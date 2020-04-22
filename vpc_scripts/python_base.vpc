@@ -1,0 +1,42 @@
+//-----------------------------------------------------------------------------
+//
+//	python_base.vpc
+//
+//	General settings for a Python DLL or Executable
+//
+//-----------------------------------------------------------------------------
+
+$MacroRequired	"PYTHONVER"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE;$SRCDIR\common\python\$PYTHONVER;$SRCDIR\public\python"
+	}
+
+	$Linker
+	{
+		$AdditionalLibraryDirectories		"$BASE;$SRCDIR\lib\common\python\$PYTHONVER"
+	}
+}
+
+$Configuration	"Debug"
+{
+	$General
+	{
+		$OutputDirectory			"Debug_Python$PYTHONVER"
+		$IntermediateDirectory			"Debug_Python$PYTHONVER"
+	}
+}
+
+$Configuration	"Release"
+{
+	$General
+	{
+		$OutputDirectory			"Release_Python$PYTHONVER"
+		$IntermediateDirectory			"Release_Python$PYTHONVER"
+	}
+}
+
+$Include "$SRCDIR\vpc_scripts\python_inc_$PYTHONVER.vpc"

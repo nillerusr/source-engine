@@ -1,0 +1,40 @@
+ALWAYS_SEARCH_USER_PATHS = YES
+HEADER_SEARCH_PATHS = $(HEADER_SEARCH_PATHS) $(SDKROOT)/usr/include/malloc
+
+ARCHS = i386
+ONLY_ACTIVE_ARCH = NO
+COPY_PHASE_STRIP = NO
+DEBUG_INFORMATION_FORMAT = dwarf-with-dsym
+
+DEAD_CODE_STRIPPING = YES
+PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES
+
+GCC_C_LANGUAGE_STANDARD = gnu99
+GCC_ENABLE_OBJC_EXCEPTIONS = YES
+GCC_SYMBOLS_PRIVATE_EXTERN = YES
+GCC_INLINES_ARE_PRIVATE_EXTERN = YES
+GCC_REUSE_STRINGS = YES
+
+CLANG_CXX_LIBRARY = libc++
+GCC_PREPROCESSOR_DEFINITIONS = _DLL_EXT=.dylib VPROF_LEVEL=1 NO_HOOK_MALLOC=1 PNG_NO_PEDANTIC_WARNINGS
+BASE_CFLAGS= -Usprintf -Ustrncpy -UPROTECTED_THINGS_ENABLE -ftemplate-depth=512
+
+GCC_WARN_ABOUT_INVALID_OFFSETOF_MACRO = NO
+WARNING_CFLAGS = -Wno-deprecated-writable-strings -Wno-switch-enum -Wno-switch -Wno-unused-value -Wno-parentheses -Wno-logical-op-parentheses -Wno-c++11-narrowing -Wno-inconsistent-missing-override
+
+// CLANG - and use the ccache wrapper
+GCC_VERSION = com.apple.compilers.llvm.clang.1_0
+CC = $(SOURCE_ROOT)/devtools/bin/osx32/xcode_ccache_wrapper
+LDPLUSPLUS = $(DT_TOOLCHAIN_DIR)/usr/bin/clang++
+//CLANG_WARN_CXX0X_EXTENSIONS = NO
+CLANG_CXX_LANGUAGE_STANDARD = c++11
+
+// include <memory.h> gets confused, 'cause ivp has one, and the system has one, and only one
+// gets into the header map, so sacrifice speed for corectness.
+USE_HEADERMAP = NO
+
+SDKROOT = macosx10.10
+MACOSX_DEPLOYMENT_TARGET = 10.7
+GCC_FAST_MATH = YES
+CLANG_LINK_OBJC_RUNTIME = false
+

@@ -1,0 +1,203 @@
+//====== Copyright 1996-2010, Valve Corporation, All rights reserved. =======
+//
+// Purpose: The file defines our Google Protocol Buffers which are used in over 
+// the wire messages between servers as well as between clients and servers.
+//
+//=============================================================================
+
+// We care more about speed than code size
+option optimize_for = SPEED;
+
+// We don't use the service generation functionality
+option cc_generic_services = false;
+
+
+// 
+// STYLE NOTES:
+//
+// Use CamelCase CMsgMyMessageName style names for messages.
+// 
+// Use lowercase _ delimited names like my_steam_id for field names, this is non-standard for Steam,
+// but plays nice with the Google formatted code generation.  
+// 
+// Try not to use required fields ever. Only do so if you are really really sure you'll never want them removed. 
+// Optional should be preffered as it will make versioning easier and cleaner in the future if someone refactors
+// your message and wants to remove or rename fields.
+//
+// Use fixed64 for JobId_t, GID_t, or SteamID.  This is appropriate for any field that is normally
+// going to be larger than 2^56.  Otherwise use int64 for 64 bit values that are frequently smaller
+// than 2^56 as it will safe space on the wire in those cases.
+//
+// Similar to fixed64, use fixed32 for RTime32 or other 32 bit values that are frequently larger than
+// 2^28.  It will safe space in those cases, otherwise use int32 which will safe space for smaller values.
+// An exception to this rule for RTime32 is if the value will frequently be zero rather than set to an actual 
+// time.
+//
+
+enum EGCSystemMsg
+{
+	k_EGCMsgInvalid =							0;
+	k_EGCMsgMulti =								1;
+
+	k_EGCMsgGenericReply =						10;
+
+	k_EGCMsgSystemBase =						50;
+	k_EGCMsgAchievementAwarded =				51;
+	k_EGCMsgConCommand =						52;		// A command from the GC's admin console
+	k_EGCMsgStartPlaying =						53;
+	k_EGCMsgStopPlaying =						54;
+	k_EGCMsgStartGameserver =					55;
+	k_EGCMsgStopGameserver =					56;
+	k_EGCMsgWGRequest =							57;
+	k_EGCMsgWGResponse =						58;
+	k_EGCMsgGetUserGameStatsSchema =			59;		// Gets the user game stats schema for the app
+	k_EGCMsgGetUserGameStatsSchemaResponse =	60;
+	k_EGCMsgGetUserStatsDEPRECATED =			61;		// Gets user game stats for a user
+	k_EGCMsgGetUserStatsResponse =				62;
+	k_EGCMsgAppInfoUpdated =					63;		// Message sent to the GC when there has been an AppInfo update
+	k_EGCMsgValidateSession =					64;		// Message sent by the GC when it wants to make sure a session exists
+	k_EGCMsgValidateSessionResponse =			65;		// Message sent to the GC in response to ValidateSession 
+	k_EGCMsgLookupAccountFromInput =			66;		// Sent by the GC to lookup user. Reply is k_EGCMsgGenericReply
+	k_EGCMsgSendHTTPRequest =					67;		// Message sent by the GC to do a generic HTTP request
+	k_EGCMsgSendHTTPRequestResponse =			68;		// Response back to the GC with the results of the HTTP request
+	k_EGCMsgPreTestSetup =						69;		// Reset the GC database (usually for testing purposes)
+	k_EGCMsgRecordSupportAction =				70;		// Logs a support action
+	k_EGCMsgGetAccountDetails_DEPRECATED =		71;		// DEPRECATED - Use protobuf-based k_EGCMsgGetAccountDetails //Requests the details for an account
+//	k_EGCMsgSendInterAppMessage =				72;		// Sends a message to another app's GC
+	k_EGCMsgReceiveInterAppMessage =			73;		// Receives a message from another app's GC
+	k_EGCMsgFindAccounts =						74;		// queries the AMs for accounts by name
+	k_EGCMsgPostAlert =							75;		// posts an alert to Steam
+	k_EGCMsgGetLicenses =						76;		// asks Steam for the user's licenses
+	k_EGCMsgGetUserStats =						77;		// Gets user game stats for a user
+	k_EGCMsgGetCommands =						78;		// request for a list of commands from a gc console
+	k_EGCMsgGetCommandsResponse =				79;		// response with a list of commands for a gc console
+	k_EGCMsgAddFreeLicense =					80;		// request for for Steam to add a license to the specified free package
+	k_EGCMsgAddFreeLicenseResponse =			81;		// response with the result of the attempt to add a free license
+	k_EGCMsgGetIPLocation = 					82;		// Get geolocation data for a specific IP
+	k_EGCMsgGetIPLocationResponse = 			83;		// Geolocation response
+
+	k_EGCMsgSystemStatsSchema =		 			84;		// Message sent by the GC specifying what its stats schema is
+	k_EGCMsgGetSystemStats =		 			85;		// Message sent to the GC requesting its stats
+	k_EGCMsgGetSystemStatsResponse =	 		86;		// Message sent by the GC with its stats
+
+	k_EGCMsgSendEmail =		 					87;		// Sent by the GC to send an email to a user
+	k_EGCMsgSendEmailResponse =	 				88;		// Response with the result of the send request
+	k_EGCMsgGetEmailTemplate =					89;		// Sent to the GC to request an email template
+	k_EGCMsgGetEmailTemplateResponse =			90;		// Get email template response
+	k_EGCMsgGrantGuestPass =					91;		// Sends a guest pass/gift to a user
+	k_EGCMsgGrantGuestPassResponse =			92;		// Send guest pass response
+	k_EGCMsgGetAccountDetails =					93;		// Requests the details for an account
+	k_EGCMsgGetAccountDetailsResponse =			94;		// Requests the details for an account response
+	k_EGCMsgGetPersonaNames =					95;		// Gets the persona names for a set of accounts
+	k_EGCMsgGetPersonaNamesResponse =			96;		// Gets the persona names for a set of accounts response
+	k_EGCMsgMultiplexMsg =						97;		// Sends a single message to multiple users
+
+	// web API calls
+	k_EGCMsgWebAPIRegisterInterfaces =			101; // sent once at startup to register APIs
+	k_EGCMsgWebAPIJobRequest =					102; // sent when an actual request is made
+//	k_EGCMsgWebAPIRegistrationRequested =		103; // sent by the GC Host when it learns a web API server has started		-- No longer sent by the GCH
+	k_EGCMsgWebAPIJobRequestHttpResponse =		104; // sent by the GC in response to k_EGCMsgWebAPIJobRequest - uses CMsgHttpResponse
+	k_EGCMsgWebAPIJobRequestForwardResponse =	105; // sent by the GC in response to k_EGCMsgWebAPIJobRequest - uses CMsgGCMsgWebAPIJobRequestForwardResponse
+
+
+	// Memcached
+	k_EGCMsgMemCachedGet =						200;	// Get key(s) from memcached
+	k_EGCMsgMemCachedGetResponse =				201;	// Retrieved keys
+	k_EGCMsgMemCachedSet =						202;	// Set key(s) into memcached
+	k_EGCMsgMemCachedDelete =					203;	// Delete key(s) from memcached
+	k_EGCMsgMemCachedStats =					204;	// Request stats from memcached
+	k_EGCMsgMemCachedStatsResponse =			205;	// Retrieved stats
+
+	// SQL
+	k_EGCMsgSQLStats =							210;	// Get the current SQL stats
+	k_EGCMsgSQLStatsResponse =					211;	// Retrieved stats
+
+	// Multi-GC setup
+	k_EGCMsgMasterSetDirectory =				220;	// The master GC will send this back to the GCH indicating the sub GC's that need to be created
+	k_EGCMsgMasterSetDirectoryResponse =		221;	// Response back from the GCH to the master GC regarding the successful receiving of the directory (note this doesn't mean all sub GCs are done starting up)
+	k_EGCMsgMasterSetWebAPIRouting =			222;	// The master GC will send this back to the GCH indicating the routing details for WebAPI requests
+	k_EGCMsgMasterSetWebAPIRoutingResponse =	223;	// Response back from the GCH to the master GC regarding the successful receipt and processing of k_EGCMsgMasterSetWebAPIRouting
+	k_EGCMsgMasterSetClientMsgRouting =			224;	// The master GC will send this back to the GCH indicating the routing details for client messages
+	k_EGCMsgMasterSetClientMsgRoutingResponse =	225;	// Response back from the GCH to the master GC regarding the successful receipt and processing of k_EGCMsgMasterSetClientMsgRouting
+	k_EGCMsgSetOptions =						226;	// Each GC can send this back to the GCH indicating which client messages and data streams the GC is interested in
+	k_EGCMsgSetOptionsResponse =				227;	// Response back from the GCH (optional - don't send a job ID with SetOptions to skip the response)
+
+	// Newer GC SDK messages. All should be protobuf based.
+	k_EGCMsgSystemBase2 =						500;
+	k_EGCMsgGetPurchaseTrustStatus =			501;	// Gets information about a user's purchase trustworthiness
+	k_EGCMsgGetPurchaseTrustStatusResponse =	502;	// Gets information about a user's purchase trustworthiness response
+	k_EGCMsgUpdateSession =						503;	// GCH update regarding the status of a session, only sent if the convar to enable these messages is set
+	k_EGCMsgGCAccountVacStatusChange =			504;	// Accounts VAC status has changed
+	k_EGCMsgCheckFriendship =					505;	// GC checking if two users are friends
+	k_EGCMsgCheckFriendshipResponse =			506;	// Response to the GC regarding the users' friendship
+	k_EGCMsgGetPartnerAccountLink =				507;	// Request the partner account link details for a user
+	k_EGCMsgGetPartnerAccountLinkResponse =		508;	// Response to the GC with the partner account link details
+	k_EGCMsgVSReportedSuspiciousActivity =		509;	// Suspicious activity detected on user's account
+	k_EGCMsgAccountTradeBanStatusChange =		510;	// Account's trade ban status has changed
+	k_EGCMsgAccountLockStatusChange =			511;	// Account's lock status has changed
+	k_EGCMsgDPPartnerMicroTxns =				512;	// A set of microtransaction data relayed to the DP for insert or update.
+	k_EGCMsgDPPartnerMicroTxnsResponse =		513;	// ... Response
+	k_EGCMsgGetIPASN = 							514;	// Get ASN data for a specific IP
+	k_EGCMsgGetIPASNResponse = 					515;	// IP ASN response
+	k_EGCMsgGetAppFriendsList =					516;	// GC requesting a list of app-friends for a user (defined as friends who play the app requesting the friends list)
+	k_EGCMsgGetAppFriendsListResponse =			517;	// ... Response
+	k_EGCMsgVacVerificationChange =				518;	// From VS to GC
+	k_EGCMsgAccountPhoneNumberChange =			519;	// From Phone Server to GC
+	k_EGCMsgAccountTwoFactorChange =			520;	// From AM to GC
+	k_EGCMsgCheckClanMembership =				521;	// Checks if an account is a member of a given clan
+	k_EGCMsgCheckClanMembershipResponse =		522;	// Checks if an account is a member of a given clan response
+};
+
+enum ESOMsg
+{
+	k_ESOMsg_Create =						21;
+	k_ESOMsg_Update =						22;
+	k_ESOMsg_Destroy =						23;
+	k_ESOMsg_CacheSubscribed =				24;
+	k_ESOMsg_CacheUnsubscribed =			25;
+	k_ESOMsg_UpdateMultiple =				26;
+	k_ESOMsg_CacheSubscriptionCheck =		27; // need to get rid of this!
+	k_ESOMsg_CacheSubscriptionRefresh =		28;
+	k_ESOMsg_CacheSubscribedUpToDate =		29;
+};
+
+enum EGCBaseClientMsg
+{
+	k_EMsgGCPingRequest =						3001; // GC <=> client
+	k_EMsgGCPingResponse =						3002; // GC <=> client
+
+	// WARNING: These messages were promoted into the gcsdk
+	// from base_gcmessages.proto (which is not part of the gcsdk put is
+	// "shared game code").  But we did not want to change the numbers
+	// for existing messages.  Don't add new messages in the 4000 range!
+	k_EMsgGCClientWelcome =						4004; // GC => client
+	k_EMsgGCServerWelcome =						4005; // GC => server
+	k_EMsgGCClientHello =						4006; // client => GC
+	k_EMsgGCServerHello =						4007; // server => GC
+
+	k_EMsgGCClientGoodbye =						4008; // GC => client
+	k_EMsgGCServerGoodbye =						4009; // GC => server
+
+	// !FIXME! DOTAMERGE
+	//k_EMsgGCClientConnectionStatus =			4009; // GC => client
+	//k_EMsgGCServerConnectionStatus =			4010; // GC => server
+
+};
+
+enum EGCToGCMsg
+{
+	k_EGCToGCMsgMasterAck =						150;		// Sub GC => Master GC, confirm that we've started up successfully so the master can go when all sub GCs are ready
+	k_EGCToGCMsgMasterAckResponse =				151;		// Master GC => Sub GC, the ack came through fine and everything is as expected
+	k_EGCToGCMsgRouted =						152;		// Master GC => Sub GC, a routed message that originally came in from a client or the system and has been sent to another GC
+	k_EGCToGCMsgRoutedReply =					153;		// Sub GC => Sub/Master GC, a reply message that needs to be sent back from the original GC that received the message
+	k_EMsgGCUpdateSubGCSessionInfo =			154;		// Master GC => Other GCs
+	k_EMsgGCRequestSubGCSessionInfo =			155;		// Sub GC => Master GC
+	k_EMsgGCRequestSubGCSessionInfoResponse =	156;		// Master GC => Sub GC
+	k_EGCToGCMsgMasterStartupComplete =			157;		// Master GC => Sub GC - Indicates that the master universe has completed startup, indicating that sub GC's are in a good spot to complete startup
+	k_EMsgGCToGCSOCacheSubscribe =				158;		// Master GC => Sub GC - A steam ID has subscribed to another SO cache (or possibly their own)
+	k_EMsgGCToGCSOCacheUnsubscribe =			159;		// Master GC => Sub GC - A steam ID has unsubscribed from another SO cache (or possibly their own)
+}
+
+
+// Do not remove this comment due to a bug on the Mac OS X protobuf compiler
+

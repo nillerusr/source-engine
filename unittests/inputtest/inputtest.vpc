@@ -1,0 +1,24 @@
+//-----------------------------------------------------------------------------
+//	INPUTTEST.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_base.vpc"
+
+$Project "Inputtest"
+{
+	$Folder	"Source Files"
+	{
+		$File	"inputtest.cpp"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib appframework
+		$Lib tier2
+	}
+}

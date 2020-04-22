@@ -1,0 +1,39 @@
+//-----------------------------------------------------------------------------
+//	VPROJECT.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$SRCDIR\devtools\bin"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_win_win32_base.vpc"
+
+$Project "VProject"
+{
+	$Folder	"Source Files"
+	{
+		$File	"vproject.cpp"
+		$File	"sys_utils.cpp"
+		-$File	"memoverride.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"sys_utils.h"
+		$File	"vproject.h"		
+	}
+
+	$Folder "Resources"
+	{
+		$File	"vproject.rc"
+		$File	"vproject.ico"
+	}
+
+	$Folder "Link Libraries"
+	{
+		-$File	"tier0"
+		-$File	"tier1"
+		-$File	"vstdlib"
+	}
+}

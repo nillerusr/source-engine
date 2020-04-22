@@ -1,0 +1,4 @@
+LIBRARY	stdshader_dx8_360.dll
+EXPORTS
+	CreateInterface		@1
+	

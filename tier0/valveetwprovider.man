@@ -1,0 +1,288 @@
+﻿<?xml version='1.0' encoding='utf-8' standalone='yes'?>
+<instrumentationManifest xmlns="http://schemas.microsoft.com/win/2004/08/events">
+  <instrumentation
+      xmlns:win="http://manifests.microsoft.com/win/2004/08/windows/events"
+      xmlns:xs="http://www.w3.org/2001/XMLSchema"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <events xmlns="http://schemas.microsoft.com/win/2004/08/events">
+      <!-- Main provider to emit low to medium frequency information about game performance.
+      This includes Begin/End pairs, markers, and labeled thread IDs.
+      Documentation on ETW is available at:
+      http://msdn.microsoft.com/en-us/magazine/cc163437.aspx
+      http://blogs.msdn.com/b/ryanmy/archive/2005/05/27/422772.aspx
+      http://msdn.microsoft.com/en-us/library/aa363668(VS.85).aspx
+
+      Documentation of the data types available for event payload templates is here:
+      http://msdn.microsoft.com/en-us/library/aa382774(v=VS.85).aspx
+      
+      See also the Windows Platform SDK SimpleProvider sample and the Scenario
+      libary at http://archive.msdn.microsoft.com/Scenario
+
+      Before recording traces you need to execute these commands to register the provider:
+      xcopy /y %vgame%\bin\tier0.dll %temp%
+      wevtutil um %vgame%\..\src\tier0\valveetwprovider.man
+      wevtutil im %vgame%\..\src\tier0\valveetwprovider.man
+      -->
+      <provider
+          guid="{3fa9201e-73b0-43fe-9821-7e145359bc6f}"
+          name="Valve-Main"
+          symbol="VALVE_MAIN"
+          messageFileName="%temp%\tier0.dll"
+          resourceFileName="%temp%\tier0.dll" >
+        <templates>
+          <template tid="T_Start">
+            <data inType="win:AnsiString" name="Description" />
+            <data inType="win:Int32" name="Depth" />
+          </template>
+          <template tid="T_End">
+            <data inType="win:AnsiString" name="Description" />
+            <data inType="win:Int32" name="Depth" />
+            <data inType="win:Float" name="Duration (ms)" />
+          </template>
+          <template tid="T_Mark">
+            <data inType="win:AnsiString" name="Description" />
+          </template>
+          <template tid="T_Mark1F">
+            <data inType="win:AnsiString" name="Description" />
+            <data inType="win:Float" name="Data 1" />
+          </template>
+          <template tid="T_Mark2F">
+            <data inType="win:AnsiString" name="Description" />
+            <data inType="win:Float" name="Data 1" />
+            <data inType="win:Float" name="Data 2" />
+          </template>
+          <template tid="T_Mark3F">
+            <data inType="win:AnsiString" name="Description" />
+            <data inType="win:Float" name="Data 1" />
+            <data inType="win:Float" name="Data 2" />
+            <data inType="win:Float" name="Data 3" />
+          </template>
+          <template tid="T_Mark4F">
+            <data inType="win:AnsiString" name="Description" />
+            <data inType="win:Float" name="Data 1" />
+            <data inType="win:Float" name="Data 2" />
+            <data inType="win:Float" name="Data 3" />
+            <data inType="win:Float" name="Data 4" />
+          </template>
+          <template tid="T_Mark1I">
+            <data inType="win:AnsiString" name="Description" />
+            <data inType="win:Int32" name="Data 1" />
+          </template>
+          <template tid="T_Mark2I">
+            <data inType="win:AnsiString" name="Description" />
+            <data inType="win:Int32" name="Data 1" />
+            <data inType="win:Int32" name="Data 2" />
+          </template>
+          <template tid="T_Mark3I">
+            <data inType="win:AnsiString" name="Description" />
+            <data inType="win:Int32" name="Data 1" />
+            <data inType="win:Int32" name="Data 2" />
+            <data inType="win:Int32" name="Data 3" />
+          </template>
+          <template tid="T_Mark4I">
+            <data inType="win:AnsiString" name="Description" />
+            <data inType="win:Int32" name="Data 1" />
+            <data inType="win:Int32" name="Data 2" />
+            <data inType="win:Int32" name="Data 3" />
+            <data inType="win:Int32" name="Data 4" />
+          </template>
+          <template tid="T_Mark1S">
+            <data inType="win:AnsiString" name="Description" />
+            <data inType="win:AnsiString" name="Data 1" />
+          </template>
+          <template tid="T_Mark2S">
+            <data inType="win:AnsiString" name="Description" />
+            <data inType="win:AnsiString" name="Data 1" />
+            <data inType="win:AnsiString" name="Data 2" />
+          </template>
+          <template tid="T_ThreadID">
+            <data inType="win:Int32" name="ThreadID" />
+            <data inType="win:AnsiString" name="ThreadName" />
+          </template>
+        </templates>
+        <events>
+          <event symbol="Start" template="T_Start" value="100" task="Block" opcode="Begin" />
+          <event symbol="Stop" template="T_End" value="101" task="Block" opcode="End" />
+          <event symbol="Mark" template="T_Mark" value="102" task="Block" opcode="Mark" />
+          <event symbol="Mark1F" template="T_Mark1F" value="103" task="Block" opcode="Mark1F" />
+          <event symbol="Mark2F" template="T_Mark2F" value="104" task="Block" opcode="Mark2F" />
+          <event symbol="Mark3F" template="T_Mark3F" value="105" task="Block" opcode="Mark3F" />
+          <event symbol="Mark4F" template="T_Mark4F" value="106" task="Block" opcode="Mark4F" />
+          <event symbol="Mark1I" template="T_Mark1I" value="107" task="Block" opcode="Mark1I" />
+          <event symbol="Mark2I" template="T_Mark2I" value="108" task="Block" opcode="Mark2I" />
+          <event symbol="Mark3I" template="T_Mark3I" value="109" task="Block" opcode="Mark3I" />
+          <event symbol="Mark4I" template="T_Mark4I" value="110" task="Block" opcode="Mark4I" />
+          <event symbol="Mark1S" template="T_Mark1S" value="111" task="Block" opcode="Mark1S" />
+          <event symbol="Mark2S" template="T_Mark2S" value="112" task="Block" opcode="Mark2S" />
+          <event level="win:Informational" symbol="Thread_ID" template="T_ThreadID" value="113" task="ThreadID" opcode="Information" />
+        </events>
+        <opcodes>
+          <opcode name="Begin" symbol="_BeginOpcode" value="10"/>
+          <opcode name="End" symbol="_EndOpcode" value="11"/>
+          <opcode name="Step" symbol="_StepOpcode" value="12"/>
+          <opcode name="Mark" symbol="_MarkOpcode" value="13"/>
+          <opcode name="Mark1F" symbol="_MarkOpcode1F" value="14"/>
+          <opcode name="Mark2F" symbol="_MarkOpcode2F" value="15"/>
+          <opcode name="Mark3F" symbol="_MarkOpcode3F" value="16"/>
+          <opcode name="Mark4F" symbol="_MarkOpcode4F" value="17"/>
+          <opcode name="Mark1I" symbol="_MarkOpcode1I" value="18"/>
+          <opcode name="Mark2I" symbol="_MarkOpcode2I" value="19"/>
+          <opcode name="Mark3I" symbol="_MarkOpcode3I" value="20"/>
+          <opcode name="Mark4I" symbol="_MarkOpcode4I" value="21"/>
+          <opcode name="Mark1S" symbol="_MarkOpcode1S" value="22"/>
+          <opcode name="Mark2S" symbol="_MarkOpcode2S" value="23"/>
+          <opcode name="Information" symbol="_InformationOpcode" value="24"/>
+        </opcodes>
+        <tasks>
+          <task name="Block" symbol="Block_Task" value="1" eventGUID="{F15F363A-49FD-4de3-967C-1732464945FF}"/>
+          <task name="ThreadID" symbol="ThreadID_Task" value="2" eventGUID="{F15F363A-493D-4dea-967C-1123464945FF}"/>
+        </tasks>
+      </provider>
+
+      <!-- Additional provider, to emit high frequency information about game performance, mainly frame events. -->
+      <provider
+          guid="{47a9201e-73b0-42ce-9821-7e134361bc6f}"
+          name="Valve-FrameRate"
+          symbol="VALVE_FRAMERATE"
+          messageFileName="%temp%\tier0.dll"
+          resourceFileName="%temp%\tier0.dll"
+          >
+        <templates>
+          <template tid="T_FrameMark">
+            <data inType="win:Int32" name="Frame number" />
+            <data inType="win:Float" name="Duration (ms)" />
+          </template>
+        </templates>
+        <events>
+          <event symbol="RenderFrameMark" template="T_FrameMark" value="200" task="Frame" opcode="RenderFrameMark" />
+          <event symbol="SimFrameMark" template="T_FrameMark" value="201" task="Frame" opcode="SimFrameMark" />
+        </events>
+        <opcodes>
+          <opcode name="RenderFrameMark" symbol="_RenderFrameMarkOpcode" value="10"/>
+          <opcode name="SimFrameMark" symbol="_SimFrameMarkOpcode" value="11"/>
+        </opcodes>
+        <tasks>
+          <task name="Frame" symbol="Frame_Task" value="1" eventGUID="{F15F363A-49FD-4FFa-967C-1739364945FF}"/>
+        </tasks>
+      </provider>
+
+      <!-- Additional provider, to emit high frequency information about server performance. -->
+      <provider
+          guid="{58a9201e-73b0-42ce-9821-7e134361bc70}"
+          name="Valve-ServerFrameRate"
+          symbol="VALVE_SERVERFRAMERATE"
+          messageFileName="%temp%\tier0.dll"
+          resourceFileName="%temp%\tier0.dll"
+          >
+        <templates>
+          <template tid="T_FrameMark">
+            <data inType="win:Int32" name="Frame number" />
+            <data inType="win:Float" name="Duration (ms)" />
+          </template>
+        </templates>
+        <events>
+          <event symbol="ServerRenderFrameMark" template="T_FrameMark" value="300" task="ServerFrame" opcode="ServerRenderFrameMark" />
+          <event symbol="ServerSimFrameMark" template="T_FrameMark" value="301" task="ServerFrame" opcode="ServerSimFrameMark" />
+        </events>
+        <opcodes>
+          <opcode name="ServerRenderFrameMark" symbol="_ServerRenderFrameMarkOpcode" value="10"/>
+          <opcode name="ServerSimFrameMark" symbol="_ServerSimFrameMarkOpcode" value="11"/>
+        </opcodes>
+        <tasks>
+          <task name="ServerFrame" symbol="Frame_Task" value="1" eventGUID="{025F363A-49FD-4FFa-967C-173936494500}"/>
+        </tasks>
+      </provider>
+
+      <!-- Additional provider, to emit information about user input. -->
+      <provider
+          guid="{1432afee-73b0-42ce-9821-7e134361b433}"
+          name="Valve-Input"
+          symbol="VALVE_INPUT"
+          messageFileName="%temp%\tier0.dll"
+          resourceFileName="%temp%\tier0.dll"
+          >
+        <templates>
+          <template tid="T_MouseClick">
+            <data inType="win:Int32" name="x" />
+            <data inType="win:Int32" name="y" />
+            <data inType="win:Int32" name="Button Type" />
+          </template>
+          <template tid="T_KeyPress">
+            <data inType="win:AnsiString" name="Character" />
+            <data inType="win:Int32" name="Scan Code" />
+            <data inType="win:Int32" name="Virtual Code" />
+          </template>
+          <template tid="T_MouseMove">
+            <data inType="win:Int32" name="x" />
+            <data inType="win:Int32" name="y" />
+          </template>
+          <template tid="T_MouseWheel">
+            <data inType="win:Int32" name="x" />
+            <data inType="win:Int32" name="y" />
+            <data inType="win:Int32" name="wheelDelta" />
+          </template>
+        </templates>
+        <events>
+          <event symbol="Mouse_down" template="T_MouseClick" value="400" task="Mouse" opcode="MouseDown" />
+          <event symbol="Mouse_up" template="T_MouseClick" value="401" task="Mouse" opcode="MouseUp" />
+          <event symbol="Key_down" template="T_KeyPress" value="402" task="Keyboard" opcode="KeyDown" />
+          <event symbol="Mouse_Move" template="T_MouseMove" value="403" task="Mouse" opcode="MouseMove" />
+          <event symbol="Mouse_Wheel" template="T_MouseWheel" value="404" task="Mouse" opcode="MouseWheel" />
+        </events>
+        <opcodes>
+          <opcode name="MouseDown" symbol="_MouseDownOpcode" value="10" />
+          <opcode name="MouseUp" symbol="_MouseUpOpcode" value="11" />
+          <opcode name="KeyDown" symbol="_KeyDownOpcode" value="12" />
+          <opcode name="MouseMove" symbol="_MouseMoveOpcode" value="13" />
+          <opcode name="MouseWheel" symbol="_MouseWheelOpcode" value="14" />
+        </opcodes>
+        <tasks>
+          <task name="Mouse" symbol="Mouse_Task" value="1" eventGUID="{363A49FD-F15F-4FFa-967C-173936494433}"/>
+          <task name="Keyboard" symbol="Keyboard_Task" value="2" eventGUID="{123A49FD-F15F-4FFa-967C-17393649BEAD}"/>
+        </tasks>
+      </provider>
+
+      <!-- Additional provider, to emit information about networking. -->
+      <provider
+          guid="{4372afee-73b0-42ce-9821-7e134361b519}"
+          name="Valve-Network"
+          symbol="VALVE_NETWORK"
+          messageFileName="%temp%\tier0.dll"
+          resourceFileName="%temp%\tier0.dll"
+          >
+        <templates>
+          <template tid="T_SendPacket">
+            <data inType="win:AnsiString" name="To" />
+            <data inType="win:Int32" name="WireSize" />
+            <data inType="win:Int32" name="outSequenceNR" />
+            <data inType="win:Int32" name="outSequenceNrAck" />
+            <data inType="win:Int32" name="CumulativeWireSize" />
+          </template>
+          <template tid="T_Throttled">
+          </template>
+          <template tid="T_ReadPacket">
+            <data inType="win:AnsiString" name="From" />
+            <data inType="win:Int32" name="WireSize" />
+            <data inType="win:Int32" name="inSequenceNR" />
+            <data inType="win:Int32" name="outSequenceNrAck" />
+            <data inType="win:Int32" name="CumulativeWireSize" />
+          </template>
+        </templates>
+        <events>
+          <event symbol="SendPacket" template="T_SendPacket" value="500" task="Transmit" opcode="Send" />
+          <event symbol="Throttled" template="T_Throttled" value="501" task="Throttled" opcode="Throttled" />
+          <event symbol="ReadPacket" template="T_ReadPacket" value="502" task="Transmit" opcode="Read" />
+        </events>
+        <opcodes>
+          <opcode name="Send" symbol="_SendOpcode" value="10" />
+          <opcode name="Throttled" symbol="_ThrottledOpcode" value="11" />
+          <opcode name="Read" symbol="_ReadOpcode" value="12" />
+        </opcodes>
+        <tasks>
+          <task name="Transmit" symbol="Transmit_Task" value="1" eventGUID="{932A49FD-F15F-4FFa-967C-173936494901}"/>
+          <task name="Throttled" symbol="Network_Task" value="2" eventGUID="{A32A49FD-F15F-4FFa-967C-173936494902}"/>
+        </tasks>
+      </provider>
+    </events>
+  </instrumentation>
+</instrumentationManifest>

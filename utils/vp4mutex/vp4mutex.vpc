@@ -1,0 +1,39 @@
+//-----------------------------------------------------------------------------
+//	VP4MUTEX.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$SRCDIR\devtools\bin"
+$Macro OUTBINNAME	"p4mutex"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_win32_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE;$SRCDIR\common\p4api"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE ws2_32.lib"
+	}
+}
+
+$Project "Vp4mutex"
+{
+	$Folder	"Source Files"
+	{
+		$File	"vp4mutex.cpp"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$File	"$SRCDIR\lib\common\p4api\libclient.lib"
+		$File	"$SRCDIR\lib\common\p4api\librpc.lib"
+		$File	"$SRCDIR\lib\common\p4api\libsupp.lib"
+	}
+}

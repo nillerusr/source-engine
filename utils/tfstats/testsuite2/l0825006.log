@@ -1,0 +1,315 @@
+L 08/25/1999 - 15:10:51: Log file started.
+L 08/25/1999 - 15:10:51: Spawning server "2fort"
+L 08/25/1999 - 15:10:51: server cvars start
+L 08/25/1999 - 15:10:51: "cr_random" = "0"
+L 08/25/1999 - 15:10:51: "cr_engineer" = "0"
+L 08/25/1999 - 15:10:51: "cr_spy" = "0"
+L 08/25/1999 - 15:10:51: "cr_pyro" = "0"
+L 08/25/1999 - 15:10:51: "cr_hwguy" = "0"
+L 08/25/1999 - 15:10:51: "cr_medic" = "0"
+L 08/25/1999 - 15:10:51: "cr_demoman" = "0"
+L 08/25/1999 - 15:10:51: "cr_soldier" = "0"
+L 08/25/1999 - 15:10:51: "cr_sniper" = "0"
+L 08/25/1999 - 15:10:51: "cr_scout" = "0"
+L 08/25/1999 - 15:10:51: "decalfrequency" = "30"
+L 08/25/1999 - 15:10:51: "mp_autocrosshair" = "1"
+L 08/25/1999 - 15:10:51: "mp_flashlight" = "0"
+L 08/25/1999 - 15:10:51: "mp_footsteps" = "1"
+L 08/25/1999 - 15:10:51: "mp_forcerespawn" = "1"
+L 08/25/1999 - 15:10:51: "mp_weaponstay" = "0"
+L 08/25/1999 - 15:10:51: "mp_falldamage" = "0"
+L 08/25/1999 - 15:10:51: "mp_friendlyfire" = "0"
+L 08/25/1999 - 15:10:51: "mp_timelimit" = "0"
+L 08/25/1999 - 15:10:51: "mp_fraglimit" = "0"
+L 08/25/1999 - 15:10:51: "mp_teamplay" = "0"
+L 08/25/1999 - 15:10:51: "tfc_balance_scores" = "1.0"
+L 08/25/1999 - 15:10:51: "tfc_balance_teams" = "1.0"
+L 08/25/1999 - 15:10:51: "tfc_adminpwd" = ""
+L 08/25/1999 - 15:10:51: "tfc_clanbattle_locked" = "0.0"
+L 08/25/1999 - 15:10:51: "tfc_clanbattle" = "0.0"
+L 08/25/1999 - 15:10:51: "tfc_respawndelay" = "0.0"
+L 08/25/1999 - 15:10:51: "tfc_autoteam" = "0.0"
+L 08/25/1999 - 15:10:51: "sv_maxrate" = "0"
+L 08/25/1999 - 15:10:51: "sv_minrate" = "0"
+L 08/25/1999 - 15:10:51: "sv_allowupload" = "1"
+L 08/25/1999 - 15:10:51: "sv_allowdownload" = "1"
+L 08/25/1999 - 15:10:51: "sv_upload_maxsize" = "0"
+L 08/25/1999 - 15:10:51: "sv_spectatormaxspeed" = "500"
+L 08/25/1999 - 15:10:51: "sv_spectalk" = "1"
+L 08/25/1999 - 15:10:51: "sv_maxspectators" = "8"
+L 08/25/1999 - 15:10:51: "sv_cheats" = "0"
+L 08/25/1999 - 15:10:51: "sv_clienttrace" = "1"
+L 08/25/1999 - 15:10:51: "sv_timeout" = "65"
+L 08/25/1999 - 15:10:51: "sv_waterfriction" = "1"
+L 08/25/1999 - 15:10:51: "sv_wateraccelerate" = "10"
+L 08/25/1999 - 15:10:51: "sv_airaccelerate" = "10"
+L 08/25/1999 - 15:10:51: "sv_airmove" = "1"
+L 08/25/1999 - 15:10:51: "sv_bounce" = "1"
+L 08/25/1999 - 15:10:51: "sv_clipmode" = "0"
+L 08/25/1999 - 15:10:51: "sv_stepsize" = "18"
+L 08/25/1999 - 15:10:51: "sv_accelerate" = "10"
+L 08/25/1999 - 15:10:51: "sv_maxspeed" = "320"
+L 08/25/1999 - 15:10:51: "sv_stopspeed" = "100"
+L 08/25/1999 - 15:10:51: "edgefriction" = "2"
+L 08/25/1999 - 15:10:51: "sv_friction" = "4"
+L 08/25/1999 - 15:10:51: "sv_gravity" = "800"
+L 08/25/1999 - 15:10:51: "sv_aim" = "1"
+L 08/25/1999 - 15:10:51: "sv_password" = ""
+L 08/25/1999 - 15:10:51: "pausable" = "1"
+L 08/25/1999 - 15:10:51: "coop" = "0"
+L 08/25/1999 - 15:10:51: "deathmatch" = "1"
+L 08/25/1999 - 15:10:51: "mp_logecho" = "1"
+L 08/25/1999 - 15:10:51: "mp_logfile" = "1"
+L 08/25/1999 - 15:10:51: "cmdline" = "0"
+L 08/25/1999 - 15:10:51: server cvars end
+L 08/25/1999 - 15:10:53: Map CRC "-652696221"
+L 08/25/1999 - 15:10:55: "sv_aim" = "0"
+L 08/25/1999 - 15:10:55: "sv_clienttrace" = "3.5"
+L 08/25/1999 - 15:10:55: "pausable" = "0"
+L 08/25/1999 - 15:10:55: "sv_maxspeed" = "500"
+L 08/25/1999 - 15:10:55: "mp_teamplay" = "21"
+L 08/25/1999 - 15:10:55: "mp_timelimit" = "30"
+L 08/25/1999 - 15:10:55: "tfc_autoteam" = "1"
+L 08/25/1999 - 15:10:55: Server name is "VALVe Test Server"
+L 08/25/1999 - 15:10:55: "sv_maxspeed" = "500.000000"
+L 08/25/1999 - 15:11:25: "Player<1><WON:1623209>" connected, address "63.75.210.28:27005"
+L 08/25/1999 - 15:11:37: "Player<1><WON:1623209>" has entered the game
+L 08/25/1999 - 15:11:39: "Player<1>" joined team "1".
+L 08/25/1999 - 15:11:42: "Player<1>" changed class to "RandomPC"
+L 08/25/1999 - 15:11:42: "Player<1>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:11:50: "ultimiteplayer<2><WON:1600029>" connected, address "24.65.98.36:27005"
+L 08/25/1999 - 15:11:58: "ultimiteplayer<2><WON:1600029>" has entered the game
+L 08/25/1999 - 15:12:04: "ultimiteplayer<2>" joined team "2".
+L 08/25/1999 - 15:12:09: "ultimiteplayer<2>" changed class to "Soldier"
+L 08/25/1999 - 15:12:09: "ultimiteplayer<2>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:12:14: "Player<1>" disconnected
+L 08/25/1999 - 15:12:14: "Player<3><WON:1623209>" connected, address "63.75.210.28:27005"
+L 08/25/1999 - 15:12:15: "Paddy<4><WON:1398009>" connected, address "194.125.167.18:27005"
+L 08/25/1999 - 15:12:18: "Player<3><WON:1623209>" has entered the game
+L 08/25/1999 - 15:12:19: "Player<3>" joined team "1".
+L 08/25/1999 - 15:12:23: "Player<3>" changed class to "Scout"
+L 08/25/1999 - 15:12:23: "Player<3>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:12:31: "Paddy<4><WON:1398009>" has entered the game
+L 08/25/1999 - 15:12:31: "pikalex<5><WON:2632619>" connected, address "209.18.30.18:27005"
+L 08/25/1999 - 15:12:35: "Paddy<4>" joined team "1".
+L 08/25/1999 - 15:12:43: "Paddy<4>" changed class to "Engineer"
+L 08/25/1999 - 15:12:43: "Paddy<4>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:12:43: "pikalex<5><WON:2632619>" has entered the game
+L 08/25/1999 - 15:12:47: "pikalex<5>" joined team "2".
+L 08/25/1999 - 15:12:48: "burnsy<6><WON:592789>" connected, address "206.106.127.194:27005"
+L 08/25/1999 - 15:12:55: "pikalex<5>" changed class to "Spy"
+L 08/25/1999 - 15:12:55: "pikalex<5>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:13:03: "Paddy<4>" killed self with "empgrenade"
+L 08/25/1999 - 15:13:05: "Paddy<4>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:13:07: "Paddy<4>" killed "ultimiteplayer<2>" with "normalgrenade"
+L 08/25/1999 - 15:13:08: "ultimiteplayer<2>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:13:12: "Player<3>" disconnected
+L 08/25/1999 - 15:13:12: "Player<7><WON:1623209>" connected, address "63.75.210.28:27005"
+L 08/25/1999 - 15:13:16: "Player<7><WON:1623209>" has entered the game
+L 08/25/1999 - 15:13:19: "Player<7>" joined team "1".
+L 08/25/1999 - 15:13:22: "Player<7>" changed class to "Scout"
+L 08/25/1999 - 15:13:22: "Player<7>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:13:26: "Paddy<4>" built a "sentry".
+L 08/25/1999 - 15:13:38: "Wedge<8><WON:1372329>" connected, address "129.15.141.155:27005"
+L 08/25/1999 - 15:13:45: "burnsy<6><WON:592789>" has entered the game
+L 08/25/1999 - 15:13:59: "Wedge<8><WON:1372329>" has entered the game
+L 08/25/1999 - 15:14:04: "Wedge<8>" joined team "1".
+L 08/25/1999 - 15:14:04: "Paddy<4>" killed "ultimiteplayer<2>" with "sentrygun"
+L 08/25/1999 - 15:14:06: "ultimiteplayer<2>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:14:08: "danzig<9><WON:3113589>" connected, address "207.172.79.106:27005"
+L 08/25/1999 - 15:14:09: "Wedge<8>" changed class to "Sniper"
+L 08/25/1999 - 15:14:09: "Wedge<8>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:14:24: "Paddy<4>" killed "pikalex<5>" with "sentrygun"
+L 08/25/1999 - 15:14:25: "pikalex<5>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:14:28: "Player<7>" disconnected
+L 08/25/1999 - 15:14:31: "burnsy<6>" joined team "1".
+L 08/25/1999 - 15:14:33: "pikalex<5>" changed to team "1".
+L 08/25/1999 - 15:14:33: "pikalex<5>" killed self with "world"
+L 08/25/1999 - 15:14:35: "pikalex<5>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:14:38: "pikalex<5>" changed class to "Engineer"
+L 08/25/1999 - 15:14:38: "pikalex<5>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:14:41: "danzig<9><WON:3113589>" has entered the game
+L 08/25/1999 - 15:14:54: "ultimiteplayer<2>" say "ok little unfair"
+L 08/25/1999 - 15:14:57: "DR.Octagon<10><WON:1812789>" connected, address "208.250.191.145:27005"
+L 08/25/1999 - 15:15:03: "Player<11><WON:1623209>" connected, address "63.75.210.28:27005"
+L 08/25/1999 - 15:15:05: "danzig<9>" joined team "2".
+L 08/25/1999 - 15:15:06: "Player<11><WON:1623209>" has entered the game
+L 08/25/1999 - 15:15:09: "burnsy<6>" changed class to "Soldier"
+L 08/25/1999 - 15:15:09: "burnsy<6>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:15:13: "danzig<9>" changed class to "Soldier"
+L 08/25/1999 - 15:15:13: "danzig<9>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:15:21: "DR.Octagon<10><WON:1812789>" has entered the game
+L 08/25/1999 - 15:15:21: "ultimiteplayer<2>" destroyed "Paddy<4>"'s "sentry".
+L 08/25/1999 - 15:15:24: "ultimiteplayer<2>" killed "pikalex<5>" with "rocket"
+L 08/25/1999 - 15:15:26: "pikalex<5>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:15:30: "DR.Octagon<10>" joined team "2".
+L 08/25/1999 - 15:15:32: "danzig<9>" killed "Wedge<8>" with "rocket"
+L 08/25/1999 - 15:15:38: "Player<11>" disconnected
+L 08/25/1999 - 15:15:38: "Player<12><WON:1623209>" connected, address "63.75.210.28:27005"
+L 08/25/1999 - 15:15:41: "Player<12><WON:1623209>" has entered the game
+L 08/25/1999 - 15:15:43: "DR.Octagon<10>" changed class to "Demoman"
+L 08/25/1999 - 15:15:43: "DR.Octagon<10>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:15:47: "Wedge<8>" disconnected
+L 08/25/1999 - 15:16:09: "ultimiteplayer<2>" activated the goal "Blue Flag"
+L 08/25/1999 - 15:16:13: "Assasin<13><WON:366449>" connected, address "134.69.16.249:27005"
+L 08/25/1999 - 15:16:21: "Assasin<13><WON:366449>" has entered the game
+L 08/25/1999 - 15:16:26: "Paddy<4>" killed "ultimiteplayer<2>" with "supershotgun"
+L 08/25/1999 - 15:16:26: "danzig<9>" killed "pikalex<5>" with "rocket"
+L 08/25/1999 - 15:16:27: "Assasin<13>" joined team "1".
+L 08/25/1999 - 15:16:27: "pikalex<5>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:16:28: "ultimiteplayer<2>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:16:31: "Assasin<13>" changed class to "HWGuy"
+L 08/25/1999 - 15:16:31: "Assasin<13>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:16:43: "burnsy<6>" activated the goal "Red Flag"
+L 08/25/1999 - 15:16:47: "Player<12>" disconnected
+L 08/25/1999 - 15:16:49: "pikalex<5>" changed to team "2".
+L 08/25/1999 - 15:16:49: "pikalex<5>" killed self with "world"
+L 08/25/1999 - 15:16:49: "Paddy<4>" built a "sentry".
+L 08/25/1999 - 15:16:51: "pikalex<5>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:16:55: "Assasin<13>" killed "ultimiteplayer<2>" with "ac"
+L 08/25/1999 - 15:16:57: "pikalex<5>" changed class to "Soldier"
+L 08/25/1999 - 15:16:57: "pikalex<5>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:16:58: "ultimiteplayer<2>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:17:08: "DR.Octagon<10>" killed "Paddy<4>" with "gl_grenade"
+L 08/25/1999 - 15:17:11: "Paddy<4>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:17:16: "DR.Octagon<10>" killed self with "mirvgrenade"
+L 08/25/1999 - 15:17:16: "DR.Octagon<10>" destroyed "Paddy<4>"'s "sentry".
+L 08/25/1999 - 15:17:17: "DR.Octagon<10>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:17:23: "lying pig dog<14><WON:2031589>" connected, address "24.129.38.64:27005"
+L 08/25/1999 - 15:17:29: "Player<15><WON:3334459>" connected, address "212.123.89.251:27005"
+L 08/25/1999 - 15:17:30: "burnsy<6>" killed self with "rocket"
+L 08/25/1999 - 15:17:32: "burnsy<6>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:17:39: "burnsy<6>" activated the goal "Red Flag"
+L 08/25/1999 - 15:17:49: "Player<15><WON:3334459>" has entered the game
+L 08/25/1999 - 15:17:51: "Rogue<16><WON:2883129>" connected, address "129.106.115.140:27005"
+L 08/25/1999 - 15:17:52: "pikalex<5>" disconnected
+L 08/25/1999 - 15:17:53: "burnsy<6>" activated the goal "Team 1 dropoff"
+L 08/25/1999 - 15:17:55: "lying pig dog<14><WON:2031589>" has entered the game
+L 08/25/1999 - 15:18:01: "Player<15>" joined team "1".
+L 08/25/1999 - 15:18:01: "lying pig dog<14>" joined team "2".
+L 08/25/1999 - 15:18:05: "lying pig dog<14>" changed class to "Engineer"
+L 08/25/1999 - 15:18:05: "lying pig dog<14>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:18:07: "Paddy<4>" built a "sentry".
+L 08/25/1999 - 15:18:07: "DR.Octagon<10>" killed "Paddy<4>" with "gl_grenade"
+L 08/25/1999 - 15:18:08: "DR.Octagon<10>" destroyed "Paddy<4>"'s "sentry".
+L 08/25/1999 - 15:18:08: "Paddy<4>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:18:13: "Player<15>" changed class to "Medic"
+L 08/25/1999 - 15:18:13: "Player<15>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:18:16: "DR.Octagon<10>" activated the goal "Blue Flag"
+L 08/25/1999 - 15:18:21: "Rogue<16><WON:2883129>" has entered the game
+L 08/25/1999 - 15:18:22: "ultimiteplayer<2>" killed "Paddy<4>" with "rocket"
+L 08/25/1999 - 15:18:23: "Paddy<4>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:18:24: "Rogue<16>" joined team "1".
+L 08/25/1999 - 15:18:30: "Rogue<16>" changed class to "Soldier"
+L 08/25/1999 - 15:18:30: "Rogue<16>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:18:34: "fig<17><WON:1078659>" connected, address "209.95.25.22:27005"
+L 08/25/1999 - 15:18:35: "burnsy<6>" killed "lying pig dog<14>" with "rocket"
+L 08/25/1999 - 15:18:36: "lying pig dog<14>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:18:44: "burnsy<6>" activated the goal "Red Flag"
+L 08/25/1999 - 15:18:51: "ultimiteplayer<2>" killed "Player<15>" with "rocket"
+L 08/25/1999 - 15:18:51: "fig<17><WON:1078659>" has entered the game
+L 08/25/1999 - 15:18:51: "lying pig dog<14>" built a "sentry".
+L 08/25/1999 - 15:18:52: "Player<15>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:18:52: "fig<17>" joined team "2".
+L 08/25/1999 - 15:18:55: "ultimiteplayer<2>" killed "Paddy<4>" with "rocket"
+L 08/25/1999 - 15:18:56: "fig<17>" changed class to "Soldier"
+L 08/25/1999 - 15:18:56: "fig<17>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:18:58: "Paddy<4>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:19:18: "danzig<9>" disconnected
+L 08/25/1999 - 15:19:21: "DR.Octagon<10>" killed "Rogue<16>" with "gl_grenade"
+L 08/25/1999 - 15:19:22: "DR.Octagon<10>" activated the goal "Team 2 dropoff"
+L 08/25/1999 - 15:19:23: "Rogue<16>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:19:28: "lying pig dog<14>" killed "burnsy<6>" with "sentrygun"
+L 08/25/1999 - 15:19:29: "DR.Octagon<10>" killed "Assasin<13>" with "mirvgrenade"
+L 08/25/1999 - 15:19:32: "burnsy<6>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:19:53: "Paddy<4>" built a "sentry".
+L 08/25/1999 - 15:20:04: "BlackDog<18><WON:441879>" connected, address "209.253.60.25:27005"
+L 08/25/1999 - 15:20:07: "lying pig dog<14>" killed "burnsy<6>" with "sentrygun"
+L 08/25/1999 - 15:20:13: "fig<17>" killed "Paddy<4>" with "rocket"
+L 08/25/1999 - 15:20:15: "Paddy<4>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:20:15: "burnsy<6>" say_team "the flag is at the top"
+L 08/25/1999 - 15:20:17: "burnsy<6>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:20:17: "fig<17>" destroyed "Paddy<4>"'s "sentry".
+L 08/25/1999 - 15:20:26: "fig<17>" activated the goal "Blue Flag"
+L 08/25/1999 - 15:20:33: "ultimiteplayer<2>" killed self with "rocket"
+L 08/25/1999 - 15:20:34: "ultimiteplayer<2>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:20:36: "DR.Octagon<10>" killed "Player<15>" with "pipebomb"
+L 08/25/1999 - 15:20:47: "Player<15>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:20:58: "DR.Octagon<10>" killed self with "pipebomb"
+L 08/25/1999 - 15:20:59: "lying pig dog<14>" built a "sentry".
+L 08/25/1999 - 15:21:00: "DR.Octagon<10>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:21:05: "Rogue<16>" killed "lying pig dog<14>" with "rocket"
+L 08/25/1999 - 15:21:06: "Rogue<16>" destroyed "lying pig dog<14>"'s "sentry".
+L 08/25/1999 - 15:21:08: "lying pig dog<14>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:21:08: "kill_bot<19><WON:1594619>" connected, address "24.113.94.130:27005"
+L 08/25/1999 - 15:21:15: "fig<17>" activated the goal "Team 2 dropoff"
+L 08/25/1999 - 15:21:15: "Rogue<16>" activated the goal "Red Flag"
+L 08/25/1999 - 15:21:19: "Paddy<4>" built a "sentry".
+L 08/25/1999 - 15:21:23: "Player<20><WON:1623209>" connected, address "63.75.210.28:27005"
+L 08/25/1999 - 15:21:24: "kill_bot<19><WON:1594619>" has entered the game
+L 08/25/1999 - 15:21:27: "fig<17>" killed "Rogue<16>" with "rocket"
+L 08/25/1999 - 15:21:28: "kill_bot<19>" joined team "2".
+L 08/25/1999 - 15:21:29: "Rogue<16>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:21:32: "(1)Player<20><WON:1623209>" has entered the game
+L 08/25/1999 - 15:21:35: "[CbK]-PriCk<21><WON:2656709>" connected, address "216.96.72.77:27005"
+L 08/25/1999 - 15:21:38: "kill_bot<19>" changed class to "Scout"
+L 08/25/1999 - 15:21:38: "kill_bot<19>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:21:46: "burnsy<6>" activated the goal "Red Flag"
+L 08/25/1999 - 15:21:49: "DR.Octagon<10>" killed "burnsy<6>" with "gl_grenade"
+L 08/25/1999 - 15:21:50: "lying pig dog<14>" built a "sentry".
+L 08/25/1999 - 15:21:52: "burnsy<6>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:21:57: "Ames<22><WON:2275359>" connected, address "63.20.200.141:27005"
+L 08/25/1999 - 15:21:57: "Player<23><WON:3235569>" connected, address "129.74.140.137:27005"
+L 08/25/1999 - 15:22:00: "Player<15>" killed "ultimiteplayer<2>" with "shotgun"
+L 08/25/1999 - 15:22:04: "ultimiteplayer<2>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:22:09: "(2)Player<23><WON:3235569>" has entered the game
+L 08/25/1999 - 15:22:10: "Paddy<4>" killed "kill_bot<19>" with "sentrygun"
+L 08/25/1999 - 15:22:12: "Ames<22><WON:2275359>" has entered the game
+L 08/25/1999 - 15:22:12: "DR.Octagon<10>" say_team "sorry"
+L 08/25/1999 - 15:22:14: "(1)Player<20>" disconnected
+L 08/25/1999 - 15:22:14: "(2)Player<23>" joined team "1".
+L 08/25/1999 - 15:22:15: "Ames<22>" joined team "2".
+L 08/25/1999 - 15:22:17: "[CbK]-PriCk<21><WON:2656709>" has entered the game
+L 08/25/1999 - 15:22:18: "kill_bot<19>" changed class to "Spy"
+L 08/25/1999 - 15:22:19: "kill_bot<19>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:22:20: "Ames<22>" changed class to "Pyro"
+L 08/25/1999 - 15:22:20: "Ames<22>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:22:20: "(2)Player<23>" changed class to "Soldier"
+L 08/25/1999 - 15:22:20: "(2)Player<23>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:22:27: "lying pig dog<14>" killed "burnsy<6>" with "sentrygun"
+L 08/25/1999 - 15:22:31: "burnsy<6>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:22:31: "ultimiteplayer<2>" killed self with "rocket"
+L 08/25/1999 - 15:22:33: "ultimiteplayer<2>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:22:37: "[CbK]-PriCk<21>" joined team "1".
+L 08/25/1999 - 15:22:50: "[CbK]-PriCk<21>" changed class to "Sniper"
+L 08/25/1999 - 15:22:50: "[CbK]-PriCk<21>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:22:51: "hell<24><WON:3263619>" connected, address "152.30.99.101:27005"
+L 08/25/1999 - 15:23:05: "hell<24><WON:3263619>" has entered the game
+L 08/25/1999 - 15:23:08: "hell<24>" joined team "2".
+L 08/25/1999 - 15:23:12: "hell<24>" changed class to "HWGuy"
+L 08/25/1999 - 15:23:12: "hell<24>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:23:16: "Rogue<16>" killed "Ames<22>" with "rocket"
+L 08/25/1999 - 15:23:18: "Ames<22>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:23:28: "Rogue<16>" killed "DR.Octagon<10>" with "rocket"
+L 08/25/1999 - 15:23:29: "lying pig dog<14>" killed "[CbK]-PriCk<21>" with "empgrenade"
+L 08/25/1999 - 15:23:32: "[CbK]-PriCk<21>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:23:32: "DR.Octagon<10>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:23:36: "fig<17>" killed "Rogue<16>" with "rocket"
+L 08/25/1999 - 15:23:37: "Rogue<16>" activated the goal "info_player_teamspawn"
+L 08/25/1999 - 15:23:53: "DR.Octagon<10>" disconnected
+L 08/25/1999 - 15:23:53: "ultimiteplayer<2>" disconnected
+L 08/25/1999 - 15:23:53: "Paddy<4>" disconnected
+L 08/25/1999 - 15:23:53: "<-1>" destroyed "Paddy<4>"'s "sentry".
+L 08/25/1999 - 15:23:53: "fig<17>" disconnected
+L 08/25/1999 - 15:23:53: "burnsy<6>" disconnected
+L 08/25/1999 - 15:23:53: "Assasin<13>" disconnected
+L 08/25/1999 - 15:23:53: "kill_bot<19>" disconnected
+L 08/25/1999 - 15:23:53: "lying pig dog<14>" disconnected
+L 08/25/1999 - 15:23:53: "<-1>" destroyed "lying pig dog<14>"'s "sentry".
+L 08/25/1999 - 15:23:53: "Player<15>" disconnected
+L 08/25/1999 - 15:23:53: "Rogue<16>" disconnected
+L 08/25/1999 - 15:23:53: "hell<24>" disconnected
+L 08/25/1999 - 15:23:53: "[CbK]-PriCk<21>" disconnected
+L 08/25/1999 - 15:23:53: "Ames<22>" disconnected
+L 08/25/1999 - 15:23:53: "(2)Player<23>" disconnected
+L 08/25/1999 - 15:23:53: Log closed.

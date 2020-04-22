@@ -1,0 +1,22 @@
+NOTE 2/8/05:
+
+These files are copied directly out of the HL2 engine to use as a 
+starting point for writing your own vgui based "smoothing" tools for dem files.
+
+If you decide to use this, then my suggestion would be to copy these into a MOD in the client .dll and 
+clean up the #include's so that you can get it basically compiling and showing up.  
+
+It should be a "tool" just like the net_graph and other vgui
+based tools in the client .dll (use a ConVar to show/hide it maybe?)
+
+The sample source actually contains all of the reading/writing code for dem files which is also in deminfo.cpp.
+
+Note that CDemoFile should be changed to CToolDemoFile.
+
+As I recall, you might have to reimplement a "driving" interface like the one in the main demo UI panel.  I would just implement
+it as part of this UI, etc.
+
+If you have any questions or run into major snags, please let me know and I'll try to help out.
+
+Yahn Bernier
+yahn@valvesoftware.com

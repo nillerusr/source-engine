@@ -1,0 +1,3 @@
+LIBRARY	inputsystem_360.dll
+EXPORTS
+	CreateInterface		@1

@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioProject
+	ProjectType="Visual C++"
+	Version="7.10"
+	Name="valvelib"
+	ProjectGUID="{B9FDD758-DFA9-4559-99E8-3451FF847972}"
+	SccProjectName=""
+	SccAuxPath=""
+	SccLocalPath=""
+	SccProvider=""
+	Keyword="MFCProj">
+	<Platforms>
+		<Platform
+			Name="Win32"/>
+	</Platforms>
+	<Configurations>
+		<Configuration
+			Name="Release|Win32"
+			OutputDirectory=".\Release"
+			IntermediateDirectory=".\Release"
+			ConfigurationType="2"
+			UseOfMFC="2"
+			ATLMinimizesCRunTimeLibraryUsage="FALSE"
+			CharacterSet="2">
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="2"
+				InlineFunctionExpansion="1"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_AFXEXT"
+				StringPooling="TRUE"
+				RuntimeLibrary="2"
+				EnableFunctionLevelLinking="TRUE"
+				UsePrecompiledHeader="3"
+				PrecompiledHeaderThrough="stdafx.h"
+				PrecompiledHeaderFile=".\Release/valvelib.pch"
+				AssemblerListingLocation=".\Release/"
+				ObjectFile=".\Release/"
+				ProgramDataBaseFileName=".\Release/"
+				WarningLevel="3"
+				SuppressStartupBanner="TRUE"/>
+			<Tool
+				Name="VCCustomBuildTool"
+				Description="Copying custom AppWizard to Template directory..."
+				CommandLine="if not exist &quot;$(DevEnvDir)Template\nul&quot; md &quot;$(DevEnvDir)Template&quot;
+copy &quot;$(TargetPath)&quot; &quot;$(DevEnvDir)Template&quot;
+if exist &quot;$(OutDir)\$(TargetName).pdb&quot; copy &quot;$(OutDir)\$(TargetName).pdb&quot; &quot;$(DevEnvDir)Template&quot;
+"
+				Outputs="$(DevEnvDir)Template\$(TargetName).awx"/>
+			<Tool
+				Name="VCLinkerTool"
+				OutputFile=".\Release/valvelib.awx"
+				LinkIncremental="1"
+				SuppressStartupBanner="TRUE"
+				ProgramDatabaseFile=".\Release/valvelib.pdb"
+				SubSystem="2"
+				ImportLibrary=".\Release/valvelib.lib"
+				TargetMachine="1"/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="TRUE"
+				SuppressStartupBanner="TRUE"
+				TargetEnvironment="1"
+				TypeLibraryName=".\Release/valvelib.tlb"
+				HeaderFileName=""/>
+			<Tool
+				Name="VCPostBuildEventTool"/>
+			<Tool
+				Name="VCPreBuildEventTool"/>
+			<Tool
+				Name="VCPreLinkEventTool"/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1033"/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"/>
+			<Tool
+				Name="VCWebDeploymentTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+		</Configuration>
+		<Configuration
+			Name="Pseudo-Debug|Win32"
+			OutputDirectory=".\Debug"
+			IntermediateDirectory=".\Debug"
+			ConfigurationType="2"
+			UseOfMFC="2"
+			ATLMinimizesCRunTimeLibraryUsage="FALSE"
+			CharacterSet="2">
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_PSEUDO_DEBUG;_AFXEXT"
+				RuntimeLibrary="2"
+				UsePrecompiledHeader="3"
+				PrecompiledHeaderThrough="stdafx.h"
+				PrecompiledHeaderFile=".\Debug/valvelib.pch"
+				AssemblerListingLocation=".\Debug/"
+				ObjectFile=".\Debug/"
+				ProgramDataBaseFileName=".\Debug/"
+				WarningLevel="3"
+				SuppressStartupBanner="TRUE"
+				DebugInformationFormat="3"/>
+			<Tool
+				Name="VCCustomBuildTool"
+				Description="Copying custom AppWizard to Template directory..."
+				CommandLine="if not exist &quot;$(DevEnvDir)Template\nul&quot; md &quot;$(DevEnvDir)Template&quot;
+copy &quot;$(TargetPath)&quot; &quot;$(DevEnvDir)Template&quot;
+if exist &quot;$(OutDir)\$(TargetName).pdb&quot; copy &quot;$(OutDir)\$(TargetName).pdb&quot; &quot;$(DevEnvDir)Template&quot;
+"
+				Outputs="$(DevEnvDir)Template\$(TargetName).awx"/>
+			<Tool
+				Name="VCLinkerTool"
+				OutputFile=".\Debug/valvelib.awx"
+				LinkIncremental="1"
+				SuppressStartupBanner="TRUE"
+				GenerateDebugInformation="TRUE"
+				ProgramDatabaseFile=".\Debug/valvelib.pdb"
+				SubSystem="2"
+				ImportLibrary=".\Debug/valvelib.lib"
+				TargetMachine="1"/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="TRUE"
+				SuppressStartupBanner="TRUE"
+				TargetEnvironment="1"
+				TypeLibraryName=".\Debug/valvelib.tlb"
+				HeaderFileName=""/>
+			<Tool
+				Name="VCPostBuildEventTool"/>
+			<Tool
+				Name="VCPreBuildEventTool"/>
+			<Tool
+				Name="VCPreLinkEventTool"/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG;_PSEUDO_DEBUG"
+				Culture="1033"/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"/>
+			<Tool
+				Name="VCWebDeploymentTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+		</Configuration>
+	</Configurations>
+	<References>
+	</References>
+	<Files>
+		<Filter
+			Name="Source Files"
+			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
+			<File
+				RelativePath="Chooser.cpp">
+			</File>
+			<File
+				RelativePath="Cstm1Dlg.cpp">
+			</File>
+			<File
+				RelativePath="Debug.cpp">
+			</File>
+			<File
+				RelativePath="StdAfx.cpp">
+				<FileConfiguration
+					Name="Pseudo-Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="valvelib.cpp">
+			</File>
+			<File
+				RelativePath="hlp\valvelib.hpj">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Making help file..."
+						CommandLine="start /wait hcw /C /E /M &quot;hlp\$(InputName).hpj&quot;
+if errorlevel 1 goto :Error
+if not exist &quot;hlp\$(InputName).hlp&quot; goto :Error
+copy &quot;hlp\$(InputName).hlp&quot; &quot;$(OutDir)&quot;
+copy &quot;$(OutDir)\$(TargetName).hlp&quot; &quot;$(DevEnvDir)Template&quot;
+goto :done
+:Error
+echo hlp\&quot;$(InputName)&quot;.hpj(1) : error:
+type &quot;hlp\$(InputName).log&quot;
+:done
+"
+						AdditionalDependencies="hlp\AfxCore.rtf;hlp\AfxPrint.rtf;hlp\$(TargetName).hm;"
+						Outputs="$(OutDir)\$(InputName).hlp;$(DevEnvDir)Template"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Pseudo-Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Making help file..."
+						CommandLine="start /wait hcw /C /E /M &quot;hlp\$(InputName).hpj&quot;
+if errorlevel 1 goto :Error
+if not exist &quot;hlp\$(InputName).hlp&quot; goto :Error
+copy &quot;hlp\$(InputName).hlp&quot; &quot;$(OutDir)&quot;
+copy &quot;$(OutDir)\$(TargetName).hlp&quot; &quot;$(DevEnvDir)Template&quot;
+goto :done
+:Error
+echo hlp\&quot;$(InputName)&quot;.hpj(1) : error:
+type &quot;hlp\$(InputName).log&quot;
+:done
+"
+						AdditionalDependencies="hlp\AfxCore.rtf;hlp\AfxPrint.rtf;hlp\$(TargetName).hm;"
+						Outputs="$(OutDir)\$(InputName).hlp;$(DevEnvDir)Template"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="valvelib.rc">
+			</File>
+			<File
+				RelativePath="valvelibAw.cpp">
+			</File>
+		</Filter>
+		<Filter
+			Name="Header Files"
+			Filter="h;hpp;hxx;hm;inl">
+			<File
+				RelativePath="Chooser.h">
+			</File>
+			<File
+				RelativePath="Cstm1Dlg.h">
+			</File>
+			<File
+				RelativePath="Debug.h">
+			</File>
+			<File
+				RelativePath="Resource.h">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Making help include file..."
+						CommandLine="echo. &gt;&quot;hlp\$(TargetName).hm&quot;
+echo // Commands (ID_* and IDM_*) &gt;&gt;&quot;hlp\$(TargetName).hm&quot;
+makehm ID_,HID_,0x10000 IDM_,HIDM_,0x10000 resource.h &gt;&gt;&quot;hlp\$(TargetName).hm&quot;
+echo. &gt;&gt;&quot;hlp\$(TargetName).hm&quot;
+echo // Prompts (IDP_*) &gt;&gt;&quot;hlp\$(TargetName).hm&quot;
+makehm IDP_,HIDP_,0x30000 resource.h &gt;&gt;&quot;hlp\$(TargetName).hm&quot;
+echo. &gt;&gt;&quot;hlp\$(TargetName).hm&quot;
+echo // Resources (IDR_*) &gt;&gt;&quot;hlp\$(TargetName).hm&quot;
+makehm IDR_,HIDR_,0x20000 resource.h &gt;&gt;&quot;hlp\$(TargetName).hm&quot;
+echo. &gt;&gt;&quot;hlp\$(TargetName).hm&quot;
+echo // Dialogs (IDD_*) &gt;&gt;&quot;hlp\$(TargetName).hm&quot;
+makehm IDD_,HIDD_,0x20000 resource.h &gt;&gt;&quot;hlp\$(TargetName).hm&quot;
+echo. &gt;&gt;&quot;hlp\$(TargetName).hm&quot;
+echo // Frame Controls (IDW_*) &gt;&gt;&quot;hlp\$(TargetName).hm&quot;
+makehm IDW_,HIDW_,0x50000 resource.h &gt;&gt;&quot;hlp\$(TargetName).hm&quot;
+"
+						Outputs="hlp\$(TargetName).hm"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Pseudo-Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Making help include file..."
+						CommandLine="echo. &gt;&quot;hlp\$(TargetName).hm&quot;
+echo // Commands (ID_* and IDM_*) &gt;&gt;&quot;hlp\$(TargetName).hm&quot;
+makehm ID_,HID_,0x10000 IDM_,HIDM_,0x10000 resource.h &gt;&gt;&quot;hlp\$(TargetName).hm&quot;
+echo. &gt;&gt;&quot;hlp\$(TargetName).hm&quot;
+echo // Prompts (IDP_*) &gt;&gt;&quot;hlp\$(TargetName).hm&quot;
+makehm IDP_,HIDP_,0x30000 resource.h &gt;&gt;&quot;hlp\$(TargetName).hm&quot;
+echo. &gt;&gt;&quot;hlp\$(TargetName).hm&quot;
+echo // Resources (IDR_*) &gt;&gt;&quot;hlp\$(TargetName).hm&quot;
+makehm IDR_,HIDR_,0x20000 resource.h &gt;&gt;&quot;hlp\$(TargetName).hm&quot;
+echo. &gt;&gt;&quot;hlp\$(TargetName).hm&quot;
+echo // Dialogs (IDD_*) &gt;&gt;&quot;hlp\$(TargetName).hm&quot;
+makehm IDD_,HIDD_,0x20000 resource.h &gt;&gt;&quot;hlp\$(TargetName).hm&quot;
+echo. &gt;&gt;&quot;hlp\$(TargetName).hm&quot;
+echo // Frame Controls (IDW_*) &gt;&gt;&quot;hlp\$(TargetName).hm&quot;
+makehm IDW_,HIDW_,0x50000 resource.h &gt;&gt;&quot;hlp\$(TargetName).hm&quot;
+"
+						Outputs="hlp\$(TargetName).hm"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="StdAfx.h">
+			</File>
+			<File
+				RelativePath="valvelib.h">
+			</File>
+			<File
+				RelativePath="valvelibAw.h">
+			</File>
+		</Filter>
+		<Filter
+			Name="Resource Files"
+			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
+			<File
+				RelativePath="res\valvelib.ico">
+			</File>
+		</Filter>
+		<Filter
+			Name="Help Files"
+			Filter="cnt;rtf">
+			<File
+				RelativePath="hlp\valvelib.rtf">
+			</File>
+		</Filter>
+		<Filter
+			Name="Template Files"
+			Filter="&lt;templates&gt;">
+			<File
+				RelativePath="Template\confirm.inf">
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCustomBuildTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Pseudo-Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCustomBuildTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="Template\newproj.inf">
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCustomBuildTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Pseudo-Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCustomBuildTool"/>
+				</FileConfiguration>
+			</File>
+		</Filter>
+	</Files>
+	<Globals>
+	</Globals>
+</VisualStudioProject>

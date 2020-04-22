@@ -1,0 +1,55 @@
+//-----------------------------------------------------------------------------
+//	INPUTSYSTEM.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$macro SRCDIR		".."
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
+
+$include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE;$SRCDIR\thirdparty\SDL2"	[!$SDL] // If $SDL, then we already have this from source_video_base.vpc.
+		$PreprocessorDefinitions			"$BASE;VERSION_SAFE_STEAM_API_INTERFACES" 
+	}
+	$Linker
+	{
+		$SystemLibraries                                                        "iconv" [$OSXALL]
+		$SystemFrameworks			"IOKit;Carbon;ForceFeedback"
+	}
+}
+
+$Project "inputsystem"
+{
+	$Folder	"Source Files"
+	{
+		$File	"inputsystem.cpp"
+		$File	"inputsystem.h"
+		$File	"joystick_sdl.cpp"
+		$File	"novint.cpp"			[$WIN32]
+		$File	"key_translation.cpp"
+		$File	"key_translation.h"
+		$File	"steamcontroller.cpp"
+	}
+
+	$Folder	"Public Headers"
+	{
+		$File	"$SRCDIR\public\inputsystem\AnalogCode.h"
+		$File	"$SRCDIR\public\inputsystem\ButtonCode.h"
+		$File	"$SRCDIR\public\inputsystem\iinputsystem.h"
+		$File	"$SRCDIR\public\inputsystem\InputEnums.h"
+		$File	"$SRCDIR\dx9sdk\include\xinput.h" [$WIN32]
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib	tier1
+		$Lib	tier2
+		$ImpLib SDL2
+		$Implib	"steam_api"						[($WIN32||$WIN64||$POSIX||$PS3)&&!$NO_STEAM]
+	}
+}

@@ -1,0 +1,106 @@
+//-----------------------------------------------------------------------------
+//	IHVTEST1.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin\unittests"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_base.vpc"	
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\game\shared"
+		$PreprocessorDefinitions		"$BASE;IHVTEST"
+	}
+}
+
+$Project "ihvtest1"
+{
+	$Folder	"Source Files"
+	{
+		$File	"$SRCDIR\public\bone_setup.cpp"
+		$File	"$SRCDIR\public\collisionutils.cpp"
+		$File	"ihvtest1.cpp"
+		$File	"$SRCDIR\public\studio.cpp"
+		$File	"sys_clock.cpp"						[$WIN32]
+	}
+
+	$Folder	"Public Header Files"
+	{
+		$File	"$SRCDIR\public\mathlib\amd3dx.h"
+		$File	"$SRCDIR\public\basehandle.h"
+		$File	"$SRCDIR\public\tier0\basetypes.h"
+		$File	"$SRCDIR\public\bitvec.h"
+		$File	"$SRCDIR\public\bone_accessor.h"
+		$File	"$SRCDIR\public\bone_setup.h"
+		$File	"$SRCDIR\public\bspflags.h"
+		$File	"$SRCDIR\public\clientstats.h"
+		$File	"$SRCDIR\public\cmodel.h"
+		$File	"$SRCDIR\public\CollisionUtils.h"
+		$File	"$SRCDIR\public\tier0\commonmacros.h"
+		$File	"$SRCDIR\public\mathlib\compressed_vector.h"
+		$File	"$SRCDIR\public\const.h"
+		$File	"$SRCDIR\public\tier0\dbg.h"
+		$File	"$SRCDIR\public\tier0\fasttimer.h"
+		$File	"$SRCDIR\public\filesystem.h"
+		$File	"$SRCDIR\public\gametrace.h"
+		$File	"$SRCDIR\public\appframework\IAppSystem.h"
+		$File	"$SRCDIR\public\tier0\icommandline.h"
+		$File	"$SRCDIR\public\ihandleentity.h"
+		$File	"$SRCDIR\public\materialsystem\imaterialproxyfactory.h"
+		$File	"$SRCDIR\public\materialsystem\imaterialsystem.h"
+		$File	"$SRCDIR\public\materialsystem\imaterialsystemhardwareconfig.h"
+		$File	"$SRCDIR\public\tier1\interface.h"
+		$File	"$SRCDIR\public\istudiorender.h"
+		$File	"$SRCDIR\public\materialsystem\materialsystem_config.h"
+		$File	"$SRCDIR\public\mathlib\mathlib.h"
+		$File	"$SRCDIR\public\tier0\mem.h"
+		$File	"$SRCDIR\public\tier0\memalloc.h"
+		$File	"$SRCDIR\public\tier0\memdbgon.h"
+		$File	"$SRCDIR\public\tier0\platform.h"
+		$File	"$SRCDIR\public\tier0\protected_things.h"
+		$File	"$SRCDIR\public\vstdlib\random.h"
+		$File	"$SRCDIR\public\string_t.h"
+		$File	"$SRCDIR\public\tier1\strtools.h"
+		$File	"$SRCDIR\public\studio.h"
+		$File	"$SRCDIR\public\tier1\utlbuffer.h"
+		$File	"$SRCDIR\public\tier1\utldict.h"
+		$File	"$SRCDIR\public\tier1\utlmemory.h"
+		$File	"$SRCDIR\public\tier1\utlrbtree.h"
+		$File	"$SRCDIR\public\tier1\utlsymbol.h"
+		$File	"$SRCDIR\public\tier1\utlvector.h"
+		$File	"$SRCDIR\public\vcollide.h"
+		$File	"$SRCDIR\public\mathlib\vector.h"
+		$File	"$SRCDIR\public\mathlib\vector2d.h"
+		$File	"$SRCDIR\public\mathlib\vector4d.h"
+		$File	"$SRCDIR\public\tier0\vprof.h"
+		$File	"$SRCDIR\public\vstdlib\vstdlib.h"
+	}
+
+	$Folder	"Build Bat Files" [$0]
+	{
+		$File	"copybin.bat"
+		$File	"copycommonsrc.bat"
+		$File	"copydx8.bat"
+		$File	"copygamesharedsrc.bat"
+		$File	"copyihvtestsrc.bat"
+		$File	"copylib.bat"
+		$File	"copymatsyssrc.bat"
+		$File	"copypublicsrc.bat"
+		$File	"copyshaderdx8src.bat"
+		$File	"copysrc.bat"
+		$File	"copystudiorendersrc.bat"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib appframework
+		$Lib mathlib
+		$Lib $LIBCOMMON\vtuneapi [$WIN32&&!$VS2015]
+		$Lib $SRCDIR\lib\common\vtuneapi [$WIN32&&$VS2015]
+	}
+}

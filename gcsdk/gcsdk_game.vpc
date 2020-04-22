@@ -1,0 +1,160 @@
+//-----------------------------------------------------------------------------
+//	GCSDK.VPC
+//
+//	Project Script for the Game Coordinator SDK
+//-----------------------------------------------------------------------------
+
+$macro SRCDIR		".."
+$Macro GENERATED_PROTO_DIR	"$SRCDIR\gcsdk\generated_proto"
+
+$include "$SRCDIR\vpc_scripts\source_lib_base.vpc"
+$include "$SRCDIR\vpc_scripts\protobuf_builder.vpc"
+$include "$SRCDIR\gcsdk\steammessages_include.vpc"
+$include "$SRCDIR\gcsdk\gcsdk_gcmessages_include.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		//$PreprocessorDefinitions				"$BASE;STEAM"
+		$AdditionalIncludeDirectories			"$BASE;$SRCDIR\gcsdk\steamextra;..;..\public;..\public\gcsdk;$SRCDIR\thirdparty\JSON_parser;."
+		$PreprocessorDefinitions		"$BASE;TF" // Some steamextra files have tweaks unfortunately
+		$Create/UsePrecompiledHeader			"Use Precompiled Header (/Yu)"
+		$AdditionalOptions				"$BASE /YlGCSDK_PCH_Symbol"
+	}
+}
+
+$Project "gcsdk"
+{
+	$Folder "Source Files"
+	{
+		$File "stdafx.cpp"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader	"Create Precompiled Header (/Yc)"
+					
+					// Generate a bogus symbol to fix the PCH "no debug symbols" warning
+					//$AdditionalOptions					"$BASE /YlBogusGCSDKSymbol"
+				}
+			}
+		}
+
+		// turn off the debug check for the debug build
+		$File	"$SRCDIR\common\debug_lib_check.cpp"
+		{
+			$Configuration "Debug"
+			{
+				$ExcludedFromBuild					"Yes"
+			}
+		}
+
+		$File "gcclient.cpp"
+		$File "gcconstants.cpp"
+		$File "gclogger.cpp"
+		$File "gcmsg.cpp"
+		$File "job.cpp"
+		$File "jobmgr.cpp"
+		$File "jobtime.cpp"
+		$File "messagelist.cpp"
+		$File "msgprotobuf.cpp"
+		$File "netpacket.cpp"
+		$File "netpacketpool.cpp"
+		$File "protobufsharedobject.cpp"
+		$File "sharedobject.cpp"
+		$File "sharedobjectcache.cpp"
+		$File "gcclient_sharedobjectcache.cpp"
+		$File "steamextra\misc.cpp"
+		$File "steamextra\rtime.cpp"
+		$File "steamextra\steamid.cpp"
+		{
+			// Needs to #define something prior to including the PCH
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+				}
+			}
+		}
+		$File "steamextra\tier1\hashglobals.cpp"
+		$File "steamextra\tier1\tsmempool.cpp"
+		$File "steamextra\tier1\tsmultimempool.cpp"
+		$File "workthreadpool.cpp"
+		$File "webapi_response.cpp"
+		$File "$SRCDIR\thirdparty\JSON_parser\JSON_parser.c"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+				}
+			}
+		}
+	}
+	$Folder "Header Files"
+	{
+		$File "stdafx.h"
+
+		$File "$SRCDIR\public\gcsdk\enumutils.h"
+		$File "$SRCDIR\public\gcsdk\gcclient.h"
+		$File "$SRCDIR\public\gcsdk\gcclientsdk.h"
+		$File "$SRCDIR\public\gcsdk\gcconstants.h"
+		$File "$SRCDIR\public\gcsdk\gclogger.h"
+		$File "$SRCDIR\public\gcsdk\gcclientjob.h"
+		$File "$SRCDIR\public\gcsdk\gcmsg.h"
+		$File "$SRCDIR\public\gcsdk\gcsdk.h"
+		$File "$SRCDIR\public\gcsdk\gcschema.h"
+		$File "$SRCDIR\public\gcsdk\gcsession.h"
+		$File "$SRCDIR\public\gcsdk\gcsystemmsgs.h"
+		$File "$SRCDIR\public\gcsdk\job.h"
+		$File "$SRCDIR\public\gcsdk\jobmgr.h"
+		$File "$SRCDIR\public\gcsdk\jobtime.h"
+		$File "$SRCDIR\public\gcsdk\messagelist.h"
+		$File "$SRCDIR\public\gcsdk\msgbase.h"
+		$File "$SRCDIR\public\gcsdk\netpacket.h"
+		$File "$SRCDIR\public\gcsdk\msgprotobuf.h"
+		$File "$SRCDIR\public\gcsdk\netpacketpool.h"
+		$File "$SRCDIR\public\gcsdk\protobufsharedobject.h"
+		$File "$SRCDIR\public\gcsdk\refcount.h"
+		$File "$SRCDIR\public\gcsdk\sharedobject.h"
+		$File "$SRCDIR\public\gcsdk\sharedobjectcache.h"
+		$File "$SRCDIR\public\gcsdk\gcclient_sharedobjectcache.h"
+		$File "$SRCDIR\public\gcsdk\workthreadpool.h"
+
+		$File "steamextra\clientenums.h"
+		$File "steamextra\misc.h"
+		$File "steamextra\rtime.h"
+		$File "steamextra\gamecoordinator\igamecoordinator.h"
+		$File "steamextra\gamecoordinator\igamecoordinatorhost.h"
+		$File "steamextra\gamecoordinator\igcsqlquery.h"
+		$File "steamextra\gamecoordinator\igcsqlresultsetlist.h"
+		$File "steamextra\steam\isteamgamecoordinator.h"
+		$File "steamextra\tier0\t0constants.h"
+		$File "steamextra\tier1\pearsonshash.h"
+		$File "steamextra\tier1\tsmempool.h"
+		$File "steamextra\tier1\tsmultimempool.h"
+	}
+
+	$Folder "Protobuf Files"
+	{
+		$File "gcsystemmsgs.proto"
+		$Folder "Generated Files"
+		{
+			$DynamicFile "$GENERATED_PROTO_DIR/gcsystemmsgs.pb.h"
+			$DynamicFile "$GENERATED_PROTO_DIR/gcsystemmsgs.pb.cc"
+			{
+				$Configuration
+				{
+					$Compiler 
+					{
+						$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+					}
+				}
+			}
+		}
+	}
+}

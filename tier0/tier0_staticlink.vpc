@@ -1,0 +1,3 @@
+$Conditional STATIC_LINK	"1"
+
+$Include "tier0.vpc"

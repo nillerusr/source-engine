@@ -1,0 +1,23 @@
+//-----------------------------------------------------------------------------
+//	NETWORKTEST.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_win_win32_base.vpc"
+
+$Project "Networktest"
+{
+	$Folder	"Source Files"
+	{
+		$File	"networktest.cpp"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$DynamicFile	"$SRCDIR\lib\public\appframework.lib"
+	}
+}

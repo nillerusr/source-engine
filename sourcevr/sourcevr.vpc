@@ -1,0 +1,72 @@
+//-----------------------------------------------------------------------------
+//	SOURCEVR.VPC
+//
+//	Wraps OpenVR and provides VR-related services to other bits of Source
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR ".."
+$Macro OUTBINDIR "..\..\game\bin"
+$Macro BINNAME "sourcevr"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$General
+	{
+		$AdditionalProjectDependencies			"$BASE;filesystem_stdio"
+	}
+
+	$Compiler
+	{
+		$PreprocessorDefinitions		"$BASE;SOURCEVR_DLL;VERSION_SAFE_STEAM_API_INTERFACES" 
+		$Create/UsePrecompiledHeader	"Use Precompiled Header (/Yu)"
+		$Create/UsePCHThroughFile		"cbase.h"
+		$PrecompiledHeaderFile			"$(IntDir)/sourcevr.pch"
+	}
+
+	$Linker
+	{
+		$IgnoreImportLibrary			"TRUE"
+	}
+}
+
+$Project "SourceVR"
+{
+	$Folder	"Source Files"
+	{
+		$Folder	"Precompiled Header"
+		{
+			$File "$SRCDIR\sourcevr\stdafx.cpp"
+			{
+				$Configuration
+				{
+					$Compiler
+					{
+						$Create/UsePrecompiledHeader	"Create Precompiled Header (/Yc)"
+					}
+				}
+			}
+			$File "$SRCDIR\sourcevr\cbase.h"
+		}
+
+		$Folder "Public Headers"
+		{
+			$File "$SRCDIR\public\sourcevr\isourcevirtualreality.h"
+			$File "$SRCDIR\public\openvr\openvr.h"
+		}
+
+		$File	"$SRCDIR\sourcevr\sourcevirtualreality.h"
+		$File	"$SRCDIR\sourcevr\sourcevirtualreality.cpp"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$ImpLibexternal openvr_api
+		$Lib mathlib
+		$Lib tier2
+		$Lib tier3
+		$Lib appframework
+		$ImpLibexternal steam_api
+	}
+}

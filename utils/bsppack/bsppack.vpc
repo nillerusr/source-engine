@@ -1,0 +1,57 @@
+//-----------------------------------------------------------------------------
+//	BSPPACK.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
+
+$include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$PreprocessorDefinitions		"$BASE;BSPPACK_EXPORTS;ZIP_SUPPORT_LZMA_ENCODE"
+		$PreprocessorDefinitions		"$BASE;WIN_ERROR;_USRDLL"						[$WIN32]
+		$PreprocessorDefinitions		"$BASE;WIN_ERROR;_USRDLL;BSP_USE_LESS_MEMORY"	[$X360]
+		$AdditionalIncludeDirectories	"..\common;$BASE"
+	}
+	$Linker
+	{
+			$SystemLibraries                                                        "iconv" [$OSXALL]
+	}
+}
+
+$Project "bsppack"
+{
+	$Folder	"Source Files"
+	{
+		$File	"..\common\bsplib.cpp"
+		$File	"bsppack.cpp"
+		$File	"..\common\cmdlib.cpp"
+		$File	"$SRCDIR\public\filesystem_helpers.cpp"
+		$File	"$SRCDIR\public\filesystem_helpers.h"
+		$File	"$SRCDIR\public\filesystem_init.cpp"
+		$File	"..\common\filesystem_tools.cpp"
+		$File	"..\common\filesystem_tools.h"
+		$File	"$SRCDIR\public\lumpfiles.cpp"
+		$File	"..\common\scriplib.cpp"
+		$File	"$SRCDIR\public\zip_utils.cpp"
+		$File	"$SRCDIR\filesystem\linux_support.cpp" [$POSIX]
+	}
+
+	$Folder	"Public Header Files"
+	{
+		$File	"$SRCDIR\public\ibsppack.h"
+		$File	"$SRCDIR\public\bspfile.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib	mathlib
+		$Lib	tier2
+		$Lib	"$LIBCOMMON/lzma"
+	}
+}

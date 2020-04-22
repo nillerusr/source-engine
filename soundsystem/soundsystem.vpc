@@ -1,0 +1,64 @@
+//-----------------------------------------------------------------------------
+//	SOUNDSYSTEM.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		".."
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$PreprocessorDefinitions			"$BASE;SOUNDSYSTEM_EXPORTS"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE winmm.lib"
+	}
+}
+
+$Project "Soundsystem"
+{
+	$Folder	"Source Files"
+	{
+		$File	"$SRCDIR\public\sentence.cpp"
+		$File	"snd_audio_source.cpp"
+		$File	"snd_dev_wave.cpp"
+		$File	"snd_io.cpp"
+		$File	"snd_wave_mixer.cpp"
+		$File	"snd_wave_mixer_adpcm.cpp"
+		$File	"snd_wave_source.cpp"
+		$File	"soundsystem.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"snd_dev_wave.h"
+		$File	"snd_wave_mixer.h"
+		$File	"snd_wave_mixer_adpcm.h"
+		$File	"snd_wave_mixer_private.h"
+		$File	"snd_wave_source.h"
+		$File	"soundsystem.h"
+	}
+
+	$Folder	"Interface"
+	{
+		$File	"$SRCDIR\public\soundsystem\isoundsystem.h"
+		$File	"$SRCDIR\public\soundsystem\snd_audio_source.h"
+		$File	"$SRCDIR\public\soundsystem\snd_device.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib mathlib
+		$Lib tier2
+		$File	"$SRCDIR\dx9sdk\lib\dsound.lib"
+		$File	"$SRCDIR\dx9sdk\lib\dxguid.lib"
+		$File	"$SRCDIR\lib\common\mss32.lib"
+	}
+}

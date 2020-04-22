@@ -1,0 +1,37 @@
+//-----------------------------------------------------------------------------
+//	vxbdm.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\..\.."
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_x360_base.vpc"
+
+$Configuration
+{	
+	$Xbox360ImageConversion
+	{
+		// General
+		$ExportByName				"Yes"
+	}
+}
+
+$Project
+{
+	$Folder	"Link Libraries"
+	{
+		-$File	"$SRCDIR\lib\public\tier1_360.lib"	
+		-$File	"$SRCDIR\lib\public\vstdlib_360.lib"
+	}
+}
+
+$Project "vxbdm"
+{
+	$Folder	"Source Files"
+	{
+		$file	"console.cpp"
+		$File	"rcommands.cpp"
+	}
+}

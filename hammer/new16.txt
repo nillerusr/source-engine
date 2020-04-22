@@ -1,0 +1,88 @@
+
+--- 02/10
+
+* fixed crash when loading same .fgd twice
++ added new "build programs" field - "bsp directory". this is used
+  in the non-expert compile for a location to save the compiled 
+  BSP. also is a new parameter variable in expert mode - "$bspdir".
+
+--- 02/02
+
+(b) * fixed problem loading old cmdseq.wc files
+
+* default pointentity wasn't working - fixed. (default solid
+  entity always did work.)
+* fixed map directory being ignored.
+* fixed about box version.
+* fixed semicolon separation problem in multiple .WADs.
+* fixed problem with lockup after running game in NORMAL
+  run-map mode.
+
+--- 01/30
+
+* fixed the texture applicator "apply" button.
+* fixed non-expert run map - works now for all games.
+* solids keep their shape when resized way down, then back up.
+* took out 3-4-5-6 keys in 3d window (changed front clip plane
+  and fov.)
+
+--- 01/28
+
+* pointfile loader now tries to find a default pointfile (same
+  directory as the loaded map, with a .pts or a .lin extension)
+  and asks if you'd like to load it (if found) instead of
+  picking one yourself.
+* visgroups are displayed when you load a map now. they had to
+  be fiddled with before.
++ new expert run map variables for use in the COMMAND part of an
+  expert compile step, that are replaced with the BUILD PROGRAMS
+  tab info (that was meant to be confusing):
+		$vis_exe
+		$bsp_exe
+		$light_exe
+		$game_exe
+
+--- 01/27
+
+* the map size limit is back to -4096 to +4096.
+* fixed more of the non-expert run map dialog. should work better
+  now.
+* the default pointentity/solidentity feature works now.
++ added pointfile loader. access it from the MAP menu. when the 
+  pointfile is loaded, use the HOME/END keys to cycle through the
+  points.
+
+---
+
+* quake2 maps were being saved with "wad" "" - fixed.
+* added "build programs" tab - set up the build utilities/game
+  executable for each game configuration.
+* moved game directory and map directory fields from the general
+  tab to the game configs tab.
+* run map NON-expert dialog doesn't totally work yet. it should
+  be alright for now, though.
+
+---
+
+* fixed the pick color button showing up where it's not supposed to
+* fixed the face attributes getting all mixed up in a carve
+* can no longer edit a game config that is not selected (used to
+  crash - now you just can't do it)
+* PAK files are now never saved in the wad file list of a MAP file.
+  also a check is now made for each WAD file to make sure it is 
+  the same texture format as the document before saving to the MAP's
+  WAD list.
+
+---
+
+
++ added two new variable types to the FGD file - color255 and color1.
+  these tell worldcraft to display a "pick color" button in entity
+  smartedit to aid selection of colors. the difference between the
+  two is that color255 uses integer components of 0-255, and color1
+  uses fractional components of 0.0-1.0. 
+
+* face properties window no longer docks - easiest UI choice because
+  it's so big
+* fixed texture browser - changing filters did not redraw the 
+  texture list properly sometimes.

@@ -1,0 +1,202 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "#include ""afxres.rc""  // Standard components\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+#ifndef _MAC
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "Comments", "\0"
+            VALUE "CompanyName", "\0"
+            VALUE "FileDescription", "Valve Project AppWizard\0"
+            VALUE "FileVersion", "1, 0, 0, 1\0"
+            VALUE "InternalName", "VALVELIB\0"
+            VALUE "LegalCopyright", "Copyright © 2002\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", "VALVELIB.DLL\0"
+            VALUE "PrivateBuild", "\0"
+            VALUE "ProductName", "Valve Project\0"
+            VALUE "ProductVersion", "1, 0, 0, 1\0"
+            VALUE "SpecialBuild", "\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+#endif    // !_MAC
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_CUSTOM1 DIALOG DISCARDABLE  0, 0, 286, 196
+STYLE DS_CONTROL | WS_CHILD | WS_TABSTOP
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT           "Select Project Type",IDC_STATIC,118,10,66,10
+    COMBOBOX        IDC_SELECT_PROJECT_TYPE,93,23,122,50,CBS_DROPDOWNLIST | 
+                    WS_TABSTOP
+    LTEXT           "Root Path",IDC_STATIC,40,109,57,10
+    EDITTEXT        IDC_EDIT_ROOT_PATH,115,109,147,12,ES_AUTOHSCROLL
+    LTEXT           "Import Library Path",IDC_STATIC,40,159,66,11
+    EDITTEXT        IDC_EDIT_IMPLIB_PATH,115,159,147,12,ES_AUTOHSCROLL
+    LTEXT           "Output (Target) Path",IDC_STATIC,40,184,66,11
+    EDITTEXT        IDC_EDIT_TARGET_PATH,115,184,147,12,ES_AUTOHSCROLL
+    CONTROL         "Tool Project (uses multithreaded C libs)",
+                    IDC_CHECK_TOOL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,115,
+                    45,143,11
+    CONTROL         "Public Project (linked to by mods)",IDC_CHECK_PUBLIC,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,115,61,122,9
+    CONTROL         "Publish Import Library",IDC_CHECK_PUBLISH_IMPORT,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,115,74,124,11
+    CONTROL         "Console Application",IDC_CHECK_CONSOLE_APP,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,115,89,124,11
+    LTEXT           "Src Path (Relative)",IDC_STATIC,40,134,65,8
+    EDITTEXT        IDC_EDIT_SRC_PATH,115,134,147,12,ES_AUTOHSCROLL
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEMPLATE
+//
+
+NEWPROJ.INF             TEMPLATE DISCARDABLE    "template\\newproj.inf"
+CONFIRM.INF             TEMPLATE DISCARDABLE    "template\\confirm.inf"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_VALVELIB            ICON    DISCARDABLE     "res\\valvelib.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog Info
+//
+
+IDD_CUSTOM1 DLGINIT
+BEGIN
+    IDC_SELECT_PROJECT_TYPE, 0x403, 22, 0
+0x7453, 0x7461, 0x6369, 0x4c20, 0x6269, 0x6172, 0x7972, 0x2820, 0x4c2e, 
+0x4249, 0x0029, 
+    IDC_SELECT_PROJECT_TYPE, 0x403, 23, 0
+0x7944, 0x616e, 0x696d, 0x2063, 0x694c, 0x7262, 0x7261, 0x2079, 0x2e28, 
+0x4c44, 0x294c, "\000" 
+    IDC_SELECT_PROJECT_TYPE, 0x403, 18, 0
+0x7845, 0x6365, 0x7475, 0x6261, 0x656c, 0x2820, 0x452e, 0x4558, 0x0029, 
+
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_CUSTOM1, DIALOG
+    BEGIN
+        BOTTOMMARGIN, 168
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+#include "afxres.rc"  // Standard components
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

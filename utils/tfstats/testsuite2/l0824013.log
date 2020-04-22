@@ -1,0 +1,231 @@
+L 08/24/1999 - 15:27:16: Log file started.
+L 08/24/1999 - 15:27:16: Spawning server "cz2"
+L 08/24/1999 - 15:27:16: server cvars start
+L 08/24/1999 - 15:27:16: "cr_random" = "0"
+L 08/24/1999 - 15:27:16: "cr_engineer" = "0"
+L 08/24/1999 - 15:27:16: "cr_spy" = "0"
+L 08/24/1999 - 15:27:16: "cr_pyro" = "0"
+L 08/24/1999 - 15:27:16: "cr_hwguy" = "0"
+L 08/24/1999 - 15:27:16: "cr_medic" = "0"
+L 08/24/1999 - 15:27:16: "cr_demoman" = "0"
+L 08/24/1999 - 15:27:16: "cr_soldier" = "0"
+L 08/24/1999 - 15:27:16: "cr_sniper" = "0"
+L 08/24/1999 - 15:27:16: "cr_scout" = "0"
+L 08/24/1999 - 15:27:16: "decalfrequency" = "30"
+L 08/24/1999 - 15:27:16: "mp_autocrosshair" = "1"
+L 08/24/1999 - 15:27:16: "mp_flashlight" = "0"
+L 08/24/1999 - 15:27:16: "mp_footsteps" = "1"
+L 08/24/1999 - 15:27:16: "mp_forcerespawn" = "1"
+L 08/24/1999 - 15:27:16: "mp_weaponstay" = "0"
+L 08/24/1999 - 15:27:16: "mp_falldamage" = "0"
+L 08/24/1999 - 15:27:16: "mp_friendlyfire" = "0"
+L 08/24/1999 - 15:27:16: "mp_timelimit" = "30"
+L 08/24/1999 - 15:27:16: "mp_fraglimit" = "0"
+L 08/24/1999 - 15:27:16: "mp_teamplay" = "21"
+L 08/24/1999 - 15:27:16: "tfc_balance_scores" = "1.0"
+L 08/24/1999 - 15:27:16: "tfc_balance_teams" = "1.0"
+L 08/24/1999 - 15:27:16: "tfc_adminpwd" = ""
+L 08/24/1999 - 15:27:16: "tfc_clanbattle_locked" = "0.0"
+L 08/24/1999 - 15:27:16: "tfc_clanbattle" = "0.0"
+L 08/24/1999 - 15:27:16: "tfc_respawndelay" = "0.0"
+L 08/24/1999 - 15:27:16: "tfc_autoteam" = "1"
+L 08/24/1999 - 15:27:16: "sv_maxrate" = "0"
+L 08/24/1999 - 15:27:16: "sv_minrate" = "0"
+L 08/24/1999 - 15:27:16: "sv_allowupload" = "1"
+L 08/24/1999 - 15:27:16: "sv_allowdownload" = "1"
+L 08/24/1999 - 15:27:16: "sv_upload_maxsize" = "0"
+L 08/24/1999 - 15:27:16: "sv_spectatormaxspeed" = "500"
+L 08/24/1999 - 15:27:16: "sv_spectalk" = "1"
+L 08/24/1999 - 15:27:16: "sv_maxspectators" = "8"
+L 08/24/1999 - 15:27:17: "sv_cheats" = "0"
+L 08/24/1999 - 15:27:17: "sv_clienttrace" = "3.5"
+L 08/24/1999 - 15:27:17: "sv_timeout" = "65"
+L 08/24/1999 - 15:27:17: "sv_waterfriction" = "1"
+L 08/24/1999 - 15:27:17: "sv_wateraccelerate" = "10"
+L 08/24/1999 - 15:27:17: "sv_airaccelerate" = "10"
+L 08/24/1999 - 15:27:17: "sv_airmove" = "1"
+L 08/24/1999 - 15:27:17: "sv_bounce" = "1"
+L 08/24/1999 - 15:27:17: "sv_clipmode" = "0"
+L 08/24/1999 - 15:27:17: "sv_stepsize" = "18"
+L 08/24/1999 - 15:27:17: "sv_accelerate" = "10"
+L 08/24/1999 - 15:27:17: "sv_maxspeed" = "500.000000"
+L 08/24/1999 - 15:27:17: "sv_stopspeed" = "100"
+L 08/24/1999 - 15:27:17: "edgefriction" = "2"
+L 08/24/1999 - 15:27:17: "sv_friction" = "4"
+L 08/24/1999 - 15:27:17: "sv_gravity" = "800"
+L 08/24/1999 - 15:27:17: "sv_aim" = "0"
+L 08/24/1999 - 15:27:17: "sv_password" = ""
+L 08/24/1999 - 15:27:17: "pausable" = "0"
+L 08/24/1999 - 15:27:17: "coop" = "0"
+L 08/24/1999 - 15:27:17: "deathmatch" = "1"
+L 08/24/1999 - 15:27:17: "mp_logecho" = "1"
+L 08/24/1999 - 15:27:17: "mp_logfile" = "1"
+L 08/24/1999 - 15:27:17: "cmdline" = "0"
+L 08/24/1999 - 15:27:17: server cvars end
+L 08/24/1999 - 15:27:18: Map CRC "1880504211"
+L 08/24/1999 - 15:27:18: "sv_maxspeed" = "500"
+L 08/24/1999 - 15:27:18: Server name is "VALVe Test Server"
+L 08/24/1999 - 15:27:18: "sv_maxspeed" = "500.000000"
+L 08/24/1999 - 15:27:28: "Bodybag<115><WON:3289849>" connected, address "62.136.15.138:27005"
+L 08/24/1999 - 15:27:54: "Bar Fly<116><WON:555639>" connected, address "153.36.254.148:27005"
+L 08/24/1999 - 15:28:17: "Bar Fly<116><WON:555639>" has entered the game
+L 08/24/1999 - 15:28:23: "Bar Fly<116>" joined team "1".
+L 08/24/1999 - 15:28:27: "Bar Fly<116>" changed class to "Medic"
+L 08/24/1999 - 15:28:27: "Bar Fly<116>" activated the goal "i_p_t"
+L 08/24/1999 - 15:28:41: "Bar Fly<116>" activated the goal "blue flag 3"
+L 08/24/1999 - 15:29:10: Named Broadcast: "#cz_bcap1" ("Bar Fly<116>")
+L 08/24/1999 - 15:29:33: "Bar Fly<116>" activated the goal "blue flag 2"
+L 08/24/1999 - 15:30:11: Named Broadcast: "#cz_bcap2" ("Bar Fly<116>")
+L 08/24/1999 - 15:30:40: "Bar Fly<116>" activated the goal "blue flag 3"
+L 08/24/1999 - 15:31:23: Named Broadcast: "#cz_bcap4" ("Bar Fly<116>")
+L 08/24/1999 - 15:32:13: "Tiki_God<117><WON:2212509>" connected, address "208.251.202.157:27005"
+L 08/24/1999 - 15:32:21: "Bar Fly<116>" activated the goal "blue flag 3"
+L 08/24/1999 - 15:32:54: Named Broadcast: "#cz_bcap3" ("Bar Fly<116>")
+L 08/24/1999 - 15:33:07: "Tiki_God<117><WON:2212509>" has entered the game
+L 08/24/1999 - 15:33:17: "Tiki_God<117>" joined team "2".
+L 08/24/1999 - 15:33:18: "Bar Fly<116>" activated the goal "blue flag 3"
+L 08/24/1999 - 15:33:26: "Tiki_God<117>" changed class to "Scout"
+L 08/24/1999 - 15:33:26: "Tiki_God<117>" activated the goal "i_p_t"
+L 08/24/1999 - 15:33:39: "Tiki_God<117>" activated the goal "red marker 2"
+L 08/24/1999 - 15:34:06: Named Broadcast: "#cz_bcap5" ("Bar Fly<116>")
+L 08/24/1999 - 15:34:07: Named Broadcast: "#cz_rcap4" ("Tiki_God<117>")
+L 08/24/1999 - 15:34:27: "Bar Fly<116>" changed class to "Demoman"
+L 08/24/1999 - 15:34:33: "Bar Fly<116>" changed class to "Engineer"
+L 08/24/1999 - 15:34:37: "Tiki_God<117>" activated the goal "red marker 1"
+L 08/24/1999 - 15:34:43: "Bar Fly<116>" activated the goal "blue flag 3"
+L 08/24/1999 - 15:35:12: Named Broadcast: "#cz_bcap1" ("Bar Fly<116>")
+L 08/24/1999 - 15:35:20: Named Broadcast: "#cz_rcap2" ("Tiki_God<117>")
+L 08/24/1999 - 15:35:40: "Tiki_God<117>" activated the goal "red marker 2"
+L 08/24/1999 - 15:35:48: "Bar Fly<116>" activated the goal "blue flag 3"
+L 08/24/1999 - 15:36:25: Named Broadcast: "#cz_bcap2" ("Bar Fly<116>")
+L 08/24/1999 - 15:36:26: Named Broadcast: "#cz_rcap1" ("Tiki_God<117>")
+L 08/24/1999 - 15:36:57: "Ramirez<118><WON:2355569>" connected, address "63.75.210.67:27005"
+L 08/24/1999 - 15:37:08: "Ramirez<118><WON:2355569>" has entered the game
+L 08/24/1999 - 15:37:08: "Ramirez<118>" joined team "1".
+L 08/24/1999 - 15:37:14: "Ramirez<118>" changed class to "Sniper"
+L 08/24/1999 - 15:37:14: "Ramirez<118>" activated the goal "i_p_t"
+L 08/24/1999 - 15:37:58: "Tiki_God<117>" activated the goal "red marker 1"
+L 08/24/1999 - 15:38:09: "Ramirez<118>" killed "Tiki_God<117>" with "sniperrifle"
+L 08/24/1999 - 15:38:11: "Tiki_God<117>" activated the goal "i_p_t"
+L 08/24/1999 - 15:38:13: "Ramirez<118>" say "*8-)"
+L 08/24/1999 - 15:38:21: "Tiki_God<117>" activated the goal "red marker 1"
+L 08/24/1999 - 15:38:26: "Bar Fly<116>" say_team "i guess I'll get flags"
+L 08/24/1999 - 15:38:50: Named Broadcast: "#cz_rcap3" ("Tiki_God<117>")
+L 08/24/1999 - 15:38:57: "Ramirez<118>" killed "Tiki_God<117>" with "nails"
+L 08/24/1999 - 15:39:00: "Tiki_God<117>" activated the goal "i_p_t"
+L 08/24/1999 - 15:39:02: "Bar Fly<116>" activated the goal "blue flag 3"
+L 08/24/1999 - 15:39:07: "Tiki_God<117>" activated the goal "red marker 1"
+L 08/24/1999 - 15:39:30: Named Broadcast: "#cz_bcap1" ("Bar Fly<116>")
+L 08/24/1999 - 15:39:37: Named Broadcast: "#cz_rcap5" ("Tiki_God<117>")
+L 08/24/1999 - 15:39:46: "Ramirez<118>" killed "Tiki_God<117>" with "nails"
+L 08/24/1999 - 15:39:48: "Tiki_God<117>" activated the goal "i_p_t"
+L 08/24/1999 - 15:39:52: "Bar Fly<116>" activated the goal "blue flag 3"
+L 08/24/1999 - 15:40:03: "Tiki_God<117>" activated the goal "red marker 2"
+L 08/24/1999 - 15:40:20: "Ramirez<118>" killed "Tiki_God<117>" with "sniperrifle"
+L 08/24/1999 - 15:40:23: "Tiki_God<117>" activated the goal "i_p_t"
+L 08/24/1999 - 15:40:28: "The<119><WON:69859>" connected, address "63.75.210.51:27005"
+L 08/24/1999 - 15:40:36: "Tiki_God<117>" activated the goal "red marker 1"
+L 08/24/1999 - 15:40:36: Named Broadcast: "#cz_bcap4" ("Bar Fly<116>")
+L 08/24/1999 - 15:40:41: "The<119><WON:69859>" has entered the game
+L 08/24/1999 - 15:40:42: "The<119>" changed name to "The Jesus<119>"
+L 08/24/1999 - 15:40:44: "Tiki_God<117>" changed class to "Soldier"
+L 08/24/1999 - 15:40:45: "The Jesus<119>" joined team "2".
+L 08/24/1999 - 15:40:47: "Ramirez<118>" say "eek"
+L 08/24/1999 - 15:40:48: "The Jesus<119>" changed class to "Sniper"
+L 08/24/1999 - 15:40:48: "The Jesus<119>" activated the goal "i_p_t"
+L 08/24/1999 - 15:41:07: "The Jesus<119>" disconnected
+L 08/24/1999 - 15:41:09: "Ramirez<118>" killed "Tiki_God<117>" with "nails"
+L 08/24/1999 - 15:41:11: "Tiki_God<117>" activated the goal "i_p_t"
+L 08/24/1999 - 15:41:16: "The Jesus<119><WON:69859>" has entered the game
+L 08/24/1999 - 15:41:24: "Hudson<120><WON:328069>" connected, address "63.11.192.39:27005"
+L 08/24/1999 - 15:41:24: "Tiki_God<117>" activated the goal "red marker 2"
+L 08/24/1999 - 15:41:32: "Bar Fly<116>" activated the goal "blue flag 3"
+L 08/24/1999 - 15:41:36: "The Jesus<119>" joined team "2".
+L 08/24/1999 - 15:41:41: "The Jesus<119>" changed class to "Sniper"
+L 08/24/1999 - 15:41:41: "The Jesus<119>" activated the goal "i_p_t"
+L 08/24/1999 - 15:41:44: "Smitty-on-your-ASS!!!<121><WON:3300159>" connected, address "165.247.36.221:27005"
+L 08/24/1999 - 15:42:05: Named Broadcast: "#cz_bcap3" ("Bar Fly<116>")
+L 08/24/1999 - 15:42:07: "Smitty-on-your-ASS!!!<121><WON:3300159>" has entered the game
+L 08/24/1999 - 15:42:10: "Ramirez<118>" killed "Tiki_God<117>" with "sniperrifle"
+L 08/24/1999 - 15:42:19: "Smitty-on-your-ASS!!!<121>" disconnected
+L 08/24/1999 - 15:42:21: "Tiki_God<117>" activated the goal "i_p_t"
+L 08/24/1999 - 15:42:23: "The Jesus<119>" killed "Ramirez<118>" with "headshot"
+L 08/24/1999 - 15:42:26: "Ramirez<118>" say "doh"
+L 08/24/1999 - 15:42:26: "Ramirez<118>" activated the goal "i_p_t"
+L 08/24/1999 - 15:42:29: "Bar Fly<116>" activated the goal "blue flag 3"
+L 08/24/1999 - 15:42:32: "The Jesus<119>" say "no one fucks with the jesus"
+L 08/24/1999 - 15:42:37: "Tiki_God<117>" changed class to "Medic"
+L 08/24/1999 - 15:42:38: "Ramirez<118>" say "*8-)"
+L 08/24/1999 - 15:42:42: "Tiki_God<117>" activated the goal "red marker 2"
+L 08/24/1999 - 15:42:54: "Tiki_God<117>" changed class to "Medic"
+L 08/24/1999 - 15:43:42: "Tiki_God<117>" killed "Bar Fly<116>" with "rocket"
+L 08/24/1999 - 15:43:43: "Bar Fly<116>" activated the goal "i_p_t"
+L 08/24/1999 - 15:43:52: "Bar Fly<116>" changed class to "Medic"
+L 08/24/1999 - 15:43:54: "Bar Fly<116>" changed class to "Engineer"
+L 08/24/1999 - 15:44:04: "Ramirez<118>" killed "The Jesus<119>" with "headshot"
+L 08/24/1999 - 15:44:07: "The Jesus<119>" activated the goal "i_p_t"
+L 08/24/1999 - 15:44:08: "Tiki_God<117>" say "are tehre any special messages besides christmas  and today?"
+L 08/24/1999 - 15:44:27: "Ramirez<118>" killed "Tiki_God<117>" with "nails"
+L 08/24/1999 - 15:44:29: "Tiki_God<117>" activated the goal "i_p_t"
+L 08/24/1999 - 15:44:32: "Ramirez<118>" killed "The Jesus<119>" with "nails"
+L 08/24/1999 - 15:44:34: "The Jesus<119>" activated the goal "i_p_t"
+L 08/24/1999 - 15:44:40: "Tiki_God<117>" activated the goal "red marker 2"
+L 08/24/1999 - 15:44:42: "Bar Fly<116>" built a "sentry".
+L 08/24/1999 - 15:44:56: "Ramirez<118>" say "not that I know of"
+L 08/24/1999 - 15:44:58: "Ramirez<118>" say "I think those are it"
+L 08/24/1999 - 15:45:04: "Bar Fly<116>" killed "The Jesus<119>" with "sentrygun"
+L 08/24/1999 - 15:45:05: "The Jesus<119>" activated the goal "i_p_t"
+L 08/24/1999 - 15:45:17: Named Broadcast: "#cz_rcap4" ("Tiki_God<117>")
+L 08/24/1999 - 15:45:39: "The Jesus<119>" disconnected
+L 08/24/1999 - 15:45:50: "Tiki_God<117>" activated the goal "red marker 2"
+L 08/24/1999 - 15:45:54: "Bar Fly<116>" activated the goal "blue flag 3"
+L 08/24/1999 - 15:46:30: "Tiki_God<117>" killed "Bar Fly<116>" with "supernails"
+L 08/24/1999 - 15:46:31: "Bar Fly<116>" activated the goal "i_p_t"
+L 08/24/1999 - 15:46:42: "Bar Fly<116>" activated the goal "blue flag 3"
+L 08/24/1999 - 15:46:56: Named Broadcast: "#cz_rcap2" ("Tiki_God<117>")
+L 08/24/1999 - 15:47:17: "Ramirez<118>" killed "Tiki_God<117>" with "sniperrifle"
+L 08/24/1999 - 15:47:20: "E<122><WON:1929879>" connected, address "168.191.232.130:27005"
+L 08/24/1999 - 15:47:20: "Tiki_God<117>" activated the goal "i_p_t"
+L 08/24/1999 - 15:47:31: "Tiki_God<117>" activated the goal "red marker 1"
+L 08/24/1999 - 15:47:39: "E<122><WON:1929879>" has entered the game
+L 08/24/1999 - 15:47:43: Named Broadcast: "#cz_bcap5" ("Bar Fly<116>")
+L 08/24/1999 - 15:47:44: "E<122>" joined team "2".
+L 08/24/1999 - 15:47:50: "Bar Fly<116>" killed "Tiki_God<117>" with "sentrygun"
+L 08/24/1999 - 15:47:52: "E<122>" changed class to "Soldier"
+L 08/24/1999 - 15:47:52: "E<122>" activated the goal "i_p_t"
+L 08/24/1999 - 15:47:54: "Tiki_God<117>" activated the goal "i_p_t"
+L 08/24/1999 - 15:47:59: "E<122>" say_team "where is sg?"
+L 08/24/1999 - 15:48:04: "Tiki_God<117>" activated the goal "red marker 2"
+L 08/24/1999 - 15:48:10: "Tiki_God<117>" changed class to "Sniper"
+L 08/24/1999 - 15:48:11: "Ramirez<118>" killed "E<122>" with "sniperrifle"
+L 08/24/1999 - 15:48:15: "E<122>" activated the goal "i_p_t"
+L 08/24/1999 - 15:48:22: "Ramirez<118>" killed "Tiki_God<117>" with "sniperrifle"
+L 08/24/1999 - 15:48:28: "Tiki_God<117>" activated the goal "i_p_t"
+L 08/24/1999 - 15:48:39: "E<122>" killed "Ramirez<118>" with "rocket"
+L 08/24/1999 - 15:48:40: "Ramirez<118>" activated the goal "i_p_t"
+L 08/24/1999 - 15:48:50: "Bar Fly<116>" activated the goal "blue flag 3"
+L 08/24/1999 - 15:48:54: "Bar Fly<116>" killed "Tiki_God<117>" with "sentrygun"
+L 08/24/1999 - 15:48:56: "Tiki_God<117>" activated the goal "i_p_t"
+L 08/24/1999 - 15:49:20: "Ramirez<118>" killed "Tiki_God<117>" with "nails"
+L 08/24/1999 - 15:49:26: "Tiki_God<117>" changed class to "HWGuy"
+L 08/24/1999 - 15:49:27: "Tiki_God<117>" activated the goal "i_p_t"
+L 08/24/1999 - 15:50:04: "Ramirez<118>" disconnected
+L 08/24/1999 - 15:50:36: "Tiki_God<117>" disconnected
+L 08/24/1999 - 15:50:36: "Bar Fly<116>" disconnected
+L 08/24/1999 - 15:50:36: "<-1>" destroyed "Bar Fly<116>"'s "sentry".
+L 08/24/1999 - 15:50:36: "E<122>" disconnected
+L 08/24/1999 - 15:52:09: "Tiki_God<123><WON:2212509>" connected, address "208.251.202.157:27005"
+L 08/24/1999 - 15:53:03: "Tiki_God<123><WON:2212509>" has entered the game
+L 08/24/1999 - 15:53:07: "Tiki_God<123>" joined team "1".
+L 08/24/1999 - 15:53:13: "Tiki_God<123>" changed class to "Scout"
+L 08/24/1999 - 15:53:13: "Tiki_God<123>" activated the goal "i_p_t"
+L 08/24/1999 - 15:53:24: "Tiki_God<123>" activated the goal "blue flag 1"
+L 08/24/1999 - 15:54:01: Named Broadcast: "#cz_bcap4" ("Tiki_God<123>")
+L 08/24/1999 - 15:55:22: "Tiki_God<123>" disconnected
+L 08/24/1999 - 15:57:15: "The<124><WON:69859>" connected, address "63.75.210.51:27005"
+L 08/24/1999 - 15:57:18: =------= MATCH RESULTS =------=
+L 08/24/1999 - 15:57:18: "blue" defeated "red" 
+L 08/24/1999 - 15:57:18: "blue" RESULTS: "1" players. "40" frags, "1" unaccounted for. "170" team score. Allies:
+L 08/24/1999 - 15:57:18: "red" RESULTS: "0" players. "18" frags, "0" unaccounted for. "79" team score. Allies:
+L 08/24/1999 - 15:57:22: "The<124>" changed name to "The Jesus<124>"
+L 08/24/1999 - 15:57:27: Log closed.

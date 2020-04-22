@@ -1,0 +1,16 @@
+//Custom Log Event rules for Rock2.
+
+Award
+{
+	name = "Executioner";
+	noWinnerMessage = "No gas was discharged!";
+	extraInfo = "%player discharged the gas %number times!";
+
+	trigger
+	{
+		type = goal;
+		key = rhand;
+		key = bhand;
+	}
+}
+

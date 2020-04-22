@@ -1,0 +1,36 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "smp", "smp.vcproj", "{F2E998F8-1482-4A51-A70C-C3B225A7A201}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release = Release
+		Release MinDependency = Release MinDependency
+		Release MinSize = Release MinSize
+		Unicode Debug = Unicode Debug
+		Unicode Release MinDependency = Unicode Release MinDependency
+		Unicode Release MinSize = Unicode Release MinSize
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{F2E998F8-1482-4A51-A70C-C3B225A7A201}.Debug.ActiveCfg = Debug|Win32
+		{F2E998F8-1482-4A51-A70C-C3B225A7A201}.Debug.Build.0 = Debug|Win32
+		{F2E998F8-1482-4A51-A70C-C3B225A7A201}.Release.ActiveCfg = Release MinSize|Win32
+		{F2E998F8-1482-4A51-A70C-C3B225A7A201}.Release.Build.0 = Release MinSize|Win32
+		{F2E998F8-1482-4A51-A70C-C3B225A7A201}.Release MinDependency.ActiveCfg = Release MinDependency|Win32
+		{F2E998F8-1482-4A51-A70C-C3B225A7A201}.Release MinDependency.Build.0 = Release MinDependency|Win32
+		{F2E998F8-1482-4A51-A70C-C3B225A7A201}.Release MinSize.ActiveCfg = Release MinSize|Win32
+		{F2E998F8-1482-4A51-A70C-C3B225A7A201}.Release MinSize.Build.0 = Release MinSize|Win32
+		{F2E998F8-1482-4A51-A70C-C3B225A7A201}.Unicode Debug.ActiveCfg = Unicode Debug|Win32
+		{F2E998F8-1482-4A51-A70C-C3B225A7A201}.Unicode Debug.Build.0 = Unicode Debug|Win32
+		{F2E998F8-1482-4A51-A70C-C3B225A7A201}.Unicode Release MinDependency.ActiveCfg = Unicode Release MinDependency|Win32
+		{F2E998F8-1482-4A51-A70C-C3B225A7A201}.Unicode Release MinDependency.Build.0 = Unicode Release MinDependency|Win32
+		{F2E998F8-1482-4A51-A70C-C3B225A7A201}.Unicode Release MinSize.ActiveCfg = Unicode Release MinSize|Win32
+		{F2E998F8-1482-4A51-A70C-C3B225A7A201}.Unicode Release MinSize.Build.0 = Unicode Release MinSize|Win32
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal

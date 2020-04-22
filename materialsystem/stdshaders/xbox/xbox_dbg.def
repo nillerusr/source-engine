@@ -1,0 +1,4 @@
+LIBRARY	stdshader_dbg_360.dll
+EXPORTS
+	CreateInterface		@1
+	

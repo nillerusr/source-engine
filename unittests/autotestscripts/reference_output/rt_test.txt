@@ -1,0 +1,6 @@
+reading src texture
+n triangles 1567238
+Creating kd-tree
+kd built time := 79
+Rendering
+pixels traced and lit per second := 1559694.998968

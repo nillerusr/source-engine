@@ -1,0 +1,257 @@
+//-----------------------------------------------------------------------------
+//	GCSDK_gc.VPC
+//
+//	Project Script for the Game Coordinator SDK (GC version)
+//-----------------------------------------------------------------------------
+
+$MacroRequired "PLATSUBDIR"
+
+// The OUTLIBDIR for this library has long used $PLATFORM in the path so
+// appending $PLATSUBDIR is redundant.
+$macro SRCDIR		".."
+$Macro OUTLIBDIR	"$LIBPUBLIC"
+$Macro GENERATED_PROTO_DIR	"$SRCDIR\gcsdk\generated_proto_gc"
+
+$Linux
+{
+		$BuildForLinux 1
+}
+
+$include "$SRCDIR\vpc_scripts\source_lib_base.vpc"
+$include "$SRCDIR\vpc_scripts\protobuf_builder.vpc"
+$include "$SRCDIR\gcsdk\steammessages_include.vpc"
+$include "$SRCDIR\gcsdk\gcsdk_gcmessages_include.vpc"
+
+$Configuration "Release"
+{
+	$General
+	{
+		$IntermediateDirectory				".\Release_gc$PLATSUBDIR"
+	}
+
+	$Compiler
+	{
+		$PreprocessorDefinitions	"$BASE;RELEASEASSERTS"
+	}
+}
+
+$Configuration "Debug"
+{
+	$General
+	{
+		$IntermediateDirectory				".\Debug_gc$PLATSUBDIR"
+	}
+}
+
+$Configuration
+{
+	$Compiler
+	{
+		$PreprocessorDefinitions				"$BASE;GC"
+		$AdditionalIncludeDirectories			"$BASE;$SRCDIR\gcsdk\steamextra;..;..\public;..\public\gcsdk;.;$SRCDIR\thirdparty\JSON_parser"
+		$Create/UsePrecompiledHeader			"Use Precompiled Header (/Yu)"
+		$AdditionalOptions		       		"$BASE /YlGCSDK_PCH_Symbol"
+	}
+}
+
+$Project "gcsdk_gc"
+{
+	$Folder "Source Files"
+	{
+		// turn off the debug check for the debug build
+		$File	"$SRCDIR\common\debug_lib_check.cpp"
+		{
+			$Configuration "Debug"
+			{
+				$ExcludedFromBuild					"Yes"
+			}
+		}
+
+		$File "stdafx.cpp"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader	"Create Precompiled Header (/Yc)"
+					
+					// Generate a bogus symbol to fix the PCH "no debug symbols" warning
+					//$AdditionalOptions					"$BASE /YlBogusGCSDKSymbol"
+				}
+			}
+		}
+
+		$File "accountdetails.cpp"
+		$File "bufferpool.cpp"
+		$File "directory.cpp"
+		$File "framefunction.cpp"
+		$File "gcbase.cpp"
+		$File "gcconstants.cpp"
+		$File "gc_convar.cpp"
+		$File "gchost.cpp"
+		$File "gcjob.cpp"
+		$File "gcleaderboardapi.cpp"
+		$File "gclogger.cpp"
+		$File "gcmsg.cpp"
+		$File "gcdirtyfield.cpp"
+		$file "gcreportprinter.cpp"
+		$File "gcsession.cpp"
+		$File "gcsqlquery.cpp"
+		$File "gcparalleljobfarm.cpp"
+		$File "gcwebapi.cpp"
+		$File "gcwebapikey.cpp"
+		$File "gcwgjobmgr.cpp"
+		$File "gc_sharedobjectcache.cpp"
+		$File "http.cpp"
+		$File "job.cpp"
+		$File "jobmgr.cpp"
+		$File "jobtime.cpp"
+		$File "messagelist.cpp"
+		$File "msgprotobuf.cpp"
+		$File "netpacket.cpp"
+		$File "netpacketpool.cpp"
+		$File "protobufsharedobject.cpp"
+		$File "scheduledfunction.cpp"
+		$File "schemasharedobject.cpp"
+		$File "sdocache.cpp"
+		$File "sharedobject.cpp"
+		$File "sharedobjectcache.cpp"
+		$File "sharedobjecttransaction.cpp"
+		$File "webapi_response.cpp"
+		$File "workthreadpool.cpp"
+		$File "$SRCDIR\thirdparty\JSON_parser\JSON_parser.c"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+				}
+			}
+		}
+		
+		$File "steamextra\misc.cpp"
+		$File "steamextra\rtime.cpp"
+		$File "steamextra\steamid.cpp"
+		$File "steamextra\tier1\hashglobals.cpp"
+		$File "steamextra/tier1/murmurhash3.cpp"
+		$File "steamextra\tier1\tsmempool.cpp"
+		$File "steamextra\tier1\tsmultimempool.cpp"
+
+		$Folder "SQLAccess"
+		{
+			$File "sqlaccess\columnset.cpp"
+			$File "sqlaccess\record.cpp"
+			$File "sqlaccess\recordinfo.cpp"
+			$File "sqlaccess\schema.cpp"
+			$File "sqlaccess\schemafull.cpp"
+			$File "sqlaccess\schemaupdate.cpp"
+			$File "sqlaccess\sqlaccess.cpp"
+			$File "sqlaccess\sqlrecord.cpp"
+			$File "sqlaccess\sqlutil.cpp"
+		}
+	}
+
+	$Folder "Header Files"
+	{
+		$File "stdafx.h"
+
+		$File "$SRCDIR\public\gcsdk\accountdetails.h"
+		$File "$SRCDIR\public\gcsdk\bufferpool.h"
+		$File "$SRCDIR/public/gcsdk/directory.h"
+		$File "$SRCDIR\public\gcsdk\enumutils.h"
+		$File "$SRCDIR\public\gcsdk\framefunction.h"
+		$File "$SRCDIR\public\gcsdk\gcbase.h"
+		$File "$SRCDIR\public\gcsdk\gcclient.h"
+		$File "$SRCDIR\public\gcsdk\gcclientsdk.h"
+		$File "$SRCDIR\public\gcsdk\gcconstants.h"
+		$File "$SRCDIR\public\gcsdk\gc_convar.h"
+		$File "$SRCDIR\public\gcsdk\gclogger.h"
+		$File "$SRCDIR\public\gcsdk\gcleaderboardapi.h"
+		$File "$SRCDIR\public\gcsdk\gchost.h"
+		$File "$SRCDIR\public\gcsdk\gcjob.h"
+		$File "$SRCDIR\public\gcsdk\gcclientjob.h"
+		$File "$SRCDIR\public\gcsdk\gcmsg.h"
+		$File "$SRCDIR\public\gcsdk\gcdirtyfield.h"
+		$File "$SRCDIR/public/gcsdk/gcreportprinter.h"
+		$File "$SRCDIR\public\gcsdk\gcsdk.h"
+		$File "$SRCDIR\public\gcsdk\gcschema.h"
+		$File "$SRCDIR\public\gcsdk\gcsession.h"
+		$File "$SRCDIR\public\gcsdk\gcsqlquery.h"
+		$File "$SRCDIR\public\gcsdk\gcsqlwritequeue.h"
+		$File "$SRCDIR/public/gcsdk/gcsystemaccess.h"
+		$File "$SRCDIR\public\gcsdk\gcsystemmsgs.h"
+		$File "$SRCDIR\public\gcsdk\gcparalleljobfarm.h"
+		$File "$SRCDIR\public\gcsdk\gcwebapi.h"
+		$File "$SRCDIR\public\gcsdk\gcwebapikey.h"
+		$File "$SRCDIR\public\gcsdk\gcwgjobmgr.h"
+		$File "$SRCDIR\public\gcsdk\gc_sharedobjectcache.h"
+		$File "$SRCDIR\public\gcsdk\http.h"
+		$File "$SRCDIR\public\gcsdk\job.h"
+		$File "$SRCDIR\public\gcsdk\jobmgr.h"
+		$File "$SRCDIR\public\gcsdk\jobtime.h"
+		$File "$SRCDIR\public\gcsdk\messagelist.h"
+		$File "$SRCDIR\public\gcsdk\msgbase.h"
+		$File "$SRCDIR\public\gcsdk\netpacket.h"
+		$File "$SRCDIR\public\gcsdk\msgprotobuf.h"
+		$File "$SRCDIR\public\gcsdk\netpacketpool.h"
+		$File "$SRCDIR\public\gcsdk\protobufsharedobject.h"
+		$File "$SRCDIR\public\gcsdk\refcount.h"
+		$File "$SRCDIR\public\gcsdk\scheduledfunction.h"
+		$File "$SRCDIR\public\gcsdk\schemasharedobject.h"
+		$File "$SRCDIR\public\gcsdk\sdocache.h"
+		$File "$SRCDIR\public\gcsdk\sharedobject.h"
+		$File "$SRCDIR\public\gcsdk\sharedobjectcache.h"
+		$File "$SRCDIR\public\gcsdk\sharedobjecttransaction.h"
+		$File "$SRCDIR\public\gcsdk\webapi_response.h"
+		$File "$SRCDIR\public\gcsdk\workthreadpool.h"
+
+		$File "steamextra\clientenums.h"
+		$File "steamextra\misc.h"
+		$File "steamextra\rtime.h"
+		$File "steamextra\gamecoordinator\igamecoordinator.h"
+		$File "steamextra\gamecoordinator\igamecoordinatorhost.h"
+		$File "steamextra\gamecoordinator\igcsqlquery.h"
+		$File "steamextra\gamecoordinator\igcsqlresultsetlist.h"
+		$File "steamextra\steam\isteamgamecoordinator.h"
+		$File "steamextra\tier0\t0constants.h"
+		$File "steamextra/tier1/murmurhash3.h"
+		$File "steamextra\tier1\pearsonshash.h"
+		$File "steamextra\tier1\tsmempool.h"
+		$File "steamextra\tier1\tsmultimempool.h"
+		$File "steamextra\tier1\utlhashmaplarge.h"
+		$File "$SRCDIR\thirdparty\JSON_parser\JSON_parser.h"
+
+		$Folder "SQLAccess"
+		{
+			$File "$SRCDIR\public\gcsdk\sqlaccess\columnset.h"
+			$File "$SRCDIR\public\gcsdk\sqlaccess\record.h"
+			$File "$SRCDIR\public\gcsdk\sqlaccess\recordinfo.h"
+			$File "$SRCDIR\public\gcsdk\sqlaccess\schema.h"
+			$File "$SRCDIR\public\gcsdk\sqlaccess\schemafull.h"
+			$File "$SRCDIR\public\gcsdk\sqlaccess\schemaupdate.h"
+			$File "$SRCDIR\public\gcsdk\sqlaccess\sqlaccess.h"
+			$File "$SRCDIR\public\gcsdk\sqlaccess\sqlrecord.h"
+			$File "$SRCDIR\public\gcsdk\sqlaccess\sqlutil.h"
+		}
+	}
+
+	$Folder "Protobuf Files"
+	{
+		$File "gcsystemmsgs.proto"
+		$Folder "Generated Files"
+		{
+			$DynamicFile "$GENERATED_PROTO_DIR/gcsystemmsgs.pb.h"
+			$DynamicFile "$GENERATED_PROTO_DIR/gcsystemmsgs.pb.cc"
+			{
+				$Configuration
+				{
+					$Compiler 
+					{
+						$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+					}
+				}
+			}
+		}
+	}
+}

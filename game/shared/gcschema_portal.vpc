@@ -1,0 +1,40 @@
+
+//-----------------------------------------------------------------------------
+//	GCSCHEMA_PORTAL.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$macro SRCDIR		"..\.."
+$Macro OUTLIBDIR	"$SRCDIR\lib\game\portal"
+$macro $_STATICLIB_EXT	".lib"
+
+$include "$SRCDIR\vpc_scripts\source_lib_base.vpc"
+
+$Configuration
+{
+	$PreBuildEvent [$WIN32]
+	{
+		$CommandLine		"call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $SRCDIR\game\shared\portal\portal_gcschema.h $SRCDIR" "\n" \ 
+							"call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $SRCDIR\game\shared\portal\portal_gcschema.cpp $SRCDIR" "\n" \
+							"$BASE" 
+	}
+}
+
+$Project "schema (PORTAL)"
+{
+	$File "portal\portal_gcschema.sch"
+	{
+		$Configuration
+		{
+			$CustomBuildStep
+			{
+				$Description	"Running SchemaCompiler..."
+				$CommandLine	"$SRCDIR\gcsdk\bin\schemacompiler.exe portal\portal_gcschema.sch portal\portal_gcschema.cpp portal\portal_gcschema.h"
+				$Outputs		"portal\portal_gcschema.h;portal\portal_gcschema.cpp"
+				$AdditionalDependencies	"..\..\bin\schemacompiler.exe"
+			}
+		}
+	}
+}
+

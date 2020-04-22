@@ -1,0 +1,15 @@
+//-----------------------------------------------------------------------------
+// HEADERS.VPC - Allows for sync'd inclusion of headers for replay_common.lib
+// other vpc's.
+//-----------------------------------------------------------------------------
+
+$Folder $REPLAY_COMMON_HEADERS_TITLE
+{
+	$File	"$SRCDIR\common\replay\replay.h"
+	$File	"$SRCDIR\common\replay\replaylib.h"
+	$File	"$SRCDIR\common\replay\performance.h"
+	$File	"$SRCDIR\common\replay\replaytime.h"
+	$File	"$SRCDIR\common\replay\replayutils.h"
+	$File	"$SRCDIR\common\replay\screenshot.h"
+	$File	"$SRCDIR\common\replay\shared_defs.h"
+}

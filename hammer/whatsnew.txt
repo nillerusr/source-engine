@@ -1,0 +1,114 @@
+
+* took decimal values out of face editor in shifting.
+* IMPORTANT: first corner of a path drawn with the path tool
+  is now named "fred" instead of "fred00". you will need to
+  change all objects that targetted the old path (use the
+  entity report dialog for this.)
+* removed all visible references to "Quake" in the editor.
+* ALSO IMPORTANT: the .FGD file is now called HALFLIFE.FGD,
+  so as not to confuse press people. 
+
+----
+
+* fixed clip plane weirdness (duplicate objects)
++ entity report dialog now saves info between sessions,
+  and there's an "exact match" checkbox for keyvalue filters.
+
+----
+
++ "Select by X" and "Infinite select" are now toggles on the
+  toolbar.
+* Fixed a bug where deleting a key would set its value to
+  "0".
+
+----
+
++ added PATH CORNERS tool. this is not perfect yet (you can't
+  selectively hide paths), but it does work. to use it, click
+  the path tool icon. to create a new path, hold down SHIFT
+  and drag it out. to create a new node, make sure no nodes
+  are currently selected. hold down CTRL, click on a node,
+  and drag out the new one. the right mouse button menu will 
+  pop up by clicking the RMB on a path node. from the menu,
+  you can edit the node's properties and the path's properties,
+  delete the selected nodes, and add a new node. oops, "add"
+  doesn't work yet. you have to use the CTRL method. you can
+  also select multiple nodes (even from multiple paths) by
+  holding down LMB and dragging a selection box. click off 
+  any path nodes to unselect all of them. 
+
+  tying to your map entities: the first node in the path will
+  be called NAME00, where NAME is the NAME you gave the path.
+  (change the name at any time by selecting "path properties"
+  in the RMB context menu.) the subsequent node is, of course, 
+  NAME01. the one other neat thing about this tool is that you
+  can tell it to automatically loop a path -OR- make a "ping-
+  pong" path that traces in one direction and then traces 
+  backwards (so you can patrol your dudes.) this setting is
+  also available in the "path properties" RMB item. 
+  
+  if this needs further explanation, please email me and i'll 
+  come see you tomorrow morning. also: comments, please!
+
+* changed face painter behavior. right mouse button APPLIES
+  all the time now (instead of lifts.)
+* problem with vertex selection box fixed.
+* problem with tools starting on the wrong grid point fixed.
+* 'D' and 'C' now work to zoom the 2D views.
+
+
+----
+
+* when you clone an object, the result of the clone does not
+  share the original object's visgroup
++ added "group ignore" feature ("IG" button on the toolbar.)
+  this feature allows you to select members of groups and
+  brushmodels without selecting everything in the group. 
+  if you have a group/brushmodel selected when you hit IG,
+  the selection will be converted to contain all the children.
+  this means you can do things like select a group of lights,
+  hit IG, and edit their properties. you can also use this
+  feature to delete members of groups/brushmodels.
+
+----
+
+* fixed weird display problems when translating stuff.
++ completed visgroup overhaul. you can now create visgroups
+  by pressing the HIDE button. all the objects that are
+  selected will be placed in this group, which will be named
+  "n objects" (n = number of objects you hid.) you can now
+  rename groups by clicking on them once in the filter 
+  control (just like in explorer.) you can COMBINE groups
+  by dragging one onto the other. everything else works
+  pretty much the same. objects can be members of only
+  one group now. ask me if yoiu have any questions.
+
+----
+
+* fixed the selection box sometimes selecting everything
+  in the map.
+* Shift+X to activate the clipper wasn't working. fixed.
+
+----
+
+* Shift+Q (to deselect objects) wasn't working properlike.
+  fixed.
+
++ Added manual translation dialog box. Select objects, then
+  press Ctrl+M or use Tools|Transform to activate it. krad.
++ Selecting stuff and moving/rotating/shearing/scaling it
+  will now display said stuff -while dragging the mouse-.
+  This makes it much easier to line stuff up. 
+
+
+----
+
+* click-moving a vertex without CTRL held down deselects
+  other vertices first (didn't before)
+* the ALT key will now disable snap to grid when you 
+  start a selection/creation box (hold it down before
+  you click the left button - didn't before)
+* the entity creation tool now snaps to grid (don't know
+  why it didn't before)
+* CTRL+E now centers on selected vertex/edge handles
+* fixed texture browser filter wackiness

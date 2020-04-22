@@ -1,0 +1,1319 @@
+// 
+// Win32 2010 Project Generator Definition
+//
+
+"Xbox360_2010"
+{
+	"Version"		"2010"
+
+	//
+	// Configuration
+	//
+
+	"$General"
+	{
+		"$AdditionalProjectDependencies"
+		{
+			"type"	"ignore"
+		}
+	
+		"$AdditionalOutputFiles"
+		{
+			"type"	"ignore"
+		}
+	
+		"$GameOutputFile"
+		{
+			"type"	"ignore"
+		}
+	
+		"$InheritedProjectPropertySheets"
+		{
+			"type"	"ignore"
+		}
+	
+		"$MinimizeCRTUseInATL"
+		{
+			"type"	"ignore"
+		}
+	
+		"$ExcludedFromBuild"
+		{
+			"type"	"bool"
+		}
+		
+		"$OutputDirectory"
+		{
+			"type"				"string"
+			"output"			"OutDir"
+			"globalproperty"	"1"
+			"AppendSlash"		"1"
+		}
+		
+		"$IntermediateDirectory"
+		{
+			"type"				"string"
+			"output"			"IntDir"
+			"globalproperty"	"1"
+			"AppendSlash"		"1"
+		}
+
+		"$ExtensionsToDeleteOnClean"
+		{
+			"type"	"string"
+		}
+
+		"$BuildLogFile"
+		{
+			"type"	"string"
+		}
+
+		"$PlatformToolset"
+		{
+			"type"	"string"
+		}
+								
+		"$ConfigurationType"
+		{
+			"ordinals"
+			{
+				"Utility"					"Utility"
+				"Application (.exe)"		"Application"
+				"Title (.xex)"				"Title"
+				"Dynamic Library (.dll)"	"DynamicLibrary"
+				"Dynamic Library (.xex)"	"DynamicLibrary"
+				"Static Library (.lib)"		"StaticLibrary"
+			}
+		}
+
+		"$CharacterSet"
+		{
+			"ordinals"
+			{
+				"Not Set"						"NotSet"
+				"Use Unicode Character Set"		"Unicode"
+				"Use Multi-Byte Character Set"	"MultiByte"
+			}	
+		}
+
+		"$WholeProgramOptimization"
+		{
+			"ordinals"
+			{
+				"No Whole Program Optimization"				"false"
+				"Use Link Time Code Generation"				"true"
+				"Profile Guided Optimization - Instrument"	"PGInstrument"
+				"Profile Guided Optimization - Optimize"	"PGOptimize"
+				"Profile Guided Optimization - Update"		"PGUpdate"
+			}
+		}		
+	}
+	
+	"$Debugging"
+	{
+		"$Command"
+		{
+			"type"	"string"
+		}
+		
+		"$CommandArguments"
+		{
+			"type"	"string"
+		}
+
+		"$MapDVDDrive"
+		{
+			"type"	"bool"
+		}
+		
+		"$RemoteMachine"
+		{
+			"type"	"string"
+		}
+
+		"$CheckUpToDate"
+		{
+			"type"	"bool"
+		}
+	}
+	
+	"$Compiler"
+	{
+		"$SymbolVisibility"
+		{
+			"type"	"ignore"
+		}
+	
+		"$GCC_ExtraCompilerFlags"
+		{
+			"type"	"ignore"
+		}
+
+		"$Detect64bitPortabilityIssues"
+		{
+			"type"	"ignore"
+		}
+
+		"$UseUNICODEResponseFiles"
+		{
+			"type"	"ignore"
+		}
+					
+		"$GeneratePreprocessedFile"
+		{
+			"type"	"ignore"
+		}
+				
+		// General
+		"$AdditionalIncludeDirectories"
+		{
+			"type"						"string"
+			"PreferSemicolonNoComma"	"1"
+		}
+				
+		"$DebugInformationFormat"
+		{
+			"ordinals"
+			{
+				"C7 Compatible (/Z7)"							"OldStyle"
+				"Program Database (/Zi)"						"ProgramDatabase"
+				"Program Database for Edit & Continue (/ZI)"	"EditAndContinue"
+			}
+		}
+	
+		"$SuppressStartupBanner"
+		{
+			"type"	"bool"
+		}
+				
+		"$WarningLevel"
+		{
+			"ordinals"
+			{
+				"Off: Turn Off All Warnings (/W0)"	"TurnOffAllWarnings"
+				"Level 1 (/W1)"						"Level1"
+				"Level 2 (/W2)"						"Level2"
+				"Level 3 (/W3)"						"Level3"
+				"Level 4 (/W4)"						"Level4"
+				"EnableAllWarnings (/Wall)"			"EnableAllWarnings"
+			}
+		}
+		
+		"$TreatWarningsAsErrors"
+		{
+			"type"		"bool"
+			"output"	"TreatWarningAsError"
+		}
+
+		"$MultiProcessorCompilation"
+		{
+			"type"		"bool"
+		}
+
+		"$UseUnicodeForAssemblerListing"	
+		{
+			"type"	"bool"
+		}
+
+		// Optimization
+		"$Optimization"
+		{
+			"ordinals"
+			{
+				"Disabled (/Od)"			"Disabled"
+				"Minimize Size (/O1)"		"MinSpace"
+				"Maximize Speed (/O2)"		"MaxSpeed"
+				"Full Optimization (/Ox)"	"Full"
+			}
+		}
+
+		"$InlineFunctionExpansion"
+		{
+			"ordinals"
+			{
+				"Default"					"Default"		
+				"Disabled (/Ob0)"			"Disabled"		
+				"Only __inline (/Ob1)"		"OnlyExplicitInline"
+				"Any Suitable (/Ob2)"		"AnySuitable"
+			}
+		}
+		
+		"$EnableIntrinsicFunctions"
+		{
+			"type"		"bool"
+			"output"	"IntrinsicFunctions"
+		}
+		
+		"$FavorSizeOrSpeed"
+		{
+			"ordinals"
+			{
+				"Neither"					"Neither"
+				"Favor Fast Code (/Ot)"		"Speed"
+				"Favor Small Code (/Os)"	"Size"
+			}
+		}
+
+		"$EnableFiberSafeOptimizations"
+		{
+			"type"	"bool"
+		}
+
+		"$WholeProgramOptimization"
+		{
+			"type"	"bool"
+		}		
+
+		// Preprocessor
+		"$PreprocessorDefinitions"
+		{
+			"type"	"string"
+		}
+		
+		"$UndefinePreprocessorDefinitions"
+		{
+			"type"	"string"
+		}
+
+		"$UndefineAllPreprocessorDefinitions"
+		{
+			"type"	"bool"
+		}
+
+		"$IgnoreStandardIncludePaths"
+		{
+			"type"		"bool"
+			"legacy"	"$IgnoreStandardIncludePath"
+			"output"	"IgnoreStandardIncludePath"
+		}
+
+		"$PreprocessToAFile"
+		{
+			"type"		"bool"
+			"output"	"PreprocessToFile"
+		}
+
+		"$PreprocessSuppressLineNumbers"
+		{
+			"type"	"bool"
+		}
+		
+		"$KeepComments"
+		{
+			"type"		"bool"
+			"output"	"PreprocessKeepComments"
+		}
+
+		// Code Generation
+		"$EnableStringPooling"
+		{
+			"type"		"bool"
+			"output"	"StringPooling"
+		}
+
+		"$EnableMinimalRebuild"
+		{
+			"type"		"bool"
+			"output"	"MinimalRebuild"
+		}
+
+		"$EnableC++Exceptions"
+		{
+			"alias"		"EnableCPPExceptions"
+			"output"	"ExceptionHandling"
+			"ordinals"
+			{
+				"Yes With SEH Exceptions (/EHa)"		"Async"
+				"Yes (/EHsc)"							"Sync"
+				"Yes with Extern C functions (/EHs)"	"SyncCThrow"
+				"No"									"false"
+			}
+		}
+		
+		"$SmallerTypeCheck"
+		{
+			"type"	"bool"
+		}
+
+		"$BasicRuntimeChecks"
+		{
+			"ordinals"
+			{
+				"Stack Frames (/RTCs)"						"StackFrameRuntimeCheck"
+				"Uninitialized Variables (/RTCu)"			"UninitializedLocalUsageCheck"
+				"Both (/RTC1, equiv. to /RTCsu)"			"EnableFastChecks"
+				"Both (/RTC1, equiv. to /RTCsu) (/RTC1)"	"EnableFastChecks"
+				"Default"									"Default"
+			}
+		}
+		
+		"$RuntimeLibrary"
+		{
+			"ordinals"
+			{
+				"Multi-threaded (/MT)"				"MultiThreaded"
+				"Multi-threaded Debug (/MTd)"		"MultiThreadedDebug"
+				"Multi-threaded DLL (/MD)"			"MultiThreadedDLL"
+				"Multi-threaded Debug DLL (/MDd)"	"MultiThreadedDebugDLL"
+			}
+		}
+		
+		"$StructMemberAlignment"
+		{
+			"ordinals"
+			{
+				"1 Byte (/Zp1)"		"1Byte"
+				"2 Bytes (/Zp2)"	"2Bytes"
+				"4 Bytes (/Zp4)"	"4Bytes"
+				"8 Bytes (/Zp8)"	"8Bytes"
+				"16 Bytes (/Zp16)"	"16Bytes"
+				"Default"			"Default"
+			}
+		}
+		
+		"$BufferSecurityCheck"
+		{
+			"type"	"bool"
+		}
+
+		"$EnableFunctionLevelLinking"
+		{
+			"type"		"bool"
+			"output"	"FunctionLevelLinking"
+		}
+
+		"$FloatingPointModel"
+		{
+			"ordinals"
+			{
+				"Precise (/fp:precise)"	"Precise"
+				"Strict (/fp:strict)"	"Strict"
+				"Fast (/fp:fast)"		"Fast"
+			}
+		}
+		
+		"$EnableFloatingPointExceptions"
+		{
+			"type"		"bool"
+			"output"	"FloatingPointExceptions"
+		}
+
+		// Language
+		"$DisableLanguageExtensions"
+		{
+			"type"	"bool"
+		}
+
+		"$DefaultCharUnsigned"
+		{
+			"type"		"ignore"
+		}
+
+		"$TreatWChar_tAsBuiltInType"
+		{
+			"type"		"bool"
+		}
+
+		"$ForceConformanceInForLoopScope"
+		{
+			"type"	"bool"
+		}
+
+		"$EnableRunTimeTypeInfo"
+		{
+			"type"		"bool"
+			"output"	"RuntimeTypeInfo"
+		}
+
+		"$OpenMPSupport"
+		{
+			"type"		"bool"
+		}
+
+		"$DeduceVariableType"
+		{
+			"type"		"bool"
+		}
+
+		// Precompiled Headers
+		"$Create/UsePrecompiledHeader"
+		{
+			"alias"		"PrecompiledHeader"
+			"output"	"PrecompiledHeader"
+			"ordinals"
+			{
+				"Not Using Precompiled Headers"		"NotUsing"
+				"Create Precompiled Header (/Yc)"	"Create"
+				"Create (/Yc)"						"Create"
+				"Use Precompiled Header (/Yu)"		"Use"
+				"Use (/Yu)"							"Use"
+			}
+		}
+		
+		"$Create/UsePCHThroughFile"		
+		{
+			"alias"			"PrecompiledHeaderFile"
+			"output"		"PrecompiledHeaderFile"
+			"type"			"string"
+			"fixslashes"	"1"
+		}
+
+		"$PrecompiledHeaderOutputFile"
+		{
+			"type"		"string"
+			"legacy"	"$PrecompiledHeaderFile"
+		}
+
+		// Output Files
+		"$ExpandAttributedSource"
+		{
+			"type"	"bool"
+		}
+
+		"$AssemblerOutput"
+		{
+			"ordinals"
+			{
+				"No Listing"								"NoListing"
+				"Assembly-Only Listing (/FA)"				"AssemblyCode"
+				"Assembly With Machine Code (/FAc)"			"AssemblyAndMachineCode"
+				"Assembly With Source Code (/FAs)"			"AssemblyAndSourceCode"
+				"Assembly, Machine Code and Source (/FAcs)"	"All"
+			}
+		}
+		
+		"$ASMListLocation"
+		{
+			"type"		"string"
+			"output"	"AssemblerListingLocation"
+		}
+
+		"$ObjectFileName"
+		{
+			"type"		"string"
+		}
+
+		"$ProgramDatabaseFileName"
+		{
+			"type"		"string"
+			"output"	"ProgramDataBaseFileName"
+		}
+
+		// Browse Information
+		"$EnableBrowseInformation"
+		{
+			"output"	"BrowseInformation"
+			"type"		"bool"
+		}
+		
+		"$BrowseInformationFile"
+		{
+			"legacy"	"$BrowseFile"
+			"type"		"string"
+		}
+
+		// Advanced
+		"$CompileAs"
+		{
+			"ordinals"
+			{
+				"Default"					"Default"
+				"Compile as C Code (/TC)"	"CompileAsC"
+				"Compile as C++ Code (/TP)"	"CompileAsCpp"
+			}
+		}
+		
+		"$DisableSpecificWarnings"
+		{
+			"type"	"string"
+		}
+		
+		"$ForcedIncludeFile"
+		{
+			"type"		"string"
+			"legacy"	"$ForceIncludes"
+			"output"	"ForcedIncludeFiles"
+		}
+		
+		"$Forced#UsingFile"
+		{
+			"type"		"string"
+			"legacy"	"$Force#Using"
+			"alias"		"ForcedUsingFile"
+		}
+		
+		"$ShowIncludes"
+		{
+			"type"	"bool"
+		}
+
+		"$UseFullPaths"
+		{
+			"type"	"bool"
+		}
+						
+		"$OmitDefaultLibraryName"
+		{
+			"type"		"bool"
+			"legacy"	"$OmitDefaultLibraryNames"
+			"output"	"OmitDefaultLibName"
+		}
+									
+		// Xbox 360
+		"$RegisterReservation"
+		{
+			"type"	"bool"
+		}
+
+		"$AnalyzeStalls"
+		{
+			"type"		"bool"
+			"legacy"	"$Stalls"
+		}
+
+		"$CallAttributedProfiling"
+		{
+			"ordinals"
+			{
+				"Disabled"											"Disabled"
+				"Call profiler around function calls. (/fastcap)"	"Fastcap"
+				"Call profiler within function calls. (/callcap)"	"Callcap"
+			}
+		}
+
+		"$TrapIntegerDividesOptimization"
+		{
+			"type"		"bool"
+		}
+
+		"$PreschedulingOptimization"
+		{
+			"type"		"bool"
+		}
+
+		"$InlineAssemblyOptimization"
+		{
+			"type"		"bool"
+		}
+
+		"$CodeAnalysisForC/C++"
+		{
+			"alias"		"CodeAnalysisForCCPP"
+			"output"	"PREfast"
+			"ordinals"
+			{
+				"Disabled"											"Disabled"
+				"Enable static analysis in the build. (/analyze)"	"Analyze"
+				"Enable static analysis only. (/analyze:only)"		"AnalyzeOnly"
+			}
+		}
+
+		"$DisabledWarningDirectories"
+		{
+			"type" "string"
+		}
+
+		// Command Line
+		"$AdditionalOptions"
+		{
+			"type"	"string"
+		}		
+	}
+
+	"$Librarian"
+	{
+		"$OutputFile"
+		{
+			"type"				"string"
+			"globalproperty"	"1"
+		}
+		
+		"$AdditionalDependencies"
+		{
+			"type"						"string"
+			"PreferSemicolonNoComma"	"1"
+			"PreferSemicolonNoSpace"	"1"
+		}
+		
+		"$AdditionalLibraryDirectories"
+		{
+			"type"	"string"
+		}
+		
+		"$SuppressStartupBanner"
+		{
+			"type"	"bool"
+		}
+		
+		"$ModuleDefinitionFileName"
+		{
+			"type"	"string"
+		}
+		
+		"$IgnoreAllDefaultLibraries"
+		{
+			"type"	"bool"
+		}
+		
+		"$IgnoreSpecificDefaultLibraries"
+		{
+			"type"		"string"
+			"legacy"	"$IgnoreSpecificLibrary"
+			"PreferSemicolonNoComma"	"1"
+			"PreferSemicolonNoSpace"	"1"
+		}
+		
+		"$ExportNamedFunctions"
+		{
+			"type"	"string"
+		}
+		
+		"$ForceSymbolReferences"
+		{
+			"type"	"string"
+		}
+		
+		"$UseUnicodeResponseFiles"
+		{
+			"type"	"bool"
+		}
+		
+		"$LinkLibraryDependencies"
+		{
+			"type"				"bool"
+		}
+		
+		"$AdditionalOptions"					
+		{
+			"type"	"string"
+		}
+	}
+	
+	"$Linker"
+	{
+		"$SystemLibraries"
+		{
+			"type"	"ignore"
+		}
+		
+		"$SystemFrameworks"
+		{
+			"type"	"ignore"
+		}
+		
+		"$GCC_ExtraLinkerFlags"
+		{
+			"type"	"ignore"
+		}
+
+		"$UseUNICODEResponseFiles"
+		{
+			"type"	"ignore"
+		}
+
+		"$OptimizeForWindows98"
+		{
+			"type"	"ignore"
+		}
+
+		// General
+		"$OutputFile"
+		{
+			"type"				"string"
+			"fixslashes"		"1"
+			"globalproperty"	"1"
+		}
+		
+		"$ShowProgress"
+		{
+			"ordinals"
+			{
+				"Not Set"														"NotSet"
+				"Display All Progress Messages (/VERBOSE)"						"LinkVerbose"
+				"For Libraries Searched (/VERBOSE:Lib)"							"LinkVerboseLib"
+				"About COMDAT folding during optimized linking (/VERBOSE:ICF)"	"LinkVerboseICF"
+				"About data removed during optimized linking (/VERBOSE:REF)"	"LinkVerboseREF"
+				"About Modules incompatible with SEH (/VERBOSE:SAFESEH)"		"LinkVerboseSAFESEH"
+				"About linker activity related to managed code (/VERBOSE:CLR)"	"LinkVerboseCLR"
+			}
+		}
+		
+		"$Version"
+		{
+			"type"	"string"
+		}
+				
+		"$EnableIncrementalLinking"
+		{
+			"output"			"LinkIncremental"
+			"type"				"bool"
+			"globalproperty"	"1"
+		}
+		
+		"$SuppressStartupBanner"
+		{
+			"type"	"bool"
+		}
+		
+		"$IgnoreImportLibrary"
+		{
+			"type"				"bool"
+			"globalproperty"	"1"
+		}
+		
+		"$AdditionalLibraryDirectories"
+		{
+			"type"	"string"
+		}
+		
+		"$LinkLibraryDependencies"
+		{
+			"type"				"bool"
+		}
+		
+		"$UseLibraryDependencyInputs"
+		{
+			"type"	"bool"
+		}
+		
+		"$AdditionalDependencies"
+		{
+			"type"						"string"
+			"PreferSemicolonNoComma"	"1"
+			"PreferSemicolonNoSpace"	"1"
+		}
+		
+		"$IgnoreAllDefaultLibraries"
+		{
+			"type"	"bool"
+		}
+		
+		"$IgnoreSpecificDefaultLibraries"
+		{
+			"type"		"string"
+			"legacy"	"$IgnoreSpecificLibrary"
+			"PreferSemicolonNoComma"	"1"
+			"PreferSemicolonNoSpace"	"1"
+		}
+		
+		"$ModuleDefinitionFile"
+		{
+			"type"	"string"
+		}
+		
+		"$AutomaticModuleDefinitionFile"
+		{
+			"type"	"string"
+		}
+		
+		"$ForceSymbolReferences"
+		{
+			"type"	"string"
+		}
+		
+		// Debugging
+		"$GenerateDebugInfo"
+		{
+			"type"		"bool"
+			"output"	"GenerateDebugInformation"
+		}
+		
+		"$GenerateProgramDatabaseFile"
+		{
+			"type"		"string"
+			"output"	"ProgramDatabaseFile"
+		}
+		
+		"$StripPrivateSymbols"
+		{
+			"type"	"string"
+		}
+		
+		"$GenerateMapFile"
+		{
+			"type"	"bool"
+		}
+		
+		"$MapFileName"
+		{
+			"type"	"string"
+		}
+		
+		"$MapExports"
+		{
+			"type"	"bool"
+		}
+				
+		// System		
+		"$StackCommitSize"
+		{
+			"type"	"integer"
+		}
+	
+		"$StackReserveSize"
+		{
+			"type"	"ignore"
+		}
+		
+		// Optimization
+		"$References"
+		{
+			"output"	"OptimizeReferences"
+			"ordinals"
+			{			
+				"No (/OPT:NOREF)"							"false"
+				"Keep Unreferenced Data (/OPT:NOREF)"		"false"
+				"Yes (/OPT:REF)"							"true"
+				"Eliminate Unreferenced Data (/OPT:REF)"	"true"
+			}			
+		}
+		
+		"$EnableCOMDATFolding"
+		{
+			"ordinals"
+			{
+				"Do Not Remove Redundant COMDATs (/OPT:NOICF)"	"false"
+				"No (/OPT:NOICF)"								"false"
+				"Remove Redundant COMDATs (/OPT:ICF)"			"true"
+				"Yes (/OPT:ICF)"								"true"
+			}
+		}
+		
+		"$FunctionOrder"
+		{
+			"type"	"string"
+		}
+						
+		"$ProfileGuidedDatabase"
+		{
+			"type"	"string"
+		}
+		
+		"$LinkTimeCodeGeneration"
+		{
+			"ordinals"
+			{
+				"Default"														"Default"
+				"Use Link Time Code Generation (/ltcg)"							"UseLinkTimeCodeGeneration"
+				"Profile Guided Optimization - Instrument (/ltcg:pginstrument)"	"PGInstrument"
+				"Profile Guided Optimization - Optimize (/ltcg:pgoptimize)"		"PGOptimization"
+				"Profile Guided Optimization - Update (/ltcg:pgupdate)"			"PGUpdate"
+			}
+		}
+				
+		// Advanced
+		"$EntryPoint"
+		{
+			"type"		"string"
+			"output"	"EntryPointSymbol"
+		}
+		
+		"$NoEntryPoint"
+		{
+			"type"		"bool"
+		}
+		
+		"$SetChecksum"
+		{
+			"type"	"bool"
+		}
+		
+		"$BaseAddress"
+		{
+			"type"	"string"
+		}
+
+		"$FixedBaseAddress"
+		{
+			"ordinals"
+			{
+				"Generate a relocation section (/FIXED:NO)"			"false"
+				"No (/FIXED:NO)"									"false"
+				"Image must be loaded at a fixed address (/FIXED)"	"true"
+				"Yes (/FIXED)"										"true"
+			}
+		}
+		
+		"$ImportLibrary"
+		{
+			"type"	"string"
+		}
+		
+		"$MergeSections"
+		{
+			"type"	"string"
+		}
+		
+		"$ErrorReporting"
+		{
+			"output"	"LinkErrorReporting"
+			"ordinals"
+			{
+				"Prompt Immediately (/ERRORREPORT:PROMPT)"	"PromptImmediately"
+				"Queue For Next Login (/ERRORREPORT:QUEUE)"	"QueueForNextLogin"
+				"Send Error Report (/ERRORREPORT:SEND)"		"SendErrorReport"
+				"No Error Report (/ERRORREPORT:NONE)"		"NoErrorReport"
+				
+			}
+		}
+				
+		// Command Line
+		"$AdditionalOptions"					
+		{
+			"type"	"string"
+		}	
+	}
+		
+	"$BrowseInformation"
+	{
+		"$SuppressStartupBanner"
+		{
+			"type"	"bool"
+		}
+		
+		"$OutputFile"
+		{
+			"type"	"string"
+		}
+		
+		"$PreserveSBRFiles"
+		{
+			"type"	"bool"
+		}
+		
+		"$AdditionalOptions"
+		{
+			"type"	"string"
+		}
+	}
+		
+	$PreBuildEvent
+	{
+		"$CommandLine"
+		{
+			"type"		"string"
+			"output"	"Command"
+		}
+
+		"$Description"
+		{
+			"type"		"string"
+			"output"	"Message"
+		}
+
+		"$ExcludedFromBuild"
+		{
+			"type"				"bool"
+			"output"			"PreBuildEventUseInBuild"
+			"globalproperty"	"1"		
+			"invertoutput"		"1"
+		}
+
+		"$UseInBuild"	
+		{
+			"type"				"bool"
+			"output"			"PreBuildEventUseInBuild"
+			"globalproperty"	"1"		
+		}
+	}
+	
+	$PreLinkEvent
+	{
+		"$CommandLine"
+		{
+			"type"		"string"
+			"output"	"Command"
+		}
+
+		"$Description"
+		{
+			"type"		"string"
+			"output"	"Message"
+		}
+
+		"$ExcludedFromBuild"
+		{
+			"type"				"bool"
+			"output"			"PreLinkEventUseInBuild"
+			"globalproperty"	"1"		
+			"invertoutput"		"1"
+		}
+
+		"$UseInBuild"	
+		{
+			"type"				"bool"
+			"output"			"PreLinkEventUseInBuild"
+			"globalproperty"	"1"
+		}
+	}
+
+	$PostBuildEvent
+	{
+		"$CommandLine"
+		{
+			"type"		"string"
+			"output"	"Command"
+		}
+
+		"$Description"
+		{
+			"type"		"string"
+			"output"	"Message"
+		}
+
+		"$ExcludedFromBuild"
+		{
+			"type"				"bool"
+			"output"			"PostBuildEventUseInBuild"
+			"globalproperty"	"1"		
+			"invertoutput"		"1"
+		}
+
+		"$UseInBuild"	
+		{
+			"type"				"bool"
+			"output"			"PostBuildEventUseInBuild"
+			"globalproperty"	"1"
+		}
+	}
+
+	$CustomBuildStep
+	{
+		"$CommandLine"
+		{
+			"type"		"string"
+			"output"	"Command"
+		}
+		
+		"$Description"
+		{
+			"type"		"string"
+			"output"	"Message"
+		}
+
+		"$Outputs"
+		{
+			"type"	"string"
+		}
+
+		"$AdditionalDependencies"
+		{
+			"type"	"string"
+		}
+		
+		"$ExecuteAfter"
+		{
+			"ordinals"
+			{
+				"AddIntermediateAssemblyToReferenceList"	"0"
+			}
+		}
+		
+		"$ExecuteBefore"
+		{
+			"ordinals"
+			{
+				"AddIntermediateAssemblyToReferenceList"	"0"
+			}
+		}
+	}
+	
+	$Xbox360ImageConversion
+	{
+		"$ConfigurationFile"
+		{
+			"type"		"string"
+			"legacy"	"$ProjectDefaults"
+		}
+
+		"$OutputFile"
+		{
+			"type"				"string"
+			"output"			"ImageXexOutput"
+			"globalproperty"	"1"
+		}
+		
+		"$TitleID"
+		{
+			"type"	"string"
+		}
+		
+		"$LANKey"
+		{
+			"type"	"string"
+		}
+		
+		"$SuppressStartupBanner"
+		{
+			"type"	"bool"		
+		}
+		
+		"$BaseAddress"
+		{
+			"type"	"string"	
+		}
+		
+		"$HeapSize"
+		{
+			"type"	"string"	
+		}
+		
+		"$WorkspaceSize"
+		{
+			"type"	"string"	
+		}
+		
+		"$AdditionalSections"
+		{
+			"type"	"string"	
+		}
+		
+		"$ExportByName"
+		{
+			"type"	"bool"	
+		}
+		
+		"$OpticalDiscDriveMapping"
+		{
+			"type"		"bool"
+		}
+		
+		"$PAL50Incompatible"
+		{
+			"type"		"bool"	
+			"output"	"Pal50Incompatible"
+		}
+
+		"$MultidiscTitle"
+		{
+			"type"		"bool"
+			"output"	"MultiDiscTitle"
+		}
+
+		"$PreferBigButtonInput"
+		{
+			"type"	"bool"		
+		}
+
+		"$CrossPlatformSystemLink"
+		{
+			"type"	"bool"		
+		}
+
+		"$AllowAvatarGetMetadataByXUID"
+		{
+			"type"		"bool"
+			"output"	"AllowAvatarGetMetadata"
+		}
+
+		"$AllowControllerSwapping"
+		{
+			"type"	"bool"		
+		}
+
+		"$RequireFullExperience"
+		{
+			"type"	"bool"		
+		}
+
+		"$GameVoiceRequiredUI"
+		{
+			"type"	"bool"		
+		}
+
+		"$KinectElevationControl"
+		{
+			"type"	"bool"		
+		}
+
+		"$SkeletalTrackingRequirement"
+		{
+			"output"	"KinectSupportLevel"
+			"ordinals"
+			{
+				"None"									"None"
+				"Requires Tracking (/privilege:38)"		"RequiresTracking"
+				"Supports Tracking (/privilege:39)"		"SupportsTracking"
+			}		
+		}
+		
+		"$AdditionalOptions"
+		{
+			"type"	"string"	
+		}
+	}
+	
+	$ConsoleDeployment
+	{
+		"$DeploymentType"
+		{
+			"ordinals"
+			{
+				"Copy to Hard Drive"	"CopyToHardDrive"
+				"Emulate DVD Drive"		"EmulateDVDDrive"
+			}
+		}
+		
+		"$SuppressStartupBanner"
+		{
+			"type"	"bool"
+		}
+
+				
+		"$ExcludedFromBuild"
+		{
+			"type"	"bool"
+		}
+						
+		"$Progress"
+		{
+			"type"	"bool"
+		}
+		
+		"$ForceCopy"
+		{
+			"type"	"bool"
+		}
+
+		"$DeploymentFiles"
+		{
+			"type"	"string"
+		}
+		
+		"$DeploymentRoot"
+		{
+			"type"				"string"
+			"output"			"RemoteRoot"
+			"globalproperty"	"1"
+		}
+		
+		"$EmulationType"
+		{
+			"output"	"DvdEmulationType"
+			"ordinals"
+			{
+				"Zero Seek Times"								"ZeroSeekTimes"
+				"Zero Seek Times (/TimingMode none)"			"ZeroSeekTimes"
+				"Typical Seek Times (/TimingMode typical)"		"TypicalSeekTimes"
+				"Accurate Seek Times"							"AccurateSeekTimes"
+				"Accurate Seek Times (/TimingMode accurate)"	"AccurateSeekTimes"
+			}
+		}
+		
+		"$LayoutFile"
+		{
+			"type"		"string"
+			"legacy"	"$Layout"
+		}
+	
+		"$LayoutRoot"
+		{
+			"type"		"deprecated"
+		}
+				
+		"$AdditionalOptions"
+		{
+			"type"	"string"
+		}
+	}
+}

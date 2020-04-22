@@ -1,0 +1,107 @@
+//-----------------------------------------------------------------------------
+//	FILESYSTEM_STDIO.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$macro SRCDIR		".."
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
+
+$include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+$include "$SRCDIR\vpc_scripts\source_cryptlib_include.vpc"
+
+$Configuration	"Debug"
+{
+	$General
+	{
+		$OutputDirectory		"Debug_Stdio"     [$WINDOWS]
+		$IntermediateDirectory	"Debug_Stdio"     [$WINDOWS]
+		$OutputDirectory		"Debug_Stdio_360" [$X360]
+		$IntermediateDirectory	"Debug_Stdio_360" [$X360]
+	}
+}
+
+$Configuration	"Release"
+{
+	$General
+	{
+		$OutputDirectory		"Release_Stdio"     [$WINDOWS]
+		$IntermediateDirectory	"Release_Stdio"     [$WINDOWS]
+		$OutputDirectory		"Release_Stdio_360" [$X360]
+		$IntermediateDirectory	"Release_Stdio_360" [$X360]
+	}
+}
+
+$Configuration
+{
+	$Compiler
+	{
+		$PreprocessorDefinitions	"$BASE;FILESYSTEM_STDIO_EXPORTS;DONT_PROTECT_FILEIO_FUNCTIONS;PROTECTED_THINGS_ENABLE" [$WIN64]
+		$PreprocessorDefinitions	"$BASE;FILESYSTEM_STDIO_EXPORTS;DONT_PROTECT_FILEIO_FUNCTIONS;PROTECTED_THINGS_ENABLE;_USE_32BIT_TIME_T" [!$WIN64]
+
+		// Enable super-fun workaround for using MSVC2015 to target Windows XP
+		// https://connect.microsoft.com/VisualStudio/feedback/details/1600505/stat-not-working-on-windows-xp-using-v14-xp-platform-toolset-vs2015
+		$PreprocessorDefinitions	"$BASE;FILESYSTEM_MSVC2015_STAT_BUG_WORKAROUND" [$VS2015]
+
+		// Add VPK support
+		$PreprocessorDefinitions	"$BASE;SUPPORT_PACKED_STORE" [!$WIN64]
+	}
+	$Linker
+	{
+			$SystemLibraries                                                        "iconv" [$OSXALL]
+	}
+}
+
+$Project "FileSystem_Stdio"
+{
+	$Folder	"Source Files"
+	{
+		$File	"basefilesystem.cpp"
+		$File	"packfile.cpp"
+		$File	"filetracker.cpp"
+		$File	"filesystem_async.cpp"
+		$File	"filesystem_stdio.cpp"
+		$File	"$SRCDIR\public\kevvaluescompiler.cpp"
+		$File	"$SRCDIR\public\zip_utils.cpp"
+		$File	"QueuedLoader.cpp"
+		$File	"linux_support.cpp"			[$POSIX]
+	}
+
+
+	$Folder	"Header Files"
+	{
+		$File	"basefilesystem.h"
+		$File	"packfile.h"
+		$File	"filetracker.h"
+		$File	"threadsaferefcountedobject.h"
+		$File	"$SRCDIR\public\tier0\basetypes.h"
+		$File	"$SRCDIR\public\bspfile.h"
+		$File	"$SRCDIR\public\bspflags.h"
+		$File	"$SRCDIR\public\mathlib\bumpvects.h"
+		$File	"$SRCDIR\public\tier1\characterset.h"
+		$File	"$SRCDIR\public\tier0\dbg.h"
+		$File	"$SRCDIR\public\tier0\fasttimer.h"
+		$File	"$SRCDIR\public\filesystem.h"
+		$File	"$SRCDIR\public\ifilelist.h"
+		$File	"$SRCDIR\public\appframework\IAppSystem.h"
+		$File	"$SRCDIR\public\tier1\interface.h"
+		$File	"$SRCDIR\public\mathlib\mathlib.h"
+		$File	"$SRCDIR\public\tier0\platform.h"
+		$File	"$SRCDIR\public\tier1\strtools.h"
+		$File	"$SRCDIR\public\tier1\utlmemory.h"
+		$File	"$SRCDIR\public\tier1\utlrbtree.h"
+		$File	"$SRCDIR\public\tier1\utlsymbol.h"
+		$File	"$SRCDIR\public\tier1\utlvector.h"
+		$File	"$SRCDIR\public\mathlib\vector.h"
+		$File	"$SRCDIR\public\mathlib\vector2d.h"
+		$File	"$SRCDIR\public\mathlib\vector4d.h"
+		$File	"$SRCDIR\public\vstdlib\vstdlib.h"
+		$File	"$SRCDIR\public\keyvaluescompiler.h"
+		$File	"$SRCDIR\public\filesystem\IQueuedLoader.h"
+	}
+
+	$Folder "Link Libraries"
+	{
+		$Lib	tier2
+	}
+}

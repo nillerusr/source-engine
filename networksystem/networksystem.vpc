@@ -1,0 +1,54 @@
+//-----------------------------------------------------------------------------
+//	NETWORKSYSTEM.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		".."
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$PreprocessorDefinitions			"$BASE;NETWORKSYSTEM_EXPORTS"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE winmm.lib ws2_32.lib"
+	}
+}
+
+$Project "Networksystem"
+{
+	$Folder	"Source Files"
+	{
+		$File	"netchannel.cpp"
+		$File	"netchannel.h"
+		$File	"networkclient.cpp"
+		$File	"networkclient.h"
+		$File	"networkserver.cpp"
+		$File	"networkserver.h"
+		$File	"networksystem.cpp"
+		$File	"networksystem.h"
+		$File	"sm_protocol.h"
+		$File	"udp_process.cpp"
+		$File	"udp_process.h"
+		$File	"udp_socket.cpp"
+		$File	"udp_socket.h"
+	}
+
+	$Folder	"Interface"
+	{
+		$File	"$SRCDIR\common\networksystem\inetworkmessage.h"
+		$File	"$SRCDIR\common\networksystem\inetworksystem.h"
+	}
+
+	$Folder "Link Libraries"
+	{
+		$Lib tier2
+	}
+}

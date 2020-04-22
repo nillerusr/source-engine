@@ -1,0 +1,40 @@
+
+//-----------------------------------------------------------------------------
+//	STEAMSCHEMA.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$macro SRCDIR		"..\.."
+$Macro OUTLIBDIR	"$SRCDIR\lib\game\cstrike"
+$macro $_STATICLIB_EXT	".lib"
+
+$include "$SRCDIR\vpc_scripts\source_lib_base.vpc"
+
+$Configuration
+{
+	$PreBuildEvent [$WIN32]
+	{
+		$CommandLine		"call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $SRCDIR\game\shared\cstrike\schema_cstrike.h $SRCDIR" "\n" \ 
+							"call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $SRCDIR\game\shared\cstrike\schema_cstrike.cpp $SRCDIR" "\n" \
+							"$BASE" 
+	}
+}
+
+$Project "schema (cstrike)"
+{
+	$File "cstrike\schema_cstrike.sch"
+	{
+		$Configuration
+		{
+			$CustomBuildStep
+			{
+				$Description	"Running SchemaCompiler..."
+				$CommandLine	"$SRCDIR\gcsdk\bin\schemacompiler.exe cstrike\schema_cstrike.sch cstrike\schema_cstrike.cpp cstrike\schema_cstrike.h"
+				$Outputs		"cstrike\schema_cstrike.h;cstrike\schema_cstrike.cpp"
+				$AdditionalDependencies	"..\..\bin\schemacompiler.exe"
+			}
+		}
+	}
+}
+

@@ -1,0 +1,61 @@
+#
+# Sample server plugin for SRC engine
+#
+# October 2004, alfred@valvesoftware.com
+#
+
+PLUGIN_SRC_DIR=$(SOURCE_DIR)/utils/serverplugin_sample
+PUBLIC_SRC_DIR=$(SOURCE_DIR)/public
+TIER0_PUBLIC_SRC_DIR=$(SOURCE_DIR)/public/tier0
+
+PLUGIN_OBJ_DIR=$(BUILD_OBJ_DIR)/plugin
+PUBLIC_OBJ_DIR=$(BUILD_OBJ_DIR)/plugin/public
+TIER0_OBJ_DIR=$(BUILD_OBJ_DIR)/plugin/tier0
+
+CFLAGS=$(BASE_CFLAGS) $(ARCH_CFLAGS)
+#DEBUG = -g -ggdb
+#CFLAGS+= $(DEBUG)
+
+INCLUDEDIRS=-I$(PUBLIC_SRC_DIR) -I$(COMMON_SRC_DIR) -Dstrcmpi=strcasecmp -D_alloca=alloca
+
+DO_CC=$(CPLUS) $(INCLUDEDIRS) -w $(CFLAGS) -DARCH=$(ARCH) -o $@ -c $<
+
+#####################################################################
+
+PLUGIN_OBJS = \
+	$(PLUGIN_OBJ_DIR)/serverplugin_convar.o \
+	$(PLUGIN_OBJ_DIR)/serverplugin_empty.o \
+
+PUBLIC_OBJS = \
+	$(PUBLIC_OBJ_DIR)/convar.o \
+	$(PUBLIC_OBJ_DIR)/interface.o \
+	$(PUBLIC_OBJ_DIR)/KeyValues.o \
+	$(PUBLIC_OBJ_DIR)/utlbuffer.o \
+
+TIER0_OBJS = \
+	$(TIER0_OBJ_DIR)/memoverride.o \
+
+all: dirs serverplugin_empty_$(ARCH).$(SHLIBEXT)
+
+dirs:
+	-mkdir $(BUILD_OBJ_DIR)
+	-mkdir $(PLUGIN_OBJ_DIR)
+	-mkdir $(PUBLIC_OBJ_DIR)
+	-mkdir $(TIER0_OBJ_DIR)
+	$(CHECK_DSP) $(SOURCE_DSP)
+
+serverplugin_empty_$(ARCH).$(SHLIBEXT): $(PLUGIN_OBJS) $(PUBLIC_OBJS) $(TIER0_OBJS)
+	$(CLINK) $(DEBUG) -o $(BUILD_DIR)/$@ $(SHLIBLDFLAGS) $(PLUGIN_OBJS) $(PUBLIC_OBJS) $(TIER0_OBJS) $(CPP_LIB) $(LDFLAGS) $(CPP_LIB)
+
+$(PLUGIN_OBJ_DIR)/%.o: $(PLUGIN_SRC_DIR)/%.cpp
+	$(DO_CC)
+
+$(PUBLIC_OBJ_DIR)/%.o: $(PUBLIC_SRC_DIR)/%.cpp
+	$(DO_CC)
+
+$(TIER0_OBJ_DIR)/%.o: $(TIER0_PUBLIC_SRC_DIR)/%.cpp
+	$(DO_CC)
+
+clean:
+	-rm -rf $(PLUGIN_OBJ_DIR)
+	-rm -f plugin_$(ARCH).$(SHLIBEXT)

@@ -1,0 +1,267 @@
+//-----------------------------------------------------------------------------
+//	TIER0.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$MacroRequired "PLATSUBDIR"
+
+$Macro SRCDIR		".."
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$General
+	{
+		// X360 version publishes to some other directory then copies here so we need to tell VPC to track this
+		// or else it won't know what depends on this project.
+		$AdditionalOutputFiles			"$SRCDIR\lib\public\$(TargetName).lib"	[$X360]
+	}
+	
+	$Compiler
+	{
+		$PreprocessorDefinitions		"$BASE;TIER0_DLL_EXPORT"
+		$Create/UsePrecompiledHeader	"Use Precompiled Header (/Yu)"
+		$Create/UsePCHThroughFile		"pch_tier0.h"
+		$PrecompiledHeaderFile			"$(IntDir)/tier0.pch"
+	}
+
+	$Compiler [$WINDOWS]
+	{
+		$AdditionalIncludeDirectories	"$BASE;..\public\WindowsSDK"
+	}
+	
+	$Linker
+	{
+		$AdditionalDependencies			"$BASE ws2_32.lib"						[$WINDOWS]
+
+		// pc publishes the import library directly
+		$ImportLibrary					"$LIBPUBLIC\$(TargetName).lib"				[$WINDOWS]
+
+		// 360 publishes the import library via a post build step
+		$ImportLibrary					"$(TargetDir)\$(TargetName).lib"		[$X360]	
+
+		$ImportLibrary					"$LIBPUBLIC\$_IMPLIB_PREFIX$OUTBINNAME$_IMPLIB_EXT"	[$POSIX]
+
+
+
+		// 360 will auto generate a def file for this import library
+		$ModuleDefinitionFile			" "										[$X360]
+		$AdditionalOptions				"$BASE /AUTODEF:xbox\xbox.def"			[$X360]
+		$SystemLibraries                 "rt" [$LINUXALL]
+	}
+
+	$PreLinkEvent [$WINDOWS]
+	{
+		$CommandLine	"call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $LIBPUBLIC\$(TargetName).lib $SRCDIR" "\n" \
+						"$BASE"
+	}
+	
+	$PreLinkEvent [$X360]
+	{
+		// Run a pre-link event to clean the .def file from the last link
+		$CommandLine					"if exist xbox\xbox.def del xbox\xbox.def" "\n" \
+										"$BASE"
+	}
+
+	$PostBuildEvent [$X360]
+	{
+		// Publish the import lib
+		$CommandLine					"if exist $(TargetDir)$(TargetName).lib copy $(TargetDir)$(TargetName).lib $SRCDIR\lib\public\$(TargetName).lib" "\n" \
+										"$BASE"
+	}
+
+	// tier0/vstdlib traditionally used "lib" prefix though nobody else seems to.
+	$General [$POSIX]
+	{
+		$GameOutputFile                                 "$OUTBINDIR/$_IMPLIB_PREFIX$OUTBINNAME$_DLL_EXT"
+	}
+
+	$Linker [$POSIX]
+	{
+		$OutputFile                                 "$(OBJ_DIR)/$_IMPLIB_PREFIX$OUTBINNAME$_DLL_EXT"
+	}
+}
+
+$Project
+{
+	$Folder	"Source Files" [$WINDOWS||$X360]
+	{
+		-$File	"$SRCDIR\public\tier0\memoverride.cpp"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		-$ImpLib tier0
+		-$Lib	 tier1
+		-$Implib vstdlib
+		
+		$Lib	 "$SRCDIR\thirdparty\telemetry\lib\telemetry32.link" [$WIN32]
+		$Lib	 "$SRCDIR\thirdparty\telemetry\lib\telemetry64.link" [$WIN64]
+
+		$LibExternal	 "$SRCDIR/thirdparty/telemetry/lib/libtelemetryx86.link" [$LINUX32]
+		$LibExternal	 "$SRCDIR/thirdparty/telemetry/lib/libtelemetryx64.link" [$LINUX64]
+	}
+}
+
+$Project "tier0"
+{
+	$Folder	"Source Files"
+	{
+		$File	"assert_dialog.cpp"
+		$File	"assert_dialog.rc"		[$WINDOWS]
+		$File	"commandline.cpp"
+		$File	"cpu.cpp"
+		$File	"cpumonitoring.cpp"
+		$File	"cpu_posix.cpp"			[$POSIX]
+		$File	"cpu_usage.cpp"
+		$File	"dbg.cpp"
+		$File	"dynfunction.cpp"
+		$File	"etwprof.cpp"			[$WINDOWS]
+		$File	"fasttimer.cpp"
+		$File "InterlockedCompareExchange128.masm" [$WIN64]
+		{
+			$Configuration
+			{   
+				$CustomBuildStep
+				{
+					// General
+					$CommandLine                "$QUOTE$(VCInstallDir)bin\x86_amd64\ml64.exe$QUOTE /nologo /c /Fo$QUOTE$(IntDir)\$(InputName).obj$QUOTE $QUOTE$(InputPath)$QUOTE"
+					$Description                "Compiling $(InputName).masm"
+					$Outputs                    "$(IntDir)\$(InputName).obj"
+				}
+			}
+		}
+		$File	"mem.cpp"
+		$File	"mem_helpers.cpp"
+		$File	"memdbg.cpp"
+		$File	"memstd.cpp"
+		$File	"memvalidate.cpp"
+		$File	"minidump.cpp"
+		$File	"pch_tier0.cpp"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader	"Create Precompiled Header (/Yc)"
+				}
+			}
+		}
+		$File	"platform.cpp"		[$WINDOWS||$X360]
+		$File	"platform_posix.cpp"		[$POSIX]
+		$File	"pmc360.cpp"		[$X360]
+		$File	"pme.cpp"			[$WINDOWS]
+		$File	"pme_posix.cpp"		[$POSIX]
+		$File	"PMELib.cpp"		[$WINDOWS||$POSIX]
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+				}
+			}
+		}
+		$File	"progressbar.cpp"
+		$File	"security.cpp"
+		$File	"systeminformation.cpp"
+		$File	"stacktools.cpp"
+		$File	"thread.cpp"		[$WINDOWS||$POSIX]
+		$File	"threadtools.cpp"
+		$File	"tier0_strtools.cpp"
+		$File	"tslist.cpp"
+		$File	"vcrmode.cpp"		[$WINDOWS]
+		$File	"vcrmode_posix.cpp"	[$POSIX]
+		$File	"vprof.cpp"
+		$File	"win32consoleio.cpp"	[$WINDOWS]
+		$File	"../tier1/pathmatch.cpp" [$LINUXALL]
+	}
+
+	$folder	"Header Files"
+	{
+		$File	"$SRCDIR\public\tier0\basetypes.h"
+		$File	"$SRCDIR\public\tier0\commonmacros.h"
+		$File	"$SRCDIR\public\tier0\cpumonitoring.h"
+		$File	"$SRCDIR\public\tier0\dbg.h"
+		$File	"$SRCDIR\public\tier0\dbgflag.h"
+		$File	"$SRCDIR\public\tier0\EventMasks.h"
+		$File	"$SRCDIR\public\tier0\EventModes.h"
+		$File	"$SRCDIR\public\tier0\etwprof.h"
+		$File	"$SRCDIR\public\tier0\fasttimer.h"
+		$File	"$SRCDIR\public\tier0\ia32detect.h"
+		$File	"$SRCDIR\public\tier0\icommandline.h"
+		$File	"$SRCDIR\public\tier0\IOCTLCodes.h"
+		$File	"$SRCDIR\public\tier0\K8PerformanceCounters.h"
+		$File	"$SRCDIR\public\tier0\l2cache.h"
+		$File	"$SRCDIR\public\tier0\pmc360.h"		[$X360]
+		$File	"$SRCDIR\public\tier0\mem.h"
+		$File	"$SRCDIR\public\tier0\memalloc.h"
+		$File	"$SRCDIR\public\tier0\memdbgoff.h"
+		$File	"$SRCDIR\public\tier0\memdbgon.h"
+		$File	"$SRCDIR\public\tier0\minidump.h"
+		$File	"$SRCDIR\public\tier0\P4PerformanceCounters.h"
+		$File	"$SRCDIR\public\tier0\P5P6PerformanceCounters.h"
+		$File	"pch_tier0.h"
+		$File	"$SRCDIR\public\tier0\platform.h"
+		$File	"$SRCDIR\public\tier0\PMELib.h"
+		$File	"$SRCDIR\public\tier0\progressbar.h"
+		$File	"$SRCDIR\public\tier0\protected_things.h"
+		$File	"resource.h"
+		$File	"$SRCDIR\public\tier0\systeminformation.h"
+		$File	"$SRCDIR\public\tier0\threadtools.h"
+		$File	"$SRCDIR\public\tier0\tslist.h"
+		$File	"$SRCDIR\public\tier0\validator.h"
+		$File	"$SRCDIR\public\tier0\valobject.h"
+		$File	"$SRCDIR\public\tier0\valve_off.h"
+		$File	"$SRCDIR\public\tier0\valve_on.h"
+		$File	"$SRCDIR\public\tier0\vcr_shared.h"
+		$File	"$SRCDIR\public\tier0\vcrmode.h"
+		$File	"$SRCDIR\public\tier0\vprof.h"
+		$File	"$SRCDIR\public\tier0\wchartypes.h"
+		$File	"$SRCDIR\public\tier0\xbox_codeline_defines.h"
+		$File	"mem_helpers.h"
+	}
+
+	$Folder	"DESKey" [$WINDOWS]
+	{
+		$File	"DESKey\ALGO.H"
+		$File	"DESKey\ALGO32.LIB"
+		$File	"DESKey\DK2WIN32.H"
+		$File	"DESKey\DK2WIN32.LIB"
+	}
+
+	$Folder "Xbox" [$X360]
+	{
+		$folder "Source Files"
+		{
+ 			$File	"xbox\xbox_console.cpp"
+			$File	"xbox\xbox_system.cpp"
+			$File	"xbox\xbox_win32stubs.cpp"
+		}
+		$folder "Header Files"
+		{
+			$File	"$SRCDIR\common\xbox\xbox_console.h"
+			$File	"$SRCDIR\common\xbox\xbox_core.h"
+			$File	"$SRCDIR\common\xbox\xbox_win32stubs.h"
+		}
+	}
+	
+	$Folder "Manifest Files" [$WINDOWS]
+	{
+		$File	"ValveETWProvider.man"
+		{
+			$Configuration
+			{
+				$CustomBuildStep
+				{
+					$CommandLine	"..\DevTools\bin\mc.exe -um $(InputFilename) -z $(InputName)Events"
+					$Description	"Compiling ETW manifest file"
+					$Outputs		"$(InputName)Events.h;$(InputName)Events.rc"
+				}
+			}
+		}
+	}
+}

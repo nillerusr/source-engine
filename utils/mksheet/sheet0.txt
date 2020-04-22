@@ -1,0 +1,32 @@
+SEQUENCE 0
+LOOP
+frame testimages\rockettrail000.tga 1
+frame testimages\rockettrail001.tga 1
+frame testimages\rockettrail002.tga 1
+frame testimages\rockettrail003.tga 1
+frame testimages\rockettrail004.tga 1
+frame testimages\rockettrail005.tga 1
+frame testimages\rockettrail006.tga 1
+frame testimages\rockettrail007.tga 1
+frame testimages\rockettrail008.tga 1
+frame testimages\rockettrail009.tga 1
+frame testimages\rockettrail010.tga 1
+frame testimages\rockettrail011.tga 1
+frame testimages\rockettrail012.tga 1
+frame testimages\rockettrail013.tga 1
+frame testimages\rockettrail014.tga 1
+frame testimages\rockettrail015.tga 1
+frame testimages\rockettrail016.tga 1
+frame testimages\rockettrail017.tga 1
+frame testimages\rockettrail018.tga 1
+frame testimages\rockettrail019.tga 1
+frame testimages\rockettrail020.tga 1
+frame testimages\rockettrail021.tga 1
+frame testimages\rockettrail022.tga 1
+frame testimages\rockettrail023.tga 1
+frame testimages\rockettrail024.tga 1
+frame testimages\rockettrail025.tga 1
+
+
+SEQUENCE 1
+ga_frame alpha1.tga alpha2.tga 1

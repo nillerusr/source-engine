@@ -1,0 +1,860 @@
+// 
+// PS3 Project Generator Definition
+//
+
+"PS3"
+{
+	"Version"		"1.0"
+
+	//
+	// Configuration
+	//
+
+	"$General"
+	{	
+		"$ConfigurationType"
+		{
+			"ordinals"
+			{
+				"ELF"	"1"
+				"PRX"	"1"
+				"LIB"	"4"
+			}
+		}
+		
+		"$ExcludedFromBuild"
+		{
+			"type"	"bool"
+		}
+		
+		"$OutputDirectory"
+		{
+			"type"	"string"
+		}
+		
+		"$IntermediateDirectory"
+		{
+			"type"	"string"
+		}
+		
+		"$ExtensionsToDeleteOnClean"
+		{
+			"type"	"string"
+		}
+		
+		"$BuildLogFile"
+		{
+			"type"	"string"
+		}
+		
+		"$SystemIncludeDependencies"
+		{
+			"type"	"bool"
+		}
+		
+		"$SaveDebuggerPropertiesInProject"
+		{
+			"type"	"bool"
+		}
+		
+		"$AdditionalProjectDependencies"
+		{
+			"type"	"ignore"
+		}
+		
+		"$AdditionalOutputFiles"
+		{
+			"type"	"ignore"
+		}
+	}
+
+	//
+	// GCC Compiler/General
+	//
+
+	"$GCCCompiler"
+	{
+		"$AdditionalIncludeDirectories" 
+		{
+			"type"	"string"
+		}
+
+		"$PreprocessorDefinitions"
+		{
+			"type"	"string"
+		}
+		
+		"$ForceIncludes"
+		{
+			"type"	"string"
+		}
+
+		"$GenerateDebugInformation"
+		{
+			"type"	"bool"
+		}
+
+		"$Warnings"
+		{
+			"ordinals"
+			{
+				"Turn Off Warnings (-w)"			"0"
+				"Generate Normal Warnings"			"1"
+				"Generate More Warnings (-Wall)"	"2"
+			}
+		}
+		
+		"$ExtraWarnings" 
+		{
+			"type"	"bool"
+		}
+	
+		"$WarnLoadHitStores"
+		{
+			"type"	"bool"
+		}
+
+		"$WarnMicrocodedInstruction"
+		{
+			"type"	"bool"
+		}
+
+		"$TreatWarningsAsErrors" 
+		{
+			"type"	"bool"
+		}
+	
+		"$ObjectFileName"
+		{
+			"type"	"string"
+		}
+
+		"$CallprofHierarchicalProfiling"
+		{
+			"type"	"bool"
+		}
+
+		"$SPURSUsage"
+		{
+			"ordinals"
+			{
+				"Not using SPURS"								"0"
+				"Job with CRT init (-mspurs-job-initialize)"	"1"
+				"Lightweight Job (-mspurs-job)"					"2"
+				"SPURS Task (-mspurs-task)"						"3"
+			}
+		}
+	}
+	
+	//
+	// GCC Compiler/Optimization
+	//
+	
+	"$GCCCompiler"
+	{
+		"$OptimizationLevel"
+		{
+			"ordinals"
+			{
+				"No Optimization (-O0)"			"0"
+				"Standard Optimization (-O1)"	"1"
+				"Full Optimization (-O2)"		"2"
+				"Full with Inlining (-O3)"		"3"
+				"Optimize for Size (-Os)"		"4"
+			}
+		}
+		
+		"$FastMath"
+		{
+			"type"	"bool"
+		}
+		
+		"$NoStrictAliasing"
+		{
+			"type"	"bool"
+		}
+		
+		"$UnrollLoops"
+		{
+			"type"	"bool"
+		}
+		
+		"$InlineFunctionSizeLimit"
+		{
+			"type"	"integer"
+		}
+	}
+	
+	//
+	// GCC Compiler/Code Generation
+	//
+
+	"$GCCCompiler"
+	{
+		"$TOCUsage"
+		{
+			"ordinals"
+			{
+				"Normal TOC"						"0"
+				"Minimal TOC (-mminimal-toc)"		"1"
+				"Base TOC (-mbase-toc)"				"2"
+				"All Base TOC (-mall-base-toc)"		"3"
+				"No TOC Restore (-mno-toc)"			"4"
+			}
+		}
+
+		"$Save/RestoreFunctions"
+		{
+			"alias"	"$SaveRestoreFunctions"
+			"type"	"integer"
+		}
+		
+		"$GenerateMicrocodedInstructions"
+		{
+			"ordinals"
+			{
+				"Default (only with -Os)"						"0"
+				"Use when optimizing (-mgen-microcode)"			"1"
+				"Only when unavoidable (-mno-gen-microcode)"	"2"
+			}
+		}
+		
+		"$Position-IndependentCode"
+		{
+			"alias"	"$PositionIndependentCode"
+			"type"	"bool"
+		}
+		
+		"$FunctionSections"
+		{
+			"type"	"bool"
+		}
+		
+		"$DataSections"
+		{
+			"type"	"bool"
+		}
+		
+		"$StackCheck"
+		{
+			"type"	"bool"
+		}
+	}
+	
+	//
+	// GCC Compiler/Language
+	//
+		
+	"$GCCCompiler"
+	{
+		"$C++ExceptionsAndRTTIUsage"
+		{
+			"alias"	"$CPPExceptionsAndRTTIUsage"
+			"ordinals"
+			{
+				"Not using Exceptions or RTTI"		"0"
+				"Using RTTI only"					"1"
+				"Using Exceptions and RTTI"			"2"
+			}
+		}
+
+		"$CheckANSICompliance"
+		{
+			"type"	"bool"
+		}
+
+		"$DefaultCharSigned"
+		{
+			"type"	"bool"
+		}
+		
+		"$Permissive"
+		{
+			"type"	"bool"
+		}
+		
+		"$EnableMSExtensions"
+		{
+			"type"	"bool"
+		}
+		
+		"$RelaxC++Compliance"
+		{
+			"alias"	"$RelaxCPPCompliance"
+			"type"	"bool"
+		}
+	}
+
+	//
+	// GCC Compiler/Command Line
+	//
+	
+	"$GCCCompiler"
+	{
+		"$AdditionalOptions"
+		{
+			"type"	"string"
+		}
+	}
+
+	"$GCCLinker"
+	{
+		// General
+		"$OutputFile"
+		{
+			"type"	"string"
+		}
+		
+		"$AdditionalDependencies"
+		{
+			"type"	"string"
+		}
+		
+		"$AdditionalLibraryDirectories"
+		{
+			"type"	"string"
+		}
+		
+		"$ImportLibrary"
+		{
+			"type"	"string"
+		}
+		
+		"$SPURSUsage"
+		{
+			"ordinals"
+			{
+				"Not using SPURS"								"0"
+				"Job with CRT init (-mspurs-job-initialize)"	"1"
+				"Lightweight Job (-mspurs-job)"					"2"
+				"SPURS Task (-mspurs-task)"						"3"
+			}
+		}
+		
+		"$Position-IndependentCode"
+		{
+			"alias"	"$PositionIndependentCode"
+			"type"	"bool"
+		}
+		
+		"$EmitRelocations"
+		{
+			"type"	"bool"
+		}
+		
+		"$GarbageCollection"
+		{
+			"type"	"bool"
+		}
+		
+		"$GenerateMapFile"
+		{
+			"type"	"bool"
+		}
+		
+		"$MapFileName"
+		{
+			"type"	"string"
+		}
+		
+		"$LinkLibraryDependencies"
+		{
+			"type"	"bool"
+		}
+
+		// Command Line
+		"$AdditionalOptions"
+		{
+			"type"	"string"
+		}
+	}
+
+	//
+	// SNC Compiler/General
+	//
+
+	"$SNCCompiler"
+	{
+		
+		"$AdditionalIncludeDirectories"
+		{
+			"type"	"string"
+		}
+		
+		"$PreprocessorDefinitions"	
+		{
+			"type"	"string"
+		}
+		
+		"$ForceIncludes"
+		{
+			"type"	"string"
+		}
+		
+		"$GenerateDebugInformation"
+		{
+			"type"	"bool"
+		}
+		
+		"$Warnings"
+		{
+			"ordinals"
+			{
+				"Turn Off Warnings (=0)"				"0"
+				"Generate Warnings (=1)"				"1"
+				"Generate Warnings and Remarks (=2)"	"2"
+			}
+		}
+		
+		"$TreatMessagesAsErrors"
+		{
+			"ordinals"
+			{
+				"Reported Errors Only (=0)"				"0"
+				"Warnings as Errors (=1)"				"1"
+				"Warnings and Remarks as Errors (=2)"	"2"
+			}
+		}
+		
+		"$DisableSpecificWarnings"
+		{
+			"type"	"string"
+		}
+		
+		"$ObjectFileName"
+		{
+			"type"	"string"
+		}
+		
+		"$CallprofHierarchicalProfiling"
+		{
+			"type"	"bool"
+		}
+	}
+	
+	//
+	// SNC Compiler/Optimization
+	//
+	
+	"$SNCCompiler"
+	{
+		"$OptimizationLevel"
+		{
+			"ordinals"
+			{
+				"No Optimization, Forced Inlining only (-O0)"			"0"
+				"No Optimization, Auto Inlining (-O1)"					"1"
+				"Full Optimization (-O2)"								"2"
+				"Optimize for Size (-Os)"								"3"
+				"Optimized Debuggable (-Od)"							"4"
+			}
+		}
+		
+		"$FastMath"
+		{
+			"type"	"bool"
+		}
+		
+		"$RelaxAliasChecking"
+		{
+			"ordinals"
+			{
+				"Default"						"-1"
+				"No Strict Aliasing (=0)"		"0"
+				"No Overlapping Types (=1)"		"1"
+				"C99 Strict Aliasing (=2)"		"2"
+				"Strictest Aliasing (=3)"		"3"
+			}
+		}
+		
+		"$BranchlessCompares"
+		{
+			"ordinals"
+			{
+				"Always Use Branches (=0)"				"0"
+				"Convert Ternary Operators (=1)"		"1"
+				"Convert all Integer Comparisons (=2)"	"2"
+			}
+		}
+		
+		"$UnrollLoops"
+		{
+			"ordinals"
+			{
+				"No Loop Unrolling (=0)"	"0"
+				"Unroll Larger Loops (=30)"	"30"
+			}
+		}
+		
+		"$AssumeAlignedPointers"
+		{
+			"type"	"bool"
+		}
+		
+		"$AssumeCorrectSign"
+		{
+			"type"	"bool"
+		}
+	}
+	
+	//
+	// SNC Compiler/Code Generation
+	//
+	
+	"$SNCCompiler"
+	{
+		"$TOCPointerPreservation"
+		{
+			"ordinals"
+			{
+				"Preserve the TOC for all Function Calls (=0)"	"0"
+				"Preserve for Function Calls by Pointer (=1)"	"1"
+				"Assume Single TOC; No TOC Preservation (=2)"	"2"
+			}
+		}
+		
+		"$InitializedDataPlacement"
+		{
+			"ordinals"
+			{
+				"Placement in .data Section Only (=0)"				"0"
+				"Automatic .bss and .data Placement (=1)"			"1"
+				"Uninitialized and Zero Initialized in .bss (=2)"	"2"
+			}
+		}
+		
+		"$PromoteFPConstantsToDoubles"
+		{
+			"type"	"bool"
+		}
+	}
+	
+	//
+	// SNC Compiler/Language
+	//
+	
+	"$SNCCompiler"
+	{
+		"$CC++Dialect"
+		{
+			"alias"		"$CCPPDialect"
+			"ordinals"
+			{
+				"Mixed with GNU Extensions"		"0"
+				"ANSI and ISO C Standard"		"1"
+				"Annotated Reference Manual"	"2"
+				"CP Mode"						"3"
+				"AT&T Cfront"					"4"
+				"Kernighan & Ritchie C"			"5"
+			}
+		}
+		
+		"$C++ExceptionsAndRTTIUsage"
+		{
+			"alias"		"$CPPExceptionsAndRTTIUsage"
+			"ordinals"
+			{
+				"Not using Exceptions or RTTI"	"0"
+				"Using RTTI only"				"1"
+				"Using Exceptions and RTTI"		"2"
+			}
+		}
+		
+		"$DefaultCharUnsigned"
+		{
+			"type"	"bool"
+		}
+
+		"$DefaultFPConstantsAsTypeFloat"
+		{
+			"type"	"bool"
+		}
+		
+		"$BuiltInDefinitionForWCHAR_TType"
+		{
+			"ordinals"
+			{
+				"unsigned int (=uint)"			"0"
+				"unsigned long (=ulong)"		"1"
+				"unsigned short (=ushort)"		"2"
+				"unsigned char (=uchar)"		"3"
+				"int (=int)"					"4"
+				"long (=long)"					"5"
+				"short (=short)"				"6"
+				"char (=char)"					"7"
+				"signed char (=schar)"			"8"
+			}
+		}
+	}
+	
+	//
+	// SNC Compiler/Precompiled Headers
+	//
+	
+	"$SNCCompiler"
+	{
+		"$Create/UsePrecompiledHeader"
+		{
+			"alias"		"$CreateUsePrecompiledHeader"
+			"ordinals"
+			{
+				"Not Using Precompiled Header File(s)"				"0"
+				"Not Using Precompiled Headers"						"0"
+				"Create Precompiled Header (--create_pch)"			"1"
+				"Automatic Per File Precompiled Headers (--pch)"	"2"
+				"Use Precompiled Header (--use_pch)"				"3"
+			}
+		}
+		
+		"$PrecompiledHeaderFile"
+		{
+			"type"	"string"
+		}
+	}
+	
+	//
+	// SNC Compiler/Command Line
+	//
+	
+	"$SNCCompiler"
+	{
+		"$AdditionalOptions"
+		{
+			"type"	"string"
+		}
+	}
+	
+	"$SNCCompiler"
+	{	
+		"$EnableC++Exceptions"
+		{
+			"type"	"ignore"
+		}
+		
+		"$Create/UsePCHThroughFile"
+		{
+			"type"	"ignore"
+		}
+	}
+
+	"$SNCLinker"
+	{
+		// General
+		"$OutputFile"
+		{
+			"type"	"string"
+		}
+		
+		"$OutputFormat"
+		{	
+			"ordinals"
+			{
+				"ELF file"			"0"
+				"Fake Signed ELF"	"1"
+				"Network FSELF"		"2"
+				"PRX file"			"3"
+				"Fake Signed PRX"	"4"
+			}
+		}
+		
+		"$AdditionalDependencies"
+		{
+			"type"	"string"
+		}
+		
+		"$AdditionalLibraryDirectories"
+		{
+			"type"	"string"
+		}
+		
+		"$IgnoreAllDefaultLibraries"
+		{
+			"type"	"bool"
+		}
+		
+		"$UsingExceptionHandling"
+		{
+			"type"	"bool"
+		}
+		
+		"$TOCPointerElimination"
+		{
+			"type"	"bool"
+		}
+		
+		"$ForceSymbolReferences"
+		{
+			"type"	"string"
+		}
+		
+		"$CallprofHierarchicalProfiling"
+		{
+			"type"	"bool"
+		}
+		
+		"$DebugInfoAndSymbolStripping"
+		{
+			"ordinals"
+			{
+				"No Symbol Stripping"						"0"
+				"Strip Debug Information Only (-S)"			"1"
+				"Strip Symbols and Debug Information (-s)"	"2"
+			}
+		}
+		
+		"$UnusedFunctionAndDataStripping"
+		{
+			"ordinals"
+			{
+				"No Code Stripping"					"0"
+				"Strip Unused Functions Only"		"1"
+				"Strip Unused Functions and Data"	"2"
+			}
+		}
+		
+		"$ImportLibrary"
+		{
+			"type"	"string"
+		}
+		
+		"$GenerateMapFile"
+		{
+			"ordinals"
+			{
+				"No Map File"			"0"
+				"Normal Map File"		"1"
+				"Full Map File"			"2"
+			}
+		}
+		
+		"$MapFileName"
+		{
+			"type"	"string"
+		}
+		
+		"$LinkLibraryDependencies"
+		{
+			"type"	"bool"
+		}
+
+		"$AdditionalOptions"
+		{
+			"type"	"string"
+		}
+
+		"$SystemLibraries"
+		{
+			"type"	"ignore"
+		}
+		
+		"$SystemFrameworks"
+		{
+			"type"	"ignore"
+		}
+
+		"$LocalFrameworks"
+		{
+			"type"	"ignore"
+		}
+	}
+	
+	"$Librarian"
+	{
+		"$OutputFile"
+		{
+			"type"	"string"
+		}
+		
+		"$AdditionalDependencies"
+		{
+			"type"	"string"
+		}
+
+		"$WholeArchive"
+		{
+			"type"	"bool"
+		}
+
+		"$LinkLibraryDependencies"
+		{
+			"type"	"bool"
+		}
+	}
+	
+	$CustomBuildStep
+	{
+		"$CommandLine"
+		{
+			"type"	"string"
+		}
+		
+		"$Description"
+		{
+			"type"	"string"
+		}
+
+		"$Outputs"
+		{
+			"type"	"string"
+		}
+
+		"$AdditionalDependencies"
+		{
+			"type"	"string"
+		}
+	}
+	
+	$PreBuildEvent
+	{
+		"$CommandLine"
+		{
+			"type"	"string"
+		}
+
+		"$Description"
+		{
+			"type"	"string"
+		}
+
+		"$ExcludedFromBuild"	
+		{
+			"type"	"bool"
+		}
+	}
+	
+	$PreLinkEvent
+	{
+		"$CommandLine"
+		{
+			"type"	"string"
+		}
+
+		"$Description"
+		{
+			"type"	"string"
+		}
+
+		"$ExcludedFromBuild"	
+		{
+			"type"	"bool"
+		}
+	}
+
+	$PostBuildEvent
+	{
+		"$CommandLine"
+		{
+			"type"	"string"
+		}
+
+		"$Description"
+		{
+			"type"	"string"
+		}
+
+		"$ExcludedFromBuild"	
+		{
+			"type"	"bool"
+		}
+	}	
+}

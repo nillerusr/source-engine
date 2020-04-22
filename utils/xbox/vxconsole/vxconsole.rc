@@ -1,0 +1,557 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#define APSTUDIO_HIDDEN_SYMBOLS
+#include "windows.h"
+#undef APSTUDIO_HIDDEN_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_VXCONSOLE           ICON                    "VXConsole.ico"
+IDI_CONNECT1_ON         ICON                    "icon_connect1.ico"
+IDI_DISCONNECTED        ICON                    "icon_disconnect.ico"
+IDI_CONNECT2_OFF        ICON                    "icon_connect2.ico"
+IDI_CONNECT2_ON         ICON                    "icon_connect2a.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_VXCONSOLE DIALOGEX 7, 18, 416, 203
+STYLE DS_SETFONT | DS_3DLOOK | DS_FIXEDSYS | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+EXSTYLE WS_EX_CLIENTEDGE
+MENU MENU_VXCONSOLE
+CLASS "VXConsole"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    COMBOBOX        IDC_COMMAND,26,182,386,130,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "&Cmd:",IDC_LABEL,5,184,17,8,SS_CENTERIMAGE
+    CONTROL         "",IDC_OUTPUT,"RichEdit20A",ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_READONLY | WS_BORDER | WS_VSCROLL | WS_HSCROLL,5,7,404,170
+END
+
+IDD_CONFIG DIALOGEX 0, 0, 412, 151
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDC_OK,355,130,50,14
+    PUSHBUTTON      "Cancel",IDC_CANCEL,296,130,50,14
+    LTEXT           "Target XBox Name:",IDC_STATIC,7,7,126,9
+    EDITTEXT        IDC_CONFIG_XBOXNAME,7,18,148,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Ping",IDC_CONFIG_PING,163,18,43,13
+    CONTROL         "Clear Log On Connect",IDC_CONFIG_CLEARONCONNECT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,223,17,149,12
+    CONTROL         "Always Auto-Connect At Startup",IDC_CONFIG_ALWAYSAUTOCONNECT,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,223,33,149,12
+    CONTROL         "Start Minimized",IDC_CONFIG_STARTMINIMIZED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,223,49,149,12
+    EDITTEXT        IDC_CONFIG_INSTALLPATH,7,117,199,13,ES_AUTOHSCROLL
+    LTEXT           "PC Local Game Path: (Example: u:\\dev\\game)",IDC_STATIC,7,37,199,9
+    EDITTEXT        IDC_CONFIG_LOCALPATH,7,49,199,13,ES_AUTOHSCROLL
+    LTEXT           "XBox Target HDD Path: (Example: e:\\valve)",IDC_STATIC,7,70,199,9
+    EDITTEXT        IDC_CONFIG_TARGETPATH,7,81,199,13,ES_AUTOHSCROLL
+    LTEXT           "Installation Depot:",IDC_STATIC,7,105,116,9
+    CONTROL         "Enable Capture Debug Spew At Startup",IDC_CONFIG_CAPTUREDEBUGSPEW,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,223,65,149,12
+END
+
+IDD_SYNCFILES DIALOGEX 0, 0, 227, 154
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Sync Files"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "Sync",IDC_OK,170,132,50,14
+    PUSHBUTTON      "Cancel",IDC_CANCEL,111,132,50,14
+    LTEXT           "XBox Target Path (To):",IDC_STATIC,7,39,116,9
+    EDITTEXT        IDC_SYNCFILES_TARGETPATH,7,51,213,13,ES_AUTOHSCROLL
+    LTEXT           "PC Source Path (From):",IDC_STATIC,7,7,142,9
+    EDITTEXT        IDC_SYNCFILES_LOCALPATH,7,19,213,13,ES_AUTOHSCROLL
+    CONTROL         "Force Sync",IDC_SYNCFILES_FORCESYNC,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,89,116,10
+    CONTROL         "Skip Writing Files (Test Mode)",IDC_SYNCFILES_NOWRITE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,105,116,10
+    CONTROL         "Verbose",IDC_SYNCFILES_VERBOSE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,73,116,10
+END
+
+IDD_MODIFYBIND DIALOGEX 0, 0, 260, 106
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDC_OK,202,86,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,144,86,50,14
+    LTEXT           "Key:",IDC_STATIC,7,7,16,8
+    LTEXT           "Static",IDC_MODIFYBIND_KEYCODE,28,7,51,8
+    LTEXT           "Menu Name:",IDC_STATIC,7,21,41,8
+    EDITTEXT        IDC_MODIFYBIND_MENUNAME,7,31,245,14,ES_AUTOHSCROLL
+    LTEXT           "Command:",IDC_STATIC,7,50,35,8
+    EDITTEXT        IDC_MODIFYBIND_COMMAND,7,60,243,14,ES_AUTOHSCROLL
+END
+
+IDD_BUG DIALOGEX 0, 0, 441, 375
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Bug Reporter"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    EDITTEXT        IDC_BUG_TITLE,70,7,361,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_BUG_DESCRIPTION,70,26,361,90,ES_MULTILINE | ES_WANTRETURN | WS_VSCROLL
+    PUSHBUTTON      "Take Shot",IDC_BUG_TAKESHOT,7,122,56,14
+    PUSHBUTTON      "Save Game",IDC_BUG_SAVEGAME,7,141,56,14
+    PUSHBUTTON      "Include .bsp",IDC_BUG_INCLUDEBSP,7,159,56,14
+    PUSHBUTTON      "Include .vmf",IDC_BUG_INCLUDEVMF,7,178,56,14
+    CONTROL         "Compress Screenshot",IDC_BUG_COMPRESS_SCREENSHOT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,70,298,104,10
+    COMBOBOX        IDC_BUG_OWNER,282,202,152,195,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_BUG_SEVERITY,282,221,152,77,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_BUG_REPORTTYPE,282,240,152,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_BUG_PRIORITY,282,259,152,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_BUG_GAME,282,278,152,195,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_BUG_AREA,282,297,152,125,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_BUG_MAPNUMBER,282,316,152,84,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Clear Form",IDC_BUG_CLEARFORM,7,354,50,14
+    PUSHBUTTON      "Update",IDC_BUG_UPDATE,67,354,50,14
+    PUSHBUTTON      "Cancel",IDC_CANCEL,321,354,50,14
+    DEFPUSHBUTTON   "Submit",IDC_BUG_SUBMIT,384,354,50,14
+    LTEXT           "Title:",IDC_STATIC,7,7,45,8
+    LTEXT           "Description:",IDC_STATIC,7,26,45,8
+    LTEXT           "Position:",IDC_STATIC,7,204,44,8
+    LTEXT           "Orientation:",IDC_STATIC,7,223,44,8
+    LTEXT           "Map:",IDC_STATIC,7,242,44,8
+    LTEXT           "Build:",IDC_STATIC,7,261,44,8
+    LTEXT           "Submitter:",IDC_STATIC,7,280,40,8
+    LTEXT           "",IDC_BUG_POSITION_LABEL,70,201,152,14,SS_SUNKEN
+    LTEXT           "",IDC_BUG_ORIENTATION_LABEL,70,220,152,14,SS_SUNKEN
+    LTEXT           "",IDC_BUG_MAP_LABEL,70,239,152,14,SS_SUNKEN
+    LTEXT           "",IDC_BUG_BUILD_LABEL,70,258,152,14,SS_SUNKEN
+    LTEXT           "",IDC_BUG_SUBMITTER_LABEL,70,277,152,14,SS_SUNKEN
+    LTEXT           "Owner:",IDC_STATIC,232,204,40,8
+    LTEXT           "Severity:",IDC_STATIC,232,223,40,8
+    LTEXT           "Report Type:",IDC_STATIC,232,242,44,8
+    LTEXT           "Priority:",IDC_STATIC,232,261,26,8
+    LTEXT           "Game:",IDC_STATIC,231,280,40,8
+    LTEXT           "Area:",IDC_STATIC,232,299,19,8
+    LTEXT           "Map Number:",IDC_STATIC,232,318,44,8
+    LTEXT           "",IDC_BUG_TAKESHOT_LABEL,70,122,364,14,SS_SUNKEN | SS_PATHELLIPSIS
+    LTEXT           "",IDC_BUG_SAVEGAME_LABEL,70,141,364,14,SS_SUNKEN | SS_PATHELLIPSIS
+    LTEXT           "",IDC_BUG_INCLUDEBSP_LABEL,70,159,364,14,SS_SUNKEN | SS_PATHELLIPSIS
+    LTEXT           "",IDC_BUG_INCLUDEVMF_LABEL,70,178,364,14,SS_SUNKEN | SS_PATHELLIPSIS
+END
+
+IDD_EXCLUDEPATHS DIALOGEX 0, 0, 412, 313
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Exclude Xbox HDD Paths"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "",IDC_PATHS_TREE,"SysTreeView32",TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | TVS_DISABLEDRAGDROP | TVS_CHECKBOXES | WS_BORDER | WS_TABSTOP,7,7,398,276,WS_EX_CLIENTEDGE
+    PUSHBUTTON      "Re-Scan",IDC_PATHS_RESCAN,7,292,50,14
+    PUSHBUTTON      "Expand All",IDC_PATHS_EXPAND,64,292,50,14
+    PUSHBUTTON      "Collapse All",IDC_PATHS_COLLAPSE,122,292,50,14
+    PUSHBUTTON      "Cancel",IDC_CANCEL,294,292,50,14
+    DEFPUSHBUTTON   "OK",IDC_OK,355,292,50,14
+    CONTROL         "Link Game Directories",IDC_PATHS_LINKGAMEDIRS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,188,294,91,10
+END
+
+IDD_INSTALL DIALOGEX 0, 0, 492, 261
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Sync to DVD Image"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "",IDC_INSTALL_LIST,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,7,477,215
+    PUSHBUTTON      "Refresh",IDC_INSTALL_REFRESH,7,234,50,14
+    CONTROL         "Force Sync",IDC_INSTALL_FORCESYNC,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,122,236,51,10
+    CONTROL         "Exact Image (Deletes Unrelated Files)",IDC_INSTALL_CLEANTARGET,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,185,236,137,10
+    PUSHBUTTON      "Cancel",IDC_CANCEL,373,234,50,14
+    DEFPUSHBUTTON   "OK",IDC_OK,434,234,50,14
+END
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "#include ""windows.h""\r\n"
+    "#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDR_MAIN_ACCEL ACCELERATORS 
+BEGIN
+    "X",            IDM_AUTOCONNECT,        VIRTKEY, CONTROL, NOINVERT
+    "H",            IDM_PROFILEHISTORY,     VIRTKEY, CONTROL, NOINVERT
+    "S",            IDM_PROFILESAMPLES,     VIRTKEY, CONTROL, NOINVERT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+MENU_VXCONSOLE MENU 
+BEGIN
+    POPUP "Main"
+    BEGIN
+        MENUITEM "Configuration..",             IDM_CONFIG
+        MENUITEM SEPARATOR
+        MENUITEM "Exit",                        IDM_EXIT
+    END
+    POPUP "Connection"
+    BEGIN
+        MENUITEM "Capture Game Spew",           IDM_CAPTUREGAMESPEW
+        MENUITEM "Capture Debug Spew",          IDM_CAPTUREDEBUGSPEW
+        MENUITEM "Show Remote Command Traffic", IDM_DEBUGCOMMANDS
+        MENUITEM SEPARATOR
+        MENUITEM "Bug Reporter...",             IDM_BUG
+        MENUITEM SEPARATOR
+        MENUITEM "Sync Xbox HDD Files...",      IDM_SYNCFILES
+        MENUITEM "Sync Xbox HDD To DVD Image...", IDM_SYNCINSTALL
+        MENUITEM SEPARATOR
+        MENUITEM "Exclude Xbox HDD Paths...",   IDM_EXCLUDEPATHS
+        MENUITEM SEPARATOR
+        MENUITEM "&Auto Connect\tCtrl+X",       IDM_AUTOCONNECT
+    END
+    POPUP "Profiling"
+    BEGIN
+        MENUITEM "TimeStamp Log",               IDM_TIMESTAMPLOG
+        MENUITEM "Memory Dump",                 IDM_MEMORYDUMP
+        MENUITEM SEPARATOR
+        POPUP "Show CPU Usage"
+        BEGIN
+            MENUITEM "Snapshot",                    IDM_CPU_SAMPLES
+            MENUITEM " History",                    IDM_CPU_HISTORY
+        END
+        POPUP "Show D3D Usage"
+        BEGIN
+            MENUITEM "Snapshot",                    IDM_D3D_SAMPLES
+            MENUITEM "History",                     IDM_D3D_HISTORY
+        END
+        MENUITEM "Show Memory Usage",           IDM_SHOWMEMORYUSAGE
+        MENUITEM SEPARATOR
+        MENUITEM "Playtest Mode",               IDM_PLAYTESTMODE
+    END
+    POPUP "Resources"
+    BEGIN
+        MENUITEM "List Materials",              IDM_SHOWRESOURCES_MATERIALS
+        MENUITEM "List Models",                 IDM_SHOWRESOURCES_MODELS
+        MENUITEM "List Textures",               IDM_SHOWRESOURCES_TEXTURES
+        MENUITEM "List Sounds",                 IDM_SHOWRESOURCES_SOUNDS
+    END
+END
+
+MENU_CPUPROFILE MENU 
+BEGIN
+    POPUP "Options"
+    BEGIN
+        MENUITEM "Tick Marks",                  IDM_CPUPROFILE_TICKMARKS
+        MENUITEM "Colors",                      IDM_CPUPROFILE_COLORS
+        MENUITEM "FPS",                         IDM_CPUPROFILE_FPSLABELS
+        MENUITEM SEPARATOR
+        MENUITEM "Zoom In\tINS",                IDM_CPUPROFILE_ZOOMIN
+        MENUITEM "Zoom Out\tDEL",               IDM_CPUPROFILE_ZOOMOUT
+        MENUITEM SEPARATOR
+        MENUITEM "Enable",                      IDM_CPUPROFILE_ENABLE
+    END
+END
+
+MENU_SHOWTEXTURES MENU 
+BEGIN
+    POPUP "Options"
+    BEGIN
+        MENUITEM "Summary...",                  IDM_OPTIONS_SUMMARY
+        MENUITEM "Refresh",                     IDM_OPTIONS_REFRESH
+        MENUITEM "Export...",                   IDM_OPTIONS_EXPORT
+        MENUITEM SEPARATOR
+        MENUITEM "Current Frame",               IDM_OPTIONS_CURRENTFRAME
+        MENUITEM "Full Path",                   IDM_OPTIONS_FULLPATH
+        MENUITEM SEPARATOR
+        MENUITEM "Draw Texture",                IDM_OPTIONS_DRAWTEXTURE
+    END
+END
+
+MENU_TEXPROFILE MENU 
+BEGIN
+    POPUP "Options"
+    BEGIN
+        MENUITEM "Tick Marks",                  IDM_TEXPROFILE_TICKMARKS
+        MENUITEM "Colors",                      IDM_TEXPROFILE_COLORS
+        MENUITEM SEPARATOR
+        MENUITEM "Zoom In\tINS",                IDM_TEXPROFILE_ZOOMIN
+        MENUITEM "Zoom Out\tDEL",               IDM_TEXPROFILE_ZOOMOUT
+        MENUITEM SEPARATOR
+        MENUITEM "Current Frame",               IDM_TEXPROFILE_CURRENTFRAME
+        MENUITEM "Enable",                      IDM_TEXPROFILE_ENABLE
+    END
+END
+
+MENU_BINDOPTIONS MENU 
+BEGIN
+    POPUP "Options"
+    BEGIN
+        MENUITEM "Modify...",                   IDM_BINDOPTIONS_MODIFY
+        MENUITEM "Delete",                      IDM_BINDOPTIONS_DELETE
+    END
+END
+
+MENU_SHOWMATERIALS MENU 
+BEGIN
+    POPUP "Options"
+    BEGIN
+        MENUITEM "Refresh",                     IDM_OPTIONS_REFRESH
+        MENUITEM "Export",                      IDM_OPTIONS_EXPORT
+        MENUITEM SEPARATOR
+        MENUITEM "Current Frame",               IDM_OPTIONS_CURRENTFRAME
+    END
+END
+
+MENU_SHOWSOUNDS MENU 
+BEGIN
+    POPUP "Options"
+    BEGIN
+        MENUITEM "Summary...",                  IDM_OPTIONS_SUMMARY
+        MENUITEM "Refresh",                     IDM_OPTIONS_REFRESH
+        MENUITEM "Export...",                   IDM_OPTIONS_EXPORT
+        MENUITEM SEPARATOR
+        MENUITEM "Play",                        IDM_OPTIONS_PLAYSOUND
+    END
+END
+
+MENU_SHOWMEMORYDUMP MENU 
+BEGIN
+    POPUP "Options"
+    BEGIN
+        MENUITEM "Refresh",                     IDM_OPTIONS_REFRESH
+        MENUITEM "Export...",                   IDM_OPTIONS_EXPORT
+        MENUITEM "Summary...",                  IDM_OPTIONS_SUMMARY
+        MENUITEM SEPARATOR
+        MENUITEM "Size as Bytes",               IDM_OPTIONS_BYTES
+        MENUITEM "Size as KB",                  IDM_OPTIONS_KILOBYTES
+        MENUITEM "Size as MB",                  IDM_OPTIONS_MEGABYTES
+        MENUITEM "Collapse Output",             IDM_OPTIONS_COLLAPSEOUTPUT
+    END
+END
+
+MENU_TIMESTAMPLOG MENU 
+BEGIN
+    POPUP "Options"
+    BEGIN
+        MENUITEM "Clear",                       IDM_OPTIONS_CLEAR
+        MENUITEM "Export",                      IDM_OPTIONS_EXPORT
+    END
+END
+
+MENU_MEMPROFILE MENU 
+BEGIN
+    POPUP "Options"
+    BEGIN
+        MENUITEM "Tick Marks",                  IDM_MEMPROFILE_TICKMARKS
+        MENUITEM "Colors",                      IDM_MEMPROFILE_COLORS
+        MENUITEM SEPARATOR
+        MENUITEM "Zoom In\tINS",                IDM_MEMPROFILE_ZOOMIN
+        MENUITEM "Zoom Out\t INS",              IDM_MEMPROFILE_ZOOMOUT
+        MENUITEM SEPARATOR
+        MENUITEM "Enable",                      IDM_MEMPROFILE_ENABLE
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_CONFIG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 405
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 144
+    END
+
+    IDD_SYNCFILES, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 220
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 146
+    END
+
+    IDD_MODIFYBIND, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 252
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 99
+    END
+
+    IDD_BUG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 434
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 368
+    END
+
+    IDD_EXCLUDEPATHS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 405
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 306
+    END
+
+    IDD_INSTALL, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 485
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 254
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE 
+BEGIN
+    10004                   "Interrupted system call."
+    10009                   "Bad file number."
+    10013                   "Permission denied."
+    10014                   "Bad address."
+END
+
+STRINGTABLE 
+BEGIN
+    10022                   "Invalid argument."
+    10024                   "Too many open files."
+END
+
+STRINGTABLE 
+BEGIN
+    10035                   "Operation would block."
+    10036                   "Operation now in progress."
+    10037                   "Operation already in progress."
+    10038                   "Socket operation on nonsocket."
+    10039                   "Destination address required."
+    10040                   "Message too long."
+    10041                   "Protocol wrong type for socket."
+    10042                   "Protocol not available."
+    10043                   "Protocol not supported."
+    10044                   "Socket type not supported."
+    10045                   "Operation not supported on socket."
+    10046                   "Protocol family not supported."
+    10047                   "Address family not supported by protocol family."
+END
+
+STRINGTABLE 
+BEGIN
+    10048                   "Address already in use."
+    10049                   "Cannot assign requested address."
+    10050                   "Network is down."
+    10051                   "Network is unreachable."
+    10052                   "Network dropped connection on reset."
+    10053                   "Software caused connection abort."
+    10054                   "Connection reset by peer."
+    10055                   "No buffer space available."
+    10056                   "Socket is already connected."
+    10057                   "Socket is not connected."
+    10058                   "Cannot send after socket shutdown."
+    10059                   "Too many references: cannot splice."
+    10060                   "Connection timed out."
+    10061                   "Connection refused."
+    10062                   "Too many levels of symbolic links."
+    10063                   "File name too long."
+END
+
+STRINGTABLE 
+BEGIN
+    10064                   "Host is down."
+    10065                   "No route to host."
+END
+
+STRINGTABLE 
+BEGIN
+    10091                   "The network subsystem is unusable."
+    10092                   "The Windows Sockets DLL cannot support this application."
+    10093                   "Winsock not initialized."
+END
+
+STRINGTABLE 
+BEGIN
+    10101                   "Disconnect."
+END
+
+STRINGTABLE 
+BEGIN
+    11001                   "Host not found."
+    11002                   "Nonauthoritative host not found. Name service maybe not be functioning."
+    11003                   "Nonrecoverable error. Name service maybe not be functioning."
+    11004                   "Valid name, no data record of requested type."
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

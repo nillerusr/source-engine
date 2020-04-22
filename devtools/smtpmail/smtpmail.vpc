@@ -1,0 +1,38 @@
+//-----------------------------------------------------------------------------
+//	SMTPMAIL.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"..\bin"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\common,..\vmpi"
+		$PreprocessorDefinitions			"$BASE;MACRO_MATHLIB;PROTECTED_THINGS_DISABLE"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE ws2_32.lib odbc32.lib odbccp32.lib"
+	}
+}
+
+$Project "Smtpmail"
+{
+	$Folder	"Source Files"
+	{
+		$File	"smtpmail.cpp"
+		$File	"simplesocket.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"simplesocket.h"
+	}
+}

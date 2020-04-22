@@ -1,0 +1,261 @@
+//-----------------------------------------------------------------------------
+//	SOURCE_XEX_X360_DEBUG.VPC
+//
+//	Base Settings for Source(TM) Projects
+//-----------------------------------------------------------------------------
+
+$MacroRequired				"LOADADDRESS_DEVELOPMENT"
+$MacroRequired				"SRCDIR"
+$MacroRequired				"OUTBINNAME"
+$MacroRequired				"OUTBINDIR"
+
+$IgnoreRedundancyWarning	"ON"
+
+$Configuration "Debug"
+{
+	$General	
+	{
+		// General
+		$OutputDirectory					".\Debug_360"
+		$IntermediateDirectory				".\Debug_360"
+		$ExtensionsToDeleteOnClean
+		$BuildLogFile
+		$InheritedProjectPropertySheets
+
+		// Project Defaults
+		$ConfigurationType					"Application (.exe)"
+		$CharacterSet						"Not Set"
+		$WholeProgramOptimization			"No Whole Program Optimization"
+	}
+
+	$Debugging
+	{
+		$Command							"$(RemoteRoot)\$(TargetFileName)"
+		$CommandArguments
+		$MapDVDDrive
+		$RemoteMachine
+	}
+
+	$Compiler
+	{
+		// General
+		$AdditionalIncludeDirectories		"$SRCDIR\common;$SRCDIR\public;$SRCDIR\public\tier0;$SRCDIR\public\tier1"
+		$DebugInformationFormat				"Program Database (/Zi)"
+		$SuppressStartupBanner				"Yes (/nologo)"
+		$WarningLevel						"Level 4 (/W4)"
+		$TreatWarningsAsErrors				"No"
+		$UseUNICODEResponseFiles			"No"
+
+		// Optimization
+		$Optimization						"Disabled (/Od)"
+		$InlineFunctionExpansion
+		$EnableIntrinsicFunctions			"Yes (/Oi)"
+		$FavorSizeOrSpeed					"Neither"
+		$EnableFiberSafeOptimizations		"No"
+		$WholeProgramOptimization			"No"
+
+		// Preprocessor
+		$PreprocessorDefinitions			"_HAS_ITERATOR_DEBUGGING=0;_X360;_DEBUG;DEBUG;_WIN32;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE"
+		$PreprocessorDefinitions			"$BASE;_CERT" [$CERT]
+		$IgnoreStandardIncludePath
+		$GeneratePreprocessedFile
+		$KeepComments						"No"
+
+		// Code Generation
+		$EnableStringPooling				"Yes (/GF)"
+		$EnableMinimalRebuild				"Yes (/Gm)"
+		$EnableC++Exceptions				"No"
+		$SmallerTypeCheck
+		$BasicRuntimeChecks					"Both (/RTC1, equiv. to /RTCsu)"
+		$RuntimeLibrary						"Multi-threaded Debug (/MTd)"
+		$StructMemberAlignment
+		// 360 Issue: Enable BufferSecurityCheck below in AdditionalOptions
+		$BufferSecurityCheck				"No"		
+		$EnableFunctionLevelLinking
+		$FloatingPointModel					"Fast (/fp:fast)"
+		$EnableFloatingPointExceptions		"No"
+
+		// Language
+		$DisableLanguageExtensions			"No"
+		$DefaultCharUnsigned				"No"
+		$TreatWCHAR_TAsBuiltInType			"Yes (/Zc:wchar_t)"
+		$ForceConformanceInForLoopScope		"Yes (/Zc:forScope)"
+		$EnableRunTimeTypeInfo				"Yes (/GR)"
+		$OpenMPSupport						"No"
+
+		// Precompiled Headers
+		$Create/UsePrecompiledHeader		"Not Using Precompiled Headers"
+		$Create/UsePCHThroughFile
+		$PrecompiledHeaderFile
+
+		// Output Files
+		$ExpandAttributedSource				"No"
+		$AssemblerOutput					"No Listing"
+		$ASMListLocation					"$(IntDir)/"
+		$ObjectFileName						"$(IntDir)/"
+		$ProgramDatabaseFileName			"$(IntDir)/"
+
+		// Browse Information
+		$EnableBrowseInformation			"None"
+		$BrowseFile							"$(IntDir)/"
+
+		// Advanced
+		$CompileAs							"Compile as C++ Code (/TP)"
+		$DisableSpecificWarnings
+		$ForceIncludes						"tier0/platform.h"			
+		$ShowIncludes						"No"
+		$UndefinePreprocessorDefinitions
+		$UndefineAllPreprocessorDefinitions	"No"
+		$UseFullPaths
+		$OmitDefaultLibraryNames
+
+		// Xbox 360
+		$RegisterReservation				"No"
+		$TrapIntegerDividesOptimization		"No"
+		$PreschedulingOptimization			"No"
+		$InlineAssemblyOptimization			"No"
+		$Stalls								"No"
+		$CallAttributedProfiling			"Disabled"
+
+		// Command Line
+		$AdditionalOptions					"/QVMX128 /GS"
+	}
+
+	$Linker
+	{
+		// General
+		$OutputFile							"$(OutDir)/$OUTBINNAME.exe"
+		$ShowProgress						"Not Set"
+		$Version
+		$EnableIncrementalLinking			"Yes (/INCREMENTAL)"
+		$SuppressStartupBanner				"Yes (/NOLOGO)"
+		$IgnoreImportLibrary
+		$AdditionalLibraryDirectories
+		$LinkLibraryDependencies
+		$UseLibraryDependencyInputs
+		$UseUNICODEResponseFiles			"No"
+
+		// Input
+		$AdditionalDependencies				"d3d9d.lib xapilibd.lib xboxkrnl.lib libpmcpbd.lib"
+		$AdditionalDependencies				"d3d9d.lib xapilibd.lib xboxkrnl.lib libpmcpbd.lib xbdm.lib"	[$PROFILE]	
+		$AdditionalDependencies				"d3d9d.lib xapilibd.lib xboxkrnl.lib"							[$CERT]
+		$IgnoreAllDefaultLibraries
+		$IgnoreSpecificLibrary				"libc;libcd;libcmt;xapilib"
+		$ModuleDefinitionFile
+		$ForceSymbolReferences
+
+		// Debugging
+		$GenerateDebugInfo					"Yes (/DEBUG)"
+		$GenerateProgramDatabaseFile		"$(IntDir)/$(TargetName).pdb"
+		$StripPrivateSymbols
+		$GenerateMapFile					"No"
+		$MapFileName						"$(IntDir)/$(TargetName).map"
+		$MapExports							"No"
+
+		// System
+		$StackCommitSize					"262144"
+
+		// Optimization
+		$References
+		$EnableCOMDATFolding
+		$FunctionOrder
+		$ProfileGuidedDatabase
+		$LinkTimeCodeGeneration
+
+		// Advanced
+		$EntryPoint
+		$NoEntryPoint
+		$SetChecksum						"No"
+		$BaseAddress						"$LOADADDRESS_DEVELOPMENT"
+		$FixedBaseAddress					"Image must be loaded at a fixed address (/FIXED)"
+		$ImportLibrary
+		$MergeSections
+		$ErrorReporting						"Prompt Immediately (/ERRORREPORT:PROMPT)"
+
+		// Command Line
+		$AdditionalOptions						
+	}
+ 
+	$Xbox360ImageConversion
+	{
+		// General
+		$OutputFile							"$(OutDir)/$OUTBINNAME.xex"
+		$TitleID
+		$LANKey
+		$SuppressStartupBanner				"Yes (/NOLOGO)"
+		$BaseAddress
+		$HeapSize
+		$WorkspaceSize
+		$AdditionalSections
+		$ExportByName
+
+		// Privileges
+		$OpticalDiscDriveMapping
+		$PAL50Incompatible
+
+		// Project Defaults
+		$ProjectDefaults
+
+		// Command Line
+		$AdditionalOptions
+	}
+
+	$BrowseInformation
+	{
+		$SuppressStartupBanner				"Yes (/nologo)"	
+		$OutputFile							"$(OutDir)/$OUTBINNAME.bsc"
+		$AdditionalOptions
+	}
+
+	$PreBuildEvent
+	{
+		$CommandLine
+		$Description
+		$ExcludedFromBuild					"No"
+	}
+
+	$PreLinkEvent
+	{
+		$CommandLine
+		$Description
+		$ExcludedFromBuild					"No"
+	}
+
+	$PostBuildEvent
+	{
+		$CommandLine
+		$Description
+		$ExcludedFromBuild					"No"
+	}
+
+	$CustomBuildStep
+	{
+		// General
+		$CommandLine
+		$Description
+		$Outputs
+		$AdditionalDependencies
+	}
+
+	$ConsoleDeployment
+	{
+		// Common Settings
+		$DeploymentType						"Copy to Hard Drive"
+		$DeploymentFiles					"$(RemoteRoot)=$(TargetPath);"
+
+		// Copy to Hard Drive
+		$ExcludedFromBuild					"Yes"
+		$SuppressStartupBanner				"Yes (/nologo)"
+		$Progress							"No"
+		$ForceCopy
+		$DeploymentRoot
+
+		// Emulate DVD Drive
+		$EmulationType
+		$Layout
+		$LayoutRoot
+
+		// Command Line
+		$AdditionalOptions
+	}
+}

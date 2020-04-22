@@ -1,0 +1,174 @@
+//-----------------------------------------------------------------------------
+//	MATERIALSYSTEM.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$macro SRCDIR		".."
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
+
+$include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$PreprocessorDefinitions	"$BASE;DEFINE_MATERIALSYSTEM_INTERFACE;MATERIALSYSTEM_EXPORTS;PROTECTED_THINGS_ENABLE;strncpy=use_Q_strncpy_instead;_snprintf=use_Q_snprintf_instead"
+		$PreprocessorDefinitions	"$BASE;fopen=dont_use_fopen" [$WINDOWS]
+		$Create/UsePCHThroughFile	"pch_materialsystem.h"
+	}
+	$Linker
+	{
+			$SystemLibraries                                                        "iconv" [$OSXALL]
+	}
+}
+
+$Configuration "Debug"
+{
+	$Linker [$X360]
+	{
+		$AdditionalDependencies		"$BASE d3dx9d.lib"
+	}
+}
+
+$Configuration "Release"
+{
+	$Linker [$X360]
+	{
+		$AdditionalDependencies		"$BASE d3dx9.lib"
+	}
+}
+
+$Project "MaterialSystem"
+{
+	$Folder	"Source Files"
+	{
+		$File	"CColorCorrection.cpp"
+		$File	"cmaterial.cpp"
+		$File	"cmaterial_queuefriendly.cpp"
+		$File	"CMaterialSubRect.cpp"
+		$File	"cmaterialvar.cpp"
+		$File	"cmatnullrendercontext.cpp"
+		$File	"colorspace.cpp"
+		$File	"ctexture.cpp"
+		$File	"$SRCDIR\public\filesystem_helpers.cpp"
+		$File	"imagepacker.cpp"
+		$File	"mat_stub.cpp"
+		$File	"materialsystem_global.cpp"
+		$File	"morph.cpp"
+		$File	"occlusionquerymgr.cpp"
+		$File	"shadersystem.cpp"
+		$File	"texturemanager.cpp"
+
+		$File	"pch_materialsystem.cpp"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader	"Create Precompiled Header (/Yc)"
+				}
+			}
+		}
+
+		$File	"cmaterialdict.cpp" \
+				"cmaterialsystem.cpp" \
+				"cmatlightmaps.cpp" \
+				"cmatrendercontext.cpp" \
+				"cmatqueuedrendercontext.cpp" \
+				"ctexturecompositor.cpp"
+		{
+				$Configuration
+				{
+					$Compiler
+					{
+						$Create/UsePrecompiledHeader	"Use Precompiled Header (/Yu)"
+					}
+				}
+		}
+	}
+
+	$Folder	"Public Header Files"
+	{
+		$File	"$SRCDIR\public\mathlib\amd3dx.h"
+		$File	"$SRCDIR\public\tier0\basetypes.h"
+		$File	"$SRCDIR\public\mathlib\bumpvects.h"
+		$File	"$SRCDIR\public\const.h"
+		$File	"$SRCDIR\public\tier1\convar.h"
+		$File	"$SRCDIR\public\crtmemdebug.h"
+		$File	"$SRCDIR\common\cstringhash.h"
+		$File	"$SRCDIR\public\filesystem.h"
+		$File	"$SRCDIR\public\appframework\IAppSystem.h"
+		$File	"$SRCDIR\public\materialsystem\combineoperations.h"
+		$File	"$SRCDIR\public\materialsystem\IColorCorrection.h"
+		$File	"$SRCDIR\public\materialsystem\imaterial.h"
+		$File	"$SRCDIR\public\materialsystem\imaterialproxy.h"
+		$File	"$SRCDIR\public\materialsystem\imaterialproxyfactory.h"
+		$File	"$SRCDIR\public\materialsystem\imaterialsystem.h"
+		$File	"$SRCDIR\public\materialsystem\imaterialsystemhardwareconfig.h"
+		$File	"$SRCDIR\public\materialsystem\imaterialsystemstub.h"
+		$File	"$SRCDIR\public\materialsystem\imaterialvar.h"
+		$File	"$SRCDIR\public\materialsystem\imesh.h"
+		$File	"$SRCDIR\public\materialsystem\imorph.h"
+		$File	"$SRCDIR\public\tier1\interface.h"
+		$File	"$SRCDIR\public\materialsystem\IShader.h"
+		$File	"$SRCDIR\public\materialsystem\ishaderapi.h"
+		$File	"$SRCDIR\public\materialsystem\itexture.h"
+		$File	"$SRCDIR\public\materialsystem\itexturecompositor.h"
+		$File	"$SRCDIR\public\tier1\KeyValues.h"
+		$File	"$SRCDIR\public\materialsystem\materialsystem_config.h"
+		$File	"$SRCDIR\public\mathlib\mathlib.h"
+		$File	"$SRCDIR\public\tier1\mempool.h"
+		$File	"$SRCDIR\public\pixelwriter.h"
+		$File	"$SRCDIR\public\renderparm.h"
+		$File	"$SRCDIR\public\tier1\strtools.h"
+		$File	"$SRCDIR\public\tier1\utlbuffer.h"
+		$File	"$SRCDIR\public\tier1\utlmemory.h"
+		$File	"$SRCDIR\public\tier1\utlrbtree.h"
+		$File	"$SRCDIR\public\tier1\utlsymbol.h"
+		$File	"$SRCDIR\public\tier1\utlvector.h"
+		$File	"$SRCDIR\public\mathlib\vector.h"
+		$File	"$SRCDIR\public\mathlib\vector2d.h"
+		$File	"$SRCDIR\public\mathlib\vector4d.h"
+		$File	"$SRCDIR\public\mathlib\vmatrix.h"
+		$File	"$SRCDIR\public\mathlib\vplane.h"
+		$File	"$SRCDIR\public\vstdlib\vstdlib.h"
+		$File	"$SRCDIR\public\vtf\vtf.h"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"cmaterial_queuefriendly.h"
+		$File	"cmaterialdict.h"
+		$File	"cmaterialsystem.h"
+		$File	"cmatlightmaps.h"
+		$File	"cmatnullrendercontext.h"
+		$File	"cmatqueuedrendercontext.h"
+		$File	"cmatrendercontext.h"
+		$File	"colorspace.h"
+		$File	"ctexturecompositor.h"
+		$File	"IHardwareConfigInternal.h"
+		$File	"imagepacker.h"
+		$File	"imaterialinternal.h"
+		$File	"imaterialsysteminternal.h"
+		$File	"imatrendercontextinternal.h"
+		$File	"imorphinternal.h"
+		$File	"IShaderSystem.h"
+		$File	"$SRCDIR\public\shaderapi\ishaderutil.h"
+		$File	"itextureinternal.h"
+		$File	"materialsystem_global.h"
+		$File	"occlusionquerymgr.h"
+		$File	"shader_dll_verify.h"		[$WIN32]
+		$File	"shadersystem.h"
+		$File	"texturemanager.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib	bitmap
+		$Lib	mathlib
+		$Lib	shaderlib
+		$Lib	tier2
+		$Lib	vtf
+	}
+}

@@ -1,0 +1,47 @@
+# create database gamestats;
+# use gamestats;
+
+create table ep1
+(
+	UserID						CHAR(16),
+	PRIMARY KEY( UserID ),
+	LastUpdate					DATETIME,
+	KEY( LastUpdate ),
+	Version						TINYINT,
+	Count						INT,
+	Seconds						INT,
+	HDR						INT,
+	Captions					INT,
+	Commentary					INT,
+	Easy						INT,
+	Medium						INT,
+	Hard						INT,
+	nonsteam					TINYINT,
+	cybercafe					TINYINT,
+	hl2_chapter					TINYINT,
+	SecondsToCompleteGame				INT,  # Non-zero if user has completed game
+	HighestMap					CHAR(16),
+	DXLevel						INT,
+	Deaths						INT,
+) TYPE=MyISAM;
+
+create table ep1_maps
+(
+	UserID						CHAR(16),
+	MapName						CHAR(16),
+	PRIMARY KEY( UserID,MapName ),
+	LastUpdate					DATETIME,
+	KEY( LastUpdate ),
+	Version						TINYINT,
+	Count						INT,
+	Seconds						INT,
+	HDR						INT,
+	Captions					INT,
+	Commentary					INT,
+	Easy						INT,
+	Medium						INT,
+	Hard						INT,
+	nonsteam					TINYINT,
+	cybercafe					TINYINT,
+	Deaths						INT,
+) TYPE=MyISAM;

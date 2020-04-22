@@ -1,0 +1,393 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="VPC">
+      <UniqueIdentifier>{46bac1ee-3374-43a2-9761-f79ee2691007}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="VPC\Header Files">
+      <UniqueIdentifier>{38599379-561b-43c5-bdc9-e84eee3ab186}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="VPC\Source Files">
+      <UniqueIdentifier>{13ae58f1-21cb-4159-82ae-3d2dbd5238a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Dependencies">
+      <UniqueIdentifier>{e86543a4-b232-42c1-91e4-ddd9dd9c36a8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Dependencies\Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Dependencies\Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="VPC\definitions">
+      <UniqueIdentifier>{f5d738f6-132d-42e7-9f03-05388b11b408}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="VPC\VPCCRCCheck">
+      <UniqueIdentifier>{90afaed2-cb09-4747-bb13-2186c417c0f2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="P4 Libs">
+      <UniqueIdentifier>{7bc720f7-b058-4998-9fa5-03df7999beef}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\interfaces\interfaces.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier0\assert_dialog.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier0\commandline.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier0\cpu.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier0\dbg.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier0\fasttimer.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier0\logging.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier0\mem.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier0\mem_helpers.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier0\memdbg.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier0\memstd.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier0\memvalidate.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier0\minidump.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier0\pch_tier0.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier0\threadtools.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier0\tier0_strtools.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier0\valobject.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier0\vprof.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier0\win32consoleio.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier1\characterset.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier1\checksum_crc.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier1\checksum_md5.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier1\convar.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier1\exprevaluator.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier1\generichash.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier1\interface.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier1\keyvalues.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier1\mempool.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier1\memstack.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier1\splitstring.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier1\stringpool.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier1\strtools.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier1\tier1.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier1\utlbuffer.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier1\utlstring.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier1\utlsymbol.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\vstdlib\cvar.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\vstdlib\keyvaluessystem.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\vstdlib\random.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\vstdlib\vstrtools.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier0\platform.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier0\cputopology.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier0\stacktools.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier0\pme.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tier0\pmelib.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="baseprojectdatacollector.cpp">
+      <Filter>VPC\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="conditionals.cpp">
+      <Filter>VPC\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="configuration.cpp">
+      <Filter>VPC\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies.cpp">
+      <Filter>VPC\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="exprsimplifier.cpp">
+      <Filter>VPC\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="generatordefinition.cpp">
+      <Filter>VPC\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="groupscript.cpp">
+      <Filter>VPC\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="macros.cpp">
+      <Filter>VPC\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>VPC\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="p4sln.cpp">
+      <Filter>VPC\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="projectgenerator_makefile.cpp">
+      <Filter>VPC\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="projectgenerator_ps3.cpp">
+      <Filter>VPC\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="projectgenerator_vcproj.cpp">
+      <Filter>VPC\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="projectgenerator_win32.cpp">
+      <Filter>VPC\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="projectgenerator_win32_2010.cpp">
+      <Filter>VPC\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="projectgenerator_xbox360.cpp">
+      <Filter>VPC\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="projectgenerator_xbox360_2010.cpp">
+      <Filter>VPC\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="projectscript.cpp">
+      <Filter>VPC\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scriptsource.cpp">
+      <Filter>VPC\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="solutiongenerator_makefile.cpp">
+      <Filter>VPC\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="solutiongenerator_win32.cpp">
+      <Filter>VPC\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="solutiongenerator_xcode.cpp">
+      <Filter>VPC\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sys_utils.cpp">
+      <Filter>VPC\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vpccrccheck\crccheck_shared.cpp">
+      <Filter>VPC\VPCCRCCheck</Filter>
+    </ClCompile>
+    <ClCompile Include="projectgenerator_codelite.cpp">
+      <Filter>VPC\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="solutiongenerator_codelite.cpp">
+      <Filter>VPC\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\p4lib\p4.cpp">
+      <Filter>Dependencies\Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\tier0\mem_helpers.h">
+      <Filter>Dependencies\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\tier0\mem_impl_type.h">
+      <Filter>Dependencies\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\tier0\memstd.h">
+      <Filter>Dependencies\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\tier0\pch_tier0.h">
+      <Filter>Dependencies\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\tier0\resource.h">
+      <Filter>Dependencies\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\tier0\tier0_strtools.h">
+      <Filter>Dependencies\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\vstdlib\concommandhash.h">
+      <Filter>Dependencies\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\tier0\cputopology.h">
+      <Filter>Dependencies\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="baseprojectdatacollector.h">
+      <Filter>VPC\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dependencies.h">
+      <Filter>VPC\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="generatordefinition.h">
+      <Filter>VPC\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ibaseprojectgenerator.h">
+      <Filter>VPC\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ibasesolutiongenerator.h">
+      <Filter>VPC\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="p4sln.h">
+      <Filter>VPC\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="projectgenerator_ps3.h">
+      <Filter>VPC\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="projectgenerator_vcproj.h">
+      <Filter>VPC\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="projectgenerator_win32.h">
+      <Filter>VPC\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="projectgenerator_win32_2010.h">
+      <Filter>VPC\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="projectgenerator_xbox360.h">
+      <Filter>VPC\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="projectgenerator_xbox360_2010.h">
+      <Filter>VPC\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="projectgenerator_xcode.h">
+      <Filter>VPC\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scriptsource.h">
+      <Filter>VPC\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sys_utils.h">
+      <Filter>VPC\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vpc.h">
+      <Filter>VPC\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vpccrccheck\crccheck_shared.h">
+      <Filter>VPC\VPCCRCCheck</Filter>
+    </ClInclude>
+    <ClInclude Include="projectgenerator_codelite.h">
+      <Filter>VPC\Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Makefile" />
+    <None Include="vpc.opensdf" />
+    <None Include="vpc.vpc" />
+    <None Include="projectgenerator_ps3.inc">
+      <Filter>VPC\Header Files</Filter>
+    </None>
+    <None Include="projectgenerator_win32.inc">
+      <Filter>VPC\Header Files</Filter>
+    </None>
+    <None Include="projectgenerator_win32_2010.inc">
+      <Filter>VPC\Header Files</Filter>
+    </None>
+    <None Include="projectgenerator_xbox360.inc">
+      <Filter>VPC\Header Files</Filter>
+    </None>
+    <None Include="projectgenerator_xbox360_2010.inc">
+      <Filter>VPC\Header Files</Filter>
+    </None>
+    <None Include="..\..\vpc_scripts\definitions\ps3.def">
+      <Filter>VPC\definitions</Filter>
+    </None>
+    <None Include="..\..\vpc_scripts\definitions\win32_2005.def">
+      <Filter>VPC\definitions</Filter>
+    </None>
+    <None Include="..\..\vpc_scripts\definitions\win32_2010.def">
+      <Filter>VPC\definitions</Filter>
+    </None>
+    <None Include="..\..\vpc_scripts\definitions\xbox360.def">
+      <Filter>VPC\definitions</Filter>
+    </None>
+    <None Include="..\..\vpc_scripts\definitions\xbox360_2010.def">
+      <Filter>VPC\definitions</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\..\lib\common\libsupp.lib">
+      <Filter>P4 Libs</Filter>
+    </Library>
+    <Library Include="..\..\lib\common\libclient.lib">
+      <Filter>P4 Libs</Filter>
+    </Library>
+    <Library Include="..\..\lib\common\librpc.lib">
+      <Filter>P4 Libs</Filter>
+    </Library>
+    <Library Include="..\..\lib\common\libp4sslstub.lib">
+      <Filter>P4 Libs</Filter>
+    </Library>
+    <Library Include="..\..\lib\common\debug\libclient.lib">
+      <Filter>P4 Libs</Filter>
+    </Library>
+    <Library Include="..\..\lib\common\debug\libp4sslstub.lib">
+      <Filter>P4 Libs</Filter>
+    </Library>
+    <Library Include="..\..\lib\common\debug\librpc.lib">
+      <Filter>P4 Libs</Filter>
+    </Library>
+    <Library Include="..\..\lib\common\debug\libsupp.lib">
+      <Filter>P4 Libs</Filter>
+    </Library>
+  </ItemGroup>
+</Project>

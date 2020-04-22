@@ -1,0 +1,100 @@
+L 08/24/1999 - 10:21:45: Log file started.
+L 08/24/1999 - 10:21:45: Spawning server "2fort"
+L 08/24/1999 - 10:21:45: server cvars start
+L 08/24/1999 - 10:21:45: "cr_random" = "0"
+L 08/24/1999 - 10:21:45: "cr_engineer" = "0"
+L 08/24/1999 - 10:21:45: "cr_spy" = "0"
+L 08/24/1999 - 10:21:45: "cr_pyro" = "0"
+L 08/24/1999 - 10:21:45: "cr_hwguy" = "0"
+L 08/24/1999 - 10:21:45: "cr_medic" = "0"
+L 08/24/1999 - 10:21:45: "cr_demoman" = "0"
+L 08/24/1999 - 10:21:45: "cr_soldier" = "0"
+L 08/24/1999 - 10:21:45: "cr_sniper" = "0"
+L 08/24/1999 - 10:21:45: "cr_scout" = "0"
+L 08/24/1999 - 10:21:45: "decalfrequency" = "30"
+L 08/24/1999 - 10:21:45: "mp_autocrosshair" = "1"
+L 08/24/1999 - 10:21:45: "mp_flashlight" = "0"
+L 08/24/1999 - 10:21:45: "mp_footsteps" = "1"
+L 08/24/1999 - 10:21:45: "mp_forcerespawn" = "1"
+L 08/24/1999 - 10:21:45: "mp_weaponstay" = "0"
+L 08/24/1999 - 10:21:45: "mp_falldamage" = "0"
+L 08/24/1999 - 10:21:45: "mp_friendlyfire" = "0"
+L 08/24/1999 - 10:21:45: "mp_timelimit" = "30"
+L 08/24/1999 - 10:21:45: "mp_fraglimit" = "0"
+L 08/24/1999 - 10:21:45: "mp_teamplay" = "21"
+L 08/24/1999 - 10:21:45: "tfc_balance_scores" = "1.0"
+L 08/24/1999 - 10:21:45: "tfc_balance_teams" = "1.0"
+L 08/24/1999 - 10:21:45: "tfc_adminpwd" = ""
+L 08/24/1999 - 10:21:45: "tfc_clanbattle_locked" = "0.0"
+L 08/24/1999 - 10:21:45: "tfc_clanbattle" = "0.0"
+L 08/24/1999 - 10:21:45: "tfc_respawndelay" = "0.0"
+L 08/24/1999 - 10:21:45: "tfc_autoteam" = "1"
+L 08/24/1999 - 10:21:45: "sv_maxrate" = "0"
+L 08/24/1999 - 10:21:45: "sv_minrate" = "0"
+L 08/24/1999 - 10:21:45: "sv_allowupload" = "1"
+L 08/24/1999 - 10:21:45: "sv_allowdownload" = "1"
+L 08/24/1999 - 10:21:45: "sv_upload_maxsize" = "0"
+L 08/24/1999 - 10:21:45: "sv_spectatormaxspeed" = "500"
+L 08/24/1999 - 10:21:45: "sv_spectalk" = "1"
+L 08/24/1999 - 10:21:45: "sv_maxspectators" = "8"
+L 08/24/1999 - 10:21:45: "sv_cheats" = "0"
+L 08/24/1999 - 10:21:45: "sv_clienttrace" = "3.5"
+L 08/24/1999 - 10:21:45: "sv_timeout" = "65"
+L 08/24/1999 - 10:21:45: "sv_waterfriction" = "1"
+L 08/24/1999 - 10:21:45: "sv_wateraccelerate" = "10"
+L 08/24/1999 - 10:21:45: "sv_airaccelerate" = "10"
+L 08/24/1999 - 10:21:45: "sv_airmove" = "1"
+L 08/24/1999 - 10:21:45: "sv_bounce" = "1"
+L 08/24/1999 - 10:21:45: "sv_clipmode" = "0"
+L 08/24/1999 - 10:21:45: "sv_stepsize" = "18"
+L 08/24/1999 - 10:21:45: "sv_accelerate" = "10"
+L 08/24/1999 - 10:21:45: "sv_maxspeed" = "500.000000"
+L 08/24/1999 - 10:21:45: "sv_stopspeed" = "100"
+L 08/24/1999 - 10:21:45: "edgefriction" = "2"
+L 08/24/1999 - 10:21:45: "sv_friction" = "4"
+L 08/24/1999 - 10:21:45: "sv_gravity" = "800"
+L 08/24/1999 - 10:21:45: "sv_aim" = "0"
+L 08/24/1999 - 10:21:45: "sv_password" = ""
+L 08/24/1999 - 10:21:45: "pausable" = "0"
+L 08/24/1999 - 10:21:45: "coop" = "0"
+L 08/24/1999 - 10:21:45: "deathmatch" = "1"
+L 08/24/1999 - 10:21:45: "mp_logecho" = "1"
+L 08/24/1999 - 10:21:45: "mp_logfile" = "1"
+L 08/24/1999 - 10:21:45: "cmdline" = "0"
+L 08/24/1999 - 10:21:45: server cvars end
+L 08/24/1999 - 10:21:46: Map CRC "-652696221"
+L 08/24/1999 - 10:21:46: "sv_maxspeed" = "500"
+L 08/24/1999 - 10:21:46: Server name is "VALVe Test Server"
+L 08/24/1999 - 10:21:46: "sv_maxspeed" = "500.000000"
+L 08/24/1999 - 10:21:52: "Dante<4><WON:1623209>" has entered the game
+L 08/24/1999 - 10:21:54: "Dante<4>" joined team "1".
+L 08/24/1999 - 10:21:55: "Dante<4>" changed class to "Demoman"
+L 08/24/1999 - 10:21:55: "Dante<4>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 10:23:30: "Dante<4>" disconnected
+L 08/24/1999 - 10:48:17: "[TVT]TSWG<5><WON:2386909>" connected, address "207.149.159.106:27005"
+L 08/24/1999 - 10:48:58: "[TVT]TSWG<5><WON:2386909>" has entered the game
+L 08/24/1999 - 10:49:00: "FiShBrAiN<6><WON:455429>" connected, address "209.162.155.186:27005"
+L 08/24/1999 - 10:49:11: "[TVT]TSWG<5>" joined team "1".
+L 08/24/1999 - 10:49:17: "[TVT]TSWG<5>" changed class to "Sniper"
+L 08/24/1999 - 10:49:17: "[TVT]TSWG<5>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 10:49:52: "[TVT]TSWG<5>" changed class to "Demoman"
+L 08/24/1999 - 10:50:14: "FiShBrAiN<6><WON:455429>" has entered the game
+L 08/24/1999 - 10:50:24: "FiShBrAiN<6>" joined team "2".
+L 08/24/1999 - 10:50:29: "BUBBLE<7><WON:2398579>" connected, address "24.237.15.115:27005"
+L 08/24/1999 - 10:50:30: "FiShBrAiN<6>" changed class to "Soldier"
+L 08/24/1999 - 10:50:30: "FiShBrAiN<6>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 10:50:46: "BUBBLE<7><WON:2398579>" has entered the game
+L 08/24/1999 - 10:50:49: "BUBBLE<7>" joined team "1".
+L 08/24/1999 - 10:50:59: "BUBBLE<7>" disconnected
+L 08/24/1999 - 10:51:00: "Dante<8><WON:1623209>" connected, address "63.75.210.28:27005"
+L 08/24/1999 - 10:51:13: "Dante<8><WON:1623209>" has entered the game
+L 08/24/1999 - 10:51:16: "Dante<8>" joined team "1".
+L 08/24/1999 - 10:51:20: "Dante<8>" changed class to "Sniper"
+L 08/24/1999 - 10:51:20: "Dante<8>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 10:51:26: "Dante<8>" say "hello all"
+L 08/24/1999 - 10:51:31: "[TVT]TSWG<5>" say "hi "
+L 08/24/1999 - 10:51:47: =------= MATCH RESULTS =------=
+L 08/24/1999 - 10:51:47: -> DRAW <-
+L 08/24/1999 - 10:51:47: "blue" RESULTS: "2" players. "0" frags, "2" unaccounted for. "0" team score. Allies:
+L 08/24/1999 - 10:51:47: "red" RESULTS: "1" players. "0" frags, "1" unaccounted for. "0" team score. Allies:
+L 08/24/1999 - 10:52:18: Log closed.

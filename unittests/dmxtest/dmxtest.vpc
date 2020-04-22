@@ -1,0 +1,57 @@
+//-----------------------------------------------------------------------------
+//	DMXTEST.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin\unittests"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,$SRCDIR\game\shared,$SRCDIR\utils\common"
+		$PreprocessorDefinitions			"$BASE;DMXTEST_EXPORTS"
+	}
+}
+
+$Project "Dmxtest"
+{
+	$Folder	"Source Files"
+	{
+		$File	"$SRCDIR\movieobjects\dmx_to_vcd.cpp"
+		$File	"dmxtest.cpp"
+		$File	"dmxtest_dmeloglayers.cpp"
+		$File	"dmxtest_vcdtodme.cpp"
+		$File	"dmxtestarray.cpp"
+		$File	"dmxtestdmelog.cpp"
+		$File	"dmxtestloader.cpp"
+		$File	"dmxtestnotify.cpp"
+		$File	"dmxtestserialization.cpp"
+		$File	"dmxtestundoredo.cpp"
+		$File	"$SRCDIR\public\interpolatortypes.cpp"
+		$File	"$SRCDIR\public\movieobjects\movieobjects.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\public\movieobjects\dmx_to_vcd.h"
+		$File	"$SRCDIR\public\interpolatortypes.h"
+	}
+
+	$Folder "Link Libraries"
+	{
+		$Lib datamodel
+		$Lib choreoobjects
+		$Lib dmserializers
+		$Lib mathlib
+		$Lib dmxloader
+		$Lib movieobjects
+		$Lib tier2
+		$Lib tier3
+		$Lib unitlib
+	}
+}

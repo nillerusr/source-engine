@@ -1,0 +1,51 @@
+//-----------------------------------------------------------------------------
+//	protobuf_include.vpc
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$MacroRequired "PLATFORM"
+
+$Project
+{
+	$Folder "Link Libraries" [!$VS2015]
+	{
+		$Libexternal $SRCDIR\thirdparty\protobuf-2.6.1\bin\osx32\libc++\libprotobuf [$OSX32]
+		$Libexternal $SRCDIR\thirdparty\protobuf-2.6.1\bin\win32\2013\staticcrt\release\libprotobuf [$WIN32]
+		$Libexternal $SRCDIR\thirdparty\protobuf-2.6.1\bin\linux32\libprotobuf [$LINUX32]
+	}
+
+	$Folder "Link Libraries" [$WIN64&&!$VS2015]
+	{
+		$File "$SRCDIR\thirdparty\protobuf-2.6.1\bin\win64\2013\staticcrt\release\libprotobuf.lib"
+		{
+			$Configuration "Debug" 	{ $ExcludedFromBuild "Yes" }
+		}
+		$File "$SRCDIR\thirdparty\protobuf-2.6.1\bin\win64\2013\staticcrt\debug\libprotobuf.lib"
+		{
+			$Configuration "Release" { $ExcludedFromBuild "Yes" }
+		}
+	}
+
+	$Folder "Link Libraries" [$VS2015]
+	{
+		$File "$SRCDIR\thirdparty\protobuf-2.6.1\bin\win32\2015\staticcrt\release\libprotobuf.lib" [$WIN32]
+		{
+			$Configuration "Debug" 	{ $ExcludedFromBuild "Yes" }
+		}
+		$File "$SRCDIR\thirdparty\protobuf-2.6.1\bin\win32\2015\staticcrt\debug\libprotobuf.lib" [$WIN32]
+		{
+			$Configuration "Release" { $ExcludedFromBuild "Yes" }
+		}
+		
+		$File "$SRCDIR\thirdparty\protobuf-2.6.1\bin\win64\2015\staticcrt\release\libprotobuf.lib" [$WIN64]
+		{
+			$Configuration "Debug" 	{ $ExcludedFromBuild "Yes" }
+		}
+		$File "$SRCDIR\thirdparty\protobuf-2.6.1\bin\win64\2015\staticcrt\debug\libprotobuf.lib" [$WIN64]
+		{
+			$Configuration "Release" { $ExcludedFromBuild "Yes" }
+		}
+	}
+}
+

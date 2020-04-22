@@ -1,0 +1,183 @@
+L 08/24/1999 - 19:39:53: Log file started.
+L 08/24/1999 - 19:39:53: Spawning server "2fort"
+L 08/24/1999 - 19:39:53: server cvars start
+L 08/24/1999 - 19:39:53: "cr_random" = "0"
+L 08/24/1999 - 19:39:53: "cr_engineer" = "0"
+L 08/24/1999 - 19:39:53: "cr_spy" = "0"
+L 08/24/1999 - 19:39:53: "cr_pyro" = "0"
+L 08/24/1999 - 19:39:53: "cr_hwguy" = "0"
+L 08/24/1999 - 19:39:53: "cr_medic" = "0"
+L 08/24/1999 - 19:39:53: "cr_demoman" = "0"
+L 08/24/1999 - 19:39:53: "cr_soldier" = "0"
+L 08/24/1999 - 19:39:53: "cr_sniper" = "0"
+L 08/24/1999 - 19:39:53: "cr_scout" = "0"
+L 08/24/1999 - 19:39:53: "decalfrequency" = "30"
+L 08/24/1999 - 19:39:53: "mp_autocrosshair" = "1"
+L 08/24/1999 - 19:39:53: "mp_flashlight" = "0"
+L 08/24/1999 - 19:39:53: "mp_footsteps" = "1"
+L 08/24/1999 - 19:39:53: "mp_forcerespawn" = "1"
+L 08/24/1999 - 19:39:53: "mp_weaponstay" = "0"
+L 08/24/1999 - 19:39:53: "mp_falldamage" = "0"
+L 08/24/1999 - 19:39:53: "mp_friendlyfire" = "0"
+L 08/24/1999 - 19:39:53: "mp_timelimit" = "30"
+L 08/24/1999 - 19:39:53: "mp_fraglimit" = "0"
+L 08/24/1999 - 19:39:53: "mp_teamplay" = "21"
+L 08/24/1999 - 19:39:53: "tfc_balance_scores" = "1.0"
+L 08/24/1999 - 19:39:53: "tfc_balance_teams" = "1.0"
+L 08/24/1999 - 19:39:53: "tfc_adminpwd" = ""
+L 08/24/1999 - 19:39:53: "tfc_clanbattle_locked" = "0.0"
+L 08/24/1999 - 19:39:53: "tfc_clanbattle" = "0.0"
+L 08/24/1999 - 19:39:53: "tfc_respawndelay" = "0.0"
+L 08/24/1999 - 19:39:53: "tfc_autoteam" = "1"
+L 08/24/1999 - 19:39:53: "sv_maxrate" = "0"
+L 08/24/1999 - 19:39:53: "sv_minrate" = "0"
+L 08/24/1999 - 19:39:53: "sv_allowupload" = "1"
+L 08/24/1999 - 19:39:53: "sv_allowdownload" = "1"
+L 08/24/1999 - 19:39:53: "sv_upload_maxsize" = "0"
+L 08/24/1999 - 19:39:53: "sv_spectatormaxspeed" = "500"
+L 08/24/1999 - 19:39:53: "sv_spectalk" = "1"
+L 08/24/1999 - 19:39:53: "sv_maxspectators" = "8"
+L 08/24/1999 - 19:39:53: "sv_cheats" = "0"
+L 08/24/1999 - 19:39:53: "sv_clienttrace" = "3.5"
+L 08/24/1999 - 19:39:53: "sv_timeout" = "65"
+L 08/24/1999 - 19:39:53: "sv_waterfriction" = "1"
+L 08/24/1999 - 19:39:53: "sv_wateraccelerate" = "10"
+L 08/24/1999 - 19:39:53: "sv_airaccelerate" = "10"
+L 08/24/1999 - 19:39:53: "sv_airmove" = "1"
+L 08/24/1999 - 19:39:53: "sv_bounce" = "1"
+L 08/24/1999 - 19:39:53: "sv_clipmode" = "0"
+L 08/24/1999 - 19:39:53: "sv_stepsize" = "18"
+L 08/24/1999 - 19:39:53: "sv_accelerate" = "10"
+L 08/24/1999 - 19:39:53: "sv_maxspeed" = "500.000000"
+L 08/24/1999 - 19:39:53: "sv_stopspeed" = "100"
+L 08/24/1999 - 19:39:53: "edgefriction" = "2"
+L 08/24/1999 - 19:39:53: "sv_friction" = "4"
+L 08/24/1999 - 19:39:53: "sv_gravity" = "800"
+L 08/24/1999 - 19:39:53: "sv_aim" = "0"
+L 08/24/1999 - 19:39:53: "sv_password" = ""
+L 08/24/1999 - 19:39:53: "pausable" = "0"
+L 08/24/1999 - 19:39:53: "coop" = "0"
+L 08/24/1999 - 19:39:53: "deathmatch" = "1"
+L 08/24/1999 - 19:39:53: "mp_logecho" = "1"
+L 08/24/1999 - 19:39:53: "mp_logfile" = "1"
+L 08/24/1999 - 19:39:53: "cmdline" = "0"
+L 08/24/1999 - 19:39:53: server cvars end
+L 08/24/1999 - 19:39:55: Map CRC "-652696221"
+L 08/24/1999 - 19:39:55: "sv_maxspeed" = "500"
+L 08/24/1999 - 19:39:55: Server name is "VALVe Test Server"
+L 08/24/1999 - 19:39:55: "sv_maxspeed" = "500.000000"
+L 08/24/1999 - 19:54:14: "Player<164><WON:122249>" connected, address "128.54.128.159:27005"
+L 08/24/1999 - 19:54:23: "Player<164><WON:122249>" has entered the game
+L 08/24/1999 - 19:54:41: "Player<164>" joined team "1".
+L 08/24/1999 - 19:54:49: "Player<164>" disconnected
+L 08/24/1999 - 20:00:00: "[T.O.]Sarge<165><WON:2814359>" connected, address "209.244.80.205:27005"
+L 08/24/1999 - 20:00:27: "[T.O.]Sarge<165><WON:2814359>" has entered the game
+L 08/24/1999 - 20:00:31: "[T.O.]Sarge<165>" joined team "1".
+L 08/24/1999 - 20:00:37: "[T.O.]Sarge<165>" changed class to "HWGuy"
+L 08/24/1999 - 20:00:37: "[T.O.]Sarge<165>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 20:02:19: "BlowME<166><WON:58759>" connected, address "153.37.205.46:27005"
+L 08/24/1999 - 20:02:29: "BlowME<166><WON:58759>" has entered the game
+L 08/24/1999 - 20:02:35: "[T.O.]Sarge<165>" say "yo man"
+L 08/24/1999 - 20:02:38: "[t.o.]morbis<167><WON:2814359>" connected, address "151.197.117.37:27005"
+L 08/24/1999 - 20:02:40: "[t.o.]morbis<168><WON:2814359>" connected, address "151.197.117.37:27005"
+L 08/24/1999 - 20:02:40: "BlowME<166>" joined team "2".
+L 08/24/1999 - 20:02:46: "BlowME<166>" changed class to "Sniper"
+L 08/24/1999 - 20:02:46: "BlowME<166>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 20:02:52: "BlowME<166>" changed to team "1".
+L 08/24/1999 - 20:02:52: "BlowME<166>" killed self with "world"
+L 08/24/1999 - 20:02:52: "[T.O.]Sarge<165>" say "the rest of my guys will be here soon so dont start playin yet"
+L 08/24/1999 - 20:02:58: "BlowME<166>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 20:03:02: "BlowME<166>" changed class to "Soldier"
+L 08/24/1999 - 20:03:02: "BlowME<166>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 20:03:06: "LINV8K [FFG]<169><WON:576299>" connected, address "153.37.88.11:27005"
+L 08/24/1999 - 20:03:12: "[t.o.]morbis<170><WON:2814359>" connected, address "151.197.117.37:27005"
+L 08/24/1999 - 20:03:18: "[t.o.]morbis<171><WON:2814359>" connected, address "151.197.117.37:27005"
+L 08/24/1999 - 20:03:25: "LINV8K [FFG]<169><WON:576299>" has entered the game
+L 08/24/1999 - 20:03:25: "LINV8K [FFG]<169>" joined team "2".
+L 08/24/1999 - 20:03:34: "[T.O.]Sarge<165>" say "dont play yet"
+L 08/24/1999 - 20:03:40: "[T.O.]Sarge<165>" say "T.O. will be here soon"
+L 08/24/1999 - 20:03:45: "[t.o.]morbis<172><WON:2814359>" connected, address "151.197.117.37:27005"
+L 08/24/1999 - 20:03:50: "[T.O.]Sarge<165>" say "then we cna ge t a real game goin"
+L 08/24/1999 - 20:04:00: "BlowME<166>" say_team "ok"
+L 08/24/1999 - 20:04:07: "[t.o.]morbis<172><WON:2814359>" has entered the game
+L 08/24/1999 - 20:04:08: "LINV8K [FFG]<169>" changed class to "Sniper"
+L 08/24/1999 - 20:04:08: "LINV8K [FFG]<169>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 20:04:11: "[t.o.]morbis<172>" joined team "2".
+L 08/24/1999 - 20:04:17: "[t.o.]morbis<172>" changed class to "Demoman"
+L 08/24/1999 - 20:04:17: "[t.o.]morbis<172>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 20:04:18: "[T.O.]Sarge<165>" say "ok shall we begin?"
+L 08/24/1999 - 20:04:25: "[T.O.]Sarge<165>" say "or wait for other guys?"
+L 08/24/1999 - 20:04:43: "BlowME<166>" say "we begin"
+L 08/24/1999 - 20:04:44: "[T.O.]Sarge<165>" say "i guess we begin!"
+L 08/24/1999 - 20:04:44: "BlowME<166>" activated the goal "Red Flag"
+L 08/24/1999 - 20:04:48: "[T.O.]Tempest<173><WON:1442609>" connected, address "209.244.82.153:27005"
+L 08/24/1999 - 20:04:48: "[t.o.]morbis<172>" say "yay i still shoot presents"
+L 08/24/1999 - 20:04:53: "LINV8K [FFG]<169>" changed class to "Demoman"
+L 08/24/1999 - 20:04:59: "LINV8K [FFG]<169>" killed "BlowME<166>" with "sniperrifle"
+L 08/24/1999 - 20:05:04: "BlowME<166>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 20:05:24: "LINV8K [FFG]<169>" killed "[T.O.]Sarge<165>" with "sniperrifle"
+L 08/24/1999 - 20:05:27: "[T.O.]Sarge<165>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 20:05:29: "[T.O.]Tempest<173><WON:1442609>" has entered the game
+L 08/24/1999 - 20:05:31: "[T.O.]Tempest<173>" joined team "1".
+L 08/24/1999 - 20:05:39: "LINV8K [FFG]<169>" killed "BlowME<166>" with "sniperrifle"
+L 08/24/1999 - 20:05:46: "[T.O.]Tempest<173>" say "heyheyhey"
+L 08/24/1999 - 20:05:46: "BlowME<166>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 20:05:48: "[T.O.]Sarge<165>" say "da the T.O. spray paint went away"
+L 08/24/1999 - 20:06:07: "[T.O.]Tempest<173>" changed class to "Pyro"
+L 08/24/1999 - 20:06:07: "[T.O.]Tempest<173>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 20:06:14: "Poltergeist<174><WON:460019>" connected, address "24.64.33.170:27005"
+L 08/24/1999 - 20:06:21: "Poltergeist<174><WON:460019>" has entered the game
+L 08/24/1999 - 20:06:25: "[T.O.]Sarge<165>" killed "[t.o.]morbis<172>" with "normalgrenade"
+L 08/24/1999 - 20:06:27: "Poltergeist<174>" joined team "2".
+L 08/24/1999 - 20:06:28: "[t.o.]morbis<172>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 20:06:30: "[t.o.]morbis<172>" killed "[T.O.]Sarge<165>" with "mirvgrenade"
+L 08/24/1999 - 20:06:31: "Poltergeist<174>" changed class to "Engineer"
+L 08/24/1999 - 20:06:31: "Poltergeist<174>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 20:06:32: "[T.O.]Sarge<165>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 20:06:33: "[t.o.]morbis<172>" say "ol death to potatoes"
+L 08/24/1999 - 20:06:37: "[T.O.]Sarge<165>" say "your my bitch"
+L 08/24/1999 - 20:06:41: "[T.O.]Sarge<165>" say "your my bitch"
+L 08/24/1999 - 20:06:41: "[T.O.]Sarge<165>" say "your my bitch"
+L 08/24/1999 - 20:06:50: "BlowME<166>" say_team "whats up this dice thing"
+L 08/24/1999 - 20:06:59: "[T.O.]Sarge<165>" say "those arepresents"
+L 08/24/1999 - 20:06:59: "Poltergeist<174>" built a "sentry".
+L 08/24/1999 - 20:07:13: "[T.O.]Sarge<165>" say "its team fortress's third b-day today"
+L 08/24/1999 - 20:07:46: "LINV8K [FFG]<169>" killed "BlowME<166>" with "sniperrifle"
+L 08/24/1999 - 20:08:01: "DIV_ZATAN<175><WON:3143069>" connected, address "24.65.21.50:27005"
+L 08/24/1999 - 20:08:16: "DIV_ZATAN<175><WON:3143069>" has entered the game
+L 08/24/1999 - 20:08:17: "BlowME<166>" disconnected
+L 08/24/1999 - 20:08:21: "DIV_ZATAN<175>" joined team "1".
+L 08/24/1999 - 20:08:25: "[T.O.]Sarge<165>" killed "Poltergeist<174>" with "ac"
+L 08/24/1999 - 20:08:26: "Poltergeist<174>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 20:08:27: "tonysan<176><WON:714889>" connected, address "206.173.133.32:27005"
+L 08/24/1999 - 20:08:28: "[T.O.]Tempest<173>" say "ive been shot"
+L 08/24/1999 - 20:08:35: "LINV8K [FFG]<169>" killed "[T.O.]Sarge<165>" with "sniperrifle"
+L 08/24/1999 - 20:08:35: "DIV_ZATAN<175>" changed class to "Soldier"
+L 08/24/1999 - 20:08:35: "DIV_ZATAN<175>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 20:08:39: "[T.O.]Sarge<165>" destroyed "Poltergeist<174>"'s "sentry".
+L 08/24/1999 - 20:08:39: "[T.O.]Sarge<165>" destroyed "Poltergeist<174>"'s "sentry".
+L 08/24/1999 - 20:08:44: "[T.O.]Sarge<165>" changed class to "Spy"
+L 08/24/1999 - 20:08:45: "[t.o.]morbis<172>" say "damn just as i was about to blow him up(the ass...j/k)"
+L 08/24/1999 - 20:08:51: "tonysan<176><WON:714889>" has entered the game
+L 08/24/1999 - 20:08:56: "tonysan<176>" joined team "1".
+L 08/24/1999 - 20:08:57: "LINV8K [FFG]<169>" killed "[T.O.]Tempest<173>" with "sniperrifle"
+L 08/24/1999 - 20:09:02: "tonysan<176>" changed class to "Engineer"
+L 08/24/1999 - 20:09:02: "tonysan<176>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 20:09:05: "[T.O.]Sarge<165>" changed class to "Engineer"
+L 08/24/1999 - 20:09:06: "[T.O.]Sarge<165>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 20:09:08: "Poltergeist<174>" built a "sentry".
+L 08/24/1999 - 20:09:08: "[T.O.]Tempest<173>" say "where u come from"
+L 08/24/1999 - 20:09:13: "DIV_ZATAN<175>" activated the goal "Red Flag"
+L 08/24/1999 - 20:09:25: "[T.O.]Tempest<173>" changed class to "Spy"
+L 08/24/1999 - 20:09:26: "[T.O.]Sarge<165>" built a "sentry".
+L 08/24/1999 - 20:09:27: "[T.O.]Tempest<173>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 20:09:28: "[t.o.]morbis<172>" killed "[T.O.]Sarge<165>" with "gl_grenade"
+L 08/24/1999 - 20:09:29: "[t.o.]morbis<172>" destroyed "[T.O.]Sarge<165>"'s "sentry".
+L 08/24/1999 - 20:09:33: "[T.O.]Sarge<165>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 20:09:42: "[T.O.]Sarge<165>" say "tim you queer ball"
+L 08/24/1999 - 20:09:44: "[T.O.]Sarge<165>" changed class to "Scout"
+L 08/24/1999 - 20:09:46: =------= MATCH RESULTS =------=
+L 08/24/1999 - 20:09:46: -> DRAW <-
+L 08/24/1999 - 20:09:46: "blue" RESULTS: "4" players. "2" frags, "4" unaccounted for. "0" team score. Allies:
+L 08/24/1999 - 20:09:46: "red" RESULTS: "3" players. "7" frags, "3" unaccounted for. "0" team score. Allies:
+L 08/24/1999 - 20:09:52: Log closed.

@@ -1,0 +1,168 @@
+create database gamestats_ep2;
+use gamestats_ep2;
+
+create table ep2
+(
+	UserID						CHAR(16),
+	PRIMARY KEY( UserID ),
+	LastUpdate					DATETIME,
+	KEY( LastUpdate ),
+	Version						TINYINT,
+	Tag							CHAR(8),
+	KEY( Tag ),
+	Count						INT,
+	Seconds						INT,
+	HDR						INT,
+	Captions					INT,
+	Commentary					INT,
+	Easy						INT,
+	Medium						INT,
+	Hard						INT,
+	nonsteam					TINYINT,
+	cybercafe					TINYINT,
+	hl2_chapter					TINYINT,
+	SecondsToCompleteGame		INT,  # Non-zero if user has completed game
+	HighestMap					CHAR(20),
+	DXLevel						INT,
+	Deaths						INT
+) TYPE=MyISAM;
+
+create table ep2_maps
+(
+	UserID						CHAR(16),
+	MapName						CHAR(20),
+	PRIMARY KEY( UserID,MapName ),
+	LastUpdate					DATETIME,
+	KEY( LastUpdate ),
+	Version						TINYINT,
+	Tag							CHAR(8),
+	KEY( Tag ),
+	Count						INT,
+	Seconds						INT,
+	HDR							INT,
+	Captions					INT,
+	Commentary					INT,
+	Easy						INT,
+	Medium						INT,
+	Hard						INT,
+	nonsteam					TINYINT,
+	cybercafe					TINYINT,
+	Deaths						INT
+) TYPE=MyISAM;
+
+create table ep2_entities
+(
+	UserID						CHAR(16),
+	Tag							CHAR(8),
+	KEY( Tag ),
+	MapName						CHAR(20),
+	MapVersion					INT,
+	KEY( MapVersion ),
+	Entity						CHAR(32),
+	PRIMARY KEY( UserID,Tag,MapName,Entity ),
+	LastUpdate					DATETIME,
+	KEY( LastUpdate ),
+	BodyCount					INT,
+	KilledPlayer				INT
+) TYPE=MyISAM;
+
+create table ep2_deaths
+(
+	UserID						CHAR(16),
+	Tag							CHAR(8),
+	KEY( Tag ),
+	MapName						CHAR(20),
+	MapVersion					INT,
+	KEY( MapVersion ),
+	LastUpdate					DATETIME,
+	KEY( LastUpdate ),
+	DeathIndex					INT,
+	X							SMALLINT,
+	Y							SMALLINT,
+	Z							SMALLINT,
+	PRIMARY KEY ( UserID, Tag, MapName, X, Y, Z )
+) TYPE=MyISAM;
+
+create table ep2_weapons
+(
+	UserID						CHAR(16),
+	Tag							CHAR(8),
+	KEY( Tag ),
+	MapName						CHAR(20),
+	MapVersion					INT,
+	KEY( MapVersion ),
+	Weapon						CHAR(32),
+	PRIMARY KEY( UserID,Tag, MapName,Weapon ),
+	LastUpdate					DATETIME,
+	KEY( LastUpdate ),
+	Shots						INT,
+	Hits						INT,
+	Damage						DOUBLE
+) TYPE=MyISAM;
+
+create table ep2_saves
+(
+	UserID						CHAR(16),
+	Tag							CHAR(8),
+	KEY( Tag ),
+	MapName						CHAR(20),
+	MapVersion					INT,
+	KEY( MapVersion ),
+	LastUpdate					DATETIME,
+	KEY( LastUpdate ),
+	FIRSTDEATH					INT,  # index into ep2_deaths
+	NUMDEATHS					INT, 
+	X							SMALLINT,
+	Y							SMALLINT,
+	Z							SMALLINT,
+	HEALTH						SMALLINT,
+	SAVETYPE					TINYINT, # 0 unknown, 1 autosave, 2 user save (quick or other)
+	PRIMARY KEY( UseriD, Tag, MapName, FirstDeath, NumDeaths )
+) TYPE=MyISAM;
+
+create table ep2_counters
+(
+	UserID						CHAR(16),
+	Tag							CHAR(8),
+	KEY( Tag ),
+	MapName						CHAR(20),
+	MapVersion					INT,
+	KEY( MapVersion ),
+	PRIMARY KEY( UserID,Tag,MapName ),
+	LastUpdate					DATETIME,
+	KEY( LastUpdate ),
+	CRATESSMASHED				INT,
+	OBJECTSPUNTED				INT,
+	VEHICULARHOMICIDES			INT,
+	DISTANCE_INVEHICLE			BIGINT,
+	DISTANCE_ONFOOT				BIGINT,
+	DISTANCE_ONFOOTSPRINTING	BIGINT,
+	FALLINGDEATHS				INT,
+	VEHICLE_OVERTURNED			INT,
+	LOADGAME_STILLALIVE			INT,
+	LOADS						INT,
+	SAVES						INT,
+	GODMODES					INT,
+	NOCLIPS						INT,
+	
+	DAMAGETAKEN					DOUBLE
+) TYPE=MyISAM;
+
+create table ep2_generic
+(
+	UserID						CHAR(16),
+	Tag						CHAR(8),
+	KEY( Tag ),
+	MapName						CHAR(20),
+	MapVersion					INT,
+	KEY( MapVersion ),
+	StatName					CHAR(16),
+	PRIMARY KEY( UserID,Tag, MapName,StatName ),
+	LastUpdate					DATETIME,
+	KEY( LastUpdate ),
+	Count						INT,
+	Value						DOUBLE,
+	X						SMALLINT,
+	Y						SMALLINT,
+	Z						SMALLINT
+) TYPE=MyISAM;

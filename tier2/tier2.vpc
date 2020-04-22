@@ -1,0 +1,58 @@
+//-----------------------------------------------------------------------------
+//	TIER2.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$macro SRCDIR		".."
+
+$include "$SRCDIR\vpc_scripts\source_lib_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\public\tier2"
+	}
+}
+
+$Project "tier2"
+{
+	$Folder	"Source Files"
+	{
+		$File	"beamsegdraw.cpp"
+		$File	"defaultfilesystem.cpp"
+		$File	"dmconnect.cpp"
+		$file	"fileutils.cpp"
+		$File	"keybindings.cpp"
+		$File	"$SRCDIR\public\map_utils.cpp"
+		$File	"$SRCDIR\public\materialsystem\MaterialSystemUtil.cpp"
+		$File	"camerautils.cpp"
+		$File	"meshutils.cpp"
+		$File	"p4helpers.cpp"
+		$File	"renderutils.cpp"
+		$File	"riff.cpp"
+		$File	"soundutils.cpp"
+		$File	"tier2.cpp"
+		$File	"util_init.cpp"
+		$File	"utlstreambuffer.cpp"
+		$File	"vconfig.cpp"
+		$File	"keyvaluesmacros.cpp"
+	}
+
+	$Folder	"Public Header Files"
+	{
+		$File	"$SRCDIR\public\tier2\beamsegdraw.h"
+		$File	"$SRCDIR\public\tier2\fileutils.h"
+		$File	"$SRCDIR\public\tier2\camerautils.h"
+		$File	"$SRCDIR\public\tier2\meshutils.h"
+		$File	"$SRCDIR\public\tier2\keybindings.h"
+		$File	"$SRCDIR\public\tier2\renderutils.h"
+		$File	"$SRCDIR\public\tier2\riff.h"
+		$File	"$SRCDIR\public\tier2\soundutils.h"
+		$File	"$SRCDIR\public\tier2\tier2.h"
+		$File	"$SRCDIR\public\tier2\utlstreambuffer.h"
+		$File	"$SRCDIR\public\tier2\vconfig.h"
+		$File	"$SRCDIR\public\tier2\keyvaluesmacros.h"
+	}
+}

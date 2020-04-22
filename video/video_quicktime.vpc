@@ -1,0 +1,84 @@
+//-----------------------------------------------------------------------------
+//	video_quicktime.vpc
+//
+//	Project Script
+//  Created by: 		Matt Pritchard
+//
+//  Description:		Quicktime video sub-system (for video services system)
+// 
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		".."
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		// Win32 - need to point to Quicktime 7 for Win SDK directory so that dependant includes will work
+		$AdditionalIncludeDirectories	"$BASE,..\common\quicktime_win32\"		[$WIN32]
+		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\dx9sdk\include"			[$WIN32]
+	}
+	$Linker
+	{
+		$IgnoreImportLibrary				"Yes" [$WIN32]
+		$AdditionalDependencies				"$BASE vfw32.lib" [$WIN32]
+		$SystemLibraries                    "iconv" [$OSXALL]
+		$SystemFrameworks					"Quicktime;Carbon" [$OSXALL]
+		$AdditionalLibraryDirectories		"$BASE;$SRCDIR\dx9sdk\lib"	[$WIN32]
+	}
+}
+
+
+$Configuration  "Debug"
+{
+        $General
+        {
+                $OutputDirectory                        "Debug_Video_Quicktime" [$WINDOWS]
+                $IntermediateDirectory                  "Debug_Video_Quicktime" [$WINDOWS]
+        }
+}
+
+$Configuration  "Release"
+{
+        $General
+        {
+                $OutputDirectory                        "Release_Video_Quicktime" [$WINDOWS]
+                $IntermediateDirectory                  "Release_Video_Quicktime" [$WINDOWS]
+        }
+}
+
+
+$Project "video_quicktime"
+{
+	$Folder	"Source Files"   [$OSXALL||$WIN32]
+	{
+		$file	"quicktime_video.cpp"
+		$file	"quicktime_material.cpp"
+		$file	"quicktime_recorder.cpp"
+	}
+
+	$Folder	"Header Files"   [$OSXALL||$WIN32]
+	{
+		$file   "videosubsystem.h"
+		$file   "video_macros.h"
+		$file	"quicktime_common.h"
+		$file	"quicktime_video.h"
+		$file	"quicktime_material.h"
+		$file   "quicktime_recorder.h"
+		$file	"$SRCDIR\public\pixelwriter.h"
+		
+	}
+
+	$Folder "Link Libraries"
+	{
+		$Lib tier2
+		$File   "$SRCDIR\lib\common\quicktime\QTMLClient.lib"		[$WIN32]
+		$File	"$SRCDIR\DX9SDK\lib\dsound.lib"						[$WIN32]
+		$File	"$SRCDIR\DX9SDK\lib\dxguid.lib"						[$WIN32]
+		
+	}
+}
+

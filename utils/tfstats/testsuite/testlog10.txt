@@ -1,0 +1,539 @@
+L 07/20/1999 - 08:09:58: Log file started.
+L 07/20/1999 - 08:09:58: Spawning server "rock2"
+L 07/20/1999 - 08:09:58: server cvars start
+L 07/20/1999 - 08:09:58: "cr_random" = "0"
+L 07/20/1999 - 08:09:58: "cr_engineer" = "0"
+L 07/20/1999 - 08:09:58: "cr_spy" = "0"
+L 07/20/1999 - 08:09:58: "cr_pyro" = "0"
+L 07/20/1999 - 08:09:58: "cr_hwguy" = "0"
+L 07/20/1999 - 08:09:58: "cr_medic" = "0"
+L 07/20/1999 - 08:09:58: "cr_demoman" = "0"
+L 07/20/1999 - 08:09:58: "cr_soldier" = "0"
+L 07/20/1999 - 08:09:58: "cr_sniper" = "0"
+L 07/20/1999 - 08:09:58: "cr_scout" = "0"
+L 07/20/1999 - 08:09:58: "decalfrequency" = "30"
+L 07/20/1999 - 08:09:58: "mp_autocrosshair" = "1"
+L 07/20/1999 - 08:09:58: "mp_flashlight" = "0"
+L 07/20/1999 - 08:09:58: "mp_footsteps" = "0"
+L 07/20/1999 - 08:09:58: "mp_forcerespawn" = "1"
+L 07/20/1999 - 08:09:58: "mp_weaponstay" = "0"
+L 07/20/1999 - 08:09:58: "mp_falldamage" = "0"
+L 07/20/1999 - 08:09:58: "mp_friendlyfire" = "0"
+L 07/20/1999 - 08:09:58: "mp_timelimit" = "30"
+L 07/20/1999 - 08:09:58: "mp_fraglimit" = "0"
+L 07/20/1999 - 08:09:58: "mp_teamplay" = "21"
+L 07/20/1999 - 08:09:58: "tfc_balance_scores" = "1.0"
+L 07/20/1999 - 08:09:58: "tfc_balance_teams" = "1.0"
+L 07/20/1999 - 08:09:58: "tfc_adminpwd" = ""
+L 07/20/1999 - 08:09:58: "tfc_clanbattle_locked" = "0.0"
+L 07/20/1999 - 08:09:58: "tfc_clanbattle" = "0.0"
+L 07/20/1999 - 08:09:58: "tfc_respawndelay" = "0.0"
+L 07/20/1999 - 08:09:58: "tfc_autoteam" = "0"
+L 07/20/1999 - 08:09:58: "cmdline" = "0"
+L 07/20/1999 - 08:09:58: "mp_logfile" = "1"
+L 07/20/1999 - 08:09:58: "mp_logecho" = "1"
+L 07/20/1999 - 08:09:58: "deathmatch" = "1"
+L 07/20/1999 - 08:09:58: "coop" = "0"
+L 07/20/1999 - 08:09:58: "pausable" = "0"
+L 07/20/1999 - 08:09:58: "sv_sendvelocity" = "1"
+L 07/20/1999 - 08:09:58: "sv_password" = ""
+L 07/20/1999 - 08:09:58: "sv_aim" = "0"
+L 07/20/1999 - 08:09:58: "sv_gravity" = "800"
+L 07/20/1999 - 08:09:58: "sv_friction" = "4"
+L 07/20/1999 - 08:09:58: "edgefriction" = "2"
+L 07/20/1999 - 08:09:58: "sv_stopspeed" = "100"
+L 07/20/1999 - 08:09:58: "sv_maxspeed" = "500.000000"
+L 07/20/1999 - 08:09:58: "sv_accelerate" = "10"
+L 07/20/1999 - 08:09:58: "sv_stepsize" = "18"
+L 07/20/1999 - 08:09:58: "sv_clipmode" = "0"
+L 07/20/1999 - 08:09:58: "sv_bounce" = "1"
+L 07/20/1999 - 08:09:58: "sv_airmove" = "1"
+L 07/20/1999 - 08:09:58: "sv_airaccelerate" = "10"
+L 07/20/1999 - 08:09:58: "sv_wateraccelerate" = "10"
+L 07/20/1999 - 08:09:58: "sv_waterfriction" = "1"
+L 07/20/1999 - 08:09:58: "sv_timeout" = "65"
+L 07/20/1999 - 08:09:58: "sv_clienttrace" = "3.5"
+L 07/20/1999 - 08:09:58: "sv_cheats" = "1.000000"
+L 07/20/1999 - 08:09:58: "sv_maxspectators" = "8"
+L 07/20/1999 - 08:09:58: "sv_spectalk" = "1"
+L 07/20/1999 - 08:09:58: "sv_spectatormaxspeed" = "500"
+L 07/20/1999 - 08:09:58: "sv_upload_maxsize" = "0"
+L 07/20/1999 - 08:09:58: "sv_allowdownload" = "1"
+L 07/20/1999 - 08:09:58: "sv_allowupload" = "1"
+L 07/20/1999 - 08:09:58: server cvars end
+L 07/20/1999 - 08:10:06: Map CRC "1246753045"
+L 07/20/1999 - 08:10:06: "sv_maxspeed" = "500"
+L 07/20/1999 - 08:10:06: Server name is "Aesthete"
+L 07/20/1999 - 08:10:06: "sv_maxspeed" = "500.000000"
+L 07/20/1999 - 08:10:10: "Phorritorium<2><WON:4294928345>" has entered the game
+L 07/20/1999 - 08:10:25: "Mr.Smiley<94><WON:4294965262>" has entered the game
+L 07/20/1999 - 08:10:34: "Mr.Smiley<94>" joined team "1".
+L 07/20/1999 - 08:10:36: "Mr.Smiley<94>" changed class to "Scout"
+L 07/20/1999 - 08:10:36: "Mr.Smiley<94>" changed class to "Scout"
+L 07/20/1999 - 08:10:36: "Mr.Smiley<94>" activated the goal "info_player_teamspawn"
+L 07/20/1999 - 08:10:46: "Devil<98><WON:4294903220>" has entered the game
+L 07/20/1999 - 08:10:53: "lonegunman<93><WON:4294902159>" has entered the game
+L 07/20/1999 - 08:11:01: "lonegunman<93>" joined team "2".
+L 07/20/1999 - 08:11:03: "Mr.Smiley<94>" activated the goal "goalitem"
+L 07/20/1999 - 08:11:04: "lonegunman<93>" changed class to "Demoman"
+L 07/20/1999 - 08:11:04: "lonegunman<93>" changed class to "Demoman"
+L 07/20/1999 - 08:11:04: "lonegunman<93>" activated the goal "info_player_teamspawn"
+L 07/20/1999 - 08:11:30: "Mr.Smiley<94>" activated the goal "rhand"
+L 07/20/1999 - 08:11:30: Broadcast: "#rock_blue_scores"
+L 07/20/1999 - 08:11:30: Broadcast: "#rock_blue_scores"
+L 07/20/1999 - 08:11:30: Broadcast: "#rock_blue_scores"
+L 07/20/1999 - 08:11:30: Broadcast: "#rock_blue_scores"
+L 07/20/1999 - 08:11:31: "Mr.Smiley<94>" activated the goal "rblock"
+L 07/20/1999 - 08:11:34: Broadcast: "#rock_gasmask_message"
+L 07/20/1999 - 08:11:34: Broadcast: "#rock_gasmask_message"
+L 07/20/1999 - 08:11:34: Broadcast: "#rock_gasmask_message"
+L 07/20/1999 - 08:11:34: Broadcast: "#rock_gasmask_message"
+L 07/20/1999 - 08:11:36: "Mr.Smiley<94>" activated the goal "brise1"
+L 07/20/1999 - 08:11:36: "Mr.Smiley<94>" activated the goal "brise2"
+L 07/20/1999 - 08:11:40: "Mr.Smiley<94>" activated the goal "brise3"
+L 07/20/1999 - 08:11:43: Broadcast: "5 . . .
+"
+L 07/20/1999 - 08:11:43: Broadcast: "5 . . .
+"
+L 07/20/1999 - 08:11:43: Broadcast: "5 . . .
+"
+L 07/20/1999 - 08:11:43: Broadcast: "5 . . .
+"
+L 07/20/1999 - 08:11:44: Broadcast: "4 . . .
+"
+L 07/20/1999 - 08:11:44: Broadcast: "4 . . .
+"
+L 07/20/1999 - 08:11:44: Broadcast: "4 . . .
+"
+L 07/20/1999 - 08:11:44: Broadcast: "4 . . .
+"
+L 07/20/1999 - 08:11:45: Broadcast: "3 . . .
+"
+L 07/20/1999 - 08:11:45: Broadcast: "3 . . .
+"
+L 07/20/1999 - 08:11:45: Broadcast: "3 . . .
+"
+L 07/20/1999 - 08:11:45: Broadcast: "3 . . .
+"
+L 07/20/1999 - 08:11:46: Broadcast: "2 . . .
+"
+L 07/20/1999 - 08:11:46: Broadcast: "2 . . .
+"
+L 07/20/1999 - 08:11:46: Broadcast: "2 . . .
+"
+L 07/20/1999 - 08:11:46: Broadcast: "2 . . .
+"
+L 07/20/1999 - 08:11:47: Broadcast: "1 . . .
+"
+L 07/20/1999 - 08:11:47: Broadcast: "1 . . .
+"
+L 07/20/1999 - 08:11:47: Broadcast: "1 . . .
+"
+L 07/20/1999 - 08:11:47: Broadcast: "1 . . .
+"
+L 07/20/1999 - 08:11:57: "Mr.Smiley<94>" activated the goal "brise1"
+L 07/20/1999 - 08:11:57: "Mr.Smiley<94>" activated the goal "brise2"
+L 07/20/1999 - 08:11:59: "Mr.Smiley<94>" activated the goal "brise3"
+L 07/20/1999 - 08:12:01: "Mr.Smiley<94>" activated the goal "rblock"
+L 07/20/1999 - 08:12:24: "Mr.Smiley<94>" activated the goal "goalitem"
+L 07/20/1999 - 08:12:29: "lonegunman<93>" activated the goal "bcave1"
+L 07/20/1999 - 08:12:48: "Mr.Smiley<94>" activated the goal "rhand"
+L 07/20/1999 - 08:12:48: Broadcast: "#rock_blue_scores"
+L 07/20/1999 - 08:12:48: Broadcast: "#rock_blue_scores"
+L 07/20/1999 - 08:12:48: Broadcast: "#rock_blue_scores"
+L 07/20/1999 - 08:12:48: Broadcast: "#rock_blue_scores"
+L 07/20/1999 - 08:12:48: "Mr.Smiley<94>" activated the goal "rblock"
+L 07/20/1999 - 08:12:51: Broadcast: "#rock_gasmask_message"
+L 07/20/1999 - 08:12:51: Broadcast: "#rock_gasmask_message"
+L 07/20/1999 - 08:12:51: Broadcast: "#rock_gasmask_message"
+L 07/20/1999 - 08:12:51: Broadcast: "#rock_gasmask_message"
+L 07/20/1999 - 08:12:52: "Mr.Smiley<94>" activated the goal "brise1"
+L 07/20/1999 - 08:12:53: "Mr.Smiley<94>" activated the goal "brise2"
+L 07/20/1999 - 08:12:56: "Mr.Smiley<94>" activated the goal "brise3"
+L 07/20/1999 - 08:12:58: Broadcast: "5 . . .
+"
+L 07/20/1999 - 08:12:58: Broadcast: "5 . . .
+"
+L 07/20/1999 - 08:12:58: Broadcast: "5 . . .
+"
+L 07/20/1999 - 08:12:58: Broadcast: "5 . . .
+"
+L 07/20/1999 - 08:12:59: Broadcast: "4 . . .
+"
+L 07/20/1999 - 08:12:59: Broadcast: "4 . . .
+"
+L 07/20/1999 - 08:12:59: Broadcast: "4 . . .
+"
+L 07/20/1999 - 08:12:59: Broadcast: "4 . . .
+"
+L 07/20/1999 - 08:13:01: Broadcast: "3 . . .
+"
+L 07/20/1999 - 08:13:01: Broadcast: "3 . . .
+"
+L 07/20/1999 - 08:13:01: Broadcast: "3 . . .
+"
+L 07/20/1999 - 08:13:01: Broadcast: "3 . . .
+"
+L 07/20/1999 - 08:13:02: Broadcast: "2 . . .
+"
+L 07/20/1999 - 08:13:02: Broadcast: "2 . . .
+"
+L 07/20/1999 - 08:13:02: Broadcast: "2 . . .
+"
+L 07/20/1999 - 08:13:02: Broadcast: "2 . . .
+"
+L 07/20/1999 - 08:13:03: Broadcast: "1 . . .
+"
+L 07/20/1999 - 08:13:03: Broadcast: "1 . . .
+"
+L 07/20/1999 - 08:13:03: Broadcast: "1 . . .
+"
+L 07/20/1999 - 08:13:03: Broadcast: "1 . . .
+"
+L 07/20/1999 - 08:13:04: "lonegunman<93>" killed by world with "#rock_gas_kill"
+L 07/20/1999 - 08:13:05: "lonegunman<93>" activated the goal "info_player_teamspawn"
+L 07/20/1999 - 08:13:11: "Mr.Smiley<94>" activated the goal "brise1"
+L 07/20/1999 - 08:13:12: "Mr.Smiley<94>" activated the goal "brise2"
+L 07/20/1999 - 08:13:14: "Mr.Smiley<94>" activated the goal "brise3"
+L 07/20/1999 - 08:13:16: "Mr.Smiley<94>" activated the goal "rblock"
+L 07/20/1999 - 08:13:47: "Mr.Smiley<94>" activated the goal "goalitem"
+L 07/20/1999 - 08:13:48: "lonegunman<93>" killed "Mr.Smiley<94>" with "pipebomb"
+L 07/20/1999 - 08:13:51: "Mr.Smiley<94>" activated the goal "info_player_teamspawn"
+L 07/20/1999 - 08:14:29: "Mr.Smiley<94>" activated the goal "goalitem"
+L 07/20/1999 - 08:14:54: "Mr.Smiley<94>" activated the goal "rhand"
+L 07/20/1999 - 08:14:54: Broadcast: "#rock_blue_scores"
+L 07/20/1999 - 08:14:54: Broadcast: "#rock_blue_scores"
+L 07/20/1999 - 08:14:54: Broadcast: "#rock_blue_scores"
+L 07/20/1999 - 08:14:54: Broadcast: "#rock_blue_scores"
+L 07/20/1999 - 08:14:54: "Mr.Smiley<94>" activated the goal "rblock"
+L 07/20/1999 - 08:14:57: Broadcast: "#rock_gasmask_message"
+L 07/20/1999 - 08:14:57: Broadcast: "#rock_gasmask_message"
+L 07/20/1999 - 08:14:57: Broadcast: "#rock_gasmask_message"
+L 07/20/1999 - 08:14:57: Broadcast: "#rock_gasmask_message"
+L 07/20/1999 - 08:14:58: "Mr.Smiley<94>" activated the goal "brise1"
+L 07/20/1999 - 08:14:59: "Mr.Smiley<94>" activated the goal "brise2"
+L 07/20/1999 - 08:15:02: "Mr.Smiley<94>" activated the goal "brise3"
+L 07/20/1999 - 08:15:05: Broadcast: "5 . . .
+"
+L 07/20/1999 - 08:15:05: Broadcast: "5 . . .
+"
+L 07/20/1999 - 08:15:05: Broadcast: "5 . . .
+"
+L 07/20/1999 - 08:15:05: Broadcast: "5 . . .
+"
+L 07/20/1999 - 08:15:06: Broadcast: "4 . . .
+"
+L 07/20/1999 - 08:15:06: Broadcast: "4 . . .
+"
+L 07/20/1999 - 08:15:06: Broadcast: "4 . . .
+"
+L 07/20/1999 - 08:15:06: Broadcast: "4 . . .
+"
+L 07/20/1999 - 08:15:07: Broadcast: "3 . . .
+"
+L 07/20/1999 - 08:15:07: Broadcast: "3 . . .
+"
+L 07/20/1999 - 08:15:07: Broadcast: "3 . . .
+"
+L 07/20/1999 - 08:15:07: Broadcast: "3 . . .
+"
+L 07/20/1999 - 08:15:08: Broadcast: "2 . . .
+"
+L 07/20/1999 - 08:15:08: Broadcast: "2 . . .
+"
+L 07/20/1999 - 08:15:08: Broadcast: "2 . . .
+"
+L 07/20/1999 - 08:15:08: Broadcast: "2 . . .
+"
+L 07/20/1999 - 08:15:09: Broadcast: "1 . . .
+"
+L 07/20/1999 - 08:15:09: Broadcast: "1 . . .
+"
+L 07/20/1999 - 08:15:09: Broadcast: "1 . . .
+"
+L 07/20/1999 - 08:15:09: Broadcast: "1 . . .
+"
+L 07/20/1999 - 08:15:18: "Mr.Smiley<94>" activated the goal "brise1"
+L 07/20/1999 - 08:15:18: "Mr.Smiley<94>" activated the goal "brise2"
+L 07/20/1999 - 08:15:20: "Mr.Smiley<94>" activated the goal "brise3"
+L 07/20/1999 - 08:15:22: "Mr.Smiley<94>" activated the goal "rblock"
+L 07/20/1999 - 08:15:46: "Mr.Smiley<94>" activated the goal "goalitem"
+L 07/20/1999 - 08:16:16: "Mr.Smiley<94>" activated the goal "rhand"
+L 07/20/1999 - 08:16:16: Broadcast: "#rock_blue_scores"
+L 07/20/1999 - 08:16:16: Broadcast: "#rock_blue_scores"
+L 07/20/1999 - 08:16:16: Broadcast: "#rock_blue_scores"
+L 07/20/1999 - 08:16:16: Broadcast: "#rock_blue_scores"
+L 07/20/1999 - 08:16:17: "Mr.Smiley<94>" activated the goal "rblock"
+L 07/20/1999 - 08:16:19: Broadcast: "#rock_gasmask_message"
+L 07/20/1999 - 08:16:19: Broadcast: "#rock_gasmask_message"
+L 07/20/1999 - 08:16:19: Broadcast: "#rock_gasmask_message"
+L 07/20/1999 - 08:16:19: Broadcast: "#rock_gasmask_message"
+L 07/20/1999 - 08:16:20: "Mr.Smiley<94>" activated the goal "brise1"
+L 07/20/1999 - 08:16:21: "Mr.Smiley<94>" activated the goal "brise2"
+L 07/20/1999 - 08:16:24: "Mr.Smiley<94>" activated the goal "brise3"
+L 07/20/1999 - 08:16:27: Broadcast: "5 . . .
+"
+L 07/20/1999 - 08:16:27: Broadcast: "5 . . .
+"
+L 07/20/1999 - 08:16:27: Broadcast: "5 . . .
+"
+L 07/20/1999 - 08:16:27: Broadcast: "5 . . .
+"
+L 07/20/1999 - 08:16:28: Broadcast: "4 . . .
+"
+L 07/20/1999 - 08:16:28: Broadcast: "4 . . .
+"
+L 07/20/1999 - 08:16:28: Broadcast: "4 . . .
+"
+L 07/20/1999 - 08:16:28: Broadcast: "4 . . .
+"
+L 07/20/1999 - 08:16:29: Broadcast: "3 . . .
+"
+L 07/20/1999 - 08:16:29: Broadcast: "3 . . .
+"
+L 07/20/1999 - 08:16:29: Broadcast: "3 . . .
+"
+L 07/20/1999 - 08:16:29: Broadcast: "3 . . .
+"
+L 07/20/1999 - 08:16:30: Broadcast: "2 . . .
+"
+L 07/20/1999 - 08:16:30: Broadcast: "2 . . .
+"
+L 07/20/1999 - 08:16:30: Broadcast: "2 . . .
+"
+L 07/20/1999 - 08:16:30: Broadcast: "2 . . .
+"
+L 07/20/1999 - 08:16:31: Broadcast: "1 . . .
+"
+L 07/20/1999 - 08:16:31: Broadcast: "1 . . .
+"
+L 07/20/1999 - 08:16:31: Broadcast: "1 . . .
+"
+L 07/20/1999 - 08:16:31: Broadcast: "1 . . .
+"
+L 07/20/1999 - 08:16:33: "lonegunman<93>" killed by world with "info_tfgoal"
+L 07/20/1999 - 08:16:34: "lonegunman<93>" activated the goal "info_player_teamspawn"
+L 07/20/1999 - 08:16:40: "Mr.Smiley<94>" activated the goal "brise1"
+L 07/20/1999 - 08:16:41: "Mr.Smiley<94>" activated the goal "brise2"
+L 07/20/1999 - 08:16:43: "Mr.Smiley<94>" activated the goal "brise3"
+L 07/20/1999 - 08:16:44: "Mr.Smiley<94>" activated the goal "rblock"
+L 07/20/1999 - 08:17:10: "Mr.Smiley<94>" activated the goal "goalitem"
+L 07/20/1999 - 08:17:37: "Mr.Smiley<94>" activated the goal "rhand"
+L 07/20/1999 - 08:17:37: Broadcast: "#rock_blue_scores"
+L 07/20/1999 - 08:17:37: Broadcast: "#rock_blue_scores"
+L 07/20/1999 - 08:17:37: Broadcast: "#rock_blue_scores"
+L 07/20/1999 - 08:17:37: Broadcast: "#rock_blue_scores"
+L 07/20/1999 - 08:17:37: "Mr.Smiley<94>" activated the goal "rblock"
+L 07/20/1999 - 08:17:40: Broadcast: "#rock_gasmask_message"
+L 07/20/1999 - 08:17:40: Broadcast: "#rock_gasmask_message"
+L 07/20/1999 - 08:17:40: Broadcast: "#rock_gasmask_message"
+L 07/20/1999 - 08:17:40: Broadcast: "#rock_gasmask_message"
+L 07/20/1999 - 08:17:41: "Mr.Smiley<94>" activated the goal "brise1"
+L 07/20/1999 - 08:17:42: "Mr.Smiley<94>" activated the goal "brise2"
+L 07/20/1999 - 08:17:45: "Mr.Smiley<94>" activated the goal "brise3"
+L 07/20/1999 - 08:17:47: Broadcast: "5 . . .
+"
+L 07/20/1999 - 08:17:47: Broadcast: "5 . . .
+"
+L 07/20/1999 - 08:17:47: Broadcast: "5 . . .
+"
+L 07/20/1999 - 08:17:47: Broadcast: "5 . . .
+"
+L 07/20/1999 - 08:17:48: Broadcast: "4 . . .
+"
+L 07/20/1999 - 08:17:48: Broadcast: "4 . . .
+"
+L 07/20/1999 - 08:17:48: Broadcast: "4 . . .
+"
+L 07/20/1999 - 08:17:48: Broadcast: "4 . . .
+"
+L 07/20/1999 - 08:17:50: Broadcast: "3 . . .
+"
+L 07/20/1999 - 08:17:50: Broadcast: "3 . . .
+"
+L 07/20/1999 - 08:17:50: Broadcast: "3 . . .
+"
+L 07/20/1999 - 08:17:50: Broadcast: "3 . . .
+"
+L 07/20/1999 - 08:17:51: Broadcast: "2 . . .
+"
+L 07/20/1999 - 08:17:51: Broadcast: "2 . . .
+"
+L 07/20/1999 - 08:17:51: Broadcast: "2 . . .
+"
+L 07/20/1999 - 08:17:51: Broadcast: "2 . . .
+"
+L 07/20/1999 - 08:17:52: Broadcast: "1 . . .
+"
+L 07/20/1999 - 08:17:52: Broadcast: "1 . . .
+"
+L 07/20/1999 - 08:17:52: Broadcast: "1 . . .
+"
+L 07/20/1999 - 08:17:52: Broadcast: "1 . . .
+"
+L 07/20/1999 - 08:17:58: "Mr.Smiley<94>" say "bye "
+L 07/20/1999 - 08:18:01: "Mr.Smiley<94>" activated the goal "brise1"
+L 07/20/1999 - 08:18:01: "Mr.Smiley<94>" activated the goal "brise2"
+L 07/20/1999 - 08:18:03: "Mr.Smiley<94>" activated the goal "brise3"
+L 07/20/1999 - 08:18:04: "Mr.Smiley<94>" say "i gotta go"
+L 07/20/1999 - 08:18:05: "Mr.Smiley<94>" activated the goal "rblock"
+L 07/20/1999 - 08:18:12: "lonegunman<93>" say "why"
+L 07/20/1999 - 08:18:30: "Mr.Smiley<94>" say "i will stay a little"
+L 07/20/1999 - 08:18:35: "Mr.Smiley<94>" say "longer"
+L 07/20/1999 - 08:18:50: "Mr.Smiley<94>" activated the goal "goalitem"
+L 07/20/1999 - 08:19:24: "lonegunman<93>" killed "Mr.Smiley<94>" with "shotgun"
+L 07/20/1999 - 08:19:27: "Mr.Smiley<94>" activated the goal "info_player_teamspawn"
+L 07/20/1999 - 08:19:52: "Mr.Smiley<94>" disconnected
+L 07/20/1999 - 08:20:29: "lonegunman<93>" say "someone please join the game"
+L 07/20/1999 - 08:20:54: "lonegunman<93>" activated the goal "bholedet"
+L 07/20/1999 - 08:20:54: Broadcast: "#rock_blue_yard_opened"
+L 07/20/1999 - 08:20:54: Broadcast: "#rock_blue_yard_opened"
+L 07/20/1999 - 08:20:54: Broadcast: "#rock_blue_yard_opened"
+L 07/20/1999 - 08:21:34: "lonegunman<93>" activated the goal "goalitem"
+L 07/20/1999 - 08:22:26: "lonegunman<93>" activated the goal "bhand"
+L 07/20/1999 - 08:22:26: Broadcast: "#rock_red_scores"
+L 07/20/1999 - 08:22:26: Broadcast: "#rock_red_scores"
+L 07/20/1999 - 08:22:26: Broadcast: "#rock_red_scores"
+L 07/20/1999 - 08:22:27: "lonegunman<93>" activated the goal "bblock"
+L 07/20/1999 - 08:22:29: Broadcast: "#rock_gasmask_message"
+L 07/20/1999 - 08:22:29: Broadcast: "#rock_gasmask_message"
+L 07/20/1999 - 08:22:29: Broadcast: "#rock_gasmask_message"
+L 07/20/1999 - 08:22:30: "lonegunman<93>" activated the goal "brise1"
+L 07/20/1999 - 08:22:31: "lonegunman<93>" activated the goal "brise2"
+L 07/20/1999 - 08:22:34: "lonegunman<93>" activated the goal "brise3"
+L 07/20/1999 - 08:22:36: Broadcast: "5 . . .
+"
+L 07/20/1999 - 08:22:36: Broadcast: "5 . . .
+"
+L 07/20/1999 - 08:22:36: Broadcast: "5 . . .
+"
+L 07/20/1999 - 08:22:37: Broadcast: "4 . . .
+"
+L 07/20/1999 - 08:22:37: Broadcast: "4 . . .
+"
+L 07/20/1999 - 08:22:37: Broadcast: "4 . . .
+"
+L 07/20/1999 - 08:22:38: Broadcast: "3 . . .
+"
+L 07/20/1999 - 08:22:38: Broadcast: "3 . . .
+"
+L 07/20/1999 - 08:22:38: Broadcast: "3 . . .
+"
+L 07/20/1999 - 08:22:39: Broadcast: "2 . . .
+"
+L 07/20/1999 - 08:22:39: Broadcast: "2 . . .
+"
+L 07/20/1999 - 08:22:39: Broadcast: "2 . . .
+"
+L 07/20/1999 - 08:22:40: Broadcast: "1 . . .
+"
+L 07/20/1999 - 08:22:40: Broadcast: "1 . . .
+"
+L 07/20/1999 - 08:22:40: Broadcast: "1 . . .
+"
+L 07/20/1999 - 08:22:47: "lonegunman<93>" activated the goal "brise1"
+L 07/20/1999 - 08:22:48: "lonegunman<93>" activated the goal "brise2"
+L 07/20/1999 - 08:22:51: "lonegunman<93>" activated the goal "brise3"
+L 07/20/1999 - 08:22:52: "lonegunman<93>" activated the goal "bblock"
+L 07/20/1999 - 08:23:39: "lonegunman<93>" activated the goal "goalitem"
+L 07/20/1999 - 08:24:05: "G-Man<99><WON:4294904272>" connected, address "141.225.22.74:27005"
+L 07/20/1999 - 08:24:29: "G-Man<99><WON:4294904272>" has entered the game
+L 07/20/1999 - 08:24:30: "Skeletim<100><WON:4294903281>" connected, address "208.27.190.51:27005"
+L 07/20/1999 - 08:24:34: "lonegunman<93>" activated the goal "bhand"
+L 07/20/1999 - 08:24:34: Broadcast: "#rock_red_scores"
+L 07/20/1999 - 08:24:34: Broadcast: "#rock_red_scores"
+L 07/20/1999 - 08:24:34: Broadcast: "#rock_red_scores"
+L 07/20/1999 - 08:24:34: Broadcast: "#rock_red_scores"
+L 07/20/1999 - 08:24:35: "lonegunman<93>" activated the goal "bblock"
+L 07/20/1999 - 08:24:37: Broadcast: "#rock_gasmask_message"
+L 07/20/1999 - 08:24:37: Broadcast: "#rock_gasmask_message"
+L 07/20/1999 - 08:24:37: Broadcast: "#rock_gasmask_message"
+L 07/20/1999 - 08:24:37: Broadcast: "#rock_gasmask_message"
+L 07/20/1999 - 08:24:38: "lonegunman<93>" activated the goal "brise1"
+L 07/20/1999 - 08:24:39: "lonegunman<93>" activated the goal "brise2"
+L 07/20/1999 - 08:24:42: "lonegunman<93>" activated the goal "brise3"
+L 07/20/1999 - 08:24:44: Broadcast: "5 . . .
+"
+L 07/20/1999 - 08:24:44: Broadcast: "5 . . .
+"
+L 07/20/1999 - 08:24:44: Broadcast: "5 . . .
+"
+L 07/20/1999 - 08:24:44: Broadcast: "5 . . .
+"
+L 07/20/1999 - 08:24:45: "G-Man<99>" joined team "1".
+L 07/20/1999 - 08:24:45: Broadcast: "4 . . .
+"
+L 07/20/1999 - 08:24:45: Broadcast: "4 . . .
+"
+L 07/20/1999 - 08:24:45: Broadcast: "4 . . .
+"
+L 07/20/1999 - 08:24:45: Broadcast: "4 . . .
+"
+L 07/20/1999 - 08:24:46: Broadcast: "3 . . .
+"
+L 07/20/1999 - 08:24:46: Broadcast: "3 . . .
+"
+L 07/20/1999 - 08:24:46: Broadcast: "3 . . .
+"
+L 07/20/1999 - 08:24:46: Broadcast: "3 . . .
+"
+L 07/20/1999 - 08:24:47: Broadcast: "2 . . .
+"
+L 07/20/1999 - 08:24:47: Broadcast: "2 . . .
+"
+L 07/20/1999 - 08:24:47: Broadcast: "2 . . .
+"
+L 07/20/1999 - 08:24:47: Broadcast: "2 . . .
+"
+L 07/20/1999 - 08:24:48: Broadcast: "1 . . .
+"
+L 07/20/1999 - 08:24:48: Broadcast: "1 . . .
+"
+L 07/20/1999 - 08:24:48: Broadcast: "1 . . .
+"
+L 07/20/1999 - 08:24:48: Broadcast: "1 . . .
+"
+L 07/20/1999 - 08:24:51: "G-Man<99>" changed class to "Sniper"
+L 07/20/1999 - 08:24:51: "G-Man<99>" changed class to "Sniper"
+L 07/20/1999 - 08:24:51: "G-Man<99>" activated the goal "info_player_teamspawn"
+L 07/20/1999 - 08:24:55: "lonegunman<93>" activated the goal "brise1"
+L 07/20/1999 - 08:24:56: "lonegunman<93>" activated the goal "brise2"
+L 07/20/1999 - 08:24:59: "lonegunman<93>" activated the goal "brise3"
+L 07/20/1999 - 08:25:00: "lonegunman<93>" activated the goal "bblock"
+L 07/20/1999 - 08:25:32: "lonegunman<93>" killed "G-Man<99>" with "gl_grenade"
+L 07/20/1999 - 08:25:37: "G-Man<99>" activated the goal "info_player_teamspawn"
+L 07/20/1999 - 08:26:03: "lonegunman<93>" killed self with "gl_grenade"
+L 07/20/1999 - 08:26:05: "lonegunman<93>" activated the goal "info_player_teamspawn"
+L 07/20/1999 - 08:26:23: "Devil<98>" joined team "1".
+L 07/20/1999 - 08:26:27: "Devil<98>" changed class to "Sniper"
+L 07/20/1999 - 08:26:27: "Devil<98>" changed class to "Sniper"
+L 07/20/1999 - 08:26:27: "Devil<98>" activated the goal "info_player_teamspawn"
+L 07/20/1999 - 08:26:33: "G-Man<99>" disconnected
+L 07/20/1999 - 08:26:54: "lonegunman<93>" say "hi"
+L 07/20/1999 - 08:27:04: "Devil<98>" disconnected
+L 07/20/1999 - 08:28:21: "lonegunman<93>" disconnected
+L 07/20/1999 - 08:35:03: "iceman<101><WON:4294904071>" connected, address "209.150.37.172:27005"
+L 07/20/1999 - 08:35:36: "iceman<101><WON:4294904071>" has entered the game
+L 07/20/1999 - 08:35:52: "iceman<101>" joined team "1".
+L 07/20/1999 - 08:35:55: "iceman<101>" changed class to "Sniper"
+L 07/20/1999 - 08:35:55: "iceman<101>" changed class to "Sniper"
+L 07/20/1999 - 08:35:55: "iceman<101>" activated the goal "info_player_teamspawn"
+L 07/20/1999 - 08:37:13: "MAXX<102><WON:4294904796>" connected, address "24.64.149.172:27005"
+L 07/20/1999 - 08:37:31: "MAXX<102><WON:4294904796>" has entered the game
+L 07/20/1999 - 08:37:48: "MAXX<102>" joined team "1".
+L 07/20/1999 - 08:37:53: "MAXX<102>" changed class to "RandomPC"
+L 07/20/1999 - 08:37:53: "MAXX<102>" changed class to "RandomPC"
+L 07/20/1999 - 08:37:53: "MAXX<102>" activated the goal "info_player_teamspawn"
+L 07/20/1999 - 08:39:39: "MAXX<102>" killed by world with "#rock_falling_death"
+L 07/20/1999 - 08:39:40: "MAXX<102>" activated the goal "info_player_teamspawn"
+L 07/20/1999 - 08:40:34: "iceman<101>" changed to team "2".
+L 07/20/1999 - 08:40:34: "iceman<101>" killed self with "world"
+L 07/20/1999 - 08:40:40: "iceman<101>" activated the goal "info_player_teamspawn"
+L 07/20/1999 - 08:40:45: "iceman<101>" changed class to "Sniper"
+L 07/20/1999 - 08:40:45: "iceman<101>" changed class to "Sniper"
+L 07/20/1999 - 08:40:45: "iceman<101>" activated the goal "info_player_teamspawn"
+L 07/20/1999 - 08:40:57: =------= MATCH RESULTS =------=
+L 07/20/1999 - 08:40:57: "blue" defeated "red"
+L 07/20/1999 - 08:40:57: "blue" RESULTS: "98906768" players. "48" frags, "1" unaccounted for. "75" team score.
+L 07/20/1999 - 08:40:57: "red" RESULTS: "98906768" players. "20" frags, "1" unaccounted for. "30" team score.
+L 07/20/1999 - 08:41:03: Log closed.

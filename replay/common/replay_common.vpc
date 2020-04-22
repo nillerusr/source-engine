@@ -1,0 +1,36 @@
+//-----------------------------------------------------------------------------
+//	REPLAY_COMMON.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR						"..\.."
+$Macro REPLAY_COMMON_HEADERS_TITLE	"Headers"
+$Macro OUTLIBDIR	"$LIBCOMMON"
+
+$include "$SRCDIR\vpc_scripts\source_lib_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\dx9sdk\include"			[$WINDOWS]
+		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\x360xdk\include\win32\vs2005" [$WINDOWS]
+	}
+}
+
+$Project "replay_common"
+{
+	$Folder	"Source Files"
+	{
+		$File	"replay.cpp"
+		$File	"replaylib.cpp"
+		$File	"basereplayserializeable.cpp"
+		$File	"performance.cpp"
+		$File	"replaytime.cpp"
+		$File	"replayutils.cpp"
+		$File	"screenshot.cpp"
+	}
+
+	$Include "$SRCDIR\replay\common\headers.vpc"
+}

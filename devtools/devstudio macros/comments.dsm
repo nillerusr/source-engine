@@ -1,0 +1,270 @@
+'------------------------------------------------------------------------------
+'FILE DESCRIPTION: Contains macros which make MSVC commenting more automated
+'------------------------------------------------------------------------------
+
+Sub ModuleHeader()
+'DESCRIPTION: This macro adds the standard copyright information to the top of a module.
+
+	ActiveDocument.Selection.StartOfDocument
+
+	' Create the standard file prologue
+	Header = "//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======" + vbCrLf 
+	Header = Header + "//" + vbCrLf 
+	Header = Header + "// Purpose: " + vbCrLf
+	Header = Header + "//" + vbCrLf 
+	Header = Header + "//=============================================================================" + vbCrLf + vbCrLf
+
+	' Add the single inclusion macros for header files
+	DotHPos = InStr(ActiveDocument.Name, ".h")
+
+	If DotHPos > 0 Then
+		InclusionKey = Left(ActiveDocument.Name, DotHPos - 1)
+		InclusionKey = UCase(InclusionKey) + "_H"
+		Header = Header + "#ifndef " + InclusionKey + vbCrLf
+		Header = Header + "#define " + InclusionKey + vbCrLf
+		Header = Header + "#ifdef _WIN32" + vbCrLf
+		Header = Header + "#pragma once" + vbCrLf
+		Header = Header + "#endif" + vbCrLf + vbCrLf
+	End If
+
+	ActiveDocument.Selection.Text = Header
+
+	' Add the "#endif" for header files
+	If DotHPos > 0 Then
+		ActiveDocument.Selection.EndOfDocument
+		Header = vbCrLf + "#endif // " + InclusionKey + vbCrLf
+		ActiveDocument.Selection.Text = Header
+	End If
+
+	ActiveDocument.Selection.StartOfDocument
+
+End Sub
+
+
+Sub TypeHeader()
+'DESCRIPTION: This macro adds a description block above a type declaration
+
+	' Select the text on the current line and store it for parsing
+	ActiveDocument.Selection.SelectLine
+	TypeDec = ActiveDocument.Selection.Text
+	ActiveDocument.Selection.StartOfLine
+
+	' Check to make sure that this line is a type delcaration
+	If InStr(TypeDec, "class") = 0 And InStr(TypeDec, "struct") = 0 And InStr(TypeDec, "interface") = 0 And InStr(TypeDec, "enum") = 0 Then 
+		MsgBox("This line does not contain a class, struct, interface, or enum declaration.") 
+	Else
+		' Construct the type header
+		Header = "//-----------------------------------------------------------------------------" + vbCrLf
+		Header = Header + "// Purpose: " + vbCrLf
+		Header = Header + "//-----------------------------------------------------------------------------" + vbCrLf
+			
+		' Write the header
+		ActiveDocument.Selection.Text = Header
+	End If
+
+End Sub
+
+
+Sub FunctionHeader()
+'DESCRIPTION: This macro creates a function header for C functions or C++ member functions
+
+	' Select the text on the current line and store it for parsing
+	ActiveDocument.Selection.SelectLine
+	FunctionImp = ActiveDocument.Selection.Text
+ 	ActiveDocument.Selection.StartOfLine
+	LineNum = ActiveDocument.Selection.CurrentLine
+
+	FunctionName = Left(FunctionImp, InStr(FunctionImp, "("))
+
+	' Check to make sure that this line is a class delcaration
+	If len(FunctionName) = 0 Then
+		MsgBox("This line does not contain a function implementation.")
+	Else
+		FuncArray = Split(FunctionName)
+
+		ReturnType = ""
+
+		' Get the return type and function name
+		For Each Element In FuncArray
+			if InStr(Element, "(") = 0 Then
+				ReturnType = ReturnType + Element + " "
+			Else
+				FunctionName = Left(Element, len(Element) - 1)
+			End If
+		Next
+
+		ReturnType = Trim(ReturnType)
+
+		if ReturnType = "BOOL" Then
+			ReturnType = "Returns TRUE on success, FALSE on failure."
+		Elseif ReturnType = "bool" Then
+			ReturnType = "Returns true on success, false on failure."
+		End If
+
+		' Place the function parameters in its own string
+		Params = Right(FunctionImp, len(FunctionImp) - InStr(FunctionImp, "("))
+		Do While InStr(Params, ")") = 0
+			ActiveDocument.Selection.LineDown
+			ActiveDocument.Selection.SelectLine
+			Params = Left(Params, InStr(Params, vbCrLf) - 1)
+			Params = Params + Trim(ActiveDocument.Selection.Text)
+		Loop
+		ActiveDocument.Selection.GotoLine LineNum
+		Params = Left(Params, InStr(Params, ")") - 1)
+		Params = Trim(Params)
+
+		' Remove any /* */ comments from Params
+		Pos = InStr( Params, "/*" )
+		Do While Pos
+			EndComment = InStr( Params, "*/" )
+			If EndComment Then
+				StartString = Left( Params, InStr( Params, "/*" ) - 1)
+				Pos2 = len( Params ) - InStr( Params, "*/" ) + 3
+				EndString = Mid( Params, InStr( Params, "*/" ) + 2, Pos2 )
+
+				StartString = Trim( StartString )
+				EndString = Trim( EndString )
+
+				Params = StartString + EndString
+				Pos = InStr( Params, "/*" )
+			Else
+				Pos = 0
+			End If
+		Loop
+
+		' Create an array of individual parameters
+		ParamsArray = Split(Params, ",")
+
+		' Construct the parameters section
+		ParamSection = ""
+		AddNewLine = 0
+		For Each Element In ParamsArray
+			Element = Trim(Element)
+			Element = Right(Element, len(Element) - InstrRev(Element, " "))
+			if AddNewLine = 1 Then
+				ParamSection = ParamSection + vbCrLf + "//			"
+			End If
+			ParamSection = ParamSection + Element + " - "
+			AddNewLine = 1
+		Next
+
+		' Construct the rest of the header
+		Header =          "//-----------------------------------------------------------------------------" + vbCrLf
+		Header = Header + "// Purpose: " + vbCrLf
+
+		if ParamSection <> "void - " and ParamSection <> "" then
+			Header = Header + "// Input  : " + ParamSection + vbCrLf
+		end if
+
+		if ReturnType <> "void" and ReturnType <> "" Then
+			Header = Header + "// Output : " + ReturnType + vbCrLf
+		end if
+
+		Header = Header + "//-----------------------------------------------------------------------------" + vbCrLf
+			
+		' Write the header
+		ActiveDocument.Selection.Text = Header
+
+	End If
+End Sub
+
+
+'DESCRIPTION: Comments in or out a line of code, then moves to the next line.
+Sub ToggleComment()
+
+	ActiveDocument.Selection.SelectLine
+	LineText = ActiveDocument.Selection.Text
+ 	ActiveDocument.Selection.StartOfLine
+
+	FirstTwoChars = Left(LineText, 2)
+
+	If len(FirstTwoChars) < 2 Then
+			ActiveDocument.Selection = ""
+	Elseif FirstTwoChars = "//" Then
+	 	ActiveDocument.Selection.CharRight dsExtend
+	 	ActiveDocument.Selection.CharRight dsExtend
+		ActiveDocument.Selection = ""
+	Else
+		ActiveDocument.Selection = "//"
+	End if
+
+	ActiveDocument.Selection.LineDown
+
+End Sub
+
+Sub ScheduleTemplate()
+'DESCRIPTION: Adds a schedule template at the current cursor position
+	ActiveDocument.Selection = "//==================================================" + vbCrLf + "// SCHED_" + vbCrLf + "//==================================================" + vbCrLf + vbCrLf + "Schedule" + vbCrLf + vbTab + "SCHED_" + vbCrLf + "Tasks" + vbCrLf + vbCrLf + "Interrupts" + vbCrLf + vbCrLf + ActiveDocument.Selection
+
+End Sub
+
+Sub CommentTODO()
+'DESCRIPTION: Adds "//TODO:" at the current cursor position
+	ActiveDocument.Selection = "//TODO: " + ActiveDocument.Selection
+
+End Sub
+
+Sub CommentFIXME()
+'DESCRIPTION: Adds "//FIXME:" at the current cursor position
+	ActiveDocument.Selection = "//FIXME: " + ActiveDocument.Selection
+
+End Sub
+
+Sub CommentNOTENOTE()
+'DESCRIPTION: Adds "//NOTENOTE:" at the current cursor position
+	ActiveDocument.Selection = "//NOTENOTE: " + ActiveDocument.Selection
+
+End Sub
+
+Sub JumpToHeader()
+	'////////////////////////////////////////////
+	'DESCRIPTION: Switch Between Header and cpp
+	'////////////////////////////////////////////
+	Dim myDocument
+	Dim a
+	Dim b
+	Dim c
+	Dim Flag
+	Dim Flag1
+	Flag1 = 0
+	Flag = 1
+	a = ActiveDocument.FullName
+	tmp = InStr(a, ".cpp")
+	If tmp Then
+		b = Left(a, Len(a) - 3) + "h"
+		c = Left(a, Len(a) - 3) + "h"
+		Flag1 = 1
+	Else
+		tmp = InStr(a, ".c")
+		If tmp Then
+			b = Left(a, Len(a) - 1) + "h"
+			c = Left(a, Len(a) - 1) + "h"
+			Flag1 = 1
+		Else
+			tmp = InStr(a, ".h")
+			If tmp Then
+					b = Left(a, Len(a) - 1) + "c"
+					c = Left(a, Len(a) - 1) + "cpp"
+					Flag1 = 1
+			End If
+		End If
+	End If
+	For Each myDocument In Application.Documents
+		If myDocument.FullName = b Then
+			myDocument.Active = True
+			Flag = 0
+			Exit For
+		End If
+
+		If myDocument.FullName = c Then
+			myDocument.Active = True
+			Flag = 0
+			b = c
+			Exit For
+		End If
+
+	Next
+	If Flag And Flag1 Then
+			Documents.Open b, "Text"
+	End If
+End Sub

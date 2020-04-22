@@ -1,0 +1,13 @@
+[OPTIONS]
+TITLE=VALVELIB AppWizard Help
+COMPRESS=true
+WARNING=2
+HLP=valvelib.HLP
+ERRORLOG=valvelib.LOG
+
+[FILES]
+valvelib.rtf
+
+[MAP]
+#include <C:\Program Files\Microsoft Visual Studio\VC98\MFC\include\afxhelp.hm>
+#include <valvelib.hm>

@@ -1,0 +1,72 @@
+//-----------------------------------------------------------------------------
+//	videoservices.vpc
+//
+//	Project Script
+//  Created by: 		Matt Pritchard
+//
+//  Description:		Centralized & abstracted cross-platform video services
+//                      Provides a central interface where the game can 
+//                      handle video requests and query video capabilities
+// 
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		".."
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+
+$Configuration
+{
+	$Linker
+	{
+		$SystemLibraries                    "iconv" [$OSXALL]
+		$SystemFrameworks					"Carbon" [$OSXALL]
+	}
+}
+
+$Configuration  "Debug"
+{
+        $General
+        {
+                $OutputDirectory                        "debug_video_services" [$WINDOWS]
+                $IntermediateDirectory                  "debug_video_services" [$WINDOWS]
+        }
+}
+
+$Configuration  "Release"
+{
+        $General
+        {
+                $OutputDirectory                        "Release_video_services" [$WINDOWS]
+                $IntermediateDirectory                  "Release_video_services" [$WINDOWS]
+        }
+}
+
+
+$Project "video_services"
+{
+	$Folder	"Source Files"
+	{
+		$file	"videoservices.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$file   "video_macros.h"
+		$file	"videoservices.h"
+		$file   "videosubsystem.h"
+	}
+
+	$Folder	"Interface"
+	{
+		$File	"$SRCDIR\public\video\ivideoservices.h"
+	}
+
+	$Folder "Link Libraries"
+	{
+		$Lib	tier2
+		$Lib	tier3
+	}
+}
+

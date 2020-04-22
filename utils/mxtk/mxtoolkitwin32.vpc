@@ -1,0 +1,98 @@
+//-----------------------------------------------------------------------------
+//	MXTOOLKITWIN32.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTLIBDIR	"$LIBCOMMON"
+
+$Include "$SRCDIR\vpc_scripts\source_lib_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\..\public"
+		$PreprocessorDefinitions		"$BASE;_CRT_SECURE_NO_DEPRECATE"
+	}
+}
+
+$Project "Mxtoolkitwin32"
+{
+	$Folder	"Source Files"
+	{
+		$File	"mx.cpp"
+		$File	"mxBmp.cpp"
+		$File	"mxButton.cpp"
+		$File	"mxCheckBox.cpp"
+		$File	"mxChoice.cpp"
+		$File	"mxChooseColor.cpp"
+		$File	"mxFileDialog.cpp"
+		$File	"mxGlWindow.cpp"
+		$File	"mxGroupBox.cpp"
+		$File	"mxLabel.cpp"
+		$File	"mxLineEdit.cpp"
+		$File	"mxListBox.cpp"
+		$File	"mxlistview.cpp"
+		$File	"mxMatSysWindow.cpp"
+		$File	"mxMenu.cpp"
+		$File	"mxMenuBar.cpp"
+		$File	"mxMessageBox.cpp"
+		$File	"mxpath.cpp"
+		$File	"mxPcx.cpp"
+		$File	"mxPopupMenu.cpp"
+		$File	"mxProgressBar.cpp"
+		$File	"mxRadioButton.cpp"
+		$File	"mxScrollbar.cpp"
+		$File	"mxSlider.cpp"
+		$File	"mxstring.cpp"
+		$File	"mxTab.cpp"
+		$File	"mxTga.cpp"
+		$File	"mxToolTip.cpp"
+		$File	"mxTreeView.cpp"
+		$File	"mxWidget.cpp"
+		$File	"mxWindow.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"..\..\public\mxtk\gl.h"
+		$File	"..\..\public\mxtk\mx.h"
+		$File	"..\..\public\mxtk\mxBmp.h"
+		$File	"..\..\public\mxtk\mxButton.h"
+		$File	"..\..\public\mxtk\mxCheckBox.h"
+		$File	"..\..\public\mxtk\mxChoice.h"
+		$File	"..\..\public\mxtk\mxChooseColor.h"
+		$File	"..\..\public\mxtk\mxEvent.h"
+		$File	"..\..\public\mxtk\mxFileDialog.h"
+		$File	"..\..\public\mxtk\mxGlWindow.h"
+		$File	"..\..\public\mxtk\mxGroupBox.h"
+		$File	"..\..\public\mxtk\mxImage.h"
+		$File	"..\..\public\mxtk\mxInit.h"
+		$File	"..\..\public\mxtk\mxLabel.h"
+		$File	"..\..\public\mxtk\mxLineEdit.h"
+		$File	"..\..\public\mxtk\mxLinkedList.h"
+		$File	"..\..\public\mxtk\mxListBox.h"
+		$File	"..\..\public\mxtk\mxlistview.h"
+		$File	"..\..\public\mxtk\mxMatSysWindow.h"
+		$File	"..\..\public\mxtk\mxMenu.h"
+		$File	"..\..\public\mxtk\mxMenuBar.h"
+		$File	"..\..\public\mxtk\mxMessageBox.h"
+		$File	"..\..\public\mxtk\mxpath.h"
+		$File	"..\..\public\mxtk\mxPcx.h"
+		$File	"..\..\public\mxtk\mxPopupMenu.h"
+		$File	"..\..\public\mxtk\mxProgressBar.h"
+		$File	"..\..\public\mxtk\mxRadioButton.h"
+		$File	"..\..\public\mxtk\mxScrollbar.h"
+		$File	"..\..\public\mxtk\mxSlider.h"
+		$File	"..\..\public\mxtk\mxstring.h"
+		$File	"..\..\public\mxtk\mxTab.h"
+		$File	"..\..\public\mxtk\mxTga.h"
+		$File	"..\..\public\mxtk\mxToggleButton.h"
+		$File	"..\..\public\mxtk\mxToolTip.h"
+		$File	"..\..\public\mxtk\mxTreeView.h"
+		$File	"..\..\public\mxtk\mxWidget.h"
+		$File	"..\..\public\mxtk\mxWindow.h"
+	}
+}

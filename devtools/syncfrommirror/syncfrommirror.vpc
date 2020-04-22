@@ -1,0 +1,60 @@
+//-----------------------------------------------------------------------------
+//	SYNCFROMMIRROR.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$SRCDIR\devtools\bin"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_win_win32_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$Create/UsePrecompiledHeader		"Use Precompiled Header (/Yu)"
+		$PrecompiledHeaderFile				"Release/syncfrommirror.pch"
+		$EnableC++Exceptions				"Yes (/EHsc)"
+	}
+}
+
+$Project "Syncfrommirror"
+{
+	$Folder	"Source Files"
+	{
+		-$File	"$SRCDIR\public\tier0\memoverride.cpp"
+		
+		$File	"Redir.cpp"
+		$File	"Redirect.cpp"
+		$File	"syncfrommirror.cpp"
+		$File	"syncfrommirror.rc"
+		$File	"syncfrommirrorDlg.cpp"
+		$File	"StdAfx.cpp"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader	"Create Precompiled Header (/Yc)"
+				}
+			}
+		}
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"Redir.h"
+		$File	"Redirect.h"
+		$File	"Resource.h"
+		$File	"StdAfx.h"
+		$File	"syncfrommirror.h"
+		$File	"syncfrommirrorDlg.h"
+	}
+
+	$Folder	"Resource Files"
+	{
+		$File	"res\syncfrommirror.ico"
+		$File	"res\syncfrommirror.rc2"
+	}
+}

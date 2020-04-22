@@ -1,0 +1,314 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 9, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif //_WIN32\r\n"
+    "#include ""afxres.rc""         // Standard components\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON                    "FontMaker.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_DIALOGBAR DIALOGEX 0, 0, 142, 418
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "Font",IDC_FONT_GROUPBOX,5,5,130,142,WS_DISABLED
+    LTEXT           "Name",IDC_FONTNAME_LABEL,10,15,24,15,SS_CENTERIMAGE | 
+                    WS_DISABLED
+    LTEXT           "",IDC_FONTNAME_STATIC,35,15,90,12,SS_CENTERIMAGE | 
+                    WS_DISABLED,WS_EX_CLIENTEDGE
+    LTEXT           "Style",IDC_FONTSTYLE_LABEL,10,30,20,15,SS_CENTERIMAGE | 
+                    WS_DISABLED
+    LTEXT           "",IDC_FONTSTYLE_STATIC,35,30,90,12,SS_CENTERIMAGE | 
+                    WS_DISABLED,WS_EX_CLIENTEDGE
+    LTEXT           "Size",IDC_FONTSIZE_LABEL,10,45,20,15,SS_CENTERIMAGE | 
+                    WS_DISABLED
+    LTEXT           "",IDC_FONTSIZE_STATIC,35,45,30,12,SS_CENTERIMAGE | 
+                    WS_DISABLED,WS_EX_CLIENTEDGE
+    CONTROL         "Outlined",IDC_EFFECTSOUTLINED_CHECK,"Button",
+                    BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,10,65,42,10
+    CONTROL         "Shadowed",IDC_EFFECTSSHADOWED_CHECK,"Button",
+                    BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,10,80,50,10
+    PUSHBUTTON      "Magnify...",IDC_MAGNIFY_BUTTON,75,70,50,14,WS_DISABLED
+    GROUPBOX        "Texture properties",IDC_TEXTURE_GROUPBOX,5,149,130,40,
+                    WS_DISABLED
+    LTEXT           "Insert Glyph:",IDC_INSERTGLYPH_LABEL,10,375,63,10,
+                    SS_CENTERIMAGE | WS_DISABLED
+    CTEXT           "",IDC_TEXTUREWIDTH_STATIC,9,170,30,12,SS_CENTERIMAGE | 
+                    WS_DISABLED,WS_EX_CLIENTEDGE
+    CTEXT           "Height",IDC_TEXTUREHEIGHT_LABEL,45,159,30,10,
+                    SS_CENTERIMAGE | WS_DISABLED
+    CTEXT           "",IDC_TEXTUREHEIGHT_STATIC,45,170,30,12,SS_CENTERIMAGE | 
+                    WS_DISABLED,WS_EX_CLIENTEDGE
+    PUSHBUTTON      "Size...",IDC_TEXTURESIZE_BUTTON,80,165,50,14,
+                    WS_DISABLED
+    GROUPBOX        "Glyphs",IDC_GLYPHS_GROUPBOX,5,189,130,95,WS_DISABLED
+    CONTROL         "From range:",IDC_GLYPHSFROMRANGE_RADIO,"Button",
+                    BS_AUTORADIOBUTTON | WS_DISABLED | WS_GROUP,10,199,53,10
+    RTEXT           "From:",IDC_GLYPHSRANGEFROM_LABEL,25,215,20,15,
+                    SS_CENTERIMAGE | WS_DISABLED
+    EDITTEXT        IDC_GLYPHSRANGEFROM_EDIT,50,215,25,12,ES_CENTER | 
+                    ES_AUTOHSCROLL | WS_DISABLED
+    RTEXT           "To:",IDC_GLYPHSRANGETO_LABEL,85,215,15,15,
+                    SS_CENTERIMAGE | WS_DISABLED
+    EDITTEXT        IDC_GLYPHSRANGETO_EDIT,105,215,25,12,ES_CENTER | 
+                    ES_AUTOHSCROLL | WS_DISABLED
+    CONTROL         "From file:",IDC_GLYPHSFROMFILE_RADIO,"Button",
+                    BS_AUTORADIOBUTTON | WS_DISABLED,10,233,44,10
+    EDITTEXT        IDC_GLYPHSFILE_EDIT,23,245,90,12,ES_AUTOHSCROLL | 
+                    WS_DISABLED
+    PUSHBUTTON      "...",IDC_GLYPHSFILESELECTOR_BUTTON,117,245,15,12,
+                    WS_DISABLED
+    GROUPBOX        "Selected Glyph",IDC_SELECTEDGLYPH_GROUPBOX,5,289,130,
+                    121,WS_DISABLED
+    CTEXT           "Value",IDC_GLYPH_VALUE_LABEL,10,300,35,10,
+                    SS_CENTERIMAGE | WS_DISABLED
+    CTEXT           "",IDC_GLYPH_VALUE_STATIC,10,310,35,12,SS_CENTERIMAGE | 
+                    WS_DISABLED,WS_EX_CLIENTEDGE
+    CTEXT           "A",IDC_GLYPH_A_LABEL,60,300,20,10,SS_CENTERIMAGE | 
+                    WS_DISABLED
+    CTEXT           "x",IDC_GLYPH_X_LABEL,9,324,20,10,SS_CENTERIMAGE | 
+                    WS_DISABLED
+    CTEXT           "y",IDC_GLYPH_Y_LABEL,35,324,20,10,SS_CENTERIMAGE | 
+                    WS_DISABLED
+    CTEXT           "w",IDC_GLYPH_W_LABEL,65,324,20,10,SS_CENTERIMAGE | 
+                    WS_DISABLED
+    CTEXT           "h",IDC_GLYPH_H_LABEL,89,324,20,10,SS_CENTERIMAGE | 
+                    WS_DISABLED
+    CTEXT           "B",IDC_GLYPH_B_LABEL,85,300,20,10,SS_CENTERIMAGE | 
+                    WS_DISABLED
+    CTEXT           "C",IDC_GLYPH_C_LABEL,110,300,20,10,SS_CENTERIMAGE | 
+                    WS_DISABLED
+    CONTROL         "Reserved for custom bitmap",IDC_GLYPH_SPECIAL,"Button",
+                    BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,10,356,104,10
+    CTEXT           "",IDC_GLYPH_X_STATIC,10,334,20,12,SS_CENTERIMAGE | 
+                    WS_DISABLED,WS_EX_CLIENTEDGE
+    CTEXT           "",IDC_GLYPH_Y_STATIC,35,334,20,12,SS_CENTERIMAGE | 
+                    WS_DISABLED,WS_EX_CLIENTEDGE
+    CTEXT           "",IDC_GLYPH_W_STATIC,65,334,20,12,SS_CENTERIMAGE | 
+                    WS_DISABLED,WS_EX_CLIENTEDGE
+    CTEXT           "",IDC_GLYPH_H_STATIC,90,334,20,12,SS_CENTERIMAGE | 
+                    WS_DISABLED,WS_EX_CLIENTEDGE
+    CTEXT           "",IDC_GLYPH_A_STATIC,60,310,20,12,SS_CENTERIMAGE | 
+                    WS_DISABLED,WS_EX_CLIENTEDGE
+    CTEXT           "",IDC_GLYPH_B_STATIC,85,310,20,12,SS_CENTERIMAGE | 
+                    WS_DISABLED,WS_EX_CLIENTEDGE
+    CTEXT           "",IDC_GLYPH_C_STATIC,110,310,20,12,SS_CENTERIMAGE | 
+                    WS_DISABLED,WS_EX_CLIENTEDGE
+    CONTROL         "Blurred",IDC_EFFECTSBLURRED_CHECK,"Button",
+                    BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,10,97,50,10
+    CONTROL         "ScanLines",IDC_EFFECTSSCANLINES_CHECK,"Button",
+                    BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,10,114,50,10
+    EDITTEXT        IDC_BLUR_EDIT,65,95,25,12,ES_CENTER | ES_AUTOHSCROLL | 
+                    WS_DISABLED
+    EDITTEXT        IDC_SCANLINES_EDIT,65,114,25,12,ES_CENTER | 
+                    ES_AUTOHSCROLL | WS_DISABLED
+    CONTROL         "Antialias",IDC_EFFECTSANTIALIAS_CHECK,"Button",
+                    BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,10,130,50,10
+    CONTROL         "Custom",IDC_GLYPHSCUSTOM_RADIO,"Button",
+                    BS_AUTORADIOBUTTON | WS_DISABLED | WS_GROUP,10,265,53,10
+    EDITTEXT        IDC_INSERTGLYPH_EDIT,10,387,35,12,ES_CENTER | 
+                    ES_AUTOHSCROLL | WS_DISABLED
+    CTEXT           "Width",IDC_TEXTUREWIDTH_LABEL,9,159,30,10,
+                    SS_CENTERIMAGE | WS_DISABLED
+END
+
+IDD_TEXTURESIZE DIALOG  0, 0, 167, 49
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Texture Size"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Width",IDC_STATIC,5,5,19,15,SS_CENTERIMAGE
+    EDITTEXT        IDC_WIDTH,35,5,40,15,ES_AUTOHSCROLL
+    LTEXT           "Height",IDC_STATIC,5,25,25,15,SS_CENTERIMAGE
+    EDITTEXT        IDC_HEIGHT,35,25,40,15,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,115,5,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,115,25,50,14
+END
+
+IDD_ABOUT DIALOGEX 0, 0, 262, 123
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "About FontMaker"
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    ICON            IDR_MAINFRAME,IDC_STATIC,5,20,21,20
+    LTEXT           "Xbox Font Maker tool - Modified for Valve Software",
+                    IDC_STATIC,36,10,222,8
+    LTEXT           "Version 2.0.0000.1 - Valve",IDC_STATIC,36,25,222,8
+    LTEXT           "Copyright(c) 2000-2003 Microsoft Corporation.  All rights reserved.",
+                    IDC_STATIC,36,40,222,8
+    LTEXT           "Warning: This computer program is protected by copyright law and",
+                    IDC_STATIC,36,55,222,8
+    LTEXT           "international treaties. Unauthorized reproduction or distribution of",
+                    IDC_STATIC,36,65,222,8
+    LTEXT           "this program, or any portion of it, may result in severe civil and",
+                    IDC_STATIC,36,75,222,8
+    LTEXT           "criminal penalties, and will be prosecuted to the maximum extent",
+                    IDC_STATIC,36,85,222,8
+    LTEXT           "possible under the law.",IDC_STATIC,36,95,222,8
+    DEFPUSHBUTTON   "OK",IDOK,204,102,50,14
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_DIALOGBAR, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 135
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 411
+    END
+
+    IDD_TEXTURESIZE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 160
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 42
+    END
+
+    IDD_ABOUT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 255
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 68
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MAINFRAME MENU 
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "Load TTF Font...",            IDM_FILE_NEWFONT
+        MENUITEM "Load Custom Font...",         IDM_FILE_LOADFONTLAYOUT
+        MENUITEM "Load Compiled Font File...",  IDM_FILE_LOADFONTFILE
+        MENUITEM SEPARATOR
+        MENUITEM "&Save Compiled Font...",      IDM_FILE_SAVEFONTFILES
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit",                       IDM_FILE_EXIT
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "FontMaker &Help\tF1",         ID_HELP
+        MENUITEM SEPARATOR
+        MENUITEM "&About FontMaker...",         ID_APP_ABOUT
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE 
+BEGIN
+    IDR_MAINFRAME           "FontMaker\n\nFontMa\n\n\nFontMaker.Document\nFontMa Document"
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE 9, 1
+#pragma code_page(1252)
+#endif //_WIN32
+#include "afxres.rc"         // Standard components
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

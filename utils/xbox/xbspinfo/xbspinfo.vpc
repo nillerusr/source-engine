@@ -1,0 +1,23 @@
+//-----------------------------------------------------------------------------
+//	XBSPINFO.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\..\.."
+$Macro OUTBINDIR	"$SRCDIR\devtools\bin"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_win32_base.vpc"
+
+$Project "xbspinfo"
+{
+	$Folder	"Source Files"
+	{
+		$File	"xbspinfo.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"xbspinfo.h"
+	}
+}

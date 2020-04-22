@@ -1,0 +1,124 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ASSERT_DIALOG DIALOG DISCARDABLE  0, 0, 268, 158
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Assert"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT           "File:",IDC_NOID,7,7,23,9
+    LTEXT           "c:/hl2/src/blah.cpp",IDC_FILENAME_CONTROL,36,7,217,8
+    LTEXT           "Line:",IDC_NOID,7,18,23,9
+    LTEXT           "45",IDC_LINE_CONTROL,36,18,217,8
+    LTEXT           "Assert:",IDC_NOID,7,29,23,9
+    CONTROL         "ASSERT MESSAGE",IDC_ASSERT_MSG_CTRL,"Static",
+                    SS_LEFTNOWORDWRAP | SS_NOPREFIX | WS_GROUP,36,29,217,9
+    DEFPUSHBUTTON   "&Break in Debugger",IDC_BREAK,7,49,98,14
+    PUSHBUTTON      "&Ignore This Assert",IDC_IGNORE_THIS,7,66,98,14
+    EDITTEXT        IDC_IGNORE_NUMTIMES,110,66,24,14,ES_AUTOHSCROLL | 
+                    ES_NUMBER
+    LTEXT           "time(s).",IDC_NOID,138,68,23,8
+    PUSHBUTTON      "Always Ignore &This Assert",IDC_IGNORE_ALWAYS,7,84,98,
+                    14
+    PUSHBUTTON      "Ignore &Nearby Asserts",IDC_IGNORE_NEARBY,7,102,98,14
+    LTEXT           "within",IDC_NOID,109,105,19,8
+    EDITTEXT        IDC_IGNORE_NUMLINES,131,102,40,14,ES_AUTOHSCROLL | 
+                    ES_NUMBER
+    LTEXT           "lines.",IDC_NOID,175,105,17,8
+    PUSHBUTTON      "Ignore Asserts in This &File",IDC_IGNORE_FILE,7,120,98,
+                    14
+    PUSHBUTTON      "Ignore &All Asserts",IDC_IGNORE_ALL,7,137,98,14
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_ASSERT_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 261
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 151
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// ETW event manifest data from ValveETWProviders.man
+//
+
+#include "ValveETWProviderEvents.rc"

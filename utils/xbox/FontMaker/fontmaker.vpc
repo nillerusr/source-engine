@@ -1,0 +1,68 @@
+//-----------------------------------------------------------------------------
+//	FONTMAKER.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\..\.."
+$Macro OUTBINDIR	"$SRCDIR\devtools\bin"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_win_win32_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$EnableC++Exceptions				"Yes (/EHsc)"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"htmlhelp.lib"
+	}
+}
+
+
+$Project "FontMaker"
+{
+	$Folder	"Source Files"
+	{
+		-$File	"$SRCDIR\public\tier0\memoverride.cpp"
+
+		$File	"FontMaker.cpp"
+		$File	"FontMakerWnd.cpp"
+		$File	"Glyphs.cpp"
+		$File	"..\toollib\piclib.cpp"
+		$File	"..\toollib\scriplib.cpp"
+		$File	"Stdafx.cpp"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader		"Create Precompiled Header (/Yc)"
+				}
+			}
+		}
+
+		$File	"..\toollib\toollib.cpp"
+	}
+
+	$Folder	"Resource Files"
+	{
+		$File	"FontMaker.ico"
+		$File	"FontMaker.rc"
+		$File	"resource.h"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"..\..\..\public\BitmapFontFile.h"
+		$File	"FontMaker.h"
+		$File	"Glyphs.h"
+		$File	"..\toollib\piclib.h"
+		$File	"..\toollib\scriplib.h"
+		$File	"Stdafx.h"
+		$File	"..\toollib\toollib.h"
+	}
+}

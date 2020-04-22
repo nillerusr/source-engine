@@ -1,0 +1,106 @@
+//-----------------------------------------------------------------------------
+//	SERVERBROWSER.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		".."
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$PreprocessorDefinitions			"$BASE;VERSION_SAFE_STEAM_API_INTERFACES;SERVERBROWSER_EXPORTS;GAME_SRC;_USE_32BIT_TIME_T"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE Advapi32.lib wsock32.lib Ws2_32.lib User32.lib" [$WIN32]
+		$AdditionalDependencies				"$BASE Xonline.lib" [$X360]
+		$SystemLibraries                                                        "iconv" [$OSXALL]
+	}
+}
+
+$Project "ServerBrowser"
+{
+	$Folder	"Source Files"
+	{
+		$File	"BaseGamesPage.cpp"
+		$File	"BlacklistedServers.cpp"
+		$File	"CustomGames.cpp"
+		$File	"DialogAddServer.cpp"
+		$File	"DialogGameInfo.cpp"
+		$File	"DialogServerPassword.cpp"
+		$File	"FavoriteGames.cpp"
+		$File	"FriendsGames.cpp"
+		$File	"HistoryGames.cpp"
+		$File	"InternetGames.cpp"
+		$File	"LanGames.cpp"
+		$File	"ModList.cpp"
+		$File	"ServerBrowser.cpp"
+		$File	"ServerBrowserDialog.cpp"
+		$File	"ServerContextMenu.cpp"
+		$File	"ServerListCompare.cpp"
+		$File	"SpectateGames.cpp"
+		$File	"VACBannedConnRefusedDialog.cpp"
+		$File	"VACBannedConnRefusedDialog.h"
+
+		$File	"QuickListPanel.cpp"
+	
+		$File	"$SRCDIR\public\vgui_controls\vgui_controls.cpp"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+				}
+			}
+		}
+
+		$File	"$SRCDIR\common\ServerBrowser\blacklisted_server_manager.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"BaseGamesPage.h"
+		$File	"BlacklistedServers.h"
+		$File	"CustomGames.h"
+		$File	"DialogAddServer.h"
+		$File	"DialogGameInfo.h"
+		$File	"DialogServerPassword.h"
+		$File	"FavoriteGames.h"
+		$File	"FriendsGames.h"
+		$File	"HistoryGames.h"
+		$File	"InternetGames.h"
+		$File	"LanGames.h"
+		$File	"ModList.h"
+		$File	"ServerBrowser.h"
+		$File	"ServerBrowserDialog.h"
+		$File	"ServerContextMenu.h"
+		$File	"ServerListCompare.h"
+		$File	"SpectateGames.h"
+		$File	"QuickListPanel.h"
+
+		$File	"$SRCDIR\common\ServerBrowser\blacklisted_server_manager.h"
+	}
+
+	$Folder	"Resource Files"
+	{
+	}
+	$Folder	"Exposed interfaces"
+	{
+		$File	"$SRCDIR\common\ServerBrowser\IServerBrowser.h"
+	}
+
+	$Folder "Link Libraries"
+	{
+		$ImpLib steam_api
+		$Lib	tier2
+		$Lib	tier3
+		$Lib	vgui_controls
+		$Lib	mathlib
+	}
+}

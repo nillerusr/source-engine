@@ -1,0 +1,5 @@
+public DrawFlat()
+{
+//	$position = $position + [100, 100, 100];
+	Draw();
+}

@@ -1,0 +1,802 @@
+L 08/25/1999 - 15:54:00: Log file started.
+L 08/25/1999 - 15:54:00: Spawning server "cz2"
+L 08/25/1999 - 15:54:00: server cvars start
+L 08/25/1999 - 15:54:00: "cr_random" = "0"
+L 08/25/1999 - 15:54:00: "cr_engineer" = "0"
+L 08/25/1999 - 15:54:00: "cr_spy" = "0"
+L 08/25/1999 - 15:54:00: "cr_pyro" = "0"
+L 08/25/1999 - 15:54:00: "cr_hwguy" = "0"
+L 08/25/1999 - 15:54:00: "cr_medic" = "0"
+L 08/25/1999 - 15:54:00: "cr_demoman" = "0"
+L 08/25/1999 - 15:54:00: "cr_soldier" = "0"
+L 08/25/1999 - 15:54:00: "cr_sniper" = "0"
+L 08/25/1999 - 15:54:00: "cr_scout" = "0"
+L 08/25/1999 - 15:54:00: "decalfrequency" = "30"
+L 08/25/1999 - 15:54:00: "mp_autocrosshair" = "1"
+L 08/25/1999 - 15:54:00: "mp_flashlight" = "0"
+L 08/25/1999 - 15:54:00: "mp_footsteps" = "1"
+L 08/25/1999 - 15:54:00: "mp_forcerespawn" = "1"
+L 08/25/1999 - 15:54:00: "mp_weaponstay" = "0"
+L 08/25/1999 - 15:54:00: "mp_falldamage" = "0"
+L 08/25/1999 - 15:54:00: "mp_friendlyfire" = "0"
+L 08/25/1999 - 15:54:00: "mp_timelimit" = "30"
+L 08/25/1999 - 15:54:00: "mp_fraglimit" = "0"
+L 08/25/1999 - 15:54:00: "mp_teamplay" = "21"
+L 08/25/1999 - 15:54:00: "tfc_balance_scores" = "1.0"
+L 08/25/1999 - 15:54:00: "tfc_balance_teams" = "1.0"
+L 08/25/1999 - 15:54:00: "tfc_adminpwd" = ""
+L 08/25/1999 - 15:54:00: "tfc_clanbattle_locked" = "0.0"
+L 08/25/1999 - 15:54:00: "tfc_clanbattle" = "0.0"
+L 08/25/1999 - 15:54:00: "tfc_respawndelay" = "0.0"
+L 08/25/1999 - 15:54:00: "tfc_autoteam" = "1"
+L 08/25/1999 - 15:54:00: "sv_maxrate" = "0"
+L 08/25/1999 - 15:54:00: "sv_minrate" = "0"
+L 08/25/1999 - 15:54:00: "sv_allowupload" = "1"
+L 08/25/1999 - 15:54:00: "sv_allowdownload" = "1"
+L 08/25/1999 - 15:54:00: "sv_upload_maxsize" = "0"
+L 08/25/1999 - 15:54:00: "sv_spectatormaxspeed" = "500"
+L 08/25/1999 - 15:54:00: "sv_spectalk" = "1"
+L 08/25/1999 - 15:54:00: "sv_maxspectators" = "8"
+L 08/25/1999 - 15:54:00: "sv_cheats" = "0"
+L 08/25/1999 - 15:54:00: "sv_clienttrace" = "3.5"
+L 08/25/1999 - 15:54:00: "sv_timeout" = "65"
+L 08/25/1999 - 15:54:00: "sv_waterfriction" = "1"
+L 08/25/1999 - 15:54:00: "sv_wateraccelerate" = "10"
+L 08/25/1999 - 15:54:00: "sv_airaccelerate" = "10"
+L 08/25/1999 - 15:54:00: "sv_airmove" = "1"
+L 08/25/1999 - 15:54:00: "sv_bounce" = "1"
+L 08/25/1999 - 15:54:00: "sv_clipmode" = "0"
+L 08/25/1999 - 15:54:00: "sv_stepsize" = "18"
+L 08/25/1999 - 15:54:00: "sv_accelerate" = "10"
+L 08/25/1999 - 15:54:00: "sv_maxspeed" = "500.000000"
+L 08/25/1999 - 15:54:00: "sv_stopspeed" = "100"
+L 08/25/1999 - 15:54:00: "edgefriction" = "2"
+L 08/25/1999 - 15:54:00: "sv_friction" = "4"
+L 08/25/1999 - 15:54:00: "sv_gravity" = "800"
+L 08/25/1999 - 15:54:00: "sv_aim" = "0"
+L 08/25/1999 - 15:54:00: "sv_password" = ""
+L 08/25/1999 - 15:54:00: "pausable" = "0"
+L 08/25/1999 - 15:54:00: "coop" = "0"
+L 08/25/1999 - 15:54:00: "deathmatch" = "1"
+L 08/25/1999 - 15:54:00: "mp_logecho" = "1"
+L 08/25/1999 - 15:54:00: "mp_logfile" = "1"
+L 08/25/1999 - 15:54:00: "cmdline" = "0"
+L 08/25/1999 - 15:54:00: server cvars end
+L 08/25/1999 - 15:54:03: Map CRC "1880504211"
+L 08/25/1999 - 15:54:03: "sv_maxspeed" = "500"
+L 08/25/1999 - 15:54:03: Server name is "VALVe Test Server"
+L 08/25/1999 - 15:54:03: "sv_maxspeed" = "500.000000"
+L 08/25/1999 - 15:54:11: "Skillet[PsK]<35><WON:1521019>" has entered the game
+L 08/25/1999 - 15:54:13: "ultimiteplayer<2><WON:1600029>" has entered the game
+L 08/25/1999 - 15:54:14: "Skillet[PsK]<35>" joined team "1".
+L 08/25/1999 - 15:54:14: "Skillet[PsK]<35>" changed class to "Demoman"
+L 08/25/1999 - 15:54:14: "Skillet[PsK]<35>" activated the goal "i_p_t"
+L 08/25/1999 - 15:54:15: "stropp<32><WON:1558289>" has entered the game
+L 08/25/1999 - 15:54:20: "DR.Octagon<10><WON:1812789>" has entered the game
+L 08/25/1999 - 15:54:25: "stropp<32>" joined team "2".
+L 08/25/1999 - 15:54:25: "ultimiteplayer<2>" joined team "1".
+L 08/25/1999 - 15:54:26: "DR.Octagon<10>" joined team "1".
+L 08/25/1999 - 15:54:26: "stropp<32>" changed class to "HWGuy"
+L 08/25/1999 - 15:54:26: "stropp<32>" activated the goal "i_p_t"
+L 08/25/1999 - 15:54:26: "Skillet[PsK]<35>" activated the goal "blue flag 2"
+L 08/25/1999 - 15:54:27: "Paddy<4><WON:1398009>" has entered the game
+L 08/25/1999 - 15:54:27: "ultimiteplayer<2>" changed class to "Soldier"
+L 08/25/1999 - 15:54:27: "ultimiteplayer<2>" activated the goal "i_p_t"
+L 08/25/1999 - 15:54:31: "DR.Octagon<10>" changed class to "Soldier"
+L 08/25/1999 - 15:54:31: "DR.Octagon<10>" activated the goal "i_p_t"
+L 08/25/1999 - 15:54:32: "cia<37><WON:1301499>" has entered the game
+L 08/25/1999 - 15:54:32: "lying pig dog<14><WON:2031589>" has entered the game
+L 08/25/1999 - 15:54:32: "Paddy<4>" joined team "2".
+L 08/25/1999 - 15:54:34: "Paddy<4>" changed to team "1".
+L 08/25/1999 - 15:54:34: "Paddy<4>" killed self with "world"
+L 08/25/1999 - 15:54:39: "cia<37>" joined team "2".
+L 08/25/1999 - 15:54:39: "Tiki_God<28><WON:2212509>" has entered the game
+L 08/25/1999 - 15:54:42: "burnsy<6><WON:592789>" has entered the game
+L 08/25/1999 - 15:54:42: "Tiki_God<28>" joined team "2".
+L 08/25/1999 - 15:54:44: "assasain<34><WON:1344449>" has entered the game
+L 08/25/1999 - 15:54:45: "DR.Octagon<10>" activated the goal "blue flag 3"
+L 08/25/1999 - 15:54:46: "Paddy<4>" activated the goal "i_p_t"
+L 08/25/1999 - 15:54:47: "burnsy<6>" joined team "2".
+L 08/25/1999 - 15:54:47: "cia<37>" changed class to "Demoman"
+L 08/25/1999 - 15:54:47: "cia<37>" activated the goal "i_p_t"
+L 08/25/1999 - 15:54:48: "assasain<34>" joined team "1".
+L 08/25/1999 - 15:54:51: "Paddy<4>" changed class to "Engineer"
+L 08/25/1999 - 15:54:51: "Paddy<4>" activated the goal "i_p_t"
+L 08/25/1999 - 15:54:55: "burnsy<6>" changed class to "Scout"
+L 08/25/1999 - 15:54:55: "burnsy<6>" activated the goal "i_p_t"
+L 08/25/1999 - 15:54:56: "Tiki_God<28>" changed class to "Medic"
+L 08/25/1999 - 15:54:56: "Tiki_God<28>" activated the goal "i_p_t"
+L 08/25/1999 - 15:54:57: "assasain<34>" changed class to "Scout"
+L 08/25/1999 - 15:54:57: "assasain<34>" activated the goal "i_p_t"
+L 08/25/1999 - 15:55:01: Named Broadcast: "#cz_bcap1" ("Skillet[PsK]<35>")
+L 08/25/1999 - 15:55:07: "assasain<34>" activated the goal "blue flag 2"
+L 08/25/1999 - 15:55:07: "burnsy<6>" activated the goal "red marker 2"
+L 08/25/1999 - 15:55:07: "Tiki_God<28>" activated the goal "red marker 1"
+L 08/25/1999 - 15:55:15: "[CbK]-PriCk<21><WON:2656709>" has entered the game
+L 08/25/1999 - 15:55:24: "[CbK]-PriCk<21>" joined team "2".
+L 08/25/1999 - 15:55:24: "Paddy<4>" built a "sentry".
+L 08/25/1999 - 15:55:29: "stropp<32>" killed "DR.Octagon<10>" with "ac"
+L 08/25/1999 - 15:55:31: "DR.Octagon<10>" activated the goal "i_p_t"
+L 08/25/1999 - 15:55:34: "SHARPE<38><WON:1214499>" connected, address "24.66.193.119:27005"
+L 08/25/1999 - 15:55:36: Named Broadcast: "#cz_rcap5" ("Tiki_God<28>")
+L 08/25/1999 - 15:55:36: Named Broadcast: "#cz_bcap3" ("assasain<34>")
+L 08/25/1999 - 15:55:37: "Skillet[PsK]<35>" killed "Tiki_God<28>" with "mirvgrenade"
+L 08/25/1999 - 15:55:39: "Tiki_God<28>" activated the goal "i_p_t"
+L 08/25/1999 - 15:55:42: "stropp<32>" killed self with "mirvgrenade"
+L 08/25/1999 - 15:55:45: "stropp<32>" activated the goal "i_p_t"
+L 08/25/1999 - 15:55:48: Named Broadcast: "#cz_rcap3" ("burnsy<6>")
+L 08/25/1999 - 15:55:48: "Tiki_God<28>" activated the goal "red marker 1"
+L 08/25/1999 - 15:55:54: "[CbK]-PriCk<21>" changed class to "Sniper"
+L 08/25/1999 - 15:55:54: "[CbK]-PriCk<21>" activated the goal "i_p_t"
+L 08/25/1999 - 15:55:56: "DR.Octagon<10>" activated the goal "blue flag 3"
+L 08/25/1999 - 15:55:59: "Skillet[PsK]<35>" killed "burnsy<6>" with "gl_grenade"
+L 08/25/1999 - 15:56:02: "burnsy<6>" activated the goal "i_p_t"
+L 08/25/1999 - 15:56:03: "assasain<34>" activated the goal "blue flag 2"
+L 08/25/1999 - 15:56:08: "cia<37>" disconnected
+L 08/25/1999 - 15:56:11: "burnsy<6>" activated the goal "red marker 2"
+L 08/25/1999 - 15:56:13: "lying pig dog<14>" joined team "2".
+L 08/25/1999 - 15:56:17: "lying pig dog<14>" changed class to "Scout"
+L 08/25/1999 - 15:56:17: "lying pig dog<14>" activated the goal "i_p_t"
+L 08/25/1999 - 15:56:25: "lying pig dog<14>" activated the goal "red marker 3"
+L 08/25/1999 - 15:56:26: "SHARPE<38><WON:1214499>" has entered the game
+L 08/25/1999 - 15:56:30: Named Broadcast: "#cz_bcap3" ("assasain<34>")
+L 08/25/1999 - 15:56:34: "stropp<32>" killed "DR.Octagon<10>" with "ac"
+L 08/25/1999 - 15:56:40: "DR.Octagon<10>" changed class to "Demoman"
+L 08/25/1999 - 15:56:41: "DR.Octagon<10>" activated the goal "i_p_t"
+L 08/25/1999 - 15:56:41: Named Broadcast: "#cz_rcap4" ("Tiki_God<28>")
+L 08/25/1999 - 15:56:49: Named Broadcast: "#cz_rcap3" ("burnsy<6>")
+L 08/25/1999 - 15:56:54: "Skillet[PsK]<35>" killed "lying pig dog<14>" with "gl_grenade"
+L 08/25/1999 - 15:56:56: "assasain<34>" activated the goal "blue flag 3"
+L 08/25/1999 - 15:56:57: "lying pig dog<14>" changed class to "Engineer"
+L 08/25/1999 - 15:56:57: "SHARPE<38>" joined team "1".
+L 08/25/1999 - 15:56:58: "lying pig dog<14>" activated the goal "i_p_t"
+L 08/25/1999 - 15:56:59: "stropp<32>" killed "DR.Octagon<10>" with "ac"
+L 08/25/1999 - 15:57:02: "DR.Octagon<10>" activated the goal "i_p_t"
+L 08/25/1999 - 15:57:10: "Paddy<4>" killed "stropp<32>" with "supershotgun"
+L 08/25/1999 - 15:57:15: "Paddy<4>" killed "burnsy<6>" with "sentrygun"
+L 08/25/1999 - 15:57:15: "Tiki_God<28>" activated the goal "red marker 2"
+L 08/25/1999 - 15:57:17: "stropp<32>" activated the goal "i_p_t"
+L 08/25/1999 - 15:57:18: "SHARPE<38>" changed class to "Demoman"
+L 08/25/1999 - 15:57:18: "SHARPE<38>" activated the goal "i_p_t"
+L 08/25/1999 - 15:57:28: "burnsy<6>" activated the goal "i_p_t"
+L 08/25/1999 - 15:57:29: "[CbK]-PriCk<21>" killed "Paddy<4>" with "sniperrifle"
+L 08/25/1999 - 15:57:30: "Paddy<4>" activated the goal "i_p_t"
+L 08/25/1999 - 15:57:36: "lying pig dog<14>" built a "sentry".
+L 08/25/1999 - 15:57:38: "burnsy<6>" activated the goal "red marker 1"
+L 08/25/1999 - 15:57:38: Named Broadcast: "#cz_bcap2" ("assasain<34>")
+L 08/25/1999 - 15:57:45: "lying pig dog<14>" killed "assasain<34>" with "sentrygun"
+L 08/25/1999 - 15:57:46: "Skillet[PsK]<35>" killed "stropp<32>" with "gl_grenade"
+L 08/25/1999 - 15:57:47: "SHARPE<38>" changed class to "Demoman"
+L 08/25/1999 - 15:57:48: "stropp<32>" activated the goal "i_p_t"
+L 08/25/1999 - 15:57:51: "SHARPE<38>" changed class to "Demoman"
+L 08/25/1999 - 15:57:51: "Skillet[PsK]<35>" killed "burnsy<6>" with "mirvgrenade"
+L 08/25/1999 - 15:57:52: "Genius<39><WON:3108849>" connected, address "208.251.236.54:27005"
+L 08/25/1999 - 15:57:54: "burnsy<6>" activated the goal "i_p_t"
+L 08/25/1999 - 15:57:55: "SHARPE<38>" changed to team "2".
+L 08/25/1999 - 15:57:55: "SHARPE<38>" killed self with "world"
+L 08/25/1999 - 15:57:56: "SHARPE<38>" activated the goal "i_p_t"
+L 08/25/1999 - 15:58:00: "SHARPE<38>" changed class to "Demoman"
+L 08/25/1999 - 15:58:00: "SHARPE<38>" activated the goal "i_p_t"
+L 08/25/1999 - 15:58:00: "Tiki_God<28>" destroyed "Paddy<4>"'s "sentry".
+L 08/25/1999 - 15:58:05: "Tiki_God<28>" killed "Paddy<4>" with "supernails"
+L 08/25/1999 - 15:58:06: "Paddy<4>" activated the goal "i_p_t"
+L 08/25/1999 - 15:58:09: "burnsy<6>" activated the goal "red marker 1"
+L 08/25/1999 - 15:58:11: "assasain<34>" disconnected
+L 08/25/1999 - 15:58:11: Named Broadcast: "#cz_rcap1" ("Tiki_God<28>")
+L 08/25/1999 - 15:58:12: "lying pig dog<14>" killed "DR.Octagon<10>" with "empgrenade"
+L 08/25/1999 - 15:58:12: "Genius<39><WON:3108849>" has entered the game
+L 08/25/1999 - 15:58:18: "Genius<39>" joined team "1".
+L 08/25/1999 - 15:58:19: "DR.Octagon<10>" changed class to "Sniper"
+L 08/25/1999 - 15:58:19: "DR.Octagon<10>" activated the goal "i_p_t"
+L 08/25/1999 - 15:58:25: "Genius<39>" changed class to "Pyro"
+L 08/25/1999 - 15:58:25: "Genius<39>" activated the goal "i_p_t"
+L 08/25/1999 - 15:58:26: "lying pig dog<14>" killed "Skillet[PsK]<35>" with "sentrygun"
+L 08/25/1999 - 15:58:28: "Skillet[PsK]<35>" destroyed "lying pig dog<14>"'s "sentry".
+L 08/25/1999 - 15:58:28: "Skillet[PsK]<35>" destroyed "lying pig dog<14>"'s "sentry".
+L 08/25/1999 - 15:58:29: "Skillet[PsK]<35>" killed "lying pig dog<14>" with "mirvgrenade"
+L 08/25/1999 - 15:58:30: "lying pig dog<14>" activated the goal "i_p_t"
+L 08/25/1999 - 15:58:30: "Skillet[PsK]<35>" activated the goal "i_p_t"
+L 08/25/1999 - 15:58:33: "Skillet[PsK]<35>" say "GO TO YOUR ROOM!!!!"
+L 08/25/1999 - 15:58:33: "[CbK]-PriCk<21>" killed "DR.Octagon<10>" with "sniperrifle"
+L 08/25/1999 - 15:58:38: "DR.Octagon<10>" activated the goal "i_p_t"
+L 08/25/1999 - 15:58:42: "Paddy<4>" built a "sentry".
+L 08/25/1999 - 15:58:49: "SHARPE<38>" killed "Genius<39>" with "gl_grenade"
+L 08/25/1999 - 15:58:53: "Tiki_God<28>" activated the goal "red marker 2"
+L 08/25/1999 - 15:58:57: "Paddy<4>" killed "SHARPE<38>" with "sentrygun"
+L 08/25/1999 - 15:58:58: "Tiki_God<28>" say_team "defense to 1"
+L 08/25/1999 - 15:58:58: "SHARPE<38>" activated the goal "i_p_t"
+L 08/25/1999 - 15:59:00: "stropp<32>" killed "DR.Octagon<10>" with "ac"
+L 08/25/1999 - 15:59:01: "Genius<39>" changed class to "Sniper"
+L 08/25/1999 - 15:59:03: "Genius<39>" activated the goal "i_p_t"
+L 08/25/1999 - 15:59:04: "SHARPE<38>" changed class to "Sniper"
+L 08/25/1999 - 15:59:09: "Player<40><WON:3323059>" connected, address "208.255.128.98:27005"
+L 08/25/1999 - 15:59:09: "Skillet[PsK]<35>" killed "stropp<32>" with "mirvgrenade"
+L 08/25/1999 - 15:59:10: "DR.Octagon<10>" disconnected
+L 08/25/1999 - 15:59:12: "stropp<32>" activated the goal "i_p_t"
+L 08/25/1999 - 15:59:15: "Skillet[PsK]<35>" killed "burnsy<6>" with "gl_grenade"
+L 08/25/1999 - 15:59:19: "lying pig dog<14>" built a "sentry".
+L 08/25/1999 - 15:59:20: "burnsy<6>" activated the goal "i_p_t"
+L 08/25/1999 - 15:59:25: "stropp<32>" changed class to "Engineer"
+L 08/25/1999 - 15:59:30: "burnsy<6>" activated the goal "red marker 3"
+L 08/25/1999 - 15:59:31: "[CbK]-PriCk<21>" killed "Genius<39>" with "headshot"
+L 08/25/1999 - 15:59:34: "Paddy<4>" activated the goal "blue flag 2"
+L 08/25/1999 - 15:59:34: "Genius<39>" activated the goal "i_p_t"
+L 08/25/1999 - 15:59:35: "Skillet[PsK]<35>" destroyed "lying pig dog<14>"'s "sentry".
+L 08/25/1999 - 15:59:43: "Player<40><WON:3323059>" has entered the game
+L 08/25/1999 - 15:59:47: "lying pig dog<14>" killed "Skillet[PsK]<35>" with "empgrenade"
+L 08/25/1999 - 15:59:49: "Skillet[PsK]<35>" activated the goal "i_p_t"
+L 08/25/1999 - 15:59:53: Named Broadcast: "#cz_rcap2" ("Tiki_God<28>")
+L 08/25/1999 - 15:59:54: "Player<40>" joined team "1".
+L 08/25/1999 - 16:00:01: "Skillet[PsK]<35>" say "teams"
+L 08/25/1999 - 16:00:02: "Player<40>" changed class to "RandomPC"
+L 08/25/1999 - 16:00:02: "Player<40>" activated the goal "i_p_t"
+L 08/25/1999 - 16:00:07: Named Broadcast: "#cz_rcap4" ("burnsy<6>")
+L 08/25/1999 - 16:00:07: "[CbK]-PriCk<21>" killed "Paddy<4>" with "sniperrifle"
+L 08/25/1999 - 16:00:09: "Paddy<4>" activated the goal "i_p_t"
+L 08/25/1999 - 16:00:10: "lying pig dog<14>" built a "sentry".
+L 08/25/1999 - 16:00:12: "[CbK]-PriCk<21>" destroyed "Paddy<4>"'s "sentry".
+L 08/25/1999 - 16:00:17: "-=REZZ=-<41><WON:801639>" connected, address "24.65.234.61:27005"
+L 08/25/1999 - 16:00:17: "Skillet[PsK]<35>" killed "SHARPE<38>" with "mirvgrenade"
+L 08/25/1999 - 16:00:18: "ultimiteplayer<2>" destroyed "lying pig dog<14>"'s "sentry".
+L 08/25/1999 - 16:00:18: "Skillet[PsK]<35>" killed "stropp<32>" with "mirvgrenade"
+L 08/25/1999 - 16:00:19: "stropp<32>" activated the goal "i_p_t"
+L 08/25/1999 - 16:00:20: "SHARPE<38>" activated the goal "i_p_t"
+L 08/25/1999 - 16:00:20: "Skillet[PsK]<35>" say "GO TO YOUR ROOM!!!!"
+L 08/25/1999 - 16:00:21: "Skillet[PsK]<35>" say "GO TO YOUR ROOM!!!!"
+L 08/25/1999 - 16:00:22: "[CbK]-PriCk<21>" killed "Paddy<4>" with "sniperrifle"
+L 08/25/1999 - 16:00:25: "Paddy<4>" activated the goal "i_p_t"
+L 08/25/1999 - 16:00:25: "Tiki_God<28>" activated the goal "red marker 1"
+L 08/25/1999 - 16:00:30: "-=REZZ=-<41><WON:801639>" has entered the game
+L 08/25/1999 - 16:00:30: "-=REZZ=-<41>" joined team "1".
+L 08/25/1999 - 16:00:34: "Skillet[PsK]<35>" killed "[CbK]-PriCk<21>" with "mirvgrenade"
+L 08/25/1999 - 16:00:36: "-=REZZ=-<41>" changed class to "Sniper"
+L 08/25/1999 - 16:00:36: "-=REZZ=-<41>" activated the goal "i_p_t"
+L 08/25/1999 - 16:00:36: "[CbK]-PriCk<21>" activated the goal "i_p_t"
+L 08/25/1999 - 16:00:37: "Warlock<42><WON:3120379>" connected, address "24.0.219.114:27005"
+L 08/25/1999 - 16:00:38: "Skillet[PsK]<35>" say "GO TO YOUR ROOM!!!!"
+L 08/25/1999 - 16:00:49: Named Broadcast: "#cz_rcap5" ("Tiki_God<28>")
+L 08/25/1999 - 16:00:50: "Warlock<42><WON:3120379>" has entered the game
+L 08/25/1999 - 16:00:53: "Warlock<42>" joined team "1".
+L 08/25/1999 - 16:00:53: "[CbK]-PriCk<21>" killed "Player<40>" with "sniperrifle"
+L 08/25/1999 - 16:00:53: "stropp<32>" built a "sentry".
+L 08/25/1999 - 16:00:55: "burnsy<6>" activated the goal "red marker 2"
+L 08/25/1999 - 16:00:56: "Warlock<42>" changed class to "Soldier"
+L 08/25/1999 - 16:00:56: "Warlock<42>" activated the goal "i_p_t"
+L 08/25/1999 - 16:00:57: "ultimiteplayer<2>" killed "lying pig dog<14>" with "normalgrenade"
+L 08/25/1999 - 16:01:00: "Player<40>" changed class to "Sniper"
+L 08/25/1999 - 16:01:01: "lying pig dog<14>" activated the goal "i_p_t"
+L 08/25/1999 - 16:01:02: "Player<40>" activated the goal "i_p_t"
+L 08/25/1999 - 16:01:02: "Paddy<4>" built a "sentry".
+L 08/25/1999 - 16:01:07: "Tiki_God<28>" infected "Genius<39>".
+L 08/25/1999 - 16:01:21: "Tiki_God<28>" killed "Genius<39>" with "timer"
+L 08/25/1999 - 16:01:21: "Tiki_God<28>" killed "Genius<39>" with "infection"
+L 08/25/1999 - 16:01:22: "Genius<39>" activated the goal "i_p_t"
+L 08/25/1999 - 16:01:25: "Skillet[PsK]<35>" killed "burnsy<6>" with "gl_grenade"
+L 08/25/1999 - 16:01:28: "burnsy<6>" activated the goal "i_p_t"
+L 08/25/1999 - 16:01:35: "Genius<39>" activated the goal "blue flag 3"
+L 08/25/1999 - 16:01:35: "SHARPE<38>" killed "ultimiteplayer<2>" with "headshot"
+L 08/25/1999 - 16:01:37: "ultimiteplayer<2>" activated the goal "i_p_t"
+L 08/25/1999 - 16:01:40: "burnsy<6>" activated the goal "red marker 1"
+L 08/25/1999 - 16:01:42: "[CbK]-PriCk<21>" killed "-=REZZ=-<41>" with "sniperrifle"
+L 08/25/1999 - 16:01:43: "-=REZZ=-<41>" activated the goal "i_p_t"
+L 08/25/1999 - 16:01:45: "Tiki_God<28>" activated the goal "red marker 2"
+L 08/25/1999 - 16:01:55: "Skillet[PsK]<35>" killed "SHARPE<38>" with "mirvgrenade"
+L 08/25/1999 - 16:01:57: "SHARPE<38>" activated the goal "i_p_t"
+L 08/25/1999 - 16:02:00: "lying pig dog<14>" killed "Genius<39>" with "empgrenade"
+L 08/25/1999 - 16:02:01: "Warlock<42>" killed "burnsy<6>" with "rocket"
+L 08/25/1999 - 16:02:03: "Genius<39>" activated the goal "i_p_t"
+L 08/25/1999 - 16:02:09: "burnsy<6>" changed class to "Engineer"
+L 08/25/1999 - 16:02:10: "burnsy<6>" activated the goal "i_p_t"
+L 08/25/1999 - 16:02:15: "[CbK]-PriCk<21>" say_team "demo outside"
+L 08/25/1999 - 16:02:16: "Genius<39>" killed "lying pig dog<14>" with "headshot"
+L 08/25/1999 - 16:02:17: "Warlock<42>" killed "Tiki_God<28>" with "rocket"
+L 08/25/1999 - 16:02:19: "lying pig dog<14>" activated the goal "i_p_t"
+L 08/25/1999 - 16:02:19: "Tiki_God<28>" activated the goal "i_p_t"
+L 08/25/1999 - 16:02:26: "lying pig dog<14>" say_team "kill him"
+L 08/25/1999 - 16:02:31: "Tiki_God<28>" activated the goal "red marker 2"
+L 08/25/1999 - 16:02:31: "-=REZZ=-<41>" killed "lying pig dog<14>" with "sniperrifle"
+L 08/25/1999 - 16:02:35: "lying pig dog<14>" activated the goal "i_p_t"
+L 08/25/1999 - 16:02:56: "[CbK]-PriCk<21>" killed "-=REZZ=-<41>" with "sniperrifle"
+L 08/25/1999 - 16:02:57: "-=REZZ=-<41>" activated the goal "i_p_t"
+L 08/25/1999 - 16:03:01: "Tiki_God<28>" say_team "someone remove enemy snipers"
+L 08/25/1999 - 16:03:12: "[CbK]-PriCk<21>" say_team "i got it"
+L 08/25/1999 - 16:03:22: "burnsy<6>" built a "sentry".
+L 08/25/1999 - 16:03:22: "Skillet[PsK]<35>" activated the goal "blue flag 2"
+L 08/25/1999 - 16:03:24: "lying pig dog<14>" killed "-=REZZ=-<41>" with "empgrenade"
+L 08/25/1999 - 16:03:24: "lying pig dog<14>" killed "ultimiteplayer<2>" with "empgrenade"
+L 08/25/1999 - 16:03:24: "lying pig dog<14>" killed "Warlock<42>" with "empgrenade"
+L 08/25/1999 - 16:03:25: "-=REZZ=-<41>" activated the goal "i_p_t"
+L 08/25/1999 - 16:03:26: "Warlock<42>" activated the goal "i_p_t"
+L 08/25/1999 - 16:03:29: "lying pig dog<14>" say_team "3 for 1"
+L 08/25/1999 - 16:03:33: "Player<43><WON:392799>" connected, address "205.205.128.60:27005"
+L 08/25/1999 - 16:03:42: "Warlock<42>" killed "lying pig dog<14>" with "rocket"
+L 08/25/1999 - 16:03:43: "lying pig dog<14>" activated the goal "i_p_t"
+L 08/25/1999 - 16:03:53: "(1)Player<43><WON:392799>" has entered the game
+L 08/25/1999 - 16:03:54: "Paddy<4>" activated the goal "blue flag 3"
+L 08/25/1999 - 16:03:55: Named Broadcast: "#cz_bcap1" ("Skillet[PsK]<35>")
+L 08/25/1999 - 16:03:57: "(1)Player<43>" joined team "2".
+L 08/25/1999 - 16:04:05: "Warlock<42>" killed "SHARPE<38>" with "rocket"
+L 08/25/1999 - 16:04:07: "(1)Player<43>" changed class to "HWGuy"
+L 08/25/1999 - 16:04:07: "(1)Player<43>" activated the goal "i_p_t"
+L 08/25/1999 - 16:04:12: Named Broadcast: "#cz_rcap2" ("Tiki_God<28>")
+L 08/25/1999 - 16:04:13: "Warlock<42>" destroyed "burnsy<6>"'s "sentry".
+L 08/25/1999 - 16:04:14: "Warlock<42>" killed "burnsy<6>" with "rocket"
+L 08/25/1999 - 16:04:15: "SHARPE<38>" activated the goal "i_p_t"
+L 08/25/1999 - 16:04:18: "stropp<32>" built a "dispenser".
+L 08/25/1999 - 16:04:23: "Tiki_God<28>" infected "Genius<39>".
+L 08/25/1999 - 16:04:28: "Warlock<42>" killed "Tiki_God<28>" with "rocket"
+L 08/25/1999 - 16:04:31: "lying pig dog<14>" killed self with "normalgrenade"
+L 08/25/1999 - 16:04:33: "lying pig dog<14>" activated the goal "i_p_t"
+L 08/25/1999 - 16:04:34: "Tiki_God<28>" say "I have to go"
+L 08/25/1999 - 16:04:35: "burnsy<6>" disconnected
+L 08/25/1999 - 16:04:37: "Tiki_God<28>" say "later"
+L 08/25/1999 - 16:04:40: "Tiki_God<28>" killed "Genius<39>" with "timer"
+L 08/25/1999 - 16:04:40: "Tiki_God<28>" killed "Genius<39>" with "infection"
+L 08/25/1999 - 16:04:42: "lying pig dog<14>" say "later"
+L 08/25/1999 - 16:04:43: "Genius<39>" changed class to "Spy"
+L 08/25/1999 - 16:04:44: "Genius<39>" activated the goal "i_p_t"
+L 08/25/1999 - 16:04:45: Named Broadcast: "#cz_bcap2" ("Paddy<4>")
+L 08/25/1999 - 16:04:47: "Tiki_God<28>" disconnected
+L 08/25/1999 - 16:04:49: "[CbK]-PriCk<21>" killed "Player<40>" with "sniperrifle"
+L 08/25/1999 - 16:04:55: "Player<40>" activated the goal "i_p_t"
+L 08/25/1999 - 16:05:02: "lying pig dog<14>" killed self with "empgrenade"
+L 08/25/1999 - 16:05:04: "[CbK]-PriCk<21>" killed "Warlock<42>" with "sniperrifle"
+L 08/25/1999 - 16:05:04: "(1)Player<43>" killed "Paddy<4>" with "ac"
+L 08/25/1999 - 16:05:05: "Warlock<42>" activated the goal "i_p_t"
+L 08/25/1999 - 16:05:06: "Paddy<4>" activated the goal "i_p_t"
+L 08/25/1999 - 16:05:11: "Skillet[PsK]<35>" killed "stropp<32>" with "gl_grenade"
+L 08/25/1999 - 16:05:14: "Skillet[PsK]<35>" destroyed "stropp<32>"'s "dispenser".
+L 08/25/1999 - 16:05:14: "Skillet[PsK]<35>" destroyed "stropp<32>"'s "dispenser".
+L 08/25/1999 - 16:05:19: "Player<44><WON:91939>" connected, address "209.186.215.11:27005"
+L 08/25/1999 - 16:05:21: "[CbK]-PriCk<21>" killed "Warlock<42>" with "sniperrifle"
+L 08/25/1999 - 16:05:22: "Warlock<42>" activated the goal "i_p_t"
+L 08/25/1999 - 16:05:26: "Paddy<4>" activated the goal "blue flag 2"
+L 08/25/1999 - 16:05:49: "Warlock<42>" killed "[CbK]-PriCk<21>" with "rocket"
+L 08/25/1999 - 16:05:51: "[CbK]-PriCk<21>" activated the goal "i_p_t"
+L 08/25/1999 - 16:06:07: "(1)Player<43>" killed "-=REZZ=-<41>" with "ac"
+L 08/25/1999 - 16:06:09: "-=REZZ=-<41>" activated the goal "i_p_t"
+L 08/25/1999 - 16:06:10: "stropp<32>" activated the goal "i_p_t"
+L 08/25/1999 - 16:06:11: "[CbK]-PriCk<21>" killed "Warlock<42>" with "sniperrifle"
+L 08/25/1999 - 16:06:13: "Warlock<42>" activated the goal "i_p_t"
+L 08/25/1999 - 16:06:18: "-=REZZ=-<41>" changed to team "2".
+L 08/25/1999 - 16:06:18: "-=REZZ=-<41>" killed self with "world"
+L 08/25/1999 - 16:06:21: "-=REZZ=-<41>" activated the goal "i_p_t"
+L 08/25/1999 - 16:06:25: Named Broadcast: "#cz_bcap4" ("Paddy<4>")
+L 08/25/1999 - 16:06:27: "-=REZZ=-<41>" changed class to "Sniper"
+L 08/25/1999 - 16:06:27: "-=REZZ=-<41>" activated the goal "i_p_t"
+L 08/25/1999 - 16:06:34: "Genius<39>" killed "[CbK]-PriCk<21>" with "knife"
+L 08/25/1999 - 16:06:34: "-=REZZ=-<41>" changed to team "1".
+L 08/25/1999 - 16:06:34: "-=REZZ=-<41>" killed self with "world"
+L 08/25/1999 - 16:06:35: "[CbK]-PriCk<21>" activated the goal "i_p_t"
+L 08/25/1999 - 16:06:35: "-=REZZ=-<41>" activated the goal "i_p_t"
+L 08/25/1999 - 16:06:36: "(1)Player<43>" killed "Paddy<4>" with "ac"
+L 08/25/1999 - 16:06:36: "Skillet[PsK]<35>" killed "(1)Player<43>" with "mirvgrenade"
+L 08/25/1999 - 16:06:38: "Paddy<4>" activated the goal "i_p_t"
+L 08/25/1999 - 16:06:38: "(1)Player<43>" activated the goal "i_p_t"
+L 08/25/1999 - 16:06:41: "[CbK]-PriCk<21>" say_team "spy"
+L 08/25/1999 - 16:06:43: "-=REZZ=-<41>" changed class to "Sniper"
+L 08/25/1999 - 16:06:43: "-=REZZ=-<41>" activated the goal "i_p_t"
+L 08/25/1999 - 16:06:45: "Skillet[PsK]<35>" killed "SHARPE<38>" with "gl_grenade"
+L 08/25/1999 - 16:06:51: "Paddy<4>" activated the goal "blue flag 2"
+L 08/25/1999 - 16:06:56: "SHARPE<38>" activated the goal "i_p_t"
+L 08/25/1999 - 16:07:03: "[CbK]-PriCk<21>" killed "Genius<39>" with "sniperrifle"
+L 08/25/1999 - 16:07:09: "Genius<39>" activated the goal "i_p_t"
+L 08/25/1999 - 16:07:12: "Skillet[PsK]<35>" killed "(1)Player<43>" with "gl_grenade"
+L 08/25/1999 - 16:07:13: "[CbK]-PriCk<21>" killed "Player<40>" with "sniperrifle"
+L 08/25/1999 - 16:07:14: "(1)Player<43>" activated the goal "i_p_t"
+L 08/25/1999 - 16:07:14: "Player<40>" activated the goal "i_p_t"
+L 08/25/1999 - 16:07:22: "[CbK]-PriCk<21>" killed "-=REZZ=-<41>" with "sniperrifle"
+L 08/25/1999 - 16:07:24: "-=REZZ=-<41>" activated the goal "i_p_t"
+L 08/25/1999 - 16:07:32: "Warlock<42>" killed "SHARPE<38>" with "rocket"
+L 08/25/1999 - 16:07:35: "SHARPE<38>" changed class to "Demoman"
+L 08/25/1999 - 16:07:36: "SHARPE<38>" activated the goal "i_p_t"
+L 08/25/1999 - 16:07:43: "Skillet[PsK]<35>" activated the goal "blue flag 1"
+L 08/25/1999 - 16:07:50: "Skillet[PsK]<35>" changed class to "Scout"
+L 08/25/1999 - 16:07:54: "Skillet[PsK]<35>" changed class to "Medic"
+L 08/25/1999 - 16:07:55: Named Broadcast: "#cz_bcap3" ("Paddy<4>")
+L 08/25/1999 - 16:07:57: "[CbK]-PriCk<21>" killed "-=REZZ=-<41>" with "headshot"
+L 08/25/1999 - 16:07:59: "Skillet[PsK]<35>" changed class to "Medic"
+L 08/25/1999 - 16:07:59: "-=REZZ=-<41>" activated the goal "i_p_t"
+L 08/25/1999 - 16:08:26: "Warlock<42>" killed "(1)Player<43>" with "rocket"
+L 08/25/1999 - 16:08:26: "Paddy<4>" activated the goal "blue flag 2"
+L 08/25/1999 - 16:08:27: "(1)Player<43>" activated the goal "i_p_t"
+L 08/25/1999 - 16:08:30: "Player<40>" changed name to "Gig40<40>"
+L 08/25/1999 - 16:08:53: "Skillet[PsK]<35>" killed "stropp<32>" with "mirvgrenade"
+L 08/25/1999 - 16:09:08: Named Broadcast: "#cz_bcap5" ("Skillet[PsK]<35>")
+L 08/25/1999 - 16:09:10: "(1)Player<43>" killed "Warlock<42>" with "ac"
+L 08/25/1999 - 16:09:11: "Warlock<42>" activated the goal "i_p_t"
+L 08/25/1999 - 16:09:14: "-=REZZ=-<41>" killed "SHARPE<38>" with "sniperrifle"
+L 08/25/1999 - 16:09:16: "SHARPE<38>" activated the goal "i_p_t"
+L 08/25/1999 - 16:09:18: "Skillet[PsK]<35>" say "Very Nice"
+L 08/25/1999 - 16:09:18: "Gig40<40>" killed "(1)Player<43>" with "autorifle"
+L 08/25/1999 - 16:09:19: Named Broadcast: "#cz_bcap5" ("Paddy<4>")
+L 08/25/1999 - 16:09:20: "(1)Player<43>" activated the goal "i_p_t"
+L 08/25/1999 - 16:09:24: "Malice<45><WON:2860639>" connected, address "209.86.36.85:27005"
+L 08/25/1999 - 16:09:36: "Psyc0Smly<46><WON:1744359>" connected, address "24.88.13.131:1029"
+L 08/25/1999 - 16:09:41: "Malice<45><WON:2860639>" has entered the game
+L 08/25/1999 - 16:09:43: "Psyc0Smly<46><WON:1744359>" has entered the game
+L 08/25/1999 - 16:09:44: "Malice<45>" joined team "2".
+L 08/25/1999 - 16:09:48: "Psyc0Smly<46>" joined team "2".
+L 08/25/1999 - 16:09:51: "(1)Player<43>" disconnected
+L 08/25/1999 - 16:09:51: "Malice<45>" changed class to "Scout"
+L 08/25/1999 - 16:09:51: "Malice<45>" activated the goal "i_p_t"
+L 08/25/1999 - 16:09:52: "Psyc0Smly<46>" changed class to "Sniper"
+L 08/25/1999 - 16:09:52: "Psyc0Smly<46>" activated the goal "i_p_t"
+L 08/25/1999 - 16:09:57: "Player<47><WON:392799>" connected, address "205.205.128.60:27005"
+L 08/25/1999 - 16:09:57: "Malice<45>" changed to team "1".
+L 08/25/1999 - 16:09:57: "Malice<45>" killed self with "world"
+L 08/25/1999 - 16:10:05: "Malice<45>" activated the goal "i_p_t"
+L 08/25/1999 - 16:10:06: "Warlock<42>" killed "SHARPE<38>" with "rocket"
+L 08/25/1999 - 16:10:08: "SHARPE<38>" activated the goal "i_p_t"
+L 08/25/1999 - 16:10:08: "Paddy<4>" activated the goal "blue flag 3"
+L 08/25/1999 - 16:10:12: "Player<47><WON:392799>" has entered the game
+L 08/25/1999 - 16:10:14: "Player<47>" joined team "2".
+L 08/25/1999 - 16:10:20: "Skillet[PsK]<35>" killed "Psyc0Smly<46>" with "shotgun"
+L 08/25/1999 - 16:10:21: "Psyc0Smly<46>" activated the goal "i_p_t"
+L 08/25/1999 - 16:10:23: "Malice<45>" changed class to "Sniper"
+L 08/25/1999 - 16:10:23: "Malice<45>" activated the goal "i_p_t"
+L 08/25/1999 - 16:10:25: "[CbK]-PriCk<21>" killed "Paddy<4>" with "sniperrifle"
+L 08/25/1999 - 16:10:25: "Player<47>" changed class to "Sniper"
+L 08/25/1999 - 16:10:25: "Player<47>" activated the goal "i_p_t"
+L 08/25/1999 - 16:10:27: "Malice<45>" changed to team "2".
+L 08/25/1999 - 16:10:27: "Malice<45>" killed self with "world"
+L 08/25/1999 - 16:10:28: "lying pig dog<14>" activated the goal "i_p_t"
+L 08/25/1999 - 16:10:32: "Paddy<4>" activated the goal "i_p_t"
+L 08/25/1999 - 16:10:36: "Malice<45>" activated the goal "i_p_t"
+L 08/25/1999 - 16:10:37: "Malice<45>" changed class to "Sniper"
+L 08/25/1999 - 16:10:37: "Malice<45>" activated the goal "i_p_t"
+L 08/25/1999 - 16:10:42: "Paddy<4>" changed class to "Scout"
+L 08/25/1999 - 16:10:50: "lying pig dog<14>" killed "Warlock<42>" with "empgrenade"
+L 08/25/1999 - 16:10:52: "Warlock<42>" activated the goal "i_p_t"
+L 08/25/1999 - 16:10:55: "Paddy<4>" activated the goal "blue flag 2"
+L 08/25/1999 - 16:11:05: "stropp<32>" activated the goal "i_p_t"
+L 08/25/1999 - 16:11:05: "[CbK]-PriCk<21>" killed "Warlock<42>" with "sniperrifle"
+L 08/25/1999 - 16:11:06: "Warlock<42>" activated the goal "i_p_t"
+L 08/25/1999 - 16:11:07: "lying pig dog<14>" built a "sentry".
+L 08/25/1999 - 16:11:11: "Psyc0Smly<46>" killed "-=REZZ=-<41>" with "sniperrifle"
+L 08/25/1999 - 16:11:13: "-=REZZ=-<41>" activated the goal "i_p_t"
+L 08/25/1999 - 16:11:25: "Genius<39>" killed "SHARPE<38>" with "gasgrenade"
+L 08/25/1999 - 16:11:27: "SHARPE<38>" activated the goal "i_p_t"
+L 08/25/1999 - 16:11:30: Named Broadcast: "#cz_bcap1" ("Paddy<4>")
+L 08/25/1999 - 16:11:32: "Genius<39>" killed "Player<47>" with "gasgrenade"
+L 08/25/1999 - 16:11:34: "Player<47>" activated the goal "i_p_t"
+L 08/25/1999 - 16:11:38: "Malice<45>" killed "Gig40<40>" with "nails"
+L 08/25/1999 - 16:11:40: "Gig40<40>" activated the goal "i_p_t"
+L 08/25/1999 - 16:11:50: "Skillet[PsK]<35>" killed "Psyc0Smly<46>" with "gl_grenade"
+L 08/25/1999 - 16:11:51: "Psyc0Smly<46>" activated the goal "i_p_t"
+L 08/25/1999 - 16:12:00: "-=REZZ=-<41>" killed "SHARPE<38>" with "sniperrifle"
+L 08/25/1999 - 16:12:03: "SHARPE<38>" activated the goal "i_p_t"
+L 08/25/1999 - 16:12:03: "[CbK]-PriCk<21>" killed "Warlock<42>" with "sniperrifle"
+L 08/25/1999 - 16:12:04: "Warlock<42>" activated the goal "i_p_t"
+L 08/25/1999 - 16:12:06: "SHARPE<38>" changed class to "Sniper"
+L 08/25/1999 - 16:12:16: "[CbK]-PriCk<21>" say "sneaky"
+L 08/25/1999 - 16:12:19: "SHARPE<38>" changed class to "Scout"
+L 08/25/1999 - 16:12:24: "lying pig dog<14>" killed "Gig40<40>" with "sentrygun"
+L 08/25/1999 - 16:12:24: "Psyc0Smly<46>" killed "Paddy<4>" with "sniperrifle"
+L 08/25/1999 - 16:12:26: "<-1>" destroyed "Paddy<4>"'s "sentry".
+L 08/25/1999 - 16:12:26: "Paddy<4>" activated the goal "i_p_t"
+L 08/25/1999 - 16:12:26: "Gig40<40>" activated the goal "i_p_t"
+L 08/25/1999 - 16:12:36: "Paddy<4>" activated the goal "blue flag 2"
+L 08/25/1999 - 16:12:39: "Gig40<40>" changed class to "Spy"
+L 08/25/1999 - 16:12:43: "Genius<39>" killed "Player<47>" with "knife"
+L 08/25/1999 - 16:12:44: "Player<47>" activated the goal "i_p_t"
+L 08/25/1999 - 16:12:51: "lying pig dog<14>" killed "Skillet[PsK]<35>" with "sentrygun"
+L 08/25/1999 - 16:12:52: "Skillet[PsK]<35>" activated the goal "i_p_t"
+L 08/25/1999 - 16:12:53: "Genius<39>" killed "Malice<45>" with "knife"
+L 08/25/1999 - 16:12:53: "SHARPE<38>" say "get the flags out"
+L 08/25/1999 - 16:12:54: "Malice<45>" activated the goal "i_p_t"
+L 08/25/1999 - 16:12:57: "Psyc0Smly<46>" killed "Gig40<40>" with "sniperrifle"
+L 08/25/1999 - 16:12:59: "Gig40<40>" activated the goal "i_p_t"
+L 08/25/1999 - 16:13:02: "Malice<45>" changed class to "Medic"
+L 08/25/1999 - 16:13:04: "Skillet[PsK]<35>" activated the goal "blue flag 3"
+L 08/25/1999 - 16:13:04: "lying pig dog<14>" killed "Genius<39>" with "sentrygun"
+L 08/25/1999 - 16:13:05: Named Broadcast: "#cz_bcap2" ("Paddy<4>")
+L 08/25/1999 - 16:13:05: "Genius<39>" activated the goal "i_p_t"
+L 08/25/1999 - 16:13:06: "[CbK]-PriCk<21>" activated the goal "red marker 2"
+L 08/25/1999 - 16:13:10: "Skillet[PsK]<35>" say_team "going 3"
+L 08/25/1999 - 16:13:28: "Warlock<42>" killed "Malice<45>" with "rocket"
+L 08/25/1999 - 16:13:32: "Skillet[PsK]<35>" infected "Psyc0Smly<46>".
+L 08/25/1999 - 16:13:33: "Paddy<4>" activated the goal "blue flag 2"
+L 08/25/1999 - 16:13:33: "Malice<45>" activated the goal "i_p_t"
+L 08/25/1999 - 16:13:37: Named Broadcast: "#cz_rcap5" ("[CbK]-PriCk<21>")
+L 08/25/1999 - 16:13:38: "Skillet[PsK]<35>" killed "Psyc0Smly<46>" with "supershotgun"
+L 08/25/1999 - 16:13:39: "Warlock<42>" killed "stropp<32>" with "rocket"
+L 08/25/1999 - 16:13:41: "Psyc0Smly<46>" activated the goal "i_p_t"
+L 08/25/1999 - 16:13:41: "stropp<32>" activated the goal "i_p_t"
+L 08/25/1999 - 16:13:51: Named Broadcast: "#cz_bcap3" ("Skillet[PsK]<35>")
+L 08/25/1999 - 16:13:53: "SHARPE<38>" killed "Gig40<40>" with "gl_grenade"
+L 08/25/1999 - 16:13:54: "Warlock<42>" killed "Player<47>" with "rocket"
+L 08/25/1999 - 16:13:54: "Gig40<40>" activated the goal "i_p_t"
+L 08/25/1999 - 16:13:55: "Player<47>" activated the goal "i_p_t"
+L 08/25/1999 - 16:14:01: "Genius<39>" killed "lying pig dog<14>" with "normalgrenade"
+L 08/25/1999 - 16:14:02: "Genius<39>" destroyed "lying pig dog<14>"'s "sentry".
+L 08/25/1999 - 16:14:08: "SHARPE<38>" killed "Paddy<4>" with "gl_grenade"
+L 08/25/1999 - 16:14:10: "Paddy<4>" activated the goal "i_p_t"
+L 08/25/1999 - 16:14:13: "Player<47>" activated the goal "red marker 3"
+L 08/25/1999 - 16:14:20: "Paddy<4>" activated the goal "blue flag 3"
+L 08/25/1999 - 16:14:22: "Skillet[PsK]<35>" activated the goal "blue flag 1"
+L 08/25/1999 - 16:14:29: "lying pig dog<14>" activated the goal "i_p_t"
+L 08/25/1999 - 16:14:30: "Skillet[PsK]<35>" say_team "going 5"
+L 08/25/1999 - 16:14:30: "-=REZZ=-<41>" killed "[CbK]-PriCk<21>" with "headshot"
+L 08/25/1999 - 16:14:31: "[CbK]-PriCk<21>" activated the goal "i_p_t"
+L 08/25/1999 - 16:14:40: "[CbK]-PriCk<21>" say_team "spy outside"
+L 08/25/1999 - 16:14:41: "Paddy<4>" say "going4"
+L 08/25/1999 - 16:14:46: "Warlock<42>" killed "stropp<32>" with "rocket"
+L 08/25/1999 - 16:14:47: "stropp<32>" activated the goal "i_p_t"
+L 08/25/1999 - 16:14:48: "[CbK]-PriCk<21>" killed "-=REZZ=-<41>" with "sniperrifle"
+L 08/25/1999 - 16:14:49: "Skillet[PsK]<35>" killed "Malice<45>" with "supernails"
+L 08/25/1999 - 16:14:50: "SHARPE<38>" killed "Skillet[PsK]<35>" with "gl_grenade"
+L 08/25/1999 - 16:14:51: "Malice<45>" activated the goal "i_p_t"
+L 08/25/1999 - 16:14:51: "-=REZZ=-<41>" activated the goal "i_p_t"
+L 08/25/1999 - 16:14:51: "Skillet[PsK]<35>" activated the goal "i_p_t"
+L 08/25/1999 - 16:14:52: "Warlock<42>" killed "Player<47>" with "rocket"
+L 08/25/1999 - 16:14:53: "Player<47>" activated the goal "i_p_t"
+L 08/25/1999 - 16:14:57: "Genius<39>" changed class to "Soldier"
+L 08/25/1999 - 16:15:00: "lying pig dog<14>" killed self with "normalgrenade"
+L 08/25/1999 - 16:15:02: "lying pig dog<14>" activated the goal "i_p_t"
+L 08/25/1999 - 16:15:03: Named Broadcast: "#cz_bcap4" ("Paddy<4>")
+L 08/25/1999 - 16:15:07: "Skillet[PsK]<35>" infected "SHARPE<38>".
+L 08/25/1999 - 16:15:08: "lying pig dog<14>" changed class to "Scout"
+L 08/25/1999 - 16:15:14: "stropp<32>" killed "Genius<39>" with "railgun"
+L 08/25/1999 - 16:15:15: "Player<47>" say_team "medic"
+L 08/25/1999 - 16:15:15: "Genius<39>" activated the goal "i_p_t"
+L 08/25/1999 - 16:15:15: "Skillet[PsK]<35>" killed "SHARPE<38>" with "supernails"
+L 08/25/1999 - 16:15:16: "SHARPE<38>" activated the goal "i_p_t"
+L 08/25/1999 - 16:15:18: "Warlock<42>" killed "lying pig dog<14>" with "rocket"
+L 08/25/1999 - 16:15:19: "Malice<45>" disconnected
+L 08/25/1999 - 16:15:19: "lying pig dog<14>" activated the goal "i_p_t"
+L 08/25/1999 - 16:15:23: "Media<48><WON:1475519>" connected, address "209.50.4.112:27005"
+L 08/25/1999 - 16:15:27: "Skillet[PsK]<35>" activated the goal "blue flag 2"
+L 08/25/1999 - 16:15:28: "SHARPE<38>" activated the goal "red marker 1"
+L 08/25/1999 - 16:15:30: "Psyc0Smly<46>" killed "-=REZZ=-<41>" with "sniperrifle"
+L 08/25/1999 - 16:15:31: "lying pig dog<14>" activated the goal "red marker 2"
+L 08/25/1999 - 16:15:31: "-=REZZ=-<41>" activated the goal "i_p_t"
+L 08/25/1999 - 16:15:40: "Warlock<42>" killed "Player<47>" with "rocket"
+L 08/25/1999 - 16:15:40: "Warlock<42>" killed "SHARPE<38>" with "rocket"
+L 08/25/1999 - 16:15:41: "Player<47>" activated the goal "i_p_t"
+L 08/25/1999 - 16:15:43: "SHARPE<38>" activated the goal "i_p_t"
+L 08/25/1999 - 16:15:44: "Media<48><WON:1475519>" has entered the game
+L 08/25/1999 - 16:15:49: "Media<48>" joined team "2".
+L 08/25/1999 - 16:15:51: "Skillet[PsK]<35>" infected "Psyc0Smly<46>".
+L 08/25/1999 - 16:15:57: "SHARPE<38>" activated the goal "red marker 1"
+L 08/25/1999 - 16:15:59: "Media<48>" changed class to "Scout"
+L 08/25/1999 - 16:15:59: "Media<48>" activated the goal "i_p_t"
+L 08/25/1999 - 16:15:59: "lying pig dog<14>" uncovered "Gig40<40>".
+L 08/25/1999 - 16:16:02: Named Broadcast: "#cz_rcap4" ("lying pig dog<14>")
+L 08/25/1999 - 16:16:05: "[CbK]-PriCk<21>" killed "-=REZZ=-<41>" with "sniperrifle"
+L 08/25/1999 - 16:16:07: "Media<48>" activated the goal "red marker 2"
+L 08/25/1999 - 16:16:08: "Paddy<4>" say "5 free of reds"
+L 08/25/1999 - 16:16:08: "-=REZZ=-<41>" activated the goal "i_p_t"
+L 08/25/1999 - 16:16:13: "Skillet[PsK]<35>" killed "Psyc0Smly<46>" with "supershotgun"
+L 08/25/1999 - 16:16:14: "Psyc0Smly<46>" activated the goal "i_p_t"
+L 08/25/1999 - 16:16:16: "stropp<32>" killed "Gig40<40>" with "sentrygun"
+L 08/25/1999 - 16:16:18: "Skillet[PsK]<35>" say "GO TO YOUR ROOM!!!!"
+L 08/25/1999 - 16:16:23: "Genius<39>" killed "Player<47>" with "rocket"
+L 08/25/1999 - 16:16:23: "Gig40<40>" disconnected
+L 08/25/1999 - 16:16:25: "Player<47>" activated the goal "i_p_t"
+L 08/25/1999 - 16:16:27: "Skillet[PsK]<35>" say_team "escort to 5"
+L 08/25/1999 - 16:16:29: "Warlock<42>" killed "SHARPE<38>" with "rocket"
+L 08/25/1999 - 16:16:31: "SHARPE<38>" activated the goal "i_p_t"
+L 08/25/1999 - 16:16:31: "lying pig dog<14>" activated the goal "red marker 3"
+L 08/25/1999 - 16:16:34: "Warlock<42>" killed "Psyc0Smly<46>" with "rocket"
+L 08/25/1999 - 16:16:38: "Genius<39>" killed "[CbK]-PriCk<21>" with "rocket"
+L 08/25/1999 - 16:16:38: "Player<47>" activated the goal "red marker 1"
+L 08/25/1999 - 16:16:39: "Psyc0Smly<46>" disconnected
+L 08/25/1999 - 16:16:39: "[CbK]-PriCk<21>" activated the goal "i_p_t"
+L 08/25/1999 - 16:16:40: "Psyc0Smly<49><WON:1744359>" connected, address "24.88.13.131:1029"
+L 08/25/1999 - 16:16:45: "Psyc0Smly<49><WON:1744359>" has entered the game
+L 08/25/1999 - 16:16:48: "Psyc0Smly<49>" joined team "1".
+L 08/25/1999 - 16:16:49: "SHARPE<38>" activated the goal "red marker 1"
+L 08/25/1999 - 16:16:49: Named Broadcast: "#cz_rcap2" ("Media<48>")
+L 08/25/1999 - 16:16:50: "Paddy<4>" say "covering 5"
+L 08/25/1999 - 16:16:56: "Psyc0Smly<49>" changed class to "Sniper"
+L 08/25/1999 - 16:16:56: "Psyc0Smly<49>" activated the goal "i_p_t"
+L 08/25/1999 - 16:16:58: "Psyc0Smly<49>" changed to team "2".
+L 08/25/1999 - 16:16:58: "Psyc0Smly<49>" killed self with "world"
+L 08/25/1999 - 16:17:01: "-=REZZ=-<41>" killed "SHARPE<38>" with "sniperrifle"
+L 08/25/1999 - 16:17:02: "Skillet[PsK]<35>" killed "Media<48>" with "supershotgun"
+L 08/25/1999 - 16:17:03: "[CbK]-PriCk<21>" killed "Genius<39>" with "headshot"
+L 08/25/1999 - 16:17:03: "Media<48>" activated the goal "i_p_t"
+L 08/25/1999 - 16:17:04: "SHARPE<38>" activated the goal "i_p_t"
+L 08/25/1999 - 16:17:06: "Psyc0Smly<49>" activated the goal "i_p_t"
+L 08/25/1999 - 16:17:07: "Genius<39>" activated the goal "i_p_t"
+L 08/25/1999 - 16:17:08: Named Broadcast: "#cz_rcap3" ("lying pig dog<14>")
+L 08/25/1999 - 16:17:10: "Psyc0Smly<49>" changed class to "Sniper"
+L 08/25/1999 - 16:17:10: "Psyc0Smly<49>" activated the goal "i_p_t"
+L 08/25/1999 - 16:17:12: "Media<48>" activated the goal "red marker 2"
+L 08/25/1999 - 16:17:14: "Psyc0Smly<49>" changed to team "1".
+L 08/25/1999 - 16:17:14: "Psyc0Smly<49>" killed self with "world"
+L 08/25/1999 - 16:17:15: "Warlock<42>" killed "lying pig dog<14>" with "rocket"
+L 08/25/1999 - 16:17:15: "SHARPE<38>" activated the goal "red marker 1"
+L 08/25/1999 - 16:17:15: Named Broadcast: "#cz_bcap5" ("Skillet[PsK]<35>")
+L 08/25/1999 - 16:17:16: "lying pig dog<14>" activated the goal "i_p_t"
+L 08/25/1999 - 16:17:22: "lying pig dog<14>" activated the goal "red marker 3"
+L 08/25/1999 - 16:17:23: "Warlock<42>" killed "Player<47>" with "rocket"
+L 08/25/1999 - 16:17:24: "Psyc0Smly<49>" activated the goal "i_p_t"
+L 08/25/1999 - 16:17:25: "Skillet[PsK]<35>" infected "Media<48>".
+L 08/25/1999 - 16:17:25: "Player<47>" activated the goal "i_p_t"
+L 08/25/1999 - 16:17:27: "Psyc0Smly<49>" changed class to "Sniper"
+L 08/25/1999 - 16:17:27: "Psyc0Smly<49>" activated the goal "i_p_t"
+L 08/25/1999 - 16:17:27: "lying pig dog<14>" say_team "5 1"
+L 08/25/1999 - 16:17:32: "Warlock<42>" killed "Media<48>" with "rocket"
+L 08/25/1999 - 16:17:34: "Media<48>" activated the goal "i_p_t"
+L 08/25/1999 - 16:17:41: "Media<48>" activated the goal "red marker 2"
+L 08/25/1999 - 16:17:54: "Paddy<4>" activated the goal "blue flag 3"
+L 08/25/1999 - 16:18:06: "Warlock<42>" killed "Media<48>" with "rocket"
+L 08/25/1999 - 16:18:07: "Genius<39>" killed "Player<47>" with "rocket"
+L 08/25/1999 - 16:18:08: "Media<48>" activated the goal "i_p_t"
+L 08/25/1999 - 16:18:08: "Skillet[PsK]<35>" activated the goal "blue flag 2"
+L 08/25/1999 - 16:18:12: "Player<47>" activated the goal "i_p_t"
+L 08/25/1999 - 16:18:13: Named Broadcast: "#cz_rcap1" ("lying pig dog<14>")
+L 08/25/1999 - 16:18:16: "Media<48>" activated the goal "red marker 2"
+L 08/25/1999 - 16:18:21: "Psyc0Smly<49>" killed "stropp<32>" with "sniperrifle"
+L 08/25/1999 - 16:18:22: Named Broadcast: "#cz_bcap2" ("Paddy<4>")
+L 08/25/1999 - 16:18:23: "stropp<32>" activated the goal "i_p_t"
+L 08/25/1999 - 16:18:26: "lying pig dog<14>" say_team "1 2"
+L 08/25/1999 - 16:18:30: "Genius<39>" killed "Player<47>" with "rocket"
+L 08/25/1999 - 16:18:31: "Player<47>" activated the goal "i_p_t"
+L 08/25/1999 - 16:18:35: "Genius<39>" killed "lying pig dog<14>" with "rocket"
+L 08/25/1999 - 16:18:36: "lying pig dog<14>" activated the goal "i_p_t"
+L 08/25/1999 - 16:18:39: "Psyc0Smly<49>" killed "Media<48>" with "headshot"
+L 08/25/1999 - 16:18:39: "Psyc0Smly<49>" killed self with "normalgrenade"
+L 08/25/1999 - 16:18:40: "Media<48>" activated the goal "i_p_t"
+L 08/25/1999 - 16:18:41: "Psyc0Smly<49>" activated the goal "i_p_t"
+L 08/25/1999 - 16:18:43: "Paddy<4>" activated the goal "blue flag 3"
+L 08/25/1999 - 16:18:45: "lying pig dog<14>" activated the goal "red marker 2"
+L 08/25/1999 - 16:18:47: "Skillet[PsK]<35>" killed "SHARPE<38>" with "supernails"
+L 08/25/1999 - 16:18:48: "lying pig dog<14>" say_team "2 5"
+L 08/25/1999 - 16:18:48: "SHARPE<38>" activated the goal "i_p_t"
+L 08/25/1999 - 16:18:49: "Media<48>" activated the goal "red marker 1"
+L 08/25/1999 - 16:18:49: "ultimiteplayer<2>" activated the goal "i_p_t"
+L 08/25/1999 - 16:18:54: Named Broadcast: "#cz_bcap3" ("Skillet[PsK]<35>")
+L 08/25/1999 - 16:19:02: "SHARPE<38>" activated the goal "red marker 3"
+L 08/25/1999 - 16:19:05: Named Broadcast: "#cz_bcap1" ("Paddy<4>")
+L 08/25/1999 - 16:19:15: Named Broadcast: "#cz_rcap3" ("Media<48>")
+L 08/25/1999 - 16:19:22: "Skillet[PsK]<35>" activated the goal "blue flag 1"
+L 08/25/1999 - 16:19:26: "Paddy<4>" activated the goal "blue flag 2"
+L 08/25/1999 - 16:19:30: "Warlock<42>" killed "Media<48>" with "rocket"
+L 08/25/1999 - 16:19:32: "Media<48>" activated the goal "i_p_t"
+L 08/25/1999 - 16:19:35: Named Broadcast: "#cz_rcap2" ("lying pig dog<14>")
+L 08/25/1999 - 16:19:35: "Psyc0Smly<49>" killed "SHARPE<38>" with "sniperrifle"
+L 08/25/1999 - 16:19:36: "SHARPE<38>" activated the goal "i_p_t"
+L 08/25/1999 - 16:19:40: "Media<48>" activated the goal "red marker 1"
+L 08/25/1999 - 16:19:41: "SHARPE<38>" changed class to "Demoman"
+L 08/25/1999 - 16:19:42: "Psyc0Smly<49>" killed "stropp<32>" with "sniperrifle"
+L 08/25/1999 - 16:19:50: "Psyc0Smly<49>" killed "Media<48>" with "sniperrifle"
+L 08/25/1999 - 16:19:51: "Media<48>" activated the goal "i_p_t"
+L 08/25/1999 - 16:19:52: "Yaul<50><WON:249899>" connected, address "209.165.128.146:27005"
+L 08/25/1999 - 16:19:52: Named Broadcast: "#cz_bcap3" ("Paddy<4>")
+L 08/25/1999 - 16:19:54: "stropp<32>" changed class to "HWGuy"
+L 08/25/1999 - 16:19:54: "SHARPE<38>" activated the goal "red marker 1"
+L 08/25/1999 - 16:19:55: "Psyc0Smly<49>" killed "Player<47>" with "sniperrifle"
+L 08/25/1999 - 16:19:56: "Genius<39>" killed "lying pig dog<14>" with "rocket"
+L 08/25/1999 - 16:19:56: "<-1>" destroyed "stropp<32>"'s "sentry".
+L 08/25/1999 - 16:19:56: "stropp<32>" activated the goal "i_p_t"
+L 08/25/1999 - 16:19:57: "Player<47>" activated the goal "i_p_t"
+L 08/25/1999 - 16:19:58: "Media<48>" activated the goal "red marker 2"
+L 08/25/1999 - 16:20:00: "lying pig dog<14>" activated the goal "i_p_t"
+L 08/25/1999 - 16:20:03: "-=REZZ=-<41>" disconnected
+L 08/25/1999 - 16:20:09: "lying pig dog<14>" activated the goal "red marker 3"
+L 08/25/1999 - 16:20:09: "SHARPE<38>" killed "Psyc0Smly<49>" with "nails"
+L 08/25/1999 - 16:20:10: "Psyc0Smly<49>" activated the goal "i_p_t"
+L 08/25/1999 - 16:20:11: "Yaul<50><WON:249899>" has entered the game
+L 08/25/1999 - 16:20:13: Named Broadcast: "#cz_bcap4" ("Skillet[PsK]<35>")
+L 08/25/1999 - 16:20:13: "Paddy<4>" activated the goal "blue flag 2"
+L 08/25/1999 - 16:20:14: "lying pig dog<14>" say_team " 2 and 4"
+L 08/25/1999 - 16:20:27: "Yaul<50>" joined team "1".
+L 08/25/1999 - 16:20:27: Named Broadcast: "#cz_rcap3" ("Media<48>")
+L 08/25/1999 - 16:20:28: "Player<51><WON:2727299>" connected, address "209.20.200.19:27005"
+L 08/25/1999 - 16:20:37: "Warlock<42>" killed "SHARPE<38>" with "rocket"
+L 08/25/1999 - 16:20:39: "[CbK]-PriCk<21>" killed "Genius<39>" with "sniperrifle"
+L 08/25/1999 - 16:20:39: "Skillet[PsK]<35>" activated the goal "blue flag 3"
+L 08/25/1999 - 16:20:40: "Warlock<42>" killed "Media<48>" with "rocket"
+L 08/25/1999 - 16:20:40: "Media<48>" activated the goal "i_p_t"
+L 08/25/1999 - 16:20:42: "Genius<39>" activated the goal "i_p_t"
+L 08/25/1999 - 16:20:42: "(1)Player<51><WON:2727299>" has entered the game
+L 08/25/1999 - 16:20:43: Named Broadcast: "#cz_bcap2" ("Paddy<4>")
+L 08/25/1999 - 16:20:44: Named Broadcast: "#cz_rcap4" ("lying pig dog<14>")
+L 08/25/1999 - 16:20:45: "(1)Player<51>" joined team "2".
+L 08/25/1999 - 16:20:47: "Genius<39>" changed class to "Sniper"
+L 08/25/1999 - 16:20:47: "Media<48>" activated the goal "red marker 1"
+L 08/25/1999 - 16:20:51: "SHARPE<38>" say "thanx for letting him kill me"
+L 08/25/1999 - 16:20:55: "Genius<39>" changed class to "HWGuy"
+L 08/25/1999 - 16:20:57: "[CbK]-PriCk<21>" say_team "good job flag ppl"
+L 08/25/1999 - 16:20:57: "SHARPE<38>" activated the goal "i_p_t"
+L 08/25/1999 - 16:21:02: "Paddy<4>" activated the goal "blue flag 2"
+L 08/25/1999 - 16:21:04: "Yaul<50>" changed class to "Scout"
+L 08/25/1999 - 16:21:04: "Yaul<50>" activated the goal "i_p_t"
+L 08/25/1999 - 16:21:04: "lying pig dog<14>" activated the goal "red marker 2"
+L 08/25/1999 - 16:21:10: "Warlock<42>" killed "Media<48>" with "rocket"
+L 08/25/1999 - 16:21:10: "SHARPE<38>" activated the goal "red marker 3"
+L 08/25/1999 - 16:21:11: "Media<48>" activated the goal "i_p_t"
+L 08/25/1999 - 16:21:14: "Yaul<50>" changed to team "2".
+L 08/25/1999 - 16:21:14: "Yaul<50>" killed self with "world"
+L 08/25/1999 - 16:21:16: "Yaul<50>" activated the goal "i_p_t"
+L 08/25/1999 - 16:21:17: "Yaul<50>" changed class to "Scout"
+L 08/25/1999 - 16:21:17: "Yaul<50>" activated the goal "i_p_t"
+L 08/25/1999 - 16:21:20: "Media<48>" activated the goal "red marker 1"
+L 08/25/1999 - 16:21:24: "Warlock<42>" killed "Player<47>" with "rocket"
+L 08/25/1999 - 16:21:24: Named Broadcast: "#cz_bcap3" ("Skillet[PsK]<35>")
+L 08/25/1999 - 16:21:26: "Player<47>" activated the goal "i_p_t"
+L 08/25/1999 - 16:21:26: "Skillet[PsK]<35>" infected "stropp<32>".
+L 08/25/1999 - 16:21:31: "[CbK]-PriCk<21>" killed "Psyc0Smly<49>" with "sniperrifle"
+L 08/25/1999 - 16:21:32: "Psyc0Smly<49>" activated the goal "i_p_t"
+L 08/25/1999 - 16:21:34: Named Broadcast: "#cz_rcap5" ("lying pig dog<14>")
+L 08/25/1999 - 16:21:34: "(1)Player<51>" disconnected
+L 08/25/1999 - 16:21:37: "Warlock<42>" say "sdfsfsdfsdafdsafsdfdsaf"
+L 08/25/1999 - 16:21:38: "Yaul<50>" activated the goal "red marker 2"
+L 08/25/1999 - 16:21:41: "Warlock<42>" killed "Media<48>" with "rocket"
+L 08/25/1999 - 16:21:42: "Media<48>" activated the goal "i_p_t"
+L 08/25/1999 - 16:21:43: Named Broadcast: "#cz_bcap4" ("Paddy<4>")
+L 08/25/1999 - 16:21:47: "Skillet[PsK]<35>" say "yeah me too"
+L 08/25/1999 - 16:21:50: "Warlock<42>" killed "lying pig dog<14>" with "rocket"
+L 08/25/1999 - 16:21:52: "Media<48>" activated the goal "red marker 1"
+L 08/25/1999 - 16:21:52: "SHARPE<38>" killed "Paddy<4>" with "gl_grenade"
+L 08/25/1999 - 16:21:54: "Paddy<4>" activated the goal "i_p_t"
+L 08/25/1999 - 16:21:56: "Skillet[PsK]<35>" activated the goal "blue flag 2"
+L 08/25/1999 - 16:21:59: "Psyc0Smly<49>" say "what does psk stand for"
+L 08/25/1999 - 16:22:03: "Player<52><WON:2727299>" connected, address "209.20.200.19:27005"
+L 08/25/1999 - 16:22:06: "stropp<32>" killed self with "mirvgrenade"
+L 08/25/1999 - 16:22:07: "Paddy<4>" activated the goal "blue flag 3"
+L 08/25/1999 - 16:22:08: "(1)Player<52><WON:2727299>" has entered the game
+L 08/25/1999 - 16:22:08: "stropp<32>" activated the goal "i_p_t"
+L 08/25/1999 - 16:22:09: "Warlock<42>" killed "Yaul<50>" with "rocket"
+L 08/25/1999 - 16:22:10: "(1)Player<52>" joined team "1".
+L 08/25/1999 - 16:22:11: "Yaul<50>" activated the goal "i_p_t"
+L 08/25/1999 - 16:22:13: "Psyc0Smly<49>" killed "Player<47>" with "headshot"
+L 08/25/1999 - 16:22:16: "Player<47>" activated the goal "i_p_t"
+L 08/25/1999 - 16:22:17: Named Broadcast: "#cz_rcap4" ("Media<48>")
+L 08/25/1999 - 16:22:17: "Yaul<50>" activated the goal "red marker 2"
+L 08/25/1999 - 16:22:25: "(1)Player<52>" changed class to "HWGuy"
+L 08/25/1999 - 16:22:25: "(1)Player<52>" activated the goal "i_p_t"
+L 08/25/1999 - 16:22:25: "Skillet[PsK]<35>" say "Pine St. Killingspree"
+L 08/25/1999 - 16:22:30: "Media<48>" killed "Psyc0Smly<49>" with "nails"
+L 08/25/1999 - 16:22:31: "Psyc0Smly<49>" activated the goal "i_p_t"
+L 08/25/1999 - 16:22:36: "SHARPE<38>" killed "Paddy<4>" with "gl_grenade"
+L 08/25/1999 - 16:22:39: "(1)Player<52>" changed to team "2".
+L 08/25/1999 - 16:22:39: "(1)Player<52>" killed self with "world"
+L 08/25/1999 - 16:22:41: "(1)Player<52>" activated the goal "i_p_t"
+L 08/25/1999 - 16:22:41: "stropp<32>" killed "Warlock<42>" with "ac"
+L 08/25/1999 - 16:22:41: Named Broadcast: "#cz_rcap3" ("SHARPE<38>")
+L 08/25/1999 - 16:22:42: "Warlock<42>" activated the goal "i_p_t"
+L 08/25/1999 - 16:22:47: "Paddy<4>" disconnected
+L 08/25/1999 - 16:22:47: "Media<48>" activated the goal "red marker 1"
+L 08/25/1999 - 16:22:51: "(1)Player<52>" changed class to "HWGuy"
+L 08/25/1999 - 16:22:51: "(1)Player<52>" activated the goal "i_p_t"
+L 08/25/1999 - 16:22:54: Named Broadcast: "#cz_bcap3" ("Skillet[PsK]<35>")
+L 08/25/1999 - 16:22:55: "Skillet[PsK]<35>" infected "SHARPE<38>".
+L 08/25/1999 - 16:23:00: Named Broadcast: "#cz_rcap2" ("Yaul<50>")
+L 08/25/1999 - 16:23:00: "(1)Player<52>" changed to team "1".
+L 08/25/1999 - 16:23:00: "(1)Player<52>" killed self with "world"
+L 08/25/1999 - 16:23:02: "(1)Player<52>" activated the goal "i_p_t"
+L 08/25/1999 - 16:23:02: "SHARPE<38>" killed self with "gl_grenade"
+L 08/25/1999 - 16:23:04: "(1)Player<52>" changed class to "HWGuy"
+L 08/25/1999 - 16:23:04: "(1)Player<52>" activated the goal "i_p_t"
+L 08/25/1999 - 16:23:06: "SHARPE<38>" activated the goal "i_p_t"
+L 08/25/1999 - 16:23:08: "Warlock<42>" killed "Player<47>" with "rocket"
+L 08/25/1999 - 16:23:10: "Player<47>" activated the goal "i_p_t"
+L 08/25/1999 - 16:23:11: Named Broadcast: "#cz_rcap3" ("Media<48>")
+L 08/25/1999 - 16:23:18: "Yaul<50>" activated the goal "red marker 2"
+L 08/25/1999 - 16:23:22: "Media<48>" killed "Psyc0Smly<49>" with "nails"
+L 08/25/1999 - 16:23:23: "Psyc0Smly<49>" activated the goal "i_p_t"
+L 08/25/1999 - 16:23:27: "Genius<39>" killed "Player<47>" with "rocket"
+L 08/25/1999 - 16:23:28: "SHARPE<38>" killed "Genius<39>" with "gl_grenade"
+L 08/25/1999 - 16:23:28: "Player<47>" activated the goal "i_p_t"
+L 08/25/1999 - 16:23:31: "Genius<39>" activated the goal "i_p_t"
+L 08/25/1999 - 16:23:31: "Player<53><WON:21248>" connected, address "63.75.210.28:27005"
+L 08/25/1999 - 16:23:36: "Skillet[PsK]<35>" activated the goal "blue flag 2"
+L 08/25/1999 - 16:23:36: "Media<48>" activated the goal "red marker 1"
+L 08/25/1999 - 16:23:36: "Warlock<42>" killed "stropp<32>" with "rocket"
+L 08/25/1999 - 16:23:38: "stropp<32>" activated the goal "i_p_t"
+L 08/25/1999 - 16:23:50: "SHARPE<38>" killed self with "mirvgrenade"
+L 08/25/1999 - 16:23:50: "(2)Player<53><WON:21248>" has entered the game
+L 08/25/1999 - 16:23:51: "SHARPE<38>" activated the goal "i_p_t"
+L 08/25/1999 - 16:23:56: "(2)Player<53>" joined team "1".
+L 08/25/1999 - 16:23:59: "(2)Player<53>" changed class to "Scout"
+L 08/25/1999 - 16:23:59: "(2)Player<53>" activated the goal "i_p_t"
+L 08/25/1999 - 16:24:03: =------= MATCH RESULTS =------=
+L 08/25/1999 - 16:24:03: "blue" defeated "red" 
+L 08/25/1999 - 16:24:03: "blue" RESULTS: "7" players. "132" frags, "7" unaccounted for. "123" team score. Allies:
+L 08/25/1999 - 16:24:03: "red" RESULTS: "7" players. "101" frags, "7" unaccounted for. "115" team score. Allies:
+L 08/25/1999 - 16:24:07: "[CbK]-PriCk<21>" say "gg"
+L 08/25/1999 - 16:24:10: Log closed.

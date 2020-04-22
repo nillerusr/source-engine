@@ -1,0 +1,178 @@
+//-----------------------------------------------------------------------------
+//	SOURCE_LIB_X360_RELEASE.VPC
+//
+//	Base Settings for Source(TM) Projects
+//-----------------------------------------------------------------------------
+
+$IgnoreRedundancyWarning	"ON"
+
+$MacroRequired				"SRCDIR"
+$MacroRequired				"OUTLIBNAME"
+$MacroRequired				"OUTLIBDIR"
+
+$Configuration "Release"
+{
+	$General
+	{
+		// General
+		$OutputDirectory					".\Release_360"
+		$IntermediateDirectory				".\Release_360"
+		$ExtensionsToDeleteOnClean
+		$BuildLogFile
+		$InheritedProjectPropertySheets
+
+		// Project Defaults
+		$ConfigurationType					"Static Library (.lib)"
+		$CharacterSet						"Not Set"
+		$WholeProgramOptimization
+	}
+
+	$Debugging
+	{
+		$Command
+		$CommandArguments
+		$MapDVDDrive
+		$RemoteMachine
+	}
+
+	$Compiler
+	{
+		// General
+		$AdditionalIncludeDirectories		"$SRCDIR\common;$SRCDIR\public;$SRCDIR\public\tier0;$SRCDIR\public\tier1"
+		$DebugInformationFormat				"C7 Compatible (/Z7)"
+		$SuppressStartupBanner				"Yes (/nologo)"	
+		$WarningLevel						"Level 4 (/W4)"
+		$TreatWarningsAsErrors				"No"
+
+		// Optimization
+		$Optimization						"Full Optimization (/Ox)"
+		$InlineFunctionExpansion			"Any Suitable (/Ob2)"
+		$EnableIntrinsicFunctions			"Yes (/Oi)"
+		$FavorSizeOrSpeed					"Favor Fast Code (/Ot)"
+		$EnableFiberSafeOptimizations
+		$WholeProgramOptimization
+
+		// Preprocessor
+		$PreprocessorDefinitions			"_X360;NDEBUG;_LIB;_WIN32;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;__VMX128_SUPPORTED"
+		$PreprocessorDefinitions			"$BASE;_CERT" [$CERT]
+		$PreprocessorDefinitions			"$BASE;PROFILE"	[$PROFILE]
+		$IgnoreStandardIncludePath
+		$GeneratePreprocessedFile
+		$KeepComments
+
+		// Code Generation
+		$EnableStringPooling				"Yes (/GF)"
+		$EnableMinimalRebuild				"No"
+		$EnableC++Exceptions				"No"
+		$SmallerTypeCheck					"No"
+		$BasicRuntimeChecks					"Default"
+		$RuntimeLibrary						"Multi-threaded (/MT)"
+		$StructMemberAlignment				"Default"
+		$BufferSecurityCheck				"No"
+		$EnableFunctionLevelLinking			"Yes (/Gy)"
+		$FloatingPointModel					"Fast (/fp:fast)"
+		$EnableFloatingPointExceptions		"No"
+
+		// Language
+		$DisableLanguageExtensions			"No"
+		$DefaultCharUnsigned				"No"
+		$TreatWCHAR_TAsBuiltInType			"Yes (/Zc:wchar_t)"
+		$ForceConformanceInForLoopScope		"Yes (/Zc:forScope)"
+		$EnableRunTimeTypeInfo				"Yes (/GR)"
+		$OpenMPSupport						"No"
+
+		// Precompiled Headers
+		$Create/UsePrecompiledHeader		"Not Using Precompiled Headers"
+		$Create/UsePCHThroughFile
+		$PrecompiledHeaderFile
+
+		// Output Files
+		$ExpandAttributedSource				"No"
+		$AssemblerOutput					"No Listing"
+		$ASMListLocation					"$(IntDir)/"
+		$ObjectFileName						"$(IntDir)/"
+		$ProgramDatabaseFileName			"$(IntDir)/"
+
+		// Browse Information
+		$EnableBrowseInformation			"None"
+		$BrowseFile							"$(IntDir)/"
+
+		// Advanced
+		$CompileAs							"Compile as C++ Code (/TP)"
+		$DisableSpecificWarnings
+		$ForceIncludes						"tier0/platform.h"
+		$ShowIncludes						"No"
+		$UndefinePreprocessorDefinitions
+		$UndefineAllPreprocessorDefinitions	"No"
+		$UseFullPaths
+		$OmitDefaultLibraryNames
+
+		// Xbox 360
+		$RegisterReservation
+		$TrapIntegerDividesOptimization
+		$PreschedulingOptimization
+		$InlineAssemblyOptimization
+		$Stalls
+		$CallAttributedProfiling			"Call profiler within function calls. (/callcap)"			[$CALLCAP]
+		$CallAttributedProfiling			"Call profiler around function calls. (/fastcap)"			[$FASTCAP]
+
+		// Command Line
+		$AdditionalOptions					"$BASE /QVMX128"
+		$AdditionalOptions					"$BASE /Oy-"		[$NOFPO]
+	}
+
+	$Librarian
+	{
+		// General
+		$OutputFile							"$OUTLIBDIR\$OUTLIBNAME_360.lib"
+		$AdditionalDependencies
+		$AdditionalLibraryDirectories
+		$SuppressStartupBanner				"Yes (/NOLOGO)"
+		$ModuleDefinitionFileName
+		$IgnoreAllDefaultLibraries
+		$IgnoreSpecificLibrary				"libc;libcd;libcmtd"			[!$PROFILE]
+		$IgnoreSpecificLibrary				"libc;libcd;libcmtd;xapilib"	[$PROFILE]
+		$ExportNamedFunctions
+		$ForceSymbolReferences
+		$LinkLibraryDependencies
+
+		// Command Line			
+	}
+
+	$BrowseInformation
+	{
+		$SuppressStartupBanner				"Yes (/nologo)"	
+		$OutputFile							"$(OutDir)/$OUTLIBNAME.bsc"
+		$AdditionalOptions
+	}
+
+	$PreBuildEvent
+	{
+		$CommandLine
+		$Description
+		$ExcludedFromBuild					"No"
+	}
+
+	$PreLinkEvent
+	{
+		$CommandLine						
+		$Description
+		$ExcludedFromBuild					"No"
+	}
+
+	$PostBuildEvent
+	{
+		$CommandLine
+		$Description
+		$ExcludedFromBuild					"No"
+	}
+
+	$CustomBuildStep
+	{
+		// General
+		$CommandLine
+		$Description
+		$Outputs
+		$AdditionalDependencies
+	}
+}

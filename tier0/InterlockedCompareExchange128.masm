@@ -1,0 +1,78 @@
+; call cpuid with args in eax, ecx
+; store eax, ebx, ecx, edx to p
+PUBLIC _InterlockedCompareExchange128
+.CODE
+
+
+_InterlockedCompareExchange128	PROC FRAME
+; extern "C" unsigned char _InterlockedCompareExchange128( int64 volatile * Destination, int64 ExchangeHigh, int64 ExchangeLow, int64 * ComparandResult );
+        .endprolog      
+
+		; fastcall conventions:
+		; RCX = Destination
+		; RDX = Exchange High
+		; R8 = Exchange Lo
+		; R9 = ComparandResult
+
+		; CMPXCHG16B refernece:
+		; http://download.intel.com/design/processor/manuals/253666.pdf
+
+		; Stash RBX in R11
+		mov r11, rbx
+
+		; Destination ptr to r10
+		mov r10, rcx
+
+		; RCX:RBX Exchange
+		mov rcx, rdx
+		mov rbx, r8
+
+		; RDX:RAX Comparand
+		mov	rax, [r9]
+		mov	rdx, [r9+8]
+
+		; Do the atomic operation
+		lock cmpxchg16b [r10]
+
+		; RDX:RAX now contains the value of the destination, before the atomic operation.
+		; (Either it already matched and was not changed, or it did not match, in which case
+		; the value has been loaded into RDX:RAX.) The _InterlockedCompareExchange128 intrinsic
+		; semantics specify that this is always written out to CompareResult, so give it
+		; back to the caller.
+		mov	[r9], rax
+		mov	[r9+8], rdx
+
+		; Return value is in AL, set it equal to the zero flag
+		setz al
+
+		; Restore RBX and get out
+		mov rbx, r11
+        ret
+
+_InterlockedCompareExchange128 ENDP
+
+; For reference, here's what VC2010 generated
+;
+; __declspec(noinline) unsigned char Test_InterlockedCompareExchange128( int64 volatile * Destination, int64 ExchangeHigh, int64 ExchangeLow, int64 * ComparandResult )
+; {
+; 	return _InterlockedCompareExchange128( Destination, ExchangeHigh, ExchangeLow, ComparandResult );
+; }
+;
+;
+;?Test_InterlockedCompareExchange128@GCSDK@@YAEPEC_J_J1PEA_J@Z (unsigned char __cdecl GCSDK::Test_InterlockedCompareExchange128(__int64 volatile *,__int64,__int64,__int64 *)):
+;  0000000000000000: 48 89 5C 24 08     mov         qword ptr [rsp+8],rbx
+;  0000000000000005: 49 8B 01           mov         rax,qword ptr [r9]
+;  0000000000000008: 4C 8B D1           mov         r10,rcx
+;  000000000000000B: 48 8B CA           mov         rcx,rdx
+;  000000000000000E: 49 8B 51 08        mov         rdx,qword ptr [r9+8]
+;  0000000000000012: 49 8B D8           mov         rbx,r8
+;  0000000000000015: F0 49 0F C7 0A     lock cmpxchg16b oword ptr [r10]
+;  000000000000001A: 48 8B 5C 24 08     mov         rbx,qword ptr [rsp+8]
+;  000000000000001F: 49 89 01           mov         qword ptr [r9],rax
+;  0000000000000022: 49 89 51 08        mov         qword ptr [r9+8],rdx
+;  0000000000000026: 0F 94 C0           sete        al
+;  0000000000000029: C3                 ret
+
+
+_TEXT ENDS
+END

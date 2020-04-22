@@ -1,0 +1,24 @@
+//-----------------------------------------------------------------------------
+//	SOUNDTEST.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_win_win32_base.vpc"
+
+$Project "Soundtest"
+{
+	$Folder	"Source Files"
+	{
+		$File	"$SRCDIR\public\filesystem_init.cpp"
+		$File	"soundtest.cpp"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$DynamicFile	"$SRCDIR\lib\public\appframework.lib"
+	}
+}

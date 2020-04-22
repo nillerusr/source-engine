@@ -1,0 +1,157 @@
+//-----------------------------------------------------------------------------
+//	VSTDLIB.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		".."
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
+
+$include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$MacroRequired		"PLATSUBDIR"
+
+$Configuration
+{
+
+	$General
+	{
+		// X360 version publishes to some other directory then copies here so we need to tell VPC to track this
+		// or else it won't know what depends on this project.
+		$AdditionalOutputFiles		"$SRCDIR\lib\public\$(TargetName).lib"	[$X360]
+	}
+	
+	$Compiler
+	{
+		$PreprocessorDefinitions	"$BASE;VSTDLIB_DLL_EXPORT"
+		$GCC_ExtraCompilerFlags     "-U_FORTIFY_SOURCE" [$LINUXALL]
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies		"$BASE odbc32.lib odbccp32.lib"			[$WINDOWS]
+
+		// pc publishes the import library directly
+		$ImportLibrary				"$LIBPUBLIC\$(TargetName).lib"	[$WINDOWS]
+
+		// 360 publishes the import library via a post build step
+		$ImportLibrary				"$(TargetDir)\$(TargetName).lib"		[$X360]	
+
+
+		// 360 will auto generate a def file for this import library
+		$ModuleDefinitionFile		" "										[$X360]
+		$AdditionalOptions			"$BASE /AUTODEF:xbox\xbox.def"			[$X360]
+
+		// Suppress this warning using the undocumented /ignore linker switch
+		// tier1.lib(KeyValues.obj) : warning LNK4217: locally defined symbol _KeyValuesSystem imported in function "public: static int __cdecl KeyValues::GetSymbolForStringClassic(char const *,bool)" (?GetSymbolForStringClassic@KeyValues@@SAHPBD_N@Z)
+		$AdditionalOptions			"$BASE /ignore:4217" [$WINDOWS]
+
+		$SystemLibraries            "iconv" [$OSXALL]
+		$SystemFrameworks			"CoreServices" [$OSXALL]																			
+		$GCC_ExtraLinkerFlags		"-all_load" [$OSXALL]
+
+        $ImportLibrary				"$LIBPUBLIC\$_IMPLIB_PREFIX$OUTBINNAME$_IMPLIB_EXT"	[$POSIX]
+		$OutputFile					"$(OBJ_DIR)/$_IMPLIB_PREFIX$OUTBINNAME$_IMPLIB_EXT" [$POSIX]
+	}
+
+	$PreLinkEvent [$WINDOWS]
+	{	
+		$CommandLine	"call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $LIBPUBLIC\$(TargetName).lib $SRCDIR" "\n" \
+						"$BASE"
+	}
+	
+	$PreLinkEvent [$X360]
+	{
+		// Run a pre-link event to clean the .def file from the last link
+		$CommandLine				"if exist xbox\xbox.def del xbox\xbox.def" "\n" \
+									"$BASE"
+	}
+
+	$PostBuildEvent [$X360]
+	{
+		// Run a post build event to validate the .def file was correctly generated
+		$CommandLine				"perl $SRCDIR\devtools\bin\make360def.pl -checkauto xbox\xbox.def" "\n" \
+									"if exist $(TargetDir)$(TargetName).lib copy $(TargetDir)$(TargetName).lib $SRCDIR\lib\public\$(TargetName).lib" "\n" \
+									"$BASE"
+	}
+	
+	$General [$POSIX]
+	{
+		$GameOutputFile                                 "$OUTBINDIR/$_IMPLIB_DLL_PREFIX$OUTBINNAME$_DLL_EXT"
+	}
+}
+
+
+
+$Project "vstdlib"
+{
+	$Folder	"Source Files"
+	{
+		$File	"xbox\___FirstModule.cpp"	[$X360]
+        $File "GetStackPtr64.masm" [$WIN64]
+        {
+            $Configuration
+            {   
+                $CustomBuildStep
+                {
+                    // General
+                    $CommandLine                "$QUOTE$(VCInstallDir)bin\x86_amd64\ml64.exe$QUOTE /nologo /c /Fo$QUOTE$(IntDir)\$(InputName).obj$QUOTE $QUOTE$(InputPath)$QUOTE"
+                    $Description                "Compiling GetStackPtr64.masm"
+                    $Outputs                    "$(IntDir)\$(InputName).obj"
+                }       
+            }           
+        }
+		$File "coroutine_win64.masm" [$WIN64]
+		{
+			$Configuration
+			{
+				$CustomBuildStep
+				{
+					// General
+					$CommandLine                "$QUOTE$(VCInstallDir)bin\x86_amd64\ml64.exe$QUOTE /c /Fo$QUOTE$(IntDir)\$(InputName).obj$QUOTE $QUOTE$(InputPath)$QUOTE"
+					$Description                "Compiling coroutine_win64.masm"
+					$Outputs                    "$(IntDir)\$(InputName).obj"
+				}
+			}
+		}
+
+		$File	"coroutine.cpp"				[!$X360 && !$OSXALL]
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$BasicRuntimeChecks			"Default"
+				}
+			}
+		}
+		$File	"cvar.cpp"
+		$File	"jobthread.cpp"
+		$File	"KeyValuesSystem.cpp"
+		$File	"osversion.cpp"
+		$File	"processutils.cpp"			[$WINDOWS]
+		$File	"random.cpp"
+		$File	"vcover.cpp"
+	}
+
+	$Folder	"Public Header Files"
+	{
+		$File	"$SRCDIR\public\vstdlib\cvar.h"
+		$File	"$SRCDIR\public\vstdlib\coroutine.h"
+		$File	"$SRCDIR\public\vstdlib\jobthread.h"
+		$File	"$SRCDIR\public\vstdlib\IKeyValuesSystem.h"
+		$File	"$SRCDIR\public\vstdlib\iprocessutils.h"
+		$File	"$SRCDIR\public\tier1\mempool.h"
+		$File	"$SRCDIR\public\vstdlib\osversion.h"
+		$File	"$SRCDIR\public\vstdlib\random.h"
+		$File	"$SRCDIR\public\vstdlib\vcover.h"
+		$File	"$SRCDIR\public\vstdlib\vstdlib.h"
+	}
+	
+	$Folder "Link Libraries"
+	{
+		-$ImpLib vstdlib
+		$Lib   "coroutine_osx"  [$OSXALL]
+	}
+}
+

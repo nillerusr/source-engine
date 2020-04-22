@@ -1,0 +1,42 @@
+//-----------------------------------------------------------------------------
+//	SFMOBJECTS.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		".."
+
+$Include "$SRCDIR\vpc_scripts\source_lib_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$PreprocessorDefinitions			"$BASE;SFMOBJECTS_LIB"
+	}
+}
+
+$Project "sfmobjects"
+{
+	$Folder	"Header Files"
+	{
+	}
+
+	$Folder	"Source Files"
+	{
+		$File	"exportfacialanimation.cpp"
+		$File	"flexcontrolbuilder.cpp"
+		$File	"sfmsession.cpp"
+		$File	"sfmanimationsetutils.cpp"
+		$File	"sfmphonemeextractor.cpp"
+	}
+
+	$Folder	"Interface"
+	{
+		$File	"$SRCDIR\public\sfmobjects\exportfacialanimation.h"
+		$File	"$SRCDIR\public\sfmobjects\flexcontrolbuilder.h"
+		$File	"$SRCDIR\public\sfmobjects\sfmanimationsetutils.h"
+		$File	"$SRCDIR\public\sfmobjects\sfmphonemeextractor.h"
+		$File	"$SRCDIR\public\sfmobjects\sfmsession.h"
+	}
+}

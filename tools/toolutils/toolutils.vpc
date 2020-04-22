@@ -1,0 +1,54 @@
+//-----------------------------------------------------------------------------
+//	TOOLUTILS.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Include "$SRCDIR\vpc_scripts\source_lib_base.vpc"
+
+$Project "Toolutils"
+{
+	$Folder	"Source Files"
+	{
+		$File	"attributeelementchoicelist.cpp"
+		$File	"basepropertiescontainer.cpp"
+		$File	"basestatusbar.cpp"
+		$File	"BaseToolSystem.cpp"
+		$File	"ConsolePage.cpp"
+		$File	"miniviewport.cpp"
+		$File	"recentfilelist.cpp"
+		$File	"savewindowpositions.cpp"
+		$File	"tool_main.cpp"
+		$File	"tooleditmenubutton.cpp"
+		$File	"ToolFileMenuButton.cpp"
+		$File	"ToolHelpMenuButton.cpp"
+		$File	"toolmenubar.cpp"
+		$File	"ToolMenuButton.cpp"
+		$File	"ToolSwitchMenuButton.cpp"
+		$File	"ToolUI.cpp"
+		$File	"vgui_tools.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\public\toolutils\AttributeElementChoiceList.h"
+		$File	"$SRCDIR\public\toolutils\basepropertiescontainer.h"
+		$File	"$SRCDIR\public\toolutils\basestatusbar.h"
+		$File	"$SRCDIR\public\toolutils\BaseToolSystem.h"
+		$File	"$SRCDIR\public\toolutils\DmeMdlRenderable.h"
+		$File	"$SRCDIR\public\toolutils\DmeRenderable.h"
+		$File	"$SRCDIR\public\toolutils\enginetools_int.h"
+		$File	"$SRCDIR\public\toolutils\miniviewport.h"
+		$File	"$SRCDIR\public\toolutils\recentfilelist.h"
+		$File	"$SRCDIR\public\toolutils\savewindowpositions.h"
+		$File	"$SRCDIR\public\toolutils\ToolEditMenuButton.h"
+		$File	"$SRCDIR\public\toolutils\ToolFileMenuButton.h"
+		$File	"$SRCDIR\public\toolutils\ToolHelpMenuButton.h"
+		$File	"$SRCDIR\public\toolutils\toolmenubar.h"
+		$File	"$SRCDIR\public\toolutils\ToolMenuButton.h"
+		$File	"$SRCDIR\public\toolutils\ToolSwitchMenuButton.h"
+		$File	"ToolUI.h"
+		$File	"$SRCDIR\public\toolutils\vgui_tools.h"
+	}
+}

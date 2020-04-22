@@ -1,0 +1,38 @@
+//-----------------------------------------------------------------------------
+//	TESTPROCESS.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$MacroRequired "PLATSUBDIR"
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$SRCDIR\unittests\testprocess"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Configuration	"Debug"
+{
+	$Compiler
+	{
+		$PreprocessorDefinitions			"$BASE;PROTECTED_THINGS_DISABLE"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE winmm.lib"
+	}
+}
+
+$Project "Testprocess"
+{
+	$Folder	"Source Files"
+	{
+		$File	"testprocess.cpp"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib tier2
+	}
+}

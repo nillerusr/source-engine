@@ -1,0 +1,31 @@
+
+$Project "dx_proxy_dx9_v00_pc"
+{
+	"utils\dx_proxy\dx_proxy_dx9_v00_pc.vpc" [$WIN32]
+}
+
+$Project "dx_proxy_dx9_v30_pc"
+{
+	"utils\dx_proxy\dx_proxy_dx9_v30_pc.vpc" [$WIN32]
+}
+
+$Project "dx_proxy_dx9_v00_x360"
+{
+	"utils\dx_proxy\dx_proxy_dx9_v00_x360.vpc" [$WIN32]
+}
+
+$Project "dx_proxy_dx10_v00_pc"
+{
+	"utils\dx_proxy\dx_proxy_dx10_v00_pc.vpc" [$WIN32]
+}
+
+
+$Group "dx_proxy" "source" "everything"
+{
+	"dx_proxy_dx10_v00_pc"
+	
+	"dx_proxy_dx9_v00_pc"
+	"dx_proxy_dx9_v30_pc"
+	
+	"dx_proxy_dx9_v00_x360"
+}

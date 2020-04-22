@@ -1,0 +1,49 @@
+On disk format of directory   (xxx_dir.vpk. data is in xxx_000.vpk, xxx_001.vpk, ...)
+
+
+id
+records
+ "extension\0"    (0 = no more extensions)
+ "dir\0"          (0 = no more dirs)
+   "basefilename\0" (0 = no more files of this extension in this dir)
+   orig data file crc
+   int16 metadata size
+   location in data files for level 0 data (word filenum, ulong offset, ulong fsize)
+   location in data files for level 1 data (word filenum, ulong offset, ulong fsize) ..
+   -1.
+   uint8 metadata[]
+
+   
+   ..
+  ..
+..
+
+data files
+
+
+
+[x]step0 - class def, format def
+[x]step1 - generator
+[x]step2 - loader
+[ ]step3 - surrounding file monitor tools + ui
+
+
+
+A client of the archive who can't handle their persistent meta data going away (as during
+a reload) can say so, which will cuase their metadata to be copied away at next reload. otherwise,
+a reload will change the address of the meta data and maybe its size/content.
+
+
+
+insert
+
+  case file found:
+    find all files in the same data chunk
+    load data chunk.
+     replace old chunk of data, changing offsets in parts of files that were there.
+	 replace offset and crc in old dir record
+   case file not found
+    might need to add new extension
+    might need to add new directory
+    insert new file entry
+    add new data to last chunk

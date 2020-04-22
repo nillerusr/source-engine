@@ -1,0 +1,217 @@
+L 07/19/1999 - 19:06:30: Log file started.
+L 07/19/1999 - 19:06:30: Spawning server "hunted"
+L 07/19/1999 - 19:06:30: server cvars start
+L 07/19/1999 - 19:06:30: "cr_random" = "0"
+L 07/19/1999 - 19:06:30: "cr_engineer" = "0"
+L 07/19/1999 - 19:06:31: "cr_spy" = "0"
+L 07/19/1999 - 19:06:31: "cr_pyro" = "0"
+L 07/19/1999 - 19:06:31: "cr_hwguy" = "0"
+L 07/19/1999 - 19:06:31: "cr_medic" = "0"
+L 07/19/1999 - 19:06:31: "cr_demoman" = "0"
+L 07/19/1999 - 19:06:31: "cr_soldier" = "0"
+L 07/19/1999 - 19:06:31: "cr_sniper" = "0"
+L 07/19/1999 - 19:06:31: "cr_scout" = "0"
+L 07/19/1999 - 19:06:31: "decalfrequency" = "30"
+L 07/19/1999 - 19:06:31: "mp_autocrosshair" = "1"
+L 07/19/1999 - 19:06:31: "mp_flashlight" = "0"
+L 07/19/1999 - 19:06:32: "mp_footsteps" = "0"
+L 07/19/1999 - 19:06:32: "mp_forcerespawn" = "1"
+L 07/19/1999 - 19:06:32: "mp_weaponstay" = "0"
+L 07/19/1999 - 19:06:32: "mp_falldamage" = "0"
+L 07/19/1999 - 19:06:32: "mp_friendlyfire" = "0"
+L 07/19/1999 - 19:06:32: "mp_timelimit" = "30"
+L 07/19/1999 - 19:06:32: "mp_fraglimit" = "0"
+L 07/19/1999 - 19:06:32: "mp_teamplay" = "1.000000"
+L 07/19/1999 - 19:06:32: "tfc_balance_scores" = "1.0"
+L 07/19/1999 - 19:06:32: "tfc_balance_teams" = "1.0"
+L 07/19/1999 - 19:06:32: "tfc_adminpwd" = ""
+L 07/19/1999 - 19:06:32: "tfc_clanbattle_locked" = "0.0"
+L 07/19/1999 - 19:06:32: "tfc_clanbattle" = "0.0"
+L 07/19/1999 - 19:06:32: "tfc_respawndelay" = "0.0"
+L 07/19/1999 - 19:06:32: "tfc_autoteam" = "0"
+L 07/19/1999 - 19:06:32: "cmdline" = "0"
+L 07/19/1999 - 19:06:32: "mp_logfile" = "1"
+L 07/19/1999 - 19:06:32: "mp_logecho" = "1"
+L 07/19/1999 - 19:06:33: "deathmatch" = "1"
+L 07/19/1999 - 19:06:33: "coop" = "0"
+L 07/19/1999 - 19:06:33: "pausable" = "0"
+L 07/19/1999 - 19:06:33: "sv_sendvelocity" = "1"
+L 07/19/1999 - 19:06:33: "sv_password" = ""
+L 07/19/1999 - 19:06:33: "sv_aim" = "0"
+L 07/19/1999 - 19:06:33: "sv_gravity" = "800"
+L 07/19/1999 - 19:06:33: "sv_friction" = "4"
+L 07/19/1999 - 19:06:33: "edgefriction" = "2"
+L 07/19/1999 - 19:06:33: "sv_stopspeed" = "100"
+L 07/19/1999 - 19:06:33: "sv_maxspeed" = "500.000000"
+L 07/19/1999 - 19:06:33: "sv_accelerate" = "10"
+L 07/19/1999 - 19:06:33: "sv_stepsize" = "18"
+L 07/19/1999 - 19:06:33: "sv_clipmode" = "0"
+L 07/19/1999 - 19:06:33: "sv_bounce" = "1"
+L 07/19/1999 - 19:06:33: "sv_airmove" = "1"
+L 07/19/1999 - 19:06:33: "sv_airaccelerate" = "10"
+L 07/19/1999 - 19:06:33: "sv_wateraccelerate" = "10"
+L 07/19/1999 - 19:06:34: "sv_waterfriction" = "1"
+L 07/19/1999 - 19:06:34: "sv_timeout" = "65"
+L 07/19/1999 - 19:06:34: "sv_clienttrace" = "3.5"
+L 07/19/1999 - 19:06:34: "sv_cheats" = "1.000000"
+L 07/19/1999 - 19:06:34: "sv_maxspectators" = "8"
+L 07/19/1999 - 19:06:34: "sv_spectalk" = "1"
+L 07/19/1999 - 19:06:34: "sv_spectatormaxspeed" = "500"
+L 07/19/1999 - 19:06:34: "sv_upload_maxsize" = "0"
+L 07/19/1999 - 19:06:34: "sv_allowdownload" = "1"
+L 07/19/1999 - 19:06:34: "sv_allowupload" = "1"
+L 07/19/1999 - 19:06:34: server cvars end
+L 07/19/1999 - 19:06:38: Map CRC "-1879475242"
+L 07/19/1999 - 19:06:39: "sv_maxspeed" = "500"
+L 07/19/1999 - 19:06:39: "mp_teamplay" = "21"
+L 07/19/1999 - 19:06:39: Server name is "Aesthete"
+L 07/19/1999 - 19:06:39: "sv_maxspeed" = "500.000000"
+L 07/19/1999 - 19:06:41: "Phorritorium<2><WON:4294928345>" connected, address "loopback"
+L 07/19/1999 - 19:06:47: "Phorritorium<2><WON:4294928345>" has entered the game
+L 07/19/1999 - 19:07:00: "Phorritorium<2>" joined team "3".
+L 07/19/1999 - 19:07:01: "Phorritorium<2>" changed class to "Sniper"
+L 07/19/1999 - 19:07:01: "Phorritorium<2>" changed class to "Sniper"
+L 07/19/1999 - 19:07:01: "Phorritorium<2>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:07:59: "[FF]Vidar<3><WON:4294929813>" connected, address "216.168.96.214:27005"
+L 07/19/1999 - 19:08:05: "[FF]Vidar<4><WON:4294929813>" connected, address "216.168.96.214:27005"
+L 07/19/1999 - 19:08:37: "[FF]Vidar<4><WON:4294929813>" has entered the game
+L 07/19/1999 - 19:09:04: "[FF]Vidar<4>" joined team "3".
+L 07/19/1999 - 19:09:30: "[FF]Vidar<4>" changed class to "Sniper"
+L 07/19/1999 - 19:09:30: "[FF]Vidar<4>" changed class to "Sniper"
+L 07/19/1999 - 19:09:30: "[FF]Vidar<4>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:09:41: "[FF]Vidar<4>" changed to team "2".
+L 07/19/1999 - 19:09:41: "[FF]Vidar<4>" killed self with "world"
+L 07/19/1999 - 19:09:45: "[FF]Vidar<4>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:09:51: "[FF]Vidar<4>" changed class to "Soldier"
+L 07/19/1999 - 19:09:51: "[FF]Vidar<4>" changed class to "Soldier"
+L 07/19/1999 - 19:09:51: "[FF]Vidar<4>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:12:02: "Player<5><WON:4294931237>" connected, address "216.210.37.113:22171"
+L 07/19/1999 - 19:12:15: "Player<5><WON:4294931237>" has entered the game
+L 07/19/1999 - 19:12:34: "Player<5>" joined team "2".
+L 07/19/1999 - 19:12:40: "Player<5>" changed class to "Soldier"
+L 07/19/1999 - 19:12:40: "Player<5>" changed class to "Soldier"
+L 07/19/1999 - 19:12:40: "Player<5>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:12:49: "Pyro<6><WON:4294926607>" connected, address "152.201.230.34:27005"
+L 07/19/1999 - 19:14:27: "Player<5>" changed to team "1".
+L 07/19/1999 - 19:14:27: "Player<5>" killed self with "world"
+L 07/19/1999 - 19:14:29: "Player<5>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:14:29: "Player<5>" changed class to "Civilian"
+L 07/19/1999 - 19:14:29: "Player<5>" changed class to "Civilian"
+L 07/19/1999 - 19:14:29: "Player<5>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:14:29: "Player<5>" activated the goal "The Hunted's Notepad"
+L 07/19/1999 - 19:15:34: Broadcast: "#hunted_target_scores"
+L 07/19/1999 - 19:15:34: Named Broadcast: "#hunted_target_scores" ("Player<5>")
+L 07/19/1999 - 19:15:34: "Phorritorium<2>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:15:34: Broadcast: "#hunted_target_scores"
+L 07/19/1999 - 19:15:34: Named Broadcast: "#hunted_target_scores" ("Player<5>")
+L 07/19/1999 - 19:15:34: "[FF]Vidar<4>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:15:34: Broadcast: "#hunted_target_scores"
+L 07/19/1999 - 19:15:34: Named Broadcast: "#hunted_target_scores" ("Player<5>")
+L 07/19/1999 - 19:15:34: "Player<5>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:15:34: "Player<5>" activated the goal "The Hunted's Notepad"
+L 07/19/1999 - 19:16:36: "Ordnance<7><WON:4294913428>" connected, address "209.110.244.208:27005"
+L 07/19/1999 - 19:16:55: "Ordnance<7><WON:4294913428>" has entered the game
+L 07/19/1999 - 19:17:01: "bracepoint<8><WON:4294932281>" connected, address "24.113.136.171:27005"
+L 07/19/1999 - 19:17:02: "Ordnance<7>" joined team "3".
+L 07/19/1999 - 19:17:03: "Ordnance<7>" changed class to "Sniper"
+L 07/19/1999 - 19:17:03: "Ordnance<7>" changed class to "Sniper"
+L 07/19/1999 - 19:17:03: "Ordnance<7>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:17:07: Broadcast: "#hunted_target_scores"
+L 07/19/1999 - 19:17:07: Named Broadcast: "#hunted_target_scores" ("Player<5>")
+L 07/19/1999 - 19:17:07: "Phorritorium<2>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:17:07: Broadcast: "#hunted_target_scores"
+L 07/19/1999 - 19:17:07: Named Broadcast: "#hunted_target_scores" ("Player<5>")
+L 07/19/1999 - 19:17:07: "[FF]Vidar<4>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:17:07: Broadcast: "#hunted_target_scores"
+L 07/19/1999 - 19:17:07: Named Broadcast: "#hunted_target_scores" ("Player<5>")
+L 07/19/1999 - 19:17:07: "Player<5>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:17:07: "Player<5>" activated the goal "The Hunted's Notepad"
+L 07/19/1999 - 19:17:07: Broadcast: "#hunted_target_scores"
+L 07/19/1999 - 19:17:07: Named Broadcast: "#hunted_target_scores" ("Player<5>")
+L 07/19/1999 - 19:17:07: "Ordnance<7>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:17:12: "bracepoint<8><WON:4294932281>" has entered the game
+L 07/19/1999 - 19:17:19: "bracepoint<8>" joined team "3".
+L 07/19/1999 - 19:17:24: "bracepoint<8>" changed class to "Sniper"
+L 07/19/1999 - 19:17:24: "bracepoint<8>" changed class to "Sniper"
+L 07/19/1999 - 19:17:24: "bracepoint<8>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:18:47: "bracepoint<8>" killed "[FF]Vidar<4>" with "axe"
+L 07/19/1999 - 19:18:54: "Player<5>" killed "bracepoint<8>" with "axe"
+L 07/19/1999 - 19:18:57: "bracepoint<8>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:19:39: "[FF]Vidar<4>" disconnected
+L 07/19/1999 - 19:19:45: "Player<5>" changed class to "Civilian"
+L 07/19/1999 - 19:19:47: "Player<5>" changed class to "Civilian"
+L 07/19/1999 - 19:19:49: "Player<5>" changed class to "Civilian"
+L 07/19/1999 - 19:19:54: "Player<5>" changed to team "2".
+L 07/19/1999 - 19:19:54: "Player<5>" killed self with "world"
+L 07/19/1999 - 19:19:54: Broadcast: "#hunted_target_killed"
+L 07/19/1999 - 19:19:54: "Phorritorium<2>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:19:54: Broadcast: "#hunted_target_killed"
+L 07/19/1999 - 19:19:54: Broadcast: "#hunted_target_killed"
+L 07/19/1999 - 19:19:54: "Ordnance<7>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:19:54: Broadcast: "#hunted_target_killed"
+L 07/19/1999 - 19:19:54: "bracepoint<8>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:19:58: "Player<5>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:20:00: "Player<5>" changed class to "Soldier"
+L 07/19/1999 - 19:20:00: "Player<5>" changed class to "Soldier"
+L 07/19/1999 - 19:20:00: "Player<5>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:20:49: "Player<5>" killed "bracepoint<8>" with "rocket"
+L 07/19/1999 - 19:20:50: "bracepoint<8>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:21:40: "FirstOne<9><WON:4294932231>" connected, address "208.25.244.54:27005"
+L 07/19/1999 - 19:22:22: "FirstOne<9><WON:4294932231>" has entered the game
+L 07/19/1999 - 19:22:41: "FirstOne<9>" joined team "3".
+L 07/19/1999 - 19:22:44: "FirstOne<9>" changed class to "Sniper"
+L 07/19/1999 - 19:22:44: "FirstOne<9>" changed class to "Sniper"
+L 07/19/1999 - 19:22:44: "FirstOne<9>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:22:48: "Player<5>" killed "bracepoint<8>" with "rocket"
+L 07/19/1999 - 19:23:09: "bracepoint<8>" disconnected
+L 07/19/1999 - 19:25:54: "Player<10><WON:4294932063>" connected, address "168.191.229.232:27005"
+L 07/19/1999 - 19:26:12: "(1)Player<10><WON:4294932063>" has entered the game
+L 07/19/1999 - 19:26:19: "(1)Player<10>" joined team "2".
+L 07/19/1999 - 19:26:38: "(1)Player<10>" changed class to "Soldier"
+L 07/19/1999 - 19:26:38: "(1)Player<10>" changed class to "Soldier"
+L 07/19/1999 - 19:26:38: "(1)Player<10>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:26:47: "Z<11><WON:4294932549>" connected, address "205.149.183.101:27005"
+L 07/19/1999 - 19:26:51: "Z<11><WON:4294932549>" has entered the game
+L 07/19/1999 - 19:26:54: "Z<11>" joined team "3".
+L 07/19/1999 - 19:26:55: "Z<11>" changed class to "Sniper"
+L 07/19/1999 - 19:26:55: "Z<11>" changed class to "Sniper"
+L 07/19/1999 - 19:26:55: "Z<11>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:27:08: "Player<5>" killed "FirstOne<9>" with "supershotgun"
+L 07/19/1999 - 19:27:10: "FirstOne<9>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:29:18: "(1)Player<10>" killed "Z<11>" with "rocket"
+L 07/19/1999 - 19:29:20: "Z<11>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:29:43: "(1)Player<10>" killed "Z<11>" with "rocket"
+L 07/19/1999 - 19:29:45: "Z<11>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:30:27: "Z<11>" killed "(1)Player<10>" with "sniperrifle"
+L 07/19/1999 - 19:30:31: "(1)Player<10>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:30:34: "Player<5>" killed "Z<11>" with "supershotgun"
+L 07/19/1999 - 19:30:36: "Z<11>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:30:56: "Player<5>" killed "Z<11>" with "supershotgun"
+L 07/19/1999 - 19:30:57: "Z<11>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:30:58: "Htoriphes<12><WON:4294933746>" connected, address "216.101.156.201:21250"
+L 07/19/1999 - 19:31:05: "Player<5>" disconnected
+L 07/19/1999 - 19:31:18: "(1)Player<10>" killed "Z<11>" with "rocket"
+L 07/19/1999 - 19:31:19: "Z<11>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:31:33: "Htoriphes<12><WON:4294933746>" has entered the game
+L 07/19/1999 - 19:31:37: "(1)Player<10>" killed "Ordnance<7>" with "rocket"
+L 07/19/1999 - 19:31:43: "Htoriphes<12>" joined team "3".
+L 07/19/1999 - 19:31:46: "Htoriphes<12>" changed class to "Sniper"
+L 07/19/1999 - 19:31:46: "Htoriphes<12>" changed class to "Sniper"
+L 07/19/1999 - 19:31:46: "Htoriphes<12>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:31:46: "Ordnance<7>" disconnected
+L 07/19/1999 - 19:32:17: "(1)Player<10>" killed "Z<11>" with "rocket"
+L 07/19/1999 - 19:32:19: "Z<11>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:32:22: "FirstOne<9>" disconnected
+L 07/19/1999 - 19:32:38: "Htoriphes<12>" killed "(1)Player<10>" with "nails"
+L 07/19/1999 - 19:32:39: "(1)Player<10>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:33:48: "Z<11>" disconnected
+L 07/19/1999 - 19:34:13: "(1)Player<10>" killed "Htoriphes<12>" with "rocket"
+L 07/19/1999 - 19:34:14: "Htoriphes<12>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 19:35:05: "(1)Player<10>" killed "Htoriphes<12>" with "rocket"
+L 07/19/1999 - 19:35:09: "Htoriphes<12>" disconnected
+L 07/19/1999 - 19:36:47: =------= MATCH RESULTS =------=
+L 07/19/1999 - 19:36:47: "red" defeated "blue" and "yellow"
+L 07/19/1999 - 19:36:47: "blue" RESULTS: "98906768" players. "0" frags, "0" unaccounted for. "100" team score.
+L 07/19/1999 - 19:36:47: "red" RESULTS: "98906768" players. "11" frags, "1" unaccounted for. "100" team score.
+L 07/19/1999 - 19:36:47: "yellow" RESULTS: "98906768" players. "2" frags, "1" unaccounted for. "25" team score.
+L 07/19/1999 - 19:38:54: Log closed.

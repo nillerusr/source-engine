@@ -1,0 +1,330 @@
+L 07/22/1999 - 20:48:48: Log file started.
+L 07/22/1999 - 20:48:48: Spawning server "cz2"
+L 07/22/1999 - 20:48:48: server cvars start
+L 07/22/1999 - 20:48:48: "cr_random" = "0"
+L 07/22/1999 - 20:48:48: "cr_engineer" = "0"
+L 07/22/1999 - 20:48:48: "cr_spy" = "0"
+L 07/22/1999 - 20:48:48: "cr_pyro" = "0"
+L 07/22/1999 - 20:48:48: "cr_hwguy" = "0"
+L 07/22/1999 - 20:48:48: "cr_medic" = "0"
+L 07/22/1999 - 20:48:48: "cr_demoman" = "0"
+L 07/22/1999 - 20:48:48: "cr_soldier" = "0"
+L 07/22/1999 - 20:48:48: "cr_sniper" = "0"
+L 07/22/1999 - 20:48:48: "cr_scout" = "0"
+L 07/22/1999 - 20:48:48: "decalfrequency" = "30"
+L 07/22/1999 - 20:48:48: "mp_autocrosshair" = "1"
+L 07/22/1999 - 20:48:48: "mp_flashlight" = "0"
+L 07/22/1999 - 20:48:48: "mp_footsteps" = "0"
+L 07/22/1999 - 20:48:48: "mp_forcerespawn" = "1"
+L 07/22/1999 - 20:48:48: "mp_weaponstay" = "0"
+L 07/22/1999 - 20:48:48: "mp_falldamage" = "0"
+L 07/22/1999 - 20:48:48: "mp_friendlyfire" = "0"
+L 07/22/1999 - 20:48:48: "mp_timelimit" = "30"
+L 07/22/1999 - 20:48:48: "mp_fraglimit" = "0"
+L 07/22/1999 - 20:48:48: "mp_teamplay" = "21"
+L 07/22/1999 - 20:48:48: "tfc_balance_scores" = "1.0"
+L 07/22/1999 - 20:48:48: "tfc_balance_teams" = "1.0"
+L 07/22/1999 - 20:48:48: "tfc_adminpwd" = ""
+L 07/22/1999 - 20:48:48: "tfc_clanbattle_locked" = "0.0"
+L 07/22/1999 - 20:48:48: "tfc_clanbattle" = "0.0"
+L 07/22/1999 - 20:48:48: "tfc_respawndelay" = "0.0"
+L 07/22/1999 - 20:48:48: "tfc_autoteam" = "0"
+L 07/22/1999 - 20:48:48: "sv_maxrate" = "0"
+L 07/22/1999 - 20:48:48: "sv_minrate" = "0"
+L 07/22/1999 - 20:48:48: "sv_allowupload" = "1"
+L 07/22/1999 - 20:48:48: "sv_allowdownload" = "1"
+L 07/22/1999 - 20:48:48: "sv_upload_maxsize" = "0"
+L 07/22/1999 - 20:48:48: "sv_spectatormaxspeed" = "500"
+L 07/22/1999 - 20:48:48: "sv_spectalk" = "1"
+L 07/22/1999 - 20:48:48: "sv_maxspectators" = "8"
+L 07/22/1999 - 20:48:48: "sv_cheats" = "1.000000"
+L 07/22/1999 - 20:48:48: "sv_clienttrace" = "3.5"
+L 07/22/1999 - 20:48:48: "sv_timeout" = "65"
+L 07/22/1999 - 20:48:48: "sv_waterfriction" = "1"
+L 07/22/1999 - 20:48:48: "sv_wateraccelerate" = "10"
+L 07/22/1999 - 20:48:48: "sv_airaccelerate" = "10"
+L 07/22/1999 - 20:48:48: "sv_airmove" = "1"
+L 07/22/1999 - 20:48:48: "sv_bounce" = "1"
+L 07/22/1999 - 20:48:48: "sv_clipmode" = "0"
+L 07/22/1999 - 20:48:48: "sv_stepsize" = "18"
+L 07/22/1999 - 20:48:48: "sv_accelerate" = "10"
+L 07/22/1999 - 20:48:48: "sv_maxspeed" = "500.000000"
+L 07/22/1999 - 20:48:48: "sv_stopspeed" = "100"
+L 07/22/1999 - 20:48:48: "edgefriction" = "2"
+L 07/22/1999 - 20:48:48: "sv_friction" = "4"
+L 07/22/1999 - 20:48:48: "sv_gravity" = "800"
+L 07/22/1999 - 20:48:48: "sv_aim" = "0"
+L 07/22/1999 - 20:48:48: "sv_password" = ""
+L 07/22/1999 - 20:48:48: "sv_sendvelocity" = "1"
+L 07/22/1999 - 20:48:48: "pausable" = "0"
+L 07/22/1999 - 20:48:48: "coop" = "0"
+L 07/22/1999 - 20:48:48: "deathmatch" = "1"
+L 07/22/1999 - 20:48:48: "mp_logecho" = "1"
+L 07/22/1999 - 20:48:48: "mp_logfile" = "1"
+L 07/22/1999 - 20:48:48: "cmdline" = "0"
+L 07/22/1999 - 20:48:48: server cvars end
+L 07/22/1999 - 20:48:55: Map CRC "1880504211"
+L 07/22/1999 - 20:48:56: "sv_maxspeed" = "500"
+L 07/22/1999 - 20:48:56: Server name is "Team Fortress Classic"
+L 07/22/1999 - 20:48:56: "sv_maxspeed" = "500.000000"
+L 07/22/1999 - 20:49:12: "C.BCOOLJ[NDC]<79><WON:4294921043>" has entered the game
+L 07/22/1999 - 20:49:19: "Zell<75><WON:4294921563>" has entered the game
+L 07/22/1999 - 20:49:25: "C.BCOOLJ[NDC]<79>" joined team "2".
+L 07/22/1999 - 20:49:28: "Target_Pratice<80><WON:4294913649>" has entered the game
+L 07/22/1999 - 20:49:28: "Target_Pratice<80>" disconnected
+L 07/22/1999 - 20:49:29: "[TLI]-Vystrel<77><WON:4294924724>" has entered the game
+L 07/22/1999 - 20:49:30: "Zell<75>" joined team "2".
+L 07/22/1999 - 20:49:31: "C.BCOOLJ[NDC]<79>" changed class to "HWGuy"
+L 07/22/1999 - 20:49:31: "C.BCOOLJ[NDC]<79>" activated the goal "i_p_t"
+L 07/22/1999 - 20:49:34: "Zell<75>" changed class to "HWGuy"
+L 07/22/1999 - 20:49:34: "Zell<75>" activated the goal "i_p_t"
+L 07/22/1999 - 20:49:35: "MCGILLA<74><WON:4294922828>" has entered the game
+L 07/22/1999 - 20:49:37: "Player<64><WON:4294921177>" has entered the game
+L 07/22/1999 - 20:49:51: "MCGILLA<74>" joined team "1".
+L 07/22/1999 - 20:49:52: "[MOE]<71><WON:4294921663>" has entered the game
+L 07/22/1999 - 20:49:55: "C.BCOOLJ[NDC]<79>" say "Who is the server???"
+L 07/22/1999 - 20:49:59: "Target_Pratice<81><WON:4294913649>" connected, address "24.64.17.179:27005"
+L 07/22/1999 - 20:49:59: "Player<64>" joined team "1".
+L 07/22/1999 - 20:49:59: "MCGILLA<74>" changed class to "HWGuy"
+L 07/22/1999 - 20:49:59: "MCGILLA<74>" activated the goal "i_p_t"
+L 07/22/1999 - 20:50:02: "[TLI]-Vystrel<77>" say "snoop... wanna play this one?"
+L 07/22/1999 - 20:50:03: "Player<64>" changed class to "HWGuy"
+L 07/22/1999 - 20:50:03: "Player<64>" activated the goal "i_p_t"
+L 07/22/1999 - 20:50:10: "[MOE]<71>" joined team "1".
+L 07/22/1999 - 20:50:12: "[MOE]<71>" changed class to "Soldier"
+L 07/22/1999 - 20:50:12: "[MOE]<71>" activated the goal "i_p_t"
+L 07/22/1999 - 20:50:15: "Target_Pratice<81><WON:4294913649>" has entered the game
+L 07/22/1999 - 20:50:22: "Target_Pratice<81>" joined team "2".
+L 07/22/1999 - 20:50:23: "Target_Pratice<81>" changed class to "Scout"
+L 07/22/1999 - 20:50:23: "Target_Pratice<81>" activated the goal "i_p_t"
+L 07/22/1999 - 20:50:33: "Target_Pratice<81>" activated the goal "red marker 2"
+L 07/22/1999 - 20:50:39: "C.BCOOLJ[NDC]<79>" say "WHO IS THE SERVER???"
+L 07/22/1999 - 20:50:42: "[MOE]<71>" activated the goal "blue flag 2"
+L 07/22/1999 - 20:50:42: "[TLI]-Vystrel<77>" disconnected
+L 07/22/1999 - 20:50:43: "[TLI]-Snoop<82><WON:4294924750>" connected, address "216.228.68.152:27005"
+L 07/22/1999 - 20:50:50: "[MOE]<71>" say "i dont know"
+L 07/22/1999 - 20:50:59: Named Broadcast: "#cz_rcap4" ("Target_Pratice<81>")
+L 07/22/1999 - 20:51:09: "Player<64>" activated the goal "blue flag 3"
+L 07/22/1999 - 20:51:16: "MCGILLA<74>" killed "Zell<75>" with "ac"
+L 07/22/1999 - 20:51:17: "Target_Pratice<81>" activated the goal "red marker 2"
+L 07/22/1999 - 20:51:30: Named Broadcast: "#cz_bcap1" ("[MOE]<71>")
+L 07/22/1999 - 20:51:30: "MCGILLA<74>" killed self with "normalgrenade"
+L 07/22/1999 - 20:51:32: "Zell<75>" changed class to "Pyro"
+L 07/22/1999 - 20:51:32: "MCGILLA<74>" activated the goal "i_p_t"
+L 07/22/1999 - 20:51:33: "Zell<75>" activated the goal "i_p_t"
+L 07/22/1999 - 20:51:39: Named Broadcast: "#cz_rcap5" ("Target_Pratice<81>")
+L 07/22/1999 - 20:51:59: "Target_Pratice<81>" activated the goal "red marker 3"
+L 07/22/1999 - 20:52:05: Named Broadcast: "#cz_bcap3" ("Player<64>")
+L 07/22/1999 - 20:52:06: "[MOE]<71>" killed "Zell<75>" with "rocket"
+L 07/22/1999 - 20:52:15: "Zell<75>" activated the goal "i_p_t"
+L 07/22/1999 - 20:52:41: Named Broadcast: "#cz_rcap2" ("Target_Pratice<81>")
+L 07/22/1999 - 20:52:59: "MCGILLA<74>" changed class to "Engineer"
+L 07/22/1999 - 20:53:15: "MCGILLA<74>" killed "Target_Pratice<81>" with "ac"
+L 07/22/1999 - 20:53:19: "Target_Pratice<81>" activated the goal "i_p_t"
+L 07/22/1999 - 20:53:26: "Target_Pratice<81>" activated the goal "red marker 2"
+L 07/22/1999 - 20:53:33: "C.BCOOLJ[NDC]<79>" say "they are not going for flags so one man on are team go for flags"
+L 07/22/1999 - 20:53:35: "[MOE]<71>" killed "Target_Pratice<81>" with "rocket"
+L 07/22/1999 - 20:53:36: "Target_Pratice<81>" activated the goal "i_p_t"
+L 07/22/1999 - 20:53:39: "Target_Pratice<81>" changed class to "Soldier"
+L 07/22/1999 - 20:53:51: "[MOE]<71>" killed "Target_Pratice<81>" with "normalgrenade"
+L 07/22/1999 - 20:53:53: "Target_Pratice<81>" activated the goal "i_p_t"
+L 07/22/1999 - 20:54:06: "MCGILLA<74>" activated the goal "blue flag 3"
+L 07/22/1999 - 20:54:17: "[MOE]<71>" killed self with "rocket"
+L 07/22/1999 - 20:54:22: "MCGILLA<74>" killed "C.BCOOLJ[NDC]<79>" with "ac"
+L 07/22/1999 - 20:54:23: "[MOE]<71>" activated the goal "i_p_t"
+L 07/22/1999 - 20:54:23: "C.BCOOLJ[NDC]<79>" activated the goal "i_p_t"
+L 07/22/1999 - 20:54:25: "Target_Pratice<81>" activated the goal "red marker 1"
+L 07/22/1999 - 20:54:29: "C.BCOOLJ[NDC]<79>" changed class to "Spy"
+L 07/22/1999 - 20:54:58: "Player<64>" killed "Zell<75>" with "ac"
+L 07/22/1999 - 20:55:04: "Zell<75>" activated the goal "i_p_t"
+L 07/22/1999 - 20:55:10: "C.BCOOLJ[NDC]<79>" killed "MCGILLA<74>" with "mirvgrenade"
+L 07/22/1999 - 20:55:13: "MCGILLA<74>" activated the goal "i_p_t"
+L 07/22/1999 - 20:55:19: Named Broadcast: "#cz_rcap3" ("Target_Pratice<81>")
+L 07/22/1999 - 20:55:25: "MCGILLA<74>" activated the goal "blue flag 3"
+L 07/22/1999 - 20:55:32: "Target_Pratice<81>" killed "Player<64>" with "rocket"
+L 07/22/1999 - 20:55:34: "Player<64>" activated the goal "i_p_t"
+L 07/22/1999 - 20:55:41: "[MOE]<71>" say_team "mcgila how werte u red"
+L 07/22/1999 - 20:55:53: "MCGILLA<74>" say_team " ?"
+L 07/22/1999 - 20:56:04: "MCGILLA<74>" built a "sentry".
+L 07/22/1999 - 20:56:05: "[MOE]<71>" killed "Target_Pratice<81>" with "rocket"
+L 07/22/1999 - 20:56:06: "Target_Pratice<81>" activated the goal "i_p_t"
+L 07/22/1999 - 20:56:12: "C.BCOOLJ[NDC]<79>" changed class to "Spy"
+L 07/22/1999 - 20:56:16: "Target_Pratice<81>" activated the goal "red marker 1"
+L 07/22/1999 - 20:56:32: "C.BCOOLJ[NDC]<79>" killed "MCGILLA<74>" with "ac"
+L 07/22/1999 - 20:56:35: "C.BCOOLJ[NDC]<79>" destroyed "MCGILLA<74>"'s "sentry".
+L 07/22/1999 - 20:56:36: "MCGILLA<74>" activated the goal "i_p_t"
+L 07/22/1999 - 20:56:38: "[MOE]<71>" killed "Zell<75>" with "rocket"
+L 07/22/1999 - 20:56:41: "Zell<75>" activated the goal "i_p_t"
+L 07/22/1999 - 20:56:54: "[MOE]<71>" say_team "you were red not blue"
+L 07/22/1999 - 20:57:08: "[MOE]<71>" say_team "what color am i"
+L 07/22/1999 - 20:57:25: Named Broadcast: "#cz_rcap1" ("Target_Pratice<81>")
+L 07/22/1999 - 20:57:28: "Zell<75>" killed self with "rocket"
+L 07/22/1999 - 20:57:35: "Zell<75>" activated the goal "i_p_t"
+L 07/22/1999 - 20:57:36: "C.BCOOLJ[NDC]<79>" activated the goal "red marker 1"
+L 07/22/1999 - 20:57:40: "MCGILLA<74>" built a "sentry".
+L 07/22/1999 - 20:57:42: "Player<64>" killed "Target_Pratice<81>" with "ac"
+L 07/22/1999 - 20:57:43: "Target_Pratice<81>" activated the goal "i_p_t"
+L 07/22/1999 - 20:57:47: "Target_Pratice<81>" changed class to "Scout"
+L 07/22/1999 - 20:58:00: "Target_Pratice<81>" destroyed "MCGILLA<74>"'s "sentry".
+L 07/22/1999 - 20:58:14: "Target_Pratice<81>" killed "Player<64>" with "rocket"
+L 07/22/1999 - 20:58:14: "Target_Pratice<81>" killed self with "rocket"
+L 07/22/1999 - 20:58:16: "Player<64>" activated the goal "i_p_t"
+L 07/22/1999 - 20:58:16: "Target_Pratice<81>" activated the goal "i_p_t"
+L 07/22/1999 - 20:58:16: "Zell<75>" changed class to "HWGuy"
+L 07/22/1999 - 20:58:23: "[MOE]<71>" killed "Zell<75>" with "rocket"
+L 07/22/1999 - 20:58:24: "Target_Pratice<81>" activated the goal "red marker 3"
+L 07/22/1999 - 20:58:26: "Zell<75>" activated the goal "i_p_t"
+L 07/22/1999 - 20:58:32: Named Broadcast: "#cz_rcap5" ("C.BCOOLJ[NDC]<79>")
+L 07/22/1999 - 20:58:37: "Target_Pratice<81>" killed "[MOE]<71>" with "nails"
+L 07/22/1999 - 20:58:43: "[MOE]<71>" activated the goal "i_p_t"
+L 07/22/1999 - 20:58:48: "Player<64>" killed "Target_Pratice<81>" with "ac"
+L 07/22/1999 - 20:58:52: "Target_Pratice<81>" changed class to "Soldier"
+L 07/22/1999 - 20:58:53: "Target_Pratice<81>" activated the goal "i_p_t"
+L 07/22/1999 - 20:58:57: "Zell<75>" killed "MCGILLA<74>" with "ac"
+L 07/22/1999 - 20:58:58: "MCGILLA<74>" activated the goal "i_p_t"
+L 07/22/1999 - 20:59:04: "Target_Pratice<81>" activated the goal "red marker 1"
+L 07/22/1999 - 20:59:06: "[MOE]<71>" activated the goal "blue flag 2"
+L 07/22/1999 - 20:59:14: "Player<64>" killed "Zell<75>" with "ac"
+L 07/22/1999 - 20:59:17: "Zell<75>" activated the goal "i_p_t"
+L 07/22/1999 - 20:59:37: "Zell<75>" killed "Player<64>" with "ac"
+L 07/22/1999 - 20:59:38: "Player<64>" activated the goal "i_p_t"
+L 07/22/1999 - 20:59:45: Named Broadcast: "#cz_bcap1" ("[MOE]<71>")
+L 07/22/1999 - 20:59:45: "Zell<75>" say "commie bastard"
+L 07/22/1999 - 20:59:50: "Player<64>" activated the goal "blue flag 2"
+L 07/22/1999 - 21:00:00: Named Broadcast: "#cz_rcap3" ("Target_Pratice<81>")
+L 07/22/1999 - 21:00:01: "C.BCOOLJ[NDC]<79>" activated the goal "red marker 2"
+L 07/22/1999 - 21:00:03: "Target_Pratice<81>" killed "MCGILLA<74>" with "rocket"
+L 07/22/1999 - 21:00:13: "[MOE]<71>" activated the goal "blue flag 3"
+L 07/22/1999 - 21:00:17: "MCGILLA<74>" changed class to "Scout"
+L 07/22/1999 - 21:00:18: "MCGILLA<74>" activated the goal "i_p_t"
+L 07/22/1999 - 21:00:23: "Player<64>" killed "Zell<75>" with "ac"
+L 07/22/1999 - 21:00:25: "Zell<75>" activated the goal "i_p_t"
+L 07/22/1999 - 21:00:39: "MCGILLA<74>" activated the goal "blue flag 1"
+L 07/22/1999 - 21:00:40: Named Broadcast: "#cz_bcap3" ("Player<64>")
+L 07/22/1999 - 21:00:56: "Player<64>" killed "Target_Pratice<81>" with "ac"
+L 07/22/1999 - 21:00:59: "Target_Pratice<81>" activated the goal "i_p_t"
+L 07/22/1999 - 21:01:02: "C.BCOOLJ[NDC]<79>" killed "Player<64>" with "ac"
+L 07/22/1999 - 21:01:03: "Player<64>" activated the goal "i_p_t"
+L 07/22/1999 - 21:01:11: "Target_Pratice<81>" activated the goal "red marker 1"
+L 07/22/1999 - 21:01:12: Named Broadcast: "#cz_rcap3" ("C.BCOOLJ[NDC]<79>")
+L 07/22/1999 - 21:01:15: "Player<64>" activated the goal "blue flag 2"
+L 07/22/1999 - 21:01:17: Named Broadcast: "#cz_bcap2" ("MCGILLA<74>")
+L 07/22/1999 - 21:01:19: Named Broadcast: "#cz_bcap4" ("[MOE]<71>")
+L 07/22/1999 - 21:01:29: "Charonski<83><WON:4294924406>" connected, address "24.9.50.8:27005"
+L 07/22/1999 - 21:01:38: "Charonski<83><WON:4294924406>" has entered the game
+L 07/22/1999 - 21:01:45: "Player<64>" killed "C.BCOOLJ[NDC]<79>" with "ac"
+L 07/22/1999 - 21:01:46: "C.BCOOLJ[NDC]<79>" activated the goal "i_p_t"
+L 07/22/1999 - 21:01:55: "Player<64>" killed "Zell<75>" with "ac"
+L 07/22/1999 - 21:02:03: "Zell<75>" activated the goal "i_p_t"
+L 07/22/1999 - 21:02:05: Named Broadcast: "#cz_rcap4" ("Target_Pratice<81>")
+L 07/22/1999 - 21:02:13: Named Broadcast: "#cz_bcap3" ("Player<64>")
+L 07/22/1999 - 21:02:13: "Charonski<83>" disconnected
+L 07/22/1999 - 21:02:23: "[MOE]<71>" activated the goal "blue flag 2"
+L 07/22/1999 - 21:02:23: "Target_Pratice<81>" killed "MCGILLA<74>" with "normalgrenade"
+L 07/22/1999 - 21:02:25: "MCGILLA<74>" activated the goal "i_p_t"
+L 07/22/1999 - 21:02:29: "Target_Pratice<81>" killed "Player<64>" with "nailgrenade"
+L 07/22/1999 - 21:02:30: "Player<64>" activated the goal "i_p_t"
+L 07/22/1999 - 21:02:58: "Target_Pratice<81>" killed "MCGILLA<74>" with "rocket"
+L 07/22/1999 - 21:03:04: "MCGILLA<74>" activated the goal "i_p_t"
+L 07/22/1999 - 21:03:18: "MCGILLA<74>" activated the goal "blue flag 3"
+L 07/22/1999 - 21:03:47: "Zell<75>" killed "MCGILLA<74>" with "ac"
+L 07/22/1999 - 21:03:49: Named Broadcast: "#cz_bcap5" ("[MOE]<71>")
+L 07/22/1999 - 21:03:51: "MCGILLA<74>" activated the goal "i_p_t"
+L 07/22/1999 - 21:04:17: "MCGILLA<74>" changed class to "HWGuy"
+L 07/22/1999 - 21:04:19: "C.BCOOLJ[NDC]<79>" disconnected
+L 07/22/1999 - 21:04:40: "MCGILLA<74>" killed "Zell<75>" with "nails"
+L 07/22/1999 - 21:04:41: "Zell<75>" activated the goal "i_p_t"
+L 07/22/1999 - 21:04:59: "Deathon2legs<84><WON:4294927066>" connected, address "152.166.48.195:27005"
+L 07/22/1999 - 21:05:15: "Target_Pratice<81>" disconnected
+L 07/22/1999 - 21:05:17: "Player<64>" disconnected
+L 07/22/1999 - 21:05:24: "Zell<75>" say "that's not fair, I was incarcerated"
+L 07/22/1999 - 21:05:29: "Deathon2legs<84><WON:4294927066>" has entered the game
+L 07/22/1999 - 21:05:31: "[MOE]<71>" say_team "droping like flyes"
+L 07/22/1999 - 21:05:35: "Zell<75>" killed "[MOE]<71>" with "ac"
+L 07/22/1999 - 21:05:37: "[MOE]<71>" activated the goal "i_p_t"
+L 07/22/1999 - 21:05:47: "Deathon2legs<84>" joined team "2".
+L 07/22/1999 - 21:05:50: "Deathon2legs<84>" changed class to "Engineer"
+L 07/22/1999 - 21:05:50: "Deathon2legs<84>" activated the goal "i_p_t"
+L 07/22/1999 - 21:05:53: "Zell<75>" activated the goal "red marker 1"
+L 07/22/1999 - 21:06:08: "[MOE]<71>" activated the goal "blue flag 2"
+L 07/22/1999 - 21:06:15: "Zell<75>" killed "MCGILLA<74>" with "ac"
+L 07/22/1999 - 21:06:19: "MCGILLA<74>" activated the goal "i_p_t"
+L 07/22/1999 - 21:06:20: "[MOE]<71>" say_team "imn going for 4"
+L 07/22/1999 - 21:06:44: "Deathon2legs<84>" built a "sentry".
+L 07/22/1999 - 21:06:50: Named Broadcast: "#cz_rcap3" ("Zell<75>")
+L 07/22/1999 - 21:07:07: Named Broadcast: "#cz_bcap3" ("[MOE]<71>")
+L 07/22/1999 - 21:07:14: "Zell<75>" say "damnation"
+L 07/22/1999 - 21:07:33: "[MOE]<71>" activated the goal "blue flag 2"
+L 07/22/1999 - 21:07:48: "MCGILLA<74>" killed "Zell<75>" with "ac"
+L 07/22/1999 - 21:07:50: "Zell<75>" activated the goal "i_p_t"
+L 07/22/1999 - 21:07:51: "Zell<75>" killed "MCGILLA<74>" with "normalgrenade"
+L 07/22/1999 - 21:07:53: "MCGILLA<74>" activated the goal "i_p_t"
+L 07/22/1999 - 21:08:31: Named Broadcast: "#cz_bcap4" ("[MOE]<71>")
+L 07/22/1999 - 21:08:42: "MCGILLA<74>" say_team "good job"
+L 07/22/1999 - 21:08:43: "[MOE]<71>" say_team "kweel"
+L 07/22/1999 - 21:08:54: "[MOE]<71>" say_team "kwool"
+L 07/22/1999 - 21:09:08: "[MOE]<71>" killed "Zell<75>" with "normalgrenade"
+L 07/22/1999 - 21:09:22: "Zell<75>" activated the goal "i_p_t"
+L 07/22/1999 - 21:09:39: "[MOE]<71>" killed "Deathon2legs<84>" with "rocket"
+L 07/22/1999 - 21:09:44: "Deathon2legs<84>" activated the goal "i_p_t"
+L 07/22/1999 - 21:09:49: "Deathon2legs<84>" killed "MCGILLA<74>" with "sentrygun"
+L 07/22/1999 - 21:09:56: "MCGILLA<74>" activated the goal "i_p_t"
+L 07/22/1999 - 21:10:25: "MCGILLA<74>" say_team "they got sent by there flag"
+L 07/22/1999 - 21:10:32: "Zell<75>" killed "[MOE]<71>" with "ac"
+L 07/22/1999 - 21:10:42: "MCGILLA<74>" activated the goal "blue flag 3"
+L 07/22/1999 - 21:10:43: "FAT_FUCK_IS_ME_JERRY<85><WON:4294928044>" connected, address "209.252.136.115:27005"
+L 07/22/1999 - 21:10:48: "[MOE]<71>" say_team "?"
+L 07/22/1999 - 21:10:50: "[MOE]<71>" activated the goal "i_p_t"
+L 07/22/1999 - 21:11:10: "[MOE]<71>" say_team "nevermind i now wht you ment"
+L 07/22/1999 - 21:11:21: "FAT_FUCK_IS_ME_JERRY<85><WON:4294928044>" has entered the game
+L 07/22/1999 - 21:11:27: "[MOE]<71>" activated the goal "blue flag 2"
+L 07/22/1999 - 21:11:29: "MCGILLA<74>" say_team "the spot were you put flag by there base is sent."
+L 07/22/1999 - 21:11:30: "FAT_FUCK_IS_ME_JERRY<85>" joined team "1".
+L 07/22/1999 - 21:11:31: "FAT_FUCK_IS_ME_JERRY<85>" changed class to "Sniper"
+L 07/22/1999 - 21:11:31: "FAT_FUCK_IS_ME_JERRY<85>" activated the goal "i_p_t"
+L 07/22/1999 - 21:11:37: "[MOE]<71>" say_team "k"
+L 07/22/1999 - 21:11:40: "FAT_FUCK_IS_ME_JERRY<85>" say "sorry red"
+L 07/22/1999 - 21:11:48: "[MOE]<71>" killed "Zell<75>" with "rocket"
+L 07/22/1999 - 21:11:51: "FAT_FUCK_IS_ME_JERRY<85>" say "that is not my name"
+L 07/22/1999 - 21:11:53: "MCGILLA<74>" killed self with "normalgrenade"
+L 07/22/1999 - 21:11:56: "MCGILLA<74>" activated the goal "i_p_t"
+L 07/22/1999 - 21:11:57: "Zell<75>" activated the goal "i_p_t"
+L 07/22/1999 - 21:12:19: Named Broadcast: "#cz_bcap3" ("[MOE]<71>")
+L 07/22/1999 - 21:12:19: "FAT_FUCK_IS_ME_JERRY<85>" say "testing"
+L 07/22/1999 - 21:12:54: "Deathon2legs<84>" killed "[MOE]<71>" with "empgrenade"
+L 07/22/1999 - 21:12:56: "[MOE]<71>" activated the goal "i_p_t"
+L 07/22/1999 - 21:13:12: "[MOE]<71>" activated the goal "blue flag 2"
+L 07/22/1999 - 21:13:13: "FAT_FUCK_IS_ME_JERRY<85>" disconnected
+L 07/22/1999 - 21:13:41: "MCGILLA<74>" killed "Zell<75>" with "ac"
+L 07/22/1999 - 21:13:47: "Zell<75>" activated the goal "i_p_t"
+L 07/22/1999 - 21:14:15: Named Broadcast: "#cz_bcap4" ("[MOE]<71>")
+L 07/22/1999 - 21:14:28: "MCGILLA<74>" killed "Zell<75>" with "ac"
+L 07/22/1999 - 21:14:42: "Zell<75>" changed class to "Pyro"
+L 07/22/1999 - 21:14:42: "Zell<75>" activated the goal "i_p_t"
+L 07/22/1999 - 21:14:48: "WongFeiHung<86><WON:4294928385>" connected, address "166.93.94.154:27005"
+L 07/22/1999 - 21:14:55: "[MOE]<71>" destroyed "Deathon2legs<84>"'s "sentry".
+L 07/22/1999 - 21:14:56: "WongFeiHung<86><WON:4294928385>" has entered the game
+L 07/22/1999 - 21:15:06: "[MOE]<71>" killed "Deathon2legs<84>" with "rocket"
+L 07/22/1999 - 21:15:14: "Deathon2legs<84>" activated the goal "i_p_t"
+L 07/22/1999 - 21:15:17: "[MOE]<71>" killed "Zell<75>" with "rocket"
+L 07/22/1999 - 21:15:24: "Zell<75>" activated the goal "i_p_t"
+L 07/22/1999 - 21:16:00: "[MOE]<71>" activated the goal "blue flag 2"
+L 07/22/1999 - 21:16:21: "Deathon2legs<84>" disconnected
+L 07/22/1999 - 21:16:42: "WongFeiHung<86>" disconnected
+L 07/22/1999 - 21:16:45: Named Broadcast: "#cz_bcap1" ("[MOE]<71>")
+L 07/22/1999 - 21:16:45: "Zell<75>" say "damn again"
+L 07/22/1999 - 21:17:05: "[MOE]<71>" say "zell u loose mor help that way"
+L 07/22/1999 - 21:17:12: "MCGILLA<74>" activated the goal "blue flag 1"
+L 07/22/1999 - 21:17:23: "Zell<75>" say "no one likes me"
+L 07/22/1999 - 21:17:41: "[MOE]<71>" killed "Zell<75>" with "rocket"
+L 07/22/1999 - 21:17:45: "Zell<75>" activated the goal "i_p_t"
+L 07/22/1999 - 21:17:48: "[MOE]<71>" say "i do"
+L 07/22/1999 - 21:17:49: "Zell<75>" say "and I suck"
+L 07/22/1999 - 21:18:10: "Zell<75>" say "really bad"
+L 07/22/1999 - 21:18:29: "[MOE]<71>" say "how long u play for"
+L 07/22/1999 - 21:18:56: =------= MATCH RESULTS =------=
+L 07/22/1999 - 21:18:56: "blue" defeated "red" 
+L 07/22/1999 - 21:18:56: "blue" RESULTS: "2" players. "50" frags, "2" unaccounted for. "121" team score. Allies:
+L 07/22/1999 - 21:18:56: "red" RESULTS: "1" players. "37" frags, "1" unaccounted for. "86" team score. Allies:
+L 07/22/1999 - 21:19:34: "MCGILLA<74>" say "ya"
+L 07/22/1999 - 21:19:40: Log closed.

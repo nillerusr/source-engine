@@ -1,0 +1,36 @@
+//============ Copyright (c) Valve Corporation, All rights reserved. ==========
+//
+// Converts various input bitmap & geometry formats into standard
+// Valve formats, renames and places items in the proper directories
+// and calls vtex/studiomdl and can ZIP archive the results.
+//
+//=============================================================================
+
+
+$Macro SRCDIR		"..\.."
+
+$Include "$SRCDIR\vpc_scripts\source_lib_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$PreprocessorDefinitions			"$BASE;VERSION_SAFE_STEAM_API_INTERFACES;ITEMUPLIB_LIB"
+	}
+}
+
+$Project "itemtest_controls"
+{
+	$Folder	"Source Files"
+	{
+		$File	"itemtest_controls.cpp"
+		$File	"dualpanellist.cpp"
+		$File	"globalsubpanel.cpp"
+		$File	"finalsubpanel.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\public\itemtest\itemtest_controls.h"
+	}
+}

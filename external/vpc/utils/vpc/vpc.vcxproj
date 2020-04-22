@@ -1,0 +1,237 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{36C5F545-588F-4091-B480-89E03EDBDA93}</ProjectGuid>
+    <RootNamespace>vpc</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>NotSet</CharacterSet>
+    <PlatformToolset>v140_xp</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>NotSet</CharacterSet>
+    <PlatformToolset>v140_xp</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\..\public;..\..\public\tier0;..\..\public\tier1;..\..\public\vstdlib;..\..\common\;..\..\common\p4api</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WIN32;PLATFORM_WINDOWS;COMPILER_MSVC;COMPILER_MSVC32;_USE_32BIT_TIME_T;STATIC_TIER0;NO_MALLOC_OVERRIDE;STATIC_VSTDLIB;STANDALONE_VPC;_MBCS;_CRT_NO_VA_START_VALIDATION;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <ExceptionHandling>Async</ExceptionHandling>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;wsock32.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>libcmt.lib</IgnoreSpecificDefaultLibraries>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <PostBuildEvent>
+      <Command>p4 edit ..\..\..\..\devtools\bin\vpc.exe &amp;&amp; copy /y $(TargetPath) ..\..\..\..\devtools\bin\vpc.exe
+p4 edit ..\..\..\..\devtools\bin\vpc.pdb &amp;&amp; copy /y $(TargetDir)\vpc.pdb ..\..\..\..\devtools\bin\vpc.pdb
+</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>..\..\public;..\..\public\tier0;..\..\public\tier1;..\..\public\vstdlib;..\..\common\;..\..\common\p4api</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WIN32;PLATFORM_WINDOWS;COMPILER_MSVC;COMPILER_MSVC32;_USE_32BIT_TIME_T;STATIC_TIER0;NO_MALLOC_OVERRIDE;STATIC_VSTDLIB;STANDALONE_VPC;_MBCS;_CRT_NO_VA_START_VALIDATION;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;wsock32.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <PostBuildEvent>
+      <Command>p4 edit ..\..\..\..\devtools\bin\vpc.exe &amp;&amp; copy /y $(TargetPath) ..\..\..\..\devtools\bin\vpc.exe
+p4 edit ..\..\..\..\devtools\bin\vpc.pdb &amp;&amp; copy /y $(TargetDir)\vpc.pdb ..\..\..\..\devtools\bin\vpc.pdb
+</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\interfaces\interfaces.cpp" />
+    <ClCompile Include="..\..\p4lib\p4.cpp" />
+    <ClCompile Include="..\..\tier0\assert_dialog.cpp" />
+    <ClCompile Include="..\..\tier0\commandline.cpp" />
+    <ClCompile Include="..\..\tier0\cpu.cpp" />
+    <ClCompile Include="..\..\tier0\cputopology.cpp" />
+    <ClCompile Include="..\..\tier0\dbg.cpp" />
+    <ClCompile Include="..\..\tier0\fasttimer.cpp" />
+    <ClCompile Include="..\..\tier0\logging.cpp" />
+    <ClCompile Include="..\..\tier0\mem.cpp" />
+    <ClCompile Include="..\..\tier0\memdbg.cpp" />
+    <ClCompile Include="..\..\tier0\memstd.cpp" />
+    <ClCompile Include="..\..\tier0\memvalidate.cpp" />
+    <ClCompile Include="..\..\tier0\mem_helpers.cpp" />
+    <ClCompile Include="..\..\tier0\minidump.cpp" />
+    <ClCompile Include="..\..\tier0\pch_tier0.cpp" />
+    <ClCompile Include="..\..\tier0\platform.cpp" />
+    <ClCompile Include="..\..\tier0\pme.cpp" />
+    <ClCompile Include="..\..\tier0\pmelib.cpp" />
+    <ClCompile Include="..\..\tier0\stacktools.cpp" />
+    <ClCompile Include="..\..\tier0\threadtools.cpp" />
+    <ClCompile Include="..\..\tier0\tier0_strtools.cpp" />
+    <ClCompile Include="..\..\tier0\valobject.cpp" />
+    <ClCompile Include="..\..\tier0\vprof.cpp" />
+    <ClCompile Include="..\..\tier0\win32consoleio.cpp" />
+    <ClCompile Include="..\..\tier1\characterset.cpp" />
+    <ClCompile Include="..\..\tier1\checksum_crc.cpp" />
+    <ClCompile Include="..\..\tier1\checksum_md5.cpp" />
+    <ClCompile Include="..\..\tier1\convar.cpp" />
+    <ClCompile Include="..\..\tier1\exprevaluator.cpp" />
+    <ClCompile Include="..\..\tier1\generichash.cpp" />
+    <ClCompile Include="..\..\tier1\interface.cpp" />
+    <ClCompile Include="..\..\tier1\keyvalues.cpp" />
+    <ClCompile Include="..\..\tier1\mempool.cpp" />
+    <ClCompile Include="..\..\tier1\memstack.cpp" />
+    <ClCompile Include="..\..\tier1\splitstring.cpp" />
+    <ClCompile Include="..\..\tier1\stringpool.cpp" />
+    <ClCompile Include="..\..\tier1\strtools.cpp" />
+    <ClCompile Include="..\..\tier1\tier1.cpp" />
+    <ClCompile Include="..\..\tier1\utlbuffer.cpp" />
+    <ClCompile Include="..\..\tier1\utlstring.cpp" />
+    <ClCompile Include="..\..\tier1\utlsymbol.cpp" />
+    <ClCompile Include="..\..\vstdlib\cvar.cpp" />
+    <ClCompile Include="..\..\vstdlib\keyvaluessystem.cpp" />
+    <ClCompile Include="..\..\vstdlib\random.cpp" />
+    <ClCompile Include="..\..\vstdlib\vstrtools.cpp" />
+    <ClCompile Include="..\vpccrccheck\crccheck_shared.cpp" />
+    <ClCompile Include="baseprojectdatacollector.cpp" />
+    <ClCompile Include="conditionals.cpp" />
+    <ClCompile Include="configuration.cpp" />
+    <ClCompile Include="dependencies.cpp" />
+    <ClCompile Include="exprsimplifier.cpp" />
+    <ClCompile Include="generatordefinition.cpp" />
+    <ClCompile Include="groupscript.cpp" />
+    <ClCompile Include="macros.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="p4sln.cpp" />
+    <ClCompile Include="projectgenerator_codelite.cpp" />
+    <ClCompile Include="projectgenerator_makefile.cpp" />
+    <ClCompile Include="projectgenerator_ps3.cpp" />
+    <ClCompile Include="projectgenerator_vcproj.cpp" />
+    <ClCompile Include="projectgenerator_win32.cpp" />
+    <ClCompile Include="projectgenerator_win32_2010.cpp" />
+    <ClCompile Include="projectgenerator_xbox360.cpp" />
+    <ClCompile Include="projectgenerator_xbox360_2010.cpp" />
+    <ClCompile Include="projectscript.cpp" />
+    <ClCompile Include="scriptsource.cpp" />
+    <ClCompile Include="solutiongenerator_codelite.cpp" />
+    <ClCompile Include="solutiongenerator_makefile.cpp" />
+    <ClCompile Include="solutiongenerator_win32.cpp" />
+    <ClCompile Include="solutiongenerator_xcode.cpp" />
+    <ClCompile Include="sys_utils.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\tier0\cputopology.h" />
+    <ClInclude Include="..\..\tier0\memstd.h" />
+    <ClInclude Include="..\..\tier0\mem_helpers.h" />
+    <ClInclude Include="..\..\tier0\mem_impl_type.h" />
+    <ClInclude Include="..\..\tier0\pch_tier0.h" />
+    <ClInclude Include="..\..\tier0\resource.h" />
+    <ClInclude Include="..\..\tier0\tier0_strtools.h" />
+    <ClInclude Include="..\..\vstdlib\concommandhash.h" />
+    <ClInclude Include="..\vpccrccheck\crccheck_shared.h" />
+    <ClInclude Include="baseprojectdatacollector.h" />
+    <ClInclude Include="dependencies.h" />
+    <ClInclude Include="generatordefinition.h" />
+    <ClInclude Include="ibaseprojectgenerator.h" />
+    <ClInclude Include="ibasesolutiongenerator.h" />
+    <ClInclude Include="p4sln.h" />
+    <ClInclude Include="projectgenerator_codelite.h" />
+    <ClInclude Include="projectgenerator_ps3.h" />
+    <ClInclude Include="projectgenerator_vcproj.h" />
+    <ClInclude Include="projectgenerator_win32.h" />
+    <ClInclude Include="projectgenerator_win32_2010.h" />
+    <ClInclude Include="projectgenerator_xbox360.h" />
+    <ClInclude Include="projectgenerator_xbox360_2010.h" />
+    <ClInclude Include="projectgenerator_xcode.h" />
+    <ClInclude Include="scriptsource.h" />
+    <ClInclude Include="sys_utils.h" />
+    <ClInclude Include="vpc.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\vpc_scripts\definitions\ps3.def" />
+    <None Include="..\..\vpc_scripts\definitions\win32_2005.def" />
+    <None Include="..\..\vpc_scripts\definitions\win32_2010.def" />
+    <None Include="..\..\vpc_scripts\definitions\xbox360.def" />
+    <None Include="..\..\vpc_scripts\definitions\xbox360_2010.def" />
+    <None Include="Makefile" />
+    <None Include="projectgenerator_ps3.inc" />
+    <None Include="projectgenerator_win32.inc" />
+    <None Include="projectgenerator_win32_2010.inc" />
+    <None Include="projectgenerator_xbox360.inc" />
+    <None Include="projectgenerator_xbox360_2010.inc" />
+    <None Include="vpc.opensdf" />
+    <None Include="vpc.vpc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\..\lib\common\debug\libclient.lib">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </Library>
+    <Library Include="..\..\lib\common\debug\libp4sslstub.lib">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </Library>
+    <Library Include="..\..\lib\common\debug\librpc.lib">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </Library>
+    <Library Include="..\..\lib\common\debug\libsupp.lib">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </Library>
+    <Library Include="..\..\lib\common\libclient.lib">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </Library>
+    <Library Include="..\..\lib\common\libp4sslstub.lib">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </Library>
+    <Library Include="..\..\lib\common\librpc.lib">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </Library>
+    <Library Include="..\..\lib\common\libsupp.lib">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </Library>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -1,0 +1,165 @@
+A:link
+{
+    TEXT-DECORATION: none
+}
+A:hover
+{
+    TEXT-DECORATION: underline
+}
+.nav
+{
+    MARGIN-LEFT: 20px;
+    MARGIN-RIGHT: 20px;
+    MARGIN-TOP: 24px
+}
+.headline
+{
+    COLOR: #ffffff;
+    FONT: bold 18pt arial,helvetica;
+    MARGIN-RIGHT: 20px;
+    MARGIN-TOP: 20px
+}
+.awards
+{
+    COLOR: #818358;
+    FONT: bold 9pt arial,helvetica;
+    MARGIN-LEFT: 10px;
+    MARGIN-RIGHT: 20px
+}
+.awards2
+{
+    COLOR: #818358;
+    FONT: bold 9pt arial,helvetica;
+}
+.scores
+{
+    COLOR: #ffffff;
+    FONT: bold 8pt arial,helvetica;
+    MARGIN-LEFT: 10px
+}
+.header
+{
+    BACKGROUND: #646464;
+    COLOR: #ffffff;
+    FONT: bold 10pt arial,helvetica
+}
+.playerblue
+{
+    COLOR: #7c9fd9;
+    FONT-SIZE: 9pt;
+    FONT-WEIGHT: bold;
+}
+.playerred
+{
+    COLOR: #a95d26;
+    FONT-SIZE: 9pt;
+    FONT-WEIGHT: bold;
+}
+.scores HR
+{
+    COLOR: #646464;
+    HEIGHT: 1px
+}
+.server
+{
+    COLOR: #ffffff;
+    FONT: 22pt impact,arial,helvetica;
+    MARGIN-LEFT: 211px;
+    MARGIN-RIGHT: 20px;
+    MARGIN-TOP: 10px
+}
+.match
+{
+    COLOR: #ffffff;
+    FONT: 13pt impact,arial,helvetica;
+    MARGIN-LEFT: 211px;
+    MARGIN-RIGHT: 20px
+}
+.dialog
+{
+    FONT-FAMILY: Arial;
+    FONT-SIZE: 9pt;
+    FONT-WEIGHT: bold;
+    MARGIN-LEFT: 10px
+}
+.cvar
+{
+    COLOR: #857e59;
+    FONT-FAMILY: Arial;
+    FONT-SIZE: 9pt;
+    FONT-WEIGHT: bold;
+}
+.boardcell_br
+{
+    BORDER-BOTTOM: gray 2px solid;
+    BORDER-LEFT: gray 2px;
+    BORDER-RIGHT: gray 2px solid;
+    BORDER-TOP: gray 2px
+}
+.boardcell_r
+{
+    BORDER-RIGHT: gray 2px solid
+}
+.boardcell_b
+{
+    BORDER-BOTTOM: gray 2px solid
+}
+.boardtext
+{
+    COLOR: white;
+    FONT-FAMILY: Arial;
+    FONT-SIZE: 9pt;
+    FONT-WEIGHT: bold;
+}
+BODY
+{
+    BACKGROUND-COLOR: black
+}
+.whitetext
+{
+    COLOR: white;
+    FONT-FAMILY: Arial;
+    FONT-SIZE: 9pt;
+    FONT-WEIGHT: bold;
+}
+.playerblue2
+{
+    COLOR: #7c9fd9;
+    FONT-WEIGHT: bold;
+}
+.playerred2
+{
+    COLOR: #a95d26;
+    FONT-WEIGHT: bold;
+}
+.header2
+{
+    BACKGROUND-COLOR: #646464;
+    COLOR: #ffffff;
+    FONT-FAMILY: Arial;
+    FONT-STYLE: normal;
+    FONT-VARIANT: normal;
+    FONT-WEIGHT: bold;
+}
+.playeryellow2
+{
+    COLOR: #dfc500;
+    FONT-WEIGHT: bold;
+}
+.playergreen2
+{
+    COLOR: #4d8a58;
+    FONT-WEIGHT: bold;
+}
+.playeryellow
+{
+    COLOR: #dfc500;
+    FONT-SIZE: 9pt;
+    FONT-WEIGHT: bold;
+}
+.playergreen
+{
+    COLOR: #4d8a58;
+    FONT-SIZE: 9pt;
+    FONT-WEIGHT: bold;
+}

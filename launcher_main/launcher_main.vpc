@@ -1,0 +1,110 @@
+//-----------------------------------------------------------------------------
+//	LAUNCHER_MAIN.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$MacroRequired "PLATSUBDIR"
+
+$Macro SRCDIR		".."
+$Macro OUTBINDIR	"$SRCDIR\..\game"
+
+// Must be built explicitly as "default" in order to build a compliant submittable Disc.
+// Renames will not work.
+$Macro OUTBINNAME	"default"
+$Macro OUTBINNAME       "hl2_osx" [$OSXALL]
+$Macro OUTBINNAME       "hl2_linux" [$LINUXALL]
+
+$Include "$SRCDIR\vpc_scripts\source_exe_base.vpc"
+
+$Configuration
+{
+    $General
+    {
+        $AdditionalProjectDependencies "$BASE;newdat" [$WIN32 && !$ANALYZE]
+    }
+
+	$Compiler
+	{
+		$PreprocessorDefinitions	"$BASE;fopen=dont_use_fopen"
+		$ForceIncludes				" "
+	}
+
+	$Linker [$WIN32]
+	{
+		$EnableLargeAddresses		"Support Addresses Larger Than 2 Gigabytes (/LARGEADDRESSAWARE)" [$WIN32]
+		$FixedBaseAddress			"Generate a relocation section (/FIXED:NO)" [$WIN32]
+	}
+
+	$Xbox360ImageConversion	[$X360]
+	{
+		// General
+		$AdditionalSections			"4541080F=$SRCDIR\common\hl2orange.spa"
+	}
+
+	$PreBuildEvent [$WIN32]
+	{
+		$CommandLine		"if EXIST $OUTBINDIR\hl2.exe for /f $QUOTEdelims=$QUOTE %%A in ('attrib $QUOTE$OUTBINDIR\hl2.exe$QUOTE') do set valveTmpIsReadOnly=$QUOTE%%A$QUOTE" "\n" \
+							"set valveTmpIsReadOnlyLetter=%valveTmpIsReadOnly:~6,1%" "\n" \
+							"if $QUOTE%valveTmpIsReadOnlyLetter%$QUOTE==$QUOTER$QUOTE del /q $QUOTE$(TargetDir)$QUOTE$(TargetFileName)" "\n" \
+							"$CRCCHECK"
+	}
+
+	$PostBuildEvent	[$X360]
+	{
+		// inherit and add
+		$CommandLine				"$BASE" \
+									"call $SRCDIR\vpc_scripts\valve_xbcp_wrapper.cmd $(TargetDir)$(TargetName).xex xE:\Valve\default.xex" "\n"
+	}
+
+	$PostBuildEvent	[$WIN32 && !$ANALYZE]
+	{
+		// Note that the PDB must be checked in with the name it is linked as or else the debugger
+		// will not be able to find it. That's why it is checked in as default.pdb.
+		// override with specific behavior
+		$CommandLine				"call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $OUTBINDIR\hl2.exe $SRCDIR" "\n" \
+									"call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $OUTBINDIR\default.pdb $SRCDIR" "\n" \
+									"copy $(TargetPath) $OUTBINDIR\hl2.exe" "\n"					\
+									"if ERRORLEVEL 1 goto BuildEventFailed" "\n" \
+									"copy $(TargetDir)\default.pdb $OUTBINDIR\default.pdb" "\n"					\
+									"if ERRORLEVEL 1 goto BuildEventFailed" "\n" \
+									"if exist $(TargetDir)$(TargetName).map copy $(TargetDir)$(TargetName).map $OUTBINDIR\hl2.map" "\n" \
+									"call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $OUTBINDIR\hl2.dat $SRCDIR" "\n"								\
+									"$OUTBINDIR\bin\newdat $OUTBINDIR\hl2.exe" "\n"					\
+									"goto BuildEventOK" "\n" \
+									":BuildEventFailed" "\n" \
+									"echo *** ERROR! PostBuildStep FAILED for $(ProjectName)! EXE or DLL is probably running. ***" "\n" \
+									"del /q $(TargetPath)" "\n" \
+									"exit 1" "\n" \
+									":BuildEventOK" "\n"
+	}
+}
+
+$Project
+{
+	$Folder	"Source Files"
+	{
+		-$File	"$SRCDIR\public\tier0\memoverride.cpp"
+	}
+
+	$Folder	"Link Libraries" 
+	{
+		-$Lib tier0 [$WINDOWS]
+		-$Lib tier1 [$WINDOWS]
+		-$ImpLib vstdlib [$WINDOWS]
+	}
+}
+
+$Project "launcher_main"
+{
+	$Folder	"Source Files"
+	{
+		$File	"main.cpp"
+	}
+
+	$Folder "Resources" [$WIN32]
+	{
+		$File	"launcher_main.rc"
+		$File	"$SRCDIR\launcher\res\launcher.ico"
+	}
+}

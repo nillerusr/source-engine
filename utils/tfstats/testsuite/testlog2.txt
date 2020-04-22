@@ -1,0 +1,330 @@
+L 07/19/1999 - 19:38:54: Log file started.
+L 07/19/1999 - 19:38:54: Spawning server "cz2"
+L 07/19/1999 - 19:38:54: server cvars start
+L 07/19/1999 - 19:38:54: "cr_random" = "0"
+L 07/19/1999 - 19:38:54: "cr_engineer" = "0"
+L 07/19/1999 - 19:38:54: "cr_spy" = "0"
+L 07/19/1999 - 19:38:54: "cr_pyro" = "0"
+L 07/19/1999 - 19:38:54: "cr_hwguy" = "0"
+L 07/19/1999 - 19:38:54: "cr_medic" = "0"
+L 07/19/1999 - 19:38:54: "cr_demoman" = "0"
+L 07/19/1999 - 19:38:54: "cr_soldier" = "0"
+L 07/19/1999 - 19:38:54: "cr_sniper" = "0"
+L 07/19/1999 - 19:38:54: "cr_scout" = "0"
+L 07/19/1999 - 19:38:54: "decalfrequency" = "30"
+L 07/19/1999 - 19:38:54: "mp_autocrosshair" = "1"
+L 07/19/1999 - 19:38:54: "mp_flashlight" = "0"
+L 07/19/1999 - 19:38:54: "mp_footsteps" = "0"
+L 07/19/1999 - 19:38:54: "mp_forcerespawn" = "1"
+L 07/19/1999 - 19:38:54: "mp_weaponstay" = "0"
+L 07/19/1999 - 19:38:54: "mp_falldamage" = "0"
+L 07/19/1999 - 19:38:54: "mp_friendlyfire" = "0"
+L 07/19/1999 - 19:38:54: "mp_timelimit" = "30"
+L 07/19/1999 - 19:38:54: "mp_fraglimit" = "0"
+L 07/19/1999 - 19:38:54: "mp_teamplay" = "21"
+L 07/19/1999 - 19:38:54: "tfc_balance_scores" = "1.0"
+L 07/19/1999 - 19:38:54: "tfc_balance_teams" = "1.0"
+L 07/19/1999 - 19:38:54: "tfc_adminpwd" = ""
+L 07/19/1999 - 19:38:54: "tfc_clanbattle_locked" = "0.0"
+L 07/19/1999 - 19:38:54: "tfc_clanbattle" = "0.0"
+L 07/19/1999 - 19:38:54: "tfc_respawndelay" = "0.0"
+L 07/19/1999 - 19:38:54: "tfc_autoteam" = "0"
+L 07/19/1999 - 19:38:54: "cmdline" = "0"
+L 07/19/1999 - 19:38:54: "mp_logfile" = "1"
+L 07/19/1999 - 19:38:54: "mp_logecho" = "1"
+L 07/19/1999 - 19:38:54: "deathmatch" = "1"
+L 07/19/1999 - 19:38:54: "coop" = "0"
+L 07/19/1999 - 19:38:54: "pausable" = "0"
+L 07/19/1999 - 19:38:54: "sv_sendvelocity" = "1"
+L 07/19/1999 - 19:38:54: "sv_password" = ""
+L 07/19/1999 - 19:38:54: "sv_aim" = "0"
+L 07/19/1999 - 19:38:54: "sv_gravity" = "800"
+L 07/19/1999 - 19:38:54: "sv_friction" = "4"
+L 07/19/1999 - 19:38:54: "edgefriction" = "2"
+L 07/19/1999 - 19:38:54: "sv_stopspeed" = "100"
+L 07/19/1999 - 19:38:54: "sv_maxspeed" = "500.000000"
+L 07/19/1999 - 19:38:54: "sv_accelerate" = "10"
+L 07/19/1999 - 19:38:54: "sv_stepsize" = "18"
+L 07/19/1999 - 19:38:54: "sv_clipmode" = "0"
+L 07/19/1999 - 19:38:54: "sv_bounce" = "1"
+L 07/19/1999 - 19:38:54: "sv_airmove" = "1"
+L 07/19/1999 - 19:38:54: "sv_airaccelerate" = "10"
+L 07/19/1999 - 19:38:54: "sv_wateraccelerate" = "10"
+L 07/19/1999 - 19:38:54: "sv_waterfriction" = "1"
+L 07/19/1999 - 19:38:54: "sv_timeout" = "65"
+L 07/19/1999 - 19:38:54: "sv_clienttrace" = "3.5"
+L 07/19/1999 - 19:38:54: "sv_cheats" = "1.000000"
+L 07/19/1999 - 19:38:54: "sv_maxspectators" = "8"
+L 07/19/1999 - 19:38:54: "sv_spectalk" = "1"
+L 07/19/1999 - 19:38:54: "sv_spectatormaxspeed" = "500"
+L 07/19/1999 - 19:38:54: "sv_upload_maxsize" = "0"
+L 07/19/1999 - 19:38:54: "sv_allowdownload" = "1"
+L 07/19/1999 - 19:38:54: "sv_allowupload" = "1"
+L 07/19/1999 - 19:38:54: server cvars end
+L 07/19/1999 - 19:38:57: Map CRC "1880504211"
+L 07/19/1999 - 19:38:57: "sv_maxspeed" = "500"
+L 07/19/1999 - 19:38:57: Server name is "Aesthete"
+L 07/19/1999 - 19:38:58: "sv_maxspeed" = "500.000000"
+L 07/19/1999 - 19:39:01: "Phorritorium<2><WON:4294928345>" has entered the game
+L 07/19/1999 - 19:41:27: "Encryptor<13><WON:4294930465>" connected, address "216.198.60.108:27005"
+L 07/19/1999 - 19:42:06: "Encryptor<13><WON:4294930465>" has entered the game
+L 07/19/1999 - 19:42:22: "Encryptor<13>" joined team "2".
+L 07/19/1999 - 19:42:24: "Encryptor<13>" changed class to "Scout"
+L 07/19/1999 - 19:42:24: "Encryptor<13>" changed class to "Scout"
+L 07/19/1999 - 19:42:24: "Encryptor<13>" activated the goal "i_p_t"
+L 07/19/1999 - 19:42:34: "Encryptor<13>" activated the goal "red marker 1"
+L 07/19/1999 - 19:42:59: Named Broadcast: "#cz_rcap5" ("Encryptor<13>")
+L 07/19/1999 - 19:42:59: Named Broadcast: "#cz_rcap5" ("Encryptor<13>")
+L 07/19/1999 - 19:43:20: "Encryptor<13>" activated the goal "red marker 2"
+L 07/19/1999 - 19:43:47: Named Broadcast: "#cz_rcap3" ("Encryptor<13>")
+L 07/19/1999 - 19:43:47: Named Broadcast: "#cz_rcap3" ("Encryptor<13>")
+L 07/19/1999 - 19:44:06: "Encryptor<13>" activated the goal "red marker 1"
+L 07/19/1999 - 19:44:38: Named Broadcast: "#cz_rcap4" ("Encryptor<13>")
+L 07/19/1999 - 19:44:38: Named Broadcast: "#cz_rcap4" ("Encryptor<13>")
+L 07/19/1999 - 19:44:59: "Encryptor<13>" activated the goal "red marker 1"
+L 07/19/1999 - 19:46:03: "Wiseman<14><WON:4294935323>" connected, address "199.174.197.104:27005"
+L 07/19/1999 - 19:46:35: "Wiseman<14><WON:4294935323>" has entered the game
+L 07/19/1999 - 19:46:49: "Wiseman<14>" say " all"
+L 07/19/1999 - 19:46:51: "Wiseman<14>" joined team "2".
+L 07/19/1999 - 19:46:52: "Wiseman<14>" changed class to "Scout"
+L 07/19/1999 - 19:46:52: "Wiseman<14>" changed class to "Scout"
+L 07/19/1999 - 19:46:52: "Wiseman<14>" activated the goal "i_p_t"
+L 07/19/1999 - 19:47:48: "Encryptor<13>" say_team "su weis"
+L 07/19/1999 - 19:47:54: "Encryptor<13>" say_team "su"
+L 07/19/1999 - 19:48:03: "Wiseman<14>" disconnected
+L 07/19/1999 - 19:49:16: "[USDF]Pvt.Der_Fuehrer<15><WON:4294933439>" connected, address "207.136.171.118:27005"
+L 07/19/1999 - 19:49:33: "[USDF]Pvt.Der_Fuehrer<16><WON:4294933439>" connected, address "207.136.171.118:27005"
+L 07/19/1999 - 19:49:57: "[USDF]Pvt.Der_Fuehrer<16><WON:4294933439>" has entered the game
+L 07/19/1999 - 19:50:06: "[USDF]Pvt.Der_Fuehrer<16>" disconnected
+L 07/19/1999 - 19:51:17: "MRBIGGELSWORTH<17><WON:4294913736>" connected, address "153.37.75.92:27005"
+L 07/19/1999 - 19:51:28: "beano111<18><WON:4294932237>" connected, address "207.51.7.231:27005"
+L 07/19/1999 - 19:51:36: "MRBIGGELSWORTH<17><WON:4294913736>" has entered the game
+L 07/19/1999 - 19:51:42: "MRBIGGELSWORTH<17>" joined team "2".
+L 07/19/1999 - 19:51:46: "MRBIGGELSWORTH<17>" changed class to "Demoman"
+L 07/19/1999 - 19:51:46: "MRBIGGELSWORTH<17>" changed class to "Demoman"
+L 07/19/1999 - 19:51:46: "MRBIGGELSWORTH<17>" activated the goal "i_p_t"
+L 07/19/1999 - 19:51:54: "beano111<18><WON:4294932237>" has entered the game
+L 07/19/1999 - 19:51:58: "beano111<18>" joined team "1".
+L 07/19/1999 - 19:52:01: "beano111<18>" changed class to "HWGuy"
+L 07/19/1999 - 19:52:01: "beano111<18>" changed class to "HWGuy"
+L 07/19/1999 - 19:52:01: "beano111<18>" activated the goal "i_p_t"
+L 07/19/1999 - 19:52:54: "beano111<18>" killed "MRBIGGELSWORTH<17>" with "ac"
+L 07/19/1999 - 19:53:02: "MRBIGGELSWORTH<17>" changed class to "Soldier"
+L 07/19/1999 - 19:53:04: "MRBIGGELSWORTH<17>" changed class to "Soldier"
+L 07/19/1999 - 19:53:05: "Player<19><WON:4294936067>" connected, address "165.121.32.208:27005"
+L 07/19/1999 - 19:53:06: "MRBIGGELSWORTH<17>" activated the goal "i_p_t"
+L 07/19/1999 - 19:53:31: "Player<19><WON:4294936067>" has entered the game
+L 07/19/1999 - 19:53:39: "Player<19>" joined team "1".
+L 07/19/1999 - 19:53:44: "Player<19>" changed class to "Scout"
+L 07/19/1999 - 19:53:44: "Player<19>" changed class to "Scout"
+L 07/19/1999 - 19:53:44: "Player<19>" activated the goal "i_p_t"
+L 07/19/1999 - 19:53:56: "beano111<18>" killed "Encryptor<13>" with "ac"
+L 07/19/1999 - 19:54:08: "Player<19>" activated the goal "blue flag 3"
+L 07/19/1999 - 19:54:21: "beano111<18>" say "hi Player<19>"
+L 07/19/1999 - 19:55:01: Named Broadcast: "#cz_bcap2" ("Player<19>")
+L 07/19/1999 - 19:55:01: Named Broadcast: "#cz_bcap2" ("Player<19>")
+L 07/19/1999 - 19:55:01: Named Broadcast: "#cz_bcap2" ("Player<19>")
+L 07/19/1999 - 19:55:01: Named Broadcast: "#cz_bcap2" ("Player<19>")
+L 07/19/1999 - 19:55:01: Named Broadcast: "#cz_bcap2" ("Player<19>")
+L 07/19/1999 - 19:55:46: "Player<20><WON:4294932611>" connected, address "209.245.195.203:27005"
+L 07/19/1999 - 19:55:55: "beano111<18>" say "red  come out where ever you are"
+L 07/19/1999 - 19:56:00: "MRBIGGELSWORTH<17>" killed "Player<19>" with "nailgrenade"
+L 07/19/1999 - 19:56:03: "Player<19>" activated the goal "i_p_t"
+L 07/19/1999 - 19:56:35: "MRBIGGELSWORTH<17>" killed self with "rocket"
+L 07/19/1999 - 19:56:37: "MRBIGGELSWORTH<17>" activated the goal "i_p_t"
+L 07/19/1999 - 19:56:51: "MRBIGGELSWORTH<17>" activated the goal "red marker 2"
+L 07/19/1999 - 19:57:01: "Player<19>" activated the goal "blue flag 2"
+L 07/19/1999 - 19:57:27: Named Broadcast: "#cz_bcap1" ("Player<19>")
+L 07/19/1999 - 19:57:27: Named Broadcast: "#cz_bcap1" ("Player<19>")
+L 07/19/1999 - 19:57:27: Named Broadcast: "#cz_bcap1" ("Player<19>")
+L 07/19/1999 - 19:57:27: Named Broadcast: "#cz_bcap1" ("Player<19>")
+L 07/19/1999 - 19:57:27: Named Broadcast: "#cz_bcap1" ("Player<19>")
+L 07/19/1999 - 19:57:51: "Player<19>" activated the goal "blue flag 3"
+L 07/19/1999 - 19:58:02: "Encryptor<13>" changed class to "Soldier"
+L 07/19/1999 - 19:58:07: "Encryptor<13>" activated the goal "i_p_t"
+L 07/19/1999 - 19:58:16: Named Broadcast: "#cz_rcap2" ("MRBIGGELSWORTH<17>")
+L 07/19/1999 - 19:58:16: Named Broadcast: "#cz_rcap2" ("MRBIGGELSWORTH<17>")
+L 07/19/1999 - 19:58:16: Named Broadcast: "#cz_rcap2" ("MRBIGGELSWORTH<17>")
+L 07/19/1999 - 19:58:16: Named Broadcast: "#cz_rcap2" ("MRBIGGELSWORTH<17>")
+L 07/19/1999 - 19:58:16: Named Broadcast: "#cz_rcap2" ("MRBIGGELSWORTH<17>")
+L 07/19/1999 - 19:58:16: "Encryptor<13>" say "ok"
+L 07/19/1999 - 19:58:20: "Vorkosigan<21><WON:4294927632>" connected, address "207.136.38.165:27005"
+L 07/19/1999 - 19:58:25: Named Broadcast: "#cz_bcap3" ("Player<19>")
+L 07/19/1999 - 19:58:25: Named Broadcast: "#cz_bcap3" ("Player<19>")
+L 07/19/1999 - 19:58:25: Named Broadcast: "#cz_bcap3" ("Player<19>")
+L 07/19/1999 - 19:58:25: Named Broadcast: "#cz_bcap3" ("Player<19>")
+L 07/19/1999 - 19:58:25: Named Broadcast: "#cz_bcap3" ("Player<19>")
+L 07/19/1999 - 19:58:36: "Vorkosigan<21><WON:4294927632>" has entered the game
+L 07/19/1999 - 19:58:50: "Vorkosigan<21>" joined team "1".
+L 07/19/1999 - 19:58:53: "Vorkosigan<21>" changed class to "Scout"
+L 07/19/1999 - 19:58:53: "Vorkosigan<21>" changed class to "Scout"
+L 07/19/1999 - 19:58:53: "Vorkosigan<21>" activated the goal "i_p_t"
+L 07/19/1999 - 19:59:01: "Player<19>" activated the goal "blue flag 3"
+L 07/19/1999 - 19:59:44: Named Broadcast: "#cz_bcap4" ("Player<19>")
+L 07/19/1999 - 19:59:44: Named Broadcast: "#cz_bcap4" ("Player<19>")
+L 07/19/1999 - 19:59:44: Named Broadcast: "#cz_bcap4" ("Player<19>")
+L 07/19/1999 - 19:59:44: Named Broadcast: "#cz_bcap4" ("Player<19>")
+L 07/19/1999 - 19:59:44: Named Broadcast: "#cz_bcap4" ("Player<19>")
+L 07/19/1999 - 19:59:44: Named Broadcast: "#cz_bcap4" ("Player<19>")
+L 07/19/1999 - 20:00:19: "beano111<18>" killed "Encryptor<13>" with "ac"
+L 07/19/1999 - 20:00:22: "Encryptor<13>" activated the goal "i_p_t"
+L 07/19/1999 - 20:00:30: "Vorkosigan<21>" activated the goal "blue flag 1"
+L 07/19/1999 - 20:00:40: "Player<19>" activated the goal "blue flag 2"
+L 07/19/1999 - 20:00:46: "Encryptor<13>" say "i shall return"
+L 07/19/1999 - 20:01:15: Named Broadcast: "#cz_bcap2" ("Player<19>")
+L 07/19/1999 - 20:01:15: Named Broadcast: "#cz_bcap2" ("Player<19>")
+L 07/19/1999 - 20:01:15: Named Broadcast: "#cz_bcap2" ("Player<19>")
+L 07/19/1999 - 20:01:15: Named Broadcast: "#cz_bcap2" ("Player<19>")
+L 07/19/1999 - 20:01:15: Named Broadcast: "#cz_bcap2" ("Player<19>")
+L 07/19/1999 - 20:01:15: Named Broadcast: "#cz_bcap2" ("Player<19>")
+L 07/19/1999 - 20:01:45: "Player<19>" activated the goal "blue flag 2"
+L 07/19/1999 - 20:01:51: "beano111<18>" killed "Encryptor<13>" with "mirvgrenade"
+L 07/19/1999 - 20:01:52: "Encryptor<13>" activated the goal "i_p_t"
+L 07/19/1999 - 20:01:57: "Encryptor<13>" changed class to "HWGuy"
+L 07/19/1999 - 20:02:36: Named Broadcast: "#cz_bcap5" ("Player<19>")
+L 07/19/1999 - 20:02:36: Named Broadcast: "#cz_bcap5" ("Player<19>")
+L 07/19/1999 - 20:02:36: Named Broadcast: "#cz_bcap5" ("Player<19>")
+L 07/19/1999 - 20:02:36: Named Broadcast: "#cz_bcap5" ("Player<19>")
+L 07/19/1999 - 20:02:36: Named Broadcast: "#cz_bcap5" ("Player<19>")
+L 07/19/1999 - 20:02:36: Named Broadcast: "#cz_bcap5" ("Player<19>")
+L 07/19/1999 - 20:02:55: "beano111<18>" killed "Encryptor<13>" with "ac"
+L 07/19/1999 - 20:02:57: "Encryptor<13>" activated the goal "i_p_t"
+L 07/19/1999 - 20:03:01: Named Broadcast: "#cz_bcap4" ("Vorkosigan")
+L 07/19/1999 - 20:03:01: Named Broadcast: "#cz_bcap4" ("Vorkosigan")
+L 07/19/1999 - 20:03:01: Named Broadcast: "#cz_bcap4" ("Vorkosigan")
+L 07/19/1999 - 20:03:01: Named Broadcast: "#cz_bcap4" ("Vorkosigan")
+L 07/19/1999 - 20:03:01: Named Broadcast: "#cz_bcap4" ("Vorkosigan")
+L 07/19/1999 - 20:03:01: Named Broadcast: "#cz_bcap4" ("Vorkosigan")
+L 07/19/1999 - 20:03:39: "Encryptor<13>" killed "beano111<18>" with "ac"
+L 07/19/1999 - 20:03:39: "Vorkosigan<21>" activated the goal "blue flag 2"
+L 07/19/1999 - 20:03:40: "Player<19>" activated the goal "blue flag 3"
+L 07/19/1999 - 20:03:42: "beano111<18>" activated the goal "i_p_t"
+L 07/19/1999 - 20:04:03: Named Broadcast: "#cz_bcap1" ("Player<19>")
+L 07/19/1999 - 20:04:03: Named Broadcast: "#cz_bcap1" ("Player<19>")
+L 07/19/1999 - 20:04:03: Named Broadcast: "#cz_bcap1" ("Player<19>")
+L 07/19/1999 - 20:04:03: Named Broadcast: "#cz_bcap1" ("Player<19>")
+L 07/19/1999 - 20:04:03: Named Broadcast: "#cz_bcap1" ("Player<19>")
+L 07/19/1999 - 20:04:03: Named Broadcast: "#cz_bcap1" ("Player<19>")
+L 07/19/1999 - 20:04:11: "beano111<18>" killed "Encryptor<13>" with "ac"
+L 07/19/1999 - 20:04:13: "Encryptor<13>" activated the goal "i_p_t"
+L 07/19/1999 - 20:04:18: "beano111<18>" killed "MRBIGGELSWORTH<17>" with "ac"
+L 07/19/1999 - 20:04:22: "MRBIGGELSWORTH<17>" activated the goal "i_p_t"
+L 07/19/1999 - 20:04:28: "Player<19>" activated the goal "blue flag 3"
+L 07/19/1999 - 20:04:37: Named Broadcast: "#cz_bcap2" ("Vorkosigan")
+L 07/19/1999 - 20:04:37: Named Broadcast: "#cz_bcap2" ("Vorkosigan")
+L 07/19/1999 - 20:04:37: Named Broadcast: "#cz_bcap2" ("Vorkosigan")
+L 07/19/1999 - 20:04:37: Named Broadcast: "#cz_bcap2" ("Vorkosigan")
+L 07/19/1999 - 20:04:37: Named Broadcast: "#cz_bcap2" ("Vorkosigan")
+L 07/19/1999 - 20:04:37: Named Broadcast: "#cz_bcap2" ("Vorkosigan")
+L 07/19/1999 - 20:04:56: Named Broadcast: "#cz_bcap3" ("Player<19>")
+L 07/19/1999 - 20:04:56: Named Broadcast: "#cz_bcap3" ("Player<19>")
+L 07/19/1999 - 20:04:56: Named Broadcast: "#cz_bcap3" ("Player<19>")
+L 07/19/1999 - 20:04:56: Named Broadcast: "#cz_bcap3" ("Player<19>")
+L 07/19/1999 - 20:04:56: Named Broadcast: "#cz_bcap3" ("Player<19>")
+L 07/19/1999 - 20:04:56: Named Broadcast: "#cz_bcap3" ("Player<19>")
+L 07/19/1999 - 20:05:07: "Vorkosigan<21>" killed "Encryptor<13>" with "nails"
+L 07/19/1999 - 20:05:09: "Encryptor<13>" activated the goal "i_p_t"
+L 07/19/1999 - 20:05:16: "Encryptor<13>" changed class to "Demoman"
+L 07/19/1999 - 20:05:27: "Vorkosigan<21>" activated the goal "blue flag 2"
+L 07/19/1999 - 20:05:51: "beano111<18>" killed "MRBIGGELSWORTH<17>" with "ac"
+L 07/19/1999 - 20:05:52: "MRBIGGELSWORTH<17>" activated the goal "i_p_t"
+L 07/19/1999 - 20:06:02: "Player<19>" activated the goal "blue flag 3"
+L 07/19/1999 - 20:06:05: "MRBIGGELSWORTH<17>" activated the goal "red marker 1"
+L 07/19/1999 - 20:06:05: "Encryptor<13>" killed "beano111<18>" with "ac"
+L 07/19/1999 - 20:06:08: "beano111<18>" activated the goal "i_p_t"
+L 07/19/1999 - 20:06:24: "MRBIGGELSWORTH<17>" killed "Vorkosigan<21>" with "rocket"
+L 07/19/1999 - 20:06:24: "beano111<18>" killed "Encryptor<13>" with "ac"
+L 07/19/1999 - 20:06:26: "Vorkosigan<21>" activated the goal "i_p_t"
+L 07/19/1999 - 20:06:30: "Encryptor<13>" activated the goal "i_p_t"
+L 07/19/1999 - 20:06:33: "Vorkosigan<21>" disconnected
+L 07/19/1999 - 20:06:54: Named Broadcast: "#cz_rcap4" ("MRBIGGELSWORTH<17>")
+L 07/19/1999 - 20:06:54: Named Broadcast: "#cz_rcap4" ("MRBIGGELSWORTH<17>")
+L 07/19/1999 - 20:06:54: Named Broadcast: "#cz_rcap4" ("MRBIGGELSWORTH<17>")
+L 07/19/1999 - 20:06:54: Named Broadcast: "#cz_rcap4" ("MRBIGGELSWORTH<17>")
+L 07/19/1999 - 20:06:54: Named Broadcast: "#cz_rcap4" ("MRBIGGELSWORTH<17>")
+L 07/19/1999 - 20:06:55: Named Broadcast: "#cz_bcap5" ("Player<19>")
+L 07/19/1999 - 20:06:55: Named Broadcast: "#cz_bcap5" ("Player<19>")
+L 07/19/1999 - 20:06:55: Named Broadcast: "#cz_bcap5" ("Player<19>")
+L 07/19/1999 - 20:06:55: Named Broadcast: "#cz_bcap5" ("Player<19>")
+L 07/19/1999 - 20:06:55: Named Broadcast: "#cz_bcap5" ("Player<19>")
+L 07/19/1999 - 20:07:13: "beano111<18>" killed "Encryptor<13>" with "ac"
+L 07/19/1999 - 20:07:20: "Encryptor<13>" changed class to "Spy"
+L 07/19/1999 - 20:07:22: "Encryptor<13>" activated the goal "i_p_t"
+L 07/19/1999 - 20:07:33: "Player<19>" activated the goal "blue flag 3"
+L 07/19/1999 - 20:07:45: "beano111<18>" killed "MRBIGGELSWORTH<17>" with "ac"
+L 07/19/1999 - 20:07:52: "MRBIGGELSWORTH<17>" activated the goal "i_p_t"
+L 07/19/1999 - 20:08:05: Named Broadcast: "#cz_bcap4" ("Player<19>")
+L 07/19/1999 - 20:08:05: Named Broadcast: "#cz_bcap4" ("Player<19>")
+L 07/19/1999 - 20:08:05: Named Broadcast: "#cz_bcap4" ("Player<19>")
+L 07/19/1999 - 20:08:05: Named Broadcast: "#cz_bcap4" ("Player<19>")
+L 07/19/1999 - 20:08:05: Named Broadcast: "#cz_bcap4" ("Player<19>")
+L 07/19/1999 - 20:08:08: "MRBIGGELSWORTH<17>" activated the goal "red marker 2"
+L 07/19/1999 - 20:08:24: "Encryptor<13>" killed "beano111<18>" with "knife"
+L 07/19/1999 - 20:08:26: "beano111<18>" activated the goal "i_p_t"
+L 07/19/1999 - 20:08:28: "MRBIGGELSWORTH<17>" changed class to "Demoman"
+L 07/19/1999 - 20:08:29: "beano111<18>" say "good one"
+L 07/19/1999 - 20:08:37: "beano111<18>" say "last time tho"
+L 07/19/1999 - 20:08:45: "Encryptor<13>" say "heh,,,i feel so dumb when im a sy"
+L 07/19/1999 - 20:08:58: Named Broadcast: "#cz_rcap4" ("MRBIGGELSWORTH<17>")
+L 07/19/1999 - 20:08:58: Named Broadcast: "#cz_rcap4" ("MRBIGGELSWORTH<17>")
+L 07/19/1999 - 20:08:58: Named Broadcast: "#cz_rcap4" ("MRBIGGELSWORTH<17>")
+L 07/19/1999 - 20:08:58: Named Broadcast: "#cz_rcap4" ("MRBIGGELSWORTH<17>")
+L 07/19/1999 - 20:08:58: Named Broadcast: "#cz_rcap4" ("MRBIGGELSWORTH<17>")
+L 07/19/1999 - 20:09:22: "MRBIGGELSWORTH<17>" activated the goal "red marker 1"
+L 07/19/1999 - 20:09:29: "Player<19>" activated the goal "blue flag 3"
+L 07/19/1999 - 20:09:37: "Encryptor<13>" killed "beano111<18>" with "knife"
+L 07/19/1999 - 20:09:39: "beano111<18>" activated the goal "i_p_t"
+L 07/19/1999 - 20:09:45: "beano111<18>" say " that was bs"
+L 07/19/1999 - 20:09:53: Named Broadcast: "#cz_bcap1" ("Player<19>")
+L 07/19/1999 - 20:09:53: Named Broadcast: "#cz_bcap1" ("Player<19>")
+L 07/19/1999 - 20:09:53: Named Broadcast: "#cz_bcap1" ("Player<19>")
+L 07/19/1999 - 20:09:53: Named Broadcast: "#cz_bcap1" ("Player<19>")
+L 07/19/1999 - 20:09:53: Named Broadcast: "#cz_bcap1" ("Player<19>")
+L 07/19/1999 - 20:09:58: "Encryptor<13>" say "lol...the al mighty knife"
+L 07/19/1999 - 20:10:01: Named Broadcast: "#cz_rcap5" ("MRBIGGELSWORTH<17>")
+L 07/19/1999 - 20:10:01: Named Broadcast: "#cz_rcap5" ("MRBIGGELSWORTH<17>")
+L 07/19/1999 - 20:10:01: Named Broadcast: "#cz_rcap5" ("MRBIGGELSWORTH<17>")
+L 07/19/1999 - 20:10:01: Named Broadcast: "#cz_rcap5" ("MRBIGGELSWORTH<17>")
+L 07/19/1999 - 20:10:01: Named Broadcast: "#cz_rcap5" ("MRBIGGELSWORTH<17>")
+L 07/19/1999 - 20:10:08: "beano111<18>" killed "Encryptor<13>" with "ac"
+L 07/19/1999 - 20:10:09: "Encryptor<13>" activated the goal "i_p_t"
+L 07/19/1999 - 20:10:14: "Player<19>" activated the goal "blue flag 3"
+L 07/19/1999 - 20:10:18: "beano111<18>" say "stick in your ass"
+L 07/19/1999 - 20:10:27: "Encryptor<13>" say "lol"
+L 07/19/1999 - 20:10:29: "MRBIGGELSWORTH<17>" activated the goal "red marker 2"
+L 07/19/1999 - 20:10:41: Named Broadcast: "#cz_bcap3" ("Player<19>")
+L 07/19/1999 - 20:10:41: Named Broadcast: "#cz_bcap3" ("Player<19>")
+L 07/19/1999 - 20:10:41: Named Broadcast: "#cz_bcap3" ("Player<19>")
+L 07/19/1999 - 20:10:41: Named Broadcast: "#cz_bcap3" ("Player<19>")
+L 07/19/1999 - 20:10:41: Named Broadcast: "#cz_bcap3" ("Player<19>")
+L 07/19/1999 - 20:10:45: "Encryptor<13>" changed class to "Sniper"
+L 07/19/1999 - 20:11:01: "Encryptor<13>" killed "Player<19>" with "knife"
+L 07/19/1999 - 20:11:04: "beano111<18>" killed "Encryptor<13>" with "mirvgrenade"
+L 07/19/1999 - 20:11:06: "Encryptor<13>" activated the goal "i_p_t"
+L 07/19/1999 - 20:11:09: "Player<19>" activated the goal "i_p_t"
+L 07/19/1999 - 20:11:18: "beano111<18>" say "the  almighy grenade"
+L 07/19/1999 - 20:11:22: "Player<19>" activated the goal "blue flag 3"
+L 07/19/1999 - 20:11:32: "Encryptor<13>" say "yea,,you got a oint there"
+L 07/19/1999 - 20:11:38: Named Broadcast: "#cz_rcap3" ("MRBIGGELSWORTH<17>")
+L 07/19/1999 - 20:11:38: Named Broadcast: "#cz_rcap3" ("MRBIGGELSWORTH<17>")
+L 07/19/1999 - 20:11:38: Named Broadcast: "#cz_rcap3" ("MRBIGGELSWORTH<17>")
+L 07/19/1999 - 20:11:38: Named Broadcast: "#cz_rcap3" ("MRBIGGELSWORTH<17>")
+L 07/19/1999 - 20:11:38: Named Broadcast: "#cz_rcap3" ("MRBIGGELSWORTH<17>")
+L 07/19/1999 - 20:11:38: "Encryptor<13>" say "point"
+L 07/19/1999 - 20:11:47: "MRBIGGELSWORTH<17>" killed "Player<19>" with "rocket"
+L 07/19/1999 - 20:11:52: "Player<19>" activated the goal "i_p_t"
+L 07/19/1999 - 20:12:03: "Player<19>" activated the goal "blue flag 3"
+L 07/19/1999 - 20:12:22: "MRBIGGELSWORTH<17>" activated the goal "red marker 1"
+L 07/19/1999 - 20:12:36: Named Broadcast: "#cz_bcap4" ("Player<19>")
+L 07/19/1999 - 20:12:36: Named Broadcast: "#cz_bcap4" ("Player<19>")
+L 07/19/1999 - 20:12:36: Named Broadcast: "#cz_bcap4" ("Player<19>")
+L 07/19/1999 - 20:12:36: Named Broadcast: "#cz_bcap4" ("Player<19>")
+L 07/19/1999 - 20:12:36: Named Broadcast: "#cz_bcap4" ("Player<19>")
+L 07/19/1999 - 20:12:39: =------= MATCH RESULTS =------=
+L 07/19/1999 - 20:12:39: "red" defeated "blue"
+L 07/19/1999 - 20:12:39: "blue" RESULTS: "98906768" players. "44" frags, "2" unaccounted for. "102" team score.
+L 07/19/1999 - 20:12:39: "red" RESULTS: "98906768" players. "23" frags, "2" unaccounted for. "105" team score.
+L 07/19/1999 - 20:12:44: "beano111<18>" say "lol"
+L 07/19/1999 - 20:13:17: "beano111<18>" say "gg"
+L 07/19/1999 - 20:13:17: "Flatus<22><WON:4294932867>" connected, address "209.24.168.3:27005"
+L 07/19/1999 - 20:13:22: Log closed.

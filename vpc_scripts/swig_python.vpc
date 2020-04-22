@@ -1,0 +1,67 @@
+//-----------------------------------------------------------------------------
+//
+//	swig_python.vpc - Compile rules for swig -> c++ for Python modules
+//
+//	Include before defining the macro $SWIGFILE
+//
+//	Use like this (NOTE: Do not add the .i extension):
+//
+//	$Macro SWIGFILE	"foo"
+//	$Include "$SRCDIR/vpc_scripts/swig_python.vpc"
+//
+//-----------------------------------------------------------------------------
+
+$MacroRequired		"PYTHONVER"
+
+$MacroRequired		"SWIGFILE"
+
+$Configuration
+{
+	$PreBuildEvent
+	{
+		$CommandLine	"call $SRCDIR\vpc_scripts\swig_depend.cmd $SWIGFILE $SRCDIR $PYTHONVER" "\n" "$BASE"
+	}
+}
+
+$Project
+{
+	$Folder "SWIG Source"
+	{
+		$File   "$SWIGFILE.i"
+		{
+			$Configuration
+			{
+				$CustomBuildStep
+				{
+					$CommandLine "$SRCDIR\vpc_scripts\swig_python.cmd $SWIGFILE $SRCDIR $OUTBINDIR $PYTHONVER"
+					$AdditionalDependencies		"$SWIGFILE.dep"
+					$Description			"SWIG -> C++, $SWIGFILE.i -> swig_python$PYTHONVER\$SWIGFILE_wrap_python$PYTHONVER.cpp"
+					$Outputs			"$QUOTE$SWIGFILE_wrap_python$PYTHONVER.cpp$QUOTE;$QUOTEswig_python$PYTHONVER\$SWIGFILE.py$QUOTE"
+				}
+			}
+		}
+	}
+
+	$Folder "Read Only"
+	{
+		$Folder "SWIG Generated Python Files"
+		{
+			$DynamicFile	"$OUTBINDIR\$SWIGFILE.py"
+		}
+
+		$Folder "SWIG Generated Source Files"
+		{
+			$DynamicFile	"$QUOTE$SWIGFILE_wrap_python$PYTHONVER.cpp$QUOTE"
+			{
+				$Configuration
+				{
+					$Compiler
+					{
+						$AdditionalOptions			"/wd4127 /wd4244 /wd4505 /wd4706"
+					}
+
+				}
+			}
+		}
+	}
+}

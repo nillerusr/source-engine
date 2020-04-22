@@ -1,0 +1,6 @@
+Running file size monitor
+PC shader size := 291934326
+PC Game Bin DLL size := 108442741
+360 shader size := 0
+360 Game Bin DLL size := 0
+tf texture size := 1396651036

@@ -1,0 +1,27 @@
+Award
+{
+	name = "Flag Capture";
+	noWinnerMessage = "No one captured any flags!";
+	extraInfo = "%player captured the enemy flag %number times!";
+
+	trigger
+	{
+		type = goal;
+		key = "team one dropoff";
+		key = "team two dropoff";
+	}
+}
+
+Award
+{
+	name = "Flag Pickup";
+	noWinnerMessage = "No one picked up any flags!";
+	extraInfo = "%player managed to grab the enemy flag %score times!";
+
+	trigger
+	{
+		type = goal;
+		key = "team two flag";
+		key = "team one flag";
+	}
+}

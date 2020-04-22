@@ -1,0 +1,3 @@
+This directory needs to pre-exist for dynamic shader compile updb generation on Xbox 360.
+
+I was unsuccessful at creating the directory at runtime in code across the network. So I'm letting perforce create it with this file.

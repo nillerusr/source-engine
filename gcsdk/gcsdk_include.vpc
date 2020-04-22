@@ -1,0 +1,13 @@
+
+	// Include the gcsdk static lib, excluded from builds as appropriate.
+	$Folder "Link Libraries"
+	{
+		$File "$SRCDIR\lib\$PLATFORM\release\gcsdk$_STATICLIB_EXT"
+		{
+			$Configuration "Debug" { $ExcludedFromBuild	"Yes" }
+		}
+		$File "$SRCDIR\lib\$PLATFORM\debug\gcsdk$_STATICLIB_EXT"
+		{
+			$Configuration "Release" { $ExcludedFromBuild "Yes" }
+		}
+	}

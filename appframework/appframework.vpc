@@ -1,0 +1,53 @@
+//-----------------------------------------------------------------------------
+//	APPFRAMEWORK.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$macro SRCDIR		".."
+
+$include "$SRCDIR\vpc_scripts\source_lib_base.vpc"
+
+$Configuration
+{
+    $General
+    {
+		$AdditionalProjectDependencies                  "$BASE;togl"  [!$IS_LIB_PROJECT && $GL]
+	}
+		
+	$Linker [$OSXALL]
+	{
+		$SystemFrameworks "Carbon;OpenGL;Quartz;Cocoa;IOKit"
+	}
+}
+
+$Project "appframework"
+{
+	$Folder	"Source Files"
+	{
+		$File	"AppSystemGroup.cpp"
+		$File	"$SRCDIR\public\filesystem_init.cpp"
+		$File	"vguimatsysapp.cpp"	[$WIN32]
+		$File	"winapp.cpp"		[$WIN32]
+		$File	"posixapp.cpp"		[$POSIX]
+		$File	"sdlmgr.cpp"		[$SDL]
+		$File	"glmrendererinfo_osx.mm"		[$OSXALL]
+	}
+
+	$Folder	"Interface"
+	{
+		$File	"$SRCDIR\public\appframework\AppFramework.h"
+		$File	"$SRCDIR\public\appframework\IAppSystem.h"
+		$File	"$SRCDIR\public\appframework\IAppSystemGroup.h"
+		$File	"$SRCDIR\public\appframework\tier2app.h"
+		$File	"$SRCDIR\public\appframework\tier3app.h"
+		$File	"$SRCDIR\public\appframework\VguiMatSysApp.h"
+		$File	"$SRCDIR\public\appframework\ilaunchermgr.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$ImpLib togl [!$IS_LIB_PROJECT && $GL]
+		$ImpLib SDL2 [!$IS_LIB_PROJECT && $SDL]
+	}
+}

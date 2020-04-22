@@ -1,0 +1,173 @@
+// List of resources to bundle.
+//
+// The output will be a header file (.h) used at compile time,
+// and a packed resource file (.xpr) used at runtime.
+
+out_packedresource LoaderMedia\loader.xpr
+out_error          loader.err
+
+Texture Font
+{
+   Source      LoaderMedia_Source\Tahoma_16.tga
+   Format      D3DFMT_A4R4G4B4
+   Levels      1
+}
+
+UserData FontData
+{
+   DataFile LoaderMedia_Source\Tahoma_16.abc
+}
+
+Texture Footer
+{
+   Source      LoaderMedia_Source\Footer.tga
+   Format      D3DFMT_LIN_A8R8G8B8
+   Levels      1
+}
+
+Texture MainLegal_english
+{
+   Source      LoaderMedia_Source\LegalScreen_english.tga
+   Format      D3DFMT_LIN_A8R8G8B8
+   Levels      1
+}
+
+Texture MainLegal_french
+{
+   Source      LoaderMedia_Source\LegalScreen_french.tga
+   Format      D3DFMT_LIN_A8R8G8B8
+   Levels      1
+}
+
+Texture MainLegal_italian
+{
+   Source      LoaderMedia_Source\LegalScreen_italian.tga
+   Format      D3DFMT_LIN_A8R8G8B8
+   Levels      1
+}
+
+Texture MainLegal_german
+{
+   Source      LoaderMedia_Source\LegalScreen_german.tga
+   Format      D3DFMT_LIN_A8R8G8B8
+   Levels      1
+}
+
+Texture MainLegal_spanish
+{
+   Source      LoaderMedia_Source\LegalScreen_spanish.tga
+   Format      D3DFMT_LIN_A8R8G8B8
+   Levels      1
+}
+
+Texture SourceLegal
+{
+   Source      LoaderMedia_Source\SourceScreen.tga
+   Format      D3DFMT_LIN_A8R8G8B8
+   Levels      1
+}
+
+Texture LoadingIcon
+{
+   Source      LoaderMedia_Source\LoadingIcon.tga
+   Format      D3DFMT_LIN_A8R8G8B8
+   Levels      1
+}
+
+Texture SlideShow1_english
+{
+   Source      LoaderMedia_Source\SlideShow1_english.tga
+   Format      D3DFMT_LIN_A8R8G8B8
+   Levels      1
+}
+
+Texture SlideShow1_french
+{
+   Source      LoaderMedia_Source\SlideShow1_french.tga
+   Format      D3DFMT_LIN_A8R8G8B8
+   Levels      1
+}
+
+Texture SlideShow1_italian
+{
+   Source      LoaderMedia_Source\SlideShow1_italian.tga
+   Format      D3DFMT_LIN_A8R8G8B8
+   Levels      1
+}
+
+Texture SlideShow1_german
+{
+   Source      LoaderMedia_Source\SlideShow1_german.tga
+   Format      D3DFMT_LIN_A8R8G8B8
+   Levels      1
+}
+
+Texture SlideShow1_spanish
+{
+   Source      LoaderMedia_Source\SlideShow1_spanish.tga
+   Format      D3DFMT_LIN_A8R8G8B8
+   Levels      1
+}
+
+Texture SlideShow2
+{
+   Source      LoaderMedia_Source\SlideShow2.tga
+   Format      D3DFMT_LIN_A8R8G8B8
+   Levels      1
+}
+
+Texture SlideShow3
+{
+   Source      LoaderMedia_Source\SlideShow3.tga
+   Format      D3DFMT_LIN_A8R8G8B8
+   Levels      1
+}
+
+Texture SlideShow4
+{
+   Source      LoaderMedia_Source\SlideShow4.tga
+   Format      D3DFMT_LIN_A8R8G8B8
+   Levels      1
+}
+
+Texture SlideShow5
+{
+   Source      LoaderMedia_Source\SlideShow5.tga
+   Format      D3DFMT_LIN_A8R8G8B8
+   Levels      1
+}
+
+Texture SlideShow6
+{
+   Source      LoaderMedia_Source\SlideShow6.tga
+   Format      D3DFMT_LIN_A8R8G8B8
+   Levels      1
+}
+
+Texture SlideShow7
+{
+   Source      LoaderMedia_Source\SlideShow7.tga
+   Format      D3DFMT_LIN_A8R8G8B8
+   Levels      1
+}
+
+Texture SlideShow8
+{
+   Source      LoaderMedia_Source\SlideShow8.tga
+   Format      D3DFMT_LIN_A8R8G8B8
+   Levels      1
+}
+
+Texture SlideShow9
+{
+   Source      LoaderMedia_Source\SlideShow9.tga
+   Format      D3DFMT_LIN_A8R8G8B8
+   Levels      1
+}
+
+
+
+
+
+
+
