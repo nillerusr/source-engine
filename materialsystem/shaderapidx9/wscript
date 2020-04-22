@@ -1,0 +1,91 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from waflib import Utils
+import os
+
+top = '.'
+PROJECT_NAME = 'shaderapidx9'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	conf.env.append_unique('DEFINES',[
+		'SHADERAPIDX9',
+		'SHADER_DLL_EXPORT',
+		#'PROTECTED_THINGS_ENABLE', # conflicts with stlport
+		'strncpy=use_Q_strncpy_instead',
+		'_snprintf=use_Q_snprintf_instead',
+	])
+	
+	if conf.env.DEST_OS == 'win32' and not conf.env.GL:
+		conf.env.append_unique('DEFINES',[
+			'USE_ACTUAL_DX',
+		])
+
+
+def build(bld):
+	source = [
+		'colorformatdx8.cpp',
+		'../../public/filesystem_helpers.cpp',
+		'hardwareconfig.cpp',
+		'meshbase.cpp',
+		'meshdx8.cpp',
+		'shaderapidx8.cpp',
+		'shaderdevicebase.cpp',
+		'shaderapibase.cpp',
+		'shaderdevicedx8.cpp',
+		'shadershadowdx8.cpp',
+		'texturedx8.cpp',
+		'TransitionTable.cpp',
+		'cvballoctracker.cpp',
+		'vertexdecl.cpp',
+		'vertexshaderdx8.cpp',
+		#'textureheap.cpp',							[$X360]
+		'../../public/tier0/memoverride.cpp'
+	]
+
+	if bld.env.DEST_OS == 'win32' and not bld.env.GL:
+		source += [
+			'recording.cpp',
+			'wmi.cpp'
+		]
+		
+	if bld.env.DEST_OS != 'win32':
+		source += ['winutils.cpp']
+
+	includes = [
+		'.',
+		'../../public',
+		'../../public/tier0',
+		'../../public/tier1',
+		'../../common',
+		'../'
+	] + bld.env.INCLUDES_SDL2
+
+	defines = []
+
+	libs = ['tier0','tier1','tier2','vstdlib','togl','bitmap','mathlib']
+
+	if bld.env.DEST_OS == 'android':
+		libs += ['ANDROID_SUPPORT']
+	elif bld.env.DEST_OS == 'win32' and not bld.env.GL:
+		libs += ['D3D9', 'D3DX9', 'bzip2']
+	
+	install_path = bld.env.LIBDIR
+
+	bld.shlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		install_path = install_path,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)
+

@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xbox_loader", "xbox_loader.vcproj", "{652C7D60-BC02-4E09-96DD-9300FFFF3403}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug_XBox = Debug_XBox
+		Release_XBox = Release_XBox
+		Retail_XBox = Retail_XBox
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{652C7D60-BC02-4E09-96DD-9300FFFF3403}.Debug_XBox.ActiveCfg = Debug_XBox|Xbox
+		{652C7D60-BC02-4E09-96DD-9300FFFF3403}.Debug_XBox.Build.0 = Debug_XBox|Xbox
+		{652C7D60-BC02-4E09-96DD-9300FFFF3403}.Release_XBox.ActiveCfg = Release_XBox|Xbox
+		{652C7D60-BC02-4E09-96DD-9300FFFF3403}.Release_XBox.Build.0 = Release_XBox|Xbox
+		{652C7D60-BC02-4E09-96DD-9300FFFF3403}.Retail_XBox.ActiveCfg = Retail_XBox|Xbox
+		{652C7D60-BC02-4E09-96DD-9300FFFF3403}.Retail_XBox.Build.0 = Retail_XBox|Xbox
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal

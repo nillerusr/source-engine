@@ -1,0 +1,46 @@
+//-----------------------------------------------------------------------------
+//	PFMCOMP.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\common"
+	}
+}
+
+$Project "Pfmcomp"
+{
+	$Folder	"Source Files"
+	{		
+		$File	"$SRCDIR\public\chunkfile.cpp"
+		$File	"..\common\scriplib.cpp"
+		$File	"$SRCDIR\public\collisionutils.cpp"
+		$File	"$SRCDIR\public\filesystem_helpers.cpp"
+		$File	"$SRCDIR\public\filesystem_init.cpp"
+		$File	"$SRCDIR\public\ScratchPadUtils.cpp"
+		$File	"..\common\cmdlib.cpp"
+		$File	"..\common\filesystem_tools.cpp"
+		$File	"pfmcomp.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\public\tier1\utlsymbol.h"
+	}
+
+	$Folder "Link Libraries"
+	{
+		$Lib bitmap
+		$Lib mathlib
+		$Lib tier2
+	}
+}

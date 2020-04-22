@@ -1,0 +1,29 @@
+//-----------------------------------------------------------------------------
+//	TIER3.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$macro SRCDIR		".."
+
+$include "$SRCDIR\vpc_scripts\source_lib_base.vpc"
+
+$Project "tier3"
+{
+	$Folder	"Source Files"
+	{
+		$File	"tier3.cpp"
+		$File	"mdlutils.cpp"
+		$File	"choreoutils.cpp"
+		$File	"scenetokenprocessor.cpp"
+		$File	"studiohdrstub.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\public\tier3\tier3.h"
+		$File	"$SRCDIR\public\tier3\mdlutils.h"
+		$File	"$SRCDIR\public\tier3\choreoutils.h"
+		$File	"$SRCDIR\public\tier3\scenetokenprocessor.h"
+	}
+}

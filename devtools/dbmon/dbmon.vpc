@@ -1,0 +1,35 @@
+//-----------------------------------------------------------------------------
+//	DBMON.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"..\bin"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$PreprocessorDefinitions			"$BASE;MACRO_MATHLIB;PROTECTED_THINGS_DISABLE"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE ws2_32.lib odbc32.lib odbccp32.lib winmm.lib"
+	}
+}
+
+$Project "dbmon"
+{
+	$Folder	"Source Files"
+	{
+		$File	"dbmon.c"
+	}
+
+	$Folder	"Header Files"
+	{
+	}
+}

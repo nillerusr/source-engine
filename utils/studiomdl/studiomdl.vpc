@@ -1,0 +1,151 @@
+//-----------------------------------------------------------------------------
+//	STUDIOMDL.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\common,..\nvtristriplib,$SRCDIR\Game_Shared"
+		$PreprocessorDefinitions			"$BASE;PROTECTED_THINGS_DISABLE"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE winmm.lib"
+	}
+}
+
+$Project "Studiomdl"
+{
+	$Folder	"Source Files"
+	{
+		$File	"$SRCDIR\public\bone_setup.cpp"
+		$File	"..\common\cmdlib.cpp"
+		$File	"collisionmodel.cpp"
+		$File	"$SRCDIR\public\CollisionUtils.cpp"
+		$File	"dmxsupport.cpp"
+		$File	"$SRCDIR\public\filesystem_helpers.cpp"
+		$File	"$SRCDIR\public\filesystem_init.cpp"
+		$File	"..\common\FileSystem_Tools.cpp"
+		$File	"HardwareMatrixState.cpp"
+		$File	"HardwareVertexCache.cpp"
+		$File	"$SRCDIR\public\interpolatortypes.cpp"
+		$File	"$SRCDIR\public\mdlobjects\mdlobjects.cpp"
+		$File	"$SRCDIR\public\movieobjects\movieobjects_compiletools.cpp"
+		$File	"mrmsupport.cpp"
+		$File	"objsupport.cpp"
+		$File	"optimize.cpp"
+		$File	"perfstats.cpp"
+		$File	"..\common\physdll.cpp"
+		$File	"..\common\scriplib.cpp"
+		$File	"simplify.cpp"
+		$File	"$SRCDIR\public\studio.cpp"
+		$File	"$SRCDIR\common\studiobyteswap.cpp"
+		$File	"studiomdl.cpp"
+		$File	"UnifyLODs.cpp"
+		$File	"v1support.cpp"
+		$File	"write.cpp"
+		$File	"checkuv.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"..\common\cmdlib.h"
+		$File	"collisionmodel.h"
+		$File	"FileBuffer.h"
+		$File	"..\common\FileSystem_Tools.h"
+		$File	"HardwareMatrixState.h"
+		$File	"HardwareVertexCache.h"
+		$File	"..\NvTriStripLib\NvTriStrip.h"
+		$File	"perfstats.h"
+		$File	"..\common\physdll.h"
+		$File	"..\common\scriplib.h"
+		$File	"studiomdl.h"
+		$File	"checkuv.h"
+	}
+
+	$Folder	"Public Header Files"
+	{
+		$File	"$SRCDIR\public\gametrace.h"
+		$File	"$SRCDIR\public\filesystem.h"
+		$File	"$SRCDIR\public\filesystem_helpers.h"
+		$File	"$SRCDIR\public\cmodel.h"
+		$File	"$SRCDIR\public\mathlib\amd3dx.h"
+		$File	"$SRCDIR\public\basehandle.h"
+		$File	"$SRCDIR\public\tier0\basetypes.h"
+		$File	"$SRCDIR\public\bitvec.h"
+		$File	"$SRCDIR\public\bone_accessor.h"
+		$File	"$SRCDIR\public\bone_setup.h"
+		$File	"$SRCDIR\public\bspflags.h"
+		$File	"$SRCDIR\public\tier1\byteswap.h"
+		$File	"$SRCDIR\public\tier1\characterset.h"
+		$File	"$SRCDIR\public\CollisionUtils.h"
+		$File	"$SRCDIR\public\tier0\commonmacros.h"
+		$File	"$SRCDIR\public\mathlib\compressed_vector.h"
+		$File	"$SRCDIR\public\const.h"
+		$File	"$SRCDIR\public\vphysics\constraints.h"
+		$File	"$SRCDIR\public\tier0\dbg.h"
+		$File	"$SRCDIR\public\tier0\fasttimer.h"
+		$File	"$SRCDIR\public\appframework\IAppSystem.h"
+		$File	"$SRCDIR\public\tier0\icommandline.h"
+		$File	"$SRCDIR\public\ihandleentity.h"
+		$File	"$SRCDIR\public\materialsystem\imaterial.h"
+		$File	"$SRCDIR\public\materialsystem\imaterialsystem.h"
+		$File	"$SRCDIR\public\materialsystem\imaterialvar.h"
+		$File	"$SRCDIR\public\tier1\interface.h"
+		$File	"$SRCDIR\public\istudiorender.h"
+		$File	"$SRCDIR\public\tier1\KeyValues.h"
+		$File	"$SRCDIR\public\materialsystem\materialsystem_config.h"
+		$File	"$SRCDIR\public\mathlib\mathlib.h"
+		$File	"$SRCDIR\public\tier0\memdbgoff.h"
+		$File	"$SRCDIR\public\tier0\memdbgon.h"
+		$File	"$SRCDIR\public\phyfile.h"
+		$File	"$SRCDIR\public\optimize.h"
+		$File	"$SRCDIR\public\tier0\platform.h"
+		$File	"$SRCDIR\public\tier0\protected_things.h"
+		$File	"$SRCDIR\public\vstdlib\random.h"
+		$File	"$SRCDIR\common\studiobyteswap.h"
+		$File	"$SRCDIR\public\string_t.h"
+		$File	"$SRCDIR\public\tier1\strtools.h"
+		$File	"$SRCDIR\public\studio.h"
+		$File	"$SRCDIR\public\tier3\tier3.h"
+		$File	"$SRCDIR\public\tier1\utlbuffer.h"
+		$File	"$SRCDIR\public\tier1\utldict.h"
+		$File	"$SRCDIR\public\tier1\utllinkedlist.h"
+		$File	"$SRCDIR\public\tier1\utlmemory.h"
+		$File	"$SRCDIR\public\tier1\utlrbtree.h"
+		$File	"$SRCDIR\public\tier1\utlsymbol.h"
+		$File	"$SRCDIR\public\tier1\utlvector.h"
+		$File	"$SRCDIR\public\vcollide.h"
+		$File	"$SRCDIR\public\vcollide_parse.h"
+		$File	"$SRCDIR\public\mathlib\vector.h"
+		$File	"$SRCDIR\public\mathlib\vector2d.h"
+		$File	"$SRCDIR\public\mathlib\vector4d.h"
+		$File	"$SRCDIR\public\mathlib\vmatrix.h"
+		$File	"$SRCDIR\public\vphysics_interface.h"
+		$File	"$SRCDIR\public\mathlib\vplane.h"
+		$File	"$SRCDIR\public\tier0\vprof.h"
+		$File	"$SRCDIR\public\vstdlib\vstdlib.h"
+	}
+	
+	$Folder	"Link Libraries"
+	{
+		$Lib appframework
+		$Lib datamodel
+		$Lib dmserializers
+		$Lib mathlib
+		$Lib mdlobjects
+		$Lib movieobjects
+		$Lib nvtristrip
+		$Lib tier2
+		$Lib tier3
+	}
+}

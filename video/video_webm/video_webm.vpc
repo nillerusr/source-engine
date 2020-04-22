@@ -1,0 +1,86 @@
+//-----------------------------------------------------------------------------
+//	video_webm.vpc
+//
+//	Project Script
+//
+//  Description:		WebM video sub-system (for video services system)
+// 
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		".."
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\dx9sdk\include"			[$WIN32]
+		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\thirdparty\libvpx-v1.1.0"
+		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\thirdparty\libvorbis-1.3.2\include"
+		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\thirdparty\libwebm"
+		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\thirdparty\libogg-1.2.2\include"
+	}
+	$Linker
+	{
+		$IgnoreImportLibrary				"Yes" [$WIN32]
+		$AdditionalDependencies				"$BASE vfw32.lib" [$WIN32]
+		$SystemLibraries                    "iconv" [$OSXALL]
+		$SystemFrameworks					"Carbon" [$OSXALL]
+		$AdditionalLibraryDirectories		"$BASE;$SRCDIR\dx9sdk\lib"	[$WIN32]
+	}
+}
+
+
+$Configuration  "Debug"
+{
+        $General
+        {
+                $OutputDirectory                        "Debug_Video_WebM"
+                $IntermediateDirectory                  "Debug_Video_WebM"
+        }
+}
+
+$Configuration  "Release"
+{
+        $General
+        {
+                $OutputDirectory                        "Release_Video_WebM"
+                $IntermediateDirectory                  "Release_Video_WebM"
+        }
+}
+
+
+$Project "video_webm"
+{
+	$Folder	"Source Files"   [$OSXALL||$WIN32||$LINUXALL]
+	{
+		$file	"webm_video.cpp"
+//		$file	"webm_material.cpp"
+		$file	"webm_recorder.cpp"
+	}
+
+	$Folder	"Header Files"   [$OSXALL||$WIN32||$LINUXALL]
+	{
+		$file   "videosubsystem.h"
+		$file   "video_macros.h"
+		$file	"webm_video.h"
+		$file   "webm_recorder.h"
+		$file   "webm_common.h"
+		$file	"$SRCDIR\public\pixelwriter.h"
+		
+	}
+
+	$Folder "Link Libraries"
+	{
+		$Lib tier1
+		$Lib tier2
+		$Lib $LIBCOMMON/libvorbis
+		$Lib $LIBCOMMON/libvpx
+		$Lib $LIBCOMMON/libwebm
+		$Lib $LIBCOMMON/libvorbisenc
+		$Lib $LIBCOMMON/libogg
+	}
+}
+

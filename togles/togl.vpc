@@ -1,0 +1,116 @@
+//-----------------------------------------------------------------------------
+//	TOGL.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		".." [$WIN32]
+$Macro SRCDIR		".." [!$WIN32]
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
+$Macro OUTBINNAME	"togl"
+$Macro TOGL_SRCDIR	"$SRCDIR/togl/linuxwin" 
+$Macro TOGL_INCDIR	"$SRCDIR/public/togl/linuxwin"
+
+
+$include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+// Common Configuration
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories  	"$BASE;..\"
+		$PreprocessorDefinitions	"$BASE;TOGL_DLL_EXPORT;PROTECTED_THINGS_ENABLE;strncpy=use_Q_strncpy_instead;_snprintf=use_Q_snprintf_instead" [!$OSXALL]
+		$PreprocessorDefinitions	"$BASE;TOGL_DLL_EXPORT" [$OSXALL]
+
+	}
+    
+	$Linker
+	{
+		$ImportLibrary			"$LIBPUBLIC\$_IMPLIB_PREFIX$OUTBINNAME$_IMPLIB_EXT"	[!$X360 && !$OSXALL]
+		$ImportLibrary			"$SRCDIR\lib\$PLATFORM\$_IMPLIB_PREFIX$OUTBINNAME$_IMPLIB_EXT"	[$OSXALL]
+	}
+
+	$Linker [$OSXALL]
+	{
+		$SystemFrameworks "Carbon;OpenGL;Quartz;Cocoa;IOKit"
+	}
+
+	// togl/tier0/vstdlib traditionally used "lib" prefix though nobody else seems to.
+	$Linker [$POSIX]
+	{
+		$OutputFile                                 "$(OBJ_DIR)/$_IMPLIB_PREFIX$OUTBINNAME$_DLL_EXT"
+	}
+
+	$General [$POSIX]
+	{
+		$GameOutputFile                                 "$OUTBINDIR/$_IMPLIB_PREFIX$OUTBINNAME$_DLL_EXT"
+	}
+
+	$PreLinkEvent [$WINDOWS]
+	{
+		$CommandLine	"call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $LIBPUBLIC\$(TargetName).lib $SRCDIR" "\n" \
+						"$BASE"
+	}
+}
+
+$Project "togl"
+{
+	$Folder	"Source Files" [$GL]
+	{
+		$File	"$TOGL_SRCDIR/dx9asmtogl2.cpp"
+		$File	"$TOGL_SRCDIR/dxabstract.cpp"
+		$File	"$TOGL_SRCDIR/glentrypoints.cpp"	
+		$File	"$TOGL_SRCDIR/glmgr.cpp"			
+		$File	"$TOGL_SRCDIR/glmgrbasics.cpp"	
+		$File	"$TOGL_SRCDIR/glmgrcocoa.mm"					[$OSXALL]
+		$File	"$TOGL_SRCDIR/intelglmallocworkaround.cpp"		[$OSXALL]
+		$File	"$TOGL_SRCDIR/mach_override.c"					[$OSXALL]
+		$File	"$TOGL_SRCDIR/cglmtex.cpp"		
+		$File	"$TOGL_SRCDIR/cglmfbo.cpp"		
+		$File	"$TOGL_SRCDIR/cglmprogram.cpp"	
+		$File	"$TOGL_SRCDIR/cglmbuffer.cpp"	
+		$File	"$TOGL_SRCDIR/cglmquery.cpp"
+		$File	"$TOGL_SRCDIR/asanstubs.cpp"
+	}
+
+	$Folder	"DirectX Header Files" [$WIN32 && !$GL]
+	{
+	}
+	
+	$Folder	"Header Files" [$GL]
+	{
+		$File	"$TOGL_SRCDIR/dx9asmtogl2.h"
+		$File	"$TOGL_SRCDIR/glmgr_flush.inl"		
+		$File	"$TOGL_SRCDIR/intelglmallocworkaround.h"		[$OSXALL]
+		$File	"$TOGL_SRCDIR/mach_override.h"					[$OSXALL]
+	}
+	
+	$Folder	"Public Header Files" [$GL]
+	{
+		$File	"$SRCDIR/public/togl/rendermechanism.h"
+		$File	"$TOGL_INCDIR/dxabstract.h"
+		$File	"$TOGL_INCDIR/dxabstract_types.h"
+		$File	"$TOGL_INCDIR/glbase.h"				
+		$File	"$TOGL_INCDIR/glentrypoints.h"		
+		$File	"$TOGL_INCDIR/glmgr.h"			
+		$File	"$TOGL_INCDIR/glmdebug.h"		
+		$File	"$TOGL_INCDIR/glmgrbasics.h"
+		$File	"$TOGL_INCDIR/glmgrext.h"		
+		$File	"$TOGL_INCDIR/glmdisplay.h"		
+		$File	"$TOGL_INCDIR/glmdisplaydb.h"
+		$File	"$TOGL_INCDIR/glfuncs.h"
+		$File	"$TOGL_INCDIR/cglmtex.h"		
+		$File	"$TOGL_INCDIR/cglmfbo.h"		
+		$File	"$TOGL_INCDIR/cglmprogram.h"	
+		$File	"$TOGL_INCDIR/cglmbuffer.h"		
+		$File	"$TOGL_INCDIR/cglmquery.h"		
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib tier2
+		$Lib mathlib
+	}	
+}
+

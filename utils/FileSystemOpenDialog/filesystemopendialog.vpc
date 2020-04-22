@@ -1,0 +1,76 @@
+//-----------------------------------------------------------------------------
+//	FILESYSTEMOPENDIALOG.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		// Deprecated MBCS MFC libraries for VS 2013 (nafxcw.lib and nafxcwd.lib) can be downloaded from http://go.microsoft.com/?linkid=9832071
+		$PreprocessorDefinitions			"$BASE;NO_WARN_MBCS_MFC_DEPRECATION"
+		$AdditionalIncludeDirectories		"$BASE,..\common"
+		$PreprocessorDefinitions			"$BASE;;WINVER=0x502"
+		$Create/UsePrecompiledHeader		"Use Precompiled Header (/Yu)"
+		$PrecompiledHeaderFile				"Debug/FileSystemOpenDialog.pch"
+		$EnableC++Exceptions				"Yes (/EHsc)"
+	}
+}
+
+$Project "FileSystemOpenDialog"
+{
+	$Folder	"Source Files"
+	{
+		$File	"$SRCDIR\public\tier0\afxmem_override.cpp"
+		$File	"FileDialogApp.cpp"
+		$File	"FileDialogApp.h"
+		$File	"FileSystemOpenDlg.cpp"
+		$File	"FileSystemOpenDlg.h"
+		$File	"$SRCDIR\common\IFileSystemOpenDialog.h"
+		-$File	"$SRCDIR\public\tier0\memoverride.cpp"
+		$File	"$SRCDIR\public\tier0\memoverride.cpp"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$PreprocessorDefinitions			"$BASE;NO_MEMOVERRIDE_NEW_DELETE"
+					$Create/UsePrecompiledHeader		"Not Using Precompiled Headers"
+				}
+			}
+		}
+
+		$File	"StdAfx.cpp"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader		"Create Precompiled Header (/Yc)"
+				}
+			}
+		}
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"Resource.h"
+		$File	"StdAfx.h"
+	}
+
+	$Folder	"Resource Files"
+	{
+		$File	"FileSystemOpenDialog.rc"
+	}
+
+	$Folder "Link Libraries"
+	{
+		$Lib $LIBCOMMON/libjpeg
+	}
+}

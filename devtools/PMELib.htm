@@ -1,0 +1,206 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>New Page 1</title>
+</head>
+
+<body>
+
+<p align="center"><b><font size="5">PMELib 1.0</font></b></p>
+<h2>Introduction</h2>
+<p><font size="3">&nbsp;&nbsp;&nbsp; This library is an interface to the Performance Monitoring
+Events (PME) that are available in the Pentium P5, P6 and P4 processors.&nbsp;
+There are 18 counters that let you gather information about what the processor is
+going during execution.&nbsp; They are described in these manuals:</font></p>
+<blockquote>
+  <p><a href="http://developer.intel.com/design/pentium4/manuals/253665.htm"><font color="#008000" size="3">IA-32
+  Intel Architecture Software Developer's Manual Volume 1: Basic Architecture</font></a></p>
+  <p><a href="http://developer.intel.com/design/pentium4/manuals/253666.htm"><font color="#008000" size="3">IA-32
+  Intel Architecture Software Developer's Manual Volume 2A: Instruction Set
+  Reference, A-M</font></a></p>
+  <p><a href="http://developer.intel.com/design/pentium4/manuals/253667.htm"><font color="#008000" size="3">IA-32
+  Intel Architecture Software Developer's Manual Volume 2B: Instruction Set
+  Reference, N-Z</font></a></p>
+  <p><a href="http://developer.intel.com/design/pentium4/manuals/253668.htm"><font color="#008000" size="3">IA-32
+  Intel Architecture Software Developer's Manual Volume 3: System Programming
+  Guide</font></a></p>
+  <p><font size="3">&nbsp;&nbsp;&nbsp;<font color="#008000" size="3">&nbsp;&nbsp;&nbsp;&nbsp; </font><font size="3" color="#000000">See
+  chapter 15, Appendix A and Appendix B</font></font></p>
+</blockquote>
+<p><font size="3">Pentium 4 documentation is available <a href="http://developer.intel.com/design/Pentium4/documentation.htm">here</a></font></p>
+<p><font size="3">This library&nbsp; is an extension to the utilities from the Game Developer's
+Magazine <a href="http://www.gamasutra.com/features/wyatts_world/19990528/pentium3_08.htm">article</a>
+by Robert Wyatt in May 1998.&nbsp; The library is now in a class and included
+the Pentium 4 processor.&nbsp; Only Intel is currently supported and
+tested.&nbsp;&nbsp;</font></p>
+<p>&nbsp;</p>
+<p><font size="3">Send feedback to <a href="mailto:doug@nvidia.com">doug@nvidia.com</a></font></p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<h2><b>Installation</b></h2>
+<p><font size="3">&nbsp;&nbsp;&nbsp; Window NT and Windows XP are supported and tested.&nbsp;
+Win98 may work, however.</font></p>
+<p><font size="3">&nbsp;&nbsp;&nbsp;&nbsp;</font></p>
+<p><font size="3">&nbsp;&nbsp;&nbsp; You need to install a driver, set some registry settings
+and reboot.&nbsp; If you installed the GDPerf.sys from the GD magazine article,
+you can skip the installation step. It uses the same driver.&nbsp; Let me know
+if you have problems.</font></p>
+<p><font size="3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; In the <i>Installation</i>
+directory</font></p>
+<p><font size="3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; copy
+GDPerf.sys to the window driver directory</font></p>
+<p><font size="3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+copy GDPerf.sys <a href="file:///C:/windows/system32/drivers">C:\windows\system32\drivers</a></font></p>
+<p><font size="3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+there is a batch file as an example</font></p>
+<p><font size="3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Run the
+PMELib.reg file to set the registry settings</font></p>
+<p><font size="3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Reboot</font></p>
+<p>&nbsp;</p>
+<h2><b>Configuring PMELib</b><font size="3">&nbsp;</font></h2>
+<p><font size="3">For P5 and P6 processors (anything before Pentium 4), You use the same
+interfaces that are described in the Game Developer article.&nbsp; They have
+just been incorporated in to the PMELib as is.</font></p>
+<p><font size="3"><font color="#000000">In the Pentium 4, are 18 performance
+monitoring counters and more than 40 Events Modes that can be captured.&nbsp;
+Each Mode has a bit mask that indicates which tests to perform.&nbsp; These are
+described in Appendix A of </font><font color="#008000" size="3"><a href="http://developer.intel.com/design/pentium4/manuals/253668.htm">IA-32
+Intel Architecture Software Developer's Manual Volume 3: System Programming
+Guide</a>&nbsp;&nbsp;</font><font size="3" color="#000000"> Each of these event
+mode has a class dedicated to it.&nbsp; The event modes are listed below.</font></font></p>
+<blockquote>
+  <p><font size="3">Set PerfTest2 for an example.</font></p>
+  <p><font size="3"><b>Step 1) Choose an Event Mode class</b></font></p>
+  <p><font size="3">&nbsp;&nbsp;&nbsp; Example:</font></p>
+  <p><font size="3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  Event_branch_retired event;</font></p>
+  <p>&nbsp;</p>
+  <p><font size="3"><b>Step 2)&nbsp; Set the Event Mask for the selected Event
+  Mode</b></font></p>
+  <p><font size="3">&nbsp;&nbsp;&nbsp; Example:</font></p>
+  <p><font size="3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; event.eventMask-&gt;MMNP = 1;</font></p>
+  <p><font size="3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; event.eventMask-&gt;MMTP = 1;</font></p>
+  <p>&nbsp;</p>
+  <p><b><font size="3">Step 3)&nbsp; Set the privilege level to capture data
+  from with the <i>SetCaptureMode</i> method</font></b></p>
+  <blockquote>
+    <p><font size="3">OS_Only, <font COLOR="#008000">// ring 0, driver&nbsp;
+    level only
+    </font></font></p>
+    <p><font size="3">USR_Only, <font COLOR="#008000">// app level, privilege
+    levels&nbsp; 1 2 and 3
+    </font></font></p>
+    <p><font size="3">OS_and_USR, <font COLOR="#008000">// all levels 0, 1, 2
+    and 3
+  </font>
+    </font></p>
+    </blockquote>
+  <p><font size="3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Optionally, you
+  can enable tagging in the <i>SetCaptureMode</i> method.</font></p>
+  <p><font size="3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Example:</font></p>
+  <p><font size="3"><font COLOR="#0000ff">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </font>SetCaptureMode(OS_and_USR, TagEnable, 34);</font></p>
+  <p>&nbsp;</p>
+  <p><font size="3"><b>Step 4) Optional Configuration</b></font></p>
+  <p><font size="3">&nbsp;&nbsp;&nbsp;<b>&nbsp;&nbsp;&nbsp;&nbsp; </b>At this
+  point you can configure Tagging, Filtering, Overflow and Cascading
+  options.&nbsp; You can also select one of the legal counters for the selected
+  Event Mode.</font></p>
+  <p><font size="3"><b>Step 5) Set the process priority to high</b></font></p>
+  <blockquote>
+    <p><font size="3">This reduces the noise from other processes interfering.&nbsp; If you
+    have an infinite loop in you code and you have these set, you may hang and
+    need to reboot</font></p>
+    <p><font size="3">Example:</font></p>
+    <p><font size="3">&nbsp;&nbsp;&nbsp; PME * pme = PME::Instance();</font></p>
+    <p><font size="3">&nbsp;&nbsp;&nbsp; pme-&gt;SetProcessPriority(ProcessPriorityHigh);</font></p>
+    <font SIZE="2">
+    <p>&nbsp;</p>
+    </blockquote>
+  </font>
+  <p><font size="3"><b>Step 6) Start using the counters</b></font></p>
+  <p><font size="3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Each Event Mode
+  counter has the follow ability:</font></p>
+  <blockquote>
+    <p><font size="3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Stop</font></p>
+    <p><font size="3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Start</font></p>
+    <p><font size="3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Clear - set to
+    0</font></p>
+    <p><font size="3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Read</font></p>
+    <p><font size="3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Write - write a
+    64 bit counter value</font></p>
+  </blockquote>
+  <p><font size="3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font></p>
+  <p><font size="3"><b>Step 7) Set the process priority to normal</b></font></p>
+  <p><font size="3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; pme-&gt;SetProcessPriority(ProcessPriorityNormal);</font></p>
+  <h2>&nbsp;</h2>
+</blockquote>
+<h2><font size="3"><b>Event Modes:</b></font></h2>
+<blockquote>
+  <blockquote>
+    <p><font size="3">Event_TC_deliver_mode</font></p>
+    <p><font size="3">Event_BPU_fetch_request</font></p>
+    <p><font size="3">Event_ITLB_reference</font></p>
+    <p><font size="3">Event_memory_cancel</font></p>
+    <p><font size="3">Event_memory_complete</font></p>
+    <p><font size="3">Event_load_port_replay</font></p>
+    <p><font size="3">Event_store_port_replay</font></p>
+    <p><font size="3">Event_MOB_load_replay</font></p>
+    <p><font size="3">Event_page_walk_type</font></p>
+    <p><font size="3">Event_BSQ_cache_reference</font></p>
+    <p><font size="3">Event_IOQ_allocation</font></p>
+    <p><font size="3">Event_IOQ_active_entries</font></p>
+    <p><font size="3">Event_FSB_data_activity</font></p>
+    <p><font size="3">Event_BSQ_allocation</font></p>
+    <p><font size="3">Event_BSQ_active_entries</font></p>
+    <p><font size="3">Event_SSE_input_assist</font></p>
+    <p><font size="3">Event_packed_SP_uop</font></p>
+    <p><font size="3">Event_packed_DP_uop</font></p>
+    <p><font size="3">Event_scalar_SP_uop</font></p>
+    <p><font size="3">Event_scalar_DP_uop</font></p>
+    <p><font size="3">Event_64bit_MMX_uop</font></p>
+    <p><font size="3">Event_128bit_MMX_uop</font></p>
+    <p><font size="3">Event_x87_FP_uop</font></p>
+    <p><font size="3">Event_x87_SIMD_moves_uop</font></p>
+    <p><font size="3">Event_TC_misc</font></p>
+    <p><font size="3">Event_global_power_events</font></p>
+    <p><font size="3">Event_tc_ms_xfer</font></p>
+    <p><font size="3">Event_uop_queue_writes</font></p>
+    <p><font size="3">Event_retired_mispred_branch_type</font></p>
+    <p><font size="3">Event_retired_branch_type</font></p>
+    <p><font size="3">Event_resource_stall</font></p>
+    <p><font size="3">Event_WC_Buffer</font></p>
+    <p><font size="3">Event_b2b_cycles</font></p>
+    <p><font size="3">Event_bnr</font></p>
+    <p><font size="3">Event_snoop</font></p>
+    <p><font size="3">Event_response</font></p>
+    <p><font size="3">Event_front_end_event</font></p>
+    <p><font size="3">Event_execution_event</font></p>
+    <p><font size="3">Event_replay_event</font></p>
+    <p><font size="3">Event_instr_retired</font></p>
+    <p><font size="3">Event_uops_retired</font></p>
+    <p><font size="3">Event_uop_type</font></p>
+    <p><font size="3">Event_branch_retired</font></p>
+    <p><font size="3">Event_mispred_branch_retired</font></p>
+    <p><font size="3">Event_x87_assist</font></p>
+    <p><font size="3">Event_machine_clear</font></p>
+  </blockquote>
+  </blockquote>
+<h2><b>Credits</b></h2>
+<p><a href="http://www.gamasutra.com/features/wyatts_world/19990528/pentium3_08.htm"><font color="#008000" size="3">http://www.gamasutra.com/features/wyatts_world/19990528/pentium3_08.htm</font></a></p>
+<p><font color="#008000" size="3">Used some tables from <a href="http://user.it.uu.se/~mikpe/">Mikael Pettersson's</a>&nbsp;
+<a href="http://user.it.uu.se/~mikpe/linux/perfctr/">pertctf</a>
+</font>
+</p>
+<p align="left"><font color="#008000" size="3">Used the detect code from<a href="http://yotov.org">
+Kamen Yotov's</a>&nbsp; <a href="http://iss.cs.cornell.edu/ia32.htm">ia32lib library</a></font></p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+
+</body>
+
+</html>

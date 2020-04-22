@@ -1,0 +1,65 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from waflib import Utils
+import os
+
+top = '.'
+PROJECT_NAME = 'bitmap'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	return
+
+def build(bld):
+	source = [
+		'ImageByteSwap.cpp',
+		'colorconversion.cpp',
+		'float_bm.cpp',
+		'float_bm2.cpp',
+		'float_bm3.cpp',
+		'float_bm_bilateral_filter.cpp',
+		'float_cube.cpp',
+		'imageformat.cpp',
+		'psd.cpp',
+		'resample.cpp',
+		'tgaloader.cpp',
+		'tgawriter.cpp',
+		'bitmap.cpp'
+	]
+	
+	if bld.env.DEST_OS == 'win32':
+		source += [
+			'float_bm4.cpp'
+		]
+
+	includes = [
+		'.',
+		'../public',
+		'../public/tier0',
+		'../public/tier1',
+		'../thirdparty/stb'
+	]
+
+	defines = []
+
+	libs = []
+	
+	#if bld.env.DEST_OS == 'win32':
+	#	libs += ['NVTC', 'ATI_COMPRESS_MT_VC10']
+
+	bld.stlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)
+

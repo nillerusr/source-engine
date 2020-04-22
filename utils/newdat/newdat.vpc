@@ -1,0 +1,33 @@
+//-----------------------------------------------------------------------------
+//	NEWDAT.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$PreprocessorDefinitions			"$BASE;PROTECTED_THINGS_DISABLE"
+	}
+}
+
+$Project "Newdat"
+{
+	$Folder	"Source Files"
+	{
+		$File	"newdat.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\public\tier0\basetypes.h"
+		$File	"$SRCDIR\public\tier1\checksum_md5.h"
+		$File	"$SRCDIR\public\tier0\commonmacros.h"
+	}
+}

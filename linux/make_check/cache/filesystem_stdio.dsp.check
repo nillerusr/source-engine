@@ -1,0 +1,456 @@
+# Microsoft Developer Studio Project File - Name="FileSystem_Stdio" - Package Owner=<4>
+# Microsoft Developer Studio Generated Build File, Format Version 6.00
+# ** DO NOT EDIT **
+
+# TARGTYPE "Win32 (x86) Dynamic-Link Library" 0x0102
+
+CFG=FileSystem_Stdio - Win32 Debug STEAM
+!MESSAGE This is not a valid makefile. To build this project using NMAKE,
+!MESSAGE use the Export Makefile command and run
+!MESSAGE 
+!MESSAGE NMAKE /f "filesystem_stdio.mak".
+!MESSAGE 
+!MESSAGE You can specify a configuration when running NMAKE
+!MESSAGE by defining the macro CFG on the command line. For example:
+!MESSAGE 
+!MESSAGE NMAKE /f "filesystem_stdio.mak" CFG="FileSystem_Stdio - Win32 Debug STEAM"
+!MESSAGE 
+!MESSAGE Possible choices for configuration are:
+!MESSAGE 
+!MESSAGE "FileSystem_Stdio - Win32 Release" (based on "Win32 (x86) Dynamic-Link Library")
+!MESSAGE "FileSystem_Stdio - Win32 Debug" (based on "Win32 (x86) Dynamic-Link Library")
+!MESSAGE "FileSystem_Stdio - Win32 Debug STEAM" (based on "Win32 (x86) Dynamic-Link Library")
+!MESSAGE "FileSystem_Stdio - Win32 Release STEAM" (based on "Win32 (x86) Dynamic-Link Library")
+!MESSAGE 
+
+# Begin Project
+# PROP AllowPerConfigDependencies 0
+# PROP Scc_ProjName ""$/Src/FileSystem/FileSystem_Stdio", EJPDAAAA"
+# PROP Scc_LocalPath "."
+CPP=cl.exe
+MTL=midl.exe
+RSC=rc.exe
+
+!IF  "$(CFG)" == "FileSystem_Stdio - Win32 Release"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "Release"
+# PROP BASE Intermediate_Dir "Release"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "Release"
+# PROP Intermediate_Dir "Release"
+# PROP Ignore_Export_Lib 0
+# PROP Target_Dir ""
+# ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "FILESYSTEM_STDIO_EXPORTS" /YX /FD /c
+# ADD CPP /nologo /W4 /Zi /O2 /I "..\..\public" /I "..\..\common" /D "NDEBUG" /D "_WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "FILESYSTEM_STDIO_EXPORTS" /D "DONT_PROTECT_FILEIO_FUNCTIONS" /D "PROTECTED_THINGS_ENABLE" /FD /c
+# SUBTRACT CPP /Fr /YX
+# ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
+# ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
+# ADD BASE RSC /l 0x409 /d "NDEBUG"
+# ADD RSC /l 0x409 /d "NDEBUG"
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+LINK32=link.exe
+# ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
+# ADD LINK32 user32.lib /nologo /dll /map /debug /machine:I386 /libpath:"..\..\lib\public" /libpath:"..\..\lib\common"
+# Begin Custom Build
+TargetPath=.\Release\filesystem_stdio.dll
+InputPath=.\Release\filesystem_stdio.dll
+SOURCE="$(InputPath)"
+
+"..\..\..\bin\FileSystem_Stdio.dll" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	if exist ..\..\..\bin\FileSystem_Stdio.dll attrib -r ..\..\..\bin\FileSystem_Stdio.dll 
+	if exist $(TargetPath) copy $(TargetPath) ..\..\..\bin\FileSystem_Stdio.dll 
+	
+# End Custom Build
+
+!ELSEIF  "$(CFG)" == "FileSystem_Stdio - Win32 Debug"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 1
+# PROP BASE Output_Dir "Debug"
+# PROP BASE Intermediate_Dir "Debug"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 1
+# PROP Output_Dir "Debug"
+# PROP Intermediate_Dir "Debug"
+# PROP Ignore_Export_Lib 0
+# PROP Target_Dir ""
+# ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "FILESYSTEM_STDIO_EXPORTS" /YX /FD /GZ /c
+# ADD CPP /nologo /W4 /Gm /ZI /Od /I "..\..\public" /I "..\..\common" /D "_DEBUG" /D "_WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "FILESYSTEM_STDIO_EXPORTS" /D "DONT_PROTECT_FILEIO_FUNCTIONS" /D "PROTECTED_THINGS_ENABLE" /FR /FD /GZ /c
+# SUBTRACT CPP /YX
+# ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
+# ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
+# ADD BASE RSC /l 0x409 /d "_DEBUG"
+# ADD RSC /l 0x409 /d "_DEBUG"
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+LINK32=link.exe
+# ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
+# ADD LINK32 user32.lib /nologo /dll /map /debug /machine:I386 /pdbtype:sept /libpath:"..\..\lib\public" /libpath:"..\..\lib\common"
+# Begin Custom Build
+TargetPath=.\Debug\filesystem_stdio.dll
+InputPath=.\Debug\filesystem_stdio.dll
+SOURCE="$(InputPath)"
+
+"..\..\..\bin\FileSystem_Stdio.dll" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	if exist ..\..\..\bin\FileSystem_Stdio.dll attrib -r ..\..\..\bin\FileSystem_Stdio.dll 
+	if exist $(TargetPath) copy $(TargetPath) ..\..\..\bin\FileSystem_Stdio.dll 
+	
+# End Custom Build
+
+!ELSEIF  "$(CFG)" == "FileSystem_Stdio - Win32 Debug STEAM"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 1
+# PROP BASE Output_Dir "FileSystem_Stdio___Win32_Debug_STEAM"
+# PROP BASE Intermediate_Dir "FileSystem_Stdio___Win32_Debug_STEAM"
+# PROP BASE Ignore_Export_Lib 0
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 1
+# PROP Output_Dir "Debug_STEAM"
+# PROP Intermediate_Dir "Debug_STEAM"
+# PROP Ignore_Export_Lib 0
+# PROP Target_Dir ""
+# ADD BASE CPP /nologo /W4 /Gm /ZI /Od /I "..\..\public" /I "..\..\common" /D "_DEBUG" /D "_WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "FILESYSTEM_STDIO_EXPORTS" /D "DONT_PROTECT_FILEIO_FUNCTIONS" /FR /FD /GZ /c
+# SUBTRACT BASE CPP /YX
+# ADD CPP /nologo /W4 /Gm /ZI /Od /I "..\..\public" /I "..\..\common" /D "_DEBUG" /D "_WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "FILESYSTEM_STDIO_EXPORTS" /D "DONT_PROTECT_FILEIO_FUNCTIONS" /D "PROTECTED_THINGS_ENABLE" /FR /FD /GZ /c
+# SUBTRACT CPP /YX
+# ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
+# ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
+# ADD BASE RSC /l 0x409 /d "_DEBUG"
+# ADD RSC /l 0x409 /d "_DEBUG"
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+LINK32=link.exe
+# ADD BASE LINK32 /nologo /dll /debug /machine:I386 /pdbtype:sept /libpath:"..\..\lib\public" /libpath:"..\..\lib\common"
+# ADD LINK32 user32.lib /nologo /dll /map /debug /machine:I386 /out:"Debug_STEAM/filesystem_steam.dll" /pdbtype:sept /libpath:"..\..\lib\public" /libpath:"..\..\lib\common"
+# Begin Custom Build
+TargetPath=.\Debug_STEAM\filesystem_steam.dll
+InputPath=.\Debug_STEAM\filesystem_steam.dll
+SOURCE="$(InputPath)"
+
+"..\..\..\bin\FileSystem_Steam.dll" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	if exist ..\..\..\bin\FileSystem_Steam.dll attrib -r ..\..\..\bin\FileSystem_Steam.dll 
+	if exist $(TargetPath) copy $(TargetPath) ..\..\..\bin\FileSystem_Steam.dll 
+	
+# End Custom Build
+
+!ELSEIF  "$(CFG)" == "FileSystem_Stdio - Win32 Release STEAM"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "FileSystem_Stdio___Win32_Release_STEAM"
+# PROP BASE Intermediate_Dir "FileSystem_Stdio___Win32_Release_STEAM"
+# PROP BASE Ignore_Export_Lib 0
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "Release_STEAM"
+# PROP Intermediate_Dir "Release_STEAM"
+# PROP Ignore_Export_Lib 0
+# PROP Target_Dir ""
+# ADD BASE CPP /nologo /W4 /Zi /O2 /I "..\..\public" /I "..\..\common" /D "NDEBUG" /D "_WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "FILESYSTEM_STDIO_EXPORTS" /D "DONT_PROTECT_FILEIO_FUNCTIONS" /FD /c
+# SUBTRACT BASE CPP /Fr /YX
+# ADD CPP /nologo /W4 /Zi /O2 /I "..\..\public" /I "..\..\common" /D "NDEBUG" /D "_WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "FILESYSTEM_STDIO_EXPORTS" /D "DONT_PROTECT_FILEIO_FUNCTIONS" /D "PROTECTED_THINGS_ENABLE" /FD /c
+# SUBTRACT CPP /Fr /YX
+# ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
+# ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
+# ADD BASE RSC /l 0x409 /d "NDEBUG"
+# ADD RSC /l 0x409 /d "NDEBUG"
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+LINK32=link.exe
+# ADD BASE LINK32 /nologo /dll /map /debug /machine:I386 /libpath:"..\..\lib\public" /libpath:"..\..\lib\common"
+# ADD LINK32 user32.lib /nologo /dll /map /debug /machine:I386 /out:"Release_STEAM/filesystem_steam.dll" /libpath:"..\..\lib\public" /libpath:"..\..\lib\common"
+# Begin Custom Build
+TargetPath=.\Release_STEAM\filesystem_steam.dll
+InputPath=.\Release_STEAM\filesystem_steam.dll
+SOURCE="$(InputPath)"
+
+"..\..\..\bin\FileSystem_Steam.dll" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	if exist ..\..\..\bin\FileSystem_Steam.dll attrib -r ..\..\..\bin\FileSystem_Steam.dll 
+	if exist $(TargetPath) copy $(TargetPath) ..\..\..\bin\FileSystem_Steam.dll 
+	
+# End Custom Build
+
+!ENDIF 
+
+# Begin Target
+
+# Name "FileSystem_Stdio - Win32 Release"
+# Name "FileSystem_Stdio - Win32 Debug"
+# Name "FileSystem_Stdio - Win32 Debug STEAM"
+# Name "FileSystem_Stdio - Win32 Release STEAM"
+# Begin Group "Source Files"
+
+# PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
+# Begin Source File
+
+SOURCE=.\BaseFileSystem.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\Public\characterset.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\FileSystem_Stdio.cpp
+
+!IF  "$(CFG)" == "FileSystem_Stdio - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "FileSystem_Stdio - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "FileSystem_Stdio - Win32 Debug STEAM"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "FileSystem_Stdio - Win32 Release STEAM"
+
+# PROP Exclude_From_Build 1
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\filesystem_steam.cpp
+
+!IF  "$(CFG)" == "FileSystem_Stdio - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "FileSystem_Stdio - Win32 Debug"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "FileSystem_Stdio - Win32 Debug STEAM"
+
+!ELSEIF  "$(CFG)" == "FileSystem_Stdio - Win32 Release STEAM"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\Public\interface.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\public\tier0\memoverride.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\common\Steam.c
+
+!IF  "$(CFG)" == "FileSystem_Stdio - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "FileSystem_Stdio - Win32 Debug"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "FileSystem_Stdio - Win32 Debug STEAM"
+
+!ELSEIF  "$(CFG)" == "FileSystem_Stdio - Win32 Release STEAM"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\Public\utlsymbol.cpp
+# End Source File
+# End Group
+# Begin Group "Header Files"
+
+# PROP Default_Filter "h;hpp;hxx;hm;inl"
+# Begin Source File
+
+SOURCE=.\BaseFileSystem.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\Public\basetypes.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\Public\BSPFILE.H
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\Public\bspflags.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\Public\bumpvects.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\Public\characterset.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\public\tier0\dbg.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\public\tier0\fasttimer.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\Public\FileSystem.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\public\appframework\IAppSystem.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\Public\interface.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\Public\MATHLIB.H
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\public\tier0\platform.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\common\Steam.h
+
+!IF  "$(CFG)" == "FileSystem_Stdio - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "FileSystem_Stdio - Win32 Debug"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "FileSystem_Stdio - Win32 Debug STEAM"
+
+!ELSEIF  "$(CFG)" == "FileSystem_Stdio - Win32 Release STEAM"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\common\SteamCommon.h
+
+!IF  "$(CFG)" == "FileSystem_Stdio - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "FileSystem_Stdio - Win32 Debug"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "FileSystem_Stdio - Win32 Debug STEAM"
+
+!ELSEIF  "$(CFG)" == "FileSystem_Stdio - Win32 Release STEAM"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\common\Steamlib.h
+
+!IF  "$(CFG)" == "FileSystem_Stdio - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "FileSystem_Stdio - Win32 Debug"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "FileSystem_Stdio - Win32 Debug STEAM"
+
+!ELSEIF  "$(CFG)" == "FileSystem_Stdio - Win32 Release STEAM"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\public\vstdlib\strtools.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\Public\UtlMemory.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\Public\utlrbtree.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\Public\utlsymbol.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\Public\UtlVector.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\Public\vector.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\Public\vector2d.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\Public\vector4d.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\public\vstdlib\vstdlib.h
+# End Source File
+# End Group
+# Begin Group "Resource Files"
+
+# PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
+# End Group
+# Begin Source File
+
+SOURCE=..\..\lib\public\vstdlib.lib
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\lib\public\tier0.lib
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\lib\common\Steam.lib
+
+!IF  "$(CFG)" == "FileSystem_Stdio - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "FileSystem_Stdio - Win32 Debug"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "FileSystem_Stdio - Win32 Debug STEAM"
+
+!ELSEIF  "$(CFG)" == "FileSystem_Stdio - Win32 Release STEAM"
+
+!ENDIF 
+
+# End Source File
+# End Target
+# End Project

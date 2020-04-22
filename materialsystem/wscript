@@ -1,0 +1,78 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from waflib import Utils
+import os
+
+top = '.'
+PROJECT_NAME = 'materialsystem'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	conf.env.append_unique('DEFINES',[
+		'DEFINE_MATERIALSYSTEM_INTERFACE',
+		'MATERIALSYSTEM_EXPORTS',
+		#'PROTECTED_THINGS_ENABLE', # conflicts with stlport
+		'strncpy=use_Q_strncpy_instead',
+		'_snprintf=use_Q_snprintf_instead'
+	])
+
+def build(bld):
+	source = [
+		'CColorCorrection.cpp',
+		'cmaterial.cpp',
+		'cmaterial_queuefriendly.cpp',
+		'CMaterialSubRect.cpp',
+		'cmaterialvar.cpp',
+		'cmatnullrendercontext.cpp',
+		'colorspace.cpp',
+		'ctexture.cpp',
+		'../public/filesystem_helpers.cpp',
+		'imagepacker.cpp',
+		'mat_stub.cpp',
+		'materialsystem_global.cpp',
+		'morph.cpp',
+		'occlusionquerymgr.cpp',
+		'shadersystem.cpp',
+		'texturemanager.cpp',
+		'pch_materialsystem.cpp',
+		'cmaterialdict.cpp',
+		'cmaterialsystem.cpp',
+		'cmatlightmaps.cpp',
+		'cmatrendercontext.cpp',
+		'cmatqueuedrendercontext.cpp',
+		'ctexturecompositor.cpp',
+		'../public/tier0/memoverride.cpp'
+	]
+
+	includes = [
+		'.',
+		'../public',
+		'../public/tier0',
+		'../public/tier1',
+		'../common',
+		'../'
+	] + bld.env.INCLUDES_SDL2
+
+	defines = []
+
+	libs = ['tier0','tier1','tier2','vstdlib','mathlib','bitmap','shaderlib','vtf']
+
+	install_path = bld.env.LIBDIR
+
+	bld.shlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		install_path = install_path,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)
+

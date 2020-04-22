@@ -1,0 +1,102 @@
+//============ Copyright (c) Valve Corporation, All rights reserved. ==========
+//
+//=============================================================================
+
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+// Initially we link this as itemtest_com.exe, to avoid conflicting with itemtest.exe
+$Macro OUTBINNAME	"itemtest_com"
+// Then we copy the result to itemtest.com so that the command-line version will be
+// launched first.
+$Macro FINAL_OUTBINNAME "itemtest.com"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+$Include "$SRCDIR\utils\itemtest_lib\itemtest_lib_support.vpc"
+
+$Configuration
+{
+	$Linker
+	{
+		$AdditionalDependencies					"$BASE comctl32.lib odbc32.lib odbccp32.lib Rpcrt4.lib"
+	}
+
+	// This is a special case... there is a name collision between game/bin/itemtest.com (this project)
+	// and game/bin/itemtest.exe, so we need a custom build event that doesn't try to copy the .map/.pdb
+	// for the .com into game/bin to avoid a race condition when doing parallel builds...  maybe there's
+	// a better solution
+	$PostBuildEvent [!$ANALYZE]
+	{
+		$CommandLine		"call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $OUTBINDIR\$FINAL_OUTBINNAME $SRCDIR" "\n" \
+							"copy $QUOTE$(TargetDir)$QUOTE$(TargetFileName) $OUTBINDIR\$FINAL_OUTBINNAME" "\n" \
+							"if ERRORLEVEL 1 goto BuildEventFailed" "\n" \
+							"call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $OUTBINDIR\$(TargetName).pdb $SRCDIR" "\n" \
+							"copy $QUOTE$(TargetDir)$QUOTE$(TargetName).pdb $OUTBINDIR\$(TargetName).pdb" "\n" \
+							"if ERRORLEVEL 1 goto BuildEventFailed" "\n" \
+							"goto BuildEventOK" "\n" \
+							":BuildEventFailed" "\n" \
+							"echo *** ERROR! PostBuildStep FAILED for $(ProjectName)! COM is probably running. ***" "\n" \
+							"del /q $QUOTE$(TargetDir)$QUOTE$(TargetFileName)" "\n" \
+							"exit 1" "\n" \
+							":BuildEventOK" "\n"
+
+		$Description		"Publishing to $OUTBINDIR"
+		$ExcludedFromBuild	"No"
+	}
+}
+
+$Configuration  "Debug"
+{
+	$General
+	{
+		$OutputDirectory						".\Debug_itemtest_com"
+		$IntermediateDirectory					".\Debug_itemtest_com"
+	}
+}
+
+$Configuration  "Release"
+{
+	$General
+	{
+		$OutputDirectory						".\Release_itemtest_com"
+		$IntermediateDirectory					".\Release_itemtest_com"
+	}
+}
+
+$Project "itemtest_com"
+{
+	$Folder	"Source Files"
+	{
+		$File	"itemtestapp.cpp"
+		$File	"itemtest_con.cpp"
+		$File	"runexe.cpp"
+
+		$Folder "External"
+		{
+			$File	"$SRCDIR\public\interpolatortypes.cpp"
+			$File	"$SRCDIR\public\movieobjects\movieobjects.cpp"
+		}
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"itemtestapp.h"
+		$File	"runexe.h"
+		$Folder "External"
+		{
+			$File	"$SRCDIR\public\interpolatortypes.h"
+		}
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib appframework
+		$Lib bitmap
+		$Lib mathlib
+		$Lib tier2
+		$Lib tier3
+
+		$ImpLib steam_api
+		$Lib vtf
+	}
+}

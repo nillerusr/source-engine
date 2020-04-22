@@ -1,0 +1,55 @@
+//-----------------------------------------------------------------------------
+//	DATACACHE.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$macro SRCDIR		".."
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
+
+$include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Linker
+	{
+			$SystemLibraries                                                        "iconv" [$OSXALL]
+	}
+	$Compiler
+	{
+		$PreprocessorDefinitions	"$BASE;MDLCACHE_DLL_EXPORT"
+	}
+}
+
+
+$Project "datacache"
+{
+	$Folder	"Source Files"
+	{
+		$File	"datacache.cpp"
+		$File	"mdlcache.cpp"
+		$File	"$SRCDIR\public\studio.cpp"
+		$File	"$SRCDIR\public\studio_virtualmodel.cpp"
+		$File	"..\common\studiobyteswap.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"datacache.h"
+		$File	"datacache_common.h"
+		$File	"$SRCDIR\public\studio.h"
+		$File	"..\common\studiobyteswap.h"
+	}
+
+	$Folder	"Interface"
+	{
+		$File	"$SRCDIR\public\datacache\idatacache.h"
+		$File	"$SRCDIR\public\datacache\imdlcache.h"
+	}
+
+	$folder	"Link Libraries"
+	{
+		$Lib	tier2
+		$Lib	tier3
+	}
+}

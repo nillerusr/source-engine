@@ -1,0 +1,376 @@
+//====== Copyright 1996-2010, Valve Corporation, All rights reserved. =======
+//
+// Purpose: The file defines our Google Protocol Buffers which are used in over 
+// the wire messages between servers as well as between the TF GC and TF gameservers
+// and clients.
+//
+//=============================================================================
+
+// We care more about speed than code size
+option optimize_for = SPEED;
+
+// We don't use the service generation functionality
+option cc_generic_services = false;
+
+
+// 
+// STYLE NOTES:
+//
+// Use CamelCase CMsgMyMessageName style names for messages.
+// 
+// Use lowercase _ delimited names like my_steam_id for field names, this is non-standard for Steam,
+// but plays nice with the Google formatted code generation.  
+// 
+// Try not to use required fields ever. Only do so if you are really really sure you'll never want them removed. 
+// Optional should be preffered as it will make versioning easier and cleaner in the future if someone refactors
+// your message and wants to remove or rename fields.
+//
+// Use fixed64 for JobId_t, GID_t, or SteamID.  This is appropriate for any field that is normally
+// going to be larger than 2^56.  Otherwise use int64 for 64 bit values that are frequently smaller
+// than 2^56 as it will safe space on the wire in those cases.
+//
+// Similar to fixed64, use fixed32 for RTime32 or other 32 bit values that are frequently larger than
+// 2^28.  It will safe space in those cases, otherwise use int32 which will safe space for smaller values.
+// An exception to this rule for RTime32 is if the value will frequently be zero rather than set to an actual 
+// time.
+//
+
+import "steammessages.proto";
+
+message CMsgSOIDOwner
+{
+	optional uint32 type = 1;
+	optional uint64 id = 2;
+}
+
+//
+// k_ESOMsg_Create
+// k_ESOMsg_Update
+// k_ESOMsg_Destroy
+//
+message CMsgSOSingleObject
+{
+	optional	fixed64		owner = 1;			// the steam ID of the owner of this object
+	optional	int32		type_id = 2;		// the shared object type ID of this object
+	optional	bytes		object_data = 3;	// the actual data for the object
+	optional	fixed64		version = 4;		// version of the cache
+
+	optional	CMsgSOIDOwner	owner_soid = 5;		// The SOID that owns this object
+	optional	uint32			service_id = 6;		// The service that sent this update
+};
+
+
+//
+// k_ESOMsg_UpdateMultiple
+//
+message CMsgSOMultipleObjects
+{
+	message SingleObject
+	{
+		optional int32		type_id = 1;		// the shared object type ID of this object
+		optional bytes		object_data = 2;	// the actual data for the object
+	};
+	optional	fixed64			owner = 1;		// the steam ID of the owner of the objects
+	repeated	SingleObject	objects = 2;	// a list of types
+	optional	fixed64			version = 3;	// version of the cache
+	optional	CMsgSOIDOwner	owner_soid = 6;		// The SOID that owns this object
+	optional	uint32			service_id = 7;		// The service that sent this update
+};
+
+
+//
+// k_ESOMsg_CacheSubscribed
+//
+message CMsgSOCacheSubscribed
+{
+	message SubscribedType
+	{
+		optional int32		type_id = 1;		// ID of the type for these objects
+		repeated	bytes	object_data = 2;	// the data for all the objects of this type
+	};
+	
+	optional	fixed64			owner = 1;		// the owner of this cache
+	repeated	SubscribedType	objects = 2;	// a list of types
+	optional	fixed64			version = 3;	// version of the cache
+	optional	CMsgSOIDOwner	owner_soid = 4;		// The SOID that owns this object
+	optional	uint32			service_id = 5;		// The service that is providing this SO cache information
+	repeated	uint32			service_list = 6;	// Other services that are providing parts of this cache and need to to be received for it to be complete
+	optional	fixed64			sync_version = 7;	// The unique ID of the sync to ensure all subscribes across services match. Ignored/not provided if no other GCs are involved
+};
+
+//
+// k_ESOMsg_CacheSubscribedUpToDate
+//
+message CMsgSOCacheSubscribedUpToDate
+{
+	optional	fixed64			version = 1;		// version of the cache for this sub GC
+	optional	CMsgSOIDOwner	owner_soid = 2;		// The SOID that owns this object
+	optional	uint32			service_id = 3;		// The service that is providing this SO cache information
+	repeated	uint32			service_list = 4;	// Other services that are providing parts of this cache and need to to be received for it to be complete
+	optional	fixed64			sync_version = 5;	// The unique ID of the sync to ensure all subscribes across services match. Ignored/not provided if no other GCs are involved
+};
+
+//
+// k_ESOMsg_CacheUnsubscribed
+//
+message CMsgSOCacheUnsubscribed
+{
+	optional	fixed64		owner = 1;			// the owner of this cache
+};
+
+
+//
+// k_ESOMsg_CacheSubscriptionCheck
+//
+message CMsgSOCacheSubscriptionCheck
+{
+	optional	fixed64	owner = 1;		// the owner of the cache
+	optional	fixed64	version = 2;			// version of the cache
+	optional	CMsgSOIDOwner	owner_soid = 3;	// The SOID that owns this object
+	optional	uint32 service_id = 4;			// The service associated with this version
+	repeated	uint32 service_list = 5;		// The other services that need to provide information on this cache
+	optional	fixed64	sync_version = 6;		// The unique ID of the sync to ensure all subscribes across services match. Ignored/not provided if no other GCs are involved
+};
+
+
+//
+// k_ESOMsg_CacheSubscriptionRefresh
+//
+message CMsgSOCacheSubscriptionRefresh
+{
+	optional	fixed64			owner = 1;	// the owner of the cache
+	optional	CMsgSOIDOwner	owner_soid = 2;		// The SOID that owns this object
+};
+
+//
+// Stored in memcached for each SO Cache
+//
+message CMsgSOCacheVersion
+{
+	optional fixed64	version = 1;			// version of the cache
+};
+
+enum PartnerAccountType
+{
+	//the default for users, which is an account not linked to a provider
+	PARTNER_NONE = 0;
+	//linked to a Perfect World account
+	PARTNER_PERFECT_WORLD = 1;
+	//linked to a Nexon account
+	PARTNER_NEXON = 2;
+};
+
+message CMsgGCMultiplexMessage
+{
+	optional uint32 msgtype = 1;					// ID of the message being sent
+	optional bytes payload = 2;						// Serialized message to send
+	repeated fixed64 steamids = 3;					// Clients to send the message to
+};
+
+
+// k_EGCToGCMsgMasterAck
+message CGCToGCMsgMasterAck
+{
+	optional uint32		dir_index = 1;				// the index from the directory that this GC is responsible for
+	optional string		machine_name = 3;			// the machine name that this GC is running on so that we can quickly see the universe configuration
+	optional string		process_name = 4;			// the name of the process that this is running to ensure that it matches
+	repeated uint32		type_instances = 5;			// the list of type instances contained within this process, must match the master directory
+};
+
+// k_EGCToGCMsgMasterAck_Response
+message CGCToGCMsgMasterAck_Response
+{
+	optional int32 eresult = 1 [default = 2];		// Is this GC what the master thinks it should be?
+};
+
+// k_EGCToGCMsgMasterStartupComplete
+message CGCToGCMsgMasterStartupComplete
+{
+	message GCInfo
+	{
+		optional uint32	dir_index = 1;
+		optional string	machine_name = 2;
+	};
+
+	repeated GCInfo	gc_info = 1;
+};
+
+
+// k_EGCToGCMsgRouted
+message CGCToGCMsgRouted
+{
+	optional uint32		msg_type = 1;				// the type of the contained message
+	optional fixed64	sender_id = 2;				// steam ID of the client that sent this. If nil, it came from the system instead.
+	optional bytes		net_message = 3;			// the binary blob contents of the contained message
+};
+
+// k_EGCToGCMsgRoutedReply
+message CGCToGCMsgRoutedReply
+{
+	optional uint32		msg_type = 1;				// the type of the contained message
+	optional bytes		net_message = 2;			// the binary blob contents of the contained message
+};
+
+// k_EMsgGCUpdateSubGCSessionInfo
+message CMsgGCUpdateSubGCSessionInfo
+{
+	message CMsgUpdate
+	{
+		optional fixed64 steamid = 1;
+		optional fixed32 ip = 2;
+		optional bool	 trusted = 3;
+	};
+
+	repeated CMsgUpdate		updates = 1;			// the list of updates we should process (in order)
+}
+
+// k_EMsgGCRequestSubGCSessionInfo
+message CMsgGCRequestSubGCSessionInfo
+{
+	optional fixed64 steamid = 1;
+}
+
+// k_EMsgGCRequestSubGCSessionInfoRespone
+message CMsgGCRequestSubGCSessionInfoResponse
+{
+	optional fixed32	ip = 1;
+	optional bool		trusted	= 2;
+}
+
+// k_EMsgGCToGCIncrementRecruitmentLevel
+message CMsgGCToGCIncrementRecruitmentLevel
+{
+	optional fixed64 steamid = 1;
+}
+
+
+//
+// CMsgSOCacheHaveVersion
+//
+// An array of these is sent to indicate what SO cache versions we currently have
+//
+message CMsgSOCacheHaveVersion
+{
+	optional CMsgSOIDOwner soid = 1;	// ID of the cache we have
+	optional fixed64 version = 2;		// version stamp we have of this cache
+	optional uint32 service_id = 3;		// For partial caches, what service this version is associated with
+};
+
+// !FIXME! DOTAMERGE
+////
+//// CMsgClientHello
+////
+//message CMsgClientHello
+//{
+//	optional uint32 version = 1;
+//	repeated CMsgSOCacheHaveVersion socache_have_versions = 2;
+//
+//	/// Game-specific value indicating what state the client is in,
+//	/// and what sort of session is wants.  This is used to decide
+//	/// whether the client even needs a session, and if so, what
+//	/// priority we should assign
+//	optional uint32 client_session_need = 3;
+//
+//	/// What special partner-specific launcher was used, if any?
+//	optional PartnerAccountType client_launcher = 4;
+//
+//	/// Secret Key used to gain elevated status with the GC
+//	optional string secret_key = 5;
+//};
+//
+////
+//// CMsgClientWelcome
+////
+//message CMsgClientWelcome
+//{
+//	optional uint32 version = 1;
+//	optional bytes game_data = 2;
+//
+//	// List of caches to which the client is now subscribed, but
+//	// the GC thinks we don't have the latest data so it is included it here.
+//	repeated CMsgSOCacheSubscribed outofdate_subscribed_caches = 3;
+//
+//	// List of caches to which the client is now subscribed, and the
+//	// GC thinks that we already have the latest version.  (It is sending
+//	// the version number just to make sure.)
+//	repeated CMsgSOCacheSubscriptionCheck uptodate_subscribed_caches = 4;
+//
+//	// location information
+//	message Location
+//	{
+//		optional float latitude = 1;
+//		optional float longitude = 2;
+//		optional string country = 3;
+//	}
+//
+//	optional Location location = 5;
+//
+//	optional bytes save_game_key = 6;
+//};
+
+/// Status of connection to GC.
+//
+// Don't change these values, as they need to be consistent across props, since they
+// are central to handshaking with clients old and new!
+enum GCConnectionStatus
+{
+	GCConnectionStatus_HAVE_SESSION = 0; // You have a session.  (The status of one or more services may have changed.)
+	GCConnectionStatus_GC_GOING_DOWN = 1; // Notification that the entire GC system is going down.
+	GCConnectionStatus_NO_SESSION = 2; // You don't have a session.  Please send a hello message to initiate the session creation process.
+	GCConnectionStatus_NO_SESSION_IN_LOGON_QUEUE = 3; // You don't have a session, but we have your info and will sign you on ASAP.  No need to send it again.
+	GCConnectionStatus_NO_STEAM = 4; // Client-side only value.  We aren't connected to Steam.
+	GCConnectionStatus_SUSPENDED = 5; // Client-side only value.  We were told that we've been suspended from connecting to this GC. No need to try again later.
+};
+
+//
+// CMsgConnectionStatus
+//
+message CMsgConnectionStatus
+{
+	optional GCConnectionStatus status = 1;
+	optional uint32 client_session_need = 2; // The last client session need state we got from you.
+
+	//
+	// If they are in the queue, this tells them where they are.
+	//
+	optional int32 queue_position = 3; // your approximate position in the queue
+	optional int32 queue_size = 4; // how many people are in the queue
+	optional int32 wait_seconds = 5; // how long you've been waiting
+	optional int32 estimated_wait_seconds_remaining = 6; // estimated time until you are logged on.
+
+	// TODO: Here we could include a list of services
+	//       (perhaps just SO cache type ID's?) that
+	//       are currently known to be offline.
+};
+
+//k_EMsgGCToGCSOCacheSubscribe
+message CMsgGCToGCSOCacheSubscribe
+{
+	message CMsgHaveVersions
+	{
+		optional uint32	service_id = 1;
+		optional uint64	version = 2;
+	};
+
+	optional fixed64	subscriber = 1;				// the ID of the user that is subscribing to a cache
+	optional fixed64	subscribe_to = 2;			// the ID of the cache that is being subscribed to
+	optional fixed64	sync_version = 3;			// the unique ID that is used to distinguish this synch across the various parts
+	repeated CMsgHaveVersions	have_versions = 4;	// the version that the client has already (used to skip unnecessary sends)
+};
+
+//k_EMsgGCToGCSOCacheUnsubscribe
+message CMsgGCToGCSOCacheUnsubscribe
+{
+	optional fixed64	subscriber = 1;				// if 0, then this means unsubscribe everyone from the cache
+	optional fixed64	unsubscribe_from = 2;		// the cache we are unsubscribing from
+};
+
+// k_EMsgGCPingRequest
+// k_EMsgGCPingReply
+message CMsgGCClientPing
+{
+	// Remember, if you need to associate ping replies with requests, consider using the JobID field
+};
+
+// Do not remove this comment due to a bug on the Mac OS X protobuf compiler
+

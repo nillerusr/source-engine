@@ -1,0 +1,48 @@
+//-----------------------------------------------------------------------------
+//	HEIGHT2SSBUMP.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Configuration	"Debug"
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\common"
+	}
+
+	$Linker
+	{
+		$DebuggableAssembly					"Runtime tracking and disable optimizations (/ASSEMBLYDEBUG)"
+	}
+}
+
+$Configuration	"Release"
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\common"
+	}
+}
+
+$Project "Height2ssbump"
+{
+	$Folder "Source Files"
+	{
+		-$File	"$SRCDIR\public\tier0\memoverride.cpp"
+		$File	"height2ssbump.cpp"
+	}
+	
+	$Folder	"Link Libraries"
+	{
+		$Lib bitmap
+		$Lib mathlib
+		$Lib raytrace
+		$Lib tier2
+	}
+}

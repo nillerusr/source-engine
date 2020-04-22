@@ -1,0 +1,61 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from waflib import Utils
+import os
+
+top = '.'
+PROJECT_NAME = 'studiorender'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	conf.env.append_unique('DEFINES',[
+		'STUDIORENDER_EXPORTS',
+		#'PROTECTED_THINGS_ENABLE' # conflicts with stlport
+	])
+
+def build(bld):
+	source = [
+		'studiorender.cpp',
+		'studiorendercontext.cpp',
+		'flexrenderdata.cpp',
+		'r_studio.cpp',
+		'r_studiodecal.cpp',
+		'r_studiodraw.cpp',
+		'r_studiodraw_computeflexedvertex.cpp',
+		'r_studioflex.cpp',
+		'r_studiogettriangles.cpp',
+		'r_studiolight.cpp',
+		'r_studiostats.cpp',
+		'../public/tier0/memoverride.cpp'
+	]
+
+	includes = [
+		'.',
+		'../public',
+		'../public/tier0',
+		'../public/tier1',
+	]
+
+	defines = []
+
+	libs = ['tier0','tier1','tier2','tier3','vstdlib','mathlib','bitmap']
+
+	install_path = bld.env.LIBDIR
+
+	bld.shlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		install_path = install_path,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)
+

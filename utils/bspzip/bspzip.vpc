@@ -1,0 +1,56 @@
+//-----------------------------------------------------------------------------
+//	BSPZIP.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\common"
+		$PreprocessorDefinitions			"$BASE;ZIP_SUPPORT_LZMA_ENCODE"
+	}
+
+	$Linker [$WIN32]
+	{
+		$EnableLargeAddresses				"Support Addresses Larger Than 2 Gigabytes (/LARGEADDRESSAWARE)"
+	}
+}
+
+$Project "Bspzip"
+{
+	$Folder	"Source Files"
+	{
+		$File	"..\common\bsplib.cpp"
+		$File	"bspzip.cpp"
+		$File	"..\common\cmdlib.cpp"
+		$File	"$SRCDIR\public\filesystem_helpers.cpp"
+		$File	"$SRCDIR\public\filesystem_init.cpp"
+		$File	"..\common\filesystem_tools.cpp"
+		$File	"$SRCDIR\public\lumpfiles.cpp"
+		$File	"..\common\scriplib.cpp"
+		$File	"$SRCDIR\public\zip_utils.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\public\bspfile.h"
+		$File	"$SRCDIR\public\tier1\characterset.h"
+		$File	"$SRCDIR\public\filesystem_helpers.h"
+		$File	"..\common\filesystem_tools.h"
+		$File	"$SRCDIR\public\zip_utils.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib mathlib
+		$Lib tier2
+		$Lib "$LIBCOMMON/lzma"
+	}
+}

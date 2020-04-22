@@ -1,0 +1,64 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from waflib import Utils
+import os
+
+top = '.'
+PROJECT_NAME = 'matsys_controls'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	return
+
+def build(bld):
+	source = [
+		'assetpicker.cpp',
+		'baseassetpicker.cpp',
+		'colorpickerpanel.cpp',
+		'curveeditorpanel.cpp',
+		'gamefiletreeview.cpp',
+		'manipulator.cpp',
+		'matsyscontrols.cpp',
+		'mdlpanel.cpp',
+		'mdlpicker.cpp',
+		'mdlsequencepicker.cpp',
+		'picker.cpp',
+		'potterywheelpanel.cpp',
+		'proceduraltexturepanel.cpp',
+		'QCGenerator.cpp',
+		'sequencepicker.cpp',
+		'tgapreviewpanel.cpp',
+		'vmtpicker.cpp',
+		'vmtpreviewpanel.cpp',
+		'vtfpicker.cpp',
+		'vtfpreviewpanel.cpp',
+		'vmtpanel.cpp'
+	]
+
+	includes = [
+		'.',
+		'../../public',
+		'../../public/tier0',
+		'../../public/tier1'
+	]
+
+	defines = []
+
+	libs = []
+
+	bld.stlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)
+

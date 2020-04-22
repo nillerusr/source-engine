@@ -1,0 +1,54 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from waflib import Utils
+import os
+
+top = '.'
+PROJECT_NAME = 'soundemittersystem'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	conf.define('SOUNDEMITTERSYSTEM_EXPORTS',1)
+	conf.define('_WINDOWS',1)
+	#conf.define('PROTECTED_THINGS_ENABLE',1) # conflicts with stlport
+	#conf.define('fopen','dont_use_fopen') # WINDOWS
+
+def build(bld):
+	source = [
+		'../game/shared/interval.cpp',
+		'soundemittersystembase.cpp',
+		'../public/SoundParametersInternal.cpp',
+		'../public/tier0/memoverride.cpp'
+	]
+
+	includes = [
+		'.',
+		'../public',
+		'../public/tier0',
+		'../public/tier1',
+		'../game/shared'
+	]
+
+	defines = []
+
+	libs = ['tier0','tier1','vstdlib']
+
+	install_path = bld.env.LIBDIR
+
+	bld.shlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		install_path = install_path,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)
+

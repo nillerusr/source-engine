@@ -1,0 +1,150 @@
+L 07/20/1999 - 12:29:24: Log file started.
+L 07/20/1999 - 12:29:24: Spawning server "cz2"
+L 07/20/1999 - 12:29:24: server cvars start
+L 07/20/1999 - 12:29:24: "cr_random" = "0"
+L 07/20/1999 - 12:29:24: "cr_engineer" = "0"
+L 07/20/1999 - 12:29:24: "cr_spy" = "0"
+L 07/20/1999 - 12:29:24: "cr_pyro" = "0"
+L 07/20/1999 - 12:29:24: "cr_hwguy" = "0"
+L 07/20/1999 - 12:29:24: "cr_medic" = "0"
+L 07/20/1999 - 12:29:24: "cr_demoman" = "0"
+L 07/20/1999 - 12:29:24: "cr_soldier" = "0"
+L 07/20/1999 - 12:29:24: "cr_sniper" = "0"
+L 07/20/1999 - 12:29:24: "cr_scout" = "0"
+L 07/20/1999 - 12:29:24: "decalfrequency" = "30"
+L 07/20/1999 - 12:29:24: "mp_autocrosshair" = "1"
+L 07/20/1999 - 12:29:24: "mp_flashlight" = "0"
+L 07/20/1999 - 12:29:24: "mp_footsteps" = "0"
+L 07/20/1999 - 12:29:24: "mp_forcerespawn" = "1"
+L 07/20/1999 - 12:29:24: "mp_weaponstay" = "0"
+L 07/20/1999 - 12:29:24: "mp_falldamage" = "0"
+L 07/20/1999 - 12:29:24: "mp_friendlyfire" = "0"
+L 07/20/1999 - 12:29:24: "mp_timelimit" = "30"
+L 07/20/1999 - 12:29:24: "mp_fraglimit" = "0"
+L 07/20/1999 - 12:29:24: "mp_teamplay" = "21"
+L 07/20/1999 - 12:29:24: "tfc_balance_scores" = "1.0"
+L 07/20/1999 - 12:29:24: "tfc_balance_teams" = "1.0"
+L 07/20/1999 - 12:29:24: "tfc_adminpwd" = ""
+L 07/20/1999 - 12:29:24: "tfc_clanbattle_locked" = "0.0"
+L 07/20/1999 - 12:29:24: "tfc_clanbattle" = "0.0"
+L 07/20/1999 - 12:29:24: "tfc_respawndelay" = "0.0"
+L 07/20/1999 - 12:29:24: "tfc_autoteam" = "0"
+L 07/20/1999 - 12:29:24: "cmdline" = "0"
+L 07/20/1999 - 12:29:24: "mp_logfile" = "1"
+L 07/20/1999 - 12:29:24: "mp_logecho" = "1"
+L 07/20/1999 - 12:29:24: "deathmatch" = "1"
+L 07/20/1999 - 12:29:24: "coop" = "0"
+L 07/20/1999 - 12:29:24: "pausable" = "0"
+L 07/20/1999 - 12:29:24: "sv_sendvelocity" = "1"
+L 07/20/1999 - 12:29:24: "sv_password" = ""
+L 07/20/1999 - 12:29:24: "sv_aim" = "0"
+L 07/20/1999 - 12:29:24: "sv_gravity" = "800"
+L 07/20/1999 - 12:29:24: "sv_friction" = "4"
+L 07/20/1999 - 12:29:24: "edgefriction" = "2"
+L 07/20/1999 - 12:29:24: "sv_stopspeed" = "100"
+L 07/20/1999 - 12:29:24: "sv_maxspeed" = "500.000000"
+L 07/20/1999 - 12:29:24: "sv_accelerate" = "10"
+L 07/20/1999 - 12:29:24: "sv_stepsize" = "18"
+L 07/20/1999 - 12:29:24: "sv_clipmode" = "0"
+L 07/20/1999 - 12:29:24: "sv_bounce" = "1"
+L 07/20/1999 - 12:29:24: "sv_airmove" = "1"
+L 07/20/1999 - 12:29:24: "sv_airaccelerate" = "10"
+L 07/20/1999 - 12:29:24: "sv_wateraccelerate" = "10"
+L 07/20/1999 - 12:29:24: "sv_waterfriction" = "1"
+L 07/20/1999 - 12:29:24: "sv_timeout" = "65"
+L 07/20/1999 - 12:29:24: "sv_clienttrace" = "3.5"
+L 07/20/1999 - 12:29:24: "sv_cheats" = "1.000000"
+L 07/20/1999 - 12:29:24: "sv_maxspectators" = "8"
+L 07/20/1999 - 12:29:24: "sv_spectalk" = "1"
+L 07/20/1999 - 12:29:24: "sv_spectatormaxspeed" = "500"
+L 07/20/1999 - 12:29:24: "sv_upload_maxsize" = "0"
+L 07/20/1999 - 12:29:24: "sv_allowdownload" = "1"
+L 07/20/1999 - 12:29:24: "sv_allowupload" = "1"
+L 07/20/1999 - 12:29:24: server cvars end
+L 07/20/1999 - 12:29:28: Map CRC "1880504211"
+L 07/20/1999 - 12:29:28: "sv_maxspeed" = "500"
+L 07/20/1999 - 12:29:28: Server name is "Aesthete"
+L 07/20/1999 - 12:29:28: "sv_maxspeed" = "500.000000"
+L 07/20/1999 - 12:29:32: "Phorritorium<2><WON:4294928345>" has entered the game
+L 07/20/1999 - 12:32:28: "Blazer1<158><WON:4294920089>" connected, address "205.151.63.28:27005"
+L 07/20/1999 - 12:33:06: "Blazer1<158><WON:4294920089>" has entered the game
+L 07/20/1999 - 12:33:15: "Blazer1<158>" joined team "1".
+L 07/20/1999 - 12:33:22: "Blazer1<158>" changed class to "Spy"
+L 07/20/1999 - 12:33:22: "Blazer1<158>" changed class to "Spy"
+L 07/20/1999 - 12:33:22: "Blazer1<158>" activated the goal "i_p_t"
+L 07/20/1999 - 12:34:26: "Blazer1<158>" activated the goal "blue flag 3"
+L 07/20/1999 - 12:35:00: Named Broadcast: "#cz_bcap1" ("Blazer1<158>")
+L 07/20/1999 - 12:35:00: Named Broadcast: "#cz_bcap1" ("Blazer1<158>")
+L 07/20/1999 - 12:35:43: "Blazer1<158>" disconnected
+L 07/20/1999 - 12:37:18: "BitchSlapMatt<159><WON:4294927655>" connected, address "166.62.175.49:27005"
+L 07/20/1999 - 12:37:35: "BitchSlapMatt<159><WON:4294927655>" has entered the game
+L 07/20/1999 - 12:37:39: "BitchSlapMatt<159>" joined team "1".
+L 07/20/1999 - 12:37:42: "BraveSirRobin<160><WON:4294927319>" connected, address "206.214.72.3:27005"
+L 07/20/1999 - 12:37:43: "BitchSlapMatt<159>" changed class to "Demoman"
+L 07/20/1999 - 12:37:43: "BitchSlapMatt<159>" changed class to "Demoman"
+L 07/20/1999 - 12:37:43: "BitchSlapMatt<159>" activated the goal "i_p_t"
+L 07/20/1999 - 12:37:51: "BitchSlapMatt<159>" say "anyone else here?"
+L 07/20/1999 - 12:37:55: "BraveSirRobin<160><WON:4294927319>" has entered the game
+L 07/20/1999 - 12:38:14: "BraveSirRobin<160>" joined team "2".
+L 07/20/1999 - 12:38:18: "BraveSirRobin<160>" changed class to "Soldier"
+L 07/20/1999 - 12:38:18: "BraveSirRobin<160>" changed class to "Soldier"
+L 07/20/1999 - 12:38:18: "BraveSirRobin<160>" activated the goal "i_p_t"
+L 07/20/1999 - 12:38:21: "BitchSlapMatt<159>" say "hello"
+L 07/20/1999 - 12:38:27: "BraveSirRobin<160>" say "hi"
+L 07/20/1999 - 12:38:53: "BitchSlapMatt<159>" activated the goal "blue flag 2"
+L 07/20/1999 - 12:40:19: Named Broadcast: "#cz_bcap4" ("BitchSlapMatt<159>")
+L 07/20/1999 - 12:40:19: Named Broadcast: "#cz_bcap4" ("BitchSlapMatt<159>")
+L 07/20/1999 - 12:40:19: Named Broadcast: "#cz_bcap4" ("BitchSlapMatt<159>")
+L 07/20/1999 - 12:40:27: "BitchSlapMatt<159>" killed "BraveSirRobin<160>" with "gl_grenade"
+L 07/20/1999 - 12:40:30: "BitchSlapMatt<159>" say "hehe"
+L 07/20/1999 - 12:40:32: "BraveSirRobin<160>" activated the goal "i_p_t"
+L 07/20/1999 - 12:40:42: "BraveSirRobin<160>" changed class to "Sniper"
+L 07/20/1999 - 12:40:58: "BitchSlapMatt<159>" activated the goal "blue flag 3"
+L 07/20/1999 - 12:41:43: Named Broadcast: "#cz_bcap2" ("BitchSlapMatt<159>")
+L 07/20/1999 - 12:41:43: Named Broadcast: "#cz_bcap2" ("BitchSlapMatt<159>")
+L 07/20/1999 - 12:41:43: Named Broadcast: "#cz_bcap2" ("BitchSlapMatt<159>")
+L 07/20/1999 - 12:41:44: "Player<161><WON:4294907055>" connected, address "24.7.132.66:27005"
+L 07/20/1999 - 12:41:55: "Player<162><WON:4294927556>" connected, address "24.132.36.44:27005"
+L 07/20/1999 - 12:42:11: "Player<162><WON:4294927556>" has entered the game
+L 07/20/1999 - 12:42:19: "Player<162>" joined team "2".
+L 07/20/1999 - 12:42:24: "Player<162>" changed class to "HWGuy"
+L 07/20/1999 - 12:42:24: "Player<162>" changed class to "HWGuy"
+L 07/20/1999 - 12:42:24: "Player<162>" activated the goal "i_p_t"
+L 07/20/1999 - 12:42:40: "BitchSlapMatt<159>" activated the goal "blue flag 3"
+L 07/20/1999 - 12:43:19: Named Broadcast: "#cz_bcap3" ("BitchSlapMatt<159>")
+L 07/20/1999 - 12:43:19: Named Broadcast: "#cz_bcap3" ("BitchSlapMatt<159>")
+L 07/20/1999 - 12:43:19: Named Broadcast: "#cz_bcap3" ("BitchSlapMatt<159>")
+L 07/20/1999 - 12:43:19: Named Broadcast: "#cz_bcap3" ("BitchSlapMatt<159>")
+L 07/20/1999 - 12:43:32: "BraveSirRobin<160>" activated the goal "red marker 3"
+L 07/20/1999 - 12:43:48: "BitchSlapMatt<159>" activated the goal "blue flag 3"
+L 07/20/1999 - 12:44:13: "Player<162>" disconnected
+L 07/20/1999 - 12:44:22: Named Broadcast: "#cz_rcap4" ("BraveSirRobin<160>")
+L 07/20/1999 - 12:44:22: Named Broadcast: "#cz_rcap4" ("BraveSirRobin<160>")
+L 07/20/1999 - 12:44:22: Named Broadcast: "#cz_rcap4" ("BraveSirRobin<160>")
+L 07/20/1999 - 12:44:46: Named Broadcast: "#cz_bcap5" ("BitchSlapMatt<159>")
+L 07/20/1999 - 12:44:46: Named Broadcast: "#cz_bcap5" ("BitchSlapMatt<159>")
+L 07/20/1999 - 12:44:46: Named Broadcast: "#cz_bcap5" ("BitchSlapMatt<159>")
+L 07/20/1999 - 12:45:13: "BraveSirRobin<160>" activated the goal "red marker 2"
+L 07/20/1999 - 12:45:48: "BitchSlapMatt<159>" activated the goal "blue flag 3"
+L 07/20/1999 - 12:46:09: Named Broadcast: "#cz_rcap5" ("BraveSirRobin<160>")
+L 07/20/1999 - 12:46:09: Named Broadcast: "#cz_rcap5" ("BraveSirRobin<160>")
+L 07/20/1999 - 12:46:09: Named Broadcast: "#cz_rcap5" ("BraveSirRobin<160>")
+L 07/20/1999 - 12:46:50: "BraveSirRobin<160>" activated the goal "red marker 2"
+L 07/20/1999 - 12:46:53: Named Broadcast: "#cz_bcap5" ("BitchSlapMatt<159>")
+L 07/20/1999 - 12:46:53: Named Broadcast: "#cz_bcap5" ("BitchSlapMatt<159>")
+L 07/20/1999 - 12:46:53: Named Broadcast: "#cz_bcap5" ("BitchSlapMatt<159>")
+L 07/20/1999 - 12:47:24: "BitchSlapMatt<159>" killed "BraveSirRobin<160>" with "gl_grenade"
+L 07/20/1999 - 12:47:25: "BraveSirRobin<160>" activated the goal "i_p_t"
+L 07/20/1999 - 12:47:52: "BitchSlapMatt<159>" disconnected
+L 07/20/1999 - 12:48:05: "BraveSirRobin<160>" disconnected
+L 07/20/1999 - 12:59:18: "ben<163><WON:4294929587>" connected, address "195.36.135.210:27005"
+L 07/20/1999 - 12:59:41: "ben<163><WON:4294929587>" has entered the game
+L 07/20/1999 - 12:59:53: "ben<163>" joined team "1".
+L 07/20/1999 - 13:00:04: =------= MATCH RESULTS =------=
+L 07/20/1999 - 13:00:04: "blue" defeated "red"
+L 07/20/1999 - 13:00:04: "blue" RESULTS: "98906768" players. "14" frags, "1" unaccounted for. "153" team score.
+L 07/20/1999 - 13:00:04: "red" RESULTS: "98906768" players. "4" frags, "0" unaccounted for. "32" team score.
+L 07/20/1999 - 13:00:05: "ben<163>" changed class to "Engineer"
+L 07/20/1999 - 13:00:05: "ben<163>" changed class to "Engineer"
+L 07/20/1999 - 13:00:05: "ben<163>" activated the goal "i_p_t"
+L 07/20/1999 - 13:00:10: Log closed.

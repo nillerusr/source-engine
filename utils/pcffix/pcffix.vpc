@@ -1,0 +1,27 @@
+//-----------------------------------------------------------------------------
+//	PCFFIX.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_win32_base.vpc"
+
+$Project "pcffix"
+{
+	$Folder	"Source Files"
+	{
+		$File	"pcffix.cpp"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$DynamicFile	"$SRCDIR\lib\public\appframework.lib"
+		$DynamicFile	"$SRCDIR\lib\public\datamodel.lib"
+		$DynamicFile	"$SRCDIR\lib\public\dmserializers.lib"
+		$DynamicFile	"$SRCDIR\lib\public\mathlib.lib"
+		$DynamicFile	"$SRCDIR\lib\public\tier2.lib"
+	}
+}

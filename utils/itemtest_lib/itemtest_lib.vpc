@@ -1,0 +1,40 @@
+//============ Copyright (c) Valve Corporation, All rights reserved. ==========
+//
+// Converts various input bitmap & geometry formats into standard
+// Valve formats, renames and places items in the proper directories
+// and calls vtex/studiomdl and can ZIP archive the results.
+//
+// NOTE: Projects which link this also need to include itemtest_lib_support.vpc
+//
+//=============================================================================
+
+
+$Macro SRCDIR		"..\.."
+
+$include "$SRCDIR\vpc_scripts\source_lib_base.vpc"
+
+$Include "$SRCDIR\vpc_scripts\fbx_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$PreprocessorDefinitions			"$BASE;VERSION_SAFE_STEAM_API_INTERFACES;ITEMUPLIB_LIB"
+	}
+}
+
+$Project "itemtest_lib"
+{
+	$Folder	"Source Files"
+	{
+		$File	"itemtest.cpp"
+		$File	"systemutils.cpp"
+		$File	"$SRCDIR\public\zip_utils.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\public\itemtest\itemtest.h"
+		$File	"$SRCDIR\public\zip_utils.h"
+	}
+}

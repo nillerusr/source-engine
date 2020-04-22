@@ -1,0 +1,71 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from waflib import Utils, Configure
+import os
+
+top = '.'
+PROJECT_NAME = 'vguimatsurface'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	conf.define('VGUIMATSURFACE_DLL_EXPORT',1)
+	conf.define('GAMEUI_EXPORTS',1)
+	conf.define('DONT_PROTECT_FILEIO_FUNCTIONS',1)
+	#conf.define('PROTECTED_THINGS_ENABLE',1) # conflicts with stlport
+
+
+def build(bld):
+	source = [
+		'Clip2D.cpp',
+		'Cursor.cpp',
+		'../public/filesystem_helpers.cpp',
+		'FontTextureCache.cpp',
+		'Input.cpp',
+		'MatSystemSurface.cpp',
+		'asanstubs.cpp',
+		'TextureDictionary.cpp',
+		'../vgui2/src/vgui_key_translation.cpp',
+		'../public/vgui_controls/vgui_controls.cpp',
+		'../public/tier0/memoverride.cpp'
+	]
+
+	if bld.env.DEST_OS == 'win32':
+		source += [
+			'memorybitmap.cpp'
+		]
+
+	includes = [
+		'.',
+		'../public',
+		'../public/tier0',
+		'../public/tier1',
+		'../common',
+	]
+
+	defines = []
+
+	libs = ['bitmap','mathlib','tier0','vgui_controls','tier1','vstdlib','tier2','tier3','vgui_surfacelib','FT2','FC','SDL2']
+
+	if bld.env.DEST_OS == 'android':
+		libs += ['EXPAT']
+	elif bld.env.DEST_OS == 'win32':
+		libs += ['USER32', 'GDI32']
+
+	install_path = bld.env.LIBDIR
+
+	bld.shlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		install_path = install_path,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)

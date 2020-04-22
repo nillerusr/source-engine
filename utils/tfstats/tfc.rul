@@ -1,0 +1,31 @@
+//these are example rules. feel free to modify and use them, or
+//to use them as examples to help you write your own rules!
+//
+//Award
+//{
+//	name = "Most Used Weapon";
+//	noWinnerMessage = "No weapons were used during this match!";
+//	extraInfo = "%score people were killed by %winners";
+//
+//	trigger
+//	{
+//		type = fullsearch;
+//		winnerVar="%weapon";
+//		key = "%killer killed %killee with %weapon";
+//	}
+//}
+//
+//Award 
+//{
+//	name = "Pak Grabber";
+//	noWinnerMessage = "no one grabbed any paks!";
+//	extraInfo = "%winner grabbed %score paks!";
+//	
+//	trigger
+//	{
+//		type= fullsearch;
+//		winnerVar="%plr_grabber";
+//		key = "%plr_grabber activated the goal %goal";
+//		%goal="spawn_pak"
+//	}
+//}

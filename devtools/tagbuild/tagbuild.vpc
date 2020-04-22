@@ -1,0 +1,49 @@
+//-----------------------------------------------------------------------------
+//	TAGBUILD.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,$SRCDIR\utils\vmpi"
+	}
+}
+
+$Project "Tagbuild"
+{
+	$Folder	"Source Files"
+	{
+		-$File	"$SRCDIR\public\tier0\memoverride.cpp"
+		
+		$File	"StdAfx.cpp"
+		$File	"StdAfx.h"
+		$File	"tagbuild.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\public\tier0\basetypes.h"
+		$File	"$SRCDIR\public\tier0\commonmacros.h"
+		$File	"$SRCDIR\public\tier0\dbg.h"
+		$File	"$SRCDIR\public\tier0\fasttimer.h"
+		$File	"$SRCDIR\public\tier0\icommandline.h"
+		$File	"$SRCDIR\utils\vmpi\imysqlwrapper.h"
+		$File	"$SRCDIR\public\tier0\memdbgoff.h"
+		$File	"$SRCDIR\public\tier0\memdbgon.h"
+		$File	"$SRCDIR\public\tier0\platform.h"
+		$File	"$SRCDIR\public\tier0\protected_things.h"
+		$File	"$SRCDIR\public\string_t.h"
+		$File	"$SRCDIR\public\tier1\strtools.h"
+		$File	"$SRCDIR\public\tier1\utlmemory.h"
+		$File	"$SRCDIR\public\tier1\utlvector.h"
+		$File	"$SRCDIR\public\vstdlib\vstdlib.h"
+	}
+}

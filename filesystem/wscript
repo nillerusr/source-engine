@@ -1,0 +1,68 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from waflib import Utils
+import os
+
+top = '.'
+PROJECT_NAME = 'filesystem_stdio'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	conf.define('FILESYSTEM_STDIO_EXPORTS',1)
+	conf.define('DONT_PROTECT_FILEIO_FUNCTIONS',1)
+#	conf.define('PROTECTED_THINGS_ENABLE',1)
+#	conf.define('_USE_32BIT_TIME_T',1)
+	conf.define('SUPPORT_PACKED_STORE',1)
+
+def build(bld):
+	source = [
+		'basefilesystem.cpp',
+		'packfile.cpp',
+		'filetracker.cpp',
+		'filesystem_async.cpp',
+		'filesystem_stdio.cpp',
+		'../public/kevvaluescompiler.cpp',
+		'../public/zip_utils.cpp',
+		'QueuedLoader.cpp',
+		'../public/tier0/memoverride.cpp'
+	]
+
+	if bld.env.DEST_OS != 'win32':
+		source += [
+			'linux_support.cpp'
+		]
+
+	includes = [
+		'.',
+		'../public',
+		'../public/tier0',
+		'../public/tier1',
+		'../common'
+	]
+
+	defines = []
+
+	libs = ['tier0','vpklib','tier1','tier2','vstdlib']
+
+	if bld.env.DEST_OS == 'win32':
+		libs += ['SHELL32']
+
+	install_path = bld.env.LIBDIR
+
+	bld.shlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		install_path = install_path,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)
+

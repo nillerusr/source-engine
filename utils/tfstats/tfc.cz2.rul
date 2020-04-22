@@ -1,0 +1,22 @@
+
+Award
+{
+	name = "Command Point Capture";
+	noWinnerMessage = "Not one command point was captured this match!";
+	extraInfo = "%player captured %number command points!";
+
+	trigger
+	{
+		key= #cz_bcap1;
+		key= #cz_bcap2;
+		key= #cz_bcap3;
+		key= #cz_bcap4;
+		key= #cz_bcap5;
+		key= #cz_rcap1;
+		key= #cz_rcap2;
+		key= #cz_rcap3;
+		key= #cz_rcap4;
+		key= #cz_rcap5;
+	}
+}
+

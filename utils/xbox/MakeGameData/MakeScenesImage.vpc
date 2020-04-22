@@ -1,0 +1,133 @@
+//-----------------------------------------------------------------------------
+//	MAKESCENESIMAGE.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Macro GAMENAME "MakeScenesImage"
+
+$Configuration  "Debug"
+{
+    $General
+    {
+        $OutputDirectory        ".\Debug_$GAMENAME"
+        $IntermediateDirectory  ".\Debug_$GAMENAME"
+    }
+}
+
+$Configuration  "Release"
+{
+    $General
+    {
+        $OutputDirectory        ".\Release_$GAMENAME"
+        $IntermediateDirectory  ".\Release_$GAMENAME"
+    }
+}
+
+$Configuration
+{
+	$Compiler
+	{
+        $PreprocessorDefinitions        "$BASE;MAKESCENESIMAGE"
+		$PreprocessorDefinitions		"$BASE;NO_X360_XDK" [$VS2015]
+		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\x360xdk\include\win32\vs2005;$SRCDIR\game\shared"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies			"$BASE xgraphics.lib d3d9.lib legacy_stdio_definitions.lib"
+		$AdditionalDependencies			"$BASE xmaencoder.lib" [!$VS2015]
+		$AdditionalLibraryDirectories	"$BASE;$SRCDIR\x360xdk\lib\win32\vs2005"
+	}
+}
+
+$Project "MakeScenesImage"
+{
+	$Folder	"Source Files"
+	{
+		-$File	"$SRCDIR\public\tier0\memoverride.cpp"
+		$File	"MakeGameData.cpp"
+		$File	"MakeMaps.cpp"
+		$File	"MakeMisc.cpp"
+		$File	"MakeModels.cpp"
+		$File	"MakeParticles.cpp"
+		$File	"MakeResources.cpp"
+		$File	"MakeScenes.cpp"
+		$File	"MakeShaders.cpp"
+		$File	"MakeSounds.cpp"
+		$File	"MakeTextures.cpp"
+		$File	"MakeZip.cpp"
+
+		$Folder "Audio"
+		{
+			$File	"imaadpcm.cpp"
+			$File	"sound_io.cpp"
+			$File	"resample.cpp"
+		}
+		
+		$Folder "Public Modules"
+		{
+			$File	"$SRCDIR\common\compiledcaptionswap.cpp"
+			$file	"$SRCDIR\common\studiobyteswap.cpp"
+			$File	"$SRCDIR\utils\common\scriplib.cpp"
+			$File	"$SRCDIR\public\zip_utils.cpp"
+			$File	"$SRCDIR\public\sentence.cpp"
+			$File	"$SRCDIR\utils\common\cmdlib.cpp"
+			$File	"$SRCDIR\public\filesystem_helpers.cpp"
+			$File	"$SRCDIR\public\filesystem_init.cpp"
+			$File	"$SRCDIR\utils\common\filesystem_tools.cpp"
+			$File	"$SRCDIR\public\interpolatortypes.cpp"
+		}
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"MakeGameData.h"
+		$File	"XZipTool.h"
+		$File	"imaadpcm.h"
+		$File	"resample.h"
+		$File	"$SRCDIR\public\captioncompiler.h"
+		$File	"$SRCDIR\common\studiobyteswap.h"
+		$File	"$SRCDIR\utils\common\scriplib.h"
+		$File	"$SRCDIR\public\filesystem.h"
+		$File	"$SRCDIR\public\ibsppack.h"
+		$File	"$SRCDIR\public\sentence.h"
+		$File	"$SRCDIR\public\studio.h"
+		$File	"$SRCDIR\public\tier1\utlbuffer.h"
+		$File	"$SRCDIR\public\tier1\strtools.h"
+		$File	"$SRCDIR\public\vphysics_interface.h"
+		$File	"$SRCDIR\public\vstdlib\vstdlib.h"
+		$File	"$SRCDIR\public\xwvfile.h"
+		$File	"$SRCDIR\public\zip_utils.h"
+		$File	"$SRCDIR\game\shared\choreoscene.h"
+		$File	"$SRCDIR\game\shared\choreoactor.h"
+		$File	"$SRCDIR\public\filesystem_helpers.h"
+		$File	"$SRCDIR\public\filesystem_init.h"
+		$File	"$SRCDIR\utils\common\filesystem_tools.h"
+		$File	"$SRCDIR\public\interpolatortypes.h"
+		$File	"$SRCDIR\utils\common\cmdlib.h"
+		$File	"$SRCDIR\game\shared\choreochannel.h"
+		$File	"$SRCDIR\game\shared\choreoevent.h"
+		$File	"$SRCDIR\public\tier1\checksum_crc.h"
+		$File	"$SRCDIR\public\tier2\tier2.h"
+		$File	"$SRCDIR\common\lzma\lzma.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib appframework
+		$Lib mathlib
+		$Lib vtf
+		$Lib tier2
+		$Lib choreoobjects
+		$Lib bitmap
+		$Lib datamodel
+		$Lib dmserializers
+		$Lib $LIBCOMMON\lzma
+	}
+}

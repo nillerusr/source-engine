@@ -1,0 +1,61 @@
+//-----------------------------------------------------------------------------
+//	BUGREPORTER_TEXT.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE;..\common"
+		$PreprocessorDefinitions			"$BASE;BUGREPORTER_EXPORTS"
+	}
+	$Linker
+	{
+			$SystemLibraries                    "iconv" [$OSXALL]
+	}
+}
+
+$Project "bugreporter_filequeue"
+{
+	$Folder	"Source Files"
+	{
+		$File	"bugreporter.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\public\tier0\basetypes.h"
+		$File	"$SRCDIR\common\bugreporter\bugreporter.h"
+		$File	"$SRCDIR\public\Color.h"
+		$File	"$SRCDIR\public\tier0\commonmacros.h"
+		$File	"$SRCDIR\public\tier0\dbg.h"
+		$File	"$SRCDIR\public\tier0\fasttimer.h"
+		$File	"$SRCDIR\public\filesystem.h"
+		$File	"$SRCDIR\public\appframework\IAppSystem.h"
+		$File	"$SRCDIR\public\vstdlib\IKeyValuesSystem.h"
+		$File	"$SRCDIR\public\tier0\mem.h"
+		$File	"$SRCDIR\public\tier0\memdbgoff.h"
+		$File	"$SRCDIR\public\tier0\memdbgon.h"
+		$File	"$SRCDIR\public\tier0\platform.h"
+		$File	"$SRCDIR\public\tier0\protected_things.h"
+		$File	"$SRCDIR\public\string_t.h"
+		$File	"$SRCDIR\public\tier1\strtools.h"
+		$File	"..\bugreporter\trktool.h"
+		$File	"$SRCDIR\public\tier1\utlmemory.h"
+		$File	"$SRCDIR\public\tier1\utlrbtree.h"
+		$File	"$SRCDIR\public\vstdlib\vstdlib.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$File	"$SRCDIR\lib\common\expdlln.lib" [$WIN32]
+		$File	"$SRCDIR\lib\common\trktooln.lib" [$WIN32]
+	}
+}

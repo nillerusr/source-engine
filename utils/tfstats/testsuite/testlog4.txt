@@ -1,0 +1,1885 @@
+L 07/19/1999 - 20:51:30: Log file started.
+L 07/19/1999 - 20:51:30: Spawning server "rock2"
+L 07/19/1999 - 20:51:30: server cvars start
+L 07/19/1999 - 20:51:30: "cr_random" = "0"
+L 07/19/1999 - 20:51:30: "cr_engineer" = "0"
+L 07/19/1999 - 20:51:30: "cr_spy" = "0"
+L 07/19/1999 - 20:51:30: "cr_pyro" = "0"
+L 07/19/1999 - 20:51:30: "cr_hwguy" = "0"
+L 07/19/1999 - 20:51:30: "cr_medic" = "0"
+L 07/19/1999 - 20:51:30: "cr_demoman" = "0"
+L 07/19/1999 - 20:51:30: "cr_soldier" = "0"
+L 07/19/1999 - 20:51:30: "cr_sniper" = "0"
+L 07/19/1999 - 20:51:30: "cr_scout" = "0"
+L 07/19/1999 - 20:51:30: "decalfrequency" = "30"
+L 07/19/1999 - 20:51:30: "mp_autocrosshair" = "1"
+L 07/19/1999 - 20:51:30: "mp_flashlight" = "0"
+L 07/19/1999 - 20:51:30: "mp_footsteps" = "0"
+L 07/19/1999 - 20:51:30: "mp_forcerespawn" = "1"
+L 07/19/1999 - 20:51:30: "mp_weaponstay" = "0"
+L 07/19/1999 - 20:51:30: "mp_falldamage" = "0"
+L 07/19/1999 - 20:51:30: "mp_friendlyfire" = "0"
+L 07/19/1999 - 20:51:30: "mp_timelimit" = "30"
+L 07/19/1999 - 20:51:30: "mp_fraglimit" = "0"
+L 07/19/1999 - 20:51:30: "mp_teamplay" = "21"
+L 07/19/1999 - 20:51:30: "tfc_balance_scores" = "1.0"
+L 07/19/1999 - 20:51:30: "tfc_balance_teams" = "1.0"
+L 07/19/1999 - 20:51:30: "tfc_adminpwd" = ""
+L 07/19/1999 - 20:51:30: "tfc_clanbattle_locked" = "0.0"
+L 07/19/1999 - 20:51:30: "tfc_clanbattle" = "0.0"
+L 07/19/1999 - 20:51:30: "tfc_respawndelay" = "0.0"
+L 07/19/1999 - 20:51:30: "tfc_autoteam" = "0"
+L 07/19/1999 - 20:51:30: "cmdline" = "0"
+L 07/19/1999 - 20:51:30: "mp_logfile" = "1"
+L 07/19/1999 - 20:51:30: "mp_logecho" = "1"
+L 07/19/1999 - 20:51:30: "deathmatch" = "1"
+L 07/19/1999 - 20:51:30: "coop" = "0"
+L 07/19/1999 - 20:51:30: "pausable" = "0"
+L 07/19/1999 - 20:51:30: "sv_sendvelocity" = "1"
+L 07/19/1999 - 20:51:30: "sv_password" = ""
+L 07/19/1999 - 20:51:30: "sv_aim" = "0"
+L 07/19/1999 - 20:51:30: "sv_gravity" = "800"
+L 07/19/1999 - 20:51:30: "sv_friction" = "4"
+L 07/19/1999 - 20:51:30: "edgefriction" = "2"
+L 07/19/1999 - 20:51:30: "sv_stopspeed" = "100"
+L 07/19/1999 - 20:51:30: "sv_maxspeed" = "500.000000"
+L 07/19/1999 - 20:51:30: "sv_accelerate" = "10"
+L 07/19/1999 - 20:51:30: "sv_stepsize" = "18"
+L 07/19/1999 - 20:51:30: "sv_clipmode" = "0"
+L 07/19/1999 - 20:51:30: "sv_bounce" = "1"
+L 07/19/1999 - 20:51:30: "sv_airmove" = "1"
+L 07/19/1999 - 20:51:30: "sv_airaccelerate" = "10"
+L 07/19/1999 - 20:51:30: "sv_wateraccelerate" = "10"
+L 07/19/1999 - 20:51:30: "sv_waterfriction" = "1"
+L 07/19/1999 - 20:51:30: "sv_timeout" = "65"
+L 07/19/1999 - 20:51:30: "sv_clienttrace" = "3.5"
+L 07/19/1999 - 20:51:30: "sv_cheats" = "1.000000"
+L 07/19/1999 - 20:51:30: "sv_maxspectators" = "8"
+L 07/19/1999 - 20:51:30: "sv_spectalk" = "1"
+L 07/19/1999 - 20:51:30: "sv_spectatormaxspeed" = "500"
+L 07/19/1999 - 20:51:30: "sv_upload_maxsize" = "0"
+L 07/19/1999 - 20:51:30: "sv_allowdownload" = "1"
+L 07/19/1999 - 20:51:30: "sv_allowupload" = "1"
+L 07/19/1999 - 20:51:30: server cvars end
+L 07/19/1999 - 20:51:37: Map CRC "1246753045"
+L 07/19/1999 - 20:51:38: "sv_maxspeed" = "500"
+L 07/19/1999 - 20:51:38: Server name is "Aesthete"
+L 07/19/1999 - 20:51:38: "sv_maxspeed" = "500.000000"
+L 07/19/1999 - 20:51:42: "Phorritorium<2><WON:4294928345>" has entered the game
+L 07/19/1999 - 20:51:56: "colin<31><WON:4294941300>" has entered the game
+L 07/19/1999 - 20:51:56: "[PS]-Drumboyyy<24><WON:4294913975>" has entered the game
+L 07/19/1999 - 20:51:56: "Player<19><WON:4294936067>" has entered the game
+L 07/19/1999 - 20:52:01: "[PS]-Drumboyyy<24>" say "so fuckin easy"
+L 07/19/1999 - 20:52:02: "colin<31>" joined team "1".
+L 07/19/1999 - 20:52:04: "MRBIGGELSWORTH<17><WON:4294913736>" has entered the game
+L 07/19/1999 - 20:52:05: "colin<31>" changed class to "Sniper"
+L 07/19/1999 - 20:52:05: "colin<31>" changed class to "Sniper"
+L 07/19/1999 - 20:52:05: "colin<31>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 20:52:10: "Player<19>" joined team "2".
+L 07/19/1999 - 20:52:11: "Sgt.<25><WON:4294936624>" has entered the game
+L 07/19/1999 - 20:52:13: "Player<19>" changed class to "Soldier"
+L 07/19/1999 - 20:52:13: "Player<19>" changed class to "Soldier"
+L 07/19/1999 - 20:52:13: "Player<19>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 20:52:18: "beano111<18><WON:4294932237>" has entered the game
+L 07/19/1999 - 20:52:24: "beano111<18>" joined team "1".
+L 07/19/1999 - 20:52:25: "beano111<18>" changed class to "Engineer"
+L 07/19/1999 - 20:52:25: "beano111<18>" changed class to "Engineer"
+L 07/19/1999 - 20:52:25: "beano111<18>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 20:52:28: "[PS]-Drumboyyy<24>" joined team "1".
+L 07/19/1999 - 20:52:28: "Flatus<22><WON:4294932867>" has entered the game
+L 07/19/1999 - 20:52:29: "[PS]-Drumboyyy<24>" changed class to "Demoman"
+L 07/19/1999 - 20:52:29: "[PS]-Drumboyyy<24>" changed class to "Demoman"
+L 07/19/1999 - 20:52:29: "[PS]-Drumboyyy<24>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 20:52:32: "(2)Player<32><WON:4294940686>" has entered the game
+L 07/19/1999 - 20:52:34: "(2)Player<32>" disconnected
+L 07/19/1999 - 20:52:38: "Flatus<22>" joined team "2".
+L 07/19/1999 - 20:52:39: "Sgt.<25>" joined team "2".
+L 07/19/1999 - 20:52:43: "Sgt.<25>" changed class to "RandomPC"
+L 07/19/1999 - 20:52:43: "Sgt.<25>" changed class to "RandomPC"
+L 07/19/1999 - 20:52:43: "Sgt.<25>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 20:52:45: "Apocalypse<33><WON:4294940798>" has entered the game
+L 07/19/1999 - 20:52:48: "Flatus<22>" changed class to "Engineer"
+L 07/19/1999 - 20:52:48: "Flatus<22>" changed class to "Engineer"
+L 07/19/1999 - 20:52:48: "Flatus<22>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 20:52:53: "Apocalypse<33>" joined team "1".
+L 07/19/1999 - 20:52:54: "Apocalypse<33>" changed class to "Engineer"
+L 07/19/1999 - 20:52:54: "Apocalypse<33>" changed class to "Engineer"
+L 07/19/1999 - 20:52:54: "Apocalypse<33>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 20:53:02: "beano111<18>" built a "sentry".
+L 07/19/1999 - 20:53:08: "hank<34><WON:4294923106>" connected, address "206.47.206.73:27005"
+L 07/19/1999 - 20:53:11: "[PS]-Drumboyyy<24>" killed "Player<19>" with "mirvgrenade"
+L 07/19/1999 - 20:53:17: "Player<19>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 20:53:20: "hank<35><WON:4294923106>" connected, address "206.47.206.73:27005"
+L 07/19/1999 - 20:53:21: "[PS]-Drumboyyy<24>" say "die bastard"
+L 07/19/1999 - 20:53:25: "colin<31>" changed to team "2".
+L 07/19/1999 - 20:53:25: "colin<31>" killed self with "world"
+L 07/19/1999 - 20:53:26: "colin<31>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 20:53:39: "colin<31>" changed class to "Spy"
+L 07/19/1999 - 20:53:39: "colin<31>" changed class to "Spy"
+L 07/19/1999 - 20:53:39: "colin<31>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 20:53:59: "beano111<18>" killed "Flatus<22>" with "supershotgun"
+L 07/19/1999 - 20:54:03: "Flatus<22>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 20:54:18: "Flatus<22>" killed "beano111<18>" with "supershotgun"
+L 07/19/1999 - 20:54:21: "beano111<18>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 20:54:48: "[PS]-Drumboyyy<24>" activated the goal "goalitem"
+L 07/19/1999 - 20:55:20: "[PS]-Drumboyyy<24>" activated the goal "rhand"
+L 07/19/1999 - 20:55:20: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 20:55:20: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 20:55:20: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 20:55:20: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 20:55:20: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 20:55:20: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 20:55:20: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 20:55:20: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 20:55:20: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 20:55:21: "[PS]-Drumboyyy<24>" activated the goal "rblock"
+L 07/19/1999 - 20:55:25: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 20:55:25: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 20:55:25: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 20:55:25: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 20:55:25: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 20:55:25: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 20:55:25: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 20:55:25: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 20:55:25: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 20:55:27: "[PS]-Drumboyyy<24>" activated the goal "brise1"
+L 07/19/1999 - 20:55:28: "[PS]-Drumboyyy<24>" activated the goal "brise2"
+L 07/19/1999 - 20:55:33: "[PS]-Drumboyyy<24>" activated the goal "brise3"
+L 07/19/1999 - 20:55:35: "Sgt.<25>" killed by world with "#rock_falling_death"
+L 07/19/1999 - 20:55:36: "Sgt.<25>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 20:55:37: Broadcast: "5 . . .
+"
+L 07/19/1999 - 20:55:37: Broadcast: "5 . . .
+"
+L 07/19/1999 - 20:55:37: Broadcast: "5 . . .
+"
+L 07/19/1999 - 20:55:37: Broadcast: "5 . . .
+"
+L 07/19/1999 - 20:55:37: Broadcast: "5 . . .
+"
+L 07/19/1999 - 20:55:37: Broadcast: "5 . . .
+"
+L 07/19/1999 - 20:55:37: Broadcast: "5 . . .
+"
+L 07/19/1999 - 20:55:37: Broadcast: "5 . . .
+"
+L 07/19/1999 - 20:55:37: Broadcast: "5 . . .
+"
+L 07/19/1999 - 20:55:39: Broadcast: "4 . . .
+"
+L 07/19/1999 - 20:55:39: Broadcast: "4 . . .
+"
+L 07/19/1999 - 20:55:39: Broadcast: "4 . . .
+"
+L 07/19/1999 - 20:55:39: Broadcast: "4 . . .
+"
+L 07/19/1999 - 20:55:39: Broadcast: "4 . . .
+"
+L 07/19/1999 - 20:55:39: Broadcast: "4 . . .
+"
+L 07/19/1999 - 20:55:39: Broadcast: "4 . . .
+"
+L 07/19/1999 - 20:55:39: Broadcast: "4 . . .
+"
+L 07/19/1999 - 20:55:39: Broadcast: "4 . . .
+"
+L 07/19/1999 - 20:55:41: Broadcast: "3 . . .
+"
+L 07/19/1999 - 20:55:41: Broadcast: "3 . . .
+"
+L 07/19/1999 - 20:55:41: Broadcast: "3 . . .
+"
+L 07/19/1999 - 20:55:41: Broadcast: "3 . . .
+"
+L 07/19/1999 - 20:55:41: Broadcast: "3 . . .
+"
+L 07/19/1999 - 20:55:41: Broadcast: "3 . . .
+"
+L 07/19/1999 - 20:55:41: Broadcast: "3 . . .
+"
+L 07/19/1999 - 20:55:41: Broadcast: "3 . . .
+"
+L 07/19/1999 - 20:55:41: Broadcast: "3 . . .
+"
+L 07/19/1999 - 20:55:43: Broadcast: "2 . . .
+"
+L 07/19/1999 - 20:55:43: Broadcast: "2 . . .
+"
+L 07/19/1999 - 20:55:43: Broadcast: "2 . . .
+"
+L 07/19/1999 - 20:55:43: Broadcast: "2 . . .
+"
+L 07/19/1999 - 20:55:43: Broadcast: "2 . . .
+"
+L 07/19/1999 - 20:55:43: Broadcast: "2 . . .
+"
+L 07/19/1999 - 20:55:43: Broadcast: "2 . . .
+"
+L 07/19/1999 - 20:55:43: Broadcast: "2 . . .
+"
+L 07/19/1999 - 20:55:43: Broadcast: "2 . . .
+"
+L 07/19/1999 - 20:55:45: Broadcast: "1 . . .
+"
+L 07/19/1999 - 20:55:45: Broadcast: "1 . . .
+"
+L 07/19/1999 - 20:55:45: Broadcast: "1 . . .
+"
+L 07/19/1999 - 20:55:45: Broadcast: "1 . . .
+"
+L 07/19/1999 - 20:55:45: Broadcast: "1 . . .
+"
+L 07/19/1999 - 20:55:45: Broadcast: "1 . . .
+"
+L 07/19/1999 - 20:55:45: Broadcast: "1 . . .
+"
+L 07/19/1999 - 20:55:45: Broadcast: "1 . . .
+"
+L 07/19/1999 - 20:55:45: Broadcast: "1 . . .
+"
+L 07/19/1999 - 20:55:47: "colin<31>" killed by world with "info_tfgoal"
+L 07/19/1999 - 20:55:47: "Sgt.<25>" killed by world with "info_tfgoal"
+L 07/19/1999 - 20:55:48: "colin<31>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 20:55:54: "beano111<18>" activated the goal "goalitem"
+L 07/19/1999 - 20:55:54: "Sgt.<25>" changed class to "Spy"
+L 07/19/1999 - 20:55:54: "Flatus<22>" built a "sentry".
+L 07/19/1999 - 20:55:57: "colin<31>" killed by world with "door"
+L 07/19/1999 - 20:55:57: "[PS]-Drumboyyy<24>" activated the goal "brise1"
+L 07/19/1999 - 20:55:58: "[PS]-Drumboyyy<24>" activated the goal "brise2"
+L 07/19/1999 - 20:55:59: "colin<31>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 20:55:59: "Sgt.<25>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 20:56:01: "[PS]-Drumboyyy<24>" activated the goal "brise3"
+L 07/19/1999 - 20:56:04: "[PS]-Drumboyyy<24>" activated the goal "rblock"
+L 07/19/1999 - 20:56:07: "were<36><WON:4294942116>" connected, address "24.200.92.111:27005"
+L 07/19/1999 - 20:56:09: "Apocalypse<33>" built a "sentry".
+L 07/19/1999 - 20:56:18: "were<36><WON:4294942116>" has entered the game
+L 07/19/1999 - 20:56:20: "beano111<18>" destroyed "Flatus<22>"'s "sentry".
+L 07/19/1999 - 20:56:23: "were<36>" joined team "1".
+L 07/19/1999 - 20:56:24: "Sgt.<25>" killed "beano111<18>" with "knife"
+L 07/19/1999 - 20:56:25: "were<36>" changed class to "Demoman"
+L 07/19/1999 - 20:56:25: "were<36>" changed class to "Demoman"
+L 07/19/1999 - 20:56:25: "were<36>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 20:56:27: "beano111<18>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 20:56:45: "Player<19>" activated the goal "goalitem"
+L 07/19/1999 - 20:56:46: "were<36>" killed "Player<19>" with "gl_grenade"
+L 07/19/1999 - 20:56:50: "Player<19>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 20:56:55: "Flatus<22>" built a "sentry".
+L 07/19/1999 - 20:56:59: "[PS]-Drumboyyy<24>" killed by world with "#rock_laser_kill"
+L 07/19/1999 - 20:57:03: "[PS]-Drumboyyy<24>" changed class to "Scout"
+L 07/19/1999 - 20:57:03: "[PS]-Drumboyyy<24>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 20:57:55: "Player<19>" killed "beano111<18>" with "rocket"
+L 07/19/1999 - 20:57:58: "Apocalypse<33>" built a "sentry".
+L 07/19/1999 - 20:57:58: "[PS]-Drumboyyy<24>" activated the goal "goalitem"
+L 07/19/1999 - 20:57:59: "beano111<18>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 20:58:05: "were<36>" activated the goal "rcave1"
+L 07/19/1999 - 20:58:17: "[PS]-Drumboyyy<24>" activated the goal "rhand"
+L 07/19/1999 - 20:58:17: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 20:58:17: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 20:58:17: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 20:58:17: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 20:58:17: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 20:58:17: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 20:58:17: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 20:58:17: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 20:58:17: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 20:58:17: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 20:58:18: "[PS]-Drumboyyy<24>" activated the goal "rblock"
+L 07/19/1999 - 20:58:22: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 20:58:22: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 20:58:22: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 20:58:22: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 20:58:22: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 20:58:22: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 20:58:22: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 20:58:22: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 20:58:22: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 20:58:22: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 20:58:23: "[PS]-Drumboyyy<24>" say "too late bitch"
+L 07/19/1999 - 20:58:23: "[PS]-Drumboyyy<24>" activated the goal "brise1"
+L 07/19/1999 - 20:58:24: "[PS]-Drumboyyy<24>" activated the goal "brise2"
+L 07/19/1999 - 20:58:28: "[PS]-Drumboyyy<24>" activated the goal "brise3"
+L 07/19/1999 - 20:58:32: Broadcast: "5 . . .
+"
+L 07/19/1999 - 20:58:32: Broadcast: "5 . . .
+"
+L 07/19/1999 - 20:58:32: Broadcast: "5 . . .
+"
+L 07/19/1999 - 20:58:32: Broadcast: "5 . . .
+"
+L 07/19/1999 - 20:58:32: Broadcast: "5 . . .
+"
+L 07/19/1999 - 20:58:32: Broadcast: "5 . . .
+"
+L 07/19/1999 - 20:58:32: Broadcast: "5 . . .
+"
+L 07/19/1999 - 20:58:32: Broadcast: "5 . . .
+"
+L 07/19/1999 - 20:58:32: Broadcast: "5 . . .
+"
+L 07/19/1999 - 20:58:32: Broadcast: "5 . . .
+"
+L 07/19/1999 - 20:58:33: Broadcast: "4 . . .
+"
+L 07/19/1999 - 20:58:33: Broadcast: "4 . . .
+"
+L 07/19/1999 - 20:58:33: Broadcast: "4 . . .
+"
+L 07/19/1999 - 20:58:33: Broadcast: "4 . . .
+"
+L 07/19/1999 - 20:58:33: Broadcast: "4 . . .
+"
+L 07/19/1999 - 20:58:33: Broadcast: "4 . . .
+"
+L 07/19/1999 - 20:58:33: Broadcast: "4 . . .
+"
+L 07/19/1999 - 20:58:33: Broadcast: "4 . . .
+"
+L 07/19/1999 - 20:58:33: Broadcast: "4 . . .
+"
+L 07/19/1999 - 20:58:33: Broadcast: "4 . . .
+"
+L 07/19/1999 - 20:58:35: Broadcast: "3 . . .
+"
+L 07/19/1999 - 20:58:35: Broadcast: "3 . . .
+"
+L 07/19/1999 - 20:58:35: Broadcast: "3 . . .
+"
+L 07/19/1999 - 20:58:35: Broadcast: "3 . . .
+"
+L 07/19/1999 - 20:58:35: Broadcast: "3 . . .
+"
+L 07/19/1999 - 20:58:35: Broadcast: "3 . . .
+"
+L 07/19/1999 - 20:58:35: Broadcast: "3 . . .
+"
+L 07/19/1999 - 20:58:35: Broadcast: "3 . . .
+"
+L 07/19/1999 - 20:58:35: Broadcast: "3 . . .
+"
+L 07/19/1999 - 20:58:35: Broadcast: "3 . . .
+"
+L 07/19/1999 - 20:58:36: Broadcast: "2 . . .
+"
+L 07/19/1999 - 20:58:36: Broadcast: "2 . . .
+"
+L 07/19/1999 - 20:58:36: Broadcast: "2 . . .
+"
+L 07/19/1999 - 20:58:36: Broadcast: "2 . . .
+"
+L 07/19/1999 - 20:58:36: Broadcast: "2 . . .
+"
+L 07/19/1999 - 20:58:36: Broadcast: "2 . . .
+"
+L 07/19/1999 - 20:58:36: Broadcast: "2 . . .
+"
+L 07/19/1999 - 20:58:36: Broadcast: "2 . . .
+"
+L 07/19/1999 - 20:58:36: Broadcast: "2 . . .
+"
+L 07/19/1999 - 20:58:36: Broadcast: "2 . . .
+"
+L 07/19/1999 - 20:58:38: Broadcast: "1 . . .
+"
+L 07/19/1999 - 20:58:38: Broadcast: "1 . . .
+"
+L 07/19/1999 - 20:58:38: Broadcast: "1 . . .
+"
+L 07/19/1999 - 20:58:38: Broadcast: "1 . . .
+"
+L 07/19/1999 - 20:58:38: Broadcast: "1 . . .
+"
+L 07/19/1999 - 20:58:38: Broadcast: "1 . . .
+"
+L 07/19/1999 - 20:58:38: Broadcast: "1 . . .
+"
+L 07/19/1999 - 20:58:38: Broadcast: "1 . . .
+"
+L 07/19/1999 - 20:58:38: Broadcast: "1 . . .
+"
+L 07/19/1999 - 20:58:38: Broadcast: "1 . . .
+"
+L 07/19/1999 - 20:58:40: "colin<31>" killed by world with "info_tfgoal"
+L 07/19/1999 - 20:58:40: "Sgt.<25>" killed by world with "info_tfgoal"
+L 07/19/1999 - 20:58:41: "colin<31>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 20:58:42: "Sgt.<25>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 20:58:49: "[PS]-Drumboyyy<24>" activated the goal "brise1"
+L 07/19/1999 - 20:58:50: "[PS]-Drumboyyy<24>" activated the goal "brise2"
+L 07/19/1999 - 20:58:53: "[PS]-Drumboyyy<24>" activated the goal "brise3"
+L 07/19/1999 - 20:58:55: "[PS]-Drumboyyy<24>" activated the goal "rblock"
+L 07/19/1999 - 20:58:57: "Sgt.<25>" say_team "where do you get suit?"
+L 07/19/1999 - 20:59:08: "were<36>" killed by world with "#rock_falling_death"
+L 07/19/1999 - 20:59:10: "were<36>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 20:59:21: "[PS]-Drumboyyy<24>" killed "colin<31>" with "nails"
+L 07/19/1999 - 20:59:23: "colin<31>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 20:59:24: "Flatus<22>" killed "[PS]-Drumboyyy<24>" with "sentrygun"
+L 07/19/1999 - 20:59:26: "[PS]-Drumboyyy<24>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 20:59:31: "colin<31>" changed class to "Sniper"
+L 07/19/1999 - 20:59:36: "Flatus<22>" killed "beano111<18>" with "supershotgun"
+L 07/19/1999 - 20:59:39: "beano111<18>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:00:05: "were<36>" activated the goal "rholedet"
+L 07/19/1999 - 21:00:05: Broadcast: "#rock_red_yard_opened"
+L 07/19/1999 - 21:00:05: Broadcast: "#rock_red_yard_opened"
+L 07/19/1999 - 21:00:05: Broadcast: "#rock_red_yard_opened"
+L 07/19/1999 - 21:00:05: Broadcast: "#rock_red_yard_opened"
+L 07/19/1999 - 21:00:05: Broadcast: "#rock_red_yard_opened"
+L 07/19/1999 - 21:00:05: Broadcast: "#rock_red_yard_opened"
+L 07/19/1999 - 21:00:05: Broadcast: "#rock_red_yard_opened"
+L 07/19/1999 - 21:00:05: Broadcast: "#rock_red_yard_opened"
+L 07/19/1999 - 21:00:05: Broadcast: "#rock_red_yard_opened"
+L 07/19/1999 - 21:00:05: Broadcast: "#rock_red_yard_opened"
+L 07/19/1999 - 21:00:15: "[PS]-Drumboyyy<24>" activated the goal "goalitem"
+L 07/19/1999 - 21:00:15: "Flatus<22>" killed "were<36>" with "sentrygun"
+L 07/19/1999 - 21:00:18: "were<36>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:00:20: "Flatus<22>" killed "[PS]-Drumboyyy<24>" with "sentrygun"
+L 07/19/1999 - 21:00:21: "[PS]-Drumboyyy<24>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:00:34: "Player<19>" changed class to "Demoman"
+L 07/19/1999 - 21:00:35: "Apocalypse<33>" killed by world with "worldspawn"
+L 07/19/1999 - 21:00:49: "Sgt.<25>" killed by world with "#rock_falling_death"
+L 07/19/1999 - 21:00:51: "Sgt.<25>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:00:52: "[PS]-Drumboyyy<24>" activated the goal "goalitem"
+L 07/19/1999 - 21:00:53: "Flatus<22>" killed "[PS]-Drumboyyy<24>" with "sentrygun"
+L 07/19/1999 - 21:00:54: "[PS]-Drumboyyy<24>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:00:58: "Apocalypse<33>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:01:12: "colin<31>" killed "were<36>" with "knife"
+L 07/19/1999 - 21:01:12: "were<36>" destroyed "Flatus<22>"'s "sentry".
+L 07/19/1999 - 21:01:14: "were<36>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:01:16: "[PS]-Drumboyyy<24>" activated the goal "goalitem"
+L 07/19/1999 - 21:01:31: "[PS]-Drumboyyy<24>" activated the goal "rhand"
+L 07/19/1999 - 21:01:31: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:01:31: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:01:31: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:01:31: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:01:31: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:01:31: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:01:31: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:01:31: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:01:31: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:01:31: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:01:32: "[PS]-Drumboyyy<24>" activated the goal "rblock"
+L 07/19/1999 - 21:01:33: "colin<31>" killed by world with "#rock_falling_death"
+L 07/19/1999 - 21:01:36: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:01:36: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:01:36: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:01:36: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:01:36: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:01:36: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:01:36: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:01:36: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:01:36: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:01:36: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:01:36: "colin<31>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:01:37: "[PS]-Drumboyyy<24>" activated the goal "brise1"
+L 07/19/1999 - 21:01:38: "[PS]-Drumboyyy<24>" activated the goal "brise2"
+L 07/19/1999 - 21:01:43: "[PS]-Drumboyyy<24>" activated the goal "brise3"
+L 07/19/1999 - 21:01:46: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:01:46: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:01:46: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:01:46: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:01:46: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:01:46: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:01:46: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:01:46: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:01:46: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:01:46: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:01:48: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:01:48: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:01:48: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:01:48: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:01:48: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:01:48: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:01:48: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:01:48: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:01:48: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:01:48: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:01:49: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:01:49: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:01:49: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:01:49: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:01:49: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:01:49: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:01:49: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:01:49: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:01:49: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:01:49: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:01:51: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:01:51: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:01:51: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:01:51: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:01:51: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:01:51: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:01:51: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:01:51: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:01:51: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:01:51: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:01:52: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:01:52: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:01:52: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:01:52: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:01:52: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:01:52: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:01:52: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:01:52: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:01:52: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:01:52: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:01:54: "colin<31>" killed by world with "info_tfgoal"
+L 07/19/1999 - 21:01:54: "Player<19>" killed by world with "info_tfgoal"
+L 07/19/1999 - 21:01:54: "Sgt.<25>" killed by world with "info_tfgoal"
+L 07/19/1999 - 21:01:56: "Sgt.<25>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:01:56: "colin<31>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:01:57: "Player<19>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:02:03: "[PS]-Drumboyyy<24>" activated the goal "brise1"
+L 07/19/1999 - 21:02:04: "[PS]-Drumboyyy<24>" activated the goal "brise2"
+L 07/19/1999 - 21:02:07: "[PS]-Drumboyyy<24>" activated the goal "brise3"
+L 07/19/1999 - 21:02:09: "[PS]-Drumboyyy<24>" activated the goal "rblock"
+L 07/19/1999 - 21:02:17: "Flatus<22>" built a "sentry".
+L 07/19/1999 - 21:02:24: "Sgt.<25>" killed "beano111<18>" with "supershotgun"
+L 07/19/1999 - 21:02:27: "beano111<18>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:02:37: "[PS]-Drumboyyy<24>" activated the goal "goalitem"
+L 07/19/1999 - 21:02:46: "beano111<18>" say "that spy aiont worth a shit"
+L 07/19/1999 - 21:02:49: "were<36>" killed "Player<19>" with "gl_grenade"
+L 07/19/1999 - 21:02:52: "Player<19>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:02:58: "[PS]-Drumboyyy<24>" activated the goal "rhand"
+L 07/19/1999 - 21:02:58: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:02:58: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:02:58: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:02:58: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:02:58: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:02:58: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:02:58: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:02:58: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:02:58: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:02:58: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:02:59: "[PS]-Drumboyyy<24>" activated the goal "rblock"
+L 07/19/1999 - 21:03:00: "were<36>" activated the goal "goalitem"
+L 07/19/1999 - 21:03:02: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:03:02: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:03:02: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:03:02: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:03:02: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:03:02: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:03:02: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:03:02: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:03:02: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:03:02: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:03:04: "[PS]-Drumboyyy<24>" activated the goal "brise1"
+L 07/19/1999 - 21:03:04: "[PS]-Drumboyyy<24>" activated the goal "brise2"
+L 07/19/1999 - 21:03:05: "beano111<18>" say "if i was a spy i would try to get key"
+L 07/19/1999 - 21:03:09: "[PS]-Drumboyyy<24>" activated the goal "brise3"
+L 07/19/1999 - 21:03:12: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:03:12: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:03:12: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:03:12: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:03:12: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:03:12: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:03:12: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:03:12: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:03:12: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:03:12: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:03:14: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:03:14: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:03:14: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:03:14: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:03:14: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:03:14: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:03:14: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:03:14: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:03:14: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:03:14: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:03:15: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:03:15: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:03:15: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:03:15: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:03:15: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:03:15: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:03:15: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:03:15: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:03:15: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:03:15: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:03:17: "Sgt.<25>" killed "were<36>" with "supershotgun"
+L 07/19/1999 - 21:03:17: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:03:17: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:03:17: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:03:17: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:03:17: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:03:17: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:03:17: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:03:17: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:03:17: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:03:17: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:03:18: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:03:18: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:03:18: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:03:18: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:03:18: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:03:18: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:03:18: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:03:18: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:03:18: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:03:18: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:03:20: "were<36>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:03:20: "colin<31>" killed by world with "info_tfgoal"
+L 07/19/1999 - 21:03:20: "Flatus<22>" killed by world with "info_tfgoal"
+L 07/19/1999 - 21:03:21: "were<36>" killed by world with "#rock_gas_kill"
+L 07/19/1999 - 21:03:21: "[PS]-Drumboyyy<24>" say "that woudl require too much brain power bean"
+L 07/19/1999 - 21:03:22: "colin<31>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:03:23: "Flatus<22>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:03:23: "were<36>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:03:29: "[PS]-Drumboyyy<24>" activated the goal "brise1"
+L 07/19/1999 - 21:03:30: "[PS]-Drumboyyy<24>" activated the goal "brise2"
+L 07/19/1999 - 21:03:33: "[PS]-Drumboyyy<24>" activated the goal "brise3"
+L 07/19/1999 - 21:03:36: "[PS]-Drumboyyy<24>" activated the goal "rblock"
+L 07/19/1999 - 21:03:45: "Sgt.<25>" killed "were<36>" with "supershotgun"
+L 07/19/1999 - 21:03:46: "[PS]-Drumboyyy<24>" activated the goal "goalitem"
+L 07/19/1999 - 21:03:47: "were<36>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:03:59: "[PS]-Drumboyyy<24>" activated the goal "rhand"
+L 07/19/1999 - 21:03:59: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:03:59: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:03:59: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:03:59: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:03:59: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:03:59: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:03:59: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:03:59: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:03:59: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:03:59: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:04:00: "[PS]-Drumboyyy<24>" activated the goal "rblock"
+L 07/19/1999 - 21:04:04: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:04:04: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:04:04: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:04:04: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:04:04: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:04:04: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:04:04: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:04:04: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:04:04: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:04:04: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:04:05: "[PS]-Drumboyyy<24>" activated the goal "brise1"
+L 07/19/1999 - 21:04:06: "[PS]-Drumboyyy<24>" activated the goal "brise2"
+L 07/19/1999 - 21:04:11: "[PS]-Drumboyyy<24>" activated the goal "brise3"
+L 07/19/1999 - 21:04:15: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:04:15: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:04:15: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:04:15: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:04:15: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:04:15: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:04:15: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:04:15: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:04:15: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:04:15: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:04:16: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:04:16: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:04:16: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:04:16: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:04:16: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:04:16: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:04:16: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:04:16: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:04:16: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:04:16: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:04:16: "Apocalypse<33>" changed class to "Demoman"
+L 07/19/1999 - 21:04:18: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:04:18: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:04:18: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:04:18: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:04:18: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:04:18: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:04:18: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:04:18: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:04:18: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:04:18: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:04:19: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:04:19: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:04:19: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:04:19: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:04:19: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:04:19: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:04:19: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:04:19: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:04:19: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:04:19: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:04:21: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:04:21: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:04:21: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:04:21: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:04:21: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:04:21: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:04:21: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:04:21: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:04:21: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:04:21: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:04:22: "Sgt.<25>" killed by world with "info_tfgoal"
+L 07/19/1999 - 21:04:22: "Apocalypse<33>" killed by world with "#rock_gas_kill"
+L 07/19/1999 - 21:04:24: "Apocalypse<33>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:04:24: "Sgt.<25>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:04:31: "Sgt.<25>" changed class to "Scout"
+L 07/19/1999 - 21:04:32: "Mo<37><WON:4294942898>" connected, address "165.121.33.214:27005"
+L 07/19/1999 - 21:04:32: "[PS]-Drumboyyy<24>" activated the goal "brise1"
+L 07/19/1999 - 21:04:33: "[PS]-Drumboyyy<24>" activated the goal "brise2"
+L 07/19/1999 - 21:04:35: "[PS]-Drumboyyy<24>" activated the goal "brise3"
+L 07/19/1999 - 21:04:38: "[PS]-Drumboyyy<24>" activated the goal "rblock"
+L 07/19/1999 - 21:04:50: "were<36>" activated the goal "goalitem"
+L 07/19/1999 - 21:04:58: "Mo<37><WON:4294942898>" has entered the game
+L 07/19/1999 - 21:05:14: "Flatus<22>" disconnected
+L 07/19/1999 - 21:05:14: "<-1>" destroyed "Flatus<22>"'s "sentry".
+L 07/19/1999 - 21:05:20: "beano111<18>" killed "Sgt.<25>" with "sentrygun"
+L 07/19/1999 - 21:05:22: "Sgt.<25>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:05:23: "Mo<37>" joined team "1".
+L 07/19/1999 - 21:05:26: "[PS]-Drumboyyy<24>" killed "Player<19>" with "nails"
+L 07/19/1999 - 21:05:26: "Player<19>" killed "[PS]-Drumboyyy<24>" with "pipebomb"
+L 07/19/1999 - 21:05:26: "were<36>" killed "colin<31>" with "gl_grenade"
+L 07/19/1999 - 21:05:27: "Player<19>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:05:28: "[PS]-Drumboyyy<24>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:05:35: "were<36>" killed self with "mirvgrenade"
+L 07/19/1999 - 21:05:36: "colin<31>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:05:37: "were<36>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:05:38: "Mo<37>" changed class to "Sniper"
+L 07/19/1999 - 21:05:38: "Mo<37>" changed class to "Sniper"
+L 07/19/1999 - 21:05:38: "Mo<37>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:05:51: "beano111<18>" activated the goal "goalitem"
+L 07/19/1999 - 21:05:56: "beano111<18>" activated the goal "rhand"
+L 07/19/1999 - 21:05:56: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:05:56: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:05:56: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:05:56: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:05:56: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:05:56: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:05:56: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:05:56: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:05:56: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:05:56: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:05:57: "beano111<18>" activated the goal "rblock"
+L 07/19/1999 - 21:05:59: "Apocalypse<33>" killed "colin<31>" with "mirvgrenade"
+L 07/19/1999 - 21:06:00: "Apocalypse<33>" killed "Player<19>" with "mirvgrenade"
+L 07/19/1999 - 21:06:00: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:06:00: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:06:00: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:06:00: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:06:00: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:06:00: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:06:00: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:06:00: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:06:00: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:06:00: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:06:02: "beano111<18>" activated the goal "brise1"
+L 07/19/1999 - 21:06:03: "beano111<18>" activated the goal "brise2"
+L 07/19/1999 - 21:06:05: "Player<19>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:06:06: "Apocalypse<33>" activated the goal "goalitem"
+L 07/19/1999 - 21:06:07: "beano111<18>" activated the goal "brise3"
+L 07/19/1999 - 21:06:11: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:06:11: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:06:11: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:06:11: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:06:11: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:06:11: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:06:11: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:06:11: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:06:11: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:06:11: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:06:12: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:06:12: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:06:12: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:06:12: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:06:12: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:06:12: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:06:12: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:06:12: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:06:12: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:06:12: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:06:14: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:06:14: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:06:14: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:06:14: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:06:14: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:06:14: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:06:14: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:06:14: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:06:14: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:06:14: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:06:15: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:06:15: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:06:15: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:06:15: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:06:15: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:06:15: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:06:15: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:06:15: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:06:15: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:06:15: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:06:16: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:06:16: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:06:16: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:06:16: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:06:16: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:06:16: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:06:16: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:06:16: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:06:16: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:06:16: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:06:19: "Apocalypse<33>" killed by world with "info_tfgoal"
+L 07/19/1999 - 21:06:20: "Apocalypse<33>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:06:21: "colin<31>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:06:28: "beano111<18>" activated the goal "brise1"
+L 07/19/1999 - 21:06:28: "beano111<18>" activated the goal "brise2"
+L 07/19/1999 - 21:06:31: "beano111<18>" activated the goal "brise3"
+L 07/19/1999 - 21:06:33: "beano111<18>" activated the goal "rblock"
+L 07/19/1999 - 21:06:36: "colin<31>" changed class to "Engineer"
+L 07/19/1999 - 21:06:47: "were<36>" killed "Sgt.<25>" with "gl_grenade"
+L 07/19/1999 - 21:06:49: "Sgt.<25>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:06:53: "Mo<37>" say "Hi PLAYER"
+L 07/19/1999 - 21:06:59: "Mo<37>" say "TYPE Y TO TALK"
+L 07/19/1999 - 21:07:00: "were<36>" say "hello"
+L 07/19/1999 - 21:07:33: "Apocalypse<33>" killed by world with "#rock_laser_kill"
+L 07/19/1999 - 21:07:34: "[PS]-Drumboyyy<24>" killed "Player<19>" with "nails"
+L 07/19/1999 - 21:07:36: "Apocalypse<33>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:07:37: "Player<19>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:07:47: "colin<31>" say_team "eteamunder"
+L 07/19/1999 - 21:07:53: "colin<31>" changed class to "Engineer"
+L 07/19/1999 - 21:07:55: "beano111<18>" activated the goal "goalitem"
+L 07/19/1999 - 21:08:00: "Player<19>" changed class to "Soldier"
+L 07/19/1999 - 21:08:02: "colin<31>" killed by world with "#rock_falling_death"
+L 07/19/1999 - 21:08:07: "colin<31>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:08:14: "Player<19>" killed "Mo<37>" with "gl_grenade"
+L 07/19/1999 - 21:08:25: "Mo<37>" changed class to "Soldier"
+L 07/19/1999 - 21:08:27: "Mo<37>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:08:28: "were<36>" killed "Sgt.<25>" with "pipebomb"
+L 07/19/1999 - 21:08:33: "Sgt.<25>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:08:33: "Player<19>" killed "were<36>" with "gl_grenade"
+L 07/19/1999 - 21:08:34: "were<36>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:08:35: "beano111<18>" activated the goal "rhand"
+L 07/19/1999 - 21:08:35: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:08:35: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:08:35: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:08:35: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:08:35: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:08:35: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:08:35: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:08:35: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:08:35: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:08:35: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:08:36: "Mo<37>" changed class to "Demoman"
+L 07/19/1999 - 21:08:36: "beano111<18>" activated the goal "rblock"
+L 07/19/1999 - 21:08:40: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:08:40: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:08:40: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:08:40: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:08:40: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:08:40: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:08:40: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:08:40: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:08:40: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:08:40: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:08:42: "beano111<18>" activated the goal "brise1"
+L 07/19/1999 - 21:08:43: "beano111<18>" activated the goal "brise2"
+L 07/19/1999 - 21:08:45: "Sgt.<25>" changed class to "Demoman"
+L 07/19/1999 - 21:08:47: "beano111<18>" activated the goal "brise3"
+L 07/19/1999 - 21:08:51: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:08:51: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:08:51: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:08:51: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:08:51: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:08:51: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:08:51: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:08:51: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:08:51: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:08:51: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:08:53: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:08:53: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:08:53: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:08:53: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:08:53: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:08:53: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:08:53: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:08:53: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:08:53: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:08:53: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:08:54: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:08:54: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:08:54: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:08:54: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:08:54: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:08:54: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:08:54: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:08:54: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:08:54: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:08:54: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:08:56: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:08:56: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:08:56: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:08:56: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:08:56: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:08:56: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:08:56: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:08:56: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:08:56: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:08:56: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:08:57: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:08:57: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:08:57: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:08:57: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:08:57: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:08:57: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:08:57: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:08:57: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:08:57: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:08:57: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:09:00: "Sgt.<25>" killed by world with "info_tfgoal"
+L 07/19/1999 - 21:09:01: "Sgt.<25>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:09:10: "beano111<18>" activated the goal "brise1"
+L 07/19/1999 - 21:09:11: "beano111<18>" activated the goal "brise2"
+L 07/19/1999 - 21:09:13: "beano111<18>" activated the goal "brise3"
+L 07/19/1999 - 21:09:16: "beano111<18>" activated the goal "rblock"
+L 07/19/1999 - 21:09:18: "were<36>" activated the goal "goalitem"
+L 07/19/1999 - 21:09:23: "Sgt.<25>" killed "were<36>" with "gl_grenade"
+L 07/19/1999 - 21:09:25: "were<36>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:09:28: "colin<31>" built a "dispenser".
+L 07/19/1999 - 21:09:41: "Mo<37>" killed "Sgt.<25>" with "nailgrenade"
+L 07/19/1999 - 21:09:50: "Mo<37>" activated the goal "goalitem"
+L 07/19/1999 - 21:09:50: "Player<19>" killed self with "gl_grenade"
+L 07/19/1999 - 21:09:53: "Player<19>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:09:56: "Sgt.<25>" disconnected
+L 07/19/1999 - 21:10:02: "Apocalypse<33>" killed by world with "#rock_laser_kill"
+L 07/19/1999 - 21:10:03: "Apocalypse<33>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:10:14: "colin<31>" changed class to "Pyro"
+L 07/19/1999 - 21:10:19: "Apocalypse<33>" changed class to "HWGuy"
+L 07/19/1999 - 21:10:23: "were<36>" killed "Player<19>" with "gl_grenade"
+L 07/19/1999 - 21:10:23: "Player<19>" killed "were<36>" with "rocket"
+L 07/19/1999 - 21:10:24: "were<36>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:10:30: "Apocalypse<33>" changed class to "Demoman"
+L 07/19/1999 - 21:10:30: "Player<19>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:10:33: "Mo<37>" activated the goal "rhand"
+L 07/19/1999 - 21:10:33: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:10:33: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:10:33: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:10:33: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:10:33: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:10:33: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:10:33: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:10:33: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:10:33: Broadcast: "#rock_blue_scores"
+L 07/19/1999 - 21:10:34: "Mo<37>" activated the goal "rblock"
+L 07/19/1999 - 21:10:38: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:10:38: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:10:38: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:10:38: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:10:38: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:10:38: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:10:38: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:10:38: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:10:38: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:10:39: "Mo<37>" activated the goal "brise1"
+L 07/19/1999 - 21:10:40: "Mo<37>" activated the goal "brise2"
+L 07/19/1999 - 21:10:44: "Mo<37>" activated the goal "brise3"
+L 07/19/1999 - 21:10:46: "[PS]-Drumboyyy<24>" say "fuck this"
+L 07/19/1999 - 21:10:47: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:10:47: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:10:47: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:10:47: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:10:47: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:10:47: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:10:47: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:10:47: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:10:47: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:10:49: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:10:49: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:10:49: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:10:49: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:10:49: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:10:49: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:10:49: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:10:49: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:10:49: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:10:50: "[PS]-Drumboyyy<24>" say "im switching teams"
+L 07/19/1999 - 21:10:50: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:10:50: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:10:50: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:10:50: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:10:50: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:10:50: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:10:50: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:10:50: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:10:50: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:10:52: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:10:52: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:10:52: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:10:52: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:10:52: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:10:52: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:10:52: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:10:52: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:10:52: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:10:53: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:10:53: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:10:53: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:10:53: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:10:53: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:10:53: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:10:53: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:10:53: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:10:53: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:10:55: "[PS]-Drumboyyy<24>" changed to team "2".
+L 07/19/1999 - 21:10:55: "[PS]-Drumboyyy<24>" killed self with "world"
+L 07/19/1999 - 21:10:55: "Apocalypse<33>" killed by world with "#rock_gas_kill"
+L 07/19/1999 - 21:10:57: "Apocalypse<33>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:11:00: "[PS]-Drumboyyy<24>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:11:01: "[PS]-Drumboyyy<24>" changed class to "Demoman"
+L 07/19/1999 - 21:11:01: "[PS]-Drumboyyy<24>" changed class to "Demoman"
+L 07/19/1999 - 21:11:01: "[PS]-Drumboyyy<24>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:11:04: "Mo<37>" say "thats dumb"
+L 07/19/1999 - 21:11:04: "Mo<37>" activated the goal "brise1"
+L 07/19/1999 - 21:11:05: "Mo<37>" activated the goal "brise2"
+L 07/19/1999 - 21:11:07: "Mo<37>" activated the goal "brise3"
+L 07/19/1999 - 21:11:10: "Mo<37>" activated the goal "rblock"
+L 07/19/1999 - 21:11:14: "were<36>" activated the goal "goalitem"
+L 07/19/1999 - 21:11:16: "[PS]-Drumboyyy<24>" killed "were<36>" with "pipebomb"
+L 07/19/1999 - 21:11:17: "were<36>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:11:34: "Mo<37>" killed "colin<31>" with "rocket"
+L 07/19/1999 - 21:11:36: "<-1>" destroyed "colin<31>"'s "dispenser".
+L 07/19/1999 - 21:11:36: "colin<31>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:11:39: "[PS]-Drumboyyy<24>" activated the goal "rcave1"
+L 07/19/1999 - 21:12:00: "[PS]-Drumboyyy<24>" killed "Apocalypse<33>" with "pipebomb"
+L 07/19/1999 - 21:12:02: "Apocalypse<33>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:12:04: "beano111<18>" built a "dispenser".
+L 07/19/1999 - 21:12:44: "were<36>" killed "colin<31>" with "mirvgrenade"
+L 07/19/1999 - 21:12:45: "colin<31>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:12:50: "[PS]-Drumboyyy<24>" killed "Mo<37>" with "pipebomb"
+L 07/19/1999 - 21:12:54: "Mo<37>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:12:59: "were<36>" killed "Player<19>" with "gl_grenade"
+L 07/19/1999 - 21:13:02: "<-1>" destroyed "beano111<18>"'s "dispenser".
+L 07/19/1999 - 21:13:05: "were<36>" activated the goal "goalitem"
+L 07/19/1999 - 21:13:08: "[PS]-Drumboyyy<24>" killed "were<36>" with "pipebomb"
+L 07/19/1999 - 21:13:10: "were<36>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:13:16: "Player<19>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:13:19: "kip_wifferdink<38><WON:4294943500>" connected, address "216.36.30.52:61482"
+L 07/19/1999 - 21:13:21: "colin<31>" killed self with "rocket"
+L 07/19/1999 - 21:13:23: "kip_wifferdink<38>" changed name to "mr<38>"
+L 07/19/1999 - 21:13:25: "colin<31>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:13:32: "Apocalypse<33>" activated the goal "goalitem"
+L 07/19/1999 - 21:13:49: "mr<38><WON:4294943500>" has entered the game
+L 07/19/1999 - 21:13:57: "Apocalypse<33>" say_team "i need help in key room"
+L 07/19/1999 - 21:14:06: "Mo<37>" killed self with "gl_grenade"
+L 07/19/1999 - 21:14:09: "Mo<37>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:14:12: "[PS]-Drumboyyy<24>" killed "were<36>" with "pipebomb"
+L 07/19/1999 - 21:14:13: "Mo<37>" disconnected
+L 07/19/1999 - 21:14:16: "were<36>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:14:37: "[PS]-Drumboyyy<24>" killed "were<36>" with "pipebomb"
+L 07/19/1999 - 21:14:38: "Player<19>" disconnected
+L 07/19/1999 - 21:14:42: "were<36>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:14:47: "[PS]-Drumboyyy<24>" killed "Apocalypse<33>" with "pipebomb"
+L 07/19/1999 - 21:14:48: "mr<38>" changed name to "ingratiated<38>"
+L 07/19/1999 - 21:14:50: "Apocalypse<33>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:14:59: "ingratiated<38>" joined team "2".
+L 07/19/1999 - 21:15:00: "[PS]-Drumboyyy<24>" killed "beano111<18>" with "pipebomb"
+L 07/19/1999 - 21:15:02: "beano111<18>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:15:10: "ingratiated<38>" changed class to "Pyro"
+L 07/19/1999 - 21:15:10: "ingratiated<38>" changed class to "Pyro"
+L 07/19/1999 - 21:15:10: "ingratiated<38>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:15:44: "were<36>" killed self with "mirvgrenade"
+L 07/19/1999 - 21:15:47: "were<36>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:15:59: "[PS]-Drumboyyy<24>" killed "Apocalypse<33>" with "gl_grenade"
+L 07/19/1999 - 21:16:01: "Apocalypse<33>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:16:11: "Apocalypse<33>" changed class to "Medic"
+L 07/19/1999 - 21:16:40: "Apocalypse<33>" killed by world with "#rock_falling_death"
+L 07/19/1999 - 21:16:41: "Apocalypse<33>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:16:46: "Apocalypse<33>" changed class to "Scout"
+L 07/19/1999 - 21:16:48: "[PS]-Drumboyyy<24>" killed "were<36>" with "pipebomb"
+L 07/19/1999 - 21:16:50: "Apocalypse<33>" changed class to "Demoman"
+L 07/19/1999 - 21:16:57: "were<36>" disconnected
+L 07/19/1999 - 21:17:15: "Ironman<39><WON:4294914261>" connected, address "209.66.62.66:27005"
+L 07/19/1999 - 21:17:44: "Ironman<39><WON:4294914261>" has entered the game
+L 07/19/1999 - 21:17:53: "[PS]-Drumboyyy<24>" killed "Apocalypse<33>" with "pipebomb"
+L 07/19/1999 - 21:17:56: "Apocalypse<33>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:18:03: "beano111<18>" killed "colin<31>" with "supershotgun"
+L 07/19/1999 - 21:18:07: "colin<31>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:18:18: "Ironman<39>" joined team "1".
+L 07/19/1999 - 21:18:31: "Ironman<39>" changed class to "Engineer"
+L 07/19/1999 - 21:18:31: "Ironman<39>" changed class to "Engineer"
+L 07/19/1999 - 21:18:31: "Ironman<39>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:18:52: "Apocalypse<33>" activated the goal "rcave1"
+L 07/19/1999 - 21:19:02: "beano111<18>" killed "[PS]-Drumboyyy<24>" with "sentrygun"
+L 07/19/1999 - 21:19:03: "Apocalypse<33>" killed by world with "#rock_falling_death"
+L 07/19/1999 - 21:19:03: "[PS]-Drumboyyy<24>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:19:04: "Apocalypse<33>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:19:23: "ingratiated<38>" killed "beano111<18>" with "rocket"
+L 07/19/1999 - 21:19:26: "beano111<18>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:19:34: "[PS]-Drumboyyy<24>" killed "Apocalypse<33>" with "pipebomb"
+L 07/19/1999 - 21:19:37: "Apocalypse<33>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:19:55: "beano111<18>" killed "[PS]-Drumboyyy<24>" with "sentrygun"
+L 07/19/1999 - 21:20:00: "[PS]-Drumboyyy<24>" destroyed "beano111<18>"'s "sentry".
+L 07/19/1999 - 21:20:03: "[PS]-Drumboyyy<24>" changed class to "Scout"
+L 07/19/1999 - 21:20:03: "[PS]-Drumboyyy<24>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:20:04: "Apocalypse<33>" killed by world with "#rock_falling_death"
+L 07/19/1999 - 21:20:05: "Apocalypse<33>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:20:11: "Ironman<39>" built a "sentry".
+L 07/19/1999 - 21:20:13: "beano111<18>" built a "sentry".
+L 07/19/1999 - 21:20:28: "[PS]-Drumboyyy<24>" activated the goal "goalitem"
+L 07/19/1999 - 21:20:33: "beano111<18>" killed "[PS]-Drumboyyy<24>" with "sentrygun"
+L 07/19/1999 - 21:20:34: "[PS]-Drumboyyy<24>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:21:00: "Apocalypse<33>" changed class to "Engineer"
+L 07/19/1999 - 21:21:00: "[PS]-Drumboyyy<24>" activated the goal "goalitem"
+L 07/19/1999 - 21:21:20: "beano111<18>" killed "[PS]-Drumboyyy<24>" with "supershotgun"
+L 07/19/1999 - 21:21:21: "[PS]-Drumboyyy<24>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:21:51: "[PS]-Drumboyyy<24>" activated the goal "goalitem"
+L 07/19/1999 - 21:21:54: "ingratiated<38>" killed "Ironman<39>" with "shotgun"
+L 07/19/1999 - 21:21:55: "Ironman<39>" killed "[PS]-Drumboyyy<24>" with "sentrygun"
+L 07/19/1999 - 21:21:57: "Ironman<39>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:21:57: "[PS]-Drumboyyy<24>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:22:19: "colin<31>" disconnected
+L 07/19/1999 - 21:22:24: "[PS]-Drumboyyy<24>" activated the goal "goalitem"
+L 07/19/1999 - 21:22:26: "[PS]-Drumboyyy<24>" activated the goal "bhand"
+L 07/19/1999 - 21:22:26: Broadcast: "#rock_red_scores"
+L 07/19/1999 - 21:22:26: Broadcast: "#rock_red_scores"
+L 07/19/1999 - 21:22:26: Broadcast: "#rock_red_scores"
+L 07/19/1999 - 21:22:26: Broadcast: "#rock_red_scores"
+L 07/19/1999 - 21:22:26: Broadcast: "#rock_red_scores"
+L 07/19/1999 - 21:22:26: Broadcast: "#rock_red_scores"
+L 07/19/1999 - 21:22:26: Broadcast: "#rock_red_scores"
+L 07/19/1999 - 21:22:26: "[PS]-Drumboyyy<24>" activated the goal "bblock"
+L 07/19/1999 - 21:22:29: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:22:29: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:22:29: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:22:29: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:22:29: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:22:29: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:22:29: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:22:31: "[PS]-Drumboyyy<24>" activated the goal "brise1"
+L 07/19/1999 - 21:22:31: "[PS]-Drumboyyy<24>" activated the goal "brise2"
+L 07/19/1999 - 21:22:35: "[PS]-Drumboyyy<24>" activated the goal "brise3"
+L 07/19/1999 - 21:22:38: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:22:38: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:22:38: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:22:38: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:22:38: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:22:38: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:22:38: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:22:39: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:22:39: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:22:39: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:22:39: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:22:39: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:22:39: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:22:39: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:22:40: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:22:40: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:22:40: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:22:40: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:22:40: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:22:40: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:22:40: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:22:41: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:22:41: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:22:41: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:22:41: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:22:41: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:22:41: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:22:41: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:22:42: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:22:42: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:22:42: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:22:42: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:22:42: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:22:42: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:22:42: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:22:44: "ingratiated<38>" killed by world with "info_tfgoal"
+L 07/19/1999 - 21:22:44: "Ironman<39>" killed by world with "#rock_gas_kill"
+L 07/19/1999 - 21:22:45: "ingratiated<38>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:22:47: "Ironman<39>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:22:50: "[PS]-Drumboyyy<24>" activated the goal "brise1"
+L 07/19/1999 - 21:22:51: "[PS]-Drumboyyy<24>" activated the goal "brise2"
+L 07/19/1999 - 21:22:54: "[PS]-Drumboyyy<24>" activated the goal "brise3"
+L 07/19/1999 - 21:22:56: "[PS]-Drumboyyy<24>" activated the goal "bblock"
+L 07/19/1999 - 21:23:00: "beano111<18>" killed "[PS]-Drumboyyy<24>" with "empgrenade"
+L 07/19/1999 - 21:23:05: "[PS]-Drumboyyy<24>" changed class to "Demoman"
+L 07/19/1999 - 21:23:05: "[PS]-Drumboyyy<24>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:23:37: "[PS]-Drumboyyy<24>" killed "Ironman<39>" with "pipebomb"
+L 07/19/1999 - 21:23:40: "Ironman<39>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:24:11: "[PS]-Drumboyyy<24>" killed "Ironman<39>" with "pipebomb"
+L 07/19/1999 - 21:24:12: "Ironman<39>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:24:42: "beano111<18>" killed "ingratiated<38>" with "sentrygun"
+L 07/19/1999 - 21:24:45: "ingratiated<38>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:25:06: "[PS]-Drumboyyy<24>" destroyed "beano111<18>"'s "sentry".
+L 07/19/1999 - 21:25:08: "[PS]-Drumboyyy<24>" killed "beano111<18>" with "mirvgrenade"
+L 07/19/1999 - 21:25:10: "[PS]-Drumboyyy<24>" activated the goal "goalitem"
+L 07/19/1999 - 21:25:10: "beano111<18>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:25:26: "beano111<18>" built a "sentry".
+L 07/19/1999 - 21:25:39: "[PS]-Drumboyyy<24>" destroyed "beano111<18>"'s "sentry".
+L 07/19/1999 - 21:25:42: "beano111<18>" killed "[PS]-Drumboyyy<24>" with "supershotgun"
+L 07/19/1999 - 21:25:44: "[PS]-Drumboyyy<24>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:26:27: "[PS]-Drumboyyy<24>" activated the goal "goalitem"
+L 07/19/1999 - 21:26:39: "[PS]-Drumboyyy<24>" destroyed "Ironman<39>"'s "sentry".
+L 07/19/1999 - 21:26:52: "[PS]-Drumboyyy<24>" killed "beano111<18>" with "pipebomb"
+L 07/19/1999 - 21:26:53: "beano111<18>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:26:57: "[PS]-Drumboyyy<24>" activated the goal "bhand"
+L 07/19/1999 - 21:26:57: Broadcast: "#rock_red_scores"
+L 07/19/1999 - 21:26:57: Broadcast: "#rock_red_scores"
+L 07/19/1999 - 21:26:57: Broadcast: "#rock_red_scores"
+L 07/19/1999 - 21:26:57: Broadcast: "#rock_red_scores"
+L 07/19/1999 - 21:26:57: Broadcast: "#rock_red_scores"
+L 07/19/1999 - 21:26:57: Broadcast: "#rock_red_scores"
+L 07/19/1999 - 21:26:57: Broadcast: "#rock_red_scores"
+L 07/19/1999 - 21:26:57: "[PS]-Drumboyyy<24>" activated the goal "bblock"
+L 07/19/1999 - 21:27:00: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:27:00: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:27:00: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:27:00: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:27:00: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:27:00: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:27:00: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:27:02: "[PS]-Drumboyyy<24>" activated the goal "brise1"
+L 07/19/1999 - 21:27:02: "[PS]-Drumboyyy<24>" say "heehee"
+L 07/19/1999 - 21:27:02: "[PS]-Drumboyyy<24>" activated the goal "brise2"
+L 07/19/1999 - 21:27:06: "[PS]-Drumboyyy<24>" activated the goal "brise3"
+L 07/19/1999 - 21:27:07: "[PS]-Drumboyyy<24>" say "how am i doing now"
+L 07/19/1999 - 21:27:09: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:27:09: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:27:09: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:27:09: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:27:09: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:27:09: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:27:09: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:27:10: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:27:10: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:27:10: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:27:10: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:27:10: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:27:10: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:27:10: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:27:12: "Ironman<39>" killed by world with "#rock_laser_kill"
+L 07/19/1999 - 21:27:12: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:27:12: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:27:12: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:27:12: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:27:12: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:27:12: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:27:12: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:27:13: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:27:13: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:27:13: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:27:13: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:27:13: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:27:13: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:27:13: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:27:13: "Ironman<39>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:27:14: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:27:14: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:27:14: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:27:14: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:27:14: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:27:14: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:27:14: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:27:16: "Ironman<39>" killed by world with "#rock_gas_kill"
+L 07/19/1999 - 21:27:18: "Ironman<39>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:27:22: "[PS]-Drumboyyy<24>" activated the goal "brise1"
+L 07/19/1999 - 21:27:23: "beano111<18>" say "stilll  110 behind"
+L 07/19/1999 - 21:27:23: "[PS]-Drumboyyy<24>" activated the goal "brise2"
+L 07/19/1999 - 21:27:26: "[PS]-Drumboyyy<24>" activated the goal "brise3"
+L 07/19/1999 - 21:27:28: "[PS]-Drumboyyy<24>" activated the goal "bblock"
+L 07/19/1999 - 21:27:37: "beano111<18>" built a "sentry".
+L 07/19/1999 - 21:27:42: "Ironman<39>" built a "dispenser".
+L 07/19/1999 - 21:27:45: "Apocalypse<33>" activated the goal "goalitem"
+L 07/19/1999 - 21:27:53: "beano111<18>" killed "[PS]-Drumboyyy<24>" with "sentrygun"
+L 07/19/1999 - 21:27:55: "Apocalypse<33>" say_team "hehe"
+L 07/19/1999 - 21:27:56: "[PS]-Drumboyyy<24>" changed class to "Scout"
+L 07/19/1999 - 21:27:56: "[PS]-Drumboyyy<24>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:28:07: "Apocalypse<33>" killed by world with "#rock_falling_death"
+L 07/19/1999 - 21:28:10: "Apocalypse<33>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:28:12: "beano111<18>" built a "sentry".
+L 07/19/1999 - 21:28:15: "[PS]-Drumboyyy<24>" say "heehee"
+L 07/19/1999 - 21:28:22: "<-1>" destroyed "Ironman<39>"'s "dispenser".
+L 07/19/1999 - 21:28:30: "Apocalypse<33>" changed class to "Demoman"
+L 07/19/1999 - 21:28:42: "beano111<18>" killed "[PS]-Drumboyyy<24>" with "sentrygun"
+L 07/19/1999 - 21:28:44: "[PS]-Drumboyyy<24>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:28:53: "beano111<18>" say "hehehehe"
+L 07/19/1999 - 21:28:54: "ingratiated<38>" killed "Apocalypse<33>" with "shotgun"
+L 07/19/1999 - 21:28:57: "Apocalypse<33>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:29:09: "[PS]-Drumboyyy<24>" activated the goal "goalitem"
+L 07/19/1999 - 21:29:12: "Apocalypse<33>" changed class to "Engineer"
+L 07/19/1999 - 21:29:16: "beano111<18>" killed "[PS]-Drumboyyy<24>" with "sentrygun"
+L 07/19/1999 - 21:29:17: "[PS]-Drumboyyy<24>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:29:26: "beano111<18>" built a "dispenser".
+L 07/19/1999 - 21:29:39: "[PS]-Drumboyyy<24>" activated the goal "goalitem"
+L 07/19/1999 - 21:29:43: "<-1>" destroyed "beano111<18>"'s "dispenser".
+L 07/19/1999 - 21:29:46: "[PS]-Drumboyyy<24>" killed "Ironman<39>" with "nails"
+L 07/19/1999 - 21:29:47: "Ironman<39>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:29:56: "[PS]-Drumboyyy<24>" activated the goal "bhand"
+L 07/19/1999 - 21:29:56: Broadcast: "#rock_red_scores"
+L 07/19/1999 - 21:29:56: Broadcast: "#rock_red_scores"
+L 07/19/1999 - 21:29:56: Broadcast: "#rock_red_scores"
+L 07/19/1999 - 21:29:56: Broadcast: "#rock_red_scores"
+L 07/19/1999 - 21:29:56: Broadcast: "#rock_red_scores"
+L 07/19/1999 - 21:29:56: Broadcast: "#rock_red_scores"
+L 07/19/1999 - 21:29:56: Broadcast: "#rock_red_scores"
+L 07/19/1999 - 21:29:57: "[PS]-Drumboyyy<24>" activated the goal "bblock"
+L 07/19/1999 - 21:30:00: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:30:00: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:30:00: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:30:00: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:30:00: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:30:00: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:30:00: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:30:01: "[PS]-Drumboyyy<24>" activated the goal "brise1"
+L 07/19/1999 - 21:30:01: "[PS]-Drumboyyy<24>" activated the goal "brise2"
+L 07/19/1999 - 21:30:05: "[PS]-Drumboyyy<24>" activated the goal "brise3"
+L 07/19/1999 - 21:30:08: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:30:08: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:30:08: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:30:08: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:30:08: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:30:08: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:30:08: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:30:09: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:30:09: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:30:09: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:30:09: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:30:09: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:30:09: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:30:09: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:30:10: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:30:10: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:30:10: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:30:10: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:30:10: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:30:10: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:30:10: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:30:11: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:30:11: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:30:11: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:30:11: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:30:11: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:30:11: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:30:11: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:30:12: "Ironman<39>" built a "sentry".
+L 07/19/1999 - 21:30:13: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:30:13: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:30:13: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:30:13: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:30:13: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:30:13: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:30:13: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:30:14: "Ironman<39>" killed by world with "#rock_gas_kill"
+L 07/19/1999 - 21:30:18: "Ironman<39>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:30:20: "[PS]-Drumboyyy<24>" activated the goal "brise1"
+L 07/19/1999 - 21:30:21: "[PS]-Drumboyyy<24>" activated the goal "brise2"
+L 07/19/1999 - 21:30:24: "[PS]-Drumboyyy<24>" activated the goal "brise3"
+L 07/19/1999 - 21:30:26: "[PS]-Drumboyyy<24>" activated the goal "bblock"
+L 07/19/1999 - 21:30:42: "BarkMulch<40><WON:4294943029>" connected, address "207.194.159.103:22131"
+L 07/19/1999 - 21:30:44: "[PS]-Drumboyyy<24>" destroyed "Ironman<39>"'s "sentry".
+L 07/19/1999 - 21:30:55: "[PS]-Drumboyyy<24>" activated the goal "goalitem"
+L 07/19/1999 - 21:31:01: "beano111<18>" killed "[PS]-Drumboyyy<24>" with "sentrygun"
+L 07/19/1999 - 21:31:02: "[PS]-Drumboyyy<24>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:31:08: "ingratiated<38>" killed "Ironman<39>" with "shotgun"
+L 07/19/1999 - 21:31:10: "Ironman<39>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:31:13: "beano111<18>" built a "dispenser".
+L 07/19/1999 - 21:31:14: "BarkMulch<40><WON:4294943029>" has entered the game
+L 07/19/1999 - 21:31:19: "Ironman<39>" disconnected
+L 07/19/1999 - 21:31:24: "[PS]-Drumboyyy<24>" activated the goal "goalitem"
+L 07/19/1999 - 21:31:26: "BarkMulch<40>" joined team "2".
+L 07/19/1999 - 21:31:35: "BarkMulch<40>" changed class to "Soldier"
+L 07/19/1999 - 21:31:35: "BarkMulch<40>" changed class to "Soldier"
+L 07/19/1999 - 21:31:35: "BarkMulch<40>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:31:39: "[PS]-Drumboyyy<24>" activated the goal "bhand"
+L 07/19/1999 - 21:31:39: Broadcast: "#rock_red_scores"
+L 07/19/1999 - 21:31:39: Broadcast: "#rock_red_scores"
+L 07/19/1999 - 21:31:39: Broadcast: "#rock_red_scores"
+L 07/19/1999 - 21:31:39: Broadcast: "#rock_red_scores"
+L 07/19/1999 - 21:31:39: Broadcast: "#rock_red_scores"
+L 07/19/1999 - 21:31:39: Broadcast: "#rock_red_scores"
+L 07/19/1999 - 21:31:39: Broadcast: "#rock_red_scores"
+L 07/19/1999 - 21:31:40: "[PS]-Drumboyyy<24>" activated the goal "bblock"
+L 07/19/1999 - 21:31:43: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:31:43: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:31:43: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:31:43: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:31:43: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:31:43: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:31:43: Broadcast: "#rock_gasmask_message"
+L 07/19/1999 - 21:31:44: "[PS]-Drumboyyy<24>" activated the goal "brise1"
+L 07/19/1999 - 21:31:44: "[PS]-Drumboyyy<24>" say "60 left"
+L 07/19/1999 - 21:31:45: "[PS]-Drumboyyy<24>" activated the goal "brise2"
+L 07/19/1999 - 21:31:48: "beano111<18>" killed "ingratiated<38>" with "sentrygun"
+L 07/19/1999 - 21:31:48: "[PS]-Drumboyyy<24>" activated the goal "brise3"
+L 07/19/1999 - 21:31:49: "ingratiated<38>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:31:51: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:31:51: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:31:51: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:31:51: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:31:51: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:31:51: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:31:51: Broadcast: "5 . . .
+"
+L 07/19/1999 - 21:31:52: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:31:52: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:31:52: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:31:52: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:31:52: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:31:52: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:31:52: Broadcast: "4 . . .
+"
+L 07/19/1999 - 21:31:54: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:31:54: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:31:54: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:31:54: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:31:54: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:31:54: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:31:54: Broadcast: "3 . . .
+"
+L 07/19/1999 - 21:31:55: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:31:55: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:31:55: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:31:55: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:31:55: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:31:55: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:31:55: Broadcast: "2 . . .
+"
+L 07/19/1999 - 21:31:56: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:31:56: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:31:56: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:31:56: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:31:56: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:31:56: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:31:56: Broadcast: "1 . . .
+"
+L 07/19/1999 - 21:31:58: "ingratiated<38>" killed by world with "info_tfgoal"
+L 07/19/1999 - 21:31:58: "Apocalypse<33>" killed by world with "#rock_gas_kill"
+L 07/19/1999 - 21:32:04: "[PS]-Drumboyyy<24>" activated the goal "brise1"
+L 07/19/1999 - 21:32:05: "[PS]-Drumboyyy<24>" activated the goal "brise2"
+L 07/19/1999 - 21:32:05: "Apocalypse<33>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:32:06: "ingratiated<38>" activated the goal "info_player_teamspawn"
+L 07/19/1999 - 21:32:08: "[PS]-Drumboyyy<24>" activated the goal "brise3"
+L 07/19/1999 - 21:32:10: "[PS]-Drumboyyy<24>" activated the goal "bblock"
+L 07/19/1999 - 21:32:22: "BarkMulch<40>" destroyed "beano111<18>"'s "dispenser".
+L 07/19/1999 - 21:32:25: "Apocalypse<33>" built a "sentry".
+L 07/19/1999 - 21:32:27: =------= MATCH RESULTS =------=
+L 07/19/1999 - 21:32:27: "blue" defeated "red"
+L 07/19/1999 - 21:32:27: "blue" RESULTS: "98906768" players. "89" frags, "2" unaccounted for. "120" team score.
+L 07/19/1999 - 21:32:27: "red" RESULTS: "98906768" players. "58" frags, "3" unaccounted for. "60" team score.
+L 07/19/1999 - 21:32:34: Log closed.

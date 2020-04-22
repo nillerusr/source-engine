@@ -1,0 +1,68 @@
+//-----------------------------------------------------------------------------
+//	VTEX_DLL.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\common"
+		$PreprocessorDefinitions			"$BASE;VTEX_DLL;VTEX_DLL_EXPORTS;PROTECTED_THINGS_DISABLE"
+	}
+
+	$Linker
+	{
+		$SystemLibraries				"iconv" [$OSXALL]
+	}
+
+}
+
+$Configuration	"Debug"
+{
+	$General
+	{
+		$OutputDirectory			".\Debug_dll" [$WINDOWS]
+		$IntermediateDirectory		".\Debug_dll" [$WINDOWS]
+	}
+}
+
+$Configuration	"Release"
+{
+	$General
+	{
+		$OutputDirectory			".\Release_dll" [$WINDOWS]
+		$IntermediateDirectory		".\Release_dll" [$WINDOWS]
+	}
+}
+
+$Project "Vtex_dll"
+{
+	$Folder	"Source Files"
+	{
+		$File	"..\common\cmdlib.cpp"
+		$File	"$SRCDIR\public\filesystem_helpers.cpp"
+		$File	"$SRCDIR\public\filesystem_init.cpp"
+		$File	"..\common\filesystem_tools.cpp"
+		$File	"vtex.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\public\ivtex.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib	bitmap
+		$Lib	mathlib
+		$Lib	tier2
+		$Lib	vtf
+	}
+}

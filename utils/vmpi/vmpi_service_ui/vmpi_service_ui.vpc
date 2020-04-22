@@ -1,0 +1,58 @@
+//-----------------------------------------------------------------------------
+//	VMPI_SERVICE.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\..\common,..\,..\vmpi_service"
+		$PreprocessorDefinitions			"$BASE;PROTECTED_THINGS_DISABLE"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE ws2_32.lib odbc32.lib odbccp32.lib"
+	}
+}
+
+$Project "Vmpi_service_ui"
+{
+	$Folder	"Source Files"
+	{
+		$File	"..\iphelpers.cpp"
+		$File	"shell_icon_mgr.cpp"
+		$File	"vmpi_service_ui.cpp"
+		$File	"vmpi_service_ui.rc"
+		$File	"StdAfx.cpp"
+		$File	"..\tcpsocket_helpers.cpp"
+		$File	"..\ThreadedTCPSocket.cpp"
+		$File	"..\..\common\consolewnd.cpp"
+		$File	"..\vmpi_service\service_conn_mgr.cpp"
+		$File	"..\ThreadedTCPSocketEmu.cpp"
+		$File	"..\threadhelpers.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"shell_icon_mgr.h"
+		$File	"resource.h"
+		$File	"StdAfx.h"
+	}
+
+	$Folder	"Resource Files"
+	{
+		$File	"idi_busy_icon.ico"
+		$File	"idi_disabled_icon.ico"
+		$File	"idi_waiting_icon.ico"
+		$File	"unconnec.ico"
+		$File	"vmpi_service.ico"
+	}
+}

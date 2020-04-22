@@ -1,0 +1,120 @@
+//-----------------------------------------------------------------------------
+//	VCD_SOUND_CHECK.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,$SRCDIR\utils\vcd_sound_check,$SRCDIR\game\shared,..\common"
+		$Create/UsePrecompiledHeader		"Use Precompiled Header (/Yu)"
+		$Create/UsePCHThroughFile			"cbase.h"
+		$PrecompiledHeaderFile				"Debug/vcd_sound_check.pch"
+	}
+}
+
+$Project "Vcd_sound_check"
+{
+	$Folder	"Source Files"
+	{
+		$File	"vcd_sound_check.cpp"
+
+		$File	"..\common\cmdlib.cpp"					\
+				"$SRCDIR\public\filesystem_helpers.cpp"	\
+				"$SRCDIR\public\filesystem_init.cpp"	\
+				"..\common\filesystem_tools.cpp"		\
+				"$SRCDIR\public\interpolatortypes.cpp"	\
+				"$SRCDIR\game\shared\interval.cpp"		\
+				"..\common\scriplib.cpp"
+				{
+					$Configuration
+					{
+						$Compiler
+						{
+							$Create/UsePrecompiledHeader		"Not Using Precompiled Headers"
+						}
+					}
+				}
+
+		$File	"StdAfx.cpp"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader		"Create Precompiled Header (/Yc)"
+				}
+			}
+		}
+
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\public\filesystem_helpers.h"
+		$File	"$SRCDIR\game\shared\ichoreoeventcallback.h"
+		$File	"$SRCDIR\game\shared\iscenetokenprocessor.h"
+		$File	"..\common\scriplib.h"
+		$File	"$SRCDIR\public\mathlib\amd3dx.h"
+		$File	"$SRCDIR\public\tier0\basetypes.h"
+		$File	"cbase.h"
+		$File	"$SRCDIR\game\shared\choreoactor.h"
+		$File	"$SRCDIR\game\shared\choreochannel.h"
+		$File	"$SRCDIR\game\shared\choreoevent.h"
+		$File	"$SRCDIR\game\shared\choreoscene.h"
+		$File	"..\common\cmdlib.h"
+		$File	"$SRCDIR\public\Color.h"
+		$File	"$SRCDIR\public\tier0\commonmacros.h"
+		$File	"$SRCDIR\public\tier1\convar.h"
+		$File	"$SRCDIR\public\tier0\dbg.h"
+		$File	"$SRCDIR\game\shared\ExpressionSample.h"
+		$File	"$SRCDIR\public\tier0\fasttimer.h"
+		$File	"$SRCDIR\public\filesystem.h"
+		$File	"..\common\filesystem_tools.h"
+		$File	"$SRCDIR\public\appframework\IAppSystem.h"
+		$File	"$SRCDIR\public\tier0\icommandline.h"
+		$File	"$SRCDIR\public\engine\IEngineSound.h"
+		$File	"$SRCDIR\public\vstdlib\IKeyValuesSystem.h"
+		$File	"$SRCDIR\public\tier1\interface.h"
+		$File	"$SRCDIR\public\interpolatortypes.h"
+		$File	"$SRCDIR\game\shared\interval.h"
+		$File	"$SRCDIR\public\irecipientfilter.h"
+		$File	"$SRCDIR\public\tier1\KeyValues.h"
+		$File	"$SRCDIR\public\mathlib\mathlib.h"
+		$File	"$SRCDIR\public\tier0\mem.h"
+		$File	"$SRCDIR\public\tier0\memdbgoff.h"
+		$File	"$SRCDIR\public\tier0\memdbgon.h"
+		$File	"$SRCDIR\public\networkvar.h"
+		$File	"$SRCDIR\public\tier0\platform.h"
+		$File	"$SRCDIR\public\tier0\protected_things.h"
+		$File	"$SRCDIR\public\vstdlib\random.h"
+		$File	"$SRCDIR\game\shared\sharedInterface.h"
+		$File	"$SRCDIR\public\soundchars.h"
+		$File	"$SRCDIR\public\soundflags.h"
+		$File	"$SRCDIR\public\string_t.h"
+		$File	"$SRCDIR\public\tier1\strtools.h"
+		$File	"$SRCDIR\public\tier1\utldict.h"
+		$File	"$SRCDIR\public\tier1\utllinkedlist.h"
+		$File	"$SRCDIR\public\tier1\utlmemory.h"
+		$File	"$SRCDIR\public\tier1\utlrbtree.h"
+		$File	"$SRCDIR\public\tier1\utlsymbol.h"
+		$File	"$SRCDIR\public\tier1\utlvector.h"
+		$File	"$SRCDIR\public\mathlib\vector.h"
+		$File	"$SRCDIR\public\mathlib\vector2d.h"
+		$File	"$SRCDIR\public\vstdlib\vstdlib.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib choreoobjects
+		$Lib mathlib
+		$Lib tier2
+	}
+}

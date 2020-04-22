@@ -1,0 +1,58 @@
+//-----------------------------------------------------------------------------
+//	VAUDIO_SPEEX.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\frame_encoder,..\..\..\public,..\..\..\public\tier1,..\..,..\..\..\common,.\source\libspeex,..\..\audio\public"
+		$PreprocessorDefinitions			"$BASE;SPEEX_EXPORTS"
+	}
+	$Linker
+	{
+			$SystemLibraries                                                        "iconv" [$OSXALL]
+	}
+}
+
+$Project "vaudio_speex"
+{
+	$Folder	"Source Files"
+	{
+		$File "$SRCDIR\tier1\interface.cpp"
+		$File "..\frame_encoder\voice_codec_frame.cpp"
+		$File "VoiceEncoder_Speex.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\public\tier1\interface.h"
+		$File	"$SRCDIR\public\vaudio\ivaudio.h"
+		$File "VoiceEncoder_Speex.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$File "source\win32\libspeex\Release\libspeex.lib" [$WIN32&&!$VS2015]
+		$Lib "$LIBCOMMON/libspeex" [$POSIX]
+	}
+
+	$Folder "Link Libraries" [$VS2015]
+	{
+		$File "$SRCDIR\engine\voice_codecs\speex\source\win32\libspeex\2015\release\libspeex.lib" [$WIN32]
+		{
+			$Configuration "Debug" 	{ $ExcludedFromBuild "Yes" }
+		}
+		$File "$SRCDIR\engine\voice_codecs\speex\source\win32\libspeex\2015\debug\libspeex.lib" [$WIN32]
+		{
+			$Configuration "Release" { $ExcludedFromBuild "Yes" }
+		}
+	}
+}

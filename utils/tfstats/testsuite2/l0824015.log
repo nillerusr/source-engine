@@ -1,0 +1,277 @@
+L 08/24/1999 - 16:27:44: Log file started.
+L 08/24/1999 - 16:27:44: Spawning server "rock2"
+L 08/24/1999 - 16:27:44: server cvars start
+L 08/24/1999 - 16:27:44: "cr_random" = "0"
+L 08/24/1999 - 16:27:44: "cr_engineer" = "0"
+L 08/24/1999 - 16:27:44: "cr_spy" = "0"
+L 08/24/1999 - 16:27:44: "cr_pyro" = "0"
+L 08/24/1999 - 16:27:44: "cr_hwguy" = "0"
+L 08/24/1999 - 16:27:44: "cr_medic" = "0"
+L 08/24/1999 - 16:27:44: "cr_demoman" = "0"
+L 08/24/1999 - 16:27:44: "cr_soldier" = "0"
+L 08/24/1999 - 16:27:44: "cr_sniper" = "0"
+L 08/24/1999 - 16:27:44: "cr_scout" = "0"
+L 08/24/1999 - 16:27:44: "decalfrequency" = "30"
+L 08/24/1999 - 16:27:44: "mp_autocrosshair" = "1"
+L 08/24/1999 - 16:27:44: "mp_flashlight" = "0"
+L 08/24/1999 - 16:27:44: "mp_footsteps" = "1"
+L 08/24/1999 - 16:27:44: "mp_forcerespawn" = "1"
+L 08/24/1999 - 16:27:44: "mp_weaponstay" = "0"
+L 08/24/1999 - 16:27:44: "mp_falldamage" = "0"
+L 08/24/1999 - 16:27:44: "mp_friendlyfire" = "0"
+L 08/24/1999 - 16:27:44: "mp_timelimit" = "30"
+L 08/24/1999 - 16:27:44: "mp_fraglimit" = "0"
+L 08/24/1999 - 16:27:44: "mp_teamplay" = "21"
+L 08/24/1999 - 16:27:44: "tfc_balance_scores" = "1.0"
+L 08/24/1999 - 16:27:44: "tfc_balance_teams" = "1.0"
+L 08/24/1999 - 16:27:44: "tfc_adminpwd" = ""
+L 08/24/1999 - 16:27:44: "tfc_clanbattle_locked" = "0.0"
+L 08/24/1999 - 16:27:44: "tfc_clanbattle" = "0.0"
+L 08/24/1999 - 16:27:44: "tfc_respawndelay" = "0.0"
+L 08/24/1999 - 16:27:44: "tfc_autoteam" = "1"
+L 08/24/1999 - 16:27:44: "sv_maxrate" = "0"
+L 08/24/1999 - 16:27:44: "sv_minrate" = "0"
+L 08/24/1999 - 16:27:44: "sv_allowupload" = "1"
+L 08/24/1999 - 16:27:44: "sv_allowdownload" = "1"
+L 08/24/1999 - 16:27:44: "sv_upload_maxsize" = "0"
+L 08/24/1999 - 16:27:44: "sv_spectatormaxspeed" = "500"
+L 08/24/1999 - 16:27:44: "sv_spectalk" = "1"
+L 08/24/1999 - 16:27:44: "sv_maxspectators" = "8"
+L 08/24/1999 - 16:27:44: "sv_cheats" = "0"
+L 08/24/1999 - 16:27:44: "sv_clienttrace" = "3.5"
+L 08/24/1999 - 16:27:44: "sv_timeout" = "65"
+L 08/24/1999 - 16:27:44: "sv_waterfriction" = "1"
+L 08/24/1999 - 16:27:44: "sv_wateraccelerate" = "10"
+L 08/24/1999 - 16:27:44: "sv_airaccelerate" = "10"
+L 08/24/1999 - 16:27:44: "sv_airmove" = "1"
+L 08/24/1999 - 16:27:44: "sv_bounce" = "1"
+L 08/24/1999 - 16:27:44: "sv_clipmode" = "0"
+L 08/24/1999 - 16:27:44: "sv_stepsize" = "18"
+L 08/24/1999 - 16:27:44: "sv_accelerate" = "10"
+L 08/24/1999 - 16:27:44: "sv_maxspeed" = "500.000000"
+L 08/24/1999 - 16:27:44: "sv_stopspeed" = "100"
+L 08/24/1999 - 16:27:44: "edgefriction" = "2"
+L 08/24/1999 - 16:27:44: "sv_friction" = "4"
+L 08/24/1999 - 16:27:44: "sv_gravity" = "800"
+L 08/24/1999 - 16:27:44: "sv_aim" = "0"
+L 08/24/1999 - 16:27:44: "sv_password" = ""
+L 08/24/1999 - 16:27:44: "pausable" = "0"
+L 08/24/1999 - 16:27:44: "coop" = "0"
+L 08/24/1999 - 16:27:44: "deathmatch" = "1"
+L 08/24/1999 - 16:27:44: "mp_logecho" = "1"
+L 08/24/1999 - 16:27:44: "mp_logfile" = "1"
+L 08/24/1999 - 16:27:44: "cmdline" = "0"
+L 08/24/1999 - 16:27:44: server cvars end
+L 08/24/1999 - 16:27:46: Map CRC "1246753045"
+L 08/24/1999 - 16:27:46: "sv_maxspeed" = "500"
+L 08/24/1999 - 16:27:46: Server name is "VALVe Test Server"
+L 08/24/1999 - 16:27:46: "sv_maxspeed" = "500.000000"
+L 08/24/1999 - 16:33:38: "[PHS]Dingo_six<139><WON:1346349>" connected, address "208.25.51.92:27005"
+L 08/24/1999 - 16:33:59: "[PHS]Dingo_six<139><WON:1346349>" has entered the game
+L 08/24/1999 - 16:34:05: "[PHS]Dingo_six<139>" joined team "1".
+L 08/24/1999 - 16:34:09: "[PHS]Dingo_six<139>" changed class to "Scout"
+L 08/24/1999 - 16:34:09: "[PHS]Dingo_six<139>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 16:34:47: "[PHS]Dingo_six<139>" activated the goal "goalitem"
+L 08/24/1999 - 16:36:00: "eViL_iMp<140><WON:2637699>" connected, address "204.244.92.134:27005"
+L 08/24/1999 - 16:36:29: "[PHS]Dingo_six<139>" activated the goal "rhand"
+L 08/24/1999 - 16:36:29: Broadcast: "#rock_blue_scores"
+L 08/24/1999 - 16:36:29: "[PHS]Dingo_six<139>" activated the goal "rblock"
+L 08/24/1999 - 16:36:32: Broadcast: "#rock_gasmask_message"
+L 08/24/1999 - 16:36:33: "[PHS]Dingo_six<139>" activated the goal "brise1"
+L 08/24/1999 - 16:36:33: "[PHS]Dingo_six<139>" activated the goal "brise2"
+L 08/24/1999 - 16:36:36: "[PHS]Dingo_six<139>" activated the goal "brise3"
+L 08/24/1999 - 16:36:39: Broadcast: "5 . . .
+"
+L 08/24/1999 - 16:36:40: Broadcast: "4 . . .
+"
+L 08/24/1999 - 16:36:41: Broadcast: "3 . . .
+"
+L 08/24/1999 - 16:36:41: Broadcast: "2 . . .
+"
+L 08/24/1999 - 16:36:42: Broadcast: "1 . . .
+"
+L 08/24/1999 - 16:36:50: "[PHS]Dingo_six<139>" activated the goal "brise1"
+L 08/24/1999 - 16:36:50: "[PHS]Dingo_six<139>" activated the goal "brise2"
+L 08/24/1999 - 16:36:52: "[PHS]Dingo_six<139>" activated the goal "brise3"
+L 08/24/1999 - 16:36:54: "[PHS]Dingo_six<139>" activated the goal "rblock"
+L 08/24/1999 - 16:37:17: "[PHS]Dingo_six<139>" activated the goal "goalitem"
+L 08/24/1999 - 16:37:18: "eViL_iMp<140><WON:2637699>" has entered the game
+L 08/24/1999 - 16:37:31: "eViL_iMp<140>" joined team "2".
+L 08/24/1999 - 16:37:41: "eViL_iMp<140>" changed class to "Sniper"
+L 08/24/1999 - 16:37:41: "eViL_iMp<140>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 16:38:13: "eViL_iMp<140>" killed "[PHS]Dingo_six<139>" with "sniperrifle"
+L 08/24/1999 - 16:38:47: "[PHS]Dingo_six<139>" disconnected
+L 08/24/1999 - 16:38:49: "eViL_iMp<140>" say "hi"
+L 08/24/1999 - 16:41:02: "eViL_iMp<140>" activated the goal "goalitem"
+L 08/24/1999 - 16:41:32: "eViL_iMp<140>" activated the goal "bhand"
+L 08/24/1999 - 16:41:32: Broadcast: "#rock_red_scores"
+L 08/24/1999 - 16:41:32: "eViL_iMp<140>" activated the goal "bblock"
+L 08/24/1999 - 16:41:35: Broadcast: "#rock_gasmask_message"
+L 08/24/1999 - 16:41:36: "eViL_iMp<140>" activated the goal "brise1"
+L 08/24/1999 - 16:41:36: "eViL_iMp<140>" activated the goal "brise2"
+L 08/24/1999 - 16:41:39: "eViL_iMp<140>" activated the goal "brise3"
+L 08/24/1999 - 16:41:42: Broadcast: "5 . . .
+"
+L 08/24/1999 - 16:41:43: Broadcast: "4 . . .
+"
+L 08/24/1999 - 16:41:44: Broadcast: "3 . . .
+"
+L 08/24/1999 - 16:41:45: Broadcast: "2 . . .
+"
+L 08/24/1999 - 16:41:46: Broadcast: "1 . . .
+"
+L 08/24/1999 - 16:41:52: "eViL_iMp<140>" activated the goal "brise1"
+L 08/24/1999 - 16:41:52: "eViL_iMp<140>" activated the goal "brise2"
+L 08/24/1999 - 16:41:55: "eViL_iMp<140>" activated the goal "brise3"
+L 08/24/1999 - 16:41:57: "eViL_iMp<140>" activated the goal "bblock"
+L 08/24/1999 - 16:42:23: "eViL_iMp<140>" activated the goal "goalitem"
+L 08/24/1999 - 16:42:53: "eViL_iMp<140>" activated the goal "bhand"
+L 08/24/1999 - 16:42:53: Broadcast: "#rock_red_scores"
+L 08/24/1999 - 16:42:53: "eViL_iMp<140>" activated the goal "bblock"
+L 08/24/1999 - 16:42:56: Broadcast: "#rock_gasmask_message"
+L 08/24/1999 - 16:42:57: "eViL_iMp<140>" activated the goal "brise1"
+L 08/24/1999 - 16:42:57: "eViL_iMp<140>" activated the goal "brise2"
+L 08/24/1999 - 16:43:00: "eViL_iMp<140>" activated the goal "brise3"
+L 08/24/1999 - 16:43:03: Broadcast: "5 . . .
+"
+L 08/24/1999 - 16:43:04: Broadcast: "4 . . .
+"
+L 08/24/1999 - 16:43:05: Broadcast: "3 . . .
+"
+L 08/24/1999 - 16:43:06: Broadcast: "2 . . .
+"
+L 08/24/1999 - 16:43:07: Broadcast: "1 . . .
+"
+L 08/24/1999 - 16:43:13: "eViL_iMp<140>" activated the goal "brise1"
+L 08/24/1999 - 16:43:13: "eViL_iMp<140>" activated the goal "brise2"
+L 08/24/1999 - 16:43:16: "eViL_iMp<140>" activated the goal "brise3"
+L 08/24/1999 - 16:43:18: "eViL_iMp<140>" activated the goal "bblock"
+L 08/24/1999 - 16:45:22: "eViL_iMp<140>" disconnected
+L 08/24/1999 - 16:46:21: "DemonAce<141><WON:1226169>" connected, address "204.253.116.78:27005"
+L 08/24/1999 - 16:46:27: "Player<142><WON:3305719>" connected, address "208.251.202.124:27005"
+L 08/24/1999 - 16:46:52: "Player<142><WON:3305719>" has entered the game
+L 08/24/1999 - 16:46:59: "DemonAce<141><WON:1226169>" has entered the game
+L 08/24/1999 - 16:47:14: "DemonAce<141>" joined team "1".
+L 08/24/1999 - 16:47:14: "DemonAce<141>" changed to team "2".
+L 08/24/1999 - 16:47:14: "DemonAce<141>" killed self with "world"
+L 08/24/1999 - 16:47:23: "DemonAce<141>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 16:47:31: "DemonAce<141>" changed class to "HWGuy"
+L 08/24/1999 - 16:47:31: "DemonAce<141>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 16:47:33: "Player<142>" joined team "1".
+L 08/24/1999 - 16:47:35: "Rifraf<143><WON:994839>" connected, address "209.209.16.112:27005"
+L 08/24/1999 - 16:47:42: "Player<142>" changed class to "Scout"
+L 08/24/1999 - 16:47:42: "Player<142>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 16:48:00: "Rifraf<143><WON:994839>" has entered the game
+L 08/24/1999 - 16:48:03: "Rifraf<143>" joined team "1".
+L 08/24/1999 - 16:48:32: "Rifraf<143>" disconnected
+L 08/24/1999 - 16:48:34: "DemonAce<141>" activated the goal "goalitem"
+L 08/24/1999 - 16:48:51: "Player<142>" activated the goal "goalitem"
+L 08/24/1999 - 16:49:12: "Player<142>" activated the goal "rhand"
+L 08/24/1999 - 16:49:12: Broadcast: "#rock_blue_scores"
+L 08/24/1999 - 16:49:12: "Player<142>" activated the goal "rblock"
+L 08/24/1999 - 16:49:15: Broadcast: "#rock_gasmask_message"
+L 08/24/1999 - 16:49:16: "Player<142>" activated the goal "brise1"
+L 08/24/1999 - 16:49:16: "Player<142>" activated the goal "brise2"
+L 08/24/1999 - 16:49:19: "Player<142>" activated the goal "brise3"
+L 08/24/1999 - 16:49:22: Broadcast: "5 . . .
+"
+L 08/24/1999 - 16:49:23: "DemonAce<141>" activated the goal "bhand"
+L 08/24/1999 - 16:49:23: Broadcast: "#rock_red_scores"
+L 08/24/1999 - 16:49:23: Broadcast: "4 . . .
+"
+L 08/24/1999 - 16:49:23: "DemonAce<141>" activated the goal "bblock"
+L 08/24/1999 - 16:49:24: Broadcast: "3 . . .
+"
+L 08/24/1999 - 16:49:25: Broadcast: "2 . . .
+"
+L 08/24/1999 - 16:49:26: Broadcast: "#rock_gasmask_message"
+L 08/24/1999 - 16:49:26: Broadcast: "1 . . .
+"
+L 08/24/1999 - 16:49:27: "DemonAce<141>" activated the goal "brise1"
+L 08/24/1999 - 16:49:27: "DemonAce<141>" activated the goal "brise2"
+L 08/24/1999 - 16:49:30: "DemonAce<141>" activated the goal "brise3"
+L 08/24/1999 - 16:49:33: Broadcast: "5 . . .
+"
+L 08/24/1999 - 16:49:33: "Player<142>" activated the goal "brise1"
+L 08/24/1999 - 16:49:33: "Player<142>" activated the goal "brise2"
+L 08/24/1999 - 16:49:34: Broadcast: "4 . . .
+"
+L 08/24/1999 - 16:49:35: Broadcast: "3 . . .
+"
+L 08/24/1999 - 16:49:35: "Player<142>" activated the goal "brise3"
+L 08/24/1999 - 16:49:36: Broadcast: "2 . . .
+"
+L 08/24/1999 - 16:49:37: Broadcast: "1 . . .
+"
+L 08/24/1999 - 16:49:37: "Player<142>" activated the goal "rblock"
+L 08/24/1999 - 16:49:38: "Player<142>" killed by world with "info_tfgoal"
+L 08/24/1999 - 16:49:43: "DemonAce<141>" activated the goal "brise1"
+L 08/24/1999 - 16:49:43: "Player<142>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 16:49:43: "DemonAce<141>" activated the goal "brise2"
+L 08/24/1999 - 16:49:46: "DemonAce<141>" activated the goal "brise3"
+L 08/24/1999 - 16:49:48: "DemonAce<141>" activated the goal "bblock"
+L 08/24/1999 - 16:50:13: "Player<142>" activated the goal "goalitem"
+L 08/24/1999 - 16:50:27: "DemonAce<141>" activated the goal "goalitem"
+L 08/24/1999 - 16:50:33: "Player<142>" activated the goal "rhand"
+L 08/24/1999 - 16:50:33: Broadcast: "#rock_blue_scores"
+L 08/24/1999 - 16:50:34: "Player<142>" activated the goal "rblock"
+L 08/24/1999 - 16:50:36: Broadcast: "#rock_gasmask_message"
+L 08/24/1999 - 16:50:37: "Player<142>" activated the goal "brise1"
+L 08/24/1999 - 16:50:38: "Player<142>" activated the goal "brise2"
+L 08/24/1999 - 16:50:41: "Player<142>" activated the goal "brise3"
+L 08/24/1999 - 16:50:43: Broadcast: "5 . . .
+"
+L 08/24/1999 - 16:50:44: Broadcast: "4 . . .
+"
+L 08/24/1999 - 16:50:45: Broadcast: "3 . . .
+"
+L 08/24/1999 - 16:50:46: Broadcast: "2 . . .
+"
+L 08/24/1999 - 16:50:47: "DemonAce<141>" killed by world with "#rock_laser_kill"
+L 08/24/1999 - 16:50:47: Broadcast: "1 . . .
+"
+L 08/24/1999 - 16:50:50: "DemonAce<141>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 16:50:54: "Player<142>" activated the goal "brise1"
+L 08/24/1999 - 16:50:55: "Player<142>" activated the goal "brise2"
+L 08/24/1999 - 16:50:56: "Player<142>" activated the goal "brise3"
+L 08/24/1999 - 16:50:58: "Player<142>" activated the goal "rblock"
+L 08/24/1999 - 16:51:13: "DemonAce<141>" killed "Player<142>" with "ac"
+L 08/24/1999 - 16:51:13: "Player<142>" killed "DemonAce<141>" with "nails"
+L 08/24/1999 - 16:51:15: "Player<142>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 16:51:16: "DemonAce<141>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 16:51:45: "Player<142>" activated the goal "goalitem"
+L 08/24/1999 - 16:52:06: "Player<142>" activated the goal "rhand"
+L 08/24/1999 - 16:52:06: Broadcast: "#rock_blue_scores"
+L 08/24/1999 - 16:52:06: "Player<142>" activated the goal "rblock"
+L 08/24/1999 - 16:52:09: Broadcast: "#rock_gasmask_message"
+L 08/24/1999 - 16:52:10: "Player<142>" activated the goal "brise1"
+L 08/24/1999 - 16:52:10: "Player<142>" activated the goal "brise2"
+L 08/24/1999 - 16:52:13: "Player<142>" activated the goal "brise3"
+L 08/24/1999 - 16:52:16: Broadcast: "5 . . .
+"
+L 08/24/1999 - 16:52:16: Broadcast: "4 . . .
+"
+L 08/24/1999 - 16:52:18: Broadcast: "3 . . .
+"
+L 08/24/1999 - 16:52:19: Broadcast: "2 . . .
+"
+L 08/24/1999 - 16:52:20: Broadcast: "1 . . .
+"
+L 08/24/1999 - 16:52:27: "Player<142>" activated the goal "brise1"
+L 08/24/1999 - 16:52:27: "Player<142>" activated the goal "brise2"
+L 08/24/1999 - 16:52:29: "Player<142>" activated the goal "brise3"
+L 08/24/1999 - 16:52:31: "Player<142>" activated the goal "rblock"
+L 08/24/1999 - 16:52:49: "DemonAce<141>" killed "Player<142>" with "ac"
+L 08/24/1999 - 16:52:50: "Player<142>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 16:53:26: "Player<142>" activated the goal "goalitem"
+L 08/24/1999 - 16:53:26: "DemonAce<141>" killed "Player<142>" with "ac"
+L 08/24/1999 - 16:53:30: "Player<142>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 16:55:02: "DemonAce<141>" killed "Player<142>" with "shotgun"
+L 08/24/1999 - 16:55:04: "Player<142>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 16:56:19: "Player<142>" disconnected
+L 08/24/1999 - 16:56:19: "DemonAce<141>" disconnected
+L 08/24/1999 - 16:57:45: =------= MATCH RESULTS =------=
+L 08/24/1999 - 16:57:45: "blue" defeated "red" 
+L 08/24/1999 - 16:57:45: "blue" RESULTS: "0" players. "39" frags, "0" unaccounted for. "60" team score. Allies:
+L 08/24/1999 - 16:57:45: "red" RESULTS: "0" players. "34" frags, "0" unaccounted for. "45" team score. Allies:
+L 08/24/1999 - 16:59:51: Log closed.

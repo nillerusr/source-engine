@@ -1,0 +1,169 @@
+L 07/22/1999 - 19:16:19: Log file started.
+L 07/22/1999 - 19:16:19: Spawning server "rock2"
+L 07/22/1999 - 19:16:19: server cvars start
+L 07/22/1999 - 19:16:19: "cr_random" = "0"
+L 07/22/1999 - 19:16:19: "cr_engineer" = "0"
+L 07/22/1999 - 19:16:19: "cr_spy" = "0"
+L 07/22/1999 - 19:16:19: "cr_pyro" = "0"
+L 07/22/1999 - 19:16:19: "cr_hwguy" = "0"
+L 07/22/1999 - 19:16:19: "cr_medic" = "0"
+L 07/22/1999 - 19:16:19: "cr_demoman" = "0"
+L 07/22/1999 - 19:16:19: "cr_soldier" = "0"
+L 07/22/1999 - 19:16:19: "cr_sniper" = "0"
+L 07/22/1999 - 19:16:19: "cr_scout" = "0"
+L 07/22/1999 - 19:16:19: "decalfrequency" = "30"
+L 07/22/1999 - 19:16:19: "mp_autocrosshair" = "1"
+L 07/22/1999 - 19:16:19: "mp_flashlight" = "0"
+L 07/22/1999 - 19:16:19: "mp_footsteps" = "0"
+L 07/22/1999 - 19:16:19: "mp_forcerespawn" = "1"
+L 07/22/1999 - 19:16:19: "mp_weaponstay" = "0"
+L 07/22/1999 - 19:16:19: "mp_falldamage" = "0"
+L 07/22/1999 - 19:16:19: "mp_friendlyfire" = "0"
+L 07/22/1999 - 19:16:19: "mp_timelimit" = "30"
+L 07/22/1999 - 19:16:19: "mp_fraglimit" = "0"
+L 07/22/1999 - 19:16:19: "mp_teamplay" = "21"
+L 07/22/1999 - 19:16:19: "tfc_balance_scores" = "1.0"
+L 07/22/1999 - 19:16:19: "tfc_balance_teams" = "1.0"
+L 07/22/1999 - 19:16:19: "tfc_adminpwd" = ""
+L 07/22/1999 - 19:16:19: "tfc_clanbattle_locked" = "0.0"
+L 07/22/1999 - 19:16:19: "tfc_clanbattle" = "0.0"
+L 07/22/1999 - 19:16:19: "tfc_respawndelay" = "0.0"
+L 07/22/1999 - 19:16:19: "tfc_autoteam" = "0"
+L 07/22/1999 - 19:16:19: "sv_maxrate" = "0"
+L 07/22/1999 - 19:16:19: "sv_minrate" = "0"
+L 07/22/1999 - 19:16:19: "sv_allowupload" = "1"
+L 07/22/1999 - 19:16:19: "sv_allowdownload" = "1"
+L 07/22/1999 - 19:16:19: "sv_upload_maxsize" = "0"
+L 07/22/1999 - 19:16:19: "sv_spectatormaxspeed" = "500"
+L 07/22/1999 - 19:16:19: "sv_spectalk" = "1"
+L 07/22/1999 - 19:16:19: "sv_maxspectators" = "8"
+L 07/22/1999 - 19:16:19: "sv_cheats" = "1.000000"
+L 07/22/1999 - 19:16:19: "sv_clienttrace" = "3.5"
+L 07/22/1999 - 19:16:19: "sv_timeout" = "65"
+L 07/22/1999 - 19:16:19: "sv_waterfriction" = "1"
+L 07/22/1999 - 19:16:19: "sv_wateraccelerate" = "10"
+L 07/22/1999 - 19:16:19: "sv_airaccelerate" = "10"
+L 07/22/1999 - 19:16:19: "sv_airmove" = "1"
+L 07/22/1999 - 19:16:19: "sv_bounce" = "1"
+L 07/22/1999 - 19:16:19: "sv_clipmode" = "0"
+L 07/22/1999 - 19:16:19: "sv_stepsize" = "18"
+L 07/22/1999 - 19:16:19: "sv_accelerate" = "10"
+L 07/22/1999 - 19:16:19: "sv_maxspeed" = "500.000000"
+L 07/22/1999 - 19:16:19: "sv_stopspeed" = "100"
+L 07/22/1999 - 19:16:19: "edgefriction" = "2"
+L 07/22/1999 - 19:16:19: "sv_friction" = "4"
+L 07/22/1999 - 19:16:19: "sv_gravity" = "800"
+L 07/22/1999 - 19:16:19: "sv_aim" = "0"
+L 07/22/1999 - 19:16:19: "sv_password" = ""
+L 07/22/1999 - 19:16:19: "sv_sendvelocity" = "1"
+L 07/22/1999 - 19:16:19: "pausable" = "0"
+L 07/22/1999 - 19:16:19: "coop" = "0"
+L 07/22/1999 - 19:16:19: "deathmatch" = "1"
+L 07/22/1999 - 19:16:19: "mp_logecho" = "1"
+L 07/22/1999 - 19:16:19: "mp_logfile" = "1"
+L 07/22/1999 - 19:16:19: "cmdline" = "0"
+L 07/22/1999 - 19:16:19: server cvars end
+L 07/22/1999 - 19:16:24: Map CRC "1246753045"
+L 07/22/1999 - 19:16:24: "sv_maxspeed" = "500"
+L 07/22/1999 - 19:16:24: Server name is "Team Fortress Classic"
+L 07/22/1999 - 19:16:24: "sv_maxspeed" = "500.000000"
+L 07/22/1999 - 19:16:41: "Blackened<24><WON:4294904126>" has entered the game
+L 07/22/1999 - 19:16:48: "skater[224]<50><WON:4294915483>" has entered the game
+L 07/22/1999 - 19:16:55: "skater[224]<50>" joined team "1".
+L 07/22/1999 - 19:16:57: "skater[224]<50>" changed class to "Scout"
+L 07/22/1999 - 19:16:57: "skater[224]<50>" activated the goal "info_player_teamspawn"
+L 07/22/1999 - 19:17:18: "skater[224]<50>" activated the goal "goalitem"
+L 07/22/1999 - 19:17:36: "skater[224]<50>" activated the goal "rhand"
+L 07/22/1999 - 19:17:36: Broadcast: "#rock_blue_scores"
+L 07/22/1999 - 19:17:37: "skater[224]<50>" activated the goal "rblock"
+L 07/22/1999 - 19:17:39: Broadcast: "#rock_gasmask_message"
+L 07/22/1999 - 19:17:40: "skater[224]<50>" activated the goal "brise1"
+L 07/22/1999 - 19:17:41: "skater[224]<50>" activated the goal "brise2"
+L 07/22/1999 - 19:17:44: "skater[224]<50>" activated the goal "brise3"
+L 07/22/1999 - 19:17:46: Broadcast: "5 . . .
+"
+L 07/22/1999 - 19:17:47: Broadcast: "4 . . .
+"
+L 07/22/1999 - 19:17:48: Broadcast: "3 . . .
+"
+L 07/22/1999 - 19:17:49: Broadcast: "2 . . .
+"
+L 07/22/1999 - 19:17:50: Broadcast: "1 . . .
+"
+L 07/22/1999 - 19:17:53: "AciD<54><WON:4294916872>" connected, address "209.178.153.26:27005"
+L 07/22/1999 - 19:17:57: "skater[224]<50>" activated the goal "brise1"
+L 07/22/1999 - 19:17:58: "skater[224]<50>" activated the goal "brise2"
+L 07/22/1999 - 19:18:00: "skater[224]<50>" activated the goal "brise3"
+L 07/22/1999 - 19:18:01: "skater[224]<50>" activated the goal "rblock"
+L 07/22/1999 - 19:18:17: "AciD<54><WON:4294916872>" has entered the game
+L 07/22/1999 - 19:18:18: "skater[224]<50>" activated the goal "goalitem"
+L 07/22/1999 - 19:18:23: "skater[224]<50>" killed by world with "#rock_laser_kill"
+L 07/22/1999 - 19:18:26: "skater[224]<50>" activated the goal "info_player_teamspawn"
+L 07/22/1999 - 19:18:47: "skater[224]<50>" activated the goal "goalitem"
+L 07/22/1999 - 19:19:06: "skater[224]<50>" activated the goal "rhand"
+L 07/22/1999 - 19:19:06: Broadcast: "#rock_blue_scores"
+L 07/22/1999 - 19:19:06: "skater[224]<50>" activated the goal "rblock"
+L 07/22/1999 - 19:19:09: Broadcast: "#rock_gasmask_message"
+L 07/22/1999 - 19:19:10: "skater[224]<50>" activated the goal "brise1"
+L 07/22/1999 - 19:19:10: "skater[224]<50>" activated the goal "brise2"
+L 07/22/1999 - 19:19:13: "skater[224]<50>" activated the goal "brise3"
+L 07/22/1999 - 19:19:16: Broadcast: "5 . . .
+"
+L 07/22/1999 - 19:19:16: "AciD<54>" disconnected
+L 07/22/1999 - 19:19:17: Broadcast: "4 . . .
+"
+L 07/22/1999 - 19:19:18: Broadcast: "3 . . .
+"
+L 07/22/1999 - 19:19:19: Broadcast: "2 . . .
+"
+L 07/22/1999 - 19:19:20: Broadcast: "1 . . .
+"
+L 07/22/1999 - 19:19:27: "skater[224]<50>" activated the goal "brise1"
+L 07/22/1999 - 19:19:27: "skater[224]<50>" activated the goal "brise2"
+L 07/22/1999 - 19:19:29: "skater[224]<50>" activated the goal "brise3"
+L 07/22/1999 - 19:19:31: "skater[224]<50>" activated the goal "rblock"
+L 07/22/1999 - 19:20:01: "WhyMe<55><WON:4294917116>" connected, address "208.235.43.211:22184"
+L 07/22/1999 - 19:20:01: "skater[224]<50>" activated the goal "goalitem"
+L 07/22/1999 - 19:20:18: "skater[224]<50>" killed by world with "#rock_laser_kill"
+L 07/22/1999 - 19:20:20: "skater[224]<50>" activated the goal "info_player_teamspawn"
+L 07/22/1999 - 19:20:49: "skater[224]<50>" disconnected
+L 07/22/1999 - 19:30:51: "Dirtman<56><WON:4294933509>" connected, address "207.58.16.69:27005"
+L 07/22/1999 - 19:31:35: "Dirtman<56><WON:4294933509>" has entered the game
+L 07/22/1999 - 19:31:49: "Dirtman<56>" joined team "1".
+L 07/22/1999 - 19:31:55: "Dirtman<56>" changed class to "HWGuy"
+L 07/22/1999 - 19:31:55: "Dirtman<56>" activated the goal "info_player_teamspawn"
+L 07/22/1999 - 19:32:15: "[SH5]GRIZZ<57><WON:4294918409>" connected, address "206.151.91.156:27005"
+L 07/22/1999 - 19:34:38: "Dirtman<56>" killed by world with "#rock_laser_kill"
+L 07/22/1999 - 19:34:43: "Dirtman<56>" activated the goal "info_player_teamspawn"
+L 07/22/1999 - 19:36:14: "Dirtman<56>" activated the goal "goalitem"
+L 07/22/1999 - 19:36:23: "Lil~Trollop<58><WON:4294916826>" connected, address "209.96.74.132:27005"
+L 07/22/1999 - 19:37:18: "Dirtman<56>" activated the goal "rhand"
+L 07/22/1999 - 19:37:18: Broadcast: "#rock_blue_scores"
+L 07/22/1999 - 19:37:18: "Dirtman<56>" activated the goal "rblock"
+L 07/22/1999 - 19:37:21: Broadcast: "#rock_gasmask_message"
+L 07/22/1999 - 19:37:22: "Dirtman<56>" activated the goal "brise1"
+L 07/22/1999 - 19:37:22: "Dirtman<56>" activated the goal "brise2"
+L 07/22/1999 - 19:37:26: "Dirtman<56>" activated the goal "brise3"
+L 07/22/1999 - 19:37:28: Broadcast: "5 . . .
+"
+L 07/22/1999 - 19:37:29: Broadcast: "4 . . .
+"
+L 07/22/1999 - 19:37:30: Broadcast: "3 . . .
+"
+L 07/22/1999 - 19:37:31: Broadcast: "2 . . .
+"
+L 07/22/1999 - 19:37:32: Broadcast: "1 . . .
+"
+L 07/22/1999 - 19:37:39: "Dirtman<56>" activated the goal "brise1"
+L 07/22/1999 - 19:37:39: "Dirtman<56>" activated the goal "brise2"
+L 07/22/1999 - 19:37:41: "Dirtman<56>" activated the goal "brise3"
+L 07/22/1999 - 19:37:43: "Dirtman<56>" activated the goal "rblock"
+L 07/22/1999 - 19:38:04: "Dirtman<56>" disconnected
+L 07/22/1999 - 19:40:32: "Player<59><WON:4294918427>" connected, address "165.124.28.82:27005"
+L 07/22/1999 - 19:40:59: "Player<59><WON:4294918427>" has entered the game
+L 07/22/1999 - 19:42:36: "Player<59>" disconnected
+L 07/22/1999 - 19:46:24: =------= MATCH RESULTS =------=
+L 07/22/1999 - 19:46:24: "blue" defeated "red" 
+L 07/22/1999 - 19:46:24: "blue" RESULTS: "0" players. "27" frags, "0" unaccounted for. "45" team score. Allies:
+L 07/22/1999 - 19:46:24: "red" RESULTS: "0" players. "0" frags, "0" unaccounted for. "0" team score. Allies:
+L 07/22/1999 - 19:48:30: Log closed.

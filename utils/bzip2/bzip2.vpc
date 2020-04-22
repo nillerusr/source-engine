@@ -1,0 +1,40 @@
+//-----------------------------------------------------------------------------
+//	BZIP2.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTLIBDIR	"$LIBCOMMON"
+$Include "$SRCDIR\vpc_scripts\source_lib_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$ForceIncludes						" "
+		$CompileAs							"Compile as C Code (/TC)" [!$POSIX]
+	}
+}
+
+$Project "Bzip2"
+{
+	$Folder	"Source Files"
+	{
+		$File	"blocksort.c"
+		$File	"bzip2.c"
+		$File	"bzlib.c"
+		$File	"compress.c"
+		$File	"crctable.c"
+		$File	"decompress.c"
+		$File	"huffman.c"
+		$File	"randtable.c"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"bzlib.h"
+		$File	"bzlib_private.h"
+	}
+}
+

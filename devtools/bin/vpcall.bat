@@ -1,0 +1,1 @@
+vpc /allgames +everything %*

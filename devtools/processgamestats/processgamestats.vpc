@@ -1,0 +1,78 @@
+//-----------------------------------------------------------------------------
+//	PROCESSGAMESTATS.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE;$SRCDIR\utils\vmpi;$SRCDIR\game\shared;$SRCDIR\game\server;$SRCDIR\game\shared\tf;$SRCDIR\game\shared\econ;$SRCDIR\gcsdk\steamextra"
+		$EnableC++Exceptions				"Yes (/EHsc)"
+		$PreprocessorDefinitions		"$BASE;GAME_DLL;TF_DLL;NO_STEAM"
+	}
+}
+
+$Project "Processgamestats"
+{
+	$Folder	"Source Files"
+	{
+		$File	"$SRCDIR\public\filesystem_helpers.cpp"
+		$File	"$SRCDIR\public\filesystem_helpers.h"
+		$File	"$SRCDIR\game\server\GameStats_BasicStatsFunctions.cpp"
+		$File	"processgamestats.cpp"
+
+		$Folder	"Custom Stats"
+		{
+			$File	"base_gamestats_parse.h"
+			$File	"cs_gamestats.h"
+			$File	"cstrike_gamestats_parse.cpp"
+			$File	"$SRCDIR\game\server\episodic\ep2_gamestats.h"
+			$File	"ep2_gamestats_parse.cpp"
+			$File	"$SRCDIR\game\server\tf\tf_gamestats.h"
+			$File	"tf_gamestats_parse.cpp"
+			$File	"$SRCDIR\game\shared\tf\tf_gamestats_shared.cpp"
+			$File	"$SRCDIR\game\shared\tf\tf_gamestats_shared.h"
+		}
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\public\tier0\basetypes.h"
+		$File	"$SRCDIR\public\tier0\commonmacros.h"
+		$File	"$SRCDIR\public\tier0\dbg.h"
+		$File	"$SRCDIR\public\tier0\fasttimer.h"
+		$File	"$SRCDIR\game\shared\gamestats.h"
+		$File	"$SRCDIR\public\tier0\icommandline.h"
+		$File	"$SRCDIR\utils\vmpi\imysqlwrapper.h"
+		$File	"$SRCDIR\public\tier0\memdbgoff.h"
+		$File	"$SRCDIR\public\tier0\memdbgon.h"
+		$File	"$SRCDIR\public\tier0\platform.h"
+		$File	"$SRCDIR\public\tier0\protected_things.h"
+		$File	"$SRCDIR\public\string_t.h"
+		$File	"$SRCDIR\public\tier1\strtools.h"
+		$File	"$SRCDIR\public\tier1\utlmemory.h"
+		$File	"$SRCDIR\public\tier1\utlvector.h"
+		$File	"$SRCDIR\public\vstdlib\vstdlib.h"
+	}
+
+	$Folder	"Database Setup"
+	{
+		$File	"cstrike_gamestats.db"
+		$File	"portal_gamestats.db"
+		$File	"ep1_gamestats.db"
+		$File	"ep2_gamestats.db"
+		$File	"tf_gamestats.db"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib tier2
+	}
+}

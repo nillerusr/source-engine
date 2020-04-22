@@ -1,0 +1,55 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from waflib import Utils
+import os
+
+top = '.'
+PROJECT_NAME = 'vaudio_celt'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	conf.define('SPEEX_EXPORTS',1)
+#	conf.define('NO_HOOK_MALLOC',1)
+
+def build(bld):
+	source = [
+		'voiceencoder_celt.cpp',
+		'../frame_encoder/voice_codec_frame.cpp',
+		'../../../tier1/interface.cpp',
+		'../../../public/tier0/memoverride.cpp'
+	]
+
+	includes = [
+		'.',
+		'../frame_encoder',
+		'../../../public',
+		'../../../public/tier1',
+		'../../../public/tier0',
+		'../../',
+		'../../../common',
+		'../../audio/public'
+	]
+
+	defines = []
+
+	libs = ['tier0','tier1','vstdlib','CELT']
+
+	install_path = bld.env.LIBDIR
+
+	bld.shlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		install_path = install_path,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)
+

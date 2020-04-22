@@ -1,0 +1,35 @@
+//-----------------------------------------------------------------------------
+//	CARDSTATS.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Configuration
+{
+	$PostBuildEvent
+	{
+		$CommandLine				" "
+		$Description				" "
+	}
+}
+
+$Project "Cardstats"
+{
+	$Folder	"Source Files"
+	{
+		$File	"CardStats.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"CardStats.h"
+		$File	"$SRCDIR\public\tier1\utlbuffer.h"
+		$File	"$SRCDIR\public\tier1\utlmemory.h"
+		$File	"$SRCDIR\public\tier1\utlvector.h"
+	}
+}

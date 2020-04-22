@@ -1,0 +1,38 @@
+//-----------------------------------------------------------------------------
+//	TIER2TEST.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC\unittests"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$PreprocessorDefinitions			"$BASE;TIER2TEST_EXPORTS"
+	}
+}
+
+$Project "tier2test"
+{
+	$Folder	"Source Files"
+	{
+		$File	"tier2test.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+	}
+	
+	$Folder "Link Libraries"
+	{
+		$Lib mathlib
+		$Lib unitlib
+		$Lib bitmap
+		$Lib tier2
+	}
+}

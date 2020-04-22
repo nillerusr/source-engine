@@ -1,0 +1,38 @@
+//-----------------------------------------------------------------------------
+//	SHADEREMPTY.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE;..\"
+		$PreprocessorDefinitions			"$BASE;SHADER_DLL_EXPORT;PROTECTED_THINGS_ENABLE"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE odbc32.lib odbccp32.lib"
+		$SystemLibraries                                                        "iconv" [$OSXALL]
+	}
+}
+
+$Project "shaderapiempty"
+{
+	$Folder	"Source Files"
+	{
+		$File	"shaderapiempty.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\public\tier0\platform.h"
+	}
+}

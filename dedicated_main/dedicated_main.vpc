@@ -1,0 +1,43 @@
+//-----------------------------------------------------------------------------
+//	DEDICATED_MAIN.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		".."
+$Macro OUTBINDIR	"$SRCDIR\..\game"
+$Macro OUTBINNAME	"srcds" [$WINDOWS||$X360]
+$Macro OUTBINNAME	"srcds_osx" [$OSXALL]
+$Macro OUTBINNAME	"srcds_linux" [$LINUXALL]
+
+$Include "$SRCDIR\vpc_scripts\source_exe_base.vpc"
+$Include "$SRCDIR\tier0\tier0_exclude.vpc"
+$Include "$SRCDIR\tier1\tier1_exclude.vpc" [$WINDOWS]
+$Include "$SRCDIR\vstdlib\vstdlib_exclude.vpc" [$WINDOWS]
+
+$Configuration
+{
+	$Linker [$WINDOWS]
+	{
+		$AdditionalDependencies				"$BASE Advapi32.lib"
+		$EnableLargeAddresses		"Support Addresses Larger Than 2 Gigabytes (/LARGEADDRESSAWARE)"
+		$FixedBaseAddress			"Generate a relocation section (/FIXED:NO)"
+	}
+}
+
+$Project "Dedicated_main"
+{
+	$Folder	"Source Files"
+	{
+		$File	"main.cpp"
+		$File	"$SRCDIR\common\SteamAppStartup.cpp"
+		$File	"$SRCDIR\common\SteamAppStartup.h"
+	}
+
+	$Folder	"Resources"
+	{
+		$File	"$SRCDIR\launcher\res\launcher.ico"
+		$File	"dedicated_main.rc"
+	}
+
+}

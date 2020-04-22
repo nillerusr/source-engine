@@ -1,0 +1,31 @@
+//-----------------------------------------------------------------------------
+//	DIFFMEMSTATS.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$SRCDIR\devtools\bin"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\x360xdk\include\win32\vs2005"
+		$AdditionalOptions				"/EHsc"
+	}
+
+	$Linker
+	{
+	}		
+}
+
+$Project "diffmemstats"
+{
+	$Folder	"Source Files"
+	{
+		$File	"diffmemstats.cpp"
+	}
+}

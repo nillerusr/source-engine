@@ -1,0 +1,14 @@
+//
+// dx_proxy_dx9_v00_x360.vpc
+//
+// Base script for generating dx_proxy.dll for specific
+// version of Microsoft DirectX SDK:
+// DirectX9 XBox 360 XDK
+//
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$SRCDIR\x360xdk\bin\win32"
+$Macro DX_SDK_VER	"DX9_V00_X360"
+
+$Include "dx_proxy_base.vpc"
+

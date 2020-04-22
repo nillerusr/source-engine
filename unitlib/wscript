@@ -1,0 +1,44 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from waflib import Utils
+import os
+
+top = '.'
+PROJECT_NAME = 'unitlib'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	conf.env.append_unique('DEFINES', ['UNITLIB_DLL_EXPORT=1'])
+
+def build(bld):
+	source = [
+		'unitlib.cpp'
+	]
+
+	includes = [
+		'.',
+		'../',
+		'../public',
+		'../public/tier1',
+		'../public/tier0',
+		'../common'
+	]
+
+	defines = []
+	libs = []
+
+	bld.shlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)

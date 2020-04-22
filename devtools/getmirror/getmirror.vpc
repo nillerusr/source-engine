@@ -1,0 +1,43 @@
+//-----------------------------------------------------------------------------
+//	GETMIRROR.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$SRCDIR\devtools\bin"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$Create/UsePrecompiledHeader		"Use Precompiled Header (/Yu)"
+		$PrecompiledHeaderFile				"Debug/getmirror.pch"
+		$EnableC++Exceptions				"Yes (/EHsc)"
+	}
+}
+
+$Project "Getmirror"
+{
+	$Folder	"Source Files"
+	{
+		$File	"getmirror.cpp"
+		$File	"StdAfx.cpp"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader	"Create Precompiled Header (/Yc)"
+				}
+			}
+		}
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"StdAfx.h"
+	}
+}

@@ -1,0 +1,19 @@
+//-----------------------------------------------------------------------------
+//	TEXTURECOMPILE_LAUNCHER.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+$Macro OUTBINNAME	"texturecompile"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Project "Texturecompile_launcher"
+{
+	$Folder	"Source Files"
+	{
+		$File	"texturecompile_launcher.cpp"
+	}
+}

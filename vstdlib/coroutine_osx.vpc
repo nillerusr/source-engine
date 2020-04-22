@@ -1,0 +1,31 @@
+//-----------------------------------------------------------------------------
+//	COROUTINE_OSX.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		".."
+
+$include "$SRCDIR\vpc_scripts\source_lib_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$GCC_ExtraCompilerFlags		"-fno-stack-protector"
+		$PreprocessorDefinitions	"$BASE;VSTDLIB_DLL_EXPORT"
+	}
+}
+
+$Project "coroutine_osx"
+{
+	$Folder	"Source Files"
+	{
+		$File	"coroutine.cpp"
+	}
+
+	$Folder	"Public Header Files"
+	{
+		$File	"$SRCDIR\public\vstdlib\coroutine.h"
+	}
+}

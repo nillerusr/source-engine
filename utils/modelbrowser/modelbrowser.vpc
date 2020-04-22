@@ -1,0 +1,56 @@
+//-----------------------------------------------------------------------------
+//	MODELBROWSER.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,$SRCDIR\vgui2\include,$SRCDIR\vgui2\controls,..\common"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE comctl32.lib odbc32.lib odbccp32.lib Rpcrt4.lib"
+	}
+}
+
+$Project "Modelbrowser"
+{
+	$Folder	"Source Files"
+	{
+		$File	"$SRCDIR\public\interpolatortypes.cpp"
+		$File	"$SRCDIR\public\interpolatortypes.h"
+		$File	"modelbrowser.cpp"
+		$File	"$SRCDIR\public\vgui_controls\vgui_controls.cpp"
+		$File	"$SRCDIR\public\bone_setup.cpp"
+		$File	"$SRCDIR\public\studio.cpp"
+		$File	"$SRCDIR\public\collisionutils.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"..\common\cmdlib.h"
+		$File	"$SRCDIR\public\filesystem.h"
+		$File	"$SRCDIR\utils\common\FileSystem_Tools.h"
+		$File	"$SRCDIR\public\tier1\interface.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib appframework
+		$Lib dmxloader
+		$Lib mathlib
+		$Lib matsys_controls
+		$Lib tier2
+		$Lib tier3
+		$Lib vgui_controls
+	}
+}

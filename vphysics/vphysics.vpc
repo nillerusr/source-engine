@@ -1,0 +1,136 @@
+//-----------------------------------------------------------------------------
+//	VPHYSICS.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$macro SRCDIR		".."
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
+
+$include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories	"$BASE;.;$SRCDIR\ivp\ivp_intern;$SRCDIR\ivp\ivp_collision;$SRCDIR\ivp\ivp_physics;$SRCDIR\ivp\ivp_surface_manager;$SRCDIR\ivp\ivp_utility;$SRCDIR\ivp\ivp_controller;$SRCDIR\ivp\ivp_compact_builder;$SRCDIR\ivp\havana\havok;$SRCDIR\ivp\havana"
+		$PreprocessorDefinitions		"$BASE;VPHYSICS_EXPORTS;HAVANA_CONSTRAINTS;HAVOK_MOPP"
+		$Create/UsePrecompiledHeader	"Use Precompiled Header (/Yu)"
+		$Create/UsePCHThroughFile		"cbase.h"
+		$PrecompiledHeaderFile			"$(IntDir)\vphysics.pch"
+		// Language
+		$EnableRunTimeTypeInfo			"No (/GR-)"
+	}
+	$Compiler [$WIN32]
+	{
+		$EnableEnhancedInstructionSet	"Streaming SIMD Extensions (/arch:SSE)"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies			"$BASE odbc32.lib odbccp32.lib" [$WIN32]
+		$SystemLibraries                "iconv" [$OSXALL]
+	}
+}
+
+$Project "vphysics"
+{
+	$Folder	"Source Files"
+	{
+		$File	"stdafx.cpp"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader	"Create Precompiled Header (/Yc)"
+				}
+			}
+		}
+
+		$File	"convert.cpp"	\
+				"$SRCDIR\public\filesystem_helpers.cpp"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+				}
+			}
+		}
+
+		$File	"ledgewriter.cpp"
+		$File	"main.cpp"
+		$File	"physics_airboat.cpp"
+		$File	"physics_collide.cpp"
+		$File	"physics_constraint.cpp"
+		$File	"physics_controller_raycast_vehicle.cpp"
+		$File	"physics_environment.cpp"
+		$File	"physics_fluid.cpp"
+		$File	"physics_friction.cpp"
+		$File	"physics_material.cpp"
+		$File	"physics_motioncontroller.cpp"
+		$File	"physics_object.cpp"
+		$File	"physics_shadow.cpp"
+		$File	"physics_spring.cpp"
+		$File	"physics_vehicle.cpp"
+		$File	"physics_virtualmesh.cpp"
+		$File	"trace.cpp"
+		$File	"vcollide_parse.cpp"
+		$File	"vphysics_saverestore.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"cbase.h"
+		$File	"convert.h"
+		$File	"linear_solver.h"
+		$File	"physics_airboat.h"
+		$File	"physics_constraint.h"
+		$File	"physics_controller_raycast_vehicle.h"
+		$File	"physics_environment.h"
+		$File	"physics_fluid.h"
+		$File	"physics_friction.h"
+		$File	"physics_material.h"
+		$File	"physics_motioncontroller.h"
+		$File	"physics_object.h"
+		$File	"physics_shadow.h"
+		$File	"physics_spring.h"
+		$File	"physics_trace.h"
+		$File	"physics_vehicle.h"
+		$File	"vcollide_parse_private.h"
+		$File	"vphysics_internal.h"
+		$File	"vphysics_saverestore.h"
+	}
+
+	$Folder	"Public Header Files"
+	{
+		$File	"$SRCDIR\public\vphysics\collision_set.h"
+		$File	"$SRCDIR\public\vphysics\constraints.h"
+		$File	"$SRCDIR\public\datamap.h"
+		$File	"$SRCDIR\public\filesystem_helpers.h"
+		$File	"$SRCDIR\public\vphysics\friction.h"
+		$File	"$SRCDIR\public\vphysics\object_hash.h"
+		$File	"$SRCDIR\public\vphysics\performance.h"
+		$File	"$SRCDIR\public\vphysics\player_controller.h"
+		$File	"$SRCDIR\public\vphysics\stats.h"
+		$File	"$SRCDIR\public\vcollide.h"
+		$File	"$SRCDIR\public\vcollide_parse.h"
+		$File	"$SRCDIR\public\vphysics\vehicles.h"
+		$File	"$SRCDIR\public\vphysics_interface.h"
+		$File	"$SRCDIR\public\vphysics_interfaceV30.h"
+	}
+		
+	$Folder	"Link Libraries" 
+	{
+		$Lib "$LIBCOMMON/havana_constraints"
+		$Lib "$LIBCOMMON/hk_base"
+		$Lib "$LIBCOMMON/hk_math"
+		$Lib "$LIBCOMMON/ivp_compactbuilder"
+		$Lib "$LIBCOMMON/ivp_physics"
+		$Lib mathlib
+		$Lib tier2
+	}
+
+}

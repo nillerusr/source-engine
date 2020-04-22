@@ -1,0 +1,860 @@
+//====== Copyright 1996-2010, Valve Corporation, All rights reserved. =======
+//
+// Purpose: The file defines our Google Protocol Buffers which are used in over 
+// the wire messages between servers as well as between clients and servers.
+//
+//=============================================================================
+
+// We care more about speed than code size
+option optimize_for = SPEED;
+
+// We don't use the service generation functionality
+option cc_generic_services = false;
+
+
+// 
+// STYLE NOTES:
+//
+// Use CamelCase CMsgMyMessageName style names for messages.
+// 
+// Use lowercase _ delimited names like my_steam_id for field names, this is non-standard for Steam,
+// but plays nice with the Google formatted code generation.  
+// 
+// Try not to use required fields ever. Only do so if you are really really sure you'll never want them removed. 
+// Optional should be preffered as it will make versioning easier and cleaner in the future if someone refactors
+// your message and wants to remove or rename fields.
+//
+// Use fixed64 for JobId_t, GID_t, or SteamID.  This is appropriate for any field that is normally
+// going to be larger than 2^56.  Otherwise use int64 for 64 bit values that are frequently smaller
+// than 2^56 as it will safe space on the wire in those cases.
+//
+// Similar to fixed64, use fixed32 for RTime32 or other 32 bit values that are frequently larger than
+// 2^28.  It will safe space in those cases, otherwise use int32 which will safe space for smaller values.
+// An exception to this rule for RTime32 is if the value will frequently be zero rather than set to an actual 
+// time.
+//
+
+import "google/protobuf/descriptor.proto";
+
+extend google.protobuf.FieldOptions {
+	optional bool key_field = 60000 [ default = false ];
+}
+
+
+extend google.protobuf.MessageOptions{
+	// Allows us to customize the pooling for different messages
+	optional int32 msgpool_soft_limit = 60000 [default=32];
+	optional int32 msgpool_hard_limit = 60001 [default=384];
+}
+
+enum GCProtoBufMsgSrc
+{
+	GCProtoBufMsgSrc_Unspecified = 0;
+	GCProtoBufMsgSrc_FromSystem = 1;
+	GCProtoBufMsgSrc_FromSteamID = 2;
+	GCProtoBufMsgSrc_FromGC = 3;
+	GCProtoBufMsgSrc_ReplySystem = 4;
+};
+
+//
+// Message header, every protcol buffer based message starts with this.
+//
+message CMsgProtoBufHeader
+{
+	option (msgpool_soft_limit) = 256;
+	option (msgpool_hard_limit) = 1024;
+
+	// All fields here are optional.
+	
+	// Client message header fields
+	optional fixed64 client_steam_id = 1;		// SteamID of the client sending this, typically set in all client originated messages.
+	optional int32 client_session_id = 2;		// SessionID of the client on the CM
+
+	// Source appId for inter-gc messages
+	optional uint32 source_app_id = 3;			// appId of source GC message sender
+	
+	// Job routing (may be set on client or inter-server messages)
+	optional fixed64 job_id_source = 10 [ default = 0xFFFFFFFFFFFFFFFF ];			// JobID that sent this message
+	optional fixed64 job_id_target = 11 [ default = 0xFFFFFFFFFFFFFFFF ];			// The target job which is expected to be waiting on this message
+	optional string target_job_name = 12;											// the type of job to start when this message is received
+
+	optional int32 eresult = 13 [default = 2];	// For response jobs, the corresponding eresult
+	optional string error_message = 14;			// Optionally an error message in case of failure. Mostly used for debugging purpose.
+
+	// Where did this message originally enter the system? From a client, from another GC, etc
+	optional GCProtoBufMsgSrc		gc_msg_src = 200;
+	// If this came from another GC, what is the GC that it came from
+	optional uint32					gc_dir_index_source = 201;
+}	
+
+
+//
+// Used to serialize CWebAPIKey objects.
+//
+message CMsgWebAPIKey
+{
+	optional uint32 status = 1 [ default = 0xFF ];
+	optional uint32 account_id = 2 [ default = 0 ];
+	optional uint32 publisher_group_id = 3 [ default = 0 ];
+	optional uint32 key_id = 4;
+	optional string domain = 5;
+}	
+
+
+//
+// An HTTP request message
+//
+message CMsgHttpRequest
+{
+	message RequestHeader
+	{
+		optional string name = 1;
+		optional string value = 2;
+	}
+	
+	message QueryParam
+	{
+		optional string name = 1;
+		optional bytes value = 2;
+	}
+	
+	optional uint32 request_method = 1;
+	optional string hostname = 2;
+	optional string url = 3;
+	repeated RequestHeader headers = 4;
+	repeated QueryParam get_params = 5;
+	repeated QueryParam post_params = 6;
+	optional bytes body = 7;
+	optional uint32 absolute_timeout = 8;
+}
+
+
+//
+// A web API request 
+//
+message CMsgWebAPIRequest
+{
+	optional string UNUSED_job_name = 1; // no longer used
+	optional string interface_name = 2;
+	optional string method_name = 3;
+	optional uint32 version = 4;
+	optional CMsgWebAPIKey api_key = 5;
+	optional CMsgHttpRequest request = 6;
+	optional uint32 routing_app_id = 7;
+}
+
+
+//
+// An HTTP response
+//
+message  CMsgHttpResponse
+{
+	message ResponseHeader
+	{
+		optional string name = 1;
+		optional string value = 2;
+	}
+	
+	optional uint32 status_code = 1;
+	repeated ResponseHeader headers = 2;
+	optional bytes body = 3;
+}
+
+//
+//  Message struct for k_EMsgAMFindAccounts
+//
+message CMsgAMFindAccounts
+{
+	optional uint32 search_type = 1;
+	optional string search_string = 2;
+}
+
+
+// 
+// Message struct for k_EMsgAMFindAccountsResponse
+//
+message CMsgAMFindAccountsResponse
+{
+	repeated fixed64 steam_id = 1;
+}
+
+//
+// k_EMsgNotifyWatchdog
+//
+message CMsgNotifyWatchdog
+{
+	optional uint32 source = 1;					// Alert source
+	optional uint32	alert_type = 2;				// type of alert
+	optional uint32 alert_destination = 3;		// destination for alert
+	optional bool critical = 4;					// Is the alert critical
+	optional uint32 time = 5;					// world time that alert occurred
+	optional uint32 appid = 6;					// app to forward the alert to for alerts with alert_type set to AppID
+	optional string text = 7;					// Alert text
+}
+
+//
+// k_EGCMsgGetLicenses
+//
+message CMsgAMGetLicenses
+{
+	optional fixed64 steamid = 1; // the steam ID to fetch licenses for
+}
+
+
+//
+// Used by CMsgAMGetLicensesResponse
+//
+message CMsgPackageLicense
+{
+	optional uint32 package_id = 1; // ID of the package this license is for
+	optional uint32 time_created = 2; // RTime32 when the license was granted
+	optional uint32 owner_id = 3; // the original owner if this license. if this is different from given steamid, it's a borrowed package
+}
+
+//
+// k_EMsgAMGetLicensesResponse
+//
+message CMsgAMGetLicensesResponse
+{
+	repeated CMsgPackageLicense license = 1; // the list of licenses the user owns
+	optional uint32 result = 2;				// result code, k_EResultOK on success
+
+}
+
+
+//
+// k_EMsgAMGetUserGameStats
+//
+message CMsgAMGetUserGameStats
+{
+	optional fixed64	steam_id = 1;			// ID of user
+	optional fixed64	game_id = 2;			// Game ID of stats to get
+	repeated uint32 	stats = 3;
+}
+
+
+//
+// k_EMsgAMGetUserGameStatsResponse
+//
+message CMsgAMGetUserGameStatsResponse
+{
+	optional fixed64	steam_id = 1;			// ID of user
+	optional fixed64	game_id = 2;				// Game ID
+	optional int32		eresult = 3 [default = 2];	// EResult with result of query.  (Fields following are only valid if this is EResultOK.)
+	
+	message Stats
+	{
+		optional uint32	stat_id = 1;
+		optional uint32 stat_value = 2;			// There are 4 of these, really only 8 bits each. Yay for compression!
+	}
+	
+	message Achievement_Blocks
+	{
+		optional uint32 achievement_id = 1;
+		optional uint32 achievement_bit_id = 2;
+		optional fixed32 unlock_time = 3;		// There are only 32 of these, matching the achievment bitfields, we check on the receiver that
+	}
+
+	repeated Stats stats = 4;
+	
+	repeated Achievement_Blocks achievement_blocks = 5;
+
+}
+
+
+// k_EMsgAdminGCGetCommandList
+message CMsgGCGetCommandList
+{
+	optional uint32 app_id = 1; 
+	optional string command_prefix = 2; // prefix of the command to filter by
+};
+
+// k_EMsgAdminGCGetCommandListResponse
+message CMsgGCGetCommandListResponse
+{
+	repeated string command_name = 1; // a list of command names
+};
+
+//
+// k_EGCMsgMemCachedGet
+//
+message CGCMsgMemCachedGet
+{
+	repeated string keys = 1;	
+}
+	
+//
+// k_EGCMsgMemCachedGetResponse
+//
+message CGCMsgMemCachedGetResponse
+{
+	message ValueTag
+	{
+		optional bool found = 1;
+		optional bytes value = 2;
+	}
+	
+	repeated ValueTag values = 1;	
+}
+
+//
+// k_EGCMsgMemCachedSet
+//
+message CGCMsgMemCachedSet
+{
+	message KeyPair
+	{
+		optional string name = 1;
+		optional bytes value = 2;
+	}
+	
+	repeated KeyPair keys = 1;	
+}
+
+//
+// k_EGCMsgMemCachedDelete
+//
+message CGCMsgMemCachedDelete
+{
+	repeated string keys = 1;	
+}
+
+//
+// k_EGCMsgMemCachedStats
+//
+message CGCMsgMemCachedStats
+{
+	// Nothing, yet.
+}
+
+//
+// k_EGCMsgMemCachedStatsResponse
+//
+message CGCMsgMemCachedStatsResponse
+{
+	optional uint64 curr_connections = 1;
+	optional uint64 cmd_get = 2;
+	optional uint64 cmd_set = 3;
+	optional uint64 cmd_flush = 4;
+	optional uint64 get_hits = 5;
+	optional uint64 get_misses = 6;
+	optional uint64 delete_hits = 7;
+	optional uint64 delete_misses = 8;
+	optional uint64 bytes_read = 9;
+	optional uint64 bytes_written = 10;
+	optional uint64 limit_maxbytes = 11;
+	optional uint64 curr_items = 12;
+	optional uint64 evictions = 13;
+	optional uint64 bytes = 14;
+}
+
+//
+// k_EGCMsgSQLStats
+//
+message CGCMsgSQLStats
+{
+	optional uint32 schema_catalog = 1;
+}
+
+//
+// k_EGCMsgSQLStatsResponse
+//
+message CGCMsgSQLStatsResponse
+{
+	optional uint32 threads = 1;
+	optional uint32 threads_connected = 2;
+	optional uint32 threads_active = 3;
+	optional uint32 operations_submitted = 4;
+	optional uint32 prepared_statements_executed = 5;
+	optional uint32 non_prepared_statements_executed = 6;
+	optional uint32 deadlock_retries = 7;
+	optional uint32 operations_timed_out_in_queue = 8;
+	optional uint32 errors = 9;
+}
+
+// k_EMsgAMAddFreeLicense
+message CMsgAMAddFreeLicense
+{
+	optional fixed64		steamid = 1;			// SteamID of account
+	optional uint32			ip_public = 2;			// IP of client (zero if not a client-initiated message)
+	optional uint32			packageid = 3;			// ID for package to purchase. Should be k_uPackageIdInvalid if shopping cart gid set
+	optional string			store_country_code = 4;	// country code to use for purchase
+};
+
+// k_EMsgAMAddFreeLicenseResponse
+message CMsgAMAddFreeLicenseResponse
+{
+	optional int32			eresult = 1 [default = 2];					// EResult with result of Purchase.
+	optional int32			purchase_result_detail = 2;	// Detailed result information
+	optional fixed64		transid = 3;				// ID of the created transaction
+};
+
+
+//
+// k_EGCMsgGetIPLocation
+//
+message CGCMsgGetIPLocation
+{
+	repeated fixed32 ips = 1;
+}
+
+//
+// k_EGCMsgGetIPLocationResponse
+//
+message CIPLocationInfo
+{
+	optional uint32 ip = 1;
+	optional float latitude = 2;
+	optional float longitude = 3;
+	optional string country = 4;
+	optional string state = 5;
+	optional string city = 6;
+}
+
+message CGCMsgGetIPLocationResponse
+{
+	repeated CIPLocationInfo infos = 1;
+}
+
+
+//
+// k_EGCMsgSystemStatsSchema
+//
+message CGCMsgSystemStatsSchema
+{
+	optional	uint32		gc_app_id = 1;
+	optional	bytes		schema_kv = 2;
+}
+
+//
+// k_EGCMsgGetSystemStats
+//
+message CGCMsgGetSystemStats
+{
+}
+
+//
+// k_EGCMsgGetSystemStatsResponse
+//
+message CGCMsgGetSystemStatsResponse
+{
+	optional	uint32		gc_app_id = 1;
+	optional	bytes		stats_kv = 2;
+	// statically included in GCHost's stats
+	optional	uint32		active_jobs = 3;
+	optional	uint32		yielding_jobs = 4;
+	optional	uint32		user_sessions = 5;
+	optional	uint32		game_server_sessions = 6;
+	optional	uint32		socaches = 7;
+	optional	uint32		socaches_to_unload = 8;
+	optional	uint32		socaches_loading = 9;
+	optional	uint32		writeback_queue = 10;
+	optional	uint32		steamid_locks = 11;
+	optional	uint32		logon_queue = 12;
+	optional	uint32		logon_jobs = 13;
+}
+
+// k_EGCMsgSendEmail
+message CMsgAMSendEmail
+{
+	message ReplacementToken
+	{
+		optional string token_name = 1;
+		optional string token_value = 2;
+	}
+	message PersonaNameReplacementToken
+	{
+		optional fixed64 steamid = 1;
+		optional string token_name = 2;
+	}
+	optional fixed64 steamid = 1;
+	optional uint32 email_msg_type = 2;
+	optional uint32 email_format = 3;
+	repeated PersonaNameReplacementToken persona_name_tokens = 5;
+	
+	optional uint32	source_gc = 6;
+	repeated ReplacementToken tokens = 7;	
+}
+
+// k_EGCMsgSendEmailResponse
+message CMsgAMSendEmailResponse
+{
+	optional uint32 eresult = 1 [default = 2];
+}
+
+// k_EGCMsgGetEmailTemplate
+message CMsgGCGetEmailTemplate
+{
+	optional uint32 app_id = 1;
+	optional uint32 email_msg_type = 2;
+	optional int32	email_lang = 3;
+	optional int32	email_format = 4;
+}
+
+// k_EGCMsgGetEmailTemplateResponse
+message CMsgGCGetEmailTemplateResponse
+{
+	optional uint32 eresult = 1 [default = 2];
+	optional bool	template_exists = 2;
+	optional string template = 3;
+}
+
+// k_EMsgAMGrantGuestPasses2
+message CMsgAMGrantGuestPasses2
+{
+	optional fixed64 steam_id = 1;
+	optional uint32 package_id = 2;
+	optional int32 passes_to_grant = 3;
+	optional int32 days_to_expiration = 4;
+	optional int32 action = 5;
+}
+
+// k_EMsgAMGrantGuestPasses2Response
+message CMsgAMGrantGuestPasses2Response
+{
+	optional int32 eresult = 1 [default = 2];
+	optional int32 passes_granted = 2 [default = 0];
+}
+
+// k_EGCMsgGetAccountDetails
+message CGCSystemMsg_GetAccountDetails
+{
+	option (msgpool_soft_limit) = 128;
+	option (msgpool_hard_limit) = 512;
+
+	optional fixed64 steamid = 1;					// User to get details for
+	optional uint32 appid = 2;						// appid of the source GC
+}
+
+message CGCSystemMsg_GetAccountDetails_Response
+{
+	option (msgpool_soft_limit) = 128;
+	option (msgpool_hard_limit) = 512;
+
+	optional uint32 eresult_deprecated = 1	[ default = 2 ];	// Result of the request
+	optional string account_name = 2;				// Login name for the user
+	optional string persona_name = 3;				// Diplay name for the user
+	optional bool is_profile_public = 4;			// Is the user's profile public
+	optional bool is_inventory_public = 5;			// Is the user's inventory public
+	//optional bool is_trusted = 6;					// Is the user trusted
+	optional bool is_vac_banned = 7;				// Is the user vac banned
+	optional bool is_cyber_cafe = 8;				// Is the user a cybe cafe
+	optional bool is_school_account = 9;			// Is the user a school account
+	optional bool is_limited = 10;					// Is the user limited
+	optional bool is_subscribed = 11;				// Is the user subscribed to this app
+	optional uint32 package = 12;					// The package the user owns the app through
+	optional bool is_free_trial_account = 13;		// Is the user playing the game for free
+	optional uint32 free_trial_expiration = 14;		// If the user is playing for free, when does it expire?
+	optional bool is_low_violence = 15;				// Is the user restricted to low-violence for this app
+	optional bool is_account_locked_down = 16;		// Is the user's account locked
+	optional bool is_community_banned = 17;			// Is the user banned from performing community actions
+	optional bool is_trade_banned = 18;				// Is the user banned from trading items to other users on Steam
+	optional uint32 trade_ban_expiration = 19;		// The time at which the user is unbanned from trading	
+	optional uint32 accountid = 20;					// The account ID of the user we're responding about
+	optional uint32 suspension_end_time = 21;		// If suspended (ban that ends), the date/time the suspension ends
+	optional string currency = 22;					// The currency associated with this account
+	optional uint32 steam_level = 23;				// The Steam level of the user
+	optional uint32 friend_count = 24;				// Number of friends
+	optional uint32 account_creation_time = 25;		// Time when the account was created
+	optional bool is_steamguard_enabled = 27;		// Is SteamGuard enabled
+	optional bool is_phone_verified = 28;			// Has a verified phone number
+	optional bool is_two_factor_auth_enabled = 29;	// Has SteamGuard two factor auth
+	optional uint32 two_factor_enabled_time = 30;	// Time two factor was added
+	optional uint32 phone_verification_time = 31;	// Time phone was verified
+	optional uint64 phone_id = 33;					// Phone identifier
+	optional bool is_phone_identifying = 34;		// Phone is useful for identity
+}
+
+//
+// k_EGCMsgCheckClanMembership
+//
+message CMsgGCCheckClanMembership
+{
+	optional fixed64 steamid = 1;					// [ (description) = "User whose group memberships we want" ];
+	optional uint32 clanid = 2;					// [ (description) = "Clan to check membership against" ];
+
+}
+
+message CMsgGCCheckClanMembership_Response
+{
+	optional bool ismember = 1;					// [ (description) = "Whether the user in question is a member of the group in question" ];
+}
+
+//
+// k_EGCMsgGetPersonaNames
+//
+message CMsgGCGetPersonaNames
+{
+	repeated fixed64 steamids = 1;					// Users whose persona names we want
+}
+
+message CMsgGCGetPersonaNames_Response
+{
+	message PersonaName
+	{
+		optional fixed64 steamid = 1;				// User we could get a name for
+		optional string persona_name = 2;			// Display name for that user
+	}
+
+	repeated PersonaName succeeded_lookups = 1;		// Users we could get names for
+	repeated fixed64 failed_lookup_steamids = 2;	// Users we failed to get a names for
+}
+
+
+//
+// k_EGCMsgCheckFriendship
+//
+message CMsgGCCheckFriendship
+{
+	optional fixed64 steamid_left = 1;		// User whose friends list we'll load
+	optional fixed64 steamid_right = 2;		// User to look for in the list we load
+}
+
+message CMsgGCCheckFriendship_Response
+{
+	optional bool success = 1;				// Whether the API calls all succeeded
+	optional bool found_friendship = 2;		// Denotes whether the users are friends (false on API failure)
+}
+
+
+//
+// k_EGCMsgMasterSetDirectory
+//
+message CMsgGCMsgMasterSetDirectory
+{
+	message SubGC
+	{
+		optional uint32	dir_index = 1;					// The index in the GC directory indicating what role this GC serves
+		optional string name = 2;						// A string to give the GC a name for asserts/logs/connection, etc
+		optional string box = 3;						// The box that this GC is expected to be associated with
+		optional string command_line = 4;				// Additional command line parameters to provide for this GC instance
+		optional string gc_binary = 5;					// The binary that should be launched for this GC. This can be left blank to launch the default binary
+	}
+	
+	optional uint32 master_dir_index = 1;				// The index of the master GC so that it knows how to setup the routing tables to include the master and sub GCs
+	repeated SubGC dir = 2;								// A listing of the various sub GCs that the GCH should create
+}
+
+message CMsgGCMsgMasterSetDirectory_Response
+{
+	optional int32 eresult = 1 [default = 2];			// Could the GC start the processes? It doesn't mean they will all get initialized and each sub GC still needs to ack, but catches failure earlier
+}
+
+//
+// k_EGCMsgWebAPIJobRequestForwardResponse
+//
+message CMsgGCMsgWebAPIJobRequestForwardResponse
+{
+	optional uint32 dir_index = 1;						// The directory index of the GC which has been delegated to handle this particular WebAPI request
+}
+
+//
+// k_EGCMsgGetPurchaseTrustStatus
+//
+message CGCSystemMsg_GetPurchaseTrust_Request
+{
+	optional fixed64 steamid = 1;						// User to get details for
+}
+
+message CGCSystemMsg_GetPurchaseTrust_Response
+{
+	optional bool has_prior_purchase_history = 1;	// The user has prior purchase history with no recent gaps in purchase activity
+	optional bool has_no_recent_password_resets = 2; // The user hasn't had their password reset recently
+	optional bool is_wallet_cash_trusted = 3;		// False if the user has recently used a new payment method to fund his or her wallet
+	optional uint32 time_all_trusted = 4;			// The time that the user will be trusted in all of the given fields if he or she were to complete a microtransaction right now
+}
+
+// k_EMsgGCHAccountVacStatusChange
+message CMsgGCHAccountVacStatusChange
+{
+	optional fixed64 steam_id = 1;
+	optional uint32 app_id = 2;
+	optional uint32 rtime_vacban_starts = 3;
+	optional bool is_banned_now = 4;
+	optional bool is_banned_future = 5;
+}
+
+// k_EMsgGCHAccountTradeBanStatusChange
+message CMsgGCHAccountTradeBanStatusChange
+{
+	optional fixed64 steamid = 1;
+	optional uint32 appid = 2;
+	optional bool is_banned = 3;
+	optional uint32 time_banned_until = 4;
+}
+
+// k_EMsgGCHAccountLockStatusChange
+message CMsgGCHAccountLockStatusChange
+{
+	optional fixed64 steamid = 1;
+	optional uint32 appid = 2;
+	optional bool is_locked = 3;
+}
+
+// k_EMsgGCHVacVerificationChange
+message CMsgGCHVacVerificationChange
+{
+	optional fixed64 steamid = 1;
+	optional uint32 appid = 2;
+	optional bool is_verified = 3;
+}
+
+// k_EMsgGCHAccountPhoneNumberChange
+message CMsgGCHAccountPhoneNumberChange
+{
+	optional fixed64 steamid = 1;
+	optional uint32 appid = 2;
+	optional uint64 phone_id = 3;
+	optional bool is_verified = 4;
+	optional bool is_identifying = 5;
+}
+
+// k_EMsgGCHAccountTwoFactorChange
+message CMsgGCHAccountTwoFactorChange
+{
+	optional fixed64 steamid = 1;
+	optional uint32 appid = 2;
+	optional bool twofactor_enabled = 3;
+}
+
+//
+// k_EGCMsgGetPartnerAccountLink
+//
+message CMsgGCGetPartnerAccountLink
+{
+	optional fixed64 steamid = 1;	// User whose partner account link details we want to get
+}
+
+message CMsgGCGetPartnerAccountLink_Response
+{
+	optional uint32 pwid = 1; 		// Perfect World ID (not specified if not linked)
+	optional uint32 nexonid = 2;	// Nexon ID (not specified if not linked)
+}
+
+
+//
+// k_EGCMsgMasterSetWebAPIRouting and k_EGCMsgMasterSetClientMsgRouting
+//
+message CMsgGCRoutingInfo
+{
+	enum RoutingMethod
+	{
+		RANDOM = 0;									// random instead of round-robin so that we don't need to track state per routing pool
+		DISCARD = 1;
+		CLIENT_STEAMID = 2;
+		PROTOBUF_FIELD_UINT64 = 3;
+		WEBAPI_PARAM_UINT64 = 4;
+	}
+
+	repeated uint32 dir_index = 1;								// One or more directory indices which are potential targets for this route
+	optional RoutingMethod method = 2	[ default = RANDOM ];	// Method by which the route choses its target from multiple dir_index values
+	optional RoutingMethod fallback = 3	[ default = DISCARD ];	// Fallback method to use when default method is not applicable (eg, field can't be parsed)
+	optional uint32 protobuf_field = 4;							// For PROTOBUF_FIELD_UINT64, the protobuf field number to decode as a uint64 for routing
+	optional string webapi_param = 5;							// For WEBAPI_PARAM_UINT64 method, the case-insensitive name of the webapi parameter
+}
+
+message CMsgGCMsgMasterSetWebAPIRouting
+{
+	message Entry
+	{
+		optional string interface_name = 1;
+		optional string method_name = 2;
+		optional CMsgGCRoutingInfo routing = 3;
+	}
+	repeated Entry entries = 1;
+}
+
+message CMsgGCMsgMasterSetClientMsgRouting
+{
+	message Entry
+	{
+		optional uint32 msg_type = 1;				// Client message ID to be routed; top bit is ignored for historical reasons
+		optional CMsgGCRoutingInfo routing = 2;
+	}
+	repeated Entry entries = 1;
+}
+
+message CMsgGCMsgMasterSetWebAPIRouting_Response
+{
+	optional int32 eresult = 1						[ default = 2 ]; // Success or failure code from the GCH when processing k_EGCMsgMasterSetWebAPIRouting
+}
+
+message CMsgGCMsgMasterSetClientMsgRouting_Response
+{
+	optional int32 eresult = 1						[ default = 2 ]; // Success or failure code from the GCH when processing k_EGCMsgMasterSetClientMsgRouting
+}
+
+
+// k_EGCMsgSetOptions
+message CMsgGCMsgSetOptions
+{
+	enum Option
+	{
+		// Notifications (aka "data streams" - unsoliticed messages from Steam) - default disabled, specify to opt-in
+		NOTIFY_USER_SESSIONS = 0;
+		NOTIFY_SERVER_SESSIONS = 1;
+		NOTIFY_ACHIEVEMENTS = 2;
+		NOTIFY_VAC_ACTION = 3;
+
+		// todo: other options? should start options higher up, like 20+, to save room for streams?
+	}
+	repeated Option options = 1;
+
+	
+	// The client_msg_ranges field indicates which client messages, if any, this GC should receive copies of
+	message MessageRange
+	{
+		required uint32 low = 1;
+		required uint32 high = 2;
+	}
+	repeated MessageRange client_msg_ranges = 2;
+
+
+	// The GCSQL version field is only read by the GC.EXE host to determine support for enums, etc; the GCH doesn't care
+	enum GCSQLVersion
+	{
+		GCSQL_VERSION_BASELINE = 1; // baseline
+		GCSQL_VERSION_BOOLTYPE = 2; // added explicit support for bool types (instead of int8)
+	}
+	optional GCSQLVersion gcsql_version = 3;
+}
+
+
+// k_EMsgGCHUpdateSession
+message CMsgGCHUpdateSession
+{
+	optional fixed64 steam_id = 1;
+	optional uint32 app_id = 2;
+	optional bool online = 3;
+	optional fixed64 server_steam_id = 4;				// For a game client, the steam_id of the current server
+	optional uint32 server_addr = 5;					// The IP address of the current server (or self for server state)
+	optional uint32 server_port = 6;					// The IP port of the server (or self for server state)
+	optional uint32 os_type = 7;
+	optional uint32 client_addr = 8;					// For a game client, the public IP address of the client
+	
+	message ExtraField
+	{
+		optional string name = 1;
+		optional string value = 2;
+	}
+	repeated ExtraField extra_fields = 9; 
+}
+
+//
+// k_EGCMsgVSReportedSuspiciousActivity
+//
+message CMsgNotificationOfSuspiciousActivity
+{
+	optional fixed64 steamid = 1;
+	optional uint32 appid = 2;
+
+	message MultipleGameInstances
+	{
+		optional uint32 app_instance_count = 1;
+		repeated fixed64 other_steamids = 2;
+	}
+	optional MultipleGameInstances multiple_instances = 3;
+}
+
+// Do not remove this comment due to a bug on the Mac OS X protobuf compiler
+

@@ -1,0 +1,47 @@
+//-----------------------------------------------------------------------------
+//	VMF_TWEAK.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,$SRCDIR\game\shared,..\common"
+	}
+}
+
+$Project "Vmf_tweak"
+{
+	$Folder	"Source Files"
+	{
+		$File	"$SRCDIR\public\ChunkFile.cpp"
+		$File	"..\common\cmdlib.cpp"
+		$File	"..\common\cmdlib.h"
+		$File	"$SRCDIR\public\filesystem_helpers.cpp"
+		$File	"$SRCDIR\public\filesystem_helpers.h"
+		$File	"$SRCDIR\public\filesystem_init.cpp"
+		$File	"..\common\filesystem_tools.cpp"
+		$File	"..\common\filesystem_tools.h"
+		$File	"StdAfx.cpp"
+		$File	"vmf_tweak.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\public\ChunkFile.h"
+		$File	"StdAfx.h"
+		$File	"$SRCDIR\public\tier1\tokenreader.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib tier2
+	}
+}

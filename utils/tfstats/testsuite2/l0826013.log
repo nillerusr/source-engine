@@ -1,0 +1,215 @@
+L 08/26/1999 - 15:51:55: Log file started.
+L 08/26/1999 - 15:51:55: Spawning server "2fort"
+L 08/26/1999 - 15:51:55: server cvars start
+L 08/26/1999 - 15:51:55: "cr_random" = "0"
+L 08/26/1999 - 15:51:55: "cr_engineer" = "0"
+L 08/26/1999 - 15:51:55: "cr_spy" = "0"
+L 08/26/1999 - 15:51:55: "cr_pyro" = "0"
+L 08/26/1999 - 15:51:55: "cr_hwguy" = "0"
+L 08/26/1999 - 15:51:55: "cr_medic" = "0"
+L 08/26/1999 - 15:51:55: "cr_demoman" = "0"
+L 08/26/1999 - 15:51:55: "cr_soldier" = "0"
+L 08/26/1999 - 15:51:55: "cr_sniper" = "0"
+L 08/26/1999 - 15:51:55: "cr_scout" = "0"
+L 08/26/1999 - 15:51:55: "decalfrequency" = "30"
+L 08/26/1999 - 15:51:55: "mp_autocrosshair" = "1"
+L 08/26/1999 - 15:51:55: "mp_flashlight" = "0"
+L 08/26/1999 - 15:51:55: "mp_footsteps" = "1"
+L 08/26/1999 - 15:51:55: "mp_forcerespawn" = "1"
+L 08/26/1999 - 15:51:55: "mp_weaponstay" = "0"
+L 08/26/1999 - 15:51:55: "mp_falldamage" = "0"
+L 08/26/1999 - 15:51:55: "mp_friendlyfire" = "0"
+L 08/26/1999 - 15:51:55: "mp_timelimit" = "0"
+L 08/26/1999 - 15:51:55: "mp_fraglimit" = "0"
+L 08/26/1999 - 15:51:55: "mp_teamplay" = "0"
+L 08/26/1999 - 15:51:55: "tfc_balance_scores" = "1.0"
+L 08/26/1999 - 15:51:55: "tfc_balance_teams" = "1.0"
+L 08/26/1999 - 15:51:55: "tfc_adminpwd" = ""
+L 08/26/1999 - 15:51:55: "tfc_clanbattle_locked" = "0.0"
+L 08/26/1999 - 15:51:55: "tfc_clanbattle" = "0.0"
+L 08/26/1999 - 15:51:55: "tfc_respawndelay" = "0.0"
+L 08/26/1999 - 15:51:55: "tfc_autoteam" = "0.0"
+L 08/26/1999 - 15:51:55: "sv_maxrate" = "0"
+L 08/26/1999 - 15:51:55: "sv_minrate" = "0"
+L 08/26/1999 - 15:51:55: "sv_allowupload" = "1"
+L 08/26/1999 - 15:51:55: "sv_allowdownload" = "1"
+L 08/26/1999 - 15:51:55: "sv_upload_maxsize" = "0"
+L 08/26/1999 - 15:51:55: "sv_spectatormaxspeed" = "500"
+L 08/26/1999 - 15:51:55: "sv_spectalk" = "1"
+L 08/26/1999 - 15:51:55: "sv_maxspectators" = "8"
+L 08/26/1999 - 15:51:55: "sv_cheats" = "0"
+L 08/26/1999 - 15:51:55: "sv_clienttrace" = "1"
+L 08/26/1999 - 15:51:55: "sv_timeout" = "65"
+L 08/26/1999 - 15:51:55: "sv_waterfriction" = "1"
+L 08/26/1999 - 15:51:55: "sv_wateraccelerate" = "10"
+L 08/26/1999 - 15:51:55: "sv_airaccelerate" = "10"
+L 08/26/1999 - 15:51:55: "sv_airmove" = "1"
+L 08/26/1999 - 15:51:55: "sv_bounce" = "1"
+L 08/26/1999 - 15:51:55: "sv_clipmode" = "0"
+L 08/26/1999 - 15:51:55: "sv_stepsize" = "18"
+L 08/26/1999 - 15:51:55: "sv_accelerate" = "10"
+L 08/26/1999 - 15:51:55: "sv_maxspeed" = "320"
+L 08/26/1999 - 15:51:55: "sv_stopspeed" = "100"
+L 08/26/1999 - 15:51:55: "edgefriction" = "2"
+L 08/26/1999 - 15:51:55: "sv_friction" = "4"
+L 08/26/1999 - 15:51:55: "sv_gravity" = "800"
+L 08/26/1999 - 15:51:55: "sv_aim" = "1"
+L 08/26/1999 - 15:51:55: "sv_password" = ""
+L 08/26/1999 - 15:51:55: "pausable" = "1"
+L 08/26/1999 - 15:51:55: "coop" = "0"
+L 08/26/1999 - 15:51:55: "deathmatch" = "1"
+L 08/26/1999 - 15:51:55: "mp_logecho" = "1"
+L 08/26/1999 - 15:51:55: "mp_logfile" = "1"
+L 08/26/1999 - 15:51:55: "cmdline" = "0"
+L 08/26/1999 - 15:51:55: server cvars end
+L 08/26/1999 - 15:51:56: Map CRC "-652696221"
+L 08/26/1999 - 15:51:56: "sv_aim" = "0"
+L 08/26/1999 - 15:51:56: "sv_clienttrace" = "3.5"
+L 08/26/1999 - 15:51:56: "pausable" = "0"
+L 08/26/1999 - 15:51:56: "sv_maxspeed" = "500"
+L 08/26/1999 - 15:51:56: "mp_teamplay" = "21"
+L 08/26/1999 - 15:51:56: "mp_timelimit" = "30"
+L 08/26/1999 - 15:51:56: "tfc_autoteam" = "1"
+L 08/26/1999 - 15:51:56: Server name is "VALVe Test Server"
+L 08/26/1999 - 15:51:56: "sv_maxspeed" = "500.000000"
+L 08/26/1999 - 15:52:11: "Speedy<1><WON:2372049>" connected, address "24.64.242.176:27005"
+L 08/26/1999 - 15:52:12: "Terpl<2><WON:2765779>" connected, address "24.64.205.22:27005"
+L 08/26/1999 - 15:52:17: "Speedy<1><WON:2372049>" has entered the game
+L 08/26/1999 - 15:52:20: "Speedy<1>" joined team "1".
+L 08/26/1999 - 15:52:21: "Speedy<1>" changed class to "Soldier"
+L 08/26/1999 - 15:52:21: "Speedy<1>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:52:38: "[S.O.I]Mike316<3><WON:1218709>" connected, address "208.145.88.215:27005"
+L 08/26/1999 - 15:52:47: "Terpl<4><WON:2765779>" connected, address "24.64.205.22:27005"
+L 08/26/1999 - 15:52:56: "Terpl<4><WON:2765779>" has entered the game
+L 08/26/1999 - 15:52:57: "Terpl<4>" joined team "2".
+L 08/26/1999 - 15:53:00: "Xub<5><WON:3292789>" connected, address "131.215.84.95:27005"
+L 08/26/1999 - 15:53:00: "Bulldog<6><WON:2305419>" connected, address "209.242.104.149:27005"
+L 08/26/1999 - 15:53:01: "Terpl<4>" changed class to "Soldier"
+L 08/26/1999 - 15:53:01: "Terpl<4>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:53:05: "Xub<5><WON:3292789>" has entered the game
+L 08/26/1999 - 15:53:06: "Xub<5>" joined team "1".
+L 08/26/1999 - 15:53:06: "[S.O.I]Mike316<3><WON:1218709>" has entered the game
+L 08/26/1999 - 15:53:07: "Dr.Gonzo<7><WON:799309>" connected, address "145.253.107.21:27005"
+L 08/26/1999 - 15:53:09: "Speedy<1>" activated the goal "Red Flag"
+L 08/26/1999 - 15:53:10: "Xub<5>" changed class to "HWGuy"
+L 08/26/1999 - 15:53:10: "Xub<5>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:53:16: "Dr.Gonzo<7><WON:799309>" has entered the game
+L 08/26/1999 - 15:53:16: "Dr.Gonzo<7>" joined team "2".
+L 08/26/1999 - 15:53:19: "[S.O.I]Mike316<3>" joined team "1".
+L 08/26/1999 - 15:53:23: "[S.O.I]Mike316<3>" changed class to "Engineer"
+L 08/26/1999 - 15:53:23: "[S.O.I]Mike316<3>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:53:26: "Dr.Gonzo<7>" changed class to "Engineer"
+L 08/26/1999 - 15:53:26: "Dr.Gonzo<7>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:53:27: "Bulldog<6><WON:2305419>" has entered the game
+L 08/26/1999 - 15:53:30: "Dolemanator<8><WON:1091289>" connected, address "24.66.237.115:27005"
+L 08/26/1999 - 15:53:33: "Bulldog<6>" joined team "2".
+L 08/26/1999 - 15:53:39: "Bulldog<6>" changed class to "Engineer"
+L 08/26/1999 - 15:53:39: "Bulldog<6>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:53:39: "Terpl<4>" killed "[S.O.I]Mike316<3>" with "rocket"
+L 08/26/1999 - 15:53:40: "Speedy<1>" activated the goal "Team 1 dropoff"
+L 08/26/1999 - 15:53:40: "[S.O.I]Mike316<3>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:53:52: "Xub<5>" killed "Dr.Gonzo<7>" with "ac"
+L 08/26/1999 - 15:53:53: "Terpl<4>" activated the goal "Blue Flag"
+L 08/26/1999 - 15:53:54: "Dr.Gonzo<7>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:53:55: "Dolemanator<8><WON:1091289>" has entered the game
+L 08/26/1999 - 15:53:59: "Dolemanator<8>" joined team "1".
+L 08/26/1999 - 15:54:06: "Dolemanator<8>" changed class to "RandomPC"
+L 08/26/1999 - 15:54:06: "Dolemanator<8>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:54:06: "Speedy<1>" killed "Bulldog<6>" with "rocket"
+L 08/26/1999 - 15:54:09: "Bulldog<6>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:54:30: "Speedy<1>" activated the goal "Red Flag"
+L 08/26/1999 - 15:54:32: "bladerunner<9><WON:1540489>" connected, address "167.206.234.171:27005"
+L 08/26/1999 - 15:54:34: "Terpl<4>" activated the goal "Team 2 dropoff"
+L 08/26/1999 - 15:54:39: "Xub<5>" killed "Bulldog<6>" with "ac"
+L 08/26/1999 - 15:54:42: "Bulldog<6>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:54:51: "Xub<5>" killed "Terpl<4>" with "ac"
+L 08/26/1999 - 15:54:52: "Terpl<4>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:54:59: "bladerunner<9><WON:1540489>" has entered the game
+L 08/26/1999 - 15:54:59: "Dr.Gonzo<7>" changed class to "Engineer"
+L 08/26/1999 - 15:54:59: "muaddib<10><WON:1523709>" connected, address "208.130.240.120:27005"
+L 08/26/1999 - 15:55:02: "Dr.Gonzo<7>" changed class to "Engineer"
+L 08/26/1999 - 15:55:10: "sneakin<11><WON:507529>" connected, address "24.28.45.159:27005"
+L 08/26/1999 - 15:55:12: "bladerunner<9>" joined team "2".
+L 08/26/1999 - 15:55:15: "bladerunner<9>" changed class to "Demoman"
+L 08/26/1999 - 15:55:15: "bladerunner<9>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:55:16: "muaddib<10><WON:1523709>" has entered the game
+L 08/26/1999 - 15:55:16: "Terpl<4>" changed class to "Scout"
+L 08/26/1999 - 15:55:17: "Speedy<1>" activated the goal "Team 1 dropoff"
+L 08/26/1999 - 15:55:18: "muaddib<10>" joined team "1".
+L 08/26/1999 - 15:55:24: "muaddib<10>" changed class to "Engineer"
+L 08/26/1999 - 15:55:24: "muaddib<10>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:55:31: "[]SNIPER[]<12><WON:2934569>" connected, address "24.65.219.171:27005"
+L 08/26/1999 - 15:55:32: "Terpl<4>" killed self with "rocket"
+L 08/26/1999 - 15:55:32: "[Ogzr]$Variable<13><WON:303609>" connected, address "209.162.217.15:27005"
+L 08/26/1999 - 15:55:33: "Terpl<4>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:55:33: "sneakin<11><WON:507529>" has entered the game
+L 08/26/1999 - 15:55:36: "bladerunner<9>" killed "Dolemanator<8>" with "gl_grenade"
+L 08/26/1999 - 15:55:38: "sneakin<11>" joined team "2".
+L 08/26/1999 - 15:55:38: "Dr.Gonzo<7>" say "Hi"
+L 08/26/1999 - 15:55:38: "Dolemanator<8>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:55:41: "sneakin<11>" changed class to "Medic"
+L 08/26/1999 - 15:55:41: "sneakin<11>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:55:42: "[]SNIPER[]<12><WON:2934569>" has entered the game
+L 08/26/1999 - 15:55:44: "Xub<5>" activated the goal "Red Flag"
+L 08/26/1999 - 15:55:45: "[]SNIPER[]<12>" joined team "1".
+L 08/26/1999 - 15:55:46: "[Ogzr]$Variable<13><WON:303609>" has entered the game
+L 08/26/1999 - 15:55:49: "[Ogzr]$Variable<13>" joined team "2".
+L 08/26/1999 - 15:55:49: "Speedy<1>" killed "Dr.Gonzo<7>" with "rocket"
+L 08/26/1999 - 15:55:51: "Dr.Gonzo<7>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:55:52: "muaddib<10>" built a "sentry".
+L 08/26/1999 - 15:55:53: "[Ogzr]$Variable<13>" changed class to "Soldier"
+L 08/26/1999 - 15:55:53: "[Ogzr]$Variable<13>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:55:53: "sneakin<11>" say "greetings"
+L 08/26/1999 - 15:55:54: "[]SNIPER[]<12>" changed class to "Sniper"
+L 08/26/1999 - 15:55:54: "[]SNIPER[]<12>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:55:55: "muaddib<10>" killed "bladerunner<9>" with "sentrygun"
+L 08/26/1999 - 15:55:57: "bladerunner<9>" destroyed "muaddib<10>"'s "sentry".
+L 08/26/1999 - 15:55:58: "bladerunner<9>" killed "muaddib<10>" with "gl_grenade"
+L 08/26/1999 - 15:55:58: "bladerunner<9>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:55:59: "Homey<14><WON:1591439>" connected, address "207.217.249.215:27005"
+L 08/26/1999 - 15:56:00: "[Ogzr]$Variable<13>" say "howdy"
+L 08/26/1999 - 15:56:00: "Bulldog<6>" built a "sentry".
+L 08/26/1999 - 15:56:03: "Terpl<4>" killed "[S.O.I]Mike316<3>" with "nails"
+L 08/26/1999 - 15:56:04: "Dolemanator<8>" killed "Terpl<4>" with "supershotgun"
+L 08/26/1999 - 15:56:05: "Terpl<4>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:56:05: "muaddib<10>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:56:09: "Speedy<1>" killed "Dr.Gonzo<7>" with "rocket"
+L 08/26/1999 - 15:56:11: "Dr.Gonzo<7>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:56:13: "Terpl<4>" killed "Xub<5>" with "nails"
+L 08/26/1999 - 15:56:14: "[A-PA]PsyChO<15><WON:3226209>" connected, address "63.23.59.53:27005"
+L 08/26/1999 - 15:56:15: "Xub<5>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:56:20: "[]SNIPER[]<12>" killed "[Ogzr]$Variable<13>" with "sniperrifle"
+L 08/26/1999 - 15:56:20: "muaddib<10>" changed class to "Engineer"
+L 08/26/1999 - 15:56:21: "Homey<14><WON:1591439>" has entered the game
+L 08/26/1999 - 15:56:21: "Homey<14>" joined team "1".
+L 08/26/1999 - 15:56:23: "Dr.Gonzo<7>" changed class to "Soldier"
+L 08/26/1999 - 15:56:23: "bladerunner<9>" killed "Dolemanator<8>" with "mirvgrenade"
+L 08/26/1999 - 15:56:25: "Dolemanator<8>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:56:25: "[Ogzr]$Variable<13>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:56:26: "bladerunner<9>" killed "[]SNIPER[]<12>" with "mirvgrenade"
+L 08/26/1999 - 15:56:29: "[]SNIPER[]<12>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:56:32: "Speedy<1>" killed "sneakin<11>" with "rocket"
+L 08/26/1999 - 15:56:34: "sneakin<11>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:56:35: "Xub<5>" killed "Dr.Gonzo<7>" with "ac"
+L 08/26/1999 - 15:56:37: "Dr.Gonzo<7>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:56:38: "muaddib<10>" built a "sentry".
+L 08/26/1999 - 15:56:45: "[Ogzr]$Variable<13>" killed "Speedy<1>" with "rocket"
+L 08/26/1999 - 15:56:47: "Speedy<1>" activated the goal "info_player_teamspawn"
+L 08/26/1999 - 15:56:47: "Xub<5>" activated the goal "Red Flag"
+L 08/26/1999 - 15:56:55: "Speedy<-1>" disconnected
+L 08/26/1999 - 15:56:55: "[S.O.I]Mike316<-1>" disconnected
+L 08/26/1999 - 15:56:55: "Terpl<-1>" disconnected
+L 08/26/1999 - 15:56:55: "Xub<-1>" disconnected
+L 08/26/1999 - 15:56:55: "Bulldog<-1>" disconnected
+L 08/26/1999 - 15:56:55: "<-1>" destroyed "Bulldog<-1>"'s "sentry".
+L 08/26/1999 - 15:56:55: "Dr.Gonzo<-1>" disconnected
+L 08/26/1999 - 15:56:55: "Dolemanator<-1>" disconnected
+L 08/26/1999 - 15:56:55: "bladerunner<-1>" disconnected
+L 08/26/1999 - 15:56:55: "muaddib<-1>" disconnected
+L 08/26/1999 - 15:56:55: "<-1>" destroyed "muaddib<-1>"'s "sentry".
+L 08/26/1999 - 15:56:55: "sneakin<-1>" disconnected
+L 08/26/1999 - 15:56:55: "[]SNIPER[]<-1>" disconnected
+L 08/26/1999 - 15:56:55: "[Ogzr]$Variable<-1>" disconnected
+L 08/26/1999 - 15:56:55: "Homey<-1>" disconnected
+L 08/26/1999 - 15:56:55: Server shutdown.
+L 08/26/1999 - 15:56:55: Log closed.

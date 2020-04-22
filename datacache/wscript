@@ -1,0 +1,56 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from waflib import Utils
+import os
+
+top = '.'
+PROJECT_NAME = 'datacache'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	return
+
+def build(bld):
+	source = [
+		'datacache.cpp',
+		'mdlcache.cpp',
+		'../public/studio.cpp',
+		'../public/studio_virtualmodel.cpp',
+		'../common/studiobyteswap.cpp',
+		'../public/tier0/memoverride.cpp'
+	]
+
+	includes = [
+		'.',
+		'../public',
+		'../public/tier0',
+		'../public/tier1',
+		'../common'
+	]
+
+	defines = []
+
+	libs = ['tier0','tier1','tier2','tier3']
+
+	if bld.env.DEST_OS == 'android':
+		libs += ['ANDROID_SUPPORT']
+
+	install_path = bld.env.LIBDIR
+
+	bld.shlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		install_path = install_path,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)
+

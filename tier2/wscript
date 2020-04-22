@@ -1,0 +1,63 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from waflib import Utils
+import os
+
+top = '.'
+PROJECT_NAME = 'tier2'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	return
+
+def build(bld):
+	source = [
+		'beamsegdraw.cpp',
+		'defaultfilesystem.cpp',
+		'dmconnect.cpp',
+		'fileutils.cpp',
+		'keybindings.cpp',
+		'../public/map_utils.cpp',
+		'../public/materialsystem/MaterialSystemUtil.cpp',
+		'camerautils.cpp',
+		'meshutils.cpp',
+		'p4helpers.cpp',
+		'renderutils.cpp',
+		'riff.cpp',
+		'soundutils.cpp',
+		'tier2.cpp',
+		'util_init.cpp',
+		'utlstreambuffer.cpp',
+		'vconfig.cpp',
+		'keyvaluesmacros.cpp'
+	]
+
+	includes = [
+		'.',
+		'../common',
+		'../public',
+		'../public/tier0',
+		'../public/tier1',
+		'../public/tier2',
+	] + bld.env.INCLUDES_SDL2
+
+	defines = []
+
+	libs = []
+
+	bld.stlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)
+

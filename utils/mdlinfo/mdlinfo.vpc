@@ -1,0 +1,31 @@
+//-----------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Project "mdlinfo"
+{
+	$Folder	"Source Files"
+	{
+		$File	"main.cpp"
+	}
+
+	$Folder	"External Files"
+	{
+		$File	"$SRCDIR\public\studio.cpp"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib	appframework
+		$Lib	mathlib
+		$Lib	tier1
+		$Lib	tier2
+		$Lib	tier3
+	}
+}

@@ -1,0 +1,35 @@
+//-----------------------------------------------------------------------------
+//	PFM2TGAS.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\common"
+	}
+}
+
+$Project "Pfm2tgas"
+{
+	$Folder "Source Files"
+	{
+		$File	"pfm2tgas.cpp"
+	}
+	
+	$Folder	"Link Libraries"
+	{
+		$Lib bitmap
+		$Lib mathlib
+		$Lib raytrace
+		$Lib tier2
+	}
+
+}

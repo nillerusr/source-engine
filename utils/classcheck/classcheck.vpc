@@ -1,0 +1,39 @@
+//-----------------------------------------------------------------------------
+//	CLASSCHECK.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\common"
+	}
+}
+
+$Project "Classcheck"
+{
+	$Folder	"Source Files"
+	{
+		$File	"class.cpp"
+		$File	"classcheck.cpp"
+		$File	"classcheck_util.cpp"
+		$File	"processmodule.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\public\tier0\basetypes.h"
+		$File	"class.h"
+		$File	"classcheck_util.h"
+		$File	"codeprocessor.h"
+		$File	"icodeprocessor.h"
+		$File	"$SRCDIR\public\tier1\utldict.h"
+	}
+}

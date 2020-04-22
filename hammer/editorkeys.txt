@@ -1,0 +1,91 @@
+Tools:
+Shift+B - block tool
+Shift+C - camera tool
+Shift+E	- entity tool
+Shift+G	- magnify tool
+Shift+V	- morph tool
+Shift+S	- pointer (select/modify) tool
+Shift+A - texture application tool
+Shift+X - clipper tool
+
+Clipboard/Selection:
+Ctrl+C	- copy objects to clipboard (also ctrl+ins)
+Ctrl+V	- paste objects from clipboard (also shift+ins)
+Ctrl+X	- cut objects to clipboard (also shift+del)
+Ctrl+E	- center on selection (vertex/object) in all views
+Shift+Q	- clear selection
+PgUp    - previous selection in "hit" list
+PgDn    - next selection in "hit" list
+
+Grid:
+[       - grid lower
+]       - grid higher
+Shift+R	- toggle grid on/off
+Shift+W - toggle snap to grid
+
+Grouping:
+Ctrl+G	- group objects
+Ctrl+U	- ungroup objects
+
+Carving/Hollowing:
+Ctrl+Shift+C - carve
+Ctrl+H	- hollow objects
+
+Creating objects:
+Enter       - create object drawn with block/entity tool
+Alt+Shift+C - insert original prefab
+Ctrl+R	    - create prefab with selected objects
+Ctrl+T	    - create entity with selected objects. to add objects to
+              an existing entity, select IT and the objects and hit 
+		      Ctrl+T (you will be prompted.)
+
+Other object operations:
+Ctrl+B	  - snap selected objects to grid (based on boundbox)
+Alt+Enter - object properties
+
+File stuff:
+Ctrl+N	- new file
+Ctrl+O	- open file
+Ctrl+S	- save file
+
+Misc:
+Ctrl+A	- autosize 4 views to center
+Shift+Z - maximize/restore view
+Ctrl+M	- transform dialog
+Alt+P	- check map for errors
+F9      - run map
+ESC     - abort current tool mouse operation (drag/drop)
+
+Undo/redo:
+Ctrl+Z  - undo (also alt+backspace)
+Ctrl+Y	- redo
+
+2D views:
+Ctrl+I	- flip vertical
+Ctrl+L	- flip horizontal
+TAB     - switch view types (top/side/front)
++ / -   - zoom in/out; hold CTRL to synchronize all 2D views
+1 to 9  - preset zoom levels
+SPACE   - hold space and leftbutton to drag view
+ALT     - disable snap to grid while dragging with the mouse
+
+Morph tool:
+Ctrl+F	- split faces (morph mode)
+
+Select tool:
+CTRL    - hold ctrl and click to keep current selection
+SHIFT   - hold shift when rotating to constrain rotation to
+          15 degrees. hold shift when moving to create a 
+		  copy of the original object at the new location.
+(drag)  - hold lbutton and drag to select with a box. press
+          ENTER to select objects hitting the box, or 
+		  Shift+ENTER to select objects only entirely 
+		  within the box.
+
+Camera tool:
+SHIFT   - create a new camera with shift (replaces old camera,
+          currently.)
+
+Clipper tool:
+CTRL    - hold CTRL to move the whole clipper (both handles)
+Shift+X - press Shift+X to cycle through clipper modes

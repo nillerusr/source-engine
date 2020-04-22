@@ -1,0 +1,101 @@
+//-----------------------------------------------------------------------------
+//	PANEL_ZOO.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_base.vpc"
+$include "$SRCDIR\game\protobuf_include.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,$SRCDIR\vgui2\vlocalize,$SRCDIR\vgui2\controls,$SRCDIR\vgui2\include,$SRCDIR\vgui2\controls"
+	}
+	$Linker
+	{
+		$AdditionalLibraryDirectories		"$LIBCOMMON;$LIBPUBLIC"
+	}
+}
+
+$Project "Panel_zoo"
+{
+	$Folder	"Source Files"
+	{
+		$File	"AnimatingImagePanelDemo.cpp"
+		$File	"ButtonDemo.cpp"
+		$File	"ButtonDemo2.cpp"
+		$File	"CascadingMenu.cpp"
+		$File	"CControlCatalog.cpp"
+		$File	"CheckButtonDemo.cpp"
+		$File	"ComboBox2.cpp"
+		$File	"ComboBoxDemo.cpp"
+		$File	"DefaultColors.cpp"
+		$File	"DemoPage.cpp"
+		$File	"EditablePanel2Demo.cpp"
+		$File	"EditablePanelDemo.cpp"
+		$File	"FileOpenDialogDemo.cpp"
+		$File	"FrameDemo.cpp"
+		$File	"HTMLDemo.cpp"
+		$File	"HTMLDemo2.cpp"
+		$File	"ImageDemo.cpp"
+		$File	"ImagePanelDemo.cpp"
+		$File	"Label2Demo.cpp"
+		$File	"LabelDemo.cpp"
+		$File	"ListPanelDemo.cpp"
+		$File	"MenuBarDemo.cpp"
+		$File	"MenuDemo.cpp"
+		$File	"MenuDemo2.cpp"
+		$File	"MessageBoxDemo.cpp"
+		$File	"ProgressBarDemo.cpp"
+		$File	"QueryBoxDemo.cpp"
+		$File	"RadioButtonDemo.cpp"
+		$File	"SampleButtons.cpp"
+		$File	"SampleCheckButtons.cpp"
+		$File	"SampleDropDowns.cpp"
+		$File	"SampleEditFields.cpp"
+		$File	"SampleListCategories.cpp"
+		$File	"SampleListPanelBoth.cpp"
+		$File	"SampleListPanelColumns.cpp"
+		$File	"SampleMenus.cpp"
+		$File	"SampleRadioButtons.cpp"
+		$File	"SampleSliders.cpp"
+		$File	"SampleTabs.cpp"
+		$File	"ScrollBar2Demo.cpp"
+		$File	"ScrollBarDemo.cpp"
+		$File	"testfile.cpp"
+		$File	"TextEntryDemo.cpp"
+		$File	"TextEntryDemo2.cpp"
+		$File	"TextEntryDemo3.cpp"
+		$File	"TextEntryDemo4.cpp"
+		$File	"TextEntryDemo5.cpp"
+		$File	"TextImageDemo.cpp"
+		$File	"ToggleButtonDemo.cpp"
+		$File	"TooltipDemo.cpp"
+		$File	"$SRCDIR\public\vgui_controls\vgui_controls.cpp"
+		$File	"WizardPanelDemo.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"CControlCatalog.h"
+		$File	"DemoPage.h"
+		$File	"$SRCDIR\public\tier1\interface.h"
+		$File	"MenuDemo.h"
+		$File	"SampleListPanelBoth.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib appframework
+		$Lib tier2
+		$Lib tier3
+		$Lib vgui_controls
+		$Lib mathlib
+		$ImpLibexternal steam_api
+	}
+}

@@ -1,0 +1,54 @@
+//-----------------------------------------------------------------------------
+//	SOURCE_EXE_WIN_WIN32.VPC
+//
+//	Base Settings for Source(TM) Projects
+//-----------------------------------------------------------------------------
+
+$Include "$SRCDIR\vpc_scripts\version.vpc"
+$Include "$SRCDIR\vpc_scripts\steam_posix_base.vpc"
+
+$MacroRequired				"SRCDIR"
+$MacroRequired				"OUTBINNAME"	"$PROJECTNAME"
+
+$Include "$SRCDIR\vpc_scripts\loadaddress.vpc"
+
+
+$IgnoreRedundancyWarning	"ON"
+
+$Configuration
+{
+	$General
+	{
+		$ConfigurationType				"Application (.exe)"
+	}
+
+	$Compiler
+	{
+		$AdditionalIncludeDirectories	"$SRCDIR\common;$SRCDIR\public;$SRCDIR\public\tier0;$SRCDIR\public\tier1;/usr/include/malloc"
+		$PreprocessorDefinitions		"$BASE;_GNUC;POSIX;"
+		$PreprocessorDefinitions		"$BASE;_OSX;OSX;" [$OSX32 || $OSX64]
+		$PreprocessorDefinitions		"$BASE;_LINUX;LINUX" [$LINUXALL]
+	}
+	$Linker
+	{
+			$OutputFile								"$(OutDir)/$OUTBINNAME"
+	}
+}
+
+$Project
+{
+	$Folder	"Source Files"
+	{
+		$File	"$SRCDIR\public\tier0\memoverride.cpp"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+				}
+			}
+		}
+	}
+}
+

@@ -1,0 +1,43 @@
+//-----------------------------------------------------------------------------
+//	SFMGEN.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Project "sfmgen"
+{
+	$Folder	"Source Files"
+	{
+		$File	"sfmgen.cpp"
+	}
+
+	$Folder "External"
+	{
+		$File	"$SRCDIR\public\movieobjects/movieobjects.cpp"
+		$File	"$SRCDIR\public\interpolatortypes.cpp"
+		$File	"$SRCDIR\public\sentence.cpp"
+	}
+	
+	$Folder	"External Header Files"
+	{
+		$File	"$SRCDIR\public\sentence.h"
+		$File	"$SRCDIR\public\interpolatortypes.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib appframework
+		$Lib datamodel
+		$Lib dmserializers
+		$Lib mathlib
+		$Lib tier2
+		$Lib tier3
+		$Lib movieobjects
+		$Lib sfmobjects
+	}
+}

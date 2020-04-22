@@ -1,0 +1,32 @@
+//-----------------------------------------------------------------------------
+//	UNITTEST.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$PreprocessorDefinitions			"$BASE;PROTECTED_THINGS_DISABLE"
+	}
+}
+
+$Project "Unittest"
+{
+	$Folder	"Source Files"
+	{
+		$File	"unittest.cpp"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib appframework
+		$Lib unitlib
+	}
+}

@@ -1,0 +1,42 @@
+//-----------------------------------------------------------------------------
+//	SPLITSKYBOX.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\common"
+	}
+}
+
+$Project "Splitskybox"
+{
+	$Folder	"Source Files"
+	{
+		-$File	"$SRCDIR\public\tier0\memoverride.cpp"
+		
+		$File	"$SRCDIR\public\filesystem_helpers.cpp"
+		$File	"$SRCDIR\public\filesystem_init.cpp"
+		$File	"..\common\filesystem_tools.cpp"
+		$File	"..\common\cmdlib.cpp"
+		$File	"splitskybox.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\public\tier1\strtools.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib tier2
+	}
+}

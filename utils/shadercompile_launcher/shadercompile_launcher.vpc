@@ -1,0 +1,21 @@
+//-----------------------------------------------------------------------------
+//	SHADERCOMPILE_LAUNCHER.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+$Macro OUTBINNAME	"shadercompile"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Project "Shadercompile_launcher"
+{
+	$Folder	"Source Files"
+	{
+		-$File	"$SRCDIR\public\tier0\memoverride.cpp"
+		
+		$File	"shadercompile_launcher.cpp"
+	}
+}

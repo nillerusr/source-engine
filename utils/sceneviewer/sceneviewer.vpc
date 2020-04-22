@@ -1,0 +1,59 @@
+//-----------------------------------------------------------------------------
+//	SCENEVIEWER.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_base.vpc"
+
+$Configuration
+{
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE Rpcrt4.lib"
+	}
+}
+
+$Project "Sceneviewer"
+{
+	$Folder	"Source Files"
+	{		
+		$File	"clipviewpanel.cpp"
+		$File	"sceneviewer.cpp"
+		$File	"sceneviewerpanel.cpp"
+		
+		$Folder	"external"
+		{
+			$File	"$SRCDIR\public\interpolatortypes.cpp"
+			$File	"$SRCDIR\public\interpolatortypes.h"
+			$File	"$SRCDIR\public\movieobjects\movieobjects.cpp"
+			$File	"$SRCDIR\public\vgui_controls\vgui_controls.cpp"
+		}
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"clipviewpanel.h"
+		$File	"sceneviewer.h"
+		$File	"SceneViewerPanel.h"
+	}
+
+	$Folder "Link Libraries"
+	{
+		$Lib appframework
+		$Lib dmxloader
+		$Lib datamodel
+		$Lib dme_controls
+		$Lib dmserializers
+		$Lib mathlib
+		$Lib matsys_controls
+		$Lib movieobjects
+		$Lib sfmobjects
+		$Lib tier3
+		$Lib tier2
+		$Lib vgui_controls
+	}
+}

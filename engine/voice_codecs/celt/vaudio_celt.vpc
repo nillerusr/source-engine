@@ -1,0 +1,47 @@
+//-----------------------------------------------------------------------------
+//	VAUDIO_CELT.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\frame_encoder,..\celt,..\..\..\public,..\..\..\public\tier1,..\..,..\..\..\common,.\source\libcelt,..\..\audio\public"
+		$PreprocessorDefinitions			"$BASE;CELT_EXPORTS"
+	}
+	$Linker
+	{
+		$AdditionalLibraryDirectories		"$BASE,source\osx"
+		$SystemLibraries                    "iconv" [$OSXALL]
+	}
+}
+
+$Project "vaudio_celt"
+{
+	$Folder	"Source Files"
+	{
+		$File "$SRCDIR/tier1/interface.cpp"
+		$File "../frame_encoder/voice_codec_frame.cpp"
+		$File "voiceencoder_celt.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR/public/tier1/interface.h"
+		$File	"$SRCDIR/public/vaudio/ivaudio.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$File "source/libcelt/libcelt.lib" [$WIN32]
+		$File "source/osx/libcelt.a" [$OSXALL]
+		$File "source/linux/libcelt.a" [$LINUX]
+	}
+}

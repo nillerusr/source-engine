@@ -1,0 +1,27 @@
+//-----------------------------------------------------------------------------
+//	DEPCHECK.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$SRCDIR\devtools\bin"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Project "Depcheck"
+{
+	$Folder	"Source Files"
+	{
+		$File	"depcheck.cpp"
+		$File	"depcheck_util.cpp"
+		$File	"processmodule.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"codeprocessor.h"
+		$File	"depcheck_util.h"
+		$File	"icodeprocessor.h"
+	}
+}

@@ -1,0 +1,14 @@
+//
+// dx_proxy_dx9_v00_pc.vpc
+//
+// Base script for generating dx_proxy.dll for specific
+// version of Microsoft DirectX SDK:
+// DirectX9 - oldest legacy version
+//
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$SRCDIR\dx9sdk\utilities"
+$Macro DX_SDK_VER	"DX9_V00_PC"
+
+$Include "dx_proxy_base.vpc"
+

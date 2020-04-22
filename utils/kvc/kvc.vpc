@@ -1,0 +1,47 @@
+//-----------------------------------------------------------------------------
+//	KVC.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc" 
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories	"..\common;$BASE"
+	}
+}
+
+$Project "kvc"
+{
+	$Folder	"Source Files"
+	{
+		$File	"kvc.cpp"
+		$File	"kvc_paintkit.cpp"
+	}
+	
+	$Folder "Common Source Files"
+	{
+		$File	"$SRCDIR\public\kevvaluescompiler.cpp"
+		$File	"..\common\filesystem_tools.cpp"
+		$File	"..\common\pacifier.cpp"
+	}	
+
+	$Folder "Common Header Files"
+	{
+		$File	"$SRCDIR\public\keyvaluescompiler.h"
+		$File	"..\common\filesystem_tools.h"
+		$File	"..\common\pacifier.h"
+	}
+	
+	$Folder	"Link Libraries"
+	{
+		$Lib appframework
+		$Lib tier2
+	}
+}

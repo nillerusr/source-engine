@@ -1,0 +1,40 @@
+//-----------------------------------------------------------------------------
+//	MATSYS_REGRESSIONTEST.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+// ***** AUTO-GENERATED: PLEASE FIXUP MANUALLY BEFORE USING THIS SCRIPT! *****
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\common"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE $SRCDIR\lib\public\nvtc.lib"
+	}
+}
+
+$Project "Matsys_regressiontest"
+{
+	$Folder	"Source Files"
+	{
+		-$File	"$SRCDIR\public\tier0\memoverride.cpp"
+		$File	"matsys_regressiontest.cpp"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib bitmap
+		$Lib mathlib
+		$Lib tier2
+	}
+}

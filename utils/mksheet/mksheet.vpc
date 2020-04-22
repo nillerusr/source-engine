@@ -1,0 +1,36 @@
+//-----------------------------------------------------------------------------
+//	MKSHEET.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+// ***** AUTO-GENERATED: PLEASE FIXUP MANUALLY BEFORE USING THIS SCRIPT! *****
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\common"
+	}
+}
+
+$Project "Mksheet"
+{
+	$Folder "Source Files"
+	{
+		-$File	"$SRCDIR\public\tier0\memoverride.cpp"
+		$File	"mksheet.cpp"
+	}
+	
+	$Folder	"Link Libraries"
+	{
+		$Lib bitmap
+		$Lib mathlib
+		$Lib raytrace
+		$Lib tier2
+	}
+}

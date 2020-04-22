@@ -1,0 +1,3 @@
+LIBRARY	AppChooser_360.dll
+EXPORTS
+	AppChooserMain	@1

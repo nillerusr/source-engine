@@ -1,0 +1,66 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from waflib import Utils
+import os
+
+top = '.'
+PROJECT_NAME = 'mathlib'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	conf.define('MATHLIB_LIB',1)
+
+def build(bld):
+	source = [
+		'color_conversion.cpp',
+		'halton.cpp',
+		'lightdesc.cpp',
+		'mathlib_base.cpp',
+		'powsse.cpp',
+		'sparse_convolution_noise.cpp',
+		'sseconst.cpp',
+		'sse.cpp',	#				[$WINDOWS||$POSIX]
+		'ssenoise.cpp',				
+		'3dnow.cpp', #					[$WINDOWS||$LINUX]
+		'anorms.cpp',
+		'bumpvects.cpp',
+		'IceKey.cpp',
+		'imagequant.cpp',
+		'polyhedron.cpp',
+		'quantize.cpp',
+		'randsse.cpp',
+		'spherical.cpp',
+		'simdvectormatrix.cpp',
+		'vector.cpp',
+		'vmatrix.cpp',
+		'almostequal.cpp'
+	]
+
+	includes = [
+		'.',
+		'../common',
+		'../public',
+		'../public/tier0',
+		'../public/mathlib'
+	]	
+
+	defines = []
+
+	libs = []
+
+	bld.stlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)
+

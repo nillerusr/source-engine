@@ -1,0 +1,82 @@
+//-----------------------------------------------------------------------------
+//	SDKLAUNCHER.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		".."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_win_win32_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,$SRCDIR\utils\common"
+		$PreprocessorDefinitions			"$BASE;VERSION_SAFE_STEAM_API_INTERFACES"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE odbc32.lib odbccp32.lib WS2_32.LIB"
+	}
+}
+
+$Project "SDKLauncher"
+{
+	$Folder	"Source Files"
+	{
+		$File	"$SRCDIR\common\ConfigManager.cpp"
+		$File	"$SRCDIR\common\SourceAppInfo.cpp"
+		$File	"configs.cpp"
+		$File	"CreateModWizard.cpp"
+		$File	"CreateModWizard.h"
+		$File	"$SRCDIR\public\filesystem_init.cpp"
+		$File	"$SRCDIR\public\registry.cpp"
+		$File	"Main.cpp"
+		$File	"min_footprint_files.cpp"
+		$File	"ModConfigsHelper.cpp"
+		$File	"ModWizard_CopyFiles.cpp"
+		$File	"ModWizard_Finished.cpp"
+		$File	"ModWizard_GetModInfo.cpp"
+		$File	"ModWizard_Intro.cpp"
+		$File	"ModWizard_TemplateOptions.cpp"
+		$File	"$SRCDIR\public\registry.cpp"
+		$File	"sdklauncher_main.h"
+		$File	"SDKLauncherDialog.cpp"
+		$File	"$SRCDIR\public\vgui_controls\vgui_controls.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\common\ConfigManager.h"
+		$File	"configs.h"
+		$File	"$SRCDIR\public\filesystem_init.h"
+		$File	"$SRCDIR\public\tier1\interface.h"
+		$File	"min_footprint_files.h"
+		$File	"ModConfigsHelper.h"
+		$File	"ModWizard_CopyFiles.h"
+		$File	"ModWizard_GetModInfo.h"
+		$File	"ModWizard_Intro.h"
+		$File	"ModWizard_TemplateOptions.h"
+		$File	"SDKLauncherDialog.h"
+	}
+
+	$Folder	"Resource Files"
+	{
+		$File	"icon2.ico"
+		$File	"Script1.rc"
+		$File	"steam.ico"
+	}
+
+	$Folder "Link Libraries"
+	{
+		$Lib appframework
+		$ImpLib steam_api
+		$Lib tier2
+		$Lib tier3
+		$Lib vgui_controls
+		$Lib mathlib
+	}
+}

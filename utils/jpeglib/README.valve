@@ -1,0 +1,37 @@
+* To build on OSX (32bit)
+
+export CC=/Developer/usr/bin/llvm-gcc
+export CXX=/Developer/usr/bin/llvm-g++
+export CFLAGS="-m32 -isysroot /Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5 -O3 -fomit-frame-pointer -momit-leaf-frame-pointer -fno-tree-pre -falign-loops -ffast-math -fvisibility=hidden"
+export CXXFLAGS=$CFLAGS
+
+$ ./configure --enable-shared=no
+
+Note that in xcode4 beta builds /Developer would be replaced with /Xcode4.
+Also note the optimizations may be redundant, but it's good to know they are there.
+Fast-Math should be yanked if it seems to cause any problems, but so far seems good.
+
+
+* To build on linux x86:
+
+export CC=/path/to/gcc
+export CXX=/path/to/g++
+export CFLAGS=-fvisibility=hidden
+export CXXFLAGS=$CFLAGS
+export LDFLAGS=-static-libgcc
+./configure --enable-shared=no
+
+* To build on linux x86_64:
+
+export CC=/path/to/gcc
+export CXX=/path/to/g++
+export CFLAGS=-fvisibility=hidden
+export CXXFLAGS=$CFLAGS
+export LDFLAGS=-static-libgcc
+./configure --with-pic --enable-shared=no
+
+alternatively, just put all those variables on the configure line (note that LIBS is expressed in terms of the path to g++, not the CXX variable):
+
+./configure CC=/path/to/c-compiler CXX=/path/to/c++-compiler [LDFLAGS=-static-libgcc] [-m32] [--with-pic] --enable-shared=no
+
+publish libjpeg.a into src/lib/<platform>/release

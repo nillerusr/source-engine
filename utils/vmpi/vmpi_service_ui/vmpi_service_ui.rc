@@ -1,0 +1,171 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#define APSTUDIO_HIDDEN_SYMBOLS
+#include "windows.h"
+#undef APSTUDIO_HIDDEN_SYMBOLS
+#include "resource.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_DISABLED_ICON       ICON                    "idi_disabled_icon.ico"
+IDI_VMPI_SERVICE        ICON                    "vmpi_service.ICO"
+IDI_BUSY_ICON           ICON                    "idi_busy_icon.ico"
+IDI_WAITING_ICON        ICON                    "idi_waiting_icon.ico"
+IDI_UNCONNECTED         ICON                    "unconnec.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_POPUP_MENU MENU 
+BEGIN
+    POPUP "item1"
+    BEGIN
+        MENUITEM "&Enable",                     ID_ENABLE_WORKER
+        MENUITEM "&Disable",                    ID_DISABLE_WORKER
+        MENUITEM "&Kill Current Job",           ID_KILLCURRENTJOB
+        MENUITEM SEPARATOR
+        MENUITEM "&Show Console Window",        ID_SHOW_CONSOLE_WINDOW
+        MENUITEM "&Hide Console Window",        ID_HIDE_CONSOLE_WINDOW
+        MENUITEM SEPARATOR
+        MENUITEM "Set &Password",               ID_SET_PASSWORD
+        MENUITEM "Highlight Icon When Busy",    ID_HIGHLIGHT_ICON_WHEN_BUSY
+        MENUITEM "Screensaver Mode",            ID_SCREENSAVER_MODE
+        MENUITEM SEPARATOR
+        MENUITEM "&Exit Service",               ID_EXIT_SERVICE
+    END
+END
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+2 TEXTINCLUDE 
+BEGIN
+    "#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "#include ""windows.h""\r\n"
+    "#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "#include ""resource.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_VMPI_SERVICE DIALOG  0, 0, 454, 225
+STYLE DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "Valve MPI Service"
+FONT 8, "MS Sans Serif"
+BEGIN
+    EDITTEXT        IDC_DEBUG_OUTPUT,7,7,440,211,ES_MULTILINE | ES_READONLY | WS_VSCROLL | WS_HSCROLL
+END
+
+IDD_SET_PASSWORD DIALOG  0, 0, 134, 50
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Set Password (-mpi_pw)"
+FONT 8, "MS Sans Serif"
+BEGIN
+    EDITTEXT        IDC_PASSWORD,7,7,120,14,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,7,29,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,77,29,50,14
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_VMPI_SERVICE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 447
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 218
+    END
+
+    IDD_SET_PASSWORD, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 127
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 43
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE 
+BEGIN
+    IDS_APP_TITLE           "vmpi_service"
+    IDS_HELLO               "Hello World!"
+    IDC_VMPI_SERVICE        "VMPI_SERVICE"
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

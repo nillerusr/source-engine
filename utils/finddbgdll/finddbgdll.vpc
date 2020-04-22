@@ -1,0 +1,18 @@
+//-----------------------------------------------------------------------------
+//	FINDDBGDLL.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Project "Finddbgdll"
+{
+	$Folder	"Source Files"
+	{
+		$File	"finddbgdll.cpp"
+	}
+}

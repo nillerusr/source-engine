@@ -1,0 +1,68 @@
+//-----------------------------------------------------------------------------
+//	MDLOBJECTS.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		".."
+$Include "$SRCDIR\vpc_scripts\source_lib_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$PreprocessorDefinitions			"$BASE;MDLOBJECTS_LIB"
+	}
+}
+
+$Project "mdlobjects"
+{
+	$Folder	"Header Files"
+	{
+	}
+
+	$Folder	"Source Files"
+	{
+		$File	"dmebodygroup.cpp"
+		$File	"dmebodygrouplist.cpp"
+		$File	"dmecollisionmodel.cpp"
+		$File	"dmehitbox.cpp"
+		$File	"dmehitboxset.cpp"
+		$File	"dmebodypart.cpp"
+		$File	"dmeblankbodypart.cpp"
+		$File	"dmelod.cpp"
+		$File	"dmelodlist.cpp"
+		$File	"dmemdllist.cpp"
+		$File	"dmeboneweight.cpp"
+		$File	"dmebonemask.cpp"
+		$File	"dmebonemasklist.cpp"
+		$File	"dmesequence.cpp"
+		$File	"dmesequencelist.cpp"
+		$File	"dmeboneflexdriver.cpp"
+	}
+
+	$Folder	"Interface"
+	{
+		$File	"$SRCDIR\public\mdlobjects\dmebodygroup.h"
+		$File	"$SRCDIR\public\mdlobjects\dmebodygrouplist.h"
+		$File	"$SRCDIR\public\mdlobjects\dmecollisionmodel.h"
+		$File	"$SRCDIR\public\mdlobjects\dmehitbox.h"
+		$File	"$SRCDIR\public\mdlobjects\dmehitboxset.h"
+		$File	"$SRCDIR\public\mdlobjects\dmebodypart.h"
+		$File	"$SRCDIR\public\mdlobjects\dmeblankbodypart.h"
+		$File	"$SRCDIR\public\mdlobjects\dmelod.h"
+		$File	"$SRCDIR\public\mdlobjects\dmelodlist.h"
+		$File	"$SRCDIR\public\mdlobjects\dmemdllist.h"
+		$File	"$SRCDIR\public\mdlobjects\dmeboneweight.h"
+		$File	"$SRCDIR\public\mdlobjects\dmebonemask.h"
+		$File	"$SRCDIR\public\mdlobjects\dmebonemasklist.h"
+		$File	"$SRCDIR\public\mdlobjects\dmesequence.h"
+		$File	"$SRCDIR\public\mdlobjects\dmesequencelist.h"
+		$File	"$SRCDIR\public\mdlobjects\mdlobjects.h"
+	}
+
+	$Folder	"external"
+	{
+		$File	"$SRCDIR\public\mdlobjects\dmeboneflexdriver.h"
+	}
+}

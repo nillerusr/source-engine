@@ -1,0 +1,37 @@
+ //-----------------------------------------------------------------------------
+//	VPCCRCCHECK.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$MacroRequired "PLATSUBDIR"
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$SRCDIR\devtools\bin"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+	}
+}
+
+$Project "vpccrccheck"
+{
+	$Folder	"Source Files"
+	{
+		-$File	"$SRCDIR\public\tier0\memoverride.cpp"
+		$File	"vpccrccheck.cpp"
+		$File	"crccheck_shared.cpp"
+		$File	"$SRCDIR\tier1\checksum_crc.cpp"
+	}
+	
+	$Folder "Link Libraries" [$WIN32]
+	{
+		$Lib tier0
+		$Lib tier1
+		$ImpLib vstdlib
+	}
+}

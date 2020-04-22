@@ -1,0 +1,353 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 9, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif //_WIN32\r\n"
+    "#include ""res\\voice_tweak.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
+    "#include ""afxres.rc""         // Standard components\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON    DISCARDABLE     "res\\voice_tweak.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_VOICE_TWEAK_DIALOG DIALOGEX 0, 0, 314, 250
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_APPWINDOW
+CAPTION "Valve Voice Configuration"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    CONTROL         "Slider1",IDC_VOLUMESLIDER,"msctls_trackbar32",TBS_VERT | 
+                    TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,54,36,16,156
+    CONTROL         "Enable +20dB hardware gain (leave checked if unsure)",
+                    IDC_HARDWAREGAIN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,
+                    212,300,10
+    DEFPUSHBUTTON   "OK",IDOK,7,229,96,14
+    PUSHBUTTON      "Cancel",IDCANCEL,108,229,96,14
+    PUSHBUTTON      "System Setup",IDSYSTEMSETUP,211,229,96,14
+    EDITTEXT        IDC_INSTRUCTIONTEXT,91,7,216,197,ES_MULTILINE | 
+                    ES_READONLY | WS_VSCROLL | NOT WS_TABSTOP
+    GROUPBOX        "Voice Input",IDC_VOICEINPUTFRAME,7,7,75,197
+    CONTROL         "Progress1",IDC_VOICEVOLUME,"msctls_progress32",
+                    PBS_VERTICAL | WS_BORDER,19,28,11,160
+    LTEXT           "Volume:",IDC_VOLUMELABEL,49,25,26,8
+END
+
+
+#ifndef _MAC
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "CompanyName", "Valve\0"
+            VALUE "FileDescription", "Voice_Tweak Application\0"
+            VALUE "FileVersion", "1, 0, 0, 1\0"
+            VALUE "InternalName", "Voice_Tweak Application\0"
+            VALUE "LegalCopyright", "Copyright (c) 1996-2003\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", "voice_tweak.exe\0"
+            VALUE "ProductName", "Voice_Tweak Application\0"
+            VALUE "ProductVersion", "1, 0, 0, 1\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+#endif    // !_MAC
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_VOICE_TWEAK_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 307
+        VERTGUIDE, 28
+        VERTGUIDE, 39
+        VERTGUIDE, 133
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 243
+        HORZGUIDE, 28
+        HORZGUIDE, 188
+        HORZGUIDE, 204
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_HELPTEXT            "The first step to getting voice working in the Half-Life platform is to make sure your microphone is plugged in.\r\n\r\nPlug your microphone into the microphone jack on your sound card. If you don't know which one is the microphone jack, try each one and speak into the microphone each time. When you've found the right one, you should hear your voice coming out of your PC speakers.\r\n\r\nNext, adjust the distance from the microphone to your mouth and adjust the volume slider until your voice sounds good to you. This is how you will sound to other players in the game.\r\n\r\nIf you are not using headphones for audio output, be sure that your microphone is far enough away from your speakers or else you may get feedback which manifests itself as a loud high-pitched whine.\r\n\r\nIf you are unable to get your microphone working here, try clicking System Setup, which will do more extensive tests to get your microphone working."
+    IDS_ERROR               "Error!"
+    IDS_CANTFINDMICBOOST    "Warning: couldn't find microphone boost control."
+    IDS_CANTFINDMICVOLUME   "Couldn't find mic volume."
+    IDS_CANTFINDMICMUTE     "Couldn't find mic mute."
+    IDS_CANTCREATEWAVEIN    "Can't create a DirectSound or waveIn device."
+    IDS_CANTLOADVOICEMODULE "Can't load voice codec in %1!s!."
+    IDS_CANTINITCODEC       "Can't initialize voice codec in %1!s!."
+    IDS_CANTCREATEWAVEOUT   "Can't initialize waveOut."
+    IDS_NODPLAYVOICE        "Can't initialize DirectPlayVoice setup."
+    IDS_WINDOWTITLE         "Valve Voice Configuration"
+    IDS_OKAY                "Okay"
+    IDS_CANCEL              "Cancel"
+    IDS_SYSTEMSETUP         "System Setup"
+    IDS_HELP                "Help"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_VOICEINPUT          "Voice Input"
+    IDS_VOLUME              "Volume"
+    IDS_ENABLEGAIN          "Enable +20dB hardware gain (leave checked if unsure)"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_SPANISH_HELPTEXT    "El primer paso para que funcione la comunicación vocal en la plataforma de Half-Life es asegurarse de que el micrófono está conectado.\r\n\r\nConecta tu micrófono en la entrada apropiada de la tarjeta de sonido. Si no sabes cuál es, intenta cada una de ellas y habla por el micrófono. Cuando hayas encontrado la entrada correcta, oirás tu voz por los altavoces del PC.\r\n\r\nA continuación ajusta la distancia entre el micrófono y tu boca y ajusta el control deslizante del volumen hasta que te guste cómo suena tu voz. Así te oirán el resto de jugadores durante la partida.\r\n\r\nSi no utilizas auriculares para la salida de audio, asegúrate de que tu micrófono está lo suficientemente lejos de los altavoces o el sonido se emitirá como un silbido fuerte y agudo.\r\n\r\nSi no consigues que tu micrófono funcione, intenta hacer clic en System Setup (instalación del sistema) para hacer más pruebas y solucionar el problema."
+    IDS_SPANISH_ERROR       "¡Error!"
+    IDS_SPANISH_CANTFINDMICBOOST 
+                            "Aviso: no se ha podido encontrar el control de graves del micrófono."
+    IDS_SPANISH_CANTFINDMICVOLUME 
+                            "No se ha podido encontrar el mic volume (volumen de las entradas de mic)."
+    IDS_SPANISH_CANTFINDMICMUTE 
+                            "No se ha podido encontrar mic mute (mic bloqueado)."
+    IDS_SPANISH_CANTCREATEWAVEIN 
+                            "No se puede crear el dispositivo de entrada de sonido (waveIn) (mono a 16 bits y 8 KB)."
+    IDS_SPANISH_CANTLOADVOICEMODULE 
+                            "No se puede cargar el codec vocal en %1!s!."
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_SPANISH_CANTINITCODEC 
+                            "No se puede inicializar el codec vocal en %1!s!."
+    IDS_SPANISH_CANTCREATEWAVEOUT 
+                            "No se puede inicializar el dispositivo de salida de sonido (waveOut)."
+    IDS_SPANISH_NODPLAYVOICE 
+                            "No se puede inicializar la instalación de DirectPlayVoice."
+    IDS_SPANISH_WINDOWTITLE "Configuración del procesador de voz"
+    IDS_SPANISH_OKAY        "Aceptar"
+    IDS_SPANISH_CANCEL      "Cancelar"
+    IDS_SPANISH_SYSTEMSETUP "Instalación del sistema"
+    IDS_SPANISH_HELP        "Ayuda"
+    IDS_SPANISH_VOICEINPUT  "Entrada de voz"
+    IDS_SPANISH_VOLUME      "Volumen"
+    IDS_SPANISH_ENABLEGAIN  "Permitir aumento de más de 20dB de hardware (déjalo marcado si no estás seguro)"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_FRENCH_HELPTEXT     "Afin d'utiliser les communications vocales dans Half-Life, vous devez tout d'abord vérifier que votre microphone est correctement branché.\r\n\r\nBranchez le microphone dans la prise microphone de votre carte son. Si vous ne savez pas quelle prise de la carte son est la prise microphone, essayez toutes les prises libres et testez votre microphone à chaque fois. Lorsque vous avez trouvé la bonne prise, vous devriez entendre votre voix dans les haut-parleurs de votre PC.\r\n\r\nEnsuite, placez le microphone à bonne distance de votre bouche et réglez les paramètres de volume pour que votre voix ressorte correctement.\r\n\r\nSi vous n'utilisez pas un casque, assurez-vous que le microphone n'est pas placé trop prêt des haut-parleurs. Vous risquez sinon d'entendre des bruits parasites, par exemple un effet larsen qui se caractérise par un sifflement aigu.\r\n\r\nSi vous n'arrivez pas à faire fonctionner votre microphone, essayez de vérifier depuis Panneau de Configuration/Système que votre carte son et tous les ports correspondants sont correctement installés."
+    IDS_FRENCH_ERROR        "Erreur !"
+    IDS_FRENCH_CANTFINDMICBOOST 
+                            "Attention : impossible de trouver le contrôle de gain microphone."
+    IDS_FRENCH_CANTFINDMICVOLUME "Impossible de trouver volume microphone."
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_FRENCH_CANTFINDMICMUTE "Impossible de trouver muet microphone."
+    IDS_FRENCH_CANTCREATEWAVEIN 
+                            "Impossible de créer un périphérique waveIn (16 bits mono en 8 k)."
+    IDS_FRENCH_CANTLOADVOICEMODULE 
+                            "Impossible de charger le codec voix en %1!s!."
+    IDS_FRENCH_CANTINITCODEC 
+                            "Impossible d'initialiser le codec voix en %1!s!."
+    IDS_FRENCH_CANTCREATEWAVEOUT "Impossible d'initialiser waveOut."
+    IDS_FRENCH_NODPLAYVOICE "Impossible d'initialiser le paramétrage de DirectPlayVoice."
+    IDS_FRENCH_WINDOWTITLE  "Configuration Voix Valve"
+    IDS_FRENCH_OKAY         "OK"
+    IDS_FRENCH_CANCEL       "Annuler"
+    IDS_FRENCH_SYSTEMSETUP  "Configuration"
+    IDS_FRENCH_HELP         "Aide"
+    IDS_FRENCH_VOICEINPUT   "Entrée voix"
+    IDS_FRENCH_VOLUME       "Volume"
+    IDS_FRENCH_ENABLEGAIN   "Activer un gain matériel de +20 Db (laissez cocher en cas de doute)"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_ITALIAN_HELPTEXT    "Il primo passo per utilizzare la voce in Half-Life è accertarsi che il microfono sia collegato correttamente.\r\n\r\nInserisci il microfono nell'apposita presa della scheda audio. Se non sai quale sia, provale tutte e procedi per tentativi provando a parlare nel microfono. Quando trovi quella giusta, dovresti sentire la tua voce provenire dagli altoparlanti del PC. \r\n\r\nA questo punto, aggiusta la distanza del microfono dalla bocca e regola il volume in modo che la voce risulti gradevole. Questo livello sarà infatti quello che sentiranno gli altri giocatori. \r\n\r\nSe non stai utilizzando le cuffie per ascoltare l'audio, assicurati che il microfono sia distante dagli altoparlanti. In caso contrario potrebbero manifestarsi dei disturbi legati al rientro dell'audio.\r\n\r\nSe non riesci a utilizzare il microfono, prova ad attivare il setup del sistema in modo che venga effettuato un test che verifichi accuratamente il funzionamento del microfono."
+    IDS_ITALIAN_ERROR       "Errore!"
+    IDS_ITALIAN_CANTFINDMICBOOST 
+                            "Attenzione: impossibile trovare il controllo per incrementare il segnale del microfono."
+    IDS_ITALIAN_CANTFINDMICVOLUME 
+                            "Impossibile trovare il volume del microfono."
+    IDS_ITALIAN_CANTFINDMICMUTE 
+                            "Impossibile trovare il comando mute per il microfono."
+    IDS_ITALIAN_CANTCREATEWAVEIN 
+                            "Impossibile creare un device waveIn (16 Bit-Signed Mono a 8K)"
+    IDS_ITALIAN_CANTLOADVOICEMODULE 
+                            "Impossibile caricare il voice codec in %1!s!."
+    IDS_ITALIAN_CANTINITCODEC 
+                            "Impossibile inizializzare il voice codec in %1!s!."
+    IDS_ITALIAN_CANTCREATEWAVEOUT "Impossibile inizializzare waveOut."
+    IDS_ITALIAN_NODPLAYVOICE 
+                            "Impossibile inizializzare il setup di DirectPlayVoice."
+    IDS_ITALIAN_WINDOWTITLE "Configurazione supporto vocale Valve"
+    IDS_ITALIAN_OKAY        "OK"
+    IDS_ITALIAN_CANCEL      "Annulla"
+    IDS_ITALIAN_SYSTEMSETUP "Impostazioni di sistema"
+    IDS_ITALIAN_HELP        "Aiuto"
+    IDS_ITALIAN_VOICEINPUT  "Input vocale"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_ITALIAN_VOLUME      "Volume"
+    IDS_ITALIAN_ENABLEGAIN  "Attiva l'incremento audio di 20 dB (lascia attivo se non sei sicuro)"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_GERMAN_HELPTEXT     "Der erste Schritt zur Aktivierung des Sprach-Features bei der HALF-LIFE-Plattform besteht darin, sicherzustellen, dass das Mikrofon angeschlossen ist.\r\n\r\nVerbinden Sie das Mikrofon mit der Mikrofonbuchse Ihrer Soundkarte. Wenn Sie nicht wissen, welche die Mikrofonbuchse ist, probieren Sie alle aus und sprechen Sie dabei jedes Mal ins Mikrofon. Wenn Sie die richtige gefunden haben, sollten Sie Ihre Stimme über die Lautsprecher Ihres PCs hören.\r\n\r\nAls Nächstes stellen Sie die Entfernung zwischen Ihrem Mund und dem Mikrofon ein und regeln die Lautstärke so, dass Ihre Stimme gut zu verstehen ist. Die anderen Spieler werden Sie im Spiel genau so hören.\r\n\r\nWenn Sie für die Soundausgabe keinen Kopfhörer benutzen, achten Sie darauf, dass sich Ihr Mikrofon weit genug von den Lautsprechern entfernt befindet, da Sie anderenfalls eine Rückkopplung verursachen, die sich als lautes, hohes Pfeifen bemerkbar macht.\r\n\r\nSollte es Ihnen nicht gelingen, das Mikrofon in Betrieb zu nehmen, klicken Sie bitte auf System-Setup, um intensivere Tests durchzuführen und das Mikrofon auf diese Weise einzurichten."
+    IDS_GERMAN_ERROR        "Fehler!"
+    IDS_GERMAN_CANTFINDMICBOOST 
+                            "Achtung: Verstärkersteuerung für Mikrofon konnte nicht gefunden werden."
+    IDS_GERMAN_CANTFINDMICVOLUME 
+                            "Mikro-Lautstärkeregelung konnte nicht gefunden werden."
+    IDS_GERMAN_CANTFINDMICMUTE 
+                            "Mikro-Stummschaltung konnte nicht gefunden werden."
+    IDS_GERMAN_CANTCREATEWAVEIN 
+                            "WaveIn-Gerät konnte nicht erstellt werden (16-Bit-Mono bei 8 K)."
+    IDS_GERMAN_CANTLOADVOICEMODULE 
+                            "Sprach-Codec konnte nicht in %1!s! geladen werden."
+    IDS_GERMAN_CANTINITCODEC 
+                            "Sprach-Codec konnte nicht in %1!s! initialisiert werden."
+    IDS_GERMAN_CANTCREATEWAVEOUT "WaveOut konnte nicht initialisiert werden."
+    IDS_GERMAN_NODPLAYVOICE "DirectPlayVoice-Setup konnte nicht initialisiert werden."
+    IDS_GERMAN_WINDOWTITLE  "Valve - Sprach-Konfiguration"
+    IDS_GERMAN_OKAY         "OK"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_GERMAN_CANCEL       "Abbrechen"
+    IDS_GERMAN_SYSTEMSETUP  "System - Setup"
+    IDS_GERMAN_HELP         "Hilfe"
+    IDS_GERMAN_VOICEINPUT   "Spracheingabe"
+    IDS_GERMAN_VOLUME       "Lautst"
+    IDS_GERMAN_ENABLEGAIN   "+20dB Hardware-Gain aktivieren (Markierung belassen, wenn nicht sicher)"
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE 9, 1
+#pragma code_page(1252)
+#endif //_WIN32
+#include "res\voice_tweak.rc2"  // non-Microsoft Visual C++ edited resources
+#include "afxres.rc"         // Standard components
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

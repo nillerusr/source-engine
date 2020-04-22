@@ -1,0 +1,383 @@
+L 07/19/1999 - 22:47:53: Log file started.
+L 07/19/1999 - 22:47:53: Spawning server "cz2"
+L 07/19/1999 - 22:47:53: server cvars start
+L 07/19/1999 - 22:47:53: "cr_random" = "0"
+L 07/19/1999 - 22:47:53: "cr_engineer" = "0"
+L 07/19/1999 - 22:47:53: "cr_spy" = "0"
+L 07/19/1999 - 22:47:53: "cr_pyro" = "0"
+L 07/19/1999 - 22:47:53: "cr_hwguy" = "0"
+L 07/19/1999 - 22:47:53: "cr_medic" = "0"
+L 07/19/1999 - 22:47:53: "cr_demoman" = "0"
+L 07/19/1999 - 22:47:53: "cr_soldier" = "0"
+L 07/19/1999 - 22:47:53: "cr_sniper" = "0"
+L 07/19/1999 - 22:47:53: "cr_scout" = "0"
+L 07/19/1999 - 22:47:53: "decalfrequency" = "30"
+L 07/19/1999 - 22:47:53: "mp_autocrosshair" = "1"
+L 07/19/1999 - 22:47:53: "mp_flashlight" = "0"
+L 07/19/1999 - 22:47:53: "mp_footsteps" = "0"
+L 07/19/1999 - 22:47:53: "mp_forcerespawn" = "1"
+L 07/19/1999 - 22:47:53: "mp_weaponstay" = "0"
+L 07/19/1999 - 22:47:53: "mp_falldamage" = "0"
+L 07/19/1999 - 22:47:53: "mp_friendlyfire" = "0"
+L 07/19/1999 - 22:47:53: "mp_timelimit" = "30"
+L 07/19/1999 - 22:47:53: "mp_fraglimit" = "0"
+L 07/19/1999 - 22:47:53: "mp_teamplay" = "21"
+L 07/19/1999 - 22:47:53: "tfc_balance_scores" = "1.0"
+L 07/19/1999 - 22:47:53: "tfc_balance_teams" = "1.0"
+L 07/19/1999 - 22:47:53: "tfc_adminpwd" = ""
+L 07/19/1999 - 22:47:53: "tfc_clanbattle_locked" = "0.0"
+L 07/19/1999 - 22:47:53: "tfc_clanbattle" = "0.0"
+L 07/19/1999 - 22:47:53: "tfc_respawndelay" = "0.0"
+L 07/19/1999 - 22:47:53: "tfc_autoteam" = "0"
+L 07/19/1999 - 22:47:53: "cmdline" = "0"
+L 07/19/1999 - 22:47:53: "mp_logfile" = "1"
+L 07/19/1999 - 22:47:53: "mp_logecho" = "1"
+L 07/19/1999 - 22:47:53: "deathmatch" = "1"
+L 07/19/1999 - 22:47:53: "coop" = "0"
+L 07/19/1999 - 22:47:53: "pausable" = "0"
+L 07/19/1999 - 22:47:53: "sv_sendvelocity" = "1"
+L 07/19/1999 - 22:47:53: "sv_password" = ""
+L 07/19/1999 - 22:47:53: "sv_aim" = "0"
+L 07/19/1999 - 22:47:53: "sv_gravity" = "800"
+L 07/19/1999 - 22:47:53: "sv_friction" = "4"
+L 07/19/1999 - 22:47:53: "edgefriction" = "2"
+L 07/19/1999 - 22:47:53: "sv_stopspeed" = "100"
+L 07/19/1999 - 22:47:53: "sv_maxspeed" = "500.000000"
+L 07/19/1999 - 22:47:53: "sv_accelerate" = "10"
+L 07/19/1999 - 22:47:53: "sv_stepsize" = "18"
+L 07/19/1999 - 22:47:53: "sv_clipmode" = "0"
+L 07/19/1999 - 22:47:53: "sv_bounce" = "1"
+L 07/19/1999 - 22:47:53: "sv_airmove" = "1"
+L 07/19/1999 - 22:47:53: "sv_airaccelerate" = "10"
+L 07/19/1999 - 22:47:53: "sv_wateraccelerate" = "10"
+L 07/19/1999 - 22:47:53: "sv_waterfriction" = "1"
+L 07/19/1999 - 22:47:53: "sv_timeout" = "65"
+L 07/19/1999 - 22:47:53: "sv_clienttrace" = "3.5"
+L 07/19/1999 - 22:47:53: "sv_cheats" = "1.000000"
+L 07/19/1999 - 22:47:53: "sv_maxspectators" = "8"
+L 07/19/1999 - 22:47:53: "sv_spectalk" = "1"
+L 07/19/1999 - 22:47:53: "sv_spectatormaxspeed" = "500"
+L 07/19/1999 - 22:47:53: "sv_upload_maxsize" = "0"
+L 07/19/1999 - 22:47:53: "sv_allowdownload" = "1"
+L 07/19/1999 - 22:47:53: "sv_allowupload" = "1"
+L 07/19/1999 - 22:47:53: server cvars end
+L 07/19/1999 - 22:47:58: Map CRC "1880504211"
+L 07/19/1999 - 22:47:58: "sv_maxspeed" = "500"
+L 07/19/1999 - 22:47:58: Server name is "Aesthete"
+L 07/19/1999 - 22:47:58: "sv_maxspeed" = "500.000000"
+L 07/19/1999 - 22:48:02: "Phorritorium<2><WON:4294928345>" has entered the game
+L 07/19/1999 - 22:48:15: "[DoF]Slybones<50><WON:4294950139>" has entered the game
+L 07/19/1999 - 22:48:17: "ingratiated<38><WON:4294943500>" has entered the game
+L 07/19/1999 - 22:48:20: "Massterr<45><WON:4294947489>" has entered the game
+L 07/19/1999 - 22:48:21: "BarkMulch<40><WON:4294943029>" has entered the game
+L 07/19/1999 - 22:48:21: "[DoF]Slybones<50>" joined team "1".
+L 07/19/1999 - 22:48:28: "[DoF]Slybones<50>" changed class to "Soldier"
+L 07/19/1999 - 22:48:28: "[DoF]Slybones<50>" changed class to "Soldier"
+L 07/19/1999 - 22:48:28: "[DoF]Slybones<50>" activated the goal "i_p_t"
+L 07/19/1999 - 22:48:29: "beano111<18><WON:4294932237>" has entered the game
+L 07/19/1999 - 22:48:29: "BarkMulch<40>" joined team "2".
+L 07/19/1999 - 22:48:34: "beano111<18>" joined team "1".
+L 07/19/1999 - 22:48:35: "BarkMulch<40>" changed class to "Soldier"
+L 07/19/1999 - 22:48:35: "BarkMulch<40>" changed class to "Soldier"
+L 07/19/1999 - 22:48:35: "BarkMulch<40>" activated the goal "i_p_t"
+L 07/19/1999 - 22:48:36: "beano111<18>" changed class to "HWGuy"
+L 07/19/1999 - 22:48:36: "beano111<18>" changed class to "HWGuy"
+L 07/19/1999 - 22:48:36: "beano111<18>" activated the goal "i_p_t"
+L 07/19/1999 - 22:48:40: "Massterr<45>" joined team "2".
+L 07/19/1999 - 22:48:42: "[DoF]Slybones<50>" activated the goal "blue flag 3"
+L 07/19/1999 - 22:48:44: "Massterr<45>" changed class to "Demoman"
+L 07/19/1999 - 22:48:44: "Massterr<45>" changed class to "Demoman"
+L 07/19/1999 - 22:48:44: "Massterr<45>" activated the goal "i_p_t"
+L 07/19/1999 - 22:48:48: "ingratiated<38>" joined team "1".
+L 07/19/1999 - 22:48:56: "BarkMulch<40>" activated the goal "red marker 3"
+L 07/19/1999 - 22:49:02: "Massterr<45>" activated the goal "red marker 2"
+L 07/19/1999 - 22:49:04: "ingratiated<38>" changed class to "Demoman"
+L 07/19/1999 - 22:49:04: "ingratiated<38>" changed class to "Demoman"
+L 07/19/1999 - 22:49:04: "ingratiated<38>" activated the goal "i_p_t"
+L 07/19/1999 - 22:49:05: "[DoF]Apocalypse<48><WON:4294949869>" has entered the game
+L 07/19/1999 - 22:49:13: "[DoF]Apocalypse<48>" joined team "2".
+L 07/19/1999 - 22:49:14: "[DoF]Apocalypse<48>" changed class to "Demoman"
+L 07/19/1999 - 22:49:14: "[DoF]Apocalypse<48>" changed class to "Demoman"
+L 07/19/1999 - 22:49:14: "[DoF]Apocalypse<48>" activated the goal "i_p_t"
+L 07/19/1999 - 22:49:20: Named Broadcast: "#cz_bcap1" ("[DoF]Slybones<50>")
+L 07/19/1999 - 22:49:20: Named Broadcast: "#cz_bcap1" ("[DoF]Slybones<50>")
+L 07/19/1999 - 22:49:20: Named Broadcast: "#cz_bcap1" ("[DoF]Slybones<50>")
+L 07/19/1999 - 22:49:20: Named Broadcast: "#cz_bcap1" ("[DoF]Slybones<50>")
+L 07/19/1999 - 22:49:20: Named Broadcast: "#cz_bcap1" ("[DoF]Slybones<50>")
+L 07/19/1999 - 22:49:20: Named Broadcast: "#cz_bcap1" ("[DoF]Slybones<50>")
+L 07/19/1999 - 22:49:20: Named Broadcast: "#cz_bcap1" ("[DoF]Slybones<50>")
+L 07/19/1999 - 22:49:33: Named Broadcast: "#cz_rcap5" ("Barkmulch<40>")
+L 07/19/1999 - 22:49:33: Named Broadcast: "#cz_rcap5" ("Barkmulch<40>")
+L 07/19/1999 - 22:49:33: Named Broadcast: "#cz_rcap5" ("Barkmulch<40>")
+L 07/19/1999 - 22:49:33: Named Broadcast: "#cz_rcap5" ("Barkmulch<40>")
+L 07/19/1999 - 22:49:33: Named Broadcast: "#cz_rcap5" ("Barkmulch<40>")
+L 07/19/1999 - 22:49:33: Named Broadcast: "#cz_rcap5" ("Barkmulch<40>")
+L 07/19/1999 - 22:49:33: Named Broadcast: "#cz_rcap5" ("Barkmulch<40>")
+L 07/19/1999 - 22:49:47: Named Broadcast: "#cz_rcap3" ("Massterr<45>")
+L 07/19/1999 - 22:49:47: Named Broadcast: "#cz_rcap3" ("Massterr<45>")
+L 07/19/1999 - 22:49:47: Named Broadcast: "#cz_rcap3" ("Massterr<45>")
+L 07/19/1999 - 22:49:47: Named Broadcast: "#cz_rcap3" ("Massterr<45>")
+L 07/19/1999 - 22:49:47: Named Broadcast: "#cz_rcap3" ("Massterr<45>")
+L 07/19/1999 - 22:49:47: Named Broadcast: "#cz_rcap3" ("Massterr<45>")
+L 07/19/1999 - 22:49:47: Named Broadcast: "#cz_rcap3" ("Massterr<45>")
+L 07/19/1999 - 22:49:52: "[DoF]Slybones<50>" activated the goal "blue flag 2"
+L 07/19/1999 - 22:49:54: "ingratiated<38>" activated the goal "blue flag 3"
+L 07/19/1999 - 22:50:23: "ingratiated<38>" killed self with "gl_grenade"
+L 07/19/1999 - 22:50:24: "ingratiated<38>" activated the goal "i_p_t"
+L 07/19/1999 - 22:50:34: "ingratiated<38>" killed "BarkMulch<40>" with "gl_grenade"
+L 07/19/1999 - 22:50:37: "BarkMulch<40>" activated the goal "i_p_t"
+L 07/19/1999 - 22:50:52: "ingratiated<38>" activated the goal "blue flag 3"
+L 07/19/1999 - 22:50:57: "[DoF]Slybones<50>" disconnected
+L 07/19/1999 - 22:51:27: "[DoF]Apocalypse<48>" killed self with "mirvgrenade"
+L 07/19/1999 - 22:51:28: "[DoF]Apocalypse<48>" activated the goal "i_p_t"
+L 07/19/1999 - 22:52:10: "BarkMulch<40>" say_team " master can you get uup here"
+L 07/19/1999 - 22:52:15: "beano111<18>" say "dammmm  what lagggggg"
+L 07/19/1999 - 22:52:37: "beano111<18>" disconnected
+L 07/19/1999 - 22:52:51: "Massterr<45>" killed self with "pipebomb"
+L 07/19/1999 - 22:52:58: "Massterr<45>" activated the goal "i_p_t"
+L 07/19/1999 - 22:52:59: "SHoGoKHaN<51><WON:4294945045>" connected, address "209.186.18.49:27005"
+L 07/19/1999 - 22:53:02: "beano111<52><WON:4294932237>" connected, address "207.51.7.231:27005"
+L 07/19/1999 - 22:53:09: "[DoF]Apocalypse<48>" killed "ingratiated<38>" with "mirvgrenade"
+L 07/19/1999 - 22:53:11: "SHoGoKHaN<51><WON:4294945045>" has entered the game
+L 07/19/1999 - 22:53:12: "ingratiated<38>" activated the goal "i_p_t"
+L 07/19/1999 - 22:53:21: "BarkMulch<40>" say_team " dang i needed health"
+L 07/19/1999 - 22:53:27: "SHoGoKHaN<51>" joined team "1".
+L 07/19/1999 - 22:53:28: "beano111<52><WON:4294932237>" has entered the game
+L 07/19/1999 - 22:53:29: "SHoGoKHaN<51>" changed class to "Sniper"
+L 07/19/1999 - 22:53:29: "SHoGoKHaN<51>" changed class to "Sniper"
+L 07/19/1999 - 22:53:29: "SHoGoKHaN<51>" activated the goal "i_p_t"
+L 07/19/1999 - 22:53:33: "beano111<52>" joined team "1".
+L 07/19/1999 - 22:53:36: "beano111<52>" changed class to "HWGuy"
+L 07/19/1999 - 22:53:36: "beano111<52>" changed class to "HWGuy"
+L 07/19/1999 - 22:53:36: "beano111<52>" activated the goal "i_p_t"
+L 07/19/1999 - 22:53:41: "Player<53><WON:4294950139>" connected, address "208.250.225.224:27005"
+L 07/19/1999 - 22:53:57: "[DoF]Slybones<53><WON:4294950139>" has entered the game
+L 07/19/1999 - 22:54:07: "[DoF]Slybones<53>" joined team "2".
+L 07/19/1999 - 22:54:14: "[DoF]Slybones<53>" changed class to "Demoman"
+L 07/19/1999 - 22:54:14: "[DoF]Slybones<53>" changed class to "Demoman"
+L 07/19/1999 - 22:54:14: "[DoF]Slybones<53>" activated the goal "i_p_t"
+L 07/19/1999 - 22:54:17: "BarkMulch<40>" killed "ingratiated<38>" with "supershotgun"
+L 07/19/1999 - 22:54:21: "ingratiated<38>" activated the goal "i_p_t"
+L 07/19/1999 - 22:54:23: "Massterr<45>" killed "SHoGoKHaN<51>" with "pipebomb"
+L 07/19/1999 - 22:54:36: "Massterr<45>" killed self with "pipebomb"
+L 07/19/1999 - 22:54:38: "Massterr<45>" activated the goal "i_p_t"
+L 07/19/1999 - 22:54:41: "SHoGoKHaN<51>" disconnected
+L 07/19/1999 - 22:54:43: "[DoF]Apocalypse<48>" killed "beano111<52>" with "mirvgrenade"
+L 07/19/1999 - 22:54:48: "beano111<52>" activated the goal "i_p_t"
+L 07/19/1999 - 22:54:59: "[DoF]Slybones<53>" killed "ingratiated<38>" with "gl_grenade"
+L 07/19/1999 - 22:55:01: "ingratiated<38>" activated the goal "i_p_t"
+L 07/19/1999 - 22:55:23: "beano111<52>" say "campin hard aint ya red"
+L 07/19/1999 - 22:55:36: "[DoF]Slybones<53>" say_team "watch out, detpack"
+L 07/19/1999 - 22:56:15: "[DoF]Slybones<53>" say_team "apoc, teach me how to pipe jump"
+L 07/19/1999 - 22:56:22: "[DoF]Slybones<53>" killed "ingratiated<38>" with "pipebomb"
+L 07/19/1999 - 22:56:24: "ingratiated<38>" activated the goal "i_p_t"
+L 07/19/1999 - 22:56:24: "[DoF]Apocalypse<48>" say_team "k where are you"
+L 07/19/1999 - 22:56:31: "[DoF]Slybones<53>" say_team "base"
+L 07/19/1999 - 22:56:40: "[DoF]Apocalypse<48>" say_team " ours"
+L 07/19/1999 - 22:56:43: "[DoF]Slybones<53>" say_team "yeah"
+L 07/19/1999 - 22:57:08: "PJ60<54><WON:4294948822>" connected, address "209.239.217.12:1031"
+L 07/19/1999 - 22:57:18: "[DoF]Slybones<53>" say_team "ooh"
+L 07/19/1999 - 22:57:23: "[DoF]Apocalypse<48>" killed "beano111<52>" with "gl_grenade"
+L 07/19/1999 - 22:57:25: "beano111<52>" activated the goal "i_p_t"
+L 07/19/1999 - 22:57:26: "PJ60<54><WON:4294948822>" has entered the game
+L 07/19/1999 - 22:57:30: "Massterr<45>" say "you like"
+L 07/19/1999 - 22:57:34: "ingratiated<38>" disconnected
+L 07/19/1999 - 22:57:39: "[DoF]Slybones<53>" say_team "hehe"
+L 07/19/1999 - 22:57:41: "[DoF]Apocalypse<48>" say_team " where are you"
+L 07/19/1999 - 22:57:42: "PJ60<54>" joined team "1".
+L 07/19/1999 - 22:57:51: "PJ60<54>" changed class to "Pyro"
+L 07/19/1999 - 22:57:51: "PJ60<54>" changed class to "Pyro"
+L 07/19/1999 - 22:57:51: "PJ60<54>" activated the goal "i_p_t"
+L 07/19/1999 - 22:57:57: "[DoF]Slybones<53>" say_team "outside base"
+L 07/19/1999 - 22:58:10: "[DoF]Apocalypse<48>" say_team " come here ill show ya"
+L 07/19/1999 - 22:58:35: "[DoF]Apocalypse<48>" say_team "as soon as you get over the bomb jump then det"
+L 07/19/1999 - 22:58:48: "beano111<52>" killed "BarkMulch<40>" with "ac"
+L 07/19/1999 - 22:58:51: "BarkMulch<40>" activated the goal "i_p_t"
+L 07/19/1999 - 22:58:54: "[DoF]Apocalypse<48>" say_team "close"
+L 07/19/1999 - 22:59:02: "[DoF]Apocalypse<48>" say_team " get the bomb closeer"
+L 07/19/1999 - 22:59:04: "Massterr<45>" killed "beano111<52>" with "gl_grenade"
+L 07/19/1999 - 22:59:07: "beano111<52>" activated the goal "i_p_t"
+L 07/19/1999 - 22:59:12: "PJ60<54>" changed class to "Scout"
+L 07/19/1999 - 22:59:13: "[DoF]Apocalypse<48>" say_team " to battlement"
+L 07/19/1999 - 22:59:18: "beano111<52>" say "even the teams out"
+L 07/19/1999 - 22:59:26: "[DoF]Slybones<53>" say_team "did it"
+L 07/19/1999 - 22:59:32: "BarkMulch<40>" changed to team "1".
+L 07/19/1999 - 22:59:32: "BarkMulch<40>" killed self with "world"
+L 07/19/1999 - 22:59:34: "BarkMulch<40>" activated the goal "i_p_t"
+L 07/19/1999 - 22:59:36: "[DoF]Apocalypse<48>" say_team "easy heh"
+L 07/19/1999 - 22:59:38: "[DoF]Apocalypse<48>" say_team "huh"
+L 07/19/1999 - 22:59:38: "BarkMulch<40>" changed class to "Soldier"
+L 07/19/1999 - 22:59:38: "BarkMulch<40>" changed class to "Soldier"
+L 07/19/1999 - 22:59:38: "BarkMulch<40>" activated the goal "i_p_t"
+L 07/19/1999 - 22:59:44: "[DoF]Slybones<53>" say_team "yepo"
+L 07/19/1999 - 23:00:16: "BarkMulch<40>" killed "Massterr<45>" with "rocket"
+L 07/19/1999 - 23:00:16: "[DoF]Apocalypse<48>" say_team " if you want something more effectime"
+L 07/19/1999 - 23:00:20: "[DoF]Apocalypse<48>" say_team "effective"
+L 07/19/1999 - 23:00:20: "Massterr<45>" activated the goal "i_p_t"
+L 07/19/1999 - 23:00:39: "[DoF]Apocalypse<48>" say_team " let me pipe jump you...no lose of life"
+L 07/19/1999 - 23:00:45: "[DoF]Slybones<53>" say_team "k"
+L 07/19/1999 - 23:00:46: "[DoF]Apocalypse<48>" say_team " just armor"
+L 07/19/1999 - 23:00:57: "BarkMulch<40>" killed "Massterr<45>" with "rocket"
+L 07/19/1999 - 23:01:07: "[DoF]Slybones<53>" say_team "hehe"
+L 07/19/1999 - 23:01:12: "Massterr<45>" activated the goal "i_p_t"
+L 07/19/1999 - 23:01:26: "[DoF]Apocalypse<48>" say_team " ready to assult their base...and blow some command centers"
+L 07/19/1999 - 23:01:27: "[DoF]Slybones<53>" killed "BarkMulch<40>" with "gl_grenade"
+L 07/19/1999 - 23:01:28: "BarkMulch<40>" activated the goal "i_p_t"
+L 07/19/1999 - 23:01:32: "beano111<52>" killed "[DoF]Slybones<53>" with "ac"
+L 07/19/1999 - 23:01:34: "[DoF]Slybones<53>" activated the goal "i_p_t"
+L 07/19/1999 - 23:01:42: "PJ60<54>" activated the goal "blue flag 3"
+L 07/19/1999 - 23:01:54: "BarkMulch<40>" say_team " any one going for points"
+L 07/19/1999 - 23:02:12: "BarkMulch<40>" activated the goal "blue flag 1"
+L 07/19/1999 - 23:02:27: "[DoF]Apocalypse<48>" say_team "sorry i thought i was blue for a sec"
+L 07/19/1999 - 23:02:36: "[DoF]Slybones<53>" killed self with "pipebomb"
+L 07/19/1999 - 23:02:40: Named Broadcast: "#cz_bcap4" ("PJ60<54>")
+L 07/19/1999 - 23:02:40: Named Broadcast: "#cz_bcap4" ("PJ60<54>")
+L 07/19/1999 - 23:02:40: Named Broadcast: "#cz_bcap4" ("PJ60<54>")
+L 07/19/1999 - 23:02:40: Named Broadcast: "#cz_bcap4" ("PJ60<54>")
+L 07/19/1999 - 23:02:40: Named Broadcast: "#cz_bcap4" ("PJ60<54>")
+L 07/19/1999 - 23:02:40: Named Broadcast: "#cz_bcap4" ("PJ60<54>")
+L 07/19/1999 - 23:02:40: Named Broadcast: "#cz_bcap4" ("PJ60<54>")
+L 07/19/1999 - 23:02:41: "Massterr<45>" say "cool"
+L 07/19/1999 - 23:02:41: "[DoF]Slybones<53>" changed class to "HWGuy"
+L 07/19/1999 - 23:02:42: "[DoF]Slybones<53>" activated the goal "i_p_t"
+L 07/19/1999 - 23:03:01: "[DoF]Apocalypse<48>" say_team "come follow me into their base"
+L 07/19/1999 - 23:03:07: Named Broadcast: "#cz_bcap2" ("Barkmulch<40>")
+L 07/19/1999 - 23:03:07: Named Broadcast: "#cz_bcap2" ("Barkmulch<40>")
+L 07/19/1999 - 23:03:07: Named Broadcast: "#cz_bcap2" ("Barkmulch<40>")
+L 07/19/1999 - 23:03:07: Named Broadcast: "#cz_bcap2" ("Barkmulch<40>")
+L 07/19/1999 - 23:03:07: Named Broadcast: "#cz_bcap2" ("Barkmulch<40>")
+L 07/19/1999 - 23:03:07: Named Broadcast: "#cz_bcap2" ("Barkmulch<40>")
+L 07/19/1999 - 23:03:07: Named Broadcast: "#cz_bcap2" ("Barkmulch<40>")
+L 07/19/1999 - 23:03:09: "Massterr<45>" say "i get blue too sometimes"
+L 07/19/1999 - 23:03:11: "[DoF]Apocalypse<48>" say_team " ill show you an effective method"
+L 07/19/1999 - 23:03:11: "PJ60<54>" killed "[DoF]Apocalypse<48>" with "flames"
+L 07/19/1999 - 23:03:13: "[DoF]Apocalypse<48>" activated the goal "i_p_t"
+L 07/19/1999 - 23:03:23: "[DoF]Apocalypse<48>" say_team " of blowing command center"
+L 07/19/1999 - 23:03:32: "[DoF]Slybones<53>" killed "beano111<52>" with "ac"
+L 07/19/1999 - 23:03:36: "beano111<52>" activated the goal "i_p_t"
+L 07/19/1999 - 23:03:40: "[DoF]Apocalypse<48>" say_team "oh nevermind"
+L 07/19/1999 - 23:03:52: "[DoF]Apocalypse<48>" changed class to "HWGuy"
+L 07/19/1999 - 23:03:54: "[DoF]Apocalypse<48>" killed self with "world"
+L 07/19/1999 - 23:03:58: "BarkMulch<40>" killed "Massterr<45>" with "rocket"
+L 07/19/1999 - 23:04:01: "[DoF]Apocalypse<48>" activated the goal "i_p_t"
+L 07/19/1999 - 23:04:07: "Massterr<45>" activated the goal "i_p_t"
+L 07/19/1999 - 23:04:17: "beano111<52>" killed "[DoF]Slybones<53>" with "mirvgrenade"
+L 07/19/1999 - 23:04:18: "[DoF]Apocalypse<48>" say_team "where are you"
+L 07/19/1999 - 23:04:20: "[DoF]Slybones<53>" activated the goal "i_p_t"
+L 07/19/1999 - 23:04:57: "PJ60<54>" activated the goal "blue flag 2"
+L 07/19/1999 - 23:05:35: "Massterr<45>" killed "BarkMulch<40>" with "pipebomb"
+L 07/19/1999 - 23:05:45: "BarkMulch<40>" say " ouch"
+L 07/19/1999 - 23:05:46: "BarkMulch<40>" activated the goal "i_p_t"
+L 07/19/1999 - 23:05:50: "beano111<52>" say "dam laggg"
+L 07/19/1999 - 23:05:52: "[DoF]Slybones<53>" killed "PJ60<54>" with "shotgun"
+L 07/19/1999 - 23:05:54: "PJ60<54>" activated the goal "i_p_t"
+L 07/19/1999 - 23:06:03: "PJ60<54>" activated the goal "blue flag 3"
+L 07/19/1999 - 23:06:22: "[DoF]Slybones<53>" killed "BarkMulch<40>" with "ac"
+L 07/19/1999 - 23:06:25: "BarkMulch<40>" activated the goal "i_p_t"
+L 07/19/1999 - 23:06:35: Named Broadcast: "#cz_bcap3" ("PJ60<54>")
+L 07/19/1999 - 23:06:35: Named Broadcast: "#cz_bcap3" ("PJ60<54>")
+L 07/19/1999 - 23:06:35: Named Broadcast: "#cz_bcap3" ("PJ60<54>")
+L 07/19/1999 - 23:06:35: Named Broadcast: "#cz_bcap3" ("PJ60<54>")
+L 07/19/1999 - 23:06:35: Named Broadcast: "#cz_bcap3" ("PJ60<54>")
+L 07/19/1999 - 23:06:35: Named Broadcast: "#cz_bcap3" ("PJ60<54>")
+L 07/19/1999 - 23:06:35: Named Broadcast: "#cz_bcap3" ("PJ60<54>")
+L 07/19/1999 - 23:06:45: "[DoF]Slybones<53>" killed "BarkMulch<40>" with "ac"
+L 07/19/1999 - 23:06:49: "BarkMulch<40>" activated the goal "i_p_t"
+L 07/19/1999 - 23:06:59: "PJ60<54>" activated the goal "blue flag 2"
+L 07/19/1999 - 23:07:11: "[DoF]Apocalypse<48>" say_team " lets try some duel pyro next sly..."
+L 07/19/1999 - 23:07:14: "[DoF]Apocalypse<48>" changed class to "Pyro"
+L 07/19/1999 - 23:07:22: "[DoF]Slybones<53>" say_team "hehe"
+L 07/19/1999 - 23:07:37: Named Broadcast: "#cz_bcap5" ("PJ60<54>")
+L 07/19/1999 - 23:07:37: Named Broadcast: "#cz_bcap5" ("PJ60<54>")
+L 07/19/1999 - 23:07:37: Named Broadcast: "#cz_bcap5" ("PJ60<54>")
+L 07/19/1999 - 23:07:37: Named Broadcast: "#cz_bcap5" ("PJ60<54>")
+L 07/19/1999 - 23:07:37: Named Broadcast: "#cz_bcap5" ("PJ60<54>")
+L 07/19/1999 - 23:07:37: Named Broadcast: "#cz_bcap5" ("PJ60<54>")
+L 07/19/1999 - 23:07:37: Named Broadcast: "#cz_bcap5" ("PJ60<54>")
+L 07/19/1999 - 23:07:46: "[DoF]Apocalypse<48>" killed "beano111<52>" with "ac"
+L 07/19/1999 - 23:07:49: "beano111<52>" activated the goal "i_p_t"
+L 07/19/1999 - 23:07:56: "[DoF]Slybones<53>" changed class to "Pyro"
+L 07/19/1999 - 23:08:19: "PJ60<54>" activated the goal "blue flag 3"
+L 07/19/1999 - 23:08:22: "beano111<52>" killed "[DoF]Apocalypse<48>" with "mirvgrenade"
+L 07/19/1999 - 23:08:23: "[DoF]Apocalypse<48>" activated the goal "i_p_t"
+L 07/19/1999 - 23:08:26: "Massterr<45>" say "change maps"
+L 07/19/1999 - 23:08:43: Named Broadcast: "#cz_bcap1" ("PJ60<54>")
+L 07/19/1999 - 23:08:43: Named Broadcast: "#cz_bcap1" ("PJ60<54>")
+L 07/19/1999 - 23:08:43: Named Broadcast: "#cz_bcap1" ("PJ60<54>")
+L 07/19/1999 - 23:08:43: Named Broadcast: "#cz_bcap1" ("PJ60<54>")
+L 07/19/1999 - 23:08:43: Named Broadcast: "#cz_bcap1" ("PJ60<54>")
+L 07/19/1999 - 23:08:43: Named Broadcast: "#cz_bcap1" ("PJ60<54>")
+L 07/19/1999 - 23:08:43: Named Broadcast: "#cz_bcap1" ("PJ60<54>")
+L 07/19/1999 - 23:08:51: "[DoF]Slybones<53>" killed "beano111<52>" with "mirvgrenade"
+L 07/19/1999 - 23:08:54: "beano111<52>" activated the goal "i_p_t"
+L 07/19/1999 - 23:08:55: "BarkMulch<40>" killed "[DoF]Slybones<53>" with "rocket"
+L 07/19/1999 - 23:08:57: "[DoF]Slybones<53>" activated the goal "i_p_t"
+L 07/19/1999 - 23:09:02: "BarkMulch<40>" say "bout time"
+L 07/19/1999 - 23:09:13: "PJ60<54>" activated the goal "blue flag 2"
+L 07/19/1999 - 23:09:20: "[DoF]Apocalypse<48>" say_team " they call us the hw killer"
+L 07/19/1999 - 23:09:26: "[DoF]Slybones<53>" say_team "yep"
+L 07/19/1999 - 23:09:45: "[DoF]Apocalypse<48>" killed "beano111<52>" with "flames"
+L 07/19/1999 - 23:09:49: "beano111<52>" activated the goal "i_p_t"
+L 07/19/1999 - 23:10:15: "PJ60<54>" disconnected
+L 07/19/1999 - 23:10:39: "[DoF]Slybones<53>" killed "BarkMulch<40>" with "flames"
+L 07/19/1999 - 23:10:53: "BarkMulch<40>" disconnected
+L 07/19/1999 - 23:10:59: "beano111<52>" killed "[DoF]Apocalypse<48>" with "ac"
+L 07/19/1999 - 23:11:01: "[DoF]Apocalypse<48>" activated the goal "i_p_t"
+L 07/19/1999 - 23:11:06: "beano111<52>" killed "Massterr<45>" with "ac"
+L 07/19/1999 - 23:11:20: "[DoF]Slybones<53>" killed "beano111<52>" with "flames"
+L 07/19/1999 - 23:11:22: "beano111<52>" activated the goal "i_p_t"
+L 07/19/1999 - 23:11:28: "[DoF]Slybones<53>" say_team "hehe i like pyro"
+L 07/19/1999 - 23:11:39: "Massterr<45>" activated the goal "i_p_t"
+L 07/19/1999 - 23:11:42: "[DoF]Apocalypse<48>" say " only good vs slow classes"
+L 07/19/1999 - 23:11:53: "[DoF]Slybones<53>" say_team "yeah and medics"
+L 07/19/1999 - 23:12:08: "Massterr<45>" say "you guys in clan"
+L 07/19/1999 - 23:12:12: "[DoF]Slybones<53>" say_team "they are a tiny bit faster so they can run backwards and spray medics"
+L 07/19/1999 - 23:12:14: "beano111<52>" killed "[DoF]Apocalypse<48>" with "ac"
+L 07/19/1999 - 23:12:16: "[DoF]Apocalypse<48>" activated the goal "i_p_t"
+L 07/19/1999 - 23:13:02: "[DoF]Apocalypse<48>" killed "beano111<52>" with "flames"
+L 07/19/1999 - 23:13:07: "beano111<52>" activated the goal "i_p_t"
+L 07/19/1999 - 23:13:08: "[DoF]Apocalypse<48>" say_team "heh..yea"
+L 07/19/1999 - 23:13:09: "Massterr<45>" changed class to "Engineer"
+L 07/19/1999 - 23:13:30: "beano111<52>" killed "[DoF]Apocalypse<48>" with "ac"
+L 07/19/1999 - 23:13:36: "[DoF]Apocalypse<48>" killed "beano111<52>" with "napalmgrenade"
+L 07/19/1999 - 23:13:37: "[DoF]Apocalypse<48>" activated the goal "i_p_t"
+L 07/19/1999 - 23:13:38: "beano111<52>" activated the goal "i_p_t"
+L 07/19/1999 - 23:13:45: "[DoF]Apocalypse<48>" changed class to "Soldier"
+L 07/19/1999 - 23:14:20: "[DoF]Apocalypse<48>" killed "beano111<52>" with "flames"
+L 07/19/1999 - 23:14:25: "beano111<52>" say "later "
+L 07/19/1999 - 23:14:28: "[DoF]Slybones<53>" say "later"
+L 07/19/1999 - 23:14:34: "beano111<52>" say "3 at  one that is fair"
+L 07/19/1999 - 23:14:35: "beano111<52>" activated the goal "i_p_t"
+L 07/19/1999 - 23:14:46: "[DoF]Slybones<53>" changed to team "1".
+L 07/19/1999 - 23:14:46: "[DoF]Slybones<53>" killed self with "world"
+L 07/19/1999 - 23:14:49: "[DoF]Slybones<53>" activated the goal "i_p_t"
+L 07/19/1999 - 23:14:49: "beano111<52>" changed class to "Spy"
+L 07/19/1999 - 23:14:52: "beano111<52>" changed class to "Engineer"
+L 07/19/1999 - 23:14:58: "[DoF]Slybones<53>" changed class to "Medic"
+L 07/19/1999 - 23:14:58: "[DoF]Slybones<53>" changed class to "Medic"
+L 07/19/1999 - 23:14:58: "[DoF]Slybones<53>" activated the goal "i_p_t"
+L 07/19/1999 - 23:14:59: "beano111<52>" say "`"
+L 07/19/1999 - 23:15:00: "beano111<52>" killed self with "world"
+L 07/19/1999 - 23:15:04: "Iceman<55><WON:4294915086>" connected, address "216.192.35.44:27005"
+L 07/19/1999 - 23:15:07: "beano111<52>" activated the goal "i_p_t"
+L 07/19/1999 - 23:15:08: "Iceman<55>" changed name to "Player<55>"
+L 07/19/1999 - 23:15:24: "Player<55><WON:4294915086>" has entered the game
+L 07/19/1999 - 23:15:26: "[DoF]Apocalypse<48>" killed self with "napalmgrenade"
+L 07/19/1999 - 23:15:40: "beano111<52>" built a "sentry".
+L 07/19/1999 - 23:15:44: "Player<55>" joined team "1".
+L 07/19/1999 - 23:15:57: "Player<55>" changed class to "Soldier"
+L 07/19/1999 - 23:15:57: "Player<55>" changed class to "Soldier"
+L 07/19/1999 - 23:15:57: "Player<55>" activated the goal "i_p_t"
+L 07/19/1999 - 23:16:15: "[DoF]Slybones<53>" killed "Massterr<45>" with "normalgrenade"
+L 07/19/1999 - 23:16:24: "[DoF]Apocalypse<48>" disconnected
+L 07/19/1999 - 23:16:29: "Massterr<45>" activated the goal "i_p_t"
+L 07/19/1999 - 23:16:32: "[DoF]Slybones<53>" disconnected
+L 07/19/1999 - 23:16:43: "Massterr<45>" disconnected
+L 07/19/1999 - 23:17:12: "beano111<52>" disconnected
+L 07/19/1999 - 23:17:12: "<-1>" destroyed "beano111<52>"'s "sentry".
+L 07/19/1999 - 23:23:29: "Player<55>" disconnected
+L 07/19/1999 - 23:24:08: =------= MATCH RESULTS =------=
+L 07/19/1999 - 23:24:08: "blue" defeated "red"
+L 07/19/1999 - 23:24:08: "blue" RESULTS: "98906768" players. "25" frags, "0" unaccounted for. "94" team score.
+L 07/19/1999 - 23:24:08: "red" RESULTS: "98906768" players. "18" frags, "0" unaccounted for. "54" team score.
+L 07/19/1999 - 23:26:15: Log closed.

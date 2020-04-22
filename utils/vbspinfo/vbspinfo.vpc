@@ -1,0 +1,61 @@
+//-----------------------------------------------------------------------------
+//	VBSPINFO.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\common"
+		$PreprocessorDefinitions			"$BASE;DONT_PROTECT_FILEIO_FUNCTIONS"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE odbc32.lib odbccp32.lib"
+	}
+}
+
+$Project "Vbspinfo"
+{
+	$Folder	"Source Files"
+	{
+		-$File	"$SRCDIR\public\tier0\memoverride.cpp"
+		
+		$File	"..\common\tools_minidump.cpp"
+		$File	"..\common\bsplib.cpp"
+		$File	"..\common\cmdlib.cpp"
+		$File	"$SRCDIR\public\filesystem_helpers.cpp"
+		$File	"$SRCDIR\public\filesystem_init.cpp"
+		$File	"..\common\filesystem_tools.cpp"
+		$File	"$SRCDIR\public\iscratchpad3d.h"
+		$File	"$SRCDIR\public\lumpfiles.cpp"
+		$File	"$SRCDIR\public\scratchpad3d.cpp"
+		$File	"..\common\scriplib.cpp"
+		$File	"vbspinfo.cpp"
+		$File	"$SRCDIR\public\zip_utils.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"..\common\bsplib.h"
+		$File	"$SRCDIR\public\tier1\characterset.h"
+		$File	"$SRCDIR\public\tier1\checksum_crc.h"
+		$File	"$SRCDIR\public\filesystem_helpers.h"
+		$File	"$SRCDIR\public\lumpfiles.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib mathlib
+		$Lib tier2
+		$Lib "$LIBCOMMON/lzma"
+	}
+}

@@ -1,0 +1,63 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from waflib import Utils
+import os
+
+top = '.'
+PROJECT_NAME = 'launcher'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	conf.define('LAUNCHERONLY',1)
+	conf.define('CFLAGS', conf.env.CFLAGS)
+	conf.define('LDFLAGS', conf.env.LINKFLAGS)
+
+def build(bld):
+	source = [
+		'../public/filesystem_init.cpp',
+		'launcher.cpp',
+		'reslistgenerator.cpp',
+		'../public/tier0/memoverride.cpp'
+	]
+
+	if bld.env.DEST_OS == 'android':
+		source += [
+			'android/main.cpp',
+			'android/crashhandler.cpp'
+		]
+
+	includes = [
+		'.',
+		'android/libunwind',
+		'../public',
+		'../public/tier0',
+		'../public/tier1',
+		'../common'
+	] + bld.env.INCLUDES_SDL2
+
+	defines = []
+
+	libs = ['tier0','tier1','tier2','tier3','vstdlib','steam_api','appframework','SDL2','togl', 'UNWIND']
+
+	if bld.env.DEST_OS == 'win32':
+		libs += ['USER32', 'OLE32', 'SHELL32']
+
+	install_path = bld.env.LIBDIR
+
+	bld.shlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		install_path = install_path,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)
+

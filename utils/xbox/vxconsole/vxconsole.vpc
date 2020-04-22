@@ -1,0 +1,85 @@
+//-----------------------------------------------------------------------------
+//	VXCONSOLE.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_win_win32_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE;$SRCDIR\x360xdk\include\win32\vs2005"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"wsock32.lib comctl32.lib odbc32.lib odbccp32.lib xbdm.lib"
+		$AdditionalLibraryDirectories		"$SRCDIR\x360xdk\lib\win32\vs2005"
+		$DelayLoadedDLLs					"xbdm.dll"
+	}
+}
+
+$Project "VXConsole"
+{
+	$Folder	"Source Files"
+	{
+		$File	"bindings.cpp"
+		$File	"bug.cpp"
+		$File	"common.cpp"
+		$File	"config.cpp"
+		$File	"cpu_profile.cpp"
+		$File	"exclude_paths.cpp"
+		$File	"fileio.cpp"
+		$File	"local_cmds.cpp"
+		$File	"progress.cpp"
+		$File	"remote_cmds.cpp"
+		$File	"show_materials.cpp"
+		$File	"show_memdump.cpp"
+		$File	"show_sounds.cpp"
+		$File	"show_textures.cpp"
+		$File	"sync_files.cpp"
+		$File	"sys_scriptlib.cpp"
+		$File	"sys_utils.cpp"
+		$File	"tex_profile.cpp"
+		$File	"timestamp_log.cpp"
+		$File	"vxconsole.cpp"
+		$File	"assert_dialog.cpp"
+		$File	"mem_profile.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\common\bugreporter\bugreporter.h"
+		$File	"$SRCDIR\common\xbox\xbox_vxconsole.h"
+		$File	"$SRCDIR\public\tier1\interface.h"
+		$File	"$SRCDIR\public\jpeglib\jpeglib.h"
+		$File	"$SRCDIR\public\tier0\platform.h"
+		$File	"$SRCDIR\public\tier1\strtools.h"
+		$File	"resource.h"
+		$File	"assert_resource.h"
+		$File	"sys_scriptlib.h"
+		$File	"sys_utils.h"
+		$File	"vxconsole.h"
+	}
+
+	$Folder	"Resource Files"
+	{
+		$File	"icon_connect1.ico"
+		$File	"icon_connect2.ico"
+		$File	"icon_connect2a.ico"
+		$File	"icon_disconnect.ico"
+		$File	"vxconsole.ico"
+		$File	"vxconsole.rc"
+		$File	"assert_dialog.rc"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$DynamicFile	"$SRCDIR\lib\common\jpeglib.lib"
+	}
+}

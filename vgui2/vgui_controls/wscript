@@ -1,0 +1,123 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from waflib import Utils
+import os
+
+top = '.'
+PROJECT_NAME = 'vgui_controls'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	return
+
+def build(bld):
+	source = [
+		'AnalogBar.cpp',
+		'AnimatingImagePanel.cpp',
+		'AnimationController.cpp',
+		'BitmapImagePanel.cpp',
+		'BuildFactoryHelper.cpp',
+		'BuildGroup.cpp',
+		'BuildModeDialog.cpp',
+		'Button.cpp',
+		'CheckButton.cpp',
+		'CheckButtonList.cpp',
+		'CircularProgressBar.cpp',
+		'ComboBox.cpp',
+		'consoledialog.cpp',
+		'ControllerMap.cpp',
+		'controls.cpp',
+		'cvartogglecheckbutton.cpp',
+		'DirectorySelectDialog.cpp',
+		'Divider.cpp',
+		'EditablePanel.cpp',
+		'ExpandButton.cpp',
+		'FileOpenDialog.cpp',
+		'FileOpenStateMachine.cpp',
+		'../../public/filesystem_helpers.cpp',
+		'FocusNavGroup.cpp',
+		'Frame.cpp',
+		'GraphPanel.cpp',
+		'HTML.cpp',
+		'Image.cpp',
+		'ImageList.cpp',
+		'ImagePanel.cpp',
+		'InputDialog.cpp',
+		'KeyBindingHelpDialog.cpp',
+		'KeyBoardEditorDialog.cpp',
+		'KeyRepeat.cpp',
+		'Label.cpp',
+		'ListPanel.cpp',
+		'ListViewPanel.cpp',
+		'Menu.cpp',
+		'MenuBar.cpp',
+		'MenuButton.cpp',
+		'MenuItem.cpp',
+		'MessageBox.cpp',
+		'MessageDialog.cpp',
+		'Panel.cpp',
+		'PanelListPanel.cpp',
+		'PerforceFileExplorer.cpp',
+		'PerforceFileList.cpp',
+		'perforcefilelistframe.cpp',
+		'ProgressBar.cpp',
+		'ProgressBox.cpp',
+		'PropertyDialog.cpp',
+		'PropertyPage.cpp',
+		'PropertySheet.cpp',
+		'QueryBox.cpp',
+		'RadioButton.cpp',
+		'RichText.cpp',
+		'RotatingProgressBar.cpp',
+		'savedocumentquery.cpp',
+		'ScalableImagePanel.cpp',
+		'ScrollableEditablePanel.cpp',
+		'ScrollBar.cpp',
+		'ScrollBarSlider.cpp',
+		'SectionedListPanel.cpp',
+		'Slider.cpp',
+		'Splitter.cpp',
+		'subrectimage.cpp',
+		'TextEntry.cpp',
+		'TextImage.cpp',
+		'ToggleButton.cpp',
+		'Tooltip.cpp',
+		'ToolWindow.cpp',
+		'TreeView.cpp',
+		'TreeViewListControl.cpp',
+		'URLLabel.cpp',
+		'WizardPanel.cpp',
+		'WizardSubPanel.cpp',
+		'../src/vgui_key_translation.cpp'
+	]
+
+	includes = [
+		'.',
+		'../../public',
+		'../../public/tier0',
+		'../../public/tier1'
+	]
+
+	defines = []
+
+	libs = []
+
+	if bld.env.DEST_OS == 'win32':
+		libs += ['SHELL32']
+
+	bld.stlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)
+

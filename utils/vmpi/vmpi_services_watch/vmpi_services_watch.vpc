@@ -1,0 +1,72 @@
+//-----------------------------------------------------------------------------
+//	vmpi_services_watch.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+$Macro OUTBINNAME	"vmpi_services_watch"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE;.\;..\;..\..\common"
+		$PreprocessorDefinitions			"$BASE;PROTECTED_THINGS_DISABLE;WINVER=0x501;NO_WARN_MBCS_MFC_DEPRECATION"
+		$EnableC++Exceptions				"Yes (/EHsc)"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE ws2_32.lib"
+	}
+}
+
+$Project "vmpi_services_watch"
+{
+	$Folder	"Source Files"
+	{
+		-$File	"$SRCDIR\public\tier0\memoverride.cpp"
+		
+		$File	"..\idle_dialog.cpp"
+		$File	"..\net_view_thread.cpp"
+		$File	"PatchTimeout.cpp"
+		$File	"ServicesDlg.cpp"
+		$File	"SetPasswordDlg.cpp"
+		$File	"..\vmpi_browser_helpers.cpp"
+		$File	"vmpi_browser_services.cpp"
+		$File	"vmpi_browser_services.rc"
+		$File	"..\win_idle.cpp"
+		$File	"..\window_anchor_mgr.cpp"
+		$File	"StdAfx.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"..\idle_dialog.h"
+		$File	"..\net_view_thread.h"
+		$File	"PatchTimeout.h"
+		$File	"Resource.h"
+		$File	"ServicesDlg.h"
+		$File	"SetPasswordDlg.h"
+		$File	"StdAfx.h"
+		$File	"vmpi_browser_services.h"
+		$File	"..\vmpi_defs.h"
+		$File	"..\win_idle.h"
+		$File	"..\window_anchor_mgr.h"
+	}
+
+	$Folder	"Resources"
+	{
+		$File	"res\vmpi_browser_services.ico"
+		$File	"res\vmpi_browser_services.rc2"
+	}
+
+	$Folder "Link Libraries"
+	{
+		$Lib vmpi
+	}
+}

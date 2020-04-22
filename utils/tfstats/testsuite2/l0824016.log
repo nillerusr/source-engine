@@ -1,0 +1,108 @@
+L 08/24/1999 - 16:59:51: Log file started.
+L 08/24/1999 - 16:59:51: Spawning server "2fort"
+L 08/24/1999 - 16:59:51: server cvars start
+L 08/24/1999 - 16:59:51: "cr_random" = "0"
+L 08/24/1999 - 16:59:51: "cr_engineer" = "0"
+L 08/24/1999 - 16:59:51: "cr_spy" = "0"
+L 08/24/1999 - 16:59:51: "cr_pyro" = "0"
+L 08/24/1999 - 16:59:51: "cr_hwguy" = "0"
+L 08/24/1999 - 16:59:51: "cr_medic" = "0"
+L 08/24/1999 - 16:59:51: "cr_demoman" = "0"
+L 08/24/1999 - 16:59:51: "cr_soldier" = "0"
+L 08/24/1999 - 16:59:51: "cr_sniper" = "0"
+L 08/24/1999 - 16:59:51: "cr_scout" = "0"
+L 08/24/1999 - 16:59:51: "decalfrequency" = "30"
+L 08/24/1999 - 16:59:51: "mp_autocrosshair" = "1"
+L 08/24/1999 - 16:59:51: "mp_flashlight" = "0"
+L 08/24/1999 - 16:59:51: "mp_footsteps" = "1"
+L 08/24/1999 - 16:59:51: "mp_forcerespawn" = "1"
+L 08/24/1999 - 16:59:51: "mp_weaponstay" = "0"
+L 08/24/1999 - 16:59:51: "mp_falldamage" = "0"
+L 08/24/1999 - 16:59:51: "mp_friendlyfire" = "0"
+L 08/24/1999 - 16:59:51: "mp_timelimit" = "30"
+L 08/24/1999 - 16:59:51: "mp_fraglimit" = "0"
+L 08/24/1999 - 16:59:51: "mp_teamplay" = "21"
+L 08/24/1999 - 16:59:51: "tfc_balance_scores" = "1.0"
+L 08/24/1999 - 16:59:51: "tfc_balance_teams" = "1.0"
+L 08/24/1999 - 16:59:51: "tfc_adminpwd" = ""
+L 08/24/1999 - 16:59:51: "tfc_clanbattle_locked" = "0.0"
+L 08/24/1999 - 16:59:51: "tfc_clanbattle" = "0.0"
+L 08/24/1999 - 16:59:51: "tfc_respawndelay" = "0.0"
+L 08/24/1999 - 16:59:51: "tfc_autoteam" = "1"
+L 08/24/1999 - 16:59:51: "sv_maxrate" = "0"
+L 08/24/1999 - 16:59:51: "sv_minrate" = "0"
+L 08/24/1999 - 16:59:51: "sv_allowupload" = "1"
+L 08/24/1999 - 16:59:51: "sv_allowdownload" = "1"
+L 08/24/1999 - 16:59:51: "sv_upload_maxsize" = "0"
+L 08/24/1999 - 16:59:51: "sv_spectatormaxspeed" = "500"
+L 08/24/1999 - 16:59:51: "sv_spectalk" = "1"
+L 08/24/1999 - 16:59:51: "sv_maxspectators" = "8"
+L 08/24/1999 - 16:59:51: "sv_cheats" = "0"
+L 08/24/1999 - 16:59:51: "sv_clienttrace" = "3.5"
+L 08/24/1999 - 16:59:51: "sv_timeout" = "65"
+L 08/24/1999 - 16:59:51: "sv_waterfriction" = "1"
+L 08/24/1999 - 16:59:51: "sv_wateraccelerate" = "10"
+L 08/24/1999 - 16:59:51: "sv_airaccelerate" = "10"
+L 08/24/1999 - 16:59:51: "sv_airmove" = "1"
+L 08/24/1999 - 16:59:51: "sv_bounce" = "1"
+L 08/24/1999 - 16:59:51: "sv_clipmode" = "0"
+L 08/24/1999 - 16:59:51: "sv_stepsize" = "18"
+L 08/24/1999 - 16:59:51: "sv_accelerate" = "10"
+L 08/24/1999 - 16:59:51: "sv_maxspeed" = "500.000000"
+L 08/24/1999 - 16:59:51: "sv_stopspeed" = "100"
+L 08/24/1999 - 16:59:51: "edgefriction" = "2"
+L 08/24/1999 - 16:59:51: "sv_friction" = "4"
+L 08/24/1999 - 16:59:51: "sv_gravity" = "800"
+L 08/24/1999 - 16:59:51: "sv_aim" = "0"
+L 08/24/1999 - 16:59:51: "sv_password" = ""
+L 08/24/1999 - 16:59:51: "pausable" = "0"
+L 08/24/1999 - 16:59:51: "coop" = "0"
+L 08/24/1999 - 16:59:51: "deathmatch" = "1"
+L 08/24/1999 - 16:59:51: "mp_logecho" = "1"
+L 08/24/1999 - 16:59:51: "mp_logfile" = "1"
+L 08/24/1999 - 16:59:51: "cmdline" = "0"
+L 08/24/1999 - 16:59:51: server cvars end
+L 08/24/1999 - 16:59:52: Map CRC "-652696221"
+L 08/24/1999 - 16:59:52: "sv_maxspeed" = "500"
+L 08/24/1999 - 16:59:52: Server name is "VALVe Test Server"
+L 08/24/1999 - 16:59:52: "sv_maxspeed" = "500.000000"
+L 08/24/1999 - 17:02:18: "[SW]NightEyes<144><WON:1498649>" connected, address "209.178.146.96:27005"
+L 08/24/1999 - 17:02:37: "[SW]NightEyes<144><WON:1498649>" has entered the game
+L 08/24/1999 - 17:02:41: "[SW]NightEyes<144>" joined team "1".
+L 08/24/1999 - 17:02:50: "[SW]NightEyes<144>" changed class to "Sniper"
+L 08/24/1999 - 17:02:50: "[SW]NightEyes<144>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 17:04:12: "[SW]NightEyes<144>" disconnected
+L 08/24/1999 - 17:06:51: "Player<145><WON:3321039>" connected, address "152.174.252.252:27005"
+L 08/24/1999 - 17:07:15: "BigBidA**Dutch<146><WON:81379>" connected, address "207.148.144.69:27005"
+L 08/24/1999 - 17:07:32: "Player<145><WON:3321039>" has entered the game
+L 08/24/1999 - 17:07:39: "BigBidA**Dutch<146><WON:81379>" has entered the game
+L 08/24/1999 - 17:07:42: "BigBidA**Dutch<146>" joined team "1".
+L 08/24/1999 - 17:07:51: "BigBidA**Dutch<146>" changed class to "Sniper"
+L 08/24/1999 - 17:07:51: "BigBidA**Dutch<146>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 17:07:51: "Player<145>" joined team "2".
+L 08/24/1999 - 17:08:40: "BigBidA**Dutch<146>" disconnected
+L 08/24/1999 - 17:08:54: "Player<145>" disconnected
+L 08/24/1999 - 17:10:16: "Player<147><WON:3321039>" connected, address "152.174.252.252:27005"
+L 08/24/1999 - 17:13:53: "Player<148><WON:3321039>" connected, address "152.174.252.252:27005"
+L 08/24/1999 - 17:14:23: "Ghoda<149><WON:3273099>" connected, address "24.4.158.99:27005"
+L 08/24/1999 - 17:14:32: "Ghoda<149><WON:3273099>" has entered the game
+L 08/24/1999 - 17:14:35: "Ghoda<149>" joined team "1".
+L 08/24/1999 - 17:14:42: "Ghoda<149>" changed class to "Scout"
+L 08/24/1999 - 17:14:42: "Ghoda<149>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 17:15:40: "Ghoda<149>" changed class to "Spy"
+L 08/24/1999 - 17:15:42: "Ghoda<149>" changed to team "2".
+L 08/24/1999 - 17:15:42: "Ghoda<149>" killed self with "world"
+L 08/24/1999 - 17:15:46: "Ghoda<149>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 17:15:51: "Ghoda<149>" changed class to "Spy"
+L 08/24/1999 - 17:15:51: "Ghoda<149>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 17:16:14: "Ghoda<149>" killed self with "gasgrenade"
+L 08/24/1999 - 17:16:15: "Ghoda<149>" activated the goal "info_player_teamspawn"
+L 08/24/1999 - 17:19:07: "Ghoda<149>" disconnected
+L 08/24/1999 - 17:23:17: "Its2Late4U<150><WON:791559>" connected, address "208.164.113.33:27005"
+L 08/24/1999 - 17:26:35: "BlueFalcon<151><WON:1944179>" connected, address "24.0.241.234:27005"
+L 08/24/1999 - 17:26:36: "BlueFalcon<152><WON:1944179>" connected, address "24.0.241.234:27005"
+L 08/24/1999 - 17:29:51: =------= MATCH RESULTS =------=
+L 08/24/1999 - 17:29:51: -> DRAW <-
+L 08/24/1999 - 17:29:51: "blue" RESULTS: "0" players. "-1" frags, "0" unaccounted for. "0" team score. Allies:
+L 08/24/1999 - 17:29:51: "red" RESULTS: "0" players. "-1" frags, "0" unaccounted for. "0" team score. Allies:
+L 08/24/1999 - 17:31:57: Log closed.

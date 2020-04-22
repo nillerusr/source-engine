@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioProject
+	ProjectType="Visual C++"
+	Version="7.10"
+	Name="SQLWrapper"
+	ProjectGUID="{D66A7F7E-CD38-45CC-951D-E22E5DED6585}"
+	SccProjectName="Perforce Project"
+	SccAuxPath=""
+	SccLocalPath=".."
+	SccProvider="MSSCCI:Perforce SCM"
+	Keyword="Win32Proj">
+	<Platforms>
+		<Platform
+			Name="Win32"/>
+	</Platforms>
+	<Configurations>
+		<Configuration
+			Name="Debug|Win32"
+			OutputDirectory="..\..\bin\$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="2"
+			CharacterSet="2">
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				AdditionalIncludeDirectories="..\..\common;..\..\public;..\..;..\..\public\tier0;..\..\public\tier1;..\vmpi_private\mysql\include"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;"
+				MinimalRebuild="TRUE"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="1"
+				RuntimeTypeInfo="TRUE"
+				UsePrecompiledHeader="0"
+				WarningLevel="4"
+				WarnAsError="TRUE"
+				Detect64BitPortabilityProblems="FALSE"
+				DebugInformationFormat="4"/>
+			<Tool
+				Name="VCCustomBuildTool"
+				CommandLine="if exist ..\..\..\game\bin\sqlwrapper.dll attrib -r ..\..\..\game\bin\sqlwrapper.dll
+copy &quot;$(TargetDir)&quot;sqlwrapper.dll ..\..\..\game\bin\sqlwrapper.dll
+if exist ..\..\..\game\bin\sqlwrapper.pdb attrib -r ..\..\..\game\bin\sqlwrapper.pdb
+copy &quot;$(TargetDir)&quot;sqlwrapper.pdb ..\..\..\game\bin
+if exist ..\..\..\src\lib\common\sqlwrapper.lib attrib -r ..\..\..\src\lib\common\sqlwrapper.lib
+copy &quot;$(TargetDir)&quot;sqlwrapper.lib ..\..\..\src\lib\common\
+
+"
+				Outputs="..\..\..\game\bin\&quot;$(TargetName)&quot;.dll"/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="mswsock.lib winmm.lib ws2_32.lib libmySQL.lib tier0.lib tier1.lib vstdlib.lib"
+				OutputFile="$(OutDir)/sqlwrapper.dll"
+				LinkIncremental="2"
+				AdditionalLibraryDirectories="&quot;../../common/$(IntDir)&quot;;../../lib/public;../vmpi_private/mysql/lib/opt"
+				GenerateDebugInformation="TRUE"
+				ProgramDatabaseFile="$(OutDir)/sqlwrapper.pdb"
+				SubSystem="0"
+				ImportLibrary="$(OutDir)/sqlwrapper.lib"
+				TargetMachine="1"/>
+			<Tool
+				Name="VCMIDLTool"/>
+			<Tool
+				Name="VCPostBuildEventTool"/>
+			<Tool
+				Name="VCPreBuildEventTool"/>
+			<Tool
+				Name="VCPreLinkEventTool"/>
+			<Tool
+				Name="VCResourceCompilerTool"/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"/>
+			<Tool
+				Name="VCWebDeploymentTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+		</Configuration>
+		<Configuration
+			Name="Release|Win32"
+			OutputDirectory="..\..\bin\$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="2"
+			CharacterSet="2">
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="2"
+				GlobalOptimizations="TRUE"
+				InlineFunctionExpansion="2"
+				EnableIntrinsicFunctions="TRUE"
+				FavorSizeOrSpeed="1"
+				OptimizeForProcessor="3"
+				AdditionalIncludeDirectories="..\..\common;..\..\public;..\..;..\..\public\tier0;..\..\public\tier1;..\vmpi_private\mysql\include"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL"
+				StringPooling="TRUE"
+				RuntimeLibrary="0"
+				BufferSecurityCheck="FALSE"
+				EnableFunctionLevelLinking="FALSE"
+				EnableEnhancedInstructionSet="1"
+				RuntimeTypeInfo="TRUE"
+				UsePrecompiledHeader="0"
+				WarningLevel="4"
+				WarnAsError="TRUE"
+				Detect64BitPortabilityProblems="FALSE"
+				DebugInformationFormat="3"/>
+			<Tool
+				Name="VCCustomBuildTool"
+				CommandLine="if exist ..\..\..\game\bin\sqlwrapper.dll attrib -r ..\..\..\game\bin\sqlwrapper.dll
+copy &quot;$(TargetDir)&quot;sqlwrapper.dll ..\..\..\game\bin\sqlwrapper.dll
+
+if exist ..\..\..\game\bin\sqlwrapper.pdb attrib -r ..\..\..\game\bin\sqlwrapper.pdb
+copy &quot;$(TargetDir)&quot;sqlwrapper.pdb ..\..\..\game\bin\sqlwrapper.pdb
+
+if exist ..\..\..\src\lib\common\sqlwrapper.lib attrib -r ..\..\..\src\lib\common\sqlwrapper.lib
+copy &quot;$(TargetDir)&quot;sqlwrapper.lib ..\..\..\src\lib\common\sqlwrapper.lib
+
+"
+				Outputs="..\..\..\game\bin\&quot;$(TargetName)&quot;.dll"/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="mswsock.lib winmm.lib ws2_32.lib libmySQL.lib tier0.lib tier1.lib vstdlib.lib"
+				OutputFile="$(OutDir)/sqlwrapper.dll"
+				LinkIncremental="1"
+				AdditionalLibraryDirectories="&quot;../../common/$(IntDir)&quot;;../../lib/public;../vmpi_private/mysql/lib/opt"
+				GenerateDebugInformation="TRUE"
+				ProgramDatabaseFile="$(OutDir)/sqlwrapper.pdb"
+				SubSystem="0"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				ImportLibrary="$(OutDir)/sqlwrapper.lib"
+				TargetMachine="1"/>
+			<Tool
+				Name="VCMIDLTool"/>
+			<Tool
+				Name="VCPostBuildEventTool"/>
+			<Tool
+				Name="VCPreBuildEventTool"/>
+			<Tool
+				Name="VCPreLinkEventTool"/>
+			<Tool
+				Name="VCResourceCompilerTool"/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"/>
+			<Tool
+				Name="VCWebDeploymentTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+		</Configuration>
+	</Configurations>
+	<References>
+	</References>
+	<Files>
+		<Filter
+			Name="Source Files"
+			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
+			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
+			<File
+				RelativePath="..\..\tier1\interface.cpp">
+			</File>
+			<File
+				RelativePath="..\..\public\tier0\memoverride.cpp">
+			</File>
+			<File
+				RelativePath=".\sqlhelpers.cpp">
+			</File>
+			<File
+				RelativePath=".\sqlwrapper.cpp">
+			</File>
+		</Filter>
+		<Filter
+			Name="Header Files"
+			Filter="h;hpp;hxx;hm;inl;inc;xsd"
+			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+			<File
+				RelativePath="..\..\public\tier1\interface.h">
+			</File>
+			<File
+				RelativePath="..\..\public\isqlwrapper.h">
+			</File>
+			<File
+				RelativePath="..\vmpi_private\mysql\include\mysql.h">
+			</File>
+			<File
+				RelativePath=".\sqlhelpers.h">
+			</File>
+		</Filter>
+		<Filter
+			Name="Resource Files"
+			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
+			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
+		</Filter>
+	</Files>
+	<Globals>
+	</Globals>
+</VisualStudioProject>

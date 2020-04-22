@@ -1,0 +1,61 @@
+//-----------------------------------------------------------------------------
+//	ELEMENTVIEWER.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,$SRCDIR\vgui2\include,$SRCDIR\vgui2\controls,..\common"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE comctl32.lib odbc32.lib odbccp32.lib Rpcrt4.lib"
+	}
+}
+
+$Project "Elementviewer"
+{
+	$Folder	"Source Files"
+	{
+		$File	"elementviewer.cpp"
+		$File	"elementviewerPanel.cpp"
+		$File	"$SRCDIR\public\interpolatortypes.cpp"
+		$File	"$SRCDIR\public\interpolatortypes.h"
+		$File	"$SRCDIR\public\movieobjects\movieobjects.cpp"
+		$File	"$SRCDIR\public\vgui_controls\vgui_controls.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"..\common\cmdlib.h"
+		$File	"elementviewer.h"
+		$File	"$SRCDIR\public\filesystem.h"
+		$File	"..\common\FileSystem_Tools.h"
+		$File	"$SRCDIR\public\tier1\interface.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib appframework
+		$Lib datamodel
+		$Lib dmxloader
+		$Lib dme_controls
+		$Lib dmserializers
+		$Lib mathlib
+		$Lib matsys_controls
+		$Lib movieobjects
+		$Lib sfmobjects
+		$Lib tier3
+		$Lib tier2
+		$Lib vgui_controls
+	}
+}

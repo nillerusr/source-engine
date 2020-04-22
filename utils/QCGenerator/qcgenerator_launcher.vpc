@@ -1,0 +1,51 @@
+//-----------------------------------------------------------------------------
+//	QCGENERATOR_LAUNCHER.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+$Macro OUTBINNAME	"QCGenerator"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_win_win32_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE;$SRCDIR\vgui2\include;$SRCDIR\vgui2\controls;$SRCDIR\..\src\utils\common"
+		$EnableC++Exceptions				"Yes (/EHsc)"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE comctl32.lib Rpcrt4.lib dbghelp.lib"
+	}
+}
+
+$Project "QCGenerator_Launcher"
+{
+	$Folder	"Source Files"
+	{
+		$File	"CQCGenMain.cpp"
+		$File	"main.cpp"
+		$File	"$SRCDIR\public\vgui_controls\vgui_controls.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"CQCGenMain.h"
+		$File	"..\common\filesystem_tools.h"
+	}
+
+	$Folder "Link Libraries"
+	{
+		$DynamicFile	"$SRCDIR\lib\public\appframework.lib"
+		$DynamicFile	"$SRCDIR\lib\public\matsys_controls.lib"
+		$File	"$SRCDIR\lib\common\sqlwrapper.lib"
+		$DynamicFile	"$SRCDIR\lib\public\tier2.lib"
+		$DynamicFile	"$SRCDIR\lib\public\tier3.lib"
+		$DynamicFile	"$SRCDIR\lib\public\vgui_controls.lib"
+	}
+}

@@ -1,0 +1,64 @@
+//-----------------------------------------------------------------------------
+//	VCDBLOCK.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC\tools"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,.\,..\common;$SRCDIR\game\shared"
+		$PreprocessorDefinitions			"$BASE;VCDBLOCK_EXPORTS"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE Psapi.lib"
+	}
+}
+
+$Project "Vcdblock"
+{
+	$Folder	"Source Files"
+	{
+		$File	"dmevmfentity.cpp"
+		$File	"infotargetbrowserpanel.cpp"
+		$File	"infotargetpropertiespanel.cpp"
+		$File	"$SRCDIR\public\interpolatortypes.cpp"
+		$File	"$SRCDIR\public\registry.cpp"
+		$File	"vcdblockdoc.cpp"
+		$File	"vcdblocktool.cpp"
+		$File	"$SRCDIR\public\vgui_controls\vgui_controls.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"dmevmfentity.h"
+		$File	"infotargetbrowserpanel.h"
+		$File	"infotargetpropertiespanel.h"
+		$File	"$SRCDIR\public\mathlib\mathlib.h"
+		$File	"vcdblockdoc.h"
+		$File	"vcdblocktool.h"
+	}
+
+	$Folder "Link Libraries"
+	{
+		$Lib datamodel
+		$Lib dme_controls
+		$Lib dmserializers
+		$Lib mathlib
+		$Lib matsys_controls
+		$Lib movieobjects
+		$Lib sfmobjects
+		$Lib tier2
+		$Lib tier3
+		$Lib toolutils
+		$Lib vgui_controls
+	}
+}

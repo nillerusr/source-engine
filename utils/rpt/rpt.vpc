@@ -1,0 +1,47 @@
+//-----------------------------------------------------------------------------
+//	RPT.VPC [Remote Perf Testing]
+//
+//  This project is used to copy files onto the customer machine to run
+//  specific tests. It also launches steam in a special way to make it 
+//  not blow away those files.
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$MacroRequired "PLATSUBDIR"
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_win32_base.vpc"
+
+$Project
+{
+	$Folder	"Source Files"
+	{
+		-$File	"$SRCDIR\public\tier0\memoverride.cpp"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		-$File	"$SRCDIR\lib\public\tier0.lib" 			[!$WIN64]
+		-$File	"$SRCDIR\lib\public\tier1.lib"			[!$WIN64]
+		-$File	"$SRCDIR\lib\public\vstdlib.lib"		[!$WIN64]
+
+		-$File	"$SRCDIR\lib\public$PLATSUBDIR\tier0.lib" 		[$WIN64]	
+		-$File	"$SRCDIR\lib\public$PLATSUBDIR\tier1.lib"		[$WIN64]
+		-$File	"$SRCDIR\lib\public$PLATSUBDIR\vstdlib.lib"		[$WIN64]
+	}
+}
+
+$Project "rpt"
+{
+	$Folder	"Source Files"
+	{
+		$File	"rpt.cpp"
+	}
+
+	$Folder	"Link Libraries"
+	{
+	}
+}

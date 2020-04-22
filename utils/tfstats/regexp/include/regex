@@ -1,0 +1,3 @@
+#ifndef __REGEX_H
+#include <jm/regex.h>
+#endif

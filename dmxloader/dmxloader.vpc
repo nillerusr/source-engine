@@ -1,0 +1,41 @@
+//-----------------------------------------------------------------------------
+//	DMXLOADER.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		".."
+
+$Include "$SRCDIR\vpc_scripts\source_lib_base.vpc"	
+
+$Configuration
+{
+	$Compiler
+	{
+		$PreprocessorDefinitions			"$BASE;DMXLOADER_LIB"
+	}
+}
+
+$Project "Dmxloader"
+{
+	$Folder	"Source Files"
+	{
+		$File	"dmxattribute.cpp"
+		$File	"dmxelement.cpp"
+		$File	"dmxloader.cpp"
+		$File	"dmxloadertext.cpp"
+		$File	"dmxserializationdictionary.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"dmxserializationdictionary.h"
+	}
+
+	$Folder	"Interface"
+	{
+		$File	"$SRCDIR\public\dmxloader\dmxattribute.h"
+		$File	"$SRCDIR\public\dmxloader\dmxelement.h"
+		$File	"$SRCDIR\public\dmxloader\dmxloader.h"
+	}
+}

@@ -1,0 +1,68 @@
+//-----------------------------------------------------------------------------
+//	MDMPRIPPER.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_win32_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,$SRCDIR\vgui2\include,$SRCDIR\vgui2\controls,$SRCDIR\utils\common"
+		$EnableC++Exceptions				"Yes (/EHsc)"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE dbgeng.lib shlwapi.lib comctl32.lib odbc32.lib odbccp32.lib Rpcrt4.lib dbghelp.lib sqlwrapper.lib"
+	}
+}
+
+$Project "MdmpRipper"
+{
+	$Folder	"Source Files"
+	{
+		$File	"CDbgOutput.cpp"
+		$File	"CMDDetailPanel.cpp"
+		$File	"CMDErrorPanel.cpp"
+		$File	"CMDModulePanel.cpp"
+		$File	"CMDRipperMain.cpp"
+		$File	"CMiniDumpObject.cpp"
+		$File	"main.cpp"
+		$File	"steamwebConnection.cpp"
+		$File	"$SRCDIR\public\vgui_controls\vgui_controls.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"CDbgOutput.h"
+		$File	"CMDDetailPanel.h"
+		$File	"CMDErrorPanel.h"
+		$File	"CMDModulePanel.h"
+		$File	"CMDRipperMain.h"
+		$File	"CMiniDumpObject.h"
+		$File	"..\common\filesystem_tools.h"
+		$File	"mdmpRipper.h"
+	}
+
+	$Folder	"Resource Files"
+	{
+		$File	"icon2.ico"
+		$File	"icon_mdmpRipper.ico"
+		$File	"mdmpRipper.rc"
+	}
+
+	$Folder "Link Libraries"
+	{
+		$DynamicFile	"$SRCDIR\lib\public\appframework.lib"
+		$DynamicFile	"$SRCDIR\lib\public\matsys_controls.lib"
+		$DynamicFile	"$SRCDIR\lib\public\tier2.lib"
+		$DynamicFile	"$SRCDIR\lib\public\tier3.lib"
+		$DynamicFile	"$SRCDIR\lib\public\vgui_controls.lib"
+	}
+}

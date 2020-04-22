@@ -1,0 +1,100 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from waflib import Utils
+import os
+
+top = '.'
+PROJECT_NAME = 'tier0'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	conf.define('WAF_CFLAGS', conf.env.CFLAGS)
+	conf.define('WAF_LDFLAGS', conf.env.LINKFLAGS)
+	conf.define('TIER0_DLL_EXPORT',1)
+#	conf.define('NO_HOOK_MALLOC',1)
+
+def build(bld):
+	source = [
+		'assert_dialog.cpp',
+		'commandline.cpp',
+		'cpu.cpp',
+		'cpumonitoring.cpp',
+		'cpu_usage.cpp',
+		'dbg.cpp',
+		'dynfunction.cpp',
+		'fasttimer.cpp',
+		# 'InterlockedCompareExchange128.masm', [$WIN64]
+		'mem.cpp',
+		'mem_helpers.cpp',
+		'memdbg.cpp',
+		'memstd.cpp',
+		'memvalidate.cpp',
+		'minidump.cpp',
+		'pch_tier0.cpp',
+		#'pmc360.cpp',		[$X360]
+		'PMELib.cpp',		#[$WINDOWS||$POSIX]
+		'progressbar.cpp',
+		'security.cpp',
+		'systeminformation.cpp',
+		'stacktools.cpp',
+		'thread.cpp',		#[$WINDOWS||$POSIX]
+		'threadtools.cpp',
+		'tier0_strtools.cpp',
+		'tslist.cpp',
+		'vprof.cpp',
+		#'../tier1/pathmatch.cpp' # [$LINUXALL]
+	]
+	
+	if bld.env.DEST_OS == 'win32':
+		source += [
+			'assert_dialog.rc',
+			#'etwprof.cpp',			[$WINDOWS]
+			'platform.cpp',
+			'pme.cpp',
+			'vcrmode.cpp',
+			'win32consoleio.cpp'
+		]
+		if bld.env.DEST_CPU == 'amd64':
+			source += [
+				'InterlockedCompareExchange128.masm'
+			]
+	else:
+		source += [
+			'cpu_posix.cpp',
+			'platform_posix.cpp',
+			'pme_posix.cpp',
+			'vcrmode_posix.cpp'
+		]
+
+	includes = [
+		'.',
+		'../public',
+		'../public/tier0',
+	] + bld.env.INCLUDES_SDL2
+
+	defines = []
+
+	if bld.env.DEST_OS == 'win32':
+		libs = ['ADVAPI32', 'WS2_32']
+	else:
+		libs = ['DL', 'M', 'LOG', 'ATOMIC']
+
+	install_path = None if bld.env.BUILD_SDK else bld.env.LIBDIR
+
+	bld.shlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		install_path = install_path,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)
+

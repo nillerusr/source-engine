@@ -1,0 +1,55 @@
+//-----------------------------------------------------------------------------
+//	REMOTESHADERCOMPILE.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Configuration	"Debug"
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\common"
+	}
+
+	$Linker
+	{
+		$DebuggableAssembly					"Runtime tracking and disable optimizations (/ASSEMBLYDEBUG)"
+		$AdditionalDependencies				"$BASE ws2_32.lib"
+	}
+}
+
+$Configuration	"Release"
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\common"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE ws2_32.lib"
+	}
+}
+
+$Project "remoteshadercompile"
+{
+	$Folder "Source Files"
+	{
+		-$File	"$SRCDIR\public\tier0\memoverride.cpp"
+		$File	"remoteshadercompile.cpp"
+	}
+	
+	$Folder	"Link Libraries"
+	{
+		$Lib mathlib
+		$Lib tier2
+		$File	"$SRCDIR\dx9sdk\lib\d3dx9.lib" [!$VS2015]
+		$File	"$LIBCOMMON\d3dx9.lib" [$VS2015]
+	}
+}

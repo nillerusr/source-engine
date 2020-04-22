@@ -1,0 +1,60 @@
+//-----------------------------------------------------------------------------
+//	SHADERCOMPILE_DLL.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\common;..\vmpi;$SRCDIR\dx9sdk\include"
+		$PreprocessorDefinitions			"$BASE;SHADERCOMPILE_EXPORTS;MPI"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE ws2_32.lib odbc32.lib odbccp32.lib"
+	}
+}
+
+$Project "Shadercompile_dll"
+{
+	$Folder	"Source Files"
+	{
+		$File	"..\common\cmdlib.cpp"
+		$File	"cmdsink.cpp"
+		$File	"d3dxfxc.cpp"
+		$File	"$SRCDIR\public\filesystem_helpers.cpp"
+		$File	"..\common\pacifier.cpp"
+		$File	"shadercompile.cpp"
+		$File	"subprocess.cpp"
+		$File	"cfgprocessor.cpp"
+		$File	"..\common\threads.cpp"
+		$File	"..\common\vmpi_tools_shared.cpp"
+		$File	"..\common\tools_minidump.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"cmdsink.h"
+		$File	"d3dxfxc.h"
+		$File	"$SRCDIR\public\ishadercompiledll.h"
+		$File	"shadercompile.h"
+		$File	"utlnodehash.h"
+		$File	"cfgprocessor.h"
+		$File	"$SRCDIR\public\tier1\UtlStringMap.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib tier2
+		$Lib vmpi
+		$Lib $LIBCOMMON\lzma
+	}
+}

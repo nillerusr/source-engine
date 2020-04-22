@@ -1,0 +1,227 @@
+create database if not exists gamestats_tf;
+use gamestats_tf;
+
+create table if not exists tf_mapdata
+(
+	MapName						VARCHAR(64)
+);
+alter table tf_mapdata add 			INDEX(MapName);
+alter table tf_mapdata add column		ServerID		VARCHAR(16);
+alter table tf_mapdata add column 		TimeSubmitted 		DATETIME;
+alter table tf_mapdata add 			INDEX(TimeSubmitted);
+alter table tf_mapdata add column 		RoundsPlayed		BIGINT;
+alter table tf_mapdata add column 		TotalTime		BIGINT;
+alter table tf_mapdata add column 		BlueWins		BIGINT;
+alter table tf_mapdata add column 		RedWins			BIGINT;
+alter table tf_mapdata add column 		Stalemates		BIGINT;
+
+
+create table if not exists tf_mapdata_rollup
+(
+	MapName						VARCHAR(64)
+);
+alter table tf_mapdata_rollup add 		INDEX(MapName);
+alter table tf_mapdata_rollup add column 	TimeSubmitted 		DATETIME;
+alter table tf_mapdata_rollup add 		INDEX(TimeSubmitted);
+alter table tf_mapdata_rollup add column 	RoundsPlayed		BIGINT;
+alter table tf_mapdata_rollup add column 	TotalTime		BIGINT;
+alter table tf_mapdata_rollup add column 	BlueWins		BIGINT;
+alter table tf_mapdata_rollup add column 	RedWins			BIGINT;
+alter table tf_mapdata_rollup add column 	Stalemates		BIGINT;
+
+
+create table if not exists tf_classdata
+(
+	MapName						VARCHAR(64)
+);
+alter table tf_classdata add 			INDEX(MapName);
+alter table tf_classdata add column		ServerID		VARCHAR(16);
+alter table tf_classdata add column 		TimeSubmitted 		DATETIME;
+alter table tf_classdata add 			INDEX(TimeSubmitted);
+alter table tf_classdata add column 		Class 			TINYINT;
+alter table tf_classdata add column 		Spawns 			BIGINT;
+alter table tf_classdata add column 		TotalTime 		BIGINT;
+alter table tf_classdata add column 		Score 			BIGINT;
+alter table tf_classdata add column 		Kills 			BIGINT;
+alter table tf_classdata add column 		Deaths 			BIGINT;
+alter table tf_classdata add column 		Assists 		BIGINT;
+alter table tf_classdata add column 		Captures 		BIGINT;
+
+create table if not exists tf_classdata_rollup
+(
+	MapName						VARCHAR(64)
+);
+alter table tf_classdata_rollup add 		INDEX(MapName);
+alter table tf_classdata_rollup add column 	TimeSubmitted 		DATETIME;
+alter table tf_classdata_rollup add 		INDEX(TimeSubmitted);
+alter table tf_classdata_rollup add column 	Class 			TINYINT;
+alter table tf_classdata_rollup add column 	Spawns 			BIGINT;
+alter table tf_classdata_rollup add column 	TotalTime 		BIGINT;
+alter table tf_classdata_rollup add column 	Score 			BIGINT;
+alter table tf_classdata_rollup add column 	Kills 			BIGINT;
+alter table tf_classdata_rollup add column 	Deaths 			BIGINT;
+alter table tf_classdata_rollup add column 	Assists 		BIGINT;
+alter table tf_classdata_rollup add column 	Captures 		BIGINT;
+
+create table if not exists tf_weapondata
+(
+	WeaponID					TINYINT
+);
+alter table tf_weapondata add 			INDEX(WeaponID);
+alter table tf_weapondata add column		ServerID		VARCHAR(16);
+alter table tf_weapondata add column 		MapName 		VARCHAR(64);
+alter table tf_weapondata add 			INDEX(MapName);
+alter table tf_weapondata add column 		TimeSubmitted 		DATETIME;
+alter table tf_weapondata add 			INDEX(TimeSubmitted);
+alter table tf_weapondata add column 		ShotsFired		BIGINT;
+alter table tf_weapondata add column 		ShotsFiredCrit		BIGINT;
+alter table tf_weapondata add column 		ShotsHit		BIGINT;
+alter table tf_weapondata add column 		DamageTotal		BIGINT;
+alter table tf_weapondata add column 		HitsWithKnownDistance	BIGINT;
+alter table tf_weapondata add column 		DistanceTotal		BIGINT;
+
+create table if not exists tf_weapondata_rollup
+(
+	WeaponID					TINYINT
+);
+alter table tf_weapondata_rollup add 		INDEX(WeaponID);
+alter table tf_weapondata_rollup add column 	MapName 		VARCHAR(64);
+alter table tf_weapondata_rollup add 		INDEX(MapName);
+alter table tf_weapondata_rollup add column 	TimeSubmitted 		DATETIME;
+alter table tf_weapondata_rollup add 		INDEX(TimeSubmitted);
+alter table tf_weapondata_rollup add column 	ShotsFired		BIGINT;
+alter table tf_weapondata_rollup add column 	ShotsFiredCrit		BIGINT;
+alter table tf_weapondata_rollup add column 	ShotsHit		BIGINT;
+alter table tf_weapondata_rollup add column 	DamageTotal		BIGINT;
+alter table tf_weapondata_rollup add column 	HitsWithKnownDistance	BIGINT;
+alter table tf_weapondata_rollup add column 	DistanceTotal		BIGINT;
+
+create table if not exists tf_deaths
+(
+	UserID						CHAR(16),
+	Tag							CHAR(8),
+	KEY( Tag ),
+	MapName						CHAR(20),
+	MapVersion					INT,
+	KEY( MapVersion ),
+	LastUpdate					DATETIME,
+	KEY( LastUpdate ),
+	DeathIndex					INT,
+	X							SMALLINT,
+	Y							SMALLINT,
+	Z							SMALLINT,
+	PRIMARY KEY ( UserID, Tag, MapName, X, Y, Z )
+) TYPE=MyISAM;
+
+
+create table if not exists tf_perfdata
+(
+	CreationTimeStamp   DATETIME,
+	AvgFps              FLOAT,
+	MinFps              FLOAT,
+	MaxFps              FLOAT,
+	CPUID               VARCHAR(64),
+	CPUGhz              FLOAT,
+	NumCores            INT,
+	GPUDrv              VARCHAR(64),
+	GPUVendor           INT,
+	GPUDeviceID         INT,
+	GPUDriverVersion    VARCHAR(25),
+	DxLvl               INT,
+	Width               INT,
+	Height              INT,
+	MapName		    VARCHAR(64),
+	TotalLevelTime	    INT,
+	NumLevels	    SMALLINT,
+	INDEX(CreationTimeStamp),
+	INDEX(AvgFps),
+	INDEX(GPUDrv),
+	INDEX(Width),
+	INDEX(MapName)
+);
+
+create table if not exists tf_perfdata_rollup_fps
+(
+	CreationTimeStamp   DATETIME,
+	NumEntries	    BIGINT,
+	AvgFps              FLOAT,
+	INDEX(CreationTimeStamp),
+);
+
+create table if not exists tf_perfdata_rollup_fpsdist
+(
+	CreationTimeStamp   DATETIME,
+	NumEntries	    BIGINT,
+	BaseFps             FLOAT,
+	GPUDrv              VARCHAR(64),		
+	INDEX(CreationTimeStamp),
+	INDEX(GPUDrv)
+);
+
+create table if not exists tf_perfdata_rollup_fpsmap
+(
+	CreationTimeStamp   DATETIME,
+	NumEntries	    BIGINT,
+	AvgFps              FLOAT,
+	MapName		    VARCHAR(64),
+	INDEX(CreationTimeStamp),
+	INDEX(MapName),
+);
+
+create table if not exists tf_perfdata_rollup_fpscard
+(
+	CreationTimeStamp   DATETIME,
+	NumEntries	    BIGINT,
+	AvgFps              FLOAT,
+	GPUDrv              VARCHAR(64),
+	INDEX(CreationTimeStamp),
+	INDEX(GPUDrv),
+);
+
+create table if not exists tf_perfdata_rollup_fpswidth
+(
+	CreationTimeStamp   DATETIME,
+	NumEntries	    BIGINT,
+	AvgFps              FLOAT,
+	Width               INT,
+	INDEX(CreationTimeStamp),
+);
+
+create table if not exists tf_perfdata_rollup_fpscardwidth
+(
+	CreationTimeStamp   DATETIME,
+	NumEntries	    BIGINT,
+	AvgFps              FLOAT,
+	Width               INT,
+	GPUDrv              VARCHAR(64),
+	INDEX(CreationTimeStamp),
+	INDEX(GPUDrv),
+);
+
+create table if not exists tf_perfdata_rollup_cpudist
+(
+	CreationTimeStamp   DATETIME,
+	NumEntries	    BIGINT,
+	AvgFps              FLOAT,
+	CPUID               VARCHAR(64),
+	NumCores            INT,
+	BaseCPUGhz          FLOAT,
+	GPUVendor           INT,
+	INDEX(CreationTimeStamp),
+);
+
+create table if not exists tf_perfdata_rollup_playtime
+(
+	CreationTimeStamp   DATETIME,
+	AvgSession	    FLOAT,
+	AvgLevels	    FLOAT,
+	INDEX(CreationTimeStamp),
+);
+
+create table if not exists tf_perfdata_rollup_playtimedist
+(
+	CreationTimeStamp   DATETIME,
+	BaseSession	    FLOAT,
+	NumEntries	    INT,
+	INDEX(CreationTimeStamp),
+);

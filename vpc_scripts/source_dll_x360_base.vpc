@@ -1,0 +1,133 @@
+//-----------------------------------------------------------------------------
+//	SOURCE_DLL_X360_BASE.VPC
+//
+//	Base Settings for Source(TM) Projects
+//-----------------------------------------------------------------------------
+
+$Include "$SRCDIR\vpc_scripts\version.vpc"
+
+$MacroRequired				"SRCDIR"
+$MacroRequired				"OUTBINNAME"	"$PROJECTNAME"
+$MacroRequired				"OUTBINDIR"
+$MacroRequired				"DEVKITBINDIR"	"bin"
+
+// 360 must have a dll load address
+$Include "$SRCDIR\vpc_scripts\loadaddress.vpc"
+$MacroRequired				"LOADADDRESS_DEVELOPMENT"
+$MacroRequired				"LOADADDRESS_RETAIL"
+$MacroRequired				"LOADADDRESSNAME"
+
+$Macro DLLDEMOSUFFIX "_demo\" 			[$DEMO]
+$MacroEmptyString DLLDEMOSUFFIX "empty" [!$DEMO]
+
+$Macro LIBPUBLIC	"$SRCDIR\lib\public"
+$Macro LIBCOMMON	"$SRCDIR\lib\common"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_x360_debug.vpc"
+$Include "$SRCDIR\vpc_scripts\source_dll_x360_release.vpc"
+
+$IgnoreRedundancyWarning	"ON"
+
+// Common Configuration
+$Configuration
+{	
+	$Compiler
+	{
+		$PreprocessorDefinitions	"$BASE;_LOWVIOLENCE"	[$LV]
+		$PreprocessorDefinitions	"$BASE;_X360DEMO"		[$X360DEMO]
+		$PreprocessorDefinitions	"$BASE;COMPILER_MSVC;COMPILER_MSVCX360;_DLL_EXT=$_DLL_EXT"
+		$PreprocessorDefinitions	"$BASE;DLLNAME=$OUTBINNAME"
+	}
+	
+	$Linker
+	{
+		// This ignores the linker error "export '<symbol>' specified multiple times; using first specification
+		$AdditionalOptions		"$BASE /IGNORE:4197"
+	}
+
+	$Xbox360ImageConversion
+	{
+		// All X360 DLLs must be signed with a special XML containing only version field
+		// the version of the DLL must match the version of default.xex that is signed
+		// with another XML including more settings (privileges, ratings, memory, etc.)
+		// DLLs must NOT be signed with the XML used for XEX
+		$ProjectDefaults		"$SRCDIR\common\xlast_$VPCGAME$DLLDEMOSUFFIX\$VPCGAME""_dll.xml"
+	}
+	
+	$ConsoleDeployment
+	{
+		$ExcludedFromBuild		"Yes"
+		$DeploymentRoot			"xe:\$VPCGAME$DLLDEMOSUFFIX"
+	}
+
+	$PreBuildEvent
+	{
+		$CommandLine		"if EXIST $OUTBINDIR\$(TargetFileName) for /f $QUOTEdelims=$QUOTE %%A in ('attrib $QUOTE$OUTBINDIR\$(TargetFileName)$QUOTE') do set valveTmpIsReadOnly=$QUOTE%%A$QUOTE" "\n" \
+							"set valveTmpIsReadOnlyLetter=%valveTmpIsReadOnly:~6,1%" "\n" \
+							"if $QUOTE%valveTmpIsReadOnlyLetter%$QUOTE==$QUOTER$QUOTE del /q $(TargetDir)$(TargetName)_converted.dll" "\n" \
+							"$CRCCHECK" "\n" 			
+	}
+
+	$PostBuildEvent
+	{
+		$CommandLine			"call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $OUTBINDIR\$(TargetFileName) $SRCDIR" "\n" \
+								"copy $(TargetDir)$(TargetName)_converted.dll $OUTBINDIR\$(TargetFileName)" "\n" \
+								"if exist $(TargetDir)$(TargetName).map copy $(TargetDir)$(TargetName).map $OUTBINDIR\$(TargetName).map" "\n" \
+								"call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $OUTBINDIR\$(TargetName).pdb $SRCDIR" "\n" \
+								"copy $(TargetDir)$(TargetName).pdb $OUTBINDIR\$(TargetName).pdb" "\n" \
+								"copy $(TargetDir)$(TargetName).xdb $OUTBINDIR\$(TargetName).xdb" "\n" \
+								"call $SRCDIR\vpc_scripts\valve_xbcp_wrapper.cmd $(TargetDir)$(TargetName)_converted.dll $(RemoteRoot)\$DEVKITBINDIR\$(TargetFileName)" "\n"
+
+		$CommandLine			"$BASE" \
+								"echo LoadAddressName=$LOADADDRESSNAME > $(TargetDir)$(TargetName).vpcinfo" "\n" \
+								"call $SRCDIR\vpc_scripts\valve_xbcp_wrapper.cmd $(TargetDir)$(TargetName).vpcinfo $(RemoteRoot)\$DEVKITBINDIR\$(TargetName).vpcinfo" "\n" [$VPCINFO]
+								
+								
+		$Description			"Publishing to $OUTBINDIR"
+		$ExcludedFromBuild		"No"
+	}
+		
+
+	// this forces a dependency on the published directory
+	// when the dependency fails (the dll was deleted), the PostBuildEvent will run, thus causing the publish to re-occur
+	// this allows for faster debug/release flipping without having to recompile or relink
+	$CustomBuildStep
+	{
+		// General
+		$CommandLine				"echo Checking Dependency $OUTBINDIR\$(TargetFileName)"			
+		$Description				" "
+		$Outputs					"$OUTBINDIR\$(TargetFileName)"
+	}
+}
+
+// Skeleton Project
+$Project
+{
+	$Folder	"Source Files"
+	{
+		$File "$SRCDIR\public\tier0\memoverride.cpp"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+				}
+			}
+		}
+	}
+
+	$Folder "Xbox"
+	{
+		$File	"xbox\xbox.def"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$ImpLib "$LIBPUBLIC\tier0"
+		$Lib	"$LIBPUBLIC\tier1"
+		$Implib "$LIBPUBLIC\vstdlib"
+		$Lib	"$LIBPUBLIC\interfaces"
+	}
+}
+

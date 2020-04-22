@@ -1,0 +1,87 @@
+//-----------------------------------------------------------------------------
+//	VMPI_SERVICE_INSTALL.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+$Macro OUTBINNAME	"vmpi_service_install"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_win_win32_base.vpc"
+
+$Configuration "Debug"
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,.\,..\,..\..\common,..\..\..\public"
+		$PreprocessorDefinitions			"$BASE;PROTECTED_THINGS_DISABLE;WINVER=0x400"
+		$Create/UsePrecompiledHeader		"Use Precompiled Header (/Yu)"
+		$Create/UsePCHThroughFile			"stdafx.h"
+	}
+	
+	$Linker
+	{
+		$AdditionalDependencies				"nafxcwd.lib"
+		$IgnoreSpecificLibrary				"nafxcw.lib libcmt.lib  libcmtd.lib"
+	}
+}
+
+$Configuration "Release"
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,.\,..\,..\..\common,..\..\..\public"
+		$PreprocessorDefinitions			"$BASE;PROTECTED_THINGS_DISABLE;WINVER=0x400"
+		$Create/UsePrecompiledHeader		"Use Precompiled Header (/Yu)"
+		$Create/UsePCHThroughFile			"stdafx.h"
+	}
+	
+	$Linker
+	{
+		$AdditionalDependencies				"nafxcw.lib libcmt.lib"
+		$IgnoreSpecificLibrary				"nafxcwd.lib libcmtd.lib"
+	}
+}
+
+$Project "Vmpi_service_install"
+{
+	$Folder	"Source Files"
+	{
+		-$File	"$SRCDIR\public\tier0\memoverride.cpp"
+
+		$File	"StdAfx.cpp"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader		"Create Precompiled Header (/Yc)"
+				}
+			}
+		}
+
+		$File	"ServiceInstallDlg.cpp"
+		$File	"vmpi_service_install.cpp"
+		$File	"vmpi_service_install.rc"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"ServiceInstallDlg.h"
+		$File	"Resource.h"
+		$File	"StdAfx.h"
+		$File	"vmpi_service_install.h"
+	}
+
+	$Folder	"Resource Files"
+	{
+		$File	"res\vmpi_service_install.ico"
+		$File	"res\vmpi_service_install.rc2"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$DynamicFile	"$SRCDIR\lib\public\vmpi.lib"
+	}
+}

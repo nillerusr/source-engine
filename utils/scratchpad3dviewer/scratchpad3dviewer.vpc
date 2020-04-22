@@ -1,0 +1,55 @@
+//-----------------------------------------------------------------------------
+//	SCRATCHPAD3DVIEWER.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,$SRCDIR\dx9sdk\include"
+		$PreprocessorDefinitions			"$BASE;NO_MATHLIB_FTOL"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE $SRCDIR\dx9sdk\lib\dxerr8.lib $SRCDIR\dx9sdk\lib\d3d8.lib $SRCDIR\dx9sdk\lib\d3dx.lib odbc32.lib odbccp32.lib"
+	}
+}
+
+$Project "ScratchPad3DViewer"
+{
+	$Folder	"Source Files"
+	{
+		$File	"d3dapp.cpp"
+		$File	"$SRCDIR\public\ScratchPad3D.cpp"
+		$File	"ScratchPad3DViewer.cpp"
+		$File	"StdAfx.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"d3dapp.h"
+		$File	"$SRCDIR\public\filesystem.h"
+		$File	"$SRCDIR\public\tier1\interface.h"
+		$File	"$SRCDIR\public\IScratchPad3D.h"
+		$File	"$SRCDIR\public\mathlib\mathlib.h"
+		$File	"resource.h"
+		$File	"$SRCDIR\public\ScratchPad3D.h"
+		$File	"StdAfx.h"
+		$File	"$SRCDIR\public\tier1\utlvector.h"
+		$File	"$SRCDIR\public\mathlib\vector.h"
+		$File	"$SRCDIR\public\mathlib\vmatrix.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib mathlib
+	}
+}

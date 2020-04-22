@@ -1,0 +1,146 @@
+//-----------------------------------------------------------------------------
+//	SHADERDX8.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
+$Macro OUTBINNAME	"shaderapidx9"
+
+$include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+
+// Common Configuration
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\dx9sdk\include" [$WIN32 && !$GL]
+		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\x360xdk\include\xbox" [$X360]
+		$AdditionalIncludeDirectories	"$BASE;..\"
+		$PreprocessorDefinitions		"$BASE;SHADERAPIDX9;SHADER_DLL_EXPORT;PROTECTED_THINGS_ENABLE;strncpy=use_Q_strncpy_instead;_snprintf=use_Q_snprintf_instead"
+		$PreprocessorDefinitions		"$BASE;USE_ACTUAL_DX" [($WIN32||$X360) && !$GL]
+		$PreprocessorDefinitions		"$BASE;GL_GLEXT_PROTOTYPES;DX_TO_GL_ABSTRACTION" [$GL]
+//		$AdditionalOptions		"/FC"
+	}
+    
+	$Linker
+	{
+		$SystemLibraries                    "iconv" [$OSXALL]
+		$GCC_ExtraLinkerFlags                   		"-L/usr/lib32" [$LINUXALL]
+		$SystemFrameworks					"Carbon;OpenGL;Quartz;Cocoa;IOKit" [$OSXALL]
+		$AdditionalDependencies				"$BASE ws2_32.lib" [$WIN32]
+	}
+}
+
+$Configuration "Debug"
+{
+	$Linker [$X360]
+	{
+		$AdditionalDependencies		"$BASE d3dx9d.lib xuirund.lib xuirenderd.lib xaudiod2.lib xmcored.lib"
+	}
+}
+
+$Configuration "Release"
+{
+	$Linker [$X360]
+	{
+		$AdditionalDependencies		"$BASE d3dx9.lib xuirun.lib xuirender.lib xaudio2.lib xmcore.lib"
+	}
+}
+
+$Project "shaderapidx9"
+{
+	$Folder	"Source Files"
+	{
+		$File	"colorformatdx8.cpp"
+		$File	"$SRCDIR\public\filesystem_helpers.cpp"
+		$File	"hardwareconfig.cpp"
+		$File	"meshbase.cpp"
+		$File	"meshdx8.cpp"
+		$File	"recording.cpp"								[$WIN32 && !$GL]
+		$File	"shaderapidx8.cpp"
+		$File	"shaderdevicebase.cpp"
+		$File	"shaderapibase.cpp"
+		$File	"shaderdevicedx8.cpp"
+		$File	"shadershadowdx8.cpp"
+		$File	"texturedx8.cpp"
+		$File	"TransitionTable.cpp"
+		$File	"cvballoctracker.cpp"
+		$File	"vertexdecl.cpp"
+		$File	"vertexshaderdx8.cpp"
+		$File	"wmi.cpp"									[$WIN32 && !$GL]
+		$File	"textureheap.cpp"							[$X360]
+		$File	"winutils.cpp"							[!$WIN32]
+	}
+
+	$Folder	"DirectX Header Files" [$WIN32 && !$GL]
+	{
+		$File	"$SRCDIR\dx9sdk\include\d3dx9.h"
+		$File	"$SRCDIR\dx9sdk\include\d3dx9anim.h"
+		$File	"$SRCDIR\dx9sdk\include\d3dx9core.h"
+		$File	"$SRCDIR\dx9sdk\include\d3dx9effect.h"
+		$File	"$SRCDIR\dx9sdk\include\d3dx9math.h"
+		$File	"$SRCDIR\dx9sdk\include\d3dx9math.inl"
+		$File	"$SRCDIR\dx9sdk\include\d3dx9mesh.h"
+		$File	"$SRCDIR\dx9sdk\include\d3dx9shader.h"
+		$File	"$SRCDIR\dx9sdk\include\d3dx9shape.h"
+		$File	"$SRCDIR\dx9sdk\include\d3dx9tex.h"
+	}
+
+	$Folder	"Public Header Files"
+	{
+		$File	"$SRCDIR\public\shaderapi\IShaderDevice.h"
+		$File	"$SRCDIR\public\shaderapi\ishaderutil.h"
+		$File	"$SRCDIR\public\shaderapi\ishaderapi.h"
+		$File	"$SRCDIR\public\shaderapi\ishaderdynamic.h"
+		$File	"$SRCDIR\public\shaderapi\ishadershadow.h"
+		$File	"$SRCDIR\public\materialsystem\idebugtextureinfo.h"
+		$File	"$SRCDIR\public\materialsystem\ivballoctracker.h"
+		$File	"$SRCDIR\public\materialsystem\shader_vcs_version.h"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"TransitionTable.h"
+		$File	"vertexdecl.h"
+		$File	"colorformatdx8.h"
+		$File	"dynamicib.h"
+		$File	"dynamicvb.h"
+		$File	"hardwareconfig.h"
+		$File	"meshbase.h"
+		$File	"imeshdx8.h"
+		$File	"locald3dtypes.h"
+		$File	"recording.h"
+		$File	"shaderapidx8.h"
+		$File	"shaderdevicebase.h"
+		$File	"shaderapibase.h"
+		$File	"shaderdevicedx8.h"
+		$File	"shaderapidx8_global.h"
+		$File	"shadershadowdx8.h"
+		$File	"stubd3ddevice.h"
+		$File	"texturedx8.h"
+		$File	"vertexshaderdx8.h"
+		$File	"wmi.h"							[$WIN32 && !$GL]
+		$File	"textureheap.h"					[$X360]
+		$File	"winutils.h"				[!$WIN32]
+	}
+
+	$Folder	"Link Libraries" [$WIN32]
+	{
+
+		$File	"$SRCDIR\dx9sdk\lib\d3d9.lib" [$WIN32 && !$GL]
+		$File	"$SRCDIR\dx9sdk\lib\d3dx9.lib" [$WIN32 && !$GL&&!$VS2015]
+		$File	"$LIBCOMMON\d3dx9.lib" [$WIN32 && !$GL &&$VS2015]
+	}
+	
+	$Folder "Link Libraries"
+	{
+        $Lib	bitmap
+        $Lib	mathlib
+        $Lib	tier2
+		$Lib	"$LIBCOMMON/bzip2"
+		$ImpLib togl [!$IS_LIB_PROJECT && $GL]
+    }
+}

@@ -1,0 +1,27 @@
+//-----------------------------------------------------------------------------
+//	DMXCONVERT.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Project "Dmxconvert"
+{
+	$Folder	"Source Files"
+	{
+		$File	"dmxconvert.cpp"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib appframework
+		$Lib datamodel
+		$Lib dmserializers
+		$Lib mathlib
+		$Lib tier2
+	}
+}

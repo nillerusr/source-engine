@@ -1,0 +1,340 @@
+L 07/20/1999 - 09:48:46: Log file started.
+L 07/20/1999 - 09:48:46: Spawning server "cz2"
+L 07/20/1999 - 09:48:46: server cvars start
+L 07/20/1999 - 09:48:46: "cr_random" = "0"
+L 07/20/1999 - 09:48:46: "cr_engineer" = "0"
+L 07/20/1999 - 09:48:46: "cr_spy" = "0"
+L 07/20/1999 - 09:48:46: "cr_pyro" = "0"
+L 07/20/1999 - 09:48:46: "cr_hwguy" = "0"
+L 07/20/1999 - 09:48:46: "cr_medic" = "0"
+L 07/20/1999 - 09:48:46: "cr_demoman" = "0"
+L 07/20/1999 - 09:48:46: "cr_soldier" = "0"
+L 07/20/1999 - 09:48:46: "cr_sniper" = "0"
+L 07/20/1999 - 09:48:46: "cr_scout" = "0"
+L 07/20/1999 - 09:48:46: "decalfrequency" = "30"
+L 07/20/1999 - 09:48:46: "mp_autocrosshair" = "1"
+L 07/20/1999 - 09:48:46: "mp_flashlight" = "0"
+L 07/20/1999 - 09:48:46: "mp_footsteps" = "0"
+L 07/20/1999 - 09:48:46: "mp_forcerespawn" = "1"
+L 07/20/1999 - 09:48:46: "mp_weaponstay" = "0"
+L 07/20/1999 - 09:48:46: "mp_falldamage" = "0"
+L 07/20/1999 - 09:48:46: "mp_friendlyfire" = "0"
+L 07/20/1999 - 09:48:46: "mp_timelimit" = "30"
+L 07/20/1999 - 09:48:46: "mp_fraglimit" = "0"
+L 07/20/1999 - 09:48:46: "mp_teamplay" = "21"
+L 07/20/1999 - 09:48:46: "tfc_balance_scores" = "1.0"
+L 07/20/1999 - 09:48:46: "tfc_balance_teams" = "1.0"
+L 07/20/1999 - 09:48:46: "tfc_adminpwd" = ""
+L 07/20/1999 - 09:48:46: "tfc_clanbattle_locked" = "0.0"
+L 07/20/1999 - 09:48:46: "tfc_clanbattle" = "0.0"
+L 07/20/1999 - 09:48:46: "tfc_respawndelay" = "0.0"
+L 07/20/1999 - 09:48:46: "tfc_autoteam" = "0"
+L 07/20/1999 - 09:48:46: "cmdline" = "0"
+L 07/20/1999 - 09:48:46: "mp_logfile" = "1"
+L 07/20/1999 - 09:48:46: "mp_logecho" = "1"
+L 07/20/1999 - 09:48:46: "deathmatch" = "1"
+L 07/20/1999 - 09:48:46: "coop" = "0"
+L 07/20/1999 - 09:48:46: "pausable" = "0"
+L 07/20/1999 - 09:48:46: "sv_sendvelocity" = "1"
+L 07/20/1999 - 09:48:46: "sv_password" = ""
+L 07/20/1999 - 09:48:46: "sv_aim" = "0"
+L 07/20/1999 - 09:48:46: "sv_gravity" = "800"
+L 07/20/1999 - 09:48:46: "sv_friction" = "4"
+L 07/20/1999 - 09:48:46: "edgefriction" = "2"
+L 07/20/1999 - 09:48:46: "sv_stopspeed" = "100"
+L 07/20/1999 - 09:48:46: "sv_maxspeed" = "500.000000"
+L 07/20/1999 - 09:48:46: "sv_accelerate" = "10"
+L 07/20/1999 - 09:48:46: "sv_stepsize" = "18"
+L 07/20/1999 - 09:48:46: "sv_clipmode" = "0"
+L 07/20/1999 - 09:48:46: "sv_bounce" = "1"
+L 07/20/1999 - 09:48:46: "sv_airmove" = "1"
+L 07/20/1999 - 09:48:46: "sv_airaccelerate" = "10"
+L 07/20/1999 - 09:48:46: "sv_wateraccelerate" = "10"
+L 07/20/1999 - 09:48:46: "sv_waterfriction" = "1"
+L 07/20/1999 - 09:48:46: "sv_timeout" = "65"
+L 07/20/1999 - 09:48:46: "sv_clienttrace" = "3.5"
+L 07/20/1999 - 09:48:46: "sv_cheats" = "1.000000"
+L 07/20/1999 - 09:48:46: "sv_maxspectators" = "8"
+L 07/20/1999 - 09:48:46: "sv_spectalk" = "1"
+L 07/20/1999 - 09:48:46: "sv_spectatormaxspeed" = "500"
+L 07/20/1999 - 09:48:46: "sv_upload_maxsize" = "0"
+L 07/20/1999 - 09:48:46: "sv_allowdownload" = "1"
+L 07/20/1999 - 09:48:46: "sv_allowupload" = "1"
+L 07/20/1999 - 09:48:46: server cvars end
+L 07/20/1999 - 09:48:52: Map CRC "1880504211"
+L 07/20/1999 - 09:48:52: "sv_maxspeed" = "500"
+L 07/20/1999 - 09:48:52: Server name is "Aesthete"
+L 07/20/1999 - 09:48:53: "sv_maxspeed" = "500.000000"
+L 07/20/1999 - 09:48:57: "Phorritorium<2><WON:4294928345>" has entered the game
+L 07/20/1999 - 09:49:07: "[rage]MattLee<117><WON:4294910380>" has entered the game
+L 07/20/1999 - 09:49:08: "Bobidicous<131><WON:4294910081>" has entered the game
+L 07/20/1999 - 09:49:10: "Ez 2 Kill<120><WON:4294910574>" has entered the game
+L 07/20/1999 - 09:49:12: "Bobidicous<131>" disconnected
+L 07/20/1999 - 09:49:13: "Commander<123><WON:4294909834>" has entered the game
+L 07/20/1999 - 09:49:14: "[rage]MattLee<117>" joined team "1".
+L 07/20/1999 - 09:49:15: "Commander<123>" disconnected
+L 07/20/1999 - 09:49:16: "Travis<116><WON:4294906061>" has entered the game
+L 07/20/1999 - 09:49:17: "Silent_Death<128><WON:4294910168>" has entered the game
+L 07/20/1999 - 09:49:20: "Dack 130<129><WON:4294910960>" has entered the game
+L 07/20/1999 - 09:49:22: "Silent_Death<128>" joined team "2".
+L 07/20/1999 - 09:49:23: "Travis<116>" joined team "1".
+L 07/20/1999 - 09:49:24: "[rage]MattLee<117>" changed class to "Scout"
+L 07/20/1999 - 09:49:24: "[rage]MattLee<117>" changed class to "Scout"
+L 07/20/1999 - 09:49:24: "[rage]MattLee<117>" activated the goal "i_p_t"
+L 07/20/1999 - 09:49:25: "Ez 2 Kill<120>" joined team "2".
+L 07/20/1999 - 09:49:26: "Silent_Death<128>" changed class to "Sniper"
+L 07/20/1999 - 09:49:26: "Silent_Death<128>" changed class to "Sniper"
+L 07/20/1999 - 09:49:26: "Silent_Death<128>" activated the goal "i_p_t"
+L 07/20/1999 - 09:49:27: "Dack 130<129>" joined team "1".
+L 07/20/1999 - 09:49:29: "Travis<116>" changed class to "Pyro"
+L 07/20/1999 - 09:49:29: "Travis<116>" changed class to "Pyro"
+L 07/20/1999 - 09:49:29: "Travis<116>" activated the goal "i_p_t"
+L 07/20/1999 - 09:49:30: "Dack 130<129>" changed class to "Scout"
+L 07/20/1999 - 09:49:30: "Dack 130<129>" changed class to "Scout"
+L 07/20/1999 - 09:49:30: "Dack 130<129>" activated the goal "i_p_t"
+L 07/20/1999 - 09:49:33: "Ez 2 Kill<120>" changed class to "Medic"
+L 07/20/1999 - 09:49:33: "Ez 2 Kill<120>" changed class to "Medic"
+L 07/20/1999 - 09:49:33: "Ez 2 Kill<120>" activated the goal "i_p_t"
+L 07/20/1999 - 09:49:34: "[rage]MattLee<117>" activated the goal "blue flag 3"
+L 07/20/1999 - 09:49:48: "Silent_Death<128>" say_team "whos on the team??"
+L 07/20/1999 - 09:49:49: "Ez 2 Kill<120>" activated the goal "red marker 2"
+L 07/20/1999 - 09:49:59: Named Broadcast: "#cz_bcap1" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:49:59: Named Broadcast: "#cz_bcap1" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:49:59: Named Broadcast: "#cz_bcap1" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:49:59: Named Broadcast: "#cz_bcap1" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:49:59: Named Broadcast: "#cz_bcap1" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:49:59: Named Broadcast: "#cz_bcap1" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:50:19: "Travis<116>" activated the goal "blue flag 3"
+L 07/20/1999 - 09:50:25: "[rage]MattLee<117>" activated the goal "blue flag 2"
+L 07/20/1999 - 09:50:53: "Ez 2 Kill<120>" killed "Dack 130<129>" with "supernails"
+L 07/20/1999 - 09:50:55: Named Broadcast: "#cz_bcap2" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:50:55: Named Broadcast: "#cz_bcap2" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:50:55: Named Broadcast: "#cz_bcap2" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:50:55: Named Broadcast: "#cz_bcap2" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:50:55: Named Broadcast: "#cz_bcap2" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:50:55: Named Broadcast: "#cz_bcap2" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:50:56: "Dack 130<129>" activated the goal "i_p_t"
+L 07/20/1999 - 09:51:05: Named Broadcast: "#cz_bcap3" ("Travis<116>")
+L 07/20/1999 - 09:51:05: Named Broadcast: "#cz_bcap3" ("Travis<116>")
+L 07/20/1999 - 09:51:05: Named Broadcast: "#cz_bcap3" ("Travis<116>")
+L 07/20/1999 - 09:51:05: Named Broadcast: "#cz_bcap3" ("Travis<116>")
+L 07/20/1999 - 09:51:05: Named Broadcast: "#cz_bcap3" ("Travis<116>")
+L 07/20/1999 - 09:51:05: Named Broadcast: "#cz_bcap3" ("Travis<116>")
+L 07/20/1999 - 09:51:08: "Dack 130<129>" changed class to "Spy"
+L 07/20/1999 - 09:51:14: Named Broadcast: "#cz_rcap5" ("Ez 2 Kill")
+L 07/20/1999 - 09:51:14: Named Broadcast: "#cz_rcap5" ("Ez 2 Kill")
+L 07/20/1999 - 09:51:14: Named Broadcast: "#cz_rcap5" ("Ez 2 Kill")
+L 07/20/1999 - 09:51:14: Named Broadcast: "#cz_rcap5" ("Ez 2 Kill")
+L 07/20/1999 - 09:51:14: Named Broadcast: "#cz_rcap5" ("Ez 2 Kill")
+L 07/20/1999 - 09:51:14: Named Broadcast: "#cz_rcap5" ("Ez 2 Kill")
+L 07/20/1999 - 09:51:21: "[rage]MattLee<117>" activated the goal "blue flag 2"
+L 07/20/1999 - 09:51:26: "Travis<116>" say " i got 3"
+L 07/20/1999 - 09:51:40: "Ez 2 Kill<120>" killed "Dack 130<129>" with "supernails"
+L 07/20/1999 - 09:51:43: "Dack 130<129>" activated the goal "i_p_t"
+L 07/20/1999 - 09:52:18: "[rage]MattLee<117>" killed "Silent_Death<128>" with "nails"
+L 07/20/1999 - 09:52:20: "Silent_Death<128>" activated the goal "i_p_t"
+L 07/20/1999 - 09:52:28: "Silent_Death<128>" disconnected
+L 07/20/1999 - 09:52:34: "Ez 2 Kill<120>" infected "Travis<116>".
+L 07/20/1999 - 09:52:43: "Ez 2 Kill<120>" killed "Travis<116>" with "timer"
+L 07/20/1999 - 09:52:47: "Travis<116>" activated the goal "i_p_t"
+L 07/20/1999 - 09:52:48: Named Broadcast: "#cz_bcap5" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:52:48: Named Broadcast: "#cz_bcap5" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:52:48: Named Broadcast: "#cz_bcap5" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:52:48: Named Broadcast: "#cz_bcap5" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:52:48: Named Broadcast: "#cz_bcap5" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:53:00: "Travis<116>" activated the goal "blue flag 3"
+L 07/20/1999 - 09:53:19: "[rage]MattLee<117>" activated the goal "blue flag 2"
+L 07/20/1999 - 09:53:53: Named Broadcast: "#cz_bcap4" ("Travis<116>")
+L 07/20/1999 - 09:53:53: Named Broadcast: "#cz_bcap4" ("Travis<116>")
+L 07/20/1999 - 09:53:53: Named Broadcast: "#cz_bcap4" ("Travis<116>")
+L 07/20/1999 - 09:53:53: Named Broadcast: "#cz_bcap4" ("Travis<116>")
+L 07/20/1999 - 09:53:53: Named Broadcast: "#cz_bcap4" ("Travis<116>")
+L 07/20/1999 - 09:53:58: Named Broadcast: "#cz_bcap4" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:53:58: Named Broadcast: "#cz_bcap4" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:53:58: Named Broadcast: "#cz_bcap4" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:53:58: Named Broadcast: "#cz_bcap4" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:53:58: Named Broadcast: "#cz_bcap4" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:54:06: "Travis<116>" say "3"
+L 07/20/1999 - 09:54:31: "[rage]MattLee<117>" activated the goal "blue flag 3"
+L 07/20/1999 - 09:54:31: "Travis<116>" killed "Ez 2 Kill<120>" with "flames"
+L 07/20/1999 - 09:54:38: "Ez 2 Kill<120>" activated the goal "i_p_t"
+L 07/20/1999 - 09:54:41: "Travis<116>" say "hehe"
+L 07/20/1999 - 09:54:45: "Dack 130<129>" activated the goal "blue flag 2"
+L 07/20/1999 - 09:55:15: Named Broadcast: "#cz_bcap1" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:55:15: Named Broadcast: "#cz_bcap1" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:55:15: Named Broadcast: "#cz_bcap1" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:55:15: Named Broadcast: "#cz_bcap1" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:55:15: Named Broadcast: "#cz_bcap1" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:55:29: "Ez 2 Kill<120>" infected "Travis<116>".
+L 07/20/1999 - 09:55:36: "[rage]MattLee<117>" activated the goal "blue flag 3"
+L 07/20/1999 - 09:56:05: "Ez 2 Kill<120>" infected "Dack 130<129>".
+L 07/20/1999 - 09:56:06: Named Broadcast: "#cz_bcap2" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:56:06: Named Broadcast: "#cz_bcap2" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:56:06: Named Broadcast: "#cz_bcap2" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:56:06: Named Broadcast: "#cz_bcap2" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:56:06: Named Broadcast: "#cz_bcap2" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:56:13: "Ez 2 Kill<120>" killed "Travis<116>" with "timer"
+L 07/20/1999 - 09:56:16: "Travis<116>" activated the goal "i_p_t"
+L 07/20/1999 - 09:56:21: "Dack 130<129>" passed on the infection to "[rage]MattLee<117>".
+L 07/20/1999 - 09:56:27: "SlugPunker<132><WON:4294912363>" connected, address "152.202.157.39:27005"
+L 07/20/1999 - 09:56:31: "Travis<116>" activated the goal "blue flag 3"
+L 07/20/1999 - 09:56:42: "Ez 2 Kill<120>" killed "Dack 130<129>" with "timer"
+L 07/20/1999 - 09:56:45: "Dack 130<129>" activated the goal "i_p_t"
+L 07/20/1999 - 09:56:45: "Ez 2 Kill<120>" killed "[rage]MattLee<117>" with "timer"
+L 07/20/1999 - 09:56:49: "[rage]MattLee<117>" activated the goal "i_p_t"
+L 07/20/1999 - 09:56:50: "Ez 2 Kill<120>" infected "Travis<116>".
+L 07/20/1999 - 09:56:52: "Travis<116>" killed "Ez 2 Kill<120>" with "flames"
+L 07/20/1999 - 09:57:00: "Ez 2 Kill<120>" activated the goal "i_p_t"
+L 07/20/1999 - 09:57:05: "[rage]MattLee<117>" activated the goal "blue flag 2"
+L 07/20/1999 - 09:57:16: Named Broadcast: "#cz_bcap3" ("Travis<116>")
+L 07/20/1999 - 09:57:16: Named Broadcast: "#cz_bcap3" ("Travis<116>")
+L 07/20/1999 - 09:57:16: Named Broadcast: "#cz_bcap3" ("Travis<116>")
+L 07/20/1999 - 09:57:16: Named Broadcast: "#cz_bcap3" ("Travis<116>")
+L 07/20/1999 - 09:57:16: Named Broadcast: "#cz_bcap3" ("Travis<116>")
+L 07/20/1999 - 09:57:27: "Ez 2 Kill<120>" infected "Dack 130<129>".
+L 07/20/1999 - 09:57:39: "SlugPunker<132><WON:4294912363>" has entered the game
+L 07/20/1999 - 09:57:42: "Dack 130<129>" passed on the infection to "[rage]MattLee<117>".
+L 07/20/1999 - 09:57:55: Named Broadcast: "#cz_bcap5" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:57:55: Named Broadcast: "#cz_bcap5" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:57:55: Named Broadcast: "#cz_bcap5" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:57:55: Named Broadcast: "#cz_bcap5" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:57:55: Named Broadcast: "#cz_bcap5" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:57:55: Named Broadcast: "#cz_bcap5" ("[rage]MattLee<117>")
+L 07/20/1999 - 09:58:05: "Ez 2 Kill<120>" killed "Dack 130<129>" with "timer"
+L 07/20/1999 - 09:58:06: "Dack 130<129>" activated the goal "i_p_t"
+L 07/20/1999 - 09:58:06: "Ez 2 Kill<120>" killed "Travis<116>" with "timer"
+L 07/20/1999 - 09:58:07: "[rage]MattLee<117>" killed self with "world"
+L 07/20/1999 - 09:58:11: "Travis<116>" activated the goal "i_p_t"
+L 07/20/1999 - 09:58:16: "[rage]MattLee<117>" changed class to "Medic"
+L 07/20/1999 - 09:58:16: "[rage]MattLee<117>" activated the goal "i_p_t"
+L 07/20/1999 - 09:58:39: "[rage]MattLee<117>" say_team "i'm a medic now...so call me if you need any help"
+L 07/20/1999 - 09:58:42: "Ez 2 Kill<120>" infected "Dack 130<129>".
+L 07/20/1999 - 09:58:55: "SlugPunker<132>" disconnected
+L 07/20/1999 - 09:59:23: "Ez 2 Kill<120>" killed "Dack 130<129>" with "timer"
+L 07/20/1999 - 09:59:29: "[rage]MattLee<117>" killed "Ez 2 Kill<120>" with "supershotgun"
+L 07/20/1999 - 09:59:35: "Ez 2 Kill<120>" activated the goal "i_p_t"
+L 07/20/1999 - 09:59:39: "[rage]MattLee<117>" say "you almost made it"
+L 07/20/1999 - 09:59:41: "Dack 130<129>" changed class to "Pyro"
+L 07/20/1999 - 09:59:42: "Dack 130<129>" activated the goal "i_p_t"
+L 07/20/1999 - 10:00:44: "[rage]MattLee<117>" killed self with "normalgrenade"
+L 07/20/1999 - 10:00:47: "[rage]MattLee<117>" activated the goal "i_p_t"
+L 07/20/1999 - 10:00:53: "Travis<116>" say "mother-"
+L 07/20/1999 - 10:01:28: "Travis<116>" say "med"
+L 07/20/1999 - 10:02:15: "Travis<116>" say "hey red opdf"
+L 07/20/1999 - 10:02:41: "Travis<116>" say "med ec"
+L 07/20/1999 - 10:02:48: "[rage]MattLee<117>" say_team "hey dack thowa"
+L 07/20/1999 - 10:02:49: "Player<133><WON:4294912843>" connected, address "193.159.84.109:27005"
+L 07/20/1999 - 10:03:10: "Player<133><WON:4294912843>" has entered the game
+L 07/20/1999 - 10:03:12: "Player<133>" disconnected
+L 07/20/1999 - 10:03:35: "[rage]MattLee<117>" say_team "hey dack...when I stand near the door....throw a reg granade at my feet"
+L 07/20/1999 - 10:04:00: "Ez 2 Kill<120>" say_team "hahaha"
+L 07/20/1999 - 10:04:08: "IRONGIANT<134><WON:4294912651>" connected, address "209.161.45.70:27005"
+L 07/20/1999 - 10:04:17: "IRONGIANT<135><WON:4294912651>" connected, address "209.161.45.70:27005"
+L 07/20/1999 - 10:05:30: "[KFS]Tanker<136><WON:4294912906>" connected, address "139.11.105.108:27005"
+L 07/20/1999 - 10:05:35: "Ez 2 Kill<120>" killed "Dack 130<129>" with "supernails"
+L 07/20/1999 - 10:05:41: "Dack 130<129>" activated the goal "i_p_t"
+L 07/20/1999 - 10:05:48: "Dack 130<129>" changed class to "Spy"
+L 07/20/1999 - 10:06:03: "Travis<116>" say "you suicidal"
+L 07/20/1999 - 10:06:19: "[KFS]Tanker<136><WON:4294912906>" has entered the game
+L 07/20/1999 - 10:06:25: "[KFS]Tanker<136>" joined team "2".
+L 07/20/1999 - 10:06:29: "[KFS]Tanker<136>" changed class to "Soldier"
+L 07/20/1999 - 10:06:29: "[KFS]Tanker<136>" changed class to "Soldier"
+L 07/20/1999 - 10:06:29: "[KFS]Tanker<136>" activated the goal "i_p_t"
+L 07/20/1999 - 10:06:33: "Travis<116>" say " i see"
+L 07/20/1999 - 10:06:39: "[KFS]Tanker<136>" say_team "hi medic"
+L 07/20/1999 - 10:06:44: "Travis<116>" say "get a gernade"
+L 07/20/1999 - 10:07:00: "Ez 2 Kill<120>" killed "Travis<116>" with "supernails"
+L 07/20/1999 - 10:07:02: "Travis<116>" activated the goal "i_p_t"
+L 07/20/1999 - 10:07:06: "Travis<116>" say " almost"
+L 07/20/1999 - 10:07:19: "Ez 2 Kill<120>" say_team "haha"
+L 07/20/1999 - 10:07:22: "Travis<116>" say "rong door"
+L 07/20/1999 - 10:07:54: "[KFS]Tanker<136>" killed self with "rocket"
+L 07/20/1999 - 10:07:58: "[KFS]Tanker<136>" activated the goal "i_p_t"
+L 07/20/1999 - 10:08:11: "Ez 2 Kill<120>" killed "[rage]MattLee<117>" with "supernails"
+L 07/20/1999 - 10:08:12: "[rage]MattLee<117>" activated the goal "i_p_t"
+L 07/20/1999 - 10:08:23: "[KFS]Tanker<136>" killed "Travis<116>" with "rocket"
+L 07/20/1999 - 10:08:26: "Travis<116>" activated the goal "i_p_t"
+L 07/20/1999 - 10:08:32: "Travis<116>" say "bye"
+L 07/20/1999 - 10:08:45: "Travis<116>" disconnected
+L 07/20/1999 - 10:09:18: "[KFS]Tanker<136>" killed "[rage]MattLee<117>" with "rocket"
+L 07/20/1999 - 10:09:22: "[rage]MattLee<117>" changed class to "Demoman"
+L 07/20/1999 - 10:09:22: "[rage]MattLee<117>" activated the goal "i_p_t"
+L 07/20/1999 - 10:09:33: "Dack 130<129>" changed class to "Spy"
+L 07/20/1999 - 10:10:08: "Ez 2 Kill<120>" infected "[rage]MattLee<117>".
+L 07/20/1999 - 10:10:13: "[KFS]Tanker<136>" killed "Dack 130<129>" with "rocket"
+L 07/20/1999 - 10:10:15: "Dack 130<129>" activated the goal "i_p_t"
+L 07/20/1999 - 10:10:18: "[rage]MattLee<117>" disconnected
+L 07/20/1999 - 10:10:25: "Fall<137><WON:4294911485>" connected, address "24.222.9.250:27005"
+L 07/20/1999 - 10:11:18: "Fall<137><WON:4294911485>" has entered the game
+L 07/20/1999 - 10:11:47: "Fall<137>" joined team "2".
+L 07/20/1999 - 10:11:53: "Fall<137>" changed class to "Soldier"
+L 07/20/1999 - 10:11:53: "Fall<137>" changed class to "Soldier"
+L 07/20/1999 - 10:11:53: "Fall<137>" activated the goal "i_p_t"
+L 07/20/1999 - 10:12:07: "[KFS]Tanker<136>" say "fall chnage to 1"
+L 07/20/1999 - 10:12:57: "[KFS]Tanker<136>" activated the goal "red marker 1"
+L 07/20/1999 - 10:13:42: Named Broadcast: "#cz_rcap5" ("[KFS]Tanker<136>")
+L 07/20/1999 - 10:13:42: Named Broadcast: "#cz_rcap5" ("[KFS]Tanker<136>")
+L 07/20/1999 - 10:13:42: Named Broadcast: "#cz_rcap5" ("[KFS]Tanker<136>")
+L 07/20/1999 - 10:13:42: Named Broadcast: "#cz_rcap5" ("[KFS]Tanker<136>")
+L 07/20/1999 - 10:13:42: Named Broadcast: "#cz_rcap5" ("[KFS]Tanker<136>")
+L 07/20/1999 - 10:14:15: "[KFS]Tanker<136>" killed "Dack 130<129>" with "rocket"
+L 07/20/1999 - 10:14:19: "Dack 130<129>" activated the goal "i_p_t"
+L 07/20/1999 - 10:14:51: "[KFS]Tanker<136>" activated the goal "red marker 1"
+L 07/20/1999 - 10:15:14: "Ez 2 Kill<120>" activated the goal "red marker 2"
+L 07/20/1999 - 10:15:15: "[KFS]Tanker<136>" killed "Dack 130<129>" with "rocket"
+L 07/20/1999 - 10:15:18: "Dack 130<129>" activated the goal "i_p_t"
+L 07/20/1999 - 10:15:41: "Runner<138><WON:4294910687>" connected, address "209.232.208.241:27005"
+L 07/20/1999 - 10:15:43: "Runner<139><WON:4294910687>" connected, address "209.232.208.241:27005"
+L 07/20/1999 - 10:16:05: "[KFS]Tanker<136>" killed "Dack 130<129>" with "rocket"
+L 07/20/1999 - 10:16:06: "Dack 130<129>" activated the goal "i_p_t"
+L 07/20/1999 - 10:16:28: Named Broadcast: "#cz_rcap3" ("[KFS]Tanker<136>")
+L 07/20/1999 - 10:16:28: Named Broadcast: "#cz_rcap3" ("[KFS]Tanker<136>")
+L 07/20/1999 - 10:16:28: Named Broadcast: "#cz_rcap3" ("[KFS]Tanker<136>")
+L 07/20/1999 - 10:16:28: Named Broadcast: "#cz_rcap3" ("[KFS]Tanker<136>")
+L 07/20/1999 - 10:16:28: Named Broadcast: "#cz_rcap3" ("[KFS]Tanker<136>")
+L 07/20/1999 - 10:16:29: "Dack 130<129>" activated the goal "blue flag 2"
+L 07/20/1999 - 10:16:43: "[KFS]Tanker<136>" changed to team "1".
+L 07/20/1999 - 10:16:43: "[KFS]Tanker<136>" killed self with "world"
+L 07/20/1999 - 10:16:47: "[KFS]Tanker<136>" activated the goal "i_p_t"
+L 07/20/1999 - 10:16:48: "[KFS]Tanker<136>" changed class to "Soldier"
+L 07/20/1999 - 10:16:48: "[KFS]Tanker<136>" changed class to "Soldier"
+L 07/20/1999 - 10:16:48: "[KFS]Tanker<136>" activated the goal "i_p_t"
+L 07/20/1999 - 10:17:07: Named Broadcast: "#cz_bcap1" ("Dack 130<129>")
+L 07/20/1999 - 10:17:07: Named Broadcast: "#cz_bcap1" ("Dack 130<129>")
+L 07/20/1999 - 10:17:07: Named Broadcast: "#cz_bcap1" ("Dack 130<129>")
+L 07/20/1999 - 10:17:07: Named Broadcast: "#cz_bcap1" ("Dack 130<129>")
+L 07/20/1999 - 10:17:07: Named Broadcast: "#cz_bcap1" ("Dack 130<129>")
+L 07/20/1999 - 10:17:26: "Ez 2 Kill<120>" say_team "how do you drop the flag"
+L 07/20/1999 - 10:17:38: "Dack 130<129>" activated the goal "blue flag 3"
+L 07/20/1999 - 10:18:26: Named Broadcast: "#cz_bcap3" ("Dack 130<129>")
+L 07/20/1999 - 10:18:26: Named Broadcast: "#cz_bcap3" ("Dack 130<129>")
+L 07/20/1999 - 10:18:26: Named Broadcast: "#cz_bcap3" ("Dack 130<129>")
+L 07/20/1999 - 10:18:26: Named Broadcast: "#cz_bcap3" ("Dack 130<129>")
+L 07/20/1999 - 10:18:26: Named Broadcast: "#cz_bcap3" ("Dack 130<129>")
+L 07/20/1999 - 10:19:12: "Dack 130<129>" activated the goal "blue flag 3"
+L 07/20/1999 - 10:19:27: "[KFS]Tanker<136>" disconnected
+L 07/20/1999 - 10:19:40: "vids<140><WON:4294908223>" connected, address "206.206.163.132:27005"
+L 07/20/1999 - 10:20:00: "vids<140><WON:4294908223>" has entered the game
+L 07/20/1999 - 10:20:08: "vids<140>" joined team "1".
+L 07/20/1999 - 10:20:12: "vids<140>" changed class to "Sniper"
+L 07/20/1999 - 10:20:12: "vids<140>" changed class to "Sniper"
+L 07/20/1999 - 10:20:12: "vids<140>" activated the goal "i_p_t"
+L 07/20/1999 - 10:20:18: Named Broadcast: "#cz_bcap4" ("Dack 130<129>")
+L 07/20/1999 - 10:20:18: Named Broadcast: "#cz_bcap4" ("Dack 130<129>")
+L 07/20/1999 - 10:20:18: Named Broadcast: "#cz_bcap4" ("Dack 130<129>")
+L 07/20/1999 - 10:20:18: Named Broadcast: "#cz_bcap4" ("Dack 130<129>")
+L 07/20/1999 - 10:20:18: Named Broadcast: "#cz_bcap4" ("Dack 130<129>")
+L 07/20/1999 - 10:20:35: "vids<140>" activated the goal "blue flag 3"
+L 07/20/1999 - 10:20:43: "Ez 2 Kill<120>" say_team "how do you drop the flag?!?"
+L 07/20/1999 - 10:21:22: "Ez 2 Kill<120>" killed self with "normalgrenade"
+L 07/20/1999 - 10:21:25: "Ez 2 Kill<120>" activated the goal "i_p_t"
+L 07/20/1999 - 10:21:45: Named Broadcast: "#cz_bcap5" ("vids<140>")
+L 07/20/1999 - 10:21:45: Named Broadcast: "#cz_bcap5" ("vids<140>")
+L 07/20/1999 - 10:21:45: Named Broadcast: "#cz_bcap5" ("vids<140>")
+L 07/20/1999 - 10:21:45: Named Broadcast: "#cz_bcap5" ("vids<140>")
+L 07/20/1999 - 10:21:45: Named Broadcast: "#cz_bcap5" ("vids<140>")
+L 07/20/1999 - 10:21:51: =------= MATCH RESULTS =------=
+L 07/20/1999 - 10:21:51: "blue" defeated "red"
+L 07/20/1999 - 10:21:51: "blue" RESULTS: "98906768" players. "30" frags, "2" unaccounted for. "96" team score.
+L 07/20/1999 - 10:21:51: "red" RESULTS: "98906768" players. "21" frags, "2" unaccounted for. "19" team score.
+L 07/20/1999 - 10:21:57: Log closed.

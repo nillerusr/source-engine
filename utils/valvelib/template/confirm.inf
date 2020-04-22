@@ -1,0 +1,28 @@
+About to create project $$root$$.$$VALVE_TARGET_TYPE$$:
+	Located in $$FULL_DIR_PATH$$
+	Target $$root$$.$$VALVE_TARGET_TYPE$$ will be copied into $$VALVE_TARGET_PATH$$
+$$IF(PROJTYPE_DLL)
+$$IF(VALVE_PUBLISH_IMPORT_LIB)
+	Import library $$root$$.lib will be copied into $$VALVE_IMPLIB_PATH$$
+$$ENDIF
+$$ENDIF
+
+$$IF(PROJTYPE_DLL || PROJTYPE_LIB)
+	Creating directory $$VALVE_ROOT_SRC_PATH$$common\$$root$$
+$$IF(VALVE_PUBLIC_PROJECT)		 
+	Creating directory $$VALVE_ROOT_SRC_PATH$$public\$$root$$
+$$ENDIF
+
+	Public Valve internal interfaces should be placed into 
+		$$VALVE_ROOT_SRC_PATH$$common\$$root$$
+
+$$IF(VALVE_PUBLIC_PROJECT)		 
+	Public Mod-visible interfaces should be placed into 
+		$$VALVE_ROOT_SRC_PATH$$public\$$root$$
+$$ENDIF
+$$ENDIF
+
+$$IF(PROJTYPE_DLL)
+	$$ROOT$$_DLL_EXPORT is defined for this project
+$$ENDIF
+

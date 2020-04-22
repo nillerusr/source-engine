@@ -1,0 +1,191 @@
+create table weapons
+(
+	WeaponID					INT,
+	PRIMARY KEY( WeaponID ),
+	Count						INT,
+) TYPE=MyISAM;
+
+create table maps
+(
+	MapName						CHAR(16),
+	PRIMARY KEY( MapName ),
+	TerroristWins					INT,
+	CTWins						INT,
+) TYPE=MyISAM;
+
+create table autobuy
+(
+	Purchase						CHAR(16),
+	PRIMARY KEY( Purchase ),
+	Count					INT,
+) TYPE=MyISAM;
+
+create table purchases_pricing
+(
+	snapshot					CHAR(16),
+	PRIMARY KEY( snapshot ),
+	dt2							DATETIME,
+	weapon_id					INT,
+	purchases					INT,
+	current_price				INT,
+	projected_price				INT,
+	
+) TYPE=MyISAM;
+
+create table snapshot_counter
+(
+	counter						INT,
+	PRIMARY KEY( counter ),
+	
+) TYPE=MyISAM;
+
+create table weapon_info
+(
+	WeaponID					INT,
+	PRIMARY KEY( WeaponID ),
+	side						ENUM('Terrorists', 'Counter-Terrorists', 'Both'),
+	fullname					CHAR( 32 ),
+	default_price				INT,
+	current_price				INT,
+) TYPE=MyISAM;
+
+
+
+Insert into weapon_info ( WeaponID, side, fullname, default_price, current_price ) values ( 1, 3, "228 COMPACT", 600, 600 );
+Insert into weapon_info ( WeaponID, side, fullname, default_price, current_price ) values ( 2, 3, "9X19MM SIDEARM", 400, 400 );
+Insert into weapon_info ( WeaponID, side, fullname, default_price, current_price ) values ( 16, 3, "K&M .45 TACTICAL", 500, 500 );
+Insert into weapon_info ( WeaponID, side, fullname, default_price, current_price ) values ( 25, 3, "NIGHT HAWK .50C", 650, 650 );
+Insert into weapon_info ( WeaponID, side, fullname, default_price, current_price ) values ( 11, 2, "ES FIVE-SEVEN", 750, 750 );
+Insert into weapon_info ( WeaponID, side, fullname, default_price, current_price ) values ( 10, 1, ".40 DUAL ELITES", 800, 800 );
+
+Insert into weapon_info ( WeaponID, side, fullname, default_price, current_price ) values ( 20, 3, "LEONE 12 GAUGE SUPER", 1700, 1700 );
+Insert into weapon_info ( WeaponID, side, fullname, default_price, current_price ) values ( 5, 3, "LEONE YG1265 AUTO SHOTGUN", 3000, 3000 );
+
+Insert into weapon_info ( WeaponID, side, fullname, default_price, current_price ) values ( 22, 2, "SCHMIDT MACHINE PISTOL", 1250, 1250 );
+Insert into weapon_info ( WeaponID, side, fullname, default_price, current_price ) values ( 18, 3, "K&M SUB-MACHINE GUN", 1500, 1500 );
+Insert into weapon_info ( WeaponID, side, fullname, default_price, current_price ) values ( 12, 3, "K&M UMP45", 1700, 1700 );
+Insert into weapon_info ( WeaponID, side, fullname, default_price, current_price ) values ( 29, 3, "ES C90", 2350, 2350 );
+Insert into weapon_info ( WeaponID, side, fullname, default_price, current_price ) values ( 7, 1, "INGRAM MAC-10", 1400, 1400 );
+
+Insert into weapon_info ( WeaponID, side, fullname, default_price, current_price ) values ( 15, 2, "CLARION 5.56", 2250, 2250 );
+Insert into weapon_info ( WeaponID, side, fullname, default_price, current_price ) values ( 3, 3, "SCHMIDT SCOUT", 2750, 2750 );
+Insert into weapon_info ( WeaponID, side, fullname, default_price, current_price ) values ( 21, 2, "MAVERICK M4A1 CARBINE", 3100, 3100 );
+Insert into weapon_info ( WeaponID, side, fullname, default_price, current_price ) values ( 8, 2, "BULLPUP", 3500, 3500 );
+Insert into weapon_info ( WeaponID, side, fullname, default_price, current_price ) values ( 13, 1, "KRIEG 550 COMMANDO", 4200, 4200 );
+Insert into weapon_info ( WeaponID, side, fullname, default_price, current_price ) values ( 26, 1, "KRIEG 552", 3500, 3500 );
+Insert into weapon_info ( WeaponID, side, fullname, default_price, current_price ) values ( 17, 3, "MAGNUM SNIPER RIFLE", 4750, 4750 );
+Insert into weapon_info ( WeaponID, side, fullname, default_price, current_price ) values ( 14, 1, "IDF DEFENDER", 2000, 2000 );
+Insert into weapon_info ( WeaponID, side, fullname, default_price, current_price ) values ( 27, 1, "CV-47", 2500, 2500 );
+Insert into weapon_info ( WeaponID, side, fullname, default_price, current_price ) values ( 23, 2, "D3/AU-1", 5000, 5000 );
+Insert into weapon_info ( WeaponID, side, fullname, default_price, current_price ) values ( 19, 3, "M249", 5750, 5750 );
+
+Insert into weapon_info ( WeaponID, side, fullname, default_price, current_price ) values ( 31, 3, "KEVLAR", 650, 650 );
+Insert into weapon_info ( WeaponID, side, fullname, default_price, current_price ) values ( 32, 3, "KEVLAR+HELMET", 1000, 1000 );
+Insert into weapon_info ( WeaponID, side, fullname, default_price, current_price ) values ( 24, 3, "FLASHBANG", 200, 200 );
+Insert into weapon_info ( WeaponID, side, fullname, default_price, current_price ) values ( 4, 3, "HE GRENADE", 300, 300 );
+Insert into weapon_info ( WeaponID, side, fullname, default_price, current_price ) values ( 9, 3, "SMOKE GRENADE", 300, 300 );
+Insert into weapon_info ( WeaponID, side, fullname, default_price, current_price ) values ( 33, 3, "NIGHTVISION", 1250, 1250 );
+
+
+
+# update weapons set Count=Count+450 where WeaponID = 0;
+# Insert into weapons (WeaponID,Count) values ( 1, 0 );
+
+# update maps set TerroristWins=0, CTWins=0 where MapName = "cs_assault";
+
+# Insert into maps (MapName,TerroristWins, CTWins) values ( "cs_assault", 0, 0 );
+# Insert into maps (MapName,TerroristWins, CTWins) values ( "cs_compound", 0, 0 );
+# Insert into maps (MapName,TerroristWins, CTWins) values ( "cs_havana", 0, 0 );
+# Insert into maps (MapName,TerroristWins, CTWins) values ( "cs_italy", 0, 0 );
+# Insert into maps (MapName,TerroristWins, CTWins) values ( "cs_militia", 0, 0 );
+# Insert into maps (MapName,TerroristWins, CTWins) values ( "cs_office", 0, 0 );
+# Insert into maps (MapName,TerroristWins, CTWins) values ( "de_aztec", 0, 0 );
+# Insert into maps (MapName,TerroristWins, CTWins) values ( "de_cbble", 0, 0 );
+# Insert into maps (MapName,TerroristWins, CTWins) values ( "de_chateau", 0, 0 );
+# Insert into maps (MapName,TerroristWins, CTWins) values ( "de_dust2", 0, 0 );
+# Insert into maps (MapName,TerroristWins, CTWins) values ( "de_dust", 0, 0 );
+# Insert into maps (MapName,TerroristWins, CTWins) values ( "de_inferno", 0, 0 );
+# Insert into maps (MapName,TerroristWins, CTWins) values ( "de_nuke", 0, 0 );
+# Insert into maps (MapName,TerroristWins, CTWins) values ( "de_piranesi", 0, 0 );
+# Insert into maps (MapName,TerroristWins, CTWins) values ( "de_port", 0, 0 );
+# Insert into maps (MapName,TerroristWins, CTWins) values ( "de_prodigy", 0, 0 );
+# Insert into maps (MapName,TerroristWins, CTWins) values ( "de_tides", 0, 0 );
+# Insert into maps (MapName,TerroristWins, CTWins) values ( "de_train", 0, 0 );
+
+
+//Autobuy
+Insert into autobuy (Purchase, Count) values ( "Auto-Buy", 0 );
+Insert into autobuy (Purchase, Count) values ( "Re-Buy", 0 );
+Insert into autobuy (Purchase, Count) values ( "Auto-Buy: M4A1", 0 );
+Insert into autobuy (Purchase, Count) values ( "Auto-Buy: AK47", 0 );
+Insert into autobuy (Purchase, Count) values ( "Auto-Buy: Famas", 0 );
+Insert into autobuy (Purchase, Count) values ( "Auto-Buy: Galil", 0 );
+Insert into autobuy (Purchase, Count) values ( "Auto-Buy: Suit", 0 );
+Insert into autobuy (Purchase, Count) values ( "Auto-Buy: Kev", 0 );
+
+update autobuy set Count=0 where Purchase = "Auto-Buy";
+update autobuy set Count=0 where Purchase = "Re-Buy";
+update autobuy set Count=0 where Purchase = "Auto-Buy: M4A1";
+update autobuy set Count=0 where Purchase = "Auto-Buy: AK47";
+update autobuy set Count=0 where Purchase = "Auto-Buy: Famas";
+update autobuy set Count=0 where Purchase = "Auto-Buy: Galil";
+update autobuy set Count=0 where Purchase = "Auto-Buy: Suit";
+update autobuy set Count=0 where Purchase = "Auto-Buy: Kev";
+
+
+
+//Copy and Paste into the SQL terminal to reset everything
+
+update weapons set Count=0 where WeaponID = 1;
+update weapons set Count=0 where WeaponID = 2;
+update weapons set Count=0 where WeaponID = 3;
+update weapons set Count=0 where WeaponID = 4;
+update weapons set Count=0 where WeaponID = 5;
+update weapons set Count=0 where WeaponID = 6;
+update weapons set Count=0 where WeaponID = 7;
+update weapons set Count=0 where WeaponID = 8;
+update weapons set Count=0 where WeaponID = 9;
+update weapons set Count=0 where WeaponID = 10;
+update weapons set Count=0 where WeaponID = 11;
+update weapons set Count=0 where WeaponID = 12;
+update weapons set Count=0 where WeaponID = 13;
+update weapons set Count=0 where WeaponID = 14;
+update weapons set Count=0 where WeaponID = 15;
+update weapons set Count=0 where WeaponID = 16;
+update weapons set Count=0 where WeaponID = 17;
+update weapons set Count=0 where WeaponID = 18;
+update weapons set Count=0 where WeaponID = 19;
+update weapons set Count=0 where WeaponID = 20;
+update weapons set Count=0 where WeaponID = 21;
+update weapons set Count=0 where WeaponID = 22;
+update weapons set Count=0 where WeaponID = 23;
+update weapons set Count=0 where WeaponID = 24;
+update weapons set Count=0 where WeaponID = 25;
+update weapons set Count=0 where WeaponID = 26;
+update weapons set Count=0 where WeaponID = 27;
+update weapons set Count=0 where WeaponID = 28;
+update weapons set Count=0 where WeaponID = 29;
+update weapons set Count=0 where WeaponID = 30;
+update weapons set Count=0 where WeaponID = 31;
+update weapons set Count=0 where WeaponID = 32;
+update weapons set Count=0 where WeaponID = 33;
+
+update maps set TerroristWins=0, CTWins=0 where MapName = "cs_assault";
+update maps set TerroristWins=0, CTWins=0 where MapName = "cs_compound";
+update maps set TerroristWins=0, CTWins=0 where MapName = "cs_havana";
+update maps set TerroristWins=0, CTWins=0 where MapName = "cs_italy";
+update maps set TerroristWins=0, CTWins=0 where MapName = "cs_militia";
+update maps set TerroristWins=0, CTWins=0 where MapName = "cs_office";
+update maps set TerroristWins=0, CTWins=0 where MapName = "de_aztec";
+update maps set TerroristWins=0, CTWins=0 where MapName = "de_cbble";
+update maps set TerroristWins=0, CTWins=0 where MapName = "de_chateau";
+update maps set TerroristWins=0, CTWins=0 where MapName = "de_dust2";
+update maps set TerroristWins=0, CTWins=0 where MapName = "de_dust";
+update maps set TerroristWins=0, CTWins=0 where MapName = "de_inferno";
+update maps set TerroristWins=0, CTWins=0 where MapName = "de_nuke";
+update maps set TerroristWins=0, CTWins=0 where MapName = "de_piranesi";
+update maps set TerroristWins=0, CTWins=0 where MapName = "de_port";
+update maps set TerroristWins=0, CTWins=0 where MapName = "de_prodigy";
+update maps set TerroristWins=0, CTWins=0 where MapName = "de_tides";
+update maps set TerroristWins=0, CTWins=0 where MapName = "de_train";
+

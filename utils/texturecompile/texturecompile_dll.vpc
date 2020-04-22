@@ -1,0 +1,48 @@
+//-----------------------------------------------------------------------------
+//	TEXTURECOMPILE_DLL.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,$SRCDIR\utils\common,$SRCDIR\utils\vmpi"
+		$PreprocessorDefinitions			"$BASE;_USRDLL;TEXTURECOMPILE_EXPORTS"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE ws2_32.lib odbc32.lib odbccp32.lib"
+	}
+}
+
+$Project "Texturecompile_dll"
+{
+	$Folder	"Source Files"
+	{
+		$File	"..\common\cmdlib.cpp"
+		$File	"$SRCDIR\public\filesystem_helpers.cpp"
+		$File	"..\common\pacifier.cpp"
+		$File	"texturecompile.cpp"
+		$File	"..\common\threads.cpp"
+		$File	"..\common\vmpi_tools_shared.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\public\tier1\UtlStringMap.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib tier2
+		$Lib vmpi
+	}
+}

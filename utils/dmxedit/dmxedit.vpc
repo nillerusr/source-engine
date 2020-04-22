@@ -1,0 +1,53 @@
+//-----------------------------------------------------------------------------
+//	DMXEDIT.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$EnableC++Exceptions	"Yes (/EHsc)"
+	}
+}
+
+$Project "Dmxedit"
+{
+	$Folder	"Source Files"
+	{
+		$File	"dmxedit.cpp"
+		$File	"luamain.cpp"
+		$File	"doit.h"
+		$File	"winstuff.cpp"
+
+		$Folder "External"
+		{
+			$File	"$SRCDIR\public\movieobjects/movieobjects.cpp"
+			$File	"$SRCDIR\public\interpolatortypes.cpp"
+			$File	"$SRCDIR\public\interpolatortypes.h"
+		}
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"dmxedit.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib appframework
+		$Lib movieobjects
+		$Lib datamodel
+		$Lib dmserializers
+		$Lib mathlib
+		$Lib tier2
+		$Lib tier3
+		$Lib $LIBCOMMON\lua
+	}
+}

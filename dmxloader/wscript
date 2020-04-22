@@ -1,0 +1,49 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from waflib import Utils
+import os
+
+top = '.'
+PROJECT_NAME = 'dmxloader'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	conf.define('DMXLOADER_LIB',1)
+
+def build(bld):
+	source = [
+		'dmxattribute.cpp',
+		'dmxelement.cpp',
+		'dmxloader.cpp',
+                'dmxloadertext.cpp',
+		'dmxserializationdictionary.cpp'
+	]
+
+	includes = [
+		'.',
+		'../public',
+		'../public/tier0',
+		'../public/tier1',
+		'../common'
+	]
+
+	defines = []
+
+	libs = []
+
+	bld.stlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)
+

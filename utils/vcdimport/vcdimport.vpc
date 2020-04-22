@@ -1,0 +1,39 @@
+//-----------------------------------------------------------------------------
+//	VCDIMPORT.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,$SRCDIR\game\shared"
+	}	
+}
+
+$Project "vcdimport"
+{
+	$Folder	"Source Files"
+	{
+		$File	"vcdimport.cpp"
+		$File	"$SRCDIR\movieobjects\importintovcd.cpp"
+		$File	"$SRCDIR\public\interpolatortypes.cpp"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib appframework
+		$Lib choreoobjects
+		$Lib mathlib
+		$Lib tier2
+		$Lib tier3
+		$Lib datamodel
+		$Lib dmserializers
+	}
+}

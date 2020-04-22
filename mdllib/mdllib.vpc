@@ -1,0 +1,44 @@
+//-----------------------------------------------------------------------------
+//	MDLLIB.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		".."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+	}
+
+	$Linker
+	{
+	}
+}
+
+$Project "mdllib"
+{
+	$Folder	"Source Files"
+	{
+		$File	"mdllib.cpp"
+		$File	"mdllib_stripinfo.cpp"
+		$File	"mdllib_stripmodel.cpp"
+		$File	"mdllib_utils.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\public\mdllib\mdllib.h"
+		$File	"mdllib_common.h"
+		$File	"mdllib_stripinfo.h"
+		$File	"mdllib_utils.h"
+	}
+
+	$Folder "Link Libraries"
+	{
+	}
+}

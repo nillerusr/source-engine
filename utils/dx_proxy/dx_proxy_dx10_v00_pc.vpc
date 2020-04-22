@@ -1,0 +1,14 @@
+//
+// dx_proxy_dx10_v00_pc.vpc
+//
+// Base script for generating dx_proxy.dll for specific
+// version of Microsoft DirectX SDK:
+// DirectX10 from April 2007 SDK
+//
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$SRCDIR\dx10sdk\utilities\dx10_40"
+$Macro DX_SDK_VER	"DX10_V00_PC"
+
+$Include "dx_proxy_base.vpc"
+

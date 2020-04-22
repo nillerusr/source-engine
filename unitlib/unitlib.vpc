@@ -1,0 +1,50 @@
+//-----------------------------------------------------------------------------
+//	UNITLIB.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		".."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Linux
+{
+	$BuildForLinux 1
+}
+$Configuration
+{
+	$Compiler
+	{
+		$PreprocessorDefinitions			"$BASE;fopen=dont_use_fopen;UNITLIB_DLL_EXPORT"
+	}
+
+	$PreLinkEvent [$WIN32]
+	{	
+		$CommandLine	"call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $SRCDIR\lib\public\$(TargetName).lib $SRCDIR" "\n" \
+						"call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $SRCDIR\lib\public\$(TargetName).exp $SRCDIR" "\n" \
+						"$BASE"
+	}
+
+
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE odbc32.lib odbccp32.lib"
+		$ImportLibrary					"$SRCDIR\lib\public\$(TargetName).lib"
+
+	}
+}
+
+$Project "Unitlib"
+{
+	$Folder	"Source Files"
+	{
+		$File	"unitlib.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\public\unitlib\UnitLib.h"
+	}
+}

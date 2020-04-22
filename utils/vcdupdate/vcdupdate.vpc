@@ -1,0 +1,50 @@
+//-----------------------------------------------------------------------------
+//	VCDUPDATE.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,$SRCDIR\game\shared"
+	}	
+}
+
+$Project "vcdupdate"
+{
+	$Folder	"Source Files"
+	{
+		$File	"vcdupdate.cpp"
+	}
+
+	$Folder "External"
+	{
+		$File	"$SRCDIR\public\bone_setup.cpp"
+		$File	"$SRCDIR\public\collisionutils.cpp"
+		$File	"$SRCDIR\public\interpolatortypes.cpp"
+		$File	"$SRCDIR\public\studio.cpp"
+		$File	"$SRCDIR\public\sentence.cpp"
+	}
+	
+	$Folder	"External Header Files"
+	{
+		$File	"$SRCDIR\public\sentence.h"
+		$File	"$SRCDIR\public\interpolatortypes.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib appframework
+		$Lib choreoobjects
+		$Lib mathlib
+		$Lib tier2
+		$Lib tier3
+	}
+}

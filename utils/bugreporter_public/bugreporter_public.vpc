@@ -1,0 +1,65 @@
+//-----------------------------------------------------------------------------
+//	BUGREPORTER_PUBLIC.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\common"
+		$PreprocessorDefinitions			"$BASE;bugreporter_public_EXPORTS"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE Ws2_32.lib odbc32.lib odbccp32.lib" [$WIN32]
+		$SystemLibraries                    "iconv" [$OSXALL]
+	}
+}
+
+$Project "Bugreporter_public"
+{
+	$Folder	"Source Files"
+	{
+		$File	"$SRCDIR\public\blockingudpsocket.cpp"
+		$File	"bugreporter_public.cpp"
+		$File	"bugreporter_upload.cpp"
+		$File	"$SRCDIR\public\mathlib\IceKey.H"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\public\tier0\basetypes.h"
+		$File	"$SRCDIR\public\blockingudpsocket.h"
+		$File	"$SRCDIR\public\Color.h"
+		$File	"$SRCDIR\public\tier0\commonmacros.h"
+		$File	"$SRCDIR\public\tier0\dbg.h"
+		$File	"$SRCDIR\public\tier0\fasttimer.h"
+		$File	"$SRCDIR\public\filesystem.h"
+		$File	"$SRCDIR\public\appframework\IAppSystem.h"
+		$File	"$SRCDIR\public\vstdlib\IKeyValuesSystem.h"
+		$File	"$SRCDIR\public\tier0\mem.h"
+		$File	"$SRCDIR\public\tier0\memdbgoff.h"
+		$File	"$SRCDIR\public\tier0\memdbgon.h"
+		$File	"$SRCDIR\public\tier0\platform.h"
+		$File	"$SRCDIR\public\tier0\protected_things.h"
+		$File	"$SRCDIR\public\string_t.h"
+		$File	"$SRCDIR\public\tier1\strtools.h"
+		$File	"$SRCDIR\public\tier1\utlmemory.h"
+		$File	"$SRCDIR\public\tier1\utlrbtree.h"
+		$File	"$SRCDIR\public\vstdlib\vstdlib.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib			mathlib
+	}
+
+}

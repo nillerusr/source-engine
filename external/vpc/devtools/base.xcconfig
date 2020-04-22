@@ -1,0 +1,28 @@
+ALWAYS_SEARCH_USER_PATHS = YES
+HEADER_SEARCH_PATHS = $(HEADER_SEARCH_PATHS) $(SDKROOT)/usr/include/malloc
+
+ARCHS = i386
+ONLY_ACTIVE_ARCH = NO
+COPY_PHASE_STRIP = NO
+DEBUG_INFORMATION_FORMAT = dwarf-with-dsym
+
+DEAD_CODE_STRIPPING = YES
+PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES
+
+GCC_C_LANGUAGE_STANDARD = gnu99
+GCC_ENABLE_OBJC_EXCEPTIONS = YES
+GCC_PREPROCESSOR_DEFINITIONS = _DLL_EXT=.dylib
+GCC_SYMBOLS_PRIVATE_EXTERN = YES
+
+GCC_WARN_ABOUT_INVALID_OFFSETOF_MACRO = NO
+
+// CLANG - and use the ccache wrapper
+GCC_VERSION = com.apple.compilers.llvm.clang.1_0
+CC = $(SOURCE_ROOT)/devtools/bin/osx32/xcode_ccache_wrapper
+LDPLUSPLUS = $(DT_TOOLCHAIN_DIR)/usr/bin/clang++
+WARNING_CFLAGS = -Wno-deprecated-writable-strings
+CLANG_WARN_CXX0X_EXTENSIONS = NO
+
+// this combination of sdk and deploy target allows building on 10.7 (lion) targeting 10.5
+SDKROOT = macosx10.6
+MACOSX_DEPLOYMENT_TARGET=10.5

@@ -1,0 +1,44 @@
+//-----------------------------------------------------------------------------
+//	VTEX_LAUNCHER.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+$Macro OUTBINNAME	"vtex"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE;..\common"
+		$PreprocessorDefinitions			"$BASE;PROTECTED_THINGS_DISABLE"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE odbc32.lib odbccp32.lib"
+	}
+}
+
+$Project "Vtex_launcher"
+{
+	$Folder	"Source Files"
+	{
+		$File	"vtex_launcher.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\public\ilaunchabledll.h"
+		$File	"$SRCDIR\public\tier1\interface.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib tier2
+	}
+}

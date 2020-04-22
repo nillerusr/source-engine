@@ -1,0 +1,366 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioProject
+	ProjectType="Visual C++"
+	Version="7.10"
+	Name="xbox_loader"
+	ProjectGUID="{652C7D60-BC02-4E09-96DD-9300FFFF3403}"
+	RootNamespace="xbox_loader"
+	SccProjectName=""
+	SccLocalPath="">
+	<Platforms>
+		<Platform
+			Name="Xbox"/>
+	</Platforms>
+	<Configurations>
+		<Configuration
+			Name="Debug_XBox|Xbox"
+			OutputDirectory=".\Debug_XBox"
+			IntermediateDirectory=".\Debug_XBox"
+			ConfigurationType="1"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="FALSE">
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				OptimizeForProcessor="2"
+				AdditionalIncludeDirectories="..\..\..\public;..\..\..\common;..\Common\include;..\toollib"
+				PreprocessorDefinitions="_USE_XGMATH,_XBOX,XBOX_SAMPLE,_DEBUG,"
+				ExceptionHandling="FALSE"
+				RuntimeLibrary="1"
+				EnableEnhancedInstructionSet="1"
+				UsePrecompiledHeader="0"
+				PrecompiledHeaderThrough="xtl.h"
+				PrecompiledHeaderFile="$(IntDir)/apploader.pch"
+				AssemblerListingLocation="$(IntDir)/"
+				ObjectFile="$(IntDir)/"
+				ProgramDataBaseFileName="$(IntDir)/"
+				WarningLevel="3"
+				SuppressStartupBanner="TRUE"
+				DebugInformationFormat="4"
+				CompileAs="0"
+				DisableSpecificWarnings="4244"/>
+			<Tool
+				Name="VCCustomBuildTool"/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalOptions="/MACHINE:I386 /FIXED:NO"
+				AdditionalDependencies="xperf.lib xbdm.lib xapilibd.lib d3d8d.lib d3dx8d.lib xmv.lib xgraphicsd.lib dsoundd.lib xboxkrnl.lib"
+				OutputFile="$(OutDir)/xbox_loader.exe"
+				LinkIncremental="2"
+				SuppressStartupBanner="TRUE"
+				GenerateDebugInformation="TRUE"
+				ProgramDatabaseFile="$(OutDir)/xbox_loader.pdb"
+				GenerateMapFile="TRUE"/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				Description="Copying LoaderMedia to \\Fileserver"
+				CommandLine="copy LoaderMedia\*.* \\FileServer\user\XBox\DVD\LoaderMedia
+
+"/>
+			<Tool
+				Name="VCPreBuildEventTool"
+				CommandLine="bundler LoaderMedia_Source\loader_icon.rdf -o LoaderMedia_Source\loader_icon.xbx"/>
+			<Tool
+				Name="VCPreLinkEventTool"/>
+			<Tool
+				Name="XboxDeploymentTool"
+				RemotePath="xe:\hl2\default.xbe"
+				AdditionalFiles=""/>
+			<Tool
+				Name="XboxImageTool"
+				StackSize="0x10000"
+				IncludeDebugInfo="TRUE"
+				LimitAvailableMemoryTo64MB="TRUE"
+				SuppressStartupBanner="TRUE"
+				NoLibWarn="TRUE"
+				TitleID="0x45410091"
+				TitleName="Half - Life 2 (Debug Build)"
+				TitleImage="LoaderMedia_Source\loader_icon.xbx"
+				XBEVersion="4096"/>
+		</Configuration>
+		<Configuration
+			Name="Release_XBox|Xbox"
+			OutputDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="1"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="FALSE">
+			<Tool
+				Name="VCCLCompilerTool"
+				OmitFramePointers="TRUE"
+				OptimizeForProcessor="2"
+				AdditionalIncludeDirectories="..\..\..\public;..\..\..\common;..\Common\include;..\toollib"
+				PreprocessorDefinitions="_USE_XGMATH;_XBOX;NDEBUG"
+				StringPooling="TRUE"
+				ExceptionHandling="FALSE"
+				RuntimeLibrary="0"
+				EnableFunctionLevelLinking="TRUE"
+				EnableEnhancedInstructionSet="1"
+				UsePrecompiledHeader="0"
+				PrecompiledHeaderThrough=""
+				PrecompiledHeaderFile=""
+				AssemblerListingLocation="$(IntDir)/"
+				ObjectFile="$(IntDir)/"
+				ProgramDataBaseFileName="$(IntDir)/"
+				WarningLevel="3"
+				SuppressStartupBanner="TRUE"
+				DisableSpecificWarnings="4244"/>
+			<Tool
+				Name="VCCustomBuildTool"/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalOptions="/MACHINE:I386 /FIXED:NO"
+				AdditionalDependencies="xapilib.lib d3d8.lib d3dx8.lib xgraphics.lib dsound.lib xmv.lib xboxkrnl.lib"
+				OutputFile="$(OutDir)/xbox_loader.exe"
+				SuppressStartupBanner="TRUE"
+				GenerateDebugInformation="TRUE"
+				ProgramDatabaseFile="$(OutDir)/xbox_loader.pdb"
+				GenerateMapFile="TRUE"
+				MapExports="TRUE"
+				MapLines="TRUE"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				SetChecksum="TRUE"/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				Description="Copying LoaderMedia to \\Fileserver"
+				CommandLine="copy LoaderMedia\*.* \\FileServer\user\XBox\DVD\LoaderMedia
+copy $(TargetDir)$(TargetName).xbe \\FileServer\user\XBox\DVD\default.xbe
+"/>
+			<Tool
+				Name="VCPreBuildEventTool"
+				CommandLine="bundler LoaderMedia_Source\loader_icon.rdf -o LoaderMedia_Source\loader_icon.xbx"/>
+			<Tool
+				Name="VCPreLinkEventTool"/>
+			<Tool
+				Name="XboxDeploymentTool"
+				RemotePath="xe:\hl2\default.xbe"
+				AdditionalFiles=""/>
+			<Tool
+				Name="XboxImageTool"
+				StackSize="0x10000"
+				LimitAvailableMemoryTo64MB="TRUE"
+				SuppressStartupBanner="TRUE"
+				TitleID="0x45410091"
+				TitleName="Half - Life 2 (Release Build)"
+				TitleImage="LoaderMedia_Source\loader_icon.xbx"
+				XBEVersion="4096"/>
+		</Configuration>
+		<Configuration
+			Name="Retail_XBox|Xbox"
+			OutputDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="1"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="FALSE">
+			<Tool
+				Name="VCCLCompilerTool"
+				OmitFramePointers="TRUE"
+				OptimizeForProcessor="2"
+				AdditionalIncludeDirectories="..\..\..\public;..\..\..\common;..\Common\include;..\toollib"
+				PreprocessorDefinitions="_USE_XGMATH;_XBOX;NDEBUG;_RETAIL"
+				StringPooling="TRUE"
+				ExceptionHandling="FALSE"
+				RuntimeLibrary="0"
+				EnableFunctionLevelLinking="TRUE"
+				EnableEnhancedInstructionSet="1"
+				UsePrecompiledHeader="0"
+				PrecompiledHeaderThrough="xtl.h"
+				PrecompiledHeaderFile="$(IntDir)/apploader.pch"
+				AssemblerListingLocation="$(IntDir)/"
+				ObjectFile="$(IntDir)/"
+				ProgramDataBaseFileName="$(IntDir)/"
+				WarningLevel="3"
+				SuppressStartupBanner="TRUE"
+				DisableSpecificWarnings="4244"/>
+			<Tool
+				Name="VCCustomBuildTool"/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalOptions="/MACHINE:I386 /FIXED:NO"
+				AdditionalDependencies="xapilib.lib d3d8.lib d3dx8.lib xgraphics.lib dsound.lib xmv.lib xboxkrnl.lib"
+				OutputFile="$(OutDir)/xbox_loader.exe"
+				SuppressStartupBanner="TRUE"
+				GenerateDebugInformation="TRUE"
+				ProgramDatabaseFile="$(OutDir)/xbox_loader.pdb"
+				GenerateMapFile="TRUE"
+				MapExports="TRUE"
+				MapLines="TRUE"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				SetChecksum="TRUE"/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				Description="Copying LoaderMedia to \\Fileserver"
+				CommandLine="copy LoaderMedia\*.* \\FileServer\user\XBox\DVD\LoaderMedia
+copy $(TargetDir)$(TargetName).xbe \\FileServer\user\XBox\DVD\default.xbe
+"/>
+			<Tool
+				Name="VCPreBuildEventTool"
+				CommandLine="bundler LoaderMedia_Source\loader_icon.rdf -o LoaderMedia_Source\loader_icon.xbx"/>
+			<Tool
+				Name="VCPreLinkEventTool"/>
+			<Tool
+				Name="XboxDeploymentTool"
+				RemotePath="xe:\hl2\default.xbe"
+				AdditionalFiles=""/>
+			<Tool
+				Name="XboxImageTool"
+				StackSize="0x10000"
+				LimitAvailableMemoryTo64MB="TRUE"
+				SuppressStartupBanner="TRUE"
+				TitleID="0x45410091"
+				TitleName="Half - Life 2"
+				TitleImage="LoaderMedia_Source\loader_icon.xbx"
+				XBEVersion="4096"/>
+		</Configuration>
+	</Configurations>
+	<References>
+	</References>
+	<Files>
+		<Filter
+			Name="Source Files"
+			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm">
+			<File
+				RelativePath=".\xbox_fileCopy.cpp">
+			</File>
+			<File
+				RelativePath=".\xbox_loader.cpp">
+			</File>
+			<File
+				RelativePath=".\xmvhelper.cpp">
+			</File>
+		</Filter>
+		<Filter
+			Name="Header Files"
+			Filter="h;hpp;hxx;hm;inl;inc">
+			<File
+				RelativePath=".\font.h">
+			</File>
+			<File
+				RelativePath="..\..\..\public\jcalg1.h">
+			</File>
+			<File
+				RelativePath=".\loader.h">
+			</File>
+			<File
+				RelativePath="..\..\..\common\xbox\xbox_launch.h">
+			</File>
+			<File
+				RelativePath=".\xbox_loader.h">
+			</File>
+			<File
+				RelativePath=".\xmvhelper.h">
+			</File>
+		</Filter>
+		<Filter
+			Name="Common Files"
+			Filter="">
+			<Filter
+				Name="Source Files"
+				Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm">
+				<File
+					RelativePath="..\toollib\scriplib.cpp">
+				</File>
+				<File
+					RelativePath="..\toollib\scriplib.h">
+				</File>
+				<File
+					RelativePath="..\toollib\toollib.cpp">
+				</File>
+				<File
+					RelativePath="..\toollib\toollib.h">
+				</File>
+				<File
+					RelativePath="..\Common\src\XBApp.cpp">
+				</File>
+				<File
+					RelativePath="..\Common\src\XBFont.cpp">
+				</File>
+				<File
+					RelativePath="..\Common\src\XBInput.cpp">
+				</File>
+				<File
+					RelativePath="..\Common\src\XBMesh.cpp">
+				</File>
+				<File
+					RelativePath="..\Common\src\XBResource.cpp">
+				</File>
+				<File
+					RelativePath="..\Common\src\XBUtil.cpp">
+				</File>
+			</Filter>
+			<Filter
+				Name="Header Files"
+				Filter="h;hpp;hxx;hm;inl;inc">
+				<File
+					RelativePath="..\Common\include\XBApp.h">
+				</File>
+				<File
+					RelativePath="..\Common\include\XBFont.h">
+				</File>
+				<File
+					RelativePath="..\Common\include\XBHelp.h">
+				</File>
+				<File
+					RelativePath="..\Common\include\XBInput.h">
+				</File>
+				<File
+					RelativePath="..\Common\include\XBMesh.h">
+				</File>
+				<File
+					RelativePath="..\Common\include\XBProfiling.h">
+				</File>
+				<File
+					RelativePath="..\Common\include\XBResource.h">
+				</File>
+				<File
+					RelativePath="..\Common\include\XBUtil.h">
+				</File>
+			</Filter>
+		</Filter>
+		<Filter
+			Name="Resources"
+			Filter="*.rdf">
+			<File
+				RelativePath=".\loader.rdf">
+				<FileConfiguration
+					Name="Debug_XBox|Xbox">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="bundler &quot;$(InputPath)&quot;"
+						CommandLine="bundler &quot;$(InputPath)&quot;"
+						Outputs="$(ProjectDir)Media\$(InputName).xpr;$(ProjectDir)$(InputName).h"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release_XBox|Xbox">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="bundler &quot;$(InputPath)&quot;"
+						CommandLine="bundler &quot;$(InputPath)&quot;"
+						Outputs="$(ProjectDir)Media\$(InputName).xpr;$(ProjectDir)$(InputName).h"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Retail_XBox|Xbox">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="bundler &quot;$(InputPath)&quot;"
+						CommandLine="bundler &quot;$(InputPath)&quot;"
+						Outputs="$(ProjectDir)Media\$(InputName).xpr;$(ProjectDir)$(InputName).h"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\LoaderMedia_Source\loader_icon.rdf">
+			</File>
+		</Filter>
+		<Filter
+			Name="Libraries"
+			Filter="">
+			<File
+				RelativePath="..\..\..\lib\public\jcalg1_static.lib">
+			</File>
+		</Filter>
+	</Files>
+	<Globals>
+	</Globals>
+</VisualStudioProject>

@@ -1,0 +1,38 @@
+//-----------------------------------------------------------------------------
+//	VPKLIB.VPC
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		".."
+
+$Include "$SRCDIR\vpc_scripts\source_lib_base.vpc"	
+
+$Configuration
+{
+	$Compiler
+	{
+		//$PreprocessorDefinitions		"$BASE"
+		$AdditionalIncludeDirectories	"$BASE;;$SRCDIR/external;$SRCDIR/external/crypto++-5.6.3"
+	}
+}
+
+$Project "vpklib"
+{
+	$Folder	"Source Files"
+	{
+		$File	"packedstore.cpp"
+		$Folder	"Crypto"
+		{
+			$File	"$SRCDIR\common\simplebitstring.cpp"
+		}
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\public\vpklib\packedstore.h"
+		$File	"packedstore_internal.h"
+		$Folder	"Crypto"
+		{
+			$File	"$SRCDIR\common\simplebitstring.h"
+		}
+	}
+}

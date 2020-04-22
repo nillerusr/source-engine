@@ -1,0 +1,54 @@
+//-----------------------------------------------------------------------------
+//	ACTBUSY.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC\tools"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE psapi.lib"
+	}
+}
+
+$Project "Actbusy"
+{
+	$Folder	"Source Files"
+	{
+		$File	"actbusydoc.cpp"
+		$File	"actbusytool.cpp"
+		$File	"$SRCDIR\public\interpolatortypes.cpp"
+		$File	"$SRCDIR\public\movieobjects\movieobjects.cpp"
+		$File	"$SRCDIR\public\registry.cpp"
+		$File	"$SRCDIR\public\vgui_controls\vgui_controls.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"actbusydoc.h"
+		$File	"actbusytool.h"
+		$File	"$SRCDIR\public\interpolatortypes.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib dmxloader
+		$Lib datamodel
+		$Lib dme_controls
+		$Lib dmserializers
+		$Lib mathlib
+		$Lib matsys_controls
+		$Lib movieobjects
+		$Lib sfmobjects
+		$Lib tier2
+		$Lib tier3
+		$Lib toolutils
+		$Lib vgui_controls
+	}
+}

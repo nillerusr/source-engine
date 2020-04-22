@@ -1,0 +1,117 @@
+//-----------------------------------------------------------------------------
+//	ADMINSERVER.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+//		$AdditionalIncludeDirectories		"$BASE,.\,"
+		$PreprocessorDefinitions			"$BASE;ADMINSERVER_EXPORTS;BUDGET_ADMIN_SERVER"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE wsock32.lib"
+	}
+}
+
+$Project "AdminServer"
+{
+	$Folder	"Source Files"
+	{
+		$File	"AdminServer.cpp"
+		$File	"BanContextMenu.cpp"
+		$File	"ConfigPanel.cpp"
+		$File	"GamePanelInfo.cpp"
+		$File	"MapCycleEditDialog.cpp"
+		$File	"..\common\msgbuffer.cpp"
+		$File	"PlayerContextMenu.cpp"
+		$File	"PlayerListCompare.cpp"
+		$File	"RemoteServer.cpp"
+		$File	"VarEditDialog.cpp"
+		$File	"VarListPropertyPage.cpp"
+		$File	"$SRCDIR\common\vgui\vgui_basebudgetpanel.cpp"
+		$File	"$SRCDIR\common\vgui\vgui_budgetbargraphpanel.cpp"
+		$File	"$SRCDIR\common\vgui\vgui_budgethistorypanel.cpp"
+		$File	"$SRCDIR\common\vgui\vgui_budgetpanelshared.cpp"
+		$File	"$SRCDIR\public\vgui_controls\vgui_controls.cpp"
+
+		$Folder	"Utils"
+		{
+			$File	"TokenLine.cpp"
+		}
+
+		$Folder	"Generic Dialogs"
+		{
+			$File	"DialogAddBan.cpp"
+			$File	"DialogCvarChange.cpp"
+		}
+
+		$Folder	"Pages"
+		{
+			$File	"BanPanel.cpp"
+			$File	"BudgetPanelContainer.cpp"
+			$File	"ChatPanel.cpp"
+			$File	"GraphPanel.cpp"
+			$File	"PlayerPanel.cpp"
+			$File	"RawLogPanel.cpp"
+			$File	"ServerConfigPanel.cpp"
+			$File	"serverinfopanel.cpp"
+		}
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"AdminServer.h"
+		$File	"BanContextMenu.h"
+		$File	"BanPanel.h"
+		$File	"BudgetPanelContainer.h"
+		$File	"ChatPanel.h"
+		$File	"ConfigPanel.h"
+		$File	"DialogAddBan.h"
+		$File	"DialogCvarChange.h"
+		$File	"GamePanelInfo.h"
+		$File	"GraphPanel.h"
+		$File	"$SRCDIR\common\IGameServerData.h"
+		$File	"IManageServer.h"
+		$File	"$SRCDIR\public\tier1\interface.h"
+		$File	"..\common\IServerRefreshResponse.h"
+		$File	"$SRCDIR\common\ivprofexport.h"
+		$File	"MapCycleEditDialog.h"
+		$File	"..\common\msgbuffer.h"
+		$File	"PlayerContextMenu.h"
+		$File	"PlayerListCompare.h"
+		$File	"PlayerPanel.h"
+		$File	"RawLogPanel.h"
+		$File	"RemoteServer.h"
+		$File	"ServerConfigPanel.h"
+		$File	"serverinfopanel.h"
+		$File	"TokenLine.h"
+		$File	"$SRCDIR\public\tier1\utlbuffer.h"
+		$File	"$SRCDIR\public\tier1\utllinkedlist.h"
+		$File	"$SRCDIR\public\tier1\utlsymbol.h"
+		$File	"$SRCDIR\public\tier1\utlvector.h"
+		$File	"VarEditDialog.h"
+		$File	"VarListPropertyPage.h"
+		$File	"$SRCDIR\common\vgui\vgui_basebudgetpanel.h"
+		$File	"$SRCDIR\common\vgui\vgui_budgetbargraphpanel.h"
+		$File	"$SRCDIR\common\vgui\vgui_budgethistorypanel.h"
+		$File	"$SRCDIR\common\vgui\vgui_budgetpanelshared.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib tier2
+		$Lib tier3
+		$Lib vgui_controls
+		$Lib mathlib
+	}
+}

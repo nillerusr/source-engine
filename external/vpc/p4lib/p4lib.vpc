@@ -1,0 +1,43 @@
+//-----------------------------------------------------------------------------
+//	P4LIB.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		".."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,$SRCDIR\common\p4api"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE wsock32.lib"
+	}
+}
+
+$Project "P4lib"
+{
+	$Folder	"Source Files"
+	{
+		$File	"p4.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR/public/p4lib/ip4.h"
+	}
+
+	$Folder "Link Libraries"
+	{
+		$File	"$SRCDIR/lib/common/libclient.lib"
+		$File	"$SRCDIR/lib/common/librpc.lib"
+		$File	"$SRCDIR/lib/common/libsupp.lib"
+	}
+}

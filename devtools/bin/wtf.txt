@@ -1,0 +1,18 @@
+\Browser\*
+\Cache\*
+\LogicalDisk(*)\*
+\Memory\*
+\Network Interface(*)\*
+\Paging File(*)\*
+\PhysicalDisk(*)\*
+\Process(*)\*
+\Processor(*)\*
+\ProcessorPerformance(*)\*
+\PSched Pipe(*)\*
+\Redirector\*
+\Server Work Queues(*)\*
+\Server\*
+\System\*
+\TCP\*
+\Thread(*)\*
+

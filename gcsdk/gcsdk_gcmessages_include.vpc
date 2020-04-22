@@ -1,0 +1,22 @@
+$Project
+{
+	$Folder "Protobuf Files"
+	{
+		$File "$SRCDIR\gcsdk\gcsdk_gcmessages.proto"
+		$Folder "Generated Files"
+		{
+			$DynamicFile "$GENERATED_PROTO_DIR\gcsdk_gcmessages.pb.h"
+			$DynamicFile "$GENERATED_PROTO_DIR\gcsdk_gcmessages.pb.cc"
+			{
+				$Configuration
+				{
+					$Compiler 
+					{
+						$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+					}
+				}
+			}
+		}
+	}
+
+}

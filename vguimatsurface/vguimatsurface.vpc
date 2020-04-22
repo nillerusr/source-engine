@@ -1,0 +1,106 @@
+//-----------------------------------------------------------------------------
+//	VGUIMATSURFACE.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$macro SRCDIR		".."
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
+
+$include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories   "$BASE;.\;/usr/include/freetype2/"
+		$PreprocessorDefinitions		"$BASE;BENCHMARK;VGUIMATSURFACE_DLL_EXPORT;GAMEUI_EXPORTS;DONT_PROTECT_FILEIO_FUNCTIONS;PROTECTED_THINGS_ENABLE"
+		$PreprocessorDefinitions		"$BASE;fopen=dont_use_fopen" [$WIN32]
+		$EnableC++Exceptions			"Yes (/EHsc)"
+//		$TreatWchar_tAsBuiltinType		"No"
+	}
+
+	$Linker
+	{
+		$SystemLibraries                "iconv" [$OSXALL]
+		$SystemFrameworks				"Carbon" [$OSXALL]
+		$GCC_ExtraLinkerFlags                   "-L/usr/lib32 -L/usr/lib -L/usr/lib/i386-linux-gnu" [$LINUXALL]
+		$SystemLibraries                        "fontconfig;freetype" [$LINUXALL]
+		$AdditionalDependencies			"$BASE vgui_surfacelib_360.lib"			[$X360]
+		$AdditionalDependencies			"$BASE vgui_surfacelib.lib nvtc.lib"	[$WIN32]
+	}
+}
+
+$Project "vguimatsurface"
+{
+	$Folder	"Source Files"
+	{
+		$File	"Clip2D.cpp"
+		$File	"Cursor.cpp"
+		$File	"$SRCDIR\public\filesystem_helpers.cpp"
+		$File	"FontTextureCache.cpp"
+		$File	"Input.cpp"
+		$File	"MatSystemSurface.cpp"
+		$File	"asanstubs.cpp"
+		$File	"memorybitmap.cpp"						[$WIN32]
+		$File	"TextureDictionary.cpp"
+		$File	"$SRCDIR\vgui2\src\vgui_key_translation.cpp"
+		$File	"$SRCDIR\public\vgui_controls\vgui_controls.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"Clip2D.h"
+		$File	"Cursor.h"
+		$File	"Input.h"
+		$File	"memorybitmap.h"						[$WIN32]
+		$File	"TextureDictionary.h"
+		$File	"vguimatsurface.h"
+		$File	"MatSystemSurface.h"
+		$File	"FontTextureCache.h"
+		$File	"$SRCDIR\vgui2\src\vgui_key_translation.h"
+	}
+
+	$Folder	"Public Header Files"
+	{
+		$File	"$SRCDIR\public\tier0\basetypes.h"
+		$File	"$SRCDIR\public\tier1\characterset.h"
+		$File	"$SRCDIR\public\tier1\checksum_crc.h"
+		$File	"$SRCDIR\public\tier0\commonmacros.h"
+		$File	"$SRCDIR\public\filesystem.h"
+		$File	"$SRCDIR\public\filesystem_helpers.h"
+		$File	"$SRCDIR\common\vgui_surfacelib\FontAmalgam.h"
+		$File	"$SRCDIR\common\vgui_surfacelib\FontManager.h"
+		$File	"$SRCDIR\public\appframework\IAppSystem.h"
+		$File	"$SRCDIR\public\materialsystem\imaterial.h"
+		$File	"$SRCDIR\public\materialsystem\imaterialsystem.h"
+		$File	"$SRCDIR\public\materialsystem\imaterialvar.h"
+		$File	"$SRCDIR\public\VGuiMatSurface\IMatSystemSurface.h"
+		$File	"$SRCDIR\public\materialsystem\imesh.h"
+		$File	"$SRCDIR\public\tier1\interface.h"
+		$File	"$SRCDIR\public\materialsystem\itexture.h"
+		$File	"$SRCDIR\public\pixelwriter.h"
+		$File	"$SRCDIR\public\tier1\strtools.h"
+		$File	"$SRCDIR\public\tier1\utllinkedlist.h"
+		$File	"$SRCDIR\public\tier1\utlmemory.h"
+		$File	"$SRCDIR\public\tier1\utlrbtree.h"
+		$File	"$SRCDIR\public\tier1\utlvector.h"
+		$File	"$SRCDIR\public\mathlib\vector.h"
+		$File	"$SRCDIR\public\mathlib\vector2d.h"
+		$File	"$SRCDIR\public\mathlib\vector4d.h"
+		$File	"$SRCDIR\public\vstdlib\vstdlib.h"
+		$File	"$SRCDIR\public\vtf\vtf.h"
+		$File	"$SRCDIR\common\vgui_surfacelib\Win32Font.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib		bitmap
+		$Lib		mathlib
+		$Lib		tier2
+		$Lib		tier3
+		$Lib		vgui_controls
+		$Lib		vgui_surfacelib
+		$ImpLib		SDL2 [$SDL]
+	}
+}

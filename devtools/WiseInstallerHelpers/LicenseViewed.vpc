@@ -1,0 +1,31 @@
+//-----------------------------------------------------------------------------
+//	LICENSEVIEWED.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$PreprocessorDefinitions			"$BASE;LicenseViewed_EXPORTS"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE msi.lib odbc32.lib odbccp32.lib"
+	}
+}
+
+$Project "LicenseViewed"
+{
+	$Folder	"Source Files"
+	{
+		$File	"LicenseViewed.cpp"
+	}
+}

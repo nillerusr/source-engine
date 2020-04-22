@@ -1,0 +1,46 @@
+//-----------------------------------------------------------------------------
+//	CHOREOOBJECTS.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$macro SRCDIR		".."
+
+$include "$SRCDIR\vpc_scripts\source_lib_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories	"$BASE;..\game\shared;..\utils\common"
+	}
+}
+
+$Project "choreoobjects"
+{
+	$Folder	"Source Files"
+	{
+		$File	"$SRCDIR\game\shared\choreoactor.cpp"
+		$File	"$SRCDIR\game\shared\choreochannel.cpp"
+		$File	"$SRCDIR\game\shared\choreoevent.cpp"
+		$File	"$SRCDIR\game\shared\choreoscene.cpp"
+		$File	"$SRCDIR\game\shared\sceneimage.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\game\shared\choreoactor.h"
+		$File	"$SRCDIR\game\shared\choreochannel.h"
+		$File	"$SRCDIR\game\shared\choreoevent.h"
+		$File	"$SRCDIR\game\shared\choreoscene.h"
+		$File	"$SRCDIR\game\shared\ichoreoeventcallback.h"
+		$File	"$SRCDIR\game\shared\sceneimage.h"
+	}
+
+	$Folder	"Public Header Files"
+	{
+		$File	"$SRCDIR\public\mathlib\mathlib.h"
+		$File	"$SRCDIR\public\mathlib\vector.h"
+		$File	"$SRCDIR\public\mathlib\vector2d.h"
+	}
+}

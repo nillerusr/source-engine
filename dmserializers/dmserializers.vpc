@@ -1,0 +1,46 @@
+//-----------------------------------------------------------------------------
+//	DMSERIALIZERS.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		".."
+$include "$SRCDIR\vpc_scripts\source_lib_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$PreprocessorDefinitions			"$BASE;DMSERIALIZERS_LIB"
+	}
+}
+
+$Project "Dmserializers"
+{
+	$Folder	"Source Files"
+	{
+		$File	"dmebaseimporter.cpp"
+		$File	"dmserializers.cpp"
+		$File	"importactbusy.cpp"
+		$File	"importkeyvaluebase.cpp"
+		$File	"importsfmv1.cpp"
+		$File	"importsfmv2.cpp"
+		$File	"importsfmv3.cpp"
+		$File	"importsfmv4.cpp"
+		$File	"importsfmv5.cpp"
+		$File	"importsfmv6.cpp"
+		$File	"importsfmv7.cpp"
+		$File	"importsfmv8.cpp"
+		$File	"importsfmv9.cpp"
+		$File	"importvmf.cpp"
+		$File	"importvmt.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"dmebaseimporter.h"
+		$File	"dmserializers.h"
+		$File	"$SRCDIR\public\dmserializers\idmserializers.h"
+		$File	"importkeyvaluebase.h"
+	}
+}

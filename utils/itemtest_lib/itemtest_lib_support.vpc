@@ -1,0 +1,44 @@
+//============ Copyright (c) Valve Corporation, All rights reserved. ==========
+//
+// Adds ZIP support to your project which is used by the itemtest_lib project
+//
+//=============================================================================
+
+$Include "$SRCDIR\vpc_scripts\fbx.vpc"
+
+$Project
+{
+	$Folder	"ZIP Support"
+	{
+		$File	"$SRCDIR\public\XZip.cpp"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+				}
+			}
+		}
+		$File	"$SRCDIR\public\XUnzip.cpp"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+					$EnableC++Exceptions	"Yes With SEH Exceptions (/EHa)" [!$X360]
+				}
+			}
+		}
+	}
+
+	$Folder	"Link Libraries" 
+	{
+		$Lib datamodel
+		$Lib dmserializers
+		$Lib fbxutils
+		$Lib movieobjects
+		$Lib itemtest_lib
+	}
+}

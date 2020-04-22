@@ -1,0 +1,65 @@
+//-----------------------------------------------------------------------------
+//	VP4.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$Create/UsePrecompiledHeader		"Use Precompiled Header (/Yu)"
+		$PrecompiledHeaderFile				"Debug/vp4.pch"
+	}
+}
+
+$Project "Vp4"
+{
+	$Folder	"Source Files"
+	{
+		$File	"vp4dialog.cpp"
+		
+		$File	"main.cpp"	\
+				"$SRCDIR\public\vgui_controls\vgui_controls.cpp"
+				{
+					$Configuration
+					{
+						$Compiler
+						{
+							$Create/UsePrecompiledHeader		"Not Using Precompiled Headers"
+						}
+					}
+				}
+
+		$File	"stdafx.cpp"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader		"Create Precompiled Header (/Yc)"
+				}
+			}
+		}
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"stdafx.h"
+		$File	"vp4dialog.h"
+	}
+
+	$Folder "Link Libraries"
+	{
+		$Lib appframework
+		$Lib tier3
+		$Lib tier2
+		$Lib vgui_controls
+		$Lib mathlib
+	}
+}

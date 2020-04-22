@@ -1,0 +1,63 @@
+//-----------------------------------------------------------------------------
+//	SIMDTEST.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro	SRCDIR		"..\.."
+$Macro	OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Configuration	"Debug"
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\common"
+	}
+
+	$Linker	[$WIN32]
+	{
+		$DebuggableAssembly					"Runtime tracking and disable optimizations (/ASSEMBLYDEBUG)"
+	}
+
+	$PostBuildEvent	[$X360]
+	{
+		// copy the XEX and all required DLLs into a simdtest folder
+		$CommandLine						"call $SRCDIR\vpc_scripts\valve_xbcp_wrapper.cmd 	$OUTBINDIR\tier0_360.dll			xE:\simdtest\tier0_360.dll"		"\n"	\
+											"call $SRCDIR\vpc_scripts\valve_xbcp_wrapper.cmd 	$OUTBINDIR\vstdlib_360.dll			xE:\simdtest\vstdlib_360.dll"	"\n"	\
+											"call $SRCDIR\vpc_scripts\valve_xbcp_wrapper.cmd 	$(TargetDir)simdtest.xex			xE:\simdtest\simdtest.xex"
+	}
+}
+
+$Configuration	"Release"
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\common"
+	}
+
+	$PostBuildEvent	[$X360]
+	{
+		// copy the XEX and all required DLLs into a simdtest folder
+		$CommandLine						"call $SRCDIR\vpc_scripts\valve_xbcp_wrapper.cmd 	$OUTBINDIR\tier0_360.dll			xE:\simdtest\tier0_360.dll"		"\n"	\
+											"call $SRCDIR\vpc_scripts\valve_xbcp_wrapper.cmd 	$OUTBINDIR\vstdlib_360.dll			xE:\simdtest\vstdlib_360.dll"	"\n"	\
+											"call $SRCDIR\vpc_scripts\valve_xbcp_wrapper.cmd 	$(TargetDir)simdtest.xex			xE:\simdtest\simdtest.xex"
+	}
+}
+
+$Project "Simdtest"
+{
+	$Folder "Source Files"
+	{
+		$File	"simdtest.cpp"
+	}
+	
+	$Folder	"Link Libraries"
+	{
+		$Lib mathlib
+		$Lib tier2
+		$Implib tier0 [$POSIX]
+		$Lib	tier1 [$POSIX]
+	}
+}

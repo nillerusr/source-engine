@@ -1,0 +1,63 @@
+//-----------------------------------------------------------------------------
+//	VCONFIG.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\common"
+		$PreprocessorDefinitions			"$BASE;VERSION_SAFE_STEAM_API_INTERFACES"
+	}
+}
+
+$Project "VConfig"
+{
+	$Folder	"Source Files"
+	{
+		$File	"$SRCDIR\common\ConfigManager.cpp"
+		$File	"$SRCDIR\common\SourceAppInfo.cpp"
+		$File	"$SRCDIR\public\filesystem_init.cpp"
+		$File	"$SRCDIR\public\registry.cpp"
+		$File	"main.cpp"
+		$File	"ManageGamesDialog.cpp"
+		$File	"VConfigDialog.cpp"
+		$File	"$SRCDIR\public\vgui_controls\vgui_controls.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\common\ConfigManager.h"
+		$File	"..\common\filesystem_tools.h"
+		$File	"$SRCDIR\public\tier1\KeyValues.h"
+		$File	"ManageGamesDialog.h"
+		$File	"resource.h"
+		$File	"$SRCDIR\public\tier1\utlbuffer.h"
+		$File	"vconfig_main.h"
+		$File	"VConfigDialog.h"
+	}
+
+	$Folder	"Resources"
+	{
+		$File	"icon1.ico"
+		$File	"icon2.ico"
+		$File	"VConfig.rc"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib appframework
+		$ImpLib steam_api
+		$Lib tier2
+		$Lib tier3
+		$Lib vgui_controls
+		$Lib mathlib
+	}
+}

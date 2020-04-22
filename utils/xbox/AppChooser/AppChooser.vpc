@@ -1,0 +1,47 @@
+//-----------------------------------------------------------------------------
+//	AppChooser.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration "Debug"
+{
+	$Linker [$X360]
+	{
+		$AdditionalDependencies		"$BASE xaudiod.lib xmediad.lib xnet.lib xonline.lib xmp.lib"
+	}
+}
+
+$Configuration "Release"
+{
+	$Linker [$X360]
+	{
+		$AdditionalDependencies		"$BASE xaudio.lib xmedia.lib xnet.lib xonline.lib xmp.lib"
+	}
+}
+
+$Project "AppChooser"
+{
+	$Folder	"Source Files"
+	{
+		$file	"main.cpp"
+		$file	"$SRCDIR\public\vgui_controls\vgui_controls.cpp"
+	}
+
+	$Folder "Link Libraries"
+	{
+		$Lib appframework
+		$Lib mathlib
+		$Lib tier2
+		$Lib tier3
+		$Lib vtf
+		$Lib bitmap
+		$Lib vgui_controls
+		$Lib vgui_surfacelib
+	}
+}

@@ -1,0 +1,73 @@
+//============ Copyright (c) Valve Corporation, All rights reserved. ==========
+//
+// Converts various input bitmap & geometry formats into standard
+// Valve formats, renames and places items in the proper directories
+// and calls vtex/studiomdl and can ZIP archive the results.
+//
+// Uses:
+//
+// itemtest_lib to do the work
+// itemtest_controls for VGUI
+//
+//=============================================================================
+
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_win_win32_base.vpc"
+$Include "$SRCDIR\utils\itemtest_lib\itemtest_lib_support.vpc"
+
+$Configuration
+{
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE comctl32.lib odbc32.lib odbccp32.lib Rpcrt4.lib"
+	}
+}
+
+$Project "itemtest"
+{
+	$Folder	"Source Files"
+	{
+		$File	"itemtest_vgui.cpp"
+		$File	"itemtestapp.cpp"
+
+		$Folder "External"
+		{
+			$File	"$SRCDIR\public\interpolatortypes.cpp"
+			$File	"$SRCDIR\public\movieobjects\movieobjects.cpp"
+			$File	"$SRCDIR\public\vgui_controls\vgui_controls.cpp"
+		}
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"itemtestapp.h"
+		$Folder "External"
+		{
+			$File	"$SRCDIR\public\interpolatortypes.h"
+		}
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$DynamicFile	"$SRCDIR\lib\public\appframework.lib"
+		$DynamicFile	"$SRCDIR\lib\public\bitmap.lib"
+		$DynamicFile	"$SRCDIR\lib\public\mathlib.lib"
+		$DynamicFile	"$SRCDIR\lib\public\tier2.lib"
+		$DynamicFile	"$SRCDIR\lib\public\tier3.lib"
+
+		$DynamicFile	"$SRCDIR\lib\public\steam_api.lib"
+		$DynamicFile	"$SRCDIR\lib\public\vtf.lib"
+		$DynamicFile	"$SRCDIR\lib\public\itemtest_controls.lib"
+
+		$DynamicFile	"$SRCDIR\lib\public\vgui_controls.lib"
+	}
+
+	$Folder "Resources" [$WIN32]
+	{
+		$File   "res/itemtest.rc"
+		$File   "res/itemtest.ico"
+	}
+}

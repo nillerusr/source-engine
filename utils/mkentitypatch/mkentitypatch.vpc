@@ -1,0 +1,53 @@
+//-----------------------------------------------------------------------------
+//	MKENTITYPATCH.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\common"
+		$PreprocessorDefinitions			"$BASE;DONT_PROTECT_FILEIO_FUNCTIONS"
+	}
+}
+
+$Project "mkentitypatch"
+{
+	$Folder	"Source Files"
+	{
+		$File	"mkentitypatch.cpp"
+	}
+
+	$Folder "External"
+	{
+		$File	"$SRCDIR\utils\common\bsplib.cpp"
+		$File	"$SRCDIR\utils\common\filesystem_tools.cpp"
+		$File	"$SRCDIR\utils\common\scriplib.cpp"
+		$File	"$SRCDIR\utils\common\cmdlib.cpp"
+		$File	"$SRCDIR\public\filesystem_helpers.cpp"
+		$File	"$SRCDIR\public\lumpfiles.cpp"
+		$File	"$SRCDIR\public\zip_utils.cpp"
+	}
+	
+	$Folder	"External Header Files"
+	{
+		$File	"$SRCDIR\utils\common\bsplib.h"
+		$File	"$SRCDIR\public\lumpfiles.h"
+		$File	"$SRCDIR\public\filesystem_helpers.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib appframework
+		$Lib mathlib
+		$Lib tier2
+		$Lib "$LIBCOMMON/lzma"
+	}
+}

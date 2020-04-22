@@ -1,0 +1,32 @@
+//-----------------------------------------------------------------------------
+//	WAITANDRESTART.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+$Macro OUTBINNAME	"WaitAndRestart"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_win32_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\"
+		$PreprocessorDefinitions			"$BASE;PROTECTED_THINGS_DISABLE"
+	}
+}
+
+$Project "WaitAndRestart"
+{
+	$Folder	"Source Files"
+	{
+		$File	"WaitAndRestart.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+	}
+}

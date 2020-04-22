@@ -1,0 +1,40 @@
+//-----------------------------------------------------------------------------
+//	MYSQL_WRAPPER.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..,..\mysql\include,..\..\vmpi"
+		$PreprocessorDefinitions			"$BASE;MYSQL_WRAPPER_EXPORTS"
+	}
+}
+
+$Project "Mysql_wrapper"
+{
+	$Folder	"Source Files"
+	{
+		$File	"mysql_wrapper.cpp"
+		$File	"StdAfx.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"..\..\vmpi\imysqlwrapper.h"
+		$File	"StdAfx.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$File	"..\mysql\lib\opt\libmySQL.lib"
+		$File	"..\mysql\lib\opt\zlib.lib"
+	}
+}

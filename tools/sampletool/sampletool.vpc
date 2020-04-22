@@ -1,0 +1,79 @@
+//-----------------------------------------------------------------------------
+//	SAMPLETOOL.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC\tools"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,.\,..\common,$SRCDIR\game\shared"
+		$PreprocessorDefinitions			"$BASE;SAMPLETOOL_EXPORTS"
+		$Create/UsePrecompiledHeader		"Use Precompiled Header (/Yu)"
+		$Create/UsePCHThroughFile			"cbase.h"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies				"$BASE Psapi.lib"
+	}
+}
+
+$Project "Sampletool"
+{
+	$Folder	"Source Files"
+	{
+		$File	"sampletool.cpp"
+		$File	"cbase.cpp"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader		"Create Precompiled Header (/Yc)"
+				}
+			}
+		}
+
+		$File	"$SRCDIR\public\interpolatortypes.cpp"				\
+				"$SRCDIR\public\registry.cpp"						\
+				"$SRCDIR\public\vgui_controls\vgui_controls.cpp"
+			{
+				$Configuration
+				{
+					$Compiler
+					{
+						$Create/UsePrecompiledHeader		"Not Using Precompiled Headers"
+					}
+				}
+			}
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"cbase.h"
+		$File	"$SRCDIR\public\interpolatortypes.h"
+		$File	"$SRCDIR\public\mathlib\mathlib.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib datamodel
+		$Lib dme_controls
+		$Lib dmserializers
+		$Lib mathlib
+		$Lib matsys_controls
+		$Lib movieobjects
+		$Lib sfmobjects
+		$Lib tier2
+		$Lib tier3
+		$Lib toolutils
+		$Lib vgui_controls
+	}
+}

@@ -1,0 +1,52 @@
+//-----------------------------------------------------------------------------
+//	VGUI_SURFACELIB.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$macro SRCDIR		"..\.."
+
+$include "$SRCDIR\vpc_scripts\source_lib_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories   "$BASE;.\;/usr/include/freetype2/"
+	}
+}
+
+$Project "vgui_surfacelib"
+{
+	$Folder	"Source Files"
+	{
+		$File	"BitmapFont.cpp"
+		$File	"FontAmalgam.cpp"
+		$File	"FontManager.cpp"
+		$File	"FontEffects.cpp"
+		$File	"FontEffects.h"
+		$File	"Win32Font.cpp"			[$WIN32 && !$X360]
+		$File	"Win32Font_x360.cpp"	[$X360]
+		$File	"osxfont.cpp"			[$OSXALL]
+		$File	"linuxfont.cpp"			[$LINUXALL]
+	}
+
+	$Folder	"Public Header Files"
+	{
+		$File	"$SRCDIR\public\tier0\basetypes.h"
+		$File	"$SRCDIR\common\vgui_surfacelib\BitmapFont.h"
+		$File	"$SRCDIR\common\vgui_surfacelib\FontAmalgam.h"
+		$File	"$SRCDIR\common\vgui_surfacelib\FontManager.h"
+		$File	"$SRCDIR\public\appframework\IAppSystem.h"
+		$File	"$SRCDIR\public\tier1\interface.h"
+		$File	"$SRCDIR\public\tier1\strtools.h"
+		$File	"$SRCDIR\public\tier1\utlbuffer.h"
+		$File	"$SRCDIR\public\tier1\utlmemory.h"
+		$File	"$SRCDIR\public\tier1\utlvector.h"
+		$File	"$SRCDIR\public\mathlib\vector2d.h"
+		$File	"$SRCDIR\public\vstdlib\vstdlib.h"
+		$File	"$SRCDIR\common\vgui_surfacelib\vguifont.h"
+		$File	"$SRCDIR\common\vgui_surfacelib\Win32Font.h" [$WIN32]
+		$File	"$SRCDIR\common\vgui_surfacelib\osxfont.h" [$OSXALL]
+	}
+}

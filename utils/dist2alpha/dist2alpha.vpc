@@ -1,0 +1,61 @@
+//-----------------------------------------------------------------------------
+//	DIST2ALPHA.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$LIBPUBLIC"
+$Macro OUTBINNAME "dist2alpha"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
+
+$Linux
+{
+		$BuildForLinux 1
+
+}
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\common"
+	}
+}
+
+$Project "Dist2alpha"
+{
+	$Folder "Source Files"
+	{
+		$File	"..\common\cmdlib.cpp"
+		$File	"dist2alpha.cpp"
+		$File	"..\common\filesystem_tools.cpp"
+	}
+	
+	$Folder	"Common Files"
+	{
+		$File	"$SRCDIR\public\chunkfile.cpp"
+
+	}
+
+	$Folder	"Public Files"
+	{
+		$File	"$SRCDIR\public\collisionutils.cpp"
+		$File	"$SRCDIR\public\filesystem_helpers.cpp"
+		$File	"$SRCDIR\public\filesystem_init.cpp"
+		$File	"$SRCDIR\public\ScratchPadUtils.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\public\tier1\utlsymbol.h"
+	}
+
+	$Folder "Link Libraries"
+	{
+		$Lib bitmap
+		$Lib mathlib
+		$Lib tier2
+	}
+}
