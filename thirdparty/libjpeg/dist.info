@@ -1,0 +1,10 @@
+--- This file is part of LuaDist project
+
+name = "libjpeg"
+version = "9.1.0"
+
+author = "Tom Lane, Guido Vollbeding, Philip Gladstone, Bill Allombert, Jim Boucher, Lee Crocker, Bob Friesenhahn, Ben Jackson, Julian Minguillon, Luis Ortiz, George Phillips, Davide Rossi, Ge' Weijers, and other members of the Independent JPEG Group."
+desc = "Independent JPEG Group's JPEG software"
+license = "jpeg license"
+url = "http://www.ijg.org/"
+maintainer = "Peter Kapec"
