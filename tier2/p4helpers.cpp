@@ -88,10 +88,12 @@ bool CP4File::IsFileInPerforce()
 
 bool CP4File::SetFileType(const CUtlString& desiredFileType)
 {
-	if ( !p4 )
+	/*if ( !p4 )
 		return false;
 
-	return p4->SetFileType( m_sFilename.String(), desiredFileType.String() );
+	return p4->SetFileType( m_sFilename.String(), desiredFileType.String() );*/
+	Error("CP4File::SetFileType is unimplemented");
+	return false;
 }
 
 

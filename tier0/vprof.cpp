@@ -1850,8 +1850,9 @@ static bool TelemetryInitialize()
 {
 	if( g_tmContext )
 	{
-		TmConnectionStatus status = tmGetConnectionStatus( g_tmContext );
-
+		//TmConnectionStatus status = tmGetConnectionStatus( g_tmContext );
+		TmConnectionStatus status = TmConnectionStatus::TMCS_DISCONNECTED;
+		
 		if( status == TMCS_CONNECTED || status == TMCS_CONNECTING )
 			return true;
 	}
@@ -1863,9 +1864,11 @@ static bool TelemetryInitialize()
 		// Pass in 0 if you want to use the release mode DLL or 1 if you want to
 		// use the checked DLL.  The checked DLL is compiled with optimizations but
 		// does extra run time checks and reporting.
-		int nLoadTelemetry = tmLoadTelemetry( 0 );
+		//int nLoadTelemetry = tmLoadTelemetry( 0 );
+		int nLoadTelemetry = 0;
 
-		retVal = tmStartup();
+		//retVal = tmStartup();
+		retVal = 0;
 		if ( retVal != TM_OK )
 		{
 			Warning( "TelemetryInit() failed: tmStartup() returned %d, tmLoadTelemetry() returned %d.\n", retVal, nLoadTelemetry );
@@ -1877,7 +1880,8 @@ static bool TelemetryInitialize()
 			g_pTmMemoryArena = new TmU8[ TELEMETRY_ARENA_SIZE ];
 		}
 
-		retVal = tmInitializeContext( &g_tmContext, g_pTmMemoryArena, TELEMETRY_ARENA_SIZE );
+		//retVal = tmInitializeContext( &g_tmContext, g_pTmMemoryArena, TELEMETRY_ARENA_SIZE );
+		retVal = 0;
 		if ( retVal != TM_OK )
 		{
 			delete [] g_pTmMemoryArena;
@@ -1923,8 +1927,9 @@ static bool TelemetryInitialize()
 	TmU32 TmOpenFlags = TMOF_DEFAULT | TMOF_MINIMAL_CONTEXT_SWITCHES;
 	/* TmOpenFlags |= TMOF_DISABLE_CONTEXT_SWITCHES | TMOF_INIT_NETWORKING*/
 
-	retVal = tmOpen( g_tmContext, pGameName, szBuildInfo, pServerAddress, tmType,
-		TELEMETRY_DEFAULT_PORT, TmOpenFlags, 1000 );
+	//retVal = tmOpen( g_tmContext, pGameName, szBuildInfo, pServerAddress, tmType,
+	//	TELEMETRY_DEFAULT_PORT, TmOpenFlags, 1000 );
+	retVal = 0;
 	if ( retVal != TM_OK )
 	{
 		Warning( "TelemetryInitialize() failed: tmOpen returned %d.\n", retVal );
@@ -1950,7 +1955,8 @@ static void TelemetryShutdown( bool InDtor = false )
 			Msg( "Shutting down telemetry.\n" );
 		}
 
-		TmConnectionStatus status = tmGetConnectionStatus( g_tmContext );
+		//TmConnectionStatus status = tmGetConnectionStatus( g_tmContext );
+		TmConnectionStatus status = 0;
 		if( status == TMCS_CONNECTED || status == TMCS_CONNECTING )
 			tmClose( g_tmContext );
 
@@ -1959,8 +1965,8 @@ static void TelemetryShutdown( bool InDtor = false )
 		HTELEMETRY hShutdown = g_tmContext;
 		g_tmContext = NULL;
 
-		tmShutdownContext( hShutdown ); 
-		tmShutdown();
+		//tmShutdownContext( hShutdown ); 
+		//tmShutdown();
 		g_TelemetryLoaded = false;
 	}
 }
