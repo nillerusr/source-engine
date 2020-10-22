@@ -5,7 +5,7 @@
 //-----------------------------------------------------------------------------
 
 $Macro SRCDIR		"..\..\.."
-$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
+$Macro OUTBINDIR	"$LIBPUBLIC"
 $Macro OUTBINNAME	"vmpi_service_install"
 
 $Include "$SRCDIR\vpc_scripts\source_exe_win_win32_base.vpc"

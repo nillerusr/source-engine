@@ -4,7 +4,7 @@ $Include "$SRCDIR\vpc_scripts\source_posix_base.vpc"
 
 
 $MacroRequired	 "OUTBINNAME"	"$PROJECTNAME"
-$MacroRequired	 "OUTBINDIR"	"$SRCDIR\..\game\bin"
+$MacroRequired	 "OUTBINDIR"	"$LIBPUBLIC"
 
 
 // General configuration info.

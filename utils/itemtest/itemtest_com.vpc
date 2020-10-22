@@ -4,7 +4,7 @@
 
 
 $Macro SRCDIR		"..\.."
-$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
+$Macro OUTBINDIR	"$LIBPUBLIC"
 // Initially we link this as itemtest_com.exe, to avoid conflicting with itemtest.exe
 $Macro OUTBINNAME	"itemtest_com"
 // Then we copy the result to itemtest.com so that the command-line version will be

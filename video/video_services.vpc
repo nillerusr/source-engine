@@ -11,7 +11,7 @@
 //-----------------------------------------------------------------------------
 
 $Macro SRCDIR		".."
-$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
+$Macro OUTBINDIR	"$LIBPUBLIC"
 
 $Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
 
