@@ -60,22 +60,22 @@ $Project "bspzip"
 
 $Project "bugreporter"
 {
-	"utils\bugreporter\bugreporter.vpc" [$WIN32]
+//	"utils\bugreporter\bugreporter.vpc" [$WIN32]
 }
 
 $Project "bugreporter_public"
 {
-	"utils\bugreporter_public\bugreporter_public.vpc" [$WINDOWS||$POSIX]
+//	"utils\bugreporter_public\bugreporter_public.vpc" [$WINDOWS||$POSIX]
 }
 
 $Project "bugreporter_text"
 {
-	"utils\bugreporter_text\bugreporter_text.vpc" [$WIN32]
+//	"utils\bugreporter_text\bugreporter_text.vpc" [$WIN32]
 }
 
 $Project "bugreporter_filequeue"
 {
-	"utils\bugreporter_filequeue\bugreporter_filequeue.vpc" [$WINDOWS||$POSIX]
+//	"utils\bugreporter_filequeue\bugreporter_filequeue.vpc" [$WINDOWS||$POSIX]
 }
 
 $Project "bzip2"
@@ -386,7 +386,7 @@ $Project "haptics"
 
 $Project "havana_constraints"
 {
-	"ivp\havana\havana_constraints.vpc" [$WINDOWS||$X360||$POSIX]
+//	"ivp\havana\havana_constraints.vpc" [$WINDOWS||$X360||$POSIX]
 }
 
 $Project "height2normal"
@@ -401,12 +401,12 @@ $Project "height2ssbump"
 
 $Project "hk_base"
 {
-	"ivp\havana\havok\hk_base\hk_base.vpc" [$WINDOWS||$X360||$POSIX]
+//	"ivp\havana\havok\hk_base\hk_base.vpc" [$WINDOWS||$X360||$POSIX]
 }
 
 $Project "hk_math"
 {
-	"ivp\havana\havok\hk_math\hk_math.vpc" [$WINDOWS||$X360||$POSIX]
+//	"ivp\havana\havok\hk_math\hk_math.vpc" [$WINDOWS||$X360||$POSIX]
 }
 
 // FIXME why doesn't source2 define this?
@@ -432,7 +432,7 @@ $Project "particles"
 
 $Project "sdktoolslib"
 {
-	"sdktools/sdktoolslib/sdktoolslib.vpc"
+//	"sdktools/sdktoolslib/sdktoolslib.vpc"
 }
 
 $Project "server"
@@ -506,27 +506,27 @@ $Project "inputtest"
 
 $Project "ivp_compactbuilder"
 {
-	"ivp\ivp_compact_builder\ivp_compactbuilder.vpc" [$WINDOWS||$X360||$POSIX]
+//	"ivp\ivp_compact_builder\ivp_compactbuilder.vpc" [$WINDOWS||$X360||$POSIX]
 }
 
 $Project "itemtest_com"
 {
-	"utils\itemtest\itemtest_com.vpc"
+//	"utils\itemtest\itemtest_com.vpc"
 }
 
 $Project "itemtest_controls"
 {
-	"utils\itemtest_controls\itemtest_controls.vpc"
+//	"utils\itemtest_controls\itemtest_controls.vpc"
 }
 
 $Project "itemtest_lib"
 {
-	"utils\itemtest_lib\itemtest_lib.vpc"
+//	"utils\itemtest_lib\itemtest_lib.vpc"
 }
 
 $Project "ivp_physics"
 {
-	"ivp\ivp_physics\ivp_physics.vpc" [$WINDOWS||$X360||$POSIX]
+//	"ivp\ivp_physics\ivp_physics.vpc" [$WINDOWS||$X360||$POSIX]
 }
 
 $Project "jpeglib"
@@ -1017,7 +1017,7 @@ $Project "vaudio_speex"
 
 $Project "vaudio_celt"
 {
-	"engine\voice_codecs\celt\vaudio_celt.vpc" [$WIN32||$POSIX]
+//	"engine\voice_codecs\celt\vaudio_celt.vpc" [$WIN32||$POSIX]
 }
 
 //$Project "splitskybox"
@@ -1287,7 +1287,7 @@ $Project "valvepython_python2.5"
 
 $Project "vaudio_miles"
 {
-	"engine\voice_codecs\miles\vaudio_miles.vpc" [$WINDOWS||$POSIX]
+//	"engine\voice_codecs\miles\vaudio_miles.vpc" [$WINDOWS||$POSIX]
 }
 
 $Project "vbsp"
@@ -1332,7 +1332,7 @@ $Project "vcrtrace"
 
 $Project "video_bink"
 {
-	"video\video_bink.vpc" [($WINDOWS||$LINUX)]
+//	"video\video_bink.vpc" [($WINDOWS||$LINUX)]
 }
 
 $Project "video_quicktime"

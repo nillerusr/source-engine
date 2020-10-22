@@ -78,7 +78,7 @@ ARCH_FLAGS =
 BUILDING_MULTI_ARCH = 0
 # Preserve cflags set in environment
 ENV_CFLAGS := $(CFLAGS)
-ENV_CXXFLAGS := $(CXXFLAGS)
+ENV_CXXFLAGS := $(CXXFLAGS) -fpermissive
 CPPFLAGS = $(DEFINES) $(addprefix -I, $(abspath $(INCLUDEDIRS) ))
 BASE_CFLAGS = $(ARCH_FLAGS) $(CPPFLAGS) $(WARN_FLAGS) -fvisibility=$(SymbolVisibility) $(OptimizerLevel) -pipe $(GCC_ExtraCompilerFlags) -Usprintf -Ustrncpy -UPROTECTED_THINGS_ENABLE
 BASE_CXXFLAGS = -std=c++11
@@ -183,13 +183,13 @@ endif
 
 # If not specified by environment, use steam runtime compilers + in-tree ccache
 ifneq ($(filter default undefined,$(origin AR)),)
-	AR = $(STEAM_RUNTIME_PATH)/bin/ar crs
+	AR = ar
 endif
 ifneq ($(filter default undefined,$(origin CC)),)
-	CC = $(CCACHE) $(STEAM_RUNTIME_PATH)/bin/gcc$(GCC_VER)
+	CC = gcc -m32
 endif
 ifneq ($(filter default undefined,$(origin CXX)),)
-	CXX = $(CCACHE) $(STEAM_RUNTIME_PATH)/bin/g++$(GCC_VER)
+	CXX = g++ -m32
 endif
 
 LINK ?= $(CC)

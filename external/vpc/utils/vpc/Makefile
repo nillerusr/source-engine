@@ -30,11 +30,11 @@ endif
 
 ifeq ($(OS),Linux)
 ifeq ($(wildcard /valve/bin/gcc),)
-CC:=gcc
-CXX:=g++
+CC:=gcc -m32
+CXX:=g++ -m32
 else
-CC:=/valve/bin/gcc-4.7
-CXX:=/valve/bin/g++-4.7
+CC:=/valve/bin/gcc-4.7 -m32
+CXX:=/valve/bin/g++-4.7 -m32
 endif
 EXE_POSTFIX:=_linux
 endif

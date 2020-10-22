@@ -7,7 +7,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#ifdef LINUX
+#include <linux/sysctl.h>
+#else
 #include <sys/sysctl.h>
+#endif
 #include <sys/time.h>
 #include <unistd.h>
 #include <tier0/platform.h>
