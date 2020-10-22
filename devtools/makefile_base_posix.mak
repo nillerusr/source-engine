@@ -183,7 +183,7 @@ endif
 
 # If not specified by environment, use steam runtime compilers + in-tree ccache
 ifneq ($(filter default undefined,$(origin AR)),)
-	AR = ar
+	AR = ar crs
 endif
 ifneq ($(filter default undefined,$(origin CC)),)
 	CC = gcc -m32
