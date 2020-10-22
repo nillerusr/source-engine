@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OBJCOPY=$STEAM_RUNTIME_PATH/bin/objcopy
+OBJCOPY=objcopy
 
 function usage {
 	echo "$0 /path/to/input/file [-o /path/to/output/file ]"
