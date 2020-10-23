@@ -1,4 +1,4 @@
-//========= Copyright � 1996-2008, Valve LLC, All rights reserved. ============
+//========= Copyright ?1996-2008, Valve LLC, All rights reserved. ============
 //
 // Purpose:
 //
@@ -126,6 +126,17 @@ enum EResult
 	k_EResultEmailSendFailure = 99,				// Cannot send an email
 	k_EResultNotSettled = 100,					// Can't perform operation till payment has settled
 	k_EResultNeedCaptcha = 101,					// Needs to provide a valid captcha
+	k_EResultGSLTDenied = 102,					// a game server login token owned by this token's owner has been banned
+	k_EResultGSOwnerDenied = 103,				// game server owner is denied for other reason (account lock, community ban, vac ban, missing phone)
+	k_EResultInvalidItemType = 104,				// the type of thing we were requested to act on is invalid
+	k_EResultIPBanned = 105,					// the ip address has been banned from taking this action
+	k_EResultGSLTExpired = 106,					// this token has expired from disuse; can be reset for use
+	k_EResultInsufficientFunds = 107,			// user doesn't have enough wallet funds to complete the action
+	k_EResultTooManyPending = 108,				// There are too many of this thing pending already
+	k_EResultNoSiteLicensesFound = 109,			// No site licenses found
+	k_EResultWGNetworkSendExceeded = 110,		// the WG couldn't send a response because we exceeded max network send size
+	k_EResultAccountNotFriends = 111,			// the user is not mutually friends
+	k_EResultLimitedUserAccount = 112,			// the user is limited
 };
 
 // Error codes for use with the voice functions
@@ -260,11 +271,15 @@ enum EAppOwnershipFlags
 	k_EAppOwnershipFlags_LicenseCanceled	= 0x2000,	// Mark as canceled, but might be still active if recurring
 	k_EAppOwnershipFlags_AutoGrant			= 0x4000,	// Ownership is based on any kind of autogrant license
 	k_EAppOwnershipFlags_PendingGift		= 0x8000,	// user has pending gift to redeem
+	k_EAppOwnershipFlags_RentalNotActivated	= 0x10000,	// Rental hasn't been activated yet
+	k_EAppOwnershipFlags_Rental				= 0x20000,	// Is a rental
+	k_EAppOwnershipFlags_SiteLicense		= 0x40000,	// Is from a site license
 };
 
 
 //-----------------------------------------------------------------------------
 // Purpose: designed as flags to allow filters masks
+// NOTE: If you add to this, please update PackageAppType (SteamConfig) as well as populatePackageAppType 
 //-----------------------------------------------------------------------------
 enum EAppType
 {
@@ -279,10 +294,12 @@ enum EAppType
 	k_EAppType_Driver				= 0x080,	// hardware driver updater (ATI, Razor etc)
 	k_EAppType_Config				= 0x100,	// hidden app used to config Steam features (backpack, sales, etc)
 	k_EAppType_Hardware				= 0x200,	// a hardware device (Steam Machine, Steam Controller, Steam Link, etc.)
-	// 0x400 is up for grabs here
+	k_EAppType_Franchise			= 0x400,	// A hub for collections of multiple apps, eg films, series, games
 	k_EAppType_Video				= 0x800,	// A video component of either a Film or TVSeries (may be the feature, an episode, preview, making-of, etc)
 	k_EAppType_Plugin				= 0x1000,	// Plug-in types for other Apps
 	k_EAppType_Music				= 0x2000,	// Music files
+	k_EAppType_Series				= 0x4000,	// Container app for video series
+	k_EAppType_Comic				= 0x8000,	// Comic Book
 		
 	k_EAppType_Shortcut				= 0x40000000,	// just a shortcut, client side only
 	k_EAppType_DepotOnly			= 0x80000000,	// placeholder since depots and apps share the same namespace
@@ -327,8 +344,8 @@ enum EChatEntryType
 	k_EChatEntryTypeWasBanned = 9,		// user was banned (data: 64-bit steamid of actor performing the ban)
 	k_EChatEntryTypeDisconnected = 10,	// user disconnected
 	k_EChatEntryTypeHistoricalChat = 11,	// a chat message from user's chat history or offilne message
-	k_EChatEntryTypeReserved1 = 12,
-	k_EChatEntryTypeReserved2 = 13,
+	//k_EChatEntryTypeReserved1 = 12, // No longer used
+	//k_EChatEntryTypeReserved2 = 13, // No longer used
 	k_EChatEntryTypeLinkBlocked = 14, // a link was removed by the chat filter.
 };
 
@@ -352,6 +369,7 @@ enum EChatRoomEnterResponse
 	// k_EChatRoomEnterResponseNoRankingDataLobby = 12,  // No longer used
 	// k_EChatRoomEnterResponseNoRankingDataUser = 13,  //  No longer used
 	// k_EChatRoomEnterResponseRankOutOfRange = 14, //  No longer used
+	k_EChatRoomEnterResponseRatelimitExceeded = 15, // Join failed - to many join attempts in a very short period of time
 };
 
 
@@ -443,7 +461,7 @@ enum ELaunchOptionType
 	k_ELaunchOptionType_SafeMode	= 2,	// runs the game in safe mode
 	k_ELaunchOptionType_Multiplayer = 3,	// runs the game in multiplayer mode
 	k_ELaunchOptionType_Config		= 4,	// runs config tool for this game
-	k_ELaunchOptionType_VR			= 5,	// runs game in VR mode
+	k_ELaunchOptionType_OpenVR		= 5,	// runs game in VR mode using OpenVR
 	k_ELaunchOptionType_Server		= 6,	// runs dedicated server for this game
 	k_ELaunchOptionType_Editor		= 7,	// runs game editor
 	k_ELaunchOptionType_Manual		= 8,	// shows game manual
@@ -451,13 +469,98 @@ enum ELaunchOptionType
 	k_ELaunchOptionType_Option1		= 10,	// generic run option, uses description field for game name
 	k_ELaunchOptionType_Option2		= 11,	// generic run option, uses description field for game name
 	k_ELaunchOptionType_Option3     = 12,	// generic run option, uses description field for game name
-	
+	k_ELaunchOptionType_OculusVR	= 13,	// runs game in VR mode using the Oculus SDK 
+	k_ELaunchOptionType_OpenVROverlay = 14,	// runs an OpenVR dashboard overlay
+	k_ELaunchOptionType_OSVR		= 15,	// runs game in VR mode using the OSVR SDK
+
 	
 	k_ELaunchOptionType_Dialog 		= 1000, // show launch options dialog
 };
 
 
-#pragma pack( push, 1 )		
+//-----------------------------------------------------------------------------
+// Purpose: true if this launch option is any of the vr launching types
+//-----------------------------------------------------------------------------
+static inline bool BIsVRLaunchOptionType( const ELaunchOptionType  eType )
+{
+	return eType == k_ELaunchOptionType_OpenVR 
+		|| eType == k_ELaunchOptionType_OpenVROverlay 
+		|| eType == k_ELaunchOptionType_OculusVR
+		|| eType == k_ELaunchOptionType_OSVR;
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: code points for VR HMD vendors and models 
+// WARNING: DO NOT RENUMBER EXISTING VALUES - STORED IN A DATABASE
+//-----------------------------------------------------------------------------
+enum EVRHMDType
+{
+	k_eEVRHMDType_None = -1, // unknown vendor and model
+
+	k_eEVRHMDType_Unknown = 0, // unknown vendor and model
+
+	k_eEVRHMDType_HTC_Dev = 1,	// original HTC dev kits
+	k_eEVRHMDType_HTC_VivePre = 2,	// htc vive pre
+	k_eEVRHMDType_HTC_Vive = 3,	// htc vive consumer release
+
+	k_eEVRHMDType_HTC_Unknown = 20, // unknown htc hmd
+
+	k_eEVRHMDType_Oculus_DK1 = 21, // Oculus DK1 
+	k_eEVRHMDType_Oculus_DK2 = 22, // Oculus DK2
+	k_eEVRHMDType_Oculus_Rift = 23, // Oculus rift
+
+	k_eEVRHMDType_Oculus_Unknown = 40, // // Oculus unknown HMD
+
+	k_eEVRHMDType_Acer_Unknown = 50, // Acer unknown HMD
+	k_eEVRHMDType_Acer_WindowsMR = 51, // Acer QHMD Windows MR headset
+
+	k_eEVRHMDType_Dell_Unknown = 60, // Dell unknown HMD
+	k_eEVRHMDType_Dell_Visor = 61, // Dell Visor Windows MR headset
+
+	k_eEVRHMDType_Lenovo_Unknown = 70, // Lenovo unknown HMD
+	k_eEVRHMDType_Lenovo_Explorer = 71, // Lenovo Explorer Windows MR headset
+
+	k_eEVRHMDType_HP_Unknown = 80, // HP unknown HMD
+	k_eEVRHMDType_HP_WindowsMR = 81, // HP Windows MR headset
+
+	k_eEVRHMDType_Samsung_Unknown = 90, // Samsung unknown HMD
+	k_eEVRHMDType_Samsung_Odyssey = 91, // Samsung Odyssey Windows MR headset
+
+	k_eEVRHMDType_Unannounced_Unknown = 100, // Unannounced unknown HMD
+	k_eEVRHMDType_Unannounced_WindowsMR = 101, // Unannounced Windows MR headset
+
+};
+
+
+//-----------------------------------------------------------------------------
+// Purpose: true if this is from an Oculus HMD
+//-----------------------------------------------------------------------------
+static inline bool BIsOculusHMD( EVRHMDType eType )
+{
+	return eType == k_eEVRHMDType_Oculus_DK1 || eType == k_eEVRHMDType_Oculus_DK2 || eType == k_eEVRHMDType_Oculus_Rift || eType == k_eEVRHMDType_Oculus_Unknown;
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: true if this is from a Windows MR HMD
+//-----------------------------------------------------------------------------
+static inline bool BIsWindowsMRHeadset( EVRHMDType eType )
+{
+	return eType >= k_eEVRHMDType_Acer_WindowsMR && eType <= k_eEVRHMDType_Unannounced_WindowsMR;
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: true if this is from an Vive HMD
+//-----------------------------------------------------------------------------
+static inline bool BIsViveHMD( EVRHMDType eType )
+{
+	return eType == k_eEVRHMDType_HTC_Dev || eType == k_eEVRHMDType_HTC_VivePre || eType == k_eEVRHMDType_HTC_Vive || eType == k_eEVRHMDType_HTC_Unknown;
+}
+
+
+#pragma pack( push, 1 )
 
 #define CSTEAMID_DEFINED
 
@@ -979,8 +1082,10 @@ public:
 
 		CRC32_t crc32;
 		CRC32_Init( &crc32 );
-		CRC32_ProcessBuffer( &crc32, pchExePath, V_strlen( pchExePath ) );
-		CRC32_ProcessBuffer( &crc32, pchAppName, V_strlen( pchAppName ) );
+		if ( pchExePath )
+			CRC32_ProcessBuffer( &crc32, pchExePath, V_strlen( pchExePath ) );
+		if ( pchAppName )
+			CRC32_ProcessBuffer( &crc32, pchAppName, V_strlen( pchAppName ) );
 		CRC32_Final( &crc32 );
 
 		// set the high-bit on the mod-id 

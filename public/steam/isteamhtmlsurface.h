@@ -33,6 +33,14 @@ public:
 	// identify your client on web servers.
 	//   The userCSS string lets you apply a CSS style sheet to every displayed page, leave null if
 	// you do not require this functionality.
+	//
+	// YOU MUST HAVE IMPLEMENTED HANDLERS FOR HTML_BrowserReady_t, HTML_StartRequest_t,
+	// HTML_JSAlert_t, HTML_JSConfirm_t, and HTML_FileOpenDialog_t! See the CALLBACKS
+	// section of this interface (AllowStartRequest, etc) for more details. If you do
+	// not implement these callback handlers, the browser may appear to hang instead of
+	// navigating to new pages or triggering javascript popups.
+	//
+	CALL_RESULT( HTML_BrowserReady_t )
 	virtual SteamAPICall_t CreateBrowser( const char *pchUserAgent, const char *pchUserCSS ) = 0;
 
 	// Call this when you are done with a html surface, this lets us free the resources being used by it
@@ -169,6 +177,10 @@ public:
 	// When background mode is disabled, any video or audio objects with that property will resume with ".play()".
 	virtual void SetBackgroundMode( HHTMLBrowser unBrowserHandle, bool bBackgroundMode ) = 0;
 
+	// Scale the output display space by this factor, this is useful when displaying content on high dpi devices.
+	// Specifies the ratio between physical and logical pixels.
+	virtual void SetDPIScalingFactor( HHTMLBrowser unBrowserHandle, float flDPIScaling ) = 0;
+
 	// CALLBACKS
 	//
 	//  These set of functions are used as responses to callback requests
@@ -185,10 +197,11 @@ public:
 	virtual void JSDialogResponse( HHTMLBrowser unBrowserHandle, bool bResult ) = 0;
 
 	// You MUST call this in response to a HTML_FileOpenDialog_t callback
+	IGNOREATTR()
 	virtual void FileLoadDialogResponse( HHTMLBrowser unBrowserHandle, const char **pchSelectedFiles ) = 0;
 };
 
-#define STEAMHTMLSURFACE_INTERFACE_VERSION "STEAMHTMLSURFACE_INTERFACE_VERSION_003"
+#define STEAMHTMLSURFACE_INTERFACE_VERSION "STEAMHTMLSURFACE_INTERFACE_VERSION_004"
 
 // callbacks
 #if defined( VALVE_CALLBACK_PACK_SMALL )
@@ -436,6 +449,15 @@ END_DEFINE_CALLBACK_2()
 DEFINE_CALLBACK( HTML_HideToolTip_t, k_iSteamHTMLSurfaceCallbacks + 26 )
 CALLBACK_MEMBER( 0, HHTMLBrowser, unBrowserHandle ) // the handle of the surface 
 END_DEFINE_CALLBACK_1()
+
+
+//-----------------------------------------------------------------------------
+// Purpose: The browser has restarted due to an internal failure, use this new handle value
+//-----------------------------------------------------------------------------
+DEFINE_CALLBACK( HTML_BrowserRestarted_t, k_iSteamHTMLSurfaceCallbacks + 27 )
+CALLBACK_MEMBER( 0, HHTMLBrowser, unBrowserHandle ) // this is the new browser handle after the restart
+CALLBACK_MEMBER( 1, HHTMLBrowser, unOldBrowserHandle ) // the handle for the browser before the restart, if your handle was this then switch to using unBrowserHandle for API calls
+END_DEFINE_CALLBACK_2()
 
 
 #pragma pack( pop )

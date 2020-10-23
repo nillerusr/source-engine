@@ -26,7 +26,7 @@ enum EFriendRelationship
 	k_EFriendRelationshipRequestInitiator = 4,
 	k_EFriendRelationshipIgnored = 5,			// this is stored; the user has explicit blocked this other user from comments/chat/etc
 	k_EFriendRelationshipIgnoredFriend = 6,
-	k_EFriendRelationshipSuggested = 7,
+	k_EFriendRelationshipSuggested_DEPRECATED = 7,		// was used by the original implementation of the facebook linking feature, but now unused.
 
 	// keep this updated
 	k_EFriendRelationshipMax = 8,
@@ -80,7 +80,8 @@ enum EFriendFlags
 	k_EFriendFlagRequestingInfo = 0x100,
 	k_EFriendFlagIgnored		= 0x200,
 	k_EFriendFlagIgnoredFriend	= 0x400,
-	k_EFriendFlagSuggested		= 0x800,
+	// k_EFriendFlagSuggested		= 0x800,	// not used
+	k_EFriendFlagChatMember		= 0x1000,
 	k_EFriendFlagAll			= 0xFFFF,
 };
 
@@ -175,6 +176,7 @@ public:
 	//
 	// If the name change fails to happen on the server, then an additional global PersonaStateChange_t will be posted
 	// to change the name back, in addition to the SetPersonaNameResponse_t callback.
+	CALL_RESULT( SetPersonaNameResponse_t )
 	virtual SteamAPICall_t SetPersonaName( const char *pchPersonaName ) = 0;
 
 	// gets the status of the current user
@@ -307,6 +309,7 @@ public:
 	// you can only ask about clans that a user is a member of
 	// note that this won't download avatars automatically; if you get an officer,
 	// and no avatar image is available, call RequestUserInformation( steamID, false ) to download the avatar
+	CALL_RESULT( ClanOfficerListResponse_t )
 	virtual SteamAPICall_t RequestClanOfficerList( CSteamID steamIDClan ) = 0;
 
 	// iteration of clan officers - can only be done when a RequestClanOfficerList() call has completed
@@ -324,7 +327,7 @@ public:
 
 	// Rich Presence data is automatically shared between friends who are in the same game
 	// Each user has a set of Key/Value pairs
-	// Up to 20 different keys can be set
+	// Note the following limits: k_cchMaxRichPresenceKeys, k_cchMaxRichPresenceKeyLength, k_cchMaxRichPresenceValueLength
 	// There are two magic keys:
 	//		"status"  - a UTF-8 string that will show up in the 'view game info' dialog in the Steam friends list
 	//		"connect" - a UTF-8 string that contains the command-line for how a friend can connect to a game
@@ -358,6 +361,7 @@ public:
 	// this allows in-game access to group (clan) chats from in the game
 	// the behavior is somewhat sophisticated, because the user may or may not be already in the group chat from outside the game or in the overlay
 	// use ActivateGameOverlayToUser( "chat", steamIDClan ) to open the in-game overlay version of the chat
+	CALL_RESULT( JoinClanChatRoomCompletionResult_t )
 	virtual SteamAPICall_t JoinClanChatRoom( CSteamID steamIDClan ) = 0;
 	virtual bool LeaveClanChatRoom( CSteamID steamIDClan ) = 0;
 	virtual int GetClanChatMemberCount( CSteamID steamIDClan ) = 0;
@@ -378,9 +382,15 @@ public:
 	virtual int GetFriendMessage( CSteamID steamIDFriend, int iMessageID, void *pvData, int cubData, EChatEntryType *peChatEntryType ) = 0;
 
 	// following apis
+	CALL_RESULT( FriendsGetFollowerCount_t )
 	virtual SteamAPICall_t GetFollowerCount( CSteamID steamID ) = 0;
+	CALL_RESULT( FriendsIsFollowing_t )
 	virtual SteamAPICall_t IsFollowing( CSteamID steamID ) = 0;
+	CALL_RESULT( FriendsEnumerateFollowingList_t )
 	virtual SteamAPICall_t EnumerateFollowingList( uint32 unStartIndex ) = 0;
+
+	virtual bool IsClanPublic( CSteamID steamIDClan ) = 0;
+	virtual bool IsClanOfficialGameGroup( CSteamID steamIDClan ) = 0;
 };
 
 #define STEAMFRIENDS_INTERFACE_VERSION "SteamFriends015"

@@ -1,4 +1,4 @@
-//====== Copyright � 1996-2008, Valve Corporation, All rights reserved. =======
+//====== Copyright ? 1996-2008, Valve Corporation, All rights reserved. =======
 //
 // Purpose: interface to utility functions in Steam
 //
@@ -61,7 +61,7 @@ public:
 	// the universe this client is connecting to
 	virtual EUniverse GetConnectedUniverse() = 0;
 
-	// Steam server time - in PST, number of seconds since January 1, 1970 (i.e unix time)
+	// Steam server time.  Number of seconds since January 1, 1970, GMT (i.e unix time)
 	virtual uint32 GetServerRealTime() = 0;
 
 	// returns the 2 digit ISO 3166-1-alpha-2 format country code this client is running in (as looked up via an IP-to-location database)
@@ -95,9 +95,8 @@ public:
 	virtual ESteamAPICallFailure GetAPICallFailureReason( SteamAPICall_t hSteamAPICall ) = 0;
 	virtual bool GetAPICallResult( SteamAPICall_t hSteamAPICall, void *pCallback, int cubCallback, int iCallbackExpected, bool *pbFailed ) = 0;
 
-	// this needs to be called every frame to process matchmaking results
-	// redundant if you're already calling SteamAPI_RunCallbacks()
-	virtual void RunFrame() = 0;
+	// Deprecated. Applications should use SteamAPI_RunCallbacks() instead. Game servers do not need to call this function.
+	STEAM_PRIVATE_API( virtual void RunFrame() = 0; )
 
 	// returns the number of IPC calls made since the last time this function was called
 	// Used for perf debugging so you can understand how many IPC calls your game makes per frame
@@ -126,7 +125,6 @@ public:
 	// refresh the screen with Present or SwapBuffers to allow the overlay to do it's work.
 	virtual bool BOverlayNeedsPresent() = 0;
 
-#ifndef _PS3
 	// Asynchronous call to check if an executable file has been signed using the public key set on the signing tab
 	// of the partner site, for example to refuse to load modified executable files.  
 	// The result is returned in CheckFileSignature_t.
@@ -135,18 +133,8 @@ public:
 	//   k_ECheckFileSignatureFileNotFound - The file does not exist on disk.
 	//   k_ECheckFileSignatureInvalidSignature - The file exists, and the signing tab has been set for this file, but the file is either not signed or the signature does not match.
 	//   k_ECheckFileSignatureValidSignature - The file is signed and the signature is valid.
+	CALL_RESULT( CheckFileSignature_t )
 	virtual SteamAPICall_t CheckFileSignature( const char *szFileName ) = 0;
-#endif
-
-#ifdef _PS3
-	virtual void PostPS3SysutilCallback( uint64_t status, uint64_t param, void* userdata ) = 0;
-	virtual bool BIsReadyToShutdown() = 0;
-	virtual bool BIsPSNOnline() = 0;
-
-	// Call this with localized strings for the language the game is running in, otherwise default english
-	// strings will be used by Steam.
-	virtual void SetPSNGameBootInviteStrings( const char *pchSubject, const char *pchBody ) = 0;
-#endif
 
 	// Activates the Big Picture text input dialog which only supports gamepad input
 	virtual bool ShowGamepadTextInput( EGamepadTextInputMode eInputMode, EGamepadTextInputLineMode eLineInputMode, const char *pchDescription, uint32 unCharMax, const char *pchExistingText ) = 0;
@@ -163,9 +151,27 @@ public:
 	
 	// Sets the inset of the overlay notification from the corner specified by SetOverlayNotificationPosition.
 	virtual void SetOverlayNotificationInset( int nHorizontalInset, int nVerticalInset ) = 0;
+
+	// returns true if Steam & the Steam Overlay are running in Big Picture mode
+	// Games much be launched through the Steam client to enable the Big Picture overlay. During development,
+	// a game can be added as a non-steam game to the developers library to test this feature
+	virtual bool IsSteamInBigPictureMode() = 0;
+
+	// ask SteamUI to create and render its OpenVR dashboard
+	virtual void StartVRDashboard() = 0;
+
+	// Returns true if the HMD content will be streamed via Steam In-Home Streaming
+	virtual bool IsVRHeadsetStreamingEnabled() = 0;
+
+	// Set whether the HMD content will be streamed via Steam In-Home Streaming
+	// If this is set to true, then the scene in the HMD headset will be streamed, and remote input will not be allowed.
+	// If this is set to false, then the application window will be streamed instead, and remote input will be allowed.
+	// The default is true unless "VRHeadsetStreaming" "0" is in the extended appinfo for a game.
+	// (this is useful for games that have asymmetric multiplayer gameplay)
+	virtual void SetVRHeadsetStreamingEnabled( bool bEnabled ) = 0;
 };
 
-#define STEAMUTILS_INTERFACE_VERSION "SteamUtils007"
+#define STEAMUTILS_INTERFACE_VERSION "SteamUtils009"
 
 
 // callbacks
@@ -203,6 +209,8 @@ struct SteamAPICallCompleted_t
 {
 	enum { k_iCallback = k_iSteamUtilsCallbacks + 3 };
 	SteamAPICall_t m_hAsyncCall;
+	int m_iCallback;
+	uint32 m_cubParam;
 };
 
 
@@ -235,60 +243,6 @@ struct CheckFileSignature_t
 	ECheckFileSignature m_eCheckFileSignature;
 };
 
-#ifdef _PS3
-//-----------------------------------------------------------------------------
-// callback for NetCtlNetStartDialog finishing on PS3
-//-----------------------------------------------------------------------------
-struct NetStartDialogFinished_t
-{
-	enum { k_iCallback = k_iSteamUtilsCallbacks + 6 };
-};
-
-//-----------------------------------------------------------------------------
-// callback for NetCtlNetStartDialog unloaded on PS3
-//-----------------------------------------------------------------------------
-struct NetStartDialogUnloaded_t
-{
-	enum { k_iCallback = k_iSteamUtilsCallbacks + 7 };
-};
-
-//-----------------------------------------------------------------------------
-// callback for system menu closing on PS3 - should trigger resyncronizing friends list, etc.
-//-----------------------------------------------------------------------------
-struct PS3SystemMenuClosed_t
-{
-	enum { k_iCallback = k_iSteamUtilsCallbacks + 8 };
-};
-
-//-----------------------------------------------------------------------------
-// callback for NP message being selected by user on PS3 - should trigger handling of message if it's a lobby invite, etc.
-//-----------------------------------------------------------------------------
-struct PS3NPMessageSelected_t
-{
-	enum { k_iCallback = k_iSteamUtilsCallbacks + 9 };
-	uint32 dataid;
-};
-
-//-----------------------------------------------------------------------------
-// callback for when the PS3 keyboard dialog closes
-//-----------------------------------------------------------------------------
-struct PS3KeyboardDialogFinished_t
-{
-	enum { k_iCallback = k_iSteamUtilsCallbacks + 10 };
-};
-
-// k_iSteamUtilsCallbacks + 11 is taken
-
-//-----------------------------------------------------------------------------
-// callback for PSN status changing on PS3
-//-----------------------------------------------------------------------------
-struct PS3PSNStatusChange_t
-{
-	enum { k_iCallback = k_iSteamUtilsCallbacks + 12 };
-	bool m_bPSNOnline;
-};
-
-#endif
 
 // k_iSteamUtilsCallbacks + 13 is taken
 

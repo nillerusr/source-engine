@@ -193,7 +193,8 @@ public:
 	// these two functions s are deprecated, and will not return results
 	// they will be removed in a future version of the SDK
 	virtual void GetGameplayStats( ) = 0;
-	virtual SteamAPICall_t GetServerReputation( ) = 0;
+	CALL_RESULT( GSReputation_t )
+	virtual SteamAPICall_t GetServerReputation() = 0;
 
 	// Returns the public IP of the server according to Steam, useful when the server is 
 	// behind NAT and you want to advertise its IP in a lobby for other clients to directly
@@ -240,9 +241,11 @@ public:
 	virtual void ForceHeartbeat() = 0;
 
 	// associate this game server with this clan for the purposes of computing player compat
+	CALL_RESULT( AssociateWithClanResult_t )
 	virtual SteamAPICall_t AssociateWithClan( CSteamID steamIDClan ) = 0;
 	
 	// ask if any of the current players dont want to play with this new player - or vice versa
+	CALL_RESULT( ComputeNewPlayerCompatibilityResult_t )
 	virtual SteamAPICall_t ComputeNewPlayerCompatibility( CSteamID steamIDNewPlayer ) = 0;
 
 };

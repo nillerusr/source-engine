@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright 1996-2008, Valve Corporation, All rights reserved. =======
 //
 // Purpose: a private, but well versioned, interface to get at critical bits
 // of a steam3 appticket - consumed by the simple drm wrapper to let it 

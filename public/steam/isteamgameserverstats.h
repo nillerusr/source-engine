@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright © Valve Corporation, All rights reserved. =======
 //
 // Purpose: interface for game servers to steam stats and achievements
 //
@@ -23,6 +23,7 @@ public:
 	// if the user has no stats, GSStatsReceived_t.m_eResult will be set to k_EResultFail
 	// these stats will only be auto-updated for clients playing on the server. For other
 	// users you'll need to call RequestUserStats() again to refresh any data
+	CALL_RESULT( GSStatsReceived_t )
 	virtual SteamAPICall_t RequestUserStats( CSteamID steamIDUser ) = 0;
 
 	// requests stat information for a user, usable after a successful call to RequestUserStats()
@@ -47,6 +48,7 @@ public:
 	// uploaded has been rejected, either because they broke constraints
 	// or were out of date. In this case the server sends back updated values.
 	// The stats should be re-iterated to keep in sync.
+	CALL_RESULT( GSStatsStored_t )
 	virtual SteamAPICall_t StoreUserStats( CSteamID steamIDUser ) = 0;
 };
 

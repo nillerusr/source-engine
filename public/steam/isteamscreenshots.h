@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright ? 1996-2008, Valve Corporation, All rights reserved. =======
 //
 // Purpose: public interface to user remote file storage in Steam
 //
@@ -24,6 +24,16 @@ const int k_ScreenshotThumbWidth = 200;
 // Handle is valid for the lifetime of your process and no longer
 typedef uint32 ScreenshotHandle; 
 #define INVALID_SCREENSHOT_HANDLE 0
+
+enum EVRScreenshotType
+{
+	k_EVRScreenshotType_None			= 0,
+	k_EVRScreenshotType_Mono			= 1,
+	k_EVRScreenshotType_Stereo			= 2,
+	k_EVRScreenshotType_MonoCubemap		= 3,
+	k_EVRScreenshotType_MonoPanorama	= 4,
+	k_EVRScreenshotType_StereoPanorama	= 5
+};
 
 //-----------------------------------------------------------------------------
 // Purpose: Functions for adding screenshots to the user's screenshot library
@@ -57,9 +67,19 @@ public:
 
 	// Tags a published file as being visible in the screenshot
 	virtual bool TagPublishedFile( ScreenshotHandle hScreenshot, PublishedFileId_t unPublishedFileID ) = 0;
+
+	// Returns true if the app has hooked the screenshot
+	virtual bool IsScreenshotsHooked() = 0;
+
+	// Adds a VR screenshot to the user's screenshot library from disk in the supported type.
+	// pchFilename should be the normal 2D image used in the library view
+	// pchVRFilename should contain the image that matches the correct type
+	// The return value is a handle that is valid for the duration of the game process and can be used to apply tags.
+	// JPEG, TGA, and PNG formats are supported.
+	virtual ScreenshotHandle AddVRScreenshotToLibrary( EVRScreenshotType eType, const char *pchFilename, const char *pchVRFilename ) = 0;
 };
 
-#define STEAMSCREENSHOTS_INTERFACE_VERSION "STEAMSCREENSHOTS_INTERFACE_VERSION002"
+#define STEAMSCREENSHOTS_INTERFACE_VERSION "STEAMSCREENSHOTS_INTERFACE_VERSION003"
 
 // callbacks
 #if defined( VALVE_CALLBACK_PACK_SMALL )
@@ -92,5 +112,5 @@ struct ScreenshotRequested_t
 
 #pragma pack( pop )
 
-
 #endif // ISTEAMSCREENSHOTS_H
+

@@ -21,6 +21,14 @@
 #define REFERENCE(arg) ((void)arg)
 #endif
 
+#if ( defined(STEAM_API_EXPORTS) || defined(STEAM_API_NODLL) ) && !defined(API_GEN)
+#define STEAM_PRIVATE_API( ... ) __VA_ARGS__
+#elif defined(STEAM_API_EXPORTS) && defined(API_GEN)
+#define STEAM_PRIVATE_API( ... )
+#else
+#define STEAM_PRIVATE_API( ... ) protected: __VA_ARGS__ public:
+#endif
+
 #if defined(__linux__) || defined(__APPLE__) 
 // The 32-bit version of gcc has the alignment requirement for uint64 and double set to
 // 4 meaning that even with #pragma pack(8) these types will only be four-byte aligned.
@@ -69,7 +77,6 @@ typedef int32 HSteamUser;
 #define __cdecl
 #endif
 extern "C" typedef void (__cdecl *SteamAPIWarningMessageHook_t)(int, const char *);
-extern "C" typedef void( *SteamAPI_PostAPIResultInProcess_t )(SteamAPICall_t callHandle, void *, uint32 unCallbackSize, int iCallbackNum);
 extern "C" typedef uint32 ( *SteamAPI_CheckCallbackRegistered_t )( int iCallbackNum );
 #if defined( __SNC__ )
 	#pragma diag_suppress=1700	   // warning 1700: class "%s" has virtual functions but non-virtual destructor
@@ -93,13 +100,13 @@ class ISteamMusicRemote;
 class ISteamGameServerStats;
 class ISteamPS3OverlayRender;
 class ISteamHTTP;
-class ISteamUnifiedMessages;
 class ISteamController;
 class ISteamUGC;
 class ISteamAppList;
 class ISteamHTMLSurface;
 class ISteamInventory;
 class ISteamVideo;
+class ISteamParentalSettings;
 
 //-----------------------------------------------------------------------------
 // Purpose: Interface to creating a new steam instance, or to
@@ -107,26 +114,32 @@ class ISteamVideo;
 //			different process or is local.
 //
 //			For most scenarios this is all handled automatically via SteamAPI_Init().
-//			You'll only need to use these interfaces if you have a more complex versioning scheme,
-//			where you want to get different versions of the same interface in different dll's in your project.
+//			You'll only need these APIs if you have a more complex versioning scheme,
+//			or if you want to implement a multiplexed gameserver where a single process
+//			is handling multiple games at once with independent gameserver SteamIDs.
 //-----------------------------------------------------------------------------
 class ISteamClient
 {
 public:
-	// Creates a communication pipe to the Steam client
+	// Creates a communication pipe to the Steam client.
+	// NOT THREADSAFE - ensure that no other threads are accessing Steamworks API when calling
 	virtual HSteamPipe CreateSteamPipe() = 0;
 
 	// Releases a previously created communications pipe
+	// NOT THREADSAFE - ensure that no other threads are accessing Steamworks API when calling
 	virtual bool BReleaseSteamPipe( HSteamPipe hSteamPipe ) = 0;
 
 	// connects to an existing global user, failing if none exists
 	// used by the game to coordinate with the steamUI
+	// NOT THREADSAFE - ensure that no other threads are accessing Steamworks API when calling
 	virtual HSteamUser ConnectToGlobalUser( HSteamPipe hSteamPipe ) = 0;
 
 	// used by game servers, create a steam user that won't be shared with anyone else
+	// NOT THREADSAFE - ensure that no other threads are accessing Steamworks API when calling
 	virtual HSteamUser CreateLocalUser( HSteamPipe *phSteamPipe, EAccountType eAccountType ) = 0;
 
 	// removes an allocated user
+	// NOT THREADSAFE - ensure that no other threads are accessing Steamworks API when calling
 	virtual void ReleaseUser( HSteamPipe hSteamPipe, HSteamUser hUser ) = 0;
 
 	// retrieves the ISteamUser interface associated with the handle
@@ -172,9 +185,8 @@ public:
 	// user screenshots
 	virtual ISteamScreenshots *GetISteamScreenshots( HSteamUser hSteamuser, HSteamPipe hSteamPipe, const char *pchVersion ) = 0;
 
-	// this needs to be called every frame to process matchmaking results
-	// redundant if you're already calling SteamAPI_RunCallbacks()
-	virtual void RunFrame() = 0;
+	// Deprecated. Applications should use SteamAPI_RunCallbacks() or SteamGameServer_RunCallbacks() instead.
+	STEAM_PRIVATE_API( virtual void RunFrame() = 0; )
 
 	// returns the number of IPC calls made since the last time this function was called
 	// Used for perf debugging so you can understand how many IPC calls your game makes per frame
@@ -185,21 +197,17 @@ public:
 	// API warning handling
 	// 'int' is the severity; 0 for msg, 1 for warning
 	// 'const char *' is the text of the message
-	// callbacks will occur directly after the API function is called that generated the warning or message
+	// callbacks will occur directly after the API function is called that generated the warning or message.
 	virtual void SetWarningMessageHook( SteamAPIWarningMessageHook_t pFunction ) = 0;
 
 	// Trigger global shutdown for the DLL
 	virtual bool BShutdownIfAllPipesClosed() = 0;
 
-#ifdef _PS3
-	virtual ISteamPS3OverlayRender *GetISteamPS3OverlayRender() = 0;
-#endif
-
 	// Expose HTTP interface
 	virtual ISteamHTTP *GetISteamHTTP( HSteamUser hSteamuser, HSteamPipe hSteamPipe, const char *pchVersion ) = 0;
 
-	// Exposes the ISteamUnifiedMessages interface
-	virtual ISteamUnifiedMessages *GetISteamUnifiedMessages( HSteamUser hSteamuser, HSteamPipe hSteamPipe, const char *pchVersion ) = 0;
+	// Deprecated - the ISteamUnifiedMessages interface is no longer intended for public consumption.
+	STEAM_PRIVATE_API( virtual void *DEPRECATED_GetISteamUnifiedMessages( HSteamUser hSteamuser, HSteamPipe hSteamPipe, const char *pchVersion ) = 0 ; )
 
 	// Exposes the ISteamController interface
 	virtual ISteamController *GetISteamController( HSteamUser hSteamUser, HSteamPipe hSteamPipe, const char *pchVersion ) = 0;
@@ -220,15 +228,18 @@ public:
 	virtual ISteamHTMLSurface *GetISteamHTMLSurface(HSteamUser hSteamuser, HSteamPipe hSteamPipe, const char *pchVersion) = 0;
 
 	// Helper functions for internal Steam usage
-	virtual void Set_SteamAPI_CPostAPIResultInProcess( SteamAPI_PostAPIResultInProcess_t func ) = 0;
-	virtual void Remove_SteamAPI_CPostAPIResultInProcess( SteamAPI_PostAPIResultInProcess_t func ) = 0;
-	virtual void Set_SteamAPI_CCheckCallbackRegisteredInProcess( SteamAPI_CheckCallbackRegistered_t func ) = 0;
+	STEAM_PRIVATE_API( virtual void DEPRECATED_Set_SteamAPI_CPostAPIResultInProcess( void (*)() ) = 0; )
+	STEAM_PRIVATE_API( virtual void DEPRECATED_Remove_SteamAPI_CPostAPIResultInProcess( void (*)() ) = 0; )
+	STEAM_PRIVATE_API( virtual void Set_SteamAPI_CCheckCallbackRegisteredInProcess( SteamAPI_CheckCallbackRegistered_t func ) = 0; )
 
 	// inventory
 	virtual ISteamInventory *GetISteamInventory( HSteamUser hSteamuser, HSteamPipe hSteamPipe, const char *pchVersion ) = 0;
 
 	// Video
 	virtual ISteamVideo *GetISteamVideo( HSteamUser hSteamuser, HSteamPipe hSteamPipe, const char *pchVersion ) = 0;
+
+	// Parental controls
+	virtual ISteamParentalSettings *GetISteamParentalSettings( HSteamUser hSteamuser, HSteamPipe hSteamPipe, const char *pchVersion ) = 0;
 };
 
 
@@ -280,11 +291,15 @@ enum { k_iSteamAppListCallbacks = 3900 };
 enum { k_iSteamMusicCallbacks = 4000 };
 enum { k_iSteamMusicRemoteCallbacks = 4100 };
 enum { k_iClientVRCallbacks = 4200 };
-enum { k_iClientReservedCallbacks = 4300 };
-enum { k_iSteamReservedCallbacks = 4400 };
+enum { k_iClientGameNotificationCallbacks = 4300 }; 
+enum { k_iSteamGameNotificationCallbacks = 4400 }; 
 enum { k_iSteamHTMLSurfaceCallbacks = 4500 };
 enum { k_iClientVideoCallbacks = 4600 };
 enum { k_iClientInventoryCallbacks = 4700 };
+enum { k_iClientBluetoothManagerCallbacks = 4800 };
+enum { k_iClientSharedConnectionCallbacks = 4900 };
+enum { k_ISteamParentalSettingsCallbacks = 5000 };
+enum { k_iClientShaderCallbacks = 5100 };
 
 //-----------------------------------------------------------------------------
 // The CALLBACK macros are for client side callback logging enabled with
@@ -292,14 +307,11 @@ enum { k_iClientInventoryCallbacks = 4700 };
 // Do not change any of these. 
 //-----------------------------------------------------------------------------
 
-struct SteamCallback_t
-{
-public:
-	SteamCallback_t() {}
-};
+#ifdef STEAM_CALLBACK_INSPECTION_ENABLED
 
 #define DEFINE_CALLBACK( callbackname, callbackid ) \
-struct callbackname : SteamCallback_t { \
+struct callbackname { \
+	typedef callbackname SteamCallback_t; \
 	enum { k_iCallback = callbackid }; \
 	static callbackname *GetNullPointer() { return 0; } \
 	static const char *GetCallbackName() { return #callbackname; } \
@@ -337,6 +349,17 @@ struct callbackname : SteamCallback_t { \
 	static bool    GetMemberVariable( uint32 index, uint32 &varOffset, uint32 &varSize,  uint32 &varCount, const char **pszName, const char **pszType ) { REFERENCE( pszType ); REFERENCE( pszName ); REFERENCE( varCount ); REFERENCE( varSize ); REFERENCE( varOffset ); REFERENCE( index ); return false; } \
 	};
 	
+#else
+
+#define DEFINE_CALLBACK( callbackname, callbackid )	struct callbackname { typedef callbackname SteamCallback_t; enum { k_iCallback = callbackid };
+#define CALLBACK_MEMBER( varidx, vartype, varname )	public: vartype varname ; 
+#define CALLBACK_ARRAY( varidx, vartype, varname, varcount ) public: vartype varname [ varcount ];
+#define END_CALLBACK_INTERNAL_BEGIN( numvars )  
+#define END_CALLBACK_INTERNAL_SWITCH( varidx )
+#define END_CALLBACK_INTERNAL_END()					};
+#define END_DEFINE_CALLBACK_0()						};
+
+#endif
 
 #define END_DEFINE_CALLBACK_1() \
 	END_CALLBACK_INTERNAL_BEGIN( 1 ) \

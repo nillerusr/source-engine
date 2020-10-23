@@ -25,7 +25,7 @@ public:
 	virtual uint32 GetNumInstalledApps() = 0;
 	virtual uint32 GetInstalledApps( AppId_t *pvecAppID, uint32 unMaxAppIDs ) = 0;
 
-	virtual int  GetAppName( AppId_t nAppID, char *pchName, int cchNameMax ) = 0; // returns -1 if no name was found
+	virtual int  GetAppName( AppId_t nAppID, OUT_STRING() char *pchName, int cchNameMax ) = 0; // returns -1 if no name was found
 	virtual int  GetAppInstallDir( AppId_t nAppID, char *pchDirectory, int cchNameMax ) = 0; // returns -1 if no dir was found
 
 	virtual int GetAppBuildId( AppId_t nAppID ) = 0; // return the buildid of this app, may change at any time based on backend updates to the game

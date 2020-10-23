@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2010, Valve LLC, All rights reserved. ============
 //
 // Purpose: utilities to decode/decrypt a ticket from the
 // ISteamUser::RequestEncryptedAppTicket, ISteamUser::GetEncryptedAppTicket API
