@@ -29,7 +29,7 @@ OPTFLAGS=-pipe -fno-exceptions -fPIC -fvisibility=hidden
 CXXFLAGS=$(OPTFLAGS) -fpermissive -std=gnu++0x -Wno-narrowing -m32
 CFLAGS=$(OPTFLAGS) -m32
 
-INCLUDES=-I.
+INCLUDES=-I. -I../../public/steam
 LDFLAGS = -shared -Wl,--no-warn-mismatch -Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -m32
 
 ifeq ($(NDK),1)

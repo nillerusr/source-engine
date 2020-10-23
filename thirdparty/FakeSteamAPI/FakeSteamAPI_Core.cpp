@@ -95,7 +95,7 @@ S_API void Steam_RegisterInterfaceFuncs(void *hModule) {
 }
 
 S_API HSteamUser Steam_GetHSteamUserCurrent() {
-	return NULL;
+	return 0;
 }
 
 S_API const char *SteamAPI_GetSteamInstallPath() {
@@ -103,25 +103,25 @@ S_API const char *SteamAPI_GetSteamInstallPath() {
 }
 
 S_API HSteamPipe SteamAPI_GetHSteamPipe() {
-	return NULL;
+	return 0;
 }
 
 S_API void SteamAPI_SetTryCatchCallbacks(bool bTryCatchCallbacks) {
-	return;
+
 }
 
 S_API HSteamPipe GetHSteamPipe() {
-	return NULL;
+	return 0;
 }
 
 S_API HSteamUser GetHSteamUser() {
-	return NULL;
+	return 0;
 }
 
 //steam_api_internal.h
 S_API HSteamUser SteamAPI_GetHSteamUser() {
 	//FakeSteamAPI_AppendLog(LogLevel_Info, "%s() will pass NULL to the application.", __FUNCTION__);
-	return NULL;
+	return 0;
 }
 
 S_API void * S_CALLTYPE SteamInternal_ContextInit(void *pContextInitData) {
