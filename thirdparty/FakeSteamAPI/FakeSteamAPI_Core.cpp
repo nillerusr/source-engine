@@ -1,100 +1,72 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define STEAM_API_EXPORTS
 
-#include "FakeSteamAPI_ContextProvider.h"
-#include "FakeSteamAPI_Utilities.h"
-#include "FakeSteamAPI_Settings.h"
+#define S_API extern "C" __attribute__ ((visibility("default"))) 
+#define NULL 0
 
-#include "steam_api.h"
-
-//Make FakeSteamAPI.dll bigger, just like the normal steam_api.dll does
-#pragma optimize("", off)
-char placeholder[1024 * 24] = { 'I', 'n', 'f', 'o', '\0' };
-
-#pragma optimize("", on)
+S_API void *g_pSteamClientGameServer;
+void *g_pSteamClientGameServer = NULL;
 
 //steam_api.h
-S_API bool S_CALLTYPE SteamAPI_Init() {
-	FakeSteamAPI_Settings_Init();
-
-	//FakeSteamAPI_AppendLog(LogLevel_Info, "FakeSteamAPI has been started.");
-
+S_API bool SteamAPI_Init() {
 	return true;
 }
 
-S_API bool S_CALLTYPE SteamAPI_InitSafe() {
-	FakeSteamAPI_Settings_Init();
-
-	//FakeSteamAPI_AppendLog(LogLevel_Info, "FakeSteamAPI has been started.");
-
+S_API bool SteamAPI_InitSafe() {
 	return true;
 }
 
-
-S_API void S_CALLTYPE SteamAPI_Shutdown() {
+S_API void SteamAPI_Shutdown() {
 
 }
 
-S_API bool S_CALLTYPE SteamAPI_RestartAppIfNecessary(uint32 unOwnAppID) {
-	//FakeSteamAPI_AppendLog(LogLevel_Info, "%s() will pass false to the application.", __FUNCTION__);
+S_API bool SteamAPI_RestartAppIfNecessary() {
 	return false;
 }
 
-S_API void S_CALLTYPE SteamAPI_ReleaseCurrentThreadMemory() {
+S_API void SteamAPI_ReleaseCurrentThreadMemory() {
 
 }
 
-S_API void S_CALLTYPE SteamAPI_WriteMiniDump(uint32 uStructuredExceptionCode, void* pvExceptionInfo, uint32 uBuildID) {
+S_API void SteamAPI_WriteMiniDump() {
 
 }
 
-S_API void S_CALLTYPE SteamAPI_SetMiniDumpComment(const char *pchMsg) {
+S_API void SteamAPI_SetMiniDumpComment() {
 
 }
 
-S_API void S_CALLTYPE SteamAPI_RunCallbacks() {
-	static bool bFirst = true;
-
-	if (bFirst) {
-		bFirst = false;
-		//FakeSteamAPI_AppendLog(LogLevel_Info, "Calls to %s() will only be shown once.", __FUNCTION__);
-	}
-
-	if (FakeSteamAPI_GetSettingsItemInt32(FakeSteamAPI_SettingsIndex_ProcessMessageInRunCallbacks) != 0) {
-
-	}
+S_API void SteamAPI_RunCallbacks() {
 }
 
-S_API void S_CALLTYPE SteamAPI_RegisterCallback(class CCallbackBase *pCallback, int iCallback) {
+S_API void SteamAPI_RegisterCallback() {
 
 }
 
-S_API void S_CALLTYPE SteamAPI_UnregisterCallback(class CCallbackBase *pCallback) {
+S_API void SteamAPI_UnregisterCallback() {
 
 }
 
-S_API void S_CALLTYPE SteamAPI_RegisterCallResult(class CCallbackBase *pCallback, SteamAPICall_t hAPICall) {
+S_API void SteamAPI_RegisterCallResult() {
 
 }
 
-S_API void S_CALLTYPE SteamAPI_UnregisterCallResult(class CCallbackBase *pCallback, SteamAPICall_t hAPICall) {
+S_API void SteamAPI_UnregisterCallResult() {
 
 }
 
-S_API bool S_CALLTYPE SteamAPI_IsSteamRunning() {
-	//FakeSteamAPI_AppendLog(LogLevel_Info, "%s() will pass false to the application.", __FUNCTION__);
+S_API bool SteamAPI_IsSteamRunning() {
 	return false;
 }
 
-S_API void Steam_RunCallbacks(HSteamPipe hSteamPipe, bool bGameServerCallbacks) {
+S_API void Steam_RunCallbacks() {
 
 }
 
-S_API void Steam_RegisterInterfaceFuncs(void *hModule) {
-
+S_API void Steam_RegisterInterfaceFuncs() {
 }
 
-S_API HSteamUser Steam_GetHSteamUserCurrent() {
+S_API int Steam_GetHSteamUserCurrent() {
 	return 0;
 }
 
@@ -102,39 +74,100 @@ S_API const char *SteamAPI_GetSteamInstallPath() {
 	return NULL;
 }
 
-S_API HSteamPipe SteamAPI_GetHSteamPipe() {
+S_API int SteamAPI_GetHSteamPipe() {
 	return 0;
 }
 
-S_API void SteamAPI_SetTryCatchCallbacks(bool bTryCatchCallbacks) {
+S_API void SteamAPI_SetTryCatchCallbacks() {
 
 }
 
-S_API HSteamPipe GetHSteamPipe() {
+S_API int GetHSteamPipe() {
 	return 0;
 }
 
-S_API HSteamUser GetHSteamUser() {
+S_API int GetHSteamUser() {
 	return 0;
 }
 
-//steam_api_internal.h
-S_API HSteamUser SteamAPI_GetHSteamUser() {
-	//FakeSteamAPI_AppendLog(LogLevel_Info, "%s() will pass NULL to the application.", __FUNCTION__);
+S_API int SteamAPI_GetHSteamUser() {
 	return 0;
 }
 
-S_API void * S_CALLTYPE SteamInternal_ContextInit(void *pContextInitData) {
-	static bool bFirst = true;
-	if (bFirst) {
-		bFirst = false;
-		//FakeSteamAPI_AppendLog(LogLevel_Info, "Calls to %s() will only be shown once.", __FUNCTION__);
-	}
-	//FakeSteamAPI_AppendLog(LogLevel_Info, "%s() will pass NULL to the application.", __FUNCTION__);
-	return &FakeSteamAPI_GetContextInstance();
-}
-
-S_API void * S_CALLTYPE SteamInternal_CreateInterface(const char *ver) {
-	//FakeSteamAPI_AppendLog(LogLevel_Info, "%s() will pass NULL to the application.", __FUNCTION__);
+S_API void *SteamInternal_ContextInit() {
 	return NULL;
+}
+
+S_API void *SteamInternal_CreateInterface() {
+	return NULL;
+}
+
+S_API void *SteamApps() {
+	return NULL;
+}
+
+S_API void *SteamClient() {
+	return NULL;
+}
+
+S_API void *SteamFriends() {
+	return NULL;
+}
+
+S_API void *SteamHTTP() {
+	return NULL;
+}
+
+S_API void *SteamMatchmaking() {
+	return NULL;
+}
+
+S_API void *SteamMatchmakingServers() {
+	return NULL;
+}
+
+S_API void *SteamNetworking() {
+	return NULL;
+}
+
+S_API void *SteamRemoteStorage() {
+	return NULL;
+}
+
+S_API void *SteamScreenshots() {
+	return NULL;
+}
+
+S_API void *SteamUser() {
+	return NULL;
+}
+
+S_API void *SteamUserStats() {
+	return NULL;
+}
+
+S_API void *SteamUtils() {
+	return NULL;
+}
+
+S_API int SteamGameServer_GetHSteamPipe() {
+	return 0;
+}
+
+S_API int SteamGameServer_GetHSteamUser() {
+	return 0;
+}
+
+S_API int SteamGameServer_GetIPCCallCount() {
+	return 0;
+}
+
+S_API int SteamGameServer_InitSafe() {
+	return 0;
+}
+
+S_API void SteamGameServer_RunCallbacks() {
+}
+
+S_API void SteamGameServer_Shutdown() {
 }

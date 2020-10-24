@@ -35,80 +35,39 @@ enum EServerMode
 //		UDP packets for the master  server updater. See references to GameSocketShare in isteamgameserver.h.
 // - The version string is usually in the form x.x.x.x, and is used by the master server to detect when the
 //		server is out of date.  (Only servers with the latest version will be listed.)
+#ifndef _PS3
 
-inline bool SteamGameServer_Init( uint32 unIP, uint16 usSteamPort, uint16 usGamePort, uint16 usQueryPort, EServerMode eServerMode, const char *pchVersionString );
+#ifdef VERSION_SAFE_STEAM_API_INTERFACES
+S_API bool SteamGameServer_InitSafe( uint32 unIP, uint16 usSteamPort, uint16 usGamePort, uint16 usQueryPort, EServerMode eServerMode, const char *pchVersionString );
+#else
+S_API bool SteamGameServer_Init( uint32 unIP, uint16 usSteamPort, uint16 usGamePort, uint16 usQueryPort, EServerMode eServerMode, const char *pchVersionString );
+#endif
+
+#else
+
+#ifdef VERSION_SAFE_STEAM_API_INTERFACES
+S_API bool SteamGameServer_InitSafe( const SteamPS3Params_t *ps3Params, uint32 unIP, uint16 usSteamPort, uint16 usGamePort, uint16 usQueryPort, EServerMode eServerMode, const char *pchVersionString );
+#else
+S_API bool SteamGameServer_Init( const SteamPS3Params_t *ps3Params, uint32 unIP, uint16 usSteamPort, uint16 usGamePort, uint16 usQueryPort, EServerMode eServerMode, const char *pchVersionString );
+#endif
+
+#endif
+
+#ifndef VERSION_SAFE_STEAM_API_INTERFACES
+S_API ISteamGameServer *SteamGameServer();
+S_API ISteamUtils *SteamGameServerUtils();
+S_API ISteamNetworking *SteamGameServerNetworking();
+S_API ISteamGameServerStats *SteamGameServerStats();
+S_API ISteamHTTP *SteamGameServerHTTP();
+S_API ISteamInventory *SteamGameServerInventory();
+S_API ISteamUGC *SteamGameServerUGC();
+#endif
 
 S_API void SteamGameServer_Shutdown();
 S_API void SteamGameServer_RunCallbacks();
 
-// Most Steam API functions allocate some amount of thread-local memory for
-// parameter storage. Calling SteamGameServer_ReleaseCurrentThreadMemory()
-// will free all API-related memory associated with the calling thread.
-// This memory is released automatically by SteamGameServer_RunCallbacks(),
-// so single-threaded servers do not need to explicitly call this function.
-inline void SteamGameServer_ReleaseCurrentThreadMemory();
-
 S_API bool SteamGameServer_BSecure();
 S_API uint64 SteamGameServer_GetSteamID();
-
-
-//----------------------------------------------------------------------------------------------------------------------------------------------------------//
-// Global accessors for game server C++ APIs. See individual isteam*.h files for details.
-// You should not cache the results of these accessors or pass the result pointers across
-// modules! Different modules may be compiled against different SDK header versions, and
-// the interface pointers could therefore be different across modules. Every line of code
-// which calls into a Steamworks API should retrieve the interface from a global accessor.
-//----------------------------------------------------------------------------------------------------------------------------------------------------------//
-#if !defined( STEAM_API_EXPORTS )
-inline ISteamClient *SteamGameServerClient();
-inline ISteamGameServer *SteamGameServer();
-inline ISteamUtils *SteamGameServerUtils();
-inline ISteamNetworking *SteamGameServerNetworking();
-inline ISteamGameServerStats *SteamGameServerStats();
-inline ISteamHTTP *SteamGameServerHTTP();
-inline ISteamInventory *SteamGameServerInventory();
-inline ISteamUGC *SteamGameServerUGC();
-inline ISteamApps *SteamGameServerApps();
-#endif
-
-class CSteamGameServerAPIContext
-{
-public:
-	CSteamGameServerAPIContext() { Clear(); }
-	inline void Clear();
-	inline bool Init();
-
-	ISteamClient *SteamClient() const					{ return m_pSteamClient; }
-	ISteamGameServer *SteamGameServer() const			{ return m_pSteamGameServer; }
-	ISteamUtils *SteamGameServerUtils() const			{ return m_pSteamGameServerUtils; }
-	ISteamNetworking *SteamGameServerNetworking() const	{ return m_pSteamGameServerNetworking; }
-	ISteamGameServerStats *SteamGameServerStats() const	{ return m_pSteamGameServerStats; }
-	ISteamHTTP *SteamHTTP() const						{ return m_pSteamHTTP; }
-	ISteamInventory *SteamInventory() const				{ return m_pSteamInventory; }
-	ISteamUGC *SteamUGC() const							{ return m_pSteamUGC; }
-	ISteamApps *SteamApps() const						{ return m_pSteamApps; }
-
-private:
-	ISteamClient				*m_pSteamClient;
-	ISteamGameServer			*m_pSteamGameServer;
-	ISteamUtils					*m_pSteamGameServerUtils;
-	ISteamNetworking			*m_pSteamGameServerNetworking;
-	ISteamGameServerStats		*m_pSteamGameServerStats;
-	ISteamHTTP					*m_pSteamHTTP;
-	ISteamInventory				*m_pSteamInventory;
-	ISteamUGC					*m_pSteamUGC;
-	ISteamApps					*m_pSteamApps;
-};
-
-
-// Older SDKs exported this global pointer, but it is no longer supported.
-// You should use SteamGameServerClient() or CSteamGameServerAPIContext to
-// safely access the ISteamClient APIs from your game server application.
-//S_API ISteamClient *g_pSteamClientGameServer;
-
-// SteamGameServer_InitSafe has been replaced with SteamGameServer_Init and
-// is no longer supported. Use SteamGameServer_Init instead.
-//S_API void S_CALLTYPE SteamGameServer_InitSafe();
 
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------//
@@ -121,6 +80,7 @@ private:
 	CCallbackManual< thisclass, callback_type, true > var; void func( callback_type *pParam )
 
 
+
 #define _STEAM_CALLBACK_GS( _, thisclass, func, param, var ) \
 	CCallback< thisclass, param, true > var; void func( param *pParam )
 
@@ -129,45 +89,52 @@ private:
 //
 //	The following functions are part of abstracting API access to the steamclient.dll, but should only be used in very specific cases
 //----------------------------------------------------------------------------------------------------------------------------------------------------------//
-S_API HSteamPipe S_CALLTYPE SteamGameServer_GetHSteamPipe();
-S_API HSteamUser S_CALLTYPE SteamGameServer_GetHSteamUser();
-S_API bool S_CALLTYPE SteamInternal_GameServer_Init( uint32 unIP, uint16 usPort, uint16 usGamePort, uint16 usQueryPort, EServerMode eServerMode, const char *pchVersionString );
+S_API HSteamPipe SteamGameServer_GetHSteamPipe();
 
+#ifdef VERSION_SAFE_STEAM_API_INTERFACES
+//----------------------------------------------------------------------------------------------------------------------------------------------------------//
+// VERSION_SAFE_STEAM_API_INTERFACES uses CSteamAPIContext to provide interfaces to each module in a way that 
+// lets them each specify the interface versions they are compiled with.
+//
+// It's important that these stay inlined in the header so the calling module specifies the interface versions
+// for whatever Steam API version it has.
+//----------------------------------------------------------------------------------------------------------------------------------------------------------//
 
-#if !defined( STEAM_API_EXPORTS )
-inline void S_CALLTYPE SteamGameServerInternal_OnContextInit( void* p )
+S_API HSteamUser SteamGameServer_GetHSteamUser();
+
+class CSteamGameServerAPIContext
 {
-	((CSteamGameServerAPIContext*)p)->Clear();
-	if ( SteamGameServer_GetHSteamPipe() )
-		((CSteamGameServerAPIContext*)p)->Init();
-}
-inline CSteamGameServerAPIContext& SteamGameServerInternal_ModuleContext()
-{
-	// SteamInternal_ContextInit takes a base pointer for the equivalent of
-	// struct { void (*pFn)(void* pCtx); uintp counter; CSteamAPIContext ctx; }
-	// Do not change layout of 2 + sizeof... or add non-pointer aligned data!
-	// NOTE: declaring "static CSteamAPIConext" creates a large function
-	// which queries the initialization status of the object. We know that
-	// it is pointer-aligned and fully memset with zeros, so just alias a
-	// static buffer of the appropriate size and call it a CSteamAPIContext.
-	static void* s_CallbackCounterAndContext[2 + sizeof( CSteamGameServerAPIContext ) / sizeof( void* )] = { (void*)&SteamGameServerInternal_OnContextInit, 0 };
-	return *(CSteamGameServerAPIContext*)SteamInternal_ContextInit( s_CallbackCounterAndContext );
-}
-inline ISteamClient *SteamGameServerClient() { return SteamGameServerInternal_ModuleContext().SteamClient(); }
-inline ISteamGameServer *SteamGameServer() { return SteamGameServerInternal_ModuleContext().SteamGameServer(); }
-inline ISteamUtils *SteamGameServerUtils() { return SteamGameServerInternal_ModuleContext().SteamGameServerUtils(); }
-inline ISteamNetworking *SteamGameServerNetworking() { return SteamGameServerInternal_ModuleContext().SteamGameServerNetworking(); }
-inline ISteamGameServerStats *SteamGameServerStats() { return SteamGameServerInternal_ModuleContext().SteamGameServerStats(); }
-inline ISteamHTTP *SteamGameServerHTTP() { return SteamGameServerInternal_ModuleContext().SteamHTTP(); }
-inline ISteamInventory *SteamGameServerInventory() { return SteamGameServerInternal_ModuleContext().SteamInventory(); }
-inline ISteamUGC *SteamGameServerUGC() { return SteamGameServerInternal_ModuleContext().SteamUGC(); }
-inline ISteamApps *SteamGameServerApps() { return SteamGameServerInternal_ModuleContext().SteamApps(); }
-#endif // !defined( STEAM_API_EXPORTS )
+public:
+	CSteamGameServerAPIContext();
+	void Clear();
 
+	bool Init();
+
+	ISteamGameServer *SteamGameServer() { return m_pSteamGameServer; }
+	ISteamUtils *SteamGameServerUtils() { return m_pSteamGameServerUtils; }
+	ISteamNetworking *SteamGameServerNetworking() { return m_pSteamGameServerNetworking; }
+	ISteamGameServerStats *SteamGameServerStats() { return m_pSteamGameServerStats; }
+	ISteamHTTP *SteamHTTP() { return m_pSteamHTTP; }
+	ISteamInventory *SteamInventory() { return m_pSteamInventory; }
+	ISteamUGC *SteamUGC() { return m_pSteamUGC; }
+
+private:
+	ISteamGameServer			*m_pSteamGameServer;
+	ISteamUtils					*m_pSteamGameServerUtils;
+	ISteamNetworking			*m_pSteamGameServerNetworking;
+	ISteamGameServerStats		*m_pSteamGameServerStats;
+	ISteamHTTP					*m_pSteamHTTP;
+	ISteamInventory				*m_pSteamInventory;
+	ISteamUGC					*m_pSteamUGC;
+};
+
+inline CSteamGameServerAPIContext::CSteamGameServerAPIContext()
+{
+	Clear();
+}
 
 inline void CSteamGameServerAPIContext::Clear()
 {
-	m_pSteamClient = NULL;
 	m_pSteamGameServer = NULL;
 	m_pSteamGameServerUtils = NULL;
 	m_pSteamGameServerNetworking = NULL;
@@ -175,69 +142,50 @@ inline void CSteamGameServerAPIContext::Clear()
 	m_pSteamHTTP = NULL;
 	m_pSteamInventory = NULL;
 	m_pSteamUGC = NULL;
-	m_pSteamApps = NULL;
 }
 
-// This function must be declared inline in the header so the module using steam_api.dll gets the version names they want.
+S_API ISteamClient *g_pSteamClientGameServer;
+// This function must be inlined so the module using steam_api.dll gets the version names they want.
 inline bool CSteamGameServerAPIContext::Init()
 {
-	HSteamUser hSteamUser = SteamGameServer_GetHSteamUser();
-	HSteamPipe hSteamPipe = SteamGameServer_GetHSteamPipe();
-	if ( !hSteamPipe )
+	if ( !g_pSteamClientGameServer )
 		return false;
 
-	m_pSteamClient = (ISteamClient*) SteamInternal_CreateInterface( STEAMCLIENT_INTERFACE_VERSION );
-	if ( !m_pSteamClient )
-		return false;
-	
-	m_pSteamGameServer = m_pSteamClient->GetISteamGameServer( hSteamUser, hSteamPipe, STEAMGAMESERVER_INTERFACE_VERSION );
+	HSteamUser hSteamUser = SteamGameServer_GetHSteamUser();
+	HSteamPipe hSteamPipe = SteamGameServer_GetHSteamPipe();
+
+	m_pSteamGameServer = g_pSteamClientGameServer->GetISteamGameServer( hSteamUser, hSteamPipe, STEAMGAMESERVER_INTERFACE_VERSION );
 	if ( !m_pSteamGameServer )
 		return false;
 
-	m_pSteamGameServerUtils = m_pSteamClient->GetISteamUtils( hSteamPipe, STEAMUTILS_INTERFACE_VERSION );
+	m_pSteamGameServerUtils = g_pSteamClientGameServer->GetISteamUtils( hSteamPipe, STEAMUTILS_INTERFACE_VERSION );
 	if ( !m_pSteamGameServerUtils )
 		return false;
 
-	m_pSteamGameServerNetworking = m_pSteamClient->GetISteamNetworking( hSteamUser, hSteamPipe, STEAMNETWORKING_INTERFACE_VERSION );
+	m_pSteamGameServerNetworking = g_pSteamClientGameServer->GetISteamNetworking( hSteamUser, hSteamPipe, STEAMNETWORKING_INTERFACE_VERSION );
 	if ( !m_pSteamGameServerNetworking )
 		return false;
 
-	m_pSteamGameServerStats = m_pSteamClient->GetISteamGameServerStats( hSteamUser, hSteamPipe, STEAMGAMESERVERSTATS_INTERFACE_VERSION );
+	m_pSteamGameServerStats = g_pSteamClientGameServer->GetISteamGameServerStats( hSteamUser, hSteamPipe, STEAMGAMESERVERSTATS_INTERFACE_VERSION );
 	if ( !m_pSteamGameServerStats )
 		return false;
 
-	m_pSteamHTTP = m_pSteamClient->GetISteamHTTP( hSteamUser, hSteamPipe, STEAMHTTP_INTERFACE_VERSION );
+	m_pSteamHTTP = g_pSteamClientGameServer->GetISteamHTTP( hSteamUser, hSteamPipe, STEAMHTTP_INTERFACE_VERSION );
 	if ( !m_pSteamHTTP )
 		return false;
 
-	m_pSteamInventory = m_pSteamClient->GetISteamInventory( hSteamUser, hSteamPipe, STEAMINVENTORY_INTERFACE_VERSION );
+	m_pSteamInventory = g_pSteamClientGameServer->GetISteamInventory( hSteamUser, hSteamPipe, STEAMINVENTORY_INTERFACE_VERSION );
 	if ( !m_pSteamInventory )
 		return false;
 
-	m_pSteamUGC = m_pSteamClient->GetISteamUGC( hSteamUser, hSteamPipe, STEAMUGC_INTERFACE_VERSION );
+	m_pSteamUGC = g_pSteamClientGameServer->GetISteamUGC( hSteamUser, hSteamPipe, STEAMUGC_INTERFACE_VERSION );
 	if ( !m_pSteamUGC )
 		return false;
 
-	m_pSteamApps = m_pSteamClient->GetISteamApps( hSteamUser, hSteamPipe, STEAMAPPS_INTERFACE_VERSION );
-	if ( !m_pSteamApps )
-		return false;
-
 	return true;
 }
 
+#endif // VERSION_SAFE_STEAM_API_INTERFACES
 
-inline bool SteamGameServer_Init( uint32 unIP, uint16 usSteamPort, uint16 usGamePort, uint16 usQueryPort, EServerMode eServerMode, const char *pchVersionString )
-{
-	if ( !SteamInternal_GameServer_Init( unIP, usSteamPort, usGamePort, usQueryPort, eServerMode, pchVersionString ) )
-		return false;
-
-	return true;
-}
-
-
-inline void SteamGameServer_ReleaseCurrentThreadMemory()
-{
-	SteamAPI_ReleaseCurrentThreadMemory();
-}
 
 #endif // STEAM_GAMESERVER_H

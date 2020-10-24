@@ -1,4 +1,4 @@
-//====== Copyright ? 1996-2014 Valve Corporation, All rights reserved. =======
+//====== Copyright © 1996-2014 Valve Corporation, All rights reserved. =======
 //
 // Purpose: interface to Steam Inventory
 //
@@ -27,7 +27,7 @@
 // and will not be transferred to another player or re-used for another item.
 typedef uint64 SteamItemInstanceID_t;
 
-static const SteamItemInstanceID_t k_SteamItemInstanceIDInvalid = (SteamItemInstanceID_t)~0;
+static const SteamItemInstanceID_t k_SteamItemInstanceIDInvalid = ~(SteamItemInstanceID_t)0;
 
 // Types of items in your game are identified by a 32-bit "item definition number".
 // Valid definition numbers are between 1 and 999999999; numbers less than or equal to
@@ -61,8 +61,6 @@ typedef int32 SteamInventoryResult_t;
 
 static const SteamInventoryResult_t k_SteamInventoryResultInvalid = -1;
 
-typedef uint64 SteamInventoryUpdateHandle_t;
-const SteamInventoryUpdateHandle_t k_SteamInventoryUpdateHandleInvalid = 0xffffffffffffffffull;
 
 //-----------------------------------------------------------------------------
 // Purpose: Steam Inventory query and manipulation API
@@ -95,23 +93,6 @@ public:
 	virtual bool GetResultItems( SteamInventoryResult_t resultHandle,
 								OUT_ARRAY_COUNT( punOutItemsArraySize,Output array) SteamItemDetails_t *pOutItemsArray,
 								uint32 *punOutItemsArraySize ) = 0;
-
-	// In combination with GetResultItems, you can use GetResultItemProperty to retrieve
-	// dynamic string properties for a given item returned in the result set.
-	// 
-	// Property names are always composed of ASCII letters, numbers, and/or underscores.
-	//
-	// Pass a NULL pointer for pchPropertyName to get a comma - separated list of available
-	// property names.
-	//
-	// If pchValueBuffer is NULL, *punValueBufferSize will contain the 
-	// suggested buffer size. Otherwise it will be the number of bytes actually copied
-	// to pchValueBuffer. If the results do not fit in the given buffer, partial 
-	// results may be copied.
-	virtual bool GetResultItemProperty( SteamInventoryResult_t resultHandle, 
-										uint32 unItemIndex, 
-										const char *pchPropertyName,
-										OUT_STRING_COUNT( punValueBufferSizeOut ) char *pchValueBuffer, uint32 *punValueBufferSizeOut ) = 0;
 
 	// Returns the server time at which the result was generated. Compare against
 	// the value of IClientUtils::GetServerRealTime() to determine age.
@@ -194,9 +175,10 @@ public:
 	//
 	
 	// GenerateItems() creates one or more items and then generates a SteamInventoryCallback_t
-	// notification with a matching nCallbackContext parameter. This API is only intended
-	// for prototyping - it is only usable by Steam accounts that belong to the publisher group 
-	// for your game.
+	// notification with a matching nCallbackContext parameter. This API is insecure, and could
+	// be abused by hacked clients. It is, however, very useful as a development cheat or as
+	// a means of prototyping item-related features for your game. The use of GenerateItems can
+	// be restricted to certain item definitions or fully blocked via the Steamworks website.
 	// If punArrayQuantity is not NULL, it should be the same length as pArrayItems and should
 	// describe the quantity of each item to generate.
 	virtual bool GenerateItems( SteamInventoryResult_t *pResultHandle, ARRAY_COUNT(unArrayLength) const SteamItemDef_t *pArrayItemDefs, ARRAY_COUNT(unArrayLength) const uint32 *punArrayQuantity, uint32 unArrayLength ) = 0;
@@ -217,18 +199,22 @@ public:
 
 	// ConsumeItem() removes items from the inventory, permanently. They cannot be recovered.
 	// Not for the faint of heart - if your game implements item removal at all, a high-friction
-	// UI confirmation process is highly recommended.
+	// UI confirmation process is highly recommended. Similar to GenerateItems, punArrayQuantity
+	// can be NULL or else an array of the same length as pArrayItems which describe the quantity
+	// of each item to destroy. ConsumeItem can be restricted to certain item definitions or
+	// fully blocked via the Steamworks website to minimize support/abuse issues such as the
+	// clasic "my brother borrowed my laptop and deleted all of my rare items".
 	METHOD_DESC(ConsumeItem() removes items from the inventory permanently.)
 	virtual bool ConsumeItem( SteamInventoryResult_t *pResultHandle, SteamItemInstanceID_t itemConsume, uint32 unQuantity ) = 0;
 
-	// ExchangeItems() is an atomic combination of item generation and consumption. 
-	// It can be used to implement crafting recipes or transmutations, or items which unpack 
-	// themselves into other items (e.g., a chest). 
-	// Exchange recipes are defined in the ItemDef, and explicitly list the required item 
-	// types and resulting generated type. 
-	// Exchange recipes are evaluated atomically by the Inventory Service; if the supplied
-	// components do not match the recipe, or do not contain sufficient quantity, the 
-	// exchange will fail.
+	// ExchangeItems() is an atomic combination of GenerateItems and DestroyItems. It can be
+	// used to implement crafting recipes or transmutations, or items which unpack themselves
+	// into other items. Like GenerateItems, this is a flexible and dangerous API which is
+	// meant for rapid prototyping. You can configure restrictions on ExchangeItems via the
+	// Steamworks website, such as limiting it to a whitelist of input/output combinations
+	// corresponding to recipes.
+	// (Note: although GenerateItems may be hard or impossible to use securely in your game,
+	// ExchangeItems is perfectly reasonable to use once the whitelists are set accordingly.)
 	virtual bool ExchangeItems( SteamInventoryResult_t *pResultHandle,
 								ARRAY_COUNT(unArrayGenerateLength) const SteamItemDef_t *pArrayGenerate, ARRAY_COUNT(unArrayGenerateLength) const uint32 *punArrayGenerateQuantity, uint32 unArrayGenerateLength,
 								ARRAY_COUNT(unArrayDestroyLength) const SteamItemInstanceID_t *pArrayDestroy, ARRAY_COUNT(unArrayDestroyLength) const uint32 *punArrayDestroyQuantity, uint32 unArrayDestroyLength ) = 0;
@@ -244,8 +230,21 @@ public:
 	// TIMED DROPS AND PLAYTIME CREDIT
 	//
 
-	// Deprecated. Calling this method is not required for proper playtime accounting.
-	METHOD_DESC( Deprecated method. Playtime accounting is performed on the Steam servers. )
+	// Applications which use timed-drop mechanics should call SendItemDropHeartbeat() when
+	// active gameplay begins, and at least once every two minutes afterwards. The backend
+	// performs its own time calculations, so the precise timing of the heartbeat is not
+	// critical as long as you send at least one heartbeat every two minutes. Calling the
+	// function more often than that is not harmful, it will simply have no effect. Note:
+	// players may be able to spoof this message by hacking their client, so you should not
+	// attempt to use this as a mechanism to restrict playtime credits. It is simply meant
+	// to distinguish between being in any kind of gameplay situation vs the main menu or
+	// a pre-game launcher window. (If you are stingy with handing out playtime credit, it
+	// will only encourage players to run bots or use mouse/kb event simulators.)
+	//
+	// Playtime credit accumulation can be capped on a daily or weekly basis through your
+	// Steamworks configuration.
+	//
+	METHOD_DESC(Applications which use timed-drop mechanics should call SendItemDropHeartbeat() when active gameplay begins and at least once every two minutes afterwards.)
 	virtual void SendItemDropHeartbeat() = 0;
 
 	// Playtime credit must be consumed and turned into item drops by your game. Only item
@@ -254,14 +253,23 @@ public:
 	// Your game should call TriggerItemDrop at an appropriate time for the user to receive
 	// new items, such as between rounds or while the player is dead. Note that players who
 	// hack their clients could modify the value of "dropListDefinition", so do not use it
-	// to directly control rarity.
-	// See your Steamworks configuration to set playtime drop rates for individual itemdefs.
-	// The client library will suppress too-frequent calls to this method.
+	// to directly control rarity. It is primarily useful during testing and development,
+	// where you may wish to perform experiments with different types of drops.
 	METHOD_DESC(Playtime credit must be consumed and turned into item drops by your game.)
 	virtual bool TriggerItemDrop( SteamInventoryResult_t *pResultHandle, SteamItemDef_t dropListDefinition ) = 0;
 
 
-	// Deprecated. This method is not supported.
+	// IN-GAME TRADING
+	//
+	// TradeItems() implements limited in-game trading of items, if you prefer not to use
+	// the overlay or an in-game web browser to perform Steam Trading through the website.
+	// You should implement a UI where both players can see and agree to a trade, and then
+	// each client should call TradeItems simultaneously (+/- 5 seconds) with matching
+	// (but reversed) parameters. The result is the same as if both players performed a
+	// Steam Trading transaction through the web. Each player will get an inventory result
+	// confirming the removal or quantity changes of the items given away, and the new
+	// item instance id numbers and quantities of the received items.
+	// (Note: new item instance IDs are generated whenever an item changes ownership.)
 	virtual bool TradeItems( SteamInventoryResult_t *pResultHandle, CSteamID steamIDTradePartner,
 							 ARRAY_COUNT(nArrayGiveLength) const SteamItemInstanceID_t *pArrayGive, ARRAY_COUNT(nArrayGiveLength) const uint32 *pArrayGiveQuantity, uint32 nArrayGiveLength,
 							 ARRAY_COUNT(nArrayGetLength) const SteamItemInstanceID_t *pArrayGet, ARRAY_COUNT(nArrayGetLength) const uint32 *pArrayGetQuantity, uint32 nArrayGetLength ) = 0;
@@ -298,67 +306,12 @@ public:
 	// on the current Steam language settings (see ISteamApps::GetCurrentGameLanguage).
 	// Property names are always composed of ASCII letters, numbers, and/or underscores.
 	// Pass a NULL pointer for pchPropertyName to get a comma - separated list of available
-	// property names. If pchValueBuffer is NULL, *punValueBufferSize will contain the 
-	// suggested buffer size. Otherwise it will be the number of bytes actually copied
-	// to pchValueBuffer. If the results do not fit in the given buffer, partial 
-	// results may be copied.
+	// property names. 
 	virtual bool GetItemDefinitionProperty( SteamItemDef_t iDefinition, const char *pchPropertyName,
-		OUT_STRING_COUNT(punValueBufferSizeOut) char *pchValueBuffer, uint32 *punValueBufferSizeOut ) = 0;
-
-	// Request the list of "eligible" promo items that can be manually granted to the given
-	// user.  These are promo items of type "manual" that won't be granted automatically.
-	// An example usage of this is an item that becomes available every week.
-	CALL_RESULT( SteamInventoryEligiblePromoItemDefIDs_t )
-	virtual SteamAPICall_t RequestEligiblePromoItemDefinitionsIDs( CSteamID steamID ) = 0;
-
-	// After handling a SteamInventoryEligiblePromoItemDefIDs_t call result, use this
-	// function to pull out the list of item definition ids that the user can be
-	// manually granted via the AddPromoItems() call.
-	virtual bool GetEligiblePromoItemDefinitionIDs(
-		CSteamID steamID,
-		OUT_ARRAY_COUNT(punItemDefIDsArraySize,List of item definition IDs) SteamItemDef_t *pItemDefIDs,
-		DESC(Size of array is passed in and actual size used is returned in this param) uint32 *punItemDefIDsArraySize ) = 0;
-
-	// Starts the purchase process for the given item definitions.  The callback SteamInventoryStartPurchaseResult_t
-	// will be posted if Steam was able to initialize the transaction.
-	// 
-	// Once the purchase has been authorized and completed by the user, the callback SteamInventoryResultReady_t 
-	// will be posted.
-	CALL_RESULT( SteamInventoryStartPurchaseResult_t )
-	virtual SteamAPICall_t StartPurchase( ARRAY_COUNT(unArrayLength) const SteamItemDef_t *pArrayItemDefs, ARRAY_COUNT(unArrayLength) const uint32 *punArrayQuantity, uint32 unArrayLength ) = 0;
-
-	// Request current prices for all applicable item definitions
-	CALL_RESULT( SteamInventoryRequestPricesResult_t )
-	virtual SteamAPICall_t RequestPrices() = 0;
-
-	// Returns the number of items with prices.  Need to call RequestPrices() first.
-	virtual uint32 GetNumItemsWithPrices() = 0;
-	
-	// Returns item definition ids and their prices in the user's local currency.
-	// Need to call RequestPrices() first.
-	virtual bool GetItemsWithPrices( ARRAY_COUNT(unArrayLength) OUT_ARRAY_COUNT(pArrayItemDefs, Items with prices) SteamItemDef_t *pArrayItemDefs,
-									 ARRAY_COUNT(unArrayLength) OUT_ARRAY_COUNT(pPrices, List of prices for the given item defs) uint64 *pPrices,
-									 uint32 unArrayLength ) = 0;
-
-	// Retrieves the price for the item definition id
-	// Returns false if there is no price stored for the item definition.
-	virtual bool GetItemPrice( SteamItemDef_t iDefinition, uint64 *pPrice ) = 0;
-
-	// Create a request to update properties on items
-	virtual SteamInventoryUpdateHandle_t StartUpdateProperties() = 0;
-	// Remove the property on the item
-	virtual bool RemoveProperty( SteamInventoryUpdateHandle_t handle, SteamItemInstanceID_t nItemID, const char *pchPropertyName ) = 0;
-	// Accessor methods to set properties on items
-	virtual bool SetProperty( SteamInventoryUpdateHandle_t handle, SteamItemInstanceID_t nItemID, const char *pchPropertyName, const char *pchPropertyValue ) = 0;
-	virtual bool SetProperty( SteamInventoryUpdateHandle_t handle, SteamItemInstanceID_t nItemID, const char *pchPropertyName, bool bValue ) = 0;
-	virtual bool SetProperty( SteamInventoryUpdateHandle_t handle, SteamItemInstanceID_t nItemID, const char *pchPropertyName, int64 nValue ) = 0;
-	virtual bool SetProperty( SteamInventoryUpdateHandle_t handle, SteamItemInstanceID_t nItemID, const char *pchPropertyName, float flValue ) = 0;
-	// Submit the update request by handle
-	virtual bool SubmitUpdateProperties( SteamInventoryUpdateHandle_t handle, SteamInventoryResult_t * pResultHandle ) = 0;
-	
+		OUT_STRING_COUNT(punValueBufferSize) char *pchValueBuffer, uint32 *punValueBufferSize ) = 0;
 };
 
-#define STEAMINVENTORY_INTERFACE_VERSION "STEAMINVENTORY_INTERFACE_V002"
+#define STEAMINVENTORY_INTERFACE_VERSION "STEAMINVENTORY_INTERFACE_V001"
 
 
 // SteamInventoryResultReady_t callbacks are fired whenever asynchronous
@@ -393,34 +346,6 @@ struct SteamInventoryFullUpdate_t
 struct SteamInventoryDefinitionUpdate_t
 {
 	enum { k_iCallback = k_iClientInventoryCallbacks + 2 };
-};
-
-// Returned 
-struct SteamInventoryEligiblePromoItemDefIDs_t
-{
-	enum { k_iCallback = k_iClientInventoryCallbacks + 3 };
-	EResult m_result;
-	CSteamID m_steamID;
-	int m_numEligiblePromoItemDefs;
-	bool m_bCachedData;	// indicates that the data was retrieved from the cache and not the server
-};
-
-// Triggered from StartPurchase call
-struct SteamInventoryStartPurchaseResult_t
-{
-	enum { k_iCallback = k_iClientInventoryCallbacks + 4 };
-	EResult m_result;
-	uint64 m_ulOrderID;
-	uint64 m_ulTransID;
-};
-
-
-// Triggered from RequestPrices
-struct SteamInventoryRequestPricesResult_t
-{
-	enum { k_iCallback = k_iClientInventoryCallbacks + 5 };
-	EResult m_result;
-	char m_rgchCurrency[4];
 };
 
 #pragma pack( pop )
