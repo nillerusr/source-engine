@@ -82,6 +82,14 @@ S_API void SteamAPI_SetTryCatchCallbacks() {
 
 }
 
+S_API void SteamAPI_SetBreakpadAppID() {
+
+}
+
+S_API void SteamAPI_UseBreakpadCrashHandler() {
+
+}
+
 S_API int GetHSteamPipe() {
 	return 0;
 }
