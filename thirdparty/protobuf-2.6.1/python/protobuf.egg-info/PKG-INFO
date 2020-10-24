@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: protobuf
+Version: 2.6.1
+Summary: Protocol Buffers
+Home-page: https://developers.google.com/protocol-buffers/
+Author: protobuf@googlegroups.com
+Author-email: protobuf@googlegroups.com
+License: New BSD License
+Description: Protocol Buffers are Google's data interchange format.
+Platform: UNKNOWN

@@ -1,0 +1,6 @@
+[distutils.setup_keywords]
+google_test_dir = google.apputils.setup_command:ValidateGoogleTestDir
+
+[distutils.commands]
+google_test = google.apputils.setup_command:GoogleTest
+
