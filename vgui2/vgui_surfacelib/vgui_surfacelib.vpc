@@ -8,6 +8,13 @@ $macro SRCDIR		"..\.."
 
 $include "$SRCDIR\vpc_scripts\source_lib_base.vpc"
 
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories   "$BASE;.\;/usr/include/freetype2/"
+	}
+}
 
 $Project "vgui_surfacelib"
 {
