@@ -3,7 +3,6 @@
 
 #include "pch.h"
 #include "twofish.h"
-#include "secblock.h"
 #include "misc.h"
 
 NAMESPACE_BEGIN(CryptoPP)
@@ -37,9 +36,7 @@ inline word32 Twofish::Base::h0(word32 x, const word32 *key, unsigned int kLen)
 	{
 #define Q(a, b, c, d, t) q[a][GETBYTE(t,0)] ^ (q[b][GETBYTE(t,1)] << 8) ^ (q[c][GETBYTE(t,2)] << 16) ^ (q[d][GETBYTE(t,3)] << 24)
 	case 4: x = Q(1, 0, 0, 1, x) ^ key[6];
-	// fall through
 	case 3: x = Q(1, 1, 0, 0, x) ^ key[4];
-	// fall through
 	case 2: x = Q(0, 1, 0, 1, x) ^ key[2];
 			x = Q(0, 0, 1, 1, x) ^ key[0];
 	}
@@ -64,9 +61,9 @@ void Twofish::Base::UncheckedSetKey(const byte *userKey, unsigned int keylength,
 	for (i=0; i<40; i+=2)
 	{
 		word32 a = h(i, key, len);
-		word32 b = rotlConstant<8>(h(i + 1, key + 1, len));
+		word32 b = rotlFixed(h(i+1, key+1, len), 8);
 		m_k[i] = a+b;
-		m_k[i + 1] = rotlConstant<9>(a + 2 * b);
+		m_k[i+1] = rotlFixed(a+2*b, 9);
 	}
 
 	SecBlock<word32> svec(2*len);
@@ -89,8 +86,8 @@ void Twofish::Base::UncheckedSetKey(const byte *userKey, unsigned int keylength,
 	x = G1 (a); y = G2 (b); \
 	x += y; y += x + k[2 * (n) + 1]; \
 	(c) ^= x + k[2 * (n)]; \
-	(c) = rotrConstant<1>(c); \
-	(d) = rotlConstant<1>(d) ^ y
+	(c) = rotrFixed(c, 1); \
+	(d) = rotlFixed(d, 1) ^ y
 
 #define ENCCYCLE(n) \
 	ENCROUND (2 * (n), a, b, c, d); \
@@ -100,8 +97,8 @@ void Twofish::Base::UncheckedSetKey(const byte *userKey, unsigned int keylength,
 	x = G1 (a); y = G2 (b); \
 	x += y; y += x; \
 	(d) ^= y + k[2 * (n) + 1]; \
-	(d) = rotrConstant<1>(d); \
-	(c) = rotlConstant<1>(c); \
+	(d) = rotrFixed(d, 1); \
+	(c) = rotlFixed(c, 1); \
 	(c) ^= (x + k[2 * (n)])
 
 #define DECCYCLE(n) \
@@ -134,7 +131,7 @@ void Twofish::Enc::ProcessAndXorBlock(const byte *inBlock, const byte *xorBlock,
 	c ^= m_k[4];
 	d ^= m_k[5];
 	a ^= m_k[6];
-	b ^= m_k[7];
+	b ^= m_k[7]; 
 
 	Block::Put(xorBlock, outBlock)(c)(d)(a)(b);
 }

@@ -1,38 +1,27 @@
-// dsa.cpp - originally written and placed in the public domain by Wei Dai
+// dsa.cpp - written and placed in the public domain by Wei Dai
 
 #include "pch.h"
-#include "config.h"
-
-// TODO: fix the C4589 warnings
-#if CRYPTOPP_MSC_VERSION
-# pragma warning(disable: 4189 4589)
-#endif
 
 #ifndef CRYPTOPP_IMPORTS
 
 #include "gfpcrypt.h"
-#include "nbtheory.h"
-#include "modarith.h"
-#include "integer.h"
 #include "asn.h"
 #include "oids.h"
-#include "misc.h"
+#include "nbtheory.h"
 
 NAMESPACE_BEGIN(CryptoPP)
 
-#if defined(CRYPTOPP_DEBUG) && !defined(CRYPTOPP_DOXYGEN_PROCESSING)
 void TestInstantiations_gfpcrypt()
 {
-	GDSA<SHA1>::Signer test;
-	GDSA<SHA1>::Verifier test1;
+	GDSA<SHA>::Signer test;
+	GDSA<SHA>::Verifier test1;
 	DSA::Signer test5(NullRNG(), 100);
 	DSA::Signer test2(test5);
-	NR<SHA1>::Signer test3;
-	NR<SHA1>::Verifier test4;
+	NR<SHA>::Signer test3;
+	NR<SHA>::Verifier test4;
 	DLIES<>::Encryptor test6;
 	DLIES<>::Decryptor test7;
 }
-#endif
 
 void DL_GroupParameters_DSA::GenerateRandom(RandomNumberGenerator &rng, const NameValuePairs &alg)
 {
@@ -41,54 +30,49 @@ void DL_GroupParameters_DSA::GenerateRandom(RandomNumberGenerator &rng, const Na
 	if (alg.GetValue("Modulus", p) && alg.GetValue("SubgroupGenerator", g))
 	{
 		q = alg.GetValueWithDefault("SubgroupOrder", ComputeGroupOrder(p)/2);
-		Initialize(p, q, g);
 	}
 	else
 	{
-		int modulusSize = 2048, defaultSubgroupOrderSize;
+		int modulusSize = 1024;
 		alg.GetIntValue("ModulusSize", modulusSize) || alg.GetIntValue("KeySize", modulusSize);
 
-		switch (modulusSize)
-		{
-		case 1024:
-			defaultSubgroupOrderSize = 160;
-			break;
-		case 2048:
-			defaultSubgroupOrderSize = 224;
-			break;
-		case 3072:
-			defaultSubgroupOrderSize = 256;
-			break;
-		default:
+		if (!DSA::IsValidPrimeLength(modulusSize))
 			throw InvalidArgument("DSA: not a valid prime length");
-		}
 
-		DL_GroupParameters_GFP::GenerateRandom(rng, CombinedNameValuePairs(alg, MakeParameters(Name::SubgroupOrderSize(), defaultSubgroupOrderSize, false)));
+		SecByteBlock seed(SHA::DIGESTSIZE);
+		Integer h;
+		int c;
+
+		do
+		{
+			rng.GenerateBlock(seed, SHA::DIGESTSIZE);
+		} while (!DSA::GeneratePrimes(seed, SHA::DIGESTSIZE*8, c, p, modulusSize, q));
+
+		do
+		{
+			h.Randomize(rng, 2, p-2);
+			g = a_exp_b_mod_c(h, (p-1)/q, p);
+		} while (g <= 1);
 	}
+
+	Initialize(p, q, g);
 }
 
 bool DL_GroupParameters_DSA::ValidateGroup(RandomNumberGenerator &rng, unsigned int level) const
 {
 	bool pass = DL_GroupParameters_GFP::ValidateGroup(rng, level);
-	CRYPTOPP_ASSERT(pass);
-
-	const int pSize = GetModulus().BitCount(), qSize = GetSubgroupOrder().BitCount();
-	pass = pass && ((pSize==1024 && qSize==160) || (pSize==2048 && qSize==224) || (pSize==2048 && qSize==256) || (pSize==3072 && qSize==256));
-	CRYPTOPP_ASSERT(pass);
-
+	pass = pass && DSA::IsValidPrimeLength(GetModulus().BitCount());
+	pass = pass && GetSubgroupOrder().BitCount() == 160;
 	return pass;
 }
 
-void DL_SignatureMessageEncodingMethod_DSA::ComputeMessageRepresentative(RandomNumberGenerator &rng,
+void DL_SignatureMessageEncodingMethod_DSA::ComputeMessageRepresentative(RandomNumberGenerator &rng, 
 	const byte *recoverableMessage, size_t recoverableMessageLength,
 	HashTransformation &hash, HashIdentifier hashIdentifier, bool messageEmpty,
 	byte *representative, size_t representativeBitLength) const
 {
-	CRYPTOPP_UNUSED(rng), CRYPTOPP_UNUSED(recoverableMessage), CRYPTOPP_UNUSED(recoverableMessageLength);
-	CRYPTOPP_UNUSED(messageEmpty), CRYPTOPP_UNUSED(hashIdentifier);
-	CRYPTOPP_ASSERT(recoverableMessageLength == 0);
-	CRYPTOPP_ASSERT(hashIdentifier.second == 0);
-
+	assert(recoverableMessageLength == 0);
+	assert(hashIdentifier.second == 0);
 	const size_t representativeByteLength = BitsToBytes(representativeBitLength);
 	const size_t digestSize = hash.DigestSize();
 	const size_t paddingLength = SaturatingSubtract(representativeByteLength, digestSize);
@@ -104,17 +88,13 @@ void DL_SignatureMessageEncodingMethod_DSA::ComputeMessageRepresentative(RandomN
 	}
 }
 
-void DL_SignatureMessageEncodingMethod_NR::ComputeMessageRepresentative(RandomNumberGenerator &rng,
+void DL_SignatureMessageEncodingMethod_NR::ComputeMessageRepresentative(RandomNumberGenerator &rng, 
 	const byte *recoverableMessage, size_t recoverableMessageLength,
 	HashTransformation &hash, HashIdentifier hashIdentifier, bool messageEmpty,
 	byte *representative, size_t representativeBitLength) const
 {
-	CRYPTOPP_UNUSED(rng);CRYPTOPP_UNUSED(recoverableMessage); CRYPTOPP_UNUSED(recoverableMessageLength);
-	CRYPTOPP_UNUSED(hash); CRYPTOPP_UNUSED(hashIdentifier); CRYPTOPP_UNUSED(messageEmpty);
-	CRYPTOPP_UNUSED(representative); CRYPTOPP_UNUSED(representativeBitLength);
-
-	CRYPTOPP_ASSERT(recoverableMessageLength == 0);
-	CRYPTOPP_ASSERT(hashIdentifier.second == 0);
+	assert(recoverableMessageLength == 0);
+	assert(hashIdentifier.second == 0);
 	const size_t representativeByteLength = BitsToBytes(representativeBitLength);
 	const size_t digestSize = hash.DigestSize();
 	const size_t paddingLength = SaturatingSubtract(representativeByteLength, digestSize);
@@ -133,28 +113,15 @@ void DL_SignatureMessageEncodingMethod_NR::ComputeMessageRepresentative(RandomNu
 bool DL_GroupParameters_IntegerBased::ValidateGroup(RandomNumberGenerator &rng, unsigned int level) const
 {
 	const Integer &p = GetModulus(), &q = GetSubgroupOrder();
+
 	bool pass = true;
-
-	CRYPTOPP_ASSERT(p > Integer::One() && p.IsOdd());
 	pass = pass && p > Integer::One() && p.IsOdd();
-
-	CRYPTOPP_ASSERT(q > Integer::One() && q.IsOdd());
 	pass = pass && q > Integer::One() && q.IsOdd();
 
 	if (level >= 1)
-	{
-		CRYPTOPP_ASSERT(GetCofactor() > Integer::One());
-		CRYPTOPP_ASSERT(GetGroupOrder() % q == Integer::Zero());
-
 		pass = pass && GetCofactor() > Integer::One() && GetGroupOrder() % q == Integer::Zero();
-	}
 	if (level >= 2)
-	{
-		CRYPTOPP_ASSERT(VerifyPrime(rng, q, level-2));
-		CRYPTOPP_ASSERT(VerifyPrime(rng, p, level-2));
-
 		pass = pass && VerifyPrime(rng, q, level-2) && VerifyPrime(rng, p, level-2);
-	}
 
 	return pass;
 }
@@ -162,29 +129,20 @@ bool DL_GroupParameters_IntegerBased::ValidateGroup(RandomNumberGenerator &rng, 
 bool DL_GroupParameters_IntegerBased::ValidateElement(unsigned int level, const Integer &g, const DL_FixedBasePrecomputation<Integer> *gpc) const
 {
 	const Integer &p = GetModulus(), &q = GetSubgroupOrder();
+
 	bool pass = true;
-
-	CRYPTOPP_ASSERT(GetFieldType() == 1 ? g.IsPositive() : g.NotNegative());
 	pass = pass && GetFieldType() == 1 ? g.IsPositive() : g.NotNegative();
-
-	CRYPTOPP_ASSERT(g < p && !IsIdentity(g));
 	pass = pass && g < p && !IsIdentity(g);
 
 	if (level >= 1)
 	{
 		if (gpc)
-		{
-			CRYPTOPP_ASSERT(gpc->Exponentiate(GetGroupPrecomputation(), Integer::One()) == g);
 			pass = pass && gpc->Exponentiate(GetGroupPrecomputation(), Integer::One()) == g;
-		}
 	}
 	if (level >= 2)
 	{
 		if (GetFieldType() == 2)
-		{
-			CRYPTOPP_ASSERT(Jacobi(g*g-4, p)==-1);
 			pass = pass && Jacobi(g*g-4, p)==-1;
-		}
 
 		// verifying that Lucas((p+1)/2, w, p)==2 is omitted because it's too costly
 		// and at most 1 bit is leaked if it's false
@@ -193,14 +151,10 @@ bool DL_GroupParameters_IntegerBased::ValidateElement(unsigned int level, const 
 		if (fullValidate && pass)
 		{
 			Integer gp = gpc ? gpc->Exponentiate(GetGroupPrecomputation(), q) : ExponentiateElement(g, q);
-			CRYPTOPP_ASSERT(IsIdentity(gp));
 			pass = pass && IsIdentity(gp);
 		}
 		else if (GetFieldType() == 1)
-		{
-			CRYPTOPP_ASSERT(Jacobi(g, p) == 1);
 			pass = pass && Jacobi(g, p) == 1;
-		}
 	}
 
 	return pass;
@@ -209,7 +163,7 @@ bool DL_GroupParameters_IntegerBased::ValidateElement(unsigned int level, const 
 void DL_GroupParameters_IntegerBased::GenerateRandom(RandomNumberGenerator &rng, const NameValuePairs &alg)
 {
 	Integer p, q, g;
-
+	
 	if (alg.GetValue("Modulus", p) && alg.GetValue("SubgroupGenerator", g))
 	{
 		q = alg.GetValueWithDefault("SubgroupOrder", ComputeGroupOrder(p)/2);
@@ -234,23 +188,10 @@ void DL_GroupParameters_IntegerBased::GenerateRandom(RandomNumberGenerator &rng,
 	Initialize(p, q, g);
 }
 
-void DL_GroupParameters_IntegerBased::EncodeElement(bool reversible, const Element &element, byte *encoded) const
-{
-	CRYPTOPP_UNUSED(reversible);
-	element.Encode(encoded, GetModulus().ByteCount());
-}
-
-unsigned int DL_GroupParameters_IntegerBased::GetEncodedElementSize(bool reversible) const
-{
-	CRYPTOPP_UNUSED(reversible);
-	return GetModulus().ByteCount();
-}
-
 Integer DL_GroupParameters_IntegerBased::DecodeElement(const byte *encoded, bool checkForGroupMembership) const
 {
-	CRYPTOPP_UNUSED(checkForGroupMembership);
 	Integer g(encoded, GetModulus().ByteCount());
-	if (!ValidateElement(1, g, NULLPTR))
+	if (!ValidateElement(1, g, NULL))
 		throw DL_BadElement();
 	return g;
 }

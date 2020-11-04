@@ -1,61 +1,29 @@
-// misc.cpp - originally written and placed in the public domain by Wei Dai
+// misc.cpp - written and placed in the public domain by Wei Dai
 
 #include "pch.h"
-#include "config.h"
-
-#if CRYPTOPP_MSC_VERSION
-# pragma warning(disable: 4189)
-# if (CRYPTOPP_MSC_VERSION >= 1400)
-#  pragma warning(disable: 6237)
-# endif
-#endif
 
 #ifndef CRYPTOPP_IMPORTS
 
 #include "misc.h"
-#include "trap.h"
 #include "words.h"
-#include "stdcpp.h"
-#include "integer.h"
-#include "secblock.h"
+#include <new>
+
+#if defined(CRYPTOPP_MEMALIGN_AVAILABLE) || defined(CRYPTOPP_MM_MALLOC_AVAILABLE) || defined(QNX)
+#include <malloc.h>
+#endif
 
 NAMESPACE_BEGIN(CryptoPP)
 
-byte* BytePtr(SecByteBlock& str)
-{
-	// Caller wants a writeable pointer
-	CRYPTOPP_ASSERT(str.empty() == false);
-
-	if (str.empty())
-		return NULLPTR;
-	return reinterpret_cast<byte*>(str.data());
-}
-
-const byte* ConstBytePtr(const SecByteBlock& str)
-{
-	if (str.empty())
-		return NULLPTR;
-	return reinterpret_cast<const byte*>(str.data());
-}
-
-size_t BytePtrSize(const SecByteBlock& str)
-{
-	return str.size();
-}
-
 void xorbuf(byte *buf, const byte *mask, size_t count)
 {
-	CRYPTOPP_ASSERT(buf != NULLPTR);
-	CRYPTOPP_ASSERT(mask != NULLPTR);
-	CRYPTOPP_ASSERT(count > 0);
+	size_t i;
 
-	size_t i=0;
 	if (IsAligned<word32>(buf) && IsAligned<word32>(mask))
 	{
 		if (!CRYPTOPP_BOOL_SLOW_WORD64 && IsAligned<word64>(buf) && IsAligned<word64>(mask))
 		{
 			for (i=0; i<count/8; i++)
-				((word64*)(void*)buf)[i] ^= ((word64*)(void*)mask)[i];
+				((word64*)buf)[i] ^= ((word64*)mask)[i];
 			count -= 8*i;
 			if (!count)
 				return;
@@ -64,7 +32,7 @@ void xorbuf(byte *buf, const byte *mask, size_t count)
 		}
 
 		for (i=0; i<count/4; i++)
-			((word32*)(void*)buf)[i] ^= ((word32*)(void*)mask)[i];
+			((word32*)buf)[i] ^= ((word32*)mask)[i];
 		count -= 4*i;
 		if (!count)
 			return;
@@ -78,17 +46,14 @@ void xorbuf(byte *buf, const byte *mask, size_t count)
 
 void xorbuf(byte *output, const byte *input, const byte *mask, size_t count)
 {
-	CRYPTOPP_ASSERT(output != NULLPTR);
-	CRYPTOPP_ASSERT(input != NULLPTR);
-	CRYPTOPP_ASSERT(count > 0);
+	size_t i;
 
-	size_t i=0;
 	if (IsAligned<word32>(output) && IsAligned<word32>(input) && IsAligned<word32>(mask))
 	{
 		if (!CRYPTOPP_BOOL_SLOW_WORD64 && IsAligned<word64>(output) && IsAligned<word64>(input) && IsAligned<word64>(mask))
 		{
 			for (i=0; i<count/8; i++)
-				((word64*)(void*)output)[i] = ((word64*)(void*)input)[i] ^ ((word64*)(void*)mask)[i];
+				((word64*)output)[i] = ((word64*)input)[i] ^ ((word64*)mask)[i];
 			count -= 8*i;
 			if (!count)
 				return;
@@ -98,7 +63,7 @@ void xorbuf(byte *output, const byte *input, const byte *mask, size_t count)
 		}
 
 		for (i=0; i<count/4; i++)
-			((word32*)(void*)output)[i] = ((word32*)(void*)input)[i] ^ ((word32*)(void*)mask)[i];
+			((word32*)output)[i] = ((word32*)input)[i] ^ ((word32*)mask)[i];
 		count -= 4*i;
 		if (!count)
 			return;
@@ -113,21 +78,17 @@ void xorbuf(byte *output, const byte *input, const byte *mask, size_t count)
 
 bool VerifyBufsEqual(const byte *buf, const byte *mask, size_t count)
 {
-	CRYPTOPP_ASSERT(buf != NULLPTR);
-	CRYPTOPP_ASSERT(mask != NULLPTR);
-	// CRYPTOPP_ASSERT(count > 0);
-
-	size_t i=0;
+	size_t i;
 	byte acc8 = 0;
 
-	if (IsAligned<word32>(buf) && IsAligned<word32>(mask) && count)
+	if (IsAligned<word32>(buf) && IsAligned<word32>(mask))
 	{
 		word32 acc32 = 0;
 		if (!CRYPTOPP_BOOL_SLOW_WORD64 && IsAligned<word64>(buf) && IsAligned<word64>(mask))
 		{
 			word64 acc64 = 0;
 			for (i=0; i<count/8; i++)
-				acc64 |= ((word64*)(void*)buf)[i] ^ ((word64*)(void*)mask)[i];
+				acc64 |= ((word64*)buf)[i] ^ ((word64*)mask)[i];
 			count -= 8*i;
 			if (!count)
 				return acc64 == 0;
@@ -137,7 +98,7 @@ bool VerifyBufsEqual(const byte *buf, const byte *mask, size_t count)
 		}
 
 		for (i=0; i<count/4; i++)
-			acc32 |= ((word32*)(void*)buf)[i] ^ ((word32*)(void*)mask)[i];
+			acc32 |= ((word32*)buf)[i] ^ ((word32*)mask)[i];
 		count -= 4*i;
 		if (!count)
 			return acc32 == 0;
@@ -151,132 +112,74 @@ bool VerifyBufsEqual(const byte *buf, const byte *mask, size_t count)
 	return acc8 == 0;
 }
 
-std::string StringNarrow(const wchar_t *str, bool throwOnError)
-{
-	CRYPTOPP_ASSERT(str);
-	std::string result;
-
-	// Safer functions on Windows for C&A, https://github.com/weidai11/cryptopp/issues/55
-#if (CRYPTOPP_MSC_VERSION >= 1400)
-	size_t len=0, size=0;
-	errno_t err = 0;
-
-	//const wchar_t* ptr = str;
-	//while (*ptr++) len++;
-	len = wcslen(str)+1;
-
-	err = wcstombs_s(&size, NULLPTR, 0, str, len*sizeof(wchar_t));
-	CRYPTOPP_ASSERT(err == 0);
-	if (err != 0)
-	{
-		if (throwOnError)
-			throw InvalidArgument("StringNarrow: wcstombs_s() call failed with error " + IntToString(err));
-		else
-			return std::string();
-	}
-
-	result.resize(size);
-	err = wcstombs_s(&size, &result[0], size, str, len*sizeof(wchar_t));
-	CRYPTOPP_ASSERT(err == 0);
-	if (err != 0)
-	{
-		if (throwOnError)
-			throw InvalidArgument("StringNarrow: wcstombs_s() call failed with error " + IntToString(err));
-		else
-			return std::string();
-	}
-
-	// The safe routine's size includes the NULL.
-	if (!result.empty() && result[size - 1] == '\0')
-		result.erase(size - 1);
-#else
-	size_t size = wcstombs(NULLPTR, str, 0);
-	CRYPTOPP_ASSERT(size != (size_t)-1);
-	if (size == (size_t)-1)
-	{
-		if (throwOnError)
-			throw InvalidArgument("StringNarrow: wcstombs() call failed");
-		else
-			return std::string();
-	}
-
-	result.resize(size);
-	size = wcstombs(&result[0], str, size);
-	CRYPTOPP_ASSERT(size != (size_t)-1);
-	if (size == (size_t)-1)
-	{
-		if (throwOnError)
-			throw InvalidArgument("StringNarrow: wcstombs() call failed");
-		else
-			return std::string();
-	}
+#if !(defined(_MSC_VER) && (_MSC_VER < 1300))
+using std::new_handler;
+using std::set_new_handler;
 #endif
 
-	return result;
+void CallNewHandler()
+{
+	new_handler newHandler = set_new_handler(NULL);
+	if (newHandler)
+		set_new_handler(newHandler);
+
+	if (newHandler)
+		newHandler();
+	else
+		throw std::bad_alloc();
 }
 
-std::wstring StringWiden(const char *str, bool throwOnError)
+#if CRYPTOPP_BOOL_ALIGN16_ENABLED
+
+void * AlignedAllocate(size_t size)
 {
-	CRYPTOPP_ASSERT(str);
-	std::wstring result;
-
-	// Safer functions on Windows for C&A, https://github.com/weidai11/cryptopp/issues/55
-#if (CRYPTOPP_MSC_VERSION >= 1400)
-	size_t len=0, size=0;
-	errno_t err = 0;
-
-	//const char* ptr = str;
-	//while (*ptr++) len++;
-	len = std::strlen(str)+1;
-
-	err = mbstowcs_s(&size, NULLPTR, 0, str, len);
-	CRYPTOPP_ASSERT(err == 0);
-	if (err != 0)
-	{
-		if (throwOnError)
-			throw InvalidArgument("StringWiden: wcstombs_s() call failed with error " + IntToString(err));
-		else
-			return std::wstring();
-	}
-
-	result.resize(size);
-	err = mbstowcs_s(&size, &result[0], size, str, len);
-	CRYPTOPP_ASSERT(err == 0);
-	if (err != 0)
-	{
-		if (throwOnError)
-			throw InvalidArgument("StringWiden: wcstombs_s() call failed with error " + IntToString(err));
-		else
-			return std::wstring();
-	}
-
-	// The safe routine's size includes the NULL.
-	if (!result.empty() && result[size - 1] == '\0')
-		result.erase(size - 1);
+	byte *p;
+#ifdef CRYPTOPP_MM_MALLOC_AVAILABLE
+	while (!(p = (byte *)_mm_malloc(size, 16)))
+#elif defined(CRYPTOPP_MEMALIGN_AVAILABLE)
+	while (!(p = (byte *)memalign(16, size)))
+#elif defined(CRYPTOPP_MALLOC_ALIGNMENT_IS_16)
+	while (!(p = (byte *)malloc(size)))
 #else
-	size_t size = mbstowcs(NULLPTR, str, 0);
-	CRYPTOPP_ASSERT(size != (size_t)-1);
-	if (size == (size_t)-1)
-	{
-		if (throwOnError)
-			throw InvalidArgument("StringWiden: mbstowcs() call failed");
-		else
-			return std::wstring();
-	}
+	while (!(p = (byte *)malloc(size + 16)))
+#endif
+		CallNewHandler();
 
-	result.resize(size);
-	size = mbstowcs(&result[0], str, size);
-	CRYPTOPP_ASSERT(size != (size_t)-1);
-	if (size == (size_t)-1)
-	{
-		if (throwOnError)
-			throw InvalidArgument("StringWiden: mbstowcs() call failed");
-		else
-			return std::wstring();
-	}
+#ifdef CRYPTOPP_NO_ALIGNED_ALLOC
+	size_t adjustment = 16-((size_t)p%16);
+	p += adjustment;
+	p[-1] = (byte)adjustment;
 #endif
 
-	return result;
+	assert(IsAlignedOn(p, 16));
+	return p;
+}
+
+void AlignedDeallocate(void *p)
+{
+#ifdef CRYPTOPP_MM_MALLOC_AVAILABLE
+	_mm_free(p);
+#elif defined(CRYPTOPP_NO_ALIGNED_ALLOC)
+	p = (byte *)p - ((byte *)p)[-1];
+	free(p);
+#else
+	free(p);
+#endif
+}
+
+#endif
+
+void * UnalignedAllocate(size_t size)
+{
+	void *p;
+	while (!(p = malloc(size)))
+		CallNewHandler();
+	return p;
+}
+
+void UnalignedDeallocate(void *p)
+{
+	free(p);
 }
 
 NAMESPACE_END

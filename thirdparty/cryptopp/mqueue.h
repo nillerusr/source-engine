@@ -1,16 +1,13 @@
 #ifndef CRYPTOPP_MQUEUE_H
 #define CRYPTOPP_MQUEUE_H
 
-#include "cryptlib.h"
 #include "queue.h"
 #include "filters.h"
-#include "misc.h"
-
 #include <deque>
 
 NAMESPACE_BEGIN(CryptoPP)
 
-/// Message Queue
+//! Message Queue
 class CRYPTOPP_DLL MessageQueue : public AutoSignaling<BufferedTransformation>
 {
 public:
@@ -20,7 +17,6 @@ public:
 		{m_queue.IsolatedInitialize(parameters); m_lengths.assign(1, 0U); m_messageCounts.assign(1, 0U);}
 	size_t Put2(const byte *begin, size_t length, int messageEnd, bool blocking)
 	{
-		CRYPTOPP_UNUSED(blocking);
 		m_queue.Put(begin, length);
 		m_lengths.back() += length;
 		if (messageEnd)
@@ -30,10 +26,9 @@ public:
 		}
 		return 0;
 	}
-	bool IsolatedFlush(bool hardFlush, bool blocking)
-		{CRYPTOPP_UNUSED(hardFlush), CRYPTOPP_UNUSED(blocking); return false;}
+	bool IsolatedFlush(bool hardFlush, bool blocking) {return false;}
 	bool IsolatedMessageSeriesEnd(bool blocking)
-		{CRYPTOPP_UNUSED(blocking); m_messageCounts.push_back(0); return false;}
+		{m_messageCounts.push_back(0); return false;}
 
 	lword MaxRetrievable() const
 		{return m_lengths.front();}
@@ -67,14 +62,14 @@ private:
 };
 
 
-/// A filter that checks messages on two channels for equality
+//! A filter that checks messages on two channels for equality
 class CRYPTOPP_DLL EqualityComparisonFilter : public Unflushable<Multichannel<Filter> >
 {
 public:
 	struct MismatchDetected : public Exception {MismatchDetected() : Exception(DATA_INTEGRITY_CHECK_FAILED, "EqualityComparisonFilter: did not receive the same data on two channels") {}};
 
 	/*! if throwIfNotEqual is false, this filter will output a '\\0' byte when it detects a mismatch, '\\1' otherwise */
-	EqualityComparisonFilter(BufferedTransformation *attachment=NULLPTR, bool throwIfNotEqual=true, const std::string &firstChannel="0", const std::string &secondChannel="1")
+	EqualityComparisonFilter(BufferedTransformation *attachment=NULL, bool throwIfNotEqual=true, const std::string &firstChannel="0", const std::string &secondChannel="1")
 		: m_throwIfNotEqual(throwIfNotEqual), m_mismatchDetected(false)
 		, m_firstChannel(firstChannel), m_secondChannel(secondChannel)
 		{Detach(attachment);}

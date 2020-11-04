@@ -1,15 +1,11 @@
 stacktrace.lo: src/stacktrace.cc /usr/include/stdc-predef.h src/config.h \
  src/gperftools/stacktrace.h src/stacktrace_config.h \
- src/stacktrace_x86-inl.h src/config.h /usr/include/c++/10.2.0/stdlib.h \
- /usr/include/c++/10.2.0/cstdlib \
- /usr/include/c++/10.2.0/x86_64-pc-linux-gnu/32/bits/c++config.h \
- /usr/include/c++/10.2.0/x86_64-pc-linux-gnu/32/bits/os_defines.h \
- /usr/include/features.h /usr/include/sys/cdefs.h \
- /usr/include/bits/wordsize.h /usr/include/bits/long-double.h \
- /usr/include/gnu/stubs.h /usr/include/gnu/stubs-32.h \
- /usr/include/c++/10.2.0/x86_64-pc-linux-gnu/32/bits/cpu_defines.h \
- /usr/include/stdlib.h /usr/include/bits/libc-header-start.h \
- /usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/include/stddef.h \
+ src/stacktrace_x86-inl.h src/config.h /usr/include/stdlib.h \
+ /usr/include/bits/libc-header-start.h /usr/include/features.h \
+ /usr/include/sys/cdefs.h /usr/include/bits/wordsize.h \
+ /usr/include/bits/long-double.h /usr/include/gnu/stubs.h \
+ /usr/include/gnu/stubs-32.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/include/stddef.h \
  /usr/include/bits/waitflags.h /usr/include/bits/waitstatus.h \
  /usr/include/bits/floatn.h /usr/include/bits/floatn-common.h \
  /usr/include/bits/types/locale_t.h /usr/include/bits/types/__locale_t.h \
@@ -28,10 +24,9 @@ stacktrace.lo: src/stacktrace.cc /usr/include/stdc-predef.h src/config.h \
  /usr/include/bits/pthreadtypes.h /usr/include/bits/thread-shared-types.h \
  /usr/include/bits/pthreadtypes-arch.h /usr/include/bits/struct_mutex.h \
  /usr/include/bits/struct_rwlock.h /usr/include/alloca.h \
- /usr/include/bits/stdlib-float.h /usr/include/c++/10.2.0/bits/std_abs.h \
- /usr/include/assert.h /usr/include/sys/ucontext.h \
- /usr/include/bits/types/stack_t.h \
- /usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/include/stdint.h \
+ /usr/include/bits/stdlib-float.h /usr/include/assert.h \
+ /usr/include/sys/ucontext.h /usr/include/bits/types/stack_t.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/include/stdint.h \
  /usr/include/stdint.h /usr/include/bits/wchar.h \
  /usr/include/bits/stdint-uintn.h /usr/include/unistd.h \
  /usr/include/bits/posix_opt.h /usr/include/bits/environments.h \
@@ -45,90 +40,165 @@ stacktrace.lo: src/stacktrace.cc /usr/include/stdc-predef.h src/config.h \
  /usr/include/link.h /usr/include/elf.h /usr/include/dlfcn.h \
  /usr/include/bits/dlfcn.h /usr/include/bits/elfclass.h \
  /usr/include/bits/link.h src/gperftools/stacktrace.h
+
 /usr/include/stdc-predef.h:
+
 src/config.h:
+
 src/gperftools/stacktrace.h:
+
 src/stacktrace_config.h:
+
 src/stacktrace_x86-inl.h:
+
 src/config.h:
-/usr/include/c++/10.2.0/stdlib.h:
-/usr/include/c++/10.2.0/cstdlib:
-/usr/include/c++/10.2.0/x86_64-pc-linux-gnu/32/bits/c++config.h:
-/usr/include/c++/10.2.0/x86_64-pc-linux-gnu/32/bits/os_defines.h:
-/usr/include/features.h:
-/usr/include/sys/cdefs.h:
-/usr/include/bits/wordsize.h:
-/usr/include/bits/long-double.h:
-/usr/include/gnu/stubs.h:
-/usr/include/gnu/stubs-32.h:
-/usr/include/c++/10.2.0/x86_64-pc-linux-gnu/32/bits/cpu_defines.h:
+
 /usr/include/stdlib.h:
+
 /usr/include/bits/libc-header-start.h:
-/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/include/stddef.h:
+
+/usr/include/features.h:
+
+/usr/include/sys/cdefs.h:
+
+/usr/include/bits/wordsize.h:
+
+/usr/include/bits/long-double.h:
+
+/usr/include/gnu/stubs.h:
+
+/usr/include/gnu/stubs-32.h:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/include/stddef.h:
+
 /usr/include/bits/waitflags.h:
+
 /usr/include/bits/waitstatus.h:
+
 /usr/include/bits/floatn.h:
+
 /usr/include/bits/floatn-common.h:
+
 /usr/include/bits/types/locale_t.h:
+
 /usr/include/bits/types/__locale_t.h:
+
 /usr/include/sys/types.h:
+
 /usr/include/bits/types.h:
+
 /usr/include/bits/timesize.h:
+
 /usr/include/bits/typesizes.h:
+
 /usr/include/bits/time64.h:
+
 /usr/include/bits/types/clock_t.h:
+
 /usr/include/bits/types/clockid_t.h:
+
 /usr/include/bits/types/time_t.h:
+
 /usr/include/bits/types/timer_t.h:
+
 /usr/include/bits/stdint-intn.h:
+
 /usr/include/endian.h:
+
 /usr/include/bits/endian.h:
+
 /usr/include/bits/endianness.h:
+
 /usr/include/bits/byteswap.h:
+
 /usr/include/bits/uintn-identity.h:
+
 /usr/include/sys/select.h:
+
 /usr/include/bits/select.h:
+
 /usr/include/bits/types/sigset_t.h:
+
 /usr/include/bits/types/__sigset_t.h:
+
 /usr/include/bits/types/struct_timeval.h:
+
 /usr/include/bits/types/struct_timespec.h:
+
 /usr/include/bits/pthreadtypes.h:
+
 /usr/include/bits/thread-shared-types.h:
+
 /usr/include/bits/pthreadtypes-arch.h:
+
 /usr/include/bits/struct_mutex.h:
+
 /usr/include/bits/struct_rwlock.h:
+
 /usr/include/alloca.h:
+
 /usr/include/bits/stdlib-float.h:
-/usr/include/c++/10.2.0/bits/std_abs.h:
+
 /usr/include/assert.h:
+
 /usr/include/sys/ucontext.h:
+
 /usr/include/bits/types/stack_t.h:
-/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/include/stdint.h:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/include/stdint.h:
+
 /usr/include/stdint.h:
+
 /usr/include/bits/wchar.h:
+
 /usr/include/bits/stdint-uintn.h:
+
 /usr/include/unistd.h:
+
 /usr/include/bits/posix_opt.h:
+
 /usr/include/bits/environments.h:
+
 /usr/include/bits/confname.h:
+
 /usr/include/bits/getopt_posix.h:
+
 /usr/include/bits/getopt_core.h:
+
 /usr/include/bits/unistd_ext.h:
+
 /usr/include/sys/mman.h:
+
 /usr/include/bits/mman.h:
+
 /usr/include/bits/mman-map-flags-generic.h:
+
 /usr/include/bits/mman-linux.h:
+
 /usr/include/bits/mman-shared.h:
+
 src/base/vdso_support.h:
+
 src/base/basictypes.h:
+
 /usr/include/string.h:
+
 /usr/include/strings.h:
+
 /usr/include/inttypes.h:
+
 src/base/elf_mem_image.h:
+
 /usr/include/link.h:
+
 /usr/include/elf.h:
+
 /usr/include/dlfcn.h:
+
 /usr/include/bits/dlfcn.h:
+
 /usr/include/bits/elfclass.h:
+
 /usr/include/bits/link.h:
+
 src/gperftools/stacktrace.h:

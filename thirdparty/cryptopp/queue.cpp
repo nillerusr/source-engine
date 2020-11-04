@@ -1,4 +1,4 @@
-// queue.cpp - originally written and placed in the public domain by Wei Dai
+// queue.cpp - written and placed in the public domain by Wei Dai
 
 #include "pch.h"
 
@@ -6,8 +6,6 @@
 
 #include "queue.h"
 #include "filters.h"
-#include "misc.h"
-#include "trap.h"
 
 NAMESPACE_BEGIN(CryptoPP)
 
@@ -18,16 +16,13 @@ class ByteQueueNode
 {
 public:
 	ByteQueueNode(size_t maxSize)
-		: m_buf(maxSize)
+		: buf(maxSize)
 	{
-		// See GH #962 for the reason for this assert.
-		CRYPTOPP_ASSERT(maxSize != SIZE_MAX);
-
 		m_head = m_tail = 0;
-		m_next = NULLPTR;
+		next = 0;
 	}
 
-	inline size_t MaxSize() const {return m_buf.size();}
+	inline size_t MaxSize() const {return buf.size();}
 
 	inline size_t CurrentSize() const
 	{
@@ -46,11 +41,9 @@ public:
 
 	inline size_t Put(const byte *begin, size_t length)
 	{
-		// Avoid passing NULL to memcpy
-		if (!begin || !length) return length;
 		size_t l = STDMIN(length, MaxSize()-m_tail);
-		if (m_buf+m_tail != begin)
-			memcpy(m_buf+m_tail, begin, l);
+		if (buf+m_tail != begin)
+			memcpy(buf+m_tail, begin, l);
 		m_tail += l;
 		return l;
 	}
@@ -60,28 +53,28 @@ public:
 		if (m_tail==m_head)
 			return 0;
 
-		outByte=m_buf[m_head];
+		outByte=buf[m_head];
 		return 1;
 	}
 
 	inline size_t Peek(byte *target, size_t copyMax) const
 	{
 		size_t len = STDMIN(copyMax, m_tail-m_head);
-		memcpy(target, m_buf+m_head, len);
+		memcpy(target, buf+m_head, len);
 		return len;
 	}
 
 	inline size_t CopyTo(BufferedTransformation &target, const std::string &channel=DEFAULT_CHANNEL) const
 	{
 		size_t len = m_tail-m_head;
-		target.ChannelPut(channel, m_buf+m_head, len);
+		target.ChannelPut(channel, buf+m_head, len);
 		return len;
 	}
 
 	inline size_t CopyTo(BufferedTransformation &target, size_t copyMax, const std::string &channel=DEFAULT_CHANNEL) const
 	{
 		size_t len = STDMIN(copyMax, m_tail-m_head);
-		target.ChannelPut(channel, m_buf+m_head, len);
+		target.ChannelPut(channel, buf+m_head, len);
 		return len;
 	}
 
@@ -102,7 +95,7 @@ public:
 	inline size_t TransferTo(BufferedTransformation &target, const std::string &channel=DEFAULT_CHANNEL)
 	{
 		size_t len = m_tail-m_head;
-		target.ChannelPutModifiable(channel, m_buf+m_head, len);
+		target.ChannelPutModifiable(channel, buf+m_head, len);
 		m_head = m_tail;
 		return len;
 	}
@@ -110,7 +103,7 @@ public:
 	inline size_t TransferTo(BufferedTransformation &target, lword transferMax, const std::string &channel=DEFAULT_CHANNEL)
 	{
 		size_t len = UnsignedMin(m_tail-m_head, transferMax);
-		target.ChannelPutModifiable(channel, m_buf+m_head, len);
+		target.ChannelPutModifiable(channel, buf+m_head, len);
 		m_head += len;
 		return len;
 	}
@@ -124,24 +117,20 @@ public:
 
 	inline byte operator[](size_t i) const
 	{
-		return m_buf[m_head+i];
+		return buf[m_head+i];
 	}
 
-	ByteQueueNode* m_next;
+	ByteQueueNode *next;
 
-	SecByteBlock m_buf;
+	SecByteBlock buf;
 	size_t m_head, m_tail;
 };
 
 // ********************************************************
 
 ByteQueue::ByteQueue(size_t nodeSize)
-	: Bufferless<BufferedTransformation>(), m_autoNodeSize(!nodeSize), m_nodeSize(nodeSize)
-	, m_head(NULLPTR), m_tail(NULLPTR), m_lazyString(NULLPTR), m_lazyLength(0), m_lazyStringModifiable(false)
+	: m_lazyString(NULL), m_lazyLength(0)
 {
-	// See GH #962 for the reason for this assert.
-	CRYPTOPP_ASSERT(nodeSize != SIZE_MAX);
-
 	SetNodeSize(nodeSize);
 	m_head = m_tail = new ByteQueueNode(m_nodeSize);
 }
@@ -153,7 +142,7 @@ void ByteQueue::SetNodeSize(size_t nodeSize)
 }
 
 ByteQueue::ByteQueue(const ByteQueue &copy)
-	: Bufferless<BufferedTransformation>(copy), m_lazyString(NULLPTR), m_lazyLength(0)
+	: m_lazyString(NULL)
 {
 	CopyFrom(copy);
 }
@@ -165,13 +154,13 @@ void ByteQueue::CopyFrom(const ByteQueue &copy)
 	m_nodeSize = copy.m_nodeSize;
 	m_head = m_tail = new ByteQueueNode(*copy.m_head);
 
-	for (ByteQueueNode *current=copy.m_head->m_next; current; current=current->m_next)
+	for (ByteQueueNode *current=copy.m_head->next; current; current=current->next)
 	{
-		m_tail->m_next = new ByteQueueNode(*current);
-		m_tail = m_tail->m_next;
+		m_tail->next = new ByteQueueNode(*current);
+		m_tail = m_tail->next;
 	}
 
-	m_tail->m_next = NULLPTR;
+	m_tail->next = NULL;
 
 	Put(copy.m_lazyString, copy.m_lazyLength);
 }
@@ -185,7 +174,7 @@ void ByteQueue::Destroy()
 {
 	for (ByteQueueNode *next, *current=m_head; current; current=next)
 	{
-		next=current->m_next;
+		next=current->next;
 		delete current;
 	}
 }
@@ -200,7 +189,7 @@ lword ByteQueue::CurrentSize() const
 {
 	lword size=0;
 
-	for (ByteQueueNode *current=m_head; current; current=current->m_next)
+	for (ByteQueueNode *current=m_head; current; current=current->next)
 		size += current->CurrentSize();
 
 	return size + m_lazyLength;
@@ -213,40 +202,36 @@ bool ByteQueue::IsEmpty() const
 
 void ByteQueue::Clear()
 {
-	for (ByteQueueNode *next, *current=m_head->m_next; current; current=next)
+	for (ByteQueueNode *next, *current=m_head->next; current; current=next)
 	{
-		next=current->m_next;
+		next=current->next;
 		delete current;
 	}
 
 	m_tail = m_head;
 	m_head->Clear();
-	m_head->m_next = NULLPTR;
+	m_head->next = NULL;
 	m_lazyLength = 0;
 }
 
 size_t ByteQueue::Put2(const byte *inString, size_t length, int messageEnd, bool blocking)
 {
-	CRYPTOPP_UNUSED(messageEnd), CRYPTOPP_UNUSED(blocking);
-
 	if (m_lazyLength > 0)
 		FinalizeLazyPut();
 
 	size_t len;
 	while ((len=m_tail->Put(inString, length)) < length)
 	{
-		inString = PtrAdd(inString, len);
+		inString += len;
 		length -= len;
 		if (m_autoNodeSize && m_nodeSize < s_maxAutoNodeSize)
-		{
 			do
 			{
 				m_nodeSize *= 2;
 			}
 			while (m_nodeSize < length && m_nodeSize < s_maxAutoNodeSize);
-		}
-		m_tail->m_next = new ByteQueueNode(STDMAX(m_nodeSize, length));
-		m_tail = m_tail->m_next;
+		m_tail->next = new ByteQueueNode(STDMAX(m_nodeSize, length));
+		m_tail = m_tail->next;
 	}
 
 	return 0;
@@ -254,16 +239,14 @@ size_t ByteQueue::Put2(const byte *inString, size_t length, int messageEnd, bool
 
 void ByteQueue::CleanupUsedNodes()
 {
-	// Test for m_head due to Enterprise Anlysis finding
-	while (m_head && m_head != m_tail && m_head->UsedUp())
+	while (m_head != m_tail && m_head->UsedUp())
 	{
 		ByteQueueNode *temp=m_head;
-		m_head=m_head->m_next;
+		m_head=m_head->next;
 		delete temp;
 	}
 
-	// Test for m_head due to Enterprise Anlysis finding
-	if (m_head && m_head->CurrentSize() == 0)
+	if (m_head->CurrentSize() == 0)
 		m_head->Clear();
 }
 
@@ -272,7 +255,7 @@ void ByteQueue::LazyPut(const byte *inString, size_t size)
 	if (m_lazyLength > 0)
 		FinalizeLazyPut();
 
-	if (inString == m_tail->m_buf+m_tail->m_tail)
+	if (inString == m_tail->buf+m_tail->m_tail)
 		Put(inString, size);
 	else
 	{
@@ -352,13 +335,10 @@ size_t ByteQueue::Peek(byte *outString, size_t peekMax) const
 
 size_t ByteQueue::TransferTo2(BufferedTransformation &target, lword &transferBytes, const std::string &channel, bool blocking)
 {
-	// No need for CRYPTOPP_ASSERT on transferBytes here.
-	// TransferTo2 handles LWORD_MAX as expected.
-
 	if (blocking)
 	{
 		lword bytesLeft = transferBytes;
-		for (ByteQueueNode *current=m_head; bytesLeft && current; current=current->m_next)
+		for (ByteQueueNode *current=m_head; bytesLeft && current; current=current->next)
 			bytesLeft -= current->TransferTo(target, bytesLeft, channel);
 		CleanupUsedNodes();
 
@@ -369,7 +349,7 @@ size_t ByteQueue::TransferTo2(BufferedTransformation &target, lword &transferByt
 				target.ChannelPutModifiable(channel, m_lazyString, len);
 			else
 				target.ChannelPut(channel, m_lazyString, len);
-			m_lazyString = PtrAdd(m_lazyString, len);
+			m_lazyString += len;
 			m_lazyLength -= len;
 			bytesLeft -= len;
 		}
@@ -390,7 +370,6 @@ size_t ByteQueue::CopyRangeTo2(BufferedTransformation &target, lword &begin, lwo
 	Walker walker(*this);
 	walker.Skip(begin);
 	lword transferBytes = end-begin;
-
 	size_t blockedBytes = walker.TransferTo2(target, transferBytes, channel, blocking);
 	begin += transferBytes;
 	return blockedBytes;
@@ -403,18 +382,15 @@ void ByteQueue::Unget(byte inByte)
 
 void ByteQueue::Unget(const byte *inString, size_t length)
 {
-	// See GH #962 for the reason for this assert.
-	CRYPTOPP_ASSERT(length != SIZE_MAX);
-
 	size_t len = STDMIN(length, m_head->m_head);
 	length -= len;
-	m_head->m_head = m_head->m_head - len;
-	memcpy(m_head->m_buf + m_head->m_head, inString + length, len);
+	m_head->m_head -= len;
+	memcpy(m_head->buf + m_head->m_head, inString + length, len);
 
 	if (length > 0)
 	{
 		ByteQueueNode *newHead = new ByteQueueNode(length);
-		newHead->m_next = m_head;
+		newHead->next = m_head;
 		m_head = newHead;
 		m_head->Put(inString, length);
 	}
@@ -429,27 +405,22 @@ const byte * ByteQueue::Spy(size_t &contiguousSize) const
 		return m_lazyString;
 	}
 	else
-		return m_head->m_buf + m_head->m_head;
+		return m_head->buf + m_head->m_head;
 }
 
 byte * ByteQueue::CreatePutSpace(size_t &size)
 {
-	// See GH #962 for the reason for this assert.
-	CRYPTOPP_ASSERT(size != SIZE_MAX);
-	// Sanity check for a reasonable size
-	CRYPTOPP_ASSERT(size <= 16U*1024*1024);
-
 	if (m_lazyLength > 0)
 		FinalizeLazyPut();
 
 	if (m_tail->m_tail == m_tail->MaxSize())
 	{
-		m_tail->m_next = new ByteQueueNode(STDMAX(m_nodeSize, size));
-		m_tail = m_tail->m_next;
+		m_tail->next = new ByteQueueNode(STDMAX(m_nodeSize, size));
+		m_tail = m_tail->next;
 	}
 
 	size = m_tail->MaxSize() - m_tail->m_tail;
-	return PtrAdd(m_tail->m_buf.begin(), m_tail->m_tail);
+	return m_tail->buf + m_tail->m_tail;
 }
 
 ByteQueue & ByteQueue::operator=(const ByteQueue &rhs)
@@ -478,15 +449,15 @@ bool ByteQueue::operator==(const ByteQueue &rhs) const
 
 byte ByteQueue::operator[](lword i) const
 {
-	for (ByteQueueNode *current=m_head; current; current=current->m_next)
+	for (ByteQueueNode *current=m_head; current; current=current->next)
 	{
 		if (i < current->CurrentSize())
 			return (*current)[(size_t)i];
-
+		
 		i -= current->CurrentSize();
 	}
 
-	CRYPTOPP_ASSERT(i < m_lazyLength);
+	assert(i < m_lazyLength);
 	return m_lazyString[i];
 }
 
@@ -505,8 +476,6 @@ void ByteQueue::swap(ByteQueue &rhs)
 
 void ByteQueue::Walker::IsolatedInitialize(const NameValuePairs &parameters)
 {
-	CRYPTOPP_UNUSED(parameters);
-
 	m_node = m_queue.m_head;
 	m_position = 0;
 	m_offset = 0;
@@ -540,16 +509,13 @@ size_t ByteQueue::Walker::Peek(byte *outString, size_t peekMax) const
 
 size_t ByteQueue::Walker::TransferTo2(BufferedTransformation &target, lword &transferBytes, const std::string &channel, bool blocking)
 {
-	// No need for CRYPTOPP_ASSERT on transferBytes here.
-	// TransferTo2 handles LWORD_MAX as expected.
-
 	lword bytesLeft = transferBytes;
 	size_t blockedBytes = 0;
 
 	while (m_node)
 	{
 		size_t len = (size_t)STDMIN(bytesLeft, (lword)m_node->CurrentSize()-m_offset);
-		blockedBytes = target.ChannelPut2(channel, m_node->m_buf+m_node->m_head+m_offset, len, 0, blocking);
+		blockedBytes = target.ChannelPut2(channel, m_node->buf+m_node->m_head+m_offset, len, 0, blocking);
 
 		if (blockedBytes)
 			goto done;
@@ -563,7 +529,7 @@ size_t ByteQueue::Walker::TransferTo2(BufferedTransformation &target, lword &tra
 			goto done;
 		}
 
-		m_node = m_node->m_next;
+		m_node = m_node->next;
 		m_offset = 0;
 	}
 
@@ -574,7 +540,7 @@ size_t ByteQueue::Walker::TransferTo2(BufferedTransformation &target, lword &tra
 		if (blockedBytes)
 			goto done;
 
-		m_lazyString = PtrAdd(m_lazyString, len);
+		m_lazyString += len;
 		m_lazyLength -= len;
 		bytesLeft -= len;
 	}
@@ -589,7 +555,6 @@ size_t ByteQueue::Walker::CopyRangeTo2(BufferedTransformation &target, lword &be
 	Walker walker(*this);
 	walker.Skip(begin);
 	lword transferBytes = end-begin;
-
 	size_t blockedBytes = walker.TransferTo2(target, transferBytes, channel, blocking);
 	begin += transferBytes;
 	return blockedBytes;

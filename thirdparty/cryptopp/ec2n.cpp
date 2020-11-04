@@ -1,4 +1,4 @@
-// ec2n.cpp - originally written and placed in the public domain by Wei Dai
+// ec2n.cpp - written and placed in the public domain by Wei Dai
 
 #include "pch.h"
 
@@ -6,29 +6,9 @@
 
 #include "ec2n.h"
 #include "asn.h"
-#include "integer.h"
-#include "filters.h"
+
 #include "algebra.cpp"
 #include "eprecomp.cpp"
-
-ANONYMOUS_NAMESPACE_BEGIN
-
-using CryptoPP::EC2N;
-
-#if defined(HAVE_GCC_INIT_PRIORITY)
-	#define INIT_ATTRIBUTE __attribute__ ((init_priority (CRYPTOPP_INIT_PRIORITY + 51)))
-	const EC2N::Point g_identity INIT_ATTRIBUTE = EC2N::Point();
-#elif defined(HAVE_MSC_INIT_PRIORITY)
-	#pragma warning(disable: 4075)
-	#pragma init_seg(".CRT$XCU")
-	const EC2N::Point g_identity;
-	#pragma warning(default: 4075)
-#elif defined(HAVE_XLC_INIT_PRIORITY)
-	#pragma priority(290)
-	const EC2N::Point g_identity;
-#endif
-
-ANONYMOUS_NAMESPACE_END
 
 NAMESPACE_BEGIN(CryptoPP)
 
@@ -52,8 +32,8 @@ void EC2N::DEREncode(BufferedTransformation &bt) const
 {
 	m_field->DEREncode(bt);
 	DERSequenceEncoder seq(bt);
-	   m_field->DEREncodeElement(seq, m_a);
-	   m_field->DEREncodeElement(seq, m_b);
+	m_field->DEREncodeElement(seq, m_a);
+	m_field->DEREncodeElement(seq, m_b);
 	seq.MessageEnd();
 }
 
@@ -81,7 +61,7 @@ bool EC2N::DecodePoint(EC2N::Point &P, BufferedTransformation &bt, size_t encode
 			return false;
 
 		P.identity = false;
-		P.x.Decode(bt, m_field->MaxElementByteLength());
+		P.x.Decode(bt, m_field->MaxElementByteLength()); 
 
 		if (P.x.IsZero())
 		{
@@ -90,11 +70,11 @@ bool EC2N::DecodePoint(EC2N::Point &P, BufferedTransformation &bt, size_t encode
 		}
 
 		FieldElement z = m_field->Square(P.x);
-		CRYPTOPP_ASSERT(P.x == m_field->SquareRoot(z));
+		assert(P.x == m_field->SquareRoot(z));
 		P.y = m_field->Divide(m_field->Add(m_field->Multiply(z, m_field->Add(P.x, m_a)), m_b), z);
-		CRYPTOPP_ASSERT(P.x == m_field->Subtract(m_field->Divide(m_field->Subtract(m_field->Multiply(P.y, z), m_b), z), m_a));
+		assert(P.x == m_field->Subtract(m_field->Divide(m_field->Subtract(m_field->Multiply(P.y, z), m_b), z), m_a));
 		z = m_field->SolveQuadraticEquation(P.y);
-		CRYPTOPP_ASSERT(m_field->Add(m_field->Square(z), z) == P.y);
+		assert(m_field->Add(m_field->Square(z), z) == P.y);
 		z.SetCoefficient(0, type & 1);
 
 		P.y = m_field->Multiply(z, P.x);
@@ -122,7 +102,7 @@ void EC2N::EncodePoint(BufferedTransformation &bt, const Point &P, bool compress
 		NullStore().TransferTo(bt, EncodedPointSize(compressed));
 	else if (compressed)
 	{
-		bt.Put((byte)(2U + (!P.x ? 0U : m_field->Divide(P.y, P.x).GetBit(0))));
+		bt.Put(2 + (!P.x ? 0 : m_field->Divide(P.y, P.x).GetBit(0)));
 		P.x.Encode(bt, m_field->MaxElementByteLength());
 	}
 	else
@@ -138,7 +118,7 @@ void EC2N::EncodePoint(byte *encodedPoint, const Point &P, bool compressed) cons
 {
 	ArraySink sink(encodedPoint, EncodedPointSize(compressed));
 	EncodePoint(sink, P, compressed);
-	CRYPTOPP_ASSERT(sink.TotalPutLength() == EncodedPointSize(compressed));
+	assert(sink.TotalPutLength() == EncodedPointSize(compressed));
 }
 
 EC2N::Point EC2N::BERDecodePoint(BufferedTransformation &bt) const
@@ -160,21 +140,20 @@ void EC2N::DEREncodePoint(BufferedTransformation &bt, const Point &P, bool compr
 
 bool EC2N::ValidateParameters(RandomNumberGenerator &rng, unsigned int level) const
 {
-	CRYPTOPP_UNUSED(rng);
 	bool pass = !!m_b;
 	pass = pass && m_a.CoefficientCount() <= m_field->MaxElementBitLength();
 	pass = pass && m_b.CoefficientCount() <= m_field->MaxElementBitLength();
 
 	if (level >= 1)
 		pass = pass && m_field->GetModulus().IsIrreducible();
-
+		
 	return pass;
 }
 
 bool EC2N::VerifyPoint(const Point &P) const
 {
 	const FieldElement &x = P.x, &y = P.y;
-	return P.identity ||
+	return P.identity || 
 		(x.CoefficientCount() <= m_field->MaxElementBitLength()
 		&& y.CoefficientCount() <= m_field->MaxElementBitLength()
 		&& !(((x+m_a)*x*x+m_b-(x+y)*y)%m_field->GetModulus()));
@@ -196,14 +175,7 @@ bool EC2N::Equal(const Point &P, const Point &Q) const
 
 const EC2N::Point& EC2N::Identity() const
 {
-#if defined(HAVE_GCC_INIT_PRIORITY) || defined(HAVE_MSC_INIT_PRIORITY) || defined(HAVE_XLC_INIT_PRIORITY)
-	return g_identity;
-#elif defined(CRYPTOPP_CXX11_STATIC_INIT)
-	static const EC2N::Point g_identity;
-	return g_identity;
-#else
 	return Singleton<Point>().Ref();
-#endif
 }
 
 const EC2N::Point& EC2N::Inverse(const Point &P) const
@@ -261,7 +233,7 @@ const EC2N::Point& EC2N::Double(const Point &P) const
 
 // ********************************************************
 
-#if 0
+/*
 EcPrecomputation<EC2N>& EcPrecomputation<EC2N>::operator=(const EcPrecomputation<EC2N> &rhs)
 {
 	m_ec = rhs.m_ec;
@@ -313,7 +285,7 @@ EC2N::Point EcPrecomputation<EC2N>::CascadeExponentiate(const Integer &exponent,
 {
 	return m_ep.CascadeExponentiate(exponent, static_cast<const EcPrecomputation<EC2N> &>(pc2).m_ep, exponent2);
 }
-#endif
+*/
 
 NAMESPACE_END
 

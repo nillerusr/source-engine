@@ -1,27 +1,22 @@
-// rc5.h - originally written and placed in the public domain by Wei Dai
-
-/// \file rc5.h
-/// \brief Classes for the RC5 block cipher
-
 #ifndef CRYPTOPP_RC5_H
 #define CRYPTOPP_RC5_H
+
+/** \file
+*/
 
 #include "seckey.h"
 #include "secblock.h"
 
 NAMESPACE_BEGIN(CryptoPP)
 
-/// \brief RC5 block cipher information
-/// \since Crypto++ 1.0
+//! _
 struct RC5_Info : public FixedBlockSize<8>, public VariableKeyLength<16, 0, 255>, public VariableRounds<16>
 {
-	CRYPTOPP_STATIC_CONSTEXPR const char* StaticAlgorithmName() {return "RC5";}
+	static const char *StaticAlgorithmName() {return "RC5";}
 	typedef word32 RC5_WORD;
 };
 
-/// \brief RC5 block cipher
-/// \sa <a href="http://www.cryptopp.com/wiki/RC5">RC5</a>
-/// \since Crypto++ 1.0
+/// <a href="http://www.weidai.com/scan-mirror/cs.html#RC5">RC5</a>
 class RC5 : public RC5_Info, public BlockCipherDocumentation
 {
 	class CRYPTOPP_NO_VTABLE Base : public BlockCipherImpl<RC5_Info>

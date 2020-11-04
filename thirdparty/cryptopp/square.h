@@ -1,26 +1,21 @@
-// square.h - originally written and placed in the public domain by Wei Dai
-
-/// \file square.h
-/// \brief Classes for the Square block cipher
-
 #ifndef CRYPTOPP_SQUARE_H
 #define CRYPTOPP_SQUARE_H
+
+/** \file
+*/
 
 #include "seckey.h"
 #include "secblock.h"
 
 NAMESPACE_BEGIN(CryptoPP)
 
-/// \brief Square block cipher information
-/// \since Crypto++ 2.2
+//! _
 struct Square_Info : public FixedBlockSize<16>, public FixedKeyLength<16>, FixedRounds<8>
 {
-	CRYPTOPP_STATIC_CONSTEXPR const char* StaticAlgorithmName() {return "Square";}
+	static const char *StaticAlgorithmName() {return "Square";}
 };
 
-/// \brief Square block cipher
-/// \sa <a href="http://www.cryptopp.com/wiki/Square">Square</a>
-/// \since Crypto++ 2.2
+/// <a href="http://www.weidai.com/scan-mirror/cs.html#Square">Square</a>
 class Square : public Square_Info, public BlockCipherDocumentation
 {
 	class CRYPTOPP_NO_VTABLE Base : public BlockCipherImpl<Square_Info>

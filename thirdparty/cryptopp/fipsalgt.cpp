@@ -1,4 +1,4 @@
-// fipsalgt.cpp - originally written and placed in the public domain by Wei Dai
+// fipsalgt.cpp - written and placed in the public domain by Wei Dai
 
 // This file implements the various algorithm tests needed to pass FIPS 140 validation.
 // They're preserved here (commented out) in case Crypto++ needs to be revalidated.
@@ -7,26 +7,23 @@
 #ifndef CRYPTOPP_IMPORTS
 #define CRYPTOPP_DEFAULT_NO_DLL
 #endif
-
 #include "dll.h"
-#include "cryptlib.h"
-#include "smartptr.h"
-#include "filters.h"
 #include "oids.h"
 
 USING_NAMESPACE(CryptoPP)
+USING_NAMESPACE(std)
 
 class LineBreakParser : public AutoSignaling<Bufferless<Filter> >
 {
 public:
-	LineBreakParser(BufferedTransformation *attachment=NULLPTR, byte lineEnd='\n')
+	LineBreakParser(BufferedTransformation *attachment=NULL, byte lineEnd='\n')
 		: m_lineEnd(lineEnd) {Detach(attachment);}
 
 	size_t Put2(const byte *begin, size_t length, int messageEnd, bool blocking)
 	{
 		if (!blocking)
 			throw BlockingInputOnly("LineBreakParser");
-
+		
 		unsigned int i, last = 0;
 		for (i=0; i<length; i++)
 		{
@@ -261,7 +258,7 @@ protected:
 
 	static inline void Xor(SecByteBlock &z, const SecByteBlock &x, const SecByteBlock &y)
 	{
-		CRYPTOPP_ASSERT(x.size() == y.size());
+		assert(x.size() == y.size());
 		z.resize(x.size());
 		xorbuf(z, x, y, x.size());
 	}
@@ -399,7 +396,7 @@ protected:
 				return (Result *) new typename RSASS<PKCS1v15, H>::Signer;
 		}
 
-		return NULLPTR;
+		return NULL;
 	}
 
 	template <class Result>
@@ -416,7 +413,7 @@ protected:
 		else if (hash == "512")
 			return CreateRSA2<SHA512, Result>(standard);
 		else
-			return NULLPTR;
+			return NULL;
 	}
 
 	virtual void DoTest()
@@ -455,8 +452,8 @@ protected:
 				{
 					Integer p, q, h, g;
 					int counter;
-
-					SecByteBlock seed(SHA1::DIGESTSIZE);
+					
+					SecByteBlock seed(SHA::DIGESTSIZE);
 					do
 					{
 						m_rng.GenerateBlock(seed, seed.size());
@@ -636,7 +633,7 @@ protected:
 			}
 			else
 			{
-				CRYPTOPP_ASSERT(m_test == "Gen");
+				assert(m_test == "Gen");
 				int modLen = atol(m_bracketString.substr(6).c_str());
 				std::string &encodedKey = m_data["PrivKey"];
 				RSA::PrivateKey priv;
@@ -1033,7 +1030,7 @@ protected:
 		}
 		else
 		{
-			CRYPTOPP_ASSERT(m_test == "KAT");
+			assert(m_test == "KAT");
 
 			SecByteBlock &input = m_data2[INPUT];
 			SecByteBlock result(input.size());
@@ -1096,7 +1093,7 @@ protected:
 
 		if (m_line.substr(0, 2) == "H>")
 		{
-			CRYPTOPP_ASSERT(m_test == "sha");
+			assert(m_test == "sha");
 			m_bracketString = m_line.substr(2, m_line.size()-4);
 			m_line = m_line.substr(0, 13) + "Hashes<H";
 			copyLine = true;
@@ -1258,7 +1255,7 @@ int FIPS_140_AlgorithmTest(int argc, char **argv)
 			test = "KAT";
 		bool encrypt = (filename.find("vrct") == std::string::npos);
 
-		BufferedTransformation *pSink = NULLPTR;
+		BufferedTransformation *pSink = NULL;
 
 		if (argc > 3)
 		{

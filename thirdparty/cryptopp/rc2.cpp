@@ -1,4 +1,4 @@
-// rc2.cpp - originally written and placed in the public domain by Wei Dai
+// rc2.cpp - written and placed in the public domain by Wei Dai
 
 #include "pch.h"
 #include "rc2.h"
@@ -41,7 +41,7 @@ void RC2::Base::UncheckedSetKey(const byte *key, unsigned int keyLen, const Name
 		L[i] = PITABLE[(L[i-1] + L[i-keyLen]) & 255];
 
 	unsigned int T8 = (effectiveLen+7) / 8;
-	byte TM = byte((int)255 >> ((8-(effectiveLen%8))%8));
+	byte TM = 255 >> ((8-(effectiveLen%8))%8);
 	L[128-T8] = PITABLE[L[128-T8] & TM];
 
 	for (i=127-T8; i>=0; i--)
@@ -61,23 +61,23 @@ void RC2::Enc::ProcessAndXorBlock(const byte *inBlock, const byte *xorBlock, byt
 	for (int i = 0; i < 16; i++)
 	{
 		R0 += (R1 & ~R3) + (R2 & R3) + K[4*i+0];
-		R0 = rotlConstant<1>(R0);
+		R0 = rotlFixed(R0, 1);
 
 		R1 += (R2 & ~R0) + (R3 & R0) + K[4*i+1];
-		R1 = rotlConstant<2>(R1);
+		R1 = rotlFixed(R1, 2);
 
 		R2 += (R3 & ~R1) + (R0 & R1) + K[4*i+2];
-		R2 = rotlConstant<3>(R2);
+		R2 = rotlFixed(R2, 3);
 
 		R3 += (R0 & ~R2) + (R1 & R2) + K[4*i+3];
-		R3 = rotlConstant<5>(R3);
+		R3 = rotlFixed(R3, 5);
 
 		if (i == 4 || i == 10)
 		{
-			R0 = word16(R0 + K[R3 & 63]);
-			R1 = word16(R1 + K[R0 & 63]);
-			R2 = word16(R2 + K[R1 & 63]);
-			R3 = word16(R3 + K[R2 & 63]);
+			R0 += K[R3 & 63];
+			R1 += K[R0 & 63];
+			R2 += K[R1 & 63];
+			R3 += K[R2 & 63];
 		}
 	}
 
@@ -93,23 +93,23 @@ void RC2::Dec::ProcessAndXorBlock(const byte *inBlock, const byte *xorBlock, byt
 	{
 		if (i == 4 || i == 10)
 		{
-			R3 = word16(R3 - K[R2 & 63]);
-			R2 = word16(R2 - K[R1 & 63]);
-			R1 = word16(R1 - K[R0 & 63]);
-			R0 = word16(R0 - K[R3 & 63]);
+			R3 -= K[R2 & 63];
+			R2 -= K[R1 & 63];
+			R1 -= K[R0 & 63];
+			R0 -= K[R3 & 63];
 		}
 
-		R3 = rotrConstant<5>(R3);
-		R3 = word16(R3 - ((R0 & ~R2) + (R1 & R2) + K[4*i+3]));
+		R3 = rotrFixed(R3, 5);
+		R3 -= (R0 & ~R2) + (R1 & R2) + K[4*i+3];
 
-		R2 = rotrConstant<3>(R2);
-		R2 = word16(R2 - ((R3 & ~R1) + (R0 & R1) + K[4*i+2]));
+		R2 = rotrFixed(R2, 3);
+		R2 -= (R3 & ~R1) + (R0 & R1) + K[4*i+2];
 
-		R1 = rotrConstant<2>(R1);
-		R1 = word16(R1 - ((R2 & ~R0) + (R3 & R0) + K[4*i+1]));
+		R1 = rotrFixed(R1, 2);
+		R1 -= (R2 & ~R0) + (R3 & R0) + K[4*i+1];
 
-		R0 = rotrConstant<1>(R0);
-		R0 = word16(R0 - ((R1 & ~R3) + (R2 & R3) + K[4*i+0]));
+		R0 = rotrFixed(R0, 1);
+		R0 -= (R1 & ~R3) + (R2 & R3) + K[4*i+0];
 	}
 
 	Block::Put(xorBlock, outBlock)(R0)(R1)(R2)(R3);

@@ -1,25 +1,15 @@
-// channels.h - originally written and placed in the public domain by Wei Dai
-
-/// \file channels.h
-/// \brief Classes for multiple named channels
-
 #ifndef CRYPTOPP_CHANNELS_H
 #define CRYPTOPP_CHANNELS_H
 
-#include "cryptlib.h"
 #include "simple.h"
 #include "smartptr.h"
-#include "stdcpp.h"
-
-#if CRYPTOPP_MSC_VERSION
-# pragma warning(push)
-# pragma warning(disable: 4355)
-#endif
+#include <map>
+#include <list>
 
 NAMESPACE_BEGIN(CryptoPP)
 
 #if 0
-/// Route input on default channel to different and/or multiple channels based on message sequence number
+//! Route input on default channel to different and/or multiple channels based on message sequence number
 class MessageSwitch : public Sink
 {
 public:
@@ -73,26 +63,21 @@ class ChannelSwitch;
 class ChannelRouteIterator : public ChannelSwitchTypedefs
 {
 public:
-	ChannelRouteIterator(ChannelSwitch &cs) : m_cs(cs), m_useDefault(false) {}
-
-	void Reset(const std::string &channel);
-	bool End() const;
-	void Next();
-	BufferedTransformation & Destination();
-	const std::string & Channel();
-
 	ChannelSwitch& m_cs;
 	std::string m_channel;
 	bool m_useDefault;
 	MapIterator m_itMapCurrent, m_itMapEnd;
 	ListIterator m_itListCurrent, m_itListEnd;
 
-protected:
-	// Hide this to see if we break something...
-	ChannelRouteIterator();
+	ChannelRouteIterator(ChannelSwitch &cs) : m_cs(cs) {}
+	void Reset(const std::string &channel);
+	bool End() const;
+	void Next();
+	BufferedTransformation & Destination();
+	const std::string & Channel();
 };
 
-/// Route input to different and/or multiple channels based on channel ID
+//! Route input to different and/or multiple channels based on channel ID
 class CRYPTOPP_DLL ChannelSwitch : public Multichannel<Sink>, public ChannelSwitchTypedefs
 {
 public:
@@ -115,7 +100,7 @@ public:
 	bool ChannelMessageSeriesEnd(const std::string &channel, int propagation=-1, bool blocking=true);
 
 	byte * ChannelCreatePutSpace(const std::string &channel, size_t &size);
-
+	
 	void AddDefaultRoute(BufferedTransformation &destination);
 	void RemoveDefaultRoute(BufferedTransformation &destination);
 	void AddDefaultRoute(BufferedTransformation &destination, const std::string &outChannel);
@@ -134,9 +119,5 @@ private:
 };
 
 NAMESPACE_END
-
-#if CRYPTOPP_MSC_VERSION
-# pragma warning(pop)
-#endif
 
 #endif

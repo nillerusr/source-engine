@@ -1,26 +1,16 @@
-// zdeflate.h - originally written and placed in the public domain by Wei Dai
-
-/// \file zdeflate.h
-/// \brief DEFLATE compression and decompression (RFC 1951)
-
 #ifndef CRYPTOPP_ZDEFLATE_H
 #define CRYPTOPP_ZDEFLATE_H
 
-#include "cryptlib.h"
 #include "filters.h"
 #include "misc.h"
 
 NAMESPACE_BEGIN(CryptoPP)
 
-/// \brief Encoding table writer
-/// \since Crypto++ 1.0
+//! _
 class LowFirstBitWriter : public Filter
 {
 public:
-	/// \brief Construct a LowFirstBitWriter
-	/// \param attachment an attached transformation
 	LowFirstBitWriter(BufferedTransformation *attachment);
-
 	void PutBits(unsigned long value, unsigned int length);
 	void FlushBitBuffer();
 	void ClearBitBuffer();
@@ -36,25 +26,15 @@ protected:
 	FixedSizeSecBlock<byte, 256> m_outputBuffer;
 };
 
-/// \brief Huffman Encoder
-/// \since Crypto++ 1.0
+//! Huffman Encoder
 class HuffmanEncoder
 {
 public:
 	typedef unsigned int code_t;
 	typedef unsigned int value_t;
 
-	/// \brief Construct a HuffmanEncoder
 	HuffmanEncoder() {}
-
-	/// \brief Construct a HuffmanEncoder
-	/// \param codeBits a table of code bits
-	/// \param nCodes the number of codes in the table
 	HuffmanEncoder(const unsigned int *codeBits, unsigned int nCodes);
-
-	/// \brief Initialize or reinitialize this object
-	/// \param codeBits a table of code bits
-	/// \param nCodes the number of codes in the table
 	void Initialize(const unsigned int *codeBits, unsigned int nCodes);
 
 	static void GenerateCodeLengths(unsigned int *codeBits, unsigned int maxCodeBits, const unsigned int *codeCounts, size_t nCodes);
@@ -70,55 +50,23 @@ public:
 	SecBlock<Code> m_valueToCode;
 };
 
-/// \brief DEFLATE compressor (RFC 1951)
-/// \since Crypto++ 1.0
+//! DEFLATE (RFC 1951) compressor
+
 class Deflator : public LowFirstBitWriter
 {
 public:
-	/// \brief Deflate level as enumerated values.
-	enum {
-		/// \brief Minimum deflation level, fastest speed (0)
-		MIN_DEFLATE_LEVEL = 0,
-		/// \brief Default deflation level, compromise between speed (6)
-		DEFAULT_DEFLATE_LEVEL = 6,
-		/// \brief Minimum deflation level, slowest speed (9)
-		MAX_DEFLATE_LEVEL = 9};
+	enum {MIN_DEFLATE_LEVEL = 0, DEFAULT_DEFLATE_LEVEL = 6, MAX_DEFLATE_LEVEL = 9};
+	enum {MIN_LOG2_WINDOW_SIZE = 9, DEFAULT_LOG2_WINDOW_SIZE = 15, MAX_LOG2_WINDOW_SIZE = 15};
+	/*! \note detectUncompressible makes it faster to process uncompressible files, but
+		if a file has both compressible and uncompressible parts, it may fail to compress some of the
+		compressible parts. */
+	Deflator(BufferedTransformation *attachment=NULL, int deflateLevel=DEFAULT_DEFLATE_LEVEL, int log2WindowSize=DEFAULT_LOG2_WINDOW_SIZE, bool detectUncompressible=true);
+	//! possible parameter names: Log2WindowSize, DeflateLevel, DetectUncompressible
+	Deflator(const NameValuePairs &parameters, BufferedTransformation *attachment=NULL);
 
-	/// \brief Windows size as enumerated values.
-	enum {
-		/// \brief Minimum window size, smallest table (9)
-		MIN_LOG2_WINDOW_SIZE = 9,
-		/// \brief Default window size (15)
-		DEFAULT_LOG2_WINDOW_SIZE = 15,
-		/// \brief Maximum window size, largest table (15)
-		MAX_LOG2_WINDOW_SIZE = 15};
-
-	/// \brief Construct a Deflator compressor
-	/// \param attachment an attached transformation
-	/// \param deflateLevel the deflate level
-	/// \param log2WindowSize the window size
-	/// \param detectUncompressible flag to detect if data is compressible
-	/// \details detectUncompressible makes it faster to process uncompressible files, but
-	///   if a file has both compressible and uncompressible parts, it may fail to compress
-	///   some of the compressible parts.
-	Deflator(BufferedTransformation *attachment=NULLPTR, int deflateLevel=DEFAULT_DEFLATE_LEVEL, int log2WindowSize=DEFAULT_LOG2_WINDOW_SIZE, bool detectUncompressible=true);
-	/// \brief Construct a Deflator compressor
-	/// \param parameters a set of NameValuePairs to initialize this object
-	/// \param attachment an attached transformation
-	/// \details Possible parameter names: Log2WindowSize, DeflateLevel, DetectUncompressible
-	Deflator(const NameValuePairs &parameters, BufferedTransformation *attachment=NULLPTR);
-
-	/// \brief Sets the deflation level
-	/// \param deflateLevel the level of deflation
-	/// \details SetDeflateLevel can be used to set the deflate level in the middle of compression
+	//! this function can be used to set the deflate level in the middle of compression
 	void SetDeflateLevel(int deflateLevel);
-
-	/// \brief Retrieves the deflation level
-	/// \returns the level of deflation
 	int GetDeflateLevel() const {return m_deflateLevel;}
-
-	/// \brief Retrieves the window size
-	/// \returns the windows size
 	int GetLog2WindowSize() const {return m_log2WindowSize;}
 
 	void IsolatedInitialize(const NameValuePairs &parameters);
@@ -127,8 +75,7 @@ public:
 
 protected:
 	virtual void WritePrestreamHeader() {}
-	virtual void ProcessUncompressedData(const byte *string, size_t length)
-		{CRYPTOPP_UNUSED(string), CRYPTOPP_UNUSED(length);}
+	virtual void ProcessUncompressedData(const byte *string, size_t length) {}
 	virtual void WritePoststreamTail() {}
 
 	enum {STORED = 0, STATIC = 1, DYNAMIC = 2};

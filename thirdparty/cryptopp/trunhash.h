@@ -8,17 +8,13 @@ NAMESPACE_BEGIN(CryptoPP)
 class NullHash : public HashTransformation
 {
 public:
-	void Update(const byte *input, size_t length)
-		{CRYPTOPP_UNUSED(input);CRYPTOPP_UNUSED(length);}
-	unsigned int DigestSize() const
-		{return 0;}
-	void TruncatedFinal(byte *digest, size_t digestSize)
-		{CRYPTOPP_UNUSED(digest);CRYPTOPP_UNUSED(digestSize);}
-	bool TruncatedVerify(const byte *digest, size_t digestLength)
-		{CRYPTOPP_UNUSED(digest);CRYPTOPP_UNUSED(digestLength);return true;}
+	void Update(const byte *input, size_t length) {}
+	unsigned int DigestSize() const {return 0;}
+	void TruncatedFinal(byte *digest, size_t digestSize) {}
+	bool TruncatedVerify(const byte *digest, size_t digestLength) {return true;}
 };
 
-/// construct new HashModule with smaller DigestSize() from existing one
+//! construct new HashModule with smaller DigestSize() from existing one
 template <class T>
 class TruncatedHashTemplate : public HashTransformation
 {

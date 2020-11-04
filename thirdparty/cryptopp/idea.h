@@ -1,26 +1,21 @@
-// idea.h - originally written and placed in the public domain by Wei Dai
-
-/// \file idea.h
-/// \brief Classes for the IDEA block cipher
-
 #ifndef CRYPTOPP_IDEA_H
 #define CRYPTOPP_IDEA_H
+
+/** \file
+*/
 
 #include "seckey.h"
 #include "secblock.h"
 
 NAMESPACE_BEGIN(CryptoPP)
 
-/// \brief IDEA block cipher information
-/// \since Crypto++ 1.0
+//! _
 struct IDEA_Info : public FixedBlockSize<8>, public FixedKeyLength<16>, public FixedRounds<8>
 {
-	CRYPTOPP_STATIC_CONSTEXPR const char* StaticAlgorithmName() {return "IDEA";}
+	static const char *StaticAlgorithmName() {return "IDEA";}
 };
 
-/// \brief IDEA block cipher
-/// \sa <a href="http://www.cryptopp.com/wiki/IDEA">IDEA</a>
-/// \since Crypto++ 1.0
+/// <a href="http://www.weidai.com/scan-mirror/cs.html#IDEA">IDEA</a>
 class IDEA : public IDEA_Info, public BlockCipherDocumentation
 {
 public:		// made public for internal purposes

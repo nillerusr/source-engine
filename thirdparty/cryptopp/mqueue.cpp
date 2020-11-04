@@ -1,4 +1,4 @@
-// mqueue.cpp - originally written and placed in the public domain by Wei Dai
+// mqueue.cpp - written and placed in the public domain by Wei Dai
 
 #include "pch.h"
 
@@ -166,8 +166,7 @@ bool EqualityComparisonFilter::HandleMismatchDetected(bool blocking)
 	m_mismatchDetected = true;
 	if (m_throwIfNotEqual)
 		throw MismatchDetected();
-	const byte b[1] = {0};
-	return Output(1, b, 1, 0, blocking) != 0;
+	return Output(1, (const byte *)"\0", 1, 0, blocking) != 0;
 }
 
 NAMESPACE_END

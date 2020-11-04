@@ -434,6 +434,9 @@ $(objects)/SDL_dbus.lo: /home/nillerusr/projects/source-engine/thirdparty/SDL2-s
 $(objects)/SDL_ime.lo: /home/nillerusr/projects/source-engine/thirdparty/SDL2-src/src/core/linux/SDL_ime.c $(objects)/.created
 	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
 
+$(objects)/SDL_ibus.lo: /home/nillerusr/projects/source-engine/thirdparty/SDL2-src/src/core/linux/SDL_ibus.c $(objects)/.created
+	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
+
 $(objects)/SDL_systhread.lo: /home/nillerusr/projects/source-engine/thirdparty/SDL2-src/src/thread/pthread/SDL_systhread.c $(objects)/.created
 	$(RUN_CMD_CC)$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) $(EXTRA_CFLAGS) -MMD -MT $@ -c $< -o $@
 

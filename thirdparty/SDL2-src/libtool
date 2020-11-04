@@ -275,7 +275,7 @@ finish_eval=""
 hardcode_into_libs=yes
 
 # Compile-time system search path for libraries.
-sys_lib_search_path_spec="/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0 /usr/lib32 /lib32 "
+sys_lib_search_path_spec="/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4 /usr/lib32 /lib32 "
 
 # Run-time system search path for libraries.
 sys_lib_dlsearch_path_spec="/lib /usr/lib /usr/lib/libfakeroot /usr/lib32 "
@@ -10227,17 +10227,17 @@ file_list_spec=""
 hardcode_action=immediate
 
 # The directories searched by this compiler when creating a shared library.
-compiler_lib_search_dirs="/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/32 /usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/../../../../lib32 /lib/../lib32 /usr/lib/../lib32 /usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0 /usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/../../.."
+compiler_lib_search_dirs="/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/32 /usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/../../../../lib32 /lib/../lib32 /usr/lib/../lib32 /usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4 /usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/../../.."
 
 # Dependencies to place before and after the objects being linked to
 # create a shared library.
-predep_objects="/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/../../../../lib32/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/32/crtbeginS.o"
-postdep_objects="/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/32/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/../../../../lib32/crtn.o"
+predep_objects="/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/../../../../lib32/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/32/crtbeginS.o"
+postdep_objects="/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/32/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/../../../../lib32/crtn.o"
 predeps=""
 postdeps="-lstdc++ -lm -lgcc_s -lc -lgcc_s"
 
 # The library search path used internally by the compiler when linking
 # a shared library.
-compiler_lib_search_path="-L/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/32 -L/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/../../../../lib32 -L/lib/../lib32 -L/usr/lib/../lib32 -L/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0 -L/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/../../.."
+compiler_lib_search_path="-L/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/32 -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/../../../../lib32 -L/lib/../lib32 -L/usr/lib/../lib32 -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4 -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/../../.."
 
 # ### END LIBTOOL TAG CONFIG: CXX

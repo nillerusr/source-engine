@@ -1,48 +1,35 @@
-// dsa.h - originally written and placed in the public domain by Wei Dai
-
-/// \file dsa.h
-/// \brief Classes for the DSA signature algorithm
-
 #ifndef CRYPTOPP_DSA_H
 #define CRYPTOPP_DSA_H
 
-#include "cryptlib.h"
+/** \file
+*/
+
 #include "gfpcrypt.h"
 
 NAMESPACE_BEGIN(CryptoPP)
 
-/// \brief DSA Signature Format
-/// \details The DSA signature format used by Crypto++ is as defined by IEEE P1363.
-///  OpenSSL, Java and .Net use the DER format, and OpenPGP uses the OpenPGP format.
-/// \sa <A HREF="http://www.cryptopp.com/wiki/DSAConvertSignatureFormat">DSAConvertSignatureFormat</A>
-///  on the Crypto++ wiki.
-/// \since Crypto++ 1.0
-enum DSASignatureFormat {
-	/// \brief Crypto++ native signature encoding format
-	DSA_P1363,
-	/// \brief signature encoding format used by OpenSSL, Java and .Net
-	DSA_DER,
-	/// \brief OpenPGP signature encoding format
-	DSA_OPENPGP
-};
-
-/// \brief Converts between signature encoding formats
-/// \param buffer byte buffer for the converted signature encoding
-/// \param bufferSize the length of the converted signature encoding buffer
-/// \param toFormat the source signature format
-/// \param signature byte buffer for the existing signature encoding
-/// \param signatureLen the length of the existing signature encoding buffer
-/// \param fromFormat the source signature format
-/// \details This function converts between these formats, and returns length
-///  of signature in the target format. If <tt>toFormat == DSA_P1363</tt>, then
-///  <tt>bufferSize</tt> must equal <tt>publicKey.SignatureLength()</tt> or
-///  <tt>verifier.SignatureLength()</tt>.
-/// \sa <A HREF="http://www.cryptopp.com/wiki/DSAConvertSignatureFormat">DSAConvertSignatureFormat</A>
-///  on the Crypto++ wiki.
-/// \since Crypto++ 1.0
-size_t DSAConvertSignatureFormat(byte *buffer, size_t bufferSize, DSASignatureFormat toFormat,
+/*! The DSA signature format used by Crypto++ is as defined by IEEE P1363.
+  Java uses the DER format, and OpenPGP uses the OpenPGP format. */
+enum DSASignatureFormat {DSA_P1363, DSA_DER, DSA_OPENPGP};
+/** This function converts between these formats, and returns length of signature in the target format.
+	If toFormat == DSA_P1363, bufferSize must equal publicKey.SignatureLength() */
+size_t DSAConvertSignatureFormat(byte *buffer, size_t bufferSize, DSASignatureFormat toFormat, 
 	const byte *signature, size_t signatureLen, DSASignatureFormat fromFormat);
+
+#ifdef CRYPTOPP_MAINTAIN_BACKWARDS_COMPATIBILITY
+
+typedef DSA::Signer DSAPrivateKey;
+typedef DSA::Verifier DSAPublicKey;
+
+const int MIN_DSA_PRIME_LENGTH = DSA::MIN_PRIME_LENGTH;
+const int MAX_DSA_PRIME_LENGTH = DSA::MAX_PRIME_LENGTH;
+const int DSA_PRIME_LENGTH_MULTIPLE = DSA::PRIME_LENGTH_MULTIPLE;
+
+inline bool GenerateDSAPrimes(const byte *seed, size_t seedLength, int &counter, Integer &p, unsigned int primeLength, Integer &q)
+	{return DSA::GeneratePrimes(seed, seedLength, counter, p, primeLength, q);}
+
+#endif
 
 NAMESPACE_END
 
-#endif  // CRYPTOPP_DSA_H
+#endif

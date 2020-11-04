@@ -1,4 +1,4 @@
-// authenc.cpp - originally written and placed in the public domain by Wei Dai
+// authenc.cpp - written and placed in the public domain by Wei Dai
 
 #include "pch.h"
 
@@ -10,15 +10,11 @@ NAMESPACE_BEGIN(CryptoPP)
 
 void AuthenticatedSymmetricCipherBase::AuthenticateData(const byte *input, size_t len)
 {
-	// UBsan finding with -std=c++03 using memcpy
-	CRYPTOPP_ASSERT(input && len);
-	if(!input || !len) return;
-
 	unsigned int blockSize = AuthenticationBlockSize();
 	unsigned int &num = m_bufferedDataLength;
 	byte* data = m_buffer.begin();
 
-	if (data && num)	// process left over data
+	if (num != 0)	// process left over data
 	{
 		if (num+len >= blockSize)
 		{
@@ -45,8 +41,7 @@ void AuthenticatedSymmetricCipherBase::AuthenticateData(const byte *input, size_
 		len = leftOver;
 	}
 
-	if (data && len)
-		memcpy(data, input, len);
+	memcpy(data, input, len);
 	num = (unsigned int)len;
 }
 
@@ -55,7 +50,7 @@ void AuthenticatedSymmetricCipherBase::SetKey(const byte *userKey, size_t keylen
 	m_bufferedDataLength = 0;
 	m_state = State_Start;
 
-	this->SetKeyWithoutResync(userKey, keylength, params);
+	SetKeyWithoutResync(userKey, keylength, params);
 	m_state = State_KeySet;
 
 	size_t length;
@@ -79,8 +74,8 @@ void AuthenticatedSymmetricCipherBase::Resynchronize(const byte *iv, int length)
 
 void AuthenticatedSymmetricCipherBase::Update(const byte *input, size_t length)
 {
-	// Part of original authenc.cpp code. Don't remove it.
-	if (length == 0) {return;}
+	if (length == 0)
+		return;
 
 	switch (m_state)
 	{
@@ -102,15 +97,15 @@ void AuthenticatedSymmetricCipherBase::Update(const byte *input, size_t length)
 		m_totalFooterLength += length;
 		break;
 	default:
-		CRYPTOPP_ASSERT(false);
+		assert(false);
 	}
 }
 
 void AuthenticatedSymmetricCipherBase::ProcessData(byte *outString, const byte *inString, size_t length)
 {
-	if (m_state >= State_IVSet && length > MaxMessageLength()-m_totalMessageLength)
-		throw InvalidArgument(AlgorithmName() + ": message length exceeds maximum");
 	m_totalMessageLength += length;
+	if (m_state >= State_IVSet && m_totalMessageLength > MaxMessageLength())
+		throw InvalidArgument(AlgorithmName() + ": message length exceeds maximum");
 
 reswitch:
 	switch (m_state)
@@ -134,15 +129,12 @@ reswitch:
 		AuthenticateData(outString, length);
 		break;
 	default:
-		CRYPTOPP_ASSERT(false);
+		assert(false);
 	}
 }
 
 void AuthenticatedSymmetricCipherBase::TruncatedFinal(byte *mac, size_t macSize)
 {
-	// https://github.com/weidai11/cryptopp/issues/954
-	this->ThrowIfInvalidTruncatedSize(macSize);
-
 	if (m_totalHeaderLength > MaxHeaderLength())
 		throw InvalidArgument(AlgorithmName() + ": header length of " + IntToString(m_totalHeaderLength) + " exceeds the maximum of " + IntToString(MaxHeaderLength()));
 
@@ -177,7 +169,7 @@ void AuthenticatedSymmetricCipherBase::TruncatedFinal(byte *mac, size_t macSize)
 		break;
 
 	default:
-		CRYPTOPP_ASSERT(false);
+		assert(false);
 	}
 
 	m_state = State_KeySet;

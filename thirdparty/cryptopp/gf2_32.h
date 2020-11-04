@@ -1,18 +1,11 @@
-// gf2_32.h - originally written and placed in the public domain by Wei Dai
-
-/// \file gf2_32.h
-/// \brief Classes and functions for schemes over GF(2^32)
-
 #ifndef CRYPTOPP_GF2_32_H
 #define CRYPTOPP_GF2_32_H
 
 #include "cryptlib.h"
-#include "secblock.h"
-#include "misc.h"
 
 NAMESPACE_BEGIN(CryptoPP)
 
-/// \brief GF(2^32) with polynomial basis
+//! GF(2^32) with polynomial basis
 class GF2_32
 {
 public:
@@ -22,7 +15,7 @@ public:
 	GF2_32(word32 modulus=0x0000008D) : m_modulus(modulus) {}
 
 	Element RandomElement(RandomNumberGenerator &rng, int ignored = 0) const
-		{CRYPTOPP_UNUSED(ignored); return rng.GenerateWord32();}
+		{return rng.GenerateWord32();}
 
 	bool Equal(Element a, Element b) const
 		{return a==b;}
@@ -46,7 +39,7 @@ public:
 		{return a^=b;}
 
 	Element Double(Element a) const
-		{CRYPTOPP_UNUSED(a); return 0;}
+		{return 0;}
 
 	Element MultiplicativeIdentity() const
 		{return 1;}

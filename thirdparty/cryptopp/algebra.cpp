@@ -1,4 +1,4 @@
-// algebra.cpp - originally written and placed in the public domain by Wei Dai
+// algebra.cpp - written and placed in the public domain by Wei Dai
 
 #include "pch.h"
 
@@ -14,42 +14,42 @@ NAMESPACE_BEGIN(CryptoPP)
 
 template <class T> const T& AbstractGroup<T>::Double(const Element &a) const
 {
-	return this->Add(a, a);
+	return Add(a, a);
 }
 
 template <class T> const T& AbstractGroup<T>::Subtract(const Element &a, const Element &b) const
 {
 	// make copy of a in case Inverse() overwrites it
 	Element a1(a);
-	return this->Add(a1, Inverse(b));
+	return Add(a1, Inverse(b));
 }
 
 template <class T> T& AbstractGroup<T>::Accumulate(Element &a, const Element &b) const
 {
-	return a = this->Add(a, b);
+	return a = Add(a, b);
 }
 
 template <class T> T& AbstractGroup<T>::Reduce(Element &a, const Element &b) const
 {
-	return a = this->Subtract(a, b);
+	return a = Subtract(a, b);
 }
 
 template <class T> const T& AbstractRing<T>::Square(const Element &a) const
 {
-	return this->Multiply(a, a);
+	return Multiply(a, a);
 }
 
 template <class T> const T& AbstractRing<T>::Divide(const Element &a, const Element &b) const
 {
 	// make copy of a in case MultiplicativeInverse() overwrites it
 	Element a1(a);
-	return this->Multiply(a1, this->MultiplicativeInverse(b));
+	return Multiply(a1, MultiplicativeInverse(b));
 }
 
 template <class T> const T& AbstractEuclideanDomain<T>::Mod(const Element &a, const Element &b) const
 {
 	Element q;
-	this->DivisionAlgorithm(result, q, a, b);
+	DivisionAlgorithm(result, q, a, b);
 	return result;
 }
 
@@ -60,7 +60,7 @@ template <class T> const T& AbstractEuclideanDomain<T>::Gcd(const Element &a, co
 
 	while (!this->Equal(g[i1], this->Identity()))
 	{
-		g[i2] = this->Mod(g[i0], g[i1]);
+		g[i2] = Mod(g[i0], g[i1]);
 		unsigned int t = i0; i0 = i1; i1 = i2; i2 = t;
 	}
 
@@ -74,7 +74,7 @@ template <class T> const typename QuotientRing<T>::Element& QuotientRing<T>::Mul
 	Element y;
 	unsigned int i0=0, i1=1, i2=2;
 
-	while (!this->Equal(g[i1], this->Identity()))
+	while (!Equal(g[i1], Identity()))
 	{
 		// y = g[i0] / g[i1];
 		// g[i2] = g[i0] % g[i1];
@@ -90,7 +90,7 @@ template <class T> const typename QuotientRing<T>::Element& QuotientRing<T>::Mul
 template <class T> T AbstractGroup<T>::ScalarMultiply(const Element &base, const Integer &exponent) const
 {
 	Element result;
-	this->SimultaneousMultiply(&result, base, &exponent, 1);
+	SimultaneousMultiply(&result, base, &exponent, 1);
 	return result;
 }
 
@@ -98,7 +98,7 @@ template <class T> T AbstractGroup<T>::CascadeScalarMultiply(const Element &x, c
 {
 	const unsigned expLen = STDMAX(e1.BitCount(), e2.BitCount());
 	if (expLen==0)
-		return this->Identity();
+		return Identity();
 
 	const unsigned w = (expLen <= 46 ? 1 : (expLen <= 260 ? 2 : 3));
 	const unsigned tableSize = 1<<w;
@@ -107,11 +107,11 @@ template <class T> T AbstractGroup<T>::CascadeScalarMultiply(const Element &x, c
 	powerTable[1] = x;
 	powerTable[tableSize] = y;
 	if (w==1)
-		powerTable[3] = this->Add(x,y);
+		powerTable[3] = Add(x,y);
 	else
 	{
-		powerTable[2] = this->Double(x);
-		powerTable[2*tableSize] = this->Double(y);
+		powerTable[2] = Double(x);
+		powerTable[2*tableSize] = Double(y);
 
 		unsigned i, j;
 
@@ -157,12 +157,12 @@ template <class T> T AbstractGroup<T>::CascadeScalarMultiply(const Element &x, c
 			else
 			{
 				while (squaresBefore--)
-					result = this->Double(result);
+					result = Double(result);
 				if (power1 || power2)
 					Accumulate(result, powerTable[(power2<<w) + power1]);
 			}
 			while (squaresAfter--)
-				result = this->Double(result);
+				result = Double(result);
 			power1 = power2 = 0;
 		}
 	}
@@ -206,8 +206,7 @@ template <class Element, class Iterator> Element GeneralCascadeMultiplication(co
 struct WindowSlider
 {
 	WindowSlider(const Integer &expIn, bool fastNegate, unsigned int windowSizeIn=0)
-		: exp(expIn), windowModulus(Integer::One()), windowSize(windowSizeIn), windowBegin(0), expWindow(0)
-		, fastNegate(fastNegate), negateNext(false), firstTime(true), finished(false)
+		: exp(expIn), windowModulus(Integer::One()), windowSize(windowSizeIn), windowBegin(0), fastNegate(fastNegate), firstTime(true), finished(false)
 	{
 		if (windowSize == 0)
 		{
@@ -260,12 +259,12 @@ void AbstractGroup<T>::SimultaneousMultiply(T *results, const T &base, const Int
 	exponents.reserve(expCount);
 	unsigned int i;
 
-	for (i=0; expBegin && i<expCount; i++)
+	for (i=0; i<expCount; i++)
 	{
-		CRYPTOPP_ASSERT(expBegin->NotNegative());
+		assert(expBegin->NotNegative());
 		exponents.push_back(WindowSlider(*expBegin++, InversionIsFast(), 0));
 		exponents[i].FindNextWindow();
-		buckets[i].resize(((size_t) 1) << (exponents[i].windowSize-1), Identity());
+		buckets[i].resize(1<<(exponents[i].windowSize-1), Identity());
 	}
 
 	unsigned int expBitPosition = 0;

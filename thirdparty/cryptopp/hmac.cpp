@@ -1,4 +1,4 @@
-// hmac.cpp - originally written and placed in the public domain by Wei Dai
+// hmac.cpp - written and placed in the public domain by Wei Dai
 
 #include "pch.h"
 
@@ -23,18 +23,14 @@ void HMAC_Base::UncheckedSetKey(const byte *userKey, unsigned int keylength, con
 	m_buf.resize(2*AccessHash().BlockSize() + AccessHash().DigestSize());
 
 	if (keylength <= blockSize)
-	{
-		// hmac.cpp:26:9: runtime error: null pointer passed as argument 2
-		if (AccessIpad() && userKey && keylength)
-			memcpy(AccessIpad(), userKey, keylength);
-	}
+		memcpy(AccessIpad(), userKey, keylength);
 	else
 	{
 		AccessHash().CalculateDigest(AccessIpad(), userKey, keylength);
 		keylength = hash.DigestSize();
 	}
 
-	CRYPTOPP_ASSERT(keylength <= blockSize);
+	assert(keylength <= blockSize);
 	memset(AccessIpad()+keylength, 0, blockSize-keylength);
 
 	for (unsigned int i=0; i<blockSize; i++)
@@ -46,7 +42,7 @@ void HMAC_Base::UncheckedSetKey(const byte *userKey, unsigned int keylength, con
 
 void HMAC_Base::KeyInnerHash()
 {
-	CRYPTOPP_ASSERT(!m_innerHashKeyed);
+	assert(!m_innerHashKeyed);
 	HashTransformation &hash = AccessHash();
 	hash.Update(AccessIpad(), hash.BlockSize());
 	m_innerHashKeyed = true;

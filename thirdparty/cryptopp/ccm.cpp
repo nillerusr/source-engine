@@ -1,4 +1,4 @@
-// ccm.cpp - originally written and placed in the public domain by Wei Dai
+// ccm.cpp - written and placed in the public domain by Wei Dai
 
 #include "pch.h"
 
@@ -11,6 +11,7 @@ NAMESPACE_BEGIN(CryptoPP)
 void CCM_Base::SetKeyWithoutResync(const byte *userKey, size_t keylength, const NameValuePairs &params)
 {
 	BlockCipher &blockCipher = AccessBlockCipher();
+
 	blockCipher.SetKey(userKey, keylength, params);
 
 	if (blockCipher.BlockSize() != REQUIRED_BLOCKSIZE)
@@ -29,7 +30,7 @@ void CCM_Base::Resync(const byte *iv, size_t len)
 	BlockCipher &cipher = AccessBlockCipher();
 
 	m_L = REQUIRED_BLOCKSIZE-1-(int)len;
-	CRYPTOPP_ASSERT(m_L >= 2);
+	assert(m_L >= 2);
 	if (m_L > 8)
 		m_L = 8;
 
@@ -43,16 +44,16 @@ void CCM_Base::Resync(const byte *iv, size_t len)
 		m_ctr.SetCipherWithIV(cipher, m_buffer);
 
 	m_ctr.Seek(REQUIRED_BLOCKSIZE);
-	m_aadLength = 0;
+	m_aadLength = 0; 
 	m_messageLength = 0;
 }
 
-void CCM_Base::UncheckedSpecifyDataLengths(lword headerLength, lword messageLength, lword /*footerLength*/)
+void CCM_Base::UncheckedSpecifyDataLengths(lword headerLength, lword messageLength, lword footerLength)
 {
 	if (m_state != State_IVSet)
 		throw BadState(AlgorithmName(), "SpecifyDataLengths", "or after State_IVSet");
 
-	m_aadLength = headerLength;
+	m_aadLength = headerLength; 
 	m_messageLength = messageLength;
 
 	byte *cbcBuffer = CBC_Buffer();
@@ -65,7 +66,7 @@ void CCM_Base::UncheckedSpecifyDataLengths(lword headerLength, lword messageLeng
 
 	if (headerLength>0)
 	{
-		CRYPTOPP_ASSERT(m_bufferedDataLength == 0);
+		assert(m_bufferedDataLength == 0);
 
 		if (headerLength < ((1<<16) - (1<<8)))
 		{

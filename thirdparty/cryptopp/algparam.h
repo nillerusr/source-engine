@@ -1,75 +1,34 @@
-// algparam.h - originally written and placed in the public domain by Wei Dai
-
-/// \file algparam.h
-/// \brief Classes for working with NameValuePairs
-
 #ifndef CRYPTOPP_ALGPARAM_H
 #define CRYPTOPP_ALGPARAM_H
 
-#include "config.h"
 #include "cryptlib.h"
-
 #include "smartptr.h"
 #include "secblock.h"
-#include "integer.h"
-#include "misc.h"
-
-#include <string>
-#include <typeinfo>
-#include <exception>
 
 NAMESPACE_BEGIN(CryptoPP)
 
-/// \brief Used to pass byte array input as part of a NameValuePairs object
+//! used to pass byte array input as part of a NameValuePairs object
+/*! the deepCopy option is used when the NameValuePairs object can't
+	keep a copy of the data available */
 class ConstByteArrayParameter
 {
 public:
-	/// \brief Construct a ConstByteArrayParameter
-	/// \param data a C-String
-	/// \param deepCopy flag indicating whether the data should be copied
-	/// \details The deepCopy option is used when the NameValuePairs object can't
-	///   keep a copy of the data available
-	ConstByteArrayParameter(const char *data = NULLPTR, bool deepCopy = false)
-		: m_deepCopy(false), m_data(NULLPTR), m_size(0)
+	ConstByteArrayParameter(const char *data = NULL, bool deepCopy = false)
 	{
-		Assign(reinterpret_cast<const byte *>(data), data ? strlen(data) : 0, deepCopy);
+		Assign((const byte *)data, data ? strlen(data) : 0, deepCopy);
 	}
-
-	/// \brief Construct a ConstByteArrayParameter
-	/// \param data a memory buffer
-	/// \param size the length of the memory buffer
-	/// \param deepCopy flag indicating whether the data should be copied
-	/// \details The deepCopy option is used when the NameValuePairs object can't
-	///   keep a copy of the data available
 	ConstByteArrayParameter(const byte *data, size_t size, bool deepCopy = false)
-		: m_deepCopy(false), m_data(NULLPTR), m_size(0)
 	{
 		Assign(data, size, deepCopy);
 	}
-
-	/// \brief Construct a ConstByteArrayParameter
-	/// \tparam T a std::basic_string<char> or std::vector<byte> class
-	/// \param string a std::basic_string<char> or std::vector<byte> object
-	/// \param deepCopy flag indicating whether the data should be copied
-	/// \details The deepCopy option is used when the NameValuePairs object can't
-	///   keep a copy of the data available
 	template <class T> ConstByteArrayParameter(const T &string, bool deepCopy = false)
-		: m_deepCopy(false), m_data(NULLPTR), m_size(0)
 	{
-		CRYPTOPP_COMPILE_ASSERT(sizeof(typename T::value_type) == 1);
-		Assign(reinterpret_cast<const byte *>(&string[0]), string.size(), deepCopy);
+        CRYPTOPP_COMPILE_ASSERT(sizeof(CPP_TYPENAME T::value_type) == 1);
+		Assign((const byte *)string.data(), string.size(), deepCopy);
 	}
 
-	/// \brief Assign contents from a memory buffer
-	/// \param data a memory buffer
-	/// \param size the length of the memory buffer
-	/// \param deepCopy flag indicating whether the data should be copied
-	/// \details The deepCopy option is used when the NameValuePairs object can't
-	///   keep a copy of the data available
 	void Assign(const byte *data, size_t size, bool deepCopy)
 	{
-		// This fires, which means: no data with a size, or data with no size.
-		// CRYPTOPP_ASSERT((data && size) || !(data || size));
 		if (deepCopy)
 			m_block.Assign(data, size);
 		else
@@ -80,11 +39,8 @@ public:
 		m_deepCopy = deepCopy;
 	}
 
-	/// \brief Pointer to the first byte in the memory block
 	const byte *begin() const {return m_deepCopy ? m_block.begin() : m_data;}
-	/// \brief Pointer beyond the last byte in the memory block
 	const byte *end() const {return m_deepCopy ? m_block.end() : m_data + m_size;}
-	/// \brief Length of the memory block
 	size_t size() const {return m_deepCopy ? m_block.size() : m_size;}
 
 private:
@@ -94,26 +50,16 @@ private:
 	SecByteBlock m_block;
 };
 
-/// \brief Used to pass byte array input as part of a NameValuePairs object
 class ByteArrayParameter
 {
 public:
-	/// \brief Construct a ByteArrayParameter
-	/// \param data a memory buffer
-	/// \param size the length of the memory buffer
-	ByteArrayParameter(byte *data = NULLPTR, unsigned int size = 0)
+	ByteArrayParameter(byte *data = NULL, unsigned int size = 0)
 		: m_data(data), m_size(size) {}
-
-	/// \brief Construct a ByteArrayParameter
-	/// \param block a SecByteBlock
 	ByteArrayParameter(SecByteBlock &block)
 		: m_data(block.begin()), m_size(block.size()) {}
 
-	/// \brief Pointer to the first byte in the memory block
 	byte *begin() const {return m_data;}
-	/// \brief Pointer beyond the last byte in the memory block
 	byte *end() const {return m_data + m_size;}
-	/// \brief Length of the memory block
 	size_t size() const {return m_size;}
 
 private:
@@ -121,16 +67,9 @@ private:
 	size_t m_size;
 };
 
-/// \brief Combines two sets of NameValuePairs
-/// \details CombinedNameValuePairs allows you to provide two sets of of NameValuePairs.
-///   If a name is not found in the first set, then the second set is searched for the
-///   name and value pair. The second set of NameValuePairs often provides default values.
 class CRYPTOPP_DLL CombinedNameValuePairs : public NameValuePairs
 {
 public:
-	/// \brief Construct a CombinedNameValuePairs
-	/// \param pairs1 reference to the first set of NameValuePairs
-	/// \param pairs2 reference to the second set of NameValuePairs
 	CombinedNameValuePairs(const NameValuePairs &pairs1, const NameValuePairs &pairs2)
 		: m_pairs1(pairs1), m_pairs2(pairs2) {}
 
@@ -140,7 +79,6 @@ private:
 	const NameValuePairs &m_pairs1, &m_pairs2;
 };
 
-#ifndef CRYPTOPP_DOXYGEN_PROCESSING
 template <class T, class BASE>
 class GetValueHelperClass
 {
@@ -169,7 +107,7 @@ public:
 
 		if (!m_found && searchFirst)
 			m_found = searchFirst->GetVoidValue(m_name, valueType, pValue);
-
+		
 		if (!m_found && typeid(T) != typeid(BASE))
 			m_found = pObject->BASE::GetVoidValue(m_name, valueType, pValue);
 	}
@@ -214,18 +152,30 @@ private:
 };
 
 template <class BASE, class T>
-GetValueHelperClass<T, BASE> GetValueHelper(const T *pObject, const char *name, const std::type_info &valueType, void *pValue, const NameValuePairs *searchFirst=NULLPTR)
+GetValueHelperClass<T, BASE> GetValueHelper(const T *pObject, const char *name, const std::type_info &valueType, void *pValue, const NameValuePairs *searchFirst=NULL, BASE *dummy=NULL)
 {
 	return GetValueHelperClass<T, BASE>(pObject, name, valueType, pValue, searchFirst);
 }
 
 template <class T>
-GetValueHelperClass<T, T> GetValueHelper(const T *pObject, const char *name, const std::type_info &valueType, void *pValue, const NameValuePairs *searchFirst=NULLPTR)
+GetValueHelperClass<T, T> GetValueHelper(const T *pObject, const char *name, const std::type_info &valueType, void *pValue, const NameValuePairs *searchFirst=NULL)
 {
 	return GetValueHelperClass<T, T>(pObject, name, valueType, pValue, searchFirst);
 }
 
 // ********************************************************
+
+template <class R>
+R Hack_DefaultValueFromConstReferenceType(const R &)
+{
+	return R();
+}
+
+template <class R>
+bool Hack_GetValueIntoConstReference(const NameValuePairs &source, const char *name, const R &value)
+{
+	return source.GetValue(name, const_cast<R &>(value));
+}
 
 template <class T, class BASE>
 class AssignFromHelperClass
@@ -241,12 +191,12 @@ public:
 	}
 
 	template <class R>
-	AssignFromHelperClass & operator()(const char *name, void (T::*pm)(const R&))
+	AssignFromHelperClass & operator()(const char *name, void (T::*pm)(R))	// VC60 workaround: "const R &" here causes compiler error
 	{
 		if (!m_done)
 		{
-			R value;
-			if (!m_source.GetValue(name, value))
+			R value = Hack_DefaultValueFromConstReferenceType(reinterpret_cast<R>(*(int *)NULL));
+			if (!Hack_GetValueIntoConstReference(m_source, name, value))
 				throw InvalidArgument(std::string(typeid(T).name()) + ": Missing required parameter '" + name + "'");
 			(m_pObject->*pm)(value);
 		}
@@ -254,15 +204,15 @@ public:
 	}
 
 	template <class R, class S>
-	AssignFromHelperClass & operator()(const char *name1, const char *name2, void (T::*pm)(const R&, const S&))
+	AssignFromHelperClass & operator()(const char *name1, const char *name2, void (T::*pm)(R, S))	// VC60 workaround: "const R &" here causes compiler error
 	{
 		if (!m_done)
 		{
-			R value1;
-			if (!m_source.GetValue(name1, value1))
+			R value1 = Hack_DefaultValueFromConstReferenceType(reinterpret_cast<R>(*(int *)NULL));
+			if (!Hack_GetValueIntoConstReference(m_source, name1, value1))
 				throw InvalidArgument(std::string(typeid(T).name()) + ": Missing required parameter '" + name1 + "'");
-			S value2;
-			if (!m_source.GetValue(name2, value2))
+			S value2 = Hack_DefaultValueFromConstReferenceType(reinterpret_cast<S>(*(int *)NULL));
+			if (!Hack_GetValueIntoConstReference(m_source, name2, value2))
 				throw InvalidArgument(std::string(typeid(T).name()) + ": Missing required parameter '" + name2 + "'");
 			(m_pObject->*pm)(value1, value2);
 		}
@@ -276,7 +226,7 @@ private:
 };
 
 template <class BASE, class T>
-AssignFromHelperClass<T, BASE> AssignFromHelper(T *pObject, const NameValuePairs &source)
+AssignFromHelperClass<T, BASE> AssignFromHelper(T *pObject, const NameValuePairs &source, BASE *dummy=NULL)
 {
 	return AssignFromHelperClass<T, BASE>(pObject, source);
 }
@@ -287,51 +237,22 @@ AssignFromHelperClass<T, T> AssignFromHelper(T *pObject, const NameValuePairs &s
 	return AssignFromHelperClass<T, T>(pObject, source);
 }
 
-#endif // CRYPTOPP_DOXYGEN_PROCESSING
-
 // ********************************************************
 
-#ifndef CRYPTOPP_NO_ASSIGN_TO_INTEGER
-// Allow the linker to discard Integer code if not needed.
-// Also see http://github.com/weidai11/cryptopp/issues/389.
-CRYPTOPP_DLL bool AssignIntToInteger(const std::type_info &valueType, void *pInteger, const void *pInt);
-#endif
+// to allow the linker to discard Integer code if not needed.
+typedef bool (CRYPTOPP_API * PAssignIntToInteger)(const std::type_info &valueType, void *pInteger, const void *pInt);
+CRYPTOPP_DLL extern PAssignIntToInteger g_pAssignIntToInteger;
 
 CRYPTOPP_DLL const std::type_info & CRYPTOPP_API IntegerTypeId();
 
-/// \brief Base class for AlgorithmParameters
 class CRYPTOPP_DLL AlgorithmParametersBase
 {
 public:
-	/// \brief Exception thrown when an AlgorithmParameter is unused
 	class ParameterNotUsed : public Exception
 	{
-	public:
+	public: 
 		ParameterNotUsed(const char *name) : Exception(OTHER_ERROR, std::string("AlgorithmParametersBase: parameter \"") + name + "\" not used") {}
 	};
-
-	virtual ~AlgorithmParametersBase() CRYPTOPP_THROW
-	{
-
-#if defined(CRYPTOPP_CXX17_UNCAUGHT_EXCEPTIONS)
-		if (std::uncaught_exceptions() == 0)
-#elif defined(CRYPTOPP_CXX98_UNCAUGHT_EXCEPTION)
-		if (std::uncaught_exception() == false)
-#else
-		try
-#endif
-		{
-			if (m_throwIfNotUsed && !m_used)
-				throw ParameterNotUsed(m_name);
-		}
-#if !defined(CRYPTOPP_CXX98_UNCAUGHT_EXCEPTION)
-# if !defined(CRYPTOPP_CXX17_UNCAUGHT_EXCEPTIONS)
-		catch(const Exception&)
-		{
-		}
-# endif
-#endif
-	}
 
 	// this is actually a move, not a copy
 	AlgorithmParametersBase(const AlgorithmParametersBase &x)
@@ -341,22 +262,38 @@ public:
 		x.m_used = true;
 	}
 
-	/// \brief Construct a AlgorithmParametersBase
-	/// \param name the parameter name
-	/// \param throwIfNotUsed flags indicating whether an exception should be thrown
-	/// \details If throwIfNotUsed is true, then a ParameterNotUsed exception
-	///   will be thrown in the destructor if the parameter is not not retrieved.
 	AlgorithmParametersBase(const char *name, bool throwIfNotUsed)
 		: m_name(name), m_throwIfNotUsed(throwIfNotUsed), m_used(false) {}
 
-	bool GetVoidValue(const char *name, const std::type_info &valueType, void *pValue) const;
+	virtual ~AlgorithmParametersBase()
+	{
+#ifdef CRYPTOPP_UNCAUGHT_EXCEPTION_AVAILABLE
+		if (!std::uncaught_exception())
+#else
+		try
+#endif
+		{
+			if (m_throwIfNotUsed && !m_used)
+				throw ParameterNotUsed(m_name);
+		}
+#ifndef CRYPTOPP_UNCAUGHT_EXCEPTION_AVAILABLE
+		catch(...)
+		{
+		}
+#endif
+	}
 
+	bool GetVoidValue(const char *name, const std::type_info &valueType, void *pValue) const;
+	
 protected:
 	friend class AlgorithmParameters;
-	void operator=(const AlgorithmParametersBase& rhs);  // assignment not allowed, declare this for VC60
+	void operator=(const AlgorithmParametersBase& rhs);	// assignment not allowed, declare this for VC60
 
 	virtual void AssignValue(const char *name, const std::type_info &valueType, void *pValue) const =0;
-	virtual void MoveInto(void *p) const =0;	// not really const
+
+	//VALVE: Our debug allocator doesn't implement placement new, and this function is never
+	//		actually called.
+	//virtual void MoveInto(void *p) const =0;	// not really const
 
 	const char *m_name;
 	bool m_throwIfNotUsed;
@@ -364,18 +301,10 @@ protected:
 	member_ptr<AlgorithmParametersBase> m_next;
 };
 
-/// \brief Template base class for AlgorithmParameters
-/// \tparam T the class or type
 template <class T>
 class AlgorithmParametersTemplate : public AlgorithmParametersBase
 {
 public:
-	/// \brief Construct an AlgorithmParametersTemplate
-	/// \param name the name of the value
-	/// \param value a reference to the value
-	/// \param throwIfNotUsed flags indicating whether an exception should be thrown
-	/// \details If throwIfNotUsed is true, then a ParameterNotUsed exception
-	///   will be thrown in the destructor if the parameter is not not retrieved.
 	AlgorithmParametersTemplate(const char *name, const T &value, bool throwIfNotUsed)
 		: AlgorithmParametersBase(name, throwIfNotUsed), m_value(value)
 	{
@@ -383,30 +312,20 @@ public:
 
 	void AssignValue(const char *name, const std::type_info &valueType, void *pValue) const
 	{
-#ifndef CRYPTOPP_NO_ASSIGN_TO_INTEGER
-		// Special case for retrieving an Integer parameter when an int was passed in
-		if (!(typeid(T) == typeid(int) && AssignIntToInteger(valueType, pValue, &m_value)))
-#endif
+		// special case for retrieving an Integer parameter when an int was passed in
+		if (!(g_pAssignIntToInteger != NULL && typeid(T) == typeid(int) && g_pAssignIntToInteger(valueType, pValue, &m_value)))
 		{
 			NameValuePairs::ThrowIfTypeMismatch(name, typeid(T), valueType);
 			*reinterpret_cast<T *>(pValue) = m_value;
 		}
 	}
 
-#if defined(DEBUG_NEW) && (_MSC_VER >= 1300)
-# pragma push_macro("new")
-# undef new
-#endif
-
-	void MoveInto(void *buffer) const
-	{
-		AlgorithmParametersTemplate<T>* p = new(buffer) AlgorithmParametersTemplate<T>(*this);
-		CRYPTOPP_UNUSED(p);	// silence warning
-	}
-
-#if defined(DEBUG_NEW) && (_MSC_VER >= 1300)
-# pragma pop_macro("new")
-#endif
+	//VALVE: Our debug allocator doesn't implement placement new, and this function is never
+	//		actually called.
+	//void MoveInto(void *buffer) const
+	//{
+	//	AlgorithmParametersTemplate<T>* p = new(buffer) AlgorithmParametersTemplate<T>(*this);
+	//}
 
 protected:
 	T m_value;
@@ -416,36 +335,12 @@ CRYPTOPP_DLL_TEMPLATE_CLASS AlgorithmParametersTemplate<bool>;
 CRYPTOPP_DLL_TEMPLATE_CLASS AlgorithmParametersTemplate<int>;
 CRYPTOPP_DLL_TEMPLATE_CLASS AlgorithmParametersTemplate<ConstByteArrayParameter>;
 
-/// \brief An object that implements NameValuePairs
-/// \note A NameValuePairs object containing an arbitrary number of name value pairs may be constructed by
-///   repeatedly using operator() on the object returned by MakeParameters, for example:
-///   <pre>
-///     AlgorithmParameters parameters = MakeParameters(name1, value1)(name2, value2)(name3, value3);
-///   </pre>
 class CRYPTOPP_DLL AlgorithmParameters : public NameValuePairs
 {
 public:
-	/// \brief Construct a AlgorithmParameters
-	/// \note A NameValuePairs object containing an arbitrary number of name value pairs may be constructed by
-	///   repeatedly using operator() on the object returned by MakeParameters, for example:
-	///   <pre>
-	///     AlgorithmParameters parameters = MakeParameters(name1, value1)(name2, value2)(name3, value3);
-	///   </pre>
 	AlgorithmParameters();
 
 #ifdef __BORLANDC__
-	/// \brief Construct a AlgorithmParameters
-	/// \tparam T the class or type
-	/// \param name the name of the object or value to retrieve
-	/// \param value reference to a variable that receives the value
-	/// \param throwIfNotUsed if true, the object will throw an exception if the value is not accessed
-	/// \note throwIfNotUsed is ignored if using a compiler that does not support std::uncaught_exception(),
-	///   such as MSVC 7.0 and earlier.
-	/// \note A NameValuePairs object containing an arbitrary number of name value pairs may be constructed by
-	///   repeatedly using operator() on the object returned by MakeParameters, for example:
-	///   <pre>
-	///     AlgorithmParameters parameters = MakeParameters(name1, value1)(name2, value2)(name3, value3);
-	///   </pre>
 	template <class T>
 	AlgorithmParameters(const char *name, const T &value, bool throwIfNotUsed=true)
 		: m_next(new AlgorithmParametersTemplate<T>(name, value, throwIfNotUsed))
@@ -458,10 +353,6 @@ public:
 
 	AlgorithmParameters & operator=(const AlgorithmParameters &x);
 
-	/// \tparam T the class or type
-	/// \param name the name of the object or value to retrieve
-	/// \param value reference to a variable that receives the value
-	/// \param throwIfNotUsed if true, the object will throw an exception if the value is not accessed
 	template <class T>
 	AlgorithmParameters & operator()(const char *name, const T &value, bool throwIfNotUsed)
 	{
@@ -472,10 +363,6 @@ public:
 		return *this;
 	}
 
-	/// \brief Appends a NameValuePair to a collection of NameValuePairs
-	/// \tparam T the class or type
-	/// \param name the name of the object or value to retrieve
-	/// \param value reference to a variable that receives the value
 	template <class T>
 	AlgorithmParameters & operator()(const char *name, const T &value)
 	{
@@ -489,18 +376,14 @@ protected:
 	bool m_defaultThrowIfNotUsed;
 };
 
-/// \brief Create an object that implements NameValuePairs
-/// \tparam T the class or type
-/// \param name the name of the object or value to retrieve
-/// \param value reference to a variable that receives the value
-/// \param throwIfNotUsed if true, the object will throw an exception if the value is not accessed
-/// \note throwIfNotUsed is ignored if using a compiler that does not support std::uncaught_exception(),
-///   such as MSVC 7.0 and earlier.
-/// \note A NameValuePairs object containing an arbitrary number of name value pairs may be constructed by
-///   repeatedly using \p operator() on the object returned by \p MakeParameters, for example:
-///   <pre>
-///     AlgorithmParameters parameters = MakeParameters(name1, value1)(name2, value2)(name3, value3);
-///   </pre>
+//! Create an object that implements NameValuePairs for passing parameters
+/*! \param throwIfNotUsed if true, the object will throw an exception if the value is not accessed
+	\note throwIfNotUsed is ignored if using a compiler that does not support std::uncaught_exception(),
+	such as MSVC 7.0 and earlier.
+	\note A NameValuePairs object containing an arbitrary number of name value pairs may be constructed by
+	repeatedly using operator() on the object returned by MakeParameters, for example:
+	AlgorithmParameters parameters = MakeParameters(name1, value1)(name2, value2)(name3, value3);
+*/
 #ifdef __BORLANDC__
 typedef AlgorithmParameters MakeParameters;
 #else

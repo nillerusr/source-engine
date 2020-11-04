@@ -1,21 +1,20 @@
 #ifndef CRYPTOPP_XTRCRYPT_H
 #define CRYPTOPP_XTRCRYPT_H
 
-/// \file
-/// \brief XTR public key system
-/// \sa  "The XTR public key system" by Arjen K. Lenstra and Eric R. Verheul
+/** \file
+	"The XTR public key system" by Arjen K. Lenstra and Eric R. Verheul
+*/
 
-#include "cryptlib.h"
 #include "xtr.h"
-#include "integer.h"
 
 NAMESPACE_BEGIN(CryptoPP)
 
-/// \brief XTR-DH with key validation
+//! XTR-DH with key validation
+
 class XTR_DH : public SimpleKeyAgreementDomain, public CryptoParameters
 {
 	typedef XTR_DH ThisClass;
-
+	
 public:
 	XTR_DH(const Integer &p, const Integer &q, const GFP2Element &g);
 	XTR_DH(RandomNumberGenerator &rng, unsigned int pbits, unsigned int qbits);

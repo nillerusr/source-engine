@@ -673,7 +673,7 @@ postuninstall_cmds=''
 finish_cmds='PATH="\$PATH:/sbin" ldconfig -n $libdir'
 finish_eval=''
 hardcode_into_libs='yes'
-sys_lib_search_path_spec='/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0 /usr/lib32 /lib32 '
+sys_lib_search_path_spec='/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4 /usr/lib32 /lib32 '
 sys_lib_dlsearch_path_spec='/lib /usr/lib /usr/lib/libfakeroot /usr/lib32 '
 hardcode_action='immediate'
 enable_dlopen='unknown'
@@ -729,12 +729,12 @@ prelink_cmds_CXX=''
 postlink_cmds_CXX=''
 file_list_spec_CXX=''
 hardcode_action_CXX='immediate'
-compiler_lib_search_dirs_CXX='/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/32 /usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/../../../../lib32 /lib/../lib32 /usr/lib/../lib32 /usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0 /usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/../../..'
-predep_objects_CXX='/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/../../../../lib32/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/32/crtbeginS.o'
-postdep_objects_CXX='/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/32/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/../../../../lib32/crtn.o'
+compiler_lib_search_dirs_CXX='/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/32 /usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/../../../../lib32 /lib/../lib32 /usr/lib/../lib32 /usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4 /usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/../../..'
+predep_objects_CXX='/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/../../../../lib32/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/32/crtbeginS.o'
+postdep_objects_CXX='/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/32/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/../../../../lib32/crtn.o'
 predeps_CXX=''
 postdeps_CXX='-lstdc++ -lm -lgcc_s -lc -lgcc_s'
-compiler_lib_search_path_CXX='-L/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/32 -L/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/../../../../lib32 -L/lib/../lib32 -L/usr/lib/../lib32 -L/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0 -L/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/../../..'
+compiler_lib_search_path_CXX='-L/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/32 -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/../../../../lib32 -L/lib/../lib32 -L/usr/lib/../lib32 -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4 -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/../../..'
 
 LTCC='gcc'
 LTCFLAGS='-m32 -Wno-narrowing'
@@ -793,7 +793,7 @@ fi
 
 
 
-SUMMARY="SDL2 Configure Summary:\nBuilding Shared Libraries\nBuilding Static Libraries\nEnabled modules : atomic audio video render events joystick haptic sensor power filesystem threads timers file loadso cpuinfo assembly\nAssembly Math   : mmx 3dnow sse\nAudio drivers   : disk dummy oss alsa(dynamic) pulse(dynamic) jack(dynamic)\nVideo drivers   : dummy x11(dynamic) opengl opengl_es2 vulkan wayland(dynamic)\nX11 libraries   : xcursor xdbe xinerama xinput2 xinput2_multitouch xrandr xscrnsaver xshape xvidmode\nInput drivers   : linuxev linuxkd\nUsing libsamplerate : YES\nUsing libudev       : YES\nUsing dbus          : YES\nUsing ime           : YES\nUsing ibus          : NO\nUsing fcitx         : NO\n"
+SUMMARY="SDL2 Configure Summary:\nBuilding Shared Libraries\nBuilding Static Libraries\nEnabled modules : atomic audio video render events joystick haptic sensor power filesystem threads timers file loadso cpuinfo assembly\nAssembly Math   : mmx 3dnow sse\nAudio drivers   : disk dummy oss alsa(dynamic) pulse(dynamic) jack(dynamic)\nVideo drivers   : dummy x11(dynamic) opengl opengl_es2 vulkan wayland(dynamic)\nX11 libraries   : xcursor xdbe xinerama xinput2 xinput2_multitouch xrandr xscrnsaver xshape xvidmode\nInput drivers   : linuxev linuxkd\nUsing libsamplerate : YES\nUsing libudev       : YES\nUsing dbus          : YES\nUsing ime           : YES\nUsing ibus          : YES\nUsing fcitx         : NO\n"
 
 
 # Handling of arguments.
@@ -881,7 +881,8 @@ S["EXTRA_LDFLAGS"]=" -Wl,--no-undefined -lm -ldl -lpthread -lrt"
 S["BUILD_LDFLAGS"]="-m32"
 S["EXTRA_CFLAGS"]="-Iinclude -I/home/nillerusr/projects/source-engine/thirdparty/SDL2-src/include -idirafter /home/nillerusr/projects/source-engine/thirdparty/SDL2-src"\
 "/src/video/khronos  -mmmx -m3dnow -msse -Wall -fno-strict-aliasing -fvisibility=hidden -Wdeclaration-after-statement -Werror=declaration-after-state"\
-"ment  -D_REENTRANT     -I$(gen) -I/usr/include/dbus-1.0 -I/usr/lib/dbus-1.0/include  -D_REENTRANT -DHAVE_LINUX_VERSION_H"
+"ment  -D_REENTRANT     -I$(gen) -I/usr/include/dbus-1.0 -I/usr/lib/dbus-1.0/include  -I/usr/include/ibus-1.0 -I/usr/include/glib-2.0 -I/usr/lib/glib"\
+"-2.0/include -pthread -I/usr/include/libmount -I/usr/include/blkid  -D_REENTRANT -DHAVE_LINUX_VERSION_H"
 S["BUILD_CFLAGS"]="-m32 -Wno-narrowing  -DUSING_GENERATED_CONFIG_H"
 S["SDLTEST_OBJECTS"]="$(objects)/SDL_test_assert.lo $(objects)/SDL_test_common.lo $(objects)/SDL_test_compare.lo $(objects)/SDL_test_crc32.lo $(objects)/SDL_test_font.lo "\
 "$(objects)/SDL_test_fuzzer.lo $(objects)/SDL_test_harness.lo $(objects)/SDL_test_imageBlit.lo $(objects)/SDL_test_imageBlitBlend.lo $(objects)/SDL_t"\
@@ -920,10 +921,10 @@ S["OBJECTS"]="$(objects)/SDL.lo $(objects)/SDL_assert.lo $(objects)/SDL_dataqueu
 "s)/SDL_x11video.lo $(objects)/SDL_x11vulkan.lo $(objects)/SDL_x11window.lo $(objects)/SDL_x11xinput2.lo $(objects)/edid-parse.lo $(objects)/imKStoUC"\
 "S.lo $(objects)/SDL_waylandclipboard.lo $(objects)/SDL_waylanddatamanager.lo $(objects)/SDL_waylanddyn.lo $(objects)/SDL_waylandevents.lo $(objects)"\
 "/SDL_waylandmouse.lo $(objects)/SDL_waylandopengles.lo $(objects)/SDL_waylandtouch.lo $(objects)/SDL_waylandvideo.lo $(objects)/SDL_waylandvulkan.lo"\
-" $(objects)/SDL_waylandwindow.lo $(objects)/SDL_dbus.lo $(objects)/SDL_ime.lo $(objects)/SDL_systhread.lo $(objects)/SDL_syssem.lo $(objects)/SDL_sy"\
-"smutex.lo $(objects)/SDL_syscond.lo $(objects)/SDL_systls.lo $(objects)/SDL_sysjoystick.lo $(objects)/SDL_steamcontroller.lo $(objects)/SDL_syshapti"\
-"c.lo $(objects)/SDL_syspower.lo $(objects)/SDL_sysfilesystem.lo $(objects)/SDL_systimer.lo $(objects)/SDL_udev.lo $(objects)/SDL_evdev.lo $(objects)"\
-"/SDL_evdev_kbd.lo $(objects)/SDL_threadprio.lo $(objects)/SDL_poll.lo $(objects)/SDL_dummysensor.lo"
+" $(objects)/SDL_waylandwindow.lo $(objects)/SDL_dbus.lo $(objects)/SDL_ime.lo $(objects)/SDL_ibus.lo $(objects)/SDL_systhread.lo $(objects)/SDL_syss"\
+"em.lo $(objects)/SDL_sysmutex.lo $(objects)/SDL_syscond.lo $(objects)/SDL_systls.lo $(objects)/SDL_sysjoystick.lo $(objects)/SDL_steamcontroller.lo "\
+"$(objects)/SDL_syshaptic.lo $(objects)/SDL_syspower.lo $(objects)/SDL_sysfilesystem.lo $(objects)/SDL_systimer.lo $(objects)/SDL_udev.lo $(objects)/"\
+"SDL_evdev.lo $(objects)/SDL_evdev_kbd.lo $(objects)/SDL_threadprio.lo $(objects)/SDL_poll.lo $(objects)/SDL_dummysensor.lo"
 S["INCLUDE"]="-Iinclude -I/home/nillerusr/projects/source-engine/thirdparty/SDL2-src/include -idirafter /home/nillerusr/projects/source-engine/thirdparty/SDL2-src"\
 "/src/video/khronos"
 S["ac_aux_dir"]="build-scripts"
@@ -1300,6 +1301,7 @@ D["HAVE_LIBUDEV_H"]=" 1"
 D["SDL_UDEV_DYNAMIC"]=" \"libudev.so.1\""
 D["HAVE_DBUS_DBUS_H"]=" 1"
 D["SDL_USE_IME"]=" 1"
+D["HAVE_IBUS_IBUS_H"]=" 1"
 D["SDL_INPUT_LINUXKD"]=" 1"
 D["SDL_THREAD_PTHREAD"]=" 1"
 D["SDL_THREAD_PTHREAD_RECURSIVE_MUTEX"]=" 1"

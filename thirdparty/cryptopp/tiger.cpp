@@ -1,31 +1,11 @@
-// tiger.cpp - originally written and placed in the public domain by Wei Dai
+// tiger.cpp - written and placed in the public domain by Wei Dai
 
 #include "pch.h"
-#include "config.h"
-
 #include "tiger.h"
 #include "misc.h"
 #include "cpu.h"
 
-#if defined(CRYPTOPP_DISABLE_TIGER_ASM)
-# undef CRYPTOPP_X86_ASM_AVAILABLE
-# undef CRYPTOPP_X32_ASM_AVAILABLE
-# undef CRYPTOPP_X64_ASM_AVAILABLE
-# undef CRYPTOPP_SSE2_ASM_AVAILABLE
-#endif
-
 NAMESPACE_BEGIN(CryptoPP)
-
-std::string Tiger::AlgorithmProvider() const
-{
-#ifndef CRYPTOPP_DISABLE_TIGER_ASM
-# if CRYPTOPP_SSE2_ASM_AVAILABLE
-	if (HasSSE2())
-		return "SSE2";
-# endif
-#endif
-	return "C++";
-}
 
 void Tiger::InitState(HashWordType *state)
 {
@@ -34,10 +14,9 @@ void Tiger::InitState(HashWordType *state)
 	state[2] = W64LIT(0xF096A5B4C3B2E187);
 }
 
-void Tiger::TruncatedFinal(byte *digest, size_t digestSize)
+void Tiger::TruncatedFinal(byte *hash, size_t size)
 {
-	CRYPTOPP_ASSERT(digest != NULLPTR);
-	ThrowIfInvalidTruncatedSize(digestSize);
+	ThrowIfInvalidTruncatedSize(size);
 
 	PadLastBlock(56, 0x01);
 	CorrectEndianess(m_data, m_data, 56);
@@ -46,25 +25,30 @@ void Tiger::TruncatedFinal(byte *digest, size_t digestSize)
 
 	Transform(m_state, m_data);
 	CorrectEndianess(m_state, m_state, DigestSize());
-	memcpy(digest, m_state, digestSize);
+	memcpy(hash, m_state, size);
 
 	Restart();		// reinit for next use
 }
 
-void Tiger::Transform (word64 *state, const word64 *data)
+void Tiger::Transform (word64 *digest, const word64 *X)
 {
-#if CRYPTOPP_SSE2_ASM_AVAILABLE && CRYPTOPP_BOOL_X86
+#if CRYPTOPP_BOOL_SSE2_ASM_AVAILABLE && CRYPTOPP_BOOL_X86
 	if (HasSSE2())
 	{
 #ifdef __GNUC__
 		__asm__ __volatile__
 		(
-		INTEL_NOPREFIX
-		AS_PUSH_IF86(bx)
+		".intel_syntax noprefix;"
+		AS1(	push	ebx)
 #else
+	#if _MSC_VER < 1300
+		const word64 *t = table;
+		AS2(	mov		edx, t)
+	#else
 		AS2(	lea		edx, [table])
-		AS2(	mov		eax, state)
-		AS2(	mov		esi, data)
+	#endif
+		AS2(	mov		eax, digest)
+		AS2(	mov		esi, X)
 #endif
 		AS2(	movq	mm0, [eax])
 		AS2(	movq	mm1, [eax+1*8])
@@ -75,7 +59,7 @@ void Tiger::Transform (word64 *state, const word64 *data)
 		AS2(	mov		ecx, esp)
 		AS2(	and		esp, 0xfffffff0)
 		AS2(	sub		esp, 8*8)
-		AS_PUSH_IF86(cx)
+		AS1(	push	ecx)
 
 #define SSE2_round(a,b,c,x,mul) \
 		AS2(	pxor	c, [x])\
@@ -206,14 +190,13 @@ void Tiger::Transform (word64 *state, const word64 *data)
 		AS2(	paddq	mm2, [eax+2*8])
 		AS2(	movq	[eax+2*8], mm2)
 
-		AS_POP_IF86(sp)
+		AS1(	pop		esp)
 		AS1(	emms)
-
 #ifdef __GNUC__
-		AS_POP_IF86(bx)
-		ATT_PREFIX
+		AS1(	pop		ebx)
+		".att_syntax prefix;"
 			:
-			: "a" (state), "S" (data), "d" (table)
+			: "a" (digest), "S" (X), "d" (table)
 			: "%ecx", "%edi", "memory", "cc"
 		);
 #endif
@@ -221,9 +204,9 @@ void Tiger::Transform (word64 *state, const word64 *data)
 	else
 #endif
 	{
-		word64 a = state[0];
-		word64 b = state[1];
-		word64 c = state[2];
+		word64 a = digest[0];
+		word64 b = digest[1];
+		word64 c = digest[2];
 		word64 Y[8];
 
 #define t1 (table)
@@ -267,15 +250,15 @@ void Tiger::Transform (word64 *state, const word64 *data)
 	Y[6] += Y[5]; \
 	Y[7] -= Y[6] ^ W64LIT(0x0123456789ABCDEF)
 
-		pass(a,b,c,5,data);
-		key_schedule(Y,data);
+		pass(a,b,c,5,X);
+		key_schedule(Y,X);
 		pass(c,a,b,7,Y);
 		key_schedule(Y,Y);
 		pass(b,c,a,9,Y);
 
-		state[0] = a ^ state[0];
-		state[1] = b - state[1];
-		state[2] = c + state[2];
+		digest[0] = a ^ digest[0];
+		digest[1] = b - digest[1];
+		digest[2] = c + digest[2];
 	}
 }
 

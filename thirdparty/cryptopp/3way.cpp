@@ -7,19 +7,15 @@
 
 NAMESPACE_BEGIN(CryptoPP)
 
-#if defined(CRYPTOPP_DEBUG) && !defined(CRYPTOPP_DOXYGEN_PROCESSING)
 void ThreeWay_TestInstantiations()
 {
 	ThreeWay::Encryption x1;
 	ThreeWay::Decryption x2;
 }
-#endif
 
-namespace
-{
-	const word32 START_E = 0x0b0b; // round constant of first encryption round
-	const word32 START_D = 0xb1b1; // round constant of first decryption round
-}
+static const word32 START_E = 0x0b0b; // round constant of first encryption round
+static const word32 START_D = 0xb1b1; // round constant of first decryption round
+static const word32 RC_MODULUS = 0x11011;
 
 static inline word32 reverseBits(word32 a)
 {
@@ -36,14 +32,14 @@ static inline word32 reverseBits(word32 a)
 	a2 = t;							\
 }
 
-#define pi_gamma_pi(a0, a1, a2)   \
-{                                 \
-	word32 b0, b2;                          \
-	b2 = rotlConstant<1>(a2);               \
-	b0 = rotlConstant<22>(a0);				\
-	a0 = rotlConstant<1>(b0 ^ (a1|(~b2)));	\
-	a2 = rotlConstant<22>(b2 ^ (b0|(~a1))); \
-	a1 ^= (b2|(~b0));                       \
+#define pi_gamma_pi(a0, a1, a2)		\
+{									\
+	word32 b0, b2;					\
+	b2 = rotlFixed(a2, 1U);				\
+	b0 = rotlFixed(a0, 22U);				\
+	a0 = rotlFixed(b0 ^ (a1|(~b2)), 1U);	\
+	a2 = rotlFixed(b2 ^ (b0|(~a1)), 22U);\
+	a1 ^= (b2|(~b0));				\
 }
 
 // thanks to Paulo Barreto for this optimized theta()
@@ -51,19 +47,19 @@ static inline word32 reverseBits(word32 a)
 { 															\
 	word32 b0, b1, c; 										\
 	c = a0 ^ a1 ^ a2; 										\
-	c = rotlConstant<16>(c) ^ rotlConstant<8>(c);			\
+	c = rotlFixed(c, 16U) ^ rotlFixed(c, 8U);				\
 	b0 = (a0 << 24) ^ (a2 >> 8) ^ (a1 << 8) ^ (a0 >> 24); 	\
 	b1 = (a1 << 24) ^ (a0 >> 8) ^ (a2 << 8) ^ (a1 >> 24); 	\
 	a0 ^= c ^ b0; 											\
 	a1 ^= c ^ b1; 											\
 	a2 ^= c ^ (b0 >> 16) ^ (b1 << 16); 						\
-}
+}															
 
 #define rho(a0, a1, a2)			\
 {								\
 	theta(a0, a1, a2);			\
 	pi_gamma_pi(a0, a1, a2);	\
-}
+}											
 
 void ThreeWay::Base::UncheckedSetKey(const byte *uk, unsigned int length, const NameValuePairs &params)
 {

@@ -1,22 +1,18 @@
-// seal.cpp - originally written and placed in the public domain by Wei Dai
+// seal.cpp - written and placed in the public domain by Wei Dai
 // updated to SEAL 3.0 by Leonard Janke
 
 #include "pch.h"
 
 #include "seal.h"
-#include "cpu.h"
 #include "sha.h"
 #include "misc.h"
-#include "secblock.h"
 
 NAMESPACE_BEGIN(CryptoPP)
 
-#if defined(CRYPTOPP_DEBUG) && !defined(CRYPTOPP_DOXYGEN_PROCESSING)
 void SEAL_TestInstantiations()
 {
 	SEAL<>::Encryption x;
 }
-#endif
 
 struct SEAL_Gamma
 {
@@ -40,17 +36,15 @@ word32 SEAL_Gamma::Apply(word32 i)
 	{
 		memcpy(Z, H, 20);
 		D[0] = shaIndex;
-		SHA1::Transform(Z, D);
+		SHA::Transform(Z, D);
 		lastIndex = shaIndex;
 	}
-
 	return Z[i%5];
 }
 
 template <class B>
 void SEAL_Policy<B>::CipherSetKey(const NameValuePairs &params, const byte *key, size_t length)
 {
-	CRYPTOPP_UNUSED(length);
 	m_insideCounter = m_outsideCounter = m_startCount = 0;
 
 	unsigned int L = params.GetIntValueWithDefault("NumberOfOutputBitsPerPositionIndex", 32*1024);
@@ -74,9 +68,7 @@ void SEAL_Policy<B>::CipherSetKey(const NameValuePairs &params, const byte *key,
 template <class B>
 void SEAL_Policy<B>::CipherResynchronize(byte *keystreamBuffer, const byte *IV, size_t length)
 {
-	CRYPTOPP_UNUSED(keystreamBuffer), CRYPTOPP_UNUSED(IV), CRYPTOPP_UNUSED(length);
-	CRYPTOPP_ASSERT(length==4);
-
+	assert(length==4);
 	m_outsideCounter = IV ? GetWord<word32>(false, BIG_ENDIAN_ORDER, IV) : 0;
 	m_startCount = m_outsideCounter;
 	m_insideCounter = 0;
@@ -95,90 +87,89 @@ void SEAL_Policy<B>::OperateKeystream(KeystreamOperation operation, byte *output
 	word32 a, b, c, d, n1, n2, n3, n4;
 	unsigned int p, q;
 
-	CRYPTOPP_ASSERT(IsAlignedOn(m_T.begin(),GetAlignmentOf<word32>()));
 	for (size_t iteration = 0; iteration < iterationCount; ++iteration)
 	{
-		#define Ttab(x) *(word32 *)(void*)((byte *)m_T.begin()+x)
+#define Ttab(x) *(word32 *)((byte *)m_T.begin()+x)
 
 		a = m_outsideCounter ^ m_R[4*m_insideCounter];
-		b = rotrConstant<8>(m_outsideCounter) ^ m_R[4*m_insideCounter+1];
-		c = rotrConstant<16>(m_outsideCounter) ^ m_R[4 * m_insideCounter + 2];
-		d = rotrConstant<24>(m_outsideCounter) ^ m_R[4 * m_insideCounter + 3];
+		b = rotrFixed(m_outsideCounter, 8U) ^ m_R[4*m_insideCounter+1];
+		c = rotrFixed(m_outsideCounter, 16U) ^ m_R[4*m_insideCounter+2];
+		d = rotrFixed(m_outsideCounter, 24U) ^ m_R[4*m_insideCounter+3];
 
 		for (unsigned int j=0; j<2; j++)
 		{
 			p = a & 0x7fc;
 			b += Ttab(p);
-			a = rotrConstant<9>(a);
+			a = rotrFixed(a, 9U);
 
 			p = b & 0x7fc;
 			c += Ttab(p);
-			b = rotrConstant<9>(b);
+			b = rotrFixed(b, 9U);
 
 			p = c & 0x7fc;
 			d += Ttab(p);
-			c = rotrConstant<9>(c);
+			c = rotrFixed(c, 9U);
 
 			p = d & 0x7fc;
 			a += Ttab(p);
-			d = rotrConstant<9>(d);
+			d = rotrFixed(d, 9U);
 		}
 
 		n1 = d, n2 = b, n3 = a, n4 = c;
 
 		p = a & 0x7fc;
 		b += Ttab(p);
-		a = rotrConstant<9>(a);
+		a = rotrFixed(a, 9U);
 
 		p = b & 0x7fc;
 		c += Ttab(p);
-		b = rotrConstant<9>(b);
+		b = rotrFixed(b, 9U);
 
 		p = c & 0x7fc;
 		d += Ttab(p);
-		c = rotrConstant<9>(c);
+		c = rotrFixed(c, 9U);
 
 		p = d & 0x7fc;
 		a += Ttab(p);
-		d = rotrConstant<9>(d);
-
+		d = rotrFixed(d, 9U);
+		
 		// generate 8192 bits
 		for (unsigned int i=0; i<64; i++)
 		{
 			p = a & 0x7fc;
-			a = rotrConstant<9>(a);
+			a = rotrFixed(a, 9U);
 			b += Ttab(p);
 			b ^= a;
 
 			q = b & 0x7fc;
-			b = rotrConstant<9>(b);
+			b = rotrFixed(b, 9U);
 			c ^= Ttab(q);
 			c += b;
 
 			p = (p+c) & 0x7fc;
-			c = rotrConstant<9>(c);
+			c = rotrFixed(c, 9U);
 			d += Ttab(p);
 			d ^= c;
 
 			q = (q+d) & 0x7fc;
-			d = rotrConstant<9>(d);
+			d = rotrFixed(d, 9U);
 			a ^= Ttab(q);
 			a += d;
 
 			p = (p+a) & 0x7fc;
 			b ^= Ttab(p);
-			a = rotrConstant<9>(a);
+			a = rotrFixed(a, 9U);
 
 			q = (q+b) & 0x7fc;
 			c += Ttab(q);
-			b = rotrConstant<9>(b);
+			b = rotrFixed(b, 9U);
 
 			p = (p+c) & 0x7fc;
 			d ^= Ttab(p);
-			c = rotrConstant<9>(c);
+			c = rotrFixed(c, 9U);
 
 			q = (q+d) & 0x7fc;
-			d = rotrConstant<9>(d);
+			d = rotrFixed(d, 9U);
 			a += Ttab(q);
 
 #define SEAL_OUTPUT(x)	\
@@ -199,7 +190,7 @@ void SEAL_Policy<B>::OperateKeystream(KeystreamOperation operation, byte *output
 			else
 			{
 				a += n1;
-				b += n2;
+				b += n2;        
 				c ^= n1;
 				d ^= n2;
 			}

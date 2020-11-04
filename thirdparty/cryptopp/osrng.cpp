@@ -1,53 +1,24 @@
-// osrng.cpp - originally written and placed in the public domain by Wei Dai
+// osrng.cpp - written and placed in the public domain by Wei Dai
 
 // Thanks to Leonard Janke for the suggestion for AutoSeededRandomPool.
 
 #include "pch.h"
-#include "config.h"
 
 #ifndef CRYPTOPP_IMPORTS
 
-// Win32 has CryptoAPI and <wincrypt.h>. Windows 10 and Windows Store 10 have CNG and <bcrypt.h>.
-//  There's a hole for Windows Phone 8 and Windows Store 8. There is no userland RNG available.
-//  Also see http://www.drdobbs.com/windows/using-c-and-com-with-winrt/240168150 and
-//  http://stackoverflow.com/questions/36974545/random-numbers-for-windows-phone-8-and-windows-store-8 and
-//  https://social.msdn.microsoft.com/Forums/vstudio/en-US/25b83e13-c85f-4aa1-a057-88a279ea3fd6/what-crypto-random-generator-c-code-could-use-on-wp81
-#if defined(CRYPTOPP_WIN32_AVAILABLE) && !defined(OS_RNG_AVAILABLE)
-# pragma message("WARNING: Compiling for Windows but an OS RNG is not available. This is likely a Windows Phone 8 or Windows Store 8 app.")
-#endif
-
-#if !defined(NO_OS_DEPENDENCE) && defined(OS_RNG_AVAILABLE)
-
 #include "osrng.h"
+
+#ifdef OS_RNG_AVAILABLE
+
 #include "rng.h"
 
 #ifdef CRYPTOPP_WIN32_AVAILABLE
-#define WIN32_LEAN_AND_MEAN
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0400
+#endif
 #include <windows.h>
-#ifndef ERROR_INCORRECT_SIZE
-# define ERROR_INCORRECT_SIZE 0x000005B6
-#endif
-#if defined(USE_MS_CRYPTOAPI)
 #include <wincrypt.h>
-#ifndef CRYPT_NEWKEYSET
-# define CRYPT_NEWKEYSET 0x00000008
 #endif
-#ifndef CRYPT_MACHINE_KEYSET
-# define CRYPT_MACHINE_KEYSET 0x00000020
-#endif
-#elif defined(USE_MS_CNGAPI)
-#include <bcrypt.h>
-#ifndef BCRYPT_SUCCESS
-# define BCRYPT_SUCCESS(Status) (((NTSTATUS)(Status)) >= 0)
-#endif
-#ifndef STATUS_INVALID_PARAMETER
-# define STATUS_INVALID_PARAMETER 0xC000000D
-#endif
-#ifndef STATUS_INVALID_HANDLE
-# define STATUS_INVALID_HANDLE 0xC0000008
-#endif
-#endif
-#endif  // Win32
 
 #ifdef CRYPTOPP_UNIX_AVAILABLE
 #include <errno.h>
@@ -59,7 +30,7 @@ NAMESPACE_BEGIN(CryptoPP)
 
 #if defined(NONBLOCKING_RNG_AVAILABLE) || defined(BLOCKING_RNG_AVAILABLE)
 OS_RNG_Err::OS_RNG_Err(const std::string &operation)
-	: Exception(OTHER_ERROR, "OS_Rng: " + operation + " operation failed with error " +
+	: Exception(OTHER_ERROR, "OS_Rng: " + operation + " operation failed with error " + 
 #ifdef CRYPTOPP_WIN32_AVAILABLE
 		"0x" + IntToString(GetLastError(), 16)
 #else
@@ -74,62 +45,18 @@ OS_RNG_Err::OS_RNG_Err(const std::string &operation)
 
 #ifdef CRYPTOPP_WIN32_AVAILABLE
 
-#if defined(USE_MS_CNGAPI)
-inline DWORD NtStatusToErrorCode(NTSTATUS status)
+MicrosoftCryptoProvider::MicrosoftCryptoProvider()
 {
-	if (status == STATUS_INVALID_PARAMETER)
-		return ERROR_INVALID_PARAMETER;
-	else if (status == STATUS_INVALID_HANDLE)
-		return ERROR_INVALID_HANDLE;
-	else
-		return (DWORD)status;
-}
-#endif
-
-#if defined(UNICODE) || defined(_UNICODE)
-# define CRYPTOPP_CONTAINER L"Crypto++ RNG"
-#else
-# define CRYPTOPP_CONTAINER "Crypto++ RNG"
-#endif
-
-MicrosoftCryptoProvider::MicrosoftCryptoProvider() : m_hProvider(0)
-{
-#if defined(USE_MS_CRYPTOAPI)
-	// See http://support.microsoft.com/en-us/kb/238187 for CRYPT_NEWKEYSET fallback strategy
-	if (!CryptAcquireContext(&m_hProvider, 0, 0, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT))
-	{
-		const DWORD firstErr = GetLastError();
-		if (!CryptAcquireContext(&m_hProvider, CRYPTOPP_CONTAINER, 0, PROV_RSA_FULL, CRYPT_NEWKEYSET /*user*/) &&
-		    !CryptAcquireContext(&m_hProvider, CRYPTOPP_CONTAINER, 0, PROV_RSA_FULL, CRYPT_MACHINE_KEYSET|CRYPT_NEWKEYSET))
-		{
-			// Set original error with original code
-			SetLastError(firstErr);
-			throw OS_RNG_Err("CryptAcquireContext");
-		}
-	}
-#elif defined(USE_MS_CNGAPI)
-	NTSTATUS ret = BCryptOpenAlgorithmProvider(&m_hProvider, BCRYPT_RNG_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0);
-	if (!(BCRYPT_SUCCESS(ret)))
-	{
-		// Hack... OS_RNG_Err calls GetLastError()
-		SetLastError(NtStatusToErrorCode(ret));
-		throw OS_RNG_Err("BCryptOpenAlgorithmProvider");
-	}
-#endif
+	if(!CryptAcquireContext(&m_hProvider, 0, 0, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT))
+		throw OS_RNG_Err("CryptAcquireContext");
 }
 
 MicrosoftCryptoProvider::~MicrosoftCryptoProvider()
 {
-#if defined(USE_MS_CRYPTOAPI)
-	if (m_hProvider)
-		CryptReleaseContext(m_hProvider, 0);
-#elif defined(USE_MS_CNGAPI)
-	if (m_hProvider)
-		BCryptCloseAlgorithmProvider(m_hProvider, 0);
-#endif
+	CryptReleaseContext(m_hProvider, 0);
 }
 
-#endif  // CRYPTOPP_WIN32_AVAILABLE
+#endif
 
 NonblockingRng::NonblockingRng()
 {
@@ -137,9 +64,6 @@ NonblockingRng::NonblockingRng()
 	m_fd = open("/dev/urandom",O_RDONLY);
 	if (m_fd == -1)
 		throw OS_RNG_Err("open /dev/urandom");
-
-	// Do some OSes return -NNN instead of -1?
-	CRYPTOPP_ASSERT(m_fd >= 0);
 #endif
 }
 
@@ -153,61 +77,18 @@ NonblockingRng::~NonblockingRng()
 void NonblockingRng::GenerateBlock(byte *output, size_t size)
 {
 #ifdef CRYPTOPP_WIN32_AVAILABLE
-	// Acquiring a provider is expensive. Do it once and retain the reference.
-# if defined(CRYPTOPP_CXX11_STATIC_INIT)
-	static const MicrosoftCryptoProvider hProvider = MicrosoftCryptoProvider();
-# else
-	const MicrosoftCryptoProvider &hProvider = Singleton<MicrosoftCryptoProvider>().Ref();
-# endif
-# if defined(USE_MS_CRYPTOAPI)
-	DWORD dwSize;
-	CRYPTOPP_ASSERT(SafeConvert(size, dwSize));
-	if (!SafeConvert(size, dwSize))
-	{
-		SetLastError(ERROR_INCORRECT_SIZE);
-		throw OS_RNG_Err("GenerateBlock size");
-	}
-	BOOL ret = CryptGenRandom(hProvider.GetProviderHandle(), dwSize, output);
-	CRYPTOPP_ASSERT(ret != FALSE);
-	if (ret == FALSE)
+#	ifdef WORKAROUND_MS_BUG_Q258000
+		const MicrosoftCryptoProvider &m_Provider = Singleton<MicrosoftCryptoProvider>().Ref();
+#	endif
+	if (!CryptGenRandom(m_Provider.GetProviderHandle(), (DWORD)size, output))
 		throw OS_RNG_Err("CryptGenRandom");
-# elif defined(USE_MS_CNGAPI)
-	ULONG ulSize;
-	CRYPTOPP_ASSERT(SafeConvert(size, ulSize));
-	if (!SafeConvert(size, ulSize))
-	{
-		SetLastError(ERROR_INCORRECT_SIZE);
-		throw OS_RNG_Err("GenerateBlock size");
-	}
-	NTSTATUS ret = BCryptGenRandom(hProvider.GetProviderHandle(), output, ulSize, 0);
-	CRYPTOPP_ASSERT(BCRYPT_SUCCESS(ret));
-	if (!(BCRYPT_SUCCESS(ret)))
-	{
-		// Hack... OS_RNG_Err calls GetLastError()
-		SetLastError(NtStatusToErrorCode(ret));
-		throw OS_RNG_Err("BCryptGenRandom");
-	}
-# endif
 #else
-	while (size)
-	{
-		ssize_t len = read(m_fd, output, size);
-		if (len < 0)
-		{
-			// /dev/urandom reads CAN give EAGAIN errors! (maybe EINTR as well)
-			if (errno != EINTR && errno != EAGAIN)
-				throw OS_RNG_Err("read /dev/urandom");
-
-			continue;
-		}
-
-		output += len;
-		size -= len;
-	}
-#endif  // CRYPTOPP_WIN32_AVAILABLE
+	if (read(m_fd, output, size) != size)
+		throw OS_RNG_Err("read /dev/urandom");
+#endif
 }
 
-#endif  // NONBLOCKING_RNG_AVAILABLE
+#endif
 
 // *************************************************************
 
@@ -226,9 +107,6 @@ BlockingRng::BlockingRng()
 	m_fd = open(CRYPTOPP_BLOCKING_RNG_FILENAME,O_RDONLY);
 	if (m_fd == -1)
 		throw OS_RNG_Err("open " CRYPTOPP_BLOCKING_RNG_FILENAME);
-
-	// Do some OSes return -NNN instead of -1?
-	CRYPTOPP_ASSERT(m_fd >= 0);
 }
 
 BlockingRng::~BlockingRng()
@@ -241,17 +119,10 @@ void BlockingRng::GenerateBlock(byte *output, size_t size)
 	while (size)
 	{
 		// on some systems /dev/random will block until all bytes
-		// are available, on others it returns immediately
+		// are available, on others it will returns immediately
 		ssize_t len = read(m_fd, output, size);
 		if (len < 0)
-		{
-			// /dev/random reads CAN give EAGAIN errors! (maybe EINTR as well)
-			if (errno != EINTR && errno != EAGAIN)
-				throw OS_RNG_Err("read " CRYPTOPP_BLOCKING_RNG_FILENAME);
-
-			continue;
-		}
-
+			throw OS_RNG_Err("read " CRYPTOPP_BLOCKING_RNG_FILENAME);
 		size -= len;
 		output += len;
 		if (size)
@@ -259,7 +130,7 @@ void BlockingRng::GenerateBlock(byte *output, size_t size)
 	}
 }
 
-#endif  // BLOCKING_RNG_AVAILABLE
+#endif
 
 // *************************************************************
 
@@ -295,6 +166,6 @@ void AutoSeededRandomPool::Reseed(bool blocking, unsigned int seedSize)
 
 NAMESPACE_END
 
-#endif  // OS_RNG_AVAILABLE
+#endif
 
-#endif  // CRYPTOPP_IMPORTS
+#endif

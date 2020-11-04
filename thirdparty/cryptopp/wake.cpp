@@ -1,28 +1,15 @@
-// wake.cpp - originally written and placed in the public domain by Wei Dai
+// wake.cpp - written and placed in the public domain by Wei Dai
 
 #include "pch.h"
-
 #include "wake.h"
-#include "smartptr.h"
-
-ANONYMOUS_NAMESPACE_BEGIN
-
-const unsigned int TT[8]= {
-	0x726a8f3b,	0xe69a3b5c, 0xd3c71fe5, 0xab3c73d2,
-	0x4d3a8eb3, 0x0396d6e8, 0x3d4c2f7a, 0x9ee27cf3
-} ;
-
-ANONYMOUS_NAMESPACE_END
 
 NAMESPACE_BEGIN(CryptoPP)
 
-#if defined(CRYPTOPP_DEBUG) && !defined(CRYPTOPP_DOXYGEN_PROCESSING)
 void WAKE_TestInstantiations()
 {
 	WAKE_OFB<>::Encryption x2;
 	WAKE_OFB<>::Decryption x4;
 }
-#endif
 
 inline word32 WAKE_Base::M(word32 x, word32 y)
 {
@@ -33,8 +20,18 @@ inline word32 WAKE_Base::M(word32 x, word32 y)
 void WAKE_Base::GenKey(word32 k0, word32 k1, word32 k2, word32 k3)
 {
 	// this code is mostly copied from David Wheeler's paper "A Bulk Data Encryption Algorithm"
-	signed int x, z, p;
-
+	signed int x, z, p;	
+	// x and z were declared as "long" in Wheeler's paper, which is a signed type. I don't know if that was intentional, but it's too late to change it now. -- Wei 7/4/2010
+	CRYPTOPP_COMPILE_ASSERT(sizeof(x) == 4);
+	static unsigned int tt[10]= {
+		0x726a8f3b,								 // table
+		0xe69a3b5c,
+		0xd3c71fe5,
+		0xab3c73d2,
+		0x4d3a8eb3,
+		0x0396d6e8,
+		0x3d4c2f7a,
+		0x9ee27cf3, } ;
 	t[0] = k0;
 	t[1] = k1;
 	t[2] = k2;
@@ -42,7 +39,7 @@ void WAKE_Base::GenKey(word32 k0, word32 k1, word32 k2, word32 k3)
 	for (p=4 ; p<256 ; p++)
 	{
 	  x=t[p-4]+t[p-1] ; 					   // fill t
-	  t[p]= (x>>3) ^ TT[x&7] ;
+	  t[p]= (x>>3) ^ tt[x&7] ;
 	}
 
 	for (p=0 ; p<23 ; p++)
@@ -63,7 +60,6 @@ void WAKE_Base::GenKey(word32 k0, word32 k1, word32 k2, word32 k3)
 template <class B>
 void WAKE_Policy<B>::CipherSetKey(const NameValuePairs &params, const byte *key, size_t length)
 {
-	CRYPTOPP_UNUSED(params); CRYPTOPP_UNUSED(key); CRYPTOPP_UNUSED(length);
 	word32 k0, k1, k2, k3;
 	BlockGetAndPut<word32, BigEndian>::Get(key)(r3)(r4)(r5)(r6)(k0)(k1)(k2)(k3);
 	GenKey(k0, k1, k2, k3);
@@ -107,5 +103,7 @@ void WAKE_ROFB_Policy<B>::Iterate(KeystreamOperation operation, byte *output, co
 */
 template class WAKE_Policy<BigEndian>;
 template class WAKE_Policy<LittleEndian>;
+//template class WAKE_ROFB_Policy<BigEndian>;
+//template class WAKE_ROFB_Policy<LittleEndian>;
 
 NAMESPACE_END

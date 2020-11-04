@@ -1,4 +1,4 @@
-// rng.cpp - originally written and placed in the public domain by Wei Dai
+// rng.cpp - written and placed in the public domain by Wei Dai
 
 #include "pch.h"
 
@@ -40,16 +40,17 @@ void LC_RNG::GenerateBlock(byte *output, size_t size)
 {
 	while (size--)
 	{
-		const word32 hi = seed/q;
-		const word32 lo = seed%q;
-		const sword64 test = a*lo - r*hi;
+		word32 hi = seed/q;
+		word32 lo = seed%q;
+
+		long test = a*lo - r*hi;
 
 		if (test > 0)
-			seed = static_cast<word32>(test);
+			seed = test;
 		else
-			seed = static_cast<word32>(test + m);
+			seed = test+ m;
 
-		*output++ = byte((GETBYTE(seed, 0) ^ GETBYTE(seed, 1) ^ GETBYTE(seed, 2) ^ GETBYTE(seed, 3)));
+		*output++ = (GETBYTE(seed, 0) ^ GETBYTE(seed, 1) ^ GETBYTE(seed, 2) ^ GETBYTE(seed, 3));
 	}
 }
 
@@ -58,37 +59,25 @@ void LC_RNG::GenerateBlock(byte *output, size_t size)
 #ifndef CRYPTOPP_IMPORTS
 
 X917RNG::X917RNG(BlockTransformation *c, const byte *seed, const byte *deterministicTimeVector)
-	: m_cipher(c),
-	  m_size(m_cipher->BlockSize()),
-	  m_datetime(m_size),
-	  m_randseed(seed, m_size),
-	  m_lastBlock(m_size),
-	  m_deterministicTimeVector(deterministicTimeVector, deterministicTimeVector ? m_size : 0)
+	: cipher(c),
+	  S(cipher->BlockSize()),
+	  dtbuf(S),
+	  randseed(seed, S),
+	  m_lastBlock(S),
+	  m_deterministicTimeVector(deterministicTimeVector, deterministicTimeVector ? S : 0)
 {
-	// Valgrind finding, http://github.com/weidai11/cryptopp/issues/105
-	// Garbage in the tail creates a non-conforming X9.17 or X9.31 generator.
-	if (m_size > 8)
-	{
-		memset(m_datetime, 0x00, m_size);
-		memset(m_lastBlock, 0x00, m_size);
-	}
-
 	if (!deterministicTimeVector)
 	{
-		time_t tstamp1 = ::time(NULLPTR);
-		xorbuf(m_datetime, (byte *)&tstamp1, UnsignedMin(sizeof(tstamp1), m_size));
-		m_cipher->ProcessBlock(m_datetime);
+		time_t tstamp1 = time(0);
+		xorbuf(dtbuf, (byte *)&tstamp1, UnsignedMin(sizeof(tstamp1), S));
+		cipher->ProcessBlock(dtbuf);
 		clock_t tstamp2 = clock();
-		xorbuf(m_datetime, (byte *)&tstamp2, UnsignedMin(sizeof(tstamp2), m_size));
-		m_cipher->ProcessBlock(m_datetime);
+		xorbuf(dtbuf, (byte *)&tstamp2, UnsignedMin(sizeof(tstamp2), S));
+		cipher->ProcessBlock(dtbuf);
 	}
 
 	// for FIPS 140-2
-	// GenerateBlock(m_lastBlock, m_size);
-
-	// Make explicit call to avoid virtual-dispatch findings in ctor
-	ArraySink target(m_lastBlock, m_size);
-	X917RNG::GenerateIntoBufferedTransformation(target, DEFAULT_CHANNEL, m_size);
+	GenerateBlock(m_lastBlock, S);
 }
 
 void X917RNG::GenerateIntoBufferedTransformation(BufferedTransformation &target, const std::string &channel, lword size)
@@ -98,35 +87,35 @@ void X917RNG::GenerateIntoBufferedTransformation(BufferedTransformation &target,
 		// calculate new enciphered timestamp
 		if (m_deterministicTimeVector.size())
 		{
-			m_cipher->ProcessBlock(m_deterministicTimeVector, m_datetime);
-			IncrementCounterByOne(m_deterministicTimeVector, m_size);
+			cipher->ProcessBlock(m_deterministicTimeVector, dtbuf);
+			IncrementCounterByOne(m_deterministicTimeVector, S);
 		}
 		else
 		{
 			clock_t c = clock();
-			xorbuf(m_datetime, (byte *)&c, UnsignedMin(sizeof(c), m_size));
-			time_t t = ::time(NULLPTR);
-			xorbuf(m_datetime+m_size-UnsignedMin(sizeof(t), m_size), (byte *)&t, UnsignedMin(sizeof(t), m_size));
-			m_cipher->ProcessBlock(m_datetime);
+			xorbuf(dtbuf, (byte *)&c, UnsignedMin(sizeof(c), S));
+			time_t t = time(NULL);
+			xorbuf(dtbuf+S-UnsignedMin(sizeof(t), S), (byte *)&t, UnsignedMin(sizeof(t), S));
+			cipher->ProcessBlock(dtbuf);
 		}
 
 		// combine enciphered timestamp with seed
-		xorbuf(m_randseed, m_datetime, m_size);
+		xorbuf(randseed, dtbuf, S);
 
 		// generate a new block of random bytes
-		m_cipher->ProcessBlock(m_randseed);
-		if (memcmp(m_lastBlock, m_randseed, m_size) == 0)
+		cipher->ProcessBlock(randseed);
+		if (memcmp(m_lastBlock, randseed, S) == 0)
 			throw SelfTestFailure("X917RNG: Continuous random number generator test failed.");
 
 		// output random bytes
-		size_t len = UnsignedMin(m_size, size);
-		target.ChannelPut(channel, m_randseed, len);
+		size_t len = UnsignedMin(S, size);
+		target.ChannelPut(channel, randseed, len);
 		size -= len;
 
 		// compute new seed vector
-		memcpy(m_lastBlock, m_randseed, m_size);
-		xorbuf(m_randseed, m_datetime, m_size);
-		m_cipher->ProcessBlock(m_randseed);
+		memcpy(m_lastBlock, randseed, S);
+		xorbuf(randseed, dtbuf, S);
+		cipher->ProcessBlock(randseed);
 	}
 }
 
@@ -139,13 +128,13 @@ MaurerRandomnessTest::MaurerRandomnessTest()
 		tab[i] = 0;
 }
 
-size_t MaurerRandomnessTest::Put2(const byte *inString, size_t length, int /*messageEnd*/, bool /*blocking*/)
+size_t MaurerRandomnessTest::Put2(const byte *inString, size_t length, int messageEnd, bool blocking)
 {
 	while (length--)
 	{
 		byte inByte = *inString++;
 		if (n >= Q)
-			sum += ::log(double(n - tab[inByte]));
+			sum += log(double(n - tab[inByte]));
 		tab[inByte] = n;
 		n++;
 	}
@@ -157,7 +146,7 @@ double MaurerRandomnessTest::GetTestValue() const
 	if (BytesNeeded() > 0)
 		throw Exception(Exception::OTHER_ERROR, "MaurerRandomnessTest: " + IntToString(BytesNeeded()) + " more bytes of input needed");
 
-	double fTu = (sum/(n-Q))/::log(2.0);	// this is the test value defined by Maurer
+	double fTu = (sum/(n-Q))/log(2.0);	// this is the test value defined by Maurer
 
 	double value = fTu * 0.1392;		// arbitrarily normalize it to
 	return value > 1.0 ? 1.0 : value;	// a number between 0 and 1

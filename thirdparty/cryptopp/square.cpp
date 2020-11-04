@@ -1,31 +1,21 @@
-// square.cpp - originally written and placed in the public domain by Wei Dai
+// square.cpp - written and placed in the public domain by Wei Dai
 // Based on Paulo S.L.M. Barreto's public domain implementation
 
 #include "pch.h"
-#include "config.h"
-
 #include "square.h"
 #include "misc.h"
 #include "gf256.h"
-
-#if CRYPTOPP_MSC_VERSION
-# pragma warning(disable: 4244)
-#endif
-
-#if CRYPTOPP_GCC_DIAGNOSTIC_AVAILABLE
-# pragma GCC diagnostic ignored "-Wmissing-braces"
-#endif
 
 NAMESPACE_BEGIN(CryptoPP)
 
 // apply theta to a roundkey
 static void SquareTransform (word32 in[4], word32 out[4])
 {
-	static const byte G[4][4] =
+	static const byte G[4][4] = 
 	{
-		0x02U, 0x01U, 0x01U, 0x03U,
-		0x03U, 0x02U, 0x01U, 0x01U,
-		0x01U, 0x03U, 0x02U, 0x01U,
+		0x02U, 0x01U, 0x01U, 0x03U, 
+		0x03U, 0x02U, 0x01U, 0x01U, 
+		0x01U, 0x03U, 0x02U, 0x01U, 
 		0x01U, 0x01U, 0x03U, 0x02U
 	};
 
@@ -34,8 +24,8 @@ static void SquareTransform (word32 in[4], word32 out[4])
 	for (int i = 0; i < 4; i++)
 	{
 		word32 temp = 0;
-		for (unsigned int j = 0; j < 4; j++)
-			for (unsigned int k = 0; k < 4; k++)
+		for (int j = 0; j < 4; j++)
+			for (int k = 0; k < 4; k++)
 				temp ^= (word32)gf256.Multiply(GETBYTE(in[i], 3-k), G[k][j]) << ((3-j)*8);
 		out[i] = temp;
 	}
@@ -58,11 +48,11 @@ void Square::Base::UncheckedSetKey(const byte *userKey, unsigned int length, con
 	/* apply the key evolution function */
 	for (int i = 1; i < ROUNDS+1; i++)
 	{
-		roundkeys(i, 0) = roundkeys(i-1, 0) ^ rotlConstant<8>(roundkeys(i-1, 3)) ^ offset[i-1];
+		roundkeys(i, 0) = roundkeys(i-1, 0) ^ rotlFixed(roundkeys(i-1, 3), 8U) ^ offset[i-1];
 		roundkeys(i, 1) = roundkeys(i-1, 1) ^ roundkeys(i, 0);
 		roundkeys(i, 2) = roundkeys(i-1, 2) ^ roundkeys(i, 1);
 		roundkeys(i, 3) = roundkeys(i-1, 3) ^ roundkeys(i, 2);
-	}
+	}  
 
 	/* produce the round keys */
 	if (IsForwardTransformation())
@@ -138,13 +128,13 @@ void Square::Enc::ProcessAndXorBlock(const byte *inBlock, const byte *xorBlock, 
 {
 	word32 text[4], temp[4];
 	Block::Get(inBlock)(text[0])(text[1])(text[2])(text[3]);
-
+   
 	/* initial key addition */
 	text[0] ^= roundkeys(0, 0);
 	text[1] ^= roundkeys(0, 1);
 	text[2] ^= roundkeys(0, 2);
 	text[3] ^= roundkeys(0, 3);
-
+ 
 	/* ROUNDS - 1 full rounds */
 	for (int i=1; i+1<ROUNDS; i+=2)
 	{
@@ -163,13 +153,13 @@ void Square::Dec::ProcessAndXorBlock(const byte *inBlock, const byte *xorBlock, 
 {
 	word32 text[4], temp[4];
 	Block::Get(inBlock)(text[0])(text[1])(text[2])(text[3]);
-
+   
 	/* initial key addition */
 	text[0] ^= roundkeys(0, 0);
 	text[1] ^= roundkeys(0, 1);
 	text[2] ^= roundkeys(0, 2);
 	text[3] ^= roundkeys(0, 3);
-
+ 
 	/* ROUNDS - 1 full rounds */
 	for (int i=1; i+1<ROUNDS; i+=2)
 	{

@@ -4,7 +4,6 @@
 #include "pch.h"
 #include "rc6.h"
 #include "misc.h"
-#include "secblock.h"
 
 NAMESPACE_BEGIN(CryptoPP)
 
@@ -33,7 +32,7 @@ void RC6::Base::UncheckedSetKey(const byte *k, unsigned int keylen, const NameVa
 
 	for (unsigned h=0; h < n; h++)
 	{
-		a = sTable[h % sTable.size()] = rotlConstant<3>((sTable[h % sTable.size()] + a + b));
+		a = sTable[h % sTable.size()] = rotlFixed((sTable[h % sTable.size()] + a + b), 3);
 		b = l[h % c] = rotlMod((l[h % c] + a + b), (a+b));
 	}
 }
@@ -52,8 +51,8 @@ void RC6::Enc::ProcessAndXorBlock(const byte *inBlock, const byte *xorBlock, byt
 
 	for(unsigned i=0; i<r; i++)
 	{
-		t = rotlConstant<5>(b*(2*b+1));
-		u = rotlConstant<5>(d*(2*d+1));
+		t = rotlFixed(b*(2*b+1), 5);
+		u = rotlFixed(d*(2*d+1), 5);
 		a = rotlMod(a^t,u) + sptr[0];
 		c = rotlMod(c^u,t) + sptr[1];
 		t = a; a = b; b = c; c = d; d = t;
@@ -81,12 +80,13 @@ void RC6::Dec::ProcessAndXorBlock(const byte *inBlock, const byte *xorBlock, byt
 	{
 		sptr -= 2;
 		t = a; a = d; d = c; c = b; b = t;
-		u = rotlConstant<5>(d*(2 * d + 1));
-		t = rotlConstant<5>(b*(2 * b + 1));
+		u = rotlFixed(d*(2*d+1), 5);
+		t = rotlFixed(b*(2*b+1), 5);
 		c = rotrMod(c-sptr[1], t) ^ u;
 		a = rotrMod(a-sptr[0], u) ^ t;
 	}
 
+	sptr -= 2;
 	d -= sTable[1];
 	b -= sTable[0];
 

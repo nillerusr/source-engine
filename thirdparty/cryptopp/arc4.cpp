@@ -1,4 +1,4 @@
-// arc4.cpp - originally written and placed in the public domain by Wei Dai
+// arc4.cpp - written and placed in the public domain by Wei Dai
 
 // The ARC4 algorithm was first revealed in an anonymous email to the
 // cypherpunks mailing list. This file originally contained some
@@ -13,28 +13,26 @@
 NAMESPACE_BEGIN(CryptoPP)
 namespace Weak1 {
 
-#if defined(CRYPTOPP_DEBUG) && !defined(CRYPTOPP_DOXYGEN_PROCESSING)
 void ARC4_TestInstantiations()
 {
 	ARC4 x;
 }
-#endif
 
 ARC4_Base::~ARC4_Base()
 {
 	m_x = m_y = 0;
 }
 
-void ARC4_Base::UncheckedSetKey(const byte *key, unsigned int length, const NameValuePairs &params)
+void ARC4_Base::UncheckedSetKey(const byte *key, unsigned int keyLen, const NameValuePairs &params)
 {
-	AssertValidKeyLength(length);
+	AssertValidKeyLength(keyLen);
 
 	m_x = 1;
 	m_y = 0;
 
 	unsigned int i;
 	for (i=0; i<256; i++)
-		m_state[i] = byte(i);
+		m_state[i] = i;
 
 	unsigned int keyIndex = 0, stateIndex = 0;
 	for (i=0; i<256; i++)
@@ -43,8 +41,8 @@ void ARC4_Base::UncheckedSetKey(const byte *key, unsigned int length, const Name
 		stateIndex += key[keyIndex] + a;
 		stateIndex &= 0xff;
 		m_state[i] = m_state[stateIndex];
-		m_state[stateIndex] = byte(a);
-		if (++keyIndex >= length)
+		m_state[stateIndex] = a;
+		if (++keyIndex >= keyLen)
 			keyIndex = 0;
 	}
 
@@ -56,18 +54,18 @@ template <class T>
 static inline unsigned int MakeByte(T &x, T &y, byte *s)
 {
 	unsigned int a = s[x];
-	y = byte((y+a) & 0xff);
+	y = (y+a) & 0xff;
 	unsigned int b = s[y];
-	s[x] = byte(b);
-	s[y] = byte(a);
-	x = byte((x+1) & 0xff);
+	s[x] = b;
+	s[y] = a;
+	x = (x+1) & 0xff;
 	return s[(a+b) & 0xff];
 }
 
 void ARC4_Base::GenerateBlock(byte *output, size_t size)
 {
 	while (size--)
-		*output++ = static_cast<byte>(MakeByte(m_x, m_y, m_state));
+		*output++ = MakeByte(m_x, m_y, m_state);
 }
 
 void ARC4_Base::ProcessData(byte *outString, const byte *inString, size_t length)
@@ -90,18 +88,18 @@ void ARC4_Base::ProcessData(byte *outString, const byte *inString, size_t length
 	{
 		do
 		{
-			*outString++ = *inString++ ^ byte(MakeByte(x, y, s));
+			*outString++ = *inString++ ^ MakeByte(x, y, s);
 		}
 		while(--length);
 	}
 
-	m_x = byte(x);
-	m_y = byte(y);
+	m_x = x;
+	m_y = y;
 }
 
-void ARC4_Base::DiscardBytes(size_t n)
+void ARC4_Base::DiscardBytes(size_t length)
 {
-	if (n == 0)
+	if (length == 0)
 		return;
 
 	byte *const s = m_state;
@@ -112,10 +110,10 @@ void ARC4_Base::DiscardBytes(size_t n)
 	{
 		MakeByte(x, y, s);
 	}
-	while(--n);
+	while(--length);
 
-	m_x = byte(x);
-	m_y = byte(y);
+	m_x = x;
+	m_y = y;
 }
 
 }

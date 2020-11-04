@@ -1,32 +1,22 @@
-// queue.h - originally written and placed in the public domain by Wei Dai
-
-/// \file
-/// \brief Classes for an unlimited queue to store bytes
+// specification file for an unlimited queue for storing bytes
 
 #ifndef CRYPTOPP_QUEUE_H
 #define CRYPTOPP_QUEUE_H
 
-#include "cryptlib.h"
 #include "simple.h"
+//#include <algorithm>
 
 NAMESPACE_BEGIN(CryptoPP)
 
+/** The queue is implemented as a linked list of byte arrays, but you don't need to
+    know about that.  So just ignore this next line. :) */
 class ByteQueueNode;
 
-/// \brief Data structure used to store byte strings
-/// \details The queue is implemented as a linked list of byte arrays
+//! Byte Queue
 class CRYPTOPP_DLL ByteQueue : public Bufferless<BufferedTransformation>
 {
 public:
-	/// \brief Construct a ByteQueue
-	/// \param nodeSize the initial node size
-	/// \details Internally, ByteQueue uses a ByteQueueNode to store bytes, and \p nodeSize determines the
-	///   size of the ByteQueueNode. A value of 0 indicates the ByteQueueNode should be automatically sized,
-	///   which means a value of 256 is used.
 	ByteQueue(size_t nodeSize=0);
-
-	/// \brief Copy construct a ByteQueue
-	/// \param copy the other ByteQueue
 	ByteQueue(const ByteQueue &copy);
 	~ByteQueue();
 
@@ -68,19 +58,14 @@ public:
 
 	ByteQueue & operator=(const ByteQueue &rhs);
 	bool operator==(const ByteQueue &rhs) const;
-	bool operator!=(const ByteQueue &rhs) const {return !operator==(rhs);}
 	byte operator[](lword i) const;
 	void swap(ByteQueue &rhs);
 
-	/// \brief A ByteQueue iterator
 	class Walker : public InputRejecting<BufferedTransformation>
 	{
 	public:
-		/// \brief Construct a ByteQueue Walker
-		/// \param queue a ByteQueue
 		Walker(const ByteQueue &queue)
-			: m_queue(queue), m_node(NULLPTR), m_position(0), m_offset(0), m_lazyString(NULLPTR), m_lazyLength(0)
-				{Initialize();}
+			: m_queue(queue) {Initialize();}
 
 		lword GetCurrentPosition() {return m_position;}
 
@@ -122,21 +107,21 @@ private:
 	bool m_lazyStringModifiable;
 };
 
-/// use this to make sure LazyPut is finalized in event of exception
+//! use this to make sure LazyPut is finalized in event of exception
 class CRYPTOPP_DLL LazyPutter
 {
 public:
 	LazyPutter(ByteQueue &bq, const byte *inString, size_t size)
 		: m_bq(bq) {bq.LazyPut(inString, size);}
 	~LazyPutter()
-		{try {m_bq.FinalizeLazyPut();} catch(const Exception&) {CRYPTOPP_ASSERT(0);}}
+		{try {m_bq.FinalizeLazyPut();} catch(...) {}}
 protected:
 	LazyPutter(ByteQueue &bq) : m_bq(bq) {}
 private:
 	ByteQueue &m_bq;
 };
 
-/// like LazyPutter, but does a LazyPutModifiable instead
+//! like LazyPutter, but does a LazyPutModifiable instead
 class LazyPutterModifiable : public LazyPutter
 {
 public:

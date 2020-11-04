@@ -1,7 +1,4 @@
-// hmac.h - originally written and placed in the public domain by Wei Dai
-
-/// \file hmac.h
-/// \brief Classes for HMAC message authentication codes
+// hmac.h - written and placed in the public domain by Wei Dai
 
 #ifndef CRYPTOPP_HMAC_H
 #define CRYPTOPP_HMAC_H
@@ -11,15 +8,10 @@
 
 NAMESPACE_BEGIN(CryptoPP)
 
-/// \brief HMAC information
-/// \details HMAC_Base derives from VariableKeyLength and MessageAuthenticationCode
-/// \since Crypto++ 2.1
+//! _
 class CRYPTOPP_DLL CRYPTOPP_NO_VTABLE HMAC_Base : public VariableKeyLength<16, 0, INT_MAX>, public MessageAuthenticationCode
 {
 public:
-	virtual ~HMAC_Base() {}
-
-	/// \brief Construct a HMAC_Base
 	HMAC_Base() : m_innerHashKeyed(false) {}
 	void UncheckedSetKey(const byte *userKey, unsigned int keylength, const NameValuePairs &params);
 
@@ -31,9 +23,10 @@ public:
 
 protected:
 	virtual HashTransformation & AccessHash() =0;
-	byte * AccessIpad() {return m_buf;}
-	byte * AccessOpad() {return m_buf + AccessHash().BlockSize();}
-	byte * AccessInnerHash() {return m_buf + 2*AccessHash().BlockSize();}
+	// VALVE: clang requires m_buf.BytePtr() instead of m_buf
+	byte * AccessIpad() {return m_buf.BytePtr();}
+	byte * AccessOpad() {return m_buf.BytePtr() + AccessHash().BlockSize();}
+	byte * AccessInnerHash() {return m_buf.BytePtr() + 2*AccessHash().BlockSize();}
 
 private:
 	void KeyInnerHash();
@@ -42,32 +35,21 @@ private:
 	bool m_innerHashKeyed;
 };
 
-/// \brief HMAC
-/// \tparam T HashTransformation derived class
-/// \details HMAC derives from MessageAuthenticationCodeImpl. It calculates the HMAC using
-///   <tt>HMAC(K, text) = H(K XOR opad, H(K XOR ipad, text))</tt>.
-/// \sa <a href="http://www.weidai.com/scan-mirror/mac.html#HMAC">HMAC</a>
-/// \since Crypto++ 2.1
+//! <a href="http://www.weidai.com/scan-mirror/mac.html#HMAC">HMAC</a>
+/*! HMAC(K, text) = H(K XOR opad, H(K XOR ipad, text)) */
 template <class T>
 class HMAC : public MessageAuthenticationCodeImpl<HMAC_Base, HMAC<T> >
 {
 public:
-	CRYPTOPP_CONSTANT(DIGESTSIZE=T::DIGESTSIZE);
-	CRYPTOPP_CONSTANT(BLOCKSIZE=T::BLOCKSIZE);
+	CRYPTOPP_CONSTANT(DIGESTSIZE=T::DIGESTSIZE)
+	CRYPTOPP_CONSTANT(BLOCKSIZE=T::BLOCKSIZE)
 
-	virtual ~HMAC() {}
-
-	/// \brief Construct a HMAC
 	HMAC() {}
-	/// \brief Construct a HMAC
-	/// \param key the HMAC key
-	/// \param length the size of the HMAC key
 	HMAC(const byte *key, size_t length=HMAC_Base::DEFAULT_KEYLENGTH)
 		{this->SetKey(key, length);}
 
 	static std::string StaticAlgorithmName() {return std::string("HMAC(") + T::StaticAlgorithmName() + ")";}
 	std::string AlgorithmName() const {return std::string("HMAC(") + m_hash.AlgorithmName() + ")";}
-	std::string AlgorithmProvider() const {return m_hash.AlgorithmProvider();}
 
 private:
 	HashTransformation & AccessHash() {return m_hash;}

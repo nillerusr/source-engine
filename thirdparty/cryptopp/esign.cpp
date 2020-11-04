@@ -1,38 +1,28 @@
-// esign.cpp - originally written and placed in the public domain by Wei Dai
+// esign.cpp - written and placed in the public domain by Wei Dai
 
 #include "pch.h"
-#include "config.h"
-
-// TODO: fix the C4589 warnings
-#if CRYPTOPP_MSC_VERSION
-# pragma warning(disable: 4589)
-#endif
-
 #include "esign.h"
-#include "modarith.h"
-#include "integer.h"
-#include "nbtheory.h"
-#include "algparam.h"
-#include "sha.h"
 #include "asn.h"
+#include "modarith.h"
+#include "nbtheory.h"
+#include "sha.h"
+#include "algparam.h"
 
 NAMESPACE_BEGIN(CryptoPP)
 
-#if defined(CRYPTOPP_DEBUG) && !defined(CRYPTOPP_DOXYGEN_PROCESSING)
 void ESIGN_TestInstantiations()
 {
-	ESIGN<SHA1>::Verifier x1(1, 1);
-	ESIGN<SHA1>::Signer x2(NullRNG(), 1);
-	ESIGN<SHA1>::Verifier x3(x2);
-	ESIGN<SHA1>::Verifier x4(x2.GetKey());
-	ESIGN<SHA1>::Verifier x5(x3);
-	ESIGN<SHA1>::Signer x6 = x2;
+	ESIGN<SHA>::Verifier x1(1, 1);
+	ESIGN<SHA>::Signer x2(NullRNG(), 1);
+	ESIGN<SHA>::Verifier x3(x2);
+	ESIGN<SHA>::Verifier x4(x2.GetKey());
+	ESIGN<SHA>::Verifier x5(x3);
+	ESIGN<SHA>::Signer x6 = x2;
 
 	x6 = x2;
-	x3 = ESIGN<SHA1>::Verifier(x2);
+	x3 = ESIGN<SHA>::Verifier(x2);
 	x4 = x2.GetKey();
 }
-#endif
 
 void ESIGNFunction::BERDecode(BufferedTransformation &bt)
 {
@@ -56,14 +46,11 @@ Integer ESIGNFunction::ApplyFunction(const Integer &x) const
 	return STDMIN(a_exp_b_mod_c(x, m_e, m_n) >> (2*GetK()+2), MaxImage());
 }
 
-bool ESIGNFunction::Validate(RandomNumberGenerator& rng, unsigned int level) const
+bool ESIGNFunction::Validate(RandomNumberGenerator &rng, unsigned int level) const
 {
-	CRYPTOPP_UNUSED(rng), CRYPTOPP_UNUSED(level);
 	bool pass = true;
 	pass = pass && m_n > Integer::One() && m_n.IsOdd();
-	CRYPTOPP_ASSERT(pass);
 	pass = pass && m_e >= 8 && m_e < m_n;
-	CRYPTOPP_ASSERT(pass);
 	return pass;
 }
 
@@ -127,7 +114,7 @@ void InvertibleESIGNFunction::GenerateRandom(RandomNumberGenerator &rng, const N
 
 	m_n = m_p * m_p * m_q;
 
-	CRYPTOPP_ASSERT(m_n.BitCount() == (unsigned int)modulusSize);
+	assert(m_n.BitCount() == modulusSize);
 }
 
 void InvertibleESIGNFunction::BERDecode(BufferedTransformation &bt)
@@ -150,7 +137,7 @@ void InvertibleESIGNFunction::DEREncode(BufferedTransformation &bt) const
 	privateKey.MessageEnd();
 }
 
-Integer InvertibleESIGNFunction::CalculateRandomizedInverse(RandomNumberGenerator &rng, const Integer &x) const
+Integer InvertibleESIGNFunction::CalculateRandomizedInverse(RandomNumberGenerator &rng, const Integer &x) const 
 {
 	DoQuickSanityCheck();
 
@@ -171,13 +158,13 @@ Integer InvertibleESIGNFunction::CalculateRandomizedInverse(RandomNumberGenerato
 			w1 = pq - w1;
 		}
 	}
-	while ((w1 >> (2*GetK()+1)).IsPositive());
+	while ((w1 >> 2*GetK()+1).IsPositive());
 
 	ModularArithmetic modp(m_p);
 	Integer t = modp.Divide(w0 * r % m_p, m_e * re % m_p);
 	Integer s = r + t*pq;
-	CRYPTOPP_ASSERT(s < m_n);
-#if 0
+	assert(s < m_n);
+/*
 	using namespace std;
 	cout << "f = " << x << endl;
 	cout << "r = " << r << endl;
@@ -187,30 +174,20 @@ Integer InvertibleESIGNFunction::CalculateRandomizedInverse(RandomNumberGenerato
 	cout << "w1 = " << w1 << endl;
 	cout << "t = " << t << endl;
 	cout << "s = " << s << endl;
-#endif
+*/
 	return s;
 }
 
 bool InvertibleESIGNFunction::Validate(RandomNumberGenerator &rng, unsigned int level) const
 {
 	bool pass = ESIGNFunction::Validate(rng, level);
-	CRYPTOPP_ASSERT(pass);
 	pass = pass && m_p > Integer::One() && m_p.IsOdd() && m_p < m_n;
-	CRYPTOPP_ASSERT(pass);
 	pass = pass && m_q > Integer::One() && m_q.IsOdd() && m_q < m_n;
-	CRYPTOPP_ASSERT(pass);
 	pass = pass && m_p.BitCount() == m_q.BitCount();
-	CRYPTOPP_ASSERT(pass);
 	if (level >= 1)
-	{
 		pass = pass && m_p * m_p * m_q == m_n;
-		CRYPTOPP_ASSERT(pass);
-	}
 	if (level >= 2)
-	{
 		pass = pass && VerifyPrime(rng, m_p, level-2) && VerifyPrime(rng, m_q, level-2);
-		CRYPTOPP_ASSERT(pass);
-	}
 	return pass;
 }
 

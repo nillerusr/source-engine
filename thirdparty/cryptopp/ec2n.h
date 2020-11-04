@@ -1,54 +1,47 @@
-// ec2n.h - originally written and placed in the public domain by Wei Dai
-
-/// \file ec2n.h
-/// \brief Classes for Elliptic Curves over binary fields
-
 #ifndef CRYPTOPP_EC2N_H
 #define CRYPTOPP_EC2N_H
 
-#include "cryptlib.h"
 #include "gf2n.h"
-#include "integer.h"
-#include "algebra.h"
-#include "ecpoint.h"
 #include "eprecomp.h"
 #include "smartptr.h"
 #include "pubkey.h"
 
-#if CRYPTOPP_MSC_VERSION
-# pragma warning(push)
-# pragma warning(disable: 4231 4275)
-#endif
-
 NAMESPACE_BEGIN(CryptoPP)
 
-/// \brief Elliptic Curve over GF(2^n)
-class CRYPTOPP_DLL EC2N : public AbstractGroup<EC2NPoint>, public EncodedPoint<EC2NPoint>
+//! Elliptic Curve Point
+struct CRYPTOPP_DLL EC2NPoint
+{
+	EC2NPoint() : identity(true) {}
+	EC2NPoint(const PolynomialMod2 &x, const PolynomialMod2 &y)
+		: identity(false), x(x), y(y) {}
+
+	bool operator==(const EC2NPoint &t) const
+		{return (identity && t.identity) || (!identity && !t.identity && x==t.x && y==t.y);}
+	bool operator< (const EC2NPoint &t) const
+		{return identity ? !t.identity : (!t.identity && (x<t.x || (x==t.x && y<t.y)));}
+
+	bool identity;
+	PolynomialMod2 x, y;
+};
+
+CRYPTOPP_DLL_TEMPLATE_CLASS AbstractGroup<EC2NPoint>;
+
+//! Elliptic Curve over GF(2^n)
+class CRYPTOPP_DLL EC2N : public AbstractGroup<EC2NPoint>
 {
 public:
 	typedef GF2NP Field;
 	typedef Field::Element FieldElement;
 	typedef EC2NPoint Point;
 
-	virtual ~EC2N() {}
-
-	/// \brief Construct an EC2N
 	EC2N() {}
-
-	/// \brief Construct an EC2N
-	/// \param field Field, GF2NP derived class
-	/// \param a Field::Element
-	/// \param b Field::Element
 	EC2N(const Field &field, const Field::Element &a, const Field::Element &b)
 		: m_field(field), m_a(a), m_b(b) {}
-
-	/// \brief Construct an EC2N from BER encoded parameters
-	/// \param bt BufferedTransformation derived object
-	/// \details This constructor will decode and extract the the fields fieldID and curve of the sequence ECParameters
+	// construct from BER encoded parameters
+	// this constructor will decode and extract the the fields fieldID and curve of the sequence ECParameters
 	EC2N(BufferedTransformation &bt);
 
-	/// \brief Encode the fields fieldID and curve of the sequence ECParameters
-	/// \param bt BufferedTransformation derived object
+	// encode the fields fieldID and curve of the sequence ECParameters
 	void DEREncode(BufferedTransformation &bt) const;
 
 	bool Equal(const Point &P, const Point &Q) const;
@@ -94,33 +87,21 @@ private:
 CRYPTOPP_DLL_TEMPLATE_CLASS DL_FixedBasePrecomputationImpl<EC2N::Point>;
 CRYPTOPP_DLL_TEMPLATE_CLASS DL_GroupPrecomputation<EC2N::Point>;
 
-/// \brief Elliptic Curve precomputation
-/// \tparam EC elliptic curve field
-template <class EC> class EcPrecomputation;
+template <class T> class EcPrecomputation;
 
-/// \brief EC2N precomputation specialization
-/// \details Implementation of <tt>DL_GroupPrecomputation<EC2N::Point></tt>
-/// \sa DL_GroupPrecomputation
+//! EC2N precomputation
 template<> class EcPrecomputation<EC2N> : public DL_GroupPrecomputation<EC2N::Point>
 {
 public:
 	typedef EC2N EllipticCurve;
-
-	virtual ~EcPrecomputation() {}
 
 	// DL_GroupPrecomputation
 	const AbstractGroup<Element> & GetGroup() const {return m_ec;}
 	Element BERDecodeElement(BufferedTransformation &bt) const {return m_ec.BERDecodePoint(bt);}
 	void DEREncodeElement(BufferedTransformation &bt, const Element &v) const {m_ec.DEREncodePoint(bt, v, false);}
 
-	/// \brief Set the elliptic curve
-	/// \param ec ECP derived class
-	/// \details SetCurve() is not inherited
+	// non-inherited
 	void SetCurve(const EC2N &ec) {m_ec = ec;}
-
-	/// \brief Get the elliptic curve
-	/// \returns EC2N curve
-	/// \details GetCurve() is not inherited
 	const EC2N & GetCurve() const {return m_ec;}
 
 private:
@@ -128,9 +109,5 @@ private:
 };
 
 NAMESPACE_END
-
-#if CRYPTOPP_MSC_VERSION
-# pragma warning(pop)
-#endif
 
 #endif
