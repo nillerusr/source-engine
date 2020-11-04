@@ -13,6 +13,7 @@ $Configuration
 {
 	$Compiler
 	{
+		$AdditionalIncludeDirectories   "$BASE;.\;/usr/include/freetype2/"
 		$PreprocessorDefinitions		"$BASE;BENCHMARK;VGUIMATSURFACE_DLL_EXPORT;GAMEUI_EXPORTS;DONT_PROTECT_FILEIO_FUNCTIONS;PROTECTED_THINGS_ENABLE"
 		$PreprocessorDefinitions		"$BASE;fopen=dont_use_fopen" [$WIN32]
 		$EnableC++Exceptions			"Yes (/EHsc)"
