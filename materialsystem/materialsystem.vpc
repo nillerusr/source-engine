@@ -13,6 +13,7 @@ $Configuration
 {
 	$Compiler
 	{
+		$AdditionalIncludeDirectories   "$BASE;.\;"
 		$PreprocessorDefinitions	"$BASE;DEFINE_MATERIALSYSTEM_INTERFACE;MATERIALSYSTEM_EXPORTS;PROTECTED_THINGS_ENABLE;strncpy=use_Q_strncpy_instead;_snprintf=use_Q_snprintf_instead"
 		$PreprocessorDefinitions	"$BASE;fopen=dont_use_fopen" [$WINDOWS]
 		$Create/UsePCHThroughFile	"pch_materialsystem.h"
