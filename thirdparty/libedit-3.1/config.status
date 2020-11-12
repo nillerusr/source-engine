@@ -733,7 +733,7 @@ if test -n "${ZSH_VERSION+set}"; then
 fi
 
 
-    PACKAGE='libedit-20191231'
+    PACKAGE='libedit-20201104'
     VERSION='3.1'
     RM='rm -f'
     ofile='libtool'
@@ -894,7 +894,7 @@ S["AUTOMAKE"]="${SHELL} /home/nillerusr/projects/source-engine/thirdparty/libedi
 S["AUTOCONF"]="${SHELL} /home/nillerusr/projects/source-engine/thirdparty/libedit-3.1/missing autoconf"
 S["ACLOCAL"]="${SHELL} /home/nillerusr/projects/source-engine/thirdparty/libedit-3.1/missing aclocal-1.16"
 S["VERSION"]="3.1"
-S["PACKAGE"]="libedit-20191231"
+S["PACKAGE"]="libedit-20201104"
 S["CYGPATH_W"]="echo"
 S["am__isrc"]=""
 S["INSTALL_DATA"]="${INSTALL} -m 644"
@@ -944,7 +944,7 @@ S["PACKAGE_URL"]=""
 S["PACKAGE_BUGREPORT"]=""
 S["PACKAGE_STRING"]="libedit 3.1"
 S["PACKAGE_VERSION"]="3.1"
-S["PACKAGE_TARNAME"]="libedit-20191231"
+S["PACKAGE_TARNAME"]="libedit-20201104"
 S["PACKAGE_NAME"]="libedit"
 S["PATH_SEPARATOR"]=":"
 S["SHELL"]="/bin/sh"
@@ -991,7 +991,7 @@ if test -n "$CONFIG_HEADERS"; then
 cat >"$ac_tmp/defines.awk" <<\_ACAWK ||
 BEGIN {
 D["PACKAGE_NAME"]=" \"libedit\""
-D["PACKAGE_TARNAME"]=" \"libedit-20191231\""
+D["PACKAGE_TARNAME"]=" \"libedit-20201104\""
 D["PACKAGE_VERSION"]=" \"3.1\""
 D["PACKAGE_STRING"]=" \"libedit 3.1\""
 D["PACKAGE_BUGREPORT"]=" \"\""
@@ -1011,7 +1011,7 @@ D["_ALL_SOURCE"]=" 1"
 D["_GNU_SOURCE"]=" 1"
 D["_POSIX_PTHREAD_SEMANTICS"]=" 1"
 D["_TANDEM_SOURCE"]=" 1"
-D["PACKAGE"]=" \"libedit-20191231\""
+D["PACKAGE"]=" \"libedit-20201104\""
 D["VERSION"]=" \"3.1\""
 D["HAVE_DLFCN_H"]=" 1"
 D["LT_OBJDIR"]=" \".libs/\""
@@ -1462,7 +1462,9 @@ $as_echo X/"$am_mf" |
     { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 as_fn_error $? "Something went wrong bootstrapping makefile fragments
-    for automatic dependency tracking.  Try re-running configure with the
+    for automatic dependency tracking.  If GNU make was not used, consider
+    re-running the configure script with MAKE=\"gmake\" (or whatever is
+    necessary).  You can also try re-running configure with the
     '--disable-dependency-tracking' option to at least be able to build
     the package (albeit without support for automatic dependency tracking).
 See \`config.log' for more details" "$LINENO" 5; }

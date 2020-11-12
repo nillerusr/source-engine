@@ -207,7 +207,7 @@
 #define LT_OBJDIR ".libs/"
 
 /* Name of package */
-#define PACKAGE "libedit-20191231"
+#define PACKAGE "libedit-20201104"
 
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT ""
@@ -219,7 +219,7 @@
 #define PACKAGE_STRING "libedit 3.1"
 
 /* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME "libedit-20191231"
+#define PACKAGE_TARNAME "libedit-20201104"
 
 /* Define to the home page for this package. */
 #define PACKAGE_URL ""
