@@ -459,7 +459,7 @@ configure:9811: gcc -o conftest -m32 -Wno-narrowing  -m32 conftest.c  >&5
 conftest.c:48:6: warning: conflicting types for built-in function 'pow'
  char pow ();
       ^
-/usr/bin/ld: /tmp/ccPOoIMo.o: in function `main':
+/usr/bin/ld: /tmp/cckFt8M5.o: in function `main':
 conftest.c:(.text+0x12): undefined reference to `pow'
 collect2: error: ld returned 1 exit status
 configure:9811: $? = 1

@@ -1255,8 +1255,6 @@ $Project
 		$Lib		vtf
 		$ImpLib		steam_api
 		
-		$Libexternal $LIBCOMMON/libcrypto [$OSXALL]
-		$Libexternal "$SRCDIR\lib\common\$(CRYPTOPPDIR)\libcrypto" [$LINUXALL]
 		$Lib   "libz" [$WIN32]
 
 		$Libexternal	libz [$LINUXALL]

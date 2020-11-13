@@ -1115,7 +1115,6 @@ $Project "engine"
 		$ImpLib	"$LIBCOMMON\curl"	  [$OSXALL]
 
 		$Libexternal	"libz"
-		$Libexternal 	"$SRCDIR\lib\common\$(CRYPTOPPDIR)\libcrypto" [$LINUXALL&&!$DEDICATED]
 
 		// Link with the google profiler.
 		// http://code.google.com/p/gperftools/wiki/GooglePerformanceTools

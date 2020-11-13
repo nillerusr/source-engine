@@ -32,8 +32,8 @@ then
 	clean SDL2-src
 	clean protobuf-2.6.1/
 	clean StubSteamAPI/
-	clean openssl
-	clean cryptopp
+#	clean openssl
+#	clean cryptopp
 	clean libjpeg
 	clean libpng
 	clean zlib
@@ -63,16 +63,16 @@ mk
 inst libsteam_api.so 
 cd ../
 
-cd openssl
-conf ./Configure -m32 linux-generic32
-mk
-cp libcrypto.a ../../lib/common/ubuntu12_32/
-cd ../
+#cd openssl
+#conf ./Configure -m32 linux-generic32
+#mk
+#cp libcrypto.a ../../lib/common/ubuntu12_32/
+#cd ../
 
-cd cryptopp
-mk IS_X86=1 IS_X64=0 CC='gcc -m32 -msse4 -fPIC' CXX='g++ -m32 -msse4 -D_GLIBCXX_USE_CXX11_ABI=0'
-cp libcryptopp.a ../../lib/common/ubuntu12_32/
-cd ../
+#cd cryptopp
+#mk IS_X86=1 IS_X64=0 CC='gcc -m32 -msse4 -fPIC' CXX='g++ -m32 -msse4 -D_GLIBCXX_USE_CXX11_ABI=0'
+#cp libcryptopp.a ../../lib/common/ubuntu12_32/
+#cd ../
 
 cd libjpeg
 conf ./configure --build=i686-pc-linux-gnu "CFLAGS=-m32 -Wno-narrowing" "CXXFLAGS=-m32 -Wno-narrowing -fpermissive" "LDFLAGS=-m32"

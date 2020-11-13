@@ -24,7 +24,7 @@
 #include "tier1/utlmap.h"
 #include "tier1/checksum_md5.h"
 
-#define VPK_ENABLE_SIGNING
+//#define VPK_ENABLE_SIGNING
 
 const int k_nVPKDefaultChunkSize = 200 * 1024 * 1024;
 
