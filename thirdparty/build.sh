@@ -28,9 +28,9 @@ mkdir -p ../lib/common/linux32
 
 if [ "$1" = "clean" ]
 then
-	clean gperftools-2.0
+#	clean gperftools-2.0
 	clean SDL2-src
-	clean protobuf-2.6.1
+	clean protobuf-2.6.1/
 	clean StubSteamAPI/
 	clean openssl
 	clean cryptopp
@@ -41,11 +41,11 @@ then
 	exit
 fi
 
-cd gperftools-2.0
-conf ./configure CFLAGS="-m32 -Wno-narrowing" "CXXFLAGS=-m32 -Wno-narrowing -fpermissive" "LDFLAGS=-m32"
-mk
-inst .libs/libtcmalloc_minimal.so.4
-cd ../
+#cd gperftools-2.0
+#conf ./configure CFLAGS="-m32 -Wno-narrowing" "CXXFLAGS=-m32 -Wno-narrowing -fpermissive" "LDFLAGS=-m32"
+#mk
+#inst .libs/libtcmalloc_minimal.so.4
+#cd ../
 
 cd SDL2-src
 conf ./configure --build=i686-pc-linux-gnu "CFLAGS=-m32 -Wno-narrowing" "CXXFLAGS=-m32 -Wno-narrowing -fpermissive" "LDFLAGS=-m32" --enable-input-tslib=no
