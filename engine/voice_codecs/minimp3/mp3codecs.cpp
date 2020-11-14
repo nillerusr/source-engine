@@ -17,12 +17,6 @@ struct AudioStream_s
 size_t mp3dec_read_callback(void *buf, size_t size, void *user_data)
 {
 	AudioStream_s *stream = static_cast<AudioStream_s*>( (void*)user_data);
-
-	if( stream->decode_size > 0)
-	{
-		printf("mp3dec_read_callback size: %d\n", (int)size);		
-		return size;
-	}
 	
 	int ret_size = stream->stream_event->StreamRequestData( buf, size, stream->offset );
 	printf("mp3dec_read_callback size: %d, ret_size: %d\n", (int)size, ret_size);	
@@ -104,21 +98,9 @@ CMiniMP3::~CMiniMP3()
 // IAudioStream functions
 int	CMiniMP3::Decode( void *pBuffer, unsigned int bufferSize )
 {
-	printf("CMiniMP3::Decode size: %d\n", bufferSize);
-	audio_stream.decode_size = 1;
-	unsigned int readed = mp3dec_ex_read(&mp3d, (mp3d_sample_t*)pBuffer, bufferSize/2);
-	printf("mp3dec_ex_read %d\n", readed);
-	printf("dec.samples: %d\n", (int)mp3d.samples);
+    size_t readed = mp3dec_ex_read(&mp3d, pBuffer, 1152);
+	printf("CMiniMP3::Decode: readed samples: %d\n", readed);
 
-    if (readed != mp3d.samples) /* normal eof or error condition */
-    {
-        if (mp3d.last_error)
-        {
-			printf("last_err: %d\n", mp3d.last_error);
-            /* error */
-        }
-    }
-	
 	return readed;
 }
 
