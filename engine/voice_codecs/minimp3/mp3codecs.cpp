@@ -91,41 +91,37 @@ bool CMiniMP3::Init( IAudioStreamEvent *pHandler )
 
 CMiniMP3::~CMiniMP3()
 {
-//	m_decoder.Shutdown();
+
 }
 	
 
 // IAudioStream functions
 int	CMiniMP3::Decode( void *pBuffer, unsigned int bufferSize )
 {
-    size_t readed = mp3dec_ex_read(&mp3d, pBuffer, 1152);
+    size_t readed = mp3dec_ex_read(&mp3d, pBuffer, bufferSize/2);
 	printf("CMiniMP3::Decode: readed samples: %d\n", readed);
-
-	return readed;
+	return readed*2;
 }
 
 
 int CMiniMP3::GetOutputBits()
 {
 	printf("CMiniMP3::GetOutputBits\n");
-	return 16;
-//	return m_decoder.GetAttribute( m_decoder.OUTPUT_BITS );
+	return mp3d.info.bitrate_kbps;
 }
 
 
 int CMiniMP3::GetOutputRate()
 {
-	printf("CMiniMP3::GetOutputRate: %d\n", 44100);
-	return 44100;
-//	return m_decoder.GetAttribute( m_decoder.OUTPUT_RATE );
+	printf("CMiniMP3::GetOutputRate: %d\n", mp3d.info.hz);
+	return mp3d.info.hz;
 }
 
 
 int CMiniMP3::GetOutputChannels()
 {
-	printf("CMiniMP3::GetOutputChannels %d\n", 2);	
-	return 2;
-//	return m_decoder.GetAttribute( m_decoder.OUTPUT_CHANNELS );
+	printf("CMiniMP3::GetOutputChannels %d\n", mp3d.info.channels);	
+	return mp3d.info.channels;
 }
 
 
@@ -133,14 +129,12 @@ unsigned int CMiniMP3::GetPosition()
 {
 	printf("CMiniMP3::GetPosition %d\n", 0);		
 	return 0;
-//	return m_decoder.GetAttribute( m_decoder.POSITION );
 }
 
 // NOTE: Only supports seeking forward right now
 void CMiniMP3::SetPosition( unsigned int position )
 {
 	printf("CMiniMP3::SetPosition %d\n", position);	
-//	m_decoder.Seek( position );
 }
 
 
