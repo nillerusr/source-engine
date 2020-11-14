@@ -386,7 +386,7 @@ $Project "haptics"
 
 $Project "havana_constraints"
 {
-//	"ivp\havana\havana_constraints.vpc" [$WINDOWS||$X360||$POSIX]
+	"ivp\havana\havana_constraints.vpc" [$WINDOWS||$X360||$POSIX]
 }
 
 $Project "height2normal"
@@ -401,12 +401,12 @@ $Project "height2ssbump"
 
 $Project "hk_base"
 {
-//	"ivp\havana\havok\hk_base\hk_base.vpc" [$WINDOWS||$X360||$POSIX]
+	"ivp\havana\havok\hk_base\hk_base.vpc" [$WINDOWS||$X360||$POSIX]
 }
 
 $Project "hk_math"
 {
-//	"ivp\havana\havok\hk_math\hk_math.vpc" [$WINDOWS||$X360||$POSIX]
+	"ivp\havana\havok\hk_math\hk_math.vpc" [$WINDOWS||$X360||$POSIX]
 }
 
 // FIXME why doesn't source2 define this?
@@ -506,7 +506,7 @@ $Project "inputtest"
 
 $Project "ivp_compactbuilder"
 {
-//	"ivp\ivp_compact_builder\ivp_compactbuilder.vpc" [$WINDOWS||$X360||$POSIX]
+	"ivp\ivp_compact_builder\ivp_compactbuilder.vpc" [$WINDOWS||$X360||$POSIX]
 }
 
 $Project "itemtest_com"
@@ -526,7 +526,7 @@ $Project "itemtest_lib"
 
 $Project "ivp_physics"
 {
-//	"ivp\ivp_physics\ivp_physics.vpc" [$WINDOWS||$X360||$POSIX]
+	"ivp\ivp_physics\ivp_physics.vpc" [$WINDOWS||$X360||$POSIX]
 }
 
 $Project "jpeglib"
@@ -1288,6 +1288,11 @@ $Project "valvepython_python2.5"
 $Project "vaudio_miles"
 {
 //	"engine\voice_codecs\miles\vaudio_miles.vpc" [$WINDOWS||$POSIX]
+}
+
+$Project "vaudio_minimp3"
+{
+	"engine\voice_codecs\minimp3\vaudio_minimp3.vpc" [$WINDOWS||$POSIX]
 }
 
 $Project "vbsp"

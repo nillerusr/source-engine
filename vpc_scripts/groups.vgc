@@ -196,6 +196,7 @@ $Group "game"
 
 $Group "everything"
 {
+	"vaudio_minimp3"
 	"socketlib"
 	"actbusy"
 	"adminserver"

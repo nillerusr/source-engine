@@ -1,0 +1,34 @@
+//-----------------------------------------------------------------------------
+//	VAUDIO_MINIMP3.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+
+$Macro SRCDIR           "..\..\.."
+$Macro OUTBINDIR        "$LIBPUBLIC"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+        $Compiler
+        {
+                $AdditionalIncludeDirectories           "$BASE,$SRCDIR\thirdparty\minimp3\,..\..\..\public,..\..\..\public\tier1,..\..,..\..\..\common,..\..\audio\public"
+                $PreprocessorDefinitions                        "$BASE;"
+        }
+}
+
+$Project "vaudio_minimp3"
+{
+	$Folder	"Source Files"
+	{
+		$File	"mp3codecs.cpp"
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\public\tier1\interface.h"
+		$File	"$SRCDIR\public\vaudio\ivaudio.h"
+	}
+}
