@@ -103,5 +103,6 @@ $Project "FileSystem_Stdio"
 	$Folder "Link Libraries"
 	{
 		$Lib	tier2
+		$Lib	vpklib
 	}
 }
