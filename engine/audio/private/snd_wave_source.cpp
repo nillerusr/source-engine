@@ -1826,7 +1826,7 @@ CAudioSource *Audio_CreateStreamedWave( CSfxTable *pSfx )
 #if defined( MP3_SUPPORT )
 	if ( Audio_IsMP3( pSfx->GetFileName() ) )
 	{
-		return Audio_CreateStreamedMP3( pSfx );
+		return Audio_CreateMemoryMP3(pSfx); // TOSUCK: Dont work with streamed mp3, idk why
 	}
 #endif
 
