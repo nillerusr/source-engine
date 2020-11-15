@@ -6,6 +6,7 @@
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
+#include <csignal>
 
 struct AudioStream_s
 {
@@ -17,7 +18,6 @@ struct AudioStream_s
 size_t mp3dec_read_callback(void *buf, size_t size, void *user_data)
 {
 	AudioStream_s *stream = static_cast<AudioStream_s*>( (void*)user_data);
-	
 	int ret_size = stream->stream_event->StreamRequestData( buf, size, stream->offset );
 	printf("mp3dec_read_callback size: %d, ret_size: %d\n", (int)size, ret_size);	
 	stream->offset += ret_size;
@@ -99,42 +99,38 @@ CMiniMP3::~CMiniMP3()
 int	CMiniMP3::Decode( void *pBuffer, unsigned int bufferSize )
 {
     size_t readed = mp3dec_ex_read(&mp3d, pBuffer, bufferSize/2);
-	printf("CMiniMP3::Decode: readed samples: %d\n", readed);
 	return readed*2;
 }
 
 
 int CMiniMP3::GetOutputBits()
 {
-	printf("CMiniMP3::GetOutputBits\n");
-	return mp3d.info.bitrate_kbps;
+	return 16;
 }
 
 
 int CMiniMP3::GetOutputRate()
 {
-	printf("CMiniMP3::GetOutputRate: %d\n", mp3d.info.hz);
 	return mp3d.info.hz;
 }
 
 
 int CMiniMP3::GetOutputChannels()
 {
-	printf("CMiniMP3::GetOutputChannels %d\n", mp3d.info.channels);	
 	return mp3d.info.channels;
 }
 
 
 unsigned int CMiniMP3::GetPosition()
 {
-	printf("CMiniMP3::GetPosition %d\n", 0);		
-	return 0;
+	return audio_stream.offset;
 }
 
 // NOTE: Only supports seeking forward right now
 void CMiniMP3::SetPosition( unsigned int position )
 {
-	printf("CMiniMP3::SetPosition %d\n", position);	
+	audio_stream.offset = position;
+	mp3dec_ex_seek(&mp3d, position);
 }
 
 
