@@ -696,13 +696,13 @@ void Button::SetMouseClickEnabled(MouseCode code,bool state)
 	if(state)
 	{
 		//set bit to 1
-		_mouseClickMask|=1<<((int)(code+1));
+		_mouseClickMask|=1<<(static_cast<int>(code-MOUSE_FIRST));
 	}
 	else
 	{
 		//set bit to 0
-		_mouseClickMask&=~(1<<((int)(code+1)));
-	}	
+		_mouseClickMask&=~(static_cast<int>(code-MOUSE_FIRST));
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -710,7 +710,7 @@ void Button::SetMouseClickEnabled(MouseCode code,bool state)
 //-----------------------------------------------------------------------------
 bool Button::IsMouseClickEnabled(MouseCode code)
 {
-	if(_mouseClickMask&(1<<((int)(code+1))))
+	if(_mouseClickMask&(1<<(static_cast<int>(code-MOUSE_FIRST))))
 	{
 		return true;
 	}
