@@ -141,7 +141,7 @@ inline unsigned GetEndMask( int numBits )
 }
 
 
-inline int GetBitForBitnum( int bitNum ) 
+inline uint GetBitForBitnum( int bitNum ) 
 { 
 	static int bitsForBitnum[] = 
 	{

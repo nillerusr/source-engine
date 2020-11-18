@@ -114,7 +114,7 @@ public:
 
 		for ( unsigned int littleBit=0; littleBit < 32; littleBit++ )
 			StoreLittleDWord( &g_LittleBits[littleBit], 0, 1u<<littleBit );
-	}
+	}                     
 };
 static CBitWriteMasksInit g_BitWriteMasksInit;
 

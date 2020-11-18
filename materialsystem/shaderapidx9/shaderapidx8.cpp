@@ -3499,7 +3499,7 @@ void CShaderAPIDx8::ResetRenderState( bool bFullReset )
 	SetRenderState( D3DRS_CULLMODE, D3DCULL_CCW );
 
 	// No shade mode yet
-	m_DynamicState.m_ShadeMode = (D3DSHADEMODE)-1;
+	m_DynamicState.m_ShadeMode = NULL;
 	ShadeMode( SHADER_SMOOTH );
 
 	m_DynamicState.m_bHWMorphingEnabled = false;

@@ -155,7 +155,7 @@ public:
 
 	EGLMProgramType			m_type;					// vertex or pixel
 
-	uint					m_nHashTag;				// serial number for hashing
+	unsigned long m_nHashTag;				// serial number for hashing
 	
 	char					*m_text;				// copy of text passed into constructor.  Can change if editable shaders is enabled.
 													// note - it can contain multiple flavors, so use CGLMTextSectioner to scan it and locate them
