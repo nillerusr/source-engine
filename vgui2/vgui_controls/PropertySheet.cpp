@@ -500,6 +500,7 @@ PropertySheet::PropertySheet(
 	m_pTabKV = NULL;
 	m_iTabHeight = 0;
     m_iTabHeightSmall = 0;
+	m_bContextButton = false;
 
 	if ( m_bDraggableTabs )
 	{
