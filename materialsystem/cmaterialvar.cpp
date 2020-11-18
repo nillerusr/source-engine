@@ -23,9 +23,9 @@
 
 #define MATERIALVAR_CHAR_BUF_SIZE 512
 
-#if !defined( _X360 )
+/*#if !defined( _X360 )
 #pragma pack (1)
-#endif
+#endif*/
 
 ConVar mat_texture_tracking( "mat_texture_tracking", IsDebug() ? "1" : "0" );
 CUtlMap<ITexture*, CInterlockedInt> s_TextureRefList( DefLessFunc( ITexture* ) );
