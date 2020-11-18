@@ -28,6 +28,7 @@
 #include "ivp_listener_collision.hxx"
 #include "ivp_listener_object.hxx"
 #include "ivp_mindist.hxx"
+#include "ivp_mindist_intern.hxx"
 #include "ivp_friction.hxx"
 #include "ivp_anomaly_manager.hxx"
 #include "ivp_time.hxx"
@@ -35,7 +36,6 @@
 #include "ivp_phantom.hxx"
 #include "ivp_range_manager.hxx"
 #include "ivp_clustering_visualizer.hxx"
-#include "ivp_mindist_intern.hxx"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -1540,7 +1540,7 @@ void CPhysicsEnvironment::Simulate( float deltaTime )
 	{
 		m_pSleepEvents->ProcessActiveObjects( m_pPhysEnv, m_pCollisionListener->GetHandler() );
 	}
-	VISUALIZE_COLLISIONS();
+	//visualize_collisions();
 	VirtualMeshPSI();
 	GetNextFrameTime();
 }

@@ -38,7 +38,7 @@ BOOL WINAPI DllMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
 {
  	if ( fdwReason == DLL_PROCESS_ATTACH )
 	{
-		ivp_set_message_print_function( ivu_string_print_function );
+//		ivp_set_message_print_function( ivu_string_print_function );
 
 		MathLib_Init( 2.2f, 2.2f, 0.0f, 2.0f, false, false, false, false );
 		// store out module handle
@@ -56,7 +56,7 @@ BOOL WINAPI DllMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
 void __attribute__ ((constructor)) vphysics_init(void);
 void vphysics_init(void)
 {
-	ivp_set_message_print_function( ivu_string_print_function );
+//	ivp_set_message_print_function( ivu_string_print_function );
 
 	MathLib_Init( 2.2f, 2.2f, 0.0f, 2.0f, false, false, false, false );
 }

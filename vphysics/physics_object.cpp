@@ -9,6 +9,7 @@
 #include "ivp_compact_ledge.hxx"
 #include "ivp_compact_ledge_solver.hxx"
 #include "ivp_mindist.hxx"
+#include "ivp_mindist_intern.hxx"
 #include "ivp_friction.hxx"
 #include "ivp_phantom.hxx"
 #include "ivp_listener_collision.hxx"
