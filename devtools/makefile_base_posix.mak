@@ -35,6 +35,7 @@ SHELL = $(TOOL_PATH)bash
 
 OS := $($(SHELL) $(TOOL_PATH)uname)
 HOSTNAME := $($(SHELL) $(TOOL_PATH)hostname)
+CFG := debug
 
 -include $(SRCROOT)/devtools/steam_def.mak
 -include $(SRCROOT)/devtools/sourcesdk_def.mak
@@ -56,14 +57,14 @@ ifeq ($(CFG), release)
 	#  There also was no speed difference running at 1280x1024. May 2012, mikesart.
 	#  tonyp: The size increase was likely caused by -finline-functions and -fipa-cp-clone getting switched on with -O3.
 	# -fno-omit-frame-pointer: need this for stack traces with perf.
-	OptimizerLevel_CompilerSpecific = -O2 -fno-strict-aliasing -ffast-math -fno-omit-frame-pointer -ftree-vectorize
+	OptimizerLevel_CompilerSpecific = -Ofast -fno-strict-aliasing -ffast-math -fno-omit-frame-pointer # -ftree-vectorize
 	ifeq ($(CLANG_BUILD),1)
 		OptimizerLevel_CompilerSpecific += -funswitch-loops
 	else
 		OptimizerLevel_CompilerSpecific += -fpredictive-commoning -funswitch-loops
 	endif
 else
-	OptimizerLevel_CompilerSpecific = -O0
+	OptimizerLevel_CompilerSpecific = -O0 -ggdb
 	#-O1 -finline-functions
 endif
 
@@ -80,7 +81,7 @@ BUILDING_MULTI_ARCH = 0
 ENV_CFLAGS := $(CFLAGS)
 ENV_CXXFLAGS := $(CXXFLAGS) -fpermissive
 CPPFLAGS = $(DEFINES) $(addprefix -I, $(abspath $(INCLUDEDIRS) ))
-BASE_CFLAGS = $(ARCH_FLAGS) $(CPPFLAGS) $(WARN_FLAGS) -fvisibility=$(SymbolVisibility) $(OptimizerLevel) -pipe $(GCC_ExtraCompilerFlags) -Usprintf -Ustrncpy -UPROTECTED_THINGS_ENABLE
+BASE_CFLAGS = $(GCC_ExtraCompilerFlags) $(ARCH_FLAGS) $(CPPFLAGS) $(WARN_FLAGS) -fvisibility=$(SymbolVisibility) $(OptimizerLevel) -pipe -Usprintf -Ustrncpy -UPROTECTED_THINGS_ENABLE # -fsanitize=undefined -fsanitize=address
 BASE_CXXFLAGS = -std=c++11
 # Additional CXXFLAGS when compiling PCH files
 PCH_CXXFLAGS =
@@ -115,7 +116,7 @@ COPY_DLL_TO_SRV = 0
 
 # We should always specify -Wl,--build-id, as documented at:
 # http://linux.die.net/man/1/ld and http://fedoraproject.org/wiki/Releases/FeatureBuildId.http://fedoraproject.org/wiki/Releases/FeatureBuildId
-LDFLAGS += -Wl,--build-id
+LDFLAGS += -Wl,--build-id -fsanitize=address -fsanitize=undefined
 
 #
 # If we should be running in a chroot, check to see if we are. If not, then prefix everything with the 
@@ -164,7 +165,8 @@ ifeq ($(CLANG_BUILD),1)
 	# instruction set extensions are available by default.
 	SSE_GEN_FLAGS = -msse2
 else
-	SSE_GEN_FLAGS = -msse2 -mfpmath=sse
+	SSE_GEN_FLAGS = -mfpmath=387
+	#SSE_GEN_FLAGS = -msse2 -mfpmath=sse
 endif
 
 CCACHE := $(SRCROOT)/devtools/bin/linux/ccache
@@ -186,10 +188,10 @@ ifneq ($(filter default undefined,$(origin AR)),)
 	AR = ar crs
 endif
 ifneq ($(filter default undefined,$(origin CC)),)
-	CC = gcc -m32
+	CC = gcc -m32 -ggdb
 endif
 ifneq ($(filter default undefined,$(origin CXX)),)
-	CXX = g++ -m32
+	CXX = g++ -m32 -ggdb
 endif
 
 LINK ?= $(CC)
@@ -215,7 +217,7 @@ else ifeq ($(GCC_VER),-4.8)
 endif
 
 WARN_FLAGS += -Wno-unknown-pragmas -Wno-unused-parameter -Wno-unused-value
-WARN_FLAGS += -Wno-invalid-offsetof -Wno-float-equal -Wno-reorder -Werror=return-type
+WARN_FLAGS += -Wno-invalid-offsetof -Wno-float-equal -Wno-reorder # -Werror=return-type
 WARN_FLAGS += -fdiagnostics-show-option -Wformat -Wformat-security
 
 ifeq ($(TARGET_PLATFORM),linux64)
