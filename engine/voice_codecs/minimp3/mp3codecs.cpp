@@ -6,7 +6,6 @@
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
-#include <csignal>
 
 struct AudioStream_s
 {
@@ -19,7 +18,7 @@ size_t mp3dec_read_callback(void *buf, size_t size, void *user_data)
 {
 	AudioStream_s *stream = static_cast<AudioStream_s*>( (void*)user_data);
 	int ret_size = stream->stream_event->StreamRequestData( buf, size, stream->offset );
-	printf("mp3dec_read_callback size: %d, ret_size: %d\n", (int)size, ret_size);	
+//	printf("mp3dec_read_callback size: %d, ret_size: %d\n", (int)size, ret_size);	
 	stream->offset += ret_size;
 
 	return ret_size;
@@ -30,17 +29,15 @@ int mp3dec_seek_callback(uint64_t position, void *user_data)
 {
 	struct AudioStream_s *stream = static_cast<AudioStream_s*>( (void*)user_data);
 	stream->offset = position;
-	printf("mp3dec_seek_callback position: %d\n", (int)position);	
-	
+//	printf("mp3dec_seek_callback position: %d\n", (int)position);	
+
 	return 0;
 }
 
 class CMiniMP3 : public IAudioStream
 {
 public:
-	CMiniMP3();
 	bool Init( IAudioStreamEvent *pHandler );
-	~CMiniMP3();
 
 	// IAudioStream functions
 	virtual int	Decode( void *pBuffer, unsigned int bufferSize );
@@ -57,48 +54,38 @@ private:
 	struct AudioStream_s audio_stream;
 };
 
-CMiniMP3::CMiniMP3()
-{
-}
-
 bool CMiniMP3::Init( IAudioStreamEvent *pHandler )
 {
-	printf("CMiniMP3::Init\n");
-	
+//	printf("CMiniMP3::Init\n");
+
 	audio_stream.stream_event = pHandler;
 	audio_stream.offset = 0;
 	audio_stream.decode_size = 0;
-	
+
 	mp3io.read = &mp3dec_read_callback;
 	mp3io.read_data = &audio_stream;
 	mp3io.seek = &mp3dec_seek_callback;
 	mp3io.seek_data = &audio_stream;
 	if( mp3dec_ex_open_cb(&mp3d, &mp3io, MP3D_SEEK_TO_SAMPLE) )
 	{
-		printf("mp3dec_ex_open_cb failed\n");		
+//		printf("mp3dec_ex_open_cb failed\n");		
 		return false;
 	}
-		
+
 	if ( mp3dec_ex_seek(&mp3d, 0) )
 	{
-		printf("mp3dec_ex_seek failed\n");		
+//		printf("mp3dec_ex_seek failed\n");		
 		return false;
 	}
-	
+
 	return true;
 }
 
 
-CMiniMP3::~CMiniMP3()
-{
-
-}
-	
-
 // IAudioStream functions
 int	CMiniMP3::Decode( void *pBuffer, unsigned int bufferSize )
 {
-    size_t readed = mp3dec_ex_read(&mp3d, pBuffer, bufferSize/2);
+	size_t readed = mp3dec_ex_read(&mp3d, (mp3d_sample_t*)pBuffer, bufferSize/2);
 	return readed*2;
 }
 
@@ -126,7 +113,6 @@ unsigned int CMiniMP3::GetPosition()
 	return audio_stream.offset;
 }
 
-// NOTE: Only supports seeking forward right now
 void CMiniMP3::SetPosition( unsigned int position )
 {
 	audio_stream.offset = position;
@@ -137,18 +123,6 @@ void CMiniMP3::SetPosition( unsigned int position )
 class CVAudio : public IVAudio
 {
 public:
-	CVAudio()
-	{
-		// Assume the user will be creating multiple miles objects, so
-		// keep miles running while this exists
-		//IncrementRefMiles();
-	}
-
-	~CVAudio()
-	{
-		//DecrementRefMiles();
-	}
-
 	IAudioStream *CreateMP3StreamDecoder( IAudioStreamEvent *pEventHandler )
 	{
 		CMiniMP3 *pMP3 = new CMiniMP3;
