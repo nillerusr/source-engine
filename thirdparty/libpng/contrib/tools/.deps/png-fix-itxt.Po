@@ -1,160 +1,159 @@
 contrib/tools/png-fix-itxt.o: contrib/tools/png-fix-itxt.c \
  /usr/include/stdc-predef.h /usr/include/stdio.h \
- /usr/include/bits/libc-header-start.h /usr/include/features.h \
- /usr/include/sys/cdefs.h /usr/include/bits/wordsize.h \
- /usr/include/bits/long-double.h /usr/include/gnu/stubs.h \
- /usr/include/gnu/stubs-32.h \
- /usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/include/stddef.h \
- /usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/include/stdarg.h \
- /usr/include/bits/types.h /usr/include/bits/timesize.h \
- /usr/include/bits/typesizes.h /usr/include/bits/time64.h \
- /usr/include/bits/types/__fpos_t.h /usr/include/bits/types/__mbstate_t.h \
- /usr/include/bits/types/__fpos64_t.h /usr/include/bits/types/__FILE.h \
- /usr/include/bits/types/FILE.h /usr/include/bits/types/struct_FILE.h \
- /usr/include/bits/stdio_lim.h /usr/include/bits/floatn.h \
- /usr/include/bits/floatn-common.h /usr/include/zlib.h \
- /usr/include/zconf.h \
- /usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/include-fixed/limits.h \
- /usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/include-fixed/syslimits.h \
- /usr/include/limits.h /usr/include/bits/posix1_lim.h \
- /usr/include/bits/local_lim.h /usr/include/linux/limits.h \
- /usr/include/bits/posix2_lim.h /usr/include/sys/types.h \
- /usr/include/bits/types/clock_t.h /usr/include/bits/types/clockid_t.h \
- /usr/include/bits/types/time_t.h /usr/include/bits/types/timer_t.h \
- /usr/include/bits/stdint-intn.h /usr/include/endian.h \
- /usr/include/bits/endian.h /usr/include/bits/endianness.h \
- /usr/include/bits/byteswap.h /usr/include/bits/uintn-identity.h \
- /usr/include/sys/select.h /usr/include/bits/select.h \
- /usr/include/bits/types/sigset_t.h /usr/include/bits/types/__sigset_t.h \
- /usr/include/bits/types/struct_timeval.h \
- /usr/include/bits/types/struct_timespec.h \
- /usr/include/bits/pthreadtypes.h /usr/include/bits/thread-shared-types.h \
- /usr/include/bits/pthreadtypes-arch.h /usr/include/bits/struct_mutex.h \
- /usr/include/bits/struct_rwlock.h /usr/include/unistd.h \
- /usr/include/bits/posix_opt.h /usr/include/bits/environments.h \
- /usr/include/bits/confname.h /usr/include/bits/getopt_posix.h \
- /usr/include/bits/getopt_core.h /usr/include/bits/unistd_ext.h
+ /usr/include/i386-linux-gnu/bits/libc-header-start.h \
+ /usr/include/features.h /usr/include/i386-linux-gnu/sys/cdefs.h \
+ /usr/include/i386-linux-gnu/bits/wordsize.h \
+ /usr/include/i386-linux-gnu/bits/long-double.h \
+ /usr/include/i386-linux-gnu/gnu/stubs.h \
+ /usr/include/i386-linux-gnu/gnu/stubs-32.h \
+ /usr/lib/gcc/x86_64-linux-gnu/8/include/stddef.h \
+ /usr/lib/gcc/x86_64-linux-gnu/8/include/stdarg.h \
+ /usr/include/i386-linux-gnu/bits/types.h \
+ /usr/include/i386-linux-gnu/bits/typesizes.h \
+ /usr/include/i386-linux-gnu/bits/types/__fpos_t.h \
+ /usr/include/i386-linux-gnu/bits/types/__mbstate_t.h \
+ /usr/include/i386-linux-gnu/bits/types/__fpos64_t.h \
+ /usr/include/i386-linux-gnu/bits/types/__FILE.h \
+ /usr/include/i386-linux-gnu/bits/types/FILE.h \
+ /usr/include/i386-linux-gnu/bits/types/struct_FILE.h \
+ /usr/include/i386-linux-gnu/bits/stdio_lim.h \
+ /usr/include/i386-linux-gnu/bits/sys_errlist.h /usr/local/include/zlib.h \
+ /usr/local/include/zconf.h \
+ /usr/lib/gcc/x86_64-linux-gnu/8/include-fixed/limits.h \
+ /usr/lib/gcc/x86_64-linux-gnu/8/include-fixed/syslimits.h \
+ /usr/include/limits.h /usr/include/i386-linux-gnu/bits/posix1_lim.h \
+ /usr/include/i386-linux-gnu/bits/local_lim.h /usr/include/linux/limits.h \
+ /usr/include/i386-linux-gnu/bits/posix2_lim.h \
+ /usr/include/i386-linux-gnu/sys/types.h \
+ /usr/include/i386-linux-gnu/bits/types/clock_t.h \
+ /usr/include/i386-linux-gnu/bits/types/clockid_t.h \
+ /usr/include/i386-linux-gnu/bits/types/time_t.h \
+ /usr/include/i386-linux-gnu/bits/types/timer_t.h \
+ /usr/include/i386-linux-gnu/bits/stdint-intn.h /usr/include/endian.h \
+ /usr/include/i386-linux-gnu/bits/endian.h \
+ /usr/include/i386-linux-gnu/bits/byteswap.h \
+ /usr/include/i386-linux-gnu/bits/uintn-identity.h \
+ /usr/include/i386-linux-gnu/sys/select.h \
+ /usr/include/i386-linux-gnu/bits/select.h \
+ /usr/include/i386-linux-gnu/bits/types/sigset_t.h \
+ /usr/include/i386-linux-gnu/bits/types/__sigset_t.h \
+ /usr/include/i386-linux-gnu/bits/types/struct_timeval.h \
+ /usr/include/i386-linux-gnu/bits/types/struct_timespec.h \
+ /usr/include/i386-linux-gnu/bits/pthreadtypes.h \
+ /usr/include/i386-linux-gnu/bits/thread-shared-types.h \
+ /usr/include/i386-linux-gnu/bits/pthreadtypes-arch.h \
+ /usr/include/unistd.h /usr/include/i386-linux-gnu/bits/posix_opt.h \
+ /usr/include/i386-linux-gnu/bits/environments.h \
+ /usr/include/i386-linux-gnu/bits/confname.h \
+ /usr/include/i386-linux-gnu/bits/getopt_posix.h \
+ /usr/include/i386-linux-gnu/bits/getopt_core.h
 
 /usr/include/stdc-predef.h:
 
 /usr/include/stdio.h:
 
-/usr/include/bits/libc-header-start.h:
+/usr/include/i386-linux-gnu/bits/libc-header-start.h:
 
 /usr/include/features.h:
 
-/usr/include/sys/cdefs.h:
+/usr/include/i386-linux-gnu/sys/cdefs.h:
 
-/usr/include/bits/wordsize.h:
+/usr/include/i386-linux-gnu/bits/wordsize.h:
 
-/usr/include/bits/long-double.h:
+/usr/include/i386-linux-gnu/bits/long-double.h:
 
-/usr/include/gnu/stubs.h:
+/usr/include/i386-linux-gnu/gnu/stubs.h:
 
-/usr/include/gnu/stubs-32.h:
+/usr/include/i386-linux-gnu/gnu/stubs-32.h:
 
-/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/include/stddef.h:
+/usr/lib/gcc/x86_64-linux-gnu/8/include/stddef.h:
 
-/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/include/stdarg.h:
+/usr/lib/gcc/x86_64-linux-gnu/8/include/stdarg.h:
 
-/usr/include/bits/types.h:
+/usr/include/i386-linux-gnu/bits/types.h:
 
-/usr/include/bits/timesize.h:
+/usr/include/i386-linux-gnu/bits/typesizes.h:
 
-/usr/include/bits/typesizes.h:
+/usr/include/i386-linux-gnu/bits/types/__fpos_t.h:
 
-/usr/include/bits/time64.h:
+/usr/include/i386-linux-gnu/bits/types/__mbstate_t.h:
 
-/usr/include/bits/types/__fpos_t.h:
+/usr/include/i386-linux-gnu/bits/types/__fpos64_t.h:
 
-/usr/include/bits/types/__mbstate_t.h:
+/usr/include/i386-linux-gnu/bits/types/__FILE.h:
 
-/usr/include/bits/types/__fpos64_t.h:
+/usr/include/i386-linux-gnu/bits/types/FILE.h:
 
-/usr/include/bits/types/__FILE.h:
+/usr/include/i386-linux-gnu/bits/types/struct_FILE.h:
 
-/usr/include/bits/types/FILE.h:
+/usr/include/i386-linux-gnu/bits/stdio_lim.h:
 
-/usr/include/bits/types/struct_FILE.h:
+/usr/include/i386-linux-gnu/bits/sys_errlist.h:
 
-/usr/include/bits/stdio_lim.h:
+/usr/local/include/zlib.h:
 
-/usr/include/bits/floatn.h:
+/usr/local/include/zconf.h:
 
-/usr/include/bits/floatn-common.h:
+/usr/lib/gcc/x86_64-linux-gnu/8/include-fixed/limits.h:
 
-/usr/include/zlib.h:
-
-/usr/include/zconf.h:
-
-/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/include-fixed/limits.h:
-
-/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/include-fixed/syslimits.h:
+/usr/lib/gcc/x86_64-linux-gnu/8/include-fixed/syslimits.h:
 
 /usr/include/limits.h:
 
-/usr/include/bits/posix1_lim.h:
+/usr/include/i386-linux-gnu/bits/posix1_lim.h:
 
-/usr/include/bits/local_lim.h:
+/usr/include/i386-linux-gnu/bits/local_lim.h:
 
 /usr/include/linux/limits.h:
 
-/usr/include/bits/posix2_lim.h:
+/usr/include/i386-linux-gnu/bits/posix2_lim.h:
 
-/usr/include/sys/types.h:
+/usr/include/i386-linux-gnu/sys/types.h:
 
-/usr/include/bits/types/clock_t.h:
+/usr/include/i386-linux-gnu/bits/types/clock_t.h:
 
-/usr/include/bits/types/clockid_t.h:
+/usr/include/i386-linux-gnu/bits/types/clockid_t.h:
 
-/usr/include/bits/types/time_t.h:
+/usr/include/i386-linux-gnu/bits/types/time_t.h:
 
-/usr/include/bits/types/timer_t.h:
+/usr/include/i386-linux-gnu/bits/types/timer_t.h:
 
-/usr/include/bits/stdint-intn.h:
+/usr/include/i386-linux-gnu/bits/stdint-intn.h:
 
 /usr/include/endian.h:
 
-/usr/include/bits/endian.h:
+/usr/include/i386-linux-gnu/bits/endian.h:
 
-/usr/include/bits/endianness.h:
+/usr/include/i386-linux-gnu/bits/byteswap.h:
 
-/usr/include/bits/byteswap.h:
+/usr/include/i386-linux-gnu/bits/uintn-identity.h:
 
-/usr/include/bits/uintn-identity.h:
+/usr/include/i386-linux-gnu/sys/select.h:
 
-/usr/include/sys/select.h:
+/usr/include/i386-linux-gnu/bits/select.h:
 
-/usr/include/bits/select.h:
+/usr/include/i386-linux-gnu/bits/types/sigset_t.h:
 
-/usr/include/bits/types/sigset_t.h:
+/usr/include/i386-linux-gnu/bits/types/__sigset_t.h:
 
-/usr/include/bits/types/__sigset_t.h:
+/usr/include/i386-linux-gnu/bits/types/struct_timeval.h:
 
-/usr/include/bits/types/struct_timeval.h:
+/usr/include/i386-linux-gnu/bits/types/struct_timespec.h:
 
-/usr/include/bits/types/struct_timespec.h:
+/usr/include/i386-linux-gnu/bits/pthreadtypes.h:
 
-/usr/include/bits/pthreadtypes.h:
+/usr/include/i386-linux-gnu/bits/thread-shared-types.h:
 
-/usr/include/bits/thread-shared-types.h:
-
-/usr/include/bits/pthreadtypes-arch.h:
-
-/usr/include/bits/struct_mutex.h:
-
-/usr/include/bits/struct_rwlock.h:
+/usr/include/i386-linux-gnu/bits/pthreadtypes-arch.h:
 
 /usr/include/unistd.h:
 
-/usr/include/bits/posix_opt.h:
+/usr/include/i386-linux-gnu/bits/posix_opt.h:
 
-/usr/include/bits/environments.h:
+/usr/include/i386-linux-gnu/bits/environments.h:
 
-/usr/include/bits/confname.h:
+/usr/include/i386-linux-gnu/bits/confname.h:
 
-/usr/include/bits/getopt_posix.h:
+/usr/include/i386-linux-gnu/bits/getopt_posix.h:
 
-/usr/include/bits/getopt_core.h:
-
-/usr/include/bits/unistd_ext.h:
+/usr/include/i386-linux-gnu/bits/getopt_core.h:

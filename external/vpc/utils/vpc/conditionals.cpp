@@ -27,6 +27,11 @@ void CVPC::SetupDefaultConditionals()
 
 		FindOrCreateConditional( "X360", true, CONDITIONAL_PLATFORM );
 		FindOrCreateConditional( "PS3", true, CONDITIONAL_PLATFORM );
+		
+		FindOrCreateConditional( "ANDROID32", true, CONDITIONAL_PLATFORM );
+		FindOrCreateConditional( "ANDROID64", true, CONDITIONAL_PLATFORM );
+		FindOrCreateConditional( "ANDROIDARM32", true, CONDITIONAL_PLATFORM );
+		FindOrCreateConditional( "ANDROIDARM64", true, CONDITIONAL_PLATFORM );
 	}
 	
 	//

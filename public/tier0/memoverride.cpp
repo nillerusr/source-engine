@@ -392,6 +392,8 @@ extern "C"
 #ifndef NO_MEMOVERRIDE_NEW_DELETE
 #ifdef OSX
 void *__cdecl operator new( size_t nSize ) throw (std::bad_alloc)
+#elif ANDROID
+void *__cdecl operator new( size_t nSize ) throw (std::bad_alloc)
 #else
 void *__cdecl operator new( size_t nSize )
 #endif
@@ -406,6 +408,8 @@ void *__cdecl operator new( size_t nSize, int nBlockUse, const char *pFileName, 
 
 #ifdef OSX
 void __cdecl operator delete( void *pMem ) throw()
+#elif ANDROID
+void __cdecl operator delete( void *pMem ) throw()
 #else
 void __cdecl operator delete( void *pMem )
 #endif
@@ -415,6 +419,8 @@ void __cdecl operator delete( void *pMem )
 
 #ifdef OSX
 void operator delete(void*pMem, std::size_t)
+#elif ANDROID
+void operator delete(void*pMem, std::size_t)
 #else
 void operator delete(void*pMem, std::size_t) throw()
 #endif
@@ -423,6 +429,8 @@ void operator delete(void*pMem, std::size_t) throw()
 }
 
 #ifdef OSX
+void *__cdecl operator new[]( size_t nSize ) throw (std::bad_alloc)
+#elif ANDROID
 void *__cdecl operator new[]( size_t nSize ) throw (std::bad_alloc)
 #else
 void *__cdecl operator new[]( size_t nSize )
@@ -437,6 +445,8 @@ void *__cdecl operator new[] ( size_t nSize, int nBlockUse, const char *pFileNam
 }
 
 #ifdef OSX
+void __cdecl operator delete[]( void *pMem ) throw()
+#elif ANDROID
 void __cdecl operator delete[]( void *pMem ) throw()
 #else
 void __cdecl operator delete[]( void *pMem )

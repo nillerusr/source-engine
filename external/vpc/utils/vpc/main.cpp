@@ -2040,8 +2040,21 @@ void CVPC::SetMacrosAndConditionals()
 		SetMacro( "_EXTERNAL_IMPLIB_EXT", "_ios.dylib", false );
 		SetMacro( "_EXTERNAL_STATICLIB_EXT", "_ios.a", false );
 	}
-	else if ( V_stricmp( cVPCPlatform.String(), "ANDROID" ) == 0 )
+	else if ( V_stricmp( cVPCPlatform.String(), "ANDROID32" ) == 0 || V_stricmp( cVPCPlatform.String(), "ANDROID64" ) == 0 || V_stricmp( cVPCPlatform.String(), "ANDROIDARM32" ) == 0 || V_stricmp( cVPCPlatform.String(), "ANDROIDARM64" ) == 0)
 	{
+		bool IsAndroid86 = ( V_stricmp( cVPCPlatform.String(), "ANDROID32" ) == 0 || V_stricmp( cVPCPlatform.String(), "ANDROID64" ) == 0);
+		bool IsAndroidARM = ( V_stricmp( cVPCPlatform.String(), "ANDROIDARM32" ) == 0 || V_stricmp( cVPCPlatform.String(), "ANDROIDARM64" ) == 0);
+		bool IsAndroid64 = ( V_stricmp( cVPCPlatform.String(), "ANDROID64" ) == 0 || V_stricmp( cVPCPlatform.String(), "ANDROIDARM64" ) == 0);
+
+		if ( IsAndroid86 )
+		{
+			SetMacro( "PLATSUBDIR", IsAndroid64 ? "\\android64" : "\\android32", false );
+		}
+		else
+		{
+			SetMacro( "PLATSUBDIR", IsAndroid64 ? "\\androidarm64" : "\\androidarm32", false );
+		}
+
 		SetConditional( "LINUXALL" );
 		if ( m_bDedicatedBuild )
 		{
@@ -2057,25 +2070,29 @@ void CVPC::SetMacrosAndConditionals()
 		SetMacro( "ANDROID", "1", true );
 		SetMacro( "_ANDROID", "1", true );
 
-		SetMacro( "_DLL_EXT", "_an.so", true );
-		SetMacro( "_IMPLIB_EXT", "_an.so", false );
+		const char *str3264 = IsAndroid64 ? "64" : "";
+		const char *strSrv = m_bAppendSrvToDedicated ? "_srv" : "";
+		CFmtStrN<128> strDso( "%s%s.so", strSrv, str3264 );
+		CFmtStrN<128> strLib( "%s%s.a", strSrv, str3264 );
+
+		SetMacro( "_DLL_EXT", strDso.Access(), true );
+		SetMacro( "_IMPLIB_EXT", strDso.Access(), false );
+		SetMacro( "_STATICLIB_EXT", strLib.Access(), false );
+
+		// Extensions for external dependencies like libsteam_api.so (not libsteam_api_ds.so).
+		// VPC_Keyword_Folder in projectscript.cpp will check for ImpLibExternal or LibExternal and
+		// use these prefixes instead of _ds.so if they exist.
+		SetMacro( "_EXTERNAL_DLL_EXT", ".so", true );
+		SetMacro( "_EXTERNAL_IMPLIB_EXT", ".so", false );
+		SetMacro( "_EXTERNAL_STATICLIB_EXT", ".a", false );
+
+		//SetMacro( "_STATICLIB_PREFIX", "lib", false );
+		SetMacro( "_STATICLIB_PREFIX", "", false );
 
 		SetMacro( "_IMPLIB_PREFIX", "lib", false );
 		SetMacro( "_IMPLIB_DLL_PREFIX", "lib", false );
-
-		SetMacro( "_STATICLIB_PREFIX", "lib", false );
-		SetMacro( "_STATICLIB_EXT", "_an.a", false );
-
 		SetMacro( "_EXE_EXT", "", false );
-
-		SetMacro( "_EXTERNAL_DLL_EXT", "_an.so", true );
-		SetMacro( "_EXTERNAL_IMPLIB_EXT", "_an.so", false );
-		SetMacro( "_EXTERNAL_STATICLIB_EXT", "_an.a", false );
-
-		// and is a cross-compiled target
-		SetConditional( "CROSS_COMPILED" );
-		SetMacro( "CROSS_COMPILED", "1", true );
-		SetMacro( "_CROSS_COMPILED", "1", true );
+		SetMacro( "_SYM_EXT", ".dbg", false );
 
 		SetConditional( "GL" );
 	}
@@ -2311,7 +2328,7 @@ void CVPC::SetupGenerators()
 	extern IBaseProjectGenerator	*GetXcodeProjectGenerator();
 	extern IBaseSolutionGenerator	*GetXcodeSolutionGenerator();
 
-	bool bIsLinux = IsPlatformDefined( "LINUX32" ) || IsPlatformDefined( "LINUX64" );
+	bool bIsLinux = IsPlatformDefined( "LINUX32" ) || IsPlatformDefined( "LINUX64" ) || IsPlatformDefined( "ANDROID32" ) || IsPlatformDefined( "ANDROID64" ) || IsPlatformDefined( "ANDROIDARM32" ) || IsPlatformDefined( "ANDROIDARM64" );
 	bool bIsOSX = IsPlatformDefined( "OSX32" ) || IsPlatformDefined( "OSX64" );
 
 #if defined( WIN32 )

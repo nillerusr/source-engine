@@ -74,7 +74,18 @@ endif
 DEFINES += -D_GLIBCXX_USE_CXX11_ABI=0
 
 # CPPFLAGS == "c/c++ *preprocessor* flags" - not "cee-plus-plus flags"
-ARCH_FLAGS = 
+ifeq ($(NDK),1)
+	ifeq ($(NDK_ABI),x86)
+		SYSROOT := "$(NDK_PATH)/platforms/android-$(APP_API_LEVEL)/arch-x86"
+	else ifeq ($(NDK_ABI),armeabi-v7a)
+		SYSROOT := "$(NDK_PATH)/platforms/android-$(APP_API_LEVEL)/arch-arm"
+	endif
+	SYSROOTFLAG := "--sysroot=$(SYSROOT)"
+	ARCH_FLAGS := $(SYSROOTFLAG) -I$(NDK_PATH)/sources/cxx-stl/stlport/stlport/ -I$(NDK_PATH)/sources/android/support/include -DANDROID
+else
+	ARCH_FLAGS = 
+endif
+
 BUILDING_MULTI_ARCH = 0
 # Preserve cflags set in environment
 ENV_CFLAGS := $(CFLAGS)
@@ -113,87 +124,6 @@ MAP_FLAGS =
 Srv_GAMEOUTPUTFILE = 
 COPY_DLL_TO_SRV = 0
 
-# We should always specify -Wl,--build-id, as documented at:
-# http://linux.die.net/man/1/ld and http://fedoraproject.org/wiki/Releases/FeatureBuildId.http://fedoraproject.org/wiki/Releases/FeatureBuildId
-LDFLAGS += -Wl,--build-id
-
-#
-# If we should be running in a chroot, check to see if we are. If not, then prefix everything with the 
-# required chroot
-#
-ifdef MAKE_CHROOT
-	export STEAM_RUNTIME_PATH := /usr
-	ifneq ("$(SCHROOT_CHROOT_NAME)", "$(CHROOT_NAME)")
-        $(info '$(SCHROOT_CHROOT_NAME)' is not '$(CHROOT_NAME)')
-        $(error This makefile should be run from within a chroot. 'schroot --chroot $(CHROOT_NAME) -- $(MAKE) $(MAKEFLAGS)')  
-	endif
-	GCC_VER = -4.8
-	P4BIN = $(SRCROOT)/devtools/bin/linux/p4
-	CRYPTOPPDIR=ubuntu12_32_gcc48
-else ifeq ($(USE_VALVE_BINDIR),1)
-	# Using /valve/bin directory.
-	export STEAM_RUNTIME_PATH ?= /valve
-	GCC_VER = -4.6
-	P4BIN = $(SRCROOT)/devtools/bin/linux/p4
-	CRYPTOPPDIR=linux32
-else
-	# Not using chroot, use old steam-runtime. (gcc 4.6.3)
-	export STEAM_RUNTIME_PATH ?= /valve/steam-runtime
-	GCC_VER =
-	P4BIN = true
-	CRYPTOPPDIR=ubuntu12_32
-endif
-
-ifeq ($(TARGET_PLATFORM),linux64)
-	MARCH_TARGET = core2
-else
-	MARCH_TARGET = pentium4
-endif
-
-ifeq ($(USE_VALVE_BINDIR),1)
-	# On dedicated servers, some plugins depend on global variable symbols in addition to functions.
-	# So symbols like _Z16ClearMultiDamagev should show up when you do "nm server_srv.so" in TF2.
-	STRIP_FLAGS =
-else
-	# Linux desktop client (or client/dedicated server in chroot).
-	STRIP_FLAGS = -x
-endif
-
-ifeq ($(CLANG_BUILD),1)
-	# Clang does not support -mfpmath=sse because it uses whatever
-	# instruction set extensions are available by default.
-	SSE_GEN_FLAGS = -msse2
-else
-	SSE_GEN_FLAGS = -msse2 -mfpmath=sse
-endif
-
-CCACHE := $(SRCROOT)/devtools/bin/linux/ccache
-
-# - pch_defines,time_macros,file_macro needed for precompiled headers to be beneficial. See additional ".defines" wrapper
-#   for PCH below to prevent this from biting us (in theory)
-# - include_file_ctime/mtime causes re-generated but identical headers, like protobuf, to cause a cache miss. I couldn't
-#   find the justification for this setting being on by default, perhaps to not waste time preprocessing the files?
-#   Let's find out the painful way.
-export CCACHE_SLOPPINESS := $(CCACHE_SLOPPINESS),time_macros,file_macro,include_file_ctime,include_file_mtime,pch_defines
-# Needed for clang to take advantage of PCH, we include the PCH in the
-# source files and clang doesn't support -fpch-preprocess properly
-ifeq ($(CLANG_BUILD),1)
-	export CCACHE_CPP2 = 1
-endif
-
-# If not specified by environment, use steam runtime compilers + in-tree ccache
-ifneq ($(filter default undefined,$(origin AR)),)
-	AR = ar crs
-endif
-ifneq ($(filter default undefined,$(origin CC)),)
-	CC = gcc -m32
-endif
-ifneq ($(filter default undefined,$(origin CXX)),)
-	CXX = g++ -m32
-endif
-
-LINK ?= $(CC)
-
 ifeq ($(STEAM_BRANCH),1)
 	WARN_FLAGS = -Wall -Wextra -Wshadow -Wno-invalid-offsetof
 else
@@ -218,19 +148,117 @@ WARN_FLAGS += -Wno-unknown-pragmas -Wno-unused-parameter -Wno-unused-value
 WARN_FLAGS += -Wno-invalid-offsetof -Wno-float-equal -Wno-reorder -Werror=return-type
 WARN_FLAGS += -fdiagnostics-show-option -Wformat -Wformat-security
 
-ifeq ($(TARGET_PLATFORM),linux64)
-	# nocona = pentium4 + 64bit + MMX, SSE, SSE2, SSE3 - no SSSE3 (that's three s's - added in core2)
-	ARCH_FLAGS += -march=$(MARCH_TARGET) -mtune=core2
-	LD_SO = ld-linux-x86_64.so.2
-	LIBSTDCXX := $(shell $(CXX) -print-file-name=libstdc++.a)
-	LIBSTDCXXPIC := $(shell $(CXX) -print-file-name=libstdc++-pic.a)
+# We should always specify -Wl,--build-id, as documented at:
+# http://linux.die.net/man/1/ld and http://fedoraproject.org/wiki/Releases/FeatureBuildId.http://fedoraproject.org/wiki/Releases/FeatureBuildId
+LDFLAGS += -Wl,--build-id
+
+CCACHE := $(SRCROOT)/devtools/bin/linux/ccache
+
+#
+# If we should be running in a chroot, check to see if we are. If not, then prefix everything with the 
+# required chroot
+#
+ifeq ($(NDK), 1)
+	CC = $(shell $(NDK_PATH)/ndk-which gcc $(NDK_ABI))
+	CXX = $(shell $(NDK_PATH)/ndk-which g++ $(NDK_ABI))
+	LD = $(shell $(NDK_PATH)/ndk-which ld $(NDK_ABI))
+	AR = $(shell $(NDK_PATH)/ndk-which ar $(NDK_ABI))
+	LINK = $(shell $(NDK_PATH)/ndk-which gcc $(NDK_ABI))
+	STRIP = $(shell $(NDK_PATH)/ndk-which strip $(NDK_ABI))
+	
+	ifeq ($(NDK_ABI), x86)
+		ARCH_FLAGS += -m32 -march=pentium4 -mtune=core2 -msse2 -mfpmath=sse
+	else ifeq ($(NDK_ABI), armeabi-v7a)
+		CXXFLAGS += -march=armv7-a -mtune=cortex-a15 -mthumb -mfloat-abi=softfp -mfpu=neon -mcpu=cortex-a9 -pipe -mvectorize-with-neon-quad -fPIC -fuse-ld=bfd
+		LDFLAGS += -fuse-ld=bfd
+		LDFLAGS += -march=armv7-a -mtune=cortex-a15 -mthumb -mfloat-abi=softfp -mfpu=neon -mcpu=cortex-a9 -pipe -mvectorize-with-neon-quad -fPIC -no-canonical-prefixes -Wl,--fix-cortex-a8 -Wl,--no-warn-mismatch -Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now
+	endif
 else
-	# pentium4 = MMX, SSE, SSE2 - no SSE3 (added in prescott) # -msse3 -mfpmath=sse
-	ARCH_FLAGS += -m32 -march=$(MARCH_TARGET) -mtune=core2 $(SSE_GEN_FLAGS)
-	LD_SO = ld-linux.so.2
-	LIBSTDCXX := $(shell $(CXX) $(ARCH_FLAGS) -print-file-name=libstdc++.so)
-	LIBSTDCXXPIC := $(shell $(CXX) $(ARCH_FLAGS) -print-file-name=libstdc++.so)
-	LDFLAGS += -m32
+	ifdef MAKE_CHROOT
+		export STEAM_RUNTIME_PATH := /usr
+		ifneq ("$(SCHROOT_CHROOT_NAME)", "$(CHROOT_NAME)")
+			$(info '$(SCHROOT_CHROOT_NAME)' is not '$(CHROOT_NAME)')
+			$(error This makefile should be run from within a chroot. 'schroot --chroot $(CHROOT_NAME) -- $(MAKE) $(MAKEFLAGS)')  
+		endif
+		GCC_VER = -4.8
+		P4BIN = $(SRCROOT)/devtools/bin/linux/p4
+		CRYPTOPPDIR=ubuntu12_32_gcc48
+	else ifeq ($(USE_VALVE_BINDIR),1)
+		# Using /valve/bin directory.
+		export STEAM_RUNTIME_PATH ?= /valve
+		GCC_VER = -4.6
+		P4BIN = $(SRCROOT)/devtools/bin/linux/p4
+		CRYPTOPPDIR=linux32
+	else
+		# Not using chroot, use old steam-runtime. (gcc 4.6.3)
+		export STEAM_RUNTIME_PATH ?= /valve/steam-runtime
+		GCC_VER =
+		P4BIN = true
+		CRYPTOPPDIR=ubuntu12_32
+	endif
+
+	ifeq ($(TARGET_PLATFORM),linux64)
+		MARCH_TARGET = core2
+	else
+		MARCH_TARGET = pentium4
+	endif
+
+	ifeq ($(USE_VALVE_BINDIR),1)
+		# On dedicated servers, some plugins depend on global variable symbols in addition to functions.
+		# So symbols like _Z16ClearMultiDamagev should show up when you do "nm server_srv.so" in TF2.
+		STRIP_FLAGS =
+	else
+		# Linux desktop client (or client/dedicated server in chroot).
+		STRIP_FLAGS = -x
+	endif
+
+	ifeq ($(CLANG_BUILD),1)
+		# Clang does not support -mfpmath=sse because it uses whatever
+		# instruction set extensions are available by default.
+		SSE_GEN_FLAGS = -msse2
+	else
+		SSE_GEN_FLAGS = -msse2 -mfpmath=sse
+	endif
+
+	# - pch_defines,time_macros,file_macro needed for precompiled headers to be beneficial. See additional ".defines" wrapper
+	#   for PCH below to prevent this from biting us (in theory)
+	# - include_file_ctime/mtime causes re-generated but identical headers, like protobuf, to cause a cache miss. I couldn't
+	#   find the justification for this setting being on by default, perhaps to not waste time preprocessing the files?
+	#   Let's find out the painful way.
+	export CCACHE_SLOPPINESS := $(CCACHE_SLOPPINESS),time_macros,file_macro,include_file_ctime,include_file_mtime,pch_defines
+	# Needed for clang to take advantage of PCH, we include the PCH in the
+	# source files and clang doesn't support -fpch-preprocess properly
+	ifeq ($(CLANG_BUILD),1)
+		export CCACHE_CPP2 = 1
+	endif
+
+	# If not specified by environment, use steam runtime compilers + in-tree ccache
+	ifneq ($(filter default undefined,$(origin AR)),)
+		AR = ar crs
+	endif
+	ifneq ($(filter default undefined,$(origin CC)),)
+		CC = gcc -m32
+	endif
+	ifneq ($(filter default undefined,$(origin CXX)),)
+		CXX = g++ -m32
+	endif
+
+	LINK ?= $(CC)
+
+	ifeq ($(TARGET_PLATFORM),linux64)
+		# nocona = pentium4 + 64bit + MMX, SSE, SSE2, SSE3 - no SSSE3 (that's three s's - added in core2)
+		ARCH_FLAGS += -march=$(MARCH_TARGET) -mtune=core2
+		LD_SO = ld-linux-x86_64.so.2
+		LIBSTDCXX := $(shell $(CXX) -print-file-name=libstdc++.a)
+		LIBSTDCXXPIC := $(shell $(CXX) -print-file-name=libstdc++-pic.a)
+	else
+		# pentium4 = MMX, SSE, SSE2 - no SSE3 (added in prescott) # -msse3 -mfpmath=sse
+		ARCH_FLAGS += -m32 -march=$(MARCH_TARGET) -mtune=core2 $(SSE_GEN_FLAGS)
+		LD_SO = ld-linux.so.2
+		LIBSTDCXX := $(shell $(CXX) $(ARCH_FLAGS) -print-file-name=libstdc++.so)
+		LIBSTDCXXPIC := $(shell $(CXX) $(ARCH_FLAGS) -print-file-name=libstdc++.so)
+		LDFLAGS += -m32
+	endif
 endif
 
 GEN_SYM ?= $(SRCROOT)/devtools/gendbg.sh
@@ -242,6 +270,12 @@ else
 	STRIP ?= true
 endif
 VSIGN ?= true
+
+#ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),linux32 android32 androidarm32))
+#ifeq ($(TARGET_PLATFORM),linux32)
+	# FIXME(maximsmol): linux can't link stripped .ar archives apparently
+	STRIP="true"
+#endif
 
 ifeq ($(SOURCE_SDK), 1)
 	Srv_GAMEOUTPUTFILE := $(GAMEOUTPUTFILE:.so=_srv.so)
@@ -272,12 +306,30 @@ else
     CFLAGS += $(STACK_PROTECTOR)
 endif
 
-
 LIB_START_EXE = $(PATHWRAP) -static-libgcc -Wl,--start-group
 LIB_END_EXE = -Wl,--end-group -lm -ldl $(LIBSTDCXX) -lpthread
 
-LIB_START_SHLIB = $(PATHWRAP) -static-libgcc -Wl,--start-group
-LIB_END_SHLIB = -Wl,--end-group -lm -ldl $(LIBSTDCXXPIC) -lpthread -l:$(LD_SO) -Wl,--version-script=$(SRCROOT)/devtools/version_script.linux.txt
+ifeq ($(NDK), 1)
+	#LIB_END_SHLIB = "-Wl,--end-group -L$(SYSROOT)/usr/lib -lm_hard -ldl -lz -landroid -lstdc++ -lc -llog -Wl,--version-script=$(SRCROOT)/devtools/version_script.linux.txt"
+	#LIB_START_SHLIB = $(PATHWRAP) -Wl,--start-group
+	#LIB_END_SHLIB := -Wl,--end-group -L$(SYSROOT)/usr/lib -lm -ldl -lz -landroid -llog
+	#LIBFILES += "$(NDK_PATH)/sources/cxx-stl/stlport/libs/armeabi-v7a-hard/thumb/libstlport_static.a"
+	#LIBFILES += "$(SRCROOT)/lib/public/armeabi-v7a/libandroid_support.a"
+
+	#LIB_END_SHLIB = "-Wl,--end-group -L$(SYSROOT)/usr/lib -lm_hard -ldl -lz -landroid -lstdc++ -lc -llog -Wl,--version-script=$(SRCROOT)/devtools/version_script.linux.txt"
+	LIB_START_SHLIB = $(PATHWRAP) -Wl,--start-group
+	LIB_END_SHLIB := -Wl,--end-group -L$(SYSROOT)/usr/lib -lm -ldl -lz -landroid -llog
+	ifeq ($(NDK_ABI), x86)
+		LIBFILES += "$(NDK_PATH)/sources/cxx-stl/stlport/libs/x86/libstlport_static.a"
+		#LIBFILES += "$(SRCROOT)/lib/public/x86/libandroid_support.a"
+	else ifeq ($(NDK_ABI), armeabi-v7a)
+		LIBFILES += "$(NDK_PATH)/sources/cxx-stl/stlport/libs/armeabi-v7a-hard/thumb/libstlport_static.a"
+		#LIBFILES += "$(SRCROOT)/lib/public/armeabi-v7a/libandroid_support.a"
+	endif
+else
+	LIB_START_SHLIB = $(PATHWRAP) -static-libgcc -Wl,--start-group
+	LIB_END_SHLIB := -Wl,--end-group -lm -ldl $(LIBSTDCXXPIC) -lpthread -l:$(LD_SO) -Wl,--version-script=$(SRCROOT)/devtools/version_script.linux.txt
+endif
 
 #
 # Profile-directed optimizations.
@@ -294,6 +346,11 @@ LIB_END_SHLIB = -Wl,--end-group -lm -ldl $(LIBSTDCXXPIC) -lpthread -l:$(LD_SO) -
 #############################################################################
 # The compiler command lne for each src code file to compile
 #############################################################################
+
+ifeq ($(NDK),1)
+	# Replace and update
+	ARFLAGS = "ru"
+endif
 
 OBJ_DIR = ./obj_$(NAME)_$(TARGET_PLATFORM)$(TARGET_PLATFORM_EXT)/$(CFG)
 CPP_TO_OBJ = $(CPPFILES:.cpp=.o)
@@ -421,7 +478,11 @@ else
 endif
 
 ifneq "$(origin VALVE_NO_AUTO_P4)" "undefined"
-	P4_EDIT_START = chmod -R +w
+	ifeq ($(NDK),1)
+		P4_EDIT_START = true
+	else
+		P4_EDIT_START = chmod -R +w
+	endif
 	P4_EDIT_END = || true
 	P4_REVERT_START = true
 	P4_REVERT_END =
@@ -541,7 +602,7 @@ endif
 
 $(LIB_File): $(OTHER_DEPENDENCIES) $(OBJS) 
 	$(QUIET_PREFIX) -$(P4_EDIT_START) $(LIB_File) $(P4_EDIT_END); 
-	$(QUIET_PREFIX) $(AR) $(LIB_File) $(OBJS) $(LIBFILES);
+	$(QUIET_PREFIX) $(AR) $(ARFLAGS) $(LIB_File) $(OBJS) $(LIBFILES);
 	$(SHELL) -c "$(POSTBUILDCOMMAND)"
 
 SO_GameOutputFile = $(GAMEOUTPUTFILE)

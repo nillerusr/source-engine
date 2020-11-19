@@ -386,7 +386,7 @@ DBG_INTERFACE bool ShouldUseNewAssertDialog()
 #endif // DBGFLAG_ASSERTDLG
 }
 
-#if defined( POSIX )
+#if defined( POSIX ) && !defined( ANDROID )
 
 #include <execinfo.h>
 
@@ -430,7 +430,7 @@ DBG_INTERFACE bool DoNewAssertDialog( const tchar *pFilename, int line, const tc
 		return false;
 
 	// Assert not suppressed. Spew it, and optionally a backtrace.
-#if defined( POSIX )
+#if defined( POSIX ) && !defined( ANDROID )
 	if( isatty( STDERR_FILENO ) )
 	{
 		#define COLOR_YELLOW 	"\033[1;33m"

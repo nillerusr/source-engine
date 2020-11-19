@@ -263,7 +263,7 @@ public:
     if ( !pTargetPlatformName )
       g_pVPC->VPCError( "GetTargetPlatformName failed." );
 
-    if ( !V_stricmp( pTargetPlatformName, "LINUX32" )  || !V_stricmp( pTargetPlatformName, "LINUX64" ) )
+    if ( !V_stricmp( pTargetPlatformName, "LINUX32" )  || !V_stricmp( pTargetPlatformName, "LINUX64" ) || !V_stricmp( pTargetPlatformName, "ANDROID32" ) || !V_stricmp( pTargetPlatformName, "ANDROID64" ) || !V_stricmp( pTargetPlatformName, "ANDROIDARM32" ) || !V_stricmp( pTargetPlatformName, "ANDROIDARM64" ))
     {
       if ( g_pVPC->IsForceGenerate() || !bProjectIsCurrent )
       {

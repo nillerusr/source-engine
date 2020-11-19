@@ -454,7 +454,7 @@ void inline SinCos( float radians, float *sine, float *cosine )
 		fstp DWORD PTR [edx]
 		fstp DWORD PTR [eax]
 	}
-#elif defined( PLATFORM_WINDOWS_PC64 )
+#elif defined( PLATFORM_WINDOWS_PC64 ) || defined(__arm__)
 	*sine = sin( radians );
 	*cosine = cos( radians );
 #elif defined( POSIX )
@@ -1217,6 +1217,8 @@ FORCEINLINE int RoundFloatToInt(float f)
 	};
 	flResult = __fctiw( f );
 	return pResult[1];
+#elif defined(__arm__)
+	return (int)(f + 0.5f);
 #else
 #error Unknown architecture
 #endif
@@ -1246,8 +1248,10 @@ FORCEINLINE unsigned long RoundFloatToUnsignedLong(float f)
 	flResult = __fctiw( f );
 	Assert( pIntResult[1] >= 0 );
 	return pResult[1];
+#elif defined(__arm__)
+	return (unsigned long)(f + 0.5f);
 #else  // !X360
-	
+
 #if defined( PLATFORM_WINDOWS_PC64 )
 	uint nRet = ( uint ) f;
 	if ( nRet & 1 )

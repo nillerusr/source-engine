@@ -226,7 +226,11 @@ extern "C" byte *GetStackPtr64();
 #if defined(__llvm__) || defined(__clang__)
 #define GetStackPtr( pStackPtr )	byte *pStackPtr = (byte*)__builtin_frame_address(0)
 #else
+#if defined(__arm__)
+#define GetStackPtr( pStackPtr )	byte *pStackPtr = (byte*)__builtin_frame_address(0)
+#else
 #define GetStackPtr( pStackPtr )	register byte *pStackPtr __asm__( "esp" )
+#endif
 #endif
 #elif defined(__SNC__)
 #define GetStackPtr( pStackPtr )	byte *pStackPtr = (byte*)__builtin_frame_address(0)

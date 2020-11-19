@@ -102,7 +102,7 @@ int CAudioMixerWaveMP3::StreamRequestData( void *pBuffer, int bytesRequested, in
 
 		void *pData = NULL;
 		int bytesRead = m_pData->ReadSourceData( &pData, offset + totalBytesRead, bytesRequested, pOutputBuffer );
-		
+
 		if ( !bytesRead )
 			break;
 		if ( bytesRead > bytesRequested )

@@ -152,6 +152,7 @@ $Project "vstdlib"
 	{
 		-$ImpLib vstdlib
 		$Lib   "coroutine_osx"  [$OSXALL]
+		$Lib   "libiconv"  [$ANDROID]
 	}
 }
 

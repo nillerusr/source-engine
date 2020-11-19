@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 # Generated automatically by config.status (protobuf) 2.6.1
 # NOTE: Changes made to this file will be lost: look at ltmain.sh.
 
@@ -50,13 +50,13 @@ build_old_libs=yes
 pic_mode=default
 
 # Whether or not to optimize for fast installation.
-fast_install=yes
+fast_install=needless
 
 # Shared archive member basename,for filename based shared library versioning on AIX.
 shared_archive_member_spec=
 
 # Shell to use when invoking shell scripts.
-SHELL="/bin/sh"
+SHELL="/bin/bash"
 
 # An echo program that protects backslashes.
 ECHO="printf %s\\n"
@@ -75,19 +75,19 @@ build=i686-pc-linux-gnu
 build_os=linux-gnu
 
 # A sed program that does not truncate output.
-SED="/usr/bin/sed"
+SED="/bin/sed"
 
 # Sed that helps us avoid accidentally triggering echo(1) options like -n.
 Xsed="$SED -e 1s/^X//"
 
 # A grep program that handles long lines.
-GREP="/usr/bin/grep"
+GREP="/bin/grep"
 
 # An ERE matcher.
-EGREP="/usr/bin/grep -E"
+EGREP="/bin/grep -E"
 
 # A literal string matcher.
-FGREP="/usr/bin/grep -F"
+FGREP="/bin/grep -F"
 
 # A BSD- or MS-compatible name lister.
 NM="/usr/bin/nm -B"
@@ -191,7 +191,7 @@ nm_file_list_spec="@"
 lt_sysroot=
 
 # Command to truncate a binary pipe.
-lt_truncate_bin="/usr/bin/dd bs=4096 count=1"
+lt_truncate_bin="/bin/dd bs=4096 count=1"
 
 # The name of the directory that contains temporary libtool files.
 objdir=.libs
@@ -249,7 +249,7 @@ runpath_var=LD_RUN_PATH
 shlibpath_var=LD_LIBRARY_PATH
 
 # Is shlibpath searched before the hard-coded library search path?
-shlibpath_overrides_runpath=no
+shlibpath_overrides_runpath=yes
 
 # Format of library name prefix.
 libname_spec="lib\$name"
@@ -281,10 +281,10 @@ finish_eval=""
 hardcode_into_libs=yes
 
 # Compile-time system search path for libraries.
-sys_lib_search_path_spec="/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4 /usr/lib32 /lib32 "
+sys_lib_search_path_spec="/usr/lib/gcc/x86_64-linux-gnu/8 /usr/lib/x86_64-linux-gnu /usr/lib32 /lib/x86_64-linux-gnu /lib32 "
 
 # Detected run-time system search path for libraries.
-sys_lib_dlsearch_path_spec="/lib /usr/lib /usr/lib/libfakeroot /usr/lib32 "
+sys_lib_dlsearch_path_spec="/lib /usr/lib /usr/lib/x86_64-linux-gnu/libfakeroot /usr/local/lib/i386-linux-gnu /lib/i386-linux-gnu /usr/lib/i386-linux-gnu /usr/local/lib/i686-linux-gnu /lib/i686-linux-gnu /usr/lib/i686-linux-gnu /usr/local/lib /usr/local/lib/x86_64-linux-gnu /lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu /lib32 /usr/lib32 /libx32 /usr/libx32 "
 
 # Explicit LT_SYS_LIBRARY_PATH set during ./configure time.
 configure_time_lt_sys_library_path=""
@@ -11893,17 +11893,17 @@ file_list_spec=""
 hardcode_action=immediate
 
 # The directories searched by this compiler when creating a shared library.
-compiler_lib_search_dirs="/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/32 /usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/../../../../lib32 /lib/../lib32 /usr/lib/../lib32 /usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4 /usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/../../.."
+compiler_lib_search_dirs="/usr/lib/gcc/x86_64-linux-gnu/8/32 /usr/lib/gcc/x86_64-linux-gnu/8/../../../i386-linux-gnu /usr/lib/gcc/x86_64-linux-gnu/8/../../../../lib32 /lib/i386-linux-gnu /lib/../lib32 /usr/lib/i386-linux-gnu /usr/lib/../lib32 /usr/lib/gcc/x86_64-linux-gnu/8 /usr/lib/gcc/x86_64-linux-gnu/8/../../../i386-linux-gnu /usr/lib/gcc/x86_64-linux-gnu/8/../../.. /lib/i386-linux-gnu /usr/lib/i386-linux-gnu"
 
 # Dependencies to place before and after the objects being linked to
 # create a shared library.
-predep_objects="/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/../../../../lib32/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/32/crtbeginS.o"
-postdep_objects="/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/32/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/../../../../lib32/crtn.o"
+predep_objects="/usr/lib/gcc/x86_64-linux-gnu/8/../../../i386-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/8/32/crtbeginS.o"
+postdep_objects="/usr/lib/gcc/x86_64-linux-gnu/8/32/crtendS.o /usr/lib/gcc/x86_64-linux-gnu/8/../../../i386-linux-gnu/crtn.o"
 predeps=""
 postdeps="-lstdc++ -lm -lgcc_s -lc -lgcc_s"
 
 # The library search path used internally by the compiler when linking
 # a shared library.
-compiler_lib_search_path="-L/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/32 -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/../../../../lib32 -L/lib/../lib32 -L/usr/lib/../lib32 -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4 -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/../../.."
+compiler_lib_search_path="-L/usr/lib/gcc/x86_64-linux-gnu/8/32 -L/usr/lib/gcc/x86_64-linux-gnu/8/../../../i386-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/8/../../../../lib32 -L/lib/i386-linux-gnu -L/lib/../lib32 -L/usr/lib/i386-linux-gnu -L/usr/lib/../lib32 -L/usr/lib/gcc/x86_64-linux-gnu/8 -L/usr/lib/gcc/x86_64-linux-gnu/8/../../../i386-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/8/../../.. -L/lib/i386-linux-gnu -L/usr/lib/i386-linux-gnu"
 
 # ### END LIBTOOL TAG CONFIG: CXX

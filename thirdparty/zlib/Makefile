@@ -18,14 +18,14 @@
 
 CC=gcc
 
-CFLAGS=-m32 -D_LARGEFILE64_SOURCE=1 -DHAVE_HIDDEN
+CFLAGS=-O3 -D_LARGEFILE64_SOURCE=1 -DHAVE_HIDDEN
 #CFLAGS=-O -DMAX_WBITS=14 -DMAX_MEM_LEVEL=7
 #CFLAGS=-g -DZLIB_DEBUG
 #CFLAGS=-O3 -Wall -Wwrite-strings -Wpointer-arith -Wconversion \
 #           -Wstrict-prototypes -Wmissing-prototypes
 
-SFLAGS=-m32 -fPIC -D_LARGEFILE64_SOURCE=1 -DHAVE_HIDDEN
-LDFLAGS=-m32
+SFLAGS=-O3 -fPIC -D_LARGEFILE64_SOURCE=1 -DHAVE_HIDDEN
+LDFLAGS=
 TEST_LDFLAGS=-L. libz.a
 LDSHARED=gcc -shared -Wl,-soname,libz.so.1,--version-script,zlib.map
 CPP=gcc -E

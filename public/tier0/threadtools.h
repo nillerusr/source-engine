@@ -141,8 +141,10 @@ inline void ThreadPause()
 #if defined( PLATFORM_WINDOWS_PC )
 	// Intrinsic for __asm pause; from <intrin.h>
 	_mm_pause();
-#elif POSIX
+#elif defined( __i386__ ) && defined(POSIX)
 	__asm __volatile( "pause" );
+#elif defined(__arm__)
+	sched_yield(); // maybe work. Maybe not. Who knows?
 #elif defined( _X360 )
 #else
 #error "implement me"

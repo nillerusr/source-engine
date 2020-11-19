@@ -5,16 +5,16 @@
 #define HASH_MAP_CLASS unordered_map
 
 /* the location of <unordered_map> or <hash_map> */
-#define HASH_MAP_H <tr1/unordered_map>
+#define HASH_MAP_H <unordered_map>
 
 /* the namespace of hash_map/hash_set */
-#define HASH_NAMESPACE std::tr1
+#define HASH_NAMESPACE std
 
 /* the name of <hash_set> */
 #define HASH_SET_CLASS unordered_set
 
 /* the location of <unordered_set> or <hash_set> */
-#define HASH_SET_H <tr1/unordered_set>
+#define HASH_SET_H <unordered_set>
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1

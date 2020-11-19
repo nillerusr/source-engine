@@ -23,8 +23,10 @@
 #elif defined(POSIX)
 
 #if !defined(OSX)
+	#ifndef ANDROID
 	#include <sys/fcntl.h>
 	#include <sys/unistd.h>
+	#endif
 	#define sem_unlink( arg )
 	#define OS_TO_PTHREAD(x) (x)
 #else
@@ -50,6 +52,10 @@ typedef PTHREAD_START_ROUTINE LPTHREAD_START_ROUTINE;
 #include <sys/time.h>
 #define GetLastError() errno
 typedef void *LPVOID;
+#endif
+
+#ifdef ANDROID
+#include <sched.h>
 #endif
 
 #include "tier0/valve_minmax_off.h"
@@ -2034,6 +2040,8 @@ void CThread::Yield()
 {
 #ifdef _WIN32
 	::Sleep(0);
+#elif defined(ANDROID)
+	sched_yield();
 #elif defined(POSIX)
 	pthread_yield();
 #endif

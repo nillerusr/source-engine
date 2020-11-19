@@ -10,6 +10,6 @@ Description: Simple DirectMedia Layer is a cross-platform multimedia library des
 Version: 2.0.12
 Requires:
 Conflicts:
-Libs: -L${libdir} -Wl,-rpath,${libdir} -Wl,--enable-new-dtags -lSDL2
-Libs.private: -lSDL2  -Wl,--no-undefined -lm -ldl -lpthread -lrt
-Cflags: -I${includedir}/SDL2   -D_REENTRANT
+Libs: -L${libdir}  -lSDL2
+Libs.private: -lSDL2  -Wl,--no-undefined -lm -ldl -lGLESv1_CM -lGLESv2 -llog -landroid -lpulse-simple -lpulse 
+Cflags: -I${includedir}/SDL2  -DGL_GLEXT_PROTOTYPES -D_REENTRANT -D_THREAD_SAFE

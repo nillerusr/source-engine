@@ -2164,7 +2164,10 @@ int CWaveDataStreamAsync::ReadSourceData( void **pData, int sampleIndex, int sam
 		
 		// past the end of the file?  stop the wave.
 		if ( m_bufferCount <= 0 )
+		{
+			printf("ReadSourceData: m_bufferCount <= 0\n");
 			return 0;
+		}
 
 		// clamp available samples to buffer size
 		if ( m_bufferCount > m_bufferSize )
@@ -2228,6 +2231,7 @@ int CWaveDataStreamAsync::ReadSourceData( void **pData, int sampleIndex, int sam
 					m_bufferCount * m_sampleSize,
 					&postprocessed ) )
 				{
+					printf("ReadSourceData: !wavedatacache->CopyDataIntoMemory\n");
 					return 0;
 				}
 
@@ -2283,6 +2287,7 @@ int CWaveDataStreamAsync::ReadSourceData( void **pData, int sampleIndex, int sam
 		return available;
 	}
 
+	printf("ReadSourceData: return 0\n");
 	return 0;
 }
 

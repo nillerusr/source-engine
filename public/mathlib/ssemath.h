@@ -8,6 +8,8 @@
 
 #if defined( _X360 )
 #include <xboxmath.h>
+#elif defined(__arm__)
+#include <SSE2NEON.h>
 #else
 #include <xmmintrin.h>
 #endif
@@ -15,7 +17,7 @@
 #include <mathlib/vector.h>
 #include <mathlib/mathlib.h>
 
-#if defined(GNUC)
+#if defined(GNUC) && defined(__arm__) // HACK: implement NEON later
 #define USE_STDC_FOR_SIMD 0
 #else
 #define USE_STDC_FOR_SIMD 0
@@ -879,10 +881,13 @@ FORCEINLINE fltx4 FindHighestSIMD3( const fltx4 & a )
 // like this.
 FORCEINLINE void ConvertStoreAsIntsSIMD(intx4 * RESTRICT pDest, const fltx4 &vSrc)
 {
-	(*pDest)[0] = SubFloat(vSrc, 0);
-	(*pDest)[1] = SubFloat(vSrc, 1);
-	(*pDest)[2] = SubFloat(vSrc, 2);
-	(*pDest)[3] = SubFloat(vSrc, 3);
+	__m64 bottom = _mm_cvttps_pi32( vSrc );
+	__m64 top    = _mm_cvttps_pi32( _mm_movehl_ps(vSrc,vSrc) );
+
+	*reinterpret_cast<__m64 *>(&(*pDest)[0]) = bottom;
+	*reinterpret_cast<__m64 *>(&(*pDest)[2]) = top;
+
+	_mm_empty();
 }
 
 // ------------------------------------
@@ -2407,13 +2412,16 @@ FORCEINLINE i32x4 IntShiftLeftWordSIMD(const i32x4 &vSrcA, const i32x4 &vSrcB)
 // like this.
 FORCEINLINE void ConvertStoreAsIntsSIMD(intx4 * RESTRICT pDest, const fltx4 &vSrc)
 {
-#if defined( COMPILER_MSVC64 )
-
+#ifdef __arm__
+	(*pDest)[0] = (int)vSrc[0];
+	(*pDest)[1] = (int)vSrc[1];
+	(*pDest)[2] = (int)vSrc[2];
+	(*pDest)[3] = (int)vSrc[3];	
+#elif defined( COMPILER_MSVC64 )
 	(*pDest)[0] = SubFloat( vSrc, 0 );
 	(*pDest)[1] = SubFloat( vSrc, 1 );
 	(*pDest)[2] = SubFloat( vSrc, 2 );
 	(*pDest)[3] = SubFloat( vSrc, 3 );
-
 #else
 	__m64 bottom = _mm_cvttps_pi32( vSrc );
 	__m64 top    = _mm_cvttps_pi32( _mm_movehl_ps(vSrc,vSrc) );

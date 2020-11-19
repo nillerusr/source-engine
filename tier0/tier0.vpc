@@ -50,7 +50,7 @@ $Configuration
 		// 360 will auto generate a def file for this import library
 		$ModuleDefinitionFile			" "										[$X360]
 		$AdditionalOptions				"$BASE /AUTODEF:xbox\xbox.def"			[$X360]
-		$SystemLibraries                 "rt" [$LINUXALL]
+		$SystemLibraries                 "rt" [$LINUXALL && !$ANDROID]
 	}
 
 	$PreLinkEvent [$WINDOWS]

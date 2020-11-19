@@ -22,7 +22,9 @@ const tchar* GetProcessorVendorId();
 
 static bool cpuid(unsigned long function, unsigned long& out_eax, unsigned long& out_ebx, unsigned long& out_ecx, unsigned long& out_edx)
 {
-#if defined(GNUC)
+#if defined( __arm__ )
+	return false;
+#elif defined(GNUC)
 	asm("mov %%ebx, %%esi\n\t"
 		"cpuid\n\t"
 		"xchg %%esi, %%ebx"
@@ -80,7 +82,7 @@ static bool cpuid(unsigned long function, unsigned long& out_eax, unsigned long&
 
 static bool CheckMMXTechnology(void)
 {
-#if defined( _X360 ) || defined( _PS3 ) 
+#if defined( _X360 ) || defined( _PS3 ) || defined( __arm__ )
 	return true;
 #else
     unsigned long eax,ebx,edx,unused;
@@ -142,7 +144,7 @@ static bool IsWin98OrOlder()
 
 static bool CheckSSETechnology(void)
 {
-#if defined( _X360 ) || defined( _PS3 )
+#if defined( _X360 ) || defined( _PS3 ) || defined( __arm__ )
 	return true;
 #else
 	if ( IsWin98OrOlder() )
@@ -162,7 +164,7 @@ static bool CheckSSETechnology(void)
 
 static bool CheckSSE2Technology(void)
 {
-#if defined( _X360 ) || defined( _PS3 )
+#if defined( _X360 ) || defined( _PS3 ) || defined( __arm__ )
 	return false;
 #else
 	unsigned long eax,ebx,edx,unused;
@@ -175,7 +177,7 @@ static bool CheckSSE2Technology(void)
 
 bool CheckSSE3Technology(void)
 {
-#if defined( _X360 ) || defined( _PS3 )
+#if defined( _X360 ) || defined( _PS3 ) || defined( __arm__ )
 	return false;
 #else
 	unsigned long eax,ebx,edx,ecx;
@@ -188,7 +190,7 @@ bool CheckSSE3Technology(void)
 
 bool CheckSSSE3Technology(void)
 {
-#if defined( _X360 ) || defined( _PS3 )
+#if defined( _X360 ) || defined( _PS3 ) || defined( __arm__ )
 	return false;
 #else
 	// SSSE 3 is implemented by both Intel and AMD
@@ -203,7 +205,7 @@ bool CheckSSSE3Technology(void)
 
 bool CheckSSE41Technology(void)
 {
-#if defined( _X360 ) || defined( _PS3 )
+#if defined( _X360 ) || defined( _PS3 ) || defined( __arm__ )
 	return false;
 #else
 	// SSE 4.1 is implemented by both Intel and AMD
@@ -219,7 +221,7 @@ bool CheckSSE41Technology(void)
 
 bool CheckSSE42Technology(void)
 {
-#if defined( _X360 ) || defined( _PS3 )
+#if defined( _X360 ) || defined( _PS3 ) || defined( __arm__ )
 	return false;
 #else
 	// SSE4.2 is an Intel-only feature
@@ -239,7 +241,7 @@ bool CheckSSE42Technology(void)
 
 bool CheckSSE4aTechnology( void )
 {
-#if defined( _X360 ) || defined( _PS3 )
+#if defined( _X360 ) || defined( _PS3 ) || defined( __arm__ )
 	return false;
 #else
 	// SSE 4a is an AMD-only feature
@@ -259,7 +261,7 @@ bool CheckSSE4aTechnology( void )
 
 static bool Check3DNowTechnology(void)
 {
-#if defined( _X360 ) || defined( _PS3 )
+#if defined( _X360 ) || defined( _PS3 ) || defined( __arm__ )
 	return false;
 #else
 	unsigned long eax, unused;
@@ -279,7 +281,7 @@ static bool Check3DNowTechnology(void)
 
 static bool CheckCMOVTechnology()
 {
-#if defined( _X360 ) || defined( _PS3 )
+#if defined( _X360 ) || defined( _PS3 ) || defined( __arm__ )
 	return false;
 #else
 	unsigned long eax,ebx,edx,unused;
@@ -292,7 +294,7 @@ static bool CheckCMOVTechnology()
 
 static bool CheckFCMOVTechnology(void)
 {
-#if defined( _X360 ) || defined( _PS3 )
+#if defined( _X360 ) || defined( _PS3 ) || defined( __arm__ )
 	return false;
 #else
     unsigned long eax,ebx,edx,unused;
@@ -305,7 +307,7 @@ static bool CheckFCMOVTechnology(void)
 
 static bool CheckRDTSCTechnology(void)
 {
-#if defined( _X360 ) || defined( _PS3 )
+#if defined( _X360 ) || defined( _PS3 ) || defined( __arm__ )
 	return false;
 #else
 	unsigned long eax,ebx,edx,unused;
@@ -353,7 +355,9 @@ const tchar* GetProcessorVendorId()
 // Hyper-Threading Technology is necessarily enabled.
 static bool HTSupported(void)
 {
-#if defined( _X360 )
+#if defined( __arm__ )
+	return false;
+#elif defined( _X360 )
 	// not entirtely sure about the semantic of HT support, it being an intel name
 	// are we asking about HW threads or HT?
 	return true;

@@ -124,9 +124,13 @@ float GetCPUUsage()
 
 float GetCPUUsage() 
 {
+#ifdef ANDROID
+	return 0;
+#else
 	double loadavg[3];
 
 	getloadavg( loadavg, 3 );
 	return loadavg[0];
+#endif
 }
 #endif //POSIX

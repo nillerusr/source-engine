@@ -43,7 +43,7 @@
 #include "tier1.h"
 #include "tier2/tier2.h"
 
-#ifdef _LINUX
+#if defined(_LINUX) && !defined(__ANDROID__)
 #include <GL/glx.h>
 #endif
 
@@ -296,7 +296,7 @@ static bool CheckOpenGLExtension_internal(const char *ext, const int coremajor, 
 				return false;
 			}
 		}
-#elif !defined ( OSX )
+#elif !defined ( OSX ) && !defined( __ANDROID__ )
 		if (!ptr)
 		{
 			static CDynamicFunctionOpenGL< true, Display *( APIENTRY *)( ), Display* > glXGetCurrentDisplay("glXGetCurrentDisplay");

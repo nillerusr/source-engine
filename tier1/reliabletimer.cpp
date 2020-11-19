@@ -83,6 +83,8 @@ int64 CReliableTimer::GetPerformanceCountNow()
 	uint64 ulNow;
 	SYS_TIMEBASE_GET( ulNow );
 	return ulNow;
+#elif defined(__arm__) && defined(ANDROID)
+	return Plat_Rdtsc();
 #else
 	uint64 un64;
 	 __asm__ __volatile__ (

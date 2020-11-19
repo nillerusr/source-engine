@@ -45,6 +45,8 @@ $Configuration
 
 		// Add VPK support
 		$PreprocessorDefinitions	"$BASE;SUPPORT_PACKED_STORE" [!$WIN64]
+		
+		$PreprocessorDefinitions	"$BASE;S_IREAD=S_IRUSR;S_IWRITE=S_IWUSR;S_IEXEC=S_IXUSR" [$ANDROID]
 	}
 	$Linker
 	{

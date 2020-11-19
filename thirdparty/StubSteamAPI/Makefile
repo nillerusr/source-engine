@@ -1,12 +1,12 @@
 DLLNAME=libsteam_api
 
 ifeq ($(NDK),1)
-	CC = $(shell $(NDK_PATH)/ndk-which gcc)
-	CXX = $(shell $(NDK_PATH)/ndk-which g++)
-	LD = $(shell $(NDK_PATH)/ndk-which ld)
-	AR = $(shell $(NDK_PATH)/ndk-which ar)
-	LINK = $(shell $(NDK_PATH)/ndk-which g++)
-	STRIP = $(shell $(NDK_PATH)/ndk-which strip)
+	CC = $(shell $(NDK_PATH)/ndk-which gcc $(NDK_ABI))
+	CXX = $(shell $(NDK_PATH)/ndk-which g++ $(NDK_ABI))
+	LD = $(shell $(NDK_PATH)/ndk-which ld $(NDK_ABI))
+	AR = $(shell $(NDK_PATH)/ndk-which ar $(NDK_ABI))
+	LINK = $(shell $(NDK_PATH)/ndk-which g++ $(NDK_ABI))
+	STRIP = $(shell $(NDK_PATH)/ndk-which strip $(NDK_ABI))
 else
 	CXX=g++
 	CC=gcc

@@ -16,7 +16,7 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-#ifndef COMPILER_MSVC64
+#if !defined(COMPILER_MSVC64) && !defined(__arm__)
 // Implement for 64-bit Windows if needed.
 
 static const uint32 _sincos_masks[]	  = { (uint32)0x0,  (uint32)~0x0 };

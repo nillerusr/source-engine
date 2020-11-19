@@ -66,7 +66,12 @@
 
 static bool s_bShowDiag;
 #define DEBUG_MSG( ... ) if ( s_bShowDiag ) fprintf( stderr, ##__VA_ARGS__ )
-#define DEBUG_BREAK() __asm__ __volatile__ ( "int $3" )
+
+#ifndef __arm__
+	#define DEBUG_BREAK() __asm__ __volatile__ ( "int $3" )
+#else
+	#define DEBUG_BREAK()
+#endif
 #define _COMPILE_TIME_ASSERT(pred) switch(0){case 0:case pred:;}
 
 #define WRAP( fn, ret, ... ) \
@@ -750,7 +755,7 @@ extern "C" {
 		return CALL(fopen)( mpath, mode );
 	}
 
-
+#ifndef ANDROID
 	WRAP(fopen64, FILE *, const char *path, const char *mode)
 	{
 		// if mode does not have w, a, or +, it's open for read.
@@ -759,6 +764,7 @@ extern "C" {
 
 		return CALL(fopen64)( mpath, mode );
 	}
+#endif
 
 	WRAP(open, int, const char *pathname, int flags, mode_t mode)
 	{
@@ -805,7 +811,8 @@ extern "C" {
 	{
 		return CALL(opendir)( CWrap( name, false ) );
 	}
-
+	
+#ifndef ANDROID
     WRAP(__xstat, int, int __ver, __const char *__filename, struct stat *__stat_buf)
     {
         return CALL(__xstat)( __ver, CWrap( __filename, false), __stat_buf );
@@ -825,6 +832,7 @@ extern "C" {
     {
         return CALL(__lxstat64)( __ver, CWrap( __filename, false), __stat_buf );
     }
+#endif
 
 	WRAP(chmod, int, const char *path, mode_t mode)
 	{

@@ -17,9 +17,6 @@
 #include <tier0/platform.h>
 #include <errno.h>
 
-#define rdtsc(x) \
-	__asm__ __volatile__ ("rdtsc" : "=A" (x))
-
 class TimeVal
 {
 public:
@@ -142,11 +139,11 @@ uint64 CalculateCPUFreq()
 		uint64 start_tsc, end_tsc;
 
 		gettimeofday( &start_time.m_TimeVal, 0 );
-		rdtsc( start_tsc );
+		start_tsc = Plat_Rdtsc();
 		usleep( 5000 ); // sleep for 5 msec
 		gettimeofday( &end_time.m_TimeVal, 0 );
-		rdtsc( end_tsc );
-	
+		end_tsc = Plat_Rdtsc();
+
 		// end_time - start_time calls into the overloaded TimeVal operator- way above, and returns a double.
 		period3 = ( end_tsc - start_tsc ) / ( end_time - start_time );
 

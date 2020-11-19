@@ -42,14 +42,14 @@ while test $# -gt 0; do
       echo 2.0.12
       ;;
     --cflags)
-      echo -I${prefix}/include/SDL2   -D_REENTRANT
+      echo -I${prefix}/include/SDL2  -DGL_GLEXT_PROTOTYPES -D_REENTRANT -D_THREAD_SAFE
       ;;
     --libs)
-      echo -L${exec_prefix}/lib -Wl,-rpath,${libdir} -Wl,--enable-new-dtags -lSDL2
+      echo -L${exec_prefix}/lib  -lSDL2
       ;;
     --static-libs)
 #    --libs|--static-libs)
-      echo -L${exec_prefix}/lib -Wl,-rpath,${libdir} -Wl,--enable-new-dtags -lSDL2  -Wl,--no-undefined -lm -ldl -lpthread -lrt
+      echo -L${exec_prefix}/lib  -lSDL2  -Wl,--no-undefined -lm -ldl -lGLESv1_CM -lGLESv2 -llog -landroid -lpulse-simple -lpulse 
       ;;
     *)
       echo "${usage}" 1>&2

@@ -7,15 +7,15 @@ set(SDL2_PREFIX "/usr/local")
 set(SDL2_EXEC_PREFIX "/usr/local")
 set(SDL2_LIBDIR "${exec_prefix}/lib")
 set(SDL2_INCLUDE_DIRS "${prefix}/include/SDL2")
-set(SDL2_LIBRARIES "-L${SDL2_LIBDIR} -Wl,-rpath,${libdir} -Wl,--enable-new-dtags -lSDL2")
+set(SDL2_LIBRARIES "-L${SDL2_LIBDIR}  -lSDL2")
 string(STRIP "${SDL2_LIBRARIES}" SDL2_LIBRARIES)
 
 if(NOT TARGET SDL2::SDL2)
   # Remove -lSDL2 as that is handled by CMake, note the space at the end so it does not replace e.g. -lSDL2main
   # This may require "libdir" beeing set (from above)
-  string(REPLACE "-lSDL2 " "" SDL2_EXTRA_LINK_FLAGS "-Wl,-rpath,${libdir} -Wl,--enable-new-dtags -lSDL2 ")
+  string(REPLACE "-lSDL2 " "" SDL2_EXTRA_LINK_FLAGS " -lSDL2 ")
   string(STRIP "${SDL2_EXTRA_LINK_FLAGS}" SDL2_EXTRA_LINK_FLAGS)
-  string(REPLACE "-lSDL2 " "" SDL2_EXTRA_LINK_FLAGS_STATIC "-Wl,-rpath,${libdir} -Wl,--enable-new-dtags -lSDL2  -Wl,--no-undefined -lm -ldl -lpthread -lrt ")
+  string(REPLACE "-lSDL2 " "" SDL2_EXTRA_LINK_FLAGS_STATIC " -lSDL2  -Wl,--no-undefined -lm -ldl -lGLESv1_CM -lGLESv2 -llog -landroid -lpulse-simple -lpulse  ")
   string(STRIP "${SDL2_EXTRA_LINK_FLAGS_STATIC}" SDL2_EXTRA_LINK_FLAGS_STATIC)
 
   add_library(SDL2::SDL2 SHARED IMPORTED)

@@ -451,7 +451,6 @@ $Group "everything"
 	"vvis_launcher"
     "zlib"
 	"coroutine_osx"
-
 //	"vs_python2.5"
 //	"vslib_python2.5"
 }

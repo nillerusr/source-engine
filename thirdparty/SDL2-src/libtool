@@ -1,8 +1,8 @@
-#! /bin/sh
+#! /bin/bash
 
 # libtool - Provide generalized library-building support services.
 # Generated automatically by config.status () 
-# Libtool was configured on host lostnote:
+# Libtool was configured on host DESKTOP-6CJ0SOQ:
 # NOTE: Changes made to this file will be lost: look at ltmain.sh.
 #
 #   Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2003, 2004, 2005,
@@ -50,7 +50,7 @@ AS="as"
 DLLTOOL="false"
 
 # Object dumper program.
-OBJDUMP="objdump"
+OBJDUMP="arm-linux-androideabi-objdump"
 
 # Whether or not to build shared libraries.
 build_libtool_libs=yes
@@ -62,10 +62,10 @@ build_old_libs=yes
 pic_mode=default
 
 # Whether or not to optimize for fast installation.
-fast_install=yes
+fast_install=needless
 
 # Shell to use when invoking shell scripts.
-SHELL="/bin/sh"
+SHELL="/bin/bash"
 
 # An echo program that protects backslashes.
 ECHO="printf %s\\n"
@@ -74,32 +74,32 @@ ECHO="printf %s\\n"
 PATH_SEPARATOR=":"
 
 # The host system.
-host_alias=
-host=i686-pc-linux-gnu
-host_os=linux-gnu
+host_alias=arm-linux-androideabi
+host=arm-unknown-linux-androideabi
+host_os=linux-androideabi
 
 # The build system.
-build_alias=i686-pc-linux-gnu
-build=i686-pc-linux-gnu
+build_alias=
+build=x86_64-pc-linux-gnu
 build_os=linux-gnu
 
 # A sed program that does not truncate output.
-SED="/usr/bin/sed"
+SED="/bin/sed"
 
 # Sed that helps us avoid accidentally triggering echo(1) options like -n.
 Xsed="$SED -e 1s/^X//"
 
 # A grep program that handles long lines.
-GREP="/usr/bin/grep"
+GREP="/bin/grep"
 
 # An ERE matcher.
-EGREP="/usr/bin/grep -E"
+EGREP="/bin/grep -E"
 
 # A literal string matcher.
-FGREP="/usr/bin/grep -F"
+FGREP="/bin/grep -F"
 
 # A BSD- or MS-compatible name lister.
-NM="/usr/bin/nm -B"
+NM="/mnt/f/soft/android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/arm-linux-androideabi-nm -B"
 
 # Whether we need soft or hard links.
 LN_S="ln -s"
@@ -144,7 +144,7 @@ want_nocaseglob="no"
 sharedlib_from_linklib_cmd="printf %s\\n"
 
 # The archiver.
-AR="ar"
+AR="arm-linux-androideabi-ar"
 
 # Flags to create an archive.
 AR_FLAGS="cru"
@@ -153,10 +153,10 @@ AR_FLAGS="cru"
 archiver_list_spec="@"
 
 # A symbol stripping program.
-STRIP="strip"
+STRIP="arm-linux-androideabi-strip"
 
 # Commands used to install an old-style archive.
-RANLIB="ranlib"
+RANLIB="arm-linux-androideabi-ranlib"
 old_postinstall_cmds="chmod 644 \$oldlib~\$RANLIB \$tool_oldlib"
 old_postuninstall_cmds=""
 
@@ -164,10 +164,10 @@ old_postuninstall_cmds=""
 lock_old_archive_extraction=no
 
 # A C compiler.
-LTCC="gcc"
+LTCC="arm-linux-androideabi-gcc"
 
 # LTCC compiler flags.
-LTCFLAGS="-m32 -Wno-narrowing -Iinclude -I/home/nillerusr/projects/source-engine/thirdparty/SDL2-src/include -idirafter /home/nillerusr/projects/source-engine/thirdparty/SDL2-src/src/video/khronos  "
+LTCFLAGS="--sysroot=/mnt/f/soft/android-ndk-r10e/platforms/android-21/arch-arm -Iinclude -I/home/jusic/source-engine/thirdparty/SDL2-src/include -idirafter /home/jusic/source-engine/thirdparty/SDL2-src/src/video/khronos  -DGL_GLEXT_PROTOTYPES"
 
 # Take the output of nm and produce a listing of raw symbols and C names.
 global_symbol_pipe="sed -n -e 's/^.*[	 ]\\([ABCDGIRSTW][ABCDGIRSTW]*\\)[	 ][	 ]*\\([_A-Za-z][_A-Za-z0-9]*\\)\$/\\1 \\2 \\2/p' | sed '/ __gnu_lto/d'"
@@ -185,7 +185,7 @@ global_symbol_to_c_name_address_lib_prefix="sed -n -e 's/^: \\([^ ]*\\)[ ]*\$/  
 nm_file_list_spec="@"
 
 # The root where to search for dependent libraries,and in which our libraries should be installed.
-lt_sysroot=
+lt_sysroot=/mnt/f/soft/android-ndk-r10e/platforms/android-21/arch-arm
 
 # The name of the directory that contains temporary libtool files.
 objdir=.libs
@@ -243,7 +243,7 @@ runpath_var=LD_RUN_PATH
 shlibpath_var=LD_LIBRARY_PATH
 
 # Is shlibpath searched before the hard-coded library search path?
-shlibpath_overrides_runpath=no
+shlibpath_overrides_runpath=yes
 
 # Format of library name prefix.
 libname_spec="lib\$name"
@@ -275,10 +275,10 @@ finish_eval=""
 hardcode_into_libs=yes
 
 # Compile-time system search path for libraries.
-sys_lib_search_path_spec="/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4 /usr/lib32 /lib32 "
+sys_lib_search_path_spec="/mnt/f/soft/android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/lib/gcc/arm-linux-androideabi/4.9 /mnt/f/soft/android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/lib/gcc /mnt/f/soft/android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/arm-linux-androideabi/lib "
 
 # Run-time system search path for libraries.
-sys_lib_dlsearch_path_spec="/lib /usr/lib /usr/lib/libfakeroot /usr/lib32 "
+sys_lib_dlsearch_path_spec="/lib /usr/lib /usr/lib/x86_64-linux-gnu/libfakeroot /usr/local/lib/i386-linux-gnu /lib/i386-linux-gnu /usr/lib/i386-linux-gnu /usr/local/lib/i686-linux-gnu /lib/i686-linux-gnu /usr/lib/i686-linux-gnu /usr/local/lib /usr/local/lib/x86_64-linux-gnu /lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu /lib32 /usr/lib32 /libx32 /usr/libx32 "
 
 # Whether dlopen is supported.
 dlopen_support=unknown
@@ -290,12 +290,12 @@ dlopen_self=unknown
 dlopen_self_static=unknown
 
 # Commands to strip libraries.
-old_striplib="strip --strip-debug"
-striplib="strip --strip-unneeded"
+old_striplib="arm-linux-androideabi-strip --strip-debug"
+striplib="arm-linux-androideabi-strip --strip-unneeded"
 
 
 # The linker used to build libraries.
-LD="/usr/bin/ld"
+LD="/mnt/f/soft/android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/arm-linux-androideabi/bin/ld"
 
 # How to create reloadable object files.
 reload_flag=" -r"
@@ -305,7 +305,7 @@ reload_cmds="\$LD\$reload_flag -o \$output\$reload_objs"
 old_archive_cmds="\$AR \$AR_FLAGS \$oldlib\$oldobjs~\$RANLIB \$tool_oldlib"
 
 # A language specific compiler.
-CC="gcc"
+CC="arm-linux-androideabi-gcc"
 
 # Is the compiler the GNU compiler?
 with_gcc=yes
@@ -10096,7 +10096,7 @@ build_old_libs=`case $build_libtool_libs in yes) echo no;; *) echo yes;; esac`
 # ### BEGIN LIBTOOL TAG CONFIG: CXX
 
 # The linker used to build libraries.
-LD="/usr/bin/ld"
+LD="/mnt/f/soft/android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/arm-linux-androideabi/bin/ld"
 
 # How to create reloadable object files.
 reload_flag=" -r"
@@ -10106,7 +10106,7 @@ reload_cmds="\$LD\$reload_flag -o \$output\$reload_objs"
 old_archive_cmds="\$AR \$AR_FLAGS \$oldlib\$oldobjs~\$RANLIB \$tool_oldlib"
 
 # A language specific compiler.
-CC="g++"
+CC="arm-linux-androideabi-g++"
 
 # Is the compiler the GNU compiler?
 with_gcc=yes
@@ -10227,17 +10227,17 @@ file_list_spec=""
 hardcode_action=immediate
 
 # The directories searched by this compiler when creating a shared library.
-compiler_lib_search_dirs="/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/32 /usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/../../../../lib32 /lib/../lib32 /usr/lib/../lib32 /usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4 /usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/../../.."
+compiler_lib_search_dirs="/mnt/f/soft/android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9 /mnt/f/soft/android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/../lib/gcc /mnt/f/soft/android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9/../../../../arm-linux-androideabi/lib"
 
 # Dependencies to place before and after the objects being linked to
 # create a shared library.
-predep_objects="/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/../../../../lib32/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/32/crtbeginS.o"
-postdep_objects="/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/32/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/../../../../lib32/crtn.o"
+predep_objects="crtbegin_so.o"
+postdep_objects="crtend_so.o"
 predeps=""
-postdeps="-lstdc++ -lm -lgcc_s -lc -lgcc_s"
+postdeps="-lstdc++ -lm -lgcc -lc -ldl -lgcc"
 
 # The library search path used internally by the compiler when linking
 # a shared library.
-compiler_lib_search_path="-L/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/32 -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/../../../../lib32 -L/lib/../lib32 -L/usr/lib/../lib32 -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4 -L/usr/lib/gcc/x86_64-pc-linux-gnu/4.9.4/../../.."
+compiler_lib_search_path="-L/mnt/f/soft/android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9 -L/mnt/f/soft/android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/../lib/gcc -L/mnt/f/soft/android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9/../../../../arm-linux-androideabi/lib"
 
 # ### END LIBTOOL TAG CONFIG: CXX
