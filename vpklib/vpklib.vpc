@@ -33,7 +33,6 @@ $Project "vpklib"
 		$Folder	"Crypto"
 		{
 			$File	"$SRCDIR\common\simplebitstring.h"
-			$File	"$SRCDIR\common\crypto.h"
 		}
 	}
 }
