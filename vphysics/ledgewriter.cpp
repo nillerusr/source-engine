@@ -230,7 +230,7 @@ void CVPhysicsVirtualMeshWriter::UnpackCompactLedgeFromHull( IVP_Compact_Ledge *
 	pLedge->has_chilren_flag = isVirtualLedge ? IVP_TRUE : IVP_FALSE;
 
 	// Make the offset -pLedge so the result is a NULL ledgetree node - we haven't needed to create one of these as of yet
-	pLedge->ledgetree_node_offset = -((int)pLedge);
+	//pLedge->ledgetree_node_offset = -((int)pLedge);
 
 	// keep track of which triangle edge referenced this edge (so the next one can swap the order and point to the first one)
 	int forwardEdgeIndex[255];
