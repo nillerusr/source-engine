@@ -1953,6 +1953,7 @@ void CShaderSystem::LoadTexture( IMaterialVar *pTextureVar, const char *pTexture
 	// Force local cubemaps when using the editor
 	if ( MaterialSystem()->CanUseEditorMaterials() && ( stricmp( pName, "env_cubemap" ) == 0 ) )
 	{
+		// TODO(nillerusr): should work with g_DummyTexture, but now it doesn't work
 		pTexture = (ITextureInternal*)-1;
 	}
 	else
@@ -2026,7 +2027,7 @@ void CShaderSystem::LoadCubeMap( IMaterialVar **ppParams, IMaterialVar *pTexture
 	{
 		// don't have to load anything here. . just set the texture value to DummyTexture
 		// special that says to use the cubemap entity.
-		pTextureVar->SetTextureValue(  &g_DummyTexture );
+		pTextureVar->SetTextureValue(  (ITexture*)-1 );
 		SetFlags2( ppParams, MATERIAL_VAR2_USES_ENV_CUBEMAP );
 	}
 	else
