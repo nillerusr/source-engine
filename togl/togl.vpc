@@ -70,7 +70,8 @@ $Project "togl"
 		$File	"$TOGL_SRCDIR/cglmfbo.cpp"		
 		$File	"$TOGL_SRCDIR/cglmprogram.cpp"	
 		$File	"$TOGL_SRCDIR/cglmbuffer.cpp"	
-		$File	"$TOGL_SRCDIR/cglmquery.cpp"		
+		$File	"$TOGL_SRCDIR/cglmquery.cpp"
+		$File	"$TOGL_SRCDIR/asanstubs.cpp"
 	}
 
 	$Folder	"DirectX Header Files" [$WIN32 && !$GL]

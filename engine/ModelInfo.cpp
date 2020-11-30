@@ -95,8 +95,8 @@ static int ModelFrameCount( model_t *model )
 class CNetworkStringTable_LockOverride : public CNetworkStringTable
 {
 private:
-	CNetworkStringTable_LockOverride(); // no impl
-	~CNetworkStringTable_LockOverride(); // no impl
+//	CNetworkStringTable_LockOverride(); // no impl
+//	~CNetworkStringTable_LockOverride(); // no impl
 	CNetworkStringTable_LockOverride(const CNetworkStringTable_LockOverride &); // no impl
 	CNetworkStringTable_LockOverride& operator=(const CNetworkStringTable_LockOverride &); // no impl
 public:

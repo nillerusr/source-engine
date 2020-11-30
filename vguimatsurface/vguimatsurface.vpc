@@ -41,6 +41,7 @@ $Project "vguimatsurface"
 		$File	"FontTextureCache.cpp"
 		$File	"Input.cpp"
 		$File	"MatSystemSurface.cpp"
+		$File	"asanstubs.cpp"
 		$File	"memorybitmap.cpp"						[$WIN32]
 		$File	"TextureDictionary.cpp"
 		$File	"$SRCDIR\vgui2\src\vgui_key_translation.cpp"
