@@ -507,7 +507,7 @@ FORCEINLINE_PIXEL void CPixelWriter::WritePixelNoAdvance( int r, int g, int b, i
 			{
 				if ( IsPC() || !IsX360() )
 				{
-					((unsigned short *)m_pBits)[0] = (unsigned short)((val & 0xffff));
+					((unsigned char *)m_pBits)[0] = (unsigned char)((val & 0xffff));
 					m_pBits[2] = (unsigned char)((val >> 16) & 0xff);
 				}
 				else
