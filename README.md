@@ -10,3 +10,15 @@ The main purpose of this repository is to port the engine for other platforms.
 * improve performance
 * replace current buildsystem with waf
 * rewrite achivement system( to work without steam )
+# How to Build?
+On Linux:
+1. Clone repo ( ```git clone https://github.com/nillerusr/source-engine```)
+2. Run ```git submodule init && git submodule update```
+3. Build
+```
+cd thirdparty/
+./build.sh
+cd ../
+./createallprojects
+./build.sh everything
+```
