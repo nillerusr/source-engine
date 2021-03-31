@@ -1,0 +1,84 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from waflib import Utils
+import os
+
+top = '.'
+PROJECT_NAME = 'tier0'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	conf.define('TIER0_DLL_EXPORT',1)
+#	conf.define('NO_HOOK_MALLOC',1)
+
+def build(bld):
+	source = [
+		'assert_dialog.cpp',
+		#'assert_dialog.rc',		[$WINDOWS]
+		'commandline.cpp',
+		'cpu.cpp',
+		'cpumonitoring.cpp',
+		'cpu_posix.cpp',			#[$POSIX]
+		'cpu_usage.cpp',
+		'dbg.cpp',
+		'dynfunction.cpp',
+		#'etwprof.cpp',			[$WINDOWS]
+		'fasttimer.cpp',
+		# 'InterlockedCompareExchange128.masm', [$WIN64]
+		'mem.cpp',
+		'mem_helpers.cpp',
+		'memdbg.cpp',
+		'memstd.cpp',
+		'memvalidate.cpp',
+		'minidump.cpp',
+		'pch_tier0.cpp',
+		#'platform.cpp',		[$WINDOWS||$X360]
+		'platform_posix.cpp',	#	[$POSIX]
+		#'pmc360.cpp',		[$X360]
+		#'pme.cpp',			[$WINDOWS]
+		'pme_posix.cpp',	#	[$POSIX]
+		'PMELib.cpp',		#[$WINDOWS||$POSIX]
+		'progressbar.cpp',
+		'security.cpp',
+		'systeminformation.cpp',
+		'stacktools.cpp',
+		'thread.cpp',		#[$WINDOWS||$POSIX]
+		'threadtools.cpp',
+		'tier0_strtools.cpp',
+		'tslist.cpp',
+		#'vcrmode.cpp',		#[$WINDOWS]
+		'vcrmode_posix.cpp',	#[$POSIX]
+		'vprof.cpp',
+		# 'win32consoleio.cpp',	[$WINDOWS]
+		'../tier1/pathmatch.cpp' # [$LINUXALL]
+	]
+
+	includes = [
+		'.',
+		'../public',
+		'../public/tier0',
+	] + bld.env.INCLUDES_SDL2
+
+	defines = []
+
+	libs = ['DL']
+
+	install_path = bld.env.PREFIX
+
+	bld.shlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		install_path = install_path,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)
+

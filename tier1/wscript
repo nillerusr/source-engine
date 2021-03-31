@@ -1,0 +1,92 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from waflib import Utils
+import os
+
+top = '.'
+PROJECT_NAME = 'tier1'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	conf.env.append_unique('DEFINES', ['TIER1_STATIC_LIB=1'])
+
+def build(bld):
+	print(bld)
+	source = [
+		'../utils/lzma/C/LzmaDec.c',
+		'bitbuf.cpp',
+		'byteswap.cpp',
+		'characterset.cpp',
+		'checksum_crc.cpp',
+		'checksum_md5.cpp',
+		'checksum_sha1.cpp',
+		'commandbuffer.cpp',
+		'convar.cpp',
+		'datamanager.cpp',
+		'diff.cpp',
+		'generichash.cpp',
+		'ilocalize.cpp',
+		'interface.cpp',
+		'KeyValues.cpp',
+		'keyvaluesjson.cpp',
+		'kvpacker.cpp',
+		'lzmaDecoder.cpp',
+		'lzss.cpp', # [!$SOURCESDK]
+		'mempool.cpp',
+		'memstack.cpp',
+		'NetAdr.cpp',
+		'newbitbuf.cpp',
+		'pathmatch.cpp', # [$LINUXALL]
+		# 'processor_detect.cpp', # [$WINDOWS||$X360]
+		'processor_detect_linux.cpp', # [$POSIX]
+		'qsort_s.cpp', # [$LINUXALL||$PS3]
+		'rangecheckedvar.cpp',
+		'reliabletimer.cpp',
+		'snappy-sinksource.cpp',
+		'snappy-stubs-internal.cpp',
+		'snappy.cpp',
+		'sparsematrix.cpp',
+		'splitstring.cpp',
+		'stringpool.cpp',
+		'strtools.cpp',
+		'strtools_unicode.cpp',
+		'tier1.cpp',
+		'tokenreader.cpp',
+		'uniqueid.cpp',
+		'utlbinaryblock.cpp',
+		'utlbuffer.cpp',
+		'utlbufferutil.cpp',
+		'utlstring.cpp',
+		'utlsymbol.cpp'
+	]
+
+	includes = [
+		'.',
+		'../public',
+		'../public/tier1',
+		'../public/tier0'
+	]
+
+	defines = []
+
+	libs = []
+
+	install_path = bld.env.PREFIX
+
+	bld.stlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		install_path = install_path,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)
+

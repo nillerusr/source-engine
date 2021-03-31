@@ -1,0 +1,8 @@
+*.mak
+*.mak.vpc_crc
+*.vpc_crc
+*.a
+*.project
+lib/
+*obj_*
+build/

@@ -1,0 +1,346 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from waflib import Utils
+import os
+
+top = '.'
+PROJECT_NAME = 'engine'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	conf.env.append_unique('DEFINES',[
+		'__USEA3D',
+		'_ADD_EAX_',
+		'ENGINE_DLL',
+		'VERSION_SAFE_STEAM_API_INTERFACES',
+		'USE_BREAKPAD_HANDLER'
+	])
+
+def build(bld):
+	source = [
+		'client_pch.cpp', ##[!$DEDICATED]
+		'cl_rcon.cpp', ##[!$DEDICATED]
+		'socketcreator.cpp',
+		'rpt_engine.cpp', ##[!$DEDICATED]
+		'cl_steamauth.cpp',# #[!$DEDICATED]
+		'clientframe.cpp',
+		'decal_clip.cpp',
+		'demofile.cpp',
+		'DevShotGenerator.cpp',
+		'OcclusionSystem.cpp',
+		'tmessage.cpp',
+		'r_efx.cpp',# #[!$DEDICATED] 
+		'view.cpp', ##[!$DEDICATED]
+		'baseclient.cpp',
+		'baseclientstate.cpp',
+		'cbenchmark.cpp',
+		'cdll_engine_int.cpp', ##[!$DEDICATED]	/
+		'cl_main.cpp',##[!$DEDICATED]	/
+		'cl_demo.cpp',##[!$DEDICATED]	/
+		#'cl_null.cpp',	[$DEDICATED]	/
+		'cl_demoaction.cpp',	#[!$DEDICATED]	/
+		'cl_demoaction_types.cpp',  	#[!$DEDICATED]	/
+		'cl_demoactioneditors.cpp',	#[!$DEDICATED] 	/
+		'cl_demoactionmanager.cpp',  #[!$DEDICATED]	/
+		'cl_demoeditorpanel.cpp',  	#[!$DEDICATED]	/
+		'cl_demosmootherpanel.cpp', 	#[!$DEDICATED]	/
+		'cl_demouipanel.cpp',  #[!$DEDICATED]	/
+		'cl_foguipanel.cpp',  #[!$DEDICATED]	/
+		'cl_txviewpanel.cpp',	 	#[!$DEDICATED]	/
+		'cl_entityreport.cpp',	 	#[!$DEDICATED]	/
+		'cl_ents_parse.cpp',	#[!$DEDICATED]	/
+		'cl_localnetworkbackdoor.cpp', #[!$DEDICATED] 	/
+		'cl_parse_event.cpp',	 	#[!$DEDICATED]	/
+		'cl_pluginhelpers.cpp',#[!$DEDICATED]	/
+		'cl_pred.cpp', #[!$DEDICATED]	/
+		'cl_texturelistpanel.cpp',	#[!$DEDICATED]	/
+		'client.cpp',#[!$DEDICATED]	/
+		'colorcorrectionpanel.cpp',	#[!$DEDICATED] 	/
+		'console.cpp',
+		'render_pch.cpp',
+
+		'buildcubemaps.cpp',	#[!$DEDICATED]	/
+		'debug_leafvis.cpp',	#[!$DEDICATED]	/
+		'debugoverlay.cpp',	#[!$DEDICATED]	/
+		'decals.cpp',
+		'disp.cpp',
+		'disp_interface.cpp',
+		'disp_mapload.cpp',
+		'gl_draw.cpp',
+		'gl_rsurf.cpp',
+		'gl_shader.cpp',
+		'gl_drawlights.cpp',	#[!$DEDICATED]	/
+		'gl_lightmap.cpp',	#[!$DEDICATED]	/
+		'gl_matsysiface.cpp', #[!$DEDICATED]	/
+		'gl_rlight.cpp',#[!$DEDICATED]	/
+		'gl_rmain.cpp',#[!$DEDICATED]	/
+		'gl_rmisc.cpp',#[!$DEDICATED]	/
+		'gl_screen.cpp',#[!$DEDICATED]	/
+		'gl_warp.cpp',#[!$DEDICATED]	/
+		'l_studio.cpp',
+		'matsys_interface.cpp',
+		'modelloader.cpp',
+		'Overlay.cpp',
+		'r_areaportal.cpp',	#[!$DEDICATED]	/
+		'r_decal.cpp',
+		'r_linefile.cpp',
+		'shadowmgr.cpp',#[!$DEDICATED]
+		'server_pch.cpp',
+
+
+		'sv_ipratelimit.cpp',
+		'sv_rcon.cpp',
+		'sv_steamauth.cpp',
+		'sv_uploaddata.cpp',
+		'sv_uploadgamestats.cpp',
+		'vengineserver_impl.cpp',
+
+		'sv_main.cpp',
+		'sv_client.cpp',
+		'sv_ents_write.cpp',
+		'sv_filter.cpp',
+		'sv_framesnapshot.cpp',
+		'sv_log.cpp',
+		'sv_packedentities.cpp',
+		'sv_plugin.cpp',
+		'sv_precache.cpp',
+		'sv_redirect.cpp',
+		'sv_remoteaccess.cpp',
+
+		'baseautocompletefilelist.cpp',
+		'baseserver.cpp',
+		'bitbuf_errorhandler.cpp',
+		'../public/blockingudpsocket.cpp',
+		'../public/bsptreedata.cpp',
+		'../public/builddisp.cpp',
+		'changeframelist.cpp',
+		'checksum_engine.cpp',
+		'ccs.cpp',
+		'clockdriftmgr.cpp',
+		'cl_bounded_cvars.cpp', ##[!$DEDICATED]
+		'cl_check_process.cpp',	
+		'cmd.cpp',
+		'cmodel.cpp',
+		'cmodel_bsp.cpp',
+		'cmodel_disp.cpp',
+		'../public/collisionutils.cpp',
+		'common.cpp',
+		'../public/crtmemdebug.cpp',
+		'cvar.cpp',
+		'../public/disp_common.cpp',
+		'disp_defs.cpp',
+		'disp_helpers.cpp',
+		'../public/disp_powerinfo.cpp',
+		'../public/dispcoll_common.cpp',
+		'DownloadListGenerator.cpp',
+		'downloadthread.cpp', ##[!$DEDICATED]
+		'dt.cpp',
+		'dt_common_eng.cpp',
+		'dt_encode.cpp',
+		'dt_instrumentation.cpp',
+		'dt_instrumentation_server.cpp',
+		'dt_localtransfer.cpp',
+		'../public/dt_recv.cpp',
+		'dt_recv_decoder.cpp',
+		'dt_recv_eng.cpp',
+		'../public/dt_send.cpp',
+		'dt_send_eng.cpp',
+		'dt_stack.cpp',
+		'dt_test.cpp',
+		'../public/dt_utlvector_common.cpp',
+		'../public/dt_utlvector_recv.cpp',
+		'../public/dt_utlvector_send.cpp',
+		'enginesingleuserfilter.cpp',
+		'enginestats.cpp',
+		'enginethreads.cpp',
+		'enginetrace.cpp',
+		'filesystem_engine.cpp',
+		'../public/filesystem_helpers.cpp',
+		'../public/filesystem_init.cpp',
+		'filetransfermgr.cpp',
+		'GameEventManager.cpp',
+		'GameEventManagerOld.cpp',
+		'gametrace_engine.cpp',
+		'hltvclient.cpp',
+		'hltvclientstate.cpp',
+		'hltvdemo.cpp', 
+		'hltvserver.cpp',
+		'hltvtest.cpp',
+		'host.cpp',
+		'host_cmd.cpp',
+		'host_listmaps.cpp',
+		'host_phonehome.cpp',
+		'host_state.cpp',
+		'initmathlib.cpp',
+		'../common/language.cpp',
+		'LocalNetworkBackdoor.cpp',
+		'LoadScreenUpdate.cpp', #[!$DEDICATED]
+		'../public/lumpfiles.cpp',
+		'MapReslistGenerator.cpp',
+		'matchmakinghost.cpp', #[!$DEDICATED] 
+		'matchmakingqos.cpp', #[!$DEDICATED]
+		'matchmakingclient.cpp', #[!$DEDICATED]
+		'matchmakingshared.cpp', #[!$DEDICATED]
+		'matchmakingmigrate.cpp', #[!$DEDICATED]
+		'materialproxyfactory.cpp',
+		'mem_fgets.cpp',
+		'mod_vis.cpp',
+		'ModelInfo.cpp',
+		'net_chan.cpp',
+		'net_synctags.cpp',
+		'net_ws.cpp',
+		'net_ws_queued_packet_sender.cpp',
+		'../common/netmessages.cpp',
+		'../common/steamid.cpp',
+		'networkstringtable.cpp',
+		'NetworkStringTableItem.cpp',
+		'networkstringtableserver.cpp',
+		'../public/networkvar.cpp',
+		'packed_entity.cpp',
+		'pure_server.cpp',
+		'pr_edict.cpp',
+		'precache.cpp',
+		'quakedef.cpp',
+		'randomstream.cpp',
+		'../common/randoverride.cpp',
+		'../public/registry.cpp',
+		'engine_replay_int.cpp',
+		'replay_internal.cpp',
+		'replaydemo.cpp',
+		'replaydemoplayer.cpp',	#[!$DEDICATED]
+		'replayserver.cpp',
+		'../public/sentence.cpp',
+		'Session.cpp', #[!$DEDICATED]
+		'sound_shared.cpp',
+		'spatialpartition.cpp',
+		'staticpropmgr.cpp',
+		'../public/studio.cpp',
+		'sys_dll.cpp',
+		'sys_dll2.cpp',
+		'sys_engine.cpp',
+		'sys_mainwind.cpp', #[!$DEDICATED]
+		'sys_linuxwind.cpp', #[$POSIX]
+		'testscriptmgr.cpp',
+		'traceinit.cpp',
+		'../public/vallocator.cpp',
+		'voiceserver_impl.cpp',
+		'vprof_engine.cpp',
+		'vprof_record.cpp',
+		'world.cpp',
+		'../public/XZip.cpp',
+		'../public/XUnzip.cpp',
+		'zone.cpp',
+		'bugreporter.cpp', #[!$DEDICATED]
+		'cheatcodes.cpp',
+		'download.cpp', #[!$DEDICATED]
+		'../public/editor_sendcommand.cpp',
+		'host_saverestore.cpp', #[!$DEDICATED]
+		'keys.cpp',
+		'lightcache.cpp', #[!$DEDICATED] 
+		'networkstringtableclient.cpp',
+		'saverestore_filesystem.cpp', #[!$DEDICATED]
+		'../public/scratchpad3d.cpp',
+		'servermsghandler.cpp',
+		'sys_getmodes.cpp', #[!$DEDICATED]
+		'vgui_askconnectpanel.cpp', #[!$DEDICATED]
+		'xboxsystem.cpp', #[!$DEDICATED]
+		'../common/SourceAppInfo.cpp',
+		'snd_io.cpp',
+		'EngineSoundServer.cpp',
+		'EngineSoundClient.cpp', #[!$DEDICATED]
+		'engsoundservice.cpp', #[!$DEDICATED]
+		'audio/private/voice_wavefile.cpp',
+		'audio/private/MPAFile.cpp', #[!$DEDICATED&&!$X360]
+		'audio/private/MPAHeader.cpp', #[!$DEDICATED&&!$X360]
+		'audio/private/circularbuffer.cpp', #[!$DEDICATED]
+		'audio/private/snd_posix.cpp',	#	[$POSIX]	
+
+		'audio/audio_pch.cpp', #[!$DEDICATED]
+			
+		'audio/private/vox.cpp',
+		'audio/private/snd_dev_common.cpp',	#[!$DEDICATED]	/
+		'audio/private/snd_dma.cpp',	#[!$DEDICATED]	/
+		'audio/private/snd_dsp.cpp',	#[!$DEDICATED]	/
+		'audio/private/snd_mix.cpp',	#[!$DEDICATED]	/
+		'audio/private/snd_sentence_mixer.cpp',	#[!$DEDICATED]/
+		'audio/private/snd_wave_data.cpp',	#[!$DEDICATED]	/
+		'audio/private/snd_wave_mixer.cpp',	#[!$DEDICATED]	/
+		'audio/private/snd_wave_mixer_adpcm.cpp',	#[!$DEDICATED]	/
+		'audio/private/snd_wave_source.cpp',	#[!$DEDICATED]	/
+		'audio/private/snd_wave_temp.cpp',	#[!$DEDICATED]	/
+		'audio/private/snd_win.cpp',	#[!$DEDICATED]	/
+		'audio/private/voice_gain.cpp',	
+
+		#'audio/private/snd_dev_direct.cpp',	[$WINDOWS]/
+		#'audio/private/snd_dev_wave.cpp',	[$WINDOWS]/
+		'audio/private/snd_mp3_source.cpp',	#[!$DEDICATED]/
+		'audio/private/snd_wave_mixer_mp3.cpp',	#[!$DEDICATED]	/
+		'audio/private/VBRHeader.cpp',	#	[!$DEDICATED&&!$X360]/
+		'audio/private/voice.cpp',	#[!$DEDICATED&&!$X360]/
+		#'audio/private/voice_mixer_controls.cpp', [$WINDOWS]	/
+		#'audio/private/voice_record_dsound.cpp',	[$WINDOWS]	/
+		'audio/private/voice_sound_engine_interface.cpp',	#[!$DEDICATED&&!$X360]
+
+		#'audio/private/snd_dev_xaudio.cpp',[$X360]
+		#'audio/private/snd_wave_mixer_xma.cpp',	[$X360]
+
+		'audio/private/snd_dev_sdl.cpp',	#[$SDL && !$OSXALL]
+		#'audio/private/snd_dev_openal.cpp', # [$OSXALL]
+		#'audio/private/snd_dev_mac_audioqueue.cpp',#	[$OSXALL]
+		'audio/private/voice_mixer_controls_openal.cpp',	#[$OSXALL||($LINUXALL&&!$DEDICATED)]
+		'audio/private/voice_record_openal.cpp',	#[$OSXALL||($LINUXALL&&!$DEDICATED)]
+		#'audio/private/voice_record_mac_audioqueue.cpp',	#[$OSXALL]
+
+		'../public/vgui_controls/vgui_controls.cpp',
+		'../common/vgui/vgui_basebudgetpanel.cpp',
+		'../common/vgui/vgui_budgetbargraphpanel.cpp',
+		'../common/vgui/vgui_budgethistorypanel.cpp',
+		'../common/vgui/vgui_budgetpanelshared.cpp',
+		'perfuipanel.cpp',
+		'vgui_basepanel.cpp',
+		'vgui_baseui_interface.cpp',
+		'vgui_budgetpanel.cpp',
+		'vgui_DebugSystemPanel.cpp',
+		'vgui_drawtreepanel.cpp',
+		'vgui_helpers.cpp',
+		'vgui_texturebudgetpanel.cpp',
+		'vgui_vprofgraphpanel.cpp',
+		'vgui_vprofpanel.cpp',	
+		'enginetool.cpp', #[!$DEDICATED]
+		'toolframework.cpp'
+	]
+
+	includes = [
+		'.',
+		'../public',
+		'../public/tier0',
+		'../public/tier1',
+		'../common',
+		'audio',
+		'audio/public',
+		'audio/private'
+	]
+
+	defines = []
+
+	libs = ['tier0','vgui_controls','dmxloader','tier1','tier2','tier3','bitmap','vstdlib','appframework','datamodel','vtf','mathlib','steam_api','matsys_controls','BZIP2','SDL2','JPEG','ZLIB','OPENAL','CURL']
+
+	install_path = bld.env.PREFIX
+
+	bld.shlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		install_path = install_path,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)
+

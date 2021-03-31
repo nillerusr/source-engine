@@ -1,0 +1,126 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from waflib import Utils
+import os
+
+top = '.'
+PROJECT_NAME = 'GameUI'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	conf.define('GAMEUI_EXPORTS',1)
+	conf.define('VERSION_SAFE_STEAM_API_INTERFACES',1)
+
+def build(bld):
+	source = [
+		'BackgroundMenuButton.cpp',
+		'BasePanel.cpp',
+		'GameConsole.cpp',
+		'GameUI_Interface.cpp',
+		# 'LogoFile.cpp', [!$POSIX]
+		'ModInfo.cpp',
+		'MouseMessageForwardingPanel.cpp',
+		'../common/GameUI/ObjectList.cpp',
+		'PanelListPanel.cpp',
+		'RunGameEngine.cpp',
+		'../common/GameUI/scriptobject.cpp',
+		'Sys_Utils.cpp',
+		'TextEntryBox.cpp',
+		'TGAImagePanel.cpp',
+		'../public/vgui_controls/vgui_controls.cpp',
+		'VGuiSystemModuleLoader.cpp',
+		'BonusMapsDatabase.cpp',
+		'../common/language.cpp',
+		'../common/imageutils.cpp',
+		'SaveGameBrowserDialog.cpp',
+		'gameui_util.cpp',
+		'BitmapImagePanel.cpp',
+		'CommandCheckButton.cpp',
+		'CvarNegateCheckButton.cpp',
+		'../common/GameUI/cvarslider.cpp',
+		'CvarTextEntry.cpp',
+		'CvarToggleCheckButton.cpp',
+		'HapticControlBox.cpp',
+		'KeyToggleCheckButton.cpp',
+		'LabeledCommandComboBox.cpp',
+		'URLButton.cpp',
+		'vcontrolslistpanel.cpp',
+		'BenchmarkDialog.cpp',
+		'BonusMapsDialog.cpp',
+		'CommentaryDialog.cpp',
+		'CommentaryExplanationDialog.cpp',
+		'ContentControlDialog.cpp',
+		'CustomTabExplanationDialog.cpp',
+		'GameConsoleDialog.cpp',
+		'LoadGameDialog_Xbox.cpp',
+		'LoadGameDialog.cpp',
+		'MultiplayerAdvancedDialog.cpp',
+		'NewGameDialog.cpp',
+		'PlayerListDialog.cpp',
+		'SaveGameDialog_Xbox.cpp',
+		'SaveGameDialog.cpp',
+		'LoadCommentaryDialog.cpp',
+		'LoadingDialog.cpp',
+		'BaseSaveGameDialog.cpp',
+		#'ChangeGameDialog.cpp', [!$POSIX]
+		'CreateMultiplayerGameBotPage.cpp',
+		'CreateMultiplayerGameDialog.cpp',
+		'CreateMultiplayerGameGameplayPage.cpp',
+		'CreateMultiplayerGameServerPage.cpp',
+		'OptionsDialog_Xbox.cpp',
+		'ControllerDialog.cpp',
+		'matchmaking/achievementsdialog.cpp',
+		'matchmaking/basedialog.cpp',
+		'matchmaking/dialogmenu.cpp',
+		'matchmaking/leaderboarddialog.cpp',
+		'matchmaking/matchmakingbasepanel.cpp',
+		'matchmaking/pausedialog.cpp',
+		'matchmaking/sessionlobbydialog.cpp',
+		'matchmaking/sessionoptionsdialog.cpp',
+		'matchmaking/sessionbrowserdialog.cpp',
+		'matchmaking/welcomedialog.cpp',
+		'OptionsDialog.cpp',
+		'OptionsSubAudio.cpp',
+		'OptionsSubDifficulty.cpp',
+		'OptionsSubGame.cpp',
+		#'OptionsSubHaptics.cpp',	[$WIN32]	[$WIN32]
+		'OptionsSubKeyboard.cpp',
+		'OptionsSubMouse.cpp',
+		'OptionsSubMultiplayer.cpp',
+		'OptionsSubPortal.cpp',
+		'OptionsSubVideo.cpp',
+		'OptionsSubVoice.cpp',
+	]
+
+	includes = [
+		'.',
+		'../public',
+		'../public/tier0',
+		'../public/tier1',
+		'../common',
+		'../common/GameUI'
+	]
+
+	defines = []
+
+	libs = ['tier0','vgui_controls','tier1','tier2','tier3','vstdlib','vtf','bitmap','mathlib','SDL2','steam_api','matsys_controls','JPEG','PNG']
+
+	install_path = bld.env.PREFIX
+
+	bld.shlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		install_path = install_path,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)
+

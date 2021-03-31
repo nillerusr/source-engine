@@ -1,0 +1,72 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from waflib import Utils
+import os
+
+top = '.'
+PROJECT_NAME = 'ServerBrowser'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	conf.define('SERVERBROWSER_EXPORTS',1)
+	conf.define('VERSION_SAFE_STEAM_API_INTERFACES',1)
+	conf.define('SERVERBROWSER_EXPORTS',1)
+	conf.define('GAME_SRC',1)
+	conf.define('_USE_32BIT_TIME_T',1)
+
+def build(bld):
+	source = [
+		'BaseGamesPage.cpp',
+		'BlacklistedServers.cpp',
+		'CustomGames.cpp',
+		'DialogAddServer.cpp',
+		'DialogGameInfo.cpp',
+		'DialogServerPassword.cpp',
+		'FavoriteGames.cpp',
+		'FriendsGames.cpp',
+		'HistoryGames.cpp',
+		'InternetGames.cpp',
+		'LanGames.cpp',
+		'ModList.cpp',
+		'ServerBrowser.cpp',
+		'ServerBrowserDialog.cpp',
+		'ServerContextMenu.cpp',
+		'ServerListCompare.cpp',
+		'SpectateGames.cpp',
+		'VACBannedConnRefusedDialog.cpp',
+		'QuickListPanel.cpp',
+		'../public/vgui_controls/vgui_controls.cpp',
+		'../common/ServerBrowser/blacklisted_server_manager.cpp'
+	]
+
+	includes = [
+		'.',
+		'../public',
+		'../public/tier0',
+		'../public/tier1',
+		'../common'
+	]
+
+	defines = []
+
+	libs = ['tier0','vgui_controls','mathlib','tier1','tier2','tier3','vstdlib','steam_api']
+
+	install_path = bld.env.PREFIX
+
+	bld.shlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		install_path = install_path,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)
+

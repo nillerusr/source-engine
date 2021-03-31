@@ -1,0 +1,69 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from waflib import Utils
+import os
+
+top = '.'
+PROJECT_NAME = 'vgui2'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	conf.define('DONT_PROTECT_FILEIO_FUNCTIONS',1)
+
+def build(bld):
+	source = [
+		'Bitmap.cpp',
+		'Border.cpp',
+		'ScalableImageBorder.cpp',
+		'ImageBorder.cpp',
+		'fileimage.cpp',
+		'../../public/filesystem_helpers.cpp',
+		'../../public/filesystem_init.cpp',
+		'InputWin32.cpp',
+		'LocalizedStringTable.cpp',
+		'MemoryBitmap.cpp',
+		'MessageListener.cpp',
+		'Scheme.cpp',
+		#'Surface.cpp',					[$WIN32]
+		#'System.cpp',					[$WINDOWS||$X360]
+		'system_posix.cpp',# [$POSIX]
+		'../../public/UnicodeFileHelpers.cpp',
+		'vgui.cpp',
+		'vgui_internal.cpp',
+		'vgui_key_translation.cpp',
+		'VPanel.cpp',
+		'VPanelWrapper.cpp',
+		'keyrepeat.cpp'
+	]
+
+	includes = [
+		'.',
+		'../../public',
+		'../../public/tier0',
+		'../../public/tier1',
+		'../../common'
+	] + bld.env.INCLUDES_SDL2
+
+	defines = []
+
+	libs = ['tier0','tier1','tier2','tier3','vstdlib','SDL2']
+
+	install_path = bld.env.PREFIX
+
+	bld.shlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		install_path = install_path,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)
+
