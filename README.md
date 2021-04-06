@@ -16,9 +16,6 @@ On Linux:
 2. Run ```git submodule init && git submodule update```
 3. Build
 ```
-cd thirdparty/
-./build.sh
-cd ../
-./createallprojects
-./build.sh everything
+./waf configure -T debug
+./waf build
 ```
