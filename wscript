@@ -39,7 +39,10 @@ projects=[
 	'materialsystem','studiorender','materialsystem/stdshaders',
 	'video','inputsystem','appframework',
 	'launcher','engine/voice_codecs/minimp3','materialsystem/shaderapidx9',
-	'gameui','dmxloader','datamodel','engine'
+	'gameui','dmxloader','datamodel','engine','ivp/havana',
+	'ivp/havana/havok/hk_math','ivp/havana/havok/hk_base',
+	'ivp/ivp_compact_builder','ivp/ivp_physics','vphysics','game/server',
+	'particles','choreoobjects','game/client'
 ]
 
 projects += ['thirdparty/StubSteamAPI'] # ,'thirdparty/libjpeg','thirdparty/SDL2-src'] # thirdparty projects
@@ -91,9 +94,6 @@ def options(opt):
 	grp.add_option('-8', '--64bits', action = 'store_true', dest = 'ALLOW64', default = False,
 		help = 'allow targetting 64-bit engine(Linux/Windows/OSX x86 only) [default: %default]')
 
-	grp.add_option('-W', '--win-style-install', action = 'store_true', dest = 'WIN_INSTALL', default = False,
-		help = 'install like Windows build, ignore prefix, useful for development [default: %default]')
-
 	opt.load('compiler_optimizations subproject')
 
 	opt.add_subproject(projects)
@@ -104,7 +104,7 @@ def options(opt):
 	opt.load('reconfigure')
 
 def configure(conf):
-	conf.env.PREFIX = ''
+	conf.env.PREFIX = '.'
 
 	conf.load('fwgslib reconfigure')
 
@@ -127,16 +127,6 @@ def configure(conf):
 	conf.check_pkg('freetype2', 'FT2', FT2_CHECK)
 	conf.check_pkg('fontconfig', 'FC', FC_CHECK)
 
-#	enforce_pic = True # modern defaults
-
-	# modify options dictionary early
-#	if conf.env.DEST_OS == 'android':
-
-#	if conf.env.STATIC_LINKING:
-#		enforce_pic = False # PIC may break full static builds
-
-#	conf.check_pic(enforce_pic)
-
 	# We restrict 64-bit builds ONLY for Win/Linux/OSX running on Intel architecture
 	# Because compatibility with original GoldSrc
 	if conf.env.DEST_OS in ['win32', 'linux', 'darwin'] and conf.env.DEST_CPU == 'x86_64':
@@ -149,38 +139,16 @@ def configure(conf):
 	conf.load('force_32bit')
 
 	compiler_optional_flags = [
-#		'-Wall', '-Wextra', '-Wpedantic',
+		'-Wall',
 		'-fdiagnostics-color=always',
-#		'-Werror=return-type',
-#		'-Werror=parentheses',
-#		'-Werror=vla',
-#		'-Werror=tautological-compare',
-#		'-Werror=duplicated-cond',
-#		'-Werror=duplicated-branches', # BEWARE: buggy
-#		'-Werror=bool-compare',
-#		'-Werror=bool-operation',
 		'-Wcast-align',
-#		'-Werror=cast-align=strict', # =strict is for GCC >=8
-#		'-Werror=packed',
-#		'-Werror=packed-not-aligned',
-		'-Wuninitialized', # older GCC versions have -Wmaybe-uninitialized enabled by this switch, which is not accurate
-                                   # so just warn, not error
+		'-Wuninitialized',
 		'-Winit-self',
-#		'-Werror=implicit-fallthrough=2', # clang incompatible without "=2"
-#		'-Wdouble-promotion', # disable warning flood
 		'-Wstrict-aliasing'
 	]
 
 	c_compiler_optional_flags = [
-#		'-Werror=incompatible-pointer-types',
-#		'-Werror=implicit-function-declaration',
-#		'-Werror=int-conversion',
-#		'-Werror=implicit-int',
-#		'-Werror=strict-prototypes',
-#		'-Werror=old-style-declaration',
-#		'-Werror=old-style-definition',
-#		'-Werror=declaration-after-statement',
-		'-fnonconst-initializers', # owcc
+		'-fnonconst-initializers' # owcc
 	]
 
 	cflags, linkflags = conf.get_optimization_flags()
@@ -190,7 +158,7 @@ def configure(conf):
 	cxxflags = list(cflags) + ['-std=c++11','-fpermissive']
 
 	if conf.env.COMPILER_CC == 'gcc':
-		wrapfunctions = ['fopen','freopen','open','creat','access','__xstat','stat','lstat','fopen64','open64',
+		wrapfunctions = ['freopen','fopen','open','creat','access','__xstat','stat','lstat','fopen64','open64',
 			'opendir','__lxstat','chmod','chown','lchown','symlink','link','__lxstat64','mknod',
 			'utimes','unlink','rename','utime','__xstat64','mount','mkfifo','mkdir','rmdir','scandir','realpath']
 
@@ -217,6 +185,7 @@ def configure(conf):
 
 	if conf.env.DEST_OS != 'win32':
 		conf.check_cc(lib='dl', mandatory=False)
+		conf.check_cc(lib='rt', mandatory=False)
 
 		if not conf.env.LIB_M: # HACK: already added in xcompile!
 			conf.check_cc(lib='m')
@@ -247,13 +216,13 @@ def configure(conf):
 		# conf.multicheck(*a, run_all_tests = True, mandatory = True)
 
 	# indicate if we are packaging for Linux/BSD
-	if not conf.options.WIN_INSTALL and conf.env.DEST_OS not in ['win32', 'darwin', 'android']:
-		conf.env.LIBDIR = conf.env.BINDIR = '${PREFIX}/lib/'
-	else:
-		conf.env.LIBDIR = conf.env.BINDIR = conf.env.PREFIX
+	if conf.env.DEST_OS != 'android':
+		conf.env.LIBDIR = conf.env.PREFIX+'/bin/'
+		conf.env.BINDIR = conf.env.PREFIX
+
+	conf.env.LIBDIR = conf.env.BINDIR = conf.env.PREFIX
 
 	define_platform(conf)
-
 	conf.add_subproject(projects)
 
 def build(bld):

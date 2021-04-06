@@ -20,6 +20,7 @@ struct studiohdr_t;
 #include <tier0/dbg.h>
 
 #include <tier1/strtools.h>
+#include <tier1/fmtstr.h>
 #include <vstdlib/random.h>
 #include <utlvector.h>
 

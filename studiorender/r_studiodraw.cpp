@@ -1235,11 +1235,13 @@ public:
 			{
 #if !defined( _X360 )
 				Assert( dstVertex.m_vecUserData.w == -1.0f || dstVertex.m_vecUserData.w == 1.0f );
-				if ( nHasSIMD )
-				{
-					meshBuilder.FastVertexSSE( dstVertex );
-				}
-				else
+
+				// TODO(nillerusr): uncomment when i remove -mfpmath=387 from compiler options
+				//if ( nHasSIMD )
+				//{
+				//	meshBuilder.FastVertexSSE( dstVertex );
+				//}
+				//else
 				{
 					meshBuilder.FastVertex( dstVertex );
 				}
