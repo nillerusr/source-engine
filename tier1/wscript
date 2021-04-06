@@ -75,8 +75,6 @@ def build(bld):
 
 	libs = []
 
-	install_path = bld.env.PREFIX
-
 	bld.stlib(
 		source   = source,
 		target   = PROJECT_NAME,

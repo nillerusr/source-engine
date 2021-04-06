@@ -329,7 +329,7 @@ def build(bld):
 
 	libs = ['tier0','vgui_controls','dmxloader','tier1','tier2','tier3','bitmap','vstdlib','appframework','datamodel','vtf','mathlib','steam_api','matsys_controls','BZIP2','SDL2','JPEG','ZLIB','OPENAL','CURL']
 
-	install_path = bld.env.PREFIX
+	install_path = bld.env.LIBDIR
 
 	bld.shlib(
 		source   = source,

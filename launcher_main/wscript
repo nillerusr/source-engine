@@ -5,7 +5,7 @@ from waflib import Utils
 import os
 
 top = '.'
-PROJECT_NAME = 'hl2'
+PROJECT_NAME = 'hl2_launcher'
 
 def options(opt):
 	# stub
@@ -27,7 +27,7 @@ def build(bld):
 		libs += ['USER32', 'SHELL32']
 		source += ['launcher_main.rc']
 
-	install_path = bld.env.PREFIX
+	install_path = bld.env.BINDIR
 	bld(
 		source   = source,
 		target   = PROJECT_NAME,

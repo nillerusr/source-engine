@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 # encoding: utf-8
-# a1batross, mittorn, 2018
+# a1batross, mittorn, nillerusr
 
 from __future__ import print_function
 from waflib import Logs, Context, Configure
@@ -104,8 +104,6 @@ def options(opt):
 	opt.load('reconfigure')
 
 def configure(conf):
-	conf.env.PREFIX = '.'
-
 	conf.load('fwgslib reconfigure')
 
 	# Force XP compability, all build targets should add
@@ -219,8 +217,8 @@ def configure(conf):
 	if conf.env.DEST_OS != 'android':
 		conf.env.LIBDIR = conf.env.PREFIX+'/bin/'
 		conf.env.BINDIR = conf.env.PREFIX
-
-	conf.env.LIBDIR = conf.env.BINDIR = conf.env.PREFIX
+	else:
+		conf.env.LIBDIR = conf.env.BINDIR = conf.env.PREFIX
 
 	define_platform(conf)
 	conf.add_subproject(projects)

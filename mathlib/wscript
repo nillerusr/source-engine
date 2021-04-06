@@ -1,4 +1,4 @@
-	#! /usr/bin/env python
+#! /usr/bin/env python
 # encoding: utf-8
 
 from waflib import Utils
@@ -52,8 +52,6 @@ def build(bld):
 
 	libs = []
 
-	install_path = bld.env.PREFIX
-
 	bld.stlib(
 		source   = source,
 		target   = PROJECT_NAME,
@@ -62,7 +60,6 @@ def build(bld):
 		includes = includes,
 		defines  = defines,
 		use      = libs,
-		install_path = install_path,
 		subsystem = bld.env.MSVC_SUBSYSTEM,
 		idx      = bld.get_taskgen_count()
 	)

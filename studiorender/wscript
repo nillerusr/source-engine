@@ -43,7 +43,7 @@ def build(bld):
 
 	libs = ['tier0','tier1','tier2','tier3','vstdlib','mathlib','bitmap']
 
-	install_path = bld.env.PREFIX
+	install_path = bld.env.LIBDIR
 
 	bld.shlib(
 		source   = source,

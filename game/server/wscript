@@ -602,7 +602,7 @@ def build(bld):
 
 	libs = ['tier0','particles','dmxloader','tier1','tier2','tier3','mathlib','vstdlib','choreoobjects','steam_api']
 
-	install_path = bld.env.PREFIX
+	install_path = bld.env.PREFIX+'/hl2/bin'
 
 	bld.shlib(
 		source   = source,
@@ -611,6 +611,7 @@ def build(bld):
 		features = 'c cxx',
 		includes = includes,
 		defines  = defines,
+		install_path = install_path,
 		use      = libs,
 		subsystem = bld.env.MSVC_SUBSYSTEM,
 		idx      = bld.get_taskgen_count()

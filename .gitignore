@@ -6,3 +6,6 @@
 lib/
 *obj_*
 build/
+.waf*
+.lock-waf*
+__pycache__
