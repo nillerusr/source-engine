@@ -1084,6 +1084,7 @@ FSReturnCode_t FileSystem_SetBasePaths( IFileSystem *pFileSystem )
 //-----------------------------------------------------------------------------
 FSReturnCode_t FileSystem_GetFileSystemDLLName( char *pFileSystemDLL, int nMaxLen, bool &bSteam )
 {
+#if 0
 	bSteam = false;
 
 	// Inside of here, we don't have a filesystem yet, so we have to assume that the filesystem_stdio or filesystem_steam
@@ -1112,6 +1113,31 @@ FSReturnCode_t FileSystem_GetFileSystemDLLName( char *pFileSystemDLL, int nMaxLe
 			bSteam = true;
 		}
 	#endif
+#else
+	char executablePath[MAX_PATH];
+	if ( !FileSystem_GetExecutableDir( executablePath, sizeof( executablePath ) )	)
+		return SetupFileSystemError( false, FS_INVALID_PARAMETERS, "FileSystem_GetExecutableDir failed." );
+
+	// Assume we'll use local files
+	Q_snprintf( pFileSystemDLL, nMaxLen, "%s%clibfilesystem_stdio" DLL_EXT_STRING, executablePath, CORRECT_PATH_SEPARATOR );
+
+	#if !defined( _X360 )
+		// Use filsystem_steam if it exists?
+		#if defined( OSX ) || defined( LINUX )
+			struct stat statBuf;
+		#endif
+		if (
+			#if defined( OSX ) || defined( LINUX )
+				stat( pFileSystemDLL, &statBuf ) != 0
+			#else
+				_access( pFileSystemDLL, 0 ) != 0
+			#endif
+		) {
+			Q_snprintf( pFileSystemDLL, nMaxLen, "%s%cfilesystem_stdio" DLL_EXT_STRING, executablePath, CORRECT_PATH_SEPARATOR );
+		}
+	#endif
+
+#endif
 
 	return FS_OK;
 }

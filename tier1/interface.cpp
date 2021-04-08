@@ -36,6 +36,9 @@
 #include "xbox/xbox_win32stubs.h"
 #endif
 
+#ifdef POSIX
+#include <sys/stat.h>
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -273,6 +276,7 @@ CSysModule *Sys_LoadModule( const char *pModuleName, Sys_Flags flags /* = SYS_NO
 	// file in the depot (MFP) or a filesystem GetLocalCopy() call must be made
 	// prior to the call to this routine.
 	char szCwd[1024];
+	char szModuleName[1024];
 	HMODULE hDLL = NULL;
 
 	if ( !Q_IsAbsolutePath( pModuleName ) )
@@ -287,6 +291,7 @@ CSysModule *Sys_LoadModule( const char *pModuleName, Sys_Flags flags /* = SYS_NO
 				V_strcpy_safe( szCwd, CommandLine()->GetParm( i + 1 ) );
 			}
 		}
+
 		if (szCwd[strlen(szCwd) - 1] == '/' || szCwd[strlen(szCwd) - 1] == '\\' )
 		{
 			szCwd[strlen(szCwd) - 1] = 0;
@@ -294,15 +299,20 @@ CSysModule *Sys_LoadModule( const char *pModuleName, Sys_Flags flags /* = SYS_NO
 
 		char szAbsoluteModuleName[1024];
 		size_t cCwd = strlen( szCwd );
-		if ( strstr( pModuleName, "bin/") == pModuleName || ( szCwd[ cCwd - 1 ] == 'n'  && szCwd[ cCwd - 2 ] == 'i' && szCwd[ cCwd - 3 ] == 'b' )  )
-		{
-			// don't make bin/bin path
-			Q_snprintf( szAbsoluteModuleName, sizeof(szAbsoluteModuleName), "%s/%s", szCwd, pModuleName );			
-		}
+
+		bool bUseLibPrefix = false;
+		
+#ifdef POSIX
+		struct stat statBuf;
+		Q_snprintf(szModuleName, sizeof(szModuleName), "bin/lib%s", pModuleName);
+		bUseLibPrefix |= stat(szModuleName, &statBuf) == 0;
+#endif
+
+		if( bUseLibPrefix )
+			Q_snprintf( szAbsoluteModuleName, sizeof(szAbsoluteModuleName), "%s/bin/lib%s", szCwd, pModuleName );
 		else
-		{
 			Q_snprintf( szAbsoluteModuleName, sizeof(szAbsoluteModuleName), "%s/bin/%s", szCwd, pModuleName );
-		}
+
 		hDLL = Sys_LoadLibrary( szAbsoluteModuleName, flags );
 	}
 

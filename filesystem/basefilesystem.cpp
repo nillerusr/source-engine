@@ -5020,6 +5020,7 @@ void CBaseFileSystem::CSearchPathsIterator::CopySearchPaths( const CUtlVector<CS
 CSysModule *CBaseFileSystem::LoadModule( const char *pFileName, const char *pPathID, bool bValidatedDllOnly )
 {
 	CHECK_DOUBLE_SLASHES( pFileName );
+	CSysModule *pModule = NULL;
 
 	LogFileAccess( pFileName );
 	if ( !pPathID )
@@ -5044,16 +5045,33 @@ CSysModule *CBaseFileSystem::LoadModule( const char *pFileName, const char *pPat
 			continue;
 
 		Q_snprintf( tempPathID, sizeof(tempPathID), "%s%s", m_SearchPaths[i].GetPathString(), pFileName ); // append the path to this dir.
-		CSysModule *pModule = Sys_LoadModule( tempPathID );
+		pModule = Sys_LoadModule( tempPathID );
 		if ( pModule ) 
 		{
 			// we found the binary in one of our search paths
 			return pModule;
 		}
+
+#ifdef POSIX
+		Q_snprintf( tempPathID, sizeof(tempPathID), "%slib%s", m_SearchPaths[i].GetPathString(), pFileName ); // append the path to this dir.
+		printf(tempPathID);
+		pModule = Sys_LoadModule( tempPathID );
+		if ( pModule )
+			return pModule;
+#endif
 	}
 
-	// couldn't load it from any of the search paths, let LoadLibrary try
-	return Sys_LoadModule( pFileName );
+
+#ifdef POSIX
+	Q_snprintf( tempPathID, sizeof(tempPathID), "lib%s", pFileName );
+	pModule = Sys_LoadModule( tempPathID );
+	if( !pModule )
+#endif
+	{
+		pModule = Sys_LoadModule( pFileName );
+	}
+
+	return pModule;
 }
 
 //-----------------------------------------------------------------------------
