@@ -22,7 +22,8 @@
 // For rand(). We really need a library!
 #include <stdlib.h>
 
-#ifndef _X360
+#if defined(__SSE__) || defined(_M_IX86_FP)
+#define USE_SSE
 // For MMX intrinsics
 #include <xmmintrin.h>
 #endif
@@ -209,10 +210,9 @@ private:
 
 FORCEINLINE void NetworkVarConstruct( Vector &v ) { v.Zero(); }
 
-
-#define USE_M64S ( ( !defined( _X360 ) ) )
-
-
+#ifdef USE_SSE
+#define USE_M64S
+#endif
 
 //=========================================================
 // 4D Short Vector (aligned on 8-byte boundary)

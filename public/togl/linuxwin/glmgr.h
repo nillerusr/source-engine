@@ -214,8 +214,8 @@ struct GLClipPlaneEnable_t		{ GLint		enable;													inline bool operator==(
 struct GLClipPlaneEquation_t	{ GLfloat	x,y,z,w;												inline bool operator==(const GLClipPlaneEquation_t& src)	const { return EQ(x) && EQ(y) && EQ(z) && EQ(w);			} };
 
 //blend
-struct GLColorMaskSingle_t		{ char		r,g,b,a;												inline bool operator==(const GLColorMaskSingle_t& src)		const { return EQ(r) && EQ(g) && EQ(b) && EQ(a);			} };
-struct GLColorMaskMultiple_t	{ char		r,g,b,a;												inline bool operator==(const GLColorMaskMultiple_t& src)	const { return EQ(r) && EQ(g) && EQ(b) && EQ(a);			} };
+struct GLColorMaskSingle_t		{ signed char		r,g,b,a;												inline bool operator==(const GLColorMaskSingle_t& src)		const { return EQ(r) && EQ(g) && EQ(b) && EQ(a);			} };
+struct GLColorMaskMultiple_t	{ signed char		r,g,b,a;												inline bool operator==(const GLColorMaskMultiple_t& src)	const { return EQ(r) && EQ(g) && EQ(b) && EQ(a);			} };
 struct GLBlendEnable_t			{ GLint		enable;													inline bool operator==(const GLBlendEnable_t& src)			const { return EQ(enable);									} };
 struct GLBlendFactor_t			{ GLenum	srcfactor,dstfactor;									inline bool operator==(const GLBlendFactor_t& src)			const { return EQ(srcfactor) && EQ(dstfactor);				} };
 struct GLBlendEquation_t		{ GLenum	equation;												inline bool operator==(const GLBlendEquation_t& src)		const { return EQ(equation);								} };
@@ -225,7 +225,7 @@ struct GLBlendEnableSRGB_t		{ GLint		enable;													inline bool operator==(
 //depth
 struct GLDepthTestEnable_t		{ GLint		enable;													inline bool operator==(const GLDepthTestEnable_t& src)		const { return EQ(enable);									} };
 struct GLDepthFunc_t			{ GLenum	func;													inline bool operator==(const GLDepthFunc_t& src)			const { return EQ(func);									} };
-struct GLDepthMask_t			{ char		mask;													inline bool operator==(const GLDepthMask_t& src)			const { return EQ(mask);									} };
+struct GLDepthMask_t			{  char		mask;													inline bool operator==(const GLDepthMask_t& src)			const { return EQ(mask);									} };
 
 //stencil
 struct GLStencilTestEnable_t	{ GLint		enable;													inline bool operator==(const GLStencilTestEnable_t& src)	const { return EQ(enable);									} };

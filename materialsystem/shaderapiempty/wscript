@@ -5,34 +5,35 @@ from waflib import Utils
 import os
 
 top = '.'
-PROJECT_NAME = 'inputsystem'
+PROJECT_NAME = 'shaderapiempty'
 
 def options(opt):
 	# stub
 	return
 
 def configure(conf):
-	conf.define('VERSION_SAFE_STEAM_API_INTERFACES',1)
+	conf.env.append_unique('DEFINES',[
+		'SHADER_DLL_EXPORT',
+		'PROTECTED_THINGS_ENABLE'
+	])
 
 def build(bld):
 	source = [
-		'inputsystem.cpp',
-		'joystick_sdl.cpp',
-		#'novint.cpp', #			[$WIN32]
-		'key_translation.cpp',
-		'steamcontroller.cpp'
+		'shaderapiempty.cpp'
 	]
 
 	includes = [
 		'.',
-		'../common',
-		'../public',
-		'../public/tier0'
-	]
+		'../../public',
+		'../../public/tier0',
+		'../../public/tier1',
+		'../../common',
+		'../'
+	] + bld.env.INCLUDES_SDL2
 
 	defines = []
 
-	libs = ['tier0','tier1','tier2','vstdlib','SDL2','steam_api']
+	libs = ['tier0','tier1']
 
 	install_path = bld.env.LIBDIR
 

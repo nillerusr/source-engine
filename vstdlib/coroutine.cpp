@@ -223,11 +223,11 @@ extern "C" byte *GetStackPtr64();
 // Apple's version of gcc/g++ doesn't return the expected value using the intrinsic, so 
 // do it the old fashioned way - this will also use asm on linux (since we don't compile
 // with llvm/clang there) but that seems fine.
-#if defined(__llvm__) || defined(__clang__)
+//#if defined(__llvm__) || defined(__clang__)
 #define GetStackPtr( pStackPtr )	byte *pStackPtr = (byte*)__builtin_frame_address(0)
-#else
-#define GetStackPtr( pStackPtr )	register byte *pStackPtr __asm__( "esp" )
-#endif
+//#else
+//#define GetStackPtr( pStackPtr )	register byte *pStackPtr __asm__( "esp" )
+//#endif
 #elif defined(__SNC__)
 #define GetStackPtr( pStackPtr )	byte *pStackPtr = (byte*)__builtin_frame_address(0)
 #else

@@ -8,6 +8,8 @@
 
 #if defined( _X360 )
 #include <xboxmath.h>
+#elif defined(__arm__)
+#include "sse2neon.h"
 #else
 #include <xmmintrin.h>
 #endif
@@ -21,7 +23,7 @@
 #define USE_STDC_FOR_SIMD 0
 #endif
 
-#if (!defined(_X360) && (USE_STDC_FOR_SIMD == 0))
+#if (!defined (__arm__) && !defined(_X360) && (USE_STDC_FOR_SIMD == 0))
 #define _SSE1 1
 #endif
 

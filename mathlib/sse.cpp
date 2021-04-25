@@ -11,6 +11,10 @@
 #include "tier0/dbg.h"
 #include "mathlib/mathlib.h"
 #include "mathlib/vector.h"
+#ifdef __arm__
+#include "sse2neon.h"
+#endif
+
 #include "sse.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -176,7 +180,9 @@ float _SSE_RSqrtFast(float x)
 	Assert( s_bMathlibInitialized );
 
 	float rroot;
-#ifdef _WIN32
+#ifdef __arm__
+        rroot = _SSE_RSqrtAccurate(x);
+#elif _WIN32
 	_asm
 	{
 		rsqrtss	xmm0, x
@@ -204,16 +210,19 @@ float FASTCALL _SSE_VectorNormalize (Vector& vec)
 #endif
 
 	float *v = &vec[0];
-#ifdef _WIN32
 	float *r = &result[0];
-#endif
 
 	float	radius = 0.f;
 	// Blah, get rid of these comparisons ... in reality, if you have all 3 as zero, it shouldn't 
 	// be much of a performance win, considering you will very likely miss 3 branch predicts in a row.
 	if ( v[0] || v[1] || v[2] )
 	{
-#ifdef _WIN32
+#ifdef __arm__
+		float rsqrt = _SSE_RSqrtAccurate( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] );
+		r[0] = v[0] * rsqrt;
+		r[1] = v[1] * rsqrt;
+		r[2] = v[2] * rsqrt;
+#elif _WIN32
 	_asm
 		{
 			mov			eax, v
@@ -287,7 +296,9 @@ void FASTCALL _SSE_VectorNormalizeFast (Vector& vec)
 float _SSE_InvRSquared(const float* v)
 {
 	float	inv_r2 = 1.f;
-#ifdef _WIN32
+#ifdef __arm__
+	return _SSE_RSqrtAccurate( FLT_EPSILON + v[0] * v[0] + v[1] * v[1] + v[2] * v[2] );
+#elif _WIN32
 	_asm { // Intel SSE only routine
 		mov			eax, v
 		movss		xmm5, inv_r2		// x5 = 1.0, 0, 0, 0
@@ -380,7 +391,14 @@ typedef __m64 v2si;   // vector of 2 int (mmx)
 
 void _SSE_SinCos(float x, float* s, float* c)
 {
-#ifdef _WIN32
+#ifdef __arm__
+#if defined( POSIX )
+        sincosf(x, s, c);
+#else
+	*s = sin( x );
+        *c = cos( x );
+#endif
+#elif _WIN32
 	float t4, t8, t12;
 
 	__asm
@@ -587,7 +605,9 @@ void _SSE_SinCos(float x, float* s, float* c)
 
 float _SSE_cos( float x )
 {
-#ifdef _WIN32
+#ifdef __arm__
+	return cos(x);
+#elif _WIN32
 	float temp;
 	__asm
 	{

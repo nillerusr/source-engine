@@ -210,6 +210,9 @@ int main( int argc, char *argv[] )
 
 	void *dedicated = dlopen( pBinaryName, RTLD_NOW );
 	if ( !dedicated )
+		dedicated = dlopen( "libdedicated" DLL_EXT_STRING, RTLD_NOW );
+
+	if ( !dedicated )
 	{
 		printf( "Failed to open %s (%s)\n", pBinaryName, dlerror());
 		return -1;

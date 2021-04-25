@@ -1,0 +1,68 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from waflib import Utils
+import os
+
+top = '.'
+PROJECT_NAME = 'dedicated'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	conf.define('LAUNCHERONLY',1)
+#	conf.define('SUPPORT_PACKED_STORE',1)
+	conf.define('DEDICATED',1)
+
+def build(bld):
+	source = [
+		'filesystem.cpp',
+		'../public/filesystem_init.cpp',
+		'../common/netapi.cpp',
+		'../common/SteamAppStartup.cpp',
+		'sys_common.cpp',
+		'sys_ded.cpp',
+		#'sys_windows.cpp', [$WINDOWS]
+		'sys_linux.cpp', # [$POSIX]
+		'console/conproc.cpp',
+		'console/textconsole.cpp',
+		'console/TextConsoleUnix.cpp', # [$POSIX]
+		'../filesystem/filetracker.cpp',
+		'../filesystem/basefilesystem.cpp',
+		'../filesystem/packfile.cpp',
+		'../filesystem/filesystem_async.cpp',
+		'../filesystem/filesystem_stdio.cpp',
+		'../filesystem/QueuedLoader.cpp',
+		'../public/zip_utils.cpp',
+		'../filesystem/linux_support.cpp' # [$POSIX]
+	]
+
+	includes = [
+		'.',
+		'../public',
+		'../public/tier0',
+		'../public/tier1',
+		'../common'
+	] + bld.env.INCLUDES_SDL2
+
+	defines = []
+
+	libs = ['tier0','tier1','tier2','tier3','vstdlib','steam_api','vpklib','appframework','mathlib', 'EDIT']
+
+	install_path = bld.env.LIBDIR
+
+	bld.shlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		install_path = install_path,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)
+

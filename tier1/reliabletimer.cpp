@@ -13,6 +13,10 @@ bool CReliableTimer::sm_bUseQPC = false;
 #include "winlite.h"
 #endif
 
+#ifdef POSIX
+#include <time.h>
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
@@ -83,6 +87,10 @@ int64 CReliableTimer::GetPerformanceCountNow()
 	uint64 ulNow;
 	SYS_TIMEBASE_GET( ulNow );
 	return ulNow;
+#elif defined( __arm__ ) && defined (POSIX)
+	struct timespec ts;
+	clock_gettime(CLOCK_REALTIME, &ts);
+	return ts.tv_sec * 1000000000ULL + ts.tv_nsec;
 #else
 	uint64 un64;
 	 __asm__ __volatile__ (

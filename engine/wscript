@@ -12,6 +12,10 @@ def options(opt):
 	return
 
 def configure(conf):
+	if conf.options.DEDICATED:
+		conf.define('SWDS', 1)
+		conf.define('NO_STEAM', 1)
+
 	conf.env.append_unique('DEFINES',[
 		'__USEA3D',
 		'_ADD_EAX_',
@@ -22,50 +26,18 @@ def configure(conf):
 
 def build(bld):
 	source = [
-		'client_pch.cpp', ##[!$DEDICATED]
-		'cl_rcon.cpp', ##[!$DEDICATED]
 		'socketcreator.cpp',
-		'rpt_engine.cpp', ##[!$DEDICATED]
-		'cl_steamauth.cpp',# #[!$DEDICATED]
 		'clientframe.cpp',
 		'decal_clip.cpp',
 		'demofile.cpp',
 		'DevShotGenerator.cpp',
 		'OcclusionSystem.cpp',
 		'tmessage.cpp',
-		'r_efx.cpp',# #[!$DEDICATED] 
-		'view.cpp', ##[!$DEDICATED]
 		'baseclient.cpp',
 		'baseclientstate.cpp',
 		'cbenchmark.cpp',
-		'cdll_engine_int.cpp', ##[!$DEDICATED]	/
-		'cl_main.cpp',##[!$DEDICATED]	/
-		'cl_demo.cpp',##[!$DEDICATED]	/
-		#'cl_null.cpp',	[$DEDICATED]	/
-		'cl_demoaction.cpp',	#[!$DEDICATED]	/
-		'cl_demoaction_types.cpp',  	#[!$DEDICATED]	/
-		'cl_demoactioneditors.cpp',	#[!$DEDICATED] 	/
-		'cl_demoactionmanager.cpp',  #[!$DEDICATED]	/
-		'cl_demoeditorpanel.cpp',  	#[!$DEDICATED]	/
-		'cl_demosmootherpanel.cpp', 	#[!$DEDICATED]	/
-		'cl_demouipanel.cpp',  #[!$DEDICATED]	/
-		'cl_foguipanel.cpp',  #[!$DEDICATED]	/
-		'cl_txviewpanel.cpp',	 	#[!$DEDICATED]	/
-		'cl_entityreport.cpp',	 	#[!$DEDICATED]	/
-		'cl_ents_parse.cpp',	#[!$DEDICATED]	/
-		'cl_localnetworkbackdoor.cpp', #[!$DEDICATED] 	/
-		'cl_parse_event.cpp',	 	#[!$DEDICATED]	/
-		'cl_pluginhelpers.cpp',#[!$DEDICATED]	/
-		'cl_pred.cpp', #[!$DEDICATED]	/
-		'cl_texturelistpanel.cpp',	#[!$DEDICATED]	/
-		'client.cpp',#[!$DEDICATED]	/
-		'colorcorrectionpanel.cpp',	#[!$DEDICATED] 	/
 		'console.cpp',
 		'render_pch.cpp',
-
-		'buildcubemaps.cpp',	#[!$DEDICATED]	/
-		'debug_leafvis.cpp',	#[!$DEDICATED]	/
-		'debugoverlay.cpp',	#[!$DEDICATED]	/
 		'decals.cpp',
 		'disp.cpp',
 		'disp_interface.cpp',
@@ -73,32 +45,19 @@ def build(bld):
 		'gl_draw.cpp',
 		'gl_rsurf.cpp',
 		'gl_shader.cpp',
-		'gl_drawlights.cpp',	#[!$DEDICATED]	/
-		'gl_lightmap.cpp',	#[!$DEDICATED]	/
-		'gl_matsysiface.cpp', #[!$DEDICATED]	/
-		'gl_rlight.cpp',#[!$DEDICATED]	/
-		'gl_rmain.cpp',#[!$DEDICATED]	/
-		'gl_rmisc.cpp',#[!$DEDICATED]	/
-		'gl_screen.cpp',#[!$DEDICATED]	/
-		'gl_warp.cpp',#[!$DEDICATED]	/
 		'l_studio.cpp',
 		'matsys_interface.cpp',
 		'modelloader.cpp',
 		'Overlay.cpp',
-		'r_areaportal.cpp',	#[!$DEDICATED]	/
 		'r_decal.cpp',
 		'r_linefile.cpp',
-		'shadowmgr.cpp',#[!$DEDICATED]
 		'server_pch.cpp',
-
-
 		'sv_ipratelimit.cpp',
 		'sv_rcon.cpp',
 		'sv_steamauth.cpp',
 		'sv_uploaddata.cpp',
 		'sv_uploadgamestats.cpp',
 		'vengineserver_impl.cpp',
-
 		'sv_main.cpp',
 		'sv_client.cpp',
 		'sv_ents_write.cpp',
@@ -110,7 +69,6 @@ def build(bld):
 		'sv_precache.cpp',
 		'sv_redirect.cpp',
 		'sv_remoteaccess.cpp',
-
 		'baseautocompletefilelist.cpp',
 		'baseserver.cpp',
 		'bitbuf_errorhandler.cpp',
@@ -121,7 +79,6 @@ def build(bld):
 		'checksum_engine.cpp',
 		'ccs.cpp',
 		'clockdriftmgr.cpp',
-		'cl_bounded_cvars.cpp', ##[!$DEDICATED]
 		'cl_check_process.cpp',	
 		'cmd.cpp',
 		'cmodel.cpp',
@@ -137,7 +94,6 @@ def build(bld):
 		'../public/disp_powerinfo.cpp',
 		'../public/dispcoll_common.cpp',
 		'DownloadListGenerator.cpp',
-		'downloadthread.cpp', ##[!$DEDICATED]
 		'dt.cpp',
 		'dt_common_eng.cpp',
 		'dt_encode.cpp',
@@ -178,14 +134,8 @@ def build(bld):
 		'initmathlib.cpp',
 		'../common/language.cpp',
 		'LocalNetworkBackdoor.cpp',
-		'LoadScreenUpdate.cpp', #[!$DEDICATED]
 		'../public/lumpfiles.cpp',
 		'MapReslistGenerator.cpp',
-		'matchmakinghost.cpp', #[!$DEDICATED] 
-		'matchmakingqos.cpp', #[!$DEDICATED]
-		'matchmakingclient.cpp', #[!$DEDICATED]
-		'matchmakingshared.cpp', #[!$DEDICATED]
-		'matchmakingmigrate.cpp', #[!$DEDICATED]
 		'materialproxyfactory.cpp',
 		'mem_fgets.cpp',
 		'mod_vis.cpp',
@@ -211,10 +161,8 @@ def build(bld):
 		'engine_replay_int.cpp',
 		'replay_internal.cpp',
 		'replaydemo.cpp',
-		'replaydemoplayer.cpp',	#[!$DEDICATED]
 		'replayserver.cpp',
 		'../public/sentence.cpp',
-		'Session.cpp', #[!$DEDICATED]
 		'sound_shared.cpp',
 		'spatialpartition.cpp',
 		'staticpropmgr.cpp',
@@ -222,7 +170,6 @@ def build(bld):
 		'sys_dll.cpp',
 		'sys_dll2.cpp',
 		'sys_engine.cpp',
-		'sys_mainwind.cpp', #[!$DEDICATED]
 		'sys_linuxwind.cpp', #[$POSIX]
 		'testscriptmgr.cpp',
 		'traceinit.cpp',
@@ -234,56 +181,22 @@ def build(bld):
 		'../public/XZip.cpp',
 		'../public/XUnzip.cpp',
 		'zone.cpp',
-		'bugreporter.cpp', #[!$DEDICATED]
 		'cheatcodes.cpp',
-		'download.cpp', #[!$DEDICATED]
 		'../public/editor_sendcommand.cpp',
-		'host_saverestore.cpp', #[!$DEDICATED]
 		'keys.cpp',
-		'lightcache.cpp', #[!$DEDICATED] 
 		'networkstringtableclient.cpp',
-		'saverestore_filesystem.cpp', #[!$DEDICATED]
 		'../public/scratchpad3d.cpp',
 		'servermsghandler.cpp',
-		'sys_getmodes.cpp', #[!$DEDICATED]
-		'vgui_askconnectpanel.cpp', #[!$DEDICATED]
-		'xboxsystem.cpp', #[!$DEDICATED]
 		'../common/SourceAppInfo.cpp',
 		'snd_io.cpp',
 		'EngineSoundServer.cpp',
-		'EngineSoundClient.cpp', #[!$DEDICATED]
-		'engsoundservice.cpp', #[!$DEDICATED]
 		'audio/private/voice_wavefile.cpp',
-		'audio/private/MPAFile.cpp', #[!$DEDICATED&&!$X360]
-		'audio/private/MPAHeader.cpp', #[!$DEDICATED&&!$X360]
-		'audio/private/circularbuffer.cpp', #[!$DEDICATED]
-		'audio/private/snd_posix.cpp',	#	[$POSIX]	
-
-		'audio/audio_pch.cpp', #[!$DEDICATED]
-			
 		'audio/private/vox.cpp',
-		'audio/private/snd_dev_common.cpp',	#[!$DEDICATED]	/
-		'audio/private/snd_dma.cpp',	#[!$DEDICATED]	/
-		'audio/private/snd_dsp.cpp',	#[!$DEDICATED]	/
-		'audio/private/snd_mix.cpp',	#[!$DEDICATED]	/
-		'audio/private/snd_sentence_mixer.cpp',	#[!$DEDICATED]/
-		'audio/private/snd_wave_data.cpp',	#[!$DEDICATED]	/
-		'audio/private/snd_wave_mixer.cpp',	#[!$DEDICATED]	/
-		'audio/private/snd_wave_mixer_adpcm.cpp',	#[!$DEDICATED]	/
-		'audio/private/snd_wave_source.cpp',	#[!$DEDICATED]	/
-		'audio/private/snd_wave_temp.cpp',	#[!$DEDICATED]	/
-		'audio/private/snd_win.cpp',	#[!$DEDICATED]	/
-		'audio/private/voice_gain.cpp',	
-
+		'audio/private/snd_posix.cpp',	#	[$POSIX]	
 		#'audio/private/snd_dev_direct.cpp',	[$WINDOWS]/
 		#'audio/private/snd_dev_wave.cpp',	[$WINDOWS]/
-		'audio/private/snd_mp3_source.cpp',	#[!$DEDICATED]/
-		'audio/private/snd_wave_mixer_mp3.cpp',	#[!$DEDICATED]	/
-		'audio/private/VBRHeader.cpp',	#	[!$DEDICATED&&!$X360]/
-		'audio/private/voice.cpp',	#[!$DEDICATED&&!$X360]/
 		#'audio/private/voice_mixer_controls.cpp', [$WINDOWS]	/
 		#'audio/private/voice_record_dsound.cpp',	[$WINDOWS]	/
-		'audio/private/voice_sound_engine_interface.cpp',	#[!$DEDICATED&&!$X360]
 
 		#'audio/private/snd_dev_xaudio.cpp',[$X360]
 		#'audio/private/snd_wave_mixer_xma.cpp',	[$X360]
@@ -291,28 +204,115 @@ def build(bld):
 		'audio/private/snd_dev_sdl.cpp',	#[$SDL && !$OSXALL]
 		#'audio/private/snd_dev_openal.cpp', # [$OSXALL]
 		#'audio/private/snd_dev_mac_audioqueue.cpp',#	[$OSXALL]
-		'audio/private/voice_mixer_controls_openal.cpp',	#[$OSXALL||($LINUXALL&&!$DEDICATED)]
-		'audio/private/voice_record_openal.cpp',	#[$OSXALL||($LINUXALL&&!$DEDICATED)]
 		#'audio/private/voice_record_mac_audioqueue.cpp',	#[$OSXALL]
-
-		'../public/vgui_controls/vgui_controls.cpp',
-		'../common/vgui/vgui_basebudgetpanel.cpp',
-		'../common/vgui/vgui_budgetbargraphpanel.cpp',
-		'../common/vgui/vgui_budgethistorypanel.cpp',
-		'../common/vgui/vgui_budgetpanelshared.cpp',
-		'perfuipanel.cpp',
-		'vgui_basepanel.cpp',
-		'vgui_baseui_interface.cpp',
-		'vgui_budgetpanel.cpp',
-		'vgui_DebugSystemPanel.cpp',
-		'vgui_drawtreepanel.cpp',
-		'vgui_helpers.cpp',
-		'vgui_texturebudgetpanel.cpp',
-		'vgui_vprofgraphpanel.cpp',
-		'vgui_vprofpanel.cpp',	
-		'enginetool.cpp', #[!$DEDICATED]
-		'toolframework.cpp'
 	]
+
+	if bld.env.DEDICATED:
+		source += ['cl_null.cpp']
+	else:
+		source += [
+			'client_pch.cpp',
+			'cl_rcon.cpp',
+			'r_efx.cpp',
+			'view.cpp',
+			'rpt_engine.cpp',
+			'cl_steamauth.cpp',
+			'cdll_engine_int.cpp',
+			'cl_main.cpp',
+			'cl_demo.cpp',
+			'cl_demoaction.cpp',
+			'cl_demoaction_types.cpp',
+			'cl_demoactioneditors.cpp',
+			'cl_demoactionmanager.cpp',
+			'cl_demoeditorpanel.cpp',
+			'cl_demosmootherpanel.cpp',
+			'cl_demouipanel.cpp',
+			'cl_foguipanel.cpp',
+			'cl_txviewpanel.cpp',
+			'cl_entityreport.cpp',
+			'cl_ents_parse.cpp',
+			'cl_localnetworkbackdoor.cpp',
+			'cl_parse_event.cpp',
+			'cl_pluginhelpers.cpp',
+			'cl_pred.cpp',
+			'cl_texturelistpanel.cpp',
+			'client.cpp',
+			'colorcorrectionpanel.cpp',
+			'buildcubemaps.cpp',
+			'debug_leafvis.cpp',
+			'debugoverlay.cpp',
+			'LoadScreenUpdate.cpp',
+			'enginetool.cpp',
+			'gl_drawlights.cpp',
+			'gl_lightmap.cpp',
+			'gl_matsysiface.cpp',
+			'gl_rlight.cpp',
+			'gl_rmain.cpp',
+			'gl_rmisc.cpp',
+			'gl_screen.cpp',
+			'gl_warp.cpp',
+			'r_areaportal.cpp',
+			'shadowmgr.cpp',
+			'cl_bounded_cvars.cpp',
+			'downloadthread.cpp',
+			'matchmakinghost.cpp',
+			'matchmakingqos.cpp',
+			'matchmakingclient.cpp',
+			'matchmakingshared.cpp',
+			'matchmakingmigrate.cpp',
+			'replaydemoplayer.cpp',
+			'Session.cpp',
+			'sys_mainwind.cpp',
+			'bugreporter.cpp',
+			'download.cpp',
+			'host_saverestore.cpp',
+			'lightcache.cpp',
+			'saverestore_filesystem.cpp',
+			'sys_getmodes.cpp',
+			'vgui_askconnectpanel.cpp',
+			'xboxsystem.cpp',
+			'audio/audio_pch.cpp',
+			'EngineSoundClient.cpp',
+			'engsoundservice.cpp',
+			'audio/private/MPAFile.cpp', #[!$X360]
+			'audio/private/MPAHeader.cpp', #[!$X360]
+			'audio/private/circularbuffer.cpp',
+			'audio/private/snd_dev_common.cpp',
+			'audio/private/snd_dma.cpp',
+			'audio/private/snd_dsp.cpp',
+			'audio/private/snd_mix.cpp',
+			'audio/private/snd_sentence_mixer.cpp',
+			'audio/private/snd_wave_data.cpp',
+			'audio/private/snd_wave_mixer.cpp',
+			'audio/private/snd_wave_mixer_adpcm.cpp',
+			'audio/private/snd_wave_source.cpp',
+			'audio/private/snd_wave_temp.cpp',
+			'audio/private/snd_win.cpp',
+			'audio/private/voice_gain.cpp',	
+			'audio/private/snd_mp3_source.cpp',
+			'audio/private/snd_wave_mixer_mp3.cpp',
+			'audio/private/VBRHeader.cpp', #[!$X360]
+			'audio/private/voice.cpp', #[!$X360]
+			'audio/private/voice_sound_engine_interface.cpp', #[!$X360]
+			'audio/private/voice_mixer_controls_openal.cpp', #[$OSXALL||$LINUXALL]
+			'audio/private/voice_record_openal.cpp', #[$OSXALL||$LINUXALL]
+			'../public/vgui_controls/vgui_controls.cpp',
+			'../common/vgui/vgui_basebudgetpanel.cpp',
+			'../common/vgui/vgui_budgetbargraphpanel.cpp',
+			'../common/vgui/vgui_budgethistorypanel.cpp',
+			'../common/vgui/vgui_budgetpanelshared.cpp',
+			'perfuipanel.cpp',
+			'vgui_basepanel.cpp',
+			'vgui_baseui_interface.cpp',
+			'vgui_budgetpanel.cpp',
+			'vgui_DebugSystemPanel.cpp',
+			'vgui_drawtreepanel.cpp',
+			'vgui_helpers.cpp',
+			'vgui_texturebudgetpanel.cpp',
+			'vgui_vprofgraphpanel.cpp',
+			'vgui_vprofpanel.cpp',	
+			'toolframework.cpp'
+		]
 
 	includes = [
 		'.',
@@ -327,7 +327,7 @@ def build(bld):
 
 	defines = []
 
-	libs = ['tier0','vgui_controls','dmxloader','tier1','tier2','tier3','bitmap','vstdlib','appframework','datamodel','vtf','mathlib','steam_api','matsys_controls','BZIP2','SDL2','JPEG','ZLIB','OPENAL','CURL']
+	libs = ['tier0','vgui_controls','dmxloader','tier1','tier2','tier3','bitmap','vstdlib','appframework','datamodel','vtf','mathlib','steam_api','matsys_controls','BZ2','SDL2','JPEG','ZLIB','OPENAL','CURL']
 
 	install_path = bld.env.LIBDIR
 

@@ -25,6 +25,7 @@
 #ifdef POSIX
 #include <pthread.h>
 #include <errno.h>
+#include <sched.h>
 #define WAIT_OBJECT_0 0
 #define WAIT_TIMEOUT 0x00000102
 #define WAIT_FAILED -1
@@ -141,9 +142,11 @@ inline void ThreadPause()
 #if defined( PLATFORM_WINDOWS_PC )
 	// Intrinsic for __asm pause; from <intrin.h>
 	_mm_pause();
-#elif POSIX
+#elif POSIX && defined( __i386__ )
 	__asm __volatile( "pause" );
 #elif defined( _X360 )
+#elif defined(__arm__)
+	sched_yield();
 #else
 #error "implement me"
 #endif

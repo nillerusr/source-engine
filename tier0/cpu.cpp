@@ -22,7 +22,9 @@ const tchar* GetProcessorVendorId();
 
 static bool cpuid(unsigned long function, unsigned long& out_eax, unsigned long& out_ebx, unsigned long& out_ecx, unsigned long& out_edx)
 {
-#if defined(GNUC)
+#if defined (__arm__) || defined( _X360 )
+	return false;
+#elif defined(GNUC)
 	asm("mov %%ebx, %%esi\n\t"
 		"cpuid\n\t"
 		"xchg %%esi, %%ebx"
@@ -30,11 +32,9 @@ static bool cpuid(unsigned long function, unsigned long& out_eax, unsigned long&
 		"=S" (out_ebx),
 		"=c" (out_ecx),
 		"=d" (out_edx)
-		: "a" (function) 
+		: "a" (function)
 		);
 	return true;
-#elif defined( _X360 )
-	return false;
 #elif defined(_WIN64)
 	int pCPUInfo[4];
 	__cpuid( pCPUInfo, (int)function );
@@ -142,21 +142,21 @@ static bool IsWin98OrOlder()
 
 static bool CheckSSETechnology(void)
 {
-#if defined( _X360 ) || defined( _PS3 )
+#if defined( __ARM__ )
+	return false;
+#elif defined( _X360 ) || defined( _PS3 )
 	return true;
 #else
-	if ( IsWin98OrOlder() )
-	{
+	if ( IsWin98OrOlder() ) {
 		return false;
 	}
 
-    unsigned long eax,ebx,edx,unused;
-    if ( !cpuid(1,eax,ebx,unused,edx) )
-	{
+	unsigned long eax,ebx,edx,unused;
+	if ( !cpuid(1,eax,ebx,unused,edx) ) {
 		return false;
 	}
 
-    return ( edx & 0x2000000L ) != 0;
+	return ( edx & 0x2000000L ) != 0;
 #endif
 }
 

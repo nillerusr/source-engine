@@ -713,7 +713,7 @@ typedef void * HINSTANCE;
 
 
 // When we port to 64 bit, we'll have to resolve the int, ptr vs size_t 32/64 bit problems...
-#if !defined( _WIN64 )
+#if !defined( _WIN64 ) && defined( _WIN32 )
 #pragma warning( disable : 4267 )	// conversion from 'size_t' to 'int', possible loss of data
 #pragma warning( disable : 4311 )	// pointer truncation from 'char *' to 'int'
 #pragma warning( disable : 4312 )	// conversion from 'unsigned int' to 'memhandle_t' of greater size
@@ -825,9 +825,9 @@ static FORCEINLINE double fsel(double fComparand, double fValGE, double fLT)
 
 		#endif
 	#endif
-
+#elif defined (__arm__)
+	inline void SetupFPUControlWord() {}
 #else
-
 	inline void SetupFPUControlWord()
 	{
 		__volatile unsigned short int __cw;
@@ -849,7 +849,7 @@ static FORCEINLINE double fsel(double fComparand, double fValGE, double fLT)
 			{
 				double flResult;
 				int pResult[2];
-			};
+			}
 			flResult = __fctiw( f );
 			return ( pResult[1] == 1 );
 		}
@@ -1160,7 +1160,11 @@ PLATFORM_INTERFACE struct tm *		Plat_localtime( const time_t *timep, struct tm *
 
 inline uint64 Plat_Rdtsc()
 {
-#if defined( _X360 )
+#if defined( __arm__ ) && defined (POSIX)
+	struct timespec t;
+	clock_gettime( CLOCK_REALTIME, &t);
+	return t.tv_sec * 1000000000ULL + t.tv_nsec;
+#elif defined( _X360 )
 	return ( uint64 )__mftb32();
 #elif defined( _WIN64 )
 	return ( uint64 )__rdtsc();

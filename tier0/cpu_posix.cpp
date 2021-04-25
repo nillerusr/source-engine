@@ -106,7 +106,7 @@ uint64 CalculateCPUFreq()
 		uint64 retVal = 1000000;
 		return retVal * atoi( pFreq );
 	}
-#endif
+#else
 
 	// Try to open cpuinfo_max_freq. If the kernel was built with cpu scaling support disabled, this will fail.
 	FILE *fp = fopen( "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq", "r" );
@@ -177,5 +177,6 @@ uint64 CalculateCPUFreq()
 	}
 
 	return period;
+#endif
 }
 

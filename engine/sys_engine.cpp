@@ -39,6 +39,9 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+#ifdef POSIX
+#include <signal.h>
+#endif
 
 //-----------------------------------------------------------------------------
 // Forward declarations
@@ -366,7 +369,11 @@ void CEngine::Frame( void )
 				for (int i = 2000; i >= 0; --i)
 				{
 #if defined(POSIX)
+#ifdef __arm__
+					raise(SIGINT);
+#else
 					__asm( "pause" ); __asm( "pause" ); __asm( "pause" ); __asm( "pause" );
+#endif
 #elif defined(IS_WINDOWS_PC)
 					_asm { pause }; _asm { pause }; _asm { pause }; _asm { pause };
 #endif

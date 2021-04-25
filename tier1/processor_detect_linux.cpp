@@ -6,6 +6,14 @@
 // $NoKeywords: $
 //=============================================================================//
 
+
+#if defined (__arm__)
+bool CheckMMXTechnology(void) { return false; }
+bool CheckSSETechnology(void) { return false; }
+bool CheckSSE2Technology(void) { return false; }
+bool Check3DNowTechnology(void) { return false; }
+#else
+
 #define cpuid(in,a,b,c,d)												\
 	asm("pushl %%ebx\n\t" "cpuid\n\t" "movl %%ebx,%%esi\n\t" "pop %%ebx": "=a" (a), "=S" (b), "=c" (c), "=d" (d) : "a" (in));
 
@@ -45,3 +53,5 @@ bool Check3DNowTechnology(void)
     }
     return false;
 }
+
+#endif

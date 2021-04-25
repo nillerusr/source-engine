@@ -7,7 +7,7 @@ from waflib import Logs, Context, Configure
 import sys
 import os
 
-VERSION = '0.99'
+VERSION = '1.0'
 APPNAME = 'source-engine'
 top = '.'
 
@@ -28,24 +28,91 @@ int main() { return (int)FcInit(); }
 
 Context.Context.line_just = 55 # should fit for everything on 80x26
 
-projects=[
-	'tier0','tier1','tier2',
-	'vstdlib','vpklib','filesystem'
-	,'mathlib','tier3',
-	'bitmap','scenefilecache','datacache',
-	'launcher_main','vgui2/vgui_controls','vgui2/matsys_controls','vgui2/vgui_surfacelib',
-	'serverbrowser','soundemittersystem','vgui2/src',
-	'togl','vguimatsurface','vtf','materialsystem/shaderlib',
-	'materialsystem','studiorender','materialsystem/stdshaders',
-	'video','inputsystem','appframework',
-	'launcher','engine/voice_codecs/minimp3','materialsystem/shaderapidx9',
-	'gameui','dmxloader','datamodel','engine','ivp/havana',
-	'ivp/havana/havok/hk_math','ivp/havana/havok/hk_base',
-	'ivp/ivp_compact_builder','ivp/ivp_physics','vphysics','game/server',
-	'particles','choreoobjects','game/client'
-]
+projects={
+	'game': [
+		'appframework',
+		'bitmap',
+		'choreoobjects',
+		'datacache',
+		'datamodel',
+		'dmxloader',
+		'engine',
+		'engine/voice_codecs/minimp3',
+		'filesystem',
+		'game/client',
+		'game/server',
+		'gameui',
+		'inputsystem',
+		'ivp/havana',
+		'ivp/havana/havok/hk_base',
+		'ivp/havana/havok/hk_math',
+		'ivp/ivp_compact_builder',
+		'ivp/ivp_physics',
+		'launcher',
+		'launcher_main',
+		'materialsystem',
+		'materialsystem/shaderapidx9',
+		'materialsystem/shaderlib',
+		'materialsystem/stdshaders',
+		'mathlib',
+		'particles',
+		'scenefilecache',
+		'serverbrowser',
+		'soundemittersystem',
+		'studiorender',
+		'thirdparty/StubSteamAPI',
+		'tier0',
+		'tier1',
+		'tier2',
+		'tier3',
+		'togl',
+		'vgui2/matsys_controls',
+		'vgui2/src',
+		'vgui2/vgui_controls',
+		'vgui2/vgui_surfacelib',
+		'vguimatsurface',
+		'video',
+		'vphysics',
+		'vpklib',
+		'vstdlib',
+		'vtf'
+	],
+	'dedicated': [
+		'appframework',
+		'bitmap',
+		'choreoobjects',
+		'datacache',
+		'dedicated',
+		'dedicated_main',
+		'dmxloader',
+		'engine',
+		'game/server',
+		'ivp/havana',
+		'ivp/havana/havok/hk_base',
+		'ivp/havana/havok/hk_math',
+		'ivp/ivp_compact_builder',
+		'ivp/ivp_physics',
+		'materialsystem',
+		'mathlib',
+		'particles',
+		'scenefilecache',
+		'materialsystem/shaderapiempty',
+		'materialsystem/shaderlib',
+		'soundemittersystem',
+		'studiorender',
+		'tier0',
+		'tier1',
+		'tier2',
+		'tier3',
+		'vphysics',
+		'vpklib',
+		'vstdlib',
+		'vtf',
+		'thirdparty/StubSteamAPI'
+	]
+}
 
-projects += ['thirdparty/StubSteamAPI'] # ,'thirdparty/libjpeg','thirdparty/SDL2-src'] # thirdparty projects
+
 
 @Configure.conf
 def check_pkg(conf, package, uselib_store, fragment, *k, **kw):
@@ -70,7 +137,23 @@ def get_taskgen_count(self):
 	return idx
 
 def define_platform(conf):
-	conf.define('SOURCE1',1)
+	conf.env.DEDICATED = conf.options.DEDICATED
+
+	if conf.options.DEDICATED:
+		conf.options.SDL = False
+#		conf.options.GL = False
+		conf.define('DEDICATED', 1)
+
+	if conf.options.GL:
+		conf.env.append_unique('DEFINES', [
+			'DX_TO_GL_ABSTRACTION',
+			'GL_GLEXT_PROTOTYPES',
+			'BINK_VIDEO'
+		])
+
+	if conf.options.SDL:
+		conf.define('USE_SDL', 1)
+
 	if conf.env.DEST_OS == 'linux':
 		conf.define('_GLIBCXX_USE_CXX11_ABI',0)
 		conf.env.append_unique('DEFINES', [
@@ -79,14 +162,11 @@ def define_platform(conf):
 			'POSIX=1',
 			'_POSIX=1',
 			'GNUC',
-			'DX_TO_GL_ABSTRACTION',
-			'GL_GLEXT_PROTOTYPES',
-			'BINK_VIDEO',
-			'USE_SDL',
 			'NDEBUG',
 			'NO_HOOK_MALLOC',
 			'_DLL_EXT=.so'
 		])
+
 
 def options(opt):
 	grp = opt.add_option_group('Common options')
@@ -94,9 +174,18 @@ def options(opt):
 	grp.add_option('-8', '--64bits', action = 'store_true', dest = 'ALLOW64', default = False,
 		help = 'allow targetting 64-bit engine(Linux/Windows/OSX x86 only) [default: %default]')
 
+	grp.add_option('-d', '--dedicated', action = 'store_true', dest = 'DEDICATED', default = False,
+		help = 'build dedicated server [default: %default]')
+
+	grp.add_option('--use-sdl', action = 'store', dest = 'SDL', type = 'int', default = True,
+		help = 'build engine with SDL [default: %default]')
+
+	grp.add_option('--use-togl', action = 'store', dest = 'GL', type = 'int', default = True,
+		help = 'build engine with ToGL [default: %default]')
+
 	opt.load('compiler_optimizations subproject')
 
-	opt.add_subproject(projects)
+#	opt.add_subproject(projects['game'])
 
 	opt.load('xcompile compiler_cxx compiler_c sdl2 clang_compilation_database strip_on_install waf_unit_test subproject')
 	if sys.platform == 'win32':
@@ -104,6 +193,7 @@ def options(opt):
 	opt.load('reconfigure')
 
 def configure(conf):
+
 	conf.load('fwgslib reconfigure')
 
 	# Force XP compability, all build targets should add
@@ -115,13 +205,16 @@ def configure(conf):
 		conf.load('msvc msvc_pdb msdev msvs')
 	conf.load('subproject xcompile compiler_c compiler_cxx gitversion clang_compilation_database strip_on_install waf_unit_test enforce_pic')
 
-	conf.check_cfg(package='sdl2', uselib_store='SDL2', args=['--cflags', '--libs'])
+	if conf.options.SDL:
+		conf.check_cfg(package='sdl2', uselib_store='SDL2', args=['--cflags', '--libs'])
+	if conf.options.DEDICATED:
+		conf.check_cfg(package='libedit', uselib_store='EDIT', args=['--cflags', '--libs'])
+
 	conf.check_cfg(package='libjpeg', uselib_store='JPEG', args=['--cflags', '--libs'])
 	conf.check_cfg(package='libpng', uselib_store='PNG', args=['--cflags', '--libs'])
 	conf.check_cfg(package='zlib', uselib_store='ZLIB', args=['--cflags', '--libs'])
 	conf.check_cfg(package='openal', uselib_store='OPENAL', args=['--cflags', '--libs'])
 	conf.check_cfg(package='libcurl', uselib_store='CURL', args=['--cflags', '--libs'])
-	conf.check_cfg(package='bzip2', uselib_store='BZIP2', args=['--cflags', '--libs'])
 	conf.check_pkg('freetype2', 'FT2', FT2_CHECK)
 	conf.check_pkg('fontconfig', 'FC', FC_CHECK)
 
@@ -150,8 +243,17 @@ def configure(conf):
 	]
 
 	cflags, linkflags = conf.get_optimization_flags()
-	cflags += ['-march=pentium4','-mtune=core2','-mfpmath=387']
-	linkflags += ['-march=pentium4','-mtune=core2','-mfpmath=387']
+
+	flags = ['-fPIC']
+
+	if conf.env.DEST_CPU == 'arm':
+		flags += ['-mfpu=neon']
+	else:
+		flags += ['-march=pentium4','-mtune=core2','-mfpmath=387']
+
+	cflags += flags
+	linkflags += flags
+
 	# And here C++ flags starts to be treated separately
 	cxxflags = list(cflags) + ['-std=c++11','-fpermissive']
 
@@ -180,9 +282,11 @@ def configure(conf):
 	conf.env.append_unique('CFLAGS', cflags)
 	conf.env.append_unique('CXXFLAGS', cxxflags)
 	conf.env.append_unique('LINKFLAGS', linkflags)
+	conf.env.append_unique('INCLUDES', [os.path.abspath('common/')])
 
 	if conf.env.DEST_OS != 'win32':
 		conf.check_cc(lib='dl', mandatory=False)
+		conf.check_cc(lib='bz2', mandatory=False)
 		conf.check_cc(lib='rt', mandatory=False)
 
 		if not conf.env.LIB_M: # HACK: already added in xcompile!
@@ -221,7 +325,14 @@ def configure(conf):
 		conf.env.LIBDIR = conf.env.BINDIR = conf.env.PREFIX
 
 	define_platform(conf)
-	conf.add_subproject(projects)
+
+	if conf.options.DEDICATED:
+		conf.add_subproject(projects['dedicated'])
+	else:
+		conf.add_subproject(projects['game'])
 
 def build(bld):
-	bld.add_subproject(projects)
+	if bld.env.DEDICATED:
+		bld.add_subproject(projects['dedicated'])
+	else:
+		bld.add_subproject(projects['game'])
