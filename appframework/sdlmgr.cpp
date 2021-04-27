@@ -4,8 +4,10 @@
 //
 //=============================================================================//
 
+#ifdef USE_SDL
 #include "SDL.h"
 #include "SDL_opengl.h"
+#endif
 
 #include "appframework/ilaunchermgr.h"
 #include "inputsystem/ButtonCode.h"
@@ -66,7 +68,7 @@ that Apple unhelpfully clamps you to vsync in this scenario, which would
 explain the 60fps max.
 
 There are a few options:
-- SDL_WINDOW_FULLSCREEN mode will not use this new magic (only
+- SDL_WAINDOW_FULLSCREEN mode will not use this new magic (only
 SDL_WINDOW_FULLSCREEN_DESKTOP), but that brings other problems and I
 wouldn't recommend a drastic change like that.
 

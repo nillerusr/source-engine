@@ -23,7 +23,7 @@
 #include <dlfcn.h>
 #endif
 
-#if defined( LINUX ) || defined( USE_SDL )
+#if defined( USE_SDL )
 
 // We lazily load the SDL shared object, and only reference functions if it's
 // available, so this can be included on the dedicated server too.
@@ -357,7 +357,7 @@ DBG_INTERFACE void SetAllAssertsDisabled( bool bAssertsDisabled )
 	g_bAssertsEnabled = !bAssertsDisabled;
 }
 
-#if defined( LINUX ) || defined( USE_SDL )
+#if defined( USE_SDL )
 SDL_Window *g_SDLWindow = NULL;
 
 DBG_INTERFACE void SetAssertDialogParent( struct SDL_Window *window )
@@ -534,7 +534,7 @@ DBG_INTERFACE bool DoNewAssertDialog( const tchar *pFilename, int line, const tc
 		DialogBox( g_hTier0Instance, MAKEINTRESOURCE( IDD_ASSERT_DIALOG ), hParentWindow, AssertDialogProc );
 	}
 
-#elif defined( POSIX )
+#elif defined( POSIX ) && defined ( USE_SDL )
 	static FUNC_SDL_ShowMessageBox *pfnSDLShowMessageBox = NULL;
 	if( !pfnSDLShowMessageBox )
 	{
