@@ -169,7 +169,7 @@ def define_platform(conf):
 
 	if conf.env.DEST_OS == 'android':
 		conf.env.append_unique('DEFINES', [
-			'ANDROID=1', '_ANDROID=1'
+			'ANDROID=1', '_ANDROID=1',
 			'LINUX=1', '_LINUX=1',
 			'POSIX=1', '_POSIX=1',
 			'GNUC',
