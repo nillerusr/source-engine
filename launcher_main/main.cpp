@@ -216,7 +216,6 @@ static void WaitForDebuggerConnect( int argc, char *argv[], int time )
 int main( int argc, char *argv[] )
 {
 	void *launcher = dlopen( "bin/liblauncher" DLL_EXT_STRING, RTLD_NOW );
-	fprintf( stderr, "%s\nFailed to load the launcher\n", dlerror() );
 	if( !launcher )
 		launcher = dlopen( "bin/launcher" DLL_EXT_STRING, RTLD_NOW );
 
@@ -225,7 +224,7 @@ int main( int argc, char *argv[] )
 		fprintf( stderr, "%s\nFailed to load the launcher\n", dlerror() );
 		return 0;
 	}
-	
+
 	LauncherMain_t main = (LauncherMain_t)dlsym( launcher, "LauncherMain" );
 	if ( !main )
 	{

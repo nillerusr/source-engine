@@ -99,15 +99,6 @@ uint64 GetCPUFreqFromPROC()
 
 uint64 CalculateCPUFreq()
 {
-#ifdef LINUX
-	char const *pFreq = getenv( "CPU_MHZ" );
-	if ( pFreq )
-	{
-		uint64 retVal = 1000000;
-		return retVal * atoi( pFreq );
-	}
-#else
-
 	// Try to open cpuinfo_max_freq. If the kernel was built with cpu scaling support disabled, this will fail.
 	FILE *fp = fopen( "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq", "r" );
 	if ( fp )
@@ -128,6 +119,7 @@ uint64 CalculateCPUFreq()
 		}
 	}
 
+#ifndef __arm__
 	// Compute the period. Loop until we get 3 consecutive periods that
 	// are the same to within a small error. The error is chosen
 	// to be +/- 0.02% on a P-200.
@@ -178,5 +170,6 @@ uint64 CalculateCPUFreq()
 
 	return period;
 #endif
+	return (uint64)0;
 }
 

@@ -21,7 +21,8 @@ def configure(conf):
 		'_ADD_EAX_',
 		'ENGINE_DLL',
 		'VERSION_SAFE_STEAM_API_INTERFACES',
-		'USE_BREAKPAD_HANDLER'
+		'USE_BREAKPAD_HANDLER',
+		'USE_CONVARS'
 	])
 
 def build(bld):

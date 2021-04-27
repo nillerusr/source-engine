@@ -86,7 +86,7 @@ projects={
 		'dedicated_main',
 		'dmxloader',
 		'engine',
-		'game/server',
+#		'game/server',
 		'ivp/havana',
 		'ivp/havana/havok/hk_base',
 		'ivp/havana/havok/hk_math',
@@ -157,16 +157,24 @@ def define_platform(conf):
 	if conf.env.DEST_OS == 'linux':
 		conf.define('_GLIBCXX_USE_CXX11_ABI',0)
 		conf.env.append_unique('DEFINES', [
-			'LINUX=1',
-			'_LINUX=1',
-			'POSIX=1',
-			'_POSIX=1',
+			'LINUX=1', '_LINUX=1',
+			'POSIX=1', '_POSIX=1',
 			'GNUC',
 			'NDEBUG',
 			'NO_HOOK_MALLOC',
 			'_DLL_EXT=.so'
 		])
 
+	if conf.env.DEST_OS == 'android':
+		conf.env.append_unique('DEFINES', [
+			'ANDROID', '_ANDROID'
+			'LINUX=1', '_LINUX=1',
+			'POSIX=1', '_POSIX=1',
+			'GNUC',
+			'NDEBUG',
+			'NO_HOOK_MALLOC',
+			'_DLL_EXT=.so'
+		])
 
 def options(opt):
 	grp = opt.add_option_group('Common options')
@@ -209,14 +217,16 @@ def configure(conf):
 		conf.check_cfg(package='sdl2', uselib_store='SDL2', args=['--cflags', '--libs'])
 	if conf.options.DEDICATED:
 		conf.check_cfg(package='libedit', uselib_store='EDIT', args=['--cflags', '--libs'])
+	else:
+		conf.check_pkg('freetype2', 'FT2', FT2_CHECK)
+		conf.check_pkg('fontconfig', 'FC', FC_CHECK)
+		conf.check_cfg(package='openal', uselib_store='OPENAL', args=['--cflags', '--libs'])
+		conf.check_cfg(package='libjpeg', uselib_store='JPEG', args=['--cflags', '--libs'])
+		conf.check_cfg(package='libpng', uselib_store='PNG', args=['--cflags', '--libs'])
+		conf.check_cfg(package='libcurl', uselib_store='CURL', args=['--cflags', '--libs'])
 
-	conf.check_cfg(package='libjpeg', uselib_store='JPEG', args=['--cflags', '--libs'])
-	conf.check_cfg(package='libpng', uselib_store='PNG', args=['--cflags', '--libs'])
 	conf.check_cfg(package='zlib', uselib_store='ZLIB', args=['--cflags', '--libs'])
-	conf.check_cfg(package='openal', uselib_store='OPENAL', args=['--cflags', '--libs'])
-	conf.check_cfg(package='libcurl', uselib_store='CURL', args=['--cflags', '--libs'])
-	conf.check_pkg('freetype2', 'FT2', FT2_CHECK)
-	conf.check_pkg('fontconfig', 'FC', FC_CHECK)
+
 
 	# We restrict 64-bit builds ONLY for Win/Linux/OSX running on Intel architecture
 	# Because compatibility with original GoldSrc
@@ -235,7 +245,8 @@ def configure(conf):
 		'-Wcast-align',
 		'-Wuninitialized',
 		'-Winit-self',
-		'-Wstrict-aliasing'
+		'-Wstrict-aliasing',
+#		'-faligned-new'
 	]
 
 	c_compiler_optional_flags = [
@@ -247,7 +258,7 @@ def configure(conf):
 	flags = ['-fPIC']
 
 	if conf.env.DEST_CPU == 'arm':
-		flags += ['-mfpu=neon']
+		flags += ['-mfpu=neon', '-fsigned-char']
 	else:
 		flags += ['-march=pentium4','-mtune=core2','-mfpmath=387']
 
