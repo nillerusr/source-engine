@@ -2655,8 +2655,8 @@ public:
 		const void *m_expectedVModel;
 
 		// double-check that the data I point to hasn't changed
-		bool ValidateAgainst( const CStudioHdr * RESTRICT pstudiohdr );
-		void SetValidationPair( const CStudioHdr *RESTRICT pstudiohdr );
+		bool ValidateAgainst( const CStudioHdr * RESTRICT pstudiohdr ) RESTRICT;
+		void SetValidationPair( const CStudioHdr *RESTRICT pstudiohdr ) RESTRICT;
 
 		friend class CStudioHdr;
 	};

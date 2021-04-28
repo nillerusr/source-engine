@@ -42,28 +42,28 @@ public:
 	FORCEINLINE void ActivateByteSwapping( bool bSwap );
 #endif
 
-	FORCEINLINE void Seek( int x, int y );
-	FORCEINLINE void* SkipBytes( int n );
+	FORCEINLINE void Seek( int x, int y ) RESTRICT;
+	FORCEINLINE void* SkipBytes( int n ) RESTRICT;
 	FORCEINLINE void SkipPixels( int n );	
 	FORCEINLINE void WritePixel( int r, int g, int b, int a = 255 );
-	FORCEINLINE void WritePixelNoAdvance( int r, int g, int b, int a = 255 );
+	FORCEINLINE void WritePixelNoAdvance( int r, int g, int b, int a = 255 ) RESTRICT;
 	FORCEINLINE void WritePixelSigned( int r, int g, int b, int a = 255 );
 	FORCEINLINE void WritePixelNoAdvanceSigned( int r, int g, int b, int a = 255 );
 	FORCEINLINE void ReadPixelNoAdvance( int &r, int &g, int &b, int &a );
 
 	// Floating point formats
-	FORCEINLINE void WritePixelNoAdvanceF( float r, float g, float b, float a = 1.0f );
+	FORCEINLINE void WritePixelNoAdvanceF( float r, float g, float b, float a = 1.0f ) RESTRICT;
 	FORCEINLINE void WritePixelF( float r, float g, float b, float a = 1.0f );
 
 	// SIMD formats
-	FORCEINLINE void WritePixel( FLTX4 rgba );
+	FORCEINLINE void WritePixel( FLTX4 rgba ) RESTRICT;
 	FORCEINLINE void WritePixelNoAdvance( FLTX4 rgba );
 #ifdef _X360
 	// here are some explicit formats so we can avoid the switch:
 	FORCEINLINE void WritePixelNoAdvance_RGBA8888( FLTX4 rgba );
 	FORCEINLINE void WritePixelNoAdvance_BGRA8888( FLTX4 rgba );
 	// as above, but with m_pBits passed in to avoid a LHS
-	FORCEINLINE void WritePixelNoAdvance_BGRA8888( FLTX4 rgba, void *pBits );
+	FORCEINLINE void WritePixelNoAdvance_BGRA8888( FLTX4 rgba, void *pBits ) RESTRICT;
 	// for writing entire SIMD registers at once when they have
 	// already been packed, and when m_pBits is vector-aligned
 	// (which is a requirement for write-combined memory)
@@ -73,9 +73,9 @@ public:
 #endif
 
 
-	FORCEINLINE unsigned char GetPixelSize() { return m_Size; }	
+	FORCEINLINE unsigned char GetPixelSize() RESTRICT { return m_Size; }	
 
-	FORCEINLINE bool IsUsingFloatFormat() const;
+	FORCEINLINE bool IsUsingFloatFormat() RESTRICT const;
 	FORCEINLINE unsigned char *GetCurrentPixel() { return m_pBits; }
 
 private:
@@ -108,7 +108,7 @@ private:
 #endif
 };
 
-FORCEINLINE_PIXEL bool CPixelWriter::IsUsingFloatFormat() const
+FORCEINLINE_PIXEL bool CPixelWriter::IsUsingFloatFormat() RESTRICT const
 {
 	return (m_nFlags & PIXELWRITER_USING_FLOAT_FORMAT) != 0;
 }
@@ -379,7 +379,7 @@ FORCEINLINE void CPixelWriter::ActivateByteSwapping( bool bSwap )
 //-----------------------------------------------------------------------------
 // Sets where we're writing to
 //-----------------------------------------------------------------------------
-FORCEINLINE_PIXEL void CPixelWriter::Seek( int x, int y )
+FORCEINLINE_PIXEL void CPixelWriter::Seek( int x, int y ) RESTRICT
 {
 	m_pBits = m_pBase + y * m_BytesPerRow + x * m_Size;
 }
@@ -407,7 +407,7 @@ FORCEINLINE_PIXEL void CPixelWriter::SkipPixels( int n )
 //-----------------------------------------------------------------------------
 // Writes a pixel without advancing the index		PC ONLY
 //-----------------------------------------------------------------------------
-FORCEINLINE_PIXEL void CPixelWriter::WritePixelNoAdvanceF( float r, float g, float b, float a )
+FORCEINLINE_PIXEL void CPixelWriter::WritePixelNoAdvanceF( float r, float g, float b, float a ) RESTRICT
 {
 	Assert( IsUsingFloatFormat() );
 
@@ -473,7 +473,7 @@ FORCEINLINE_PIXEL void CPixelWriter::WritePixelSigned( int r, int g, int b, int 
 //-----------------------------------------------------------------------------
 // Writes a pixel without advancing the index
 //-----------------------------------------------------------------------------
-FORCEINLINE_PIXEL void CPixelWriter::WritePixelNoAdvance( int r, int g, int b, int a )
+FORCEINLINE_PIXEL void CPixelWriter::WritePixelNoAdvance( int r, int g, int b, int a ) RESTRICT
 {
 	Assert( !IsUsingFloatFormat() );
 

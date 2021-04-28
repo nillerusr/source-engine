@@ -849,7 +849,7 @@ void bf_read::SetDebugName( const char *pName )
 	m_pDebugName = pName;
 }
 
-void bf_read::SetOverflowFlag()
+void bf_read::SetOverflowFlag() RESTRICT
 {
 	if ( m_bAssertOnOverflow )
 	{
@@ -992,7 +992,7 @@ unsigned int bf_read::PeekUBitLong( int numbits )
 	return r;
 }
 
-unsigned int bf_read::ReadUBitLongNoInline( int numbits )
+unsigned int bf_read::ReadUBitLongNoInline( int numbits ) RESTRICT
 {
 	return ReadUBitLong( numbits );
 }

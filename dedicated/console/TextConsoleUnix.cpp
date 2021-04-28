@@ -336,8 +336,11 @@ void CTextConsoleUnix::ShutDown()
 		pthread_t tid = g_threadid;
 
 		g_threadid = (pthread_t)-1;
-
+#if defined ( ANDROID )
+		pthread_kill( tid, SIGUSR1 );
+#else
 		pthread_cancel( tid );
+#endif
 		pthread_join( tid, &status );
 	}
 

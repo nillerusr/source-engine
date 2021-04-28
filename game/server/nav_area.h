@@ -343,8 +343,8 @@ public:
 	bool IsOverlapping( const Extent &extent ) const;			// return true if 'extent' overlaps our 2D extents
 	bool IsOverlappingX( const CNavArea *area ) const;			// return true if 'area' overlaps our X extent
 	bool IsOverlappingY( const CNavArea *area ) const;			// return true if 'area' overlaps our Y extent
-	inline float GetZ( const Vector * RESTRICT pPos ) const ;			// return Z of area at (x,y) of 'pos'
-	inline float GetZ( const Vector &pos ) const;						// return Z of area at (x,y) of 'pos'
+	inline float GetZ( const Vector * RESTRICT pPos ) const RESTRICT ;			// return Z of area at (x,y) of 'pos'
+	inline float GetZ( const Vector &pos ) const RESTRICT;						// return Z of area at (x,y) of 'pos'
 	float GetZ( float x, float y ) const RESTRICT;				// return Z of area at (x,y) of 'pos'
 	bool Contains( const Vector &pos ) const;					// return true if given point is on or above this area, but no others
 	bool Contains( const CNavArea *area ) const;	

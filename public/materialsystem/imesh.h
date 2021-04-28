@@ -1244,11 +1244,11 @@ inline void CVertexBuilder::FastVertexSSE( const ModelVertexDX7_t &vertex )
 	const char *pRead = (char *)&vertex;
 	char *pCurrPos = (char *)m_pCurrPosition;
 	__m128 m1 = _mm_load_ps( (float *)pRead );
-	__m128 m2 = _mm_load_ps( (float *)(pRead + 16) );
-	__m128 m3 = _mm_load_ps( (float *)(pRead + 32) );
+	__m128 m2 = _mm_load_ps( (float *)((int)pRead + 16) );
+	__m128 m3 = _mm_load_ps( (float *)((int)pRead + 32) );
 	_mm_stream_ps( (float *)pCurrPos, m1 );
-	_mm_stream_ps( (float *)(pCurrPos + 16), m2 );
-	_mm_stream_ps( (float *)(pCurrPos + 32), m3 );
+	_mm_stream_ps( (float *)((int)pCurrPos + 16), m2 );
+	_mm_stream_ps( (float *)((int)pCurrPos + 32), m3 );
 #else
 	Error( "Implement CMeshBuilder::FastVertexSSE(dx7)" );
 #endif
@@ -1436,13 +1436,13 @@ inline void CVertexBuilder::FastVertexSSE( const ModelVertexDX8_t &vertex )
 						  :: "r" (pRead), "r" (pCurrPos) : "memory"); */
 
 	__m128 m1 = _mm_load_ps( (float *)pRead );
-	__m128 m2 = _mm_load_ps( (float *)(pRead + 16) );
-	__m128 m3 = _mm_load_ps( (float *)(pRead + 32) );
-	__m128 m4 = _mm_load_ps( (float *)(pRead + 48) );
+	__m128 m2 = _mm_load_ps( (float *)((int)pRead + 16) );
+	__m128 m3 = _mm_load_ps( (float *)((int)pRead + 32) );
+	__m128 m4 = _mm_load_ps( (float *)((int)pRead + 48) );
 	_mm_stream_ps( (float *)pCurrPos, m1 );
-	_mm_stream_ps( (float *)(pCurrPos + 16), m2 );
-	_mm_stream_ps( (float *)(pCurrPos + 32), m3 );
-	_mm_stream_ps( (float *)(pCurrPos + 48), m4 );
+	_mm_stream_ps( (float *)((int)pCurrPos + 16), m2 );
+	_mm_stream_ps( (float *)((int)pCurrPos + 32), m3 );
+	_mm_stream_ps( (float *)((int)pCurrPos + 48), m4 );
 #else
 	Error( "Implement CMeshBuilder::FastVertexSSE((dx8)" );
 #endif

@@ -181,7 +181,7 @@ public:
 	void			WriteOneBitAt( int iBit, int nValue );
 	
 	// Write signed or unsigned. Range is only checked in debug.
-	void			WriteUBitLong( unsigned int data, int numbits, bool bCheckRange=true );
+	void		    WriteUBitLong( unsigned int data, int numbits, bool bCheckRange=true ) RESTRICT;
 	void			WriteSBitLong( int data, int numbits );
 	
 	// Tell it whether or not the data is unsigned. If it's signed,
@@ -241,7 +241,7 @@ public:
 	int				GetNumBytesWritten() const;
 	int				GetNumBitsWritten() const;
 	int				GetMaxNumBits();
-	int				GetNumBitsLeft();
+	int				GetNumBitsLeft() RESTRICT;
 	int				GetNumBytesLeft();
 	unsigned char*	GetData();
 	const unsigned char*	GetData() const;
@@ -250,7 +250,7 @@ public:
 	bool			CheckForOverflow(int nBits);
 	inline bool		IsOverflowed() const {return m_bOverflow;}
 
-	void			SetOverflowFlag();
+	void			SetOverflowFlag() RESTRICT;
 
 
 public:
@@ -292,7 +292,7 @@ inline int bf_write::GetMaxNumBits()
 	return m_nDataBits;
 }
 
-inline int bf_write::GetNumBitsLeft()	
+inline int bf_write::GetNumBitsLeft() RESTRICT
 {
 	return m_nDataBits - m_iCurBit;
 }
@@ -323,7 +323,7 @@ BITBUF_INLINE bool bf_write::CheckForOverflow(int nBits)
 	return m_bOverflow;
 }
 
-BITBUF_INLINE void bf_write::SetOverflowFlag()
+BITBUF_INLINE void bf_write::SetOverflowFlag() RESTRICT
 {
 #ifdef DBGFLAG_ASSERT
 	if ( m_bAssertOnOverflow )
@@ -635,7 +635,7 @@ public:
 public:
 	int				GetNumBytesLeft();
 	int				GetNumBytesRead();
-	int				GetNumBitsLeft();
+	int				GetNumBitsLeft() RESTRICT;
 	int				GetNumBitsRead() const;
 
 	// Has the buffer overflowed?
@@ -645,7 +645,7 @@ public:
 	inline bool		SeekRelative(int iBitDelta);	// Seek to an offset from the current position.
 
 	// Called when the buffer is overflowed.
-	void			SetOverflowFlag();
+	void			SetOverflowFlag() RESTRICT;
 
 
 public:
@@ -678,7 +678,7 @@ inline int bf_read::GetNumBytesRead()
 	return BitByte(m_iCurBit);
 }
 
-inline int bf_read::GetNumBitsLeft()	
+inline int bf_read::GetNumBitsLeft() RESTRICT
 {
 	return m_nDataBits - m_iCurBit;
 }

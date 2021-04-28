@@ -2034,6 +2034,8 @@ void CThread::Yield()
 {
 #ifdef _WIN32
 	::Sleep(0);
+#elif defined(ANDROID)
+	sched_yield();
 #elif defined(POSIX)
 	pthread_yield();
 #endif

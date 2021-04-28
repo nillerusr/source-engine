@@ -1,4 +1,4 @@
-//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//===== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -27,7 +27,7 @@
 #include <set>
 #endif
 
-#if defined( LINUX )
+#if defined( LINUX ) && !defined( ANDROID )
 #include <execinfo.h>
 #endif
 
@@ -38,7 +38,7 @@
 
 #if !defined( ENABLE_RUNTIME_STACK_TRANSLATION ) //disable the whole toolset
 
-#if defined( LINUX )
+#if defined( LINUX ) && !defined( ANDROID )
 
 int GetCallStack( void **pReturnAddressesOut, int iArrayCount, int iSkipCount )
 {
