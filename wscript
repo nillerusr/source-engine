@@ -154,6 +154,8 @@ def define_platform(conf):
 	if conf.options.SDL:
 		conf.define('USE_SDL', 1)
 
+	print(conf.env.DEST_OS)
+
 	if conf.env.DEST_OS == 'linux':
 		conf.define('_GLIBCXX_USE_CXX11_ABI',0)
 		conf.env.append_unique('DEFINES', [
@@ -167,7 +169,7 @@ def define_platform(conf):
 
 	if conf.env.DEST_OS == 'android':
 		conf.env.append_unique('DEFINES', [
-			'ANDROID', '_ANDROID'
+			'ANDROID=1', '_ANDROID=1'
 			'LINUX=1', '_LINUX=1',
 			'POSIX=1', '_POSIX=1',
 			'GNUC',
@@ -212,6 +214,8 @@ def configure(conf):
 	if sys.platform == 'win32':
 		conf.load('msvc msvc_pdb msdev msvs')
 	conf.load('subproject xcompile compiler_c compiler_cxx gitversion clang_compilation_database strip_on_install waf_unit_test enforce_pic')
+
+	define_platform(conf)
 
 	if conf.options.SDL:
 		conf.check_cfg(package='sdl2', uselib_store='SDL2', args=['--cflags', '--libs'])
@@ -334,8 +338,6 @@ def configure(conf):
 		conf.env.BINDIR = conf.env.PREFIX
 	else:
 		conf.env.LIBDIR = conf.env.BINDIR = conf.env.PREFIX
-
-	define_platform(conf)
 
 	if conf.options.DEDICATED:
 		conf.add_subproject(projects['dedicated'])

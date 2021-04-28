@@ -152,8 +152,6 @@ class Android:
 	def gen_host_toolchain(self):
 		# With host toolchain we don't care about OS
 		# so just download NDK for Linux x86_64
-		if 'HOST_TOOLCHAIN' in self.ctx.environ:
-			return self.ctx.environ['HOST_TOOLCHAIN']
 		if self.is_host():
 			return 'linux-x86_64'
 
@@ -250,19 +248,6 @@ class Android:
 		if cxx and not self.is_clang() and self.toolchain not in ['4.8','4.9']:
 			cflags += ['-fno-sized-deallocation']
 
-		def fixup_host_clang_with_old_ndk():
-			cflags = []
-			# Clang builtin redefine w/ different calling convention bug
-			# NOTE: I did not added complex.h functions here, despite
-			# that NDK devs forgot to put __NDK_FPABI_MATH__ for complex
-			# math functions
-			# I personally don't need complex numbers support, but if you want it
-			# just run sed to patch header
-			for f in ['strtod', 'strtof', 'strtold']:
-				cflags += ['-fno-builtin-%s' % f]
-			return cflags
-
-
 		if self.is_arm():
 			if self.arch == 'armeabi-v7a':
 				# ARMv7 support
@@ -271,19 +256,23 @@ class Android:
 				if not self.is_clang() and not self.is_host():
 					cflags += [ '-mvectorize-with-neon-quad' ]
 
-				if self.is_host() and self.ndk_rev <= ANDROID_NDK_HARDFP_MAX:
-					cflags += fixup_host_clang_with_old_ndk()
-
 				if self.is_hardfp():
 					cflags += ['-D_NDK_MATH_NO_SOFTFP=1', '-mfloat-abi=hard', '-DLOAD_HARDFP', '-DSOFTFP_LINK']
+
+					if self.is_host():
+					# Clang builtin redefine w/ different calling convention bug
+					# NOTE: I did not added complex.h functions here, despite
+					# that NDK devs forgot to put __NDK_FPABI_MATH__ for complex
+					# math functions
+					# I personally don't need complex numbers support, but if you want it
+					# just run sed to patch header
+						for f in ['strtod', 'strtof', 'strtold']:
+							cflags += ['-fno-builtin-%s' % f]
 				else:
 					cflags += ['-mfloat-abi=softfp']
 			else:
-				if self.is_host() and self.ndk_rev <= ANDROID_NDK_HARDFP_MAX:
-					cflags += fixup_host_clang_with_old_ndk()
-
 				# ARMv5 support
-				cflags += ['-march=armv5te', '-msoft-float']
+				cflags += ['-march=armv5te', '-mtune=xscale', '-msoft-float']
 		elif self.is_x86():
 			cflags += ['-mtune=atom', '-march=atom', '-mssse3', '-mfpmath=sse', '-DVECTORIZE_SINCOS', '-DHAVE_EFFICIENT_UNALIGNED_ACCESS']
 		return cflags
@@ -302,7 +291,7 @@ class Android:
 		if self.is_clang() or self.is_host():
 			linkflags += ['-fuse-ld=lld']
 
-		linkflags += ['-Wl,--hash-style=sysv', '-Wl,--no-undefined', '-no-canonical-prefixes']
+		linkflags += ['-Wl,--hash-style=both','-Wl,--no-undefined']
 		return linkflags
 
 	def ldflags(self):
@@ -326,10 +315,6 @@ def options(opt):
 	android = opt.add_option_group('Android options')
 	android.add_option('--android', action='store', dest='ANDROID_OPTS', default=None,
 		help='enable building for android, format: --android=<arch>,<toolchain>,<api>, example: --android=armeabi-v7a-hard,4.9,9')
-
-	magx = opt.add_option_group('MotoMAGX options')
-	magx.add_option('--enable-magx', action = 'store_true', dest = 'MAGX', default = False,
-		help = 'enable targetting for MotoMAGX phones [default: %default]')
 
 def configure(conf):
 	if conf.options.ANDROID_OPTS:
@@ -366,16 +351,7 @@ def configure(conf):
 
 		# conf.env.ANDROID_OPTS = android
 		conf.env.DEST_OS2 = 'android'
-	elif conf.options.MAGX:
-		# useless to change toolchain path, as toolchain meant to be placed in this path
-		toolchain_path = '/opt/toolchains/motomagx/arm-eabi2/lib/'
-		conf.env.INCLUDES_MAGX = [toolchain_path + i for i in ['ezx-z6/include', 'qt-2.3.8/include']]
-		conf.env.LIBPATH_MAGX  = [toolchain_path + i for i in ['ezx-z6/lib', 'qt-2.3.8/lib']]
-		conf.env.LINKFLAGS_MAGX = ['-Wl,-rpath-link=' + i for i in conf.env.LIBPATH_MAGX]
-		for lib in ['qte-mt', 'ezxappbase', 'ezxpm', 'log_util']:
-			conf.check_cc(lib=lib, use='MAGX', uselib_store='MAGX')
 
-	conf.env.MAGX = conf.options.MAGX
 	MACRO_TO_DESTOS = OrderedDict({ '__ANDROID__' : 'android' })
 	for k in c_config.MACRO_TO_DESTOS:
 		MACRO_TO_DESTOS[k] = c_config.MACRO_TO_DESTOS[k] # ordering is important
