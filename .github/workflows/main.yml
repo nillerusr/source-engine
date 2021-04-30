@@ -78,5 +78,8 @@ jobs:
           brew install binutils llvm
       - name: Build
         run: |
+          echo 'export PATH="/usr/local/opt/binutils/bin:$PATH"' >> /Users/runner/.bash_profile
+          export LDFLAGS="-L/usr/local/opt/binutils/lib"
+          export CPPFLAGS="-I/usr/local/opt/binutils/include"
           ./waf configure -T ${{ matrix.configuration }}
           ./waf build
