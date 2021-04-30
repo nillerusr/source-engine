@@ -36,9 +36,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             g++-multilib \
+            libbz2-dev \
             libcurl4-openssl-dev \
             libopenal-dev \
             libsdl2-dev \
+            libsdl2-2.0-0
 #            libcurl3-gnutls
       - name: Build
         run: |
