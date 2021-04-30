@@ -21,7 +21,7 @@ jobs:
         if: matrix.runs-on == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libsdl2-dev libopenal-dev libcurl-ocaml{,dev} libcurl3-{gnutls,nss} libcurl4{,-{gnutls-dev,nss-dev,openssl-dev}}
+          sudo apt-get install -y libsdl2-dev libopenal-dev libcurl-ocaml{,dev} libcurl3-{gnutls,nss} libcurl4 libcurl4-{gnutls,nss,openssl}-dev libcurlpp-dev
       - name: Build
         run: |
           ./waf configure -T ${{ matrix.configuration }}
