@@ -17,11 +17,11 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: recursive
-      - name: Install sdl2
+      - name: Install dependencies
         if: matrix.runs-on == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libsdl2-{dev,2.0-0} libopenal{-dev,1}
+          sudo apt-get install -y libsdl2-dev libopenal-dev libcurl-ocaml{,dev} libcurl3-{gnutls,nss} libcurl4{,-{gnutls-dev,nss-dev,openssl-dev}}
       - name: Build
         run: |
           ./waf configure -T ${{ matrix.configuration }}
