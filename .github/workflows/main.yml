@@ -21,7 +21,7 @@ jobs:
         if: matrix.runs-on == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libsdl2-{dev,2.0-0} libopenal-{dev,1}
+          sudo apt-get install -y libsdl2-{dev,2.0-0} libopenal{-dev,1}
       - name: Build
         run: |
           ./waf configure -T ${{ matrix.configuration }}
