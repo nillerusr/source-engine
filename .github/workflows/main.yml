@@ -6,27 +6,28 @@ on:
   workflow_dispatch:
 
 jobs:
-#  build-windows:
-#    runs-on: windows-latest
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        configuration: [debug, release]
-#    steps:
-#      - uses: actions/checkout@v2
-#        with:
-#          submodules: recursive
-#      - name: Build
-#        run: |
-#          ./waf configure -T ${{ matrix.configuration }}
-#          ./waf build
-
-  build-linux:
-    runs-on: ubuntu-latest
+  build-windows:
+    runs-on: windows-latest
     strategy:
       fail-fast: false
       matrix:
         configuration: [debug, release]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Build
+        run: |
+          ./waf configure -T ${{ matrix.configuration }}
+          ./waf build
+
+  build-linux:
+    runs-on: ubuntu-${{ matrix.ubuntu_version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [debug, release]
+        ubuntu_version: [16.04, 18.04, latest]
     steps:
       - uses: actions/checkout@v2
         with:
@@ -49,23 +50,28 @@ jobs:
             libsdl2-image-dev \
             libsdl2-gfx-1.0-0 \
             libsdl2-gfx-dev
-#            libcurl3-gnutls
       - name: Build
         run: |
           ./waf configure -T ${{ matrix.configuration }}
           ./waf build
 
-#  build-macos:
-#    runs-on: macos-latest
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        configuration: [debug, release]
-#    steps:
-#      - uses: actions/checkout@v2
-#        with:
-#          submodules: recursive
-#      - name: Build
-#        run: |
-#          ./waf configure -T ${{ matrix.configuration }}
-#          ./waf build
+  build-macos:
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [debug, release]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Install dependencies
+        env:
+          HOMEBREW_NO_ANALYTICS: 1
+        run: |
+          brew update
+          brew install binutils llvm
+      - name: Build
+        run: |
+          ./waf configure -T ${{ matrix.configuration }}
+          ./waf build
