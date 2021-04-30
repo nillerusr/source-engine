@@ -6,12 +6,26 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ${{ matrix.runs-on }}
+#  build-windows:
+#    runs-on: windows-latest
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        configuration: [debug, release]
+#    steps:
+#      - uses: actions/checkout@v2
+#        with:
+#          submodules: recursive
+#      - name: Build
+#        run: |
+#          ./waf configure -T ${{ matrix.configuration }}
+#          ./waf build
+
+  build-linux:
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        runs-on: [ubuntu-latest, windows-latest, macos-latest]
         configuration: [debug, release]
     steps:
       - uses: actions/checkout@v2
@@ -21,8 +35,29 @@ jobs:
         if: matrix.runs-on == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libsdl2-dev libopenal-dev libcurl-ocaml{,-dev} libcurl3-{gnutls,nss} libcurl4 libcurl4-{gnutls,nss,openssl}-dev libcurlpp-dev
+          sudo apt-get install -y libsdl2-dev \
+            libopenal-dev \
+            libcurl-ocaml{,-dev} \
+            libcurl3-{gnutls,nss} \
+#            libcurl4 \
+#            libcurl4-{gnutls,nss,openssl}-dev \
+#            libcurlpp-dev
       - name: Build
         run: |
           ./waf configure -T ${{ matrix.configuration }}
           ./waf build
+
+#  build-macos:
+#    runs-on: macos-latest
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        configuration: [debug, release]
+#    steps:
+#      - uses: actions/checkout@v2
+#        with:
+#          submodules: recursive
+#      - name: Build
+#        run: |
+#          ./waf configure -T ${{ matrix.configuration }}
+#          ./waf build
