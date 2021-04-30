@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [debug, release]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - uses: albin-johansson/download-sdl2@v1
+        with:
+          version: 2.0.14
+          sources_destination: .
+          binaries_destination: bin
+      - name: Build
+        run: |
+          ./waf configure -T ${{ matrix.configuration }}
+          ./waf build
+
+  build-linux:
+    runs-on: ubuntu-${{ matrix.ubuntu_version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [debug, release]
+        ubuntu_version: [16.04, 18.04, latest]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            g++-multilib \
+            libbz2-dev \
+            libcurl4-openssl-dev \
+            libopenal-dev \
+            libsdl2-2.0-0 \
+            libsdl2-dev \
+            libsdl2-ttf-2.0-0 \
+            libsdl2-ttf-dev \
+            libsdl2-net-2.0-0 \
+            libsdl2-net-dev \
+            libsdl2-image-2.0-0 \
+            libsdl2-image-dev \
+            libsdl2-gfx-1.0-0 \
+            libsdl2-gfx-dev
+      - name: Build
+        run: |
+          ./waf configure -T ${{ matrix.configuration }}
+          ./waf build
+
+  build-macos:
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [debug, release]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Install dependencies
+        env:
+          HOMEBREW_NO_ANALYTICS: 1
+        run: |
+          brew update
+          brew install binutils llvm
+      - name: Build
+        run: |
+          echo 'export PATH="/usr/local/opt/binutils/bin:$PATH"' >> /Users/runner/.bash_profile
+          export LDFLAGS="-L/usr/local/opt/binutils/lib"
+          export CPPFLAGS="-I/usr/local/opt/binutils/include"
+          ./waf configure -T ${{ matrix.configuration }}
+          ./waf build
