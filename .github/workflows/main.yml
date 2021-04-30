@@ -34,13 +34,12 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libsdl2-dev \
+          sudo apt-get install -y \
+            g++-multilib \
+            libcurl4-openssl-dev
             libopenal-dev \
-            libcurl-ocaml{,-dev} \
-            libcurl3-{gnutls,nss} \
-#            libcurl4 \
-#            libcurl4-{gnutls,nss,openssl}-dev \
-#            libcurlpp-dev
+            libsdl2-dev \
+#            libcurl3-gnutls
       - name: Build
         run: |
           ./waf configure -T ${{ matrix.configuration }}
