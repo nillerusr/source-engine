@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on: [ubuntu-latest, windows-latest, macos-latest]
+        configuration: [debug, release]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Build
+        run: |
+          ./waf configure -T ${{ matrix.configuration }}
+          ./waf build
