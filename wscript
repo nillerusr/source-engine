@@ -216,6 +216,7 @@ def configure(conf):
 	conf.load('subproject xcompile compiler_c compiler_cxx gitversion clang_compilation_database strip_on_install waf_unit_test enforce_pic')
 
 	define_platform(conf)
+	conf.load('force_32bit')
 
 	if conf.options.SDL:
 		conf.check_cfg(package='sdl2', uselib_store='SDL2', args=['--cflags', '--libs'])
@@ -231,18 +232,6 @@ def configure(conf):
 
 	conf.check_cfg(package='zlib', uselib_store='ZLIB', args=['--cflags', '--libs'])
 
-
-	# We restrict 64-bit builds ONLY for Win/Linux/OSX running on Intel architecture
-	# Because compatibility with original GoldSrc
-	if conf.env.DEST_OS in ['win32', 'linux', 'darwin'] and conf.env.DEST_CPU == 'x86_64':
-		conf.env.BIT32_MANDATORY = not conf.options.ALLOW64
-		if conf.env.BIT32_MANDATORY:
-			Logs.info('WARNING: will build engine for 32-bit target')
-	else:
-		conf.env.BIT32_MANDATORY = False
-
-	conf.load('force_32bit')
-
 	compiler_optional_flags = [
 		'-Wall',
 		'-fdiagnostics-color=always',
@@ -250,7 +239,7 @@ def configure(conf):
 		'-Wuninitialized',
 		'-Winit-self',
 		'-Wstrict-aliasing',
-#		'-faligned-new'
+		'-faligned-new'
 	]
 
 	c_compiler_optional_flags = [
