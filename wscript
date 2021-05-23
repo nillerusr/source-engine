@@ -216,6 +216,14 @@ def configure(conf):
 	conf.load('subproject xcompile compiler_c compiler_cxx gitversion clang_compilation_database strip_on_install waf_unit_test enforce_pic')
 
 	define_platform(conf)
+
+	if conf.env.DEST_OS in ['win32', 'linux', 'darwin'] and conf.env.DEST_CPU == 'x86_64':
+		conf.env.BIT32_MANDATORY = not conf.options.ALLOW64
+		if conf.env.BIT32_MANDATORY:
+			Logs.info('WARNING: will build engine for 32-bit target')
+	else:
+		conf.env.BIT32_MANDATORY = False
+
 	conf.load('force_32bit')
 
 	if conf.options.SDL:
