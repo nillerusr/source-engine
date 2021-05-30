@@ -2743,7 +2743,14 @@ void CL_InitLanguageCvar()
 	}
 	else
 	{
-		cl_language.SetValue( "english" );
+		if ( CommandLine()->CheckParm( "-language" ) )
+		{
+			cl_language.SetValue( CommandLine()->ParmValue( "-language", "english") );
+		}
+		else
+		{
+			cl_language.SetValue( "english" );
+		}
 	}
 }
 
