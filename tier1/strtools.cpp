@@ -47,7 +47,11 @@
 #include <stdarg.h>
 
 #ifdef POSIX
+#ifdef ANDROID
+#include <../thirdparty/libiconv-1.14/include/iconv.h>
+#else
 #include <iconv.h>
+#endif
 #include <ctype.h>
 #include <unistd.h>
 #include <stdlib.h>

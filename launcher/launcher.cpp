@@ -642,6 +642,8 @@ void ReportDirtyDiskNoMaterialSystem()
 //-----------------------------------------------------------------------------
 bool CSourceAppSystemGroup::Create()
 {
+	Warning( "CSourceAppSystemGroup::Create\n" );
+
 	IFileSystem *pFileSystem = (IFileSystem*)FindSystem( FILESYSTEM_INTERFACE_VERSION );
 	pFileSystem->InstallDirtyDiskReportFunc( ReportDirtyDiskNoMaterialSystem );
 
@@ -674,13 +676,18 @@ bool CSourceAppSystemGroup::Create()
 		{ "", "" }							// Required to terminate the list
 	};
 
+	Warning( "PreAddSystem\n" );
+
 #if defined( USE_SDL )
 	AddSystem( (IAppSystem *)CreateSDLMgr(), SDLMGR_INTERFACE_VERSION );
 #endif
 
+	Warning( "PreAddSystems\n" );
+
 	if ( !AddSystems( appSystems ) ) 
 		return false;
-
+	
+	Warning( "PostAddSystems\n" );
 
 	// This will be NULL for games that don't support VR. That's ok. Just don't load the DLL
 	AppModule_t sourceVRModule = LoadModule( "sourcevr" DLL_EXT_STRING );
@@ -757,6 +764,8 @@ bool CSourceAppSystemGroup::Create()
 
 bool CSourceAppSystemGroup::PreInit()
 {
+	Warning( "CSourceAppSystemGroup::PreInit\n" );
+
 	CreateInterfaceFn factory = GetFactory();
 	ConnectTier1Libraries( &factory, 1 );
 	ConVar_Register( );
@@ -934,7 +943,9 @@ bool GrabSourceMutex()
 	CRC32_ProcessBuffer( &gameCRC, (void *)pchGameParam, Q_strlen( pchGameParam ) );
 	CRC32_Final( &gameCRC );
 
-#ifdef LINUX
+#ifdef ANDROID
+	return true;
+#elif defined (LINUX)
 	/*
 	 * Linux
  	 */
@@ -1166,6 +1177,306 @@ static const char *BuildCommand()
 	return (const char *)build.Base();
 }
 
+#ifdef ANDROID
+#include <android/log.h>
+#include "jni.h"
+
+char dataDir[512];
+
+const char *LauncherArgv[512];
+char javaArgv[2048];
+char gameName[512];
+char startArgs[256][128];
+char language[1024] = "english";
+int iLastArgs = 0;
+static int scr_width,scr_height;
+
+bool bClient_loaded = false;
+bool bShowTouch = true;
+void *libclient;
+
+static struct jnimethods_s
+{
+        jclass actcls;
+        JavaVM *vm;
+        JNIEnv *env;
+        jmethodID enableTextInput;
+} jni;
+
+
+DLL_EXPORT int Java_com_valvesoftware_ValveActivity2_setMainPackFilePath(JNIEnv *env, jclass *clazz, jstring str)
+{
+	__android_log_print( ANDROID_LOG_DEBUG, "SourceSDK2013", "Java_com_valvesoftware_ValveActivity_setMainPackFilePath" );
+	return setenv( "VALVE_PAK0_PATH", env->GetStringUTFChars(str, NULL), 1 );
+}
+DLL_EXPORT int Java_com_valvesoftware_ValveActivity2_setPatchPackFilePath(JNIEnv *env, jclass *clazz, jstring str)
+{
+	__android_log_print( ANDROID_LOG_DEBUG, "SourceSDK2013", "Java_com_valvesoftware_ValveActivity_setPatchPackFilePath" );
+	return setenv( "VALVE_PAK1_PATH", env->GetStringUTFChars(str, NULL), 1 );
+}
+DLL_EXPORT void Java_com_valvesoftware_ValveActivity2_setCacheDirectoryPath(JNIEnv *env, jclass *clazz, jstring str)
+{
+	__android_log_print( ANDROID_LOG_DEBUG, "SourceSDK2013", "Java_com_valvesoftware_ValveActivity_setCacheDirectoryPath" );
+	//return setenv( "VALVE_CACHE_PATH", env->GetStringUTFChars(str, NULL), 1 );
+}
+DLL_EXPORT void Java_com_valvesoftware_ValveActivity2_gpgsStart()
+{
+	__android_log_print( ANDROID_LOG_DEBUG, "SourceSDK2013", "Java_com_valvesoftware_ValveActivity_gpgsStart" );
+}
+DLL_EXPORT void Java_com_valvesoftware_ValveActivity2_nativeOnActivityResult()
+{
+	__android_log_print( ANDROID_LOG_DEBUG, "SourceSDK2013", "Java_com_valvesoftware_ValveActivity_nativeOnActivityResult" );
+}
+
+DLL_EXPORT void Java_com_valvesoftware_ValveActivity2_setNativeLibPath(JNIEnv *env, jclass *clazz, jstring str)
+{
+	__android_log_print( ANDROID_LOG_DEBUG, "SourceSDK2013", "Java_com_valvesoftware_ValveActivity_setNativeLibPath" );
+//	snprintf(dataDir, sizeof dataDir, env->GetStringUTFChars(str, NULL));
+}
+DLL_EXPORT void Java_com_valvesoftware_ValveActivity2_setLanguage(JNIEnv *env, jclass *clazz, jstring str)
+{
+	snprintf(language, sizeof language, "%s", env->GetStringUTFChars(str, NULL));
+	__android_log_print( ANDROID_LOG_DEBUG, "SourceSDK2013", "Java_com_valvesoftware_ValveActivity_setLanguage" );
+}
+DLL_EXPORT int Java_com_valvesoftware_ValveActivity2_setDocumentDirectoryPath(JNIEnv *env, jclass *clazz, jstring str)
+{
+	__android_log_print( ANDROID_LOG_DEBUG, "SourceSDK2013", "Java_com_valvesoftware_ValveActivity_setDocumentDirectoryPath" );
+	setenv( "HOME", env->GetStringUTFChars(str, NULL), 1);
+	return setenv( "VALVE_CACHE_PATH", env->GetStringUTFChars(str, NULL), 1 );
+}
+DLL_EXPORT int Java_com_valvesoftware_ValveActivity2_setDropMip(int a1, int a2, signed int a3)
+{
+	__android_log_print( ANDROID_LOG_DEBUG, "SourceSDK2013", "Java_com_valvesoftware_ValveActivity_setDropMip" );
+}
+
+DLL_EXPORT int Java_com_valvesoftware_ValveActivity2_saveGame()
+{
+	__android_log_print( ANDROID_LOG_DEBUG, "SourceSDK2013", "Java_com_valvesoftware_ValveActivity_saveGame" );
+}
+
+DLL_EXPORT int Java_com_valvesoftware_ValveActivity2_setDataDirectoryPath(JNIEnv *env, jclass *clazz, jstring str)
+{
+	__android_log_print( ANDROID_LOG_DEBUG, "SourceSDK2013", "Java_com_valvesoftware_ValveActivity_setDataDirectoryPath" );
+	snprintf(dataDir, sizeof dataDir, env->GetStringUTFChars(str, NULL));
+}
+
+DLL_EXPORT int Java_com_valvesoftware_ValveActivity2_setExtrasPackFilePath(JNIEnv *env, jclass *clazz, jstring str)
+{
+	__android_log_print( ANDROID_LOG_DEBUG, "SourceSDK2013", "Java_com_valvesoftware_ValveActivity2_setExtrasPackFilePath" );
+	return setenv( "VALVE_PAK2_PATH", env->GetStringUTFChars(str, NULL), 1 );
+}
+
+DLL_EXPORT int Java_com_valvesoftware_ValveActivity2_setenv(JNIEnv *jenv, jclass *jclass, jstring env, jstring value, jint over)
+{
+	__android_log_print( ANDROID_LOG_DEBUG, "SourceSDK2013", "Java_com_valvesoftware_ValveActivity2_setenv %s=%s", jenv->GetStringUTFChars(env, NULL),jenv->GetStringUTFChars(value, NULL) );
+	return setenv( jenv->GetStringUTFChars(env, NULL), jenv->GetStringUTFChars(value, NULL), over );
+}
+
+DLL_EXPORT int Java_com_valvesoftware_ValveActivity2_setGame(JNIEnv *jenv, jclass *jclass, jstring game)
+{
+	snprintf(gameName, sizeof dataDir, "-game %s", jenv->GetStringUTFChars(game, NULL));
+	return setenv( "VALVE_MOD",  jenv->GetStringUTFChars(game, NULL), 1);
+}
+
+typedef void (*t_TouchEvent)(int finger, int x, int y, int act);
+t_TouchEvent TouchEvent;
+
+DLL_EXPORT void clientLoaded( void )
+{
+	bClient_loaded = true;
+	libclient = dlopen("libclient.so",0);
+	TouchEvent = (t_TouchEvent)dlsym(libclient, "TouchEvent");
+	((void (*)(bool, int, int))dlsym(libclient, "showTouch"))(bShowTouch, scr_width, scr_height);
+}
+
+DLL_EXPORT void showKeyboard( int show )
+{
+	jni.env->CallStaticVoidMethod( jni.actcls, jni.enableTextInput, show );
+}
+
+DLL_EXPORT void JNICALL Java_com_valvesoftware_ValveActivity2_showTouch(JNIEnv *env, jobject obj, jboolean show_touch, jint width, jint height)
+{
+	scr_width = width;
+	scr_height = height;
+	bShowTouch = show_touch;
+}
+
+DLL_EXPORT void JNICALL Java_com_valvesoftware_ValveActivity2_TouchEvent(JNIEnv *env, jobject obj, jint fingerid, jint x, jint y, jint action)
+{
+	if( !bClient_loaded )
+		return;
+
+	TouchEvent( fingerid, x, y, action );
+}
+
+DLL_EXPORT const char* getSystemLanguage()
+{
+	return language;
+}
+
+typedef void (*t_SDL_Android_Init)(JNIEnv* env, jclass cls);
+t_SDL_Android_Init SDL_Android_Init;
+
+//typedef void *(*t_SDL_StartTextInput)();
+//t_SDL_StartTextInput SDL_StartTextInput;
+
+typedef void (*t_egl_init)();
+t_egl_init egl_init;
+
+bool bUseGL;
+
+void SetRenderer()
+{
+	if ( bUseGL )
+	{
+		//setenv("USE_BIG_GL", "1", 1);
+	}
+	else
+	{
+		setenv("REGAL_LOG", "0", 1);
+		setenv("REGAL_LOG_ERROR", "0", 1);
+		setenv("REGAL_LOG_WARNING", "0", 1);
+		setenv("REGAL_LOG_INFO", "0", 1);
+		setenv("REGAL_LOG_HTTP", "0", 1);
+		setenv("REGAL_LOG_JSON", "0", 1);
+		setenv("REGAL_LOG_CALLBACK", "0", 1);
+		setenv("REGAL_LOG_ONCE", "0", 1);
+		setenv("REGAL_LOG_POINTERS", "0", 1);
+		setenv("REGAL_LOG_THREAD", "0", 1);
+		setenv("REGAL_LOG_PROCESS", "0", 1);
+		setenv("REGAL_LOG_ALL", "0", 1);
+		setenv("REGAL_DEBUG", "0", 1);
+		setenv("REGAL_ERROR", "0", 1);
+		setenv("REGAL_LOG_FILE", "/dev/null", 1);
+		setenv("REGAL_EMU_SO", "0", 1);
+		setenv("REGAL_THREAD_LOCKING", "0", 1);
+		setenv("REGAL_FORCE_ES2_PROFILE", "1", 1);
+		setenv("REGAL_SYS_GLX", "0", 1);
+		setenv("REGAL_SYS_ES2", "1", 1);
+		setenv("REGAL_SYS_EGL", "1", 1);
+		setenv("REGAL_SYS_GL", "0", 1);
+		setenv("REGAL_GL_VERSION", "2.1", 1);
+		setenv("REGAL_GL_EXTENSIONS", "GL_EXT_framebuffer_object GL_EXT_framebuffer_blit GL_OES_mapbuffer GL_EXT_texture_sRGB_decode GL_EXT_texture_compression_s3tc GL_EXT_texture_compression_dxt1", 1);
+	}
+}
+
+void SetArg( const char *arg )
+{
+	char *pch;
+	char str[1024];
+	strncpy( str, arg, sizeof str );
+	pch = strtok (str," ");
+	while (pch != NULL)
+	{
+		strncpy( startArgs[iLastArgs], pch, sizeof startArgs[0] );
+		LauncherArgv[iLastArgs] = startArgs[iLastArgs];
+		iLastArgs++;
+		pch = strtok (NULL, " ");
+	}
+}
+
+DLL_EXPORT int Java_com_valvesoftware_ValveActivity2_setArgs(JNIEnv *env, jclass *clazz, jstring str)
+{
+	snprintf( javaArgv, sizeof javaArgv, env->GetStringUTFChars(str, NULL) );
+}
+
+void SetStartArgs()
+{
+	char lang[2048];
+	snprintf(lang, sizeof lang, "-language %s +cc_lang %s", language, language);
+
+	SetArg(dataDir);
+	SetArg(lang);
+	SetArg(gameName);
+	SetArg(javaArgv);
+	SetArg("-window "
+			"-nosteam "
+			"-nouserclip "
+			"+sv_unlockedchapters 99 "
+			"+mat_queue_mode 2 "
+			"-ignoredxsupportcfg "
+			"-regal "
+			"+gl_rt_forcergba 1 "
+			"+mat_antialias 1 "
+			"-mat_antialias 1 "
+			"+r_flashlightdepthtexture 1 "
+			"+gl_dropmips 1 "
+			"-insecure");
+
+	if( bUseGL )
+		SetArg("-userclip "
+				"-gl_disablesamplerobjects "
+//				"-egl "
+				"+gl_enabletexsubimage 1 "
+				"+gl_blitmode 1 "
+				"+gl_supportMapBuffer 0 "
+				"-gl_separatedepthstencil 0 "
+				"-gl_nodepthtexture 0 "
+				"+r_flashlight_version2 0 "
+				"+gl_emurgba16 0 "
+				"+gl_emunooverwrite 0");
+	else
+		SetArg("-nouserclip "
+				"-gl_disablesamplerobjects "
+				"+gl_enabletexsubimage 0 "
+				"+mat_reducefillrate 1 "
+				"+gl_blitmode 1 "
+				"+gl_supportMapBuffer 1 "
+				"-gl_separatedepthstencil 0 "// default is 1
+				"-gl_nodepthtexture 1 "
+				"+r_flashlight_version2 1 "
+				"+gl_emurgba16 1 "
+				"+gl_emunooverwrite 1");
+}
+
+int LauncherMain( int argc, char **argv );
+
+DLL_EXPORT int SDL_main()
+{
+	// init sdl
+	void *sdlHandle = dlopen("libSDL2.so", 0);
+
+	SDL_Android_Init = (t_SDL_Android_Init)dlsym(sdlHandle, "SDL_Android_Init");
+	SDL_Android_Init(env, cls);
+
+	//SDL_StartTextInput = (t_SDL_StartTextInput)dlsym(sdlHandle, "SDL_StartTextInput");
+	//SDL_StartTextInput();
+
+	chdir(dataDir);
+	getcwd(dataDir, sizeof dataDir);
+	setenv( "VALVE_GAME_PATH", dataDir, 1 );
+	snprintf(dataDir, sizeof dataDir, "%s/hl2_linux", dataDir);
+
+	bUseGL = false;
+
+	SetRenderer();
+	SetStartArgs();
+
+	void *engineHandle = dlopen("libengine.so", 0);
+	void *launcherHandle = dlopen("liblauncher.so", 0);
+	
+#ifdef GL4ES
+
+	void *glHandle = dlopen("libRegal.so", 0);
+	egl_init = (t_egl_init)dlsym(glHandle, "egl_init");
+	if( egl_init )
+		egl_init();
+#endif
+
+	jni.env = env;
+	jni.actcls = env->FindClass("org/libsdl/app/SDLActivity");
+	jni.enableTextInput = env->GetStaticMethodID(jni.actcls, "showKeyboard", "(I)V");
+
+	LauncherMain(iLastArgs, LauncherArgv);
+
+	dlclose(launcherHandle);
+	dlclose(engineHandle);
+
+	return 0;
+}
+
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: The real entry point for the application
 // Input  : hInstance - 
@@ -1175,7 +1486,7 @@ static const char *BuildCommand()
 // Output : int APIENTRY
 //-----------------------------------------------------------------------------
 #ifdef WIN32
-extern "C" __declspec(dllexport) int LauncherMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
+extern "C" __declspec(DLL_EXPORT) int LauncherMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
 #else
 DLL_EXPORT int LauncherMain( int argc, char **argv )
 #endif
@@ -1229,7 +1540,7 @@ DLL_EXPORT int LauncherMain( int argc, char **argv )
 	{
 		return -1;
 	}
-
+	
 	const char *filename;
 #ifdef WIN32
 	CommandLine()->CreateCmdLine( IsPC() ? VCRHook_GetCommandLine() : lpCmdLine );

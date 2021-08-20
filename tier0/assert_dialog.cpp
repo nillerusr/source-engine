@@ -23,7 +23,7 @@
 #include <dlfcn.h>
 #endif
 
-#if defined( USE_SDL )
+#if defined( LINUX ) || defined( USE_SDL )
 
 // We lazily load the SDL shared object, and only reference functions if it's
 // available, so this can be included on the dedicated server too.

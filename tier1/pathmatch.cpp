@@ -750,7 +750,7 @@ extern "C" {
 
 		return CALL(freopen)( mpath, mode, stream );
 	}
-
+#ifndef ANDROID
 	WRAP(fopen, FILE *, const char *path, const char *mode)
 	{
 		// if mode does not have w, a, or +, it's open for read.
@@ -788,7 +788,7 @@ extern "C" {
 	{
 		return __wrap_open( pathname, O_CREAT|O_WRONLY|O_TRUNC, mode );
 	}
-
+#endif
 	int __wrap_access(const char *pathname, int mode)
 	{
 		return __real_access( CWrap( pathname, false ), mode );
@@ -815,6 +815,7 @@ extern "C" {
 	{
 		return CALL(opendir)( CWrap( name, false ) );
 	}
+#ifndef ANDROID
 
     WRAP(__xstat, int, int __ver, __const char *__filename, struct stat *__stat_buf)
     {
@@ -835,7 +836,7 @@ extern "C" {
     {
         return CALL(__lxstat64)( __ver, CWrap( __filename, false), __stat_buf );
     }
-
+#endif
 	WRAP(chmod, int, const char *path, mode_t mode)
 	{
         return CALL(chmod)( CWrap( path, false), mode );

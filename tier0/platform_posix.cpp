@@ -28,6 +28,9 @@
 #include <time.h>
 #include <fcntl.h>
 #endif
+#ifdef ANDROID
+#include <linux/stat.h>
+#endif
 
 #include "tier0/memdbgon.h"
 // Benchmark mode uses this heavy-handed method 
