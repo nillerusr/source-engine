@@ -226,19 +226,19 @@ def configure(conf):
 
 	conf.load('force_32bit')
 
-	if conf.options.SDL:
-		conf.check_cfg(package='sdl2', uselib_store='SDL2', args=['--cflags', '--libs'])
+	#if conf.options.SDL:
+	#	conf.check_cfg(package='sdl2', uselib_store='SDL2', args=['--cflags', '--libs'])
 	if conf.options.DEDICATED:
 		conf.check_cfg(package='libedit', uselib_store='EDIT', args=['--cflags', '--libs'])
-	else:
-		conf.check_pkg('freetype2', 'FT2', FT2_CHECK)
-		conf.check_pkg('fontconfig', 'FC', FC_CHECK)
-		conf.check_cfg(package='openal', uselib_store='OPENAL', args=['--cflags', '--libs'])
-		conf.check_cfg(package='libjpeg', uselib_store='JPEG', args=['--cflags', '--libs'])
-		conf.check_cfg(package='libpng', uselib_store='PNG', args=['--cflags', '--libs'])
-		conf.check_cfg(package='libcurl', uselib_store='CURL', args=['--cflags', '--libs'])
+	#else:
+		#conf.check_pkg('freetype2', 'FT2', FT2_CHECK)
+		#conf.check_pkg('fontconfig', 'FC', FC_CHECK)
+		#conf.check_cfg(package='openal', uselib_store='OPENAL', args=['--cflags', '--libs'])
+		#conf.check_cfg(package='libjpeg', uselib_store='JPEG', args=['--cflags', '--libs'])
+		#conf.check_cfg(package='libpng', uselib_store='PNG', args=['--cflags', '--libs'])
+		#conf.check_cfg(package='libcurl', uselib_store='CURL', args=['--cflags', '--libs'])
 
-	conf.check_cfg(package='zlib', uselib_store='ZLIB', args=['--cflags', '--libs'])
+	#conf.check_cfg(package='zlib', uselib_store='ZLIB', args=['--cflags', '--libs'])
 
 	compiler_optional_flags = [
 		'-Wall',
@@ -247,11 +247,13 @@ def configure(conf):
 		'-Wuninitialized',
 		'-Winit-self',
 		'-Wstrict-aliasing',
-		'-faligned-new'
+		'-Wextra',
+		'-w',
+		#'-faligned-new'
 	]
 
 	c_compiler_optional_flags = [
-		'-fnonconst-initializers' # owcc
+		#'-fnonconst-initializers' # owcc
 	]
 
 	cflags, linkflags = conf.get_optimization_flags()
@@ -259,18 +261,20 @@ def configure(conf):
 	flags = ['-fPIC']
 
 	if conf.env.DEST_CPU == 'arm':
-		flags += ['-mfpu=neon', '-fsigned-char']
+		flags += ['-mfpu=neon', '-mfloat-abi=softfp', '-fsigned-char', '--sysroot=/home/jusic/android-ndk-r10e/platforms/android-21/arch-arm', '-I/home/jusic/android-ndk-r10e/sources/cxx-stl/stlport/stlport', '-I/home/jusic/android-ndk-r10e/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi-v7a-hard/include', '-I/home/jusic/android-ndk-r10e/sources/android/support/include']
 	else:
 		flags += ['-march=pentium4','-mtune=core2','-mfpmath=387']
+	
+	flags += ['-I/home/jusic/source-engine-android/thirdparty/SDL/include', '-L/home/jusic/android-ndk-r10e/sources/cxx-stl/stlport/libs/armeabi-v7a-hard/thumb', '-L/home/jusic/android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/lib/gcc/arm-linux-androideabi/4.9', '-lstlport_shared', '-lm', '-L/home/jusic/source-engine-android/lib/common/android/armeabi-v7a', '-L/home/jusic/source-engine-android/lib/public/android/armeabi-v7a']
 
 	cflags += flags
 	linkflags += flags
-
-	# And here C++ flags starts to be treated separately
+	
+    # And here C++ flags starts to be treated separately
 	cxxflags = list(cflags) + ['-std=c++11','-fpermissive']
 
 	if conf.env.COMPILER_CC == 'gcc':
-		wrapfunctions = ['freopen','fopen','open','creat','access','__xstat','stat','lstat','fopen64','open64',
+		wrapfunctions = ['freopen','creat','access','__xstat','stat','lstat','fopen64','open64',
 			'opendir','__lxstat','chmod','chown','lchown','symlink','link','__lxstat64','mknod',
 			'utimes','unlink','rename','utime','__xstat64','mount','mkfifo','mkdir','rmdir','scandir','realpath']
 
@@ -284,6 +288,7 @@ def configure(conf):
 		conf.check_cxx(cxxflags=cxxflags, linkflags=linkflags, msg='Checking for required C++ flags')
 
 		linkflags += ['-pthread']
+        
 		conf.env.append_unique('CFLAGS', cflags)
 		conf.env.append_unique('CXXFLAGS', cxxflags)
 		conf.env.append_unique('LINKFLAGS', linkflags)
@@ -291,11 +296,26 @@ def configure(conf):
 		cxxflags += conf.filter_cxxflags(compiler_optional_flags, cflags)
 		cflags += conf.filter_cflags(compiler_optional_flags + c_compiler_optional_flags, cflags)
 
+    
 	conf.env.append_unique('CFLAGS', cflags)
 	conf.env.append_unique('CXXFLAGS', cxxflags)
 	conf.env.append_unique('LINKFLAGS', linkflags)
 	conf.env.append_unique('INCLUDES', [os.path.abspath('common/')])
 
+	conf.check(lib='iconv', uselib_store='iconv')     
+	conf.check(lib='curl', uselib_store='curl')     
+	conf.check(lib='jpeg', uselib_store='jpeg')     
+	conf.check(lib='z', uselib_store='zlib')     
+	conf.check(lib='crypto', uselib_store='crypto')     
+	conf.check(lib='ssl', uselib_store='ssl')     
+	conf.check(lib='openal', uselib_store='openal')     
+	conf.check(lib='SDL2', uselib_store='sdl2')     
+	conf.check(lib='png', uselib_store='png')     
+	conf.check(lib='fontconfig', uselib_store='FT2')     
+	conf.check(lib='freetype2', uselib_store='FC')     
+	conf.check(lib='expat', uselib_store='EXPAT')  
+	conf.check(lib='log', uselib_store='LOG')     
+	
 	if conf.env.DEST_OS != 'win32':
 		conf.check_cc(lib='dl', mandatory=False)
 		conf.check_cc(lib='bz2', mandatory=False)

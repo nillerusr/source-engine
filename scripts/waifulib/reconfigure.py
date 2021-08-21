@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # encoding: utf-8
 # Copyright (c) 2019 mittorn
+CC=../android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/arm-linux-androideabi-gcc CXX=../android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/arm-linux-androideabi-gcc LD=../android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/arm-linux-androideabi-ld AR=../android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/arm-linux-androideabi-ar LINK=../android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/arm-linux-androideabi-ld STRIP=../android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/arm-linux-androideabi-strip ./waf configure -T debug
 
+../android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/arm-linux-androideabi-gcc -DDX_TO_GL_ABSTRACTION -DGL_GLEXT_PROTOTYPES -DBINK_VIDEO -DUSE_SDL=1 -DANDROID=1 -D_ANDROID=1 -DLINUX=1 -D_LINUX=1 -DPOSIX=1 -D_POSIX=1 -DGNUC -DNDEBUG -DNO_HOOK_MALLOC -D_DLL_EXT=.so /home/jusic/source-engine/main.c -c -o/home/jusic/source-engine/build/test.c.1.o
 '''
 Reconfigure
 

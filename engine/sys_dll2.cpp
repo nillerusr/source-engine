@@ -1006,17 +1006,25 @@ bool CEngineAPI::Connect( CreateInterfaceFn factory )
 	// Store off the app system factory...
 	g_AppSystemFactory = factory;
 
+	Warning( "CEngineAPI::Connect\n" );
+
 	if ( !BaseClass::Connect( factory ) )
 		return false;
+
+	Warning( "CEngineAPI::Connect2\n" );
 
 	g_pFileSystem = g_pFullFileSystem;
 	if ( !g_pFileSystem )
 		return false;
 
+	Warning( "CEngineAPI::Connect3\n" );
+
 	g_pFileSystem->SetWarningFunc( Warning );
 
 	if ( !Shader_Connect( true ) )
 		return false;
+
+	Warning( "CEngineAPI::Connect4\n" );
 
 	g_pPhysics = (IPhysics*)factory( VPHYSICS_INTERFACE_VERSION, NULL );
 

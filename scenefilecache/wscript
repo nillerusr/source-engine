@@ -13,7 +13,7 @@ def options(opt):
 
 def configure(conf):
 	conf.define('_WINDOWS',1) # WTF? this defined in original vpc file
-	conf.define('PROTECTED_THINGS_ENABLE',1)
+	#conf.define('PROTECTED_THINGS_ENABLE',1) # conflicts with stlport
 
 def build(bld):
 	source = [
@@ -30,7 +30,7 @@ def build(bld):
 
 	defines = []
 
-	libs = ['tier0','tier1']
+	libs = ['tier0','tier1','iconv']
 
 	install_path = bld.env.LIBDIR
 

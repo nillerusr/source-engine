@@ -1,0 +1,285 @@
+<waflib.extras.clang_compilation_database.ClangDbContext object at 0x7f587bde5dd0>
+<waflib.extras.clang_compilation_database.ClangDbContext object at 0x7f587bde5dd0>
+<waflib.extras.clang_compilation_database.ClangDbContext object at 0x7f587bde5dd0>
+<waflib.extras.clang_compilation_database.ClangDbContext object at 0x7f587bde5dd0>
+<waflib.extras.clang_compilation_database.ClangDbContext object at 0x7f587bde5dd0>
+<waflib.extras.clang_compilation_database.ClangDbContext object at 0x7f587bde5dd0>
+<waflib.extras.clang_compilation_database.ClangDbContext object at 0x7f587bde5dd0>
+Build commands will be stored in build/compile_commands.json
+Waf: Entering directory `/home/jusic/source-engine/build'
+<waflib.Build.BuildContext object at 0x7f587bfbfe90>
+<waflib.Build.BuildContext object at 0x7f587bfbfe90>
+<waflib.Build.BuildContext object at 0x7f587bfbfe90>
+<waflib.Build.BuildContext object at 0x7f587bfbfe90>
+<waflib.Build.BuildContext object at 0x7f587bfbfe90>
+<waflib.Build.BuildContext object at 0x7f587bfbfe90>
+<waflib.Build.BuildContext object at 0x7f587bfbfe90>
+[  31/2159] Linking build/tier0/libtier0.so
+[  32/2159] Compiling tier1/utlstring.cpp
+[  33/2159] Compiling tier1/utlbufferutil.cpp
+[  35/2159] Compiling tier1/utlbuffer.cpp
+[  36/2159] Compiling tier1/uniqueid.cpp
+[  37/2159] Compiling tier1/tokenreader.cpp
+../tier1/pathmatch.cpp:416: error: undefined reference to '__cxa_end_cleanup'
+../tier1/pathmatch.cpp:492: error: undefined reference to '__cxa_end_cleanup'
+../tier1/pathmatch.cpp:508: error: undefined reference to '__cxa_guard_acquire'
+../tier1/pathmatch.cpp:508: error: undefined reference to '__cxa_guard_release'
+../tier1/pathmatch.cpp:512: error: undefined reference to '__cxa_guard_acquire'
+../tier1/pathmatch.cpp:512: error: undefined reference to '__cxa_guard_release'
+../tier1/pathmatch.cpp:751: error: undefined reference to '__cxa_end_cleanup'
+../tier1/pathmatch.cpp:760: error: undefined reference to '__cxa_end_cleanup'
+../tier1/pathmatch.cpp:770: error: undefined reference to 'fopen64'
+../tier1/pathmatch.cpp:821: error: undefined reference to '__xstat'
+../tier1/pathmatch.cpp:826: error: undefined reference to '__lxstat'
+../tier1/pathmatch.cpp:831: error: undefined reference to '__xstat64'
+../tier1/pathmatch.cpp:836: error: undefined reference to '__lxstat64'
+tier1/pathmatch.cpp.31.o(.ARM.extab.text._ZN7CDirPtrD2Ev+0x0): error: undefined reference to '__gxx_personality_v0'
+tier1/pathmatch.cpp.31.o(.ARM.extab+0x0): error: undefined reference to '__gxx_personality_v0'
+tier1/pathmatch.cpp.31.o(.ARM.extab+0x58): error: undefined reference to '__gxx_personality_v0'
+tier1/pathmatch.cpp.31.o(.ARM.extab+0x78): error: undefined reference to '__gxx_personality_v0'
+../tier0/assert_dialog.cpp:109: error: undefined reference to '__cxa_guard_acquire'
+../tier0/assert_dialog.cpp:109: error: undefined reference to '__cxa_guard_release'
+../tier0/assert_dialog.cpp:109: error: undefined reference to '__cxa_guard_abort'
+../tier0/assert_dialog.cpp:115: error: undefined reference to '__cxa_guard_acquire'
+../tier0/assert_dialog.cpp:115: error: undefined reference to '__cxa_guard_release'
+../tier0/assert_dialog.cpp:115: error: undefined reference to '__cxa_guard_abort'
+../tier0/assert_dialog.cpp:148: error: undefined reference to 'operator delete(void*)'
+../tier0/assert_dialog.cpp:166: error: undefined reference to 'operator new(unsigned int)'
+../tier0/assert_dialog.cpp:376: error: undefined reference to '__cxa_guard_abort'
+../tier0/commandline.cpp:116: error: undefined reference to 'operator delete[](void*)'
+../tier0/commandline.cpp:117: error: undefined reference to 'operator delete(void*)'
+../tier0/commandline.cpp:117: error: undefined reference to 'operator delete(void*)'
+../tier0/commandline.cpp:231: error: undefined reference to 'operator delete[](void*)'
+../tier0/commandline.cpp:273: error: undefined reference to 'operator new[](unsigned int)'
+../tier0/commandline.cpp:420: error: undefined reference to 'operator new[](unsigned int)'
+../tier0/commandline.cpp:437: error: undefined reference to 'operator new[](unsigned int)'
+../tier0/commandline.cpp:450: error: undefined reference to 'operator delete[](void*)'
+../tier0/commandline.cpp:512: error: undefined reference to 'operator new[](unsigned int)'
+../tier0/commandline.cpp:589: error: undefined reference to 'operator delete[](void*)'
+tier0/commandline.cpp.31.o:commandline.cpp:vtable for ICommandLine: error: undefined reference to '__cxa_pure_virtual'
+tier0/commandline.cpp.31.o:commandline.cpp:vtable for ICommandLine: error: undefined reference to '__cxa_pure_virtual'
+tier0/commandline.cpp.31.o:commandline.cpp:vtable for ICommandLine: error: undefined reference to '__cxa_pure_virtual'
+tier0/commandline.cpp.31.o:commandline.cpp:vtable for ICommandLine: error: undefined reference to '__cxa_pure_virtual'
+tier0/commandline.cpp.31.o:commandline.cpp:typeinfo for CCommandLine: error: undefined reference to 'vtable for __cxxabiv1::__si_class_type_info'
+/home/jusic/android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9/../../../../arm-linux-androideabi/bin/ld: the vtable symbol may be undefined because the class is missing its key function
+tier0/commandline.cpp.31.o:commandline.cpp:typeinfo for ICommandLine: error: undefined reference to 'vtable for __cxxabiv1::__class_type_info'
+/home/jusic/android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9/../../../../arm-linux-androideabi/bin/ld: the vtable symbol may be undefined because the class is missing its key function
+../tier0/dynfunction.cpp:59: error: undefined reference to 'operator delete(void*)'
+../tier0/dynfunction.cpp:80: error: undefined reference to 'operator new(unsigned int)'
+tier0/memstd.cpp.31.o:memstd.cpp:typeinfo for CStdMemAlloc: error: undefined reference to 'vtable for __cxxabiv1::__si_class_type_info'
+/home/jusic/android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9/../../../../arm-linux-androideabi/bin/ld: the vtable symbol may be undefined because the class is missing its key function
+tier0/memstd.cpp.31.o:memstd.cpp:typeinfo for IMemAlloc: error: undefined reference to 'vtable for __cxxabiv1::__class_type_info'
+/home/jusic/android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9/../../../../arm-linux-androideabi/bin/ld: the vtable symbol may be undefined because the class is missing its key function
+../tier0/threadtools.cpp:153: error: undefined reference to 'operator new(unsigned int)'
+../tier0/threadtools.cpp:460: error: undefined reference to '__cxa_guard_abort'
+../tier0/threadtools.cpp:1751: error: undefined reference to 'operator new(unsigned int)'
+../tier0/threadtools.cpp:1896: error: undefined reference to '__cxa_allocate_exception'
+../tier0/threadtools.cpp:1896: error: undefined reference to '__cxa_throw'
+../tier0/threadtools.cpp:1900: error: undefined reference to 'typeinfo for int'
+../tier0/threadtools.cpp:2143: error: undefined reference to '__cxa_end_catch'
+../tier0/threadtools.cpp:2143: error: undefined reference to '__cxa_begin_catch'
+../tier0/threadtools.cpp:2146: error: undefined reference to '__cxa_rethrow'
+../tier0/threadtools.cpp:2162: error: undefined reference to '__cxa_begin_catch'
+../tier0/threadtools.cpp:2162: error: undefined reference to '__cxa_end_catch'
+tier0/threadtools.cpp.31.o:threadtools.cpp:typeinfo for CThread: error: undefined reference to 'vtable for __cxxabiv1::__class_type_info'
+/home/jusic/android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9/../../../../arm-linux-androideabi/bin/ld: the vtable symbol may be undefined because the class is missing its key function
+tier0/threadtools.cpp.31.o:threadtools.cpp:typeinfo for CWorkerThread: error: undefined reference to 'vtable for __cxxabiv1::__si_class_type_info'
+/home/jusic/android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9/../../../../arm-linux-androideabi/bin/ld: the vtable symbol may be undefined because the class is missing its key function
+/home/jusic/android-ndk-r10e/sources/cxx-stl/gnu-libstdc++/4.9/include/bits/stl_list.h:1697: error: undefined reference to 'std::__detail::_List_node_base::_M_unhook()'
+/home/jusic/android-ndk-r10e/sources/cxx-stl/gnu-libstdc++/4.9/include/bits/stl_list.h:1689: error: undefined reference to 'std::__detail::_List_node_base::_M_hook(std::__detail::_List_node_base*)'
+/home/jusic/android-ndk-r10e/sources/cxx-stl/gnu-libstdc++/4.9/include/bits/stl_list.h:1689: error: undefined reference to 'std::__detail::_List_node_base::_M_hook(std::__detail::_List_node_base*)'
+/home/jusic/android-ndk-r10e/sources/cxx-stl/gnu-libstdc++/4.9/include/bits/stl_list.h:517: error: undefined reference to '__cxa_end_catch'
+/home/jusic/android-ndk-r10e/sources/cxx-stl/gnu-libstdc++/4.9/include/bits/stl_list.h:517: error: undefined reference to '__cxa_begin_catch'
+/home/jusic/android-ndk-r10e/sources/cxx-stl/gnu-libstdc++/4.9/include/bits/stl_list.h:520: error: undefined reference to '__cxa_rethrow'
+/home/jusic/android-ndk-r10e/sources/cxx-stl/gnu-libstdc++/4.9/include/bits/stl_list.h:517: error: undefined reference to '__cxa_end_catch'
+/home/jusic/android-ndk-r10e/sources/cxx-stl/gnu-libstdc++/4.9/include/bits/stl_list.h:517: error: undefined reference to '__cxa_begin_catch'
+/home/jusic/android-ndk-r10e/sources/cxx-stl/gnu-libstdc++/4.9/include/bits/stl_list.h:520: error: undefined reference to '__cxa_rethrow'
+/home/jusic/android-ndk-r10e/sources/cxx-stl/gnu-libstdc++/4.9/include/ext/new_allocator.h:102: error: undefined reference to 'std::__throw_bad_alloc()'
+tier0/tslist.cpp.31.o:tslist.cpp:typeinfo for TSListTests::CListOps: error: undefined reference to 'vtable for __cxxabiv1::__si_class_type_info'
+/home/jusic/android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9/../../../../arm-linux-androideabi/bin/ld: the vtable symbol may be undefined because the class is missing its key function
+tier0/tslist.cpp.31.o:tslist.cpp:typeinfo for TSListTests::CTestOps: error: undefined reference to 'vtable for __cxxabiv1::__class_type_info'
+/home/jusic/android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9/../../../../arm-linux-androideabi/bin/ld: the vtable symbol may be undefined because the class is missing its key function
+/home/jusic/android-ndk-r10e/sources/cxx-stl/gnu-libstdc++/4.9/include/bits/vector.tcc:470: error: undefined reference to '__cxa_rethrow'
+/home/jusic/android-ndk-r10e/sources/cxx-stl/gnu-libstdc++/4.9/include/bits/stl_tree.h:1185: error: undefined reference to 'std::_Rb_tree_insert_and_rebalance(bool, std::_Rb_tree_node_base*, std::_Rb_tree_node_base*, std::_Rb_tree_node_base&)'
+/home/jusic/android-ndk-r10e/sources/cxx-stl/gnu-libstdc++/4.9/include/bits/stl_tree.h:1185: error: undefined reference to 'std::_Rb_tree_insert_and_rebalance(bool, std::_Rb_tree_node_base*, std::_Rb_tree_node_base*, std::_Rb_tree_node_base&)'
+/home/jusic/android-ndk-r10e/sources/cxx-stl/gnu-libstdc++/4.9/include/bits/stl_vector.h:1585: error: undefined reference to 'std::__throw_length_error(char const*)'
+/home/jusic/android-ndk-r10e/sources/cxx-stl/gnu-libstdc++/4.9/include/bits/stl_tree.h:218: error: undefined reference to 'std::_Rb_tree_decrement(std::_Rb_tree_node_base*)'
+/home/jusic/android-ndk-r10e/sources/cxx-stl/gnu-libstdc++/4.9/include/bits/stl_tree.h:218: error: undefined reference to 'std::_Rb_tree_decrement(std::_Rb_tree_node_base*)'
+/home/jusic/android-ndk-r10e/sources/cxx-stl/gnu-libstdc++/4.9/include/ext/new_allocator.h:102: error: undefined reference to 'std::__throw_bad_alloc()'
+/home/jusic/android-ndk-r10e/sources/cxx-stl/gnu-libstdc++/4.9/include/ext/new_allocator.h:102: error: undefined reference to 'std::__throw_bad_alloc()'
+/home/jusic/android-ndk-r10e/sources/cxx-stl/gnu-libstdc++/4.9/include/ext/new_allocator.h:102: error: undefined reference to 'std::__throw_bad_alloc()'
+collect2: error: ld returned 1 exit status
+
+In file included from ../public/mathlib/vector.h:32:0,
+                 from ../public/mathlib/mathlib.h:14,
+                 from ../public/tier1/utlmemory.h:20,
+                 from ../public/tier1/utlstring.h:14,
+                 from ../tier1/utlstring.cpp:10:
+../public/tier0/threadtools.h: In member function 'bool CThreadSpinRWLock::AssignIf(const CThreadSpinRWLock::LockInfo_t&, const CThreadSpinRWLock::LockInfo_t&)':
+../public/tier0/threadtools.h:1743:48: warning: cast from 'volatile CThreadSpinRWLock::LockInfo_t*' to 'int64* {aka long long int*}' increases required alignment of target type [-Wcast-align]
+  return ThreadInterlockedAssignIf64( (int64 *)&m_lockInfo, *((int64 *)&newValue), *((int64 *)&comperand) );
+                                                ^
+../public/tier0/threadtools.h:1743:72: warning: cast from 'const CThreadSpinRWLock::LockInfo_t*' to 'int64* {aka long long int*}' increases required alignment of target type [-Wcast-align]
+  return ThreadInterlockedAssignIf64( (int64 *)&m_lockInfo, *((int64 *)&newValue), *((int64 *)&comperand) );
+                                                                        ^
+../public/tier0/threadtools.h:1743:95: warning: cast from 'const CThreadSpinRWLock::LockInfo_t*' to 'int64* {aka long long int*}' increases required alignment of target type [-Wcast-align]
+  return ThreadInterlockedAssignIf64( (int64 *)&m_lockInfo, *((int64 *)&newValue), *((int64 *)&comperand) );
+                                                                                               ^
+In file included from ../public/tier1/utlmemory.h:22:0,
+                 from ../public/tier1/utlstring.h:14,
+                 from ../tier1/utlstring.cpp:10:
+../public/tier0/memalloc.h: In function 'void* MemAlloc_AllocAligned(size_t, size_t)':
+../public/tier0/memalloc.h:190:28: warning: cast from 'unsigned char*' to 'unsigned char**' increases required alignment of target type [-Wcast-align]
+  ((unsigned char**)(pResult))[-1] = pAlloc;
+                            ^
+../public/tier0/memalloc.h: In function 'void* MemAlloc_AllocAligned(size_t, size_t, const char*, int)':
+../public/tier0/memalloc.h:208:28: warning: cast from 'unsigned char*' to 'unsigned char**' increases required alignment of target type [-Wcast-align]
+  ((unsigned char**)(pResult))[-1] = pAlloc;
+                            ^
+../public/tier0/memalloc.h: In function 'void* MemAlloc_AllocAlignedUnattributed(size_t, size_t)':
+../public/tier0/memalloc.h:226:28: warning: cast from 'unsigned char*' to 'unsigned char**' increases required alignment of target type [-Wcast-align]
+  ((unsigned char**)(pResult))[-1] = pAlloc;
+                            ^
+../public/tier0/memalloc.h: In function 'void* MemAlloc_AllocAlignedFileLine(size_t, size_t, const char*, int)':
+../public/tier0/memalloc.h:244:28: warning: cast from 'unsigned char*' to 'unsigned char**' increases required alignment of target type [-Wcast-align]
+  ((unsigned char**)(pResult))[-1] = pAlloc;
+                            ^
+
+In file included from ../public/tier1/utlvector.h:23:0,
+                 from ../public/tier1/uniqueid.h:17,
+                 from ../tier1/uniqueid.cpp:17:
+../public/tier0/threadtools.h: In member function 'bool CThreadSpinRWLock::AssignIf(const CThreadSpinRWLock::LockInfo_t&, const CThreadSpinRWLock::LockInfo_t&)':
+../public/tier0/threadtools.h:1743:48: warning: cast from 'volatile CThreadSpinRWLock::LockInfo_t*' to 'int64* {aka long long int*}' increases required alignment of target type [-Wcast-align]
+  return ThreadInterlockedAssignIf64( (int64 *)&m_lockInfo, *((int64 *)&newValue), *((int64 *)&comperand) );
+                                                ^
+../public/tier0/threadtools.h:1743:72: warning: cast from 'const CThreadSpinRWLock::LockInfo_t*' to 'int64* {aka long long int*}' increases required alignment of target type [-Wcast-align]
+  return ThreadInterlockedAssignIf64( (int64 *)&m_lockInfo, *((int64 *)&newValue), *((int64 *)&comperand) );
+                                                                        ^
+../public/tier0/threadtools.h:1743:95: warning: cast from 'const CThreadSpinRWLock::LockInfo_t*' to 'int64* {aka long long int*}' increases required alignment of target type [-Wcast-align]
+  return ThreadInterlockedAssignIf64( (int64 *)&m_lockInfo, *((int64 *)&newValue), *((int64 *)&comperand) );
+                                                                                               ^
+In file included from ../public/tier1/utlmemory.h:22:0,
+                 from ../public/tier1/utlvector.h:24,
+                 from ../public/tier1/uniqueid.h:17,
+                 from ../tier1/uniqueid.cpp:17:
+../public/tier0/memalloc.h: In function 'void* MemAlloc_AllocAligned(size_t, size_t)':
+../public/tier0/memalloc.h:190:28: warning: cast from 'unsigned char*' to 'unsigned char**' increases required alignment of target type [-Wcast-align]
+  ((unsigned char**)(pResult))[-1] = pAlloc;
+                            ^
+../public/tier0/memalloc.h: In function 'void* MemAlloc_AllocAligned(size_t, size_t, const char*, int)':
+../public/tier0/memalloc.h:208:28: warning: cast from 'unsigned char*' to 'unsigned char**' increases required alignment of target type [-Wcast-align]
+  ((unsigned char**)(pResult))[-1] = pAlloc;
+                            ^
+../public/tier0/memalloc.h: In function 'void* MemAlloc_AllocAlignedUnattributed(size_t, size_t)':
+../public/tier0/memalloc.h:226:28: warning: cast from 'unsigned char*' to 'unsigned char**' increases required alignment of target type [-Wcast-align]
+  ((unsigned char**)(pResult))[-1] = pAlloc;
+                            ^
+../public/tier0/memalloc.h: In function 'void* MemAlloc_AllocAlignedFileLine(size_t, size_t, const char*, int)':
+../public/tier0/memalloc.h:244:28: warning: cast from 'unsigned char*' to 'unsigned char**' increases required alignment of target type [-Wcast-align]
+  ((unsigned char**)(pResult))[-1] = pAlloc;
+                            ^
+
+../tier1/utlbufferutil.cpp:9:0: warning: ignoring #pragma warning  [-Wunknown-pragmas]
+ #pragma warning (disable : 4514)
+ ^
+In file included from ../public/tier1/utlvector.h:23:0,
+                 from ../public/tier1/utlbufferutil.h:17,
+                 from ../tier1/utlbufferutil.cpp:11:
+../public/tier0/threadtools.h: In member function 'bool CThreadSpinRWLock::AssignIf(const CThreadSpinRWLock::LockInfo_t&, const CThreadSpinRWLock::LockInfo_t&)':
+../public/tier0/threadtools.h:1743:48: warning: cast from 'volatile CThreadSpinRWLock::LockInfo_t*' to 'int64* {aka long long int*}' increases required alignment of target type [-Wcast-align]
+  return ThreadInterlockedAssignIf64( (int64 *)&m_lockInfo, *((int64 *)&newValue), *((int64 *)&comperand) );
+                                                ^
+../public/tier0/threadtools.h:1743:72: warning: cast from 'const CThreadSpinRWLock::LockInfo_t*' to 'int64* {aka long long int*}' increases required alignment of target type [-Wcast-align]
+  return ThreadInterlockedAssignIf64( (int64 *)&m_lockInfo, *((int64 *)&newValue), *((int64 *)&comperand) );
+                                                                        ^
+../public/tier0/threadtools.h:1743:95: warning: cast from 'const CThreadSpinRWLock::LockInfo_t*' to 'int64* {aka long long int*}' increases required alignment of target type [-Wcast-align]
+  return ThreadInterlockedAssignIf64( (int64 *)&m_lockInfo, *((int64 *)&newValue), *((int64 *)&comperand) );
+                                                                                               ^
+In file included from ../public/tier1/utlmemory.h:22:0,
+                 from ../public/tier1/utlvector.h:24,
+                 from ../public/tier1/utlbufferutil.h:17,
+                 from ../tier1/utlbufferutil.cpp:11:
+../public/tier0/memalloc.h: In function 'void* MemAlloc_AllocAligned(size_t, size_t)':
+../public/tier0/memalloc.h:190:28: warning: cast from 'unsigned char*' to 'unsigned char**' increases required alignment of target type [-Wcast-align]
+  ((unsigned char**)(pResult))[-1] = pAlloc;
+                            ^
+../public/tier0/memalloc.h: In function 'void* MemAlloc_AllocAligned(size_t, size_t, const char*, int)':
+../public/tier0/memalloc.h:208:28: warning: cast from 'unsigned char*' to 'unsigned char**' increases required alignment of target type [-Wcast-align]
+  ((unsigned char**)(pResult))[-1] = pAlloc;
+                            ^
+../public/tier0/memalloc.h: In function 'void* MemAlloc_AllocAlignedUnattributed(size_t, size_t)':
+../public/tier0/memalloc.h:226:28: warning: cast from 'unsigned char*' to 'unsigned char**' increases required alignment of target type [-Wcast-align]
+  ((unsigned char**)(pResult))[-1] = pAlloc;
+                            ^
+../public/tier0/memalloc.h: In function 'void* MemAlloc_AllocAlignedFileLine(size_t, size_t, const char*, int)':
+../public/tier0/memalloc.h:244:28: warning: cast from 'unsigned char*' to 'unsigned char**' increases required alignment of target type [-Wcast-align]
+  ((unsigned char**)(pResult))[-1] = pAlloc;
+                            ^
+In file included from ../tier1/utlbufferutil.cpp:17:0:
+../public/Color.h: In constructor 'Color::Color()':
+../public/Color.h:25:12: warning: cast from 'Color*' to 'int*' increases required alignment of target type [-Wcast-align]
+   *((int *)this) = 0;
+            ^
+../public/Color.h: In member function 'void Color::SetRawColor(int)':
+../public/Color.h:59:12: warning: cast from 'Color*' to 'int*' increases required alignment of target type [-Wcast-align]
+   *((int *)this) = color32;
+            ^
+../public/Color.h: In member function 'int Color::GetRawColor() const':
+../public/Color.h:64:19: warning: cast from 'const Color*' to 'int*' increases required alignment of target type [-Wcast-align]
+   return *((int *)this);
+                   ^
+../public/Color.h: In member function 'bool Color::operator==(const Color&) const':
+../public/Color.h:84:21: warning: cast from 'const Color*' to 'int*' increases required alignment of target type [-Wcast-align]
+   return ( *((int *)this) == *((int *)&rhs) );
+                     ^
+../public/Color.h:84:40: warning: cast from 'const Color*' to 'int*' increases required alignment of target type [-Wcast-align]
+   return ( *((int *)this) == *((int *)&rhs) );
+                                        ^
+
+../tier1/utlbuffer.cpp:9:0: warning: ignoring #pragma warning  [-Wunknown-pragmas]
+ #pragma warning (disable : 4514)
+ ^
+../tier1/utlbuffer.cpp:908:0: warning: ignoring #pragma warning  [-Wunknown-pragmas]
+ #pragma warning ( disable : 4706 )
+ ^
+../tier1/utlbuffer.cpp:1079:0: warning: ignoring #pragma warning  [-Wunknown-pragmas]
+ #pragma warning ( default : 4706 )
+ ^
+In file included from ../public/mathlib/vector.h:32:0,
+                 from ../public/mathlib/mathlib.h:14,
+                 from ../public/tier1/utlmemory.h:20,
+                 from ../public/tier1/utlbuffer.h:17,
+                 from ../tier1/utlbuffer.cpp:11:
+../public/tier0/threadtools.h: In member function 'bool CThreadSpinRWLock::AssignIf(const CThreadSpinRWLock::LockInfo_t&, const CThreadSpinRWLock::LockInfo_t&)':
+../public/tier0/threadtools.h:1743:48: warning: cast from 'volatile CThreadSpinRWLock::LockInfo_t*' to 'int64* {aka long long int*}' increases required alignment of target type [-Wcast-align]
+  return ThreadInterlockedAssignIf64( (int64 *)&m_lockInfo, *((int64 *)&newValue), *((int64 *)&comperand) );
+                                                ^
+../public/tier0/threadtools.h:1743:72: warning: cast from 'const CThreadSpinRWLock::LockInfo_t*' to 'int64* {aka long long int*}' increases required alignment of target type [-Wcast-align]
+  return ThreadInterlockedAssignIf64( (int64 *)&m_lockInfo, *((int64 *)&newValue), *((int64 *)&comperand) );
+                                                                        ^
+../public/tier0/threadtools.h:1743:95: warning: cast from 'const CThreadSpinRWLock::LockInfo_t*' to 'int64* {aka long long int*}' increases required alignment of target type [-Wcast-align]
+  return ThreadInterlockedAssignIf64( (int64 *)&m_lockInfo, *((int64 *)&newValue), *((int64 *)&comperand) );
+                                                                                               ^
+In file included from ../public/tier1/utlmemory.h:22:0,
+                 from ../public/tier1/utlbuffer.h:17,
+                 from ../tier1/utlbuffer.cpp:11:
+../public/tier0/memalloc.h: In function 'void* MemAlloc_AllocAligned(size_t, size_t)':
+../public/tier0/memalloc.h:190:28: warning: cast from 'unsigned char*' to 'unsigned char**' increases required alignment of target type [-Wcast-align]
+  ((unsigned char**)(pResult))[-1] = pAlloc;
+                            ^
+../public/tier0/memalloc.h: In function 'void* MemAlloc_AllocAligned(size_t, size_t, const char*, int)':
+../public/tier0/memalloc.h:208:28: warning: cast from 'unsigned char*' to 'unsigned char**' increases required alignment of target type [-Wcast-align]
+  ((unsigned char**)(pResult))[-1] = pAlloc;
+                            ^
+../public/tier0/memalloc.h: In function 'void* MemAlloc_AllocAlignedUnattributed(size_t, size_t)':
+../public/tier0/memalloc.h:226:28: warning: cast from 'unsigned char*' to 'unsigned char**' increases required alignment of target type [-Wcast-align]
+  ((unsigned char**)(pResult))[-1] = pAlloc;
+                            ^
+../public/tier0/memalloc.h: In function 'void* MemAlloc_AllocAlignedFileLine(size_t, size_t, const char*, int)':
+../public/tier0/memalloc.h:244:28: warning: cast from 'unsigned char*' to 'unsigned char**' increases required alignment of target type [-Wcast-align]
+  ((unsigned char**)(pResult))[-1] = pAlloc;
+                            ^
+
+Waf: Leaving directory `/home/jusic/source-engine/build'
+Build failed
+ -> task in 'tier0' failed with exit status 1 (run with -v to display more information)

@@ -38,7 +38,7 @@ def build(bld):
 
 	defines = []
 
-	libs = ['tier0','tier1']
+	libs = ['tier0','tier1','iconv']
 
 	install_path = bld.env.LIBDIR
 

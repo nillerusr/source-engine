@@ -15,7 +15,7 @@ def configure(conf):
 	conf.env.append_unique('DEFINES',[
 		'SHADERAPIDX9',
 		'SHADER_DLL_EXPORT',
-		'PROTECTED_THINGS_ENABLE',
+		#'PROTECTED_THINGS_ENABLE', # conflicts with stlport
 		'strncpy=use_Q_strncpy_instead',
 		'_snprintf=use_Q_snprintf_instead',
 		'GL_GLEXT_PROTOTYPES',
@@ -56,7 +56,7 @@ def build(bld):
 
 	defines = []
 
-	libs = ['tier0','tier1','tier2','vstdlib','togl','bitmap','mathlib']
+	libs = ['tier0','tier1','tier2','vstdlib','togl','bitmap','mathlib','iconv']
 
 	install_path = bld.env.LIBDIR
 

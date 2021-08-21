@@ -106,20 +106,7 @@
  * __ARM_NEON is defined to a value indicating the Advanced SIMD (NEON)
  * architecture supported.
  */
-#if !defined(__ARM_NEON) || !defined(__ARM_NEON__)
-#error "You must enable NEON instructions (e.g. -mfpu=neon) to use SSE2NEON."
-#endif
-#if !defined(__clang__)
-#pragma GCC push_options
-#pragma GCC target("fpu=neon")
-#endif
-#elif defined(__aarch64__)
-#if !defined(__clang__)
-#pragma GCC push_options
-#pragma GCC target("+simd")
-#endif
-#else
-#error "Unsupported target. Must be either ARMv7-A+NEON or ARMv8-A."
+
 #endif
 #endif
 

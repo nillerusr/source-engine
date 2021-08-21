@@ -31,7 +31,9 @@ def build(bld):
 		'../../public',
 		'../../public/tier0',
 		'../../public/tier1',
-		'../../common'
+		'../../common',
+		'../../thirdparty/freetype2-android/include', #		[$ANDROID]
+		'../../thirdparty/fontconfig' #		[$ANDROID]
 	] + bld.env.INCLUDES_FT2
 
 	defines = []

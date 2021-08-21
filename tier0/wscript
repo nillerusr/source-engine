@@ -65,7 +65,7 @@ def build(bld):
 
 	defines = []
 
-	libs = ['DL']
+	libs = ['DL', 'm', 'LOG']
 
 	install_path = bld.env.LIBDIR
 

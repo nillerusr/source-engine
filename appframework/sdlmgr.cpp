@@ -475,13 +475,25 @@ InitReturnVal_t CSDLMgr::Init()
 			SDL_GL_SetAttribute( SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG );
 		}
 
+#ifdef ANDROID
+		if (SDL_GL_LoadLibrary("libGL4ES.so") == -1)
+#else
 		if (SDL_GL_LoadLibrary(NULL) == -1)
+#endif
 			Error( "SDL_GL_LoadLibrary(NULL) failed: %s", SDL_GetError() );
 #endif
 	}
 
 	fprintf(stderr, "SDL video target is '%s'\n", SDL_GetCurrentVideoDriver());
 	Msg("SDL video target is '%s'\n", SDL_GetCurrentVideoDriver());
+	
+	SDL_version compiled;
+	SDL_version linked;
+
+	SDL_VERSION(&compiled);
+	SDL_GetVersion(&linked);
+
+	Msg("SDL compiled version: %d.%d.%d, linked: %d.%d.%d\n", compiled.major, compiled.minor, compiled.patch, linked.major, linked.minor, linked.patch);
 
 	m_bForbidMouseGrab = true;
 	if ( !CommandLine()->FindParm("-nomousegrab") && CommandLine()->FindParm("-mousegrab") )

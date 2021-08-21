@@ -74,7 +74,9 @@ def build(bld):
 
 	defines = []
 
-	libs = []
+	libs = [
+		'libgnustl_static.a'
+	]
 
 	bld.stlib(
 		source   = source,
