@@ -5068,13 +5068,15 @@ CSysModule *CBaseFileSystem::LoadModule( const char *pFileName, const char *pPat
 
 
 #ifdef POSIX
-	Q_snprintf( tempPathID, sizeof(tempPathID), "lib%s", pFileName );
-	pModule = Sys_LoadModule( tempPathID );
 	if( !pModule )
-#endif
 	{
-		pModule = Sys_LoadModule( pFileName );
+		Q_snprintf( tempPathID, sizeof(tempPathID), "lib%s", pFileName );
+		pModule = Sys_LoadModule( tempPathID );
 	}
+#endif
+
+	if( !pModule )
+		pModule = Sys_LoadModule( pFileName );
 
 	return pModule;
 }

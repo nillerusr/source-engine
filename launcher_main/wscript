@@ -15,6 +15,8 @@ def configure(conf):
 	return
 
 def build(bld):
+	if bld.env.DEST_OS == 'android':
+		return
 
 	source = ['main.cpp']
 	includes = ['../public']

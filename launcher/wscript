@@ -19,6 +19,7 @@ def build(bld):
 		'../public/filesystem_init.cpp',
 		'launcher.cpp',
 		'reslistgenerator.cpp',
+		'android.cpp'
 	]
 
 	includes = [
@@ -31,7 +32,7 @@ def build(bld):
 
 	defines = []
 
-	libs = ['tier0','tier1','tier2','tier3','vstdlib','steam_api','appframework','sdl2','togl','LOG']
+	libs = ['tier0','tier1','tier2','tier3','vstdlib','steam_api','appframework','SDL2','togl']
 
 	install_path = bld.env.LIBDIR
 

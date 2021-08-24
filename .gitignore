@@ -7,3 +7,4 @@ build/
 .waf*
 .lock-waf*
 __pycache__
+*.pyc

@@ -502,7 +502,7 @@ void CLinuxFont::GetCharRGBA( wchar_t ch, int rgbaWide, int rgbaTall, unsigned c
 	if( error == 0 )
 	{
 		uint32 alpha_scale = 1;
-		int Width = min( rgbaWide, bitmap.width );
+		int Width = MIN( rgbaWide, bitmap.width );
 		unsigned char *rgba = prgba + ( nSkipRows * rgbaWide * 4 );
 
 		switch( m_face->glyph->bitmap.pixel_mode )

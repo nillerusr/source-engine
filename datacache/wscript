@@ -33,7 +33,10 @@ def build(bld):
 
 	defines = []
 
-	libs = ['tier0','tier1','tier2','tier3','iconv']
+	libs = ['tier0','tier1','tier2','tier3']
+
+	if bld.env.DEST_OS == 'android':
+		libs += ['ANDROID_SUPPORT']
 
 	install_path = bld.env.LIBDIR
 

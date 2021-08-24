@@ -377,10 +377,12 @@ COpenGLEntryPoints::COpenGLEntryPoints()
 	// !!! FIXME:  hint Apple's drivers and not because we rely on the
 	// !!! FIXME:  functionality. If so, just remove this check (and the
 	// !!! FIXME:  GL_NV_fence code entirely).
+#ifndef ANDROID // HACK
  	if ((m_bHave_OpenGL) && ((!m_bHave_GL_NV_fence) && (!m_bHave_GL_ARB_sync) && (!m_bHave_GL_APPLE_fence)))
  	{
  		Error( "Required OpenGL extension \"GL_NV_fence\", \"GL_ARB_sync\", or \"GL_APPLE_fence\" is not supported. Please upgrade your OpenGL driver." );
  	}
+#endif
 
 	// same extension, different name.
 	if (m_bHave_GL_EXT_vertex_array_bgra || m_bHave_GL_ARB_vertex_array_bgra)

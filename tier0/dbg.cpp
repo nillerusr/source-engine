@@ -313,13 +313,13 @@ static SpewRetval_t _SpewMessage( SpewType_t spewType, const char *pGroupName, i
 		nLevel
 	};
 
+#ifdef ANDROID
+    __android_log_print( ANDROID_LOG_INFO, "SRCENG", "%s", pTempBuffer );
+#endif
+
 	g_pSpewInfo = &spewInfo;
 	ret = s_SpewOutputFunc( spewType, pTempBuffer );
 	g_pSpewInfo = (int)NULL;
-
-#ifdef ANDROID
-    __android_log_print( ANDROID_LOG_INFO, "SRCENGINE", "%s", pTempBuffer );
-#endif
 
 	switch (ret)
 	{
@@ -909,10 +909,6 @@ void COM_TimestampedLog( char const *fmt, ... )
 
 #if defined( _X360 )
 	XBX_rTimeStampLog( curStamp, string );
-#endif
-
-#ifdef ANDROID
-	__android_log_print( ANDROID_LOG_INFO, "SRCENGINE", "%s", string );
 #endif
 
 	if ( IsPC() )
