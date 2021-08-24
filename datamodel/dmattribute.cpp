@@ -2898,7 +2898,7 @@ void CDmaDecorator<T,B>::Init( CDmElement *pOwner, const char *pAttributeName, i
 {
 	Assert( pOwner );
 	this->m_pAttribute = pOwner->AddExternalAttribute( pAttributeName, CDmAttributeInfo<CUtlVector<T> >::AttributeType(), &Value() );
-	Assert( m_pAttribute );
+	Assert( this->m_pAttribute );
 	if ( nFlags )
 	{
 		this->m_pAttribute->AddFlag( nFlags );

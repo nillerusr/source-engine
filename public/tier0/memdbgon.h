@@ -39,7 +39,9 @@
 		#define _NORMAL_BLOCK 1
 		
 		#include <cstddef>
+		#ifndef ANDROID
 		#include <glob.h>
+		#endif
 		#include <new>
 		#include <sys/types.h>
 		#if !defined( DID_THE_OPERATOR_NEW )

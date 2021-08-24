@@ -160,7 +160,6 @@ def define_platform(conf):
 			'LINUX=1', '_LINUX=1',
 			'POSIX=1', '_POSIX=1',
 			'GNUC',
-			'NDEBUG',
 			'NO_HOOK_MALLOC',
 			'_DLL_EXT=.so'
 		])
@@ -171,9 +170,17 @@ def define_platform(conf):
 			'LINUX=1', '_LINUX=1',
 			'POSIX=1', '_POSIX=1',
 			'GNUC',
-			'NDEBUG',
 			'NO_HOOK_MALLOC',
 			'_DLL_EXT=.so'
+		])
+
+	if conf.options.BUILD_TYPE == 'debug':
+		conf.env.append_unique('DEFINES', [
+			'DEBUG', '_DEBUG'
+		])
+	else:
+		conf.env.append_unique('DEFINES', [
+			'NDEBUG'
 		])
 
 def options(opt):
