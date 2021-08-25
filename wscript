@@ -250,7 +250,7 @@ def configure(conf):
 
 	cflags, linkflags = conf.get_optimization_flags()
 
-	flags = ['-fPIC']
+	flags = ['-fPIC', '-fsanitize=undefined']
 
 	if conf.env.DEST_OS == 'android':
 		flags += [
@@ -373,6 +373,7 @@ def configure(conf):
 	if conf.options.CCACHE:
 		conf.env.CC.insert(0, 'ccache')
 		conf.env.CXX.insert(0, 'ccache')
+		print( conf.env )
 
 	if conf.options.DEDICATED:
 		conf.add_subproject(projects['dedicated'])
@@ -380,6 +381,8 @@ def configure(conf):
 		conf.add_subproject(projects['game'])
 
 def build(bld):
+	os.environ["CCACHE_DIR"] = os.path.abspath('.ccache/'+bld.env.COMPILER_CC+'/'+bld.env.DEST_OS+'/'+bld.env.DEST_CPU)
+
 	if bld.env.DEDICATED:
 		bld.add_subproject(projects['dedicated'])
 	else:
