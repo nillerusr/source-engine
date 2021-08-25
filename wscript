@@ -250,7 +250,7 @@ def configure(conf):
 
 	cflags, linkflags = conf.get_optimization_flags()
 
-	flags = ['-fPIC', '-fsanitize=undefined']
+	flags = ['-fPIC']
 
 	if conf.env.DEST_OS == 'android':
 		flags += [
