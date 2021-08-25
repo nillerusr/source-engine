@@ -198,6 +198,9 @@ def options(opt):
 	grp.add_option('--use-togl', action = 'store', dest = 'GL', type = 'int', default = True,
 		help = 'build engine with ToGL [default: %default]')
 
+	grp.add_option('--use-ccache', action = 'store_true', dest = 'CCACHE', default = False,
+		help = 'build using ccache [default: %default]')
+
 	opt.load('compiler_optimizations subproject')
 
 #	opt.add_subproject(projects['game'])
@@ -366,9 +369,10 @@ def configure(conf):
 		conf.env.BINDIR = conf.env.PREFIX
 	else:
 		conf.env.LIBDIR = conf.env.BINDIR = conf.env.PREFIX
-	print(conf.env.PREFIX)
 
-
+	if conf.options.CCACHE:
+		conf.env.CC.insert(0, 'ccache')
+		conf.env.CXX.insert(0, 'ccache')
 
 	if conf.options.DEDICATED:
 		conf.add_subproject(projects['dedicated'])
