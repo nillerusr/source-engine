@@ -8,13 +8,12 @@
 #include <stdio.h>
 #include <dlfcn.h>
 
+
 #include "tier0/threadtools.h"
 
 char *LauncherArgv[512];
 char java_args[4096];
 int iLastArgs = 0;
-
-#define MAX_PATH 2048
 
 #define TAG "SRCENG"
 #define PRIO ANDROID_LOG_DEBUG
@@ -44,9 +43,6 @@ DLLEXPORT void Java_com_valvesoftware_ValveActivity2_nativeOnActivityResult()
 	LogPrintf( "Java_com_valvesoftware_ValveActivity_nativeOnActivityResult" );
 }
 
-typedef void (*t_egl_init)();
-t_egl_init egl_init;
-
 void parseArgs( char *args )
 {
 	char *pch;
@@ -72,8 +68,8 @@ DLLEXPORT int LauncherMain( int argc, char **argv );
 
 void SetLauncherArgs()
 {
-	static char binPath[MAX_PATH];
-	snprintf(binPath, MAX_PATH, "%s/hl2_linux", getenv("APP_DATA_PATH") );
+	static char binPath[2048];
+	snprintf(binPath, sizeof binPath, "%s/hl2_linux", getenv("APP_DATA_PATH") );
 	LogPrintf(binPath);
 	D(binPath);
 
@@ -85,15 +81,61 @@ void SetLauncherArgs()
 	D("-insecure");
 }
 
+static void *lgles;
+
+typedef void (*t_set_getprocaddress)(void *(*new_proc_address)(const char *));
+t_set_getprocaddress gl4es_set_getprocaddress;
+
+typedef void *(*t_eglGetProcAddress)( const char * );
+t_eglGetProcAddress eglGetProcAddress;
+
+void *GetProcAddress( const char *procname )
+{
+	void *result = dlsym(lgles, procname);
+	if(result)
+		return result;
+	else
+		return eglGetProcAddress(procname);
+}
+
 DLLEXPORT int LauncherMainAndroid( int argc, char **argv )
 {
 
 	SetLauncherArgs();
 
-	void *glHandle = dlopen("libgl4es.so", 0);
-	egl_init = (t_egl_init)dlsym(glHandle, "egl_init");
-	if( egl_init )
-		egl_init();
+	void *lgl4es = dlopen("libgl4es.so", 0);
+	if( !lgl4es )
+	{
+		LogPrintf("Failed to dlopen library libgl4es.so: %s\n", dlerror());
+		return 1;
+	}
+
+	void *lEGL = dlopen("libEGL.so", 0);
+	if( !lEGL )
+	{
+		LogPrintf("Failed to dlopen library libEGL.so: %s\n", dlerror());
+		return 1;
+	}
+
+	lgles = dlopen("libGLESv2.so", 0);
+	if( !lgles )
+	{
+		LogPrintf("Failed to dlopen library libGLESv2.so: %s\n", dlerror());
+		return 1;
+	}
+
+	gl4es_set_getprocaddress = (t_set_getprocaddress)dlsym(lgl4es, "set_getprocaddress");
+	eglGetProcAddress = (t_eglGetProcAddress)dlsym(lEGL, "eglGetProcAddress");
+
+	if( gl4es_set_getprocaddress && eglGetProcAddress )
+	{
+		gl4es_set_getprocaddress( &GetProcAddress );
+	}
+	else
+	{
+		LogPrintf("Failed to call set_getprocaddress\n");
+		return 1;
+	}
 
 	DeclareCurrentThreadIsMainThread(); // Init thread propertly on Android
 

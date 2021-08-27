@@ -58,7 +58,7 @@ const int kBogusSwapInterval = INT_MAX;
 
 #ifdef ANDROID
 static void *gl4es = NULL;
-void *(*_eglGetProcAddress)( const char * );
+void *(*_glGetProcAddress)( const char * );
 #endif
 
 /*
@@ -183,8 +183,8 @@ void *VoidFnPtrLookup_GlMgr(const char *fn, bool &okay, const bool bRequired, vo
 
 #ifdef ANDROID
 	// SDL does the right thing, so we never need to use tier0 in this case.
-	if( _eglGetProcAddress )
-		retval = _eglGetProcAddress(fn);
+	if( _glGetProcAddress )
+		retval = _glGetProcAddress(fn);
 	//printf("CDynamicFunctionOpenGL: SDL_GL_GetProcAddress(\"%s\") returned %p\n", fn, retval);
 	if ((retval == NULL) && (fallback != NULL))
 	{
@@ -764,7 +764,7 @@ bool CSDLMgr::CreateHiddenGameWindow( const char *pTitle, int width, int height 
 
 	if( gl4es )
 	{
-		_eglGetProcAddress = dlsym(gl4es, "eglGetProcAddress" );
+		_glGetProcAddress = dlsym(gl4es, "gl4es_GetProcAddress" );
 		void (*initialize_gl4es)( );
 		initialize_gl4es = dlsym(gl4es, "initialize_gl4es" );
 		initialize_gl4es();
