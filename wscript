@@ -86,7 +86,7 @@ projects={
 		'dedicated_main',
 		'dmxloader',
 		'engine',
-#		'game/server',
+		'game/server',
 		'ivp/havana',
 		'ivp/havana/havok/hk_base',
 		'ivp/havana/havok/hk_math',
@@ -174,7 +174,7 @@ def define_platform(conf):
 			'_DLL_EXT=.so'
 		])
 
-	if conf.options.BUILD_TYPE == 'debug':
+	if conf.options.DEBUG_ENGINE:
 		conf.env.append_unique('DEFINES', [
 			'DEBUG', '_DEBUG'
 		])
@@ -191,6 +191,9 @@ def options(opt):
 
 	grp.add_option('-d', '--dedicated', action = 'store_true', dest = 'DEDICATED', default = False,
 		help = 'build dedicated server [default: %default]')
+
+	grp.add_option('-D', '--debug-engine', action = 'store_true', dest = 'DEBUG_ENGINE', default = False,
+		help = 'build with -DDEBUG [default: %default]')
 
 	grp.add_option('--use-sdl', action = 'store', dest = 'SDL', type = 'int', default = True,
 		help = 'build engine with SDL [default: %default]')
@@ -264,7 +267,7 @@ def configure(conf):
 		]
 
 	if conf.env.DEST_CPU == 'arm':
-		flags += ['-mfpu=neon', '-mfloat-abi=hard', '-fsigned-char']
+		flags += ['-mfpu=neon', '-fsigned-char']
 	else:
 		flags += ['-march=pentium4','-mtune=core2','-mfpmath=387']
 
@@ -319,7 +322,6 @@ def configure(conf):
 	else:
 		conf.check(lib='SDL2', uselib_store='SDL2')
 		conf.check(lib='freetype2', uselib_store='FT2')
-		conf.check(lib='fontconfig', uselib_store='FC')
 		conf.check(lib='openal', uselib_store='OPENAL')
 		conf.check(lib='jpeg', uselib_store='JPEG')
 		conf.check(lib='png', uselib_store='PNG')
