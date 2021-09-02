@@ -98,8 +98,6 @@ void CMumbleSystem::LevelInitPostEntity()
 		g_hMapObject = NULL;
 		return;
 	}
-#elif defined( ANDROID )
-	return; // TODO: implement
 #elif defined( POSIX )
 	char memname[256];
 	V_sprintf_safe( memname, "/MumbleLink.%d", getuid() );

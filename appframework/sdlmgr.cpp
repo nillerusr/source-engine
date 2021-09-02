@@ -482,14 +482,6 @@ InitReturnVal_t CSDLMgr::Init()
 
 	fprintf(stderr, "SDL video target is '%s'\n", SDL_GetCurrentVideoDriver());
 	Msg("SDL video target is '%s'\n", SDL_GetCurrentVideoDriver());
-	
-	SDL_version compiled;
-	SDL_version linked;
-
-	SDL_VERSION(&compiled);
-	SDL_GetVersion(&linked);
-
-	Msg("SDL compiled version: %d.%d.%d, linked: %d.%d.%d\n", compiled.major, compiled.minor, compiled.patch, linked.major, linked.minor, linked.patch);
 
 	m_bForbidMouseGrab = true;
 	if ( !CommandLine()->FindParm("-nomousegrab") && CommandLine()->FindParm("-mousegrab") )

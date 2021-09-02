@@ -31,10 +31,6 @@
 #include "xbox/xbox_console.h"
 #endif
 
-#ifdef ANDROID
-#include <android/log.h>
-#endif
-
 #include "tier0/etwprof.h"
 
 #ifndef STEAM
@@ -316,10 +312,6 @@ static SpewRetval_t _SpewMessage( SpewType_t spewType, const char *pGroupName, i
 	g_pSpewInfo = &spewInfo;
 	ret = s_SpewOutputFunc( spewType, pTempBuffer );
 	g_pSpewInfo = (int)NULL;
-
-#ifdef ANDROID
-    __android_log_print( ANDROID_LOG_INFO, "SRCENGINE", "%s", pTempBuffer );
-#endif
 
 	switch (ret)
 	{
@@ -909,10 +901,6 @@ void COM_TimestampedLog( char const *fmt, ... )
 
 #if defined( _X360 )
 	XBX_rTimeStampLog( curStamp, string );
-#endif
-
-#ifdef ANDROID
-	__android_log_print( ANDROID_LOG_INFO, "SRCENGINE", "%s", string );
 #endif
 
 	if ( IsPC() )

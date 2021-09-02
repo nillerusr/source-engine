@@ -23,13 +23,8 @@
 #elif defined(POSIX)
 
 #if !defined(OSX)
-#if defined(ANDROID)
-	#include <fcntl.h>
-	#include <unistd.h>
-#else
 	#include <sys/fcntl.h>
 	#include <sys/unistd.h>
-#endif
 	#define sem_unlink( arg )
 	#define OS_TO_PTHREAD(x) (x)
 #else

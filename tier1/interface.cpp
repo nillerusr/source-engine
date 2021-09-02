@@ -304,26 +304,15 @@ CSysModule *Sys_LoadModule( const char *pModuleName, Sys_Flags flags /* = SYS_NO
 		
 #ifdef POSIX
 		struct stat statBuf;
-#ifdef ANDROID
-		Q_snprintf(szModuleName, sizeof(szModuleName), "lib/lib%s", pModuleName);
-#else
 		Q_snprintf(szModuleName, sizeof(szModuleName), "bin/lib%s", pModuleName);
-#endif
 		bUseLibPrefix |= stat(szModuleName, &statBuf) == 0;
 #endif
 
-#ifdef ANDROID
-		char* szModulePath = "%s/lib/lib%s";
-		if (!bUseLibPrefix)
-			szModulePath = "%s/lib/%s";
-#else
-		char* szModulePath = "%s/bin/lib%s";
-		if (!bUseLibPrefix)
-			szModulePath = "%s/bin/%s";
-#endif
+		if( bUseLibPrefix )
+			Q_snprintf( szAbsoluteModuleName, sizeof(szAbsoluteModuleName), "%s/bin/lib%s", szCwd, pModuleName );
+		else
+			Q_snprintf( szAbsoluteModuleName, sizeof(szAbsoluteModuleName), "%s/bin/%s", szCwd, pModuleName );
 
-		Q_snprintf( szAbsoluteModuleName, sizeof(szAbsoluteModuleName), szModulePath, szCwd, pModuleName );
-		
 		hDLL = Sys_LoadLibrary( szAbsoluteModuleName, flags );
 	}
 
