@@ -14,7 +14,7 @@ def options(opt):
 def configure(conf):
 	conf.env.append_unique('DEFINES',[
 		'STUDIORENDER_EXPORTS',
-		'PROTECTED_THINGS_ENABLE'
+		#'PROTECTED_THINGS_ENABLE' # conflicts with stlport
 	])
 
 def build(bld):

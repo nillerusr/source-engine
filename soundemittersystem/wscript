@@ -14,7 +14,7 @@ def options(opt):
 def configure(conf):
 	conf.define('SOUNDEMITTERSYSTEM_EXPORTS',1)
 	conf.define('_WINDOWS',1)
-	conf.define('PROTECTED_THINGS_ENABLE',1)
+	#conf.define('PROTECTED_THINGS_ENABLE',1) # conflicts with stlport
 	#conf.define('fopen','dont_use_fopen') # WINDOWS
 
 def build(bld):

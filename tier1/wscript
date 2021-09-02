@@ -40,7 +40,7 @@ def build(bld):
 		'memstack.cpp',
 		'NetAdr.cpp',
 		'newbitbuf.cpp',
-		'pathmatch.cpp', # [$LINUXALL]
+#		'pathmatch.cpp', # [$LINUXALL]
 		# 'processor_detect.cpp', # [$WINDOWS||$X360]
 		'processor_detect_linux.cpp', # [$POSIX]
 		'qsort_s.cpp', # [$LINUXALL||$PS3]

@@ -3770,8 +3770,10 @@ bool CBaseFileSystem::IsFileWritable( char const *pFileName, char const *pPathID
 		{
 #ifdef WIN32
 			if( buf.st_mode & _S_IWRITE )
-#elif LINUX
+#elif defined (LINUX) && !defined (ANDROID) 
 			if( buf.st_mode & S_IWRITE )
+#elif ANDROID
+			if( buf.st_mode & S_IWUSR )
 #else
 			if( buf.st_mode & S_IWRITE )
 #endif
@@ -3792,8 +3794,10 @@ bool CBaseFileSystem::IsFileWritable( char const *pFileName, char const *pPathID
 		{
 #ifdef WIN32
 			if ( buf.st_mode & _S_IWRITE )
-#elif LINUX
+#elif defined (LINUX) && !defined (ANDROID) 
 			if ( buf.st_mode & S_IWRITE )
+#elif ANDROID
+			if ( buf.st_mode & S_IWUSR )
 #else
 			if ( buf.st_mode & S_IWRITE )
 #endif
@@ -3812,6 +3816,8 @@ bool CBaseFileSystem::SetFileWritable( char const *pFileName, bool writable, con
 
 #ifdef _WIN32
 	int pmode = writable ? ( _S_IWRITE | _S_IREAD ) : ( _S_IREAD );
+#elif ANDROID
+	int pmode = writable ? ( S_IWUSR | S_IRUSR ) : ( S_IRUSR );
 #else
 	int pmode = writable ? ( S_IWRITE | S_IREAD ) : ( S_IREAD );
 #endif
@@ -5062,13 +5068,15 @@ CSysModule *CBaseFileSystem::LoadModule( const char *pFileName, const char *pPat
 
 
 #ifdef POSIX
-	Q_snprintf( tempPathID, sizeof(tempPathID), "lib%s", pFileName );
-	pModule = Sys_LoadModule( tempPathID );
 	if( !pModule )
-#endif
 	{
-		pModule = Sys_LoadModule( pFileName );
+		Q_snprintf( tempPathID, sizeof(tempPathID), "lib%s", pFileName );
+		pModule = Sys_LoadModule( tempPathID );
 	}
+#endif
+
+	if( !pModule )
+		pModule = Sys_LoadModule( pFileName );
 
 	return pModule;
 }

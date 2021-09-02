@@ -341,29 +341,40 @@ bool FileSystem_GetExecutableDir( char *exedir, int exeDirLen )
 
 	Q_FixSlashes( exedir );
 
+#ifdef ANDROID
+	const char* libDir = "lib";
+#else
+	const char* libDir = "bin";
+#endif
+
 	// Return the bin directory as the executable dir if it's not in there
 	// because that's really where we're running from...
 	char ext[MAX_PATH];
 	Q_StrRight( exedir, 4, ext, sizeof( ext ) );
-	if ( ext[0] != CORRECT_PATH_SEPARATOR || Q_stricmp( ext+1, "bin" ) != 0 )
+	if ( ext[0] != CORRECT_PATH_SEPARATOR || Q_stricmp( ext+1, libDir ) != 0 )
 	{
 		Q_strncat( exedir, CORRECT_PATH_SEPARATOR_S, exeDirLen, COPY_ALL_CHARACTERS );
-		Q_strncat( exedir, "bin", exeDirLen, COPY_ALL_CHARACTERS );
+		Q_strncat( exedir, libDir, exeDirLen, COPY_ALL_CHARACTERS );
 		Q_FixSlashes( exedir );
 	}
-	
+
 	return true;
 }
 
 static bool FileSystem_GetBaseDir( char *baseDir, int baseDirLen )
 {
+#ifdef ANDROID
+	strncpy(baseDir, getenv("VALVE_GAME_PATH"), baseDirLen);
+	return true;
+#else
 	if ( FileSystem_GetExecutableDir( baseDir, baseDirLen ) )
 	{
 		Q_StripFilename( baseDir );
 		return true;
 	}
-	
+
 	return false;
+#endif
 }
 
 void LaunchVConfig()
@@ -542,6 +553,8 @@ FSReturnCode_t FileSystem_LoadSearchPaths( CFSSearchPathsInit &initInfo )
 	char baseDir[MAX_PATH];
 	if ( !FileSystem_GetBaseDir( baseDir, sizeof( baseDir ) ) )
 		return SetupFileSystemError( false, FS_INVALID_PARAMETERS, "FileSystem_GetBaseDir failed." );
+
+	Msg("filesystem BaseDir: %s\n", baseDir);
 
 	// The MOD directory is always the one that contains gameinfo.txt
 	Q_strncpy( initInfo.m_ModPath, initInfo.m_pDirectoryName, sizeof( initInfo.m_ModPath ) );

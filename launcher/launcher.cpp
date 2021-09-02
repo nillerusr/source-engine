@@ -82,6 +82,11 @@ int MessageBox( HWND hWnd, const char *message, const char *header, unsigned uTy
 #define RELAUNCH_FILE "/tmp/hl2_relaunch"
 #endif
 
+#if defined ( ANDROID )
+#include <android/log.h>
+#include "jni.h"
+#endif
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -248,7 +253,11 @@ bool GetExecutableName( char *out, int outSize )
 //-----------------------------------------------------------------------------
 char *GetBaseDirectory( void )
 {
+#ifdef ANDROID
+	return getenv("VALVE_GAME_PATH");
+#else
 	return g_szBasedir;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -680,8 +689,7 @@ bool CSourceAppSystemGroup::Create()
 
 	if ( !AddSystems( appSystems ) ) 
 		return false;
-
-
+	
 	// This will be NULL for games that don't support VR. That's ok. Just don't load the DLL
 	AppModule_t sourceVRModule = LoadModule( "sourcevr" DLL_EXT_STRING );
 	if( sourceVRModule != APP_MODULE_INVALID )
@@ -934,7 +942,9 @@ bool GrabSourceMutex()
 	CRC32_ProcessBuffer( &gameCRC, (void *)pchGameParam, Q_strlen( pchGameParam ) );
 	CRC32_Final( &gameCRC );
 
-#ifdef LINUX
+#ifdef ANDROID
+	return true;
+#elif defined (LINUX)
 	/*
 	 * Linux
  	 */
@@ -1175,7 +1185,7 @@ static const char *BuildCommand()
 // Output : int APIENTRY
 //-----------------------------------------------------------------------------
 #ifdef WIN32
-extern "C" __declspec(dllexport) int LauncherMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
+extern "C" __declspec(DLL_EXPORT) int LauncherMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
 #else
 DLL_EXPORT int LauncherMain( int argc, char **argv )
 #endif
@@ -1229,7 +1239,7 @@ DLL_EXPORT int LauncherMain( int argc, char **argv )
 	{
 		return -1;
 	}
-
+	
 	const char *filename;
 #ifdef WIN32
 	CommandLine()->CreateCmdLine( IsPC() ? VCRHook_GetCommandLine() : lpCmdLine );
@@ -1448,6 +1458,7 @@ DLL_EXPORT int LauncherMain( int argc, char **argv )
 
 	// Figure out the directory the executable is running from
 	// and make that be the current working directory
+
 	_chdir( GetBaseDirectory() );
 
 	g_LeakDump.m_bCheckLeaks = CommandLine()->CheckParm( "-leakcheck" ) ? true : false;

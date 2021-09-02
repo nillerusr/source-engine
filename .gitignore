@@ -1,11 +1,10 @@
 *.mak
 *.mak.vpc_crc
 *.vpc_crc
-*.a
 *.project
-lib/
 *obj_*
 build/
 .waf*
 .lock-waf*
 __pycache__
+*.pyc

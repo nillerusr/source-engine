@@ -879,10 +879,10 @@ int64 CZipPackFileHandle::AbsoluteBaseOffset()
 	return m_pOwner->GetPackFileBaseOffset() + m_nBase;
 }
 
-#if defined( _DEBUG ) && !defined( OSX )
+#if defined( _DEBUG ) && !defined( OSX ) && !defined( ANDROID )
 #include <atomic>
 static std::atomic<int> sLZMAPackFileHandles( 0 );
-#endif // defined( _DEBUG ) && !defined( OSX )
+#endif // defined( _DEBUG ) && !defined( OSX ) && !defined( ANDROID )
 
 CLZMAZipPackFileHandle::CLZMAZipPackFileHandle( CZipPackFile* pOwner, int64 nBase, unsigned int nOriginalSize, unsigned int nCompressedSize,
                                                 unsigned int nIndex, unsigned int nFilePointer )
@@ -892,7 +892,7 @@ CLZMAZipPackFileHandle::CLZMAZipPackFileHandle( CZipPackFile* pOwner, int64 nBas
 	  m_pLZMAStream( NULL ), m_nSeekPosition( 0 ), m_nOriginalSize( nOriginalSize )
 {
 	Reset();
-#if defined( _DEBUG ) && !defined( OSX )
+#if defined( _DEBUG ) && !defined( OSX ) && !defined( ANDROID )
 	if ( ++sLZMAPackFileHandles == PACKFILE_COMPRESSED_FILE_HANDLES_WARNING )
 	{
 		// By my count a live filehandle is currently around 270k, mostly due to the LZMA dictionary (256k) with the
@@ -901,17 +901,17 @@ CLZMAZipPackFileHandle::CLZMAZipPackFileHandle( CZipPackFile* pOwner, int64 nBas
 		         "These carry large buffers around, and can cause high memory usage\n",
 		         PACKFILE_COMPRESSED_FILE_HANDLES_WARNING );
 	}
-#endif // defined( _DEBUG ) && !defined( OSX )
+#endif // defined( _DEBUG ) && !defined( OSX ) && !defined( ANDROID )
 }
 
 CLZMAZipPackFileHandle::~CLZMAZipPackFileHandle()
 {
 	delete m_pLZMAStream;
 	m_pLZMAStream = NULL;
-#if defined( _DEBUG ) && !defined( OSX )
+#if defined( _DEBUG ) && !defined( OSX ) && !defined( ANDROID )
 	sLZMAPackFileHandles--;
 	Assert( sLZMAPackFileHandles >= 0 );
-#endif // defined( _DEBUG ) && !defined( OSX )
+#endif // defined( _DEBUG ) && !defined( OSX ) && !defined( ANDROID )
 }
 
 int CLZMAZipPackFileHandle::Read( void* pBuffer, int nDestSize, int nBytes )

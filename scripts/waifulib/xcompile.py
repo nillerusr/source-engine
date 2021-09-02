@@ -213,7 +213,11 @@ class Android:
 
 	def system_stl(self):
 		# TODO: proper STL support
-		return os.path.abspath(os.path.join(self.ndk_home, 'sources', 'cxx-stl', 'system', 'include'))
+		return [
+			#os.path.abspath(os.path.join(self.ndk_home, 'sources', 'cxx-stl', 'system', 'include')),
+			os.path.abspath(os.path.join(self.ndk_home, 'sources', 'cxx-stl', 'stlport', 'stlport')),
+			os.path.abspath(os.path.join(self.ndk_home, 'sources', 'android', 'support', 'include'))
+		]
 
 	def libsysroot(self):
 		arch = self.arch
@@ -243,7 +247,7 @@ class Android:
 					'-isystem', '%s/usr/include/' % (self.sysroot())
 				]
 
-		cflags += ['-I%s' % (self.system_stl()), '-DANDROID', '-D__ANDROID__']
+		cflags += ['-I%s'%i for i in self.system_stl()]+['-DANDROID', '-D__ANDROID__']
 
 		if cxx and not self.is_clang() and self.toolchain not in ['4.8','4.9']:
 			cflags += ['-fno-sized-deallocation']
@@ -335,13 +339,15 @@ def configure(conf):
 		conf.env.CXXFLAGS += android.cflags(True)
 		conf.env.LINKFLAGS += android.linkflags()
 		conf.env.LDFLAGS += android.ldflags()
+		conf.env.STLIBPATH += [os.path.abspath(os.path.join(android.ndk_home, 'sources','cxx-stl','stlport','libs',values[0]))]
+		conf.env.LDFLAGS += ['-lstlport_static']
 
 		conf.env.HAVE_M = True
 		if android.is_hardfp():
 			conf.env.LIB_M = ['m_hard']
 		else: conf.env.LIB_M = ['m']
 
-		conf.env.PREFIX = '/lib/%s' % android.apk_arch()
+		conf.env.PREFIX += '/lib/%s' % android.apk_arch()
 
 		conf.msg('Selected Android NDK', '%s, version: %d' % (android.ndk_home, android.ndk_rev))
 		# no need to print C/C++ compiler, as it would be printed by compiler_c/cxx

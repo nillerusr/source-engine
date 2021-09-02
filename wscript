@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 # encoding: utf-8
-# a1batross, mittorn, nillerusr
+# nillerusr
 
 from __future__ import print_function
 from waflib import Logs, Context, Configure
@@ -86,7 +86,7 @@ projects={
 		'dedicated_main',
 		'dmxloader',
 		'engine',
-#		'game/server',
+		'game/server',
 		'ivp/havana',
 		'ivp/havana/havok/hk_base',
 		'ivp/havana/havok/hk_math',
@@ -154,15 +154,12 @@ def define_platform(conf):
 	if conf.options.SDL:
 		conf.define('USE_SDL', 1)
 
-	print(conf.env.DEST_OS)
-
 	if conf.env.DEST_OS == 'linux':
 		conf.define('_GLIBCXX_USE_CXX11_ABI',0)
 		conf.env.append_unique('DEFINES', [
 			'LINUX=1', '_LINUX=1',
 			'POSIX=1', '_POSIX=1',
 			'GNUC',
-			'NDEBUG',
 			'NO_HOOK_MALLOC',
 			'_DLL_EXT=.so'
 		])
@@ -173,9 +170,17 @@ def define_platform(conf):
 			'LINUX=1', '_LINUX=1',
 			'POSIX=1', '_POSIX=1',
 			'GNUC',
-			'NDEBUG',
 			'NO_HOOK_MALLOC',
 			'_DLL_EXT=.so'
+		])
+
+	if conf.options.DEBUG_ENGINE:
+		conf.env.append_unique('DEFINES', [
+			'DEBUG', '_DEBUG'
+		])
+	else:
+		conf.env.append_unique('DEFINES', [
+			'NDEBUG'
 		])
 
 def options(opt):
@@ -187,11 +192,17 @@ def options(opt):
 	grp.add_option('-d', '--dedicated', action = 'store_true', dest = 'DEDICATED', default = False,
 		help = 'build dedicated server [default: %default]')
 
+	grp.add_option('-D', '--debug-engine', action = 'store_true', dest = 'DEBUG_ENGINE', default = False,
+		help = 'build with -DDEBUG [default: %default]')
+
 	grp.add_option('--use-sdl', action = 'store', dest = 'SDL', type = 'int', default = True,
 		help = 'build engine with SDL [default: %default]')
 
 	grp.add_option('--use-togl', action = 'store', dest = 'GL', type = 'int', default = True,
 		help = 'build engine with ToGL [default: %default]')
+
+	grp.add_option('--use-ccache', action = 'store_true', dest = 'CCACHE', default = False,
+		help = 'build using ccache [default: %default]')
 
 	opt.load('compiler_optimizations subproject')
 
@@ -226,20 +237,6 @@ def configure(conf):
 
 	conf.load('force_32bit')
 
-	if conf.options.SDL:
-		conf.check_cfg(package='sdl2', uselib_store='SDL2', args=['--cflags', '--libs'])
-	if conf.options.DEDICATED:
-		conf.check_cfg(package='libedit', uselib_store='EDIT', args=['--cflags', '--libs'])
-	else:
-		conf.check_pkg('freetype2', 'FT2', FT2_CHECK)
-		conf.check_pkg('fontconfig', 'FC', FC_CHECK)
-		conf.check_cfg(package='openal', uselib_store='OPENAL', args=['--cflags', '--libs'])
-		conf.check_cfg(package='libjpeg', uselib_store='JPEG', args=['--cflags', '--libs'])
-		conf.check_cfg(package='libpng', uselib_store='PNG', args=['--cflags', '--libs'])
-		conf.check_cfg(package='libcurl', uselib_store='CURL', args=['--cflags', '--libs'])
-
-	conf.check_cfg(package='zlib', uselib_store='ZLIB', args=['--cflags', '--libs'])
-
 	compiler_optional_flags = [
 		'-Wall',
 		'-fdiagnostics-color=always',
@@ -258,6 +255,17 @@ def configure(conf):
 
 	flags = ['-fPIC']
 
+	if conf.env.DEST_OS == 'android':
+		flags += [
+			'-L'+os.path.abspath('.')+'/lib/android/armeabi-v7a/',
+			'-I'+os.path.abspath('.')+'/thirdparty/curl/include',
+			'-I'+os.path.abspath('.')+'/thirdparty/SDL',
+			'-I'+os.path.abspath('.')+'/thirdparty/openal-soft/include/',
+			'-I'+os.path.abspath('.')+'/thirdparty/fontconfig',
+			'-I'+os.path.abspath('.')+'/thirdparty/freetype/include',
+			'-llog'
+		]
+
 	if conf.env.DEST_CPU == 'arm':
 		flags += ['-mfpu=neon', '-fsigned-char']
 	else:
@@ -270,14 +278,16 @@ def configure(conf):
 	cxxflags = list(cflags) + ['-std=c++11','-fpermissive']
 
 	if conf.env.COMPILER_CC == 'gcc':
-		wrapfunctions = ['freopen','fopen','open','creat','access','__xstat','stat','lstat','fopen64','open64',
-			'opendir','__lxstat','chmod','chown','lchown','symlink','link','__lxstat64','mknod',
-			'utimes','unlink','rename','utime','__xstat64','mount','mkfifo','mkdir','rmdir','scandir','realpath']
+#		wrapfunctions = ['freopen','creat','access','__xstat','stat','lstat','fopen64','open64',
+#			'opendir','__lxstat','chmod','chown','lchown','symlink','link','__lxstat64','mknod',
+#			'utimes','unlink','rename','utime','__xstat64','mount','mkdir','rmdir','scandir','realpath','mkfifo']
 
-		for func in wrapfunctions:
-			linkflags += ['-Wl,--wrap='+func]
+#		for func in wrapfunctions:
+#			linkflags += ['-Wl,--wrap='+func]
+
 
 		conf.define('COMPILER_GCC', 1)
+
 
 	if conf.env.COMPILER_CC != 'msvc':
 		conf.check_cc(cflags=cflags, linkflags=linkflags, msg='Checking for required C flags')
@@ -295,6 +305,32 @@ def configure(conf):
 	conf.env.append_unique('CXXFLAGS', cxxflags)
 	conf.env.append_unique('LINKFLAGS', linkflags)
 	conf.env.append_unique('INCLUDES', [os.path.abspath('common/')])
+
+	if conf.env.DEST_OS != 'android':
+		if conf.options.SDL:
+			conf.check_cfg(package='sdl2', uselib_store='SDL2', args=['--cflags', '--libs'])
+		if conf.options.DEDICATED:
+			conf.check_cfg(package='libedit', uselib_store='EDIT', args=['--cflags', '--libs'])
+		else:
+			conf.check_pkg('freetype2', 'FT2', FT2_CHECK)
+			conf.check_pkg('fontconfig', 'FC', FC_CHECK)
+			conf.check_cfg(package='openal', uselib_store='OPENAL', args=['--cflags', '--libs'])
+			conf.check_cfg(package='libjpeg', uselib_store='JPEG', args=['--cflags', '--libs'])
+			conf.check_cfg(package='libpng', uselib_store='PNG', args=['--cflags', '--libs'])
+			conf.check_cfg(package='libcurl', uselib_store='CURL', args=['--cflags', '--libs'])
+		conf.check_cfg(package='zlib', uselib_store='ZLIB', args=['--cflags', '--libs'])
+	else:
+		conf.check(lib='SDL2', uselib_store='SDL2')
+		conf.check(lib='freetype2', uselib_store='FT2')
+		conf.check(lib='openal', uselib_store='OPENAL')
+		conf.check(lib='jpeg', uselib_store='JPEG')
+		conf.check(lib='png', uselib_store='PNG')
+		conf.check(lib='curl', uselib_store='CURL')
+		conf.check(lib='z', uselib_store='ZLIB')
+		conf.check(lib='crypto', uselib_store='CRYPTO')
+		conf.check(lib='ssl', uselib_store='SSL')
+		conf.check(lib='expat', uselib_store='EXPAT')
+		conf.check(lib='android_support', uselib_store='ANDROID_SUPPORT')
 
 	if conf.env.DEST_OS != 'win32':
 		conf.check_cc(lib='dl', mandatory=False)
@@ -336,12 +372,19 @@ def configure(conf):
 	else:
 		conf.env.LIBDIR = conf.env.BINDIR = conf.env.PREFIX
 
+	if conf.options.CCACHE:
+		conf.env.CC.insert(0, 'ccache')
+		conf.env.CXX.insert(0, 'ccache')
+		print( conf.env )
+
 	if conf.options.DEDICATED:
 		conf.add_subproject(projects['dedicated'])
 	else:
 		conf.add_subproject(projects['game'])
 
 def build(bld):
+	os.environ["CCACHE_DIR"] = os.path.abspath('.ccache/'+bld.env.COMPILER_CC+'/'+bld.env.DEST_OS+'/'+bld.env.DEST_CPU)
+
 	if bld.env.DEDICATED:
 		bld.add_subproject(projects['dedicated'])
 	else:

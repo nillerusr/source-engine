@@ -31,6 +31,10 @@
 #include "xbox/xbox_console.h"
 #endif
 
+#ifdef ANDROID
+#include <android/log.h>
+#endif
+
 #include "tier0/etwprof.h"
 
 #ifndef STEAM
@@ -308,6 +312,10 @@ static SpewRetval_t _SpewMessage( SpewType_t spewType, const char *pGroupName, i
 		pGroupName,
 		nLevel
 	};
+
+#ifdef ANDROID
+    __android_log_print( ANDROID_LOG_INFO, "SRCENG", "%s", pTempBuffer );
+#endif
 
 	g_pSpewInfo = &spewInfo;
 	ret = s_SpewOutputFunc( spewType, pTempBuffer );

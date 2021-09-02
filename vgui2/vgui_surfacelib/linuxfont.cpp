@@ -92,7 +92,8 @@ void CLinuxFont::CreateFontList()
 	if ( m_FriendlyNameCache.Count() > 0 ) 
 		return;
 
-	if(!FcInit()) 
+#ifndef ANDROID
+	if(!FcInit())
 		return;
     FcConfig *config;
     FcPattern *pat;
@@ -160,8 +161,11 @@ void CLinuxFont::CreateFontList()
     FcFontSetDestroy(fontset);
     FcObjectSetDestroy(os);
     FcPatternDestroy(pat);
+
+#endif
 }
 
+#ifndef ANDROID
 static FcPattern* FontMatch(const char* type, FcType vtype, const void* value,
                             ...)
 {
@@ -204,6 +208,7 @@ static FcPattern* FontMatch(const char* type, FcType vtype, const void* value,
 
     return match;
 }
+#endif
 
 bool CLinuxFont::CreateFromMemory(const char *windowsFontName, void *data, int datasize, int tall, int weight, int blur, int scanlines, int flags)
 {
@@ -400,6 +405,52 @@ bool CLinuxFont::CreateFromMemory(const char *windowsFontName, void *data, int d
 	return true;
 }
 
+#ifdef ANDROID
+char *FindFontAndroid(bool bBold, int italic)
+{
+	const char *fontFileName, *fontFileNamePost = NULL;
+
+	fontFileName = "Roboto";
+
+	if( bBold )
+	{
+		if( italic )
+			fontFileNamePost = "BoldItalic";
+		else
+			fontFileNamePost = "Bold";
+	}
+	else if( italic )
+		fontFileNamePost = "Italic";
+	else
+		fontFileName = "Regular";
+
+	char dataFile[MAX_PATH];
+
+	if( fontFileNamePost )
+		snprintf( dataFile, sizeof dataFile, "/system/fonts/%s-%s.ttf", fontFileName, fontFileNamePost );
+	else
+		snprintf( dataFile, sizeof dataFile, "/system/fonts/%s.ttf", fontFileName );
+
+	if( access( dataFile, R_OK ) != 0 )
+	{
+		fontFileNamePost = NULL;
+		fontFileName = "DroidSans";
+		if( bBold > 500 )
+			fontFileNamePost = "Bold";
+
+		if( fontFileNamePost )
+			snprintf( dataFile, sizeof dataFile, "/system/fonts/%s-%s.ttf", fontFileName, fontFileNamePost );
+		else
+			snprintf( dataFile, sizeof dataFile, "/system/fonts/%s.ttf", fontFileName );
+
+		if( access( dataFile, R_OK ) != 0 )
+			return NULL;
+	}
+
+	return dataFile;
+}
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: Given a font name from windows, match it to the filename and return that.
 //-----------------------------------------------------------------------------
@@ -413,18 +464,24 @@ char *CLinuxFont::GetFontFileName( const char *windowsFontName, int flags )
 	else if ( !Q_stricmp( pchFontName, "Arial Black" ) || Q_stristr( pchFontName, "bold" ) )
 		bBold = true;
 
-    const int italic = ( flags & vgui::ISurface::FONTFLAG_ITALIC ) ? FC_SLANT_ITALIC : FC_SLANT_ROMAN;
-	const int nFcWeight = bBold ? FC_WEIGHT_BOLD : FC_WEIGHT_NORMAL;
+	const int italic = ( flags & vgui::ISurface::FONTFLAG_ITALIC ) ? FC_SLANT_ITALIC : FC_SLANT_ROMAN;
 
-    FcPattern *match = FontMatch( FC_FAMILY, FcTypeString, pchFontName,
+#ifdef ANDROID
+	char *filename = FindFontAndroid( bBold, italic );
+	Msg("Android font: %s", filename);
+	if( !filename ) return NULL;
+	return strdup( filename );
+#else
+	const int nFcWeight = bBold ? FC_WEIGHT_BOLD : FC_WEIGHT_NORMAL;
+	FcPattern *match = FontMatch( FC_FAMILY, FcTypeString, pchFontName,
 								  FC_WEIGHT, FcTypeInteger, nFcWeight,
 								  FC_SLANT, FcTypeInteger, italic,
 								  NULL);
  	if ( !match )
-    {
+	{
 		AssertMsg1( false, "Unable to find font named %s\n", windowsFontName );
-        return NULL;
-    }
+		return NULL;
+	}
 	else
 	{
 		char *filenameret = NULL;
@@ -440,8 +497,11 @@ char *CLinuxFont::GetFontFileName( const char *windowsFontName, int flags )
 		}
 
 		FcPatternDestroy( match );
+		Msg("Android font fc: %s", filenameret);
+
 		return filenameret;
 	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -502,7 +562,7 @@ void CLinuxFont::GetCharRGBA( wchar_t ch, int rgbaWide, int rgbaTall, unsigned c
 	if( error == 0 )
 	{
 		uint32 alpha_scale = 1;
-		int Width = min( rgbaWide, bitmap.width );
+		int Width = MIN( rgbaWide, bitmap.width );
 		unsigned char *rgba = prgba + ( nSkipRows * rgbaWide * 4 );
 
 		switch( m_face->glyph->bitmap.pixel_mode )

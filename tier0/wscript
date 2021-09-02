@@ -54,7 +54,7 @@ def build(bld):
 		'vcrmode_posix.cpp',	#[$POSIX]
 		'vprof.cpp',
 		# 'win32consoleio.cpp',	[$WINDOWS]
-		'../tier1/pathmatch.cpp' # [$LINUXALL]
+		#'../tier1/pathmatch.cpp' # [$LINUXALL]
 	]
 
 	includes = [
@@ -65,7 +65,7 @@ def build(bld):
 
 	defines = []
 
-	libs = ['DL']
+	libs = ['DL', 'M', 'LOG']
 
 	install_path = bld.env.LIBDIR
 

@@ -146,6 +146,7 @@ int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 #if defined( LINUX )
 
 #include <fcntl.h>
+#include <sys/stat.h>
 
 static bool IsDebuggerPresent( int time )
 {

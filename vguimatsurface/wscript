@@ -15,7 +15,7 @@ def configure(conf):
 	conf.define('VGUIMATSURFACE_DLL_EXPORT',1)
 	conf.define('GAMEUI_EXPORTS',1)
 	conf.define('DONT_PROTECT_FILEIO_FUNCTIONS',1)
-	conf.define('PROTECTED_THINGS_ENABLE',1)
+	#conf.define('PROTECTED_THINGS_ENABLE',1) # conflicts with stlport
 
 
 def build(bld):
@@ -38,12 +38,15 @@ def build(bld):
 		'../public',
 		'../public/tier0',
 		'../public/tier1',
-		'../common'
-	] + bld.env.INCLUDES_SDL2 + bld.env.INCLUDES_FREETYPE
+		'../common',
+	]
 
 	defines = []
 
 	libs = ['bitmap','mathlib','tier0','vgui_controls','tier1','vstdlib','tier2','tier3','vgui_surfacelib','FT2','FC','SDL2']
+
+	if bld.env.DEST_OS == 'android':
+		libs += ['EXPAT']
 
 	install_path = bld.env.LIBDIR
 

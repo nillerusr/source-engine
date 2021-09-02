@@ -43,7 +43,7 @@
 #include "tier1.h"
 #include "tier2/tier2.h"
 
-#ifdef _LINUX
+#if defined(_LINUX) && !defined(__ANDROID__)
 #include <GL/glx.h>
 #endif
 
@@ -296,7 +296,7 @@ static bool CheckOpenGLExtension_internal(const char *ext, const int coremajor, 
 				return false;
 			}
 		}
-#elif !defined ( OSX )
+#elif !defined ( OSX ) && !defined( __ANDROID__ )
 		if (!ptr)
 		{
 			static CDynamicFunctionOpenGL< true, Display *( APIENTRY *)( ), Display* > glXGetCurrentDisplay("glXGetCurrentDisplay");
@@ -377,10 +377,12 @@ COpenGLEntryPoints::COpenGLEntryPoints()
 	// !!! FIXME:  hint Apple's drivers and not because we rely on the
 	// !!! FIXME:  functionality. If so, just remove this check (and the
 	// !!! FIXME:  GL_NV_fence code entirely).
+#ifndef ANDROID // HACK
  	if ((m_bHave_OpenGL) && ((!m_bHave_GL_NV_fence) && (!m_bHave_GL_ARB_sync) && (!m_bHave_GL_APPLE_fence)))
  	{
  		Error( "Required OpenGL extension \"GL_NV_fence\", \"GL_ARB_sync\", or \"GL_APPLE_fence\" is not supported. Please upgrade your OpenGL driver." );
  	}
+#endif
 
 	// same extension, different name.
 	if (m_bHave_GL_EXT_vertex_array_bgra || m_bHave_GL_ARB_vertex_array_bgra)

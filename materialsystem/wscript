@@ -15,7 +15,7 @@ def configure(conf):
 	conf.env.append_unique('DEFINES',[
 		'DEFINE_MATERIALSYSTEM_INTERFACE',
 		'MATERIALSYSTEM_EXPORTS',
-		'PROTECTED_THINGS_ENABLE',
+		#'PROTECTED_THINGS_ENABLE', # conflicts with stlport
 		'strncpy=use_Q_strncpy_instead',
 		'_snprintf=use_Q_snprintf_instead'
 	])

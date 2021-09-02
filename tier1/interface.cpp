@@ -247,8 +247,10 @@ HMODULE Sys_LoadLibrary( const char *pLibraryName, Sys_Flags flags )
 #elif POSIX
 	int dlopen_mode = RTLD_NOW;
 
+#ifndef ANDROID
 	if ( flags & SYS_NOLOAD )
 		dlopen_mode |= RTLD_NOLOAD;
+#endif
 
 	HMODULE ret = ( HMODULE )dlopen( str, dlopen_mode );
 	if ( !ret && !( flags & SYS_NOLOAD ) )
@@ -301,20 +303,34 @@ CSysModule *Sys_LoadModule( const char *pModuleName, Sys_Flags flags /* = SYS_NO
 		size_t cCwd = strlen( szCwd );
 
 		bool bUseLibPrefix = false;
-		
+
+#ifdef ANDROID
+		struct stat statBuf;
+		char *dataPath = getenv("APP_DATA_PATH");
+
+
+		Q_snprintf(szAbsoluteModuleName, sizeof(szAbsoluteModuleName), "%s/lib/lib%s", dataPath ,pModuleName);
+		if( stat(szAbsoluteModuleName, &statBuf) != 0 )
+			Q_snprintf(szAbsoluteModuleName, sizeof(szAbsoluteModuleName), "%s/lib/%s", dataPath ,pModuleName);
+#else
+
 #ifdef POSIX
 		struct stat statBuf;
 		Q_snprintf(szModuleName, sizeof(szModuleName), "bin/lib%s", pModuleName);
 		bUseLibPrefix |= stat(szModuleName, &statBuf) == 0;
 #endif
-
 		if( bUseLibPrefix )
 			Q_snprintf( szAbsoluteModuleName, sizeof(szAbsoluteModuleName), "%s/bin/lib%s", szCwd, pModuleName );
 		else
 			Q_snprintf( szAbsoluteModuleName, sizeof(szAbsoluteModuleName), "%s/bin/%s", szCwd, pModuleName );
+#endif // ANDROID
+		Msg("LoadLibrary: pModule: %s, path: %s\n", pModuleName, szAbsoluteModuleName);
 
 		hDLL = Sys_LoadLibrary( szAbsoluteModuleName, flags );
 	}
+	else
+		Msg("LoadLibrary: path: %s\n", pModuleName);
+
 
 	if ( !hDLL )
 	{

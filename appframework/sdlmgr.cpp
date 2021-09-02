@@ -56,6 +56,11 @@ COpenGLEntryPoints *gGL = NULL;
 
 const int kBogusSwapInterval = INT_MAX;
 
+#ifdef ANDROID
+static void *gl4es = NULL;
+void *(*_glGetProcAddress)( const char * );
+#endif
+
 /*
 From Ryan Gordon:
  
@@ -174,7 +179,19 @@ void *VoidFnPtrLookup_GlMgr(const char *fn, bool &okay, const bool bRequired, vo
 		return NULL;
 
 	// The SDL path would work on all these platforms, if we were using SDL there, too...
-#if defined( USE_SDL )
+
+
+#ifdef ANDROID
+	// SDL does the right thing, so we never need to use tier0 in this case.
+	if( _glGetProcAddress )
+		retval = _glGetProcAddress(fn);
+	//printf("CDynamicFunctionOpenGL: SDL_GL_GetProcAddress(\"%s\") returned %p\n", fn, retval);
+	if ((retval == NULL) && (fallback != NULL))
+	{
+		//printf("CDynamicFunctionOpenGL: Using fallback %p for \"%s\"\n", fallback, fn);
+		retval = fallback;
+	}
+#elif defined( USE_SDL )
 	// SDL does the right thing, so we never need to use tier0 in this case.
 	retval = SDL_GL_GetProcAddress(fn);
 	//printf("CDynamicFunctionOpenGL: SDL_GL_GetProcAddress(\"%s\") returned %p\n", fn, retval);
@@ -196,7 +213,7 @@ void *VoidFnPtrLookup_GlMgr(const char *fn, bool &okay, const bool bRequired, vo
 		// We can't continue execution, because one or more GL function pointers will be NULL.
 		Error( "Could not find required OpenGL entry point '%s'! Either your video card is unsupported, or your OpenGL driver needs to be updated.\n", fn);
 	}
-	
+
 	return retval;
 }
 
@@ -742,6 +759,18 @@ bool CSDLMgr::CreateHiddenGameWindow( const char *pTitle, int width, int height 
 
 	SDL_GL_MakeCurrent(m_Window, m_GLContext);
 
+#ifdef ANDROID
+	gl4es = dlopen("libgl4es.so", RTLD_LAZY);
+
+	if( gl4es )
+	{
+		_glGetProcAddress = dlsym(gl4es, "gl4es_GetProcAddress" );
+		void (*initialize_gl4es)( );
+		initialize_gl4es = dlsym(gl4es, "initialize_gl4es" );
+		initialize_gl4es();
+	}
+#endif
+
 	// !!! FIXME: note for later...we never delete this context anywhere, I think.
 	// !!! FIXME:  when we do get around to that, don't forget to delete/NULL gGL!
 
@@ -762,7 +791,7 @@ bool CSDLMgr::CreateHiddenGameWindow( const char *pTitle, int width, int height 
 #endif // DBGFLAG_ASSERT
 
 	gGL = GetOpenGLEntryPoints(VoidFnPtrLookup_GlMgr);
-	
+
 	// It is now safe to call any base GL entry point that's supplied by gGL.
 	// You still need to explicitly test for extension entry points, though!
 
