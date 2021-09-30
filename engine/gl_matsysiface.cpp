@@ -972,7 +972,7 @@ void DebugDrawLightmapAtCrossHair()
 	IMaterial *pMaterial;
 	int lightmapPageSize[2];
 
-	if( s_CrossHairSurfID <= 0 )
+	if( s_CrossHairSurfID <= (SurfaceHandle_t)0 )
 	{
 		return;
 	}
