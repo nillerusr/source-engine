@@ -2378,15 +2378,12 @@ void CMaterial::ReloadTextures( void )
 	IMaterialVar **ppVars = GetShaderParams();
 	for( i = 0; i < nParams; i++ )
 	{
-		if( ppVars[i] )		
+		if( ppVars[i] )
 		{
 			if( ppVars[i]->IsTexture() )
 			{
 				ITextureInternal *pTexture = ( ITextureInternal * )ppVars[i]->GetTextureValue();
-				if( !IsTextureInternalEnvCubemap( pTexture ) )
-				{
-					pTexture->Download();
-				}
+				pTexture->Download();
 			}
 		}
 	}

@@ -426,7 +426,7 @@ void CMaterialVar::CleanUpData()
 
 	case MATERIAL_VAR_TYPE_TEXTURE:
 		// garymcthack
-		if( m_pTexture && !IsTextureInternalEnvCubemap( m_pTexture ) )
+		if( m_pTexture )
 		{
 			m_pTexture->DecrementReferenceCount();
 			if ( g_bDeleteUnreferencedTexturesEnabled )
@@ -731,16 +731,8 @@ const char *CMaterialVar::GetStringValue( void ) const
 		}
 
 	case MATERIAL_VAR_TYPE_TEXTURE:
-		// check for env_cubemap
-		if( IsTextureInternalEnvCubemap( m_pTexture ) )
-		{
-			return "env_cubemap";
-		}
-		else
-		{
-			Q_snprintf( s_CharBuf, sizeof( s_CharBuf ), "%s", m_pTexture->GetName() );
-			return s_CharBuf;
-		}
+		Q_snprintf( s_CharBuf, sizeof( s_CharBuf ), "%s", m_pTexture->GetName() );
+		return s_CharBuf;
 	case MATERIAL_VAR_TYPE_MATERIAL:
 		Q_snprintf( s_CharBuf, sizeof( s_CharBuf ), "%s", ( m_pMaterialValue ? m_pMaterialValue->GetName() : "" ) );
 		return s_CharBuf;
@@ -878,14 +870,11 @@ ITexture *CMaterialVar::GetTextureValue( void )
 	
 	if( m_Type == MATERIAL_VAR_TYPE_TEXTURE )
 	{
-		if ( !IsTextureInternalEnvCubemap( m_pTexture ) )
-		{
-			retVal = static_cast<ITexture *>( m_pTexture );
-		}
-		else
-		{
+		if ( strcmp(m_pTexture->GetName(), "bitch_cubemap") == 0 )
 			retVal = MaterialSystem()->GetLocalCubemap();
-		}
+		else
+			retVal = static_cast<ITexture *>( m_pTexture );
+
 		if( !retVal )
 		{
 			static int bitchCount = 0;
@@ -945,7 +934,7 @@ void CMaterialVar::SetTextureValue( ITexture *texture )
 
 	// Avoid the garymcthack in CShaderSystem::LoadCubeMap by ensuring we're not using 
 	// the internal env cubemap.
-	if ( ThreadInMainThread() && !IsTextureInternalEnvCubemap( static_cast<ITextureInternal*>( texture ) ) )
+	if ( ThreadInMainThread() )
 	{
 		ITextureInternal* pTexInternal = assert_cast<ITextureInternal *>( texture );
 		TextureManager()->RequestAllMipmaps( pTexInternal );
@@ -994,10 +983,8 @@ void CMaterialVar::SetTextureValue( ITexture *texture )
 	if ( !m_bFakeMaterialVar && m_pMaterial && (m_pMaterial == MaterialSystem()->GetCurrentMaterial()))
 		g_pShaderAPI->FlushBufferedPrimitives();
 
-	if( pTexImp && !IsTextureInternalEnvCubemap( pTexImp ) )
-	{
+	if( pTexImp )
 		pTexImp->IncrementReferenceCount();
-	}
 
 	CleanUpData();
 	m_pTexture = pTexImp;
