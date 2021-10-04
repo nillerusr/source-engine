@@ -1134,9 +1134,7 @@ void ClientModeShared::FireGameEvent( IGameEvent *event )
 		bool bValidTeam = false;
 
 		if ( (GetLocalTeam() && GetLocalTeam()->GetTeamNumber() == team) )
-		{
 			bValidTeam = true;
-		}
 
 		//If we're in the spectator team then we should be getting whatever messages the person I'm spectating gets.
 		if ( bValidTeam == false )
@@ -1152,15 +1150,11 @@ void ClientModeShared::FireGameEvent( IGameEvent *event )
 			}
 		}
 
-		if ( team == 0 && GetLocalTeam() > (C_Team*)0 )
-		{
+		if ( team == 0 && GetLocalTeam() )
 			bValidTeam = false;
-		}
 
 		if ( team == 255 )
-		{
 			bValidTeam = true;
-		}
 
 		if ( bValidTeam == true )
 		{
