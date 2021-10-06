@@ -101,6 +101,8 @@ public:
 	virtual void *GetHapticsInterfaceAddress() const { return NULL;}	
 #endif
 	bool GetRawMouseAccumulators( int& accumX, int& accumY );
+	bool GetTouchAccumulators( InputEventType_t &event, int &fingerId, int& accumX, int& accumY );
+
 	virtual void SetConsoleTextMode( bool bConsoleTextMode );
 
 	// Windows proc
@@ -240,6 +242,13 @@ public:
 
 	// Record button state and post the event
 	void JoystickButtonEvent( ButtonCode_t button, int sample );
+	
+	// Init touch
+	void InitializeTouch( void );
+	
+	// Shut down touch	
+	void ShutdownTouch( void );
+	
 
 #if defined( WIN32 ) && !defined ( _X360 )
 	// NVNT attaches window to novint devices
@@ -324,6 +333,11 @@ public:
 	void JoystickButtonRelease( int joystickId, int button ); // same as above.
 	void JoystickAxisMotion( int joystickId, int axis, int value );
 
+	void FingerDown( int fingerId, int x, int y );	
+	void FingerUp( int fingerId, int x, int y );	
+	void FingerMotion( int fingerId, int x, int y );	
+	
+	
 	// Steam Controller
 	void ReadSteamController( int iIndex );
 	void PostKeyEvent( int iIndex, sKey_t sKey, int nSample );
@@ -390,6 +404,7 @@ public:
 	CUtlFlags<unsigned short> m_JoysticksEnabled;
 	int m_nJoystickCount;
 	bool m_bJoystickInitialized;
+	bool m_bTouchInitialized;
 	bool m_bXController;
 	JoystickInfo_t m_pJoystickInfo[ MAX_JOYSTICKS ];
 
@@ -443,6 +458,9 @@ public:
 	// raw mouse input
 	bool m_bRawInputSupported;
 	int	 m_mouseRawAccumX, m_mouseRawAccumY;
+
+	InputEventType_t m_touchAccumEvent;
+	int m_touchAccumFingerId, m_touchAccumX, m_touchAccumY;
 
 	// For the 'SleepUntilInput' feature
 	HANDLE m_hEvent;

@@ -31,7 +31,6 @@ EXPOSE_SINGLE_INTERFACE_GLOBALVAR( CInputSystem, IInputSystem,
 						INPUTSYSTEM_INTERFACE_VERSION, g_InputSystem );
 
 
-
 #if defined( WIN32 ) && !defined( _X360 )
 typedef BOOL (WINAPI *RegisterRawInputDevices_t)
 (
@@ -70,6 +69,7 @@ CInputSystem::CInputSystem()
 	m_JoysticksEnabled.ClearAllFlags();
 	m_nJoystickCount = 0;
 	m_bJoystickInitialized = false;
+	m_bTouchInitialized = false;
 	m_nPollCount = 0;
 	m_PrimaryUserId = INVALID_USER_ID;
 	m_uiMouseWheel = 0;
@@ -166,6 +166,10 @@ InitReturnVal_t CInputSystem::Init()
 	ButtonCode_UpdateScanCodeLayout();
 
 	joy_xcontroller_found.SetValue( 0 );
+	
+	if( !m_bConsoleTextMode )
+		InitializeTouch();
+	
 	if ( IsPC() && !m_bConsoleTextMode )
 	{
 		InitializeJoysticks();
@@ -1524,6 +1528,16 @@ bool CInputSystem::GetRawMouseAccumulators( int& accumX, int& accumY )
 	return m_bRawInputSupported;
 
 #endif
+}
+
+bool CInputSystem::GetTouchAccumulators( InputEventType_t &event, int &fingerId, int& accumX, int& accumY )
+{
+	event = m_touchAccumEvent;
+	fingerId = m_touchAccumFingerId;
+	accumX = m_touchAccumX;
+	accumY = m_touchAccumY;
+
+	return m_bJoystickInitialized;
 }
 
 void CInputSystem::SetConsoleTextMode( bool bConsoleTextMode )

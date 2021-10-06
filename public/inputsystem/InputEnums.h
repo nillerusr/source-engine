@@ -76,7 +76,10 @@ enum InputEventType_t
 	IE_ButtonReleased,		// m_nData contains a ButtonCode_t
 	IE_ButtonDoubleClicked,	// m_nData contains a ButtonCode_t
 	IE_AnalogValueChanged,	// m_nData contains an AnalogCode_t, m_nData2 contains the value
-
+	IE_FingerDown,
+	IE_FingerUp,
+	IE_FingerMotion,
+	
 	IE_FirstSystemEvent = 100,
 	IE_Quit = IE_FirstSystemEvent,
 	IE_ControllerInserted,	// m_nData contains the controller ID
