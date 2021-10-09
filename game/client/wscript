@@ -521,7 +521,8 @@ def build(bld):
 		'hl2/hud_zoom.cpp',
 		'hl2/shieldproxy.cpp',
 		'hl2/vgui_rootpanel_hl2.cpp',
-		'episodic/c_vort_charge_token.cpp'
+		'episodic/c_vort_charge_token.cpp',
+		'touch.cpp'
 	]
 
 	includes = [

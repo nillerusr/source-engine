@@ -18,6 +18,7 @@ def build(bld):
 	source = [
 		'inputsystem.cpp',
 		'joystick_sdl.cpp',
+		'touch_sdl.cpp',
 		#'novint.cpp', #			[$WIN32]
 		'key_translation.cpp',
 		'steamcontroller.cpp'

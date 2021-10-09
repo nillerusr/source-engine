@@ -988,10 +988,10 @@ void CSDLMgr::PostEvent( const CCocoaEvent &theEvent, bool debugEvent )
 	SDLAPP_FUNC;
 
 	m_CocoaEventsMutex.Lock();
-	
+
 	CUtlLinkedList<CCocoaEvent,int> &queue = debugEvent ? m_CocoaEvents : m_DebugEvents;
 	queue.AddToTail( theEvent );
-	
+
 	m_CocoaEventsMutex.Unlock();
 }
 
@@ -1837,6 +1837,8 @@ void CSDLMgr::PumpWindowsMessageLoop()
 				break;
 			}
 
+// FIXME(nillerusr): SDL posts SDL_QUIT when map loaded on android, idk why.
+#ifndef ANDROID
 			case SDL_QUIT:
 			{
 				CCocoaEvent theEvent;
@@ -1844,7 +1846,7 @@ void CSDLMgr::PumpWindowsMessageLoop()
 				PostEvent( theEvent );
 				break;
 			}
-
+#endif
 			default:
 				break;
 		}

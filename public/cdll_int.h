@@ -789,6 +789,8 @@ public:
 	virtual bool DisconnectAttempt( void ) = 0;
 
 	virtual bool IsConnectedUserInfoChangeAllowed( IConVar *pCvar ) = 0;
+
+	virtual void IN_TouchEvent( int type, int fingerId, int x, int y ) = 0;
 };
 
 #define CLIENT_DLL_INTERFACE_VERSION		"VClient017"

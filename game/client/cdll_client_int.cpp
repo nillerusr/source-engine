@@ -126,6 +126,7 @@
 #include "client_virtualreality.h"
 #include "mumble.h"
 #include "vgui_controls/BuildGroup.h"
+#include "touch.h"
 
 // NVNT includes
 #include "hud_macros.h"
@@ -729,11 +730,12 @@ public:
 	
 	// Returns true if the disconnect command has been handled by the client
 	virtual bool DisconnectAttempt( void );
-public:
+
 	void PrecacheMaterial( const char *pMaterialName );
 
 	virtual bool IsConnectedUserInfoChangeAllowed( IConVar *pCvar );
 
+	virtual void IN_TouchEvent( int type, int fingerId, int x, int y );
 private:
 	void UncacheAllMaterials( );
 	void ResetStringTablePointers();
@@ -1038,6 +1040,8 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 	g_pClientMode->InitViewport();
 
 	gHUD.Init();
+
+	gTouch.Init();
 
 	g_pClientMode->Init();
 
@@ -1419,8 +1423,23 @@ int CHLClient::IN_KeyEvent( int eventcode, ButtonCode_t keynum, const char *pszC
 	return input->KeyEvent( eventcode, keynum, pszCurrentBinding );
 }
 
-void CHLClient::ExtraMouseSample( float frametime, bool active )
+void CHLClient::IN_TouchEvent( int type, int fingerId, int x, int y )
 {
+	if( enginevgui->IsGameUIVisible() )
+		return;
+
+	touch_event_t ev;
+
+	ev.type = type;
+	ev.fingerid = fingerId;
+	ev.x = x;
+	ev.y = y;
+
+	gTouch.ProcessEvent( &ev );
+}
+
+void CHLClient::ExtraMouseSample( float frametime, bool active )
+	{
 	Assert( C_BaseEntity::IsAbsRecomputationsEnabled() );
 	Assert( C_BaseEntity::IsAbsQueriesValid() );
 

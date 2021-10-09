@@ -7,7 +7,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <dlfcn.h>
-
+#include <SDL_hints.h>
 
 #include "tier0/threadtools.h"
 
@@ -92,9 +92,9 @@ t_eglGetProcAddress eglGetProcAddress;
 void *GetProcAddress( const char *procname )
 {
 	void *result = dlsym(lgles, procname);
-	if(result)
+	if( result )
 		return result;
-	else
+	else if( eglGetProcAddress )
 		return eglGetProcAddress(procname);
 }
 
@@ -127,7 +127,7 @@ DLLEXPORT int LauncherMainAndroid( int argc, char **argv )
 	gl4es_set_getprocaddress = (t_set_getprocaddress)dlsym(lgl4es, "set_getprocaddress");
 	eglGetProcAddress = (t_eglGetProcAddress)dlsym(lEGL, "eglGetProcAddress");
 
-	if( gl4es_set_getprocaddress && eglGetProcAddress )
+	if( gl4es_set_getprocaddress )
 	{
 		gl4es_set_getprocaddress( &GetProcAddress );
 	}
@@ -137,6 +137,7 @@ DLLEXPORT int LauncherMainAndroid( int argc, char **argv )
 		return 1;
 	}
 
+	SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
 	DeclareCurrentThreadIsMainThread(); // Init thread propertly on Android
 
 	return LauncherMain(iLastArgs, LauncherArgv);

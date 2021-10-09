@@ -19,12 +19,16 @@
 #include "bitbuf.h"
 #include "checksum_md5.h"
 #include "hltvcamera.h"
+#include "touch.h"
+#include "ienginevgui.h"
+
 #if defined( REPLAY_ENABLED )
 #include "replay/replaycamera.h"
 #endif
 #include <ctype.h> // isalnum()
 #include <voice_status.h>
 #include "cam_thirdperson.h"
+#include "inputsystem/iinputsystem.h"
 
 #ifdef SIXENSE
 #include "sixense/in_sixense.h"
@@ -289,11 +293,11 @@ Add a kbutton_t * to the list of pointers the engine can retrieve via KB_Find
 */
 void CInput::AddKeyButton( const char *name, kbutton_t *pkb )
 {
-	CKeyboardKey *p;	
+	CKeyboardKey *p;
 	kbutton_t *kb;
 
 	kb = FindKey( name );
-	
+
 	if ( kb )
 		return;
 
@@ -307,7 +311,7 @@ void CInput::AddKeyButton( const char *name, kbutton_t *pkb )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 CInput::CInput( void )
 {
@@ -319,7 +323,7 @@ CInput::CInput( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 CInput::~CInput( void )
 {
@@ -952,6 +956,7 @@ void CInput::ControllerMove( float frametime, CUserCmd *cmd )
 
 	SteamControllerMove( frametime, cmd );
 	JoyStickMove( frametime, cmd );
+	gTouch.Move( frametime, cmd );
 
 	// NVNT if we have a haptic device..
 	if(haptics && haptics->HasDevice())
@@ -1105,11 +1110,10 @@ void CInput::ExtraMouseSample( float frametime, bool active )
 			prediction->SetLocalViewAngles( cmd->viewangles );
 		}
 	}
-
 }
 
 void CInput::CreateMove ( int sequence_number, float input_sample_frametime, bool active )
-{	
+{
 	CUserCmd *cmd = &m_pCommands[ sequence_number % MULTIPLAYER_BACKUP ];
 	CVerifiedUserCmd *pVerified = &m_pVerifiedCommands[ sequence_number % MULTIPLAYER_BACKUP ];
 
@@ -1196,11 +1200,11 @@ void CInput::CreateMove ( int sequence_number, float input_sample_frametime, boo
 	cmd->buttons = GetButtonBits( 1 );
 #endif
 
-	// Using joystick?
+	// Using joystick or touch?
 #ifdef SIXENSE
-	if ( in_joystick.GetInt() || g_pSixenseInput->IsEnabled() )
+	if ( in_joystick.GetInt() || g_pSixenseInput->IsEnabled() || touch_enable.GetInt() )
 #else
-	if ( in_joystick.GetInt() )
+	if ( in_joystick.GetInt() || touch_enable.GetInt() )
 #endif
 	{
 		if ( cmd->forwardmove > 0 )

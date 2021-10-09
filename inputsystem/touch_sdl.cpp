@@ -23,11 +23,11 @@ int TouchSDLWatcher( void *userInfo, SDL_Event *event )
 	SDL_Window *window = SDL_GetWindowFromID(event->tfinger.windowID);
 	if( !window )
 		return 0;
-	
+
 	int width, height;
 	width = height = 0;
 	SDL_GetWindowSize(window, &width, &height);
-	
+
 	switch ( event->type ) {
 	case SDL_FINGERDOWN:
 		pInputSystem->FingerDown( event->tfinger.fingerId, event->tfinger.x*width, event->tfinger.y*height );
@@ -73,7 +73,7 @@ void CInputSystem::FingerDown(int fingerId, int x, int y)
 	m_touchAccumFingerId = fingerId;
 	m_touchAccumX = x;
 	m_touchAccumY = y;
-	
+
 	PostEvent(IE_FingerDown, m_nLastSampleTick, fingerId, x, y);
 }
 
@@ -83,16 +83,16 @@ void CInputSystem::FingerUp(int fingerId, int x, int y)
 	m_touchAccumFingerId = fingerId;
 	m_touchAccumX = x;
 	m_touchAccumY = y;
-	
-	PostEvent(IE_FingerUp, m_nLastSampleTick, fingerId, x, y);	
+
+	PostEvent(IE_FingerUp, m_nLastSampleTick, fingerId, x, y);
 }
 
 void CInputSystem::FingerMotion(int fingerId, int x, int y)
 {
-	m_touchAccumEvent = IE_FingerMotion;	
+	m_touchAccumEvent = IE_FingerMotion;
 	m_touchAccumFingerId = fingerId;
 	m_touchAccumX = x;
 	m_touchAccumY = y;
-	
-	PostEvent(IE_FingerMotion, m_nLastSampleTick, fingerId, x, y);	
+
+	PostEvent(IE_FingerMotion, m_nLastSampleTick, fingerId, x, y);
 }
