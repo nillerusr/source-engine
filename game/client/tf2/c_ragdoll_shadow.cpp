@@ -79,7 +79,7 @@ IPhysicsObject *PhysModelCreateCustom( C_BaseEntity *pEntity, const CPhysCollide
 	solid_t solid;
 	solid.params = g_PhysDefaultObjectParams;
 	solid.params.mass = 85.0f;
-	solid.params.inertia = 1e24f;
+	solid.params.inertia = 1e16f;
 	int surfaceProp = -1;
 	if ( props && props[0] )
 	{

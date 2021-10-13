@@ -91,7 +91,7 @@ bool COrderRepair::CreateOrder_RepairFriendlyObjects( CPlayerClassDefender *pCla
 				ORDER_REPAIR,
 				pObjToHeal,
 				pPlayer,
-				1e24,
+				1e16,
 				60,
 				pOrder
 				);
@@ -130,7 +130,7 @@ bool COrderRepair::CreateOrder_RepairOwnObjects( CPlayerClass *pClass )
 			ORDER_REPAIR,
 			pObj,
 			info.m_pPlayer,
-			1e24,
+			1e16,
 			60,
 			pOrder
 			);

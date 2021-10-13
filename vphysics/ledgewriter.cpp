@@ -65,7 +65,7 @@ static void BuildVertMap( vertmap_t &out, const Vector *pVerts, int vertexCount,
 				int index = -1;
 				Vector tmp;
 				ConvertPositionToHL( &pVertList[ivpIndex], tmp);
-				float minDist = 1e24;
+				float minDist = 1e16;
 				for ( int k = 0; k < vertexCount; k++ )
 				{
 					float dist = (tmp-pVerts[k]).Length();

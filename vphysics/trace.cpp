@@ -1231,7 +1231,7 @@ loop_without_store:
 			const IVP_Compact_Ledgetree_Node *node0 = node->left_son();
 			center.set(node0->center.k);
 			// if we don't insert, this is larger than any quad distance
-			float lastDist = 1e24f;
+			float lastDist = 1e16f;
 			if ( SweepHitsSphereOS( &center, node0->radius ) )
 			{
 				lastDist = m_rayStartOS.quad_distance_to(&center);
@@ -2073,7 +2073,7 @@ inline float Clip( const Vector &dir, const Vector &pos, const Vector &normal )
 		return dist / cosTheta;
 
 	// parallel or not facing the plane
-	return 1e24f;
+	return 1e16f;
 }
 
 // This is the first iteration of solving time of intersection.
@@ -2258,7 +2258,7 @@ float simplex_t::ClipRayToTriangle( const Vector &dir, float epsilon )
 	}
 	float dot = DotProduct( dir, *normals[best] );
 	if ( dot <= 0 )
-		return 1e24f;
+		return 1e16f;
 	dmin += epsilon/dot;
 
 	return dmin;

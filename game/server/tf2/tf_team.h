@@ -145,7 +145,7 @@ public:
 		int iOrderType, 
 		CBaseEntity *pTarget, 
 		CBaseTFPlayer *pPlayer = NULL, 
-		float flDistanceToRemove = 1e24, 
+		float flDistanceToRemove = 1e16, 
 		float flLifetime = 60,
 		COrder *pDefaultOrder = NULL	// If this is specified, then it is used instead of 
 										// asking COrder to allocate an order.

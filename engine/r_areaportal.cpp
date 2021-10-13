@@ -122,8 +122,8 @@ struct portalclip_t
 static inline bool GetPortalScreenExtents( dareaportal_t *pPortal, 
 	portalclip_t * RESTRICT clip, CPortalRect &portalRect , float *pReflectionWaterHeight )
 {
-	portalRect.left = portalRect.bottom = 1e24;
-	portalRect.right = portalRect.top   = -1e24;
+	portalRect.left = portalRect.bottom = 1e16;
+	portalRect.right = portalRect.top   = -1e16;
 	bool bValidExtents = false;
 	worldbrushdata_t *pBrushData = host_state.worldbrush;
 	

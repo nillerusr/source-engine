@@ -311,7 +311,7 @@ CPositionInterpolator_Rope::CPositionInterpolator_Rope()
 	m_nSegments = 5;
 
 	for( int i=0; i < 2; i++ )
-		m_Delegate.m_CurEndPoints[i] = Vector( 1e24, 1e24, 1e24 );
+		m_Delegate.m_CurEndPoints[i] = Vector( 1e16, 1e16, 1e16 );
 }
 
 void CPositionInterpolator_Rope::Release()

@@ -478,7 +478,7 @@ void PhysGetDefaultAABBSolid( solid_t &solid )
 {
 	solid.params = g_PhysDefaultObjectParams;
 	solid.params.mass = 85.0f;
-	solid.params.inertia = 1e24f;
+	solid.params.inertia = 1e16f;
 	Q_strncpy( solid.surfaceprop, "default", sizeof( solid.surfaceprop ) );
 }
 

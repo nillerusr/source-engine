@@ -8014,7 +8014,7 @@ void CBasePlayer::SetupVPhysicsShadow( const Vector &vecAbsOrigin, const Vector 
 	Q_strncpy( solid.surfaceprop, "player", sizeof(solid.surfaceprop) );
 	solid.params = g_PhysDefaultObjectParams;
 	solid.params.mass = 85.0f;
-	solid.params.inertia = 1e24f;
+	solid.params.inertia = 1e16f;
 	solid.params.enableCollisions = false;
 	//disable drag
 	solid.params.dragCoefficient = 0;

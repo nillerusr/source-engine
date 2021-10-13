@@ -2788,7 +2788,7 @@ int CFastPointLeafNum::GetLeaf( const Vector &vPos )
 		m_vCachedPos = vPos;
 
 		CCollisionBSPData *pBSPData = GetCollisionBSPData();
-		m_flDistToExitLeafSqr = 1e24;
+		m_flDistToExitLeafSqr = 1e16;
 		m_iCachedLeaf = CM_PointLeafnumMinDistSqr_r( pBSPData, vPos, 0, m_flDistToExitLeafSqr );
 	}
 

@@ -173,7 +173,7 @@ void CMCVMinimapPanel::OnMousePressed( vgui::MouseCode code )
 		
 		// Find the closest MCV to their mouse press.
 		int iClosest = -1;
-		float flClosest = 1e24;
+		float flClosest = 1e16;
 		Vector2D curMousePos( m_LastX, m_LastY );
 
 		for ( int i=0; i < pPanel->m_DeployedTeleportStations.Count(); i++ )
