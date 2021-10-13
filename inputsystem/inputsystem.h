@@ -374,6 +374,8 @@ public:
 		m_bSkipControllerInitialization = bSkip;
 	}
 
+	void StartTextInput();
+
 #if defined( USE_SDL )
 	void PollInputState_Platform();
 

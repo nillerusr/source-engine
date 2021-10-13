@@ -7,17 +7,13 @@
 
 extern ConVar touch_enable;
 
-#define STEAMCONTROLLER_A -3
-
-#define MOUSE_EVENT_PRESS 0x02
-#define MOUSE_EVENT_RELEASE 0x04
-
-enum ActivationType_t
-{
-    ACTIVATE_ONPRESSEDANDRELEASED, // normal button behaviour
-    ACTIVATE_ONPRESSED, // menu buttons, toggle buttons
-    ACTIVATE_ONRELEASED, // menu items
-};
+#define GRID_COUNT touch_grid_count.GetInt()
+#define GRID_COUNT_X (GRID_COUNT)
+#define GRID_COUNT_Y (GRID_COUNT * screen_h / screen_w)
+#define GRID_X (1.0/GRID_COUNT_X)
+#define GRID_Y (screen_w/screen_h/GRID_COUNT_X)
+#define GRID_ROUND_X(x) ((float)round( x * GRID_COUNT_X ) / GRID_COUNT_X)
+#define GRID_ROUND_Y(x) ((float)round( x * GRID_COUNT_Y ) / GRID_COUNT_Y)
 
 #define CMD_SIZE 64
 
@@ -95,22 +91,13 @@ public:
 	int textureID;
 };
 
-struct touch_settings_s
-{
-	float pitch = 90;
-	float yaw = 120;
-	float sensitivity = 2;
-	float forwardzone = 0.8;
-	float sidezone = 0.12;
-};
-
 class CTouchPanel : public vgui::Panel
 {
 	DECLARE_CLASS_SIMPLE( CTouchPanel, vgui::Panel );
 
 public:
 	CTouchPanel( vgui::VPANEL parent );
-	virtual			~CTouchPanel( void );
+	virtual			~CTouchPanel( void ) {};
 
 	virtual void	Paint();
 	virtual bool	ShouldDraw( void );
@@ -153,17 +140,16 @@ public:
 class CTouchControls
 {
 public:
-	CTouchControls();
-	~CTouchControls();
-
-	void VidInit( );
-	void Shutdown( );
 
 	void Init( );
+	void Shutdown( );
+	
 	void Paint( );
 	void Frame( );
 
-	void IN_TouchAddButton( const char *name, const char *texturefile, const char *command, ETouchButtonType type, float x1, float y1, float x2, float y2, rgba_t color );
+	void IN_TouchAddButton( const char *name, const char *texturefile, const char *command, float x1, float y1, float x2, float y2, rgba_t color = rgba_t(255, 255, 255, 255) );
+	void IN_TouchCheckCoords( float *x1, float *y1, float *x2, float *y2  );
+	
 	void Move( float frametime, CUserCmd *cmd );
 	void IN_Look( );
 
@@ -175,7 +161,7 @@ public:
 private:
 	bool initialized;
 	ETouchState state;
-	CUtlLinkedList<CTouchButton> btns;
+	CUtlLinkedList<CTouchButton*> btns;
 
 	int look_finger;
 	int move_finger;
@@ -205,7 +191,7 @@ private:
 	vgui::HFont textfont;
 	int mouse_events;
 
-	struct touch_settings_s touch_settings;
+	int screen_h, screen_w;
 };
 
 extern CTouchControls gTouch;

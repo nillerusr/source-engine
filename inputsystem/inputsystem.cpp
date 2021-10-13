@@ -1562,3 +1562,10 @@ ISteamController* CInputSystem::SteamControllerInterface()
 		return m_SteamAPIContext.SteamController();
 	}
 }
+
+void CInputSystem::StartTextInput()
+{
+#ifdef USE_SDL
+	SDL_StartTextInput();
+#endif
+}

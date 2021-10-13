@@ -28,6 +28,7 @@
 #include <vgui_controls/MenuItem.h>
 // memdbgon must be the last include file in a .cpp file!!!
 #include <tier0/memdbgon.h>
+#include <inputsystem/iinputsystem.h>
 
 enum
 {
@@ -1482,7 +1483,9 @@ void TextEntry::OnMousePressed(MouseCode code)
 			BaseClass::OnMousePressed( code );
 			return;
 		}
-		
+
+		g_pInputSystem->StartTextInput();
+
 		// move the cursor to where the mouse was pressed
 		int x, y;
 		input()->GetCursorPos(x, y);

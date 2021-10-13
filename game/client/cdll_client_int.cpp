@@ -1206,7 +1206,8 @@ void CHLClient::Shutdown( void )
 	
 	gHUD.Shutdown();
 	VGui_Shutdown();
-	
+	gTouch.Shutdown();
+
 	ParticleMgr()->Term();
 	
 	vgui::BuildGroup::ClearResFileCache();
