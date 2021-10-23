@@ -1,5 +1,5 @@
 # source-engine
-The main purpose of this repository is to port the engine for other platforms.
+
 # Goals
 * fixing bugs
 * ~~NEON support~~
