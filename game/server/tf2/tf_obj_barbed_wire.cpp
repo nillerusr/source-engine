@@ -177,7 +177,7 @@ void CObjectBarbedWire::StartPlacement( CBaseTFPlayer *pPlayer )
 	if ( pPlayer && !m_hConnectedTo )
 	{
 		// Automatically connect to the nearest barbed wire on our team.
-		float flClosest = 1e16;
+		float flClosest = 1e24;
 		CObjectBarbedWire *pClosest = NULL;
 		
 		CBaseEntity *pCur = gEntList.FirstEnt();

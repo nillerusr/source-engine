@@ -652,6 +652,9 @@ void CConsolePanel::OnTextChanged(Panel *panel)
 	// see if they've hit the tilde key (which opens & closes the console)
 	int len = Q_strlen(m_szPartialText);
 
+	if( !len )
+		return;
+
 	bool hitTilde = ( m_szPartialText[len - 1] == '~' || m_szPartialText[len - 1] == '`' ) ? true : false;
 
 	bool altKeyDown = ( vgui::input()->IsKeyDown( KEY_LALT ) || vgui::input()->IsKeyDown( KEY_RALT ) ) ? true : false;

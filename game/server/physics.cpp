@@ -74,7 +74,7 @@ static float g_PhysAverageSimTime;
 CCallQueue g_PostSimulationQueue;
 
 
-// local routines
+// local roeutines
 static IPhysicsObject *PhysCreateWorld( CBaseEntity *pWorld );
 static void PhysFrame( float deltaTime );
 static bool IsDebris( int collisionGroup );
@@ -1689,6 +1689,7 @@ void PhysFrame( float deltaTime )
 	float simRealTime = 0;
 
 	deltaTime *= phys_timescale.GetFloat();
+
 	// !!!HACKHACK -- hard limit scaled time to avoid spending too much time in here
 	// Limit to 100 ms
 	if ( deltaTime > 0.100f )
@@ -1709,10 +1710,9 @@ void PhysFrame( float deltaTime )
 	g_Collisions.BufferTouchEvents( true );
 #endif
 
-	physenv->Simulate( deltaTime );
-
 	int activeCount = physenv->GetActiveObjectCount();
 	IPhysicsObject **pActiveList = NULL;
+#if 0
 	if ( activeCount )
 	{
 		pActiveList = (IPhysicsObject **)stackalloc( sizeof(IPhysicsObject *)*activeCount );
@@ -1721,6 +1721,26 @@ void PhysFrame( float deltaTime )
 		for ( int i = 0; i < activeCount; i++ )
 		{
 			CBaseEntity *pEntity = reinterpret_cast<CBaseEntity *>(pActiveList[i]->GetGameData());
+			OutputVPhysicsDebugInfo(pEntity);
+		}
+		stackfree( pActiveList );
+	}
+#endif
+
+	physenv->Simulate( deltaTime );
+
+	activeCount = physenv->GetActiveObjectCount();
+	pActiveList = NULL;
+
+	if ( activeCount )
+	{
+		pActiveList = (IPhysicsObject **)stackalloc( sizeof(IPhysicsObject *)*activeCount );
+		physenv->GetActiveObjects( pActiveList );
+
+		for ( int i = 0; i < activeCount; i++ )
+		{
+			CBaseEntity *pEntity = reinterpret_cast<CBaseEntity *>(pActiveList[i]->GetGameData());
+//			OutputVPhysicsDebugInfo(pEntity);
 			if ( pEntity )
 			{
 				if ( pEntity->CollisionProp()->DoesVPhysicsInvalidateSurroundingBox() )
@@ -1948,7 +1968,7 @@ void CCollisionEvent::Friction( IPhysicsObject *pObject, float energy, int surfa
 	if ( pEntity  )
 	{
 		friction_t *pFriction = g_Collisions.FindFriction( pEntity );
-
+		
 		if ( pFriction && pFriction->pObject) 
 		{
 			// in MP mode play sound and effects once every 500 msecs,

@@ -1041,7 +1041,7 @@ void CPlayerClass::InitVCollision( void )
 	solid_t solid;
 	solid.params = g_PhysDefaultObjectParams;
 	solid.params.mass = 85.0f;
-	solid.params.inertia = 1e16f;
+	solid.params.inertia = 1e24f;
 	solid.params.enableCollisions = false;
 	//disable drag
 	solid.params.dragCoefficient = 0;

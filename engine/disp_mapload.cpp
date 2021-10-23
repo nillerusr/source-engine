@@ -793,7 +793,7 @@ CDispInfo::CDispInfo()
 
 	m_pPowerInfo = NULL;
 
-	m_ViewerSphereCenter.Init( 1e16, 1e16, 1e16 );
+	m_ViewerSphereCenter.Init( 1e24, 1e24, 1e24 );
 	
 	m_bInUse = false;
 
@@ -995,7 +995,7 @@ int FindNeighborCornerVert( CCoreDispInfo *pDisp, const Vector &vecPoint )
 	CDispUtilsHelper *pDispHelper = pDisp;
 
 	int iClosest = 0;
-	float flClosest = 1e16;
+	float flClosest = 1e24;
 	for ( int iCorner = 0; iCorner < 4; ++iCorner )
 	{
 

@@ -770,8 +770,8 @@ void ClearNeighborData( CCoreDispInfo *pDisp )
 void GetDispBox( CCoreDispInfo *pDisp, CDispBox &box )
 {
 	// Calculate the bbox for this displacement.
-	Vector vMin(  1e16,  1e16,  1e16 );
-	Vector vMax( -1e16, -1e16, -1e16 );
+	Vector vMin(  1e24,  1e24,  1e24 );
+	Vector vMax( -1e24, -1e24, -1e24 );
 
 	for ( int iVert = 0; iVert < 4; ++iVert )
 	{

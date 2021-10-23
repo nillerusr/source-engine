@@ -102,8 +102,8 @@ inline CVertIndex CDispInfo::IndexToVert( int index ) const
 
 void CDispInfo::UpdateBoundingBox()
 {
-	m_BBoxMin.Init( 1e16, 1e16, 1e16 );
-	m_BBoxMax.Init( -1e16, -1e16, -1e16 );
+	m_BBoxMin.Init( 1e24, 1e24, 1e24 );
+	m_BBoxMax.Init( -1e24, -1e24, -1e24 );
 
 	for( int i=0; i < NumVerts(); i++ )
 	{

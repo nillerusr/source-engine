@@ -157,7 +157,7 @@ bool OrderCreator_ResourceZoneObject(
 			ORDER_BUILD,
 			pClosest,
 			pPlayer,
-			1e16,
+			1e24,
 			60,
 			pOrder
 			);

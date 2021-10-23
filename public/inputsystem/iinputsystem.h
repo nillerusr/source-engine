@@ -156,6 +156,8 @@ public:
 	void ActivateSteamControllerActionSet( GameActionSet_t eActionSet ) {
 		ActivateSteamControllerActionSetForSlot( 0xffffffffffffffff, eActionSet );
 	}
+
+	virtual void StartTextInput() = 0;
 };
 
 

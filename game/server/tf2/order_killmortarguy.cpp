@@ -95,7 +95,7 @@ bool COrderKillMortarGuy::CreateOrder( CPlayerClass *pClass )
 			ORDER_KILL,
 			pBrian,
 			pClass->GetPlayer(),
-			1e16,
+			1e24,
 			60,
 			pOrder
 			);

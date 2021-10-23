@@ -125,8 +125,8 @@ inline CParticleRenderIterator::CParticleRenderIterator()
 	m_bGotFirst = false;
 	m_flPrevZ = 0;
 	m_nParticlesInCurrentBatch = 0;
-	m_MinZ = 1e16;
-	m_MaxZ = -1e16;
+	m_MinZ = 1e24;
+	m_MaxZ = -1e24;
 	m_nZCoords = 0;
 }
 

@@ -61,7 +61,7 @@ bool COrderMortarAttack::CreateOrder( CPlayerClass *pClass )
 			ORDER_MORTAR_ATTACK,
 			pEnt,
 			pPlayer,
-			1e16,
+			1e24,
 			40,
 			pOrder
 			);

@@ -1236,12 +1236,13 @@ public:
 #if !defined( _X360 )
 				Assert( dstVertex.m_vecUserData.w == -1.0f || dstVertex.m_vecUserData.w == 1.0f );
 
-				// TODO(nillerusr): uncomment when i remove -mfpmath=387 from compiler options
-				//if ( nHasSIMD )
-				//{
-				//	meshBuilder.FastVertexSSE( dstVertex );
-				//}
-				//else
+#if 0 // FIXME(nillerusr): causing a crash, reason: misalign?
+				if ( nHasSIMD )
+				{
+					meshBuilder.FastVertexSSE( dstVertex );
+				}
+				else
+#endif
 				{
 					meshBuilder.FastVertex( dstVertex );
 				}
@@ -1251,11 +1252,13 @@ public:
 			}
 			else
 			{
+#if 0 // FIXME(nillerusr): causing a crash, reason: misalign?
 				if ( nHasSIMD )
 				{
 					meshBuilder.FastVertexSSE( *(ModelVertexDX7_t*)&dstVertex );
 				}
 				else
+#endif
 				{
 					meshBuilder.FastVertex( *(ModelVertexDX7_t*)&dstVertex );
 				}

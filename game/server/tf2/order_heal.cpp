@@ -74,7 +74,7 @@ bool COrderHeal::CreateOrder( CPlayerClass *pClass )
 			ORDER_HEAL, 
 			pTeam->GetPlayer( sorted[0] ), 
 			pClass->GetPlayer(), 
-			1e16,
+			1e24,
 			60,
 			pOrder );
 
