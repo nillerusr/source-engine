@@ -12,6 +12,8 @@
 #pragma once
 #endif
 
+#include "tier1/strtools.h"
+
 //-----------------------------------------------------------------------------
 // Purpose: Basic handler for an rgb set of colors
 //			This class is fully inline
@@ -22,7 +24,7 @@ public:
 	// constructors
 	Color()
 	{
-		*((int *)this) = 0;
+		Q_memset( _color, 0, sizeof _color );
 	}
 	Color(int _r,int _g,int _b)
 	{
@@ -32,7 +34,7 @@ public:
 	{
 		SetColor(_r, _g, _b, _a);
 	}
-	
+
 	// set the color
 	// r - red component (0-255)
 	// g - green component (0-255)
@@ -56,19 +58,21 @@ public:
 
 	void SetRawColor( int color32 )
 	{
-		*((int *)this) = color32;
+		Q_memcpy( _color, &color32, sizeof _color );
 	}
 
 	int GetRawColor() const
 	{
-		return *((int *)this);
+		int color;
+		Q_memcpy( &color, _color, sizeof _color );
+		return color;
 	}
 
 	inline int r() const	{ return _color[0]; }
 	inline int g() const	{ return _color[1]; }
 	inline int b() const	{ return _color[2]; }
 	inline int a() const	{ return _color[3]; }
-	
+
 	unsigned char &operator[](int index)
 	{
 		return _color[index];
@@ -79,12 +83,12 @@ public:
 		return _color[index];
 	}
 
-	bool operator == (const Color &rhs) const
+	bool operator == (const Color &rhs)
 	{
-		return ( *((int *)this) == *((int *)&rhs) );
+		return Q_memcmp( this, &rhs, sizeof(Color) ) == 0;
 	}
 
-	bool operator != (const Color &rhs) const
+	bool operator != (const Color &rhs)
 	{
 		return !(operator==(rhs));
 	}
