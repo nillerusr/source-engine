@@ -19,6 +19,7 @@
 
 #include "tier1/utllinkedlist.h"
 #include "tier1/convar.h"
+#include <EGL/egl.h>
 
 // NOTE: This has to be the last file included! (turned off below, since this is included like a header)
 #include "tier0/memdbgon.h"
@@ -57,8 +58,14 @@ COpenGLEntryPoints *gGL = NULL;
 const int kBogusSwapInterval = INT_MAX;
 
 #ifdef ANDROID
-static void *gl4es = NULL;
-void *(*_glGetProcAddress)( const char * );
+static void *l_gl4es = NULL;
+static void *l_egl = NULL;
+
+typedef void *(*t_glGetProcAddress)( const char * );
+t_glGetProcAddress _glGetProcAddress;
+
+typedef EGLBoolean (*t_eglBindAPI)(EGLenum api);
+t_eglBindAPI _eglBindAPI;
 #endif
 
 /*
@@ -238,7 +245,7 @@ public:
 	
 	virtual void IncWindowRefCount();
 	virtual void DecWindowRefCount();
-				
+
 	// Get the next N events. The function returns the number of events that were filled into your array.
 	virtual int GetEvents( CCocoaEvent *pEvents, int nMaxEventsToReturn, bool debugEvents = false );
 #ifdef LINUX
@@ -374,7 +381,7 @@ private:
 	Uint32 m_MouseButtonDownTimeStamp;
 	int m_MouseButtonDownX;
 	int m_MouseButtonDownY;
-			
+
 	double m_flPrevGLSwapWindowTime;
 };
 
@@ -544,23 +551,51 @@ InitReturnVal_t CSDLMgr::Init()
 	m_MouseButtonDownTimeStamp = 0;
 	m_MouseButtonDownX = 0;
 	m_MouseButtonDownY = 0;
-		
+
 	m_bExpectSyntheticMouseMotion = false;
 	m_nMouseTargetX = 0;
 	m_nMouseTargetY = 0;
 	m_nWarpDelta = 0;
 	m_bRawInput = false;
-			
+
 	m_flPrevGLSwapWindowTime = 0.0f;
-		
+
 	memset(m_pixelFormatAttribs, '\0', sizeof (m_pixelFormatAttribs));
 
 	int *attCursor = m_pixelFormatAttribs;
 
-	#define SET_GL_ATTR(key,value) \
-	    *(attCursor++) = (int) (key); \
-	    *(attCursor++) = (int) (value);
+#define SET_GL_ATTR(key,value) \
+	*(attCursor++) = (int) (key); \
+	*(attCursor++) = (int) (value);
 
+#ifdef ANDROID
+	bool m_bOGL = false;
+
+	l_egl = dlopen("libEGL.so", RTLD_LAZY);
+
+	if( l_egl )
+	{
+		_eglBindAPI = (t_eglBindAPI)dlsym(l_egl, "eglBindAPI");
+
+		if( _eglBindAPI && _eglBindAPI(EGL_OPENGL_API) )
+		{
+			Msg("OpenGL support found!\n");
+			m_bOGL = true;
+		}
+	}
+
+
+	if( m_bOGL )
+	{
+		_glGetProcAddress = (t_glGetProcAddress)dlsym(l_egl, "eglGetProcAddress");
+		SET_GL_ATTR(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+	}
+	else
+	{
+		l_gl4es = dlopen("libgl4es.so", RTLD_LAZY);
+		_glGetProcAddress = (t_glGetProcAddress)dlsym(l_gl4es, "gl4es_glGetProcAddress");
+	}
+#endif
 	SET_GL_ATTR(SDL_GL_RED_SIZE, 8);
 	SET_GL_ATTR(SDL_GL_GREEN_SIZE, 8);
 	SET_GL_ATTR(SDL_GL_BLUE_SIZE, 8);
@@ -586,9 +621,9 @@ InitReturnVal_t CSDLMgr::Init()
 	//  to really actually make a window, we just resize the one we built here.
 	if ( !CreateHiddenGameWindow( "", 640, 480 ) )
 		Error( "CreateGameWindow failed" );
-	
+
 	SDL_HideWindow( m_Window );
-	
+
 	return INIT_OK;
 }
 
@@ -724,7 +759,7 @@ bool CSDLMgr::CreateHiddenGameWindow( const char *pTitle, int width, int height 
 #if defined( DX_TO_GL_ABSTRACTION )
 	flags |= SDL_WINDOW_OPENGL;
 #endif
-	m_Window = SDL_CreateWindow( pTitle, x, y, width, height,  flags );
+	m_Window = SDL_CreateWindow( pTitle, x, y, width, height, flags );
 
 	if (m_Window == NULL)
 		Error( "Failed to create SDL window: %s", SDL_GetError() );
@@ -760,13 +795,11 @@ bool CSDLMgr::CreateHiddenGameWindow( const char *pTitle, int width, int height 
 	SDL_GL_MakeCurrent(m_Window, m_GLContext);
 
 #ifdef ANDROID
-	gl4es = dlopen("libgl4es.so", RTLD_LAZY);
-
-	if( gl4es )
+	if( l_gl4es )
 	{
-		_glGetProcAddress = dlsym(gl4es, "gl4es_GetProcAddress" );
+		_glGetProcAddress = (t_glGetProcAddress)dlsym(l_gl4es, "gl4es_GetProcAddress" );
 		void (*initialize_gl4es)( );
-		initialize_gl4es = dlsym(gl4es, "initialize_gl4es" );
+		initialize_gl4es = (void(*)())dlsym(l_gl4es, "initialize_gl4es" );
 		initialize_gl4es();
 	}
 #endif
