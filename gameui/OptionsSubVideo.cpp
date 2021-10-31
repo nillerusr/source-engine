@@ -1714,39 +1714,47 @@ void COptionsSubVideo::LaunchBenchmark()
 //-----------------------------------------------------------------------------
 class COptionsSubVideoThirdPartyCreditsDlg : public vgui::Frame
 {
-   DECLARE_CLASS_SIMPLE( COptionsSubVideoThirdPartyCreditsDlg, vgui::Frame );
+	DECLARE_CLASS_SIMPLE(COptionsSubVideoThirdPartyCreditsDlg, vgui::Frame);
 public:
-   COptionsSubVideoThirdPartyCreditsDlg( vgui::VPANEL hParent ) : BaseClass( NULL, NULL )
-   {
-      // parent is ignored, since we want look like we're steal focus from the parent (we'll become modal below)
+	COptionsSubVideoThirdPartyCreditsDlg(vgui::VPANEL hParent) : BaseClass(NULL, NULL)
+	{
+		// parent is ignored, since we want look like we're steal focus from the parent (we'll become modal below)
+		int w = 500;
+		int h = 200;
+		if (ipanel()->IsProportional(hParent))
+		{
+			SetProportional(true);
+			w = scheme()->GetProportionalScaledValueEx(GetScheme(), w);
+			h = scheme()->GetProportionalScaledValueEx(GetScheme(), h);
+		}
 
-      SetTitle("#GameUI_ThirdPartyVideo_Title", true);
-      SetSize( 500, 200 );
-      LoadControlSettings( "resource/OptionsSubVideoThirdPartyDlg.res" );
-      MoveToCenterOfScreen();
-      SetSizeable( false );
-      SetDeleteSelfOnClose( true );
-   }
+		SetTitle("#GameUI_ThirdPartyVideo_Title", true);
+		SetSize(w, h);
+		LoadControlSettings("resource/OptionsSubVideoThirdPartyDlg.res");
+		MoveToCenterOfScreen();
+		SetSizeable(false);
+		SetDeleteSelfOnClose(true);
+	}
 
-   virtual void Activate()
-   {
-      BaseClass::Activate();
+	virtual void Activate()
+	{
+		BaseClass::Activate();
 
-      input()->SetAppModalSurface(GetVPanel());
-   }
+		input()->SetAppModalSurface(GetVPanel());
+	}
 
-   void OnKeyCodeTyped(KeyCode code)
-   {
-      // force ourselves to be closed if the escape key it pressed
-      if (code == KEY_ESCAPE)
-      {
-         Close();
-      }
-      else
-      {
-         BaseClass::OnKeyCodeTyped(code);
-      }
-   }
+	void OnKeyCodeTyped(KeyCode code)
+	{
+		// force ourselves to be closed if the escape key it pressed
+		if (code == KEY_ESCAPE)
+		{
+			Close();
+		}
+		else
+		{
+			BaseClass::OnKeyCodeTyped(code);
+		}
+	}
 };
 
 
@@ -1755,9 +1763,9 @@ public:
 //-----------------------------------------------------------------------------
 void COptionsSubVideo::OpenThirdPartyVideoCreditsDialog()
 {
-   if (!m_OptionsSubVideoThirdPartyCreditsDlg.Get())
-   {
-      m_OptionsSubVideoThirdPartyCreditsDlg = new COptionsSubVideoThirdPartyCreditsDlg(GetVParent());
-   }
-   m_OptionsSubVideoThirdPartyCreditsDlg->Activate();
+	if (!m_OptionsSubVideoThirdPartyCreditsDlg.Get())
+	{
+		m_OptionsSubVideoThirdPartyCreditsDlg = new COptionsSubVideoThirdPartyCreditsDlg(GetVParent());
+	}
+	m_OptionsSubVideoThirdPartyCreditsDlg->Activate();
 }

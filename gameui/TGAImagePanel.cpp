@@ -19,6 +19,10 @@ CTGAImagePanel::CTGAImagePanel( vgui::Panel *parent, const char *name ) : BaseCl
 	m_bHasValidTexture = false;
 	m_bLoadedTexture = false;
 	m_szTGAName[0] = 0;
+	m_iImageWidth = 0;
+	m_iImageHeight = 0;
+	m_iImageRealWidth = 0;
+	m_iImageRealHeight = 0;
 
 	SetPaintBackgroundEnabled( false );
 }
@@ -63,8 +67,19 @@ void CTGAImagePanel::Paint()
 			// set the textureID
 			surface()->DrawSetTextureRGBA( m_iTextureID, tga.Base(), m_iImageWidth, m_iImageHeight, false, true );
 			m_bHasValidTexture = true;
+
+			surface()->DrawGetTextureSize(m_iTextureID, m_iImageRealWidth, m_iImageRealHeight);
+			if (IsProportional())
+			{
+				m_iImageRealWidth = scheme()->GetProportionalScaledValueEx(GetScheme(), m_iImageRealWidth);
+				m_iImageRealHeight = scheme()->GetProportionalScaledValueEx(GetScheme(), m_iImageRealHeight);
+
+				m_iImageWidth = scheme()->GetProportionalScaledValueEx(GetScheme(), m_iImageWidth);
+				m_iImageHeight = scheme()->GetProportionalScaledValueEx(GetScheme(), m_iImageHeight);
+			}
+
 			// set our size to be the size of the tga
-			SetSize( m_iImageWidth, m_iImageHeight );
+			SetSize(m_iImageWidth, m_iImageHeight);
 		}
 		else
 #endif
@@ -77,10 +92,9 @@ void CTGAImagePanel::Paint()
 	int wide, tall;
 	if ( m_bHasValidTexture )
 	{
-		surface()->DrawGetTextureSize( m_iTextureID, wide, tall );
 		surface()->DrawSetTexture( m_iTextureID );
 		surface()->DrawSetColor( 255, 255, 255, 255 );
-		surface()->DrawTexturedRect( 0, 0, wide, tall );
+		surface()->DrawTexturedRect( 0, 0, m_iImageRealWidth, m_iImageRealHeight );
 	}
 	else
 	{
