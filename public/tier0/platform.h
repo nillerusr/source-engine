@@ -245,6 +245,11 @@ typedef signed char int8;
 	#define IsPlatform64Bits()	false
 #endif
 
+#ifdef _ANDROID
+	#define IsAndroid() true
+#else
+	#define IsAndroid()	false
+#endif
 // From steam/steamtypes.h
 // RTime32
 // We use this 32 bit time representing real world time.
