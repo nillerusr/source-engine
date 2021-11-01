@@ -71,7 +71,6 @@ void Button::Init()
 	_keyFocusBorder = NULL;
 	m_bSelectionStateSaved = false;
 	m_bStaySelectedOnClick = false;
-	m_bStaySelectedOnClick = false;
 	m_bStayArmedOnClick = false;
 	m_sArmedSoundName = UTL_INVAL_SYMBOL;
 	m_sDepressedSoundName = UTL_INVAL_SYMBOL;
@@ -140,11 +139,12 @@ void Button::SetSelected( bool state )
 		InvalidateLayout(false);
 	}
 
-	if ( !m_bStayArmedOnClick && state && _buttonFlags.IsFlagSet( ARMED ) )
-	{
-		_buttonFlags.SetFlag( ARMED,  false );
-		InvalidateLayout(false);
-	}
+	// Jusic: idk what is it for
+	//if (!m_bStayArmedOnClick && state && _buttonFlags.IsFlagSet(ARMED))
+	//{
+	//	_buttonFlags.SetFlag( ARMED,  false );
+	//	InvalidateLayout(false);
+	//}
 }
 
 void Button::SetBlink( bool state )
@@ -877,7 +877,11 @@ void Button::ApplySettings( KeyValues *inResourceData )
 		SetReleasedSound(sound);
 	}
 
-	_activationType = (ActivationType_t)inResourceData->GetInt( "button_activation_type", ACTIVATE_ONRELEASED );
+	int iButtonActivationType = inResourceData->GetInt( "button_activation_type", -1 );
+	if (iButtonActivationType != -1)
+	{
+		_activationType = (ActivationType_t)iButtonActivationType;
+	}
 }
 
 
