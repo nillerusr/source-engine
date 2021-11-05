@@ -112,8 +112,6 @@ projects={
 	]
 }
 
-
-
 @Configure.conf
 def check_pkg(conf, package, uselib_store, fragment, *k, **kw):
 	errormsg = '{0} not available! Install {0} development package. Also you may need to set PKG_CONFIG_PATH environment variable'.format(package)
@@ -201,6 +199,9 @@ def options(opt):
 	grp.add_option('--use-togl', action = 'store', dest = 'GL', type = 'int', default = True,
 		help = 'build engine with ToGL [default: %default]')
 
+	grp.add_option('--build-games', action = 'store', dest = 'GAMES', type = 'string', default = 'hl2',
+		help = 'build games [default: %default]')
+
 	grp.add_option('--use-ccache', action = 'store_true', dest = 'CCACHE', default = False,
 		help = 'build using ccache [default: %default]')
 
@@ -214,7 +215,6 @@ def options(opt):
 	opt.load('reconfigure')
 
 def configure(conf):
-
 	conf.load('fwgslib reconfigure')
 
 	# Force XP compability, all build targets should add
@@ -245,6 +245,7 @@ def configure(conf):
 		'-Winit-self',
 		'-Wstrict-aliasing',
 		'-faligned-new'
+ #		'-Werror=strict-aliasing'
 	]
 
 	c_compiler_optional_flags = [
@@ -267,9 +268,15 @@ def configure(conf):
 		]
 
 	if conf.env.DEST_CPU == 'arm':
-		flags += ['-mfpu=neon', '-fsigned-char']
+		flags += ['-fsigned-char', '-mfpu=neon']
+
+		if conf.env.DEST_OS == 'android':
+			flags += ['-mcpu=cortex-a15', '-mtune=cortex-a15']
+		else:
+			flags += ['-march=native', '-mtune=native']
 	else:
-		flags += ['-march=pentium4','-mtune=core2','-mfpmath=387']
+		flags += ['-march=native','-mtune=native','-mfpmath=sse', '-msse', '-msse2']
+
 
 	cflags += flags
 	linkflags += flags
@@ -333,8 +340,8 @@ def configure(conf):
 		conf.check(lib='android_support', uselib_store='ANDROID_SUPPORT')
 
 	if conf.env.DEST_OS != 'win32':
-		conf.check_cc(lib='dl', mandatory=True)
-		conf.check_cc(lib='bz2', mandatory=True)
+		conf.check_cc(lib='dl', mandatory=False)
+		conf.check_cc(lib='bz2', mandatory=False)
 		conf.check_cc(lib='rt', mandatory=False)
 
 		if not conf.env.LIB_M: # HACK: already added in xcompile!
