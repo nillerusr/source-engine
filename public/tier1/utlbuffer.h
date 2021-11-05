@@ -598,7 +598,7 @@ inline void CUtlBuffer::GetObject( T *dest )
 	{
 		if ( !m_Byteswap.IsSwappingBytes() || ( sizeof( T ) == 1 ) )
 		{
-			*dest = *(T *)PeekGet();
+			Q_memcpy( dest, PeekGet(), sizeof( T ) );
 		}
 		else
 		{
@@ -661,7 +661,7 @@ inline void CUtlBuffer::GetTypeBin< float >( float &dest )
 		else
 		{
 			// aligned read
-			Q_memcmp( &dest, pData, sizeof(float) );
+			Q_memcmp( &dest, (void*)pData, sizeof(float) );
 		}
 		if ( m_Byteswap.IsSwappingBytes() )
 		{
