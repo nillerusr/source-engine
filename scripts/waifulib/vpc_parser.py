@@ -122,9 +122,8 @@ def parse_vpcs( env ,vpcs, basedir ):
 			if i == '': continue
 
 			s = match_statement.search(i)
-			if s:
-				if not compute_statement(env.DEFINES+defines, s[0]):
-					continue
+			if s and not compute_statement(env.DEFINES+defines, s.group(0)):
+				continue
 
 			if i.startswith('$') and iBrackets == 0:
 				ret.update({i:[]})
