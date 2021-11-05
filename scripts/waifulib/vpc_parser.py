@@ -38,7 +38,7 @@ def compute_statement( defines, statement ):
 		for token in token_list:
 			r = token.search(statement, pos)
 			if r and r.start() == pos:
-				l += [r[0]]
+				l += [r.group(0)]]
 				pos = r.end()
 
 	k = 0
