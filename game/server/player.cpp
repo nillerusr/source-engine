@@ -3380,12 +3380,14 @@ void CBasePlayer::PhysicsSimulate( void )
 			pi->m_nNumCmds = commandsToRun;
 		}
 	}
+#if 0
 	else if ( GetTimeSinceLastUserCommand() > sv_player_usercommand_timeout.GetFloat() )
 	{
 		// no usercommand from player after some threshold
 		// server should start RunNullCommand as if client sends an empty command so that Think and gamestate related things run properly
 		RunNullCommand();
 	}
+#endif
 
 	// Restore the true server clock
 	// FIXME:  Should this occur after simulation of children so
