@@ -740,7 +740,7 @@ bool CBaseServer::ProcessConnectionlessPacket(netpacket_t * packet)
 // 					RejectConnection( packet->from, "Cannot connect to a secure server while plug-ins are\nloaded on your client\n" );
 //					break;
 // 				}
-
+/*
 				if ( authProtocol == PROTOCOL_STEAM )
 				{
 					int keyLen = msg.ReadShort();
@@ -753,7 +753,7 @@ bool CBaseServer::ProcessConnectionlessPacket(netpacket_t * packet)
 
 					ConnectClient( packet->from, protocol, challengeNr, clientChallenge, authProtocol, name, password, cdkey, keyLen );	// cd key is actually a raw encrypted key	
 				}
-				else
+				else*/
 				{
 					msg.ReadString( cdkey, sizeof(cdkey) );
 					ConnectClient( packet->from, protocol, challengeNr, clientChallenge, authProtocol, name, password, cdkey, strlen(cdkey) );
@@ -1466,6 +1466,7 @@ bool CBaseServer::CheckChallengeType( CBaseClient * client, int nNewUserID, neta
 // 		{
 // 			return true;
 // 		}
+		return true;
 
 		client->SetSteamID( CSteamID() ); // set an invalid SteamID
 
