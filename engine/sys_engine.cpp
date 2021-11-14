@@ -358,27 +358,7 @@ void CEngine::Frame( void )
 			// Calculate how long we need to wait.
 			int nSleepMS = (int)( ( m_flMinFrameTime - m_flFrameTime ) * 1000 - fBusyWaitMS );
 			if ( nSleepMS > 0 )
-			{
 				ThreadSleep( nSleepMS );
-			}
-			else
-			{
-				// On x86, busy-wait using PAUSE instruction which encourages
-				// power savings by idling for ~10 cycles (also yielding to
-				// the other logical hyperthread core if the CPU supports it)
-				for (int i = 2000; i >= 0; --i)
-				{
-#if defined(POSIX)
-#ifdef __arm__
-					raise(SIGINT);
-#else
-					__asm( "pause" ); __asm( "pause" ); __asm( "pause" ); __asm( "pause" );
-#endif
-#elif defined(IS_WINDOWS_PC)
-					_asm { pause }; _asm { pause }; _asm { pause }; _asm { pause };
-#endif
-				}
-			}
 
 			// Go back to the top of the loop and see if it is time yet.
 		}

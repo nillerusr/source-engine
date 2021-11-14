@@ -1869,9 +1869,6 @@ void CSDLMgr::PumpWindowsMessageLoop()
 				}
 				break;
 			}
-
-// FIXME(nillerusr): SDL posts SDL_QUIT when map loaded on android, idk why.
-#ifndef ANDROID
 			case SDL_QUIT:
 			{
 				CCocoaEvent theEvent;
@@ -1879,7 +1876,6 @@ void CSDLMgr::PumpWindowsMessageLoop()
 				PostEvent( theEvent );
 				break;
 			}
-#endif
 			default:
 				break;
 		}
