@@ -341,8 +341,8 @@ def configure(conf):
 		conf.check(lib='android_support', uselib_store='ANDROID_SUPPORT')
 
 	if conf.env.DEST_OS != 'win32':
-		conf.check_cc(lib='dl', mandatory=True)
-		conf.check_cc(lib='bz2', mandatory=True)
+		conf.check_cc(lib='dl', mandatory=False)
+		conf.check_cc(lib='bz2', mandatory=False)
 		conf.check_cc(lib='rt', mandatory=False)
 
 		if not conf.env.LIB_M: # HACK: already added in xcompile!
