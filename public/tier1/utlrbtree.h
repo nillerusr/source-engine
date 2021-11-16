@@ -295,9 +295,10 @@ protected:
 	void	Link( I elem );
 
 	// Used for sorting.
+	M m_Elements;
+
 	LessFunc_t m_LessFunc;
 
-	M m_Elements;
 	I m_Root;
 	I m_NumElements;
 	I m_FirstFree;

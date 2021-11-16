@@ -1623,7 +1623,8 @@ void CThreadSpinRWLock::UnlockWrite()
 #if defined(_X360)
 	// X360TBD: Serious Perf implications, not yet. __sync();
 #endif
-	ThreadInterlockedExchange64(  (int64 *)&m_lockInfo, *((int64 *)&newValue) );
+	int64 val; memcpy( &val, &newValue, sizeof( val ) );
+	ThreadInterlockedExchange64(  (int64 *)&m_lockInfo, val );
 	m_nWriters--;
 }
 

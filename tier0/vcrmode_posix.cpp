@@ -109,7 +109,7 @@ static void VCR_Write(void const *pSrc, int size)
 template<class T>
 static void VCR_WriteVal(T &val)
 {
-	VCR_Write(&val, sizeof(val));
+	VCR_Write((void const*)&val, sizeof(val));
 }
 
 
@@ -127,7 +127,7 @@ void OutputDebugStringFormat( const char *pMsg, ... )
 	if ( g_bTraceRead )
 	{
 		char tempData[4096];
-		int tempLen;
+		uint tempLen;
 		VCR_ReadVal( tempLen );
 		VCR_RuntimeAssert( tempLen <= sizeof( tempData ) );
 		VCR_Read( tempData, tempLen );

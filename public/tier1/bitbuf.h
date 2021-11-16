@@ -20,7 +20,7 @@
 #include "mathlib/vector.h"
 #include "basetypes.h"
 #include "tier0/dbg.h"
-
+#include "strtools.h"
 
 #if _DEBUG
 #define BITBUF_INLINE inline
@@ -465,12 +465,12 @@ BITBUF_INLINE void bf_write::WriteUBitVar( unsigned int data )
 // write raw IEEE float bits in little endian form
 BITBUF_INLINE void bf_write::WriteBitFloat(float val)
 {
-	long intVal;
+	int32 intVal;
 
 	Assert(sizeof(long) == sizeof(float));
 	Assert(sizeof(float) == 4);
 
-	intVal = *((long*)&val);
+	Q_memcpy( &intVal, &val, sizeof(intVal));
 	WriteUBitLong( intVal, 32 );
 }
 

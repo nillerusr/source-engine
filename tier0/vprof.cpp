@@ -20,15 +20,17 @@
 #ifdef _WIN32
 #pragma warning(disable:4073)
 #pragma init_seg( lib )
-#endif
-
 #pragma warning(push, 1)
 #pragma warning(disable:4786)
 #pragma warning(disable:4530)
+#endif
+
 #include <map>
 #include <vector>
 #include <algorithm>
+#ifdef _WIN32
 #pragma warning(pop)
+#endif
 
 #include "tier0/valve_on.h"
 #include "tier0/vprof.h"

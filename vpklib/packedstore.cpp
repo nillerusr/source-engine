@@ -29,7 +29,7 @@
 
 typedef uint16 PackFileIndex_t;
 #define PACKFILEINDEX_END 0xffff
-
+const uint16 packedfileindex_end = 0xffff;
 
 #pragma pack(1)
 struct CFilePartDescr
@@ -120,9 +120,12 @@ static int SkipFile( char const * &pData )					// returns highest file index
 	int nHighestChunkIndex = -1;
 	pData += 1 + V_strlen( pData );
 	pData += sizeof( uint32 );
-	int nMetaDataSize = *(reinterpret_cast<uint16 const *>( pData ) );
+
+	uint16 nMetaDataSize;
+	Q_memcpy( &nMetaDataSize, pData, sizeof( uint16 ) );
+
 	pData += sizeof( uint16 );
-	while ( *( ( PackFileIndex_t const *) pData ) != PACKFILEINDEX_END )
+	while ( Q_memcmp( pData, &packedfileindex_end, sizeof( packedfileindex_end ) ) != 0 )
 	{
 		int nIdx = reinterpret_cast<CFilePartDescr const *>(pData)->m_nFileNumber;
 
