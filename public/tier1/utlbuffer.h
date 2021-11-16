@@ -598,7 +598,7 @@ inline void CUtlBuffer::GetObject( T *dest )
 	{
 		if ( !m_Byteswap.IsSwappingBytes() || ( sizeof( T ) == 1 ) )
 		{
-			*dest = *(T *)PeekGet();
+			Q_memcpy( dest, PeekGet(), sizeof( T ) );
 		}
 		else
 		{
@@ -630,18 +630,18 @@ inline void CUtlBuffer::GetTypeBin( T &dest )
 	{
 		if ( !m_Byteswap.IsSwappingBytes() || ( sizeof( T ) == 1 ) )
 		{
-			dest = *(T *)PeekGet();
+			Q_memcpy(&dest, PeekGet(), sizeof(T) );
 		}
 		else
 		{
 			m_Byteswap.SwapBufferToTargetEndian<T>( &dest, (T*)PeekGet() );
 		}
-		m_Get += sizeof(T);	
-	}		
+		m_Get += sizeof(T);
+	}
 	else
 	{
 		dest = 0;
-	}					
+	}
 }
 
 template <>
@@ -661,18 +661,18 @@ inline void CUtlBuffer::GetTypeBin< float >( float &dest )
 		else
 		{
 			// aligned read
-			dest = *(float *)pData;
+			Q_memcpy( &dest, (void*)pData, sizeof(float) );
 		}
 		if ( m_Byteswap.IsSwappingBytes() )
 		{
 			m_Byteswap.SwapBufferToTargetEndian< float >( &dest, &dest );
 		}
-		m_Get += sizeof( float );	
-	}		
+		m_Get += sizeof( float );
+	}
 	else
 	{
 		dest = 0;
-	}					
+	}
 }
 
 template <typename T> 
@@ -816,7 +816,7 @@ inline void CUtlBuffer::PutObject( T *src )
 	{
 		if ( !m_Byteswap.IsSwappingBytes() || ( sizeof( T ) == 1 ) )
 		{
-			*(T *)PeekPut() = *src;
+			Q_memcpy( PeekPut(), src, sizeof( T ) );
 		}
 		else
 		{
@@ -845,7 +845,7 @@ inline void CUtlBuffer::PutTypeBin( T src )
 	{
 		if ( !m_Byteswap.IsSwappingBytes() || ( sizeof( T ) == 1 ) )
 		{
-			*(T *)PeekPut() = src;
+			Q_memcpy( PeekPut(), &src, sizeof( T ) );
 		}
 		else
 		{

@@ -541,7 +541,7 @@ PLATFORM_INTERFACE const tchar *Plat_GetCommandLine()
 			{
 				Assert ( nCharRead < ARRAYSIZE( g_CmdLine ) );
 
-				for( int i = 0; i < nCharRead; i++ )
+				for( uint i = 0; i < nCharRead; i++ )
 				{
 					if( g_CmdLine[ i ] == '\0' )
 						g_CmdLine[ i ] = ' ';

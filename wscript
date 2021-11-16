@@ -238,6 +238,7 @@ def configure(conf):
 	conf.load('force_32bit')
 
 	compiler_optional_flags = [
+		'-pipe',
 		'-Wall',
 		'-fdiagnostics-color=always',
 		'-Wcast-align',

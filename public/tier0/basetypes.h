@@ -12,6 +12,7 @@
 #include "wchartypes.h"
 
 #include "tier0/valve_off.h"
+#include <string.h>
 
 #ifdef _WIN32
 #pragma once
@@ -182,7 +183,9 @@ inline unsigned long const& FloatBits( vec_t const& f )
 
 inline vec_t BitsToFloat( unsigned long i )
 {
-	return *reinterpret_cast<vec_t*>(&i);
+	vec_t f;
+	memcpy( &f, &i, sizeof(f));
+	return f;
 }
 
 inline bool IsFinite( vec_t f )

@@ -539,64 +539,62 @@ struct leafnums_t
 	CCollisionBSPData *pBSPData;
 };
 
-
-
 int CM_BoxLeafnums( leafnums_t &context, const Vector &center, const Vector &extents, int nodenum )
 {
-	int leafCount = 0;
-	const int NODELIST_MAX = 1024;
-	int nodeList[NODELIST_MAX];
-	int nodeReadIndex = 0;
-	int nodeWriteIndex = 0;
-	cplane_t	*plane;
-	cnode_t		*node;
-	int prev_topnode = -1;
+        int leafCount = 0;
+        const int NODELIST_MAX = 1024;
+        int nodeList[NODELIST_MAX];
+        int nodeReadIndex = 0;
+        int nodeWriteIndex = 0;
+        cplane_t        *plane;
+        cnode_t         *node;
+        int prev_topnode = -1;
 
-	while (1)
-	{
-		if (nodenum < 0)
-		{
-			// This handles the case when the box lies completely
-			// within a single node. In that case, the top node should be
-			// the parent of the leaf
-			if (context.leafTopNode == -1)
-				context.leafTopNode = prev_topnode;
+        while (1)
+        {
+                if (nodenum < 0)
+                {
+                        // This handles the case when the box lies completely
+                        // within a single node. In that case, the top node should be
+                        // the parent of the leaf
+                        if (context.leafTopNode == -1)
+                                context.leafTopNode = prev_topnode;
 
-			if (leafCount < context.leafMaxCount)
-			{
-				context.pLeafList[leafCount] = -1 - nodenum;
-				leafCount++;
-			}
-			if ( nodeReadIndex == nodeWriteIndex )
-				return leafCount;
-			nodenum = nodeList[nodeReadIndex];
-			nodeReadIndex = (nodeReadIndex+1) & (NODELIST_MAX-1);
-		}
-		else
-		{
-			node = &context.pBSPData->map_rootnode[nodenum];
-			plane = node->plane;
-			//		s = BoxOnPlaneSide (leaf_mins, leaf_maxs, plane);
-			//		s = BOX_ON_PLANE_SIDE(*leaf_mins, *leaf_maxs, plane);
-			float d0 = DotProduct( plane->normal, center ) - plane->dist;
-			float d1 = DotProductAbs( plane->normal, extents );
-			prev_topnode = nodenum;
-			if (d0 >= d1)
-				nodenum = node->children[0];
-			else if (d0 < -d1)
-				nodenum = node->children[1];
-			else
-			{	// go down both
-				if (context.leafTopNode == -1)
-					context.leafTopNode = nodenum;
-				nodeList[nodeWriteIndex] = node->children[0];
-				nodeWriteIndex = (nodeWriteIndex+1) & (NODELIST_MAX-1);
-				// check for overflow of the ring buffer
-				Assert(nodeWriteIndex != nodeReadIndex);
-				nodenum = node->children[1];
-			}
-		}
-	}
+                        if (leafCount < context.leafMaxCount)
+                        {
+                                context.pLeafList[leafCount] = -1 - nodenum;
+                                leafCount++;
+                        }
+                        if ( nodeReadIndex == nodeWriteIndex )
+                                return leafCount;
+                        nodenum = nodeList[nodeReadIndex];
+                        nodeReadIndex = (nodeReadIndex+1) & (NODELIST_MAX-1);
+                }
+                else
+                {
+                        node = &context.pBSPData->map_rootnode[nodenum];
+                        plane = node->plane;
+                        //              s = BoxOnPlaneSide (leaf_mins, leaf_maxs, plane);
+                        //              s = BOX_ON_PLANE_SIDE(*leaf_mins, *leaf_maxs, plane);
+                        float d0 = DotProduct( plane->normal, center ) - plane->dist;
+                        float d1 = DotProductAbs( plane->normal, extents );
+                        prev_topnode = nodenum;
+                        if (d0 >= d1)
+                                nodenum = node->children[0];
+                        else if (d0 < -d1)
+                                nodenum = node->children[1];
+                        else
+                        {       // go down both
+                                if (context.leafTopNode == -1)
+                                        context.leafTopNode = nodenum;
+                                nodeList[nodeWriteIndex] = node->children[0];
+                                nodeWriteIndex = (nodeWriteIndex+1) & (NODELIST_MAX-1);
+                                // check for overflow of the ring buffer
+                                Assert(nodeWriteIndex != nodeReadIndex);
+                                nodenum = node->children[1];
+                        }
+                }
+        }
 }
 
 int	CM_BoxLeafnums ( const Vector& mins, const Vector& maxs, int *list, int listsize, int *topnode)
@@ -2666,37 +2664,31 @@ bool CM_HeadnodeVisible (int nodenum, const byte *visbits, int vissize )
 //			*visbits - pvs or pas of some cluster
 // Output : true if visible, false if not
 //-----------------------------------------------------------------------------
-#define MAX_BOX_LEAVES	256
-int	CM_BoxVisible( const Vector& mins, const Vector& maxs, const byte *visbits, int vissize )
+#define MAX_BOX_LEAVES  256
+int     CM_BoxVisible( const Vector& mins, const Vector& maxs, const byte *visbits, int vissize )
 {
-	int leafList[MAX_BOX_LEAVES];
-	int topnode;
+        int leafList[MAX_BOX_LEAVES];
+        int topnode;
 
-	// FIXME: Could save a loop here by traversing the tree in this routine like the code above
-	int count = CM_BoxLeafnums( mins, maxs, leafList, MAX_BOX_LEAVES, &topnode );
-	for ( int i = 0; i < count; i++ )
-	{
-		int cluster = CM_LeafCluster( leafList[i] );
-		int offset = cluster>>3;
+        // FIXME: Could save a loop here by traversing the tree in this routine like the code above
+        int count = CM_BoxLeafnums( mins, maxs, leafList, MAX_BOX_LEAVES, &topnode );
+        for ( int i = 0; i < count; i++ )
+        {
+                int cluster = CM_LeafCluster( leafList[i] );
+                int offset = cluster>>3;
 
-		if ( offset == -1 )
-		{
-			return false;
-		}
+                if ( offset > vissize )
+                {
+                        Sys_Error( "CM_BoxVisible:  cluster %i, offset %i out of bounds %i\n", cluster, offset, vissize );
+                }
 
-		if ( offset > vissize || offset < 0 )
-		{
-			Sys_Error( "CM_BoxVisible:  cluster %i, offset %i out of bounds %i\n", cluster, offset, vissize );
-		}
-
-		if (visbits[cluster>>3] & (1<<(cluster&7)))
-		{
-			return true;
-		}
-	}
-	return false;
+                if (visbits[cluster>>3] & (1<<(cluster&7)))
+                {
+                        return true;
+                }
+        }
+        return false;
 }
-
 
 //-----------------------------------------------------------------------------
 // Returns the world-space center of an entity

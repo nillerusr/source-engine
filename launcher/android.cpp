@@ -1,3 +1,45 @@
+#include <stdio.h>
+#include <string.h>
+#include <dlfcn.h>
+
+typedef void (*t_set_getprocaddress)(void *(*new_proc_address)(const char *));
+t_set_getprocaddress gl4es_set_getprocaddress;
+
+typedef void *(*t_eglGetProcAddress)( const char * );
+t_eglGetProcAddress eglGetProcAddress;
+
+void *GetProcAddress( const char *procname )
+{
+	return eglGetProcAddress(procname);
+}
+
+void InitGL4ES()
+{
+	void *lgl4es = dlopen("libgl4es.so", RTLD_LAZY);
+	if( !lgl4es )
+	{
+		printf("Failed to dlopen library libgl4es.so: %s\n", dlerror());
+	}
+
+	void *lEGL = dlopen("libEGL.so", RTLD_LAZY);
+	if( !lEGL )
+	{
+		printf("Failed to dlopen library libEGL.so: %s\n", dlerror());
+	}
+
+	gl4es_set_getprocaddress = (t_set_getprocaddress)dlsym(lgl4es, "set_getprocaddress");
+	eglGetProcAddress = (t_eglGetProcAddress)dlsym(lEGL, "eglGetProcAddress");
+
+	if( gl4es_set_getprocaddress )
+	{
+		gl4es_set_getprocaddress( &GetProcAddress );
+	}
+	else
+	{
+		printf("Failed to call set_getprocaddress\n");
+	}
+}
+
 #ifdef ANDROID
 
 #include <android/log.h>
@@ -5,8 +47,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <stdio.h>
-#include <dlfcn.h>
 #include <SDL_hints.h>
 
 #include "tier0/threadtools.h"
@@ -73,29 +113,15 @@ void SetLauncherArgs()
 	LogPrintf(binPath);
 	D(binPath);
 
+	D("-console");
+	A("-game", "hl2mp");
+	D("-nouserclip");
+
 	parseArgs(java_args);
 
-	A("-game", "hl2");
-	D("-window");
+	D("-windowed");
 	D("-nosteam");
 	D("-insecure");
-}
-
-static void *lgles;
-
-typedef void (*t_set_getprocaddress)(void *(*new_proc_address)(const char *));
-t_set_getprocaddress gl4es_set_getprocaddress;
-
-typedef void *(*t_eglGetProcAddress)( const char * );
-t_eglGetProcAddress eglGetProcAddress;
-
-void *GetProcAddress( const char *procname )
-{
-	void *result = dlsym(lgles, procname);
-	if( result )
-		return result;
-	else if( eglGetProcAddress )
-		return eglGetProcAddress(procname);
 }
 
 DLLEXPORT int LauncherMainAndroid( int argc, char **argv )
@@ -103,39 +129,7 @@ DLLEXPORT int LauncherMainAndroid( int argc, char **argv )
 
 	SetLauncherArgs();
 
-	void *lgl4es = dlopen("libgl4es.so", 0);
-	if( !lgl4es )
-	{
-		LogPrintf("Failed to dlopen library libgl4es.so: %s\n", dlerror());
-		return 1;
-	}
-
-	void *lEGL = dlopen("libEGL.so", 0);
-	if( !lEGL )
-	{
-		LogPrintf("Failed to dlopen library libEGL.so: %s\n", dlerror());
-		return 1;
-	}
-
-	lgles = dlopen("libGLESv2.so", 0);
-	if( !lgles )
-	{
-		LogPrintf("Failed to dlopen library libGLESv2.so: %s\n", dlerror());
-		return 1;
-	}
-
-	gl4es_set_getprocaddress = (t_set_getprocaddress)dlsym(lgl4es, "set_getprocaddress");
-	eglGetProcAddress = (t_eglGetProcAddress)dlsym(lEGL, "eglGetProcAddress");
-
-	if( gl4es_set_getprocaddress )
-	{
-		gl4es_set_getprocaddress( &GetProcAddress );
-	}
-	else
-	{
-		LogPrintf("Failed to call set_getprocaddress\n");
-		return 1;
-	}
+	InitGL4ES();
 
 	SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
 	DeclareCurrentThreadIsMainThread(); // Init thread propertly on Android
