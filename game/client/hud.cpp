@@ -134,10 +134,9 @@ void LoadHudTextures( CUtlDict< CHudTexture *, int >& list, const char *szFilena
 				pTemp = pTemp->GetNextKey();
 			}
 		}
-	}
 
-	// Failed for some reason. Delete the Key data and abort.
-	pKeyValuesData->deleteThis();
+		pKeyValuesData->deleteThis();
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -459,7 +458,9 @@ void CHud::Init( void )
 
 	// check to see if we have sprites for this res; if not, step down
 	LoadHudTextures( textureList, "scripts/hud_textures", NULL );
-	LoadHudTextures( textureList, "scripts/mod_textures", NULL );
+
+	// Нахуя, а главное зачем ?
+	// LoadHudTextures( textureList, "scripts/mod_textures", NULL );
 
 	int c = textureList.Count();
 	for ( int index = 0; index < c; index++ )
@@ -810,7 +811,7 @@ void CHud::RefreshHudTextures()
 
 	// check to see if we have sprites for this res; if not, step down
 	LoadHudTextures( textureList, "scripts/hud_textures", NULL );
-	LoadHudTextures( textureList, "scripts/mod_textures", NULL );
+	//LoadHudTextures( textureList, "scripts/mod_textures", NULL );
 
 	// fix up all the texture icons first
 	int c = textureList.Count();
