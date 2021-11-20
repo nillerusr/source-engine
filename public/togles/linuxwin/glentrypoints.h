@@ -36,7 +36,7 @@
 #include "tier0/platform.h"
 #include "tier0/vprof_telemetry.h"
 #include "interface.h"
-#include "togl/rendermechanism.h"
+#include "togles/rendermechanism.h"
 
 void *VoidFnPtrLookup_GlMgr(const char *fn, bool &okay, const bool bRequired, void *fallback=NULL);
 
@@ -316,7 +316,7 @@ public:
 #define GL_FUNC(ext,req,ret,fn,arg,call) CDynamicFunctionOpenGL< req, ret (APIENTRY *) arg, ret > fn;
 #define GL_FUNC_VOID(ext,req,fn,arg,call) CDynamicFunctionOpenGL< req, void (APIENTRY *) arg, void > fn;
 #endif
-	#include "togl/glfuncs.inl"
+	#include "togles/glfuncs.inl"
 	#undef GL_FUNC_VOID
 	#undef GL_FUNC
 	#undef GL_EXT

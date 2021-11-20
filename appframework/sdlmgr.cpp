@@ -57,7 +57,7 @@ COpenGLEntryPoints *gGL = NULL;
 
 const int kBogusSwapInterval = INT_MAX;
 
-#ifdef ANDROID
+#if defined ANDROID || defined TOGLES
 static void *l_gl4es = NULL;
 static void *l_egl = NULL;
 
@@ -182,13 +182,16 @@ void	CheckGLError( int line )
 void *VoidFnPtrLookup_GlMgr(const char *fn, bool &okay, const bool bRequired, void *fallback)
 {
 	void *retval = NULL;
+
+#ifndef TOGLES // TODO(nillerusr): remove this hack
 	if ((!okay) && (!bRequired))  // always look up if required (so we get a complete list of crucial missing symbols).
 		return NULL;
+#endif
 
 	// The SDL path would work on all these platforms, if we were using SDL there, too...
 
 
-#ifdef ANDROID
+#if defined ANDROID || defined TOGLES
 	// SDL does the right thing, so we never need to use tier0 in this case.
 	if( _glGetProcAddress )
 		retval = _glGetProcAddress(fn);
@@ -214,7 +217,12 @@ void *VoidFnPtrLookup_GlMgr(const char *fn, bool &okay, const bool bRequired, vo
 	// Note that a non-NULL response doesn't mean it's safe to call the function!
 	//  You always have to check that the extension is supported;
 	//  an implementation MAY return NULL in this case, but it doesn't have to (and doesn't, with the DRI drivers).
+
+#ifdef TOGLES // TODO(nillerusr): remove this hack
+	okay = retval != NULL;
+#else
 	okay = (okay && (retval != NULL));
+#endif
 	if (bRequired && !okay)
 	{
 		// We can't continue execution, because one or more GL function pointers will be NULL.
@@ -499,7 +507,11 @@ InitReturnVal_t CSDLMgr::Init()
 			SDL_GL_SetAttribute( SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG );
 		}
 
+#ifdef TOGLES
+		if (SDL_GL_LoadLibrary("libGLESv2.so") == -1)
+#else
 		if (SDL_GL_LoadLibrary(NULL) == -1)
+#endif
 			Error( "SDL_GL_LoadLibrary(NULL) failed: %s", SDL_GetError() );
 #endif
 	}
@@ -568,7 +580,18 @@ InitReturnVal_t CSDLMgr::Init()
 	*(attCursor++) = (int) (key); \
 	*(attCursor++) = (int) (value);
 
-#ifdef ANDROID
+
+#ifdef TOGLES
+	l_egl = dlopen("libEGL.so", RTLD_LAZY);
+
+	if( l_egl )
+		_glGetProcAddress = (t_glGetProcAddress)dlsym(l_egl, "eglGetProcAddress");
+
+	SET_GL_ATTR(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+	SET_GL_ATTR(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	SET_GL_ATTR(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+
+#elif ANDROID
 	bool m_bOGL = false;
 
 	l_egl = dlopen("libEGL.so", RTLD_LAZY);
@@ -619,7 +642,7 @@ InitReturnVal_t CSDLMgr::Init()
 	//  GL entry points, but the game hasn't made a window yet. So it's time
 	//  to make a window! We make a 640x480 one here, and later, when asked
 	//  to really actually make a window, we just resize the one we built here.
-	if ( !CreateHiddenGameWindow( "", 640, 480 ) )
+	if ( !CreateHiddenGameWindow( "", 1280, 720 ) )
 		Error( "CreateGameWindow failed" );
 
 	SDL_HideWindow( m_Window );
@@ -653,7 +676,11 @@ void CSDLMgr::Shutdown()
 	SDLAPP_FUNC;
 
 	if (gGL && m_readFBO)
+#ifdef TOGLES
+		gGL->glDeleteFramebuffers(1, &m_readFBO);
+#else
 		gGL->glDeleteFramebuffersEXT(1, &m_readFBO);
+#endif
 	m_readFBO = 0;
 
 	if ( m_Window )
@@ -794,7 +821,7 @@ bool CSDLMgr::CreateHiddenGameWindow( const char *pTitle, int width, int height 
 
 	SDL_GL_MakeCurrent(m_Window, m_GLContext);
 
-#ifdef ANDROID
+#if defined ANDROID && !defined TOGLES
 	if( l_gl4es )
 	{
 		_glGetProcAddress = (t_glGetProcAddress)dlsym(l_gl4es, "gl4es_GetProcAddress" );
@@ -819,7 +846,9 @@ bool CSDLMgr::CreateHiddenGameWindow( const char *pTitle, int width, int height 
 	// If we specified -gl_debug, make sure the extension string is present now.
 	if ( CommandLine()->FindParm( "-gl_debug" ) )
 	{
+#ifndef TOGLES
 		Assert( V_strstr(pszString, "GL_ARB_debug_output") );
+#endif
 	}
 #endif // DBGFLAG_ASSERT
 
@@ -844,7 +873,11 @@ bool CSDLMgr::CreateHiddenGameWindow( const char *pTitle, int width, int height 
 		DebugPrintf("\n");
 	}
 
+#ifdef TOGLES
+	gGL->glGenFramebuffers(1, &m_readFBO);
+#else
 	gGL->glGenFramebuffersEXT(1, &m_readFBO);
+#endif
 
 	gGL->glViewport(0, 0, width, height);    /* Reset The Current Viewport And Perspective Transformation */
 	gGL->glScissor(0, 0, width, height);    /* Reset The Current Viewport And Perspective Transformation */
@@ -1191,6 +1224,17 @@ void CSDLMgr::ShowPixels( CShowPixelsParams *params )
 			// bind a quickie FBO to enclose the source texture
 			GLint	myreadfb = 1000;
 
+#ifdef TOGLES
+			glBindFramebuffer( GL_READ_FRAMEBUFFER, myreadfb);
+			CheckGLError( __LINE__ );
+
+			glBindFramebuffer( GL_DRAW_FRAMEBUFFER, 0);		// to the default FB/backbuffer
+			CheckGLError( __LINE__ );
+
+			// attach source tex to source FB
+			glFramebufferTexture2D( GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, params->m_srcTexName, 0);
+			CheckGLError( __LINE__ );
+#else
 			glBindFramebufferEXT( GL_READ_FRAMEBUFFER_EXT, myreadfb);
 			CheckGLError( __LINE__ );
 
@@ -1200,6 +1244,7 @@ void CSDLMgr::ShowPixels( CShowPixelsParams *params )
 			// attach source tex to source FB
 			glFramebufferTexture2DEXT( GL_READ_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, params->m_srcTexName, 0);
 			CheckGLError( __LINE__ );
+#endif
 
 			// blit
 
@@ -1234,6 +1279,23 @@ void CSDLMgr::ShowPixels( CShowPixelsParams *params )
 			// go NEAREST if sizes match
 			GLenum filter = ( ((srcxmax-srcxmin)==(dstxmax-dstxmin)) && ((srcymax-srcymin)==(dstymax-dstymin)) ) ? GL_NEAREST : GL_LINEAR;
 
+#ifdef TOGLES
+			glBlitFramebuffer(
+					/* src min and maxes xy xy */ srcxmin, srcymin,				srcxmax,srcymax,
+					/* dst min and maxes xy xy */ dstxmin, dstymax,				dstxmax,dstymin,		// note yflip here
+					GL_COLOR_BUFFER_BIT, filter );
+			CheckGLError( __LINE__ );
+
+			// detach source tex
+			glFramebufferTexture2D( GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
+			CheckGLError( __LINE__ );
+
+			glBindFramebuffer( GL_READ_FRAMEBUFFER, 0);
+			CheckGLError( __LINE__ );
+
+			glBindFramebuffer( GL_DRAW_FRAMEBUFFER, 0);		// to the default FB/backbuffer
+			CheckGLError( __LINE__ );
+#else
 			glBlitFramebufferEXT(
 					/* src min and maxes xy xy */ srcxmin, srcymin,				srcxmax,srcymax,
 					/* dst min and maxes xy xy */ dstxmin, dstymax,				dstxmax,dstymin,		// note yflip here
@@ -1249,6 +1311,7 @@ void CSDLMgr::ShowPixels( CShowPixelsParams *params )
 
 			glBindFramebufferEXT( GL_DRAW_FRAMEBUFFER_EXT, 0);		// to the default FB/backbuffer
 			CheckGLError( __LINE__ );
+#endif
 
 		}
 		else
@@ -1911,7 +1974,11 @@ void CSDLMgr::DecWindowRefCount()
 
 		if ( gGL && m_readFBO )
 		{
+#ifdef TOGLES
+			gGL->glDeleteFramebuffers( 1, &m_readFBO );
+#else
 			gGL->glDeleteFramebuffersEXT( 1, &m_readFBO );
+#endif
 		}
 		m_readFBO = 0;
 								

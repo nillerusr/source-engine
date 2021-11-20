@@ -27,7 +27,7 @@
 //=============================================================================//
 // Immediately include gl.h, etc. here to avoid compilation warnings.
 
-#include "togl/rendermechanism.h"
+#include "togles/rendermechanism.h"
 
 #include "appframework/AppFramework.h"
 #include "appframework/IAppSystemGroup.h"
@@ -80,9 +80,9 @@ bool g_bPrintOpenGLCalls = false;
 	fflush(stdout); \
 	} \
 	const GLenum err = glGetError_gldebugptr(); \
-	if ( err == GL_INVALID_FRAMEBUFFER_OPERATION_EXT ) { \
-	const GLenum fberr = gGL->glCheckFramebufferStatus( GL_FRAMEBUFFER_EXT ); \
-	printf("%s triggered error GL_INVALID_FRAMEBUFFER_OPERATION_EXT! (0x%X)\n\n\n", #fn, (int) fberr); \
+	if ( err == GL_INVALID_FRAMEBUFFER_OPERATION ) { \
+	const GLenum fberr = gGL->glCheckFramebufferStatus( GL_FRAMEBUFFER ); \
+	printf("%s triggered error GL_INVALID_FRAMEBUFFER_OPERATION! (0x%X)\n\n\n", #fn, (int) fberr); \
 	fflush(stdout); \
 	__asm__ __volatile__ ( "int $3\n\t" ); \
 	} else if (err != GL_NO_ERROR) { \
@@ -107,9 +107,9 @@ bool g_bPrintOpenGLCalls = false;
 	fflush(stdout); \
 	} \
 	const GLenum err = glGetError_gldebugptr(); \
-	if ( err == GL_INVALID_FRAMEBUFFER_OPERATION_EXT ) { \
-	const GLenum fberr = gGL->glCheckFramebufferStatus( GL_FRAMEBUFFER_EXT ); \
-	printf("%s triggered error GL_INVALID_FRAMEBUFFER_OPERATION_EXT! (0x%X)\n\n\n", #fn, (int) fberr); \
+	if ( err == GL_INVALID_FRAMEBUFFER_OPERATION ) { \
+	const GLenum fberr = gGL->glCheckFramebufferStatus( GL_FRAMEBUFFER ); \
+	printf("%s triggered error GL_INVALID_FRAMEBUFFER_OPERATION! (0x%X)\n\n\n", #fn, (int) fberr); \
 	fflush(stdout); \
 	__asm__ __volatile__ ( "int $3\n\t" ); \
 	} else if (err != GL_NO_ERROR) { \
@@ -119,7 +119,7 @@ bool g_bPrintOpenGLCalls = false;
 	} \
 }
 
-#include "togl/glfuncs.inl"
+#include "togles/glfuncs.inl"
 #undef GL_FUNC_VOID
 #undef GL_FUNC
 #undef GL_EXT
@@ -296,7 +296,9 @@ static bool CheckOpenGLExtension_internal(const char *ext, const int coremajor, 
 				return false;
 			}
 		}
+
 #elif !defined ( OSX ) && !defined( __ANDROID__ )
+/*
 		if (!ptr)
 		{
 			static CDynamicFunctionOpenGL< true, Display *( APIENTRY *)( ), Display* > glXGetCurrentDisplay("glXGetCurrentDisplay");
@@ -306,7 +308,7 @@ static bool CheckOpenGLExtension_internal(const char *ext, const int coremajor, 
 				extensions = glXQueryExtensionsString(glXGetCurrentDisplay(), 0);
 				ptr = strstr(extensions, ext);
 			}
-		}
+		}*/
 #endif
 
 		if (!ptr)
@@ -342,7 +344,7 @@ COpenGLEntryPoints::COpenGLEntryPoints()
 #define GL_EXT(x,glmajor,glminor) , m_bHave_##x(CheckOpenGLExtension(#x, glmajor, glminor))
 #define GL_FUNC(ext,req,ret,fn,arg,call) , fn(#fn, m_bHave_##ext)
 #define GL_FUNC_VOID(ext,req,fn,arg,call) , fn(#fn, m_bHave_##ext)
-#include "togl/glfuncs.inl"
+#include "togles/glfuncs.inl"
 #undef GL_FUNC_VOID
 #undef GL_FUNC
 #undef GL_EXT
@@ -380,7 +382,7 @@ COpenGLEntryPoints::COpenGLEntryPoints()
 #ifndef ANDROID // HACK
  	if ((m_bHave_OpenGL) && ((!m_bHave_GL_NV_fence) && (!m_bHave_GL_ARB_sync) && (!m_bHave_GL_APPLE_fence)))
  	{
- 		Error( "Required OpenGL extension \"GL_NV_fence\", \"GL_ARB_sync\", or \"GL_APPLE_fence\" is not supported. Please upgrade your OpenGL driver." );
+ 	//	Error( "Required OpenGL extension \"GL_NV_fence\", \"GL_ARB_sync\", or \"GL_APPLE_fence\" is not supported. Please upgrade your OpenGL driver." );
  	}
 #endif
 
@@ -393,25 +395,26 @@ COpenGLEntryPoints::COpenGLEntryPoints()
 	// GL_ARB_framebuffer_object is a superset of GL_EXT_framebuffer_object,
 	//  (etc) but if you don't call in through the ARB entry points, you won't
 	//  get the relaxed restrictions on mismatched attachment dimensions.
-	if (m_bHave_GL_ARB_framebuffer_object)
+//	if (m_bHave_GL_ARB_framebuffer_object)
 	{
 		m_bHave_GL_EXT_framebuffer_object = true;
 		m_bHave_GL_EXT_framebuffer_blit = true;
 		m_bHave_GL_EXT_framebuffer_multisample = true;
-		glBindFramebufferEXT.Force(glBindFramebuffer.Pointer());
-		glBindRenderbufferEXT.Force(glBindRenderbuffer.Pointer());
-		glCheckFramebufferStatusEXT.Force(glCheckFramebufferStatus.Pointer());
-		glDeleteRenderbuffersEXT.Force(glDeleteRenderbuffers.Pointer());
-		glFramebufferRenderbufferEXT.Force(glFramebufferRenderbuffer.Pointer());
-		glFramebufferTexture2DEXT.Force(glFramebufferTexture2D.Pointer());
-		glFramebufferTexture3DEXT.Force(glFramebufferTexture3D.Pointer());
-		glGenFramebuffersEXT.Force(glGenFramebuffers.Pointer());
-		glGenRenderbuffersEXT.Force(glGenRenderbuffers.Pointer());
-		glDeleteFramebuffersEXT.Force(glDeleteFramebuffers.Pointer());
-		glBlitFramebufferEXT.Force(glBlitFramebuffer.Pointer());
-		glRenderbufferStorageMultisampleEXT.Force(glRenderbufferStorageMultisample.Pointer());
+
+		glBindFramebuffer.Force(glBindFramebuffer.Pointer());
+		glBindRenderbuffer.Force(glBindRenderbuffer.Pointer());
+		glCheckFramebufferStatus.Force(glCheckFramebufferStatus.Pointer());
+		glDeleteRenderbuffers.Force(glDeleteRenderbuffers.Pointer());
+		glFramebufferRenderbuffer.Force(glFramebufferRenderbuffer.Pointer());
+		glFramebufferTexture2D.Force(glFramebufferTexture2D.Pointer());
+		glFramebufferTexture3D.Force(glFramebufferTexture3D.Pointer());
+		glGenFramebuffers.Force(glGenFramebuffers.Pointer());
+		glGenRenderbuffers.Force(glGenRenderbuffers.Pointer());
+		glDeleteFramebuffers.Force(glDeleteFramebuffers.Pointer());
+		glBlitFramebuffer.Force(glBlitFramebuffer.Pointer());
+		glRenderbufferStorageMultisample.Force(glRenderbufferStorageMultisample.Pointer());
 	}
-		
+
 #if DEBUG_ALL_GLCALLS
 	// push all GL calls through the debug wrappers.
 #define GL_EXT(x,glmajor,glminor)
@@ -421,7 +424,7 @@ COpenGLEntryPoints::COpenGLEntryPoints()
 #define GL_FUNC_VOID(ext,req,fn,arg,call) \
 	fn##_gldebugptr = this->fn; \
 	this->fn.Force(fn##_gldebug);
-#include "togl/glfuncs.inl"
+#include "togles/glfuncs.inl"
 #undef GL_FUNC_VOID
 #undef GL_FUNC
 #undef GL_EXT
@@ -500,7 +503,7 @@ void COpenGLEntryPoints::ClearEntryPoints()
 	#define GL_EXT(x,glmajor,glminor)
 	#define GL_FUNC(ext,req,ret,fn,arg,call) fn.Force( NULL );
 	#define GL_FUNC_VOID(ext,req,fn,arg,call) fn.Force( NULL );
-	#include "togl/glfuncs.inl"
+	#include "togles/glfuncs.inl"
 	#undef GL_FUNC_VOID
 	#undef GL_FUNC
 	#undef GL_EXT

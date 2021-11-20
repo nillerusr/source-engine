@@ -25,7 +25,7 @@
 // dxabstract.cpp
 //
 //==================================================================================================
-#include "togl/rendermechanism.h"
+#include "togles/rendermechanism.h"
 #include "tier0/vprof_telemetry.h"
 #include "tier0/dbg.h"
 #include "tier0/threadtools.h"
@@ -2384,7 +2384,7 @@ HRESULT	IDirect3DDevice9::Create( IDirect3DDevice9Params *params )
 	m_ctx->m_drawingFBO = m_ctx->NewFBO();					
 				
 	// bind it to context.  will receive attachments shortly.
-	m_ctx->BindFBOToCtx( m_ctx->m_drawingFBO, GL_FRAMEBUFFER_EXT );
+	m_ctx->BindFBOToCtx( m_ctx->m_drawingFBO, GL_FRAMEBUFFER );
 	
 	m_bFBODirty = false;
 
@@ -3235,7 +3235,7 @@ void IDirect3DDevice9::UpdateBoundFBO()
 		m_ctx->m_drawingFBO = newFBO;
 	}
 
-	m_ctx->BindFBOToCtx( m_ctx->m_drawingFBO, GL_FRAMEBUFFER_EXT );
+	m_ctx->BindFBOToCtx( m_ctx->m_drawingFBO, GL_FRAMEBUFFER );
 
 	m_bFBODirty = false;
 }
@@ -3873,10 +3873,8 @@ HRESULT IDirect3DDevice9::CreatePixelShader(CONST DWORD* pFunction,IDirect3DPixe
 		
 		int maxTranslationSize = 50000;	// size of any one translation
 		
-		CUtlBuffer transbuf( 3000, numTranslations * maxTranslationSize, CUtlBuffer::TEXT_BUFFER );
-		CUtlBuffer tempbuf( 3000, maxTranslationSize, CUtlBuffer::TEXT_BUFFER );
-
-		transbuf.PutString( "//GLSLfp\n" );		// this is required so GLM can crack the text apart
+		CUtlBuffer transbuf( 9000, numTranslations * maxTranslationSize, CUtlBuffer::TEXT_BUFFER );
+		CUtlBuffer tempbuf( 9000, maxTranslationSize, CUtlBuffer::TEXT_BUFFER );
 
 		// note the GLSL translator wants its own buffer
 		tempbuf.EnsureCapacity( maxTranslationSize );
@@ -4009,7 +4007,7 @@ HRESULT IDirect3DDevice9::CreatePixelShader(CONST DWORD* pFunction,IDirect3DPixe
 
 			{
 				// find the fb outputs used by this shader/combo
-				const GLenum buffers[] = { GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT, GL_COLOR_ATTACHMENT2_EXT, GL_COLOR_ATTACHMENT3_EXT };
+				const GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
 
 				char *fragDataMaskPrefix = "//FRAGDATAMASK-";		
 
@@ -4153,10 +4151,8 @@ HRESULT IDirect3DDevice9::CreateVertexShader(CONST DWORD* pFunction, IDirect3DVe
 		
 		int maxTranslationSize = 500000;	// size of any one translation
 
-		CUtlBuffer transbuf( 1000, numTranslations * maxTranslationSize, CUtlBuffer::TEXT_BUFFER );
-		CUtlBuffer tempbuf( 1000, maxTranslationSize, CUtlBuffer::TEXT_BUFFER );
-
-		transbuf.PutString( "//GLSLvp\n" );		// this is required so GLM can crack the text apart
+		CUtlBuffer transbuf( 5000, numTranslations * maxTranslationSize, CUtlBuffer::TEXT_BUFFER );
+		CUtlBuffer tempbuf( 5000, maxTranslationSize, CUtlBuffer::TEXT_BUFFER );
 
 		// note the GLSL translator wants its own buffer
 		tempbuf.EnsureCapacity( maxTranslationSize );

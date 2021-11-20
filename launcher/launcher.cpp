@@ -1176,6 +1176,8 @@ static const char *BuildCommand()
 	return (const char *)build.Base();
 }
 
+extern void InitGL4ES();
+
 //-----------------------------------------------------------------------------
 // Purpose: The real entry point for the application
 // Input  : hInstance - 
@@ -1208,7 +1210,12 @@ DLL_EXPORT int LauncherMain( int argc, char **argv )
 	{
 		Warning( "WARNING: setlocale('%s') failed, using locale:'%s'. International characters may not work.\n", en_US, CurrentLocale );
 	}
+
 #endif // LINUX
+
+#if defined LINUX && defined USE_SDL && defined TOGLES
+	SDL_SetHint(SDL_HINT_VIDEO_X11_FORCE_EGL, "1");
+#endif
 
 #ifdef WIN32
 	SetAppInstance( hInstance );

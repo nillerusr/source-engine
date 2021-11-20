@@ -28,7 +28,7 @@
 #include <GL/gl.h>
 #include <GL/glext.h>
 
-#include "togl/rendermechanism.h"
+#include "togles/rendermechanism.h"
 #include "tier0/dbg.h"
 #include "tier1/strtools.h"
 #include "tier1/utlbuffer.h"
@@ -59,6 +59,42 @@
 
 //#define Assert(n) if( !(n) ){ TranslationError(); }
 
+static char g_szShadow2D[] = 
+	"uniform sampler2D u_ShadowMap;\n"
+	"#define invSize 0.001953125\n"
+	"#define size 512.0\n"
+	"vec4 _shadow2D( sampler2D u_depthTex, vec3 suv)\n"
+	"{\n"
+	"vec2 p1 = suv.xy;\n"
+	"vec2 p2 = suv.xy+vec2(0.0,invSize);\n"
+	"vec2 p3 = suv.xy+vec2(invSize,0.0);\n"
+	"vec2 p4 = suv.xy+vec2(invSize);\n"
+	"float d = texture2D(u_depthTex,p1).r;\n"
+	"float r = float(d>suv.z);\n"
+	"d = texture2D(u_depthTex,p2).r;\n"
+	"float r2 = float(d>suv.z);\n"
+	"d = texture2D(u_depthTex,p3).r;\n"
+	"float r3 = float(d>suv.z);\n"
+	"d = texture2D(u_depthTex,p4).r;\n"
+	"float r4 = float(d>suv.z);\n"
+	"p1*=size;\n"
+	"float a = p1.y-floor(p1.y);\n"
+	"float b = p1.x-floor(p1.x);\n"
+	"float gg = mix(mix(r,r2,a),mix(r3,r4,a),b);\n"
+	"return vec4(gg, gg, gg, gg);"
+	"}\n"
+	"#define shadow2D _shadow2D\n";
+
+static char g_szShadow2DProj[] = 
+	"float _shadow2DProj( vec4 projection, vec2 texel, float NdotL )\n"
+	"{\n"
+	"vec3 coord = vec3( projection.xyz / ( projection.w + 0.0005 )); // z-bias\n"
+	"coord.s = float( clamp( float( coord.s ), texel.x, 1.0 - texel.x ));\n"
+	"coord.t = float( clamp( float( coord.t ), texel.y, 1.0 - texel.y ));\n"
+	"coord.r = float( clamp( float( coord.r ), 0.0, 1.0 ));\n"
+	"return _shadow2D( u_ShadowMap, coord );\n"
+	"}\n"
+	"#define shadow2DProj _shadow2DProj\n";
 
 static char *g_szVecZeros[] = { NULL, "0.0", "vec2( 0.0, 0.0 )", "vec3( 0.0, 0.0, 0.0 )", "vec4( 0.0, 0.0, 0.0, 0.0 )" };
 static char *g_szVecOnes[] = { NULL, "1.0", "vec2( 1.0, 1.0 )", "vec3( 1.0, 1.0, 1.0 )", "vec4( 1.0, 1.0, 1.0, 1.0 )" };
@@ -894,7 +930,7 @@ void D3DToGL::PrintUsageAndIndexToString( uint32 dwToken, char* strUsageUsageInd
 			V_snprintf( strUsageUsageIndexName, nBufLen, "_psize" );					// no analog
 			break;
 		case D3DDECLUSAGE_TEXCOORD:
-			V_snprintf( strUsageUsageIndexName, nBufLen, "oT%d", dwUsageIndex );
+			V_snprintf( strUsageUsageIndexName, nBufLen, "oT%d", dwUsageIndex );			
 			break;
 		case D3DDECLUSAGE_TANGENT:
 			
@@ -919,8 +955,7 @@ void D3DToGL::PrintUsageAndIndexToString( uint32 dwToken, char* strUsageUsageInd
 //			if ( fSemanticFlags & SEMANTIC_OUTPUT )
 //				V_snprintf( strUsageUsageIndexName, nBufLen, dwUsageIndex != 0 ? "gl_BackColor" : "gl_FrontColor" );
 //			else
-			V_snprintf( strUsageUsageIndexName, nBufLen, dwUsageIndex != 0 ? "gl_SecondaryColor" : "gl_Color" );
-			
+			V_snprintf( strUsageUsageIndexName, nBufLen, dwUsageIndex != 0 ? "_gl_SecondaryColor" : "_gl_Color" );
 			break;
 		case D3DDECLUSAGE_FOG:
 			TranslationError();
@@ -1185,9 +1220,9 @@ void D3DToGL::PrintParameterToString ( uint32 dwToken, uint32 dwSourceOrDest, ch
 				}
 				else
 				{
-					V_snprintf( buff, sizeof( buff ), dwRegNum == 0 ? "gl_Color" : "gl_SecondaryColor" );
+					V_snprintf( buff, sizeof( buff ), dwRegNum == 0 ? "_gl_Color" : "_gl_SecondaryColor" );
 				}
-				strcat_s( pRegisterName, nBufLen, buff );				
+				strcat_s( pRegisterName, nBufLen, buff );
 			}
 			else 
 			{
@@ -1318,13 +1353,12 @@ void D3DToGL::PrintParameterToString ( uint32 dwToken, uint32 dwSourceOrDest, ch
 					// Is this iterator centroid?
 					if ( m_nCentroidMask & ( 0x00000001 << dwRegNum ) )
 					{
-						V_snprintf( buff, sizeof( buff ), "centroid varying vec4 oT%d", dwRegNum ); // centroid varying
+						V_snprintf( buff, sizeof( buff ), "centroid in vec4 oT%d", dwRegNum ); // centroid varying
 					}
 					else
 					{
-						V_snprintf( buff, sizeof( buff ), "varying vec4 oT%d", dwRegNum );
-					}
-					
+						V_snprintf( buff, sizeof( buff ), "in vec4 oT%d", dwRegNum );
+					}					
 					bAllowWriteMask = false;
 				}
 				else // source register
@@ -1345,7 +1379,13 @@ void D3DToGL::PrintParameterToString ( uint32 dwToken, uint32 dwSourceOrDest, ch
 				break;
 				
 				case D3DSRO_FOG:
-					strcat_s( pRegisterName, nBufLen, "gl_FogFragCoord" );
+					if( !m_bFogFragCoord )
+					{
+						StrcatToHeaderCode("varying mediump vec4 _gl_FogFragCoord;\n");
+						m_bFogFragCoord = true;
+					}
+
+					strcat_s( pRegisterName, nBufLen, "_gl_FogFragCoord" );
 					m_bDeclareVSOFog = true;
 				break;
 
@@ -1361,11 +1401,23 @@ void D3DToGL::PrintParameterToString ( uint32 dwToken, uint32 dwSourceOrDest, ch
 
 			if ( dwRegNum == 0 )
 			{
-				V_snprintf( buff, sizeof( buff ), "gl_FrontColor" );
+				if( !m_bFrontColor )
+				{
+					StrcatToHeaderCode("varying lowp vec4 _gl_FrontColor;\n");
+					m_bFrontColor = true;
+				}
+
+				V_snprintf( buff, sizeof( buff ), "_gl_FrontColor" );
 			}
 			else if ( dwRegNum == 1 )
 			{
-				V_snprintf( buff, sizeof( buff ), "gl_FrontSecondaryColor" );
+				if( !m_bFrontSecondaryColor )
+				{
+					StrcatToHeaderCode("varying lowp vec4 _gl_FrontSecondaryColor;\n");
+					m_bFrontSecondaryColor = true;
+				}
+
+				V_snprintf( buff, sizeof( buff ), "_gl_FrontSecondaryColor" );
 			}
 			else
 			{
@@ -1404,6 +1456,10 @@ void D3DToGL::PrintParameterToString ( uint32 dwToken, uint32 dwSourceOrDest, ch
 			m_dwConstIntUsageMask |= 0x00000001 << dwRegNum;		// Keep track of the use of this integer constant
 			break;
 		case D3DSPR_COLOROUT:
+			// TODO(nillerusr): go fck urself
+			if( dwRegNum+1 > m_iFragDataCount )
+				m_iFragDataCount = dwRegNum+1;
+
 			V_snprintf( buff, sizeof( buff ), "gl_FragData[%d]", dwRegNum );
 			strcat_s( pRegisterName, nBufLen, buff );
 			m_bOutputColorRegister[dwRegNum] = true;
@@ -1816,7 +1872,7 @@ void D3DToGL::Handle_DCL()
 			CUtlString sParam2 = GetUsageAndIndexString( dwToken, SEMANTIC_INPUT );
 
 			sParam2 = FixGLSLSwizzle( sParam1, sParam2 );
-			PrintToBuf( *m_pBufHeaderCode, "attribute vec4 %s; // ", sParam1.String() );
+			PrintToBuf( *m_pBufHeaderCode, "in vec4 %s; // ", sParam1.String() );
 
 			MaintainAttributeMap( dwToken, dwRegToken );
 
@@ -1869,12 +1925,13 @@ void D3DToGL::Handle_DCL()
 					char buf[256];
 					if ( m_nCentroidMask & ( 0x00000001 << dwUsageIndex ) )
 					{
-						V_snprintf( buf, sizeof( buf ), "centroid varying vec4 oT%d;\n", dwUsageIndex ); // centroid varying
+						V_snprintf( buf, sizeof( buf ), "centroid in vec4 oT%d;\n", dwUsageIndex ); // centroid varying
 					}
 					else
 					{
-						V_snprintf( buf, sizeof( buf ), "varying vec4 oT%d;\n", dwUsageIndex );
+						V_snprintf( buf, sizeof( buf ), "in vec4 oT%d;\n", dwUsageIndex );
 					}
+					
 					StrcatToHeaderCode( buf );
 				}
 			}
@@ -2877,13 +2934,14 @@ void D3DToGL::Handle_UnaryOp( uint32 nInstruction )
 void D3DToGL::WriteGLSLSamplerDefinitions()
 {
 	int nSamplersWritten = 0;
+	bool m_bSampler3d = false;
 	for ( int i=0; i < ARRAYSIZE( m_dwSamplerTypes ); i++ )
 	{
 		if ( m_dwSamplerTypes[i] == SAMPLER_TYPE_2D )
 		{
 			if ( ( ( 1 << i ) & m_nShadowDepthSamplerMask ) != 0 )
 			{
-				PrintToBuf( *m_pBufHeaderCode, "uniform sampler2DShadow sampler%d;\n", i );
+				PrintToBuf( *m_pBufHeaderCode, "uniform sampler2D sampler%d;\n", i );
 			}
 			else
 			{
@@ -2893,6 +2951,12 @@ void D3DToGL::WriteGLSLSamplerDefinitions()
 		}
 		else if ( m_dwSamplerTypes[i] == SAMPLER_TYPE_3D )
 		{
+			if( !m_bSampler3d )
+			{
+				StrcatToHeaderCode( "precision mediump sampler3D;\n" );
+				m_bSampler3d = true;
+			}
+				
 			PrintToBuf( *m_pBufHeaderCode, "uniform sampler3D sampler%d;\n", i );
 			++nSamplersWritten;
 		}
@@ -2941,21 +3005,27 @@ void D3DToGL::WriteGLSLOutputVariableAssignments()
 
 			if ( dwUsage == D3DDECLUSAGE_COLOR )
 			{
-				PrintToBufWithIndents( *m_pBufALUCode, "%s = oTempT%d;\n", dwUsageIndex ? "gl_FrontSecondaryColor" : "gl_FrontColor", i );
+				if( !m_bFrontColor )
+				{
+					StrcatToHeaderCode("varying lowp vec4 _gl_FrontColor;\n");
+					m_bFrontColor = true;
+				}
+
+				PrintToBufWithIndents( *m_pBufALUCode, "%s = oTempT%d;\n", dwUsageIndex ? "gl_FrontSecondaryColor" : "_gl_FrontColor", i );
 			}
 			else if ( dwUsage == D3DDECLUSAGE_TEXCOORD )
 			{
 				char buf[256];
 				if ( m_nCentroidMask & ( 0x00000001 << dwUsageIndex ) )
 				{
-					V_snprintf( buf, sizeof( buf ), "centroid varying vec4 oT%d;\n", dwUsageIndex ); // centroid varying
+					V_snprintf( buf, sizeof( buf ), "centroid out vec4 oT%d;\n", dwUsageIndex ); // centroid varying
 				}
 				else
 				{
-					V_snprintf( buf, sizeof( buf ), "varying vec4 oT%d;\n", dwUsageIndex );
+					V_snprintf( buf, sizeof( buf ), "out vec4 oT%d;\n", dwUsageIndex );
 				}
 				StrcatToHeaderCode( buf );
-									
+													
 				PrintToBufWithIndents( *m_pBufALUCode, "oT%d = oTempT%d;\n", dwUsageIndex, i );
 			}
 		}
@@ -2979,12 +3049,12 @@ void D3DToGL::WriteGLSLInputVariableAssignments()
 
 		if ( dwUsage == D3DDECLUSAGE_COLOR )
 		{
-			PrintToBufWithIndents( *m_pBufAttribCode, "vec4 oTempT%d = %s;\n", i, dwUsageIndex ? "gl_SecondaryColor" : "gl_Color" );
+			PrintToBufWithIndents( *m_pBufAttribCode, "vec4 oTempT%d = %s;\n", i, dwUsageIndex ? "_gl_SecondaryColor" : "_gl_Color" );
 		}
 		else if ( dwUsage == D3DDECLUSAGE_TEXCOORD )
 		{
 			PrintToBufWithIndents( *m_pBufAttribCode, "vec4 oTempT%d = oT%d;\n", i, dwUsageIndex );
-		}
+		}		
 	}
 }
 
@@ -3100,6 +3170,13 @@ int D3DToGL::TranslateShader( uint32* code, CUtlBuffer *pBufDisassembledCode, bo
 	m_bDoFixupZ = (options & D3DToGL_OptionDoFixupZ) != 0;
 	m_bDoFixupY = (options & D3DToGL_OptionDoFixupY) != 0;
 	m_bDoUserClipPlanes = (options & D3DToGL_OptionDoUserClipPlanes) != 0;
+
+	m_bFrontSecondaryColor = false;
+	m_bFogFragCoord = false;
+	m_bColor = false;
+	m_bFrontColor = false;
+	m_bSecondaryColor = false;
+	m_iFragDataCount = 0;
 	
 	m_bAddHexCodeComments = (options & D3DToGL_AddHexComments) != 0;
 	m_bPutHexCodesAfterLines = (options & D3DToGL_PutHexCommentsAfterLines) != 0;
@@ -3190,25 +3267,24 @@ int D3DToGL::TranslateShader( uint32* code, CUtlBuffer *pBufDisassembledCode, bo
 	m_dwMinorVersion = D3DSHADER_VERSION_MINOR( dwToken );
 
 	// If pixel shader
-	const char *glslExtText = "#extension GL_ARB_shader_texture_lod : require\n";//m_bUseBindlessTexturing ? "#extension GL_NV_bindless_texture : require\n" : "";
+	const char *glslExtText = "\n";//#extension GL_ARB_shader_texture_lod : require\n";//m_bUseBindlessTexturing ? "#extension GL_NV_bindless_texture : require\n" : "";
 	// 7ls
-	const char *glslVersionText = m_bUseBindlessTexturing ? "330 compatibility" : "120";
+//	const char *glslVersionText = m_bUseBindlessTexturing ? "330 compatibility" : "120";
 
 	if ( ( dwToken & 0xFFFF0000 ) == 0xFFFF0000 )
 	{
 		// must explicitly enable extensions if emitting GLSL
-		V_snprintf( (char *)m_pBufHeaderCode->Base(), m_pBufHeaderCode->Size(), "#version %s\n%s", glslVersionText, glslExtText );
+		V_snprintf( (char *)m_pBufHeaderCode->Base(), m_pBufHeaderCode->Size(), "#version 300 es\nprecision mediump float;\n#define varying in\n\n%s", glslExtText );
 		m_bVertexShader = false;
 	}
 	else // vertex shader
 	{
 		m_bGenerateSRGBWriteSuffix = false;
+		V_snprintf( (char *)m_pBufHeaderCode->Base(), m_pBufHeaderCode->Size(), "#version 300 es\nprecision mediump float;\n#define attribute in\n#define varying out\n%s//ATTRIBMAP-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx\n", glslExtText );
 
-		V_snprintf( (char *)m_pBufHeaderCode->Base(), m_pBufHeaderCode->Size(), "#version %s\n%s//ATTRIBMAP-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx\n", glslVersionText, glslExtText );
-		
 		// find that first '-xx' which is where the attrib map will be written later.
 		pAttribMapStart = strstr( (char *)m_pBufHeaderCode->Base(), "-xx" ) + 1;
-		
+
 		m_bVertexShader = true;
 	}
 	
@@ -3521,7 +3597,7 @@ int D3DToGL::TranslateShader( uint32* code, CUtlBuffer *pBufDisassembledCode, bo
 
 	// Note that this constant packing expects .wzyx swizzles in case we ever use the SINCOS code in a ps_2_x shader
 	//
-	// The Microsoft documentation on this is all kinds of broken and, strangely, these numbers don't even
+	// The Microsoft do cumentation on this is all kinds of broken and, strangely, these numbers don't even
 	// match the D3DSINCOSCONST1 and D3DSINCOSCONST2 constants used by the D3D assembly sincos instruction...
 	if ( m_bNeedsSinCosDeclarations )
 	{
@@ -3688,7 +3764,7 @@ int D3DToGL::TranslateShader( uint32* code, CUtlBuffer *pBufDisassembledCode, bo
 	{
 		if ( m_bDoUserClipPlanes )
 		{
-			StrcatToALUCode( "gl_ClipVertex = vTempPos;\n" ); // if user clip is enabled, jam clip space position into gl_ClipVertex
+//			StrcatToALUCode( "gl_ClipVertex = vTempPos;\n" ); // if user clip is enabled, jam clip space position into gl_ClipVertex
 		}
 		
 		if ( m_bDoFixupZ  || m_bDoFixupY )
@@ -3746,12 +3822,12 @@ int D3DToGL::TranslateShader( uint32* code, CUtlBuffer *pBufDisassembledCode, bo
 					{
 						if ( m_nCentroidMask & ( 0x00000001 << i ) )
 						{
-							V_snprintf( outTexCoordBuff, sizeof( outTexCoordBuff ), "centroid varying vec4 oT%d;\n", i ); // centroid varying
+							V_snprintf( outTexCoordBuff, sizeof( outTexCoordBuff ), "centroid out vec4 oT%d;\n", i ); // centroid varying
 							StrcatToHeaderCode( outTexCoordBuff );
 						}
 						else
 						{
-							V_snprintf( outTexCoordBuff, sizeof( outTexCoordBuff ), "varying vec4 oT%d;\n", i );
+							V_snprintf( outTexCoordBuff, sizeof( outTexCoordBuff ), "out vec4 oT%d;\n", i );
 							StrcatToHeaderCode( outTexCoordBuff );
 						}
 					}
@@ -3769,7 +3845,7 @@ int D3DToGL::TranslateShader( uint32* code, CUtlBuffer *pBufDisassembledCode, bo
 		
 	// do some annotation at the end of the attrib block
 	{
-		char temp[1000];
+		char temp[5000];
 
 		if ( m_bVertexShader )
 		{
@@ -3800,6 +3876,30 @@ int D3DToGL::TranslateShader( uint32* code, CUtlBuffer *pBufDisassembledCode, bo
 		StrcatToHeaderCode( "OPTION ARB_fragment_program_shadow;\n" );
 	}
 
+	if( m_iFragDataCount || m_bGenerateSRGBWriteSuffix )
+	{
+		char buf[256];
+		snprintf(buf, sizeof buf, "out vec4 _gl_FragData[%d];\n#define gl_FragData _gl_FragData\n", m_iFragDataCount);
+		StrcatToHeaderCode( buf );
+	}
+
+#define FindSubcode(a) (V_strstr((char*)m_pBufALUCode->Base(), a) != 0 || V_strstr((char*)m_pBufHeaderCode->Base(), a) != 0 || V_strstr((char*)m_pBufParamCode->Base(), a) != 0 || V_strstr((char*)m_pBufAttribCode->Base(), a) != 0  )
+	
+	if( FindSubcode("shadow2DProj") )
+	{
+		StrcatToHeaderCode( g_szShadow2D );
+		StrcatToHeaderCode( g_szShadow2DProj );
+		
+	}
+	else if( FindSubcode("shadow2D") )
+		StrcatToHeaderCode( g_szShadow2D );		
+
+	if( FindSubcode("_gl_Color") )
+		StrcatToHeaderCode( "vec4 _gl_Color;\n" );
+
+	if( FindSubcode("_gl_SecondaryColor") )
+		StrcatToHeaderCode( "vec4 _gl_SecondaryColor;\n" );
+	
 	StrcatToHeaderCode( "\nvoid main()\n{\n" );
 	if ( m_bUsedAtomicTempVar )
 	{
@@ -3815,9 +3915,9 @@ int D3DToGL::TranslateShader( uint32* code, CUtlBuffer *pBufDisassembledCode, bo
 		StrcatToALUCode( "sRGBFragData.xyz = exp( sRGBFragData.xyz );\n" );
 		StrcatToALUCode( "gl_FragData[0].xyz = mix( gl_FragData[0].xyz, sRGBFragData, flSRGBWrite );\n" );
 	}
-
-	strcat_s( (char*)m_pBufALUCode->Base(), m_pBufALUCode->Size(), "}\n" );
 	
+	strcat_s( (char*)m_pBufALUCode->Base(), m_pBufALUCode->Size(), "}\n" );
+		
 	// Put all of the strings together for final program ( pHeaderCode + pAttribCode + pParamCode + pALUCode )
 	StrcatToHeaderCode( (char*)m_pBufAttribCode->Base() );
 	StrcatToHeaderCode( (char*)m_pBufParamCode->Base() );

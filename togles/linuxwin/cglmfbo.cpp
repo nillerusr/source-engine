@@ -26,7 +26,7 @@
 //
 //===============================================================================
 
-#include "togl/rendermechanism.h"
+#include "togles/rendermechanism.h"
 
 // memdbgon -must- be the last include file in a .cpp file.
 #include "tier0/memdbgon.h"
@@ -36,7 +36,7 @@ CGLMFBO::CGLMFBO( GLMContext *ctx )
 	m_ctx = ctx;
 	m_ctx->CheckCurrent();
 	
-	gGL->glGenFramebuffersEXT( 1, &m_name );
+	gGL->glGenFramebuffers( 1, &m_name );
 	
 	memset( m_attach, 0, sizeof( m_attach ) );
 }
@@ -55,7 +55,7 @@ CGLMFBO::~CGLMFBO( )
 		}
 	}
 	
-	gGL->glDeleteFramebuffersEXT( 1, &m_name );
+	gGL->glDeleteFramebuffers( 1, &m_name );
 	
 	m_name = 0;
 	m_ctx = NULL;
@@ -68,22 +68,22 @@ static GLenum EncodeAttachmentFBO( EGLMFBOAttachment index )
 {
 	if (index < kAttDepth)
 	{
-		return GL_COLOR_ATTACHMENT0_EXT + (int) index;
+		return GL_COLOR_ATTACHMENT0 + (int) index;
 	}
 	else
 	{
 		switch( index )
 		{
 			case kAttDepth:
-				return	GL_DEPTH_ATTACHMENT_EXT;
+				return	GL_DEPTH_ATTACHMENT;
 			break;
 
 			case kAttStencil:
-				return	GL_STENCIL_ATTACHMENT_EXT;
+				return	GL_STENCIL_ATTACHMENT;
 			break;
 			
 			case kAttDepthStencil:
-				return	GL_DEPTH_STENCIL_ATTACHMENT_EXT;
+				return	GL_DEPTH_STENCIL_ATTACHMENT;
 			break;
 			
 			default:
@@ -94,7 +94,7 @@ static GLenum EncodeAttachmentFBO( EGLMFBOAttachment index )
 	
 	GLMStop(); // bad news
 	// shouldn't get here
-	return GL_COLOR_ATTACHMENT0_EXT;
+	return GL_COLOR_ATTACHMENT0;
 }
 
 void	CGLMFBO::TexAttach( GLMFBOTexAttachParams *params, EGLMFBOAttachment attachIndex, GLenum fboBindPoint )
@@ -136,7 +136,7 @@ void	CGLMFBO::TexAttach( GLMFBOTexAttachParams *params, EGLMFBOAttachment attach
 			if (layout->m_key.m_texFlags & kGLMTexMultisampled)
 			{
 				// it is an MSAA tex
-				if (fboBindPoint == GL_READ_FRAMEBUFFER_EXT)
+				if (fboBindPoint == GL_READ_FRAMEBUFFER)
 				{
 					// I think you just want to read a resolved tex.
 					// But I will check that it is resolved first..
@@ -148,34 +148,31 @@ void	CGLMFBO::TexAttach( GLMFBOTexAttachParams *params, EGLMFBOAttachment attach
 					useRBO = true;
 				}
 			}
-				
+
 			if (useRBO)
 			{
 				// MSAA path - attach the RBO, not the texture, and mark the RBO dirty
-				if (attachIndexGL==GL_DEPTH_STENCIL_ATTACHMENT_EXT)
+				if (attachIndexGL==GL_DEPTH_STENCIL_ATTACHMENT)
 				{
 					// you have to attach it both places...
 					// http://www.opengl.org/wiki/GL_EXT_framebuffer_object
 
-					// bind the RBO to the GL_RENDERBUFFER_EXT target
-					gGL->glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, tex->m_rboName );
-										
-					// attach the GL_RENDERBUFFER_EXT target to the depth and stencil attach points
-					gGL->glFramebufferRenderbufferEXT( fboBindPoint, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, tex->m_rboName);						
-											
-					gGL->glFramebufferRenderbufferEXT( fboBindPoint, GL_STENCIL_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, tex->m_rboName);
-					
+					// bind the RBO to the GL_RENDERBUFFER target
+					gGL->glBindRenderbuffer( GL_RENDERBUFFER, tex->m_rboName );
+
+					// attach the GL_RENDERBUFFER target to the depth and stencil attach points
+					gGL->glFramebufferRenderbuffer( fboBindPoint, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, tex->m_rboName);
+					gGL->glFramebufferRenderbuffer( fboBindPoint, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, tex->m_rboName);
+
 					// no need to leave the RBO hanging on
-					gGL->glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, 0 );
+					gGL->glBindRenderbuffer( GL_RENDERBUFFER, 0 );
 				}
 				else
 				{
 					// color attachment (likely 0)
-					gGL->glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, tex->m_rboName );
-										
-					gGL->glFramebufferRenderbufferEXT( fboBindPoint, attachIndexGL, GL_RENDERBUFFER_EXT, tex->m_rboName);
-					
-					gGL->glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, 0 );
+					gGL->glBindRenderbuffer( GL_RENDERBUFFER, tex->m_rboName );
+					gGL->glFramebufferRenderbuffer( fboBindPoint, attachIndexGL, GL_RENDERBUFFER, tex->m_rboName);
+					gGL->glBindRenderbuffer( GL_RENDERBUFFER, 0 );
 				}
 				tex->ForceRBODirty();
 			}
@@ -183,26 +180,25 @@ void	CGLMFBO::TexAttach( GLMFBOTexAttachParams *params, EGLMFBOAttachment attach
 			{
 				// regular path - attaching a texture2d
 				
-				if (attachIndexGL==GL_DEPTH_STENCIL_ATTACHMENT_EXT)
+				if (attachIndexGL==GL_DEPTH_STENCIL_ATTACHMENT)
 				{
 					// you have to attach it both places...
 					// http://www.opengl.org/wiki/GL_EXT_framebuffer_object
 					
-					gGL->glFramebufferTexture2DEXT( fboBindPoint, GL_DEPTH_ATTACHMENT_EXT, target, tex->m_texName, params->m_mip );
-					
-					gGL->glFramebufferTexture2DEXT( fboBindPoint, GL_STENCIL_ATTACHMENT_EXT, target, tex->m_texName, params->m_mip );
+					gGL->glFramebufferTexture2D( fboBindPoint, GL_DEPTH_ATTACHMENT, target, tex->m_texName, params->m_mip );
+					gGL->glFramebufferTexture2D( fboBindPoint, GL_STENCIL_ATTACHMENT, target, tex->m_texName, params->m_mip );
 				}
 				else
 				{
-					gGL->glFramebufferTexture2DEXT( fboBindPoint, attachIndexGL, target, tex->m_texName, params->m_mip );
+					gGL->glFramebufferTexture2D( fboBindPoint, attachIndexGL, target, tex->m_texName, params->m_mip );
 				}
 			}
 		}
 		break;
 
 		case GL_TEXTURE_3D:
-		{			
-			gGL->glFramebufferTexture3DEXT( fboBindPoint, attachIndexGL, target, tex->m_texName, params->m_mip, params->m_zslice );
+		{
+//			gGL->glFramebufferTexture3DEXT( fboBindPoint, attachIndexGL, target, tex->m_texName, params->m_mip, params->m_zslice );
 		}
 		break;
 
@@ -210,8 +206,8 @@ void	CGLMFBO::TexAttach( GLMFBOTexAttachParams *params, EGLMFBOAttachment attach
 		{
 			// adjust target to steer to the proper face of the cube map
 			target = GL_TEXTURE_CUBE_MAP_POSITIVE_X + params->m_face;
-			
-			gGL->glFramebufferTexture2DEXT( fboBindPoint, attachIndexGL, target, tex->m_texName, params->m_mip );
+
+			gGL->glFramebufferTexture2D( fboBindPoint, attachIndexGL, target, tex->m_texName, params->m_mip );
 		}
 		break;
 	}
@@ -248,35 +244,35 @@ void	CGLMFBO::TexDetach( EGLMFBOAttachment attachIndex, GLenum fboBindPoint )
 					// MSAA path - detach the RBO, not the texture
 					// (is this the right time to resolve?  probably better to wait until someone tries to sample the texture)
 
-					gGL->glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, 0 );
+					gGL->glBindRenderbuffer( GL_RENDERBUFFER, 0 );
 						
-					if (attachIndexGL==GL_DEPTH_STENCIL_ATTACHMENT_EXT)
+					if (attachIndexGL==GL_DEPTH_STENCIL_ATTACHMENT)
 					{
-						// detach the GL_RENDERBUFFER_EXT target at depth and stencil attach points
-						gGL->glFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, 0);						
+						// detach the GL_RENDERBUFFER target at depth and stencil attach points
+						gGL->glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);						
 							
-						gGL->glFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, 0);
+						gGL->glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, 0);
 					}
 					else
 					{
 						// color attachment (likely 0)
-						gGL->glFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, attachIndexGL, GL_RENDERBUFFER_EXT, 0);
+						gGL->glFramebufferRenderbuffer( GL_FRAMEBUFFER, attachIndexGL, GL_RENDERBUFFER, 0);
 					}
 				}
 				else
 				{
 					// plain tex detach
-					if (attachIndexGL==GL_DEPTH_STENCIL_ATTACHMENT_EXT)
+					if (attachIndexGL==GL_DEPTH_STENCIL_ATTACHMENT)
 					{
 						// you have to detach it both places...
 						// http://www.opengl.org/wiki/GL_EXT_framebuffer_object
 						
-						gGL->glFramebufferTexture2DEXT( fboBindPoint, GL_DEPTH_ATTACHMENT_EXT, target, 0, 0 );
-						gGL->glFramebufferTexture2DEXT( fboBindPoint, GL_STENCIL_ATTACHMENT_EXT, target, 0, 0 );
+						gGL->glFramebufferTexture2D( fboBindPoint, GL_DEPTH_ATTACHMENT, target, 0, 0 );
+						gGL->glFramebufferTexture2D( fboBindPoint, GL_STENCIL_ATTACHMENT, target, 0, 0 );
 					}
 					else
 					{
-						gGL->glFramebufferTexture2DEXT( fboBindPoint, attachIndexGL, target, 0, 0 );
+						gGL->glFramebufferTexture2D( fboBindPoint, attachIndexGL, target, 0, 0 );
 					}
 				}
 			}
@@ -284,13 +280,13 @@ void	CGLMFBO::TexDetach( EGLMFBOAttachment attachIndex, GLenum fboBindPoint )
 
 			case GL_TEXTURE_3D:
 			{
-				gGL->glFramebufferTexture3DEXT( fboBindPoint, attachIndexGL, target, 0, 0, 0 );
+//				gGL->glFramebufferTexture3DEXT( fboBindPoint, attachIndexGL, target, 0, 0, 0 );
 			}
 			break;
 
 			case GL_TEXTURE_CUBE_MAP:
 			{
-				gGL->glFramebufferTexture2DEXT( fboBindPoint, attachIndexGL, target, 0, 0 );
+				gGL->glFramebufferTexture2D( fboBindPoint, attachIndexGL, target, 0, 0 );
 			}
 			break;
 		}
@@ -315,7 +311,7 @@ void CGLMFBO::TexScrub( CGLMTex *tex )
 		if (m_attach[ attachIndex ].m_tex == tex)
 		{
 			// blammo
-			TexDetach( (EGLMFBOAttachment)attachIndex, GL_DRAW_FRAMEBUFFER_EXT );
+			TexDetach( (EGLMFBOAttachment)attachIndex, GL_DRAW_FRAMEBUFFER );
 		}
 	}
 }
@@ -332,7 +328,9 @@ bool	CGLMFBO::IsReady( void )
 	m_ctx->BindFBOToCtx( this );
 
 	GLenum status;
-	status = gGL->glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
+	status = gGL->glCheckFramebufferStatus(GL_FRAMEBUFFER);
+
+#if 0
 	switch(status)
 	{
 		case GL_FRAMEBUFFER_COMPLETE_EXT:
@@ -351,5 +349,6 @@ bool	CGLMFBO::IsReady( void )
 			/* programming error; will fail on all hardware */
 		break;
 	}
-	return result;
+#endif
+	return true;
 }

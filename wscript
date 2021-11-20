@@ -65,7 +65,6 @@ projects={
 		'tier1',
 		'tier2',
 		'tier3',
-		'togl',
 		'vgui2/matsys_controls',
 		'vgui2/src',
 		'vgui2/vgui_controls',
@@ -136,6 +135,8 @@ def get_taskgen_count(self):
 
 def define_platform(conf):
 	conf.env.DEDICATED = conf.options.DEDICATED
+	conf.env.TOGLES = conf.options.TOGLES
+	conf.env.GL = conf.options.GL
 
 	if conf.options.DEDICATED:
 		conf.options.SDL = False
@@ -148,6 +149,10 @@ def define_platform(conf):
 			'GL_GLEXT_PROTOTYPES',
 			'BINK_VIDEO'
 		])
+
+	if conf.options.TOGLES:
+		conf.env.append_unique('DEFINES', ['TOGLES'])
+
 
 	if conf.options.SDL:
 		conf.define('USE_SDL', 1)
@@ -205,6 +210,9 @@ def options(opt):
 	grp.add_option('--use-ccache', action = 'store_true', dest = 'CCACHE', default = False,
 		help = 'build using ccache [default: %default]')
 
+	grp.add_option('--togles', action = 'store_true', dest = 'TOGLES', default = False,
+		help = 'build engine with ToGLES [default: %default]')
+
 	opt.load('compiler_optimizations subproject')
 
 #	opt.add_subproject(projects['game'])
@@ -227,6 +235,12 @@ def configure(conf):
 	conf.load('subproject xcompile compiler_c compiler_cxx gitversion clang_compilation_database strip_on_install waf_unit_test enforce_pic')
 
 	define_platform(conf)
+
+	if conf.env.TOGLES:
+		projects['game'] += ['togles']
+	elif conf.env.GL:
+		projects['game'] += ['togl']
+
 
 	if conf.env.DEST_OS in ['win32', 'linux', 'darwin'] and conf.env.DEST_CPU == 'x86_64':
 		conf.env.BIT32_MANDATORY = not conf.options.ALLOW64
@@ -396,4 +410,9 @@ def build(bld):
 	if bld.env.DEDICATED:
 		bld.add_subproject(projects['dedicated'])
 	else:
+		if bld.env.TOGLES:
+			projects['game'] += ['togles']
+		elif bld.env.GL:
+			projects['game'] += ['togl']
+
 		bld.add_subproject(projects['game'])

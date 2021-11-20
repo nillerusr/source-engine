@@ -1,2 +1,2 @@
-#include "togl/linuxwin/glfuncs.h"
+#include "togles/linuxwin/glfuncs.h"
 

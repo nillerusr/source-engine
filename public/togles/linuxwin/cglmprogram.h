@@ -90,7 +90,7 @@ struct GLMShaderDesc
 	union
 	{
 		GLuint		arb;		// ARB program object name
-		GLhandleARB	glsl;		// GLSL shader object handle (void*)
+		GLuint	glsl;		// GLSL shader object handle (void*)
 	}	m_object;
 
 	// these can change if shader text is edited
@@ -253,7 +253,7 @@ public:
 	CGLMProgram				*m_vertexProg;	
 	CGLMProgram				*m_fragmentProg;
 
-	GLhandleARB				m_program;				// linked program object
+	GLuint				m_program;				// linked program object
 
 	// need meta data for attribs / samplers / params
 	// actually we only need it for samplers and params.

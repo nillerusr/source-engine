@@ -325,7 +325,7 @@ FORCEINLINE void GLContextGetDefault( GLAlphaTestEnable_t *dst )
 //                                                                      --- GLAlphaTestFunc ---
 FORCEINLINE void GLContextSet( GLAlphaTestFunc_t *src )
 {
-	gGL->glAlphaFunc( src->func, src->ref );
+// gGL->glAlphaFunc( src->func, src->ref );
 }
 
 FORCEINLINE void GLContextGet( GLAlphaTestFunc_t *dst )
@@ -343,12 +343,12 @@ FORCEINLINE void GLContextGetDefault( GLAlphaTestFunc_t *dst )
 //                                                                      --- GLAlphaToCoverageEnable ---
 FORCEINLINE void GLContextSet( GLAlphaToCoverageEnable_t *src )
 {
-	glSetEnable( GL_SAMPLE_ALPHA_TO_COVERAGE_ARB, src->enable != 0 );
+	glSetEnable( GL_SAMPLE_ALPHA_TO_COVERAGE, src->enable != 0 );
 }
 
 FORCEINLINE void GLContextGet( GLAlphaToCoverageEnable_t *dst )
 {
-	dst->enable = gGL->glIsEnabled( GL_SAMPLE_ALPHA_TO_COVERAGE_ARB );
+	dst->enable = gGL->glIsEnabled( GL_SAMPLE_ALPHA_TO_COVERAGE );
 }
 
 FORCEINLINE void GLContextGetDefault( GLAlphaToCoverageEnable_t *dst )
@@ -393,8 +393,8 @@ FORCEINLINE void GLContextGetDefault( GLCullFrontFace_t *dst )
 //                                                                      --- GLPolygonMode ---
 FORCEINLINE void GLContextSet( GLPolygonMode_t *src )
 {
-	gGL->glPolygonMode( GL_FRONT, src->values[0] );
-	gGL->glPolygonMode( GL_BACK, src->values[1] );
+//	gGL->glPolygonMode( GL_FRONT, src->values[0] );
+//	gGL->glPolygonMode( GL_BACK, src->values[1] );
 }
 
 FORCEINLINE void GLContextGet( GLPolygonMode_t *dst )
@@ -497,7 +497,7 @@ FORCEINLINE void GLContextGetDefault( GLViewportBox_t *dst )
 //                                                                      --- GLViewportDepthRange ---
 FORCEINLINE void GLContextSet( GLViewportDepthRange_t *src )
 {
-	gGL->glDepthRange	( src->flNear, src->flFar );
+	gGL->glDepthRangef	( src->flNear, src->flFar );
 }
 
 FORCEINLINE void GLContextGet( GLViewportDepthRange_t *dst )
@@ -543,9 +543,9 @@ FORCEINLINE void GLContextGetDefaultIndexed( GLClipPlaneEnable_t *dst, int index
 FORCEINLINE void GLContextSetIndexed( GLClipPlaneEquation_t *src, int index )
 {
 	// shove into glGlipPlane
-	GLdouble coeffs[4] = { src->x, src->y, src->z, src->w };
 
-	gGL->glClipPlane( GL_CLIP_PLANE0 + index, coeffs );
+//	GLdouble coeffs[4] = { src->x, src->y, src->z, src->w };
+//	gGL->glClipPlane( GL_CLIP_PLANE0 + index, coeffs );
 }
 
 FORCEINLINE void GLContextGetIndexed( GLClipPlaneEquation_t *dst, int index )
@@ -864,7 +864,8 @@ FORCEINLINE void GLContextGetDefault( GLClearColor_t *dst )
 //                                                                      --- GLClearDepth ---
 FORCEINLINE void GLContextSet( GLClearDepth_t *src )
 {
-	gGL->glClearDepth ( src->d );
+//	TOFUCK: wut
+//	gGL->glClearDepth ( src->d );
 }
 
 FORCEINLINE void GLContextGet( GLClearDepth_t *dst )
@@ -1205,133 +1206,6 @@ public:
 };
 
 //===========================================================================//
-#ifndef OSX
-
-#ifndef GL_EXTERNAL_VIRTUAL_MEMORY_BUFFER_AMD
-#define GL_EXTERNAL_VIRTUAL_MEMORY_BUFFER_AMD 0x9160
-#endif
-
-#define GLMGR_PINNED_MEMORY_BUFFER_SIZE ( 6 * 1024 * 1024 )
-
-class CPinnedMemoryBuffer
-{
-	CPinnedMemoryBuffer( const CPinnedMemoryBuffer & );
-	CPinnedMemoryBuffer & operator= ( const CPinnedMemoryBuffer & );
-
-public:
-	CPinnedMemoryBuffer()
-	: 
-		m_pRawBuf( NULL ) 
-		, m_pBuf( NULL )
-		, m_nSize( 0 )
-		, m_nOfs( 0 )
-		, m_nBufferObj( 0 )
-#ifdef HAVE_GL_ARB_SYNC
-		, m_nSyncObj( 0 )
-#endif
-	{
-	}
-
-	~CPinnedMemoryBuffer()
-	{
-		Deinit();
-	}
-
-	bool Init( uint nSize )
-	{
-		Deinit();
-
-		// Guarantee 64KB alignment
-		m_pRawBuf = malloc( nSize + 65535 );
-		m_pBuf = reinterpret_cast<void *>((reinterpret_cast<uint64>(m_pRawBuf) + 65535) & (~65535));
-		m_nSize = nSize;
-		m_nOfs = 0;
-
-		gGL->glGenBuffersARB( 1, &m_nBufferObj );
-		gGL->glBindBufferARB( GL_EXTERNAL_VIRTUAL_MEMORY_BUFFER_AMD, m_nBufferObj );
-
-		gGL->glBufferDataARB( GL_EXTERNAL_VIRTUAL_MEMORY_BUFFER_AMD, m_nSize, m_pBuf, GL_STREAM_COPY );
-
-		return true;
-	}
-
-	void Deinit()
-	{
-		if ( !m_pRawBuf )
-			return;
-
-		BlockUntilNotBusy();
-
-		gGL->glBindBufferARB(GL_EXTERNAL_VIRTUAL_MEMORY_BUFFER_AMD, m_nBufferObj );
-
-		gGL->glBufferDataARB( GL_EXTERNAL_VIRTUAL_MEMORY_BUFFER_AMD, 0, (void*)NULL, GL_STREAM_COPY );
-
-		gGL->glBindBufferARB( GL_EXTERNAL_VIRTUAL_MEMORY_BUFFER_AMD, 0 );
-
-		gGL->glDeleteBuffersARB( 1, &m_nBufferObj );
-		m_nBufferObj = 0;
-
-		free( m_pRawBuf );
-		m_pRawBuf = NULL;
-		m_pBuf = NULL;
-	
-		m_nSize = 0;
-		m_nOfs = 0;
-	}
-
-	inline uint GetSize() const { return m_nSize; }
-	inline uint GetOfs() const { return m_nOfs; }
-	inline uint GetBytesRemaining() const { return m_nSize - m_nOfs; }
-	inline void *GetPtr() const { return m_pBuf; }
-	inline GLuint GetHandle() const { return m_nBufferObj; }
-
-	void InsertFence()
-	{
-#ifdef HAVE_GL_ARB_SYNC
-		if ( m_nSyncObj  )
-		{
-			gGL->glDeleteSync( m_nSyncObj );
-		}
-
-		m_nSyncObj = gGL->glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
-#endif
-	}
-
-	void BlockUntilNotBusy()
-	{
-#ifdef HAVE_GL_ARB_SYNC
-		if ( m_nSyncObj )
-		{
-			gGL->glClientWaitSync( m_nSyncObj, GL_SYNC_FLUSH_COMMANDS_BIT, 3000000000000ULL );
-
-			gGL->glDeleteSync( m_nSyncObj );
-								
-			m_nSyncObj = 0;
-		}
-#endif
-		m_nOfs = 0;
-	}
-
-	void Append( uint nSize )
-	{
-		m_nOfs += nSize;
-		Assert( m_nOfs <= m_nSize );
-	}
-
-private:
-	void *m_pRawBuf;
-	void *m_pBuf;
-	uint m_nSize;
-	uint m_nOfs;
-
-	GLuint m_nBufferObj;
-#ifdef HAVE_GL_ARB_SYNC
-	GLsync m_nSyncObj;
-#endif
-};
-#endif // !OSX
-
-//===========================================================================//
 
 class GLMContext
 {
@@ -1568,7 +1442,7 @@ class GLMContext
 			if ( nGLName != m_nBoundGLBuffer[kGLMVertexBuffer] )
 			{
 				m_nBoundGLBuffer[kGLMVertexBuffer] = nGLName;
-				gGL->glBindBufferARB( GL_ARRAY_BUFFER_ARB, nGLName );
+				gGL->glBindBuffer( GL_ARRAY_BUFFER, nGLName );
 			}
 			else if ( ( curAttribs.m_pPtr == pBuf ) && 
 					  ( curAttribs.m_revision == nRevision ) &&
@@ -1624,18 +1498,18 @@ class GLMContext
 		void BindTexToTMU( CGLMTex *tex, int tmu );
 				
 		// render targets / FBO's
-		void BindFBOToCtx( CGLMFBO *fbo, GLenum bindPoint = GL_FRAMEBUFFER_EXT );				// you can also choose GL_READ_FRAMEBUFFER_EXT / GL_DRAW_FRAMEBUFFER_EXT
+		void BindFBOToCtx( CGLMFBO *fbo, GLenum bindPoint = GL_FRAMEBUFFER );				// you can also choose GL_READ_FRAMEBUFFER_EXT / GL_DRAW_FRAMEBUFFER_EXT
 		
 		// buffers
 		FORCEINLINE void BindGLBufferToCtx( GLenum nGLBufType, GLuint nGLName, bool bForce = false )
 		{
-			Assert( ( nGLBufType == GL_ARRAY_BUFFER_ARB ) || ( nGLBufType == GL_ELEMENT_ARRAY_BUFFER_ARB ) );
-						
-			const uint nIndex = ( nGLBufType == GL_ARRAY_BUFFER_ARB ) ? kGLMVertexBuffer : kGLMIndexBuffer;
+			Assert( ( nGLBufType == GL_ARRAY_BUFFER ) || ( nGLBufType == GL_ELEMENT_ARRAY_BUFFER ) );
+
+			const uint nIndex = ( nGLBufType == GL_ARRAY_BUFFER ) ? kGLMVertexBuffer : kGLMIndexBuffer;
 			if ( ( bForce ) || ( m_nBoundGLBuffer[nIndex] != nGLName ) )
 			{
 				m_nBoundGLBuffer[nIndex] = nGLName;
-				gGL->glBindBufferARB( nGLBufType, nGLName );
+				gGL->glBindBuffer( nGLBufType, nGLName );
 			}
 		}
 
@@ -1653,10 +1527,6 @@ class GLMContext
 		// debug font
 		void GenDebugFontTex( void );
 		void DrawDebugText( float x, float y, float z, float drawCharWidth, float drawCharHeight, char *string );
-
-#ifndef OSX
-		CPinnedMemoryBuffer *GetCurPinnedMemoryBuffer( ) { return &m_PinnedMemoryBuffers[m_nCurPinnedMemoryBuffer]; }
-#endif
 
 		CPersistentBuffer* GetCurPersistentBuffer( EGLMBufferType type ) { return &( m_persistentBuffer[m_nCurPersistentBuffer][type] ); }
 
@@ -1858,12 +1728,6 @@ class GLMContext
 
 		GLuint							m_destroyPBO;
 		CUtlVector< TextureEntry_t >	m_availableTextures;
-
-#ifndef OSX
-		enum { cNumPinnedMemoryBuffers = 4 };
-		CPinnedMemoryBuffer m_PinnedMemoryBuffers[cNumPinnedMemoryBuffers];
-		uint m_nCurPinnedMemoryBuffer;
-#endif
 
 		enum { cNumPersistentBuffers = 3 };
 		CPersistentBuffer	m_persistentBuffer[cNumPersistentBuffers][kGLMNumBufferTypes];
@@ -2320,7 +2184,7 @@ FORCEINLINE void GLMContext::BindIndexBufferToCtx( CGLMBuffer *buff )
 {
 	GLMPRINTF(( "--- GLMContext::BindIndexBufferToCtx buff %p, GL name %d", buff, (buff) ? buff->m_nHandle : -1 ));
 		
-	Assert( !buff || ( buff->m_buffGLTarget == GL_ELEMENT_ARRAY_BUFFER_ARB ) );
+	Assert( !buff || ( buff->m_buffGLTarget == GL_ELEMENT_ARRAY_BUFFER ) );
 
 	GLuint nGLName = buff ? buff->GetHandle() : 0;
 
@@ -2328,14 +2192,14 @@ FORCEINLINE void GLMContext::BindIndexBufferToCtx( CGLMBuffer *buff )
 		return;
 
 	m_nBoundGLBuffer[ kGLMIndexBuffer] = nGLName;
-	gGL->glBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, nGLName );
+	gGL->glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, nGLName );
 }
 
 FORCEINLINE void GLMContext::BindVertexBufferToCtx( CGLMBuffer *buff )
 {
 	GLMPRINTF(( "--- GLMContext::BindVertexBufferToCtx buff %p, GL name %d", buff, (buff) ? buff->m_nHandle : -1 ));
 
-	Assert( !buff || ( buff->m_buffGLTarget == GL_ARRAY_BUFFER_ARB ) );
+	Assert( !buff || ( buff->m_buffGLTarget == GL_ARRAY_BUFFER ) );
 
 	GLuint nGLName = buff ? buff->GetHandle() : 0;
 
@@ -2343,7 +2207,7 @@ FORCEINLINE void GLMContext::BindVertexBufferToCtx( CGLMBuffer *buff )
 		return;
 
 	m_nBoundGLBuffer[ kGLMVertexBuffer] = nGLName;
-	gGL->glBindBufferARB( GL_ARRAY_BUFFER_ARB, nGLName );
+	gGL->glBindBuffer( GL_ARRAY_BUFFER, nGLName );
 }
 
 FORCEINLINE void GLMContext::SetMaxUsedVertexShaderConstantsHint( uint nMaxConstants )

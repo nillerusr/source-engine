@@ -25,7 +25,7 @@
 // glmgr.cpp
 //
 //===============================================================================
-#include "togl/rendermechanism.h"
+#include "togles/rendermechanism.h"
 
 #include "tier0/icommandline.h"
 
@@ -76,28 +76,25 @@ const uint32 g_garbageTextureBits[ 4 * kDeletedTextureDim * kDeletedTextureDim ]
 
 char g_nullFragmentProgramText [] =
 {
-	"!!ARBfp1.0  \n"
-	"PARAM black = { 0.0, 0.0, 0.0, 1.0 };  \n"		// opaque black
-	"MOV result.color, black;  \n"
-	"END  \n\n\n"
-	"//GLSLfp\n"
+	"#version 300 es\n"
+	"precision mediump float;\n"
+	"out vec4 _gl_FragColor;\n"
 	"void main()\n"
 	"{\n"
-	"gl_FragColor = vec4( 0.0, 0.0, 0.0, 1.0 );\n"
+	"_gl_FragColor = vec4( 0.0, 0.0, 0.0, 1.0 );\n"
 	"}\n"
-	
 };
 
 // make dummy programs for doing texture preload via dummy draw
-char g_preloadTexVertexProgramText[] =
+char g_preloadTexVertexProgramText[] = // Гроб гроб кладбище пидор
 {
-	"//GLSLvp  \n"
-	"#version 120  \n"
-	"varying vec4 otex;  \n"
+	"#version 300 es\n"
+	"precision mediump float;\n"
+	"out vec4 otex;\n"
 	"void main()  \n"
 	"{  \n"
-	"vec4 pos = ftransform(); // vec4( 0.1, 0.1, 0.1, 0.1 );  \n"
-	"vec4 tex = vec4( 0.0, 0.0, 0.0, 0.0 );  \n"
+	"vec4 pos = vec4( 0.1, 0.1, 0.1, 0.1 );\n"
+	"vec4 tex = vec4( 0.0, 0.0, 0.0, 0.0 );\n"
 	"  \n"
 	"gl_Position = pos;  \n"
 	"otex = tex;  \n"
@@ -106,9 +103,10 @@ char g_preloadTexVertexProgramText[] =
 
 char g_preload2DTexFragmentProgramText[] =
 {
-	"//GLSLfp  \n"
-	"#version 120  \n"
-	"varying vec4 otex;  \n"
+	"#version 300 es\n"
+	"precision mediump float;\n"
+	"out vec4 _gl_FragColor;\n"		
+	"in vec4 otex;\n"
 	"//SAMPLERMASK-8000		// may not be needed  \n"
 	"//HIGHWATER-30			// may not be needed  \n"
 	"  \n"
@@ -119,18 +117,20 @@ char g_preload2DTexFragmentProgramText[] =
 	"{  \n"
 	"vec4 r0;  \n"
 	"r0 = texture2D( sampler15, otex.xy );  \n"
-	"gl_FragColor = r0;	//discard;  \n"
+	"_gl_FragColor = r0;	//discard;  \n"
 	"}  \n"
 };
 
 char g_preload3DTexFragmentProgramText[] =
 {
-	"//GLSLfp  \n"
-	"#version 120  \n"
-	"varying vec4 otex;  \n"
+	"#version 300 es\n"
+	"precision mediump float;\n"
+	"out vec4 _gl_FragColor;\n"	
+	"in vec4 otex;\n"
 	"//SAMPLERMASK-8000		// may not be needed  \n"
 	"//HIGHWATER-30			// may not be needed  \n"
 	"  \n"
+	"precision mediump sampler3D;\n"
 	"uniform vec4 pc[31];  \n"
 	"uniform sampler3D sampler15;  \n"
 	"  \n"
@@ -138,17 +138,18 @@ char g_preload3DTexFragmentProgramText[] =
 	"{  \n"
 	"vec4 r0;  \n"
 	"r0 = texture3D( sampler15, otex.xyz );  \n"
-	"gl_FragColor = r0;	//discard;  \n"
+	"_gl_FragColor = vec4(0,0,0,0);	//discard;  \n"
 	"}  \n"
 };
 
 char g_preloadCubeTexFragmentProgramText[] =
 {
-	"//GLSLfp  \n"
-	"#version 120  \n"
-	"varying vec4 otex;  \n"
-	"//SAMPLERMASK-8000		// may not be needed  \n"
-	"//HIGHWATER-30			// may not be needed  \n"
+	"#version 300 es\n"
+	"precision mediump float;\n"
+	"in vec4 otex;\n"
+	"out vec4 _gl_FragColor;\n"
+       "//SAMPLERMASK-8000             // may not be needed  \n"
+       "//HIGHWATER-30                 // may not be needed  \n"
 	"  \n"
 	"uniform vec4 pc[31];  \n"
 	"uniform samplerCube sampler15;  \n"
@@ -157,7 +158,7 @@ char g_preloadCubeTexFragmentProgramText[] =
 	"{  \n"
 	"vec4 r0;  \n"
 	"r0 = textureCube( sampler15, otex.xyz );  \n"
-	"gl_FragColor = r0;	//discard;  \n"
+	"_gl_FragColor = r0;	//discard;  \n"
 	"}  \n"
 };
 
@@ -638,19 +639,12 @@ void GLMContext::ForceFlushStates()
 	NullProgram();
 
 	// FBO
-	BindFBOToCtx( m_boundReadFBO, GL_READ_FRAMEBUFFER_EXT );
-	BindFBOToCtx( m_boundDrawFBO, GL_DRAW_FRAMEBUFFER_EXT );
+	BindFBOToCtx( m_boundReadFBO, GL_READ_FRAMEBUFFER );
+	BindFBOToCtx( m_boundDrawFBO, GL_DRAW_FRAMEBUFFER );
 
 	// Current VB/IB/pinned memory buffers
-	gGL->glBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, m_nBoundGLBuffer[ kGLMIndexBuffer] );
-	gGL->glBindBufferARB( GL_ARRAY_BUFFER_ARB, m_nBoundGLBuffer[ kGLMVertexBuffer] );
-
-#ifndef OSX
-	if ( gGL->m_bHave_GL_AMD_pinned_memory )
-	{
-		gGL->glBindBufferARB( GL_EXTERNAL_VIRTUAL_MEMORY_BUFFER_AMD, m_PinnedMemoryBuffers[m_nCurPinnedMemoryBuffer].GetHandle() );
-	}
-#endif
+	gGL->glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, m_nBoundGLBuffer[ kGLMIndexBuffer] );
+	gGL->glBindBuffer( GL_ARRAY_BUFFER, m_nBoundGLBuffer[ kGLMVertexBuffer] );
 }
 
 const GLMRendererInfoFields& GLMContext::Caps( void )
@@ -827,17 +821,17 @@ enum eBlitFormatClass
 	eDepthStencil
 };
 
-uint	glAttachFromClass[ 3 ] = 		{ GL_COLOR_ATTACHMENT0_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_STENCIL_ATTACHMENT_EXT };
+uint	glAttachFromClass[ 3 ] = 		{ GL_COLOR_ATTACHMENT0, GL_DEPTH_ATTACHMENT, GL_DEPTH_STENCIL_ATTACHMENT };
 
 void glScrubFBO			( GLenum target )
 {
-	gGL->glFramebufferRenderbufferEXT	( target, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, 0);
-	gGL->glFramebufferRenderbufferEXT	( target, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, 0);
-	gGL->glFramebufferRenderbufferEXT	( target, GL_STENCIL_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, 0);
+	gGL->glFramebufferRenderbuffer	( target, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, 0);
+	gGL->glFramebufferRenderbuffer	( target, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
+	gGL->glFramebufferRenderbuffer	( target, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, 0);
 
-	gGL->glFramebufferTexture2DEXT		( target, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, 0, 0 );
-	gGL->glFramebufferTexture2DEXT		( target, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, 0, 0 );
-	gGL->glFramebufferTexture2DEXT		( target, GL_STENCIL_ATTACHMENT_EXT, GL_TEXTURE_2D, 0, 0 );
+	gGL->glFramebufferTexture2D		( target, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0 );
+	gGL->glFramebufferTexture2D		( target, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, 0, 0 );
+	gGL->glFramebufferTexture2D		( target, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, 0, 0 );
 }
 
 void glAttachRBOtoFBO	( GLenum target, eBlitFormatClass formatClass, uint rboName )
@@ -845,16 +839,16 @@ void glAttachRBOtoFBO	( GLenum target, eBlitFormatClass formatClass, uint rboNam
 	switch( formatClass )
 	{
 		case eColor:
-			gGL->glFramebufferRenderbufferEXT	( target, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, rboName);
+			gGL->glFramebufferRenderbuffer	( target, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rboName);
 		break;
 		
 		case eDepth:
-			gGL->glFramebufferRenderbufferEXT	( target, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, rboName);
+			gGL->glFramebufferRenderbuffer	( target, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboName);
 		break;
 		
 		case eDepthStencil:
-			gGL->glFramebufferRenderbufferEXT	( target, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, rboName);
-			gGL->glFramebufferRenderbufferEXT	( target, GL_STENCIL_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, rboName);
+			gGL->glFramebufferRenderbuffer	( target, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboName);
+			gGL->glFramebufferRenderbuffer	( target, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rboName);
 		break;
 	}
 }
@@ -864,15 +858,15 @@ void glAttachTex2DtoFBO	( GLenum target, eBlitFormatClass formatClass, uint texN
 	switch( formatClass )
 	{
 		case eColor:
-			gGL->glFramebufferTexture2DEXT		( target, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, texName, texMip );
+			gGL->glFramebufferTexture2D		( target, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texName, texMip );
 		break;
 		
 		case eDepth:
-			gGL->glFramebufferTexture2DEXT		( target, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, texName, texMip );
+			gGL->glFramebufferTexture2D		( target, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texName, texMip );
 		break;
 		
 		case eDepthStencil:
-			gGL->glFramebufferTexture2DEXT		( target, GL_DEPTH_STENCIL_ATTACHMENT_EXT, GL_TEXTURE_2D, texName, texMip );
+			gGL->glFramebufferTexture2D		( target, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, texName, texMip );
 		break;
 	}
 }
@@ -934,7 +928,7 @@ void GLMContext::Blit2( CGLMTex *srcTex, GLMRect *srcRect, int srcFace, int srcM
 			blitMask = GL_DEPTH_BUFFER_BIT;
 		break;
 		
-		case GL_DEPTH_STENCIL_EXT:
+		case GL_DEPTH_STENCIL:
 			formatClass = eDepthStencil;
 			blitMask = GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;
 		break;
@@ -1048,14 +1042,14 @@ void GLMContext::Blit2( CGLMTex *srcTex, GLMRect *srcRect, int srcFace, int srcM
 		// a resolve that can't be done directly due to constraints on scaling or flipping.
 		
 		// bind scratch FBO0 to read, scrub it, attach RBO
-		BindFBOToCtx		( m_scratchFBO[0], GL_READ_FRAMEBUFFER_EXT );
-		glScrubFBO			( GL_READ_FRAMEBUFFER_EXT );
-		glAttachRBOtoFBO	( GL_READ_FRAMEBUFFER_EXT, formatClass, srcTex->m_rboName );
+		BindFBOToCtx		( m_scratchFBO[0], GL_READ_FRAMEBUFFER );
+		glScrubFBO			( GL_READ_FRAMEBUFFER );
+		glAttachRBOtoFBO	( GL_READ_FRAMEBUFFER, formatClass, srcTex->m_rboName );
 		
 		// bind scratch FBO1 to write, scrub it, attach scratch tex
-		BindFBOToCtx		( m_scratchFBO[1], GL_DRAW_FRAMEBUFFER_EXT );
-		glScrubFBO			( GL_DRAW_FRAMEBUFFER_EXT );
-		glAttachTex2DtoFBO	( GL_DRAW_FRAMEBUFFER_EXT, formatClass, srcTex->m_texName, 0 );
+		BindFBOToCtx		( m_scratchFBO[1], GL_DRAW_FRAMEBUFFER );
+		glScrubFBO			( GL_DRAW_FRAMEBUFFER );
+		glAttachTex2DtoFBO	( GL_DRAW_FRAMEBUFFER, formatClass, srcTex->m_texName, 0 );
 
 		// set read and draw buffers appropriately		
 		gGL->glReadBuffer		( glAttachFromClass[formatClass] );
@@ -1066,15 +1060,15 @@ void GLMContext::Blit2( CGLMTex *srcTex, GLMRect *srcRect, int srcFace, int srcM
 
 		GLenum resolveFilter = GL_NEAREST;
 		
-		gGL->glBlitFramebufferEXT(	0, 0,	srcTex->m_layout->m_key.m_xSize, srcTex->m_layout->m_key.m_ySize,
+		gGL->glBlitFramebuffer(	0, 0,	srcTex->m_layout->m_key.m_xSize, srcTex->m_layout->m_key.m_ySize,
 								0, 0,	srcTex->m_layout->m_key.m_xSize, srcTex->m_layout->m_key.m_ySize,	// same source and dest rect, whole surface
 								blitMask, resolveFilter );
 								
 		// FBO1 now holds the interesting content.
 		// scrub FBO0, bind FBO1 to READ, fall through to next stage of blit where 1 goes onto 0 (or BACK)
 		
-		glScrubFBO			( GL_READ_FRAMEBUFFER_EXT );	// zap FBO0
-		BindFBOToCtx		( m_scratchFBO[1], GL_READ_FRAMEBUFFER_EXT );
+		glScrubFBO			( GL_READ_FRAMEBUFFER );	// zap FBO0
+		BindFBOToCtx		( m_scratchFBO[1], GL_READ_FRAMEBUFFER );
 
 		srcTex->ForceRBONonDirty();
 	}
@@ -1084,33 +1078,33 @@ void GLMContext::Blit2( CGLMTex *srcTex, GLMRect *srcRect, int srcFace, int srcM
 		if (srcTex->m_pBlitSrcFBO == NULL) 
 		{
 			srcTex->m_pBlitSrcFBO = NewFBO();
-			BindFBOToCtx( srcTex->m_pBlitSrcFBO, GL_READ_FRAMEBUFFER_EXT );
+			BindFBOToCtx( srcTex->m_pBlitSrcFBO, GL_READ_FRAMEBUFFER );
 			if (blitResolves)
 			{
-				glAttachRBOtoFBO( GL_READ_FRAMEBUFFER_EXT, formatClass, srcTex->m_rboName );
+				glAttachRBOtoFBO( GL_READ_FRAMEBUFFER, formatClass, srcTex->m_rboName );
 			}
 			else
 			{
-				glAttachTex2DtoFBO( GL_READ_FRAMEBUFFER_EXT, formatClass, srcTex->m_texName, srcMip );
+				glAttachTex2DtoFBO( GL_READ_FRAMEBUFFER, formatClass, srcTex->m_texName, srcMip );
 			}
 		} 
 		else 
 		{
-			BindFBOToCtx		( srcTex->m_pBlitSrcFBO, GL_READ_FRAMEBUFFER_EXT );
+			BindFBOToCtx		( srcTex->m_pBlitSrcFBO, GL_READ_FRAMEBUFFER );
 			//                     GLMCheckError();
 		}
 #else
 		// arrange source surface on FBO1 for blit directly to dest (which could be FBO0 or BACK)
-		BindFBOToCtx( m_scratchFBO[1], GL_READ_FRAMEBUFFER_EXT );
-		glScrubFBO( GL_READ_FRAMEBUFFER_EXT );
+		BindFBOToCtx( m_scratchFBO[1], GL_READ_FRAMEBUFFER );
+		glScrubFBO( GL_READ_FRAMEBUFFER );
 		GLMCheckError();
 		if (blitResolves)
 		{
-			glAttachRBOtoFBO( GL_READ_FRAMEBUFFER_EXT, formatClass, srcTex->m_rboName );
+			glAttachRBOtoFBO( GL_READ_FRAMEBUFFER, formatClass, srcTex->m_rboName );
 		}
 		else
 		{
-			glAttachTex2DtoFBO( GL_READ_FRAMEBUFFER_EXT, formatClass, srcTex->m_texName, srcMip );
+			glAttachTex2DtoFBO( GL_READ_FRAMEBUFFER, formatClass, srcTex->m_texName, srcMip );
 		}
 #endif
 
@@ -1124,7 +1118,7 @@ void GLMContext::Blit2( CGLMTex *srcTex, GLMRect *srcRect, int srcFace, int srcM
 	{
 		// backbuffer is special - FBO0 is left out (either scrubbed already, or not used)
 		
-		BindFBOToCtx		( NULL, GL_DRAW_FRAMEBUFFER_EXT );
+		BindFBOToCtx		( NULL, GL_DRAW_FRAMEBUFFER );
 		gGL->glDrawBuffer		( GL_BACK );
 		
 		yflip = true;
@@ -1137,31 +1131,31 @@ void GLMContext::Blit2( CGLMTex *srcTex, GLMRect *srcRect, int srcFace, int srcM
 		if (dstTex->m_pBlitDstFBO == NULL) 
 		{
 			dstTex->m_pBlitDstFBO = NewFBO();
-			BindFBOToCtx( dstTex->m_pBlitDstFBO, GL_DRAW_FRAMEBUFFER_EXT );
+			BindFBOToCtx( dstTex->m_pBlitDstFBO, GL_DRAW_FRAMEBUFFER );
 			if (dstTex->m_rboName)
 			{
-				glAttachRBOtoFBO( GL_DRAW_FRAMEBUFFER_EXT, formatClass, dstTex->m_rboName );		
+				glAttachRBOtoFBO( GL_DRAW_FRAMEBUFFER, formatClass, dstTex->m_rboName );		
 			}
 			else
 			{
-				glAttachTex2DtoFBO( GL_DRAW_FRAMEBUFFER_EXT, formatClass, dstTex->m_texName, dstMip );
+				glAttachTex2DtoFBO( GL_DRAW_FRAMEBUFFER, formatClass, dstTex->m_texName, dstMip );
 			}
 		} 
 		else
 		{
-			BindFBOToCtx( dstTex->m_pBlitDstFBO, GL_DRAW_FRAMEBUFFER_EXT );
+			BindFBOToCtx( dstTex->m_pBlitDstFBO, GL_DRAW_FRAMEBUFFER );
 		}
 #else
-		BindFBOToCtx( m_scratchFBO[0], GL_DRAW_FRAMEBUFFER_EXT );							GLMCheckError();								
-		glScrubFBO( GL_DRAW_FRAMEBUFFER_EXT );
+		BindFBOToCtx( m_scratchFBO[0], GL_DRAW_FRAMEBUFFER );							GLMCheckError();								
+		glScrubFBO( GL_DRAW_FRAMEBUFFER );
 
 		if (dstTex->m_rboName)
 		{
-			glAttachRBOtoFBO( GL_DRAW_FRAMEBUFFER_EXT, formatClass, dstTex->m_rboName );		
+			glAttachRBOtoFBO( GL_DRAW_FRAMEBUFFER, formatClass, dstTex->m_rboName );		
 		}
 		else
 		{
-			glAttachTex2DtoFBO( GL_DRAW_FRAMEBUFFER_EXT, formatClass, dstTex->m_texName, dstMip );
+			glAttachTex2DtoFBO( GL_DRAW_FRAMEBUFFER, formatClass, dstTex->m_texName, dstMip );
 		}	
 
 		gGL->glDrawBuffer		( glAttachFromClass[formatClass] );										GLMCheckError();
@@ -1181,31 +1175,31 @@ void GLMContext::Blit2( CGLMTex *srcTex, GLMRect *srcRect, int srcFace, int srcM
 	// this is blit #1 or #2 depending on what took place above.
 	if (yflip)
 	{
-		gGL->glBlitFramebufferEXT(	srcRect->xmin, srcRect->ymin, srcRect->xmax, srcRect->ymax,
+		gGL->glBlitFramebuffer(	srcRect->xmin, srcRect->ymin, srcRect->xmax, srcRect->ymax,
 								dstRect->xmin, dstRect->ymax, dstRect->xmax, dstRect->ymin,		// note dest Y's are flipped
 								blitMask, filter );
 	}
 	else
 	{
-		gGL->glBlitFramebufferEXT(	srcRect->xmin, srcRect->ymin, srcRect->xmax, srcRect->ymax,
+		gGL->glBlitFramebuffer(	srcRect->xmin, srcRect->ymin, srcRect->xmax, srcRect->ymax,
 								dstRect->xmin, dstRect->ymin, dstRect->xmax, dstRect->ymax,
 								blitMask, filter );
 	}
 
 	//----------------------------------------------------------------- scrub READ and maybe DRAW FBO, and unbind
 
-//	glScrubFBO			( GL_READ_FRAMEBUFFER_EXT );
-	BindFBOToCtx		( NULL, GL_READ_FRAMEBUFFER_EXT );
+//	glScrubFBO			( GL_READ_FRAMEBUFFER );
+	BindFBOToCtx		( NULL, GL_READ_FRAMEBUFFER );
 	if (!blitToBack)
 	{
-//		glScrubFBO			( GL_DRAW_FRAMEBUFFER_EXT );
-		BindFBOToCtx		( NULL, GL_DRAW_FRAMEBUFFER_EXT );
+//		glScrubFBO			( GL_DRAW_FRAMEBUFFER );
+		BindFBOToCtx		( NULL, GL_DRAW_FRAMEBUFFER );
 	}
 		
 	//----------------------------------------------------------------- restore GLM's drawing FBO
 
 	//	restore GLM drawing FBO
-	BindFBOToCtx( m_drawingFBO, GL_FRAMEBUFFER_EXT );
+	BindFBOToCtx( m_drawingFBO, GL_FRAMEBUFFER );
 	
 	if (doPushPop)
 	{
@@ -1329,19 +1323,19 @@ void GLMContext::BlitTex( CGLMTex *srcTex, GLMRect *srcRect, int srcFace, int sr
 			case GL_LUMINANCE:
 			case GL_LUMINANCE_ALPHA:
 				attachIndex = kAttColor0;
-				attachIndexGL = GL_COLOR_ATTACHMENT0_EXT;
+				attachIndexGL = GL_COLOR_ATTACHMENT0;
 				blitMask = GL_COLOR_BUFFER_BIT;
 			break;
 
 			case GL_DEPTH_COMPONENT:
 				attachIndex = kAttDepth;
-				attachIndexGL = GL_DEPTH_ATTACHMENT_EXT;
+				attachIndexGL = GL_DEPTH_ATTACHMENT;
 				blitMask = GL_DEPTH_BUFFER_BIT;
 			break;
 			
-			case GL_DEPTH_STENCIL_EXT:
+			case GL_DEPTH_STENCIL:
 				attachIndex = kAttDepthStencil;
-				attachIndexGL = GL_DEPTH_STENCIL_ATTACHMENT_EXT;
+				attachIndexGL = GL_DEPTH_STENCIL_ATTACHMENT;
 				blitMask = GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;
 			break;
 
@@ -1351,31 +1345,31 @@ void GLMContext::BlitTex( CGLMTex *srcTex, GLMRect *srcRect, int srcFace, int sr
 		}
 
 		//	set the read fb, attach read tex at appropriate attach point, set read buffer
-		BindFBOToCtx( m_blitReadFBO, GL_READ_FRAMEBUFFER_EXT );
+		BindFBOToCtx( m_blitReadFBO, GL_READ_FRAMEBUFFER );
 
 		GLMFBOTexAttachParams attparams;
 		attparams.m_tex		=	srcTex;
 		attparams.m_face	=	srcFace;
 		attparams.m_mip		=	srcMip;
 		attparams.m_zslice	=	0;
-		m_blitReadFBO->TexAttach( &attparams, attachIndex, GL_READ_FRAMEBUFFER_EXT );
+		m_blitReadFBO->TexAttach( &attparams, attachIndex, GL_READ_FRAMEBUFFER );
 
 		gGL->glReadBuffer( attachIndexGL );
 		
 
 		//	set the write fb and buffer, and attach write tex
-		BindFBOToCtx( m_blitDrawFBO, GL_DRAW_FRAMEBUFFER_EXT );
+		BindFBOToCtx( m_blitDrawFBO, GL_DRAW_FRAMEBUFFER );
 
 		attparams.m_tex		=	dstTex;
 		attparams.m_face	=	dstFace;
 		attparams.m_mip		=	dstMip;
 		attparams.m_zslice	=	0;
-		m_blitDrawFBO->TexAttach( &attparams, attachIndex, GL_DRAW_FRAMEBUFFER_EXT );
+		m_blitDrawFBO->TexAttach( &attparams, attachIndex, GL_DRAW_FRAMEBUFFER );
 
 		gGL->glDrawBuffer( attachIndexGL );
 
 		//	do the blit
-		gGL->glBlitFramebufferEXT(	srcRect->xmin, srcRect->ymin, srcRect->xmax, srcRect->ymax,
+		gGL->glBlitFramebuffer(	srcRect->xmin, srcRect->ymin, srcRect->xmax, srcRect->ymax,
 								dstRect->xmin, dstRect->ymin, dstRect->xmax, dstRect->ymax,
 								blitMask, filter );
 							
@@ -1383,13 +1377,13 @@ void GLMContext::BlitTex( CGLMTex *srcTex, GLMRect *srcRect, int srcFace, int sr
 		//	unset the read fb and buffer, detach read tex
 		//	unset the write fb and buffer, detach write tex
 
-		m_blitReadFBO->TexDetach( attachIndex, GL_READ_FRAMEBUFFER_EXT );
+		m_blitReadFBO->TexDetach( attachIndex, GL_READ_FRAMEBUFFER );
 
-		m_blitDrawFBO->TexDetach( attachIndex, GL_DRAW_FRAMEBUFFER_EXT );
+		m_blitDrawFBO->TexDetach( attachIndex, GL_DRAW_FRAMEBUFFER );
 
 		//	put the original FB back in place (both read and draw)
 		// this bind will hit both read and draw bindings
-		BindFBOToCtx( m_drawingFBO, GL_FRAMEBUFFER_EXT );
+		BindFBOToCtx( m_drawingFBO, GL_FRAMEBUFFER );
 		
 			//	set the read and write buffers back to... what ? does it matter for anything but copies ?  don't worry about it
 		
@@ -1414,7 +1408,7 @@ void GLMContext::BlitTex( CGLMTex *srcTex, GLMRect *srcRect, int srcFace, int sr
 			case GL_LUMINANCE:
 			case GL_LUMINANCE_ALPHA:
 				attachIndex = kAttColor0;
-				attachIndexGL = GL_COLOR_ATTACHMENT0_EXT;
+				attachIndexGL = GL_COLOR_ATTACHMENT0;
 			break;
 
 			default:
@@ -1422,14 +1416,14 @@ void GLMContext::BlitTex( CGLMTex *srcTex, GLMRect *srcRect, int srcFace, int sr
 			break;
 		}
 		
-		BindFBOToCtx( m_blitDrawFBO, GL_DRAW_FRAMEBUFFER_EXT );
+		BindFBOToCtx( m_blitDrawFBO, GL_DRAW_FRAMEBUFFER );
 
 		GLMFBOTexAttachParams attparams;
 		attparams.m_tex		=	dstTex;
 		attparams.m_face	=	dstFace;
 		attparams.m_mip		=	dstMip;
 		attparams.m_zslice	=	0;
-		m_blitDrawFBO->TexAttach( &attparams, attachIndex, GL_DRAW_FRAMEBUFFER_EXT );
+		m_blitDrawFBO->TexAttach( &attparams, attachIndex, GL_DRAW_FRAMEBUFFER );
 
 		gGL->glDrawBuffer( attachIndexGL );
 		
@@ -1509,10 +1503,10 @@ void GLMContext::BlitTex( CGLMTex *srcTex, GLMRect *srcRect, int srcFace, int sr
 
 		//	unset the write fb and buffer, detach write tex
 
-		m_blitDrawFBO->TexDetach( attachIndex, GL_DRAW_FRAMEBUFFER_EXT );
+		m_blitDrawFBO->TexDetach( attachIndex, GL_DRAW_FRAMEBUFFER );
 
 		//	put the original FB back in place (both read and draw)
-		BindFBOToCtx( m_drawingFBO, GL_FRAMEBUFFER_EXT );
+		BindFBOToCtx( m_drawingFBO, GL_FRAMEBUFFER );
 	}
 	
 	while(pushed)
@@ -1563,19 +1557,19 @@ void GLMContext::ResolveTex( CGLMTex *tex, bool forceDirty )
 	//		case GL_LUMINANCE:
 	//		case GL_LUMINANCE_ALPHA:
 				attachIndex = kAttColor0;
-				attachIndexGL = GL_COLOR_ATTACHMENT0_EXT;
+				attachIndexGL = GL_COLOR_ATTACHMENT0;
 				blitMask = GL_COLOR_BUFFER_BIT;
 			break;
 
 	//		case GL_DEPTH_COMPONENT:
 	//			attachIndex = kAttDepth;
-	//			attachIndexGL = GL_DEPTH_ATTACHMENT_EXT;
+	//			attachIndexGL = GL_DEPTH_ATTACHMENT;
 	//			blitMask = GL_DEPTH_BUFFER_BIT;
 	//		break;
 			
-			case GL_DEPTH_STENCIL_EXT:
+			case GL_DEPTH_STENCIL:
 				attachIndex = kAttDepthStencil;
-				attachIndexGL = GL_DEPTH_STENCIL_ATTACHMENT_EXT;
+				attachIndexGL = GL_DEPTH_STENCIL_ATTACHMENT;
 				blitMask = GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;
 			break;
 
@@ -1586,35 +1580,35 @@ void GLMContext::ResolveTex( CGLMTex *tex, bool forceDirty )
 
 		
 		//	set the read fb, attach read RBO at appropriate attach point, set read buffer
-		BindFBOToCtx( m_blitReadFBO, GL_READ_FRAMEBUFFER_EXT );
+		BindFBOToCtx( m_blitReadFBO, GL_READ_FRAMEBUFFER );
 
 		// going to avoid the TexAttach / TexDetach calls due to potential confusion, implement it directly here
 		
 		//-----------------------------------------------------------------------------------
 		// put tex->m_rboName on the read FB's attachment
-		if (attachIndexGL==GL_DEPTH_STENCIL_ATTACHMENT_EXT)
+		if (attachIndexGL==GL_DEPTH_STENCIL_ATTACHMENT)
 		{
 			// you have to attach it both places...
 			// http://www.opengl.org/wiki/GL_EXT_framebuffer_object
 
-			// bind the RBO to the GL_RENDERBUFFER_EXT target - is this extraneous ?
-			//glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, tex->m_rboName );
+			// bind the RBO to the GL_RENDERBUFFER target - is this extraneous ?
+			//glBindRenderbufferEXT( GL_RENDERBUFFER, tex->m_rboName );
 			
-			// attach the GL_RENDERBUFFER_EXT target to the depth and stencil attach points
-			gGL->glFramebufferRenderbufferEXT( GL_READ_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, tex->m_rboName);						
+			// attach the GL_RENDERBUFFER target to the depth and stencil attach points
+			gGL->glFramebufferRenderbuffer( GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, tex->m_rboName);						
 				
-			gGL->glFramebufferRenderbufferEXT( GL_READ_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, tex->m_rboName);
+			gGL->glFramebufferRenderbuffer( GL_READ_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, tex->m_rboName);
 
 			// no need to leave the RBO hanging on
-			//glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, 0 );
+			//glBindRenderbufferEXT( GL_RENDERBUFFER, 0 );
 		}
 		else
 		{
-			//glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, tex->m_rboName );
+			//glBindRenderbufferEXT( GL_RENDERBUFFER, tex->m_rboName );
 			
-			gGL->glFramebufferRenderbufferEXT( GL_READ_FRAMEBUFFER_EXT, attachIndexGL, GL_RENDERBUFFER_EXT, tex->m_rboName);
+			gGL->glFramebufferRenderbuffer( GL_READ_FRAMEBUFFER, attachIndexGL, GL_RENDERBUFFER, tex->m_rboName);
 
-			//glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, 0 );
+			//glBindRenderbufferEXT( GL_RENDERBUFFER, 0 );
 		}
 
 		gGL->glReadBuffer( attachIndexGL );
@@ -1623,19 +1617,19 @@ void GLMContext::ResolveTex( CGLMTex *tex, bool forceDirty )
 		// put tex->m_texName on the draw FBO attachment
 
 		//	set the write fb and buffer, and attach write tex
-		BindFBOToCtx( m_blitDrawFBO, GL_DRAW_FRAMEBUFFER_EXT );
+		BindFBOToCtx( m_blitDrawFBO, GL_DRAW_FRAMEBUFFER );
 
 		// regular path - attaching a texture2d
 		
-		if (attachIndexGL==GL_DEPTH_STENCIL_ATTACHMENT_EXT)
+		if (attachIndexGL==GL_DEPTH_STENCIL_ATTACHMENT)
 		{
-			gGL->glFramebufferTexture2DEXT( GL_DRAW_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, tex->m_texName, 0 );
+			gGL->glFramebufferTexture2D( GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, tex->m_texName, 0 );
 
-			gGL->glFramebufferTexture2DEXT( GL_DRAW_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_TEXTURE_2D, tex->m_texName, 0 );
+			gGL->glFramebufferTexture2D( GL_DRAW_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, tex->m_texName, 0 );
 		}
 		else
 		{
-			gGL->glFramebufferTexture2DEXT( GL_DRAW_FRAMEBUFFER_EXT, attachIndexGL, GL_TEXTURE_2D, tex->m_texName, 0 );
+			gGL->glFramebufferTexture2D( GL_DRAW_FRAMEBUFFER, attachIndexGL, GL_TEXTURE_2D, tex->m_texName, 0 );
 		}
 
 		gGL->glDrawBuffer( attachIndexGL );
@@ -1643,7 +1637,7 @@ void GLMContext::ResolveTex( CGLMTex *tex, bool forceDirty )
 		//-----------------------------------------------------------------------------------
 
 		// blit
-		gGL->glBlitFramebufferEXT(	0, 0,	tex->m_layout->m_key.m_xSize, tex->m_layout->m_key.m_ySize,
+		gGL->glBlitFramebuffer(	0, 0,	tex->m_layout->m_key.m_xSize, tex->m_layout->m_key.m_ySize,
 								0, 0,	tex->m_layout->m_key.m_xSize, tex->m_layout->m_key.m_ySize,
 								blitMask, GL_NEAREST );
 			// or should it be GL_LINEAR?  does it matter ?
@@ -1654,38 +1648,37 @@ void GLMContext::ResolveTex( CGLMTex *tex, bool forceDirty )
 
 
 		//	unset the read fb and buffer, detach read RBO
-		//glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, 0 );
+		//glBindRenderbufferEXT( GL_RENDERBUFFER, 0 );
 
-		if (attachIndexGL==GL_DEPTH_STENCIL_ATTACHMENT_EXT)
+		if (attachIndexGL==GL_DEPTH_STENCIL_ATTACHMENT)
 		{
-			// detach the GL_RENDERBUFFER_EXT target from the depth and stencil attach points
-			gGL->glFramebufferRenderbufferEXT( GL_READ_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, 0);						
-				
-			gGL->glFramebufferRenderbufferEXT( GL_READ_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, 0);
+			// detach the GL_RENDERBUFFER target from the depth and stencil attach points
+			gGL->glFramebufferRenderbuffer( GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
+			gGL->glFramebufferRenderbuffer( GL_READ_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, 0);
 		}
 		else
 		{
-			gGL->glFramebufferRenderbufferEXT( GL_READ_FRAMEBUFFER_EXT, attachIndexGL, GL_RENDERBUFFER_EXT, 0);
+			gGL->glFramebufferRenderbuffer( GL_READ_FRAMEBUFFER, attachIndexGL, GL_RENDERBUFFER, 0);
 		}
 
 		//-----------------------------------------------------------------------------------
 		//	unset the write fb and buffer, detach write tex
 		
 
-		if (attachIndexGL==GL_DEPTH_STENCIL_ATTACHMENT_EXT)
+		if (attachIndexGL==GL_DEPTH_STENCIL_ATTACHMENT)
 		{
-			gGL->glFramebufferTexture2DEXT( GL_DRAW_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, 0, 0 );
+			gGL->glFramebufferTexture2D( GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, 0, 0 );
 
-			gGL->glFramebufferTexture2DEXT( GL_DRAW_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_TEXTURE_2D, 0, 0 );
+			gGL->glFramebufferTexture2D( GL_DRAW_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, 0, 0 );
 		}
 		else
 		{
-			gGL->glFramebufferTexture2DEXT( GL_DRAW_FRAMEBUFFER_EXT, attachIndexGL, GL_TEXTURE_2D, 0, 0 );
+			gGL->glFramebufferTexture2D( GL_DRAW_FRAMEBUFFER, attachIndexGL, GL_TEXTURE_2D, 0, 0 );
 		}
 
 		//	put the original FB back in place (both read and draw)
 		// this bind will hit both read and draw bindings
-		BindFBOToCtx( m_drawingFBO, GL_FRAMEBUFFER_EXT );
+		BindFBOToCtx( m_drawingFBO, GL_FRAMEBUFFER );
 		
 		//	set the read and write buffers back to... what ? does it matter for anything but copies ?  don't worry about it
 		
@@ -1740,9 +1733,7 @@ void GLMContext::PreloadTex( CGLMTex *tex, bool force )
 	if ( !preloadPair->m_valid )
 	{
 		if ( !preloadPair->ValidateProgramPair() )
-		{
 			return;
-		}
 	}
 
 	gGL->glUseProgram( (GLuint)preloadPair->m_program );
@@ -1795,7 +1786,7 @@ void GLMContext::PreloadTex( CGLMTex *tex, bool force )
 
 	gGL->glVertexAttribPointer( 0, 3, GL_FLOAT, 0, 0, posns );
 
-	gGL->glDrawRangeElements( GL_TRIANGLES, 0, 3, 3, GL_UNSIGNED_INT, indices);
+	gGL->glDrawRangeElements( GL_TRIANGLES, 0, 2, 3, GL_UNSIGNED_INT, indices);
 
 	gGL->glDisableVertexAttribArray( 0 );
 	
@@ -1830,13 +1821,13 @@ void GLMContext::DelFBO( CGLMFBO *fbo )
 	
 	if (m_boundReadFBO == fbo )
 	{
-		BindFBOToCtx( NULL, GL_READ_FRAMEBUFFER_EXT );
+		BindFBOToCtx( NULL, GL_READ_FRAMEBUFFER );
 		m_boundReadFBO = NULL;
 	}
 
 	if (m_boundDrawFBO == fbo )
 	{
-		BindFBOToCtx( NULL, GL_DRAW_FRAMEBUFFER_EXT );
+		BindFBOToCtx( NULL, GL_DRAW_FRAMEBUFFER );
 		m_boundDrawFBO = NULL;
 	}
 
@@ -2272,47 +2263,17 @@ void GLMContext::Present( CGLMTex *tex )
 
 		ProcessTextureDeletes();
 
-#ifdef HAVE_GL_ARB_SYNC
-
-		if ( gGL->m_bHave_GL_AMD_pinned_memory )
-		{
-			m_PinnedMemoryBuffers[m_nCurPinnedMemoryBuffer].InsertFence();
-			
-			m_nCurPinnedMemoryBuffer = ( m_nCurPinnedMemoryBuffer + 1 ) % cNumPinnedMemoryBuffers;
-			
-			m_PinnedMemoryBuffers[m_nCurPinnedMemoryBuffer].BlockUntilNotBusy();
-			
-			gGL->glBindBufferARB( GL_EXTERNAL_VIRTUAL_MEMORY_BUFFER_AMD, m_PinnedMemoryBuffers[m_nCurPinnedMemoryBuffer].GetHandle() );
-		}
-
-		if ( gGL->m_bHave_GL_ARB_buffer_storage )
-		{
-			for (uint lpType = 0; lpType < kGLMNumBufferTypes; ++lpType)
-			{
-				m_persistentBuffer[m_nCurPersistentBuffer][lpType].InsertFence();
-			}
-
-			m_nCurPersistentBuffer = ( m_nCurPersistentBuffer + 1 ) % cNumPersistentBuffers;
-
-			for (uint lpType = 0; lpType < kGLMNumBufferTypes; ++lpType)
-			{
-				m_persistentBuffer[m_nCurPersistentBuffer][lpType].BlockUntilNotBusy();
-			}
-		}
-
-#endif // HAVE_GL_ARB_SYNC
-					
 		bool newRefreshMode = false;
 		// two ways to go:
-	
+
 		// old school, do the resolve, had the tex down to cocoamgr to actually blit.
 		// that way is required if you are not in one-context mode (10.5.8)
-	
+
 		if ( (gl_blitmode.GetInt() != 0) )
 		{
 			newRefreshMode = true;
 		}
-	
+
 		// this is the path whether full screen or windowed... we always blit.
 		CShowPixelsParams showparams;
 		memset( &showparams, 0, sizeof(showparams) );
@@ -2378,13 +2339,13 @@ void GLMContext::Present( CGLMTex *tex )
 				// we set showparams.m_noBlit, and just let CocoaMgr handle the swap (flushbuffer / page flip)
 				showparams.m_noBlit = true;
 
-				BindFBOToCtx( NULL, GL_FRAMEBUFFER_EXT );
+				BindFBOToCtx( NULL, GL_FRAMEBUFFER );
 			}
 			else
 			{
 				ResolveTex( tex, true );	// dxabstract used to do this unconditionally.we still do if new refresh mode doesn't engage.
 
-				BindFBOToCtx( NULL, GL_FRAMEBUFFER_EXT );
+				BindFBOToCtx( NULL, GL_FRAMEBUFFER );
 
 				// showparams.m_noBlit is left set to 0.  CocoaMgr does the blit.
 			}
@@ -2394,7 +2355,7 @@ void GLMContext::Present( CGLMTex *tex )
 
 		//	put the original FB back in place (both read and draw)
 		// this bind will hit both read and draw bindings
-		BindFBOToCtx( m_drawingFBO, GL_FRAMEBUFFER_EXT );
+		BindFBOToCtx( m_drawingFBO, GL_FRAMEBUFFER );
 
 		// put em back !!
 		m_ScissorEnable.Flush();	
@@ -2490,19 +2451,6 @@ GLMContext::GLMContext( IDirect3DDevice9 *pDevice, GLMDisplayParams *params )
 
 	ClearCurAttribs();
 
-#ifndef OSX
-	m_nCurPinnedMemoryBuffer = 0;
-	if ( gGL->m_bHave_GL_AMD_pinned_memory )
-	{
-		for ( uint t = 0; t < cNumPinnedMemoryBuffers; t++ )
-		{
-			m_PinnedMemoryBuffers[t].Init( GLMGR_PINNED_MEMORY_BUFFER_SIZE );
-		}
-
-		gGL->glBindBufferARB( GL_EXTERNAL_VIRTUAL_MEMORY_BUFFER_AMD, m_PinnedMemoryBuffers[m_nCurPinnedMemoryBuffer].GetHandle() );
-	}
-#endif // OSX
-
 	m_nCurPersistentBuffer = 0;
 	if ( gGL->m_bHave_GL_ARB_buffer_storage )
 	{
@@ -2569,9 +2517,9 @@ GLMContext::GLMContext( IDirect3DDevice9 *pDevice, GLMDisplayParams *params )
 	IncrementWindowRefCount();
 
 	// If we're using GL_ARB_debug_output, go ahead and setup the callback here.
-	if ( gGL->m_bHave_GL_ARB_debug_output && CommandLine()->FindParm( "-gl_debug" ) ) 
+	if ( CommandLine()->FindParm( "-gl_debug" ) ) 
 	{
-#if GLMDEBUG
+//#if GLMDEBUG
 		// Turning this on is a perf loss, but it ensures that you can (at least) swap to the other 
 		// threads to see what call is currently being made.
 		// Note that if the driver is in multithreaded mode, you can put it back into singlethreaded mode
@@ -2585,16 +2533,16 @@ GLMContext::GLMContext( IDirect3DDevice9 *pDevice, GLMDisplayParams *params )
 		printf( "GLMContext::GLMContext: GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB enabled!\n" );
 #endif
 
-#endif
+		// TODO(nillerusr): rewrite me!!!
 		// This should be there if we get in here--make sure.
-		Assert(gGL->glDebugMessageControlARB);
-		gGL->glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, (const GLuint *)NULL, GL_TRUE);
+		gGL->glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, (const GLuint *)NULL, GL_TRUE);
 
 		// Gonna filter these out, they're "chatty".
-		gGL->glDebugMessageControlARB(GL_DEBUG_SOURCE_API_ARB, GL_DEBUG_TYPE_OTHER_ARB, GL_DEBUG_SEVERITY_LOW_ARB, 0, (const GLuint *)NULL, GL_FALSE);
-		gGL->glDebugMessageCallbackARB(GL_Debug_Output_Callback, (void*)NULL);
+		gGL->glDebugMessageControl(GL_DEBUG_SOURCE_API_ARB, GL_DEBUG_TYPE_OTHER_ARB, GL_DEBUG_SEVERITY_LOW_ARB, 0, (const GLuint *)NULL, GL_FALSE);
+		gGL->glDebugMessageCallback(GL_Debug_Output_Callback, (void*)NULL);
 
 		GLMDebugPrintf( "GLMContext::GLMContext: Debug output (gl_arb_debug_output) enabled!\n" );
+//#endif
 	}
 
 
@@ -2741,10 +2689,10 @@ GLMContext::GLMContext( IDirect3DDevice9 *pDevice, GLMDisplayParams *params )
 	// Create a PBO that we can use to fill textures with bogus data asyncronously.
 	m_nBoundGLBuffer[ kGLMPixelBuffer ] = 0;
 
-	gGL->glGenBuffersARB( 1, &m_destroyPBO );
-	gGL->glBindBufferARB( GL_PIXEL_UNPACK_BUFFER_ARB, m_destroyPBO );
-	gGL->glBufferDataARB( GL_PIXEL_UNPACK_BUFFER_ARB, sizeof( g_garbageTextureBits ), g_garbageTextureBits, GL_STATIC_DRAW );
-	gGL->glBindBufferARB( GL_PIXEL_UNPACK_BUFFER_ARB, m_nBoundGLBuffer[ kGLMPixelBuffer ] );
+	gGL->glGenBuffers( 1, &m_destroyPBO );
+	gGL->glBindBuffer( GL_PIXEL_UNPACK_BUFFER, m_destroyPBO );
+	gGL->glBufferData( GL_PIXEL_UNPACK_BUFFER, sizeof( g_garbageTextureBits ), g_garbageTextureBits, GL_STATIC_DRAW );
+	gGL->glBindBuffer( GL_PIXEL_UNPACK_BUFFER, m_nBoundGLBuffer[ kGLMPixelBuffer ] );
 
 	// Create a bunch of texture names for us to use forever and ever ramen.
 	FillTexCache( false, kGLMInitialTexCount );
@@ -2842,40 +2790,6 @@ void GLMContext::Reset()
 
 GLMContext::~GLMContext	()
 {
-#ifndef OSX
-	GLMGPUTimestampManagerDeinit();
-		
-	for ( uint t = 0; t < cNumPinnedMemoryBuffers; t++ )
-	{
-		m_PinnedMemoryBuffers[t].Deinit();
-	}
-
-	if (gGL->m_bHave_GL_ARB_buffer_storage)
-	{
-		for (uint lpType = 0; lpType < kGLMNumBufferTypes; ++lpType)
-		{
-			for (uint lpNum = 0; lpNum < cNumPersistentBuffers; ++lpNum)
-			{
-				m_persistentBuffer[lpNum][lpType].Deinit();
-			}
-		}
-	}
-
-	if ( m_bUseSamplerObjects )
-	{
-		for( int i=0; i< GLM_SAMPLER_COUNT; i++)
-		{
-			gGL->glBindSampler( i, 0 );
-		}
-
-		for( int i=0; i< cSamplerObjectHashSize; i++)
-		{
-			gGL->glDeleteSamplers( 1, &m_samplerObjectHash[i].m_samplerObject );
-			m_samplerObjectHash[i].m_samplerObject = 0;
-		}
-	}
-#endif // !OSX
-
 	if (m_debugFontTex)
 	{
 		DelTex( m_debugFontTex );
@@ -2908,7 +2822,7 @@ GLMContext::~GLMContext	()
 
 	// m_texLayoutTable can be scrubbed once we know that all the tex are freed
 
-	gGL->glDeleteBuffersARB( 1, &m_destroyPBO );
+	gGL->glDeleteBuffers( 1, &m_destroyPBO );
 
 	PurgeTexCache();
 
@@ -2958,29 +2872,29 @@ void GLMContext::BindFBOToCtx( CGLMFBO *fbo, GLenum bindPoint )
 
 	CheckCurrent();
 
-	if ( bindPoint == GL_FRAMEBUFFER_EXT )
+	if ( bindPoint == GL_FRAMEBUFFER )
 	{
-		gGL->glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, fbo ? fbo->m_name : 0 );
+		gGL->glBindFramebuffer( GL_FRAMEBUFFER, fbo ? fbo->m_name : 0 );
 		m_boundReadFBO = fbo;
 		m_boundDrawFBO = fbo;
 		return;
 	}
 	
-	bool	targetRead = (bindPoint==GL_READ_FRAMEBUFFER_EXT);
-	bool	targetDraw = (bindPoint==GL_DRAW_FRAMEBUFFER_EXT);
+	bool	targetRead = (bindPoint==GL_READ_FRAMEBUFFER);
+	bool	targetDraw = (bindPoint==GL_DRAW_FRAMEBUFFER);
 			
 	if (targetRead)
 	{
 		if (fbo)	// you can pass NULL to go back to no-FBO
 		{
-			gGL->glBindFramebufferEXT( GL_READ_FRAMEBUFFER_EXT, fbo->m_name );
+			gGL->glBindFramebuffer( GL_READ_FRAMEBUFFER, fbo->m_name );
 			
 			m_boundReadFBO = fbo;
 			//dontcare fbo->m_bound = true;
 		}
 		else
 		{
-			gGL->glBindFramebufferEXT( GL_READ_FRAMEBUFFER_EXT, 0 );
+			gGL->glBindFramebuffer( GL_READ_FRAMEBUFFER, 0 );
 			
 			m_boundReadFBO = NULL;
 		}
@@ -2990,14 +2904,14 @@ void GLMContext::BindFBOToCtx( CGLMFBO *fbo, GLenum bindPoint )
 	{
 		if (fbo)	// you can pass NULL to go back to no-FBO
 		{
-			gGL->glBindFramebufferEXT( GL_DRAW_FRAMEBUFFER_EXT, fbo->m_name );
+			gGL->glBindFramebuffer( GL_DRAW_FRAMEBUFFER, fbo->m_name );
 			
 			m_boundDrawFBO = fbo;
 			//dontcare fbo->m_bound = true;
 		}
 		else
 		{
-			gGL->glBindFramebufferEXT( GL_DRAW_FRAMEBUFFER_EXT, 0 );
+			gGL->glBindFramebuffer( GL_DRAW_FRAMEBUFFER, 0 );
 			
 			m_boundDrawFBO = NULL;
 		}
@@ -3023,17 +2937,17 @@ void GLMContext::BindBufferToCtx( EGLMBufferType type, CGLMBuffer *pBuff, bool b
 	GLenum target = 0;
 	switch( type )
 	{	
-		case kGLMVertexBuffer:		target = GL_ARRAY_BUFFER_ARB;			break;
-		case kGLMIndexBuffer:		target = GL_ELEMENT_ARRAY_BUFFER_ARB;	break;
-		case kGLMUniformBuffer:		target = GL_UNIFORM_BUFFER_EXT;			break;
-		case kGLMPixelBuffer:		target = GL_PIXEL_UNPACK_BUFFER_ARB;	break;
+		case kGLMVertexBuffer:		target = GL_ARRAY_BUFFER;			break;
+		case kGLMIndexBuffer:		target = GL_ELEMENT_ARRAY_BUFFER;	break;
+		case kGLMUniformBuffer:		target = GL_UNIFORM_BUFFER;			break;
+		case kGLMPixelBuffer:		target = GL_PIXEL_UNPACK_BUFFER;	break;
 		default: Assert(!"Unknown buffer type" );
 	}
 			
 	Assert( !pBuff || ( pBuff->m_buffGLTarget == target ) );
 			
 	m_nBoundGLBuffer[type] = nGLName;
-	gGL->glBindBufferARB( target, nGLName );
+	gGL->glBindBuffer( target, nGLName );
 }
 
 
@@ -3079,7 +2993,7 @@ void GLMContext::CleanupTex( GLenum texBind, GLMTexLayout* pLayout, GLuint tex )
 	const GLuint oldPBO = m_nBoundGLBuffer[ kGLMPixelBuffer ];
 	const GLuint oldTex = ( m_samplers[ m_activeTexture ].m_pBoundTex != NULL ) ? m_samplers[ m_activeTexture ].m_pBoundTex->GetTexName() : 0;
 
-	gGL->glBindBufferARB( GL_PIXEL_UNPACK_BUFFER_ARB, m_destroyPBO );
+	gGL->glBindBuffer( GL_PIXEL_UNPACK_BUFFER, m_destroyPBO );
 	gGL->glBindTexture( texBind, tex );
 
 	// Clear out old data.
@@ -3101,7 +3015,7 @@ void GLMContext::CleanupTex( GLenum texBind, GLMTexLayout* pLayout, GLuint tex )
 	}
 
 	gGL->glBindTexture( texBind, oldTex );
-	gGL->glBindBufferARB( GL_PIXEL_UNPACK_BUFFER_ARB, oldPBO );
+	gGL->glBindBuffer( GL_PIXEL_UNPACK_BUFFER, oldPBO );
 }
 
 void GLMContext::DestroyTex( GLenum texBind, GLMTexLayout* pLayout, GLuint tex )
@@ -5366,7 +5280,7 @@ void GLMTester::StdSetup( void )
 	InternalError( !ready, "drawing FBO no go");
 
 	// bind it
-	ctx->BindFBOToCtx( m_drawFBO, GL_FRAMEBUFFER_EXT );
+	ctx->BindFBOToCtx( m_drawFBO, GL_FRAMEBUFFER );
 	
 	gGL->glViewport(0, 0, (GLsizei) m_drawWidth, (GLsizei) m_drawHeight );
 	CheckGLError("stdsetup viewport");
@@ -5386,7 +5300,7 @@ void GLMTester::StdCleanup( void )
 	GLMContext *ctx = m_params.m_ctx;	
 
 	// unbind
-	ctx->BindFBOToCtx( NULL, GL_FRAMEBUFFER_EXT );
+	ctx->BindFBOToCtx( NULL, GL_FRAMEBUFFER );
 	
 	// del FBO
 	if (m_drawFBO)
@@ -5456,10 +5370,10 @@ return;
 		const char	*decodedStr = GLMDecode( eGL_ERROR, errorcode );
 		const char	*decodedStr2 = "";
 				
-		if ( errorcode == GL_INVALID_FRAMEBUFFER_OPERATION_EXT )
+		if ( errorcode == GL_INVALID_FRAMEBUFFER_OPERATION )
 		{
 			// dig up the more detailed FBO status
-			errorcode2 = gGL->glCheckFramebufferStatusEXT( GL_FRAMEBUFFER_EXT );
+			errorcode2 = gGL->glCheckFramebufferStatus( GL_FRAMEBUFFER );
 			
 			decodedStr2 = GLMDecode( eGL_ERROR, errorcode2 );
 
@@ -5904,7 +5818,7 @@ void GLMTester::Test1( void )
 					printf("\n   -> %s\n", ready ? "pass" : "fail" );
 					
 					// unbind
-					ctx->BindFBOToCtx( NULL, GL_FRAMEBUFFER_EXT );
+					ctx->BindFBOToCtx( NULL, GL_FRAMEBUFFER );
 					
 					// del FBO
 					ctx->DelFBO(fbo);

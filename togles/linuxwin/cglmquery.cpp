@@ -26,7 +26,7 @@
 //
 //===============================================================================
 
-#include "togl/rendermechanism.h"
+#include "togles/rendermechanism.h"
 
 #ifndef _WIN32
 	#include <unistd.h>
@@ -77,7 +77,7 @@ CGLMQuery::CGLMQuery( GLMContext *ctx, GLMQueryParams *params )
 		case EOcclusion:
 		{
 			//make an occlusion query (and a fence to go with it)
-			gGL->glGenQueriesARB( 1, &m_name );
+			gGL->glGenQueries( 1, &m_name );
 			s_nTotalOcclusionQueryCreatesOrDeletes++;
 			GLMPRINTF(("-A-      CGLMQuery(OQ) created name %d", m_name));
 		}
@@ -114,7 +114,7 @@ CGLMQuery::~CGLMQuery()
 		{
 			// do a finish occlusion query ?
 			GLMPRINTF(("-A-      ~CGLMQuery(OQ) deleting name %d", m_name));
-			gGL->glDeleteQueriesARB(1, &m_name );
+			gGL->glDeleteQueries(1, &m_name );
 			s_nTotalOcclusionQueryCreatesOrDeletes++;
 		}
 		break;
@@ -163,7 +163,7 @@ void	CGLMQuery::Start( void )		// "start counting"
 			}
 			else
 			{
-				gGL->glBeginQueryARB( GL_SAMPLES_PASSED_ARB, m_name );
+				gGL->glBeginQuery( GL_SAMPLES_PASSED, m_name );
 			}
 		}
 		break;
@@ -204,7 +204,7 @@ void	CGLMQuery::Stop( void )			// "stop counting"
 			}
 			else
 			{
-				gGL->glEndQueryARB( GL_SAMPLES_PASSED_ARB );	// we are only putting the request-to-stop-counting into the cmd stream.
+				gGL->glEndQuery( GL_SAMPLES_PASSED );	// we are only putting the request-to-stop-counting into the cmd stream.
 			}
 		}
 		break;
@@ -240,7 +240,7 @@ bool	CGLMQuery::IsDone( void )
 					// prepare to pay a big price on drivers prior to 10.6.4+SLGU
 					
 					GLint available = 0;
-					gGL->glGetQueryObjectivARB(m_name, GL_QUERY_RESULT_AVAILABLE_ARB, &available );
+					gGL->glGetQueryObjectiv(m_name, GL_QUERY_RESULT_AVAILABLE, &available );
 					
 					m_done = (available != 0);					
 				}
@@ -301,7 +301,7 @@ void	CGLMQuery::Complete( uint *result )
 			}
 			else
 			{
-				gGL->glGetQueryObjectuivARB( m_name, GL_QUERY_RESULT_ARB, &resultval);
+				gGL->glGetQueryObjectuiv( m_name, GL_QUERY_RESULT, &resultval);
 				m_done = true;
 			}
 		}

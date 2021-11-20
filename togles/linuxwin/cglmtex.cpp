@@ -26,7 +26,7 @@
 //
 //===============================================================================
 
-#include "togl/rendermechanism.h"
+#include "togles/rendermechanism.h"
 
 #include "tier0/icommandline.h"
 #include "glmtexinlines.h"
@@ -777,11 +777,11 @@ CGLMTex::CGLMTex( GLMContext *ctx, GLMTexLayout *layout, uint levels, const char
 	// if tex is MSAA renderable, make an RBO, else zero the RBO name and dirty bit
 	if (layout->m_key.m_texFlags & kGLMTexMultisampled)
 	{
-		gGL->glGenRenderbuffersEXT( 1, &m_rboName );
+		gGL->glGenRenderbuffers( 1, &m_rboName );
 				
 		// so we have enough info to go ahead and bind the RBO and put storage on it?
 		// try it.
-		gGL->glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, m_rboName );
+		gGL->glBindRenderbuffer( GL_RENDERBUFFER, m_rboName );
 
 		// quietly clamp if sample count exceeds known limit for the device
 		int sampleCount = layout->m_key.m_texSamples;
@@ -792,7 +792,7 @@ CGLMTex::CGLMTex( GLMContext *ctx, GLMTexLayout *layout, uint levels, const char
 		}
 		
 		GLenum	msaaFormat = (layout->m_key.m_texFlags & kGLMTexSRGB) ? layout->m_format->m_glIntFormatSRGB : layout->m_format->m_glIntFormat;
-		gGL->glRenderbufferStorageMultisampleEXT(	GL_RENDERBUFFER_EXT,
+		gGL->glRenderbufferStorageMultisample(	GL_RENDERBUFFER,
 												sampleCount,	// not "layout->m_key.m_texSamples"
 												msaaFormat,
 												layout->m_key.m_xSize,
@@ -803,7 +803,7 @@ CGLMTex::CGLMTex( GLMContext *ctx, GLMTexLayout *layout, uint levels, const char
 			printf( "\n == MSAA Tex %p %s : MSAA RBO is intformat %s (%x)", this, m_debugLabel?m_debugLabel:"", GLMDecode( eGL_ENUM, msaaFormat ), msaaFormat );
 		}
 
-		gGL->glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, 0 );
+		gGL->glBindRenderbuffer( GL_RENDERBUFFER, 0 );
 	}
 	else
 	{
@@ -1013,7 +1013,7 @@ CGLMTex::~CGLMTex( )
 
 	if ( m_rboName )
 	{
-		gGL->glDeleteRenderbuffersEXT( 1, &m_rboName );
+		gGL->glDeleteRenderbuffers( 1, &m_rboName );
 		m_rboName = 0;
 	}
 
@@ -1120,7 +1120,7 @@ void CGLMTex::ReadTexels( GLMTexLockDesc *desc, bool readWholeSlice )
 	{
 		readBox = desc->m_req.m_region;
 	}
-	
+
 	CGLMTex *pPrevTex = m_ctx->m_samplers[0].m_pBoundTex;
 	m_ctx->BindTexToTMU( this, 0 );		// SelectTMU(n) is a side effect
 
@@ -1135,8 +1135,9 @@ void CGLMTex::ReadTexels( GLMTexLockDesc *desc, bool readWholeSlice )
 		
 		void *sliceAddress = m_backing + m_layout->m_slices[ desc->m_sliceIndex ].m_storageOffset;	// this would change for PBO
 		//int sliceSize = m_layout->m_slices[ desc->m_sliceIndex ].m_storageSize;
-		
+
 		// interestingly enough, we can use the same path for both 2D and 3D fetch
+		
 		
 		switch( target )
 		{
@@ -1153,7 +1154,7 @@ void CGLMTex::ReadTexels( GLMTexLockDesc *desc, bool readWholeSlice )
 				{
 					// compressed path
 					// http://www.opengl.org/sdk/docs/man/xhtml/glGetCompressedTexImage.xml
-					
+
 					gGL->glGetCompressedTexImage(	target,					// target
 												desc->m_req.m_mip,		// level
 												sliceAddress );			// destination
@@ -1162,15 +1163,50 @@ void CGLMTex::ReadTexels( GLMTexLockDesc *desc, bool readWholeSlice )
 				{
 					// uncompressed path
 					// http://www.opengl.org/sdk/docs/man/xhtml/glGetTexImage.xml
+					GLuint fbo;
+					GLint Rfbo = 0, Dfbo = 0;
+
+					gGL->glGetIntegerv( GL_DRAW_FRAMEBUFFER_BINDING, &Dfbo );
+					gGL->glGetIntegerv( GL_READ_FRAMEBUFFER_BINDING, &Rfbo );
+
+					/*
+					gl4es_glGenFramebuffers(1, &fbo);
+					gl4es_glBindFramebuffer(GL_FRAMEBUFFER_OES, fbo);
+				    gl4es_glFramebufferTexture2D(GL_FRAMEBUFFER_OES, GL_COLOR_ATTACHMENT0_OES, GL_TEXTURE_2D, oldBind, 0);
+					// Read the pixels!
+					gl4es_glReadPixels(0, nheight-height, width, height, format, type, img);    // using "full" version with conversion of format/type
+					gl4es_glBindFramebuffer(GL_FRAMEBUFFER_OES, old_fbo);
+					gl4es_glDeleteFramebuffers(1, &fbo);
+
+					 */
 					
+					gGL->glGenFramebuffers(1, &fbo);
+					gGL->glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+					gGL->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_ctx->m_samplers[0].m_pBoundTex->m_texName, 0);
+
+					uint fmt = format->m_glDataFormat;
+					if( fmt == GL_BGR )
+						fmt = GL_RGB;
+					else if( fmt == GL_BGRA )
+						fmt = GL_RGBA;
+					
+					gGL->glReadPixels(0, 0, m_layout->m_slices[ desc->m_sliceIndex ].m_xSize, m_layout->m_slices[ desc->m_sliceIndex ].m_ySize, fmt , format->m_glDataType == GL_UNSIGNED_INT_8_8_8_8_REV ? GL_UNSIGNED_BYTE : format->m_glDataType, sliceAddress);
+
+					gGL->glBindFramebuffer(GL_READ_FRAMEBUFFER, Rfbo);
+					gGL->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, Dfbo);
+
+					gGL->glDeleteFramebuffers(1, &fbo);
+
+#if 0
 					gGL->glGetTexImage(			target,						// target
 											desc->m_req.m_mip,			// level
 											format->m_glDataFormat,		// dataformat
 											format->m_glDataType,		// datatype
 											sliceAddress );				// destination
+#endif
 				}
 			}
-			break;				
+			break;
 		}
 	}
 	else
@@ -1238,10 +1274,10 @@ void CGLMTex::WriteTexels( GLMTexLockDesc *desc, bool writeWholeSlice, bool noDa
 
 	// allow use of subimage if the target is texture2D and it has already been teximage'd
 	bool mayUseSubImage = false;
-	if ( (target==GL_TEXTURE_2D) && (m_sliceFlags[ desc->m_sliceIndex ] & kSliceValid) )
-	{
-		mayUseSubImage = gl_enabletexsubimage.GetInt() != 0;
-	}
+	//if ( (target==GL_TEXTURE_2D) && (m_sliceFlags[ desc->m_sliceIndex ] & kSliceValid) )
+	//{
+	//	mayUseSubImage = gl_enabletexsubimage.GetInt() != 0;
+	//}
 			
 	// check flavor, 2D, 3D, or cube map
 	// we also have the choice to use subimage if this is a tex already created. (open question as to benefit)
@@ -1262,7 +1298,7 @@ void CGLMTex::WriteTexels( GLMTexLockDesc *desc, bool writeWholeSlice, bool noDa
 	if (m_layout->m_key.m_texFlags & kGLMTexSRGB)
 	{
 		Assert( m_layout->m_format->m_glDataFormat != GL_DEPTH_COMPONENT );
-		Assert( m_layout->m_format->m_glDataFormat != GL_DEPTH_STENCIL_EXT );
+		Assert( m_layout->m_format->m_glDataFormat != GL_DEPTH_STENCIL );
 		Assert( m_layout->m_format->m_glDataFormat != GL_ALPHA );
 	}
 	
@@ -1366,14 +1402,14 @@ void CGLMTex::WriteTexels( GLMTexLockDesc *desc, bool writeWholeSlice, bool noDa
 					gGL->glPixelStorei( GL_UNPACK_SKIP_PIXELS, writeBox.xmin );		// in pixels
 					gGL->glPixelStorei( GL_UNPACK_SKIP_ROWS, writeBox.ymin );		// in pixels
 
-					gGL->glTexSubImage2D(	target,
+					gGL->glTexSubImage2D(	glDataFormat,
 										desc->m_req.m_mip,				// level
 										writeBox.xmin,					// xoffset into dest
 										writeBox.ymin,					// yoffset into dest
 										writeBox.xmax - writeBox.xmin,	// width	(was slice->m_xSize)
 										writeBox.ymax - writeBox.ymin,	// height	(was slice->m_ySize)
 										glDataFormat,					// format
-										glDataType,						// type
+										glDataType == GL_UNSIGNED_INT_8_8_8_8_REV ? GL_UNSIGNED_BYTE : glDataType,						// type
 										sliceAddress					// data (will be offsetted by the SKIP_PIXELS and SKIP_ROWS - let GL do the math to find the first source texel)
 										);					
 
@@ -1413,12 +1449,12 @@ void CGLMTex::WriteTexels( GLMTexLockDesc *desc, bool writeWholeSlice, bool noDa
 					// http://www.opengl.org/documentation/specs/man_pages/hardcopy/GL/html/gl/teximage2d.html
 					gGL->glTexImage2D(			target,						// target
 											desc->m_req.m_mip,			// level
-											intformat,					// internalformat - don't use format->m_glIntFormat because we have the SRGB select going on above
+											glDataFormat,					// internalformat - don't use format->m_glIntFormat because we have the SRGB select going on above
 											slice->m_xSize,				// width
 											slice->m_ySize,				// height
 											0,							// border
 											glDataFormat,				// dataformat
-											glDataType,					// datatype
+											glDataType == GL_UNSIGNED_INT_8_8_8_8_REV ? GL_UNSIGNED_BYTE : glDataType,					// datatype
 											noDataWrite ? NULL : sliceAddress );	// data (optionally suppressed in case ResetSRGB desires)
 
 					if (m_layout->m_key.m_texFlags & kGLMTexMultisampled)

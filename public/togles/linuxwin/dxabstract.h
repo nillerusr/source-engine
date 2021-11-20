@@ -30,7 +30,7 @@
 
 #ifdef DX_TO_GL_ABSTRACTION
 
-#include "togl/rendermechanism.h"
+#include "togles/rendermechanism.h"
 
 #include "tier0/platform.h"
 #include "tier0/dbg.h"

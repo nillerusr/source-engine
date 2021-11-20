@@ -82,7 +82,13 @@ private:
 	bool	m_bGenerateSRGBWriteSuffix;	// set D3DToGL_OptionSRGBWriteSuffix
 	bool	m_bGenerateBoneUniformBuffer;
 	bool	m_bUseBindlessTexturing;
-		
+	bool	m_bFogFragCoord;
+	bool	m_bFrontSecondaryColor;
+	bool	m_bColor;
+	bool	m_bSecondaryColor;
+	bool	m_bFrontColor;
+
+
 	// Counter for dealing with nested loops
 	int m_nLoopDepth;
 
@@ -181,6 +187,7 @@ private:
 
 	// Have they used the tangent input semantic (i.e. is g_pTangentAttributeName declared)?
 	bool m_bTangentInputUsed;
+	uint m_iFragDataCount;
 
 	bool m_bUsesDSTInstruction;
 
