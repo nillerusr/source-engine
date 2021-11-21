@@ -891,9 +891,6 @@ CGLMTex::CGLMTex( GLMContext *ctx, GLMTexLayout *layout, uint levels, const char
 		{
 			printf("\n minimizing storage for tex '%s' [%s] ", m_debugLabel?m_debugLabel:"-", m_layout->m_layoutSummary );
 		}
-		
-		if (gGL->m_bHave_GL_APPLE_texture_range)
-			gGL->glTexParameteri( m_layout->m_key.m_texGLTarget, GL_TEXTURE_MINIMIZE_STORAGE_APPLE, 1 );
 	}
 
 	// after a lot of pain with texture completeness...
@@ -1359,10 +1356,6 @@ void CGLMTex::WriteTexels( GLMTexLockDesc *desc, bool writeWholeSlice, bool noDa
 	// set up the client storage now, one way or another
 	// If this extension isn't supported, we just end up with two copies of the texture, one in the GL and one in app memory.
 	//  So it's safe to just go on as if this extension existed and hold the possibly-unnecessary extra RAM.
-	if (gGL->m_bHave_GL_APPLE_client_storage)
-	{
-		gGL->glPixelStorei( GL_UNPACK_CLIENT_STORAGE_APPLE, m_texClientStorage );
-	}
 
 	switch( target )
 	{
@@ -1507,11 +1500,6 @@ void CGLMTex::WriteTexels( GLMTexLockDesc *desc, bool writeWholeSlice, bool noDa
 			}
 		}
 		break;
-	}
-
-	if (gGL->m_bHave_GL_APPLE_client_storage)
-	{
-		gGL->glPixelStorei( GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE );
 	}
 
 	if ( expandTemp )

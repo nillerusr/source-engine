@@ -915,7 +915,11 @@ bool CGame::CreateGameWindow( void )
 
 	if ( IsOpenGL() )
 	{
+#ifdef TOGLES
+		V_strcat( windowName, " - OpenGLES", sizeof( windowName ) );
+#else
 		V_strcat( windowName, " - OpenGL", sizeof( windowName ) );
+#endif
 	}
 
 #if PIX_ENABLE || defined( PIX_INSTRUMENTATION )

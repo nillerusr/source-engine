@@ -1456,22 +1456,22 @@ void GLMContext::BlitTex( CGLMTex *srcTex, GLMRect *srcRect, int srcFace, int sr
 
 		// immediate mode is fine
 
-		float topv = 1.0;
-		float botv = 0.0;
-		
-		gGL->glBegin(GL_QUADS);
-			gGL->glTexCoord2f	( 0.0, botv );
-			gGL->glVertex3f		( -1.0, -1.0, 0.0 );
-			
-			gGL->glTexCoord2f	( 1.0, botv );
-			gGL->glVertex3f		( 1.0, -1.0, 0.0 );
-			
-			gGL->glTexCoord2f	( 1.0, topv );
-			gGL->glVertex3f		( 1.0, 1.0, 0.0 );
+		const float topv = 1.0;
+		const float botv = 0.0;
 
-			gGL->glTexCoord2f	( 0.0, topv );
-			gGL->glVertex3f		( -1.0, 1.0, 0.0 );
-		gGL->glEnd();
+		const float verts[] = {-1.f, -1.f, 1.f, -1.f, 1.f, 1.f, -1.f, 1.f};
+		const float verts_tex[] = {0.f, botv, 1.f, botv, 1.f, topv, 0.f, topv};
+
+		gGL->glEnableClientState(GL_VERTEX_ARRAY);
+		gGL->glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+		gGL->glVertexPointer(2, GL_FLOAT, 0, verts);
+		gGL->glTexCoordPointer(2, GL_FLOAT, 0, verts_tex);
+
+		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+		gGL->glDisableClientState(GL_VERTEX_ARRAY);
+		gGL->glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
 		gGL->glBindTexture( GL_TEXTURE_2D, 0 );
 

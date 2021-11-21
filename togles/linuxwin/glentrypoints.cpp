@@ -379,18 +379,6 @@ COpenGLEntryPoints::COpenGLEntryPoints()
 	// !!! FIXME:  hint Apple's drivers and not because we rely on the
 	// !!! FIXME:  functionality. If so, just remove this check (and the
 	// !!! FIXME:  GL_NV_fence code entirely).
-#ifndef ANDROID // HACK
- 	if ((m_bHave_OpenGL) && ((!m_bHave_GL_NV_fence) && (!m_bHave_GL_ARB_sync) && (!m_bHave_GL_APPLE_fence)))
- 	{
- 	//	Error( "Required OpenGL extension \"GL_NV_fence\", \"GL_ARB_sync\", or \"GL_APPLE_fence\" is not supported. Please upgrade your OpenGL driver." );
- 	}
-#endif
-
-	// same extension, different name.
-	if (m_bHave_GL_EXT_vertex_array_bgra || m_bHave_GL_ARB_vertex_array_bgra)
-	{
-		m_bHave_GL_EXT_vertex_array_bgra = m_bHave_GL_ARB_vertex_array_bgra = true;
-	}
 
 	// GL_ARB_framebuffer_object is a superset of GL_EXT_framebuffer_object,
 	//  (etc) but if you don't call in through the ARB entry points, you won't
@@ -400,6 +388,7 @@ COpenGLEntryPoints::COpenGLEntryPoints()
 		m_bHave_GL_EXT_framebuffer_object = true;
 		m_bHave_GL_EXT_framebuffer_blit = true;
 		m_bHave_GL_EXT_framebuffer_multisample = true;
+		m_bHave_GL_ARB_occlusion_query = true;
 
 		glBindFramebuffer.Force(glBindFramebuffer.Pointer());
 		glBindRenderbuffer.Force(glBindRenderbuffer.Pointer());

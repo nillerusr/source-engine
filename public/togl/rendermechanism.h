@@ -22,6 +22,11 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //  THE SOFTWARE.
 //
+
+#ifdef TOGLES
+#include "togles/rendermechanism.h"
+#else
+
 #ifndef RENDERMECHANISM_H
 #define RENDERMECHANISM_H
 
@@ -71,3 +76,5 @@
 #endif // defined(DX_TO_GL_ABSTRACTION)
 
 #endif // RENDERMECHANISM_H
+
+#endif
