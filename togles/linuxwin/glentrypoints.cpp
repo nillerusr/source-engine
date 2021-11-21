@@ -448,12 +448,12 @@ COpenGLEntryPoints::COpenGLEntryPoints()
 	// So disable it for now.
 	if ( ( m_nDriverProvider == cGLDriverProviderAMD ) || CommandLine()->CheckParm( "-gl_disable_arb_buffer_storage" ) )
 	{
-		m_bHave_GL_ARB_buffer_storage = false;
+		m_bHave_GL_EXT_buffer_storage = false;
 	}
 
 	printf( "GL_NV_bindless_texture: %s\n", m_bHave_GL_NV_bindless_texture ? "ENABLED" : "DISABLED" );
 	printf( "GL_AMD_pinned_memory: %s\n", m_bHave_GL_AMD_pinned_memory ? "ENABLED" : "DISABLED" );
-	printf( "GL_ARB_buffer_storage: %s\n", m_bHave_GL_ARB_buffer_storage ? "AVAILABLE" : "NOT AVAILABLE" );
+	printf( "GL_EXT_buffer_storage: %s\n", m_bHave_GL_EXT_buffer_storage ? "AVAILABLE" : "NOT AVAILABLE" );
 	printf( "GL_EXT_texture_sRGB_decode: %s\n", m_bHave_GL_EXT_texture_sRGB_decode ? "AVAILABLE" : "NOT AVAILABLE" );
 
 	bool bGLCanDecodeS3TCTextures = m_bHave_GL_EXT_texture_compression_s3tc || ( m_bHave_GL_EXT_texture_compression_dxt1 && m_bHave_GL_ANGLE_texture_compression_dxt3 && m_bHave_GL_ANGLE_texture_compression_dxt5 );

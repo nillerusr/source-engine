@@ -2452,7 +2452,7 @@ GLMContext::GLMContext( IDirect3DDevice9 *pDevice, GLMDisplayParams *params )
 	ClearCurAttribs();
 
 	m_nCurPersistentBuffer = 0;
-	if ( gGL->m_bHave_GL_ARB_buffer_storage )
+	if ( gGL->m_bHave_GL_EXT_buffer_storage )
 	{
 		for ( uint lpType = 0; lpType < kGLMNumBufferTypes; ++lpType )
 		{

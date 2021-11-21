@@ -93,7 +93,7 @@ CPersistentBuffer::~CPersistentBuffer()
 
 void CPersistentBuffer::Init( EGLMBufferType type,uint nSize )
 {
-	Assert( gGL->m_bHave_GL_ARB_buffer_storage );
+	Assert( gGL->m_bHave_GL_EXT_buffer_storage );
 	Assert( gGL->m_bHave_GL_ARB_map_buffer_range );
 	
 	m_nSize		= nSize;
@@ -115,10 +115,10 @@ void CPersistentBuffer::Init( EGLMBufferType type,uint nSize )
 
 		// Create persistent immutable buffer that we will permanently map.  This buffer can be written from any thread (not just
 		// the renderthread)
-		gGL->glBufferStorage( m_buffGLTarget, m_nSize, (const GLvoid *)NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT ); // V_GL_REQ: GL_ARB_buffer_storage, GL_ARB_map_buffer_range, GL_VERSION_4_4
+		gGL->glBufferStorageEXT( m_buffGLTarget, m_nSize, (const GLvoid *)NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT ); // V_GL_REQ: GL_EXT_buffer_storage, GL_ARB_map_buffer_range, GL_VERSION_4_4
 
 		// Map the buffer for all of eternity.  Pointer can be used from multiple threads.
-		m_pImmutablePersistentBuf = gGL->glMapBufferRange( m_buffGLTarget, 0, m_nSize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT ); // V_GL_REQ: GL_ARB_map_buffer_range, GL_ARB_buffer_storage, GL_VERSION_4_4
+		m_pImmutablePersistentBuf = gGL->glMapBufferRange( m_buffGLTarget, 0, m_nSize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT ); // V_GL_REQ: GL_ARB_map_buffer_range, GL_EXT_buffer_storage, GL_VERSION_4_4
 		Assert( m_pImmutablePersistentBuf != NULL );
 	}
 }
@@ -687,7 +687,7 @@ void CGLMBuffer::Lock( GLMBuffLockParams *pParams, char **pAddressOut )
 	bool bUsingPersistentBuffer = false;
 
 	uint padding = 0;
-	if ( m_bDynamic && gGL->m_bHave_GL_ARB_buffer_storage )
+	if ( m_bDynamic && gGL->m_bHave_GL_EXT_buffer_storage )
 	{
 		// Compute padding to add to make sure the start offset is valid
 		CPersistentBuffer *pTempBuffer = m_pCtx->GetCurPersistentBuffer( m_type );
@@ -747,7 +747,7 @@ void CGLMBuffer::Lock( GLMBuffLockParams *pParams, char **pAddressOut )
 		}
 #endif
 	}
-	else if ( m_bDynamic && gGL->m_bHave_GL_ARB_buffer_storage && ( m_pCtx->GetCurPersistentBuffer( m_type )->GetBytesRemaining() >= ( pParams->m_nSize + padding ) ) )
+	else if ( m_bDynamic && gGL->m_bHave_GL_EXT_buffer_storage && ( m_pCtx->GetCurPersistentBuffer( m_type )->GetBytesRemaining() >= ( pParams->m_nSize + padding ) ) )
 	{
 		CPersistentBuffer *pTempBuffer = m_pCtx->GetCurPersistentBuffer( m_type );
 
