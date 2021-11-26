@@ -69,13 +69,13 @@ static char g_szShadow2D[] =
 	"vec2 p2 = suv.xy+vec2(0.0,invSize);\n"
 	"vec2 p3 = suv.xy+vec2(invSize,0.0);\n"
 	"vec2 p4 = suv.xy+vec2(invSize);\n"
-	"float d = texture2D(u_depthTex,p1).r;\n"
+	"float d = texture(u_depthTex,p1).r;\n"
 	"float r = float(d>suv.z);\n"
-	"d = texture2D(u_depthTex,p2).r;\n"
+	"d = texture(u_depthTex,p2).r;\n"
 	"float r2 = float(d>suv.z);\n"
-	"d = texture2D(u_depthTex,p3).r;\n"
+	"d = texture(u_depthTex,p3).r;\n"
 	"float r3 = float(d>suv.z);\n"
-	"d = texture2D(u_depthTex,p4).r;\n"
+	"d = texture(u_depthTex,p4).r;\n"
 	"float r4 = float(d>suv.z);\n"
 	"p1*=size;\n"
 	"float a = p1.y-floor(p1.y);\n"
@@ -955,7 +955,7 @@ void D3DToGL::PrintUsageAndIndexToString( uint32 dwToken, char* strUsageUsageInd
 //			if ( fSemanticFlags & SEMANTIC_OUTPUT )
 //				V_snprintf( strUsageUsageIndexName, nBufLen, dwUsageIndex != 0 ? "gl_BackColor" : "gl_FrontColor" );
 //			else
-			V_snprintf( strUsageUsageIndexName, nBufLen, dwUsageIndex != 0 ? "_gl_SecondaryColor" : "_gl_Color" );
+			V_snprintf( strUsageUsageIndexName, nBufLen, dwUsageIndex != 0 ? "_gl_FrontSecondaryColor" : "_gl_FrontColor" );
 			break;
 		case D3DDECLUSAGE_FOG:
 			TranslationError();
@@ -1220,7 +1220,7 @@ void D3DToGL::PrintParameterToString ( uint32 dwToken, uint32 dwSourceOrDest, ch
 				}
 				else
 				{
-					V_snprintf( buff, sizeof( buff ), dwRegNum == 0 ? "_gl_Color" : "_gl_SecondaryColor" );
+					V_snprintf( buff, sizeof( buff ), dwRegNum == 0 ? "_gl_FrontColor" : "_gl_FrontSecondaryColor" );
 				}
 				strcat_s( pRegisterName, nBufLen, buff );
 			}
@@ -1456,7 +1456,6 @@ void D3DToGL::PrintParameterToString ( uint32 dwToken, uint32 dwSourceOrDest, ch
 			m_dwConstIntUsageMask |= 0x00000001 << dwRegNum;		// Keep track of the use of this integer constant
 			break;
 		case D3DSPR_COLOROUT:
-			// TODO(nillerusr): go fck urself
 			if( dwRegNum+1 > m_iFragDataCount )
 				m_iFragDataCount = dwRegNum+1;
 
@@ -2546,7 +2545,7 @@ void D3DToGL::Handle_TEX( uint32 dwToken, bool bIsTexLDL )
 			V_snprintf( szExtra, sizeof( szExtra ), ".%c", GetSwizzleComponent( pSrc0Reg, 3 ) );
 			V_strncat( szLOD, szExtra, sizeof( szLOD ) );
 
-			PrintToBufWithIndents( *m_pBufALUCode, "%s = %s( %s, %s, %s );\n", pDestReg, bIsShadowSampler ? "shadow2DLod" : "texture2DLod", pSrc1Reg, sCoordVar.String(), szLOD );
+			PrintToBufWithIndents( *m_pBufALUCode, "%s = %s( %s, %s, %s );\n", pDestReg, bIsShadowSampler ? "shadow2DLod" : "textureLod", pSrc1Reg, sCoordVar.String(), szLOD );
 		}
 		else if ( bIsShadowSampler )
 		{
@@ -2564,12 +2563,12 @@ void D3DToGL::Handle_TEX( uint32 dwToken, bool bIsTexLDL )
 			// We use the vec4 variant of texture2DProj() intentionally here, since it lines up well with Direct3D.
 
 			CUtlString s4DProjCoords = EnsureNumSwizzleComponents( pSrc0Reg, 4 ); // Ensure vec4 variant
-			PrintToBufWithIndents( *m_pBufALUCode, "%s = texture2DProj( %s, %s );\n", pDestReg, pSrc1Reg, s4DProjCoords.String() );
+			PrintToBufWithIndents( *m_pBufALUCode, "%s = textureProj( %s, %s );\n", pDestReg, pSrc1Reg, s4DProjCoords.String() );
 		}
-		else				
+		else
 		{
 			CUtlString sCoordVar = EnsureNumSwizzleComponents( pSrc0Reg, bIsShadowSampler ? 3 : 2 );
-			PrintToBufWithIndents( *m_pBufALUCode, "%s = texture2D( %s, %s );\n", pDestReg, pSrc1Reg, sCoordVar.String() );
+			PrintToBufWithIndents( *m_pBufALUCode, "%s = texture( %s, %s );\n", pDestReg, pSrc1Reg, sCoordVar.String() );
 		}
 	}
 	else if ( nSamplerType == SAMPLER_TYPE_3D )
@@ -2580,7 +2579,7 @@ void D3DToGL::Handle_TEX( uint32 dwToken, bool bIsTexLDL )
 		}
 
 		CUtlString sCoordVar = EnsureNumSwizzleComponents( pSrc0Reg, 3 );
-		PrintToBufWithIndents( *m_pBufALUCode, "%s = texture3D( %s, %s );\n", pDestReg, pSrc1Reg, sCoordVar.String() );
+		PrintToBufWithIndents( *m_pBufALUCode, "%s = texture( %s, %s );\n", pDestReg, pSrc1Reg, sCoordVar.String() );
 	}
 	else if ( nSamplerType == SAMPLER_TYPE_CUBE )
 	{
@@ -2590,7 +2589,7 @@ void D3DToGL::Handle_TEX( uint32 dwToken, bool bIsTexLDL )
 		}
 
 		CUtlString sCoordVar = EnsureNumSwizzleComponents( pSrc0Reg, 3 );
-		PrintToBufWithIndents( *m_pBufALUCode, "%s = textureCube( %s, %s );\n", pDestReg, pSrc1Reg, sCoordVar.String() );
+		PrintToBufWithIndents( *m_pBufALUCode, "%s = texture( %s, %s );\n", pDestReg, pSrc1Reg, sCoordVar.String() );
 	}
 	else
 	{
@@ -3049,7 +3048,7 @@ void D3DToGL::WriteGLSLInputVariableAssignments()
 
 		if ( dwUsage == D3DDECLUSAGE_COLOR )
 		{
-			PrintToBufWithIndents( *m_pBufAttribCode, "vec4 oTempT%d = %s;\n", i, dwUsageIndex ? "_gl_SecondaryColor" : "_gl_Color" );
+			PrintToBufWithIndents( *m_pBufAttribCode, "vec4 oTempT%d = %s;\n", i, dwUsageIndex ? "_gl_FrontSecondaryColor" : "_gl_FrontColor" );
 		}
 		else if ( dwUsage == D3DDECLUSAGE_TEXCOORD )
 		{
@@ -3182,6 +3181,10 @@ int D3DToGL::TranslateShader( uint32* code, CUtlBuffer *pBufDisassembledCode, bo
 	m_bPutHexCodesAfterLines = (options & D3DToGL_PutHexCommentsAfterLines) != 0;
 	m_bGeneratingDebugText = (options & D3DToGL_GeneratingDebugText) != 0;
 	m_bGenerateSRGBWriteSuffix = (options & D3DToGL_OptionSRGBWriteSuffix) != 0;
+//	m_bGenerateSRGBWriteSuffix = true;
+
+	if( debugLabel && ( V_strstr( debugLabel ,"vertexlit_and_unlit_generic_bump_ps") ))
+		m_bGenerateSRGBWriteSuffix = true;
 
 	m_NumIndentTabs = 1; // start code indented one tab
 	m_nLoopDepth = 0;
@@ -3675,6 +3678,7 @@ int D3DToGL::TranslateShader( uint32* code, CUtlBuffer *pBufDisassembledCode, bo
 	}
 
 	// Control bit for sRGB Write suffix
+
 	if ( m_bGenerateSRGBWriteSuffix )
 	{
 		// R500 Hookup
@@ -3889,33 +3893,38 @@ int D3DToGL::TranslateShader( uint32* code, CUtlBuffer *pBufDisassembledCode, bo
 	{
 		StrcatToHeaderCode( g_szShadow2D );
 		StrcatToHeaderCode( g_szShadow2DProj );
-		
 	}
 	else if( FindSubcode("shadow2D") )
-		StrcatToHeaderCode( g_szShadow2D );		
-
-	if( FindSubcode("_gl_Color") )
-		StrcatToHeaderCode( "vec4 _gl_Color;\n" );
-
-	if( FindSubcode("_gl_SecondaryColor") )
-		StrcatToHeaderCode( "vec4 _gl_SecondaryColor;\n" );
+		StrcatToHeaderCode( g_szShadow2D );
 	
+	if( FindSubcode("_gl_FrontColor") && !m_bFrontColor )
+		StrcatToHeaderCode( "in vec4 _gl_FrontColor;\n" );
+
+	if( FindSubcode("_gl_FrontSecondaryColor") && !m_bFrontSecondaryColor )
+		StrcatToHeaderCode( "in vec4 _gl_FrontSecondaryColor;\n" );
+	
+	if( m_iFragDataCount && bVertexShader )
+		StrcatToHeaderCode( "\nuniform float alpha_ref;\n" );	
+
 	StrcatToHeaderCode( "\nvoid main()\n{\n" );
 	if ( m_bUsedAtomicTempVar )
 	{
 		PrintToBufWithIndents( *m_pBufHeaderCode, "vec4 %s;\n\n", g_pAtomicTempVarName );
 	}
-	
+
 	// sRGB Write suffix
 	if ( m_bGenerateSRGBWriteSuffix )
 	{
-		StrcatToALUCode( "vec3 sRGBFragData;\n" );
-		StrcatToALUCode( "sRGBFragData.xyz = log( gl_FragData[0].xyz );\n" );
-		StrcatToALUCode( "sRGBFragData.xyz = sRGBFragData.xyz * vec3( 0.454545f, 0.454545f, 0.454545f );\n" );
-		StrcatToALUCode( "sRGBFragData.xyz = exp( sRGBFragData.xyz );\n" );
-		StrcatToALUCode( "gl_FragData[0].xyz = mix( gl_FragData[0].xyz, sRGBFragData, flSRGBWrite );\n" );
+	//	StrcatToALUCode( "vec3 sRGBFragData;\n" );
+	//	StrcatToALUCode( "sRGBFragData.xyz = log( gl_FragData[0].xyz );\n" );
+	//	StrcatToALUCode( "sRGBFragData.xyz = sRGBFragData.xyz * vec3( 0.754545f, 0.754545f, 0.754545f );\n" );
+	//	StrcatToALUCode( "sRGBFragData.xyz = exp( sRGBFragData.xyz );\n" );
+		StrcatToALUCode( "gl_FragData[0].xyz = pow(gl_FragData[0].xyz, vec3(1.0/2.2));\n" );
 	}
 	
+	if( m_iFragDataCount && bVertexShader )
+		StrcatToALUCode( "if( gl_FragData[0].a < alpha_ref ) { discard; };\n" );
+
 	strcat_s( (char*)m_pBufALUCode->Base(), m_pBufALUCode->Size(), "}\n" );
 		
 	// Put all of the strings together for final program ( pHeaderCode + pAttribCode + pParamCode + pALUCode )

@@ -92,11 +92,11 @@ char g_preloadTexVertexProgramText[] = // Гроб гроб кладбище п�
 	"precision mediump float;\n"
 	"out vec4 otex;\n"
 	"void main()  \n"
-	"{  \n"
+	"{\n"
 	"vec4 pos = vec4( 0.1, 0.1, 0.1, 0.1 );\n"
 	"vec4 tex = vec4( 0.0, 0.0, 0.0, 0.0 );\n"
-	"  \n"
-	"gl_Position = pos;  \n"
+	"\n"
+	"gl_Position = pos;\n"
 	"otex = tex;  \n"
 	"}  \n"
 };
@@ -116,7 +116,7 @@ char g_preload2DTexFragmentProgramText[] =
 	"void main()  \n"
 	"{  \n"
 	"vec4 r0;  \n"
-	"r0 = texture2D( sampler15, otex.xy );  \n"
+	"r0 = texture( sampler15, otex.xy );  \n"
 	"_gl_FragColor = r0;	//discard;  \n"
 	"}  \n"
 };
@@ -137,7 +137,7 @@ char g_preload3DTexFragmentProgramText[] =
 	"void main()  \n"
 	"{  \n"
 	"vec4 r0;  \n"
-	"r0 = texture3D( sampler15, otex.xyz );  \n"
+	"r0 = texture( sampler15, otex.xyz );  \n"
 	"_gl_FragColor = vec4(0,0,0,0);	//discard;  \n"
 	"}  \n"
 };
@@ -157,7 +157,7 @@ char g_preloadCubeTexFragmentProgramText[] =
 	"void main()  \n"
 	"{  \n"
 	"vec4 r0;  \n"
-	"r0 = textureCube( sampler15, otex.xyz );  \n"
+	"r0 = texture( sampler15, otex.xyz );  \n"
 	"_gl_FragColor = r0;	//discard;  \n"
 	"}  \n"
 };
@@ -448,6 +448,20 @@ GLMgr::GLMgr()
 GLMgr::~GLMgr()
 {
 }
+
+extern void CompressedTexImage2D(GLenum target, GLint level, GLenum internalformat,
+                            GLsizei width, GLsizei height, GLint border,
+                            GLsizei imageSize, const GLvoid *data);
+
+extern void TexImage2D(GLenum target,
+					   GLint level,
+					   GLint internalformat,
+					   GLsizei width,
+					   GLsizei height,
+					   GLint border,
+					   GLenum format,
+					   GLenum type,
+					   const void * data);
 
 //===============================================================================
 
@@ -953,14 +967,6 @@ void GLMContext::Blit2( CGLMTex *srcTex, GLMRect *srcRect, int srcFace, int srcM
 	bool srcGamma = srcTex && ((srcTex->m_layout->m_key.m_texFlags & kGLMTexSRGB) != 0);
 	bool dstGamma = dstTex && ((dstTex->m_layout->m_key.m_texFlags & kGLMTexSRGB) != 0);
 
-	bool doPushPop = (srcGamma != dstGamma) && gl_radar7954721_workaround_mixed.GetInt() && m_caps.m_nv;		// workaround for cross gamma blit problems on NV
-		// ^^ need to re-check this on some post-10.6.3 build on NV to see if it was fixed
-
-	if (doPushPop)
-	{
-		gGL->glPushAttrib( 0 );
-	}
-	
 	//----------------------------------------------------------------- figure out the plan
 	
 	bool blitTwoStep = false;		// think positive
@@ -1052,8 +1058,8 @@ void GLMContext::Blit2( CGLMTex *srcTex, GLMRect *srcRect, int srcFace, int srcM
 		glAttachTex2DtoFBO	( GL_DRAW_FRAMEBUFFER, formatClass, srcTex->m_texName, 0 );
 
 		// set read and draw buffers appropriately		
-		gGL->glReadBuffer		( glAttachFromClass[formatClass] );
-		gGL->glDrawBuffer		( glAttachFromClass[formatClass] );
+		gGL->glReadBuffer( glAttachFromClass[formatClass] );
+		gGL->glDrawBuffers( 1, &glAttachFromClass[formatClass] );
 		
 		// blit#1 - to resolve to scratch
 		// implicitly means no scaling, thus will be done with NEAREST sampling
@@ -1117,10 +1123,12 @@ void GLMContext::Blit2( CGLMTex *srcTex, GLMRect *srcRect, int srcFace, int srcM
 	if (blitToBack)
 	{
 		// backbuffer is special - FBO0 is left out (either scrubbed already, or not used)
-		
-		BindFBOToCtx		( NULL, GL_DRAW_FRAMEBUFFER );
-		gGL->glDrawBuffer		( GL_BACK );
-		
+
+		BindFBOToCtx( NULL, GL_DRAW_FRAMEBUFFER );
+
+		GLenum bufs = GL_BACK;
+		gGL->glDrawBuffers( 1, &bufs );
+
 		yflip = true;
 	}
 	else
@@ -1201,12 +1209,6 @@ void GLMContext::Blit2( CGLMTex *srcTex, GLMRect *srcRect, int srcFace, int srcM
 	//	restore GLM drawing FBO
 	BindFBOToCtx( m_drawingFBO, GL_FRAMEBUFFER );
 	
-	if (doPushPop)
-	{
-		gGL->glPopAttrib( );
-	}
-	
-
 	//----------------------------------------------------------------- restore old scissor state
 	if (oldsciss.enable)
 	{
@@ -1256,39 +1258,6 @@ void GLMContext::BlitTex( CGLMTex *srcTex, GLMRect *srcRect, int srcFace, int sr
 		
 		GLMPRINTF(( "-D-       src tex layout is %s", srcTex->m_layout->m_layoutSummary ));
 		GLMPRINTF(( "-D-       dst tex layout is %s", dstTex->m_layout->m_layoutSummary ));
-	}
-
-	int pushed = 0;
-	uint pushmask = gl_radar7954721_workaround_maskval.GetInt();
-		//GL_COLOR_BUFFER_BIT
-		//| GL_CURRENT_BIT
-		//| GL_ENABLE_BIT
-		//| GL_FOG_BIT
-		//| GL_PIXEL_MODE_BIT
-		//| GL_SCISSOR_BIT
-		//| GL_STENCIL_BUFFER_BIT
-		//| GL_TEXTURE_BIT
-		//GL_VIEWPORT_BIT
-		//;
-	
-	if (gl_radar7954721_workaround_all.GetInt()!=0)
-	{
-		gGL->glPushAttrib( pushmask );
-		pushed++;
-	}
-	else
-	{
-		bool srcGamma = (srcTex->m_layout->m_key.m_texFlags & kGLMTexSRGB) != 0;
-		bool dstGamma = (dstTex->m_layout->m_key.m_texFlags & kGLMTexSRGB) != 0;
-
-		if (srcGamma != dstGamma)
-		{
-			if (gl_radar7954721_workaround_mixed.GetInt())
-			{
-				gGL->glPushAttrib( pushmask );
-				pushed++;
-			}
-		}
 	}
 
 	if (useBlitFB)
@@ -1354,8 +1323,7 @@ void GLMContext::BlitTex( CGLMTex *srcTex, GLMRect *srcRect, int srcFace, int sr
 		attparams.m_zslice	=	0;
 		m_blitReadFBO->TexAttach( &attparams, attachIndex, GL_READ_FRAMEBUFFER );
 
-		gGL->glReadBuffer( attachIndexGL );
-		
+		gGL->glDrawBuffers( 1, &attachIndexGL );
 
 		//	set the write fb and buffer, and attach write tex
 		BindFBOToCtx( m_blitDrawFBO, GL_DRAW_FRAMEBUFFER );
@@ -1366,7 +1334,7 @@ void GLMContext::BlitTex( CGLMTex *srcTex, GLMRect *srcRect, int srcFace, int sr
 		attparams.m_zslice	=	0;
 		m_blitDrawFBO->TexAttach( &attparams, attachIndex, GL_DRAW_FRAMEBUFFER );
 
-		gGL->glDrawBuffer( attachIndexGL );
+		gGL->glDrawBuffers( 1, &attachIndexGL );
 
 		//	do the blit
 		gGL->glBlitFramebuffer(	srcRect->xmin, srcRect->ymin, srcRect->xmax, srcRect->ymax,
@@ -1425,8 +1393,8 @@ void GLMContext::BlitTex( CGLMTex *srcTex, GLMRect *srcRect, int srcFace, int sr
 		attparams.m_zslice	=	0;
 		m_blitDrawFBO->TexAttach( &attparams, attachIndex, GL_DRAW_FRAMEBUFFER );
 
-		gGL->glDrawBuffer( attachIndexGL );
-		
+		gGL->glDrawBuffers( 1, &attachIndexGL );
+
 		// attempt to just set states directly the way we want them, then use the latched states to repair them afterward.
 		NullProgram();	// out of program mode
 		
@@ -1456,25 +1424,24 @@ void GLMContext::BlitTex( CGLMTex *srcTex, GLMRect *srcRect, int srcFace, int sr
 
 		// immediate mode is fine
 
+#if 0 // Does it needed?
 		const float topv = 1.0;
 		const float botv = 0.0;
 
 		const float verts[] = {-1.f, -1.f, 1.f, -1.f, 1.f, 1.f, -1.f, 1.f};
-		const float verts_tex[] = {0.f, botv, 1.f, botv, 1.f, topv, 0.f, topv};
-
-		gGL->glEnableClientState(GL_VERTEX_ARRAY);
-		gGL->glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
+		const float verts_tex[] = {0.f, botv, 1.f, botv, 1.f, topv, 0.f, topv};		
+		
 		gGL->glVertexPointer(2, GL_FLOAT, 0, verts);
 		gGL->glTexCoordPointer(2, GL_FLOAT, 0, verts_tex);
 
-		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+		gGL->glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
 		gGL->glDisableClientState(GL_VERTEX_ARRAY);
 		gGL->glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
+#endif
+		
 		gGL->glBindTexture( GL_TEXTURE_2D, 0 );
-
+		
 		gGL->glDisable(GL_TEXTURE_2D);
 
 		BindTexToTMU( m_samplers[0].m_pBoundTex, 0 );
@@ -1509,12 +1476,6 @@ void GLMContext::BlitTex( CGLMTex *srcTex, GLMRect *srcRect, int srcFace, int sr
 		BindFBOToCtx( m_drawingFBO, GL_FRAMEBUFFER );
 	}
 	
-	while(pushed)
-	{
-		gGL->glPopAttrib();
-		pushed--;
-	}
-
 	RestoreSavedColorMask();
 }
 
@@ -1632,7 +1593,7 @@ void GLMContext::ResolveTex( CGLMTex *tex, bool forceDirty )
 			gGL->glFramebufferTexture2D( GL_DRAW_FRAMEBUFFER, attachIndexGL, GL_TEXTURE_2D, tex->m_texName, 0 );
 		}
 
-		gGL->glDrawBuffer( attachIndexGL );
+		gGL->glDrawBuffers( 1, &attachIndexGL );
 
 		//-----------------------------------------------------------------------------------
 
@@ -2369,10 +2330,6 @@ void GLMContext::Present( CGLMTex *tex )
 	tmMessage( TELEMETRY_LEVEL2, TMMF_ICON_EXCLAMATION, "VS Uniform Calls: %u, VS Uniforms: %u|VS Uniform Bone Calls: %u, VS Bone Uniforms: %u|PS Uniform Calls: %u, PS Uniforms: %u", m_nTotalVSUniformCalls, m_nTotalVSUniformsSet, m_nTotalVSUniformBoneCalls, m_nTotalVSUniformsBoneSet, m_nTotalPSUniformCalls, m_nTotalPSUniformsSet );
 	m_nTotalVSUniformCalls = 0, m_nTotalVSUniformBoneCalls = 0, m_nTotalVSUniformsSet = 0, m_nTotalVSUniformsBoneSet = 0, m_nTotalPSUniformCalls = 0, m_nTotalPSUniformsSet = 0;
 #endif
-
-#ifndef OSX
-	GLMGPUTimestampManagerTick();
-#endif
 }
 
 //===============================================================================
@@ -2845,7 +2802,6 @@ void GLMContext::BindTexToTMU( CGLMTex *pTex, int tmu )
 		
 	if ( !pTex )
 	{
-		gGL->glBindTexture( GL_TEXTURE_1D, 0 );
 		gGL->glBindTexture( GL_TEXTURE_2D, 0 );
 		gGL->glBindTexture( GL_TEXTURE_3D, 0 );
 		gGL->glBindTexture( GL_TEXTURE_CUBE_MAP, 0 );
@@ -2853,7 +2809,6 @@ void GLMContext::BindTexToTMU( CGLMTex *pTex, int tmu )
 	else
 	{
 		const GLenum texGLTarget = pTex->m_texGLTarget;
-		if ( texGLTarget != GL_TEXTURE_1D ) gGL->glBindTexture( GL_TEXTURE_1D, 0 );
 		if ( texGLTarget != GL_TEXTURE_2D ) gGL->glBindTexture( GL_TEXTURE_2D, 0 );
 		if ( texGLTarget != GL_TEXTURE_3D ) gGL->glBindTexture( GL_TEXTURE_3D, 0 );
 		if ( texGLTarget != GL_TEXTURE_CUBE_MAP ) gGL->glBindTexture( GL_TEXTURE_CUBE_MAP, 0 );
@@ -3006,11 +2961,11 @@ void GLMContext::CleanupTex( GLenum texBind, GLMTexLayout* pLayout, GLuint tex )
 			const int dataSize = ( chunks * chunks ) * pLayout->m_format->m_bytesPerSquareChunk;
 			Assert( dataSize <= ( sizeof( uint32) * ARRAYSIZE( g_garbageTextureBits ) ) );
 
-			gGL->glCompressedTexImage2D( texBind, i, pLayout->m_format->m_glIntFormat, mipDim, mipDim, 0, dataSize, 0 );
+			CompressedTexImage2D( texBind, i, pLayout->m_format->m_glIntFormat, mipDim, mipDim, 0, dataSize, 0 );
 		}
 		else
 		{
-			gGL->glTexImage2D( texBind, i, pLayout->m_format->m_glIntFormat, mipDim, mipDim, 0, pLayout->m_format->m_glDataFormat, pLayout->m_format->m_glDataType, 0 );
+			TexImage2D( texBind, i, pLayout->m_format->m_glIntFormat, mipDim, mipDim, 0, pLayout->m_format->m_glDataFormat, pLayout->m_format->m_glDataType, 0 );
 		}
 	}
 
@@ -4412,8 +4367,7 @@ void GLMContext::DebugHook( GLMDebugHookInfo *info )
 			break;
 			
 			case 2:
-				short fakecolor[4] = { 0, 0, 0, 0 };
-				gGL->glColor4sv( fakecolor );	// break to OGLP
+				// What the fuck?
 			break;
 		}
 		// re-flush all GLM states so you can fiddle with them in the debugger. then run the batch again and spin..
@@ -4766,36 +4720,11 @@ void GLMContext::DrawDebugText( float x, float y, float z, float drawCharWidth, 
 	
 	gGL->glEnable(GL_TEXTURE_2D);
 
-	if (0)
-	{
-		gGL->glEnableClientState(GL_VERTEX_ARRAY);
-
-		gGL->glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		
-		gGL->glVertexPointer( 3, GL_FLOAT, sizeof( vtx[0] ), &vtx[0].x );
-		
-		gGL->glClientActiveTexture(GL_TEXTURE0);
-
-		gGL->glTexCoordPointer( 2, GL_FLOAT, sizeof( vtx[0] ), &vtx[0].u );
-	}
-	else
-	{
-		SetVertexAttributes( &vertSetup );
-	}
+	SetVertexAttributes( &vertSetup );
 
 	gGL->glDrawArrays( GL_QUADS, 0, stringlen * 4 );
 
-	// disable all the input streams
-	if (0)
-	{
-		gGL->glDisableClientState(GL_VERTEX_ARRAY);
-
-		gGL->glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	}
-	else
-	{
-		SetVertexAttributes( NULL );
-	}
+	SetVertexAttributes( NULL );
 
 	gGL->glDisable(GL_TEXTURE_2D);
 
@@ -5288,7 +5217,7 @@ void GLMTester::StdSetup( void )
 	gGL->glScissor( 0,0,  (GLsizei) m_drawWidth, (GLsizei) m_drawHeight );
 	CheckGLError("stdsetup scissor");
 
-	gGL->glOrtho( -1,1, -1,1, -1,1 );
+	//gGL->glOrtho( -1,1, -1,1, -1,1 );
 	CheckGLError("stdsetup ortho");
 	
 	// activate debug font
@@ -5331,7 +5260,7 @@ void GLMTester::Clear( void )
 	
 	gGL->glViewport(0, 0, (GLsizei) m_drawWidth, (GLsizei) m_drawHeight );
 	gGL->glScissor( 0,0,  (GLsizei) m_drawWidth, (GLsizei) m_drawHeight );
-	gGL->glOrtho( -1,1, -1,1, -1,1 );
+	//gGL->glOrtho( -1,1, -1,1, -1,1 );
 	CheckGLError("clearing viewport");
 
 	// clear to black
@@ -6000,7 +5929,9 @@ void GLMTester::Test3( void )
 void GLMTriggerDebuggerBreak()
 {
 	// we call an obscure GL function which we know has been breakpointed in the OGLP function list
-	static signed short nada[] = { -1,-1,-1,-1 };
-	gGL->glColor4sv( nada );
+
+// What the fuck is that?
+//	static signed short nada[] = { -1,-1,-1,-1 };
+//	gGL->glColor4sv( nada );
 }
 #endif

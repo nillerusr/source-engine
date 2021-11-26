@@ -263,7 +263,8 @@ public:
 	GLint					m_locVertexParams;		// "vc" per dx9asmtogl2 convention
 	GLint					m_locVertexBoneParams;	// "vcbones"
 	GLint					m_locVertexInteger0;	// "i0"
-			
+	GLint					m_locAlphaRef; // "alpha_ref"		
+	
 	enum { cMaxVertexShaderBoolUniforms = 4, cMaxFragmentShaderBoolUniforms = 1 };
 
 	GLint					m_locVertexBool[cMaxVertexShaderBoolUniforms];		// "b0", etc.

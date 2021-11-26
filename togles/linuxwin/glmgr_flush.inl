@@ -1,5 +1,7 @@
 // BE VERY VERY CAREFUL what you do in these function. They are extremely hot, and calling the wrong GL API's in here will crush perf. (especially on NVidia threaded drivers).
 
+#include "togles/linuxwin/glmgr.h"
+
 FORCEINLINE uint32 bitmix32(uint32 a)
 {
 	a -= (a<<6);
@@ -433,7 +435,6 @@ FORCEINLINE void GLMContext::FlushDrawStates( uint nStartIndex, uint nEndIndex, 
 		}
 	}
 
-
 	// see if VS uses i0, b0, b1, b2, b3.
 	// use a glUniform1i to set any one of these if active.  skip all of them if no dirties reported.
 	// my kingdom for the UBO extension!
@@ -476,6 +477,15 @@ FORCEINLINE void GLMContext::FlushDrawStates( uint nStartIndex, uint nEndIndex, 
 			}
 			m_programParamsI[kGLMVertexProgram].m_dirtySlotCount = 0;
 		}
+	}
+
+
+	if( m_pBoundPair->m_locAlphaRef )
+	{
+		if( !m_AlphaTestEnable.GetData().enable )
+			gGL->glUniform1f( m_pBoundPair->m_locAlphaRef, 0.0 );
+		else
+			gGL->glUniform1f( m_pBoundPair->m_locAlphaRef, m_AlphaTestFunc.GetData().ref );			
 	}
 
 	Assert( ( m_pDevice->m_streams[0].m_vtxBuffer && ( m_pDevice->m_streams[0].m_vtxBuffer->m_vtxBuffer == m_pDevice->m_vtx_buffers[0] ) ) || ( ( !m_pDevice->m_streams[0].m_vtxBuffer ) && ( m_pDevice->m_vtx_buffers[0] == m_pDevice->m_pDummy_vtx_buffer ) ) );

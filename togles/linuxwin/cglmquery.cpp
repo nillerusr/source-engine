@@ -239,8 +239,8 @@ bool	CGLMQuery::IsDone( void )
 				{
 					// prepare to pay a big price on drivers prior to 10.6.4+SLGU
 					
-					GLint available = 0;
-					gGL->glGetQueryObjectiv(m_name, GL_QUERY_RESULT_AVAILABLE, &available );
+					GLuint available = 0;
+					gGL->glGetQueryObjectuiv(m_name, GL_QUERY_RESULT_AVAILABLE, &available );
 					
 					m_done = (available != 0);					
 				}

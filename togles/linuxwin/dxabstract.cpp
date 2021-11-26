@@ -1201,8 +1201,8 @@ static void FillD3DCaps9( const GLMRendererInfoFields &glmRendererInfo, D3DCAPS9
 	pCaps->MaxPixelShader30InstructionSlots		=	0;
 
 #if DX_TO_GL_ABSTRACTION
-	pCaps->FakeSRGBWrite			=	!glmRendererInfo.m_hasGammaWrites;
-	pCaps->CanDoSRGBReadFromRTs		=	!glmRendererInfo.m_cantAttachSRGB;
+	pCaps->FakeSRGBWrite			=	true;//!glmRendererInfo.m_hasGammaWrites;
+	pCaps->CanDoSRGBReadFromRTs		=	true;//!glmRendererInfo.m_cantAttachSRGB;
 	pCaps->MixedSizeTargets			=	glmRendererInfo.m_hasMixedAttachmentSizes;
 #endif
 }

@@ -718,7 +718,7 @@ CGLMShaderPair::~CGLMShaderPair( )
 {
 	if (m_program)
 	{
-		gGL->glDeleteObject( m_program );
+		gGL->glDeleteProgram( m_program );
 		m_program = 0;
 	}
 }
@@ -746,7 +746,7 @@ bool CGLMShaderPair::ValidateProgramPair()
 
 		// check for success
 		GLint result = GL_TRUE;
-		gGL->glGetObjectParameteriv( m_program, GL_OBJECT_LINK_STATUS_ARB, &result );	// want GL_TRUE
+		gGL->glGetProgramiv(m_program, GL_LINK_STATUS, &result);
 		m_bCheckLinkStatus = false;
 
 		if (result == GL_TRUE)
@@ -762,12 +762,6 @@ bool CGLMShaderPair::ValidateProgramPair()
 			GLint laux = 0;
 
 			// do some digging
-			gGL->glGetObjectParameteriv( m_program, GL_OBJECT_INFO_LOG_LENGTH_ARB, &length );
-
-			GLchar *logString = (GLchar *)malloc( length * sizeof(GLchar) );
-			gGL->glGetInfoLog( m_program, length, &laux, logString );
-
-			GLMPRINTF( ("-D- ----- GLSL link failed: \n %s ", logString) );
 #if !GLM_FREE_SHADER_TEXT
 			char *vtemp = strdup( m_vertexProg->m_text );
 			vtemp[m_vertexProg->m_descs[kGLMGLSL].m_textOffset + m_vertexProg->m_descs[kGLMGLSL].m_textLength] = 0;
@@ -784,8 +778,6 @@ bool CGLMShaderPair::ValidateProgramPair()
 			free( ftemp );
 			free( vtemp );
 #endif
-			free( logString );
-
 			GLMPRINTF( ("-D- -----end-----") );
 		}
 
@@ -793,11 +785,15 @@ bool CGLMShaderPair::ValidateProgramPair()
 		{
 			gGL->glUseProgram( m_program );
 
+			printf("Sample text\n");
+
 			m_ctx->NewLinkedProgram();
 
 			m_locVertexParams = gGL->glGetUniformLocation( m_program, "vc" );
 			m_locVertexBoneParams = gGL->glGetUniformLocation( m_program, "vcbones" );
 			m_locVertexScreenParams = gGL->glGetUniformLocation( m_program, "vcscreen" );
+			m_locAlphaRef = gGL->glGetUniformLocation( m_program, "alpha_ref" );
+			
 			m_nScreenWidthHeight = 0xFFFFFFFF;
 
 			m_locVertexInteger0 = gGL->glGetUniformLocation( m_program, "i0" );
@@ -940,13 +936,13 @@ bool CGLMShaderPair::SetProgramPair( CGLMProgram *vp, CGLMProgram *fp )
 		// attempt link. but first, detach any previously attached programs
 		if (m_vertexProg)
 		{
-			gGL->glDetachObject(m_program, m_vertexProg->m_descs[kGLMGLSL].m_object.glsl);
+			gGL->glDetachShader(m_program, m_vertexProg->m_descs[kGLMGLSL].m_object.glsl);
 			m_vertexProg = NULL;			
 		}
 		
 		if (m_fragmentProg)
 		{
-			gGL->glDetachObject(m_program, m_fragmentProg->m_descs[kGLMGLSL].m_object.glsl);
+			gGL->glDetachShader(m_program, m_fragmentProg->m_descs[kGLMGLSL].m_object.glsl);
 			m_fragmentProg = NULL;			
 		}
 		
@@ -987,7 +983,7 @@ bool CGLMShaderPair::SetProgramPair( CGLMProgram *vp, CGLMProgram *fp )
 		gGL->glLinkProgram( m_program );
 
 		GLint isLinked = 0;
-		gGL->glGetShaderiv(m_program, GL_LINK_STATUS, &isLinked);
+		gGL->glGetProgramiv(m_program, GL_LINK_STATUS, &isLinked);
 		if(isLinked == GL_FALSE)
 		{
 			GLint maxLength = 0;
@@ -997,8 +993,8 @@ bool CGLMShaderPair::SetProgramPair( CGLMProgram *vp, CGLMProgram *fp )
 			gGL->glGetProgramInfoLog( m_program, sizeof(log), &maxLength, log );
 			if( maxLength )
 			{
-				printf("vp: \n%s\nfp: \n%s\n", vp->m_text, fp->m_text );
-				printf("shader %d link log: %s\n", m_program, log);
+				Msg("vp: \n%s\nfp: \n%s\n", vp->m_text, fp->m_text );
+				Msg("shader %d link log: %s\n", m_program, log);
 			}
 		}
 		

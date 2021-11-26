@@ -389,6 +389,14 @@ COpenGLEntryPoints::COpenGLEntryPoints()
 		m_bHave_GL_EXT_framebuffer_blit = true;
 		m_bHave_GL_EXT_framebuffer_multisample = true;
 		m_bHave_GL_ARB_occlusion_query = true;
+		m_bHave_GL_ARB_map_buffer_range = true;
+		m_bHave_GL_ARB_vertex_buffer_object = true;
+		m_bHave_GL_ARB_vertex_array_bgra = true;
+		m_bHave_GL_EXT_vertex_array_bgra = true;
+		m_bHave_GL_ARB_debug_output = true;
+		m_bHave_GL_EXT_direct_state_access = false;
+		m_bHave_GL_EXT_framebuffer_multisample_blit_scaled = true;
+		m_bHave_GL_EXT_texture_sRGB_decode = true;
 
 		glBindFramebuffer.Force(glBindFramebuffer.Pointer());
 		glBindRenderbuffer.Force(glBindRenderbuffer.Pointer());
@@ -455,12 +463,6 @@ COpenGLEntryPoints::COpenGLEntryPoints()
 	printf( "GL_AMD_pinned_memory: %s\n", m_bHave_GL_AMD_pinned_memory ? "ENABLED" : "DISABLED" );
 	printf( "GL_EXT_buffer_storage: %s\n", m_bHave_GL_EXT_buffer_storage ? "AVAILABLE" : "NOT AVAILABLE" );
 	printf( "GL_EXT_texture_sRGB_decode: %s\n", m_bHave_GL_EXT_texture_sRGB_decode ? "AVAILABLE" : "NOT AVAILABLE" );
-
-	bool bGLCanDecodeS3TCTextures = m_bHave_GL_EXT_texture_compression_s3tc || ( m_bHave_GL_EXT_texture_compression_dxt1 && m_bHave_GL_ANGLE_texture_compression_dxt3 && m_bHave_GL_ANGLE_texture_compression_dxt5 );
-	if ( !bGLCanDecodeS3TCTextures )
-	{
-		Error( "This application requires either the GL_EXT_texture_compression_s3tc, or the GL_EXT_texture_compression_dxt1 + GL_ANGLE_texture_compression_dxt3 + GL_ANGLE_texture_compression_dxt5 OpenGL extensions. Please install S3TC texture support.\n" );
-	}
 
 #ifdef OSX
 	if ( CommandLine()->FindParm( "-glmnosrgbdecode" ) )

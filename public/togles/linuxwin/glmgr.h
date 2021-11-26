@@ -198,9 +198,11 @@ FORCEINLINE void glGetEnumv( GLenum which, GLenum *dst )
 // shorthand macros
 #define	EQ(fff) ( (src.fff) == (fff) )
 
+
 //rasterizer
 struct GLAlphaTestEnable_t		{ GLint		enable;													inline bool operator==(const GLAlphaTestEnable_t& src)		const { return EQ(enable);									} };
 struct GLAlphaTestFunc_t		{ GLenum	func; GLclampf ref;										inline bool operator==(const GLAlphaTestFunc_t& src)		const { return EQ(func) && EQ(ref);							} };
+struct GLAlphaTest_t { GLint enable; GLenum func; GLclampf ref; };
 struct GLCullFaceEnable_t		{ GLint		enable;													inline bool operator==(const GLCullFaceEnable_t& src)		const { return EQ(enable);									} };
 struct GLCullFrontFace_t		{ GLenum	value;													inline bool operator==(const GLCullFrontFace_t& src)		const { return EQ(value);									} };
 struct GLPolygonMode_t			{ GLenum	values[2];												inline bool operator==(const GLPolygonMode_t& src)			const { return EQ(values[0]) && EQ(values[1]);				} };
@@ -209,7 +211,7 @@ struct GLScissorEnable_t		{ GLint		enable;													inline bool operator==(co
 struct GLScissorBox_t			{ GLint		x,y;		GLsizei width, height;						inline bool operator==(const GLScissorBox_t& src)			const { return EQ(x) && EQ(y) && EQ(width) && EQ(height);	} };
 struct GLAlphaToCoverageEnable_t{ GLint		enable;													inline bool operator==(const GLAlphaToCoverageEnable_t& src) const { return EQ(enable);								} };
 struct GLViewportBox_t			{ GLint		x,y;		GLsizei width, height; uint widthheight;	inline bool operator==(const GLViewportBox_t& src)			const { return EQ(x) && EQ(y) && EQ(width) && EQ(height);	} };
-struct GLViewportDepthRange_t	{ GLdouble	flNear,flFar;											inline bool operator==(const GLViewportDepthRange_t& src)	const { return EQ(flNear) && EQ(flFar);						} };
+struct GLViewportDepthRange_t	{ GLfloat	flNear,flFar;											inline bool operator==(const GLViewportDepthRange_t& src)	const { return EQ(flNear) && EQ(flFar);						} };
 struct GLClipPlaneEnable_t		{ GLint		enable;													inline bool operator==(const GLClipPlaneEnable_t& src)		const { return EQ(enable);									} };
 struct GLClipPlaneEquation_t	{ GLfloat	x,y,z,w;												inline bool operator==(const GLClipPlaneEquation_t& src)	const { return EQ(x) && EQ(y) && EQ(z) && EQ(w);			} };
 
@@ -235,7 +237,7 @@ struct GLStencilWriteMask_t		{ GLint		mask;													inline bool operator==(c
 
 //clearing
 struct GLClearColor_t			{  GLfloat	r,g,b,a;												inline bool operator==(const GLClearColor_t& src)			const { return EQ(r) && EQ(g) && EQ(b) && EQ(a);			} };
-struct GLClearDepth_t			{  GLdouble	d;														inline bool operator==(const GLClearDepth_t& src)			const { return EQ(d);										} };
+struct GLClearDepth_t			{  GLfloat	d;														inline bool operator==(const GLClearDepth_t& src)			const { return EQ(d);										} };
 struct GLClearStencil_t			{  GLint	s;														inline bool operator==(const GLClearStencil_t& src)		const { return EQ(s);										} };
 
 #undef EQ
@@ -306,15 +308,20 @@ template<typename T>	void GLContextGetDefaultIndexed( T *dst, int index );
 //===============================================================================
 // template specializations for each type of state
 
+
+static GLAlphaTest_t g_alpha_test;
+
 //                                                                      --- GLAlphaTestEnable ---
 FORCEINLINE void GLContextSet( GLAlphaTestEnable_t *src )
 {
-	glSetEnable( GL_ALPHA_TEST, src->enable != 0 );
+//	glSetEnable( GL_ALPHA_TEST, src->enable != 0 );
+	g_alpha_test.enable = src->enable;
 }
 
 FORCEINLINE void GLContextGet( GLAlphaTestEnable_t *dst )
 {
-	dst->enable = gGL->glIsEnabled( GL_ALPHA_TEST );
+//	dst->enable = gGL->glIsEnabled( GL_ALPHA_TEST );
+	dst->enable = g_alpha_test.enable;
 }
 
 FORCEINLINE void GLContextGetDefault( GLAlphaTestEnable_t *dst )
@@ -326,12 +333,16 @@ FORCEINLINE void GLContextGetDefault( GLAlphaTestEnable_t *dst )
 FORCEINLINE void GLContextSet( GLAlphaTestFunc_t *src )
 {
 // gGL->glAlphaFunc( src->func, src->ref );
+	g_alpha_test.func = src->func;
+	g_alpha_test.ref = src->ref;
 }
 
 FORCEINLINE void GLContextGet( GLAlphaTestFunc_t *dst )
 {
-	glGetEnumv( GL_ALPHA_TEST_FUNC, &dst->func );
-	gGL->glGetFloatv( GL_ALPHA_TEST_REF, &dst->ref );
+//	glGetEnumv( GL_ALPHA_TEST_FUNC, &dst->func );
+//	gGL->glGetFloatv( GL_ALPHA_TEST_REF, &dst->ref );
+	dst->func = g_alpha_test.func;
+	dst->ref = g_alpha_test.ref;
 }
 
 FORCEINLINE void GLContextGetDefault( GLAlphaTestFunc_t *dst )
@@ -502,7 +513,7 @@ FORCEINLINE void GLContextSet( GLViewportDepthRange_t *src )
 
 FORCEINLINE void GLContextGet( GLViewportDepthRange_t *dst )
 {
-	gGL->glGetDoublev	( GL_DEPTH_RANGE, &dst->flNear );
+	gGL->glGetFloatv( GL_DEPTH_RANGE, &dst->flNear );
 }
 
 FORCEINLINE void GLContextGetDefault( GLViewportDepthRange_t *dst )
@@ -584,12 +595,26 @@ FORCEINLINE void GLContextGetDefault( GLColorMaskSingle_t *dst )
 //                                                                      --- GLColorMaskMultiple ---
 FORCEINLINE void GLContextSetIndexed( GLColorMaskMultiple_t *src, int index )
 {
-	gGL->glColorMaskIndexedEXT ( index, src->r, src->g, src->b, src->a );
+	GLint Rfbo = 0, Dfbo = 0;
+
+	gGL->glGetIntegerv( GL_DRAW_FRAMEBUFFER_BINDING, &Dfbo );
+	gGL->glGetIntegerv( GL_READ_FRAMEBUFFER_BINDING, &Rfbo );
+	GLint target = Dfbo == Rfbo?GL_FRAMEBUFFER:GL_DRAW_FRAMEBUFFER;
+	gGL->glBindFramebuffer( target, index );
+	gGL->glColorMask ( src->r, src->g, src->b, src->a );
+	gGL->glBindFramebuffer( target, Dfbo );
 }
 
 FORCEINLINE void GLContextGetIndexed( GLColorMaskMultiple_t *dst, int index )
 {
-	gGL->glGetBooleanIndexedvEXT ( GL_COLOR_WRITEMASK, index, (GLboolean*)&dst->r );
+	GLint Rfbo = 0, Dfbo = 0;
+	
+	gGL->glGetIntegerv( GL_DRAW_FRAMEBUFFER_BINDING, &Dfbo );
+	gGL->glGetIntegerv( GL_READ_FRAMEBUFFER_BINDING, &Rfbo );
+	GLint target = Dfbo == Rfbo?GL_FRAMEBUFFER:GL_DRAW_FRAMEBUFFER;
+	gGL->glBindFramebuffer( target, index );
+	gGL->glGetBooleanv( GL_COLOR_WRITEMASK, (GLboolean*)&dst->r );
+	gGL->glBindFramebuffer( target, Dfbo );
 }
 
 FORCEINLINE void GLContextGetDefaultIndexed( GLColorMaskMultiple_t *dst, int index )
@@ -698,7 +723,7 @@ FORCEINLINE void GLContextSet( GLBlendEnableSRGB_t *src )
 
 FORCEINLINE void GLContextGet( GLBlendEnableSRGB_t *dst )
 {
-	//dst->enable = glIsEnabled( GL_FRAMEBUFFER_SRGB_EXT );
+//	dst->enable = gGL->glIsEnabled( GL_FRAMEBUFFER_SRGB_EXT );
 	dst->enable = true; // wtf ?
 }
 
@@ -864,13 +889,12 @@ FORCEINLINE void GLContextGetDefault( GLClearColor_t *dst )
 //                                                                      --- GLClearDepth ---
 FORCEINLINE void GLContextSet( GLClearDepth_t *src )
 {
-//	TOFUCK: wut
-//	gGL->glClearDepth ( src->d );
+	gGL->glClearDepthf( src->d );
 }
 
 FORCEINLINE void GLContextGet( GLClearDepth_t *dst )
 {
-	gGL->glGetDoublev ( GL_DEPTH_CLEAR_VALUE, &dst->d );
+	gGL->glGetFloatv( GL_DEPTH_CLEAR_VALUE, &dst->d );
 }
 
 FORCEINLINE void GLContextGetDefault( GLClearDepth_t *dst )
@@ -2285,7 +2309,7 @@ public:
 };
 
 #define	kMaxCrawlFrames	100
-#define	kMaxCrawlText		(kMaxCrawlFrames * 256)
+#define	kMaxCrawlText (kMaxCrawlFrames * 256)
 class CStackCrawlParams
 {
 	public:
