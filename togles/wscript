@@ -31,7 +31,8 @@ def build(bld):
 		'linuxwin/cglmprogram.cpp',	
 		'linuxwin/cglmbuffer.cpp',	
 		'linuxwin/cglmquery.cpp',
-		'linuxwin/asanstubs.cpp'
+		'linuxwin/asanstubs.cpp',
+		'linuxwin/decompress.c'
 	]
 
 	includes = [
