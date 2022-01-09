@@ -930,7 +930,7 @@ void CAchievementMgr::AwardAchievement( int iAchievementID )
 	pAchievement->OnAchieved();
 
     // [tj]
-    IGameEvent * event = gameeventmanager->CreateEvent( "achievement_earned_local" );
+    IGameEvent * event = gameeventmanager->CreateEvent( "achievement_earned" );
     if ( event )
     {
         event->SetInt( "achievement", pAchievement->GetAchievementID() );
@@ -1033,6 +1033,8 @@ extern bool IsInCommentaryMode( void );
 //-----------------------------------------------------------------------------
 bool CAchievementMgr::CheckAchievementsEnabled()
 {
+	return true;
+
 	// if PC, Steam must be running and user logged in
 	if ( IsPC() && !LoggedIntoSteam() )
 	{
