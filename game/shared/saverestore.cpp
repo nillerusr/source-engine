@@ -152,7 +152,7 @@ const char *UTIL_FunctionToName( datamap_t *pMap, inputfunc_t *function )
 //			This is used to save/restore function pointers (convert text back to pointer)
 // Input  : *pName - name of the member function
 //-----------------------------------------------------------------------------
-inputfunc_t *UTIL_FunctionFromName( datamap_t *pMap, const char *pName )
+inputfunc_t UTIL_FunctionFromName( datamap_t *pMap, const char *pName )
 {
 	while ( pMap )
 	{
@@ -170,7 +170,7 @@ inputfunc_t *UTIL_FunctionFromName( datamap_t *pMap, const char *pName )
 			{
 				if ( FStrEq( pName, pMap->dataDesc[i].fieldName ) )
 				{
-					return EXTRACT_INPUTFUNC_FUNCTIONPTR(pMap->dataDesc[i].inputFunc);
+					return pMap->dataDesc[i].inputFunc;
 				}
 			}
 		}
@@ -2240,8 +2240,14 @@ int CRestore::ReadFunction( datamap_t *pMap, inputfunc_t **pValue, int count, in
 	if ( *pszFunctionName == 0 )
 		*pValue = NULL;
 	else
-		*pValue = UTIL_FunctionFromName( pMap, pszFunctionName );
-
+	{
+		inputfunc_t func = UTIL_FunctionFromName( pMap, pszFunctionName );
+#ifdef GNUC
+		Q_memcpy( (void*)pValue, &func, sizeof(void*)*2 );
+#else
+		Q_memcpy( (void*)pValue, &func, sizeof(void*) );
+#endif
+	}
 	return 0;
 }
 	
