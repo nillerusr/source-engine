@@ -3903,7 +3903,7 @@ void Host_PostInit()
 		EngineVGui()->PostInit();
 	}
 
-#if defined( LINUX )
+#if defined( LINUX ) && !defined ANDROID
 	const char en_US[] = "en_US.UTF-8";
 	const char *CurrentLocale = setlocale( LC_ALL, NULL );
 	if ( !CurrentLocale )

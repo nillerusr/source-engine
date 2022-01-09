@@ -42,6 +42,8 @@ inline int32_t INT_2FIXED6(int32_t x)   { return x << 6; }
 bool CLinuxFont::ms_bSetFriendlyNameCacheLessFunc = false;
 CUtlRBTree< CLinuxFont::font_name_entry > CLinuxFont::m_FriendlyNameCache;
 
+#define ANDROID 1
+
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
@@ -422,9 +424,9 @@ char *FindFontAndroid(bool bBold, int italic)
 	else if( italic )
 		fontFileNamePost = "Italic";
 	else
-		fontFileName = "Regular";
+		fontFileNamePost = "Regular";
 
-	char dataFile[MAX_PATH];
+	static char dataFile[MAX_PATH];
 
 	if( fontFileNamePost )
 		snprintf( dataFile, sizeof dataFile, "/system/fonts/%s-%s.ttf", fontFileName, fontFileNamePost );
@@ -435,7 +437,7 @@ char *FindFontAndroid(bool bBold, int italic)
 	{
 		fontFileNamePost = NULL;
 		fontFileName = "DroidSans";
-		if( bBold > 500 )
+		if( bBold )
 			fontFileNamePost = "Bold";
 
 		if( fontFileNamePost )
@@ -468,7 +470,7 @@ char *CLinuxFont::GetFontFileName( const char *windowsFontName, int flags )
 
 #ifdef ANDROID
 	char *filename = FindFontAndroid( bBold, italic );
-	Msg("Android font: %s", filename);
+	Msg("Android font: %s\n", filename);
 	if( !filename ) return NULL;
 	return strdup( filename );
 #else
