@@ -1,4 +1,5 @@
 #include "utllinkedlist.h"
+#include "vgui/ISurface.h"
 #include "vgui/VGUI.h"
 #include <vgui_controls/Panel.h>
 #include "cbase.h"
@@ -11,7 +12,7 @@ extern "C" int getAssets();
 #define GRID_COUNT touch_grid_count.GetInt()
 #define GRID_COUNT_X (GRID_COUNT)
 #define GRID_COUNT_Y (GRID_COUNT * screen_h / screen_w)
-#define GRID_X (1.0/GRID_COUNT_X)
+#define GRID_X (1.0f/GRID_COUNT_X)
 #define GRID_Y (screen_w/screen_h/GRID_COUNT_X)
 #define GRID_ROUND_X(x) ((float)round( x * GRID_COUNT_X ) / GRID_COUNT_X)
 #define GRID_ROUND_Y(x) ((float)round( x * GRID_COUNT_Y ) / GRID_COUNT_Y)
@@ -157,12 +158,13 @@ public:
 	void Paint( );
 	void Frame( );
 	
-	void AddButton( const char *name, const char *texturefile, const char *command, float x1, float y1, float x2, float y2, rgba_t color = rgba_t(255, 255, 255, 255), int round = 2, float aspect = 1, int flags = 0 );
+	void AddButton( const char *name, const char *texturefile, const char *command, float x1, float y1, float x2, float y2, rgba_t color = rgba_t(255, 255, 255, 255), int round = 2, float aspect = 1.f, int flags = 0 );
 	void RemoveButton( const char *name );
 	
 	void HideButton( const char *name );
 	void ShowButton( const char *name );
-	
+	void ListButtons();
+	void RemoveButtons();
 	
 	CTouchButton *FindButton( const char *name );
 //	bool FindNextButton( const char *name, CTouchButton &button );
@@ -170,9 +172,10 @@ public:
 	void SetColor( const char *name, rgba_t color );
 	void SetCommand( const char *name, const char *cmd );
 	void SetFlags( const char *name, int flags );
-
+	void WriteConfig();
 	
 	void IN_CheckCoords( float *x1, float *y1, float *x2, float *y2  );
+	void InitGrid();
 	
 	
 	void Move( float frametime, CUserCmd *cmd );
@@ -182,11 +185,13 @@ public:
 	void FingerPress( touch_event_t *ev );
 	void FingerMotion( touch_event_t *ev );
 
-	void EnableTouchEdit();
+	void EditEvent( touch_event_t *ev );
+	
+	void EnableTouchEdit(bool enable);
 	
 	CTouchPanel *touchPanel;
 private:
-	bool initialized;
+	bool initialized = false;
 	ETouchState state;
 	CUtlLinkedList<CTouchButton*> btns;
 
@@ -196,7 +201,7 @@ private:
 	CTouchButton *move_button;
 
 	float move_start_x, move_start_y;
-	float dx, dy;
+	float dx, dy, dx2, dy2;
 
 	// editing
 	CTouchButton *edit;
@@ -214,13 +219,14 @@ private:
 	int closetexture;
 	int joytexture; // touch indicator
 	bool configchanged;
+	bool config_loaded;
 	vgui::HFont textfont;
 	int mouse_events;
 
 	int base_textureID;
 
 	bool m_bHaveAssets;
-	int screen_h, screen_w;
+	float screen_h, screen_w;
 };
 
 extern CTouchControls gTouch;
