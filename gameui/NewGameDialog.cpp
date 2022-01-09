@@ -615,6 +615,11 @@ void CNewGameDialog::ApplySettings( KeyValues *inResourceData )
 	BaseClass::ApplySettings( inResourceData );
 
 	int ypos = inResourceData->GetInt( "chapterypos", 40 );
+	if (IsProportional())
+	{
+		ypos = scheme()->GetProportionalScaledValueEx(GetScheme(), ypos);
+	}
+
 	for ( int i = 0; i < NUM_SLOTS; ++i )
 	{
 		m_PanelYPos[i] = ypos;
