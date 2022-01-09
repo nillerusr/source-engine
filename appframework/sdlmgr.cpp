@@ -60,6 +60,7 @@ const int kBogusSwapInterval = INT_MAX;
 #if defined ANDROID || defined TOGLES
 static void *l_gl4es = NULL;
 static void *l_egl = NULL;
+static void *l_gles = NULL;
 
 typedef void *(*t_glGetProcAddress)( const char * );
 t_glGetProcAddress _glGetProcAddress;
@@ -194,7 +195,14 @@ void *VoidFnPtrLookup_GlMgr(const char *fn, bool &okay, const bool bRequired, vo
 #if defined ANDROID || defined TOGLES
 	// SDL does the right thing, so we never need to use tier0 in this case.
 	if( _glGetProcAddress )
+	{
 		retval = _glGetProcAddress(fn);
+
+		Msg("_glGetProcAddress(%s) = %x\n", fn, retval);
+
+		if( !retval && l_gles )
+			retval = dlsym( l_gles, fn );
+	}
 	//printf("CDynamicFunctionOpenGL: SDL_GL_GetProcAddress(\"%s\") returned %p\n", fn, retval);
 	if ((retval == NULL) && (fallback != NULL))
 	{
@@ -507,8 +515,8 @@ InitReturnVal_t CSDLMgr::Init()
 			SDL_GL_SetAttribute( SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG );
 		}
 
-#ifdef TOGLES
-		if (SDL_GL_LoadLibrary("libGLESv2.so") == -1)
+#if defined( TOGLES )
+		if (SDL_GL_LoadLibrary("libGLESv3.so") == -1)
 #else
 		if (SDL_GL_LoadLibrary(NULL) == -1)
 #endif
@@ -583,6 +591,7 @@ InitReturnVal_t CSDLMgr::Init()
 
 #ifdef TOGLES
 	l_egl = dlopen("libEGL.so", RTLD_LAZY);
+	l_gles = dlopen("libGLESv3.so", RTLD_LAZY);
 
 	if( l_egl )
 		_glGetProcAddress = (t_glGetProcAddress)dlsym(l_egl, "eglGetProcAddress");
@@ -590,7 +599,6 @@ InitReturnVal_t CSDLMgr::Init()
 	SET_GL_ATTR(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
 	SET_GL_ATTR(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SET_GL_ATTR(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-
 #elif ANDROID
 	bool m_bOGL = false;
 
@@ -1405,6 +1413,7 @@ void CSDLMgr::ShowPixels( CShowPixelsParams *params )
 
 	m_flPrevGLSwapWindowTime = tm.GetDurationInProgress().GetMillisecondsF();
 
+	
 	CheckGLError( __LINE__ );
 }
 #endif // DX_TO_GL_ABSTRACTION

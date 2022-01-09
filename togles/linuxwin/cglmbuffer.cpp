@@ -37,7 +37,7 @@ bool g_bUsePseudoBufs = false; //( Plat_GetCommandLineA() ) ? ( strstr( Plat_Get
 // Significant perf degradation on some OSX parts if static buffers not disabled
 bool g_bDisableStaticBuffer = true;
 #else
-bool g_bDisableStaticBuffer = false; //( Plat_GetCommandLineA() ) ? ( strstr( Plat_GetCommandLineA(), "-gl_disable_static_buffer" ) != NULL ) : false;
+bool g_bDisableStaticBuffer = true; //( Plat_GetCommandLineA() ) ? ( strstr( Plat_GetCommandLineA(), "-gl_disable_static_buffer" ) != NULL ) : false;
 #endif
 
 // http://www.opengl.org/registry/specs/ARB/vertex_buffer_object.txt
@@ -93,8 +93,8 @@ CPersistentBuffer::~CPersistentBuffer()
 
 void CPersistentBuffer::Init( EGLMBufferType type,uint nSize )
 {
-	Assert( gGL->m_bHave_GL_EXT_buffer_storage );
-	Assert( gGL->m_bHave_GL_ARB_map_buffer_range );
+//	Assert( gGL->m_bHave_GL_EXT_buffer_storage );
+//	Assert( gGL->m_bHave_GL_ARB_map_buffer_range );
 	
 	m_nSize		= nSize;
 	m_nOffset	= 0;
@@ -527,13 +527,13 @@ CGLMBuffer::CGLMBuffer( GLMContext *pCtx, EGLMBufferType type, uint size, uint o
 		// buffers start out static, but if they get orphaned and gl_bufmode is non zero,
 		// then they will get flipped to dynamic.
 		
-		GLenum hint = GL_STATIC_DRAW;
+		GLenum hint = GL_STREAM_DRAW;
 		switch (m_type)
 		{
-			case kGLMVertexBuffer:	hint = m_bDynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW; break;
-			case kGLMIndexBuffer:	hint = m_bDynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW; break;
+			case kGLMVertexBuffer:	hint = m_bDynamic ? GL_DYNAMIC_DRAW : GL_STREAM_DRAW; break;
+			case kGLMIndexBuffer:	hint = m_bDynamic ? GL_DYNAMIC_DRAW : GL_STREAM_DRAW; break;
 			case kGLMUniformBuffer:	hint = GL_DYNAMIC_DRAW; break;
-			case kGLMPixelBuffer:	hint = m_bDynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW; break;
+			case kGLMPixelBuffer:	hint = m_bDynamic ? GL_DYNAMIC_DRAW : GL_STREAM_DRAW; break;
 			
 			default: Assert(!"Unknown buffer type" ); DXABSTRACT_BREAK_ON_ERROR();
 		}
@@ -786,7 +786,7 @@ void CGLMBuffer::Lock( GLMBuffLockParams *pParams, char **pAddressOut )
 
 				// observe gl_bufmode on any orphan event.
 				// if orphaned and bufmode is nonzero, flip it to dynamic.
-				GLenum hint = gl_bufmode.GetInt() ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW;
+				GLenum hint = gl_bufmode.GetInt() ? GL_DYNAMIC_DRAW : GL_STREAM_DRAW;
 				gGL->glBufferData( m_buffGLTarget, m_nSize, (const GLvoid*)NULL, hint );
 			
 				m_nRevision++; // revision grows on orphan event
@@ -829,7 +829,7 @@ void CGLMBuffer::Lock( GLMBuffLockParams *pParams, char **pAddressOut )
 			// if orphaned and bufmode is nonzero, flip it to dynamic.
 			
 			// We always want to call glBufferData( ..., NULL ) on discards, even though we're using the GL_MAP_INVALIDATE_BUFFER_BIT flag, because this flag is actually only a hint according to AMD.
-			GLenum hint = gl_bufmode.GetInt() ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW;
+			GLenum hint = gl_bufmode.GetInt() ? GL_DYNAMIC_DRAW : GL_STREAM_DRAW;
 			gGL->glBufferData( m_buffGLTarget, m_nSize, (const GLvoid*)NULL, hint );
 									
 			m_nRevision++;	// revision grows on orphan event
@@ -1047,7 +1047,7 @@ void CGLMBuffer::Unlock( int nActualSize, const void *pActualData )
 				Assert( nActualSize <= (int)( m_dirtyMaxOffset - m_dirtyMinOffset ) );
 
 				glBufferSubDataMaxSize( m_buffGLTarget, m_dirtyMinOffset, nActualSize, pActualData ? pActualData : m_pStaticBuffer );
-						
+
 		#ifdef REPORT_LOCK_TIME
 				double flEnd = Plat_FloatTime();
 				if ( flEnd - flStart > 5.0 / 1000.0 )

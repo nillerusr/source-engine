@@ -333,6 +333,9 @@ static bool CheckOpenGLExtension(const char *ext, const int coremajor, const int
 	return retval;
 }
 
+extern bool g_bUsePseudoBufs;
+extern bool g_bDisableStaticBuffer;
+
 // The GL context you want entry points for must be current when you hit this constructor!
 COpenGLEntryPoints::COpenGLEntryPoints()
 	: m_nTotalGLCycles(0)
@@ -387,17 +390,24 @@ COpenGLEntryPoints::COpenGLEntryPoints()
 	{
 		m_bHave_GL_EXT_framebuffer_object = true;
 		m_bHave_GL_EXT_framebuffer_blit = true;
-		m_bHave_GL_EXT_framebuffer_multisample = true;
-		m_bHave_GL_ARB_occlusion_query = true;
 		m_bHave_GL_ARB_map_buffer_range = true;
+		m_bHave_GL_EXT_direct_state_access = false;		
+		m_bHave_GL_ARB_occlusion_query = true;
+		m_bHave_GL_EXT_buffer_storage = false;
 		m_bHave_GL_ARB_vertex_buffer_object = true;
-		m_bHave_GL_ARB_vertex_array_bgra = true;
-		m_bHave_GL_EXT_vertex_array_bgra = true;
 		m_bHave_GL_ARB_debug_output = true;
-		m_bHave_GL_EXT_direct_state_access = false;
-		m_bHave_GL_EXT_framebuffer_multisample_blit_scaled = true;
-		m_bHave_GL_EXT_texture_sRGB_decode = true;
+		m_bHave_GL_ARB_sync = true;
 
+		//	m_bHave_GL_EXT_texture_sRGB_decode = true;
+
+		if( CommandLine()->FindParm( "-gl_enable_pseudobufs" ) )
+			g_bUsePseudoBufs = true;
+		if( CommandLine()->FindParm( "-gl_enable_static_buffer" ) )
+			g_bDisableStaticBuffer = false;
+		if( CommandLine()->FindParm( "-gl_enable_buffer_storage" ) )
+			m_bHave_GL_EXT_buffer_storage = true;
+
+#if 0
 		glBindFramebuffer.Force(glBindFramebuffer.Pointer());
 		glBindRenderbuffer.Force(glBindRenderbuffer.Pointer());
 		glCheckFramebufferStatus.Force(glCheckFramebufferStatus.Pointer());
@@ -410,6 +420,7 @@ COpenGLEntryPoints::COpenGLEntryPoints()
 		glDeleteFramebuffers.Force(glDeleteFramebuffers.Pointer());
 		glBlitFramebuffer.Force(glBlitFramebuffer.Pointer());
 		glRenderbufferStorageMultisample.Force(glRenderbufferStorageMultisample.Pointer());
+#endif
 	}
 
 #if DEBUG_ALL_GLCALLS
@@ -417,10 +428,10 @@ COpenGLEntryPoints::COpenGLEntryPoints()
 #define GL_EXT(x,glmajor,glminor)
 #define GL_FUNC(ext,req,ret,fn,arg,call) \
 	fn##_gldebugptr = this->fn; \
-	this->fn.Force(fn##_gldebug);
+//	this->fn.Force(fn##_gldebug);
 #define GL_FUNC_VOID(ext,req,fn,arg,call) \
 	fn##_gldebugptr = this->fn; \
-	this->fn.Force(fn##_gldebug);
+//	this->fn.Force(fn##_gldebug);
 #include "togles/glfuncs.inl"
 #undef GL_FUNC_VOID
 #undef GL_FUNC
@@ -434,6 +445,7 @@ COpenGLEntryPoints::COpenGLEntryPoints()
 	if ( ( m_bHave_GL_NV_bindless_texture ) && ( !CommandLine()->CheckParm( "-gl_nv_bindless_texturing" ) ) )
 	{
 		m_bHave_GL_NV_bindless_texture = false;
+#if 0
 		glGetTextureHandleNV.Force( NULL );
 		glGetTextureSamplerHandleNV.Force( NULL );
 		glMakeTextureHandleResidentNV.Force( NULL );
@@ -443,6 +455,7 @@ COpenGLEntryPoints::COpenGLEntryPoints()
 		glProgramUniformHandleui64NV.Force( NULL );
 		glProgramUniformHandleui64vNV.Force( NULL );
 		glIsTextureHandleResidentNV.Force( NULL );
+#endif
 	}
 
 	if ( !CommandLine()->CheckParm( "-gl_amd_pinned_memory" ) )
@@ -501,6 +514,3 @@ void COpenGLEntryPoints::ClearEntryPoints()
 }
 // Turn off memdbg macros (turned on up top) since this is included like a header
 #include "tier0/memdbgoff.h"
-
-
-

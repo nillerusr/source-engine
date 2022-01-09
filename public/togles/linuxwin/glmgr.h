@@ -65,6 +65,10 @@
 #define GLM_OPENGL_DEFAULT_DEVICE_ID 1
 #define GLM_OPENGL_LOW_PERF_DEVICE_ID 2
 
+#define GL_ALPHA_TEST_QCOM 0x0BC0
+#define GL_ALPHA_TEST_FUNC_QCOM 0x0BC1
+#define GL_ALPHA_TEST_REF_QCOM 0x0BC2
+
 extern void GLMDebugPrintf( const char *pMsg, ... );
 
 extern uint g_nTotalDrawsOrClears, g_nTotalVBLockBytes, g_nTotalIBLockBytes;
@@ -314,14 +318,18 @@ static GLAlphaTest_t g_alpha_test;
 //                                                                      --- GLAlphaTestEnable ---
 FORCEINLINE void GLContextSet( GLAlphaTestEnable_t *src )
 {
-//	glSetEnable( GL_ALPHA_TEST, src->enable != 0 );
-	g_alpha_test.enable = src->enable;
+	if( gGL->m_bHave_GL_QCOM_alpha_test )
+		glSetEnable( GL_ALPHA_TEST_QCOM, src->enable != 0 );
+	else
+		g_alpha_test.enable = src->enable;
 }
 
 FORCEINLINE void GLContextGet( GLAlphaTestEnable_t *dst )
 {
-//	dst->enable = gGL->glIsEnabled( GL_ALPHA_TEST );
-	dst->enable = g_alpha_test.enable;
+	if( gGL->m_bHave_GL_QCOM_alpha_test )
+		dst->enable = gGL->glIsEnabled( GL_ALPHA_TEST_QCOM );
+	else
+		dst->enable = g_alpha_test.enable;
 }
 
 FORCEINLINE void GLContextGetDefault( GLAlphaTestEnable_t *dst )
@@ -332,17 +340,25 @@ FORCEINLINE void GLContextGetDefault( GLAlphaTestEnable_t *dst )
 //                                                                      --- GLAlphaTestFunc ---
 FORCEINLINE void GLContextSet( GLAlphaTestFunc_t *src )
 {
-// gGL->glAlphaFunc( src->func, src->ref );
+	if( gGL->m_bHave_GL_QCOM_alpha_test )
+		gGL->glAlphaFuncQCOM( src->func, src->ref );
+
 	g_alpha_test.func = src->func;
 	g_alpha_test.ref = src->ref;
 }
 
 FORCEINLINE void GLContextGet( GLAlphaTestFunc_t *dst )
 {
-//	glGetEnumv( GL_ALPHA_TEST_FUNC, &dst->func );
-//	gGL->glGetFloatv( GL_ALPHA_TEST_REF, &dst->ref );
-	dst->func = g_alpha_test.func;
-	dst->ref = g_alpha_test.ref;
+	if( gGL->m_bHave_GL_QCOM_alpha_test )
+	{
+		glGetEnumv( GL_ALPHA_TEST_FUNC_QCOM, &dst->func );
+		gGL->glGetFloatv( GL_ALPHA_TEST_REF_QCOM, &dst->ref );
+	}
+	else
+	{
+		dst->func = g_alpha_test.func;
+		dst->ref = g_alpha_test.ref;
+	}
 }
 
 FORCEINLINE void GLContextGetDefault( GLAlphaTestFunc_t *dst )
@@ -723,8 +739,8 @@ FORCEINLINE void GLContextSet( GLBlendEnableSRGB_t *src )
 
 FORCEINLINE void GLContextGet( GLBlendEnableSRGB_t *dst )
 {
-//	dst->enable = gGL->glIsEnabled( GL_FRAMEBUFFER_SRGB_EXT );
-	dst->enable = true; // wtf ?
+	dst->enable = gGL->glIsEnabled( GL_FRAMEBUFFER_SRGB_EXT );
+//	dst->enable = true; // wtf ?
 }
 
 FORCEINLINE void GLContextGetDefault( GLBlendEnableSRGB_t *dst )
@@ -1403,7 +1419,7 @@ class GLMContext
 			else
 			{
 				m_FakeBlendEnableSRGB = src->enable != 0;
-			}	
+			}
 			// note however that we're still tracking what this mode should be, so FlushDrawStates can look at it and adjust the pixel shader
 			// if fake SRGB mode is in place (m_caps.m_hasGammaWrites is false)
 		}

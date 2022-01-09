@@ -1381,7 +1381,7 @@ void D3DToGL::PrintParameterToString ( uint32 dwToken, uint32 dwSourceOrDest, ch
 				case D3DSRO_FOG:
 					if( !m_bFogFragCoord )
 					{
-						StrcatToHeaderCode("varying mediump vec4 _gl_FogFragCoord;\n");
+						StrcatToHeaderCode("varying highp vec4 _gl_FogFragCoord;\n");
 						m_bFogFragCoord = true;
 					}
 
@@ -1403,7 +1403,7 @@ void D3DToGL::PrintParameterToString ( uint32 dwToken, uint32 dwSourceOrDest, ch
 			{
 				if( !m_bFrontColor )
 				{
-					StrcatToHeaderCode("varying lowp vec4 _gl_FrontColor;\n");
+					StrcatToHeaderCode("varying highp vec4 _gl_FrontColor;\n");
 					m_bFrontColor = true;
 				}
 
@@ -1413,7 +1413,7 @@ void D3DToGL::PrintParameterToString ( uint32 dwToken, uint32 dwSourceOrDest, ch
 			{
 				if( !m_bFrontSecondaryColor )
 				{
-					StrcatToHeaderCode("varying lowp vec4 _gl_FrontSecondaryColor;\n");
+					StrcatToHeaderCode("varying highp vec4 _gl_FrontSecondaryColor;\n");
 					m_bFrontSecondaryColor = true;
 				}
 
@@ -2545,14 +2545,14 @@ void D3DToGL::Handle_TEX( uint32 dwToken, bool bIsTexLDL )
 			V_snprintf( szExtra, sizeof( szExtra ), ".%c", GetSwizzleComponent( pSrc0Reg, 3 ) );
 			V_strncat( szLOD, szExtra, sizeof( szLOD ) );
 
-			PrintToBufWithIndents( *m_pBufALUCode, "%s = %s( %s, %s, %s );\n", pDestReg, bIsShadowSampler ? "shadow2DLod" : "textureLod", pSrc1Reg, sCoordVar.String(), szLOD );
+			PrintToBufWithIndents( *m_pBufALUCode, "%s = %s( %s, %s, %s );\n", pDestReg, "textureLod", pSrc1Reg, sCoordVar.String(), szLOD );
 		}
 		else if ( bIsShadowSampler )
 		{
 			// .z is meant to contain the object depth, while .xy contains the 2D tex coords
 			CUtlString sCoordVar3D = EnsureNumSwizzleComponents( pSrc0Reg, 3 );
 
-			PrintToBufWithIndents( *m_pBufALUCode, "%s = shadow2D( %s, %s );\n", pDestReg, pSrc1Reg, sCoordVar3D.String() );
+			PrintToBufWithIndents( *m_pBufALUCode, "%s = vec4(texture( %s, %s ));\n", pDestReg, pSrc1Reg, sCoordVar3D.String() );
 			Assert( m_dwSamplerTypes[dwSrc1Token & D3DSP_REGNUM_MASK] == SAMPLER_TYPE_2D );
 		}
 		else if( ( OpcodeSpecificData( dwToken ) << D3DSP_OPCODESPECIFICCONTROL_SHIFT ) == D3DSI_TEXLD_PROJECT )
@@ -2934,13 +2934,19 @@ void D3DToGL::WriteGLSLSamplerDefinitions()
 {
 	int nSamplersWritten = 0;
 	bool m_bSampler3d = false;
+	bool m_bShadowSampler = false;
 	for ( int i=0; i < ARRAYSIZE( m_dwSamplerTypes ); i++ )
 	{
 		if ( m_dwSamplerTypes[i] == SAMPLER_TYPE_2D )
 		{
 			if ( ( ( 1 << i ) & m_nShadowDepthSamplerMask ) != 0 )
 			{
-				PrintToBuf( *m_pBufHeaderCode, "uniform sampler2D sampler%d;\n", i );
+				if( !m_bShadowSampler )
+				{
+					PrintToBuf( *m_pBufHeaderCode, "precision lowp sampler2DShadow;\n", i );
+					m_bShadowSampler = true;
+				}
+				PrintToBuf( *m_pBufHeaderCode, "uniform sampler2DShadow sampler%d;\n", i );
 			}
 			else
 			{
@@ -2955,7 +2961,6 @@ void D3DToGL::WriteGLSLSamplerDefinitions()
 				StrcatToHeaderCode( "precision mediump sampler3D;\n" );
 				m_bSampler3d = true;
 			}
-				
 			PrintToBuf( *m_pBufHeaderCode, "uniform sampler3D sampler%d;\n", i );
 			++nSamplersWritten;
 		}
@@ -3006,7 +3011,7 @@ void D3DToGL::WriteGLSLOutputVariableAssignments()
 			{
 				if( !m_bFrontColor )
 				{
-					StrcatToHeaderCode("varying lowp vec4 _gl_FrontColor;\n");
+					StrcatToHeaderCode("varying highp vec4 _gl_FrontColor;\n");
 					m_bFrontColor = true;
 				}
 
@@ -3181,9 +3186,9 @@ int D3DToGL::TranslateShader( uint32* code, CUtlBuffer *pBufDisassembledCode, bo
 	m_bPutHexCodesAfterLines = (options & D3DToGL_PutHexCommentsAfterLines) != 0;
 	m_bGeneratingDebugText = (options & D3DToGL_GeneratingDebugText) != 0;
 	m_bGenerateSRGBWriteSuffix = (options & D3DToGL_OptionSRGBWriteSuffix) != 0;
-//	m_bGenerateSRGBWriteSuffix = true;
+	m_bGenerateSRGBWriteSuffix = false;
 
-	if( debugLabel && ( V_strstr( debugLabel ,"vertexlit_and_unlit_generic_bump_ps") ))
+	if( debugLabel && (V_strstr( debugLabel ,"vertexlit_and_unlit_generic_ps") || V_strstr( debugLabel ,"vertexlit_and_unlit_generic_bump_ps") ) )
 		m_bGenerateSRGBWriteSuffix = true;
 
 	m_NumIndentTabs = 1; // start code indented one tab
@@ -3277,13 +3282,13 @@ int D3DToGL::TranslateShader( uint32* code, CUtlBuffer *pBufDisassembledCode, bo
 	if ( ( dwToken & 0xFFFF0000 ) == 0xFFFF0000 )
 	{
 		// must explicitly enable extensions if emitting GLSL
-		V_snprintf( (char *)m_pBufHeaderCode->Base(), m_pBufHeaderCode->Size(), "#version 300 es\nprecision mediump float;\n#define varying in\n\n%s", glslExtText );
+		V_snprintf( (char *)m_pBufHeaderCode->Base(), m_pBufHeaderCode->Size(), "#version 300 es\nprecision highp float;\n#define varying in\n\n%s", glslExtText );
 		m_bVertexShader = false;
 	}
 	else // vertex shader
 	{
 		m_bGenerateSRGBWriteSuffix = false;
-		V_snprintf( (char *)m_pBufHeaderCode->Base(), m_pBufHeaderCode->Size(), "#version 300 es\nprecision mediump float;\n#define attribute in\n#define varying out\n%s//ATTRIBMAP-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx\n", glslExtText );
+		V_snprintf( (char *)m_pBufHeaderCode->Base(), m_pBufHeaderCode->Size(), "#version 300 es\nprecision highp float;\n#define attribute in\n#define varying out\n%s//ATTRIBMAP-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx\n", glslExtText );
 
 		// find that first '-xx' which is where the attrib map will be written later.
 		pAttribMapStart = strstr( (char *)m_pBufHeaderCode->Base(), "-xx" ) + 1;
@@ -3889,14 +3894,15 @@ int D3DToGL::TranslateShader( uint32* code, CUtlBuffer *pBufDisassembledCode, bo
 
 #define FindSubcode(a) (V_strstr((char*)m_pBufALUCode->Base(), a) != 0 || V_strstr((char*)m_pBufHeaderCode->Base(), a) != 0 || V_strstr((char*)m_pBufParamCode->Base(), a) != 0 || V_strstr((char*)m_pBufAttribCode->Base(), a) != 0  )
 	
+/*
 	if( FindSubcode("shadow2DProj") )
 	{
 		StrcatToHeaderCode( g_szShadow2D );
 		StrcatToHeaderCode( g_szShadow2DProj );
 	}
 	else if( FindSubcode("shadow2D") )
-		StrcatToHeaderCode( g_szShadow2D );
-	
+		StrcatToHeaderCode( g_szShadow2D );*/
+
 	if( FindSubcode("_gl_FrontColor") && !m_bFrontColor )
 		StrcatToHeaderCode( "in vec4 _gl_FrontColor;\n" );
 

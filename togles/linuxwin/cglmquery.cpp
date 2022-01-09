@@ -163,7 +163,7 @@ void	CGLMQuery::Start( void )		// "start counting"
 			}
 			else
 			{
-				gGL->glBeginQuery( GL_SAMPLES_PASSED, m_name );
+				gGL->glBeginQuery( GL_ANY_SAMPLES_PASSED, m_name );
 			}
 		}
 		break;
@@ -204,7 +204,7 @@ void	CGLMQuery::Stop( void )			// "stop counting"
 			}
 			else
 			{
-				gGL->glEndQuery( GL_SAMPLES_PASSED );	// we are only putting the request-to-stop-counting into the cmd stream.
+				gGL->glEndQuery( GL_ANY_SAMPLES_PASSED );	// we are only putting the request-to-stop-counting into the cmd stream.
 			}
 		}
 		break;

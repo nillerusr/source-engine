@@ -160,13 +160,16 @@ static FILE *GetDebugFileHandle( void )
 #ifdef DX_TO_GL_ABSTRACTION
 	// mat_autoload_glshaders instructs the engine to load a cached shader table at startup
 	// it will try for glshaders.cfg first, then fall back to glbaseshaders.cfg if not found
-ConVar mat_autoload_glshaders( "mat_autoload_glshaders", "1" );
-
 	// mat_autosave_glshaders instructs the engine to save out the shader table at key points
 	// to the filename glshaders.cfg
 	//
-ConVar mat_autosave_glshaders( "mat_autosave_glshaders", "1" );
-
+#ifdef ANDROID
+	ConVar mat_autosave_glshaders( "mat_autosave_glshaders", "0" );
+	ConVar mat_autoload_glshaders( "mat_autoload_glshaders", "0" );
+#else
+	ConVar mat_autosave_glshaders( "mat_autosave_glshaders", "1" );
+	ConVar mat_autoload_glshaders( "mat_autoload_glshaders", "1" );
+#endif
 
 #endif
 //-----------------------------------------------------------------------------

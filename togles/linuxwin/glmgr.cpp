@@ -229,7 +229,7 @@ void APIENTRY GL_Debug_Output_Callback(GLenum source, GLenum type, GLuint id, GL
 			
 	if ( ( type == GL_DEBUG_TYPE_ERROR_ARB ) && ( g_bDebugOutputBreakpoints ) )
 	{
-		DebuggerBreak();
+//		DebuggerBreak();		
 	}
 }
 
@@ -592,13 +592,13 @@ void GLMContext::ForceFlushStates()
 
 	m_DepthBias.Flush();
 
-	m_ScissorEnable.Flush();	
+	m_ScissorEnable.Flush();
 	m_ScissorBox.Flush();
 
-	m_ViewportBox.Flush();		
+	m_ViewportBox.Flush();
 	m_ViewportDepthRange.Flush();
 
-	m_ColorMaskSingle.Flush();	
+	m_ColorMaskSingle.Flush();
 
 	m_BlendEnable.Flush();
 	m_BlendFactor.Flush();
@@ -819,7 +819,7 @@ void GLMContext::ProcessTextureDeletes()
 	}
 }
 
-// push and pop attrib when blit has mixed srgb source and dest?		
+// push and pop attrib when blit has mixed srgb source and dest?
 ConVar	gl_radar7954721_workaround_mixed ( "gl_radar7954721_workaround_mixed", "1" );
 
 // push and pop attrib on any blit?
@@ -1323,7 +1323,7 @@ void GLMContext::BlitTex( CGLMTex *srcTex, GLMRect *srcRect, int srcFace, int sr
 		attparams.m_zslice	=	0;
 		m_blitReadFBO->TexAttach( &attparams, attachIndex, GL_READ_FRAMEBUFFER );
 
-		gGL->glDrawBuffers( 1, &attachIndexGL );
+		gGL->glReadBuffer( attachIndexGL );
 
 		//	set the write fb and buffer, and attach write tex
 		BindFBOToCtx( m_blitDrawFBO, GL_DRAW_FRAMEBUFFER );
@@ -2648,7 +2648,7 @@ GLMContext::GLMContext( IDirect3DDevice9 *pDevice, GLMDisplayParams *params )
 
 	gGL->glGenBuffers( 1, &m_destroyPBO );
 	gGL->glBindBuffer( GL_PIXEL_UNPACK_BUFFER, m_destroyPBO );
-	gGL->glBufferData( GL_PIXEL_UNPACK_BUFFER, sizeof( g_garbageTextureBits ), g_garbageTextureBits, GL_STATIC_DRAW );
+	gGL->glBufferData( GL_PIXEL_UNPACK_BUFFER, sizeof( g_garbageTextureBits ), g_garbageTextureBits, GL_STREAM_DRAW );
 	gGL->glBindBuffer( GL_PIXEL_UNPACK_BUFFER, m_nBoundGLBuffer[ kGLMPixelBuffer ] );
 
 	// Create a bunch of texture names for us to use forever and ever ramen.

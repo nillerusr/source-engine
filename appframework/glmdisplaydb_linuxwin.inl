@@ -42,6 +42,7 @@ void GLMRendererInfo::Init( GLMRendererInfoFields *info )
         m_info.m_atiNewer = true;
 
         m_info.m_hasGammaWrites = true;
+	m_info.m_cantAttachSRGB = false;
 
         // If you haven't created a GL context by now (and initialized gGL), you're about to crash.
 

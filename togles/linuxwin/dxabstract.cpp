@@ -1201,8 +1201,8 @@ static void FillD3DCaps9( const GLMRendererInfoFields &glmRendererInfo, D3DCAPS9
 	pCaps->MaxPixelShader30InstructionSlots		=	0;
 
 #if DX_TO_GL_ABSTRACTION
-	pCaps->FakeSRGBWrite			=	true;//!glmRendererInfo.m_hasGammaWrites;
-	pCaps->CanDoSRGBReadFromRTs		=	true;//!glmRendererInfo.m_cantAttachSRGB;
+	pCaps->FakeSRGBWrite			=	!glmRendererInfo.m_hasGammaWrites;
+	pCaps->CanDoSRGBReadFromRTs		=	!glmRendererInfo.m_cantAttachSRGB;
 	pCaps->MixedSizeTargets			=	glmRendererInfo.m_hasMixedAttachmentSizes;
 #endif
 }
@@ -1320,9 +1320,9 @@ HRESULT IDirect3D9::CheckDeviceFormat(UINT Adapter,D3DDEVTYPE DeviceType,D3DFORM
 							|	D3DUSAGE_QUERY_VERTEXTEXTURE;
 	(void)knownUsageMask;
 
-	//	FramebufferSRGB stuff.
-	//	basically a format is only allowed to have SRGB usage for writing, if you have the framebuffer SRGB extension.
-	//	so, check for that capability with GLM adapter db, and if it's not there, don't mark that bit as usable in any of our formats.
+	// FramebufferSRGB stuff.
+	// basically a format is only allowed to have SRGB usage for writing, if you have the framebuffer SRGB extension.
+	// so, check for that capability with GLM adapter db, and if it's not there, don't mark that bit as usable in any of our formats.
 	GLMDisplayDB *db = GetDisplayDB();
 	int glmRendererIndex = -1;
 	int glmDisplayIndex = -1;
