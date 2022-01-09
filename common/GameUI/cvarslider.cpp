@@ -53,20 +53,20 @@ CCvarSlider::CCvarSlider( Panel *parent, const char *panelName, char const *capt
 void CCvarSlider::SetupSlider( float minValue, float maxValue, const char *cvarname, bool bAllowOutOfRange )
 {
 	// make sure min/max don't go outside cvar range if there's one
-	ConVarRef var( cvarname, true );
-	if ( var.IsValid() )
-	{
-		float flCVarMin;
-		if ( var.GetMin( flCVarMin ) )
-		{
-			minValue = m_bUseConVarMinMax ? flCVarMin : MAX( minValue, flCVarMin );
-		}
-		float flCVarMax;
-		if ( var.GetMax( flCVarMax ) )
-		{
-			maxValue = m_bUseConVarMinMax ? flCVarMax : MIN( maxValue, flCVarMax );
-		}
-	}
+	//ConVarRef var( cvarname, true );
+	//if ( var.IsValid() )
+	//{
+	//	float flCVarMin;
+	//	if ( var.GetMin( flCVarMin ) )
+	//	{
+	//		minValue = m_bUseConVarMinMax ? flCVarMin : MAX( minValue, flCVarMin );
+	//	}
+	//	float flCVarMax;
+	//	if ( var.GetMax( flCVarMax ) )
+	//	{
+	//		maxValue = m_bUseConVarMinMax ? flCVarMax : MIN( maxValue, flCVarMax );
+	//	}
+	//}
 
 	m_flMinValue = minValue;
 	m_flMaxValue = maxValue;

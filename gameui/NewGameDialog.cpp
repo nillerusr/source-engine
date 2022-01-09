@@ -161,22 +161,22 @@ public:
 
 		SetPaintBackgroundEnabled( false );
 
-		// the image has the same name as the config file
-		char szMaterial[ MAX_PATH ];
-		Q_snprintf( szMaterial, sizeof(szMaterial), "chapters/%s", chapterConfigFile );
-		char *ext = strstr( szMaterial, "." );
-		if ( ext )
-		{
-			*ext = 0;
-		}
-		m_pLevelPic->SetImage( szMaterial );
-
 		KeyValues *pKeys = NULL;
 		if ( GameUI().IsConsoleUI() )
 		{
 			pKeys = BasePanel()->GetConsoleControlSettings()->FindKey( "NewGameChapterPanel.res" );
 		}
 		LoadControlSettings( "Resource/NewGameChapterPanel.res", NULL, pKeys );
+
+		// the image has the same name as the config file
+		char szMaterial[MAX_PATH];
+		Q_snprintf(szMaterial, sizeof(szMaterial), "chapters/%s", chapterConfigFile);
+		char* ext = strstr(szMaterial, ".");
+		if (ext)
+		{
+			*ext = 0;
+		}
+		m_pLevelPic->SetImage(szMaterial);
 
 		int px, py;
 		m_pLevelPicBorder->GetPos( px, py );

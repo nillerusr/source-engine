@@ -90,6 +90,21 @@ void ImagePanel::SetImage(const char *imageName)
 	m_pszImageName = new char[ len ];
 	Q_strncpy(m_pszImageName, imageName, len );
 	InvalidateLayout(false, true); // force applyschemesettings to run
+
+	if (IsProportional() && m_pImage && !m_bScaleImage)
+	{
+		float scale = 1;
+		int screenW, screenH;
+		surface()->GetScreenSize(screenW, screenH);
+
+		int proW, proH;
+		surface()->GetProportionalBase(proW, proH);
+
+		scale = ((float)(screenH) / (float)(proH));
+
+		m_fScaleAmount = scale;
+		m_bScaleImage = true;
+	}
 }
 
 //-----------------------------------------------------------------------------
