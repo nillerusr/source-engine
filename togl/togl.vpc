@@ -6,7 +6,7 @@
 
 $Macro SRCDIR		".." [$WIN32]
 $Macro SRCDIR		".." [!$WIN32]
-$Macro OUTBINDIR	$LIBPUBLIC
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
 $Macro OUTBINNAME	"togl"
 $Macro TOGL_SRCDIR	"$SRCDIR/togl/linuxwin" 
 $Macro TOGL_INCDIR	"$SRCDIR/public/togl/linuxwin"

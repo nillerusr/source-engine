@@ -5,7 +5,7 @@
 //-----------------------------------------------------------------------------
 
 $Macro SRCDIR		"..\.."
-$Macro OUTBINDIR	"$LIBPUBLIC"
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
 $Macro OUTBINNAME	"shaderapidx9"
 
 $include "$SRCDIR\vpc_scripts\source_dll_base.vpc"

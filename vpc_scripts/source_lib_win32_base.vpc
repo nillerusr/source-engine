@@ -58,7 +58,7 @@ $Configuration
 
 	$PreLinkEvent [!$ANALYZE && !$SOURCESDK]
 	{
-		$CommandLine		"call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $OUTLIBDIR\$(TargetName).lib $SRCDIR" 
+//		$CommandLine		"call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $OUTLIBDIR\$(TargetName).lib $SRCDIR" 
 	}
 
 	$Librarian

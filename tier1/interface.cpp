@@ -278,7 +278,9 @@ CSysModule *Sys_LoadModule( const char *pModuleName, Sys_Flags flags /* = SYS_NO
 	// file in the depot (MFP) or a filesystem GetLocalCopy() call must be made
 	// prior to the call to this routine.
 	char szCwd[1024];
+#ifdef POSIX
 	char szModuleName[1024];
+#endif
 	HMODULE hDLL = NULL;
 
 	if ( !Q_IsAbsolutePath( pModuleName ) )
@@ -300,8 +302,6 @@ CSysModule *Sys_LoadModule( const char *pModuleName, Sys_Flags flags /* = SYS_NO
 		}
 
 		char szAbsoluteModuleName[1024];
-		size_t cCwd = strlen( szCwd );
-
 		bool bUseLibPrefix = false;
 
 #ifdef ANDROID

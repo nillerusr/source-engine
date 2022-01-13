@@ -11,6 +11,7 @@ $Include "$SRCDIR\game\server\server_base.vpc"
 $Include "$SRCDIR\game\server\server_econ_base.vpc"
 $include "$SRCDIR\game\shared\tf\tf_gcmessages_include.vpc"
 $Include "$SRCDIR\game\server\nav_mesh.vpc"
+$Include "$SRCDIR\game\protobuf_include.vpc"
 
 $Configuration
 {

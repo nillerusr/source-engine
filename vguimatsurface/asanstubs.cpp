@@ -70,10 +70,12 @@ void VPanel::SetEnabled(bool state)
 
 bool VPanel::IsVisible()
 {
+	return false;
 }
 
 bool VPanel::IsEnabled()
 {
+	return false;
 }
 
 void VPanel::GetAbsPos(int &x, int &y)
@@ -110,8 +112,10 @@ VPanel *VPanel::GetChild(int index)
 	return NULL;
 }
 
+CUtlVector< VPanel *> panels;
 CUtlVector< VPanel *> &VPanel::GetChildren()
 {
+	return panels;
 //	return NULL;
 }
 
@@ -153,6 +157,7 @@ void VPanel::SetPlat(SurfacePlat *Plat)
 
 bool VPanel::IsPopup()
 {
+	return false;
 }
 
 void VPanel::SetPopup(bool state)

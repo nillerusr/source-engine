@@ -283,7 +283,7 @@ struct CInterpolatedVarEntryBase<Type, false>
 	{
 		Assert(maxCount==1);
 	}
-	Type *NewEntry( Type *pValue, int maxCount, float time )
+	Type *NewEntry( const Type *pValue, int maxCount, float time )
 	{
 		Assert(maxCount==1);
 		changetime = time;

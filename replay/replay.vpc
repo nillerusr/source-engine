@@ -9,7 +9,7 @@
 //-----------------------------------------------------------------------------
 
 $macro SRCDIR		".."
-$Macro OUTBINDIR	"$LIBPUBLIC"
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
 
 // NOTE:  We don't want to include source_replay.vpc here.  The only purpose
 // REPLAY_ENABLED // serves in this project is for includes like netmessages.h

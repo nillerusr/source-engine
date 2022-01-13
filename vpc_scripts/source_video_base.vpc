@@ -45,6 +45,6 @@ $Configuration
 		
 		$PreprocessorDefinitions		"$BASE;GL_GLEXT_PROTOTYPES;DX_TO_GL_ABSTRACTION"			[$GL]
 		$PreprocessorDefinitions		"$BASE;USE_SDL"										[$SDL]
-                $AdditionalIncludeDirectories		"$BASE;$SRCDIR\thirdparty\SDL2"					[$SDL || $DEDICATED]
+                $AdditionalIncludeDirectories		"$BASE;$SRCDIR\thirdparty\SDL"					[$SDL || $DEDICATED]
 	}
 }

@@ -6,17 +6,17 @@
 
 
 $Macro SRCDIR           "..\..\.."
-$Macro OUTBINDIR        "$LIBPUBLIC"
+$Macro OUTBINDIR		"$SRCDIR\..\game\bin"
 
 $Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
 
 $Configuration
 {
-        $Compiler
-        {
-                $AdditionalIncludeDirectories           "$BASE,$SRCDIR\thirdparty\minimp3\,..\..\..\public,..\..\..\public\tier1,..\..,..\..\..\common,..\..\audio\public"
-                $PreprocessorDefinitions                        "$BASE;"
-        }
+	$Compiler
+	{
+		$AdditionalIncludeDirectories           "$BASE,$SRCDIR\thirdparty\minimp3\,..\..\..\public,..\..\..\public\tier1,..\..,..\..\..\common,..\..\audio\public"
+		$DisableSpecificWarnings				"$BASE;4706"
+	}
 }
 
 $Project "vaudio_minimp3"

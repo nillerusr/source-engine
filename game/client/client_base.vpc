@@ -16,7 +16,6 @@ $MacroRequired "GAMENAME"
 $Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
 $include "$SRCDIR\vpc_scripts\protobuf_builder.vpc"
 $Include "$SRCDIR\vpc_scripts\source_replay.vpc"	[$TF]
-$Include "$SRCDIR\game\protobuf_include.vpc"
 
 $Configuration	"Debug"
 {
@@ -505,6 +504,8 @@ $Project
 		//Haptics
 		$File	"$SRCDIR\public\haptics\haptic_msgs.cpp"	[!$X360]
 		$File	"$SRCDIR\public\haptics\haptic_utils.cpp"	[$WIN32&&!$X360]
+
+		$File	"$SRCDIR\game\client\touch.cpp"
 
 		$Folder	"Sixense"
 		{

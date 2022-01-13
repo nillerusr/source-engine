@@ -5,7 +5,7 @@
 //-----------------------------------------------------------------------------
 
 $macro SRCDIR		".."
-$Macro OUTBINDIR	"$LIBPUBLIC"
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
 
 $include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
 
@@ -13,7 +13,7 @@ $Configuration
 {
 	$Compiler
 	{
-		$AdditionalIncludeDirectories		"$BASE;$SRCDIR\thirdparty\SDL2"	[!$SDL] // If $SDL, then we already have this from source_video_base.vpc.
+		$AdditionalIncludeDirectories		"$BASE;$SRCDIR\thirdparty\SDL"	[!$SDL] // If $SDL, then we already have this from source_video_base.vpc.
 		$PreprocessorDefinitions			"$BASE;VERSION_SAFE_STEAM_API_INTERFACES" 
 	}
 	$Linker
@@ -34,6 +34,7 @@ $Project "inputsystem"
 		$File	"key_translation.cpp"
 		$File	"key_translation.h"
 		$File	"steamcontroller.cpp"
+		$File	"touch_sdl.cpp"
 	}
 
 	$Folder	"Public Headers"

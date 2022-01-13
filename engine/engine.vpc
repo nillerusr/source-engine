@@ -5,7 +5,7 @@
 //-----------------------------------------------------------------------------
 
 $macro SRCDIR		".."
-$Macro OUTBINDIR	"$LIBPUBLIC"
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
 
 $include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
 $include "$SRCDIR\vpc_scripts\source_replay.vpc"

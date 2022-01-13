@@ -66,11 +66,11 @@ $Configuration
 	$PostBuildEvent [!$ANALYZE]
 	{
 		$CommandLine		"if not exist $QUOTE$OUTBINDIR$QUOTE mkdir $QUOTE$OUTBINDIR$QUOTE" "\n" 
-		$CommandLine		"$BASE" "call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $QUOTE$OUTBINDIR\$(TargetFileName)$QUOTE $SRCDIR" "\n" [!$SOURCESDK]
+//		$CommandLine		"$BASE" "call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $QUOTE$OUTBINDIR\$(TargetFileName)$QUOTE $SRCDIR" "\n" [!$SOURCESDK]
 		$CommandLine		"$BASE" "copy $QUOTE$(TargetDir)$(TargetFileName)$QUOTE $QUOTE$OUTBINDIR\$(TargetFileName)$QUOTE" "\n" \
 							"if ERRORLEVEL 1 goto BuildEventFailed" "\n" \
 							"if exist $QUOTE$(TargetDir)$(TargetName).map$QUOTE copy $QUOTE$(TargetDir)$(TargetName).map$QUOTE $OUTBINDIR\$(TargetName).map" "\n" 
-		$CommandLine		"$BASE" "call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $QUOTE$OUTBINDIR\$(TargetName).pdb$QUOTE $SRCDIR" "\n"  [!$SOURCESDK] 
+//		$CommandLine		"$BASE" "call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $QUOTE$OUTBINDIR\$(TargetName).pdb$QUOTE $SRCDIR" "\n"  [!$SOURCESDK] 
 		$CommandLine		"$BASE" "copy $QUOTE$(TargetDir)$(TargetName).pdb$QUOTE $OUTBINDIR\$(TargetName).pdb" "\n" \
 							"if ERRORLEVEL 1 goto BuildEventFailed" "\n" \
 							"goto BuildEventOK" "\n" \
@@ -110,7 +110,8 @@ $Project
 				$CustomBuildStep
 				{
 					// General
-					$CommandLine				"$QUOTE$(VCInstallDir)bin\ml.exe$QUOTE /safeseh /c /Cp /Zi /Fo$QUOTE$(IntDir)\$(InputName).obj$QUOTE $QUOTE$(InputPath)$QUOTE"
+					$CommandLine				"$QUOTE$(VCInstallDir)bin\ml.exe$QUOTE /safeseh /c /Cp /Zi /Fo$QUOTE$(IntDir)\$(InputName).obj$QUOTE $QUOTE$(InputPath)$QUOTE" [!$VS2019]
+					$CommandLine				"$QUOTE$(VC_ExecutablePath_x86_x86)\ml.exe$QUOTE /safeseh /c /Cp /Zi /Fo$QUOTE$(IntDir)\$(InputName).obj$QUOTE $QUOTE$(InputPath)$QUOTE" [$VS2019]
 					$Description				"Compiling pointeroverride.asm"
 					$Outputs					"$(IntDir)\$(InputName).obj"
 				}		

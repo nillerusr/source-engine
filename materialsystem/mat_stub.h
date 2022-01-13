@@ -76,7 +76,7 @@ public:
 	// Texture streaming!
 	virtual ResidencyType_t GetCurrentResidence() const { return RESIDENT_NONE; };
 	virtual ResidencyType_t GetTargetResidence() const { return RESIDENT_NONE; };
-	virtual bool MakeResident( ResidencyType_t newResidence ) {};
+	virtual bool MakeResident( ResidencyType_t newResidence ) { return false; };
 	virtual void UpdateLodBias() {};
 
 	// Various texture polling methods

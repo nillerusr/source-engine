@@ -1,5 +1,5 @@
+#include "cbase.h"
 #include "convar.h"
-#include <dlfcn.h>
 #include <string.h>
 #include "vgui/IInputInternal.h"
 #include "VGuiMatSurface/IMatSystemSurface.h"
@@ -234,24 +234,26 @@ CON_COMMAND( touch_toggleselection, "toggle visibility on selected button in edi
 void CTouchControls::Init()
 {
 	m_bHaveAssets = true;
+#ifndef _WIN32
 	if( getAssets() == 0 )
 	{
 		m_bHaveAssets = false;
 		base_textureID = vgui::surface()->CreateNewTextureID(true);
 		vgui::surface()->DrawSetTextureRGBA( base_textureID, base_img_rgba, 120, 96, 0, true );
 	}
+#endif
 
 	int w,h;
 	engine->GetScreenSize( w, h );
 	screen_w = w; screen_h = h;
 
-	Msg("grid_x: %f, grid_y: %x\n", GRID_X, GRID_Y);
+	Msg("grid_x: %f, grid_y: %f\n", GRID_X, GRID_Y);
 	configchanged = false;
 	config_loaded = false;
 	btns.EnsureCapacity( 64 );
 	look_finger = move_finger = resize_finger = -1;
 	forward = side = 0;
-	scolor = rgba_t( -1, -1, -1, -1 );
+	scolor = rgba_t( 255, 255, 255, 255 );
 	state = state_none;
 	swidth = 1;
 	move_button = edit = selection = NULL;
@@ -776,7 +778,6 @@ void CTouchControls::WriteConfig()
 
 	if( f )
 	{
-		CTouchButton *button;
 		filesystem->FPrintf( f, "//=======================================================================\n");
 		filesystem->FPrintf( f, "//\t\t\ttouchscreen config\n" );
 		filesystem->FPrintf( f, "//=======================================================================\n" );

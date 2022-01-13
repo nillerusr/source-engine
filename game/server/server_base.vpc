@@ -5,7 +5,7 @@
 //-----------------------------------------------------------------------------
 
 $Macro OUTBINNAME	"server"
-$Macro OUTBINDIR	"$SRCDIR\..\game\$GAMENAME\bin"
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
 $Macro DEVKITBINDIR	"$GAMENAME\bin"							[$X360]
 // It's important to include $GAMENAME in the generated_proto directory
 // to avoid race conditions when multiple games are in one solution.
@@ -16,7 +16,6 @@ $MacroRequired "GAMENAME"
 $include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
 $include "$SRCDIR\vpc_scripts\protobuf_builder.vpc"
 $Include "$SRCDIR\vpc_scripts\source_replay.vpc"	[$TF]
-$Include "$SRCDIR\game\protobuf_include.vpc"
 
 $Configuration	"Debug"
 {
