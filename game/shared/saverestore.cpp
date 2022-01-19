@@ -112,7 +112,7 @@ static void Matrix3x4Offset( matrix3x4_t& dest, const matrix3x4_t& matrixIn, con
 
 // This does the necessary casting / extract to grab a pointer to a member function as a void *
 // UNDONE: Cast to BASEPTR or something else here?
-#define EXTRACT_INPUTFUNC_FUNCTIONPTR(x)		(*(inputfunc_t **)(&(x)))
+//#define EXTRACT_INPUTFUNC_FUNCTIONPTR(x)		(*(inputfunc_t **)(&(x)))
 
 //-----------------------------------------------------------------------------
 // Purpose: Search this datamap for the name of this member function
@@ -120,7 +120,7 @@ static void Matrix3x4Offset( matrix3x4_t& dest, const matrix3x4_t& matrixIn, con
 // Input  : *function - pointer to member function
 // Output : const char * - function name
 //-----------------------------------------------------------------------------
-const char *UTIL_FunctionToName( datamap_t *pMap, inputfunc_t *function )
+const char *UTIL_FunctionToName( datamap_t *pMap, inputfunc_t function )
 {
 	while ( pMap )
 	{
@@ -135,7 +135,7 @@ const char *UTIL_FunctionToName( datamap_t *pMap, inputfunc_t *function )
 #else
 #error
 #endif
-				inputfunc_t *pTest = EXTRACT_INPUTFUNC_FUNCTIONPTR(pMap->dataDesc[i].inputFunc);
+				inputfunc_t pTest = pMap->dataDesc[i].inputFunc;
 
 				if ( pTest == function )
 					return pMap->dataDesc[i].fieldName;
@@ -1140,7 +1140,7 @@ void CSave::WritePositionVector( const Vector *value, int count )
 void CSave::WriteFunction( datamap_t *pRootMap, const char *pname, inputfunc_t **data, int count )
 {
 	AssertMsg( count == 1, "Arrays of functions not presently supported" );
-	const char *functionName = UTIL_FunctionToName( pRootMap, *data );
+	const char *functionName = UTIL_FunctionToName( pRootMap, *(inputfunc_t*)data );
 	if ( !functionName )
 	{
 		Warning( "Invalid function pointer in entity!\n" );

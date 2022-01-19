@@ -8,7 +8,6 @@
 #include "cdll_int.h"
 #include "ienginevgui.h"
 #include "in_buttons.h"
-#include "base_texture.h"
 #include "filesystem.h"
 #include "tier0/icommandline.h"
 #include "vgui_controls/Button.h"
@@ -233,14 +232,6 @@ CON_COMMAND( touch_toggleselection, "toggle visibility on selected button in edi
 
 void CTouchControls::Init()
 {
-	m_bHaveAssets = true;
-	if( getAssets() == 0 )
-	{
-		m_bHaveAssets = false;
-		base_textureID = vgui::surface()->CreateNewTextureID(true);
-		vgui::surface()->DrawSetTextureRGBA( base_textureID, base_img_rgba, 120, 96, 0, true );
-	}
-
 	int w,h;
 	engine->GetScreenSize( w, h );
 	screen_w = w; screen_h = h;
@@ -373,15 +364,6 @@ void CTouchControls::Frame()
 		return;
 
 	IN_Look();
-
-	if( !m_bHaveAssets )
-	{
-		vgui::surface()->DrawSetColor(255,255,255,255);
-		vgui::surface()->DrawSetTexture(base_textureID);
-
-		const int off = 50;
-		vgui::surface()->DrawTexturedRect( off, off, screen_w*0.3f+off,  0.24f*screen_w+off );
-	}
 
 	if( touch_enable.GetBool() && !enginevgui->IsGameUIVisible() ) Paint();
 }

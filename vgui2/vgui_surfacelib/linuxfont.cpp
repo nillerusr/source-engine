@@ -42,8 +42,6 @@ inline int32_t INT_2FIXED6(int32_t x)   { return x << 6; }
 bool CLinuxFont::ms_bSetFriendlyNameCacheLessFunc = false;
 CUtlRBTree< CLinuxFont::font_name_entry > CLinuxFont::m_FriendlyNameCache;
 
-#define ANDROID 1
-
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------

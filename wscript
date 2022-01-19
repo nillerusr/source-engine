@@ -279,7 +279,8 @@ def configure(conf):
 			'-I'+os.path.abspath('.')+'/thirdparty/openal-soft/include/',
 			'-I'+os.path.abspath('.')+'/thirdparty/fontconfig',
 			'-I'+os.path.abspath('.')+'/thirdparty/freetype/include',
-			'-llog'
+			'-llog',
+			'-lz'
 		]
 
 	if conf.env.DEST_CPU == 'arm':

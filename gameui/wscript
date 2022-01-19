@@ -13,6 +13,7 @@ def options(opt):
 
 def configure(conf):
 	conf.define('GAMEUI_EXPORTS',1)
+	conf.define('NO_STEAM',1)
 	conf.define('VERSION_SAFE_STEAM_API_INTERFACES',1)
 
 def build(bld):

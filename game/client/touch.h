@@ -7,7 +7,6 @@
 #include "usercmd.h"
 
 extern ConVar touch_enable;
-extern "C" int getAssets();
 
 #define GRID_COUNT touch_grid_count.GetInt()
 #define GRID_COUNT_X (GRID_COUNT)
@@ -223,9 +222,6 @@ private:
 	vgui::HFont textfont;
 	int mouse_events;
 
-	int base_textureID;
-
-	bool m_bHaveAssets;
 	float screen_h, screen_w;
 };
 
