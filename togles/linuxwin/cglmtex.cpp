@@ -3361,11 +3361,11 @@ void convert_texture( GLint &internalformat, GLsizei width, GLsizei height, GLen
 	if( format == GL_LUMINANCE || format == GL_LUMINANCE_ALPHA )
 		internalformat = format;
 
-//	if( internalformat == GL_SRGB8_ALPHA8 )
-//		internalformat = GL_RGBA;
+	if( internalformat == GL_SRGB8_ALPHA8 )
+		internalformat = GL_RGBA;
 
-//	if( internalformat == GL_SRGB8 )
-//		internalformat = GL_RGB;
+	if( internalformat == GL_SRGB8 )
+		internalformat = GL_RGB;
 
 	if( data )
 	{
@@ -3412,12 +3412,12 @@ void convert_texture( GLint &internalformat, GLsizei width, GLsizei height, GLen
 		else if( internalformat == GL_SRGB8_ALPHA8 )
 		{
 //			pixel_srgb_inplace( data, 4, width, height );
-			internalformat = GL_RGBA;
+//			internalformat = GL_RGBA;
 		}
 		else if( internalformat == GL_SRGB8 )
 		{
 //			pixel_srgb_inplace( data, 3, width, height );
-			internalformat = GL_RGB;
+//			internalformat = GL_RGB;
 		}
 
 	}
@@ -3659,15 +3659,17 @@ void CGLMTex::WriteTexels( GLMTexLockDesc *desc, bool writeWholeSlice, bool noDa
 	GLenum glDataFormat	= format->m_glDataFormat;				// this could change if expansion kicks in 
 	GLenum glDataType	= format->m_glDataType;
 	
-	GLMTexLayoutSlice *slice = &m_layout->m_slices[ desc->m_sliceIndex ];		
+	GLMTexLayoutSlice *slice = &m_layout->m_slices[ desc->m_sliceIndex ];
 	void *sliceAddress = m_backing ? (m_backing + slice->m_storageOffset) : NULL;	// this would change for PBO
 
 	// allow use of subimage if the target is texture2D and it has already been teximage'd
 	bool mayUseSubImage = false;
+#ifdef ANDROID
 	if ( (target==GL_TEXTURE_2D) && (m_sliceFlags[ desc->m_sliceIndex ] & kSliceValid) )
 	{
-//		mayUseSubImage = gl_enabletexsubimage.GetInt() != 0;
+		mayUseSubImage = gl_enabletexsubimage.GetInt() != 0;
 	}
+#endif
 
 	// check flavor, 2D, 3D, or cube map
 	// we also have the choice to use subimage if this is a tex already created. (open question as to benefit)

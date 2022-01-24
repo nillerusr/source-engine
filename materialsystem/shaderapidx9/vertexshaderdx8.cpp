@@ -163,14 +163,9 @@ static FILE *GetDebugFileHandle( void )
 	// mat_autosave_glshaders instructs the engine to save out the shader table at key points
 	// to the filename glshaders.cfg
 	//
-#ifdef ANDROID
-	ConVar mat_autosave_glshaders( "mat_autosave_glshaders", "0" );
-	ConVar mat_autoload_glshaders( "mat_autoload_glshaders", "0" );
-#else
+
 	ConVar mat_autosave_glshaders( "mat_autosave_glshaders", "1" );
 	ConVar mat_autoload_glshaders( "mat_autoload_glshaders", "1" );
-#endif
-
 #endif
 //-----------------------------------------------------------------------------
 // Explicit instantiation of shader buffer implementation
@@ -943,7 +938,8 @@ void CShaderManager::Shutdown()
 	}
 #endif
 
-#ifdef DX_TO_GL_ABSTRACTION
+#if defined (DX_TO_GL_ABSTRACTION) && !defined (ANDROID)
+
 	if (mat_autosave_glshaders.GetInt())
 	{
 		SaveShaderCache("glshaders.cfg");
@@ -3757,6 +3753,10 @@ CON_COMMAND( mat_shadercount, "display count of all shaders and reset that count
 #if defined( DX_TO_GL_ABSTRACTION )
 void	CShaderManager::DoStartupShaderPreloading()
 {
+#ifdef ANDROID // Too slow
+	return;
+#endif
+
 	if (mat_autoload_glshaders.GetInt())
 	{
 		double flStartTime = Plat_FloatTime();

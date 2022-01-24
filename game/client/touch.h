@@ -72,8 +72,7 @@ struct event_clientcmd_t
 struct event_s
 {
 	int type;
-	int x;
-	int y;
+	float x,y,dx,dy;
 	int fingerid;
 } typedef touch_event_t;
 
@@ -110,8 +109,11 @@ class CTouchPanel : public vgui::Panel
 public:
 	CTouchPanel( vgui::VPANEL parent );
 	virtual			~CTouchPanel( void ) {};
-
 	virtual void	Paint();
+	virtual void    ApplySchemeSettings(vgui::IScheme *pScheme);
+
+protected:
+	MESSAGE_FUNC_INT_INT( OnScreenSizeChanged, "OnScreenSizeChanged", oldwide, oldtall );
 };
 
 abstract_class ITouchPanel
@@ -189,6 +191,8 @@ public:
 	void EnableTouchEdit(bool enable);
 	
 	CTouchPanel *touchPanel;
+	float screen_h, screen_w;
+
 private:
 	bool initialized = false;
 	ETouchState state;
@@ -200,7 +204,6 @@ private:
 	CTouchButton *move_button;
 
 	float move_start_x, move_start_y;
-	float dx, dy, dx2, dy2;
 
 	// editing
 	CTouchButton *edit;
@@ -221,8 +224,6 @@ private:
 	bool config_loaded;
 	vgui::HFont textfont;
 	int mouse_events;
-
-	float screen_h, screen_w;
 };
 
 extern CTouchControls gTouch;

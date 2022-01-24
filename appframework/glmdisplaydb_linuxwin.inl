@@ -595,8 +595,12 @@ void    GLMDisplayInfo::PopulateModes( void )
                                 // Add double of everything also - Retina proofing hopefully.
                                 m_modes->AddToTail( new GLMDisplayMode( w * 2, h * 2, 0 ) );
                         }
+
+                        m_modes->AddToTail( new GLMDisplayMode( w, w * ((float)m_info.m_displayPixelHeight/m_info.m_displayPixelWidth), 0 ) );
                 }
         }
+
+        m_modes->AddToTail( new GLMDisplayMode( m_info.m_displayPixelWidth / 2, m_info.m_displayPixelHeight / 2, 0 ) );
 
         m_modes->Sort( DisplayModeSortFunction );
 

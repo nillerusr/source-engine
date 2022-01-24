@@ -62,9 +62,34 @@ CTouchPanel::CTouchPanel( vgui::VPANEL parent ) : BaseClass( NULL, "TouchPanel" 
 	SetVisible( true );
 }
 
+
 void CTouchPanel::Paint()
 {
 	gTouch.Frame();
+}
+
+void CTouchPanel::OnScreenSizeChanged(int iOldWide, int iOldTall)
+{
+	BaseClass::OnScreenSizeChanged(iOldWide, iOldTall);
+
+	int w,h;
+	w = ScreenWidth();
+	h = ScreenHeight();
+	gTouch.screen_w = ScreenWidth(); gTouch.screen_h = h;
+
+	SetBounds( 0, 0, w, h );
+}
+
+void CTouchPanel::ApplySchemeSettings(vgui::IScheme *pScheme)
+{
+	BaseClass::ApplySchemeSettings(pScheme);
+
+	int w,h;
+	w = ScreenWidth();
+	h = ScreenHeight();
+	gTouch.screen_w = ScreenWidth(); gTouch.screen_h = h;
+
+	SetBounds( 0, 0, w, h );
 }
 
 CON_COMMAND( touch_addbutton, "add native touch button" )
@@ -282,7 +307,7 @@ void CTouchControls::Init()
 	char buf[256];
 	Q_snprintf(buf, sizeof buf, "exec %s\n", touch_config_file.GetString());
 	engine->ClientCmd_Unrestricted(buf);
-	
+
 	Q_snprintf(buf, sizeof buf, "cfg/%s", touch_config_file.GetString());	
 	if( !filesystem->FileExists(buf) )
 		WriteConfig();
@@ -530,8 +555,8 @@ void CTouchControls::ProcessEvent(touch_event_t *ev)
 
 void CTouchControls::EditEvent(touch_event_t *ev)
 {
-	float x = ev->x / (float)screen_w;
-	float y = ev->y / (float)screen_h;
+	const float x = ev->x;
+	const float y = ev->y;
 
 	//CUtlLinkedList<CTouchButton*>::iterator it;
 	
@@ -556,13 +581,11 @@ void CTouchControls::EditEvent(touch_event_t *ev)
 				{
 					move_finger = ev->fingerid;
 					selection = btn;
-					dx = x; dy = y;
 					break;
 				}
 				else if( resize_finger == -1 )
 				{
 					resize_finger = ev->fingerid;
-					dx2 = x; dy2 = y;
 				}
 			}
 		}
@@ -574,7 +597,6 @@ void CTouchControls::EditEvent(touch_event_t *ev)
 			move_finger = -1;
 			IN_CheckCoords( &selection->x1, &selection->y1, &selection->x2, &selection->y2 );
 			selection = nullptr;
-			dx = dy = 0.f;
 		}
 		else if( ev->fingerid == resize_finger )
 			resize_finger = -1;
@@ -586,20 +608,15 @@ void CTouchControls::EditEvent(touch_event_t *ev)
 
 		if( move_finger == ev->fingerid )
 		{
-			selection->x1 += x-dx;
-			selection->x2 += x-dx;
-			selection->y1 += y-dy;
-			selection->y2 += y-dy;
-		
-			dx = x;
-			dy = y;
+			selection->x1 += ev->dx;
+			selection->x2 += ev->dx;
+			selection->y1 += ev->dy;
+			selection->y2 += ev->dy;
 		}
 		else if( resize_finger == ev->fingerid )
 		{
-			selection->x2 += x-dx2;
-			selection->y2 += y-dy2;
-			
-			dx2 = x; dy2 = y;
+			selection->x2 += ev->dx;
+			selection->y2 += ev->dy;
 		}
 	}
 }
@@ -607,8 +624,8 @@ void CTouchControls::EditEvent(touch_event_t *ev)
 
 void CTouchControls::FingerMotion(touch_event_t *ev) // finger in my ass
 {
-	float x = ev->x / (float)screen_w;
-	float y = ev->y / (float)screen_h;
+	const float x = ev->x;
+	const float y = ev->y;
 
 	float f, s;
 
@@ -627,10 +644,8 @@ void CTouchControls::FingerMotion(touch_event_t *ev) // finger in my ass
 			}
 			else if( btn->type == touch_look )
 			{
-				yaw += touch_yaw.GetFloat() * ( dx - x ) * sensitivity.GetFloat();
-				pitch -= touch_pitch.GetFloat() * ( dy - y ) * sensitivity.GetFloat();
-				dx = x;
-				dy = y;
+				yaw -= touch_yaw.GetFloat() * ev->dx * sensitivity.GetFloat();
+				pitch += touch_pitch.GetFloat() * ev->dy * sensitivity.GetFloat();
 			}
 		}
 	}
@@ -638,8 +653,8 @@ void CTouchControls::FingerMotion(touch_event_t *ev) // finger in my ass
 
 void CTouchControls::FingerPress(touch_event_t *ev)
 {
-	float x = ev->x / (float)screen_w;
-	float y = ev->y / (float)screen_h;
+	const float x = ev->x;
+	const float y = ev->y;
 
 	CUtlLinkedList<CTouchButton*>::iterator it;
 	
@@ -668,11 +683,7 @@ void CTouchControls::FingerPress(touch_event_t *ev)
 				else if( btn->type == touch_look )
 				{
 					if( look_finger == -1 )
-					{
-						dx = x;
-						dy = y;
 						look_finger = ev->fingerid;
-					}
 					else
 						btn->finger = look_finger;
 				}
@@ -722,7 +733,7 @@ void CTouchControls::EnableTouchEdit(bool enable)
 		resize_finger = move_finger = look_finger = wheel_finger = -1;
 		move_button = NULL;
 		configchanged = true;
-		AddButton( "close_edit", "vgui/touch/exit", "touch_disableedit", 0.010000, 0.837778, 0.080000, 0.980000, rgba_t(255,255,255,255), 0, 1.f, TOUCH_FL_NOEDIT );
+		AddButton( "close_edit", "vgui/touch/back", "touch_disableedit", 0.010000, 0.837778, 0.080000, 0.980000, rgba_t(255,255,255,255), 0, 1.f, TOUCH_FL_NOEDIT );
 	}
 	else
 	{

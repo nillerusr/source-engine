@@ -284,11 +284,9 @@ def configure(conf):
 		]
 
 	if conf.env.DEST_CPU == 'arm':
-		flags += ['-fsigned-char', '-mfpu=neon']
+		flags += ['-fsigned-char']
 
-		if conf.env.DEST_OS == 'android':
-			flags += ['-mcpu=cortex-a15', '-mtune=cortex-a15']
-		else:
+		if conf.env.DEST_OS != 'android':
 			flags += ['-march=native', '-mtune=native']
 	else:
 		flags += ['-march=native','-mtune=native','-mfpmath=sse', '-msse', '-msse2']
