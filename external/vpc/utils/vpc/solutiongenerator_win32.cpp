@@ -27,6 +27,12 @@ class CSolutionGenerator_Win32 : public IBaseSolutionGenerator
 public:
 	void GetVCPROJSolutionGUID( char (&szSolutionGUID)[256] )
 	{
+		if ( g_pVPC->Is2019() )
+		{
+			V_strncpy( szSolutionGUID, "{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}", ARRAYSIZE(szSolutionGUID) );
+			return;
+		}
+
 		HKEY hKey;
 		int firstVer = 8;
 		const int lastVer = 14; // Handle up to VS 14, AKA VS 2015
@@ -114,7 +120,12 @@ public:
 			g_pVPC->VPCError( "Can't open %s for writing.", pSolutionFilename );
 
 		
-		if ( g_pVPC->Is2015() )
+		if ( g_pVPC->Is2019() )
+		{
+			fprintf( fp, "\xef\xbb\xbf\nMicrosoft Visual Studio Solution File, Format Version 12.00\n" );
+			fprintf( fp, "# Visual Studio Version 16\n" );
+		}
+		else if ( g_pVPC->Is2015() )
 		{
 			fprintf( fp, "\xef\xbb\xbf\nMicrosoft Visual Studio Solution File, Format Version 12.00\n" ); // still on 12
 			fprintf( fp, "# Visual Studio 2015\n" );
