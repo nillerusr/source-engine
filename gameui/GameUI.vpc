@@ -246,8 +246,8 @@ $Project "GameUI"
 		$Lib	vtf
 		$Lib  	"$LIBCOMMON/libjpeg"		[!$DEDICATED]
 		$ImpLib	steam_api
-		$Lib libpng [!$VS2015&&!$DEDICATED]
-		$Lib $LIBCOMMON/libpng [$VS2015&&!$DEDICATED]
+		$Lib libpng [!$VS2015 && !$VS2019 && !$DEDICATED]
+		$Lib $LIBCOMMON/libpng [($VS2015 || $VS2019) && !$DEDICATED]
 		$Lib libz [!$DEDICATED]
 		$ImpLib SDL2 [$SDL]
 	}

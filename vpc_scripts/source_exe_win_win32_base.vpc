@@ -12,9 +12,9 @@ $MacroRequired				"OUTBINDIR"
 
 $Macro OUTBINDIR	"$OUTBINDIR$PLATSUBDIR"
 $Macro LIBPUBLIC	"$SRCDIR\lib\public$PLATSUBDIR"
-$Macro LIBCOMMON	"$SRCDIR\lib\common$PLATSUBDIR" [!$VS2015]
-$Macro LIBCOMMON	"$SRCDIR\lib\common$PLATSUBDIR\2015\release" [$VS2015&&!$WIN32]
-$Macro LIBCOMMON	"$SRCDIR\lib\common\win32\2015\release" [$VS2015&&$WIN32]
+$Macro LIBCOMMON	"$SRCDIR\lib\common$PLATSUBDIR" [!$VS2015 && !$VS2019]
+$Macro LIBCOMMON	"$SRCDIR\lib\common$PLATSUBDIR\2015\release" [($VS2015 || $VS2019) && !$WIN32]
+$Macro LIBCOMMON	"$SRCDIR\lib\common\win32\2015\release" [($VS2015 || $VS2019) && $WIN32]
 
 $Include "$SRCDIR\vpc_scripts\loadaddress.vpc"
 $Include "$SRCDIR\vpc_scripts\source_exe_win_win32_debug.vpc"
