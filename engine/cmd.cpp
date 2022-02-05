@@ -579,7 +579,7 @@ void Cmd_Exec_f( const CCommand &args )
 
 	const char *szFile = args[1];
 
-	const char *pPathID = "MOD";
+	const char *pPathID = "*";
 
 	Q_snprintf( fileName, sizeof( fileName ), "//%s/cfg/%s", pPathID, szFile );
 	Q_DefaultExtension( fileName, ".cfg", sizeof( fileName ) );

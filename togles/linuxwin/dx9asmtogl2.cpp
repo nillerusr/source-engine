@@ -3186,10 +3186,9 @@ int D3DToGL::TranslateShader( uint32* code, CUtlBuffer *pBufDisassembledCode, bo
 	m_bPutHexCodesAfterLines = (options & D3DToGL_PutHexCommentsAfterLines) != 0;
 	m_bGeneratingDebugText = (options & D3DToGL_GeneratingDebugText) != 0;
 	m_bGenerateSRGBWriteSuffix = (options & D3DToGL_OptionSRGBWriteSuffix) != 0;
-	m_bGenerateSRGBWriteSuffix = false;
 
-	if( debugLabel && (V_strstr( debugLabel ,"vertexlit_and_unlit_generic_ps") || V_strstr( debugLabel ,"vertexlit_and_unlit_generic_bump_ps") ) )
-		m_bGenerateSRGBWriteSuffix = true;
+/*	if( debugLabel && (V_strstr( debugLabel ,"vertexlit_and_unlit_generic_ps") || V_strstr( debugLabel ,"vertexlit_and_unlit_generic_bump_ps") ) )
+		m_bGenerateSRGBWriteSuffix = true;*/
 
 	m_NumIndentTabs = 1; // start code indented one tab
 	m_nLoopDepth = 0;
@@ -3921,11 +3920,11 @@ int D3DToGL::TranslateShader( uint32* code, CUtlBuffer *pBufDisassembledCode, bo
 	// sRGB Write suffix
 	if ( m_bGenerateSRGBWriteSuffix )
 	{
-	//	StrcatToALUCode( "vec3 sRGBFragData;\n" );
-	//	StrcatToALUCode( "sRGBFragData.xyz = log( gl_FragData[0].xyz );\n" );
-	//	StrcatToALUCode( "sRGBFragData.xyz = sRGBFragData.xyz * vec3( 0.754545f, 0.754545f, 0.754545f );\n" );
-	//	StrcatToALUCode( "sRGBFragData.xyz = exp( sRGBFragData.xyz );\n" );
-		StrcatToALUCode( "gl_FragData[0].xyz = pow(gl_FragData[0].xyz, vec3(1.0/2.2));\n" );
+		StrcatToALUCode( "vec3 sRGBFragData;\n" );
+		StrcatToALUCode( "sRGBFragData.xyz = log( gl_FragData[0].xyz );\n" );
+		StrcatToALUCode( "sRGBFragData.xyz = sRGBFragData.xyz * vec3( 0.454545f, 0.454545f, 0.454545f );\n" );
+		StrcatToALUCode( "sRGBFragData.xyz = exp( sRGBFragData.xyz );\n" );
+		StrcatToALUCode( "gl_FragData[0].xyz = mix( gl_FragData[0].xyz, sRGBFragData, flSRGBWrite );\n" );
 	}
 	
 	if( m_iFragDataCount && bVertexShader )

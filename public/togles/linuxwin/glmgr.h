@@ -731,16 +731,16 @@ FORCEINLINE void GLContextSet( GLBlendEnableSRGB_t *src )
 	}
 #endif
 	// this query is not useful unless you have the ARB_framebuffer_srgb ext.
-	//GLint encoding = 0;
-	//pfnglGetFramebufferAttachmentParameteriv( GL_DRAW_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING, &encoding );
+//	GLint encoding = 0;
+//	gGL->glGetFramebufferAttachmentParameteriv( GL_DRAW_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING, &encoding );
 
 	glSetEnable( GL_FRAMEBUFFER_SRGB_EXT, src->enable != 0 );
 }
 
 FORCEINLINE void GLContextGet( GLBlendEnableSRGB_t *dst )
 {
-	dst->enable = gGL->glIsEnabled( GL_FRAMEBUFFER_SRGB_EXT );
-//	dst->enable = true; // wtf ?
+//	dst->enable = gGL->glIsEnabled( GL_FRAMEBUFFER_SRGB_EXT );
+	dst->enable = true; // wtf ?
 }
 
 FORCEINLINE void GLContextGetDefault( GLBlendEnableSRGB_t *dst )
