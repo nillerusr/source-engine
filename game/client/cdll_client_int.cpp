@@ -735,7 +735,7 @@ public:
 
 	virtual bool IsConnectedUserInfoChangeAllowed( IConVar *pCvar );
 
-	virtual void IN_TouchEvent( int type, int fingerId, int x, int y );
+	virtual void IN_TouchEvent( uint data, uint data2, uint data3, uint data4 );
 private:
 	void UncacheAllMaterials( );
 	void ResetStringTablePointers();
@@ -1424,17 +1424,24 @@ int CHLClient::IN_KeyEvent( int eventcode, ButtonCode_t keynum, const char *pszC
 	return input->KeyEvent( eventcode, keynum, pszCurrentBinding );
 }
 
-void CHLClient::IN_TouchEvent( int type, int fingerId, int x, int y )
+void CHLClient::IN_TouchEvent( uint data, uint data2, uint data3, uint data4 )
 {
 	if( enginevgui->IsGameUIVisible() )
 		return;
 
 	touch_event_t ev;
 
-	ev.type = type;
-	ev.fingerid = fingerId;
-	ev.x = x;
-	ev.y = y;
+	ev.type = data & 0xFFFF;
+	ev.fingerid = (data >> 16) & 0xFFFF;
+	ev.x = (double)((data2 >> 16) & 0xFFFF)  / 0xFFFF;
+	ev.y = (double)(data2 & 0xFFFF) / 0xFFFF;
+
+	union{uint i;float f;} ifconv;
+	ifconv.i = data3;
+	ev.dx = ifconv.f;
+
+	ifconv.i = data4;
+	ev.dy = ifconv.f;
 
 	gTouch.ProcessEvent( &ev );
 }

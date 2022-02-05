@@ -16,6 +16,7 @@
 #include "appframework/IAppSystem.h"
 
 #if defined( DX_TO_GL_ABSTRACTION )
+
 #include "togl/linuxwin/glmgrbasics.h"
 #include "togl/linuxwin/glmdisplay.h"
 

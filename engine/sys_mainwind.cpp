@@ -355,7 +355,7 @@ void CGame::HandleMsg_Close( const InputEvent_t &event )
 
 void CGame::DispatchInputEvent( const InputEvent_t &event )
 {
-	switch( event.m_nType )
+	switch( event.m_nType & 0xFFFF )
 	{
 	// Handle button events specially, 
 	// since we have all manner of crazy filtering going on	when dealing with them
@@ -915,7 +915,11 @@ bool CGame::CreateGameWindow( void )
 
 	if ( IsOpenGL() )
 	{
+#ifdef TOGLES
+		V_strcat( windowName, " - OpenGLES", sizeof( windowName ) );
+#else
 		V_strcat( windowName, " - OpenGL", sizeof( windowName ) );
+#endif
 	}
 
 #if PIX_ENABLE || defined( PIX_INSTRUMENTATION )

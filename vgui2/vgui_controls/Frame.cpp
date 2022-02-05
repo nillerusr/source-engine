@@ -1224,12 +1224,24 @@ void Frame::PerformLayout()
 	// move everything into place
 	int wide, tall;
 	GetSize(wide, tall);
-		
+	
+	float scale = 1;
+	if (IsProportional())
+	{
+		int screenW, screenH;
+		surface()->GetScreenSize(screenW, screenH);
+
+		int proW, proH;
+		surface()->GetProportionalBase(proW, proH);
+
+		scale = ((float)(screenH) / (float)(proH));
+	}
+
 #if !defined( _X360 )
 	int DRAGGER_SIZE = GetDraggerSize();
 	int CORNER_SIZE = GetCornerSize();
 	int CORNER_SIZE2 = CORNER_SIZE * 2;
-	int BOTTOMRIGHTSIZE = GetBottomRightSize();
+	int BOTTOMRIGHTSIZE = GetBottomRightSize() * scale;
 
 	_topGrip->SetBounds(CORNER_SIZE, 0, wide - CORNER_SIZE2, DRAGGER_SIZE);
 	_leftGrip->SetBounds(0, CORNER_SIZE, DRAGGER_SIZE, tall - CORNER_SIZE2);
@@ -1260,18 +1272,6 @@ void Frame::PerformLayout()
 	_minimizeToSysTrayButton->MoveToFront();
 	_menuButton->SetBounds(5+2, 5+3, GetCaptionHeight()-5, GetCaptionHeight()-5);
 #endif
-
-	float scale = 1;
-	if (IsProportional())
-	{
-		int screenW, screenH;
-		surface()->GetScreenSize( screenW, screenH );
-
-		int proW,proH;
-		surface()->GetProportionalBase( proW, proH );
-
-		scale =	( (float)( screenH ) / (float)( proH ) );
-	}
 	
 #if !defined( _X360 )
 	int offset_start = (int)( 20 * scale );

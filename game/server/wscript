@@ -57,7 +57,7 @@ def build(bld):
 
 	install_path = bld.env.PREFIX
 	if bld.env.DEST_OS != 'android':
-		install_path += '/hl2/bin'
+		install_path += '/'+bld.env.GAMES+'/bin'
 
 	source = game["sources"]
 	includes += game["includes"]

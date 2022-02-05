@@ -83,12 +83,12 @@ public:
 		return _color[index];
 	}
 
-	bool operator == (const Color &rhs)
+	bool operator == (const Color &rhs) const
 	{
 		return Q_memcmp( this, &rhs, sizeof(Color) ) == 0;
 	}
 
-	bool operator != (const Color &rhs)
+	bool operator != (const Color &rhs) const
 	{
 		return !(operator==(rhs));
 	}

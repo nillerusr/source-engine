@@ -42,10 +42,11 @@ void GLMRendererInfo::Init( GLMRendererInfoFields *info )
         m_info.m_atiNewer = true;
 
         m_info.m_hasGammaWrites = true;
+	m_info.m_cantAttachSRGB = false;
 
         // If you haven't created a GL context by now (and initialized gGL), you're about to crash.
 
-        m_info.m_hasMixedAttachmentSizes = gGL->m_bHave_GL_ARB_framebuffer_object;
+        m_info.m_hasMixedAttachmentSizes = gGL->m_bHave_GL_EXT_framebuffer_object;
         m_info.m_hasBGRA = gGL->m_bHave_GL_EXT_vertex_array_bgra;
 
         // !!! FIXME: what do these do on the Mac?
@@ -64,8 +65,15 @@ void GLMRendererInfo::Init( GLMRendererInfoFields *info )
                 m_info.m_hasNativeClipVertexMode = true;
         }
         
+#ifdef TOGLES
+        m_info.m_hasOcclusionQuery = true;
+        m_info.m_hasFramebufferBlit = true;
+        m_info.m_hasUniformBuffers = true;
+#else
         m_info.m_hasOcclusionQuery = gGL->m_bHave_GL_ARB_occlusion_query;
         m_info.m_hasFramebufferBlit = gGL->m_bHave_GL_EXT_framebuffer_blit || gGL->m_bHave_GL_ARB_framebuffer_object;
+        m_info.m_hasUniformBuffers =  gGL->m_bHave_GL_ARB_uniform_buffer;
+#endif
 
         GLint nMaxAniso = 0;
         gGL->glGetIntegerv( GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &nMaxAniso );
@@ -88,8 +96,7 @@ void GLMRendererInfo::Init( GLMRendererInfoFields *info )
                         m_info.m_hasBindableUniforms = false;
                 }
         }
-                
-        m_info.m_hasUniformBuffers =  gGL->m_bHave_GL_ARB_uniform_buffer;
+
         m_info.m_hasPerfPackage1 = true;  // this flag is Mac-specific. We do slower things if you don't have Mac OS X 10.x.y or later. Linux always does the fast path!
 
         //-------------------------------------------------------------------
@@ -588,8 +595,12 @@ void    GLMDisplayInfo::PopulateModes( void )
                                 // Add double of everything also - Retina proofing hopefully.
                                 m_modes->AddToTail( new GLMDisplayMode( w * 2, h * 2, 0 ) );
                         }
+
+                        m_modes->AddToTail( new GLMDisplayMode( w, w * ((float)m_info.m_displayPixelHeight/m_info.m_displayPixelWidth), 0 ) );
                 }
         }
+
+        m_modes->AddToTail( new GLMDisplayMode( m_info.m_displayPixelWidth / 2, m_info.m_displayPixelHeight / 2, 0 ) );
 
         m_modes->Sort( DisplayModeSortFunction );
 

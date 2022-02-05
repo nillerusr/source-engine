@@ -113,9 +113,9 @@ DECLARE_FIELD_SIZE( FIELD_SOUNDNAME,	sizeof(int))
 DECLARE_FIELD_SIZE( FIELD_INPUT,		sizeof(int))
 #ifdef POSIX
 // pointer to members under gnuc are 8bytes if you have a virtual func
-DECLARE_FIELD_SIZE( FIELD_FUNCTION,		sizeof(uint64))
+DECLARE_FIELD_SIZE( FIELD_FUNCTION,		2 * sizeof(void *))
 #else
-DECLARE_FIELD_SIZE( FIELD_FUNCTION,		sizeof(int *))
+DECLARE_FIELD_SIZE( FIELD_FUNCTION,		sizeof(void *))
 #endif
 DECLARE_FIELD_SIZE( FIELD_VMATRIX,		16 * sizeof(float))
 DECLARE_FIELD_SIZE( FIELD_VMATRIX_WORLDSPACE,	16 * sizeof(float))
@@ -128,7 +128,7 @@ DECLARE_FIELD_SIZE( FIELD_MATERIALINDEX,	sizeof(int) )
 #define ARRAYSIZE2D(p)		(sizeof(p)/sizeof(p[0][0]))
 #define SIZE_OF_ARRAY(p)	_ARRAYSIZE(p)
 
-#define _offsetof(s,m)	((size_t)&(((s *)0)->m))
+#define _offsetof(s,m)	((int)&(((s *)0)->m))
 
 #define _FIELD(name,fieldtype,count,flags,mapname,tolerance)		{ fieldtype, #name, { _offsetof(classNameTypedef, name), 0 }, count, flags, mapname, NULL, NULL, NULL, sizeof( ((classNameTypedef *)0)->name ), NULL, 0, tolerance }
 #define DEFINE_FIELD_NULL	{ FIELD_VOID,0, {0,0},0,0,0,0,0,0}
@@ -278,7 +278,7 @@ struct typedescription_t
 
 	// Used to track exclusion of baseclass fields
 	int					override_count;
-  
+
 	// Tolerance for field errors for float fields
 	float				fieldTolerance;
 };

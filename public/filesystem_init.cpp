@@ -581,6 +581,20 @@ FSReturnCode_t FileSystem_LoadSearchPaths( CFSSearchPathsInit &initInfo )
 		}
 	}
 
+	const char *ExtraVpkPaths = getenv( "EXTRAS_VPK_PATH" );
+	char szAbsSearchPath[MAX_PATH];
+
+	if( ExtraVpkPaths )
+	{
+		CUtlStringList vecPaths;
+		V_SplitString( ExtraVpkPaths, ",", vecPaths );
+
+		FOR_EACH_VEC( vecPaths, idxExtraPath )
+		{
+			FileSystem_AddLoadedSearchPath( initInfo, "GAME", vecPaths[idxExtraPath], false );
+		}
+	}
+
 	bool bLowViolence = initInfo.m_bLowViolence;
 	for ( KeyValues *pCur=pSearchPaths->GetFirstValue(); pCur; pCur=pCur->GetNextValue() )
 	{
@@ -602,11 +616,12 @@ FSReturnCode_t FileSystem_LoadSearchPaths( CFSSearchPathsInit &initInfo )
 			// We need a special identifier in the gameinfo.txt here because the base hl2 folder exists in different places.
 			// In the case of a game or a Steam-launched dedicated server, all the necessary prior engine content is mapped in with the Steam depots,
 			// so we can just use the path as-is.
+
 			pLocation += strlen( BASESOURCEPATHS_TOKEN );
 		}
 
+
 		CUtlStringList vecFullLocationPaths;
-		char szAbsSearchPath[MAX_PATH];
 		V_MakeAbsolutePath( szAbsSearchPath, sizeof( szAbsSearchPath ), pLocation, pszBaseDir );
 
 		// Now resolve any ./'s.

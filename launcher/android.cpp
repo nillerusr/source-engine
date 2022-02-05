@@ -114,12 +114,11 @@ void SetLauncherArgs()
 	D(binPath);
 
 	D("-console");
-	A("-game", "hl2mp");
 	D("-nouserclip");
 
 	parseArgs(java_args);
 
-	D("-windowed");
+	D("-fullscreen");
 	D("-nosteam");
 	D("-insecure");
 }

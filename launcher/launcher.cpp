@@ -1176,6 +1176,8 @@ static const char *BuildCommand()
 	return (const char *)build.Base();
 }
 
+extern void InitGL4ES();
+
 //-----------------------------------------------------------------------------
 // Purpose: The real entry point for the application
 // Input  : hInstance - 
@@ -1190,7 +1192,7 @@ extern "C" __declspec(DLL_EXPORT) int LauncherMain( HINSTANCE hInstance, HINSTAN
 DLL_EXPORT int LauncherMain( int argc, char **argv )
 #endif
 {
-#ifdef LINUX
+#if defined LINUX && !defined ANDROID
 	// Temporary fix to stop us from crashing in printf/sscanf functions that don't expect
 	//  localization to mess with your "." and "," float seperators. Mac OSX also sets LANG
 	//  to en_US.UTF-8 before starting up (in info.plist I believe).
@@ -1206,9 +1208,14 @@ DLL_EXPORT int LauncherMain( int argc, char **argv )
 	const char *CurrentLocale = setlocale( LC_ALL, NULL );
 	if ( Q_stricmp( CurrentLocale, en_US ) )
 	{
-		Warning( "WARNING: setlocale('%s') failed, using locale:'%s'. International characters may not work.\n", en_US, CurrentLocale );
+		Msg( "WARNING: setlocale('%s') failed, using locale:'%s'. International characters may not work.\n", en_US, CurrentLocale );
 	}
+
 #endif // LINUX
+
+#if defined LINUX && defined USE_SDL && defined TOGLES && !defined ANDROID
+	SDL_SetHint(SDL_HINT_VIDEO_X11_FORCE_EGL, "1");
+#endif
 
 #ifdef WIN32
 	SetAppInstance( hInstance );

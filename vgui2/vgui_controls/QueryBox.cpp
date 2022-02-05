@@ -9,6 +9,7 @@
 //=============================================================================//
 
 #include <vgui/KeyCode.h>
+#include <vgui/ISurface.h>
 
 #include <vgui_controls/QueryBox.h>
 #include <vgui_controls/TextImage.h>
@@ -89,10 +90,23 @@ void QueryBox::PerformLayout()
 	int oldWide, oldTall;
 	m_pCancelButton->GetSize(oldWide, oldTall);
 	
+	// calc proportionality scale
+	float scale = 1;
+	if (IsProportional())
+	{
+		int screenW, screenH;
+		surface()->GetScreenSize(screenW, screenH);
+
+		int proW, proH;
+		surface()->GetProportionalBase(proW, proH);
+
+		scale = ((float)(screenH) / (float)(proH));
+	}
+
 	int btnWide, btnTall;
 	m_pCancelButton->GetContentSize(btnWide, btnTall);
-	btnWide = max(oldWide, btnWide + 10);
-	btnTall = max(oldTall, btnTall + 10);
+	btnWide = max(oldWide, btnWide + 10 * scale);
+	btnTall = max(oldTall, btnTall + 10 * scale);
 	m_pCancelButton->SetSize(btnWide, btnTall);
 
 //nt boxWidth, boxTall;
@@ -100,8 +114,8 @@ void QueryBox::PerformLayout()
 //	wide = max(wide, btnWide * 2 + 100);
 //	SetSize(wide, tall);
 
-	m_pOkButton->SetPos((wide/2)-(m_pOkButton->GetWide())-1 + x, tall - m_pOkButton->GetTall() - 15);
-	m_pCancelButton->SetPos((wide/2) + x+16, tall - m_pCancelButton->GetTall() - 15);
+	m_pOkButton->SetPos((wide/2)-(m_pOkButton->GetWide())-1 + x, tall - m_pOkButton->GetTall() - 15 * scale);
+	m_pCancelButton->SetPos((wide/2) + x+16*scale, tall - m_pCancelButton->GetTall() - 15 * scale);
 
 }
 

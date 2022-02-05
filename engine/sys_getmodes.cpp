@@ -2286,7 +2286,9 @@ bool CVideoMode_MaterialSystem::Init( )
     int bitsperpixel = 32;
 
     bool bAllowSmallModes = false;
+#ifndef ANDROID
     if ( CommandLine()->FindParm( "-small" ) )
+#endif
     {
         bAllowSmallModes = true;
     }

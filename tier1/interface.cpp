@@ -308,12 +308,20 @@ CSysModule *Sys_LoadModule( const char *pModuleName, Sys_Flags flags /* = SYS_NO
 		struct stat statBuf;
 		char *dataPath = getenv("APP_DATA_PATH");
 
+		char *modLibPath = getenv("APP_MOD_LIB");
+		if( modLibPath && *modLibPath ) // first load library from mod launcher
+		{
+			Q_snprintf(szAbsoluteModuleName, sizeof(szAbsoluteModuleName), "%s/lib%s", modLibPath, pModuleName);
+			if( stat(szAbsoluteModuleName, &statBuf) != 0 )
+				Q_snprintf(szAbsoluteModuleName, sizeof(szAbsoluteModuleName), "%s/%s", modLibPath, pModuleName);
+			
+			hDLL = Sys_LoadLibrary(szAbsoluteModuleName, flags);
+		}
 
 		Q_snprintf(szAbsoluteModuleName, sizeof(szAbsoluteModuleName), "%s/lib/lib%s", dataPath ,pModuleName);
 		if( stat(szAbsoluteModuleName, &statBuf) != 0 )
 			Q_snprintf(szAbsoluteModuleName, sizeof(szAbsoluteModuleName), "%s/lib/%s", dataPath ,pModuleName);
 #else
-
 #ifdef POSIX
 		struct stat statBuf;
 		Q_snprintf(szModuleName, sizeof(szModuleName), "bin/lib%s", pModuleName);
@@ -326,7 +334,8 @@ CSysModule *Sys_LoadModule( const char *pModuleName, Sys_Flags flags /* = SYS_NO
 #endif // ANDROID
 		Msg("LoadLibrary: pModule: %s, path: %s\n", pModuleName, szAbsoluteModuleName);
 
-		hDLL = Sys_LoadLibrary( szAbsoluteModuleName, flags );
+		if( !hDLL )
+			hDLL = Sys_LoadLibrary( szAbsoluteModuleName, flags );
 	}
 	else
 		Msg("LoadLibrary: path: %s\n", pModuleName);

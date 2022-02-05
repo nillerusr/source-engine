@@ -733,7 +733,7 @@ inline void CInterpolatedVarArrayBase<Type, IS_ARRAY>::AddToHead( float changeTi
 		}
 
 	CInterpolatedVarEntry *e = &m_VarHistory[ newslot ];
-	e->NewEntry( values, m_nMaxCount, changeTime );
+	e->NewEntry( (Type*)values, m_nMaxCount, changeTime );
 }
 
 template< typename Type, bool IS_ARRAY >

@@ -161,22 +161,22 @@ public:
 
 		SetPaintBackgroundEnabled( false );
 
-		// the image has the same name as the config file
-		char szMaterial[ MAX_PATH ];
-		Q_snprintf( szMaterial, sizeof(szMaterial), "chapters/%s", chapterConfigFile );
-		char *ext = strstr( szMaterial, "." );
-		if ( ext )
-		{
-			*ext = 0;
-		}
-		m_pLevelPic->SetImage( szMaterial );
-
 		KeyValues *pKeys = NULL;
 		if ( GameUI().IsConsoleUI() )
 		{
 			pKeys = BasePanel()->GetConsoleControlSettings()->FindKey( "NewGameChapterPanel.res" );
 		}
 		LoadControlSettings( "Resource/NewGameChapterPanel.res", NULL, pKeys );
+
+		// the image has the same name as the config file
+		char szMaterial[MAX_PATH];
+		Q_snprintf(szMaterial, sizeof(szMaterial), "chapters/%s", chapterConfigFile);
+		char* ext = strstr(szMaterial, ".");
+		if (ext)
+		{
+			*ext = 0;
+		}
+		m_pLevelPic->SetImage(szMaterial);
 
 		int px, py;
 		m_pLevelPicBorder->GetPos( px, py );
@@ -525,11 +525,23 @@ CNewGameDialog::CNewGameDialog(vgui::Panel *parent, bool bCommentaryMode) : Base
 		return;
 	}
 
+	int indent = 8;
+	if ( IsProportional() )
+	{
+		indent = scheme()->GetProportionalScaledValueEx( GetScheme(), indent );
+	}
+
+	int wide = 16;
+	if ( IsProportional() )
+	{
+		wide = scheme()->GetProportionalScaledValueEx( GetScheme(), wide );
+	}
+
 	// Layout panel positions relative to the dialog center.
-	int panelWidth = m_ChapterPanels[0]->GetWide() + 16;
+	int panelWidth = m_ChapterPanels[0]->GetWide() + wide;
 	int dialogWidth = GetWide();
 	
-	m_PanelXPos[2] = ( dialogWidth - panelWidth ) / 2 + 8;
+	m_PanelXPos[2] = ( dialogWidth - panelWidth ) / 2 + indent;
 	
 	if (m_ChapterPanels.Count() > 1)
 	{
@@ -553,8 +565,8 @@ CNewGameDialog::CNewGameDialog(vgui::Panel *parent, bool bCommentaryMode) : Base
 
 	int panelHeight;
 	m_ChapterPanels[0]->GetSize( panelWidth, panelHeight );
-	m_pCenterBg->SetWide( panelWidth + 16 );
-	m_pCenterBg->SetPos( m_PanelXPos[2] - 8, m_PanelYPos[2] - (m_pCenterBg->GetTall() - panelHeight) + 8 );
+	m_pCenterBg->SetWide( panelWidth + wide);
+	m_pCenterBg->SetPos( m_PanelXPos[2] - indent, m_PanelYPos[2] - (m_pCenterBg->GetTall() - panelHeight) + indent );
 	m_pCenterBg->SetBgColor( Color( 190, 115, 0, 255 ) );
 
 	// start the first item selected
@@ -615,6 +627,11 @@ void CNewGameDialog::ApplySettings( KeyValues *inResourceData )
 	BaseClass::ApplySettings( inResourceData );
 
 	int ypos = inResourceData->GetInt( "chapterypos", 40 );
+	if ( IsProportional() )
+	{
+		ypos = scheme()->GetProportionalScaledValueEx( GetScheme(), ypos );
+	}
+
 	for ( int i = 0; i < NUM_SLOTS; ++i )
 	{
 		m_PanelYPos[i] = ypos;
