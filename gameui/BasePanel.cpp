@@ -297,6 +297,16 @@ public:
 		return BaseClass::AddMenuItem(item);
 	}
 
+	virtual int AddMenuItem(const char *itemName, wchar_t *itemText, const char *command, Panel *target, KeyValues *userData = NULL)
+	{
+		MenuItem *item = new CGameMenuItem(this, itemName);
+		item->AddActionSignalTarget(target);
+		item->SetCommand(command);
+		item->SetText(itemText);
+		item->SetUserData(userData);
+		return BaseClass::AddMenuItem(item);
+	}
+
 	virtual int AddMenuItem(const char *itemName, const char *itemText, KeyValues *command, Panel *target, KeyValues *userData = NULL)
 	{
 		CGameMenuItem *item = new CGameMenuItem(this, itemName);
@@ -585,6 +595,9 @@ public:
 
 					KeyValues *kv1 = menuItem1->GetUserData();
 					KeyValues *kv2 = menuItem2->GetUserData();
+
+					if( !kv1 || !kv2 )
+						continue;
 
 					if ( kv1->GetInt("InGameOrder") > kv2->GetInt("InGameOrder") )
 						MoveMenuItem( iID2, iID1 );
@@ -1478,7 +1491,12 @@ CGameMenu *CBasePanel::RecursiveLoadGameMenu(KeyValues *datafile)
 {
 	CGameMenu *menu = new CGameMenu(this, datafile->GetName());
 
-	menu->AddMenuItem("Console", "CONSOLE", "OpenConsole", this);
+	wchar_t *pString = g_pVGuiLocalize->Find( "#GameUI_Console" );
+
+	if( pString )
+		menu->AddMenuItem("Console", V_wcsupr(pString), "OpenConsole", this);
+	else
+		menu->AddMenuItem("Console", "CONSOLE", "OpenConsole", this);
 
 	// loop through all the data adding items to the menu
 	for (KeyValues *dat = datafile->GetFirstSubKey(); dat != NULL; dat = dat->GetNextKey())

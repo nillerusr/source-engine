@@ -72,6 +72,7 @@
 #include "replay_internal.h"
 #endif
 
+#include "language.h"
 #include "igame.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -2743,14 +2744,18 @@ void CL_InitLanguageCvar()
 	}
 	else
 	{
+		char *szLang = getenv("LANG");
+
 		if ( CommandLine()->CheckParm( "-language" ) )
-		{
 			cl_language.SetValue( CommandLine()->ParmValue( "-language", "english") );
+		else if( szLang )
+		{
+			ELanguage lang = PchLanguageICUCodeToELanguage(szLang, k_Lang_English);
+			char *szShortLang = GetLanguageShortName(lang);
+			cl_language.SetValue( szShortLang );
 		}
 		else
-		{
 			cl_language.SetValue( "english" );
-		}
 	}
 }
 
