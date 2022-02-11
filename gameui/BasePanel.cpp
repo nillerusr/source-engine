@@ -292,6 +292,7 @@ public:
 		MenuItem *item = new CGameMenuItem(this, itemName);
 		item->AddActionSignalTarget(target);
 		item->SetCommand(command);
+		item->SetProportional(true);
 		item->SetText(itemText);
 		item->SetUserData(userData);
 		return BaseClass::AddMenuItem(item);
@@ -302,6 +303,7 @@ public:
 		MenuItem *item = new CGameMenuItem(this, itemName);
 		item->AddActionSignalTarget(target);
 		item->SetCommand(command);
+		item->SetProportional(true);
 		item->SetText(itemText);
 		item->SetUserData(userData);
 		return BaseClass::AddMenuItem(item);
