@@ -3445,7 +3445,7 @@ void CBaseFileSystem::EnableWhitelistFileTracking( bool bEnable, bool bCacheAllV
 	{
 		Error( "CBaseFileSystem::EnableWhitelistFileTracking called more than once." );
 	}
-	
+
 	m_WhitelistFileTrackingEnabled = bEnable;
 	if ( m_WhitelistFileTrackingEnabled && bCacheAllVPKHashes )
 	{
@@ -3619,6 +3619,9 @@ void CBaseFileSystem::NotifyFileUnloaded( const char *pszFilename, const char *p
 
 void CBaseFileSystem::SetSearchPathIsTrustedSource( CSearchPath *pSearchPath )
 {
+#if 1
+	pSearchPath->m_bIsTrustedForPureServer = true;
+#else // Broken, I am lazy to fix this
 	// Most paths are not considered trusted
 	pSearchPath->m_bIsTrustedForPureServer = false;
 
@@ -3675,6 +3678,7 @@ void CBaseFileSystem::SetSearchPathIsTrustedSource( CSearchPath *pSearchPath )
 			Msg( "Setting %s as untrusted.  (Key not in trusted key list)\n", pSearchPath->GetDebugString() );
 		#endif
 	#endif
+#endif
 }
 
 

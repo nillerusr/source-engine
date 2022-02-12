@@ -17,7 +17,7 @@ games = {
 	'hl1': ['client_base.vpc', 'client_hl1.vpc'],
 	'portal': ['client_base.vpc', 'client_portal.vpc'],
 	'hl1mp': ['client_base.vpc', 'client_hl1.vpc'],
-	'css': ['client_base.vpc', 'client_cstrike.vpc'],
+	'cstrike': ['client_base.vpc', 'client_cstrike.vpc'],
 	'dod': ['client_base.vpc', 'client_dod.vpc']
 }
 
