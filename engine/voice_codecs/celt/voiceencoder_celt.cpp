@@ -41,13 +41,13 @@ damage. */
 #include "ivoicecodec.h"
 #include "iframeencoder.h"
 
-#ifdef POSIX
+/*#ifdef POSIX
 #include "source/osx/config.h"
 #else
 #include "source/msvc/config.h"
-#endif
+#endif*/
 #include <stdio.h>
-#include "celt.h"
+#include <celt/celt.h>
 
 
 // NOTE: This has to be the last file included!
@@ -67,21 +67,10 @@ struct celt_versions
 
 celt_versions g_CeltVersion[CELT_VERSION] = 
 {
-	{
-		44100, 256, 120 
-	},
-
-	{
-		22050, 120, 60
-	},
-
-	{
-		22050, 256, 60
-	},
-
-	{
-		22050, 512, 64
-	},
+	{44100, 256, 120},
+	{22050, 120, 60},
+	{22050, 256, 60},
+	{22050, 512, 64},
 };
 
 class VoiceEncoder_Celt : public IFrameEncoder

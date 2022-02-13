@@ -38,6 +38,7 @@ projects={
 		'dmxloader',
 		'engine',
 		'engine/voice_codecs/minimp3',
+		'engine/voice_codecs/opus',
 		'filesystem',
 		'game/client',
 		'game/server',
@@ -269,7 +270,7 @@ def configure(conf):
 
 	cflags, linkflags = conf.get_optimization_flags()
 
-	flags = ['-fPIC']
+	flags = ['-fPIC'] #, '-fsanitize=undefined']
 
 	if conf.env.DEST_OS == 'android':
 		flags += [
@@ -340,6 +341,8 @@ def configure(conf):
 			conf.check_cfg(package='libpng', uselib_store='PNG', args=['--cflags', '--libs'])
 			conf.check_cfg(package='libcurl', uselib_store='CURL', args=['--cflags', '--libs'])
 		conf.check_cfg(package='zlib', uselib_store='ZLIB', args=['--cflags', '--libs'])
+		conf.check_cfg(package='opus', uselib_store='OPUS', args=['--cflags', '--libs'])
+#		conf.check_cfg(package='speex', uselib_store='SPEEX', args=['--cflags', '--libs'])
 	else:
 		conf.check(lib='SDL2', uselib_store='SDL2')
 		conf.check(lib='freetype2', uselib_store='FT2')
@@ -352,6 +355,8 @@ def configure(conf):
 		conf.check(lib='ssl', uselib_store='SSL')
 		conf.check(lib='expat', uselib_store='EXPAT')
 		conf.check(lib='android_support', uselib_store='ANDROID_SUPPORT')
+		conf.check(lib='opus', uselib_store='OPUS')
+#		conf.check(lib='speex', uselib_store='SPEEX')
 
 	if conf.env.DEST_OS != 'win32':
 		conf.check_cc(lib='dl', mandatory=False)

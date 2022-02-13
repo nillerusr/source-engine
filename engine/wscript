@@ -22,7 +22,8 @@ def configure(conf):
 		'ENGINE_DLL',
 		'VERSION_SAFE_STEAM_API_INTERFACES',
 		'USE_BREAKPAD_HANDLER',
-		'USE_CONVARS'
+		'USE_CONVARS',
+		'VOICE_OVER_IP'
 	])
 
 def build(bld):
@@ -311,7 +312,7 @@ def build(bld):
 			'vgui_helpers.cpp',
 			'vgui_texturebudgetpanel.cpp',
 			'vgui_vprofgraphpanel.cpp',
-			'vgui_vprofpanel.cpp',	
+			'vgui_vprofpanel.cpp',
 			'toolframework.cpp'
 		]
 

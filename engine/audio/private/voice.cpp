@@ -37,7 +37,7 @@ void VoiceTweak_EndVoiceTweakMode();
 void EngineTool_OverrideSampleRate( int& rate );
 
 // A fallback codec that should be the most likely to work for local/offline use
-#define VOICE_FALLBACK_CODEC	"vaudio_celt"
+#define VOICE_FALLBACK_CODEC	"vaudio_opus"
 
 // Special entity index used for tweak mode.
 #define TWEAKMODE_ENTITYINDEX				-500
@@ -583,12 +583,13 @@ bool Voice_Init( const char *pCodecName, int nSampleRate )
 
 	bool bSpeex = Q_stricmp( pCodecName, "vaudio_speex" ) == 0;
 	bool bCelt  = Q_stricmp( pCodecName, "vaudio_celt" )  == 0;
+	bool bOpus  = Q_stricmp( pCodecName, "vaudio_opus" )  == 0;
 	bool bSteam = Q_stricmp( pCodecName, "steam" )        == 0;
 	// Miles has not been in use for voice in a long long time.  Not worth the surface to support ancient demos that may
 	// use it (and probably do not work for other reasons)
 	// "vaudio_miles"
 
-	if ( !( bSpeex || bCelt || bSteam ) )
+	if ( !( bSpeex || bCelt || bOpus || bSteam ) )
 	{
 		Msg( "Voice_Init Failed: invalid voice codec %s.\n", pCodecName );
 		return false;
@@ -670,6 +671,12 @@ bool Voice_Init( const char *pCodecName, int nSampleRate )
 		// Get the codec.
 		CreateInterfaceFn createCodecFn = NULL;
 		g_hVoiceCodecDLL = FileSystem_LoadModule(pCodecName);
+
+		if( !g_hVoiceCodecDLL || (createCodecFn = Sys_GetFactory(g_hVoiceCodecDLL)) == NULL )
+		{
+			g_hVoiceCodecDLL = FileSystem_LoadModule( VOICE_FALLBACK_CODEC );
+			pCodecName = VOICE_FALLBACK_CODEC;
+		}
 
 		if ( !g_hVoiceCodecDLL || (createCodecFn = Sys_GetFactory(g_hVoiceCodecDLL)) == NULL ||
 		     (g_pEncodeCodec = (IVoiceCodec*)createCodecFn(pCodecName, NULL)) == NULL || !g_pEncodeCodec->Init( quality ) )
@@ -1075,7 +1082,7 @@ int Voice_GetCompressedData(char *pchDest, int nCount, bool bFinal)
 {
 	// Check g_bVoiceRecordStopping in case g_bUsingSteamVoice changes on us
 	// while waiting for the end of voice data.
-	if ( g_bUsingSteamVoice || g_bVoiceRecordStopping )
+	if ( g_bUsingSteamVoice && g_bVoiceRecordStopping )
 	{
 		uint32 cbCompressedWritten = 0;
 		uint32 cbUncompressedWritten = 0;
