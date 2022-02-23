@@ -654,10 +654,10 @@ inline void Vector4DWeightMAD( vec_t w, Vector4DAligned const& vInA, Vector4DAli
 	vOutB.z += vInB.z * w;
 	vOutB.w += vInB.w * w;
 #else
-    __vector4 temp;
+	__vector4 temp;
 
-    temp = __lvlx( &w, 0 );
-    temp = __vspltw( temp, 0 );
+	temp = __lvlx( &w, 0 );
+	temp = __vspltw( temp, 0 );
 
 	vOutA.AsM128() = __vmaddfp( vInA.AsM128(), temp, vOutA.AsM128() );
 	vOutB.AsM128() = __vmaddfp( vInB.AsM128(), temp, vOutB.AsM128() );
