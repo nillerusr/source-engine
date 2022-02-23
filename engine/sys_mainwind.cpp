@@ -1566,7 +1566,7 @@ void *CGame::GetMainWindowPlatformSpecificHandle( void )
 #ifdef OSX
 	id nsWindow = (id)pInfo.info.cocoa.window;
 	SEL selector = sel_registerName("windowRef");
-	id windowRef = objc_msgSend( nsWindow, selector );
+	id windowRef = ((id(*)(id, SEL))objc_msgSend)( nsWindow, selector );
 	return windowRef;
 #else
 	// Not used on Linux.

@@ -34,7 +34,7 @@ inline void RangeCheck( const T &value, int minValue, int maxValue )
 	if ( ThreadInMainThread() && g_bDoRangeChecks )
 	{
 		// Ignore the min/max stuff for now.. just make sure it's not a NAN.
-		Assert( _finite( value ) );
+		Assert( IsFinite( value ) );
 	}
 #endif
 }
