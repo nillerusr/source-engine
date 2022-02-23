@@ -68,7 +68,7 @@ private:
 	CMemoryStack m_Strings;
 	struct hash_item_t
 	{
-		int stringIndex;
+		intp stringIndex;
 		hash_item_t *next;
 	};
 	CUtlMemoryPool m_HashItemMemPool;
@@ -79,7 +79,7 @@ private:
 
 	struct MemoryLeakTracker_t
 	{
-		int nameIndex;
+		intp nameIndex;
 		void *pMem;
 	};
 	static bool MemoryLeakTrackerLessFunc( const MemoryLeakTracker_t &lhs, const MemoryLeakTracker_t &rhs )

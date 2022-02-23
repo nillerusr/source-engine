@@ -235,11 +235,11 @@ struct AsyncInfo_t
 	int					iAnimBlock;
 };
 
-const int NO_ASYNC = CUtlLinkedList< AsyncInfo_t >::InvalidIndex();
+const intp NO_ASYNC = CUtlFixedLinkedList< AsyncInfo_t >::InvalidIndex();
 
 //-------------------------------------
 
-CUtlMap<int, int> g_AsyncInfoMap( DefLessFunc( int ) );
+CUtlMap<int, intp> g_AsyncInfoMap( DefLessFunc( int ) );
 CThreadFastMutex g_AsyncInfoMapMutex;
 
 inline int MakeAsyncInfoKey( MDLHandle_t hModel, MDLCacheDataType_t type, int iAnimBlock )
@@ -248,7 +248,7 @@ inline int MakeAsyncInfoKey( MDLHandle_t hModel, MDLCacheDataType_t type, int iA
 	return ( ( ( (int)hModel) << 16 ) | ( (int)type << 13 ) | iAnimBlock );
 }
 
-inline int GetAsyncInfoIndex( MDLHandle_t hModel, MDLCacheDataType_t type, int iAnimBlock = 0 )
+inline intp GetAsyncInfoIndex( MDLHandle_t hModel, MDLCacheDataType_t type, int iAnimBlock = 0 )
 {
 	AUTO_LOCK( g_AsyncInfoMapMutex );
 	int key = MakeAsyncInfoKey( hModel, type, iAnimBlock );
@@ -260,7 +260,7 @@ inline int GetAsyncInfoIndex( MDLHandle_t hModel, MDLCacheDataType_t type, int i
 	return g_AsyncInfoMap[i];
 }
 
-inline int SetAsyncInfoIndex( MDLHandle_t hModel, MDLCacheDataType_t type, int iAnimBlock, int index )
+inline intp SetAsyncInfoIndex( MDLHandle_t hModel, MDLCacheDataType_t type, int iAnimBlock, intp index )
 {
 	AUTO_LOCK( g_AsyncInfoMapMutex );
 	Assert( index == NO_ASYNC || GetAsyncInfoIndex( hModel, type, iAnimBlock ) == NO_ASYNC );
@@ -277,7 +277,7 @@ inline int SetAsyncInfoIndex( MDLHandle_t hModel, MDLCacheDataType_t type, int i
 	return index;
 }
 
-inline int SetAsyncInfoIndex( MDLHandle_t hModel, MDLCacheDataType_t type, int index )
+inline intp SetAsyncInfoIndex( MDLHandle_t hModel, MDLCacheDataType_t type, intp index )
 {
 	return SetAsyncInfoIndex( hModel, type, 0, index );
 }
@@ -507,7 +507,7 @@ private:
 	bool BuildHardwareData( MDLHandle_t handle, studiodata_t *pStudioData, studiohdr_t *pStudioHdr, OptimizedModel::FileHeader_t *pVtxHdr );
 	void ConvertFlexData( studiohdr_t *pStudioHdr );
 
-	int ProcessPendingAsync( int iAsync );
+	int ProcessPendingAsync( intp iAsync );
 	void ProcessPendingAsyncs( MDLCacheDataType_t type = MDLCACHE_NONE );
 	bool ClearAsync( MDLHandle_t handle, MDLCacheDataType_t type, int iAnimBlock, bool bAbort = false );
 
@@ -879,7 +879,7 @@ void CMDLCache::SetCacheNotify( IMDLCacheNotify *pNotify )
 //-----------------------------------------------------------------------------
 const char *CMDLCache::GetModelName( MDLHandle_t handle )
 {
-	if ( handle == MDLHANDLE_INVALID )
+	if ( handle == MDLHANDLE_INVALID  )
 		return ERROR_MODEL;
 
 	return m_MDLDict.GetElementName( handle );
@@ -909,7 +909,7 @@ void CMDLCache::MakeFilename( MDLHandle_t handle, const char *pszExtension, char
 	Q_strncpy( pszFileName, GetActualModelName( handle ), nMaxLength );
 	Q_SetExtension( pszFileName, pszExtension, nMaxLength );
 	Q_FixSlashes( pszFileName );
-#ifdef _LINUX
+#ifdef POSIX
 	Q_strlower( pszFileName );
 #endif
 }
@@ -1004,7 +1004,7 @@ void CMDLCache::UnserializeVCollide( MDLHandle_t handle, bool synchronousLoad )
 	// FIXME: Should the vcollde be played into cacheable memory?
 	studiodata_t *pStudioData = m_MDLDict[handle];
 
-	int iAsync = GetAsyncInfoIndex( handle, MDLCACHE_VCOLLIDE );
+	intp iAsync = GetAsyncInfoIndex( handle, MDLCACHE_VCOLLIDE );
 
 	if ( iAsync == NO_ASYNC )
 	{
@@ -1025,7 +1025,7 @@ void CMDLCache::UnserializeVCollide( MDLHandle_t handle, bool synchronousLoad )
 			{
 				for ( int i = 1; i < pVirtualModel->m_group.Count(); i++ )
 				{
-					MDLHandle_t sharedHandle = (MDLHandle_t) (int)pVirtualModel->m_group[i].cache & 0xffff;
+					MDLHandle_t sharedHandle = VoidPtrToMDLHandle(pVirtualModel->m_group[i].cache);
 					studiodata_t *pData = m_MDLDict[sharedHandle];
 					if ( !(pData->m_nFlags & STUDIODATA_FLAGS_VCOLLISION_LOADED) )
 					{
@@ -1219,7 +1219,7 @@ unsigned char *CMDLCache::UnserializeAnimBlock( MDLHandle_t handle, int nBlock )
 
 	studiodata_t *pStudioData = m_MDLDict[handle];
 
-	int iAsync = GetAsyncInfoIndex( handle, MDLCACHE_ANIMBLOCK, nBlock );
+	intp iAsync = GetAsyncInfoIndex( handle, MDLCACHE_ANIMBLOCK, nBlock );
 
 	if ( iAsync == NO_ASYNC )
 	{
@@ -1238,7 +1238,7 @@ unsigned char *CMDLCache::UnserializeAnimBlock( MDLHandle_t handle, int nBlock )
 		char pFileName[MAX_PATH];
 		Q_strncpy( pFileName, pModelName, sizeof(pFileName) );
 		Q_FixSlashes( pFileName );
-#ifdef _LINUX
+#ifdef POSIX
 		Q_strlower( pFileName );
 #endif
 		if ( IsX360() )
@@ -1398,12 +1398,12 @@ void CMDLCache::FreeVirtualModel( MDLHandle_t handle )
 	if ( pStudioData && pStudioData->m_pVirtualModel )
 	{
 		int nGroupCount = pStudioData->m_pVirtualModel->m_group.Count();
-		Assert( (nGroupCount >= 1) && pStudioData->m_pVirtualModel->m_group[0].cache == (void*)(uintp)handle );
+		Assert( (nGroupCount >= 1) && pStudioData->m_pVirtualModel->m_group[0].cache == MDLHandleToVirtual(handle) );
 
 		// NOTE: Start at *1* here because the 0th element contains a reference to *this* handle
 		for ( int i = 1; i < nGroupCount; ++i )
 		{
-			MDLHandle_t h = (MDLHandle_t)(int)pStudioData->m_pVirtualModel->m_group[i].cache&0xffff;
+			MDLHandle_t h = VoidPtrToMDLHandle( pStudioData->m_pVirtualModel->m_group[i].cache );
 			FreeVirtualModel( h );
 			Release( h );
 		}
@@ -1450,10 +1450,13 @@ virtualmodel_t *CMDLCache::GetVirtualModelFast( const studiohdr_t *pStudioHdr, M
 
 		AllocateVirtualModel( handle );
 
+        // MoeMod : added
+        pStudioHdr->SetVirtualModel( MDLHandleToVirtual( handle ) );
+
 		// Group has to be zero to ensure refcounting is correct
 		int nGroup = pStudioData->m_pVirtualModel->m_group.AddToTail( );
 		Assert( nGroup == 0 );
-		pStudioData->m_pVirtualModel->m_group[nGroup].cache = (void *)(uintp)handle;
+		pStudioData->m_pVirtualModel->m_group[nGroup].cache = MDLHandleToVirtual(handle);
 
 		// Add all dependent data
 		pStudioData->m_pVirtualModel->AppendModels( 0, pStudioHdr );
@@ -1550,7 +1553,7 @@ bool CMDLCache::LoadHardwareData( MDLHandle_t handle )
 		return false;
 	}
 
-	int iAsync = GetAsyncInfoIndex( handle, MDLCACHE_STUDIOHWDATA );
+	intp iAsync = GetAsyncInfoIndex( handle, MDLCACHE_STUDIOHWDATA );
 
 	if ( iAsync == NO_ASYNC )
 	{
@@ -1970,18 +1973,39 @@ studiohdr_t *CMDLCache::UnserializeMDL( MDLHandle_t handle, void *pData, int nDa
 
 	// critical! store a back link to our data
 	// this is fetched when re-establishing dependent cached data (vtx/vvd)
-	pStudioHdrIn->virtualModel = (void *)(uintp)handle;
+#ifndef PLATFORM_64BITS
+    pStudioHdrIn->SetVirtualModel( MDLHandleToVirtual( handle ) );
+#endif
 
 	MdlCacheMsg( "MDLCache: Alloc studiohdr %s\n", GetModelName( handle ) );
 
 	// allocate cache space
 	MemAlloc_PushAllocDbgInfo( "Models:StudioHdr", 0);
+#ifdef PLATFORM_64BITS
+    studiohdr_t *pHdr = (studiohdr_t *)AllocData( MDLCACHE_STUDIOHDR, pStudioHdrIn->length + sizeof(studiohdr_shim64_index) );
+#else
 	studiohdr_t *pHdr = (studiohdr_t *)AllocData( MDLCACHE_STUDIOHDR, pStudioHdrIn->length );
+#endif
 	MemAlloc_PopAllocDbgInfo();
 	if ( !pHdr )
 		return NULL;
 
+#ifdef PLATFORM_64BITS
+    // MoeMod : fix shim64 index
+    studiohdr_shim64_index *pHdrIndex = (studiohdr_shim64_index *)(((byte *)pHdr)+ pStudioHdrIn->length);
+    pHdrIndex->virtualModel = nullptr;
+    pHdrIndex->animblockModel = nullptr;
+    pHdrIndex->pVertexBase = nullptr;
+    pHdrIndex->pIndexBase = nullptr;
+    pStudioHdrIn->index_ptr_virtualModel = (byte *)&pHdrIndex->virtualModel - (byte *)pHdr;
+    pStudioHdrIn->index_ptr_animblockModel = (byte *)&pHdrIndex->animblockModel - (byte *)pHdr;
+    pStudioHdrIn->index_ptr_pVertexBase = (byte *)&pHdrIndex->pVertexBase - (byte *)pHdr;
+    pStudioHdrIn->index_ptr_pIndexBase = (byte *)&pHdrIndex->pIndexBase - (byte *)pHdr;
+    pStudioHdrIn->SetVirtualModel( MDLHandleToVirtual( handle ) );
+    CacheData( &m_MDLDict[handle]->m_MDLCache, pHdr, pStudioHdrIn->length + sizeof(studiohdr_shim64_index), GetModelName( handle ), MDLCACHE_STUDIOHDR, MakeCacheID( handle, MDLCACHE_STUDIOHDR) );
+#else
 	CacheData( &m_MDLDict[handle]->m_MDLCache, pHdr, pStudioHdrIn->length, GetModelName( handle ), MDLCACHE_STUDIOHDR, MakeCacheID( handle, MDLCACHE_STUDIOHDR) );
+#endif
 
 	if ( mod_lock_mdls_on_load.GetBool() )
 	{
@@ -2022,7 +2046,7 @@ bool CMDLCache::ReadMDLFile( MDLHandle_t handle, const char *pMDLFileName, CUtlB
 	char pFileName[ MAX_PATH ];
 	Q_strncpy( pFileName, pMDLFileName, sizeof( pFileName ) );
 	Q_FixSlashes( pFileName );
-#ifdef _LINUX
+#ifdef POSIX
 	Q_strlower( pFileName );
 #endif
 
@@ -2059,6 +2083,12 @@ bool CMDLCache::ReadMDLFile( MDLHandle_t handle, const char *pMDLFileName, CUtlB
 		}
 	}
 
+    if ( buf.Size() < sizeof(studiohdr_t) )
+    {
+        DevWarning( "Empty model %s\n", pMDLFileName );
+        return false;
+    }
+
 	studiohdr_t *pStudioHdr = (studiohdr_t*)buf.PeekGet();
 	if ( !pStudioHdr )
 	{
@@ -2073,7 +2103,27 @@ bool CMDLCache::ReadMDLFile( MDLHandle_t handle, const char *pMDLFileName, CUtlB
 
 	// critical! store a back link to our data
 	// this is fetched when re-establishing dependent cached data (vtx/vvd)
-	pStudioHdr->virtualModel = (void*)(uintp)handle;
+#if PLATFORM_64BITS
+    int length = buf.Size();
+    {
+        studiohdr_shim64_index shim;
+        buf.Put( &shim, sizeof(shim) );
+    }
+    studiohdr_shim64_index *pHdrIndex = (studiohdr_shim64_index *)(((byte *)buf.PeekGet())+ length);
+    pStudioHdr = (studiohdr_t*)buf.PeekGet();
+
+    pHdrIndex->virtualModel = nullptr;
+    pHdrIndex->animblockModel = nullptr;
+    pHdrIndex->pVertexBase = nullptr;
+    pHdrIndex->pIndexBase = nullptr;
+    pStudioHdr->index_ptr_virtualModel = (byte *)&pHdrIndex->virtualModel - (byte *)pStudioHdr;
+    pStudioHdr->index_ptr_animblockModel = (byte *)&pHdrIndex->animblockModel - (byte *)pStudioHdr;
+    pStudioHdr->index_ptr_pVertexBase = (byte *)&pHdrIndex->pVertexBase - (byte *)pStudioHdr;
+    pStudioHdr->index_ptr_pIndexBase = (byte *)&pHdrIndex->pIndexBase - (byte *)pStudioHdr;
+    pStudioHdr->SetVirtualModel( MDLHandleToVirtual( handle ) );
+#else
+    pStudioHdr->SetVirtualModel( MDLHandleToVirtual( handle ) );
+#endif
 
 	// Make sure all dependent files are valid
 	if ( !VerifyHeaders( pStudioHdr ) )
@@ -2236,7 +2286,7 @@ void CMDLCache::TouchAllData( MDLHandle_t handle )
 		// ensure all sub models are cached
 		for ( int i=1; i<pVModel->m_group.Count(); ++i )
 		{
-			MDLHandle_t childHandle = (MDLHandle_t)(int)pVModel->m_group[i].cache&0xffff;
+			MDLHandle_t childHandle = VoidPtrToMDLHandle( pVModel->m_group[i].cache );
 			if ( childHandle != MDLHANDLE_INVALID )
 			{
 				// FIXME: Should this be calling TouchAllData on the child?
@@ -2301,7 +2351,7 @@ bool CMDLCache::HandleCacheNotification( const DataCacheNotification_t &notifica
 		{
 			MdlCacheMsg( "MDLCache: Data cache discard %s %s\n", g_ppszTypes[TypeFromCacheID( notification.clientId )], GetModelName( HandleFromCacheID( notification.clientId ) ) );
 
-			if ( (DataCacheClientID_t)notification.pItemData == notification.clientId ||
+			if ( (DataCacheClientID_t)(intp)notification.pItemData == notification.clientId ||
 				 TypeFromCacheID(notification.clientId) != MDLCACHE_STUDIOHWDATA )
 			{
 				Assert( notification.pItemData );
@@ -2320,7 +2370,7 @@ bool CMDLCache::HandleCacheNotification( const DataCacheNotification_t &notifica
 
 bool CMDLCache::GetItemName( DataCacheClientID_t clientId, const void *pItem, char *pDest, unsigned nMaxLen  )
 {
-	if ( (DataCacheClientID_t)pItem == clientId )
+	if ( (DataCacheClientID_t)(uintp)pItem == clientId )
 	{
 		return false;
 	}
@@ -2426,7 +2476,7 @@ void CMDLCache::FinishPendingLoads()
 	AUTO_LOCK( m_AsyncMutex );
 
 	// finish just our known jobs
-	int iAsync = m_PendingAsyncs.Head();
+	intp iAsync = m_PendingAsyncs.Head();
 	while ( iAsync != m_PendingAsyncs.InvalidIndex() )
 	{
 		AsyncInfo_t &info = m_PendingAsyncs[iAsync];
@@ -2581,7 +2631,7 @@ bool CMDLCache::VerifyHeaders( studiohdr_t *pStudioHdr )
 	}
 
 	char pFileName[ MAX_PATH ];
-	MDLHandle_t handle = (MDLHandle_t)(int)pStudioHdr->virtualModel&0xffff;
+	MDLHandle_t handle = VoidPtrToMDLHandle( pStudioHdr->VirtualModel() );
 
 	MakeFilename( handle, ".vvd", pFileName, sizeof(pFileName) );
 
@@ -2642,7 +2692,7 @@ vertexFileHeader_t *CMDLCache::CacheVertexData( studiohdr_t *pStudioHdr )
 
 	Assert( pStudioHdr );
 
-	handle = (MDLHandle_t)(int)pStudioHdr->virtualModel&0xffff;
+	handle = VoidPtrToMDLHandle( pStudioHdr->VirtualModel() );
 	Assert( handle != MDLHANDLE_INVALID );
 
 	pVvdHdr = (vertexFileHeader_t *)CheckData( m_MDLDict[handle]->m_VertexCache, MDLCACHE_VERTEXES );
@@ -3037,7 +3087,7 @@ bool CMDLCache::ProcessDataIntoCache( MDLHandle_t handle, MDLCacheDataType_t typ
 //	=0: pending
 //	>0:	completed
 //-----------------------------------------------------------------------------
-int CMDLCache::ProcessPendingAsync( int iAsync )
+int CMDLCache::ProcessPendingAsync( intp iAsync )
 {
 	if ( !ThreadInMainThread() )
 	{
@@ -3122,10 +3172,10 @@ void CMDLCache::ProcessPendingAsyncs( MDLCacheDataType_t type )
 	// things -- the LRU is in correct order, and it catches precached items lurking
 	// in the async queue that have only been requested once (thus aren't being cached
 	// and might lurk forever, e.g., wood gibs in the citadel)
-	int current = m_PendingAsyncs.Head();
+	intp current = m_PendingAsyncs.Head();
 	while ( current != m_PendingAsyncs.InvalidIndex() )
 	{
-		int next = m_PendingAsyncs.Next( current );
+		intp next = m_PendingAsyncs.Next( current );
 
 		if ( type == MDLCACHE_NONE || m_PendingAsyncs[current].type == type )
 		{
@@ -3148,7 +3198,7 @@ void CMDLCache::ProcessPendingAsyncs( MDLCacheDataType_t type )
 //-----------------------------------------------------------------------------
 bool CMDLCache::ClearAsync( MDLHandle_t handle, MDLCacheDataType_t type, int iAnimBlock, bool bAbort )
 {
-	int iAsyncInfo = GetAsyncInfoIndex( handle, type, iAnimBlock );
+	intp iAsyncInfo = GetAsyncInfoIndex( handle, type, iAnimBlock );
 	if ( iAsyncInfo != NO_ASYNC )
 	{
 		AsyncInfo_t *pInfo;
@@ -3242,7 +3292,7 @@ bool CMDLCache::SetAsyncLoad( MDLCacheDataType_t type, bool bAsync )
 //-----------------------------------------------------------------------------
 vertexFileHeader_t *CMDLCache::BuildAndCacheVertexData( studiohdr_t *pStudioHdr, vertexFileHeader_t *pRawVvdHdr  )
 {
-	MDLHandle_t	handle = (MDLHandle_t)(int)pStudioHdr->virtualModel&0xffff;
+	MDLHandle_t	handle = VoidPtrToMDLHandle( pStudioHdr->VirtualModel() );
 	vertexFileHeader_t *pVvdHdr;
 
 	MdlCacheMsg( "MDLCache: Load VVD for %s\n", pStudioHdr->pszName() );
@@ -3330,7 +3380,7 @@ vertexFileHeader_t *CMDLCache::LoadVertexData( studiohdr_t *pStudioHdr )
 	MDLHandle_t			handle;
 
 	Assert( pStudioHdr );
-	handle = (MDLHandle_t)(int)pStudioHdr->virtualModel&0xffff;
+	handle = VoidPtrToMDLHandle( pStudioHdr->VirtualModel() );
 	Assert( !m_MDLDict[handle]->m_VertexCache );
 
 	studiodata_t *pStudioData = m_MDLDict[handle];
@@ -3340,7 +3390,7 @@ vertexFileHeader_t *CMDLCache::LoadVertexData( studiohdr_t *pStudioHdr )
 		return NULL;
 	}
 
-	int iAsync = GetAsyncInfoIndex( handle, MDLCACHE_VERTEXES );
+	intp iAsync = GetAsyncInfoIndex( handle, MDLCACHE_VERTEXES );
 
 	if ( iAsync == NO_ASYNC )
 	{
@@ -3420,7 +3470,7 @@ void CMDLCache::CacheData( DataCacheHandle_t *c, void *pData, int size, const ch
 	}
 
 	if ( id == (DataCacheClientID_t)-1 )
-		id = (DataCacheClientID_t)pData;
+		id = (DataCacheClientID_t)(intp)pData;
 
 	GetCacheSection( type )->Add(id, pData, size, c );
 }
@@ -3584,7 +3634,7 @@ void CMDLCache::QueuedLoaderCallback_MDL( void *pContext, void *pContext2, const
 
 	// journal each incoming buffer
 	ModelParts_t *pModelParts = (ModelParts_t *)pContext;
-	ModelParts_t::BufferType_t bufferType = static_cast< ModelParts_t::BufferType_t >((int)pContext2);
+	ModelParts_t::BufferType_t bufferType = static_cast< ModelParts_t::BufferType_t >((intp)pContext2);
 	pModelParts->Buffers[bufferType].SetExternalBuffer( (void *)pData, nSize, nSize, CUtlBuffer::READ_ONLY );
 	pModelParts->nLoadedParts += (1 << bufferType);
 
@@ -3895,7 +3945,7 @@ void CMDLCache::MarkFrame()
 const studiohdr_t *studiohdr_t::FindModel( void **cache, char const *pModelName ) const
 {
 	MDLHandle_t handle = g_MDLCache.FindMDL( pModelName );
-	*cache = (void*)(uintp)handle;
+	*cache = MDLHandleToVirtual(handle);
 	return g_MDLCache.GetStudioHdr( handle );
 }
 
@@ -3904,21 +3954,21 @@ virtualmodel_t *studiohdr_t::GetVirtualModel( void ) const
 	if (numincludemodels == 0)
 		return NULL;
 
-	return g_MDLCache.GetVirtualModelFast( this, (MDLHandle_t)(int)virtualModel&0xffff );
+    return g_MDLCache.GetVirtualModelFast( this, VoidPtrToMDLHandle( VirtualModel() ) );
 }
 
 byte *studiohdr_t::GetAnimBlock( int i ) const
 {
-	return g_MDLCache.GetAnimBlock( (MDLHandle_t)(int)virtualModel&0xffff, i );
+	return g_MDLCache.GetAnimBlock( VoidPtrToMDLHandle( VirtualModel() ), i );
 }
 
 int studiohdr_t::GetAutoplayList( unsigned short **pOut ) const
 {
-	return g_MDLCache.GetAutoplayList( (MDLHandle_t)(int)virtualModel&0xffff, pOut );
+	return g_MDLCache.GetAutoplayList( VoidPtrToMDLHandle( VirtualModel() ), pOut );
 }
 
 const studiohdr_t *virtualgroup_t::GetStudioHdr( void ) const
 {
-	return g_MDLCache.GetStudioHdr( (MDLHandle_t)(int)cache&0xffff );
+	return g_MDLCache.GetStudioHdr( VoidPtrToMDLHandle( cache ) );
 }
 

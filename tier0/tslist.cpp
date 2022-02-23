@@ -135,7 +135,7 @@ void ValidateBuckets()
 	}
 }
 
-unsigned PopThreadFunc( void *)
+uintp PopThreadFunc( void *)
 {
 	ThreadSetDebugName( "PopThread" );
 	g_nPopThreads++;
@@ -165,7 +165,7 @@ unsigned PopThreadFunc( void *)
 	return 0;
 }
 
-unsigned PushThreadFunc( void * )
+uintp PushThreadFunc( void * )
 {
 	ThreadSetDebugName( "PushThread" );
 	g_nPushThreads++;
@@ -306,7 +306,7 @@ void PushPopInterleavedTest()
 	TestEnd();
 }
 
-unsigned PushPopInterleavedTestThreadFunc( void * )
+uintp PushPopInterleavedTestThreadFunc( void * )
 {
 	ThreadSetDebugName( "PushPopThread" );
 	g_nThreads++;

@@ -2260,7 +2260,7 @@ bool EnableLongTickWatcher()
 #ifdef POSIX
 			(void*)
 #endif
-			LongTickWatcherThread, NULL, 0, (unsigned long int *)&nThreadID );
+			LongTickWatcherThread, NULL, 0, (uintp *)&nThreadID );
 
 		bRet = true;
 	}

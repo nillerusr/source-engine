@@ -148,7 +148,7 @@ void CMeshInstance::Init( const virtualmeshlist_t &list )
 	m_memSize = memSize;
 	m_hullCount = 0;
 	m_pMemory = (char *)ivp_malloc_aligned( memSize, 16 );
-	Assert( (int(m_pMemory) & 15) == 0 );	// make sure it is aligned
+	Assert( (intp(m_pMemory) & 15) == 0 );	// make sure it is aligned
 	IVP_Compact_Poly_Point *pPoints = (IVP_Compact_Poly_Point *)&m_pMemory[ledgeSize];
 	triangleledge_t *pLedges = (triangleledge_t *) m_pMemory;
 	memset( m_pMemory, 0, memSize );

@@ -461,7 +461,7 @@ inline void CUtlHash<Data, C, K>::Log( const char *filename )
 // Number of buckets must be a power of 2.
 // Key must be 32-bits (unsigned int).
 //
-typedef int UtlHashFastHandle_t;
+typedef intp UtlHashFastHandle_t;
 
 #define UTLHASH_POOL_SCALAR		2
 
@@ -617,7 +617,7 @@ template<class Data, class HashFuncs> inline UtlHashFastHandle_t CUtlHashFast<Da
 template<class Data, class HashFuncs> inline UtlHashFastHandle_t CUtlHashFast<Data,HashFuncs>::FastInsert( unsigned int uiKey, const Data &data )
 {
 	// Get a new element from the pool.
-	int iHashData = m_aDataPool.Alloc( true );
+	intp iHashData = m_aDataPool.Alloc( true );
 	HashFastData_t *pHashData = &m_aDataPool[iHashData];
 	if ( !pHashData )
 		return InvalidHandle();
@@ -671,7 +671,7 @@ template<class Data, class HashFuncs> inline UtlHashFastHandle_t CUtlHashFast<Da
 	// hash the "key" - get the correct hash table "bucket"
 	int iBucket = HashFuncs::Hash( uiKey, m_uiBucketMask );
 
-	for ( int iElement = m_aBuckets[iBucket]; iElement != m_aDataPool.InvalidIndex(); iElement = m_aDataPool.Next( iElement ) )
+	for ( intp iElement = m_aBuckets[iBucket]; iElement != m_aDataPool.InvalidIndex(); iElement = m_aDataPool.Next( iElement ) )
 	{
 		if ( m_aDataPool[iElement].m_uiKey == uiKey )
 			return iElement;
@@ -719,7 +719,7 @@ template<class Data, class HashFuncs> inline Data const &CUtlHashFast<Data,HashF
 // Number of buckets must be a power of 2.
 // Key must be 32-bits (unsigned int).
 //
-typedef int UtlHashFixedHandle_t;
+typedef intp UtlHashFixedHandle_t;
 
 template <int NUM_BUCKETS>
 class CUtlHashFixedGenericHash
@@ -753,7 +753,7 @@ public:
 	void Purge( void );
 
 	// Invalid handle.
-	static UtlHashFixedHandle_t InvalidHandle( void )	{ return ( UtlHashFixedHandle_t )~0; }
+	static UtlHashFixedHandle_t InvalidHandle( void )	{ return ( UtlHashFixedHandle_t )-1; }
 
 	// Size.
 	int Count( void );
@@ -858,7 +858,7 @@ template<class Data, int NUM_BUCKETS, class HashFuncs> inline UtlHashFixedHandle
 	pHashData->m_Data = data;
 
 	m_nElements++;
-	return (UtlHashFixedHandle_t)pHashData;	
+	return (UtlHashFixedHandle_t)(intp)pHashData;
 }
 
 //-----------------------------------------------------------------------------
@@ -895,7 +895,7 @@ template<class Data, int NUM_BUCKETS, class HashFuncs> inline UtlHashFixedHandle
 	for ( UtlPtrLinkedListIndex_t iElement = bucket.Head(); iElement != bucket.InvalidIndex(); iElement = bucket.Next( iElement ) )
 	{
 		if ( bucket[iElement].m_uiKey == uiKey )
-			return (UtlHashFixedHandle_t)iElement;
+			return (UtlHashFixedHandle_t)(intp)iElement;
 	}
 
 	return InvalidHandle();

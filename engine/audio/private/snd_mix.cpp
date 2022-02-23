@@ -1962,7 +1962,7 @@ public:
 	{
 		int m_channelNum;
 		int m_vol; // max volume of sound. -1 means "do not cull, ever, do not even do the math"
-		unsigned int m_nameHash; // a unique id for a sound file
+        uintp m_nameHash; // a unique id for a sound file
 	};
 protected:
 	sChannelVolData m_channelInfo[MAX_CHANNELS];
@@ -1994,7 +1994,7 @@ void CChannelCullList::Initialize( CChannelList &list )
 		{
 			m_channelInfo[i].m_vol = ChannelLoudestCurVolume(ch);
 			AssertMsg(m_channelInfo[i].m_vol >= 0, "Sound channel has a negative volume?");
-			m_channelInfo[i].m_nameHash = (unsigned int) ch->sfx;
+			m_channelInfo[i].m_nameHash = (uintp) ch->sfx;
 		}
 		else
 		{
@@ -2029,7 +2029,7 @@ void CChannelCullList::Initialize( CChannelList &list )
 			 ++j )
 		{
 			// j steps through the sorted list until we find ourselves:
-			if (m_channelInfo[j].m_nameHash == (unsigned int)(ch->sfx))
+			if (m_channelInfo[j].m_nameHash == (uintp)(ch->sfx))
 			{
 				// that's another channel playing this sound but louder than me
 				++howManyLouder;

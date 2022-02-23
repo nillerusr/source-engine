@@ -29,12 +29,12 @@ class CFSIOReadBinary : public IFileReadBinary
 {
 public:
 	// inherited from IFileReadBinary
-	virtual int open( const char *pFileName );
-	virtual int read( void *pOutput, int size, int file );
-	virtual void seek( int file, int pos );
-	virtual unsigned int tell( int file );
-	virtual unsigned int size( int file );
-	virtual void close( int file );
+	virtual intp open( const char *pFileName );
+	virtual int read( void *pOutput, int size, intp file );
+	virtual void seek( intp file, int pos );
+	virtual unsigned int tell( intp file );
+	virtual unsigned int size( intp file );
+	virtual void close( intp file );
 };
 
 class CFSIOWriteBinary : public IFileWriteBinary
@@ -61,12 +61,12 @@ IFileWriteBinary *g_pFSIOWriteBinary = &s_FSIoOut;
 //-----------------------------------------------------------------------------
 // RIFF reader that use the file system
 //-----------------------------------------------------------------------------
-int CFSIOReadBinary::open( const char *pFileName )
+intp CFSIOReadBinary::open( const char *pFileName )
 {
-	return (int)g_pFullFileSystem->Open( pFileName, "rb" );
+	return (intp)g_pFullFileSystem->Open( pFileName, "rb" );
 }
 
-int CFSIOReadBinary::read( void *pOutput, int size, int file )
+int CFSIOReadBinary::read( void *pOutput, int size, intp file )
 {
 	if ( !file )
 		return 0;
@@ -74,7 +74,7 @@ int CFSIOReadBinary::read( void *pOutput, int size, int file )
 	return g_pFullFileSystem->Read( pOutput, size, (FileHandle_t)file );
 }
 
-void CFSIOReadBinary::seek( int file, int pos )
+void CFSIOReadBinary::seek( intp file, int pos )
 {
 	if ( !file )
 		return;
@@ -82,7 +82,7 @@ void CFSIOReadBinary::seek( int file, int pos )
 	g_pFullFileSystem->Seek( (FileHandle_t)file, pos, FILESYSTEM_SEEK_HEAD );
 }
 
-unsigned int CFSIOReadBinary::tell( int file )
+unsigned int CFSIOReadBinary::tell( intp file )
 {
 	if ( !file )
 		return 0;
@@ -90,7 +90,7 @@ unsigned int CFSIOReadBinary::tell( int file )
 	return g_pFullFileSystem->Tell( (FileHandle_t)file );
 }
 
-unsigned int CFSIOReadBinary::size( int file )
+unsigned int CFSIOReadBinary::size( intp file )
 {
 	if ( !file )
 		return 0;
@@ -98,7 +98,7 @@ unsigned int CFSIOReadBinary::size( int file )
 	return g_pFullFileSystem->Size( (FileHandle_t)file );
 }
 
-void CFSIOReadBinary::close( int file )
+void CFSIOReadBinary::close( intp file )
 {
 	if ( !file )
 		return;
@@ -113,7 +113,7 @@ void CFSIOReadBinary::close( int file )
 int CFSIOWriteBinary::create( const char *pFileName )
 {
 	g_pFullFileSystem->SetFileWritable( pFileName, true );
-	return (int)g_pFullFileSystem->Open( pFileName, "wb" );
+	return (intp)g_pFullFileSystem->Open( pFileName, "wb" );
 }
 
 int CFSIOWriteBinary::write( void *pData, int size, int file )

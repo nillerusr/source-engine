@@ -1006,7 +1006,7 @@ void CParticleCollection::Init( CParticleSystemDefinition *pDef, float flDelay, 
 	}
 	else
 	{
-		m_nRandomSeed = (int)this;
+		m_nRandomSeed = (intp)this;
 #ifndef _DEBUG
 		m_nRandomSeed += Plat_MSTime();
 #endif

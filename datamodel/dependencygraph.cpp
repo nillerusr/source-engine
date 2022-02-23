@@ -67,7 +67,7 @@ bool HashEntryCompareFunc( CAttributeNode *const& lhs, CAttributeNode *const& rh
 
 uint HashEntryKeyFunc( CAttributeNode *const& keyinfo )
 {
-	uint i = (uint)keyinfo->m_attribute;
+	uintp i = (uintp)keyinfo->m_attribute;
 	return i >> 2; // since memory is allocated on a 4-byte (at least!) boundary
 }
 

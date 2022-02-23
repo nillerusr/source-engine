@@ -154,7 +154,7 @@ private:
 	CSaveDirectory	*m_pSaveDirectory;
 	CUtlMap<CUtlSymbol, SaveFile_t> &GetDirectory( void ) { return m_pSaveDirectory->m_Files; }
 	SaveFile_t &GetFile( const int idx ) { return m_pSaveDirectory->m_Files[idx]; }
-	SaveFile_t &GetFile( const FileHandle_t hFile ) { return GetFile( (unsigned int)hFile ); }
+	SaveFile_t &GetFile( const FileHandle_t hFile ) { return GetFile( (uintp)hFile ); }
 
 	FileHandle_t	GetFileHandle( const char *pFileName );
 	int				GetFileIndex( const char *pFileName );
@@ -331,7 +331,7 @@ bool CSaveRestoreFileSystem::FileExists( const char *pFileName, const char *pPat
 //-----------------------------------------------------------------------------
 bool CSaveRestoreFileSystem::HandleIsValid( FileHandle_t hFile )
 {
-	return hFile && GetDirectory().IsValidIndex( (unsigned int)hFile );
+	return hFile && GetDirectory().IsValidIndex( (uintp)hFile );
 }
 
 //-----------------------------------------------------------------------------
@@ -588,7 +588,7 @@ FSAsyncStatus_t CSaveRestoreFileSystem::AsyncWrite( const char *pFileName, const
 	FileHandle_t hFile = Open( pFileName, "wb" );
 	if ( hFile )
 	{
-		SaveFile_t &file = GetFile( (unsigned int)hFile );
+		SaveFile_t &file = GetFile( (uintp)hFile );
 
 		if( file.eType == WRITE_ONLY )
 		{

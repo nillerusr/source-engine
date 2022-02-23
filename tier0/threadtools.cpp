@@ -53,6 +53,7 @@ typedef PTHREAD_START_ROUTINE LPTHREAD_START_ROUTINE;
 #include <signal.h>
 #include <pthread.h>
 #include <sys/time.h>
+#include <inttypes.h>
 #define GetLastError() errno
 typedef void *LPVOID;
 #endif
@@ -220,12 +221,12 @@ void ThreadSleep(unsigned nMilliseconds)
 //-----------------------------------------------------------------------------
 
 #ifndef ThreadGetCurrentId
-uint ThreadGetCurrentId()
+ThreadId_t ThreadGetCurrentId()
 {
 #ifdef _WIN32
 	return GetCurrentThreadId();
 #elif defined(POSIX)
-	return (uint)pthread_self();
+	return (ThreadId_t)pthread_self();
 #endif
 }
 #endif
@@ -345,7 +346,7 @@ void ThreadSetAffinity( ThreadHandle_t hThread, int nAffinityMask )
 
 //-----------------------------------------------------------------------------
 
-uint InitMainThread()
+ThreadId_t InitMainThread()
 {
 #ifndef LINUX
 	// Skip doing the setname on Linux for the main thread. Here is why...
@@ -369,11 +370,11 @@ uint InitMainThread()
 #ifdef _WIN32
 	return ThreadGetCurrentId();
 #elif defined(POSIX)
-	return (uint)pthread_self();
+	return (ThreadId_t)pthread_self();
 #endif
 }
 
-uint g_ThreadMainThreadID = InitMainThread();
+ThreadId_t g_ThreadMainThreadID = InitMainThread();
 
 bool ThreadInMainThread()
 {
@@ -859,37 +860,37 @@ void CThreadLocalBase::Set( void *value )
 #endif
 
 #ifndef USE_INTRINSIC_INTERLOCKED
-long ThreadInterlockedIncrement( long volatile *pDest )
+int32 ThreadInterlockedIncrement( int32 volatile *pDest )
 {
 	Assert( (size_t)pDest % 4 == 0 );
 	return InterlockedIncrement( TO_INTERLOCK_PARAM(pDest) );
 }
 
-long ThreadInterlockedDecrement( long volatile *pDest )
+int32 ThreadInterlockedDecrement( int32 volatile *pDest )
 {
 	Assert( (size_t)pDest % 4 == 0 );
 	return InterlockedDecrement( TO_INTERLOCK_PARAM(pDest) );
 }
 
-long ThreadInterlockedExchange( long volatile *pDest, long value )
+int32 ThreadInterlockedExchange( int32 volatile *pDest, int32 value )
 {
 	Assert( (size_t)pDest % 4 == 0 );
 	return InterlockedExchange( TO_INTERLOCK_PARAM(pDest), value );
 }
 
-long ThreadInterlockedExchangeAdd( long volatile *pDest, long value )
+int32 ThreadInterlockedExchangeAdd( int32 volatile *pDest, int32 value )
 {
 	Assert( (size_t)pDest % 4 == 0 );
 	return InterlockedExchangeAdd( TO_INTERLOCK_PARAM(pDest), value );
 }
 
-long ThreadInterlockedCompareExchange( long volatile *pDest, long value, long comperand )
+int32 ThreadInterlockedCompareExchange( int32 volatile *pDest, int32 value, int32 comperand )
 {
 	Assert( (size_t)pDest % 4 == 0 );
 	return InterlockedCompareExchange( TO_INTERLOCK_PARAM(pDest), value, comperand );
 }
 
-bool ThreadInterlockedAssignIf( long volatile *pDest, long value, long comperand )
+bool ThreadInterlockedAssignIf( int32 volatile *pDest, int32 value, int32 comperand )
 {
 	Assert( (size_t)pDest % 4 == 0 );
 
@@ -1070,37 +1071,52 @@ int64 ThreadInterlockedExchangeAdd64( int64 volatile *pDest, int64 value )
 
 #elif defined(GNUC)
 
-#ifdef OSX
-#include <libkern/OSAtomic.h>
-#endif
-
-
-long ThreadInterlockedIncrement( long volatile *pDest )
+int32 ThreadInterlockedIncrement( int32 volatile *pDest )
 {
 	return __sync_fetch_and_add( pDest, 1 ) + 1;
 }
 
-long ThreadInterlockedDecrement( long volatile *pDest )
+int64 ThreadInterlockedIncrement64( int64 volatile *pDest )
+{
+    return  __sync_fetch_and_add( pDest, 1 ) + 1;
+}
+
+int32 ThreadInterlockedDecrement( int32 volatile *pDest )
 {
 	return __sync_fetch_and_sub( pDest, 1 ) - 1;
 }
 
-long ThreadInterlockedExchange( long volatile *pDest, long value )
+int64 ThreadInterlockedDecrement64( int64 volatile *pDest )
+{
+    return  __sync_fetch_and_sub( pDest, 1 ) - 1;
+}
+
+int32 ThreadInterlockedExchange( int32 volatile *pDest, int32 value )
 {
 	return __sync_lock_test_and_set( pDest, value );
 }
 
-long ThreadInterlockedExchangeAdd( long volatile *pDest, long value )
+int64 ThreadInterlockedExchange64( int64 volatile *pDest, int64 value )
+{
+    return  __sync_lock_test_and_set( pDest, value );
+}
+
+int32 ThreadInterlockedExchangeAdd( int32 volatile *pDest, int32 value )
 {
 	return  __sync_fetch_and_add( pDest, value );
 }
 
-long ThreadInterlockedCompareExchange( long volatile *pDest, long value, long comperand )
+int64 ThreadInterlockedExchangeAdd64( int64 volatile *pDest, int64 value )
+{
+    return  __sync_fetch_and_add( pDest, value );
+}
+
+int32 ThreadInterlockedCompareExchange( int32 volatile *pDest, int32 value, int32 comperand )
 {
 	return  __sync_val_compare_and_swap( pDest, comperand, value );
 }
 
-bool ThreadInterlockedAssignIf( long volatile *pDest, long value, long comperand )
+bool ThreadInterlockedAssignIf( int32 volatile *pDest, int32 value, int32 comperand )
 {
 	return __sync_bool_compare_and_swap( pDest, comperand, value );
 }
@@ -1122,15 +1138,7 @@ bool ThreadInterlockedAssignPointerIf( void * volatile *pDest, void *value, void
 
 int64 ThreadInterlockedCompareExchange64( int64 volatile *pDest, int64 value, int64 comperand )
 {
-#if defined(OSX)
-	int64 retVal = *pDest;
-	if ( OSAtomicCompareAndSwap64( comperand, value, pDest ) )
-		retVal = *pDest;
-	
-	return retVal;
-#else
 	return __sync_val_compare_and_swap( pDest, comperand, value  );
-#endif
 }
 
 bool ThreadInterlockedAssignIf64( int64 volatile * pDest, int64 value, int64 comperand ) 
@@ -1138,18 +1146,12 @@ bool ThreadInterlockedAssignIf64( int64 volatile * pDest, int64 value, int64 com
 	return __sync_bool_compare_and_swap( pDest, comperand, value );
 }
 
-int64 ThreadInterlockedExchange64( int64 volatile *pDest, int64 value )
+#ifdef PLATFORM_64BITS
+bool ThreadInterlockedAssignIf128( int128 volatile *pDest, const int128 &value, const int128 &comperand )
 {
-	Assert( (size_t)pDest % 8 == 0 );
-	int64 Old;
-	
-	do 
-	{
-		Old = *pDest;
-	} while (ThreadInterlockedCompareExchange64(pDest, value, Old) != Old);
-	
-	return Old;
+    return __sync_bool_compare_and_swap( pDest, comperand, value );
 }
+#endif
 
 
 #else
@@ -1157,22 +1159,22 @@ int64 ThreadInterlockedExchange64( int64 volatile *pDest, int64 value )
 #error "Falling back to mutexed interlocked operations, you really don't have intrinsics you can use?"ß
 CThreadMutex g_InterlockedMutex;
 
-long ThreadInterlockedIncrement( long volatile *pDest )
+int32 ThreadInterlockedIncrement( int32 volatile *pDest )
 {
 	AUTO_LOCK( g_InterlockedMutex );
 	return ++(*pDest);
 }
 
-long ThreadInterlockedDecrement( long volatile *pDest )
+int32 ThreadInterlockedDecrement( int32 volatile *pDest )
 {
 	AUTO_LOCK( g_InterlockedMutex );
 	return --(*pDest);
 }
 
-long ThreadInterlockedExchange( long volatile *pDest, long value )
+int32 ThreadInterlockedExchange( int32 volatile *pDest, int32 value )
 {
 	AUTO_LOCK( g_InterlockedMutex );
-	long retVal = *pDest;
+	int32 retVal = *pDest;
 	*pDest = value;
 	return retVal;
 }
@@ -1185,18 +1187,18 @@ void *ThreadInterlockedExchangePointer( void * volatile *pDest, void *value )
 	return retVal;
 }
 
-long ThreadInterlockedExchangeAdd( long volatile *pDest, long value )
+int32 ThreadInterlockedExchangeAdd( int32 volatile *pDest, int32 value )
 {
 	AUTO_LOCK( g_InterlockedMutex );
-	long retVal = *pDest;
+	int32 retVal = *pDest;
 	*pDest += value;
 	return retVal;
 }
 
-long ThreadInterlockedCompareExchange( long volatile *pDest, long value, long comperand )
+int32 ThreadInterlockedCompareExchange( int32 volatile *pDest, int32 value, int32 comperand )
 {
 	AUTO_LOCK( g_InterlockedMutex );
-	long retVal = *pDest;
+	int32 retVal = *pDest;
 	if ( *pDest == comperand )
 		*pDest = value;
 	return retVal;
@@ -1241,7 +1243,7 @@ bool ThreadInterlockedAssignIf64(volatile int64 *pDest, int64 value, int64 compe
 	return ( ThreadInterlockedCompareExchange64( pDest, value, comperand ) == comperand ); 
 }
 
-bool ThreadInterlockedAssignIf( long volatile *pDest, long value, long comperand )
+bool ThreadInterlockedAssignIf( int32 volatile *pDest, int32 value, int32 comperand )
 {
 	Assert( (size_t)pDest % 4 == 0 );
 	return ( ThreadInterlockedCompareExchange( pDest, value, comperand ) == comperand ); 
@@ -1347,7 +1349,7 @@ bool CThreadMutex::TryLock()
 
 #define THREAD_SPIN (8*1024)
 
-void CThreadFastMutex::Lock( const uint32 threadId, unsigned nSpinSleepTime ) volatile 
+void CThreadFastMutex::Lock( const uintp threadId, unsigned nSpinSleepTime ) volatile
 {
 	int i;
 	if ( nSpinSleepTime != TT_INFINITE )
@@ -1482,7 +1484,7 @@ void CThreadRWLock::UnlockWrite()
 //
 //-----------------------------------------------------------------------------
 
-void CThreadSpinRWLock::SpinLockForWrite( const uint32 threadId )
+void CThreadSpinRWLock::SpinLockForWrite( const uintp threadId )
 {
 	int i;
 
@@ -1695,7 +1697,7 @@ const char *CThread::GetName()
 #ifdef _WIN32
 		_snprintf( m_szName, sizeof(m_szName) - 1, "Thread(%p/%p)", this, m_hThread );
 #elif defined(POSIX)
-		_snprintf( m_szName, sizeof(m_szName) - 1, "Thread(0x%x/0x%x)", (uint)this, (uint)m_threadId );
+		_snprintf( m_szName, sizeof(m_szName) - 1, "Thread(0x" PRIxPTR "/0x" PRIxPTR ")", (ThreadId_t)this, (ThreadId_t)m_threadId );
 #endif
 		m_szName[sizeof(m_szName) - 1] = 0;
 	}
@@ -1886,7 +1888,7 @@ void CThread::Stop(int exitCode)
 		if ( !( m_flags & SUPPORT_STOP_PROTOCOL ) )
 		{
 			OnExit();
-			g_pCurThread = (int)NULL;
+			g_pCurThread = NULL;
 
 #ifdef _WIN32
 			CloseHandle( m_hThread );
@@ -1947,7 +1949,7 @@ void CThread::SuspendCooperative()
 
 void CThread::ResumeCooperative()
 {
-	Assert( m_nSuspendCount == 1 );
+	//Assert( m_nSuspendCount == 1 );
 	m_SuspendEvent.Set();
 }
 
@@ -2118,7 +2120,7 @@ CThread::ThreadProc_t CThread::GetThreadProc()
 
 unsigned __stdcall CThread::ThreadProc(LPVOID pv)
 {
-  std::auto_ptr<ThreadInit_t> pInit((ThreadInit_t *)pv);
+  std::unique_ptr<ThreadInit_t> pInit((ThreadInit_t *)pv);
   
 #ifdef _X360
         // Make sure all threads are consistent w.r.t floating-point math
@@ -2170,7 +2172,7 @@ unsigned __stdcall CThread::ThreadProc(LPVOID pv)
 	}
 	
 	pInit->pThread->OnExit();
-	g_pCurThread = (int)NULL;
+	g_pCurThread = NULL;
 	pInit->pThread->Cleanup();
 	
 	return pInit->pThread->m_result;

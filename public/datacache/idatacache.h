@@ -35,7 +35,7 @@ class IDataCache;
 //---------------------------------------------------------
 // Unique (per section) identifier for a cache item defined by client
 //---------------------------------------------------------
-typedef uint32 DataCacheClientID_t;
+typedef uintp DataCacheClientID_t;
 
 
 //---------------------------------------------------------
@@ -491,7 +491,7 @@ public:
 		m_pCache->EnsureCapacity(STORAGE_TYPE::EstimatedSize(createParams));
 		STORAGE_TYPE *pStore = STORAGE_TYPE::CreateResource( createParams );
 		DataCacheHandle_t handle;
-		m_pCache->AddEx( (DataCacheClientID_t)pStore, pStore, pStore->Size(), flags, &handle);
+		m_pCache->AddEx( (DataCacheClientID_t)(uintp)pStore, pStore, pStore->Size(), flags, &handle);
 		return handle;
 	}
 

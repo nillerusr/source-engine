@@ -643,7 +643,7 @@ FileNameHandle_t CQueuedLoader::FindFilename( const char *pFilename )
 //-----------------------------------------------------------------------------
 bool CQueuedLoader::CResourceNameLessFunc::Less( const FileNameHandle_t &hFilenameLHS, const FileNameHandle_t &hFilenameRHS, void *pCtx )
 {
-	switch ( (int)pCtx )
+	switch ( (intp)pCtx )
 	{
 	case RESOURCEPRELOAD_MATERIAL:
 		{

@@ -338,7 +338,7 @@ public:
 			Assert( m_VertexSize );
 			Assert( !m_pVertexData );
 			m_pVertexData = (byte *)m_pOwner->AllocVertices( numVerts, m_VertexSize );
-			Assert( (unsigned)m_pVertexData % 16 == 0 );
+			Assert( (uintp)m_pVertexData % 16 == 0 );
 
 			// Compute the vertex index..
 			desc.m_nFirstVertex = 0;

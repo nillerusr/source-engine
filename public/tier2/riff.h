@@ -25,12 +25,12 @@
 class IFileReadBinary
 {
 public:
-	virtual int open( const char *pFileName ) = 0;
-	virtual int read( void *pOutput, int size, int file ) = 0;
-	virtual void close( int file ) = 0;
-	virtual void seek( int file, int pos ) = 0;
-	virtual unsigned int tell( int file ) = 0;
-	virtual unsigned int size( int file ) = 0;
+	virtual intp open( const char *pFileName ) = 0;
+	virtual int read( void *pOutput, int size, intp file ) = 0;
+	virtual void close( intp file ) = 0;
+	virtual void seek( intp file, int pos ) = 0;
+	virtual unsigned int tell( intp file ) = 0;
+	virtual unsigned int size( intp file ) = 0;
 };
 
 
@@ -56,7 +56,7 @@ private:
 	const InFileRIFF & operator=( const InFileRIFF & );
 
 	IFileReadBinary		&m_io;
-	int					m_file;
+	intp				m_file;
 	unsigned int		m_riffName;
 	unsigned int		m_riffSize;
 };
@@ -126,7 +126,7 @@ private:
 	const OutFileRIFF & operator=( const OutFileRIFF & );
 
 	IFileWriteBinary	&m_io;
-	int					m_file;
+	intp				m_file;
 	unsigned int		m_riffName;
 	unsigned int		m_riffSize;
 	unsigned int		m_nNamePos;

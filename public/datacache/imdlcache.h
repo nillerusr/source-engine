@@ -41,6 +41,17 @@ namespace OptimizedModel
 //-----------------------------------------------------------------------------
 typedef unsigned short MDLHandle_t;
 
+// MoeMod : integer promotion keeps sign on arm, but discards sign on x86
+inline MDLHandle_t VoidPtrToMDLHandle( void *ptr )
+{
+    return ( MDLHandle_t ) ( ( uintp ) ptr & 0xffff );
+}
+
+inline void* MDLHandleToVirtual( MDLHandle_t hndl )
+{
+    return (void*)(uintp)hndl;
+}
+
 enum
 {
 	MDLHANDLE_INVALID = (MDLHandle_t)~0 
