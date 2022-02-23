@@ -870,6 +870,18 @@ void BuildGroup::PanelAdded(Panel *panel)
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Add panel the list of panels that are in the build group
+//-----------------------------------------------------------------------------
+void BuildGroup::PanelRemoved(Panel *panel)
+{
+    Assert(panel);
+
+    PHandle temp;
+    temp = panel;
+    _panelDar.FindAndRemove(temp);
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: loads the control settings from file
 //-----------------------------------------------------------------------------
 void BuildGroup::LoadControlSettings(const char *controlResourceName, const char *pathID, KeyValues *pPreloadedKeyValues, KeyValues *pConditions)
