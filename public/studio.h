@@ -1194,10 +1194,16 @@ struct mstudiotexture_t
 	int						flags;
 	int						used;
     int						unused1;
+#if PLATFORM_64BITS
+    mutable IMaterial		*material;
+    mutable void			*clientmaterial;
+    int						unused[8];
+#else
 	mutable IMaterial		*material;  // fixme: this needs to go away . .isn't used by the engine, but is used by studiomdl
 	mutable void			*clientmaterial;	// gary, replace with client material pointer if used
 	
 	int						unused[10];
+#endif
 };
 
 // eyeball
@@ -1290,6 +1296,11 @@ struct mstudio_modelvertexdata_t
 	const void			*pTangentData;
 };
 
+#ifdef PLATFORM_64BITS
+// 64b - match 32-bit packing
+#pragma pack( push, 4 )
+#endif
+
 struct mstudio_meshvertexdata_t
 {
 	DECLARE_BYTESWAP_DATADESC();
@@ -1339,9 +1350,15 @@ struct mstudiomesh_t
 
 	Vector				center;
 
+#ifdef PLATFORM_64BITS
+    mstudio_meshvertexdata_t vertexdata;
+
+    int					unused[7]; // remove as appropriate
+#else
 	mstudio_meshvertexdata_t vertexdata;
 
 	int					unused[8]; // remove as appropriate
+#endif
 
 	mstudiomesh_t(){}
 private:
@@ -1383,10 +1400,21 @@ struct mstudiomodel_t
 	int					eyeballindex;
 	inline  mstudioeyeball_t *pEyeball( int i ) { return (mstudioeyeball_t *)(((byte *)this) + eyeballindex) + i; };
 
+
+#ifdef PLATFORM_64BITS
+    mstudio_modelvertexdata_t vertexdata; // sizeof(mstudio_modelvertexdata_t) == 16
+
+    int					unused[6];		// remove as appropriate
+#else
 	mstudio_modelvertexdata_t vertexdata;
 
 	int					unused[8];		// remove as appropriate
+#endif
 };
+
+#ifdef PLATFORM_64BITS
+#pragma pack( pop )
+#endif
 
 inline bool mstudio_modelvertexdata_t::HasTangentData( void ) const 
 {
@@ -1396,14 +1424,14 @@ inline bool mstudio_modelvertexdata_t::HasTangentData( void ) const
 inline int mstudio_modelvertexdata_t::GetGlobalVertexIndex( int i ) const
 {
 	mstudiomodel_t *modelptr = (mstudiomodel_t *)((byte *)this - offsetof(mstudiomodel_t, vertexdata));
-	Assert( ( modelptr->vertexindex % sizeof( mstudiovertex_t ) ) == 0 );
+	//Assert( ( modelptr->vertexindex % sizeof( mstudiovertex_t ) ) == 0 );
 	return ( i + ( modelptr->vertexindex / sizeof( mstudiovertex_t ) ) );
 }
 
 inline int mstudio_modelvertexdata_t::GetGlobalTangentIndex( int i ) const
 {
 	mstudiomodel_t *modelptr = (mstudiomodel_t *)((byte *)this - offsetof(mstudiomodel_t, vertexdata));
-	Assert( ( modelptr->tangentsindex % sizeof( Vector4D ) ) == 0 );
+	//Assert( ( modelptr->tangentsindex % sizeof( Vector4D ) ) == 0 );
 	return ( i + ( modelptr->tangentsindex / sizeof( Vector4D ) ) );
 }
 
@@ -2263,7 +2291,11 @@ struct studiohdr_t
 	const studiohdr_t	*FindModel( void **cache, char const *modelname ) const;
 
 	// implementation specific back pointer to virtual data
+#ifdef PLATFORM_64BITS
+    int                 index_ptr_virtualModel;
+#else
 	mutable void		*virtualModel;
+#endif
 	virtualmodel_t		*GetVirtualModel( void ) const;
 
 	// for demand loaded animation blocks
@@ -2272,7 +2304,11 @@ struct studiohdr_t
 	int					numanimblocks;
 	int					animblockindex;
 	inline mstudioanimblock_t *pAnimBlock( int i ) const { Assert( i > 0 && i < numanimblocks); return (mstudioanimblock_t *)(((byte *)this) + animblockindex) + i; };
+#ifdef PLATFORM_64BITS
+    int                 index_ptr_animblockModel;
+#else
 	mutable void		*animblockModel;
+#endif
 	byte *				GetAnimBlock( int i ) const;
 
 	int					bonetablebynameindex;
@@ -2280,8 +2316,13 @@ struct studiohdr_t
 
 	// used by tools only that don't cache, but persist mdl's peer data
 	// engine uses virtualModel to back link to cache pointers
+#ifdef PLATFORM_64BITS
+    int                 index_ptr_pVertexBase;
+    int                 index_ptr_pIndexBase;
+#else
 	void				*pVertexBase;
 	void				*pIndexBase;
+#endif
 
 	// if STUDIOHDR_FLAGS_CONSTANT_DIRECTIONAL_LIGHT_DOT is set,
 	// this value is used to calculate directional components of lighting 
@@ -2327,7 +2368,23 @@ struct studiohdr_t
 	inline mstudiolinearbone_t *pLinearBones() const { return studiohdr2index ? pStudioHdr2()->pLinearBones() : NULL; }
 
 	inline int			BoneFlexDriverCount() const { return studiohdr2index ? pStudioHdr2()->m_nBoneFlexDriverCount : 0; }
-	inline const mstudioboneflexdriver_t* BoneFlexDriver( int i ) const { Assert( i >= 0 && i < BoneFlexDriverCount() ); return studiohdr2index ? pStudioHdr2()->pBoneFlexDriver( i ) : NULL; }
+	inline const mstudioboneflexdriver_t* BoneFlexDriver( int i ) const { Assert( i >= 0 && i < BoneFlexDriverCount() ); return studiohdr2index > 0 ? pStudioHdr2()->pBoneFlexDriver( i ) : NULL; }
+
+#ifdef PLATFORM_64BITS
+    void* 				VirtualModel() const { return *(void **)(((byte *)this) + index_ptr_virtualModel); }
+    void				SetVirtualModel( void* ptr ) const { *(void **)(((byte *)this) + index_ptr_virtualModel) = ptr; }
+    void*				VertexBase() const { return *(void **)(((byte *)this) + index_ptr_pVertexBase); }
+    void				SetVertexBase( void* ptr ) { *(void **)(((byte *)this) + index_ptr_pVertexBase) = ptr; }
+    void*				IndexBase() const { return *(void **)(((byte *)this) + index_ptr_pIndexBase); }
+    void				SetIndexBase( void* ptr ) { *(void **)(((byte *)this) + index_ptr_pIndexBase) = ptr; }
+#else
+    void* 				VirtualModel() const { return virtualModel; }
+    void				SetVirtualModel( void* ptr ) const { virtualModel = ptr; }
+    void*				VertexBase() const { return pVertexBase; }
+    void				SetVertexBase( void* ptr ) { pVertexBase = ptr; }
+    void*				IndexBase() const { return pIndexBase; }
+    void				SetIndexBase( void* ptr ) { pIndexBase = ptr; } }
+#endif
 
 	// NOTE: No room to add stuff? Up the .mdl file format version 
 	// [and move all fields in studiohdr2_t into studiohdr_t and kill studiohdr2_t],
@@ -2340,6 +2397,15 @@ private:
 	friend struct virtualmodel_t;
 };
 
+#ifdef PLATFORM_64BITS
+struct studiohdr_shim64_index
+{
+    mutable void		*virtualModel;
+    mutable void		*animblockModel;
+    void				*pVertexBase;
+    void				*pIndexBase;
+};
+#endif
 
 
 //-----------------------------------------------------------------------------

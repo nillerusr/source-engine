@@ -1147,7 +1147,7 @@ private:
 // Raw thread launching
 //-----------------------------------------------------------------------------
 
-inline unsigned FunctorExecuteThread( void *pParam )
+inline uintp FunctorExecuteThread( void *pParam )
 {
 	CFunctor *pFunctor = (CFunctor *)pParam;
 	(*pFunctor)();

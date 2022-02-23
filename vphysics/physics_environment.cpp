@@ -2041,7 +2041,7 @@ public:
 		if ( !pHash )
 			return m_objectList.InvalidIndex();
 
-		unsigned int hash = (unsigned int)pHash;
+        uintp hash = (uintp)pHash;
 		// mask off the extra bit we added to avoid zeros
 		hash &= 0xFFFF;
 		return (unsigned short)hash;

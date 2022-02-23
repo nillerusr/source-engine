@@ -122,7 +122,7 @@ public:
 		Q_strncpy( szFixedName, pszFilename, sizeof( szFixedName ) );
 		Q_FixSlashes( szFixedName );
 
-		Assert( (int)FS_INVALID_ASYNC_FILE == m_map.InvalidIndex() );
+		Assert( (intp)FS_INVALID_ASYNC_FILE == m_map.InvalidIndex() );
 
 		AUTO_LOCK( m_mutex );
 
@@ -164,7 +164,7 @@ public:
 
 		AUTO_LOCK( m_mutex );
 
-		int iEntry = (CUtlMap<CUtlString, AsyncOpenedFile_t>::IndexType_t)(int)item;
+		int iEntry = (CUtlMap<CUtlString, AsyncOpenedFile_t>::IndexType_t)(intp)item;
 		Assert( m_map.IsValidIndex( iEntry ) );
 		m_map[iEntry]->AddRef();
 		return m_map[iEntry];
@@ -179,7 +179,7 @@ public:
 
 		AUTO_LOCK( m_mutex );
 
-		int iEntry = (CUtlMap<CUtlString, AsyncOpenedFile_t>::IndexType_t)(int)item;
+		int iEntry = (CUtlMap<CUtlString, AsyncOpenedFile_t>::IndexType_t)(intp)item;
 		Assert( m_map.IsValidIndex( iEntry ) );
 		m_map[iEntry]->AddRef();
 	}
@@ -193,7 +193,7 @@ public:
 
 		AUTO_LOCK( m_mutex );
 
-		int iEntry = (CUtlMap<CUtlString, AsyncOpenedFile_t>::IndexType_t)(int)item;
+		int iEntry = (CUtlMap<CUtlString, AsyncOpenedFile_t>::IndexType_t)(intp)item;
 		Assert( m_map.IsValidIndex( iEntry ) );
 		if ( m_map[iEntry]->Release() == 0 )
 		{

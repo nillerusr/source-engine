@@ -1534,7 +1534,7 @@ class GLMContext
 #endif
 
 		FORCEINLINE void SetMaxUsedVertexShaderConstantsHint( uint nMaxConstants );
-		FORCEINLINE DWORD GetCurrentOwnerThreadId() const { return m_nCurOwnerThreadId; }
+		FORCEINLINE uintp GetCurrentOwnerThreadId() const { return m_nCurOwnerThreadId; }
 								
 	protected:
 		friend class GLMgr;				// only GLMgr can make GLMContext objects
@@ -1663,7 +1663,7 @@ class GLMContext
 		// members------------------------------------------
 						
 		// context
-		DWORD							m_nCurOwnerThreadId;
+		uintp							m_nCurOwnerThreadId;
 		uint							m_nThreadOwnershipReleaseCounter;
 
 		bool							m_bUseSamplerObjects;

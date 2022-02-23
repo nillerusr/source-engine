@@ -198,7 +198,7 @@ IPhysicsCollisionSet *CPhysicsInterface::FindCollisionSet( unsigned int id )
 {
 	if ( m_pCollisionSetHash )
 	{
-		int index = (int)m_pCollisionSetHash->find_elem( (void *)id );
+        intp index = (intp)m_pCollisionSetHash->find_elem( (void *)id );
 		if ( index > 0 )
 		{
 			Assert( index <= m_collisionSets.Count() );

@@ -754,10 +754,18 @@ BASEPTR	CBaseEntity::ThinkSet( BASEPTR func, float thinkTime, const char *szCont
 {
 #if !defined( CLIENT_DLL )
 #ifdef _DEBUG
+#ifdef PLATFORM_64BITS
+#ifdef GNUC
+	COMPILE_TIME_ASSERT( sizeof(func) == 16 );
+#else
+	COMPILE_TIME_ASSERT( sizeof(func) == 8 );
+#endif
+#else
 #ifdef GNUC
 	COMPILE_TIME_ASSERT( sizeof(func) == 8 );
 #else
 	COMPILE_TIME_ASSERT( sizeof(func) == 4 );
+#endif
 #endif
 #endif
 #endif

@@ -93,7 +93,7 @@ CAudioSourceMP3::CAudioSourceMP3( CSfxTable *pSfx )
 
 	m_dataStart = 0;
 
-	int file = g_pSndIO->open( pSfx->GetFileName() );
+	intp file = g_pSndIO->open( pSfx->GetFileName() );
 	if ( file != -1 )
 	{
 		m_dataSize = g_pSndIO->size( file );
@@ -239,7 +239,7 @@ void CAudioSourceMP3::GetCacheData( CAudioSourceCachedInfo *info )
 	info->SetSampleRate( m_sampleRate );
 	info->SetDataStart( 0 );
 
-	int file = g_pSndIO->open( m_pSfx->GetFileName() );
+	intp file = g_pSndIO->open( m_pSfx->GetFileName() );
 	if ( !file )
 	{
 		Warning( "Failed to find file for building soundcache [ %s ]\n", m_pSfx->GetFileName() );

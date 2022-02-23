@@ -13,8 +13,8 @@
 #include "vstdlib/vstdlib.h"
 
 // handle to a KeyValues key name symbol
-typedef int HKeySymbol;
-#define INVALID_KEY_SYMBOL (-1)
+typedef intp HKeySymbol;
+#define INVALID_KEY_SYMBOL (HKeySymbol)(-1)
 
 class IBaseFileSystem;
 class KeyValues;

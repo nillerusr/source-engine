@@ -12,6 +12,8 @@
 #pragma once
 #endif
 
+#include "tier0/platform.h"
+
 #if defined( DX10 ) && !defined( DX_TO_GL_ABSTRACTION )
 
 #include <d3d10.h>
@@ -113,13 +115,13 @@ typedef void *HardwareShader_t;
 //-----------------------------------------------------------------------------
 // The vertex and pixel shader type
 //-----------------------------------------------------------------------------
-typedef int VertexShader_t;
-typedef int PixelShader_t;	
+typedef intp VertexShader_t;
+typedef intp PixelShader_t;
 
 //-----------------------------------------------------------------------------
 // Bitpattern for an invalid shader
 //-----------------------------------------------------------------------------
-#define INVALID_SHADER	( 0xFFFFFFFF )
+#define INVALID_SHADER	(-1) // ( 0xFFFFFFFF )
 #define INVALID_HARDWARE_SHADER ( NULL )
 
 #define D3DSAMP_NOTSUPPORTED					D3DSAMP_FORCE_DWORD

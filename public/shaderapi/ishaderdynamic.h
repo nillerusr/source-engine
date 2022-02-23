@@ -19,7 +19,7 @@
 #include "tier0/basetypes.h"
 
 
-typedef int ShaderAPITextureHandle_t;
+typedef intp ShaderAPITextureHandle_t;
 
 //-----------------------------------------------------------------------------
 // forward declarations

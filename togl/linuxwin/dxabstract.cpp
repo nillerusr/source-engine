@@ -1876,7 +1876,7 @@ HRESULT IDirect3DQuery9::GetData(void* pData,DWORD dwSize,DWORD dwGetDataFlags)
 	GL_BATCH_PERF_CALL_TIMER;
 	Assert( m_device->m_nValidMarker == D3D_DEVICE_VALID_MARKER );
 	HRESULT	result = S_FALSE ;
-	DWORD nCurThreadId = ThreadGetCurrentId();
+	uintp nCurThreadId = ThreadGetCurrentId();
 
 	// Make sure calling thread owns the GL context.
 	Assert( m_ctx->m_nCurOwnerThreadId == nCurThreadId );

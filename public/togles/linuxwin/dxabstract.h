@@ -563,7 +563,7 @@ struct TOGL_CLASS IDirect3DDevice9 : public IUnknown
 
 	void TOGLMETHODCALLTYPE AcquireThreadOwnership( );
 	void TOGLMETHODCALLTYPE ReleaseThreadOwnership( );
-	inline DWORD TOGLMETHODCALLTYPE GetCurrentOwnerThreadId() const { return m_ctx->m_nCurOwnerThreadId; }
+	inline uintp TOGLMETHODCALLTYPE GetCurrentOwnerThreadId() const { return m_ctx->m_nCurOwnerThreadId; }
 
 	FORCEINLINE void TOGLMETHODCALLTYPE SetMaxUsedVertexShaderConstantsHint( uint nMaxReg );
 	void TOGLMETHODCALLTYPE SetMaxUsedVertexShaderConstantsHintNonInline( uint nMaxReg );

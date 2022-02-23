@@ -1089,6 +1089,21 @@ public:
 
 	// Ugly code to lookup all functions to make sure they are in the table when set.
 #ifdef _DEBUG
+
+#ifdef PLATFORM_64BITS
+#ifdef GNUC
+#define ENTITYFUNCPTR_SIZE	16
+#else
+#define ENTITYFUNCPTR_SIZE	8
+#endif
+#else
+#ifdef GNUC
+#define ENTITYFUNCPTR_SIZE	8
+#else
+#define ENTITYFUNCPTR_SIZE	4
+#endif
+#endif
+
 	void FunctionCheck( void *pFunction, const char *name );
 
 	ENTITYFUNCPTR TouchSet( ENTITYFUNCPTR func, char *name ) 

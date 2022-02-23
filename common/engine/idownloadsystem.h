@@ -32,7 +32,7 @@ struct RequestContext_t;
 class IDownloadSystem : public IBaseInterface
 {
 public:
-	virtual DWORD CreateDownloadThread( RequestContext_t *pContext ) = 0;
+	virtual uintp CreateDownloadThread( RequestContext_t *pContext ) = 0;
 };
 
 //----------------------------------------------------------------------------------------

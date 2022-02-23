@@ -39,7 +39,7 @@ struct DataCacheItemData_t
 
 //-------------------------------------
 
-#define DC_NO_NEXT_LOCKED ((DataCacheItem_t *)0xffffffff)
+#define DC_NO_NEXT_LOCKED ((DataCacheItem_t *)-1)
 #define DC_MAX_THREADS_FRAMELOCKED 4
 
 struct DataCacheItem_t : DataCacheItemData_t

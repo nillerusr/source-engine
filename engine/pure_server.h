@@ -96,7 +96,7 @@ private:
 		CPureServerWhitelist::CCommand *pBestEntry );
 
 	unsigned short	m_LoadCounter;	// Incremented as we load things so their m_LoadOrder increases.
-	volatile long int m_RefCount;
+	volatile int32 m_RefCount;
 
 	// Commands are applied to files in order.
 	CUtlDict<CCommand*,int>	m_FileCommands;				// file commands

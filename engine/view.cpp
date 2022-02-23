@@ -523,7 +523,7 @@ public:
 		int m_nLeafWaterDataID;
 	};
 	
-	bool EnumerateLeaf( int leaf, int context )
+	bool EnumerateLeaf( int leaf, intp context )
 	{
 		BoxIntersectWaterContext_t *pSearchContext = ( BoxIntersectWaterContext_t * )context;
 		mleaf_t *pLeaf = &host_state.worldmodel->brush.pShared->leafs[leaf];
@@ -541,7 +541,7 @@ public:
 		BoxIntersectWaterContext_t context;
 		context.m_bFoundWaterLeaf = false;
 		context.m_nLeafWaterDataID = leafWaterDataID;
-		g_pToolBSPTree->EnumerateLeavesInBox( mins, maxs, this, ( int )&context );
+		g_pToolBSPTree->EnumerateLeavesInBox( mins, maxs, this, ( intp )&context );
 		return context.m_bFoundWaterLeaf;
 	}
 

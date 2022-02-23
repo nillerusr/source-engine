@@ -5,7 +5,6 @@
 //===========================================================================//
 
 #include <stdlib.h>
-#include <malloc.h>
 #include "materialsystem_global.h"
 #include "string.h"
 #include "shaderapi/ishaderapi.h"
@@ -787,8 +786,8 @@ protected:
 	friend class AsyncReader;
 	AsyncReader* m_pAsyncReader;
 
-	uint m_nAsyncLoadThread;
-	uint m_nAsyncReadThread;
+    ThreadId_t m_nAsyncLoadThread;
+    ThreadId_t m_nAsyncReadThread;
 
 	int m_iSuspendTextureStreaming;
 };
@@ -1131,7 +1130,7 @@ private:
 		m_completedJobs.PushItem( pJob );
 	}
 
-	static unsigned LoaderMain( void* _this )
+	static uintp LoaderMain( void* _this )
 	{
 		ThreadSetDebugName( "Loader" );
 
@@ -1432,7 +1431,7 @@ private:
 			mip_h = Max( 1, mip_h >> 1 );
 		}
 	}
-	static unsigned ReaderMain( void* _this )
+	static uintp ReaderMain( void* _this )
 	{
 		ThreadSetDebugName( "Helper" );
 

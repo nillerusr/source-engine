@@ -24,29 +24,29 @@
 class StdIOReadBinary : public IFileReadBinary
 {
 public:
-	int open( const char *pFileName )
+	intp open( const char *pFileName )
 	{
-		return (int)fopen( pFileName, "rb" );
+		return (intp)fopen( pFileName, "rb" );
 	}
 
-	int read( void *pOutput, int size, int file )
+	int read( void *pOutput, int size, intp file )
 	{
 		FILE *fp = (FILE *)file;
 
 		return fread( pOutput, size, 1, fp );
 	}
 
-	void seek( int file, int pos )
+	void seek( intp file, int pos )
 	{
 		fseek( (FILE *)file, pos, SEEK_SET );
 	}
 
-	unsigned int tell( int file )
+	unsigned int tell( intp file )
 	{
 		return ftell( (FILE *)file );
 	}
 
-	unsigned int size( int file )
+	unsigned int size( intp file )
 	{
 		FILE *fp = (FILE *)file;
 		if ( !fp )
@@ -60,7 +60,7 @@ public:
 		return size;
 	}
 
-	void close( int file )
+	void close( intp file )
 	{
 		FILE *fp = (FILE *)file;
 

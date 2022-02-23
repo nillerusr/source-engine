@@ -53,8 +53,8 @@ public:
 	DELEGATE_TO_OBJECT_0( int,		heapchk, m_pMemAlloc );
 	DELEGATE_TO_OBJECT_0( bool,		IsDebugHeap, m_pMemAlloc );
 	DELEGATE_TO_OBJECT_2V(			GetActualDbgInfo, const char *&, int &, m_pMemAlloc );
-	DELEGATE_TO_OBJECT_5V(			RegisterAllocation, const char *, int, int, int, unsigned, m_pMemAlloc );
-	DELEGATE_TO_OBJECT_5V(			RegisterDeallocation, const char *, int, int, int, unsigned, m_pMemAlloc );
+	DELEGATE_TO_OBJECT_5V(			RegisterAllocation, const char *, int, size_t, size_t, unsigned, m_pMemAlloc );
+	DELEGATE_TO_OBJECT_5V(			RegisterDeallocation, const char *, int, size_t, size_t, unsigned, m_pMemAlloc );
 	DELEGATE_TO_OBJECT_0( int,		GetVersion, m_pMemAlloc );
 	DELEGATE_TO_OBJECT_0V(			CompactHeap, m_pMemAlloc );
 	DELEGATE_TO_OBJECT_1( MemAllocFailHandler_t, SetAllocFailHandler, MemAllocFailHandler_t, m_pMemAlloc );

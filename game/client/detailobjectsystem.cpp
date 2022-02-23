@@ -405,7 +405,7 @@ public:
 	void BeginTranslucentDetailRendering( );
 
 	// Method of ISpatialLeafEnumerator
-	bool EnumerateLeaf( int leaf, int context );
+	bool EnumerateLeaf( int leaf, intp context );
 
 	DetailPropLightstylesLump_t& DetailLighting( int i ) { return m_DetailLighting[i]; }
 	DetailPropSpriteDict_t& DetailSpriteDict( int i ) { return m_DetailSpriteDict[i]; }
@@ -464,7 +464,7 @@ private:
 	int SortSpritesBackToFront( int nLeaf, const Vector &viewOrigin, const Vector &viewForward, SortInfo_t *pSortInfo );
 
 	// For fast detail object insertion
-	IterationRetval_t EnumElement( int userId, int context );
+	IterationRetval_t EnumElement( int userId, intp context );
 
 	CUtlVector<DetailModelDict_t>			m_DetailObjectDict;
 	CUtlVector<CDetailModel>				m_DetailObjects;
@@ -2322,7 +2322,7 @@ void CDetailObjectSystem::RenderFastSprites( const Vector &viewOrigin, const Vec
 					FastSpriteQuadBuildoutBufferNonSIMDView_t const *pquad = pQuadBuffer+nSIMDIdx;
 
 					// voodoo - since everything is in 4s, offset structure pointer by a couple of floats to handle sub-index
-					pquad = (FastSpriteQuadBuildoutBufferNonSIMDView_t const *) ( ( (int) ( pquad ) )+ ( nSubIdx << 2 ) );
+					pquad = (FastSpriteQuadBuildoutBufferNonSIMDView_t const *) ( ( (intp) ( pquad ) )+ ( nSubIdx << 2 ) );
 					uint8 const *pColorsCasted = reinterpret_cast<uint8 const *> ( pquad->m_Alpha );
 
 					uint8 color[4];
@@ -2554,7 +2554,7 @@ void CDetailObjectSystem::RenderFastTranslucentDetailObjectsInLeaf( const Vector
 			FastSpriteQuadBuildoutBufferNonSIMDView_t const *pquad = pQuadBuffer+nSIMDIdx;
 
 			// voodoo - since everything is in 4s, offset structure pointer by a couple of floats to handle sub-index
-			pquad = (FastSpriteQuadBuildoutBufferNonSIMDView_t const *) ( ( (int) ( pquad ) )+ ( nSubIdx << 2 ) );
+			pquad = (FastSpriteQuadBuildoutBufferNonSIMDView_t const *) ( ( (intp) ( pquad ) )+ ( nSubIdx << 2 ) );
 			uint8 const *pColorsCasted = reinterpret_cast<uint8 const *> ( pquad->m_Alpha );
 
 			uint8 color[4];
@@ -2707,7 +2707,7 @@ void CDetailObjectSystem::RenderTranslucentDetailObjectsInLeaf( const Vector &vi
 //-----------------------------------------------------------------------------
 // Gets called each view
 //-----------------------------------------------------------------------------
-bool CDetailObjectSystem::EnumerateLeaf( int leaf, int context )
+bool CDetailObjectSystem::EnumerateLeaf( int leaf, intp context )
 {
 	VPROF_BUDGET( "CDetailObjectSystem::EnumerateLeaf", VPROF_BUDGETGROUP_DETAILPROP_RENDERING );
 	Vector v;
@@ -2806,6 +2806,6 @@ void CDetailObjectSystem::BuildDetailObjectRenderLists( const Vector &vViewOrigi
 
 	ISpatialQuery* pQuery = engine->GetBSPTreeQuery();
 	pQuery->EnumerateLeavesInSphere( CurrentViewOrigin(), 
-									 cl_detaildist.GetFloat(), this, (int)&ctx );
+									 cl_detaildist.GetFloat(), this, (intp)&ctx );
 }
 

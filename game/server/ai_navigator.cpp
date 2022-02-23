@@ -1231,7 +1231,7 @@ AI_PathNode_t CAI_Navigator::GetNearestNode()
 
 Vector CAI_Navigator::GetNodePos( AI_PathNode_t node )
 {
-	return GetNetwork()->GetNode((int)node)->GetPosition(GetHullType());
+	return GetNetwork()->GetNode((intp)node)->GetPosition(GetHullType());
 }
 
 //-----------------------------------------------------------------------------

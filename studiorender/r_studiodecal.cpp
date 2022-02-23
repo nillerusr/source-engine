@@ -137,7 +137,7 @@ void CStudioRender::DestroyDecalList( StudioDecalHandle_t hDecal )
 
 	RemoveDecalListFromLRU( hDecal );
 
-	int h = (int)hDecal;
+	intp h = (intp)hDecal;
 	// Clean up 
 	for (int i = 0; i < m_DecalList[h].m_nLods; i++ )
 	{
@@ -1130,7 +1130,7 @@ void CStudioRender::AddDecal( StudioDecalHandle_t hDecal, const StudioRenderCont
 		return;
 
 	// For each lod, build the decal list
-	int h = (int)hDecal;
+    intp h = (intp)hDecal;
 	DecalModelList_t& list = m_DecalList[h];
 
 	if ( list.m_pHardwareData->m_NumStudioMeshes == 0 )
@@ -1215,7 +1215,7 @@ void CStudioRender::AddDecal( StudioDecalHandle_t hDecal, const StudioRenderCont
 		{
 			DecalId_t nRetireID = m_DecalLRU[ m_DecalLRU.Head() ].m_nDecalId;
 			StudioDecalHandle_t hRetire = m_DecalLRU[ m_DecalLRU.Head() ].m_hDecalHandle;
-			DecalModelList_t &modelList = m_DecalList[(int)hRetire];
+			DecalModelList_t &modelList = m_DecalList[(intp)hRetire];
 			RetireDecal( modelList, nRetireID, modelList.m_pHardwareData->m_RootLOD, modelList.m_pHardwareData->m_NumLODs );
 		}
 	}
@@ -1229,7 +1229,7 @@ void CStudioRender::AddDecal( StudioDecalHandle_t hDecal, const StudioRenderCont
 	{
 		DecalId_t nRetireID = m_DecalLRU[ m_DecalLRU.Head() ].m_nDecalId;
 		StudioDecalHandle_t hRetire = m_DecalLRU[ m_DecalLRU.Head() ].m_hDecalHandle;
-		DecalModelList_t &modelList = m_DecalList[(int)hRetire];
+		DecalModelList_t &modelList = m_DecalList[(intp)hRetire];
 		RetireDecal( modelList, nRetireID, modelList.m_pHardwareData->m_RootLOD, modelList.m_pHardwareData->m_NumLODs );
 	}
 
@@ -1238,7 +1238,7 @@ void CStudioRender::AddDecal( StudioDecalHandle_t hDecal, const StudioRenderCont
 		DecalHistory_t *pDecalHistory = &pHistoryList->Element( pHistoryList->Head() );
 		DecalId_t nRetireID = pDecalHistory->m_nId;
 		StudioDecalHandle_t hRetire = hDecal;
-		RetireDecal( m_DecalList[(int)hRetire], nRetireID, nRootLOD, nFinalLOD );
+		RetireDecal( m_DecalList[(intp)hRetire], nRetireID, nRootLOD, nFinalLOD );
 	}
 
 	// Search all LODs for an overflow condition and retire those also
@@ -1902,7 +1902,7 @@ void CStudioRender::DrawDecal( const DrawModelInfo_t &drawInfo, int lod, int bod
 	// FIXME: Body stuff isn't hooked in at all for decals
 
 	// Get the decal list for this lod
-	const DecalModelList_t& list = m_DecalList[(int)handle];
+	const DecalModelList_t& list = m_DecalList[(intp)handle];
 	m_pStudioHdr = drawInfo.m_pStudioHdr;
 
 	// Add this fix after I fix the other problem.
@@ -1975,7 +1975,7 @@ void CStudioRender::DrawStaticPropDecals( const DrawModelInfo_t &drawInfo, const
 	pRenderContext->MatrixMode( MATERIAL_MODEL );
 	pRenderContext->LoadMatrix( modelToWorld );
 
-	const DecalModelList_t& list = m_DecalList[(int)handle];
+	const DecalModelList_t& list = m_DecalList[(intp)handle];
 	// Gotta do this for all LODs
 	// Draw each set of decals using a particular material
 	unsigned short mat = list.m_pLod[drawInfo.m_Lod].m_FirstMaterial;
