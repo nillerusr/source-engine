@@ -87,7 +87,7 @@ int64 CReliableTimer::GetPerformanceCountNow()
 	uint64 ulNow;
 	SYS_TIMEBASE_GET( ulNow );
 	return ulNow;
-#elif defined( __arm__ ) && defined (POSIX)
+#elif (defined( __arm__ ) || defined( __arm64__ )) && defined (POSIX)
 	struct timespec ts;
 	clock_gettime(CLOCK_REALTIME, &ts);
 	return ts.tv_sec * 1000000000ULL + ts.tv_nsec;

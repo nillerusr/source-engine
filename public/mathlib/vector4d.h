@@ -141,8 +141,8 @@ public:
 	inline void Set( vec_t X, vec_t Y, vec_t Z, vec_t W );
 	inline void InitZero( void );
 
-#ifndef __arm__
-	inline __m128 &AsM128() { return *(__m128*)&x; }
+#if !defined(__arm__) && !defined(__arm64__)
+    inline __m128 &AsM128() { return *(__m128*)&x; }
 	inline const __m128 &AsM128() const { return *(const __m128*)&x; } 
 #endif
 
@@ -616,7 +616,7 @@ inline void Vector4DAligned::Set( vec_t X, vec_t Y, vec_t Z, vec_t W )
 
 inline void Vector4DAligned::InitZero( void )
 {
-#if defined (__arm__)
+#if defined (__arm__) || defined(__arm64__)
 	x = y = z = w = 0;
 #elif !defined( _X360 )
 	this->AsM128() = _mm_set1_ps( 0.0f );
@@ -643,7 +643,7 @@ inline void Vector4DWeightMAD( vec_t w, Vector4DAligned const& vInA, Vector4DAli
 {
 	Assert( vInA.IsValid() && vInB.IsValid() && IsFinite(w) );
 
-#if !defined( _X360 ) || defined (__arm__)
+#if !defined( _X360 ) || defined (__arm__) || defined(__arm64__)
 	vOutA.x += vInA.x * w;
 	vOutA.y += vInA.y * w;
 	vOutA.z += vInA.z * w;
@@ -664,7 +664,7 @@ inline void Vector4DWeightMAD( vec_t w, Vector4DAligned const& vInA, Vector4DAli
 #endif
 }
 
-#ifndef __arm__
+#if !defined(__arm__) && !defined(__arm64__)
 inline void Vector4DWeightMADSSE( vec_t w, Vector4DAligned const& vInA, Vector4DAligned& vOutA, Vector4DAligned const& vInB, Vector4DAligned& vOutB )
 {
 	Assert( vInA.IsValid() && vInB.IsValid() && IsFinite(w) );
