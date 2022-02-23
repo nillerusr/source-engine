@@ -10,7 +10,11 @@
 
 #if !defined(STEAM) && !defined(NO_MALLOC_OVERRIDE)
 
+#ifdef OSX
+#include <malloc/malloc.h>
+#else
 #include <malloc.h>
+#endif
 #include <string.h>
 #include "tier0/dbg.h"
 #include "tier0/memalloc.h"
@@ -269,7 +273,7 @@ struct DbgMemHeader_t
 	: CrtDbgMemHeader_t
 #endif
 {
-	unsigned nLogicalSize;
+	size_t nLogicalSize;
 	byte reserved[12];	// MS allocator always returns mem aligned on 16 bytes, which some of our code depends on
 };
 
@@ -634,11 +638,11 @@ private:
 	const char *FindOrCreateFilename( const char *pFileName );
 
 	// Updates stats
-	void RegisterAllocation( const char *pFileName, int nLine, int nLogicalSize, int nActualSize, unsigned nTime );
-	void RegisterDeallocation( const char *pFileName, int nLine, int nLogicalSize, int nActualSize, unsigned nTime );
+	void RegisterAllocation( const char *pFileName, int nLine, size_t nLogicalSize, size_t nActualSize, unsigned nTime );
+	void RegisterDeallocation( const char *pFileName, int nLine, size_t nLogicalSize, size_t nActualSize, unsigned nTime );
 
-	void RegisterAllocation( MemInfo_t &info, int nLogicalSize, int nActualSize, unsigned nTime );
-	void RegisterDeallocation( MemInfo_t &info, int nLogicalSize, int nActualSize, unsigned nTime );
+	void RegisterAllocation( MemInfo_t &info, size_t nLogicalSize, size_t nActualSize, unsigned nTime );
+	void RegisterDeallocation( MemInfo_t &info, size_t nLogicalSize, size_t nActualSize, unsigned nTime );
 
 	// Gets the allocation file name
 	const char *GetAllocatonFileName( void *pMem );
@@ -1056,21 +1060,21 @@ CDbgMemAlloc::MemInfo_t &CDbgMemAlloc::FindOrCreateEntry( const char *pFileName,
 //-----------------------------------------------------------------------------
 // Updates stats
 //-----------------------------------------------------------------------------
-void CDbgMemAlloc::RegisterAllocation( const char *pFileName, int nLine, int nLogicalSize, int nActualSize, unsigned nTime )
+void CDbgMemAlloc::RegisterAllocation( const char *pFileName, int nLine, size_t nLogicalSize, size_t nActualSize, unsigned nTime )
 {
 	HEAP_LOCK();
 	RegisterAllocation( m_GlobalInfo, nLogicalSize, nActualSize, nTime );
 	RegisterAllocation( FindOrCreateEntry( pFileName, nLine ), nLogicalSize, nActualSize, nTime );
 }
 
-void CDbgMemAlloc::RegisterDeallocation( const char *pFileName, int nLine, int nLogicalSize, int nActualSize, unsigned nTime )
+void CDbgMemAlloc::RegisterDeallocation( const char *pFileName, int nLine, size_t nLogicalSize, size_t nActualSize, unsigned nTime )
 {
 	HEAP_LOCK();
 	RegisterDeallocation( m_GlobalInfo, nLogicalSize, nActualSize, nTime );
 	RegisterDeallocation( FindOrCreateEntry( pFileName, nLine ), nLogicalSize, nActualSize, nTime );
 }
 
-void CDbgMemAlloc::RegisterAllocation( MemInfo_t &info, int nLogicalSize, int nActualSize, unsigned nTime )
+void CDbgMemAlloc::RegisterAllocation( MemInfo_t &info, size_t nLogicalSize, size_t nActualSize, unsigned nTime )
 {
 	++info.m_nCurrentCount;
 	++info.m_nTotalCount;
@@ -1107,7 +1111,7 @@ void CDbgMemAlloc::RegisterAllocation( MemInfo_t &info, int nLogicalSize, int nA
 	info.m_nTime += nTime;
 }
 
-void CDbgMemAlloc::RegisterDeallocation( MemInfo_t &info, int nLogicalSize, int nActualSize, unsigned nTime )
+void CDbgMemAlloc::RegisterDeallocation( MemInfo_t &info, size_t nLogicalSize, size_t nActualSize, unsigned nTime )
 {
 	// Check for decrementing these counters below zero. The checks
 	// must be done here because these unsigned counters will wrap-around and
@@ -1117,7 +1121,7 @@ void CDbgMemAlloc::RegisterDeallocation( MemInfo_t &info, int nLogicalSize, int 
 	// It is technically legal for code to request allocations of zero bytes, and there are a number of places in our code
 	// that do. So only assert that nLogicalSize >= 0. http://stackoverflow.com/questions/1087042/c-new-int0-will-it-allocate-memory
 	Assert( nLogicalSize >= 0 );
-	Assert( info.m_nCurrentSize >= (size_t)nLogicalSize );
+	Assert( info.m_nCurrentSize >= nLogicalSize );
 	--info.m_nCurrentCount;
 	info.m_nCurrentSize -= nLogicalSize;
 
@@ -1250,8 +1254,8 @@ void  CDbgMemAlloc::Free( void *pMem, const char * /*pFileName*/, int nLine )
 		return;
 	}
 
-	int nOldLogicalSize = InternalLogicalSize( pMem );
-	int nOldSize = InternalMSize( pMem );
+	size_t nOldLogicalSize = InternalLogicalSize( pMem );
+    size_t nOldSize = InternalMSize( pMem );
 	const char *pOldFileName = GetAllocatonFileName( pMem );
 	int oldLine = GetAllocatonLineNumber( pMem );
 
@@ -1832,6 +1836,10 @@ static inline void unprotect_malloc_zone( malloc_zone_t *malloc_zone )
 	// The version check may not be necessary, but we know it was RW before that.
 	if ( malloc_zone->version >= 8 )
 	{
+#ifdef __arm64__
+        // MoeMod : this is required for Apple Silicon
+        pthread_jit_write_protect_np(false);
+#endif
 		vm_protect( mach_task_self(), (uintptr_t)malloc_zone, sizeof( malloc_zone_t ), 0, VM_PROT_READ | VM_PROT_WRITE );
 	}
 }
@@ -1841,6 +1849,10 @@ static inline void protect_malloc_zone( malloc_zone_t *malloc_zone )
 	if ( malloc_zone->version >= 8 )
 	{
 		vm_protect( mach_task_self(), (uintptr_t)malloc_zone, sizeof( malloc_zone_t ), 0, VM_PROT_READ );
+#ifdef __arm64__
+        // MoeMod : this is required for Apple Silicon
+        pthread_jit_write_protect_np(true);
+#endif
 	}
 }
 

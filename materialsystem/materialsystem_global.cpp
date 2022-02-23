@@ -7,7 +7,6 @@
 #include "materialsystem_global.h"
 #include "shaderapi/ishaderapi.h"
 #include "shadersystem.h"
-#include <malloc.h>
 #include "filesystem.h"
 
 // memdbgon must be the last include file in a .cpp file!!!

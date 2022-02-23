@@ -42,7 +42,6 @@ mat_fullbright 1 doesn't work properly on alpha materials in testroom_standards
 #include "colorformatdx8.h"
 #include "texturedx8.h"
 #include "textureheap.h"
-#include <malloc.h>
 #include "interface.h"
 #include "utlrbtree.h"
 #include "utlsymbol.h"

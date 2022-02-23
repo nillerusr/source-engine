@@ -10,7 +10,6 @@
 #include "bitmap/imageformat.h"
 #include "basetypes.h"
 #include "tier0/dbg.h"
-#include <malloc.h>
 #include <memory.h>
 #include "mathlib/mathlib.h"
 #include "mathlib/vector.h"

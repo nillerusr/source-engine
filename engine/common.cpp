@@ -16,7 +16,11 @@
 #include <characterset.h>
 #include <bitbuf.h>
 #include "common.h"
+#ifdef OSX
+#include <malloc/malloc.h>
+#else
 #include <malloc.h>
+#endif
 #include "traceinit.h"
 #include <filesystem.h>
 #include "filesystem_engine.h"

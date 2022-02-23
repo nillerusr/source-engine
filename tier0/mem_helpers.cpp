@@ -7,7 +7,11 @@
 #include "pch_tier0.h"
 #include "mem_helpers.h"
 #include <string.h>
+#ifdef OSX
+#include <malloc/malloc.h>
+#else
 #include <malloc.h>
+#endif
 
 bool g_bInitMemory = true;
 
