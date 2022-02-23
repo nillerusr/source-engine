@@ -27,14 +27,21 @@ public:
 	BuyPresetListBox( vgui::Panel *parent, char const *panelName );
 	~BuyPresetListBox();
 
-	virtual int AddItem( vgui::Panel *panel, void * userData );	///< Adds an item to the end of the listbox.  UserData is assumed to be a pointer that can be freed by the listbox if non-NULL.
+    class IBuyPresetListBoxUserData
+    {
+    protected:
+        friend BuyPresetListBox;
+        virtual ~IBuyPresetListBoxUserData() {};
+    };
+
+	virtual int AddItem( vgui::Panel *panel, IBuyPresetListBoxUserData *userData );	///< Adds an item to the end of the listbox.  UserData is assumed to be a pointer that will be deleted by the listbox if non-NULL.
 	virtual int	GetItemCount( void ) const;						///< Returns the number of items in the listbox
 	void SwapItems( int index1, int index2 );					///< Exchanges two items in the listbox
 	void MakeItemVisible( int index );							///< Try to ensure that the given index is visible
 
 	vgui::Panel * GetItemPanel( int index ) const;				///< Returns the panel in the given index, or NULL
-	void * GetItemUserData( int index );						///< Returns the userData in the given index, or NULL
-	void SetItemUserData( int index, void * userData );			///< Sets the userData in the given index
+    IBuyPresetListBoxUserData * GetItemUserData( int index );						///< Returns the userData in the given index, or NULL
+	void SetItemUserData( int index, IBuyPresetListBoxUserData * userData );			///< Sets the userData in the given index
 
 	virtual void RemoveItem( int index );						///< Removes an item from the table (changing the indices of all following items), deleting the panel and userData
 	virtual void DeleteAllItems();								///< clears the listbox, deleting all panels and userData
@@ -60,7 +67,7 @@ private:
 	typedef struct dataitem_s
 	{
 		vgui::Panel *panel;
-		void * userData;
+        IBuyPresetListBoxUserData * userData;
 	} DataItem;
 	CUtlVector< DataItem >	m_items;
 

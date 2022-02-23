@@ -94,6 +94,7 @@ public:
 	virtual const char *GetResourceName(void) { return m_pResourceName; }
 
 	virtual void PanelAdded(Panel* panel);
+	virtual void PanelRemoved(Panel* panel);
 
 	virtual bool MousePressed(MouseCode code,Panel* panel);
 	virtual bool MouseReleased(MouseCode code,Panel* panel);
