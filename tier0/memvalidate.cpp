@@ -102,8 +102,8 @@ private:
 	void GetActualDbgInfo( const char *&pFileName, int &nLine );
 
 	// Updates stats
-	void RegisterAllocation( const char *pFileName, int nLine, int nLogicalSize, int nActualSize, unsigned nTime );
-	void RegisterDeallocation( const char *pFileName, int nLine, int nLogicalSize, int nActualSize, unsigned nTime );
+	void RegisterAllocation( const char *pFileName, int nLine, size_t nLogicalSize, size_t nActualSize, unsigned nTime );
+	void RegisterDeallocation( const char *pFileName, int nLine, size_t nLogicalSize, size_t nActualSize, unsigned nTime );
 
 	HeapSuffix_t *Suffix( HeapPrefix_t *pPrefix );
 	void *AllocationStart( HeapPrefix_t *pBase );
@@ -460,12 +460,12 @@ void CValidateAlloc::GetActualDbgInfo( const char *&pFileName, int &nLine )
 }
 
 // Updates stats
-void CValidateAlloc::RegisterAllocation( const char *pFileName, int nLine, int nLogicalSize, int nActualSize, unsigned nTime )
+void CValidateAlloc::RegisterAllocation( const char *pFileName, int nLine, size_t nLogicalSize, size_t nActualSize, unsigned nTime )
 {
 	g_pActualAlloc->RegisterAllocation( pFileName, nLine, nLogicalSize, nActualSize, nTime );
 }
 
-void CValidateAlloc::RegisterDeallocation( const char *pFileName, int nLine, int nLogicalSize, int nActualSize, unsigned nTime )
+void CValidateAlloc::RegisterDeallocation( const char *pFileName, int nLine, size_t nLogicalSize, size_t nActualSize, unsigned nTime )
 {
 	g_pActualAlloc->RegisterDeallocation( pFileName, nLine, nLogicalSize, nActualSize, nTime );
 }

@@ -17,7 +17,11 @@
 #endif
 
 #include <assert.h>
+#ifdef OSX
+#include <malloc/malloc.h>
+#else
 #include <malloc.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
@@ -319,7 +323,7 @@ static SpewRetval_t _SpewMessage( SpewType_t spewType, const char *pGroupName, i
 
 	g_pSpewInfo = &spewInfo;
 	ret = s_SpewOutputFunc( spewType, pTempBuffer );
-	g_pSpewInfo = (int)NULL;
+	g_pSpewInfo = NULL;
 
 	switch (ret)
 	{

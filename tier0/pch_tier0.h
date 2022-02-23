@@ -30,7 +30,11 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
+#ifdef OSX
+#include <malloc/malloc.h>
+#else
 #include <malloc.h>
+#endif
 #include <memory.h>
 #include <ctype.h>
 #include <limits.h>

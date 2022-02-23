@@ -9,7 +9,6 @@
 
 //#include <stdafx.h>
 #include <stdlib.h>
-#include <malloc.h>
 #include "builddisp.h"
 #include "collisionutils.h"
 #include "tier1/strtools.h"

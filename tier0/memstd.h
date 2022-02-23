@@ -18,7 +18,11 @@
 #endif
 #endif
 
+#ifdef OSX
+#include <malloc/malloc.h>
+#else
 #include <malloc.h>
+#endif
 #include <algorithm>
 #include "tier0/dbg.h"
 #include "tier0/memalloc.h"
@@ -253,8 +257,8 @@ public:
 	virtual bool IsDebugHeap() { return false; }
 
 	virtual void GetActualDbgInfo( const char *&pFileName, int &nLine ) {}
-	virtual void RegisterAllocation( const char *pFileName, int nLine, int nLogicalSize, int nActualSize, unsigned nTime ) {}
-	virtual void RegisterDeallocation( const char *pFileName, int nLine, int nLogicalSize, int nActualSize, unsigned nTime ) {}
+	virtual void RegisterAllocation( const char *pFileName, int nLine, size_t nLogicalSize, size_t nActualSize, unsigned nTime ) {}
+	virtual void RegisterDeallocation( const char *pFileName, int nLine, size_t nLogicalSize, size_t nActualSize, unsigned nTime ) {}
 
 	virtual int GetVersion() { return MEMALLOC_VERSION; }
 

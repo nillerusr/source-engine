@@ -6,7 +6,11 @@
 
 #include "mempool.h"
 #include <stdio.h>
+#ifdef OSX
+#include <malloc/malloc.h>
+#else
 #include <malloc.h>
+#endif
 #include <memory.h>
 #include "tier0/dbg.h"
 #include <ctype.h>

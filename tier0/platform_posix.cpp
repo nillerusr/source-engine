@@ -679,13 +679,17 @@ PLATFORM_INTERFACE void Plat_SetWatchdogHandlerFunction( Plat_WatchDogHandlerFun
 // memory logging this functionality is portable code, except for the way in which it hooks
 // malloc/free. glibc contains the ability for the app to install hooks into malloc/free.
 
+#ifdef OSX
+#include <malloc/malloc.h>
+#else
 #include <malloc.h>
+#endif
 #include <tier1/utlintrusivelist.h>
 #include <execinfo.h>
 #include <tier1/utlvector.h>
      
 #define MEMALLOC_HASHSIZE 8193
-typedef uint32 ptrint_t;
+typedef uintp ptrint_t;
 
 
 
@@ -993,7 +997,7 @@ static inline bool SortLessFunc( CLinuxMallocContext * const &left, CLinuxMalloc
 void DumpMemoryLog( int nThresh )
 {
 	AUTO_LOCK( s_MemoryMutex );
-	EndWatchdogTimer();
+    Plat_EndWatchdogTimer();
 	RemoveHooks();
 	std::vector<CLinuxMallocContext *> memList;
 	
@@ -1028,7 +1032,7 @@ void DumpMemoryLog( int nThresh )
 void DumpChangedMemory( int nThresh )
 {
 	AUTO_LOCK( s_MemoryMutex );
-	EndWatchdogTimer();
+    Plat_EndWatchdogTimer();
 	RemoveHooks();
 	std::vector<CLinuxMallocContext *> memList;
 	
