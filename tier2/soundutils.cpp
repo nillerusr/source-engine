@@ -40,11 +40,11 @@ public:
 class CFSIOWriteBinary : public IFileWriteBinary
 {
 public:
-	virtual int create( const char *pFileName );
-	virtual int write( void *pData, int size, int file );
-	virtual void close( int file );
-	virtual void seek( int file, int pos );
-	virtual unsigned int tell( int file );
+	virtual intp create( const char *pFileName );
+	virtual int write( void *pData, int size, intp file );
+	virtual void close( intp file );
+	virtual void seek( intp file, int pos );
+	virtual unsigned int tell( intp file );
 };
 
 
@@ -110,28 +110,28 @@ void CFSIOReadBinary::close( intp file )
 //-----------------------------------------------------------------------------
 // RIFF writer that use the file system
 //-----------------------------------------------------------------------------
-int CFSIOWriteBinary::create( const char *pFileName )
+intp CFSIOWriteBinary::create( const char *pFileName )
 {
 	g_pFullFileSystem->SetFileWritable( pFileName, true );
 	return (intp)g_pFullFileSystem->Open( pFileName, "wb" );
 }
 
-int CFSIOWriteBinary::write( void *pData, int size, int file )
+int CFSIOWriteBinary::write( void *pData, int size, intp file )
 {
 	return g_pFullFileSystem->Write( pData, size, (FileHandle_t)file );
 }
 
-void CFSIOWriteBinary::close( int file )
+void CFSIOWriteBinary::close( intp file )
 {
 	g_pFullFileSystem->Close( (FileHandle_t)file );
 }
 
-void CFSIOWriteBinary::seek( int file, int pos )
+void CFSIOWriteBinary::seek( intp file, int pos )
 {
 	g_pFullFileSystem->Seek( (FileHandle_t)file, pos, FILESYSTEM_SEEK_HEAD );
 }
 
-unsigned int CFSIOWriteBinary::tell( int file )
+unsigned int CFSIOWriteBinary::tell( intp file )
 {
 	return g_pFullFileSystem->Tell( (FileHandle_t)file );
 }
