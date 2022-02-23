@@ -4243,7 +4243,9 @@ CGLMEditableTextItem::~CGLMEditableTextItem( )
 	
 	if (m_mirror)
 	{
-		free( m_mirror );
+		//free( m_mirror );
+        // MoeMod : should be delete here
+        delete m_mirror;
 	}
 }
 

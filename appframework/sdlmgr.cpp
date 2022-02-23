@@ -19,7 +19,9 @@
 
 #include "tier1/utllinkedlist.h"
 #include "tier1/convar.h"
+#ifdef TOGLES
 #include <EGL/egl.h>
+#endif
 
 // NOTE: This has to be the last file included! (turned off below, since this is included like a header)
 #include "tier0/memdbgon.h"
