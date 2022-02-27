@@ -91,11 +91,12 @@
 
 
 // Use this to extern send and receive datatables, and reference them.
-#define EXTERN_SEND_TABLE(tableName)	namespace tableName {extern SendTable g_SendTable;}
-#define EXTERN_RECV_TABLE(tableName)	namespace tableName {extern RecvTable g_RecvTable;}
+#define EXTERN_SEND_TABLE(tableName)	namespace tableName {extern SendTable g_SendTable; extern int g_SendTableInit;}
+#define EXTERN_RECV_TABLE(tableName)	namespace tableName {extern RecvTable g_RecvTable; extern int g_RecvTableInit;}
 
-#define REFERENCE_SEND_TABLE(tableName)	tableName::g_SendTable
-#define REFERENCE_RECV_TABLE(tableName)	tableName::g_RecvTable
+// MoeMod: ODR Use it to prevent being dropped by linker
+#define REFERENCE_SEND_TABLE(tableName)	(tableName::g_SendTableInit + &tableName::g_SendTableInit, tableName::g_SendTable)
+#define REFERENCE_RECV_TABLE(tableName)	(tableName::g_RecvTableInit + &tableName::g_RecvTableInit, tableName::g_RecvTable)
 
 
 class SendProp;
