@@ -264,7 +264,7 @@ DmAttributeType_t CDmSerializerKeyValues::DetermineAttributeType( KeyValues *pKe
 			if ( sscanf( pKeyValues->GetString(), "%f %f", &f1, &f2 ) == 2 )
 				return AT_VECTOR2;
 
-			int i = pKeyValues->GetInt( NULL, INT_MAX );
+			int i = pKeyValues->GetInt( nullptr, INT_MAX );
 			if ( ( sscanf( pKeyValues->GetString(), "%d", &i ) == 1 ) && 
 				 ( !strchr( pKeyValues->GetString(), '.' ) ) )
 				return AT_INT;
