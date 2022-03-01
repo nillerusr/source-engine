@@ -18,12 +18,6 @@
 #include "hl2mp_gamerules.h"
 #endif
 
-#ifdef TF_DLL
-#include "tf_player.h"
-#include "entity_healthkit.h"
-#include "particle_parse.h"
-#endif
-
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -369,17 +363,6 @@ bool UTIL_ItemCanBeTouchedByPlayer( CBaseEntity *pItem, CBasePlayer *pPlayer )
 		vecStartPos = pItem->CollisionProp()->WorldSpaceCenter();
 	}
 
-#ifdef TF_DLL
-	//Plague powerup carrier collects health kits in a radius so we want to skip the occlusion trace
-	CTFPlayer *pTFPlayer = dynamic_cast<CTFPlayer*>( pPlayer );
-	if ( pTFPlayer && ( pTFPlayer->m_Shared.GetCarryingRuneType() == RUNE_PLAGUE ) )
-	{
-		CHealthKit *pHealthKit = dynamic_cast<CHealthKit*>( pItem );
-		if ( pHealthKit )
-			return true;
-	}
-#endif
-
 	Vector vecEndPos = pPlayer->EyePosition();
 
 	// FIXME: This is the simple first try solution towards the problem.  We need to take edges and shape more into account
@@ -450,18 +433,6 @@ void CItem::ItemTouch( CBaseEntity *pOther )
 	if ( MyTouch( pPlayer ) )
 	{
 		m_OnPlayerTouch.FireOutput(pOther, this);
-
-#if TF_DLL
-		CHealthKit *pHealthKit = dynamic_cast<CHealthKit*>( this );
-		if ( pHealthKit )
-		{
-			CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
-			if ( pTFPlayer && ( pTFPlayer->m_Shared.GetCarryingRuneType() == RUNE_PLAGUE ) )
-			{
-				DispatchParticleEffect( "plague_healthkit_pickup", GetAbsOrigin(), GetAbsAngles() );
-			}
-		}
-#endif
 
 		SetTouch( NULL );
 		SetThink( NULL );

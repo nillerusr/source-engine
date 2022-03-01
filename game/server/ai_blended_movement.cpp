@@ -1864,7 +1864,7 @@ float ChangeDistance( float flInterval, float flGoalDistance, float flGoalVeloci
 		// I need to speed up
 		flNewVelocity = flCurVelocity + flGoalAccel * flInterval;
 		if (flNewVelocity > flGoalVelocity)
-			flNewVelocity = flGoalVelocity;
+			flGoalVelocity = flGoalVelocity;
 	}
 	else if (flNewVelocity < flIdealVelocity)
 	{

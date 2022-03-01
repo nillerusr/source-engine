@@ -61,8 +61,6 @@ void CTakeDamageInfo::Init( CBaseEntity *pInflictor, CBaseEntity *pAttacker, CBa
 	m_iPlayerPenetrationCount = 0;
 	m_flDamageBonus = 0.f;
 	m_bForceFriendlyFire = false;
-	m_flDamageForForce = 0.f;
-	m_eCritType = CRIT_NONE;
 }
 
 CTakeDamageInfo::CTakeDamageInfo()
@@ -246,7 +244,6 @@ void AddMultiDamage( const CTakeDamageInfo &info, CBaseEntity *pEntity )
 	g_MultiDamage.SetReportedPosition( info.GetReportedPosition() );
 	g_MultiDamage.SetMaxDamage( MAX( g_MultiDamage.GetMaxDamage(), info.GetDamage() ) );
 	g_MultiDamage.SetAmmoType( info.GetAmmoType() );
-	g_MultiDamage.SetCritType( info.GetCritType() );
 
 	if ( g_MultiDamage.GetPlayerPenetrationCount() == 0 )
 	{
@@ -452,19 +449,6 @@ void CTakeDamageInfo::DebugGetDamageTypeString(unsigned int damageType, char *ou
 	}
 }
 
-void CTakeDamageInfo::SetCritType( ECritType eType )
-{
-	if ( eType == CRIT_NONE )
-	{
-		// always let CRIT_NONE override the current setting
-		m_eCritType = eType;
-	}
-	else
-	{
-		// don't let CRIT_MINI override CRIT_FULL
-		m_eCritType = ( eType > m_eCritType ) ? eType : m_eCritType;
-	}
-}
 
 /*
 // instant damage

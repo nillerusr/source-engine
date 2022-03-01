@@ -70,7 +70,7 @@ itemFlags_t g_ItemFlags[8] =
 	{ "ITEM_FLAG_NOITEMPICKUP",		ITEM_FLAG_NOITEMPICKUP }
 };
 #else
-extern itemFlags_t g_ItemFlags[8];
+extern itemFlags_t g_ItemFlags[7];
 #endif
 
 
@@ -78,7 +78,7 @@ static CUtlDict< FileWeaponInfo_t*, unsigned short > m_WeaponInfoDatabase;
 
 #ifdef _DEBUG
 // used to track whether or not two weapons have been mistakenly assigned the wrong slot
-bool g_bUsedWeaponSlots[MAX_WEAPON_SLOTS][MAX_WEAPON_POSITIONS] = { { false } };
+bool g_bUsedWeaponSlots[MAX_WEAPON_SLOTS][MAX_WEAPON_POSITIONS] = { 0 };
 
 #endif
 
@@ -160,13 +160,13 @@ void ResetFileWeaponInfoDatabase( void )
 }
 #endif
 
-void PrecacheFileWeaponInfoDatabase( IFileSystem *pFilesystem, const unsigned char *pICEKey )
+void PrecacheFileWeaponInfoDatabase( IFileSystem *filesystem, const unsigned char *pICEKey )
 {
 	if ( m_WeaponInfoDatabase.Count() )
 		return;
 
 	KeyValues *manifest = new KeyValues( "weaponscripts" );
-	if ( manifest->LoadFromFile( pFilesystem, "scripts/weapon_manifest.txt", "GAME" ) )
+	if ( manifest->LoadFromFile( filesystem, "scripts/weapon_manifest.txt", "GAME" ) )
 	{
 		for ( KeyValues *sub = manifest->GetFirstSubKey(); sub != NULL ; sub = sub->GetNextKey() )
 		{
@@ -176,12 +176,12 @@ void PrecacheFileWeaponInfoDatabase( IFileSystem *pFilesystem, const unsigned ch
 				Q_FileBase( sub->GetString(), fileBase, sizeof(fileBase) );
 				WEAPON_FILE_INFO_HANDLE tmp;
 #ifdef CLIENT_DLL
-				if ( ReadWeaponDataFromFileForSlot( pFilesystem, fileBase, &tmp, pICEKey ) )
+				if ( ReadWeaponDataFromFileForSlot( filesystem, fileBase, &tmp, pICEKey ) )
 				{
 					gWR.LoadWeaponSprites( tmp );
 				}
 #else
-				ReadWeaponDataFromFileForSlot( pFilesystem, fileBase, &tmp, pICEKey );
+				ReadWeaponDataFromFileForSlot( filesystem, fileBase, &tmp, pICEKey );
 #endif
 			}
 			else
@@ -193,7 +193,7 @@ void PrecacheFileWeaponInfoDatabase( IFileSystem *pFilesystem, const unsigned ch
 	manifest->deleteThis();
 }
 
-KeyValues* ReadEncryptedKVFile( IFileSystem *pFilesystem, const char *szFilenameWithoutExtension, const unsigned char *pICEKey, bool bForceReadEncryptedFile /*= false*/ )
+KeyValues* ReadEncryptedKVFile( IFileSystem *filesystem, const char *szFilenameWithoutExtension, const unsigned char *pICEKey, bool bForceReadEncryptedFile /*= false*/ )
 {
 	Assert( strchr( szFilenameWithoutExtension, '.' ) == NULL );
 	char szFullName[512];
@@ -210,14 +210,14 @@ KeyValues* ReadEncryptedKVFile( IFileSystem *pFilesystem, const char *szFilename
 
 	Q_snprintf(szFullName,sizeof(szFullName), "%s.txt", szFilenameWithoutExtension);
 
-	if ( bForceReadEncryptedFile || !pKV->LoadFromFile( pFilesystem, szFullName, pSearchPath ) ) // try to load the normal .txt file first
+	if ( bForceReadEncryptedFile || !pKV->LoadFromFile( filesystem, szFullName, pSearchPath ) ) // try to load the normal .txt file first
 	{
 #ifndef _XBOX
 		if ( pICEKey )
 		{
 			Q_snprintf(szFullName,sizeof(szFullName), "%s.ctx", szFilenameWithoutExtension); // fall back to the .ctx file
 
-			FileHandle_t f = pFilesystem->Open( szFullName, "rb", pSearchPath );
+			FileHandle_t f = filesystem->Open( szFullName, "rb", pSearchPath );
 
 			if (!f)
 			{
@@ -225,18 +225,18 @@ KeyValues* ReadEncryptedKVFile( IFileSystem *pFilesystem, const char *szFilename
 				return NULL;
 			}
 			// load file into a null-terminated buffer
-			int fileSize = pFilesystem->Size(f);
+			int fileSize = filesystem->Size(f);
 			char *buffer = (char*)MemAllocScratch(fileSize + 1);
 		
 			Assert(buffer);
 		
-			pFilesystem->Read(buffer, fileSize, f); // read into local buffer
+			filesystem->Read(buffer, fileSize, f); // read into local buffer
 			buffer[fileSize] = 0; // null terminate file as EOF
-			pFilesystem->Close( f );	// close file after reading
+			filesystem->Close( f );	// close file after reading
 
 			UTIL_DecodeICE( (unsigned char*)buffer, fileSize, pICEKey );
 
-			bool retOK = pKV->LoadFromBuffer( szFullName, buffer, pFilesystem );
+			bool retOK = pKV->LoadFromBuffer( szFullName, buffer, filesystem );
 
 			MemFreeScratch();
 
@@ -267,7 +267,7 @@ KeyValues* ReadEncryptedKVFile( IFileSystem *pFilesystem, const char *szFilename
 //			false - if data load fails
 //-----------------------------------------------------------------------------
 
-bool ReadWeaponDataFromFileForSlot( IFileSystem* pFilesystem, const char *szWeaponName, WEAPON_FILE_INFO_HANDLE *phandle, const unsigned char *pICEKey )
+bool ReadWeaponDataFromFileForSlot( IFileSystem* filesystem, const char *szWeaponName, WEAPON_FILE_INFO_HANDLE *phandle, const unsigned char *pICEKey )
 {
 	if ( !phandle )
 	{
@@ -285,7 +285,7 @@ bool ReadWeaponDataFromFileForSlot( IFileSystem* pFilesystem, const char *szWeap
 	char sz[128];
 	Q_snprintf( sz, sizeof( sz ), "scripts/%s", szWeaponName );
 
-	KeyValues *pKV = ReadEncryptedKVFile( pFilesystem, sz, pICEKey,
+	KeyValues *pKV = ReadEncryptedKVFile( filesystem, sz, pICEKey,
 #if defined( DOD_DLL )
 		true			// Only read .ctx files!
 #else

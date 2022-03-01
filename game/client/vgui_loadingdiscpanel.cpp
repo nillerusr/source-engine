@@ -12,12 +12,9 @@
 #include "vgui_controls/Label.h"
 #include "hud_numericdisplay.h"
 #include "vgui/ISurface.h"
-#include "vgui/ILocalize.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
-
-extern vgui::ILocalize *g_pVGuiLocalize;
 
 //-----------------------------------------------------------------------------
 // Purpose: Displays the loading plaque
@@ -113,14 +110,11 @@ private:
 	CLoadingDiscPanel *m_pPauseDiscPanel;
 	vgui::VPANEL m_hParent;
 
-	int m_nPrevTimeRemaining;
-
 public:
 	CLoadingDisc( void )
 	{
 		loadingDiscPanel = NULL;
 		m_pPauseDiscPanel = NULL;
-		m_nPrevTimeRemaining = -1;
 	}
 
 	void Create( vgui::VPANEL parent )
@@ -134,14 +128,14 @@ public:
 		if ( loadingDiscPanel )
 		{
 			loadingDiscPanel->SetParent( (vgui::Panel *)NULL );
-			loadingDiscPanel->MarkForDeletion();
+			delete loadingDiscPanel;
 			loadingDiscPanel = NULL;
 		}
 
 		if ( m_pPauseDiscPanel )
 		{
 			m_pPauseDiscPanel->SetParent( (vgui::Panel *)NULL );
-			m_pPauseDiscPanel->MarkForDeletion();
+			delete m_pPauseDiscPanel;
 			m_pPauseDiscPanel = NULL;
 		}
 
@@ -163,39 +157,12 @@ public:
 	}
 
 
-	void SetPausedVisible( bool bVisible, float flExpireTime /*= -1.f */)
+	void SetPausedVisible( bool bVisible )
 	{
-		if ( bVisible )
+		if ( bVisible && !m_pPauseDiscPanel )
 		{
-			if ( !m_pPauseDiscPanel )
-			{
-				m_pPauseDiscPanel = vgui::SETUP_PANEL(new CLoadingDiscPanel( m_hParent ) );
-			}
-
-			if ( m_pPauseDiscPanel )
-			{
-				// Update when we have a timer
-				if ( flExpireTime != -1.f )
-				{
-					int nTime = (int)( flExpireTime - Plat_FloatTime() );
-					if ( nTime != m_nPrevTimeRemaining )
-					{
-						wchar_t wzString[256];
-						wchar_t wzTime[64];
-						char szString[256];
-						_snwprintf( wzTime, sizeof( wzTime ), L"%d", nTime );
-						g_pVGuiLocalize->ConstructString_safe( wzString, g_pVGuiLocalize->Find( "#GameUI_PausedTimer" ), 1, wzTime );
-						g_pVGuiLocalize->ConvertUnicodeToANSI( wzString, szString, sizeof( szString ) );
-						m_pPauseDiscPanel->SetText( szString );
-					
-						m_nPrevTimeRemaining = nTime;
-					}
-				}
-				else if ( m_pPauseDiscPanel->IsVisible() != bVisible )
-				{
-					m_pPauseDiscPanel->SetText( "#gameui_paused" );
-				}
-			}
+			m_pPauseDiscPanel = vgui::SETUP_PANEL(new CLoadingDiscPanel( m_hParent ) );
+			m_pPauseDiscPanel->SetText( "#gameui_paused" );
 		}
 
 		if ( m_pPauseDiscPanel )

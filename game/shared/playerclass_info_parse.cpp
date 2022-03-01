@@ -107,7 +107,7 @@ void ResetFilePlayerClassInfoDatabase( void )
 }
 
 #ifndef _XBOX
-KeyValues* ReadEncryptedKVPlayerClassFile( IFileSystem *pFilesystem, const char *szFilenameWithoutExtension, const unsigned char *pICEKey )
+KeyValues* ReadEncryptedKVPlayerClassFile( IFileSystem *filesystem, const char *szFilenameWithoutExtension, const unsigned char *pICEKey )
 {
 	Assert( strchr( szFilenameWithoutExtension, '.' ) == NULL );
 	char szFullName[512];
@@ -117,13 +117,13 @@ KeyValues* ReadEncryptedKVPlayerClassFile( IFileSystem *pFilesystem, const char 
 
 	Q_snprintf(szFullName,sizeof(szFullName), "%s.txt", szFilenameWithoutExtension);
 
-	if ( !pKV->LoadFromFile( pFilesystem, szFullName, "GAME" ) ) // try to load the normal .txt file first
+	if ( !pKV->LoadFromFile( filesystem, szFullName, "GAME" ) ) // try to load the normal .txt file first
 	{
 		if ( pICEKey )
 		{
 			Q_snprintf(szFullName,sizeof(szFullName), "%s.ctx", szFilenameWithoutExtension); // fall back to the .ctx file
 
-			FileHandle_t f = pFilesystem->Open( szFullName, "rb", "GAME");
+			FileHandle_t f = filesystem->Open( szFullName, "rb", "GAME");
 
 			if (!f)
 			{
@@ -131,18 +131,18 @@ KeyValues* ReadEncryptedKVPlayerClassFile( IFileSystem *pFilesystem, const char 
 				return NULL;
 			}
 			// load file into a null-terminated buffer
-			int fileSize = pFilesystem->Size(f);
+			int fileSize = filesystem->Size(f);
 			char *buffer = (char*)MemAllocScratch(fileSize + 1);
 		
 			Assert(buffer);
 		
-			pFilesystem->Read(buffer, fileSize, f); // read into local buffer
+			filesystem->Read(buffer, fileSize, f); // read into local buffer
 			buffer[fileSize] = 0; // null terminate file as EOF
-			pFilesystem->Close( f );	// close file after reading
+			filesystem->Close( f );	// close file after reading
 
 			UTIL_DecodeICE( (unsigned char*)buffer, fileSize, pICEKey );
 
-			bool retOK = pKV->LoadFromBuffer( szFullName, buffer, pFilesystem );
+			bool retOK = pKV->LoadFromBuffer( szFullName, buffer, filesystem );
 
 			MemFreeScratch();
 
@@ -168,7 +168,7 @@ KeyValues* ReadEncryptedKVPlayerClassFile( IFileSystem *pFilesystem, const char 
 // Output:  true  - if data2 successfully read
 //			false - if data load fails
 //-----------------------------------------------------------------------------
-bool ReadPlayerClassDataFromFileForSlot( IFileSystem* pFilesystem, const char *szPlayerClassName, PLAYERCLASS_FILE_INFO_HANDLE *phandle, const unsigned char *pICEKey )
+bool ReadPlayerClassDataFromFileForSlot( IFileSystem* filesystem, const char *szPlayerClassName, PLAYERCLASS_FILE_INFO_HANDLE *phandle, const unsigned char *pICEKey )
 {
 	if ( !phandle )
 	{
@@ -185,7 +185,7 @@ bool ReadPlayerClassDataFromFileForSlot( IFileSystem* pFilesystem, const char *s
 
 	char sz[128];
 	Q_snprintf( sz, sizeof( sz ), "scripts/playerclass_%s", szPlayerClassName );
-	KeyValues *pKV = ReadEncryptedKVFile( pFilesystem, sz, pICEKey );
+	KeyValues *pKV = ReadEncryptedKVFile( filesystem, sz, pICEKey );
 	if ( !pKV )
 		return false;
 

@@ -45,12 +45,6 @@ static ConVar	cl_predictionentitydump( "cl_pdump", "-1", FCVAR_CHEAT, "Dump info
 static ConVar	cl_predictionentitydumpbyclass( "cl_pclass", "", FCVAR_CHEAT, "Dump entity by prediction classname." );
 static ConVar	cl_pred_optimize( "cl_pred_optimize", "2", 0, "Optimize for not copying data if didn't receive a network update (1), and also for not repredicting if there were no errors (2)." );
 
-#ifdef STAGING_ONLY
-// Do not ship this - testing a fix
-static ConVar	cl_pred_optimize_prefer_server_data( "cl_pred_optimize_prefer_server_data", "0", 0, "In the case where we have both server data and predicted data up to the same tick, choose server data over predicted data." );
-//
-#endif // STAGING_ONLY
-
 #endif
 
 extern IGameMovement *g_pGameMovement;
@@ -421,9 +415,9 @@ void CPrediction::PostNetworkDataReceived( int commands_acknowledged )
 
 	bool error_check = ( commands_acknowledged > 0 ) ? true : false;
 #if defined( _DEBUG )
-	char szDebug[32];
-	Q_snprintf( szDebug, sizeof( szDebug ), "postnetworkdata%d", commands_acknowledged );
-	PREDICTION_TRACKVALUECHANGESCOPE( szDebug );
+	char sz[ 32 ];
+	Q_snprintf( sz, sizeof( sz ), "postnetworkdata%d", commands_acknowledged );
+	PREDICTION_TRACKVALUECHANGESCOPE( sz );
 #endif
 #ifndef _XBOX
 	CPDumpPanel *dump = GetPDumpPanel();
@@ -477,7 +471,7 @@ void CPrediction::PostNetworkDataReceived( int commands_acknowledged )
 
 			if ( showlist )
 			{
-				char sz[32];
+				char sz[ 32 ];
 				if ( ent->entindex() == -1 )
 				{
 					Q_snprintf( sz, sizeof( sz ), "handle %u", (unsigned int)ent->GetClientHandle().ToInt() );
@@ -617,7 +611,6 @@ void CPrediction::SetupMove( C_BasePlayer *player, CUserCmd *ucmd, IMoveHelper *
 	move->SetAbsOrigin( player->GetNetworkOrigin() );
 	move->m_vecOldAngles	= move->m_vecAngles;
 	move->m_nOldButtons		= player->m_Local.m_nOldButtons;
-	move->m_flOldForwardMove = player->m_Local.m_flOldForwardMove;
 	move->m_flClientMaxSpeed = player->m_flMaxspeed;
 
 	move->m_vecAngles		= ucmd->viewangles;
@@ -1408,11 +1401,6 @@ int CPrediction::ComputeFirstCommandToExecute( bool received_new_world_update, i
 	}
 	else
 	{
-#ifdef STAGING_ONLY	
-		int nPredictedLimit = cl_pred_optimize_prefer_server_data.GetBool() ? m_nCommandsPredicted - 1 : m_nCommandsPredicted;
-#else
-		int nPredictedLimit = m_nCommandsPredicted;		
-#endif // STAGING_ONLY
 		// Otherwise, there is a second optimization, wherein if we did receive an update, but no
 		//  values differed (or were outside their epsilon) and the server actually acknowledged running
 		//  one or more commands, then we can revert the entity to the predicted state from last frame, 
@@ -1421,7 +1409,7 @@ int CPrediction::ComputeFirstCommandToExecute( bool received_new_world_update, i
 		if ( cl_pred_optimize.GetInt() >= 2 && 
 			!m_bPreviousAckHadErrors && 
 			m_nCommandsPredicted > 0 && 
-			m_nServerCommandsAcknowledged <= nPredictedLimit )
+			m_nServerCommandsAcknowledged <= m_nCommandsPredicted )
 		{
 			// Copy all of the previously predicted data back into entity so we can skip repredicting it
 			// This is the final slot that we previously predicted

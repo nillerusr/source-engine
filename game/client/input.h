@@ -17,7 +17,6 @@
 #include "kbutton.h"
 #include "ehandle.h"
 #include "inputsystem/AnalogCode.h"
-#include "steam/isteamcontroller.h"
 
 typedef unsigned int CRC32_t;
 
@@ -100,8 +99,7 @@ public:
 	virtual		bool		CAM_IsOrthographic() const;
 	virtual		void		CAM_OrthographicSize( float& w, float& h ) const;
 
-	virtual		float		CAM_CapYaw( float fVal ) const { return fVal; }
-	virtual		float		CAM_CapPitch( float fVal ) const { return fVal; }
+	virtual		float		CAM_CapYaw( float fVal ) { return fVal; }
 	
 #if defined( HL2_CLIENT_DLL )
 	// IK back channel info
@@ -114,22 +112,8 @@ public:
 
 	virtual	bool		EnableJoystickMode();
 
-	// SteamController
-	bool		InitializeSteamControllerGameActionSets();
-	Vector2D	ScaleSteamControllerLook( Vector2D vecPosition );
-	void		PerformSteamControllerCameraHaptics( ESteamControllerPad ePad, float flDistance );
-	void		PerformSteamControllerStickHaptics( ESteamControllerPad ePad, bool bFingerDown );
-	Vector2D	PerformSteamControllerCameraMove( ESteamControllerPad ePad, Vector2D vecPadPosition, bool bFingerDown, float flFrametime );
-	void		ApplySteamControllerCameraMove( QAngle& viewangles, CUserCmd *cmd, Vector2D vecPosition );
-
-	virtual void	SetPreferredGameActionSet( GameActionSet_t action_set );
-	virtual GameActionSet_t GetPreferredGameActionSet();
-	virtual void	SetGameActionSetFlags( GameActionSetFlags_t action_set_flags );
-
-	virtual bool IsSteamControllerActive();
-
 // Private Implementation
-protected:
+private:
 	// Implementation specific initialization
 	void		Init_Camera( void );
 	void		Init_Keyboard( void );
@@ -150,15 +134,14 @@ protected:
 	void		GetAccumulatedMouseDeltasAndResetAccumulators( float *mx, float *my );
 	void		GetMouseDelta( float inmousex, float inmousey, float *pOutMouseX, float *pOutMouseY );
 	void		ScaleMouse( float *x, float *y );
-	virtual void ApplyMouse( QAngle& viewangles, CUserCmd *cmd, float mouse_x, float mouse_y );
-	virtual void MouseMove ( CUserCmd *cmd );
+	void		ApplyMouse( QAngle& viewangles, CUserCmd *cmd, float mouse_x, float mouse_y );
+	void		MouseMove ( CUserCmd *cmd );
 
 	// Joystick  movement input helpers
 	void		ControllerMove ( float frametime, CUserCmd *cmd );
 	void		JoyStickMove ( float frametime, CUserCmd *cmd );
 	float		ScaleAxisValue( const float axisValue, const float axisThreshold );
 	virtual float JoyStickAdjustYaw( float flSpeed ) { return flSpeed; }
-	virtual void SteamControllerMove( float frametime, CUserCmd *cmd );
 
 	// Call this to get the cursor position. The call will be logged in the VCR file if there is one.
 	void		GetMousePos(int &x, int &y);
@@ -265,14 +248,6 @@ private:
 	float m_flPreviousJoystickSide;
 	float m_flPreviousJoystickPitch;
 	float m_flPreviousJoystickYaw;
-
-	// Steam controller stuff
-	int m_nControllerType[MAX_JOYSTICKS + MAX_STEAM_CONTROLLERS];
-
-	GameActionSet_t m_PreferredGameActionSet;
-	GameActionSetFlags_t m_GameActionSetFlags;
-
-	bool m_bSteamControllerGameActionsInitialized;
 
 	class CVerifiedUserCmd
 	{

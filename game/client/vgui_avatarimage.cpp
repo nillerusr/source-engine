@@ -344,7 +344,7 @@ void CAvatarImagePanel::SetPlayer( int entindex, EAvatarSize avatarSize )
 	{
 		if ( pi.friendsID != 0 	&& steamapicontext->SteamUtils() )
 		{		
-			CSteamID steamIDForPlayer( pi.friendsID, 1, GetUniverse(), k_EAccountTypeIndividual );
+			CSteamID steamIDForPlayer( pi.friendsID, 1, steamapicontext->SteamUtils()->GetConnectedUniverse(), k_EAccountTypeIndividual );
 			SetPlayer(steamIDForPlayer, avatarSize);
 		}
 		else

@@ -31,9 +31,9 @@ ITexture *CReplayScreenshotTaker::m_pScreenshotTarget;
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-CReplayScreenshotTaker::CReplayScreenshotTaker( IViewRender *pViewRender, CViewSetup &viewSetup )
+CReplayScreenshotTaker::CReplayScreenshotTaker( IViewRender *pViewRender, CViewSetup &view )
 :	m_pViewRender( pViewRender ),
-	m_View( viewSetup )
+	m_View( view )
 {
 	m_pUnpaddedPixels = NULL;
 	m_pPaddedPixels = NULL;

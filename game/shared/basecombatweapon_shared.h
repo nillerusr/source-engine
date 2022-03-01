@@ -55,7 +55,8 @@ class CUserCmd;
 // Put this in your derived class definition to declare it's activity table
 // UNDONE: Cascade these?
 #define DECLARE_ACTTABLE()		static acttable_t m_acttable[];\
-	virtual acttable_t *ActivityList( int &iActivityCount ) OVERRIDE;
+	acttable_t *ActivityList( void );\
+	int ActivityListCount( void );
 
 // You also need to include the activity table itself in your class' implementation:
 // e.g.
@@ -72,7 +73,8 @@ class CUserCmd;
 // activity table.
 // UNDONE: Cascade these?
 #define IMPLEMENT_ACTTABLE(className) \
-	acttable_t *className::ActivityList( int &iActivityCount ) { iActivityCount = ARRAYSIZE(m_acttable); return m_acttable; }
+	acttable_t *className::ActivityList( void ) { return m_acttable; } \
+	int className::ActivityListCount( void ) { return ARRAYSIZE(m_acttable); } \
 
 typedef struct
 {
@@ -80,29 +82,6 @@ typedef struct
 	int			weaponAct;
 	bool		required;
 } acttable_t;
-
-
-struct poseparamtable_t
-{
-	const char *pszName;
-	float		flValue;
-};
-
-// Put this in your derived class definition to declare it's poseparam table
-#define DECLARE_POSEPARAMTABLE()	static poseparamtable_t m_poseparamtable[];\
-	virtual poseparamtable_t* PoseParamList( int &iPoseParamCount ) { return NULL; }
-
-// You also need to include the activity table itself in your class' implementation:
-// e.g.
-//	acttable_t	CTFGrapplingHook::m_poseparamtable[] = 
-//	{
-//		{ "r_arm", 2 },
-//	};
-//
-// The grapplinghook overrides the r_arm pose param, value to 2.
-
-#define IMPLEMENT_POSEPARAMTABLE(className)\
-	poseparamtable_t* className::PoseParamList( int &iPoseParamCount ) { iPoseParamCount = ARRAYSIZE(m_poseparamtable); return m_poseparamtable; }
 
 class CHudTexture;
 class Color;
@@ -229,7 +208,7 @@ public:
 	virtual bool			SendWeaponAnim( int iActivity );
 	virtual void			SendViewModelAnim( int nSequence );
 	float					GetViewModelSequenceDuration();	// Return how long the current view model sequence is.
-	bool					IsViewModelSequenceFinished( void ) const; // Returns if the viewmodel's current animation is finished
+	bool					IsViewModelSequenceFinished( void ); // Returns if the viewmodel's current animation is finished
 
 	virtual void			SetViewModel();
 
@@ -245,7 +224,7 @@ public:
 	bool					UsesSecondaryAmmo( void );					// returns true if the weapon actually uses secondary ammo
 	void					GiveDefaultAmmo( void );
 	
-	virtual bool			CanHolster( void ) const { return TRUE; };		// returns true if the weapon can be holstered
+	virtual bool			CanHolster( void ) { return TRUE; };		// returns true if the weapon can be holstered
 	virtual bool			DefaultDeploy( char *szViewModel, char *szWeaponModel, int iActivity, char *szAnimExt );
 	virtual bool			CanDeploy( void ) { return true; }			// return true if the weapon's allowed to deploy
 	virtual bool			Deploy( void );								// returns true is deploy was successful
@@ -268,7 +247,6 @@ public:
 	virtual void			HandleFireOnEmpty();					// Called when they have the attack button down
 																	// but they are out of ammo. The default implementation
 																	// either reloads, switches weapons, or plays an empty sound.
-	virtual bool			CanPerformSecondaryAttack() const;
 
 	virtual bool			ShouldBlockPrimaryFire() { return false; }
 
@@ -287,7 +265,8 @@ public:
 	bool					DefaultReload( int iClipSize1, int iClipSize2, int iActivity );
 	bool					ReloadsSingly( void ) const;
 
-	virtual bool			AutoFiresFullClip( void ) const { return false; }
+	virtual bool			AutoFiresFullClip( void ) { return false; }
+	virtual bool			CanOverload( void ) { return false; }
 	virtual void			UpdateAutoFire( void );
 
 	// Weapon firing
@@ -328,7 +307,7 @@ public:
 
 	virtual void			SetActivity( Activity act, float duration );
 	inline void				SetActivity( Activity eActivity ) { m_Activity = eActivity; }
-	inline Activity			GetActivity( void ) const { return m_Activity; }
+	inline Activity			GetActivity( void ) { return m_Activity; }
 
 	virtual void			AddViewKick( void );	// Add in the view kick for the weapon
 
@@ -369,7 +348,6 @@ public:
 	virtual int				GetWeight( void ) const;
 	virtual bool			AllowsAutoSwitchTo( void ) const;
 	virtual bool			AllowsAutoSwitchFrom( void ) const;
-	virtual bool			ForceWeaponSwitch( void ) const { return false; }
 	virtual int				GetWeaponFlags( void ) const;
 	virtual int				GetSlot( void ) const;
 	virtual int				GetPosition( void ) const;
@@ -408,10 +386,8 @@ public:
 	virtual CHudTexture const	*GetSpriteZoomedAutoaim( void ) const;
 
 	virtual Activity		ActivityOverride( Activity baseAct, bool *pRequired );
-	virtual	acttable_t*		ActivityList( int &iActivityCount ) { return NULL; }
-
-	virtual void			PoseParameterOverride( bool bReset );
-	virtual poseparamtable_t* PoseParamList( int &iPoseParamCount ) { return NULL; }
+	virtual	acttable_t*		ActivityList( void ) { return NULL; }
+	virtual	int				ActivityListCount( void ) { return 0; }
 
 	virtual void			Activate( void );
 
@@ -466,8 +442,6 @@ public:
 	void					Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 
 	virtual CDmgAccumulator	*GetDmgAccumulator( void ) { return NULL; }
-
-	void					SetSoundsEnabled( bool bSoundsEnabled ) { m_bSoundsEnabled = bSoundsEnabled; }
 
 // Client only methods
 #else
@@ -588,10 +562,6 @@ public:
 	bool					SetIdealActivity( Activity ideal );
 	void					MaintainIdealActivity( void );
 
-#ifdef CLIENT_DLL
-	virtual const Vector&	GetViewmodelOffset() { return vec3_origin; }
-#endif // CLIENT_DLL
-
 private:
 	Activity				m_Activity;
 	int						m_nIdealSequence;
@@ -606,9 +576,6 @@ public:
 
 	IMPLEMENT_NETWORK_VAR_FOR_DERIVED( m_nNextThinkTick );
 
-#ifdef CLIENT_DLL
-	static void				RecvProxy_WeaponState( const CRecvProxyData *pData, void *pStruct, void *pOut );
-#endif
 	int						WeaponState() const { return m_iState; }
 
 	// Weapon data
@@ -648,8 +615,6 @@ private:
 	
 	// Server only
 #if !defined( CLIENT_DLL )
-
-	bool					m_bSoundsEnabled;
 
 	// Outputs
 protected:

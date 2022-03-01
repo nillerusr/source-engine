@@ -19,16 +19,12 @@
 #include "bitbuf.h"
 #include "checksum_md5.h"
 #include "hltvcamera.h"
-#include "touch.h"
-#include "ienginevgui.h"
-
 #if defined( REPLAY_ENABLED )
 #include "replay/replaycamera.h"
 #endif
 #include <ctype.h> // isalnum()
 #include <voice_status.h>
 #include "cam_thirdperson.h"
-#include "inputsystem/iinputsystem.h"
 
 #ifdef SIXENSE
 #include "sixense/in_sixense.h"
@@ -47,9 +43,6 @@ extern ConVar cam_idealyaw;
 
 // For showing/hiding the scoreboard
 #include <game/client/iviewport.h>
-
-// Need this for steam controller
-#include "clientsteamcontext.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -293,11 +286,11 @@ Add a kbutton_t * to the list of pointers the engine can retrieve via KB_Find
 */
 void CInput::AddKeyButton( const char *name, kbutton_t *pkb )
 {
-	CKeyboardKey *p;
+	CKeyboardKey *p;	
 	kbutton_t *kb;
 
 	kb = FindKey( name );
-
+	
 	if ( kb )
 		return;
 
@@ -311,19 +304,17 @@ void CInput::AddKeyButton( const char *name, kbutton_t *pkb )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: 
 //-----------------------------------------------------------------------------
 CInput::CInput( void )
 {
 	m_pCommands = NULL;
 	m_pCameraThirdData = NULL;
 	m_pVerifiedCommands = NULL;
-	m_PreferredGameActionSet = GAME_ACTION_SET_MENUCONTROLS;
-	m_bSteamControllerGameActionsInitialized = false;
 }
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: 
 //-----------------------------------------------------------------------------
 CInput::~CInput( void )
 {
@@ -954,9 +945,7 @@ void CInput::ControllerMove( float frametime, CUserCmd *cmd )
 		}
 	}
 
-	SteamControllerMove( frametime, cmd );
-	JoyStickMove( frametime, cmd );
-	gTouch.Move( frametime, cmd );
+	JoyStickMove( frametime, cmd);
 
 	// NVNT if we have a haptic device..
 	if(haptics && haptics->HasDevice())
@@ -1110,10 +1099,11 @@ void CInput::ExtraMouseSample( float frametime, bool active )
 			prediction->SetLocalViewAngles( cmd->viewangles );
 		}
 	}
+
 }
 
 void CInput::CreateMove ( int sequence_number, float input_sample_frametime, bool active )
-{
+{	
 	CUserCmd *cmd = &m_pCommands[ sequence_number % MULTIPLAYER_BACKUP ];
 	CVerifiedUserCmd *pVerified = &m_pVerifiedCommands[ sequence_number % MULTIPLAYER_BACKUP ];
 
@@ -1200,11 +1190,11 @@ void CInput::CreateMove ( int sequence_number, float input_sample_frametime, boo
 	cmd->buttons = GetButtonBits( 1 );
 #endif
 
-	// Using joystick or touch?
+	// Using joystick?
 #ifdef SIXENSE
-	if ( in_joystick.GetInt() || g_pSixenseInput->IsEnabled() || touch_enable.GetInt() )
+	if ( in_joystick.GetInt() || g_pSixenseInput->IsEnabled() )
 #else
-	if ( in_joystick.GetInt() || touch_enable.GetInt() )
+	if ( in_joystick.GetInt() )
 #endif
 	{
 		if ( cmd->forwardmove > 0 )
@@ -1672,9 +1662,6 @@ void CInput::Init_All (void)
 	m_fHadJoysticks = false;
 	m_flLastForwardMove = 0.0;
 
-	// Make sure this is activated now so steam controller stuff works
-	ClientSteamContext().Activate();
-
 	// Initialize inputs
 	if ( IsPC() )
 	{
@@ -1684,9 +1671,6 @@ void CInput::Init_All (void)
 		
 	// Initialize third person camera controls.
 	Init_Camera();
-
-	// Initialize steam controller action sets
-	m_bSteamControllerGameActionsInitialized = InitializeSteamControllerGameActionSets();
 }
 
 /*

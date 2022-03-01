@@ -58,7 +58,6 @@ public:
 	void InputSetSpeedForwardModifier( inputdata_t &inputdata );
 	void InputSetTrainRecedeTime( inputdata_t &inputdata );
 	void InputSetTrainCanRecede( inputdata_t &inputdata );
-	void InputSetTrainRecedeTimeAndUpdate( inputdata_t &inputdata );
 
 	// ==========================================================
 	// given a start node and a list of goal nodes
@@ -94,8 +93,6 @@ public:
 #if defined( STAGING_ONLY ) && defined( TF_DLL )
 	void DumpStats( void );
 #endif // STAGING_ONLY && TF_DLL
-
-	float GetTrainProgress() { return m_flTotalProgress; }
 
 private:
 
@@ -146,7 +143,6 @@ private:
 	float m_flTotalPathDistance;	// calculated only at round start, node graph
 	// may get chopped as the round progresses
 
-	float m_flTrainDistanceAccumulator;
 	float m_flTrainDistanceFromStart;	// actual distance along path of train, for comparing against m_CPLinks[].flDistanceFromStart
 
 	float m_flSpeedLevels[3];

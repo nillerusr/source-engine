@@ -2076,8 +2076,8 @@ public:
 	{
 		if ( ARRAYSIZE( g_NameMap ) != CChoreoEvent::NUM_TYPES )
 		{
-			Error( "g_NameMap contains %llu entries, CChoreoEvent::NUM_TYPES == %i!",
-				(uint64)(ARRAYSIZE( g_NameMap )), CChoreoEvent::NUM_TYPES );
+			Error( "g_NameMap contains %i entries, CChoreoEvent::NUM_TYPES == %i!",
+				ARRAYSIZE( g_NameMap ), CChoreoEvent::NUM_TYPES );
 		}
 		for ( int i = 0; i < CChoreoEvent::NUM_TYPES; ++i )
 		{
@@ -2158,8 +2158,8 @@ public:
 	{
 		if ( ARRAYSIZE( g_CCNameMap ) != CChoreoEvent::NUM_CC_TYPES )
 		{
-			Error( "g_CCNameMap contains %llu entries, CChoreoEvent::NUM_CC_TYPES == %i!",
-				(uint64)(ARRAYSIZE( g_CCNameMap )), CChoreoEvent::NUM_CC_TYPES );
+			Error( "g_CCNameMap contains %i entries, CChoreoEvent::NUM_CC_TYPES == %i!",
+				ARRAYSIZE( g_CCNameMap ), CChoreoEvent::NUM_CC_TYPES );
 		}
 		for ( int i = 0; i < CChoreoEvent::NUM_CC_TYPES; ++i )
 		{
@@ -4341,7 +4341,7 @@ bool CChoreoEvent::RestoreFromBuffer( CUtlBuffer& buf, CChoreoScene *pScene, ICh
 		char cctoken[ 256 ];
 		pStringPool->GetString( buf.GetShort(), cctoken, sizeof( cctoken ) );
 		SetCloseCaptionToken( cctoken );
-		flags = buf.GetChar();
+		int flags = buf.GetChar();
 		if ( flags & ( 1<<0 ) )
 		{
 			SetUsingCombinedFile( true );
@@ -4483,7 +4483,7 @@ bool CChoreoEvent::RestoreFlexAnimationsFromBuffer( CUtlBuffer& buf, IChoreoStri
 
 		if ( track->IsComboType() )
 		{
-			s = buf.GetUnsignedShort();
+			int s = buf.GetUnsignedShort();
 			for ( int j = 0; j < s; ++j )
 			{
 				float t, v;

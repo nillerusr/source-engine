@@ -21,7 +21,7 @@
 static void PixelvisDrawChanged( IConVar *pPixelvisVar, const char *pOld, float flOldValue );
 
 ConVar r_pixelvisibility_partial( "r_pixelvisibility_partial", "1" );
-ConVar r_dopixelvisibility( "r_dopixelvisibility", "1", FCVAR_ALLOWED_IN_COMPETITIVE );
+ConVar r_dopixelvisibility( "r_dopixelvisibility", "1" );
 ConVar r_drawpixelvisibility( "r_drawpixelvisibility", "0", 0, "Show the occlusion proxies", PixelvisDrawChanged );
 ConVar r_pixelvisibility_spew( "r_pixelvisibility_spew", "0" );
 

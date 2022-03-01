@@ -15,6 +15,7 @@
 extern ConVar cl_sidespeed;
 extern ConVar cl_forwardspeed;
 extern ConVar cl_upspeed;
+extern ConVar default_fov;
 
 #ifdef ANDROID
 #define TOUCH_DEFAULT "1"
@@ -23,6 +24,8 @@ extern ConVar cl_upspeed;
 #endif
 
 extern ConVar sensitivity;
+
+#define TOUCH_DEFAULT_CFG "touch_default.cfg"
 
 ConVar touch_enable( "touch_enable", TOUCH_DEFAULT, FCVAR_ARCHIVE );
 ConVar touch_forwardzone( "touch_forwardzone", "0.06", FCVAR_ARCHIVE, "forward touch zone" );
@@ -372,13 +375,25 @@ void CTouchControls::Move( float /*frametime*/, CUserCmd *cmd )
 
 void CTouchControls::IN_Look()
 {
+	C_BasePlayer *pl = C_BasePlayer::GetLocalPlayer();
+
+	float diff = 1.0f;
+	if( pl )
+	{
+		float def_fov = default_fov.GetFloat();
+		float fov = pl->GetFOV();
+		diff = fov/def_fov;
+		Msg("diff=%f\n", diff);
+	}
+
 	if( !pitch && !yaw )
 		return;
 
+
 	QAngle ang;
 	engine->GetViewAngles( ang );
-	ang.x += pitch;
-	ang.y += yaw;
+	ang.x += pitch*diff;
+	ang.y += yaw*diff;
 	engine->SetViewAngles( ang );
 	pitch = yaw = 0;
 }

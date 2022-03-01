@@ -34,13 +34,12 @@
 bool NPC_CheckBrushExclude( CBaseEntity *pEntity, CBaseEntity *pBrush );
 #endif
 
-#include "steam/steam_api.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 ConVar r_visualizetraces( "r_visualizetraces", "0", FCVAR_CHEAT );
-ConVar developer("developer", "0", 0, "Set developer message level" ); // developer mode
+ConVar developer("developer", "0", 0, "Set developer message level." ); // developer mode
 
 float UTIL_VecToYaw( const Vector &vec )
 {
@@ -178,11 +177,11 @@ Vector SharedRandomVector( const char *sharedname, float minVal, float maxVal, i
 	RandomSeed( seed );
 	// HACK:  Can't call RandomVector/Angle because it uses rand() not vstlib Random*() functions!
 	// Get a random vector.
-	Vector vRandom;
-	vRandom.x = RandomFloat( minVal, maxVal );
-	vRandom.y = RandomFloat( minVal, maxVal );
-	vRandom.z = RandomFloat( minVal, maxVal );
-	return vRandom;
+	Vector random;
+	random.x = RandomFloat( minVal, maxVal );
+	random.y = RandomFloat( minVal, maxVal );
+	random.z = RandomFloat( minVal, maxVal );
+	return random;
 }
 
 QAngle SharedRandomAngle( const char *sharedname, float minVal, float maxVal, int additionalSeed /*=0*/ )
@@ -194,11 +193,11 @@ QAngle SharedRandomAngle( const char *sharedname, float minVal, float maxVal, in
 
 	// HACK:  Can't call RandomVector/Angle because it uses rand() not vstlib Random*() functions!
 	// Get a random vector.
-	Vector vRandom;
-	vRandom.x = RandomFloat( minVal, maxVal );
-	vRandom.y = RandomFloat( minVal, maxVal );
-	vRandom.z = RandomFloat( minVal, maxVal );
-	return QAngle( vRandom.x, vRandom.y, vRandom.z );
+	Vector random;
+	random.x = RandomFloat( minVal, maxVal );
+	random.y = RandomFloat( minVal, maxVal );
+	random.z = RandomFloat( minVal, maxVal );
+	return QAngle( random.x, random.y, random.z );
 }
 
 
@@ -1035,189 +1034,36 @@ float CountdownTimer::Now( void ) const
 	{
 		return ToBasePlayer( ClientEntityList().GetEnt( entindex ) );
 	}
-#endif
 
+//=============================================================================
+// HPE_BEGIN:
+// [menglish] Added UTIL function for events in client win_panel which transmit the player as a user ID
+//=============================================================================
 
-CBasePlayer *UTIL_PlayerBySteamID( const CSteamID &steamID )
-{
-	CSteamID steamIDPlayer;
-	for ( int i = 1; i <= gpGlobals->maxClients; i++ )
+	CBasePlayer* UTIL_PlayerByUserId( int userID )
 	{
-		CBasePlayer *pPlayer = UTIL_PlayerByIndex( i );
-		if ( !pPlayer )
-			continue;
-
-		if ( !pPlayer->GetSteamID( &steamIDPlayer ) )
-			continue;
-
-		if ( steamIDPlayer == steamID )
-			return pPlayer;
-	}
-	return NULL;
-}
-
-// Helper for use with console commands and the like.
-// Returns NULL if not found or if the provided arg would match multiple players.
-// Currently accepts, in descending priority:
-//  - Formatted SteamID ([U:1:1234])
-//  - SteamID64 (76561197989728462)
-//  - Legacy SteamID (STEAM_0:1:1234)
-//  - UserID preceded by a pound (#4)
-//  - Partial name match (if unique)
-//  - UserID not preceded by a pound*
-//
-// *Does not count as ambiguous with higher priority items
-CBasePlayer* UTIL_PlayerByCommandArg( const char *arg )
-{
-	size_t nLength = V_strlen( arg );
-	if ( nLength < 1 )
-		{ return NULL; }
-
-	// Is the argument numeric?
-	bool bAllButFirstNumbers = true;
-	for ( size_t idx = 1; bAllButFirstNumbers && idx < nLength; idx++ )
-	{
-		bAllButFirstNumbers = V_isdigit( arg[idx] );
-	}
-	bool bAllNumbers = V_isdigit( arg[0] ) && bAllButFirstNumbers;
-
-	// Keep searching when we find a match to track ambiguous results
-	CBasePlayer *pFound = NULL;
-
-	// Assign pFound unless we already found a different player, in which case return NULL due to ambiguous
-	// WTB Lambdas
-#define UTIL_PLAYERBYCMDARG_CHECKMATCH( pEvalMatch ) \
-	do                                               \
-	{                                                \
-		CBasePlayer *_pMacroMatch = (pEvalMatch);    \
-		if ( _pMacroMatch )                          \
-		{                                            \
-			/* Ambiguity check */                    \
-			if ( pFound && pFound != _pMacroMatch )  \
-				{ return NULL; }                     \
-			pFound = _pMacroMatch;                   \
-		}                                            \
-	} while ( false );
-
-	// Formatted SteamID or SteamID64
-	if ( bAllNumbers || ( arg[0] == '[' && arg[nLength-1] == ']' ) )
-	{
-		CSteamID steamID;
-		bool bMatch = steamID.SetFromStringStrict( arg, GetUniverse() );
-		UTIL_PLAYERBYCMDARG_CHECKMATCH( bMatch ? UTIL_PlayerBySteamID( steamID ) : NULL );
-	}
-
-	// Legacy SteamID?
-	const char szPrefix[] = "STEAM_";
-	if ( nLength >= V_ARRAYSIZE( szPrefix ) && V_strncmp( szPrefix, arg, V_ARRAYSIZE( szPrefix ) - 1 ) == 0 )
-	{
-		CSteamID steamID;
-		bool bMatch = steamID.SetFromSteam2String( arg, GetUniverse() );
-		UTIL_PLAYERBYCMDARG_CHECKMATCH( bMatch ? UTIL_PlayerBySteamID( steamID ) : NULL );
-	}
-
-	// UserID preceded by a pound (#4)
-	if ( nLength > 1 && arg[0] == '#' && bAllButFirstNumbers )
-	{
-		UTIL_PLAYERBYCMDARG_CHECKMATCH( UTIL_PlayerByUserId( V_atoi( arg + 1 ) ) );
-	}
-
-	// Partial name match (if unique)
-	UTIL_PLAYERBYCMDARG_CHECKMATCH( UTIL_PlayerByPartialName( arg ) );
-
-	// UserID not preceded by a pound
-	// *Does not count as ambiguous with higher priority items
-	if ( bAllNumbers && !pFound )
-	{
-		UTIL_PLAYERBYCMDARG_CHECKMATCH( UTIL_PlayerByUserId( V_atoi( arg ) ) );
-	}
-
-	return pFound;
-
-#undef UTIL_PLAYERBYCMDARG_CHECKMATCH
-}
-
-CBasePlayer* UTIL_PlayerByName( const char *name )
-{
-	if ( !name || !name[0] )
-		return NULL;
-
-	for (int i = 1; i<=gpGlobals->maxClients; i++ )
-	{
-		CBasePlayer *pPlayer = UTIL_PlayerByIndex( i );
-
-		if ( !pPlayer )
-			continue;
-
-#ifndef CLIENT_DLL
-		if ( !pPlayer->IsConnected() )
-			continue;
-#endif
-
-		if ( Q_stricmp( pPlayer->GetPlayerName(), name ) == 0 )
+		for (int i = 1; i<=gpGlobals->maxClients; i++ )
 		{
-			return pPlayer;
-		}
-	}
+			CBasePlayer *pPlayer = UTIL_PlayerByIndex( i );
 
-	return NULL;
-}
+			if ( !pPlayer )
+				continue;
 
-// Finds a player who has this non-ambiguous substring
-CBasePlayer* UTIL_PlayerByPartialName( const char *name )
-{
-	if ( !name || !name[0] )
-		return NULL;
-
-	CBasePlayer *pFound = NULL;
-	for (int i = 1; i<=gpGlobals->maxClients; i++ )
-	{
-		CBasePlayer *pPlayer = UTIL_PlayerByIndex( i );
-
-		if ( !pPlayer )
-			continue;
-
-#ifndef CLIENT_DLL
-		if ( !pPlayer->IsConnected() )
-			continue;
-#endif
-
-		if ( Q_stristr( pPlayer->GetPlayerName(), name ) )
-		{
-			if ( pFound )
+			if ( pPlayer->GetUserID() == userID )
 			{
-				// Ambiguous
-				return NULL;
+				return pPlayer;
 			}
-			pFound = pPlayer;
 		}
+
+		return NULL;
 	}
 
-	return pFound;
-}
+//=============================================================================
+// HPE_END
+//=============================================================================
 
-CBasePlayer* UTIL_PlayerByUserId( int userID )
-{
-	for (int i = 1; i<=gpGlobals->maxClients; i++ )
-	{
-		CBasePlayer *pPlayer = UTIL_PlayerByIndex( i );
-
-		if ( !pPlayer )
-			continue;
-
-#ifndef CLIENT_DLL
-		if ( !pPlayer->IsConnected() )
-			continue;
 #endif
 
-		if ( pPlayer->GetUserID()  == userID )
-		{
-			return pPlayer;
-		}
-	}
-
-	return NULL;
-}
 
 char* ReadAndAllocStringValue( KeyValues *pSub, const char *pName, const char *pFilename )
 {
@@ -1328,79 +1174,4 @@ const char* UTIL_GetActiveHolidayString()
 #else
 	return NULL;
 #endif
-}
-
-extern ISoundEmitterSystemBase *soundemitterbase;
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-const char *UTIL_GetRandomSoundFromEntry( const char* pszEntryName )
-{
-	Assert( pszEntryName );
-
-	if ( pszEntryName )
-	{
-		int soundIndex = soundemitterbase->GetSoundIndex( pszEntryName );
-		CSoundParametersInternal *internal = ( soundIndex != -1 ) ? soundemitterbase->InternalGetParametersForSound( soundIndex ) : NULL;
-		// See if we need to pick a random one
-		if ( internal )
-		{
-			int wave = RandomInt( 0, internal->NumSoundNames() - 1 );
-			pszEntryName = soundemitterbase->GetWaveName( internal->GetSoundNames()[wave].symbol );
-		}
-	}
-
-	return pszEntryName;
-}
-
-/// Clamp and round float vals to int.  The values are in the 0...255 range.
-Color FloatRGBAToColor( float r, float g, float b, float a )
-{
-	return Color(
-		(unsigned char)clamp(r + .5f, 0.0, 255.0f),
-		(unsigned char)clamp(g + .5f, 0.0, 255.0f),
-		(unsigned char)clamp(b + .5f, 0.0, 255.0f),
-		(unsigned char)clamp(a + .5f, 0.0, 255.0f)
-	);
-}
-
-float LerpFloat( float x0, float x1, float t )
-{
-	return x0 + (x1 - x0) * t;
-}
-
-Color LerpColor( const Color &c0, const Color &c1, float t )
-{
-	if ( t <= 0.0f ) return c0;
-	if ( t >= 1.0f ) return c1;
-	return FloatRGBAToColor(
-		LerpFloat( (float)c0.r(), (float)c1.r(), t ),
-		LerpFloat( (float)c0.g(), (float)c1.g(), t ),
-		LerpFloat( (float)c0.b(), (float)c1.b(), t ),
-		LerpFloat( (float)c0.a(), (float)c1.a(), t )
-	);
-}
-
-ISteamUtils* GetSteamUtils()
-{
-#ifdef GAME_DLL
-	// Use steamgameserver context if this isn't a client/listenserver.
-	if ( engine->IsDedicatedServer() )
-	{
-		return steamgameserverapicontext ? steamgameserverapicontext->SteamGameServerUtils() : NULL;
-	}
-#endif
-	return steamapicontext ? steamapicontext->SteamUtils() : NULL;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-EUniverse GetUniverse()
-{
-	if ( !GetSteamUtils() )
-		return k_EUniverseInvalid;
-
-	static EUniverse steamUniverse = GetSteamUtils()->GetConnectedUniverse();
-	return steamUniverse;
 }

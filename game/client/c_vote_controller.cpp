@@ -81,10 +81,10 @@ C_VoteController::~C_VoteController()
 void C_VoteController::ResetData()
 {
 	m_iActiveIssueIndex = INVALID_ISSUE;
-	m_iOnlyTeamToVote = TEAM_UNASSIGNED;
-	for( int i = 0; i < MAX_VOTE_OPTIONS; i++ )
+	m_iOnlyTeamToVote = TEAM_INVALID;
+	for( int index = 0; index < MAX_VOTE_OPTIONS; index++ )
 	{
-		m_nVoteOptionCount[i] = 0;
+		m_nVoteOptionCount[index] = 0;
 	}
 	m_nPotentialVotes = 0;
 	m_bVotesDirty = false;
@@ -118,24 +118,22 @@ void C_VoteController::ClientThink()
 	{
 		if ( m_nPotentialVotes > 0 )
 		{
-#ifdef STAGING_ONLY
 			// Currently hard-coded to MAX_VOTE_COUNT options per issue
 			DevMsg( "Votes: Option1 - %d, Option2 - %d, Option3 - %d, Option4 - %d, Option5 - %d\n",
 				m_nVoteOptionCount[0], m_nVoteOptionCount[1], m_nVoteOptionCount[2], m_nVoteOptionCount[3], m_nVoteOptionCount[4] );
-#endif // STAGING_ONLY
 
 			IGameEvent *event = gameeventmanager->CreateEvent( "vote_changed" );
 			if ( event )
 			{
-				for ( int i = 0; i < MAX_VOTE_OPTIONS; i++ )
+				for ( int index = 0; index < MAX_VOTE_OPTIONS; index++ )
 				{	
 					char szOption[2];
-					Q_snprintf( szOption, sizeof( szOption ), "%i", i + 1 );
+					Q_snprintf( szOption, sizeof( szOption ), "%i", index + 1 );
 
 					char szVoteOption[13] = "vote_option";
 					Q_strncat( szVoteOption, szOption, sizeof( szVoteOption ), COPY_ALL_CHARACTERS );
 
-					event->SetInt( szVoteOption, m_nVoteOptionCount[i] );
+					event->SetInt( szVoteOption, m_nVoteOptionCount[index] );
 				}
 				event->SetInt( "potentialVotes", m_nPotentialVotes );
 				gameeventmanager->FireEventClientSide( event );

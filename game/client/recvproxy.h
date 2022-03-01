@@ -48,13 +48,6 @@ RecvProp RecvPropBool(
 	int offset, 
 	int sizeofVar );
 
-RecvProp RecvPropBool(
-	const char *pVarName,
-	int offset,
-	int sizeofVar,
-	int flags,
-	RecvVarProxyFn varProxy );
-
 RecvProp RecvPropIntWithMinusOneFlag(
 	const char *pVarName, 
 	int offset, 

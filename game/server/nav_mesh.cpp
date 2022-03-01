@@ -49,9 +49,7 @@ ConVar nav_max_vis_delta_list_length( "nav_max_vis_delta_list_length", "64", FCV
 
 extern ConVar nav_show_potentially_visible;
 
-#ifdef STAGING_ONLY
 int g_DebugPathfindCounter = 0;
-#endif
 
 
 bool FindGroundForNode( Vector *pos, Vector *normal );
@@ -1700,9 +1698,6 @@ static ConCommand nav_clear_selected_set( "nav_clear_selected_set", CommandNavCl
 //----------------------------------------------------------------------------------
 CON_COMMAND_F( nav_dump_selected_set_positions, "Write the (x,y,z) coordinates of the centers of all selected nav areas to a file.", FCVAR_GAMEDLL | FCVAR_CHEAT )
 {
-	if ( !UTIL_IsCommandIssuedByServerAdmin() )
-		return;
-
 	const NavAreaVector &selectedSet = TheNavMesh->GetSelectedSet();
 
 	CUtlBuffer fileBuffer( 4096, 1024*1024, CUtlBuffer::TEXT_BUFFER );
@@ -1735,9 +1730,6 @@ CON_COMMAND_F( nav_dump_selected_set_positions, "Write the (x,y,z) coordinates o
 //----------------------------------------------------------------------------------
 CON_COMMAND_F( nav_show_dumped_positions, "Show the (x,y,z) coordinate positions of the given dump file.", FCVAR_GAMEDLL | FCVAR_CHEAT )
 {
-	if ( !UTIL_IsCommandIssuedByServerAdmin() )
-		return;
-
 	CUtlBuffer fileBuffer( 4096, 1024*1024, CUtlBuffer::TEXT_BUFFER );
 
 	// filename is local to game dir for Steam, so we need to prepend game dir for regular file save
@@ -1770,9 +1762,6 @@ CON_COMMAND_F( nav_show_dumped_positions, "Show the (x,y,z) coordinate positions
 //----------------------------------------------------------------------------------
 CON_COMMAND_F( nav_select_larger_than, "Select nav areas where both dimensions are larger than the given size.", FCVAR_GAMEDLL | FCVAR_CHEAT )
 {
-	if ( !UTIL_IsCommandIssuedByServerAdmin() )
-		return;
-
 	if ( args.ArgC() > 1 )
 	{
 		float minSize = atof( args[1] );
@@ -2673,9 +2662,6 @@ void CommandNavMarkWalkable( void )
 void CNavMesh::CommandNavMarkWalkable( void )
 {
 	Vector pos;
-
-	if ( !UTIL_IsCommandIssuedByServerAdmin() )
-		return;
 
 	if (nav_edit.GetBool())
 	{

@@ -14,7 +14,7 @@
 
 #include "c_basecombatcharacter.h"
 
-// NOTE: Moved all controller code into c_basestudiomodel
+// NOTE: MOved all controller code into c_basestudiomodel
 class C_AI_BaseNPC : public C_BaseCombatCharacter
 {
 	DECLARE_CLASS( C_AI_BaseNPC, C_BaseCombatCharacter );
@@ -29,7 +29,7 @@ public:
 	bool					ShouldAvoidObstacle( void ){ return m_bPerformAvoidance; }
 	virtual bool			AddRagdollToFadeQueue( void ) { return m_bFadeCorpse; }
 
-	virtual bool			GetRagdollInitBoneArrays( matrix3x4_t *pDeltaBones0, matrix3x4_t *pDeltaBones1, matrix3x4_t *pCurrentBones, float boneDt ) OVERRIDE;
+	virtual void			GetRagdollInitBoneArrays( matrix3x4_t *pDeltaBones0, matrix3x4_t *pDeltaBones1, matrix3x4_t *pCurrentBones, float boneDt );
 
 	int						GetDeathPose( void ) { return m_iDeathPose; }
 

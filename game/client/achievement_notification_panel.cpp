@@ -101,12 +101,11 @@ void CAchievementNotificationPanel::FireGameEvent( IGameEvent * event )
 		int iMax = event->GetInt( "max_val" );
 		wchar_t szLocalizedName[256]=L"";
 
-#if 0
 		if ( IsPC() )
 		{
 			// shouldn't ever get achievement progress if steam not running and user logged in, but check just in case
 			if ( !steamapicontext->SteamUserStats() )
-			{
+			{				
 				Msg( "Steam not running, achievement progress notification not displayed\n" );
 			}
 			else 
@@ -116,7 +115,6 @@ void CAchievementNotificationPanel::FireGameEvent( IGameEvent * event )
 			}
 		}
 		else 
-#endif
 		{
 			// on X360 we need to show our own achievement progress UI
 
@@ -139,7 +137,7 @@ void CAchievementNotificationPanel::FireGameEvent( IGameEvent * event )
 				return;
 			Q_wcsncpy( szFmt, pchFmt, sizeof( szFmt ) );
 
-			g_pVGuiLocalize->ConstructString_safe( szText, szFmt, 3, szLocalizedName, szNumFound, szNumTotal );
+			g_pVGuiLocalize->ConstructString( szText, sizeof( szText ), szFmt, 3, szLocalizedName, szNumFound, szNumTotal );
 			AddNotification( pchName, g_pVGuiLocalize->Find( "#GameUI_Achievement_Progress" ), szText );
 		}
 	}
@@ -247,7 +245,7 @@ void CAchievementNotificationPanel::SetXAndWide( Panel *pPanel, int x, int wide 
 	pPanel->SetWide( wide );
 }
 
-CON_COMMAND_F( achievement_notification_test, "Test the hud notification UI", FCVAR_CHEAT )
+CON_COMMAND_F( achievement_notification_test, "Test the hud notification UI", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY )
 {
 	static int iCount=0;
 

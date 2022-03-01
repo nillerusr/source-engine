@@ -38,7 +38,10 @@ CAI_TimedSemaphore g_AIFoesTalkSemaphore;
 
 ConceptHistory_t::~ConceptHistory_t()
 {
-	delete response;
+	if ( response )
+	{
+		delete response;
+	}
 	response = NULL;
 }
 
@@ -54,16 +57,14 @@ ConceptHistory_t::ConceptHistory_t( const ConceptHistory_t& src )
 
 ConceptHistory_t& ConceptHistory_t::operator =( const ConceptHistory_t& src )
 {
-	if ( this != &src )
-	{
-		timeSpoken = src.timeSpoken;
+	if ( this == &src )
+		return *this;
 
-		delete response;
-		response = NULL;
-		if ( src.response )
-		{
-			response = new AI_Response( *src.response );
-		}
+	timeSpoken = src.timeSpoken;
+	response = NULL;
+	if ( src.response )
+	{
+		response = new AI_Response( *src.response );
 	}
 
 	return *this;
@@ -88,14 +89,14 @@ public:
 
 			pSave->StartBlock();
 			{
+
 				// Write element name
 				pSave->WriteString( ch->GetElementName( i ) );
 
 				// Write data
 				pSave->WriteAll( pHistory );
-
 				// Write response blob
-				bool hasresponse = !!pHistory->response;
+				bool hasresponse = pHistory->response != NULL ? true : false;
 				pSave->WriteBool( &hasresponse );
 				if ( hasresponse )
 				{
@@ -117,7 +118,6 @@ public:
 		{
 			char conceptname[ 512 ];
 			conceptname[ 0 ] = 0;
-
 			ConceptHistory_t history;
 
 			pRestore->StartBlock();
@@ -127,6 +127,7 @@ public:
 				pRestore->ReadAll( &history );
 
 				bool hasresponse = false;
+
 				pRestore->ReadBool( &hasresponse );
 				if ( hasresponse )
 				{
@@ -150,7 +151,7 @@ public:
 			}
 		}
 	}
-
+	
 	virtual void MakeEmpty( const SaveRestoreFieldInfo_t &fieldInfo )
 	{
 	}
@@ -250,14 +251,14 @@ void CAI_Expresser::TestAllResponses()
 	if ( pResponseSystem )
 	{
 		CUtlVector<AI_Response *> responses;
-
 		pResponseSystem->GetAllResponses( &responses );
 		for ( int i = 0; i < responses.Count(); i++ )
 		{
-			const char *szResponse = responses[i]->GetResponsePtr();
+			char response[ 256 ];
+			responses[i]->GetResponse( response, sizeof( response ) );
 
-			Msg( "Response: %s\n", szResponse );
-			SpeakDispatchResponse( "", *responses[i] );
+			Msg( "Response: %s\n", response );
+			SpeakDispatchResponse( "", responses[i] );
 		}
 	}
 }
@@ -272,13 +273,13 @@ static const int LEN_SPECIFIC_SCENE_MODIFIER = strlen( AI_SPECIFIC_SCENE_MODIFIE
 //			NULL - 
 // Output : AI_Response
 //-----------------------------------------------------------------------------
-bool CAI_Expresser::SpeakFindResponse( AI_Response &outResponse, AIConcept_t concept, const char *modifiers /*= NULL*/ )
+AI_Response *CAI_Expresser::SpeakFindResponse( AIConcept_t concept, const char *modifiers /*= NULL*/ )
 {
 	IResponseSystem *rs = GetOuter()->GetResponseSystem();
 	if ( !rs )
 	{
 		Assert( !"No response system installed for CAI_Expresser::GetOuter()!!!" );
-		return false;
+		return NULL;
 	}
 
 	AI_CriteriaSet set;
@@ -286,7 +287,7 @@ bool CAI_Expresser::SpeakFindResponse( AI_Response &outResponse, AIConcept_t con
 	set.AppendCriteria( "concept", concept, CONCEPT_WEIGHT );
 
 	// Always include any optional modifiers
-	if ( modifiers )
+	if ( modifiers != NULL )
 	{
 		char copy_modifiers[ 255 ];
 		const char *pCopy;
@@ -319,19 +320,30 @@ bool CAI_Expresser::SpeakFindResponse( AI_Response &outResponse, AIConcept_t con
 	}
 
 	// Now that we have a criteria set, ask for a suitable response
-	bool found = rs->FindBestResponse( set, outResponse, this );
+	AI_Response *result = new AI_Response;
+	Assert( result && "new AI_Response: Returned a NULL AI_Response!" );
+	bool found = rs->FindBestResponse( set, *result, this );
 
 	if ( rr_debugresponses.GetInt() == 3 )
 	{
 		if ( ( GetOuter()->MyNPCPointer() && GetOuter()->m_debugOverlays & OVERLAY_NPC_SELECTED_BIT ) || GetOuter()->IsPlayer() )
 		{
-			const char *pszName = GetOuter()->IsPlayer() ?
-									((CBasePlayer*)GetOuter())->GetPlayerName() : GetOuter()->GetDebugName();
+			const char *pszName;
+			if ( GetOuter()->IsPlayer() )
+			{
+				pszName = ((CBasePlayer*)GetOuter())->GetPlayerName();
+			}
+			else
+			{
+				pszName = GetOuter()->GetDebugName();
+			}
 
 			if ( found )
 			{
-				const char *szReponse = outResponse.GetResponsePtr();
-				Warning( "RESPONSERULES: %s spoke '%s'. Found response '%s'.\n", pszName, concept, szReponse );
+				char response[ 256 ];
+				result->GetResponse( response, sizeof( response ) );
+
+				Warning( "RESPONSERULES: %s spoke '%s'. Found response '%s'.\n", pszName, concept, response );
 			}
 			else
 			{
@@ -341,28 +353,44 @@ bool CAI_Expresser::SpeakFindResponse( AI_Response &outResponse, AIConcept_t con
 	}
 
 	if ( !found )
-		return false;
+	{
+		//Assert( !"rs->FindBestResponse: Returned a NULL AI_Response!" );
+		delete result;
+		return NULL;
+	}
 
-	const char *szReponse = outResponse.GetResponsePtr();
-	if ( !szReponse[0] )
-		return false;
+	char response[ 256 ];
+	result->GetResponse( response, sizeof( response ) );
 
-	if ( ( outResponse.GetOdds() < 100 ) && ( random->RandomInt( 1, 100 ) <= outResponse.GetOdds() ) )
-		return false;
+	if ( !response[0] )
+	{
+		delete result;
+		return NULL;
+	}
 
-	return true;
+	if ( result->GetOdds() < 100 && random->RandomInt( 1, 100 ) <= result->GetOdds() )
+	{
+		delete result;
+		return NULL;
+	}
+
+	return result;
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: Dispatches the result
 // Input  : *response - 
 //-----------------------------------------------------------------------------
-bool CAI_Expresser::SpeakDispatchResponse( AIConcept_t concept, AI_Response& response, IRecipientFilter *filter /* = NULL */ )
+bool CAI_Expresser::SpeakDispatchResponse( AIConcept_t concept, AI_Response *result, IRecipientFilter *filter /* = NULL */ )
 {
+	char response[ 256 ];
+	result->GetResponse( response, sizeof( response ) );
+
+	float delay = result->GetDelay();
+	
 	bool spoke = false;
-	float delay = response.GetDelay();
-	const char *szResponse = response.GetResponsePtr();
-	soundlevel_t soundlevel = response.GetSoundLevel();
+
+	soundlevel_t soundlevel = result->GetSoundLevel();
 
 	if ( IsSpeaking() && concept[0] != 0 )
 	{
@@ -376,52 +404,63 @@ bool CAI_Expresser::SpeakDispatchResponse( AIConcept_t concept, AI_Response& res
 		if ( IsRunningScriptedScene( GetOuter() ) )
 		{
 			DevMsg( "SpeakDispatchResponse:  Entity ( %i/%s ) refusing to speak due to scene entity, tossing '%s'\n", GetOuter()->entindex(), STRING( GetOuter()->GetEntityName() ), concept );
+			delete result;
 			return false;
 		}
 	}
 
-	switch ( response.GetType() )
+	switch ( result->GetType() )
 	{
 	default:
 	case RESPONSE_NONE:
 		break;
 
 	case RESPONSE_SPEAK:
-		if ( !response.ShouldntUseScene() )
 		{
-			// This generates a fake CChoreoScene wrapping the sound.txt name
-			spoke = SpeakAutoGeneratedScene( szResponse, delay );
-		}
-		else
-		{
-			float speakTime = GetResponseDuration( response );
-			GetOuter()->EmitSound( szResponse );
+			if ( !result->ShouldntUseScene() )
+			{
+				// This generates a fake CChoreoScene wrapping the sound.txt name
+				spoke = SpeakAutoGeneratedScene( response, delay );
+			}
+			else
+			{
+				float speakTime = GetResponseDuration( result );
+				GetOuter()->EmitSound( response );
 
-			DevMsg( "SpeakDispatchResponse:  Entity ( %i/%s ) playing sound '%s'\n", GetOuter()->entindex(), STRING( GetOuter()->GetEntityName() ), szResponse );
-			NoteSpeaking( speakTime, delay );
-			spoke = true;
+				DevMsg( "SpeakDispatchResponse:  Entity ( %i/%s ) playing sound '%s'\n", GetOuter()->entindex(), STRING( GetOuter()->GetEntityName() ), response );
+				NoteSpeaking( speakTime, delay );
+				spoke = true;
+			}
 		}
 		break;
 
 	case RESPONSE_SENTENCE:
-		spoke = ( -1 != SpeakRawSentence( szResponse, delay, VOL_NORM, soundlevel ) ) ? true : false;
+		{
+			spoke = ( -1 != SpeakRawSentence( response, delay, VOL_NORM, soundlevel ) ) ? true : false;
+		}
 		break;
 
 	case RESPONSE_SCENE:
-		spoke = SpeakRawScene( szResponse, delay, &response, filter );
+		{
+			spoke = SpeakRawScene( response, delay, result, filter );
+		}
 		break;
 
 	case RESPONSE_RESPONSE:
-		// This should have been recursively resolved already
-		Assert( 0 );
+		{
+			// This should have been recursively resolved already
+			Assert( 0 );
+		}
 		break;
 	case RESPONSE_PRINT:
-		if ( g_pDeveloper->GetInt() > 0 )
 		{
-			Vector vPrintPos;
-			GetOuter()->CollisionProp()->NormalizedToWorldSpace( Vector(0.5,0.5,1.0f), &vPrintPos );
-			NDebugOverlay::Text( vPrintPos, szResponse, true, 1.5 );
-			spoke = true;
+			if ( g_pDeveloper->GetInt() > 0 )
+			{
+				Vector vPrintPos;
+				GetOuter()->CollisionProp()->NormalizedToWorldSpace( Vector(0.5,0.5,1.0f), &vPrintPos );
+				NDebugOverlay::Text( vPrintPos, response, true, 1.5 );
+				spoke = true;
+			}
 		}
 		break;
 	}
@@ -429,27 +468,30 @@ bool CAI_Expresser::SpeakDispatchResponse( AIConcept_t concept, AI_Response& res
 	if ( spoke )
 	{
 		m_flLastTimeAcceptedSpeak = gpGlobals->curtime;
-		if ( DebuggingSpeech() && g_pDeveloper->GetInt() > 0 && response.GetType() != RESPONSE_PRINT )
+		if ( DebuggingSpeech() && g_pDeveloper->GetInt() > 0 && response && result->GetType() != RESPONSE_PRINT )
 		{
 			Vector vPrintPos;
 			GetOuter()->CollisionProp()->NormalizedToWorldSpace( Vector(0.5,0.5,1.0f), &vPrintPos );
-			NDebugOverlay::Text( vPrintPos, CFmtStr( "%s: %s", concept, szResponse ), true, 1.5 );
+			NDebugOverlay::Text( vPrintPos, CFmtStr( "%s: %s", concept, response ), true, 1.5 );
 		}
 
-		if ( response.IsApplyContextToWorld() )
+		if ( result->IsApplyContextToWorld() )
 		{
 			CBaseEntity *pEntity = CBaseEntity::Instance( engine->PEntityOfEntIndex( 0 ) );
 			if ( pEntity )
 			{
-				pEntity->AddContext( response.GetContext() );
+				pEntity->AddContext( result->GetContext() );
 			}
 		}
 		else
 		{
-			GetOuter()->AddContext( response.GetContext() );
+			GetOuter()->AddContext( result->GetContext() );
 		}
-
-		SetSpokeConcept( concept, &response );
+		SetSpokeConcept( concept, result );
+	}
+	else
+	{
+		delete result;
 	}
 
 	return spoke;
@@ -460,33 +502,44 @@ bool CAI_Expresser::SpeakDispatchResponse( AIConcept_t concept, AI_Response& res
 // Input  : *response - 
 // Output : float
 //-----------------------------------------------------------------------------
-float CAI_Expresser::GetResponseDuration( AI_Response& response )
+float CAI_Expresser::GetResponseDuration( AI_Response *result )
 {
-	const char *szResponse = response.GetResponsePtr();
+	Assert( result );
+	char response[ 256 ];
+	result->GetResponse( response, sizeof( response ) );
 
-	switch ( response.GetType() )
+	switch ( result->GetType() )
 	{
 	default:
 	case RESPONSE_NONE:
 		break;
-
 	case RESPONSE_SPEAK:
-		return GetOuter()->GetSoundDuration( szResponse, STRING( GetOuter()->GetModelName() ) );
-
-	case RESPONSE_SENTENCE:
-		Assert( 0 );
-		return 999.0f;
-
-	case RESPONSE_SCENE:
-		return GetSceneDuration( szResponse );
-
-	case RESPONSE_RESPONSE:
-		// This should have been recursively resolved already
-		Assert( 0 );
+		{
+			return GetOuter()->GetSoundDuration( response, STRING( GetOuter()->GetModelName() ) );
+		}
 		break;
-
+	case RESPONSE_SENTENCE:
+		{
+			Assert( 0 );
+			return 999.0f;
+		}
+		break;
+	case RESPONSE_SCENE:
+		{
+			return GetSceneDuration( response );
+		}
+		break;
+	case RESPONSE_RESPONSE:
+		{
+			// This should have been recursively resolved already
+			Assert( 0 );
+		}
+		break;
 	case RESPONSE_PRINT:
-		return 1.0;
+		{
+			return 1.0;
+		}
+		break;
 	}
 
 	return 0.0f;
@@ -499,18 +552,18 @@ float CAI_Expresser::GetResponseDuration( AI_Response& response )
 //-----------------------------------------------------------------------------
 bool CAI_Expresser::Speak( AIConcept_t concept, const char *modifiers /*= NULL*/, char *pszOutResponseChosen /* = NULL*/, size_t bufsize /* = 0 */, IRecipientFilter *filter /* = NULL */ )
 {
-    AI_Response response;
-	bool result = SpeakFindResponse( response, concept, modifiers );
+	AI_Response *result = SpeakFindResponse( concept, modifiers );
 	if ( !result )
+	{
 		return false;
+	}
 
 	SpeechMsg( GetOuter(), "%s (%p) spoke %s (%f)\n", STRING(GetOuter()->GetEntityName()), GetOuter(), concept, gpGlobals->curtime );
 
-	bool spoke = SpeakDispatchResponse( concept, response, filter );
+	bool spoke = SpeakDispatchResponse( concept, result, filter );
 	if ( pszOutResponseChosen )
 	{
-        const char *szResponse = response.GetResponsePtr();
-        Q_strncpy( pszOutResponseChosen, szResponse, bufsize );
+		result->GetResponse( pszOutResponseChosen, bufsize );
 	}
 	
 	return spoke;
@@ -755,12 +808,17 @@ void CAI_Expresser::SetSpokeConcept( AIConcept_t concept, AI_Response *response,
 	ConceptHistory_t *slot = &m_ConceptHistories[ idx ];
 
 	slot->timeSpoken = gpGlobals->curtime;
-
 	// Update response info
 	if ( response )
 	{
-		delete slot->response;
-		slot->response = new AI_Response( *response );
+		AI_Response *r = slot->response;
+		if ( r )
+		{
+			delete r;
+		}
+
+		// FIXME:  Are we leaking AI_Responses?
+		slot->response = response;
 	}
 
 	if ( bCallback )
@@ -827,13 +885,13 @@ void CAI_Expresser::SpeechMsg( CBaseEntity *pFlex, const char *pszFormat, ... )
 
 	if ( pFlex->MyNPCPointer() )
 	{
-		DevMsg( pFlex->MyNPCPointer(), "%s", string );
+		DevMsg( pFlex->MyNPCPointer(), string );
 	}
 	else 
 	{
 		DevMsg( "%s", string );
 	}
-	UTIL_LogPrintf( "%s", string );
+	UTIL_LogPrintf( string );
 }
 
 

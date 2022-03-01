@@ -844,7 +844,6 @@ CHudCloseCaption::CHudCloseCaption( const char *pElementName )
 	HOOK_HUD_MESSAGE( CHudCloseCaption, CloseCaption );
 
 	char uilanguage[ 64 ];
-	uilanguage[0] = 0;
 	engine->GetUILanguage( uilanguage, sizeof( uilanguage ) );
 
 	if ( !Q_stricmp( uilanguage, "english" ) )
@@ -2414,7 +2413,7 @@ void CHudCloseCaption::ProcessSentenceCaptionStream( const char *tokenstream )
 		}
 		else
 		{
-			entry = m_CloseCaptionRepeats[ idx ];
+			CaptionRepeat &entry = m_CloseCaptionRepeats[ idx ];
 			if ( gpGlobals->curtime < ( entry.m_flLastEmitTime + entry.m_flInterval ) )
 			{
 				return;
@@ -2460,7 +2459,7 @@ void CHudCloseCaption::_ProcessCaption( const wchar_t *caption, const char *toke
 	}
 	else
 	{
-		entry = m_CloseCaptionRepeats[ idx ];
+		CaptionRepeat &entry = m_CloseCaptionRepeats[ idx ];
 
 		// Interval of 0.0 means just don't double emit on same tick #
 		if ( entry.m_flInterval <= 0.0f )
@@ -2753,7 +2752,6 @@ void OnCaptionLanguageChanged( IConVar *pConVar, const char *pOldString, float f
 	}
 
 	char uilanguage[ 64 ];
-	uilanguage[0] = 0;
 	engine->GetUILanguage( uilanguage, sizeof( uilanguage ) );
 
 	CHudCloseCaption *hudCloseCaption = GET_HUDELEMENT( CHudCloseCaption );
