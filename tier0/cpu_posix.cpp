@@ -105,7 +105,7 @@ uint64 CalculateCPUFreq()
     int retval = sysctlbyname("hw.cpufrequency_max", &freq_hz, &freq_size, NULL, 0);
     // MoeMod : TODO dont know how to get freq on Apple Silicon
     if(!freq_hz)
-        freq_hz = 3200000;
+        freq_hz = 3200000000;
     return freq_hz;
 #else
 	// Try to open cpuinfo_max_freq. If the kernel was built with cpu scaling support disabled, this will fail.
