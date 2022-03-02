@@ -1292,8 +1292,15 @@ struct mstudio_modelvertexdata_t
 	int					GetGlobalTangentIndex( int i ) const;
 
 	// base of external vertex data stores
+#ifdef PLATFORM_64BITS
+	int                 unused_pVertexData;
+    int                 unused_pTangentData;
 	const void			*pVertexData;
 	const void			*pTangentData;
+#else
+	const void			*pVertexData;
+	const void			*pTangentData;
+#endif
 };
 
 #ifdef PLATFORM_64BITS
@@ -1314,12 +1321,19 @@ struct mstudio_meshvertexdata_t
 	int					GetModelVertexIndex( int i ) const;
 	int					GetGlobalVertexIndex( int i ) const;
 
+#ifdef PLATFORM_64BITS
+    // MoeMod : fix 64bit ptr size
+    int         	    unused_modelvertexdata;
+    int					numLODVertexes[MAX_NUM_LODS];
+    const mstudio_modelvertexdata_t	*modelvertexdata;
+#else
 	// indirection to this mesh's model's vertex data
 	const mstudio_modelvertexdata_t	*modelvertexdata;
 
 	// used for fixup calcs when culling top level lods
 	// expected number of mesh verts at desired lod
 	int					numLODVertexes[MAX_NUM_LODS];
+#endif
 };
 
 struct mstudiomesh_t
@@ -1353,7 +1367,7 @@ struct mstudiomesh_t
 #ifdef PLATFORM_64BITS
     mstudio_meshvertexdata_t vertexdata;
 
-    int					unused[7]; // remove as appropriate
+    int					unused[6]; // remove as appropriate
 #else
 	mstudio_meshvertexdata_t vertexdata;
 
@@ -1424,14 +1438,16 @@ inline bool mstudio_modelvertexdata_t::HasTangentData( void ) const
 inline int mstudio_modelvertexdata_t::GetGlobalVertexIndex( int i ) const
 {
 	mstudiomodel_t *modelptr = (mstudiomodel_t *)((byte *)this - offsetof(mstudiomodel_t, vertexdata));
-	//Assert( ( modelptr->vertexindex % sizeof( mstudiovertex_t ) ) == 0 );
+    Assert(&modelptr->vertexdata == this);
+	Assert( ( modelptr->vertexindex % sizeof( mstudiovertex_t ) ) == 0 );
 	return ( i + ( modelptr->vertexindex / sizeof( mstudiovertex_t ) ) );
 }
 
 inline int mstudio_modelvertexdata_t::GetGlobalTangentIndex( int i ) const
 {
 	mstudiomodel_t *modelptr = (mstudiomodel_t *)((byte *)this - offsetof(mstudiomodel_t, vertexdata));
-	//Assert( ( modelptr->tangentsindex % sizeof( Vector4D ) ) == 0 );
+    Assert(&modelptr->vertexdata == this);
+	Assert( ( modelptr->tangentsindex % sizeof( Vector4D ) ) == 0 );
 	return ( i + ( modelptr->tangentsindex / sizeof( Vector4D ) ) );
 }
 
@@ -1499,7 +1515,8 @@ inline const thinModelVertices_t * mstudiomesh_t::GetThinVertexData( void *pMode
 
 inline int mstudio_meshvertexdata_t::GetModelVertexIndex( int i ) const
 {
-	mstudiomesh_t *meshptr = (mstudiomesh_t *)((byte *)this - offsetof(mstudiomesh_t,vertexdata)); 
+	mstudiomesh_t *meshptr = (mstudiomesh_t *)((byte *)this - offsetof(mstudiomesh_t,vertexdata));
+    Assert(&meshptr->vertexdata == this);
 	return meshptr->vertexoffset + i;
 }
 
