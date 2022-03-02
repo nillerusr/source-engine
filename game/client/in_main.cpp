@@ -18,6 +18,7 @@
 #include "prediction.h"
 #include "bitbuf.h"
 #include "checksum_md5.h"
+#include "touch.h"
 #include "hltvcamera.h"
 #if defined( REPLAY_ENABLED )
 #include "replay/replaycamera.h"
@@ -946,6 +947,7 @@ void CInput::ControllerMove( float frametime, CUserCmd *cmd )
 	}
 
 	JoyStickMove( frametime, cmd);
+	gTouch.Move( frametime, cmd );
 
 	// NVNT if we have a haptic device..
 	if(haptics && haptics->HasDevice())
