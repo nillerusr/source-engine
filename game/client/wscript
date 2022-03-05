@@ -18,7 +18,8 @@ games = {
 	'portal': ['client_base.vpc', 'client_portal.vpc'],
 	'hl1mp': ['client_base.vpc', 'client_hl1.vpc'],
 	'cstrike': ['client_base.vpc', 'client_cstrike.vpc'],
-	'dod': ['client_base.vpc', 'client_dod.vpc']
+	'dod': ['client_base.vpc', 'client_dod.vpc'],
+	'episodic': ['client_base.vpc', 'client_episodic.vpc']
 }
 
 def configure(conf):
