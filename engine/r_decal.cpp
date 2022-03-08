@@ -2304,7 +2304,7 @@ inline void R_DrawDecalMeshList( DecalMeshList_t &meshList )
 }
 
 #define DECALMARKERS_SWITCHSORTTREE ((decal_t *)0x00000000)
-#define DECALMARKERS_SWITCHBUCKET	((decal_t *)0xFFFFFFFF)
+#define DECALMARKERS_SWITCHBUCKET	((decal_t *)-1)
 //-----------------------------------------------------------------------------
 //
 //-----------------------------------------------------------------------------

@@ -111,7 +111,8 @@ protected:
 class CMemoryPoolMT : public CUtlMemoryPool
 {
 public:
-	CMemoryPoolMT(int blockSize, int numElements, int growMode = UTLMEMORYPOOL_GROW_FAST, const char *pszAllocOwner = NULL) : CUtlMemoryPool( blockSize, numElements, growMode, pszAllocOwner) {}
+    // MoeMod : add alignment
+	CMemoryPoolMT(int blockSize, int numElements, int growMode = UTLMEMORYPOOL_GROW_FAST, const char *pszAllocOwner = NULL, int nAlignment = 0) : CUtlMemoryPool( blockSize, numElements, growMode, pszAllocOwner, nAlignment) {}
 
 
 	void*		Alloc()	{ AUTO_LOCK( m_mutex ); return CUtlMemoryPool::Alloc(); }
@@ -135,7 +136,8 @@ template< class T >
 class CClassMemoryPool : public CUtlMemoryPool
 {
 public:
-	CClassMemoryPool(int numElements, int growMode = GROW_FAST, int nAlignment = 0 ) :
+    // MoeMod : bad default align here, should be alignof(T)
+	CClassMemoryPool(int numElements, int growMode = GROW_FAST, int nAlignment = alignof(T) ) :
 		CUtlMemoryPool( sizeof(T), numElements, growMode, MEM_ALLOC_CLASSNAME(T), nAlignment ) {
 			#ifdef PLATFORM_64BITS 
 				COMPILE_TIME_ASSERT( sizeof(CUtlMemoryPool) == 64 );
@@ -315,7 +317,8 @@ inline void CClassMemoryPool<T>::Clear()
 
 	for( CBlob *pCur=m_BlobHead.m_pNext; pCur != &m_BlobHead; pCur=pCur->m_pNext )
 	{
-		T *p = (T *)pCur->m_Data;
+        // MoeMod : should realign to real data.
+		T *p = (T *)AlignValue( pCur->m_Data, m_nAlignment );
 		T *pLimit = (T *)(pCur->m_Data + pCur->m_NumBytes);
 		while ( p < pLimit )
 		{
@@ -361,7 +364,7 @@ inline void CClassMemoryPool<T>::Clear()
 		static   CMemoryPoolMT   s_Allocator
 
 #define DEFINE_FIXEDSIZE_ALLOCATOR_MT( _class, _initsize, _grow )					\
-	CMemoryPoolMT   _class::s_Allocator(sizeof(_class), _initsize, _grow, #_class " pool")
+	CMemoryPoolMT   _class::s_Allocator(sizeof(_class), _initsize, _grow, #_class " pool", alignof(_class))
 
 //-----------------------------------------------------------------------------
 // Macros that make it simple to make a class use a fixed-size allocator
