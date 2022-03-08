@@ -1293,14 +1293,26 @@ struct mstudio_modelvertexdata_t
 
 	// base of external vertex data stores
 #ifdef PLATFORM_64BITS
-	int                 unused_pVertexData;
-    int                 unused_pTangentData;
-	const void			*pVertexData;
-	const void			*pTangentData;
+	int                 index_ptr_pVertexData;
+    int                 index_ptr_pTangentData;
 #else
 	const void			*pVertexData;
 	const void			*pTangentData;
 #endif
+    const void	*GetVertexData() const {
+#ifdef PLATFORM_64BITS
+        return *(const void **)((byte *)this + index_ptr_pVertexData);
+#else
+        return pVertexData;
+#endif
+    }
+    const void	*GetTangentData() const {
+#ifdef PLATFORM_64BITS
+        return *(const void **)((byte *)this + index_ptr_pTangentData);
+#else
+        return pTangentData;
+#endif
+    }
 };
 
 #ifdef PLATFORM_64BITS
@@ -1323,17 +1335,22 @@ struct mstudio_meshvertexdata_t
 
 #ifdef PLATFORM_64BITS
     // MoeMod : fix 64bit ptr size
-    int         	    unused_modelvertexdata;
-    int					numLODVertexes[MAX_NUM_LODS];
-    const mstudio_modelvertexdata_t	*modelvertexdata;
+    int         	    index_ptr_modelvertexdata;
 #else
 	// indirection to this mesh's model's vertex data
 	const mstudio_modelvertexdata_t	*modelvertexdata;
-
+#endif
 	// used for fixup calcs when culling top level lods
 	// expected number of mesh verts at desired lod
 	int					numLODVertexes[MAX_NUM_LODS];
+
+    const mstudio_modelvertexdata_t	*pModelVertexData() const {
+#ifdef PLATFORM_64BITS
+        return *(const mstudio_modelvertexdata_t **)((byte *)this + index_ptr_modelvertexdata);
+#else
+        return modelvertexdata;
 #endif
+    }
 };
 
 struct mstudiomesh_t
@@ -1364,13 +1381,12 @@ struct mstudiomesh_t
 
 	Vector				center;
 
-#ifdef PLATFORM_64BITS
     mstudio_meshvertexdata_t vertexdata;
 
+#ifdef PLATFORM_64BITS
     int					unused[6]; // remove as appropriate
+    const mstudio_modelvertexdata_t	*real_modelvertexdata;
 #else
-	mstudio_meshvertexdata_t vertexdata;
-
 	int					unused[8]; // remove as appropriate
 #endif
 
@@ -1414,14 +1430,12 @@ struct mstudiomodel_t
 	int					eyeballindex;
 	inline  mstudioeyeball_t *pEyeball( int i ) { return (mstudioeyeball_t *)(((byte *)this) + eyeballindex) + i; };
 
-
-#ifdef PLATFORM_64BITS
     mstudio_modelvertexdata_t vertexdata; // sizeof(mstudio_modelvertexdata_t) == 16
-
-    int					unused[6];		// remove as appropriate
+#ifdef PLATFORM_64BITS
+    int					unused[4];		// remove as appropriate
+    const void			*real_pVertexData;
+    const void			*real_pTangentData;
 #else
-	mstudio_modelvertexdata_t vertexdata;
-
 	int					unused[8];		// remove as appropriate
 #endif
 };
@@ -1432,7 +1446,7 @@ struct mstudiomodel_t
 
 inline bool mstudio_modelvertexdata_t::HasTangentData( void ) const 
 {
-	return (pTangentData != NULL);
+	return (GetTangentData() != NULL);
 }
 
 inline int mstudio_modelvertexdata_t::GetGlobalVertexIndex( int i ) const
@@ -1453,7 +1467,7 @@ inline int mstudio_modelvertexdata_t::GetGlobalTangentIndex( int i ) const
 
 inline mstudiovertex_t *mstudio_modelvertexdata_t::Vertex( int i ) const 
 {
-	return (mstudiovertex_t *)pVertexData + GetGlobalVertexIndex( i );
+	return (mstudiovertex_t *)GetVertexData() + GetGlobalVertexIndex( i );
 }
 
 inline Vector *mstudio_modelvertexdata_t::Position( int i ) const 
@@ -1471,7 +1485,7 @@ inline Vector4D *mstudio_modelvertexdata_t::TangentS( int i ) const
 	// NOTE: The tangents vector is 16-bytes in a separate array
 	// because it only exists on the high end, and if I leave it out
 	// of the mstudiovertex_t, the vertex is 64-bytes (good for low end)
-	return (Vector4D *)pTangentData + GetGlobalTangentIndex( i );
+	return (Vector4D *)GetTangentData() + GetGlobalTangentIndex( i );
 }
 
 inline Vector2D *mstudio_modelvertexdata_t::Texcoord( int i ) const 
@@ -1491,7 +1505,7 @@ inline mstudiomodel_t *mstudiomesh_t::pModel() const
 
 inline bool mstudio_meshvertexdata_t::HasTangentData( void ) const
 {
-	return modelvertexdata->HasTangentData();
+	return pModelVertexData()->HasTangentData();
 }
 
 inline const mstudio_meshvertexdata_t *mstudiomesh_t::GetVertexData( void *pModelData )
@@ -1499,9 +1513,14 @@ inline const mstudio_meshvertexdata_t *mstudiomesh_t::GetVertexData( void *pMode
 	// get this mesh's model's vertex data (allow for mstudiomodel_t::GetVertexData
 	// returning NULL if the data has been converted to 'thin' vertices)
 	this->pModel()->GetVertexData( pModelData );
+#ifdef PLATFORM_64BITS
+    real_modelvertexdata = &( this->pModel()->vertexdata );
+    vertexdata.index_ptr_modelvertexdata = (byte *)&real_modelvertexdata - (byte *)&vertexdata;
+#else
 	vertexdata.modelvertexdata = &( this->pModel()->vertexdata );
+#endif
 
-	if ( !vertexdata.modelvertexdata->pVertexData )
+	if ( !vertexdata.pModelVertexData()->GetVertexData() )
 		return NULL;
 
 	return &vertexdata;
@@ -1522,37 +1541,37 @@ inline int mstudio_meshvertexdata_t::GetModelVertexIndex( int i ) const
 
 inline int mstudio_meshvertexdata_t::GetGlobalVertexIndex( int i ) const
 {
-	return modelvertexdata->GetGlobalVertexIndex( GetModelVertexIndex( i ) );
+	return pModelVertexData()->GetGlobalVertexIndex( GetModelVertexIndex( i ) );
 }
 
 inline Vector *mstudio_meshvertexdata_t::Position( int i ) const 
 {
-	return modelvertexdata->Position( GetModelVertexIndex( i ) ); 
+	return pModelVertexData()->Position( GetModelVertexIndex( i ) );
 };
 
 inline Vector *mstudio_meshvertexdata_t::Normal( int i ) const 
 {
-	return modelvertexdata->Normal( GetModelVertexIndex( i ) ); 
+	return pModelVertexData()->Normal( GetModelVertexIndex( i ) );
 };
 
 inline Vector4D *mstudio_meshvertexdata_t::TangentS( int i ) const
 {
-	return modelvertexdata->TangentS( GetModelVertexIndex( i ) );
+	return pModelVertexData()->TangentS( GetModelVertexIndex( i ) );
 }
 
 inline Vector2D *mstudio_meshvertexdata_t::Texcoord( int i ) const 
 {
-	return modelvertexdata->Texcoord( GetModelVertexIndex( i ) ); 
+	return pModelVertexData()->Texcoord( GetModelVertexIndex( i ) );
 };
 
 inline mstudioboneweight_t *mstudio_meshvertexdata_t::BoneWeights( int i ) const 
 {
-	return modelvertexdata->BoneWeights( GetModelVertexIndex( i ) ); 
+	return pModelVertexData()->BoneWeights( GetModelVertexIndex( i ) );
 };
 
 inline mstudiovertex_t *mstudio_meshvertexdata_t::Vertex( int i ) const
 {
-	return modelvertexdata->Vertex( GetModelVertexIndex( i ) );
+	return pModelVertexData()->Vertex( GetModelVertexIndex( i ) );
 }
 
 // a group of studio model data
@@ -1972,15 +1991,29 @@ inline const mstudio_modelvertexdata_t * mstudiomodel_t::GetVertexData( void *pM
 	const vertexFileHeader_t * pVertexHdr = CacheVertexData( pModelData );
 	if ( !pVertexHdr )
 	{
+#ifdef PLATFORM_64BITS
+        this->real_pVertexData = NULL;
+        this->real_pTangentData = NULL;
+        vertexdata.index_ptr_pVertexData = (byte *)&real_pVertexData - (byte *)&vertexdata;
+        vertexdata.index_ptr_pTangentData = (byte *)&real_pTangentData - (byte *)&vertexdata;
+#else
 		vertexdata.pVertexData = NULL;
 		vertexdata.pTangentData = NULL;
+#endif
 		return NULL;
 	}
 
+#ifdef PLATFORM_64BITS
+    this->real_pVertexData = pVertexHdr->GetVertexData();
+    this->real_pTangentData = pVertexHdr->GetTangentData();
+    vertexdata.index_ptr_pVertexData = (byte *)&real_pVertexData - (byte *)&vertexdata;
+    vertexdata.index_ptr_pTangentData = (byte *)&real_pTangentData - (byte *)&vertexdata;
+#else
 	vertexdata.pVertexData  = pVertexHdr->GetVertexData();
 	vertexdata.pTangentData = pVertexHdr->GetTangentData();
+#endif
 
-	if ( !vertexdata.pVertexData )
+	if ( !vertexdata.GetVertexData() )
 		return NULL;
 
 	return &vertexdata;

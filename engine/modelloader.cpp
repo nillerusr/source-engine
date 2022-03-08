@@ -1831,7 +1831,7 @@ void *Hunk_AllocNameAlignedClear_( int size, int alignment, const char *pHunkNam
 	Assert(IsPowerOfTwo(alignment));
 	void *pMem = Hunk_AllocName( alignment + size, pHunkName );
 	memset( pMem, 0, size + alignment );
-	pMem = (void *)( ( ( ( unsigned long )pMem ) + (alignment-1) ) & ~(alignment-1) );
+	pMem = (void *)( ( ( ( uintp )pMem ) + (alignment-1) ) & ~(alignment-1) );
 
 	return pMem;
 }

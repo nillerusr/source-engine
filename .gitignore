@@ -8,3 +8,4 @@ build/
 .lock-waf*
 __pycache__
 *.pyc
+.DS_Store

@@ -2919,8 +2919,8 @@ END_BYTESWAP_DATADESC()
 
 BEGIN_BYTESWAP_DATADESC( mstudio_modelvertexdata_t )
 #ifdef PLATFORM_64BITS
-	DEFINE_FIELD( unused_pVertexData, FIELD_INTEGER ),		// void*
-	DEFINE_FIELD( unused_pTangentData, FIELD_INTEGER ),	// void*
+	DEFINE_FIELD( index_ptr_pVertexData, FIELD_INTEGER ),		// void*
+	DEFINE_FIELD( index_ptr_pTangentData, FIELD_INTEGER ),	// void*
 #else
 	DEFINE_FIELD( pVertexData, FIELD_INTEGER ),		// void*
 	DEFINE_FIELD( pTangentData, FIELD_INTEGER ),	// void*
@@ -3004,7 +3004,7 @@ END_BYTESWAP_DATADESC()
 
 BEGIN_BYTESWAP_DATADESC( mstudio_meshvertexdata_t )
 #ifdef PLATFORM_64BITS
-	DEFINE_FIELD( unused_modelvertexdata, FIELD_INTEGER ),	// mstudio_modelvertexdata_t*
+	DEFINE_FIELD( index_ptr_modelvertexdata, FIELD_INTEGER ),	// mstudio_modelvertexdata_t*
 #else
 	DEFINE_FIELD( modelvertexdata, FIELD_INTEGER ),	// mstudio_modelvertexdata_t*
 #endif

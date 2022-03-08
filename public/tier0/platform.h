@@ -441,7 +441,13 @@ typedef void * HINSTANCE;
 	// So if being debugged, use INT3 which is precise.
 #ifdef OSX
 #if defined(__arm__) || defined(__arm64__)
+#ifdef __clang__
 #define DebuggerBreak()  do { if ( Plat_IsInDebugSession() ) { __builtin_debugtrap(); } else { raise(SIGTRAP); } } while(0)
+#elif defined __GNUC__
+#define DebuggerBreak()  do { if ( Plat_IsInDebugSession() ) { __builtin_trap(); } else { raise(SIGTRAP); } } while(0)
+#else
+#define DebuggerBreak()  raise(SIGTRAP)
+#endif
 #else
 #define DebuggerBreak()  do { if ( Plat_IsInDebugSession() ) { __asm ( "int $3" ); } else { raise(SIGTRAP); } } while(0)
 #endif

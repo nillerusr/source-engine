@@ -126,7 +126,7 @@ struct studiodata_t
 	// array of cache handles to demand loaded virtual model data
 	int					m_nAnimBlockCount;
 	DataCacheHandle_t	*m_pAnimBlock;
-	unsigned long	 	*m_iFakeAnimBlockStall;
+	unsigned int	 	*m_iFakeAnimBlockStall;
 
 	// vertex data is usually compressed to save memory (model decal code only needs some data)
 	DataCacheHandle_t	m_VertexCache;
@@ -1169,8 +1169,8 @@ void CMDLCache::AllocateAnimBlocks( studiodata_t *pStudioData, int nCount )
 
 	memset( pStudioData->m_pAnimBlock, 0, sizeof(DataCacheHandle_t) * pStudioData->m_nAnimBlockCount );
 
-	pStudioData->m_iFakeAnimBlockStall = new unsigned long [pStudioData->m_nAnimBlockCount];
-	memset( pStudioData->m_iFakeAnimBlockStall, 0, sizeof( unsigned long ) * pStudioData->m_nAnimBlockCount );
+	pStudioData->m_iFakeAnimBlockStall = new unsigned int [pStudioData->m_nAnimBlockCount];
+	memset( pStudioData->m_iFakeAnimBlockStall, 0, sizeof( unsigned int ) * pStudioData->m_nAnimBlockCount );
 }
 
 void CMDLCache::FreeAnimBlocks( MDLHandle_t handle )
