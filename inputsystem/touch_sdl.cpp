@@ -20,9 +20,7 @@ int TouchSDLWatcher( void *userInfo, SDL_Event *event )
 {
 	CInputSystem *pInputSystem = (CInputSystem *)userInfo;
 
-	SDL_Window *window = SDL_GetWindowFromID(event->tfinger.windowID);
-	if( !window )
-		return 0;
+	if( !event || !pInputSystem ) return 1;
 
 	switch ( event->type ) {
 	case SDL_FINGERDOWN:
