@@ -21,7 +21,6 @@ def build(bld):
 		'float_bm.cpp',
 		'float_bm2.cpp',
 		'float_bm3.cpp',
-		 #'float_bm4.cpp',	[$WINDOWS]
 		'float_bm_bilateral_filter.cpp',
 		'float_cube.cpp',
 		'imageformat.cpp',
@@ -31,6 +30,11 @@ def build(bld):
 		'tgawriter.cpp',
 		'bitmap.cpp'
 	]
+	
+	if bld.env.DEST_OS == 'win32':
+		source += [
+			'float_bm4.cpp'
+		]
 
 	includes = [
 		'.',
@@ -43,6 +47,9 @@ def build(bld):
 	defines = []
 
 	libs = []
+	
+	if bld.env.DEST_OS == 'win32':
+		libs += ['NVTC', 'ATI_COMPRESS_MT_VC10']
 
 	bld.stlib(
 		source   = source,

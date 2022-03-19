@@ -19,8 +19,12 @@ def build(bld):
 		'../public/filesystem_init.cpp',
 		'launcher.cpp',
 		'reslistgenerator.cpp',
-		'android.cpp'
 	]
+
+	if bld.env.DEST_OS == 'android':
+		source += [
+			'android.cpp'
+		]
 
 	includes = [
 		'.',
@@ -33,6 +37,9 @@ def build(bld):
 	defines = []
 
 	libs = ['tier0','tier1','tier2','tier3','vstdlib','steam_api','appframework','SDL2','togl']
+	
+	if bld.env.DEST_OS == 'win32':
+		libs += ['USER32', 'OLE32', 'SHELL32']
 
 	install_path = bld.env.LIBDIR
 

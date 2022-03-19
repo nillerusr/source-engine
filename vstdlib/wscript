@@ -22,11 +22,15 @@ def build(bld):
 		'jobthread.cpp',
 		'KeyValuesSystem.cpp',
 		'osversion.cpp',
-		#'processutils.cpp'	#		[$WINDOWS]
 		'random.cpp',
 		'vcover.cpp',
 		'../public/tier0/memoverride.cpp'
 	]
+	
+	if bld.env.DEST_OS == 'win32':
+		source += [
+			'processutils.cpp'
+		]
 
 	includes = [
 		'.',

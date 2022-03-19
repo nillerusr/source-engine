@@ -40,10 +40,6 @@ def build(bld):
 		'memstack.cpp',
 		'NetAdr.cpp',
 		'newbitbuf.cpp',
-#		'pathmatch.cpp', # [$LINUXALL]
-		# 'processor_detect.cpp', # [$WINDOWS||$X360]
-		'processor_detect_linux.cpp', # [$POSIX]
-		'qsort_s.cpp', # [$LINUXALL||$PS3]
 		'rangecheckedvar.cpp',
 		'reliabletimer.cpp',
 		'snappy-sinksource.cpp',
@@ -64,6 +60,17 @@ def build(bld):
 		'utlsymbol.cpp'
 	]
 
+	if bld.env.DEST_OS == 'win32':
+		source += [
+			'processor_detect.cpp',
+		]
+	else:
+		source += [
+			#'pathmatch.cpp',
+			'processor_detect_linux.cpp',
+			'qsort_s.cpp',
+		]
+
 	includes = [
 		'.',
 		'../public',
@@ -75,7 +82,9 @@ def build(bld):
 	defines = []
 
 	libs = []
-
+	if bld.env.DEST_OS == 'win32':
+		libs += ['RPCRT4']
+		
 	bld.stlib(
 		source   = source,
 		target   = PROJECT_NAME,

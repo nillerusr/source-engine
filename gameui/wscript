@@ -21,7 +21,6 @@ def build(bld):
 		'BasePanel.cpp',
 		'GameConsole.cpp',
 		'GameUI_Interface.cpp',
-		# 'LogoFile.cpp', [!$POSIX]
 		'ModInfo.cpp',
 		'MouseMessageForwardingPanel.cpp',
 		'../common/GameUI/ObjectList.cpp',
@@ -66,7 +65,6 @@ def build(bld):
 		'LoadCommentaryDialog.cpp',
 		'LoadingDialog.cpp',
 		'BaseSaveGameDialog.cpp',
-		#'ChangeGameDialog.cpp', [!$POSIX]
 		'CreateMultiplayerGameBotPage.cpp',
 		'CreateMultiplayerGameDialog.cpp',
 		'CreateMultiplayerGameGameplayPage.cpp',
@@ -87,7 +85,6 @@ def build(bld):
 		'OptionsSubAudio.cpp',
 		'OptionsSubDifficulty.cpp',
 		'OptionsSubGame.cpp',
-		#'OptionsSubHaptics.cpp',	[$WIN32]	[$WIN32]
 		'OptionsSubKeyboard.cpp',
 		'OptionsSubMouse.cpp',
 		'OptionsSubMultiplayer.cpp',
@@ -95,6 +92,14 @@ def build(bld):
 		'OptionsSubVideo.cpp',
 		'OptionsSubVoice.cpp',
 	]
+
+	if bld.env.DEST_OS == 'win32':
+		source += [
+			'../public/tier0/memoverride.cpp',
+			'LogoFile.cpp',
+			'ChangeGameDialog.cpp',
+			'OptionsSubHaptics.cpp'
+		]
 
 	includes = [
 		'.',
@@ -109,6 +114,9 @@ def build(bld):
 
 	libs = ['tier0','vgui_controls','tier1','tier2','tier3','vstdlib','vtf','bitmap','mathlib','SDL2','steam_api','matsys_controls','JPEG','PNG','ZLIB']
 
+	if bld.env.DEST_OS == 'win32':
+		libs += ['USER32', 'GDI32']
+		
 	install_path = bld.env.LIBDIR
 
 	bld.shlib(

@@ -54,6 +54,8 @@ def build(bld):
 	defines = []
 
 	libs = ['tier0','particles','dmxloader','tier1','tier2','tier3','mathlib','vstdlib','choreoobjects','steam_api']
+	if bld.env.DEST_OS == 'win32':
+		libs += ['USER32']
 
 	install_path = bld.env.PREFIX
 	if bld.env.DEST_OS != 'android':
@@ -62,6 +64,9 @@ def build(bld):
 	source = game["sources"]
 	includes += game["includes"]
 	defines = game["defines"]
+
+	if bld.env.DEST_OS == 'win32':
+		source += ['../../public/tier0/memoverride.cpp']
 
 	defines.remove('PROTECTED_THINGS_ENABLE')
 

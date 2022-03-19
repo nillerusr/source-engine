@@ -66,8 +66,11 @@ def build(bld):
 	if bld.env.DEST_OS != 'android':
 		install_path += '/'+bld.env.GAMES+'/bin'
 
-	source = [ 'touch.cpp', 'arch.c' ]
-
+	source = [ 'arch.c' ]
+	if bld.env.DEST_OS == 'win32':
+		source += [ '../../public/tier0/memoverride.cpp' ]
+		libs += ['USER32']
+		
 	if bld.env.DEST_OS == 'android':
 		source += [
 			'third/minizip/mz_zip.c',

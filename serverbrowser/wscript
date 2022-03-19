@@ -43,6 +43,11 @@ def build(bld):
 		'../common/ServerBrowser/blacklisted_server_manager.cpp'
 	]
 
+	if bld.env.DEST_OS == 'win32':
+		source += [
+			'../public/tier0/memoverride.cpp'
+		]
+
 	includes = [
 		'.',
 		'../public',

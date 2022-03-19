@@ -18,9 +18,13 @@ def configure(conf):
 		#'PROTECTED_THINGS_ENABLE', # conflicts with stlport
 		'strncpy=use_Q_strncpy_instead',
 		'_snprintf=use_Q_snprintf_instead',
-		'GL_GLEXT_PROTOTYPES',
-		'DX_TO_GL_ABSTRACTION'
 	])
+	
+	if conf.env.DEST_OS == 'win32' and not conf.env.GL:
+		conf.env.append_unique('DEFINES',[
+			'USE_ACTUAL_DX',
+		])
+
 
 def build(bld):
 	source = [
@@ -29,7 +33,6 @@ def build(bld):
 		'hardwareconfig.cpp',
 		'meshbase.cpp',
 		'meshdx8.cpp',
-		#'recording.cpp',								[$WIN32 && !$GL]
 		'shaderapidx8.cpp',
 		'shaderdevicebase.cpp',
 		'shaderapibase.cpp',
@@ -40,10 +43,19 @@ def build(bld):
 		'cvballoctracker.cpp',
 		'vertexdecl.cpp',
 		'vertexshaderdx8.cpp',
-		#'wmi.cpp',									[$WIN32 && !$GL]
 		#'textureheap.cpp',							[$X360]
-		'winutils.cpp'#							[!$WIN32]
 	]
+
+	if bld.env.DEST_OS == 'win32' and not bld.env.GL:
+		source += [
+			'recording.cpp',
+			'wmi.cpp'
+		]
+		
+	if bld.env.DEST_OS != 'win32':
+		source += ['winutils.cpp']
+	else:
+		source += ['../../public/tier0/memoverride.cpp']
 
 	includes = [
 		'.',
@@ -60,7 +72,9 @@ def build(bld):
 
 	if bld.env.DEST_OS == 'android':
 		libs += ['ANDROID_SUPPORT']
-
+	elif bld.env.DEST_OS == 'win32' and not bld.env.GL:
+		libs += ['D3D9', 'D3DX9', 'bzip2']
+	
 	install_path = bld.env.LIBDIR
 
 	bld.shlib(
