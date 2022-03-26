@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -31,8 +31,6 @@ BEGIN_VS_SHADER_FLAGS( screenspace_general_dx9, "Help for screenspace_general", 
 		SHADER_PARAM( PIXSHADER, SHADER_PARAM_TYPE_STRING, "", "Name of the pixel shader to use" )
 		SHADER_PARAM( DISABLE_COLOR_WRITES,SHADER_PARAM_TYPE_INTEGER,"0","")
 		SHADER_PARAM( ALPHATESTED,SHADER_PARAM_TYPE_FLOAT,"0","")
-		SHADER_PARAM( ALPHA_BLEND_COLOR_OVERLAY, SHADER_PARAM_TYPE_INTEGER, "0", "")
-		SHADER_PARAM( ALPHA_BLEND, SHADER_PARAM_TYPE_INTEGER, "0", "")
 		SHADER_PARAM( TEXTURE1, SHADER_PARAM_TYPE_TEXTURE, "", "" )
 		SHADER_PARAM( TEXTURE2, SHADER_PARAM_TYPE_TEXTURE, "", "" )
 		SHADER_PARAM( TEXTURE3, SHADER_PARAM_TYPE_TEXTURE, "", "" )
@@ -42,66 +40,25 @@ BEGIN_VS_SHADER_FLAGS( screenspace_general_dx9, "Help for screenspace_general", 
 		SHADER_PARAM( LINEARREAD_TEXTURE3, SHADER_PARAM_TYPE_INTEGER, "0", "" )
 		SHADER_PARAM( LINEARWRITE,SHADER_PARAM_TYPE_INTEGER,"0","")
 		SHADER_PARAM( X360APPCHOOSER, SHADER_PARAM_TYPE_INTEGER, "0", "Needed for movies in 360 launcher" )
-		SHADER_PARAM( COPYALPHA, SHADER_PARAM_TYPE_INTEGER, "0", "")
 	END_SHADER_PARAMS
 
     SHADER_INIT
 	{
 		if ( params[BASETEXTURE]->IsDefined() )
 		{
-#ifdef POSIX
-			ImageFormat fmt = params[BASETEXTURE]->GetTextureValue()->GetImageFormat();
-			bool bSRGB;
-			if ( ( fmt == IMAGE_FORMAT_RGBA16161616F ) || ( fmt == IMAGE_FORMAT_RGBA16161616 ) )
-				bSRGB = false;
-			else
-				bSRGB = !params[LINEARREAD_BASETEXTURE]->IsDefined() || !params[LINEARREAD_BASETEXTURE]->GetIntValue();
-			LoadTexture( BASETEXTURE, bSRGB ? TEXTUREFLAGS_SRGB : 0 );
-#else
 			LoadTexture( BASETEXTURE );
-#endif // POSIX
 		}
 		if ( params[TEXTURE1]->IsDefined() )
 		{
-#ifdef POSIX
-			ImageFormat fmt = params[TEXTURE1]->GetTextureValue()->GetImageFormat();
-			bool bSRGB;
-			if ( ( fmt == IMAGE_FORMAT_RGBA16161616F ) || ( fmt == IMAGE_FORMAT_RGBA16161616 ) )
-				bSRGB = false;
-			else
-				bSRGB = !params[LINEARREAD_TEXTURE1]->IsDefined() || !params[LINEARREAD_TEXTURE1]->GetIntValue();
-			LoadTexture( TEXTURE1, bSRGB ? TEXTUREFLAGS_SRGB : 0 );
-#else
 			LoadTexture( TEXTURE1 );
-#endif // POSIX
 		}
 		if ( params[TEXTURE2]->IsDefined() )
 		{
-#ifdef POSIX
-			ImageFormat fmt = params[TEXTURE2]->GetTextureValue()->GetImageFormat();
-			bool bSRGB;
-			if ( ( fmt == IMAGE_FORMAT_RGBA16161616F ) || ( fmt == IMAGE_FORMAT_RGBA16161616 ) )
-				bSRGB = false;
-			else
-				bSRGB = !params[LINEARREAD_TEXTURE2]->IsDefined() || !params[LINEARREAD_TEXTURE2]->GetIntValue();
-			LoadTexture( TEXTURE2, bSRGB ? TEXTUREFLAGS_SRGB : 0 );
-#else
 			LoadTexture( TEXTURE2 );
-#endif // POSIX
 		}
 		if ( params[TEXTURE3]->IsDefined() )
 		{
-#ifdef POSIX
-			ImageFormat fmt = params[TEXTURE3]->GetTextureValue()->GetImageFormat();
-			bool bSRGB;
-			if ( ( fmt == IMAGE_FORMAT_RGBA16161616F ) || ( fmt == IMAGE_FORMAT_RGBA16161616 ) )
-				bSRGB = false;
-			else
-				bSRGB = !params[LINEARREAD_TEXTURE3]->IsDefined() || !params[LINEARREAD_TEXTURE3]->GetIntValue();
-			LoadTexture( TEXTURE3, bSRGB ? TEXTUREFLAGS_SRGB : 0 );
-#else
 			LoadTexture( TEXTURE3 );
-#endif // POSIX
 		}
 	}
 	
@@ -195,24 +152,8 @@ BEGIN_VS_SHADER_FLAGS( screenspace_general_dx9, "Help for screenspace_general", 
 			{
 				EnableAlphaBlending( SHADER_BLEND_ONE, SHADER_BLEND_ONE );
 			}
-			if ( params[ ALPHA_BLEND_COLOR_OVERLAY ]->GetIntValue() )
-			{
-				// Used for adding L4D-style halos
-				EnableAlphaBlending( SHADER_BLEND_ONE, SHADER_BLEND_ONE_MINUS_SRC_ALPHA );
-			}
-			if ( params[ ALPHA_BLEND ]->GetIntValue() )
-			{
-				// Used for adding L4D-style halos
-				EnableAlphaBlending( SHADER_BLEND_SRC_ALPHA, SHADER_BLEND_ONE_MINUS_SRC_ALPHA );
-			}
 
-			if( params[ COPYALPHA ]->GetIntValue() )
-			{
-				pShaderShadow->EnableBlending( false );
-				pShaderShadow->AlphaFunc( SHADER_ALPHAFUNC_ALWAYS, 0.0f );
-			}
-
-			if ( g_pHardwareConfig->SupportsPixelShaders_2_b() )
+			if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
 			{
 				const char *szPixelShader = params[PIXSHADER]->GetStringValue();
 				size_t iLength = Q_strlen( szPixelShader );
@@ -239,44 +180,23 @@ BEGIN_VS_SHADER_FLAGS( screenspace_general_dx9, "Help for screenspace_general", 
 
 		DYNAMIC_STATE
 		{
-			// Using c4-c7 to store the pixel sizes of each texture
 			if (params[BASETEXTURE]->IsDefined())
 			{
 				BindTexture( SHADER_SAMPLER0, BASETEXTURE, -1 );
-
-				ITexture *pTarget = params[ BASETEXTURE ]->GetTextureValue();
-				float vPixelSize[4] = { 1.0f / pTarget->GetActualWidth(), 1.0f / pTarget->GetActualHeight(), 0.0f, 0.0f };
-				pShaderAPI->SetPixelShaderConstant( 4, vPixelSize, 1 );
 			}
-
 			if (params[TEXTURE1]->IsDefined())
 			{
 				BindTexture( SHADER_SAMPLER1, TEXTURE1, -1 );
-
-				ITexture *pTarget = params[ TEXTURE1 ]->GetTextureValue();
-				float vPixelSize[4] = { 1.0f / pTarget->GetActualWidth(), 1.0f / pTarget->GetActualHeight(), 0.0f, 0.0f };
-				pShaderAPI->SetPixelShaderConstant( 5, vPixelSize, 1 );
 			}
-
 			if (params[TEXTURE2]->IsDefined())
 			{
 				BindTexture( SHADER_SAMPLER2, TEXTURE2, -1 );
-
-				ITexture *pTarget = params[ TEXTURE2 ]->GetTextureValue();
-				float vPixelSize[4] = { 1.0f / pTarget->GetActualWidth(), 1.0f / pTarget->GetActualHeight(), 0.0f, 0.0f };
-				pShaderAPI->SetPixelShaderConstant( 6, vPixelSize, 1 );
 			}
-
 			if (params[TEXTURE3]->IsDefined())
 			{
 				BindTexture( SHADER_SAMPLER3, TEXTURE3, -1 );
-
-				ITexture *pTarget = params[ TEXTURE3 ]->GetTextureValue();
-				float vPixelSize[4] = { 1.0f / pTarget->GetActualWidth(), 1.0f / pTarget->GetActualHeight(), 0.0f, 0.0f };
-				pShaderAPI->SetPixelShaderConstant( 7, vPixelSize, 1 );
 			}
-
-			float c0[] = {
+			float c0[]={
 				params[C0_X]->GetFloatValue(),
 				params[C0_Y]->GetFloatValue(),
 				params[C0_Z]->GetFloatValue(),
@@ -295,7 +215,6 @@ BEGIN_VS_SHADER_FLAGS( screenspace_general_dx9, "Help for screenspace_general", 
 				params[C3_W]->GetFloatValue()
 			};
 
-			// c0-c3
 			pShaderAPI->SetPixelShaderConstant( 0, c0, ARRAYSIZE(c0)/4 );
 
 			float eyePos[4];
