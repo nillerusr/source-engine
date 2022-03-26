@@ -1042,7 +1042,7 @@ void R_BuildCubemapSamples( int numIterations )
 			}
 		}
 
-		bool bSupportsHDR = g_pMaterialSystemHardwareConfig->GetHDRType() != HDR_TYPE_NONE;
+		bool bSupportsHDR = true; //g_pMaterialSystemHardwareConfig->GetHDRType() != HDR_TYPE_NONE;
 
 		for( i = 0; i < pWorldModel->brush.pShared->m_nCubemapSamples; i++ )
 		{
@@ -1080,7 +1080,7 @@ void R_BuildCubemapSamples( int numIterations )
 			return;
 		}
 
-		iBSPPack->SetHDRMode( g_pMaterialSystemHardwareConfig->GetHDRType() != HDR_TYPE_NONE );
+		iBSPPack->SetHDRMode( true /*g_pMaterialSystemHardwareConfig->GetHDRType() != HDR_TYPE_NONE*/ );
 
 		iBSPPack->LoadBSPFile( g_pFileSystem, cl.m_szLevelFileName );
 

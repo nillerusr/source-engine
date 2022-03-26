@@ -1177,7 +1177,7 @@ bool CMaterial::ShouldSkipVar( KeyValues *pVar, bool *pWasConditional )
 		}
 		else if ( ! stricmp( pCond, "hdr" ) )
 		{
-			bShouldSkip = ( HardwareConfig()->GetHDRType() == HDR_TYPE_NONE );
+			bShouldSkip = false; //( HardwareConfig()->GetHDRType() == HDR_TYPE_NONE );
 		}
 		else if ( ! stricmp( pCond, "srgb" ) )
 		{
@@ -1400,7 +1400,7 @@ static KeyValues *FindBuiltinFallbackBlock( char const *pShaderName, KeyValues *
 		if ( pRet )
 			return pRet;
 	}
-	if ( HardwareConfig()->GetHDRType() != HDR_TYPE_NONE )
+//	if ( HardwareConfig()->GetHDRType() != HDR_TYPE_NONE )
 	{
 		KeyValues *pRet = CheckConditionalFakeShaderName( pShaderName,"hdr_dx9", pKeyValues );
 		if ( pRet )
@@ -1409,7 +1409,7 @@ static KeyValues *FindBuiltinFallbackBlock( char const *pShaderName, KeyValues *
 		if ( pRet )
 			return pRet;
 	}
-	else
+	if( HardwareConfig()->GetHDRType() == HDR_TYPE_NONE )
 	{
 		KeyValues *pRet = CheckConditionalFakeShaderName( pShaderName,"ldr", pKeyValues );
 		if ( pRet )
