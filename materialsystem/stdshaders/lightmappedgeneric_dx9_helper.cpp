@@ -350,36 +350,6 @@ void DrawLightmappedGeneric_DX9_Internal(CBaseVSShader *pShader, IMaterialVar** 
 		pContextData->m_bFullyOpaque = bFullyOpaque;
 		pContextData->m_bFullyOpaqueWithoutAlphaTest = bFullyOpaqueWithoutAlphaTest;
 
-		NormalDecodeMode_t nNormalDecodeMode = NORMAL_DECODE_NONE;
-		if ( hasBump && g_pHardwareConfig->SupportsNormalMapCompression() && g_pHardwareConfig->SupportsPixelShaders_2_b() )
-		{
-			ITexture *pBumpTex = params[info.m_nBumpmap]->GetTextureValue();
-			if ( pBumpTex )
-			{
-				nNormalDecodeMode = pBumpTex->GetNormalDecodeMode();
-
-				if ( hasBump2 )			// Check encoding of secondary normal if there is oneg
-				{
-					ITexture *pBumpTex2 = params[info.m_nBumpmap]->GetTextureValue();
-					if ( pBumpTex2 && ( pBumpTex2->GetNormalDecodeMode() != nNormalDecodeMode ) )
-					{
-						DevMsg("LightmappedGeneric: Primary and Secondary normal map compression formats don't match.  This is unsupported!\n");
-						Assert(0);
-					}
-				}
-			}
-		}
-
-		int nNormalMaskDecodeMode = 0;
-		if ( hasBumpMask && g_pHardwareConfig->SupportsNormalMapCompression() && g_pHardwareConfig->SupportsPixelShaders_2_b() )
-		{
-			ITexture *pBumpMaskTex = params[info.m_nBumpMask]->GetTextureValue();
-			if ( pBumpMaskTex )
-			{
-				nNormalMaskDecodeMode = pBumpMaskTex->GetNormalDecodeMode();
-			}
-		}
-
 		bool bHasOutline = IsBoolSet( info.m_nOutline, params );
 		pContextData->m_bPixelShaderForceFastPathBecauseOutline = bHasOutline;
 		bool bHasSoftEdges = IsBoolSet( info.m_nSoftEdges, params );
@@ -513,26 +483,14 @@ void DrawLightmappedGeneric_DX9_Internal(CBaseVSShader *pShader, IMaterialVar** 
 				if( hasBump || hasNormalMapAlphaEnvmapMask )
 				{
 					pShaderShadow->EnableTexture( SHADER_SAMPLER4, true );
-					if ( nNormalDecodeMode == NORMAL_DECODE_ATI2N_ALPHA )
-					{
-						pShaderShadow->EnableTexture( SHADER_SAMPLER9, true );	// Normal map alpha, in the compressed normal case
-					}
 				}
 				if( hasBump2 )
 				{
 					pShaderShadow->EnableTexture( SHADER_SAMPLER5, true );
-					if ( nNormalDecodeMode == NORMAL_DECODE_ATI2N_ALPHA )
-					{
-						pShaderShadow->EnableTexture( SHADER_SAMPLER10, true );	// Secondary normal alpha, in the compressed normal case
-					}
 				}
 				if( hasBumpMask )
 				{
 					pShaderShadow->EnableTexture( SHADER_SAMPLER8, true );
-					if ( nNormalMaskDecodeMode == NORMAL_DECODE_ATI2N_ALPHA )
-					{
-						pShaderShadow->EnableTexture( SHADER_SAMPLER11, true );	// Normal mask alpha, in the compressed normal case
-					}
 				}
 				if( hasEnvmapMask )
 				{
@@ -611,8 +569,8 @@ void DrawLightmappedGeneric_DX9_Internal(CBaseVSShader *pShader, IMaterialVar** 
 					SET_STATIC_PIXEL_SHADER_COMBO( OUTLINE, bHasOutline );
 					SET_STATIC_PIXEL_SHADER_COMBO( SOFTEDGES, bHasSoftEdges );
 					SET_STATIC_PIXEL_SHADER_COMBO( DETAIL_BLEND_MODE, nDetailBlendMode );
-					SET_STATIC_PIXEL_SHADER_COMBO( NORMAL_DECODE_MODE, (int)  nNormalDecodeMode );
-					SET_STATIC_PIXEL_SHADER_COMBO( NORMALMASK_DECODE_MODE, (int) nNormalMaskDecodeMode );
+					SET_STATIC_PIXEL_SHADER_COMBO( NORMAL_DECODE_MODE, (int)  NORMAL_DECODE_NONE );
+					SET_STATIC_PIXEL_SHADER_COMBO( NORMALMASK_DECODE_MODE, (int) NORMAL_DECODE_NONE );
 #ifdef _X360
 					SET_STATIC_PIXEL_SHADER_COMBO( FLASHLIGHT, hasFlashlight);
 #endif
@@ -854,14 +812,7 @@ void DrawLightmappedGeneric_DX9_Internal(CBaseVSShader *pShader, IMaterialVar** 
 			{
 				if( !g_pConfig->m_bFastNoBump )
 				{
-					if ( nNormalDecodeMode == NORMAL_DECODE_ATI2N_ALPHA )
-					{
-						pContextData->m_SemiStaticCmdsOut.BindMultiTexture( pShader, SHADER_SAMPLER4, SHADER_SAMPLER9, info.m_nBumpmap, info.m_nBumpFrame );
-					}
-					else
-					{
-						pContextData->m_SemiStaticCmdsOut.BindTexture( pShader, SHADER_SAMPLER4, info.m_nBumpmap, info.m_nBumpFrame );
-					}
+					pContextData->m_SemiStaticCmdsOut.BindTexture( pShader, SHADER_SAMPLER4, info.m_nBumpmap, info.m_nBumpFrame );
 				}
 				else
 				{
@@ -872,14 +823,7 @@ void DrawLightmappedGeneric_DX9_Internal(CBaseVSShader *pShader, IMaterialVar** 
 			{
 				if( !g_pConfig->m_bFastNoBump )
 				{
-					if ( nNormalDecodeMode == NORMAL_DECODE_ATI2N_ALPHA )
-					{
-						pContextData->m_SemiStaticCmdsOut.BindMultiTexture( pShader, SHADER_SAMPLER5, SHADER_SAMPLER10, info.m_nBumpmap2, info.m_nBumpFrame2 );
-					}
-					else
-					{
-						pContextData->m_SemiStaticCmdsOut.BindTexture( pShader, SHADER_SAMPLER5, info.m_nBumpmap2, info.m_nBumpFrame2 );
-					}
+					pContextData->m_SemiStaticCmdsOut.BindTexture( pShader, SHADER_SAMPLER5, info.m_nBumpmap2, info.m_nBumpFrame2 );
 				}
 				else
 				{
@@ -890,15 +834,7 @@ void DrawLightmappedGeneric_DX9_Internal(CBaseVSShader *pShader, IMaterialVar** 
 			{
 				if( !g_pConfig->m_bFastNoBump )
 				{
-					if ( nNormalMaskDecodeMode == NORMAL_DECODE_ATI2N_ALPHA )
-					{
-						Assert(0);
-						//pContextData->m_SemiStaticCmdsOut.BindTexture( SHADER_SAMPLER8, SHADER_SAMPLER11, info.m_nBumpMask );
-					}
-					else
-					{
-						pContextData->m_SemiStaticCmdsOut.BindTexture( pShader, SHADER_SAMPLER8, info.m_nBumpMask, -1 );
-					}
+					pContextData->m_SemiStaticCmdsOut.BindTexture( pShader, SHADER_SAMPLER8, info.m_nBumpMask, -1 );
 				}
 				else
 				{

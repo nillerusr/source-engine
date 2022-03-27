@@ -1,93 +1,11 @@
-// ALL SKIP STATEMENTS THAT AFFECT THIS SHADER!!!
-// ($DETAILTEXTURE == 0 ) && ( $DETAIL_BLEND_MODE != 0 )
-// ($DETAILTEXTURE == 0 ) && ( $SEAMLESS_DETAIL )
-// ($ENVMAPMASK || $SELFILLUM_ENVMAPMASK_ALPHA) && ($SEAMLESS_BASE || $SEAMLESS_DETAIL)
-// $BASEALPHAENVMAPMASK && $ENVMAPMASK
-// $BASEALPHAENVMAPMASK && $SELFILLUM
-// $SELFILLUM && $SELFILLUM_ENVMAPMASK_ALPHA
-// $SELFILLUM_ENVMAPMASK_ALPHA && (! $ENVMAPMASK)
-// $ENVMAPMASK && ($FLASHLIGHT || $FLASHLIGHTSHADOWS)
-// $BASEALPHAENVMAPMASK && ($SEAMLESS_BASE || $SEAMLESS_DETAIL)
-// ($DISTANCEALPHA == 0) && ($DISTANCEALPHAFROMDETAIL || $SOFT_MASK || $OUTLINE || $OUTER_GLOW)
-// ($DETAILTEXTURE == 0) && ($DISTANCEALPHAFROMDETAIL)
-// ( $FLASHLIGHT == 0 ) && ( $FLASHLIGHTSHADOWS == 1 )
-// ( $FLASHLIGHT == 0 ) && ( $FLASHLIGHTDEPTHFILTERMODE != 0 )
-// ($DISTANCEALPHA) && ($ENVMAPMASK || $BASEALPHAENVMAPMASK || $SELFILLUM || $SELFILLUM_ENVMAPMASK_ALPHA )
-// ($DISTANCEALPHA) && ($SEAMLESS_BASE || $SEAMLESS_DETAIL || $CUBEMAP || $LIGHTING_PREVIEW )
-// ($DISTANCEALPHA) && ($WRITEWATERFOGTODESTALPHA || $PIXELFOGTYPE || $FLASHLIGHT || $FLASHLIGHTSHADOWS || $SRGB_INPUT_ADAPTER )
-// $SEAMLESS_BASE && $SRGB_INPUT_ADAPTER
-// $SEAMLESS_BASE && ($BLENDTINTBYBASEALPHA )
-// ($BLENDTINTBYBASEALPHA) && ($SELFILLUM || (($DISTANCEALPHA) && ($DISTANCEALPHAFROMDETAIL == 0)) || $BASEALPHAENVMAPMASK)
-// $FLASHLIGHT && $CUBEMAP
-// $CUBEMAP_SPHERE_LEGACY && ($CUBEMAP == 0)
-// defined $HDRTYPE && defined $HDRENABLED && !$HDRTYPE && $HDRENABLED
-// defined $PIXELFOGTYPE && defined $WRITEWATERFOGTODESTALPHA && ( $PIXELFOGTYPE != 1 ) && $WRITEWATERFOGTODESTALPHA
-// defined $LIGHTING_PREVIEW && defined $HDRTYPE && $LIGHTING_PREVIEW && $HDRTYPE != 0
-// defined $LIGHTING_PREVIEW && defined $FASTPATHENVMAPTINT && $LIGHTING_PREVIEW && $FASTPATHENVMAPTINT
-// defined $LIGHTING_PREVIEW && defined $FASTPATHENVMAPCONTRAST && $LIGHTING_PREVIEW && $FASTPATHENVMAPCONTRAST
-// defined $LIGHTING_PREVIEW && defined $FASTPATH && $LIGHTING_PREVIEW && $FASTPATH
-// ($FLASHLIGHT || $FLASHLIGHTSHADOWS) && $LIGHTING_PREVIEW
-// defined $HDRTYPE && defined $HDRENABLED && !$HDRTYPE && $HDRENABLED
-// defined $PIXELFOGTYPE && defined $WRITEWATERFOGTODESTALPHA && ( $PIXELFOGTYPE != 1 ) && $WRITEWATERFOGTODESTALPHA
-// defined $LIGHTING_PREVIEW && defined $HDRTYPE && $LIGHTING_PREVIEW && $HDRTYPE != 0
-// defined $LIGHTING_PREVIEW && defined $FASTPATHENVMAPTINT && $LIGHTING_PREVIEW && $FASTPATHENVMAPTINT
-// defined $LIGHTING_PREVIEW && defined $FASTPATHENVMAPCONTRAST && $LIGHTING_PREVIEW && $FASTPATHENVMAPCONTRAST
-// defined $LIGHTING_PREVIEW && defined $FASTPATH && $LIGHTING_PREVIEW && $FASTPATH
-// ($FLASHLIGHT || $FLASHLIGHTSHADOWS) && $LIGHTING_PREVIEW
-
-#ifndef VERTEXLIT_AND_UNLIT_GENERIC_PS30_H
-#define VERTEXLIT_AND_UNLIT_GENERIC_PS30_H
-
-#include "shaderapi/ishaderapi.h"
-#include "shaderapi/ishadershadow.h"
-#include "materialsystem/imaterialvar.h"
-
+#include "shaderlib/cshader.h"
 class vertexlit_and_unlit_generic_ps30_Static_Index
 {
-	unsigned int m_nDETAILTEXTURE : 2;
-	unsigned int m_nCUBEMAP : 2;
-	unsigned int m_nDIFFUSELIGHTING : 2;
-	unsigned int m_nENVMAPMASK : 2;
-	unsigned int m_nBASEALPHAENVMAPMASK : 2;
-	unsigned int m_nSELFILLUM : 2;
-	unsigned int m_nVERTEXCOLOR : 2;
-	unsigned int m_nFLASHLIGHT : 2;
-	unsigned int m_nSELFILLUM_ENVMAPMASK_ALPHA : 2;
-	unsigned int m_nDETAIL_BLEND_MODE : 4;
-	unsigned int m_nSEAMLESS_BASE : 2;
-	unsigned int m_nSEAMLESS_DETAIL : 2;
-	unsigned int m_nDISTANCEALPHA : 2;
-	unsigned int m_nDISTANCEALPHAFROMDETAIL : 2;
-	unsigned int m_nSOFT_MASK : 2;
-	unsigned int m_nOUTLINE : 2;
-	unsigned int m_nOUTER_GLOW : 2;
-	unsigned int m_nFLASHLIGHTDEPTHFILTERMODE : 2;
-	unsigned int m_nDEPTHBLEND : 2;
-	unsigned int m_nBLENDTINTBYBASEALPHA : 2;
-	unsigned int m_nCUBEMAP_SPHERE_LEGACY : 2;
+private:
+	int m_nDETAILTEXTURE;
 #ifdef _DEBUG
-	bool m_bDETAILTEXTURE : 1;
-	bool m_bCUBEMAP : 1;
-	bool m_bDIFFUSELIGHTING : 1;
-	bool m_bENVMAPMASK : 1;
-	bool m_bBASEALPHAENVMAPMASK : 1;
-	bool m_bSELFILLUM : 1;
-	bool m_bVERTEXCOLOR : 1;
-	bool m_bFLASHLIGHT : 1;
-	bool m_bSELFILLUM_ENVMAPMASK_ALPHA : 1;
-	bool m_bDETAIL_BLEND_MODE : 1;
-	bool m_bSEAMLESS_BASE : 1;
-	bool m_bSEAMLESS_DETAIL : 1;
-	bool m_bDISTANCEALPHA : 1;
-	bool m_bDISTANCEALPHAFROMDETAIL : 1;
-	bool m_bSOFT_MASK : 1;
-	bool m_bOUTLINE : 1;
-	bool m_bOUTER_GLOW : 1;
-	bool m_bFLASHLIGHTDEPTHFILTERMODE : 1;
-	bool m_bDEPTHBLEND : 1;
-	bool m_bBLENDTINTBYBASEALPHA : 1;
-	bool m_bCUBEMAP_SPHERE_LEGACY : 1;
-#endif	// _DEBUG
+	bool m_bDETAILTEXTURE;
+#endif
 public:
 	void SetDETAILTEXTURE( int i )
 	{
@@ -95,255 +13,542 @@ public:
 		m_nDETAILTEXTURE = i;
 #ifdef _DEBUG
 		m_bDETAILTEXTURE = true;
-#endif	// _DEBUG
+#endif
 	}
-
+	void SetDETAILTEXTURE( bool i )
+	{
+		m_nDETAILTEXTURE = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bDETAILTEXTURE = true;
+#endif
+	}
+private:
+	int m_nCUBEMAP;
+#ifdef _DEBUG
+	bool m_bCUBEMAP;
+#endif
+public:
 	void SetCUBEMAP( int i )
 	{
 		Assert( i >= 0 && i <= 1 );
 		m_nCUBEMAP = i;
 #ifdef _DEBUG
 		m_bCUBEMAP = true;
-#endif	// _DEBUG
+#endif
 	}
-
+	void SetCUBEMAP( bool i )
+	{
+		m_nCUBEMAP = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bCUBEMAP = true;
+#endif
+	}
+private:
+	int m_nDIFFUSELIGHTING;
+#ifdef _DEBUG
+	bool m_bDIFFUSELIGHTING;
+#endif
+public:
 	void SetDIFFUSELIGHTING( int i )
 	{
 		Assert( i >= 0 && i <= 1 );
 		m_nDIFFUSELIGHTING = i;
 #ifdef _DEBUG
 		m_bDIFFUSELIGHTING = true;
-#endif	// _DEBUG
+#endif
 	}
-
+	void SetDIFFUSELIGHTING( bool i )
+	{
+		m_nDIFFUSELIGHTING = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bDIFFUSELIGHTING = true;
+#endif
+	}
+private:
+	int m_nENVMAPMASK;
+#ifdef _DEBUG
+	bool m_bENVMAPMASK;
+#endif
+public:
 	void SetENVMAPMASK( int i )
 	{
 		Assert( i >= 0 && i <= 1 );
 		m_nENVMAPMASK = i;
 #ifdef _DEBUG
 		m_bENVMAPMASK = true;
-#endif	// _DEBUG
+#endif
 	}
-
+	void SetENVMAPMASK( bool i )
+	{
+		m_nENVMAPMASK = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bENVMAPMASK = true;
+#endif
+	}
+private:
+	int m_nBASEALPHAENVMAPMASK;
+#ifdef _DEBUG
+	bool m_bBASEALPHAENVMAPMASK;
+#endif
+public:
 	void SetBASEALPHAENVMAPMASK( int i )
 	{
 		Assert( i >= 0 && i <= 1 );
 		m_nBASEALPHAENVMAPMASK = i;
 #ifdef _DEBUG
 		m_bBASEALPHAENVMAPMASK = true;
-#endif	// _DEBUG
+#endif
 	}
-
+	void SetBASEALPHAENVMAPMASK( bool i )
+	{
+		m_nBASEALPHAENVMAPMASK = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bBASEALPHAENVMAPMASK = true;
+#endif
+	}
+private:
+	int m_nSELFILLUM;
+#ifdef _DEBUG
+	bool m_bSELFILLUM;
+#endif
+public:
 	void SetSELFILLUM( int i )
 	{
 		Assert( i >= 0 && i <= 1 );
 		m_nSELFILLUM = i;
 #ifdef _DEBUG
 		m_bSELFILLUM = true;
-#endif	// _DEBUG
+#endif
 	}
-
+	void SetSELFILLUM( bool i )
+	{
+		m_nSELFILLUM = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bSELFILLUM = true;
+#endif
+	}
+private:
+	int m_nVERTEXCOLOR;
+#ifdef _DEBUG
+	bool m_bVERTEXCOLOR;
+#endif
+public:
 	void SetVERTEXCOLOR( int i )
 	{
 		Assert( i >= 0 && i <= 1 );
 		m_nVERTEXCOLOR = i;
 #ifdef _DEBUG
 		m_bVERTEXCOLOR = true;
-#endif	// _DEBUG
+#endif
 	}
-
+	void SetVERTEXCOLOR( bool i )
+	{
+		m_nVERTEXCOLOR = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bVERTEXCOLOR = true;
+#endif
+	}
+private:
+	int m_nFLASHLIGHT;
+#ifdef _DEBUG
+	bool m_bFLASHLIGHT;
+#endif
+public:
 	void SetFLASHLIGHT( int i )
 	{
 		Assert( i >= 0 && i <= 1 );
 		m_nFLASHLIGHT = i;
 #ifdef _DEBUG
 		m_bFLASHLIGHT = true;
-#endif	// _DEBUG
+#endif
 	}
-
+	void SetFLASHLIGHT( bool i )
+	{
+		m_nFLASHLIGHT = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bFLASHLIGHT = true;
+#endif
+	}
+private:
+	int m_nSELFILLUM_ENVMAPMASK_ALPHA;
+#ifdef _DEBUG
+	bool m_bSELFILLUM_ENVMAPMASK_ALPHA;
+#endif
+public:
 	void SetSELFILLUM_ENVMAPMASK_ALPHA( int i )
 	{
 		Assert( i >= 0 && i <= 1 );
 		m_nSELFILLUM_ENVMAPMASK_ALPHA = i;
 #ifdef _DEBUG
 		m_bSELFILLUM_ENVMAPMASK_ALPHA = true;
-#endif	// _DEBUG
+#endif
 	}
-
+	void SetSELFILLUM_ENVMAPMASK_ALPHA( bool i )
+	{
+		m_nSELFILLUM_ENVMAPMASK_ALPHA = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bSELFILLUM_ENVMAPMASK_ALPHA = true;
+#endif
+	}
+private:
+	int m_nDETAIL_BLEND_MODE;
+#ifdef _DEBUG
+	bool m_bDETAIL_BLEND_MODE;
+#endif
+public:
 	void SetDETAIL_BLEND_MODE( int i )
 	{
 		Assert( i >= 0 && i <= 9 );
 		m_nDETAIL_BLEND_MODE = i;
 #ifdef _DEBUG
 		m_bDETAIL_BLEND_MODE = true;
-#endif	// _DEBUG
+#endif
 	}
-
+	void SetDETAIL_BLEND_MODE( bool i )
+	{
+		m_nDETAIL_BLEND_MODE = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bDETAIL_BLEND_MODE = true;
+#endif
+	}
+private:
+	int m_nSEAMLESS_BASE;
+#ifdef _DEBUG
+	bool m_bSEAMLESS_BASE;
+#endif
+public:
 	void SetSEAMLESS_BASE( int i )
 	{
 		Assert( i >= 0 && i <= 1 );
 		m_nSEAMLESS_BASE = i;
 #ifdef _DEBUG
 		m_bSEAMLESS_BASE = true;
-#endif	// _DEBUG
+#endif
 	}
-
+	void SetSEAMLESS_BASE( bool i )
+	{
+		m_nSEAMLESS_BASE = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bSEAMLESS_BASE = true;
+#endif
+	}
+private:
+	int m_nSEAMLESS_DETAIL;
+#ifdef _DEBUG
+	bool m_bSEAMLESS_DETAIL;
+#endif
+public:
 	void SetSEAMLESS_DETAIL( int i )
 	{
 		Assert( i >= 0 && i <= 1 );
 		m_nSEAMLESS_DETAIL = i;
 #ifdef _DEBUG
 		m_bSEAMLESS_DETAIL = true;
-#endif	// _DEBUG
+#endif
 	}
-
+	void SetSEAMLESS_DETAIL( bool i )
+	{
+		m_nSEAMLESS_DETAIL = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bSEAMLESS_DETAIL = true;
+#endif
+	}
+private:
+	int m_nDISTANCEALPHA;
+#ifdef _DEBUG
+	bool m_bDISTANCEALPHA;
+#endif
+public:
 	void SetDISTANCEALPHA( int i )
 	{
 		Assert( i >= 0 && i <= 1 );
 		m_nDISTANCEALPHA = i;
 #ifdef _DEBUG
 		m_bDISTANCEALPHA = true;
-#endif	// _DEBUG
+#endif
 	}
-
+	void SetDISTANCEALPHA( bool i )
+	{
+		m_nDISTANCEALPHA = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bDISTANCEALPHA = true;
+#endif
+	}
+private:
+	int m_nDISTANCEALPHAFROMDETAIL;
+#ifdef _DEBUG
+	bool m_bDISTANCEALPHAFROMDETAIL;
+#endif
+public:
 	void SetDISTANCEALPHAFROMDETAIL( int i )
 	{
 		Assert( i >= 0 && i <= 1 );
 		m_nDISTANCEALPHAFROMDETAIL = i;
 #ifdef _DEBUG
 		m_bDISTANCEALPHAFROMDETAIL = true;
-#endif	// _DEBUG
+#endif
 	}
-
+	void SetDISTANCEALPHAFROMDETAIL( bool i )
+	{
+		m_nDISTANCEALPHAFROMDETAIL = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bDISTANCEALPHAFROMDETAIL = true;
+#endif
+	}
+private:
+	int m_nSOFT_MASK;
+#ifdef _DEBUG
+	bool m_bSOFT_MASK;
+#endif
+public:
 	void SetSOFT_MASK( int i )
 	{
 		Assert( i >= 0 && i <= 1 );
 		m_nSOFT_MASK = i;
 #ifdef _DEBUG
 		m_bSOFT_MASK = true;
-#endif	// _DEBUG
+#endif
 	}
-
+	void SetSOFT_MASK( bool i )
+	{
+		m_nSOFT_MASK = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bSOFT_MASK = true;
+#endif
+	}
+private:
+	int m_nOUTLINE;
+#ifdef _DEBUG
+	bool m_bOUTLINE;
+#endif
+public:
 	void SetOUTLINE( int i )
 	{
 		Assert( i >= 0 && i <= 1 );
 		m_nOUTLINE = i;
 #ifdef _DEBUG
 		m_bOUTLINE = true;
-#endif	// _DEBUG
+#endif
 	}
-
+	void SetOUTLINE( bool i )
+	{
+		m_nOUTLINE = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bOUTLINE = true;
+#endif
+	}
+private:
+	int m_nOUTER_GLOW;
+#ifdef _DEBUG
+	bool m_bOUTER_GLOW;
+#endif
+public:
 	void SetOUTER_GLOW( int i )
 	{
 		Assert( i >= 0 && i <= 1 );
 		m_nOUTER_GLOW = i;
 #ifdef _DEBUG
 		m_bOUTER_GLOW = true;
-#endif	// _DEBUG
+#endif
 	}
-
+	void SetOUTER_GLOW( bool i )
+	{
+		m_nOUTER_GLOW = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bOUTER_GLOW = true;
+#endif
+	}
+private:
+	int m_nFLASHLIGHTDEPTHFILTERMODE;
+#ifdef _DEBUG
+	bool m_bFLASHLIGHTDEPTHFILTERMODE;
+#endif
+public:
 	void SetFLASHLIGHTDEPTHFILTERMODE( int i )
 	{
 		Assert( i >= 0 && i <= 2 );
 		m_nFLASHLIGHTDEPTHFILTERMODE = i;
 #ifdef _DEBUG
 		m_bFLASHLIGHTDEPTHFILTERMODE = true;
-#endif	// _DEBUG
+#endif
 	}
-
+	void SetFLASHLIGHTDEPTHFILTERMODE( bool i )
+	{
+		m_nFLASHLIGHTDEPTHFILTERMODE = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bFLASHLIGHTDEPTHFILTERMODE = true;
+#endif
+	}
+private:
+	int m_nDEPTHBLEND;
+#ifdef _DEBUG
+	bool m_bDEPTHBLEND;
+#endif
+public:
 	void SetDEPTHBLEND( int i )
 	{
 		Assert( i >= 0 && i <= 1 );
 		m_nDEPTHBLEND = i;
 #ifdef _DEBUG
 		m_bDEPTHBLEND = true;
-#endif	// _DEBUG
+#endif
 	}
-
+	void SetDEPTHBLEND( bool i )
+	{
+		m_nDEPTHBLEND = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bDEPTHBLEND = true;
+#endif
+	}
+private:
+	int m_nBLENDTINTBYBASEALPHA;
+#ifdef _DEBUG
+	bool m_bBLENDTINTBYBASEALPHA;
+#endif
+public:
 	void SetBLENDTINTBYBASEALPHA( int i )
 	{
 		Assert( i >= 0 && i <= 1 );
 		m_nBLENDTINTBYBASEALPHA = i;
 #ifdef _DEBUG
 		m_bBLENDTINTBYBASEALPHA = true;
-#endif	// _DEBUG
+#endif
 	}
-
+	void SetBLENDTINTBYBASEALPHA( bool i )
+	{
+		m_nBLENDTINTBYBASEALPHA = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bBLENDTINTBYBASEALPHA = true;
+#endif
+	}
+private:
+	int m_nCUBEMAP_SPHERE_LEGACY;
+#ifdef _DEBUG
+	bool m_bCUBEMAP_SPHERE_LEGACY;
+#endif
+public:
 	void SetCUBEMAP_SPHERE_LEGACY( int i )
 	{
 		Assert( i >= 0 && i <= 1 );
 		m_nCUBEMAP_SPHERE_LEGACY = i;
 #ifdef _DEBUG
 		m_bCUBEMAP_SPHERE_LEGACY = true;
-#endif	// _DEBUG
+#endif
 	}
-
-	vertexlit_and_unlit_generic_ps30_Static_Index()
+	void SetCUBEMAP_SPHERE_LEGACY( bool i )
 	{
-		m_nDETAILTEXTURE = 0;
-		m_nCUBEMAP = 0;
-		m_nDIFFUSELIGHTING = 0;
-		m_nENVMAPMASK = 0;
-		m_nBASEALPHAENVMAPMASK = 0;
-		m_nSELFILLUM = 0;
-		m_nVERTEXCOLOR = 0;
-		m_nFLASHLIGHT = 0;
-		m_nSELFILLUM_ENVMAPMASK_ALPHA = 0;
-		m_nDETAIL_BLEND_MODE = 0;
-		m_nSEAMLESS_BASE = 0;
-		m_nSEAMLESS_DETAIL = 0;
-		m_nDISTANCEALPHA = 0;
-		m_nDISTANCEALPHAFROMDETAIL = 0;
-		m_nSOFT_MASK = 0;
-		m_nOUTLINE = 0;
-		m_nOUTER_GLOW = 0;
-		m_nFLASHLIGHTDEPTHFILTERMODE = 0;
-		m_nDEPTHBLEND = 0;
-		m_nBLENDTINTBYBASEALPHA = 0;
-		m_nCUBEMAP_SPHERE_LEGACY = 0;
+		m_nCUBEMAP_SPHERE_LEGACY = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bCUBEMAP_SPHERE_LEGACY = true;
+#endif
+	}
+public:
+	vertexlit_and_unlit_generic_ps30_Static_Index( )
+	{
 #ifdef _DEBUG
 		m_bDETAILTEXTURE = false;
+#endif // _DEBUG
+		m_nDETAILTEXTURE = 0;
+#ifdef _DEBUG
 		m_bCUBEMAP = false;
+#endif // _DEBUG
+		m_nCUBEMAP = 0;
+#ifdef _DEBUG
 		m_bDIFFUSELIGHTING = false;
+#endif // _DEBUG
+		m_nDIFFUSELIGHTING = 0;
+#ifdef _DEBUG
 		m_bENVMAPMASK = false;
+#endif // _DEBUG
+		m_nENVMAPMASK = 0;
+#ifdef _DEBUG
 		m_bBASEALPHAENVMAPMASK = false;
+#endif // _DEBUG
+		m_nBASEALPHAENVMAPMASK = 0;
+#ifdef _DEBUG
 		m_bSELFILLUM = false;
+#endif // _DEBUG
+		m_nSELFILLUM = 0;
+#ifdef _DEBUG
 		m_bVERTEXCOLOR = false;
+#endif // _DEBUG
+		m_nVERTEXCOLOR = 0;
+#ifdef _DEBUG
 		m_bFLASHLIGHT = false;
+#endif // _DEBUG
+		m_nFLASHLIGHT = 0;
+#ifdef _DEBUG
 		m_bSELFILLUM_ENVMAPMASK_ALPHA = false;
+#endif // _DEBUG
+		m_nSELFILLUM_ENVMAPMASK_ALPHA = 0;
+#ifdef _DEBUG
 		m_bDETAIL_BLEND_MODE = false;
+#endif // _DEBUG
+		m_nDETAIL_BLEND_MODE = 0;
+#ifdef _DEBUG
 		m_bSEAMLESS_BASE = false;
+#endif // _DEBUG
+		m_nSEAMLESS_BASE = 0;
+#ifdef _DEBUG
 		m_bSEAMLESS_DETAIL = false;
+#endif // _DEBUG
+		m_nSEAMLESS_DETAIL = 0;
+#ifdef _DEBUG
 		m_bDISTANCEALPHA = false;
+#endif // _DEBUG
+		m_nDISTANCEALPHA = 0;
+#ifdef _DEBUG
 		m_bDISTANCEALPHAFROMDETAIL = false;
+#endif // _DEBUG
+		m_nDISTANCEALPHAFROMDETAIL = 0;
+#ifdef _DEBUG
 		m_bSOFT_MASK = false;
+#endif // _DEBUG
+		m_nSOFT_MASK = 0;
+#ifdef _DEBUG
 		m_bOUTLINE = false;
+#endif // _DEBUG
+		m_nOUTLINE = 0;
+#ifdef _DEBUG
 		m_bOUTER_GLOW = false;
+#endif // _DEBUG
+		m_nOUTER_GLOW = 0;
+#ifdef _DEBUG
 		m_bFLASHLIGHTDEPTHFILTERMODE = false;
+#endif // _DEBUG
+		m_nFLASHLIGHTDEPTHFILTERMODE = 0;
+#ifdef _DEBUG
 		m_bDEPTHBLEND = false;
+#endif // _DEBUG
+		m_nDEPTHBLEND = 0;
+#ifdef _DEBUG
 		m_bBLENDTINTBYBASEALPHA = false;
+#endif // _DEBUG
+		m_nBLENDTINTBYBASEALPHA = 0;
+#ifdef _DEBUG
 		m_bCUBEMAP_SPHERE_LEGACY = false;
-#endif	// _DEBUG
+#endif // _DEBUG
+		m_nCUBEMAP_SPHERE_LEGACY = 0;
 	}
-
-	int GetIndex() const
+	int GetIndex()
 	{
-		Assert( m_bDETAILTEXTURE && m_bCUBEMAP && m_bDIFFUSELIGHTING && m_bENVMAPMASK && m_bBASEALPHAENVMAPMASK && m_bSELFILLUM && m_bVERTEXCOLOR && m_bFLASHLIGHT && m_bSELFILLUM_ENVMAPMASK_ALPHA && m_bDETAIL_BLEND_MODE && m_bSEAMLESS_BASE && m_bSEAMLESS_DETAIL && m_bDISTANCEALPHA && m_bDISTANCEALPHAFROMDETAIL && m_bSOFT_MASK && m_bOUTLINE && m_bOUTER_GLOW && m_bFLASHLIGHTDEPTHFILTERMODE && m_bDEPTHBLEND && m_bBLENDTINTBYBASEALPHA && m_bCUBEMAP_SPHERE_LEGACY );
-		return ( 6 * m_nDETAILTEXTURE ) + ( 12 * m_nCUBEMAP ) + ( 24 * m_nDIFFUSELIGHTING ) + ( 48 * m_nENVMAPMASK ) + ( 96 * m_nBASEALPHAENVMAPMASK ) + ( 192 * m_nSELFILLUM ) + ( 384 * m_nVERTEXCOLOR ) + ( 768 * m_nFLASHLIGHT ) + ( 1536 * m_nSELFILLUM_ENVMAPMASK_ALPHA ) + ( 3072 * m_nDETAIL_BLEND_MODE ) + ( 30720 * m_nSEAMLESS_BASE ) + ( 61440 * m_nSEAMLESS_DETAIL ) + ( 122880 * m_nDISTANCEALPHA ) + ( 245760 * m_nDISTANCEALPHAFROMDETAIL ) + ( 491520 * m_nSOFT_MASK ) + ( 983040 * m_nOUTLINE ) + ( 1966080 * m_nOUTER_GLOW ) + ( 3932160 * m_nFLASHLIGHTDEPTHFILTERMODE ) + ( 11796480 * m_nDEPTHBLEND ) + ( 23592960 * m_nBLENDTINTBYBASEALPHA ) + ( 47185920 * m_nCUBEMAP_SPHERE_LEGACY ) + 0;
+		// Asserts to make sure that we aren't using any skipped combinations.
+		// Asserts to make sure that we are setting all of the combination vars.
+#ifdef _DEBUG
+		bool bAllStaticVarsDefined = m_bDETAILTEXTURE && m_bCUBEMAP && m_bDIFFUSELIGHTING && m_bENVMAPMASK && m_bBASEALPHAENVMAPMASK && m_bSELFILLUM && m_bVERTEXCOLOR && m_bFLASHLIGHT && m_bSELFILLUM_ENVMAPMASK_ALPHA && m_bDETAIL_BLEND_MODE && m_bSEAMLESS_BASE && m_bSEAMLESS_DETAIL && m_bDISTANCEALPHA && m_bDISTANCEALPHAFROMDETAIL && m_bSOFT_MASK && m_bOUTLINE && m_bOUTER_GLOW && m_bFLASHLIGHTDEPTHFILTERMODE && m_bDEPTHBLEND && m_bBLENDTINTBYBASEALPHA && m_bCUBEMAP_SPHERE_LEGACY;
+		Assert( bAllStaticVarsDefined );
+#endif // _DEBUG
+		return ( 24 * m_nDETAILTEXTURE ) + ( 48 * m_nCUBEMAP ) + ( 96 * m_nDIFFUSELIGHTING ) + ( 192 * m_nENVMAPMASK ) + ( 384 * m_nBASEALPHAENVMAPMASK ) + ( 768 * m_nSELFILLUM ) + ( 1536 * m_nVERTEXCOLOR ) + ( 3072 * m_nFLASHLIGHT ) + ( 6144 * m_nSELFILLUM_ENVMAPMASK_ALPHA ) + ( 12288 * m_nDETAIL_BLEND_MODE ) + ( 122880 * m_nSEAMLESS_BASE ) + ( 245760 * m_nSEAMLESS_DETAIL ) + ( 491520 * m_nDISTANCEALPHA ) + ( 983040 * m_nDISTANCEALPHAFROMDETAIL ) + ( 1966080 * m_nSOFT_MASK ) + ( 3932160 * m_nOUTLINE ) + ( 7864320 * m_nOUTER_GLOW ) + ( 15728640 * m_nFLASHLIGHTDEPTHFILTERMODE ) + ( 47185920 * m_nDEPTHBLEND ) + ( 94371840 * m_nBLENDTINTBYBASEALPHA ) + ( 188743680 * m_nCUBEMAP_SPHERE_LEGACY ) + 0;
 	}
 };
-
-#define shaderStaticTest_vertexlit_and_unlit_generic_ps30 psh_forgot_to_set_static_DETAILTEXTURE + psh_forgot_to_set_static_CUBEMAP + psh_forgot_to_set_static_DIFFUSELIGHTING + psh_forgot_to_set_static_ENVMAPMASK + psh_forgot_to_set_static_BASEALPHAENVMAPMASK + psh_forgot_to_set_static_SELFILLUM + psh_forgot_to_set_static_VERTEXCOLOR + psh_forgot_to_set_static_FLASHLIGHT + psh_forgot_to_set_static_SELFILLUM_ENVMAPMASK_ALPHA + psh_forgot_to_set_static_DETAIL_BLEND_MODE + psh_forgot_to_set_static_SEAMLESS_BASE + psh_forgot_to_set_static_SEAMLESS_DETAIL + psh_forgot_to_set_static_DISTANCEALPHA + psh_forgot_to_set_static_DISTANCEALPHAFROMDETAIL + psh_forgot_to_set_static_SOFT_MASK + psh_forgot_to_set_static_OUTLINE + psh_forgot_to_set_static_OUTER_GLOW + psh_forgot_to_set_static_FLASHLIGHTDEPTHFILTERMODE + psh_forgot_to_set_static_DEPTHBLEND + psh_forgot_to_set_static_BLENDTINTBYBASEALPHA + psh_forgot_to_set_static_CUBEMAP_SPHERE_LEGACY
-
-
+#define shaderStaticTest_vertexlit_and_unlit_generic_ps30 psh_forgot_to_set_static_DETAILTEXTURE + psh_forgot_to_set_static_CUBEMAP + psh_forgot_to_set_static_DIFFUSELIGHTING + psh_forgot_to_set_static_ENVMAPMASK + psh_forgot_to_set_static_BASEALPHAENVMAPMASK + psh_forgot_to_set_static_SELFILLUM + psh_forgot_to_set_static_VERTEXCOLOR + psh_forgot_to_set_static_FLASHLIGHT + psh_forgot_to_set_static_SELFILLUM_ENVMAPMASK_ALPHA + psh_forgot_to_set_static_DETAIL_BLEND_MODE + psh_forgot_to_set_static_SEAMLESS_BASE + psh_forgot_to_set_static_SEAMLESS_DETAIL + psh_forgot_to_set_static_DISTANCEALPHA + psh_forgot_to_set_static_DISTANCEALPHAFROMDETAIL + psh_forgot_to_set_static_SOFT_MASK + psh_forgot_to_set_static_OUTLINE + psh_forgot_to_set_static_OUTER_GLOW + psh_forgot_to_set_static_FLASHLIGHTDEPTHFILTERMODE + psh_forgot_to_set_static_DEPTHBLEND + psh_forgot_to_set_static_BLENDTINTBYBASEALPHA + psh_forgot_to_set_static_CUBEMAP_SPHERE_LEGACY + 0
 class vertexlit_and_unlit_generic_ps30_Dynamic_Index
 {
-	unsigned int m_nLIGHTING_PREVIEW : 2;
-	unsigned int m_nFLASHLIGHTSHADOWS : 2;
+private:
+	int m_nLIGHTING_PREVIEW;
 #ifdef _DEBUG
-	bool m_bLIGHTING_PREVIEW : 1;
-	bool m_bFLASHLIGHTSHADOWS : 1;
-#endif	// _DEBUG
+	bool m_bLIGHTING_PREVIEW;
+#endif
 public:
 	void SetLIGHTING_PREVIEW( int i )
 	{
@@ -351,36 +556,107 @@ public:
 		m_nLIGHTING_PREVIEW = i;
 #ifdef _DEBUG
 		m_bLIGHTING_PREVIEW = true;
-#endif	// _DEBUG
+#endif
 	}
-
+	void SetLIGHTING_PREVIEW( bool i )
+	{
+		m_nLIGHTING_PREVIEW = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bLIGHTING_PREVIEW = true;
+#endif
+	}
+private:
+	int m_nFLASHLIGHTSHADOWS;
+#ifdef _DEBUG
+	bool m_bFLASHLIGHTSHADOWS;
+#endif
+public:
 	void SetFLASHLIGHTSHADOWS( int i )
 	{
 		Assert( i >= 0 && i <= 1 );
 		m_nFLASHLIGHTSHADOWS = i;
 #ifdef _DEBUG
 		m_bFLASHLIGHTSHADOWS = true;
-#endif	// _DEBUG
+#endif
 	}
-
+	void SetFLASHLIGHTSHADOWS( bool i )
+	{
+		m_nFLASHLIGHTSHADOWS = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bFLASHLIGHTSHADOWS = true;
+#endif
+	}
+private:
+	int m_nSTATIC_LIGHT_LIGHTMAP;
+#ifdef _DEBUG
+	bool m_bSTATIC_LIGHT_LIGHTMAP;
+#endif
+public:
+	void SetSTATIC_LIGHT_LIGHTMAP( int i )
+	{
+		Assert( i >= 0 && i <= 1 );
+		m_nSTATIC_LIGHT_LIGHTMAP = i;
+#ifdef _DEBUG
+		m_bSTATIC_LIGHT_LIGHTMAP = true;
+#endif
+	}
+	void SetSTATIC_LIGHT_LIGHTMAP( bool i )
+	{
+		m_nSTATIC_LIGHT_LIGHTMAP = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bSTATIC_LIGHT_LIGHTMAP = true;
+#endif
+	}
+private:
+	int m_nDEBUG_LUXELS;
+#ifdef _DEBUG
+	bool m_bDEBUG_LUXELS;
+#endif
+public:
+	void SetDEBUG_LUXELS( int i )
+	{
+		Assert( i >= 0 && i <= 1 );
+		m_nDEBUG_LUXELS = i;
+#ifdef _DEBUG
+		m_bDEBUG_LUXELS = true;
+#endif
+	}
+	void SetDEBUG_LUXELS( bool i )
+	{
+		m_nDEBUG_LUXELS = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bDEBUG_LUXELS = true;
+#endif
+	}
+public:
 	vertexlit_and_unlit_generic_ps30_Dynamic_Index()
 	{
-		m_nLIGHTING_PREVIEW = 0;
-		m_nFLASHLIGHTSHADOWS = 0;
 #ifdef _DEBUG
 		m_bLIGHTING_PREVIEW = false;
+#endif // _DEBUG
+		m_nLIGHTING_PREVIEW = 0;
+#ifdef _DEBUG
 		m_bFLASHLIGHTSHADOWS = false;
-#endif	// _DEBUG
+#endif // _DEBUG
+		m_nFLASHLIGHTSHADOWS = 0;
+#ifdef _DEBUG
+		m_bSTATIC_LIGHT_LIGHTMAP = false;
+#endif // _DEBUG
+		m_nSTATIC_LIGHT_LIGHTMAP = 0;
+#ifdef _DEBUG
+		m_bDEBUG_LUXELS = false;
+#endif // _DEBUG
+		m_nDEBUG_LUXELS = 0;
 	}
-
-	int GetIndex() const
+	int GetIndex()
 	{
-		Assert( m_bLIGHTING_PREVIEW && m_bFLASHLIGHTSHADOWS );
-		return ( 1 * m_nLIGHTING_PREVIEW ) + ( 3 * m_nFLASHLIGHTSHADOWS ) + 0;
+		// Asserts to make sure that we aren't using any skipped combinations.
+		// Asserts to make sure that we are setting all of the combination vars.
+#ifdef _DEBUG
+		bool bAllDynamicVarsDefined = m_bLIGHTING_PREVIEW && m_bFLASHLIGHTSHADOWS && m_bSTATIC_LIGHT_LIGHTMAP && m_bDEBUG_LUXELS;
+		Assert( bAllDynamicVarsDefined );
+#endif // _DEBUG
+		return ( 1 * m_nLIGHTING_PREVIEW ) + ( 3 * m_nFLASHLIGHTSHADOWS ) + ( 6 * m_nSTATIC_LIGHT_LIGHTMAP ) + ( 12 * m_nDEBUG_LUXELS ) + 0;
 	}
 };
-
-#define shaderDynamicTest_vertexlit_and_unlit_generic_ps30 psh_forgot_to_set_dynamic_LIGHTING_PREVIEW + psh_forgot_to_set_dynamic_FLASHLIGHTSHADOWS
-
-
-#endif	// VERTEXLIT_AND_UNLIT_GENERIC_PS30_H
+#define shaderDynamicTest_vertexlit_and_unlit_generic_ps30 psh_forgot_to_set_dynamic_LIGHTING_PREVIEW + psh_forgot_to_set_dynamic_FLASHLIGHTSHADOWS + psh_forgot_to_set_dynamic_STATIC_LIGHT_LIGHTMAP + psh_forgot_to_set_dynamic_DEBUG_LUXELS + 0
