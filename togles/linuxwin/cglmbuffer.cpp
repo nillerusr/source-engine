@@ -99,7 +99,10 @@ void CPersistentBuffer::Init( EGLMBufferType type,uint nSize )
 	m_nSize		= nSize;
 	m_nOffset	= 0;
 	m_type		= type;
-	
+
+	if( strcmp(gGL->glGetString(GL_RENDERER), "ARM") == 0 )
+		g_bUsePseudoBufs = true; // works faster with Mali gpu
+
 	switch ( type )
 	{
 	case kGLMVertexBuffer:	m_buffGLTarget = GL_ARRAY_BUFFER; break;

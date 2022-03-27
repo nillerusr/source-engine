@@ -3187,9 +3187,6 @@ int D3DToGL::TranslateShader( uint32* code, CUtlBuffer *pBufDisassembledCode, bo
 	m_bGeneratingDebugText = (options & D3DToGL_GeneratingDebugText) != 0;
 	m_bGenerateSRGBWriteSuffix = (options & D3DToGL_OptionSRGBWriteSuffix) != 0;
 
-/*	if( debugLabel && (V_strstr( debugLabel ,"vertexlit_and_unlit_generic_ps") || V_strstr( debugLabel ,"vertexlit_and_unlit_generic_bump_ps") ) )
-		m_bGenerateSRGBWriteSuffix = true;*/
-
 	m_NumIndentTabs = 1; // start code indented one tab
 	m_nLoopDepth = 0;
 
@@ -3907,8 +3904,8 @@ int D3DToGL::TranslateShader( uint32* code, CUtlBuffer *pBufDisassembledCode, bo
 
 	if( FindSubcode("_gl_FrontSecondaryColor") && !m_bFrontSecondaryColor )
 		StrcatToHeaderCode( "in vec4 _gl_FrontSecondaryColor;\n" );
-	
-	if( m_iFragDataCount && bVertexShader )
+
+	if( !gGL->m_bHave_GL_QCOM_alpha_test && m_iFragDataCount && bVertexShader )
 		StrcatToHeaderCode( "\nuniform float alpha_ref;\n" );	
 
 	StrcatToHeaderCode( "\nvoid main()\n{\n" );
@@ -3926,12 +3923,12 @@ int D3DToGL::TranslateShader( uint32* code, CUtlBuffer *pBufDisassembledCode, bo
 		StrcatToALUCode( "sRGBFragData.xyz = exp( sRGBFragData.xyz );\n" );
 		StrcatToALUCode( "gl_FragData[0].xyz = mix( gl_FragData[0].xyz, sRGBFragData, flSRGBWrite );\n" );
 	}
-	
-	if( m_iFragDataCount && bVertexShader )
+
+	if( !gGL->m_bHave_GL_QCOM_alpha_test && m_iFragDataCount && bVertexShader )
 		StrcatToALUCode( "if( gl_FragData[0].a < alpha_ref ) { discard; };\n" );
 
 	strcat_s( (char*)m_pBufALUCode->Base(), m_pBufALUCode->Size(), "}\n" );
-		
+
 	// Put all of the strings together for final program ( pHeaderCode + pAttribCode + pParamCode + pALUCode )
 	StrcatToHeaderCode( (char*)m_pBufAttribCode->Base() );
 	StrcatToHeaderCode( (char*)m_pBufParamCode->Base() );
