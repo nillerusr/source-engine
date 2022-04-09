@@ -147,14 +147,11 @@ public:
 	virtual void UpdateIKLocks( float currentTime );
 	virtual void CalculateIKLocks( float currentTime );
 	virtual bool ShouldDraw();
-	virtual void UpdateVisibility() OVERRIDE;
 	virtual int DrawModel( int flags );
 	virtual int	InternalDrawModel( int flags );
 	virtual bool OnInternalDrawModel( ClientModelRenderInfo_t *pInfo );
 	virtual bool OnPostInternalDrawModel( ClientModelRenderInfo_t *pInfo );
 	void		DoInternalDrawModel( ClientModelRenderInfo_t *pInfo, DrawModelState_t *pState, matrix3x4_t *pBoneToWorldArray = NULL );
-
-	virtual IMaterial* GetEconWeaponMaterialOverride( int iTeam ) { return NULL; }
 
 	//
 	virtual CMouthInfo *GetMouth();
@@ -250,7 +247,7 @@ public:
 	void							ForceClientSideAnimationOn();
 	
 	void							AddToClientSideAnimationList();
-	void							RemoveFromClientSideAnimationList( bool bBeingDestroyed = false );
+	void							RemoveFromClientSideAnimationList();
 
 	virtual bool					IsSelfAnimating();
 	virtual void					ResetLatched();
@@ -301,8 +298,8 @@ public:
 	virtual void					Clear( void );
 	void							ClearRagdoll();
 	void							CreateUnragdollInfo( C_BaseAnimating *pRagdoll );
-	bool							ForceSetupBonesAtTime( matrix3x4_t *pBonesOut, float flTime );
-	virtual bool					GetRagdollInitBoneArrays( matrix3x4_t *pDeltaBones0, matrix3x4_t *pDeltaBones1, matrix3x4_t *pCurrentBones, float boneDt );
+	void							ForceSetupBonesAtTime( matrix3x4_t *pBonesOut, float flTime );
+	virtual void					GetRagdollInitBoneArrays( matrix3x4_t *pDeltaBones0, matrix3x4_t *pDeltaBones1, matrix3x4_t *pCurrentBones, float boneDt );
 
 	// For shadows rendering the correct body + sequence...
 	virtual int GetBody()			{ return m_nBody; }
@@ -432,7 +429,6 @@ public:
 
 	// For prediction
 	int								SelectWeightedSequence ( int activity );
-	int								SelectWeightedSequenceFromModifiers( Activity activity, CUtlSymbol *pActivityModifiers, int iModifierCount );
 	void							ResetSequenceInfo( void );
 	float							SequenceDuration( void );
 	float							SequenceDuration( CStudioHdr *pStudioHdr, int iSequence );
@@ -448,7 +444,6 @@ public:
 	virtual bool					ShouldResetSequenceOnNewModel( void );
 
 	virtual bool					IsViewModel() const;
-	virtual void					UpdateOnRemove( void );
 
 protected:
 	// View models scale their attachment positions to account for FOV. To get the unmodified
@@ -610,7 +605,7 @@ private:
 	// Calculated attachment points
 	CUtlVector<CAttachmentData>		m_Attachments;
 
-	bool							SetupBones_AttachmentHelper( CStudioHdr *pStudioHdr );
+	void							SetupBones_AttachmentHelper( CStudioHdr *pStudioHdr );
 
 	EHANDLE							m_hLightingOrigin;
 	EHANDLE							m_hLightingOriginRelative;
@@ -620,7 +615,6 @@ private:
 	unsigned char m_nOldMuzzleFlashParity;
 
 	bool							m_bInitModelEffects;
-	bool							m_bDelayInitModelEffects;
 
 	// Dynamic models
 	bool							m_bDynamicModelAllowed;
@@ -639,7 +633,6 @@ private:
 	mutable CStudioHdr				*m_pStudioHdr;
 	mutable MDLHandle_t				m_hStudioHdr;
 	CThreadFastMutex				m_StudioHdrInitLock;
-	bool							m_bHasAttachedParticles;
 };
 
 enum 
@@ -765,12 +758,19 @@ inline CStudioHdr *C_BaseAnimating::GetModelPtr() const
 
 inline void C_BaseAnimating::InvalidateMdlCache()
 {
-	UnlockStudioHdr();
+	if ( m_pStudioHdr )
+	{
+		UnlockStudioHdr();
+		delete m_pStudioHdr;
+		m_pStudioHdr = NULL;
+	}
 }
 
-inline bool C_BaseAnimating::IsModelScaleFractional() const
+
+inline bool C_BaseAnimating::IsModelScaleFractional() const   /// very fast way to ask if the model scale is < 1.0f
 {
-	return ( m_flModelScale < 1.0f );
+	COMPILE_TIME_ASSERT( sizeof( m_flModelScale ) == sizeof( int ) );
+	return *((const int *) &m_flModelScale) < 0x3f800000;
 }
 
 inline bool C_BaseAnimating::IsModelScaled() const

@@ -22,8 +22,8 @@ $Configuration	"Debug"
 {
 	$General
 	{
-		$OutputDirectory		".\Debug_$GAMENAME" [$WINDOWS]
-		$IntermediateDirectory	".\Debug_$GAMENAME" [$WINDOWS]
+		$OutputDirectory		".\Debug_$GAMENAME"			[$WIN32]
+		$IntermediateDirectory	".\Debug_$GAMENAME"			[$WIN32]
 
 		$OutputDirectory		".\Debug_$GAMENAME_360"		[$X360]
 		$IntermediateDirectory	".\Debug_$GAMENAME_360"		[$X360]
@@ -34,9 +34,8 @@ $Configuration	"Release"
 {
 	$General
 	{
-		// Windows generator doesn't sandbox these directories per configuration but others do :-/
-		$OutputDirectory		".\Release_$GAMENAME" [$WINDOWS]
-		$IntermediateDirectory	".\Release_$GAMENAME" [$WINDOWS]
+		$OutputDirectory		".\Release_$GAMENAME"		[$WIN32]
+		$IntermediateDirectory	".\Release_$GAMENAME"		[$WIN32]
 
 		$OutputDirectory		".\Release_$GAMENAME_360"	[$X360]
 		$IntermediateDirectory	".\Release_$GAMENAME_360"	[$X360]
@@ -47,14 +46,13 @@ $Configuration
 {
 	$General
 	{
-		$OutputDirectory			".\$GAMENAME"
-		$IntermediateDirectory		".\$GAMENAME"
+		$OutputDirectory		".\$GAMENAME"		[$OSXALL]
 	}
-
+	
 	$Compiler
 	{
 		$AdditionalIncludeDirectories	"$BASE;.\;$SRCDIR\game\shared;$SRCDIR\utils\common;$SRCDIR\game\shared\econ;$SRCDIR\game\server\NextBot"
-		$PreprocessorDefinitions		"$BASE;GAME_DLL;VECTOR;VERSION_SAFE_STEAM_API_INTERFACES;PROTECTED_THINGS_ENABLE;strncpy=use_Q_strncpy_instead;_snprintf=use_Q_snprintf_instead"
+		$PreprocessorDefinitions		"$BASE;GAME_DLL;VECTOR;VERSION_SAFE_STEAM_API_INTERFACES;PROTECTED_THINGS_ENABLE;sprintf=use_Q_snprintf_instead_of_sprintf;strncpy=use_Q_strncpy_instead;_snprintf=use_Q_snprintf_instead"
 		$PreprocessorDefinitions		"$BASE;SWDS" [$POSIX]
 		$PreprocessorDefinitions		"$BASE;fopen=dont_use_fopen" [$WINDOWS||$X360]
 		$Create/UsePrecompiledHeader	"Use Precompiled Header (/Yu)"
@@ -74,11 +72,11 @@ $Project
 	{
 		$File	"gamedll_replay.cpp"
 		$File	"$SRCDIR\common\replay\ireplaysessionrecorder.h"
-
+		
 		$File	"$SRCDIR\game\shared\replay_gamestats_shared.cpp"	[$BUILD_REPLAY]
 		$File	"$SRCDIR\game\shared\replay_gamestats_shared.h"	[$BUILD_REPLAY]
 	}
-
+	
 	$Folder	"Source Files"
 	{
 		$File	"$SRCDIR\game\shared\achievement_saverestore.cpp"
@@ -683,7 +681,6 @@ $Project
 				"$SRCDIR\game\shared\interval.cpp"					\
 				"$SRCDIR\public\keyframe\keyframe.cpp"				\
 				"$SRCDIR\common\language.cpp"						\
-				"$SRCDIR\common\steamid.cpp"						\
 				"$SRCDIR\public\map_utils.cpp"						\
 				"$SRCDIR\public\networkvar.cpp"						\
 				"$SRCDIR\common\randoverride.cpp"					\

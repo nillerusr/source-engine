@@ -215,8 +215,8 @@ void CHudCredits::ReadNames( KeyValues *pKeyValue )
 	while ( pKVNames )
 	{
 		creditname_t Credits;
-		V_strcpy_safe( Credits.szCreditName, pKVNames->GetName() );
-		V_strcpy_safe( Credits.szFontName, pKeyValue->GetString( Credits.szCreditName, "Default" ) );
+		Q_strcpy( Credits.szCreditName, pKVNames->GetName());
+		Q_strcpy( Credits.szFontName, pKeyValue->GetString( Credits.szCreditName, "Default" ) );
 
 		m_CreditsList.AddToTail( Credits );
 		pKVNames = pKVNames->GetNextKey();

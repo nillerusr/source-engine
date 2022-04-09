@@ -113,18 +113,6 @@ RecvProp RecvPropBool(
 	return RecvPropInt( pVarName, offset, sizeofVar );
 }
 
-RecvProp RecvPropBool(
-	const char *pVarName,
-	int offset,
-	int sizeofVar,
-	int flags,
-	RecvVarProxyFn varProxy
-	)
-{
-	Assert( sizeofVar == sizeof( bool ) );
-	return RecvPropInt( pVarName, offset, sizeofVar, flags, varProxy );
-}
-
 
 //-----------------------------------------------------------------------------
 // Moveparent receive proxies

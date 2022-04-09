@@ -30,10 +30,6 @@
 #include "ai_utils.h"
 #include "physics_impact_damage.h"
 
-#ifdef TF_DLL
-#include "tf_shareddefs.h"
-#endif // TF_DLL
-
 class CNavArea;
 class CScriptedTarget;
 typedef CHandle<CBaseCombatWeapon> CBaseCombatWeaponHandle;
@@ -371,7 +367,7 @@ public:
 	virtual bool		RemoveEntityRelationship( CBaseEntity *pEntity );
 	virtual void		AddClassRelationship( Class_T nClass, Disposition_t nDisposition, int nPriority );
 
-	virtual void		ChangeTeam( int iTeamNum ) OVERRIDE;
+	virtual void		ChangeTeam( int iTeamNum );
 
 	// Nav hull type
 	Hull_t	GetHullType() const				{ return m_eHull; }
@@ -415,10 +411,6 @@ public:
 	// Notification from INextBots.
 	// -----------------------
 	virtual void		OnPursuedBy( INextBot * RESTRICT pPursuer ){} // called every frame while pursued by a bot in DirectChase.
-
-#ifdef TF_DLL
-	virtual HalloweenBossType GetBossType() const { return HALLOWEEN_BOSS_INVALID; }
-#endif // TF_DLL
 
 #ifdef GLOWS_ENABLE
 	// Glows

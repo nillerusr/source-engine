@@ -438,7 +438,7 @@ int	Beam_t::GetFxBlend( )
 extern bool g_bRenderingScreenshot;
 extern ConVar r_drawviewmodel;
 
-int Beam_t::DrawModel( int ignored )
+int Beam_t::DrawModel( int flags )
 {
 #ifdef PORTAL
 	if ( ( !g_pPortalRender->IsRenderingPortal() && !m_bDrawInMainRender ) || 
@@ -1733,21 +1733,15 @@ void CViewRenderBeams::DrawBeamFollow( const model_t* pSprite, Beam_t *pbeam,
 	}
 	if (!pnew && div != 0)
 	{
-		if ( debugoverlay )
-		{
-			VectorCopy( pbeam->attachment[0], delta );
-			debugoverlay->ScreenPosition( pbeam->attachment[0], screenLast );
-			debugoverlay->ScreenPosition( particles->org, screen );
-		}
+		VectorCopy( pbeam->attachment[0], delta );
+		debugoverlay->ScreenPosition( pbeam->attachment[0], screenLast );
+		debugoverlay->ScreenPosition( particles->org, screen );
 	}
 	else if (particles && particles->next)
 	{
-		if ( debugoverlay )
-		{
-			VectorCopy( particles->org, delta );
-			debugoverlay->ScreenPosition( particles->org, screenLast );
-			debugoverlay->ScreenPosition( particles->next->org, screen );
-		}
+		VectorCopy( particles->org, delta );
+		debugoverlay->ScreenPosition( particles->org, screenLast );
+		debugoverlay->ScreenPosition( particles->next->org, screen );
 		particles = particles->next;
 	}
 	else

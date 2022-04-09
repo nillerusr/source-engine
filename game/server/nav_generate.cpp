@@ -39,7 +39,6 @@ ConVar nav_slope_tolerance( "nav_slope_tolerance", "0.1", FCVAR_CHEAT, "The grou
 ConVar nav_displacement_test( "nav_displacement_test", "10000", FCVAR_CHEAT, "Checks for nodes embedded in displacements (useful for in-development maps)" );
 ConVar nav_generate_fencetops( "nav_generate_fencetops", "1", FCVAR_CHEAT, "Autogenerate nav areas on fence and obstacle tops" );
 ConVar nav_generate_fixup_jump_areas( "nav_generate_fixup_jump_areas", "1", FCVAR_CHEAT, "Convert obsolete jump areas into 2-way connections" );
-ConVar nav_generate_jump_connections( "nav_generate_jump_connections", "1", FCVAR_CHEAT, "If disabled, don't generate jump connections from jump areas" );
 ConVar nav_generate_incremental_range( "nav_generate_incremental_range", "2000", FCVAR_CHEAT );
 ConVar nav_generate_incremental_tolerance( "nav_generate_incremental_tolerance", "0", FCVAR_CHEAT, "Z tolerance for adding new nav areas." );
 ConVar nav_area_max_size( "nav_area_max_size", "50", FCVAR_CHEAT, "Max area size created in nav generation" );
@@ -498,11 +497,6 @@ class JumpConnector
 public:
 	bool operator()( CNavArea *jumpArea )
 	{
-		if ( !nav_generate_jump_connections.GetBool() )
-		{
-			return true;
-		}
-
 		if ( !(jumpArea->GetAttributes() & NAV_MESH_JUMP) )
 		{
 			return true;
@@ -1235,12 +1229,9 @@ void CNavMesh::RemoveOverlappingObstacleTopAreas()
 
 static void CommandNavCheckStairs( void )
 {
-	if ( !UTIL_IsCommandIssuedByServerAdmin() )
-		return;
-
 	TheNavMesh->MarkStairAreas();
 }
-static ConCommand nav_check_stairs( "nav_check_stairs", CommandNavCheckStairs, "Update the nav mesh STAIRS attribute", FCVAR_CHEAT );
+static ConCommand nav_check_stairs( "nav_check_stairs", CommandNavCheckStairs, "Update the nav mesh STAIRS attribute" );
 
 //--------------------------------------------------------------------------------------------------------------
 /**
@@ -1454,9 +1445,6 @@ bool CNavArea::TestStairs( void )
 //--------------------------------------------------------------------------------------------------------------
 CON_COMMAND_F( nav_test_stairs, "Test the selected set for being on stairs", FCVAR_CHEAT )
 {
-	if ( !UTIL_IsCommandIssuedByServerAdmin() )
-		return;
-
 	int count = 0;
 
 	const NavAreaVector &selectedSet = TheNavMesh->GetSelectedSet();
@@ -1801,11 +1789,6 @@ inline bool testJumpDown( const Vector *fromPos, const Vector *toPos )
 //--------------------------------------------------------------------------------------------------------------
 inline CNavArea *findJumpDownArea( const Vector *fromPos, NavDirType dir )
 {
-	if ( !nav_generate_jump_connections.GetBool() )
-	{
-		return NULL;
-	}
-
 	Vector start( fromPos->x, fromPos->y, fromPos->z + HalfHumanHeight );
 	AddDirectionVector( &start, dir, GenerationStepSize/2.0f );
 
@@ -1826,8 +1809,6 @@ void CNavMesh::StitchAreaIntoMesh( CNavArea *area, NavDirType dir, Functor &func
 	Vector corner1, corner2;
 	switch ( dir )
 	{
-		default:
-			Assert(0);
 		case NORTH:
 			corner1 = area->GetCorner( NORTH_WEST );
 			corner2 = area->GetCorner( NORTH_EAST );
@@ -4949,8 +4930,5 @@ void CNavMesh::PostProcessCliffAreas()
 
 CON_COMMAND_F( nav_gen_cliffs_approx, "Mark cliff areas, post-processing approximation", FCVAR_CHEAT )
 {
-	if ( !UTIL_IsCommandIssuedByServerAdmin() )
-		return;
-
 	TheNavMesh->PostProcessCliffAreas();
 }

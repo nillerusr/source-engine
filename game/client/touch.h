@@ -161,7 +161,7 @@ public:
 	
 	void AddButton( const char *name, const char *texturefile, const char *command, float x1, float y1, float x2, float y2, rgba_t color = rgba_t(255, 255, 255, 255), int round = 2, float aspect = 1.f, int flags = 0 );
 	void RemoveButton( const char *name );
-	
+	void ResetToDefaults();
 	void HideButton( const char *name );
 	void ShowButton( const char *name );
 	void ListButtons();

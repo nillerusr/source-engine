@@ -1339,6 +1339,7 @@ typedef struct _D3DCAPS9
 	DWORD	FakeSRGBWrite;				// 1 for parts which can't support SRGB writes due to driver issues - 0 for others
 	DWORD	MixedSizeTargets;			// 1 for parts which can mix attachment sizes (RT's color vs depth)
 	DWORD	CanDoSRGBReadFromRTs;		// 0 when we're on Leopard, 1 when on Snow Leopard
+	DWORD   SupportInt16Format;
 } D3DCAPS9;
 
 typedef struct _D3DDISPLAYMODE

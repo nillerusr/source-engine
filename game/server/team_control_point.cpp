@@ -17,7 +17,6 @@
 
 #ifdef TF_DLL
 #include "tf_shareddefs.h"
-#include "tf_gamerules.h"
 #endif
 
 #define CONTROL_POINT_UNLOCK_THINK			"UnlockThink"
@@ -83,7 +82,6 @@ CTeamControlPoint::CTeamControlPoint()
 
 	m_bLocked = false;
 	m_flUnlockTime = -1;
-	m_bBotsIgnore = false;
 
 #ifdef  TF_DLL
 	UseClientSideAnimation();
@@ -143,8 +141,6 @@ void CTeamControlPoint::Spawn( void )
 	{
 		AddEffects( EF_NOSHADOW );
 	}
-
-	m_bBotsIgnore = FBitSet( m_spawnflags, SF_CAP_POINT_BOTS_IGNORE ) > 0;
 
 	m_flLastContestedAt = -1;
 
@@ -273,7 +269,6 @@ void CTeamControlPoint::Precache( void )
 
 #ifdef TF_DLL
 	PrecacheScriptSound( "Announcer.ControlPointContested" );
-	PrecacheScriptSound( "Announcer.ControlPointContested_Neutral" );
 #endif
 }
 
@@ -658,15 +653,7 @@ void CTeamControlPoint::InternalSetOwner( int iCapTeam, bool bMakeSound, int iNu
 
 			Assert( playerIndex > 0 && playerIndex <= gpGlobals->maxClients );
 
-			CBaseMultiplayerPlayer *pPlayer = ToBaseMultiplayerPlayer( UTIL_PlayerByIndex( playerIndex ) );
-			PlayerCapped( pPlayer );
-
-#ifdef TF_DLL
-			if ( TFGameRules() && TFGameRules()->IsHolidayActive( kHoliday_EOTL ) )
-			{
-				TFGameRules()->DropBonusDuck( pPlayer->GetAbsOrigin(), ToTFPlayer( pPlayer ), NULL, NULL, false, true );
-			}
-#endif
+			PlayerCapped( ToBaseMultiplayerPlayer(UTIL_PlayerByIndex( playerIndex )) );
 		}
 
 		// Remap team to get first game team = 1
@@ -684,13 +671,6 @@ void CTeamControlPoint::InternalSetOwner( int iCapTeam, bool bMakeSound, int iNu
 		{
 			SendCapString( m_iTeam, iNumCappers, pCappingPlayers );
 		}
-
-#ifdef TF_DLL
-		if ( TFGameRules() && TFGameRules()->IsHolidayActive( kHoliday_Halloween ) )
-		{
-			TFGameRules()->DropHalloweenSoulPackToTeam( 5, GetAbsOrigin(), m_iTeam, TEAM_SPECTATOR );
-		}
-#endif
 	}
 
 	// Have control point master check the win conditions now!
@@ -753,7 +733,7 @@ void CTeamControlPoint::SendCapString( int iCapTeam, int iNumCappingPlayers, int
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTeamControlPoint::CaptureBlocked( CBaseMultiplayerPlayer *pPlayer, CBaseMultiplayerPlayer *pVictim )
+void CTeamControlPoint::CaptureBlocked( CBaseMultiplayerPlayer *pPlayer )
 {
 	if( strlen( STRING(m_iszPrintName) ) <= 0 )
 		return;
@@ -766,10 +746,6 @@ void CTeamControlPoint::CaptureBlocked( CBaseMultiplayerPlayer *pPlayer, CBaseMu
 		event->SetString( "cpname", STRING(m_iszPrintName) );
 		event->SetInt( "blocker", pPlayer->entindex() );
 		event->SetInt( "priority", 9 );
-		if ( pVictim )
-		{
-			event->SetInt( "victim", pVictim->entindex() );
-		}
 
 		gameeventmanager->FireEvent( event );
 	}

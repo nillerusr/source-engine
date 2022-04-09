@@ -1,3 +1,0 @@
-LIBRARY	client_360.dll
-EXPORTS
-	CreateInterface		@1

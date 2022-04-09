@@ -82,7 +82,6 @@ def project_key(l):
 			return k
 
 def fix_dos_path( path ):
-
 	path = path.replace('\\', '/')
 	p = path.split('/')
 
@@ -110,6 +109,7 @@ def parse_vpcs( env ,vpcs, basedir ):
 	for vpc in vpcs:
 		f=open(vpc, 'r').read().replace('\\\n', ';')
 
+		re.sub(r'//.*', '', f)
 		l = f.split('\n')
 
 		iBrackets = 0

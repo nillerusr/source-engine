@@ -197,6 +197,9 @@ extern IVoiceRecord* CreateVoiceRecord_AudioQueue(int sampleRate);
 extern IVoiceRecord* CreateVoiceRecord_OpenAL(int sampleRate);
 #endif
 
+#ifdef USE_SDL
+extern IVoiceRecord *CreateVoiceRecord_SDL(int sampleRate);
+#endif
 
 static bool VoiceRecord_Start()
 {
@@ -649,6 +652,8 @@ bool Voice_Init( const char *pCodecName, int nSampleRate )
 	}
 #elif defined( WIN32 )
 	g_pVoiceRecord = CreateVoiceRecord_DSound( Voice_SamplesPerSec() );
+#elif defined( USE_SDL )
+	g_pVoiceRecord = CreateVoiceRecord_SDL( Voice_SamplesPerSec() );
 #else
 	g_pVoiceRecord = CreateVoiceRecord_OpenAL( Voice_SamplesPerSec() );
 #endif

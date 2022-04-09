@@ -66,8 +66,6 @@ public:
 	bool IsBaseControlPoint( int iPointIndex );
 
 	bool PlayingMiniRounds( void ){	return ( m_ControlPointRounds.Count() > 0 ); }
-	int GetNumRounds( void ) { return m_ControlPointRounds.Count(); }
-	const CTeamControlPointRound* GetRoundByIndex( int nIndex ) const;
 
 	float PointLastContestedAt( int point );
 	CTeamControlPoint *GetControlPoint( int point )
@@ -123,18 +121,13 @@ public:
 	bool ShouldScorePerCapture( void ){ return m_bScorePerCapture; }
 	bool ShouldPlayAllControlPointRounds( void ){ return m_bPlayAllRounds; }
 	int NumPlayableControlPointRounds( void ); // checks to see if there are any more rounds to play (but doesn't actually "get" one to play)
-
-#ifdef STAGING_ONLY
-	void ListRounds( void );
-#endif
+	
+//	void ListRounds( void );
 
 	float GetPartialCapturePointRate( void );
 
 	void SetLastOwnershipChangeTime( float m_flTime ) { m_flLastOwnershipChangeTime = m_flTime; }
 	float GetLastOwnershipChangeTime( void ) { return m_flLastOwnershipChangeTime; }
-
-	int GetCurrentRoundIndex() { return m_iCurrentRoundIndex; }
-	bool ShouldSwitchTeamsOnRoundWin( void ) { return m_bSwitchTeamsOnWin; }
 
 private:
 	void EXPORT CPMThink( void );

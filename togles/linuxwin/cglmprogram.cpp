@@ -790,8 +790,9 @@ bool CGLMShaderPair::ValidateProgramPair()
 			m_locVertexParams = gGL->glGetUniformLocation( m_program, "vc" );
 			m_locVertexBoneParams = gGL->glGetUniformLocation( m_program, "vcbones" );
 			m_locVertexScreenParams = gGL->glGetUniformLocation( m_program, "vcscreen" );
-			m_locAlphaRef = gGL->glGetUniformLocation( m_program, "alpha_ref" );
-			
+			if( !gGL->m_bHave_GL_QCOM_alpha_test )
+				m_locAlphaRef = gGL->glGetUniformLocation( m_program, "alpha_ref" );
+
 			m_nScreenWidthHeight = 0xFFFFFFFF;
 
 			m_locVertexInteger0 = gGL->glGetUniformLocation( m_program, "i0" );

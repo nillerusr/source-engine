@@ -69,7 +69,7 @@ public:
 
 	virtual Color GetBlackBarColor( void ) { return BLACK_BAR_COLOR; }
 
-	virtual const char *GetResFile( void );
+	virtual const char *GetResFile( void ) { return "Resource/UI/Spectator.res"; }
 
 	virtual GameActionSet_t GetPreferredActionSet() { return GAME_ACTION_SET_SPECTATOR; }
 	

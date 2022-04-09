@@ -40,11 +40,7 @@ public:
 		bool bServerSide = true;
 #endif
 		if ( gameeventmanager )
-		{
 			gameeventmanager->AddListener( this, name, bServerSide );
-		}
-		
-		AssertMsg1( gameeventmanager, "Failed to subscribe to event %s!", name );
 	}
 
 	void StopListeningForAllEvents()

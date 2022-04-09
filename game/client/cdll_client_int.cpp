@@ -117,7 +117,6 @@
 #include "tf_hud_disconnect_prompt.h"
 #include "../engine/audio/public/sound.h"
 #include "tf_shared_content_manager.h"
-#include "tf_gamerules.h"
 #endif
 #include "clientsteamcontext.h"
 #include "renamed_recvtable_compat.h"
@@ -125,8 +124,6 @@
 #include "sourcevr/isourcevirtualreality.h"
 #include "client_virtualreality.h"
 #include "mumble.h"
-#include "vgui_controls/BuildGroup.h"
-#include "touch.h"
 
 // NVNT includes
 #include "hud_macros.h"
@@ -144,12 +141,13 @@
 
 #if defined( TF_CLIENT_DLL )
 #include "econ/tool_items/custom_texture_cache.h"
-
 #endif
 
 #ifdef WORKSHOP_IMPORT_ENABLED
 #include "fbxsystem/fbxsystem.h"
 #endif
+
+#include "touch.h"
 
 extern vgui::IInputInternal *g_InputInternal;
 
@@ -572,8 +570,7 @@ void DisplayBoneSetupEnts()
 		if ( pEnt->m_Count >= 3 )
 		{
 			printInfo.color[0] = 1;
-			printInfo.color[1] = 0;
-			printInfo.color[2] = 0;
+			printInfo.color[1] = printInfo.color[2] = 0;
 		}
 		else if ( pEnt->m_Count == 2 )
 		{
@@ -583,9 +580,7 @@ void DisplayBoneSetupEnts()
 		}
 		else
 		{
-			printInfo.color[0] = 1;
-			printInfo.color[1] = 1;
-			printInfo.color[2] = 1;
+			printInfo.color[0] = printInfo.color[0] = printInfo.color[0] = 1;
 		}
 		engine->Con_NXPrintf( &printInfo, "%25s / %3d / %3d", pEnt->m_ModelName, pEnt->m_Count, pEnt->m_Index );
 		printInfo.index++;
@@ -730,12 +725,12 @@ public:
 	
 	// Returns true if the disconnect command has been handled by the client
 	virtual bool DisconnectAttempt( void );
-
+public:
 	void PrecacheMaterial( const char *pMaterialName );
 
 	virtual bool IsConnectedUserInfoChangeAllowed( IConVar *pCvar );
-
 	virtual void IN_TouchEvent( uint data, uint data2, uint data3, uint data4 );
+
 private:
 	void UncacheAllMaterials( );
 	void ResetStringTablePointers();
@@ -906,7 +901,7 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 		return false;
 	if ( (networkstringtable = (INetworkStringTableContainer *)appSystemFactory(INTERFACENAME_NETWORKSTRINGTABLECLIENT,NULL)) == NULL )
 		return false;
-	if ( (::partition = (ISpatialPartition *)appSystemFactory(INTERFACEVERSION_SPATIALPARTITION, NULL)) == NULL )
+	if ( (partition = (ISpatialPartition *)appSystemFactory(INTERFACEVERSION_SPATIALPARTITION, NULL)) == NULL )
 		return false;
 	if ( (shadowmgr = (IShadowMgr *)appSystemFactory(ENGINE_SHADOWMGR_INTERFACE_VERSION, NULL)) == NULL )
 		return false;
@@ -956,8 +951,7 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 #endif
 
 	// it's ok if this is NULL. That just means the sourcevr.dll wasn't found
-	if ( CommandLine()->CheckParm( "-vr" ) )
-		g_pSourceVR = (ISourceVirtualReality *)appSystemFactory(SOURCE_VIRTUAL_REALITY_INTERFACE_VERSION, NULL);
+	g_pSourceVR = (ISourceVirtualReality *)appSystemFactory(SOURCE_VIRTUAL_REALITY_INTERFACE_VERSION, NULL);
 
 	factorylist_t factories;
 	factories.appSystemFactory = appSystemFactory;
@@ -1040,7 +1034,6 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 	g_pClientMode->InitViewport();
 
 	gHUD.Init();
-
 	gTouch.Init();
 
 	g_pClientMode->Init();
@@ -1210,7 +1203,7 @@ void CHLClient::Shutdown( void )
 
 	ParticleMgr()->Term();
 	
-	vgui::BuildGroup::ClearResFileCache();
+	ClearKeyValuesCache();
 
 #ifndef NO_STEAM
 	ClientSteamContext().Shutdown();
@@ -1424,30 +1417,8 @@ int CHLClient::IN_KeyEvent( int eventcode, ButtonCode_t keynum, const char *pszC
 	return input->KeyEvent( eventcode, keynum, pszCurrentBinding );
 }
 
-void CHLClient::IN_TouchEvent( uint data, uint data2, uint data3, uint data4 )
-{
-	if( enginevgui->IsGameUIVisible() )
-		return;
-
-	touch_event_t ev;
-
-	ev.type = data & 0xFFFF;
-	ev.fingerid = (data >> 16) & 0xFFFF;
-	ev.x = (double)((data2 >> 16) & 0xFFFF)  / 0xFFFF;
-	ev.y = (double)(data2 & 0xFFFF) / 0xFFFF;
-
-	union{uint i;float f;} ifconv;
-	ifconv.i = data3;
-	ev.dx = ifconv.f;
-
-	ifconv.i = data4;
-	ev.dy = ifconv.f;
-
-	gTouch.ProcessEvent( &ev );
-}
-
 void CHLClient::ExtraMouseSample( float frametime, bool active )
-	{
+{
 	Assert( C_BaseEntity::IsAbsRecomputationsEnabled() );
 	Assert( C_BaseEntity::IsAbsQueriesValid() );
 
@@ -1779,10 +1750,10 @@ void CHLClient::LevelShutdown( void )
 //-----------------------------------------------------------------------------
 void CHLClient::SetCrosshairAngle( const QAngle& angle )
 {
-	CHudCrosshair *pCrosshair = GET_HUDELEMENT( CHudCrosshair );
-	if ( pCrosshair )
+	CHudCrosshair *crosshair = GET_HUDELEMENT( CHudCrosshair );
+	if ( crosshair )
 	{
-		pCrosshair->SetCrosshairAngle( angle );
+		crosshair->SetCrosshairAngle( angle );
 	}
 }
 
@@ -2139,11 +2110,10 @@ void OnRenderStart()
 	g_pPortalRender->UpdatePortalPixelVisibility(); //updating this one or two lines before querying again just isn't cutting it. Update as soon as it's cheap to do so.
 #endif
 
-	::partition->SuppressLists( PARTITION_ALL_CLIENT_EDICTS, true );
+	partition->SuppressLists( PARTITION_ALL_CLIENT_EDICTS, true );
 	C_BaseEntity::SetAbsQueriesValid( false );
 
 	Rope_ResetCounters();
-	UpdateLocalPlayerVisionFlags();
 
 	// Interpolate server entities and move aiments.
 	{
@@ -2183,7 +2153,7 @@ void OnRenderStart()
 	// This will place all entities in the correct position in world space and in the KD-tree
 	C_BaseAnimating::UpdateClientSideAnimations();
 
-	::partition->SuppressLists( PARTITION_ALL_CLIENT_EDICTS, false );
+	partition->SuppressLists( PARTITION_ALL_CLIENT_EDICTS, false );
 
 	// Process OnDataChanged events.
 	ProcessOnDataChangedEvents();
@@ -2296,7 +2266,7 @@ void CHLClient::FrameStageNotify( ClientFrameStage_t curStage )
 			C_BaseEntity::EnableAbsRecomputations( false );
 			C_BaseEntity::SetAbsQueriesValid( false );
 			Interpolation_SetLastPacketTimeStamp( engine->GetLastTimeStamp() );
-			::partition->SuppressLists( PARTITION_ALL_CLIENT_EDICTS, true );
+			partition->SuppressLists( PARTITION_ALL_CLIENT_EDICTS, true );
 
 			PREDICTION_STARTTRACKVALUE( "netupdate" );
 		}
@@ -2308,7 +2278,7 @@ void CHLClient::FrameStageNotify( ClientFrameStage_t curStage )
 			// reenable abs recomputation since now all entities have been updated
 			C_BaseEntity::EnableAbsRecomputations( true );
 			C_BaseEntity::SetAbsQueriesValid( true );
-			::partition->SuppressLists( PARTITION_ALL_CLIENT_EDICTS, false );
+			partition->SuppressLists( PARTITION_ALL_CLIENT_EDICTS, false );
 
 			PREDICTION_ENDTRACKVALUE();
 		}
@@ -2470,18 +2440,10 @@ bool CHLClient::CanRecordDemo( char *errorMsg, int length ) const
 
 void CHLClient::OnDemoRecordStart( char const* pDemoBaseName )
 {
-	if ( GetClientModeNormal() )
-	{
-		return GetClientModeNormal()->OnDemoRecordStart( pDemoBaseName );
-	}
 }
 
 void CHLClient::OnDemoRecordStop()
 {
-	if ( GetClientModeNormal() )
-	{
-		return GetClientModeNormal()->OnDemoRecordStop();
-	}
 }
 
 void CHLClient::OnDemoPlaybackStart( char const* pDemoBaseName )
@@ -2604,22 +2566,26 @@ void CHLClient::ClientAdjustStartSoundParams( StartSoundParams_t& params )
 		// Halloween voice futzery?
 		else
 		{
-			float flVoicePitchScale = 1.f;
-			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pEntity, flVoicePitchScale, voice_pitch_scale );
+			float flHeadScale = 1.f;
+			CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pEntity, flHeadScale, head_scale );
 
 			int iHalloweenVoiceSpell = 0;
-			if ( TF_IsHolidayActive( kHoliday_HalloweenOrFullMoon ) )
-			{
-				CALL_ATTRIB_HOOK_INT_ON_OTHER( pEntity, iHalloweenVoiceSpell, halloween_voice_modulation );
-			}
-
+			CALL_ATTRIB_HOOK_INT_ON_OTHER( pEntity, iHalloweenVoiceSpell, halloween_voice_modulation );
 			if ( iHalloweenVoiceSpell > 0 )
 			{
 				params.pitch *= 0.8f;
 			}
-			else if( flVoicePitchScale != 1.f )
+			else if( flHeadScale != 1.f )
 			{
-				params.pitch *= flVoicePitchScale;
+				// Big head, deep voice
+				if( flHeadScale > 1.f )
+				{
+					params.pitch *= 0.8f;
+				}
+				else	// Small head, high voice
+				{
+					params.pitch *= 1.3f;
+				}
 			}
 		}
 	}
@@ -2661,7 +2627,7 @@ CSteamID GetSteamIDForPlayerIndex( int iPlayerIndex )
 		{
 			if ( pi.friendsID )
 			{
-				return CSteamID( pi.friendsID, 1, GetUniverse(), k_EAccountTypeIndividual );
+				return CSteamID( pi.friendsID, 1, steamapicontext->SteamUtils()->GetConnectedUniverse(), k_EAccountTypeIndividual );
 			}
 		}
 	}
@@ -2669,3 +2635,26 @@ CSteamID GetSteamIDForPlayerIndex( int iPlayerIndex )
 }
 
 #endif
+
+ 
+void CHLClient::IN_TouchEvent( uint data, uint data2, uint data3, uint data4 )
+{
+	if( enginevgui->IsGameUIVisible() )
+		return;
+
+	touch_event_t ev;
+
+	ev.type = data & 0xFFFF;
+	ev.fingerid = (data >> 16) & 0xFFFF;
+	ev.x = (double)((data2 >> 16) & 0xFFFF)  / 0xFFFF;
+	ev.y = (double)(data2 & 0xFFFF) / 0xFFFF;
+
+	union{uint i;float f;} ifconv;
+	ifconv.i = data3;
+	ev.dx = ifconv.f;
+
+	ifconv.i = data4;
+	ev.dy = ifconv.f;
+
+	gTouch.ProcessEvent( &ev );
+}

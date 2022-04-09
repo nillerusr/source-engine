@@ -480,7 +480,7 @@ FORCEINLINE void GLMContext::FlushDrawStates( uint nStartIndex, uint nEndIndex, 
 	}
 
 
-	if( m_pBoundPair->m_locAlphaRef )
+	if( !gGL->m_bHave_GL_QCOM_alpha_test && m_pBoundPair->m_locAlphaRef )
 	{
 		if( !m_AlphaTestEnable.GetData().enable )
 			gGL->glUniform1f( m_pBoundPair->m_locAlphaRef, 0.0 );

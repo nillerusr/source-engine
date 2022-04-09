@@ -283,7 +283,7 @@ struct CInterpolatedVarEntryBase<Type, false>
 	{
 		Assert(maxCount==1);
 	}
-	Type *NewEntry( Type *pValue, int maxCount, float time )
+	Type *NewEntry( const Type *pValue, int maxCount, float time )
 	{
 		Assert(maxCount==1);
 		changetime = time;
@@ -733,7 +733,7 @@ inline void CInterpolatedVarArrayBase<Type, IS_ARRAY>::AddToHead( float changeTi
 		}
 
 	CInterpolatedVarEntry *e = &m_VarHistory[ newslot ];
-	e->NewEntry( (Type*)values, m_nMaxCount, changeTime );
+	e->NewEntry( values, m_nMaxCount, changeTime );
 }
 
 template< typename Type, bool IS_ARRAY >

@@ -92,7 +92,7 @@ bool GetHWMExpressionFileName( const char *pFilename, char *pHWMFilename )
 
 	// Find the hardware morph scene name and pass that along as well.
 	char szExpression[MAX_PATH];
-	V_strcpy_safe( szExpression, pFilename );
+	V_strcpy( szExpression, pFilename );
 
 	char szExpressionHWM[MAX_PATH];
 	szExpressionHWM[0] = '\0';
@@ -431,20 +431,21 @@ void *CFlexSceneFileManager::FindSceneFile( IHasLocalToGlobalFlexSettings *insta
 {
 	char szFilename[MAX_PATH];
 	Assert( V_strlen( filename ) < MAX_PATH );
-	V_strcpy_safe( szFilename, filename );
+	V_strcpy( szFilename, filename );
 	
 #if defined( TF_CLIENT_DLL )	
 	char szHWMFilename[MAX_PATH];
 	if ( GetHWMExpressionFileName( szFilename, szHWMFilename ) )
 	{
-		V_strcpy_safe( szFilename, szHWMFilename );
+		V_strcpy( szFilename, szHWMFilename );
 	}
 #endif
 
 	Q_FixSlashes( szFilename );
 
 	// See if it's already loaded
-	for ( int i = 0; i < m_FileList.Count(); i++ )
+	int i;
+	for ( i = 0; i < m_FileList.Count(); i++ )
 	{
 		CFlexSceneFile *file = m_FileList[ i ];
 		if ( file && !Q_stricmp( file->filename, szFilename ) )
@@ -561,11 +562,11 @@ Vector C_BaseFlex::SetViewTarget( CStudioHdr *pStudioHdr )
 		m_iEyeUpdown = FindFlexController( "eyes_updown" );
 		m_iEyeRightleft = FindFlexController( "eyes_rightleft" );
 
-		if ( m_iEyeUpdown != LocalFlexController_t(-1) )
+		if ( m_iEyeUpdown != -1 )
 		{
 			pStudioHdr->pFlexcontroller( m_iEyeUpdown )->localToGlobal = AddGlobalFlexController( "eyes_updown" );
 		}
-		if ( m_iEyeRightleft != LocalFlexController_t(-1) )
+		if ( m_iEyeRightleft != -1 )
 		{
 			pStudioHdr->pFlexcontroller( m_iEyeRightleft )->localToGlobal = AddGlobalFlexController( "eyes_rightleft" );
 		}
@@ -593,13 +594,13 @@ Vector C_BaseFlex::SetViewTarget( CStudioHdr *pStudioHdr )
 		// calculate animated eye deflection
 		Vector eyeDeflect;
 		QAngle eyeAng( 0, 0, 0 );
-		if ( m_iEyeUpdown != LocalFlexController_t(-1) )
+		if ( m_iEyeUpdown != -1 )
 		{
 			mstudioflexcontroller_t *pflex = pStudioHdr->pFlexcontroller( m_iEyeUpdown );
 			eyeAng.x = g_flexweight[ pflex->localToGlobal ];
 		}
 		
-		if ( m_iEyeRightleft != LocalFlexController_t(-1) )
+		if ( m_iEyeRightleft != -1 )
 		{
 			mstudioflexcontroller_t *pflex = pStudioHdr->pFlexcontroller( m_iEyeRightleft );
 			eyeAng.y = g_flexweight[ pflex->localToGlobal ];
@@ -1056,7 +1057,7 @@ void C_BaseFlex::GetToolRecordingState( KeyValues *msg )
 	Vector viewtarget = m_viewtarget; // Use the unfiltered value
 
 	// HACK HACK: Unmap eyes right/left amounts
-	if (m_iEyeUpdown != LocalFlexController_t(-1) && m_iEyeRightleft != LocalFlexController_t(-1))
+	if (m_iEyeUpdown != -1 && m_iEyeRightleft != -1)
 	{
 		mstudioflexcontroller_t *flexupdown = hdr->pFlexcontroller( m_iEyeUpdown );
 		mstudioflexcontroller_t *flexrightleft = hdr->pFlexcontroller( m_iEyeRightleft );
@@ -1594,6 +1595,7 @@ void C_BaseFlex::RemoveSceneEvent( CChoreoScene *scene, CChoreoEvent *event, boo
 			info->m_bStarted	= false;
 
 			m_SceneEvents.Remove( i );
+			return;
 		}
 	}
 
@@ -1630,15 +1632,15 @@ bool C_BaseFlex::CheckSceneEventCompletion( CSceneEventInfo *info, float current
 	return true;
 }
 
-void C_BaseFlex::SetFlexWeight( LocalFlexController_t index_, float value )
+void C_BaseFlex::SetFlexWeight( LocalFlexController_t index, float value )
 {
-	if ( index_ >= 0 && index_ < GetNumFlexControllers())
+	if (index >= 0 && index < GetNumFlexControllers())
 	{
 		CStudioHdr *pstudiohdr = GetModelPtr( );
 		if (! pstudiohdr)
 			return;
 
-		mstudioflexcontroller_t *pflexcontroller = pstudiohdr->pFlexcontroller( index_ );
+		mstudioflexcontroller_t *pflexcontroller = pstudiohdr->pFlexcontroller( index );
 
 		if (pflexcontroller->max != pflexcontroller->min)
 		{
@@ -1646,26 +1648,26 @@ void C_BaseFlex::SetFlexWeight( LocalFlexController_t index_, float value )
 			value = clamp( value, 0.0f, 1.0f );
 		}
 
-		m_flexWeight[index_] = value;
+		m_flexWeight[ index ] = value;
 	}
 }
 
-float C_BaseFlex::GetFlexWeight( LocalFlexController_t index_ )
+float C_BaseFlex::GetFlexWeight( LocalFlexController_t index )
 {
-	if ( index_ >= 0 && index_ < GetNumFlexControllers())
+	if (index >= 0 && index < GetNumFlexControllers())
 	{
 		CStudioHdr *pstudiohdr = GetModelPtr( );
 		if (! pstudiohdr)
 			return 0;
 
-		mstudioflexcontroller_t *pflexcontroller = pstudiohdr->pFlexcontroller( index_ );
+		mstudioflexcontroller_t *pflexcontroller = pstudiohdr->pFlexcontroller( index );
 
 		if (pflexcontroller->max != pflexcontroller->min)
 		{
-			return m_flexWeight[index_] * (pflexcontroller->max - pflexcontroller->min) + pflexcontroller->min;
+			return m_flexWeight[index] * (pflexcontroller->max - pflexcontroller->min) + pflexcontroller->min;
 		}
 				
-		return m_flexWeight[index_];
+		return m_flexWeight[index];
 	}
 	return 0.0;
 }
@@ -1833,8 +1835,8 @@ int C_BaseFlex::FlexControllerLocalToGlobal( const flexsettinghdr_t *pSettinghdr
 	FS_LocalToGlobal_t& result = m_LocalToGlobal[ idx ];
 	// Validate lookup
 	Assert( result.m_nCount != 0 && key < result.m_nCount );
-	int iMap = result.m_Mapping[ key ];
-	return iMap;
+	int index = result.m_Mapping[ key ];
+	return index;
 }
 
 //-----------------------------------------------------------------------------
@@ -1877,11 +1879,11 @@ void C_BaseFlex::AddFlexSetting( const char *expr, float scale,
 	{
 		// Translate to local flex controller
 		// this is translating from the settings's local index to the models local index
-		int iFlex = FlexControllerLocalToGlobal( pSettinghdr, pWeights->key );
+		int index = FlexControllerLocalToGlobal( pSettinghdr, pWeights->key );
 
 		// blend scaled weighting in to total (post networking g_flexweight!!!!)
 		float s = clamp( scale * pWeights->influence, 0.0f, 1.0f );
-		g_flexweight[iFlex] = g_flexweight[iFlex] * (1.0f - s) + pWeights->weight * s;
+		g_flexweight[index] = g_flexweight[index] * (1.0f - s) + pWeights->weight * s;
 	}
 }
 

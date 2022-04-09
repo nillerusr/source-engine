@@ -298,6 +298,7 @@ def build(bld):
 			'audio/private/voice_sound_engine_interface.cpp', #[!$X360]
 			'audio/private/voice_mixer_controls_openal.cpp', #[$OSXALL||$LINUXALL]
 			'audio/private/voice_record_openal.cpp', #[$OSXALL||$LINUXALL]
+			'audio/private/voice_record_sdl.cpp', #[$OSXALL||$LINUXALL]
 			'../public/vgui_controls/vgui_controls.cpp',
 			'../common/vgui/vgui_basebudgetpanel.cpp',
 			'../common/vgui/vgui_budgetbargraphpanel.cpp',

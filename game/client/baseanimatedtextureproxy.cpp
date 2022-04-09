@@ -11,8 +11,6 @@
 #include "materialsystem/itexture.h"
 #include "tier1/KeyValues.h"
 #include "toolframework_client.h"
-#include "tier0/minidump.h"
-#include "tier0/stacktools.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -41,33 +39,25 @@ CBaseAnimatedTextureProxy::~CBaseAnimatedTextureProxy()
 bool CBaseAnimatedTextureProxy::Init( IMaterial *pMaterial, KeyValues *pKeyValues )
 {
 	char const* pAnimatedTextureVarName = pKeyValues->GetString( "animatedTextureVar" );
+	if( !pAnimatedTextureVarName )
+		return false;
 
-	if( pAnimatedTextureVarName )
-	{
-		bool foundVar;
+	bool foundVar;
+	m_AnimatedTextureVar = pMaterial->FindVar( pAnimatedTextureVarName, &foundVar, false );
+	if( !foundVar )
+		return false;
 
-		m_AnimatedTextureVar = pMaterial->FindVar( pAnimatedTextureVarName, &foundVar, false );
-		if( foundVar )
-		{
-			char const* pAnimatedTextureFrameNumVarName = pKeyValues->GetString( "animatedTextureFrameNumVar" );
+	char const* pAnimatedTextureFrameNumVarName = pKeyValues->GetString( "animatedTextureFrameNumVar" );
+	if( !pAnimatedTextureFrameNumVarName )
+		return false;
 
-			if( pAnimatedTextureFrameNumVarName )
-			{
-				m_AnimatedTextureFrameNumVar = pMaterial->FindVar( pAnimatedTextureFrameNumVarName, &foundVar, false );
+	m_AnimatedTextureFrameNumVar = pMaterial->FindVar( pAnimatedTextureFrameNumVarName, &foundVar, false );
+	if( !foundVar )
+		return false;
 
-				if( foundVar )
-				{
-					m_FrameRate = pKeyValues->GetFloat( "animatedTextureFrameRate", 15 );
-					m_WrapAnimation = !pKeyValues->GetInt( "animationNoWrap", 0 );
-					return true;
-				}
-			}
-		}
-	}
-
-	// Error - null out pointers.
-	Cleanup();
-	return false;
+	m_FrameRate = pKeyValues->GetFloat( "animatedTextureFrameRate", 15 );
+	m_WrapAnimation = !pKeyValues->GetInt( "animationNoWrap", 0 );
+	return true;
 }
 
 void CBaseAnimatedTextureProxy::Cleanup()

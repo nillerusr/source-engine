@@ -1856,8 +1856,7 @@ void Mod_LoadFaces( void )
 	int			ti, di;
 
 	int face_lump_to_load = LUMP_FACES;
-	if ( g_pMaterialSystemHardwareConfig->GetHDRType() != HDR_TYPE_NONE &&
-		CMapLoadHelper::LumpSize( LUMP_FACES_HDR ) > 0 )
+	if ( CMapLoadHelper::LumpSize( LUMP_FACES_HDR ) > 0 )
 	{
 		face_lump_to_load = LUMP_FACES_HDR;
 	}
@@ -2289,8 +2288,7 @@ void Mod_LoadLeafs( void )
 		Mod_LoadLeafs_Version_0( lh );
 		break;
 	case 1:
-		if( g_pMaterialSystemHardwareConfig->GetHDRType() != HDR_TYPE_NONE &&
-	  		  CMapLoadHelper::LumpSize( LUMP_LEAF_AMBIENT_LIGHTING_HDR ) > 0 )
+		if( CMapLoadHelper::LumpSize( LUMP_LEAF_AMBIENT_LIGHTING_HDR ) > 0 )
 		{
 			CMapLoadHelper mlh( LUMP_LEAF_AMBIENT_LIGHTING_HDR );
 			CMapLoadHelper mlhTable( LUMP_LEAF_AMBIENT_INDEX_HDR );
@@ -2385,7 +2383,7 @@ void Mod_LoadCubemapSamples( void )
 	lh.GetMap()->m_pCubemapSamples = out;
 	lh.GetMap()->m_nCubemapSamples = count;
 
-	bool bHDR = g_pMaterialSystemHardwareConfig->GetHDRType() != HDR_TYPE_NONE;
+	bool bHDR = true; //g_pMaterialSystemHardwareConfig->GetHDRType() != HDR_TYPE_NONE;
 	int nCreateFlags = bHDR ? 0 : TEXTUREFLAGS_SRGB;
 
 	// We have separate HDR versions of the textures.  In order to deal with this,
@@ -4453,8 +4451,7 @@ void CModelLoader::Map_LoadModel( model_t *mod )
 
 	// Until BSP version 19, this must occur after loading texinfo
 	COM_TimestampedLog( "  Mod_LoadLighting" );
-	if ( g_pMaterialSystemHardwareConfig->GetHDRType() != HDR_TYPE_NONE &&
-		CMapLoadHelper::LumpSize( LUMP_LIGHTING_HDR ) > 0 )
+	if ( CMapLoadHelper::LumpSize( LUMP_LIGHTING_HDR ) > 0 )
 	{
 		CMapLoadHelper mlh( LUMP_LIGHTING_HDR );
 		Mod_LoadLighting( mlh );
@@ -4546,8 +4543,7 @@ void CModelLoader::Map_LoadModel( model_t *mod )
 		&m_worldBrushData.m_nAreas );
 
 	COM_TimestampedLog( "  Mod_LoadWorldlights" );
-	if ( g_pMaterialSystemHardwareConfig->GetHDRType() != HDR_TYPE_NONE &&
-  		  CMapLoadHelper::LumpSize( LUMP_WORLDLIGHTS_HDR ) > 0 )
+	if ( CMapLoadHelper::LumpSize( LUMP_WORLDLIGHTS_HDR ) > 0 )
 	{
 		CMapLoadHelper mlh( LUMP_WORLDLIGHTS_HDR );
 		Mod_LoadWorldlights( mlh, true );

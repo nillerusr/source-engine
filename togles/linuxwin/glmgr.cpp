@@ -74,6 +74,9 @@ const int kGLMHighWaterUndeleted = 2048;
 const int kDeletedTextureDim = 4;
 const uint32 g_garbageTextureBits[ 4 * kDeletedTextureDim * kDeletedTextureDim ] = { 0 };
 
+extern void CompressedTexImage2D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data);
+extern void convert_texture( GLenum &internalformat, GLsizei width, GLsizei height, GLenum &format, GLenum &type, void *data );
+
 char g_nullFragmentProgramText [] =
 {
 	"#version 300 es\n"
@@ -448,20 +451,6 @@ GLMgr::GLMgr()
 GLMgr::~GLMgr()
 {
 }
-
-extern void CompressedTexImage2D(GLenum target, GLint level, GLenum internalformat,
-                            GLsizei width, GLsizei height, GLint border,
-                            GLsizei imageSize, const GLvoid *data);
-
-extern void TexImage2D(GLenum target,
-					   GLint level,
-					   GLint internalformat,
-					   GLsizei width,
-					   GLsizei height,
-					   GLint border,
-					   GLenum format,
-					   GLenum type,
-					   const void * data);
 
 //===============================================================================
 
@@ -2961,11 +2950,12 @@ void GLMContext::CleanupTex( GLenum texBind, GLMTexLayout* pLayout, GLuint tex )
 			const int dataSize = ( chunks * chunks ) * pLayout->m_format->m_bytesPerSquareChunk;
 			Assert( dataSize <= ( sizeof( uint32) * ARRAYSIZE( g_garbageTextureBits ) ) );
 
-			CompressedTexImage2D( texBind, i, pLayout->m_format->m_glIntFormat, mipDim, mipDim, 0, dataSize, 0 );
+			CompressedTexImage2D( texBind, i, pLayout->m_format->m_glIntFormat, mipDim, mipDim, 0, dataSize, NULL );
 		}
 		else
 		{
-			TexImage2D( texBind, i, pLayout->m_format->m_glIntFormat, mipDim, mipDim, 0, pLayout->m_format->m_glDataFormat, pLayout->m_format->m_glDataType, 0 );
+			convert_texture( pLayout->m_format->m_glIntFormat, mipDim, mipDim, pLayout->m_format->m_glDataFormat, pLayout->m_format->m_glDataType, NULL );
+			gGL->glTexImage2D( texBind, i, pLayout->m_format->m_glIntFormat, mipDim, mipDim, 0, pLayout->m_format->m_glDataFormat, pLayout->m_format->m_glDataType, NULL );
 		}
 	}
 

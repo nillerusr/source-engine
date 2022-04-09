@@ -463,6 +463,7 @@ void C_SmokeStack::SimulateParticles( CParticleSimulateIterator *pIterator )
 		else
 		{
 			// Transform.						   
+			Vector tPos;
 			if( m_bTwist )
 			{
 				Vector vTwist(

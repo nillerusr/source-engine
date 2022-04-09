@@ -27,8 +27,7 @@ public:
 	void SetMode(int iMode);
 	void SetChaseCamParams( float flOffset, float flDistance, float flTheta, float flPhi  );
 	void SpecNextPlayer( bool bInverse );
-	// See UTIL_PlayerByCommandArg for what all might go in here.
-	void SpecPlayerByPredicate( const char *szPlayerSearch );
+	void SpecNamedPlayer( const char *szPlayerName );
 	void ToggleChaseAsFirstPerson();
 	bool IsPVSLocked();
 	void SetAutoDirector( bool bActive );

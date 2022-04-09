@@ -24,15 +24,6 @@ class CBaseEntity;
 class CTakeDamageInfo
 {
 public:
-
-	enum ECritType
-	{
-		CRIT_NONE = 0,
-		CRIT_MINI,
-		CRIT_FULL,
-	};
-
-
 	DECLARE_CLASS_NOBASE( CTakeDamageInfo );
 
 					CTakeDamageInfo();
@@ -64,8 +55,7 @@ public:
 	void			AddDamage( float flAddAmount );
 	void			SubtractDamage( float flSubtractAmount );
 	float			GetDamageBonus() const;
-	CBaseEntity		*GetDamageBonusProvider() const;
-	void			SetDamageBonus( float flBonus, CBaseEntity *pProvider = NULL );
+	void			SetDamageBonus( float flBonus );
 
 	float			GetBaseDamage() const;
 	bool			BaseDamageIsValid() const;
@@ -73,8 +63,6 @@ public:
 	Vector			GetDamageForce() const;
 	void			SetDamageForce( const Vector &damageForce );
 	void			ScaleDamageForce( float flScaleAmount );
-	float			GetDamageForForceCalc() const;
-	void			SetDamageForForceCalc( const float flScaleAmount );
 
 	Vector			GetDamagePosition() const;
 	void			SetDamagePosition( const Vector &damagePosition );
@@ -114,9 +102,6 @@ public:
 	// For designer debug output.
 	static void		DebugGetDamageTypeString(unsigned int DamageType, char *outbuf, int outbuflength );
 
-	void			SetCritType( ECritType eType ); 
-
-	ECritType		GetCritType() const { return m_eCritType; }
 
 //private:
 	void			CopyDamageToBaseDamage();
@@ -140,12 +125,7 @@ protected:
 	int				m_iDamagedOtherPlayers;
 	int				m_iPlayerPenetrationCount;
 	float			m_flDamageBonus;		// Anything that increases damage (crit) - store the delta
-	EHANDLE			m_hDamageBonusProvider;	// Who gave us the ability to do extra damage?
 	bool			m_bForceFriendlyFire;	// Ideally this would be a dmg type, but we can't add more
-
-	float			m_flDamageForForce;
-
-	ECritType		m_eCritType;
 
 	DECLARE_SIMPLE_DATADESC();
 };
@@ -267,15 +247,9 @@ inline float CTakeDamageInfo::GetDamageBonus() const
 	return m_flDamageBonus;
 }
 
-inline CBaseEntity *CTakeDamageInfo::GetDamageBonusProvider() const
-{
-	return m_hDamageBonusProvider;
-}
-
-inline void CTakeDamageInfo::SetDamageBonus( float flBonus, CBaseEntity *pProvider /*= NULL*/ )
+inline void CTakeDamageInfo::SetDamageBonus( float flBonus )
 {
 	m_flDamageBonus = flBonus;
-	m_hDamageBonusProvider = pProvider;
 }
 
 inline float CTakeDamageInfo::GetBaseDamage() const
@@ -305,16 +279,6 @@ inline void CTakeDamageInfo::SetDamageForce( const Vector &damageForce )
 inline void	CTakeDamageInfo::ScaleDamageForce( float flScaleAmount )
 {
 	m_vecDamageForce *= flScaleAmount;
-}
-
-inline float CTakeDamageInfo::GetDamageForForceCalc() const
-{
-	return m_flDamageForForce;
-}
-
-inline void CTakeDamageInfo::SetDamageForForceCalc( float flDamage )
-{
-	m_flDamageForForce = flDamage;
 }
 
 inline Vector CTakeDamageInfo::GetDamagePosition() const

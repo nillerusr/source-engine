@@ -85,13 +85,6 @@ typedef enum
 
 	AE_WPN_PLAYWPNSOUND,	// Play a weapon sound from the weapon script file
 
-	AE_RD_ROBOT_POP_PANELS_OFF,
-
-	AE_TAUNT_ENABLE_MOVE,
-	AE_TAUNT_DISABLE_MOVE,
-
-	AE_CL_REMOVE_PARTICLE_EFFECT,
-
 	LAST_SHARED_ANIMEVENT,
 } Animevent;
 

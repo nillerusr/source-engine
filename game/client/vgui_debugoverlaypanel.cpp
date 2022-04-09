@@ -99,7 +99,7 @@ void CDebugOverlay::OnTick( void )
 
 bool CDebugOverlay::ShouldDraw( void )
 {
-	if ( debugoverlay && debugoverlay->GetFirst() )
+	if ( debugoverlay->GetFirst() )
 		return true;
 	return false;
 }
@@ -109,9 +109,6 @@ bool CDebugOverlay::ShouldDraw( void )
 //-----------------------------------------------------------------------------
 void CDebugOverlay::Paint()
 {
-	if (!debugoverlay)
-		return;
-
 	OverlayText_t* pCurrText = debugoverlay->GetFirst();
 	while (pCurrText) 
 	{
@@ -132,7 +129,7 @@ void CDebugOverlay::Paint()
 				{
 					float xPos		= screenPos[0];
 					float yPos		= screenPos[1]+ (pCurrText->lineOffset*13); // Line spacing;
-					g_pMatSystemSurface->DrawColoredText( m_hFont, xPos, yPos, r, g, b, a, "%s", pCurrText->text );
+					g_pMatSystemSurface->DrawColoredText( m_hFont, xPos, yPos, r, g, b, a, pCurrText->text );
 				}
 			}
 			else
@@ -141,7 +138,7 @@ void CDebugOverlay::Paint()
 				{	
 					float xPos		= screenPos[0];
 					float yPos		= screenPos[1]+ (pCurrText->lineOffset*13); // Line spacing;
-					g_pMatSystemSurface->DrawColoredText( m_hFont, xPos, yPos, r, g, b, a, "%s", pCurrText->text );
+					g_pMatSystemSurface->DrawColoredText( m_hFont, xPos, yPos, r, g, b, a, pCurrText->text );
 				}
 			}
 		}
@@ -169,8 +166,7 @@ public:
 		if ( debugOverlayPanel )
 		{
 			debugOverlayPanel->SetParent( (vgui::Panel *)NULL );
-			debugOverlayPanel->MarkForDeletion();
-			debugOverlayPanel = NULL;
+			delete debugOverlayPanel;
 		}
 	}
 };
@@ -181,8 +177,5 @@ IDebugOverlayPanel *debugoverlaypanel =  ( IDebugOverlayPanel * )&g_DebugOverlay
 
 void DebugDrawLine( const Vector& vecAbsStart, const Vector& vecAbsEnd, int r, int g, int b, bool test, float duration )
 {
-	if ( debugoverlay )
-	{
-		debugoverlay->AddLineOverlay( vecAbsStart + Vector( 0,0,0.1), vecAbsEnd + Vector( 0,0,0.1), r,g,b, test, duration );
-	}
+	debugoverlay->AddLineOverlay( vecAbsStart + Vector( 0,0,0.1), vecAbsEnd + Vector( 0,0,0.1), r,g,b, test, duration );
 }

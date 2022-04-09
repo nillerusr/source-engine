@@ -312,12 +312,17 @@ ImageFormat D3DFormatToImageFormat( D3DFORMAT format )
 
 	switch ( format )
 	{
-#if !defined( _X360 )
+#ifdef TOGLES
+	case D3DFMT_R8G8B8:
+		return IMAGE_FORMAT_RGB888;
+	case D3DFMT_A8R8G8B8:
+		return IMAGE_FORMAT_RGBA8888;
+#else
 	case D3DFMT_R8G8B8:
 		return IMAGE_FORMAT_BGR888;
-#endif
 	case D3DFMT_A8R8G8B8:
 		return IMAGE_FORMAT_BGRA8888;
+#endif
 	case D3DFMT_X8R8G8B8:
 		return IMAGE_FORMAT_BGRX8888;
 	case D3DFMT_R5G6B5:
@@ -425,6 +430,10 @@ D3DFORMAT ImageFormatToD3DFormat( ImageFormat format )
 		return D3DFMT_UNKNOWN;
 #endif
 	case IMAGE_FORMAT_BGRA8888:
+		return D3DFMT_A8R8G8B8;
+	case IMAGE_FORMAT_RGB888:
+		return D3DFMT_R8G8B8;
+	case IMAGE_FORMAT_RGBA8888:
 		return D3DFMT_A8R8G8B8;
 	case IMAGE_FORMAT_BGRX8888:
 		return D3DFMT_X8R8G8B8;

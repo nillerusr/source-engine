@@ -45,94 +45,94 @@ public:
 	void	SetCapLayout( const char *pszLayout );
 
 	// Is the point visible in the objective display
-	bool	IsCPVisible( int index_ )
+	bool	IsCPVisible( int index )
 	{
-		Assert( index_ < m_iNumControlPoints );
-		return m_bCPIsVisible[index_];
+		Assert( index < m_iNumControlPoints );
+		return m_bCPIsVisible[index];
 	}
 
-	bool	IsCPBlocked( int index_ )
+	bool	IsCPBlocked( int index )
 	{
-		Assert( index_ < m_iNumControlPoints );
-		return m_bBlocked[index_];
+		Assert( index < m_iNumControlPoints );
+		return m_bBlocked[index];
 	}
 
 	// Get the world location of this control point
-	Vector& GetCPPosition( int index_ )
+	Vector& GetCPPosition( int index )
 	{
-		Assert( index_ < m_iNumControlPoints );
-		return m_vCPPositions[index_];
+		Assert( index < m_iNumControlPoints );
+		return m_vCPPositions[index];
 	}
 
-	int GetOwningTeam( int index_ )
+	int GetOwningTeam( int index )
 	{
-		if ( index_ >= m_iNumControlPoints )
+		if ( index >= m_iNumControlPoints )
 			return TEAM_UNASSIGNED;
 
-		return m_iOwner[index_];
+		return m_iOwner[index];
 	}	
 
-	int GetCappingTeam( int index_ )
+	int GetCappingTeam( int index )
 	{
-		if ( index_ >= m_iNumControlPoints )
+		if ( index >= m_iNumControlPoints )
 			return TEAM_UNASSIGNED;
 
-		return m_iCappingTeam[index_];
+		return m_iCappingTeam[index];
 	}
 
-	int GetTeamInZone( int index_ )
+	int GetTeamInZone( int index )
 	{
-		if ( index_ >= m_iNumControlPoints )
+		if ( index >= m_iNumControlPoints )
 			return TEAM_UNASSIGNED;
 
-		return m_iTeamInZone[index_];
+		return m_iTeamInZone[index];
 	}
 
 	// Icons
-	int GetCPCurrentOwnerIcon( int index_, int iOwner )
+	int GetCPCurrentOwnerIcon( int index, int iOwner )
 	{
-		Assert( index_ < m_iNumControlPoints );
+		Assert( index < m_iNumControlPoints );
 
-		return GetIconForTeam( index_, iOwner );
+		return GetIconForTeam( index, iOwner );
 	}
 
-	int GetCPCappingIcon( int index_ )
+	int GetCPCappingIcon( int index )
 	{
-		Assert( index_ < m_iNumControlPoints );
+		Assert( index < m_iNumControlPoints );
 
-		int iCapper = GetCappingTeam( index_ );
+		int iCapper = GetCappingTeam(index);
 
 		Assert( iCapper != TEAM_UNASSIGNED );
 
-		return GetIconForTeam( index_, iCapper );
+		return GetIconForTeam( index, iCapper );;
 	}
 
 	// Icon for the specified team
-	int GetIconForTeam( int index_, int team )
+	int GetIconForTeam( int index, int team )
 	{
-		Assert( index_ < m_iNumControlPoints );
-		return m_iTeamIcons[ TEAM_ARRAY( index_,team) ];
+		Assert( index < m_iNumControlPoints );
+		return m_iTeamIcons[ TEAM_ARRAY(index,team) ];
 	}
 
 	// Overlay for the specified team
-	int GetOverlayForTeam( int index_, int team )
+	int GetOverlayForTeam( int index, int team )
 	{
-		Assert( index_ < m_iNumControlPoints );
-		return m_iTeamOverlays[ TEAM_ARRAY( index_,team) ];
+		Assert( index < m_iNumControlPoints );
+		return m_iTeamOverlays[ TEAM_ARRAY(index,team) ];
 	}
 
 	// Number of players in the area
-	int GetNumPlayersInArea( int index_, int team )
+	int GetNumPlayersInArea( int index, int team )
 	{
-		Assert( index_ < m_iNumControlPoints );
-		return m_iNumTeamMembers[ TEAM_ARRAY( index_,team) ];
+		Assert( index < m_iNumControlPoints );
+		return m_iNumTeamMembers[ TEAM_ARRAY(index,team) ];
 	}
 	
 	// get the required cappers for the passed team
-	int GetRequiredCappers( int index_, int team )
+	int GetRequiredCappers( int index, int team )
 	{
-		Assert( index_ < m_iNumControlPoints );
-		return m_iTeamReqCappers[ TEAM_ARRAY( index_,team) ];
+		Assert( index < m_iNumControlPoints );
+		return m_iTeamReqCappers[ TEAM_ARRAY(index,team) ];
 	}
 
 	// Base Icon for the specified team
@@ -148,84 +148,84 @@ public:
 		return m_iBaseControlPoints[iTeam]; 
 	}
 
-	int GetPreviousPointForPoint( int index_, int team, int iPrevIndex )
+	int GetPreviousPointForPoint( int index, int team, int iPrevIndex )
 	{
-		Assert( index_ < m_iNumControlPoints );
+		Assert( index < m_iNumControlPoints );
 		Assert( iPrevIndex >= 0 && iPrevIndex < MAX_PREVIOUS_POINTS );
-		int iIntIndex = iPrevIndex + (index_ * MAX_PREVIOUS_POINTS) + (team * MAX_CONTROL_POINTS * MAX_PREVIOUS_POINTS);
+		int iIntIndex = iPrevIndex + (index * MAX_PREVIOUS_POINTS) + (team * MAX_CONTROL_POINTS * MAX_PREVIOUS_POINTS);
 		return m_iPreviousPoints[ iIntIndex ];
 	}
 
-	bool TeamCanCapPoint( int index_, int team )
+	bool TeamCanCapPoint( int index, int team )
 	{
-		Assert( index_ < m_iNumControlPoints );
-		return m_bTeamCanCap[ TEAM_ARRAY( index_, team ) ];
+		Assert( index < m_iNumControlPoints );
+		return m_bTeamCanCap[ TEAM_ARRAY( index, team ) ];
 	}
 
 	const char *GetCapLayoutInHUD( void ) { return m_pszCapLayoutInHUD; }
 	void GetCapLayoutCustomPosition( float& flCustomPositionX, float& flCustomPositionY ) { flCustomPositionX = m_flCustomPositionX; flCustomPositionY = m_flCustomPositionY; }
 
 	bool PlayingMiniRounds( void ){ return m_bPlayingMiniRounds; }
-	bool IsInMiniRound( int index_ ) { return m_bInMiniRound[index_]; }
+	bool IsInMiniRound( int index ) { return m_bInMiniRound[index]; }
 
-	int GetCapWarningLevel( int index_ )
+	int GetCapWarningLevel( int index )
 	{
-		Assert( index_ < m_iNumControlPoints );
-		return m_iWarnOnCap[index_];
+		Assert( index < m_iNumControlPoints );
+		return m_iWarnOnCap[index];
 	}
 
-	int GetCPGroup( int index_ )
+	int GetCPGroup( int index )
 	{
-		Assert( index_ < m_iNumControlPoints );
-		return m_iCPGroup[index_];
+		Assert( index < m_iNumControlPoints );
+		return m_iCPGroup[index];
 	}
 
-	const char *GetWarnSound( int index_ )
+	const char *GetWarnSound( int index )
 	{
-		Assert( index_ < m_iNumControlPoints );
-		return m_iszWarnSound[index_];
+		Assert( index < m_iNumControlPoints );
+		return m_iszWarnSound[index];
 	}
 
-	virtual const char *GetGameSpecificCPCappingSwipe( int index_, int iCappingTeam )
+	virtual const char *GetGameSpecificCPCappingSwipe( int index, int iCappingTeam )
 	{
 		// You need to implement this in your game's objective resource.
 		Assert(0);
 		return NULL;
 	}
-	virtual const char *GetGameSpecificCPBarFG( int index_, int iOwningTeam )
+	virtual const char *GetGameSpecificCPBarFG( int index, int iOwningTeam )
 	{
 		// You need to implement this in your game's objective resource.
 		Assert(0);
 		return NULL;
 	}
-	virtual const char *GetGameSpecificCPBarBG( int index_, int iCappingTeam )
+	virtual const char *GetGameSpecificCPBarBG( int index, int iCappingTeam )
 	{
 		// You need to implement this in your game's objective resource.
 		Assert(0);
 		return NULL;
 	}
 
-	bool CapIsBlocked( int index_ );
+	bool CapIsBlocked( int index );
 
 	int		GetTimerToShowInHUD( void ) { return m_iTimerToShowInHUD; }
 	int		GetStopWatchTimer( void ) { return m_iStopWatchTimer; }
 
-	float GetPathDistance( int index_ )
+	float GetPathDistance( int index )
 	{
-		Assert( index_ < m_iNumControlPoints );
-		return m_flPathDistance[index_];
+		Assert( index < m_iNumControlPoints );
+		return m_flPathDistance[index];
 	}
 
-	bool GetCPLocked( int index_ )
+	bool GetCPLocked( int index )
 	{
-		Assert( index_ < m_iNumControlPoints );
-		return m_bCPLocked[index_];
+		Assert( index < m_iNumControlPoints );
+		return m_bCPLocked[index];
 	}
 
-	bool GetTrackAlarm( int index_ )
+	bool GetTrackAlarm( int index )
 	{
-		Assert( index_ < TEAM_TRAIN_MAX_TEAMS );
-		return m_bTrackAlarm[index_];
+		Assert( index < TEAM_TRAIN_MAX_TEAMS );
+		return m_bTrackAlarm[index];
 	}
 
 	int GetNumNodeHillData( int team ){ return ( team < TEAM_TRAIN_MAX_TEAMS ) ? m_nNumNodeHillData[team] : 0; }
@@ -234,11 +234,11 @@ public:
 	{
 		if ( hill < TEAM_TRAIN_MAX_HILLS && team < TEAM_TRAIN_MAX_TEAMS )
 		{
-			int index_ = ( hill * TEAM_TRAIN_FLOATS_PER_HILL ) + ( team * TEAM_TRAIN_MAX_HILLS * TEAM_TRAIN_FLOATS_PER_HILL );
-			if ( index_ < TEAM_TRAIN_HILLS_ARRAY_SIZE - 1 ) // - 1 because we want to look at 2 entries
+			int index = ( hill * TEAM_TRAIN_FLOATS_PER_HILL ) + ( team * TEAM_TRAIN_MAX_HILLS * TEAM_TRAIN_FLOATS_PER_HILL );
+			if ( index < TEAM_TRAIN_HILLS_ARRAY_SIZE - 1 ) // - 1 because we want to look at 2 entries
 			{
-   				flStart = m_flNodeHillData[index_];
-				flEnd = m_flNodeHillData[index_ +1];
+   				flStart = m_flNodeHillData[index];
+				flEnd = m_flNodeHillData[index+1];
 			}
 		}
 	}
@@ -247,8 +247,8 @@ public:
 	{
 		if ( team < TEAM_TRAIN_MAX_TEAMS && hill < TEAM_TRAIN_MAX_HILLS )
 		{
-			int index_ = hill + ( team * TEAM_TRAIN_MAX_HILLS );
-			m_bTrainOnHill[index_] = state;
+			int index = hill + ( team * TEAM_TRAIN_MAX_HILLS ); 
+			m_bTrainOnHill[index] = state;
 		}
 	}
 

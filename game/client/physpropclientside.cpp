@@ -902,14 +902,14 @@ void C_FuncPhysicsRespawnZone::InitializePropsWithin( void )
 			pProp->SetRespawnZone( this );
 
 			// This is a crappy way to do this
-			int iProp = m_PropList.AddToTail();
-			m_PropList[iProp].iszModelName = pProp->GetModelName();
-			m_PropList[iProp].vecOrigin = pProp->GetAbsOrigin();
-			m_PropList[iProp].vecAngles = pProp->GetAbsAngles();
-			m_PropList[iProp].iSkin = pProp->m_nSkin;
-			m_PropList[iProp].iHealth = pProp->m_iHealth;
-			m_PropList[iProp].iSpawnFlags = pProp->m_spawnflags;
-			m_PropList[iProp].hClientEntity = pProp->GetClientHandle();
+			int index = m_PropList.AddToTail();
+			m_PropList[index].iszModelName = pProp->GetModelName();
+			m_PropList[index].vecOrigin = pProp->GetAbsOrigin();
+			m_PropList[index].vecAngles = pProp->GetAbsAngles();
+			m_PropList[index].iSkin = pProp->m_nSkin;
+			m_PropList[index].iHealth = pProp->m_iHealth;
+			m_PropList[index].iSpawnFlags = pProp->m_spawnflags;
+			m_PropList[index].hClientEntity = pProp->GetClientHandle();
 		}
 	}
 }

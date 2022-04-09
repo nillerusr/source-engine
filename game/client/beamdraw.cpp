@@ -831,8 +831,8 @@ void DrawSplineSegs( int noise_divisions, float *prgNoise,
 			}
 			else if ( flags & FBEAM_SHADEOUT )
 			{
-				float fadeFractionOut = fadeLength/length;
-				brightness = 1.0 - (fraction/ fadeFractionOut);
+				float fadeFraction = fadeLength/length;
+				brightness = 1.0 - (fraction/fadeFraction);
 				if (brightness < 0)
 				{
 					brightness = 0;

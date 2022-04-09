@@ -366,7 +366,6 @@ void CTriggerAreaCapture::CaptureThink( void )
 							}
 
 							iNumBlockablePlayers[iTeam] += TeamplayGameRules()->GetCaptureValueForPlayer( pPlayer );
-							pPlayer->SetLastObjectiveTime( gpGlobals->curtime );
 						}
 						continue;
 					}
@@ -379,7 +378,6 @@ void CTriggerAreaCapture::CaptureThink( void )
 						}
 
 						iNumPlayers[iTeam] += TeamplayGameRules()->GetCaptureValueForPlayer( pPlayer );
-						pPlayer->SetLastObjectiveTime( gpGlobals->curtime );
 					}
 				}
 			}
@@ -535,7 +533,7 @@ void CTriggerAreaCapture::CaptureThink( void )
 
 					if ( !bRepeatBlocker )
 					{
-                        m_hPoint->CaptureBlocked( pBlockingPlayer, NULL );
+                        m_hPoint->CaptureBlocked( pBlockingPlayer );
 
 						// Add this guy to our blocker list
 						int iNew = m_Blockers.AddToTail();
@@ -882,12 +880,6 @@ void CTriggerAreaCapture::EndCapture( int team )
 	m_nCapturingTeam = TEAM_UNASSIGNED;
 	SetCapTimeRemaining( 0 );
 
-	// play any special cap sounds. need to do this before we update the owner of the point.
-	if ( TeamplayRoundBasedRules() )
-	{
-		TeamplayRoundBasedRules()->PlaySpecialCapSounds( m_nOwningTeam, m_hPoint.Get() );
-	}
-
 	//there may have been more than one capper, but only report this one.
 	//he hasn't gotten points yet, and his name will go in the cap string if its needed
 	//first capper gets name sent and points given by flag.
@@ -917,6 +909,12 @@ void CTriggerAreaCapture::EndCapture( int team )
 				pPlayer->StopScoringEscortPoints();					
 			}
 		}
+	}
+
+	// play any special cap sounds
+	if ( TeamplayRoundBasedRules() )
+	{
+		TeamplayRoundBasedRules()->PlaySpecialCapSounds( m_nOwningTeam );
 	}
 }
 
@@ -1140,7 +1138,7 @@ bool CTriggerAreaCapture::CheckIfDeathCausesBlock( CBaseMultiplayerPlayer *pVict
 
 	if ( bBreakCap )
 	{
-		m_hPoint->CaptureBlocked( pKiller, pVictim );
+		m_hPoint->CaptureBlocked( pKiller );
 		//BreakCapture( true );
 	}
 

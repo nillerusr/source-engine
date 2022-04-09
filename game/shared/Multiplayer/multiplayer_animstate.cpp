@@ -91,10 +91,6 @@ CMultiPlayerAnimState::CMultiPlayerAnimState( CBasePlayer *pPlayer, MultiPlayerM
 
 	m_flMaxGroundSpeed = 0.0f;
 
-	// If you are forcing aim yaw, your code is almost definitely broken if you don't include a delay between 
-	// teleporting and forcing yaw. This is due to an unfortunate interaction between the command lookback window,
-	// and the fact that m_flEyeYaw is never propogated from the server to the client.
-	// TODO: Fix this after Halloween 2014.
 	m_bForceAimYaw = false;
 
 	Init( pPlayer, movementData );
@@ -693,7 +689,7 @@ void CMultiPlayerAnimState::AddVCDSequenceToGestureSlot( int iGestureSlot, int i
 	m_aGestureSlots[iGestureSlot].m_pAnimLayer->m_flLayerAnimtime = 0.0f;
 	m_aGestureSlots[iGestureSlot].m_pAnimLayer->m_flLayerFadeOuttime = 0.0f;
 
-	pPlayer->m_flOverlayPrevEventCycle[iGestureSlot] = flCycle == 0.f ? -1.0 : flCycle;
+	pPlayer->m_flOverlayPrevEventCycle[iGestureSlot] = -1.0;
 
 #else
 
@@ -1659,10 +1655,6 @@ void CMultiPlayerAnimState::ComputePoseParam_AimYaw( CStudioHdr *pStudioHdr )
 	bool bMoving = ( vecVelocity.Length() > 1.0f ) ? true : false;
 
 	// If we are moving or are prone and undeployed.
-	// If you are forcing aim yaw, your code is almost definitely broken if you don't include a delay between 
-	// teleporting and forcing yaw. This is due to an unfortunate interaction between the command lookback window,
-	// and the fact that m_flEyeYaw is never propogated from the server to the client.
-	// TODO: Fix this after Halloween 2014.
 	if ( bMoving || m_bForceAimYaw )
 	{
 		// The feet match the eye direction when moving - the move yaw takes care of the rest.
@@ -1696,10 +1688,6 @@ void CMultiPlayerAnimState::ComputePoseParam_AimYaw( CStudioHdr *pStudioHdr )
 	m_flGoalFeetYaw = AngleNormalize( m_flGoalFeetYaw );
 	if ( m_flGoalFeetYaw != m_flCurrentFeetYaw )
 	{
-		// If you are forcing aim yaw, your code is almost definitely broken if you don't include a delay between 
-		// teleporting and forcing yaw. This is due to an unfortunate interaction between the command lookback window,
-		// and the fact that m_flEyeYaw is never propogated from the server to the client.
-		// TODO: Fix this after Halloween 2014.
 		if ( m_bForceAimYaw )
 		{
 			m_flCurrentFeetYaw = m_flGoalFeetYaw;
@@ -1937,12 +1925,9 @@ void CMultiPlayerAnimState::DebugShowEyeYaw( void )
 	AngleVectors( angles, &vecForward, &vecRight, &vecUp );
 
 	// Draw a red triangle on the ground for the eye yaw.
-	if ( debugoverlay )
-	{
-		debugoverlay->AddTriangleOverlay( ( vecPos + vecRight * flBaseSize / 2.0f ), 
-			( vecPos - vecRight * flBaseSize / 2.0f ), 
-			( vecPos + vecForward * flHeight, 255, 0, 0, 255, false, 0.01f );
-	}
+	debugoverlay->AddTriangleOverlay( ( vecPos + vecRight * flBaseSize / 2.0f ), 
+		( vecPos - vecRight * flBaseSize / 2.0f ), 
+		( vecPos + vecForward * flHeight, 255, 0, 0, 255, false, 0.01f );
 
 #endif
 }
@@ -2023,23 +2008,20 @@ void CMultiPlayerAnimState::DebugShowAnimState( int iStartLine )
 
 	Anim_StateLog( "--------------------------------------------\n\n" );
 
-	if ( debugoverlay )
-	{
-		// Draw a red triangle on the ground for the eye yaw.
-		float flBaseSize = 10;
-		float flHeight = 80;
-		Vector vBasePos = GetBasePlayer()->GetAbsOrigin() + Vector( 0, 0, 3 );
-		QAngle angles( 0, 0, 0 );
-		angles[YAW] = m_flEyeYaw;
-		Vector vForward, vRight, vUp;
-		AngleVectors( angles, &vForward, &vRight, &vUp );
-		debugoverlay->AddTriangleOverlay( vBasePos+vRight*flBaseSize/2, vBasePos-vRight*flBaseSize/2, vBasePos+vForward*flHeight, 255, 0, 0, 255, false, 0.01 );
+	// Draw a red triangle on the ground for the eye yaw.
+	float flBaseSize = 10;
+	float flHeight = 80;
+	Vector vBasePos = GetBasePlayer()->GetAbsOrigin() + Vector( 0, 0, 3 );
+	QAngle angles( 0, 0, 0 );
+	angles[YAW] = m_flEyeYaw;
+	Vector vForward, vRight, vUp;
+	AngleVectors( angles, &vForward, &vRight, &vUp );
+	debugoverlay->AddTriangleOverlay( vBasePos+vRight*flBaseSize/2, vBasePos-vRight*flBaseSize/2, vBasePos+vForward*flHeight, 255, 0, 0, 255, false, 0.01 );
 
-		// Draw a blue triangle on the ground for the body yaw.
-		angles[YAW] = m_angRender[YAW];
-		AngleVectors( angles, &vForward, &vRight, &vUp );
-		debugoverlay->AddTriangleOverlay( vBasePos+vRight*flBaseSize/2, vBasePos-vRight*flBaseSize/2, vBasePos+vForward*flHeight, 0, 0, 255, 255, false, 0.01 );	
-	}
+	// Draw a blue triangle on the ground for the body yaw.
+	angles[YAW] = m_angRender[YAW];
+	AngleVectors( angles, &vForward, &vRight, &vUp );
+	debugoverlay->AddTriangleOverlay( vBasePos+vRight*flBaseSize/2, vBasePos-vRight*flBaseSize/2, vBasePos+vForward*flHeight, 0, 0, 255, 255, false, 0.01 );	
 }
 
 // Debug!

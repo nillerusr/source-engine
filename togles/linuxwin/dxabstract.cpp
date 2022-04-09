@@ -1204,6 +1204,7 @@ static void FillD3DCaps9( const GLMRendererInfoFields &glmRendererInfo, D3DCAPS9
 	pCaps->FakeSRGBWrite			=	true;//!glmRendererInfo.m_hasGammaWrites;
 	pCaps->CanDoSRGBReadFromRTs		=	true;//!glmRendererInfo.m_cantAttachSRGB;
 	pCaps->MixedSizeTargets			=	glmRendererInfo.m_hasMixedAttachmentSizes;
+	pCaps->SupportInt16Format = gGL->m_bHave_GL_EXT_texture_norm16;
 #endif
 }
 

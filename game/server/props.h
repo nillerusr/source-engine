@@ -327,8 +327,7 @@ protected:
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-DECLARE_AUTO_LIST( IPhysicsPropAutoList );
-class CPhysicsProp : public CBreakableProp, public IPhysicsPropAutoList
+class CPhysicsProp : public CBreakableProp
 {
 	DECLARE_CLASS( CPhysicsProp, CBreakableProp );
 	DECLARE_SERVERCLASS();

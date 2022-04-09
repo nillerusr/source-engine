@@ -18,12 +18,11 @@
 #include "filesystem.h"
 #include "../common/xbox/xboxstubs.h"
 #include "steam/steam_api.h"
-#include "tier0/cpumonitoring.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-static ConVar cl_showfps( "cl_showfps", "0", FCVAR_ALLOWED_IN_COMPETITIVE, "Draw fps meter at top of screen (1 = fps, 2 = smooth fps)" );
+static ConVar cl_showfps( "cl_showfps", "0", 0, "Draw fps meter at top of screen (1 = fps, 2 = smooth fps)" );
 static ConVar cl_showpos( "cl_showpos", "0", 0, "Draw current position at top of screen" );
 static ConVar cl_showbattery( "cl_showbattery", "0", 0, "Draw current battery level at top of screen when on battery power" );
 
@@ -210,28 +209,6 @@ void GetFPSColor( int nFps, unsigned char ucColor[3] )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Set the color appropriately based on the CPU's frequency percentage
-//-----------------------------------------------------------------------------
-void GetCPUColor( float cpuPercentage, unsigned char ucColor[3] )
-{
-	// These colors are for poor CPU performance
-	ucColor[0] = 255; ucColor[1] = 0; ucColor[2] = 0;
-
-	if ( cpuPercentage >= kCPUMonitoringWarning1 )
-	{
-		// Excellent CPU performance
-		ucColor[0] = 10; 
-		ucColor[1] = 200;
-	}
-	else if ( cpuPercentage >= kCPUMonitoringWarning2 )
-	{
-		// Medium CPU performance
-		ucColor[0] = 220;
-		ucColor[1] = 220;
-	}
-}
-
-//-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : 
 //-----------------------------------------------------------------------------
@@ -294,17 +271,6 @@ void CFPSPanel::Paint()
 				nFps = static_cast<int>( 1.0f / realFrameTime );
 				GetFPSColor( nFps, ucColor );
 				g_pMatSystemSurface->DrawColoredText( m_hFont, x, 2, ucColor[0], ucColor[1], ucColor[2], 255, "%3i fps on %s", nFps, engine->GetLevelName() );
-			}
-
-			const CPUFrequencyResults frequency = GetCPUFrequencyResults();
-			double currentTime = Plat_FloatTime();
-			const double displayTime = 5.0f; // Display frequency results for this long.
-			if ( frequency.m_GHz > 0 && frequency.m_timeStamp + displayTime > currentTime )
-			{
-				int lineHeight = vgui::surface()->GetFontTall( m_hFont );
-				// Optionally print out the CPU frequency monitoring data.
-				GetCPUColor( frequency.m_percentage, ucColor );
-				g_pMatSystemSurface->DrawColoredText( m_hFont, x, lineHeight + 2, ucColor[0], ucColor[1], ucColor[2], 255, "CPU frequency percent: %3.1f%%   Min percent: %3.1f%%", frequency.m_percentage, frequency.m_lowestPercentage );
 			}
 		}
 	}
@@ -395,7 +361,7 @@ public:
 		if ( fpsPanel )
 		{
 			fpsPanel->SetParent( (vgui::Panel *)NULL );
-			fpsPanel->MarkForDeletion();
+			delete fpsPanel;
 			fpsPanel = NULL;
 		}
 	}
@@ -814,7 +780,7 @@ public:
 		if ( ioPanel )
 		{
 			ioPanel->SetParent( (vgui::Panel *)NULL );
-			ioPanel->MarkForDeletion();
+			delete ioPanel;
 			ioPanel = NULL;
 		}
 	}

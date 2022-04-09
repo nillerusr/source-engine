@@ -163,13 +163,18 @@ void C_TeamTrainWatcher::OnDataChanged( DataUpdateType_t updateType )
 			int nNumHills = ObjectiveResource()->GetNumNodeHillData( GetTeamNumber() );
 			if ( nNumHills > 0 )
 			{
-				float flStart = 0, flEnd = 0;
+				float flStart, flEnd;
 				for ( int i = 0 ; i < nNumHills ; i++ )
 				{
 					ObjectiveResource()->GetHillData( GetTeamNumber(), i, flStart, flEnd );
-
-					bool state = ( m_flTotalProgress >= flStart && m_flTotalProgress <= flEnd );
-					ObjectiveResource()->SetTrainOnHill( GetTeamNumber(), i, state );
+					if ( m_flTotalProgress >= flStart && m_flTotalProgress<= flEnd )
+					{
+						ObjectiveResource()->SetTrainOnHill( GetTeamNumber(), i, true );
+					}
+					else
+					{
+						ObjectiveResource()->SetTrainOnHill( GetTeamNumber(), i, false );
+					}
 				}
 			}
 		}
