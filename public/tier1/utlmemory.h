@@ -798,7 +798,7 @@ void CUtlMemory<T,I>::Purge()
 		if (m_pMemory)
 		{
 			UTLMEMORY_TRACK_FREE();
-			free( (void*)m_pMemory );
+			g_pMemAlloc->Free((void*)m_pMemory);
 			m_pMemory = 0;
 		}
 		m_nAllocationCount = 0;
