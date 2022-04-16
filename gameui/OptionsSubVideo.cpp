@@ -1030,7 +1030,8 @@ COptionsSubVideo::COptionsSubVideo(vgui::Panel *parent) : PropertyPage(parent, N
 	m_pBenchmark = new Button( this, "BenchmarkButton", "#GameUI_LaunchBenchmark" );
 	m_pBenchmark->SetCommand(new KeyValues("LaunchBenchmark"));
 	m_pThirdPartyCredits = new URLButton(this, "ThirdPartyVideoCredits", "#GameUI_ThirdPartyTechCredits");
-	m_pThirdPartyCredits->SetCommand(new KeyValues("OpenThirdPartyVideoCreditsDialog"));
+//	m_pThirdPartyCredits->SetCommand(new KeyValues("OpenThirdPartyVideoCreditsDialog"));
+	m_pThirdPartyCredits->SetVisible(false);
 	m_pHDContent = new CheckButton( this, "HDContentButton", "#GameUI_HDContent" );
 
 	char pszAspectName[3][64];

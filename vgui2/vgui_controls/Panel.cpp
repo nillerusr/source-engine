@@ -226,7 +226,6 @@ KeyBindingMap_t::~KeyBindingMap_t()
 class CKeyBindingsMgr
 {
 public:
-	
 	CKeyBindingsMgr() :
 		m_Bindings( 0, 0, KeyBindingContextHandleLessFunc ),
 		m_nKeyBindingContexts( 0 )
@@ -1450,8 +1449,10 @@ void Panel::SetParent(Panel *newParent)
 //-----------------------------------------------------------------------------
 void Panel::SetParent(VPANEL newParent)
 {
+
 	if (newParent)
 	{
+
 		ipanel()->SetParent(GetVPanel(), newParent);
 	}
 	else
@@ -1459,19 +1460,19 @@ void Panel::SetParent(VPANEL newParent)
 		ipanel()->SetParent(GetVPanel(), NULL);
 	}
 
-	if (GetVParent() && !IsPopup())
+	if (GetVParent() )
 	{
-		SetProportional(ipanel()->IsProportional(GetVParent()));
+		if( ipanel()->IsProportional(GetVParent()) )
+			SetProportional(true);
 
-		// most of the time KBInput == parents kbinput
-		if (ipanel()->IsKeyBoardInputEnabled(GetVParent()) != IsKeyBoardInputEnabled())
+		if( IsPopup() )
 		{
-			SetKeyBoardInputEnabled(ipanel()->IsKeyBoardInputEnabled(GetVParent()));
-		}
+			// most of the time KBInput == parents kbinput
+			if (ipanel()->IsKeyBoardInputEnabled(GetVParent()) != IsKeyBoardInputEnabled())
+				SetKeyBoardInputEnabled(ipanel()->IsKeyBoardInputEnabled(GetVParent()));
 
-		if (ipanel()->IsMouseInputEnabled(GetVParent()) != IsMouseInputEnabled())
-		{
-			SetMouseInputEnabled(ipanel()->IsMouseInputEnabled(GetVParent()));
+			if (ipanel()->IsMouseInputEnabled(GetVParent()) != IsMouseInputEnabled())
+				SetMouseInputEnabled(ipanel()->IsMouseInputEnabled(GetVParent()));
 		}
 	}
 

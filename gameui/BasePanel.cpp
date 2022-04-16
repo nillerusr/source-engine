@@ -242,8 +242,12 @@ public:
 	{
 		BaseClass::ApplySchemeSettings(pScheme);
 
+		int height = atoi(pScheme->GetResourceString("MainMenu.MenuItemHeight"));
+		if( IsProportional() )
+			height = scheme()->GetProportionalScaledValue( height );
+
 		// make fully transparent
-		SetMenuItemHeight(atoi(pScheme->GetResourceString("MainMenu.MenuItemHeight")));
+		SetMenuItemHeight(height);
 		SetBgColor(Color(0, 0, 0, 0));
 		SetBorder(NULL);
 	}
@@ -292,7 +296,6 @@ public:
 		MenuItem *item = new CGameMenuItem(this, itemName);
 		item->AddActionSignalTarget(target);
 		item->SetCommand(command);
-		item->SetProportional(true);
 		item->SetText(itemText);
 		item->SetUserData(userData);
 		return BaseClass::AddMenuItem(item);
@@ -303,7 +306,6 @@ public:
 		MenuItem *item = new CGameMenuItem(this, itemName);
 		item->AddActionSignalTarget(target);
 		item->SetCommand(command);
-		item->SetProportional(true);
 		item->SetText(itemText);
 		item->SetUserData(userData);
 		return BaseClass::AddMenuItem(item);
@@ -659,7 +661,6 @@ void CGameMenu::OnCursorEnteredMenuItem(int VPanel)
 static CBackgroundMenuButton* CreateMenuButton( CBasePanel *parent, const char *panelName, const wchar_t *panelText )
 {
 	CBackgroundMenuButton *pButton = new CBackgroundMenuButton( parent, panelName );
-	pButton->SetProportional(true);
 	pButton->SetCommand("OpenGameMenu");
 	pButton->SetText(panelText);
 
@@ -673,6 +674,9 @@ bool g_bIsCreatingNewGameMenuForPreFetching = false;
 //-----------------------------------------------------------------------------
 CBasePanel::CBasePanel() : Panel(NULL, "BaseGameUIPanel")
 {
+	if( NeedProportional() )
+		SetProportional( true );
+
 	g_pBasePanel = this;
 	m_bLevelLoading = false;
 	m_eBackgroundState = BACKGROUND_INITIAL;

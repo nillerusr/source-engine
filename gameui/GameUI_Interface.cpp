@@ -203,6 +203,8 @@ void CGameUI::Initialize( CreateInterfaceFn factory )
 		Error( "CGameUI::Initialize() failed to get necessary interfaces\n" );
 	}
 
+	vgui::VPANEL rootpanel = enginevguifuncs->GetPanel( PANEL_GAMEUIDLL );
+
 	// setup base panel
 	staticPanel = new CBasePanel();
 	staticPanel->SetBounds(0, 0, 400, 300 );
@@ -212,9 +214,7 @@ void CGameUI::Initialize( CreateInterfaceFn factory )
 	staticPanel->SetVisible( true );
 	staticPanel->SetMouseInputEnabled( false );
 	staticPanel->SetKeyBoardInputEnabled( false );
-
-	vgui::VPANEL rootpanel = enginevguifuncs->GetPanel( PANEL_GAMEUIDLL );
-	staticPanel->SetParent( rootpanel );
+	staticPanel->SetParent(rootpanel);
 }
 
 void CGameUI::PostInit()
