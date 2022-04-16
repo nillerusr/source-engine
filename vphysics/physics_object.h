@@ -112,6 +112,7 @@ public:
 	unsigned short	GetGameIndex( void ) const;
 
 	void			Wake();
+	void			WakeNow();
 	void			Sleep();
 	void			RecheckCollisionFilter();
 	void			RecheckContactPoints();

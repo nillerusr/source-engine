@@ -177,6 +177,11 @@ void CPhysicsObject::Wake( void )
 	m_pObject->ensure_in_simulation();
 }
 
+void CPhysicsObject::WakeNow( void )
+{
+	m_pObject->ensure_in_simulation_now();
+}
+
 // supported
 void CPhysicsObject::Sleep( void )
 {
@@ -643,7 +648,6 @@ void CPhysicsObject::SetInertia( const Vector &inertia )
 	ri.k[2] = IVP_Inline_Math::fabsd(ri.k[2]);
 
 	if( ri.k[0] > 1e14f ) ri.k[0] = 1e14f; if( ri.k[1] > 1e14f ) ri.k[1] = 1e14f; if( ri.k[2] > 1e14f ) ri.k[2] = 1e14f;
-	if( ri.k[0] <= 0 ) ri.k[0] = 1.f; if( ri.k[1] <= 0 ) ri.k[1] = 1.f; if( ri.k[2] <= 0 ) ri.k[2] = 1.f;
 
 	m_pObject->get_core()->set_rotation_inertia( &ri );
 }
@@ -1091,7 +1095,6 @@ void GetWorldCoordFromSynapse( IVP_Synapse_Friction *pfriction, IVP_U_Point &wor
 {
 	world.set(pfriction->get_contact_point()->get_contact_point_ws());
 }
-
 
 bool CPhysicsObject::GetContactPoint( Vector *contactPoint, IPhysicsObject **contactObject ) const
 {
