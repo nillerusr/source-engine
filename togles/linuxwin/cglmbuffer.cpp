@@ -95,13 +95,10 @@ void CPersistentBuffer::Init( EGLMBufferType type,uint nSize )
 {
 //	Assert( gGL->m_bHave_GL_EXT_buffer_storage );
 //	Assert( gGL->m_bHave_GL_ARB_map_buffer_range );
-	
+
 	m_nSize		= nSize;
 	m_nOffset	= 0;
 	m_type		= type;
-
-	if( strcmp(gGL->glGetString(GL_RENDERER), "ARM") == 0 )
-		g_bUsePseudoBufs = true; // works faster with Mali gpu
 
 	switch ( type )
 	{
@@ -474,6 +471,12 @@ CGLMBuffer::CGLMBuffer( GLMContext *pCtx, EGLMBufferType type, uint size, uint o
 #if GL_ENABLE_UNLOCK_BUFFER_OVERWRITE_DETECTION
 	m_bPseudo = true;
 #endif
+
+	const char *szRenderer = gGL->glGetString(GL_VENDOR);
+//	Msg("GL_VENDOR: %s\n", szRenderer);
+
+	if( strcmp(szRenderer, "ARM") == 0 )
+		g_bUsePseudoBufs = true; // works faster with Mali gpu
 
 #if GL_ENABLE_INDEX_VERIFICATION
 	m_BufferSpanManager.Init( m_pCtx, m_type, 512, m_nSize, m_bDynamic );
