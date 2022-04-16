@@ -85,7 +85,7 @@ void CAchievementNotificationPanel::PerformLayout( void )
 	SetBgColor( Color( 0, 0, 0, 0 ) );
 	m_pLabelHeading->SetBgColor( Color( 0, 0, 0, 0 ) );
 	m_pLabelTitle->SetBgColor( Color( 0, 0, 0, 0 ) );
-	m_pPanelBackground->SetBgColor( Color( 62,70,55, 200 ) );
+	m_pPanelBackground->SetBgColor( Color( 128, 128, 128, 128 ) );
 }
 
 //-----------------------------------------------------------------------------
@@ -94,13 +94,14 @@ void CAchievementNotificationPanel::PerformLayout( void )
 void CAchievementNotificationPanel::FireGameEvent( IGameEvent * event )
 {
 	const char *name = event->GetName();
-	if ( 0 == Q_strcmp( name, "achievement_event" ) )
+	if ( Q_strcmp( name, "achievement_event" ) == 0 )
 	{
 		const char *pchName = event->GetString( "achievement_name" );
 		int iCur = event->GetInt( "cur_val" );
 		int iMax = event->GetInt( "max_val" );
 		wchar_t szLocalizedName[256]=L"";
 
+#ifndef DISABLE_STEAM
 		if ( IsPC() )
 		{
 			// shouldn't ever get achievement progress if steam not running and user logged in, but check just in case
@@ -114,7 +115,8 @@ void CAchievementNotificationPanel::FireGameEvent( IGameEvent * event )
 				steamapicontext->SteamUserStats()->IndicateAchievementProgress( pchName, iCur, iMax );
 			}
 		}
-		else 
+		else
+#endif
 		{
 			// on X360 we need to show our own achievement progress UI
 
@@ -125,10 +127,17 @@ void CAchievementNotificationPanel::FireGameEvent( IGameEvent * event )
 			Q_wcsncpy( szLocalizedName, pchLocalizedName, sizeof( szLocalizedName ) );
 
 			// this is achievement progress, compose the message of form: "<name> (<#>/<max>)"
-			wchar_t szFmt[128]=L"";
 			wchar_t szText[512]=L"";
+			wchar_t szFmt[128]=L"";
 			wchar_t szNumFound[16]=L"";
 			wchar_t szNumTotal[16]=L"";
+
+			if( iCur >= iMax )
+			{
+				AddNotification( pchName, g_pVGuiLocalize->Find( "#GameUI_Achievement_Awarded" ), szLocalizedName );
+				return;
+			}
+
 			_snwprintf( szNumFound, ARRAYSIZE( szNumFound ), L"%i", iCur );
 			_snwprintf( szNumTotal, ARRAYSIZE( szNumTotal ), L"%i", iMax );
 
@@ -138,6 +147,7 @@ void CAchievementNotificationPanel::FireGameEvent( IGameEvent * event )
 			Q_wcsncpy( szFmt, pchFmt, sizeof( szFmt ) );
 
 			g_pVGuiLocalize->ConstructString( szText, sizeof( szText ), szFmt, 3, szLocalizedName, szNumFound, szNumTotal );
+
 			AddNotification( pchName, g_pVGuiLocalize->Find( "#GameUI_Achievement_Progress" ), szText );
 		}
 	}
@@ -245,13 +255,13 @@ void CAchievementNotificationPanel::SetXAndWide( Panel *pPanel, int x, int wide 
 	pPanel->SetWide( wide );
 }
 
-CON_COMMAND_F( achievement_notification_test, "Test the hud notification UI", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY )
+CON_COMMAND( achievement_notification_test, "Test the hud notification UI" )
 {
 	static int iCount=0;
 
 	CAchievementNotificationPanel *pPanel = GET_HUDELEMENT( CAchievementNotificationPanel );
 	if ( pPanel )
-	{		
+	{
 		pPanel->AddNotification( "HL2_KILL_ODESSAGUNSHIP", L"Achievement Progress", ( 0 == ( iCount % 2 ) ? L"Test Notification Message A (1/10)" :
 			L"Test Message B" ) );
 	}

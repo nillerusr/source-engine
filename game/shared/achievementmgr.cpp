@@ -950,8 +950,8 @@ void CAchievementMgr::AwardAchievement( int iAchievementID )
 	SetDirty( true );
 
 	if ( IsPC() )
-	{		
-#ifndef NO_STEAM
+	{
+#ifndef DISABLE_STEAM
 		if ( steamapicontext->SteamUserStats() )
 		{
 			VPROF_BUDGET( "AwardAchievement", VPROF_BUDGETGROUP_STEAM );
@@ -963,8 +963,9 @@ void CAchievementMgr::AwardAchievement( int iAchievementID )
 				m_AchievementsAwarded.AddToTail( iAchievementID );
 			}
 		}
+		m_AchievementsAwarded.AddToTail( iAchievementID );
 #endif
-    }
+	}
 	else if ( IsX360() )
 	{
 #ifdef _X360
@@ -1033,12 +1034,16 @@ extern bool IsInCommentaryMode( void );
 //-----------------------------------------------------------------------------
 bool CAchievementMgr::CheckAchievementsEnabled()
 {
+	return true;
+
 	// if PC, Steam must be running and user logged in
+#ifndef DISABLE_STEAM
 	if ( IsPC() && !LoggedIntoSteam() )
 	{
 		Msg( "Achievements disabled: Steam not running.\n" );
 		return false;
 	}
+#endif
 
 #if defined( _X360 )
 	uint state = XUserGetSigninState( XBX_GetPrimaryUserId() );

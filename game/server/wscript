@@ -33,6 +33,8 @@ def configure(conf):
 	game = conf.options.GAMES
 	conf.env.GAMES = game
 
+	conf.env.append_unique('DEFINES', ['DISABLE_STEAM=1'])
+
 	if game not in games.keys():
 		conf.fatal("Couldn't find game: ", game)
 

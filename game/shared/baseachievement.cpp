@@ -231,7 +231,7 @@ void CBaseAchievement::IncrementCount( int iOptIncrement )
 			Msg( "Achievement count increased for %s: %d/%d\n", GetName(), m_iCount, m_iGoal );
 		}
 
-#ifndef NO_STEAM
+#ifndef DISABLE_STEAM
 		// if this achievement's progress should be stored in Steam, set the steam stat for it
 		if ( StoreProgressInSteam() && steamapicontext->SteamUserStats() )
 		{
@@ -255,7 +255,7 @@ void CBaseAchievement::IncrementCount( int iOptIncrement )
 				AwardAchievement();
 			}
 			else
-			{	
+			{
 				HandleProgressUpdate();
 			}
 		}
@@ -275,20 +275,16 @@ void CBaseAchievement::SetShowOnHUD( bool bShow )
 
 void CBaseAchievement::HandleProgressUpdate()
 {
-	// if we've hit the right # of progress steps to show a progress notification, show it
-	if ( ( m_iProgressMsgIncrement > 0 ) && m_iCount >= m_iProgressMsgMinimum && ( 0 == ( m_iCount % m_iProgressMsgIncrement ) ) )
+	// which notification is this
+	int iProgress = m_iCount / m_iProgressMsgIncrement;
+	// if we haven't already shown this progress step, show it
+	if ( iProgress > m_iProgressShown || m_iCount == 1 )
 	{
-		// which notification is this
-		int iProgress = m_iCount / m_iProgressMsgIncrement;
-		// if we haven't already shown this progress step, show it
-		if ( iProgress > m_iProgressShown )
-		{
-			ShowProgressNotification();
-			// remember progress step shown so we don't show it again if the player loads an earlier save game
-			// and gets past this point again
-			m_iProgressShown = iProgress;
-			m_pAchievementMgr->SetDirty( true );
-		}					
+		ShowProgressNotification();
+		// remember progress step shown so we don't show it again if the player loads an earlier save game
+		// and gets past this point again
+		m_iProgressShown = iProgress;
+		m_pAchievementMgr->SetDirty( true );
 	}
 }
 
@@ -383,6 +379,7 @@ void CBaseAchievement::AwardAchievement()
 	if ( IsAchieved() )
 		return;
 
+	ShowProgressNotification();
 	m_pAchievementMgr->AwardAchievement( m_iAchievementID );
 }
 
@@ -438,7 +435,7 @@ void CBaseAchievement::EnsureComponentBitSetAndEvaluate( int iBitNumber )
 			}
 
 			ShowProgressNotification();
-		}				
+		}
 	}
 	else
 	{
