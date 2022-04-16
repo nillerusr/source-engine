@@ -28,6 +28,8 @@ extern ConVar sensitivity;
 #define TOUCH_DEFAULT_CFG "touch_default.cfg"
 
 ConVar touch_enable( "touch_enable", TOUCH_DEFAULT, FCVAR_ARCHIVE );
+ConVar touch_draw( "touch_draw", "1", FCVAR_ARCHIVE );
+ConVar touch_filter( "touch_filter", "0", FCVAR_ARCHIVE );
 ConVar touch_forwardzone( "touch_forwardzone", "0.06", FCVAR_ARCHIVE, "forward touch zone" );
 ConVar touch_sidezone( "touch_sidezone", "0.06", FCVAR_ARCHIVE, "side touch zone" );
 ConVar touch_pitch( "touch_pitch", "90", FCVAR_ARCHIVE, "touch pitch sensitivity" );
@@ -258,6 +260,36 @@ CON_COMMAND( touch_toggleselection, "toggle visibility on selected button in edi
 
 }*/
 
+void CTouchControls::GetTouchAccumulators( float *side, float *forward, float *yaw, float *pitch )
+{
+	*forward = this->forward;
+	*side = this->side;
+	*pitch = this->pitch;
+	*yaw = this->yaw;
+	this->yaw = 0.f;
+	this->pitch = 0.f;
+}
+
+void CTouchControls::GetTouchDelta( float yaw, float pitch, float *dx, float *dy )
+{
+	// Apply filtering?
+	if( touch_filter.GetBool() )
+	{
+		// Average over last two samples
+		*dx = ( yaw + m_flPreviousYaw ) * 0.5f;
+		*dy = ( pitch + m_flPreviousPitch ) * 0.5f;
+	}
+	else
+	{
+		*dx = yaw;
+		*dy = pitch;
+	}
+
+	// Latch previous
+	m_flPreviousYaw = yaw;
+	m_flPreviousPitch = pitch;
+}
+
 void CTouchControls::ResetToDefaults()
 {
 	rgba_t color(255, 255, 255, 155);
@@ -291,7 +323,7 @@ void CTouchControls::ResetToDefaults()
 	else
 	{
 		Q_snprintf(buf, sizeof buf, "exec %s", TOUCH_DEFAULT_CFG);
-		engine->ClientCmd_Unrestricted(buf);
+		engine->ExecuteClientCmd(buf);
 	}
 
 	WriteConfig();
@@ -307,7 +339,8 @@ void CTouchControls::Init()
 	config_loaded = false;
 	btns.EnsureCapacity( 64 );
 	look_finger = move_finger = resize_finger = -1;
-	forward = side = 0;
+	forward = side = 0.f;
+	pitch = yaw = 0.f;
 	scolor = rgba_t( -1, -1, -1, -1 );
 	state = state_none;
 	swidth = 1;
@@ -317,6 +350,7 @@ void CTouchControls::Init()
 	precision = false;
 	mouse_events = 0;
 	move_start_x = move_start_y = 0.0f;
+	m_flPreviousYaw = m_flPreviousPitch = 0.f;
 
 	showtexture = hidetexture = resettexture = closetexture = joytexture = 0;
 	configchanged = false;
@@ -344,12 +378,15 @@ void CTouchControls::Init()
 	AddButton( "menu", "vgui/touch/menu", "gameui_activate", 0.000000, 0.00000, 0.080000, 0.142222, color );
 
 	char buf[256];
-	Q_snprintf(buf, sizeof buf, "exec %s\n", touch_config_file.GetString());
-	engine->ClientCmd_Unrestricted(buf);
 
 	Q_snprintf(buf, sizeof buf, "cfg/%s", touch_config_file.GetString());
-	if( !filesystem->FileExists(buf) )
-		WriteConfig();
+	if( filesystem->FileExists(buf, "MOD") )
+	{
+		Q_snprintf(buf, sizeof buf, "exec %s\n", touch_config_file.GetString());
+		engine->ClientCmd_Unrestricted(buf);
+	}
+	else
+		ResetToDefaults();
 
 	initialized = true;
 }
@@ -405,32 +442,10 @@ void CTouchControls::IN_CheckCoords( float *x1, float *y1, float *x2, float *y2 
 
 void CTouchControls::Move( float /*frametime*/, CUserCmd *cmd )
 {
-	cmd->sidemove -= cl_sidespeed.GetFloat() * side;
-	cmd->forwardmove += cl_forwardspeed.GetFloat() * forward;
 }
 
 void CTouchControls::IN_Look()
 {
-	C_BasePlayer *pl = C_BasePlayer::GetLocalPlayer();
-
-	float diff = 1.0f;
-	if( pl )
-	{
-		float def_fov = default_fov.GetFloat();
-		float fov = pl->GetFOV();
-		diff = fov/def_fov;
-	}
-
-	if( !pitch && !yaw )
-		return;
-
-
-	QAngle ang;
-	engine->GetViewAngles( ang );
-	ang.x += pitch*diff;
-	ang.y += yaw*diff;
-	engine->SetViewAngles( ang );
-	pitch = yaw = 0;
 }
 
 void CTouchControls::Frame()
@@ -438,9 +453,7 @@ void CTouchControls::Frame()
 	if (!initialized)
 		return;
 
-	IN_Look();
-
-	if( touch_enable.GetBool() && !enginevgui->IsGameUIVisible() ) Paint();
+	if( touch_enable.GetBool() && touch_draw.GetBool() && !enginevgui->IsGameUIVisible() ) Paint();
 }
 
 void CTouchControls::Paint( )
@@ -448,12 +461,11 @@ void CTouchControls::Paint( )
 	if (!initialized)
 		return;
 
-	
 	if( state == state_edit )
 	{
 		vgui::surface()->DrawSetColor(255, 0, 0, 200);
 		float x,y;
-		
+
 		for( x = 0.0f; x < 1.0f; x += GRID_X )
 			vgui::surface()->DrawLine( screen_w*x, 0, screen_w*x, screen_h );
 
@@ -472,7 +484,7 @@ void CTouchControls::Paint( )
 			vgui::surface()->DrawSetColor(btn->color.r, btn->color.g, btn->color.b, btn->color.a);
 			vgui::surface()->DrawTexturedRect( btn->x1*screen_w, btn->y1*screen_h, btn->x2*screen_w, btn->y2*screen_h );
 		}
-		
+
 		if( state == state_edit && !(btn->flags & TOUCH_FL_NOEDIT) )
 		{
 			vgui::surface()->DrawSetColor(255, 0, 0, 50);
@@ -694,8 +706,8 @@ void CTouchControls::FingerMotion(touch_event_t *ev) // finger in my ass
 			}
 			else if( btn->type == touch_look )
 			{
-				yaw -= touch_yaw.GetFloat() * ev->dx * sensitivity.GetFloat();
-				pitch += touch_pitch.GetFloat() * ev->dy * sensitivity.GetFloat();
+				yaw += ev->dx;
+				pitch += ev->dy;
 			}
 		}
 	}
@@ -707,7 +719,7 @@ void CTouchControls::FingerPress(touch_event_t *ev)
 	const float y = ev->y;
 
 	CUtlLinkedList<CTouchButton*>::iterator it;
-	
+
 	if( ev->type == IE_FingerDown )
 	{
 		for( it = btns.begin(); it != btns.end(); it++ )
@@ -717,7 +729,7 @@ void CTouchControls::FingerPress(touch_event_t *ev)
 			{
 				if( btn->flags & TOUCH_FL_HIDE )
 					continue;
-				
+
 				btn->finger = ev->fingerid;
 				if( btn->type == touch_move  )
 				{

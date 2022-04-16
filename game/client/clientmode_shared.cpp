@@ -52,6 +52,7 @@
 #include "replay/vgui/replaymessagepanel.h"
 #include "econ/econ_controls.h"
 #include "econ/confirm_dialog.h"
+
 extern IClientReplayContext *g_pClientReplayContext;
 extern ConVar replay_rendersetting_renderglow;
 #endif
@@ -142,6 +143,18 @@ CON_COMMAND( hud_reloadscheme, "Reloads hud layout and animation scripts." )
 		return;
 
 	mode->ReloadScheme();
+}
+
+CON_COMMAND( messagemode, "Opens chat dialog" )
+{
+	ClientModeShared *mode = ( ClientModeShared * )GetClientModeNormal();
+	mode->StartMessageMode( MM_SAY );
+}
+
+CON_COMMAND( messagemode2, "Opens chat dialog" )
+{
+	ClientModeShared *mode = ( ClientModeShared * )GetClientModeNormal();
+	mode->StartMessageMode( MM_SAY_TEAM );
 }
 
 #ifdef _DEBUG
@@ -631,28 +644,6 @@ int	ClientModeShared::KeyInput( int down, ButtonCode_t keynum, const char *pszCu
 {
 	if ( engine->Con_IsVisible() )
 		return 1;
-	
-	// Should we start typing a message?
-	if ( pszCurrentBinding &&
-		( Q_strcmp( pszCurrentBinding, "messagemode" ) == 0 ||
-		  Q_strcmp( pszCurrentBinding, "say" ) == 0 ) )
-	{
-		if ( down )
-		{
-			StartMessageMode( MM_SAY );
-		}
-		return 0;
-	}
-	else if ( pszCurrentBinding &&
-				( Q_strcmp( pszCurrentBinding, "messagemode2" ) == 0 ||
-				  Q_strcmp( pszCurrentBinding, "say_team" ) == 0 ) )
-	{
-		if ( down )
-		{
-			StartMessageMode( MM_SAY_TEAM );
-		}
-		return 0;
-	}
 	
 	// If we're voting...
 #ifdef VOTING_ENABLED

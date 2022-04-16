@@ -91,6 +91,7 @@ def build(bld):
 		#'OptionsSubHaptics.cpp',	[$WIN32]	[$WIN32]
 		'OptionsSubKeyboard.cpp',
 		'OptionsSubMouse.cpp',
+		'OptionsSubTouch.cpp',
 		'OptionsSubMultiplayer.cpp',
 		'OptionsSubPortal.cpp',
 		'OptionsSubVideo.cpp',

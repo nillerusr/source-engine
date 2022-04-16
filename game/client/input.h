@@ -135,7 +135,10 @@ private:
 	void		GetMouseDelta( float inmousex, float inmousey, float *pOutMouseX, float *pOutMouseY );
 	void		ScaleMouse( float *x, float *y );
 	void		ApplyMouse( QAngle& viewangles, CUserCmd *cmd, float mouse_x, float mouse_y );
-	void		MouseMove ( CUserCmd *cmd );
+	void		MouseMove( CUserCmd *cmd );
+	void		TouchMove( CUserCmd *cmd );
+	void		TouchScale( float &dx, float &dy );
+	void		ApplyTouch( QAngle &viewangles, CUserCmd *cmd, float dx, float dy );
 
 	// Joystick  movement input helpers
 	void		ControllerMove ( float frametime, CUserCmd *cmd );

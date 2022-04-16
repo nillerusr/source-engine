@@ -947,7 +947,8 @@ void CInput::ControllerMove( float frametime, CUserCmd *cmd )
 	}
 
 	JoyStickMove( frametime, cmd);
-	gTouch.Move( frametime, cmd );
+
+	TouchMove( cmd );
 
 	// NVNT if we have a haptic device..
 	if(haptics && haptics->HasDevice())
@@ -1194,9 +1195,9 @@ void CInput::CreateMove ( int sequence_number, float input_sample_frametime, boo
 
 	// Using joystick?
 #ifdef SIXENSE
-	if ( in_joystick.GetInt() || g_pSixenseInput->IsEnabled() )
+	if ( in_joystick.GetInt() || g_pSixenseInput->IsEnabled() || touch_enable.GetInt() )
 #else
-	if ( in_joystick.GetInt() )
+	if ( in_joystick.GetInt() || touch_enable.GetInt() )
 #endif
 	{
 		if ( cmd->forwardmove > 0 )

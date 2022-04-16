@@ -22,6 +22,7 @@
 #include "KeyValues.h"
 #include "OptionsSubKeyboard.h"
 #include "OptionsSubMouse.h"
+#include "OptionsSubTouch.h"
 #include "OptionsSubAudio.h"
 #include "OptionsSubVideo.h"
 #include "OptionsSubVoice.h"
@@ -53,7 +54,7 @@ COptionsDialog::COptionsDialog(vgui::Panel *parent) : PropertyDialog(parent, "Op
 		w = scheme()->GetProportionalScaledValueEx(GetScheme(), w);
 		h = scheme()->GetProportionalScaledValueEx(GetScheme(), h);
 	}
-	
+
 	SetBounds(0, 0, w, h);
 
 	SetSizeable( false );
@@ -85,6 +86,10 @@ COptionsDialog::COptionsDialog(vgui::Panel *parent) : PropertyDialog(parent, "Op
 
 	AddPage(new COptionsSubKeyboard(this), "#GameUI_Keyboard");
 	AddPage(new COptionsSubMouse(this), "#GameUI_Mouse");
+
+#ifdef ANDROID
+	AddPage(new COptionsSubTouch(this), "Touch");
+#endif
 
 	m_pOptionsSubAudio = new COptionsSubAudio(this);
 	AddPage(m_pOptionsSubAudio, "#GameUI_Audio");

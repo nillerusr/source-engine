@@ -113,7 +113,6 @@ void SetLauncherArgs()
 	LogPrintf(binPath);
 	D(binPath);
 
-	D("-console");
 	D("-nouserclip");
 
 	parseArgs(java_args);

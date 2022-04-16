@@ -174,24 +174,25 @@ public:
 	void SetCommand( const char *name, const char *cmd );
 	void SetFlags( const char *name, int flags );
 	void WriteConfig();
-	
+
 	void IN_CheckCoords( float *x1, float *y1, float *x2, float *y2  );
 	void InitGrid();
-	
-	
+
 	void Move( float frametime, CUserCmd *cmd );
 	void IN_Look( );
 
 	void ProcessEvent( touch_event_t *ev );
 	void FingerPress( touch_event_t *ev );
 	void FingerMotion( touch_event_t *ev );
-
+	void GetTouchAccumulators( float *forward, float *side, float *yaw, float *pitch );
+	void GetTouchDelta( float yaw, float pitch, float *dx, float *dy );
 	void EditEvent( touch_event_t *ev );
-	
 	void EnableTouchEdit(bool enable);
-	
+
 	CTouchPanel *touchPanel;
 	float screen_h, screen_w;
+	float forward, side, movecount;
+	float yaw, pitch;
 
 private:
 	bool initialized = false;
@@ -199,11 +200,10 @@ private:
 	CUtlLinkedList<CTouchButton*> btns;
 
 	int look_finger, move_finger, wheel_finger;
-	float forward, side, movecount;
-	float yaw, pitch;
 	CTouchButton *move_button;
 
 	float move_start_x, move_start_y;
+	float m_flPreviousYaw, m_flPreviousPitch;
 
 	// editing
 	CTouchButton *edit;
