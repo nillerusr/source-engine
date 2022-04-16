@@ -939,10 +939,6 @@ bool CShaderDeviceMgrDx8::ComputeCapsFromD3D( HardwareCaps_t *pCaps, int nAdapte
 		D3DFMT_X8R8G8B8, D3DUSAGE_QUERY_FILTER,
 		D3DRTYPE_TEXTURE, D3DFMT_A16B16G16R16 ) == S_OK );
 
-#ifdef TOGLES
-	bSupportsInteger16Textures = caps.SupportInt16Format;
-#endif
-
 	// Does the device support filterable fp16 textures?
 	bool bSupportsFloat16Textures = 		
 		( D3D()->CheckDeviceFormat( nAdapter, DX8_DEVTYPE,
@@ -1051,6 +1047,11 @@ bool CShaderDeviceMgrDx8::ComputeCapsFromD3D( HardwareCaps_t *pCaps, int nAdapte
 		}
 	}
 
+
+#ifdef TOGLES
+	bSupportsInteger16Textures = caps.SupportInt16Format;
+#endif
+
 	// Do we have everything necessary to run with integer HDR?  Note that
 	// even if we don't support integer 16-bit/component textures, we
 	// can still run in this mode if fp16 textures are supported.
@@ -1058,7 +1059,7 @@ bool CShaderDeviceMgrDx8::ComputeCapsFromD3D( HardwareCaps_t *pCaps, int nAdapte
 		pCaps->m_SupportsVertexShaders_2_0 &&
 		//		(caps.Caps3 & D3DCAPS3_ALPHA_FULLSCREEN_FLIP_OR_DISCARD) &&
 		//		(caps.PrimitiveMiscCaps & D3DPMISCCAPS_SEPARATEALPHABLEND) &&
-		( bSupportsInteger16Textures || bSupportsFloat16Textures ) &&
+		bSupportsInteger16Textures &&
 		pCaps->m_SupportsSRGB;
 
 	// Do we have everything necessary to run with float HDR?

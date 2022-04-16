@@ -612,10 +612,10 @@ InitReturnVal_t CSDLMgr::Init()
 	_eglGetDisplay = (t_eglGetDisplay)dlsym(l_egl, "eglGetDisplay");
 	_eglQueryString = (t_eglQueryString)dlsym(l_egl, "eglQueryString");
 
-	if( _eglInitialize && _eglInitialize && _eglQueryString)
+	if( _eglInitialize && _eglInitialize && _eglQueryString )
 	{
 		EGLDisplay display = _eglGetDisplay(EGL_DEFAULT_DISPLAY);
-		if( _eglInitialize(display, NULL, NULL) != -1 
+		if( _eglInitialize(display, NULL, NULL) != -1
 			&& strstr(_eglQueryString(display, EGL_EXTENSIONS) ,"EGL_KHR_gl_colorspace") )
 				SET_GL_ATTR(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, 1)
 	}

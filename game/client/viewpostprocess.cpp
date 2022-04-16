@@ -1460,7 +1460,7 @@ static float GetBloomAmount( void )
 
 	if ( hdrType == HDR_TYPE_NONE )
 	{
-		flBloomAmount *= mat_non_hdr_bloom_scalefactor.GetFloat();
+		flBloomAmount *= mat_non_hdr_bloom_scalefactor.GetFloat()/2.f;
 	}
 
 	flBloomAmount *= mat_bloom_scalefactor_scalar.GetFloat();

@@ -549,15 +549,15 @@ void CPortal_Player::UpdateExpression( void )
 	GetExpresser()->SetOuter( this );
 
 	ClearExpression();
-	AI_Response response;
-	bool result = SpeakFindResponse( response, g_pszChellConcepts[iConcept] );
-	if ( !result )
+	AI_Response *response = SpeakFindResponse( g_pszChellConcepts[iConcept] );
+	if ( !response )
 	{
 		m_flExpressionLoopTime = gpGlobals->curtime + RandomFloat(30,40);
 		return;
 	}
 
-	char const *szScene = response.GetResponsePtr();
+	char const szScene[256];
+	response->GetResponse( szScene, sizeof(szScene) );
 
 	// Ignore updates that choose the same scene
 	if ( m_iszExpressionScene != NULL_STRING && stricmp( STRING(m_iszExpressionScene), szScene ) == 0 )

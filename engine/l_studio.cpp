@@ -3637,7 +3637,7 @@ void CModelRender::ValidateStaticPropColorData( ModelInstanceHandle_t handle )
 	// fetch the header
 	CUtlBuffer utlBuf;
 	char fileName[MAX_PATH];
-	if ( g_bBakedPropLightingNoSeparateHDR )
+	if ( !g_pMaterialSystemHardwareConfig->GetHDREnabled() || g_bBakedPropLightingNoSeparateHDR )
 	{
 		Q_snprintf( fileName, sizeof( fileName ), "sp_%d%s.vhv", StaticPropMgr()->GetStaticPropIndex( pProp ), GetPlatformExt() );
 	}
@@ -3930,13 +3930,13 @@ bool CModelRender::LoadStaticPropColorData( IHandleEntity *pProp, DataCacheHandl
 
 	// each static prop has its own compiled color mesh
 	char fileName[MAX_PATH];
-	if ( g_bBakedPropLightingNoSeparateHDR )
+	if ( !g_pMaterialSystemHardwareConfig->GetHDREnabled() || g_bBakedPropLightingNoSeparateHDR )
 	{
-        Q_snprintf( fileName, sizeof( fileName ), "sp_%d%s.vhv", StaticPropMgr()->GetStaticPropIndex( pProp ), GetPlatformExt() );
+	        Q_snprintf( fileName, sizeof( fileName ), "sp_%d%s.vhv", StaticPropMgr()->GetStaticPropIndex( pProp ), GetPlatformExt() );
 	}
 	else
 	{
-        Q_snprintf( fileName, sizeof( fileName ), "sp_hdr_%d%s.vhv", StaticPropMgr()->GetStaticPropIndex( pProp ), GetPlatformExt() );
+        	Q_snprintf( fileName, sizeof( fileName ), "sp_hdr_%d%s.vhv", StaticPropMgr()->GetStaticPropIndex( pProp ), GetPlatformExt() );
 	}
 
 	// mark as invalid, async callback will set upon completion
