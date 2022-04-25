@@ -2297,9 +2297,9 @@ void CVoxelTree::EnumerateElementsAlongRay( SpatialPartitionListMask_t listMask,
 	vecInvDelta[1] = ( clippedRay.m_Delta[1] != 0.0f ) ? 1.0f / clippedRay.m_Delta[1] : FLT_MAX;
 	vecInvDelta[2] = ( clippedRay.m_Delta[2] != 0.0f ) ? 1.0f / clippedRay.m_Delta[2] : FLT_MAX;
 
-	CPartitionVisits *pPrevVisits = BeginVisit();
-
 	m_lock.LockForRead();
+
+	CPartitionVisits *pPrevVisits = BeginVisit();
 	if ( ray.m_IsRay )
 	{
 		EnumerateElementsAlongRay_Ray( listMask, clippedRay, vecInvDelta, vecEnd, pIterator );

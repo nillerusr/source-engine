@@ -137,6 +137,11 @@ public:
 		return pResult;
 	}
 
+	void operator delete(void *p)
+	{
+		MemAlloc_Free( p );
+	};
+
 private:
 	CAI_BaseNPC *m_pOuter;
 };

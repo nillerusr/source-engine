@@ -1389,7 +1389,7 @@ bool NET_GetLoopPacket ( netpacket_t * packet )
 
 	if ( loop->data != loop->defbuffer )
 	{
-		delete loop->data;
+		delete[] loop->data;
 		loop->data = loop->defbuffer;
 	}
 

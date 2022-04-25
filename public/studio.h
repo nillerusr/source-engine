@@ -2062,6 +2062,8 @@ struct studiohdr2_t
 struct studiohdr_t
 {
 	DECLARE_BYTESWAP_DATADESC();
+	studiohdr_t() = default;
+
 	int					id;
 	int					version;
 
@@ -2077,10 +2079,10 @@ struct studiohdr_t
 	Vector				illumposition;	// illumination center
 	
 	Vector				hull_min;		// ideal movement hull size
-	Vector				hull_max;			
+	Vector				hull_max;
 
 	Vector				view_bbmin;		// clipping bounding box
-	Vector				view_bbmax;		
+	Vector				view_bbmax;
 
 	int					flags;
 
@@ -2329,9 +2331,6 @@ struct studiohdr_t
 	// [and move all fields in studiohdr2_t into studiohdr_t and kill studiohdr2_t],
 	// or add your stuff to studiohdr2_t. See NumSrcBoneTransforms/SrcBoneTransform for the pattern to use.
 	int					unused2[1];
-
-	studiohdr_t() {}
-
 private:
 	// No copy constructors allowed
 	studiohdr_t(const studiohdr_t& vOther);

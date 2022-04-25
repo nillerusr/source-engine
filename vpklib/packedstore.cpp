@@ -502,7 +502,7 @@ void SplitFileComponents( char const *pFileName, char *pDirOut, char *pBaseOut, 
 
 	if ( !pDirOut[0] )
 		strcpy( pDirOut, " " );								// blank dir name
-	V_strcpy( pBaseOut, V_UnqualifiedFileName( pFileName ) );
+	V_strncpy( pBaseOut, V_UnqualifiedFileName( pFileName ), MAX_PATH );
 	char *pDot = strrchr( pBaseOut, '.' );
 	if ( pDot )
 	{

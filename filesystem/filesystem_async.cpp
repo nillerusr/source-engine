@@ -488,7 +488,7 @@ public:
 	{
 		if ( m_pData && m_bFreeMemory )
 		{
-			free( (void*) m_pData );
+			delete[] (char*)m_pData;
 		}
 	}
 

@@ -2048,34 +2048,34 @@ public:
 class CClipPlane
 {
 public:
-	static inline bool Inside( ShadowVertex_t const& vert )						
+	static inline bool Inside( ShadowVertex_t const& vert )
 	{
-		return DotProduct( vert.m_Position, *m_pNormal ) < m_Dist;
+		return DotProduct( vert.m_Position, m_pNormal ) < m_Dist;
 	}
 
-	static inline float Clip( const Vector& one, const Vector& two )	
+	static inline float Clip( const Vector& one, const Vector& two )
 	{
 		Vector dir;
 		VectorSubtract( two, one, dir );
-		return IntersectRayWithPlane( one, dir, *m_pNormal, m_Dist );
+		return IntersectRayWithPlane( one, dir, m_pNormal, m_Dist );
 	}
 
 	static inline bool IsAbove()	{return false;}
 	static inline bool IsPlane()	{return true;}
 
-	static void SetPlane( const Vector& normal, float dist )
+	static void SetPlane( const Vector normal, float dist )
 	{
-		m_pNormal = &normal;
+		m_pNormal = normal;
 		m_Dist = dist;
 	}
 
 
 private:
-	static const Vector *m_pNormal;
+	static const Vector m_pNormal;
 	static float  m_Dist;
 };
 
-const Vector *CClipPlane::m_pNormal;
+const Vector CClipPlane::m_pNormal;
 float  CClipPlane::m_Dist;
 
 static inline void ClampTexCoord( ShadowVertex_t *pInVertex, ShadowVertex_t *pOutVertex )
