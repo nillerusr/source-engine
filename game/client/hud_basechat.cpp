@@ -633,6 +633,7 @@ CBaseHudChat::CBaseHudChat( const char *pElementName )
 	}
 
 	m_pChatHistory = new CHudChatHistory( this, "HudChatHistory" );
+	m_pFilterPanel = NULL;
 
 	CreateChatLines();
 	CreateChatInputLine();

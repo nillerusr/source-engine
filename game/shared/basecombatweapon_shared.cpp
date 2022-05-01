@@ -60,7 +60,7 @@ ConVar tf_weapon_criticals_bucket_bottom( "tf_weapon_criticals_bucket_bottom", "
 ConVar tf_weapon_criticals_bucket_default( "tf_weapon_criticals_bucket_default", "300.0", FCVAR_REPLICATED | FCVAR_CHEAT );
 #endif // TF
 
-CBaseCombatWeapon::CBaseCombatWeapon()
+CBaseCombatWeapon::CBaseCombatWeapon() : BASECOMBATWEAPON_DERIVED_FROM()
 {
 	// Constructor must call this
 	// CONSTRUCT_PREDICTABLE( CBaseCombatWeapon );
@@ -77,6 +77,7 @@ CBaseCombatWeapon::CBaseCombatWeapon()
 	m_nViewModelIndex	= 0;
 
 	m_bFlipViewModel	= false;
+	m_iSubType = 0;
 
 #if defined( CLIENT_DLL )
 	m_iState = m_iOldState = WEAPON_NOT_CARRIED;

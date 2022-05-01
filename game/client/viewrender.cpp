@@ -1435,8 +1435,8 @@ static void GetFogColorTransition( fogparams_t *pFogParams, float *pColorPrimary
 	{
 		float flPercent = 1.0f - (( pFogParams->lerptime - gpGlobals->curtime ) / pFogParams->duration );
 
-		float flPrimaryColorLerp[3] = { pFogParams->colorPrimaryLerpTo.GetR(), pFogParams->colorPrimaryLerpTo.GetG(), pFogParams->colorPrimaryLerpTo.GetB() };
-		float flSecondaryColorLerp[3] = { pFogParams->colorSecondaryLerpTo.GetR(), pFogParams->colorSecondaryLerpTo.GetG(), pFogParams->colorSecondaryLerpTo.GetB() };
+		float flPrimaryColorLerp[3] = { (float)pFogParams->colorPrimaryLerpTo.GetR(), (float)pFogParams->colorPrimaryLerpTo.GetG(), (float)pFogParams->colorPrimaryLerpTo.GetB() };
+		float flSecondaryColorLerp[3] = { (float)pFogParams->colorSecondaryLerpTo.GetR(), (float)pFogParams->colorSecondaryLerpTo.GetG(), (float)pFogParams->colorSecondaryLerpTo.GetB() };
 
 		CheckAndTransitionColor( flPercent, pColorPrimary, flPrimaryColorLerp );
 		CheckAndTransitionColor( flPercent, pColorSecondary, flSecondaryColorLerp );
@@ -1459,8 +1459,8 @@ static void GetFogColor( fogparams_t *pFogParams, float *pColor )
 	}
 	else
 	{
-		float flPrimaryColor[3] = { pFogParams->colorPrimary.GetR(), pFogParams->colorPrimary.GetG(), pFogParams->colorPrimary.GetB() };
-		float flSecondaryColor[3] = { pFogParams->colorSecondary.GetR(), pFogParams->colorSecondary.GetG(), pFogParams->colorSecondary.GetB() };
+		float flPrimaryColor[3] = { (float)pFogParams->colorPrimary.GetR(), (float)pFogParams->colorPrimary.GetG(), (float)pFogParams->colorPrimary.GetB() };
+		float flSecondaryColor[3] = { (float)pFogParams->colorSecondary.GetR(), (float)pFogParams->colorSecondary.GetG(), (float)pFogParams->colorSecondary.GetB() };
 
 		GetFogColorTransition( pFogParams, flPrimaryColor, flSecondaryColor );
 
@@ -2689,6 +2689,7 @@ bool DoesViewPlaneIntersectWater( float waterZ, int leafWaterDataID )
 //			&view - the camera view to render from
 //			nClearFlags -  how to clear the buffer
 //-----------------------------------------------------------------------------
+
 void CViewRender::ViewDrawScene_PortalStencil( const CViewSetup &viewIn, ViewCustomVisibility_t *pCustomVisibility )
 {
 	VPROF( "CViewRender::ViewDrawScene_PortalStencil" );
@@ -2700,28 +2701,6 @@ void CViewRender::ViewDrawScene_PortalStencil( const CViewSetup &viewIn, ViewCus
 	QAngle vecOldAngles = CurrentViewAngles();
 
 	int iCurrentViewID = g_CurrentViewID;
-	int iRecursionLevel = g_pPortalRender->GetViewRecursionLevel();
-	Assert( iRecursionLevel > 0 );
-
-	//get references to reflection textures
-	CTextureReference pPrimaryWaterReflectionTexture;
-	pPrimaryWaterReflectionTexture.Init( GetWaterReflectionTexture() );
-	CTextureReference pReplacementWaterReflectionTexture;
-	pReplacementWaterReflectionTexture.Init( portalrendertargets->GetWaterReflectionTextureForStencilDepth( iRecursionLevel ) );
-
-	//get references to refraction textures
-	CTextureReference pPrimaryWaterRefractionTexture;
-	pPrimaryWaterRefractionTexture.Init( GetWaterRefractionTexture() );
-	CTextureReference pReplacementWaterRefractionTexture;
-	pReplacementWaterRefractionTexture.Init( portalrendertargets->GetWaterRefractionTextureForStencilDepth( iRecursionLevel ) );
-
-
-	//swap texture contents for the primary render targets with those we set aside for this recursion level
-	if( pReplacementWaterReflectionTexture != NULL )
-		pPrimaryWaterReflectionTexture->SwapContents( pReplacementWaterReflectionTexture );
-
-	if( pReplacementWaterRefractionTexture != NULL )
-		pPrimaryWaterRefractionTexture->SwapContents( pReplacementWaterRefractionTexture );
 
 	bool bDrew3dSkybox = false;
 	SkyboxVisibility_t nSkyboxVisible = SKYBOX_NOT_VISIBLE;
@@ -2738,7 +2717,7 @@ void CViewRender::ViewDrawScene_PortalStencil( const CViewSetup &viewIn, ViewCus
 	//generate unique view ID's for each stencil view
 	view_id_t iNewViewID = (view_id_t)g_pPortalRender->GetCurrentViewId();
 	SetupCurrentView( view.origin, view.angles, (view_id_t)iNewViewID );
-	
+
 	// update vis data
 	unsigned int visFlags;
 	SetupVis( view, visFlags, pCustomVisibility );
@@ -2757,10 +2736,10 @@ void CViewRender::ViewDrawScene_PortalStencil( const CViewSetup &viewIn, ViewCus
 	DetermineWaterRenderInfo( fogInfo, waterInfo );
 
 	if ( waterInfo.m_bCheapWater )
-	{		     
+	{
 		cplane_t glassReflectionPlane;
 		if ( IsReflectiveGlassInView( viewIn, glassReflectionPlane ) )
-		{								    
+		{
 			CRefPtr<CReflectiveGlassView> pGlassReflectionView = new CReflectiveGlassView( this );
 			pGlassReflectionView->Setup( viewIn, VIEW_CLEAR_DEPTH | VIEW_CLEAR_COLOR | VIEW_CLEAR_OBEY_STENCIL, drawSkybox, fogInfo, waterInfo, glassReflectionPlane );
 			AddViewToScene( pGlassReflectionView );
@@ -2813,14 +2792,6 @@ void CViewRender::ViewDrawScene_PortalStencil( const CViewSetup &viewIn, ViewCus
 	// Return to the previous view
 	SetupCurrentView( vecOldOrigin, vecOldAngles, (view_id_t)iCurrentViewID );
 	g_CurrentViewID = iCurrentViewID; //just in case the cast to view_id_t screwed up the id #
-
-
-	//swap back the water render targets
-	if( pReplacementWaterReflectionTexture != NULL )
-		pPrimaryWaterReflectionTexture->SwapContents( pReplacementWaterReflectionTexture );
-
-	if( pReplacementWaterRefractionTexture != NULL )
-		pPrimaryWaterRefractionTexture->SwapContents( pReplacementWaterRefractionTexture );
 }
 
 void CViewRender::Draw3dSkyboxworld_Portal( const CViewSetup &view, int &nClearFlags, bool &bDrew3dSkybox, SkyboxVisibility_t &nSkyboxVisible, ITexture *pRenderTarget ) 
