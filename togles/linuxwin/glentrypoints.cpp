@@ -485,12 +485,12 @@ COpenGLEntryPoints::COpenGLEntryPoints()
 	}
 #endif
 
-#ifndef OSX
+/*#ifndef OSX
 	if ( !m_bHave_GL_EXT_texture_sRGB_decode )
  	{
  		Error( "Required OpenGL extension \"GL_EXT_texture_sRGB_decode\" is not supported. Please update your OpenGL driver.\n" );
  	}
-#endif
+#endif*/
 }
 
 COpenGLEntryPoints::~COpenGLEntryPoints()

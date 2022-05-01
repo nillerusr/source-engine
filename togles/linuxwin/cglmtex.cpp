@@ -3435,15 +3435,15 @@ GLvoid *uncompressDXTc(GLsizei width, GLsizei height, GLenum format, GLsizei ima
                 case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
                 case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
                 case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
-                    DecompressBlockDXT1(x, y, width, (uint8_t*)src, transparent0, simpleAlpha, complexAlpha, pixels);
+                    DecompressBlockDXT1(x, y, width, (uint8_t*)src, transparent0, simpleAlpha, complexAlpha, (uint32_t*)pixels);
                     break;
                 case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
                 case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
-                    DecompressBlockDXT3(x, y, width, (uint8_t*)src, transparent0, simpleAlpha, complexAlpha, pixels);
+                    DecompressBlockDXT3(x, y, width, (uint8_t*)src, transparent0, simpleAlpha, complexAlpha, (uint32_t*)pixels);
                     break;
                 case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
                 case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
-                    DecompressBlockDXT5(x, y, width, (uint8_t*)src, transparent0, simpleAlpha, complexAlpha, pixels);
+                    DecompressBlockDXT5(x, y, width, (uint8_t*)src, transparent0, simpleAlpha, complexAlpha, (uint32_t*)pixels);
                     break;
             }
             src+=blocksize;
@@ -3641,24 +3641,18 @@ void CGLMTex::WriteTexels( GLMTexLockDesc *desc, bool writeWholeSlice, bool noDa
 
 			// adjust target to steer to the proper face, then fall through to the 2D texture path.
 			target = GL_TEXTURE_CUBE_MAP_POSITIVE_X + desc->m_req.m_face;
-			
 		case GL_TEXTURE_2D:
-		{			
+		{
 			// check compressed or not
 			if (format->m_chunkSize != 1)
 			{
 				Assert( writeWholeSlice );	//subimage not implemented in this path yet
-												
 				// compressed path
 				// http://www.opengl.org/sdk/docs/man/xhtml/glCompressedTexImage2D.xml
-				CompressedTexImage2D( target,						// target
-										desc->m_req.m_mip,			// level
-										intformat,					// internalformat - don't use format->m_glIntFormat because we have the SRGB select going on above
-										slice->m_xSize,				// width
-										slice->m_ySize,				// height
-										0,							// border
-										slice->m_storageSize,		// imageSize
-										sliceAddress );				// data
+				if( gGL->m_bHave_GL_EXT_texture_compression_dxt1 )
+					gGL->glCompressedTexImage2D( target, desc->m_req.m_mip, intformat, slice->m_xSize, slice->m_ySize, 0, slice->m_storageSize, sliceAddress );
+				else
+					CompressedTexImage2D( target, desc->m_req.m_mip, intformat, slice->m_xSize, slice->m_ySize, 0, slice->m_storageSize, sliceAddress );
 			}
 			else
 			{
@@ -3669,7 +3663,7 @@ void CGLMTex::WriteTexels( GLMTexLockDesc *desc, bool writeWholeSlice, bool noDa
 					gGL->glPixelStorei( GL_UNPACK_ROW_LENGTH, slice->m_xSize );			// in pixels
 					gGL->glPixelStorei( GL_UNPACK_SKIP_PIXELS, writeBox.xmin );		// in pixels
 					gGL->glPixelStorei( GL_UNPACK_SKIP_ROWS, writeBox.ymin );		// in pixels
-					
+
 					convert_texture(intformat, writeBox.xmax - writeBox.xmin, writeBox.ymax - writeBox.ymin, glDataFormat, glDataType, sliceAddress);
 
 					gGL->glTexSubImage2D(	target,

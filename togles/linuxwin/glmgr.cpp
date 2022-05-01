@@ -1729,14 +1729,13 @@ void GLMContext::PreloadTex( CGLMTex *tex, bool force )
 								0.0f, 0.0f, 0.0f,
 								0.0f, 0.0f, 0.0f };
 
-	static int indices[] = { 0, 1, 2 };
-	
+	static unsigned short indices[] = { 0, 1, 2 };
 
 	gGL->glEnableVertexAttribArray( 0 );
 
 	gGL->glVertexAttribPointer( 0, 3, GL_FLOAT, 0, 0, posns );
 
-	gGL->glDrawRangeElements( GL_TRIANGLES, 0, 2, 3, GL_UNSIGNED_INT, indices);
+	gGL->glDrawRangeElements( GL_TRIANGLES, 0, 2, 3, GL_UNSIGNED_SHORT, indices);
 
 	gGL->glDisableVertexAttribArray( 0 );
 	
