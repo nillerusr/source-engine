@@ -1516,7 +1516,7 @@ void CVProfile::Term()
 	{
 		delete [] m_pBudgetGroups[i].m_pName;
 	}
-	delete m_pBudgetGroups;
+	delete[] m_pBudgetGroups;
 	m_nBudgetGroupNames = m_nBudgetGroupNamesAllocated = 0;
 	m_pBudgetGroups = NULL;
 

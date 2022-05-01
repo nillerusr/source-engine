@@ -473,11 +473,11 @@ CPackedStore::~CPackedStore( void )
 	}
 
 	// Free the FindFirst cache data
-	m_directoryList.PurgeAndDeleteElements();
+	m_directoryList.PurgeAndDeleteElementsArray();
 
 	FOR_EACH_MAP( m_dirContents, i )
 	{
-		m_dirContents[i]->PurgeAndDeleteElements();
+		m_dirContents[i]->PurgeAndDeleteElementsArray();
 		delete m_dirContents[i];
 	}
 }

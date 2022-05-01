@@ -2071,11 +2071,11 @@ public:
 
 
 private:
-	static const Vector m_pNormal;
+	static Vector m_pNormal;
 	static float  m_Dist;
 };
 
-const Vector CClipPlane::m_pNormal;
+Vector CClipPlane::m_pNormal;
 float  CClipPlane::m_Dist;
 
 static inline void ClampTexCoord( ShadowVertex_t *pInVertex, ShadowVertex_t *pOutVertex )

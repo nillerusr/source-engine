@@ -174,8 +174,7 @@ void CVPhysicsParse::ParseSolid( solid_t *pSolid, IVPhysicsKeyHandler *unknownKe
 		}
 		else if ( !Q_stricmp( key, "inertia" ) )
 		{
-			float inertia = atof(value);
-			pSolid->params.inertia = (inertia > 1e14f) ? 1e14f : inertia;
+			pSolid->params.inertia = atof(value);
 		}
 		else if ( !Q_stricmp( key, "damping" ) )
 		{
@@ -469,8 +468,7 @@ void CVPhysicsParse::ParseVehicleWheel( vehicle_wheelparams_t &wheel )
 		}
 		else if ( !Q_stricmp( key, "inertia" ) )
 		{
-			float inertia = atof(value);
-			wheel.inertia = (inertia > 1e14f) ? 1e14f : inertia;
+			wheel.inertia = atof(value);
 		}
 		else if ( !Q_stricmp( key, "damping" ) )
 		{

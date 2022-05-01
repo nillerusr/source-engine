@@ -109,7 +109,7 @@ private:
 void audioRecordingCallback( void *userdata, uint8 *stream, int len )
 {
 	VoiceRecord_SDL *voice = (VoiceRecord_SDL*)userdata;
-	voice->RenderBuffer( stream, len );
+	voice->RenderBuffer( (char*)stream, len );
 }
 
 VoiceRecord_SDL::VoiceRecord_SDL() :

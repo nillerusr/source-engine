@@ -865,6 +865,7 @@ CConPanel::CConPanel( vgui::Panel *parent ) : CBasePanel( parent, "CConPanel" )
 //-----------------------------------------------------------------------------
 CConPanel::~CConPanel( void )
 {
+	g_pConPanel = NULL;
 }
 
 void CConPanel::Con_NPrintf( int idx, const char *msg )

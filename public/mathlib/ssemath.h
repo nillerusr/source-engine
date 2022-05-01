@@ -23,7 +23,7 @@
 #define USE_STDC_FOR_SIMD 0
 #endif
 
-#if (!defined (__arm__) && !defined(_X360) && (USE_STDC_FOR_SIMD == 0))
+#if !(defined(_X360) && (USE_STDC_FOR_SIMD == 0))
 #define _SSE1 1
 #endif
 

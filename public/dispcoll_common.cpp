@@ -429,7 +429,7 @@ void CDispCollTree::AABBTree_CreateLeafs( void )
 	}
 }
 
-void CDispCollTree::AABBTree_GenerateBoxes_r( int nodeIndex, Vector *pMins, Vector *pMaxs )
+void __attribute__((no_sanitize("address"))) CDispCollTree::AABBTree_GenerateBoxes_r( int nodeIndex, Vector *pMins, Vector *pMaxs )
 {
 	// leaf
 	ClearBounds( *pMins, *pMaxs );

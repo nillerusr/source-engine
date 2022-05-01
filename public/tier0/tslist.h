@@ -231,7 +231,7 @@ public:
 #endif
 	}
 
-	TSLNodeBase_t *Pop()
+	__attribute__((no_sanitize("address"))) TSLNodeBase_t *Pop()
 	{
 #ifdef USE_NATIVE_SLIST
 #ifdef _X360

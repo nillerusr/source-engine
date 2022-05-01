@@ -1182,7 +1182,11 @@ private:
 class ALIGN8 PLATFORM_CLASS CThreadSpinRWLock
 {
 public:
-	CThreadSpinRWLock()	{ COMPILE_TIME_ASSERT( sizeof( LockInfo_t ) == sizeof( int64 ) ); Assert( (intp)this % 8 == 0 ); memset( this, 0, sizeof( *this ) ); }
+	CThreadSpinRWLock()
+	{
+		COMPILE_TIME_ASSERT( sizeof( LockInfo_t ) == sizeof( int64 ) );
+		Assert( (intp)this % 8 == 0 );
+	}
 
 	bool TryLockForWrite();
 	bool TryLockForRead();
@@ -1200,11 +1204,18 @@ public:
 	void UnlockWrite() const { const_cast<CThreadSpinRWLock *>(this)->UnlockWrite(); }
 
 private:
+
 	struct LockInfo_t
+	{
+		LockInfo_t(uint32 thread_id = 0, int readers = 0)
 		{
-			uint32	m_writerId;
-			int		m_nReaders;
-		};
+			m_writerId = thread_id;
+			m_nReaders = readers;
+		}
+
+		uint32 m_writerId;
+		int m_nReaders;
+	};
 
 	bool AssignIf( const LockInfo_t &newValue, const LockInfo_t &comperand );
 	bool TryLockForWrite( const uint32 threadId );
@@ -1751,8 +1762,8 @@ inline bool CThreadSpinRWLock::TryLockForWrite( const uint32 threadId )
 		return false;
 	}
 
-	static const LockInfo_t oldValue = { 0, 0 };
-	LockInfo_t newValue = { threadId, 0 };
+	static const LockInfo_t oldValue( 0, 0 );
+	LockInfo_t newValue( threadId, 0 );
 	const bool bSuccess = AssignIf( newValue, oldValue );
 #if defined(_X360)
 	if ( bSuccess )

@@ -142,9 +142,9 @@ static bool IsWin98OrOlder()
 
 static bool CheckSSETechnology(void)
 {
-#if defined( __ARM__ )
+#if defined(__SANITIZE_ADDRESS__)
 	return false;
-#elif defined( _X360 ) || defined( _PS3 )
+#elif defined( _X360 ) || defined( _PS3 ) || defined (__arm__)
 	return true;
 #else
 	if ( IsWin98OrOlder() ) {
@@ -162,8 +162,10 @@ static bool CheckSSETechnology(void)
 
 static bool CheckSSE2Technology(void)
 {
-#if defined( _X360 ) || defined( _PS3 )
+#if defined( _X360 ) || defined( _PS3 ) || defined(__SANITIZE_ADDRESS__)
 	return false;
+#elif defined (__arm__)
+	return true;
 #else
 	unsigned long eax,ebx,edx,unused;
     if ( !cpuid(1,eax,ebx,unused,edx) )
@@ -175,8 +177,10 @@ static bool CheckSSE2Technology(void)
 
 bool CheckSSE3Technology(void)
 {
-#if defined( _X360 ) || defined( _PS3 )
+#if defined( _X360 ) || defined( _PS3 ) || defined(__SANITIZE_ADDRESS__)
 	return false;
+#elif defined (__arm__)
+	return true;
 #else
 	unsigned long eax,ebx,edx,ecx;
 	if( !cpuid(1,eax,ebx,ecx,edx) )
@@ -188,8 +192,10 @@ bool CheckSSE3Technology(void)
 
 bool CheckSSSE3Technology(void)
 {
-#if defined( _X360 ) || defined( _PS3 )
+#if defined( _X360 ) || defined( _PS3 ) || defined(__SANITIZE_ADDRESS__)
 	return false;
+#elif defined (__arm__)
+	return true;
 #else
 	// SSSE 3 is implemented by both Intel and AMD
 	// detection is done the same way for both vendors
@@ -203,8 +209,10 @@ bool CheckSSSE3Technology(void)
 
 bool CheckSSE41Technology(void)
 {
-#if defined( _X360 ) || defined( _PS3 )
+#if defined( _X360 ) || defined( _PS3 ) || defined(__SANITIZE_ADDRESS__)
 	return false;
+#elif defined (__arm__)
+	return true;
 #else
 	// SSE 4.1 is implemented by both Intel and AMD
 	// detection is done the same way for both vendors
@@ -219,8 +227,10 @@ bool CheckSSE41Technology(void)
 
 bool CheckSSE42Technology(void)
 {
-#if defined( _X360 ) || defined( _PS3 )
+#if defined( _X360 ) || defined( _PS3 ) || defined(__SANITIZE_ADDRESS__)
 	return false;
+#elif defined (__arm__)
+	return true;
 #else
 	// SSE4.2 is an Intel-only feature
 
@@ -239,8 +249,10 @@ bool CheckSSE42Technology(void)
 
 bool CheckSSE4aTechnology( void )
 {
-#if defined( _X360 ) || defined( _PS3 )
+#if defined( _X360 ) || defined( _PS3 ) || defined(__SANITIZE_ADDRESS__)
 	return false;
+#elif defined (__arm__)
+	return true;
 #else
 	// SSE 4a is an AMD-only feature
 
@@ -259,7 +271,7 @@ bool CheckSSE4aTechnology( void )
 
 static bool Check3DNowTechnology(void)
 {
-#if defined( _X360 ) || defined( _PS3 )
+#if defined( _X360 ) || defined( _PS3 ) || defined (__arm__) || defined(__SANITIZE_ADDRESS__)
 	return false;
 #else
 	unsigned long eax, unused;
@@ -279,7 +291,7 @@ static bool Check3DNowTechnology(void)
 
 static bool CheckCMOVTechnology()
 {
-#if defined( _X360 ) || defined( _PS3 )
+#if defined( _X360 ) || defined( _PS3 ) || defined (__arm__) || defined(__SANITIZE_ADDRESS__)
 	return false;
 #else
 	unsigned long eax,ebx,edx,unused;
@@ -292,7 +304,7 @@ static bool CheckCMOVTechnology()
 
 static bool CheckFCMOVTechnology(void)
 {
-#if defined( _X360 ) || defined( _PS3 )
+#if defined( _X360 ) || defined( _PS3 ) || defined (__arm__) || defined(__SANITIZE_ADDRESS__)
 	return false;
 #else
     unsigned long eax,ebx,edx,unused;
@@ -305,7 +317,7 @@ static bool CheckFCMOVTechnology(void)
 
 static bool CheckRDTSCTechnology(void)
 {
-#if defined( _X360 ) || defined( _PS3 )
+#if defined( _X360 ) || defined( _PS3 ) || defined (__arm__) || defined(__SANITIZE_ADDRESS__)
 	return false;
 #else
 	unsigned long eax,ebx,edx,unused;
@@ -321,11 +333,13 @@ const tchar* GetProcessorVendorId()
 {
 #if defined( _X360 ) || defined( _PS3 )
 	return "PPC";
+#elif defined ( __arm__ )
+	return "ARM";
 #else
 	unsigned long unused, VendorIDRegisters[3];
 
 	static tchar VendorID[13];
-	
+
 	memset( VendorID, 0, sizeof(VendorID) );
 	if ( !cpuid(0,unused, VendorIDRegisters[0], VendorIDRegisters[2], VendorIDRegisters[1] ) )
 	{
@@ -375,7 +389,7 @@ static bool HTSupported(void)
 
 	//  Check to see if this is a Pentium 4 or later processor
 	if (((reg_eax & FAMILY_ID) ==  PENTIUM4_ID) || (reg_eax & EXT_FAMILY_ID))
-		if (vendor_id[0] == 'uneG' && vendor_id[1] == 'Ieni' && vendor_id[2] == 'letn')
+		if (vendor_id[0] == 0x756E6547 && vendor_id[1] == 0x49656E69 && vendor_id[2] == 0x6C65746E)
 			return (reg_edx & HT_BIT) != 0;	// Genuine Intel Processor with Hyper-Threading Technology
 
 	return false;  // This is not a genuine Intel processor.
@@ -391,7 +405,7 @@ static uint8 LogicalProcessorsPerPackage(void)
 	// EBX[23:16] indicate number of logical processors per package
 	const unsigned NUM_LOGICAL_BITS = 0x00FF0000;
 
-    unsigned long unused, reg_ebx = 0;
+	unsigned long unused, reg_ebx = 0;
 
 	if ( !HTSupported() ) 
 		return 1; 

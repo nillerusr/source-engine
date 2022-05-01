@@ -6301,27 +6301,16 @@ int CShaderAPIDx8::GetCurrentDynamicVBSize( void )
 
 FORCEINLINE void CShaderAPIDx8::SetVertexShaderConstantInternal( int var, float const* pVec, int numVecs, bool bForce )
 {
+	Assert( numVecs > 0 );
 	Assert( pVec );
 
-	// DX8 asm shaders use a constant mapping which has transforms and vertex shader
-	// specific constants shifted down by 10 constants (two 5-constant light structures)
-	if ( IsPC() )
+	if ( IsPC() || IsPS3() )
 	{
-		if ( (g_pHardwareConfig->Caps().m_nDXSupportLevel < 90) && (var >= VERTEX_SHADER_MODULATION_COLOR) )
-		{
-			var -= 10;
-		}
 		Assert( var + numVecs <= g_pHardwareConfig->NumVertexShaderConstants() );
 
-		if ( !bForce )
-		{
-			int skip = 0;
-			numVecs = AdjustUpdateRange( pVec, &m_DesiredState.m_pVectorVertexShaderConstant[var], numVecs, &skip );
-			if ( !numVecs )
-				return;
-			var += skip;
-			pVec += skip * 4;
-		}
+		if ( !bForce && memcmp( pVec, &m_DynamicState.m_pVectorVertexShaderConstant[var], numVecs * 4 * sizeof( float ) ) == 0 )
+			return;
+
 		Dx9Device()->SetVertexShaderConstantF( var, pVec, numVecs );
 		memcpy( &m_DynamicState.m_pVectorVertexShaderConstant[var], pVec, numVecs * 4 * sizeof(float) );
 	}
@@ -6330,12 +6319,10 @@ FORCEINLINE void CShaderAPIDx8::SetVertexShaderConstantInternal( int var, float 
 		Assert( var + numVecs <= g_pHardwareConfig->NumVertexShaderConstants() );
 	}
 
-	memcpy( &m_DesiredState.m_pVectorVertexShaderConstant[var], pVec, numVecs * 4 * sizeof(float) );	
+	if ( IsX360() && var + numVecs > m_MaxVectorVertexShaderConstant )
+			m_MaxVectorVertexShaderConstant = var + numVecs;
 
-	if ( IsX360() )
-	{
-		m_MaxVectorVertexShaderConstant = max( m_MaxVectorVertexShaderConstant, var + numVecs );
-	}	
+	memcpy( &m_DesiredState.m_pVectorVertexShaderConstant[var], pVec, numVecs * 4 * sizeof(float) );	
 }
 
 
@@ -6417,29 +6404,40 @@ FORCEINLINE void CShaderAPIDx8::SetPixelShaderConstantInternal( int nStartConst,
 {
 	Assert( nStartConst + nNumConsts <= g_pHardwareConfig->NumPixelShaderConstants() );
 
-	if ( IsPC() )
+	if ( IsPC() || IsPS3() )
 	{
-		if ( ! bForce )
+		if ( !bForce )
 		{
-			int skip = 0;
-			nNumConsts = AdjustUpdateRange( pValues, &m_DesiredState.m_pVectorPixelShaderConstant[nStartConst], nNumConsts, &skip );
+			DWORD* pSrc = (DWORD*)pValues;
+			DWORD* pDst = (DWORD*)&m_DesiredState.m_pVectorPixelShaderConstant[nStartConst];
+			while( nNumConsts && ( pSrc[0] == pDst[0] ) && ( pSrc[1] == pDst[1] ) && ( pSrc[2] == pDst[2] ) && ( pSrc[3] == pDst[3] ) )
+			{
+				pSrc += 4;
+				pDst += 4;
+				nNumConsts--;
+				nStartConst++;
+			}
 			if ( !nNumConsts )
 				return;
-			nStartConst += skip;
-			pValues += skip * 4;
+			pValues = reinterpret_cast< float const * >( pSrc );
 		}
 					
 		Dx9Device()->SetPixelShaderConstantF( nStartConst, pValues, nNumConsts );
 		memcpy( &m_DynamicState.m_pVectorPixelShaderConstant[nStartConst], pValues, nNumConsts * 4 * sizeof(float) );
 	}
 
-	memcpy( &m_DesiredState.m_pVectorPixelShaderConstant[nStartConst], pValues, nNumConsts * 4 * sizeof(float) );
-					
-	if ( IsX360() )
+	if ( IsX360() && nStartConst + nNumConsts > m_MaxVectorPixelShaderConstant )
 	{
-		m_MaxVectorPixelShaderConstant = max( m_MaxVectorPixelShaderConstant, nStartConst + nNumConsts );
+		m_MaxVectorPixelShaderConstant = nStartConst + nNumConsts;
 		Assert( m_MaxVectorPixelShaderConstant <= 32 );
+		if ( m_MaxVectorPixelShaderConstant > 32 )
+		{
+			// NOTE!  There really are 224 pixel shader constants on the 360, but we do an optimization that only blasts the first 32 always.
+			Error( "Don't use more then the first 32 pixel shader constants on the 360!" );
+		}
 	}
+
+	memcpy( &m_DesiredState.m_pVectorPixelShaderConstant[nStartConst], pValues, nNumConsts * 4 * sizeof(float) );
 }
 
 void CShaderAPIDx8::SetPixelShaderConstant( int var, float const* pVec, int numVecs, bool bForce )
