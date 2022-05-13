@@ -56,12 +56,10 @@ public:
 		// Immediately try to start vprofiling
 		// Also, enable cheats on this client only
 		Cmd_SetRptActive( true );
-		StartVProfData();
 	}
 
 	virtual void OnSocketClosed( SocketHandle_t hSocket, const netadr_t & netAdr, void* pData )
 	{
-		StopVProfData();
 		Cmd_SetRptActive( false );
 		BaseClass::OnSocketClosed( hSocket, netAdr, pData );
 	}
@@ -97,135 +95,6 @@ static void RconAddressChanged_f( IConVar *pConVar, const char *pOldString, floa
 }
 
 static ConVar	rcon_address( "rcon_address", "", FCVAR_SERVER_CANNOT_QUERY|FCVAR_DONTRECORD, "Address of remote server if sending unconnected rcon commands (format x.x.x.x:p) ", RconAddressChanged_f );
-
-
-
-//-----------------------------------------------------------------------------
-// Implementation of remote vprof
-//-----------------------------------------------------------------------------
-CRConVProfExport::CRConVProfExport()
-{
-}
-
-void CRConVProfExport::AddListener()
-{
-}
-
-void CRConVProfExport::RemoveListener()
-{
-}
-
-void CRConVProfExport::SetBudgetFlagsFilter( int filter )
-{
-}
-
-int CRConVProfExport::GetNumBudgetGroups()
-{
-	return m_Info.Count();
-}
-
-void CRConVProfExport::GetBudgetGroupInfos( CExportedBudgetGroupInfo *pInfos )
-{
-	memcpy( pInfos, m_Info.Base(), GetNumBudgetGroups() * sizeof(CExportedBudgetGroupInfo) );
-}
-
-void CRConVProfExport::GetBudgetGroupTimes( float times[IVProfExport::MAX_BUDGETGROUP_TIMES] )
-{
-	int nGroups = min( m_Times.Count(), (int)IVProfExport::MAX_BUDGETGROUP_TIMES );
-	memset( times, 0, nGroups * sizeof(float) );
-	nGroups = min( GetNumBudgetGroups(), nGroups );
-	memcpy( times, m_Times.Base(), nGroups * sizeof(float) );
-}
-
-void CRConVProfExport::PauseProfile()
-{
-	// NOTE: This only has effect when testing on a listen server
-	// it shouldn't do anything in the wild. When drawing the budget panel
-	// this will cause the time spent doing so to not be counted
-	VProfExport_Pause();
-}
-
-void CRConVProfExport::ResumeProfile()
-{
-	// NOTE: This only has effect when testing on a listen server
-	// it shouldn't do anything in the wild
-	VProfExport_Resume();
-}		
-
-void CRConVProfExport::CleanupGroupData()
-{
-	int nCount = m_Info.Count();
-	for ( int i = 0; i < nCount; ++i )
-	{
-		delete m_Info[i].m_pName;
-	}
-
-	m_Info.RemoveAll();
-}
-
-void CRConVProfExport::OnRemoteGroupData( const void *data, int len )
-{
-	CUtlBuffer buf( data, len, CUtlBuffer::READ_ONLY );
-	int nFirstGroup = buf.GetInt();
-
-	if ( nFirstGroup == 0 )
-	{
-		CleanupGroupData();
-	}
-	else
-	{
-		Assert( nFirstGroup == m_Info.Count() );
-	}
-
-	// NOTE: See WriteRemoteVProfGroupData in vprof_engine.cpp
-	// to see the encoding of this data
-	int nGroupCount = buf.GetInt();
-	int nBase = m_Info.AddMultipleToTail( nGroupCount );
-	char temp[1024];
-	for ( int i = 0; i < nGroupCount; ++i )
-	{
-		CExportedBudgetGroupInfo *pInfo = &m_Info[nBase + i];
-
-		unsigned char red, green, blue, alpha;
-		red = buf.GetUnsignedChar( );
-		green = buf.GetUnsignedChar( );
-		blue = buf.GetUnsignedChar( );
-		alpha = buf.GetUnsignedChar( );
-		buf.GetString( temp );
-		int nLen = Q_strlen( temp );
-
-		pInfo->m_Color.SetColor( red, green, blue, alpha );
-		char *pBuf = new char[ nLen + 1 ];
-		pInfo->m_pName = pBuf;
-		memcpy( pBuf, temp, nLen+1 );
-		pInfo->m_BudgetFlags = 0;
-	}
-}
-
-void CRConVProfExport::OnRemoteData( const void *data, int len )
-{
-	// NOTE: See WriteRemoteVProfData in vprof_engine.cpp
-	// to see the encoding of this data
-	int nCount = len / sizeof(float);
-	Assert( nCount == m_Info.Count() );
-
-	CUtlBuffer buf( data, len, CUtlBuffer::READ_ONLY );
-	m_Times.SetCount( nCount );
-	memcpy( m_Times.Base(), data, nCount * sizeof(float) );
-}
-
-
-CON_COMMAND( vprof_remote_start, "Request a VProf data stream from the remote server (requires authentication)" )
-{
-	// TODO: Make this work (it might already!)
-//	RCONClient().StartVProfData();
-}
-
-CON_COMMAND( vprof_remote_stop, "Stop an existing remote VProf data request" )
-{
-	// TODO: Make this work (it might already!)
-//	RCONClient().StopVProfData();
-}
 
 #ifdef ENABLE_RPT
 CON_COMMAND_F( rpt_screenshot, "", FCVAR_HIDDEN | FCVAR_DONTRECORD )
@@ -450,22 +319,6 @@ void CRConClient::ParseReceivedData()
 			{
 				int nDataSize = m_RecvBuffer.GetInt();
 				SaveRemoteConsoleLog( m_RecvBuffer.PeekGet(), nDataSize );
-				m_RecvBuffer.SeekGet( CUtlBuffer::SEEK_CURRENT, nDataSize );
-			}
-			break;
-
-		case SERVERDATA_VPROF_DATA:
-			{
-				int nDataSize = m_RecvBuffer.GetInt();
-				m_VProfExport.OnRemoteData( m_RecvBuffer.PeekGet(), nDataSize );
-				m_RecvBuffer.SeekGet( CUtlBuffer::SEEK_CURRENT, nDataSize );
-			}
-			break;
-
-		case SERVERDATA_VPROF_GROUPS:
-			{
-				int nDataSize = m_RecvBuffer.GetInt();
-				m_VProfExport.OnRemoteGroupData( m_RecvBuffer.PeekGet(), nDataSize );
 				m_RecvBuffer.SeekGet( CUtlBuffer::SEEK_CURRENT, nDataSize );
 			}
 			break;
@@ -705,45 +558,6 @@ void CRConClient::SendCmd( const char *msg )
 	BuildResponse( response, SERVERDATA_EXECCOMMAND, msg, "" );
 	SendResponse( response );
 }
-
-
-//-----------------------------------------------------------------------------
-// Purpose: Start vprofiling
-//-----------------------------------------------------------------------------
-void CRConClient::StartVProfData()
-{
-	if ( !IsConnected() )
-	{
-		if ( !ConnectSocket() )
-			return;
-	}
-
-	// Override the vprof export to point to our local profiling data
-	OverrideVProfExport( &m_VProfExport );
-
-	CUtlBuffer response;
-	BuildResponse( response, SERVERDATA_VPROF, "", "" );
-	SendResponse( response );
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose: Stop vprofiling
-//-----------------------------------------------------------------------------
-void CRConClient::StopVProfData()
-{
-	// Reset the vprof export to point to the normal profiling data
-	ResetVProfExport( &m_VProfExport );
-
-	// Don't bother restarting a connection to turn this off
-	if ( !IsConnected() )
-		return;
-
-	CUtlBuffer response;
-	BuildResponse( response, SERVERDATA_REMOVE_VPROF, "", "" );
-	SendResponse( response );
-}
-
 
 //-----------------------------------------------------------------------------
 // Purpose: get data from the server
