@@ -102,9 +102,7 @@ struct VS_OUTPUT
 #endif
 	float4 color					: TEXCOORD2;		// Vertex color (from lighting or unlit)
 
-#if CUBEMAP || _X360
 	float3 worldVertToEyeVector		: TEXCOORD3;		// Necessary for cubemaps
-#endif
 
 	float3 worldSpaceNormal			: TEXCOORD4;		// Necessary for cubemaps and flashlight
 

@@ -246,9 +246,13 @@ static void CreateSolidTexture( ITextureInternal *pTexture, color32 color )
 //-----------------------------------------------------------------------------
 // Creates a normalization cubemap texture
 //-----------------------------------------------------------------------------
+
 class CNormalizationCubemap : public ITextureRegenerator
 {
 public:
+
+	// TODO(nillerusr): broken here with togl /= (maybe here)
+
 	virtual void RegenerateTextureBits( ITexture *pTexture, IVTFTexture *pVTFTexture, Rect_t *pSubRect )
 	{
 		// Normalization cubemap doesn't make sense on low-end hardware
