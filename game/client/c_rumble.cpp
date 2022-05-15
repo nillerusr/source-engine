@@ -166,7 +166,7 @@ void GenerateSquareWaveEffect( RumbleWaveform_t *pWaveform, const WaveGenParams_
 
 	while( i < NUM_WAVE_SAMPLES )
 	{
-		for( j = 0 ; j < steps ; j++ )
+		for( j = 0 ; j < steps && i < NUM_WAVE_SAMPLES; j++ )
 		{
 			if( params.leftChannel )
 			{
@@ -177,7 +177,7 @@ void GenerateSquareWaveEffect( RumbleWaveform_t *pWaveform, const WaveGenParams_
 				pWaveform->amplitude_right[i++] = params.minAmplitude;
 			}
 		}
-		for( j = 0 ; j < steps ; j++ )
+		for( j = 0 ; j < steps && i < NUM_WAVE_SAMPLES; j++ )
 		{
 			if( params.leftChannel )
 			{

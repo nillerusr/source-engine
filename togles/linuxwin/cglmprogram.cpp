@@ -350,11 +350,10 @@ void	CGLMProgram::Compile( EGLMProgramLang lang )
 
 			// compile
 			gGL->glCompileShader( glslDesc->m_object.glsl );
-			
-			
+
 			GLint isCompiled = 0;
 			gGL->glGetShaderiv(glslDesc->m_object.glsl, GL_COMPILE_STATUS, &isCompiled);
-			
+
 			if(isCompiled == GL_FALSE)
 			{
 				GLint maxLength = 0;

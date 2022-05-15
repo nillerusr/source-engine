@@ -23,6 +23,10 @@
 #include "tier0/dbg.h"
 #include "mathlib/math_pfns.h"
 
+#ifdef __arm__
+#include "sse2neon.h"
+#endif
+
 // forward declarations
 class Vector;
 class Vector2D;
@@ -141,10 +145,8 @@ public:
 	inline void Set( vec_t X, vec_t Y, vec_t Z, vec_t W );
 	inline void InitZero( void );
 
-#ifndef __arm__
 	inline __m128 &AsM128() { return *(__m128*)&x; }
 	inline const __m128 &AsM128() const { return *(const __m128*)&x; } 
-#endif
 
 private:
 	// No copy constructors allowed if we're in optimal mode
@@ -616,9 +618,7 @@ inline void Vector4DAligned::Set( vec_t X, vec_t Y, vec_t Z, vec_t W )
 
 inline void Vector4DAligned::InitZero( void )
 {
-#if defined (__arm__)
-	x = y = z = w = 0;
-#elif !defined( _X360 )
+#if !defined( _X360 )
 	this->AsM128() = _mm_set1_ps( 0.0f );
 #else
 	this->AsM128() = __vspltisw( 0 );
@@ -629,7 +629,7 @@ inline void Vector4DAligned::InitZero( void )
 inline void Vector4DMultiplyAligned( Vector4DAligned const& a, Vector4DAligned const& b, Vector4DAligned& c )
 {
 	Assert( a.IsValid() && b.IsValid() );
-#if !defined( _X360 ) || defined (__arm__)
+#if !defined( _X360 )
 	c.x = a.x * b.x;
 	c.y = a.y * b.y;
 	c.z = a.z * b.z;
@@ -643,7 +643,7 @@ inline void Vector4DWeightMAD( vec_t w, Vector4DAligned const& vInA, Vector4DAli
 {
 	Assert( vInA.IsValid() && vInB.IsValid() && IsFinite(w) );
 
-#if !defined( _X360 ) || defined (__arm__)
+#if !defined( _X360 )
 	vOutA.x += vInA.x * w;
 	vOutA.y += vInA.y * w;
 	vOutA.z += vInA.z * w;
@@ -664,7 +664,6 @@ inline void Vector4DWeightMAD( vec_t w, Vector4DAligned const& vInA, Vector4DAli
 #endif
 }
 
-#ifndef __arm__
 inline void Vector4DWeightMADSSE( vec_t w, Vector4DAligned const& vInA, Vector4DAligned& vOutA, Vector4DAligned const& vInB, Vector4DAligned& vOutB )
 {
 	Assert( vInA.IsValid() && vInB.IsValid() && IsFinite(w) );
@@ -686,7 +685,6 @@ inline void Vector4DWeightMADSSE( vec_t w, Vector4DAligned const& vInA, Vector4D
 	vOutB.AsM128() = __vmaddfp( vInB.AsM128(), temp, vOutB.AsM128() );
 #endif
 }
-#endif
 
 #endif // VECTOR4D_H
 

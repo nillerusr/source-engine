@@ -4099,7 +4099,9 @@ CBrushBatchRender::brushrender_t *CBrushBatchRender::FindOrCreateRenderBatch( mo
 	surfaceList.Sort( SurfaceCmp );
 	renderT.pPlanes = new cplane_t *[planeList.Count()];
 	renderT.planeCount = planeList.Count();
-	memcpy( renderT.pPlanes, planeList.Base(), sizeof(cplane_t *)*planeList.Count() );
+
+	if( planeList.Base() )
+		memcpy( renderT.pPlanes, planeList.Base(), sizeof(cplane_t *)*planeList.Count() );
 	renderT.pSurfaces = new brushrendersurface_t[surfaceList.Count()];
 	renderT.surfaceCount = surfaceList.Count();
 

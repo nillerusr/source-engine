@@ -221,7 +221,7 @@ void APIENTRY GL_Debug_Output_Callback(GLenum source, GLenum type, GLuint id, GL
 		return;
 	}
 	
-	if ( gl_debug_output.GetBool() || type == GL_DEBUG_TYPE_ERROR_ARB )
+	if ( gl_debug_output.GetBool() || type == GL_DEBUG_TYPE_ERROR_ARB || type == GL_DEBUG_SEVERITY_MEDIUM_ARB )
 	{
 		Msg( "GL: [%s][%s][%s][%d]: %s\n", sSource, sType, sSeverity, id, message );
 	}

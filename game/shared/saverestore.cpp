@@ -203,6 +203,7 @@ CSave::CSave( CSaveRestoreData *pdata )
 
 inline int CSave::DataEmpty( const char *pdata, int size )
 {
+	static int void_data = 0;
 	if ( size != 4 )
 	{
 		const char *pLimit = pdata + size;
@@ -214,7 +215,7 @@ inline int CSave::DataEmpty( const char *pdata, int size )
 		return 1;
 	}
 
-	return ( *((int *)pdata) == 0 );
+	return memcmp(pdata, &void_data, sizeof(int)) == 0;
 }
 
 //-----------------------------------------------------------------------------

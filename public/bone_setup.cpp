@@ -21,6 +21,8 @@
 #include "convar.h"
 #include "tier0/tslist.h"
 #include "vphysics_interface.h"
+#include "mathlib/compressed_vector.h"
+
 #ifdef CLIENT_DLL
 	#include "posedebugger.h"
 #endif
@@ -378,14 +380,18 @@ void CalcBoneQuaternion( int frame, float s,
 {
 	if ( panim->flags & STUDIO_ANIM_RAWROT )
 	{
-		q = *(panim->pQuat48());
+		Quaternion48 tmp;
+		memcpy( &tmp, panim->pQuat48(), sizeof(Quaternion48) );
+		q = tmp;
 		Assert( q.IsValid() );
 		return;
-	} 
-	
+	}
+
 	if ( panim->flags & STUDIO_ANIM_RAWROT2 )
 	{
-		q = *(panim->pQuat64());
+		Quaternion64 tmp;
+		memcpy( &tmp, panim->pQuat64(), sizeof(Quaternion64) );
+		q = tmp;
 		Assert( q.IsValid() );
 		return;
 	}

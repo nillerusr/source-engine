@@ -206,7 +206,7 @@ void ToGLDisconnectLibraries()
 static void GetOpenGLVersion(int *major, int *minor, int *patch)
 {
 	*major = *minor = *patch = 0;
-	static CDynamicFunctionOpenGL< true, const GLubyte *( APIENTRY *)(GLenum name), const GLubyte * > glGetString("glGetString");
+	static CDynamicFunctionOpenGL< true, const GLubyte *( _APIENTRY *)(GLenum name), const GLubyte * > glGetString("glGetString");
 	if (glGetString)
 	{
 		const char *version = (const char *) glGetString(GL_VERSION);
@@ -271,7 +271,7 @@ static bool CheckOpenGLExtension_internal(const char *ext, const int coremajor, 
 	}
 
 	// okay, see if the GL_EXTENSIONS string reports it.
-	static CDynamicFunctionOpenGL< true, const GLubyte *( APIENTRY *)(GLenum name), const GLubyte * > glGetString("glGetString");
+	static CDynamicFunctionOpenGL< true, const GLubyte *( _APIENTRY *)(GLenum name), const GLubyte * > glGetString("glGetString");
 	if (!glGetString)
 		return false;
 
@@ -284,7 +284,7 @@ static bool CheckOpenGLExtension_internal(const char *ext, const int coremajor, 
 #if _WIN32
 		if (!ptr)
 		{
-			static CDynamicFunctionOpenGL< true, const char *( APIENTRY *)( ), const char * > wglGetExtensionsStringEXT("wglGetExtensionsStringEXT");
+			static CDynamicFunctionOpenGL< true, const char *( _APIENTRY *)( ), const char * > wglGetExtensionsStringEXT("wglGetExtensionsStringEXT");
 			if (wglGetExtensionsStringEXT) 
 			{
 				extensions = wglGetExtensionsStringEXT();

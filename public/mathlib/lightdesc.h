@@ -34,7 +34,7 @@ enum LightType_OptimizationFlags_t
 struct LightDesc_t 
 {
     LightType_t m_Type;										//< MATERIAL_LIGHT_xxx
-	Vector m_Color;											//< color+intensity 
+    Vector m_Color;											//< color+intensity 
     Vector m_Position;										//< light source center position
     Vector m_Direction;										//< for SPOT, direction it is pointing
     float  m_Range;											//< distance range for light.0=infinite
@@ -60,6 +60,7 @@ public:
 
 	LightDesc_t(void)
 	{
+		m_Type = MATERIAL_LIGHT_DISABLE;
 	}
 
 	// constructors for various useful subtypes

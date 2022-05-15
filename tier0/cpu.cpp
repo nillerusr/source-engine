@@ -142,9 +142,9 @@ static bool IsWin98OrOlder()
 
 static bool CheckSSETechnology(void)
 {
-#if defined(__SANITIZE_ADDRESS__)
+#if defined(__SANITIZE_ADDRESS__) || defined (__arm__)
 	return false;
-#elif defined( _X360 ) || defined( _PS3 ) || defined (__arm__)
+#elif defined( _X360 ) || defined( _PS3 )
 	return true;
 #else
 	if ( IsWin98OrOlder() ) {
@@ -162,10 +162,8 @@ static bool CheckSSETechnology(void)
 
 static bool CheckSSE2Technology(void)
 {
-#if defined( _X360 ) || defined( _PS3 ) || defined(__SANITIZE_ADDRESS__)
+#if defined( _X360 ) || defined( _PS3 ) || defined(__SANITIZE_ADDRESS__) || defined (__arm__)
 	return false;
-#elif defined (__arm__)
-	return true;
 #else
 	unsigned long eax,ebx,edx,unused;
     if ( !cpuid(1,eax,ebx,unused,edx) )
@@ -177,10 +175,8 @@ static bool CheckSSE2Technology(void)
 
 bool CheckSSE3Technology(void)
 {
-#if defined( _X360 ) || defined( _PS3 ) || defined(__SANITIZE_ADDRESS__)
+#if defined( _X360 ) || defined( _PS3 ) || defined(__SANITIZE_ADDRESS__) || defined (__arm__)
 	return false;
-#elif defined (__arm__)
-	return true;
 #else
 	unsigned long eax,ebx,edx,ecx;
 	if( !cpuid(1,eax,ebx,ecx,edx) )
@@ -192,10 +188,8 @@ bool CheckSSE3Technology(void)
 
 bool CheckSSSE3Technology(void)
 {
-#if defined( _X360 ) || defined( _PS3 ) || defined(__SANITIZE_ADDRESS__)
+#if defined( _X360 ) || defined( _PS3 ) || defined(__SANITIZE_ADDRESS__) || defined (__arm__)
 	return false;
-#elif defined (__arm__)
-	return true;
 #else
 	// SSSE 3 is implemented by both Intel and AMD
 	// detection is done the same way for both vendors
@@ -209,10 +203,8 @@ bool CheckSSSE3Technology(void)
 
 bool CheckSSE41Technology(void)
 {
-#if defined( _X360 ) || defined( _PS3 ) || defined(__SANITIZE_ADDRESS__)
+#if defined( _X360 ) || defined( _PS3 ) || defined(__SANITIZE_ADDRESS__) || defined (__arm__)
 	return false;
-#elif defined (__arm__)
-	return true;
 #else
 	// SSE 4.1 is implemented by both Intel and AMD
 	// detection is done the same way for both vendors
@@ -227,10 +219,8 @@ bool CheckSSE41Technology(void)
 
 bool CheckSSE42Technology(void)
 {
-#if defined( _X360 ) || defined( _PS3 ) || defined(__SANITIZE_ADDRESS__)
+#if defined( _X360 ) || defined( _PS3 ) || defined(__SANITIZE_ADDRESS__) || defined (__arm__)
 	return false;
-#elif defined (__arm__)
-	return true;
 #else
 	// SSE4.2 is an Intel-only feature
 
@@ -249,10 +239,8 @@ bool CheckSSE42Technology(void)
 
 bool CheckSSE4aTechnology( void )
 {
-#if defined( _X360 ) || defined( _PS3 ) || defined(__SANITIZE_ADDRESS__)
+#if defined( _X360 ) || defined( _PS3 ) || defined(__SANITIZE_ADDRESS__) || defined (__arm__)
 	return false;
-#elif defined (__arm__)
-	return true;
 #else
 	// SSE 4a is an AMD-only feature
 

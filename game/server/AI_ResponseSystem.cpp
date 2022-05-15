@@ -44,7 +44,6 @@ inline static char *CopyString( const char *in )
 	return out;
 }
 
-#pragma pack(1)
 class Matcher
 {
 public:
@@ -542,7 +541,6 @@ struct Rule
 	bool				m_bMatchOnce : 1;
 	bool				m_bEnabled : 1;
 };
-#pragma pack()
 
 //-----------------------------------------------------------------------------
 // Purpose: 

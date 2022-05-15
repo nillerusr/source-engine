@@ -33,7 +33,7 @@ void C_VoteController::RecvProxy_VoteType( const CRecvProxyData *pData, void *pS
 	if( pMe->m_iActiveIssueIndex == pData->m_Value.m_Int )
 		return;
 
-	pMe->m_iActiveIssueIndex = pData->m_Value.m_Int;
+	memcpy( &pMe->m_iActiveIssueIndex, &pData->m_Value.m_Int, sizeof(pData->m_Value.m_Int) );
 	pMe->m_bTypeDirty = true;
 
 	// Since the contents of a new vote are in three parts, we can't directly send an event to the Hud

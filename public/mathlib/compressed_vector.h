@@ -149,7 +149,7 @@ class Quaternion64
 {
 public:
 	// Construction/destruction:
-	Quaternion64(void); 
+	Quaternion64(void) {};
 	Quaternion64(vec_t X, vec_t Y, vec_t Z);
 
 	// assignment
@@ -197,7 +197,7 @@ class Quaternion48
 {
 public:
 	// Construction/destruction:
-	Quaternion48(void); 
+	Quaternion48(void) {};
 	Quaternion48(vec_t X, vec_t Y, vec_t Z);
 
 	// assignment

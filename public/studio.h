@@ -639,6 +639,7 @@ struct mstudioanim_t
 	byte				bone;
 	byte				flags;		// weighing options
 
+
 	// valid for animating data only
 	inline byte				*pData( void ) const { return (((byte *)this) + sizeof( struct mstudioanim_t )); };
 	inline mstudioanim_valueptr_t	*pRotV( void ) const { return (mstudioanim_valueptr_t *)(pData()); };
@@ -650,8 +651,9 @@ struct mstudioanim_t
 	inline Vector48			*pPos( void ) const { return (Vector48 *)(pData() + ((flags & STUDIO_ANIM_RAWROT) != 0) * sizeof( *pQuat48() ) + ((flags & STUDIO_ANIM_RAWROT2) != 0) * sizeof( *pQuat64() ) ); };
 
 	short				nextoffset;
+
 	inline mstudioanim_t	*pNext( void ) const { if (nextoffset != 0) return  (mstudioanim_t *)(((byte *)this) + nextoffset); else return NULL; };
-};
+} ALIGN16;
 
 struct mstudiomovement_t
 {
