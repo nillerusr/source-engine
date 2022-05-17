@@ -201,16 +201,22 @@ float4 main( PS_INPUT i ) : COLOR
 
 #if NORMALMAP == 0
 	float3 worldPosToLightVector = texCUBE( NormalizingCubemapSampler, i.worldPosToLightVector ) * 2.0f - 1.0f;
-	float nDotL = 0.577350f;
+	float nDotL = dot( worldPosToLightVector, vNormal.xyz );
 #endif
 
 #if NORMALMAP == 1
 	// flashlightfixme: wrap this!
-	float nDotL = 0.577350f;
+	float3 tangentPosToLightVector = texCUBE( NormalizingCubemapSampler, i.tangentPosToLightVector ) * 2.0f - 1.0f;
+	float nDotL = dot( tangentPosToLightVector, vNormal.xyz );
 #endif
 
 #if NORMALMAP == 2
-	float nDotL = 0.577350f;
+	float3 tangentPosToLightVector = normalize( i.tangentPosToLightVector );
+
+	float nDotL = 
+		vNormal.x*dot( tangentPosToLightVector, bumpBasis[0]) +
+		vNormal.y*dot( tangentPosToLightVector, bumpBasis[1]) +
+		vNormal.z*dot( tangentPosToLightVector, bumpBasis[2]);
 #endif
 
 	float3 outColor;

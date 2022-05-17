@@ -250,9 +250,6 @@ static void CreateSolidTexture( ITextureInternal *pTexture, color32 color )
 class CNormalizationCubemap : public ITextureRegenerator
 {
 public:
-
-	// TODO(nillerusr): broken here with togl /= (maybe here)
-
 	virtual void RegenerateTextureBits( ITexture *pTexture, IVTFTexture *pVTFTexture, Rect_t *pSubRect )
 	{
 		// Normalization cubemap doesn't make sense on low-end hardware
@@ -280,7 +277,39 @@ public:
 				{
 					float u = x * flInvWidth - 1.0f;
 					float oow = 1.0f / sqrt( 1.0f + u*u + v*v );
+#ifdef DX_TO_GL_ABSTRACTION
+					float flX = (255.0f * 0.5 * (u*oow + 1.0f) + 0.5f);
+					float flY = (255.0f * 0.5 * (v*oow + 1.0f) + 0.5f);
+					float flZ = (255.0f * 0.5 * (oow + 1.0f) + 0.5f);
 
+					flX /= 256.0f;
+					flY /= 256.0f;
+					flZ /= 256.0f;
+
+					switch (iFace)
+					{
+					case CUBEMAP_FACE_RIGHT:
+						pixelWriter.WritePixelF( flZ, 1.f - flY, 1.f - flX, 1.f );
+						break;
+					case CUBEMAP_FACE_LEFT:
+						pixelWriter.WritePixelF( 1.f - flZ, 1.f - flY, flX, 1.f );
+						break;
+					case CUBEMAP_FACE_BACK:
+						pixelWriter.WritePixelF( flX, flZ, flY, 1.f );
+						break;
+					case CUBEMAP_FACE_FRONT:
+						pixelWriter.WritePixelF( flX, 1.f - flZ, 1.f - flY, 1.f );
+						break;
+					case CUBEMAP_FACE_UP:
+						pixelWriter.WritePixelF( flX, 1.f - flY, flZ, 1.f );
+						break;
+					case CUBEMAP_FACE_DOWN:
+						pixelWriter.WritePixelF( 1.f - flX, 1.f - flY, 1.f - flZ, 1.f );
+						break;
+					default:
+						break;
+					}
+#else
 					int ix = (int)(255.0f * 0.5f * (u*oow + 1.0f) + 0.5f);
 					ix = clamp( ix, 0, 255 );
 					int iy = (int)(255.0f * 0.5f * (v*oow + 1.0f) + 0.5f);
@@ -311,6 +340,7 @@ public:
 					default:
 						break;
 					}
+#endif
 				}
 			}
 		}
@@ -1501,13 +1531,16 @@ void CTextureManager::Init( int nFlags )
 	color.a = 0;
 	CreateSolidTexture( m_pGreyAlphaZeroTexture, color );
 
+	int nTextureFlags = TEXTUREFLAGS_ENVMAP | TEXTUREFLAGS_NOMIP | TEXTUREFLAGS_NOLOD | TEXTUREFLAGS_SINGLECOPY | TEXTUREFLAGS_CLAMPS | TEXTUREFLAGS_CLAMPT | TEXTUREFLAGS_CLAMPU;
+
 	if ( HardwareConfig()->GetMaxDXSupportLevel() >= 80 )
 	{
+		ImageFormat fmt = IsOpenGL() ? IMAGE_FORMAT_RGBA16161616F : IMAGE_FORMAT_BGRX8888;
+
 		// Create a normalization cubemap
 		m_pNormalizationCubemap = CreateProceduralTexture( "normalize", TEXTURE_GROUP_CUBE_MAP,
-			NORMALIZATION_CUBEMAP_SIZE, NORMALIZATION_CUBEMAP_SIZE, 1, IMAGE_FORMAT_BGRX8888,
-			TEXTUREFLAGS_ENVMAP | TEXTUREFLAGS_NOMIP | TEXTUREFLAGS_SINGLECOPY |
-			TEXTUREFLAGS_CLAMPS | TEXTUREFLAGS_CLAMPT | TEXTUREFLAGS_CLAMPU );
+			NORMALIZATION_CUBEMAP_SIZE, NORMALIZATION_CUBEMAP_SIZE, 1, fmt,
+			nTextureFlags );
 		CreateNormalizationCubemap( m_pNormalizationCubemap );
 	}
 
@@ -1516,7 +1549,6 @@ void CTextureManager::Init( int nFlags )
 		// In GL, we have poor format support, so we ask for signed float
 		ImageFormat fmt = IsOpenGL() ? IMAGE_FORMAT_RGBA16161616F : IMAGE_FORMAT_UVWQ8888;
 
-		int nTextureFlags = TEXTUREFLAGS_ENVMAP | TEXTUREFLAGS_NOMIP | TEXTUREFLAGS_NOLOD | TEXTUREFLAGS_SINGLECOPY | TEXTUREFLAGS_CLAMPS | TEXTUREFLAGS_CLAMPT | TEXTUREFLAGS_CLAMPU;
 
 #ifdef OSX
 		// JasonM - ridiculous hack around R500 lameness...we never use this texture on OSX anyways (right?)
@@ -1528,7 +1560,7 @@ void CTextureManager::Init( int nFlags )
 		m_pSignedNormalizationCubemap = CreateProceduralTexture( "normalizesigned", TEXTURE_GROUP_CUBE_MAP,
 																NORMALIZATION_CUBEMAP_SIZE, NORMALIZATION_CUBEMAP_SIZE, 1, fmt, nTextureFlags );
 		CreateSignedNormalizationCubemap( m_pSignedNormalizationCubemap );
-		
+
 		m_pIdentityLightWarp = FindOrLoadTexture( "dev/IdentityLightWarp", TEXTURE_GROUP_OTHER );
 		m_pIdentityLightWarp->IncrementReferenceCount();
 	}
