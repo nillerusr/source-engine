@@ -4654,14 +4654,14 @@ void GLMContext::GenDebugFontTex( void )
 		
 		//-----------------------------------------------------
 		// fetch elements of font data and make texels... we're doing the whole slab so we don't really need the stride info
-		unsigned long *destTexelPtr = (unsigned long *)lockAddress;
+		uint32 *destTexelPtr = (uint32 *)lockAddress;
 
 		for( int index = 0; index < 16384; index++ )
 		{
 			if (g_glmDebugFontMap[index] == ' ')
 			{
 				// clear
-				*destTexelPtr = 0x00000000;
+				*destTexelPtr = 0;
 			}
 			else
 			{
