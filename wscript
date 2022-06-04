@@ -158,11 +158,14 @@ def define_platform(conf):
 	if conf.options.SDL:
 		conf.define('USE_SDL', 1)
 
+	if conf.options.ALLOW64:
+		conf.define('PLATFORM_64BITS', 1)
+
 	if conf.env.DEST_OS == 'linux':
 		conf.define('_GLIBCXX_USE_CXX11_ABI',0)
 		conf.env.append_unique('DEFINES', [
 			'LINUX=1', '_LINUX=1',
-			'POSIX=1', '_POSIX=1',
+			'POSIX=1', '_POSIX=1', 'PLATFORM_POSIX=1',
 			'GNUC',
 			'NO_HOOK_MALLOC',
 			'_DLL_EXT=.so'
@@ -265,6 +268,12 @@ def configure(conf):
 			'-Wuninitialized',
 			'-Winit-self',
 			'-Wstrict-aliasing',
+			'-Wno-reorder',
+			'-Wno-unknown-pragmas',
+			'-Wno-unused-function',
+			'-Wno-unused-but-set-variable',
+			'-Wno-unused-value',
+			'-Wno-unused-variable',
 			'-faligned-new',
 		]
 
@@ -274,7 +283,7 @@ def configure(conf):
 
 	cflags, linkflags = conf.get_optimization_flags()
 
-	flags = ['-fPIC', '-pipe'] #, '-fsanitize=undefined', '-fno-sanitize=vptr'] #, '-fno-sanitize=vptr,shift,shift-exponent,shift-base,signed-integer-overflow']
+	flags = ['-pipe', '-fPIC'] #, '-fsanitize=undefined'] #, '-fsanitize=undefined'] #, '-fno-sanitize=vptr'] #, '-fno-sanitize=vptr,shift,shift-exponent,shift-base,signed-integer-overflow']
 	if conf.env.COMPILER_CC != 'msvc':
 		flags += ['-pthread']
 

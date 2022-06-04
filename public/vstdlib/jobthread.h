@@ -191,7 +191,7 @@ public:
 	//  and execute or execute pFunctor right after completing current job and
 	//  before looking for another job.
 	//-----------------------------------------------------
-	virtual void ExecuteHighPriorityFunctor( CFunctor *pFunctor ) = 0;
+	// virtual void ExecuteHighPriorityFunctor( CFunctor *pFunctor ) = 0;
 
 	//-----------------------------------------------------
 	// Add an function object to the queue (master thread)

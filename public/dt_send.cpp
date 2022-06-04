@@ -265,7 +265,7 @@ void SendProxy_UInt16ToInt32( const SendProp *pProp, const void *pStruct, const 
 
 void SendProxy_UInt32ToInt32( const SendProp *pProp, const void *pStruct, const void *pData, DVariant *pOut, int iElement, int objectID)
 {
-	memcpy( &pOut->m_Int, pData, sizeof(unsigned long) );
+	memcpy( &pOut->m_Int, pData, sizeof(uint32) );
 }
 #ifdef SUPPORTS_INT64
 void SendProxy_UInt64ToInt64( const SendProp *pProp, const void *pStruct, const void *pData, DVariant *pOut, int iElement, int objectID)

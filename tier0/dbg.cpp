@@ -49,7 +49,6 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-
 //-----------------------------------------------------------------------------
 // internal structures
 //-----------------------------------------------------------------------------
@@ -152,7 +151,7 @@ struct SpewInfo_t
 	int				m_nSpewOutputLevel;
 };
 
-CThreadLocalPtr<SpewInfo_t> g_pSpewInfo;
+CTHREADLOCALPTR(SpewInfo_t) g_pSpewInfo;
 
 
 // Standard groups

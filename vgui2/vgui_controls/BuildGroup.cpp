@@ -41,6 +41,7 @@
 #include "filesystem.h"
 #include "tier0/icommandline.h"
 #include "const.h"
+#include "vprof.h"
 
 #if defined( _X360 )
 #include "xbox/xbox_win32stubs.h"
@@ -867,18 +868,6 @@ void BuildGroup::PanelAdded(Panel *panel)
 		}
 	}
 	_panelDar.AddToTail(temp);
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Add panel the list of panels that are in the build group
-//-----------------------------------------------------------------------------
-void BuildGroup::PanelRemoved(Panel *panel)
-{
-    Assert(panel);
-
-    PHandle temp;
-    temp = panel;
-    _panelDar.FindAndRemove(temp);
 }
 
 //-----------------------------------------------------------------------------

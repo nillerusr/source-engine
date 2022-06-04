@@ -2433,7 +2433,7 @@ struct studiohdr_t
     void*				VertexBase() const { return pVertexBase; }
     void				SetVertexBase( void* ptr ) { pVertexBase = ptr; }
     void*				IndexBase() const { return pIndexBase; }
-    void				SetIndexBase( void* ptr ) { pIndexBase = ptr; } }
+    void				SetIndexBase( void* ptr ) { pIndexBase = ptr; }
 #endif
 
 	// NOTE: No room to add stuff? Up the .mdl file format version 

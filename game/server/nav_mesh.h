@@ -73,7 +73,6 @@ public:
 	bool operator()( CBaseCombatCharacter *actor )
 	{
 		actor->OnNavAreaRemoved( m_deadArea );
-		return true;
 	}
 };
 
@@ -200,12 +199,12 @@ public:
 	{
 #if PLATFORM_64BITS
 		COMPILE_TIME_ASSERT( sizeof(CNavArea *) == 8 );
-		int64 key[2] = { (int64)item.pAreas[0] + (int64)item.pAreas[1]->GetID(), (int64)item.pAreas[1] + (int64)item.pAreas[0]->GetID() };
+		int64 key[2] = { (int64)(item.pAreas[0] + item.pAreas[1]->GetID()), (int64)(item.pAreas[1] + item.pAreas[0]->GetID()) };
 		return Hash16( key );
 #else
 		COMPILE_TIME_ASSERT( sizeof(CNavArea *) == 4 );
 		int key[2] = { (int)(item.pAreas[0] + item.pAreas[1]->GetID()), (int)(item.pAreas[1] + item.pAreas[0]->GetID()) };
-		return Hash8( key );	
+		return Hash8( key );
 #endif
 	}
 };

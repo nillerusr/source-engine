@@ -282,7 +282,7 @@ private:
 	CVoxelHash*							m_pVoxelHash;
 	CLeafList							m_aLeafList;								// Pool - Linked list(multilist) of leaves per entity.
 	int									m_TreeId;
-	CThreadLocalPtr<CPartitionVisits>	m_pVisits;
+	CTHREADLOCALPTR(CPartitionVisits)	m_pVisits;
 	CSpatialPartition *					m_pOwner;
 	CUtlVector<unsigned short>			m_AvailableVisitBits;
 	unsigned short						m_nNextVisitBit;
@@ -1775,7 +1775,7 @@ void CVoxelTree::Shutdown( void )
 //-----------------------------------------------------------------------------
 void CVoxelTree::InsertIntoTree( SpatialPartitionHandle_t hPartition, const Vector& mins, const Vector& maxs )
 {
-	bool bWasReading = ( m_pVisits != NULL );
+	bool bWasReading = ( m_pVisits != static_cast<void*>(nullptr) );
 	if ( bWasReading )
 	{
 		// If we're recursing in this thread, need to release our read lock to allow ourselves to write
@@ -1832,7 +1832,7 @@ void CVoxelTree::RemoveFromTree( SpatialPartitionHandle_t hPartition )
 	int nLevel = info.m_nLevel[GetTreeId()];
 	if ( nLevel >= 0 )
 	{
-		bool bWasReading = ( m_pVisits != NULL );
+		bool bWasReading = ( m_pVisits != static_cast<void*>(nullptr) );
 		if ( bWasReading )
 		{
 			// If we're recursing in this thread, need to release our read lock to allow ourselves to write

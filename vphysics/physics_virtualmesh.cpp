@@ -27,7 +27,7 @@
 class CPhysCollideVirtualMesh;
 
 CTSPool< CUtlVector<CPhysCollideVirtualMesh *> > g_MeshFrameLocksPool;
-CThreadLocalPtr< CUtlVector<CPhysCollideVirtualMesh *> > g_pMeshFrameLocks;
+CTHREADLOCALPTR(CUtlVector<CPhysCollideVirtualMesh *>) g_pMeshFrameLocks;
 
 // This is the surfacemanager class for IVP that implements the required functions by layering CPhysCollideVirtualMesh
 class IVP_SurfaceManager_VirtualMesh : public IVP_SurfaceManager

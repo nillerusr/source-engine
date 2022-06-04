@@ -115,7 +115,7 @@ StudioDecalHandle_t CStudioRender::CreateDecalList( studiohwdata_t *pHardwareDat
 
 	// NOTE: This function is called directly without queueing 
 	m_DecalMutex.Lock();
-	int handle = m_DecalList.AddToTail();
+	intp handle = m_DecalList.AddToTail();
 	m_DecalMutex.Unlock();
 
 	m_DecalList[handle].m_pHardwareData = pHardwareData;

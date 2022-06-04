@@ -3800,17 +3800,11 @@ void Panel::SetTall(int tall)
 
 void Panel::SetBuildGroup(BuildGroup* buildGroup)
 {
-    if ( _buildGroup == buildGroup )
-        return;
-    if ( _buildGroup.Get() )
-    {
-        _buildGroup->PanelRemoved( this );
-    }
-    _buildGroup = buildGroup;
-    if ( _buildGroup.Get() )
-    {
+	//TODO: remove from old group
+
+        Assert(buildGroup != NULL);
+        _buildGroup = buildGroup;
         _buildGroup->PanelAdded(this);
-    }
 }
 
 bool Panel::IsBuildGroupEnabled()
@@ -5142,7 +5136,7 @@ void Panel::OnMessage(const KeyValues *params, VPANEL ifromPanel)
 					{
 						typedef void (Panel::*MessageFunc_HandleConstCharPtr_t)(VPANEL, VPANEL);
 						VPANEL vp1 = ivgui()->HandleToPanel( param1->GetInt() );
-						VPANEL vp2 = ivgui()->HandleToPanel( param1->GetInt() );
+						VPANEL vp2 = ivgui()->HandleToPanel( param2->GetInt() );
 						(this->*((MessageFunc_HandleConstCharPtr_t)pMap->func))( vp1, vp2 );
 					}
 					else

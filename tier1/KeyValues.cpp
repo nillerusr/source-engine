@@ -1425,7 +1425,7 @@ const char *KeyValues::GetString( const char *keyName, const char *defaultValue 
 			SetString( keyName, buf );
 			break;
 		case TYPE_PTR:
-			Q_snprintf( buf, sizeof( buf ), "%lld", (int64)(size_t)dat->m_pValue );
+			Q_snprintf( buf, sizeof( buf ), "%lld", (int64)dat->m_pValue );
 			SetString( keyName, buf );
 			break;
 		case TYPE_INT:
@@ -1478,7 +1478,7 @@ const wchar_t *KeyValues::GetWString( const char *keyName, const wchar_t *defaul
 			SetWString( keyName, wbuf);
 			break;
 		case TYPE_PTR:
-			swprintf( wbuf, Q_ARRAYSIZE(wbuf), L"%lld", (int64)(size_t)dat->m_pValue );
+			swprintf( wbuf, Q_ARRAYSIZE(wbuf), L"%lld", (int64)dat->m_pValue );
 			SetWString( keyName, wbuf );
 			break;
 		case TYPE_INT:

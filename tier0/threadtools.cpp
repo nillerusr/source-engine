@@ -1,35 +1,45 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========== Copyright 2005, Valve Corporation, All rights reserved. ========
 //
 // Purpose:
 //
 //=============================================================================
 
-#include "pch_tier0.h"
+#include "tier0/platform.h"
 
-#include "tier1/strtools.h"
-#include "tier0/dynfunction.h"
-#if defined( _WIN32 ) && !defined( _X360 )
+#if defined( PLATFORM_WINDOWS_PC )
 #define WIN32_LEAN_AND_MEAN
+#define _WIN32_WINNT 0x0403
 #include <windows.h>
 #endif
-#ifdef _WIN32
+
+#ifdef PLATFORM_WINDOWS
 	#include <process.h>
-	
-#ifdef IS_WINDOWS_PC	
-	#include <Mmsystem.h>
-	#pragma comment(lib, "winmm.lib")
-#endif // IS_WINDOWS_PC
-
-#elif defined(POSIX)
-
-#if !defined(OSX)
-#if defined(ANDROID)
-	#include <fcntl.h>
+	#ifdef PLATFORM_WINDOWS_PC
+		#include <Mmsystem.h>
+		#pragma comment(lib, "winmm.lib")
+	#endif
+#elif PLATFORM_PS3
+	#include <sched.h>
 	#include <unistd.h>
-#else
+	#include <exception>
+	#include <errno.h>
+	#include <pthread.h>
+	#include <sys/time.h>
+	#include <sys/timer.h>
+	#define GetLastError() errno
+	typedef void *LPVOID;
+#elif PLATFORM_POSIX
+	#include <sched.h>
+	#include <exception>
+	#include <errno.h>
+	#include <signal.h>
+	#include <pthread.h>
+	#include <sys/time.h>
+	#define GetLastError() errno
+	typedef void *LPVOID;
+#if !defined(OSX)
 	#include <sys/fcntl.h>
 	#include <sys/unistd.h>
-#endif
 	#define sem_unlink( arg )
 	#define OS_TO_PTHREAD(x) (x)
 #else
@@ -39,42 +49,38 @@
 	#define OS_TO_PTHREAD(x) pthread_from_mach_thread_np( x )
 #endif // !OSX
 
-#ifdef LINUX
-#include <dlfcn.h> // RTLD_NEXT
 #endif
 
-typedef int (*PTHREAD_START_ROUTINE)(
-    void *lpThreadParameter
-    );
-typedef PTHREAD_START_ROUTINE LPTHREAD_START_ROUTINE;
-#include <sched.h>
-#include <exception>
-#include <errno.h>
-#include <signal.h>
-#include <pthread.h>
-#include <sys/time.h>
-#include <inttypes.h>
-#define GetLastError() errno
-typedef void *LPVOID;
+#ifndef _PS3
+#include <memory.h>
 #endif
-
-#include "tier0/valve_minmax_off.h"
-#include <memory>
-#include "tier0/valve_minmax_on.h"
-
+#include "tier0/minidump.h"
 #include "tier0/threadtools.h"
-#include "tier0/vcrmode.h"
+#include "tier0/dynfunction.h"
 
 #ifdef _X360
 #include "xbox/xbox_win32stubs.h"
 #endif
 
-#include "tier0/vprof_telemetry.h"
+#include <map>
 
 // Must be last header...
 #include "tier0/memdbgon.h"
 
+#ifdef _PS3
+#include "ps3/ps3_win32stubs.h"
+#define NEW_WAIT_FOR_MULTIPLE_OBJECTS
+bool gbCheckNotMultithreaded = true;
+
+extern "C" void(*g_pfnPushMarker)( const char * pName );
+extern "C" void(*g_pfnPopMarker)();
+
+
+#endif
+
 #define THREADS_DEBUG 1
+
+#define DEBUG_ERROR(XX) Assert(0)
 
 // Need to ensure initialized before other clients call in for main thread ID
 #ifdef _WIN32
@@ -86,6 +92,50 @@ typedef void *LPVOID;
 ASSERT_INVARIANT(TT_SIZEOF_CRITICALSECTION == sizeof(CRITICAL_SECTION));
 ASSERT_INVARIANT(TT_INFINITE == INFINITE);
 #endif
+
+// thread creation counter.
+// this is used to provide a unique threadid for each running thread in g_nThreadID ( a thread local variable ).
+
+const int MAX_THREAD_IDS = 128;
+
+static volatile bool s_bThreadIDAllocated[MAX_THREAD_IDS];
+
+#if defined(_LINUX) && defined(DEDICATED)
+
+DLL_CLASS_EXPORT __thread int g_nThreadID;
+
+#elif defined(_PS3)
+	#include "tls_ps3.h"
+#else 
+	DLL_CLASS_EXPORT CTHREADLOCALINT g_nThreadID;
+#endif 
+
+
+static CThreadFastMutex s_ThreadIDMutex;
+
+PLATFORM_INTERFACE void AllocateThreadID( void )
+{
+	AUTO_LOCK( s_ThreadIDMutex );
+	for( int i = 1; i < MAX_THREAD_IDS; i++ )
+	{
+		if ( ! s_bThreadIDAllocated[i] )
+		{
+			g_nThreadID = i;
+			s_bThreadIDAllocated[i] = true;
+			return;
+		}
+	}
+	Error( "Out of thread ids. Decrease the number of threads or increase MAX_THREAD_IDS\n" );
+}
+
+PLATFORM_INTERFACE void FreeThreadID( void )
+{
+	AUTO_LOCK( s_ThreadIDMutex );
+	int nThread = g_nThreadID;
+	if ( nThread )
+		s_bThreadIDAllocated[nThread] = false;
+}
+		
 
 //-----------------------------------------------------------------------------
 // Simple thread functions. 
@@ -105,85 +155,330 @@ struct ThreadProcInfo_t
 
 //---------------------------------------------------------
 
-#ifdef _WIN32
-static unsigned __stdcall ThreadProcConvert( void *pParam )
-#elif defined(POSIX)
-static void *ThreadProcConvert( void *pParam )
-#else
-#error
-#endif
+#ifdef PLATFORM_WINDOWS
+static DWORD WINAPI ThreadProcConvert( void *pParam )
 {
 	ThreadProcInfo_t info = *((ThreadProcInfo_t *)pParam);
+	AllocateThreadID();
 	delete ((ThreadProcInfo_t *)pParam);
-#ifdef _WIN32
-	return (*info.pfnThread)(info.pParam);
-#elif defined(POSIX)
-	return (void *)(*info.pfnThread)(info.pParam);
-#else
-#error
-#endif
+	unsigned nRet = (*info.pfnThread)(info.pParam);
+	FreeThreadID();
+	return nRet;
 }
+#elif defined( PLATFORM_PS3 )
+union ThreadProcInfoUnion_t
+{
+	struct Val_t
+	{
+		ThreadFunc_t pfnThread;
+		void *		 pParam;
+	}
+	val;
+	uint64_t val64;
+};
+static void ThreadProcConvertUnion( uint64_t param )
+{
+	COMPILE_TIME_ASSERT( sizeof( ThreadProcInfoUnion_t ) == 8 );
+	ThreadProcInfoUnion_t info;
+	info.val64 = param;
+	AllocateThreadID();
+	unsigned nRet = (*info.val.pfnThread)(info.val.pParam);
+	FreeThreadID();
+	sys_ppu_thread_exit( nRet );
+}
+static void* ThreadProcConvert( void *pParam )
+{
+	ThreadProcInfo_t info = *((ThreadProcInfo_t *)pParam);
+	AllocateThreadID();
+	delete ((ThreadProcInfo_t *)pParam);
+	unsigned nRet = (*info.pfnThread)(info.pParam);
+	FreeThreadID();
+	return ( void * ) nRet;
+}
+
+#else
+static void* ThreadProcConvert( void *pParam )
+{
+	ThreadProcInfo_t info = *((ThreadProcInfo_t *)pParam);
+	AllocateThreadID();
+	delete ((ThreadProcInfo_t *)pParam);
+	unsigned nRet = (*info.pfnThread)(info.pParam);
+	FreeThreadID();
+	return ( void * ) (uintp) nRet;
+}
+#endif
+
+
+
+#if defined( _PS3 )
+
+/*******************************************************************************
+* Thread Local Storage globals and functions
+*******************************************************************************/
+#ifndef _PS3
+__thread void *gTLSValues[ MAX_TLS_VALUES ] = { NULL };
+__thread bool  gTLSFlags[ MAX_TLS_VALUES ] = { false };
+__thread bool gbWaitObjectsCreated = false;
+__thread sys_semaphore_t gWaitObjectsSemaphore;
+#endif // !_PS3
+
+static char gThreadName[28] = "";
+
+// Simple TLS allocator.  Linearly searches for a free slot.
+uint32 TlsAlloc()
+{
+	for ( int i = 0; i < MAX_TLS_VALUES; ++i )
+	{
+		if ( !gTLSFlags[i] )
+		{
+			gTLSFlags[i] = true;
+			return i;
+		}
+	}
+
+#ifdef _PS3
+	DEBUG_ERROR("TlsAlloc(): Out of TLS\n");
+#endif
+
+	return 0xFFFFFFFF;
+}
+
+void TlsFree( uint32 index )
+{
+	gTLSValues[ index ] = NULL;
+	gTLSFlags[ index ] = false;
+}
+
+void *TlsGetValue( uint32 index )
+{
+	return gTLSValues[ index ];
+}
+
+void TlsSetValue( uint32 index, void *pValue )
+{
+	gTLSValues[ index ] = pValue;
+}
+#endif //_PS3
+
+
+
+#ifdef PLATFORM_WINDOWS
+class CThreadHandleToIDMap
+{
+public:
+	HANDLE	m_hThread;
+	uint	m_ThreadID;
+	CThreadHandleToIDMap *m_pNext;
+};
+static CThreadHandleToIDMap *g_pThreadHandleToIDMaps = NULL;
+static CThreadMutex g_ThreadHandleToIDMapMutex;
+static volatile int g_nThreadHandleToIDMaps = 0;
+
+static void AddThreadHandleToIDMap( HANDLE hThread, uint threadID )
+{
+	if ( !hThread )
+		return;
+
+	// Remember this handle/id combo.
+	CThreadHandleToIDMap *pMap = new CThreadHandleToIDMap;
+	pMap->m_hThread = hThread;
+	pMap->m_ThreadID = threadID;
+
+	// Add it to the global list.
+	g_ThreadHandleToIDMapMutex.Lock();
+	pMap->m_pNext = g_pThreadHandleToIDMaps;
+	g_pThreadHandleToIDMaps = pMap;
+	++g_nThreadHandleToIDMaps;
+
+	g_ThreadHandleToIDMapMutex.Unlock();
+
+	if ( g_nThreadHandleToIDMaps > 500 )
+		Error( "ThreadHandleToIDMap overflow." );
+}
+
+// This assumes you've got g_ThreadHandleToIDMapMutex locked!!
+static bool InternalLookupHandleToThreadIDMap( HANDLE hThread, CThreadHandleToIDMap* &pMap, CThreadHandleToIDMap** &ppPrev )
+{
+	ppPrev = &g_pThreadHandleToIDMaps;
+	for ( pMap=g_pThreadHandleToIDMaps; pMap; pMap=pMap->m_pNext )
+	{
+		if ( pMap->m_hThread == hThread )
+			return true;
+
+		ppPrev = &pMap->m_pNext;
+	}
+
+	return false;
+}
+
+static void RemoveThreadHandleToIDMap( HANDLE hThread )
+{
+	if ( !hThread )
+		return;
+
+	CThreadHandleToIDMap *pMap, **ppPrev;
+	
+	g_ThreadHandleToIDMapMutex.Lock();
+
+	if ( g_nThreadHandleToIDMaps <= 0 )
+		Error( "ThreadHandleToIDMap underflow." );
+
+	if ( InternalLookupHandleToThreadIDMap( hThread, pMap, ppPrev ) )
+	{
+		*ppPrev = pMap->m_pNext;
+		delete pMap;
+		--g_nThreadHandleToIDMaps;
+	}
+
+	g_ThreadHandleToIDMapMutex.Unlock();
+}
+
+static uint LookupThreadIDFromHandle( HANDLE hThread )
+{
+	if ( hThread == NULL || hThread == GetCurrentThread() )
+		return GetCurrentThreadId();
+
+	float flStartTime = Plat_FloatTime();
+	while ( Plat_FloatTime() - flStartTime < 2 )
+	{
+		CThreadHandleToIDMap *pMap, **ppPrev;
+
+		g_ThreadHandleToIDMapMutex.Lock();
+		bool bRet = InternalLookupHandleToThreadIDMap( hThread, pMap, ppPrev );
+		g_ThreadHandleToIDMapMutex.Unlock();
+		
+		if ( bRet )
+			return pMap->m_ThreadID;
+
+		// We should only get here if a thread that is just starting up is currently in AddThreadHandleToIDMap.
+		// Give up the timeslice and try again.
+		ThreadSleep( 1 );
+	}
+
+	Assert( !"LookupThreadIDFromHandle failed!" );
+	Warning( "LookupThreadIDFromHandle couldn't find thread ID for handle." );
+	return 0;
+}
+#endif
 
 
 //---------------------------------------------------------
 
-ThreadHandle_t CreateSimpleThread( ThreadFunc_t pfnThread, void *pParam, ThreadId_t *pID, unsigned stackSize )
+ThreadHandle_t * CreateTestThreads( ThreadFunc_t fnThread, int numThreads, int nProcessorsToDistribute )
 {
-#ifdef _WIN32
-	ThreadId_t idIgnored;
-	if ( !pID )
-		pID = &idIgnored;
-	HANDLE h = VCRHook_CreateThread(NULL, stackSize, (LPTHREAD_START_ROUTINE)ThreadProcConvert, new ThreadProcInfo_t( pfnThread, pParam ), CREATE_SUSPENDED, pID);
-	if ( h != INVALID_HANDLE_VALUE )
+	ThreadHandle_t *pHandles = (new ThreadHandle_t[numThreads+1]) + 1;
+	pHandles[-1] = (ThreadHandle_t)INT_TO_POINTER( numThreads );
+	for( int i = 0; i < numThreads; ++i )
 	{
-		Plat_ApplyHardwareDataBreakpointsToNewThread( *pID );
-		ResumeThread( h );
-	}
-	return (ThreadHandle_t)h;
-#elif defined(POSIX)
-	pthread_t tid;
+		//TestThreads();
+		ThreadHandle_t hThread;
+		const unsigned int nDefaultStackSize = 64 * 1024; // this stack size is used in case stackSize == 0
+		hThread = CreateSimpleThread( fnThread, INT_TO_POINTER( i ), nDefaultStackSize );
 
-	// If we need to create threads that are detached right out of the gate, we would need to do something like this:
-	//   pthread_attr_t attr;
-	//   int rc = pthread_attr_init(&attr);
-	//   rc = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-	//   ... pthread_create( &tid, &attr, ... ) ...
-	//   rc = pthread_attr_destroy(&attr);
-	//   ... pthread_join will now fail
-
-	int ret = pthread_create( &tid, NULL, ThreadProcConvert, new ThreadProcInfo_t( pfnThread, pParam ) );
-	if ( ret )
-	{
-		// There are only PTHREAD_THREADS_MAX number of threads, and we're probably leaking handles if ret == EAGAIN here?
-		Error( "CreateSimpleThread: pthread_create failed. Someone not calling pthread_detach() or pthread_join. Ret:%d\n", ret );
+		if ( nProcessorsToDistribute )
+		{
+			int32 mask = 1 << (i % nProcessorsToDistribute);
+			ThreadSetAffinity( hThread, mask );
+		}
+		
+/*		
+		ThreadProcInfoUnion_t info;
+		info.val.pfnThread = fnThread;
+		info.val.pParam = (void*)(i);
+		if ( int nError = sys_ppu_thread_create( &hThread, ThreadProcConvertUnion, info.val64, 1001, nDefaultStackSize, SYS_PPU_THREAD_CREATE_JOINABLE, "SimpleThread" ) != CELL_OK )
+		{
+			printf( "PROBLEM!\n" );
+			Error( "Cannot create thread, error %d\n", nError );
+			return 0;
+		}
+*/
+		//ThreadHandle_t hThread = CreateSimpleThread( fnThread, (void*)i );
+		pHandles[i] = hThread;
 	}
-	if ( pID )
-		*pID = (ThreadId_t)tid;
-	Plat_ApplyHardwareDataBreakpointsToNewThread( (long unsigned int)tid );
-	return (ThreadHandle_t)tid;
-#endif
+//	printf("Finishinged CreateTestThreads(%p,%d)\n", (void*)fnThread,  numThreads );
+	return pHandles;
 }
+
+void JoinTestThreads( ThreadHandle_t *pHandles )
+{
+	int nCount = POINTER_TO_INT( (uintp)pHandles[-1] );
+// 	printf("Joining test threads @%p[%d]:\n", pHandles, nCount );
+// 	for( int i = 0; i < nCount; ++i )
+// 	{
+// 		printf("    %p,\n", (void*)pHandles[i] );
+// 	}
+	for( int i = 0; i < nCount; ++i )
+	{
+//		printf( "Joining %p", (void*) pHandles[i] );
+//		if( !i ) sys_timer_usleep(100000);
+		ThreadJoin( pHandles[i] );
+		ReleaseThreadHandle( pHandles[i] );
+	}
+	delete[]( pHandles - 1 );
+}
+
+
 
 ThreadHandle_t CreateSimpleThread( ThreadFunc_t pfnThread, void *pParam, unsigned stackSize )
 {
-	return CreateSimpleThread( pfnThread, pParam, NULL, stackSize );
-}
-
-PLATFORM_INTERFACE void ThreadDetach( ThreadHandle_t hThread )
-{
-#if defined( POSIX )
-	// The resources of this thread will be freed immediately when it terminates,
-	//  instead of waiting for another thread to perform PTHREAD_JOIN.
-	pthread_t tid = ( pthread_t )hThread;
-
-	pthread_detach( tid );
+#ifdef PLATFORM_WINDOWS
+	DWORD threadID;
+	HANDLE hThread = (HANDLE)CreateThread( NULL, stackSize, ThreadProcConvert, new ThreadProcInfo_t( pfnThread, pParam ), stackSize ? STACK_SIZE_PARAM_IS_A_RESERVATION : 0, &threadID );
+	AddThreadHandleToIDMap( hThread, threadID );
+	return (ThreadHandle_t)hThread;
+#elif PLATFORM_PS3
+	//TestThreads();
+	ThreadHandle_t th;
+	ThreadProcInfoUnion_t info;
+	info.val.pfnThread = pfnThread;
+	info.val.pParam = pParam;
+	const unsigned int nDefaultStackSize = 64 * 1024; // this stack size is used in case stackSize == 0
+	if ( sys_ppu_thread_create( &th, ThreadProcConvertUnion, info.val64, 1001, stackSize ? stackSize : nDefaultStackSize, SYS_PPU_THREAD_CREATE_JOINABLE, "SimpleThread" ) != CELL_OK )
+	{
+		AssertMsg1( 0, "Failed to create thread (error 0x%x)", errno );
+		return 0;
+	}
+	return th;
+#elif PLATFORM_POSIX
+	pthread_t tid;
+	pthread_create( &tid, NULL, ThreadProcConvert, new ThreadProcInfo_t( pfnThread, pParam ) );
+	return ( ThreadHandle_t ) tid;
+#else
+	Assert( 0 );
+	DebuggerBreak();
+	return 0;
 #endif
 }
+
+ThreadHandle_t CreateSimpleThread( ThreadFunc_t pfnThread, void *pParam, ThreadId_t *pID, unsigned stackSize )
+{
+#ifdef PLATFORM_WINDOWS
+	DWORD threadID;
+	HANDLE hThread = (HANDLE)CreateThread( NULL, stackSize, ThreadProcConvert, new ThreadProcInfo_t( pfnThread, pParam ), stackSize ? STACK_SIZE_PARAM_IS_A_RESERVATION : 0, &threadID );
+	if( pID )
+		*pID = (ThreadId_t)threadID;
+	AddThreadHandleToIDMap( hThread, threadID );
+	return (ThreadHandle_t)hThread;
+#elif PLATFORM_POSIX
+	pthread_t tid;
+	pthread_create( &tid, NULL, ThreadProcConvert, new ThreadProcInfo_t( pfnThread, pParam ) );
+	if( pID )
+		*pID = (ThreadId_t)tid;
+	return ( ThreadHandle_t ) tid;
+#else
+	Assert( 0 );
+	DebuggerBreak();
+	return 0;
+#endif
+}
+
 
 bool ReleaseThreadHandle( ThreadHandle_t hThread )
 {
 #ifdef _WIN32
-	return ( CloseHandle( hThread ) != 0 );
+	bool bRetVal = ( CloseHandle( hThread ) != 0 );
+	RemoveThreadHandleToIDMap( (HANDLE)hThread );
+	return bRetVal;
 #else
 	return true;
 #endif
@@ -199,7 +494,7 @@ void ThreadSleep(unsigned nMilliseconds)
 {
 #ifdef _WIN32
 
-#ifdef IS_WINDOWS_PC
+#ifdef PLATFORM_WINDOWS_PC
 	static bool bInitialized = false;
 	if ( !bInitialized )
 	{
@@ -210,13 +505,41 @@ void ThreadSleep(unsigned nMilliseconds)
 		// rate.
 		timeBeginPeriod( 1 );
 	}
-#endif // IS_WINDOWS_PC
+#endif
 
 	Sleep( nMilliseconds );
+#elif PLATFORM_PS3
+	if( nMilliseconds == 0 )
+	{
+		// sys_ppu_thread_yield doesn't seem to function properly, so sleep instead.
+//		sys_timer_usleep( 60 );
+		sys_ppu_thread_yield();
+	}
+	else
+	{
+		sys_timer_usleep( nMilliseconds * 1000 );
+	}
 #elif defined(POSIX)
    usleep( nMilliseconds * 1000 ); 
 #endif
 }
+
+//-----------------------------------------------------------------------------
+void ThreadNanoSleep(unsigned ns)
+{
+#ifdef _WIN32
+	// ceil
+	Sleep( ( ns + 999 ) / 1000 );
+#elif PLATFORM_PS3
+	sys_timer_usleep( ns );
+#elif defined(POSIX)
+	struct timespec tm;
+	tm.tv_sec = 0;
+	tm.tv_nsec = ns;
+	nanosleep( &tm, NULL ); 
+#endif
+}
+
 
 //-----------------------------------------------------------------------------
 
@@ -225,8 +548,16 @@ ThreadId_t ThreadGetCurrentId()
 {
 #ifdef _WIN32
 	return GetCurrentThreadId();
+#elif defined( _PS3 )
+	sys_ppu_thread_t th = 0;
+	sys_ppu_thread_get_id( &th );
+	return th;
 #elif defined(POSIX)
 	return (ThreadId_t)pthread_self();
+#else
+	Assert(0);
+	DebuggerBreak();
+	return 0;
 #endif
 }
 #endif
@@ -236,8 +567,16 @@ ThreadHandle_t ThreadGetCurrentHandle()
 {
 #ifdef _WIN32
 	return (ThreadHandle_t)GetCurrentThread();
+#elif defined( _PS3 )
+	sys_ppu_thread_t th = 0;
+	sys_ppu_thread_get_id( &th );
+	return th;
 #elif defined(POSIX)
 	return (ThreadHandle_t)pthread_self();
+#else
+	Assert(0);
+	DebuggerBreak();
+	return 0;
 #endif
 }
 
@@ -261,24 +600,15 @@ bool ThreadIsThreadIdRunning( ThreadId_t uThreadId )
 	}
 	return bRunning;
 #elif defined( _PS3 )
-	
+
 	// will return CELL_OK for zombie threads
 	int priority;
 	return (sys_ppu_thread_get_priority( uThreadId, &priority ) == CELL_OK );
 
 #elif defined(POSIX)
-	pthread_t thread = OS_TO_PTHREAD(uThreadId);
-	if ( thread )
-	{
-		int iResult = pthread_kill( thread, 0 );
-		if ( iResult == 0 )
-			return true;
-	}
-	else
-	{
-		// We really ought not to be passing NULL in to here
-		AssertMsg( false, "ThreadIsThreadIdRunning received a null thread ID" );
-	}
+	int iResult = pthread_kill( OS_TO_PTHREAD(uThreadId), 0 );
+	if ( iResult == 0 )
+		return true;
 
 	return false;
 #endif
@@ -295,11 +625,12 @@ int ThreadGetPriority( ThreadHandle_t hThread )
 
 #ifdef _WIN32
 	return ::GetThreadPriority( (HANDLE)hThread );
+#elif defined( _PS3 )
+	int iPri = 0;
+	sys_ppu_thread_get_priority( hThread, &iPri );
+	return iPri;
 #else
-	struct sched_param thread_param;
-	int policy;
-	pthread_getschedparam( (pthread_t)hThread, &policy, &thread_param );
-	return thread_param.sched_priority;
+	return 0;
 #endif
 }
 
@@ -314,10 +645,13 @@ bool ThreadSetPriority( ThreadHandle_t hThread, int priority )
 
 #ifdef _WIN32
 	return ( SetThreadPriority(hThread, priority) != 0 );
+#elif defined( _PS3 )
+	int retval = sys_ppu_thread_set_priority( hThread, priority );
+	return retval >= CELL_OK;
 #elif defined(POSIX)
 	struct sched_param thread_param; 
 	thread_param.sched_priority = priority; 
-	pthread_setschedparam( (pthread_t)hThread, SCHED_OTHER, &thread_param );
+	//pthread_setschedparam( (pthread_t ) hThread, SCHED_RR, &thread_param );
 	return true;
 #endif
 }
@@ -346,32 +680,12 @@ void ThreadSetAffinity( ThreadHandle_t hThread, int nAffinityMask )
 
 //-----------------------------------------------------------------------------
 
+#ifndef _X360
 ThreadId_t InitMainThread()
 {
-#ifndef LINUX
-	// Skip doing the setname on Linux for the main thread. Here is why...
-
-	// From Pierre-Loup e-mail about why pthread_setname_np() on the main thread
-	// in Linux will cause some tools to display "MainThrd" as the executable name:
-	//
-	// You have two things in procfs, comm and cmdline.  Each of the threads have
-	// a different `comm`, which is the value you set through pthread_setname_np
-	// or prctl(PR_SET_NAME).  Top can either display cmdline or comm; it
-	// switched to display comm by default; htop still displays cmdline by
-	// default. Top -c will output cmdline rather than comm.
-	// 
-	// If you press 'H' while top is running it will display each thread as a
-	// separate process, so you will have different entries for MainThrd,
-	// MatQueue0, etc with their own CPU usage.  But when that mode isn't enabled
-	// it just displays the 'comm' name from the first thread.
 	ThreadSetDebugName( "MainThrd" );
-#endif
 
-#ifdef _WIN32
 	return ThreadGetCurrentId();
-#elif defined(POSIX)
-	return (ThreadId_t)pthread_self();
-#endif
 }
 
 ThreadId_t g_ThreadMainThreadID = InitMainThread();
@@ -381,24 +695,33 @@ bool ThreadInMainThread()
 	return ( ThreadGetCurrentId() == g_ThreadMainThreadID );
 }
 
-//-----------------------------------------------------------------------------
 void DeclareCurrentThreadIsMainThread()
 {
 	g_ThreadMainThreadID = ThreadGetCurrentId();
 }
 
+#else
+byte *InitMainThread()
+{
+	byte b;
+
+	return  AlignValue( &b, 64*1024 );
+}
+#define STACK_SIZE_360 327680
+byte *g_pBaseMainStack = InitMainThread();
+byte *g_pLimitMainStack = InitMainThread() - STACK_SIZE_360;
+#endif
+
+//-----------------------------------------------------------------------------
 bool ThreadJoin( ThreadHandle_t hThread, unsigned timeout )
 {
-	// You should really never be calling this with a NULL thread handle. If you
-	// are then that probably implies a race condition or threading misunderstanding.
-	Assert( hThread );
 	if ( !hThread )
 	{
 		return false;
 	}
 
 #ifdef _WIN32
-	DWORD dwWait = VCRHook_WaitForSingleObject((HANDLE)hThread, timeout);
+	DWORD dwWait = WaitForSingleObject( (HANDLE)hThread, timeout );
 	if ( dwWait == WAIT_TIMEOUT)
 		return false;
 	if ( dwWait != WAIT_OBJECT_0 && ( dwWait != WAIT_FAILED && GetLastError() != 0 ) )
@@ -406,29 +729,24 @@ bool ThreadJoin( ThreadHandle_t hThread, unsigned timeout )
 		Assert( 0 );
 		return false;
 	}
+#elif defined( _PS3 )
+	uint64 uiExitCode = 0;
+	int retval = sys_ppu_thread_join( hThread, &uiExitCode );
+	return ( retval >= CELL_OK );
 #elif defined(POSIX)
 	if ( pthread_join( (pthread_t)hThread, NULL ) != 0 )
 		return false;
+#else
+	Assert(0);
+	DebuggerBreak();
 #endif
 	return true;
 }
 
-#ifdef RAD_TELEMETRY_ENABLED
-void TelemetryThreadSetDebugName( ThreadId_t id, const char *pszName );
-#endif
-
 //-----------------------------------------------------------------------------
-
-void ThreadSetDebugName( ThreadId_t id, const char *pszName )
+void ThreadSetDebugName( ThreadHandle_t hThread, const char *pszName )
 {
-	if( !pszName )
-		return;
-
-#ifdef RAD_TELEMETRY_ENABLED
-	TelemetryThreadSetDebugName( id, pszName );
-#endif
-
-#ifdef _WIN32
+#ifdef WIN32
 	if ( Plat_IsInDebugSession() )
 	{
 #define MS_VC_EXCEPTION 0x406d1388
@@ -444,58 +762,24 @@ void ThreadSetDebugName( ThreadId_t id, const char *pszName )
 		THREADNAME_INFO info;
 		info.dwType = 0x1000;
 		info.szName = pszName;
-		info.dwThreadID = id;
-		info.dwFlags = 0;
+		info.dwThreadID = LookupThreadIDFromHandle( hThread );
 
-		__try
+		if ( info.dwThreadID != 0 )
 		{
-			RaiseException(MS_VC_EXCEPTION, 0, sizeof(info) / sizeof(DWORD), (ULONG_PTR *)&info);
-		}
-		__except (EXCEPTION_CONTINUE_EXECUTION)
-		{
-		}
-	}
-#elif defined( _LINUX )
-	// As of glibc v2.12, we can use pthread_setname_np.
-	typedef int (pthread_setname_np_func)(pthread_t, const char *);
-	static pthread_setname_np_func *s_pthread_setname_np_func = (pthread_setname_np_func *)dlsym(RTLD_DEFAULT, "pthread_setname_np");
+			info.dwFlags = 0;
 
-	if ( s_pthread_setname_np_func )
-	{
-		if ( id == (uint32)-1 )
-			id = pthread_self();
-
-		/* 
-			pthread_setname_np() in phthread_setname.c has the following code:
-		
-			#define TASK_COMM_LEN 16
-			  size_t name_len = strlen (name);
-			  if (name_len >= TASK_COMM_LEN)
-				return ERANGE;
-		
-			So we need to truncate the threadname to 16 or the call will just fail.
-		*/
-		char szThreadName[ 16 ];
-		strncpy( szThreadName, pszName, ARRAYSIZE( szThreadName ) );
-		szThreadName[ ARRAYSIZE( szThreadName ) - 1 ] = 0;
-		(*s_pthread_setname_np_func)( id, szThreadName );
+			__try
+			{
+				RaiseException(MS_VC_EXCEPTION, 0, sizeof(info) / sizeof(DWORD), (ULONG_PTR *)&info);
+			}
+			__except (EXCEPTION_CONTINUE_EXECUTION)
+			{
+			}
+		}
 	}
 #endif
 }
 
-
-//-----------------------------------------------------------------------------
-
-#ifdef _WIN32
-ASSERT_INVARIANT( TW_FAILED == WAIT_FAILED );
-ASSERT_INVARIANT( TW_TIMEOUT  == WAIT_TIMEOUT );
-ASSERT_INVARIANT( WAIT_OBJECT_0 == 0 );
-
-int ThreadWaitForObjects( int nEvents, const HANDLE *pHandles, bool bWaitAll, unsigned timeout )
-{
-	return VCRHook_WaitForMultipleObjects( nEvents, pHandles, bWaitAll, timeout );
-}
-#endif
 
 
 //-----------------------------------------------------------------------------
@@ -515,15 +799,50 @@ PLATFORM_INTERFACE ThreadedLoadLibraryFunc_t GetThreadedLoadLibraryFunc()
 
 //-----------------------------------------------------------------------------
 //
+//   CThreadSyncObject (note nothing uses this directly (I think) )
+//
 //-----------------------------------------------------------------------------
+
+
+#ifdef _PS3
+uint32_t CThreadSyncObject::m_bstaticMutexInitialized = false;
+uint32_t CThreadSyncObject::m_bstaticMutexInitializing = false;
+sys_lwmutex_t CThreadSyncObject::m_staticMutex;
+#endif
+
 
 CThreadSyncObject::CThreadSyncObject()
 #ifdef _WIN32
   : m_hSyncObject( NULL ), m_bCreatedHandle(false)
-#elif defined(POSIX)
+#elif defined(POSIX) && !defined(PLATFORM_PS3)
   : m_bInitalized( false )
 #endif
 {
+#ifdef _PS3
+	//Do we nee to initialise the staticMutex?
+	if (m_bstaticMutexInitialized) return;
+
+	//If we are the first thread then create the mutex
+	if ( cellAtomicCompareAndSwap32(&m_bstaticMutexInitializing, false, true) == false )
+	{
+		sys_lwmutex_attribute_t mutexAttr;
+		sys_lwmutex_attribute_initialize( mutexAttr );
+		mutexAttr.attr_recursive = SYS_SYNC_RECURSIVE;
+		int err = sys_lwmutex_create( &m_staticMutex, &mutexAttr );
+		Assert(err == CELL_OK);
+		m_bstaticMutexInitialized = true;
+	}
+	else
+	{
+		//Another thread is already in the process of initialising the mutex, wait for it
+		while ( !m_bstaticMutexInitialized )
+		{
+			// sys_ppu_thread_yield doesn't seem to function properly, so sleep instead.
+//			sys_timer_usleep( 60 );
+			sys_ppu_thread_yield();
+		}
+	}
+#endif
 }
 
 //---------------------------------------------------------
@@ -538,12 +857,12 @@ CThreadSyncObject::~CThreadSyncObject()
 		  Assert( 0 );
 	  }
    }
-#elif defined(POSIX)
+#elif defined(POSIX) && !defined( PLATFORM_PS3 )
    if ( m_bInitalized )
    {
-	pthread_cond_destroy( &m_Condition );
+		pthread_cond_destroy( &m_Condition );
         pthread_mutex_destroy( &m_Mutex );
-	m_bInitalized = false;
+		m_bInitalized = false;
    }
 #endif
 }
@@ -552,7 +871,9 @@ CThreadSyncObject::~CThreadSyncObject()
 
 bool CThreadSyncObject::operator!() const
 {
-#ifdef _WIN32
+#if PLATFORM_PS3
+	return m_bstaticMutexInitialized;
+#elif defined( _WIN32 ) 
    return !m_hSyncObject;
 #elif defined(POSIX)
    return !m_bInitalized;
@@ -564,7 +885,9 @@ bool CThreadSyncObject::operator!() const
 void CThreadSyncObject::AssertUseable()
 {
 #ifdef THREADS_DEBUG
-#ifdef _WIN32
+#if PLATFORM_PS3
+	AssertMsg( m_bstaticMutexInitialized, "Thread synchronization object is unuseable" );
+#elif defined( _WIN32 )
    AssertMsg( m_hSyncObject, "Thread synchronization object is unuseable" );
 #elif defined(POSIX)
    AssertMsg( m_bInitalized, "Thread synchronization object is unuseable" );
@@ -574,14 +897,15 @@ void CThreadSyncObject::AssertUseable()
 
 //---------------------------------------------------------
 
+#if defined(_WIN32) || ( defined(POSIX) && !defined( _PS3 ) )
 bool CThreadSyncObject::Wait( uint32 dwTimeout )
 {
 #ifdef THREADS_DEBUG
    AssertUseable();
 #endif
 #ifdef _WIN32
-   return ( VCRHook_WaitForSingleObject( m_hSyncObject, dwTimeout ) == WAIT_OBJECT_0 );
-#elif defined(POSIX)
+   return ( WaitForSingleObject( m_hSyncObject, dwTimeout ) == WAIT_OBJECT_0 );
+#elif defined( POSIX ) && !defined( PLATFORM_PS3 )
     pthread_mutex_lock( &m_Mutex );
     bool bRet = false;
     if ( m_cSet > 0 )
@@ -634,6 +958,147 @@ bool CThreadSyncObject::Wait( uint32 dwTimeout )
     return bRet;
 #endif
 }
+#endif
+
+uint32 CThreadSyncObject::WaitForMultiple( int nObjects, CThreadSyncObject **ppObjects, bool bWaitAll, uint32 dwTimeout )
+{
+#if defined( _WIN32 )
+	
+	CThreadSyncObject *pHandles = (CThreadSyncObject*)stackalloc( sizeof(CThreadSyncObject) * nObjects );
+	for ( int i=0; i < nObjects; i++ )
+	{
+		pHandles[i].m_hSyncObject = ppObjects[i]->m_hSyncObject;
+	}
+
+	return WaitForMultiple( nObjects, pHandles, bWaitAll, dwTimeout );
+
+#else
+	
+	// TODO: Need a more efficient implementation of this.
+	uint32 dwStartTime = 0;
+	
+	if ( dwTimeout != TT_INFINITE )
+		dwStartTime = Plat_MSTime();
+	
+	// If bWaitAll = true, then we need to track which ones were triggered.
+	char *pWasTriggered = NULL;
+	int nTriggered = 0;
+	if ( bWaitAll )
+	{
+		pWasTriggered = (char*)stackalloc( nObjects );
+		memset( pWasTriggered, 0, nObjects );
+	}
+
+	while ( 1 )
+	{
+		for ( int i=0; i < nObjects; i++ )
+		{
+			if ( bWaitAll && pWasTriggered[i] )
+				continue;
+
+#ifdef _PS3
+			Assert( !"Not implemented!" );
+			if ( false )
+#else
+			if ( ppObjects[i]->Wait( 0 ) )
+#endif
+			{
+				++nTriggered;
+				if ( bWaitAll )
+				{
+					if ( nTriggered == nObjects )
+						return 0;
+					else
+						pWasTriggered[i] = 1;
+				}
+				else
+				{
+					return i;
+				}
+			}
+		}
+
+		// Timeout?
+		if ( dwTimeout != TT_INFINITE )
+		{
+			if ( Plat_MSTime() - dwStartTime >= dwTimeout )
+				return TW_TIMEOUT;
+		}
+
+		ThreadSleep( 0 );
+	}
+
+#endif
+}
+
+uint32 CThreadSyncObject::WaitForMultiple( int nObjects, CThreadSyncObject *pObjects, bool bWaitAll, uint32 dwTimeout )
+{
+#if defined(_WIN32 )
+
+	HANDLE *pHandles = (HANDLE*)stackalloc( sizeof(HANDLE) * nObjects );
+	for ( int i=0; i < nObjects; i++ )
+	{
+		pHandles[i] = pObjects[i].m_hSyncObject;
+	}
+	
+	DWORD ret = WaitForMultipleObjects( nObjects, pHandles, bWaitAll, dwTimeout );
+	if ( ret == WAIT_TIMEOUT )
+		return TW_TIMEOUT;
+	else if ( ret >= WAIT_OBJECT_0 && (ret-WAIT_OBJECT_0) < (uint32)nObjects )
+		return (int)(ret - WAIT_OBJECT_0);
+	else if ( ret >= WAIT_ABANDONED_0 && (ret - WAIT_ABANDONED_0) < (uint32)nObjects )
+		Error( "Unhandled WAIT_ABANDONED in WaitForMultipleObjects" );
+	else if ( ret == WAIT_FAILED )
+		return TW_FAILED;
+	else
+		Error( "Unknown return value (%lu) from WaitForMultipleObjects", ret );
+
+	// We'll never get here..
+	return 0;
+
+#else
+
+	CThreadSyncObject **ppObjects = (CThreadSyncObject**)stackalloc( sizeof( CThreadSyncObject* ) * nObjects );
+	for ( int i=0; i < nObjects; i++ )
+	{
+		ppObjects[i] = &pObjects[i];
+	}
+
+	return WaitForMultiple( nObjects, ppObjects, bWaitAll, dwTimeout );
+
+#endif
+}
+
+// To implement these, I need to check that casts are safe
+uint32 CThreadEvent::WaitForMultiple( int nObjects, CThreadEvent *pObjects, bool bWaitAll, uint32 dwTimeout )
+{
+	// If data ever gets added to CThreadEvent, then we need a different implementation.
+#ifdef _PS3
+	CThreadEvent **ppObjects = (CThreadEvent**)stackalloc( sizeof( CThreadEvent* ) * nObjects );
+	for ( int i=0; i < nObjects; i++ )
+	{
+		ppObjects[i] = &pObjects[i];
+	}
+	return WaitForMultipleObjects( nObjects, ppObjects, bWaitAll, dwTimeout );
+#else
+	COMPILE_TIME_ASSERT( sizeof( CThreadSyncObject ) == 0 || sizeof( CThreadEvent ) == sizeof( CThreadSyncObject ) );
+	return CThreadSyncObject::WaitForMultiple( nObjects, (CThreadSyncObject*)pObjects, bWaitAll, dwTimeout );
+#endif
+}
+
+
+uint32 CThreadEvent::WaitForMultiple( int nObjects, CThreadEvent **ppObjects, bool bWaitAll, uint32 dwTimeout )
+{
+#ifdef _PS3
+	return WaitForMultipleObjects( nObjects, ppObjects, bWaitAll, dwTimeout );
+#else
+	// If data ever gets added to CThreadEvent, then we need a different implementation.
+	COMPILE_TIME_ASSERT( sizeof( CThreadSyncObject )== 0 || sizeof( CThreadEvent ) == sizeof( CThreadSyncObject ) );
+	return CThreadSyncObject::WaitForMultiple( nObjects, (CThreadSyncObject**)ppObjects, bWaitAll, dwTimeout );
+#endif
+}
+
+
 
 //-----------------------------------------------------------------------------
 //
@@ -645,6 +1110,23 @@ CThreadEvent::CThreadEvent( bool bManualReset )
     m_hSyncObject = CreateEvent( NULL, bManualReset, FALSE, NULL );
 	m_bCreatedHandle = true;
     AssertMsg1(m_hSyncObject, "Failed to create event (error 0x%x)", GetLastError() );
+#elif defined( _PS3 )
+
+	m_bManualReset = bManualReset;
+	m_bSet = 0;
+	m_bInitalized = false;
+	m_numWaitingThread = 0;
+
+	// set up linked list of wait objects
+
+	memset(&m_waitObjects[0], 0, sizeof(m_waitObjects));
+	m_pWaitObjectsList = &m_waitObjects[0];
+	m_pWaitObjectsPool = &m_waitObjects[1];
+
+	for (int i = 2; i < CTHREADEVENT_MAX_WAITING_THREADS + 2; i++)
+	{
+		LLLinkNode(m_pWaitObjectsPool, &m_waitObjects[i]);
+	}
 #elif defined( POSIX )
     pthread_mutexattr_t Attr;
     pthread_mutexattr_init( &Attr );
@@ -660,14 +1142,146 @@ CThreadEvent::CThreadEvent( bool bManualReset )
 #endif
 }
 
-#ifdef _WIN32
-CThreadEvent::CThreadEvent( HANDLE hHandle )
+
+//-----------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------
+
+#ifdef _PS3
+
+//
+// linked list functionality
+//
+
+//-----------------------------------------------------------------------------
+// Purpose: Linked list implementation
+//-----------------------------------------------------------------------------
+
+CThreadEventWaitObject* CThreadEvent::LLUnlinkNode(CThreadEventWaitObject *node)
 {
-	m_hSyncObject = hHandle;
-	m_bCreatedHandle = false;
-	AssertMsg(m_hSyncObject, "Null event passed into constructor" );
+	// <sergiy> Note: if you have a null-access crash here, it may mean that CTHREADEVENT_MAX_WAITING_THREADS is not high enough
+	//                and the linked list pool is simply exhausted
+	node->m_pPrev->m_pNext = node->m_pNext;
+	if (node->m_pNext) node->m_pNext->m_pPrev = node->m_pPrev;
+	node->m_pNext = node->m_pPrev = NULL;
+
+	return node;
 }
-#endif
+
+CThreadEventWaitObject* CThreadEvent::LLLinkNode(CThreadEventWaitObject* list, CThreadEventWaitObject *node)
+{
+	node->m_pNext = list->m_pNext;
+	if (node->m_pNext)
+	{
+		node->m_pNext->m_pPrev = node;
+	}
+
+	list->m_pNext = node;
+	node->m_pPrev = list;
+
+	return node;
+}
+
+//-----------------------------------------------------------------------------
+// Helper function to atomically write index into destination and set semaphore
+// This is used by WaitForMultipleObjects(WAIT_ANY) because once the semaphore
+// is set, the waiting thread also needs to know which event triggered it
+// We do NOT need this to be atomic because if a number of events fire it doesn't
+// matter which one of these we pick
+//-----------------------------------------------------------------------------
+void CThreadEventWaitObject::Set()
+{
+	*m_pFlag = m_index;
+	sys_semaphore_post(*m_pSemaphore, 1);
+}
+
+//
+// CThreadEvent::RegisterWaitingThread
+//
+void CThreadEvent::RegisterWaitingThread(sys_semaphore_t *pSemaphore, int index, int *flag)
+{
+	sys_lwmutex_lock(&m_staticMutex, 0);
+
+	// if we are already set, then signal this semaphore
+	if (m_bSet)
+	{
+		CThreadEventWaitObject waitObject;
+		waitObject.Init(pSemaphore, index, flag);
+		waitObject.Set();
+
+		if (!m_bManualReset)
+		{
+			m_bSet = false;
+		}
+	}
+	else
+	{
+		if (!m_pWaitObjectsPool->m_pNext)
+		{
+			DEBUG_ERROR("CThreadEvent: Ran out of events; cannot register waiting thread\n");
+		}
+
+		// add this semaphore to linked list - can be added more than once it doesn't matter
+
+		CThreadEventWaitObject *pWaitObject = LLUnlinkNode(m_pWaitObjectsPool->m_pNext);
+
+		pWaitObject->Init(pSemaphore, index, flag);
+
+		LLLinkNode(m_pWaitObjectsList, pWaitObject);
+	}
+
+	sys_lwmutex_unlock(&m_staticMutex);
+}
+
+//
+// CThreadEvent::UnregisterWaitingThread
+//
+void CThreadEvent::UnregisterWaitingThread(sys_semaphore_t *pSemaphore)
+{
+	// remove all instances of this semaphore from linked list
+
+	sys_lwmutex_lock(&m_staticMutex, 0);
+
+	CThreadEventWaitObject *pWaitObject = m_pWaitObjectsList->m_pNext;
+
+	while (pWaitObject)
+	{
+		CThreadEventWaitObject *pNext = pWaitObject->m_pNext;
+
+		if (pWaitObject->m_pSemaphore == pSemaphore)
+		{
+			LLUnlinkNode(pWaitObject);
+			LLLinkNode(m_pWaitObjectsPool, pWaitObject);
+		}
+
+		pWaitObject = pNext;
+	}
+
+	sys_lwmutex_unlock(&m_staticMutex);
+}
+
+#endif // _PS3
+
+
+#ifdef PLATFORM_WINDOWS
+	CThreadEvent::CThreadEvent( const char *name, bool initialState, bool bManualReset )
+	{
+		m_hSyncObject = CreateEvent( NULL, bManualReset, (BOOL) initialState, name );
+		AssertMsg1( m_hSyncObject, "Failed to create event (error 0x%x)", GetLastError() );
+	}
+
+
+	NamedEventResult_t CThreadEvent::CheckNamedEvent( const char *name, uint32 dwTimeout )
+	{
+		HANDLE eHandle = OpenEvent( SYNCHRONIZE, FALSE, name );
+		
+		if ( eHandle == NULL ) return TT_EventDoesntExist;
+		
+		DWORD result = WaitForSingleObject( eHandle, dwTimeout );
+		
+		return ( result == WAIT_OBJECT_0 ) ?  TT_EventSignaled : TT_EventNotSignaled;
+	}
+#endif 
 
 //-----------------------------------------------------------------------------
 //
@@ -678,17 +1292,92 @@ CThreadEvent::CThreadEvent( HANDLE hHandle )
 
 bool CThreadEvent::Set()
 {
+//////////////////////////////////////////////////////////////
+#ifndef NEW_WAIT_FOR_MULTIPLE_OBJECTS
+//////////////////////////////////////////////////////////////
    AssertUseable();
 #ifdef _WIN32
    return ( SetEvent( m_hSyncObject ) != 0 );
+#elif defined( _PS3 )
+
+   sys_lwmutex_lock(&m_staticMutex, 0);
+   
+   if (m_bManualReset)
+	{
+		//Mark event as set
+		m_bSet = true;
+		
+		//If any threads are already waiting then signal them to run
+		if (m_bInitalized)
+		{
+			int err = sys_semaphore_post( m_Semaphore, m_numWaitingThread);
+			Assert(err == CELL_OK);
+		}
+	}
+	else
+	{
+		//If any threads are already waiting then signal ONE to run, else signal next to run
+
+		if (m_numWaitingThread>0)
+		{
+			int err = sys_semaphore_post( m_Semaphore, 1);
+			Assert(err == CELL_OK);
+		}
+		else
+		{
+			m_bSet=true;
+		}
+	}
+
+   sys_lwmutex_unlock(&m_staticMutex);
+
+	return true;
+
+
 #elif defined(POSIX)
-    pthread_mutex_lock( &m_Mutex );
-    m_cSet = 1;
+   pthread_mutex_lock( &m_Mutex );
+	m_cSet = 1;
 	m_bWakeForEvent = true;
     int ret = pthread_cond_signal( &m_Condition );
-    pthread_mutex_unlock( &m_Mutex );
-    return ret == 0;
+   pthread_mutex_unlock( &m_Mutex );
+   return ret == 0;
 #endif
+
+
+//////////////////////////////////////////////////////////////
+#else	// NEW_WAIT_FOR_MULTIPLE_OBJECTS
+//////////////////////////////////////////////////////////////
+
+	sys_lwmutex_lock(&m_staticMutex, 0);
+
+	//Mark event as set
+	m_bSet = true;
+
+	// signal registered semaphores
+	while (m_pWaitObjectsList->m_pNext)
+	{
+	   CThreadEventWaitObject *pWaitObject = LLUnlinkNode(m_pWaitObjectsList->m_pNext);
+	   
+	   pWaitObject->Set();
+
+	   LLLinkNode(m_pWaitObjectsPool, pWaitObject);
+
+	   g_pfnPopMarker();
+
+	   if (!m_bManualReset)
+	   {
+		   m_bSet = false;
+		   break;
+	   }
+	}
+
+	sys_lwmutex_unlock(&m_staticMutex);
+
+	return true;
+
+//////////////////////////////////////////////////////////////
+#endif	// NEW_WAIT_FOR_MULTIPLE_OBJECTS
+//////////////////////////////////////////////////////////////
 }
 
 //---------------------------------------------------------
@@ -700,6 +1389,12 @@ bool CThreadEvent::Reset()
 #endif
 #ifdef _WIN32
    return ( ResetEvent( m_hSyncObject ) != 0 );
+#elif defined( _PS3 )
+
+   //Just mark us as no longer signaled
+   m_bSet = 0;
+
+   return true;
 #elif defined(POSIX)
 	pthread_mutex_lock( &m_Mutex );
 	m_cSet = 0;
@@ -713,6 +1408,9 @@ bool CThreadEvent::Reset()
 
 bool CThreadEvent::Check()
 {
+	#ifdef _PS3
+	return m_bSet; // Please, use for debugging only!
+	#endif
 #ifdef THREADS_DEBUG
    AssertUseable();
 #endif
@@ -723,7 +1421,79 @@ bool CThreadEvent::Check()
 
 bool CThreadEvent::Wait( uint32 dwTimeout )
 {
+//////////////////////////////////////////////////////////////
+#ifndef NEW_WAIT_FOR_MULTIPLE_OBJECTS
+//////////////////////////////////////////////////////////////
+
+
+#if defined( _WIN32 ) || ( defined( POSIX ) && !defined( _PS3 ) )
 	return CThreadSyncObject::Wait( dwTimeout );
+#elif defined( _PS3 )
+
+	{
+
+		if (dwTimeout == 0)
+		{
+			//If timeout is 0 then just test it now (and reset it if manual )
+			if (m_bSet)
+			{
+				if ( !m_bManualReset ) m_bSet=false;
+				return true;
+			}
+			return false;
+		}
+
+		if (!AddWaitingThread())
+		{
+			//Waiting thread NOT added because m_bSet was already set
+			if ( !m_bManualReset ) m_bSet=false;
+			return true;
+		}		
+				
+		uint32 timeout;
+		int countTimeout = 0;
+		int ret = ETIMEDOUT;
+		while ( timeout=MIN(1, dwTimeout) )
+		{
+			// on the PS3, "infinite timeout" is specified by zero, not 
+			// 0xFFFFFFFF, so we need to perform that ternary here.
+//#error Untested code:
+			ret = sys_semaphore_wait( m_Semaphore, timeout == TT_INFINITE ? 0 : timeout * 1000 );
+			Assert( (ret == CELL_OK) || (ret == ETIMEDOUT) );
+			
+			if ( ret == CELL_OK )
+				break;
+
+			dwTimeout -= timeout;
+			countTimeout++;
+			if (countTimeout > 30)
+			{
+			//	printf("WARNING: possible deadlock in CThreadEvent::Wait() !!!\n");
+			}
+		}
+
+		RemoveWaitingThread();
+
+		if ( !m_bManualReset ) m_bSet=false;
+
+		return ret == CELL_OK;
+	}
+
+#endif
+
+//////////////////////////////////////////////////////////////
+#else	// NEW_WAIT_FOR_MULTIPLE_OBJECTS
+//////////////////////////////////////////////////////////////
+
+
+	CThreadEvent *pThis = this;
+	DWORD res = WaitForMultipleObjects(1, &pThis, true, dwTimeout);
+	return res == WAIT_OBJECT_0;
+
+
+//////////////////////////////////////////////////////////////
+#endif	// NEW_WAIT_FOR_MULTIPLE_OBJECTS
+//////////////////////////////////////////////////////////////
 }
 
 #ifdef _WIN32
@@ -735,8 +1505,9 @@ bool CThreadEvent::Wait( uint32 dwTimeout )
 //
 //-----------------------------------------------------------------------------
 
-CThreadSemaphore::CThreadSemaphore( long initialValue, long maxValue )
+CThreadSemaphore::CThreadSemaphore( int32 initialValue, int32 maxValue )
 {
+#ifdef _WIN32
 	if ( maxValue )
 	{
 		AssertMsg( maxValue > 0, "Invalid max value for semaphore" );
@@ -750,16 +1521,135 @@ CThreadSemaphore::CThreadSemaphore( long initialValue, long maxValue )
 	{
 		m_hSyncObject = NULL;
 	}
+#elif defined( _PS3 )
+	if ( maxValue )
+	{
+		m_sema_max_val = maxValue;
+		m_semaCount = initialValue;
+	}
+#endif
 }
+
+
+#ifdef _PS3
+//---------------------------------------------------------
+
+bool CThreadSemaphore::AddWaitingThread()
+{
+	bool result;
+
+	sys_lwmutex_lock(&m_staticMutex, 0);
+
+	if (cellAtomicTestAndDecr32(&m_semaCount) > 0)
+	{
+		result=false;
+	}
+	else
+	{
+		result=true;
+		m_numWaitingThread++;
+
+		if ( m_numWaitingThread == 1 )
+		{
+			sys_semaphore_attribute_t semAttr;
+			sys_semaphore_attribute_initialize( semAttr );
+			Assert(m_semaCount == 0);
+			int err = sys_semaphore_create( &m_Semaphore, &semAttr, 0, m_sema_max_val );
+			Assert( err == CELL_OK );
+			m_bInitalized = true;
+		}
+	}
+
+	sys_lwmutex_unlock(&m_staticMutex);
+	return result;
+}
+
+void CThreadSemaphore::RemoveWaitingThread()
+{
+	sys_lwmutex_lock(&m_staticMutex, 0);
+
+	m_numWaitingThread--;
+
+	if ( m_numWaitingThread == 0)
+	{
+		int err = sys_semaphore_destroy( m_Semaphore );
+		Assert( err == CELL_OK );
+		m_bInitalized = false;
+	}
+
+	sys_lwmutex_unlock(&m_staticMutex);
+}
+
+#endif
+
+#ifdef _PS3
+
+bool CThreadSemaphore::Wait( uint32 dwTimeout )
+{
+#ifdef THREADS_DEBUG
+	AssertUseable();
+#endif
+
+
+#ifndef NO_THREAD_SYNC
+	if (!AddWaitingThread())
+	{
+		//Waiting thread NOT added because semaphore was already in a signaled state
+		return true;
+	}
+
+	int ret = sys_semaphore_wait( m_Semaphore, dwTimeout == TT_INFINITE ? 0 : dwTimeout * 1000 );
+	Assert( (ret == CELL_OK) || (ret == ETIMEDOUT) );
+
+	RemoveWaitingThread();
+
+	int old = cellAtomicDecr32(&m_semaCount);
+	Assert(old>0);
+#else
+	int ret = CELL_OK;
+#endif
+
+	// sys_ppu_thread_yield doesn't seem to function properly, so sleep instead.
+//	sys_timer_usleep( 60 );
+	sys_ppu_thread_yield();
+
+
+
+	return ret == CELL_OK;
+}
+
+#endif
 
 //---------------------------------------------------------
 
-bool CThreadSemaphore::Release( long releaseCount, long *pPreviousCount )
+bool CThreadSemaphore::Release( int32 releaseCount, int32 *pPreviousCount )
 {
 #ifdef THRDTOOL_DEBUG
    AssertUseable();
 #endif
-   return ( ReleaseSemaphore( m_hSyncObject, releaseCount, pPreviousCount ) != 0 );
+#ifdef _WIN32
+   return ( ReleaseSemaphore( m_hSyncObject, releaseCount, (LPLONG)pPreviousCount ) != 0 );
+#elif defined( _PS3 )
+
+#ifndef NO_THREAD_SYNC
+
+   if (m_bInitalized)
+   {
+	   sys_semaphore_value_t previousVal;
+	   sys_semaphore_get_value( m_Semaphore, &previousVal );
+
+	   cellAtomicAdd32(&m_semaCount, releaseCount);
+
+	   *pPreviousCount = previousVal;
+
+	   int err = sys_semaphore_post( m_Semaphore, releaseCount );
+	   Assert(err == CELL_OK);
+   }
+
+#endif
+
+   return true;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -789,15 +1679,20 @@ bool CThreadFullMutex::Release()
 //
 //-----------------------------------------------------------------------------
 
+#if defined( WIN32 ) || defined( _PS3 ) || defined( _OSX ) || ( defined (_LINUX) && !defined(DEDICATED) )
+#if !defined(_PS3)
+namespace GenericThreadLocals
+{
+#endif
 CThreadLocalBase::CThreadLocalBase()
 {
-#ifdef _WIN32
+#if defined(_WIN32) || defined(_PS3)
 	m_index = TlsAlloc();
 	AssertMsg( m_index != 0xFFFFFFFF, "Bad thread local" );
 	if ( m_index == 0xFFFFFFFF )
 		Error( "Out of thread local storage!\n" );
 #elif defined(POSIX)
-	if ( pthread_key_create( &m_index, NULL ) != 0 )
+	if ( pthread_key_create(  (pthread_key_t *)&m_index, NULL ) != 0 )
 		Error( "Out of thread local storage!\n" );
 #endif
 }
@@ -806,7 +1701,7 @@ CThreadLocalBase::CThreadLocalBase()
 
 CThreadLocalBase::~CThreadLocalBase()
 {
-#ifdef _WIN32
+#if defined(_WIN32) || defined(_PS3)
 	if ( m_index != 0xFFFFFFFF )
 		TlsFree( m_index );
 	m_index = 0xFFFFFFFF;
@@ -819,7 +1714,7 @@ CThreadLocalBase::~CThreadLocalBase()
 
 void * CThreadLocalBase::Get() const
 {
-#ifdef _WIN32
+#if defined(_WIN32) || defined(_PS3)
 	if ( m_index != 0xFFFFFFFF )
 		return TlsGetValue( m_index );
 	AssertMsg( 0, "Bad thread local" );
@@ -834,7 +1729,7 @@ void * CThreadLocalBase::Get() const
 
 void CThreadLocalBase::Set( void *value )
 {
-#ifdef _WIN32
+#if defined(_WIN32) || defined(_PS3)
 	if (m_index != 0xFFFFFFFF)
 		TlsSetValue(m_index, value);
 	else
@@ -844,22 +1739,25 @@ void CThreadLocalBase::Set( void *value )
 		AssertMsg( 0, "Bad thread local" );
 #endif
 }
-
-//-----------------------------------------------------------------------------
-
-
-//-----------------------------------------------------------------------------
-
-#ifdef _WIN32
-#ifdef _X360
-#define TO_INTERLOCK_PARAM(p)		((long *)p)
-#define TO_INTERLOCK_PTR_PARAM(p)	((void **)p)
-#else
-#define TO_INTERLOCK_PARAM(p)		(p)
-#define TO_INTERLOCK_PTR_PARAM(p)	(p)
+#if !defined(_PS3)
+} // namespace GenericThreadLocals
 #endif
+#endif // ( defined(WIN32) ) 
+//-----------------------------------------------------------------------------
 
-#ifndef USE_INTRINSIC_INTERLOCKED
+
+//-----------------------------------------------------------------------------
+
+#ifdef MSVC
+//#ifdef _X360
+#define TO_INTERLOCK_PARAM(p)		((volatile long *)p)
+#define TO_INTERLOCK_PTR_PARAM(p)	((void **)p)
+//#else
+//#define TO_INTERLOCK_PARAM(p)		(p)
+//#define TO_INTERLOCK_PTR_PARAM(p)	(p)
+//#endif
+
+#if !defined(USE_INTRINSIC_INTERLOCKED) && !defined(_X360)
 int32 ThreadInterlockedIncrement( int32 volatile *pDest )
 {
 	Assert( (size_t)pDest % 4 == 0 );
@@ -915,7 +1813,7 @@ bool ThreadInterlockedAssignIf( int32 volatile *pDest, int32 value, int32 comper
 void *ThreadInterlockedExchangePointer( void * volatile *pDest, void *value )
 {
 	Assert( (size_t)pDest % 4 == 0 );
-	return InterlockedExchangePointer( TO_INTERLOCK_PARAM(pDest), value );
+	return InterlockedExchangePointer( TO_INTERLOCK_PTR_PARAM(pDest), value );
 }
 
 void *ThreadInterlockedCompareExchangePointer( void * volatile *pDest, void *value, void *comperand )
@@ -943,13 +1841,11 @@ bool ThreadInterlockedAssignPointerIf( void * volatile *pDest, void *value, void
 }
 #endif
 
+#ifdef COMPILER_MSVC32
 int64 ThreadInterlockedCompareExchange64( int64 volatile *pDest, int64 value, int64 comperand )
 {
 	Assert( (size_t)pDest % 8 == 0 );
 
-#if defined(_WIN64) || defined (_X360)
-	return InterlockedCompareExchange64( pDest, value, comperand );
-#else
 	__asm 
 	{
 		lea esi,comperand;
@@ -962,14 +1858,16 @@ int64 ThreadInterlockedCompareExchange64( int64 volatile *pDest, int64 value, in
 		mov esi,pDest;
 		lock CMPXCHG8B [esi];			
 	}
-#endif
 }
+#endif
 
 bool ThreadInterlockedAssignIf64(volatile int64 *pDest, int64 value, int64 comperand ) 
 {
 	Assert( (size_t)pDest % 8 == 0 );
 
-#if defined(PLATFORM_WINDOWS_PC32 )
+#if defined(_X360) || defined(_WIN64)
+	return ( ThreadInterlockedCompareExchange64( pDest, value, comperand ) == comperand ); 
+#else
 	__asm
 	{
 		lea esi,comperand;
@@ -984,25 +1882,15 @@ bool ThreadInterlockedAssignIf64(volatile int64 *pDest, int64 value, int64 compe
 		mov eax,0;
 		setz al;
 	}
-#else
-	return ( ThreadInterlockedCompareExchange64( pDest, value, comperand ) == comperand ); 
 #endif
 }
 
-#if defined( PLATFORM_64BITS )
-
-#if _MSC_VER < 1500
-// This intrinsic isn't supported on VS2005.
-extern "C" unsigned char _InterlockedCompareExchange128( int64 volatile * Destination, int64 ExchangeHigh, int64 ExchangeLow, int64 * ComparandResult );
-#endif
-
+#ifdef _WIN64
 bool ThreadInterlockedAssignIf128( volatile int128 *pDest, const int128 &value, const int128 &comperand )
 {
-	Assert( ( (size_t)pDest % 16 ) == 0 );
-
-	volatile int64 *pDest64 = ( volatile int64 * )pDest;
-	int64 *pValue64 = ( int64 * )&value;
-	int64 *pComperand64 = ( int64 * )&comperand;
+	DbgAssert( ( (size_t)pDest % 16 ) == 0 );
+	// Must copy comperand to stack because the intrinsic uses it as an in/out param
+	int64 comperandInOut[2] = { comperand.m128i_i64[0], comperand.m128i_i64[1] };
 
 	// Description:
 	//  The CMPXCHG16B instruction compares the 128-bit value in the RDX:RAX and RCX:RBX registers
@@ -1011,120 +1899,50 @@ bool ThreadInterlockedAssignIf128( volatile int128 *pDest, const int128 &value, 
 	//  Otherwise, the ZF flag is cleared, and the memory value is copied to RDX:RAX.
 
 	// _InterlockedCompareExchange128: http://msdn.microsoft.com/en-us/library/bb514094.aspx
-	return _InterlockedCompareExchange128( pDest64, pValue64[1], pValue64[0], pComperand64 ) == 1;
+	if ( _InterlockedCompareExchange128( ( volatile int64 * )pDest, value.m128i_i64[1], value.m128i_i64[0], comperandInOut ) )
+		return true;
+	return false;
 }
-
-#endif // PLATFORM_64BITS
-
-int64 ThreadInterlockedIncrement64( int64 volatile *pDest )
-{
-	Assert( (size_t)pDest % 8 == 0 );
-
-	int64 Old;
-
-	do 
-	{
-		Old = *pDest;
-	} while (ThreadInterlockedCompareExchange64(pDest, Old + 1, Old) != Old);
-
-	return Old + 1;
-}
-
-int64 ThreadInterlockedDecrement64( int64 volatile *pDest )
-{
-	Assert( (size_t)pDest % 8 == 0 );
-	int64 Old;
-
-	do 
-	{
-		Old = *pDest;
-	} while (ThreadInterlockedCompareExchange64(pDest, Old - 1, Old) != Old);
-
-	return Old - 1;
-}
-
-int64 ThreadInterlockedExchange64( int64 volatile *pDest, int64 value )
-{
-	Assert( (size_t)pDest % 8 == 0 );
-	int64 Old;
-
-	do 
-	{
-		Old = *pDest;
-	} while (ThreadInterlockedCompareExchange64(pDest, value, Old) != Old);
-
-	return Old;
-}
-
-int64 ThreadInterlockedExchangeAdd64( int64 volatile *pDest, int64 value )
-{
-	Assert( (size_t)pDest % 8 == 0 );
-	int64 Old;
-
-	do 
-	{
-		Old = *pDest;
-	} while (ThreadInterlockedCompareExchange64(pDest, Old + value, Old) != Old);
-
-	return Old;
-}
+#endif
 
 #elif defined(GNUC)
 
-int32 ThreadInterlockedIncrement( int32 volatile *pDest )
+#ifdef OSX
+#include <libkern/OSAtomic.h>
+#endif
+
+
+long ThreadInterlockedIncrement( long volatile *pDest )
 {
 	return __sync_fetch_and_add( pDest, 1 ) + 1;
 }
 
-int64 ThreadInterlockedIncrement64( int64 volatile *pDest )
-{
-    return  __sync_fetch_and_add( pDest, 1 ) + 1;
-}
-
-int32 ThreadInterlockedDecrement( int32 volatile *pDest )
+long ThreadInterlockedDecrement( long volatile *pDest )
 {
 	return __sync_fetch_and_sub( pDest, 1 ) - 1;
 }
 
-int64 ThreadInterlockedDecrement64( int64 volatile *pDest )
-{
-    return  __sync_fetch_and_sub( pDest, 1 ) - 1;
-}
-
-int32 ThreadInterlockedExchange( int32 volatile *pDest, int32 value )
+long ThreadInterlockedExchange( long volatile *pDest, long value )
 {
 	return __sync_lock_test_and_set( pDest, value );
 }
 
-int64 ThreadInterlockedExchange64( int64 volatile *pDest, int64 value )
-{
-    return  __sync_lock_test_and_set( pDest, value );
-}
-
-int32 ThreadInterlockedExchangeAdd( int32 volatile *pDest, int32 value )
+long ThreadInterlockedExchangeAdd( long volatile *pDest, long value )
 {
 	return  __sync_fetch_and_add( pDest, value );
 }
 
-int64 ThreadInterlockedExchangeAdd64( int64 volatile *pDest, int64 value )
-{
-    return  __sync_fetch_and_add( pDest, value );
-}
-
-int32 ThreadInterlockedCompareExchange( int32 volatile *pDest, int32 value, int32 comperand )
+long ThreadInterlockedCompareExchange( long volatile *pDest, long value, long comperand )
 {
 	return  __sync_val_compare_and_swap( pDest, comperand, value );
 }
 
-bool ThreadInterlockedAssignIf( int32 volatile *pDest, int32 value, int32 comperand )
+bool ThreadInterlockedAssignIf( long volatile *pDest, long value, long comperand )
 {
 	return __sync_bool_compare_and_swap( pDest, comperand, value );
 }
 
-void *ThreadInterlockedExchangePointer( void * volatile *pDest, void *value )
-{
-	return __sync_lock_test_and_set( pDest, value );
-}
+#if !defined( USE_INTRINSIC_INTERLOCKED ) 
 
 void *ThreadInterlockedCompareExchangePointer( void *volatile *pDest, void *value, void *comperand )
 {	
@@ -1136,6 +1954,18 @@ bool ThreadInterlockedAssignPointerIf( void * volatile *pDest, void *value, void
 	return  __sync_bool_compare_and_swap( pDest, comperand, value );
 }
 
+#elif defined( PLATFORM_64BITS )
+
+void *ThreadInterlockedExchangePointer( void * volatile *pDest, void *value )
+{
+	return __sync_lock_test_and_set( pDest, value );
+}
+
+void *ThreadInterlockedCompareExchangePointer( void * volatile *p, void *value, void *comparand ) {
+	return (void *)( ( intp )ThreadInterlockedCompareExchange64( reinterpret_cast<intp volatile *>(p), reinterpret_cast<intp>(value), reinterpret_cast<intp>(comparand) ) );
+}
+#endif
+
 int64 ThreadInterlockedCompareExchange64( int64 volatile *pDest, int64 value, int64 comperand )
 {
 	return __sync_val_compare_and_swap( pDest, comperand, value  );
@@ -1146,35 +1976,32 @@ bool ThreadInterlockedAssignIf64( int64 volatile * pDest, int64 value, int64 com
 	return __sync_bool_compare_and_swap( pDest, comperand, value );
 }
 
-#ifdef PLATFORM_64BITS
-bool ThreadInterlockedAssignIf128( int128 volatile *pDest, const int128 &value, const int128 &comperand )
-{
-    return __sync_bool_compare_and_swap( pDest, comperand, value );
-}
-#endif
 
+#elif defined( _PS3 )
+
+// This is defined in the header!
 
 #else
 // This will perform horribly,
 #error "Falling back to mutexed interlocked operations, you really don't have intrinsics you can use?"ß
 CThreadMutex g_InterlockedMutex;
 
-int32 ThreadInterlockedIncrement( int32 volatile *pDest )
+long ThreadInterlockedIncrement( long volatile *pDest )
 {
 	AUTO_LOCK( g_InterlockedMutex );
 	return ++(*pDest);
 }
 
-int32 ThreadInterlockedDecrement( int32 volatile *pDest )
+long ThreadInterlockedDecrement( long volatile *pDest )
 {
 	AUTO_LOCK( g_InterlockedMutex );
 	return --(*pDest);
 }
 
-int32 ThreadInterlockedExchange( int32 volatile *pDest, int32 value )
+long ThreadInterlockedExchange( long volatile *pDest, long value )
 {
 	AUTO_LOCK( g_InterlockedMutex );
-	int32 retVal = *pDest;
+	long retVal = *pDest;
 	*pDest = value;
 	return retVal;
 }
@@ -1187,18 +2014,18 @@ void *ThreadInterlockedExchangePointer( void * volatile *pDest, void *value )
 	return retVal;
 }
 
-int32 ThreadInterlockedExchangeAdd( int32 volatile *pDest, int32 value )
+long ThreadInterlockedExchangeAdd( long volatile *pDest, long value )
 {
 	AUTO_LOCK( g_InterlockedMutex );
-	int32 retVal = *pDest;
+	long retVal = *pDest;
 	*pDest += value;
 	return retVal;
 }
 
-int32 ThreadInterlockedCompareExchange( int32 volatile *pDest, int32 value, int32 comperand )
+long ThreadInterlockedCompareExchange( long volatile *pDest, long value, long comperand )
 {
 	AUTO_LOCK( g_InterlockedMutex );
-	int32 retVal = *pDest;
+	long retVal = *pDest;
 	if ( *pDest == comperand )
 		*pDest = value;
 	return retVal;
@@ -1224,6 +2051,74 @@ int64 ThreadInterlockedCompareExchange64( int64 volatile *pDest, int64 value, in
 	return retVal;
 }
 
+#endif
+
+#ifdef COMPILER_MSVC32
+
+PLATFORM_INTERFACE int64 ThreadInterlockedOr64( int64 volatile *pDest, int64 value )
+{
+	int64 Old;
+
+	do
+	{
+		Old = *pDest;
+	} while ( ThreadInterlockedCompareExchange64( pDest, Old | value, Old ) != Old );
+
+	return Old;
+}
+
+PLATFORM_INTERFACE int64 ThreadInterlockedAnd64( int64 volatile *pDest, int64 value )
+{
+	int64 Old;
+
+	do
+	{
+		Old = *pDest;
+	} while ( ThreadInterlockedCompareExchange64( pDest, Old & value, Old ) != Old );
+
+	return Old;
+}
+
+PLATFORM_INTERFACE int64 ThreadInterlockedIncrement64( int64 volatile *pDest )
+{
+	int64 Old;
+
+	do
+	{
+		Old = *pDest;
+	} while ( ThreadInterlockedCompareExchange64( pDest, Old + 1, Old ) != Old );
+
+	return Old + 1;
+}
+
+PLATFORM_INTERFACE int64 ThreadInterlockedDecrement64( int64 volatile *pDest )
+{
+	int64 Old;
+
+
+	do
+	{
+		Old = *pDest;
+	} while ( ThreadInterlockedCompareExchange64( pDest, Old - 1, Old ) != Old );
+
+	return Old - 1;
+}
+
+PLATFORM_INTERFACE int64 ThreadInterlockedExchangeAdd64( int64 volatile *pDest, int64 value )
+{
+	int64 Old;
+
+	do
+	{
+		Old = *pDest;
+	} while ( ThreadInterlockedCompareExchange64( pDest, Old + value, Old ) != Old );
+
+	return Old;
+}
+
+
+#endif
+
 int64 ThreadInterlockedExchange64( int64 volatile *pDest, int64 value )
 {
 	Assert( (size_t)pDest % 8 == 0 );
@@ -1237,19 +2132,6 @@ int64 ThreadInterlockedExchange64( int64 volatile *pDest, int64 value )
 	return Old;
 }
 
-bool ThreadInterlockedAssignIf64(volatile int64 *pDest, int64 value, int64 comperand ) 
-{
-	Assert( (size_t)pDest % 8 == 0 );
-	return ( ThreadInterlockedCompareExchange64( pDest, value, comperand ) == comperand ); 
-}
-
-bool ThreadInterlockedAssignIf( int32 volatile *pDest, int32 value, int32 comperand )
-{
-	Assert( (size_t)pDest % 4 == 0 );
-	return ( ThreadInterlockedCompareExchange( pDest, value, comperand ) == comperand ); 
-}
-
-#endif
 
 //-----------------------------------------------------------------------------
 
@@ -1276,7 +2158,20 @@ MAP_THREAD_PROFILER_CALL( ThreadNotifySyncReleasing, __itt_notify_sync_releasing
 //
 //-----------------------------------------------------------------------------
 
-#ifndef POSIX
+#ifdef _PS3
+CThreadMutex::CThreadMutex()
+{
+	// sys_mutex with recursion enabled is like a win32 critical section
+	sys_mutex_attribute_t mutexAttr;
+	sys_mutex_attribute_initialize( mutexAttr );
+	mutexAttr.attr_recursive = SYS_SYNC_RECURSIVE;
+	sys_mutex_create( &m_Mutex, &mutexAttr );
+}
+CThreadMutex::~CThreadMutex()
+{
+	sys_mutex_destroy( m_Mutex );
+}
+#elif !defined( POSIX )
 CThreadMutex::CThreadMutex()
 {
 #ifdef THREAD_MUTEX_TRACING_ENABLED
@@ -1297,7 +2192,7 @@ CThreadMutex::~CThreadMutex()
 }
 #endif // !POSIX
 
-#if defined( _WIN32 ) && !defined( _X360 )
+#ifdef IS_WINDOWS_PC
 typedef BOOL (WINAPI*TryEnterCriticalSectionFunc_t)(LPCRITICAL_SECTION);
 static CDynamicFunction<TryEnterCriticalSectionFunc_t> DynTryEnterCriticalSection( "Kernel32.dll", "TryEnterCriticalSection" );
 #elif defined( _X360 )
@@ -1306,8 +2201,7 @@ static CDynamicFunction<TryEnterCriticalSectionFunc_t> DynTryEnterCriticalSectio
 
 bool CThreadMutex::TryLock()
 {
-
-#if defined( _WIN32 )
+#if defined( MSVC )
 #ifdef THREAD_MUTEX_TRACING_ENABLED
 	uint thisThreadID = ThreadGetCurrentId();
 	if ( m_bTrace && m_currentOwnerID && ( m_currentOwnerID != thisThreadID ) )
@@ -1323,7 +2217,7 @@ bool CThreadMutex::TryLock()
 				// we now own it for the first time.  Set owner information
 				m_currentOwnerID = thisThreadID;
 				if ( m_bTrace )
-					Msg( "Thread %u now owns lock 0x%p\n", m_currentOwnerID, (CRITICAL_SECTION *)&m_CriticalSection );
+					Msg( "Thread %u now owns lock %p\n", m_currentOwnerID, (CRITICAL_SECTION *)&m_CriticalSection );
 			}
 			m_lockCount++;
 #endif
@@ -1333,8 +2227,18 @@ bool CThreadMutex::TryLock()
 	}
 	Lock();
 	return true;
+#elif defined( _PS3 )
+
+#ifndef NO_THREAD_SYNC
+	if ( sys_mutex_trylock( m_Mutex ) == CELL_OK )
+#endif
+
+		return true;
+
+	return false; // ?? moved from EA code
+
 #elif defined( POSIX )
-	 return pthread_mutex_trylock( &m_Mutex ) == 0;
+	return pthread_mutex_trylock( &m_Mutex ) == 0;
 #else
 #error "Implement me!"
 	return true;
@@ -1347,10 +2251,59 @@ bool CThreadMutex::TryLock()
 //
 //-----------------------------------------------------------------------------
 
+#ifdef THREAD_FAST_MUTEX_TIMINGS
+// This is meant to be used in combination with breakpoints and in-debugee, so we turn the optimizer off
+#pragma optimize( "", off )
+CThreadFastMutex *g_pIgnoredMutexes[256]; // Ignore noisy non-problem mutex. Probably could be an array. Right now needed only for sound thread
+float g_MutexTimingTolerance = 5;
+bool g_bMutexTimingOutput;
+
+void TrapMutexTimings( uint32 probableBlocker, uint32 thisThread, volatile CThreadFastMutex *pMutex, CFastTimer &spikeTimer, CAverageCycleCounter &sleepTimer )
+{
+	spikeTimer.End();
+	if ( spikeTimer.GetDuration().GetMillisecondsF() > g_MutexTimingTolerance )
+	{	
+		bool bIgnore = false;
+		for ( int j = 0; j < ARRAYSIZE( g_pIgnoredMutexes ) && g_pIgnoredMutexes[j]; j++ )
+		{
+			if ( g_pIgnoredMutexes[j] == pMutex )
+			{
+				bIgnore = true;
+				break;
+			}
+		}
+
+		if ( !bIgnore && spikeTimer.GetDuration().GetMillisecondsF() < 100 )
+		{
+			volatile float FastMutexDuration = spikeTimer.GetDuration().GetMillisecondsF();
+			volatile float average = sleepTimer.GetAverageMilliseconds();
+			volatile float peak = sleepTimer.GetPeakMilliseconds();			volatile int xx = 6;
+			if ( g_bMutexTimingOutput )
+			{
+				char szBuf[256];
+				Msg( "M (%.8x): [%.8x <-- %.8x] (%f,%f,%f)\n", pMutex, probableBlocker, thisThread, FastMutexDuration, average, peak );
+			}
+		}
+	}
+}
+
+#else
+#define TrapMutexTimings( a, b, c, d, e ) ((void)0)
+#endif
+
+//-------------------------------------
+
 #define THREAD_SPIN (8*1024)
 
-void CThreadFastMutex::Lock( const uintp threadId, unsigned nSpinSleepTime ) volatile
+void CThreadFastMutex::Lock( const uint32 threadId, unsigned nSpinSleepTime ) volatile 
 {
+#ifdef THREAD_FAST_MUTEX_TIMINGS
+	CAverageCycleCounter sleepTimer;
+	CFastTimer spikeTimer;
+	uint32 currentOwner = m_ownerID;
+	spikeTimer.Start();
+	sleepTimer.Init();
+#endif
 	int i;
 	if ( nSpinSleepTime != TT_INFINITE )
 	{
@@ -1358,6 +2311,7 @@ void CThreadFastMutex::Lock( const uintp threadId, unsigned nSpinSleepTime ) vol
 		{
 			if ( TryLock( threadId ) )
 			{
+				TrapMutexTimings( currentOwner, threadId, this, spikeTimer, sleepTimer );
 				return;
 			}
 			ThreadPause();
@@ -1367,11 +2321,15 @@ void CThreadFastMutex::Lock( const uintp threadId, unsigned nSpinSleepTime ) vol
 		{
 			if ( TryLock( threadId ) )
 			{
+				TrapMutexTimings( currentOwner, threadId, this, spikeTimer, sleepTimer );
 				return;
 			}
 			ThreadPause();
 			if ( i % 1024 == 0 )
 			{
+#ifdef THREAD_FAST_MUTEX_TIMINGS
+				CAverageTimeMarker marker( &sleepTimer );
+#endif
 				ThreadSleep( 0 );
 			}
 		}
@@ -1381,15 +2339,18 @@ void CThreadFastMutex::Lock( const uintp threadId, unsigned nSpinSleepTime ) vol
 		{
 			nSpinSleepTime = 1;
 		} 
-		else
 #endif
 
 		if ( nSpinSleepTime )
 		{
 			for ( i = THREAD_SPIN; i != 0; --i )
 			{
+#ifdef THREAD_FAST_MUTEX_TIMINGS
+				CAverageTimeMarker marker( &sleepTimer );
+#endif
 				if ( TryLock( threadId ) )
 				{
+					TrapMutexTimings( currentOwner, threadId, this, spikeTimer, sleepTimer );
 					return;
 				}
 
@@ -1399,10 +2360,14 @@ void CThreadFastMutex::Lock( const uintp threadId, unsigned nSpinSleepTime ) vol
 
 		}
 
-		for ( ;; ) // coded as for instead of while to make easy to breakpoint success
+		for ( ;; )
 		{
+#ifdef THREAD_FAST_MUTEX_TIMINGS
+			CAverageTimeMarker marker( &sleepTimer );
+#endif
 			if ( TryLock( threadId ) )
 			{
+				TrapMutexTimings( currentOwner, threadId, this, spikeTimer, sleepTimer );
 				return;
 			}
 
@@ -1412,10 +2377,11 @@ void CThreadFastMutex::Lock( const uintp threadId, unsigned nSpinSleepTime ) vol
 	}
 	else
 	{
-		for ( ;; ) // coded as for instead of while to make easy to breakpoint success
+		for ( ;; )
 		{
 			if ( TryLock( threadId ) )
 			{
+				TrapMutexTimings( currentOwner, threadId, this, spikeTimer, sleepTimer );
 				return;
 			}
 
@@ -1423,6 +2389,10 @@ void CThreadFastMutex::Lock( const uintp threadId, unsigned nSpinSleepTime ) vol
 		}
 	}
 }
+
+#ifdef THREAD_FAST_MUTEX_TIMINGS
+#pragma optimize( "", on )
+#endif
 
 //-----------------------------------------------------------------------------
 //
@@ -1483,12 +2453,122 @@ void CThreadRWLock::UnlockWrite()
 // CThreadSpinRWLock
 //
 //-----------------------------------------------------------------------------
+#ifndef OLD_SPINRWLOCK
 
-void CThreadSpinRWLock::SpinLockForWrite( const uintp threadId )
+void CThreadSpinRWLock::SpinLockForWrite()
 {
 	int i;
 
-	for ( i = 1000; i != 0; --i )
+	if ( TryLockForWrite_UnforcedInline() )
+	{
+		return;
+	}
+
+	for ( i = THREAD_SPIN; i != 0; --i )
+	{
+		if ( TryLockForWrite_UnforcedInline() )
+		{
+			return;
+		}
+		ThreadPause();
+	}
+
+	for ( i = THREAD_SPIN; i != 0; --i )
+	{
+		if ( TryLockForWrite_UnforcedInline() )
+		{
+			return;
+		}
+		ThreadPause();
+		if ( i % 1024 == 0 )
+		{
+			ThreadSleep( 0 );
+		}
+	}
+
+	for ( i = THREAD_SPIN * 4; i != 0; --i )
+	{
+		if ( TryLockForWrite_UnforcedInline() )
+		{
+			return;
+		}
+
+		ThreadPause();
+		ThreadSleep( 0 );
+	}
+
+	for ( ;; ) // coded as for instead of while to make easy to breakpoint success
+	{
+		if ( TryLockForWrite_UnforcedInline() )
+		{
+			return;
+		}
+
+		ThreadPause();
+		ThreadSleep( 1 );
+	}
+}
+
+void CThreadSpinRWLock::SpinLockForRead()
+{
+	int i;
+	for ( i = THREAD_SPIN; i != 0; --i )
+	{
+		if ( TryLockForRead_UnforcedInline() )
+		{
+			return;
+		}
+		ThreadPause();
+	}
+
+	for ( i = THREAD_SPIN; i != 0; --i )
+	{
+		if ( TryLockForRead_UnforcedInline() )
+		{
+			return;
+		}
+		ThreadPause();
+		if ( i % 1024 == 0 )
+		{
+			ThreadSleep( 0 );
+		}
+	}
+
+	for ( i = THREAD_SPIN * 4; i != 0; --i )
+	{
+		if ( TryLockForRead_UnforcedInline() )
+		{
+			return;
+		}
+
+		ThreadPause();
+		ThreadSleep( 0 );
+	}
+
+	for ( ;; ) // coded as for instead of while to make easy to breakpoint success
+	{
+		if ( TryLockForRead_UnforcedInline() )
+		{
+			return;
+		}
+
+		ThreadPause();
+		ThreadSleep( 1 );
+	}
+}
+
+#else
+/* (commented out to reduce distraction in colorized editor, remove entirely when new implementation settles)
+void CThreadSpinRWLock::SpinLockForWrite( const uint32 threadId )
+{
+	int i;
+
+	if ( TryLockForWrite( threadId ) )
+	{
+		return;
+	}
+
+	for ( i = THREAD_SPIN; i != 0; --i )
 	{
 		if ( TryLockForWrite( threadId ) )
 		{
@@ -1497,7 +2577,20 @@ void CThreadSpinRWLock::SpinLockForWrite( const uintp threadId )
 		ThreadPause();
 	}
 
-	for ( i = 20000; i != 0; --i )
+	for ( i = THREAD_SPIN; i != 0; --i )
+	{
+		if ( TryLockForWrite( threadId ) )
+		{
+			return;
+		}
+		ThreadPause();
+		if ( i % 1024 == 0 )
+		{
+			ThreadSleep( 0 );
+		}
+	}
+
+	for ( i = THREAD_SPIN * 4; i != 0; --i )
 	{
 		if ( TryLockForWrite( threadId ) )
 		{
@@ -1523,49 +2616,53 @@ void CThreadSpinRWLock::SpinLockForWrite( const uintp threadId )
 void CThreadSpinRWLock::LockForRead()
 {
 	int i;
-
-	// In order to grab a read lock, the number of readers must not change and no thread can own the write lock
-	LockInfo_t oldValue;
-	LockInfo_t newValue;
-
-	oldValue.m_nReaders = m_lockInfo.m_nReaders;
-	oldValue.m_writerId = 0;
-	newValue.m_nReaders = oldValue.m_nReaders + 1;
-	newValue.m_writerId = 0;
-
-	if( m_nWriters == 0 && AssignIf( newValue, oldValue ) )
-		return;
-	ThreadPause();
-	oldValue.m_nReaders = m_lockInfo.m_nReaders;
-	newValue.m_nReaders = oldValue.m_nReaders + 1;
-
-	for ( i = 1000; i != 0; --i )
+	if ( TryLockForRead() )
 	{
-		if( m_nWriters == 0 && AssignIf( newValue, oldValue ) )
-			return;
-		ThreadPause();
-		oldValue.m_nReaders = m_lockInfo.m_nReaders;
-		newValue.m_nReaders = oldValue.m_nReaders + 1;
+		return;
 	}
 
-	for ( i = 20000; i != 0; --i )
+	for ( i = THREAD_SPIN; i != 0; --i )
 	{
-		if( m_nWriters == 0 && AssignIf( newValue, oldValue ) )
+		if ( TryLockForRead() )
+		{
 			return;
+		}
+		ThreadPause();
+	}
+
+	for ( i = THREAD_SPIN; i != 0; --i )
+	{
+		if ( TryLockForRead() )
+		{
+			return;
+		}
+		ThreadPause();
+		if ( i % 1024 == 0 )
+		{
+			ThreadSleep( 0 );
+		}
+	}
+
+	for ( i = THREAD_SPIN * 4; i != 0; --i )
+	{
+		if ( TryLockForRead() )
+		{
+			return;
+		}
+
 		ThreadPause();
 		ThreadSleep( 0 );
-		oldValue.m_nReaders = m_lockInfo.m_nReaders;
-		newValue.m_nReaders = oldValue.m_nReaders + 1;
 	}
 
 	for ( ;; ) // coded as for instead of while to make easy to breakpoint success
 	{
-		if( m_nWriters == 0 && AssignIf( newValue, oldValue ) )
+		if ( TryLockForRead() )
+		{
 			return;
+		}
+
 		ThreadPause();
 		ThreadSleep( 1 );
-		oldValue.m_nReaders = m_lockInfo.m_nReaders;
-		newValue.m_nReaders = oldValue.m_nReaders + 1;
 	}
 }
 
@@ -1574,21 +2671,35 @@ void CThreadSpinRWLock::UnlockRead()
 	int i;
 
 	Assert( m_lockInfo.m_nReaders > 0 && m_lockInfo.m_writerId == 0 );
+
+	//uint32 nLockInfoReaders = m_lockInfo.m_nReaders;
 	LockInfo_t oldValue;
 	LockInfo_t newValue;
-
-	oldValue.m_nReaders = m_lockInfo.m_nReaders;
-	oldValue.m_writerId = 0;
-	newValue.m_nReaders = oldValue.m_nReaders - 1;
-	newValue.m_writerId = 0;
-
+	
+	if( IsX360() )
+	{
+		// this is the code equivalent to original code (see below) that doesn't cause LHS on Xbox360
+		// WARNING: This code assumes BIG Endian CPU
+		oldValue.m_i64 = uint32( m_lockInfo.m_nReaders );
+		newValue.m_i64 = oldValue.m_i64 - 1; // NOTE: when we have -1 (or 0xFFFFFFFF) readers, this will result in non-equivalent code
+	}
+	else
+	{
+		// this is the original code that worked here for a while
+		oldValue.m_nReaders = m_lockInfo.m_nReaders;
+		oldValue.m_writerId = 0;
+		newValue.m_nReaders = oldValue.m_nReaders - 1;
+		newValue.m_writerId = 0;
+	}
+	ThreadMemoryBarrier();
 	if( AssignIf( newValue, oldValue ) )
 		return;
+	
 	ThreadPause();
 	oldValue.m_nReaders = m_lockInfo.m_nReaders;
 	newValue.m_nReaders = oldValue.m_nReaders - 1;
 
-	for ( i = 500; i != 0; --i )
+	for ( i = THREAD_SPIN; i != 0; --i )
 	{
 		if( AssignIf( newValue, oldValue ) )
 			return;
@@ -1597,7 +2708,20 @@ void CThreadSpinRWLock::UnlockRead()
 		newValue.m_nReaders = oldValue.m_nReaders - 1;
 	}
 
-	for ( i = 20000; i != 0; --i )
+	for ( i = THREAD_SPIN; i != 0; --i )
+	{
+		if( AssignIf( newValue, oldValue ) )
+			return;
+		ThreadPause();
+		if ( i % 512 == 0 )
+		{
+			ThreadSleep( 0 );
+		}
+		oldValue.m_nReaders = m_lockInfo.m_nReaders;
+		newValue.m_nReaders = oldValue.m_nReaders - 1;
+	}
+
+	for ( i = THREAD_SPIN * 4; i != 0; --i )
 	{
 		if( AssignIf( newValue, oldValue ) )
 			return;
@@ -1621,563 +2745,33 @@ void CThreadSpinRWLock::UnlockRead()
 void CThreadSpinRWLock::UnlockWrite()
 {
 	Assert( m_lockInfo.m_writerId == ThreadGetCurrentId()  && m_lockInfo.m_nReaders == 0 );
-	static const LockInfo_t newValue = { 0, 0 };
-#if defined(_X360)
-	// X360TBD: Serious Perf implications, not yet. __sync();
-#endif
-	int64 val; memcpy( &val, &newValue, sizeof( val ) );
-	ThreadInterlockedExchange64(  (int64 *)&m_lockInfo, val );
+	static const LockInfo_t newValue = { { 0, 0 } };
+	ThreadMemoryBarrier();
+	ThreadInterlockedExchange64(  (int64 *)&m_lockInfo, *((int64 *)&newValue) );
 	m_nWriters--;
 }
-
-
-
-//-----------------------------------------------------------------------------
-//
-// CThread
-//
-//-----------------------------------------------------------------------------
-
-CThreadLocalPtr<CThread> g_pCurThread;
-
-//---------------------------------------------------------
-
-CThread::CThread()
-:	
-#ifdef _WIN32
-	m_hThread( NULL ),
-#endif
-	m_threadId( 0 ),
-	m_result( 0 ),
-	m_flags( 0 )
-{
-	m_szName[0] = 0;
-}
-
-//---------------------------------------------------------
-
-CThread::~CThread()
-{
-#ifdef _WIN32
-	if (m_hThread)
-#elif defined(POSIX)
-	if ( m_threadId )
-#endif
-	{
-		if ( IsAlive() )
-		{
-			Msg( "Illegal termination of worker thread! Threads must negotiate an end to the thread before the CThread object is destroyed.\n" ); 
-#ifdef _WIN32
-
-			DoNewAssertDialog( __FILE__, __LINE__, "Illegal termination of worker thread! Threads must negotiate an end to the thread before the CThread object is destroyed.\n" );
-#endif
-			if ( GetCurrentCThread() == this )
-			{
-				Stop(); // BUGBUG: Alfred - this doesn't make sense, this destructor fires from the hosting thread not the thread itself!!
-			}
-		}
-
-#ifdef _WIN32
-		// Now that the worker thread has exited (which we know because we presumably waited
-		// on the thread handle for it to exit) we can finally close the thread handle. We
-		// cannot do this any earlier, and certainly not in CThread::ThreadProc().
-		CloseHandle( m_hThread );
-#endif
-	}
-}
-
-
-//---------------------------------------------------------
-
-const char *CThread::GetName()
-{
-	AUTO_LOCK( m_Lock );
-	if ( !m_szName[0] )
-	{
-#ifdef _WIN32
-		_snprintf( m_szName, sizeof(m_szName) - 1, "Thread(%p/%p)", this, m_hThread );
-#elif defined(POSIX)
-		_snprintf( m_szName, sizeof(m_szName) - 1, "Thread(0x" PRIxPTR "/0x" PRIxPTR ")", (ThreadId_t)this, (ThreadId_t)m_threadId );
-#endif
-		m_szName[sizeof(m_szName) - 1] = 0;
-	}
-	return m_szName;
-}
-
-//---------------------------------------------------------
-
-void CThread::SetName(const char *pszName)
-{
-	AUTO_LOCK( m_Lock );
-	strncpy( m_szName, pszName, sizeof(m_szName) - 1 );
-	m_szName[sizeof(m_szName) - 1] = 0;
-}
-
-//---------------------------------------------------------
-
-bool CThread::Start( unsigned nBytesStack )
-{
-	AUTO_LOCK( m_Lock );
-
-	if ( IsAlive() )
-	{
-		AssertMsg( 0, "Tried to create a thread that has already been created!" );
-		return false;
-	}
-
-	bool  bInitSuccess = false;
-	CThreadEvent createComplete;
-	ThreadInit_t init = { this, &createComplete, &bInitSuccess };
-
-#ifdef _WIN32
-	HANDLE       hThread;
-	m_hThread = hThread = (HANDLE)VCRHook_CreateThread( NULL,
-														nBytesStack,
-														(LPTHREAD_START_ROUTINE)GetThreadProc(),
-														new ThreadInit_t(init),
-														CREATE_SUSPENDED,
-														&m_threadId );
-	if ( !hThread )
-	{
-		AssertMsg1( 0, "Failed to create thread (error 0x%x)", GetLastError() );
-		return false;
-	}
-	Plat_ApplyHardwareDataBreakpointsToNewThread( m_threadId );
-	ResumeThread( hThread );
-
-#elif defined(POSIX)
-	pthread_attr_t attr;
-	pthread_attr_init( &attr );
-	// From http://www.kernel.org/doc/man-pages/online/pages/man3/pthread_attr_setstacksize.3.html
-	//  A thread's stack size is fixed at the time of thread creation. Only the main thread can dynamically grow its stack.
-	pthread_attr_setstacksize( &attr, MAX( nBytesStack, 1024u*1024 ) );
-	if ( pthread_create( &m_threadId, &attr, (void *(*)(void *))GetThreadProc(), new ThreadInit_t( init ) ) != 0 )
-	{
-		AssertMsg1( 0, "Failed to create thread (error 0x%x)", GetLastError() );
-		return false;
-	}
-	Plat_ApplyHardwareDataBreakpointsToNewThread( (long unsigned int)m_threadId );
-	bInitSuccess = true;
+*/
 #endif
 
-#if !defined( OSX )
-	ThreadSetDebugName( m_threadId, m_szName );
-#endif
+#if defined( _PS3 )
+// All CThread code is inline in the header for PS3
 
-	if ( !WaitForCreateComplete( &createComplete ) )
-	{
-		Msg( "Thread failed to initialize\n" );
-#ifdef _WIN32
-		CloseHandle( m_hThread );
-		m_hThread = NULL;
-		m_threadId = 0;
-#elif defined(POSIX)
-		m_threadId = 0;
-#endif
-		return false;
-	}
-
-	if ( !bInitSuccess )
-	{
-		Msg( "Thread failed to initialize\n" );
-#ifdef _WIN32
-		CloseHandle( m_hThread );
-		m_hThread = NULL;
-		m_threadId = 0;
-#elif defined(POSIX)
-		m_threadId = 0;
-#endif
-		return false;
-	}
-
-#ifdef _WIN32
-	if ( !m_hThread )
-	{
-		Msg( "Thread exited immediately\n" );
-	}
-#endif
-
-#ifdef _WIN32
-	return !!m_hThread;
-#elif defined(POSIX)
-	return !!m_threadId;
-#endif
+// This function is implemented here rather than the header because g_pCurThread resolves to GetCurThread() on PS3
+// and we don't want to create a dependency on the ELF stub for everyone who includes the header.
+PLATFORM_INTERFACE CThread *GetCurThreadPS3()
+{
+	return (CThread*)g_pCurThread;
 }
 
-//---------------------------------------------------------
-//
-// Return true if the thread exists. false otherwise
-//
-
-bool CThread::IsAlive()
+PLATFORM_INTERFACE void SetCurThreadPS3( CThread *pThread )
 {
-#ifdef _WIN32
-	DWORD dwExitCode;
-
-	return ( m_hThread &&
-		GetExitCodeThread( m_hThread, &dwExitCode ) &&
-		dwExitCode == STILL_ACTIVE );
-#elif defined(POSIX)
-	return m_threadId;
-#endif
-}
-
-//---------------------------------------------------------
-
-bool CThread::Join(unsigned timeout)
-{
-#ifdef _WIN32
-	if ( m_hThread )
-#elif defined(POSIX)
-	if ( m_threadId )
-#endif
-	{
-		AssertMsg(GetCurrentCThread() != this, _T("Thread cannot be joined with self"));
-
-#ifdef _WIN32
-		return ThreadJoin( (ThreadHandle_t)m_hThread );
-#elif defined(POSIX)
-		return ThreadJoin( (ThreadHandle_t)m_threadId );
-#endif
-	}
-	return true;
-}
-
-//---------------------------------------------------------
-
-#ifdef _WIN32
-
-HANDLE CThread::GetThreadHandle()
-{
-	return m_hThread;
-}
-
-#endif
-
-#if defined( _WIN32 ) || defined( LINUX )
-
-//---------------------------------------------------------
-
-uint CThread::GetThreadId()
-{
-	return m_threadId;
-}
-
-#endif
-
-//---------------------------------------------------------
-
-int CThread::GetResult()
-{
-	return m_result;
-}
-
-//---------------------------------------------------------
-//
-// Forcibly, abnormally, but relatively cleanly stop the thread
-//
-
-void CThread::Stop(int exitCode)
-{
-	if ( !IsAlive() )
-		return;
-
-	if ( GetCurrentCThread() == this )
-	{
-		m_result = exitCode;
-		if ( !( m_flags & SUPPORT_STOP_PROTOCOL ) )
-		{
-			OnExit();
-			g_pCurThread = NULL;
-
-#ifdef _WIN32
-			CloseHandle( m_hThread );
-			m_hThread = NULL;
-#endif
-			Cleanup();
-		}
-		throw exitCode;
-	}
-	else
-		AssertMsg( 0, "Only thread can stop self: Use a higher-level protocol");
-}
-
-//---------------------------------------------------------
-
-int CThread::GetPriority() const
-{
-#ifdef _WIN32
-	return GetThreadPriority(m_hThread);
-#elif defined(POSIX)
-	struct sched_param thread_param;
-	int policy;
-	pthread_getschedparam( m_threadId, &policy, &thread_param );
-	return thread_param.sched_priority;
-#endif
-}
-
-//---------------------------------------------------------
-
-bool CThread::SetPriority(int priority)
-{
-#ifdef _WIN32
-	return ThreadSetPriority( (ThreadHandle_t)m_hThread, priority );
-#else
-	return ThreadSetPriority( (ThreadHandle_t)m_threadId, priority );
-#endif
-}
-
-
-//---------------------------------------------------------
-
-void CThread::SuspendCooperative()
-{
-	if ( ThreadGetCurrentId() == (ThreadId_t)m_threadId )
-	{
-		m_SuspendEventSignal.Set();
-		m_nSuspendCount = 1;
-		m_SuspendEvent.Wait();
-		m_nSuspendCount = 0;
-	}
-	else
-	{
-		Assert( !"Suspend not called from worker thread, this would be a bug" );
-	}
-}
-
-//---------------------------------------------------------
-
-void CThread::ResumeCooperative()
-{
-	//Assert( m_nSuspendCount == 1 );
-	m_SuspendEvent.Set();
-}
-
-
-void CThread::BWaitForThreadSuspendCooperative()
-{
-	m_SuspendEventSignal.Wait();
-}
-
-
-#ifndef LINUX
-//---------------------------------------------------------
-
-unsigned int CThread::Suspend()
-{
-#ifdef _WIN32
-	return ( SuspendThread(m_hThread) != 0 );
-#elif defined(OSX)
-	int susCount = m_nSuspendCount++;
-	while ( thread_suspend( pthread_mach_thread_np(m_threadId) ) != KERN_SUCCESS )
-	{
-	};
-	return ( susCount) != 0;
-#else
-#error
-#endif
-}
-
-//---------------------------------------------------------
-
-unsigned int CThread::Resume()
-{
-#ifdef _WIN32
-	return ( ResumeThread(m_hThread) != 0 );
-#elif defined(OSX)
-	int susCount = m_nSuspendCount++;
-	while ( thread_resume( pthread_mach_thread_np(m_threadId) )  != KERN_SUCCESS )
-	{
-	};	
-	return ( susCount - 1) != 0;
-#else
-#error
-#endif
-}
-#endif
-
-
-//---------------------------------------------------------
-
-bool CThread::Terminate(int exitCode)
-{
-#ifndef _X360
-#ifdef _WIN32
-	// I hope you know what you're doing!
-	if (!TerminateThread(m_hThread, exitCode))
-		return false;
-	CloseHandle( m_hThread );
-	m_hThread = NULL;
-	Cleanup();
-#elif defined(POSIX)
-	pthread_kill( m_threadId, SIGKILL );
-	Cleanup();
-#endif
-
-	return true;
-#else
-	AssertMsg( 0, "Cannot terminate a thread on the Xbox!" );
-	return false;
-#endif
-}
-
-//---------------------------------------------------------
-//
-// Get the Thread object that represents the current thread, if any.
-// Can return NULL if the current thread was not created using
-// CThread
-//
-
-CThread *CThread::GetCurrentCThread()
-{
-	return g_pCurThread;
-}
-
-//---------------------------------------------------------
-//
-// Offer a context switch. Under Win32, equivalent to Sleep(0)
-//
-
-void CThread::Yield()
-{
-#ifdef _WIN32
-	::Sleep(0);
-#elif defined(ANDROID)
-	sched_yield();
-#elif defined(POSIX)
-	pthread_yield();
-#endif
-}
-
-//---------------------------------------------------------
-//
-// This method causes the current thread to yield and not to be
-// scheduled for further execution until a certain amount of real
-// time has elapsed, more or less.
-//
-
-void CThread::Sleep(unsigned duration)
-{
-#ifdef _WIN32
-	::Sleep(duration);
-#elif defined(POSIX)
-	usleep( duration * 1000 );
-#endif
-}
-
-//---------------------------------------------------------
-
-bool CThread::Init()
-{
-	return true;
-}
-
-//---------------------------------------------------------
-
-void CThread::OnExit()
-{
-}
-
-//---------------------------------------------------------
-
-void CThread::Cleanup()
-{
-	m_threadId = 0;
-}
-
-//---------------------------------------------------------
-bool CThread::WaitForCreateComplete(CThreadEvent * pEvent)
-{
-	// Force serialized thread creation...
-	if (!pEvent->Wait(60000))
-	{
-		AssertMsg( 0, "Probably deadlock or failure waiting for thread to initialize." );
-		return false;
-	}
-	return true;
-}
-
-//---------------------------------------------------------
-
-bool CThread::IsThreadRunning()
-{
-#ifdef _PS3
-    // ThreadIsThreadIdRunning() doesn't work on PS3 if the thread is in a zombie state
-    return m_eventTheadExit.Check();
-#else
-    return ThreadIsThreadIdRunning( (ThreadId_t)m_threadId );
-#endif
-}
-
-//---------------------------------------------------------
-
-CThread::ThreadProc_t CThread::GetThreadProc()
-{
-	return ThreadProc;
-}
-
-//---------------------------------------------------------
-
-unsigned __stdcall CThread::ThreadProc(LPVOID pv)
-{
-  std::unique_ptr<ThreadInit_t> pInit((ThreadInit_t *)pv);
-  
-#ifdef _X360
-        // Make sure all threads are consistent w.r.t floating-point math
-	SetupFPUControlWord();
-#endif
-	
-	CThread *pThread = pInit->pThread;
 	g_pCurThread = pThread;
-	
-	g_pCurThread->m_pStackBase = AlignValue( &pThread, 4096 );
-	
-	pInit->pThread->m_result = -1;
-	
-	bool bInitSuccess = true;
-	if ( pInit->pfInitSuccess )
-		*(pInit->pfInitSuccess) = false;
-	
-	try
-	{
-		bInitSuccess = pInit->pThread->Init();
-	}
-	
-	catch (...)
-	{
-		pInit->pInitCompleteEvent->Set();
-		throw;
-	}
-	
-	if ( pInit->pfInitSuccess )
-		*(pInit->pfInitSuccess) = bInitSuccess;
-	pInit->pInitCompleteEvent->Set();
-	if (!bInitSuccess)
-		return 0;
-	
-	if ( pInit->pThread->m_flags & SUPPORT_STOP_PROTOCOL )
-	{
-		try
-		{
-			pInit->pThread->m_result = pInit->pThread->Run();
-		}
-		
-		catch (...)
-		{
-		}
-	}
-	else
-	{
-		pInit->pThread->m_result = pInit->pThread->Run();
-	}
-	
-	pInit->pThread->OnExit();
-	g_pCurThread = NULL;
-	pInit->pThread->Cleanup();
-	
-	return pInit->pThread->m_result;
 }
-
+#else
+// The CThread implementation needs to be inlined for performance on the PS3 - It makes a difference of more than 1ms/frame
+// for other platforms, we include the .inl in the .cpp file where it existed before
+#include "../public/tier0/threadtools.inl"
+#endif
 
 //-----------------------------------------------------------------------------
 //
@@ -2186,16 +2780,15 @@ CWorkerThread::CWorkerThread()
 :	m_EventSend(true),                 // must be manual-reset for PeekCall()
 	m_EventComplete(true),             // must be manual-reset to handle multiple wait with thread properly
 	m_Param(0),
-	m_pParamFunctor(NULL),
 	m_ReturnVal(0)
 {
 }
 
 //---------------------------------------------------------
 
-int CWorkerThread::CallWorker(unsigned dw, unsigned timeout, bool fBoostWorkerPriorityToMaster, CFunctor *pParamFunctor)
+int CWorkerThread::CallWorker(unsigned dw, unsigned timeout, bool fBoostWorkerPriorityToMaster)
 {
-	return Call(dw, timeout, fBoostWorkerPriorityToMaster, NULL, pParamFunctor);
+	return Call(dw, timeout, fBoostWorkerPriorityToMaster);
 }
 
 //---------------------------------------------------------
@@ -2214,10 +2807,8 @@ CThreadEvent &CWorkerThread::GetCallHandle()
 
 //---------------------------------------------------------
 
-unsigned CWorkerThread::GetCallParam( CFunctor **ppParamFunctor ) const
+unsigned CWorkerThread::GetCallParam() const
 {
-	if( ppParamFunctor )
-		*ppParamFunctor = m_pParamFunctor;
 	return m_Param;
 }
 
@@ -2226,22 +2817,28 @@ unsigned CWorkerThread::GetCallParam( CFunctor **ppParamFunctor ) const
 int CWorkerThread::BoostPriority()
 {
 	int iInitialPriority = GetPriority();
+
+#ifdef WIN32
+	const int iNewPriority = ThreadGetPriority( GetThreadHandle() );
+	if (iNewPriority > iInitialPriority)
+		ThreadSetPriority( GetThreadHandle(), iNewPriority);
+#elif !defined( _PS3 )
 	const int iNewPriority = ThreadGetPriority( (ThreadHandle_t)GetThreadID() );
 	if (iNewPriority > iInitialPriority)
 		ThreadSetPriority( (ThreadHandle_t)GetThreadID(), iNewPriority);
+#endif
+
 	return iInitialPriority;
 }
 
 //---------------------------------------------------------
-
-static uint32 __stdcall DefaultWaitFunc( int nEvents, CThreadEvent * const *pEvents, int bWaitAll, uint32 timeout )
+static uint32 DefaultWaitFunc( uint32 nHandles, CThreadEvent** ppHandles, int bWaitAll, uint32 timeout )
 {
-	return ThreadWaitForEvents( nEvents, pEvents, bWaitAll!=0, timeout );
-//	return VCRHook_WaitForMultipleObjects( nHandles, (const void **)pHandles, bWaitAll, timeout );
+	return CThreadEvent::WaitForMultiple( nHandles, ppHandles, bWaitAll!=0, timeout ) ;
 }
 
 
-int CWorkerThread::Call(unsigned dwParam, unsigned timeout, bool fBoostPriority, WaitFunc_t pfnWait, CFunctor *pParamFunctor)
+int CWorkerThread::Call(unsigned dwParam, unsigned timeout, bool fBoostPriority, WaitFunc_t waitFunc)
 {
 	AssertMsg(!m_EventSend.Check(), "Cannot perform call if there's an existing call pending" );
 
@@ -2258,18 +2855,14 @@ int CWorkerThread::Call(unsigned dwParam, unsigned timeout, bool fBoostPriority,
 
 	// set the parameter, signal the worker thread, wait for the completion to be signaled
 	m_Param = dwParam;
-	m_pParamFunctor = pParamFunctor;
 
 	m_EventComplete.Reset();
 	m_EventSend.Set();
 
-	WaitForReply( timeout, pfnWait );
+	WaitForReply( timeout, waitFunc );
 
-	// MWD: Investigate why setting thread priorities is killing the 360
-#ifndef _X360
 	if (fBoostPriority)
 		SetPriority(iInitialPriority);
-#endif
 
 	return m_ReturnVal;
 }
@@ -2288,24 +2881,19 @@ int CWorkerThread::WaitForReply( unsigned timeout, WaitFunc_t pfnWait )
 {
 	if (!pfnWait)
 	{
-		pfnWait = DefaultWaitFunc;
+		pfnWait = &DefaultWaitFunc;
 	}
 
-#ifdef WIN32
-	CThreadEvent threadEvent( GetThreadHandle() );
-#endif
-	
 	CThreadEvent *waits[] =
 	{
-#ifdef WIN32
-		&threadEvent,
-#endif
-		&m_EventComplete
+		&m_EventComplete,
+		&m_ExitEvent
 	};
-	
 
 	unsigned result;
 	bool bInDebugger = Plat_IsInDebugSession();
+
+	uint32 dwActualTimeout = ( (timeout==TT_INFINITE) ? 30000 : timeout );
 
 	do
 	{
@@ -2313,22 +2901,24 @@ int CWorkerThread::WaitForReply( unsigned timeout, WaitFunc_t pfnWait )
 		// Make sure the thread handle hasn't been closed
 		if ( !GetThreadHandle() )
 		{
-			result = WAIT_OBJECT_0 + 1;
+			result = 1;
 			break;
 		}
 #endif
-		result = (*pfnWait)((sizeof(waits) / sizeof(waits[0])), waits, false,
-			(timeout != TT_INFINITE) ? timeout : 30000);
 
-		AssertMsg(timeout != TT_INFINITE || result != WAIT_TIMEOUT, "Possible hung thread, call to thread timed out");
+		result = (*pfnWait)( ARRAYSIZE( waits ), waits, false, dwActualTimeout );
 
-	} while ( bInDebugger && ( timeout == TT_INFINITE && result == WAIT_TIMEOUT ) );
+		AssertMsg(timeout != TT_INFINITE || result != TW_TIMEOUT, "Possible hung thread, call to thread timed out");
 
-	if ( result != WAIT_OBJECT_0 + 1 )
+	} while ( bInDebugger && ( timeout == TT_INFINITE && result == TW_TIMEOUT ) );
+
+	if ( result != 0 )
 	{
-		if (result == WAIT_TIMEOUT)
+		if (result == TW_TIMEOUT)
+		{
 			m_ReturnVal = WTCR_TIMEOUT;
-		else if (result == WAIT_OBJECT_0)
+		}
+		else if (result == 1)
 		{
 			DevMsg( 2, "Thread failed to respond, probably exited\n");
 			m_EventSend.Reset();
@@ -2371,7 +2961,7 @@ bool CWorkerThread::WaitForCall(unsigned dwTimeout, unsigned * pResult)
 // is there a request?
 //
 
-bool CWorkerThread::PeekCall(unsigned * pParam, CFunctor **ppParamFunctor)
+bool CWorkerThread::PeekCall(unsigned * pParam)
 {
 	if (!m_EventSend.Check())
 	{
@@ -2382,10 +2972,6 @@ bool CWorkerThread::PeekCall(unsigned * pParam, CFunctor **ppParamFunctor)
 		if (pParam)
 		{
 			*pParam = m_Param;
-		}
-		if( ppParamFunctor )
-		{
-			*ppParamFunctor = m_pParamFunctor;
 		}
 		return true;
 	}
@@ -2411,4 +2997,267 @@ void CWorkerThread::Reply(unsigned dw)
 	m_EventComplete.Set();
 }
 
+
 //-----------------------------------------------------------------------------
+
+
+#if defined( _PS3 )
+
+/*******************************************************************************
+* PS3 equivalent to Win32 function for setting events
+*******************************************************************************/
+BOOL SetEvent( CThreadEvent *pEvent )
+{
+	bool bRetVal = pEvent->Set();
+	if ( !bRetVal )
+		Assert(0);
+
+	return bRetVal;
+}
+
+/*******************************************************************************
+* PS3 equivalent to Win32 function for resetting events
+*******************************************************************************/
+BOOL ResetEvent( CThreadEvent *pEvent )
+{
+	return pEvent->Reset();
+}
+
+#define MAXIMUM_WAIT_OBJECTS 64
+
+/*******************************************************************************
+* Wait for a selection of events to terminate
+*******************************************************************************/
+DWORD WaitForMultipleObjects( DWORD nCount, CThreadEvent **lppHandles, BOOL bWaitAll, DWORD dwMilliseconds )
+{
+	//////////////////////////////////////////////////////////////
+#ifndef NEW_WAIT_FOR_MULTIPLE_OBJECTS
+	//////////////////////////////////////////////////////////////
+
+
+	// Support for a limited amount of events
+	if ( nCount >= MAXIMUM_WAIT_OBJECTS )
+	{
+		Assert(0);
+		return false;
+	}
+
+	bool bRunning = true;
+	unsigned int result = TW_FAILED;
+
+	// For bWaitAll
+	int numEvent = 0;
+	int eventComplete[ MAXIMUM_WAIT_OBJECTS ] = {0};
+
+	uint64_t timeDiffMS = 0;
+	uint64_t startTimeMS = Plat_MSTime();
+	uint64_t endTimeMS = 0;
+
+	while ( bRunning )
+	{
+		// Check for a timeout
+		if ( bRunning && ( dwMilliseconds != INFINITE ) && ( timeDiffMS > dwMilliseconds ) )
+		{
+			result = TW_TIMEOUT;
+			bRunning = false;
+		}
+
+		// Wait for all the events to be set
+		if ( bWaitAll )
+		{
+			for ( int event = 0; event < nCount; ++event )
+			{
+				if ( lppHandles[event]->Wait(1) )
+				{
+					// If an event is complete, mark it as complete in our list
+					if ( eventComplete[ event ] == 0 )
+					{
+						numEvent++;
+						eventComplete[ event ] = 1;
+					}
+				}
+			}    
+
+			// If all the events have been set, terminate the function
+			if ( numEvent >= nCount )
+			{
+				result = WAIT_OBJECT_0;
+				bRunning = false;
+			}
+		}
+
+		// Wait for one event to be set
+		else
+		{
+			for ( int event = 0; event < nCount; ++event )
+			{
+				if ( lppHandles[event]->Wait(1) )
+				{
+					result = WAIT_OBJECT_0 + event;
+					bRunning = false;
+					break;
+				}
+			}    
+		}
+
+		endTimeMS = Plat_MSTime();
+		timeDiffMS = endTimeMS - startTimeMS;
+	}
+
+	return result;
+
+
+
+	//////////////////////////////////////////////////////////////
+#else	// NEW_WAIT_FOR_MULTIPLE_OBJECTS  // (expected PS3 only)
+	//////////////////////////////////////////////////////////////
+#ifndef _PS3
+#error This code was written expecting to be run on PS3.
+#endif
+
+	// check if we have a wait objects semaphore
+	if (!gbWaitObjectsCreated)
+	{
+		sys_semaphore_attribute_t semAttr;
+		sys_semaphore_attribute_initialize(semAttr);
+		sys_semaphore_create(&gWaitObjectsSemaphore, &semAttr, 0, 0xFFFF);
+
+		gbWaitObjectsCreated = true;
+	}
+
+	// Support for a limited amount of events
+	if ( nCount >= MAXIMUM_WAIT_OBJECTS )
+	{
+		Assert(0);
+		return false;
+	}
+
+	unsigned int result = WAIT_FAILED;
+	int res = CELL_OK;
+	int event = -1;
+	int numEvent = 0;
+
+	// run through events registering this thread with each one
+	for (int i = 0; i < nCount; i++)
+	{
+		lppHandles[i]->RegisterWaitingThread(&gWaitObjectsSemaphore, i, &event);		
+	}
+
+
+	// in the Source API, a timeOut of 0 means very short timeOut, not (as in the PS3 spec) an infinite timeout.
+	// TT_INFINITE is #defined to 2^31-1, which means "infinite timeout" on PC and "72 minutes, 35 seconds" on PS3.
+	// conversely, the code below (around deltaTime) expects to be able to compare against the timeout
+	// value given here, so we cannot just replace 0 with 1 and TT_INFINITE with 0. 
+	// So, we replace 0 with 1, meaning "a very short time", and test for the special value TT_INFINITE 
+	// at the moment of calling sys_semaphore_wait, where we replace it with the real "infinite timeout"
+	// value. It isn't safe to simply increase the declaration size of TT_INFINITE, because as you can
+	// see it is often assigned to uint32s. 
+	// Also, Source timeouts are specified in milliseconds, and PS3 timeouts are in microseconds, 
+	// so we need to multiply by one thousand. 
+	uint32 timeOut = dwMilliseconds;
+	if ( timeOut == 0 )
+	{
+		timeOut = 1;
+	}
+	else if ( timeOut != TT_INFINITE )
+	{
+		timeOut *= 1000;
+		// note that it's impossible for dwMilliseconds * 1000
+		// to coincidentally equal TT_INFINITE since TT_INFINITE
+		// is not divisible by 1000.
+		COMPILE_TIME_ASSERT( TT_INFINITE % 1000 != 0 );
+	}
+
+	COMPILE_TIME_ASSERT( TT_INFINITE != 0 ); // The code here was written expecting (working around) that TT_INFINITE is 
+											 // MAXINT, so if you changed this number, please read the comment above and
+											 // carefully examine the code here to make sure that timeouts still work 
+											 // correctly on PS3. Be aware that in many places in Source, a timeout of
+											 // 0 has some special meaning other than "infinite timeout", so track those
+											 // down too.
+										  
+
+	// Wait for all the events to be set
+	if ( bWaitAll )
+	{
+		while (numEvent < nCount)
+		{
+			uint64_t deltaTime = Plat_USTime();
+
+			res = sys_semaphore_wait(gWaitObjectsSemaphore, timeOut == TT_INFINITE ? 0 : timeOut );
+
+			deltaTime = Plat_USTime() - deltaTime;
+
+			if (res == ETIMEDOUT)
+			{
+				result = TW_TIMEOUT;
+				break;
+			}
+			else if (res == CELL_OK)
+			{				
+				numEvent++;
+
+				if (deltaTime >= timeOut)
+				{
+					// note - if this is not truly a time out
+					// then it will be set to WAIT_OBJECT_0
+					// after this loop
+					result = TW_TIMEOUT;
+					break;
+				}
+				else
+				{
+					timeOut -= deltaTime;
+				}
+			}
+			else
+			{
+				result = TW_FAILED;
+				break;
+			}
+		}
+
+		if (numEvent >= nCount)
+		{
+			result = WAIT_OBJECT_0;
+		}
+	}
+	else	// Wait for one event to be set
+	{
+		// no event fired yet, wait on semaphore
+		res = sys_semaphore_wait( gWaitObjectsSemaphore, timeOut == TT_INFINITE ? 0 : timeOut  );
+
+		if (res == ETIMEDOUT)
+		{
+			result = TW_TIMEOUT;
+		}
+		else if (res == CELL_OK)
+		{
+			if ((event < 0) || (event >= nCount))
+			{
+				DEBUG_ERROR("Bad event\n");
+			}
+
+			result = WAIT_OBJECT_0 + event;
+		}	
+	}
+
+	// run through events unregistering this thread, for benefit
+	// of those events that did not fire, or fired before semaphore
+	// was registered
+	for (int i = 0; i < nCount; i++)
+	{
+		lppHandles[i]->UnregisterWaitingThread(&gWaitObjectsSemaphore);
+	}
+
+	// reset semaphore
+	while (sys_semaphore_trywait(gWaitObjectsSemaphore) != EBUSY);
+
+	return result;
+
+
+	//////////////////////////////////////////////////////////////
+#endif	// NEW_WAIT_FOR_MULTIPLE_OBJECTS
+	//////////////////////////////////////////////////////////////
+}
+
+#endif

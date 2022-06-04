@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright � 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Linked list container class 
 //
@@ -25,6 +25,9 @@
 // This is a useful macro to iterate from head to tail in a linked list.
 #define FOR_EACH_LL( listName, iteratorName ) \
 	for( auto iteratorName=(listName).Head(); (listName).IsUtlLinkedList && iteratorName != (listName).InvalidIndex(); iteratorName = (listName).Next( iteratorName ) )
+
+#define FOR_EACH_LL_BACK( listName, iteratorName ) \
+	for( auto iteratorName=(listName).Tail(); (listName).IsUtlLinkedList && iteratorName != (listName).InvalidIndex(); iteratorName = (listName).Previous( iteratorName ) )
 
 //-----------------------------------------------------------------------------
 // class CUtlLinkedList:
@@ -65,11 +68,14 @@ public:
 	typedef S IndexType_t; // should really be called IndexStorageType_t, but that would be a huge change
 	typedef I IndexLocalType_t;
 	typedef M MemoryAllocator_t;
-	static const bool IsUtlLinkedList = true; // Used to match this at compiletime 
+	enum { IsUtlLinkedList = true }; // Used to match this at compiletime 
 
 	// constructor, destructor
 	CUtlLinkedList( int growSize = 0, int initSize = 0 );
 	~CUtlLinkedList();
+
+	CUtlLinkedList( const CUtlLinkedList& ) = delete;
+	CUtlLinkedList& operator=( const CUtlLinkedList& ) = delete;
 
 	// gets particular elements
 	T&         Element( I i );
@@ -114,6 +120,9 @@ public:
 	// non-connected lists, and IsInList and Head + Tail are meaningless...
 	I		Alloc( bool multilist = false );
 	void	Free( I elem );
+
+	// Identify the owner of this linked list's memory:
+	void	SetAllocOwner( const char *pszAllocOwner );
 
 	// list modification
 	void	LinkBefore( I before, I elem );
@@ -348,15 +357,12 @@ protected:
 	typedef UtlLinkedListElem_t<T, S>  ListElem_t;
 
 	// constructs the class
-	I		AllocInternal( bool multilist = false );
+	I		AllocInternal( bool multilist = false ) RESTRICT;
 	void ConstructList();
 	
 	// Gets at the list element....
 	ListElem_t& InternalElement( I i ) { return m_Memory[i]; }
 	ListElem_t const& InternalElement( I i ) const { return m_Memory[i]; }
-
-	// copy constructors not allowed
-	CUtlLinkedList( CUtlLinkedList<T, S, ML, I, M> const& list ) { Assert(0); }
 
 	M	m_Memory;
 	I	m_Head;
@@ -379,17 +385,10 @@ protected:
 	{
 		m_pElements = m_Memory.Base();
 	}
-
-private:
-	// Faster version of Next that can only be used from tested code internal
-	// to this class, such as Find(). It avoids the cost of checking the index
-	// validity, which is a big win on debug builds.
-	I  PrivateNext( I i ) const;
 };
 
 
 // this is kind of ugly, but until C++ gets templatized typedefs in C++0x, it's our only choice
-// MoeMod : CUtlFixedMemory uses intp as index type
 template < class T >
 class CUtlFixedLinkedList : public CUtlLinkedList< T, intp, true, intp, CUtlFixedMemory< UtlLinkedListElem_t< T, intp > > >
 {
@@ -397,25 +396,24 @@ public:
 	CUtlFixedLinkedList( int growSize = 0, int initSize = 0 )
 		: CUtlLinkedList< T, intp, true, intp, CUtlFixedMemory< UtlLinkedListElem_t< T, intp > > >( growSize, initSize ) {}
 
-	typedef CUtlLinkedList< T, intp, true, intp, CUtlFixedMemory< UtlLinkedListElem_t< T, intp > > > BaseClass;
 	bool IsValidIndex( intp i ) const
 	{
-		if ( !BaseClass::Memory().IsIdxValid( i ) )
+		if ( !this->Memory().IsIdxValid( i ) )
 			return false;
 
 #ifdef _DEBUG // it's safe to skip this here, since the only way to get indices after m_LastAlloc is to use MaxElementIndex
-		if ( BaseClass::Memory().IsIdxAfter( i, this->m_LastAlloc ) )
+		if ( this->Memory().IsIdxAfter( i, this->m_LastAlloc ) )
 		{
 			Assert( 0 );
 			return false; // don't read values that have been allocated, but not constructed
 		}
 #endif
 
-		return ( BaseClass::Memory()[ i ].m_Previous != i ) || ( BaseClass::Memory()[ i ].m_Next == i );
+		return ( this->Memory()[ i ].m_Previous != i ) || ( this->Memory()[ i ].m_Next == i );
 	}
 
 private:
-    intp	MaxElementIndex() const { Assert( 0 ); return BaseClass::InvalidIndex(); } // fixedmemory containers don't support iteration from 0..maxelements-1
+	int	MaxElementIndex() const { Assert( 0 ); return this->InvalidIndex(); } // fixedmemory containers don't support iteration from 0..maxelements-1
 	void ResetDbgInfo() {}
 };
 
@@ -439,8 +437,10 @@ template <class T, class S, bool ML, class I, class M>
 CUtlLinkedList<T,S,ML,I,M>::CUtlLinkedList( int growSize, int initSize ) :
 	m_Memory( growSize, initSize ), m_LastAlloc( m_Memory.InvalidIterator() )
 {
+#if !defined( PLATFORM_WINDOWS_PC64 ) && !defined( PLATFORM_64BITS )
 	// Prevent signed non-int datatypes
-	COMPILE_TIME_ASSERT( sizeof(S) == sizeof(M::InvalidIndex()) || ( ( (S)-1 ) > 0 ) );
+	COMPILE_TIME_ASSERT( sizeof(S) == 4 || ( ( (S)-1 ) > 0 ) );
+#endif
 	ConstructList();
 	ResetDbgInfo();
 }
@@ -540,21 +540,13 @@ inline I  CUtlLinkedList<T,S,ML,I,M>::Next( I i ) const
 	return InternalElement(i).m_Next; 
 }
 
-template <class T, class S, bool ML, class I, class M>
-inline I  CUtlLinkedList<T,S,ML,I,M>::PrivateNext( I i ) const  
-{ 
-	return InternalElement(i).m_Next; 
-}
-
 
 //-----------------------------------------------------------------------------
 // Are nodes in the list or valid?
 //-----------------------------------------------------------------------------
 
-#ifdef _WIN32
 #pragma warning(push)
 #pragma warning( disable: 4310 ) // Allows "(I)(S)M::INVALID_INDEX" below
-#endif
 template <class T, class S, bool ML, class I, class M>
 inline bool CUtlLinkedList<T,S,ML,I,M>::IndexInRange( I index ) // Static method
 {
@@ -565,17 +557,17 @@ inline bool CUtlLinkedList<T,S,ML,I,M>::IndexInRange( I index ) // Static method
 
 	// Do some static checks here:
 	//  'I' needs to be able to store 'S'
-	COMPILE_TIME_ASSERT( sizeof(I) >= sizeof(S) );
+	// These COMPILE_TIME_ASSERT checks need to be in individual scopes to avoid build breaks
+	// on MacOS and Linux due to a gcc bug.
+	{ COMPILE_TIME_ASSERT( sizeof(I) >= sizeof(S) ); }
 	//  'S' should be unsigned (to avoid signed arithmetic errors for plausibly exhaustible ranges)
-	COMPILE_TIME_ASSERT( ( sizeof(S) > 2 ) || ( ( (S)-1 ) > 0 ) );
+	{ COMPILE_TIME_ASSERT( ( sizeof(S) > 2 ) || ( ( (S)-1 ) > 0 ) ); }
 	//  M::INVALID_INDEX should be storable in S to avoid ambiguities (e.g. with 65536)
-	COMPILE_TIME_ASSERT( ( M::INVALID_INDEX == -1 ) || ( M::INVALID_INDEX == (S)M::INVALID_INDEX ) );
+	{ COMPILE_TIME_ASSERT( ( M::INVALID_INDEX == -1 ) || ( M::INVALID_INDEX == (S)M::INVALID_INDEX ) ); }
 
 	return ( ( (S)index == index ) && ( (S)index != InvalidIndex() ) );
 }
-#ifdef _WIN32
 #pragma warning(pop)
-#endif
 
 template <class T, class S, bool ML, class I, class M>
 inline bool CUtlLinkedList<T,S,ML,I,M>::IsValidIndex( I i ) const  
@@ -626,6 +618,12 @@ void CUtlLinkedList<T,S,ML,I,M>::SetGrowSize( int growSize )
 	ResetDbgInfo();
 }
 
+template< class T, class S, bool ML, class I, class M >
+void CUtlLinkedList<T,S,ML,I,M>::SetAllocOwner( const char *pszAllocOwner )
+{
+	m_Memory.SetAllocOwner( pszAllocOwner );
+}
+
 
 //-----------------------------------------------------------------------------
 // Deallocate memory
@@ -665,7 +663,7 @@ void CUtlLinkedList<T,S,ML,I,M>::PurgeAndDeleteElements()
 // Node allocation/deallocation
 //-----------------------------------------------------------------------------
 template <class T, class S, bool ML, class I, class M>
-I CUtlLinkedList<T,S,ML,I,M>::AllocInternal( bool multilist )
+I CUtlLinkedList<T,S,ML,I,M>::AllocInternal( bool multilist ) RESTRICT
 {
 	Assert( !multilist || ML );
 #ifdef MULTILIST_PEDANTIC_ASSERTS
@@ -798,7 +796,7 @@ inline I CUtlLinkedList<T,S,ML,I,M>::AddToHead( )
 template <class T, class S, bool ML, class I, class M>
 inline I CUtlLinkedList<T,S,ML,I,M>::AddToTail( ) 
 { 
-	return InsertBefore( InvalidIndex() );
+	return InsertBefore( InvalidIndex() ); 
 }
 
 
@@ -860,9 +858,7 @@ inline I CUtlLinkedList<T,S,ML,I,M>::AddToTail( T const& src )
 template<class T, class S, bool ML, class I, class M>
 I CUtlLinkedList<T,S,ML,I,M>::Find( const T &src ) const
 {
-	// Cache the invalidIndex to avoid two levels of function calls on each iteration.
-	I invalidIndex = InvalidIndex();
-	for ( I i=Head(); i != invalidIndex; i = PrivateNext( i ) )
+	for ( I i=Head(); i != InvalidIndex(); i = Next( i ) )
 	{
 		if ( Element( i ) == src )
 			return i;

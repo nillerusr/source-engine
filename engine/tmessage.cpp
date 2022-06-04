@@ -367,7 +367,8 @@ void TextMessageParse( byte *pMemFile, int fileSize )
 
 	client_textmessage_t	textMessages[ MAX_MESSAGES ];
 	
-	int			i, nameHeapSize, textHeapSize, messageSize, nameOffset;
+	int			i, nameHeapSize, textHeapSize, messageSize;
+	intp nameOffset;
 
 	lastNamePos = 0;
 	lineNumber = 0;

@@ -1500,7 +1500,7 @@ inline void ConstructThreeArg( T* pMemory, P1 const& arg1, P2 const& arg2, P3 co
 template <class T>
 inline T* CopyConstruct( T* pMemory, T const& src )
 {
-	return reinterpret_cast<T*>(::new( pMemory ) T(src));
+	return ::new( pMemory ) T(src);
 }
 
 template <class T>

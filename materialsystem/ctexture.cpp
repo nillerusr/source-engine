@@ -4039,7 +4039,7 @@ void CTexture::DeleteIfUnreferenced()
 	if ( ThreadInMainThread() )
 	{
 		// Render thread better not be active or bad things can happen.
-		Assert( MaterialSystem()->GetRenderThreadId() == 0xFFFFFFFF );
+		Assert( MaterialSystem()->GetRenderThreadId() == (uintp)-1 );
 		TextureManager()->RemoveTexture( this );
 		return;
 	}

@@ -40,7 +40,7 @@ void CRagdollLowViolenceManager::SetLowViolence( const char *pMapName )
 
 #if !defined( CLIENT_DLL )
 	// the server doesn't worry about low violence during multiplayer games
-	if ( g_pGameRules->IsMultiplayer() )
+	if ( g_pGameRules && g_pGameRules->IsMultiplayer() )
 	{
 		m_bLowViolence = false;
 	}

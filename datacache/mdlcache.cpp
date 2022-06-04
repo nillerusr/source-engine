@@ -1973,39 +1973,18 @@ studiohdr_t *CMDLCache::UnserializeMDL( MDLHandle_t handle, void *pData, int nDa
 
 	// critical! store a back link to our data
 	// this is fetched when re-establishing dependent cached data (vtx/vvd)
-#ifndef PLATFORM_64BITS
-    pStudioHdrIn->SetVirtualModel( MDLHandleToVirtual( handle ) );
-#endif
+	pStudioHdrIn->SetVirtualModel( MDLHandleToVirtual( handle ) );
 
 	MdlCacheMsg( "MDLCache: Alloc studiohdr %s\n", GetModelName( handle ) );
 
 	// allocate cache space
 	MemAlloc_PushAllocDbgInfo( "Models:StudioHdr", 0);
-#ifdef PLATFORM_64BITS
-    studiohdr_t *pHdr = (studiohdr_t *)AllocData( MDLCACHE_STUDIOHDR, pStudioHdrIn->length + sizeof(studiohdr_shim64_index) );
-#else
 	studiohdr_t *pHdr = (studiohdr_t *)AllocData( MDLCACHE_STUDIOHDR, pStudioHdrIn->length );
-#endif
 	MemAlloc_PopAllocDbgInfo();
 	if ( !pHdr )
 		return NULL;
 
-#ifdef PLATFORM_64BITS
-    // MoeMod : fix shim64 index
-    studiohdr_shim64_index *pHdrIndex = (studiohdr_shim64_index *)(((byte *)pHdr)+ pStudioHdrIn->length);
-    pHdrIndex->virtualModel = nullptr;
-    pHdrIndex->animblockModel = nullptr;
-    pHdrIndex->pVertexBase = nullptr;
-    pHdrIndex->pIndexBase = nullptr;
-    pStudioHdrIn->index_ptr_virtualModel = (byte *)&pHdrIndex->virtualModel - (byte *)pHdr;
-    pStudioHdrIn->index_ptr_animblockModel = (byte *)&pHdrIndex->animblockModel - (byte *)pHdr;
-    pStudioHdrIn->index_ptr_pVertexBase = (byte *)&pHdrIndex->pVertexBase - (byte *)pHdr;
-    pStudioHdrIn->index_ptr_pIndexBase = (byte *)&pHdrIndex->pIndexBase - (byte *)pHdr;
-    pStudioHdrIn->SetVirtualModel( MDLHandleToVirtual( handle ) );
-    CacheData( &m_MDLDict[handle]->m_MDLCache, pHdr, pStudioHdrIn->length + sizeof(studiohdr_shim64_index), GetModelName( handle ), MDLCACHE_STUDIOHDR, MakeCacheID( handle, MDLCACHE_STUDIOHDR) );
-#else
 	CacheData( &m_MDLDict[handle]->m_MDLCache, pHdr, pStudioHdrIn->length, GetModelName( handle ), MDLCACHE_STUDIOHDR, MakeCacheID( handle, MDLCACHE_STUDIOHDR) );
-#endif
 
 	if ( mod_lock_mdls_on_load.GetBool() )
 	{
@@ -2103,27 +2082,7 @@ bool CMDLCache::ReadMDLFile( MDLHandle_t handle, const char *pMDLFileName, CUtlB
 
 	// critical! store a back link to our data
 	// this is fetched when re-establishing dependent cached data (vtx/vvd)
-#if PLATFORM_64BITS
-    int length = buf.Size();
-    {
-        studiohdr_shim64_index shim;
-        buf.Put( &shim, sizeof(shim) );
-    }
-    studiohdr_shim64_index *pHdrIndex = (studiohdr_shim64_index *)(((byte *)buf.PeekGet())+ length);
-    pStudioHdr = (studiohdr_t*)buf.PeekGet();
-
-    pHdrIndex->virtualModel = nullptr;
-    pHdrIndex->animblockModel = nullptr;
-    pHdrIndex->pVertexBase = nullptr;
-    pHdrIndex->pIndexBase = nullptr;
-    pStudioHdr->index_ptr_virtualModel = (byte *)&pHdrIndex->virtualModel - (byte *)pStudioHdr;
-    pStudioHdr->index_ptr_animblockModel = (byte *)&pHdrIndex->animblockModel - (byte *)pStudioHdr;
-    pStudioHdr->index_ptr_pVertexBase = (byte *)&pHdrIndex->pVertexBase - (byte *)pStudioHdr;
-    pStudioHdr->index_ptr_pIndexBase = (byte *)&pHdrIndex->pIndexBase - (byte *)pStudioHdr;
-    pStudioHdr->SetVirtualModel( MDLHandleToVirtual( handle ) );
-#else
-    pStudioHdr->SetVirtualModel( MDLHandleToVirtual( handle ) );
-#endif
+	pStudioHdr->SetVirtualModel( MDLHandleToVirtual( handle ) );
 
 	// Make sure all dependent files are valid
 	if ( !VerifyHeaders( pStudioHdr ) )

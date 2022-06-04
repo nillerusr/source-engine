@@ -62,9 +62,10 @@ typedef enum _fieldtypes
 	FIELD_INTERVAL,			// a start and range floating point interval ( e.g., 3.2->3.6 == 3.2 and 0.4 )
 	FIELD_MODELINDEX,		// a model index
 	FIELD_MATERIALINDEX,	// a material index (using the material precache string table)
-	
+
 	FIELD_VECTOR2D,			// 2 floats
-    FIELD_INTEGER64,        // 64bit integer
+	FIELD_INTEGER64,        // 64bit integer
+	FIELD_POINTER,
 
 	FIELD_TYPECOUNT,		// MUST BE LAST
 } fieldtype_t;
@@ -94,7 +95,7 @@ public:
 #define FIELD_BITS( _fieldType )	(FIELD_SIZE( _fieldType ) * 8)
 
 DECLARE_FIELD_SIZE( FIELD_FLOAT,		sizeof(float) )
-DECLARE_FIELD_SIZE( FIELD_STRING,		sizeof(int) )
+
 DECLARE_FIELD_SIZE( FIELD_VECTOR,		3 * sizeof(float) )
 DECLARE_FIELD_SIZE( FIELD_VECTOR2D,		2 * sizeof(float) )
 DECLARE_FIELD_SIZE( FIELD_QUATERNION,	4 * sizeof(float))
@@ -103,14 +104,16 @@ DECLARE_FIELD_SIZE( FIELD_BOOLEAN,		sizeof(char))
 DECLARE_FIELD_SIZE( FIELD_SHORT,		sizeof(short))
 DECLARE_FIELD_SIZE( FIELD_CHARACTER,	sizeof(char))
 DECLARE_FIELD_SIZE( FIELD_COLOR32,		sizeof(int))
-DECLARE_FIELD_SIZE( FIELD_CLASSPTR,		sizeof(int))
-DECLARE_FIELD_SIZE( FIELD_EHANDLE,		sizeof(int))
+DECLARE_FIELD_SIZE( FIELD_STRING,		sizeof(void*))
+DECLARE_FIELD_SIZE( FIELD_POINTER,		sizeof(void*))
+DECLARE_FIELD_SIZE( FIELD_MODELNAME,	sizeof(void*))
+DECLARE_FIELD_SIZE( FIELD_SOUNDNAME,	sizeof(void*))
+DECLARE_FIELD_SIZE( FIELD_EHANDLE,		sizeof(void*))
+DECLARE_FIELD_SIZE( FIELD_CLASSPTR,		sizeof(void*))
 DECLARE_FIELD_SIZE( FIELD_EDICT,		sizeof(int))
 DECLARE_FIELD_SIZE( FIELD_POSITION_VECTOR, 	3 * sizeof(float))
 DECLARE_FIELD_SIZE( FIELD_TIME,			sizeof(float))
 DECLARE_FIELD_SIZE( FIELD_TICK,			sizeof(int))
-DECLARE_FIELD_SIZE( FIELD_MODELNAME,	sizeof(int))
-DECLARE_FIELD_SIZE( FIELD_SOUNDNAME,	sizeof(int))
 DECLARE_FIELD_SIZE( FIELD_INPUT,		sizeof(int))
 #ifdef POSIX
 // pointer to members under gnuc are 8bytes if you have a virtual func

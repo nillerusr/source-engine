@@ -48,7 +48,7 @@ struct Vertex_t
 
 	// for sw skinned verts, these are indices into the global list of bones
 	// for hw skinned verts, these are hardware bone indices
-	char boneID[MAX_NUM_BONES_PER_VERT];
+	byte boneID[MAX_NUM_BONES_PER_VERT];
 };
 
 enum StripHeaderFlags_t {
