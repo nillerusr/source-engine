@@ -3769,6 +3769,10 @@ static int ShadowDepthSamplerMaskFromName( const char *pName )
 	{
 		return (1<<7);
 	}
+	else if ( V_stristr( pName, "skin_ps" ) )
+	{
+		return (1<<4) | (1<<6);
+	}
 	else if ( V_stristr( pName, "infected_ps" ) )
 	{
 		return (1<<1);
@@ -3795,7 +3799,7 @@ static int ShadowDepthSamplerMaskFromName( const char *pName )
 	}
 	else if ( V_stristr( pName, "worldtwotextureblend_ps" ) ) 
 	{
-		return (1<<7);
+		return (1<<2);
 	}
 	else if ( V_stristr( pName, "teeth_flashlight_ps" ) ) 
 	{
