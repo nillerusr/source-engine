@@ -21,7 +21,7 @@ class CStringRegistry;
 // ----------------------------------------------------------------------
 
 // Codes are either one of the enumerated types below, or a string (similar to Windows resource IDs)
-typedef intp AI_TaskFailureCode_t;
+typedef int AI_TaskFailureCode_t;
 
 enum AI_BaseTaskFailureCodes_t : AI_TaskFailureCode_t
 {
