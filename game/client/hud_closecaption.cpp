@@ -543,7 +543,7 @@ struct AsyncCaptionData_t
 		data->m_nBlockNum = params.blocktoload;
 		data->m_nFileIndex = params.fileindex;
 		data->m_nBlockSize = params.blocksize;
-		data->m_pBlockData = new byte[ data->m_nBlockSize ];
+		data->m_pBlockData = new byte[ data->m_nBlockSize * sizeof(ucs2) ];
 		return data;
 	}
 
@@ -2027,6 +2027,7 @@ public:
 			if ( entry.blockNum != nBlockNum )
 				continue;
 
+
 #ifdef WIN32
 			const wchar_t *pIn = ( const wchar_t *)&pData->m_pBlockData[ entry.offset ];
 			caption->stream = new wchar_t[ entry.length >> 1 ];
@@ -2034,7 +2035,7 @@ public:
 #else
 			// we persist to disk as ucs2 so convert back to real unicode here
 			caption->stream = new wchar_t[ entry.length ];
-			V_UCS2ToUnicode( (ucs2 *)&pData->m_pBlockData[ entry.offset ], caption->stream, entry.length*sizeof(wchar_t) );	
+			V_UCS2ToUnicode( (ucs2 *)&pData->m_pBlockData[ entry.offset ], caption->stream, entry.length << 1 );
 #endif
 		}
 	}

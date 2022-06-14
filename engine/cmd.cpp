@@ -624,7 +624,7 @@ void Cmd_Exec_f( const CCommand &args )
 		}
 	}
 
-	char buf[16384] = { 0 };
+	static char buf[16384] = { 0 };
 	int len = 0;
 	char *f = (char *)COM_LoadStackFile( fileName, buf, sizeof( buf ), len );
 	if ( !f )

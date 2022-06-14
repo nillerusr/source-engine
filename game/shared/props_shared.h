@@ -221,7 +221,7 @@ struct breakmodel_t
 
 struct breakablepropparams_t
 {
-	breakablepropparams_t( const Vector &_origin, const QAngle &_angles, const Vector &_velocity, const AngularImpulse &_angularVelocity )
+	breakablepropparams_t( const Vector _origin, const QAngle _angles, const Vector _velocity, const AngularImpulse _angularVelocity )
 		: origin(_origin), angles(_angles), velocity(_velocity), angularVelocity(_angularVelocity)
 	{
 		impactEnergyScale = 0;
@@ -230,10 +230,10 @@ struct breakablepropparams_t
 		nDefaultSkin = 0;
 	}
 
-	const Vector &origin;
-	const QAngle &angles;
-	const Vector &velocity;
-	const AngularImpulse &angularVelocity;
+	const Vector origin;
+	const QAngle angles;
+	const Vector velocity;
+	const AngularImpulse angularVelocity;
 	float impactEnergyScale;
 	float defBurstScale;
 	int defCollisionGroup;

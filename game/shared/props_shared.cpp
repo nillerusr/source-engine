@@ -951,7 +951,7 @@ void PropBreakableCreateAll( int modelindex, IPhysicsObject *pPhysics, const bre
 			nSkin = pOwnerAnim->m_nSkin;
 		}
 	}
-	matrix3x4_t localToWorld;
+	static matrix3x4_t localToWorld;
 
 	CStudioHdr studioHdr;
 	const model_t *model = modelinfo->GetModel( modelindex );
@@ -1009,7 +1009,7 @@ void PropBreakableCreateAll( int modelindex, IPhysicsObject *pPhysics, const bre
 			if ( ( iPrecomputedBreakableCount != -1 ) && ( i >= iPrecomputedBreakableCount ) )
 				break;
 
-			matrix3x4_t matrix;
+			static matrix3x4_t matrix;
 			AngleMatrix( params.angles, params.origin, matrix );
 
 			CStudioHdr studioHdr;
@@ -1188,7 +1188,7 @@ void PropBreakableCreateAll( int modelindex, IPhysicsObject *pPhysics, const bre
 					Vector vecBreakableObbSize = pBreakable->CollisionProp()->OBBSize();
 
 					// Try to align the gibs along the original axis 
-					matrix3x4_t matrix;
+					static matrix3x4_t matrix;
 					AngleMatrix( vecAngles, matrix );
 					AlignBoxes( &matrix, vecObbSize, vecBreakableObbSize );
 					MatrixAngles( matrix, vecAngles );
@@ -1397,7 +1397,7 @@ CBaseEntity *CreateGibsFromList( CUtlVector<breakmodel_t> &list, int modelindex,
 			if ( ( iPrecomputedBreakableCount != -1 ) && ( i >= iPrecomputedBreakableCount ) )
 				break;
 
-			matrix3x4_t matrix;
+			static matrix3x4_t matrix;
 			AngleMatrix( params.angles, params.origin, matrix );
 
 			CStudioHdr studioHdr;
@@ -1596,7 +1596,7 @@ CBaseEntity *CreateGibsFromList( CUtlVector<breakmodel_t> &list, int modelindex,
 					Vector vecBreakableObbSize = pBreakable->CollisionProp()->OBBSize();
 
 					// Try to align the gibs along the original axis 
-					matrix3x4_t matrix;
+					static matrix3x4_t matrix;
 					AngleMatrix( vecAngles, matrix );
 					AlignBoxes( &matrix, vecObbSize, vecBreakableObbSize );
 					MatrixAngles( matrix, vecAngles );

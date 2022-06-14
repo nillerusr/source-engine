@@ -53,7 +53,7 @@ struct AI_Follower_t
 	}
 
 	AIHANDLE 			hFollower;
-	int					slot;
+	intp					slot;
 	AI_FollowNavInfo_t	navInfo;
 	AI_FollowGroup_t *	pGroup;	// backpointer for efficiency
 };
@@ -2561,7 +2561,7 @@ bool CAI_FollowManager::AddFollower( CBaseEntity *pTarget, CAI_BaseNPC *pFollowe
 
 		AI_FollowSlot_t *pSlot 		= &pGroup->pFormation->pSlots[slot];
 
-		int i = pGroup->followers.AddToTail( );
+		intp i = pGroup->followers.AddToTail( );
 
 		AI_Follower_t *iterNode = &pGroup->followers[i];
 		iterNode->hFollower 	= pFollower;
@@ -2569,9 +2569,8 @@ bool CAI_FollowManager::AddFollower( CBaseEntity *pTarget, CAI_BaseNPC *pFollowe
 		iterNode->pGroup		= pGroup;
 
 		pGroup->slotUsage.Set( slot );
-		
 		CalculateFieldsFromSlot( pSlot, &iterNode->navInfo );
-		
+
 		pHandle->m_hFollower = i;
 		pHandle->m_pGroup = pGroup;
 		return true;
@@ -2641,10 +2640,10 @@ bool CAI_FollowManager::RedistributeSlots( AI_FollowGroup_t *pGroup )
 	{
 		AI_FollowSlot_t *  pSlot 	  = &pGroup->pFormation->pSlots[bestSlot];
 		Vector			   slotPos	  = originFollowed + pSlot->position;
-		int  h			= pGroup->followers.Head();
-		int  hBest 		= pGroup->followers.InvalidIndex();
+		intp  h			= pGroup->followers.Head();
+		intp  hBest 		= pGroup->followers.InvalidIndex();
 		float 			   distSqBest = FLT_MAX;
-		
+
 		while ( h != pGroup->followers.InvalidIndex() )
 		{
 			AI_Follower_t *p = &pGroup->followers[h];
@@ -2691,7 +2690,7 @@ void CAI_FollowManager::ChangeFormation( AI_FollowManagerInfoHandle_t& hInfo, AI
 	if ( pNewFormation == pGroup->pFormation )
 		return;
 
-	int h = pGroup->followers.Head();
+	intp h = pGroup->followers.Head();
 		
 	while ( h != pGroup->followers.InvalidIndex() )
 	{
@@ -2738,7 +2737,7 @@ void CAI_FollowManager::RemoveFollower( AI_FollowManagerInfoHandle_t& hInfo )
 		AI_FollowGroup_t *pGroup = hInfo.m_pGroup;
 		AI_Follower_t* iterNode = &pGroup->followers[hInfo.m_hFollower];
 
-		int slot = iterNode->slot;
+		intp slot = iterNode->slot;
 		pGroup->slotUsage.Clear( slot );
 		pGroup->followers.Remove( hInfo.m_hFollower );
 		if ( pGroup->followers.Count() == 0 )
