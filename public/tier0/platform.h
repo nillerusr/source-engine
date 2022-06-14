@@ -525,6 +525,16 @@ typedef void * HINSTANCE;
 #error
 #endif
 
+// !!! NOTE: if you get a compile error here, you are using VALIGNOF on an abstract type :NOTE !!!
+#define VALIGNOF_PORTABLE( type ) ( sizeof( AlignOf_t<type> ) - sizeof( type ) )
+
+#if defined( COMPILER_GCC ) || defined( COMPILER_MSVC )
+#define VALIGNOF( type ) __alignof( type )
+#define VALIGNOF_TEMPLATE_SAFE( type ) VALIGNOF_PORTABLE( type )
+#else
+#error "PORT: Code only tested with MSVC! Must validate with new compiler, and use built-in keyword if available."
+#endif
+
 // Pull in the /analyze code annotations.
 #include "annotations.h"
 

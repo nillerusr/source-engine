@@ -69,7 +69,7 @@ public:
 	void Restore( const SaveRestoreFieldInfo_t &fieldInfo, IRestore *pRestore );
 
 private:
-	typedef CUtlVector<int> VPhysPtrVector;
+	typedef CUtlVector<intp> VPhysPtrVector;
 };
 
 extern CVPhysPtrUtlVectorSaveRestoreOps g_VPhysPtrUtlVectorSaveRestoreOps;

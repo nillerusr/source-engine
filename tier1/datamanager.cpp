@@ -1,4 +1,4 @@
-
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -9,7 +9,13 @@
 #include "basetypes.h"
 #include "datamanager.h"
 
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
+
 DECLARE_POINTER_HANDLE( memhandle_t );
+
+#define AUTO_LOCK_DM() AUTO_LOCK_( CDataManagerBase, *this )
 
 CDataManagerBase::CDataManagerBase( unsigned int maxSize )
 {
@@ -19,11 +25,12 @@ CDataManagerBase::CDataManagerBase( unsigned int maxSize )
 	m_lockList = m_memoryLists.CreateList();
 	m_freeList = m_memoryLists.CreateList();
 	m_listsAreFreed = 0;
+	m_freeOnDestruct = 1;
 }
 
 CDataManagerBase::~CDataManagerBase() 
 {
-	Assert( m_listsAreFreed );
+	Assert( !m_freeOnDestruct || m_listsAreFreed );
 }
 
 void CDataManagerBase::NotifySizeChanged( memhandle_t handle, unsigned int oldSize, unsigned int newSize )
@@ -43,7 +50,7 @@ unsigned int CDataManagerBase::FlushAllUnlocked()
 	Lock();
 
 	int nFlush = m_memoryLists.Count( m_lruList );
-	void **pScratch = (void **)_alloca( nFlush * sizeof(void *) );
+	void **pScratch = (void **)stackalloc( nFlush * sizeof(void *) );
 	CUtlVector<void *> destroyList( pScratch, nFlush );
 
 	unsigned nBytesInitial = MemUsed_Inline();
@@ -80,7 +87,7 @@ unsigned int CDataManagerBase::FlushAll()
 	Lock();
 
 	int nFlush = m_memoryLists.Count( m_lruList ) + m_memoryLists.Count( m_lockList );
-	void **pScratch = (void **)_alloca( nFlush * sizeof(void *) );
+	void **pScratch = (void **) stackalloc( nFlush * sizeof(void *) );
 	CUtlVector<void *> destroyList( pScratch, nFlush );
 
 	unsigned result = MemUsed_Inline();
@@ -120,8 +127,7 @@ unsigned int CDataManagerBase::FlushAll()
 unsigned int CDataManagerBase::Purge( unsigned int nBytesToPurge )
 {
 	unsigned int nTargetSize = MemUsed_Inline() - nBytesToPurge;
-	// Check for underflow
-	if ( MemUsed_Inline() < nBytesToPurge )
+	if ( nBytesToPurge > MemUsed_Inline() )
 		nTargetSize = 0;
 	unsigned int nImpliedCapacity = MemTotal_Inline() - nTargetSize;
 	return EnsureCapacity( nImpliedCapacity );
@@ -151,8 +157,7 @@ void CDataManagerBase::DestroyResource( memhandle_t handle )
 
 void *CDataManagerBase::LockResource( memhandle_t handle )
 {
-	AUTO_LOCK( *this );
-
+	AUTO_LOCK_DM();
 	unsigned short memoryIndex = FromHandle(handle);
 	if ( memoryIndex != m_memoryLists.InvalidIndex() )
 	{
@@ -169,9 +174,29 @@ void *CDataManagerBase::LockResource( memhandle_t handle )
 	return NULL;
 }
 
+void *CDataManagerBase::LockResourceReturnCount( int *pCount, memhandle_t handle )
+{
+	AUTO_LOCK_DM();
+	unsigned short memoryIndex = FromHandle(handle);
+	if ( memoryIndex != m_memoryLists.InvalidIndex() )
+	{
+		if ( m_memoryLists[memoryIndex].lockCount == 0 )
+		{
+			m_memoryLists.Unlink( m_lruList, memoryIndex );
+			m_memoryLists.LinkToTail( m_lockList, memoryIndex );
+		}
+		Assert(m_memoryLists[memoryIndex].lockCount != (unsigned short)-1);
+		*pCount = ++m_memoryLists[memoryIndex].lockCount;
+		return m_memoryLists[memoryIndex].pStore;
+	}
+
+	*pCount = 0;
+	return NULL;
+}
+
 int CDataManagerBase::UnlockResource( memhandle_t handle )
 {
-	AUTO_LOCK( *this );
+	AUTO_LOCK_DM();
 	unsigned short memoryIndex = FromHandle(handle);
 	if ( memoryIndex != m_memoryLists.InvalidIndex() )
 	{
@@ -193,7 +218,7 @@ int CDataManagerBase::UnlockResource( memhandle_t handle )
 
 void *CDataManagerBase::GetResource_NoLockNoLRUTouch( memhandle_t handle )
 {
-	AUTO_LOCK( *this );
+	AUTO_LOCK_DM();
 	unsigned short memoryIndex = FromHandle(handle);
 	if ( memoryIndex != m_memoryLists.InvalidIndex() )
 	{
@@ -205,7 +230,7 @@ void *CDataManagerBase::GetResource_NoLockNoLRUTouch( memhandle_t handle )
 
 void *CDataManagerBase::GetResource_NoLock( memhandle_t handle )
 {
-	AUTO_LOCK( *this );
+	AUTO_LOCK_DM();
 	unsigned short memoryIndex = FromHandle(handle);
 	if ( memoryIndex != m_memoryLists.InvalidIndex() )
 	{
@@ -217,13 +242,13 @@ void *CDataManagerBase::GetResource_NoLock( memhandle_t handle )
 
 void CDataManagerBase::TouchResource( memhandle_t handle )
 {
-	AUTO_LOCK( *this );
+	AUTO_LOCK_DM();
 	TouchByIndex( FromHandle(handle) );
 }
 
 void CDataManagerBase::MarkAsStale( memhandle_t handle )
 {
-	AUTO_LOCK( *this );
+	AUTO_LOCK_DM();
 	unsigned short memoryIndex = FromHandle(handle);
 	if ( memoryIndex != m_memoryLists.InvalidIndex() )
 	{
@@ -237,7 +262,7 @@ void CDataManagerBase::MarkAsStale( memhandle_t handle )
 
 int CDataManagerBase::BreakLock( memhandle_t handle )
 {
-	AUTO_LOCK( *this );
+	AUTO_LOCK_DM();
 	unsigned short memoryIndex = FromHandle(handle);
 	if ( memoryIndex != m_memoryLists.InvalidIndex() && m_memoryLists[memoryIndex].lockCount )
 	{
@@ -253,7 +278,7 @@ int CDataManagerBase::BreakLock( memhandle_t handle )
 
 int CDataManagerBase::BreakAllLocks()
 {
-	AUTO_LOCK( *this );
+	AUTO_LOCK_DM();
 	int nBroken = 0;
 	int node;
 	int nextNode;
@@ -275,7 +300,7 @@ int CDataManagerBase::BreakAllLocks()
 
 unsigned short CDataManagerBase::CreateHandle( bool bCreateLocked )
 {
-	AUTO_LOCK( *this );
+	AUTO_LOCK_DM();
 	int memoryIndex = m_memoryLists.Head(m_freeList);
 	unsigned short list = ( bCreateLocked ) ? m_lockList : m_lruList;
 	if ( memoryIndex != m_memoryLists.InvalidIndex() )
@@ -298,7 +323,7 @@ unsigned short CDataManagerBase::CreateHandle( bool bCreateLocked )
 
 memhandle_t CDataManagerBase::StoreResourceInHandle( unsigned short memoryIndex, void *pStore, unsigned int realSize )
 {
-	AUTO_LOCK( *this );
+	AUTO_LOCK_DM();
 	resource_lru_element_t &mem = m_memoryLists[memoryIndex];
 	mem.pStore = pStore;
 	m_memUsed += realSize;
@@ -322,7 +347,7 @@ memhandle_t CDataManagerBase::ToHandle( unsigned short index )
 	unsigned int hiword = m_memoryLists.Element(index).serial;
 	hiword <<= 16;
 	index++;
-	return (memhandle_t)( hiword|index );
+	return reinterpret_cast< memhandle_t >( (uintp)( hiword|index ) );
 }
 
 unsigned int CDataManagerBase::TargetSize() 

@@ -108,8 +108,8 @@ IKeyValuesSystem *KeyValuesSystem()
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
-CKeyValuesSystem::CKeyValuesSystem() 
-: m_HashItemMemPool(sizeof(hash_item_t), 64, UTLMEMORYPOOL_GROW_FAST, "CKeyValuesSystem::m_HashItemMemPool")
+CKeyValuesSystem::CKeyValuesSystem()
+: m_HashItemMemPool(sizeof(hash_item_t), 64, CUtlMemoryPool::GROW_FAST, "CKeyValuesSystem::m_HashItemMemPool")
 , m_KeyValuesTrackingList(0, 0, MemoryLeakTrackerLessFunc)
 , m_KeyValueCache( UtlStringLessFunc )
 {

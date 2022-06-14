@@ -209,7 +209,6 @@ void CVPhysPtrUtlVectorSaveRestoreOps::Restore( const SaveRestoreFieldInfo_t &fi
 	for ( int i = 0; i < nObjects; i++ )
 	{
 		void **ppElem = (void**)(&pUtlVector->Element(i));
-
 		pRestore->ReadData( (char *)ppElem, sizeof(void*), 0 );
 
 		int iNewVal = s_VPhysPtrMap.Find( *ppElem );
