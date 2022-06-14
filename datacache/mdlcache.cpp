@@ -523,7 +523,7 @@ private:
 	int UpdateOrCreate( studiohdr_t *pHdr, const char *pFilename, char *pX360Filename, int maxLen, const char *pPathID, bool bForce = false );
 
 	// Attempts to read the platform native file - on 360 it can read and swap Win32 file as a fallback
-	bool ReadFileNative( char *pFileName, const char *pPath, CUtlBuffer &buf, int nMaxBytes = 0 );
+	bool ReadFileNative( char *pFileName, const char *pPath, CUtlBuffer &buf, int nMaxBytes = 0, MDLCacheDataType_t type = MDLCACHE_NONE );
 
 	// Creates a thin cache entry (to be used for model decals) from fat vertex data
 	vertexFileHeader_t * CreateThinVertexes( vertexFileHeader_t * originalData, const studiohdr_t * pStudioHdr, int * cacheLength );
@@ -1913,7 +1913,7 @@ int CMDLCache::UpdateOrCreate( studiohdr_t *pHdr, const char *pSourceName, char 
 //-----------------------------------------------------------------------------
 // Purpose: Attempts to read a file native to the current platform
 //-----------------------------------------------------------------------------
-bool CMDLCache::ReadFileNative( char *pFileName, const char *pPath, CUtlBuffer &buf, int nMaxBytes )
+bool CMDLCache::ReadFileNative( char *pFileName, const char *pPath, CUtlBuffer &buf, int nMaxBytes, MDLCacheDataType_t type )
 {
 	bool bOk = false;
 
@@ -1928,6 +1928,32 @@ bool CMDLCache::ReadFileNative( char *pFileName, const char *pPath, CUtlBuffer &
 	{
 		// Read the PC version
 		bOk = g_pFullFileSystem->ReadFile( pFileName, pPath, buf, nMaxBytes );
+
+		if( bOk && type == MDLCACHE_STUDIOHDR )
+		{
+			studiohdr_t* pStudioHdr = ( studiohdr_t* ) buf.PeekGet();
+
+			if ( pStudioHdr->studiohdr2index == 0 )
+			{
+				// We always need this now, so make room for it in the buffer now.
+				int bufferContentsEnd = buf.TellMaxPut();
+				int maskBits = VALIGNOF( studiohdr2_t ) - 1;
+				int offsetStudiohdr2 = ( bufferContentsEnd + maskBits ) & ~maskBits;
+				int sizeIncrease = ( offsetStudiohdr2 - bufferContentsEnd )  + sizeof( studiohdr2_t );
+				buf.SeekPut( CUtlBuffer::SEEK_CURRENT, sizeIncrease );
+
+				// Re-get the pointer after resizing, because it has probably moved.
+				pStudioHdr = ( studiohdr_t* ) buf.Base();
+				studiohdr2_t* pStudioHdr2 = ( studiohdr2_t* ) ( ( byte * ) pStudioHdr + offsetStudiohdr2 );
+				memset( pStudioHdr2, 0, sizeof( studiohdr2_t ) );
+				pStudioHdr2->flMaxEyeDeflection = 0.866f; // Matches studio.h.
+
+				pStudioHdr->studiohdr2index = offsetStudiohdr2;
+				// Also make sure the structure knows about the extra bytes 
+				// we've added so they get copied around.
+				pStudioHdr->length += sizeIncrease;
+			}
+		}
 	}
 
 	return bOk;
@@ -2033,7 +2059,7 @@ bool CMDLCache::ReadMDLFile( MDLHandle_t handle, const char *pMDLFileName, CUtlB
 
 	MEM_ALLOC_CREDIT();
 
-	bool bOk = ReadFileNative( pFileName, "GAME", buf );
+	bool bOk = ReadFileNative( pFileName, "GAME", buf, 0, MDLCACHE_STUDIOHDR );
 	if ( !bOk )
 	{
 		DevWarning( "Failed to load %s!\n", pMDLFileName );
@@ -2146,6 +2172,11 @@ studiohdr_t *CMDLCache::GetStudioHdr( MDLHandle_t handle )
 	// Don't do that.
 	// Assert( m_pModelCacheSection->IsFrameLocking() );
 	// Assert( m_pMeshCacheSection->IsFrameLocking() );
+
+	studiodata_t *pStudioData = m_MDLDict[handle];
+
+	if( !pStudioData )
+		return NULL;
 
 #if _DEBUG
 	VPROF_INCREMENT_COUNTER( "GetStudioHdr", 1 );

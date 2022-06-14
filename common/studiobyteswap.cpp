@@ -2522,27 +2522,14 @@ BEGIN_BYTESWAP_DATADESC( studiohdr_t )
 	DEFINE_FIELD( contents, FIELD_INTEGER ),
 	DEFINE_FIELD( numincludemodels, FIELD_INTEGER ),
 	DEFINE_INDEX( includemodelindex, FIELD_INTEGER ),
-#ifdef PLATFORM_64BITS
-    DEFINE_FIELD( index_ptr_virtualModel, FIELD_INTEGER ),				// void*
-#else
-	DEFINE_FIELD( virtualModel, FIELD_INTEGER ),				// void*
-#endif
+	DEFINE_FIELD( unused_virtualModel, FIELD_INTEGER ),				// void*
 	DEFINE_INDEX( szanimblocknameindex, FIELD_INTEGER ),	
 	DEFINE_FIELD( numanimblocks, FIELD_INTEGER ),
 	DEFINE_INDEX( animblockindex, FIELD_INTEGER ),
-#ifdef PLATFORM_64BITS
-    DEFINE_FIELD( index_ptr_virtualModel, FIELD_INTEGER ),				// void*
-#else
-	DEFINE_FIELD( animblockModel, FIELD_INTEGER ),				// void*
-#endif
+	DEFINE_FIELD( unused_animblockModel, FIELD_INTEGER ),				// void*
 	DEFINE_INDEX( bonetablebynameindex, FIELD_INTEGER ),
-#ifdef PLATFORM_64BITS
-    DEFINE_FIELD( index_ptr_pVertexBase, FIELD_INTEGER ),					// void*
-    DEFINE_FIELD( index_ptr_pVertexBase, FIELD_INTEGER ),					// void*
-#else
-	DEFINE_FIELD( pVertexBase, FIELD_INTEGER ),					// void*
-	DEFINE_FIELD( pIndexBase, FIELD_INTEGER ),					// void*
-#endif
+	DEFINE_FIELD( unused_pVertexBase, FIELD_INTEGER ),					// void*
+	DEFINE_FIELD( unused_pIndexBase, FIELD_INTEGER ),					// void*
 	DEFINE_FIELD( constdirectionallightdot, FIELD_CHARACTER ),	// byte
 	DEFINE_FIELD( rootLOD, FIELD_CHARACTER ),					// byte
 	DEFINE_FIELD( numAllowedRootLODs, FIELD_CHARACTER ),		// byte
@@ -2918,13 +2905,8 @@ BEGIN_BYTESWAP_DATADESC( mstudiomodel_t )
 END_BYTESWAP_DATADESC()
 
 BEGIN_BYTESWAP_DATADESC( mstudio_modelvertexdata_t )
-#ifdef PLATFORM_64BITS
-	DEFINE_FIELD( index_ptr_pVertexData, FIELD_INTEGER ),		// void*
-	DEFINE_FIELD( index_ptr_pTangentData, FIELD_INTEGER ),	// void*
-#else
 	DEFINE_FIELD( pVertexData, FIELD_INTEGER ),		// void*
 	DEFINE_FIELD( pTangentData, FIELD_INTEGER ),	// void*
-#endif
 END_BYTESWAP_DATADESC()
 
 BEGIN_BYTESWAP_DATADESC( mstudioflexdesc_t )

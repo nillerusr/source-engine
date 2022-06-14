@@ -106,6 +106,39 @@ struct mstudiodata_t
 #define STUDIO_PROC_AIMATATTACH 4
 #define STUDIO_PROC_JIGGLE 5
 
+// If you want to embed a pointer into one of the structures that is serialized, use this class! It will ensure that the pointers consume the 
+// right amount of space and work correctly across 32 and 64 bit. It also makes sure that there is no surprise about how large the structure
+// is when placed in the middle of another structure, and supports Intel's desired behavior on 64-bit that pointers are always 8-byte aligned.
+#pragma pack( push, 4 )
+template < class T > 
+struct ALIGN4 serializedstudioptr_t
+{
+	T* m_pData;
+#ifndef PLATFORM_64BITS
+	int32 padding;
+#endif
+
+	serializedstudioptr_t() 
+	{ 
+		m_pData = nullptr; 
+		#if _DEBUG && !defined( PLATFORM_64BITS )
+			padding = 0; 
+		#endif
+	}
+
+	inline operator       T*()             { return m_pData; }
+	inline operator const T*() const       { return m_pData; }
+
+	inline       T* operator->( )          { return m_pData; }
+	inline const T* operator->( ) const    { return m_pData; }
+
+	inline T* operator=( T* ptr )          { return m_pData = ptr; }
+	
+} ALIGN4_POST;
+
+#pragma pack( pop )
+
+
 struct mstudioaxisinterpbone_t
 {
 	DECLARE_BYTESWAP_DATADESC();
@@ -1292,26 +1325,14 @@ struct mstudio_modelvertexdata_t
 	int					GetGlobalTangentIndex( int i ) const;
 
 	// base of external vertex data stores
-#ifdef PLATFORM_64BITS
-	int                 index_ptr_pVertexData;
-    int                 index_ptr_pTangentData;
-#else
-	const void			*pVertexData;
-	const void			*pTangentData;
-#endif
+	serializedstudioptr_t<const void> pVertexData;
+	serializedstudioptr_t<const void> pTangentData;
+
     const void	*GetVertexData() const {
-#ifdef PLATFORM_64BITS
-        return *(const void **)((byte *)this + index_ptr_pVertexData);
-#else
         return pVertexData;
-#endif
     }
     const void	*GetTangentData() const {
-#ifdef PLATFORM_64BITS
-        return *(const void **)((byte *)this + index_ptr_pTangentData);
-#else
         return pTangentData;
-#endif
     }
 };
 
@@ -1431,13 +1452,8 @@ struct mstudiomodel_t
 	inline  mstudioeyeball_t *pEyeball( int i ) { return (mstudioeyeball_t *)(((byte *)this) + eyeballindex) + i; };
 
     mstudio_modelvertexdata_t vertexdata; // sizeof(mstudio_modelvertexdata_t) == 16
-#ifdef PLATFORM_64BITS
-    int					unused[4];		// remove as appropriate
-    const void			*real_pVertexData;
-    const void			*real_pTangentData;
-#else
-	int					unused[8];		// remove as appropriate
-#endif
+
+	int					unused[6];		// remove as appropriate
 };
 
 #ifdef PLATFORM_64BITS
@@ -1514,8 +1530,8 @@ inline const mstudio_meshvertexdata_t *mstudiomesh_t::GetVertexData( void *pMode
 	// returning NULL if the data has been converted to 'thin' vertices)
 	this->pModel()->GetVertexData( pModelData );
 #ifdef PLATFORM_64BITS
-    real_modelvertexdata = &( this->pModel()->vertexdata );
-    vertexdata.index_ptr_modelvertexdata = (byte *)&real_modelvertexdata - (byte *)&vertexdata;
+	real_modelvertexdata = &( this->pModel()->vertexdata );
+	vertexdata.index_ptr_modelvertexdata = (byte *)&real_modelvertexdata - (byte *)&vertexdata;
 #else
 	vertexdata.modelvertexdata = &( this->pModel()->vertexdata );
 #endif
@@ -1991,27 +2007,13 @@ inline const mstudio_modelvertexdata_t * mstudiomodel_t::GetVertexData( void *pM
 	const vertexFileHeader_t * pVertexHdr = CacheVertexData( pModelData );
 	if ( !pVertexHdr )
 	{
-#ifdef PLATFORM_64BITS
-        this->real_pVertexData = NULL;
-        this->real_pTangentData = NULL;
-        vertexdata.index_ptr_pVertexData = (byte *)&real_pVertexData - (byte *)&vertexdata;
-        vertexdata.index_ptr_pTangentData = (byte *)&real_pTangentData - (byte *)&vertexdata;
-#else
 		vertexdata.pVertexData = NULL;
 		vertexdata.pTangentData = NULL;
-#endif
 		return NULL;
 	}
 
-#ifdef PLATFORM_64BITS
-    this->real_pVertexData = pVertexHdr->GetVertexData();
-    this->real_pTangentData = pVertexHdr->GetTangentData();
-    vertexdata.index_ptr_pVertexData = (byte *)&real_pVertexData - (byte *)&vertexdata;
-    vertexdata.index_ptr_pTangentData = (byte *)&real_pTangentData - (byte *)&vertexdata;
-#else
 	vertexdata.pVertexData  = pVertexHdr->GetVertexData();
 	vertexdata.pTangentData = pVertexHdr->GetTangentData();
-#endif
 
 	if ( !vertexdata.GetVertexData() )
 		return NULL;
@@ -2136,7 +2138,13 @@ struct studiohdr2_t
 	int m_nBoneFlexDriverIndex;
 	inline mstudioboneflexdriver_t *pBoneFlexDriver( int i ) const { Assert( i >= 0 && i < m_nBoneFlexDriverCount ); return (mstudioboneflexdriver_t *)(((byte *)this) + m_nBoneFlexDriverIndex) + i; }
 
-	int reserved[56];
+	mutable serializedstudioptr_t< void	> virtualModel;
+	mutable serializedstudioptr_t< void	> animblockModel;
+
+	serializedstudioptr_t< void> pVertexBase;
+	serializedstudioptr_t< void> pIndexBase;
+
+	int reserved[48];
 };
 
 struct studiohdr_t
@@ -2341,11 +2349,7 @@ struct studiohdr_t
 	const studiohdr_t	*FindModel( void **cache, char const *modelname ) const;
 
 	// implementation specific back pointer to virtual data
-#ifdef PLATFORM_64BITS
-    int                 index_ptr_virtualModel;
-#else
-	mutable void		*virtualModel;
-#endif
+	int                 unused_virtualModel;
 	virtualmodel_t		*GetVirtualModel( void ) const;
 
 	// for demand loaded animation blocks
@@ -2354,11 +2358,8 @@ struct studiohdr_t
 	int					numanimblocks;
 	int					animblockindex;
 	inline mstudioanimblock_t *pAnimBlock( int i ) const { Assert( i > 0 && i < numanimblocks); return (mstudioanimblock_t *)(((byte *)this) + animblockindex) + i; };
-#ifdef PLATFORM_64BITS
-    int                 index_ptr_animblockModel;
-#else
-	mutable void		*animblockModel;
-#endif
+
+    int                 unused_animblockModel;
 	byte *				GetAnimBlock( int i ) const;
 
 	int					bonetablebynameindex;
@@ -2366,13 +2367,8 @@ struct studiohdr_t
 
 	// used by tools only that don't cache, but persist mdl's peer data
 	// engine uses virtualModel to back link to cache pointers
-#ifdef PLATFORM_64BITS
-    int                 index_ptr_pVertexBase;
-    int                 index_ptr_pIndexBase;
-#else
-	void				*pVertexBase;
-	void				*pIndexBase;
-#endif
+    int                 unused_pVertexBase;
+    int                 unused_pIndexBase;
 
 	// if STUDIOHDR_FLAGS_CONSTANT_DIRECTIONAL_LIGHT_DOT is set,
 	// this value is used to calculate directional components of lighting 
@@ -2420,21 +2416,12 @@ struct studiohdr_t
 	inline int			BoneFlexDriverCount() const { return studiohdr2index ? pStudioHdr2()->m_nBoneFlexDriverCount : 0; }
 	inline const mstudioboneflexdriver_t* BoneFlexDriver( int i ) const { Assert( i >= 0 && i < BoneFlexDriverCount() ); return studiohdr2index > 0 ? pStudioHdr2()->pBoneFlexDriver( i ) : NULL; }
 
-#ifdef PLATFORM_64BITS
-    void* 				VirtualModel() const { return *(void **)(((byte *)this) + index_ptr_virtualModel); }
-    void				SetVirtualModel( void* ptr ) const { *(void **)(((byte *)this) + index_ptr_virtualModel) = ptr; }
-    void*				VertexBase() const { return *(void **)(((byte *)this) + index_ptr_pVertexBase); }
-    void				SetVertexBase( void* ptr ) { *(void **)(((byte *)this) + index_ptr_pVertexBase) = ptr; }
-    void*				IndexBase() const { return *(void **)(((byte *)this) + index_ptr_pIndexBase); }
-    void				SetIndexBase( void* ptr ) { *(void **)(((byte *)this) + index_ptr_pIndexBase) = ptr; }
-#else
-    void* 				VirtualModel() const { return virtualModel; }
-    void				SetVirtualModel( void* ptr ) const { virtualModel = ptr; }
-    void*				VertexBase() const { return pVertexBase; }
-    void				SetVertexBase( void* ptr ) { pVertexBase = ptr; }
-    void*				IndexBase() const { return pIndexBase; }
-    void				SetIndexBase( void* ptr ) { pIndexBase = ptr; }
-#endif
+	void* 				VirtualModel() const { return studiohdr2index ? (void *)( pStudioHdr2()->virtualModel ) : nullptr; }
+	void				SetVirtualModel( void* ptr ) { Assert( studiohdr2index ); if ( studiohdr2index ) { pStudioHdr2()->virtualModel = ptr; } else { Msg("go fuck urself!\n"); } }
+	void*				VertexBase() const { return studiohdr2index ? (void *)( pStudioHdr2()->pVertexBase ) : nullptr; }
+	void				SetVertexBase( void* pVertexBase ) const { Assert( studiohdr2index ); if ( studiohdr2index ) { pStudioHdr2()->pVertexBase = pVertexBase; } }
+	void*				IndexBase() const { return studiohdr2index ? ( void * ) ( pStudioHdr2()->pIndexBase ) : nullptr; }
+	void				SetIndexBase( void* pIndexBase ) const { Assert( studiohdr2index ); if ( studiohdr2index ) { pStudioHdr2()->pIndexBase  = pIndexBase; } }
 
 	// NOTE: No room to add stuff? Up the .mdl file format version 
 	// [and move all fields in studiohdr2_t into studiohdr_t and kill studiohdr2_t],
@@ -2446,17 +2433,6 @@ private:
 
 	friend struct virtualmodel_t;
 };
-
-#ifdef PLATFORM_64BITS
-struct studiohdr_shim64_index
-{
-    mutable void		*virtualModel;
-    mutable void		*animblockModel;
-    void				*pVertexBase;
-    void				*pIndexBase;
-};
-#endif
-
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -3131,6 +3107,7 @@ inline bool Studio_ConvertStudioHdrToNewVersion( studiohdr_t *pStudioHdr )
 		return true;
 
 	bool bResult = true;
+
 	if (version < 46)
 	{
 		// some of the anim index data is incompatible
