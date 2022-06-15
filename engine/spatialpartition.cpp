@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -30,7 +30,12 @@
 #include "datacache/imdlcache.h"
 #include "tier2/renderutils.h"
 #include "bitvec.h"
+#include "host.h"
 #include "tier1/mempool.h"
+
+#ifdef _PS3
+#include "tls_ps3.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -63,6 +68,9 @@ class CPartitionVisitor;
 
 #if defined( _X360 )
 #pragma bitfield_order( push, lsb_to_msb )
+#elif defined( _PS3 )
+#pragma ms_struct on
+#pragma reverse_bitfields on
 #endif
 union Voxel_t
 {
@@ -76,6 +84,9 @@ union Voxel_t
 };
 #if defined( _X360 )
 #pragma bitfield_order( pop )
+#elif defined( _PS3 )
+#pragma ms_struct off
+#pragma reverse_bitfields off
 #endif
 
 enum EntityInfoFlags_t
@@ -89,7 +100,9 @@ enum EntityInfoFlags_t
 struct EntityInfo_t
 {
 	Vector						m_vecMin;			// Min/Max of entity
+	Voxel_t						m_voxelMin;
 	Vector						m_vecMax;
+	Voxel_t						m_voxelMax;
 	IHandleEntity *				m_pHandleEntity;	// Entity handle.
 	unsigned short				m_fList;			// Which lists is it in?
 	uint8						m_flags;
@@ -101,7 +114,7 @@ struct EntityInfo_t
 
 struct LeafListData_t
 {
-	UtlHashFastHandle_t		m_hVoxel;	// Voxel handle the entity is in.
+	UtlHashFixedHandle_t		m_hVoxel;	// Voxel handle the entity is in.
 	intp					m_iEntity;	// Entity list index for voxel
 };
 
@@ -142,7 +155,12 @@ inline Voxel_t ConvertToNextLevel( Voxel_t v )
 	return res;
 }
 
-
+class CSpatialEntry
+{
+public:
+	SpatialPartitionHandle_t m_handle;
+	uint16 m_nListMask;
+};
 //-----------------------------------------------------------------------------
 // A single voxel hash
 //-----------------------------------------------------------------------------
@@ -164,8 +182,9 @@ public:
 	bool EnumerateElementsAtPoint( SpatialPartitionListMask_t listMask, Voxel_t v, const Vector& pt, IPartitionEnumerator* pIterator );
 	
 	// Inserts/Removes a handle from the tree.
-	void InsertIntoTree( SpatialPartitionHandle_t hPartition, const Vector &vecMin, const Vector &vecMax );
+	void InsertIntoTree( SpatialPartitionHandle_t hPartition, Voxel_t voxelMin, Voxel_t voxelMax );
 	void RemoveFromTree( SpatialPartitionHandle_t hPartition );
+	void UpdateListMask( SpatialPartitionHandle_t hPartition );
 
 	// Debug!
 	void RenderAllObjectsInTree( float flTime );
@@ -179,6 +198,7 @@ public:
 
 	// Gets the voxel size for this hash
 	int VoxelSize( ) const;
+	inline float VoxelSizeF( ) const { return m_flVoxelSize; }
 
 	int EntityCount();
 
@@ -188,6 +208,11 @@ public:
 	// Converts point into voxel index
 	inline Voxel_t VoxelIndexFromPoint( const Vector &vecWorldPoint );
 	inline void VoxelIndexFromPoint( const Vector &vecWorldPoint, int pPoint[3] );
+
+#if defined(_X360) || defined(_PS3)
+	inline Voxel_t VoxelIndexFromPoint( const fltx4 &vecWorldPoint );
+	inline void VoxelIndexFromPoint( const fltx4 &vecWorldPoint, int pPoint[3] );
+#endif
 
 	// Setup ray for iteration
 	void LeafListRaySetup( const Ray_t &ray, const Vector &vecEnd, const Vector &vecInvDelta, Voxel_t voxel, int *pStep, float *pMax, float *pDelta );
@@ -206,14 +231,16 @@ private:
 
 	inline void PackVoxel( int iX, int iY, int iZ, Voxel_t &voxel );
 
-	typedef CUtlHashFixed<intp, SPHASH_BUCKET_COUNT, CUtlHashFixedGenericHash<SPHASH_BUCKET_COUNT> > CHashTable;
+    typedef CUtlHashFixed<intp, SPHASH_BUCKET_COUNT, CUtlHashFixedGenericHash<SPHASH_BUCKET_COUNT> > CHashTable;
 
 	Vector											m_vecVoxelOrigin;	// Voxel space (hash) origin.
 	CHashTable										m_aVoxelHash;		// Voxel tree (hash) - data = entity list head handle (m_aEntityList)
 	int												m_nVoxelDelta[3];	// Voxel world - width(Dx), height(Dy), depth(Dz)
-	CUtlFixedLinkedList<SpatialPartitionHandle_t>	m_aEntityList;	// Pool - Linked list(multilist) of entities per leaf.
+	CUtlFixedLinkedList<CSpatialEntry>				m_aEntityList;	// Pool - Linked list(multilist) of entities per leaf.
 	CVoxelTree										*m_pTree;
 	int												m_nLevel;
+	float											m_flVoxelSize;
+	uint											m_nLevelShift;
 };
 
 class CSpatialPartition;
@@ -257,10 +284,11 @@ public:
 	void Shutdown( void );
 
 	// Insert into the appropriate tree
-	void InsertIntoTree( SpatialPartitionHandle_t hPartition, const Vector& mins, const Vector& maxs );
+	void InsertIntoTree( SpatialPartitionHandle_t hPartition, const Vector& mins, const Vector& maxs, bool bReinsert );
 
 	// Remove from appropriate tree
 	void RemoveFromTree( SpatialPartitionHandle_t hPartition );
+	void UpdateListMask( SpatialPartitionHandle_t hPartition );
 
 	void LockForWrite()		{ m_lock.LockForWrite(); }
 	void UnlockWrite()		{ m_lock.UnlockWrite(); }
@@ -273,6 +301,8 @@ public:
 	bool EnumerateElementsAlongRay_ExtrudedRay( SpatialPartitionListMask_t listMask, 
 		const Ray_t &ray, const Vector &vecInvDelta, const Vector &vecEnd, IPartitionEnumerator *pIterator );
 
+	bool EnumerateRayStartVoxels( SpatialPartitionListMask_t listMask, IPartitionEnumerator *pIterator, CIntersectSweptBox &intersectSweptBox, int voxelBounds[4][2][3] );
+
 	// Purpose:
 	void ComputeSweptRayBounds( const Ray_t &ray, const Vector &vecStartMin, const Vector &vecStartMax, Vector *pVecMin, Vector *pVecMax );
 
@@ -282,15 +312,11 @@ private:
 	CVoxelHash*							m_pVoxelHash;
 	CLeafList							m_aLeafList;								// Pool - Linked list(multilist) of leaves per entity.
 	int									m_TreeId;
-	CTHREADLOCALPTR(CPartitionVisits)	m_pVisits;
+	CPartitionVisits *                  m_pVisits[MAX_THREADS_SUPPORTED];
 	CSpatialPartition *					m_pOwner;
 	CUtlVector<unsigned short>			m_AvailableVisitBits;
 	unsigned short						m_nNextVisitBit;
-#if TEST_TRACE_POOL
 	CTSPool<CPartitionVisits>			m_FreeVisits;
-#else
-	CObjectPool<CPartitionVisits, 2>	m_FreeVisits;
-#endif
 	CThreadSpinRWLock					m_lock;
 };
 
@@ -326,7 +352,7 @@ public:
 	virtual void UnhideElement( SpatialPartitionHandle_t handle, SpatialTempHandle_t tempHandle );
 
 	virtual void InstallQueryCallback( IPartitionQueryCallback *pCallback );
-	virtual void InstallQueryCallback_V1( IPartitionQueryCallback *pCallback );
+	virtual void InstallQueryCallback_V1( IPartitionQueryCallback *pCallback ) { Error("Use InstallQueryCallback instead of InstallQueryCallback_V1\n"); }
 	virtual void RemoveQueryCallback( IPartitionQueryCallback *pCallback );
 
 	virtual void SuppressLists( SpatialPartitionListMask_t nListMask, bool bSuppress );
@@ -366,6 +392,7 @@ public:
 	CVoxelTree * VoxelTreeForHandle( SpatialPartitionHandle_t handle );
 
 protected:
+	void UpdateListMask( SpatialPartitionHandle_t hPartition, uint16 nListMask );
 	// Invokes the pre-query callbacks.
 	void InvokeQueryCallbacks( SpatialPartitionListMask_t listMask, bool = false );
 
@@ -378,7 +405,6 @@ private:
 	CVoxelTree												m_VoxelTrees[NUM_TREES];
 
 	IPartitionQueryCallback									*m_pQueryCallback[MAX_QUERY_CALLBACK];		// Query callbacks.
-	bool													m_bUseOldQueryCallback[MAX_QUERY_CALLBACK];
 	int														m_nQueryCallbackCount;						// Number of query callbacks.
 
 	// Debug!
@@ -411,22 +437,32 @@ inline int CVoxelTree::GetTreeId() const
 
 inline CPartitionVisits *CVoxelTree::GetVisits()
 {
-	return m_pVisits;
+	int nThread = g_nThreadID;
+	return m_pVisits[nThread];
 }
 
 inline CPartitionVisits *CVoxelTree::BeginVisit()
 {
-	CPartitionVisits *pPrev = m_pVisits;
+	int nThread = g_nThreadID;
+	CPartitionVisits *pPrev = m_pVisits[nThread];
 	CPartitionVisits *pVisits = m_FreeVisits.GetObject();
-	pVisits->Resize( m_nNextVisitBit, true );
-	m_pVisits = pVisits;
+	if ( pVisits->GetNumBits() < m_nNextVisitBit )
+	{
+		pVisits->Resize( m_nNextVisitBit, true );
+	}
+	else
+	{
+		pVisits->ClearAll();
+	}
+	m_pVisits[g_nThreadID] = pVisits;
 	return pPrev;
 }
 
 inline void CVoxelTree::EndVisit( CPartitionVisits *pPrev )
 {
-	m_FreeVisits.PutObject( m_pVisits );
-	m_pVisits = pPrev;
+	int nThread = g_nThreadID;
+	m_FreeVisits.PutObject( m_pVisits[nThread] );
+	m_pVisits[nThread] = pPrev;
 }
 
 inline CVoxelTree *CSpatialPartition::VoxelTree( SpatialPartitionListMask_t listMask )
@@ -460,13 +496,6 @@ CVoxelHash::~CVoxelHash()
 //   Input: vecWorldPoint - world point to get voxel index for
 //  Output: voxel index
 //-----------------------------------------------------------------------------
-inline void CVoxelHash::VoxelIndexFromPoint( const Vector &vecWorldPoint, int pPoint[3] )
-{
-	pPoint[0] = static_cast<int>( vecWorldPoint.x - m_vecVoxelOrigin.x ) >> ( SPHASH_VOXEL_SHIFT + SPHASH_LEVEL_SKIP * m_nLevel );
-	pPoint[1] = static_cast<int>( vecWorldPoint.y - m_vecVoxelOrigin.y ) >> ( SPHASH_VOXEL_SHIFT + SPHASH_LEVEL_SKIP * m_nLevel );
-	pPoint[2] = static_cast<int>( vecWorldPoint.z - m_vecVoxelOrigin.z ) >> ( SPHASH_VOXEL_SHIFT + SPHASH_LEVEL_SKIP * m_nLevel );
-}
-
 inline void CVoxelHash::PackVoxel( int iX, int iY, int iZ, Voxel_t &voxel )
 {
 	Assert( ( iX >= -( 1 << 10 ) ) && ( iX <= ( 1 << 10 ) ) );
@@ -477,17 +506,125 @@ inline void CVoxelHash::PackVoxel( int iX, int iY, int iZ, Voxel_t &voxel )
 	voxel.bitsVoxel.z = iZ;
 }
 
+
+#if defined(_X360) || defined(_PS3)
+
+// NOTE: This isn't supportable on SSE but it isn't necessary either
+inline double FloatConvertToIntegerFormat( double flVal )
+{
+#if defined( _PS3 )
+	return __builtin_fctiwz( flVal );
+#else
+	return __fctiwz( flVal );
+#endif
+}
+
+inline fltx4 ConvertToSignedIntegerSIMD( fltx4 fl4Data )
+{
+#if defined(_X360)
+	return __vctsxs( fl4Data, 0 );	 // NOTE: 0 is power of 2 to scale by
+#else
+	return (fltx4)vec_cts( fl4Data, 0 );
+#endif
+}
+
+inline fltx4 ShiftRightSIMD( const fltx4 &fl4Data, const fltx4 &fl4Shift )
+{
+#if defined(_X360)
+	return __vsrw( fl4Data, fl4Shift );
+#else
+	return (fltx4)vec_sr( (u32x4)fl4Data, (u32x4)fl4Shift );
+#endif
+}
+
+union doublecnv_t
+{
+	double m_flConverted;
+	int32 m_nConverted[2];
+};
+
+// SIMD Versions - need more code changes to fully support this but there are enough benefits to use it on some of the code
+inline void CVoxelHash::VoxelIndexFromPoint( const fltx4 &fl4WorldPoint, int pPoint[3] )
+{
+	fltx4 fl4Shift = (fltx4)ReplicateIX4( m_nLevelShift );
+	fltx4 fl4VoxelOrigin = LoadUnaligned3SIMD( m_vecVoxelOrigin.Base() );
+	fltx4 fl4LocalOrigin = SubSIMD( fl4WorldPoint, fl4VoxelOrigin );
+	fltx4 fl4OriginInt = ConvertToSignedIntegerSIMD( fl4LocalOrigin );
+	fl4OriginInt = ShiftRightSIMD( fl4OriginInt, fl4Shift );
+	StoreUnaligned3SIMD( (float *)pPoint, fl4OriginInt );
+}
+
+inline void CVoxelHash::VoxelIndexFromPoint( const Vector &vecWorldPoint, int pPoint[3] )
+{
+	return VoxelIndexFromPoint( LoadUnaligned3SIMD( vecWorldPoint.Base() ), pPoint );
+}
+
+
 inline Voxel_t CVoxelHash::VoxelIndexFromPoint( const Vector &vecWorldPoint )
 {
 	Voxel_t voxel;
 
-	voxel.bitsVoxel.x = static_cast<int>( vecWorldPoint.x - m_vecVoxelOrigin.x ) >> ( SPHASH_VOXEL_SHIFT + SPHASH_LEVEL_SKIP * m_nLevel );
-	voxel.bitsVoxel.y = static_cast<int>( vecWorldPoint.y - m_vecVoxelOrigin.y ) >> ( SPHASH_VOXEL_SHIFT + SPHASH_LEVEL_SKIP * m_nLevel );
-	voxel.bitsVoxel.z = static_cast<int>( vecWorldPoint.z - m_vecVoxelOrigin.z ) >> ( SPHASH_VOXEL_SHIFT + SPHASH_LEVEL_SKIP * m_nLevel );
+	// This code manually schedules the float->int conversion to avoid LHS on PPC
+	// First we convert the float to int format within a float register
+	// then we write it back to memory
+	volatile union doublecnv_t cnvX, cnvY, cnvZ;
+	cnvX.m_flConverted = FloatConvertToIntegerFormat( vecWorldPoint.x - m_vecVoxelOrigin.x );
+	cnvY.m_flConverted = FloatConvertToIntegerFormat( vecWorldPoint.y - m_vecVoxelOrigin.y );
+	cnvZ.m_flConverted = FloatConvertToIntegerFormat( vecWorldPoint.z - m_vecVoxelOrigin.z );
+	// now we load that value back into an integer register.  This will LHS if there aren't enough
+	// cycles between the stores and the loads but this will allow the compiler to reorder the operations
+	// and when the conversions are implicit they don't get reordered (load instruction immediately follows the store)
+	int nX = cnvX.m_nConverted[1];
+	int nY = cnvY.m_nConverted[1];
+	int nZ = cnvZ.m_nConverted[1];
+	voxel.bitsVoxel.x = nX >> m_nLevelShift;
+	voxel.bitsVoxel.y = nY >> m_nLevelShift;
+	voxel.bitsVoxel.z = nZ >> m_nLevelShift;
 
 	return voxel;
 }
 
+inline Voxel_t CVoxelHash::VoxelIndexFromPoint( const fltx4 &fl4WorldPoint )
+{
+	Voxel_t voxel;
+
+	fltx4 fl4Shift = (fltx4)ReplicateIX4( m_nLevelShift );
+	fltx4 fl4VoxelOrigin = LoadUnaligned3SIMD( m_vecVoxelOrigin.Base() );
+	fltx4 fl4LocalOrigin = SubSIMD( fl4WorldPoint, fl4VoxelOrigin );
+	fltx4 fl4OriginInt = ConvertToSignedIntegerSIMD( fl4LocalOrigin );
+	fl4OriginInt = ShiftRightSIMD( fl4OriginInt, fl4Shift );
+
+	// UNDONE: Can probably pack these with shift, permute, or
+	int32 ALIGN16 tmp[4];
+	StoreAlignedIntSIMD( tmp, fl4OriginInt );
+	voxel.bitsVoxel.x = tmp[0];
+	voxel.bitsVoxel.y = tmp[1];
+	voxel.bitsVoxel.z = tmp[2];
+
+	return voxel;
+}
+
+#else
+
+inline void CVoxelHash::VoxelIndexFromPoint( const Vector &vecWorldPoint, int pPoint[3] )
+{
+	pPoint[0] = static_cast<int>( vecWorldPoint.x - m_vecVoxelOrigin.x ) >> m_nLevelShift;
+	pPoint[1] = static_cast<int>( vecWorldPoint.y - m_vecVoxelOrigin.y ) >> m_nLevelShift;
+	pPoint[2] = static_cast<int>( vecWorldPoint.z - m_vecVoxelOrigin.z ) >> m_nLevelShift;
+}
+
+
+inline Voxel_t CVoxelHash::VoxelIndexFromPoint( const Vector &vecWorldPoint )
+{
+	Voxel_t voxel;
+
+	voxel.bitsVoxel.x = static_cast<int>( vecWorldPoint.x - m_vecVoxelOrigin.x ) >> m_nLevelShift;
+	voxel.bitsVoxel.y = static_cast<int>( vecWorldPoint.y - m_vecVoxelOrigin.y ) >> m_nLevelShift;
+	voxel.bitsVoxel.z = static_cast<int>( vecWorldPoint.z - m_vecVoxelOrigin.z ) >> m_nLevelShift;
+
+	return voxel;
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose:	Computes the voxel count at a particular level of the tree
@@ -518,6 +655,8 @@ void CVoxelHash::Init( CVoxelTree *pPartition, const Vector &worldmin, const Vec
 {
 	m_pTree = pPartition;
 	m_nLevel = nLevel;
+	m_flVoxelSize = VoxelSize();
+	m_nLevelShift = ( SPHASH_VOXEL_SHIFT + SPHASH_LEVEL_SKIP * nLevel );
 
 	// Setup the hash.
 	MEM_ALLOC_CREDIT();
@@ -562,27 +701,21 @@ void CVoxelHash::Shutdown( void )
 //-----------------------------------------------------------------------------
 // Purpose: Insert the object into the voxel hash.
 //-----------------------------------------------------------------------------
-void CVoxelHash::InsertIntoTree( SpatialPartitionHandle_t hPartition, const Vector &vecMin, const Vector &vecMax )
+void CVoxelHash::InsertIntoTree( SpatialPartitionHandle_t hPartition, Voxel_t voxelMin, Voxel_t voxelMax )
 {
 	EntityInfo_t &info = m_pTree->EntityInfo( hPartition );
 	CLeafList &leafList = m_pTree->LeafList();
 	int treeId = m_pTree->GetTreeId();
 
-	// Set the entity bounding box.
-	info.m_vecMin = vecMin;
-	info.m_vecMax = vecMax;
+	uint16 nListMask = m_pTree->EntityInfo( hPartition ).m_fList;
 
 	// Set the voxel level
 	info.m_nLevel[m_pTree->GetTreeId()] = m_nLevel;
 
-	// Add the object to the tree.
-	Voxel_t voxelMin, voxelMax;
-	voxelMin = VoxelIndexFromPoint( vecMin );
-	voxelMax = VoxelIndexFromPoint( vecMax );
 	Assert( (m_nLevel == 4) ||
-			( (voxelMax.bitsVoxel.x - voxelMin.bitsVoxel.x <= 1) && 
+			(voxelMax.bitsVoxel.x - voxelMin.bitsVoxel.x <= 1) && 
 			(voxelMax.bitsVoxel.y - voxelMin.bitsVoxel.y <= 1) && 
-			(voxelMax.bitsVoxel.z - voxelMin.bitsVoxel.z <= 1) ) );
+			(voxelMax.bitsVoxel.z - voxelMin.bitsVoxel.z <= 1) );
 
 	// Add the object to all the voxels it intersects.
 	Voxel_t voxel;
@@ -604,9 +737,10 @@ void CVoxelHash::InsertIntoTree( SpatialPartitionHandle_t hPartition, const Vect
 
 				// Entity list.
 				intp iEntity = m_aEntityList.Alloc( true );
-				m_aEntityList[iEntity] = hPartition;
+				m_aEntityList[iEntity].m_handle = hPartition;
+				m_aEntityList[iEntity].m_nListMask = nListMask;
 				
-				UtlHashFastHandle_t hHash = m_aVoxelHash.Find( voxel.uiVoxel );
+				UtlHashFixedHandle_t hHash = m_aVoxelHash.Find( voxel.uiVoxel );
 				if ( hHash == m_aVoxelHash.InvalidHandle() )
 				{
 					// Add voxel(leaf) to hash.
@@ -650,13 +784,13 @@ void CVoxelHash::RemoveFromTree( SpatialPartitionHandle_t hPartition )
 	int treeId = m_pTree->GetTreeId();
 
 	intp iLeaf = data.m_iLeafList[treeId];
-    intp iNext;
+	intp iNext;
 	while ( iLeaf != leafList.InvalidIndex() )
 	{
 		// Get the next voxel - if any.
 		iNext = leafList.Next( iLeaf );
 
-		UtlHashFastHandle_t hHash = leafList[iLeaf].m_hVoxel;
+		UtlHashFixedHandle_t hHash = leafList[iLeaf].m_hVoxel;
 		if ( hHash == m_aVoxelHash.InvalidHandle() )
 		{
 			iLeaf = iNext;
@@ -691,6 +825,64 @@ void CVoxelHash::RemoveFromTree( SpatialPartitionHandle_t hPartition )
 	data.m_iLeafList[treeId] = leafList.InvalidIndex();
 }
 
+void CVoxelHash::UpdateListMask( SpatialPartitionHandle_t hPartition )
+{
+	EntityInfo_t &data = m_pTree->EntityInfo( hPartition );
+	uint16 nListMask = data.m_fList;
+
+	Voxel_t vmin = data.m_voxelMin;
+	Voxel_t vmax = data.m_voxelMax;
+	
+	// single voxel
+	if ( vmin.uiVoxel == vmax.uiVoxel )
+	{
+		UtlHashFixedHandle_t hHash = m_aVoxelHash.Find( vmin.uiVoxel );
+		if ( hHash != m_aVoxelHash.InvalidHandle() )
+		{
+			for ( intp i = m_aVoxelHash.Element( hHash ); i != m_aEntityList.InvalidIndex(); i = m_aEntityList.Next(i) )
+			{
+				SpatialPartitionHandle_t handle = m_aEntityList[i].m_handle;
+				if ( handle != hPartition )
+					continue;
+
+				m_aEntityList[i].m_nListMask = nListMask;
+				break;
+			}
+		}
+	}
+
+	// spans voxels
+	Voxel_t vdelta;
+	vdelta.uiVoxel = vmax.uiVoxel - vmin.uiVoxel;
+	int cx = vdelta.bitsVoxel.x;
+	int cy = vdelta.bitsVoxel.y;
+	int cz = vdelta.bitsVoxel.z;
+	Voxel_t voxel;
+	voxel.bitsVoxel.x = vmin.bitsVoxel.x;
+	for ( int iX = 0; iX <= cx; ++iX, ++voxel.bitsVoxel.x )
+	{
+		voxel.bitsVoxel.y = vmin.bitsVoxel.y;
+		for ( int iY = 0; iY <= cy; ++iY, ++voxel.bitsVoxel.y )
+		{
+			voxel.bitsVoxel.z = vmin.bitsVoxel.z;
+			for ( int iZ = 0; iZ <= cz; ++iZ, ++voxel.bitsVoxel.z )
+			{
+				UtlHashFixedHandle_t hHash = m_aVoxelHash.Find( voxel.uiVoxel );
+				if ( hHash != m_aVoxelHash.InvalidHandle() )
+				{
+					for ( intp i = m_aVoxelHash.Element( hHash ); i != m_aEntityList.InvalidIndex(); i = m_aEntityList.Next(i) )
+					{
+						if ( m_aEntityList[i].m_handle != hPartition )
+							continue;
+
+						m_aEntityList[i].m_nListMask = nListMask;
+						break;
+					}
+				}
+			}
+		}
+	}
+}
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -803,23 +995,23 @@ private:
 class CIntersectPoint : public CPartitionVisitor
 {
 public:
-	CIntersectPoint( CVoxelTree *pPartition, const Vector &pt ) : CPartitionVisitor( pPartition ), m_vecPoint( pt )
+	CIntersectPoint( CVoxelTree *pPartition, const Vector &pt ) : CPartitionVisitor( pPartition )
 	{
+		m_f4Point = LoadUnaligned3SIMD( pt.Base() );
 	}
 
-	bool Intersects( const Vector &vecMins, const Vector &vecMaxs ) const
+	bool Intersects( const float *pMins, const float *pMaxs ) const
 	{
 		// Ray intersection test
-		Assert( vecMins.x <= vecMaxs.x );
-		Assert( vecMins.y <= vecMaxs.y );
-		Assert( vecMins.z <= vecMaxs.z );
+		Assert( pMins[0] <= pMaxs[0] );
+		Assert( pMins[1] <= pMaxs[1] );
+		Assert( pMins[2] <= pMaxs[2] );
 
-		// Does the ray intersect the box?
-		return IsPointInBox( m_vecPoint, vecMins, vecMaxs );
+		return IsPointInBox( m_f4Point, LoadUnaligned3SIMD( pMins ), LoadUnaligned3SIMD(pMaxs) );
 	}
 	 
 private:
-	const Vector &m_vecPoint;
+	fltx4 m_f4Point;
 };
 
 
@@ -830,16 +1022,16 @@ public:
 	{
 	}
 
-	bool Intersects( const Vector &vecMins, const Vector &vecMaxs ) const
+	bool Intersects( const float *pMins, const float *pMaxs ) const
 	{
 		// Box intersection test
-		Assert( vecMins.x <= vecMaxs.x );
-		Assert( vecMins.y <= vecMaxs.y );
-		Assert( vecMins.z <= vecMaxs.z );
+		Assert( pMins[0] <= pMaxs[0] );
+		Assert( pMins[1] <= pMaxs[1] );
+		Assert( pMins[2] <= pMaxs[2] );
 
-		return ( vecMins.x <= m_vecMaxs.x ) && ( vecMaxs.x >= m_vecMins.x ) &&
-				( vecMins.y <= m_vecMaxs.y ) && ( vecMaxs.y >= m_vecMins.y ) &&
-				( vecMins.z <= m_vecMaxs.z ) && ( vecMaxs.z >= m_vecMins.z );
+		return ( pMins[0] <= m_vecMaxs.x ) && ( pMaxs[0] >= m_vecMins.x ) &&
+				( pMins[1] <= m_vecMaxs.y ) && ( pMaxs[1] >= m_vecMins.y ) &&
+				( pMins[2] <= m_vecMaxs.z ) && ( pMaxs[2] >= m_vecMins.z );
 	}
 	 
 private:
@@ -850,54 +1042,63 @@ private:
 class CIntersectRay : public CPartitionVisitor
 {
 public:
-	CIntersectRay( CVoxelTree *pPartition, const Ray_t &ray, const Vector &vecInvDelta ) : CPartitionVisitor( pPartition ), m_Ray( ray ), m_vecInvDelta( vecInvDelta )
+	CIntersectRay( CVoxelTree *pPartition, const Ray_t &ray, const Vector &vecInvDelta ) : CPartitionVisitor( pPartition )
 	{
+		m_f4Start = LoadUnaligned3SIMD( ray.m_Start.Base() );
+		m_f4Delta = LoadUnaligned3SIMD( ray.m_Delta.Base() );
+		m_f4InvDelta = LoadUnaligned3SIMD( vecInvDelta.Base() );
 	}
 
-	bool Intersects( const Vector &vecMins, const Vector &vecMaxs ) const
+	bool Intersects( const float *pMins, const float *pMaxs ) const
 	{
 		// Ray intersection test
-		Assert( vecMins.x <= vecMaxs.x );
-		Assert( vecMins.y <= vecMaxs.y );
-		Assert( vecMins.z <= vecMaxs.z );
+		Assert( pMins[0] <= pMaxs[0] );
+		Assert( pMins[1] <= pMaxs[1] );
+		Assert( pMins[2] <= pMaxs[2] );
 
-		// Does the ray intersect the box?
-		return IsBoxIntersectingRay( vecMins, vecMaxs, m_Ray.m_Start, m_Ray.m_Delta, m_vecInvDelta );
+		fltx4 f4Mins = LoadUnaligned3SIMD( pMins );
+		fltx4 f4Maxs = LoadUnaligned3SIMD( pMaxs );
+		return IsBoxIntersectingRay( f4Mins, f4Maxs, m_f4Start, m_f4Delta, m_f4InvDelta );
 	}
 	 
 private:
-	const Ray_t &m_Ray;
-	const Vector &m_vecInvDelta;
+	fltx4 m_f4Start;
+	fltx4 m_f4Delta;
+	fltx4 m_f4InvDelta;
 };
 
 
 class CIntersectSweptBox : public CPartitionVisitor
 {
 public:
-	CIntersectSweptBox( CVoxelTree *pPartition, const Ray_t &ray, const Vector &vecInvDelta ) : CPartitionVisitor( pPartition ), m_Ray( ray ), m_vecInvDelta( vecInvDelta )
+	CIntersectSweptBox( CVoxelTree *pPartition, const Ray_t &ray, const Vector &vecInvDelta ) : CPartitionVisitor( pPartition )
 	{
+		m_f4Start = LoadUnaligned3SIMD( ray.m_Start.Base() );
+		m_f4Delta = LoadUnaligned3SIMD( ray.m_Delta.Base() );
+		m_f4InvDelta = LoadUnaligned3SIMD( vecInvDelta.Base() );
+		m_f4Extents = LoadUnaligned3SIMD( ray.m_Extents.Base() );
 	}
 
-	bool Intersects( const Vector &vecMins, const Vector &vecMaxs ) const
+	bool Intersects( const float *pMins, const float *pMaxs ) const
 	{
 		// Swept box intersection test
-		Assert( vecMins.x <= vecMaxs.x );
-		Assert( vecMins.y <= vecMaxs.y );
-		Assert( vecMins.z <= vecMaxs.z );
+		Assert( pMins[0] <= pMaxs[0] );
+		Assert( pMins[1] <= pMaxs[1] );
+		Assert( pMins[2] <= pMaxs[2] );
 
-		Vector vecTestMin, vecTestMax;
-		VectorSubtract( vecMins, m_Ray.m_Extents, vecTestMin );
-		VectorAdd( vecMaxs, m_Ray.m_Extents, vecTestMax );
+		fltx4 f4Mins = LoadUnaligned3SIMD( pMins );
+		fltx4 f4Maxs = LoadUnaligned3SIMD( pMaxs );
 
 		// Does the ray intersect the box?
-		return IsBoxIntersectingRay( vecTestMin, vecTestMax, m_Ray.m_Start, m_Ray.m_Delta, m_vecInvDelta );
+		return IsBoxIntersectingRay( SubSIMD(f4Mins, m_f4Extents), AddSIMD(f4Maxs, m_f4Extents), m_f4Start, m_f4Delta, m_f4InvDelta );
 	}
 	 
 private:
-	const Ray_t &m_Ray;
-	const Vector &m_vecInvDelta;
+	fltx4 m_f4Start;
+	fltx4 m_f4Delta;
+	fltx4 m_f4InvDelta;
+	fltx4 m_f4Extents;
 };
-
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -906,32 +1107,33 @@ template <class T>
 bool CVoxelHash::EnumerateElementsInVoxel( Voxel_t voxel, const T &intersectTest, SpatialPartitionListMask_t listMask, IPartitionEnumerator* pIterator )
 {
 	// If the voxel doesn't exist, nothing to iterate over
-	UtlHashFastHandle_t hHash = m_aVoxelHash.Find( voxel.uiVoxel );
+	UtlHashFixedHandle_t hHash = m_aVoxelHash.Find( voxel.uiVoxel );
 	if ( hHash == m_aVoxelHash.InvalidHandle() )
 		return true;
 
-	SpatialPartitionHandle_t hPartition;
 	for ( intp i = m_aVoxelHash.Element( hHash ); i != m_aEntityList.InvalidIndex(); i = m_aEntityList.Next(i) )
 	{
-		hPartition = m_aEntityList[i];
-		if ( hPartition == PARTITION_INVALID_HANDLE )
+		SpatialPartitionHandle_t handle = m_aEntityList[i].m_handle;
+		SpatialPartitionListMask_t nListMask = m_aEntityList[i].m_nListMask;
+		if ( handle == PARTITION_INVALID_HANDLE )
 			continue;
-
-		EntityInfo_t &hInfo = m_pTree->EntityInfo( hPartition );
 
 		// Keep going if this dude isn't in the list
-		if ( !( listMask & hInfo.m_fList ) )
+		if ( !( listMask & nListMask ) )
 			continue;
+
+		EntityInfo_t &hInfo = m_pTree->EntityInfo( handle );
+		Assert( hInfo.m_fList == nListMask );
 
 		if ( hInfo.m_flags & ENTITY_HIDDEN )
 			continue;
 
 		// Has this handle already been visited?
-		if ( !intersectTest.Visit( hPartition, hInfo ) )
+		if ( !intersectTest.Visit( handle, hInfo ) )
 			continue;
 
 		// Intersection test
-		if ( !intersectTest.Intersects( hInfo.m_vecMin, hInfo.m_vecMax ) )
+		if ( !intersectTest.Intersects( hInfo.m_vecMin.Base(), hInfo.m_vecMax.Base() ) )
 			continue;
 
 		// Okay, this one is good...
@@ -953,28 +1155,28 @@ bool CVoxelHash::EnumerateElementsInSingleVoxel( Voxel_t voxel, const T &interse
 	// NOTE: We don't have to do the enum id checking, nor do we have to up the
 	// nesting level, since this only visits 1 voxel.
 	intp iEntityList;
-	UtlHashFastHandle_t hHash = m_aVoxelHash.Find( voxel.uiVoxel );
+	UtlHashFixedHandle_t hHash = m_aVoxelHash.Find( voxel.uiVoxel );
 	if ( hHash != m_aVoxelHash.InvalidHandle() )
 	{
 		iEntityList = m_aVoxelHash.Element( hHash );
 		while ( iEntityList != m_aEntityList.InvalidIndex() )
 		{
-			SpatialPartitionHandle_t hPartition = m_aEntityList[iEntityList];
+			SpatialPartitionHandle_t handle = m_aEntityList[iEntityList].m_handle;
+			SpatialPartitionListMask_t nListMask = m_aEntityList[iEntityList].m_nListMask;
 			iEntityList = m_aEntityList.Next( iEntityList );
-			if ( hPartition == PARTITION_INVALID_HANDLE )
+			if ( handle == PARTITION_INVALID_HANDLE )
 				continue;
-
-			EntityInfo_t &hInfo = m_pTree->EntityInfo( hPartition );
 
 			// Keep going if this dude isn't in the list
-			if ( !( listMask & hInfo.m_fList ) )
+			if ( !( listMask & nListMask ) )
 				continue;
 
+			EntityInfo_t &hInfo = m_pTree->EntityInfo( handle );
 			if ( hInfo.m_flags & ENTITY_HIDDEN )
 				continue;
 
 			// Keep going if there's no collision
-			if ( !intersectTest.Intersects( hInfo.m_vecMin, hInfo.m_vecMax ) )
+			if ( !intersectTest.Intersects( hInfo.m_vecMin.Base(), hInfo.m_vecMax.Base() ) )
 				continue;
 
 			// Okay, this one is good...
@@ -1012,6 +1214,15 @@ bool CVoxelHash::EnumerateElementsInBox( SpatialPartitionListMask_t listMask,
 	int cx = vdelta.bitsVoxel.x;
 	int cy = vdelta.bitsVoxel.y;
 	int cz = vdelta.bitsVoxel.z;
+
+	// Hijack what can feel like infinite iteration over voxels
+#if defined( _GAMECONSOLE ) && defined( _DEBUG )
+	if ( uint64( cx ) * uint64( cy ) * uint64( cz ) > 10000ull )
+	{
+		Assert( !"CVoxelHash::EnumerateElementsInBox: box too large" );
+		return true;
+	}
+#endif
 
 	Voxel_t voxel;
 	voxel.bitsVoxel.x = vmin.bitsVoxel.x;
@@ -1395,23 +1606,23 @@ bool CVoxelHash::EnumerateElementsAtPoint( SpatialPartitionListMask_t listMask,
 	// NOTE: We don't have to do the enum id checking, nor do we have to up the
 	// nesting level, since this only visits 1 voxel.
 	intp iEntityList;
-	UtlHashFastHandle_t hHash = m_aVoxelHash.Find( v.uiVoxel );
+	UtlHashFixedHandle_t hHash = m_aVoxelHash.Find( v.uiVoxel );
 	if ( hHash != m_aVoxelHash.InvalidHandle() )
 	{
 		iEntityList = m_aVoxelHash.Element( hHash );
 		while ( iEntityList != m_aEntityList.InvalidIndex() )
 		{
-			SpatialPartitionHandle_t hPartition = m_aEntityList[iEntityList];
+			SpatialPartitionHandle_t handle = m_aEntityList[iEntityList].m_handle;
+			SpatialPartitionListMask_t nListMask = m_aEntityList[iEntityList].m_nListMask;
 			iEntityList = m_aEntityList.Next( iEntityList );
-			if ( hPartition == PARTITION_INVALID_HANDLE )
+			if ( handle == PARTITION_INVALID_HANDLE )
 				continue;
-
-			EntityInfo_t &hInfo = m_pTree->EntityInfo( hPartition );
 
 			// Keep going if this dude isn't in the list
-			if ( !( listMask & hInfo.m_fList ) )
+			if ( !( listMask & nListMask ) )
 				continue;
 
+			EntityInfo_t &hInfo = m_pTree->EntityInfo( handle );
 			if ( hInfo.m_flags & ENTITY_HIDDEN )
 				continue;
 
@@ -1433,7 +1644,7 @@ bool CVoxelHash::EnumerateElementsAtPoint( SpatialPartitionListMask_t listMask,
 //-----------------------------------------------------------------------------
 void CVoxelHash::RenderVoxel( Voxel_t voxel, float flTime )
 {
-#ifndef SWDS
+#ifndef DEDICATED
 	Vector vecMin, vecMax;
 	vecMin.x = ( voxel.bitsVoxel.x * VoxelSize() ) + m_vecVoxelOrigin.x;
 	vecMin.y = ( voxel.bitsVoxel.y * VoxelSize() ) + m_vecVoxelOrigin.y;
@@ -1479,7 +1690,7 @@ void CVoxelHash::RenderVoxel( Voxel_t voxel, float flTime )
 //-----------------------------------------------------------------------------
 void CVoxelHash::RenderObjectInVoxel( SpatialPartitionHandle_t hPartition, CPartitionVisitor *pVisitor, float flTime )
 {
-#ifndef SWDS
+#ifndef DEDICATED
 	// Add outline.
 	if ( hPartition == PARTITION_INVALID_HANDLE )
 		return;
@@ -1529,14 +1740,14 @@ void CVoxelHash::RenderObjectInVoxel( SpatialPartitionHandle_t hPartition, CPart
 //-----------------------------------------------------------------------------
 void CVoxelHash::RenderObjectsInVoxel( Voxel_t voxel, CPartitionVisitor *pVisitor, bool bRenderVoxel, float flTime )
 {
-	UtlHashFastHandle_t hHash = m_aVoxelHash.Find( voxel.uiVoxel );
+	UtlHashFixedHandle_t hHash = m_aVoxelHash.Find( voxel.uiVoxel );
 	if ( hHash == m_aVoxelHash.InvalidHandle() )
 		return;
 
 	intp iEntityList = m_aVoxelHash.Element( hHash );
 	while ( iEntityList != m_aEntityList.InvalidIndex() )
 	{
-		SpatialPartitionHandle_t hPartition = m_aEntityList[iEntityList];
+		SpatialPartitionHandle_t hPartition = m_aEntityList[iEntityList].m_handle;
 		RenderObjectInVoxel( hPartition, pVisitor, flTime );					
 		iEntityList = m_aEntityList.Next( iEntityList );
 	}
@@ -1583,7 +1794,7 @@ int CVoxelHash::EntityCount()
 //-----------------------------------------------------------------------------
 void CVoxelHash::RenderGrid()
 {
-#ifndef SWDS
+#ifndef DEDICATED
 	Vector vecStart, vecEnd;
 	for ( int i = 0; i < m_nVoxelDelta[0]; ++i )
 	{
@@ -1648,7 +1859,7 @@ void CVoxelHash::RenderAllObjectsInTree( float flTime )
 			intp iEntity = m_aVoxelHash.m_aBuckets[iBucket][hHash].m_Data;
 			while ( iEntity!= m_aEntityList.InvalidIndex() )
 			{
-				SpatialPartitionHandle_t hPartition = m_aEntityList[iEntity];
+				SpatialPartitionHandle_t hPartition = m_aEntityList[iEntity].m_handle;
 				RenderObjectInVoxel( hPartition, &visitor, flTime );
 				iEntity = m_aEntityList.Next( iEntity );
 			}
@@ -1744,7 +1955,7 @@ void CVoxelTree::Init( CSpatialPartition *pOwner, int iTree, const Vector &world
 	m_TreeId = iTree;
 
 	// Reset the enumeration id.
-	m_pVisits = NULL;
+	memset( m_pVisits, 0, sizeof( m_pVisits ) );
 
 	for ( int i = 0; i < m_nLevelCount; ++i )
 	{
@@ -1769,32 +1980,14 @@ void CVoxelTree::Shutdown( void )
 	}
 }
 
-
 //-----------------------------------------------------------------------------
 // Insert into the appropriate tree
 //-----------------------------------------------------------------------------
-void CVoxelTree::InsertIntoTree( SpatialPartitionHandle_t hPartition, const Vector& mins, const Vector& maxs )
+void CVoxelTree::InsertIntoTree( SpatialPartitionHandle_t hPartition, const Vector& mins, const Vector& maxs, bool bReinsert )
 {
-	bool bWasReading = ( m_pVisits != static_cast<void*>(nullptr) );
-	if ( bWasReading )
-	{
-		// If we're recursing in this thread, need to release our read lock to allow ourselves to write
-		UnlockRead();
-	}
-
-	m_lock.LockForWrite();
 	Assert( hPartition != PARTITION_INVALID_HANDLE );
 
 	EntityInfo_t &info = EntityInfo( hPartition );
-	if ( m_AvailableVisitBits.Count() )
-	{
-		info.m_nVisitBit[m_TreeId] = m_AvailableVisitBits.Tail();
-		m_AvailableVisitBits.Remove( m_AvailableVisitBits.Count() - 1 );
-	}
-	else
-	{
-		info.m_nVisitBit[m_TreeId] = m_nNextVisitBit++;
-	}
 
 	// Bloat by an eps before inserting the object into the tree.
 	Vector vecMin( mins.x - SPHASH_EPS, mins.y - SPHASH_EPS, mins.z - SPHASH_EPS );
@@ -1808,16 +2001,63 @@ void CVoxelTree::InsertIntoTree( SpatialPartitionHandle_t hPartition, const Vect
 	int nLevel;
 	for ( nLevel = 0; nLevel < m_nLevelCount - 1; ++nLevel )
 	{
-		int nVoxelSize = m_pVoxelHash[nLevel].VoxelSize();
-		if ( (nVoxelSize > vecSize.x) && (nVoxelSize > vecSize.y) && (nVoxelSize > vecSize.z) )
+		float flVoxelSize = m_pVoxelHash[nLevel].VoxelSizeF();
+		if ( (flVoxelSize > vecSize.x) && (flVoxelSize > vecSize.y) && (flVoxelSize > vecSize.z) )
 			break;
 	}
-	m_pVoxelHash[nLevel].InsertIntoTree( hPartition, vecMin, vecMax );
-	m_lock.UnlockWrite();
 
-	if ( bWasReading )
+	// Add the object to the tree.
+	Voxel_t voxelMin, voxelMax;
+	voxelMin = m_pVoxelHash[nLevel].VoxelIndexFromPoint( vecMin );
+	voxelMax = m_pVoxelHash[nLevel].VoxelIndexFromPoint( vecMax );
+
+	bool bDoInsert = true;
+	if ( bReinsert )
 	{
-		LockForRead();
+		// on reinsert we need to either remove/insert or not do anything
+		// if the entity spans the same bounding box of voxels no remove/insert is necessary
+		if ( info.m_voxelMin.uiVoxel == voxelMin.uiVoxel && info.m_voxelMax.uiVoxel == voxelMax.uiVoxel )
+		{
+			bDoInsert = false;
+		}
+		else
+		{
+			// Remove entity from voxel hash.
+			RemoveFromTree( hPartition );
+		}
+	}
+	// Set/update the entity bounding box.
+	info.m_vecMin = vecMin;
+	info.m_vecMax = vecMax;
+
+	if ( bDoInsert )
+	{
+		bool bWasReading = ( m_pVisits[g_nThreadID] != NULL );
+		if ( bWasReading )
+		{
+			// If we're recursing in this thread, need to release our read lock to allow ourselves to write
+			UnlockRead();
+		}
+		m_lock.LockForWrite();
+
+		// if these have changed we need to insert
+		info.m_voxelMin = voxelMin;
+		info.m_voxelMax = voxelMax;
+		if ( m_AvailableVisitBits.Count() )
+		{
+			info.m_nVisitBit[m_TreeId] = m_AvailableVisitBits.Tail();
+			m_AvailableVisitBits.Remove( m_AvailableVisitBits.Count() - 1 );
+		}
+		else
+		{
+			info.m_nVisitBit[m_TreeId] = m_nNextVisitBit++;
+		}
+		m_pVoxelHash[nLevel].InsertIntoTree( hPartition, voxelMin, voxelMax );
+		m_lock.UnlockWrite();
+		if ( bWasReading )
+		{
+			LockForRead();
+		}
 	}
 }
 
@@ -1832,7 +2072,7 @@ void CVoxelTree::RemoveFromTree( SpatialPartitionHandle_t hPartition )
 	int nLevel = info.m_nLevel[GetTreeId()];
 	if ( nLevel >= 0 )
 	{
-		bool bWasReading = ( m_pVisits != static_cast<void*>(nullptr) );
+		bool bWasReading = ( m_pVisits[g_nThreadID] != NULL );
 		if ( bWasReading )
 		{
 			// If we're recursing in this thread, need to release our read lock to allow ourselves to write
@@ -1852,6 +2092,18 @@ void CVoxelTree::RemoveFromTree( SpatialPartitionHandle_t hPartition )
 	}
 }
 
+void CVoxelTree::UpdateListMask( SpatialPartitionHandle_t hPartition )
+{
+	EntityInfo_t &info = EntityInfo( hPartition );
+	int nLevel = info.m_nLevel[GetTreeId()];
+	if ( nLevel >= 0 )
+	{
+		m_lock.LockForRead();
+		m_pVoxelHash[nLevel].UpdateListMask( hPartition );
+		m_lock.UnlockRead();
+	}
+}
+
 
 //-----------------------------------------------------------------------------
 // Called when an element moves
@@ -1864,25 +2116,12 @@ void CVoxelTree::ElementMoved( SpatialPartitionHandle_t hPartition, const Vector
 		EntityInfo_t &info = EntityInfo( hPartition );
 		if ( info.m_iLeafList[GetTreeId()] == CLeafList::InvalidIndex() )
 		{
-			InsertIntoTree( hPartition, mins, maxs );
+			InsertIntoTree( hPartition, mins, maxs, false );
 			return;
 		} 
 
-		// Bloat by an eps before inserting the object into the tree.
-		// Need to do this here to get the test to work
-		Vector vecEpsMin( mins.x - SPHASH_EPS, mins.y - SPHASH_EPS, mins.z - SPHASH_EPS );
-		Vector vecEpsMax( maxs.x + SPHASH_EPS, maxs.y + SPHASH_EPS, maxs.z + SPHASH_EPS );
-
-		if ( (info.m_vecMin == vecEpsMin) && (info.m_vecMax == vecEpsMax) )
-		{
-			return;
-		}
-
-		// Remove entity from voxel hash.
-		RemoveFromTree( hPartition );
-
 		// Re-insert entity into voxel hash.
-		InsertIntoTree( hPartition, mins, maxs );
+		InsertIntoTree( hPartition, mins, maxs, true );
 	}
 }
 
@@ -2114,6 +2353,56 @@ void CVoxelTree::ComputeSweptRayBounds( const Ray_t &ray, const Vector &vecStart
 	}
 }
 
+bool CVoxelTree::EnumerateRayStartVoxels( SpatialPartitionListMask_t listMask, IPartitionEnumerator *pIterator, CIntersectSweptBox &intersectSweptBox, int voxelBounds[4][2][3] )
+{
+	// Iterate over all voxels that intersect the box around the starting ray point
+	int nMinX = voxelBounds[0][0][0];
+	int nMinY = voxelBounds[0][0][1];
+	int nMinZ = voxelBounds[0][0][2];
+
+	int nMaxX = voxelBounds[0][1][0];
+	int nMaxY = voxelBounds[0][1][1];
+	int nMaxZ = voxelBounds[0][1][2];
+	for ( int i = 0; i < m_nLevelCount; ++i )
+	{
+		if ( i != 0 )
+		{
+			nMinX >>= SPHASH_LEVEL_SKIP;
+			nMinY >>= SPHASH_LEVEL_SKIP;
+			nMinZ >>= SPHASH_LEVEL_SKIP;
+			nMaxX >>= SPHASH_LEVEL_SKIP;
+			nMaxY >>= SPHASH_LEVEL_SKIP;
+			nMaxZ >>= SPHASH_LEVEL_SKIP;
+
+			voxelBounds[i][0][0] = nMinX;
+			voxelBounds[i][0][1] = nMinY;
+			voxelBounds[i][0][2] = nMinZ;
+
+			voxelBounds[i][1][0] = nMaxX;
+			voxelBounds[i][1][1] = nMaxY;
+			voxelBounds[i][1][2] = nMaxZ;
+		}
+
+		Voxel_t voxel;
+		int iX, iY, iZ;
+		for ( iX = nMinX; iX <= nMaxX; ++iX )
+		{
+			voxel.bitsVoxel.x = iX;
+			for ( iY = nMinY; iY <= nMaxY; ++iY )
+			{
+				voxel.bitsVoxel.y = iY;
+				for ( iZ = nMinZ; iZ <= nMaxZ; ++iZ )
+				{
+					voxel.bitsVoxel.z = iZ;
+					if ( !m_pVoxelHash[i].EnumerateElementsInVoxel( voxel, intersectSweptBox, listMask, pIterator ) )
+						return false;
+				}
+			}
+		}
+	}
+
+	return true;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -2134,40 +2423,21 @@ bool CVoxelTree::EnumerateElementsAlongRay_ExtrudedRay( SpatialPartitionListMask
 
 	CIntersectSweptBox intersectSweptBox( this, ray, vecInvDelta );
 
-	// Iterate over all voxels that intersect the box around the starting ray point
-	for ( int i = 0; i < m_nLevelCount; ++i )
-	{
-		voxelBounds[i][0][0] = voxelBounds[0][0][0] >> ( i * SPHASH_LEVEL_SKIP );
-		voxelBounds[i][0][1] = voxelBounds[0][0][1] >> ( i * SPHASH_LEVEL_SKIP );
-		voxelBounds[i][0][2] = voxelBounds[0][0][2] >> ( i * SPHASH_LEVEL_SKIP );
-
-		voxelBounds[i][1][0] = voxelBounds[0][1][0] >> ( i * SPHASH_LEVEL_SKIP );
-		voxelBounds[i][1][1] = voxelBounds[0][1][1] >> ( i * SPHASH_LEVEL_SKIP );
-		voxelBounds[i][1][2] = voxelBounds[0][1][2] >> ( i * SPHASH_LEVEL_SKIP );
-
-		Voxel_t voxel;
-		int iX, iY, iZ;
-		for ( iX = voxelBounds[i][0][0]; iX <= voxelBounds[i][1][0]; ++iX )
-		{
-			voxel.bitsVoxel.x = iX;
-			for ( iY = voxelBounds[i][0][1]; iY <= voxelBounds[i][1][1]; ++iY )
-			{
-				voxel.bitsVoxel.y = iY;
-				for ( iZ = voxelBounds[i][0][2]; iZ <= voxelBounds[i][1][2]; ++iZ )
-				{
-					voxel.bitsVoxel.z = iZ;
-					if ( !m_pVoxelHash[i].EnumerateElementsInVoxel( voxel, intersectSweptBox, listMask, pIterator ) )
-						return false;
-				}
-			}
-		}
-	}
+	if ( !EnumerateRayStartVoxels( listMask, pIterator, intersectSweptBox, voxelBounds ) )
+		return false;
 
 	// Early out: Check to see if the range of voxels at the endpoint
 	// is the same as the range at the start point. If so, we're done.
+#if defined(_X360) || defined(_PS3)
+	fltx4 fl4RayEnd = LoadUnaligned3SIMD(vecEnd.Base());
+	fltx4 fl4Extents = LoadAlignedSIMD(ray.m_Extents.Base());
+	fltx4 vecEndMin = SubSIMD( fl4RayEnd, fl4Extents );
+	fltx4 vecEndMax = AddSIMD( fl4RayEnd, fl4Extents );
+#else
 	Vector vecEndMin, vecEndMax;
 	VectorSubtract( vecEnd, ray.m_Extents, vecEndMin );
 	VectorAdd( vecEnd, ray.m_Extents, vecEndMax );
+#endif
 
 	int endVoxelMin[3], endVoxelMax[3];
 	m_pVoxelHash[0].VoxelIndexFromPoint( vecEndMin, endVoxelMin );
@@ -2247,15 +2517,44 @@ bool CVoxelTree::EnumerateElementsAlongRay_ExtrudedRay( SpatialPartitionListMask
 	return true;
 }
 
+#ifndef _PS3
+#define THINK_TRACE_COUNTER_COMPILE_FUNCTIONS_ENGINE
+#include "engine/thinktracecounter.h"
+#endif
+
+#ifdef THINK_TRACE_COUNTER_COMPILED
+ConVar think_trace_limit( "think_trace_limit", "0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "Break into the debugger if this many or more traces are performed in a single think function. Negative numbers mean that the same think function may be broken into many times (once per [x] may traces), positive numbers mean each think will break only once." );
+CTHREADLOCALINT g_DebugTracesRemainingBeforeTrap(0);
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-
 void CVoxelTree::EnumerateElementsAlongRay( SpatialPartitionListMask_t listMask, 
 										   const Ray_t &ray, bool coarseTest, IPartitionEnumerator *pIterator )
 {
 	VPROF("EnumerateElementsAlongRay");
+#ifdef THINK_TRACE_COUNTER_COMPILED
+	if ( DEBUG_THINK_TRACE_COUNTER_ALLOWED() && think_trace_limit.GetInt() != 0 && g_DebugTracesRemainingBeforeTrap > 0 )
+	{
+		if ( --g_DebugTracesRemainingBeforeTrap <= 0 )
+		{
+			if ( Plat_IsInDebugSession() )
+			{
+
+				DebuggerBreakIfDebugging();
+				if ( think_trace_limit.GetInt() < 0 )
+				{
+					g_DebugTracesRemainingBeforeTrap = -think_trace_limit.GetInt();
+				}
+			}
+			else
+			{
+				AssertMsg1( false, "Performed %d traces in a single think function!\n", think_trace_limit.GetInt() );
+			}
+		}
+	}
+#endif
 
 	if ( !ray.m_IsSwept )
 	{
@@ -2297,9 +2596,9 @@ void CVoxelTree::EnumerateElementsAlongRay( SpatialPartitionListMask_t listMask,
 	vecInvDelta[1] = ( clippedRay.m_Delta[1] != 0.0f ) ? 1.0f / clippedRay.m_Delta[1] : FLT_MAX;
 	vecInvDelta[2] = ( clippedRay.m_Delta[2] != 0.0f ) ? 1.0f / clippedRay.m_Delta[2] : FLT_MAX;
 
-	m_lock.LockForRead();
-
 	CPartitionVisits *pPrevVisits = BeginVisit();
+
+	m_lock.LockForRead();
 	if ( ray.m_IsRay )
 	{
 		EnumerateElementsAlongRay_Ray( listMask, clippedRay, vecInvDelta, vecEnd, pIterator );
@@ -2424,6 +2723,7 @@ CSpatialPartition::~CSpatialPartition()
 void CSpatialPartition::Init( const Vector &worldmin, const Vector &worldmax )
 {
 	// Clear the handle list and ensure some new memory.
+	MEM_ALLOC_CREDIT();
 	m_aHandles.Purge();
 	m_aHandles.EnsureCapacity( SPHASH_HANDLELIST_BLOCK );
 
@@ -2459,26 +2759,6 @@ void CSpatialPartition::InstallQueryCallback( IPartitionQueryCallback *pCallback
 		return;
 
 	m_pQueryCallback[m_nQueryCallbackCount] = pCallback;
-	m_bUseOldQueryCallback[m_nQueryCallbackCount] = false;
-	++m_nQueryCallbackCount;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Add a callback to the query callback list.  Functions get called 
-//          right before a query occurs.
-//   Input: pCallback - pointer to the callback function to add
-//-----------------------------------------------------------------------------
-void CSpatialPartition::InstallQueryCallback_V1( IPartitionQueryCallback *pCallback )
-{
-	// Verify data.
-	Assert( pCallback && m_nQueryCallbackCount < MAX_QUERY_CALLBACK );
-	if ( !pCallback || ( m_nQueryCallbackCount >= MAX_QUERY_CALLBACK ) )
-		return;
-
-	// NOTE: the query callbacks are not mutexed. Only add and remove when threads are joined
-
-	m_pQueryCallback[m_nQueryCallbackCount] = pCallback;
-	m_bUseOldQueryCallback[m_nQueryCallbackCount] = true;
 	++m_nQueryCallbackCount;
 }
 
@@ -2514,21 +2794,11 @@ void CSpatialPartition::InvokeQueryCallbacks( SpatialPartitionListMask_t listMas
 	{
 		if ( !bDone )
 		{
-			if ( m_bUseOldQueryCallback[iQuery] )
-			{
-				m_pQueryCallback[iQuery]->OnPreQuery_V1();
-			}
-			else
-			{
-				m_pQueryCallback[iQuery]->OnPreQuery( listMask );
-			}
+			m_pQueryCallback[iQuery]->OnPreQuery( listMask );
 		}
 		else
 		{
-			if ( !m_bUseOldQueryCallback[iQuery] )
-			{
-				m_pQueryCallback[iQuery]->OnPostQuery( listMask );
-			}
+			m_pQueryCallback[iQuery]->OnPostQuery( listMask );
 		}
 	}
 }
@@ -2595,6 +2865,25 @@ SpatialPartitionHandle_t CSpatialPartition::CreateHandle( IHandleEntity *pHandle
 	return hPartition;
 }
 
+
+void CSpatialPartition::UpdateListMask( SpatialPartitionHandle_t hPartition, uint16 nListMask )
+{
+	EntityInfo_t &entityInfo = EntityInfo( hPartition );
+	if ( entityInfo.m_fList != nListMask )
+	{
+		entityInfo.m_fList = nListMask;
+
+		if ( entityInfo.m_flags & IN_CLIENT_TREE )
+		{
+			m_VoxelTrees[CLIENT_TREE].UpdateListMask( hPartition ); 
+		}
+
+		if ( entityInfo.m_flags & IN_SERVER_TREE )
+		{
+			m_VoxelTrees[SERVER_TREE].UpdateListMask( hPartition ); 
+		}
+	}
+}
 //-----------------------------------------------------------------------------
 // Purpose: Insert object handle into group(s).
 //   Input: listId - list(s) to insert the object handle into
@@ -2604,7 +2893,7 @@ void CSpatialPartition::Insert( SpatialPartitionListMask_t listId, SpatialPartit
 {
 	Assert( m_aHandles.IsValidIndex( handle ) );
 	Assert( listId <= USHRT_MAX );
-	m_aHandles[handle].m_fList |= listId;
+	UpdateListMask( handle, m_aHandles[handle].m_fList | listId );
 }
 
 //-----------------------------------------------------------------------------
@@ -2616,7 +2905,7 @@ void CSpatialPartition::Remove( SpatialPartitionListMask_t listId, SpatialPartit
 {
 	Assert( m_aHandles.IsValidIndex( handle ) );
 	Assert( listId <= USHRT_MAX );
-	m_aHandles[handle].m_fList &= ~listId;
+	UpdateListMask( handle, m_aHandles[handle].m_fList & ~listId );
 }
 
 //-----------------------------------------------------------------------------
@@ -2628,8 +2917,9 @@ void CSpatialPartition::RemoveAndInsert( SpatialPartitionListMask_t removeMask, 
 	Assert( m_aHandles.IsValidIndex( handle ) );
 	Assert( removeMask <= USHRT_MAX );
 	Assert( insertMask <= USHRT_MAX );
-	m_aHandles[handle].m_fList &= ~removeMask;
-	m_aHandles[handle].m_fList |= insertMask;
+	uint16 nOriginalListMask = m_aHandles[handle].m_fList;
+	uint16 nListMask = (nOriginalListMask & ~removeMask) | insertMask;
+	UpdateListMask( handle, nListMask );
 }
 
 //-----------------------------------------------------------------------------
@@ -2639,7 +2929,7 @@ void CSpatialPartition::RemoveAndInsert( SpatialPartitionListMask_t removeMask, 
 void CSpatialPartition::Remove( SpatialPartitionHandle_t handle )
 {
 	Assert( m_aHandles.IsValidIndex( handle ) );
-	m_aHandles[handle].m_fList = 0;
+	UpdateListMask( handle, 0 );
 }
 
 //-----------------------------------------------------------------------------
@@ -2654,6 +2944,7 @@ void CSpatialPartition::UnhideElement( SpatialPartitionHandle_t handle, SpatialT
 	m_aHandles[handle].m_flags &= ~ENTITY_HIDDEN;
 	m_HandlesMutex.Unlock();
 }
+
 
 
 //-----------------------------------------------------------------------------
@@ -2787,19 +3078,19 @@ void CSpatialPartition::InsertIntoTree( SpatialPartitionHandle_t hPartition, con
 	{
 		if ( ( listMask & PARTITION_ALL_CLIENT_EDICTS ) && !( entityInfo.m_flags & IN_CLIENT_TREE ) )
 		{
-			m_VoxelTrees[CLIENT_TREE].InsertIntoTree( hPartition, mins, maxs );
+			m_VoxelTrees[CLIENT_TREE].InsertIntoTree( hPartition, mins, maxs, false );
 			entityInfo.m_flags |= IN_CLIENT_TREE;
 		}
 
 		if ( ( listMask & ~PARTITION_ALL_CLIENT_EDICTS ) && !( entityInfo.m_flags & IN_SERVER_TREE ) )
 		{
-			m_VoxelTrees[SERVER_TREE].InsertIntoTree( hPartition, mins, maxs );
+			m_VoxelTrees[SERVER_TREE].InsertIntoTree( hPartition, mins, maxs, false );
 			entityInfo.m_flags |= IN_SERVER_TREE;
 		}
 	}
 	else if ( !( entityInfo.m_flags & IN_CLIENT_TREE ) )
 	{
-		m_VoxelTrees[CLIENT_TREE].InsertIntoTree( hPartition, mins, maxs );
+		m_VoxelTrees[CLIENT_TREE].InsertIntoTree( hPartition, mins, maxs, false );
 		entityInfo.m_flags |= IN_CLIENT_TREE;
 	}
 }
@@ -2878,7 +3169,7 @@ void CVoxelTree::ReportStats( const char *pFileName )
 
 void CSpatialPartition::ReportStats( const char *pFileName )
 {
-	Msg( "Handle Count %d (%llu bytes)\n", m_aHandles.Count(), (uint64)( m_aHandles.Count() * ( sizeof(EntityInfo_t) + 2 * sizeof(SpatialPartitionHandle_t) ) ) );
+	Msg( "Handle Count %d (%d bytes)\n", m_aHandles.Count(), m_aHandles.Count() * ( sizeof(EntityInfo_t) + 2 * sizeof(SpatialPartitionHandle_t) ) );
 	for ( int i = 0; i < NUM_TREES; i++ )
 	{
 		m_VoxelTrees[i].ReportStats( pFileName );
@@ -2926,5 +3217,3 @@ void DestroySpatialPartition( ISpatialPartition *pPartition )
 	Assert( pPartition != (ISpatialPartition*)&g_SpatialPartition );
 	delete pPartition;
 }
-
-
