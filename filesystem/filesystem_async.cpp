@@ -126,7 +126,7 @@ public:
 
 		AUTO_LOCK( m_mutex );
 
-		int iEntry = m_map.Find( szFixedName );
+		intp iEntry = m_map.Find( szFixedName );
 		if ( iEntry == m_map.InvalidIndex() )
 		{
 			iEntry = m_map.Insert( strdup( szFixedName ), new AsyncOpenedFile_t );
@@ -146,7 +146,7 @@ public:
 
 		AUTO_LOCK( m_mutex );
 
-		int iEntry = m_map.Find( szFixedName );
+		intp iEntry = m_map.Find( szFixedName );
 		if ( iEntry != m_map.InvalidIndex() )
 		{
 			m_map[iEntry]->AddRef();

@@ -176,7 +176,7 @@ CAI_Enemies::~CAI_Enemies()
 AI_EnemyInfo_t *CAI_Enemies::GetFirst( AIEnemiesIter_t *pIter )
 {
 	CMemMap::IndexType_t i = m_Map.FirstInorder();
-	*pIter = (AIEnemiesIter_t)(unsigned)i;
+	*pIter = (AIEnemiesIter_t)(uintp)i;
 
 	if ( i == m_Map.InvalidIndex() )
 		return NULL;
@@ -197,7 +197,7 @@ AI_EnemyInfo_t *CAI_Enemies::GetNext( AIEnemiesIter_t *pIter )
 		return NULL;
 
 	i = m_Map.NextInorder( i );
-	*pIter = (AIEnemiesIter_t)(unsigned)i;
+	*pIter = (AIEnemiesIter_t)(uintp)i;
 	if ( i == m_Map.InvalidIndex() )
 		return NULL;
 

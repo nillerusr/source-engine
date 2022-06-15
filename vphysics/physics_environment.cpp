@@ -2051,10 +2051,10 @@ public:
 	void *ListIndexToHash( unsigned short listIndex )
 	{
 		unsigned int hash = (unsigned int)listIndex;
-		
+
 		// set the high bit, so zero means "not there"
 		hash |= 0x80000000;
-		return (void *)hash;
+		return (void *)(intp)hash;
 	}
 
 	// Lookup this object and get a multilist entry

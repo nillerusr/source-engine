@@ -1573,7 +1573,7 @@ void CUtlBuffer::VaPrintf( const char* pFmt, va_list list )
 {
 	char temp[8192];
 	int nLen = V_vsnprintf( temp, sizeof( temp ), pFmt, list );
-	ErrorIfNot( nLen < sizeof( temp ), ( "CUtlBuffer::VaPrintf: String overflowed buffer [%d]\n", sizeof( temp ) ) );
+	ErrorIfNot( nLen < sizeof( temp ), ( "CUtlBuffer::VaPrintf: String overflowed buffer [%zd]\n", sizeof( temp ) ) );
 	PutString( temp );
 }
 

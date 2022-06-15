@@ -1450,9 +1450,6 @@ virtualmodel_t *CMDLCache::GetVirtualModelFast( const studiohdr_t *pStudioHdr, M
 
 		AllocateVirtualModel( handle );
 
-        // MoeMod : added
-        pStudioHdr->SetVirtualModel( MDLHandleToVirtual( handle ) );
-
 		// Group has to be zero to ensure refcounting is correct
 		int nGroup = pStudioData->m_pVirtualModel->m_group.AddToTail( );
 		Assert( nGroup == 0 );

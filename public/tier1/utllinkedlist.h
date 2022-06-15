@@ -121,9 +121,6 @@ public:
 	I		Alloc( bool multilist = false );
 	void	Free( I elem );
 
-	// Identify the owner of this linked list's memory:
-	void	SetAllocOwner( const char *pszAllocOwner );
-
 	// list modification
 	void	LinkBefore( I before, I elem );
 	void	LinkAfter( I after, I elem );
@@ -616,12 +613,6 @@ void CUtlLinkedList<T,S,ML,I,M>::SetGrowSize( int growSize )
 	RemoveAll();
 	m_Memory.Init( growSize );
 	ResetDbgInfo();
-}
-
-template< class T, class S, bool ML, class I, class M >
-void CUtlLinkedList<T,S,ML,I,M>::SetAllocOwner( const char *pszAllocOwner )
-{
-	m_Memory.SetAllocOwner( pszAllocOwner );
 }
 
 

@@ -310,12 +310,12 @@ int CSaveRestoreFileSystem::GetFileIndex( const char *filename )
 
 FileHandle_t CSaveRestoreFileSystem::GetFileHandle( const char *filename )
 {
-	int idx = GetFileIndex( filename );
+	intp idx = GetFileIndex( filename );
 	if ( idx == INVALID_INDEX )
 	{
 		idx = 0;
 	}
-	return (void*)idx;
+	return (FileHandle_t)idx;
 }
 
 //-----------------------------------------------------------------------------
@@ -339,7 +339,7 @@ bool CSaveRestoreFileSystem::HandleIsValid( FileHandle_t hFile )
 //-----------------------------------------------------------------------------
 void CSaveRestoreFileSystem::RenameFile( char const *pOldPath, char const *pNewPath, const char *pathID )
 {
-	int idx = GetFileIndex( pOldPath );
+	intp idx = GetFileIndex( pOldPath );
 	if ( idx != INVALID_INDEX )
 	{
 		CUtlSymbol newID = AddString( Q_UnqualifiedFileName( pNewPath ) );
@@ -369,7 +369,7 @@ FileHandle_t CSaveRestoreFileSystem::Open( const char *pFullName, const char *pO
 {
 	SaveFile_t *pFile = NULL;
 	CUtlSymbol id = AddString( Q_UnqualifiedFileName( pFullName ) );
-	int idx = GetDirectory().Find( id );
+	intp idx = GetDirectory().Find( id );
 	if ( idx == INVALID_INDEX )
 	{
 		// Don't create a read-only file

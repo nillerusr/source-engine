@@ -573,7 +573,7 @@ CSound* CAI_Senses::GetFirstHeardSound( AISoundIter_t *pIter )
 		return NULL;
 	}
 	
-	*pIter = (AISoundIter_t)iFirst;
+	*pIter = (AISoundIter_t)(intp)iFirst;
 	return CSoundEnt::SoundPointerForIndex( iFirst );
 }
 
@@ -584,7 +584,7 @@ CSound* CAI_Senses::GetNextHeardSound( AISoundIter_t *pIter )
 	if ( !*pIter )
 		return NULL;
 
-	int iCurrent = (intp)*pIter;
+	intp iCurrent = (intp)*pIter;
 	
 	Assert( iCurrent != SOUNDLIST_EMPTY );
 	if ( iCurrent == SOUNDLIST_EMPTY )

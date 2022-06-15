@@ -306,7 +306,7 @@ CQueuedLoader::CQueuedLoader() : BaseClass( false )
 	V_memset( m_pLoaders, 0, sizeof( m_pLoaders ) );
 
 	// set resource dictionaries sort context
-	for ( int i = 0; i < RESOURCEPRELOAD_COUNT; i++ )
+	for ( intp i = 0; i < RESOURCEPRELOAD_COUNT; i++ )
 	{
 		m_ResourceNames[i].SetLessContext( (void *)i );
 	}

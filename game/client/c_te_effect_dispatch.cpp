@@ -132,7 +132,7 @@ static void RecordEffect( const char *pEffectName, const CEffectData &data )
  		msg->SetInt( "attachmentindex", data.m_nAttachmentIndex );
 
 		// NOTE: Ptrs are our way of indicating it's an entindex
-		msg->SetPtr( "entindex", (void*)data.entindex() );
+		msg->SetPtr( "entindex", (void*)(intp)data.entindex() );
 
 		ToolFramework_PostToolMessage( HTOOLHANDLE_INVALID, msg );
 		msg->deleteThis();
@@ -213,7 +213,7 @@ void TE_DispatchEffect( IRecipientFilter& filter, float delay, KeyValues *pKeyVa
 
 	// NOTE: Ptrs are our way of indicating it's an entindex
 	ClientEntityHandle_t hWorld = ClientEntityList().EntIndexToHandle( 0 );
-	data.m_hEntity = (intp)pKeyValues->GetPtr( "entindex", (void*)hWorld.ToInt() );
+	data.m_hEntity = (intp)pKeyValues->GetPtr( "entindex", (void*)(intp)hWorld.ToInt() );
 
 	const char *pEffectName = pKeyValues->GetString( "effectname" );
 

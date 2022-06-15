@@ -509,7 +509,7 @@ bool InputHandleInputEvent( const InputEvent_t &event )
 		return true;
 
 	case IE_IMESetWindow:
-		g_pIInput->SetIMEWindow( (void *)event.m_nData );
+		g_pIInput->SetIMEWindow( (void *)(intp)event.m_nData );
 		return true;
 
 	case IE_LocateMouseClick:

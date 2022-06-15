@@ -1098,10 +1098,10 @@ void CBaseClient::EndTrace( bf_write &msg )
 	}
 
 	if ( sv_netspike_output.GetInt() & 1 )
-		COM_LogString( SERVER_PACKETS_LOG, logData.String() );
+		COM_LogString( SERVER_PACKETS_LOG, (const char*)logData.String() );
 	if ( sv_netspike_output.GetInt() & 2 )
-		Log( "%s", logData.String() );
-	ETWMark1S( "netspike", logData.String() );
+		Log( "%s", (const char*)logData.String() );
+	ETWMark1S( "netspike", (const char*)logData.String() );
 	m_Trace.m_Records.RemoveAll();
 	m_iTracing = 0;
 }

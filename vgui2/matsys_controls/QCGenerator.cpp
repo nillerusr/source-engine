@@ -320,13 +320,13 @@ CQCGenerator::CQCGenerator( vgui::Panel *pParent, const char *pszPath, const cha
 	SetParent( pParent );
 
 	char szGamePath[1024] = "\0";
-	char szSearchPath[1024] = "\0";
+	char szSearchPath[2048] = "\0";
 
 	// Get the currently set game configuration
 	GetVConfigRegistrySetting( GAMEDIR_TOKEN, szGamePath, sizeof( szGamePath ) );	
 	static const char *pSurfacePropFilename = "\\scripts\\surfaceproperties.txt";
 
-	sprintf( szSearchPath, "%s%s", szGamePath, pSurfacePropFilename );
+	snprintf( szSearchPath, sizeof(szSearchPath), "%s%s", szGamePath, pSurfacePropFilename );
 
 	FileHandle_t fp = g_pFullFileSystem->Open( szSearchPath, "rb" );	 
 
@@ -338,7 +338,7 @@ CQCGenerator::CQCGenerator( vgui::Panel *pParent, const char *pszPath, const cha
 		char *pszEndGamePath = Q_strrchr( szGamePath, '\\' );
 		pszEndGamePath[0] = 0;
 		V_strcat_safe( szGamePath, "\\hl2" );
-		sprintf( szSearchPath, "%s%s", szGamePath, pSurfacePropFilename );
+		snprintf( szSearchPath, sizeof(szSearchPath), "%s%s", szGamePath, pSurfacePropFilename );
 		fp = g_pFullFileSystem->Open( szSearchPath, "rb" );	
 	}
 

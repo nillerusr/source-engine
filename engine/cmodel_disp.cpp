@@ -318,7 +318,7 @@ void CM_CreateDispPhysCollide( dphysdisp_t *pDispLump, int dispLumpSize )
 {
 	g_VirtualTerrain.LevelInit(pDispLump, dispLumpSize);
 	g_TerrainList.SetCount( g_DispCollTreeCount );
-	for ( int i = 0; i < g_DispCollTreeCount; i++ )
+	for ( intp i = 0; i < g_DispCollTreeCount; i++ )
 	{
 		// Don't create a physics collision model for displacements that have been tagged as such.
 		CDispCollTree *pDispTree = &g_pDispCollTrees[i];

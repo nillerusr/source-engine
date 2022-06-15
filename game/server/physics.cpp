@@ -1068,7 +1068,7 @@ void CCollisionEvent::FluidStartTouch( IPhysicsObject *pObject, IPhysicsFluidCon
 		return;
 
 	pEntity->AddEFlags( EFL_TOUCHING_FLUID );
-	pEntity->OnEntityEvent( ENTITY_EVENT_WATER_TOUCH, (void*)pFluid->GetContents() );
+	pEntity->OnEntityEvent( ENTITY_EVENT_WATER_TOUCH, (void*)(intp)pFluid->GetContents() );
 
 	float timeSinceLastCollision = DeltaTimeSinceLastFluid( pEntity );
 	if ( timeSinceLastCollision < 0.5f )
@@ -1124,7 +1124,7 @@ void CCollisionEvent::FluidEndTouch( IPhysicsObject *pObject, IPhysicsFluidContr
 	}
 
 	pEntity->RemoveEFlags( EFL_TOUCHING_FLUID );
-	pEntity->OnEntityEvent( ENTITY_EVENT_WATER_UNTOUCH, (void*)pFluid->GetContents() );
+	pEntity->OnEntityEvent( ENTITY_EVENT_WATER_UNTOUCH, (void*)(intp)pFluid->GetContents() );
 }
 
 class CSkipKeys : public IVPhysicsKeyHandler

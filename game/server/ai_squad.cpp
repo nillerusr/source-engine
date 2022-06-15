@@ -420,7 +420,7 @@ CAI_BaseNPC *CAI_Squad::GetLeader( void )
 //-----------------------------------------------------------------------------
 CAI_BaseNPC *CAI_Squad::GetFirstMember( AISquadIter_t *pIter, bool bIgnoreSilentMembers )
 {
-	int i = 0;
+	intp i = 0;
 	if ( bIgnoreSilentMembers )
 	{
 		for ( ; i < m_SquadMembers.Count(); i++ )

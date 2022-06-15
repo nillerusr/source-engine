@@ -2778,7 +2778,7 @@ LUFILE *lufopen(void *z,unsigned int len,DWORD flags,ZRESULT *err)
 #ifdef _WIN32		
 			res = DuplicateHandle(GetCurrentProcess(),hf,GetCurrentProcess(),&h,0,FALSE,DUPLICATE_SAME_ACCESS) == TRUE;
 #else
-			h = (void*) dup( (intptr_t)hf );
+			h = (void*)(intptr_t) dup( (intptr_t)hf );
 			res = (intptr_t) dup >= 0;
 #endif
 			if (!res) 
@@ -2793,7 +2793,7 @@ LUFILE *lufopen(void *z,unsigned int len,DWORD flags,ZRESULT *err)
 			h = CreateFile((const TCHAR *)z, GENERIC_READ, FILE_SHARE_READ, 
 					NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 #else
-			h = (void*) open( (const TCHAR *)z, O_RDONLY );
+			h = (void*)(intptr_t) open( (const TCHAR *)z, O_RDONLY );
 #endif
 			if (h == INVALID_HANDLE_VALUE) 
 			{
@@ -4198,7 +4198,7 @@ ZRESULT TUnzip::Unzip(int index,void *dst,unsigned int len,DWORD flags)
 		h = ::CreateFile((const TCHAR*)dst, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 
 				ze.attr, NULL);
 #else
-		h = (void*) open( (const TCHAR*)dst, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO );
+		h = (void*)(intptr_t)open( (const TCHAR*)dst, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO );
 #endif
 	}
 
