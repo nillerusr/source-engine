@@ -4,6 +4,7 @@
 
 #ifdef ANDROID
 #include <android/log.h>
+#include <SDL_version.h>
 
 #define TAG "SRCENG"
 #define PRIO ANDROID_LOG_DEBUG
@@ -69,18 +70,6 @@ int iLastArgs = 0;
 #define LogPrintf(...) do { __android_log_print(PRIO, TAG, __VA_ARGS__); printf( __VA_ARGS__); } while( 0 );
 #define DLLEXPORT extern "C" __attribute__((visibility("default")))
 
-DLLEXPORT void Java_com_valvesoftware_ValveActivity2_setDataDirectoryPath(JNIEnv *env, jclass *clazz, jstring path)
-{
-	setenv( "APP_DATA_PATH", env->GetStringUTFChars(path, NULL), 1);
-	LogPrintf( "Java_com_valvesoftware_ValveActivity2_setDataDirectoryPath: %s", getenv("APP_DATA_PATH") );
-}
-
-DLLEXPORT void Java_com_valvesoftware_ValveActivity2_setGameDirectoryPath(JNIEnv *env, jclass *clazz, jstring path)
-{
-	LogPrintf( "Java_com_valvesoftware_ValveActivity2_setGameDirectoryPath" );
-	setenv( "VALVE_GAME_PATH", env->GetStringUTFChars(path, NULL), 1 );
-}
-
 DLLEXPORT int Java_com_valvesoftware_ValveActivity2_setenv(JNIEnv *jenv, jclass *jclass, jstring env, jstring value, jint over)
 {
 	LogPrintf( "Java_com_valvesoftware_ValveActivity2_setenv %s=%s", jenv->GetStringUTFChars(env, NULL), jenv->GetStringUTFChars(value, NULL) );
@@ -133,6 +122,10 @@ void SetLauncherArgs()
 
 DLLEXPORT int LauncherMainAndroid( int argc, char **argv )
 {
+	SDL_version ver;
+	SDL_GetVersion( &ver );
+
+	LogPrintf("SDL version: %d.%d.%d rev: %s\n", (int)ver.major, (int)ver.minor, (int)ver.patch, SDL_GetRevision());
 
 	SetLauncherArgs();
 

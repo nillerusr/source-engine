@@ -1156,7 +1156,7 @@ inline void CVertexBuilder::FastAdvanceNVertices( int n )
 //-----------------------------------------------------------------------------
 inline void CVertexBuilder::FastVertex( const ModelVertexDX7_t &vertex )
 {
-#if defined(__arm__) || defined(__arm64__)
+#if defined(__arm__) || defined(__aarch64__)
 	FastVertexSSE( vertex );
 #else
 	Assert( m_CompressionType == VERTEX_COMPRESSION_NONE ); // FIXME: support compressed verts if needed
@@ -1326,7 +1326,7 @@ inline void CVertexBuilder::Fast4VerticesSSE(
 
 inline void CVertexBuilder::FastVertex( const ModelVertexDX8_t &vertex )
 {
-#if defined(__arm__) || defined(__arm64__)
+#if defined(__arm__) || defined(__aarch64__)
 	FastVertexSSE( vertex );
 #else
 	Assert( m_CompressionType == VERTEX_COMPRESSION_NONE ); // FIXME: support compressed verts if needed
