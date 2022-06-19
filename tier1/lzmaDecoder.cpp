@@ -145,8 +145,8 @@ unsigned int CLZMA::Uncompress( unsigned char *pInput, unsigned char *pOutput )
 	}
 
 	// These are in/out variables
-	SizeT outProcessed = pHeader->actualSize;
-	SizeT inProcessed = pHeader->lzmaSize;
+	SizeT outProcessed = LittleLong(pHeader->actualSize);
+	SizeT inProcessed = LittleLong(pHeader->lzmaSize);
 	ELzmaStatus status;
 	SRes result = LzmaDecode( (Byte *)pOutput, &outProcessed, (Byte *)(pInput + sizeof( lzma_header_t ) ),
 	                          &inProcessed, (Byte *)pHeader->properties, LZMA_PROPS_SIZE, LZMA_FINISH_END, &status, &g_Alloc );
@@ -154,7 +154,7 @@ unsigned int CLZMA::Uncompress( unsigned char *pInput, unsigned char *pOutput )
 
 	LzmaDec_Free(&state, &g_Alloc);
 
-	if ( result != SZ_OK || pHeader->actualSize != outProcessed )
+	if ( result != SZ_OK || LittleLong(pHeader->actualSize) != outProcessed )
 	{
 		Warning( "LZMA Decompression failed (%i)\n", result );
 		return 0;

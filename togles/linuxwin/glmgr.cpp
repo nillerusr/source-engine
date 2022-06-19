@@ -221,7 +221,7 @@ void APIENTRY GL_Debug_Output_Callback(GLenum source, GLenum type, GLuint id, GL
 		return;
 	}
 	
-	if ( gl_debug_output.GetBool() || type == GL_DEBUG_TYPE_ERROR_ARB )
+	if ( gl_debug_output.GetBool() || type == GL_DEBUG_TYPE_ERROR_ARB || type == GL_DEBUG_SEVERITY_MEDIUM_ARB )
 	{
 		Msg( "GL: [%s][%s][%s][%d]: %s\n", sSource, sType, sSeverity, id, message );
 	}
@@ -667,7 +667,7 @@ void GLMContext::DumpCaps( void )
 	#define	dumpfield_hex( fff )	printf( "\n  %-30s : 0x%08x", #fff, (int) m_caps.fff )
 	#define	dumpfield_str( fff )	printf( "\n  %-30s : %s", #fff, m_caps.fff )
 
-	printf("\n-------------------------------- context caps for context %08x", (uint)this);
+	printf("\n-------------------------------- context caps for context %zx", (size_t)this);
 
 	dumpfield( m_fullscreen );
 	dumpfield( m_accelerated );
@@ -1729,14 +1729,13 @@ void GLMContext::PreloadTex( CGLMTex *tex, bool force )
 								0.0f, 0.0f, 0.0f,
 								0.0f, 0.0f, 0.0f };
 
-	static int indices[] = { 0, 1, 2 };
-	
+	static unsigned short indices[] = { 0, 1, 2 };
 
 	gGL->glEnableVertexAttribArray( 0 );
 
 	gGL->glVertexAttribPointer( 0, 3, GL_FLOAT, 0, 0, posns );
 
-	gGL->glDrawRangeElements( GL_TRIANGLES, 0, 2, 3, GL_UNSIGNED_INT, indices);
+	gGL->glDrawRangeElements( GL_TRIANGLES, 0, 2, 3, GL_UNSIGNED_SHORT, indices);
 
 	gGL->glDisableVertexAttribArray( 0 );
 	
@@ -4926,11 +4925,11 @@ void GLMContext::DrawRangeElementsNonInline( GLenum mode, GLuint start, GLuint e
 	if ( pIndexBuf->m_bPseudo )
 	{
 		// you have to pass actual address, not offset
-		indicesActual = (void*)( (int)indicesActual + (int)pIndexBuf->m_pPseudoBuf );
+		indicesActual = (void*)( (intp)indicesActual + (intp)pIndexBuf->m_pPseudoBuf );
 	}
 	if (pIndexBuf->m_bUsingPersistentBuffer)
 	{
-		indicesActual = (void*)( (int)indicesActual + (int)pIndexBuf->m_nPersistentBufferStartOffset );
+		indicesActual = (void*)( (intp)indicesActual + (intp)pIndexBuf->m_nPersistentBufferStartOffset );
 	}
 
 #if GL_ENABLE_INDEX_VERIFICATION

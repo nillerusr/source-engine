@@ -26,7 +26,7 @@ class CMaterialDict;
 class IMaterial;
 class IMaterialInternal;
 class FloatBitMap_t;
-typedef int ShaderAPITextureHandle_t;
+typedef intp ShaderAPITextureHandle_t;
 struct MaterialSystem_SortInfo_t;
 typedef unsigned short MaterialHandle_t;
 

@@ -40,7 +40,7 @@ public:
 	// activates the console after a delay
 	void ActivateDelayed(float time);
 
-	void SetParent( int parent );
+	void SetParent( intp parent );
 
 	static void OnCmdCondump();
 private:

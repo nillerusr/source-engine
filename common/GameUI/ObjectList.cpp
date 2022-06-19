@@ -6,7 +6,11 @@
 //
 //=============================================================================//
 #include <stdio.h>
+#ifdef OSX
+#include <malloc/malloc.h>
+#else
 #include <malloc.h>
+#endif
 #include "ObjectList.h"
 #include "tier1/strtools.h"
 

@@ -2,6 +2,17 @@
 #include <string.h>
 #include <dlfcn.h>
 
+#ifdef ANDROID
+#include <android/log.h>
+
+#define TAG "SRCENG"
+#define PRIO ANDROID_LOG_DEBUG
+#define LogPrintf(...) do { __android_log_print(PRIO, TAG, __VA_ARGS__); printf( __VA_ARGS__); } while( 0 );
+
+#else
+#define LogPrintf(...) printf(__VA_ARGS__)
+#endif
+
 typedef void (*t_set_getprocaddress)(void *(*new_proc_address)(const char *));
 t_set_getprocaddress gl4es_set_getprocaddress;
 
@@ -18,13 +29,13 @@ void InitGL4ES()
 	void *lgl4es = dlopen("libgl4es.so", RTLD_LAZY);
 	if( !lgl4es )
 	{
-		printf("Failed to dlopen library libgl4es.so: %s\n", dlerror());
+		LogPrintf("Failed to dlopen library libgl4es.so: %s\n", dlerror());
 	}
 
 	void *lEGL = dlopen("libEGL.so", RTLD_LAZY);
 	if( !lEGL )
 	{
-		printf("Failed to dlopen library libEGL.so: %s\n", dlerror());
+		LogPrintf("Failed to dlopen library libEGL.so: %s\n", dlerror());
 	}
 
 	gl4es_set_getprocaddress = (t_set_getprocaddress)dlsym(lgl4es, "set_getprocaddress");
@@ -36,13 +47,11 @@ void InitGL4ES()
 	}
 	else
 	{
-		printf("Failed to call set_getprocaddress\n");
+		LogPrintf("Failed to call set_getprocaddress\n");
 	}
 }
 
 #ifdef ANDROID
-
-#include <android/log.h>
 #include <jni.h>
 #include <stdlib.h>
 #include <string.h>

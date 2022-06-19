@@ -24,7 +24,7 @@ struct TBFCalculationContext
 	FloatBitMap_t *dest_bm;
 };
 
-static unsigned TBFCalculationThreadFN( void *ctx1 )
+static uintp TBFCalculationThreadFN( void *ctx1 )
 {
 	TBFCalculationContext *ctx = (TBFCalculationContext *) ctx1;
 	for(int y=ctx->min_y; y <= ctx->max_y; y++)

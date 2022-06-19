@@ -311,13 +311,16 @@ FloatBitMap_t *FloatBitMap_t::QuarterSize(void) const
 
 	FloatBitMap_t *newbm=new FloatBitMap_t(Width/2,Height/2);
 	for(int y=0;y<Height/2;y++)
+	{
 		for(int x=0;x<Width/2;x++)
 		{
 			for(int c=0;c<4;c++)
 				newbm->Pixel(x,y,c)=((Pixel(x*2,y*2,c)+Pixel(x*2+1,y*2,c)+
 				Pixel(x*2,y*2+1,c)+Pixel(x*2+1,y*2+1,c))/4);
 		}
-		return newbm;
+	}
+
+	return newbm;
 }
 
 FloatBitMap_t *FloatBitMap_t::QuarterSizeBlocky(void) const
@@ -326,12 +329,14 @@ FloatBitMap_t *FloatBitMap_t::QuarterSizeBlocky(void) const
 
 	FloatBitMap_t *newbm=new FloatBitMap_t(Width/2,Height/2);
 	for(int y=0;y<Height/2;y++)
+	{
 		for(int x=0;x<Width/2;x++)
 		{
 			for(int c=0;c<4;c++)
 				newbm->Pixel(x,y,c)=Pixel(x*2,y*2,c);
 		}
-		return newbm;
+	}
+	return newbm;
 }
 
 Vector FloatBitMap_t::AverageColor(void)
@@ -349,12 +354,15 @@ float FloatBitMap_t::BrightestColor(void)
 {
 	float ret=0.0;
 	for(int y=0;y<Height;y++)
+	{
 		for(int x=0;x<Width;x++)
 		{
 			Vector v(Pixel(x,y,0),Pixel(x,y,1),Pixel(x,y,2));
 			ret=max(ret,v.Length());
 		}
-		return ret;
+	}
+
+	return ret;
 }
 
 template <class T> static inline void SWAP(T & a, T & b)
@@ -394,6 +402,7 @@ void FloatBitMap_t::UnLogize(void)
 void FloatBitMap_t::Clear(float r, float g, float b, float alpha)
 {
 	for(int y=0;y<Height;y++)
+	{
 		for(int x=0;x<Width;x++)
 		{
 			Pixel(x,y,0)=r;
@@ -401,6 +410,7 @@ void FloatBitMap_t::Clear(float r, float g, float b, float alpha)
 			Pixel(x,y,2)=b;
 			Pixel(x,y,3)=alpha;
 		}
+	}
 }
 
 void FloatBitMap_t::ScaleRGB(float scale_factor)
@@ -418,68 +428,77 @@ static int dy[4]={-1,0,0,1};
 
 void FloatBitMap_t::SmartPaste(FloatBitMap_t const &b, int xofs, int yofs, uint32 Flags)
 {
-	// now, need to make Difference map
-	FloatBitMap_t DiffMap0(this);
-	FloatBitMap_t DiffMap1(this);
-	FloatBitMap_t DiffMap2(this);
-	FloatBitMap_t DiffMap3(this);
-	FloatBitMap_t *deltas[4]={&DiffMap0,&DiffMap1,&DiffMap2,&DiffMap3};
-	for(int x=0;x<Width;x++)
-		for(int y=0;y<Height;y++)
-			for(int c=0;c<3;c++)
+	   	// now, need to make Difference map
+		FloatBitMap_t DiffMap0(this);
+		FloatBitMap_t DiffMap1(this);
+		FloatBitMap_t DiffMap2(this);
+		FloatBitMap_t DiffMap3(this);
+		FloatBitMap_t *deltas[4] = { &DiffMap0, &DiffMap1, &DiffMap2, &DiffMap3};
+		for (int x = 0; x < Width; x++)
+		{
+			for (int y = 0; y < Height; y++)
 			{
-				for(int i=0;i<NDELTAS;i++)
+				for (int c = 0; c < 3; c++)
 				{
-					int x1=x+dx[i];
-					int y1=y+dy[i];
-					x1=MAX(0,x1);
-					x1=MIN(Width-1,x1);
-					y1=MAX(0,y1);
-					y1=MIN(Height-1,y1);
-					float dx1=Pixel(x,y,c)-Pixel(x1,y1,c);
-					deltas[i]->Pixel(x,y,c)=dx1;
+					for (int i = 0; i < NDELTAS; i++)
+					{
+						int x1 = x + dx[i];
+						int y1 = y + dy[i];
+						x1 = MAX(0, x1);
+						x1 = MIN(Width - 1, x1);
+						y1 = MAX(0, y1);
+						y1 = MIN(Height - 1, y1);
+						float dx1 = Pixel(x, y, c) - Pixel(x1, y1, c);
+						deltas[i]->Pixel(x, y, c) = dx1;
+					}
 				}
 			}
-			for(int x=1;x<b.Width-1;x++)
-				for(int y=1;y<b.Height-1;y++)
-					for(int c=0;c<3;c++)
+		}
+
+		for (int x = 1; x < b.Width - 1; x++)
+		{
+			for (int y = 1; y < b.Height - 1; y++)
+			{
+				for (int c = 0; c < 3; c++)
+				{
+					for (int i = 0; i < NDELTAS; i++)
 					{
-						for(int i=0;i<NDELTAS;i++)
+						float diff = b.Pixel(x, y, c) - b.Pixel(x + dx[i], y + dy[i], c);
+						deltas[i]->Pixel(x + xofs, y + yofs, c) = diff;
+						if (Flags & SPFLAGS_MAXGRADIENT)
 						{
-							float diff=b.Pixel(x,y,c)-b.Pixel(x+dx[i],y+dy[i],c);
-							deltas[i]->Pixel(x+xofs,y+yofs,c)=diff;
-							if (Flags & SPFLAGS_MAXGRADIENT)
-							{
-								float dx1=Pixel(x+xofs,y+yofs,c)-Pixel(x+dx[i]+xofs,y+dy[i]+yofs,c);
-								if (fabs(dx1)>fabs(diff))
-									deltas[i]->Pixel(x+xofs,y+yofs,c)=dx1;
-							}
+							float dx1 = Pixel(x + xofs, y + yofs, c) - Pixel(x + dx[i] + xofs, y + dy[i] + yofs, c);
+							if (fabs(dx1) > fabs(diff))
+								deltas[i]->Pixel(x + xofs, y + yofs, c) = dx1;
 						}
 					}
+				}
+			}
+		}
 
-					// now, calculate modifiability
-					for(int x=0;x<Width;x++)
-						for(int y=0;y<Height;y++)
-						{
-							float modify=0;
-							if (
-								(x>xofs+1) && (x<=xofs+b.Width-2) &&
-								(y>yofs+1) && (y<=yofs+b.Height-2))
-								modify=1;
-							Alpha(x,y)=modify;
-						}
-
-						//   // now, force a fex pixels in center to be constant
-						//   int midx=xofs+b.Width/2;
-						//   int midy=yofs+b.Height/2;
-						//   for(x=midx-10;x<midx+10;x++)
-						//     for(int y=midy-10;y<midy+10;y++)
-						//     {
-						//       Alpha(x,y)=0;
-						//       for(int c=0;c<3;c++)
-						//         Pixel(x,y,c)=b.Pixel(x-xofs,y-yofs,c);
-						//     }
-						Poisson(deltas,6000,Flags);
+	   	// now, calculate modifiability
+		for (int x = 0; x < Width; x++)
+		{
+			for (int y = 0; y < Height; y++)
+			{
+				float modify = 0;
+				if ( (x > xofs + 1) && (x <= xofs + b.Width - 2) &&
+					(y > yofs + 1) && (y <= yofs + b.Height - 2))
+					modify = 1;
+				Alpha(x, y) = modify;
+			}
+		}
+	   	//  	// now, force a fex pixels in center to be constant
+	   	//   int midx=xofs+b.Width/2;
+	   	//   int midy=yofs+b.Height/2;
+	   	//   for(x=midx-10;x<midx+10;x++)
+	   	//	 for(int y=midy-10;y<midy+10;y++)
+	   	//	 {
+	   	//	   Alpha(x,y)=0;
+	   	//	   for(int c=0;c < 3;c++)
+	   	//		 Pixel(x,y,c)=b.Pixel(x-xofs,y-yofs,c);
+	   	//	 }
+		Poisson(deltas, 6000, Flags);
 }
 
 void FloatBitMap_t::ScaleGradients(void)
@@ -489,57 +508,57 @@ void FloatBitMap_t::ScaleGradients(void)
 	FloatBitMap_t DiffMap1(this);
 	FloatBitMap_t DiffMap2(this);
 	FloatBitMap_t DiffMap3(this);
-	FloatBitMap_t *deltas[4]={&DiffMap0,&DiffMap1,&DiffMap2,&DiffMap3};
-	double gsum=0.0;
-	for(int x=0;x<Width;x++)
-		for(int y=0;y<Height;y++)
-			for(int c=0;c<3;c++)
+	FloatBitMap_t *deltas[4] = { &DiffMap0, &DiffMap1, &DiffMap2, &DiffMap3
+	};
+	double gsum = 0.0;
+	for (int x = 0; x < Width; x++)
+		for (int y = 0; y < Height; y++)
+			for (int c = 0; c < 3; c++)
 			{
-				for(int i=0;i<NDELTAS;i++)
+				for (int i = 0; i < NDELTAS; i++)
 				{
-					int x1=x+dx[i];
-					int y1=y+dy[i];
-					x1=MAX(0,x1);
-					x1=MIN(Width-1,x1);
-					y1=MAX(0,y1);
-					y1=MIN(Height-1,y1);
-					float dx1=Pixel(x,y,c)-Pixel(x1,y1,c);
-					deltas[i]->Pixel(x,y,c)=dx1;
-					gsum+=fabs(dx1);
+					int x1 = x + dx[i];
+					int y1 = y + dy[i];
+					x1 = MAX(0, x1);
+					x1 = MIN(Width - 1, x1);
+					y1 = MAX(0, y1);
+					y1 = MIN(Height - 1, y1);
+					float dx1 = Pixel(x, y, c) - Pixel(x1, y1, c);
+					deltas[i]->Pixel(x, y, c) = dx1;
+					gsum += fabs(dx1);
 				}
 			}
-			// now, reduce gradient changes
-			//  float gavg=gsum/(Width*Height);
-			for(int x=0;x<Width;x++)
-				for(int y=0;y<Height;y++)
-					for(int c=0;c<3;c++)
-					{
-						for(int i=0;i<NDELTAS;i++)
-						{
-							float norml=1.1*deltas[i]->Pixel(x,y,c);
-							//           if (norml<0.0)
-							//             norml=-pow(-norml,1.2);
-							//           else
-							//             norml=pow(norml,1.2);
-							deltas[i]->Pixel(x,y,c)=norml;
-						}
-					}
+	// now, reduce gradient changes
+	//  float gavg=gsum/(Width*Height);
+	for (int x = 0; x < Width; x++)
+		for (int y = 0; y < Height; y++)
+			for (int c = 0; c < 3; c++)
+			{
+				for (int i = 0; i < NDELTAS; i++)
+				{
+					float norml = 1.1 *deltas[i]->Pixel(x, y, c);
+					//		   if (norml < 0.0)
+					//			 norml=-pow(-norml,1.2);
+					//		   else
+					//			 norml=pow(norml,1.2);
+					deltas[i]->Pixel(x, y, c) = norml;
+				}
+			}
 
-					// now, calculate modifiability
-					for(int x=0;x<Width;x++)
-						for(int y=0;y<Height;y++)
-						{
-							float modify=0;
-							if (
-								(x>0) && (x<Width-1) &&
-								(y) && (y<Height-1))
-							{
-								modify=1;
-								Alpha(x,y)=modify;
-							}
-						}
+	// now, calculate modifiability
+	for (int x = 0; x < Width; x++)
+		for (int y = 0; y < Height; y++)
+		{
+			float modify = 0;
+			if (				(x > 0) && (x < Width - 1) &&
+				(y) && (y < Height - 1))
+			{
+				modify = 1;
+				Alpha(x, y) = modify;
+			}
+		}
 
-						Poisson(deltas,2200,0);
+	Poisson(deltas, 2200, 0);
 }
 
 
@@ -553,7 +572,9 @@ void FloatBitMap_t::MakeTileable(void)
 	// set each pixel=avg-pixel
 	FloatBitMap_t *cursrc=&rslta;
 	for(int x=1;x<Width-1;x++)
+	{
 		for(int y=1;y<Height-1;y++)
+		{
 			for(int c=0;c<3;c++)
 			{
 				DiffMapX.Pixel(x,y,c)=Pixel(x,y,c)-Pixel(x+1,y,c);
@@ -586,7 +607,9 @@ void FloatBitMap_t::MakeTileable(void)
 			{
 				float error=0.0;
 				for(int x=1;x<Width-1;x++)
+				{
 					for(int y=1;y<Height-1;y++)
+					{
 						for(int c=0;c<3;c++)
 						{
 							float desiredx=DiffMapX.Pixel(x,y,c)+cursrc->Pixel(x+1,y,c);
@@ -596,12 +619,16 @@ void FloatBitMap_t::MakeTileable(void)
 							error+=SQ(desired-cursrc->Pixel(x,y,c));
 						}
 						SWAP(cursrc,curdst);
+					}
+				}
 			}
 			// paste result
 			for(int x=0;x<Width;x++)
 				for(int y=0;y<Height;y++)
 					for(int c=0;c<3;c++)
 						Pixel(x,y,c)=curdst->Pixel(x,y,c);
+		}
+	}
 }
 
 
@@ -613,15 +640,18 @@ void FloatBitMap_t::GetAlphaBounds(int &minx, int &miny, int &maxx,int &maxy)
 		for(y=0;y<Height;y++)
 			if (Alpha(minx,y))
 				break;
+
 		if (y!=Height)
 			break;
 	}
+
 	for(maxx=Width-1;maxx>=0;maxx--)
 	{
 		int y;
 		for(y=0;y<Height;y++)
 			if (Alpha(maxx,y))
 				break;
+
 		if (y!=Height)
 			break;
 	}
@@ -631,6 +661,7 @@ void FloatBitMap_t::GetAlphaBounds(int &minx, int &miny, int &maxx,int &maxy)
 		for(x=minx;x<=maxx;x++)
 			if (Alpha(x,miny))
 				break;
+
 		if (x<maxx)
 			break;
 	}
@@ -640,6 +671,7 @@ void FloatBitMap_t::GetAlphaBounds(int &minx, int &miny, int &maxx,int &maxy)
 		for(x=minx;x<=maxx;x++)
 			if (Alpha(x,maxy))
 				break;
+
 		if (x<maxx)
 			break;
 	}
@@ -647,7 +679,7 @@ void FloatBitMap_t::GetAlphaBounds(int &minx, int &miny, int &maxx,int &maxy)
 
 void FloatBitMap_t::Poisson(FloatBitMap_t *deltas[4],
 							int n_iters,
-							uint32 flags                                  // SPF_xxx
+							uint32 flags								  // SPF_xxx
 							)
 {
 	int minx,miny,maxx,maxy;
@@ -666,9 +698,13 @@ void FloatBitMap_t::Poisson(FloatBitMap_t *deltas[4],
 		tmp->Poisson(lowdeltas,n_iters*4,flags);
 		// now, propagate results from tmp to us
 		for(int x=0;x<tmp->Width;x++)
+		{
 			for(int y=0;y<tmp->Height;y++)
+			{
 				for(int xi=0;xi<2;xi++)
+				{
 					for(int yi=0;yi<2;yi++)
+					{
 						if (Alpha(x*2+xi,y*2+yi))
 						{
 							for(int c=0;c<3;c++)
@@ -683,6 +719,10 @@ void FloatBitMap_t::Poisson(FloatBitMap_t *deltas[4],
 						delete tmp;
 						for(int i=0;i<NDELTAS;i++)
 							delete lowdeltas[i];
+					}
+				}
+			}
+		}
 	}
 	FloatBitMap_t work1(this);
 	FloatBitMap_t work2(this);
@@ -704,7 +744,7 @@ void FloatBitMap_t::Poisson(FloatBitMap_t *deltas[4],
 						for(int i=0;i<NDELTAS;i++)
 							desired+=deltas[i]->Pixel(x,y,c)+cursrc->Pixel(x+dx[i],y+dy[i],c);
 						desired*=(1.0/NDELTAS);
-						//            desired=FLerp(Pixel(x,y,c),desired,Alpha(x,y));
+						//			desired=FLerp(Pixel(x,y,c),desired,Alpha(x,y));
 						curdst->Pixel(x,y,c)=FLerp(cursrc->Pixel(x,y,c),desired,0.5);
 						error+=SQ(desired-cursrc->Pixel(x,y,c));
 					}

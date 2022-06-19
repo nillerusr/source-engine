@@ -901,7 +901,9 @@ bool CDataModel::Unserialize( CUtlBuffer &inBuf, const char *pEncodingName, cons
 		return false;
 	}
 
+#if !defined(NO_MALLOC_OVERRIDE)
 	g_pMemAlloc->heapchk();
+#endif
 
 	DmxHeader_t header;
 	bool bStoresVersionInFile = pSerializer->StoresVersionInFile();
@@ -1656,7 +1658,7 @@ DmAttributeReferenceIterator_t CDataModel::FirstAttributeReferencingElement( DmE
 	if ( !pRef || pRef->m_attributes.m_hAttribute == DMATTRIBUTE_HANDLE_INVALID )
 		return DMATTRIBUTE_REFERENCE_ITERATOR_INVALID;
 
-	return ( DmAttributeReferenceIterator_t )( int )&pRef->m_attributes;
+	return ( DmAttributeReferenceIterator_t )( intp )&pRef->m_attributes;
 }
 
 DmAttributeReferenceIterator_t CDataModel::NextAttributeReferencingElement( DmAttributeReferenceIterator_t hAttrIter )
@@ -1665,7 +1667,7 @@ DmAttributeReferenceIterator_t CDataModel::NextAttributeReferencingElement( DmAt
 	if ( !pList )
 		return DMATTRIBUTE_REFERENCE_ITERATOR_INVALID;
 
-	return ( DmAttributeReferenceIterator_t )( int )pList->m_pNext;
+	return ( DmAttributeReferenceIterator_t )( intp )pList->m_pNext;
 }
 
 CDmAttribute *CDataModel::GetAttribute( DmAttributeReferenceIterator_t hAttrIter )

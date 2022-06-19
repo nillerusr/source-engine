@@ -11,7 +11,7 @@
 #include "tier0/dbg.h"
 #include "mathlib/mathlib.h"
 #include "mathlib/vector.h"
-#ifdef __arm__
+#if defined(__arm__) || defined(__aarch64__)
 #include "sse2neon.h"
 #endif
 
@@ -180,7 +180,7 @@ float _SSE_RSqrtFast(float x)
 	Assert( s_bMathlibInitialized );
 
 	float rroot;
-#ifdef __arm__
+#if defined(__arm__) || defined(__aarch64__)
         rroot = _SSE_RSqrtAccurate(x);
 #elif _WIN32
 	_asm
@@ -217,7 +217,7 @@ float FASTCALL _SSE_VectorNormalize (Vector& vec)
 	// be much of a performance win, considering you will very likely miss 3 branch predicts in a row.
 	if ( v[0] || v[1] || v[2] )
 	{
-#ifdef __arm__
+#if defined(__arm__) || defined(__aarch64__)
 		float rsqrt = _SSE_RSqrtAccurate( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] );
 		r[0] = v[0] * rsqrt;
 		r[1] = v[1] * rsqrt;
@@ -296,7 +296,7 @@ void FASTCALL _SSE_VectorNormalizeFast (Vector& vec)
 float _SSE_InvRSquared(const float* v)
 {
 	float	inv_r2 = 1.f;
-#ifdef __arm__
+#if defined(__arm__) || defined(__aarch64__)
 	return _SSE_RSqrtAccurate( FLT_EPSILON + v[0] * v[0] + v[1] * v[1] + v[2] * v[2] );
 #elif _WIN32
 	_asm { // Intel SSE only routine
@@ -391,8 +391,10 @@ typedef __m64 v2si;   // vector of 2 int (mmx)
 
 void _SSE_SinCos(float x, float* s, float* c)
 {
-#ifdef __arm__
-#if defined( POSIX )
+#if defined(__arm__) || defined(__aarch64__)
+#if defined( OSX )
+    __sincosf(x, s, c);
+#elif defined( POSIX )
         sincosf(x, s, c);
 #else
 	*s = sin( x );
@@ -605,7 +607,7 @@ void _SSE_SinCos(float x, float* s, float* c)
 
 float _SSE_cos( float x )
 {
-#ifdef __arm__
+#if defined(__arm__) || defined(__aarch64__)
 	return cos(x);
 #elif _WIN32
 	float temp;

@@ -158,11 +158,14 @@ def define_platform(conf):
 	if conf.options.SDL:
 		conf.define('USE_SDL', 1)
 
+	if conf.options.ALLOW64:
+		conf.define('PLATFORM_64BITS', 1)
+
 	if conf.env.DEST_OS == 'linux':
 		conf.define('_GLIBCXX_USE_CXX11_ABI',0)
 		conf.env.append_unique('DEFINES', [
 			'LINUX=1', '_LINUX=1',
-			'POSIX=1', '_POSIX=1',
+			'POSIX=1', '_POSIX=1', 'PLATFORM_POSIX=1',
 			'GNUC',
 			'NO_HOOK_MALLOC',
 			'_DLL_EXT=.so'
@@ -211,6 +214,9 @@ def options(opt):
 	grp.add_option('--use-ccache', action = 'store_true', dest = 'CCACHE', default = False,
 		help = 'build using ccache [default: %default]')
 
+	grp.add_option('--disable-warns', action = 'store_true', dest = 'DISABLE_WARNS', default = False,
+		help = 'build using ccache [default: %default]')
+
 	grp.add_option('--togles', action = 'store_true', dest = 'TOGLES', default = False,
 		help = 'build engine with ToGLES [default: %default]')
 
@@ -252,17 +258,24 @@ def configure(conf):
 
 	conf.load('force_32bit')
 
-	compiler_optional_flags = [
-		'-pipe',
-		'-Wall',
-		'-fdiagnostics-color=always',
-		'-Wcast-align',
-		'-Wuninitialized',
-		'-Winit-self',
-		'-Wstrict-aliasing',
-		'-faligned-new'
- #		'-Werror=strict-aliasing'
-	]
+	if conf.options.DISABLE_WARNS:
+		compiler_optional_flags = ['-w']
+	else:
+		compiler_optional_flags = [
+			'-Wall',
+			'-fdiagnostics-color=always',
+			'-Wcast-align',
+			'-Wuninitialized',
+			'-Winit-self',
+			'-Wstrict-aliasing',
+			'-Wno-reorder',
+			'-Wno-unknown-pragmas',
+			'-Wno-unused-function',
+			'-Wno-unused-but-set-variable',
+			'-Wno-unused-value',
+			'-Wno-unused-variable',
+			'-faligned-new',
+		]
 
 	c_compiler_optional_flags = [
 		'-fnonconst-initializers' # owcc
@@ -270,7 +283,9 @@ def configure(conf):
 
 	cflags, linkflags = conf.get_optimization_flags()
 
-	flags = ['-fPIC'] #, '-fsanitize=undefined']
+	flags = ['-pipe', '-fPIC'] #, '-fsanitize=undefined'] #, '-fsanitize=undefined'] #, '-fno-sanitize=vptr'] #, '-fno-sanitize=vptr,shift,shift-exponent,shift-base,signed-integer-overflow']
+	if conf.env.COMPILER_CC != 'msvc':
+		flags += ['-pthread']
 
 	if conf.env.DEST_OS == 'android':
 		flags += [
@@ -290,7 +305,7 @@ def configure(conf):
 		if conf.env.DEST_OS != 'android':
 			flags += ['-march=native', '-mtune=native']
 	else:
-		flags += ['-march=native','-mtune=native','-mfpmath=sse', '-msse', '-msse2']
+		flags += ['-march=native','-mtune=native','-mfpmath=sse']
 
 
 	cflags += flags
@@ -307,7 +322,6 @@ def configure(conf):
 #		for func in wrapfunctions:
 #			linkflags += ['-Wl,--wrap='+func]
 
-
 		conf.define('COMPILER_GCC', 1)
 
 
@@ -315,7 +329,6 @@ def configure(conf):
 		conf.check_cc(cflags=cflags, linkflags=linkflags, msg='Checking for required C flags')
 		conf.check_cxx(cxxflags=cxxflags, linkflags=linkflags, msg='Checking for required C++ flags')
 
-		linkflags += ['-pthread']
 		conf.env.append_unique('CFLAGS', cflags)
 		conf.env.append_unique('CXXFLAGS', cxxflags)
 		conf.env.append_unique('LINKFLAGS', linkflags)
@@ -357,6 +370,19 @@ def configure(conf):
 		conf.check(lib='android_support', uselib_store='ANDROID_SUPPORT')
 		conf.check(lib='opus', uselib_store='OPUS')
 #		conf.check(lib='speex', uselib_store='SPEEX')
+
+
+#		'ivp/havana',
+#		'ivp/havana/havok/hk_base',
+#		'ivp/havana/havok/hk_math',
+#		'ivp/ivp_compact_builder',
+#		'ivp/ivp_physics',
+#	conf.check(lib='ivp_physics', uselib_store='ivp_physics')
+#	conf.check(lib='ivp_compactbuilder', uselib_store='ivp_compactbuilder')
+#	conf.check(lib='havana_constraints', uselib_store='havana_constraints')
+#	conf.check(lib='hk_math', uselib_store='hk_math')
+#	conf.check(lib='hk_base', uselib_store='hk_base')
+#	conf.check(lib='', uselib_store='')
 
 	if conf.env.DEST_OS != 'win32':
 		conf.check_cc(lib='dl', mandatory=False)

@@ -153,7 +153,7 @@ END_DATADESC()
 
 //-------------------------------------
 
-CAI_Squad::CAI_Squad(string_t newName) 
+CAI_Squad::CAI_Squad(string_t newName)
 #ifndef PER_ENEMY_SQUADSLOTS
  :	m_squadSlotsUsed(MAX_SQUADSLOTS)
 #endif
@@ -163,7 +163,7 @@ CAI_Squad::CAI_Squad(string_t newName)
 
 //-------------------------------------
 
-CAI_Squad::CAI_Squad() 
+CAI_Squad::CAI_Squad()
 #ifndef PER_ENEMY_SQUADSLOTS
  :	m_squadSlotsUsed(MAX_SQUADSLOTS)
 #endif
@@ -175,7 +175,7 @@ CAI_Squad::CAI_Squad()
 
 void CAI_Squad::Init(string_t newName) 
 {
-	m_Name = AllocPooledString( STRING(newName) );
+	m_Name = newName;
 	m_pNextSquad = NULL;
 	m_flSquadSoundWaitTime = 0;
 	m_SquadMembers.RemoveAll();
@@ -420,7 +420,7 @@ CAI_BaseNPC *CAI_Squad::GetLeader( void )
 //-----------------------------------------------------------------------------
 CAI_BaseNPC *CAI_Squad::GetFirstMember( AISquadIter_t *pIter, bool bIgnoreSilentMembers )
 {
-	int i = 0;
+	intp i = 0;
 	if ( bIgnoreSilentMembers )
 	{
 		for ( ; i < m_SquadMembers.Count(); i++ )

@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "tier0/dbg.h"
-#include <malloc.h>
 #include "filesystem.h"
 #include "bitmap/tgawriter.h"
 #include "tier1/utlbuffer.h"

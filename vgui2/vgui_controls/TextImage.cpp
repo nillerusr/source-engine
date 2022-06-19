@@ -9,7 +9,11 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <assert.h>
+#ifdef OSX
+#include <malloc/malloc.h>
+#else
 #include <malloc.h>
+#endif
 
 #include <vgui/IPanel.h>
 #include <vgui/ISurface.h>

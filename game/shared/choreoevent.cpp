@@ -2076,7 +2076,7 @@ public:
 	{
 		if ( ARRAYSIZE( g_NameMap ) != CChoreoEvent::NUM_TYPES )
 		{
-			Error( "g_NameMap contains %i entries, CChoreoEvent::NUM_TYPES == %i!",
+			Error( "g_NameMap contains %zd entries, CChoreoEvent::NUM_TYPES == %i!",
 				ARRAYSIZE( g_NameMap ), CChoreoEvent::NUM_TYPES );
 		}
 		for ( int i = 0; i < CChoreoEvent::NUM_TYPES; ++i )
@@ -2158,7 +2158,7 @@ public:
 	{
 		if ( ARRAYSIZE( g_CCNameMap ) != CChoreoEvent::NUM_CC_TYPES )
 		{
-			Error( "g_CCNameMap contains %i entries, CChoreoEvent::NUM_CC_TYPES == %i!",
+			Error( "g_CCNameMap contains %zd entries, CChoreoEvent::NUM_CC_TYPES == %i!",
 				ARRAYSIZE( g_CCNameMap ), CChoreoEvent::NUM_CC_TYPES );
 		}
 		for ( int i = 0; i < CChoreoEvent::NUM_CC_TYPES; ++i )

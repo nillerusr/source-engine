@@ -931,7 +931,7 @@ void CViewRender::WriteSaveGameScreenshotOfSize( const char *pFilename, int widt
 	{
 		// Write TGA format to buffer
 		int iMaxTGASize = 1024 + ( nSrcWidth * nSrcHeight * 4 );
-		void *pTGA = malloc( iMaxTGASize );
+		void *pTGA = new char[ iMaxTGASize ];
 		buffer.SetExternalBuffer( pTGA, iMaxTGASize, 0 );
 
 		bWriteResult = TGAWriter::WriteToBuffer( pSrcImage, buffer, nSrcWidth, nSrcHeight, IMAGE_FORMAT_RGB888, IMAGE_FORMAT_RGB888 );

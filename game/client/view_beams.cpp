@@ -1963,7 +1963,7 @@ void CViewRenderBeams::DrawBeam( Beam_t *pbeam )
 
 	// set color
 	float srcColor[3];
-	float color[3];
+	float color[4];
 
 	srcColor[0] = pbeam->r;
 	srcColor[1] = pbeam->g;
@@ -1984,6 +1984,7 @@ void CViewRenderBeams::DrawBeam( Beam_t *pbeam )
 	VectorScale( color, (1/255.0), color );
 	VectorCopy( color, srcColor );
 	VectorScale( color, ((float)pbeam->brightness / 255.0), color );
+	color[3] = 1.f;
 
 	switch( pbeam->type )
 	{

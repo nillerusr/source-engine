@@ -306,7 +306,7 @@ CQueuedLoader::CQueuedLoader() : BaseClass( false )
 	V_memset( m_pLoaders, 0, sizeof( m_pLoaders ) );
 
 	// set resource dictionaries sort context
-	for ( int i = 0; i < RESOURCEPRELOAD_COUNT; i++ )
+	for ( intp i = 0; i < RESOURCEPRELOAD_COUNT; i++ )
 	{
 		m_ResourceNames[i].SetLessContext( (void *)i );
 	}
@@ -643,7 +643,7 @@ FileNameHandle_t CQueuedLoader::FindFilename( const char *pFilename )
 //-----------------------------------------------------------------------------
 bool CQueuedLoader::CResourceNameLessFunc::Less( const FileNameHandle_t &hFilenameLHS, const FileNameHandle_t &hFilenameRHS, void *pCtx )
 {
-	switch ( (int)pCtx )
+	switch ( (intp)pCtx )
 	{
 	case RESOURCEPRELOAD_MATERIAL:
 		{

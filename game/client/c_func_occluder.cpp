@@ -24,7 +24,7 @@ public:
 
 private:
 	int m_nOccluderIndex;
-	bool m_bActive;
+	bool m_bActive = false;
 };
 
 IMPLEMENT_CLIENTCLASS_DT( C_FuncOccluder, DT_FuncOccluder, CFuncOccluder )

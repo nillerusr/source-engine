@@ -215,7 +215,7 @@ public:
 	virtual CMatCallQueue *GetRenderCallQueue() = 0;
 
 	virtual void UnbindMaterial( IMaterial *pMaterial ) = 0;
-	virtual uint GetRenderThreadId() const = 0 ;
+	virtual ThreadId_t GetRenderThreadId() const = 0 ;
 
 	virtual IMaterialProxy	*DetermineProxyReplacements( IMaterial *pMaterial, KeyValues *pFallbackKeyValues ) = 0;
 };

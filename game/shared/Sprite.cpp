@@ -174,7 +174,7 @@ BEGIN_NETWORK_TABLE( CSprite, DT_Sprite )
 END_NETWORK_TABLE()
 
 
-CSprite::CSprite()
+CSprite::CSprite() : BaseClass()
 {
 	m_flGlowProxySize = 2.0f;
 	m_flHDRColorScale = 1.0f;

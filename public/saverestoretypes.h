@@ -512,7 +512,7 @@ inline const char *CSaveRestoreSegment::StringFromSymbol( int token )
 ///             compilers. Either way, there's no portable intrinsic.
 
 // Newer GCC versions provide this in this header, older did by default.
-#if !defined( _rotr ) && defined( COMPILER_GCC ) && !defined( __arm__ )
+#if !defined( _rotr ) && defined( COMPILER_GCC ) && !defined( __arm__ ) && !defined( __aarch64__ )
 #include <x86intrin.h>
 #endif
 

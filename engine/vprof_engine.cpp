@@ -1117,8 +1117,6 @@ void WriteRemoteVProfGroupData( VProfListenInfo_t &info )
 		const char *pName = g_pVProfileForDisplay->GetBudgetGroupName( nIndex );
 		buf.PutString( pName );
 	}
-
-	g_ServerRemoteAccess.SendVProfData( info.m_nListenerId, true, buf.Base(), buf.TellMaxPut() );
 }
 		 
 static ConVar rpt_vprof_time( "rpt_vprof_time","0.25", FCVAR_HIDDEN | FCVAR_DONTRECORD, "" );
@@ -1167,7 +1165,6 @@ void WriteRemoteVProfData()
 			Assert( nIndex >= 0 );
 			pSentTimes[ nIndex ] = pTimes[j];
 		}
-		g_ServerRemoteAccess.SendVProfData( s_VProfListeners[i].m_nListenerId, false, pSentTimes, nSentSize );
 	}
 }
 

@@ -16,10 +16,10 @@
 #undef ALIGN4
 #undef ALIGN16
 #undef ALIGN32
-#define ALIGN4( a ) a = (byte *)((int)((byte *)a + 3) & ~ 3)
-#define ALIGN16( a ) a = (byte *)((int)((byte *)a + 15) & ~ 15)
-#define ALIGN32( a ) a = (byte *)((int)((byte *)a + 31) & ~ 31)
-#define ALIGN64( a ) a = (byte *)((int)((byte *)a + 63) & ~ 63)
+#define ALIGN4( a ) a = (byte *)((intp)((byte *)a + 3) & ~ 3)
+#define ALIGN16( a ) a = (byte *)((intp)((byte *)a + 15) & ~ 15)
+#define ALIGN32( a ) a = (byte *)((intp)((byte *)a + 31) & ~ 31)
+#define ALIGN64( a ) a = (byte *)((intp)((byte *)a + 63) & ~ 63)
 
 // Fixup macros create variables that may not be referenced
 #pragma warning( push )
@@ -1228,8 +1228,8 @@ int ByteswapANI( studiohdr_t* pHdr, void *pDestBase, const void *pSrcBase, const
 		V_memcpy( pNewDest, pDestBase, pAnimBlock->datastart );
 		pNewDest += pAnimBlock->datastart;
 
-		int padding = AlignValue( (unsigned int)pNewDest - (unsigned int)pNewDestBase, 2048 );
-		padding -= (unsigned int)pNewDest - (unsigned int)pNewDestBase;
+		int padding = AlignValue( (uintp)pNewDest - (uintp)pNewDestBase, 2048 );
+		padding -= (uintp)pNewDest - (uintp)pNewDestBase;
 		pNewDest += padding;
 
 		// iterate and compress anim blocks
@@ -1240,7 +1240,7 @@ int ByteswapANI( studiohdr_t* pHdr, void *pDestBase, const void *pSrcBase, const
 			void *pInput = (byte *)pDestBase + pAnimBlock->datastart;
 			int inputSize = pAnimBlock->dataend - pAnimBlock->datastart;
 
-			pAnimBlock->datastart = (unsigned int)pNewDest - (unsigned int)pNewDestBase;
+			pAnimBlock->datastart = (uintp)pNewDest - (uintp)pNewDestBase;
 
 			void *pOutput;
 			int outputSize;
@@ -1257,11 +1257,11 @@ int ByteswapANI( studiohdr_t* pHdr, void *pDestBase, const void *pSrcBase, const
 				pNewDest += inputSize;
 			}
 
-			padding = AlignValue( (unsigned int)pNewDest - (unsigned int)pNewDestBase, 2048 );
-			padding -= (unsigned int)pNewDest - (unsigned int)pNewDestBase;
+			padding = AlignValue( (uintp)pNewDest - (uintp)pNewDestBase, 2048 );
+			padding -= (uintp)pNewDest - (uintp)pNewDestBase;
 			pNewDest += padding;
 
-			pAnimBlock->dataend = (unsigned int)pNewDest - (unsigned int)pNewDestBase;
+			pAnimBlock->dataend = (uintp)pNewDest - (uintp)pNewDestBase;
 		}
 
 		fixedFileSize = pNewDest - pNewDestBase;
@@ -2522,14 +2522,14 @@ BEGIN_BYTESWAP_DATADESC( studiohdr_t )
 	DEFINE_FIELD( contents, FIELD_INTEGER ),
 	DEFINE_FIELD( numincludemodels, FIELD_INTEGER ),
 	DEFINE_INDEX( includemodelindex, FIELD_INTEGER ),
-	DEFINE_FIELD( virtualModel, FIELD_INTEGER ),				// void*
+	DEFINE_FIELD( unused_virtualModel, FIELD_INTEGER ),				// void*
 	DEFINE_INDEX( szanimblocknameindex, FIELD_INTEGER ),	
 	DEFINE_FIELD( numanimblocks, FIELD_INTEGER ),
 	DEFINE_INDEX( animblockindex, FIELD_INTEGER ),
-	DEFINE_FIELD( animblockModel, FIELD_INTEGER ),				// void*
+	DEFINE_FIELD( unused_animblockModel, FIELD_INTEGER ),				// void*
 	DEFINE_INDEX( bonetablebynameindex, FIELD_INTEGER ),
-	DEFINE_FIELD( pVertexBase, FIELD_INTEGER ),					// void*
-	DEFINE_FIELD( pIndexBase, FIELD_INTEGER ),					// void*
+	DEFINE_FIELD( unused_pVertexBase, FIELD_INTEGER ),					// void*
+	DEFINE_FIELD( unused_pIndexBase, FIELD_INTEGER ),					// void*
 	DEFINE_FIELD( constdirectionallightdot, FIELD_CHARACTER ),	// byte
 	DEFINE_FIELD( rootLOD, FIELD_CHARACTER ),					// byte
 	DEFINE_FIELD( numAllowedRootLODs, FIELD_CHARACTER ),		// byte
@@ -2985,7 +2985,11 @@ BEGIN_BYTESWAP_DATADESC( mstudiomesh_t )
 END_BYTESWAP_DATADESC()
 
 BEGIN_BYTESWAP_DATADESC( mstudio_meshvertexdata_t )
+#ifdef PLATFORM_64BITS
+	DEFINE_FIELD( index_ptr_modelvertexdata, FIELD_INTEGER ),	// mstudio_modelvertexdata_t*
+#else
 	DEFINE_FIELD( modelvertexdata, FIELD_INTEGER ),	// mstudio_modelvertexdata_t*
+#endif
 	DEFINE_ARRAY( numLODVertexes, FIELD_INTEGER, MAX_NUM_LODS ),
 END_BYTESWAP_DATADESC()
 

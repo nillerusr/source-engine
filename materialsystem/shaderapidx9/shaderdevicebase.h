@@ -184,7 +184,7 @@ protected:
 
 	int	m_nWindowWidth;
 	int m_nWindowHeight;
-	uint32 m_dwThreadId;
+	uintp m_dwThreadId;
 };
 
 

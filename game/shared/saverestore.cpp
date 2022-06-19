@@ -91,6 +91,8 @@ static int gSizes[FIELD_TYPECOUNT] =
 	FIELD_SIZE( FIELD_MATERIALINDEX ),
 
 	FIELD_SIZE( FIELD_VECTOR2D ),
+	FIELD_SIZE( FIELD_INTEGER64 ),
+	FIELD_SIZE( FIELD_POINTER ),
 };
 
 
@@ -203,6 +205,7 @@ CSave::CSave( CSaveRestoreData *pdata )
 
 inline int CSave::DataEmpty( const char *pdata, int size )
 {
+	static int void_data = 0;
 	if ( size != 4 )
 	{
 		const char *pLimit = pdata + size;
@@ -214,7 +217,7 @@ inline int CSave::DataEmpty( const char *pdata, int size )
 		return 1;
 	}
 
-	return ( *((int *)pdata) == 0 );
+	return memcmp(pdata, &void_data, sizeof(int)) == 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -685,7 +688,7 @@ bool CSave::ShouldSaveField( const void *pData, typedescription_t *pField )
 			int *pEHandle = (int *)pData;
 			for ( int i = 0; i < pField->fieldSize; ++i, ++pEHandle )
 			{
-				if ( (*pEHandle) != 0xFFFFFFFF )
+				if ( (*pEHandle) != INVALID_EHANDLE_INDEX )
 					return true;
 			}
 		}
@@ -719,11 +722,11 @@ bool CSave::WriteBasicField( const char *pname, void *pData, datamap_t *pRootMap
 		case FIELD_FLOAT:
 			WriteFloat( pField->fieldName, (float *)pData, pField->fieldSize );
 			break;
-			
+
 		case FIELD_STRING:
 			WriteString( pField->fieldName, (string_t *)pData, pField->fieldSize );
 			break;
-			
+
 		case FIELD_VECTOR:
 			WriteVector( pField->fieldName, (Vector *)pData, pField->fieldSize );
 			break;
@@ -1240,19 +1243,19 @@ bool CSave::WriteGameField( const char *pname, void *pData, datamap_t *pRootMap,
 		case FIELD_CLASSPTR:
 			WriteEntityPtr( pField->fieldName, (CBaseEntity **)pData, pField->fieldSize );
 			break;
-	
+
 		case FIELD_EDICT:
 			WriteEdictPtr( pField->fieldName, (edict_t **)pData, pField->fieldSize );
 			break;
-	
+
 		case FIELD_EHANDLE:
 			WriteEHandle( pField->fieldName, (EHANDLE *)pData, pField->fieldSize );
 			break;
-		
+
 		case FIELD_POSITION_VECTOR:
 			WritePositionVector( pField->fieldName, (Vector *)pData, pField->fieldSize );
 			break;
-			
+
 		case FIELD_TIME:
 			WriteTime( pField->fieldName, (float *)pData, pField->fieldSize );
 			break;
@@ -1260,7 +1263,7 @@ bool CSave::WriteGameField( const char *pname, void *pData, datamap_t *pRootMap,
 		case FIELD_TICK:
 			WriteTick( pField->fieldName, (int *)pData, pField->fieldSize );
 			break;
-			
+
 		case FIELD_MODELINDEX:
 			{
 				int nModelIndex = *(int*)pData;
@@ -1296,7 +1299,7 @@ bool CSave::WriteGameField( const char *pname, void *pData, datamap_t *pRootMap,
 		case FIELD_FUNCTION:
 			WriteFunction( pRootMap, pField->fieldName, (inputfunc_t **)(char *)pData, pField->fieldSize );
 			break;
-			
+
 		case FIELD_VMATRIX:
 			WriteVMatrix( pField->fieldName, (VMatrix *)pData, pField->fieldSize );
 			break;
@@ -1310,6 +1313,10 @@ bool CSave::WriteGameField( const char *pname, void *pData, datamap_t *pRootMap,
 
 		case FIELD_INTERVAL:
 			WriteInterval( pField->fieldName, (interval_t *)pData, pField->fieldSize );
+			break;
+
+		case FIELD_POINTER:
+			WriteData( pField->fieldName, sizeof(void*)*pField->fieldSize, (char *)pData );
 			break;
 
 		default:
@@ -2150,6 +2157,10 @@ void CRestore::ReadGameField( const SaveRestoreRecordHeader_t &header, void *pDe
 
 		case FIELD_INTERVAL:
 			ReadInterval( (interval_t *)pDest, pField->fieldSize, header.size );
+			break;
+
+		case FIELD_POINTER:
+			ReadData( (char *)pDest, sizeof(void*)*pField->fieldSize, header.size );
 			break;
 
 		default:

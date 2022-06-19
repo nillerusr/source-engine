@@ -237,7 +237,7 @@ EXPOSE_SINGLE_INTERFACE_GLOBALVAR( CVBAllocTracker, IVBAllocTracker,
 UtlHashFixedHandle_t CVBAllocTracker::TrackAlloc( void * buffer, int bufferSize, VertexFormat_t fmt, int numVerts, short allocatorHash )
 {
 	AllocData newData( buffer, bufferSize, fmt, numVerts, allocatorHash );
-	UtlHashFixedHandle_t handle = m_VBAllocTable.Insert( (int)buffer, newData );
+	UtlHashFixedHandle_t handle = m_VBAllocTable.Insert( (intp)buffer, newData );
 	if ( handle == m_VBAllocTable.InvalidHandle() )
 	{
 		Warning( "[VBMEM] VBMemAllocTable hash collision (grow table).\n" );
@@ -247,7 +247,7 @@ UtlHashFixedHandle_t CVBAllocTracker::TrackAlloc( void * buffer, int bufferSize,
 
 bool CVBAllocTracker::KillAlloc( void * buffer, int & bufferSize, VertexFormat_t & fmt, int & numVerts, short & allocatorHash )
 {
-	UtlHashFixedHandle_t handle = m_VBAllocTable.Find( (int)buffer );
+	UtlHashFixedHandle_t handle = m_VBAllocTable.Find( (intp)buffer );
 	if ( handle != m_VBAllocTable.InvalidHandle() )
 	{
 		AllocData & data = m_VBAllocTable.Element( handle );

@@ -106,7 +106,7 @@ struct TextureContext_t
 class CMaterialFileChangeWatcher : private CFileChangeWatcher::ICallbacks
 {
 public:
-	void Init( CTextureSystem *pSystem, int context );
+	void Init( CTextureSystem *pSystem, intp context );
 	void Update();	// Call this periodically to update.
 
 private:
@@ -214,7 +214,7 @@ protected:
 		k_eFileTypeVMT,
 		k_eFileTypeVTF
 	};
-	void OnFileChange( const char *pFilename, int context, EFileType eFileType );
+	void OnFileChange( const char *pFilename, intp context, EFileType eFileType );
 	void ReloadMaterialsUsingTexture( ITexture *pTestTexture );
 
 	static bool GetFileTypeFromFilename( const char *pFilename, CTextureSystem::EFileType *pFileType );

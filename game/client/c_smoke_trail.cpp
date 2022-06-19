@@ -418,7 +418,7 @@ void C_SmokeTrail::CleanupToolRecordingState( KeyValues *msg )
 
 		// FIXME: Until we can interpolate ent logs during emission, this can't work
 		KeyValues *pPosition = pInitializers->FindKey( "DmePositionPointToEntityInitializer", true );
-		pPosition->SetPtr( "entindex", (void*)pEnt->entindex() );
+		pPosition->SetPtr( "entindex", (void*)(intp)pEnt->entindex() );
 		pPosition->SetInt( "attachmentIndex", m_nAttachment );
 		pPosition->SetFloat( "randomDist", m_SpawnRadius );
 		pPosition->SetFloat( "startx", pEnt->GetAbsOrigin().x );
@@ -430,7 +430,7 @@ void C_SmokeTrail::CleanupToolRecordingState( KeyValues *msg )
  		pLifetime->SetFloat( "maxLifetime", m_ParticleLifetime );
 
 		KeyValues *pVelocity = pInitializers->FindKey( "DmeAttachmentVelocityInitializer", true );
-		pVelocity->SetPtr( "entindex", (void*)entindex() );
+		pVelocity->SetPtr( "entindex", (void*)(intp)entindex() );
 		pVelocity->SetFloat( "minAttachmentSpeed", m_MinDirectedSpeed );
  		pVelocity->SetFloat( "maxAttachmentSpeed", m_MaxDirectedSpeed );
  		pVelocity->SetFloat( "minRandomSpeed", m_MinSpeed );
@@ -1933,7 +1933,7 @@ void C_DustTrail::CleanupToolRecordingState( KeyValues *msg )
 
 		// FIXME: Until we can interpolate ent logs during emission, this can't work
 		KeyValues *pPosition = pInitializers->FindKey( "DmePositionPointToEntityInitializer", true );
-		pPosition->SetPtr( "entindex", (void*)pEnt->entindex() );
+		pPosition->SetPtr( "entindex", (void*)(intp)pEnt->entindex() );
 		pPosition->SetInt( "attachmentIndex", GetParentAttachment() );
 		pPosition->SetFloat( "randomDist", m_SpawnRadius );
 		pPosition->SetFloat( "startx", pEnt->GetAbsOrigin().x );

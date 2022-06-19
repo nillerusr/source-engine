@@ -289,7 +289,7 @@ bool CMultiManager::KeyValue( const char *szKeyName, const char *szValue )
 		{
 			char tmp[128];
 
-			UTIL_StripToken( szKeyName, tmp, Q_ARRAYSIZE( tmp ) );
+			UTIL_StripToken( szKeyName, tmp );
 			m_iTargetName [ m_cTargets ] = AllocPooledString( tmp );
 			m_flTargetDelay [ m_cTargets ] = atof (szValue);
 			m_cTargets++;

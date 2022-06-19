@@ -18,6 +18,8 @@
 class CMaterial_QueueFriendly : public IMaterialInternal //wraps a CMaterial with queue friendly functions for game/engine code. materialsystem/shaderapi code should use CMaterial directly.
 {
 public:
+	CMaterial_QueueFriendly() : m_pRealTimeVersion(NULL) {}
+
 	virtual const char *	GetName() const;
 	virtual const char *	GetTextureGroupName() const;
 	virtual PreviewImageRetVal_t GetPreviewImageProperties( int *width, int *height, ImageFormat *imageFormat, bool* isTranslucent ) const;

@@ -249,7 +249,7 @@ struct TOGL_CLASS IDirect3DQuery9 : public IDirect3DResource9	//was IUnknown
 	GLMContext				*m_ctx;
 	CGLMQuery				*m_query;
 	
-	uint					m_nIssueStartThreadID, m_nIssueEndThreadID;
+	uintp					m_nIssueStartThreadID, m_nIssueEndThreadID;
 	uint					m_nIssueStartDrawCallIndex, m_nIssueEndDrawCallIndex;
 	uint					m_nIssueStartFrameIndex, m_nIssueEndFrameIndex;
 	uint					m_nIssueStartQueryCreationCounter, m_nIssueEndQueryCreationCounter;
@@ -373,7 +373,7 @@ struct RenderTargetState_t
 
 	static inline bool LessFunc( const RenderTargetState_t &lhs, const RenderTargetState_t &rhs ) 
 	{
-		COMPILE_TIME_ASSERT( sizeof( lhs.m_pRenderTargets[0] ) == sizeof( uint32 ) );
+        COMPILE_TIME_ASSERT( sizeof( lhs.m_pRenderTargets[0] ) == sizeof( uintp ) );
 		uint64 lhs0 = reinterpret_cast<const uint64 *>(lhs.m_pRenderTargets)[0];
 		uint64 rhs0 = reinterpret_cast<const uint64 *>(rhs.m_pRenderTargets)[0];
 		if ( lhs0 < rhs0 )
@@ -563,7 +563,7 @@ struct TOGL_CLASS IDirect3DDevice9 : public IUnknown
 
 	void TOGLMETHODCALLTYPE AcquireThreadOwnership( );
 	void TOGLMETHODCALLTYPE ReleaseThreadOwnership( );
-	inline DWORD TOGLMETHODCALLTYPE GetCurrentOwnerThreadId() const { return m_ctx->m_nCurOwnerThreadId; }
+	inline uintp TOGLMETHODCALLTYPE GetCurrentOwnerThreadId() const { return m_ctx->m_nCurOwnerThreadId; }
 
 	FORCEINLINE void TOGLMETHODCALLTYPE SetMaxUsedVertexShaderConstantsHint( uint nMaxReg );
 	void TOGLMETHODCALLTYPE SetMaxUsedVertexShaderConstantsHintNonInline( uint nMaxReg );

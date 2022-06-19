@@ -2547,12 +2547,12 @@ int RichText::ParseTextStringForUrls( const char *text, int startPos, char *pchU
 			// get the url
 			i += Q_strlen( "<a href=" );
 			const char *pchURLEnd = Q_strstr( text + i, ">" );
-			Q_strncpy( pchURL, text + i, min( pchURLEnd - text - i + 1, cchURL ) ); 
+			Q_strncpy( pchURL, text + i, min( (int)(pchURLEnd - text) - i + 1, cchURL ) );
 			i += ( pchURLEnd - text - i + 1 );
             
 			// get the url text
 			pchURLEnd = Q_strstr( text, "</a>" );
-			Q_strncpy( pchURLText, text + i, min( pchURLEnd - text - i + 1, cchURLText ) ); 
+			Q_strncpy( pchURLText, text + i, min( (int)(pchURLEnd - text) - i + 1, cchURLText ) );
 			i += ( pchURLEnd - text - i );
 			i += Q_strlen( "</a>" );
 

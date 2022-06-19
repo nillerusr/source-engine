@@ -52,7 +52,7 @@ public:
 	{
 		if ( pData )
 		{
-			delete pData;
+			delete[] pData;
 		}
 	}
 
@@ -65,7 +65,7 @@ public:
 		pSendTable = src.pSendTable;
 		pClientClass = src.pClientClass;
 		filter.AddPlayersFromFilter( &src.filter );
-				
+
 		if ( src.pData )
 		{
 			int size = Bits2Bytes( src.bits );

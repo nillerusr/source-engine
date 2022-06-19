@@ -17,7 +17,7 @@
 #include "materialsystem/imaterialproxyfactory.h"
 #include "IHardwareConfigInternal.h"
 #include "utlsymbol.h"
-#include <malloc.h>
+#include <stdlib.h>
 #include "filesystem.h"
 #include <KeyValues.h>
 #include "mempool.h"

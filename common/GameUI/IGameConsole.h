@@ -33,7 +33,7 @@ public:
 	// return true if the console has focus
 	virtual bool IsConsoleVisible() = 0;
 
-	virtual void SetParent( int parent ) = 0;
+	virtual void SetParent( intp parent ) = 0;
 };
 
 #define GAMECONSOLE_INTERFACE_VERSION "GameConsole004"

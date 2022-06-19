@@ -198,7 +198,7 @@ BEGIN_VS_SHADER_FLAGS( DepthWrite, "Help for Depth Write", SHADER_NOT_EDITABLE )
 			vParms.y = 4000.0f;		// arbitrary far 
 			vParms.z = 0.0f;
 			vParms.w = 0.0f;
-			pShaderAPI->SetPixelShaderConstant( 1, vParms.Base(), 2 );
+			pShaderAPI->SetPixelShaderConstant( 1, vParms.Base(), 1 );
 
 		}	// DYNAMIC_STATE
 

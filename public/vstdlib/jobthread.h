@@ -191,7 +191,7 @@ public:
 	//  and execute or execute pFunctor right after completing current job and
 	//  before looking for another job.
 	//-----------------------------------------------------
-	virtual void ExecuteHighPriorityFunctor( CFunctor *pFunctor ) = 0;
+	// virtual void ExecuteHighPriorityFunctor( CFunctor *pFunctor ) = 0;
 
 	//-----------------------------------------------------
 	// Add an function object to the queue (master thread)
@@ -1147,7 +1147,7 @@ private:
 // Raw thread launching
 //-----------------------------------------------------------------------------
 
-inline unsigned FunctorExecuteThread( void *pParam )
+inline uintp FunctorExecuteThread( void *pParam )
 {
 	CFunctor *pFunctor = (CFunctor *)pParam;
 	(*pFunctor)();
@@ -1162,7 +1162,7 @@ inline ThreadHandle_t ThreadExecuteSoloImpl( CFunctor *pFunctor, const char *psz
 	hThread = CreateSimpleThread( FunctorExecuteThread, pFunctor, &threadId );
 	if ( pszName )
 	{
-		ThreadSetDebugName( threadId, pszName );
+		ThreadSetDebugName( (ThreadHandle_t)threadId, pszName );
 	}
 	return hThread;
 }

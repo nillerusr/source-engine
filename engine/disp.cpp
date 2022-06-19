@@ -547,9 +547,9 @@ bool CDispInfo::Render( CGroupMesh *pGroup, bool bAllowDebugModes )
 			VectorAdd( bbMin, bbMax, vecCenter );
 			vecCenter *= 0.5f;
 
-			int nInt = ( mat_surfaceid.GetInt() != 2 ) ? (int)m_ParentSurfID : (msurface2_t*)m_ParentSurfID - host_state.worldbrush->surfaces2;
+			intp nInt = ( mat_surfaceid.GetInt() != 2 ) ? (intp)m_ParentSurfID : (msurface2_t*)m_ParentSurfID - host_state.worldbrush->surfaces2;
 			char buf[32];
-			Q_snprintf( buf, sizeof( buf ), "%d", nInt );
+			Q_snprintf( buf, sizeof( buf ), "%d", (int)nInt );
 			CDebugOverlay::AddTextOverlay( vecCenter, 0, buf );
 		}
 

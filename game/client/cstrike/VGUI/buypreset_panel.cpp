@@ -93,7 +93,7 @@ public:
 			KeyValues *line = lines->GetFirstValue();
 			while ( line )
 			{
-				const char *str = line->GetString( NULL, "" );
+				const char *str = line->GetString( nullptr, "" );
 				Vector4D p;
 				int numPoints = sscanf( str, "%f %f %f %f", &p[0], &p[1], &p[2], &p[3] );
 				if ( numPoints == 4 )

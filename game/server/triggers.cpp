@@ -2517,6 +2517,8 @@ LINK_ENTITY_TO_CLASS( trigger_autosave, CTriggerSave );
 //-----------------------------------------------------------------------------
 void CTriggerSave::Spawn( void )
 {
+	m_minHitPoints = 1;
+
 	if ( g_pGameRules->IsDeathmatch() )
 	{
 		UTIL_Remove( this );
@@ -2534,7 +2536,7 @@ void CTriggerSave::Spawn( void )
 void CTriggerSave::Touch( CBaseEntity *pOther )
 {
 	// Only save on clients
-	if ( !pOther->IsPlayer() )
+	if ( !pOther->IsPlayer() || !pOther->IsAlive() )
 		return;
 
 	if ( m_fDangerousTimer != 0.0f )
@@ -3686,7 +3688,7 @@ public:
 			return IMotionEvent::SIM_NOTHING;
 
 		// Get a cosine modulated noise between 5 and 20 that is object specific
-		int nNoiseMod = 5+(int)pObject%15; // 
+		int nNoiseMod = 5+(intp)pObject%15; //
 
 		// Turn wind yaw direction into a vector and add noise
 		QAngle vWindAngle = vec3_angle;	

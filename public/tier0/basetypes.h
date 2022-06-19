@@ -171,17 +171,24 @@ typedef float vec_t;
 // This assumes the ANSI/IEEE 754-1985 standard
 //-----------------------------------------------------------------------------
 
-inline unsigned long& FloatBits( vec_t& f )
+// MoeMod : fix reinterpret_cast UB - Maybe fail with strict alias
+union FloatCast_u
 {
-	return *reinterpret_cast<unsigned long*>(&f);
+    vec_t f;
+    unsigned int i;
+};
+
+inline unsigned int& FloatBits( vec_t& f )
+{
+	return reinterpret_cast<FloatCast_u *>(&f)->i;
 }
 
-inline unsigned long const& FloatBits( vec_t const& f )
+inline unsigned int const& FloatBits( vec_t const& f )
 {
-	return *reinterpret_cast<unsigned long const*>(&f);
+	return reinterpret_cast<FloatCast_u const*>(&f)->i;
 }
 
-inline vec_t BitsToFloat( unsigned long i )
+inline vec_t BitsToFloat( unsigned int i )
 {
 	vec_t f;
 	memcpy( &f, &i, sizeof(f));
@@ -193,7 +200,7 @@ inline bool IsFinite( vec_t f )
 	return ((FloatBits(f) & 0x7F800000) != 0x7F800000);
 }
 
-inline unsigned long FloatAbsBits( vec_t f )
+inline unsigned int FloatAbsBits( vec_t f )
 {
 	return FloatBits(f) & 0x7FFFFFFF;
 }

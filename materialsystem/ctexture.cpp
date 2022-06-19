@@ -32,7 +32,6 @@
 #endif
 #include "colorspace.h"
 #include "string.h"
-#include <malloc.h>
 #include <stdlib.h>
 #include "utlmemory.h"
 #include "IHardwareConfigInternal.h"
@@ -2577,7 +2576,7 @@ bool CTexture::SetRenderTarget( int nRenderTargetID, ITexture *pDepthTexture )
 
 	ShaderAPITextureHandle_t textureHandle = m_pTextureHandles[0];
 
-	ShaderAPITextureHandle_t depthTextureHandle = (unsigned int)SHADER_RENDERTARGET_DEPTHBUFFER;
+	ShaderAPITextureHandle_t depthTextureHandle = (uintp)SHADER_RENDERTARGET_DEPTHBUFFER;
 
 	if ( m_nFlags & TEXTUREFLAGS_DEPTHRENDERTARGET )
 	{
@@ -2587,7 +2586,7 @@ bool CTexture::SetRenderTarget( int nRenderTargetID, ITexture *pDepthTexture )
 	else if ( m_nFlags & TEXTUREFLAGS_NODEPTHBUFFER )
 	{
 		// GR - render target without depth buffer	
-		depthTextureHandle = (unsigned int)SHADER_RENDERTARGET_NONE;
+		depthTextureHandle = (uintp)SHADER_RENDERTARGET_NONE;
 	}
 
 	if ( pDepthTexture)
@@ -4040,7 +4039,7 @@ void CTexture::DeleteIfUnreferenced()
 	if ( ThreadInMainThread() )
 	{
 		// Render thread better not be active or bad things can happen.
-		Assert( MaterialSystem()->GetRenderThreadId() == 0xFFFFFFFF );
+		Assert( MaterialSystem()->GetRenderThreadId() == (uintp)-1 );
 		TextureManager()->RemoveTexture( this );
 		return;
 	}
@@ -4140,7 +4139,7 @@ bool CTexture::UpdateExcludedState( void )
 
 void CTextureStreamingJob::OnAsyncFindComplete( ITexture* pTex, void* pExtraArgs )
 {
-	const int cArgsAsInt = ( int ) pExtraArgs;
+	const intp cArgsAsInt = ( intp ) pExtraArgs;
 
 	Assert( m_pOwner == NULL || m_pOwner == pTex );
 	if ( m_pOwner )

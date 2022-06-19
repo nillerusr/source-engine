@@ -8,7 +8,11 @@
 
 #if !defined(_STATIC_LINKED) || defined(_SHARED_LIB)
 
+#ifdef OSX
+#include <malloc/malloc.h>
+#else
 #include <malloc.h>
+#endif
 #include "vallocator.h"
 #include "basetypes.h"
 

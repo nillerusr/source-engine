@@ -806,7 +806,8 @@ int CSaveRestore::SaveGameSlot( const char *pSaveName, const char *pSaveComment,
 	m_bWaitingForSafeDangerousSave = bIsAutosaveDangerous;
 
 	int iHeaderBufferSize = 64 + tokenSize + pSaveData->GetCurPos();
-	void *pMem = malloc(iHeaderBufferSize);
+	void *pMem = new char[iHeaderBufferSize];
+
 	CUtlBuffer saveHeader( pMem, iHeaderBufferSize );
 
 	// Write the header -- THIS SHOULD NEVER CHANGE STRUCTURE, USE SAVE_HEADER FOR NEW HEADER INFORMATION

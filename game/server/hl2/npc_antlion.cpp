@@ -4015,8 +4015,8 @@ bool CNPC_Antlion::CorpseGib( const CTakeDamageInfo &info )
 	}
 
 	Vector velocity = vec3_origin;
-	AngularImpulse	angVelocity = RandomAngularImpulse( -150, 150 );
-	breakablepropparams_t params( EyePosition(), GetAbsAngles(), velocity, angVelocity );
+	AngularImpulse angVelocity = RandomAngularImpulse( -150, 150 );
+	static breakablepropparams_t params( EyePosition(), GetAbsAngles(), velocity, angVelocity );
 	params.impactEnergyScale = 1.0f;
 	params.defBurstScale = 150.0f;
 	params.defCollisionGroup = COLLISION_GROUP_DEBRIS;

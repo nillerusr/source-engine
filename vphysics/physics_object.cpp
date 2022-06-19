@@ -647,8 +647,6 @@ void CPhysicsObject::SetInertia( const Vector &inertia )
 	ri.k[1] = IVP_Inline_Math::fabsd(ri.k[1]);
 	ri.k[2] = IVP_Inline_Math::fabsd(ri.k[2]);
 
-	if( ri.k[0] > 1e14f ) ri.k[0] = 1e14f; if( ri.k[1] > 1e14f ) ri.k[1] = 1e14f; if( ri.k[2] > 1e14f ) ri.k[2] = 1e14f;
-
 	m_pObject->get_core()->set_rotation_inertia( &ri );
 }
 

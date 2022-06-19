@@ -797,7 +797,7 @@ void Sys_ShutdownAuthentication( void )
 //-----------------------------------------------------------------------------
 // Debug library spew output
 //-----------------------------------------------------------------------------
-CThreadLocalInt<> g_bInSpew;
+CTHREADLOCALINT g_bInSpew;
 
 #include "tier1/fmtstr.h"
 

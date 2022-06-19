@@ -624,7 +624,7 @@ void Cmd_Exec_f( const CCommand &args )
 		}
 	}
 
-	char buf[16384] = { 0 };
+	static char buf[16384] = { 0 };
 	int len = 0;
 	char *f = (char *)COM_LoadStackFile( fileName, buf, sizeof( buf ), len );
 	if ( !f )
@@ -645,7 +645,7 @@ void Cmd_Exec_f( const CCommand &args )
 	ConDMsg( "execing %s\n", szFile );
 
 	// check to make sure we're not going to overflow the cmd_text buffer
-	int hCommand = s_CommandBuffer.GetNextCommandHandle();
+    CommandHandle_t hCommand = s_CommandBuffer.GetNextCommandHandle();
 
 	// Execute each command immediately
 	const char *pszDataPtr = f;

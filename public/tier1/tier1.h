@@ -30,8 +30,7 @@ class IProcessUtils;
 // allowing link libraries to access tier1 library interfaces
 //-----------------------------------------------------------------------------
 
-// These are marked DLL_EXPORT for Linux.
-DLL_EXPORT ICvar *cvar;
+extern ICvar *cvar;
 extern ICvar *g_pCVar;
 extern IProcessUtils *g_pProcessUtils;
 

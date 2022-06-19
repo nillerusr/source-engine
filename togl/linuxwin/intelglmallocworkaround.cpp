@@ -27,6 +27,9 @@
 // memdbgon -must- be the last include file in a .cpp file.
 #include "tier0/memdbgon.h"
 
+// MoeMod : ARM Mac doesnt need this workround
+#if (defined(__i386__) || defined(__x86_64__))
+
 IntelGLMallocWorkaround* IntelGLMallocWorkaround::s_pWorkaround = NULL;
 
 void *IntelGLMallocWorkaround::ZeroingAlloc(size_t size)
@@ -69,3 +72,27 @@ bool IntelGLMallocWorkaround::Enable()
 
 	return true;
 }
+
+#else
+IntelGLMallocWorkaround* IntelGLMallocWorkaround::s_pWorkaround = NULL;
+
+void *IntelGLMallocWorkaround::ZeroingAlloc(size_t size)
+{
+    return nullptr;
+}
+
+IntelGLMallocWorkaround* IntelGLMallocWorkaround::Get()
+{
+    if (!s_pWorkaround)
+    {
+        s_pWorkaround = new IntelGLMallocWorkaround();
+    }
+
+    return s_pWorkaround;
+}
+
+bool IntelGLMallocWorkaround::Enable()
+{
+    return true;
+}
+#endif

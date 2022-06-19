@@ -195,9 +195,7 @@ inline ConCommandBase * ICvar::Iterator::Get( void )
 // don't have to include tier1.h
 //-----------------------------------------------------------------------------
 
-// These are marked DLL_EXPORT for Linux.
-DLL_EXPORT ICvar *cvar;
+extern ICvar *cvar;
 extern ICvar *g_pCVar;
-
 
 #endif // ICVAR_H

@@ -18,7 +18,7 @@ static ConVar cl_showevents	( "cl_showevents", "0", FCVAR_CHEAT, "Print event fi
 // Input  : slot - 
 //			*eventname - 
 //-----------------------------------------------------------------------------
-void CL_DescribeEvent( int slot, CEventInfo *event, const char *eventname )
+void CL_DescribeEvent( intp slot, CEventInfo *event, const char *eventname )
 {
 	int idx = (slot & 31);
 
@@ -81,7 +81,7 @@ void CL_FireEvents( void )
 		return;
 	}
 
-	int i, next;
+	intp i, next;
 	for ( i = cl.events.Head(); i != cl.events.InvalidIndex(); i = next )
 	{
 		next = cl.events.Next( i );

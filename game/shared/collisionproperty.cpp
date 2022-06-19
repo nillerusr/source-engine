@@ -50,20 +50,22 @@ public:
 	virtual void OnPostQuery( SpatialPartitionListMask_t listMask );
 
 	void AddEntity( CBaseEntity *pEntity );
-	
+
 	~CDirtySpatialPartitionEntityList();
 	void LockPartitionForRead()
 	{
-		if ( m_readLockCount == 0 )
+		int nThreadId = g_nThreadID;
+		if (  m_nReadLockCount[nThreadId] == 0 )
 		{
 			m_partitionMutex.LockForRead();
 		}
-		m_readLockCount++;
+		m_nReadLockCount[nThreadId]++;
 	}
 	void UnlockPartitionForRead()
 	{
-		m_readLockCount--;
-		if ( m_readLockCount == 0 )
+		int nThreadId = g_nThreadID;
+		m_nReadLockCount[nThreadId]--;
+		if ( m_nReadLockCount[nThreadId] == 0 )
 		{
 			m_partitionMutex.UnlockRead();
 		}
@@ -71,6 +73,8 @@ public:
 
 
 private:
+	int m_nReadLockCount[MAX_THREADS_SUPPORTED];
+
 	CTSListWithFreeList<CBaseHandle> m_DirtyEntities;
 	CThreadSpinRWLock	 m_partitionMutex;
 	uint32			 m_partitionWriteId;
@@ -106,7 +110,7 @@ void UpdateDirtySpatialPartitionEntities()
 CDirtySpatialPartitionEntityList::CDirtySpatialPartitionEntityList( char const *name ) : CAutoGameSystem( name )
 {
 	m_DirtyEntities.Purge();
-	m_readLockCount = 0;
+	memset( m_nReadLockCount, 0, sizeof( m_nReadLockCount ) );
 }
 
 //-----------------------------------------------------------------------------
@@ -164,7 +168,9 @@ void CDirtySpatialPartitionEntityList::OnPreQuery( SpatialPartitionListMask_t li
 	if ( !( listMask & validMask ) )
 		return;
 
-	if ( m_partitionWriteId != 0 && m_partitionWriteId == ThreadGetCurrentId() )
+	int nThreadID = g_nThreadID;
+
+	if ( m_partitionWriteId != 0 && m_partitionWriteId == nThreadID + 1 )
 		return;
 
 #ifdef CLIENT_DLL
@@ -180,11 +186,11 @@ void CDirtySpatialPartitionEntityList::OnPreQuery( SpatialPartitionListMask_t li
 	// or became dirty due to some other thread or callback. Updating them may cause corruption further up the
 	// stack (e.g. partition iterator).  Ignoring the state change should be safe since it happened after the 
 	// trace was requested or was unable to be resolved in a previous attempt (still dirty).
-	if ( m_DirtyEntities.Count() && !m_readLockCount )
+	if ( m_DirtyEntities.Count() && !m_nReadLockCount[nThreadID] )
 	{
 		CUtlVector< CBaseHandle > vecStillDirty;
 		m_partitionMutex.LockForWrite();
-		m_partitionWriteId = ThreadGetCurrentId();
+		m_partitionWriteId = nThreadID + 1;
 		CTSListWithFreeList<CBaseHandle>::Node_t *pCurrent, *pNext;
 		while ( ( pCurrent = m_DirtyEntities.Detach() ) != NULL )
 		{

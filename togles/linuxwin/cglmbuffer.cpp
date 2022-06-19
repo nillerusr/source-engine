@@ -472,10 +472,7 @@ CGLMBuffer::CGLMBuffer( GLMContext *pCtx, EGLMBufferType type, uint size, uint o
 	m_bPseudo = true;
 #endif
 
-	const char *szRenderer = gGL->glGetString(GL_VENDOR);
-//	Msg("GL_VENDOR: %s\n", szRenderer);
-
-	if( strcmp(szRenderer, "ARM") == 0 )
+	if( strcmp(gGL->m_pGLDriverStrings[cGLVendorString], "ARM") == 0 )
 		g_bUsePseudoBufs = true; // works faster with Mali gpu
 
 #if GL_ENABLE_INDEX_VERIFICATION

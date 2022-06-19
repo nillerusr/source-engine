@@ -479,7 +479,7 @@ Handles cursor positioning, line wrapping, etc
 */
 static bool g_fColorPrintf = false;
 static bool g_bInColorPrint = false;
-extern CThreadLocalInt<> g_bInSpew;
+extern CTHREADLOCALINT g_bInSpew;
 
 void Con_Printf( const char *fmt, ... );
 
@@ -865,6 +865,7 @@ CConPanel::CConPanel( vgui::Panel *parent ) : CBasePanel( parent, "CConPanel" )
 //-----------------------------------------------------------------------------
 CConPanel::~CConPanel( void )
 {
+	g_pConPanel = NULL;
 }
 
 void CConPanel::Con_NPrintf( int idx, const char *msg )

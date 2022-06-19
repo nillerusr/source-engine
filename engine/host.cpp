@@ -4850,7 +4850,9 @@ void Host_FreeToLowMark( bool server )
 //-----------------------------------------------------------------------------
 void Host_Shutdown(void)
 {
+#ifndef ANDROID
 	extern void ShutdownMixerControls();
+#endif
 
 	if ( host_checkheap )
 	{
@@ -4962,7 +4964,7 @@ void Host_Shutdown(void)
 
 #ifndef SWDS
 	TRACESHUTDOWN( Key_Shutdown() );
-#ifndef _X360
+#if !defined _X360 && !defined ANDROID
 	TRACESHUTDOWN( ShutdownMixerControls() );
 #endif
 #endif

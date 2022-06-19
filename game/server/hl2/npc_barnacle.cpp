@@ -1968,7 +1968,7 @@ void CNPC_Barnacle::OnTongueTipUpdated()
 //-----------------------------------------------------------------------------
 void CNPC_Barnacle::UpdateTongue( void )
 {
-	if ( m_hTongueTip == NULL )
+	if ( m_hTongueTip == NULL || m_hTongueTip->m_pSpring == NULL )
 		return;
 
 	// Set the spring's length to that of the tongue's extension
