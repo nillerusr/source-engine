@@ -22,7 +22,7 @@ const tchar* GetProcessorVendorId();
 
 static bool cpuid(uint32 function, uint32& out_eax, uint32& out_ebx, uint32& out_ecx, uint32& out_edx)
 {
-#if defined (__arm__) || defined (__arm64__) || defined( _X360 )
+#if defined (__arm__) || defined (__aarch64__) || defined( _X360 )
 	return false;
 #elif defined(GNUC)
 

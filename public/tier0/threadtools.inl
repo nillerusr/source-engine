@@ -120,7 +120,7 @@ INLINE_ON_PS3 bool CThread::Start( unsigned nBytesStack, ThreadPriorityEnum_t nP
 	}
 #endif
 
-#ifdef PLATFORM_WINDOWS
+#ifdef _WIN32
 	m_hThread = (HANDLE)CreateThread( NULL,
 		nBytesStack,
 		(LPTHREAD_START_ROUTINE)GetThreadProc(),
@@ -168,7 +168,7 @@ INLINE_ON_PS3 bool CThread::Start( unsigned nBytesStack, ThreadPriorityEnum_t nP
 	}
 
 	bInitSuccess = true;
-#elif PLATFORM_POSIX
+#elif POSIX
 	pthread_attr_t attr;
 	pthread_attr_init( &attr );
 	pthread_attr_setstacksize( &attr, MAX( nBytesStack, 1024u*1024 ) );
@@ -236,7 +236,7 @@ INLINE_ON_PS3 bool CThread::Start( unsigned nBytesStack, ThreadPriorityEnum_t nP
 
 INLINE_ON_PS3 bool CThread::IsAlive()
 {
-#ifdef PLATFORM_WINDOWS
+#ifdef _WIN32
 	DWORD dwExitCode;
 	return (
 		m_hThread 
@@ -526,7 +526,7 @@ INLINE_ON_PS3 void CThread::ThreadProcRunWithMinidumpHandler( void *pv )
 	pInit->pThread->m_result = pInit->pThread->Run();
 }
 
-#ifdef PLATFORM_WINDOWS
+#ifdef _WIN32
 unsigned long STDCALL CThread::ThreadProc(LPVOID pv)
 #else
 INLINE_ON_PS3 void* CThread::ThreadProc(LPVOID pv)

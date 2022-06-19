@@ -66,6 +66,7 @@ def build(bld):
 
 	includes = [
 		'.',
+		'../',
 		'../public',
 		'../public/tier1',
 		'../public/tier0',

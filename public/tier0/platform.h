@@ -9,7 +9,7 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
-#if defined(__x86_64__) || defined(_WIN64) || defined(__arm64__)
+#if defined(__x86_64__) || defined(_WIN64) || defined(__aarch64__)
 #define PLATFORM_64BITS 1
 #endif
 
@@ -440,7 +440,7 @@ typedef void * HINSTANCE;
 	// On OSX, SIGTRAP doesn't really stop the thread cold when debugging.
 	// So if being debugged, use INT3 which is precise.
 #ifdef OSX
-#if defined(__arm__) || defined(__arm64__)
+#if defined(__arm__) || defined(__aarch64__)
 #ifdef __clang__
 #define DebuggerBreak()  do { if ( Plat_IsInDebugSession() ) { __builtin_debugtrap(); } else { raise(SIGTRAP); } } while(0)
 #elif defined __GNUC__
@@ -631,6 +631,7 @@ typedef void * HINSTANCE;
 #endif
 
 // Used for standard calling conventions
+
 #if defined( _WIN32 ) && !defined( _X360 )
 	#define  STDCALL				__stdcall
 	#define  FASTCALL				__fastcall
@@ -686,6 +687,11 @@ typedef void * HINSTANCE;
 
 
 #ifdef _WIN32
+
+#ifdef __SANITIZE_ADDRESS__
+#undef FORCEINLINE
+#define FORCEINLINE static
+#endif
 
 // Remove warnings from warning level 4.
 #pragma warning(disable : 4514) // warning C4514: 'acosl' : unreferenced inline function has been removed
@@ -861,7 +867,7 @@ static FORCEINLINE double fsel(double fComparand, double fValGE, double fLT)
 
 		#endif
 	#endif
-#elif defined (__arm__) || defined (__arm64__)
+#elif defined (__arm__) || defined (__aarch64__)
 	inline void SetupFPUControlWord() {}
 #else
 	inline void SetupFPUControlWord()
@@ -1198,7 +1204,7 @@ PLATFORM_INTERFACE struct tm *		Plat_localtime( const time_t *timep, struct tm *
 
 inline uint64 Plat_Rdtsc()
 {
-#if (defined( __arm__ ) || defined( __arm64__ )) && defined (POSIX)
+#if (defined( __arm__ ) || defined( __aarch64__ )) && defined (POSIX)
 	struct timespec t;
 	clock_gettime( CLOCK_REALTIME, &t);
 	return t.tv_sec * 1000000000ULL + t.tv_nsec;

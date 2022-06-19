@@ -129,7 +129,7 @@ uint64 CalculateCPUFreq()
 	}
 #endif
 
-#if !defined(__arm__) && !defined(__arm64__)
+#if !defined(__arm__) && !defined(__aarch64__)
 	// Compute the period. Loop until we get 3 consecutive periods that
 	// are the same to within a small error. The error is chosen
 	// to be +/- 0.02% on a P-200.

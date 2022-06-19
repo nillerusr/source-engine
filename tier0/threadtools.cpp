@@ -6,29 +6,19 @@
 
 #include "tier0/platform.h"
 
-#if defined( PLATFORM_WINDOWS_PC )
+#if defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
 #define _WIN32_WINNT 0x0403
 #include <windows.h>
 #endif
 
-#ifdef PLATFORM_WINDOWS
+#ifdef _WIN32
 	#include <process.h>
-	#ifdef PLATFORM_WINDOWS_PC
+	#ifdef _WIN32
 		#include <Mmsystem.h>
 		#pragma comment(lib, "winmm.lib")
 	#endif
-#elif PLATFORM_PS3
-	#include <sched.h>
-	#include <unistd.h>
-	#include <exception>
-	#include <errno.h>
-	#include <pthread.h>
-	#include <sys/time.h>
-	#include <sys/timer.h>
-	#define GetLastError() errno
-	typedef void *LPVOID;
-#elif PLATFORM_POSIX
+#elif POSIX
 	#include <sched.h>
 	#include <exception>
 	#include <errno.h>
@@ -38,8 +28,13 @@
 	#define GetLastError() errno
 	typedef void *LPVOID;
 #if !defined(OSX)
-	#include <sys/fcntl.h>
-	#include <sys/unistd.h>
+#if defined(ANDROID)
+        #include <fcntl.h>
+        #include <unistd.h>
+#else
+        #include <sys/fcntl.h>
+        #include <sys/unistd.h>
+#endif
 	#define sem_unlink( arg )
 	#define OS_TO_PTHREAD(x) (x)
 #else
@@ -155,7 +150,7 @@ struct ThreadProcInfo_t
 
 //---------------------------------------------------------
 
-#ifdef PLATFORM_WINDOWS
+#ifdef _WIN32
 static DWORD WINAPI ThreadProcConvert( void *pParam )
 {
 	ThreadProcInfo_t info = *((ThreadProcInfo_t *)pParam);
@@ -165,7 +160,7 @@ static DWORD WINAPI ThreadProcConvert( void *pParam )
 	FreeThreadID();
 	return nRet;
 }
-#elif defined( PLATFORM_PS3 )
+#elif defined( PS3 )
 union ThreadProcInfoUnion_t
 {
 	struct Val_t
@@ -262,7 +257,7 @@ void TlsSetValue( uint32 index, void *pValue )
 
 
 
-#ifdef PLATFORM_WINDOWS
+#ifdef _WIN32
 class CThreadHandleToIDMap
 {
 public:
@@ -421,12 +416,12 @@ void JoinTestThreads( ThreadHandle_t *pHandles )
 
 ThreadHandle_t CreateSimpleThread( ThreadFunc_t pfnThread, void *pParam, unsigned stackSize )
 {
-#ifdef PLATFORM_WINDOWS
+#ifdef _WIN32
 	DWORD threadID;
 	HANDLE hThread = (HANDLE)CreateThread( NULL, stackSize, ThreadProcConvert, new ThreadProcInfo_t( pfnThread, pParam ), stackSize ? STACK_SIZE_PARAM_IS_A_RESERVATION : 0, &threadID );
 	AddThreadHandleToIDMap( hThread, threadID );
 	return (ThreadHandle_t)hThread;
-#elif PLATFORM_PS3
+#elif PS3
 	//TestThreads();
 	ThreadHandle_t th;
 	ThreadProcInfoUnion_t info;
@@ -439,7 +434,7 @@ ThreadHandle_t CreateSimpleThread( ThreadFunc_t pfnThread, void *pParam, unsigne
 		return 0;
 	}
 	return th;
-#elif PLATFORM_POSIX
+#elif POSIX
 	pthread_t tid;
 	pthread_create( &tid, NULL, ThreadProcConvert, new ThreadProcInfo_t( pfnThread, pParam ) );
 	return ( ThreadHandle_t ) tid;
@@ -452,14 +447,14 @@ ThreadHandle_t CreateSimpleThread( ThreadFunc_t pfnThread, void *pParam, unsigne
 
 ThreadHandle_t CreateSimpleThread( ThreadFunc_t pfnThread, void *pParam, ThreadId_t *pID, unsigned stackSize )
 {
-#ifdef PLATFORM_WINDOWS
+#ifdef _WIN32
 	DWORD threadID;
 	HANDLE hThread = (HANDLE)CreateThread( NULL, stackSize, ThreadProcConvert, new ThreadProcInfo_t( pfnThread, pParam ), stackSize ? STACK_SIZE_PARAM_IS_A_RESERVATION : 0, &threadID );
 	if( pID )
 		*pID = (ThreadId_t)threadID;
 	AddThreadHandleToIDMap( hThread, threadID );
 	return (ThreadHandle_t)hThread;
-#elif PLATFORM_POSIX
+#elif POSIX
 	pthread_t tid;
 	pthread_create( &tid, NULL, ThreadProcConvert, new ThreadProcInfo_t( pfnThread, pParam ) );
 	if( pID )
@@ -494,7 +489,7 @@ void ThreadSleep(unsigned nMilliseconds)
 {
 #ifdef _WIN32
 
-#ifdef PLATFORM_WINDOWS_PC
+#ifdef _WIN32_PC
 	static bool bInitialized = false;
 	if ( !bInitialized )
 	{
@@ -508,7 +503,7 @@ void ThreadSleep(unsigned nMilliseconds)
 #endif
 
 	Sleep( nMilliseconds );
-#elif PLATFORM_PS3
+#elif PS3
 	if( nMilliseconds == 0 )
 	{
 		// sys_ppu_thread_yield doesn't seem to function properly, so sleep instead.
@@ -530,7 +525,7 @@ void ThreadNanoSleep(unsigned ns)
 #ifdef _WIN32
 	// ceil
 	Sleep( ( ns + 999 ) / 1000 );
-#elif PLATFORM_PS3
+#elif PS3
 	sys_timer_usleep( ns );
 #elif defined(POSIX)
 	struct timespec tm;
@@ -814,7 +809,7 @@ sys_lwmutex_t CThreadSyncObject::m_staticMutex;
 CThreadSyncObject::CThreadSyncObject()
 #ifdef _WIN32
   : m_hSyncObject( NULL ), m_bCreatedHandle(false)
-#elif defined(POSIX) && !defined(PLATFORM_PS3)
+#elif defined(POSIX) && !defined(PS3)
   : m_bInitalized( false )
 #endif
 {
@@ -857,7 +852,7 @@ CThreadSyncObject::~CThreadSyncObject()
 		  Assert( 0 );
 	  }
    }
-#elif defined(POSIX) && !defined( PLATFORM_PS3 )
+#elif defined(POSIX) && !defined( PS3 )
    if ( m_bInitalized )
    {
 		pthread_cond_destroy( &m_Condition );
@@ -871,7 +866,7 @@ CThreadSyncObject::~CThreadSyncObject()
 
 bool CThreadSyncObject::operator!() const
 {
-#if PLATFORM_PS3
+#if PS3
 	return m_bstaticMutexInitialized;
 #elif defined( _WIN32 ) 
    return !m_hSyncObject;
@@ -885,7 +880,7 @@ bool CThreadSyncObject::operator!() const
 void CThreadSyncObject::AssertUseable()
 {
 #ifdef THREADS_DEBUG
-#if PLATFORM_PS3
+#if PS3
 	AssertMsg( m_bstaticMutexInitialized, "Thread synchronization object is unuseable" );
 #elif defined( _WIN32 )
    AssertMsg( m_hSyncObject, "Thread synchronization object is unuseable" );
@@ -905,7 +900,7 @@ bool CThreadSyncObject::Wait( uint32 dwTimeout )
 #endif
 #ifdef _WIN32
    return ( WaitForSingleObject( m_hSyncObject, dwTimeout ) == WAIT_OBJECT_0 );
-#elif defined( POSIX ) && !defined( PLATFORM_PS3 )
+#elif defined( POSIX ) && !defined( PS3 )
     pthread_mutex_lock( &m_Mutex );
     bool bRet = false;
     if ( m_cSet > 0 )
@@ -1263,7 +1258,7 @@ void CThreadEvent::UnregisterWaitingThread(sys_semaphore_t *pSemaphore)
 #endif // _PS3
 
 
-#ifdef PLATFORM_WINDOWS
+#ifdef _WIN32
 	CThreadEvent::CThreadEvent( const char *name, bool initialState, bool bManualReset )
 	{
 		m_hSyncObject = CreateEvent( NULL, bManualReset, (BOOL) initialState, name );

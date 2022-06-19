@@ -42,7 +42,7 @@ public:
 	Polyhedron_IndexedLine_t *pLines;
 	Polyhedron_IndexedLineReference_t *pIndices;
 	Polyhedron_IndexedPolygon_t *pPolygons;
-
+	
 	unsigned short iVertexCount;
 	unsigned short iLineCount;
 	unsigned short iIndexCount;
@@ -53,10 +53,10 @@ public:
 	Vector Center( void );
 };
 
-class CPolyhedron_AllocByNew final : public CPolyhedron
+class CPolyhedron_AllocByNew : public CPolyhedron
 {
 public:
-	void Release( void ) override;
+	virtual void Release( void );
 	static CPolyhedron_AllocByNew *Allocate( unsigned short iVertices, unsigned short iLines, unsigned short iIndices, unsigned short iPolygons ); //creates the polyhedron along with enough memory to hold all it's data in a single allocation
 
 private:

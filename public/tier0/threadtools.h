@@ -81,7 +81,7 @@ enum ThreadPriorityEnum_t
 	TP_PRIORITY_LOW = 2001,
 	TP_PRIORITY_DEFAULT = 1001
 #error "Need PRIORITY_LOWEST/HIGHEST"
-#elif defined( PLATFORM_LINUX )
+#elif defined( LINUX )
     // We can use nice on Linux threads to change scheduling.
     // pthreads on Linux only allows priority setting on
     // real-time threads.
@@ -103,7 +103,7 @@ enum ThreadPriorityEnum_t
 #endif // PLATFORM_PS3
 };
 
-#if defined( PLATFORM_LINUX )
+#if defined( LINUX )
 #define TP_IS_PRIORITY_HIGHER( a, b ) ( ( a ) < ( b ) )
 #else
 #define TP_IS_PRIORITY_HIGHER( a, b ) ( ( a ) > ( b ) )
@@ -229,6 +229,8 @@ inline void ThreadPause()
 {
 #if defined( COMPILER_PS3 )
 	__db16cyc();
+#elif defined(__arm__) || defined(__aarch64__)
+        sched_yield();
 #elif defined( COMPILER_GCC )
 	__asm __volatile( "pause" );
 #elif defined ( COMPILER_MSVC64 )
@@ -301,15 +303,7 @@ inline int32 ThreadInterlockedDecrement( int32 volatile *p )
 inline int32 ThreadInterlockedExchange( int32 volatile *p, int32 value )
 {
 	Assert( (size_t)p % 4 == 0 );
-	int32 nRet;
-
-	// Note: The LOCK instruction prefix is assumed on the XCHG instruction and GCC gets very confused on the Mac when we use it.
-	__asm __volatile(
-		"xchgl %2,(%1)"
-		: "=r" (nRet)
-		: "r" (p), "0" (value)
-		: "memory");
-	return nRet;
+	return __sync_lock_test_and_set( p, value );
 }
 
 inline int32 ThreadInterlockedExchangeAdd( int32 volatile *p, int32 value )

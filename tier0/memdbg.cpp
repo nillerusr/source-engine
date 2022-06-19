@@ -1836,7 +1836,7 @@ static inline void unprotect_malloc_zone( malloc_zone_t *malloc_zone )
 	// The version check may not be necessary, but we know it was RW before that.
 	if ( malloc_zone->version >= 8 )
 	{
-#ifdef __arm64__
+#ifdef __aarch64__
         // MoeMod : this is required for Apple Silicon
         pthread_jit_write_protect_np(false);
 #endif
@@ -1849,7 +1849,7 @@ static inline void protect_malloc_zone( malloc_zone_t *malloc_zone )
 	if ( malloc_zone->version >= 8 )
 	{
 		vm_protect( mach_task_self(), (uintptr_t)malloc_zone, sizeof( malloc_zone_t ), 0, VM_PROT_READ );
-#ifdef __arm64__
+#ifdef __aarch64__
         // MoeMod : this is required for Apple Silicon
         pthread_jit_write_protect_np(true);
 #endif

@@ -1215,7 +1215,7 @@ FORCEINLINE int RoundFloatToInt(float f)
 	};
 	flResult = __fctiw( f );
 	return pResult[1];
-#elif defined (__arm__) ||  defined (__arm64__)
+#elif defined (__arm__) ||  defined (__aarch64__)
         return (int)(f + 0.5f);
 #else
 #error Unknown architecture
@@ -1247,7 +1247,7 @@ FORCEINLINE unsigned long RoundFloatToUnsignedLong(float f)
 	Assert( pIntResult[1] >= 0 );
 	return pResult[1];
 #else  // !X360
-#if defined(__arm__) || defined(__arm64__)
+#if defined(__arm__) || defined(__aarch64__)
         return (unsigned long)(f + 0.5f);
 #elif defined( PLATFORM_WINDOWS_PC64 )
 	uint nRet = ( uint ) f;
