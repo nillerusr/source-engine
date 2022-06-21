@@ -49,7 +49,7 @@ public:
 	template<class T> FORCEINLINE void Put( T const &nValue )
 	{
 		EnsureCapacity( sizeof( T ) );
-		*( reinterpret_cast<T *>( m_pDataOut ) ) = nValue;
+		memcpy( m_pDataOut, &nValue, sizeof(T) );
 		m_pDataOut += sizeof( nValue );
 #ifdef DBGFLAG_ASSERT
 		m_nNumBytesRemaining -= sizeof( nValue );

@@ -317,18 +317,18 @@ void* SendProxy_SendLocalDataTable( const SendProp *pProp, const void *pStruct, 
 // ---------------------------------------------------------------------- //
 float AssignRangeMultiplier( int nBits, double range )
 {
-	unsigned long iHighValue;
+	uint32 iHighValue;
 	if ( nBits == 32 )
 		iHighValue = 0xFFFFFFFE;
 	else
-		iHighValue = ((1 << (unsigned long)nBits) - 1);
+		iHighValue = ((1 << (uint32)nBits) - 1);
 
 	float fHighLowMul = iHighValue / range;
 	if ( CloseEnough( range, 0 ) )
 		fHighLowMul = iHighValue;
 	
 	// If the precision is messing us up, then adjust it so it won't.
-	if ( (unsigned long)(fHighLowMul * range) > iHighValue ||
+	if ( (uint32)(fHighLowMul * range) > iHighValue ||
 		 (fHighLowMul * range) > (double)iHighValue )
 	{
 		// Squeeze it down smaller and smaller until it's going to produce an integer
@@ -338,7 +338,7 @@ float AssignRangeMultiplier( int nBits, double range )
 		for ( i=0; i < ARRAYSIZE( multipliers ); i++ )
 		{
 			fHighLowMul = (float)( iHighValue / range ) * multipliers[i];
-			if ( (unsigned long)(fHighLowMul * range) > iHighValue ||
+			if ( (uint32)(fHighLowMul * range) > iHighValue ||
 				(fHighLowMul * range) > (double)iHighValue )
 			{
 			}

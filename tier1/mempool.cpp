@@ -41,7 +41,12 @@ CUtlMemoryPool::CUtlMemoryPool( int blockSize, int numElements, int growMode, co
 	}
 #endif
 
-	m_nAlignment = ( nAlignment != 0 ) ? nAlignment : 1;
+#ifdef PLATFORM_64BITS
+	m_nAlignment = ( nAlignment != 0 ) ? nAlignment : 8;
+#else
+	m_nAlignment = ( nAlignment != 0 ) ? nAlignment : 4;
+#endif
+
 	Assert( IsPowerOfTwo( m_nAlignment ) );
 	m_BlockSize = blockSize < sizeof(void*) ? sizeof(void*) : blockSize;
 	m_BlockSize = AlignValue( m_BlockSize, m_nAlignment );
