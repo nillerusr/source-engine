@@ -4,3 +4,6 @@
 [submodule "ivp"]
 	path = ivp
 	url = https://github.com/nillerusr/source-physics
+[submodule "lib"]
+	path = lib
+	url = https://github.com/nillerusr/source-engine-libs
