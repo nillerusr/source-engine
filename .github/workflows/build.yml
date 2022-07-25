@@ -1,4 +1,4 @@
-name: Build libs
+name: Build
 
 on:
   push:
@@ -9,17 +9,20 @@ on:
       - "*"
 
 jobs:
-  build:
+  build-linux-32:
     runs-on: ubuntu-18.04
 
     steps:
     - uses: actions/checkout@v2
-    - name: Build linux-i386
-      run: |
-        scripts/build-ubuntu-i386.sh
-
     - name: Build linux-amd64
       run: |
         scripts/build-ubuntu-amd64.sh
 
+  build-linux-64:
+    runs-on: ubuntu-18.04
 
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build linux-amd64
+      run: |
+        scripts/build-ubuntu-amd64.sh
