@@ -12,8 +12,7 @@
 //  STATIC: "DONT_GAMMA_CONVERT_VERTEX_COLOR" "0..1"
 //  DYNAMIC: "COMPRESSED_VERTS"			"0..1"
 //	DYNAMIC: "DYNAMIC_LIGHT"			"0..1"
-//	DYNAMIC: "STATIC_LIGHT_VERTEX"		"0..1"
-//	DYNAMIC: "STATIC_LIGHT_LIGHTMAP"	"0..1"
+//	DYNAMIC: "STATIC_LIGHT"				"0..1"
 //	DYNAMIC: "DOWATERFOG"				"0..1"
 //	DYNAMIC: "SKINNING"					"0..1"
 //  DYNAMIC: "LIGHTING_PREVIEW"			"0..1"	[PC]
@@ -102,7 +101,9 @@ struct VS_OUTPUT
 #endif
 	float4 color					: TEXCOORD2;		// Vertex color (from lighting or unlit)
 
+#if CUBEMAP || _X360
 	float3 worldVertToEyeVector		: TEXCOORD3;		// Necessary for cubemaps
+#endif
 
 	float3 worldSpaceNormal			: TEXCOORD4;		// Necessary for cubemaps and flashlight
 
@@ -124,7 +125,7 @@ VS_OUTPUT main( const VS_INPUT v )
 	VS_OUTPUT o = ( VS_OUTPUT )0;
 
 	bool bDynamicLight = DYNAMIC_LIGHT ? true : false;
-	bool bStaticLight = STATIC_LIGHT_VERTEX ? true : false;
+	bool bStaticLight = STATIC_LIGHT ? true : false;
 	bool bDoLighting = !g_bVertexColor && (bDynamicLight || bStaticLight);
 
 	float4 vPosition = v.vPos;
