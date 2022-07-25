@@ -136,7 +136,7 @@ void CVPhysPtrSaveRestoreOps::Save( const SaveRestoreFieldInfo_t &fieldInfo, ISa
 	for ( int i = 0; i < nObjects; i++ )
 	{
 		pSave->WriteData( (char*)pField, sizeof(void*) );
-		++pField;
+		pField += sizeof(void*);
 	}
 }
 
