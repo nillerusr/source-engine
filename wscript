@@ -38,7 +38,6 @@ projects={
 		'dmxloader',
 		'engine',
 		'engine/voice_codecs/minimp3',
-		'engine/voice_codecs/opus',
 		'filesystem',
 		'game/client',
 		'game/server',
@@ -220,9 +219,11 @@ def options(opt):
 	grp.add_option('--togles', action = 'store_true', dest = 'TOGLES', default = False,
 		help = 'build engine with ToGLES [default: %default]')
 
-	opt.load('compiler_optimizations subproject')
+	# TODO(nillerusr): add wscript for opus building
+	grp.add_option('--enable-opus', action = 'store_true', dest = 'OPUS', default = False,
+		help = 'build engine with ToGLES [default: %default]')
 
-#	opt.add_subproject(projects['game'])
+	opt.load('compiler_optimizations subproject')
 
 	opt.load('xcompile compiler_cxx compiler_c sdl2 clang_compilation_database strip_on_install waf_unit_test subproject')
 	if sys.platform == 'win32':
@@ -248,6 +249,8 @@ def configure(conf):
 	elif conf.env.GL:
 		projects['game'] += ['togl']
 
+	if conf.options.OPUS or conf.env.DEST_OS == 'android':
+		projects['game'] += ['engine/voice_codecs/opus']
 
 	if conf.env.DEST_OS in ['win32', 'linux', 'darwin'] and conf.env.DEST_CPU == 'x86_64':
 		conf.env.BIT32_MANDATORY = not conf.options.ALLOW64
@@ -283,13 +286,13 @@ def configure(conf):
 
 	cflags, linkflags = conf.get_optimization_flags()
 
-	flags = ['-pipe', '-fPIC'] #, '-fsanitize=undefined'] #, '-fsanitize=undefined'] #, '-fno-sanitize=vptr'] #, '-fno-sanitize=vptr,shift,shift-exponent,shift-base,signed-integer-overflow']
+	flags = ['-pipe', '-fPIC']
 	if conf.env.COMPILER_CC != 'msvc':
 		flags += ['-pthread']
 
 	if conf.env.DEST_OS == 'android':
 		flags += [
-			'-L'+os.path.abspath('.')+'/lib/android/armeabi-v7a/',
+			'-L'+os.path.abspath('.')+'/lib/android/'+conf.env.DEST_CPU+'/',
 			'-I'+os.path.abspath('.')+'/thirdparty/curl/include',
 			'-I'+os.path.abspath('.')+'/thirdparty/SDL',
 			'-I'+os.path.abspath('.')+'/thirdparty/openal-soft/include/',
@@ -299,14 +302,14 @@ def configure(conf):
 			'-lz'
 		]
 
-	if conf.env.DEST_CPU == 'arm':
-		flags += ['-fsigned-char']
-
-		if conf.env.DEST_OS != 'android':
-			flags += ['-march=native', '-mtune=native']
+		flags += ['-fvisibility=default']
 	else:
-		flags += ['-march=native','-mtune=native','-mfpmath=sse']
+		flags += ['-march=native']
 
+	if conf.env.DEST_CPU in ['x86', 'x86_64']:
+		flags += ['-mfpmath=sse']
+	elif conf.env.DEST_CPU in ['arm', 'aarch64']:
+		flags += ['-fsigned-char']
 
 	cflags += flags
 	linkflags += flags
@@ -315,15 +318,7 @@ def configure(conf):
 	cxxflags = list(cflags) + ['-std=c++11','-fpermissive']
 
 	if conf.env.COMPILER_CC == 'gcc':
-#		wrapfunctions = ['freopen','creat','access','__xstat','stat','lstat','fopen64','open64',
-#			'opendir','__lxstat','chmod','chown','lchown','symlink','link','__lxstat64','mknod',
-#			'utimes','unlink','rename','utime','__xstat64','mount','mkdir','rmdir','scandir','realpath','mkfifo']
-
-#		for func in wrapfunctions:
-#			linkflags += ['-Wl,--wrap='+func]
-
 		conf.define('COMPILER_GCC', 1)
-
 
 	if conf.env.COMPILER_CC != 'msvc':
 		conf.check_cc(cflags=cflags, linkflags=linkflags, msg='Checking for required C flags')
@@ -354,8 +349,9 @@ def configure(conf):
 			conf.check_cfg(package='libpng', uselib_store='PNG', args=['--cflags', '--libs'])
 			conf.check_cfg(package='libcurl', uselib_store='CURL', args=['--cflags', '--libs'])
 		conf.check_cfg(package='zlib', uselib_store='ZLIB', args=['--cflags', '--libs'])
-		conf.check_cfg(package='opus', uselib_store='OPUS', args=['--cflags', '--libs'])
-#		conf.check_cfg(package='speex', uselib_store='SPEEX', args=['--cflags', '--libs'])
+
+		if conf.options.OPUS:
+			conf.check_cfg(package='opus', uselib_store='OPUS', args=['--cflags', '--libs'])
 	else:
 		conf.check(lib='SDL2', uselib_store='SDL2')
 		conf.check(lib='freetype2', uselib_store='FT2')
@@ -366,23 +362,8 @@ def configure(conf):
 		conf.check(lib='z', uselib_store='ZLIB')
 		conf.check(lib='crypto', uselib_store='CRYPTO')
 		conf.check(lib='ssl', uselib_store='SSL')
-		conf.check(lib='expat', uselib_store='EXPAT')
 		conf.check(lib='android_support', uselib_store='ANDROID_SUPPORT')
 		conf.check(lib='opus', uselib_store='OPUS')
-#		conf.check(lib='speex', uselib_store='SPEEX')
-
-
-#		'ivp/havana',
-#		'ivp/havana/havok/hk_base',
-#		'ivp/havana/havok/hk_math',
-#		'ivp/ivp_compact_builder',
-#		'ivp/ivp_physics',
-#	conf.check(lib='ivp_physics', uselib_store='ivp_physics')
-#	conf.check(lib='ivp_compactbuilder', uselib_store='ivp_compactbuilder')
-#	conf.check(lib='havana_constraints', uselib_store='havana_constraints')
-#	conf.check(lib='hk_math', uselib_store='hk_math')
-#	conf.check(lib='hk_base', uselib_store='hk_base')
-#	conf.check(lib='', uselib_store='')
 
 	if conf.env.DEST_OS != 'win32':
 		conf.check_cc(lib='dl', mandatory=False)
@@ -427,7 +408,6 @@ def configure(conf):
 	if conf.options.CCACHE:
 		conf.env.CC.insert(0, 'ccache')
 		conf.env.CXX.insert(0, 'ccache')
-		print( conf.env )
 
 	if conf.options.DEDICATED:
 		conf.add_subproject(projects['dedicated'])
