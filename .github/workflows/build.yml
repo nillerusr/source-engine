@@ -27,11 +27,11 @@ jobs:
       run: |
         scripts/build-ubuntu-amd64.sh
 
-  build-android-armv7:
+  build-android-armv7a:
     runs-on: ubuntu-18.04
 
     steps:
     - uses: actions/checkout@v2
-    - name: Build android-arm7a
+    - name: Build android-armv7a
       run: |
         scripts/build-android-armv7a.sh
