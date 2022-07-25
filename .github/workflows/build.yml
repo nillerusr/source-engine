@@ -14,7 +14,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Build test
+    - name: Build linux-i386
       run: |
-        scripts/deploy.sh
+        scripts/build-ubuntu-i386.sh
+
+    - name: Build linux-amd64
+      run: |
+        scripts/build-ubuntu-amd64.sh
+
 
