@@ -1,4 +1,4 @@
-name: Build
+name: Build tests
 
 on:
   push:
@@ -26,3 +26,12 @@ jobs:
     - name: Build linux-amd64
       run: |
         scripts/build-ubuntu-amd64.sh
+
+  build-android-armv7:
+    runs-on: ubuntu-18.04
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build android-arm7a
+      run: |
+        scripts/build-android-armv7a.sh
