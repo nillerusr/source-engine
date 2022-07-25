@@ -1,5 +1,7 @@
 # source-engine
-Welcome to hell >:)
+Welcome to source engine:)
+
+Discord: https://discord.gg/hZRB7WMgGw
 
 # Current tasks
 - [x] NEON support
