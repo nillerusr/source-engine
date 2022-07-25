@@ -14,9 +14,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Build linux-amd64
+    - name: Build linux-i386
       run: |
-        scripts/build-ubuntu-amd64.sh
+        scripts/build-ubuntu-i386.sh
 
   build-linux-64:
     runs-on: ubuntu-18.04
