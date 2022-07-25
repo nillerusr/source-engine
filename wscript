@@ -38,7 +38,6 @@ projects={
 		'dmxloader',
 		'engine',
 		'engine/voice_codecs/minimp3',
-		'engine/voice_codecs/opus',
 		'filesystem',
 		'game/client',
 		'game/server',

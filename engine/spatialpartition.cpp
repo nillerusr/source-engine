@@ -2517,7 +2517,7 @@ bool CVoxelTree::EnumerateElementsAlongRay_ExtrudedRay( SpatialPartitionListMask
 	return true;
 }
 
-#ifndef _PS3
+#if 0
 #define THINK_TRACE_COUNTER_COMPILE_FUNCTIONS_ENGINE
 #include "engine/thinktracecounter.h"
 #endif
