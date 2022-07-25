@@ -5302,43 +5302,41 @@ int C_BaseEntity::GetIntermediateDataSize( void )
 
 static int g_FieldSizes[FIELD_TYPECOUNT] = 
 {
-	0,					// FIELD_VOID
-	sizeof(float),		// FIELD_FLOAT
-	sizeof(int),		// FIELD_STRING
-	sizeof(Vector),		// FIELD_VECTOR
-	sizeof(Quaternion),	// FIELD_QUATERNION
-	sizeof(int),		// FIELD_INTEGER
-	sizeof(char),		// FIELD_BOOLEAN
-	sizeof(short),		// FIELD_SHORT
-	sizeof(char),		// FIELD_CHARACTER
-	sizeof(color32),	// FIELD_COLOR32
-	sizeof(int),		// FIELD_EMBEDDED	(handled specially)
-	sizeof(int),		// FIELD_CUSTOM		(handled specially)
+	FIELD_SIZE( FIELD_VOID ),
+	FIELD_SIZE( FIELD_FLOAT ),
+	FIELD_SIZE( FIELD_STRING ),
+	FIELD_SIZE( FIELD_VECTOR ),
+	FIELD_SIZE( FIELD_QUATERNION ),
+	FIELD_SIZE( FIELD_INTEGER ),
+	FIELD_SIZE( FIELD_BOOLEAN ),
+	FIELD_SIZE( FIELD_SHORT ),
+	FIELD_SIZE( FIELD_CHARACTER ),
+	FIELD_SIZE( FIELD_COLOR32 ),
+	FIELD_SIZE( FIELD_EMBEDDED ),
+	FIELD_SIZE( FIELD_CUSTOM ),
 	
-	//---------------------------------
+	FIELD_SIZE( FIELD_CLASSPTR ),
+	FIELD_SIZE( FIELD_EHANDLE ),
+	FIELD_SIZE( FIELD_EDICT ),
 
-	sizeof(int),		// FIELD_CLASSPTR
-	sizeof(EHANDLE),	// FIELD_EHANDLE
-	sizeof(int),		// FIELD_EDICT
+	FIELD_SIZE( FIELD_POSITION_VECTOR ),
+	FIELD_SIZE( FIELD_TIME ),
+	FIELD_SIZE( FIELD_TICK ),
+	FIELD_SIZE( FIELD_MODELNAME ),
+	FIELD_SIZE( FIELD_SOUNDNAME ),
 
-	sizeof(Vector),		// FIELD_POSITION_VECTOR
-	sizeof(float),		// FIELD_TIME
-	sizeof(int),		// FIELD_TICK
-	sizeof(int),		// FIELD_MODELNAME
-	sizeof(int),		// FIELD_SOUNDNAME
+	FIELD_SIZE( FIELD_INPUT ),
+	FIELD_SIZE( FIELD_FUNCTION ),
+	FIELD_SIZE( FIELD_VMATRIX ),
+	FIELD_SIZE( FIELD_VMATRIX_WORLDSPACE ),
+	FIELD_SIZE( FIELD_MATRIX3X4_WORLDSPACE ),
+	FIELD_SIZE( FIELD_INTERVAL ),
+	FIELD_SIZE( FIELD_MODELINDEX ),
+	FIELD_SIZE( FIELD_MATERIALINDEX ),
 
-	sizeof(int),		// FIELD_INPUT		(uses custom type)
-#ifdef GNUC
-	// pointer to members under gnuc are 8bytes if you have a virtual func
-	sizeof(uint64),		// FIELD_FUNCTION
-#else
-	sizeof(int *),		// FIELD_FUNCTION
-#endif
-	sizeof(VMatrix),	// FIELD_VMATRIX
-	sizeof(VMatrix),	// FIELD_VMATRIX_WORLDSPACE
-	sizeof(matrix3x4_t),// FIELD_MATRIX3X4_WORLDSPACE	// NOTE: Use array(FIELD_FLOAT, 12) for matrix3x4_t NOT in worldspace
-	sizeof(interval_t), // FIELD_INTERVAL
-	sizeof(int),		// FIELD_MODELINDEX
+	FIELD_SIZE( FIELD_VECTOR2D ),
+	FIELD_SIZE( FIELD_INTEGER64 ),
+	FIELD_SIZE( FIELD_POINTER ),
 };
 
 //-----------------------------------------------------------------------------

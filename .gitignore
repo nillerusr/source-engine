@@ -3,9 +3,12 @@
 *.vpc_crc
 *.project
 *obj_*
-build/
 .waf*
 .lock-waf*
 __pycache__
 *.pyc
 .DS_Store
+build*/
+android/
+.cache/
+.ccache/
