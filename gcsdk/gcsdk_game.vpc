@@ -84,7 +84,6 @@ $Project "gcsdk"
 		$File "steamextra\tier1\tsmultimempool.cpp"
 		$File "workthreadpool.cpp"
 		$File "webapi_response.cpp"
-		$File "$SRCDIR\thirdparty\JSON_parser\JSON_parser.c"
 		{
 			$Configuration
 			{
