@@ -16,7 +16,11 @@
 #include "windows.h"
 #endif
 
+#ifdef OSX
+#include <malloc/malloc.h>
+#else
 #include <malloc.h>
+#endif
 #include <string.h>
 #include "crtmemdebug.h"
 

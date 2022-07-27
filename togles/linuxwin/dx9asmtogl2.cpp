@@ -2148,23 +2148,32 @@ static uint PrintDoubleInt( char *pBuf, uint nBufSize, double f, uint nMinChars 
 
 		if ( bAnyDigitsLeft )
 		{
-			uint n = remainder % 100U; remainder /= 100U; *reinterpret_cast<uint16*>(pDst - 1) = reinterpret_cast<const uint16*>(pDigits)[n]; 
-			n = remainder % 100U; remainder /= 100U; *reinterpret_cast<uint16*>(pDst - 1 - 2) = reinterpret_cast<const uint16*>(pDigits)[n]; 
+			uint n = remainder % 100U; remainder /= 100U;
+			memcpy( reinterpret_cast<uint16*>(pDst - 1), &(reinterpret_cast<const uint16*>(pDigits)[n]), sizeof(uint16) );
+			n = remainder % 100U; remainder /= 100U;
+			memcpy( reinterpret_cast<uint16*>(pDst - 3), &(reinterpret_cast<const uint16*>(pDigits)[n]), sizeof(uint16) );
 			Assert( remainder < 100U );
-			*reinterpret_cast<uint16*>(pDst - 1 - 4) = reinterpret_cast<const uint16*>(pDigits)[remainder]; 
+			memcpy( reinterpret_cast<uint16*>(pDst - 5), &(reinterpret_cast<const uint16*>(pDigits)[remainder]), sizeof(uint16) );
 			pDst -= 6;
 		}
 		else
 		{
-			uint n = remainder % 100U; remainder /= 100U; *reinterpret_cast<uint16*>(pDst - 1) = reinterpret_cast<const uint16*>(pDigits)[n]; --pDst; if ( ( n >= 10 ) || ( remainder ) ) --pDst;
+			uint n = remainder % 100U; remainder /= 100U;
+			memcpy( reinterpret_cast<uint16*>(pDst - 1), &(reinterpret_cast<const uint16*>(pDigits)[n]), sizeof(uint16) );
+			--pDst; if ( ( n >= 10 ) || ( remainder ) ) --pDst;
+
 			if ( remainder )
 			{
-				n = remainder % 100U; remainder /= 100U; *reinterpret_cast<uint16*>(pDst - 1) = reinterpret_cast<const uint16*>(pDigits)[n]; --pDst; if ( ( n >= 10 ) || ( remainder ) ) --pDst;
+				n = remainder % 100U; remainder /= 100U;
+				memcpy( reinterpret_cast<uint16*>(pDst - 1), &(reinterpret_cast<const uint16*>(pDigits)[n]), sizeof(uint16) );
+
+				--pDst; if ( ( n >= 10 ) || ( remainder ) ) --pDst;
 
 				if ( remainder )
 				{
 					Assert( remainder < 100U );
-					*reinterpret_cast<uint16*>(pDst - 1) = reinterpret_cast<const uint16*>(pDigits)[remainder]; --pDst; if ( remainder >= 10 ) --pDst;
+					memcpy( reinterpret_cast<uint16*>(pDst - 1), &(reinterpret_cast<const uint16*>(pDigits)[remainder]), sizeof(uint16) );
+					--pDst; if ( remainder >= 10 ) --pDst;
 				}
 			}
 		}
@@ -3186,10 +3195,6 @@ int D3DToGL::TranslateShader( uint32* code, CUtlBuffer *pBufDisassembledCode, bo
 	m_bPutHexCodesAfterLines = (options & D3DToGL_PutHexCommentsAfterLines) != 0;
 	m_bGeneratingDebugText = (options & D3DToGL_GeneratingDebugText) != 0;
 	m_bGenerateSRGBWriteSuffix = (options & D3DToGL_OptionSRGBWriteSuffix) != 0;
-	m_bGenerateSRGBWriteSuffix = false;
-
-	if( debugLabel && (V_strstr( debugLabel ,"vertexlit_and_unlit_generic_ps") || V_strstr( debugLabel ,"vertexlit_and_unlit_generic_bump_ps") ) )
-		m_bGenerateSRGBWriteSuffix = true;
 
 	m_NumIndentTabs = 1; // start code indented one tab
 	m_nLoopDepth = 0;
@@ -3908,8 +3913,8 @@ int D3DToGL::TranslateShader( uint32* code, CUtlBuffer *pBufDisassembledCode, bo
 
 	if( FindSubcode("_gl_FrontSecondaryColor") && !m_bFrontSecondaryColor )
 		StrcatToHeaderCode( "in vec4 _gl_FrontSecondaryColor;\n" );
-	
-	if( m_iFragDataCount && bVertexShader )
+
+	if( !gGL->m_bHave_GL_QCOM_alpha_test && m_iFragDataCount && bVertexShader )
 		StrcatToHeaderCode( "\nuniform float alpha_ref;\n" );	
 
 	StrcatToHeaderCode( "\nvoid main()\n{\n" );
@@ -3921,18 +3926,18 @@ int D3DToGL::TranslateShader( uint32* code, CUtlBuffer *pBufDisassembledCode, bo
 	// sRGB Write suffix
 	if ( m_bGenerateSRGBWriteSuffix )
 	{
-	//	StrcatToALUCode( "vec3 sRGBFragData;\n" );
-	//	StrcatToALUCode( "sRGBFragData.xyz = log( gl_FragData[0].xyz );\n" );
-	//	StrcatToALUCode( "sRGBFragData.xyz = sRGBFragData.xyz * vec3( 0.754545f, 0.754545f, 0.754545f );\n" );
-	//	StrcatToALUCode( "sRGBFragData.xyz = exp( sRGBFragData.xyz );\n" );
-		StrcatToALUCode( "gl_FragData[0].xyz = pow(gl_FragData[0].xyz, vec3(1.0/2.2));\n" );
+		StrcatToALUCode( "vec3 sRGBFragData;\n" );
+		StrcatToALUCode( "sRGBFragData.xyz = log( gl_FragData[0].xyz );\n" );
+		StrcatToALUCode( "sRGBFragData.xyz = sRGBFragData.xyz * vec3( 0.454545f, 0.454545f, 0.454545f );\n" );
+		StrcatToALUCode( "sRGBFragData.xyz = exp( sRGBFragData.xyz );\n" );
+		StrcatToALUCode( "gl_FragData[0].xyz = mix( gl_FragData[0].xyz, sRGBFragData, flSRGBWrite );\n" );
 	}
-	
-	if( m_iFragDataCount && bVertexShader )
+
+	if( !gGL->m_bHave_GL_QCOM_alpha_test && m_iFragDataCount && bVertexShader )
 		StrcatToALUCode( "if( gl_FragData[0].a < alpha_ref ) { discard; };\n" );
 
 	strcat_s( (char*)m_pBufALUCode->Base(), m_pBufALUCode->Size(), "}\n" );
-		
+
 	// Put all of the strings together for final program ( pHeaderCode + pAttribCode + pParamCode + pALUCode )
 	StrcatToHeaderCode( (char*)m_pBufAttribCode->Base() );
 	StrcatToHeaderCode( (char*)m_pBufParamCode->Base() );

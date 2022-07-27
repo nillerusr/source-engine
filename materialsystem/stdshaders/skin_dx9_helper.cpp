@@ -23,7 +23,7 @@
 
 static ConVar mat_fullbright( "mat_fullbright", "0", FCVAR_CHEAT );
 static ConVar r_lightwarpidentity( "r_lightwarpidentity", "0", FCVAR_CHEAT );
-static ConVar r_rimlight( "r_rimlight", "1", FCVAR_NONE );
+static ConVar r_rimlight( "r_rimlight", "1", FCVAR_CHEAT );
 
 // Textures may be bound to the following samplers:
 //	SHADER_SAMPLER0	 Base (Albedo) / Gloss in alpha
@@ -269,9 +269,6 @@ void DrawSkin_DX9_Internal( CBaseVSShader *pShader, IMaterialVar** params, IShad
 	bool bBlendTintByBaseAlpha = IsBoolSet( info.m_nBlendTintByBaseAlpha, params ) && !bHasSelfIllum;	// Pixel shader can't do both BLENDTINTBYBASEALPHA and SELFILLUM, so let selfillum win
 
 	float flTintReplacementAmount = GetFloatParam( info.m_nTintReplacesBaseColor, params );
-
-	float flPhongExponentFactor =  ( info.m_nPhongExponentFactor != -1 ) ? GetFloatParam( info.m_nPhongExponentFactor, params ) : 0.0f;
-	const bool bHasPhongExponentFactor = flPhongExponentFactor != 0.0f;
 
 	BlendType_t nBlendType= pShader->EvaluateBlendRequirements( bBlendTintByBaseAlpha ? -1 : info.m_nBaseTexture, true );
 
@@ -679,7 +676,6 @@ void DrawSkin_DX9_Internal( CBaseVSShader *pShader, IMaterialVar** params, IShad
 			SET_DYNAMIC_PIXEL_SHADER_COMBO( WRITE_DEPTH_TO_DESTALPHA, bWriteDepthToAlpha );
 			SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
 			SET_DYNAMIC_PIXEL_SHADER_COMBO( FLASHLIGHTSHADOWS, bFlashlightShadows );
-			SET_DYNAMIC_PIXEL_SHADER_COMBO( PHONG_USE_EXPONENT_FACTOR, bHasPhongExponentFactor );
 			SET_DYNAMIC_PIXEL_SHADER( skin_ps20b );
 		}
 #ifndef _X360
@@ -701,7 +697,6 @@ void DrawSkin_DX9_Internal( CBaseVSShader *pShader, IMaterialVar** params, IShad
 			SET_DYNAMIC_PIXEL_SHADER_COMBO( WRITE_DEPTH_TO_DESTALPHA, bWriteDepthToAlpha );
 			SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
 			SET_DYNAMIC_PIXEL_SHADER_COMBO( FLASHLIGHTSHADOWS, bFlashlightShadows );
-			SET_DYNAMIC_PIXEL_SHADER_COMBO( PHONG_USE_EXPONENT_FACTOR, bHasPhongExponentFactor );
 			SET_DYNAMIC_PIXEL_SHADER( skin_ps30 );
 
 			bool bUnusedTexCoords[3] = { false, false, !pShaderAPI->IsHWMorphingEnabled() || !bIsDecal };
@@ -811,23 +806,15 @@ void DrawSkin_DX9_Internal( CBaseVSShader *pShader, IMaterialVar** params, IShad
 		float vSpecularTint[4] = {1, 1, 1, 4};
 		pShaderAPI->GetWorldSpaceCameraPosition( vEyePos_SpecExponent );
 
-		// If we have a phong exponent factor, then use that as a multiplier against the texture.
-		if ( bHasPhongExponentFactor )
+		// Use the alpha channel of the normal map for the exponent by default
+		vEyePos_SpecExponent[3] = -1.f;
+		if ( (info.m_nPhongExponent != -1) && params[info.m_nPhongExponent]->IsDefined() )
 		{
-			vEyePos_SpecExponent[3] = flPhongExponentFactor;
-		}
-		else
-		{
-			// Use the alpha channel of the normal map for the exponent by default
-			vEyePos_SpecExponent[3] = -1.f;
-			if ( (info.m_nPhongExponent != -1) && params[info.m_nPhongExponent]->IsDefined() )
+			float fValue = params[info.m_nPhongExponent]->GetFloatValue();
+			if ( fValue > 0.f )
 			{
-				float fValue = params[info.m_nPhongExponent]->GetFloatValue();
-				if ( fValue > 0.f )
-				{
-					// Nonzero value in material overrides map channel
-					vEyePos_SpecExponent[3] = fValue;
-				}
+				// Nonzero value in material overrides map channel
+				vEyePos_SpecExponent[3] = fValue;
 			}
 		}
 

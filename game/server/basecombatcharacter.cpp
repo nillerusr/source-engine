@@ -731,7 +731,10 @@ CBaseCombatCharacter::CBaseCombatCharacter( void )
 	}
 
 	// not standing on a nav area yet
+#ifdef MEXT_BOT
 	m_lastNavArea = NULL;
+#endif
+
 	m_registeredNavTeam = TEAM_INVALID;
 
 	for (int i = 0; i < MAX_WEAPONS; i++)
@@ -2280,8 +2283,8 @@ CBaseCombatWeapon *CBaseCombatCharacter::Weapon_GetWpnForAmmo( int iAmmoIndex )
 //-----------------------------------------------------------------------------
 bool CBaseCombatCharacter::Weapon_CanUse( CBaseCombatWeapon *pWeapon )
 {
-	int	actCount = 0;
-	acttable_t *pTable = pWeapon->ActivityList( actCount );
+	acttable_t *pTable		= pWeapon->ActivityList();
+	int			actCount	= pWeapon->ActivityListCount();
 
 	if( actCount < 1 )
 	{
@@ -3481,17 +3484,20 @@ void CBaseCombatCharacter::UpdateLastKnownArea( void )
 //-----------------------------------------------------------------------------
 bool CBaseCombatCharacter::IsAreaTraversable( const CNavArea *area ) const
 {
+#ifdef NEXT_BOT
 	return area ? !area->IsBlocked( GetTeamNumber() ) : false;
+#endif
+	return false;
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: Leaving the nav mesh
 //-----------------------------------------------------------------------------
 void CBaseCombatCharacter::ClearLastKnownArea( void )
 {
+#ifdef NEXT_BOT
 	OnNavAreaChanged( NULL, m_lastNavArea );
-	
+
 	if ( m_lastNavArea )
 	{
 		m_lastNavArea->DecrementPlayerCount( m_registeredNavTeam, entindex() );
@@ -3499,20 +3505,21 @@ void CBaseCombatCharacter::ClearLastKnownArea( void )
 		m_lastNavArea = NULL;
 		m_registeredNavTeam = TEAM_INVALID;
 	}
+#endif
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: Handling editor removing the area we're standing upon
 //-----------------------------------------------------------------------------
 void CBaseCombatCharacter::OnNavAreaRemoved( CNavArea *removedArea )
 {
+#ifdef NEXT_BOT
 	if ( m_lastNavArea == removedArea )
 	{
 		ClearLastKnownArea();
 	}
+#endif
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: Changing team, maintain associated data

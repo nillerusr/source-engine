@@ -1539,11 +1539,11 @@ public:
 	DECLARE_SERVERCLASS();
 
 private:
-#ifdef POSIX
+//#ifdef POSIX
 	CEnvWindShared m_EnvWindShared; // FIXME - fails to compile as networked var due to operator= problem
-#else
-	CNetworkVarEmbedded( CEnvWindShared, m_EnvWindShared );
-#endif
+//#else
+//	CNetworkVarEmbedded( CEnvWindShared, m_EnvWindShared );
+//#endif
 };
 
 LINK_ENTITY_TO_CLASS( env_wind, CEnvWind );

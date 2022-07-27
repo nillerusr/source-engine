@@ -190,7 +190,7 @@ typedef struct VCR_s
 		void *lpStartAddress,
 		void *lpParameter,
 		unsigned long dwCreationFlags,
-		unsigned long *lpThreadID );
+		uintp *lpThreadID );
 	
 	unsigned long (*Hook_WaitForSingleObject)(
 		void *handle,

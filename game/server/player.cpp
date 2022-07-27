@@ -183,7 +183,7 @@ ConVar	sk_player_stomach( "sk_player_stomach","1" );
 ConVar	sk_player_arm( "sk_player_arm","1" );
 ConVar	sk_player_leg( "sk_player_leg","1" );
 
-ConVar	sv_player_usercommand_timeout( "sv_player_usercommand_timeout", "3", FCVAR_CHEAT, "After this many seconds without a usercommand from a player, the server will RunNullCommand as if client sends an empty command." );
+//ConVar	player_usercommand_timeout( "player_usercommand_timeout", "10", 0, "After this many seconds without a usercommand from a player, the client is kicked." );
 #ifdef _DEBUG
 ConVar  sv_player_net_suppress_usercommands( "sv_player_net_suppress_usercommands", "0", FCVAR_CHEAT, "For testing usercommand hacking sideeffects. DO NOT SHIP" );
 #endif // _DEBUG
@@ -585,9 +585,7 @@ CBasePlayer::CBasePlayer( )
 	m_bForceOrigin = false;
 	m_hVehicle = NULL;
 	m_pCurrentCommand = NULL;
-	m_iLockViewanglesTickNumber = 0;
-	m_qangLockViewangles.Init();
-
+	
 	// Setup our default FOV
 	m_iDefaultFOV = g_pGameRules->DefaultFOV();
 
@@ -637,8 +635,6 @@ CBasePlayer::CBasePlayer( )
 
 	m_flLastUserCommandTime = 0.f;
 	m_flMovementTimeForUserCmdProcessingRemaining = 0.0f;
-
-	m_flLastObjectiveTime = -1.f;
 }
 
 CBasePlayer::~CBasePlayer( )
@@ -978,7 +974,7 @@ void CBasePlayer::DamageEffect(float flDamage, int fDamageType)
 	}
 	else if (fDamageType & DMG_DROWN)
 	{
-		//Blue damage indicator
+		//Red damage indicator
 		color32 blue = {0,0,128,128};
 		UTIL_ScreenFade( this, blue, 1.0f, 0.1f, FFADE_IN );
 	}
@@ -2327,7 +2323,6 @@ bool CBasePlayer::SetObserverMode(int mode )
 			break;
 
 		case OBS_MODE_CHASE :
-		case OBS_MODE_POI: // PASSTIME
 		case OBS_MODE_IN_EYE :	
 			// udpate FOV and viewmodels
 			SetObserverTarget( m_hObserverTarget );	
@@ -2423,7 +2418,8 @@ void CBasePlayer::CheckObserverSettings()
 	}
 
 	// check if our spectating target is still a valid one
-	if (  m_iObserverMode == OBS_MODE_IN_EYE || m_iObserverMode == OBS_MODE_CHASE || m_iObserverMode == OBS_MODE_FIXED || m_iObserverMode == OBS_MODE_POI )
+	
+	if (  m_iObserverMode == OBS_MODE_IN_EYE || m_iObserverMode == OBS_MODE_CHASE || m_iObserverMode == OBS_MODE_FIXED )
 	{
 		ValidateCurrentObserverTarget();
 				
@@ -2477,7 +2473,6 @@ void CBasePlayer::ValidateCurrentObserverTarget( void )
 		}
 		else
 		{
-#if !defined( TF_DLL )
 			// couldn't find new target, switch to temporary mode
 			if ( mp_forcecamera.GetInt() == OBS_ALLOW_ALL )
 			{
@@ -2485,11 +2480,10 @@ void CBasePlayer::ValidateCurrentObserverTarget( void )
 				ForceObserverMode( OBS_MODE_ROAMING );
 			}
 			else
-#endif
 			{
 				// fix player view right where it is
 				ForceObserverMode( OBS_MODE_FIXED );
-				m_hObserverTarget.Set( NULL ); // no target to follow
+				m_hObserverTarget.Set( NULL ); // no traget to follow
 			}
 		}
 	}
@@ -2635,10 +2629,7 @@ bool CBasePlayer::SetObserverTarget(CBaseEntity *target)
 		Vector	dir, end;
 		Vector	start = target->EyePosition();
 		
-		QAngle ang = target->EyeAngles();
-		ang.z = 0; // PASSTIME no view roll when spectating ball
-
-		AngleVectors( ang, &dir );
+		AngleVectors( target->EyeAngles(), &dir );
 		VectorNormalize( dir );
 		VectorMA( start, -64.0f, dir, end );
 
@@ -2648,7 +2639,7 @@ bool CBasePlayer::SetObserverTarget(CBaseEntity *target)
 		trace_t	tr;
 		UTIL_TraceRay( ray, MASK_PLAYERSOLID, target, COLLISION_GROUP_PLAYER_MOVEMENT, &tr );
 
-		JumptoPosition( tr.endpos, ang );
+		JumptoPosition( tr.endpos, target->EyeAngles() );
 	}
 	
 	return true;
@@ -3380,20 +3371,27 @@ void CBasePlayer::PhysicsSimulate( void )
 			pi->m_nNumCmds = commandsToRun;
 		}
 	}
-#if 0
-	else if ( GetTimeSinceLastUserCommand() > sv_player_usercommand_timeout.GetFloat() )
-	{
-		// no usercommand from player after some threshold
-		// server should start RunNullCommand as if client sends an empty command so that Think and gamestate related things run properly
-		RunNullCommand();
-	}
-#endif
 
 	// Restore the true server clock
 	// FIXME:  Should this occur after simulation of children so
 	//  that they are in the timespace of the player?
 	gpGlobals->curtime		= savetime;
-	gpGlobals->frametime	= saveframetime;
+	gpGlobals->frametime	= saveframetime;	
+
+// 	// Kick the player if they haven't sent a user command in awhile in order to prevent clients
+// 	// from using packet-level manipulation to mess with gamestate.  Not sending usercommands seems
+// 	// to have all kinds of bad effects, such as stalling a bunch of Think()'s and gamestate handling.
+// 	// An example from TF: A medic stops sending commands after deploying an uber on another player.
+// 	// As a result, invuln is permanently on the heal target because the maintenance code is stalled.
+// 	if ( GetTimeSinceLastUserCommand() > player_usercommand_timeout.GetFloat() )
+// 	{
+// 		// If they have an active netchan, they're almost certainly messing with usercommands?
+// 		INetChannelInfo *pNetChanInfo = engine->GetPlayerNetInfo( entindex() );
+// 		if ( pNetChanInfo && pNetChanInfo->GetTimeSinceLastReceived() < 5.f )
+// 		{
+// 			engine->ServerCommand( UTIL_VarArgs( "kickid %d %s\n", GetUserID(), "UserCommand Timeout" ) );
+// 		}
+// 	}
 }
 
 unsigned int CBasePlayer::PhysicsSolidMaskForEntity() const
@@ -3408,8 +3406,6 @@ void CBasePlayer::ForceSimulation()
 {
 	m_nSimulationTick = -1;
 }
-
-ConVar sv_usercmd_custom_random_seed( "sv_usercmd_custom_random_seed", "1", FCVAR_CHEAT, "When enabled server will populate an additional random seed independent of the client" );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -3435,16 +3431,6 @@ void CBasePlayer::ProcessUsercmds( CUserCmd *cmds, int numcmds, int totalcmds,
 		if ( !IsUserCmdDataValid( pCmd ) )
 		{
 			pCmd->MakeInert();
-		}
-
-		if ( sv_usercmd_custom_random_seed.GetBool() )
-		{
-			float fltTimeNow = float( Plat_FloatTime() * 1000.0 );
-			pCmd->server_random_seed = *reinterpret_cast<int*>( (char*)&fltTimeNow );
-		}
-		else
-		{
-			pCmd->server_random_seed = pCmd->random_seed;
 		}
 
 		ctx->cmds.AddToTail( *pCmd );
@@ -6441,7 +6427,7 @@ bool CBasePlayer::ClientCommand( const CCommand &args )
 		{
 			// set new spectator mode, don't allow OBS_MODE_NONE
 			if ( !SetObserverMode( mode ) )
-				ClientPrint( this, HUD_PRINTCONSOLE, "#Spectator_Mode_Unknown");
+				ClientPrint( this, HUD_PRINTCONSOLE, "#Spectator_Mode_Unkown");
 			else
 				engine->ClientCommand( edict(), "cl_spec_mode %d", mode );
 		}
@@ -6472,7 +6458,7 @@ bool CBasePlayer::ClientCommand( const CCommand &args )
 		
 		return true;
 	}
-	else if ( stricmp( cmd, "spec_prev" ) == 0 ) // chase previous player
+	else if ( stricmp( cmd, "spec_prev" ) == 0 ) // chase prevoius player
 	{
 		if ( GetObserverMode() > OBS_MODE_FIXED )
 		{
@@ -6487,21 +6473,33 @@ bool CBasePlayer::ClientCommand( const CCommand &args )
 		{
 			AttemptToExitFreezeCam();
 		}
-
+		
 		return true;
 	}
+	
 	else if ( stricmp( cmd, "spec_player" ) == 0 ) // chase next player
 	{
 		if ( GetObserverMode() > OBS_MODE_FIXED && args.ArgC() == 2 )
 		{
-			CBasePlayer *target = UTIL_PlayerByCommandArg( args[1] );
+			int index = atoi( args[1] );
+
+			CBasePlayer * target;
+
+			if ( index == 0 )
+			{
+				target = UTIL_PlayerByName( args[1] );
+			}
+			else
+			{
+				target = UTIL_PlayerByIndex( index );
+			}
 
 			if ( IsValidObserverTarget( target ) )
 			{
 				SetObserverTarget( target );
 			}
 		}
-
+		
 		return true;
 	}
 
@@ -6512,9 +6510,9 @@ bool CBasePlayer::ClientCommand( const CCommand &args )
 			 args.ArgC() == 6 )
 		{
 			Vector origin;
- 			origin.x = clamp( atof( args[1] ), MIN_COORD_FLOAT, MAX_COORD_FLOAT );
- 			origin.y = clamp( atof( args[2] ), MIN_COORD_FLOAT, MAX_COORD_FLOAT );
- 			origin.z = clamp( atof( args[3] ), MIN_COORD_FLOAT, MAX_COORD_FLOAT );
+			origin.x = atof( args[1] );
+			origin.y = atof( args[2] );
+			origin.z = atof( args[3] );
 
 			QAngle angle;
 			angle.x = atof( args[4] );
@@ -7381,7 +7379,7 @@ void CBasePlayer::EquipWearable( CEconWearable *pItem )
 		pItem->Equip( this );
 	}
 
-#ifdef DBGFLAG_ASSERT
+#ifdef DEBUG
 	// Double check list integrity.
 	for ( int i = m_hMyWearables.Count()-1; i >= 0; --i )
 	{
@@ -7420,7 +7418,7 @@ void CBasePlayer::RemoveWearable( CEconWearable *pItem )
 		}
 	}
 
-#ifdef DBGFLAG_ASSERT
+#ifdef DEBUG
 	// Double check list integrity.
 	for ( int i = m_hMyWearables.Count()-1; i >= 0; --i )
 	{
@@ -7452,7 +7450,7 @@ void CBasePlayer::PlayWearableAnimsForPlaybackEvent( wearableanimplayback_t iPla
 // Purpose: Put the player in the specified team
 //-----------------------------------------------------------------------------
 
-void CBasePlayer::ChangeTeam( int iTeamNum, bool bAutoTeam, bool bSilent, bool bAutoBalance /*= false*/ )
+void CBasePlayer::ChangeTeam( int iTeamNum, bool bAutoTeam, bool bSilent)
 {
 	if ( !GetGlobalTeam( iTeamNum ) )
 	{
@@ -7873,7 +7871,7 @@ void CMovementSpeedMod::InputSpeedMod(inputdata_t &data)
 			// Bring the weapon back
 			if  ( HasSpawnFlags( SF_SPEED_MOD_SUPPRESS_WEAPONS ) && pPlayer->GetActiveWeapon() == NULL )
 			{
-				pPlayer->SetActiveWeapon( pPlayer->GetLastWeapon() );
+				pPlayer->SetActiveWeapon( pPlayer->Weapon_GetLast() );
 				if ( pPlayer->GetActiveWeapon() )
 				{
 					pPlayer->GetActiveWeapon()->Deploy();
@@ -8949,27 +8947,8 @@ void CBasePlayer::HandleAnimEvent( animevent_t *pEvent )
 	BaseClass::HandleAnimEvent( pEvent );
 }
 
-
 //-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CBasePlayer::ShouldAnnounceAchievement( void )
-{
-	m_flAchievementTimes.AddToTail( gpGlobals->curtime );
-	if ( m_flAchievementTimes.Count() > 3 )
-	{
-		m_flAchievementTimes.Remove( 0 );
-		if ( m_flAchievementTimes.Tail() - m_flAchievementTimes.Head() <= 60.0 )
-		{
-			return false;
-		}
-	}
-
-	return true;
-}
-
-//-----------------------------------------------------------------------------
-//  CPlayerInfo functions (simple pass-through to get around the CBasePlayer multiple inheritance limitation)
+//  CPlayerInfo functions (simple passthroughts to get around the CBasePlayer multiple inheritence limitation)
 //-----------------------------------------------------------------------------
 const char *CPlayerInfo::GetName()
 { 

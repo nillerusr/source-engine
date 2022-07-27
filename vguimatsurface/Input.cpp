@@ -29,11 +29,13 @@
 #ifdef _X360
 #include "xbox/xbox_win32stubs.h"
 #endif
+#include "MatSystemSurface.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 using namespace vgui;
+extern CMatSystemSurface g_MatSystemSurface;
 
 //-----------------------------------------------------------------------------
 // Vgui input events
@@ -374,7 +376,7 @@ static vgui::MouseCode ButtonCodeToMouseCode( ButtonCode_t buttonCode )
 //-----------------------------------------------------------------------------
 bool InputHandleInputEvent( const InputEvent_t &event )
 {
-	switch( event.m_nType )
+	switch( event.m_nType & 0xFFFF )
 	{
 	case IE_ButtonPressed:
 		{
@@ -425,25 +427,35 @@ bool InputHandleInputEvent( const InputEvent_t &event )
 		break;
 	case IE_FingerDown:
 		{
-			//g_pIInput->InternalCursorMoved( event.m_nData2, event.m_nData3 );
-			g_pIInput->UpdateCursorPosInternal( event.m_nData2, event.m_nData3 );
+			int w,h,x,y; g_MatSystemSurface.GetScreenSize(w, h);
+			uint data = (uint)event.m_nData;
+			x = w*((double)((data >> 16) & 0xFFFF) / 0xFFFF);
+			y = h*((double)(data & 0xFFFF) / 0xFFFF);
+			g_pIInput->UpdateCursorPosInternal( x, y );
 			g_pIInput->SetMouseCodeState( MOUSE_LEFT, vgui::BUTTON_PRESSED );
 			g_pIInput->InternalMousePressed( MOUSE_LEFT );
 		}
 		return true;
 	case IE_FingerUp:
 		{
-			g_pIInput->UpdateCursorPosInternal( event.m_nData2, event.m_nData3 );
-			g_pIInput->SetMouseCodeState( MOUSE_LEFT, vgui::BUTTON_RELEASED );			
+			int w,h,x,y; g_MatSystemSurface.GetScreenSize(w, h);
+			uint data = (uint)event.m_nData;
+			x = w*((double)((data >> 16) & 0xFFFF) / 0xFFFF);
+			y = h*((double)(data & 0xFFFF) / 0xFFFF);
+			g_pIInput->UpdateCursorPosInternal( x, y );
+			g_pIInput->SetMouseCodeState( MOUSE_LEFT, vgui::BUTTON_RELEASED );
 			g_pIInput->InternalMouseReleased( MOUSE_LEFT );
 		}
 		return true;
 	case IE_FingerMotion:
 		{
-			//g_pIInput->UpdateCursorPosInternal( event.m_nData2, event.m_nData3 );
-			g_pIInput->InternalCursorMoved( event.m_nData2, event.m_nData3 );
+			int w,h,x,y; g_MatSystemSurface.GetScreenSize(w, h);
+			uint data = (uint)event.m_nData;
+			x = w*((double)((data >> 16) & 0xFFFF) / 0xFFFF);
+			y = h*((double)(data & 0xFFFF) / 0xFFFF);
+			g_pIInput->InternalCursorMoved( x, y );
 		}
-		return true;	
+		return true;
 	case IE_ButtonDoubleClicked:
 		{
 			// NOTE: data2 is the virtual key code (data1 contains the scan-code one)
@@ -497,7 +509,7 @@ bool InputHandleInputEvent( const InputEvent_t &event )
 		return true;
 
 	case IE_IMESetWindow:
-		g_pIInput->SetIMEWindow( (void *)event.m_nData );
+		g_pIInput->SetIMEWindow( (void *)(intp)event.m_nData );
 		return true;
 
 	case IE_LocateMouseClick:

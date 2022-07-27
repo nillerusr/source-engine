@@ -25,7 +25,6 @@ public:
 
 	CModelSoundsCache();
 	CModelSoundsCache( const CModelSoundsCache& src );
-	virtual ~CModelSoundsCache(){}
 
 	void PrecacheSoundList();
 

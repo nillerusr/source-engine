@@ -1072,7 +1072,7 @@ public:
 	float *GetInitialFloatAttributePtrForWrite( int nAttribute, int nParticleNumber );
 	fltx4 *GetInitialM128AttributePtrForWrite( int nAttribute, size_t *pStrideOut );
 
-	void Simulate( float dt, bool updateBboxOnly );
+	void Simulate( float dt, bool updateBboxOnly = false );
 	void SkipToTime( float t );
 
 	// the camera objetc may be compared for equality against control point objects

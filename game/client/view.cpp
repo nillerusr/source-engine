@@ -83,7 +83,7 @@ extern bool g_bRenderingScreenshot;
 extern ConVar sensitivity;
 #endif
 
-ConVar zoom_sensitivity_ratio( "zoom_sensitivity_ratio", "1.0", FCVAR_ARCHIVE, "Additional mouse sensitivity scale factor applied when FOV is zoomed in." );
+ConVar zoom_sensitivity_ratio( "zoom_sensitivity_ratio", "1.0", 0, "Additional mouse sensitivity scale factor applied when FOV is zoomed in." );
 
 CViewRender g_DefaultViewRender;
 IViewRender *view = NULL;	// set in cldll_client_init.cpp if no mod creates their own
@@ -110,9 +110,9 @@ static ConVar v_centerspeed( "v_centerspeed","500" );
 #ifdef TF_CLIENT_DLL
 // 54 degrees approximates a 35mm camera - we determined that this makes the viewmodels
 // and motions look the most natural.
-ConVar v_viewmodel_fov( "viewmodel_fov", "54", FCVAR_ARCHIVE, "Sets the field-of-view for the viewmodel.", true, 0.1, true, 179.9, true, 54, true, 70, NULL );
+ConVar v_viewmodel_fov( "viewmodel_fov", "54", FCVAR_ARCHIVE );
 #else
-ConVar v_viewmodel_fov( "viewmodel_fov", "54", FCVAR_CHEAT, "Sets the field-of-view for the viewmodel.", true, 0.1, true, 179.9 );
+ConVar v_viewmodel_fov( "viewmodel_fov", "54", FCVAR_CHEAT );
 #endif
 ConVar mat_viewportscale( "mat_viewportscale", "1.0", FCVAR_ARCHIVE, "Scale down the main viewport (to reduce GPU impact on CPU profiling)", true, (1.0f / 640.0f), true, 1.0f );
 ConVar mat_viewportupscale( "mat_viewportupscale", "1", FCVAR_ARCHIVE, "Scale the viewport back up" );
@@ -580,8 +580,8 @@ const CViewSetup *CViewRender::GetViewSetup( void ) const
 //-----------------------------------------------------------------------------
 const CViewSetup *CViewRender::GetPlayerViewSetup( void ) const
 {   
-    const CViewSetup &viewEye = GetView ( STEREO_EYE_MONO );
-    return &viewEye;
+    const CViewSetup &view = GetView ( STEREO_EYE_MONO );
+    return &view;
 }
 
 //-----------------------------------------------------------------------------
@@ -643,22 +643,22 @@ void CViewRender::SetUpViews()
 	float farZ = GetZFar();
 
     // Set up the mono/middle view.
-    CViewSetup &viewEye = m_View;
+    CViewSetup &view = m_View;
 
-	viewEye.zFar				= farZ;
-	viewEye.zFarViewmodel	    = farZ;
+	view.zFar				= farZ;
+	view.zFarViewmodel	    = farZ;
 	// UNDONE: Make this farther out? 
 	//  closest point of approach seems to be view center to top of crouched box
-	viewEye.zNear			    = GetZNear();
-	viewEye.zNearViewmodel	    = 1;
-	viewEye.fov				= default_fov.GetFloat();
+	view.zNear			    = GetZNear();
+	view.zNearViewmodel	    = 1;
+	view.fov				= default_fov.GetFloat();
 
-	viewEye.m_bOrtho			= false;
-	viewEye.m_bViewToProjectionOverride = false;
-	viewEye.m_eStereoEye		= STEREO_EYE_MONO;
+	view.m_bOrtho			= false;
+    view.m_bViewToProjectionOverride = false;
+	view.m_eStereoEye		= STEREO_EYE_MONO;
 
 	// Enable spatial partition access to edicts
-	::partition->SuppressLists( PARTITION_ALL_CLIENT_EDICTS, false );
+	partition->SuppressLists( PARTITION_ALL_CLIENT_EDICTS, false );
 
 	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
 
@@ -669,12 +669,12 @@ void CViewRender::SetUpViews()
 
 	if ( engine->IsHLTV() )
 	{
-		HLTVCamera()->CalcView( viewEye.origin, viewEye.angles, viewEye.fov );
+		HLTVCamera()->CalcView( view.origin, view.angles, view.fov );
 	}
 #if defined( REPLAY_ENABLED )
 	else if ( g_pEngineClientReplay->IsPlayingReplayDemo() )
 	{
-		ReplayCamera()->CalcView( viewEye.origin, viewEye.angles, viewEye.fov );
+		ReplayCamera()->CalcView( view.origin, view.angles, view.fov );
 	}
 #endif
 	else
@@ -683,7 +683,7 @@ void CViewRender::SetUpViews()
 		// FIXME: What happens when there's no player?
 		if (pPlayer)
 		{
-			pPlayer->CalcView( viewEye.origin, viewEye.angles, viewEye.zNear, viewEye.zFar, viewEye.fov );
+			pPlayer->CalcView( view.origin, view.angles, view.zNear, view.zFar, view.fov );
 
 			// If we are looking through another entities eyes, then override the angles/origin for view
 			int viewentity = render->GetViewEntity();
@@ -693,50 +693,50 @@ void CViewRender::SetUpViews()
 				C_BaseEntity *ve = cl_entitylist->GetEnt( viewentity );
 				if ( ve )
 				{
-					VectorCopy( ve->GetAbsOrigin(), viewEye.origin );
-					VectorCopy( ve->GetAbsAngles(), viewEye.angles );
+					VectorCopy( ve->GetAbsOrigin(), view.origin );
+					VectorCopy( ve->GetAbsAngles(), view.angles );
 				}
 			}
 
 			// There is a viewmodel.
 			bCalcViewModelView = true;
-			ViewModelOrigin = viewEye.origin;
-			ViewModelAngles = viewEye.angles;
+			ViewModelOrigin = view.origin;
+			ViewModelAngles = view.angles;
 		}
 		else
 		{
-			viewEye.origin.Init();
-			viewEye.angles.Init();
+			view.origin.Init();
+			view.angles.Init();
 		}
 
 		// Even if the engine is paused need to override the view
 		// for keeping the camera control during pause.
-		g_pClientMode->OverrideView( &viewEye );
+		g_pClientMode->OverrideView( &view );
 	}
 
 	// give the toolsystem a chance to override the view
-	ToolFramework_SetupEngineView( viewEye.origin, viewEye.angles, viewEye.fov );
+	ToolFramework_SetupEngineView( view.origin, view.angles, view.fov );
 
 	if ( engine->IsPlayingDemo() )
 	{
 		if ( cl_demoviewoverride.GetFloat() > 0.0f )
 		{
 			// Retreive view angles from engine ( could have been set in IN_AdjustAngles above )
-			CalcDemoViewOverride( viewEye.origin, viewEye.angles );
+			CalcDemoViewOverride( view.origin, view.angles );
 		}
 		else
 		{
-			s_DemoView = viewEye.origin;
-			s_DemoAngle = viewEye.angles;
+			s_DemoView = view.origin;
+			s_DemoAngle = view.angles;
 		}
 	}
 
 	//Find the offset our current FOV is from the default value
 	float fDefaultFov = default_fov.GetFloat();
-	float flFOVOffset = fDefaultFov - viewEye.fov;
+	float flFOVOffset = fDefaultFov - view.fov;
 
 	//Adjust the viewmodel's FOV to move with any FOV offsets on the viewer's end
-	viewEye.fovViewmodel = g_pClientMode->GetViewModelFOV() - flFOVOffset;
+	view.fovViewmodel = g_pClientMode->GetViewModelFOV() - flFOVOffset;
 
 	if ( UseVR() )
 	{
@@ -748,7 +748,7 @@ void CViewRender::SetUpViews()
 		}
 		else
 		{
-			g_ClientVirtualReality.ProcessCurrentTrackingState ( viewEye.fov );
+			g_ClientVirtualReality.ProcessCurrentTrackingState ( view.fov );
 		}
 
 		HeadtrackMovementMode_t hmmOverrideMode = g_pClientMode->ShouldOverrideHeadtrackControl();
@@ -778,7 +778,7 @@ void CViewRender::SetUpViews()
 	}
 
 	// Disable spatial partition access
-	::partition->SuppressLists( PARTITION_ALL_CLIENT_EDICTS, true );
+	partition->SuppressLists( PARTITION_ALL_CLIENT_EDICTS, true );
 
 	// Enable access to all model bones
 	C_BaseAnimating::PopBoneAccess( "OnRenderStart->CViewRender::SetUpView" ); // pops the (true, false) bone access set in OnRenderStart
@@ -786,33 +786,33 @@ void CViewRender::SetUpViews()
 
 	// Compute the world->main camera transform
     // This is only done for the main "middle-eye" view, not for the various other views.
-	ComputeCameraVariables( viewEye.origin, viewEye.angles,
+	ComputeCameraVariables( view.origin, view.angles, 
 		&g_vecVForward, &g_vecVRight, &g_vecVUp, &g_matCamInverse );
 
 	// set up the hearing origin...
 	AudioState_t audioState;
-	audioState.m_Origin = viewEye.origin;
-	audioState.m_Angles = viewEye.angles;
-	audioState.m_bIsUnderwater = pPlayer && pPlayer->AudioStateIsUnderwater( viewEye.origin );
+	audioState.m_Origin = view.origin;
+	audioState.m_Angles = view.angles;
+	audioState.m_bIsUnderwater = pPlayer && pPlayer->AudioStateIsUnderwater( view.origin );
 
 	ToolFramework_SetupAudioState( audioState );
 
     // TomF: I wonder when the audio tools modify this, if ever...
-    Assert ( viewEye.origin == audioState.m_Origin );
-    Assert ( viewEye.angles == audioState.m_Angles );
-	viewEye.origin = audioState.m_Origin;
-	viewEye.angles = audioState.m_Angles;
+    Assert ( view.origin == audioState.m_Origin );
+    Assert ( view.angles == audioState.m_Angles );
+	view.origin = audioState.m_Origin;
+	view.angles = audioState.m_Angles;
 
 	engine->SetAudioState( audioState );
 
 	g_vecPrevRenderOrigin = g_vecRenderOrigin;
 	g_vecPrevRenderAngles = g_vecRenderAngles;
-	g_vecRenderOrigin = viewEye.origin;
-	g_vecRenderAngles = viewEye.angles;
+	g_vecRenderOrigin = view.origin;
+	g_vecRenderAngles = view.angles;
 
 #ifdef DBGFLAG_ASSERT
-	s_DbgSetupOrigin = viewEye.origin;
-	s_DbgSetupAngles = viewEye.angles;
+	s_DbgSetupOrigin = view.origin;
+	s_DbgSetupAngles = view.angles;
 #endif
 }
 
@@ -931,7 +931,7 @@ void CViewRender::WriteSaveGameScreenshotOfSize( const char *pFilename, int widt
 	{
 		// Write TGA format to buffer
 		int iMaxTGASize = 1024 + ( nSrcWidth * nSrcHeight * 4 );
-		void *pTGA = malloc( iMaxTGASize );
+		void *pTGA = new char[ iMaxTGASize ];
 		buffer.SetExternalBuffer( pTGA, iMaxTGASize, 0 );
 
 		bWriteResult = TGAWriter::WriteToBuffer( pSrcImage, buffer, nSrcWidth, nSrcHeight, IMAGE_FORMAT_RGB888, IMAGE_FORMAT_RGB888 );
@@ -1014,31 +1014,31 @@ void CViewRender::SetUpOverView()
 {
 	static int oldCRC = 0;
 
-    CViewSetup &viewEye = GetView ( STEREO_EYE_MONO );
+    CViewSetup &view = GetView ( STEREO_EYE_MONO );
 
-	viewEye.m_bOrtho = true;
+	view.m_bOrtho = true;
 
-	float aspect = (float)viewEye.width/(float)viewEye.height;
+	float aspect = (float)view.width/(float)view.height;
 
 	int size_y = 1024.0f * cl_leveloverview.GetFloat(); // scale factor, 1024 = OVERVIEW_MAP_SIZE
 	int	size_x = size_y * aspect;	// standard screen aspect 
 
-	viewEye.origin.x -= size_x / 2;
-	viewEye.origin.y += size_y / 2;
+	view.origin.x -= size_x / 2;
+	view.origin.y += size_y / 2;
 
-	viewEye.m_OrthoLeft   = 0;
-	viewEye.m_OrthoTop    = -size_y;
-	viewEye.m_OrthoRight  = size_x;
-	viewEye.m_OrthoBottom = 0;
+	view.m_OrthoLeft   = 0;
+	view.m_OrthoTop    = -size_y;
+	view.m_OrthoRight  = size_x;
+	view.m_OrthoBottom = 0;
 
-	viewEye.angles = QAngle( 90, 90, 0 );
+	view.angles = QAngle( 90, 90, 0 );
 
 	// simple movement detector, show position if moved
-	int newCRC = viewEye.origin.x + viewEye.origin.y + viewEye.origin.z;
+	int newCRC = view.origin.x + view.origin.y + view.origin.z;
 	if ( newCRC != oldCRC )
 	{
 		Msg( "Overview: scale %.2f, pos_x %.0f, pos_y %.0f\n", cl_leveloverview.GetFloat(),
-			viewEye.origin.x, viewEye.origin.y );
+			view.origin.x, view.origin.y );
 		oldCRC = newCRC;
 	}
 
@@ -1078,7 +1078,7 @@ void CViewRender::Render( vrect_t *rect )
 
     for( StereoEye_t eEye = GetFirstEye(); eEye <= GetLastEye(); eEye = (StereoEye_t)(eEye+1) )
 	{
-		CViewSetup &viewEye = GetView( eEye );
+		CViewSetup &view = GetView( eEye );
 
 		#if 0 && defined( CSTRIKE_DLL )
 			const bool bPlayingBackReplay = g_pEngineClientReplay && g_pEngineClientReplay->IsPlayingReplayDemo();
@@ -1132,11 +1132,11 @@ void CViewRender::Render( vrect_t *rect )
 		    limitedAspectRatio = MIN( aspectRatio, 1.85f * 0.75f ); // cap out the FOV advantage at a 1.85:1 ratio (about the widest any legit user should be)
 	    }
 
-		viewEye.fov = ScaleFOVByWidthRatio( viewEye.fov, limitedAspectRatio );
-		viewEye.fovViewmodel = ScaleFOVByWidthRatio( viewEye.fovViewmodel, aspectRatio );
+	    view.fov = ScaleFOVByWidthRatio( view.fov, limitedAspectRatio );
+	    view.fovViewmodel = ScaleFOVByWidthRatio( view.fovViewmodel, aspectRatio );
 
 	    // Let the client mode hook stuff.
-	    g_pClientMode->PreRender(&viewEye );
+	    g_pClientMode->PreRender(&view);
 
 	    g_pClientMode->AdjustEngineViewport( vr.x, vr.y, vr.width, vr.height );
 
@@ -1144,10 +1144,10 @@ void CViewRender::Render( vrect_t *rect )
 
 	    float flViewportScale = mat_viewportscale.GetFloat();
 
-		viewEye.m_nUnscaledX = vr.x;
-		viewEye.m_nUnscaledY = vr.y;
-		viewEye.m_nUnscaledWidth = vr.width;
-		viewEye.m_nUnscaledHeight = vr.height;
+		view.m_nUnscaledX = vr.x;
+		view.m_nUnscaledY = vr.y;
+		view.m_nUnscaledWidth = vr.width;
+		view.m_nUnscaledHeight = vr.height;
 
         switch( eEye )
 		{
@@ -1160,24 +1160,24 @@ void CViewRender::Render( vrect_t *rect )
 	            view.x				= vr.x + view.width * 0.10f;
 	            view.y				= vr.y + view.height * 0.20f;
 #else
-				viewEye.x				= vr.x * flViewportScale;
-				viewEye.y				= vr.y * flViewportScale;
-				viewEye.width			= vr.width * flViewportScale;
-				viewEye.height			= vr.height * flViewportScale;
+	            view.x				= vr.x * flViewportScale;
+				view.y				= vr.y * flViewportScale;
+				view.width			= vr.width * flViewportScale;
+				view.height			= vr.height * flViewportScale;
 #endif
 			    float engineAspectRatio = engine->GetScreenAspectRatio();
-				viewEye.m_flAspectRatio	= ( engineAspectRatio > 0.0f ) ? engineAspectRatio : ( (float)viewEye.width / (float)viewEye.height );
+			    view.m_flAspectRatio	= ( engineAspectRatio > 0.0f ) ? engineAspectRatio : ( (float)view.width / (float)view.height );
 			}
 			break;
 
 			case STEREO_EYE_RIGHT:
 			case STEREO_EYE_LEFT:
 			{
-				g_pSourceVR->GetViewportBounds( (ISourceVirtualReality::VREye)(eEye - 1 ), &viewEye.x, &viewEye.y, &viewEye.width, &viewEye.height );
-				viewEye.m_nUnscaledWidth = viewEye.width;
-				viewEye.m_nUnscaledHeight = viewEye.height;
-				viewEye.m_nUnscaledX = viewEye.x;
-				viewEye.m_nUnscaledY = viewEye.y;
+				g_pSourceVR->GetViewportBounds( (ISourceVirtualReality::VREye)(eEye - 1 ), &view.x, &view.y, &view.width, &view.height );
+				view.m_nUnscaledWidth = view.width;
+				view.m_nUnscaledHeight = view.height;
+				view.m_nUnscaledX = view.x;
+				view.m_nUnscaledY = view.y;
 			}
 			break;
 
@@ -1187,8 +1187,8 @@ void CViewRender::Render( vrect_t *rect )
 		}
 
 		// if we still don't have an aspect ratio, compute it from the view size
-		if( viewEye.m_flAspectRatio <= 0.f )
-			viewEye.m_flAspectRatio	= (float)viewEye.width / (float)viewEye.height;
+		if( view.m_flAspectRatio <= 0.f )
+		    view.m_flAspectRatio	= (float)view.width / (float)view.height;
 
 	    int nClearFlags = VIEW_CLEAR_DEPTH | VIEW_CLEAR_STENCIL;
 
@@ -1253,7 +1253,7 @@ void CViewRender::Render( vrect_t *rect )
 			flags |= RENDERVIEW_SUPPRESSMONITORRENDERING;
 		}
 
-	    RenderView( viewEye, nClearFlags, flags );
+	    RenderView( view, nClearFlags, flags );
 
 		if ( UseVR() )
 		{
@@ -1274,7 +1274,7 @@ void CViewRender::Render( vrect_t *rect )
 			{
 				// TODO - a bit of a shonky test - basically trying to catch the main menu, the briefing screen, the loadout screen, etc.
 				bool bTranslucent = !g_pMatSystemSurface->IsCursorVisible();
-				g_ClientVirtualReality.OverlayHUDQuadWithUndistort( viewEye, bDoUndistort, g_pClientMode->ShouldBlackoutAroundHUD(), bTranslucent );
+				g_ClientVirtualReality.OverlayHUDQuadWithUndistort( view, bDoUndistort, g_pClientMode->ShouldBlackoutAroundHUD(), bTranslucent );
 			}
 		}
     }

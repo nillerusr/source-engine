@@ -188,9 +188,7 @@ void VideoPanel::OnKeyCodePressed( vgui::KeyCode code )
 		 code == KEY_XBUTTON_X || 
 		 code == KEY_XBUTTON_Y || 
 		 code == KEY_XBUTTON_START || 
-		 code == KEY_XBUTTON_BACK ||
-		 code == STEAMCONTROLLER_A ||
-		 code == STEAMCONTROLLER_B )
+		 code == KEY_XBUTTON_BACK )
 	{
 		OnClose();
 	}
@@ -350,8 +348,7 @@ bool VideoPanel_Create( unsigned int nXPos, unsigned int nYPos,
 	// Start it going
 	if ( pVideoPanel->BeginPlayback( pVideoFilename ) == false )
 	{
-		pVideoPanel->MarkForDeletion();
-		pVideoPanel = NULL;
+		delete pVideoPanel;
 		return false;
 	}
 

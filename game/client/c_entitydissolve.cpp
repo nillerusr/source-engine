@@ -228,6 +228,7 @@ void C_EntityDissolve::BuildTeslaEffect( mstudiobbox_t *pHitBox, const matrix3x4
 		{
 			// Move it towards the camera
 			Vector vecFlash = tr.endpos;
+			Vector vecForward;
 			AngleVectors( MainViewAngles(), &vecForward );
 			vecFlash -= (vecForward * 8);
 
@@ -555,7 +556,7 @@ void C_EntityDissolve::ClientThink( void )
 		// because when the server says to destroy it, the client won't be able to find it.
 		// ClientEntityList().RemoveEntity( GetClientHandle() );
 
-		::partition->Remove( PARTITION_CLIENT_SOLID_EDICTS | PARTITION_CLIENT_RESPONSIVE_EDICTS | PARTITION_CLIENT_NON_STATIC_EDICTS, CollisionProp()->GetPartitionHandle() );
+		partition->Remove( PARTITION_CLIENT_SOLID_EDICTS | PARTITION_CLIENT_RESPONSIVE_EDICTS | PARTITION_CLIENT_NON_STATIC_EDICTS, CollisionProp()->GetPartitionHandle() );
 
 		RemoveFromLeafSystem();
 
@@ -574,10 +575,7 @@ void C_EntityDissolve::ClientThink( void )
 #ifdef TF_CLIENT_DLL
 			else
 			{
-				// Hide the ragdoll -- don't actually delete it or else things get unhappy when
-				// we get a message from the server telling us to delete it
-				pEnt->AddEffects( EF_NODRAW );
-				pEnt->ParticleProp()->StopEmission();
+				pEnt->Release();
 			}
 #endif
 		}

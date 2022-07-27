@@ -64,7 +64,7 @@ CTextureSystem g_Textures;
 //-----------------------------------------------------------------------------
 // CMaterialFileChangeWatcher implementation.
 //-----------------------------------------------------------------------------
-void CMaterialFileChangeWatcher::Init( CTextureSystem *pSystem, int context )
+void CMaterialFileChangeWatcher::Init( CTextureSystem *pSystem, intp context )
 {
 	m_pTextureSystem = pSystem;
 	m_Context = context;
@@ -662,7 +662,7 @@ void CTextureSystem::UpdateFileChangeWatchers()
 }
 
 
-void CTextureSystem::OnFileChange( const char *pFilename, int context, CTextureSystem::EFileType eFileType )
+void CTextureSystem::OnFileChange( const char *pFilename, intp context, CTextureSystem::EFileType eFileType )
 {
 	// It requires the forward slashes later...
 	char fixedSlashes[MAX_PATH];

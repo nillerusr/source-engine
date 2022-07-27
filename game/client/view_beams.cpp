@@ -438,7 +438,7 @@ int	Beam_t::GetFxBlend( )
 extern bool g_bRenderingScreenshot;
 extern ConVar r_drawviewmodel;
 
-int Beam_t::DrawModel( int ignored )
+int Beam_t::DrawModel( int flags )
 {
 #ifdef PORTAL
 	if ( ( !g_pPortalRender->IsRenderingPortal() && !m_bDrawInMainRender ) || 
@@ -1733,21 +1733,15 @@ void CViewRenderBeams::DrawBeamFollow( const model_t* pSprite, Beam_t *pbeam,
 	}
 	if (!pnew && div != 0)
 	{
-		if ( debugoverlay )
-		{
-			VectorCopy( pbeam->attachment[0], delta );
-			debugoverlay->ScreenPosition( pbeam->attachment[0], screenLast );
-			debugoverlay->ScreenPosition( particles->org, screen );
-		}
+		VectorCopy( pbeam->attachment[0], delta );
+		debugoverlay->ScreenPosition( pbeam->attachment[0], screenLast );
+		debugoverlay->ScreenPosition( particles->org, screen );
 	}
 	else if (particles && particles->next)
 	{
-		if ( debugoverlay )
-		{
-			VectorCopy( particles->org, delta );
-			debugoverlay->ScreenPosition( particles->org, screenLast );
-			debugoverlay->ScreenPosition( particles->next->org, screen );
-		}
+		VectorCopy( particles->org, delta );
+		debugoverlay->ScreenPosition( particles->org, screenLast );
+		debugoverlay->ScreenPosition( particles->next->org, screen );
 		particles = particles->next;
 	}
 	else
@@ -1969,7 +1963,7 @@ void CViewRenderBeams::DrawBeam( Beam_t *pbeam )
 
 	// set color
 	float srcColor[3];
-	float color[3];
+	float color[4];
 
 	srcColor[0] = pbeam->r;
 	srcColor[1] = pbeam->g;
@@ -1990,6 +1984,7 @@ void CViewRenderBeams::DrawBeam( Beam_t *pbeam )
 	VectorScale( color, (1/255.0), color );
 	VectorCopy( color, srcColor );
 	VectorScale( color, ((float)pbeam->brightness / 255.0), color );
+	color[3] = 1.f;
 
 	switch( pbeam->type )
 	{

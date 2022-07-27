@@ -9,7 +9,7 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
-#if defined(__x86_64__) || defined(_WIN64)
+#if defined(__x86_64__) || defined(_WIN64) || defined(__aarch64__)
 #define PLATFORM_64BITS 1
 #endif
 
@@ -70,7 +70,11 @@
 #include <time.h>
 #endif
 
+#ifdef OSX
+#include <malloc/malloc.h>
+#else
 #include <malloc.h>
+#endif
 #include <new>
 
 // need this for memset
@@ -171,6 +175,9 @@ typedef signed char int8;
 	typedef __int64					int64;
 	typedef unsigned __int64		uint64;
 
+    typedef int64 lint64;
+    typedef uint64 ulint64;
+
 	#ifdef PLATFORM_64BITS
 		typedef __int64 intp;				// intp is an integer that can accomodate a pointer
 		typedef unsigned __int64 uintp;		// (ie, sizeof(intp) >= sizeof(int) && sizeof(intp) >= sizeof(void *)
@@ -201,13 +208,17 @@ typedef signed char int8;
 	typedef unsigned int			uint32;
 	typedef long long				int64;
 	typedef unsigned long long		uint64;
+
+    typedef long int lint64;
+    typedef unsigned long int ulint64;
+
 	#ifdef PLATFORM_64BITS
 		typedef long long			intp;
 		typedef unsigned long long	uintp;
 	#else
 		typedef int					intp;
 		typedef unsigned int		uintp;
-	#endif
+    #endif
 	typedef void *HWND;
 
 	// Avoid redefinition warnings if a previous header defines this.
@@ -429,7 +440,17 @@ typedef void * HINSTANCE;
 	// On OSX, SIGTRAP doesn't really stop the thread cold when debugging.
 	// So if being debugged, use INT3 which is precise.
 #ifdef OSX
-#define DebuggerBreak()  if ( Plat_IsInDebugSession() ) { __asm ( "int $3" ); } else { raise(SIGTRAP); }
+#if defined(__arm__) || defined(__aarch64__)
+#ifdef __clang__
+#define DebuggerBreak()  do { if ( Plat_IsInDebugSession() ) { __builtin_debugtrap(); } else { raise(SIGTRAP); } } while(0)
+#elif defined __GNUC__
+#define DebuggerBreak()  do { if ( Plat_IsInDebugSession() ) { __builtin_trap(); } else { raise(SIGTRAP); } } while(0)
+#else
+#define DebuggerBreak()  raise(SIGTRAP)
+#endif
+#else
+#define DebuggerBreak()  do { if ( Plat_IsInDebugSession() ) { __asm ( "int $3" ); } else { raise(SIGTRAP); } } while(0)
+#endif
 #else
 #define DebuggerBreak()  raise(SIGTRAP)
 #endif
@@ -502,6 +523,16 @@ typedef void * HINSTANCE;
 #define ALIGN128_POST DECL_ALIGN(128)
 #else
 #error
+#endif
+
+// !!! NOTE: if you get a compile error here, you are using VALIGNOF on an abstract type :NOTE !!!
+#define VALIGNOF_PORTABLE( type ) ( sizeof( AlignOf_t<type> ) - sizeof( type ) )
+
+#if defined( COMPILER_GCC ) || defined( COMPILER_MSVC )
+#define VALIGNOF( type ) __alignof( type )
+#define VALIGNOF_TEMPLATE_SAFE( type ) VALIGNOF_PORTABLE( type )
+#else
+#error "PORT: Code only tested with MSVC! Must validate with new compiler, and use built-in keyword if available."
 #endif
 
 // Pull in the /analyze code annotations.
@@ -600,6 +631,7 @@ typedef void * HINSTANCE;
 #endif
 
 // Used for standard calling conventions
+
 #if defined( _WIN32 ) && !defined( _X360 )
 	#define  STDCALL				__stdcall
 	#define  FASTCALL				__fastcall
@@ -655,6 +687,11 @@ typedef void * HINSTANCE;
 
 
 #ifdef _WIN32
+
+#ifdef __SANITIZE_ADDRESS__
+#undef FORCEINLINE
+#define FORCEINLINE static
+#endif
 
 // Remove warnings from warning level 4.
 #pragma warning(disable : 4514) // warning C4514: 'acosl' : unreferenced inline function has been removed
@@ -752,7 +789,7 @@ typedef void * HINSTANCE;
 #define _wtoi(arg) wcstol(arg, NULL, 10)
 #define _wtoi64(arg) wcstoll(arg, NULL, 10)
 
-typedef uint32 HMODULE;
+typedef uintp HMODULE;
 typedef void *HANDLE;
 #endif
 
@@ -830,7 +867,7 @@ static FORCEINLINE double fsel(double fComparand, double fValGE, double fLT)
 
 		#endif
 	#endif
-#elif defined (__arm__)
+#elif defined (__arm__) || defined (__aarch64__)
 	inline void SetupFPUControlWord() {}
 #else
 	inline void SetupFPUControlWord()
@@ -1094,12 +1131,12 @@ FORCEINLINE void StoreLittleDWord( unsigned long *base, unsigned int dwordIndex,
 			__storewordbytereverse( dword, dwordIndex<<2, base );
 		}
 #else
-FORCEINLINE unsigned long LoadLittleDWord( const unsigned long *base, unsigned int dwordIndex )
+FORCEINLINE uint32 LoadLittleDWord( const uint32 *base, unsigned int dwordIndex )
 	{
 		return LittleDWord( base[dwordIndex] );
 	}
 
-FORCEINLINE void StoreLittleDWord( unsigned long *base, unsigned int dwordIndex, unsigned long dword )
+FORCEINLINE void StoreLittleDWord( uint32 *base, unsigned int dwordIndex, uint32 dword )
 	{
 		base[dwordIndex] = LittleDWord(dword);
 	}
@@ -1167,7 +1204,7 @@ PLATFORM_INTERFACE struct tm *		Plat_localtime( const time_t *timep, struct tm *
 
 inline uint64 Plat_Rdtsc()
 {
-#if defined( __arm__ ) && defined (POSIX)
+#if (defined( __arm__ ) || defined( __aarch64__ )) && defined (POSIX)
 	struct timespec t;
 	clock_gettime( CLOCK_REALTIME, &t);
 	return t.tv_sec * 1000000000ULL + t.tv_nsec;
@@ -1479,7 +1516,7 @@ inline void ConstructThreeArg( T* pMemory, P1 const& arg1, P2 const& arg2, P3 co
 template <class T>
 inline T* CopyConstruct( T* pMemory, T const& src )
 {
-	return reinterpret_cast<T*>(::new( pMemory ) T(src));
+	return ::new( pMemory ) T(src);
 }
 
 template <class T>

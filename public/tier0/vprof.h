@@ -18,6 +18,7 @@
 #if !( defined( _X360 ) && defined( _CERT ) )
 #define VPROF_ENABLED
 #endif
+// TODO(nillerusr): make stubbed vprofile
 
 #if defined(_X360) && defined(VPROF_ENABLED)
 #include "tier0/pmc360.h"

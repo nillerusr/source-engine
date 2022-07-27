@@ -763,7 +763,9 @@ void CStudioRenderContext::R_StudioBuildMeshGroup( const char *pModelName, bool 
 
 	for (i = 0; i < pStripGroup->numIndices; ++i)
 	{
-		meshBuilder.Index( *pStripGroup->pIndex(i) );
+		unsigned short index;
+		memcpy( &index, pStripGroup->pIndex(i), sizeof(index) );
+		meshBuilder.Index( index );
 		meshBuilder.AdvanceIndex();
 	}
 
@@ -1317,7 +1319,7 @@ void CStudioRenderContext::R_StudioDestroyStaticMeshes( int numStudioMeshes, stu
 
 	if ( *ppStudioMeshes )
 	{
-		delete 	*ppStudioMeshes;
+		delete[] *ppStudioMeshes;
 		*ppStudioMeshes = 0;
 	}
 }

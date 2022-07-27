@@ -2750,10 +2750,6 @@ void CheckSpecialCheatVars()
 	if ( !mat_picmip )
 		mat_picmip = g_pCVar->FindVar( "mat_picmip" );
 
-	// In multiplayer, don't allow them to set mat_picmip > 2.	
-	if ( mat_picmip )
-		CheckVarRange_Generic( mat_picmip, -1, 2 );
-	
 	CheckVarRange_r_rootlod();
 	CheckVarRange_r_lod();
 	HandleServerAllowColorCorrection();
@@ -4850,7 +4846,9 @@ void Host_FreeToLowMark( bool server )
 //-----------------------------------------------------------------------------
 void Host_Shutdown(void)
 {
+#ifndef ANDROID
 	extern void ShutdownMixerControls();
+#endif
 
 	if ( host_checkheap )
 	{
@@ -4962,7 +4960,7 @@ void Host_Shutdown(void)
 
 #ifndef SWDS
 	TRACESHUTDOWN( Key_Shutdown() );
-#ifndef _X360
+#if !defined _X360 && !defined ANDROID
 	TRACESHUTDOWN( ShutdownMixerControls() );
 #endif
 #endif

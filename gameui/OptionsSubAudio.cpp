@@ -362,10 +362,6 @@ void COptionsSubAudio::OnCommand( const char *command )
 			RunTestSpeakers();
 		}
 	}
-   else if ( !stricmp( command, "ShowThirdPartyAudioCredits" ) )
-   {
-      OpenThirdPartySoundCreditsDialog();
-   }
 
 	BaseClass::OnCommand( command );
 }

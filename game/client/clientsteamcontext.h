@@ -27,9 +27,6 @@ public:
 	STEAM_CALLBACK( CClientSteamContext, OnSteamServersDisconnected, SteamServersDisconnected_t, m_CallbackSteamServersDisconnected );
 	STEAM_CALLBACK( CClientSteamContext, OnSteamServerConnectFailure, SteamServerConnectFailure_t, m_CallbackSteamServerConnectFailure );
 	STEAM_CALLBACK( CClientSteamContext, OnSteamServersConnected, SteamServersConnected_t, m_CallbackSteamServersConnected );
-#ifdef TF_CLIENT_DLL
-	STEAM_CALLBACK( CClientSteamContext, OnGameJoinRequested, GameRichPresenceJoinRequested_t, m_GameJoinRequested );
-#endif // TF_CLIENT_DLL
 #endif
 
 	bool BLoggedOn() { return m_bLoggedOn; }

@@ -600,10 +600,6 @@ public:
 				pModel->mpBreakMode = MULTIPLAYER_BREAK_CLIENTSIDE;
 			}
 		}
-		else if ( !strcmpi( pKey, "velocity" ) )
-		{
-			UTIL_StringToVector( pModel->velocity.Base(), pValue );
-		}
 	}
 	virtual void SetDefaults( void *pData ) 
 	{
@@ -621,7 +617,6 @@ public:
 		pModel->placementName[0] = 0;
 		pModel->placementIsBone = false;
 		pModel->mpBreakMode = MULTIPLAYER_BREAK_DEFAULT;
-		pModel->velocity = vec3_origin;
 		m_wroteCollisionGroup = false;
 	}
 
@@ -631,7 +626,7 @@ private:
 	bool	m_wroteCollisionGroup;
 };
 
-void BuildPropList( const char *pszBlockName, CUtlVector<breakmodel_t> &list, int modelindex, float defBurstScale, int defCollisionGroup )
+void BreakModelList( CUtlVector<breakmodel_t> &list, int modelindex, float defBurstScale, int defCollisionGroup )
 {
 	vcollide_t *pCollide = modelinfo->GetVCollide( modelindex );
 	if ( !pCollide )
@@ -643,7 +638,7 @@ void BuildPropList( const char *pszBlockName, CUtlVector<breakmodel_t> &list, in
 		CBreakParser breakParser( defBurstScale, defCollisionGroup );
 		
 		const char *pBlock = pParse->GetCurrentBlockName();
-		if ( !strcmpi( pBlock, pszBlockName ) )
+		if ( !strcmpi( pBlock, "break" ) )
 		{
 			int index = list.AddToTail();
 			breakmodel_t &breakModel = list[index];
@@ -655,11 +650,6 @@ void BuildPropList( const char *pszBlockName, CUtlVector<breakmodel_t> &list, in
 		}
 	}
 	physcollision->VPhysicsKeyParserDestroy( pParse );
-}
-
-void BreakModelList( CUtlVector<breakmodel_t> &list, int modelindex, float defBurstScale, int defCollisionGroup )
-{
-	BuildPropList( "break", list, modelindex, defBurstScale, defCollisionGroup );
 }
 
 #if !defined(_STATIC_LINKED) || defined(CLIENT_DLL)
@@ -961,7 +951,7 @@ void PropBreakableCreateAll( int modelindex, IPhysicsObject *pPhysics, const bre
 			nSkin = pOwnerAnim->m_nSkin;
 		}
 	}
-	matrix3x4_t localToWorld;
+	static matrix3x4_t localToWorld;
 
 	CStudioHdr studioHdr;
 	const model_t *model = modelinfo->GetModel( modelindex );
@@ -1019,14 +1009,14 @@ void PropBreakableCreateAll( int modelindex, IPhysicsObject *pPhysics, const bre
 			if ( ( iPrecomputedBreakableCount != -1 ) && ( i >= iPrecomputedBreakableCount ) )
 				break;
 
-			matrix3x4_t matrix;
+			static matrix3x4_t matrix;
 			AngleMatrix( params.angles, params.origin, matrix );
 
-			CStudioHdr studioHdrModel;
-			const model_t *pModel = modelinfo->GetModel( modelIndex );
-			if ( pModel )
+			CStudioHdr studioHdr;
+			const model_t *model = modelinfo->GetModel( modelIndex );
+			if ( model )
 			{
-				studioHdrModel.Init( modelinfo->GetStudiomodel( pModel ) );
+				studioHdr.Init( modelinfo->GetStudiomodel( model ) );
 			}
 
 			// Increment the number of breakable props this frame.
@@ -1047,7 +1037,7 @@ void PropBreakableCreateAll( int modelindex, IPhysicsObject *pPhysics, const bre
 				}
 				else
 				{
-					int attachmentIndex = Studio_FindAttachment( &studioHdrModel, list[i].placementName ) + 1;
+					int attachmentIndex = Studio_FindAttachment( &studioHdr, list[i].placementName ) + 1;
 					if ( attachmentIndex > 0 )
 					{
 						pOwnerAnim->GetAttachment( attachmentIndex, matrix );
@@ -1057,11 +1047,11 @@ void PropBreakableCreateAll( int modelindex, IPhysicsObject *pPhysics, const bre
 			}
 			else
 			{
-				int placementIndex = Studio_FindAttachment( &studioHdrModel, "placementOrigin" ) + 1;
+				int placementIndex = Studio_FindAttachment( &studioHdr, "placementOrigin" ) + 1;
 				Vector placementOrigin = parentOrigin;
 				if ( placementIndex > 0 )
 				{
-					GetAttachmentLocalSpace( &studioHdrModel, placementIndex-1, localToWorld );
+					GetAttachmentLocalSpace( &studioHdr, placementIndex-1, localToWorld );
 					MatrixGetColumn( localToWorld, 3, placementOrigin );
 					placementOrigin -= parentOrigin;
 				}
@@ -1076,7 +1066,7 @@ void PropBreakableCreateAll( int modelindex, IPhysicsObject *pPhysics, const bre
 			}
 
 			int nActualSkin = nSkin;
-			if ( nActualSkin > studioHdrModel.numskinfamilies() )
+			if ( nActualSkin > studioHdr.numskinfamilies() )
 				nActualSkin = 0;
 
 			CBaseEntity *pBreakable = NULL;
@@ -1198,7 +1188,7 @@ void PropBreakableCreateAll( int modelindex, IPhysicsObject *pPhysics, const bre
 					Vector vecBreakableObbSize = pBreakable->CollisionProp()->OBBSize();
 
 					// Try to align the gibs along the original axis 
-					matrix3x4_t matrix;
+					static matrix3x4_t matrix;
 					AngleMatrix( vecAngles, matrix );
 					AlignBoxes( &matrix, vecObbSize, vecBreakableObbSize );
 					MatrixAngles( matrix, vecAngles );
@@ -1236,8 +1226,9 @@ void PropBreakableCreateAll( int modelindex, IPhysicsObject *pPhysics, const Vec
 // Purpose: 
 // Input  : modelindex - 
 //-----------------------------------------------------------------------------
-void PrecachePropsForModel( int iModel, const char *pszBlockName )
+void PrecacheGibsForModel( int iModel )
 {
+	VPROF_BUDGET( "PrecacheGibsForModel", VPROF_BUDGETGROUP_PLAYER );
 	vcollide_t *pCollide = modelinfo->GetVCollide( iModel );
 	if ( !pCollide )
 		return;
@@ -1250,7 +1241,7 @@ void PrecachePropsForModel( int iModel, const char *pszBlockName )
 	while ( !pParse->Finished() )
 	{
 		const char *pBlock = pParse->GetCurrentBlockName();
-		if ( !strcmpi( pBlock, pszBlockName ) )
+		if ( !strcmpi( pBlock, "break" ) )
 		{
 			breakmodel_t breakModel;
 			pParse->ParseCustom( &breakModel, &breakParser );
@@ -1264,12 +1255,6 @@ void PrecachePropsForModel( int iModel, const char *pszBlockName )
 
 	// Destroy the parser.
 	physcollision->VPhysicsKeyParserDestroy( pParse );
-}
-
-void PrecacheGibsForModel( int iModel )
-{
-	VPROF_BUDGET( "PrecacheGibsForModel", VPROF_BUDGETGROUP_PLAYER );
-	PrecachePropsForModel( iModel, "break" );
 }
 
 //-----------------------------------------------------------------------------
@@ -1355,18 +1340,18 @@ CBaseEntity *CreateGibsFromList( CUtlVector<breakmodel_t> &list, int modelindex,
 	}
 	matrix3x4_t localToWorld;
 
-	CStudioHdr studioHdrParent;
+	CStudioHdr studioHdr;
 	const model_t *model = modelinfo->GetModel( modelindex );
 	if ( model )
 	{
-		studioHdrParent.Init( modelinfo->GetStudiomodel( model ) );
+		studioHdr.Init( modelinfo->GetStudiomodel( model ) );
 	}
 
 	Vector parentOrigin = vec3_origin;
-	int parentAttachment = 	Studio_FindAttachment( &studioHdrParent, "placementOrigin" ) + 1;
+	int parentAttachment = 	Studio_FindAttachment( &studioHdr, "placementOrigin" ) + 1;
 	if ( parentAttachment > 0 )
 	{
-		GetAttachmentLocalSpace( &studioHdrParent, parentAttachment-1, localToWorld );
+		GetAttachmentLocalSpace( &studioHdr, parentAttachment-1, localToWorld );
 		MatrixGetColumn( localToWorld, 3, parentOrigin );
 	}
 	else
@@ -1412,14 +1397,14 @@ CBaseEntity *CreateGibsFromList( CUtlVector<breakmodel_t> &list, int modelindex,
 			if ( ( iPrecomputedBreakableCount != -1 ) && ( i >= iPrecomputedBreakableCount ) )
 				break;
 
-			matrix3x4_t matrix;
+			static matrix3x4_t matrix;
 			AngleMatrix( params.angles, params.origin, matrix );
 
-			CStudioHdr studioHdrModel;
-			const model_t *pModel = modelinfo->GetModel( modelIndex );
-			if ( pModel )
+			CStudioHdr studioHdr;
+			const model_t *model = modelinfo->GetModel( modelIndex );
+			if ( model )
 			{
-				studioHdrModel.Init( modelinfo->GetStudiomodel( pModel ) );
+				studioHdr.Init( modelinfo->GetStudiomodel( model ) );
 			}
 
 			// Increment the number of breakable props this frame.
@@ -1440,7 +1425,7 @@ CBaseEntity *CreateGibsFromList( CUtlVector<breakmodel_t> &list, int modelindex,
 				}
 				else
 				{
-					int attachmentIndex = Studio_FindAttachment( &studioHdrModel, list[i].placementName ) + 1;
+					int attachmentIndex = Studio_FindAttachment( &studioHdr, list[i].placementName ) + 1;
 					if ( attachmentIndex > 0 )
 					{
 						pOwnerAnim->GetAttachment( attachmentIndex, matrix );
@@ -1450,11 +1435,11 @@ CBaseEntity *CreateGibsFromList( CUtlVector<breakmodel_t> &list, int modelindex,
 			}
 			else
 			{
-				int placementIndex = Studio_FindAttachment( &studioHdrModel, "placementOrigin" ) + 1;
+				int placementIndex = Studio_FindAttachment( &studioHdr, "placementOrigin" ) + 1;
 				Vector placementOrigin = parentOrigin;
 				if ( placementIndex > 0 )
 				{
-					GetAttachmentLocalSpace( &studioHdrModel, placementIndex-1, localToWorld );
+					GetAttachmentLocalSpace( &studioHdr, placementIndex-1, localToWorld );
 					MatrixGetColumn( localToWorld, 3, placementOrigin );
 					placementOrigin -= parentOrigin;
 				}
@@ -1463,21 +1448,12 @@ CBaseEntity *CreateGibsFromList( CUtlVector<breakmodel_t> &list, int modelindex,
 			}
 			Vector objectVelocity = params.velocity;
 
-			Vector gibVelocity = vec3_origin;
-			if ( !list[i].velocity.IsZero() )
-			{
-				VectorRotate( list[i].velocity, matrix, gibVelocity );
-				objectVelocity = gibVelocity;
-			}
-			else
-			{
-				float flScale = VectorNormalize( objectVelocity );
-				objectVelocity.x += RandomFloat( -1.f, 1.0f );
-				objectVelocity.y += RandomFloat( -1.0f, 1.0f );
-				objectVelocity.z += RandomFloat( 0.0f, 1.0f );
-				VectorNormalize( objectVelocity );
-				objectVelocity *= flScale;
-			}
+			float flScale = VectorNormalize( objectVelocity );
+			objectVelocity.x += RandomFloat( -1.f, 1.0f );
+			objectVelocity.y += RandomFloat( -1.0f, 1.0f );
+			objectVelocity.z += RandomFloat( 0.0f, 1.0f );
+			VectorNormalize( objectVelocity );
+			objectVelocity *= flScale;
 
 			if (pPhysics)
 			{
@@ -1485,7 +1461,7 @@ CBaseEntity *CreateGibsFromList( CUtlVector<breakmodel_t> &list, int modelindex,
 			}
 
 			int nActualSkin = nSkin;
-			if ( nActualSkin > studioHdrModel.numskinfamilies() )
+			if ( nActualSkin > studioHdr.numskinfamilies() )
 				nActualSkin = 0;
 
 			CBaseEntity *pBreakable = NULL;
@@ -1620,7 +1596,7 @@ CBaseEntity *CreateGibsFromList( CUtlVector<breakmodel_t> &list, int modelindex,
 					Vector vecBreakableObbSize = pBreakable->CollisionProp()->OBBSize();
 
 					// Try to align the gibs along the original axis 
-					matrix3x4_t matrix;
+					static matrix3x4_t matrix;
 					AngleMatrix( vecAngles, matrix );
 					AlignBoxes( &matrix, vecObbSize, vecBreakableObbSize );
 					MatrixAngles( matrix, vecAngles );

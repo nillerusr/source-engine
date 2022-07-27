@@ -57,60 +57,6 @@ extern bool IsInCommentaryMode( void );
 
 ConVar  *sv_cheats = NULL;
 
-enum eAllowPointServerCommand {
-	eAllowNever,
-	eAllowOfficial,
-	eAllowAlways
-};
-
-#ifdef TF_DLL
-// The default value here should match the default of the convar
-eAllowPointServerCommand sAllowPointServerCommand = eAllowOfficial;
-#else
-eAllowPointServerCommand sAllowPointServerCommand = eAllowAlways;
-#endif // TF_DLL
-
-void sv_allow_point_servercommand_changed( IConVar *pConVar, const char *pOldString, float flOldValue )
-{
-	ConVarRef var( pConVar );
-	if ( !var.IsValid() )
-	{
-		return;
-	}
-
-	const char *pNewValue = var.GetString();
-	if ( V_strcasecmp ( pNewValue, "always" ) == 0 )
-	{
-		sAllowPointServerCommand = eAllowAlways;
-	}
-#ifdef TF_DLL
-	else if ( V_strcasecmp ( pNewValue, "official" ) == 0 )
-	{
-		sAllowPointServerCommand = eAllowOfficial;
-	}
-#endif // TF_DLL
-	else
-	{
-		sAllowPointServerCommand = eAllowNever;
-	}
-}
-
-ConVar sv_allow_point_servercommand ( "sv_allow_point_servercommand",
-#ifdef TF_DLL
-                                      // The default value here should match the default of the convar
-                                      "official",
-#else
-                                      // Other games may use this in their official maps, and only TF exposes IsValveMap() currently
-                                      "always",
-#endif // TF_DLL
-                                      FCVAR_NONE,
-                                      "Allow use of point_servercommand entities in map. Potentially dangerous for untrusted maps.\n"
-                                      "  disallow : Always disallow\n"
-#ifdef TF_DLL
-                                      "  official : Allowed for valve maps only\n"
-#endif // TF_DLL
-                                      "  always   : Allow for all maps", sv_allow_point_servercommand_changed );
-
 void ClientKill( edict_t *pEdict, const Vector &vecForce, bool bExplode = false )
 {
 	CBasePlayer *pPlayer = static_cast<CBasePlayer*>( GetContainingEntity( pEdict ) );
@@ -623,22 +569,7 @@ void CPointServerCommand::InputCommand( inputdata_t& inputdata )
 	if ( !inputdata.value.String()[0] )
 		return;
 
-	bool bAllowed = ( sAllowPointServerCommand == eAllowAlways );
-#ifdef TF_DLL
-	if ( sAllowPointServerCommand == eAllowOfficial )
-	{
-		bAllowed = TFGameRules() && TFGameRules()->IsValveMap();
-	}
-#endif // TF_DLL
-
-	if ( bAllowed )
-	{
-		engine->ServerCommand( UTIL_VarArgs( "%s\n", inputdata.value.String() ) );
-	}
-	else
-	{
-		Warning( "point_servercommand usage blocked by sv_allow_point_servercommand setting\n" );
-	}
+	engine->ServerCommand( UTIL_VarArgs( "%s\n", inputdata.value.String() ) );
 }
 
 BEGIN_DATADESC( CPointServerCommand )
@@ -657,19 +588,19 @@ void CC_DrawLine( const CCommand &args )
 	Vector startPos;
 	Vector endPos;
 
-	startPos.x = clamp( atof(args[1]), MIN_COORD_FLOAT, MAX_COORD_FLOAT );
-	startPos.y = clamp( atof(args[2]), MIN_COORD_FLOAT, MAX_COORD_FLOAT );
-	startPos.z = clamp( atof(args[3]), MIN_COORD_FLOAT, MAX_COORD_FLOAT );
-	endPos.x = clamp( atof(args[4]), MIN_COORD_FLOAT, MAX_COORD_FLOAT );
-	endPos.y = clamp( atof(args[5]), MIN_COORD_FLOAT, MAX_COORD_FLOAT );
-	endPos.z = clamp( atof(args[6]), MIN_COORD_FLOAT, MAX_COORD_FLOAT );
+	startPos.x = atof(args[1]);
+	startPos.y = atof(args[2]);
+	startPos.z = atof(args[3]);
+	endPos.x = atof(args[4]);
+	endPos.y = atof(args[5]);
+	endPos.z = atof(args[6]);
 
 	UTIL_AddDebugLine(startPos,endPos,true,true);
 }
 static ConCommand drawline("drawline", CC_DrawLine, "Draws line between two 3D Points.\n\tGreen if no collision\n\tRed is collides with something\n\tArguments: x1 y1 z1 x2 y2 z2", FCVAR_CHEAT);
 
 //------------------------------------------------------------------------------
-// Purpose : Draw a cross at a points.
+// Purpose : Draw a cross at a points.  
 // Input   :
 // Output  :
 //------------------------------------------------------------------------------
@@ -677,9 +608,9 @@ void CC_DrawCross( const CCommand &args )
 {
 	Vector vPosition;
 
-	vPosition.x = clamp( atof(args[1]), MIN_COORD_FLOAT, MAX_COORD_FLOAT );
-	vPosition.y = clamp( atof(args[2]), MIN_COORD_FLOAT, MAX_COORD_FLOAT );
-	vPosition.z = clamp( atof(args[3]), MIN_COORD_FLOAT, MAX_COORD_FLOAT );
+	vPosition.x = atof(args[1]);
+	vPosition.y = atof(args[2]);
+	vPosition.z = atof(args[3]);
 
 	// Offset since min and max z in not about center
 	Vector mins = Vector(-5,-5,-5);
@@ -1249,9 +1180,9 @@ CON_COMMAND_F( setpos, "Move player to specified origin (must have sv_cheats).",
 	Vector oldorigin = pPlayer->GetAbsOrigin();
 
 	Vector newpos;
-	newpos.x = clamp( atof( args[1] ), MIN_COORD_FLOAT, MAX_COORD_FLOAT );
-	newpos.y = clamp( atof( args[2] ), MIN_COORD_FLOAT, MAX_COORD_FLOAT );
-	newpos.z = args.ArgC() == 4 ?  clamp( atof( args[3] ), MIN_COORD_FLOAT, MAX_COORD_FLOAT ) : oldorigin.z;
+	newpos.x = atof( args[1] );
+	newpos.y = atof( args[2] );
+	newpos.z = args.ArgC() == 4 ? atof( args[3] ) : oldorigin.z;
 
 	pPlayer->SetAbsOrigin( newpos );
 
@@ -1418,7 +1349,6 @@ void CC_HurtMe_f(const CCommand &args)
 
 static ConCommand hurtme("hurtme", CC_HurtMe_f, "Hurts the player.\n\tArguments: <health to lose>", FCVAR_CHEAT);
 
-#ifdef DBGFLAG_ASSERT
 static bool IsInGroundList( CBaseEntity *ent, CBaseEntity *ground )
 {
 	if ( !ground || !ent )
@@ -1438,8 +1368,8 @@ static bool IsInGroundList( CBaseEntity *ent, CBaseEntity *ground )
 	}
 
 	return false;
+
 }
-#endif
 
 static int DescribeGroundList( CBaseEntity *ent )
 {

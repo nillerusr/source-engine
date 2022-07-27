@@ -5,7 +5,11 @@
 // $NoKeywords: $
 //
 //=============================================================================//
+#ifdef OSX
+#include <malloc/malloc.h>
+#else
 #include <malloc.h>
+#endif
 #include <string.h>
 #include <assert.h>
 #include "packed_entity.h"

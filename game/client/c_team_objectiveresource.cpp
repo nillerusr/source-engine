@@ -248,12 +248,12 @@ void C_BaseTeamObjectiveResource::OnDataChanged( DataUpdateType_t updateType )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void C_BaseTeamObjectiveResource::UpdateControlPoint( const char *pszEvent, int index_ )
+void C_BaseTeamObjectiveResource::UpdateControlPoint( const char *pszEvent, int index )
 {
 	IGameEvent *event = gameeventmanager->CreateEvent( pszEvent );
 	if ( event )
 	{
-		event->SetInt( "index", index_ );
+		event->SetInt( "index", index );
 		gameeventmanager->FireEventClientSide( event );
 	}
 }
@@ -261,16 +261,16 @@ void C_BaseTeamObjectiveResource::UpdateControlPoint( const char *pszEvent, int 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-float C_BaseTeamObjectiveResource::GetCPCapPercentage( int index_ )
+float C_BaseTeamObjectiveResource::GetCPCapPercentage( int index )
 {
-	Assert( 0 <= index_ && index_ <= m_iNumControlPoints );
+	Assert( 0 <= index && index <= m_iNumControlPoints );
 
-	float flCapLength = m_flTeamCapTime[ TEAM_ARRAY(index_,m_iCappingTeam[index_]) ];
+	float flCapLength = m_flTeamCapTime[ TEAM_ARRAY(index,m_iCappingTeam[index]) ];
 
 	if( flCapLength <= 0 )
 		return 0.0f;
 
-	float flElapsedTime = flCapLength - m_flCapTimeLeft[index_];
+	float flElapsedTime = flCapLength - m_flCapTimeLeft[index];
 
 	if( flElapsedTime > flCapLength )
 		return 1.0f;
@@ -303,41 +303,41 @@ int C_BaseTeamObjectiveResource::GetNumControlPointsOwned( void )
 // Purpose: 
 //			team - 
 //-----------------------------------------------------------------------------
-void C_BaseTeamObjectiveResource::SetOwningTeam( int index_, int team )
+void C_BaseTeamObjectiveResource::SetOwningTeam( int index, int team )
 {
-	if ( team == m_iCappingTeam[index_] )
+	if ( team == m_iCappingTeam[index] )
 	{
 		// successful cap, reset things
-		m_iCappingTeam[index_] = TEAM_UNASSIGNED;
-		m_flCapTimeLeft[index_] = 0.0f;
-		m_flCapLastThinkTime[index_] = 0;
+		m_iCappingTeam[index] = TEAM_UNASSIGNED;
+		m_flCapTimeLeft[index] = 0.0f;
+		m_flCapLastThinkTime[index] = 0;
 	}
 
-	m_iOwner[index_] = team;
+	m_iOwner[index] = team;
 
-	UpdateControlPoint( "controlpoint_updateowner", index_ );
+	UpdateControlPoint( "controlpoint_updateowner", index );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void C_BaseTeamObjectiveResource::SetCappingTeam( int index_, int team )
+void C_BaseTeamObjectiveResource::SetCappingTeam( int index, int team )
 {
-	if ( team != GetOwningTeam( index_ ) && ( team > LAST_SHARED_TEAM ) )
+	if ( team != GetOwningTeam( index ) && ( team > LAST_SHARED_TEAM ) )
 	{
-		m_flCapTimeLeft[index_] = m_flTeamCapTime[ TEAM_ARRAY( index_,team) ];
+		m_flCapTimeLeft[index] = m_flTeamCapTime[ TEAM_ARRAY(index,team) ];
 	}
 	else
 	{
-		m_flCapTimeLeft[index_] = 0.0;
+		m_flCapTimeLeft[index] = 0.0;
 	}
 
-	m_iCappingTeam[index_] = team;
-	m_bWarnedOnFinalCap[index_] = false;
+	m_iCappingTeam[index] = team;
+	m_bWarnedOnFinalCap[index] = false;
 
-	m_flCapLastThinkTime[index_] = gpGlobals->curtime;
+	m_flCapLastThinkTime[index] = gpGlobals->curtime;
 	SetNextClientThink( gpGlobals->curtime + RESOURCE_THINK_TIME );
-	UpdateControlPoint( "controlpoint_updatecapping", index_ );
+	UpdateControlPoint( "controlpoint_updatecapping", index );
 }
 
 //-----------------------------------------------------------------------------
@@ -353,14 +353,14 @@ void C_BaseTeamObjectiveResource::SetCapLayout( const char *pszLayout )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool C_BaseTeamObjectiveResource::CapIsBlocked( int index_ )
+bool C_BaseTeamObjectiveResource::CapIsBlocked( int index )
 {
-	Assert( 0 <= index_ && index_ <= m_iNumControlPoints );
+	Assert( 0 <= index && index <= m_iNumControlPoints );
 
-	if ( m_flCapTimeLeft[index_] )
+	if ( m_flCapTimeLeft[index] )
 	{
 		// Blocked caps have capping teams & cap times, but no players on the point
-		if ( GetNumPlayersInArea( index_, m_iCappingTeam[index_] ) == 0 )
+		if ( GetNumPlayersInArea( index, m_iCappingTeam[index] ) == 0 )
 			return true;
 	}
 

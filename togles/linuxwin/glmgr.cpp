@@ -74,6 +74,9 @@ const int kGLMHighWaterUndeleted = 2048;
 const int kDeletedTextureDim = 4;
 const uint32 g_garbageTextureBits[ 4 * kDeletedTextureDim * kDeletedTextureDim ] = { 0 };
 
+extern void CompressedTexImage2D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data);
+extern void convert_texture( GLenum &internalformat, GLsizei width, GLsizei height, GLenum &format, GLenum &type, void *data );
+
 char g_nullFragmentProgramText [] =
 {
 	"#version 300 es\n"
@@ -218,7 +221,7 @@ void APIENTRY GL_Debug_Output_Callback(GLenum source, GLenum type, GLuint id, GL
 		return;
 	}
 	
-	if ( gl_debug_output.GetBool() || type == GL_DEBUG_TYPE_ERROR_ARB )
+	if ( gl_debug_output.GetBool() || type == GL_DEBUG_TYPE_ERROR_ARB || type == GL_DEBUG_SEVERITY_MEDIUM_ARB )
 	{
 		Msg( "GL: [%s][%s][%s][%d]: %s\n", sSource, sType, sSeverity, id, message );
 	}
@@ -449,20 +452,6 @@ GLMgr::~GLMgr()
 {
 }
 
-extern void CompressedTexImage2D(GLenum target, GLint level, GLenum internalformat,
-                            GLsizei width, GLsizei height, GLint border,
-                            GLsizei imageSize, const GLvoid *data);
-
-extern void TexImage2D(GLenum target,
-					   GLint level,
-					   GLint internalformat,
-					   GLsizei width,
-					   GLsizei height,
-					   GLint border,
-					   GLenum format,
-					   GLenum type,
-					   const void * data);
-
 //===============================================================================
 
 GLMContext *GLMgr::NewContext( IDirect3DDevice9 *pDevice, GLMDisplayParams *params )
@@ -678,7 +667,7 @@ void GLMContext::DumpCaps( void )
 	#define	dumpfield_hex( fff )	printf( "\n  %-30s : 0x%08x", #fff, (int) m_caps.fff )
 	#define	dumpfield_str( fff )	printf( "\n  %-30s : %s", #fff, m_caps.fff )
 
-	printf("\n-------------------------------- context caps for context %08x", (uint)this);
+	printf("\n-------------------------------- context caps for context %zx", (size_t)this);
 
 	dumpfield( m_fullscreen );
 	dumpfield( m_accelerated );
@@ -1740,14 +1729,13 @@ void GLMContext::PreloadTex( CGLMTex *tex, bool force )
 								0.0f, 0.0f, 0.0f,
 								0.0f, 0.0f, 0.0f };
 
-	static int indices[] = { 0, 1, 2 };
-	
+	static unsigned short indices[] = { 0, 1, 2 };
 
 	gGL->glEnableVertexAttribArray( 0 );
 
 	gGL->glVertexAttribPointer( 0, 3, GL_FLOAT, 0, 0, posns );
 
-	gGL->glDrawRangeElements( GL_TRIANGLES, 0, 2, 3, GL_UNSIGNED_INT, indices);
+	gGL->glDrawRangeElements( GL_TRIANGLES, 0, 2, 3, GL_UNSIGNED_SHORT, indices);
 
 	gGL->glDisableVertexAttribArray( 0 );
 	
@@ -2961,11 +2949,12 @@ void GLMContext::CleanupTex( GLenum texBind, GLMTexLayout* pLayout, GLuint tex )
 			const int dataSize = ( chunks * chunks ) * pLayout->m_format->m_bytesPerSquareChunk;
 			Assert( dataSize <= ( sizeof( uint32) * ARRAYSIZE( g_garbageTextureBits ) ) );
 
-			CompressedTexImage2D( texBind, i, pLayout->m_format->m_glIntFormat, mipDim, mipDim, 0, dataSize, 0 );
+			CompressedTexImage2D( texBind, i, pLayout->m_format->m_glIntFormat, mipDim, mipDim, 0, dataSize, NULL );
 		}
 		else
 		{
-			TexImage2D( texBind, i, pLayout->m_format->m_glIntFormat, mipDim, mipDim, 0, pLayout->m_format->m_glDataFormat, pLayout->m_format->m_glDataType, 0 );
+			convert_texture( pLayout->m_format->m_glIntFormat, mipDim, mipDim, pLayout->m_format->m_glDataFormat, pLayout->m_format->m_glDataType, NULL );
+			gGL->glTexImage2D( texBind, i, pLayout->m_format->m_glIntFormat, mipDim, mipDim, 0, pLayout->m_format->m_glDataFormat, pLayout->m_format->m_glDataType, NULL );
 		}
 	}
 
@@ -4517,7 +4506,7 @@ void GLMContext::GenDebugFontTex( void )
 		
 		//-----------------------------------------------------
 		// fetch elements of font data and make texels... we're doing the whole slab so we don't really need the stride info
-		unsigned long *destTexelPtr = (unsigned long *)lockAddress;
+		uint32 *destTexelPtr = (uint32 *)lockAddress;
 
 		for( int index = 0; index < 16384; index++ )
 		{
@@ -4936,11 +4925,11 @@ void GLMContext::DrawRangeElementsNonInline( GLenum mode, GLuint start, GLuint e
 	if ( pIndexBuf->m_bPseudo )
 	{
 		// you have to pass actual address, not offset
-		indicesActual = (void*)( (int)indicesActual + (int)pIndexBuf->m_pPseudoBuf );
+		indicesActual = (void*)( (intp)indicesActual + (intp)pIndexBuf->m_pPseudoBuf );
 	}
 	if (pIndexBuf->m_bUsingPersistentBuffer)
 	{
-		indicesActual = (void*)( (int)indicesActual + (int)pIndexBuf->m_nPersistentBufferStartOffset );
+		indicesActual = (void*)( (intp)indicesActual + (intp)pIndexBuf->m_nPersistentBufferStartOffset );
 	}
 
 #if GL_ENABLE_INDEX_VERIFICATION

@@ -148,7 +148,6 @@ BEGIN_SIMPLE_DATADESC( CPlayerLocalData )
 	DEFINE_FIELD( m_nStepside, FIELD_INTEGER ),
 	DEFINE_FIELD( m_flFallVelocity, FIELD_FLOAT ),
 	DEFINE_FIELD( m_nOldButtons, FIELD_INTEGER ),
-	DEFINE_FIELD( m_flOldForwardMove, FIELD_FLOAT ),
 	DEFINE_FIELD( m_vecPunchAngle, FIELD_VECTOR ),
 	DEFINE_FIELD( m_vecPunchAngleVel, FIELD_VECTOR ),
 	DEFINE_FIELD( m_bDrawViewmodel, FIELD_BOOLEAN ),

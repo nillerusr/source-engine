@@ -227,7 +227,7 @@ public:
 	//  and execute or execute pFunctor right after completing current job and
 	//  before looking for another job.
 	//-----------------------------------------------------
-	void ExecuteHighPriorityFunctor( CFunctor *pFunctor );
+	// void ExecuteHighPriorityFunctor( CFunctor *pFunctor );
 
 	//-----------------------------------------------------
 	// Add an function object to the queue (master thread)
@@ -246,8 +246,6 @@ public:
 	int AbortAll();
 
 	virtual void Reserved1() {}
-
-	void WaitForIdle( bool bAll = true );
 
 private:
 	enum
@@ -418,7 +416,7 @@ private:
 				CFunctor *pFunctor = NULL;
 				tmZone( TELEMETRY_LEVEL0, TMZF_NONE, "%s PeekCall():%d", __FUNCTION__, GetCallParam() );
 
-				switch ( GetCallParam( &pFunctor ) )
+				switch ( GetCallParam() )
 				{
 				case TPM_EXIT:
 					Reply( true );
@@ -427,10 +425,10 @@ private:
 
 				case TPM_SUSPEND:
 					Reply( true );
-					SuspendCooperative();
+					Suspend();
 					break;
 
-				case TPM_RUNFUNCTOR:
+/*				case TPM_RUNFUNCTOR:
 					if( pFunctor )
 					{
 						( *pFunctor )();
@@ -441,7 +439,7 @@ private:
 						Assert( pFunctor );
 						Reply( false );
 					}
-					break;
+					break;*/
 
 				default:
 					AssertMsg( 0, "Unknown call to thread" );
@@ -535,7 +533,7 @@ int CThreadPool::NumIdleThreads()
 	return m_nIdleThreads;
 }
 
-void CThreadPool::ExecuteHighPriorityFunctor( CFunctor *pFunctor )
+/*void CThreadPool::ExecuteHighPriorityFunctor( CFunctor *pFunctor )
 {
 	int i;
 	for ( i = 0; i < m_Threads.Count(); i++ )
@@ -547,7 +545,7 @@ void CThreadPool::ExecuteHighPriorityFunctor( CFunctor *pFunctor )
 	{
 		m_Threads[i]->WaitForReply();
 	}
-}
+}*/
 
 //---------------------------------------------------------
 // Pause/resume processing jobs
@@ -575,7 +573,10 @@ int CThreadPool::SuspendExecution()
 		// here with the thread not actually suspended
 		for ( i = 0; i < m_Threads.Count(); i++ )
 		{
-			m_Threads[i]->BWaitForThreadSuspendCooperative();
+			while ( !m_Threads[i]->IsSuspended() )
+			{
+				ThreadSleep();
+			}
 		}
 	}
 
@@ -593,17 +594,10 @@ int CThreadPool::ResumeExecution()
 	{
 		for ( int i = 0; i < m_Threads.Count(); i++ )
 		{
-			m_Threads[i]->ResumeCooperative();
+			m_Threads[i]->Resume();
 		}
 	}
 	return result;
-}
-
-//---------------------------------------------------------
-
-void CThreadPool::WaitForIdle( bool bAll )
-{
-	ThreadWaitForEvents( m_IdleEvents.Count(), m_IdleEvents.Base(), bAll, 60000 );
 }
 
 //---------------------------------------------------------
@@ -618,7 +612,7 @@ int CThreadPool::YieldWait( CThreadEvent **pEvents, int nEvents, bool bWaitAll, 
 	CJob *pJob;
 	// Always wait for zero milliseconds initially, to let us process jobs on this thread.
 	timeout = 0;
-	while ( ( result = ThreadWaitForEvents( nEvents, pEvents, bWaitAll, timeout ) ) == WAIT_TIMEOUT )
+	while ( ( result = CThreadEvent::WaitForMultiple( nEvents, pEvents, bWaitAll, timeout ) ) == TW_TIMEOUT )
 	{
 		if ( !m_bExecOnThreadPoolThreadsOnly && m_SharedQueue.Pop( &pJob ) )
 		{

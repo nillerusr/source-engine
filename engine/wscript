@@ -22,7 +22,8 @@ def configure(conf):
 		'ENGINE_DLL',
 		'VERSION_SAFE_STEAM_API_INTERFACES',
 		'USE_BREAKPAD_HANDLER',
-		'USE_CONVARS'
+		'USE_CONVARS',
+		'VOICE_OVER_IP'
 	])
 
 def build(bld):
@@ -203,7 +204,8 @@ def build(bld):
 
 	if bld.env.SDL:
 		source += [
-			'audio/private/snd_dev_sdl.cpp'		#[$SDL && !$OSXALL]
+			'audio/private/snd_dev_sdl.cpp',		#[$SDL && !$OSXALL]
+			'audio/private/voice_record_sdl.cpp' #[$OSXALL||$LINUXALL]
 		]
 
 	if bld.env.DEST_OS == 'win32':
@@ -321,7 +323,7 @@ def build(bld):
 			'vgui_helpers.cpp',
 			'vgui_texturebudgetpanel.cpp',
 			'vgui_vprofgraphpanel.cpp',
-			'vgui_vprofpanel.cpp',	
+			'vgui_vprofpanel.cpp',
 			'toolframework.cpp'
 		]
 		

@@ -721,7 +721,7 @@ public:
 
 	virtual void Undo()
 	{
-		CDmrArray<T> array( GetAttribute() );
+		CDmrArray<T> array( this->GetAttribute() );
 		if ( array.IsValid() )
 		{
 			array.Set( m_nSlot, m_OldValue );
@@ -730,7 +730,7 @@ public:
 
 	virtual void Redo()
 	{
-		CDmrArray<T> array( GetAttribute() );
+		CDmrArray<T> array( this->GetAttribute() );
 		if ( array.IsValid() )
 		{
 			array.Set( m_nSlot, m_Value );
@@ -789,7 +789,7 @@ public:
 
 	virtual void Undo()
 	{
-		CDmrArray<T> array( GetAttribute() );
+		CDmrArray<T> array( this->GetAttribute() );
 		if ( array.IsValid() )
 		{
 			for ( int i = 0; i < m_nCount; ++i )
@@ -801,7 +801,7 @@ public:
 
 	virtual void Redo()
 	{
-		CDmrArray<T> array( GetAttribute() );
+		CDmrArray<T> array( this->GetAttribute() );
 		if ( array.IsValid() )
 		{
 			for ( int i = 0; i < m_nCount; ++i )
@@ -838,7 +838,7 @@ public:
 
 	virtual void Undo()
 	{
-		CDmrArray<T> array( GetAttribute() );
+		CDmrArray<T> array( this->GetAttribute() );
 		if ( array.IsValid() )
 		{
 			array.RemoveMultiple( m_nIndex, m_nCount );
@@ -847,7 +847,7 @@ public:
 
 	virtual void Redo()
 	{
-		CDmrArray<T> array( GetAttribute() );
+		CDmrArray<T> array( this->GetAttribute() );
 		if ( array.IsValid() )
 		{
 			T defaultVal;
@@ -888,7 +888,7 @@ public:
 
 	virtual void Undo()
 	{
-		CDmrArray<T> array( GetAttribute() );
+		CDmrArray<T> array( this->GetAttribute() );
 		if ( array.IsValid() )
 		{
 			array.Remove( m_nIndex );
@@ -897,7 +897,7 @@ public:
 
 	virtual void Redo()
 	{
-		CDmrArray<T> array( GetAttribute() );
+		CDmrArray<T> array( this->GetAttribute() );
 		if ( array.IsValid() )
 		{
 			array.InsertBefore( m_nIndex, m_newValue );
@@ -955,7 +955,7 @@ public:
 
 	virtual void Undo()
 	{
-		CDmrArray<T> array( GetAttribute() );
+		CDmrArray<T> array( this->GetAttribute() );
 		if ( array.IsValid() )
 		{
 			if ( m_bFastRemove )
@@ -993,7 +993,7 @@ public:
 
 	virtual void Redo()
 	{
-		CDmrArray<T> array( GetAttribute() );
+		CDmrArray<T> array( this->GetAttribute() );
 		if ( array.IsValid() )
 		{
 			if ( m_bFastRemove )
@@ -1015,7 +1015,7 @@ public:
 		static char buf[ 128 ];
 
 		const char *base = BaseClass::GetDesc();
-		Q_snprintf( buf, sizeof( buf ), "%s (%s) = remove( pos %i, count %i )", base, GetAttributeName(), m_nIndex, m_nCount );
+		Q_snprintf( buf, sizeof( buf ), "%s (%s) = remove( pos %i, count %i )", base, this->GetAttributeName(), m_nIndex, m_nCount );
 		return buf;
 	}
 
@@ -1097,7 +1097,7 @@ public:
 
 	virtual void Undo()
 	{
-		CDmrArray<T> array( GetAttribute() );
+		CDmrArray<T> array( this->GetAttribute() );
 		if ( array.IsValid() )
 		{
 			array.RemoveAll();
@@ -1110,7 +1110,7 @@ public:
 
 	virtual void Redo()
 	{
-		CDmrArray<T> array( GetAttribute() );
+		CDmrArray<T> array( this->GetAttribute() );
 		if ( array.IsValid() )
 		{
 			array.RemoveAll();
@@ -2734,7 +2734,7 @@ CDmaArrayConstBase<T,B>::CDmaArrayConstBase( )
 template< class T, class B >
 int CDmaArrayConstBase<T,B>::Find( const T &value ) const
 {
-	return Value().Find( value );
+	return this->Value().Find( value );
 }
 
 
@@ -2747,7 +2747,7 @@ int CDmaArrayBase<T,B>::AddToTail()
 	T defaultVal;
 	CDmAttributeInfo<T>::SetDefaultValue( defaultVal );	
 	CDmArrayAttributeOp<T> accessor( this->m_pAttribute );
-	return accessor.InsertBefore( Value().Count(), defaultVal );
+	return accessor.InsertBefore( this->Value().Count(), defaultVal );
 }
 
 template< class T, class B >
@@ -2763,7 +2763,7 @@ template< class T, class B >
 int	CDmaArrayBase<T,B>::AddToTail( const T& src )
 {
 	CDmArrayAttributeOp<T> accessor( this->m_pAttribute );
-	return accessor.InsertBefore( Value().Count(), src );
+	return accessor.InsertBefore( this->Value().Count(), src );
 }
 
 template< class T, class B >
@@ -2777,7 +2777,7 @@ template< class T, class B >
 int	CDmaArrayBase<T,B>::AddMultipleToTail( int num )
 {
 	CDmArrayAttributeOp<T> accessor( this->m_pAttribute );
-	return accessor.InsertMultipleBefore( Value().Count(), num );
+	return accessor.InsertMultipleBefore( this->Value().Count(), num );
 }
 
 template< class T, class B >
@@ -2790,7 +2790,7 @@ int CDmaArrayBase<T,B>::InsertMultipleBefore( int elem, int num )
 template< class T, class B >
 void CDmaArrayBase<T,B>::EnsureCount( int num )
 {
-	int nCurrentCount = Value().Count();
+	int nCurrentCount = this->Value().Count();
 	if ( nCurrentCount < num )
 	{
 		AddMultipleToTail( num - nCurrentCount );
@@ -2879,7 +2879,7 @@ void CDmaArrayBase<T,B>::RemoveMultiple( int elem, int num )
 template< class T, class B >
 void CDmaArrayBase<T,B>::EnsureCapacity( int num )
 {
-	Value().EnsureCapacity( num );
+	this->Value().EnsureCapacity( num );
 }
 
 template< class T, class B >
@@ -2894,10 +2894,10 @@ void CDmaArrayBase<T,B>::Purge()
 // Attribute initialization
 //-----------------------------------------------------------------------------
 template< class T, class B >
-void CDmaDecorator<T,B>::Init( CDmElement *pOwner, const char *pAttributeName, int nFlags = 0 )
+void CDmaDecorator<T,B>::Init( CDmElement *pOwner, const char *pAttributeName, int nFlags )
 {
 	Assert( pOwner );
-	this->m_pAttribute = pOwner->AddExternalAttribute( pAttributeName, CDmAttributeInfo<CUtlVector<T> >::AttributeType(), &Value() );
+	this->m_pAttribute = pOwner->AddExternalAttribute( pAttributeName, CDmAttributeInfo<CUtlVector<T> >::AttributeType(), &(this->Value()) );
 	Assert( this->m_pAttribute );
 	if ( nFlags )
 	{
@@ -2915,12 +2915,12 @@ void CDmrDecoratorConst<T,BaseClass>::Init( const CDmAttribute* pAttribute )
 	if ( pAttribute && pAttribute->GetType() == CDmAttributeInfo< CUtlVector< T > >::AttributeType() )
 	{
 		this->m_pAttribute = const_cast<CDmAttribute*>( pAttribute );
-		Attach( this->m_pAttribute->GetAttributeData() );
+		this->Attach( this->m_pAttribute->GetAttributeData() );
 	}
 	else
 	{
 		this->m_pAttribute = NULL;
-		Attach( NULL );
+		this->Attach( NULL );
 	}
 }
 
@@ -2948,12 +2948,12 @@ void CDmrDecorator<T,BaseClass>::Init( CDmAttribute* pAttribute )
 	if ( pAttribute && pAttribute->GetType() == CDmAttributeInfo< CUtlVector< T > >::AttributeType() )
 	{
 		this->m_pAttribute = pAttribute;
-		Attach( this->m_pAttribute->GetAttributeData() );
+		this->Attach( this->m_pAttribute->GetAttributeData() );
 	}
 	else
 	{
 		this->m_pAttribute = NULL;
-		Attach( NULL );
+		this->Attach( NULL );
 	}
 }
 

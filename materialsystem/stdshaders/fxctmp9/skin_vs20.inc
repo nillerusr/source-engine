@@ -1,11 +1,20 @@
-#include "shaderlib/cshader.h"
+// ALL SKIP STATEMENTS THAT AFFECT THIS SHADER!!!
+// $USE_STATIC_CONTROL_FLOW && ( $NUM_LIGHTS > 0 )
+// defined $LIGHTING_PREVIEW && defined $FASTPATH && $LIGHTING_PREVIEW && $FASTPATH
+
+#ifndef SKIN_VS20_H
+#define SKIN_VS20_H
+
+#include "shaderapi/ishaderapi.h"
+#include "shaderapi/ishadershadow.h"
+#include "materialsystem/imaterialvar.h"
+
 class skin_vs20_Static_Index
 {
-private:
-	int m_nUSE_STATIC_CONTROL_FLOW;
+	unsigned int m_nUSE_STATIC_CONTROL_FLOW : 2;
 #ifdef _DEBUG
-	bool m_bUSE_STATIC_CONTROL_FLOW;
-#endif
+	bool m_bUSE_STATIC_CONTROL_FLOW : 1;
+#endif	// _DEBUG
 public:
 	void SetUSE_STATIC_CONTROL_FLOW( int i )
 	{
@@ -13,42 +22,41 @@ public:
 		m_nUSE_STATIC_CONTROL_FLOW = i;
 #ifdef _DEBUG
 		m_bUSE_STATIC_CONTROL_FLOW = true;
-#endif
+#endif	// _DEBUG
 	}
-	void SetUSE_STATIC_CONTROL_FLOW( bool i )
+
+	skin_vs20_Static_Index()
 	{
-		m_nUSE_STATIC_CONTROL_FLOW = i ? 1 : 0;
-#ifdef _DEBUG
-		m_bUSE_STATIC_CONTROL_FLOW = true;
-#endif
-	}
-public:
-	skin_vs20_Static_Index( )
-	{
+		m_nUSE_STATIC_CONTROL_FLOW = 0;
 #ifdef _DEBUG
 		m_bUSE_STATIC_CONTROL_FLOW = false;
-#endif // _DEBUG
-		m_nUSE_STATIC_CONTROL_FLOW = 0;
+#endif	// _DEBUG
 	}
-	int GetIndex()
+
+	int GetIndex() const
 	{
-		// Asserts to make sure that we aren't using any skipped combinations.
-		// Asserts to make sure that we are setting all of the combination vars.
-#ifdef _DEBUG
-		bool bAllStaticVarsDefined = m_bUSE_STATIC_CONTROL_FLOW;
-		Assert( bAllStaticVarsDefined );
-#endif // _DEBUG
+		Assert( m_bUSE_STATIC_CONTROL_FLOW );
 		return ( 48 * m_nUSE_STATIC_CONTROL_FLOW ) + 0;
 	}
 };
-#define shaderStaticTest_skin_vs20 vsh_forgot_to_set_static_USE_STATIC_CONTROL_FLOW + 0
+
+#define shaderStaticTest_skin_vs20 vsh_forgot_to_set_static_USE_STATIC_CONTROL_FLOW
+
+
 class skin_vs20_Dynamic_Index
 {
-private:
-	int m_nCOMPRESSED_VERTS;
+	unsigned int m_nCOMPRESSED_VERTS : 2;
+	unsigned int m_nDOWATERFOG : 2;
+	unsigned int m_nSKINNING : 2;
+	unsigned int m_nLIGHTING_PREVIEW : 2;
+	unsigned int m_nNUM_LIGHTS : 2;
 #ifdef _DEBUG
-	bool m_bCOMPRESSED_VERTS;
-#endif
+	bool m_bCOMPRESSED_VERTS : 1;
+	bool m_bDOWATERFOG : 1;
+	bool m_bSKINNING : 1;
+	bool m_bLIGHTING_PREVIEW : 1;
+	bool m_bNUM_LIGHTS : 1;
+#endif	// _DEBUG
 public:
 	void SetCOMPRESSED_VERTS( int i )
 	{
@@ -56,132 +64,69 @@ public:
 		m_nCOMPRESSED_VERTS = i;
 #ifdef _DEBUG
 		m_bCOMPRESSED_VERTS = true;
-#endif
+#endif	// _DEBUG
 	}
-	void SetCOMPRESSED_VERTS( bool i )
-	{
-		m_nCOMPRESSED_VERTS = i ? 1 : 0;
-#ifdef _DEBUG
-		m_bCOMPRESSED_VERTS = true;
-#endif
-	}
-private:
-	int m_nDOWATERFOG;
-#ifdef _DEBUG
-	bool m_bDOWATERFOG;
-#endif
-public:
+
 	void SetDOWATERFOG( int i )
 	{
 		Assert( i >= 0 && i <= 1 );
 		m_nDOWATERFOG = i;
 #ifdef _DEBUG
 		m_bDOWATERFOG = true;
-#endif
+#endif	// _DEBUG
 	}
-	void SetDOWATERFOG( bool i )
-	{
-		m_nDOWATERFOG = i ? 1 : 0;
-#ifdef _DEBUG
-		m_bDOWATERFOG = true;
-#endif
-	}
-private:
-	int m_nSKINNING;
-#ifdef _DEBUG
-	bool m_bSKINNING;
-#endif
-public:
+
 	void SetSKINNING( int i )
 	{
 		Assert( i >= 0 && i <= 1 );
 		m_nSKINNING = i;
 #ifdef _DEBUG
 		m_bSKINNING = true;
-#endif
+#endif	// _DEBUG
 	}
-	void SetSKINNING( bool i )
-	{
-		m_nSKINNING = i ? 1 : 0;
-#ifdef _DEBUG
-		m_bSKINNING = true;
-#endif
-	}
-private:
-	int m_nLIGHTING_PREVIEW;
-#ifdef _DEBUG
-	bool m_bLIGHTING_PREVIEW;
-#endif
-public:
+
 	void SetLIGHTING_PREVIEW( int i )
 	{
 		Assert( i >= 0 && i <= 1 );
 		m_nLIGHTING_PREVIEW = i;
 #ifdef _DEBUG
 		m_bLIGHTING_PREVIEW = true;
-#endif
+#endif	// _DEBUG
 	}
-	void SetLIGHTING_PREVIEW( bool i )
-	{
-		m_nLIGHTING_PREVIEW = i ? 1 : 0;
-#ifdef _DEBUG
-		m_bLIGHTING_PREVIEW = true;
-#endif
-	}
-private:
-	int m_nNUM_LIGHTS;
-#ifdef _DEBUG
-	bool m_bNUM_LIGHTS;
-#endif
-public:
+
 	void SetNUM_LIGHTS( int i )
 	{
 		Assert( i >= 0 && i <= 2 );
 		m_nNUM_LIGHTS = i;
 #ifdef _DEBUG
 		m_bNUM_LIGHTS = true;
-#endif
+#endif	// _DEBUG
 	}
-	void SetNUM_LIGHTS( bool i )
-	{
-		m_nNUM_LIGHTS = i ? 1 : 0;
-#ifdef _DEBUG
-		m_bNUM_LIGHTS = true;
-#endif
-	}
-public:
+
 	skin_vs20_Dynamic_Index()
 	{
+		m_nCOMPRESSED_VERTS = 0;
+		m_nDOWATERFOG = 0;
+		m_nSKINNING = 0;
+		m_nLIGHTING_PREVIEW = 0;
+		m_nNUM_LIGHTS = 0;
 #ifdef _DEBUG
 		m_bCOMPRESSED_VERTS = false;
-#endif // _DEBUG
-		m_nCOMPRESSED_VERTS = 0;
-#ifdef _DEBUG
 		m_bDOWATERFOG = false;
-#endif // _DEBUG
-		m_nDOWATERFOG = 0;
-#ifdef _DEBUG
 		m_bSKINNING = false;
-#endif // _DEBUG
-		m_nSKINNING = 0;
-#ifdef _DEBUG
 		m_bLIGHTING_PREVIEW = false;
-#endif // _DEBUG
-		m_nLIGHTING_PREVIEW = 0;
-#ifdef _DEBUG
 		m_bNUM_LIGHTS = false;
-#endif // _DEBUG
-		m_nNUM_LIGHTS = 0;
+#endif	// _DEBUG
 	}
-	int GetIndex()
+
+	int GetIndex() const
 	{
-		// Asserts to make sure that we aren't using any skipped combinations.
-		// Asserts to make sure that we are setting all of the combination vars.
-#ifdef _DEBUG
-		bool bAllDynamicVarsDefined = m_bCOMPRESSED_VERTS && m_bDOWATERFOG && m_bSKINNING && m_bLIGHTING_PREVIEW && m_bNUM_LIGHTS;
-		Assert( bAllDynamicVarsDefined );
-#endif // _DEBUG
+		Assert( m_bCOMPRESSED_VERTS && m_bDOWATERFOG && m_bSKINNING && m_bLIGHTING_PREVIEW && m_bNUM_LIGHTS );
 		return ( 1 * m_nCOMPRESSED_VERTS ) + ( 2 * m_nDOWATERFOG ) + ( 4 * m_nSKINNING ) + ( 8 * m_nLIGHTING_PREVIEW ) + ( 16 * m_nNUM_LIGHTS ) + 0;
 	}
 };
-#define shaderDynamicTest_skin_vs20 vsh_forgot_to_set_dynamic_COMPRESSED_VERTS + vsh_forgot_to_set_dynamic_DOWATERFOG + vsh_forgot_to_set_dynamic_SKINNING + vsh_forgot_to_set_dynamic_LIGHTING_PREVIEW + vsh_forgot_to_set_dynamic_NUM_LIGHTS + 0
+
+#define shaderDynamicTest_skin_vs20 vsh_forgot_to_set_dynamic_COMPRESSED_VERTS + vsh_forgot_to_set_dynamic_DOWATERFOG + vsh_forgot_to_set_dynamic_SKINNING + vsh_forgot_to_set_dynamic_LIGHTING_PREVIEW + vsh_forgot_to_set_dynamic_NUM_LIGHTS
+
+
+#endif	// SKIN_VS20_H

@@ -342,7 +342,7 @@ Vector CBasePlayer::EyePosition( )
 #ifdef CLIENT_DLL
 		if ( IsObserver() )
 		{
-			if ( GetObserverMode() == OBS_MODE_CHASE || GetObserverMode() == OBS_MODE_POI )
+			if ( GetObserverMode() == OBS_MODE_CHASE )
 			{
 				if ( IsLocalPlayer() )
 				{
@@ -696,7 +696,8 @@ void CBasePlayer::PlayStepSound( Vector &vecOrigin, surfacedata_t *psurface, flo
 	}
 	else
 	{
-		const char *pSoundName = MoveHelper()->GetSurfaceProps()->GetString( stepSoundName );
+		IPhysicsSurfaceProps *physprops = MoveHelper()->GetSurfaceProps();
+		const char *pSoundName = physprops->GetString( stepSoundName );
 
 		// Give child classes an opportunity to override.
 		pSoundName = GetOverrideStepSound( pSoundName );
@@ -1034,7 +1035,7 @@ void CBasePlayer::SelectItem( const char *pstr, int iSubType )
 	// Make sure the current weapon can be holstered
 	if ( GetActiveWeapon() )
 	{
-		if ( !GetActiveWeapon()->CanHolster() && !pItem->ForceWeaponSwitch() )
+		if ( !GetActiveWeapon()->CanHolster() )
 			return;
 
 		ResetAutoaim( );
@@ -1702,7 +1703,6 @@ void CBasePlayer::CalcObserverView( Vector& eyeOrigin, QAngle& eyeAngles, float&
 		case OBS_MODE_IN_EYE	:	CalcInEyeCamView( eyeOrigin, eyeAngles, fov );
 									break;
 
-		case OBS_MODE_POI		: // PASSTIME
 		case OBS_MODE_CHASE		:	CalcChaseCamView( eyeOrigin, eyeAngles, fov  );
 									break;
 
@@ -1796,6 +1796,7 @@ float CBasePlayer::GetFOVDistanceAdjustFactor()
 	// If FOV is lower, then we're "zoomed" in and this will give a factor < 1 so apparent LOD distances can be
 	//  shorted accordingly
 	return localFOV / defaultFOV;
+
 }
 
 //-----------------------------------------------------------------------------
@@ -1853,20 +1854,6 @@ void CBasePlayer::SharedSpawn()
 	if(IsLocalPlayer() &&haptics)
 		haptics->LocalPlayerReset();
 #endif
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CBasePlayer::IsLerpingFOV( void ) const
-{
-	// If it's immediate, just do it
-	if (m_Local.m_flFOVRate == 0.0f)
-		return false;
-
-	float deltaTime = (float)(gpGlobals->curtime - m_flFOVTime) / m_Local.m_flFOVRate;
-	return deltaTime < 1.f;
 }
 
 

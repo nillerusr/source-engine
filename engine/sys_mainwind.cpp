@@ -355,7 +355,7 @@ void CGame::HandleMsg_Close( const InputEvent_t &event )
 
 void CGame::DispatchInputEvent( const InputEvent_t &event )
 {
-	switch( event.m_nType )
+	switch( event.m_nType & 0xFFFF )
 	{
 	// Handle button events specially, 
 	// since we have all manner of crazy filtering going on	when dealing with them
@@ -1566,7 +1566,7 @@ void *CGame::GetMainWindowPlatformSpecificHandle( void )
 #ifdef OSX
 	id nsWindow = (id)pInfo.info.cocoa.window;
 	SEL selector = sel_registerName("windowRef");
-	id windowRef = objc_msgSend( nsWindow, selector );
+	id windowRef = ((id(*)(id, SEL))objc_msgSend)( nsWindow, selector );
 	return windowRef;
 #else
 	// Not used on Linux.

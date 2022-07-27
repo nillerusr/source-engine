@@ -1201,9 +1201,10 @@ static void FillD3DCaps9( const GLMRendererInfoFields &glmRendererInfo, D3DCAPS9
 	pCaps->MaxPixelShader30InstructionSlots		=	0;
 
 #if DX_TO_GL_ABSTRACTION
-	pCaps->FakeSRGBWrite			=	!glmRendererInfo.m_hasGammaWrites;
-	pCaps->CanDoSRGBReadFromRTs		=	!glmRendererInfo.m_cantAttachSRGB;
+	pCaps->FakeSRGBWrite			=	true;//!glmRendererInfo.m_hasGammaWrites;
+	pCaps->CanDoSRGBReadFromRTs		=	true;//!glmRendererInfo.m_cantAttachSRGB;
 	pCaps->MixedSizeTargets			=	glmRendererInfo.m_hasMixedAttachmentSizes;
+	pCaps->SupportInt16Format = gGL->m_bHave_GL_EXT_texture_norm16;
 #endif
 }
 
@@ -3762,11 +3763,15 @@ static uint32 CentroidMaskFromName( bool bPixelShader, const char *pName )
 static int ShadowDepthSamplerMaskFromName( const char *pName )
 {
 	if ( !pName )
-		return 0;	
-	
+		return 0;
+
 	if ( V_stristr( pName, "water_ps" ) )
 	{
 		return (1<<7);
+	}
+	else if ( V_stristr( pName, "skin_ps" ) )
+	{
+		return (1<<4);
 	}
 	else if ( V_stristr( pName, "infected_ps" ) )
 	{
@@ -3794,7 +3799,7 @@ static int ShadowDepthSamplerMaskFromName( const char *pName )
 	}
 	else if ( V_stristr( pName, "worldtwotextureblend_ps" ) ) 
 	{
-		return (1<<7);
+		return (1<<2);
 	}
 	else if ( V_stristr( pName, "teeth_flashlight_ps" ) ) 
 	{
@@ -3811,27 +3816,27 @@ static int ShadowDepthSamplerMaskFromName( const char *pName )
 	else if ( V_stristr( pName, "deferred_global_light_ps" ) )
 	{
 		return (1<<14);
-	}	
+	}
 	else if ( V_stristr( pName, "global_lit_simple_ps" ) )
 	{
 		return (1<<14);
-	}	
+	}
 	else if ( V_stristr( pName, "lightshafts_ps" ) )
 	{
 		return (1<<1);
-	}	
+	}
 	else if ( V_stristr( pName, "multiblend_combined_ps" ) )
 	{
 		return (1<<14);
-	}	
+	}
 	else if ( V_stristr( pName, "multiblend_ps" ) )
 	{
 		return (1<<14);
-	}	
+	}
 	else if ( V_stristr( pName, "customhero_ps" ) )
 	{
 		return (1<<14);
-	}	
+	}
 
 	// This shader doesn't have a shadow depth map sampler
 	return 0;

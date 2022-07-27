@@ -2092,23 +2092,32 @@ static uint PrintDoubleInt( char *pBuf, uint nBufSize, double f, uint nMinChars 
 
 		if ( bAnyDigitsLeft )
 		{
-			uint n = remainder % 100U; remainder /= 100U; *reinterpret_cast<uint16*>(pDst - 1) = reinterpret_cast<const uint16*>(pDigits)[n]; 
-			n = remainder % 100U; remainder /= 100U; *reinterpret_cast<uint16*>(pDst - 1 - 2) = reinterpret_cast<const uint16*>(pDigits)[n]; 
+			uint n = remainder % 100U; remainder /= 100U;
+			memcpy( reinterpret_cast<uint16*>(pDst - 1), &(reinterpret_cast<const uint16*>(pDigits)[n]), sizeof(uint16) );
+			n = remainder % 100U; remainder /= 100U;
+			memcpy( reinterpret_cast<uint16*>(pDst - 3), &(reinterpret_cast<const uint16*>(pDigits)[n]), sizeof(uint16) );
 			Assert( remainder < 100U );
-			*reinterpret_cast<uint16*>(pDst - 1 - 4) = reinterpret_cast<const uint16*>(pDigits)[remainder]; 
+			memcpy( reinterpret_cast<uint16*>(pDst - 5), &(reinterpret_cast<const uint16*>(pDigits)[remainder]), sizeof(uint16) );
 			pDst -= 6;
 		}
 		else
 		{
-			uint n = remainder % 100U; remainder /= 100U; *reinterpret_cast<uint16*>(pDst - 1) = reinterpret_cast<const uint16*>(pDigits)[n]; --pDst; if ( ( n >= 10 ) || ( remainder ) ) --pDst;
+			uint n = remainder % 100U; remainder /= 100U;
+			memcpy( reinterpret_cast<uint16*>(pDst - 1), &(reinterpret_cast<const uint16*>(pDigits)[n]), sizeof(uint16) );
+			--pDst; if ( ( n >= 10 ) || ( remainder ) ) --pDst;
+
 			if ( remainder )
 			{
-				n = remainder % 100U; remainder /= 100U; *reinterpret_cast<uint16*>(pDst - 1) = reinterpret_cast<const uint16*>(pDigits)[n]; --pDst; if ( ( n >= 10 ) || ( remainder ) ) --pDst;
+				n = remainder % 100U; remainder /= 100U;
+				memcpy( reinterpret_cast<uint16*>(pDst - 1), &(reinterpret_cast<const uint16*>(pDigits)[n]), sizeof(uint16) );
+
+				--pDst; if ( ( n >= 10 ) || ( remainder ) ) --pDst;
 
 				if ( remainder )
 				{
 					Assert( remainder < 100U );
-					*reinterpret_cast<uint16*>(pDst - 1) = reinterpret_cast<const uint16*>(pDigits)[remainder]; --pDst; if ( remainder >= 10 ) --pDst;
+					memcpy( reinterpret_cast<uint16*>(pDst - 1), &(reinterpret_cast<const uint16*>(pDigits)[remainder]), sizeof(uint16) );
+					--pDst; if ( remainder >= 10 ) --pDst;
 				}
 			}
 		}

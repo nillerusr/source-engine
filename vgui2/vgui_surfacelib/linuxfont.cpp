@@ -12,7 +12,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#ifdef OSX
+#include <malloc/malloc.h>
+#else
 #include <malloc.h>
+#endif
 #include <tier0/dbg.h>
 #include <vgui/ISurface.h>
 #include <utlbuffer.h>
@@ -41,8 +45,6 @@ inline int32_t INT_2FIXED6(int32_t x)   { return x << 6; }
 
 bool CLinuxFont::ms_bSetFriendlyNameCacheLessFunc = false;
 CUtlRBTree< CLinuxFont::font_name_entry > CLinuxFont::m_FriendlyNameCache;
-
-#define ANDROID 1
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
@@ -168,44 +170,40 @@ void CLinuxFont::CreateFontList()
 }
 
 #ifndef ANDROID
-static FcPattern* FontMatch(const char* type, FcType vtype, const void* value,
-                            ...)
+static FcPattern* FontMatch(const char* type, ...)
 {
+    FcValue fcvalue;
     va_list ap;
-    va_start(ap, value);
+    va_start(ap, type);
 
     FcPattern* pattern = FcPatternCreate();
 
-    for (;;)
-	{
-        FcValue fcvalue;
-        fcvalue.type = vtype;
-        switch (vtype) {
+    for (;;) {
+        // FcType is promoted to int when passed through ...
+        fcvalue.type = static_cast<FcType>(va_arg(ap, int));
+        switch (fcvalue.type) {
             case FcTypeString:
-                fcvalue.u.s = (FcChar8*) value;
+                fcvalue.u.s = va_arg(ap, const FcChar8 *);
                 break;
             case FcTypeInteger:
-                fcvalue.u.i = (int) value;
+                fcvalue.u.i = va_arg(ap, int);
                 break;
             default:
                 Assert(!"FontMatch unhandled type");
         }
-        FcPatternAdd(pattern, type, fcvalue, 0);
+        FcPatternAdd(pattern, type, fcvalue, FcFalse);
 
         type = va_arg(ap, const char *);
         if (!type)
             break;
-        // FcType is promoted to int when passed through ...
-        vtype = static_cast<FcType>(va_arg(ap, int));
-        value = va_arg(ap, const void *);
     };
     va_end(ap);
 
-    FcConfigSubstitute(0, pattern, FcMatchPattern);
+    FcConfigSubstitute(NULL, pattern, FcMatchPattern);
     FcDefaultSubstitute(pattern);
 
     FcResult result;
-    FcPattern* match = FcFontMatch(0, pattern, &result);
+    FcPattern* match = FcFontMatch(NULL, pattern, &result);
     FcPatternDestroy(pattern);
 
     return match;

@@ -27,7 +27,6 @@
 #include <vgui/ILocalize.h>
 #include "view.h"
 #include "ixboxsystem.h"
-#include "inputsystem/iinputsystem.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -83,24 +82,14 @@ int GetLocalPlayerIndex( void )
 		return 0;	// game not started yet
 }
 
-// NOTE: cache these because this gets executed hundreds of times per frame
-static int g_nLocalPlayerVisionFlagsWeaponsCheck = 0;
-static int g_nLocalPlayerVisionFlags = 0;
 int GetLocalPlayerVisionFilterFlags( bool bWeaponsCheck /*= false */ )
 {
-	return bWeaponsCheck ? g_nLocalPlayerVisionFlagsWeaponsCheck : g_nLocalPlayerVisionFlags;
-}
+	C_BasePlayer * player = C_BasePlayer::GetLocalPlayer();
 
-void UpdateLocalPlayerVisionFlags()
-{
-	g_nLocalPlayerVisionFlagsWeaponsCheck = 0;
-	g_nLocalPlayerVisionFlags = 0;
-	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
-	if ( pPlayer )
-	{
-		g_nLocalPlayerVisionFlagsWeaponsCheck = pPlayer->GetVisionFilterFlags( true );
-		g_nLocalPlayerVisionFlags = pPlayer->GetVisionFilterFlags( false );
-	}
+	if ( player )
+		return player->GetVisionFilterFlags( bWeaponsCheck );
+	else
+		return 0;
 }
 
 bool IsLocalPlayerUsingVisionFilterFlags( int nFlags, bool bWeaponsCheck /* = false */ )
@@ -674,7 +663,7 @@ IterationRetval_t CFlaggedEntitiesEnum::EnumElement( IHandleEntity *pHandleEntit
 int UTIL_EntitiesInBox( C_BaseEntity **pList, int listMax, const Vector &mins, const Vector &maxs, int flagMask, int partitionMask )
 {
 	CFlaggedEntitiesEnum boxEnum( pList, listMax, flagMask );
-	::partition->EnumerateElementsInBox( partitionMask, mins, maxs, false, &boxEnum );
+	partition->EnumerateElementsInBox( partitionMask, mins, maxs, false, &boxEnum );
 	
 	return boxEnum.GetCount();
 
@@ -692,7 +681,7 @@ int UTIL_EntitiesInBox( C_BaseEntity **pList, int listMax, const Vector &mins, c
 int UTIL_EntitiesInSphere( C_BaseEntity **pList, int listMax, const Vector &center, float radius, int flagMask, int partitionMask )
 {
 	CFlaggedEntitiesEnum sphereEnum( pList, listMax, flagMask );
-	::partition->EnumerateElementsInSphere( partitionMask, center, radius, false, &sphereEnum );
+	partition->EnumerateElementsInSphere( partitionMask, center, radius, false, &sphereEnum );
 
 	return sphereEnum.GetCount();
 
@@ -709,7 +698,7 @@ int UTIL_EntitiesInSphere( C_BaseEntity **pList, int listMax, const Vector &cent
 int UTIL_EntitiesAlongRay( C_BaseEntity **pList, int listMax, const Ray_t &ray, int flagMask, int partitionMask )
 {
 	CFlaggedEntitiesEnum rayEnum( pList, listMax, flagMask );
-	::partition->EnumerateElementsAlongRay( partitionMask, ray, false, &rayEnum );
+	partition->EnumerateElementsAlongRay( partitionMask, ray, false, &rayEnum );
 
 	return rayEnum.GetCount();
 }
@@ -725,6 +714,48 @@ CBaseEntity *CEntitySphereQuery::GetCurrentEntity()
 	if ( m_listIndex < m_listCount )
 		return m_pList[m_listIndex];
 	return NULL;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Slightly modified strtok. Does not modify the input string. Does
+//			not skip over more than one separator at a time. This allows parsing
+//			strings where tokens between separators may or may not be present:
+//
+//			Door01,,,0 would be parsed as "Door01"  ""  ""  "0"
+//			Door01,Open,,0 would be parsed as "Door01"  "Open"  ""  "0"
+//
+// Input  : token - Returns with a token, or zero length if the token was missing.
+//			str - String to parse.
+//			sep - Character to use as separator. UNDONE: allow multiple separator chars
+// Output : Returns a pointer to the next token to be parsed.
+//-----------------------------------------------------------------------------
+const char *nexttoken(char *token, const char *str, char sep)
+{
+	if ((str == NULL) || (*str == '\0'))
+	{
+		*token = '\0';
+		return(NULL);
+	}
+
+	//
+	// Copy everything up to the first separator into the return buffer.
+	// Do not include separators in the return buffer.
+	//
+	while ((*str != sep) && (*str != '\0'))
+	{
+		*token++ = *str++;
+	}
+	*token = '\0';
+
+	//
+	// Advance the pointer unless we hit the end of the input string.
+	//
+	if (*str == '\0')
+	{
+		return(str);
+	}
+
+	return(++str);
 }
 
 //-----------------------------------------------------------------------------
@@ -860,12 +891,8 @@ const char * UTIL_SafeName( const char *oldName )
 //			for consistency with other APIs.  If inbufsizebytes is 0 a NULL-terminated
 //			input buffer is assumed, or you can pass the size of the input buffer if
 //			not NULL-terminated.
-//
-//			If actionset is other than GAME_ACTION_SET_NONE (the default), then a lookup is first
-//			attempted for a Steam Controller binding in the given action set. If none if found, fallback
-//			is to the usual keyboard binding path.
 //-----------------------------------------------------------------------------
-void UTIL_ReplaceKeyBindings( const wchar_t *inbuf, int inbufsizebytes, OUT_Z_BYTECAP(outbufsizebytes) wchar_t *outbuf, int outbufsizebytes, GameActionSet_t actionset )
+void UTIL_ReplaceKeyBindings( const wchar_t *inbuf, int inbufsizebytes, OUT_Z_BYTECAP(outbufsizebytes) wchar_t *outbuf, int outbufsizebytes )
 {
 	Assert( outbufsizebytes >= sizeof(outbuf[0]) );
 	// copy to a new buf if there are vars
@@ -901,18 +928,6 @@ void UTIL_ReplaceKeyBindings( const wchar_t *inbuf, int inbufsizebytes, OUT_Z_BY
 				char binding[64];
 				g_pVGuiLocalize->ConvertUnicodeToANSI( token, binding, sizeof(binding) );
 
-				// Find a Steam Controller mapping, if an action set was specified.
-				const wchar_t* sc_origin = nullptr;
-				if ( actionset != GAME_ACTION_SET_NONE)
-				{
-					auto origin = g_pInputSystem->GetSteamControllerActionOrigin( *binding == '+' ? binding + 1 : binding, actionset );
-					if ( origin != k_EControllerActionOrigin_None )
-					{
-						sc_origin = g_pInputSystem->GetSteamControllerDescriptionForActionOrigin( origin );
-					}
-				}
-
-				// Find also the keyboard mapping
 				const char *key = engine->Key_LookupBinding( *binding == '+' ? binding + 1 : binding );
 				if ( !key )
 				{
@@ -940,18 +955,7 @@ void UTIL_ReplaceKeyBindings( const wchar_t *inbuf, int inbufsizebytes, OUT_Z_BY
 				}
 				Q_strupr( friendlyName );
 
-				const wchar_t* locName = nullptr;
-
-				// If we got a Steam Controller key description, use that, otherwise use the (possibly localized) key name
-				if ( sc_origin )
-				{
-					locName = sc_origin;
-				}
-				else
-				{
-					locName = g_pVGuiLocalize->Find( friendlyName );
-				}
-
+				wchar_t *locName = g_pVGuiLocalize->Find( friendlyName );
 				if ( !locName || wcslen(locName) <= 0)
 				{
 					g_pVGuiLocalize->ConvertANSIToUnicode( friendlyName, token, sizeof(token) );

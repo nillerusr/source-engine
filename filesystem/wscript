@@ -46,8 +46,8 @@ def build(bld):
 
 	defines = []
 
-	libs = ['tier0','tier1','tier2','vstdlib','vpklib']
-	
+	libs = ['tier0','vpklib','tier1','tier2','vstdlib']
+
 	if bld.env.DEST_OS == 'win32':
 		libs += ['SHELL32']
 

@@ -21,8 +21,8 @@ $Configuration	"Debug"
 {
 	$General
 	{
-		$OutputDirectory			".\Debug_$GAMENAME" [$WINDOWS]
-		$IntermediateDirectory		".\Debug_$GAMENAME" [$WINDOWS]
+		$OutputDirectory			".\Debug_$GAMENAME"			[$WIN32]
+		$IntermediateDirectory		".\Debug_$GAMENAME"			[$WIN32]
 
 		$OutputDirectory			".\Debug_$GAMENAME_360"		[$X360]
 		$IntermediateDirectory		".\Debug_$GAMENAME_360"		[$X360]
@@ -33,9 +33,8 @@ $Configuration	"Release"
 {
 	$General
 	{
-		// Windows generator doesn't sandbox these directories per configuration but others do :-/
-		$OutputDirectory			".\Release_$GAMENAME" [$WINDOWS]
-		$IntermediateDirectory		".\Release_$GAMENAME" [$WINDOWS]
+		$OutputDirectory			".\Release_$GAMENAME"		[$WIN32]
+		$IntermediateDirectory		".\Release_$GAMENAME"		[$WIN32]
 
 		$OutputDirectory			".\Release_$GAMENAME_360"	[$X360]
 		$IntermediateDirectory		".\Release_$GAMENAME_360"	[$X360]
@@ -46,16 +45,17 @@ $Configuration
 {
 	$General
 	{
-		$OutputDirectory			".\$GAMENAME"
-		$IntermediateDirectory		".\$GAMENAME"
+			$OutputDirectory			".\$GAMENAME"		[$OSXALL]
 	}
 
 	$Compiler
 	{
 		$AdditionalIncludeDirectories	".\;$BASE;$SRCDIR\vgui2\include;$SRCDIR\vgui2\controls;$SRCDIR\game\shared;.\game_controls;$SRCDIR\thirdparty\sixensesdk\include"
 		$PreprocessorDefinitions		"$BASE;NO_STRING_T;CLIENT_DLL;VECTOR;VERSION_SAFE_STEAM_API_INTERFACES;PROTECTED_THINGS_ENABLE;strncpy=use_Q_strncpy_instead;_snprintf=use_Q_snprintf_instead" 
-		$PreprocessorDefinitions		"$BASE;fopen=dont_use_fopen" [$WIN32]
-		$PreprocessorDefinitions		"$BASE;USE_WEBM_FOR_REPLAY;" [$LINUXALL]
+		$PreprocessorDefinitions		"$BASE;ENABLE_CHROMEHTMLWINDOW;fopen=dont_use_fopen" [$WIN32]
+		$PreprocessorDefinitions		"$BASE;ENABLE_CHROMEHTMLWINDOW;" [$OSXALL]
+		$PreprocessorDefinitions		"$BASE;ENABLE_CHROMEHTMLWINDOW;USE_WEBM_FOR_REPLAY;" [$LINUXALL]
+		$PreprocessorDefinitions		"$BASE;CURL_STATICLIB" [$WIN32 && $BUILD_REPLAY]
 		$Create/UsePrecompiledHeader	"Use Precompiled Header (/Yu)"
 		$Create/UsePCHThroughFile		"cbase.h"
 		$PrecompiledHeaderFile			"$(IntDir)/client.pch"
@@ -68,7 +68,7 @@ $Configuration
 		$SystemLibraries				"rt" [$LINUXALL]
 		$IgnoreImportLibrary			"TRUE"
 		$AdditionalDependencies			"$BASE winmm.lib"	[$WIN32]
-		$AdditionalDependencies			"$BASE wsock32.lib Ws2_32.lib" [$BUILD_REPLAY&&$WIN32]
+		$AdditionalDependencies			"$BASE wsock32.lib Ws2_32.lib" [$BUILD_REPLAY]
 	}
 }
 
@@ -100,9 +100,6 @@ $Project
 		$File	"$SRCDIR\game\shared\replay_gamestats_shared.cpp"	[$BUILD_REPLAY]
 		$File	"$SRCDIR\game\shared\replay_gamestats_shared.h"	[$BUILD_REPLAY]
 		
-		$File	"$SRCDIR\game\client\youtubeapi.h"	[$BUILD_REPLAY]
-		$File	"$SRCDIR\game\client\youtubeapi.cpp"	[$BUILD_REPLAY]
-		{
 			$Configuration
 			{
 				$Compiler
@@ -148,10 +145,6 @@ $Project
 			$File	"replay\vgui\replayrenderoverlay.h"
 			$File	"replay\vgui\replayreminderpanel.cpp"
 			$File	"replay\vgui\replayreminderpanel.h"
-			$File	"replay\replayyoutubeapi.cpp"
-			$File	"replay\replayyoutubeapi.h"
-			$File	"replay\replayyoutubeapi_key.cpp" [!$SOURCESDK]
-			$File	"replay\replayyoutubeapi_key_sdk.cpp" [$SOURCESDK]
 			
 			$File	"game_controls\slideshowpanel.cpp"
 			$File	"game_controls\slideshowpanel.h"
@@ -372,7 +365,6 @@ $Project
 		$File	"in_camera.cpp"
 		$File	"in_joystick.cpp"
 		$File	"in_main.cpp"
-		$File	"in_steamcontroller.cpp"
 		$File	"initializer.cpp"
 		$File	"interpolatedvar.cpp"
 		$File	"IsNPCProxy.cpp"
@@ -534,7 +526,6 @@ $Project
 				"$SRCDIR\common\language.cpp"						\
 				"$SRCDIR\public\networkvar.cpp"						\
 				"$SRCDIR\common\randoverride.cpp"					\
-				"$SRCDIR\common\steamid.cpp"						\
 				"$SRCDIR\public\rope_physics.cpp"					\
 				"$SRCDIR\public\scratchpad3d.cpp"					\
 				"$SRCDIR\public\ScratchPadUtils.cpp"				\
@@ -1256,9 +1247,17 @@ $Project
 		$Lib		vtf
 		$ImpLib		steam_api
 		
+		$Lib $LIBCOMMON/libcrypto [$POSIX]
+
+		$ImpLib	"$LIBCOMMON\curl"	  [$OSXALL]
+
+		$Lib	"$LIBCOMMON\libcurl" [$WIN32]
 		$Lib   "libz" [$WIN32]
 
 		$Libexternal	libz [$LINUXALL]
+		$Libexternal "$LIBCOMMON/libcurl" [$LINUXALL]
+		$Libexternal "$LIBCOMMON/libcurlssl" [$LINUXALL]
+		$Libexternal "$LIBCOMMON/libssl" [$LINUXALL]
  	}
 
 }

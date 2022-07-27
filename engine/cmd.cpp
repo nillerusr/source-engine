@@ -579,7 +579,7 @@ void Cmd_Exec_f( const CCommand &args )
 
 	const char *szFile = args[1];
 
-	const char *pPathID = "MOD";
+	const char *pPathID = "*";
 
 	Q_snprintf( fileName, sizeof( fileName ), "//%s/cfg/%s", pPathID, szFile );
 	Q_DefaultExtension( fileName, ".cfg", sizeof( fileName ) );
@@ -624,12 +624,13 @@ void Cmd_Exec_f( const CCommand &args )
 		}
 	}
 
-	char buf[16384] = { 0 };
+	char *buf = new char[16384];
 	int len = 0;
-	char *f = (char *)COM_LoadStackFile( fileName, buf, sizeof( buf ), len );
+	char *f = (char *)COM_LoadStackFile( fileName, buf, 16384, len );
 	if ( !f )
 	{
 		ConMsg( "exec: couldn't exec %s\n", szFile );
+		delete[] buf;
 		return;
 	}
 
@@ -645,7 +646,7 @@ void Cmd_Exec_f( const CCommand &args )
 	ConDMsg( "execing %s\n", szFile );
 
 	// check to make sure we're not going to overflow the cmd_text buffer
-	int hCommand = s_CommandBuffer.GetNextCommandHandle();
+	CommandHandle_t hCommand = s_CommandBuffer.GetNextCommandHandle();
 
 	// Execute each command immediately
 	const char *pszDataPtr = f;
@@ -684,6 +685,9 @@ void Cmd_Exec_f( const CCommand &args )
 			free( f );
 		}
 	}
+
+	delete[] buf;
+
 	// force any queued convar changes to flush before reading/writing them
 	UpdateMaterialSystemConfig();
 }

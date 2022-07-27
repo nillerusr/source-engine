@@ -26,7 +26,11 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdarg.h>
+#ifdef OSX
+#include <malloc/malloc.h>
+#else
 #include <malloc.h>
+#endif
 #include <tier0/dbg.h>
 #include <tier1/utlhandletable.h>
 #include "vgui_internal.h"

@@ -284,53 +284,6 @@ void CServerRemoteAccess::WriteDataRequest( CRConServer *pNetworkListener, ra_li
 #endif
 				}
 				break;
-
-#ifdef VPROF_ENABLED
-			case SERVERDATA_VPROF:
-				{
-					char password[25];
-					if ( !GetStringHelper( cmd, password, sizeof(password) ) )
-					{
-						invalidRequest = true;
-						break;
-					}
-					if ( !GetStringHelper( cmd, password, sizeof(password) ) )
-					{
-						invalidRequest = true;
-						break;
-					}
-					if ( IsAuthenticated(listener) )
-					{
-						RegisterVProfDataListener( listener );
-						LogCommand( listener, "Remote VProf started!\n" );
-						RespondString( listener, requestID, "Remote VProf started!\n" );
-					}
-				}
-				break;
-		
-			case SERVERDATA_REMOVE_VPROF:
-				{
-					char password[25];
-					if ( !GetStringHelper( cmd, password, sizeof(password) ) )
-					{
-						invalidRequest = true;
-						break;
-					}
-					if ( !GetStringHelper( cmd, password, sizeof(password) ) )
-					{
-						invalidRequest = true;
-						break;
-					}
-					if ( IsAuthenticated(listener) )
-					{
-						RemoveVProfDataListener( listener );
-						LogCommand( listener, "Remote VProf finished!\n" );
-						RespondString( listener, requestID, "Remote VProf finished!\n" );
-					}
-				}
-				break;
-#endif
-
 			default:
 				Assert(!("Unknown requestType in CServerRemoteAccess::WriteDataRequest()"));
 				cmd.Purge();
@@ -909,16 +862,6 @@ void CServerRemoteAccess::SendResponseToClient( ra_listener_id listenerID, Serve
 	response.PutInt( type );
 	response.PutInt( nDataLen );
 	response.Put( pData, nDataLen );
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose: sends an opaque blob of data from VProf to a remote rcon listener
-//-----------------------------------------------------------------------------
-void CServerRemoteAccess::SendVProfData( ra_listener_id listenerID, bool bGroupData, void *data, int len )
-{
-	Assert( listenerID != m_AdminUIID ); // only RCON clients support this right now
-	SendResponseToClient( listenerID, bGroupData ? SERVERDATA_VPROF_GROUPS : SERVERDATA_VPROF_DATA, data, len );
 }
 
 //-----------------------------------------------------------------------------

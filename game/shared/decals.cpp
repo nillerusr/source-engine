@@ -126,7 +126,7 @@ int CDecalEmitterSystem::GetDecalIndexForName( char const *decalname )
 
 	for ( int i = 0; i < count; i++ )
 	{
-		idx = e->indices[ i ];
+		int idx = e->indices[ i ];
 		DecalListEntry *item = &m_AllDecals[ idx ];
 		Assert( item );
 		

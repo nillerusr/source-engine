@@ -19,7 +19,7 @@
 #include "tier0/basetypes.h"
 
 
-typedef int ShaderAPITextureHandle_t;
+typedef intp ShaderAPITextureHandle_t;
 
 //-----------------------------------------------------------------------------
 // forward declarations
@@ -36,8 +36,8 @@ struct LightState_t
 {
 	int  m_nNumLights;
 	bool m_bAmbientLight;
-	bool m_bStaticLightVertex;
 	bool m_bStaticLightTexel;
+	bool m_bStaticLightVertex;
 	inline int HasDynamicLight() { return (m_bAmbientLight || (m_nNumLights > 0)) ? 1 : 0; }
 };
 

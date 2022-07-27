@@ -366,7 +366,12 @@ void CAchievementsDialog_XBox::OnClose()
 CAchievementsDialog::CAchievementsDialog(vgui::Panel *parent) : BaseClass(parent, "AchievementsDialog")
 {
 	SetDeleteSelfOnClose(true);
-	SetBounds(0, 0, 512, 384);
+
+	if( IsProportional() )
+		SetBounds(0, 0, scheme()->GetProportionalScaledValue(512), scheme()->GetProportionalScaledValue(384));
+	else
+		SetBounds(0, 0, 512, 384);
+
 	SetMinimumSize( 256, 300 );
 	SetSizeable( true );
 
@@ -506,7 +511,8 @@ void CAchievementsDialog::CreateNewAchievementGroup( int iMinRange, int iMaxRang
 //----------------------------------------------------------
 void CAchievementsDialog::ApplySettings( KeyValues *pResourceData )
 {
-	m_iFixedWidth = pResourceData->GetInt( "wide", 512 );
+	int width = pResourceData->GetInt( "wide", 512 );
+	m_iFixedWidth = IsProportional() ? scheme()->GetProportionalScaledValue(width) : width;
 
 	BaseClass::ApplySettings( pResourceData );
 }
@@ -1073,3 +1079,4 @@ void CAchievementDialogItemPanel::OnCheckButtonChecked(Panel *panel)
 		m_pSourceAchievement->SetShowOnHUD( m_pShowOnHUDCheck->IsSelected() );
 	}
 }
+

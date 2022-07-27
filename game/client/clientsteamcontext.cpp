@@ -20,9 +20,6 @@ CClientSteamContext::CClientSteamContext()
 	m_CallbackSteamServersDisconnected( this, &CClientSteamContext::OnSteamServersDisconnected ),
 	m_CallbackSteamServerConnectFailure( this, &CClientSteamContext::OnSteamServerConnectFailure ),
 	m_CallbackSteamServersConnected( this, &CClientSteamContext::OnSteamServersConnected )
-#ifdef TF_CLIENT_DLL
-	, m_GameJoinRequested( this, &CClientSteamContext::OnGameJoinRequested )
-#endif // TF_CLIENT_DLL
 #endif
 {
 	m_bActive = false;
@@ -113,55 +110,6 @@ void CClientSteamContext::OnSteamServersConnected( SteamServersConnected_t *pCon
 	UpdateLoggedOnState();
 	Msg( "CClientSteamContext OnSteamServersConnected logged on = %d\n", m_bLoggedOn );
 }
-
-#ifdef TF_CLIENT_DLL
-void CClientSteamContext::OnGameJoinRequested( GameRichPresenceJoinRequested_t *pCallback )
-{
-	if ( pCallback && pCallback->m_rgchConnect && ( pCallback->m_rgchConnect[0] == '+' ) )
-	{
-		char const *szConCommand = pCallback->m_rgchConnect + 1;
-		//
-		// Work around Steam Overlay bug that it doesn't replace %20 characters
-		//
-		CFmtStr fmtCommand;
-		if ( StringHasPrefix( szConCommand, "tf_econ_item_preview%20" ) )
-		{
-			fmtCommand.AppendFormat( "%s", szConCommand );
-			while ( char *pszReplace = strstr( fmtCommand.Access(), "%20" ) )
-			{
-				*pszReplace = ' ';
-				Q_memmove( pszReplace + 1, pszReplace + 3, Q_strlen( pszReplace + 3 ) + 1 );
-			}
-			szConCommand = fmtCommand.Access();
-		}
-		//
-		// End of Steam Overlay bug workaround
-		//
-		if ( char const *szItemId = StringAfterPrefix( szConCommand, "tf_econ_item_preview " ) )
-		{
-			Msg( "CClientSteamContext OnGameJoinRequested tf_econ_item_preview" );
-
-			bool bItemIdValid = ( pCallback->m_steamIDFriend.GetAccountID() == ~0u );
-			while ( *szItemId )
-			{
-				if ( ( ( *szItemId >= '0' ) && ( *szItemId <= '9' ) ) ||
-					( ( *szItemId >= 'A' ) && ( *szItemId <= 'S' ) ) )
-					++szItemId;	// support new encoding for owner steamid and assetid
-				else
-				{
-					bItemIdValid = false;
-					break;
-				}
-			}
-			if ( bItemIdValid )
-			{
-				engine->ClientCmd( szConCommand );
-			}
-		}
-	}
-}
-#endif // TF_CLIENT_DLL
-
 #endif // !defined(NO_STEAM)
 
 void CClientSteamContext::InstallCallback( CUtlDelegate< void ( const SteamLoggedOnChange_t & ) > delegate )

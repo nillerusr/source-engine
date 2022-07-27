@@ -26,7 +26,7 @@
 
 // [dwenger] Necessary for sorting achievements by award time
 #include <vgui/ISystem.h>
-#include "../../src/public/vgui_controls/Controls.h"
+#include "vgui_controls/Controls.h"
 
 
 ConVar achievements_easymode( "achievement_easymode", "0", FCVAR_CLIENTDLL | FCVAR_DEVELOPMENTONLY,

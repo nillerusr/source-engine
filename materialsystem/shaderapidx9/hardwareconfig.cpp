@@ -24,6 +24,8 @@
 static CHardwareConfig s_HardwareConfig;
 CHardwareConfig *g_pHardwareConfig = &s_HardwareConfig;
 
+extern ConVar mat_hdr_level;
+
 EXPOSE_SINGLE_INTERFACE_GLOBALVAR( CHardwareConfig, IMaterialSystemHardwareConfig, 
 	MATERIALSYSTEM_HARDWARECONFIG_INTERFACE_VERSION, s_HardwareConfig )
 
@@ -1238,12 +1240,12 @@ int CHardwareConfig::GetMaxVertexTextureDimension() const
 
 HDRType_t CHardwareConfig::GetHDRType() const
 {
-	bool enabled = m_bHDREnabled;
+	bool enabled = (mat_hdr_level.GetInt() >= 2) && GetHDREnabled();
 	int dxlev = GetDXSupportLevel();
 	int dxsupp = dxlev >= 90;
 	HDRType_t caps_hdr = m_Caps.m_HDRType;
 	HDRType_t result = HDR_TYPE_NONE;
-	
+
 	//printf("\nCHardwareConfig::GetHDRType...");
 	if (enabled)
 	{

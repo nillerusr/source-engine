@@ -149,6 +149,8 @@ ScrollBar::ScrollBar(Panel *parent, const char *panelName, bool vertical) : Pane
 	m_pOverriddenButtons[0] = NULL;
 	m_pOverriddenButtons[1] = NULL;
 
+	int width = IsProportional() ? scheme()->GetProportionalScaledValue(SCROLLBAR_DEFAULT_WIDTH) : SCROLLBAR_DEFAULT_WIDTH;
+
 	if (vertical)
 	{
 		// FIXME: proportional changes needed???
@@ -158,7 +160,7 @@ ScrollBar::ScrollBar(Panel *parent, const char *panelName, bool vertical) : Pane
 		_button[0]->SetTextInset(0, 1);
 		_button[1]->SetTextInset(0, -1);
 
-		SetSize(SCROLLBAR_DEFAULT_WIDTH, 64);
+		SetSize(width, 64);
 	}
 	else
 	{
@@ -168,7 +170,7 @@ ScrollBar::ScrollBar(Panel *parent, const char *panelName, bool vertical) : Pane
 		_button[0]->SetTextInset(0, 0);
 		_button[1]->SetTextInset(0, 0);
 
-		SetSize(64, SCROLLBAR_DEFAULT_WIDTH);
+		SetSize(64, width);
 	}
 
 	Panel::SetPaintBorderEnabled(true);

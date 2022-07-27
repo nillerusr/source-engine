@@ -19,7 +19,9 @@
 
 #include "tier1/utllinkedlist.h"
 #include "tier1/convar.h"
+#ifdef TOGLES
 #include <EGL/egl.h>
+#endif
 
 // NOTE: This has to be the last file included! (turned off below, since this is included like a header)
 #include "tier0/memdbgon.h"
@@ -63,10 +65,16 @@ static void *l_egl = NULL;
 static void *l_gles = NULL;
 
 typedef void *(*t_glGetProcAddress)( const char * );
-t_glGetProcAddress _glGetProcAddress;
-
 typedef EGLBoolean (*t_eglBindAPI)(EGLenum api);
+typedef EGLBoolean (*t_eglInitialize)(EGLDisplay display, EGLint *major, EGLint *minor);
+typedef EGLDisplay (*t_eglGetDisplay)(NativeDisplayType native_display);
+typedef char const *(*t_eglQueryString)(EGLDisplay display, EGLint name);
+
 t_eglBindAPI _eglBindAPI;
+t_glGetProcAddress _glGetProcAddress;
+t_eglInitialize _eglInitialize;
+t_eglGetDisplay _eglGetDisplay;
+t_eglQueryString _eglQueryString;
 #endif
 
 /*
@@ -594,11 +602,25 @@ InitReturnVal_t CSDLMgr::Init()
 	l_gles = dlopen("libGLESv3.so", RTLD_LAZY);
 
 	if( l_egl )
+	{
 		_glGetProcAddress = (t_glGetProcAddress)dlsym(l_egl, "eglGetProcAddress");
+	}
 
 	SET_GL_ATTR(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
 	SET_GL_ATTR(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SET_GL_ATTR(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+
+	_eglInitialize = (t_eglInitialize)dlsym(l_egl, "eglInitialize");
+	_eglGetDisplay = (t_eglGetDisplay)dlsym(l_egl, "eglGetDisplay");
+	_eglQueryString = (t_eglQueryString)dlsym(l_egl, "eglQueryString");
+
+	if( _eglInitialize && _eglInitialize && _eglQueryString )
+	{
+		EGLDisplay display = _eglGetDisplay(EGL_DEFAULT_DISPLAY);
+		if( _eglInitialize(display, NULL, NULL) != -1
+			&& strstr(_eglQueryString(display, EGL_EXTENSIONS) ,"EGL_KHR_gl_colorspace") )
+				SET_GL_ATTR(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, 1)
+	}
 #elif ANDROID
 	bool m_bOGL = false;
 

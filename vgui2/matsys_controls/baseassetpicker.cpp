@@ -671,7 +671,7 @@ bool CAssetCache::AddFilesInDirectory( CachedAssetList_t& list, const char *pSta
 //-----------------------------------------------------------------------------
 bool CAssetCache::ContinueSearchForAssets( AssetList_t hList, float flDuration )
 {
-	CachedAssetList_t& list = m_CachedAssets[ (int)hList ];
+	CachedAssetList_t& list = m_CachedAssets[ (intp)hList ];
 
 	float flStartTime = Plat_FloatTime();
 	while ( list.m_DirectoriesToCheck.Count() )
@@ -710,7 +710,7 @@ bool CAssetCache::ContinueSearchForAssets( AssetList_t hList, float flDuration )
 //-----------------------------------------------------------------------------
 bool CAssetCache::BeginAssetScan( AssetList_t hList, bool bForceRescan )
 {
-	CachedAssetList_t& list = m_CachedAssets[ (int)hList ];
+	CachedAssetList_t& list = m_CachedAssets[ (intp)hList ];
 	if ( bForceRescan )
 	{
 		list.m_bAssetScanComplete = false;
@@ -758,27 +758,27 @@ AssetList_t CAssetCache::FindAssetList( const char *pAssetType, const char *pSub
 		list.m_pFileTree = new CAssetTreeView( NULL, "FolderFilter", pAssetType, pSubDir );
 	}
 
-	return (AssetList_t)nIndex;
+	return (AssetList_t)(intp)nIndex;
 }
 
 CAssetTreeView* CAssetCache::GetFileTree( AssetList_t hList )
 {
 	if ( hList == ASSET_LIST_INVALID )
 		return NULL;
-	return m_CachedAssets[ (int)hList ].m_pFileTree;
+	return m_CachedAssets[ (intp)hList ].m_pFileTree;
 }
 
 int CAssetCache::GetAssetCount( AssetList_t hList ) const
 {
 	if ( hList == ASSET_LIST_INVALID )
 		return 0;
-	return m_CachedAssets[ (int)hList ].m_AssetList.Count();
+	return m_CachedAssets[ (intp)hList ].m_AssetList.Count();
 }
 
 const CAssetCache::CachedAssetInfo_t& CAssetCache::GetAsset( AssetList_t hList, int nIndex ) const
 {
 	Assert( nIndex < GetAssetCount(hList) );
-	return m_CachedAssets[ (int)hList ].m_AssetList[ nIndex ];
+	return m_CachedAssets[ (intp)hList ].m_AssetList[ nIndex ];
 }
 
 

@@ -102,7 +102,7 @@ HANDLE FindFirstFile( const char *fileName, FIND_DATA *dat)
 {
 	char nameStore[PATH_MAX];
 	char *dir=NULL;
-	int n,iret=-1;
+	intp n,iret=-1;
 	
 	Q_strncpy(nameStore,fileName, sizeof( nameStore ) );
 

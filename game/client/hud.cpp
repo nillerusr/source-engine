@@ -134,7 +134,7 @@ void LoadHudTextures( CUtlDict< CHudTexture *, int >& list, const char *szFilena
 				pTemp = pTemp->GetNextKey();
 			}
 		}
-
+		// Failed for some reason. Delete the Key data and abort.
 		pKeyValuesData->deleteThis();
 	}
 }
@@ -458,9 +458,7 @@ void CHud::Init( void )
 
 	// check to see if we have sprites for this res; if not, step down
 	LoadHudTextures( textureList, "scripts/hud_textures", NULL );
-
-	// Нахуя, а главное зачем ?
-	// LoadHudTextures( textureList, "scripts/mod_textures", NULL );
+	LoadHudTextures( textureList, "scripts/mod_textures", NULL );
 
 	int c = textureList.Count();
 	for ( int index = 0; index < c; index++ )
@@ -1017,11 +1015,11 @@ bool CHud::LockRenderGroup( int iGroupIndex, CHudElement *pLocker /* = NULL */ )
 	if ( !DoesRenderGroupExist(iGroupIndex) )
 		return false;
 
-	int iRenderGroup = m_RenderGroups.Find( iGroupIndex );
+	int i = m_RenderGroups.Find( iGroupIndex );
 
-	Assert( m_RenderGroups.IsValidIndex( iRenderGroup ) );
+	Assert( m_RenderGroups.IsValidIndex(i) );
 
-	CHudRenderGroup *group = m_RenderGroups.Element( iRenderGroup );
+	CHudRenderGroup *group = m_RenderGroups.Element(i);
 
 	Assert( group );
 
@@ -1066,11 +1064,11 @@ bool CHud::UnlockRenderGroup( int iGroupIndex, CHudElement *pLocker /* = NULL */
 	if ( !DoesRenderGroupExist(iGroupIndex) )
 		return false;
 
-	int iRenderGroup = m_RenderGroups.Find( iGroupIndex );
+	int i = m_RenderGroups.Find( iGroupIndex );
 
-	Assert( m_RenderGroups.IsValidIndex( iRenderGroup ) );
+	Assert( m_RenderGroups.IsValidIndex(i) );
 
-	CHudRenderGroup *group = m_RenderGroups.Element( iRenderGroup );
+	CHudRenderGroup *group = m_RenderGroups.Element(i);
 
 	if ( group )
 	{

@@ -50,20 +50,22 @@ public:
 	virtual void OnPostQuery( SpatialPartitionListMask_t listMask );
 
 	void AddEntity( CBaseEntity *pEntity );
-	
+
 	~CDirtySpatialPartitionEntityList();
 	void LockPartitionForRead()
 	{
-		if ( m_readLockCount == 0 )
+		int nThreadId = g_nThreadID;
+		if (  m_nReadLockCount[nThreadId] == 0 )
 		{
 			m_partitionMutex.LockForRead();
 		}
-		m_readLockCount++;
+		m_nReadLockCount[nThreadId]++;
 	}
 	void UnlockPartitionForRead()
 	{
-		m_readLockCount--;
-		if ( m_readLockCount == 0 )
+		int nThreadId = g_nThreadID;
+		m_nReadLockCount[nThreadId]--;
+		if ( m_nReadLockCount[nThreadId] == 0 )
 		{
 			m_partitionMutex.UnlockRead();
 		}
@@ -71,6 +73,8 @@ public:
 
 
 private:
+	int m_nReadLockCount[MAX_THREADS_SUPPORTED];
+
 	CTSListWithFreeList<CBaseHandle> m_DirtyEntities;
 	CThreadSpinRWLock	 m_partitionMutex;
 	uint32			 m_partitionWriteId;
@@ -106,7 +110,7 @@ void UpdateDirtySpatialPartitionEntities()
 CDirtySpatialPartitionEntityList::CDirtySpatialPartitionEntityList( char const *name ) : CAutoGameSystem( name )
 {
 	m_DirtyEntities.Purge();
-	m_readLockCount = 0;
+	memset( m_nReadLockCount, 0, sizeof( m_nReadLockCount ) );
 }
 
 //-----------------------------------------------------------------------------
@@ -122,13 +126,13 @@ CDirtySpatialPartitionEntityList::~CDirtySpatialPartitionEntityList()
 //-----------------------------------------------------------------------------
 bool CDirtySpatialPartitionEntityList::Init()
 {
-	::partition->InstallQueryCallback( this );
+	partition->InstallQueryCallback( this );
 	return true;
 }
 
 void CDirtySpatialPartitionEntityList::Shutdown()
 {
-	::partition->RemoveQueryCallback( this );
+	partition->RemoveQueryCallback( this );
 }
 
 
@@ -164,7 +168,9 @@ void CDirtySpatialPartitionEntityList::OnPreQuery( SpatialPartitionListMask_t li
 	if ( !( listMask & validMask ) )
 		return;
 
-	if ( m_partitionWriteId != 0 && m_partitionWriteId == ThreadGetCurrentId() )
+	int nThreadID = g_nThreadID;
+
+	if ( m_partitionWriteId != 0 && m_partitionWriteId == nThreadID + 1 )
 		return;
 
 #ifdef CLIENT_DLL
@@ -180,11 +186,11 @@ void CDirtySpatialPartitionEntityList::OnPreQuery( SpatialPartitionListMask_t li
 	// or became dirty due to some other thread or callback. Updating them may cause corruption further up the
 	// stack (e.g. partition iterator).  Ignoring the state change should be safe since it happened after the 
 	// trace was requested or was unable to be resolved in a previous attempt (still dirty).
-	if ( m_DirtyEntities.Count() && !m_readLockCount )
+	if ( m_DirtyEntities.Count() && !m_nReadLockCount[nThreadID] )
 	{
 		CUtlVector< CBaseHandle > vecStillDirty;
 		m_partitionMutex.LockForWrite();
-		m_partitionWriteId = ThreadGetCurrentId();
+		m_partitionWriteId = nThreadID + 1;
 		CTSListWithFreeList<CBaseHandle>::Node_t *pCurrent, *pNext;
 		while ( ( pCurrent = m_DirtyEntities.Detach() ) != NULL )
 		{
@@ -1289,14 +1295,14 @@ void CCollisionProperty::CreatePartitionHandle()
 {
 	// Put the entity into the spatial partition.
 	Assert( m_Partition == PARTITION_INVALID_HANDLE );
-	m_Partition = ::partition->CreateHandle( GetEntityHandle() );
+	m_Partition = partition->CreateHandle( GetEntityHandle() );
 }
 
 void CCollisionProperty::DestroyPartitionHandle()
 {
 	if ( m_Partition != PARTITION_INVALID_HANDLE )
 	{
-		::partition->DestroyHandle( m_Partition );
+		partition->DestroyHandle( m_Partition );
 		m_Partition = PARTITION_INVALID_HANDLE;
 	}
 }
@@ -1314,7 +1320,7 @@ void CCollisionProperty::UpdateServerPartitionMask( )
 
 	// Remove it from whatever lists it may be in at the moment
 	// We'll re-add it below if we need to.
-	::partition->Remove( handle );
+	partition->Remove( handle );
 
 	// Don't bother with deleted things
 	if ( !m_pOuter->edict() )
@@ -1328,7 +1334,7 @@ void CCollisionProperty::UpdateServerPartitionMask( )
 	bool bIsSolid = IsSolid() || IsSolidFlagSet(FSOLID_TRIGGER);
 	if ( bIsSolid || m_pOuter->IsEFlagSet(EFL_USE_PARTITION_WHEN_NOT_SOLID) )
 	{
-		::partition->Insert( PARTITION_ENGINE_NON_STATIC_EDICTS, handle );
+		partition->Insert( PARTITION_ENGINE_NON_STATIC_EDICTS, handle );
 	}
 
 	if ( !bIsSolid )
@@ -1346,7 +1352,7 @@ void CCollisionProperty::UpdateServerPartitionMask( )
 		mask |=	PARTITION_ENGINE_TRIGGER_EDICTS;
 	}
 	Assert( mask != 0 );
-	::partition->Insert( mask, handle );
+	partition->Insert( mask, handle );
 #endif
 }
 
@@ -1409,11 +1415,11 @@ void CCollisionProperty::UpdatePartition( )
 				WorldSpaceSurroundingBounds( &vecSurroundMins, &vecSurroundMaxs );
 				vecSurroundMins -= Vector( 1, 1, 1 );
 				vecSurroundMaxs += Vector( 1, 1, 1 );
-				::partition->ElementMoved( GetPartitionHandle(), vecSurroundMins,  vecSurroundMaxs );
+				partition->ElementMoved( GetPartitionHandle(), vecSurroundMins,  vecSurroundMaxs );
 			}
 			else
 			{
-				::partition->ElementMoved( GetPartitionHandle(), GetCollisionOrigin(),  GetCollisionOrigin() );
+				partition->ElementMoved( GetPartitionHandle(), GetCollisionOrigin(),  GetCollisionOrigin() );
 			}
 		}
 	}

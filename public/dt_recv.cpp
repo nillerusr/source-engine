@@ -493,7 +493,7 @@ void RecvProxy_Int32ToInt16( const CRecvProxyData *pData, void *pStruct, void *p
 
 void RecvProxy_Int32ToInt32( const CRecvProxyData *pData, void *pStruct, void *pOut )
 {
-	*((unsigned long*)pOut) = (unsigned long)pData->m_Value.m_Int;
+	*((uint32*)pOut) = (uint32)pData->m_Value.m_Int;
 }
 
 #ifdef SUPPORTS_INT64

@@ -74,7 +74,7 @@ struct DecalMaterialSortData_t
 
 struct DecalMaterialBucket_t
 {
-	int			m_iHead;
+	intp			m_iHead;
 	int			m_nCheckCount;
 };
 
@@ -82,16 +82,16 @@ inline bool DecalSortTreeSortLessFunc( const DecalMaterialSortData_t &decal1, co
 {
 	if ( ( decal1.m_iLightmapPage == -1 ) || ( decal2.m_iLightmapPage == -1 ) )
 	{
-		return ( ( int )decal1.m_pMaterial < ( int )decal2.m_pMaterial );
+		return ( ( intp )decal1.m_pMaterial < ( intp )decal2.m_pMaterial );
 	}
 
-	if ( ( int )decal1.m_pMaterial == ( int )decal2.m_pMaterial )
+	if ( ( intp )decal1.m_pMaterial == ( intp )decal2.m_pMaterial )
 	{
 		return ( decal1.m_iLightmapPage < decal2.m_iLightmapPage );
 	}
 	else
 	{
-		return ( ( int )decal1.m_pMaterial < ( int )decal2.m_pMaterial );
+		return ( ( intp )decal1.m_pMaterial < ( intp )decal2.m_pMaterial );
 	}
 }
 

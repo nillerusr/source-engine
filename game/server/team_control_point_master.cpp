@@ -951,20 +951,6 @@ void CTeamControlPointMaster::FireRoundEndOutput( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-const CTeamControlPointRound* CTeamControlPointMaster::GetRoundByIndex( int nIndex ) const
-{
-	if ( nIndex < 0 || nIndex >= m_ControlPointRounds.Count() )
-	{
-		Assert( false );
-		return 0;
-	}
-
-	return m_ControlPointRounds[ nIndex ];
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 float CTeamControlPointMaster::PointLastContestedAt( int point )
 {
 	CTeamControlPoint *pPoint = GetControlPoint(point);
@@ -1070,44 +1056,65 @@ bool CTeamControlPointMaster::IsBaseControlPoint( int iPointIndex )
 int	CTeamControlPointMaster::GetBaseControlPoint( int iTeam )
 {
 	int iRetVal = -1;
-	int nLowestValue = 999;
-	int nHighestValue = -1;
-	CTeamControlPoint *pLowestPoint = NULL;
-	CTeamControlPoint *pHighestPoint = NULL;
+	int nLowestValue = 999, nHighestValue = -1;
+	int iLowestIndex = 0, iHighestIndex = 0;
 
-	for( unsigned int i = 0 ; i < m_ControlPoints.Count() ; i++ )
+	for( int i = 0 ; i < (int)m_ControlPoints.Count() ; i++ )
 	{
 		CTeamControlPoint *pPoint = m_ControlPoints[i];
 
-		if ( !PlayingMiniRounds() || ( IsInRound( pPoint ) && ( iTeam > LAST_SHARED_TEAM ) ) )
-		{
-			int nTempValue = pPoint->GetPointIndex();
+		int iPointIndex = m_ControlPoints[i]->GetPointIndex();
 
-			if ( nTempValue > nHighestValue )
+		if ( PlayingMiniRounds() && iTeam > LAST_SHARED_TEAM )
+		{
+			if ( IsInRound( pPoint ) ) // is this point in the current round?
 			{
-				nHighestValue = nTempValue;
-				pHighestPoint = pPoint;
+				if ( iPointIndex > nHighestValue )
+				{
+					nHighestValue = iPointIndex;
+					iHighestIndex = i;
+				}
+
+				if ( iPointIndex < nLowestValue )
+				{
+					nLowestValue = iPointIndex;
+					iLowestIndex = i;
+				}
+			}
+		}
+		else
+		{
+			if ( pPoint->GetDefaultOwner() != iTeam )
+			{
+				continue;
 			}
 
-			if ( nTempValue < nLowestValue )
+			// If it's the first or the last point, it's their base
+			if ( iPointIndex == 0 || iPointIndex == (((int)m_ControlPoints.Count())-1) )
 			{
-				nLowestValue = nTempValue;
-				pLowestPoint = pPoint;
+				iRetVal = iPointIndex;
+				break;
 			}
 		}
 	}
 
-	if ( pLowestPoint && pHighestPoint )
+	if ( PlayingMiniRounds() && iTeam > LAST_SHARED_TEAM )
 	{
-		// which point is owned by this team?
-		if ( ( pLowestPoint->GetDefaultOwner() == iTeam && pHighestPoint->GetDefaultOwner() == iTeam ) || // if the same team owns both, take the highest value to be the last point
-				( pHighestPoint->GetDefaultOwner() == iTeam ) )
+		if ( nLowestValue != 999 && nHighestValue != -1 )
 		{
-			iRetVal = nHighestValue;
-		}
-		else if ( pLowestPoint->GetDefaultOwner() == iTeam )
-		{
-			iRetVal = nLowestValue;
+			CTeamControlPoint *pLowestPoint = m_ControlPoints[iLowestIndex];
+			CTeamControlPoint *pHighestPoint = m_ControlPoints[iHighestIndex];
+
+			// which point is owned by this team?
+			if ( ( pLowestPoint->GetDefaultOwner() == iTeam && pHighestPoint->GetDefaultOwner() == iTeam ) || // if the same team owns both, take the highest value to be the last point
+				 ( pHighestPoint->GetDefaultOwner() == iTeam ) )
+			{
+				iRetVal = nHighestValue;
+			}
+			else if ( pLowestPoint->GetDefaultOwner() == iTeam )
+			{
+				iRetVal = nLowestValue;
+			}
 		}
 	}
 	
@@ -1260,7 +1267,7 @@ float CTeamControlPointMaster::GetPartialCapturePointRate( void )
 	return m_flPartialCapturePointsRate;
 }
 
-#ifdef STAGING_ONLY
+/*
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -1337,4 +1344,4 @@ void cc_PlayRound( const CCommand& args )
 }
 
 static ConCommand playround( "playround", cc_PlayRound, "Play the selected round\n\tArgument: {round name given by \"listrounds\" command}", FCVAR_CHEAT );
-#endif
+*/

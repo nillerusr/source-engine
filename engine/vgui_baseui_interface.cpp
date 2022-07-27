@@ -696,10 +696,9 @@ void CEngineVGui::Init()
 	COM_TimestampedLog( "Building Panels (staticGameUIPanel)" );
 
 	staticGameUIPanel = new CEnginePanel( staticPanel, "GameUI Panel" );
-	if (IsAndroid() || CommandLine()->CheckParm("-gameuiproportionality"))
-	{
+
+	if(NeedProportional())
 		staticGameUIPanel->SetProportional(true);
-	}
 
 	staticGameUIPanel->SetBounds( 0, 0, videomode->GetModeUIWidth(), videomode->GetModeUIHeight() );
 	staticGameUIPanel->SetPaintBorderEnabled(false);

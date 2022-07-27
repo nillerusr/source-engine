@@ -27,7 +27,7 @@
 class CPhysCollideVirtualMesh;
 
 CTSPool< CUtlVector<CPhysCollideVirtualMesh *> > g_MeshFrameLocksPool;
-CThreadLocalPtr< CUtlVector<CPhysCollideVirtualMesh *> > g_pMeshFrameLocks;
+CTHREADLOCALPTR(CUtlVector<CPhysCollideVirtualMesh *>) g_pMeshFrameLocks;
 
 // This is the surfacemanager class for IVP that implements the required functions by layering CPhysCollideVirtualMesh
 class IVP_SurfaceManager_VirtualMesh : public IVP_SurfaceManager
@@ -148,7 +148,7 @@ void CMeshInstance::Init( const virtualmeshlist_t &list )
 	m_memSize = memSize;
 	m_hullCount = 0;
 	m_pMemory = (char *)ivp_malloc_aligned( memSize, 16 );
-	Assert( (int(m_pMemory) & 15) == 0 );	// make sure it is aligned
+	Assert( (intp(m_pMemory) & 15) == 0 );	// make sure it is aligned
 	IVP_Compact_Poly_Point *pPoints = (IVP_Compact_Poly_Point *)&m_pMemory[ledgeSize];
 	triangleledge_t *pLedges = (triangleledge_t *) m_pMemory;
 	memset( m_pMemory, 0, memSize );
@@ -185,8 +185,7 @@ void CMeshInstance::Init( const virtualmeshlist_t &list )
 	}
 }
 
-// UNDONE: Tune / expose this constant 512K budget for terrain collision
-const int g_MeshSize = (2048 * 1024);
+const int g_MeshSize = (2048 * 1024 * 4); // nillerusr: 2 MiB should be enough, old value causes problems in ep2
 static CDataManager<CMeshInstance, virtualmeshlist_t, CMeshInstance *, CThreadFastMutex> g_MeshManager( g_MeshSize );
 static int numIndices = 0, numTriangles = 0, numBaseTriangles = 0, numSplits = 0;
 //-----------------------------------------------------------------------------
@@ -443,12 +442,15 @@ CMeshInstance *CPhysCollideVirtualMesh::BuildLedges()
 	{
 		list.pHull = (byte *)m_pHull;
 	}
-	
+
 	if ( list.triangleCount )
 	{
 		m_hMemory = g_MeshManager.CreateResource( list );
 		m_ledgeCount = list.triangleCount;
 		CMeshInstance *pMesh = g_MeshManager.LockResource( m_hMemory );
+
+		Assert( g_MeshManager.AvailableSize() != 0 );
+
 		return pMesh;
 	}
 	return NULL;
@@ -532,7 +534,6 @@ CPhysCollide *CreateVirtualMesh( const virtualmeshparams_t &params )
 
 void DestroyVirtualMesh( CPhysCollide *pMesh )
 {
-	FlushFrameLocks();
 	delete pMesh;
 }
 
@@ -547,6 +548,7 @@ IVP_SurfaceManager_VirtualMesh::IVP_SurfaceManager_VirtualMesh( CPhysCollideVirt
 
 IVP_SurfaceManager_VirtualMesh::~IVP_SurfaceManager_VirtualMesh()
 {
+	FlushFrameLocks();
 }
 
 void IVP_SurfaceManager_VirtualMesh::add_reference_to_ledge(const IVP_Compact_Ledge *ledge)

@@ -585,7 +585,7 @@ private:
 	CUtlVector<HCoroutine> m_VecCoroutineStack;
 };
 
-CThreadLocalPtr< CCoroutineMgr > g_ThreadLocalCoroutineMgr;
+CTHREADLOCALPTR(CCoroutineMgr) g_ThreadLocalCoroutineMgr;
 
 CUtlVector< CCoroutineMgr * > g_VecPCoroutineMgr;
 CThreadMutex g_ThreadMutexCoroutineMgr;
@@ -610,7 +610,7 @@ void Coroutine_ReleaseThreadMemory()
 {
 	AUTO_LOCK( g_ThreadMutexCoroutineMgr );
 
-	if ( g_ThreadLocalCoroutineMgr != NULL )
+	if ( g_ThreadLocalCoroutineMgr != static_cast<const void*>( nullptr ) )
 	{
 		int iCoroutineMgr = g_VecPCoroutineMgr.Find( g_ThreadLocalCoroutineMgr );
 		delete g_VecPCoroutineMgr[iCoroutineMgr];

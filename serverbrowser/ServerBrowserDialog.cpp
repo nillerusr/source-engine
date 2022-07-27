@@ -154,9 +154,10 @@ CServerBrowserDialog::~CServerBrowserDialog()
 	SaveUserData();
 
   	if (m_pSavedData)
-  	{
   		m_pSavedData->deleteThis();
-  	}
+
+	if( m_pFilterData )
+		m_pFilterData->deleteThis();
 }
 
 

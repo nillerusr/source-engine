@@ -15,7 +15,9 @@
 
 enum NormalDecodeMode_t
 {
-	NORMAL_DECODE_NONE			= 0
+	NORMAL_DECODE_NONE			= 0,
+	NORMAL_DECODE_ATI2N,
+	NORMAL_DECODE_ATI2N_ALPHA
 };
 
 // Forward declaration

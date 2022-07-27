@@ -12,6 +12,7 @@
 #include "vgui/KeyCode.h"
 #include "LoadingDialog.h"
 #include "IGameUIFuncs.h"
+#include "tier0/icommandline.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -24,6 +25,7 @@ using namespace vgui;
 //-----------------------------------------------------------------------------
 CGameConsoleDialog::CGameConsoleDialog() : BaseClass( NULL, "GameConsole", false )
 {
+	if( NeedProportional() ) SetProportional(true);
 	AddActionSignalTarget( this );
 }
 

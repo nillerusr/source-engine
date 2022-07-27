@@ -226,7 +226,6 @@ KeyBindingMap_t::~KeyBindingMap_t()
 class CKeyBindingsMgr
 {
 public:
-	
 	CKeyBindingsMgr() :
 		m_Bindings( 0, 0, KeyBindingContextHandleLessFunc ),
 		m_nKeyBindingContexts( 0 )
@@ -881,7 +880,7 @@ const char *Panel::GetClassName()
 {
 	// loop up the panel map name
 	PanelMessageMap *panelMap = GetMessageMap();
-	if ( panelMap )
+	if ( panelMap && panelMap->pfnClassName )
 	{
 		return panelMap->pfnClassName();
 	}
@@ -1450,8 +1449,10 @@ void Panel::SetParent(Panel *newParent)
 //-----------------------------------------------------------------------------
 void Panel::SetParent(VPANEL newParent)
 {
+
 	if (newParent)
 	{
+
 		ipanel()->SetParent(GetVPanel(), newParent);
 	}
 	else
@@ -1459,19 +1460,19 @@ void Panel::SetParent(VPANEL newParent)
 		ipanel()->SetParent(GetVPanel(), NULL);
 	}
 
-	if (GetVParent() && !IsPopup())
+	if (GetVParent() )
 	{
-		SetProportional(ipanel()->IsProportional(GetVParent()));
+		if( ipanel()->IsProportional(GetVParent()) )
+			SetProportional(true);
 
-		// most of the time KBInput == parents kbinput
-		if (ipanel()->IsKeyBoardInputEnabled(GetVParent()) != IsKeyBoardInputEnabled())
+		if( IsPopup() )
 		{
-			SetKeyBoardInputEnabled(ipanel()->IsKeyBoardInputEnabled(GetVParent()));
-		}
+			// most of the time KBInput == parents kbinput
+			if (ipanel()->IsKeyBoardInputEnabled(GetVParent()) != IsKeyBoardInputEnabled())
+				SetKeyBoardInputEnabled(ipanel()->IsKeyBoardInputEnabled(GetVParent()));
 
-		if (ipanel()->IsMouseInputEnabled(GetVParent()) != IsMouseInputEnabled())
-		{
-			SetMouseInputEnabled(ipanel()->IsMouseInputEnabled(GetVParent()));
+			if (ipanel()->IsMouseInputEnabled(GetVParent()) != IsMouseInputEnabled())
+				SetMouseInputEnabled(ipanel()->IsMouseInputEnabled(GetVParent()));
 		}
 	}
 
@@ -3574,7 +3575,7 @@ void Panel::RequestFocus(int direction)
 //-----------------------------------------------------------------------------
 void Panel::OnRequestFocus(VPANEL subFocus, VPANEL defaultPanel)
 {
-	CallParentFunction(new KeyValues("OnRequestFocus", "subFocus", subFocus, "defaultPanel", defaultPanel));
+	CallParentFunction(new KeyValues("OnRequestFocus", "subFocus", ivgui()->PanelToHandle( subFocus ), "defaultPanel", ivgui()->PanelToHandle( defaultPanel )));
 }
 
 //-----------------------------------------------------------------------------
@@ -3801,11 +3802,9 @@ void Panel::SetBuildGroup(BuildGroup* buildGroup)
 {
 	//TODO: remove from old group
 
-	Assert(buildGroup != NULL);
-	
-	_buildGroup = buildGroup;
-
-	_buildGroup->PanelAdded(this);
+        Assert(buildGroup != NULL);
+        _buildGroup = buildGroup;
+        _buildGroup->PanelAdded(this);
 }
 
 bool Panel::IsBuildGroupEnabled()
@@ -5133,6 +5132,13 @@ void Panel::OnMessage(const KeyValues *params, VPANEL ifromPanel)
 						VPANEL vp = ivgui()->HandleToPanel( param1->GetInt() );
 						(this->*((MessageFunc_HandleConstCharPtr_t)pMap->func))( vp, param2->GetWString() );
 					}
+					else if ( (DATATYPE_HANDLE == pMap->firstParamType) && (DATATYPE_HANDLE == pMap->secondParamType) )
+					{
+						typedef void (Panel::*MessageFunc_HandleConstCharPtr_t)(VPANEL, VPANEL);
+						VPANEL vp1 = ivgui()->HandleToPanel( param1->GetInt() );
+						VPANEL vp2 = ivgui()->HandleToPanel( param2->GetInt() );
+						(this->*((MessageFunc_HandleConstCharPtr_t)pMap->func))( vp1, vp2 );
+					}
 					else
 					{
 						// the message isn't handled
@@ -5514,7 +5520,7 @@ void Panel::OnDelete()
 // Purpose: Panel handle implementation
 //			Returns a pointer to a valid panel, NULL if the panel has been deleted
 //-----------------------------------------------------------------------------
-Panel *PHandle::Get() 
+Panel *PHandle::Get() const
 {
 	if (m_iPanelID != INVALID_PANEL)
 	{

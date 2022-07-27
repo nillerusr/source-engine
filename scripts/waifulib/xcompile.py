@@ -255,7 +255,7 @@ class Android:
 		if self.is_arm():
 			if self.arch == 'armeabi-v7a':
 				# ARMv7 support
-				cflags += ['-mthumb', '-mfpu=neon', '-mcpu=cortex-a9', '-DHAVE_EFFICIENT_UNALIGNED_ACCESS', '-DVECTORIZE_SINCOS']
+				cflags += ['-mthumb', '-mfpu=neon-vfpv4', '-mcpu=cortex-a7', '-mtune=cortex-a7', '-DHAVE_EFFICIENT_UNALIGNED_ACCESS', '-DVECTORIZE_SINCOS']
 
 				if not self.is_clang() and not self.is_host():
 					cflags += [ '-mvectorize-with-neon-quad' ]

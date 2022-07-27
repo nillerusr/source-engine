@@ -119,21 +119,21 @@
 #define _T( arg ) arg
 #endif
 #define INVALID_HANDLE_VALUE (void*)-1
-#define CloseHandle( arg ) close( (int) arg )
+#define CloseHandle( arg ) close( (intptr_t) arg )
 #define ZeroMemory( ptr, size ) memset( ptr, 0, size )
 #define FILE_CURRENT SEEK_CUR
 #define FILE_BEGIN SEEK_SET
 #define FILE_END SEEK_END
 #define CreateDirectory( dir, ign ) mkdir( dir, S_IRWXU | S_IRWXG | S_IRWXO )
-#define SetFilePointer( handle, pos, ign, dir ) lseek( (int) handle, pos, dir )
+#define SetFilePointer( handle, pos, ign, dir ) lseek( (intptr_t) handle, pos, dir )
 bool ReadFile( void *handle, void *outbuf, unsigned int toread, unsigned int *nread, void *ignored )
 {
-	*nread = read( (int) handle, outbuf, toread );
+	*nread = read( (intptr_t) handle, outbuf, toread );
 	return *nread == toread;
 }
 bool WriteFile( void *handle, void *buf, unsigned int towrite, unsigned int *written, void *ignored )
 {
-	*written = write( (int) handle, buf, towrite );
+	*written = write( (intptr_t) handle, buf, towrite );
 	return *written == towrite;
 }
 
@@ -2778,8 +2778,8 @@ LUFILE *lufopen(void *z,unsigned int len,DWORD flags,ZRESULT *err)
 #ifdef _WIN32		
 			res = DuplicateHandle(GetCurrentProcess(),hf,GetCurrentProcess(),&h,0,FALSE,DUPLICATE_SAME_ACCESS) == TRUE;
 #else
-			h = (void*) dup( (int)hf );
-			res = (int) dup >= 0;
+			h = (void*)(intptr_t) dup( (intptr_t)hf );
+			res = (intptr_t) dup >= 0;
 #endif
 			if (!res) 
 			{
@@ -2793,7 +2793,7 @@ LUFILE *lufopen(void *z,unsigned int len,DWORD flags,ZRESULT *err)
 			h = CreateFile((const TCHAR *)z, GENERIC_READ, FILE_SHARE_READ, 
 					NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 #else
-			h = (void*) open( (const TCHAR *)z, O_RDONLY );
+			h = (void*)(intptr_t) open( (const TCHAR *)z, O_RDONLY );
 #endif
 			if (h == INVALID_HANDLE_VALUE) 
 			{
@@ -2806,7 +2806,7 @@ LUFILE *lufopen(void *z,unsigned int len,DWORD flags,ZRESULT *err)
 		canseek = (type==FILE_TYPE_DISK);
 #else
 		struct stat buf;
-		fstat( (int)h, &buf );
+		fstat( (intptr_t)h, &buf );
 		canseek = buf.st_mode & S_IFREG;
 #endif
 	}
@@ -4198,7 +4198,7 @@ ZRESULT TUnzip::Unzip(int index,void *dst,unsigned int len,DWORD flags)
 		h = ::CreateFile((const TCHAR*)dst, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 
 				ze.attr, NULL);
 #else
-		h = (void*) open( (const TCHAR*)dst, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO );
+		h = (void*)(intptr_t)open( (const TCHAR*)dst, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO );
 #endif
 	}
 
@@ -4235,7 +4235,7 @@ ZRESULT TUnzip::Unzip(int index,void *dst,unsigned int len,DWORD flags)
 		settime=true;
 #else
 	struct stat sbuf;
-	fstat( (int)h, &sbuf );
+	fstat( (intptr_t)h, &sbuf );
 	settime = ( sbuf.st_mode & S_IFREG );
 #endif
 
@@ -4244,19 +4244,19 @@ ZRESULT TUnzip::Unzip(int index,void *dst,unsigned int len,DWORD flags)
 #ifdef _WIN32
 		SetFileTime(h,&ze.ctime,&ze.atime,&ze.mtime);
 #elif defined( ANDROID )
-        struct timespec ts[2];
+	struct timespec ts[2];
         ts[0].tv_sec = ze.atime;
         ts[0].tv_nsec = 0;
         ts[1].tv_sec = ze.mtime;
         ts[1].tv_nsec = 0;
-        utimensat((int)h, NULL, ts, 0);
+        utimensat((intptr_t)h, NULL, ts, 0);
 #else
 		struct timeval tv[2];
 		tv[0].tv_sec = ze.atime;
 		tv[0].tv_usec = 0;
 		tv[1].tv_sec = ze.mtime;
 		tv[1].tv_usec = 0;
-		futimes( (int)h, tv );
+		futimes( (intptr_t)h, tv );
 #endif
 	}
 	if (flags!=ZIP_HANDLE) 

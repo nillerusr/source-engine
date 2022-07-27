@@ -467,7 +467,7 @@ void CBaseEntityOutput::DeleteAllElements( void )
 	m_ActionList = NULL;
 	while (pNext)
 	{
-		CEventAction *strikeThis = pNext;
+		register CEventAction *strikeThis = pNext;
 		pNext = pNext->m_pNext;
 		delete strikeThis;
 	}
@@ -1486,7 +1486,7 @@ bool variant_t::Convert( fieldtype_t newType )
 //-----------------------------------------------------------------------------
 const char *variant_t::ToString( void ) const
 {
-	COMPILE_TIME_ASSERT( sizeof(string_t) == sizeof(int) );
+	COMPILE_TIME_ASSERT( sizeof(string_t) == sizeof(intp) );
 
 	static char szBuf[512];
 

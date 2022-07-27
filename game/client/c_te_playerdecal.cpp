@@ -240,7 +240,7 @@ void TE_PlayerDecal( IRecipientFilter& filter, float delay,
 	color32 rgbaColor = { 255, 255, 255, 255 };
 	effects->PlayerDecalShoot( 
 		logo, 
-		(void *)player,
+		(void *)(intp)player,
 		entity, 
 		ent->GetModel(), 
 		ent->GetAbsOrigin(), 

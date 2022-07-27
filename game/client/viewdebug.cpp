@@ -514,7 +514,7 @@ static void OverlayColorRamp( bool bHalfSpace )
 //-----------------------------------------------------------------------------
 // Draws all the debugging info
 //-----------------------------------------------------------------------------
-void CDebugViewRender::Draw3DDebuggingInfo( const CViewSetup &viewDebug )
+void CDebugViewRender::Draw3DDebuggingInfo( const CViewSetup &view )
 {
 	VPROF("CViewRender::Draw3DDebuggingInfo");
 
@@ -529,7 +529,7 @@ void CDebugViewRender::Draw3DDebuggingInfo( const CViewSetup &viewDebug )
 //-----------------------------------------------------------------------------
 // Draws all the debugging info
 //-----------------------------------------------------------------------------
-void CDebugViewRender::Draw2DDebuggingInfo( const CViewSetup &viewDebug )
+void CDebugViewRender::Draw2DDebuggingInfo( const CViewSetup &view )
 {
 	if ( IsX360() && IsRetail() )
 		return;
@@ -542,7 +542,7 @@ void CDebugViewRender::Draw2DDebuggingInfo( const CViewSetup &viewDebug )
 		if( !IsErrorMaterial( pMaterial ) )
 		{
 			pMaterial->IncrementReferenceCount();
-			DrawScreenEffectMaterial( pMaterial, viewDebug.x, viewDebug.y, viewDebug.width, viewDebug.height );
+			DrawScreenEffectMaterial( pMaterial, view.x, view.y, view.width, view.height );
 			pMaterial->DecrementReferenceCount();
 		}
 	}
@@ -554,7 +554,7 @@ void CDebugViewRender::Draw2DDebuggingInfo( const CViewSetup &viewDebug )
 		if( !IsErrorMaterial( pMaterial ) )
 		{
 			pMaterial->IncrementReferenceCount();
-			DrawScreenEffectMaterial( pMaterial, viewDebug.x, viewDebug.y, viewDebug.width, viewDebug.height );
+			DrawScreenEffectMaterial( pMaterial, view.x, view.y, view.width, view.height );
 			pMaterial->DecrementReferenceCount();
 		}
 	}
@@ -562,8 +562,8 @@ void CDebugViewRender::Draw2DDebuggingInfo( const CViewSetup &viewDebug )
 	// Draw debugging lightmaps
 	if ( mat_showlightmappage.GetInt() != -1 )
 	{
-		CLightmapDebugView clientView( assert_cast<CViewRender *>( ::view) );
-		clientView.Setup( viewDebug );
+		CLightmapDebugView clientView( assert_cast<CViewRender *>( ::view ) );
+		clientView.Setup( view );
 		clientView.Draw();
 	}
 

@@ -29,7 +29,7 @@ public:
 					C_PlayerResource();
 	virtual			~C_PlayerResource();
 
-public : // IGameResources interface
+public : // IGameResources intreface
 
 	// Team data access 
 	virtual int		GetTeamScore( int index );
@@ -56,9 +56,6 @@ public : // IGameResources interface
 	virtual void ClientThink();
 	virtual	void	OnDataChanged(DataUpdateType_t updateType);
 
-	uint32 GetAccountID( int iIndex );
-	bool IsValid( int iIndex );
-
 protected:
 	void	UpdatePlayerName( int slot );
 
@@ -73,9 +70,8 @@ protected:
 	bool	m_bAlive[MAX_PLAYERS+1];
 	int		m_iHealth[MAX_PLAYERS+1];
 	Color	m_Colors[MAX_TEAMS];
-	uint32	m_iAccountID[MAX_PLAYERS+1];
-	bool	m_bValid[MAX_PLAYERS+1];
 	string_t m_szUnconnectedName;
+
 };
 
 extern C_PlayerResource *g_PR;

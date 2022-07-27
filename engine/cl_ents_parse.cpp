@@ -451,7 +451,7 @@ void CL_PreserveExistingEntity( int nOldEntity )
 		return;
 	}
 
-	pEnt->OnDataUnchangedInPVS();
+//	pEnt->OnDataUnchangedInPVS();
 }
 
 void CL_CopyExistingEntity( CEntityReadInfo &u )

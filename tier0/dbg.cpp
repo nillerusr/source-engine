@@ -14,10 +14,15 @@
 #define WIN_32_LEAN_AND_MEAN
 #include <windows.h>				// Currently needed for IsBadReadPtr and IsBadWritePtr
 #pragma comment(lib,"user32.lib")	// For MessageBox
+#include <time.h>
 #endif
 
 #include <assert.h>
+#ifdef OSX
+#include <malloc/malloc.h>
+#else
 #include <malloc.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
@@ -45,12 +50,82 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+class CDbgLogger : public IDbgLogger
+{
+public:
+	CDbgLogger();
+	~CDbgLogger();
+
+	void Init(const char *logfile);
+	void Write(const char *data);
+
+private:
+	FILE *file;
+	float flStartTime;
+	bool bShouldLog;
+};
+
+
+CDbgLogger::CDbgLogger()
+{
+	bShouldLog = false;
+	flStartTime = Plat_FloatTime();
+}
+
+void CDbgLogger::Init(const char *logfile)
+{
+	time_t timeCur;
+	struct tm tmStruct;
+
+	char szTime[256];
+
+	bShouldLog = true;
+
+	time( &timeCur );
+	Plat_gmtime( &timeCur, &tmStruct );
+	Plat_ctime( &timeCur, szTime, sizeof(szTime) );
+
+	file = fopen(logfile, "w+");
+	fprintf(file, ">>> Engine started at %s\n", szTime);
+	fflush(file);
+}
+
+CDbgLogger::~CDbgLogger()
+{
+	if( !bShouldLog )
+		return;
+
+	time_t timeCur;
+	struct tm tmStruct;
+
+	char szTime[256];
+
+	time( &timeCur );
+	Plat_gmtime( &timeCur, &tmStruct );
+	Plat_ctime( &timeCur, szTime, sizeof(szTime) );
+
+	fprintf(file, "\n>>> Engine closed at %s\n", szTime);
+	fclose(file);
+}
+
+void CDbgLogger::Write(const char *data)
+{
+	if( !bShouldLog )
+		return;
+
+	fprintf(file, "[%.4f] ", Plat_FloatTime() - flStartTime);
+	fprintf(file, "%s", data);
+	fflush(file);
+}
+
+static CDbgLogger g_DbgLogger;
+IDbgLogger *DebugLogger() { return &g_DbgLogger; }
 
 //-----------------------------------------------------------------------------
 // internal structures
 //-----------------------------------------------------------------------------
-enum 
-{ 
+enum
+{
 	MAX_GROUP_NAME_LENGTH = 48 
 };
 
@@ -148,7 +223,7 @@ struct SpewInfo_t
 	int				m_nSpewOutputLevel;
 };
 
-CThreadLocalPtr<SpewInfo_t> g_pSpewInfo;
+CTHREADLOCALPTR(SpewInfo_t) g_pSpewInfo;
 
 
 // Standard groups
@@ -272,7 +347,7 @@ DBG_INTERFACE void  _SpewInfo( SpewType_t type, const tchar* pFile, int line )
 
 static SpewRetval_t _SpewMessage( SpewType_t spewType, const char *pGroupName, int nLevel, const Color *pColor, const tchar* pMsgFormat, va_list args )
 {
-	tchar pTempBuffer[5020];
+	tchar pTempBuffer[8192];
 
 	assert( _tcslen( pMsgFormat ) < sizeof( pTempBuffer) ); // check that we won't artifically truncate the string
 
@@ -285,7 +360,7 @@ static SpewRetval_t _SpewMessage( SpewType_t spewType, const char *pGroupName, i
 
 	if ( len == -1 )
 		return SPEW_ABORT;
-	
+
 	/* Create the message.... */
 	int val= _vsntprintf( &pTempBuffer[len], sizeof( pTempBuffer ) - len - 1, pMsgFormat, args );
 	if ( val == -1 )
@@ -299,10 +374,10 @@ static SpewRetval_t _SpewMessage( SpewType_t spewType, const char *pGroupName, i
 	{
 		len += _stprintf( &pTempBuffer[len], _T("\n") ); 
 	}
-	
+
 	assert( len < sizeof(pTempBuffer)/sizeof(pTempBuffer[0]) - 1 ); /* use normal assert here; to avoid recursion. */
 	assert( s_SpewOutputFunc );
-	
+
 	/* direct it to the appropriate target(s) */
 	SpewRetval_t ret;
 	assert( g_pSpewInfo == NULL );
@@ -314,12 +389,13 @@ static SpewRetval_t _SpewMessage( SpewType_t spewType, const char *pGroupName, i
 	};
 
 #ifdef ANDROID
-    __android_log_print( ANDROID_LOG_INFO, "SRCENG", "%s", pTempBuffer );
+	__android_log_print( ANDROID_LOG_INFO, "SRCENG", "%s", pTempBuffer );
 #endif
+	g_DbgLogger.Write( pTempBuffer );
 
 	g_pSpewInfo = &spewInfo;
 	ret = s_SpewOutputFunc( spewType, pTempBuffer );
-	g_pSpewInfo = (int)NULL;
+	g_pSpewInfo = NULL;
 
 	switch (ret)
 	{

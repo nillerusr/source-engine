@@ -73,7 +73,6 @@ public:
 	bool operator()( CBaseCombatCharacter *actor )
 	{
 		actor->OnNavAreaRemoved( m_deadArea );
-		return true;
 	}
 };
 
@@ -198,9 +197,15 @@ public:
 
 	unsigned int operator()( const NavVisPair_t &item ) const
 	{
+#if PLATFORM_64BITS
+		COMPILE_TIME_ASSERT( sizeof(CNavArea *) == 8 );
+		int64 key[2] = { (int64)(item.pAreas[0] + item.pAreas[1]->GetID()), (int64)(item.pAreas[1] + item.pAreas[0]->GetID()) };
+		return Hash16( key );
+#else
 		COMPILE_TIME_ASSERT( sizeof(CNavArea *) == 4 );
-		int key[2] = { (int)item.pAreas[0] + (int)item.pAreas[1]->GetID(), (int)item.pAreas[1] + (int)item.pAreas[0]->GetID() };
+		int key[2] = { (int)(item.pAreas[0] + item.pAreas[1]->GetID()), (int)(item.pAreas[1] + item.pAreas[0]->GetID()) };
 		return Hash8( key );
+#endif
 	}
 };
 
@@ -1052,8 +1057,6 @@ public:
 	void SimplifySelectedAreas( void );	// Simplifies the selected set by reducing to 1x1 areas and re-merging them up with loosened tolerances
 
 protected:
-	NavErrorType GetNavDataFromFile( CUtlBuffer &outBuffer, bool *pNavDataFromBSP = NULL );
-
 	virtual void PostCustomAnalysis( void ) { }					// invoked when custom analysis step is complete
 	bool FindActiveNavArea( void );								// Finds the area or ladder the local player is currently pointing at.  Returns true if a surface was hit by the traceline.
 	virtual void RemoveNavArea( CNavArea *area );				// remove an area from the grid
@@ -1261,10 +1264,8 @@ extern CNavMesh *TheNavMesh;
 // factory for creating the Navigation Mesh
 extern CNavMesh *NavMeshFactory( void );
 
-#ifdef STAGING_ONLY
 // for debugging the A* algorithm, if nonzero, show debug display and decrement for each pathfind
 extern int g_DebugPathfindCounter;
-#endif
 
 
 //--------------------------------------------------------------------------------------------------------------

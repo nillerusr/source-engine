@@ -517,7 +517,7 @@ void CMaterialSystem::CleanUpErrorMaterial()
 //-----------------------------------------------------------------------------
 CMaterialSystem::CMaterialSystem()
 {
-	m_nRenderThreadID = 0xFFFFFFFF;
+	m_nRenderThreadID = (uintp)-1;
 	m_hAsyncLoadFileCache = NULL;
 	m_ShaderHInst = 0;
 	m_pMaterialProxyFactory = NULL;
@@ -2785,8 +2785,8 @@ IMaterial* CMaterialSystem::FindMaterialEx( char const* pMaterialName, const cha
 {
 	// We need lower-case symbols for this to work
 	int nLen = Q_strlen( pMaterialName ) + 1;
-	char *pFixedNameTemp = (char*)stackalloc( nLen );
-	char *pTemp = (char*)stackalloc( nLen );
+	char *pFixedNameTemp = (char*)malloc( nLen );
+	char *pTemp = (char*)malloc( nLen );
 	Q_strncpy( pFixedNameTemp, pMaterialName, nLen );
 	Q_strlower( pFixedNameTemp );
 #ifdef POSIX
@@ -2887,6 +2887,9 @@ IMaterial* CMaterialSystem::FindMaterialEx( char const* pMaterialName, const cha
 			DevWarning( "material \"%s\" not found.\n", name );
 		}
 	}
+
+	free(pTemp);
+	free(pFixedNameTemp);
 
 	return g_pErrorMaterial->GetRealTimeVersion();
 }
@@ -3547,7 +3550,7 @@ void CMaterialSystem::ThreadExecuteQueuedContext( CMatQueuedRenderContext *pCont
 	m_pRenderContext.Set( &m_HardwareRenderContext );
 	pContext->EndQueue( true );
 	m_pRenderContext.Set( pSavedRenderContext );
-	m_nRenderThreadID = 0xFFFFFFFF; 
+	m_nRenderThreadID = (uintp)-1;
 }
 
 IThreadPool *CMaterialSystem::CreateMatQueueThreadPool()

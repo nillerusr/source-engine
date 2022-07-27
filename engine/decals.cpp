@@ -14,7 +14,11 @@
 #include "filesystem.h"
 #include "filesystem_engine.h"
 #include "materialsystem/imaterial.h"
+#ifdef OSX
+#include <malloc/malloc.h>
+#else
 #include <malloc.h>
+#endif
 #include "utldict.h"
 
 // memdbgon must be the last include file in a .cpp file!!!

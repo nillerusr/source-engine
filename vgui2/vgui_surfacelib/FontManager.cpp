@@ -43,7 +43,7 @@ CFontManager::CFontManager()
 	m_FontAmalgams.AddToTail();
 	m_Win32Fonts.EnsureCapacity( MAX_INITIAL_FONTS );
 
-#ifdef LINUX
+#if defined(LINUX) || defined(OSX)
 	FT_Error error = FT_Init_FreeType( &library ); 
 	if ( error )
 		Error( "Unable to initalize freetype library, is it installed?" );
@@ -75,7 +75,7 @@ CFontManager::~CFontManager()
 {
 	ClearAllFonts();
 	m_FontAmalgams.RemoveAll();
-#ifdef LINUX
+#if defined(LINUX) || defined(OSX)
 	FT_Done_FreeType( library );
 #endif
 }
@@ -280,7 +280,7 @@ font_t *CFontManager::CreateOrFindWin32Font(const char *windowsFontName, int tal
 		i = m_Win32Fonts.AddToTail();
 		m_Win32Fonts[i] = NULL;
 
-#ifdef LINUX
+#if defined(LINUX) || defined(OSX)
 		int memSize = 0;
 		void *pchFontData = m_pFontDataHelper( windowsFontName, memSize, NULL );
 
@@ -730,7 +730,7 @@ void CFontManager::GetKernedCharWidth( vgui::HFont font, wchar_t ch, wchar_t chB
 {
 	wide = 0.0f;
 	flabcA = 0.0f;
-	
+
 	Assert( font != vgui::INVALID_FONT );
 	if ( font == vgui::INVALID_FONT )
 		return;
@@ -749,8 +749,8 @@ void CFontManager::GetKernedCharWidth( vgui::HFont font, wchar_t ch, wchar_t chB
 	
 	if ( m_FontAmalgams[font].GetFontForChar( chAfter ) != pFont )
 		chAfter = 0;
-	
-#if defined(LINUX)
+
+#if defined(LINUX) || defined(OSX)
 	pFont->GetKernedCharWidth( ch, chBefore, chAfter, wide, flabcA, flabcC );
 #else
 	pFont->GetKernedCharWidth( ch, chBefore, chAfter, wide, flabcA );

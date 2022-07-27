@@ -252,7 +252,7 @@ int CMessageCharsPanel::AddText(
 		msg->hCustomFont = m_hFont;
 
 	// Return new cursor position
-	return x + g_pMatSystemSurface->DrawTextLen( msg->hCustomFont, "%s", data );
+	return x + g_pMatSystemSurface->DrawTextLen( msg->hCustomFont, data );
 }
 
 //-----------------------------------------------------------------------------
@@ -272,7 +272,7 @@ void CMessageCharsPanel::GetTextExtents( vgui::HFont hCustomFont, int *wide, int
 
 	Assert( hCustomFont );
 
-	*wide = g_pMatSystemSurface->DrawTextLen( hCustomFont, "%s", (char *)string );
+	*wide = g_pMatSystemSurface->DrawTextLen( hCustomFont, (char *)string );
 	*tall = vgui::surface()->GetFontTall( hCustomFont );
 }
 
@@ -310,7 +310,7 @@ void CMessageCharsPanel::Paint()
 	CMessageCharsPanel::message_t *msg = m_pActive;
 	while ( msg )
 	{
-		g_pMatSystemSurface->DrawColoredText( msg->hCustomFont, msg->x, msg->y, msg->r, msg->g, msg->b, msg->a, "%s", msg->text );
+		g_pMatSystemSurface->DrawColoredText( msg->hCustomFont, msg->x, msg->y, msg->r, msg->g, msg->b, msg->a, msg->text );
 		msg = msg->next;
 	}
 
@@ -378,7 +378,7 @@ public:
 		if ( messageCharsPanel )
 		{
 			messageCharsPanel->SetParent( (vgui::Panel *)NULL );
-			messageCharsPanel->MarkForDeletion();
+			delete messageCharsPanel;
 			messageCharsPanel = NULL;
 		}
 	}

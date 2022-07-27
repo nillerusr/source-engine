@@ -91,6 +91,8 @@ static int gSizes[FIELD_TYPECOUNT] =
 	FIELD_SIZE( FIELD_MATERIALINDEX ),
 
 	FIELD_SIZE( FIELD_VECTOR2D ),
+	FIELD_SIZE( FIELD_INTEGER64 ),
+	FIELD_SIZE( FIELD_POINTER ),
 };
 
 
@@ -112,7 +114,7 @@ static void Matrix3x4Offset( matrix3x4_t& dest, const matrix3x4_t& matrixIn, con
 
 // This does the necessary casting / extract to grab a pointer to a member function as a void *
 // UNDONE: Cast to BASEPTR or something else here?
-#define EXTRACT_INPUTFUNC_FUNCTIONPTR(x)		(*(inputfunc_t **)(&(x)))
+//#define EXTRACT_INPUTFUNC_FUNCTIONPTR(x)		(*(inputfunc_t **)(&(x)))
 
 //-----------------------------------------------------------------------------
 // Purpose: Search this datamap for the name of this member function
@@ -120,7 +122,7 @@ static void Matrix3x4Offset( matrix3x4_t& dest, const matrix3x4_t& matrixIn, con
 // Input  : *function - pointer to member function
 // Output : const char * - function name
 //-----------------------------------------------------------------------------
-const char *UTIL_FunctionToName( datamap_t *pMap, inputfunc_t *function )
+const char *UTIL_FunctionToName( datamap_t *pMap, inputfunc_t function )
 {
 	while ( pMap )
 	{
@@ -135,7 +137,7 @@ const char *UTIL_FunctionToName( datamap_t *pMap, inputfunc_t *function )
 #else
 #error
 #endif
-				inputfunc_t *pTest = EXTRACT_INPUTFUNC_FUNCTIONPTR(pMap->dataDesc[i].inputFunc);
+				inputfunc_t pTest = pMap->dataDesc[i].inputFunc;
 
 				if ( pTest == function )
 					return pMap->dataDesc[i].fieldName;
@@ -203,6 +205,7 @@ CSave::CSave( CSaveRestoreData *pdata )
 
 inline int CSave::DataEmpty( const char *pdata, int size )
 {
+	static int void_data = 0;
 	if ( size != 4 )
 	{
 		const char *pLimit = pdata + size;
@@ -214,7 +217,7 @@ inline int CSave::DataEmpty( const char *pdata, int size )
 		return 1;
 	}
 
-	return ( *((int *)pdata) == 0 );
+	return memcmp(pdata, &void_data, sizeof(int)) == 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -685,7 +688,7 @@ bool CSave::ShouldSaveField( const void *pData, typedescription_t *pField )
 			int *pEHandle = (int *)pData;
 			for ( int i = 0; i < pField->fieldSize; ++i, ++pEHandle )
 			{
-				if ( (*pEHandle) != 0xFFFFFFFF )
+				if ( (*pEHandle) != INVALID_EHANDLE_INDEX )
 					return true;
 			}
 		}
@@ -719,11 +722,11 @@ bool CSave::WriteBasicField( const char *pname, void *pData, datamap_t *pRootMap
 		case FIELD_FLOAT:
 			WriteFloat( pField->fieldName, (float *)pData, pField->fieldSize );
 			break;
-			
+
 		case FIELD_STRING:
 			WriteString( pField->fieldName, (string_t *)pData, pField->fieldSize );
 			break;
-			
+
 		case FIELD_VECTOR:
 			WriteVector( pField->fieldName, (Vector *)pData, pField->fieldSize );
 			break;
@@ -1140,7 +1143,7 @@ void CSave::WritePositionVector( const Vector *value, int count )
 void CSave::WriteFunction( datamap_t *pRootMap, const char *pname, inputfunc_t **data, int count )
 {
 	AssertMsg( count == 1, "Arrays of functions not presently supported" );
-	const char *functionName = UTIL_FunctionToName( pRootMap, *data );
+	const char *functionName = UTIL_FunctionToName( pRootMap, *(inputfunc_t*)data );
 	if ( !functionName )
 	{
 		Warning( "Invalid function pointer in entity!\n" );
@@ -1240,19 +1243,19 @@ bool CSave::WriteGameField( const char *pname, void *pData, datamap_t *pRootMap,
 		case FIELD_CLASSPTR:
 			WriteEntityPtr( pField->fieldName, (CBaseEntity **)pData, pField->fieldSize );
 			break;
-	
+
 		case FIELD_EDICT:
 			WriteEdictPtr( pField->fieldName, (edict_t **)pData, pField->fieldSize );
 			break;
-	
+
 		case FIELD_EHANDLE:
 			WriteEHandle( pField->fieldName, (EHANDLE *)pData, pField->fieldSize );
 			break;
-		
+
 		case FIELD_POSITION_VECTOR:
 			WritePositionVector( pField->fieldName, (Vector *)pData, pField->fieldSize );
 			break;
-			
+
 		case FIELD_TIME:
 			WriteTime( pField->fieldName, (float *)pData, pField->fieldSize );
 			break;
@@ -1260,7 +1263,7 @@ bool CSave::WriteGameField( const char *pname, void *pData, datamap_t *pRootMap,
 		case FIELD_TICK:
 			WriteTick( pField->fieldName, (int *)pData, pField->fieldSize );
 			break;
-			
+
 		case FIELD_MODELINDEX:
 			{
 				int nModelIndex = *(int*)pData;
@@ -1296,7 +1299,7 @@ bool CSave::WriteGameField( const char *pname, void *pData, datamap_t *pRootMap,
 		case FIELD_FUNCTION:
 			WriteFunction( pRootMap, pField->fieldName, (inputfunc_t **)(char *)pData, pField->fieldSize );
 			break;
-			
+
 		case FIELD_VMATRIX:
 			WriteVMatrix( pField->fieldName, (VMatrix *)pData, pField->fieldSize );
 			break;
@@ -1310,6 +1313,10 @@ bool CSave::WriteGameField( const char *pname, void *pData, datamap_t *pRootMap,
 
 		case FIELD_INTERVAL:
 			WriteInterval( pField->fieldName, (interval_t *)pData, pField->fieldSize );
+			break;
+
+		case FIELD_POINTER:
+			WriteData( pField->fieldName, sizeof(void*)*pField->fieldSize, (char *)pData );
 			break;
 
 		default:
@@ -2150,6 +2157,10 @@ void CRestore::ReadGameField( const SaveRestoreRecordHeader_t &header, void *pDe
 
 		case FIELD_INTERVAL:
 			ReadInterval( (interval_t *)pDest, pField->fieldSize, header.size );
+			break;
+
+		case FIELD_POINTER:
+			ReadData( (char *)pDest, sizeof(void*)*pField->fieldSize, header.size );
 			break;
 
 		default:

@@ -71,20 +71,18 @@ void CreateDumpDirectory( const char *szDirectoryName )
 
 void CPolyhedron_AllocByNew::Release( void )
 {
-	delete this;
+	free(this);
 }
 
 CPolyhedron_AllocByNew *CPolyhedron_AllocByNew::Allocate( unsigned short iVertices, unsigned short iLines, unsigned short iIndices, unsigned short iPolygons ) //creates the polyhedron along with enough memory to hold all it's data in a single allocation
 {
-	void *pMemory = new unsigned char [ sizeof( CPolyhedron_AllocByNew ) +
+	void *pMemory = malloc(sizeof( CPolyhedron_AllocByNew ) +
 										(iVertices * sizeof(Vector)) + 
 										(iLines * sizeof(Polyhedron_IndexedLine_t)) + 
 										(iIndices * sizeof( Polyhedron_IndexedLineReference_t )) + 
-										(iPolygons * sizeof( Polyhedron_IndexedPolygon_t ))];
+										(iPolygons * sizeof( Polyhedron_IndexedPolygon_t )));
 
-#include "tier0/memdbgoff.h" //the following placement new doesn't compile with memory debugging
 	CPolyhedron_AllocByNew *pAllocated = new ( pMemory ) CPolyhedron_AllocByNew;
-#include "tier0/memdbgon.h"
 
 	pAllocated->iVertexCount = iVertices;
 	pAllocated->iLineCount = iLines;
@@ -106,7 +104,7 @@ public:
 	int iReferenceCount;
 #endif
 
-	virtual void Release( void )
+	void Release( void ) override
 	{
 #ifdef DBGFLAG_ASSERT
 		--iReferenceCount;

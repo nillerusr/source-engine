@@ -872,7 +872,7 @@ public:
 	virtual void SetupLighting( const Vector &vecCenter );
 	virtual void SuppressEngineLighting( bool bSuppress );
 
-	inline vertexFileHeader_t *CacheVertexData() { return g_pMDLCache->GetVertexData( (MDLHandle_t)(int)m_pStudioHdr->virtualModel&0xffff ); }
+	inline vertexFileHeader_t *CacheVertexData() { return g_pMDLCache->GetVertexData( VoidPtrToMDLHandle( m_pStudioHdr->VirtualModel() ) ); }
 
 	bool Init();
 	void Shutdown();
@@ -3637,12 +3637,12 @@ void CModelRender::ValidateStaticPropColorData( ModelInstanceHandle_t handle )
 	// fetch the header
 	CUtlBuffer utlBuf;
 	char fileName[MAX_PATH];
-	if ( g_pMaterialSystemHardwareConfig->GetHDRType() == HDR_TYPE_NONE || g_bBakedPropLightingNoSeparateHDR )
+	if ( !g_pMaterialSystemHardwareConfig->GetHDREnabled() || g_bBakedPropLightingNoSeparateHDR )
 	{
 		Q_snprintf( fileName, sizeof( fileName ), "sp_%d%s.vhv", StaticPropMgr()->GetStaticPropIndex( pProp ), GetPlatformExt() );
 	}
 	else
-	{	
+	{
 		Q_snprintf( fileName, sizeof( fileName ), "sp_hdr_%d%s.vhv", StaticPropMgr()->GetStaticPropIndex( pProp ), GetPlatformExt() );
 	}
 
@@ -3930,13 +3930,13 @@ bool CModelRender::LoadStaticPropColorData( IHandleEntity *pProp, DataCacheHandl
 
 	// each static prop has its own compiled color mesh
 	char fileName[MAX_PATH];
-	if ( g_pMaterialSystemHardwareConfig->GetHDRType() == HDR_TYPE_NONE || g_bBakedPropLightingNoSeparateHDR )
+	if ( !g_pMaterialSystemHardwareConfig->GetHDREnabled() || g_bBakedPropLightingNoSeparateHDR )
 	{
-        Q_snprintf( fileName, sizeof( fileName ), "sp_%d%s.vhv", StaticPropMgr()->GetStaticPropIndex( pProp ), GetPlatformExt() );
+	        Q_snprintf( fileName, sizeof( fileName ), "sp_%d%s.vhv", StaticPropMgr()->GetStaticPropIndex( pProp ), GetPlatformExt() );
 	}
 	else
 	{
-        Q_snprintf( fileName, sizeof( fileName ), "sp_hdr_%d%s.vhv", StaticPropMgr()->GetStaticPropIndex( pProp ), GetPlatformExt() );
+        	Q_snprintf( fileName, sizeof( fileName ), "sp_hdr_%d%s.vhv", StaticPropMgr()->GetStaticPropIndex( pProp ), GetPlatformExt() );
 	}
 
 	// mark as invalid, async callback will set upon completion
@@ -4121,7 +4121,7 @@ bool CModelRender::UpdateStaticPropColorData( IHandleEntity *pProp, ModelInstanc
 	if ( !bDebugColor )
 	{
 		// vertexes must be available for lighting calculation
-		vertexFileHeader_t *pVertexHdr = g_pMDLCache->GetVertexData( (MDLHandle_t)(int)pStudioHdr->virtualModel&0xffff );
+		vertexFileHeader_t *pVertexHdr = g_pMDLCache->GetVertexData( VoidPtrToMDLHandle( pStudioHdr->VirtualModel() ) );
 		if ( !pVertexHdr )
 		{
 			// data not available yet

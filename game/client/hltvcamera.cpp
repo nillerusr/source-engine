@@ -647,18 +647,25 @@ void C_HLTVCamera::SpecNextPlayer( bool bInverse )
 	SetAutoDirector( false );
 }
 
-void C_HLTVCamera::SpecPlayerByPredicate( const char *szSearch )
+void C_HLTVCamera::SpecNamedPlayer( const char *szPlayerName )
 {
-	C_BasePlayer *pPlayer =	UTIL_PlayerByCommandArg( szSearch );
-	if ( !pPlayer )
-		return;
+	for ( int index = 1; index <= gpGlobals->maxClients; ++index )
+	{
+		C_BasePlayer *pPlayer =	UTIL_PlayerByIndex( index );
 
-	// only follow living players or dedicated spectators
-	if ( pPlayer->IsObserver() && pPlayer->GetTeamNumber() != TEAM_SPECTATOR )
-		return;
+		if ( !pPlayer )
+			continue;
 
-	SetPrimaryTarget( pPlayer->entindex() );
-	return;
+		if ( !FStrEq( szPlayerName, pPlayer->GetPlayerName() ) )
+			continue;
+
+		// only follow living players or dedicated spectators
+		if ( pPlayer->IsObserver() && pPlayer->GetTeamNumber() != TEAM_SPECTATOR )
+			continue;
+
+		SetPrimaryTarget( index );
+		return;
+	}
 }
 
 void C_HLTVCamera::FireGameEvent( IGameEvent * event)
@@ -729,7 +736,7 @@ void C_HLTVCamera::FireGameEvent( IGameEvent * event)
 	}
 
 	// after this only auto-director commands follow
-	// don't execute them if autodirector is off and PVS is unlocked
+	// don't execute them is autodirector is off and PVS is unlocked
 	if ( !spec_autodirector.GetBool() && !IsPVSLocked() )
 		return;
 

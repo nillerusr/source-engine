@@ -206,7 +206,7 @@ GLMRendererInfo::GLMRendererInfo( GLMRendererInfoFields *info )
 		kCGLPFADoubleBuffer, kCGLPFANoRecovery, kCGLPFAAccelerated,
 		kCGLPFADepthSize, 0,
 		kCGLPFAColorSize, 32,
-		kCGLPFARendererID, info->m_rendererID,
+		kCGLPFARendererID, (unsigned int)info->m_rendererID,
 		0
 	};
 
@@ -859,7 +859,7 @@ void	GLMDisplayDB::PopulateRenderers( void )
 					{
 						// grab the OS version
 
-						long vMajor = 0;	long vMinor = 0;	long vMinorMinor = 0;
+                        SInt32 vMajor = 0;	SInt32 vMinor = 0;	SInt32 vMinorMinor = 0;
 						
 						OSStatus gestalt_err = 0;
 						gestalt_err = Gestalt(gestaltSystemVersionMajor, &vMajor);
@@ -1374,7 +1374,7 @@ bool	GLMDisplayDB::GetModeInfo( int rendererIndex, int displayIndex, int modeInd
 		{
 			int modeIndex=0;
 			number = (CFNumberRef)CFDictionaryGetValue(curModeDict, kCGDisplayMode);
-			CFNumberGetValue(number, kCFNumberLongType, &modeIndex);
+			CFNumberGetValue(number, kCFNumberIntType, &modeIndex);
 
 			// grab the width and height, I am unclear on whether this is the displayed FB width or the display device width.
 			int screenWidth=0;
@@ -1382,11 +1382,11 @@ bool	GLMDisplayDB::GetModeInfo( int rendererIndex, int displayIndex, int modeInd
 			int refreshHz=0;
 			
 			number = (CFNumberRef)CFDictionaryGetValue(curModeDict, kCGDisplayWidth);
-			CFNumberGetValue(number, kCFNumberLongType, &screenWidth);
+			CFNumberGetValue(number, kCFNumberIntType, &screenWidth);
 			number = (CFNumberRef)CFDictionaryGetValue(curModeDict, kCGDisplayHeight);
-			CFNumberGetValue(number, kCFNumberLongType, &screenHeight);
+			CFNumberGetValue(number, kCFNumberIntType, &screenHeight);
 			number = (CFNumberRef)CFDictionaryGetValue(curModeDict, kCGDisplayRefreshRate);
-			CFNumberGetValue(number, kCFNumberLongType, &refreshHz);
+			CFNumberGetValue(number, kCFNumberIntType, &refreshHz);
 			
 			GLMPRINTF(( "-D- GLMDisplayDB::GetModeInfo sees mode-index=%d, width=%d, height=%d on CGID %08x (display index %d on rendererindex %d)", 
 				modeIndex,
@@ -1574,7 +1574,7 @@ void	GLMDisplayInfo::PopulateModes( void )
 
 void	GLMDisplayInfo::Dump( int which )
 {
-	GLMPRINTF(("\n         #%d: GLMDisplayInfo @ %08x, cg-id=%08x  display-mask=%08x  pixwidth=%d  pixheight=%d", which, (int)this, m_info.m_cgDisplayID, m_info.m_glDisplayMask, m_info.m_displayPixelWidth,  m_info.m_displayPixelHeight ));
+	GLMPRINTF(("\n         #%d: GLMDisplayInfo @ %08x, cg-id=%08x  display-mask=%08x  pixwidth=%d  pixheight=%d", which, (int)(intp)this, m_info.m_cgDisplayID, m_info.m_glDisplayMask, m_info.m_displayPixelWidth,  m_info.m_displayPixelHeight ));
 
 	FOR_EACH_VEC( *m_modes, i )
 	{

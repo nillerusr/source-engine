@@ -25,7 +25,7 @@ enum QueryResultType
 };
 
 // Can pass this into IContextualQuery::IsHindrance to see if any hindrance is ever possible
-#define IS_ANY_HINDRANCE_POSSIBLE	( (CBaseEntity*)0xFFFFFFFF )
+#define IS_ANY_HINDRANCE_POSSIBLE	( (CBaseEntity*)-1 )
 
 
 //----------------------------------------------------------------------------------------------------------------

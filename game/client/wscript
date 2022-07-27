@@ -15,15 +15,18 @@ games = {
 	'hl2': ['client_base.vpc', 'client_hl2.vpc'],
 	'hl2mp': ['client_base.vpc', 'client_hl2mp.vpc'],
 	'hl1': ['client_base.vpc', 'client_hl1.vpc'],
+	'episodic': ['client_base.vpc', 'client_episodic.vpc'],
 	'portal': ['client_base.vpc', 'client_portal.vpc'],
-	'hl1mp': ['client_base.vpc', 'client_hl1.vpc'],
-	'css': ['client_base.vpc', 'client_cstrike.vpc'],
+	'hl1mp': ['client_base.vpc', 'client_hl1mp.vpc'],
+	'cstrike': ['client_base.vpc', 'client_cstrike.vpc'],
 	'dod': ['client_base.vpc', 'client_dod.vpc']
 }
 
 def configure(conf):
 	game = conf.options.GAMES
 	conf.env.GAMES = game
+
+	conf.env.append_unique('DEFINES', ['DISABLE_STEAM=1'])
 
 	if game not in games.keys():
 		conf.fatal("Couldn't find game: ", game)
@@ -66,22 +69,10 @@ def build(bld):
 	if bld.env.DEST_OS != 'android':
 		install_path += '/'+bld.env.GAMES+'/bin'
 
-	source = [ 'arch.c' ]
+	source = [ 'touch.cpp', 'in_touch.cpp' ]
 	if bld.env.DEST_OS == 'win32':
 		source += [ '../../public/tier0/memoverride.cpp' ]
 		libs += ['USER32']
-		
-	if bld.env.DEST_OS == 'android':
-		source += [
-			'third/minizip/mz_zip.c',
-			'third/minizip/mz_strm.c',
-			'third/minizip/mz_strm_mem.c',
-			'third/minizip/mz_strm_buf.c',
-			'third/minizip/mz_strm_split.c',
-			'third/minizip/mz_strm_posix.c',
-			'third/minizip/mz_strm_zlib.c',
-			'third/minizip/mz_os_posix.c'
-		]
 
 	source += game["sources"]
 	includes += game["includes"]

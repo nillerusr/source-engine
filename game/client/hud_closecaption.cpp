@@ -543,7 +543,7 @@ struct AsyncCaptionData_t
 		data->m_nBlockNum = params.blocktoload;
 		data->m_nFileIndex = params.fileindex;
 		data->m_nBlockSize = params.blocksize;
-		data->m_pBlockData = new byte[ data->m_nBlockSize ];
+		data->m_pBlockData = new byte[ data->m_nBlockSize * sizeof(ucs2) ];
 		return data;
 	}
 
@@ -820,6 +820,8 @@ CHudCloseCaption::CHudCloseCaption( const char *pElementName )
 	vgui::Panel *pParent = g_pClientMode->GetViewport();
 	SetParent( pParent );
 
+	SetProportional( true );
+
 	m_nGoalHeight = 0;
 	m_nCurrentHeight = 0;
 	m_flGoalAlpha = 1.0f;
@@ -844,7 +846,6 @@ CHudCloseCaption::CHudCloseCaption( const char *pElementName )
 	HOOK_HUD_MESSAGE( CHudCloseCaption, CloseCaption );
 
 	char uilanguage[ 64 ];
-	uilanguage[0] = 0;
 	engine->GetUILanguage( uilanguage, sizeof( uilanguage ) );
 
 	if ( !Q_stricmp( uilanguage, "english" ) )
@@ -1576,17 +1577,17 @@ void CHudCloseCaption::CreateFonts( void )
 {
 	vgui::IScheme *pScheme = vgui::scheme()->GetIScheme( GetScheme() );
 
-	m_hFonts[CCFONT_NORMAL] = pScheme->GetFont( "CloseCaption_Normal" );
+	m_hFonts[CCFONT_NORMAL] = pScheme->GetFont( "CloseCaption_Normal", true );
 
 	if ( IsPC() )
 	{
-		m_hFonts[CCFONT_BOLD] = pScheme->GetFont( "CloseCaption_Bold" );
-		m_hFonts[CCFONT_ITALIC] = pScheme->GetFont( "CloseCaption_Italic" );
-		m_hFonts[CCFONT_ITALICBOLD] = pScheme->GetFont( "CloseCaption_BoldItalic" );
+		m_hFonts[CCFONT_BOLD] = pScheme->GetFont( "CloseCaption_Bold", true );
+		m_hFonts[CCFONT_ITALIC] = pScheme->GetFont( "CloseCaption_Italic", true );
+		m_hFonts[CCFONT_ITALICBOLD] = pScheme->GetFont( "CloseCaption_BoldItalic", true );
 	}
 	else
 	{
-		m_hFonts[CCFONT_SMALL] = pScheme->GetFont( "CloseCaption_Small" );
+		m_hFonts[CCFONT_SMALL] = pScheme->GetFont( "CloseCaption_Small", true );
 	}
 
 	m_nLineHeight = MAX( 6, vgui::surface()->GetFontTall( m_hFonts[ CCFONT_NORMAL ] ) );
@@ -2028,6 +2029,7 @@ public:
 			if ( entry.blockNum != nBlockNum )
 				continue;
 
+
 #ifdef WIN32
 			const wchar_t *pIn = ( const wchar_t *)&pData->m_pBlockData[ entry.offset ];
 			caption->stream = new wchar_t[ entry.length >> 1 ];
@@ -2035,7 +2037,7 @@ public:
 #else
 			// we persist to disk as ucs2 so convert back to real unicode here
 			caption->stream = new wchar_t[ entry.length ];
-			V_UCS2ToUnicode( (ucs2 *)&pData->m_pBlockData[ entry.offset ], caption->stream, entry.length*sizeof(wchar_t) );	
+			V_UCS2ToUnicode( (ucs2 *)&pData->m_pBlockData[ entry.offset ], caption->stream, entry.length << 1 );
 #endif
 		}
 	}
@@ -2414,7 +2416,7 @@ void CHudCloseCaption::ProcessSentenceCaptionStream( const char *tokenstream )
 		}
 		else
 		{
-			entry = m_CloseCaptionRepeats[ idx ];
+			CaptionRepeat &entry = m_CloseCaptionRepeats[ idx ];
 			if ( gpGlobals->curtime < ( entry.m_flLastEmitTime + entry.m_flInterval ) )
 			{
 				return;
@@ -2460,7 +2462,7 @@ void CHudCloseCaption::_ProcessCaption( const wchar_t *caption, const char *toke
 	}
 	else
 	{
-		entry = m_CloseCaptionRepeats[ idx ];
+		CaptionRepeat &entry = m_CloseCaptionRepeats[ idx ];
 
 		// Interval of 0.0 means just don't double emit on same tick #
 		if ( entry.m_flInterval <= 0.0f )
@@ -2753,7 +2755,6 @@ void OnCaptionLanguageChanged( IConVar *pConVar, const char *pOldString, float f
 	}
 
 	char uilanguage[ 64 ];
-	uilanguage[0] = 0;
 	engine->GetUILanguage( uilanguage, sizeof( uilanguage ) );
 
 	CHudCloseCaption *hudCloseCaption = GET_HUDELEMENT( CHudCloseCaption );

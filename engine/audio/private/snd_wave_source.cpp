@@ -723,7 +723,7 @@ bool CAudioSourceWave::GetStartupData( void *dest, int destsize, int& bytesCopie
 	// requesting precache snippet as leader for streaming startup latency
 	if ( destsize )
 	{
-		int file = g_pSndIO->open( m_pSfx->GetFileName() );
+		intp file = g_pSndIO->open( m_pSfx->GetFileName() );
 		if ( !file )
 		{
 			return false;

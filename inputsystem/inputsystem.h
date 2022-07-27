@@ -333,10 +333,7 @@ public:
 	void JoystickButtonRelease( int joystickId, int button ); // same as above.
 	void JoystickAxisMotion( int joystickId, int axis, int value );
 
-	void FingerDown( int fingerId, int x, int y );	
-	void FingerUp( int fingerId, int x, int y );	
-	void FingerMotion( int fingerId, int x, int y );	
-	
+	void FingerEvent( int eventType, int fingerId, float x, float y, float dx, float dy );	
 	
 	// Steam Controller
 	void ReadSteamController( int iIndex );

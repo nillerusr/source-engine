@@ -141,7 +141,7 @@ void CTeleportCountdownScreen::OnTick()
 
 	// Find the active info teleporter countdown
 	C_InfoTeleporterCountdown *pActiveCountdown = NULL;
-	for ( int i = g_InfoTeleporterCountdownList.Head(); i != g_InfoTeleporterCountdownList.InvalidIndex();
+	for ( intp i = g_InfoTeleporterCountdownList.Head(); i != g_InfoTeleporterCountdownList.InvalidIndex();
 		i = g_InfoTeleporterCountdownList.Next(i) )
 	{
 		if ( g_InfoTeleporterCountdownList[i]->m_bCountdownStarted )

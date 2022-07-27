@@ -1026,9 +1026,6 @@ void CAI_TrackPather::UpdateCurrentTargetLeading()
 	bool bRestingAtDest = false;
 	CPathTrack *pAdjustedDest;
 
-	if( !m_pCurrentPathTarget )
-		return;
-
 	// Find the point along the line that we're closest to.
 	const Vector &vecTarget = m_pCurrentPathTarget->GetAbsOrigin();
 	Vector vecPoint;

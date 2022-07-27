@@ -14,7 +14,7 @@
 #pragma once
 #endif
 
-template <class UTLMAP, int KEY_TYPE, int FIELD_TYPE>
+template <class UTLMAP, intp KEY_TYPE, intp FIELD_TYPE>
 class CUtlMapDataOps : public CDefSaveRestoreOps
 {
 public:
@@ -169,7 +169,7 @@ public:
 
 //-------------------------------------
 
-template <int KEYTYPE, int FIELD_TYPE>
+template <intp KEYTYPE, intp FIELD_TYPE>
 class CUtlMapDataopsInstantiator
 {
 public:

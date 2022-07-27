@@ -1030,7 +1030,8 @@ COptionsSubVideo::COptionsSubVideo(vgui::Panel *parent) : PropertyPage(parent, N
 	m_pBenchmark = new Button( this, "BenchmarkButton", "#GameUI_LaunchBenchmark" );
 	m_pBenchmark->SetCommand(new KeyValues("LaunchBenchmark"));
 	m_pThirdPartyCredits = new URLButton(this, "ThirdPartyVideoCredits", "#GameUI_ThirdPartyTechCredits");
-	m_pThirdPartyCredits->SetCommand(new KeyValues("OpenThirdPartyVideoCreditsDialog"));
+//	m_pThirdPartyCredits->SetCommand(new KeyValues("OpenThirdPartyVideoCreditsDialog"));
+	m_pThirdPartyCredits->SetVisible(false);
 	m_pHDContent = new CheckButton( this, "HDContentButton", "#GameUI_HDContent" );
 
 	char pszAspectName[3][64];
@@ -1041,6 +1042,7 @@ COptionsSubVideo::COptionsSubVideo(vgui::Panel *parent) : PropertyPage(parent, N
 	unicodeText = g_pVGuiLocalize->Find("#GameUI_AspectWide16x10");
 	g_pVGuiLocalize->ConvertUnicodeToANSI(unicodeText, pszAspectName[2], 32);
 
+#ifndef ANDROID
 	int iNormalItemID = m_pAspectRatio->AddItem( pszAspectName[0], NULL );
 	int i16x9ItemID = m_pAspectRatio->AddItem( pszAspectName[1], NULL );
 	int i16x10ItemID = m_pAspectRatio->AddItem( pszAspectName[2], NULL );
@@ -1061,6 +1063,12 @@ COptionsSubVideo::COptionsSubVideo(vgui::Panel *parent) : PropertyPage(parent, N
 		m_pAspectRatio->ActivateItem( i16x10ItemID );
 		break;
 	}
+#else
+	int iNormalItemID = m_pAspectRatio->AddItem( "lemonparty.org", NULL );
+	m_pAspectRatio->ActivateItem( iNormalItemID );
+
+	m_pGammaButton->SetEnabled(false);
+#endif
 
 	char pszVRModeName[2][64];
 	unicodeText = g_pVGuiLocalize->Find("#GameUI_Disabled");
@@ -1108,6 +1116,10 @@ COptionsSubVideo::COptionsSubVideo(vgui::Panel *parent) : PropertyPage(parent, N
 
 	m_pWindowed->AddItem( "#GameUI_Fullscreen", NULL );
 	m_pWindowed->AddItem( "#GameUI_Windowed", NULL );
+#endif
+
+#ifdef ANDROID
+	m_pWindowed->SetEnabled( false );
 #endif
 
 	LoadControlSettings("Resource\\OptionsSubVideo.res");
@@ -1160,9 +1172,10 @@ void COptionsSubVideo::PrepareResolutionList()
 
 	// Clean up before filling the info again.
 	m_pMode->DeleteAllItems();
+#ifndef ANDROID
 	m_pAspectRatio->SetItemEnabled(1, false);
 	m_pAspectRatio->SetItemEnabled(2, false);
-
+#endif
 	// get full video mode list
 	vmode_t *plist = NULL;
 	int count = 0;
@@ -1225,7 +1238,9 @@ void COptionsSubVideo::PrepareResolutionList()
 		GetResolutionName( plist, sz, sizeof( sz ), desktopWidth, desktopHeight );
 
 		int itemID = -1;
+
 		int iAspectMode = GetScreenAspectMode( plist->width, plist->height );
+#ifndef ANDROID
 		if ( iAspectMode > 0 )
 		{
 			m_pAspectRatio->SetItemEnabled( iAspectMode, true );
@@ -1237,8 +1252,15 @@ void COptionsSubVideo::PrepareResolutionList()
 		{
 			itemID = m_pMode->AddItem( sz, NULL);
 		}
+#else
+		float aspect = (float)plist->width / plist->height;
+		float native_aspect = (float)desktopWidth / desktopHeight;
 
-		// try and find the best match for the resolution to be selected
+		if( fabs(native_aspect - aspect) < 0.01f )
+			itemID = m_pMode->AddItem( sz, NULL);
+#endif
+
+		// try and find the bestplistplistplist match for the resolution to be selected
 		if ( plist->width == currentWidth && plist->height == currentHeight )
 		{
 			selectedItemID = itemID;
@@ -1250,7 +1272,9 @@ void COptionsSubVideo::PrepareResolutionList()
 	}
 
 	// disable ratio selection if we can't display widescreen.
+#ifndef ANDROID
 	m_pAspectRatio->SetEnabled( bFoundWidescreen );
+#endif
 
 	m_nSelectedMode = selectedItemID;
 
@@ -1377,7 +1401,11 @@ void COptionsSubVideo::OnResetData()
 #endif
 
 	// reset gamma control
+#ifdef ANDROID
+	m_pGammaButton->SetEnabled( false );
+#else
 	m_pGammaButton->SetEnabled( !config.Windowed() );
+#endif
 
 	m_pHDContent->SetSelected( BUseHDContent() );
 
@@ -1577,8 +1605,12 @@ void COptionsSubVideo::PerformLayout()
 
 	if ( m_pGammaButton )
 	{
+#ifdef ANDROID
+		m_pGammaButton->SetEnabled( false );
+#else
 		const MaterialSystem_Config_t &config = materials->GetCurrentConfigForVideoCard();
 		m_pGammaButton->SetEnabled( !config.Windowed() );
+#endif
 	}
 }
 
@@ -1600,10 +1632,12 @@ void COptionsSubVideo::OnTextChanged(Panel *pPanel, const char *pszText)
             OnDataChanged();
         }
     }
-    else if (pPanel == m_pAspectRatio)
-    {
+#ifndef ANDROID
+	else if (pPanel == m_pAspectRatio)
+	{
 		PrepareResolutionList();
-    }
+	}
+#endif
 	else if (pPanel == m_pWindowed)
 	{
 		PrepareResolutionList();
@@ -1645,7 +1679,11 @@ void		COptionsSubVideo::EnableOrDisableWindowedForVR()
 	}
 	else
 	{
+#ifdef ANDROID
+		m_pWindowed->SetEnabled( false );
+#else
 		m_pWindowed->SetEnabled( true );
+#endif
 	}
 
 }

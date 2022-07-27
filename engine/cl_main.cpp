@@ -72,6 +72,7 @@
 #include "replay_internal.h"
 #endif
 
+#include "language.h"
 #include "igame.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -892,7 +893,7 @@ CON_COMMAND_F( connect, "Connect to specified server.", FCVAR_DONTRECORD )
 	{
 		ConMsg( "Usage:  connect <server>\n" );
 	}
-	vecArgs.PurgeAndDeleteElements();
+	vecArgs.PurgeAndDeleteElementsArray();
 }
 
 CON_COMMAND_F( redirect, "Redirect client to specified server.", FCVAR_DONTRECORD | FCVAR_SERVER_CAN_EXECUTE )
@@ -2743,14 +2744,18 @@ void CL_InitLanguageCvar()
 	}
 	else
 	{
+		char *szLang = getenv("LANG");
+
 		if ( CommandLine()->CheckParm( "-language" ) )
-		{
 			cl_language.SetValue( CommandLine()->ParmValue( "-language", "english") );
+		else if( szLang )
+		{
+			ELanguage lang = PchLanguageICUCodeToELanguage(szLang, k_Lang_English);
+			const char *szShortLang = GetLanguageShortName(lang);
+			cl_language.SetValue( szShortLang );
 		}
 		else
-		{
 			cl_language.SetValue( "english" );
-		}
 	}
 }
 

@@ -20,23 +20,17 @@ int TouchSDLWatcher( void *userInfo, SDL_Event *event )
 {
 	CInputSystem *pInputSystem = (CInputSystem *)userInfo;
 
-	SDL_Window *window = SDL_GetWindowFromID(event->tfinger.windowID);
-	if( !window )
-		return 0;
-
-	int width, height;
-	width = height = 0;
-	SDL_GetWindowSize(window, &width, &height);
+	if( !event || !pInputSystem ) return 1;
 
 	switch ( event->type ) {
 	case SDL_FINGERDOWN:
-		pInputSystem->FingerDown( event->tfinger.fingerId, event->tfinger.x*width, event->tfinger.y*height );
+		pInputSystem->FingerEvent( IE_FingerDown, event->tfinger.fingerId, event->tfinger.x, event->tfinger.y, event->tfinger.dx, event->tfinger.dy );
 		break;
 	case SDL_FINGERUP:
-		pInputSystem->FingerUp( event->tfinger.fingerId, event->tfinger.x*width, event->tfinger.y*height );
+		pInputSystem->FingerEvent( IE_FingerUp, event->tfinger.fingerId, event->tfinger.x, event->tfinger.y, event->tfinger.dx, event->tfinger.dy );
 		break;
 	case SDL_FINGERMOTION:
-		pInputSystem->FingerMotion( event->tfinger.fingerId, event->tfinger.x*width, event->tfinger.y*height );
+		pInputSystem->FingerEvent( IE_FingerMotion ,event->tfinger.fingerId, event->tfinger.x, event->tfinger.y, event->tfinger.dx, event->tfinger.dy );
 		break;
 	}
 
@@ -67,32 +61,20 @@ void CInputSystem::ShutdownTouch()
 	m_bTouchInitialized = false;
 }
 
-void CInputSystem::FingerDown(int fingerId, int x, int y)
+void CInputSystem::FingerEvent(int eventType, int fingerId, float x, float y, float dx, float dy)
 {
-	m_touchAccumEvent = IE_FingerDown;
-	m_touchAccumFingerId = fingerId;
-	m_touchAccumX = x;
-	m_touchAccumY = y;
+	// Shit, but should work with arm/x86
 
-	PostEvent(IE_FingerDown, m_nLastSampleTick, fingerId, x, y);
-}
+	int data0 = fingerId << 16 | eventType;
+	int _x = (int)((double)x*0xFFFF);
+	int _y = (int)((double)y*0xFFFF);
+	int data1 = _x << 16 | (_y & 0xFFFF);
 
-void CInputSystem::FingerUp(int fingerId, int x, int y)
-{
-	m_touchAccumEvent = IE_FingerUp;
-	m_touchAccumFingerId = fingerId;
-	m_touchAccumX = x;
-	m_touchAccumY = y;
+	union{int i;float f;} ifconv;
+	ifconv.f = dx;
+	int _dx = ifconv.i;
+	ifconv.f = dy;
+	int _dy = ifconv.i;
 
-	PostEvent(IE_FingerUp, m_nLastSampleTick, fingerId, x, y);
-}
-
-void CInputSystem::FingerMotion(int fingerId, int x, int y)
-{
-	m_touchAccumEvent = IE_FingerMotion;
-	m_touchAccumFingerId = fingerId;
-	m_touchAccumX = x;
-	m_touchAccumY = y;
-
-	PostEvent(IE_FingerMotion, m_nLastSampleTick, fingerId, x, y);
+	PostEvent(data0, m_nLastSampleTick, data1, _dx, _dy);
 }

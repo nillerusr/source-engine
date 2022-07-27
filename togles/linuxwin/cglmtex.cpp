@@ -1106,7 +1106,7 @@ void CGLMTex::CalcTexelDataOffsetAndStrides( int sliceIndex, int x, int y, int z
 	*zStrideOut	= zStride;
 }
 
-extern void convert_texture( GLint &internalformat, GLsizei width, GLsizei height, GLenum &format, GLenum &type, void *data );
+extern void convert_texture( GLenum &internalformat, GLsizei width, GLsizei height, GLenum &format, GLenum &type, void *data );
 
 void CGLMTex::ReadTexels( GLMTexLockDesc *desc, bool readWholeSlice )
 {
@@ -1136,13 +1136,12 @@ void CGLMTex::ReadTexels( GLMTexLockDesc *desc, bool readWholeSlice )
 
 		GLMTexFormatDesc *format = m_layout->m_format;
 		GLenum target = m_layout->m_key.m_texGLTarget;
-		
+
 		void *sliceAddress = m_backing + m_layout->m_slices[ desc->m_sliceIndex ].m_storageOffset;	// this would change for PBO
 		//int sliceSize = m_layout->m_slices[ desc->m_sliceIndex ].m_storageSize;
 
 		// interestingly enough, we can use the same path for both 2D and 3D fetch
-		
-		
+
 		switch( target )
 		{
 			case GL_TEXTURE_CUBE_MAP:
@@ -1174,25 +1173,17 @@ void CGLMTex::ReadTexels( GLMTexLockDesc *desc, bool readWholeSlice )
 
 					gGL->glGetIntegerv( GL_DRAW_FRAMEBUFFER_BINDING, &Dfbo );
 					gGL->glGetIntegerv( GL_READ_FRAMEBUFFER_BINDING, &Rfbo );
-					
+
 					gGL->glGenFramebuffers(1, &fbo);
 					gGL->glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-					gGL->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_ctx->m_samplers[0].m_pBoundTex->m_texName, 0);
+					gGL->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, target, m_ctx->m_samplers[0].m_pBoundTex->m_texName, 0);
 
 					GLenum fmt = format->m_glDataFormat;
-					if( fmt == GL_BGR )
-						fmt = GL_RGB;
-					else if( fmt == GL_BGRA )
-						fmt = GL_RGBA;
-	
-					gGL->glReadPixels(0, 0, m_layout->m_slices[ desc->m_sliceIndex ].m_xSize, m_layout->m_slices[ desc->m_sliceIndex ].m_ySize, fmt, format->m_glDataType == GL_UNSIGNED_INT_8_8_8_8_REV ? GL_UNSIGNED_BYTE : format->m_glDataType, sliceAddress);
-					GLint intformat = format->m_glDataFormat;
-					GLenum _format = format->m_glDataFormat;
-					GLenum _type = format->m_glDataType;
+					GLenum dataType = format->m_glDataType;
 
-					// TODO(nillerusr): Don't convert, should change m_format to another one
-					convert_texture(intformat, m_layout->m_slices[ desc->m_sliceIndex ].m_xSize, m_layout->m_slices[ desc->m_sliceIndex ].m_ySize, _format, _type, sliceAddress);
-					
+					convert_texture(fmt, 0, 0, fmt, dataType, NULL);
+					gGL->glReadPixels(0, 0, m_layout->m_slices[ desc->m_sliceIndex ].m_xSize, m_layout->m_slices[ desc->m_sliceIndex ].m_ySize, fmt, dataType, sliceAddress);
+
 					gGL->glBindFramebuffer(GL_READ_FRAMEBUFFER, Rfbo);
 					gGL->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, Dfbo);
 
@@ -3329,69 +3320,19 @@ static inline halffloat_t float_f2h(float f)
     return ret;
 }
 
-static uint8_t srgb_table[256] = {0};
-void pixel_srgb_inplace(GLvoid* pixels, GLuint size, GLuint width, GLuint height)
+void convert_texture( GLenum &internalformat, GLsizei width, GLsizei height, GLenum &format, GLenum &type, void *data )
 {
-//    return;
-    if(!srgb_table[255]) {
-        // create table
-        for (int i=1; i<256; ++i) {
-            srgb_table[i] = floorf(255.f*powf(i/255.f, 2.2f)+0.5f);
-        }
-    }
-    uint8_t *data = (uint8_t*)pixels;
-    int sz = width*height*size;
-    for (int i=0; i < sz; i += size)
-    {
-        data[i] = srgb_table[data[i]];
-        data[i+1] = srgb_table[data[i+1]];
-        data[i+2] = srgb_table[data[i+2]];
-    }
-}
+	if( format == GL_BGRA ) format = GL_RGBA;
+	if( format == GL_BGR ) format = GL_RGB;
 
-
-
-void convert_texture( GLint &internalformat, GLsizei width, GLsizei height, GLenum &format, GLenum &type, void *data )
-{
-//	printf("internalformat=%s format=%s type=%s\n", get_enum_str(internalformat), get_enum_str(format), get_enum_str(type));
-
-	if( internalformat == GL_SRGB8 && (format == GL_RGBA || format == GL_BGRA ))
+	if( internalformat == GL_SRGB8 && format == GL_RGBA )
 		internalformat = GL_SRGB8_ALPHA8;
 
 	if( format == GL_LUMINANCE || format == GL_LUMINANCE_ALPHA )
 		internalformat = format;
 
-//	if( internalformat == GL_SRGB8_ALPHA8 )
-//		internalformat = GL_RGBA;
-
-//	if( internalformat == GL_SRGB8 )
-//		internalformat = GL_RGB;
-
 	if( data )
 	{
-		uint8_t *_data = (uint8_t*)data;
-
-		if( format == GL_BGR )
-		{
-			for( int i = 0; i < width*height*3; i+=3 )
-			{
-				uint8_t tmp = _data[i];
-				_data[i] = _data[i+2];
-				_data[i+2] = tmp;
-			}
-			format = GL_RGB;
-		}
-		else if( format == GL_BGRA )
-		{
-			for( int i = 0; i < width*height*4; i+=4 )
-			{
-				uint8_t tmp = _data[i];
-				_data[i] = _data[i+2];
-				_data[i+2] = tmp;
-			}
-			format = GL_RGBA;
-		}
-
 		if( internalformat == GL_RGBA16 && !gGL->m_bHave_GL_EXT_texture_norm16 )
 		{
 			uint16_t *_data = (uint16_t*)data;
@@ -3404,57 +3345,18 @@ void convert_texture( GLint &internalformat, GLsizei width, GLsizei height, GLen
 				new_data[i+2] = _data[i+2] >> 8;
 				new_data[i+3] = _data[i+3] >> 8;
 			}
-
-			internalformat = GL_RGBA;
-			format = GL_RGBA;
-			type = GL_UNSIGNED_BYTE;
 		}
-		else if( internalformat == GL_SRGB8_ALPHA8 )
-		{
-//			pixel_srgb_inplace( data, 4, width, height );
-			internalformat = GL_RGBA;
-		}
-		else if( internalformat == GL_SRGB8 )
-		{
-//			pixel_srgb_inplace( data, 3, width, height );
-			internalformat = GL_RGB;
-		}
-
 	}
-	else
-	{
-		if( format == GL_BGR )
-			format = GL_RGB;
-		else if( format == GL_BGRA )
-			format = GL_RGBA;
 
-		if( internalformat == GL_RGBA16 && !gGL->m_bHave_GL_EXT_texture_norm16 )
-		{
-			internalformat = GL_RGBA;
-			format = GL_RGBA;
-			type = GL_UNSIGNED_BYTE;
-		}
+	if( internalformat == GL_RGBA16 && !gGL->m_bHave_GL_EXT_texture_norm16 )
+	{
+		internalformat = GL_RGBA;
+		format = GL_RGBA;
+		type = GL_UNSIGNED_BYTE;
 	}
 
 	if( type == GL_UNSIGNED_INT_8_8_8_8_REV )
 		type = GL_UNSIGNED_BYTE;
-	
-//	printf("internalformat=%s format=%s type=%s\n==========================================\n", get_enum_str(internalformat), get_enum_str(format), get_enum_str(type));
-}
-
-void TexImage2D(GLenum target,
- 	GLint level,
- 	GLint internalformat,
- 	GLsizei width,
- 	GLsizei height,
- 	GLint border,
- 	GLenum format,
- 	GLenum type,
- 	const void * data)
-{
-	convert_texture( internalformat, width, height, format, type, data );
-
-	gGL->glTexImage2D(target, level, internalformat, width, height, border, format, type, data);
 }
 
 GLboolean isDXTc(GLenum format) {
@@ -3533,15 +3435,15 @@ GLvoid *uncompressDXTc(GLsizei width, GLsizei height, GLenum format, GLsizei ima
                 case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
                 case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
                 case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
-                    DecompressBlockDXT1(x, y, width, (uint8_t*)src, transparent0, simpleAlpha, complexAlpha, pixels);
+                    DecompressBlockDXT1(x, y, width, (uint8_t*)src, transparent0, simpleAlpha, complexAlpha, (uint32_t*)pixels);
                     break;
                 case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
                 case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
-                    DecompressBlockDXT3(x, y, width, (uint8_t*)src, transparent0, simpleAlpha, complexAlpha, pixels);
+                    DecompressBlockDXT3(x, y, width, (uint8_t*)src, transparent0, simpleAlpha, complexAlpha, (uint32_t*)pixels);
                     break;
                 case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
                 case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
-                    DecompressBlockDXT5(x, y, width, (uint8_t*)src, transparent0, simpleAlpha, complexAlpha, pixels);
+                    DecompressBlockDXT5(x, y, width, (uint8_t*)src, transparent0, simpleAlpha, complexAlpha, (uint32_t*)pixels);
                     break;
             }
             src+=blocksize;
@@ -3587,24 +3489,8 @@ void CompressedTexImage2D(GLenum target, GLint level, GLenum internalformat,
 	}
 
 	gGL->glTexImage2D(target, level, intformat, width, height, border, format, type, pixels);
-	//TexImage2D( target, level, intformat, width, height, border, format, type, pixels );
 	if( data != pixels )
 		free(pixels);
-}
-
-void TexSubImage2D( GLenum target,
-					GLint level,
-					GLint xoffset,
-					GLint yoffset,
-					GLsizei width,
-					GLsizei height,
-					GLenum format,
-					GLint internalformat,
-					GLenum type,
-					const void * data)
-{
-	convert_texture( internalformat, width, height, format, type, data );
-	gGL->glTexSubImage2D( target, level, xoffset, yoffset, width, height, format, type, data);
 }
 
 // TexSubImage should work properly on every driver stack and GPU--enabling by default.
@@ -3659,15 +3545,14 @@ void CGLMTex::WriteTexels( GLMTexLockDesc *desc, bool writeWholeSlice, bool noDa
 	GLenum glDataFormat	= format->m_glDataFormat;				// this could change if expansion kicks in 
 	GLenum glDataType	= format->m_glDataType;
 	
-	GLMTexLayoutSlice *slice = &m_layout->m_slices[ desc->m_sliceIndex ];		
+	GLMTexLayoutSlice *slice = &m_layout->m_slices[ desc->m_sliceIndex ];
 	void *sliceAddress = m_backing ? (m_backing + slice->m_storageOffset) : NULL;	// this would change for PBO
 
 	// allow use of subimage if the target is texture2D and it has already been teximage'd
 	bool mayUseSubImage = false;
+
 	if ( (target==GL_TEXTURE_2D) && (m_sliceFlags[ desc->m_sliceIndex ] & kSliceValid) )
-	{
-//		mayUseSubImage = gl_enabletexsubimage.GetInt() != 0;
-	}
+		mayUseSubImage = true;
 
 	// check flavor, 2D, 3D, or cube map
 	// we also have the choice to use subimage if this is a tex already created. (open question as to benefit)
@@ -3756,26 +3641,18 @@ void CGLMTex::WriteTexels( GLMTexLockDesc *desc, bool writeWholeSlice, bool noDa
 
 			// adjust target to steer to the proper face, then fall through to the 2D texture path.
 			target = GL_TEXTURE_CUBE_MAP_POSITIVE_X + desc->m_req.m_face;
-			
 		case GL_TEXTURE_2D:
-		{			
+		{
 			// check compressed or not
 			if (format->m_chunkSize != 1)
 			{
 				Assert( writeWholeSlice );	//subimage not implemented in this path yet
-												
 				// compressed path
 				// http://www.opengl.org/sdk/docs/man/xhtml/glCompressedTexImage2D.xml
-				CompressedTexImage2D( target,						// target
-										desc->m_req.m_mip,			// level
-										intformat,					// internalformat - don't use format->m_glIntFormat because we have the SRGB select going on above
-										slice->m_xSize,				// width
-										slice->m_ySize,				// height
-										0,							// border
-										slice->m_storageSize,		// imageSize
-										sliceAddress );				// data
-				
-				
+/*				if( gGL->m_bHave_GL_EXT_texture_compression_dxt1 )
+					gGL->glCompressedTexImage2D( target, desc->m_req.m_mip, intformat, slice->m_xSize, slice->m_ySize, 0, slice->m_storageSize, sliceAddress );
+				else*/
+					CompressedTexImage2D( target, desc->m_req.m_mip, intformat, slice->m_xSize, slice->m_ySize, 0, slice->m_storageSize, sliceAddress );
 			}
 			else
 			{
@@ -3786,15 +3663,16 @@ void CGLMTex::WriteTexels( GLMTexLockDesc *desc, bool writeWholeSlice, bool noDa
 					gGL->glPixelStorei( GL_UNPACK_ROW_LENGTH, slice->m_xSize );			// in pixels
 					gGL->glPixelStorei( GL_UNPACK_SKIP_PIXELS, writeBox.xmin );		// in pixels
 					gGL->glPixelStorei( GL_UNPACK_SKIP_ROWS, writeBox.ymin );		// in pixels
-					
-					TexSubImage2D(	target,
+
+					convert_texture(intformat, writeBox.xmax - writeBox.xmin, writeBox.ymax - writeBox.ymin, glDataFormat, glDataType, sliceAddress);
+
+					gGL->glTexSubImage2D(	target,
 										desc->m_req.m_mip,				// level
 										writeBox.xmin,					// xoffset into dest
 										writeBox.ymin,					// yoffset into dest
 										writeBox.xmax - writeBox.xmin,	// width	(was slice->m_xSize)
 										writeBox.ymax - writeBox.ymin,	// height	(was slice->m_ySize)
 										glDataFormat,					// format
-										intformat,
 										glDataType,						// type
 										sliceAddress					// data (will be offsetted by the SKIP_PIXELS and SKIP_ROWS - let GL do the math to find the first source texel)
 										);					
@@ -3807,7 +3685,9 @@ void CGLMTex::WriteTexels( GLMTexLockDesc *desc, bool writeWholeSlice, bool noDa
 				{					
 					// uncompressed path
 					// http://www.opengl.org/documentation/specs/man_pages/hardcopy/GL/html/gl/teximage2d.html
-					TexImage2D(			target,						// target
+					convert_texture(intformat, m_layout->m_slices[ desc->m_sliceIndex ].m_xSize, m_layout->m_slices[ desc->m_sliceIndex ].m_ySize, glDataFormat, glDataType, noDataWrite ? NULL : sliceAddress);
+					
+					gGL->glTexImage2D(			target,						// target
 											desc->m_req.m_mip,			// level
 											intformat,					// internalformat - don't use format->m_glIntFormat because we have the SRGB select going on above
 											slice->m_xSize,				// width
@@ -3852,8 +3732,7 @@ void CGLMTex::WriteTexels( GLMTexLockDesc *desc, bool writeWholeSlice, bool noDa
 			}
 			else
 			{
-				// uncompressed path
-				// http://www.opengl.org/sdk/docs/man/xhtml/glTexImage3D.xml
+				convert_texture(intformat, m_layout->m_slices[ desc->m_sliceIndex ].m_xSize, m_layout->m_slices[ desc->m_sliceIndex ].m_ySize, glDataFormat, glDataType, noDataWrite ? NULL : sliceAddress);				
 				gGL->glTexImage3D(			target,						// target
 										desc->m_req.m_mip,			// level
 										intformat,					// internalformat

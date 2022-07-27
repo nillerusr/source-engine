@@ -562,7 +562,7 @@ void CShaderDeviceMgrDx8::CheckVendorDependentAlphaToCoverage( HardwareCaps_t *p
 ConVar mat_hdr_level( "mat_hdr_level", "2", FCVAR_ARCHIVE );
 ConVar mat_slopescaledepthbias_shadowmap( "mat_slopescaledepthbias_shadowmap", "16", FCVAR_CHEAT );
 #ifdef DX_TO_GL_ABSTRACTION
-ConVar mat_depthbias_shadowmap(	"mat_depthbias_shadowmap", "20", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
+ConVar mat_depthbias_shadowmap(	"mat_depthbias_shadowmap", "40", FCVAR_CHEAT );
 #else
 ConVar mat_depthbias_shadowmap(	"mat_depthbias_shadowmap", "0.0005", FCVAR_CHEAT  );
 #endif
@@ -1047,6 +1047,11 @@ bool CShaderDeviceMgrDx8::ComputeCapsFromD3D( HardwareCaps_t *pCaps, int nAdapte
 		}
 	}
 
+
+#ifdef TOGLES
+	bSupportsInteger16Textures = caps.SupportInt16Format;
+#endif
+
 	// Do we have everything necessary to run with integer HDR?  Note that
 	// even if we don't support integer 16-bit/component textures, we
 	// can still run in this mode if fp16 textures are supported.
@@ -1054,7 +1059,7 @@ bool CShaderDeviceMgrDx8::ComputeCapsFromD3D( HardwareCaps_t *pCaps, int nAdapte
 		pCaps->m_SupportsVertexShaders_2_0 &&
 		//		(caps.Caps3 & D3DCAPS3_ALPHA_FULLSCREEN_FLIP_OR_DISCARD) &&
 		//		(caps.PrimitiveMiscCaps & D3DPMISCCAPS_SEPARATEALPHABLEND) &&
-		( bSupportsInteger16Textures || bSupportsFloat16Textures ) &&
+		bSupportsInteger16Textures &&
 		pCaps->m_SupportsSRGB;
 
 	// Do we have everything necessary to run with float HDR?
@@ -1072,7 +1077,7 @@ bool CShaderDeviceMgrDx8::ComputeCapsFromD3D( HardwareCaps_t *pCaps, int nAdapte
 	else
 		if ( bSupportsIntegerHDR )
 			pCaps->m_MaxHDRType = HDR_TYPE_INTEGER;
-		
+
 	if ( bSupportsFloatHDR  && ( mat_hdr_level.GetInt() == 3 ) )
 	{
 		pCaps->m_HDRType = HDR_TYPE_FLOAT;

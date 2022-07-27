@@ -463,7 +463,7 @@ float AABBDistance( const Vector &mins0, const Vector &maxs0, const Vector &mins
 class CLeafList : public ISpatialLeafEnumerator
 {
 public:
-	virtual bool EnumerateLeaf( int leaf, int context )
+	virtual bool EnumerateLeaf( int leaf, intp context )
 	{
 		m_list.AddToTail(leaf);
 		return true;

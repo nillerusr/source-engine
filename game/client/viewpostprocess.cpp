@@ -56,6 +56,7 @@ ConVar mat_hdr_uncapexposure( "mat_hdr_uncapexposure", "0", FCVAR_CHEAT );
 ConVar mat_force_bloom("mat_force_bloom","0", FCVAR_CHEAT);
 ConVar mat_disable_bloom("mat_disable_bloom","0");
 ConVar mat_debug_bloom("mat_debug_bloom","0", FCVAR_CHEAT);
+ConVar mat_colorcorrection( "mat_colorcorrection", "0" );
 
 ConVar mat_accelerate_adjust_exposure_down( "mat_accelerate_adjust_exposure_down", "3.0", FCVAR_CHEAT );
 ConVar mat_hdr_manual_tonemap_rate( "mat_hdr_manual_tonemap_rate", "1.0" );
@@ -288,7 +289,7 @@ void ApplyPostProcessingPasses(PostProcessingPass *pass_list, // table of effect
 					pRenderContext->SetRenderTarget(NULL);
 					int row=pcount/4;
 					int col=pcount %4;
-					//int dest_width,dest_height;
+					int dest_width,dest_height;
 					pRenderContext->GetRenderTargetDimensions( dest_width, dest_height );
 					pRenderContext->Viewport( 0, 0, dest_width, dest_height );
 					DrawClippedScreenSpaceRectangle(src_mat,10+col*220,10+row*220,
@@ -594,7 +595,7 @@ void CLuminanceHistogramSystem::Update( void )
 	// now, issue queries for the oldest finished queries we have
 	while( n_queries_issued_this_frame < MAX_QUERIES_PER_FRAME )
 	{
-		nNumRanges = N_LUMINANCE_RANGES;
+		int nNumRanges = N_LUMINANCE_RANGES;
 		if ( mat_tonemap_algorithm.GetInt() == 1 )
 			nNumRanges = N_LUMINANCE_RANGES_NEW;
 
@@ -1459,7 +1460,7 @@ static float GetBloomAmount( void )
 
 	if ( hdrType == HDR_TYPE_NONE )
 	{
-		flBloomAmount *= mat_non_hdr_bloom_scalefactor.GetFloat();
+		flBloomAmount *= mat_non_hdr_bloom_scalefactor.GetFloat()/2.f;
 	}
 
 	flBloomAmount *= mat_bloom_scalefactor_scalar.GetFloat();
@@ -2322,8 +2323,6 @@ void DoEnginePostProcessing( int x, int y, int w, int h, bool bFlashlightIsOn, b
 				flAAStrength = mat_software_aa_strength.GetFloat();
 			}
 
-			static ConVarRef mat_colorcorrection( "mat_colorcorrection" );
-
 			// bloom, software-AA and colour-correction (applied in 1 pass, after generation of the bloom texture)
 			bool  bPerformSoftwareAA	= IsX360() && ( engine->GetDXSupportLevel() >= 90 ) && ( flAAStrength != 0.0f );
 			bool  bPerformBloom			= !bPostVGui && ( flBloomScale > 0.0f ) && ( engine->GetDXSupportLevel() >= 90 );
@@ -2386,9 +2385,9 @@ void DoEnginePostProcessing( int x, int y, int w, int h, bool bFlashlightIsOn, b
 					partialViewportPostDestRect.height	-= 0.50f*fullViewportPostDestRect.height;
 
 					// This math interprets texel coords as being at corner pixel centers (*not* at corner vertices):
-					Vector2D uvScalePost(	1.0f - ( (w / 2) / (float)(w - 1) ),
+					Vector2D uvScale(	1.0f - ( (w / 2) / (float)(w - 1) ),
 										1.0f - ( (h / 2) / (float)(h - 1) ) );
-					CenterScaleQuadUVs( partialViewportPostSrcCorners, uvScalePost );
+					CenterScaleQuadUVs( partialViewportPostSrcCorners, uvScale );
 				}
 
 				// Temporary hack... Color correction was crashing on the first frame 
@@ -2691,6 +2690,7 @@ EXPOSE_INTERFACE( CMotionBlurMaterialProxy, IMaterialProxy, "MotionBlur" IMATERI
 //=====================================================================================================================
 // Image-space Motion Blur ============================================================================================
 //=====================================================================================================================
+ConVar mat_motion_blur_enabled( "mat_motion_blur_enabled", "1", FCVAR_ARCHIVE );
 ConVar mat_motion_blur_forward_enabled( "mat_motion_blur_forward_enabled", "0" );
 ConVar mat_motion_blur_falling_min( "mat_motion_blur_falling_min", "10.0" );
 ConVar mat_motion_blur_falling_max( "mat_motion_blur_falling_max", "20.0" );
@@ -2699,13 +2699,11 @@ ConVar mat_motion_blur_falling_intensity( "mat_motion_blur_falling_intensity", "
 ConVar mat_motion_blur_rotation_intensity( "mat_motion_blur_rotation_intensity", "1.0" );
 ConVar mat_motion_blur_strength( "mat_motion_blur_strength", "1.0" );
 
-void DoImageSpaceMotionBlur( const CViewSetup &viewBlur, int x, int y, int w, int h )
+void DoImageSpaceMotionBlur( const CViewSetup &view, int x, int y, int w, int h )
 {
 #ifdef CSS_PERF_TEST
 	return;
 #endif
-	static ConVarRef mat_motion_blur_enabled( "mat_motion_blur_enabled" );
-
 	if ( ( !mat_motion_blur_enabled.GetInt() ) || ( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() < 90 ) )
 	{
 		return;
@@ -2744,7 +2742,7 @@ void DoImageSpaceMotionBlur( const CViewSetup &viewBlur, int x, int y, int w, in
 		//===================================//
 		// Get current pitch & wrap to +-180 //
 		//===================================//
-		float flCurrentPitch = viewBlur.angles[PITCH];
+		float flCurrentPitch = view.angles[PITCH];
 		while ( flCurrentPitch > 180.0f )
 			flCurrentPitch -= 360.0f;
 		while ( flCurrentPitch < -180.0f )
@@ -2753,7 +2751,7 @@ void DoImageSpaceMotionBlur( const CViewSetup &viewBlur, int x, int y, int w, in
 		//=================================//
 		// Get current yaw & wrap to +-180 //
 		//=================================//
-		float flCurrentYaw = viewBlur.angles[YAW];
+		float flCurrentYaw = view.angles[YAW];
 		while ( flCurrentYaw > 180.0f )
 			flCurrentYaw -= 360.0f;
 		while ( flCurrentYaw < -180.0f )
@@ -2766,7 +2764,7 @@ void DoImageSpaceMotionBlur( const CViewSetup &viewBlur, int x, int y, int w, in
 		// Get current basis vectors //
 		//===========================//
 		matrix3x4_t mCurrentBasisVectors;
-		AngleMatrix( viewBlur.angles, mCurrentBasisVectors );
+		AngleMatrix( view.angles, mCurrentBasisVectors );
 
 		float vCurrentSideVec[3] = { mCurrentBasisVectors[0][1], mCurrentBasisVectors[1][1], mCurrentBasisVectors[2][1] };
 		float vCurrentForwardVec[3] = { mCurrentBasisVectors[0][0], mCurrentBasisVectors[1][0], mCurrentBasisVectors[2][0] };
@@ -2775,7 +2773,7 @@ void DoImageSpaceMotionBlur( const CViewSetup &viewBlur, int x, int y, int w, in
 		//======================//
 		// Get current position //
 		//======================//
-		float vCurrentPosition[3] = { viewBlur.origin.x, viewBlur.origin.y, viewBlur.origin.z };
+		float vCurrentPosition[3] = { view.origin.x, view.origin.y, view.origin.z };
 
 		//===============================================================//
 		// Evaluate change in position to determine if we need to update //
@@ -2821,8 +2819,8 @@ void DoImageSpaceMotionBlur( const CViewSetup &viewBlur, int x, int y, int w, in
 			// Normal update path //
 			//====================//
 			// Compute horizontal and vertical fov
-			float flHorizontalFov = viewBlur.fov;
-			float flVerticalFov = (viewBlur.m_flAspectRatio <= 0.0f ) ? (viewBlur.fov ) : (viewBlur.fov  / viewBlur.m_flAspectRatio );
+			float flHorizontalFov = view.fov;
+			float flVerticalFov = ( view.m_flAspectRatio <= 0.0f ) ? ( view.fov ) : ( view.fov  / view.m_flAspectRatio );
 			//engine->Con_NPrintf( 2, "Horizontal Fov: %6.2f   Vertical Fov: %6.2f", flHorizontalFov, flVerticalFov );
 
 			//=====================//

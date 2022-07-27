@@ -993,6 +993,7 @@ typedef enum _D3DTEXTUREADDRESS
 
 typedef enum _D3DSHADEMODE 
 {
+    D3DSHADE_NONE 		= 0,
     D3DSHADE_FLAT               = 1,
     D3DSHADE_GOURAUD            = 2,
     D3DSHADE_PHONG              = 3,
@@ -1194,7 +1195,7 @@ typedef enum _D3DVERTEXBLENDFLAGS
     D3DVBF_3WEIGHTS = 3,     // 4 matrix blending
     D3DVBF_TWEENING = 255,   // blending using D3DRS_TWEENFACTOR
     D3DVBF_0WEIGHTS = 256,   // one matrix is used with weight 1.0
-    D3DVBF_FORCE_DWORD = 0x7fffffff, // force 32-bit size enum
+    D3DVBF_FORCE_DWORD = 0xffffffff, // force 32-bit size enum
 } D3DVERTEXBLENDFLAGS;
 
 typedef struct _D3DINDEXBUFFER_DESC
@@ -1338,6 +1339,7 @@ typedef struct _D3DCAPS9
 	DWORD	FakeSRGBWrite;				// 1 for parts which can't support SRGB writes due to driver issues - 0 for others
 	DWORD	MixedSizeTargets;			// 1 for parts which can mix attachment sizes (RT's color vs depth)
 	DWORD	CanDoSRGBReadFromRTs;		// 0 when we're on Leopard, 1 when on Snow Leopard
+	DWORD   SupportInt16Format;
 } D3DCAPS9;
 
 typedef struct _D3DDISPLAYMODE
@@ -1531,7 +1533,7 @@ typedef enum _D3DTRANSFORMSTATETYPE
     D3DTS_VIEW          = 2,
     D3DTS_PROJECTION    = 3,
     D3DTS_TEXTURE0      = 16,
-    D3DTS_FORCE_DWORD     = 0x7fffffff, /* force 32-bit size enum */
+    D3DTS_FORCE_DWORD     = 0xffffffff, /* force 32-bit size enum */
 } D3DTRANSFORMSTATETYPE;
 
 // **** FIXED FUNCTION STUFF - None of this stuff needs support in GL.

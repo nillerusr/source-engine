@@ -519,9 +519,11 @@ class CAchievementPortalFindAllDinosaurs : public CBaseAchievement
 			if ( id >= 0 && id < m_iNumComponents )
 			{
 				EnsureComponentBitSetAndEvaluate( id );
-				
+
+#ifndef DISABLE_STEAM
 				// Update our Steam stat
 				steamapicontext->SteamUserStats()->SetStat( "PORTAL_TRANSMISSION_RECEIVED_STAT", m_iCount );
+#endif
 			}
 			else
 			{

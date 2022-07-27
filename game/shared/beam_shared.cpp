@@ -350,8 +350,8 @@ CBeam::CBeam( void )
 void CBeam::SetModel( const char *szModelName )
 {
 	int modelIndex = modelinfo->GetModelIndex( szModelName );
-	const model_t *pModel = modelinfo->GetModel( modelIndex );
-	if ( pModel && modelinfo->GetModelType( pModel ) != mod_sprite )
+	const model_t *model = modelinfo->GetModel( modelIndex );
+	if ( model && modelinfo->GetModelType( model ) != mod_sprite )
 	{
 		Msg( "Setting CBeam to non-sprite model %s\n", szModelName );
 	}

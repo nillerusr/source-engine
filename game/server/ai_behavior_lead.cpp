@@ -269,7 +269,7 @@ bool CAI_LeadBehavior::GetClosestPointOnRoute( const Vector &targetPos, Vector *
 	float		flNearestDist	= 999999999;
 	float		flPathDist, flPathDist2D;
 
-	Vector vecNearestPoint(0, 0, 0);
+	Vector vecNearestPoint;
 	Vector vecPrevPos = GetOuter()->GetAbsOrigin();
 	for ( ; (waypoint != NULL) ; waypoint = waypoint->GetNext() )
 	{
@@ -1540,24 +1540,24 @@ void CAI_LeadGoal::InputActivate( inputdata_t &inputdata )
 		m_flRetrieveDistance = m_flLeadDistance + LEAD_MIN_RETRIEVEDIST_OFFSET;
 	}
 
-	AI_LeadArgs_t leadArgs = {
-		GetGoalEntityName(),
-		STRING(m_iszWaitPointName),
-		(unsigned)m_spawnflags,
-		m_flWaitDistance,
-		m_flLeadDistance,
-		m_flRetrieveDistance,
+	AI_LeadArgs_t leadArgs = { 
+		GetGoalEntityName(), 
+		STRING(m_iszWaitPointName), 
+		(unsigned)m_spawnflags, 
+		m_flWaitDistance, 
+		m_flLeadDistance, 
+		m_flRetrieveDistance, 
 		m_flSuccessDistance,
-		m_bRun,
-		m_iRetrievePlayer,
-		m_iRetrieveWaitForSpeak,
-		m_iComingBackWaitForSpeak,
+		m_bRun, 
+		m_iRetrievePlayer, 
+		m_iRetrieveWaitForSpeak, 
+		m_iComingBackWaitForSpeak, 
 		m_bStopScenesWhenPlayerLost,
 		m_bDontSpeakStart,
 		m_bLeadDuringCombat,
 		m_bGagLeader,
 	};
-
+	
 	pBehavior->LeadPlayer( leadArgs, this );
 }
 

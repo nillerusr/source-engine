@@ -49,7 +49,7 @@ public:
 	template<class T> FORCEINLINE void Put( T const &nValue )
 	{
 		EnsureCapacity( sizeof( T ) );
-		*( reinterpret_cast<T *>( m_pDataOut ) ) = nValue;
+		memcpy( m_pDataOut, &nValue, sizeof(T) );
 		m_pDataOut += sizeof( nValue );
 #ifdef DBGFLAG_ASSERT
 		m_nNumBytesRemaining -= sizeof( nValue );
@@ -60,6 +60,11 @@ public:
 	{
 		Put( nValue );
 	}
+
+    FORCEINLINE void PutIntPtr( intp nValue )
+    {
+        Put( nValue );
+    }
 
 	FORCEINLINE void PutFloat( float nValue )
 	{
@@ -335,7 +340,7 @@ public:
 		{
 			m_Storage.PutInt( CBCMD_BIND_SHADERAPI_TEXTURE_HANDLE );
 			m_Storage.PutInt( nSampler );
-			m_Storage.PutInt( hTexture );
+			m_Storage.PutIntPtr( hTexture );
 		}
 	}
 

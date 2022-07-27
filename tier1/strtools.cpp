@@ -47,7 +47,6 @@
 #include <stdarg.h>
 
 #ifdef POSIX
-#include <iconv.h>
 #include <ctype.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -79,6 +78,12 @@
 #include "xbox/xbox_win32stubs.h"
 #endif
 #include "tier0/memdbgon.h"
+
+#ifdef ANDROID
+#include "common/iconv.h"
+#elif POSIX
+#include <iconv.h>
+#endif
 
 static int FastToLower( char c )
 {

@@ -38,17 +38,7 @@
 #include "interface.h"
 #include "togles/rendermechanism.h"
 
-#ifdef LINUX
-#include <sys/time.h>
-#endif
-
 void *VoidFnPtrLookup_GlMgr(const char *fn, bool &okay, const bool bRequired, void *fallback=NULL);
-
-/*
-#define GL_USE_EXECUTE_HELPER_FOR_ALL_API_CALLS 1
-#define GL_TRACK_API_TIME 1
-#define GL_DUMP_ALL_API_CALLS 1
-*/
 
 #if GL_USE_EXECUTE_HELPER_FOR_ALL_API_CALLS
 class CGLExecuteHelperBase
@@ -57,7 +47,7 @@ public:
 	inline void StartCall(const char *pName);
 	inline void StopCall(const char *pName);
 #if GL_TRACK_API_TIME
-	uint64 m_nStartTime;
+	TmU64 m_nStartTime;
 #endif
 };
 
@@ -313,24 +303,30 @@ public:
 	int m_nOpenGLVersionMinor;  // if GL_VERSION is 2.1.0, this will be set to 1.
 	int m_nOpenGLVersionPatch;  // if GL_VERSION is 2.1.0, this will be set to 0.
 	bool m_bHave_OpenGL;
-	
+
 	char *m_pGLDriverStrings[cGLTotalDriverStrings];
-	GLDriverProvider_t m_nDriverProvider;		
+	GLDriverProvider_t m_nDriverProvider;
+
+#ifdef LOAD_HARDFP
+#define _APIENTRY  __attribute__((pcs("aapcs"))) APIENTRY
+#else
+#define _APIENTRY APIENTRY
+#endif
 
 #ifdef OSX
 #define GL_EXT(x,glmajor,glminor) bool m_bHave_##x;
 #define GL_FUNC(ext,req,ret,fn,arg,call) CDynamicFunctionOpenGL< req, ret (*) arg, ret > fn;
 #define GL_FUNC_VOID(ext,req,fn,arg,call) CDynamicFunctionOpenGL< req, void (*) arg, void > fn;
 #else
-#define _APIENTRY  __attribute__((pcs("aapcs"))) APIENTRY
 #define GL_EXT(x,glmajor,glminor) bool m_bHave_##x;
 #define GL_FUNC(ext,req,ret,fn,arg,call) CDynamicFunctionOpenGL< req, ret (_APIENTRY *) arg, ret > fn;
 #define GL_FUNC_VOID(ext,req,fn,arg,call) CDynamicFunctionOpenGL< req, void (_APIENTRY *) arg, void > fn;
 #endif
-	#include "togles/glfuncs.inl"
-	#undef GL_FUNC_VOID
-	#undef GL_FUNC
-	#undef GL_EXT
+
+#include "togles/glfuncs.inl"
+#undef GL_FUNC_VOID
+#undef GL_FUNC
+#undef GL_EXT
 
 	bool HasSwapTearExtension() const
 	{
@@ -358,30 +354,54 @@ typedef void * (*GL_GetProcAddressCallbackFunc_t)(const char *, bool &, const bo
 	DLL_IMPORT void ClearOpenGLEntryPoints();
 #endif
 
-inline uint64 get_nsecs()
-{
-	struct timespec time={0,0};
-    clock_gettime(CLOCK_MONOTONIC, &time);
-	return time.tv_nsec;
-}
-	
 #if GL_USE_EXECUTE_HELPER_FOR_ALL_API_CALLS
 inline void CGLExecuteHelperBase::StartCall(const char *pName) 
 { 
 	(void)pName;
-	m_nStartTime = get_nsecs();
+
+#if GL_TELEMETRY_ZONES	
+	tmEnter( TELEMETRY_LEVEL3, TMZF_NONE, pName );
+#endif
+
+#if GL_TRACK_API_TIME
+	m_nStartTime = tmFastTime();
+#endif
+
+#if GL_DUMP_ALL_API_CALLS
+	static bool s_bDumpCalls;
+	if ( s_bDumpCalls )
+	{
+		char buf[128];
+		buf[0] = 'G';
+		buf[1] = 'L';
+		buf[2] = ':';
+		size_t l = strlen( pName );
+		memcpy( buf + 3, pName, l );
+		buf[3 + l] = '\n';
+		buf[4 + l] = '\0';
+		Plat_DebugString( buf );
+	}
+#endif
 }
 
 inline void CGLExecuteHelperBase::StopCall(const char *pName) 
-{
-	if( gGL )
-	{
-		uint64 time = get_nsecs() - m_nStartTime;
-		printf("Function %s finished in %llu\n", pName, time);
-		
-		if( strcmp(pName, "glBufferSubData") == 0 && time > 1000000 )
-			DebuggerBreak();
-	}
+{ 
+#if GL_TRACK_API_TIME
+	uint64 nTotalCycles = tmFastTime() - m_nStartTime;
+#endif
+
+#if GL_TELEMETRY_ZONES
+	tmLeave( TELEMETRY_LEVEL3 );
+#endif
+
+#if GL_TRACK_API_TIME	
+	//double flMilliseconds = g_Telemetry.flRDTSCToMilliSeconds * nTotalCycles;
+	if (gGL) 
+	{ 
+		gGL->m_nTotalGLCycles += nTotalCycles;
+		gGL->m_nTotalGLCalls++; 
+	} 
+#endif
 }
 #endif
 

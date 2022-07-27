@@ -635,14 +635,18 @@ bool IsOBBIntersectingOBB( const Vector &vecOrigin1, const QAngle &vecAngles1, c
 }
 
 // NOTE: This is only very slightly faster on high end PCs and x360
+
+#ifdef __SANITIZE_ADDRESS__
+#define USE_SIMD_RAY_CHECKS 0
+#else
 #define USE_SIMD_RAY_CHECKS 1
+#endif
 //-----------------------------------------------------------------------------
 // returns true if there's an intersection between box and ray
 //-----------------------------------------------------------------------------
 bool FASTCALL IsBoxIntersectingRay( const Vector& boxMin, const Vector& boxMax, 
 									const Vector& origin, const Vector& vecDelta, float flTolerance )
 {
-	
 #if USE_SIMD_RAY_CHECKS
 	// Load the unaligned ray/box parameters into SIMD registers
 	fltx4 start = LoadUnaligned3SIMD(origin.Base());
@@ -695,7 +699,7 @@ bool FASTCALL IsBoxIntersectingRay( const Vector& boxMin, const Vector& boxMax,
 	return IsAllZeros(separation);
 #else
 	// On the x360, we force use of the SIMD functions.
-#if defined(_X360) 
+#if defined(_X360)
 	if (IsX360())
 	{
 		fltx4 delta = LoadUnaligned3SIMD(vecDelta.Base());
@@ -766,7 +770,7 @@ bool FASTCALL IsBoxIntersectingRay( const Vector& boxMin, const Vector& boxMax,
 bool FASTCALL IsBoxIntersectingRay( const Vector& boxMin, const Vector& boxMax, 
 									const Vector& origin, const Vector& vecDelta,
 									const Vector& vecInvDelta, float flTolerance )
-{	
+{
 #if USE_SIMD_RAY_CHECKS
 	// Load the unaligned ray/box parameters into SIMD registers
 	fltx4 start = LoadUnaligned3SIMD(origin.Base());

@@ -166,7 +166,7 @@ public:
 	virtual unsigned short InvalidShadowIndex( );
 
 	// Methods of ISpatialLeafEnumerator
-	virtual bool EnumerateLeaf( int leaf, int context );
+	virtual bool EnumerateLeaf( int leaf, intp context );
 
 	// Sets the texture coordinate range for a shadow...
 	virtual void SetShadowTexCoord( ShadowHandle_t handle, float x, float y, float w, float h );
@@ -605,7 +605,7 @@ void CShadowMgr::SetMaterial( Shadow_t& shadow, IMaterial* pMaterial, IMaterial*
 	}
 
 	// Search the sort order handles for an enumeration id match
-	int materialEnum = (int)pMaterial;
+	int materialEnum = (intp)pMaterial;
 	for (unsigned short i = m_SortOrderIds.Head(); i != m_SortOrderIds.InvalidIndex();
 		i = m_SortOrderIds.Next(i) )
 	{
@@ -1536,7 +1536,7 @@ void CShadowMgr::ProjectShadow( ShadowHandle_t handle, const Vector &origin,
 	for ( int i  = 0; i < nLeafCount; ++i )
 	{
 		// NOTE: Scope specifier eliminates virtual function call
-		CShadowMgr::EnumerateLeaf( pLeafList[i], (int)&build );
+		CShadowMgr::EnumerateLeaf( pLeafList[i], (intp)&build );
 	}
 }
 
@@ -1650,7 +1650,7 @@ void CShadowMgr::ProjectFlashlight( ShadowHandle_t handle, const VMatrix& worldT
 	for ( int i = 0; i < nLeafCount; ++i )
 	{
 		// NOTE: Scope specifier eliminates virtual function call
-		CShadowMgr::EnumerateLeaf( pLeafList[i], (int)&build );
+		CShadowMgr::EnumerateLeaf( pLeafList[i], (intp)&build );
 	}
 }
 
@@ -1809,7 +1809,7 @@ void CShadowMgr::ApplyShadowToLeaf( const Shadow_t &shadow, mleaf_t* RESTRICT pL
 //-----------------------------------------------------------------------------
 // Applies a projected texture to all surfaces in the leaf
 //-----------------------------------------------------------------------------
-bool CShadowMgr::EnumerateLeaf( int leaf, int context )
+bool CShadowMgr::EnumerateLeaf( int leaf, intp context )
 {
 	VPROF( "CShadowMgr::EnumerateLeaf" );
 	ShadowBuildInfo_t* pBuild = (ShadowBuildInfo_t*)context;
@@ -2048,34 +2048,34 @@ public:
 class CClipPlane
 {
 public:
-	static inline bool Inside( ShadowVertex_t const& vert )						
+	static inline bool Inside( ShadowVertex_t const& vert )
 	{
-		return DotProduct( vert.m_Position, *m_pNormal ) < m_Dist;
+		return DotProduct( vert.m_Position, m_pNormal ) < m_Dist;
 	}
 
-	static inline float Clip( const Vector& one, const Vector& two )	
+	static inline float Clip( const Vector& one, const Vector& two )
 	{
 		Vector dir;
 		VectorSubtract( two, one, dir );
-		return IntersectRayWithPlane( one, dir, *m_pNormal, m_Dist );
+		return IntersectRayWithPlane( one, dir, m_pNormal, m_Dist );
 	}
 
 	static inline bool IsAbove()	{return false;}
 	static inline bool IsPlane()	{return true;}
 
-	static void SetPlane( const Vector& normal, float dist )
+	static void SetPlane( const Vector normal, float dist )
 	{
-		m_pNormal = &normal;
+		m_pNormal = normal;
 		m_Dist = dist;
 	}
 
 
 private:
-	static const Vector *m_pNormal;
+	static Vector m_pNormal;
 	static float  m_Dist;
 };
 
-const Vector *CClipPlane::m_pNormal;
+Vector CClipPlane::m_pNormal;
 float  CClipPlane::m_Dist;
 
 static inline void ClampTexCoord( ShadowVertex_t *pInVertex, ShadowVertex_t *pOutVertex )

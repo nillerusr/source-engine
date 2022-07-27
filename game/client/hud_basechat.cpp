@@ -24,7 +24,6 @@
 #include "vgui/IInput.h"
 #include "vgui/ILocalize.h"
 #include "multiplay_gamerules.h"
-#include "voice_status.h"
 
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -37,7 +36,6 @@ ConVar hud_saytext_time( "hud_saytext_time", "12", 0 );
 ConVar cl_showtextmsg( "cl_showtextmsg", "1", 0, "Enable/disable text messages printing on the screen." );
 ConVar cl_chatfilters( "cl_chatfilters", "63", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Stores the chat filter settings " );
 ConVar cl_chatfilter_version( "cl_chatfilter_version", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_HIDDEN, "Stores the chat filter version" );
-ConVar cl_mute_all_comms("cl_mute_all_comms", "1", FCVAR_ARCHIVE, "If 1, then all communications from a player will be blocked when that player is muted, including chat messages.");
 
 const int kChatFilterVersion = 1;
 
@@ -635,6 +633,7 @@ CBaseHudChat::CBaseHudChat( const char *pElementName )
 	}
 
 	m_pChatHistory = new CHudChatHistory( this, "HudChatHistory" );
+	m_pFilterPanel = NULL;
 
 	CreateChatLines();
 	CreateChatInputLine();
@@ -819,7 +818,7 @@ void CBaseHudChat::MsgFunc_SayText2( bf_read &msg )
 	ReadLocalizedString( msg, szBuf[3], sizeof( szBuf[3] ), true );
 	ReadLocalizedString( msg, szBuf[4], sizeof( szBuf[4] ), true );
 
-	g_pVGuiLocalize->ConstructString_safe( szBuf[5], msg_text, 4, szBuf[1], szBuf[2], szBuf[3], szBuf[4] );
+	g_pVGuiLocalize->ConstructString( szBuf[5], sizeof( szBuf[5] ), msg_text, 4, szBuf[1], szBuf[2], szBuf[3], szBuf[4] );
 
 	char ansiString[512];
 	g_pVGuiLocalize->ConvertUnicodeToANSI( ConvertCRtoNL( szBuf[5] ), ansiString, sizeof( ansiString ) );
@@ -899,12 +898,12 @@ void CBaseHudChat::MsgFunc_TextMsg( bf_read &msg )
 	switch ( msg_dest )
 	{
 	case HUD_PRINTCENTER:
-		g_pVGuiLocalize->ConstructString_safe( outputBuf, szBuf[0], 4, szBuf[1], szBuf[2], szBuf[3], szBuf[4] );
+		g_pVGuiLocalize->ConstructString( outputBuf, sizeof(outputBuf), szBuf[0], 4, szBuf[1], szBuf[2], szBuf[3], szBuf[4] );
 		internalCenterPrint->Print( ConvertCRtoNL( outputBuf ) );
 		break;
 
 	case HUD_PRINTNOTIFY:
-		g_pVGuiLocalize->ConstructString_safe( outputBuf, szBuf[0], 4, szBuf[1], szBuf[2], szBuf[3], szBuf[4] );
+		g_pVGuiLocalize->ConstructString( outputBuf, sizeof(outputBuf), szBuf[0], 4, szBuf[1], szBuf[2], szBuf[3], szBuf[4] );
 		g_pVGuiLocalize->ConvertUnicodeToANSI( outputBuf, szString, sizeof(szString) );
 		len = strlen( szString );
 		if ( len && szString[len-1] != '\n' && szString[len-1] != '\r' )
@@ -915,7 +914,7 @@ void CBaseHudChat::MsgFunc_TextMsg( bf_read &msg )
 		break;
 
 	case HUD_PRINTTALK:
-		g_pVGuiLocalize->ConstructString_safe( outputBuf, szBuf[0], 4, szBuf[1], szBuf[2], szBuf[3], szBuf[4] );
+		g_pVGuiLocalize->ConstructString( outputBuf, sizeof(outputBuf), szBuf[0], 4, szBuf[1], szBuf[2], szBuf[3], szBuf[4] );
 		g_pVGuiLocalize->ConvertUnicodeToANSI( outputBuf, szString, sizeof(szString) );
 		len = strlen( szString );
 		if ( len && szString[len-1] != '\n' && szString[len-1] != '\r' )
@@ -927,7 +926,7 @@ void CBaseHudChat::MsgFunc_TextMsg( bf_read &msg )
 		break;
 
 	case HUD_PRINTCONSOLE:
-		g_pVGuiLocalize->ConstructString_safe( outputBuf, szBuf[0], 4, szBuf[1], szBuf[2], szBuf[3], szBuf[4] );
+		g_pVGuiLocalize->ConstructString( outputBuf, sizeof(outputBuf), szBuf[0], 4, szBuf[1], szBuf[2], szBuf[3], szBuf[4] );
 		g_pVGuiLocalize->ConvertUnicodeToANSI( outputBuf, szString, sizeof(szString) );
 		len = strlen( szString );
 		if ( len && szString[len-1] != '\n' && szString[len-1] != '\r' )
@@ -1552,6 +1551,8 @@ void CBaseHudChatLine::Colorize( int alpha )
 			InsertColorChange( color );
 			InsertString( wText );
 
+			CBaseHudChat *pChat = dynamic_cast<CBaseHudChat*>(GetParent() );
+
 			if ( pChat && pChat->GetChatHistory() )
 			{	
 				pChat->GetChatHistory()->InsertColorChange( color );
@@ -1747,13 +1748,6 @@ void CBaseHudChat::ChatPrintf( int iPlayerIndex, int iFilter, const char *fmt, .
 	if ( iFilter != CHAT_FILTER_NONE )
 	{
 		if ( !(iFilter & GetFilterFlags() ) )
-			return;
-	}
-
-	// If a player is muted for voice, also mute them for text because jerks gonna jerk.
-	if ( cl_mute_all_comms.GetBool() && iPlayerIndex != 0 )
-	{
-		if ( GetClientVoiceMgr() && GetClientVoiceMgr()->IsPlayerBlocked( iPlayerIndex ) )	
 			return;
 	}
 

@@ -192,7 +192,7 @@ int ParseString( char const *pText, char *buf, size_t bufsize )
 		char const *pStart = pTemp;
 		pTemp = SkipText( pTemp );
 
-		int len =  min( pTemp - pStart + 1, (int)bufsize - 1 );
+        intp len =  min( pTemp - pStart + 1, (ptrdiff_t)bufsize - 1 );
 		Q_strncpy( buf, pStart, len );
 		buf[ len ] = 0;
 		return 1;
@@ -367,7 +367,8 @@ void TextMessageParse( byte *pMemFile, int fileSize )
 
 	client_textmessage_t	textMessages[ MAX_MESSAGES ];
 	
-	int			i, nameHeapSize, textHeapSize, messageSize, nameOffset;
+	int			i, nameHeapSize, textHeapSize, messageSize;
+	intp nameOffset;
 
 	lastNamePos = 0;
 	lineNumber = 0;

@@ -249,3 +249,4 @@ GL_FUNC_VOID(OpenGL,true,glSamplerParameterfv,(GLuint a, GLenum b, const GLfloat
 GL_FUNC_VOID(GL_QCOM_alpha_test,false,glAlphaFuncQCOM,(GLenum a, GLfloat b),(a,b))
 GL_FUNC_VOID(OpenGL,true,glClearDepthf,(GLfloat a),(a))
 GL_FUNC_VOID(OpenGL,true,glDepthRangef,(GLfloat a,GLfloat b),(a,b))
+GL_FUNC_VOID(OpenGL,true,glGetFramebufferAttachmentParameteriv,(GLenum a,GLenum b,GLenum c,GLint *d),(a,b,c,d))

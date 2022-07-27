@@ -483,7 +483,8 @@ void CMapLoadHelper::Init( model_t *pMapModel, const char *loadname )
 
 	s_pMap = &g_ModelLoader.m_worldBrushData;
 
-#if 0
+	// nillerusr: Fuck you johns
+
 	// XXX(johns): There are security issues with this system currently. sv_pure doesn't handle unexpected/mismatched
 	//             lumps, so players can create lumps for maps not using them to wallhack/etc.. Currently unused,
 	//             disabling until we have time to make a proper security pass.
@@ -530,7 +531,6 @@ void CMapLoadHelper::Init( model_t *pMapModel, const char *loadname )
 			}
 		}
 	}
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1038,7 +1038,7 @@ bool Map_CheckForHDR( model_t *pModel, const char *pLoadName )
 	}
 	
 	bool bEnableHDR = ( IsX360() && bHasHDR ) ||
-		( bHasHDR && ( mat_hdr_level.GetInt() >= 2 ) &&
+		( bHasHDR &&
 		( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() >= 90 ) );
 	
 	EnableHDR( bEnableHDR );
@@ -1831,7 +1831,7 @@ void *Hunk_AllocNameAlignedClear_( int size, int alignment, const char *pHunkNam
 	Assert(IsPowerOfTwo(alignment));
 	void *pMem = Hunk_AllocName( alignment + size, pHunkName );
 	memset( pMem, 0, size + alignment );
-	pMem = (void *)( ( ( ( unsigned long )pMem ) + (alignment-1) ) & ~(alignment-1) );
+	pMem = (void *)( ( ( ( uintp )pMem ) + (alignment-1) ) & ~(alignment-1) );
 
 	return pMem;
 }
@@ -1856,8 +1856,7 @@ void Mod_LoadFaces( void )
 	int			ti, di;
 
 	int face_lump_to_load = LUMP_FACES;
-	if ( g_pMaterialSystemHardwareConfig->GetHDRType() != HDR_TYPE_NONE &&
-		CMapLoadHelper::LumpSize( LUMP_FACES_HDR ) > 0 )
+	if ( g_pMaterialSystemHardwareConfig->GetHDREnabled() && CMapLoadHelper::LumpSize( LUMP_FACES_HDR ) > 0 )
 	{
 		face_lump_to_load = LUMP_FACES_HDR;
 	}
@@ -1870,6 +1869,12 @@ void Mod_LoadFaces( void )
 
 	// align these allocations
 	// If you trip one of these, you need to rethink the alignment of the struct
+#ifdef PLATFORM_64BITS
+    msurface1_t *out1 = Hunk_AllocNameAlignedClear< msurface1_t >( count, alignof(msurface1_t), va( "%s [%s]", lh.GetLoadName(), "surface1" ) );
+    msurface2_t *out2 = Hunk_AllocNameAlignedClear< msurface2_t >( count, alignof(msurface2_t), va( "%s [%s]", lh.GetLoadName(), "surface2" ) );
+
+    msurfacelighting_t *pLighting = Hunk_AllocNameAlignedClear< msurfacelighting_t >( count, alignof(msurfacelighting_t), va( "%s [%s]", lh.GetLoadName(), "surfacelighting" ) );
+#else
 	Assert( sizeof(msurface1_t) == 16 );
 	Assert( sizeof(msurface2_t) == 32 );
 	Assert( sizeof(msurfacelighting_t) == 32 );
@@ -1878,6 +1883,7 @@ void Mod_LoadFaces( void )
 	msurface2_t *out2 = Hunk_AllocNameAlignedClear< msurface2_t >( count, 32, va( "%s [%s]", lh.GetLoadName(), "surface2" ) );
 
 	msurfacelighting_t *pLighting = Hunk_AllocNameAlignedClear< msurfacelighting_t >( count, 32, va( "%s [%s]", lh.GetLoadName(), "surfacelighting" ) );
+#endif
 
 	lh.GetMap()->surfaces1 = out1;
 	lh.GetMap()->surfaces2 = out2;
@@ -2289,8 +2295,7 @@ void Mod_LoadLeafs( void )
 		Mod_LoadLeafs_Version_0( lh );
 		break;
 	case 1:
-		if( g_pMaterialSystemHardwareConfig->GetHDRType() != HDR_TYPE_NONE &&
-	  		  CMapLoadHelper::LumpSize( LUMP_LEAF_AMBIENT_LIGHTING_HDR ) > 0 )
+		if( g_pMaterialSystemHardwareConfig->GetHDREnabled() && CMapLoadHelper::LumpSize( LUMP_LEAF_AMBIENT_LIGHTING_HDR ) > 0 )
 		{
 			CMapLoadHelper mlh( LUMP_LEAF_AMBIENT_LIGHTING_HDR );
 			CMapLoadHelper mlhTable( LUMP_LEAF_AMBIENT_INDEX_HDR );
@@ -2385,7 +2390,7 @@ void Mod_LoadCubemapSamples( void )
 	lh.GetMap()->m_pCubemapSamples = out;
 	lh.GetMap()->m_nCubemapSamples = count;
 
-	bool bHDR = g_pMaterialSystemHardwareConfig->GetHDRType() != HDR_TYPE_NONE;
+	bool bHDR =  g_pMaterialSystemHardwareConfig->GetHDREnabled(); //g_pMaterialSystemHardwareConfig->GetHDRType() != HDR_TYPE_NONE;
 	int nCreateFlags = bHDR ? 0 : TEXTUREFLAGS_SRGB;
 
 	// We have separate HDR versions of the textures.  In order to deal with this,
@@ -2862,7 +2867,7 @@ void Mod_TouchAllData( model_t *pModel, int nServerCount )
 		// skip self, start at children
 		for ( int i=1; i<pVirtualModel->m_group.Count(); ++i )
 		{
-			MDLHandle_t childHandle = (MDLHandle_t)(int)pVirtualModel->m_group[i].cache&0xffff;
+			MDLHandle_t childHandle = (MDLHandle_t)(intp)pVirtualModel->m_group[i].cache&0xffff;
 			model_t *pChildModel = (model_t *)g_pMDLCache->GetUserData( childHandle );
 			if ( pChildModel )
 			{
@@ -4327,7 +4332,7 @@ public:
 		m_pShared = pBrush->brush.pShared;
 		m_count = 0;
 	}
-	bool EnumerateLeaf( int leaf, int )
+	bool EnumerateLeaf( int leaf, intp )
 	{
 		// garymcthack - need to test identity brush models
 		int flags = ( m_pShared->leafs[leaf].leafWaterDataID == -1 ) ? SURFDRAW_ABOVEWATER : SURFDRAW_UNDERWATER;
@@ -4374,7 +4379,7 @@ static void MarkBrushModelWaterSurfaces( model_t* world,
 	model_t* pTemp = host_state.worldmodel;
 	CBrushBSPIterator brushIterator( world, brush );
 	host_state.SetWorldModel( world );
-	g_pToolBSPTree->EnumerateLeavesInBox( mins, maxs, &brushIterator, (int)brush );
+	g_pToolBSPTree->EnumerateLeavesInBox( mins, maxs, &brushIterator, (intp)brush );
 	brushIterator.CheckSurfaces();
 	host_state.SetWorldModel( pTemp );
 }
@@ -4453,8 +4458,7 @@ void CModelLoader::Map_LoadModel( model_t *mod )
 
 	// Until BSP version 19, this must occur after loading texinfo
 	COM_TimestampedLog( "  Mod_LoadLighting" );
-	if ( g_pMaterialSystemHardwareConfig->GetHDRType() != HDR_TYPE_NONE &&
-		CMapLoadHelper::LumpSize( LUMP_LIGHTING_HDR ) > 0 )
+	if ( g_pMaterialSystemHardwareConfig->GetHDREnabled() && CMapLoadHelper::LumpSize( LUMP_LIGHTING_HDR ) > 0 )
 	{
 		CMapLoadHelper mlh( LUMP_LIGHTING_HDR );
 		Mod_LoadLighting( mlh );
@@ -4546,8 +4550,7 @@ void CModelLoader::Map_LoadModel( model_t *mod )
 		&m_worldBrushData.m_nAreas );
 
 	COM_TimestampedLog( "  Mod_LoadWorldlights" );
-	if ( g_pMaterialSystemHardwareConfig->GetHDRType() != HDR_TYPE_NONE &&
-  		  CMapLoadHelper::LumpSize( LUMP_WORLDLIGHTS_HDR ) > 0 )
+	if ( g_pMaterialSystemHardwareConfig->GetHDREnabled() && CMapLoadHelper::LumpSize( LUMP_WORLDLIGHTS_HDR ) > 0 )
 	{
 		CMapLoadHelper mlh( LUMP_WORLDLIGHTS_HDR );
 		Mod_LoadWorldlights( mlh, true );

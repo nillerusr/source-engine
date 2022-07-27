@@ -242,8 +242,12 @@ public:
 	{
 		BaseClass::ApplySchemeSettings(pScheme);
 
+		int height = atoi(pScheme->GetResourceString("MainMenu.MenuItemHeight"));
+		if( IsProportional() )
+			height = scheme()->GetProportionalScaledValue( height );
+
 		// make fully transparent
-		SetMenuItemHeight(atoi(pScheme->GetResourceString("MainMenu.MenuItemHeight")));
+		SetMenuItemHeight(height);
 		SetBgColor(Color(0, 0, 0, 0));
 		SetBorder(NULL);
 	}
@@ -288,6 +292,16 @@ public:
 	}
 
 	virtual int AddMenuItem(const char *itemName, const char *itemText, const char *command, Panel *target, KeyValues *userData = NULL)
+	{
+		MenuItem *item = new CGameMenuItem(this, itemName);
+		item->AddActionSignalTarget(target);
+		item->SetCommand(command);
+		item->SetText(itemText);
+		item->SetUserData(userData);
+		return BaseClass::AddMenuItem(item);
+	}
+
+	virtual int AddMenuItem(const char *itemName, wchar_t *itemText, const char *command, Panel *target, KeyValues *userData = NULL)
 	{
 		MenuItem *item = new CGameMenuItem(this, itemName);
 		item->AddActionSignalTarget(target);
@@ -586,6 +600,9 @@ public:
 					KeyValues *kv1 = menuItem1->GetUserData();
 					KeyValues *kv2 = menuItem2->GetUserData();
 
+					if( !kv1 || !kv2 )
+						continue;
+
 					if ( kv1->GetInt("InGameOrder") > kv2->GetInt("InGameOrder") )
 						MoveMenuItem( iID2, iID1 );
 				}
@@ -616,7 +633,7 @@ public:
 		}
 	}
 
-	MESSAGE_FUNC_INT( OnCursorEnteredMenuItem, "CursorEnteredMenuItem", VPanel);
+    MESSAGE_FUNC_HANDLE( OnCursorEnteredMenuItem, "CursorEnteredMenuItem", menuItem);
 
 private:
 	CFooterPanel *m_pConsoleFooter;
@@ -627,9 +644,8 @@ private:
 //-----------------------------------------------------------------------------
 // Purpose: Respond to cursor entering a menuItem.
 //-----------------------------------------------------------------------------
-void CGameMenu::OnCursorEnteredMenuItem(int VPanel)
+void CGameMenu::OnCursorEnteredMenuItem(VPANEL menuItem)
 {
-	VPANEL menuItem = (VPANEL)VPanel;
 	MenuItem *item = static_cast<MenuItem *>(ipanel()->GetPanel(menuItem, GetModuleName()));
 	KeyValues *pCommand = item->GetCommand();
 	if ( !pCommand->GetFirstSubKey() )
@@ -638,13 +654,12 @@ void CGameMenu::OnCursorEnteredMenuItem(int VPanel)
 	if ( !pszCmd || !pszCmd[0] )
 		return;
 
-	BaseClass::OnCursorEnteredMenuItem( VPanel );
+	BaseClass::OnCursorEnteredMenuItem( menuItem );
 }
 
 static CBackgroundMenuButton* CreateMenuButton( CBasePanel *parent, const char *panelName, const wchar_t *panelText )
 {
 	CBackgroundMenuButton *pButton = new CBackgroundMenuButton( parent, panelName );
-	pButton->SetProportional(true);
 	pButton->SetCommand("OpenGameMenu");
 	pButton->SetText(panelText);
 
@@ -657,7 +672,10 @@ bool g_bIsCreatingNewGameMenuForPreFetching = false;
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
 CBasePanel::CBasePanel() : Panel(NULL, "BaseGameUIPanel")
-{	
+{
+	if( NeedProportional() )
+		SetProportional( true );
+
 	g_pBasePanel = this;
 	m_bLevelLoading = false;
 	m_eBackgroundState = BACKGROUND_INITIAL;
@@ -863,6 +881,7 @@ CBasePanel::~CBasePanel()
 static const char *g_rgValidCommands[] =
 {
 	"OpenGameMenu",
+	"OpenConsole",
 	"OpenPlayerListDialog",
 	"OpenNewGameDialog",
 	"OpenLoadGameDialog",
@@ -1477,6 +1496,13 @@ CGameMenu *CBasePanel::RecursiveLoadGameMenu(KeyValues *datafile)
 {
 	CGameMenu *menu = new CGameMenu(this, datafile->GetName());
 
+	wchar_t *pString = g_pVGuiLocalize->Find( "#GameUI_Console" );
+
+	if( pString )
+		menu->AddMenuItem("Console", V_wcsupr(pString), "OpenConsole", this);
+	else
+		menu->AddMenuItem("Console", "CONSOLE", "OpenConsole", this);
+
 	// loop through all the data adding items to the menu
 	for (KeyValues *dat = datafile->GetFirstSubKey(); dat != NULL; dat = dat->GetNextKey())
 	{
@@ -1898,6 +1924,10 @@ void CBasePanel::RunMenuCommand(const char *command)
 	else if ( !Q_stricmp( command, "OpenNewGameDialog" ) )
 	{
 		OnOpenNewGameDialog();
+	}
+	else if ( !Q_stricmp( command, "OpenConsole" ) )
+	{
+		GameConsole().Activate();
 	}
 	else if ( !Q_stricmp( command, "OpenLoadGameDialog" ) )
 	{

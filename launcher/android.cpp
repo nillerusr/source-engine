@@ -2,6 +2,18 @@
 #include <string.h>
 #include <dlfcn.h>
 
+#ifdef ANDROID
+#include <android/log.h>
+#include <SDL_version.h>
+
+#define TAG "SRCENG"
+#define PRIO ANDROID_LOG_DEBUG
+#define LogPrintf(...) do { __android_log_print(PRIO, TAG, __VA_ARGS__); printf( __VA_ARGS__); } while( 0 );
+
+#else
+#define LogPrintf(...) printf(__VA_ARGS__)
+#endif
+
 typedef void (*t_set_getprocaddress)(void *(*new_proc_address)(const char *));
 t_set_getprocaddress gl4es_set_getprocaddress;
 
@@ -18,13 +30,13 @@ void InitGL4ES()
 	void *lgl4es = dlopen("libgl4es.so", RTLD_LAZY);
 	if( !lgl4es )
 	{
-		printf("Failed to dlopen library libgl4es.so: %s\n", dlerror());
+		LogPrintf("Failed to dlopen library libgl4es.so: %s\n", dlerror());
 	}
 
 	void *lEGL = dlopen("libEGL.so", RTLD_LAZY);
 	if( !lEGL )
 	{
-		printf("Failed to dlopen library libEGL.so: %s\n", dlerror());
+		LogPrintf("Failed to dlopen library libEGL.so: %s\n", dlerror());
 	}
 
 	gl4es_set_getprocaddress = (t_set_getprocaddress)dlsym(lgl4es, "set_getprocaddress");
@@ -36,13 +48,11 @@ void InitGL4ES()
 	}
 	else
 	{
-		printf("Failed to call set_getprocaddress\n");
+		LogPrintf("Failed to call set_getprocaddress\n");
 	}
 }
 
 #ifdef ANDROID
-
-#include <android/log.h>
 #include <jni.h>
 #include <stdlib.h>
 #include <string.h>
@@ -59,18 +69,6 @@ int iLastArgs = 0;
 #define PRIO ANDROID_LOG_DEBUG
 #define LogPrintf(...) do { __android_log_print(PRIO, TAG, __VA_ARGS__); printf( __VA_ARGS__); } while( 0 );
 #define DLLEXPORT extern "C" __attribute__((visibility("default")))
-
-DLLEXPORT void Java_com_valvesoftware_ValveActivity2_setDataDirectoryPath(JNIEnv *env, jclass *clazz, jstring path)
-{
-	setenv( "APP_DATA_PATH", env->GetStringUTFChars(path, NULL), 1);
-	LogPrintf( "Java_com_valvesoftware_ValveActivity2_setDataDirectoryPath: %s", getenv("APP_DATA_PATH") );
-}
-
-DLLEXPORT void Java_com_valvesoftware_ValveActivity2_setGameDirectoryPath(JNIEnv *env, jclass *clazz, jstring path)
-{
-	LogPrintf( "Java_com_valvesoftware_ValveActivity2_setGameDirectoryPath" );
-	setenv( "VALVE_GAME_PATH", env->GetStringUTFChars(path, NULL), 1 );
-}
 
 DLLEXPORT int Java_com_valvesoftware_ValveActivity2_setenv(JNIEnv *jenv, jclass *jclass, jstring env, jstring value, jint over)
 {
@@ -113,19 +111,21 @@ void SetLauncherArgs()
 	LogPrintf(binPath);
 	D(binPath);
 
-	D("-console");
-	A("-game", "hl2mp");
 	D("-nouserclip");
 
 	parseArgs(java_args);
 
-	D("-windowed");
+	D("-fullscreen");
 	D("-nosteam");
 	D("-insecure");
 }
 
 DLLEXPORT int LauncherMainAndroid( int argc, char **argv )
 {
+	SDL_version ver;
+	SDL_GetVersion( &ver );
+
+	LogPrintf("SDL version: %d.%d.%d rev: %s\n", (int)ver.major, (int)ver.minor, (int)ver.patch, SDL_GetRevision());
 
 	SetLauncherArgs();
 

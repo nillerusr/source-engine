@@ -156,11 +156,14 @@ def define_platform(conf):
 	if conf.options.SDL:
 		conf.define('USE_SDL', 1)
 
+	if conf.options.ALLOW64:
+		conf.define('PLATFORM_64BITS', 1)
+
 	if conf.env.DEST_OS == 'linux':
 		conf.define('_GLIBCXX_USE_CXX11_ABI',0)
 		conf.env.append_unique('DEFINES', [
 			'LINUX=1', '_LINUX=1',
-			'POSIX=1', '_POSIX=1',
+			'POSIX=1', '_POSIX=1', 'PLATFORM_POSIX=1',
 			'GNUC',
 			'NO_HOOK_MALLOC',
 			'_DLL_EXT=.so'
@@ -220,12 +223,17 @@ def options(opt):
 	grp.add_option('--use-ccache', action = 'store_true', dest = 'CCACHE', default = False,
 		help = 'build using ccache [default: %default]')
 
+	grp.add_option('--disable-warns', action = 'store_true', dest = 'DISABLE_WARNS', default = False,
+		help = 'build using ccache [default: %default]')
+
 	grp.add_option('--togles', action = 'store_true', dest = 'TOGLES', default = False,
 		help = 'build engine with ToGLES [default: %default]')
 
-	opt.load('compiler_optimizations subproject')
+	# TODO(nillerusr): add wscript for opus building
+	grp.add_option('--enable-opus', action = 'store_true', dest = 'OPUS', default = False,
+		help = 'build engine with Opus voice codec [default: %default]')
 
-#	opt.add_subproject(projects['game'])
+	opt.load('compiler_optimizations subproject')
 
 	opt.load('xcompile compiler_cxx compiler_c sdl2 clang_compilation_database strip_on_install waf_unit_test subproject')
 	if sys.platform == 'win32':
@@ -254,6 +262,8 @@ def configure(conf):
 	if conf.env.DEST_OS == 'win32':
 		projects['game'] += ['utils/bzip2']
 		projects['dedicated'] += ['utils/bzip2']
+	if conf.options.OPUS or conf.env.DEST_OS == 'android':
+		projects['game'] += ['engine/voice_codecs/opus']
 
 	if conf.env.DEST_OS in ['win32', 'linux', 'darwin'] and conf.env.DEST_CPU == 'x86_64':
 		conf.env.BIT32_MANDATORY = not conf.options.ALLOW64
@@ -264,17 +274,24 @@ def configure(conf):
 
 	conf.load('force_32bit')
 
-	compiler_optional_flags = [
-		'-pipe',
-		'-Wall',
-		'-fdiagnostics-color=always',
-		'-Wcast-align',
-		'-Wuninitialized',
-		'-Winit-self',
-		'-Wstrict-aliasing',
-		'-faligned-new'
- #		'-Werror=strict-aliasing'
-	]
+	if conf.options.DISABLE_WARNS:
+		compiler_optional_flags = ['-w']
+	else:
+		compiler_optional_flags = [
+			'-Wall',
+			'-fdiagnostics-color=always',
+			'-Wcast-align',
+			'-Wuninitialized',
+			'-Winit-self',
+			'-Wstrict-aliasing',
+			'-Wno-reorder',
+			'-Wno-unknown-pragmas',
+			'-Wno-unused-function',
+			'-Wno-unused-but-set-variable',
+			'-Wno-unused-value',
+			'-Wno-unused-variable',
+			'-faligned-new',
+		]
 
 	c_compiler_optional_flags = [
 		'-fnonconst-initializers' # owcc
@@ -282,30 +299,32 @@ def configure(conf):
 
 	cflags, linkflags = conf.get_optimization_flags()
 
+	flags = []
 	if conf.env.DEST_OS != 'win32':
-		flags = ['-fPIC']
+		flags += ['-pipe', '-fPIC']
+	if conf.env.COMPILER_CC != 'msvc':
+		flags += ['-pthread']
 
 	if conf.env.DEST_OS == 'android':
 		flags += [
-			'-L'+os.path.abspath('.')+'/lib/android/armeabi-v7a/',
+			'-L'+os.path.abspath('.')+'/lib/android/'+conf.env.DEST_CPU+'/',
 			'-I'+os.path.abspath('.')+'/thirdparty/curl/include',
 			'-I'+os.path.abspath('.')+'/thirdparty/SDL',
 			'-I'+os.path.abspath('.')+'/thirdparty/openal-soft/include/',
 			'-I'+os.path.abspath('.')+'/thirdparty/fontconfig',
 			'-I'+os.path.abspath('.')+'/thirdparty/freetype/include',
-			'-llog'
+			'-llog',
+			'-lz'
 		]
 
-	if conf.env.DEST_CPU == 'arm':
-		flags += ['-fsigned-char', '-mfpu=neon']
+		flags += ['-fvisibility=default']
+	elif conf.env.COMPILER_CC != 'msvc':
+		flags += ['-march=native']
 
-		if conf.env.DEST_OS == 'android':
-			flags += ['-mcpu=cortex-a15', '-mtune=cortex-a15']
-		else:
-			flags += ['-march=native', '-mtune=native']
-	elif conf.env.COMPILER_GCC:
-		flags += ['-march=native','-mtune=native','-mfpmath=sse', '-msse', '-msse2']
-
+	if conf.env.DEST_CPU in ['x86', 'x86_64']:
+		flags += ['-mfpmath=sse']
+	elif conf.env.DEST_CPU in ['arm', 'aarch64']:
+		flags += ['-fsigned-char']
 
 	if conf.env.DEST_OS != 'win32':
 		cflags += flags
@@ -359,6 +378,7 @@ def configure(conf):
 		conf.define('COMPILER_GCC', 1)
 	elif conf.env.COMPILER_CC == 'msvc':
 		conf.define('COMPILER_MSVC', 1)
+		conf.define('MSVC', 1)
 		if conf.env.DEST_CPU == 'x86':
 			conf.define('COMPILER_MSVC32', 1)
 		elif conf.env.DEST_CPU == 'x86_64':
@@ -368,7 +388,6 @@ def configure(conf):
 		conf.check_cc(cflags=cflags, linkflags=linkflags, msg='Checking for required C flags')
 		conf.check_cxx(cxxflags=cxxflags, linkflags=linkflags, msg='Checking for required C++ flags')
 
-		linkflags += ['-pthread']
 		conf.env.append_unique('CFLAGS', cflags)
 		conf.env.append_unique('CXXFLAGS', cxxflags)
 		conf.env.append_unique('LINKFLAGS', linkflags)
@@ -381,7 +400,25 @@ def configure(conf):
 	conf.env.append_unique('LINKFLAGS', linkflags)
 	conf.env.append_unique('INCLUDES', [os.path.abspath('common/')])
 
-	if conf.env.DEST_OS == 'android':
+	
+	if conf.env.DEST_OS != 'android':
+		if conf.env.DEST_OS != 'win32':
+			if conf.options.SDL:
+				conf.check_cfg(package='sdl2', uselib_store='SDL2', args=['--cflags', '--libs'])
+			if conf.options.DEDICATED:
+				conf.check_cfg(package='libedit', uselib_store='EDIT', args=['--cflags', '--libs'])
+			else:
+				conf.check_pkg('freetype2', 'FT2', FT2_CHECK)
+				conf.check_pkg('fontconfig', 'FC', FC_CHECK)
+				conf.check_cfg(package='openal', uselib_store='OPENAL', args=['--cflags', '--libs'])
+				conf.check_cfg(package='libjpeg', uselib_store='JPEG', args=['--cflags', '--libs'])
+				conf.check_cfg(package='libpng', uselib_store='PNG', args=['--cflags', '--libs'])
+				conf.check_cfg(package='libcurl', uselib_store='CURL', args=['--cflags', '--libs'])
+			conf.check_cfg(package='zlib', uselib_store='ZLIB', args=['--cflags', '--libs'])
+
+			if conf.options.OPUS:
+				conf.check_cfg(package='opus', uselib_store='OPUS', args=['--cflags', '--libs'])
+	else:
 		conf.check(lib='SDL2', uselib_store='SDL2')
 		conf.check(lib='freetype2', uselib_store='FT2')
 		conf.check(lib='openal', uselib_store='OPENAL')
@@ -391,9 +428,17 @@ def configure(conf):
 		conf.check(lib='z', uselib_store='ZLIB')
 		conf.check(lib='crypto', uselib_store='CRYPTO')
 		conf.check(lib='ssl', uselib_store='SSL')
-		conf.check(lib='expat', uselib_store='EXPAT')
 		conf.check(lib='android_support', uselib_store='ANDROID_SUPPORT')
-	elif conf.env.DEST_OS == 'win32':
+		conf.check(lib='opus', uselib_store='OPUS')
+
+	if conf.env.DEST_OS != 'win32':
+		conf.check_cc(lib='dl', mandatory=False)
+		conf.check_cc(lib='bz2', mandatory=False)
+		conf.check_cc(lib='rt', mandatory=False)
+
+		if not conf.env.LIB_M: # HACK: already added in xcompile!
+			conf.check_cc(lib='m')
+	else:
 		# Common Win32 libraries
 		# Don't check them more than once, to save time
 		# Usually, they are always available
@@ -416,9 +461,7 @@ def configure(conf):
 
 		if conf.env.COMPILER_CC == 'msvc':
 			for i in a:
-				conf.start_msg('Checking for MSVC library')
 				conf.check_lib_msvc(i)
-				conf.end_msg(i)
 		else:
 			for i in a:
 				conf.check_cc(lib = i)
@@ -433,27 +476,8 @@ def configure(conf):
 		conf.check(lib='d3d9', uselib_store='D3D9')
 		conf.check(lib='dsound', uselib_store='DSOUND')
 		conf.check(lib='dxguid', uselib_store='DXGUID')
-	else:
-		if conf.options.SDL:
-			conf.check_cfg(package='sdl2', uselib_store='SDL2', args=['--cflags', '--libs'])
-		if conf.options.DEDICATED:
-			conf.check_cfg(package='libedit', uselib_store='EDIT', args=['--cflags', '--libs'])
-		else:
-			conf.check_pkg('freetype2', 'FT2', FT2_CHECK)
-			conf.check_pkg('fontconfig', 'FC', FC_CHECK)
-			conf.check_cfg(package='openal', uselib_store='OPENAL', args=['--cflags', '--libs'])
-			conf.check_cfg(package='libjpeg', uselib_store='JPEG', args=['--cflags', '--libs'])
-			conf.check_cfg(package='libpng', uselib_store='PNG', args=['--cflags', '--libs'])
-			conf.check_cfg(package='libcurl', uselib_store='CURL', args=['--cflags', '--libs'])
-		conf.check_cfg(package='zlib', uselib_store='ZLIB', args=['--cflags', '--libs'])
 
-	if conf.env.DEST_OS != 'win32':
-		conf.check_cc(lib='dl', mandatory=False)
-		conf.check_cc(lib='bz2', mandatory=False)
-		conf.check_cc(lib='rt', mandatory=False)
-
-		if not conf.env.LIB_M: # HACK: already added in xcompile!
-			conf.check_cc(lib='m')
+		# conf.multicheck(*a, run_all_tests = True, mandatory = True)
 
 	# indicate if we are packaging for Linux/BSD
 	if conf.env.DEST_OS != 'android':
@@ -465,7 +489,6 @@ def configure(conf):
 	if conf.options.CCACHE:
 		conf.env.CC.insert(0, 'ccache')
 		conf.env.CXX.insert(0, 'ccache')
-		print( conf.env )
 
 	if conf.options.DEDICATED:
 		conf.add_subproject(projects['dedicated'])

@@ -36,7 +36,7 @@ void MapEntity_PrecacheEntity( const char *pEntData, int &nStringSize );
 //-----------------------------------------------------------------------------
 struct HierarchicalSpawn_t
 {
-	CHandle<CBaseEntity> m_hEntity;
+	CBaseEntity *m_pEntity;
 	int			m_nDepth;
 	CBaseEntity	*m_pDeferredParent;			// attachment parents can't be set until the parents are spawned
 	const char	*m_pDeferredParentAttachment; // so defer setting them up until the second pass

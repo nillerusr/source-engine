@@ -7,7 +7,6 @@
 #include "usercmd.h"
 
 extern ConVar touch_enable;
-extern "C" int getAssets();
 
 #define GRID_COUNT touch_grid_count.GetInt()
 #define GRID_COUNT_X (GRID_COUNT)
@@ -73,8 +72,7 @@ struct event_clientcmd_t
 struct event_s
 {
 	int type;
-	int x;
-	int y;
+	float x,y,dx,dy;
 	int fingerid;
 } typedef touch_event_t;
 
@@ -111,8 +109,11 @@ class CTouchPanel : public vgui::Panel
 public:
 	CTouchPanel( vgui::VPANEL parent );
 	virtual			~CTouchPanel( void ) {};
-
 	virtual void	Paint();
+	virtual void    ApplySchemeSettings(vgui::IScheme *pScheme);
+
+protected:
+	MESSAGE_FUNC_INT_INT( OnScreenSizeChanged, "OnScreenSizeChanged", oldwide, oldtall );
 };
 
 abstract_class ITouchPanel
@@ -160,7 +161,7 @@ public:
 	
 	void AddButton( const char *name, const char *texturefile, const char *command, float x1, float y1, float x2, float y2, rgba_t color = rgba_t(255, 255, 255, 255), int round = 2, float aspect = 1.f, int flags = 0 );
 	void RemoveButton( const char *name );
-	
+	void ResetToDefaults();
 	void HideButton( const char *name );
 	void ShowButton( const char *name );
 	void ListButtons();
@@ -173,35 +174,36 @@ public:
 	void SetCommand( const char *name, const char *cmd );
 	void SetFlags( const char *name, int flags );
 	void WriteConfig();
-	
+
 	void IN_CheckCoords( float *x1, float *y1, float *x2, float *y2  );
 	void InitGrid();
-	
-	
+
 	void Move( float frametime, CUserCmd *cmd );
 	void IN_Look( );
 
 	void ProcessEvent( touch_event_t *ev );
 	void FingerPress( touch_event_t *ev );
 	void FingerMotion( touch_event_t *ev );
-
+	void GetTouchAccumulators( float *forward, float *side, float *yaw, float *pitch );
+	void GetTouchDelta( float yaw, float pitch, float *dx, float *dy );
 	void EditEvent( touch_event_t *ev );
-	
 	void EnableTouchEdit(bool enable);
-	
+
 	CTouchPanel *touchPanel;
+	float screen_h, screen_w;
+	float forward, side, movecount;
+	float yaw, pitch;
+
 private:
 	bool initialized = false;
 	ETouchState state;
 	CUtlLinkedList<CTouchButton*> btns;
 
 	int look_finger, move_finger, wheel_finger;
-	float forward, side, movecount;
-	float yaw, pitch;
 	CTouchButton *move_button;
 
 	float move_start_x, move_start_y;
-	float dx, dy, dx2, dy2;
+	float m_flPreviousYaw, m_flPreviousPitch;
 
 	// editing
 	CTouchButton *edit;
@@ -222,11 +224,6 @@ private:
 	bool config_loaded;
 	vgui::HFont textfont;
 	int mouse_events;
-
-	int base_textureID;
-
-	bool m_bHaveAssets;
-	float screen_h, screen_w;
 };
 
 extern CTouchControls gTouch;

@@ -80,8 +80,7 @@ public:
 	bool IsStopWatchTimer( void ) { return m_bStopWatchTimer; }
 	float GetStopWatchTotalTime( void ) { return m_flTotalTime; }
 	bool IsRoundMaxTimerSet( void ) { return m_nTimerMaxLength > 0; }
-	int GetTimerInitialLength( void ) { return m_nTimerInitialLength; }
-	int GetSetupTimeLength( void ){ return m_nSetupTimeLength; }
+	
 
 private:
 	void CalculateOutputMessages( void );
@@ -159,7 +158,6 @@ private:
 	COutputEvent	m_OnSetupFinished;
 
 	float			m_flNextOvertimeNag;
-	float			m_flLastTime;
 
 	DECLARE_DATADESC();
 

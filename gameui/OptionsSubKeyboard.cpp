@@ -30,6 +30,7 @@
 #include <vstdlib/IKeyValuesSystem.h>
 #include "tier2/tier2.h"
 #include "inputsystem/iinputsystem.h"
+#include "tier0/icommandline.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -760,8 +761,15 @@ public:
 	{
 		// parent is ignored, since we want look like we're steal focus from the parent (we'll become modal below)
 
+		if( NeedProportional() )
+			SetProportional(true);
+
 		SetTitle("#GameUI_KeyboardAdvanced_Title", true);
-		SetSize( 280, 140 );
+		if( IsProportional() )
+			SetSize( scheme()->GetProportionalScaledValue( 280 ), scheme()->GetProportionalScaledValue( 140 ) );
+		else
+			SetSize( 280, 140 );
+
 		LoadControlSettings( "resource/OptionsSubKeyboardAdvancedDlg.res" );
 		MoveToCenterOfScreen();
 		SetSizeable( false );

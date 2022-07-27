@@ -13,7 +13,7 @@ def options(opt):
 
 def configure(conf):
 	conf.define('LAUNCHERONLY',1)
-#	conf.define('SUPPORT_PACKED_STORE',1)
+	conf.define('SUPPORT_PACKED_STORE',1)
 	conf.define('DEDICATED',1)
 
 def build(bld):
@@ -56,7 +56,7 @@ def build(bld):
 
 	defines = []
 
-	libs = ['tier0','tier1','tier2','tier3','vstdlib','steam_api','vpklib','appframework','mathlib', 'EDIT']
+	libs = ['tier0','vpklib','tier1','tier2','tier3','vstdlib','steam_api','appframework','mathlib', 'EDIT']
 
 	install_path = bld.env.LIBDIR
 

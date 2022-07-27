@@ -731,16 +731,16 @@ FORCEINLINE void GLContextSet( GLBlendEnableSRGB_t *src )
 	}
 #endif
 	// this query is not useful unless you have the ARB_framebuffer_srgb ext.
-	//GLint encoding = 0;
-	//pfnglGetFramebufferAttachmentParameteriv( GL_DRAW_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING, &encoding );
+//	GLint encoding = 0;
+//	gGL->glGetFramebufferAttachmentParameteriv( GL_DRAW_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING, &encoding );
 
 	glSetEnable( GL_FRAMEBUFFER_SRGB_EXT, src->enable != 0 );
 }
 
 FORCEINLINE void GLContextGet( GLBlendEnableSRGB_t *dst )
 {
-	dst->enable = gGL->glIsEnabled( GL_FRAMEBUFFER_SRGB_EXT );
-//	dst->enable = true; // wtf ?
+//	dst->enable = gGL->glIsEnabled( GL_FRAMEBUFFER_SRGB_EXT );
+	dst->enable = true; // wtf ?
 }
 
 FORCEINLINE void GLContextGetDefault( GLBlendEnableSRGB_t *dst )
@@ -1448,7 +1448,7 @@ class GLMContext
 #endif
 
 		FORCEINLINE void SetMaxUsedVertexShaderConstantsHint( uint nMaxConstants );
-		FORCEINLINE DWORD GetCurrentOwnerThreadId() const { return m_nCurOwnerThreadId; }
+		FORCEINLINE uintp GetCurrentOwnerThreadId() const { return m_nCurOwnerThreadId; }
 								
 	protected:
 		friend class GLMgr;				// only GLMgr can make GLMContext objects
@@ -1573,7 +1573,7 @@ class GLMContext
 		// members------------------------------------------
 						
 		// context
-		DWORD							m_nCurOwnerThreadId;
+		uintp							m_nCurOwnerThreadId;
 		uint							m_nThreadOwnershipReleaseCounter;
 
 		bool							m_bUseSamplerObjects;
@@ -1838,11 +1838,11 @@ FORCEINLINE void GLMContext::DrawRangeElements(	GLenum mode, GLuint start, GLuin
 	if ( pIndexBuf->m_bPseudo )
 	{
 		// you have to pass actual address, not offset
-		indicesActual = (void*)( (int)indicesActual + (int)pIndexBuf->m_pPseudoBuf );
+		indicesActual = (void*)( (intp)indicesActual + (intp)pIndexBuf->m_pPseudoBuf );
 	}
 	if (pIndexBuf->m_bUsingPersistentBuffer)
 	{
-		indicesActual = (void*)( (int)indicesActual + (int)pIndexBuf->m_nPersistentBufferStartOffset );
+		indicesActual = (void*)( (intp)indicesActual + (intp)pIndexBuf->m_nPersistentBufferStartOffset );
 	}
 
 //#if GLMDEBUG

@@ -141,7 +141,7 @@ void CGameConsole::ActivateDelayed(float time)
 #endif
 }
 
-void CGameConsole::SetParent( int parent )
+void CGameConsole::SetParent( intp parent )
 {	
 #ifndef _XBOX
 	if (!m_bInitialized)

@@ -46,7 +46,7 @@ public:
 	void			AddRecipientsByPVS( const Vector& origin );
 	void			RemoveRecipientsByPVS( const Vector& origin );
 	void			AddRecipientsByPAS( const Vector& origin );
-	void			AddRecipient( const CBasePlayer *player );
+	void			AddRecipient( CBasePlayer *player );
 	void			RemoveAllRecipients( void );
 	void			RemoveRecipient( CBasePlayer *player );
 	void			RemoveRecipientByPlayerIndex( int playerindex );
@@ -82,7 +82,7 @@ private:
 class CSingleUserRecipientFilter : public CRecipientFilter
 {
 public:
-	CSingleUserRecipientFilter( const CBasePlayer *player )
+	CSingleUserRecipientFilter( CBasePlayer *player )
 	{
 		AddRecipient( player );
 	}

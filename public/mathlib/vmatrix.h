@@ -423,6 +423,12 @@ void MatrixInverseTranspose( const VMatrix& src, VMatrix& dst );
 //-----------------------------------------------------------------------------
 inline VMatrix::VMatrix()
 {
+	Init(
+		0.f, 0.f, 0.f, 0.f,
+		0.f, 0.f, 0.f, 0.f,
+		0.f, 0.f, 0.f, 0.f,
+		0.f, 0.f, 0.f, 0.f
+		);
 }
 
 inline VMatrix::VMatrix(

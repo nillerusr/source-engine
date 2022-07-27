@@ -17,8 +17,7 @@
 #define SF_CAP_POINT_HIDE_MODEL		(1<<1)
 #define SF_CAP_POINT_HIDE_SHADOW	(1<<2)
 #define SF_CAP_POINT_NO_CAP_SOUNDS	(1<<3)
-#define SF_CAP_POINT_BOTS_IGNORE	(1<<4)
-//#define SF_CAP_POINT_NO_ANNOUNCER	(1<<4) Unused?
+#define SF_CAP_POINT_NO_ANNOUNCER	(1<<4)
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -83,7 +82,7 @@ public:
 
 	void		SetCappersRequiredForTeam( int iGameTeam, int iCappers );
 
-	void		CaptureBlocked( CBaseMultiplayerPlayer *pPlayer, CBaseMultiplayerPlayer *pVictim );
+	void		CaptureBlocked( CBaseMultiplayerPlayer *pPlayer );
 
 	int			PointValue( void );
 
@@ -107,7 +106,6 @@ public:
 	virtual void StopLoopingSounds( void );
 
 	bool		IsLocked( void ){ return m_bLocked; }
-	bool		ShouldBotsIgnore( void ) { return m_bBotsIgnore; }
 
 	void EXPORT UnlockThink( void );
 
@@ -192,7 +190,6 @@ private:
 	string_t	m_iszCaptureEndSound;
 	string_t	m_iszCaptureInProgress;
 	string_t	m_iszCaptureInterrupted;
-	bool		m_bBotsIgnore;
 };
 
 #endif // TEAM_CONTROL_POINT_H
