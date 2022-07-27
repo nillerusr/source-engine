@@ -2025,7 +2025,7 @@ public:
 				continue;
 
 			// Lookup the data
-			CaptionLookup_t &entry = directories[ nFileIndex ].m_CaptionDirectory[ caption->dirindex ];
+			CaptionLookup_t &entry = directories[ caption->fileindex ].m_CaptionDirectory[ caption->dirindex ];
 			if ( entry.blockNum != nBlockNum )
 				continue;
 
@@ -2139,7 +2139,7 @@ public:
 		int dc = directories.Count();
 		for ( i = 0; i < dc; ++i )
 		{
-            idx = directories[ i ].m_CaptionDirectory.Find( search );
+			idx = directories[ i ].m_CaptionDirectory.Find( search );
 			if ( idx == directories[ i ].m_CaptionDirectory.InvalidIndex() )
 				continue;
 
