@@ -461,6 +461,14 @@ def configure(conf):
 			conf.check_cfg(package='libcurl', uselib_store='CURL', args=['--cflags', '--libs'])
 		conf.check_cfg(package='zlib', uselib_store='ZLIB', args=['--cflags', '--libs'])
 
+	if conf.env.DEST_OS != 'win32':
+		conf.check_cc(lib='dl', mandatory=False)
+		conf.check_cc(lib='bz2', mandatory=False)
+		conf.check_cc(lib='rt', mandatory=False)
+
+		if not conf.env.LIB_M: # HACK: already added in xcompile!
+			conf.check_cc(lib='m')
+
 	# indicate if we are packaging for Linux/BSD
 	if conf.env.DEST_OS != 'android':
 		conf.env.LIBDIR = conf.env.PREFIX+'/bin/'
