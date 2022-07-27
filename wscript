@@ -180,6 +180,19 @@ def define_platform(conf):
 			'_DLL_EXT=.so'
 		])
 
+	if conf.env.DEST_OS == 'win32':
+		conf.env.append_unique('DEFINES', [
+			'WIN32=1', '_WIN32=1',
+			'_WINDOWS',
+			'_DLL_EXT=.dll',
+			'_CRT_SECURE_NO_DEPRECATE',
+			'_CRT_NONSTDC_NO_DEPRECATE',
+			'_ALLOW_RUNTIME_LIBRARY_MISMATCH',
+			'_ALLOW_ITERATOR_DEBUG_LEVEL_MISMATCH',
+			'_ALLOW_MSC_VER_MISMATCH',
+			'NO_X360_XDK'
+		])
+
 	if conf.options.DEBUG_ENGINE:
 		conf.env.append_unique('DEFINES', [
 			'DEBUG', '_DEBUG'
@@ -239,7 +252,7 @@ def configure(conf):
 	conf.env.MSVC_SUBSYSTEM = 'WINDOWS,5.01'
 	conf.env.MSVC_TARGETS = ['x86'] # explicitly request x86 target for MSVC
 	if sys.platform == 'win32':
-		conf.load('msvc msvc_pdb msdev msvs')
+		conf.load('msvc_pdb msdev msvs')
 	conf.load('subproject xcompile compiler_c compiler_cxx gitversion clang_compilation_database strip_on_install waf_unit_test enforce_pic')
 
 	define_platform(conf)
@@ -248,6 +261,10 @@ def configure(conf):
 		projects['game'] += ['togles']
 	elif conf.env.GL:
 		projects['game'] += ['togl']
+
+	if conf.env.DEST_OS == 'win32':
+		projects['game'] += ['utils/bzip2']
+		projects['dedicated'] += ['utils/bzip2']
 
 	if conf.options.OPUS or conf.env.DEST_OS == 'android':
 		projects['game'] += ['engine/voice_codecs/opus']
@@ -311,14 +328,56 @@ def configure(conf):
 	elif conf.env.DEST_CPU in ['arm', 'aarch64']:
 		flags += ['-fsigned-char']
 
-	cflags += flags
-	linkflags += flags
+	if conf.env.DEST_OS != 'win32':
+		cflags += flags
+		linkflags += flags
+	else:
+		cflags += [
+			'/I'+os.path.abspath('.')+'/thirdparty/SDL',
+			'/arch:SSE',
+			'/GF',
+			'/Gy',
+			'/fp:fast',
+			'/Zc:forScope',
+			'/Zc:wchar_t',
+			'/GR',
+			'/TP'
+		]
+		
+		if conf.options.BUILD_TYPE == 'debug':
+			linkflags += [
+				'/INCREMENTAL:NO',
+				'/NODEFAULTLIB:libc',
+				'/NODEFAULTLIB:libcd',
+				'/NODEFAULTLIB:libcmt'
+			]
+		else:
+			linkflags += [
+				'/INCREMENTAL',
+				'/NODEFAULTLIB:libc',
+				'/NODEFAULTLIB:libcd',
+				'/NODEFAULTLIB:libcmtd'
+			]
+
+		linkflags += [
+			'/LIBPATH:'+os.path.abspath('.')+'/lib/public',
+			'/LIBPATH:'+os.path.abspath('.')+'/lib/common/win32/2015/release',
+			'/LIBPATH:'+os.path.abspath('.')+'/dx9sdk/lib'
+		]
 
 	# And here C++ flags starts to be treated separately
-	cxxflags = list(cflags) + ['-std=c++11','-fpermissive']
+	cxxflags = list(cflags) 
+	if conf.env.DEST_OS != 'win32':
+		cxxflags += ['-std=c++11','-fpermissive']
 
 	if conf.env.COMPILER_CC == 'gcc':
 		conf.define('COMPILER_GCC', 1)
+	elif conf.env.COMPILER_CC == 'msvc':
+		conf.define('COMPILER_MSVC', 1)
+		if conf.env.DEST_CPU == 'x86':
+			conf.define('COMPILER_MSVC32', 1)
+		elif conf.env.DEST_CPU == 'x86_64':
+			conf.define('COMPILER_MSVC64', 1)
 
 	if conf.env.COMPILER_CC != 'msvc':
 		conf.check_cc(cflags=cflags, linkflags=linkflags, msg='Checking for required C flags')
@@ -336,7 +395,59 @@ def configure(conf):
 	conf.env.append_unique('LINKFLAGS', linkflags)
 	conf.env.append_unique('INCLUDES', [os.path.abspath('common/')])
 
-	if conf.env.DEST_OS != 'android':
+	if conf.env.DEST_OS == 'android':
+		conf.check(lib='SDL2', uselib_store='SDL2')
+		conf.check(lib='freetype2', uselib_store='FT2')
+		conf.check(lib='openal', uselib_store='OPENAL')
+		conf.check(lib='jpeg', uselib_store='JPEG')
+		conf.check(lib='png', uselib_store='PNG')
+		conf.check(lib='curl', uselib_store='CURL')
+		conf.check(lib='z', uselib_store='ZLIB')
+		conf.check(lib='crypto', uselib_store='CRYPTO')
+		conf.check(lib='ssl', uselib_store='SSL')
+		conf.check(lib='expat', uselib_store='EXPAT')
+		conf.check(lib='android_support', uselib_store='ANDROID_SUPPORT')
+	elif conf.env.DEST_OS == 'win32':
+		# Common Win32 libraries
+		# Don't check them more than once, to save time
+		# Usually, they are always available
+		# but we need them in uselib
+		a = [
+			'user32',
+			'shell32',
+			'gdi32',
+			'advapi32',
+			'dbghelp',
+			'psapi',
+			'ws2_32',
+			'rpcrt4',
+			'winmm',
+			'wininet',
+			'ole32',
+			'shlwapi',
+			'imm32'
+		]
+
+		if conf.env.COMPILER_CC == 'msvc':
+			for i in a:
+				conf.start_msg('Checking for MSVC library')
+				conf.check_lib_msvc(i)
+				conf.end_msg(i)
+		else:
+			for i in a:
+				conf.check_cc(lib = i)
+
+		conf.check(lib='libz', uselib_store='ZLIB')
+		conf.check(lib='nvtc', uselib_store='NVTC')
+		conf.check(lib='ati_compress_mt_vc10', uselib_store='ATI_COMPRESS_MT_VC10')
+		conf.check(lib='SDL2', uselib_store='SDL2')
+		conf.check(lib='libjpeg', uselib_store='JPEG')
+		conf.check(lib='libpng', uselib_store='PNG')
+		conf.check(lib='d3dx9', uselib_store='D3DX9')
+		conf.check(lib='d3d9', uselib_store='D3D9')
+		conf.check(lib='dsound', uselib_store='DSOUND')
+		conf.check(lib='dxguid', uselib_store='DXGUID')
+	else:
 		if conf.options.SDL:
 			conf.check_cfg(package='sdl2', uselib_store='SDL2', args=['--cflags', '--libs'])
 		if conf.options.DEDICATED:
@@ -349,54 +460,6 @@ def configure(conf):
 			conf.check_cfg(package='libpng', uselib_store='PNG', args=['--cflags', '--libs'])
 			conf.check_cfg(package='libcurl', uselib_store='CURL', args=['--cflags', '--libs'])
 		conf.check_cfg(package='zlib', uselib_store='ZLIB', args=['--cflags', '--libs'])
-
-		if conf.options.OPUS:
-			conf.check_cfg(package='opus', uselib_store='OPUS', args=['--cflags', '--libs'])
-	else:
-		conf.check(lib='SDL2', uselib_store='SDL2')
-		conf.check(lib='freetype2', uselib_store='FT2')
-		conf.check(lib='openal', uselib_store='OPENAL')
-		conf.check(lib='jpeg', uselib_store='JPEG')
-		conf.check(lib='png', uselib_store='PNG')
-		conf.check(lib='curl', uselib_store='CURL')
-		conf.check(lib='z', uselib_store='ZLIB')
-		conf.check(lib='crypto', uselib_store='CRYPTO')
-		conf.check(lib='ssl', uselib_store='SSL')
-		conf.check(lib='android_support', uselib_store='ANDROID_SUPPORT')
-		conf.check(lib='opus', uselib_store='OPUS')
-
-	if conf.env.DEST_OS != 'win32':
-		conf.check_cc(lib='dl', mandatory=False)
-		conf.check_cc(lib='bz2', mandatory=False)
-		conf.check_cc(lib='rt', mandatory=False)
-
-		if not conf.env.LIB_M: # HACK: already added in xcompile!
-			conf.check_cc(lib='m')
-	else:
-		# Common Win32 libraries
-		# Don't check them more than once, to save time
-		# Usually, they are always available
-		# but we need them in uselib
-		a = map(lambda x: {
-			# 'features': 'c',
-			# 'message': '...' + x,
-			'lib': x,
-			# 'uselib_store': x.upper(),
-			# 'global_define': False,
-		}, [
-			'user32',
-			'shell32',
-			'gdi32',
-			'advapi32',
-			'dbghelp',
-			'psapi',
-			'ws2_32'
-		])
-
-		for i in a:
-			conf.check_cc(**i)
-
-		# conf.multicheck(*a, run_all_tests = True, mandatory = True)
 
 	# indicate if we are packaging for Linux/BSD
 	if conf.env.DEST_OS != 'android':
@@ -416,6 +479,10 @@ def configure(conf):
 
 def build(bld):
 	os.environ["CCACHE_DIR"] = os.path.abspath('.ccache/'+bld.env.COMPILER_CC+'/'+bld.env.DEST_OS+'/'+bld.env.DEST_CPU)
+
+	if bld.env.DEST_OS == 'win32':
+		projects['game'] += ['utils/bzip2']
+		projects['dedicated'] += ['utils/bzip2']
 
 	if bld.env.DEDICATED:
 		bld.add_subproject(projects['dedicated'])
