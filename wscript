@@ -363,8 +363,7 @@ def configure(conf):
 			]
 
 		linkflags += [
-			'/LIBPATH:'+os.path.abspath('.')+'/lib/win32/public/'+conf.env.DEST_CPU+'/',
-			'/LIBPATH:'+os.path.abspath('.')+'/lib/win32/common/'+conf.env.DEST_CPU+'/2015/release',
+			'/LIBPATH:'+os.path.abspath('.')+'/lib/win32/'+conf.env.DEST_CPU+'/',
 			'/LIBPATH:'+os.path.abspath('.')+'/dx9sdk/lib/'+conf.env.DEST_CPU+'/'
 		]
 		
