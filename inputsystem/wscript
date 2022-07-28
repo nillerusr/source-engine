@@ -3,7 +3,7 @@
 
 from gettext import install
 from waflib import Utils
-import os
+import os, sys
 
 top = '.'
 PROJECT_NAME = 'inputsystem'
@@ -49,7 +49,7 @@ def build(bld):
 	# Copy SDL2 dependency
 	if bld.env.DEST_OS == 'win32':
 		bld(
-			rule='cp ${SRC} ${TGT}',
+			rule=(('cp' if 'MSYSTEM' in os.environ or sys.platform != 'win32' else 'copy')+' ${SRC} ${TGT}'),
 			source='../lib/win32/'+bld.env.DEST_CPU+'/SDL2.dll',
 			target='SDL2.dll',
 			install_path=install_path,
