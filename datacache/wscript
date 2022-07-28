@@ -20,7 +20,8 @@ def build(bld):
 		'mdlcache.cpp',
 		'../public/studio.cpp',
 		'../public/studio_virtualmodel.cpp',
-		'../common/studiobyteswap.cpp'
+		'../common/studiobyteswap.cpp',
+		'../public/tier0/memoverride.cpp'
 	]
 
 	includes = [

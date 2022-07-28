@@ -671,7 +671,7 @@ bool Voice_Init( const char *pCodecName, int nSampleRate )
 		//
 		// Changing the quality level we use here will require either extending SVC_VoiceInit to pass down which quality is
 		// in use or using a different codec name (vaudio_celtHD!) for backwards compatibility
-		int quality = bCelt ? 3 : 4;
+		int quality = ( bCelt || bOpus ) ? 3 : 4;
 
 		// Get the codec.
 		CreateInterfaceFn createCodecFn = NULL;

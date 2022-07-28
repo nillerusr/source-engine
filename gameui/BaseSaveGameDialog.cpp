@@ -20,6 +20,8 @@
 #include "MouseMessageForwardingPanel.h"
 #include "TGAImagePanel.h"
 
+#include <time.h>
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -364,7 +366,7 @@ bool CBaseSaveGameDialog::ParseSaveData( char const *pszFileName, char const *ps
 	Q_strncpy( save.szElapsedTime, szElapsedTime, sizeof(save.szElapsedTime) );
 
 	// Now get file time stamp.
-	long fileTime = g_pFullFileSystem->GetFileTime(pszFileName);
+	time_t fileTime = g_pFullFileSystem->GetFileTime(pszFileName);
 	char szFileTime[32];
 	g_pFullFileSystem->FileTimeToString(szFileTime, sizeof(szFileTime), fileTime);
 	char *newline = strstr(szFileTime, "\n");

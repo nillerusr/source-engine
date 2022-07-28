@@ -1190,7 +1190,7 @@ extern void InitGL4ES();
 // Output : int APIENTRY
 //-----------------------------------------------------------------------------
 #ifdef WIN32
-extern "C" __declspec(DLL_EXPORT) int LauncherMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
+DLL_EXPORT int LauncherMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
 #else
 DLL_EXPORT int LauncherMain( int argc, char **argv )
 #endif

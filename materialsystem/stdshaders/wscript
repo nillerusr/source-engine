@@ -125,7 +125,8 @@ def build(bld):
 		'worldvertextransition_dx8_helper.cpp',
 		'writez_dx9.cpp',
 		'writestencil_dx9.cpp',
-		'eyeball.cpp'
+		'eyeball.cpp',
+		'../../public/tier0/memoverride.cpp'
 #		$Folder	'stdshader_dbg Files', [$X360]
 #		{
 #			'debugdepth.cpp',

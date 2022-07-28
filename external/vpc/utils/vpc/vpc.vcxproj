@@ -13,21 +13,21 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{36C5F545-588F-4091-B480-89E03EDBDA93}</ProjectGuid>
     <RootNamespace>vpc</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <CharacterSet>NotSet</CharacterSet>
-    <PlatformToolset>v140_xp</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>NotSet</CharacterSet>
-    <PlatformToolset>v140_xp</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -58,9 +58,8 @@
       <SubSystem>Console</SubSystem>
     </Link>
     <PostBuildEvent>
-      <Command>p4 edit ..\..\..\..\devtools\bin\vpc.exe &amp;&amp; copy /y $(TargetPath) ..\..\..\..\devtools\bin\vpc.exe
-p4 edit ..\..\..\..\devtools\bin\vpc.pdb &amp;&amp; copy /y $(TargetDir)\vpc.pdb ..\..\..\..\devtools\bin\vpc.pdb
-</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -83,14 +82,12 @@ p4 edit ..\..\..\..\devtools\bin\vpc.pdb &amp;&amp; copy /y $(TargetDir)\vpc.pdb
       <SubSystem>Console</SubSystem>
     </Link>
     <PostBuildEvent>
-      <Command>p4 edit ..\..\..\..\devtools\bin\vpc.exe &amp;&amp; copy /y $(TargetPath) ..\..\..\..\devtools\bin\vpc.exe
-p4 edit ..\..\..\..\devtools\bin\vpc.pdb &amp;&amp; copy /y $(TargetDir)\vpc.pdb ..\..\..\..\devtools\bin\vpc.pdb
-</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\interfaces\interfaces.cpp" />
-    <ClCompile Include="..\..\p4lib\p4.cpp" />
     <ClCompile Include="..\..\tier0\assert_dialog.cpp" />
     <ClCompile Include="..\..\tier0\commandline.cpp" />
     <ClCompile Include="..\..\tier0\cpu.cpp" />

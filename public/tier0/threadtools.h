@@ -216,7 +216,7 @@ inline bool ThreadInMainThread()
 #endif
 
 // NOTE: ThreadedLoadLibraryFunc_t needs to return the sleep time in milliseconds or TT_INFINITE
-typedef int (*ThreadedLoadLibraryFunc_t)(); 
+typedef uintp (*ThreadedLoadLibraryFunc_t)(void *pParam); 
 PLATFORM_INTERFACE void SetThreadedLoadLibraryFunc( ThreadedLoadLibraryFunc_t func );
 PLATFORM_INTERFACE ThreadedLoadLibraryFunc_t GetThreadedLoadLibraryFunc();
 
@@ -1602,8 +1602,11 @@ public:
 	}
 };
 
+#ifdef _WIN32
 PLATFORM_INTERFACE int ThreadWaitForObjects( int nEvents, const HANDLE *pHandles, bool bWaitAll = true, unsigned timeout = TT_INFINITE );
 inline int ThreadWaitForEvents( int nEvents, const CThreadEvent *pEvents, bool bWaitAll = true, unsigned timeout = TT_INFINITE ) { return ThreadWaitForObjects( nEvents, (const HANDLE *)pEvents, bWaitAll, timeout ); }
+inline int ThreadWaitForObject(HANDLE handle, bool bWaitAll = true, unsigned timeout = TT_INFINITE) { return ThreadWaitForObjects(1, &handle, bWaitAll, timeout); }
+#endif
 
 //-----------------------------------------------------------------------------
 //

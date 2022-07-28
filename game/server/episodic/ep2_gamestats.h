@@ -13,6 +13,8 @@
 #include "ep1_gamestats.h"
 #include "tier1/utlstring.h"
 
+#include <time.h>
+
 // EP2 Game Stats
 enum Ep2GameStatsVersions_t
 {
@@ -417,7 +419,7 @@ public:
 		{
 		}
 
-		void Latch( char const *pchSaveName, unsigned int uFileTime )
+		void Latch( char const *pchSaveName, time_t uFileTime )
 		{
 			m_pCurrentRecord = &m_Records[ m_Records.AddToTail() ];
 			m_nCurrentSaveFileTime = uFileTime;
@@ -426,7 +428,7 @@ public:
 
 		CUtlVector< SaveGameInfoRecord2_t > m_Records;
 		SaveGameInfoRecord2_t				*m_pCurrentRecord;
-		unsigned int						m_nCurrentSaveFileTime;
+		time_t							m_nCurrentSaveFileTime;
 		CUtlString							m_sCurrentSaveFile;
 	};
 

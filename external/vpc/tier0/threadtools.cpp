@@ -49,7 +49,7 @@
 #endif
 
 #ifndef _PS3
-#include <memory.h>
+#include <memory>
 #endif
 #include "tier0/threadtools.h"
 

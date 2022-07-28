@@ -11,7 +11,7 @@
 #include "tier1/strtools.h"
 
 // This code was copied from steam
-#define DbgAssert Assert
+// #define DbgAssert Assert
 
 //-----------------------------------------------------------------------------
 // Purpose: determine if a uchar32 represents a valid Unicode code point

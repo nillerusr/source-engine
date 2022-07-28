@@ -24,11 +24,8 @@ def build(bld):
 		'../common/SteamAppStartup.cpp',
 		'sys_common.cpp',
 		'sys_ded.cpp',
-		#'sys_windows.cpp', [$WINDOWS]
-		'sys_linux.cpp', # [$POSIX]
 		'console/conproc.cpp',
 		'console/textconsole.cpp',
-		'console/TextConsoleUnix.cpp', # [$POSIX]
 		'../filesystem/filetracker.cpp',
 		'../filesystem/basefilesystem.cpp',
 		'../filesystem/packfile.cpp',
@@ -36,8 +33,19 @@ def build(bld):
 		'../filesystem/filesystem_stdio.cpp',
 		'../filesystem/QueuedLoader.cpp',
 		'../public/zip_utils.cpp',
-		'../filesystem/linux_support.cpp' # [$POSIX]
+		'../public/tier0/memoverride.cpp'
 	]
+
+	if bld.env.DEST_OS == 'win32':
+		source += [
+			'sys_windows.cpp'
+		]
+	else:
+		source += [
+			'sys_linux.cpp', # [$POSIX]
+			'console/TextConsoleUnix.cpp', # [$POSIX]
+			'../filesystem/linux_support.cpp' # [$POSIX]
+		]
 
 	includes = [
 		'.',

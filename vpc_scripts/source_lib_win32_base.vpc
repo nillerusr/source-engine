@@ -11,9 +11,9 @@ $MacroRequired				"OUTLIBNAME"	"$PROJECTNAME"
 $MacroRequired				"OUTLIBDIR"
 
 $Macro LIBPUBLIC	"$SRCDIR\lib\public$PLATSUBDIR"
-$Macro LIBCOMMON	"$SRCDIR\lib\common$PLATSUBDIR" [!$VS2015]
-$Macro LIBCOMMON	"$SRCDIR\lib\common$PLATSUBDIR\2015\release" [$VS2015&&!$WIN32]
-$Macro LIBCOMMON	"$SRCDIR\lib\common\win32\2015\release" [$VS2015&&$WIN32]
+$Macro LIBCOMMON	"$SRCDIR\lib\common$PLATSUBDIR" [!$VS2015 && !$VS2019]
+$Macro LIBCOMMON	"$SRCDIR\lib\common$PLATSUBDIR\2015\release" [($VS2015 || $VS2019) && !$WIN32]
+$Macro LIBCOMMON	"$SRCDIR\lib\common\win32\2015\release" [($VS2015 || $VS2019) && $WIN32]
 
 $Include "$SRCDIR\vpc_scripts\source_lib_win32_debug.vpc"
 $Include "$SRCDIR\vpc_scripts\source_lib_win32_release.vpc"
@@ -58,7 +58,7 @@ $Configuration
 
 	$PreLinkEvent [!$ANALYZE && !$SOURCESDK]
 	{
-		$CommandLine		"call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $OUTLIBDIR\$(TargetName).lib $SRCDIR" 
+//		$CommandLine		"call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $OUTLIBDIR\$(TargetName).lib $SRCDIR" 
 	}
 
 	$Librarian

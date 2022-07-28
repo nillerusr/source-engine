@@ -11,7 +11,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "tier1/utlvector.h"
-
+#ifdef COMPILER_MSVC
+#include <new>
+#endif
 
 
 struct GeneratePolyhedronFromPlanes_Point;
@@ -82,7 +84,9 @@ CPolyhedron_AllocByNew *CPolyhedron_AllocByNew::Allocate( unsigned short iVertic
 										(iIndices * sizeof( Polyhedron_IndexedLineReference_t )) + 
 										(iPolygons * sizeof( Polyhedron_IndexedPolygon_t )));
 
+#include "tier0/memdbgoff.h"
 	CPolyhedron_AllocByNew *pAllocated = new ( pMemory ) CPolyhedron_AllocByNew;
+#include "tier0/memdbgon.h"
 
 	pAllocated->iVertexCount = iVertices;
 	pAllocated->iLineCount = iLines;

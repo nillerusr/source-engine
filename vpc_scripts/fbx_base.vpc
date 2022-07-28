@@ -1,0 +1,22 @@
+//============ Copyright (c) Valve Corporation, All rights reserved. ==========
+//
+// FBX Version, include path and defines for compiling code that utilizes
+// Autodesk FBX SDK
+// 
+//=============================================================================
+
+$MacroRequired	SRCDIR
+
+$Macro	FBXVER	"2015.1"
+
+$Macro	FBXDIR	"$SRCDIR\thirdparty\fbx\FbxSdk\$FBXVER"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories	"$BASE;$FBXDIR\include"
+		$PreprocessorDefinitions		"$BASE;FBXSDK_NEW_API"
+		$PreprocessorDefinitions		"$BASE;FBXSDK_SHARED"	[$VS2012 || $VS2013 || $VS2015]
+	}
+}

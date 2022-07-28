@@ -23,7 +23,7 @@ struct blacklisted_server_t
 {
 	int m_nServerID;
 	char m_szServerName[64];
-	uint32 m_ulTimeBlacklistedAt;
+	uint64 m_ullTimeBlacklistedAt;
 	netadr_t m_NetAdr;
 };
 
@@ -40,7 +40,7 @@ public:
 
 	blacklisted_server_t *AddServer( gameserveritem_t &server );
 	blacklisted_server_t *AddServer( const char *serverName, uint32 serverIP, int serverPort );
-	blacklisted_server_t *AddServer( const char *serverName, const char *netAddressString, uint32 timestamp );
+	blacklisted_server_t *AddServer( const char *serverName, const char *netAddressString, uint64 timestamp );
 
 	void RemoveServer( int iServerID );		// remove server with matching 'server id' from list
 

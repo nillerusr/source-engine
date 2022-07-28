@@ -3498,6 +3498,7 @@ void CShaderAPIDx8::ResetRenderState( bool bFullReset )
 	SetRenderState( D3DRS_CULLMODE, D3DCULL_CCW );
 
 	// No shade mode yet
+	const D3DSHADEMODE D3DSHADE_NONE = (D3DSHADEMODE)0;
 	m_DynamicState.m_ShadeMode = D3DSHADE_NONE;
 	ShadeMode( SHADER_SMOOTH );
 

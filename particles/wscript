@@ -15,7 +15,6 @@ def configure(conf):
 	return
 
 def build(bld):
-	print(bld)
 	source = [
 		'builtin_constraints.cpp',
 		'builtin_initializers.cpp',

@@ -18,6 +18,8 @@
 #include "SoundEmitterSystem/isoundemittersystembase.h"
 #include "ifilelist.h"
 
+#include <time.h>
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -167,7 +169,7 @@ static void AccumulateFileNameAndTimestampIntoChecksum( CRC32_t *crc, char const
 		return;
 	}
 
-	long ft = filesystem->GetFileTime( filename, "GAME" );
+	time_t ft = filesystem->GetFileTime( filename, "GAME" );
 	CRC32_ProcessBuffer( crc, &ft, sizeof( ft ) );
 	CRC32_ProcessBuffer( crc, filename, Q_strlen( filename ) );
 }

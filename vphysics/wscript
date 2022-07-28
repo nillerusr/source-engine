@@ -39,8 +39,8 @@ def build(bld):
 		'physics_virtualmesh.cpp',
 		'trace.cpp',
 		'vcollide_parse.cpp',
-		'vphysics_saverestore.cpp'
-
+		'vphysics_saverestore.cpp',
+		'../public/tier0/memoverride.cpp'
 	]
 
 	includes = [

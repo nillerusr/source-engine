@@ -5,7 +5,7 @@
 //-----------------------------------------------------------------------------
 
 $macro SRCDIR		"..\.."
-$Macro OUTBINDIR	"$LIBPUBLIC"
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
 
 // shader_dll_verify.cpp defines a function called _ftol3. This means that we can't
 // link with the bug-fixed ftol3.obj. It also means we can't convert float-to-unsigned.

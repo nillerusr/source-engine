@@ -5,7 +5,7 @@
 //-----------------------------------------------------------------------------
 
 $Macro SRCDIR		".."
-$Macro OUTBINDIR	"$LIBPUBLIC"
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
 
 $include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
 
@@ -56,8 +56,8 @@ $Configuration
 
 	$PreLinkEvent [$WINDOWS]
 	{	
-		$CommandLine	"call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $LIBPUBLIC\$(TargetName).lib $SRCDIR" "\n" \
-						"$BASE"
+		//$CommandLine	"call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $LIBPUBLIC\$(TargetName).lib $SRCDIR" "\n" \
+		//				"$BASE"
 	}
 	
 	$PreLinkEvent [$X360]

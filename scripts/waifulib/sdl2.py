@@ -42,7 +42,7 @@ def sdl2_configure_path(conf, path):
 		]
 		libpath = 'lib'
 		if conf.env.COMPILER_CC == 'msvc':
-			if conf.env.DEST_CPU == 'x86_64':
+			if conf.env.DEST_CPU in ['x86_64', 'amd64']:
 				libpath = 'lib/x64'
 			else:
 				libpath = 'lib/' + conf.env.DEST_CPU

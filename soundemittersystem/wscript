@@ -21,7 +21,8 @@ def build(bld):
 	source = [
 		'../game/shared/interval.cpp',
 		'soundemittersystembase.cpp',
-		'../public/SoundParametersInternal.cpp'
+		'../public/SoundParametersInternal.cpp',
+		'../public/tier0/memoverride.cpp'
 	]
 
 	includes = [

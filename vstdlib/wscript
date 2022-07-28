@@ -22,11 +22,20 @@ def build(bld):
 		'jobthread.cpp',
 		'KeyValuesSystem.cpp',
 		'osversion.cpp',
-		#'processutils.cpp'	#		[$WINDOWS]
 		'random.cpp',
 		'vcover.cpp',
 		'../public/tier0/memoverride.cpp'
 	]
+	
+	if bld.env.DEST_OS == 'win32':
+		source += [
+			'processutils.cpp'
+		]
+		if bld.env.DEST_CPU == 'amd64':
+			source += [
+				'coroutine_win64.masm',
+				'GetStackPtr64.masm'
+			]
 
 	includes = [
 		'.',

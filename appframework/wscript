@@ -18,12 +18,23 @@ def build(bld):
 	source = [
 		'AppSystemGroup.cpp',
 		'../public/filesystem_init.cpp',
-#		'vguimatsysapp.cpp'	[$WIN32]
-#		'winapp.cpp'		[$WIN32]
-		'posixapp.cpp',#		[$POSIX]
-		'sdlmgr.cpp'#		[$SDL]
 #		'glmrendererinfo_osx.mm'		[$OSXALL]
 	]
+
+	if bld.env.SDL:
+		source += [
+			'sdlmgr.cpp'
+		]
+
+	if bld.env.DEST_OS == 'win32':
+		source += [
+			'vguimatsysapp.cpp',
+			'winapp.cpp'
+		]
+	else:
+		source += [
+			'posixapp.cpp',#		[$POSIX]
+		]
 
 	includes = [
 		'.',

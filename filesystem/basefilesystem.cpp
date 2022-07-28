@@ -42,6 +42,8 @@
 #undef GetCurrentDirectory
 #endif
 
+#include <time.h>
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -2800,7 +2802,7 @@ unsigned int CBaseFileSystem::Size( const char* pFileName, const char *pPathID )
 //			*pFileName - 
 // Output : long
 //-----------------------------------------------------------------------------
-long CBaseFileSystem::FastFileTime( const CSearchPath *path, const char *pFileName )
+time_t CBaseFileSystem::FastFileTime( const CSearchPath *path, const char *pFileName )
 {
 	struct	_stat buf;
 
@@ -3323,7 +3325,7 @@ char *CBaseFileSystem::ReadLine( char *pOutput, int maxChars, FileHandle_t file 
 // Input  : *pFileName - 
 // Output : long
 //-----------------------------------------------------------------------------
-long CBaseFileSystem::GetFileTime( const char *pFileName, const char *pPathID )
+time_t CBaseFileSystem::GetFileTime( const char *pFileName, const char *pPathID )
 {
 	VPROF_BUDGET( "CBaseFileSystem::GetFileTime", VPROF_BUDGETGROUP_OTHER_FILESYSTEM );
 
@@ -3340,7 +3342,7 @@ long CBaseFileSystem::GetFileTime( const char *pFileName, const char *pPathID )
 
 	for ( CSearchPath *pSearchPath = iter.GetFirst(); pSearchPath != NULL; pSearchPath = iter.GetNext() )
 	{
-		long ft = FastFileTime( pSearchPath, tempFileName );
+		time_t ft = FastFileTime( pSearchPath, tempFileName );
 		if ( ft != 0L )
 		{
 			if ( !pSearchPath->GetPackFile() && m_LogFuncs.Count() )
@@ -3363,12 +3365,12 @@ long CBaseFileSystem::GetFileTime( const char *pFileName, const char *pPathID )
 			return ft;
 		}
 	}
-	return 0L;
+	return (time_t)0L;
 }
 
-long CBaseFileSystem::GetPathTime( const char *pFileName, const char *pPathID )
+time_t CBaseFileSystem::GetPathTime( const char *pFileName, const char *pPathID )
 {
-	VPROF_BUDGET( "CBaseFileSystem::GetFileTime", VPROF_BUDGETGROUP_OTHER_FILESYSTEM );
+	VPROF_BUDGET( "CBaseFileSystem::GetPathTime", VPROF_BUDGETGROUP_OTHER_FILESYSTEM );
 
 	CSearchPathsIterator iter( this, &pFileName, pPathID );
 
@@ -3379,10 +3381,10 @@ long CBaseFileSystem::GetPathTime( const char *pFileName, const char *pPathID )
 	Q_strlower( tempFileName );
 #endif
 
-	long pathTime = 0L;
+	time_t pathTime = 0L;
 	for ( CSearchPath *pSearchPath = iter.GetFirst(); pSearchPath != NULL; pSearchPath = iter.GetNext() )
 	{
-		long ft = FastFileTime( pSearchPath, tempFileName );
+		time_t ft = FastFileTime( pSearchPath, tempFileName );
 		if ( ft > pathTime )
 			pathTime = ft;
 		if ( ft != 0L )
@@ -3707,7 +3709,7 @@ void CBaseFileSystem::SetWhitelistSpewFlags( int flags )
 //			maxCharsIncludingTerminator - 
 //			fileTime - 
 //-----------------------------------------------------------------------------
-void CBaseFileSystem::FileTimeToString( char *pString, int maxCharsIncludingTerminator, long fileTime )
+void CBaseFileSystem::FileTimeToString( char *pString, int maxCharsIncludingTerminator, time_t fileTime )
 {
 	if ( IsX360() )
 	{

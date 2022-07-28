@@ -7,7 +7,7 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#include "afxres.h"
+#include "Windows.h"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -121,4 +121,6 @@ END
 // ETW event manifest data from ValveETWProviders.man
 //
 
+#if 0
 #include "ValveETWProviderEvents.rc"
+#endif

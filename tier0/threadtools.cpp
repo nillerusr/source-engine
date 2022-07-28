@@ -14,10 +14,9 @@
 
 #ifdef _WIN32
 	#include <process.h>
-	#ifdef _WIN32
-		#include <Mmsystem.h>
-		#pragma comment(lib, "winmm.lib")
-	#endif
+	#include <Mmsystem.h>
+	#pragma comment(lib, "winmm.lib")
+	#include "tier0/vcrmode.h"
 #elif POSIX
 	#include <sched.h>
 	#include <exception>
@@ -775,7 +774,18 @@ void ThreadSetDebugName( ThreadHandle_t hThread, const char *pszName )
 #endif
 }
 
+//-----------------------------------------------------------------------------
 
+#ifdef _WIN32
+ASSERT_INVARIANT( TW_FAILED == WAIT_FAILED );
+ASSERT_INVARIANT( TW_TIMEOUT  == WAIT_TIMEOUT );
+ASSERT_INVARIANT( WAIT_OBJECT_0 == 0 );
+
+int ThreadWaitForObjects( int nEvents, const HANDLE *pHandles, bool bWaitAll, unsigned timeout )
+{
+	return VCRHook_WaitForMultipleObjects( nEvents, pHandles, bWaitAll, timeout );
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Used to thread LoadLibrary on the 360

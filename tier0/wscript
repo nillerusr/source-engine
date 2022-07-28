@@ -18,15 +18,12 @@ def configure(conf):
 def build(bld):
 	source = [
 		'assert_dialog.cpp',
-		#'assert_dialog.rc',		[$WINDOWS]
 		'commandline.cpp',
 		'cpu.cpp',
 		'cpumonitoring.cpp',
-		'cpu_posix.cpp',			#[$POSIX]
 		'cpu_usage.cpp',
 		'dbg.cpp',
 		'dynfunction.cpp',
-		#'etwprof.cpp',			[$WINDOWS]
 		'fasttimer.cpp',
 		# 'InterlockedCompareExchange128.masm', [$WIN64]
 		'mem.cpp',
@@ -36,11 +33,7 @@ def build(bld):
 		'memvalidate.cpp',
 		'minidump.cpp',
 		'pch_tier0.cpp',
-		#'platform.cpp',		[$WINDOWS||$X360]
-		'platform_posix.cpp',	#	[$POSIX]
 		#'pmc360.cpp',		[$X360]
-		#'pme.cpp',			[$WINDOWS]
-		'pme_posix.cpp',	#	[$POSIX]
 		'PMELib.cpp',		#[$WINDOWS||$POSIX]
 		'progressbar.cpp',
 		'security.cpp',
@@ -50,12 +43,30 @@ def build(bld):
 		'threadtools.cpp',
 		'tier0_strtools.cpp',
 		'tslist.cpp',
-		#'vcrmode.cpp',		#[$WINDOWS]
-		'vcrmode_posix.cpp',	#[$POSIX]
 		'vprof.cpp',
-		# 'win32consoleio.cpp',	[$WINDOWS]
 		#'../tier1/pathmatch.cpp' # [$LINUXALL]
 	]
+	
+	if bld.env.DEST_OS == 'win32':
+		source += [
+			'assert_dialog.rc',
+			#'etwprof.cpp',			[$WINDOWS]
+			'platform.cpp',
+			'pme.cpp',
+			'vcrmode.cpp',
+			'win32consoleio.cpp'
+		]
+		if bld.env.DEST_CPU == 'amd64':
+			source += [
+				'InterlockedCompareExchange128.masm'
+			]
+	else:
+		source += [
+			'cpu_posix.cpp',
+			'platform_posix.cpp',
+			'pme_posix.cpp',
+			'vcrmode_posix.cpp'
+		]
 
 	includes = [
 		'.',
@@ -65,7 +76,10 @@ def build(bld):
 
 	defines = []
 
-	libs = ['DL', 'M', 'LOG']
+	if bld.env.DEST_OS == 'win32':
+		libs = ['ADVAPI32', 'WS2_32']
+	else:
+		libs = ['DL', 'M', 'LOG']
 
 	install_path = bld.env.LIBDIR
 

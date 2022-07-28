@@ -18,6 +18,7 @@ $Configuration
 		$PlatformToolset "v120" [$VS2013 && $ANALYZE] // VS 2013 for /analyze
 		$PlatformToolset "v140_xp" [$VS2015 && !$ANALYZE] // VS 2015 for /analyze
 		$PlatformToolset "v140" [$VS2015 && $ANALYZE] // VS 2015 for /analyze
+		$PlatformToolset "v142" [$VS2019] // VS 2019
 	}
 
 	$General
@@ -48,7 +49,7 @@ $Configuration
 		// window since F8 stops on both warnings and errors. The only way to
 		// keep the warning count down is to have warnings-as-errors.
 		// We will not be warning free on 64-bit for a while...
-		$TreatWarningsAsErrors				"Yes (/WX)" [!$ANALYZE && !$WIN64]
+		//$TreatWarningsAsErrors				"Yes (/WX)" [!$ANALYZE && !$WIN64]
 
 		// Defines to differentiate 32 from 64 bit builds
 		$PreprocessorDefinitions			"$BASE;PLATFORM_64BITS;WIN64;_WIN64;COMPILER_MSVC64" [$WIN64]

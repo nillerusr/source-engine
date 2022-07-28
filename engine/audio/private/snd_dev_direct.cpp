@@ -11,7 +11,7 @@
 // Fix for VS 2010 build errors copied from Dota
 #if !defined( NEW_DXSDK ) && ( _MSC_VER >= 1600 )
 #undef KSDATAFORMAT_SUBTYPE_WAVEFORMATEX
-#undef KSDATAFORMAT_SUBTYPE_PCM
+//#undef KSDATAFORMAT_SUBTYPE_PCM
 #undef KSDATAFORMAT_SUBTYPE_IEEE_FLOAT
 #endif
 #include <ksmedia.h>
@@ -46,6 +46,8 @@ typedef enum {SIS_SUCCESS, SIS_FAILURE, SIS_NOTAVAIL} sndinitstat;
 // hack - need to include latest dsound.h
 #undef DSSPEAKER_5POINT1
 #undef DSSPEAKER_7POINT1
+#undef DSSPEAKER_7POINT1_SURROUND
+#undef DSSPEAKER_5POINT1_SURROUND
 #define DSSPEAKER_5POINT1		6
 #define DSSPEAKER_7POINT1		7
 #define DSSPEAKER_7POINT1_SURROUND 8

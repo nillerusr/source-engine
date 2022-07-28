@@ -62,15 +62,13 @@ $Configuration
 		// Note that the PDB must be checked in with the name it is linked as or else the debugger
 		// will not be able to find it. That's why it is checked in as default.pdb.
 		// override with specific behavior
-		$CommandLine				"call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $OUTBINDIR\hl2.exe $SRCDIR" "\n" \
-									"call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $OUTBINDIR\default.pdb $SRCDIR" "\n" \
-									"copy $(TargetPath) $OUTBINDIR\hl2.exe" "\n"					\
+		$CommandLine				"copy $(TargetPath) $OUTBINDIR\hl2.exe" "\n"					\
 									"if ERRORLEVEL 1 goto BuildEventFailed" "\n" \
 									"copy $(TargetDir)\default.pdb $OUTBINDIR\default.pdb" "\n"					\
 									"if ERRORLEVEL 1 goto BuildEventFailed" "\n" \
 									"if exist $(TargetDir)$(TargetName).map copy $(TargetDir)$(TargetName).map $OUTBINDIR\hl2.map" "\n" \
-									"call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $OUTBINDIR\hl2.dat $SRCDIR" "\n"								\
-									"$OUTBINDIR\bin\newdat $OUTBINDIR\hl2.exe" "\n"					\
+									//"call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $OUTBINDIR\hl2.dat $SRCDIR" "\n"								\
+									//"$OUTBINDIR\bin\newdat $OUTBINDIR\hl2.exe" "\n"					\
 									"goto BuildEventOK" "\n" \
 									":BuildEventFailed" "\n" \
 									"echo *** ERROR! PostBuildStep FAILED for $(ProjectName)! EXE or DLL is probably running. ***" "\n" \

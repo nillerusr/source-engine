@@ -245,9 +245,6 @@
     <ClCompile Include="solutiongenerator_codelite.cpp">
       <Filter>VPC\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\p4lib\p4.cpp">
-      <Filter>Dependencies\Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\tier0\mem_helpers.h">

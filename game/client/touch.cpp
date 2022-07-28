@@ -1,5 +1,5 @@
+#include "cbase.h"
 #include "convar.h"
-#include <dlfcn.h>
 #include <string.h>
 #include "vgui/IInputInternal.h"
 #include "VGuiMatSurface/IMatSystemSurface.h"
@@ -831,7 +831,6 @@ void CTouchControls::WriteConfig()
 
 	if( f )
 	{
-		CTouchButton *button;
 		filesystem->FPrintf( f, "//=======================================================================\n");
 		filesystem->FPrintf( f, "//\t\t\ttouchscreen config\n" );
 		filesystem->FPrintf( f, "//=======================================================================\n" );

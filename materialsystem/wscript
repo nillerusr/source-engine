@@ -44,15 +44,16 @@ def build(bld):
 		'cmatlightmaps.cpp',
 		'cmatrendercontext.cpp',
 		'cmatqueuedrendercontext.cpp',
-		'ctexturecompositor.cpp'
+		'ctexturecompositor.cpp',
+		'../public/tier0/memoverride.cpp'
 	]
 
 	includes = [
 		'.',
-		'../../public',
-		'../../public/tier0',
-		'../../public/tier1',
-		'../../common',
+		'../public',
+		'../public/tier0',
+		'../public/tier1',
+		'../common',
 		'../'
 	] + bld.env.INCLUDES_SDL2
 

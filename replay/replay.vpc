@@ -9,7 +9,7 @@
 //-----------------------------------------------------------------------------
 
 $macro SRCDIR		".."
-$Macro OUTBINDIR	"$LIBPUBLIC"
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
 
 // NOTE:  We don't want to include source_replay.vpc here.  The only purpose
 // REPLAY_ENABLED // serves in this project is for includes like netmessages.h
@@ -201,12 +201,12 @@ $Project "replay"
 
 		$Libexternal	$LIBCOMMON/libcrypto [$OSXALL]
 		$Libexternal 	"$SRCDIR\lib\common\$(CRYPTOPPDIR)\libcrypto" [$LINUXALL]
-		$Libexternal libpng [!$VS2015]
-		$Libexternal $LIBCOMMON/libpng [$VS2015]
+		$Libexternal libpng [!$VS2015 && !$VS2019]
+		$Libexternal $LIBCOMMON/libpng [$VS2015 || $VS2019]
 
 		$ImpLib	"$LIBCOMMON\curl"	  [$OSXALL]
 
-		$Lib	"$LIBCOMMON\libcurl" [$WIN32&&!$VS2015]
+		$Lib	"$LIBCOMMON\libcurl" [$WIN32&&!$VS2015&&!$VS2019]
 		$Lib   "libz" [$WIN32]
 
 		$Libexternal	libz [$LINUXALL]

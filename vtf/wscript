@@ -17,10 +17,14 @@ def configure(conf):
 def build(bld):
 	source = [
 		'convert_x360.cpp',
-		#$File	"s3tc_decode.cpp" #	[$WINDOWS]
 		'vtf.cpp'
 		#$File	"vtf_x360.cpp"#		[$X360]
 	]
+
+	if bld.env.DEST_OS == 'win32':
+		source += [
+			's3tc_decode.cpp'
+		]
 
 	includes = [
 		'.',

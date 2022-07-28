@@ -14,7 +14,7 @@
 #include <comdef.h>
 #pragma warning( disable : 4127 ) // VS 2010 warning?
 #pragma warning( disable : 4805 ) // VS 2013 warning: warning C4805: '==' : unsafe mix of type 'INT' and type 'bool' in operation
-#include <atlcomtime.h>
+// #include <atlcomtime.h>
 #pragma warning( default : 4805 )
 #pragma warning( default : 4127 )
 #include <wbemidl.h>

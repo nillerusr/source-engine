@@ -14,6 +14,7 @@
 #define WIN_32_LEAN_AND_MEAN
 #include <windows.h>				// Currently needed for IsBadReadPtr and IsBadWritePtr
 #pragma comment(lib,"user32.lib")	// For MessageBox
+#include <time.h>
 #endif
 
 #include <assert.h>
@@ -379,7 +380,7 @@ static SpewRetval_t _SpewMessage( SpewType_t spewType, const char *pGroupName, i
 
 	/* direct it to the appropriate target(s) */
 	SpewRetval_t ret;
-	assert( g_pSpewInfo == NULL );
+	assert( g_pSpewInfo == (void*)NULL );
 	SpewInfo_t spewInfo =
 	{
 		pColor,

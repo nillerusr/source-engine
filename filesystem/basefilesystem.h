@@ -67,6 +67,8 @@
 #include "vpklib/packedstore.h"
 #endif
 
+#include <time.h>
+
 #include "tier0/memdbgon.h"
 
 #ifdef _WIN32
@@ -312,10 +314,10 @@ public:
 	virtual void				MarkPathIDByRequestOnly( const char *pPathID, bool bRequestOnly );
 
 	virtual bool				FileExists( const char *pFileName, const char *pPathID = NULL );
-	virtual long				GetFileTime( const char *pFileName, const char *pPathID = NULL );
+	virtual time_t				GetFileTime( const char *pFileName, const char *pPathID = NULL );
 	virtual bool				IsFileWritable( char const *pFileName, const char *pPathID = NULL );
 	virtual bool				SetFileWritable( char const *pFileName, bool writable, const char *pPathID = 0 );
-	virtual void				FileTimeToString( char *pString, int maxChars, long fileTime );
+	virtual void				FileTimeToString( char *pString, int maxChars, time_t fileTime );
 	
 	virtual const char			*FindFirst( const char *pWildCard, FileFindHandle_t *pHandle );
 	virtual const char			*FindFirstEx( const char *pWildCard, const char *pPathID, FileFindHandle_t *pHandle );
@@ -338,7 +340,7 @@ public:
 	virtual FileNameHandle_t	FindFileName( char const *pFileName );
 	virtual bool				String( const FileNameHandle_t& handle, char *buf, int buflen );
 	virtual int					GetPathIndex( const FileNameHandle_t &handle );
-	long						GetPathTime( const char *pFileName, const char *pPathID );
+	time_t						GetPathTime( const char *pFileName, const char *pPathID );
 	
 	virtual void				EnableWhitelistFileTracking( bool bEnable, bool bCacheAllVPKHashes, bool bRecalculateAndCheckHashes );
 	virtual void				RegisterFileWhitelist( IPureServerWhitelist *pWhiteList, IFileList **ppFilesToReload ) OVERRIDE;
@@ -794,7 +796,7 @@ protected:
 	void						HandleOpenRegularFile( CFileOpenInfo &openInfo, bool bIsAbsolutePath );
 
 	FileHandle_t				FindFileInSearchPath( CFileOpenInfo &openInfo );
-	long						FastFileTime( const CSearchPath *path, const char *pFileName );
+	time_t						FastFileTime( const CSearchPath *path, const char *pFileName );
 
 	const char					*GetWritePath( const char *pFilename, const char *pathID );
 

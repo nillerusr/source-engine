@@ -182,7 +182,7 @@ static HMODULE InternalLoadLibrary( const char *pName, Sys_Flags flags )
 		return LoadLibraryEx( pName, NULL, LOAD_WITH_ALTERED_SEARCH_PATH );
 #endif
 }
-unsigned ThreadedLoadLibraryFunc( void *pParam )
+uintp ThreadedLoadLibraryFunc( void *pParam )
 {
 	ThreadedLoadLibaryContext_t *pContext = (ThreadedLoadLibaryContext_t*)pParam;
 	pContext->m_hLibrary = InternalLoadLibrary( pContext->m_pLibraryName, SYS_NOFLAGS );
@@ -229,7 +229,7 @@ HMODULE Sys_LoadLibrary( const char *pLibraryName, Sys_Flags flags )
 	context.m_pLibraryName = str;
 	context.m_hLibrary = 0;
 
-	ThreadHandle_t h = CreateSimpleThread( ThreadedLoadLibraryFunc, &context );
+	ThreadHandle_t h = CreateSimpleThread( (ThreadFunc_t)ThreadedLoadLibraryFunc, &context );
 
 #ifdef _X360
 	ThreadSetAffinity( h, XBOX_PROCESSOR_3 );
@@ -238,7 +238,7 @@ HMODULE Sys_LoadLibrary( const char *pLibraryName, Sys_Flags flags )
 	unsigned int nTimeout = 0;
 	while( ThreadWaitForObject( h, true, nTimeout ) == TW_TIMEOUT )
 	{
-		nTimeout = threadFunc();
+		nTimeout = threadFunc(0);
 	}
 
 	ReleaseThreadHandle( h );
@@ -278,7 +278,9 @@ CSysModule *Sys_LoadModule( const char *pModuleName, Sys_Flags flags /* = SYS_NO
 	// file in the depot (MFP) or a filesystem GetLocalCopy() call must be made
 	// prior to the call to this routine.
 	char szCwd[1024];
+#ifdef POSIX
 	char szModuleName[1024];
+#endif
 	HMODULE hDLL = NULL;
 
 	if ( !Q_IsAbsolutePath( pModuleName ) )
@@ -300,8 +302,6 @@ CSysModule *Sys_LoadModule( const char *pModuleName, Sys_Flags flags /* = SYS_NO
 		}
 
 		char szAbsoluteModuleName[1024];
-		size_t cCwd = strlen( szCwd );
-
 		bool bUseLibPrefix = false;
 
 #ifdef ANDROID

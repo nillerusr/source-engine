@@ -15,7 +15,7 @@ def configure(conf):
 	conf.define('FILESYSTEM_STDIO_EXPORTS',1)
 	conf.define('DONT_PROTECT_FILEIO_FUNCTIONS',1)
 #	conf.define('PROTECTED_THINGS_ENABLE',1)
-	conf.define('_USE_32BIT_TIME_T',1)
+#	conf.define('_USE_32BIT_TIME_T',1)
 	conf.define('SUPPORT_PACKED_STORE',1)
 
 def build(bld):
@@ -28,9 +28,13 @@ def build(bld):
 		'../public/kevvaluescompiler.cpp',
 		'../public/zip_utils.cpp',
 		'QueuedLoader.cpp',
-		'linux_support.cpp', #			[$POSIX]
 		'../public/tier0/memoverride.cpp'
 	]
+
+	if bld.env.DEST_OS != 'win32':
+		source += [
+			'linux_support.cpp'
+		]
 
 	includes = [
 		'.',
@@ -43,6 +47,9 @@ def build(bld):
 	defines = []
 
 	libs = ['tier0','vpklib','tier1','tier2','vstdlib']
+
+	if bld.env.DEST_OS == 'win32':
+		libs += ['SHELL32']
 
 	install_path = bld.env.LIBDIR
 

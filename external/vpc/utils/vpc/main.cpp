@@ -75,7 +75,7 @@ CVPC::CVPC()
 	}
 
 #ifdef WIN32
-	m_eVSVersion = k_EVSVersion_2015;
+	m_eVSVersion = k_EVSVersion_2019;
 	m_bUseVS2010FileFormat = true;
 	m_bUseUnity = false;
 #else
@@ -175,11 +175,6 @@ void CVPC::Shutdown( bool bHasError )
 	UnloadPerforceInterface();
 }
 
-#if defined( STANDALONE_VPC )
-class CP4;
-extern CP4 s_p4;
-#endif
-
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 bool CVPC::LoadPerforceInterface()
@@ -189,11 +184,6 @@ bool CVPC::LoadPerforceInterface()
 		// already loaded
 		return true;
 	}
-
-#if defined( STANDALONE_VPC )
-	p4 = (IP4*)&s_p4;
-	return (p4 != NULL);
-#else
 
 	//
 	// Try to load p4lib.dll and the filesystem since the p4lib relies on it
@@ -234,7 +224,6 @@ bool CVPC::LoadPerforceInterface()
 	p4->Connect( Sys_GetFactory( m_pFilesystemModule ) );
 
 	return true;
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -635,7 +624,8 @@ void CVPC::SpewUsage( void )
 			Log_Msg( LOG_VPC, "[/srcctl]:     Enable P4SCC source control integration - can also set environment variable VPC_SRCCTL to 1\n" );
 #endif
 			Log_Msg( LOG_VPC, "[/mirror]:     <path> - Mirror output files to specified path. Used for A:B testing.\n" );
-			Log_Msg( LOG_VPC, "[/2015]:       Generate projects and solutions for Visual Studio 2015 [default]\n" );
+			Log_Msg( LOG_VPC, "[/2019]:       Generate projects and solutions for Visual Studio 2019 [default]\n" );
+			Log_Msg( LOG_VPC, "[/2015]:       Generate projects and solutions for Visual Studio 2015\n" );
 			Log_Msg( LOG_VPC, "[/2013]:       Generate projects and solutions for Visual Studio 2013\n" );
 			Log_Msg( LOG_VPC, "[/2012]:       Generate projects and solutions for Visual Studio 2012\n" );
 			Log_Msg( LOG_VPC, "[/2010]:       Generate projects and solutions for Visual Studio 2010\n" );
@@ -1002,6 +992,11 @@ void CVPC::HandleSingleCommandLineArg( const char *pArg )
 		else if ( !V_stricmp( pArgName, "2015" ) )
 		{
 			m_eVSVersion = k_EVSVersion_2015;
+			m_ExtraOptionsCRCString += pArgName;
+		}
+		else if ( !V_stricmp( pArgName, "2019" ) )
+		{
+			m_eVSVersion = k_EVSVersion_2019;
 			m_ExtraOptionsCRCString += pArgName;
 		}
 		else if ( !V_stricmp( pArgName, "nounity" ) )
@@ -1825,6 +1820,16 @@ void CVPC::SetMacrosAndConditionals()
 		// VS2010 is strictly win32/xbox360
 		switch ( m_eVSVersion )
 		{
+		case k_EVSVersion_2019:
+			m_ExtraOptionsCRCString += "VS2019";
+			SetConditional( "VS2019", true );
+
+			// temporarily allow VS2013 conditionals also as there are many. Will fix.
+			SetConditional( "VS2013", true );
+
+			m_bUseVS2010FileFormat = true;
+			break;
+
 		case k_EVSVersion_2015:
 			m_ExtraOptionsCRCString += "VS2015";
 			SetConditional( "VS2015", true );
@@ -2362,7 +2367,9 @@ void CVPC::SetupGenerators()
 		{
 			// spew what we are generating
 			const char *pchLogLine = "Generating for Visual Studio 2005.\n";
-			if ( m_eVSVersion == k_EVSVersion_2015 )
+			if ( m_eVSVersion == k_EVSVersion_2019 )
+				pchLogLine = "Generating for Visual Studio 2019.\n";
+			else if ( m_eVSVersion == k_EVSVersion_2015 )
 				pchLogLine = "Generating for Visual Studio 2015.\n";
 			else if ( m_eVSVersion == k_EVSVersion_2013 )
 				pchLogLine = "Generating for Visual Studio 2013.\n";

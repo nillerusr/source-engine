@@ -12,9 +12,9 @@ $MacroRequired				"OUTBINDIR"
 
 $Macro OUTBINDIR	"$OUTBINDIR$PLATSUBDIR"
 $Macro LIBPUBLIC	"$SRCDIR\lib\public$PLATSUBDIR"
-$Macro LIBCOMMON	"$SRCDIR\lib\common$PLATSUBDIR" [!$VS2015]
-$Macro LIBCOMMON	"$SRCDIR\lib\common$PLATSUBDIR\2015\release" [$VS2015&&!$WIN32]
-$Macro LIBCOMMON	"$SRCDIR\lib\common\win32\2015\release" [$VS2015&&$WIN32]
+$Macro LIBCOMMON	"$SRCDIR\lib\common$PLATSUBDIR" [!$VS2015 && !$VS2019]
+$Macro LIBCOMMON	"$SRCDIR\lib\common$PLATSUBDIR\2015\release" [($VS2015 || $VS2019) && !$WIN32]
+$Macro LIBCOMMON	"$SRCDIR\lib\common\win32\2015\release" [($VS2015 || $VS2019) && $WIN32]
 
 $Include "$SRCDIR\vpc_scripts\loadaddress.vpc"
 $Include "$SRCDIR\vpc_scripts\source_exe_win_win32_debug.vpc"
@@ -68,11 +68,11 @@ $Configuration
 
 	$PostBuildEvent [!$ANALYZE]
 	{
-		$CommandLine		"call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $OUTBINDIR\$(TargetFileName) $SRCDIR" "\n" [!$SOURCESDK]
+//		$CommandLine		"call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $OUTBINDIR\$(TargetFileName) $SRCDIR" "\n" [!$SOURCESDK]
 		$CommandLine		"$BASE"	"copy $QUOTE$(TargetDir)$QUOTE$(TargetFileName) $OUTBINDIR\$(TargetFileName) >nul" "\n" \
 							"if ERRORLEVEL 1 goto BuildEventFailed" "\n" \
 							"if exist $QUOTE$(TargetDir)$QUOTE$(TargetName).map copy $QUOTE$(TargetDir)$QUOTE$(TargetName).map $OUTBINDIR\$(TargetName).map >nul" "\n"
-		$CommandLine		"$BASE"	"call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $OUTBINDIR\$(TargetName).pdb $SRCDIR" "\n" [!$SOURCESDK]
+//		$CommandLine		"$BASE"	"call $SRCDIR\vpc_scripts\valve_p4_edit.cmd $OUTBINDIR\$(TargetName).pdb $SRCDIR" "\n" [!$SOURCESDK]
 		$CommandLine		"$BASE"	"copy $QUOTE$(TargetDir)$QUOTE$(TargetName).pdb $OUTBINDIR\$(TargetName).pdb >nul" "\n" \
 							"if ERRORLEVEL 1 goto BuildEventFailed" "\n" \
 							"goto BuildEventOK" "\n" \
@@ -111,7 +111,8 @@ $Project
 				$CustomBuildStep
 				{
 					// General
-					$CommandLine				"$QUOTE$(VCInstallDir)bin\ml.exe$QUOTE /c /Cp /Zi /Fo$QUOTE$(IntDir)\$(InputName).obj$QUOTE $QUOTE$(InputPath)$QUOTE"
+					$CommandLine				"$QUOTE$(VCInstallDir)bin\ml.exe$QUOTE /safeseh /c /Cp /Zi /Fo$QUOTE$(IntDir)\$(InputName).obj$QUOTE $QUOTE$(InputPath)$QUOTE" [!$VS2019]
+					$CommandLine				"$QUOTE$(VC_ExecutablePath_x86_x86)\ml.exe$QUOTE /safeseh /c /Cp /Zi /Fo$QUOTE$(IntDir)\$(InputName).obj$QUOTE $QUOTE$(InputPath)$QUOTE" [$VS2019]
 					$Description				"Compiling pointeroverride.asm"
 					$Outputs					"$(IntDir)\$(InputName).obj"
 				}		
