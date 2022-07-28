@@ -47,6 +47,9 @@ def build(bld):
 		'ctexturecompositor.cpp'
 	]
 
+	if bld.env.DEST_OS == 'win32':
+		source += ['../public/tier0/memoverride.cpp']
+
 	includes = [
 		'.',
 		'../../public',

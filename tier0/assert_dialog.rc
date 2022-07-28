@@ -121,4 +121,6 @@ END
 // ETW event manifest data from ValveETWProviders.man
 //
 
+#if 0
 #include "ValveETWProviderEvents.rc"
+#endif

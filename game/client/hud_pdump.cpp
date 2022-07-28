@@ -22,7 +22,7 @@ static CPDumpPanel *g_pPDumpPanel = NULL;
 //  retaining our own warning setup...ywb
 #ifdef WIN32
 #pragma warning( push )
-#include <typeinfo.h>
+#include <typeinfo>
 #pragma warning( pop )
 #endif
 
