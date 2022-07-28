@@ -353,7 +353,8 @@ def configure(conf):
 				'/INCREMENTAL:NO',
 				'/NODEFAULTLIB:libc',
 				'/NODEFAULTLIB:libcd',
-				'/NODEFAULTLIB:libcmt'
+				'/NODEFAULTLIB:libcmt',
+				'/FORCE'
 			]
 		else:
 			linkflags += [
