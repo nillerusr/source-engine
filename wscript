@@ -193,7 +193,7 @@ def define_platform(conf):
 			'NO_X360_XDK'
 		])
 
-	if conf.options.DEBUG_ENGINE or conf.options.BUILD_TYPE == 'debug':
+	if conf.options.DEBUG_ENGINE:
 		conf.env.append_unique('DEFINES', [
 			'DEBUG', '_DEBUG'
 		])
