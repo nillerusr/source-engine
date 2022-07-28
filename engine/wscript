@@ -201,7 +201,7 @@ def build(bld):
 		#'audio/private/voice_record_mac_audioqueue.cpp',	#[$OSXALL]
 	]
 
-	if bld.env.SDL:
+	if bld.env.LIB_SDL2:
 		source += [
 			'audio/private/snd_dev_sdl.cpp'		#[$SDL && !$OSXALL]
 		]

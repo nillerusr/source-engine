@@ -183,6 +183,7 @@ def define_platform(conf):
 	if conf.env.DEST_OS == 'win32':
 		conf.env.append_unique('DEFINES', [
 			'WIN32=1', '_WIN32=1',
+			'MSVC',
 			'_WINDOWS',
 			'_DLL_EXT=.dll',
 			'_CRT_SECURE_NO_DEPRECATE',

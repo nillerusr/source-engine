@@ -21,7 +21,7 @@ def build(bld):
 #		'glmrendererinfo_osx.mm'		[$OSXALL]
 	]
 
-	if bld.env.SDL:
+	if bld.env.LIB_SDL2:
 		source += [
 			'sdlmgr.cpp'
 		]
