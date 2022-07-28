@@ -43,5 +43,6 @@ jobs:
     - uses: actions/checkout@v2
     - name: Build windows-i386
       run: |
+        git submodule init && git submodule update
         ./waf.bat configure -T debug
         ./waf.bat build
