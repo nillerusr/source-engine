@@ -161,7 +161,7 @@ public:
 	void			SetMainWindow( SDL_Window* window );
 #else
 #ifdef WIN32
-	int				WindowProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
+	LRESULT			WindowProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
 #endif
 	void			SetMainWindow( HWND window );
 #endif
@@ -514,7 +514,7 @@ void VCR_HandlePlaybackMessages(
 // FIXME: It would be nice to remove the need for this, which we can do
 // if we can make unicode work when running inside hammer.
 //-----------------------------------------------------------------------------
-static LONG WINAPI CallDefaultWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
+static LRESULT WINAPI CallDefaultWindowProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
 	if ( unicode )
 		return unicode->DefWindowProcW( hWnd, uMsg, wParam, lParam );
@@ -575,10 +575,10 @@ void XBX_HandleInvite( DWORD nUserId )
 //-----------------------------------------------------------------------------
 // Main windows procedure
 //-----------------------------------------------------------------------------
-int CGame::WindowProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CGame::WindowProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 {
-	LONG			lRet = 0;
+	LRESULT			lRet = 0;
 	HDC				hdc;
 	PAINTSTRUCT		ps;
 
@@ -848,7 +848,7 @@ int CGame::WindowProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 //-----------------------------------------------------------------------------
 // Creates the game window 
 //-----------------------------------------------------------------------------
-static LONG WINAPI HLEngineWindowProc( HWND hWnd, UINT uMsg, WPARAM  wParam, LPARAM  lParam )
+static LRESULT WINAPI HLEngineWindowProc( HWND hWnd, UINT uMsg, WPARAM  wParam, LPARAM  lParam )
 {
 	return g_Game.WindowProc( hWnd, uMsg, wParam, lParam );
 }
@@ -952,7 +952,7 @@ bool CGame::CreateGameWindow( void )
 	memset( &wc, 0, sizeof( wc ) );
 
     wc.style         = CS_OWNDC | CS_DBLCLKS;
-    wc.lpfnWndProc   = CallDefaultWindowProc;
+    wc.lpfnWndProc   = static_cast<WNDPROC>(CallDefaultWindowProc);
     wc.hInstance     = m_hInstance;
     wc.lpszClassName = CLASSNAME;
 

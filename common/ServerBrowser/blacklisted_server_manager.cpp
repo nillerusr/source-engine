@@ -53,12 +53,12 @@ int CBlacklistedServerManager::LoadServersFromFile( const char *pszFilename, boo
 	{
 		const char *pszName = pData->GetString( "name" );
 
-		uint32 ulDate = pData->GetInt( "date" );
+		uint64 ullDate = pData->GetUint64( "date" );
 		if ( bResetTimes )
 		{
 			time_t today;
 			time( &today );
-			ulDate = today;
+			ullDate = (uint64)today;
 		}
 
 		const char *pszNetAddr = pData->GetString( "addr" );
@@ -68,7 +68,7 @@ int CBlacklistedServerManager::LoadServersFromFile( const char *pszFilename, boo
 
 			m_Blacklist[iIdx].m_nServerID = m_iNextServerID++;
 			V_strncpy( m_Blacklist[iIdx].m_szServerName, pszName, sizeof( m_Blacklist[iIdx].m_szServerName ) );
-			m_Blacklist[iIdx].m_ulTimeBlacklistedAt = ulDate;
+			m_Blacklist[iIdx].m_ullTimeBlacklistedAt = ullDate;
 			m_Blacklist[iIdx].m_NetAdr.SetFromString( pszNetAddr );
 
 			++count;
@@ -92,7 +92,7 @@ void CBlacklistedServerManager::SaveToFile( const char *pszFilename )
 	{
 		KeyValues *pSubKey = new KeyValues( "server" );
 		pSubKey->SetString( "name", m_Blacklist[i].m_szServerName );
-		pSubKey->SetInt( "date", m_Blacklist[i].m_ulTimeBlacklistedAt );
+		pSubKey->SetUint64( "date", m_Blacklist[i].m_ullTimeBlacklistedAt );
 		pSubKey->SetString( "addr", m_Blacklist[i].m_NetAdr.ToString() );
 		pKV->AddSubKey( pSubKey );
 	}
@@ -120,7 +120,7 @@ blacklisted_server_t *CBlacklistedServerManager::AddServer( gameserveritem_t &se
 
 	time_t today;
 	time( &today );
-	m_Blacklist[iIdx].m_ulTimeBlacklistedAt = today;
+	m_Blacklist[iIdx].m_ullTimeBlacklistedAt = (uint64)today;
 	m_Blacklist[iIdx].m_NetAdr = netAdr;
 	m_Blacklist[iIdx].m_nServerID = m_iNextServerID++;
 
@@ -145,7 +145,7 @@ blacklisted_server_t *CBlacklistedServerManager::AddServer( const char *serverNa
 
 	time_t today;
 	time( &today );
-	m_Blacklist[iIdx].m_ulTimeBlacklistedAt = today;
+	m_Blacklist[iIdx].m_ullTimeBlacklistedAt = (uint64)today;
 
 	m_Blacklist[iIdx].m_NetAdr = netAdr;
 	m_Blacklist[iIdx].m_nServerID = m_iNextServerID++;
@@ -157,7 +157,7 @@ blacklisted_server_t *CBlacklistedServerManager::AddServer( const char *serverNa
 //-----------------------------------------------------------------------------
 // Purpose: Add the given server to the blacklist. Return added server.
 //-----------------------------------------------------------------------------
-blacklisted_server_t *CBlacklistedServerManager::AddServer( const char *serverName, const char *netAddressString, uint32 timestamp )
+blacklisted_server_t *CBlacklistedServerManager::AddServer( const char *serverName, const char *netAddressString, uint64 timestamp )
 {
 	netadr_t netAdr( netAddressString );
 
@@ -168,7 +168,7 @@ blacklisted_server_t *CBlacklistedServerManager::AddServer( const char *serverNa
 	int iIdx = m_Blacklist.AddToTail();
 
 	V_strncpy( m_Blacklist[iIdx].m_szServerName, serverName, sizeof( m_Blacklist[iIdx].m_szServerName ) );
-	m_Blacklist[iIdx].m_ulTimeBlacklistedAt = timestamp;
+	m_Blacklist[iIdx].m_ullTimeBlacklistedAt = timestamp;
 	m_Blacklist[iIdx].m_NetAdr = netAdr;
 	m_Blacklist[iIdx].m_nServerID = m_iNextServerID++;
 

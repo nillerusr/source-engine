@@ -16,7 +16,7 @@ def configure(conf):
 	conf.define('VERSION_SAFE_STEAM_API_INTERFACES',1)
 	conf.define('SERVERBROWSER_EXPORTS',1)
 	conf.define('GAME_SRC',1)
-	conf.define('_USE_32BIT_TIME_T',1)
+#	conf.define('_USE_32BIT_TIME_T',1)
 
 def build(bld):
 	source = [
@@ -40,13 +40,9 @@ def build(bld):
 		'VACBannedConnRefusedDialog.cpp',
 		'QuickListPanel.cpp',
 		'../public/vgui_controls/vgui_controls.cpp',
-		'../common/ServerBrowser/blacklisted_server_manager.cpp'
+		'../common/ServerBrowser/blacklisted_server_manager.cpp',
+		'../public/tier0/memoverride.cpp'
 	]
-
-	if bld.env.DEST_OS == 'win32':
-		source += [
-			'../public/tier0/memoverride.cpp'
-		]
 
 	includes = [
 		'.',

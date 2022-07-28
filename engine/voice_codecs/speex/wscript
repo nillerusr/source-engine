@@ -19,7 +19,8 @@ def build(bld):
 	source = [
 		'VoiceEncoder_Speex.cpp',
 		'../frame_encoder/voice_codec_frame.cpp',
-		'../../../tier1/interface.cpp'
+		'../../../tier1/interface.cpp',
+		'../../../public/tier0/memoverride.cpp'
 	]
 
 	includes = [

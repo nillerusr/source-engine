@@ -15,7 +15,7 @@ def configure(conf):
 	conf.define('FILESYSTEM_STDIO_EXPORTS',1)
 	conf.define('DONT_PROTECT_FILEIO_FUNCTIONS',1)
 #	conf.define('PROTECTED_THINGS_ENABLE',1)
-	conf.define('_USE_32BIT_TIME_T',1)
+#	conf.define('_USE_32BIT_TIME_T',1)
 	conf.define('SUPPORT_PACKED_STORE',1)
 
 def build(bld):

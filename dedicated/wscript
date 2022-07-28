@@ -33,9 +33,10 @@ def build(bld):
 		'../filesystem/filesystem_stdio.cpp',
 		'../filesystem/QueuedLoader.cpp',
 		'../public/zip_utils.cpp',
+		'../public/tier0/memoverride.cpp'
 	]
 
-	if bld.env.DEST_OS == 'win32'
+	if bld.env.DEST_OS == 'win32':
 		source += [
 			'sys_windows.cpp'
 		]

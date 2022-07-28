@@ -36,3 +36,5 @@ android/
 .ccache/
 waf3*/
 .vscode/
+.depproj/
+source-engine.sln

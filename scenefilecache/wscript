@@ -17,7 +17,8 @@ def configure(conf):
 
 def build(bld):
 	source = [
-		'SceneFileCache.cpp'
+		'SceneFileCache.cpp',
+		'../public/tier0/memoverride.cpp'
 	]
 
 	includes = [

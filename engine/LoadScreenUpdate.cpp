@@ -113,7 +113,7 @@ void EndLoadingUpdates()
 	}
 }
 
-static int LoadLibraryThreadFunc()
+static uintp LoadLibraryThreadFunc(void *pParam)
 {
 	RefreshScreenIfNecessary();
 	return 15;

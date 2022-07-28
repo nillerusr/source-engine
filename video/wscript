@@ -16,7 +16,8 @@ def configure(conf):
 
 def build(bld):
 	source = [
-		'videoservices.cpp'
+		'videoservices.cpp',
+		'../public/tier0/memoverride.cpp'
 	]
 
 	includes = [

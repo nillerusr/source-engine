@@ -22,6 +22,8 @@
 #include "GameUI_Interface.h"
 #include "vstdlib/random.h"
 
+#include <time.h>
+
 #include "SaveGameBrowserDialog.h"
 
 extern const char *COM_GetModDirectory( void );
@@ -1273,7 +1275,7 @@ bool CSaveGameBrowserDialog::ParseSaveData( char const *pszFileName, char const 
 	Q_strncpy( save->szElapsedTime, szElapsedTime, sizeof(save->szElapsedTime) );
 
 	// Now get file time stamp.
-	long fileTime = g_pFullFileSystem->GetFileTime(pszFileName);
+	time_t fileTime = g_pFullFileSystem->GetFileTime(pszFileName);
 	char szFileTime[32];
 	g_pFullFileSystem->FileTimeToString(szFileTime, sizeof(szFileTime), fileTime);
 	char *newline = strstr(szFileTime, "\n");

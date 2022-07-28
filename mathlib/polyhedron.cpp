@@ -82,7 +82,7 @@ CPolyhedron_AllocByNew *CPolyhedron_AllocByNew::Allocate( unsigned short iVertic
 										(iIndices * sizeof( Polyhedron_IndexedLineReference_t )) + 
 										(iPolygons * sizeof( Polyhedron_IndexedPolygon_t )));
 
-	CPolyhedron_AllocByNew *pAllocated = new ( pMemory ) CPolyhedron_AllocByNew;
+	CPolyhedron_AllocByNew *pAllocated = (CPolyhedron_AllocByNew*)pMemory;
 
 	pAllocated->iVertexCount = iVertices;
 	pAllocated->iLineCount = iLines;

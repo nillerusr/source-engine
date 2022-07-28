@@ -63,12 +63,9 @@ def build(bld):
 	if bld.env.DEST_OS != 'android':
 		install_path += '/'+bld.env.GAMES+'/bin'
 
-	source = game["sources"]
+	source = game["sources"] + ['../../public/tier0/memoverride.cpp']
 	includes += game["includes"]
 	defines = game["defines"]
-
-	if bld.env.DEST_OS == 'win32':
-		source += ['../../public/tier0/memoverride.cpp']
 
 	defines.remove('PROTECTED_THINGS_ENABLE')
 

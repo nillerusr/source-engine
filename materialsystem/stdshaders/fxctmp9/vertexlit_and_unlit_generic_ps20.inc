@@ -553,7 +553,7 @@ public:
 		// Asserts to make sure that we aren't using any skipped combinations.
 		// Asserts to make sure that we are setting all of the combination vars.
 #ifdef _DEBUG
-		bool bAllDynamicVarsDefined = m_bPIXELFOGTYPE && m_bLIGHTING_PREVIEW && m_bSTATIC_LIGHT_LIGHTMAP;
+		bool bAllDynamicVarsDefined = m_bPIXELFOGTYPE && m_bLIGHTING_PREVIEW; // && m_bSTATIC_LIGHT_LIGHTMAP
 		Assert( bAllDynamicVarsDefined );
 #endif // _DEBUG
 		return ( 1 * m_nPIXELFOGTYPE ) + ( 2 * m_nLIGHTING_PREVIEW ) + 0;

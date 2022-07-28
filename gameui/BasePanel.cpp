@@ -2312,7 +2312,7 @@ bool CBasePanel::IsPromptableCommand( const char *command )
 //-------------------------
 // Purpose: Job wrapper
 //-------------------------
-static unsigned PanelJobWrapperFn( void *pvContext )
+static uintp PanelJobWrapperFn( void *pvContext )
 {
 	CBasePanel::CAsyncJobContext *pAsync = reinterpret_cast< CBasePanel::CAsyncJobContext * >( pvContext );
 

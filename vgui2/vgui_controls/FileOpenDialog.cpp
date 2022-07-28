@@ -53,6 +53,8 @@
 #undef GetCurrentDirectory
 #endif
 
+#include <time.h>
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include <tier0/memdbgon.h>
 
@@ -1238,7 +1240,7 @@ void FileOpenDialog::PopulateFileList()
 
 					kv->SetString( "attributes", g_pFullFileSystem->IsFileWritable( pFullPath )? "" : "R" );
 
-					long fileModified = g_pFullFileSystem->GetFileTime( pFullPath );
+					time_t fileModified = g_pFullFileSystem->GetFileTime( pFullPath );
 					g_pFullFileSystem->FileTimeToString( pszFileModified, sizeof( pszFileModified ), fileModified );
 					kv->SetString( "modified", pszFileModified );
 
@@ -1277,7 +1279,7 @@ void FileOpenDialog::PopulateFileList()
 			
 			kv->SetString( "attributes", g_pFullFileSystem->IsFileWritable( pFullPath )? "" : "R" );
 
-			long fileModified = g_pFullFileSystem->GetFileTime( pFullPath );
+			time_t fileModified = g_pFullFileSystem->GetFileTime( pFullPath );
 			g_pFullFileSystem->FileTimeToString( pszFileModified, sizeof( pszFileModified ), fileModified );
 			kv->SetString( "modified", pszFileModified );
 

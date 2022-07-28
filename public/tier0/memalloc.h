@@ -28,7 +28,9 @@
 #endif
 
 // Undefine this if using a compiler lacking threadsafe RTTI (like vc6)
+#ifndef COMPILER_MSVC
 #define MEM_DEBUG_CLASSNAME 1
+#endif
 
 #include <stddef.h>
 #if defined( OSX )

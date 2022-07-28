@@ -19,6 +19,7 @@ def build(bld):
 		'../public/filesystem_init.cpp',
 		'launcher.cpp',
 		'reslistgenerator.cpp',
+		'../public/tier0/memoverride.cpp'
 	]
 
 	if bld.env.DEST_OS == 'android':

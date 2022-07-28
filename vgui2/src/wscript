@@ -34,14 +34,14 @@ def build(bld):
 		'vgui_key_translation.cpp',
 		'VPanel.cpp',
 		'VPanelWrapper.cpp',
-		'keyrepeat.cpp'
+		'keyrepeat.cpp',
+		'../../public/tier0/memoverride.cpp'
 	]
 
 	if bld.env.DEST_OS == 'win32':
 		source += [
 			'Surface.cpp',
-			'System.cpp',
-			'../../public/tier0/memoverride.cpp'
+			'System.cpp'
 		]
 	else:
 		source += [

@@ -828,7 +828,7 @@ bool ConvertToATIxN(  const uint8 *src, ImageFormat srcImageFormat,
 					  uint8 *dst, ImageFormat dstImageFormat,
 					  int width, int height, int srcStride, int dstStride )
 {
-#if !defined( _X360 ) && !defined( POSIX )
+#if 0
 
 	// from rgb(a) to ATIxN
 	if( srcStride != 0 || dstStride != 0 )
@@ -877,7 +877,7 @@ bool ConvertToDXTLegacy(  const uint8 *src, ImageFormat srcImageFormat,
  						  uint8 *dst, ImageFormat dstImageFormat, 
 					      int width, int height, int srcStride, int dstStride )
 {
-#if !defined( _X360 ) && !defined( POSIX )
+#if 0
 	// from rgb(a) to dxtN
 	if( srcStride != 0 || dstStride != 0 )
 		return false;

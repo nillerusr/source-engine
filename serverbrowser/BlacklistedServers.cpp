@@ -67,9 +67,9 @@ int __cdecl BlacklistedAtCompare(ListPanel *pPanel, const ListPanelItem &p1, con
 	if ( !pSvr1 && !pSvr2 )
 		return 0;
 
-	if ( pSvr1->m_ulTimeBlacklistedAt > pSvr2->m_ulTimeBlacklistedAt )
+	if ( pSvr1->m_ullTimeBlacklistedAt > pSvr2->m_ullTimeBlacklistedAt )
 		return -1;
-	if ( pSvr1->m_ulTimeBlacklistedAt < pSvr2->m_ulTimeBlacklistedAt )
+	if ( pSvr1->m_ullTimeBlacklistedAt < pSvr2->m_ullTimeBlacklistedAt )
 		return 1;
 
 	return 0;
@@ -148,19 +148,19 @@ bool CBlacklistedServers::AddServersFromFile( const char *pszFilename, bool bRes
 	{
 		const char *pszName = pData->GetString( "name" );
 
-		uint32 ulDate = pData->GetInt( "date" );
+		uint64 ullDate = pData->GetUint64( "date" );
 		if ( bResetTimes )
 		{
 			time_t today;
 			time( &today );
-			ulDate = today;
+			ullDate = (uint64)today;
 		}
 
 		const char *pszNetAddr = pData->GetString( "addr" );
 
 		if ( pszNetAddr && pszNetAddr[0] && pszName && pszName[0] )
 		{
-			blacklisted_server_t *blackServer = m_blackList.AddServer( pszName, pszNetAddr, ulDate );
+			blacklisted_server_t *blackServer = m_blackList.AddServer( pszName, pszNetAddr, ullDate );
 
 			UpdateBlacklistUI( blackServer );
 		}
@@ -256,7 +256,7 @@ void CBlacklistedServers::UpdateBlacklistUI( blacklisted_server_t *blackServer )
 
 	// construct a time string for blacklisted time
 	struct tm *now;
-	now = localtime( (time_t*)&blackServer->m_ulTimeBlacklistedAt );
+	now = localtime( (time_t*)&blackServer->m_ullTimeBlacklistedAt );
 	if ( now ) 
 	{
 		char buf[64];

@@ -29,12 +29,12 @@ def build(bld):
 		'asanstubs.cpp',
 		'TextureDictionary.cpp',
 		'../vgui2/src/vgui_key_translation.cpp',
-		'../public/vgui_controls/vgui_controls.cpp'
+		'../public/vgui_controls/vgui_controls.cpp',
+		'../public/tier0/memoverride.cpp'
 	]
 
 	if bld.env.DEST_OS == 'win32':
 		source += [
-			'../public/tier0/memoverride.cpp',
 			'memorybitmap.cpp'
 		]
 

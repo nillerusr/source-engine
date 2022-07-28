@@ -56,6 +56,10 @@ def build(bld):
 			'vcrmode.cpp',
 			'win32consoleio.cpp'
 		]
+		if bld.env.DEST_CPU == 'amd64':
+			source += [
+				'InterlockedCompareExchange128.masm'
+			]
 	else:
 		source += [
 			'cpu_posix.cpp',

@@ -1176,7 +1176,7 @@ InitReturnVal_t CEngineAPI::Init()
 	m_bRunningSimulation = false;
 
 	// Initialize the FPU control word
-#if defined(WIN32) && !defined( SWDS ) && !defined( _X360 ) && !defined (__arm__)
+#if defined(WIN32) && !defined( SWDS ) && !defined( _X360 ) && !defined (__arm__) && !defined(PLATFORM_WINDOWS_PC64)
 	_asm
 	{
 		fninit

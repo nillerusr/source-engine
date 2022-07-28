@@ -419,7 +419,7 @@ void CEP2GameStats::Event_SaveGame( void )
 	Q_strlower( name );
 	Q_FixSlashes( name );
 
-	unsigned int uFileTime = filesystem->GetFileTime( name, "GAME" );
+	time_t uFileTime = filesystem->GetFileTime( name, "GAME" );
 	// Latch off previous
 	map->m_SaveGameInfo.Latch( name, uFileTime );
 
@@ -471,7 +471,7 @@ void CEP2GameStats::Event_LoadGame( void )
 	if ( pSaveGameInfo->m_nCurrentSaveFileTime == 0 || 
 		pSaveGameInfo->m_sCurrentSaveFile != name )
 	{
-		unsigned int uFileTime = filesystem->GetFileTime( name, "GAME" );
+		time_t uFileTime = filesystem->GetFileTime( name, "GAME" );
 
 		// Latch off previous
 		StatsLog( "Relatching save game file due to time or filename change (%s : %u)\n", name, uFileTime );

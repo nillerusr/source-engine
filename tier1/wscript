@@ -15,7 +15,6 @@ def configure(conf):
 	conf.env.append_unique('DEFINES', ['TIER1_STATIC_LIB=1'])
 
 def build(bld):
-	print(bld)
 	source = [
 		'../utils/lzma/C/LzmaDec.c',
 		'bitbuf.cpp',

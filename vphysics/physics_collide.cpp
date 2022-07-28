@@ -1637,8 +1637,8 @@ void CPhysicsCollision::VCollideLoad( vcollide_t *pOutput, int solidCount, const
 
 	for ( int i = 0; i < solidCount; i++ )
 	{
-		int size;
-		memcpy( &size, pBuffer + position, sizeof(int) );
+		int size = *(int*)(pBuffer + position);
+		// memcpy( &size, pBuffer + position, sizeof(int) );
 		position += sizeof(int);
 
 		char *tmpbuf = new char[size];

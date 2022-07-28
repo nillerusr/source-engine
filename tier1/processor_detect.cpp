@@ -13,6 +13,13 @@ bool CheckSSETechnology(void) { return false; }
 bool CheckSSE2Technology(void) { return false; }
 bool Check3DNowTechnology(void) { return false; }
 
+#elif defined( _WIN32 ) && defined( PLATFORM_64BITS )
+
+bool CheckMMXTechnology(void) { return true; }
+bool CheckSSETechnology(void) { return true; }
+bool CheckSSE2Technology(void) { return true; }
+bool Check3DNowTechnology(void) { return false; }
+
 #elif defined( _WIN32 ) && !defined( _X360 )
 
 #pragma optimize( "", off )

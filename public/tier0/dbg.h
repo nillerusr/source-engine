@@ -358,6 +358,18 @@ DBG_INTERFACE struct SDL_Window * GetAssertDialogParent();
 #define  VerifyEquals( _exp, _expectedValue )           	AssertEquals( _exp, _expectedValue )
 #define  DbgVerify( _exp )           						Assert( _exp )
 
+#ifdef _DEBUG
+#define DbgAssert( _exp )	Assert( _exp )
+#else
+#define DbgAssert( _exp )	((void)0)
+#endif
+
+#ifdef _DEBUG
+#define DbgAssert( _exp )	Assert( _exp )
+#else
+#define DbgAssert( _exp )	((void)0)
+#endif
+
 #define  AssertMsg1( _exp, _msg, a1 )									AssertMsg( _exp, _msg, a1 )
 #define  AssertMsg2( _exp, _msg, a1, a2 )								AssertMsg( _exp, _msg, a1, a2 )
 #define  AssertMsg3( _exp, _msg, a1, a2, a3 )							AssertMsg( _exp, _msg, a1, a2, a3 )
@@ -383,6 +395,7 @@ DBG_INTERFACE struct SDL_Window * GetAssertDialogParent();
 #define	 VerifyMsg3( _exp, _msg, a1, a2, a3 )				(_exp)
 #define  VerifyEquals( _exp, _expectedValue )           	(_exp)
 #define  DbgVerify( _exp )									(_exp)
+#define	 DbgAssert( _exp )									((void)0)
 
 #define  AssertMsg1( _exp, _msg, a1 )									((void)0)
 #define  AssertMsg2( _exp, _msg, a1, a2 )								((void)0)
@@ -396,6 +409,9 @@ DBG_INTERFACE struct SDL_Window * GetAssertDialogParent();
 #define  AssertMsg9( _exp, _msg, a1, a2, a3, a4, a5, a6, a7, a8, a9 )	((void)0)
 
 #endif // DBGFLAG_ASSERT
+
+// Source2 compatibility macro
+#define AssertDbg( X ) DbgAssert( X )
 
 // The Always version of the assert macros are defined even when DBGFLAG_ASSERT is not, 
 // so they will be available even in release.

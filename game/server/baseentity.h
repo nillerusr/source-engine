@@ -1108,7 +1108,7 @@ public:
 
 	ENTITYFUNCPTR TouchSet( ENTITYFUNCPTR func, char *name ) 
 	{ 
-#ifdef GNUC
+#ifdef PLATFORM_64BITS
 		COMPILE_TIME_ASSERT( sizeof(func) == 8 );
 #else
 		COMPILE_TIME_ASSERT( sizeof(func) == 4 );
@@ -1119,7 +1119,7 @@ public:
 	}
 	USEPTR	UseSet( USEPTR func, char *name ) 
 	{ 
-#ifdef GNUC
+#ifdef PLATFORM_64BITS
 		COMPILE_TIME_ASSERT( sizeof(func) == 8 );
 #else
 		COMPILE_TIME_ASSERT( sizeof(func) == 4 );
@@ -1130,7 +1130,7 @@ public:
 	}
 	ENTITYFUNCPTR	BlockedSet( ENTITYFUNCPTR func, char *name ) 
 	{ 
-#ifdef GNUC
+#ifdef PLATFORM_64BITS
 		COMPILE_TIME_ASSERT( sizeof(func) == 8 );
 #else
 		COMPILE_TIME_ASSERT( sizeof(func) == 4 );

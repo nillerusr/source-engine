@@ -31,6 +31,11 @@ def build(bld):
 		source += [
 			'processutils.cpp'
 		]
+		if bld.env.DEST_CPU == 'amd64':
+			source += [
+				'coroutine_win64.masm',
+				'GetStackPtr64.masm'
+			]
 
 	includes = [
 		'.',

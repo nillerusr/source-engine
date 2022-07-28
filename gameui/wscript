@@ -93,11 +93,11 @@ def build(bld):
 		'OptionsSubPortal.cpp',
 		'OptionsSubVideo.cpp',
 		'OptionsSubVoice.cpp',
+		'../public/tier0/memoverride.cpp',
 	]
 
 	if bld.env.DEST_OS == 'win32':
 		source += [
-			'../public/tier0/memoverride.cpp',
 			'LogoFile.cpp',
 			'ChangeGameDialog.cpp',
 			'OptionsSubHaptics.cpp'

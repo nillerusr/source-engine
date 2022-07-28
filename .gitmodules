@@ -6,4 +6,4 @@
 	url = https://github.com/nillerusr/source-physics
 [submodule "lib"]
 	path = lib
-	url = https://github.com/nillerusr/source-engine-libs
+	url = https://github.com/nillerusr/source-engine-libs.git

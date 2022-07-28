@@ -74,7 +74,8 @@ projects={
 		'vphysics',
 		'vpklib',
 		'vstdlib',
-		'vtf'
+		'vtf',
+		'unicode'
 	],
 	'dedicated': [
 		'appframework',
@@ -248,10 +249,13 @@ def configure(conf):
 	# TODO: wrapper around bld.stlib, bld.shlib and so on?
 	conf.env.MSVC_SUBSYSTEM = 'WINDOWS,5.01'
 	conf.env.MSVC_TARGETS = ['x86'] # explicitly request x86 target for MSVC
+	if conf.options.ALLOW64:
+		conf.env.MSVC_TARGETS = ['x64']
 	if sys.platform == 'win32':
-		conf.load('msvc_pdb msdev msvs')
+		conf.load('msvc_pdb_ext msdev msvs')
 	conf.load('subproject xcompile compiler_c compiler_cxx gitversion clang_compilation_database strip_on_install waf_unit_test enforce_pic')
-
+	if conf.env.DEST_OS == 'win32' and conf.env.DEST_CPU == 'amd64':
+		conf.load('masm')
 	define_platform(conf)
 
 	if conf.env.TOGLES:
@@ -265,7 +269,7 @@ def configure(conf):
 	if conf.options.OPUS or conf.env.DEST_OS == 'android':
 		projects['game'] += ['engine/voice_codecs/opus']
 
-	if conf.env.DEST_OS in ['win32', 'linux', 'darwin'] and conf.env.DEST_CPU == 'x86_64':
+	if conf.env.DEST_OS in ['win32', 'linux', 'darwin'] and conf.env.DEST_CPU in ['x86_64', 'amd64']:
 		conf.env.BIT32_MANDATORY = not conf.options.ALLOW64
 		if conf.env.BIT32_MANDATORY:
 			Logs.info('WARNING: will build engine for 32-bit target')
@@ -332,7 +336,7 @@ def configure(conf):
 	else:
 		cflags += [
 			'/I'+os.path.abspath('.')+'/thirdparty/SDL',
-			'/arch:SSE',
+			'/arch:SSE' if conf.env.DEST_CPU == 'x86' else '/arch:AVX',
 			'/GF',
 			'/Gy',
 			'/fp:fast',
@@ -358,9 +362,9 @@ def configure(conf):
 			]
 
 		linkflags += [
-			'/LIBPATH:'+os.path.abspath('.')+'/lib/public',
-			'/LIBPATH:'+os.path.abspath('.')+'/lib/common/win32/2015/release',
-			'/LIBPATH:'+os.path.abspath('.')+'/dx9sdk/lib'
+			'/LIBPATH:'+os.path.abspath('.')+'/lib/win32/public/'+conf.env.DEST_CPU+'/',
+			'/LIBPATH:'+os.path.abspath('.')+'/lib/win32/common/'+conf.env.DEST_CPU+'/2015/release',
+			'/LIBPATH:'+os.path.abspath('.')+'/dx9sdk/lib/'+conf.env.DEST_CPU+'/'
 		]
 		
 	# And here C++ flags starts to be treated separately
@@ -381,7 +385,7 @@ def configure(conf):
 		conf.define('MSVC', 1)
 		if conf.env.DEST_CPU == 'x86':
 			conf.define('COMPILER_MSVC32', 1)
-		elif conf.env.DEST_CPU == 'x86_64':
+		elif conf.env.DEST_CPU in ['x86_64', 'amd64']:
 			conf.define('COMPILER_MSVC64', 1)
 
 	if conf.env.COMPILER_CC != 'msvc':
@@ -400,7 +404,6 @@ def configure(conf):
 	conf.env.append_unique('LINKFLAGS', linkflags)
 	conf.env.append_unique('INCLUDES', [os.path.abspath('common/')])
 
-	
 	if conf.env.DEST_OS != 'android':
 		if conf.env.DEST_OS != 'win32':
 			if conf.options.SDL:
@@ -467,8 +470,8 @@ def configure(conf):
 				conf.check_cc(lib = i)
 
 		conf.check(lib='libz', uselib_store='ZLIB')
-		conf.check(lib='nvtc', uselib_store='NVTC')
-		conf.check(lib='ati_compress_mt_vc10', uselib_store='ATI_COMPRESS_MT_VC10')
+		# conf.check(lib='nvtc', uselib_store='NVTC')
+		# conf.check(lib='ati_compress_mt_vc10', uselib_store='ATI_COMPRESS_MT_VC10')
 		conf.check(lib='SDL2', uselib_store='SDL2')
 		conf.check(lib='libjpeg', uselib_store='JPEG')
 		conf.check(lib='libpng', uselib_store='PNG')
@@ -476,6 +479,8 @@ def configure(conf):
 		conf.check(lib='d3d9', uselib_store='D3D9')
 		conf.check(lib='dsound', uselib_store='DSOUND')
 		conf.check(lib='dxguid', uselib_store='DXGUID')
+		if conf.options.OPUS:
+			conf.check(lib='opus', uselib_store='OPUS')
 
 		# conf.multicheck(*a, run_all_tests = True, mandatory = True)
 

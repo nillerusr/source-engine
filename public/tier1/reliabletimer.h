@@ -13,7 +13,7 @@
 #include "tier1/tier1.h"
 #include "tier1/strtools.h"
 
-#define DbgAssert Assert
+// #define DbgAssert Assert
 #define kMILLION (1000000)
 #define kTHOUSAND (1000)
 
