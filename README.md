@@ -10,6 +10,7 @@ Discord: https://discord.gg/hZRB7WMgGw
 - [x] replace current buildsystem with waf
 - [x] rewrite achivement system( to work without steam )
 - [x] 64-bit support
+- [x] VTF 7.5 support
 - [ ] improve performance
 - [ ] fixing bugs
 - [ ] dxvk-native support
