@@ -440,7 +440,7 @@ bool GetVTFPreload360Data( const char *pDebugName, CUtlBuffer &fileBufferIn, CUt
 
 // version number for the disk texture cache
 #define VTF_MAJOR_VERSION 7
-#define VTF_MINOR_VERSION 4
+#define VTF_MINOR_VERSION 5
 
 //-----------------------------------------------------------------------------
 // !!!!CRITICAL!!!! BEFORE YOU CHANGE THE FORMAT

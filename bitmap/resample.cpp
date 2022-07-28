@@ -784,6 +784,50 @@ bool ResampleRGB323232F( const ResampleInfo_t& info )
 	return true;
 }
 
+bool ResampleRGBA32323232F( const ResampleInfo_t& info )
+{
+	// HDRFIXME: This is some lame shit right here. (We need to get NICE working, etc, etc.)
+
+	// Make sure everything is power of two.
+	Assert( ( info.m_nSrcWidth & ( info.m_nSrcWidth - 1 ) ) == 0 );
+	Assert( ( info.m_nSrcHeight & ( info.m_nSrcHeight - 1 ) ) == 0 );
+	Assert( ( info.m_nDestWidth & ( info.m_nDestWidth - 1 ) ) == 0 );
+	Assert( ( info.m_nDestHeight & ( info.m_nDestHeight - 1 ) ) == 0 );
+
+	// Make sure that we aren't upscaling the image. . .we don't support that very well.
+	Assert( info.m_nSrcWidth >= info.m_nDestWidth );
+	Assert( info.m_nSrcHeight >= info.m_nDestHeight );
+
+	int nSampleWidth = info.m_nSrcWidth / info.m_nDestWidth;
+	int nSampleHeight = info.m_nSrcHeight / info.m_nDestHeight;
+
+	float *pSrc = ( float * )info.m_pSrc;
+	float *pDst = ( float * )info.m_pDest;
+	for( int y = 0; y < info.m_nDestHeight; y++ )
+	{
+		for( int x = 0; x < info.m_nDestWidth; x++ )
+		{
+			float accum[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+			for( int nSampleY = 0; nSampleY < nSampleHeight; nSampleY++ )
+			{
+				for( int nSampleX = 0; nSampleX < nSampleWidth; nSampleX++ )
+				{
+					accum[0] += pSrc[((x*nSampleWidth+nSampleX)+(y*nSampleHeight+nSampleY)*info.m_nSrcWidth)*4+0];
+					accum[1] += pSrc[((x*nSampleWidth+nSampleX)+(y*nSampleHeight+nSampleY)*info.m_nSrcWidth)*4+1];
+					accum[2] += pSrc[((x*nSampleWidth+nSampleX)+(y*nSampleHeight+nSampleY)*info.m_nSrcWidth)*4+2];
+					accum[3] += pSrc[((x*nSampleWidth+nSampleX)+(y*nSampleHeight+nSampleY)*info.m_nSrcWidth)*4+3];
+				}
+			}
+			for( int i = 0; i < 4; i++ )
+			{
+				accum[i] /= ( nSampleWidth * nSampleHeight );
+				pDst[(x+y*info.m_nDestWidth)*4+i] = accum[i];
+			}
+		}
+	}
+	return true;
+}
+
 //-----------------------------------------------------------------------------
 // Generates mipmap levels
 //-----------------------------------------------------------------------------
