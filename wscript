@@ -155,6 +155,7 @@ def define_platform(conf):
 		conf.env.append_unique('DEFINES', ['TOGLES'])
 
 	if conf.options.SDL:
+		conf.env.SDL = 1
 		conf.define('USE_SDL', 1)
 
 	if conf.options.ALLOW64:
