@@ -35,3 +35,13 @@ jobs:
     - name: Build android-armv7a
       run: |
         scripts/build-android-armv7a.sh
+
+  build-windows-i386:
+    runs-on: windows-2016
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build windows-i386
+      run: |
+        ./waf.bat configure -T debug
+        ./waf.bat build
