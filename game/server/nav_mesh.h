@@ -73,6 +73,7 @@ public:
 	bool operator()( CBaseCombatCharacter *actor )
 	{
 		actor->OnNavAreaRemoved( m_deadArea );
+		return true;
 	}
 };
 
