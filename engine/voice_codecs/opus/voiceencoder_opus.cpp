@@ -97,6 +97,11 @@ bool VoiceEncoder_Opus::Init( int quality, int &rawFrameSize, int &encodedFrameS
 
 	m_Mode = opus_custom_mode_create( g_OpusOpts[m_iVersion].iSampleRate, g_OpusOpts[m_iVersion].iRawFrameSize, &iError );
 
+	if ( iError != 0 ) {
+		Msg( "Opus init failed with error %d", iError );
+		return false;
+	}
+
 	m_EncoderState = opus_custom_encoder_create( m_Mode, CHANNELS, NULL);
 	m_DecoderState = opus_custom_decoder_create( m_Mode, CHANNELS, NULL);
 

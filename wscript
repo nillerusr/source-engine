@@ -138,6 +138,7 @@ def define_platform(conf):
 	conf.env.DEDICATED = conf.options.DEDICATED
 	conf.env.TOGLES = conf.options.TOGLES
 	conf.env.GL = conf.options.GL
+	conf.env.OPUS = conf.options.OPUS
 
 	if conf.options.DEDICATED:
 		conf.options.SDL = False
@@ -506,6 +507,9 @@ def build(bld):
 	if bld.env.DEST_OS == 'win32':
 		projects['game'] += ['utils/bzip2']
 		projects['dedicated'] += ['utils/bzip2']
+
+	if bld.env.OPUS or bld.env.DEST_OS == 'android':
+		projects['game'] += ['engine/voice_codecs/opus']
 
 	if bld.env.DEDICATED:
 		bld.add_subproject(projects['dedicated'])
