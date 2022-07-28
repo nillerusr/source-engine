@@ -39,9 +39,7 @@ void FastCopy( byte *pDest, const byte *pSrc, size_t nBytes )
 		int nBytesFull = nBytes - ( nBytes % BYTES_PER_FULL );
 		for ( byte *pLimit = pDest + nBytesFull; pDest < pLimit; pDest += BYTES_PER_FULL, pSrc += BYTES_PER_FULL )
 		{
-			#ifdef PLATFORM_64BITS
-			memcpy( pDest, pSrc, BYTES_PER_FULL);
-			#else
+			#ifdef __i386__
 			__asm
 			{
 				mov esi, pSrc
@@ -65,6 +63,8 @@ void FastCopy( byte *pDest, const byte *pSrc, size_t nBytes )
 				movntps [edi + 96], xmm6
 				movntps [edi + 112], xmm7
 			}
+			#else
+			memcpy( pDest, pSrc, BYTES_PER_FULL);
 			#endif
 		}
 		nBytes -= nBytesFull;
