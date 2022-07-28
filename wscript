@@ -347,7 +347,7 @@ def configure(conf):
 		
 		if conf.options.BUILD_TYPE == 'debug':
 			linkflags += [
-				'/INCREMENTAL:NO',
+				'/INCREMENTAL',
 				'/NODEFAULTLIB:libc',
 				'/NODEFAULTLIB:libcd',
 				'/NODEFAULTLIB:libcmt'
