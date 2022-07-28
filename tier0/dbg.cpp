@@ -13,6 +13,7 @@
 #include "tier0/valve_off.h"
 #define WIN_32_LEAN_AND_MEAN
 #include <windows.h>				// Currently needed for IsBadReadPtr and IsBadWritePtr
+#include <time.h>
 #pragma comment(lib,"user32.lib")	// For MessageBox
 #endif
 

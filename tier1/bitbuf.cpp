@@ -42,14 +42,14 @@ inline unsigned int CountTrailingZeros( unsigned int elem )
 
 inline unsigned int CountLeadingZeros(unsigned int x)
 {
-	uint32 firstBit;
+	unsigned long firstBit;
 	if ( _BitScanReverse(&firstBit,x) )
 		return 31 - firstBit;
 	return 32;
 }
 inline unsigned int CountTrailingZeros(unsigned int elem)
 {
-	uint32 out;
+	unsigned long out;
 	if ( _BitScanForward(&out, elem) )
 		return out;
 	return 32;

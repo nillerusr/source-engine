@@ -83,6 +83,8 @@ def build(bld):
 	defines = []
 
 	libs = []
+	if bld.env.DEST_OS == 'win32':
+		libs += ['RPCRT4']
 
 	bld.stlib(
 		source   = source,

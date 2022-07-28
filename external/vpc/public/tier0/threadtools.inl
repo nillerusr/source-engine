@@ -515,7 +515,7 @@ INLINE_ON_PS3 void* CThread::ThreadProc(LPVOID pv)
 #if defined( POSIX ) || defined( _PS3 )
 	ThreadInit_t *pInit = reinterpret_cast<ThreadInit_t*>(pv);
 #else
-	std::auto_ptr<ThreadInit_t> pInit((ThreadInit_t *)pv);
+	std::unique_ptr<ThreadInit_t> pInit((ThreadInit_t *)pv);
 #endif
 
 #ifdef _X360
