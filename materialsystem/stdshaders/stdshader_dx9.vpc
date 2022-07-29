@@ -223,4 +223,27 @@ $Project "stdshader_dx9"
 	$Folder	"Link Libraries" [$WIN32]
 	{
 		$File	"$SRCDIR\dx9sdk\lib\d3dx9.lib"
-		$File	"$SRCDIR\dx9sdk\lib\x64\d3dx9.lib"
+	}
+
+	$Folder "Link Libraries" 
+	{
+        $Lib	mathlib
+        $Lib	shaderlib
+    }
+
+	$File	"$SRCDIR\devtools\bin\vsh_prep.pl"
+	$File	"$SRCDIR\devtools\bin\psh_prep.pl"
+	$File	"$SRCDIR\devtools\bin\fxc_prep.pl"
+	$File	"$SRCDIR\devtools\bin\updateshaders.pl"
+	$File	"$SRCDIR\devtools\bin\copyshaders.pl"
+	$File	"$SRCDIR\devtools\bin\p4autocheckout.pl"
+	$File	"$SRCDIR\devtools\bin\p4revertshadertargets.pl"
+	$File	"$SRCDIR\devtools\bin\valve_perl_helpers.pl"
+	$File	"$SRCDIR\devtools\bin\checkshaderchecksums.pl"
+	$File	"buildallshaders.bat"
+	$File	"buildshaders.bat"
+
+	$Shaders	"stdshader_dx9_20b.txt"
+	$Shaders	"stdshader_dx9_30.txt"
+	//$Shaders	"stdshader_dx10.txt"
+}
