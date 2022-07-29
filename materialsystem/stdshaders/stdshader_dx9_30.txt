@@ -52,3 +52,5 @@ weapon_sheen_pass_vs20.fxc
 weapon_sheen_pass_ps2x.fxc
 depthwrite_ps2x.fxc
 depthwrite_vs20.fxc
+vertexlitPBR_ps30.fxc
+vertexlitPBR_vs30.fxc

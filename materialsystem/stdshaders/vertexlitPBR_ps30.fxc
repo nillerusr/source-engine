@@ -1,0 +1,350 @@
+//===================== Copyright (c) Valve Corporation. All Rights Reserved. ======================
+//
+// Example pixel shader that can be applied to models
+//
+//==================================================================================================
+
+
+// STATIC: "CONVERT_TO_SRGB"			"0..0"
+// STATIC: "FLASHLIGHT"					"0..1"
+// STATIC: "CUBEMAP"					"0..1"
+// STATIC: "CUBEMAP_SPHERE_LEGACY"		"0..1"
+// STATIC: "SMOOTHNESS"					"0..1"
+
+// DYNAMIC: "WRITEWATERFOGTODESTALPHA"  "0..1"
+// DYNAMIC: "PIXELFOGTYPE"				"0..1"
+// DYNAMIC: "NUM_LIGHTS"				"0..4"
+// DYNAMIC: "WRITE_DEPTH_TO_DESTALPHA"	"0..1"
+// DYNAMIC: "FLASHLIGHTSHADOWS"			"0..1"
+// DYNAMIC: "LIGHTMAP"					"0..1"
+// DYNAMIC: "LIGHT_PREVIEW"				"0..2"
+
+// We don't care about those in the editor
+// SKIP: ($CUBEMAP || FLASHLIGHT ) && $LIGHT_PREVIEW
+
+// SKIP: ($PIXELFOGTYPE == 0) && ($WRITEWATERFOGTODESTALPHA != 0)
+
+// We don't care about flashlight depth unless the flashlight is on
+// SKIP: ( $FLASHLIGHT == 0 ) && ( $FLASHLIGHTSHADOWS == 1 )
+
+// SKIP: ( $CUBEMAP == 1 ) && ( $FLASHLIGHT == 1 )
+
+// SKIP: $CUBEMAP_SPHERE_LEGACY && ($CUBEMAP == 0)
+
+// SKIP: ($CUBEMAP || FLASHLIGHT )
+
+#include "common_flashlight_fxc.h"
+#include "shader_constant_register_map.h"
+#include "common_pbr.h"
+
+#ifdef NV3X
+  #define PSHADER_VECT_SCALE 20.0
+  #define VSHADER_VECT_SCALE (1.0 / (PSHADER_VECT_SCALE) )
+#else
+  #define PSHADER_VECT_SCALE 1.0
+  #define VSHADER_VECT_SCALE 1.0
+#endif
+
+const float4 g_DiffuseModulation			: register( PSREG_DIFFUSE_MODULATION );
+const float4 g_ShadowTweaks					: register( PSREG_ENVMAP_TINT__SHADOW_TWEAKS );
+const float3 cAmbientCube[6]				: register( PSREG_AMBIENT_CUBE );
+const float4 g_EyePos					: register( PSREG_EYEPOS_SPEC_EXPONENT );
+const float4 g_FogParams					: register( PSREG_FOG_PARAMS );
+#if FLASHLIGHT == 1
+sampler ShadowDepthSampler		: register( s4 );	// Flashlight shadow depth map sampler
+sampler NormalizeRandRotSampler	: register( s5 );	// Normalization / RandomRotation samplers
+sampler FlashlightSampler		: register( s6 );	// Flashlight cookie
+
+const float4 g_FlashlightAttenuationFactors	: register( PSREG_FLASHLIGHT_ATTENUATION );			// On non-flashlight pass
+const float4 g_FlashlightPos_RimBoost		: register( PSREG_FLASHLIGHT_POSITION_RIM_BOOST );
+const float4 g_FlashlightColor				: register( PSREG_FLASHLIGHT_COLOR );
+const float4x4 g_FlashlightWorldToTexture	: register( PSREG_FLASHLIGHT_TO_WORLD_TEXTURE );
+#endif
+PixelShaderLightInfo cLightInfo[3]			: register( PSREG_LIGHT_INFO_ARRAY );				// 2 registers each - 6 registers total (4th light spread across w's)
+
+#define g_FlashlightPos					g_FlashlightPos_RimBoost.xyz
+
+sampler BaseTextureSampler		: register( s0 );	// Base map, selfillum in alpha
+sampler RoughnessSampler		: register( s1 );	// Roughness
+sampler MetallicSampler			: register( s2 );	// Metallic
+sampler BumpmapSampler			: register( s3 );	// Bump map
+
+
+
+sampler EnvmapSampler			: register( s7 );	// for IBL
+sampler BRDFSampler				: register( s8 );	// for IBL
+sampler AOSampler				: register( s9 );	// AO
+sampler EmissiveSampler			: register( s10 );	// Emissive map
+sampler LightmapSampler			: register( s11 );	// Lightmap texture from the engine
+
+//DoPBRLight(float3 vWorldPos, float3 vWorldNormal, float3 albedo, float3 vPosition, float3 vColor, float3 vEye, float atten_radius, float3 metallic, float3 roughness)
+float3 DoPBRLights(float3 vEye, float3 vWorldNormal, float3 vWorldPos, float4 albedo, float4 atten, float3 lightmap, float metallic, float roughness)
+{
+	float3 linearColor = 0.0;
+
+#if LIGHTMAP ==0
+	if ( NUM_LIGHTS > 0 )
+	{
+		linearColor += DoPBRLight(vWorldPos, vWorldNormal, albedo, cLightInfo[0].pos, cLightInfo[0].color.rgb, vEye, atten.x, metallic, roughness);
+		if ( NUM_LIGHTS > 1 )
+		{
+			linearColor += DoPBRLight( vWorldPos, vWorldNormal, albedo, cLightInfo[1].pos, cLightInfo[1].color.rgb, vEye, atten.x, metallic, roughness);
+			if ( NUM_LIGHTS > 2 )
+			{
+				linearColor += DoPBRLight( vWorldPos, vWorldNormal, albedo, cLightInfo[2].pos, cLightInfo[2].color.rgb, vEye, atten.x, metallic, roughness);
+				if ( NUM_LIGHTS > 3 )
+				{
+					// Unpack the 4th light's data from tight constant packing
+					float3 vLight3Color = float3( cLightInfo[0].color.w, cLightInfo[0].pos.w, cLightInfo[1].color.w );
+					float3 vLight3Pos = float3( cLightInfo[1].pos.w, cLightInfo[2].color.w, cLightInfo[2].pos.w );
+					linearColor += DoPBRLight( vWorldPos, vWorldNormal, albedo, vLight3Pos, vLight3Color, vEye, atten.x, metallic, roughness);
+				}
+			}
+		}
+	}
+	#else
+	if ( NUM_LIGHTS > 0 )
+	{
+		float lightmap_atten = dot(lightmap, cLightInfo[0].color.rgb);
+		lightmap_atten = lightmap_atten * lightmap_atten * 2.0f;
+		linearColor += DoPBRLight(vWorldPos, vWorldNormal, albedo, cLightInfo[0].pos, cLightInfo[0].color.rgb, vEye, lightmap_atten, metallic, roughness);
+		if ( NUM_LIGHTS > 1 )
+		{
+			lightmap_atten = dot(lightmap, cLightInfo[1].color.rgb);
+			lightmap_atten = lightmap_atten * lightmap_atten * 2.0f;
+			linearColor += DoPBRLight( vWorldPos, vWorldNormal, albedo, cLightInfo[1].pos, cLightInfo[1].color.rgb, vEye, lightmap_atten, metallic, roughness);
+			if ( NUM_LIGHTS > 2 )
+			{
+				lightmap_atten = dot(lightmap, cLightInfo[2].color.rgb);
+				lightmap_atten = lightmap_atten * lightmap_atten * 2.0f;
+				linearColor += DoPBRLight( vWorldPos, vWorldNormal, albedo, cLightInfo[2].pos, cLightInfo[2].color.rgb, vEye,lightmap_atten, metallic, roughness);
+				if ( NUM_LIGHTS > 3 )
+				{
+					// Unpack the 4th light's data from tight constant packing
+					float3 vLight3Color = float3( cLightInfo[0].color.w, cLightInfo[0].pos.w, cLightInfo[1].color.w );
+					float3 vLight3Pos = float3( cLightInfo[1].pos.w, cLightInfo[2].color.w, cLightInfo[2].pos.w );
+					lightmap_atten = dot(lightmap, vLight3Color);
+					lightmap_atten = lightmap_atten * lightmap_atten * 2.0f;
+					linearColor += DoPBRLight( vWorldPos, vWorldNormal, albedo, vLight3Pos, vLight3Color, vEye, lightmap_atten, metallic, roughness);
+				}
+			}
+		}
+	}
+	#endif
+
+	return linearColor;
+}
+
+// https://www.unrealengine.com/en-US/blog/physically-based-shading-on-mobile
+half3 EnvBRDFApprox( half3 SpecularColor, half Roughness, half NoV )
+{
+	const half4 c0 = { -1, -0.0275, -0.572, 0.022 };
+	const half4 c1 = { 1, 0.0425, 1.04, -0.04 };
+	half4 r = Roughness * c0 + c1;
+	half a004 = min( r.x * r.x, exp2( -9.28 * NoV ) ) * r.x + r.y;
+	half2 AB = half2( -1.04, 1.04 ) * a004 + r.zw;
+	return SpecularColor * AB.x + AB.y;
+}
+
+float3 fresnelSchlickRoughness(float cosTheta, float3 F0, float roughness)
+{
+    return F0 + (max(1.0f.xxx - roughness, F0) - F0) * pow(1.0 - cosTheta, 5.0);
+}
+
+float3 DoIBL(float3 vEye, float3 vWorldNormal, float3 vWorldPos, float2 screenUV, float3 albedo, float metallness, float roughness, float3 lightmap)
+{
+    float3 metallic = clamp(metallness, 0.0f, 0.9f);
+#if CUBEMAP == 1
+	float3 V = normalize( vEye - vWorldPos );
+	float3 N = normalize( vWorldNormal );
+
+	//precompute dots
+    float NV = max(0.0,dot(N, V));
+
+	HALF3 reflectVect = 2.0 * NV * N - V;
+	float4 directionPosX = { 1.0f, 0.01f, 0.01f, 12.0f }; float4 directionNegX = {-1.0f, 0.01f, 0.01f, 12.0f };
+	float4 directionPosY = { 0.01f, 1.0f, 0.01f, 12.0f }; float4 directionNegY = { 0.01f,-1.0f, 0.01f, 12.0f };
+	float4 directionPosZ = { 0.01f, 0.01f, 1.0f, 12.0f }; float4 directionNegZ = { 0.01f, 0.01f,-1.0f, 12.0f };
+	float3 lookupPosX = ENV_MAP_SCALE * texCUBElod(EnvmapSampler, directionPosX);
+	float3 lookupNegX = ENV_MAP_SCALE * texCUBElod(EnvmapSampler, directionNegX);
+	float3 lookupPosY = ENV_MAP_SCALE * texCUBElod(EnvmapSampler, directionPosY);
+	float3 lookupNegY = ENV_MAP_SCALE * texCUBElod(EnvmapSampler, directionNegY);
+	float3 lookupPosZ = ENV_MAP_SCALE * texCUBElod(EnvmapSampler, directionPosZ);
+	float3 lookupNegZ = ENV_MAP_SCALE * texCUBElod(EnvmapSampler, directionNegZ);
+	float3 envmapCube[6] = { lookupPosX, lookupNegX, lookupPosY, lookupNegY, lookupPosZ, lookupNegZ };
+
+#if LIGHTMAP == 0
+	float3 irradiance = PixelShaderAmbientLight( N, cAmbientCube );
+#else
+	float3 irradiance = lightmap;
+#endif
+
+	float3 f0 = 0.04f.xxx;
+	f0 = lerp(f0, albedo.rgb, metallic);
+    float3 F = fresnelSchlickRoughness(NV, f0, roughness); // ambient Lighting Fresnel Term 
+
+	half3 BRDF = EnvBRDFApprox(f0, roughness, NV);
+
+	float3 kD = 1.0f.xxx - F;
+	kD *= 1.0 - metallic;	
+
+	float3 diffuseIBL = kD * albedo * irradiance;
+	float3 lookup = ENV_MAP_SCALE * texCUBElod(EnvmapSampler, float4(reflectVect, roughness * 12.0)).rgb;
+	float3 specularIrradiance = lerp(lookup, PixelShaderAmbientLight( reflectVect, envmapCube ), roughness * roughness );
+	float3 specularIBL = BRDF * specularIrradiance;
+    //mix
+    return max(0.0, diffuseIBL + specularIBL);
+#else
+
+	float3 V = normalize( vEye - vWorldPos );
+	float3 N = normalize( vWorldNormal );
+
+	//precompute dots
+    float NV = max(0.0,dot(N, V));
+
+#if LIGHTMAP == 0
+	float3 irradiance = PixelShaderAmbientLight( N, cAmbientCube );
+#else
+	float3 irradiance = lightmap;
+#endif
+
+	float3 f0 = 0.04f.xxx;
+	f0 = lerp(f0, albedo.rgb, metallic);
+    float3 F = fresnelSchlickRoughness(NV, f0, roughness); // ambient Lighting Fresnel Term 
+
+	float3 kD = 1.0f.xxx - F;
+	kD *= 1.0 - metallic;	
+
+	float3 diffuseIBL = kD * albedo * irradiance;
+
+    return max(0.0, diffuseIBL);
+#endif
+}
+
+#if FLASHLIGHT == 1
+float3 DoFlashlight(float3 vWorldNormal, float3 vWorldPos, float2 vScreenCords, float3 albedo, float metallic, float roughness)
+{
+	float4 flashlightSpacePosition = mul( float4(vWorldPos, 1.0f ), g_FlashlightWorldToTexture );
+	float3 vProjCoords = flashlightSpacePosition.xyz / flashlightSpacePosition.w;
+	float3 flashlightColor = tex2D( FlashlightSampler, vProjCoords);
+	float3 shadow = 1.0f;
+	#if FLASHLIGHTSHADOWS
+	shadow = DoFlashlightShadow( ShadowDepthSampler, NormalizeRandRotSampler, vProjCoords, vScreenCords, 0, g_ShadowTweaks, false );
+	//shadow = tex2DprojBicubic(ShadowDepthSampler, 512.0f.xx, vProjCoords.xy, vProjCoords.z);
+	#endif
+	float2 dist = float2(length(g_FlashlightPos_RimBoost.xyz - vWorldPos), dot(g_FlashlightPos_RimBoost.xyz - vWorldPos,g_FlashlightPos_RimBoost.xyz - vWorldPos));
+	float fAtten = saturate( dot( g_FlashlightAttenuationFactors.xyz, float3( 1.0f, 1.0f/dist.x, 1.0f/dist.y ) ) );
+	float3 light = DoPBRLight( vWorldPos, vWorldNormal, albedo, g_FlashlightPos_RimBoost.xyz, flashlightColor.rgb * g_FlashlightColor.xyz, g_EyePos.xyz, shadow * fAtten * g_FlashlightColor.w, metallic, roughness);
+	return light;
+}
+#endif
+
+struct PS_INPUT
+{
+	float2 baseTexCoord	: TEXCOORD0;
+	float4 lightAtten	: TEXCOORD1;
+	float3 worldNormal	: TEXCOORD2;
+	float3 worldPos		: TEXCOORD3;
+	float4 projPos		: TEXCOORD4;
+	float4 color		: TEXCOORD5;
+	float3 localPos		: TEXCOORD6;		// for Irradiance calculations
+	float4 vWorldTangent: TEXCOORD7;
+	float3 vWorldBinormal: TEXCOORD8;
+};
+
+struct PS_OUTPUT
+{
+    float4 MainOut : COLOR0;
+    float4 Normal : COLOR1;
+    float4 MRAO : COLOR2;
+    float4 Albedo : COLOR3;
+};
+
+#if LIGHT_PREVIEW == 2
+LPREVIEW_PS_OUT main( PS_INPUT i ) : COLOR
+#elif LIGHT_PREVIEW == 1
+HALF4 main(PS_INPUT i) : COLOR
+#else
+PS_OUTPUT main(PS_INPUT i) : COLOR
+#endif
+{
+	float2 UV = i.baseTexCoord;
+	float2 screenUV = i.projPos.xy / i.projPos.w;
+	screenUV = screenUV * 0.5f + 0.5f;
+	float4 baseColor = tex2D( BaseTextureSampler, UV );
+
+#if SMOOTHNESS == 0
+	float  roughnessMap = tex2D( RoughnessSampler, UV );
+#else
+	float  roughnessMap = 1.0f - tex2D( RoughnessSampler, UV );
+#endif
+
+	float  metallicMap = tex2D( MetallicSampler, UV );
+	float  AOSample = tex2D( AOSampler, UV );
+	float3  EmissiveSample = tex2D( EmissiveSampler, UV );
+	float4 normalTexel = tex2D( BumpmapSampler, UV);
+	float3 lightmapTexel = GammaToLinear( 2.0f * tex2D( LightmapSampler, UV ).rgb );
+
+	float3 worldPos = i.worldPos;
+	float3 worldNormal = i.worldNormal;
+	float3 eyeToWorld = (g_EyePos - worldPos);
+	float3 albedo = g_DiffuseModulation.rgb * baseColor.rgb;
+	bool bCubemap = (CUBEMAP) ? true : false;
+	
+	float3 tangentSpaceNormal = normalTexel * 2.0f - 1.0f;
+	float3 vWorldBinormal = i.vWorldBinormal;
+
+	float3 vWorldNormal = Vec3TangentToWorld( tangentSpaceNormal, worldNormal, i.vWorldTangent, vWorldBinormal );
+	vWorldNormal = normalize( vWorldNormal );
+
+	float3 projPos = i.projPos.xyz;
+	float3 Lighting =  float(0.0).xxx;
+	
+#if LIGHMAP == 0
+	// Summation of diffuse illumination from all local lights
+	Lighting = DoPBRLights(g_EyePos.xyz, vWorldNormal, worldPos, baseColor, i.lightAtten, lightmapTexel, metallicMap, roughnessMap);
+#endif
+	float3 IBL = DoIBL(g_EyePos.xyz, vWorldNormal, worldPos, screenUV, baseColor.rgb, metallicMap, roughnessMap, lightmapTexel);
+#if FLASHLIGHT
+	float3 Flashlight = DoFlashlight(vWorldNormal, worldPos, i.projPos.xy / i.projPos.w, baseColor.rgb, metallicMap, roughnessMap);
+#endif
+
+	float3 result = (
+#if FLASHLIGHT
+		Flashlight);
+#else
+		Lighting + IBL * AOSample) + EmissiveSample;
+#endif
+	float alpha = baseColor.a * g_DiffuseModulation.a;
+
+	float fogFactor = CalcPixelFogFactor( PIXELFOGTYPE, g_FogParams, g_EyePos.z, i.worldPos.z, i.projPos.z );
+
+#if WRITEWATERFOGTODESTALPHA && ( PIXELFOGTYPE == PIXEL_FOG_TYPE_HEIGHT )
+	alpha = fogFactor;
+#endif
+
+#if LIGHT_PREVIEW == 1
+	result = DoPBRLight(worldPos, vWorldNormal, baseColor, g_EyePos.xyz, 1.0f.xxx, g_EyePos.xyz, 5.0f, metallicMap, roughnessMap);
+	bool bWriteDepthToAlpha = ( WRITE_DEPTH_TO_DESTALPHA != 0 ) && ( WRITEWATERFOGTODESTALPHA == 0 );
+	return FinalOutput( float4( result, alpha), fogFactor, PIXELFOGTYPE, TONEMAP_SCALE_LINEAR, bWriteDepthToAlpha, i.projPos.z );
+#elif LIGHT_PREVIEW == 2
+	LPREVIEW_PS_OUT Output;
+	Output.color = float4( baseColor.xyz,alpha );
+	Output.normal = float4( vWorldNormal,alpha );
+	Output.position = float4( worldPos, alpha );
+	Output.flags = float4( 1.0f - metallicMap, roughnessMap, 1, alpha );
+	return FinalOutput( Output, 0, PIXEL_FOG_TYPE_NONE, TONEMAP_SCALE_NONE );	
+#else
+	
+    PS_OUTPUT output = (PS_OUTPUT) 0;
+	
+	bool bWriteDepthToAlpha = ( WRITE_DEPTH_TO_DESTALPHA != 0 ) && ( WRITEWATERFOGTODESTALPHA == 0 );
+    output.MainOut = FinalOutput(float4(result, alpha), fogFactor, PIXELFOGTYPE, TONEMAP_SCALE_LINEAR, bWriteDepthToAlpha, i.projPos.z);
+#if !FLASHLIGHT
+    output.Normal = float4(vWorldNormal.xyz, i.projPos.z / i.projPos.w);
+    output.MRAO = float4(metallicMap, roughnessMap, AOSample, 0.0f);
+    output.Albedo = float4(baseColor.xyz, 1.0f);
+#endif
+    return output;
+#endif
+}

@@ -12,6 +12,7 @@ Discord: https://discord.gg/hZRB7WMgGw
 - [x] rewrite achivement system( to work without steam )
 - [x] 64-bit support
 - [x] VTF 7.5 support
+- [x] PBR support
 - [ ] improve performance
 - [ ] fixing bugs
 - [ ] dxvk-native support
