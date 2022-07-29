@@ -120,6 +120,8 @@ CAI_Network::CAI_Network()
 #ifdef AI_NODE_TREE
 	m_pNodeTree = NULL;
 #endif
+
+	gEntList.AddListenerEntity( this );
 }
 
 //-----------------------------------------------------------------------------
@@ -133,6 +135,9 @@ CAI_Network::~CAI_Network()
 		m_pNodeTree = NULL;
 	}
 #endif
+
+	gEntList.RemoveListenerEntity( this );
+
 	if ( m_pAInode )
 	{
 		for ( int node = 0; node < m_iNumNodes; node++ )
@@ -642,3 +647,22 @@ IterationRetval_t CAI_Network::EnumElement( IHandleEntity *pHandleEntity )
 }
 
 //=============================================================================
+
+void CAI_Network::OnEntityDeleted( CBaseEntity *pEntity )
+{
+	if( pEntity->IsNPC() )
+		return;
+
+	const char *classname = pEntity->GetClassname();
+	if( !classname || strcmp(classname, "ai_hint") != 0 )
+		return;
+
+	for( int i = 0; i < m_iNumNodes; i++)
+	{
+		if(  m_pAInode[i]->GetHint() == (CAI_Hint*)pEntity )
+		{
+			m_pAInode[i]->SetHint( NULL );
+			break;
+		}
+	}
+}

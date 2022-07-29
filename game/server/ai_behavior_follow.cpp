@@ -111,7 +111,7 @@ public:
 		else
 		{
 			int result = 0;
-			for ( int i = pGroup->followers.Head(); i != pGroup->followers.InvalidIndex(); i = pGroup->followers.Next( i ) )
+			for ( intp i = pGroup->followers.Head(); i != pGroup->followers.InvalidIndex(); i = pGroup->followers.Next( i ) )
 			{
 				if ( pGroup->followers[i].hFollower && pGroup->followers[i].hFollower->ClassMatches( iszClassname ) )
 				{
@@ -131,7 +131,7 @@ public:
 			return 0;
 		}
 
-		int h = pGroup->followers.Head();
+		intp h = pGroup->followers.Head();
 
 		while( h != pGroup->followers.InvalidIndex() )
 		{

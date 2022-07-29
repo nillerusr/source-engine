@@ -2019,6 +2019,9 @@ bool V_StripLastDir( char *dirName, int maxlen )
 //-----------------------------------------------------------------------------
 const char * V_UnqualifiedFileName( const char * in )
 {
+	if( !in || !in[0] )
+		return in;
+
 	// back up until the character after the first path separator we find,
 	// or the beginning of the string
 	const char * out = in + strlen( in ) - 1;
