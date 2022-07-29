@@ -167,8 +167,8 @@ $Project "stdshader_dx9"
 		$File	"worldvertextransition_dx8_helper.cpp"
 		$File	"writez_dx9.cpp"
 		$File	"writestencil_dx9.cpp"
-		$File	"vertexlitPBR_dx9.cpp"
-		$File	"vertexlitPBR_dx9_helper.cpp"
+		$File	"VertexlitPBR_dx9.cpp"
+		$File	"VertexlitPBR_dx9_helper.cpp"
 
 		$Folder	"Remove me when VAC2 is out" [$WIN32]
 		{
