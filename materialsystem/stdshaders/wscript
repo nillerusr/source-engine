@@ -109,8 +109,6 @@ def build(bld):
 		'unlittwotexture_dx9.cpp',
 		'vertexlitgeneric_dx9.cpp',
 		'vertexlitgeneric_dx9_helper.cpp',
-		'VertexlitPBR_dx9.cpp',
-		'VertexlitPBR_dx9_helper.cpp',
 		'volume_clouds.cpp',
 		'volume_clouds_helper.cpp',
 		'vortwarp_dx9.cpp',
