@@ -373,18 +373,22 @@ bool CPortalRenderable_FlatBasic::CalcFrustumThroughPortal( const Vector &ptCurr
 			if( i2 < i3 )
 			{
 				VPlane *v2 = &Planes[iMinSideFirstPoint];
-				memcpy( v2, v2 + 1, sizeof( VPlane ) * (iVertCount - iMinSideFirstPoint) );
+
+				for( int i = 0; i < (iVertCount - iMinSideFirstPoint); i++ )
+					v2[i] = v2[i+1];
 			}
 
 			if( i3 < i4 ) //not the last point in the array
 			{
 				int iElementShift = (iOldVertCount - i4);
+				float *l3 = &fLineLengthSqr[i3];
 
 				//eliminate p3, we merged p2+p3 and already stored the result in p2
-				memcpy( p3, p3 + 1, sizeof( Vector ) * iElementShift );
-
-				float *l3 = &fLineLengthSqr[i3];
-				memcpy( l3, l3 + 1, sizeof( float ) * iElementShift );
+				for( int i = 0; i < iElementShift; i++ )
+				{
+					p3[i] = p3[i+1];
+					l3[i] = l3[i+1];
+				}
 			}
 		}
 
