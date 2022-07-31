@@ -19,101 +19,140 @@ extern bool ShouldWatchThisProp( const SendTable *pTable, int objectID, const ch
 // The engine implements this.
 extern const char* GetObjectClassName( int objectID );
 
-void EncodeFloat( const SendProp *pProp, float fVal, bf_write *pOut, int objectID )
+// Check for special flags like SPROP_COORD, SPROP_NOSCALE, and SPROP_NORMAL.
+// Returns true if it encoded the float.
+static inline bool EncodeSpecialFloat( const SendProp *pProp, float fVal, bf_write *pOut )
 {
-	// Check for special flags like SPROP_COORD, SPROP_NOSCALE, and SPROP_NORMAL.
 	int flags = pProp->GetFlags();
 	if ( flags & SPROP_COORD )
 	{
 		pOut->WriteBitCoord( fVal );
+		return true;
 	}
-	else if ( flags & ( SPROP_COORD_MP | SPROP_COORD_MP_LOWPRECISION | SPROP_COORD_MP_INTEGRAL ) )
+	else if ( flags & SPROP_COORD_MP )
 	{
-		COMPILE_TIME_ASSERT( SPROP_COORD_MP_INTEGRAL == (1<<15) );
-		COMPILE_TIME_ASSERT( SPROP_COORD_MP_LOWPRECISION == (1<<14) );
-		pOut->WriteBitCoordMP( fVal, ((flags >> 15) & 1), ((flags >> 14) & 1) );
+		pOut->WriteBitCoordMP( fVal, false, false );
+		return true;
+	}
+	else if ( flags & SPROP_COORD_MP_LOWPRECISION )
+	{
+		pOut->WriteBitCoordMP( fVal, false, true );
+		return true;
+	}
+	else if ( flags & SPROP_COORD_MP_INTEGRAL )
+	{
+		pOut->WriteBitCoordMP( fVal, true, false );
+		return true;
+	}
+	else if ( flags & SPROP_NOSCALE )
+	{
+		pOut->WriteBitFloat( fVal );
+		return true;
 	}
 	else if ( flags & SPROP_NORMAL )
 	{
 		pOut->WriteBitNormal( fVal );
+		return true;
 	}
-	else // standard clamped-range float
-	{
-		unsigned int ulVal;
-		int nBits = pProp->m_nBits;
-		if ( flags & SPROP_NOSCALE )
-		{
-			union { float f; uint32 u; } convert = { fVal };
-			ulVal = convert.u;
-			nBits = 32;
-		}
-		else if( fVal < pProp->m_fLowValue )
-		{
-			// clamp < 0
-			ulVal = 0;
-			
-			if(!(flags & SPROP_ROUNDUP))
-			{
-				DataTable_Warning("(class %s): Out-of-range value (%f / %f) in SendPropFloat '%s', clamping.\n",
-					GetObjectClassName( objectID ), fVal, pProp->m_fLowValue, pProp->m_pVarName );
-			}
-		}
-		else if( fVal > pProp->m_fHighValue )
-		{
-			// clamp > 1
-			ulVal = ((1 << pProp->m_nBits) - 1);
+	return false;
+}
 
-			if(!(flags & SPROP_ROUNDDOWN))
-			{
-				DataTable_Warning("%s: Out-of-range value (%f/%f) in SendPropFloat '%s', clamping.\n",
-					GetObjectClassName( objectID ), fVal, pProp->m_fHighValue, pProp->m_pVarName );
-			}
-		}
-		else
-		{
-			float fRangeVal = (fVal - pProp->m_fLowValue) * pProp->m_fHighLowMul;
-			if ( pProp->m_nBits <= 22 )
-			{
-				// this is the case we always expect to hit
-				ulVal = FastFloatToSmallInt( fRangeVal );
-			}
-			else
-			{
-				// retain old logic just in case anyone relies on its behavior
-				ulVal = RoundFloatToUnsignedLong( fRangeVal );
-			}
-		}
-		pOut->WriteUBitLong(ulVal, nBits);
+
+static inline void EncodeFloat( const SendProp *pProp, float fVal, bf_write *pOut, int objectID )
+{
+	// Check for special flags like SPROP_COORD, SPROP_NOSCALE, and SPROP_NORMAL.
+	if( EncodeSpecialFloat( pProp, fVal, pOut ) )
+	{
+		return;
 	}
+
+	uint32 ulVal;
+	if( fVal < pProp->m_fLowValue )
+	{
+		// clamp < 0
+		ulVal = 0;
+		
+		if(!(pProp->GetFlags() & SPROP_ROUNDUP))
+		{
+			DataTable_Warning("(class %s): Out-of-range value (%f) in SendPropFloat '%s', clamping.\n", GetObjectClassName( objectID ), fVal, pProp->m_pVarName );
+		}
+	}
+	else if( fVal > pProp->m_fHighValue )
+	{
+		// clamp > 1
+		ulVal = ((1 << pProp->m_nBits) - 1);
+
+		if(!(pProp->GetFlags() & SPROP_ROUNDDOWN))
+		{
+			DataTable_Warning("%s: Out-of-range value (%f) in SendPropFloat '%s', clamping.\n", GetObjectClassName( objectID ), fVal, pProp->m_pVarName );
+		}
+	}
+	else
+	{
+		float fRangeVal = (fVal - pProp->m_fLowValue) * pProp->m_fHighLowMul;
+		ulVal = RoundFloatToUnsignedLong( fRangeVal );
+	}
+	
+	pOut->WriteUBitLong(ulVal, pProp->m_nBits);
+}
+
+
+// Look for special flags like SPROP_COORD, SPROP_NOSCALE, and SPROP_NORMAL and
+// decode if they're there. Fills in fVal and returns true if it decodes anything.
+static inline bool DecodeSpecialFloat( SendProp const *pProp, bf_read *pIn, float &fVal )
+{
+	int flags = pProp->GetFlags();
+
+	if ( flags & SPROP_COORD )
+	{
+		fVal = pIn->ReadBitCoord();
+		return true;
+	}
+	else if ( flags & SPROP_COORD_MP )
+	{
+		fVal = pIn->ReadBitCoordMP( false, false );
+		return true;
+	}
+	else if ( flags & SPROP_COORD_MP_LOWPRECISION )
+	{
+		fVal = pIn->ReadBitCoordMP( false, true );
+		return true;
+	}
+	else if ( flags & SPROP_COORD_MP_INTEGRAL )
+	{
+		fVal = pIn->ReadBitCoordMP( true, false );
+		return true;
+	}
+	else if ( flags & SPROP_NOSCALE )
+	{
+		fVal = pIn->ReadBitFloat();
+		return true;
+	}
+	else if ( flags & SPROP_NORMAL )
+	{
+		fVal = pIn->ReadBitNormal();
+		return true;
+	}
+
+	return false;
 }
 
 
 static float DecodeFloat(SendProp const *pProp, bf_read *pIn)
 {
-	int flags = pProp->GetFlags();
-	if ( flags & SPROP_COORD )
+	float fVal;
+	uint32 dwInterp;
+
+	// Check for special flags..
+	if( DecodeSpecialFloat( pProp, pIn, fVal ) )
 	{
-		return pIn->ReadBitCoord();
-	}
-	else if ( flags & ( SPROP_COORD_MP | SPROP_COORD_MP_LOWPRECISION | SPROP_COORD_MP_INTEGRAL ) )
-	{
-		return pIn->ReadBitCoordMP( (flags >> 15) & 1, (flags >> 14) & 1 );
-	}
-	else if ( flags & SPROP_NOSCALE )
-	{
-		return pIn->ReadBitFloat();
-	}
-	else if ( flags & SPROP_NORMAL )
-	{
-		return pIn->ReadBitNormal();
-	}
-	else // standard clamped-range float
-	{
-		unsigned int dwInterp = pIn->ReadUBitLong(pProp->m_nBits);
-		float fVal = (float)dwInterp / ((1 << pProp->m_nBits) - 1);
-		fVal = pProp->m_fLowValue + (pProp->m_fHighValue - pProp->m_fLowValue) * fVal;
 		return fVal;
 	}
+
+	dwInterp = pIn->ReadUBitLong(pProp->m_nBits);
+	fVal = (float)dwInterp / ((1 << pProp->m_nBits) - 1);
+	fVal = pProp->m_fLowValue + (pProp->m_fHighValue - pProp->m_fLowValue) * fVal;
+	return fVal;
 }
 
 static inline void DecodeVector(SendProp const *pProp, bf_read *pIn, float *v)
@@ -400,26 +439,33 @@ void Float_Decode( DecodeInfo *pInfo )
 
 int	Float_CompareDeltas( const SendProp *pProp, bf_read *p1, bf_read *p2 )
 {
-	int flags = pProp->GetFlags();
-	if ( flags & SPROP_COORD )
+	if ( pProp->GetFlags() & SPROP_COORD )
 	{
-		return p1->ReadBitCoordBits() != p2->ReadBitCoordBits();
+		return p1->ReadBitCoord() != p2->ReadBitCoord();
 	}
-	else if ( flags & ( SPROP_COORD_MP | SPROP_COORD_MP_LOWPRECISION | SPROP_COORD_MP_INTEGRAL ) )
+	else if ( pProp->GetFlags() & SPROP_COORD_MP )
 	{
-		return p1->ReadBitCoordMPBits( (flags >> 15) & 1, (flags >> 14) & 1 )
-			!= p2->ReadBitCoordMPBits( (flags >> 15) & 1, (flags >> 14) & 1 );
+		return p1->ReadBitCoordMP( false, false ) != p2->ReadBitCoordMP( false, false );
+	}
+	else if ( pProp->GetFlags() & SPROP_COORD_MP_LOWPRECISION )
+	{
+		return p1->ReadBitCoordMP( false, true ) != p2->ReadBitCoordMP( false, true );
+	}
+	else if ( pProp->GetFlags() & SPROP_COORD_MP_INTEGRAL )
+	{
+		return p1->ReadBitCoordMP( true, false ) != p2->ReadBitCoordMP( true, false );
+	}
+	else if ( pProp->GetFlags() & SPROP_NOSCALE )
+	{
+		return p1->ReadUBitLong( 32 ) != p2->ReadUBitLong( 32 );
+	}
+	else if ( pProp->GetFlags() & SPROP_NORMAL )
+	{
+		return p1->ReadUBitLong( NORMAL_FRACTIONAL_BITS+1 ) != p2->ReadUBitLong( NORMAL_FRACTIONAL_BITS+1 );
 	}
 	else
 	{
-		int bits;
-		if ( flags & SPROP_NOSCALE )
-			bits = 32;
-		else if ( flags & SPROP_NORMAL )
-			bits = NORMAL_FRACTIONAL_BITS+1;
-		else
-			bits = pProp->m_nBits;
-		return p1->ReadUBitLong( bits ) != p2->ReadUBitLong( bits );
+		return p1->ReadUBitLong( pProp->m_nBits ) != p2->ReadUBitLong( pProp->m_nBits );
 	}
 }
 
