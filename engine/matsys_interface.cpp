@@ -269,6 +269,8 @@ static const char *s_pRegistryConVars[] =
 static CThreadMutex g_VideoConfigMutex;
 #endif
 
+#ifndef DEDICATED
+
 static int ReadVideoConfigInt( const char *pName, int nDefault )
 {
 #if USE_VIDEOCONFIG_FILE
@@ -378,6 +380,8 @@ static void WriteVideoConfigString( const char *pName, const char *pString )
 	registry->WriteString( pName, pString );
 #endif
 }
+
+#endif
 
 //-----------------------------------------------------------------------------
 // Scan for video config convars which are overridden on the cmd line, used
@@ -685,6 +689,7 @@ static void OverrideMaterialSystemConfigFromCommandLine( MaterialSystem_Config_t
 //-----------------------------------------------------------------------------
 void OverrideMaterialSystemConfig( MaterialSystem_Config_t &config )
 {
+#ifndef DEDICATED
 	// enable/disable flashlight support based on mod (user can also set this explicitly)
 	// FIXME: this is only here because dxsupport_override.cfg is currently broken
 	ConVarRef mat_supportflashlight( "mat_supportflashlight" );
@@ -718,7 +723,8 @@ void OverrideMaterialSystemConfig( MaterialSystem_Config_t &config )
 		WriteVideoConfigInt( "ScreenWindowed", 1 );
 		config.SetFlag( MATSYS_VIDCFG_FLAGS_WINDOWED, true );
 	}
-}	
+#endif
+}
 
 
 void HandleServerAllowColorCorrection()
