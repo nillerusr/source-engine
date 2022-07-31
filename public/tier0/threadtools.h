@@ -486,22 +486,7 @@ PLATFORM_INTERFACE void ThreadNotifySyncReleasing(void *p);
 
 #ifndef NO_THREAD_LOCAL
 
-
-#if ( defined(_LINUX) && defined(DEDICATED) ) && !defined(OSX)
-// linux totally supports compiler thread locals, even across dll's.
-#define PLAT_COMPILER_SUPPORTED_THREADLOCALS 1
-#define CTHREADLOCALINTEGER( typ ) __thread int
-#define CTHREADLOCALINT __thread int
-#define CTHREADLOCALPTR( typ ) __thread typ *
-#define CTHREADLOCAL( typ ) __thread typ
-#define GETLOCAL( x ) ( x )
-#ifndef TIER0_DLL_EXPORT
-DLL_IMPORT __thread int g_nThreadID;
-#endif
-#endif
-
-
-#if defined(WIN32) || defined(OSX) ||  defined( _PS3 ) || ( defined (_LINUX) && !defined(DEDICATED) )
+#if defined(WIN32) || defined(OSX) ||  defined( _PS3 ) || ( defined (_LINUX) )
 #ifndef __AFXTLS_H__ // not compatible with some Windows headers
 
 #if defined(_PS3)

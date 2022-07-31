@@ -181,10 +181,9 @@ private:
 		DataCacheItem_t *m_pFirst;
 		int				m_iThread;
 	};
-	typedef CThreadLocal<FrameLock_t *> CThreadFrameLock;
 
 	CDataCacheLRU &		m_LRU;
-	CThreadFrameLock	m_ThreadFrameLock;
+	CTHREADLOCAL(FrameLock_t*)	m_ThreadFrameLock;
 	DataCacheStatus_t	m_status;
 	DataCacheLimits_t	m_limits;
 	IDataCacheClient *	m_pClient;
