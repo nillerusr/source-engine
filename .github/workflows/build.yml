@@ -9,7 +9,7 @@ on:
       - "*"
 
 jobs:
-  build-linux-32:
+  build-linux-i386:
     runs-on: ubuntu-18.04
 
     steps:
@@ -18,7 +18,7 @@ jobs:
       run: |
         scripts/build-ubuntu-i386.sh
 
-  build-linux-64:
+  build-linux-amd64:
     runs-on: ubuntu-18.04
 
     steps:
@@ -46,3 +46,32 @@ jobs:
         git submodule init && git submodule update
         ./waf.bat configure -T debug
         ./waf.bat build
+
+  build-dedicated-windows-i386:
+    runs-on: windows-2019
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build dedicated windows-i386
+      run: |
+        git submodule init && git submodule update
+        ./waf.bat configure -T debug -d
+        ./waf.bat build
+
+  build-dedicated-linux-i386:
+    runs-on: ubuntu-18.04
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build dedicated linux-i386
+      run: |
+        scripts/build-ubuntu-i386.sh -d
+
+  build-dedicated-linux-amd64:
+    runs-on: ubuntu-18.04
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build dedicated linux-amd64
+      run: |
+        scripts/build-ubuntu-amd64.sh -d
