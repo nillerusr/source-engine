@@ -9,7 +9,7 @@ on:
       - "*"
 
 jobs:
-  build-linux-32:
+  build-linux-i386:
     runs-on: ubuntu-18.04
 
     steps:
@@ -18,7 +18,7 @@ jobs:
       run: |
         scripts/build-ubuntu-i386.sh
 
-  build-linux-64:
+  build-linux-amd64:
     runs-on: ubuntu-18.04
 
     steps:
@@ -58,7 +58,7 @@ jobs:
         ./waf.bat configure -T debug -d
         ./waf.bat build
 
-  build-dedicated-linux-32:
+  build-dedicated-linux-i386:
     runs-on: ubuntu-18.04
 
     steps:
@@ -67,7 +67,7 @@ jobs:
       run: |
         scripts/build-ubuntu-i386.sh -d
 
-  build-dedicated-linux-64:
+  build-dedicated-linux-amd64:
     runs-on: ubuntu-18.04
 
     steps:
