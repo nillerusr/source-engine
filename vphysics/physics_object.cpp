@@ -1042,7 +1042,7 @@ void CPhysicsObject::SetVelocityInstantaneous( const Vector *velocity, const Ang
 		return;
 	IVP_Core *core = m_pObject->get_core();
 
-	Wake();
+	WakeNow();
 
 	if ( velocity )
 	{
@@ -1859,27 +1859,29 @@ void CPhysicsObject::InitFromTemplate( CPhysicsEnvironment *pEnvironment, void *
 		EnableCollisions( true );
 	}
 
-	// will wake up the object
+	m_asleepSinceCreation = objectTemplate.asleepSinceCreation;
+
 	if ( objectTemplate.velocity.LengthSqr() != 0 || objectTemplate.angVelocity.LengthSqr() != 0 )
 	{
+		// will wake up the object
 		SetVelocityInstantaneous( &objectTemplate.velocity, &objectTemplate.angVelocity );
-		if ( objectTemplate.isAsleep )
-		{
-			Sleep();
-		}
 	}
-
-	m_asleepSinceCreation = objectTemplate.asleepSinceCreation;
-	if ( !objectTemplate.isAsleep )
+	else if( !objectTemplate.isAsleep )
 	{
 		Assert( !objectTemplate.isStatic );
-		Wake();
+		WakeNow();
+	}
+
+	if( objectTemplate.isAsleep )
+	{
+		Sleep();
 	}
 
 	if ( objectTemplate.hingeAxis )
 	{
 		BecomeHinged( objectTemplate.hingeAxis-1 );
 	}
+
 	if ( objectTemplate.hasTouchedDynamic )
 	{
 		SetTouchedDynamic();

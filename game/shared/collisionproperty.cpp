@@ -78,7 +78,7 @@ private:
 	CTSListWithFreeList<CBaseHandle> m_DirtyEntities;
 	CThreadSpinRWLock	 m_partitionMutex;
 	uint32			 m_partitionWriteId;
-	CThreadLocalInt<>	 m_readLockCount;
+	CTHREADLOCALINT	 m_readLockCount;
 };
 
 

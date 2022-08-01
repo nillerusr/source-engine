@@ -276,7 +276,9 @@ void CBaseAchievement::SetShowOnHUD( bool bShow )
 void CBaseAchievement::HandleProgressUpdate()
 {
 	// which notification is this
-	int iProgress = m_iCount / m_iProgressMsgIncrement;
+	int iProgress = -1;
+	if( m_iProgressMsgIncrement > 0 ) iProgress = m_iCount / m_iProgressMsgIncrement;
+
 	// if we haven't already shown this progress step, show it
 	if ( iProgress > m_iProgressShown || m_iCount == 1 )
 	{
