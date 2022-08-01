@@ -100,13 +100,13 @@ uint64 GetCPUFreqFromPROC()
 uint64 CalculateCPUFreq()
 {
 #ifdef __APPLE__
-    uint64 freq_hz = 0;
-    size_t freq_size = sizeof(freq_hz);
-    int retval = sysctlbyname("hw.cpufrequency_max", &freq_hz, &freq_size, NULL, 0);
-    // MoeMod : TODO dont know how to get freq on Apple Silicon
-    if(!freq_hz)
-        freq_hz = 3200000000;
-    return freq_hz;
+	uint64 freq_hz = 0;
+	size_t freq_size = sizeof(freq_hz);
+	int retval = sysctlbyname("hw.cpufrequency_max", &freq_hz, &freq_size, NULL, 0);
+	// MoeMod : TODO dont know how to get freq on Apple Silicon
+	if(!freq_hz)
+		freq_hz = 3200000000;
+	return freq_hz;
 #else
 	// Try to open cpuinfo_max_freq. If the kernel was built with cpu scaling support disabled, this will fail.
 	FILE *fp = fopen( "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq", "r" );
@@ -148,7 +148,7 @@ uint64 CalculateCPUFreq()
 		usleep( 5000 ); // sleep for 5 msec
 		gettimeofday( &end_time.m_TimeVal, 0 );
 		rdtsc( end_tsc );
-	
+
 		// end_time - start_time calls into the overloaded TimeVal operator- way above, and returns a double.
 		period3 = ( end_tsc - start_tsc ) / ( end_time - start_time );
 
@@ -161,12 +161,12 @@ uint64 CalculateCPUFreq()
 
 		period1 = period2;
 		period2 = period3;
-    }
+	}
 
 	if ( count == max_iterations )
-    {
+	{
 		return GetCPUFreqFromPROC(); // fall back to /proc
-    }
+	}
 
 	// Set the period to the average period measured.
 	period = ( period1 + period2 + period3 ) / 3;
@@ -180,6 +180,6 @@ uint64 CalculateCPUFreq()
 
 	return period;
 #endif
-	return (uint64)0;
+	return (uint64)2000000000;
 }
 

@@ -271,12 +271,9 @@ def configure(conf):
 	if conf.options.OPUS or conf.env.DEST_OS == 'android':
 		projects['game'] += ['engine/voice_codecs/opus']
 
-	if conf.env.DEST_OS in ['win32', 'linux', 'darwin'] and conf.env.DEST_CPU in ['x86_64', 'amd64']:
-		conf.env.BIT32_MANDATORY = not conf.options.ALLOW64
-		if conf.env.BIT32_MANDATORY:
-			Logs.info('WARNING: will build engine for 32-bit target')
-	else:
-		conf.env.BIT32_MANDATORY = False
+	conf.env.BIT32_MANDATORY = not conf.options.ALLOW64
+	if conf.env.BIT32_MANDATORY:
+		Logs.info('WARNING: will build engine for 32-bit target')
 
 	conf.load('force_32bit')
 
