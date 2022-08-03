@@ -2359,22 +2359,9 @@ static uint gPersistentBufferSize[kGLMNumBufferTypes] =
 
 GLMContext::GLMContext( IDirect3DDevice9 *pDevice, GLMDisplayParams *params )
 {
-// 	m_bUseSamplerObjects = true;
-// 	
-// 	// On most AMD drivers (like the current latest, 12.10 Windows), the PCF depth comparison mode doesn't work on sampler objects, so just punt them.
-// 	if ( gGL->m_nDriverProvider == cGLDriverProviderAMD )
-// 	{
-// 		m_bUseSamplerObjects = false;
-// 	}
-	
-// 	if ( CommandLine()->CheckParm( "-gl_disablesamplerobjects" ) )
-// 	{
-	// Disable sampler object usage for now since ScaleForm isn't aware of them
-	// and doesn't know how to push/pop their binding state. It seems we don't
-	// really use them in this codebase anyhow, except to preload textures.
-	m_bUseSamplerObjects = false;
-	if ( CommandLine()->CheckParm( "-gl_enablesamplerobjects" ) )
-		m_bUseSamplerObjects = true;
+	m_bUseSamplerObjects = true;
+	if ( CommandLine()->CheckParm( "-gl_disablesamplerobjects" ) )
+		m_bUseSamplerObjects = false;
 
 	// Try to get some more free memory by relying on driver host copies instead of ours.
 	//  In some cases the driver will be able to discard their own host copy and rely on GPU
