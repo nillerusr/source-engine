@@ -448,6 +448,12 @@ public:
 			{
 				pFOV->SetVisible( false );
 			}
+
+			pFOV = FindChildByName( "FovValueLabel" );
+			if ( pFOV )
+			{
+				pFOV->SetVisible( false );
+			}
 		}
 		
 		MarkDefaultSettingsAsRecommended();
