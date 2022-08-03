@@ -444,7 +444,7 @@ void CMaterialSystem::CreateCompositorMaterials()
 
 		IMaterialInternal *pMatqf = assert_cast< IMaterialInternal* >( FindMaterial( pszMaterial, TEXTURE_GROUP_RUNTIME_COMPOSITE ) );
 		Assert( pMatqf );
-		Assert( !pMatqf->IsErrorMaterial() );
+		//Assert( !pMatqf->IsErrorMaterial() );
 		IMaterialInternal *pMatrt = pMatqf->GetRealTimeVersion();
 		Assert( pMatrt );
 		pMatrt->IncrementReferenceCount(); // Hold a ref.
@@ -1769,12 +1769,7 @@ static ConVar mat_phong(			"mat_phong", "1" );
 static ConVar mat_parallaxmap(		"mat_parallaxmap", "1", FCVAR_HIDDEN | FCVAR_ALLOWED_IN_COMPETITIVE );
 static ConVar mat_reducefillrate(	"mat_reducefillrate", "0", FCVAR_ALLOWED_IN_COMPETITIVE );
 
-#if defined( OSX ) && !defined( STAGING_ONLY ) && !defined( _DEBUG )
-// OSX users are currently running OOM. We limit them to texture quality high here, which avoids the problem while we come up with a real solution.
-static ConVar mat_picmip(			"mat_picmip", "1", FCVAR_ARCHIVE, "", true, 0, true, 4 );
-#else
-static ConVar mat_picmip(			"mat_picmip", "0", FCVAR_ARCHIVE, "", true, -1, true, 4 );
-#endif
+static ConVar mat_picmip(			"mat_picmip", "0", FCVAR_ARCHIVE, "", true, -32, true, 8 );
 static ConVar mat_slopescaledepthbias_normal( "mat_slopescaledepthbias_normal", "0.0f", FCVAR_CHEAT );
 static ConVar mat_depthbias_normal( "mat_depthbias_normal", "0.0f", FCVAR_CHEAT | FCVAR_ALLOWED_IN_COMPETITIVE );
 static ConVar mat_slopescaledepthbias_decal( "mat_slopescaledepthbias_decal", "-0.5", FCVAR_CHEAT );		// Reciprocals of these biases sent to API

@@ -331,6 +331,10 @@ def configure(conf):
 		if values[0] not in valid_archs:
 			conf.fatal('Unknown arch: %s. Supported: %r' % (values[0], ', '.join(valid_archs)))
 
+
+		stlarch = values[0]
+		if values[0] == 'aarch64': stlarch = 'arm64-v8a'
+
 		conf.android = android = Android(conf, values[0], values[1], int(values[2]))
 		conf.environ['CC'] = android.cc()
 		conf.environ['CXX'] = android.cxx()
@@ -339,7 +343,7 @@ def configure(conf):
 		conf.env.CXXFLAGS += android.cflags(True)
 		conf.env.LINKFLAGS += android.linkflags()
 		conf.env.LDFLAGS += android.ldflags()
-		conf.env.STLIBPATH += [os.path.abspath(os.path.join(android.ndk_home, 'sources','cxx-stl','stlport','libs',values[0]))]
+		conf.env.STLIBPATH += [os.path.abspath(os.path.join(android.ndk_home, 'sources','cxx-stl','stlport','libs',stlarch))]
 		conf.env.LDFLAGS += ['-lstlport_static']
 
 		conf.env.HAVE_M = True
