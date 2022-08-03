@@ -40,11 +40,12 @@ public:
 
 	#ifdef GAME_DLL
 		DECLARE_DATADESC();
-	
+
 		void SendReloadSoundEvent( void );
 
 		void Materialize( void );
-		virtual	int	ObjectCaps( void );
+		virtual	int ObjectCaps( void );
+		virtual	void FallThink( void );
 	#endif
 
 	// All predicted weapons need to implement and return true
