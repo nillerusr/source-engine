@@ -283,7 +283,7 @@ void CWeaponHL2MPBase::FallThink( void )
 	// Since Materialize() never gets called, the weapon's respawn location is never set, so if a person picks it up, it respawns forever at
 	// 0 0 0 on the map (infinite loop of fall, wait, respawn, not nice at all for performance and bandwidth!)
 
-	if( hasSpawnFlags( SF_NORESPAWN ) == false )
+	if( HasSpawnFlags( SF_NORESPAWN ) == false )
 	{
 		if( GetOriginalSpawnOrigin() == vec3_origin )
 		{
