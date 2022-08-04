@@ -378,7 +378,7 @@ void CNPC_Combine::PostNPCInit()
 		// an AR2. 
 		if( !GetActiveWeapon() || !FClassnameIs( GetActiveWeapon(), "weapon_ar2" ) )
 		{
-			DevWarning("**Combine Elite Soldier MUST be equipped with AR2\n");
+			// DevWarning("**Combine Elite Soldier MUST be equipped with AR2\n");
 		}
 	}
 
@@ -2320,7 +2320,18 @@ void CNPC_Combine::HandleAnimEvent( animevent_t *pEvent )
 	{
 		if ( pEvent->event == COMBINE_AE_BEGIN_ALTFIRE )
 		{
-			EmitSound( "Weapon_CombineGuard.Special1" );
+			if( FClassnameIs( GetActiveWeapon(), "weapon_ar2" ) )
+			{
+				EmitSound( "Weapon_CombineGuard.Special1" );
+			}
+			else if( FClassnameIs( GetActiveWeapon(), "weapon_smg1" ) )
+			{
+				EmitSound( "Weapon_SMG1.Double" );
+			}
+			else
+			{
+				EmitSound( "Weapon_CombineGuard.Special1" );
+			}
 			handledEvent = true;
 		}
 		else if ( pEvent->event == COMBINE_AE_ALTFIRE )

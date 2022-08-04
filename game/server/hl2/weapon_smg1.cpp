@@ -45,7 +45,7 @@ public:
 
 	float	GetFireRate( void ) { return 0.075f; }	// 13.3hz
 	int		CapabilitiesGet( void ) { return bits_CAP_WEAPON_RANGE_ATTACK1; }
-	int		WeaponRangeAttack2Condition( float flDot, float flDist );
+	int		WeaponRangeAttack2Condition(/* float flDot, float flDist */);
 	Activity	GetPrimaryAttackActivity( void );
 
 	virtual const Vector& GetBulletSpread( void )
@@ -228,32 +228,50 @@ void CWeaponSMG1::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatChar
 		}
 		break;
 
-		/*//FIXME: Re-enable
-		case EVENT_WEAPON_AR2_GRENADE:
+		case EVENT_WEAPON_AR2_ALTFIRE:
 		{
-		CAI_BaseNPC *npc = pOperator->MyNPCPointer();
+			CAI_BaseNPC *npc = pOperator->MyNPCPointer();
 
-		Vector vecShootOrigin, vecShootDir;
-		vecShootOrigin = pOperator->Weapon_ShootPosition();
-		vecShootDir = npc->GetShootEnemyDir( vecShootOrigin );
+			Vector vecShootOrigin, vecShootDir;
+			vecShootOrigin = pOperator->Weapon_ShootPosition();
+			//vecShootDir = npc->GetShootEnemyDir( vecShootOrigin );
 
-		Vector vecThrow = m_vecTossVelocity;
+			//Checks if it can fire the grenade
+			WeaponRangeAttack2Condition();
 
-		CGrenadeAR2 *pGrenade = (CGrenadeAR2*)Create( "grenade_ar2", vecShootOrigin, vec3_angle, npc );
-		pGrenade->SetAbsVelocity( vecThrow );
-		pGrenade->SetLocalAngularVelocity( QAngle( 0, 400, 0 ) );
-		pGrenade->SetMoveType( MOVETYPE_FLYGRAVITY ); 
-		pGrenade->m_hOwner			= npc;
-		pGrenade->m_pMyWeaponAR2	= this;
-		pGrenade->SetDamage(sk_npc_dmg_ar2_grenade.GetFloat());
+			Vector vecThrow = m_vecTossVelocity;
 
-		// FIXME: arrgg ,this is hard coded into the weapon???
-		m_flNextGrenadeCheck = gpGlobals->curtime + 6;// wait six seconds before even looking again to see if a grenade can be thrown.
+			//If on the rare case the vector is 0 0 0, cancel for avoid launching the grenade without speed
+			//This should be on WeaponRangeAttack2Condition(), but for some unknown reason return CASE_NONE
+			//doesn't stop the launch
+			if( vecThrow == Vector(0, 0, 0) )
+			{
+				break;
+			}
 
-		m_iClip2--;
+			CGrenadeAR2 *pGrenade = (CGrenadeAR2*)Create("grenade_ar2", vecShootOrigin, vec3_angle, npc);
+			pGrenade->SetAbsVelocity( vecThrow );
+			pGrenade->SetLocalAngularVelocity(RandomAngle(-400, 400)); //tumble in air
+			pGrenade->SetMoveType( MOVETYPE_FLYGRAVITY, MOVECOLLIDE_FLY_BOUNCE );
+
+			pGrenade->SetThrower(GetOwner());
+
+			pGrenade->SetGravity(0.5); // lower gravity since grenade is aerodynamic and engine doesn't know it.
+
+			pGrenade->SetDamage( sk_plr_dmg_smg1_grenade.GetFloat() );
+
+			if( g_pGameRules->IsSkillLevel( SKILL_HARD ) )
+			{
+				m_flNextGrenadeCheck = gpGlobals->curtime + RandomFloat(2, 3);
+			}
+			else
+			{
+				m_flNextGrenadeCheck = gpGlobals->curtime + 6;// wait six seconds before even looking again to see if a grenade can be thrown.
+			}
+
+			m_iClip2--;
 		}
 		break;
-		*/
 
 	default:
 		BaseClass::Operator_HandleAnimEvent( pEvent, pOperator );
@@ -272,7 +290,7 @@ Activity CWeaponSMG1::GetPrimaryAttackActivity( void )
 
 	if ( m_nShotsFired < 3 )
 		return ACT_VM_RECOIL1;
-	
+
 	if ( m_nShotsFired < 4 )
 		return ACT_VM_RECOIL2;
 
@@ -394,11 +412,11 @@ void CWeaponSMG1::SecondaryAttack( void )
 //			flDist - 
 // Output : int
 //-----------------------------------------------------------------------------
-int CWeaponSMG1::WeaponRangeAttack2Condition( float flDot, float flDist )
+int CWeaponSMG1::WeaponRangeAttack2Condition(/* float flDot, float flDist */)
 {
 	CAI_BaseNPC *npcOwner = GetOwner()->MyNPCPointer();
 
-	return COND_NONE;
+	// return COND_NONE;
 
 /*
 	// --------------------------------------------------------
