@@ -1112,7 +1112,7 @@ void CParticleMgr::Term()
 {
 	// Free all the effects.
 	int iNext;
-	for ( int i = m_Effects.Head(); i != m_Effects.InvalidIndex(); i = iNext )
+	for ( intp i = m_Effects.Head(); i != m_Effects.InvalidIndex(); i = iNext )
 	{
 		iNext = m_Effects.Next( i );
 		m_Effects[i]->m_pSim->NotifyRemove();
@@ -1389,7 +1389,7 @@ void CParticleMgr::RemoveAllNewEffects()
 void CParticleMgr::RemoveAllEffects()
 {
 	int iNext;
-	for ( int i = m_Effects.Head(); i != m_Effects.InvalidIndex(); i = iNext )
+	for ( intp i = m_Effects.Head(); i != m_Effects.InvalidIndex(); i = iNext )
 	{
 		iNext = m_Effects.Next( i );
 		RemoveEffect( m_Effects[i] );
@@ -1971,7 +1971,7 @@ void CParticleMgr::UpdateAllEffects( float flTimeDelta )
 
 	// Remove any effects that were flagged to be removed.
 	int iNext;
-	for ( int i=m_Effects.Head(); i != m_Effects.InvalidIndex(); i=iNext )
+	for ( intp i = m_Effects.Head(); i != m_Effects.InvalidIndex(); i=iNext )
 	{
 		iNext = m_Effects.Next( i );
 		CParticleEffectBinding *pEffect = m_Effects[i];

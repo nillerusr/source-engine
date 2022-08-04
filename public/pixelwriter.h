@@ -320,6 +320,18 @@ FORCEINLINE_PIXEL void CPixelWriter::SetPixelMemory( ImageFormat format, void* p
 		m_BMask = 0x00;
 		m_AMask = 0x00;
 		break;
+
+	case IMAGE_FORMAT_RGB888:
+		m_Size = 3;
+		m_RShift = 0;
+		m_GShift = 8;
+		m_BShift = 16;
+		m_AShift = 0;
+		m_RMask = 0xFF;
+		m_GMask = 0xFF;
+		m_BMask = 0xFF;
+		m_AMask = 0x0;
+		break;
 	// FIXME: Add more color formats as need arises
 	default:
 		{

@@ -36,8 +36,8 @@
 #define GLMPRINTF(args)
 #endif
 
-#ifdef OSX
-ConVar osx_rawinput_set_one_time( "osx_rawinput_set_one_time", "0", FCVAR_ARCHIVE|FCVAR_HIDDEN, "");
+#if defined( OSX ) || defined( ANDROID )
+ConVar rawinput_set_one_time( "rawinput_set_one_time", "0", FCVAR_ARCHIVE|FCVAR_HIDDEN, "");
 #endif
 
 ConVar gl_blit_halfx( "gl_blit_halfx", "0" );
@@ -1141,17 +1141,15 @@ void CSDLMgr::OnFrameRendered()
 
 		ConVarRef rawinput( "m_rawinput" );
 
-		
-#ifdef OSX
-		// We default raw input to on on Mac and set it one time for all users since
+#if defined( OSX ) || defined( ANDROID )
+		// We default raw input to on on Mac/Android and set it one time for all users since
 		// it didn't used to be the default.
-		if ( !osx_rawinput_set_one_time.GetBool() )
+		if ( !rawinput_set_one_time.GetBool() )
 		{
-			osx_rawinput_set_one_time.SetValue( 1 );
+			rawinput_set_one_time.SetValue( 1 );
 			rawinput.SetValue( 1 );
 		}
 #endif
-
 		m_bRawInput = !m_bCursorVisible && rawinput.IsValid() && rawinput.GetBool();
 
 		SDL_bool bWindowGrab = !m_bCursorVisible ? SDL_TRUE : SDL_FALSE;
