@@ -645,7 +645,7 @@ void CViewRender::SetUpViews()
 	// Set up the mono/middle view.
 	CViewSetup &view = m_View;
 
-	view.zFav			= farZ;
+	view.zFar			= farZ;
 	view.zFarViewmodel		= farZ;
 
 	// UNDONE: Make this farther out?
