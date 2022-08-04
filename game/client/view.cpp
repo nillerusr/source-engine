@@ -642,16 +642,17 @@ void CViewRender::SetUpViews()
 	// Initialize view structure with default values
 	float farZ = GetZFar();
 
-    // Set up the mono/middle view.
-    CViewSetup &view = m_View;
+	// Set up the mono/middle view.
+	CViewSetup &view = m_View;
 
-	view.zFar				= farZ;
-	view.zFarViewmodel	    = farZ;
-	// UNDONE: Make this farther out? 
+	view.zFav			= farZ;
+	view.zFarViewmodel		= farZ;
+
+	// UNDONE: Make this farther out?
 	//  closest point of approach seems to be view center to top of crouched box
-	view.zNear			    = GetZNear();
-	view.zNearViewmodel	    = 1;
-	view.fov				= default_fov.GetFloat();
+	view.zNear		= GetZNear();
+	view.zNearViewmodel	= 1;
+	view.fov		= default_fov.GetFloat();
 
 	view.m_bOrtho			= false;
     view.m_bViewToProjectionOverride = false;
@@ -736,7 +737,7 @@ void CViewRender::SetUpViews()
 	float flFOVOffset = fDefaultFov - view.fov;
 
 	//Adjust the viewmodel's FOV to move with any FOV offsets on the viewer's end
-	view.fovViewmodel = g_pClientMode->GetViewModelFOV() - flFOVOffset;
+	view.fovViewmodel = fabs( g_pClientMode->GetViewModelFOV() - flFOVOffset );
 
 	if ( UseVR() )
 	{
