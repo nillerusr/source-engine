@@ -406,8 +406,21 @@ bool CLinuxFont::CreateFromMemory(const char *windowsFontName, void *data, int d
 }
 
 #ifdef ANDROID
-char *FindFontAndroid(bool bBold, int italic)
+char *FindFontAndroid(const char *winFontName, bool bBold, int italic)
 {
+	static char fontFile[MAX_PATH];
+
+	const char *fontName;
+
+	if( strcmp( winFontName, "Courier New") == 0 )
+		fontName = "LiberationMono-Regular.ttf";
+	else
+		fontName = "DroidSansFallback.ttf"; // for chinese/japanese/korean
+
+	snprintf( fontFile, sizeof fontFile, "%s/files/%s", getenv("APP_DATA_PATH"), fontName);
+	return fontFile;
+
+#if 0 // Old detect
 	const char *fontFileName, *fontFileNamePost = NULL;
 
 	fontFileName = "Roboto";
@@ -448,6 +461,7 @@ char *FindFontAndroid(bool bBold, int italic)
 	}
 
 	return dataFile;
+#endif
 }
 #endif
 
@@ -467,7 +481,7 @@ char *CLinuxFont::GetFontFileName( const char *windowsFontName, int flags )
 	const int italic = ( flags & vgui::ISurface::FONTFLAG_ITALIC ) ? FC_SLANT_ITALIC : FC_SLANT_ROMAN;
 
 #ifdef ANDROID
-	char *filename = FindFontAndroid( bBold, italic );
+	char *filename = FindFontAndroid( windowsFontName, bBold, italic );
 	Msg("Android font: %s\n", filename);
 	if( !filename ) return NULL;
 	return strdup( filename );
@@ -497,7 +511,7 @@ char *CLinuxFont::GetFontFileName( const char *windowsFontName, int flags )
 		}
 
 		FcPatternDestroy( match );
-		Msg("Android font fc: %s", filenameret);
+		Msg("font fc: %s - %s\n", windowsFontName, filenameret);
 
 		return filenameret;
 	}
