@@ -63,7 +63,7 @@ inline void LocalTransfer_FastType(
 
 			const T *pSource = (const T*)( pServerBase + pCur->m_iSendOffset );
 			T *pDest = (T*)( pClientBase + pCur->m_iRecvOffset );
-			*pDest = *pSource;
+			memcpy( pDest, pSource, sizeof(T) );
 		}
 	}
 }

@@ -381,7 +381,7 @@ void CalcBoneQuaternion( int frame, float s,
 	if ( panim->flags & STUDIO_ANIM_RAWROT )
 	{
 		Quaternion48 tmp;
-		memcpy( &tmp, panim->pQuat48(), sizeof(Quaternion48) );
+		V_memcpy( &tmp, panim->pQuat48(), sizeof(Quaternion48) );
 		q = tmp;
 		Assert( q.IsValid() );
 		return;
@@ -390,7 +390,7 @@ void CalcBoneQuaternion( int frame, float s,
 	if ( panim->flags & STUDIO_ANIM_RAWROT2 )
 	{
 		Quaternion64 tmp;
-		memcpy( &tmp, panim->pQuat64(), sizeof(Quaternion64) );
+		V_memcpy( &tmp, panim->pQuat64(), sizeof(Quaternion64) );
 		q = tmp;
 		Assert( q.IsValid() );
 		return;

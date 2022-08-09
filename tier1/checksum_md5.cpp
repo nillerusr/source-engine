@@ -267,7 +267,9 @@ unsigned int MD5_PseudoRandom(unsigned int nSeed)
 	MD5Update(&ctx, (unsigned char*)&nSeed, sizeof(nSeed) );
 	MD5Final(digest, &ctx);
 
-	return *(unsigned int*)(digest+6);	// use 4 middle bytes for random value
+	unsigned int rand;
+	memcpy(&rand, digest+6, sizeof(rand)); // use 4 middle bytes for random value
+	return rand;
 }
 
 //-----------------------------------------------------------------------------

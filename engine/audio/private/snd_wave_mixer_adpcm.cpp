@@ -123,15 +123,13 @@ void CAudioMixerWaveADPCM::DecompressBlockMono( short *pOut, const char *pIn, in
 	int co2 = m_pCoefficients[pred].iCoef2;
 
 	// read initial delta
-	int delta = *((short *)pIn);
-	pIn += 2;
+	short data[3];
+	memcpy( data, pIn, sizeof(data) );
+	pIn += sizeof(data);
 
-	// read initial samples for prediction
-	int samp1 = *((short *)pIn);
-	pIn += 2;
-
-	int samp2 = *((short *)pIn);
-	pIn += 2;
+	int delta = data[0];
+	int samp1 = data[1];
+	int samp2 = data[2];
 
 	// write out the initial samples (stored in reverse order)
 	*pOut++ = (short)samp2;
