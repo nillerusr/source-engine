@@ -18,7 +18,7 @@
 #if defined ( DOD_DLL )
 	#include "weapon_dodbase.h"
 	#define CWeaponModBaseClass CWeaponDODBase
-#elif defined ( TF_CLIENT_DLL )	|| defined ( TF_DLL )
+#elif defined ( TF_CLIENT_DLL )	|| defined ( TF_DLL ) || defined( TF_MOD_CLIENT ) || defined( TF_MOD )
 	#include "tf_weaponbase.h"
 	#define CWeaponModBaseClass CTFWeaponBase
 #endif
