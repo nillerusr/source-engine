@@ -117,7 +117,7 @@ void C_PlayerAttachedModel::ClientThink( void )
 
 	if ( m_iFlags & PAM_SCALEUP )
 	{
-		m_flScale = min( m_flScale + (gpGlobals->frametime * PAM_SCALE_SPEED), PAM_MAX_SCALE );
+		m_flScale = MIN( m_flScale + (gpGlobals->frametime * PAM_SCALE_SPEED), PAM_MAX_SCALE );
 	}
 }
 

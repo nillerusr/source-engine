@@ -575,7 +575,7 @@ bool CWeaponMedigun::FindAndHealTargets( void )
 						flChargeAmount /= (float)iTotalHealers;
 					}
 
-					float flNewLevel = min( m_flChargeLevel + flChargeAmount, 1.0 );
+					float flNewLevel = MIN( m_flChargeLevel + flChargeAmount, 1.0 );
 #ifdef GAME_DLL
 					if ( flNewLevel >= 1.0 && m_flChargeLevel < 1.0 )
 					{
@@ -619,7 +619,7 @@ void CWeaponMedigun::DrainCharge( void )
 			return;
 
 		float flChargeAmount = gpGlobals->frametime / weapon_medigun_chargerelease_rate.GetFloat();
-		m_flChargeLevel = max( m_flChargeLevel - flChargeAmount, 0.0 );
+		m_flChargeLevel = MAX( m_flChargeLevel - flChargeAmount, 0.0 );
 		if ( !m_flChargeLevel )
 		{
 			m_bChargeRelease = false;

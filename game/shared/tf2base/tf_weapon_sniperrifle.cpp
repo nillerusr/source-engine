@@ -229,7 +229,7 @@ void CTFSniperRifle::HandleZooms( void )
 	{
 		if ( gpGlobals->curtime > m_flRezoomTime )
 		{
-            ZoomIn();
+            		ZoomIn();
 			m_flRezoomTime = -1;
 		}
 	}
@@ -300,11 +300,11 @@ void CTFSniperRifle::ItemPostFrame( void )
 		// Don't start charging in the time just after a shot before we unzoom to play rack anim.
 		if ( pPlayer->m_Shared.InCond( TF_COND_AIMING ) && !m_bRezoomAfterShot )
 		{
-			m_flChargedDamage = min( m_flChargedDamage + gpGlobals->frametime * TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC, TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX );
+			m_flChargedDamage = MIN( m_flChargedDamage + gpGlobals->frametime * TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC, TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX );
 		}
 		else
 		{
-			m_flChargedDamage = max( 0, m_flChargedDamage - gpGlobals->frametime * TF_WEAPON_SNIPERRIFLE_UNCHARGE_PER_SEC );
+			m_flChargedDamage = MAX( 0, m_flChargedDamage - gpGlobals->frametime * TF_WEAPON_SNIPERRIFLE_UNCHARGE_PER_SEC );
 		}
 	}
 
@@ -359,7 +359,7 @@ void CTFSniperRifle::Zoom( void )
 	ToggleZoom();
 
 	// at least 0.1 seconds from now, but don't stomp a previous value
-	m_flNextPrimaryAttack = max( m_flNextPrimaryAttack, gpGlobals->curtime + 0.1 );
+	m_flNextPrimaryAttack = MAX( m_flNextPrimaryAttack, gpGlobals->curtime + 0.1 );
 	m_flNextSecondaryAttack = gpGlobals->curtime + TF_WEAPON_SNIPERRIFLE_ZOOM_TIME;
 }
 
@@ -512,7 +512,7 @@ void CTFSniperRifle::SetRezoom( bool bRezoom, float flDelay )
 float CTFSniperRifle::GetProjectileDamage( void )
 {
 	// Uncharged? Min damage.
-	return max( m_flChargedDamage, TF_WEAPON_SNIPERRIFLE_DAMAGE_MIN );
+	return MAX( m_flChargedDamage, TF_WEAPON_SNIPERRIFLE_DAMAGE_MIN );
 }
 
 //-----------------------------------------------------------------------------

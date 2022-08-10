@@ -518,7 +518,7 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 					flReduction += (m_aHealers.Count() * flReduction * 4);
 				}
 
-				m_flCondExpireTimeLeft[i] = max( m_flCondExpireTimeLeft[i] - flReduction, 0 );
+				m_flCondExpireTimeLeft[i] = MAX( m_flCondExpireTimeLeft[i] - flReduction, 0 );
 
 				if ( m_flCondExpireTimeLeft[i] == 0 )
 				{
@@ -2069,7 +2069,7 @@ void CTFPlayer::TeamFortress_SetSpeed()
 	if ( m_Shared.InCond( TF_COND_DISGUISED ) && !m_Shared.InCond( TF_COND_STEALTHED ) )
 	{
 		float flMaxDisguiseSpeed = GetPlayerClassData( m_Shared.GetDisguiseClass() )->m_flMaxSpeed;
-		maxfbspeed = min( flMaxDisguiseSpeed, maxfbspeed );
+		maxfbspeed = MIN( flMaxDisguiseSpeed, maxfbspeed );
 	}
 
 	// Second, see if any flags are slowing them down

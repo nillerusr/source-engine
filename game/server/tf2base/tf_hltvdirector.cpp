@@ -139,7 +139,7 @@ void CTFHLTVDirector::CreateShotFromEvent( CHLTVGameEvent *event )
 		}
 
 		// shot 2 seconds after event
-		m_nNextShotTick = min( m_nNextShotTick, (event->m_Tick+TIME_TO_TICKS(1.0)) );
+		m_nNextShotTick = MIN( m_nNextShotTick, (event->m_Tick+TIME_TO_TICKS(1.0)) );
 	}
 	else if ( !Q_strcmp( "object_destroyed", name ) )
 	{
