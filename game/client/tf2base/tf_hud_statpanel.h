@@ -16,8 +16,8 @@
 #include <vgui/IScheme.h>
 #include "hud.h"
 #include "hudelement.h"
-#include "../game/shared/tf/tf_shareddefs.h"
-#include "../game/shared/tf/tf_gamestats_shared.h"
+#include "../game/shared/tf2base/tf_shareddefs.h"
+#include "../game/shared/tf2base/tf_gamestats_shared.h"
 #include "tf_hud_playerstatus.h"
 
 using namespace vgui;
