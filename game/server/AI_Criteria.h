@@ -182,20 +182,21 @@ public:
 
 	void			GetName( char *buf, size_t buflen ) const;
 	void			GetResponse( char *buf, size_t buflen ) const;
-	const AI_ResponseParams *GetParams() const { return &m_Params; }
-	ResponseType_t	GetType() const { return (ResponseType_t)m_Type; }
-	soundlevel_t	GetSoundLevel() const;
+	const 			AI_ResponseParams *GetParams() const { return &m_Params; }
+	const char *    	GetResponsePtr() const;
+	ResponseType_t		GetType() const { return (ResponseType_t)m_Type; }
+	soundlevel_t		GetSoundLevel() const;
 	float			GetRespeakDelay() const;
 	float			GetWeaponDelay() const;
 	bool			GetSpeakOnce() const;
 	bool			ShouldntUseScene( ) const;
 	bool			ShouldBreakOnNonIdle( void ) const;
-	int				GetOdds() const;
+	int			GetOdds() const;
 	float			GetDelay() const;
 	float			GetPreDelay() const;
 
 	void			SetContext( const char *context );
-	const char *	GetContext( void ) const { return m_szContext; }
+	const char *		GetContext( void ) const { return m_szContext; }
 
 	bool			IsApplyContextToWorld( void ) { return m_bApplyContextToWorld; }
 
