@@ -26,6 +26,8 @@ morphaccumulate_vs30.fxc
 morphaccumulate_ps30.fxc
 morphweight_vs30.fxc
 morphweight_ps30.fxc
+pbr_ps30.fxc
+pbr_vs30.fxc
 pyro_vision_ps2x.fxc
 pyro_vision_vs20.fxc
 skin_vs20.fxc

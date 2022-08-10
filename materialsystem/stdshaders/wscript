@@ -78,6 +78,7 @@ def build(bld):
 		'particlelitgeneric_dx9.cpp',
 		'particlelitgeneric_dx9_helper.cpp',
 		'particlesphere_dx9.cpp',
+		'pbr_dx9.cpp',
 		'portal.cpp',
 		'portalstaticoverlay.cpp',
 		'portal_refract.cpp',

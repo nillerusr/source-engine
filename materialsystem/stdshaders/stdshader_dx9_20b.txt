@@ -272,6 +272,9 @@ particlesphere_vs11.fxc
 particlesphere_ps2x.fxc
 particlesphere_vs20.fxc
 
+pbr_ps20b.fxc
+pbr_vs20b.fxc
+
 portal_ps11.fxc
 portal_vs11.fxc
 portal_ps2x.fxc
