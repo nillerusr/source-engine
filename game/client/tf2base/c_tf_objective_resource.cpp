@@ -81,7 +81,7 @@ void C_TFObjectiveResource::SetCappingTeam( int index, int team )
 	//Display warning that someone is capping our point.
 	//Only do this at the start of a cap and if WE own the point.
 	//Also don't warn on a point that will do a "Last Point cap" warning.
-	if ( GetNumControlPoints() > 0 && ShouldWarnOnCap( index ) == false && GetCPCapPercentage( index ) == 0.0f && team != TEAM_UNASSIGNED && GetOwningTeam( index ) != TEAM_UNASSIGNED )
+	if ( GetNumControlPoints() > 0 && GetCapWarningLevel( index ) == 0 && GetCPCapPercentage( index ) == 0.0f && team != TEAM_UNASSIGNED && GetOwningTeam( index ) != TEAM_UNASSIGNED )
 	{
 		C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
 		if ( pLocalPlayer )
