@@ -35,6 +35,8 @@ public:
 	virtual bool HasInputElements( void ){ return true; }
 	virtual void ShowPanel( bool bShow );
 
+	virtual GameActionSet_t GetPreferredActionSet() { return GAME_ACTION_SET_IN_GAME_HUD; }
+
 	// both vgui::Frame and IViewPortPanel define these, so explicitly define them here as passthroughs to vgui
 	vgui::VPANEL GetVPanel( void ){ return BaseClass::GetVPanel(); }
 	virtual bool IsVisible(){ return BaseClass::IsVisible(); }
