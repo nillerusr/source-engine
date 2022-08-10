@@ -5,7 +5,7 @@
 //=============================================================================//
 
 #include "cbase.h"
-#include "tf/tf_shareddefs.h"
+#include "tf2base/tf_shareddefs.h"
 #include "entity_tfstart.h"
 #include "team_control_point.h"
 #include "team_control_point_round.h"

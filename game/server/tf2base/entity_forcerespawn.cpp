@@ -5,7 +5,7 @@
 //=============================================================================//
 
 #include "cbase.h"
-#include "tf/tf_shareddefs.h"
+#include "tf2base/tf_shareddefs.h"
 #include "entity_forcerespawn.h"
 #include "tf_player.h"
 
