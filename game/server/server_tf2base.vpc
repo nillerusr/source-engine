@@ -58,6 +58,7 @@ $Project "Server (TF)"
 		$File	"$SRCDIR\game\shared\touchlink.h"
 		$File	"trigger_area_capture.cpp"
 		$File	"trigger_area_capture.h"
+		$File	"team_train_watcher.cpp"
 
 		$Folder	"TF"
 		{
