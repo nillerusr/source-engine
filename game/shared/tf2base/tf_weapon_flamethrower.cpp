@@ -948,7 +948,7 @@ void CTFFlameEntity::OnCollide( CBaseEntity *pOther )
 		flMultiplier = RemapValClamped( flDistance, tf_flamethrower_maxdamagedist.GetFloat()/2, tf_flamethrower_maxdamagedist.GetFloat(), 1.0, 0.25 );
 	}
 	float flDamage = m_flDmgAmount * flMultiplier;
-	flDamage = max( flDamage, 1.0 );
+	flDamage = MAX( flDamage, 1.0 );
 	if ( tf_debug_flamethrower.GetInt() )
 	{
 		Msg( "Flame touch dmg: %.1f\n", flDamage );
