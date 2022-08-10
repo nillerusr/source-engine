@@ -3845,10 +3845,11 @@ bool CTFPlayer::SetObserverMode(int mode)
 		return false;
 
 	// Skip OBS_MODE_POI as we're not using that.
-	if ( mode == OBS_MODE_POI )
-	{
-		mode++;
-	}
+	// no POI mode in src2013, remove
+	//if ( mode == OBS_MODE_POI )
+	//{
+	//	mode++;
+	//}
 
 	// Skip over OBS_MODE_ROAMING for dead players
 	if( GetTeamNumber() > TEAM_SPECTATOR )
@@ -5911,7 +5912,7 @@ int CTFPlayer::DrawDebugTextOverlays(void)
 bool CTFPlayer::GetResponseSceneFromConcept( int iConcept, char *chSceneBuffer, int numSceneBufferBytes )
 {
 	AI_Response response;
-	bool bResult = SpeakConcept( response, iConcept );
+	bool bResult = false; //SpeakConcept( response, iConcept );
 
 	if ( bResult )
 	{
