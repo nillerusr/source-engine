@@ -43,6 +43,8 @@ $Project "Client (TF)"
 		$File	"$SRCDIR\game\shared\teamplay_round_timer.h"
 		$File	"TeamBitmapImage.cpp"
 		$File	"voice_menu.cpp"
+		$File   "c_team_train_watcher.cpp"
+		$File   "c_team_train_watcher.h"
 
 		$Folder	"TF"
 		{

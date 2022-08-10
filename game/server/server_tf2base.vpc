@@ -59,6 +59,7 @@ $Project "Server (TF)"
 		$File	"trigger_area_capture.cpp"
 		$File	"trigger_area_capture.h"
 		$File	"team_train_watcher.cpp"
+		$File	"team_train_watcher.h"
 
 		$Folder	"TF"
 		{
