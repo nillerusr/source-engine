@@ -461,6 +461,29 @@ void CTeamControlPointMaster::RegisterRoundBeingPlayed( void )
 	}
 }
 
+#if defined( TF_MOD )
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTeamControlPointMaster::FindControlPointRoundToPlay( void )
+{
+        for ( int i = 0 ; i < m_ControlPointRounds.Count() ; ++i )
+        {
+                CTeamControlPointRound *pRound = m_ControlPointRounds[i];
+
+                if ( pRound )
+                {
+                        if ( pRound->IsPlayable() )
+                        {
+                                // we found one that's playable
+                                return true;
+                        }
+                }
+        }
+
+        return false;
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 

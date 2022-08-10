@@ -129,6 +129,10 @@ public:
 	void SetLastOwnershipChangeTime( float m_flTime ) { m_flLastOwnershipChangeTime = m_flTime; }
 	float GetLastOwnershipChangeTime( void ) { return m_flLastOwnershipChangeTime; }
 
+#if defined( TF_MOD )
+	bool FindControlPointRoundToPlay( void ); // checks to see if there are any more rounds to play (but doesn't actually "get" one to play)
+#endif
+
 private:
 	void EXPORT CPMThink( void );
 
