@@ -19,9 +19,9 @@
 #include <vgui_controls/Label.h>
 #include <vgui/ILocalize.h>
 #include <vgui/ISurface.h>
-#include "tf/c_tf_player.h"
-#include "tf/c_tf_team.h"
-#include "tf/tf_steamstats.h"
+#include "tf2base/c_tf_player.h"
+#include "tf2base/c_tf_team.h"
+#include "tf2base/tf_steamstats.h"
 #include "filesystem.h"
 #include "dmxloader/dmxloader.h"
 #include "fmtstr.h"
