@@ -351,7 +351,7 @@ void CTFWeaponBuilder::SwitchOwnersWeaponToLast()
 		CBaseCombatWeapon *pWpn = pOwner->Weapon_GetSlot( 2 );
 
 		// Don't store last weapon when we autoswitch off builder
-		CBaseCombatWeapon *pLastWpn = pOwner->GetLastWeapon();
+		//CBaseCombatWeapon *pLastWpn = pOwner->GetLastWeapon();
 
 		if ( pWpn )
 		{
@@ -362,6 +362,7 @@ void CTFWeaponBuilder::SwitchOwnersWeaponToLast()
 			pOwner->SwitchToNextBestWeapon( NULL );
 		}
 
+		/*
 		if ( pWpn == pLastWpn )
 		{
 			// We had the wrench out before we started building. Go ahead and set out last
@@ -373,11 +374,12 @@ void CTFWeaponBuilder::SwitchOwnersWeaponToLast()
 		{
 			pOwner->Weapon_SetLast( pLastWpn );
 		}
+		*/
 	}
 	else
 	{
 		// for all other classes, just switch to last weapon used
-		pOwner->Weapon_Switch( pOwner->GetLastWeapon() );
+		//pOwner->Weapon_Switch( pOwner->GetLastWeapon() );
 	}
 }
 
