@@ -18,9 +18,8 @@
 #include "clientmode_shared.h"
 #include "c_baseplayer.h"
 #include "c_team.h"
-#include "tf_shareddefs.h"
-#include "tf_shareddefs.h"
 #include "tf_gamerules.h"
+#include "tf_shareddefs.h"
 
 #include "hud_basedeathnotice.h"
 
