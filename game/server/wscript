@@ -17,13 +17,7 @@ games = {
 	'hl1mp': ['server_base.vpc', 'server_hl1mp.vpc'],
 	'cstrike': ['server_base.vpc', 'server_cstrike.vpc', 'nav_mesh.vpc'],
 	'dod': ['server_base.vpc', 'server_dod.vpc'],
-	'tf': [
-		'server_base.vpc',
-		'server_econ_base.vpc',
-		'tf/tf_gcmessages_include.vpc',
-		'nav_mesh.vpc',
-		'server_tf.vpc'
-	]
+	'tf2base': ['server_base.vpc', 'server_tf2base.vpc']
 }
 
 def options(opt):
