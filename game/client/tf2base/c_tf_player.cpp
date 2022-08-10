@@ -610,7 +610,7 @@ void C_TFRagdoll::ClientThink( void )
 		int iAlpha = GetRenderColor().a;
 		int iFadeSpeed = 600.0f;
 
-		iAlpha = max( iAlpha - ( iFadeSpeed * gpGlobals->frametime ), 0 );
+		iAlpha = MAX( iAlpha - ( iFadeSpeed * gpGlobals->frametime ), 0 );
 
 		SetRenderMode( kRenderTransAlpha );
 		SetRenderColorA( iAlpha );
@@ -1267,7 +1267,7 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 	
 	if ( m_bDisguised != m_Shared.InCond( TF_COND_DISGUISED ) )
 	{
-		m_flDisguiseEndEffectStartTime = max( m_flDisguiseEndEffectStartTime, gpGlobals->curtime );
+		m_flDisguiseEndEffectStartTime = MAX( m_flDisguiseEndEffectStartTime, gpGlobals->curtime );
 	}
 
 	int nNewWaterLevel = GetWaterLevel();
@@ -2227,7 +2227,7 @@ void C_TFPlayer::AvoidPlayers( CUserCmd *pCmd )
 		flSideScale = fabs( cl_sidespeed.GetFloat() ) / fabs( pCmd->sidemove );
 	}
 
-	float flScale = min( flForwardScale, flSideScale );
+	float flScale = MIN( flForwardScale, flSideScale );
 	pCmd->forwardmove *= flScale;
 	pCmd->sidemove *= flScale;
 
