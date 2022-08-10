@@ -219,6 +219,7 @@ static CTFHLTVDirector s_HLTVDirector;	// singleton
 
 EXPOSE_SINGLE_INTERFACE_GLOBALVAR( CHLTVDirector, IHLTVDirector, INTERFACEVERSION_HLTVDIRECTOR, s_HLTVDirector );
 
+#if 0
 CHLTVDirector* HLTVDirector()
 {
 	return &s_HLTVDirector;
@@ -228,3 +229,4 @@ IGameSystem* HLTVDirectorSystem()
 {
 	return &s_HLTVDirector;
 }
+#endif
