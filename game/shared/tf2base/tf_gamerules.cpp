@@ -83,7 +83,6 @@ ConVar tf_birthday( "tf_birthday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 
 #ifdef GAME_DLL
 // TF overrides the default value of this convar
-ConVar mp_waitingforplayers_time( "mp_waitingforplayers_time", (IsX360()?"15":"30"), FCVAR_GAMEDLL | FCVAR_DEVELOPMENTONLY, "WaitingForPlayers time length in seconds" );
 ConVar tf_gravetalk( "tf_gravetalk", "1", FCVAR_NOTIFY, "Allows living players to hear dead players using text/voice chat." );
 ConVar tf_spectalk( "tf_spectalk", "1", FCVAR_NOTIFY, "Allows living players to hear spectators using text chat." );
 #endif
@@ -2840,6 +2839,14 @@ bool CTFGameRules::IsBirthday( void )
 	}
 
 	return ( m_iBirthdayMode == BIRTHDAY_ON );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: FIXME: stub
+//-----------------------------------------------------------------------------
+bool CTFGameRules::IsMannVsMachineMode( void )
+{
+	return false;
 }
 
 //-----------------------------------------------------------------------------
