@@ -593,7 +593,7 @@ extern const char *g_pszHintMessages[];
 #define DMG_USEDISTANCEMOD		(DMG_SLOWBURN)		// NEED TO REMOVE CALTROPS
 #define DMG_NOCLOSEDISTANCEMOD	(DMG_POISON)
 
-#define TF_DMG_SENTINEL_VALUE	0xFFFFFFFF
+#define TF_DMG_SENTINEL_VALUE	0x00512 //0xFFFFFFFF FIXME: wtf?
 
 // This can only ever be used on a TakeHealth call, since it re-uses a dmg flag that means something else
 #define DMG_IGNORE_MAXHEALTH	(DMG_BULLET)
@@ -917,5 +917,16 @@ typedef enum
 	NUM_STOCK_NOTIFICATIONS
 } HudNotification_t;
 
+#define TF_DEATH_DOMINATION				0x0001	// killer is dominating victim
+#define TF_DEATH_ASSISTER_DOMINATION			0x0002	// assister is dominating victim
+#define TF_DEATH_REVENGE				0x0004	// killer got revenge on victim
+#define TF_DEATH_ASSISTER_REVENGE			0x0008	// assister got revenge on victim
+#define TF_DEATH_FIRST_BLOOD				0x0010  // death triggered a first blood
+#define TF_DEATH_FEIGN_DEATH				0x0020  // feign death
+#define TF_DEATH_INTERRUPTED				0x0040	// interrupted a player doing an important game event (like capping or carrying flag)
+#define TF_DEATH_GIBBED					0x0080	// player was gibbed
+#define TF_DEATH_PURGATORY				0x0100	// player died while in purgatory
+#define TF_DEATH_MINIBOSS				0x0200	// player killed was a miniboss
+#define TF_DEATH_AUSTRALIUM				0x0400	// player killed by a Australium Weapon
 
 #endif // TF_SHAREDDEFS_H
