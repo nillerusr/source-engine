@@ -107,6 +107,8 @@ public:
 
 	virtual const unsigned char *GetEncryptionKey( void ) { return (unsigned char *)"E2NcUkG2"; }
 
+	bool IsMannVsMachineMode( void ); // FIXME: stub
+
 #ifdef GAME_DLL
 public:
 	// Override this to prevent removal of game specific entities that need to persist
