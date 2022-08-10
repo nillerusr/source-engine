@@ -89,7 +89,7 @@ public:
 	void		 ResetTimers( void );
 
 	virtual bool Reload( void );
-	virtual bool CanHolster( void ) const;
+	virtual bool CanHolster( void );
 	virtual bool Holster( CBaseCombatWeapon *pSwitchingTo );
 
 	void		 HandleZooms( void );

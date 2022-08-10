@@ -331,7 +331,7 @@ void CTFMinigun::WindUp( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFMinigun::CanHolster( void ) const
+bool CTFMinigun::CanHolster( void )
 {
 	if ( m_iWeaponState > AC_STATE_IDLE )
 		return false;

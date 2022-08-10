@@ -56,7 +56,7 @@ public:
 	void			SharedAttack();
 	virtual void	WeaponIdle();
 	virtual bool	SendWeaponAnim( int iActivity );
-	virtual bool	CanHolster( void ) const;
+	virtual bool	CanHolster( void );
 	virtual bool	Holster( CBaseCombatWeapon *pSwitchingTo );
 	virtual bool	Lower( void );
 	virtual void	HandleFireOnEmpty( void );
