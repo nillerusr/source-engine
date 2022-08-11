@@ -42,6 +42,7 @@
 	#include "AI_ResponseSystem.h"
 	#include "hl2orange.spa.h"
 	#include "hltvdirector.h"
+	#include "multiplay_gamerules.h"
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -2841,12 +2842,23 @@ bool CTFGameRules::IsBirthday( void )
 	return ( m_iBirthdayMode == BIRTHDAY_ON );
 }
 
+ConVar tf_is_mann_vs_machine_mode( "tf_is_mann_vs_machine_mode", "0", FCVAR_REPLICATED );
+ConVar tf_allow_training_achievements( "tf_allow_training_achievements", "0", FCVAR_REPLICATED );
+
 //-----------------------------------------------------------------------------
 // Purpose: FIXME: stub
 //-----------------------------------------------------------------------------
 bool CTFGameRules::IsMannVsMachineMode( void )
 {
-	return false;
+	return tf_is_mann_vs_machine_mode.GetInt() ? true : false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: FIXME: stub
+//-----------------------------------------------------------------------------
+bool CTFGameRules::AllowTrainingAchievements( void )
+{
+	return tf_allow_training_achievements.GetInt() ? true : false;
 }
 
 //-----------------------------------------------------------------------------

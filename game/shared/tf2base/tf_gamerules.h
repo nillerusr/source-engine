@@ -19,6 +19,8 @@
 #pragma once
 #endif
 
+extern ConVar tf_is_mann_vs_machine_mode;
+extern ConVar tf_allow_training_achievements;
 
 #include "teamplayroundbased_gamerules.h"
 #include "convar.h"
@@ -108,6 +110,7 @@ public:
 	virtual const unsigned char *GetEncryptionKey( void ) { return (unsigned char *)"E2NcUkG2"; }
 
 	bool IsMannVsMachineMode( void ); // FIXME: stub
+	bool AllowTrainingAchievements( void ); // FIXME: stub
 
 #ifdef GAME_DLL
 public:
