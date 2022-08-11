@@ -75,7 +75,8 @@ projects={
 		'vpklib',
 		'vstdlib',
 		'vtf',
-		'unicode'
+		'unicode',
+		'utils/bugreporter_public'
 	],
 	'dedicated': [
 		'appframework',
