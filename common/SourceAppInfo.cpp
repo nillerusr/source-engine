@@ -16,19 +16,20 @@ struct SourceAppInfo_t
 };
 
 
-static const SourceAppInfo_t s_SteamAppInfo[] = 
+static const SourceAppInfo_t s_SteamAppInfo[] =
 {
-	{	"Source SDK Base",				"sourcetest",	215,	k_App_SDK_BASE },
-	{	"Half-Life 2",					"hl2",			220,	k_App_HL2 } ,
-	{	"Counter-Strike: Source",		"cstrike",		240,	k_App_CSS } ,
-	{	"Day of Defeat: Source",		"dod",			300,	k_App_DODS } ,
-	{	"Half-Life 2: Deathmatch",		"hl2mp",		320,	k_App_HL2MP } ,
-	{	"Half-Life 2: Lost Coast",		"lostcoast",	340,	k_App_LOST_COAST } ,
-	{	"Half-Life Deathmatch: Source",	"hl1mp",		360,	k_App_HL1DM } ,
-	{	"Half-Life 2: Episode One",		"episodic",		380,	k_App_HL2_EP1 },
-	{	"Portal",						"portal",		400,	k_App_PORTAL } ,
-	{	"Half-Life 2: Episode Two",		"ep2",			420,	k_App_HL2_EP2 } ,
-	{	"Team Fortress 2",				"tf",			440,	k_App_TF2 } ,
+	{ "Source SDK Base",			"sourcetest",	215,	k_App_SDK_BASE },
+	{ "Half-Life 2",			"hl2",		220,	k_App_HL2 },
+	{ "Counter-Strike: Source",		"cstrike",	240,	k_App_CSS },
+	{ "Day of Defeat: Source",		"dod",		300,	k_App_DODS },
+	{ "Half-Life 2: Deathmatch",		"hl2mp",	320,	k_App_HL2MP },
+	{ "Half-Life 2: Lost Coast",		"lostcoast",	340,	k_App_LOST_COAST },
+	{ "Half-Life Deathmatch: Source",	"hl1mp",	360,	k_App_HL1DM },
+	{ "Half-Life 2: Episode One",		"episodic",	380,	k_App_HL2_EP1 },
+	{ "Portal",				"portal",	400,	k_App_PORTAL },
+	{ "Half-Life 2: Episode Two",		"ep2",		420,	k_App_HL2_EP2 },
+	{ "Team Fortress 2",			"tf",		440,	k_App_TF2 },
+	{ "Team Fortress 2 2008",		"tf_port",	440,	k_App_TF2_2008 },
 };
 
 

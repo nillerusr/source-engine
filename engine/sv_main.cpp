@@ -816,6 +816,7 @@ static ModDirPermissions_t g_ModDirPermissions[] =
 	{ GetAppSteamAppId( k_App_HL2_EP1 ),    GetAppModName( k_App_HL2_EP1 ) },
 	{ GetAppSteamAppId( k_App_HL2_EP2 ),    GetAppModName( k_App_HL2_EP2 ) },
 	{ GetAppSteamAppId( k_App_TF2 ),        GetAppModName( k_App_TF2 ) },
+	{ GetAppSteamAppId( k_App_TF2_2008 ),   GetAppModName( k_App_TF2_2008 ) },
 };
 
 bool ServerDLL_Load( bool bIsServerOnly )

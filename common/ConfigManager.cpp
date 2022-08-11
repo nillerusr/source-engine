@@ -113,6 +113,17 @@ defaultConfigInfo_t TF2Info =
 	GetAppSteamAppId( k_App_TF2 )
 };
 
+// Team Fortress 2 2008
+defaultConfigInfo_t TF2_2008_Info =
+{
+	"Team Fortress 2 2008",
+	"tf_port",
+	"tf.fgd",
+	"info_player_teamspawn",
+	"hl2.exe",
+	GetAppSteamAppId( k_App_TF2_2008 )
+};
+
 // Portal
 defaultConfigInfo_t PortalInfo =
 {
@@ -898,6 +909,7 @@ bool CGameConfigManager::GetDefaultGameBlock( KeyValues *pIn )
 
 	// Add TF2 games to list
 	defaultConfigs.AddToTail( TF2Info );
+	defaultConfigs.AddToTail( TF2_2008_Info );
 	defaultConfigs.AddToTail( DODInfo );
 	defaultConfigs.AddToTail( CStrikeInfo );
 
