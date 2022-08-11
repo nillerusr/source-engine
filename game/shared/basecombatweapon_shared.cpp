@@ -20,7 +20,7 @@
 #endif
 // NVNT end extra includes
 
-#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL )
+#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined( TF_MOD ) || defined( TF_MOD_CLIENT )
 #include "tf_shareddefs.h"
 #endif
 
@@ -51,7 +51,7 @@
 
 extern bool UTIL_ItemCanBeTouchedByPlayer( CBaseEntity *pItem, CBasePlayer *pPlayer );
 
-#if defined ( TF_CLIENT_DLL ) || defined ( TF_DLL )
+#if defined ( TF_CLIENT_DLL ) || defined ( TF_DLL ) || defined ( TF_MOD_CLIENT ) || defined ( TF_MOD )
 #ifdef _DEBUG
 ConVar tf_weapon_criticals_force_random( "tf_weapon_criticals_force_random", "0", FCVAR_REPLICATED | FCVAR_CHEAT );
 #endif // _DEBUG
@@ -94,11 +94,11 @@ CBaseCombatWeapon::CBaseCombatWeapon() : BASECOMBATWEAPON_DERIVED_FROM()
 
 	m_hWeaponFileInfo = GetInvalidWeaponInfoHandle();
 
-#if defined( TF_DLL )
+#if defined( TF_DLL ) || defined( TF_MOD )
 	UseClientSideAnimation();
 #endif
 
-#if defined ( TF_CLIENT_DLL ) || defined ( TF_DLL )
+#if defined ( TF_CLIENT_DLL ) || defined ( TF_DLL ) || defined ( TF_MOD_CLIENT ) || defined ( TF_MOD )
 	m_flCritTokenBucket = tf_weapon_criticals_bucket_default.GetFloat();
 	m_nCritChecks = 1;
 	m_nCritSeedRequests = 0;
@@ -249,10 +249,10 @@ void CBaseCombatWeapon::Precache( void )
 			{
 				Msg("ERROR: Weapon (%s) using undefined primary ammo type (%s)\n",GetClassname(), GetWpnData().szAmmo1);
 			}
- #if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL )
+#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( TF_MOD_CLIENT ) || defined ( TF_MOS )
 			// Ammo override
 			int iModUseMetalOverride = 0;
-			CALL_ATTRIB_HOOK_INT( iModUseMetalOverride, mod_use_metal_ammo_type );
+			//CALL_ATTRIB_HOOK_INT( iModUseMetalOverride, mod_use_metal_ammo_type );
 			if ( iModUseMetalOverride )
 			{
 				m_iPrimaryAmmoType = (int)TF_AMMO_METAL;
@@ -347,9 +347,9 @@ const char *CBaseCombatWeapon::GetPrintName( void ) const
 //-----------------------------------------------------------------------------
 int CBaseCombatWeapon::GetMaxClip1( void ) const
 {
-#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL )
+#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( TF_MOD_CLIENT ) || defined ( TF_MOD )
 	int iModMaxClipOverride = 0;
-	CALL_ATTRIB_HOOK_INT( iModMaxClipOverride, mod_max_primary_clip_override );
+	//CALL_ATTRIB_HOOK_INT( iModMaxClipOverride, mod_max_primary_clip_override );
 	if ( iModMaxClipOverride != 0 )
 		return iModMaxClipOverride;
 #endif
@@ -1552,7 +1552,7 @@ bool CBaseCombatWeapon::CanReload( void )
 	return true;
 }
 
-#if defined ( TF_CLIENT_DLL ) || defined ( TF_DLL )
+#if defined ( TF_CLIENT_DLL ) || defined ( TF_DLL ) || defined ( TF_MOD_CLIENT ) || defined ( TF_MOD )
 //-----------------------------------------------------------------------------
 // Purpose: Anti-hack
 //-----------------------------------------------------------------------------
@@ -2017,16 +2017,16 @@ bool CBaseCombatWeapon::DefaultReload( int iClipSize1, int iClipSize2, int iActi
 
 bool CBaseCombatWeapon::ReloadsSingly( void ) const
 {
-#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL )
+#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( TF_MOD_CLIENT ) || defined ( TF_MOD )
 	float fHasReload = 1.0f;
-	CALL_ATTRIB_HOOK_FLOAT( fHasReload, mod_no_reload_display_only );
+	//CALL_ATTRIB_HOOK_FLOAT( fHasReload, mod_no_reload_display_only );
 	if ( fHasReload != 1.0f )
 	{
 		return false;
 	}
 
 	int iWeaponMod = 0;
-	CALL_ATTRIB_HOOK_INT( iWeaponMod, set_scattergun_no_reload_single );
+	//CALL_ATTRIB_HOOK_INT( iWeaponMod, set_scattergun_no_reload_single );
 	if ( iWeaponMod == 1 )
 	{
 		return false;
@@ -2744,7 +2744,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CBaseCombatWeapon, DT_LocalActiveWeaponData )
 	SendPropInt( SENDINFO( m_nNextThinkTick ) ),
 	SendPropTime( SENDINFO( m_flTimeWeaponIdle ) ),
 
-#if defined( TF_DLL )
+#if defined( TF_DLL ) || defined( TF_MOD )
 	SendPropExclude( "DT_AnimTimeMustBeFirst" , "m_flAnimTime" ),
 #endif
 
@@ -2770,7 +2770,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CBaseCombatWeapon, DT_LocalWeaponData )
 
 	SendPropInt( SENDINFO( m_bFlipViewModel ) ),
 
-#if defined( TF_DLL )
+#if defined( TF_DLL ) || defined( TF_MOD )
 	SendPropExclude( "DT_AnimTimeMustBeFirst" , "m_flAnimTime" ),
 #endif
 

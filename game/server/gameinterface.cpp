@@ -832,7 +832,7 @@ float CServerGameDLL::GetTickInterval( void ) const
 // [Forrest] For Counter-Strike, set default tick rate of 66 and removed -tickrate command line parameter.
 //=============================================================================
 // Ignoring this for now, server ops are abusing it
-#if !defined( TF_DLL ) && !defined( CSTRIKE_DLL ) && !defined( DOD_DLL )
+#if !defined( TF_DLL ) && !defined( CSTRIKE_DLL ) && !defined( DOD_DLL ) && !defined( TF_MOD )
 //=============================================================================
 // HPE_END
 //=============================================================================
@@ -1887,7 +1887,7 @@ void CServerGameDLL::SetServerHibernation( bool bHibernating )
 
 const char *CServerGameDLL::GetServerBrowserMapOverride()
 {
-#ifdef TF_DLL
+#ifdef TF_DLL || TF_MOD
 	if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() )
 	{
 		const char *pszFilenameShort = g_pPopulationManager ? g_pPopulationManager->GetPopulationFilenameShort() : NULL;
@@ -1904,7 +1904,7 @@ const char *CServerGameDLL::GetServerBrowserGameData()
 {
 	CUtlString sResult;
 
-#ifdef TF_DLL
+#ifdef TF_DLL || TF_MOD
 	sResult.Format( "tf_mm_trusted:%d,tf_mm_servermode:%d", tf_mm_trusted.GetInt(), tf_mm_servermode.GetInt() );
 
 	CMatchInfo *pMatch = GTFGCClientSystem()->GetMatch();

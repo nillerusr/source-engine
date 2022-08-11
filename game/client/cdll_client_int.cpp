@@ -1013,12 +1013,12 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 	IGameSystem::Add( PerfVisualBenchmark() );
 	IGameSystem::Add( MumbleSystem() );
 	
-	#if defined( TF_CLIENT_DLL )
+	#if defined( TF_CLIENT_DLL )// || defined( TF_MOD_CLIENT )
 	IGameSystem::Add( CustomTextureToolCacheGameSystem() );
 	IGameSystem::Add( TFSharedContentManager() );
 	#endif
 
-#if defined( TF_CLIENT_DLL )
+#if defined( TF_CLIENT_DLL )// || defined( TF_MOD_CLIENT )
 	if ( g_AbuseReportMgr != NULL )
 	{
 		IGameSystem::Add( g_AbuseReportMgr );
@@ -1263,7 +1263,7 @@ void CHLClient::HudUpdate( bool bActive )
 {
 	float frametime = gpGlobals->frametime;
 
-#if defined( TF_CLIENT_DLL )
+#if defined( TF_CLIENT_DLL )// || defined( TF_MOD_CLIENT )
 	CRTime::UpdateRealTime();
 #endif
 
@@ -1665,7 +1665,7 @@ void CHLClient::ResetStringTablePointers()
 	g_pStringTableClientSideChoreoScenes = NULL;
 	g_pStringTableServerMapCycle = NULL;
 
-#ifdef TF_CLIENT_DLL
+#ifdef TF_CLIENT_DLL || TF_MOD_CLIENT
 	g_pStringTableServerPopFiles = NULL;
 	g_pStringTableServerMapCycleMvM = NULL;
 #endif
@@ -1722,7 +1722,7 @@ void CHLClient::LevelShutdown( void )
 
 	messagechars->Clear();
 
-#ifndef TF_CLIENT_DLL
+#ifndef TF_CLIENT_DLL || TF_MOD_CLIENT 
 	// don't want to do this for TF2 because we have particle systems in our
 	// character loadout screen that can be viewed when we're not connected to a server
 	g_pParticleSystemMgr->UncacheAllParticleSystems();
@@ -1895,7 +1895,7 @@ void CHLClient::InstallStringTableCallback( const char *tableName )
 	{
 		g_pStringTableServerMapCycle = networkstringtable->FindTable( tableName );
 	}
-#ifdef TF_CLIENT_DLL
+#ifdef TF_CLIENT_DLL || TF_MOD_CLIENT
 	else if ( !Q_strcasecmp( tableName, "ServerPopFiles" ) )
 	{
 		g_pStringTableServerPopFiles = networkstringtable->FindTable( tableName );
@@ -2552,7 +2552,7 @@ void CHLClient::FileReceived( const char * fileName, unsigned int transferID )
 
 void CHLClient::ClientAdjustStartSoundParams( StartSoundParams_t& params )
 {
-#ifdef TF_CLIENT_DLL
+#ifdef TF_CLIENT_DLL || TF_MOD_CLIENT
 	CBaseEntity *pEntity = ClientEntityList().GetEnt( params.soundsource );
 
 	// A player speaking
@@ -2604,7 +2604,7 @@ bool CHLClient::DisconnectAttempt( void )
 {
 	bool bRet = false;
 
-#if defined( TF_CLIENT_DLL )
+#if defined( TF_CLIENT_DLL )// || defined( TF_MOD_CLIENT )
 	bRet = HandleDisconnectAttempt();
 #endif
 

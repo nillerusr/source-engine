@@ -300,7 +300,7 @@ CBaseAnimating::~CBaseAnimating()
 
 void CBaseAnimating::Precache()
 {
-#if !defined( TF_DLL )
+#if !defined( TF_DLL ) && !defined( TF_MOD )
 	// Anything derived from this class can potentially burn - true, but do we want it to!
 	PrecacheParticleSystem( "burning_character" );
 #endif
@@ -2591,7 +2591,7 @@ CBoneCache *CBaseAnimating::GetBoneCache( void )
 	int boneMask = BONE_USED_BY_HITBOX | BONE_USED_BY_ATTACHMENT;
 
 	// TF queries these bones to position weapons when players are killed
-#if defined( TF_DLL )
+#if defined( TF_DLL ) || defined( TF_MOD )
 	boneMask |= BONE_USED_BY_BONE_MERGE;
 #endif
 	if ( pcache )

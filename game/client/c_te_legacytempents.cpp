@@ -44,7 +44,7 @@ extern ConVar muzzleflash_light;
 #define TENT_WIND_ACCEL 50
 
 //Precache the effects
-#ifndef TF_CLIENT_DLL
+#ifndef TF_CLIENT_DLL && TF_MOD_CLIENT
 CLIENTEFFECT_REGISTER_BEGIN( PrecacheEffectMuzzleFlash )
 
 	CLIENTEFFECT_MATERIAL( "effects/muzzleflash1" )
@@ -2389,7 +2389,7 @@ void CTempEnts::Update(void)
 // Recache tempents which might have been flushed
 void CTempEnts::LevelInit()
 {
-#ifndef TF_CLIENT_DLL
+#ifndef TF_CLIENT_DLL && TF_MOD_CLIENT
 	m_pSpriteMuzzleFlash[0] = (model_t *)engine->LoadModel( "sprites/ar2_muzzle1.vmt" );
 	m_pSpriteMuzzleFlash[1] = (model_t *)engine->LoadModel( "sprites/muzzleflash4.vmt" );
 	m_pSpriteMuzzleFlash[2] = (model_t *)engine->LoadModel( "sprites/muzzleflash4.vmt" );

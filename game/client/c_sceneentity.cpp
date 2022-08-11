@@ -70,7 +70,7 @@ C_SceneEntity::~C_SceneEntity( void )
 void C_SceneEntity::OnResetClientTime()
 {
 	// In TF2 we ignore this as the scene is played entirely client-side.
-#ifndef TF_CLIENT_DLL
+#ifndef TF_CLIENT_DLL && TF_MOD_CLIENT
 	m_flCurrentTime = m_flForceClientTime;
 #endif
 }

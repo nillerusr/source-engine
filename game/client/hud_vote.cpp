@@ -1452,7 +1452,7 @@ void CHudVote::MsgFunc_VoteSetup( bf_read &msg )
 	bool bMvM = false;
 	INetworkStringTable *pStringTable = g_pStringTableServerMapCycle;
 
-#ifdef TF_CLIENT_DLL
+#ifdef TF_CLIENT_DLL || TF_MOD_CLIENT
 	if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() )
 	{
 		bMvM = true;
@@ -1483,7 +1483,7 @@ void CHudVote::MsgFunc_VoteSetup( bf_read &msg )
 		}
 	}
 
-#ifdef TF_CLIENT_DLL
+#ifdef TF_CLIENT_DLL || TF_MOD_CLIENT
 	m_VoteSetupPopFiles.RemoveAll();
 	if ( g_pStringTableServerPopFiles )
 	{

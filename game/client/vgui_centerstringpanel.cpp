@@ -21,7 +21,7 @@
 #include "tier0/memdbgon.h"
 
 
-#ifdef TF_CLIENT_DLL
+#ifdef TF_CLIENT_DLL || TF_MOD_CLIENT
 static ConVar		scr_centertime( "scr_centertime", "5" );
 #else
 static ConVar		scr_centertime( "scr_centertime", "2" );

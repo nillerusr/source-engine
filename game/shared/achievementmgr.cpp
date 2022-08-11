@@ -43,7 +43,7 @@
 #include "engine/imatchmaking.h"
 #include "tier0/vprof.h"
 
-#if defined(TF_DLL) || defined(TF_CLIENT_DLL)
+#if defined(TF_DLL) || defined(TF_CLIENT_DLL) || defined( TF_MOD ) || defined( TF_MOD_CLIENT )
 #include "tf_gamerules.h"
 #endif
 
@@ -322,7 +322,7 @@ bool CAchievementMgr::Init()
 	usermessages->HookMessage( "AchievementEvent", MsgFunc_AchievementEvent );
 #endif // CLIENT_DLL
 
-#ifdef TF_CLIENT_DLL
+#ifdef TF_CLIENT_DLL || TF_MOD_CLIENT
 	ListenForGameEvent( "localplayer_changeclass" );
 	ListenForGameEvent( "localplayer_changeteam" );
 	ListenForGameEvent( "teamplay_round_start" );	
@@ -1093,7 +1093,7 @@ bool CAchievementMgr::CheckAchievementsEnabled()
 	//=============================================================================
 #endif // CSTRIKE_DLL	
 
-#if defined(TF_DLL) || defined(TF_CLIENT_DLL)
+#if defined(TF_DLL) || defined(TF_CLIENT_DLL) || defined(TF_MOD) || defined(TF_MOD_CLIENT)
 	// no achievements for now in training
 	if ( TFGameRules() && TFGameRules()->IsInTraining() && TFGameRules()->AllowTrainingAchievements() == false )
 	{
