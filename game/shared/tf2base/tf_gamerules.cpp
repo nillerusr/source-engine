@@ -2842,8 +2842,8 @@ bool CTFGameRules::IsBirthday( void )
 	return ( m_iBirthdayMode == BIRTHDAY_ON );
 }
 
-ConVar tf_is_mann_vs_machine_mode( "tf_is_mann_vs_machine_mode", "0", FCVAR_REPLICATED );
-ConVar tf_allow_training_achievements( "tf_allow_training_achievements", "0", FCVAR_REPLICATED );
+ConVar tf_is_mann_vs_machine_mode( "tf_is_mann_vs_machine_mode", "0", FCVAR_REPLICATED | FCVAR_CHEAT | FCVAR_HIDDEN );
+ConVar tf_allow_training_achievements( "tf_allow_training_achievements", "1", FCVAR_REPLICATED | FCVAR_CHEAT | FCVAR_HIDDEN );
 
 //-----------------------------------------------------------------------------
 // Purpose: FIXME: stub
