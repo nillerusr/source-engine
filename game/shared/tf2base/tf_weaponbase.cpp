@@ -1,4 +1,4 @@
-//========= Copyright Â© 1996-2004, Valve LLC, All rights reserved. ============
+//========= Copyright © 1996-2004, Valve LLC, All rights reserved. ============
 //
 //	Weapons.
 //
