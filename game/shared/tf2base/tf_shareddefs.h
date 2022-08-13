@@ -593,7 +593,7 @@ extern const char *g_pszHintMessages[];
 #define DMG_USEDISTANCEMOD		(DMG_SLOWBURN)		// NEED TO REMOVE CALTROPS
 #define DMG_NOCLOSEDISTANCEMOD	(DMG_POISON)
 
-#define TF_DMG_SENTINEL_VALUE	0x00512 //0xFFFFFFFF FIXME: wtf?
+#define TF_DMG_SENTINEL_VALUE	0x7FFFFFFF
 
 // This can only ever be used on a TakeHealth call, since it re-uses a dmg flag that means something else
 #define DMG_IGNORE_MAXHEALTH	(DMG_BULLET)

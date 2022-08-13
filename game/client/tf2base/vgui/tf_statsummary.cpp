@@ -120,6 +120,7 @@ void CTFStatsSummaryPanel::PerformLayout()
 	BaseClass::PerformLayout();
 
 #ifndef _X360
+	/*
 	if ( m_pTipLabel && m_pTipText )
 	{
 		m_pTipLabel->SizeToContents();
@@ -127,9 +128,10 @@ void CTFStatsSummaryPanel::PerformLayout()
 
 		int x, y, w, t;
 		m_pTipText->GetBounds( x, y, w, t );
-		m_pTipText->SetBounds( x + width, y, w - width, t );
+		m_pTipText->SetPos( ( ScreenWidth() * 0.0125 ) + ( x + w ), y );
 		m_pTipText->InvalidateLayout( false, true ); // have it re-layout the contents so it's wrapped correctly now that we've changed the size
 	}
+	*/
 
 	if ( m_pNextTipButton )
 	{
@@ -378,7 +380,7 @@ void CTFStatsSummaryPanel::UpdateBarCharts()
 
 #define MAKEFLAG(x)	( 1 << x )
 
-#define ALL_CLASSES 0x1024 //0xFFFFFFFF FIXME: wtf?
+#define ALL_CLASSES 0x7FFFFFFF
 
 //-----------------------------------------------------------------------------
 // Purpose: Updates class details
@@ -886,4 +888,10 @@ void CTFStatsSummaryPanel::OnDeactivate()
 CON_COMMAND( showstatsdlg, "Shows the player stats dialog" )
 {
 	GStatsSummaryPanel()->ShowModal();
+}
+
+CON_COMMAND( hidestatsdlg, "Hides the player stats dialog" )
+{
+	GStatsSummaryPanel()->SetVisible( false );
+	GStatsSummaryPanel()->SetParent( (VPANEL) NULL );
 }
