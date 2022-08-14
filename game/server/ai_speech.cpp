@@ -579,7 +579,7 @@ bool CAI_Expresser::SpeakRawScene( const char *pszScene, float delay, AI_Respons
 	{
 		SpeechMsg( GetOuter(), "SpeakRawScene( %s, %f) %f\n", pszScene, delay, sceneLength );
 
-#if defined( HL2_EPISODIC ) || defined( TF_DLL )
+#if defined( HL2_EPISODIC ) || defined( TF_DLL ) || defined( TF_MOD )
 		char szInstanceFilename[256];
 		GetOuter()->GenderExpandString( pszScene, szInstanceFilename, sizeof( szInstanceFilename ) );
 		// Only mark ourselves as speaking if the scene has speech

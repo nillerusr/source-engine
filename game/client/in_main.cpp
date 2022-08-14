@@ -1630,7 +1630,7 @@ static ConCommand startgrenade2( "+grenade2", IN_Grenade2Down );
 static ConCommand startattack3("+attack3", IN_Attack3Down);
 static ConCommand endattack3("-attack3", IN_Attack3Up);
 
-#ifdef TF_CLIENT_DLL
+#if defined( TF_CLIENT_DLL ) || defined( TF_MOD_CLIENT )
 static ConCommand toggle_duck( "toggle_duck", IN_DuckToggle );
 #endif
 

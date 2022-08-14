@@ -332,7 +332,7 @@ void C_EntityFlame::CreateEffect( void )
 		m_hEffect = NULL;
 	}
 
-#ifdef TF_CLIENT_DLL
+#ifdef TF_CLIENT_DLL || TF_MOD_CLIENT
 	m_hEffect = ParticleProp()->Create( "burningplayer_red", PATTACH_ABSORIGIN_FOLLOW );
 #else
 	m_hEffect = ParticleProp()->Create( "burning_character", PATTACH_ABSORIGIN_FOLLOW );

@@ -36,7 +36,7 @@
 	ConVar cl_righthand( "cl_righthand", "1", FCVAR_ARCHIVE, "Use right-handed view models." );
 #endif
 
-#ifdef TF_CLIENT_DLL
+#ifdef TF_CLIENT_DLL || TF_MOD_CLIENT
 	ConVar cl_flipviewmodels( "cl_flipviewmodels", "0", FCVAR_USERINFO | FCVAR_ARCHIVE | FCVAR_NOT_CONNECTED, "Flip view models." );
 #endif
 
@@ -204,7 +204,7 @@ inline bool C_BaseViewModel::ShouldFlipViewModel()
 	}
 #endif
 
-#ifdef TF_CLIENT_DLL
+#ifdef TF_CLIENT_DLL || TF_MOD_CLIENT
 	CBaseCombatWeapon *pWeapon = m_hWeapon.Get();
 	if ( pWeapon )
 	{

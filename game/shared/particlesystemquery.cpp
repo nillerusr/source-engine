@@ -14,7 +14,7 @@
 #include "c_pixel_visibility.h"
 #endif
 
-#ifdef TF_CLIENT_DLL
+#if defined( TF_CLIENT_DLL ) || defined( TF_MOD_CLIENT )
 #include "tf_shareddefs.h"
 #endif
 
@@ -551,7 +551,7 @@ static CollisionGroupNameRecord_t s_NameMap[]={
 	{ "NPC", COLLISION_GROUP_NPC },
 	{ "ACTOR", COLLISION_GROUP_NPC_ACTOR },
 	{ "PASSABLE", COLLISION_GROUP_PASSABLE_DOOR },	
-#if defined( TF_CLIENT_DLL )
+#if defined( TF_CLIENT_DLL ) || defined( TF_MOD_CLIENT )
 	{ "ROCKETS", TFCOLLISION_GROUP_ROCKETS },
 #endif
 };

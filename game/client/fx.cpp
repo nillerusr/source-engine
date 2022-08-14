@@ -30,7 +30,7 @@
 #include "tier0/memdbgon.h"
 
 //Precahce the effects
-#ifndef TF_CLIENT_DLL
+#ifndef TF_CLIENT_DLL && TF_MOD_CLIENT
 CLIENTEFFECT_REGISTER_BEGIN( PrecacheMuzzleFlash )
 CLIENTEFFECT_MATERIAL( "effects/muzzleflash1" )
 CLIENTEFFECT_MATERIAL( "effects/muzzleflash2" )

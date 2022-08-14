@@ -240,7 +240,7 @@ CHudElement::CHudElement( const char *pElementName )
 	m_bIsParentedToClientDLLRootPanel = false;
 
 	// Make this for all hud elements, but when its a bit safer
-#if defined( TF_CLIENT_DLL ) || defined( DOD_DLL )
+#if defined( TF_CLIENT_DLL ) || defined( DOD_DLL ) || defined( TF_MOD_CLIENT )
 	RegisterForRenderGroup( "global" );
 #endif
 }
@@ -975,7 +975,7 @@ bool CHud::IsHidden( int iHudFlags )
 		return true;
 
 	// Hide all HUD elements during screenshot if the user's set hud_freezecamhide ( TF2 )
-#if defined( TF_CLIENT_DLL )
+#if defined( TF_CLIENT_DLL ) || defined( TF_MOD_CLIENT )
 	extern bool IsTakingAFreezecamScreenshot();
 	extern ConVar hud_freezecamhide;
 

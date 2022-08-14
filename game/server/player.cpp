@@ -5014,7 +5014,7 @@ void CBasePlayer::Spawn( void )
 	m_vecSmoothedVelocity = vec3_origin;
 	InitVCollision( GetAbsOrigin(), GetAbsVelocity() );
 
-#if !defined( TF_DLL )
+#if !defined( TF_DLL ) && !defined( TF_MOD )
 	IGameEvent *event = gameeventmanager->CreateEvent( "player_spawn" );
 	
 	if ( event )
@@ -5069,7 +5069,7 @@ void CBasePlayer::Precache( void )
 	enginesound->PrecacheSentenceGroup( "HEV" );
 
 	// These are always needed
-#ifndef TF_DLL
+#if !( defined( TF_DLL ) || defined( TF_MOD ) )
 	PrecacheParticleSystem( "slime_splash_01" );
 	PrecacheParticleSystem( "slime_splash_02" );
 	PrecacheParticleSystem( "slime_splash_03" );
@@ -9012,7 +9012,7 @@ bool CPlayerInfo::IsHLTV()
 
 bool CPlayerInfo::IsReplay()
 {
-#ifdef TF_DLL // FIXME: Need run-time check for whether replay is enabled
+#if !defined ( TF_DLL ) && !defined ( TF_MOD ) // FIXME: Need run-time check for whether replay is enabled
 	Assert( m_pParent );
 	return m_pParent->IsReplay();
 #else

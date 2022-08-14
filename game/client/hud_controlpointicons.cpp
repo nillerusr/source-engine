@@ -189,7 +189,11 @@ void CControlPointIcon::ApplySchemeSettings( IScheme *pScheme )
 
 	if ( !m_pCPTimerLabel )
 	{
+#if defined( TF_MOD_CLIENT )
+		m_pCPTimerLabel = new CTFLabel( this, "CPTimerLabel", L"" );
+#else
 		m_pCPTimerLabel = new CExLabel( this, "CPTimerLabel", L"" );
+#endif
 		m_pCPTimerLabel->SetZPos( 0 );
 	}
 
@@ -1794,7 +1798,11 @@ void CControlPointCountdown::ApplySchemeSettings( IScheme *pScheme )
 //-----------------------------------------------------------------------------
 void CControlPointCountdown::PerformLayout()
 {
+#if defined( TF_MOD_CLIENT )
+	CTFLabel *pLabel = dynamic_cast<CTFLabel *>( FindChildByName( "CapCountdownLabel" ) );
+#else
 	CExLabel *pLabel = dynamic_cast<CExLabel *>( FindChildByName( "CapCountdownLabel" ) );
+#endif
 	if ( pLabel )
 	{
 		pLabel->SetBounds( 0, 0, GetWide(), GetTall() );

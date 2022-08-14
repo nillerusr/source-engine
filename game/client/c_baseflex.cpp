@@ -351,7 +351,7 @@ bool CFlexSceneFileManager::Init()
 	FindSceneFile( NULL, "randomAlert", true );
 #endif
 
-#if defined( TF_CLIENT_DLL )
+#if defined( TF_CLIENT_DLL ) || defined( TF_MOD_CLIENT )
 	// HACK TO ALL TF TO HAVE PER CLASS OVERRIDES
 	char const *pTFClasses[] = 
 	{
@@ -433,7 +433,7 @@ void *CFlexSceneFileManager::FindSceneFile( IHasLocalToGlobalFlexSettings *insta
 	Assert( V_strlen( filename ) < MAX_PATH );
 	V_strcpy( szFilename, filename );
 	
-#if defined( TF_CLIENT_DLL )	
+#if defined( TF_CLIENT_DLL ) || defined( TF_MOD_CLIENT )
 	char szHWMFilename[MAX_PATH];
 	if ( GetHWMExpressionFileName( szFilename, szHWMFilename ) )
 	{

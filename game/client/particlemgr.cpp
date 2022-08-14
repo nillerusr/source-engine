@@ -26,7 +26,7 @@
 #include "filesystem.h"
 #include "particle_parse.h"
 #include "model_types.h"
-#ifdef TF_CLIENT_DLL
+#ifdef TF_CLIENT_DLL || TF_MOD_CLIENT
 #include "rtime.h"
 #endif
 #include "tier0/icommandline.h"
@@ -1083,7 +1083,7 @@ bool CParticleMgr::Init(unsigned long count, IMaterialSystem *pMaterials)
 	// Send true to load the sheets
 	ParseParticleEffects( true, false );
 
-#ifdef TF_CLIENT_DLL
+#ifdef TF_CLIENT_DLL || TF_MOD_CLIENT
 	if ( IsX360() )
 	{
 		//m_pThreadPool[0] = CreateThreadPool();

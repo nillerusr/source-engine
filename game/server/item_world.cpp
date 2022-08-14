@@ -98,7 +98,7 @@ BEGIN_DATADESC( CItem )
 	DEFINE_THINKFUNC( Materialize ),
 	DEFINE_THINKFUNC( ComeToRest ),
 
-#if defined( HL2MP ) || defined( TF_DLL )
+#if defined( HL2MP ) || defined( TF_DLL ) || defined( TF_MOD )
 	DEFINE_FIELD( m_flNextResetCheckTime, FIELD_TIME ),
 	DEFINE_THINKFUNC( FallThink ),
 #endif
@@ -202,7 +202,7 @@ void CItem::Spawn( void )
 	}
 #endif //CLIENT_DLL
 
-#if defined( HL2MP ) || defined( TF_DLL )
+#if defined( HL2MP ) || defined( TF_DLL ) || defined( TF_MOD )
 	SetThink( &CItem::FallThink );
 	SetNextThink( gpGlobals->curtime + 0.1f );
 #endif
@@ -272,7 +272,7 @@ void CItem::ComeToRest( void )
 	}
 }
 
-#if defined( HL2MP ) || defined( TF_DLL )
+#if defined( HL2MP ) || defined( TF_DLL ) || defined( TF_MOD )
 
 //-----------------------------------------------------------------------------
 // Purpose: Items that have just spawned run this think to catch them when 
@@ -307,7 +307,7 @@ void CItem::FallThink ( void )
 	}
 #endif // HL2MP
 
-#if defined( TF_DLL )
+#if defined( TF_DLL ) || defined( TF_MOD )
 	// We only come here if ActivateWhenAtRest() is never called,
 	// which is the case when creating currencypacks in MvM
 	if ( !( GetFlags() & FL_ONGROUND ) )
@@ -472,7 +472,7 @@ CBaseEntity* CItem::Respawn( void )
 	UTIL_SetOrigin( this, g_pGameRules->VecItemRespawnSpot( this ) );// blip to whereever you should respawn.
 	SetAbsAngles( g_pGameRules->VecItemRespawnAngles( this ) );// set the angles.
 
-#if !defined( TF_DLL )
+#if !defined( TF_DLL ) && !defined( TF_MOD )
 	UTIL_DropToFloor( this, MASK_SOLID );
 #endif
 

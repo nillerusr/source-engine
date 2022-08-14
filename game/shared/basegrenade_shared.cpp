@@ -129,7 +129,7 @@ void CBaseGrenade::Explode( trace_t *pTrace, int bitsDamageType )
 	Vector vecAbsOrigin = GetAbsOrigin();
 	int contents = UTIL_PointContents ( vecAbsOrigin );
 
-#if defined( TF_DLL )
+#if defined( TF_DLL ) || defined( TF_MOD )
 	// Since this code only runs on the server, make sure it shows the tempents it creates.
 	// This solves a problem with remote detonating the pipebombs (client wasn't seeing the explosion effect)
 	CDisablePredictionFiltering disabler;

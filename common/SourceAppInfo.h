@@ -18,6 +18,7 @@ enum ESourceApp
 	k_App_PORTAL,
 	k_App_HL2_EP2,
 	k_App_TF2,
+	k_App_TF2_2008,
 	k_App_MAX
 };
 

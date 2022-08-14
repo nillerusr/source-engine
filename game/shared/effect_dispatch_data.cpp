@@ -101,7 +101,7 @@
 #endif
 		SendPropQAngles( SENDINFO_NOCHECK( m_vAngles ), 7 ),
 
-#if defined( TF_DLL )
+#if defined( TF_DLL ) || defined( TF_MOD )
 		SendPropVector( SENDINFO_NOCHECK( m_vNormal ), 6, 0, -1.0f, 1.0f ),
 #else
 		SendPropVector( SENDINFO_NOCHECK( m_vNormal ), 0, SPROP_NORMAL ),

@@ -19,7 +19,7 @@ class IReplayFactory;
 extern INetworkStringTable *g_pStringTableInfoPanel;
 extern INetworkStringTable *g_pStringTableServerMapCycle;
 
-#ifdef TF_DLL
+#ifdef TF_DLL || TF_MOD
 extern INetworkStringTable *g_pStringTableServerPopFiles;
 #endif
 

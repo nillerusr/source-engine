@@ -15,7 +15,7 @@
 #include "tier0/memdbgon.h"
 
 IMPLEMENT_SERVERCLASS_ST(CTEParticleSystem, DT_TEParticleSystem)
-#if defined( TF_DLL )
+#if defined( TF_DLL ) || defined( TF_MOD )
 	SendPropFloat( SENDINFO_VECTORELEM( m_vecOrigin, 0 ), -1, SPROP_COORD_MP_INTEGRAL ),
 	SendPropFloat( SENDINFO_VECTORELEM( m_vecOrigin, 1 ), -1, SPROP_COORD_MP_INTEGRAL ),
 	SendPropFloat( SENDINFO_VECTORELEM( m_vecOrigin, 2 ), -1, SPROP_COORD_MP_INTEGRAL ),
