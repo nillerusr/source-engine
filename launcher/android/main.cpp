@@ -1,140 +1,94 @@
+/*
+Copyright (C) 2022 nillerusr
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+*/
+
 #include <stdio.h>
 #include <string.h>
 #include <dlfcn.h>
-
-#ifdef ANDROID
-#include <android/log.h>
-#include <SDL_version.h>
-
-#define TAG "SRCENG"
-#define PRIO ANDROID_LOG_DEBUG
-#define LogPrintf(...) do { __android_log_print(PRIO, TAG, __VA_ARGS__); printf( __VA_ARGS__); } while( 0 );
-
-#else
-#define LogPrintf(...) printf(__VA_ARGS__)
-#endif
-
-typedef void (*t_set_getprocaddress)(void *(*new_proc_address)(const char *));
-t_set_getprocaddress gl4es_set_getprocaddress;
-
-typedef void *(*t_eglGetProcAddress)( const char * );
-t_eglGetProcAddress eglGetProcAddress;
-
-void *GetProcAddress( const char *procname )
-{
-	return eglGetProcAddress(procname);
-}
-
-void InitGL4ES()
-{
-	void *lgl4es = dlopen("libgl4es.so", RTLD_LAZY);
-	if( !lgl4es )
-	{
-		LogPrintf("Failed to dlopen library libgl4es.so: %s\n", dlerror());
-	}
-
-	void *lEGL = dlopen("libEGL.so", RTLD_LAZY);
-	if( !lEGL )
-	{
-		LogPrintf("Failed to dlopen library libEGL.so: %s\n", dlerror());
-	}
-
-	gl4es_set_getprocaddress = (t_set_getprocaddress)dlsym(lgl4es, "set_getprocaddress");
-	eglGetProcAddress = (t_eglGetProcAddress)dlsym(lEGL, "eglGetProcAddress");
-
-	if( gl4es_set_getprocaddress )
-	{
-		gl4es_set_getprocaddress( &GetProcAddress );
-	}
-	else
-	{
-		LogPrintf("Failed to call set_getprocaddress\n");
-	}
-}
-
-#ifdef ANDROID
 #include <jni.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <SDL_hints.h>
-
+#include <SDL_version.h>
+#include "tier0/dbg.h"
 #include "tier0/threadtools.h"
 
 char *LauncherArgv[512];
 char java_args[4096];
 int iLastArgs = 0;
 
-#define TAG "SRCENG"
-#define PRIO ANDROID_LOG_DEBUG
-#define LogPrintf(...) do { __android_log_print(PRIO, TAG, __VA_ARGS__); printf( __VA_ARGS__); } while( 0 );
-#define DLLEXPORT extern "C" __attribute__((visibility("default")))
+DLL_EXPORT int LauncherMain( int argc, char **argv ); // from launcher.cpp
+extern void InitCrashHandler();
 
-DLLEXPORT int Java_com_valvesoftware_ValveActivity2_setenv(JNIEnv *jenv, jclass *jclass, jstring env, jstring value, jint over)
+JNIEXPORT int Java_com_valvesoftware_ValveActivity2_setenv(JNIEnv *jenv, jclass *jclass, jstring env, jstring value, jint over)
 {
-	LogPrintf( "Java_com_valvesoftware_ValveActivity2_setenv %s=%s", jenv->GetStringUTFChars(env, NULL), jenv->GetStringUTFChars(value, NULL) );
+	Msg( "Java_com_valvesoftware_ValveActivity2_setenv %s=%s", jenv->GetStringUTFChars(env, NULL), jenv->GetStringUTFChars(value, NULL) );
 	return setenv( jenv->GetStringUTFChars(env, NULL), jenv->GetStringUTFChars(value, NULL), over );
 }
 
-DLLEXPORT void Java_com_valvesoftware_ValveActivity2_nativeOnActivityResult()
+JNIEXPORT void Java_com_valvesoftware_ValveActivity2_nativeOnActivityResult()
 {
-	LogPrintf( "Java_com_valvesoftware_ValveActivity_nativeOnActivityResult" );
+	Msg( "Java_com_valvesoftware_ValveActivity_nativeOnActivityResult" );
 }
 
-void parseArgs( char *args )
+JNIEXPORT void Java_com_valvesoftware_ValveActivity2_setArgs(JNIEnv *env, jclass *clazz, jstring str)
 {
+	strncpy( java_args, env->GetStringUTFChars(str, NULL), sizeof java_args );
+}
+
+void SetLauncherArgs()
+{
+#define A(a,b) LauncherArgv[iLastArgs++] = (char*)a; \
+	LauncherArgv[iLastArgs++] = (char*)b
+#define D(a) LauncherArgv[iLastArgs++] = (char*)a
+
+	static char binPath[2048];
+	snprintf(binPath, sizeof binPath, "%s/hl2_linux", getenv("APP_DATA_PATH") );
+	Msg(binPath);
+	D(binPath);
+
+	D("-nouserclip");
+
 	char *pch;
-	pch = strtok (args," ");
+
+	pch = strtok (java_args," ");
 	while (pch != NULL)
 	{
 		LauncherArgv[iLastArgs++] = pch;
 		pch = strtok (NULL, " ");
 	}
-}
-
-DLLEXPORT void Java_com_valvesoftware_ValveActivity2_setArgs(JNIEnv *env, jclass *clazz, jstring str)
-{
-	strncpy( java_args, env->GetStringUTFChars(str, NULL), sizeof java_args );
-}
-
-DLLEXPORT int LauncherMain( int argc, char **argv );
-
-#define A(a,b) LauncherArgv[iLastArgs++] = (char*)a; \
-	LauncherArgv[iLastArgs++] = (char*)b
-
-#define D(a) LauncherArgv[iLastArgs++] = (char*)a
-
-void SetLauncherArgs()
-{
-	static char binPath[2048];
-	snprintf(binPath, sizeof binPath, "%s/hl2_linux", getenv("APP_DATA_PATH") );
-	LogPrintf(binPath);
-	D(binPath);
-
-	D("-nouserclip");
-
-	parseArgs(java_args);
 
 	D("-fullscreen");
 	D("-nosteam");
 	D("-insecure");
+
+#undef A
+#undef D
 }
 
-DLLEXPORT int LauncherMainAndroid( int argc, char **argv )
+JNIEXPORT int LauncherMainAndroid( int argc, char **argv )
 {
 	SDL_version ver;
 	SDL_GetVersion( &ver );
 
-	LogPrintf("SDL version: %d.%d.%d rev: %s\n", (int)ver.major, (int)ver.minor, (int)ver.patch, SDL_GetRevision());
+	Msg("SDL version: %d.%d.%d rev: %s\n", (int)ver.major, (int)ver.minor, (int)ver.patch, SDL_GetRevision());
 
+	InitCrashHandler();
 	SetLauncherArgs();
-
-	InitGL4ES();
 
 	SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
 	DeclareCurrentThreadIsMainThread(); // Init thread propertly on Android
 
 	return LauncherMain(iLastArgs, LauncherArgv);
 }
-
-#endif

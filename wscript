@@ -236,6 +236,9 @@ def options(opt):
 	grp.add_option('--enable-opus', action = 'store_true', dest = 'OPUS', default = False,
 		help = 'build engine with Opus voice codec [default: %default]')
 
+	grp.add_option('--sanitize', action = 'store', dest = 'SANITIZE', default = '',
+		help = 'build with sanitizers [default: %default]')
+
 	opt.load('compiler_optimizations subproject')
 
 	opt.load('xcompile compiler_cxx compiler_c sdl2 clang_compilation_database strip_on_install waf_unit_test subproject')
@@ -302,7 +305,12 @@ def configure(conf):
 
 	cflags, linkflags = conf.get_optimization_flags()
 
+
 	flags = []
+
+	if conf.options.SANITIZE:
+		flags += ['-fsanitize=%s'%conf.options.SANITIZE, '-fno-sanitize=vptr']
+
 	if conf.env.DEST_OS != 'win32':
 		flags += ['-pipe', '-fPIC']
 	if conf.env.COMPILER_CC != 'msvc':
@@ -320,7 +328,7 @@ def configure(conf):
 			'-lz'
 		]
 
-		flags += ['-fvisibility=default']
+		flags += ['-funwind-tables', '-fvisibility=default']
 	elif conf.env.COMPILER_CC != 'msvc':
 		flags += ['-march=native']
 
