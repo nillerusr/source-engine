@@ -24,7 +24,8 @@ def build(bld):
 
 	if bld.env.DEST_OS == 'android':
 		source += [
-			'android/main.cpp'
+			'android/main.cpp',
+			'android/crashhandler.cpp'
 		]
 
 	includes = [
