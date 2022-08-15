@@ -299,7 +299,10 @@ class Android:
 		return linkflags
 
 	def ldflags(self):
-		ldflags = ['-lgcc', '-no-canonical-prefixes']
+		ldflags = ['-no-canonical-prefixes']
+		if not self.is_clang():
+			ldflags += ['-lgcc']
+
 		if self.is_clang() or self.is_host():
 			ldflags += ['-stdlib=libstdc++']
 		if self.is_arm():
