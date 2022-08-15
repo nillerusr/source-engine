@@ -24,7 +24,7 @@ def build(bld):
 
 	if bld.env.DEST_OS == 'android':
 		source += [
-			'android.cpp'
+			'android/main.cpp'
 		]
 
 	includes = [
