@@ -19,9 +19,9 @@
 
 #define	SLAM_SPRITE	"sprites/redglow1.vmt"
 
-ConVar    sk_plr_dmg_satchel		( "sk_plr_dmg_satchel","0");
-ConVar    sk_npc_dmg_satchel		( "sk_npc_dmg_satchel","0");
-ConVar    sk_satchel_radius			( "sk_satchel_radius","0");
+ConVar    sk_plr_dmg_satchel		( "sk_plr_dmg_satchel","150"); // commented lines in hl2/skill.cfg
+ConVar    sk_npc_dmg_satchel		( "sk_npc_dmg_satchel","75");
+ConVar    sk_satchel_radius		( "sk_satchel_radius","150");
 
 BEGIN_DATADESC( CSatchelCharge )
 
@@ -73,15 +73,14 @@ void CSatchelCharge::Spawn( void )
 	SetThink( &CSatchelCharge::SatchelThink );
 	SetNextThink( gpGlobals->curtime + 0.1f );
 
-	m_flDamage		= sk_plr_dmg_satchel.GetFloat();
-	m_DmgRadius		= sk_satchel_radius.GetFloat();
 	m_takedamage	= DAMAGE_YES;
 	m_iHealth		= 1;
 
 	SetGravity( UTIL_ScaleForGravity( 560 ) );	// slightly lower gravity
 	SetFriction( 1.0 );
 	SetSequence( 1 );
-	SetDamage( 150 );
+	SetDamage( sk_plr_dmg_satchel.GetFloat() );
+	SetDamageRadius( sk_satchel_radius.GetFloat() );
 
 	m_bIsAttached			= false;
 	m_bInAir				= true;
@@ -118,7 +117,7 @@ void CSatchelCharge::CreateEffects( void )
 //-----------------------------------------------------------------------------
 void CSatchelCharge::InputExplode( inputdata_t &inputdata )
 {
-	ExplosionCreate( GetAbsOrigin() + Vector( 0, 0, 16 ), GetAbsAngles(), GetThrower(), GetDamage(), 200, 
+	ExplosionCreate( GetAbsOrigin() + Vector( 0, 0, 16 ), GetAbsAngles(), GetThrower(), GetDamage(), GetDamageRadius(), 
 		SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS | SF_ENVEXPLOSION_NOSMOKE, 0.0f, this);
 
 	UTIL_Remove( this );
