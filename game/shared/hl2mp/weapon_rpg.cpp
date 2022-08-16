@@ -359,6 +359,11 @@ void CMissile::ShotDown( void )
 //-----------------------------------------------------------------------------
 void CMissile::DoExplosion( void )
 {
+	//Fix GetAbsOrigin().z+1 in gamerules.cpp:349
+	Vector origin = GetAbsOrigin();
+	origin.z -= 1;
+	SetAbsOrigin( origin );
+
 	// Explode
 	ExplosionCreate( GetAbsOrigin(), GetAbsAngles(), GetOwnerEntity(), GetDamage(), GetDamage() * 2, 
 		SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS | SF_ENVEXPLOSION_NOSMOKE, 0.0f, this);
@@ -452,7 +457,7 @@ void CMissile::IgniteThink( void )
 {
 	SetMoveType( MOVETYPE_FLY );
 	SetModel("models/weapons/w_missile.mdl");
-	UTIL_SetSize( this, vec3_origin, vec3_origin );
+	//UTIL_SetSize( this, vec3_origin, vec3_origin ); //This cause weird no damage dealing on stairs
  	RemoveSolidFlags( FSOLID_NOT_SOLID );
 
 	//TODO: Play opening sound
