@@ -1,3 +1,0 @@
-right spherical triangle projected percentage=0.1250
-small spherical triangle projected percentage=0.00156
-sum of areas of cubemap cells = 1.00
