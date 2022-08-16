@@ -125,20 +125,20 @@ void CDebugOverlay::Paint()
 
 			if (pCurrText->bUseOrigin)
 			{
-				if (!debugoverlay->ScreenPosition( pCurrText->origin, screenPos )) 
+				if (!debugoverlay->ScreenPosition( pCurrText->origin, screenPos ))
 				{
 					float xPos		= screenPos[0];
 					float yPos		= screenPos[1]+ (pCurrText->lineOffset*13); // Line spacing;
-					g_pMatSystemSurface->DrawColoredText( m_hFont, xPos, yPos, r, g, b, a, pCurrText->text );
+					g_pMatSystemSurface->DrawColoredText( m_hFont, xPos, yPos, r, g, b, a, "%s", pCurrText->text );
 				}
 			}
 			else
 			{
-				if (!debugoverlay->ScreenPosition( pCurrText->flXPos,pCurrText->flYPos, screenPos )) 
-				{	
+				if (!debugoverlay->ScreenPosition( pCurrText->flXPos,pCurrText->flYPos, screenPos ))
+				{
 					float xPos		= screenPos[0];
 					float yPos		= screenPos[1]+ (pCurrText->lineOffset*13); // Line spacing;
-					g_pMatSystemSurface->DrawColoredText( m_hFont, xPos, yPos, r, g, b, a, pCurrText->text );
+					g_pMatSystemSurface->DrawColoredText( m_hFont, xPos, yPos, r, g, b, a, "%s", pCurrText->text );
 				}
 			}
 		}
