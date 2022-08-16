@@ -193,6 +193,7 @@ public:
 	float screen_h, screen_w;
 	float forward, side, movecount;
 	float yaw, pitch;
+	rgba_t gridcolor;
 
 private:
 	bool initialized = false;
