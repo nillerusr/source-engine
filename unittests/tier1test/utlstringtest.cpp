@@ -72,7 +72,7 @@ static void TrimAPITests()
 	CUtlString orig( "  testy  " );
 	CUtlString orig2( "\n \n\ttesty\t\r\n \n\t\r" );
 	CUtlString s;
-	
+
 	s = orig;
 	s.TrimLeft( ' ' );
 	Shipping_Assert( !V_stricmp( s.Get(), "testy  " ) );
@@ -105,7 +105,7 @@ static void OperatorAPITests()
 	// perator = on const char *
 	orig = "different2";
 	Shipping_Assert( !V_stricmp( orig.Get(), "different2" ) );
-	
+
 	orig = orig2;
 	// op ==
 	Shipping_Assert( orig == orig2 );
@@ -180,6 +180,30 @@ static void FormatTests()
 
 static void FileNameAPITests()
 {
+#ifdef WIN32
+	CUtlString path( "c:\\source2\\game\\source2\\somefile.ext" );
+
+	CUtlString absPath = path.AbsPath();
+	Shipping_Assert( absPath == path );
+	CUtlString file = path.UnqualifiedFilename();
+	Shipping_Assert( !V_stricmp( file.Get(), "somefile.ext" ) );
+	CUtlString dir = path.DirName();
+	Shipping_Assert( !V_stricmp( dir.Get(), "c:\\source2\\game\\source2" ) );
+	dir = dir.DirName();
+	Shipping_Assert( !V_stricmp( dir.Get(), "c:\\source2\\game" ) );
+	CUtlString baseName = path.StripExtension();
+	Shipping_Assert( !V_stricmp( baseName.Get(), "c:\\source2\\game\\source2\\somefile" ) );
+	dir = path.StripFilename();
+	Shipping_Assert( !V_stricmp( dir.Get(), "c:\\source2\\game\\source2" ) );
+
+	file = path.GetBaseFilename();
+	Shipping_Assert( !V_stricmp( file.Get(), "somefile" ) );
+	CUtlString ext = path.GetExtension();
+	Shipping_Assert( !V_stricmp( ext.Get(), "ext" ) );
+
+	absPath = path.PathJoin( dir.Get(), file.Get() );
+	Shipping_Assert( !V_stricmp( absPath.Get(), "c:\\source2\\game\\source2\\somefile" ) );
+#else
 	CUtlString path( "/source2/game/source2/somefile.ext" );
 
 	CUtlString absPath = path.AbsPath();
@@ -202,6 +226,7 @@ static void FileNameAPITests()
 
 	absPath = path.PathJoin( dir.Get(), file.Get() );
 	Shipping_Assert( !V_stricmp( absPath.Get(), "/source2/game/source2/somefile" ) );
+#endif
 }
 
 DEFINE_TESTCASE( UtlStringTest, UtlStringTestSuite )
