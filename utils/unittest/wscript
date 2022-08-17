@@ -23,6 +23,7 @@ def build(bld):
 	if bld.env.DEST_OS != 'win32':
 		libs += [ 'DL', 'LOG' ]
 	else:
+		bld.env.LDFLAGS += ['/subsystem:console']
 		libs += ['USER32', 'SHELL32']
 
 	install_path = bld.env.BINDIR

@@ -40,6 +40,7 @@ SpewRetval_t UnitTestSpew( SpewType_t type, char const *pMsg )
 		break;
 	}
 	printf( "%s", pMsg );
+	fflush(stdout);
 
 	if ( Sys_IsDebuggerPresent() )
 		return ( type == SPEW_ASSERT || type == SPEW_ERROR ) ? SPEW_DEBUGGER : SPEW_CONTINUE;
