@@ -8,4 +8,4 @@ sudo apt-get install -f -y libopenal-dev:i386 g++-multilib gcc-multilib libpng-d
 PKG_CONFIG_PATH=/usr/lib/i386-linux-gnu/pkgconfig ./waf configure -T release --disable-warns --tests --prefix=out/ $* &&
 ./waf install &&
 cd out &&
-LD_LIBRARY_PATH=. ./unittest
+LD_LIBRARY_PATH=bin/ ./unittest

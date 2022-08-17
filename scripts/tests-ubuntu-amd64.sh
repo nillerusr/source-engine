@@ -7,4 +7,4 @@ sudo apt-get install -f -y gdb libopenal-dev g++-multilib gcc-multilib libpng-de
 ./waf configure -T release --disable-warns --tests --prefix=out/ --64bits $* &&
 ./waf install &&
 cd out &&
-LD_LIBRARY_PATH=. ./unittest
+LD_LIBRARY_PATH=bin/ ./unittest
