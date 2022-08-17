@@ -77,6 +77,23 @@ projects={
 		'vtf',
 		'unicode'
 	],
+	'tests': [
+		'appframework',
+		'tier0',
+		'tier1',
+		'tier2',
+		'tier3',
+		'unitlib',
+		'mathlib',
+		'vstdlib',
+		'filesystem',
+		'vpklib',
+		'unittests/tier0test',
+		'unittests/tier1test',
+		'unittests/tier2test',
+		'unittests/tier3test',
+		'utils/unittest'
+	],
 	'dedicated': [
 		'appframework',
 		'bitmap',
@@ -136,6 +153,7 @@ def get_taskgen_count(self):
 
 def define_platform(conf):
 	conf.env.DEDICATED = conf.options.DEDICATED
+	conf.env.TESTS = conf.options.TESTS
 	conf.env.TOGLES = conf.options.TOGLES
 	conf.env.GL = conf.options.GL
 	conf.env.OPUS = conf.options.OPUS
@@ -210,6 +228,9 @@ def options(opt):
 
 	grp.add_option('-d', '--dedicated', action = 'store_true', dest = 'DEDICATED', default = False,
 		help = 'build dedicated server [default: %default]')
+
+	grp.add_option('--tests', action = 'store_true', dest = 'TESTS', default = False,
+		help = 'build unit tests [default: %default]')
 
 	grp.add_option('-D', '--debug-engine', action = 'store_true', dest = 'DEBUG_ENGINE', default = False,
 		help = 'build with -DDEBUG [default: %default]')
@@ -494,6 +515,7 @@ def configure(conf):
 	# indicate if we are packaging for Linux/BSD
 	if conf.env.DEST_OS != 'android':
 		conf.env.LIBDIR = conf.env.PREFIX+'/bin/'
+		conf.env.TESTDIR = conf.env.PREFIX+'/tests/'
 		conf.env.BINDIR = conf.env.PREFIX
 	else:
 		conf.env.LIBDIR = conf.env.BINDIR = conf.env.PREFIX
@@ -502,7 +524,9 @@ def configure(conf):
 		conf.env.CC.insert(0, 'ccache')
 		conf.env.CXX.insert(0, 'ccache')
 
-	if conf.options.DEDICATED:
+	if conf.options.TESTS:
+		conf.add_subproject(projects['tests'])
+	elif conf.options.DEDICATED:
 		conf.add_subproject(projects['dedicated'])
 	else:
 		conf.add_subproject(projects['game'])
@@ -517,7 +541,9 @@ def build(bld):
 	if bld.env.OPUS or bld.env.DEST_OS == 'android':
 		projects['game'] += ['engine/voice_codecs/opus']
 
-	if bld.env.DEDICATED:
+	if bld.env.TESTS:
+		bld.add_subproject(projects['tests'])
+	elif bld.env.DEDICATED:
 		bld.add_subproject(projects['dedicated'])
 	else:
 		if bld.env.TOGLES:

@@ -6,7 +6,7 @@
 //=============================================================================//
 
 #include "unitlib/unitlib.h"
-#include "tier1/commandbuffer.h"
+#include "tier1/CommandBuffer.h"
 #include "tier1/strtools.h"
 
 
@@ -139,20 +139,24 @@ DEFINE_TESTCASE( CommandBufferTestTiming, CommandBufferTestSuite )
 		buffer.BeginProcessingCommands( 1 );
 
 		argc = buffer.DequeueNextCommand( argv );
+
 		Shipping_Assert( argc == 3 );
 		Shipping_Assert( !Q_stricmp( argv[0], "test_command" ) );
 		Shipping_Assert( !Q_stricmp( argv[1], "test_arg1" ) );
 		Shipping_Assert( !Q_stricmp( argv[2], "test_arg2" ) );
 
 		argc = buffer.DequeueNextCommand( argv );
+
 		Shipping_Assert( argc == 1 );
 		Shipping_Assert( !Q_stricmp( argv[0], "test_command3" ) );
 
 		argc = buffer.DequeueNextCommand( argv );
+
 		Shipping_Assert( argc == 0 );
 
 		buffer.EndProcessingCommands( );
 	}
+
 	{
 		buffer.BeginProcessingCommands( 1 );
 

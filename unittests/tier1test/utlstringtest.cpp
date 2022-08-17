@@ -180,20 +180,20 @@ static void FormatTests()
 
 static void FileNameAPITests()
 {
-	CUtlString path( "c:\\source2\\game\\source2\\somefile.ext" );
+	CUtlString path( "/source2/game/source2/somefile.ext" );
 
 	CUtlString absPath = path.AbsPath();
 	Shipping_Assert( absPath == path );
 	CUtlString file = path.UnqualifiedFilename();
 	Shipping_Assert( !V_stricmp( file.Get(), "somefile.ext" ) );
 	CUtlString dir = path.DirName();
-	Shipping_Assert( !V_stricmp( dir.Get(), "c:\\source2\\game\\source2" ) );
+	Shipping_Assert( !V_stricmp( dir.Get(), "/source2/game/source2" ) );
 	dir = dir.DirName();
-	Shipping_Assert( !V_stricmp( dir.Get(), "c:\\source2\\game" ) );
+	Shipping_Assert( !V_stricmp( dir.Get(), "/source2/game" ) );
 	CUtlString baseName = path.StripExtension();
-	Shipping_Assert( !V_stricmp( baseName.Get(), "c:\\source2\\game\\source2\\somefile" ) );
+	Shipping_Assert( !V_stricmp( baseName.Get(), "/source2/game/source2/somefile" ) );
 	dir = path.StripFilename();
-	Shipping_Assert( !V_stricmp( dir.Get(), "c:\\source2\\game\\source2" ) );
+	Shipping_Assert( !V_stricmp( dir.Get(), "/source2/game/source2" ) );
 
 	file = path.GetBaseFilename();
 	Shipping_Assert( !V_stricmp( file.Get(), "somefile" ) );
@@ -201,7 +201,7 @@ static void FileNameAPITests()
 	Shipping_Assert( !V_stricmp( ext.Get(), "ext" ) );
 
 	absPath = path.PathJoin( dir.Get(), file.Get() );
-	Shipping_Assert( !V_stricmp( absPath.Get(), "c:\\source2\\game\\source2\\somefile" ) );
+	Shipping_Assert( !V_stricmp( absPath.Get(), "/source2/game/source2/somefile" ) );
 }
 
 DEFINE_TESTCASE( UtlStringTest, UtlStringTestSuite )

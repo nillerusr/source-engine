@@ -6,33 +6,40 @@
 //=============================================================================//
 
 #include "unitlib/unitlib.h"
-#include "appframework/iappsystemgroup.h"
-#include "appframework/appframework.h"
+#include "appframework/IAppSystemGroup.h"
+#include "appframework/AppFramework.h"
 #include "tier0/dbg.h"
 #include <stdio.h>
-#include <windows.h>
 #include "vstdlib/iprocessutils.h"
 #include "tier1/interface.h"
 #include "vstdlib/cvar.h"
 
+#if defined(POSIX)
+#include <dirent.h>
+#elif defined(WIN32)
 #pragma warning (disable:4100)
+#include <windows.h>
+#endif
+
+static int g_TestResult = 0;
 
 SpewRetval_t UnitTestSpew( SpewType_t type, char const *pMsg )
 {
 	switch( type )
 	{
-	case 	SPEW_WARNING:
+    case SPEW_WARNING:
 		printf( "UnitTest Warning:\n" );
 		break;
-	case	SPEW_ASSERT:
+    case SPEW_ASSERT:
 		printf( "UnitTest Assert:\n" );
+        g_TestResult = 1;
 		break;
-	case	SPEW_ERROR:
+    case SPEW_ERROR:
 		printf( "UnitTest Error:\n" );
+        g_TestResult = 1;
 		break;
 	}
 	printf( "%s", pMsg );
-	OutputDebugString( pMsg );
 
 	if ( Sys_IsDebuggerPresent() )
 		return ( type == SPEW_ASSERT || type == SPEW_ERROR ) ? SPEW_DEBUGGER : SPEW_CONTINUE;
@@ -69,7 +76,7 @@ bool CUnitTestApp::Create()
 	// FIXME: This list of dlls should come from the unittests themselves
 	AppSystemInfo_t appSystems[] = 
 	{
-		{ "vstdlib.dll",			PROCESS_UTILS_INTERFACE_VERSION },
+//        { "vstdlib.so",			PROCESS_UTILS_INTERFACE_VERSION },
 		{ "", "" }	// Required to terminate the list
 	};
 
@@ -84,12 +91,16 @@ bool CUnitTestApp::Create()
 	// or giving test DLLs special extensions, or statically linking the test DLLs
 	// to this program.
 
+#ifdef WIN32
 	WIN32_FIND_DATA findFileData;
-	HANDLE hFind= FindFirstFile("*.dll", &findFileData);
+	HANDLE hFind= FindFirstFile("tests/*.dll", &findFileData);
 
 	while (hFind != INVALID_HANDLE_VALUE)
 	{
-		CSysModule* hLib = Sys_LoadModule(findFileData.cFileName);
+		static char path[2048];
+		snprintf(path, sizeof(path), "tests/%s", findFileData.cFileName);
+
+		CSysModule* hLib = Sys_LoadModule(path);
 		if ( hLib )
 		{
 			CreateInterfaceFn factory = Sys_GetFactory( hLib );
@@ -107,6 +118,40 @@ bool CUnitTestApp::Create()
 		if (!FindNextFile( hFind, &findFileData ))
 			break;
 	}
+#elif POSIX
+	DIR *d;
+	struct dirent *dir;
+	d = opendir("tests");
+	if (d)
+	{
+		while ((dir = readdir(d)) != NULL)
+		{
+			int len = strlen(dir->d_name);
+			if( len > 2 && strcmp(dir->d_name+len-3, ".so") == 0)
+			{
+				static char path[2048];
+				snprintf(path, sizeof(path), "tests/%s", dir->d_name);
+				CSysModule* hLib = Sys_LoadModule(path);
+				if ( hLib )
+				{
+					CreateInterfaceFn factory = Sys_GetFactory( hLib );
+					if ( factory && factory( UNITTEST_INTERFACE_VERSION, NULL ) )
+					{
+						AppModule_t module = LoadModule( factory );
+						AddSystem( module, UNITTEST_INTERFACE_VERSION );
+					}
+					else
+					{
+						Sys_UnloadModule( hLib );
+					}
+				}
+			}
+		}
+		closedir(d);
+	}
+#else
+#error "Implement me!"
+#endif
 
 	return true;
 }
@@ -121,7 +166,7 @@ void CUnitTestApp::Destroy()
 //-----------------------------------------------------------------------------
 int CUnitTestApp::Main()
 {
-	printf( "Valve Software - unittest.exe (%s)\n", __DATE__ );
+    printf( "Valve Software - unittest (%s)\n", __DATE__ );
 
 	int nTestCount = UnitTestCount();
 	for ( int i = 0; i < nTestCount; ++i )
@@ -131,5 +176,5 @@ int CUnitTestApp::Main()
 		pTestCase->RunTest();
 	}
 
-	return 0;
+    return g_TestResult;
 }
