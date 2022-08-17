@@ -37,6 +37,7 @@ CCommandBuffer::CCommandBuffer( ) : m_Commands( 32, 32 )
 	m_nArgSBufferSize = 0;
 	m_bIsProcessingCommands = false;
 	m_nMaxArgSBufferLength = ARGS_BUFFER_LENGTH;
+	m_bWaitEnabled = true;
 }
 
 CCommandBuffer::~CCommandBuffer()
@@ -395,10 +396,8 @@ void CCommandBuffer::EndProcessingCommands()
 			break;
 
 		AssertMsgOnce( false, "CCommandBuffer::EndProcessingCommands() called before all appropriate commands were dequeued.\n" );
-		int nNext = i;
 		Msg( "Warning: Skipping command %s\n", &m_pArgSBuffer[ m_Commands[i].m_nFirstArgS ] );
 		m_Commands.Remove( i );
-		i = nNext;
 	}
 
 	Compact();

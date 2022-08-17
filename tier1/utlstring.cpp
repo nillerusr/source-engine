@@ -426,7 +426,7 @@ void CUtlString::TrimLeft( char cTarget )
 	// We have some whitespace to remove
 	if ( nIndex > 0 )
 	{
-		memcpy( m_pString, &m_pString[nIndex], Length() - nIndex );
+		memmove( m_pString, &m_pString[nIndex], Length() - nIndex );
 		SetLength( Length() - nIndex );
 	}
 }
@@ -463,7 +463,7 @@ void CUtlString::TrimLeft( const char *szTargets )
 	// We have some whitespace to remove
 	if ( i > 0 )
 	{
-		memcpy( m_pString, &m_pString[i], Length() - i );
+		memmove( m_pString, &m_pString[i], Length() - i );
 		SetLength( Length() - i );
 	}
 }
