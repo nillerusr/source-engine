@@ -18,9 +18,9 @@
 
 extern const char* g_pModelNameLaser;
 
-ConVar    sk_plr_dmg_tripmine		( "sk_plr_dmg_tripmine","0");
-ConVar    sk_npc_dmg_tripmine		( "sk_npc_dmg_tripmine","0");
-ConVar    sk_tripmine_radius		( "sk_tripmine_radius","0");
+ConVar    sk_plr_dmg_tripmine		( "sk_plr_dmg_tripmine","150"); // commented values in hl2/skill.cfg
+ConVar    sk_npc_dmg_tripmine		( "sk_npc_dmg_tripmine","125");
+ConVar    sk_tripmine_radius		( "sk_tripmine_radius","200");
 
 LINK_ENTITY_TO_CLASS( npc_tripmine, CTripmineGrenade );
 
@@ -59,22 +59,19 @@ void CTripmineGrenade::Spawn( void )
 	SetSolid( SOLID_BBOX );
 	SetModel( "models/Weapons/w_slam.mdl" );
 
-    IPhysicsObject *pObject = VPhysicsInitNormal( SOLID_BBOX, GetSolidFlags() | FSOLID_TRIGGER, true );
+	IPhysicsObject *pObject = VPhysicsInitNormal( SOLID_BBOX, GetSolidFlags() | FSOLID_TRIGGER, true );
 	pObject->EnableMotion( false );
 	SetCollisionGroup( COLLISION_GROUP_WEAPON );
 
 	SetCycle( 0.0f );
 	m_nBody			= 3;
-	m_flDamage		= sk_plr_dmg_tripmine.GetFloat();
-	m_DmgRadius		= sk_tripmine_radius.GetFloat();
-
 	ResetSequenceInfo( );
 	m_flPlaybackRate	= 0;
-	
+
 	UTIL_SetSize(this, Vector( -4, -4, -2), Vector(4, 4, 2));
 
 	m_flPowerUp = gpGlobals->curtime + 2.0;
-	
+
 	SetThink( &CTripmineGrenade::PowerupThink );
 	SetNextThink( gpGlobals->curtime + 0.2 );
 
@@ -83,7 +80,8 @@ void CTripmineGrenade::Spawn( void )
 	m_iHealth = 1;
 
 	EmitSound( "TripmineGrenade.Place" );
-	SetDamage ( 200 );
+	SetDamage( sk_plr_dmg_tripmine.GetFloat() );
+	SetDamageRadius( sk_tripmine_radius.GetFloat() );
 
 	// Tripmine sits at 90 on wall so rotate back to get m_vecDir
 	QAngle angles = GetAbsAngles();
@@ -268,7 +266,7 @@ void CTripmineGrenade::DelayDeathThink( void )
 	UTIL_TraceLine ( GetAbsOrigin() + m_vecDir * 8, GetAbsOrigin() - m_vecDir * 64,  MASK_SOLID, this, COLLISION_GROUP_NONE, & tr);
 	UTIL_ScreenShake( GetAbsOrigin(), 25.0, 150.0, 1.0, 750, SHAKE_START );
 
-	ExplosionCreate( GetAbsOrigin() + m_vecDir * 8, GetAbsAngles(), m_hOwner, GetDamage(), 200, 
+	ExplosionCreate( GetAbsOrigin() + m_vecDir * 8, GetAbsAngles(), m_hOwner, GetDamage(), GetDamageRadius(), 
 		SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS | SF_ENVEXPLOSION_NOSMOKE, 0.0f, this);
 
 	UTIL_Remove( this );

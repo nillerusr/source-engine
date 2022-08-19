@@ -17,6 +17,8 @@ extern ConVar cl_forwardspeed;
 extern ConVar cl_upspeed;
 extern ConVar default_fov;
 
+extern IMatSystemSurface *g_pMatSystemSurface;
+
 #ifdef ANDROID
 #define TOUCH_DEFAULT "1"
 #else
@@ -38,6 +40,8 @@ ConVar touch_config_file( "touch_config_file", "touch.cfg", FCVAR_ARCHIVE, "curr
 ConVar touch_grid_count( "touch_grid_count", "50", FCVAR_ARCHIVE, "touch grid count" );
 ConVar touch_grid_enable( "touch_grid_enable", "1", FCVAR_ARCHIVE, "enable touch grid" );
 ConVar touch_precise_amount( "touch_precise_amount", "0.5", FCVAR_ARCHIVE, "sensitivity multiplier for precise-look" );
+
+ConVar touch_button_info( "touch_button_info", "0", FCVAR_ARCHIVE );
 
 #define boundmax( num, high ) ( (num) < (high) ? (num) : (high) )
 #define boundmin( num, low )  ( (num) >= (low) ? (num) : (low)  )
@@ -141,7 +145,7 @@ CON_COMMAND( touch_addbutton, "add native touch button" )
 	Msg( "Usage: touch_addbutton <name> <texture> <command> [<x1> <y1> <x2> <y2> [ r g b a ] ]\n" );
 }
 
-CON_COMMAND( touch_removebutton, "add native touch button" )
+CON_COMMAND( touch_removebutton, "remove native touch button" )
 {
 	if( args.ArgC() > 1 )
 		gTouch.RemoveButton( args[1] );
@@ -149,7 +153,7 @@ CON_COMMAND( touch_removebutton, "add native touch button" )
 		Msg( "Usage: touch_removebutton <name>\n" );
 }
 
-CON_COMMAND( touch_settexture, "add native touch button" )
+CON_COMMAND( touch_settexture, "set button texture" )
 {
 	if( args.ArgC() >= 3 )
 	{
@@ -232,6 +236,15 @@ CON_COMMAND( touch_loaddefaults, "generate config from defaults" )
 {
 	gTouch.ResetToDefaults();
 }
+
+CON_COMMAND( touch_setgridcolor, "change grid color" )
+{
+	if( args.ArgC() >= 5 )
+		gTouch.gridcolor = rgba_t( Q_atoi( args[1] ), Q_atoi( args[2] ), Q_atoi( args[3] ), Q_atoi( args[4] ) );
+	else
+		Msg( "Usage: touch_setgridcolor <r> <g> <b> <a>\n" );
+}
+
 /*
 CON_COMMAND( touch_roundall, "round all buttons coordinates to grid" )
 {
@@ -294,6 +307,7 @@ void CTouchControls::ResetToDefaults()
 {
 	rgba_t color(255, 255, 255, 155);
 	char buf[MAX_PATH];
+	gridcolor = rgba_t(255, 0, 0, 50);
 
 	RemoveButtons();
 
@@ -351,6 +365,7 @@ void CTouchControls::Init()
 	mouse_events = 0;
 	move_start_x = move_start_y = 0.0f;
 	m_flPreviousYaw = m_flPreviousPitch = 0.f;
+	gridcolor = rgba_t(255, 0, 0, 50);
 
 	showtexture = hidetexture = resettexture = closetexture = joytexture = 0;
 	configchanged = false;
@@ -463,7 +478,7 @@ void CTouchControls::Paint( )
 
 	if( state == state_edit )
 	{
-		vgui::surface()->DrawSetColor(255, 0, 0, 200);
+		vgui::surface()->DrawSetColor(gridcolor.r, gridcolor.g, gridcolor.b, gridcolor.a*3); // 255, 0, 0, 200 <- default here
 		float x,y;
 
 		for( x = 0.0f; x < 1.0f; x += GRID_X )
@@ -471,6 +486,7 @@ void CTouchControls::Paint( )
 
 		for( y = 0.0f; y < 1.0f; y += GRID_Y )
 			vgui::surface()->DrawLine( 0, screen_h*y, screen_w, screen_h*y );
+
 	}
 
 	CUtlLinkedList<CTouchButton*>::iterator it;
@@ -487,7 +503,16 @@ void CTouchControls::Paint( )
 
 		if( state == state_edit && !(btn->flags & TOUCH_FL_NOEDIT) )
 		{
-			vgui::surface()->DrawSetColor(255, 0, 0, 50);
+			if( touch_button_info.GetInt() )
+			{
+				g_pMatSystemSurface->DrawColoredText( 2, btn->x1*screen_w, btn->y1*screen_h, 255, 255, 255, 255, "N: %s", btn->name );			// name
+				g_pMatSystemSurface->DrawColoredText( 2, btn->x1*screen_w, btn->y1*screen_h+10, 255, 255, 255, 255, "T: %s", btn->texturefile );	// texture
+				g_pMatSystemSurface->DrawColoredText( 2, btn->x1*screen_w, btn->y1*screen_h+20, 255, 255, 255, 255, "C: %s", btn->command );		// command
+				g_pMatSystemSurface->DrawColoredText( 2, btn->x1*screen_w, btn->y1*screen_h+30, 255, 255, 255, 255, "F: %i", btn->flags );		// flags
+				g_pMatSystemSurface->DrawColoredText( 2, btn->x1*screen_w, btn->y1*screen_h+40, 255, 255, 255, 255, "RGBA: %d %d %d %d", btn->color.r, btn->color.g, btn->color.b, btn->color.a );// color
+			}
+
+			vgui::surface()->DrawSetColor(gridcolor.r, gridcolor.g, gridcolor.b, gridcolor.a); // 255, 0, 0, 50 <- default here
 			vgui::surface()->DrawFilledRect( btn->x1*screen_w, btn->y1*screen_h, btn->x2*screen_w, btn->y2*screen_h );
 		}
 	}
@@ -795,7 +820,7 @@ void CTouchControls::EnableTouchEdit(bool enable)
 		resize_finger = move_finger = look_finger = wheel_finger = -1;
 		move_button = NULL;
 		configchanged = true;
-		AddButton( "close_edit", "vgui/touch/back", "touch_disableedit", 0.010000, 0.837778, 0.080000, 0.980000, rgba_t(255,255,255,255), 0, 1.f, TOUCH_FL_NOEDIT );
+		AddButton( "close_edit", "vgui/touch/back", "touch_disableedit", 0.020000, 0.800000, 0.100000, 0.977778, rgba_t(255,255,255,255), 0, 1.f, TOUCH_FL_NOEDIT );
 	}
 	else
 	{
@@ -848,6 +873,9 @@ void CTouchControls::WriteConfig()
 		filesystem->FPrintf( f, "\n// grid settings\n" );
 		filesystem->FPrintf( f, "touch_grid_count \"%d\"\n", touch_grid_count.GetInt() );
 		filesystem->FPrintf( f, "touch_grid_enable \"%d\"\n", touch_grid_enable.GetInt() );
+
+		filesystem->FPrintf( f, "touch_setgridcolor \"%d\" \"%d\" \"%d\" \"%d\"\n", gridcolor.r, gridcolor.g, gridcolor.b, gridcolor.a );
+		filesystem->FPrintf( f, "touch_button_info \"%d\"\n", touch_button_info.GetInt() );
 /*
 		filesystem->FPrintf( f, "\n// global overstroke (width, r, g, b, a)\n" );
 		filesystem->FPrintf( f, "touch_set_stroke %d %d %d %d %d\n", touch.swidth, touch.scolor[0], touch.scolor[1], touch.scolor[2], touch.scolor[3] );
