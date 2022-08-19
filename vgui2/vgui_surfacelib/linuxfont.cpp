@@ -96,7 +96,7 @@ void CLinuxFont::CreateFontList()
 	if ( m_FriendlyNameCache.Count() > 0 ) 
 		return;
 
-#ifndef ANDROID
+#if HAVE_FC
 	if(!FcInit())
 		return;
     FcConfig *config;
@@ -169,7 +169,7 @@ void CLinuxFont::CreateFontList()
 #endif
 }
 
-#ifndef ANDROID
+#if HAVE_FC
 static FcPattern* FontMatch(const char* type, ...)
 {
     FcValue fcvalue;
@@ -405,19 +405,40 @@ bool CLinuxFont::CreateFromMemory(const char *windowsFontName, void *data, int d
 	return true;
 }
 
-#ifdef ANDROID
-char *FindFontAndroid(const char *winFontName, bool bBold, int italic)
+#if !HAVE_FC
+char *TryFindFont(const char *winFontName, bool bBold, int italic)
 {
 	static char fontFile[MAX_PATH];
 
-	const char *fontName;
+	const char *fontName, *fontNamePost;
 
+#ifdef ANDROID
 	if( strcmp( winFontName, "Courier New") == 0 )
 		fontName = "LiberationMono-Regular.ttf";
 	else
 		fontName = "DroidSansFallback.ttf"; // for chinese/japanese/korean
 
 	snprintf( fontFile, sizeof fontFile, "%s/files/%s", getenv("APP_DATA_PATH"), fontName);
+#else
+	// "platform/resource/linux_fonts/";
+
+	if( strcmp( winFontName, "Courier New") == 0 )
+		fontName = "liberationmono";
+
+	if( bBold )
+	{
+		if( italic )
+			fontNamePost = "boldoblique";
+		else
+			fontNamePost = "bold";
+	}
+	else if( italic )
+		fontNamePost = "oblique";
+	else
+		fontNamePost = "regular";
+
+	snprintf(fontFile, sizeof fontFile, "platform/resource/linux_fonts/%s-%s.ttf", fontName, fontNamePost);
+#endif
 	return fontFile;
 
 #if 0 // Old detect
@@ -480,9 +501,9 @@ char *CLinuxFont::GetFontFileName( const char *windowsFontName, int flags )
 
 	const int italic = ( flags & vgui::ISurface::FONTFLAG_ITALIC ) ? FC_SLANT_ITALIC : FC_SLANT_ROMAN;
 
-#ifdef ANDROID
-	char *filename = FindFontAndroid( windowsFontName, bBold, italic );
-	Msg("Android font: %s\n", filename);
+#if !HAVE_FC
+	char *filename = TryFindFont( windowsFontName, bBold, italic );
+	Msg("Found font: %s\n", filename);
 	if( !filename ) return NULL;
 	return strdup( filename );
 #else

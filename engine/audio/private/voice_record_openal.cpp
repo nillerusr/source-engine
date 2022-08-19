@@ -7,6 +7,7 @@
 //=============================================================================//
 // This module implements the voice record and compression functions 
 
+#if HAVE_OPENAL
 //#include "audio_pch.h"
 //#include "voice.h"
 #include "tier0/platform.h"
@@ -206,4 +207,6 @@ IVoiceRecord* CreateVoiceRecord_OpenAL(int sampleRate)
 		return NULL;
 	}
 }
+#endif
+
 #endif

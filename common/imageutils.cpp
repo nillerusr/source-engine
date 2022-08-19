@@ -93,6 +93,8 @@ extern void longjmp( jmp_buf, int ) __attribute__((noreturn));
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+#if HAVE_JPEG
+
 struct ValveJpegErrorHandler_t 
 {
 	// The default manager
@@ -129,12 +131,12 @@ static void ValveJpegErrorHandler( j_common_ptr cinfo )
 	// Bail
 	longjmp( pError->m_ErrorContext, 1 );
 }
-
+#endif
 
 // convert the JPEG file given to a TGA file at the given output path.
 ConversionErrorType ImgUtl_ConvertJPEGToTGA( const char *jpegpath, const char *tgaPath, bool bRequirePowerOfTwo )
 {
-#if !defined( _X360 )
+#if !defined( _X360 ) && HAVE_JPEG
 
 	//
 	// !FIXME! This really probably should use ImgUtl_ReadJPEGAsRGBA, to avoid duplicated code.
@@ -485,7 +487,7 @@ unsigned char * ImgUtl_ReadTGAAsRGBA(const char *tgaPath, int &width, int &heigh
 
 unsigned char *ImgUtl_ReadJPEGAsRGBA( const char *jpegPath, int &width, int &height, ConversionErrorType &errcode )
 {
-#if !defined( _X360 )
+#if !defined( _X360 ) && HAVE_JPEG
 	struct jpeg_decompress_struct jpegInfo;
 	struct ValveJpegErrorHandler_t jerr;
 	JSAMPROW row_pointer[1];
@@ -636,6 +638,7 @@ unsigned char *ImgUtl_ReadJPEGAsRGBA( const char *jpegPath, int &width, int &hei
 #endif
 }
 
+#if HAVE_PNG
 static void ReadPNGData( png_structp png_ptr, png_bytep outBytes, png_size_t byteCountToRead )
 {
 
@@ -654,11 +657,11 @@ static void ReadPNGData( png_structp png_ptr, png_bytep outBytes, png_size_t byt
 	// Read the bytes
 	pBuf->Get( outBytes, byteCountToRead );
 }
-
+#endif
 
 unsigned char *ImgUtl_ReadPNGAsRGBA( const char *pngPath, int &width, int &height, ConversionErrorType &errcode )
 {
-#if !defined( _X360 )
+#if !defined( _X360 ) && HAVE_PNG
 
 	// Just load the whole file into a memory buffer
 	CUtlBuffer bufFileContents;
@@ -679,7 +682,7 @@ unsigned char *ImgUtl_ReadPNGAsRGBA( const char *pngPath, int &width, int &heigh
 
 unsigned char		*ImgUtl_ReadPNGAsRGBAFromBuffer( CUtlBuffer &buffer, int &width, int &height, ConversionErrorType &errcode )
 {
-#if !defined( _X360 )
+#if !defined( _X360 ) && HAVE_PNG
 
 	png_const_bytep pngData = (png_const_bytep)buffer.Base();
 	if (png_sig_cmp( pngData, 0, 8))
@@ -1844,6 +1847,7 @@ static void FlushPNGData( png_structp png_ptr )
 	// We're writing to a memory buffer, it's a NOP
 }
 
+#if HAVE_PNG
 ConversionErrorType ImgUtl_WriteRGBAAsPNGToBuffer( const unsigned char *pRGBAData, int nWidth, int nHeight, CUtlBuffer &bufOutData, int nStride )
 {
 #if !defined( _X360 )
@@ -1927,11 +1931,13 @@ fail:
 	return CE_SOURCE_FILE_FORMAT_NOT_SUPPORTED;
 #endif
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose:  Initialize destination --- called by jpeg_start_compress
 //  before any data is actually written.
 //-----------------------------------------------------------------------------
+#if HAVE_JPEG
 METHODDEF(void) init_destination (j_compress_ptr cinfo)
 {
 	JPEGDestinationManager_t *dest = ( JPEGDestinationManager_t *) cinfo->dest;
@@ -2012,12 +2018,14 @@ GLOBAL(void) jpeg_UtlBuffer_dest (j_compress_ptr cinfo, CUtlBuffer *pBuffer )
     dest->pub.term_destination      = term_destination;
     dest->pBuffer                   = pBuffer;
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Write three channel RGB data to a JPEG file
 //-----------------------------------------------------------------------------
 bool ImgUtl_WriteRGBToJPEG( unsigned char *pSrcBuf, unsigned int nSrcWidth, unsigned int nSrcHeight, const char *lpszFilename )
 {
+#if HAVE_JPEG
 	CUtlBuffer dstBuf;
 
 	JSAMPROW row_pointer[1];     // pointer to JSAMPLE row[s]
@@ -2067,13 +2075,16 @@ bool ImgUtl_WriteRGBToJPEG( unsigned char *pSrcBuf, unsigned int nSrcWidth, unsi
 
 	// Cleanup
 	jpeg_destroy_compress(&cinfo);
-	
+
 	return CE_SUCCESS;
+#else
+	return CE_SOURCE_FILE_FORMAT_NOT_SUPPORTED;
+#endif
 }
 
 ConversionErrorType ImgUtl_WriteRGBAAsJPEGToBuffer( const unsigned char *pRGBAData, int nWidth, int nHeight, CUtlBuffer &bufOutData, int nStride )
 {
-#if !defined( _X360 )
+#if !defined( _X360 ) && HAVE_JPEG
 
 	JSAMPROW row_pointer[1];     // pointer to JSAMPLE row[s]
 	int row_stride;              // physical row width in image buffer
@@ -2214,6 +2225,7 @@ ConversionErrorType ImgUtl_SaveBitmapToBuffer( CUtlBuffer &fileData, const Bitma
 
 ConversionErrorType ImgUtl_LoadPNGBitmapFromBuffer( CUtlBuffer &fileData, Bitmap_t &bitmap )
 {
+#if HAVE_PNG
 	bitmap.Clear();
 	ConversionErrorType nErrorCode;
 	int width, height;
@@ -2226,10 +2238,14 @@ ConversionErrorType ImgUtl_LoadPNGBitmapFromBuffer( CUtlBuffer &fileData, Bitmap
 	// Install the buffer into the bitmap, and transfer ownership
 	bitmap.SetBuffer( width, height, IMAGE_FORMAT_RGBA8888, buffer, true, width*4 );
 	return CE_SUCCESS;
+#else
+	return CE_SOURCE_FILE_FORMAT_NOT_SUPPORTED;
+#endif
 }
 
 ConversionErrorType ImgUtl_SavePNGBitmapToBuffer( CUtlBuffer &fileData, const Bitmap_t &bitmap )
 {
+#if HAVE_PNG
 	if ( !bitmap.IsValid() )
 	{
 		Assert( bitmap.IsValid() );
@@ -2252,6 +2268,9 @@ ConversionErrorType ImgUtl_SavePNGBitmapToBuffer( CUtlBuffer &fileData, const Bi
 		bitmap.Stride()
 	);
 	return result;
+#else
+	return CE_SOURCE_FILE_FORMAT_NOT_SUPPORTED;
+#endif
 }
 
 ConversionErrorType ImgUtl_ResizeBitmap( Bitmap_t &destBitmap, int nWidth, int nHeight, const Bitmap_t *pImgSource )

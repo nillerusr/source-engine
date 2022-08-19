@@ -1932,7 +1932,9 @@ static void VID_ProcessMovieFrame( const MovieInfo_t& info, bool jpeg, const cha
     bool bSuccess = false;
     if ( jpeg )
     {
+#if HAVE_JPEG
         bSuccess = videomode->TakeSnapshotJPEGToBuffer( outBuf, info.jpeg_quality );
+#endif
     }
     else
     {
@@ -2001,6 +2003,7 @@ void CVideoMode_Common::WriteMovieFrame( const MovieInfo_t& info )
     delete[] hp;
 }
 
+#if HAVE_JPEG
 //-----------------------------------------------------------------------------
 // Purpose: Expanded data destination object for CUtlBuffer output
 //-----------------------------------------------------------------------------
@@ -2099,10 +2102,11 @@ GLOBAL(void) jpeg_UtlBuffer_dest (j_compress_ptr cinfo, CUtlBuffer *pBuffer )
     dest->pub.term_destination      = term_destination;
     dest->pBuffer                   = pBuffer;
 }
+#endif
 
 bool CVideoMode_Common::TakeSnapshotJPEGToBuffer( CUtlBuffer& buf, int quality )
 {
-#if !defined( _X360 )
+#if !defined( _X360 ) && HAVE_JPEG
     if ( g_LostVideoMemory )
         return false;
 

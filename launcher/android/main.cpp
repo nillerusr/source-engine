@@ -31,18 +31,18 @@ int iLastArgs = 0;
 DLL_EXPORT int LauncherMain( int argc, char **argv ); // from launcher.cpp
 extern void InitCrashHandler();
 
-JNIEXPORT int Java_com_valvesoftware_ValveActivity2_setenv(JNIEnv *jenv, jclass *jclass, jstring env, jstring value, jint over)
+DLL_EXPORT int Java_com_valvesoftware_ValveActivity2_setenv(JNIEnv *jenv, jclass *jclass, jstring env, jstring value, jint over)
 {
 	Msg( "Java_com_valvesoftware_ValveActivity2_setenv %s=%s", jenv->GetStringUTFChars(env, NULL), jenv->GetStringUTFChars(value, NULL) );
 	return setenv( jenv->GetStringUTFChars(env, NULL), jenv->GetStringUTFChars(value, NULL), over );
 }
 
-JNIEXPORT void Java_com_valvesoftware_ValveActivity2_nativeOnActivityResult()
+DLL_EXPORT void Java_com_valvesoftware_ValveActivity2_nativeOnActivityResult()
 {
 	Msg( "Java_com_valvesoftware_ValveActivity_nativeOnActivityResult" );
 }
 
-JNIEXPORT void Java_com_valvesoftware_ValveActivity2_setArgs(JNIEnv *env, jclass *clazz, jstring str)
+DLL_EXPORT void Java_com_valvesoftware_ValveActivity2_setArgs(JNIEnv *env, jclass *clazz, jstring str)
 {
 	strncpy( java_args, env->GetStringUTFChars(str, NULL), sizeof java_args );
 }
@@ -77,7 +77,7 @@ void SetLauncherArgs()
 #undef D
 }
 
-JNIEXPORT int LauncherMainAndroid( int argc, char **argv )
+DLL_EXPORT int LauncherMainAndroid( int argc, char **argv )
 {
 	SDL_version ver;
 	SDL_GetVersion( &ver );

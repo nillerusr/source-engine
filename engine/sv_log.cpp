@@ -713,6 +713,7 @@ static bool CreateTempFilename( TempFilename_t &info, const char *filenameBase, 
 // Gzip Filename to Filename.gz.
 static bool gzip_file_compress( const CUtlString &Filename )
 {
+#if HAVE_ZLIB
 	bool bRet = false;
 
 	// Try to find a unique temp filename.
@@ -758,6 +759,9 @@ static bool gzip_file_compress( const CUtlString &Filename )
 	}
 
 	return bRet;
+#else
+	return false;
+#endif
 }
 
 static void FixupInvalidPathChars( char *filename )

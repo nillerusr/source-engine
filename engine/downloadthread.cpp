@@ -522,7 +522,7 @@ DWORD __stdcall DownloadThread( void *voidPtr )
 }
 
 
-#elif defined( POSIX )
+#elif defined( POSIX ) && HAVE_CURL
 
 #include "curl/curl.h"
 
