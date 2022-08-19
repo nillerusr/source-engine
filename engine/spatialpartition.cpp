@@ -2447,10 +2447,10 @@ bool CVoxelTree::EnumerateElementsAlongRay_ExtrudedRay( SpatialPartitionListMask
 		return true;
 
 	// Setup.
-	int nStep[3];
-	float tMax[3];	// amount of change in t along ray until we hit the next new voxel
-	float tMin[3];	// amount of change in t along ray until we leave the last voxel
-	float tDelta[3];
+	int nStep[3] = {0, 0, 0};
+	float tMax[3] = {0.f, 0.f, 0.f};	// amount of change in t along ray until we hit the next new voxel
+	float tMin[3] = {0.f, 0.f, 0.f};	// amount of change in t along ray until we leave the last voxel
+	float tDelta[3] = {0.f, 0.f, 0.f};
 	m_pVoxelHash[0].LeafListExtrudedRaySetup( ray, vecInvDelta, vecMin, vecMax, voxelBounds[0][0], voxelBounds[0][1], nStep, tMin, tMax, tDelta );
 
 	int nLastVoxel1[3];

@@ -1038,7 +1038,7 @@ inline T QWordSwapC( T dw )
 // The typically used methods.
 //-------------------------------------
 
-#if (defined(__i386__) || (defined(__arm__) && defined(ANDROID))) && !defined(VALVE_LITTLE_ENDIAN)
+#if (defined(__i386__) || defined(__amd64__) || (defined(__arm__) && defined(ANDROID))) && !defined(VALVE_LITTLE_ENDIAN)
 #define VALVE_LITTLE_ENDIAN 1
 #endif
 

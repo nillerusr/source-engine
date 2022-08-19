@@ -2454,6 +2454,7 @@ static uint gPersistentBufferSize[kGLMNumBufferTypes] =
 
 GLMContext::GLMContext( IDirect3DDevice9 *pDevice, GLMDisplayParams *params )
 {
+	m_nNumDirtySamplers = 0;
 // 	m_bUseSamplerObjects = true;
 // 	
 // 	// On most AMD drivers (like the current latest, 12.10 Windows), the PCF depth comparison mode doesn't work on sampler objects, so just punt them.

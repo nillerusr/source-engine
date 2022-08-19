@@ -277,6 +277,9 @@ enum GLDriverProvider_t
 	cGLDriverProviderIntel,
 	cGLDriverProviderIntelOpenSource,
 	cGLDriverProviderApple,
+	cGLDriverProviderARM,
+	cGLDriverProviderQualcomm,
+	cGLDriverProviderImagination,
 
 	cGLTotalDriverProviders
 };

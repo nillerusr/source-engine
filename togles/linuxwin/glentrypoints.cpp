@@ -365,6 +365,12 @@ COpenGLEntryPoints::COpenGLEntryPoints()
 		m_nDriverProvider = cGLDriverProviderIntelOpenSource;
 	else if ( V_stristr( m_pGLDriverStrings[cGLVendorString], "apple" ) )
 		m_nDriverProvider = cGLDriverProviderApple;
+	else if ( V_stristr( m_pGLDriverStrings[cGLVendorString], "qualcomm" ) )
+		m_nDriverProvider = cGLDriverProviderQualcomm;
+	else if ( V_stristr( m_pGLDriverStrings[cGLVendorString], "arm" ) )
+		m_nDriverProvider = cGLDriverProviderARM;
+	else if ( V_stristr( m_pGLDriverStrings[cGLVendorString], "imagination technologies" ) )
+		m_nDriverProvider = cGLDriverProviderImagination;
 
 	pszString = ( const char * )glGetString(GL_RENDERER);
 	m_pGLDriverStrings[cGLRendererString] = strdup( pszString ? pszString : "" );

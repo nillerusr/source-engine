@@ -279,7 +279,7 @@ CSysModule *Sys_LoadModule( const char *pModuleName, Sys_Flags flags /* = SYS_NO
 	// prior to the call to this routine.
 	char szCwd[1024];
 #ifdef POSIX
-	char szModuleName[1024];
+	char szModuleName[1024] = { 0 };
 #endif
 	HMODULE hDLL = NULL;
 
