@@ -903,9 +903,9 @@ void CPrediction::RunCommand( C_BasePlayer *player, CUserCmd *ucmd, IMoveHelper 
 		pVehicle->ProcessMovement( player, g_pMoveData );
 	}
 
-	RunPostThink( player );
-
 	FinishMove( player, ucmd, g_pMoveData );
+
+	RunPostThink( player );
 
 	g_pGameMovement->FinishTrackPredictionErrors( player );
 
