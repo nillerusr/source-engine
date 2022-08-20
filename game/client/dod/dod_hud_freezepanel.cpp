@@ -196,7 +196,7 @@ void CDODFreezePanel::FireGameEvent( IGameEvent * event )
 		C_DOD_PlayerResource *tf_PR = dynamic_cast<C_DOD_PlayerResource *>(g_PR);
 		if ( !tf_PR )
 		{
-			m_pNemesisSubPanel->SetDialogVariable( "nemesisname", NULL );
+			m_pNemesisSubPanel->SetDialogVariable( "nemesisname", 0 );
 			return;
 		}
 

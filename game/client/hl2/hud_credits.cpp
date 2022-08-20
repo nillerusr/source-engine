@@ -432,7 +432,7 @@ void CHudCredits::DrawLogo( void )
 	}
 
 	vgui::HScheme scheme = vgui::scheme()->GetScheme( "ClientScheme" );
-	vgui::HFont m_hTFont = vgui::scheme()->GetIScheme(scheme)->GetFont( szLogoFont );
+	vgui::HFont m_hTFont = vgui::scheme()->GetIScheme(scheme)->GetFont( szLogoFont, true );
 
 	int iFontTall = surface()->GetFontTall ( m_hTFont );
 
@@ -513,7 +513,7 @@ void CHudCredits::DrawIntroCreditsName( void )
 			 continue;
 				
 		vgui::HScheme scheme = vgui::scheme()->GetScheme( "ClientScheme" );
-		vgui::HFont m_hTFont = vgui::scheme()->GetIScheme(scheme)->GetFont( pCredit->szFontName );
+		vgui::HFont m_hTFont = vgui::scheme()->GetIScheme(scheme)->GetFont( pCredit->szFontName, true );
 
 		float localTime = gpGlobals->curtime - pCredit->flTimeStart;
 
@@ -675,7 +675,7 @@ void CHudCredits::PrepareIntroCredits( void )
 			 continue;
 
 		vgui::HScheme scheme = vgui::scheme()->GetScheme( "ClientScheme" );
-		vgui::HFont m_hTFont = vgui::scheme()->GetIScheme(scheme)->GetFont( pCredit->szFontName );
+		vgui::HFont m_hTFont = vgui::scheme()->GetIScheme(scheme)->GetFont( pCredit->szFontName, true );
 
 		pCredit->flYPos = m_flY + ( iSlot * surface()->GetFontTall ( m_hTFont ) );
 		pCredit->flXPos = m_flX;

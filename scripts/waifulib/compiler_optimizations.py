@@ -48,8 +48,8 @@ CFLAGS = {
 	'common': {
 		# disable thread-safe local static initialization for C++11 code, as it cause crashes on Windows XP
 		'msvc':    ['/D_USING_V110_SDK71_', '/Zi', '/FS', '/Zc:threadSafeInit-'],
-		'clang':   ['-g0', '-fno-strict-aliasing', '-gdwarf-2', '-fvisibility=hidden'],
-		'gcc':     ['-g0', '-fno-strict-aliasing', '-fvisibility=hidden'],
+		'clang':   ['-g0', '-fno-strict-aliasing'],
+		'gcc':     ['-g0', '-fno-strict-aliasing'],
 		'owcc':	   ['-fno-short-enum', '-ffloat-store', '-g0']
 	},
 	'fast': {
