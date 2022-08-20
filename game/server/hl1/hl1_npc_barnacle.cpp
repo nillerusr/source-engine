@@ -384,9 +384,10 @@ void CNPC_Barnacle::BarnacleThink ( void )
 
 	}
 
-	// ALERT( at_console, "tounge %f\n", m_flAltitude + m_flTongueAdj );
+	//Msg("tounge %f\n", m_flAltitude + m_flTongueAdj );
 	//NDebugOverlay::Box( GetAbsOrigin() - Vector( 0, 0, m_flAltitude ), Vector( -2, -2, -2 ), Vector( 2, 2, 2 ), 255,255,255, 0, 0.1 );
 
+	SetBoneController( 0, 0.f );
 	SetBoneController( 0, -(m_flAltitude + m_flTongueAdj) );
 	StudioFrameAdvance();
 }
@@ -467,10 +468,13 @@ CBaseEntity *CNPC_Barnacle::TongueTouchEnt ( float *pflLength )
 	trace_t		tr;
 	float		length;
 
+	Vector origin(GetAbsOrigin());
+	origin.z -= 1.f;
+
 	// trace once to hit architecture and see if the tongue needs to change position.
-	UTIL_TraceLine ( GetAbsOrigin(), GetAbsOrigin() - Vector ( 0 , 0 , 2048 ), 
+	UTIL_TraceLine ( origin, origin - Vector ( 0 , 0 , 2048 ), 
 		MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr );
-	
+
 	length = fabs( GetAbsOrigin().z - tr.endpos.z );
 	// Pull it up a tad
 	length -= 16;
