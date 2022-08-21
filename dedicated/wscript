@@ -17,6 +17,10 @@ def configure(conf):
 	conf.define('DEDICATED',1)
 
 def build(bld):
+	# TODO: android support?
+	if bld.env.DEST_OS == 'android':
+		return
+
 	source = [
 		'filesystem.cpp',
 		'../public/filesystem_init.cpp',
@@ -43,14 +47,15 @@ def build(bld):
 		source += [
 			'sys_windows.cpp',
 			'vgui/vguihelpers.cpp',
-			'console/TextConsoleWin32.cpp',
+			'console/TextConsoleWin32.cpp'
 		]
 	else:
 		source += [
 			'sys_linux.cpp', # [$POSIX]
+			'vgui/vguihelpers_linux.cpp',
 			'console/TextConsoleUnix.cpp', # [$POSIX]
 			'../filesystem/linux_support.cpp' # [$POSIX]
-			'vgui/vguihelpers_linux.cpp'
+
 		]
 
 	includes = [
