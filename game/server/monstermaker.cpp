@@ -386,7 +386,7 @@ CNPCMaker::CNPCMaker( void )
 	m_strHintGroup = NULL_STRING;
 	m_RelationshipString = NULL_STRING;
 	m_ChildTargetName = NULL_STRING;
-	m_iszNPCClassname = NULL_STRING
+	m_iszNPCClassname = NULL_STRING;
 	m_SquadName = NULL_STRING;
 	m_spawnEquipment = NULL_STRING;
 }

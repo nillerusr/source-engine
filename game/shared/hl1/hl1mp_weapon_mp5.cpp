@@ -125,7 +125,7 @@ void CWeaponMP5::PrimaryAttack( void )
 
 	EjectShell( pPlayer, 0 );
 
-	pPlayer->ViewPunch( QAngle( random->RandomFloat( -2, 2 ), 0, 0 ) );
+	pPlayer->ViewPunch( QAngle( -1, 0, 0 ) );
 #ifdef CLIENT_DLL
 	pPlayer->DoMuzzleFlash();
 #else
