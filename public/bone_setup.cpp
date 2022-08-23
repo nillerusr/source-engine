@@ -5609,18 +5609,20 @@ bool Studio_AnimPosition( mstudioanimdesc_t *panim, float flCycle, Vector &vecPo
 
 	float	flFrame = flCycle * (panim->numframes - 1);
 
+
 	for (int i = 0; i < panim->nummovements; i++)
 	{
-		mstudiomovement_t *pmove = panim->pMovement( i );
+		mstudiomovement_t pmove;
+		// TODO(nillerusr): fix alignment on model loading
+		V_memcpy(&pmove, panim->pMovement( i ), sizeof(mstudiomovement_t));
 
-		if (pmove->endframe >= flFrame)
+		if (pmove.endframe >= flFrame)
 		{
-			float f = (flFrame - prevframe) / (pmove->endframe - prevframe);
+			float f = (flFrame - prevframe) / (pmove.endframe - prevframe);
+			float d = pmove.v0 * f + 0.5 * (pmove.v1 - pmove.v0) * f * f;
 
-			float d = pmove->v0 * f + 0.5 * (pmove->v1 - pmove->v0) * f * f;
-
-			vecPos = vecPos + d * pmove->vector;
-			vecAngle.y = vecAngle.y * (1 - f) + pmove->angle * f;
+			vecPos = vecPos + d * pmove.vector;
+			vecAngle.y = vecAngle.y * (1 - f) + pmove.angle * f;
 			if (iLoops != 0)
 			{
 				mstudiomovement_t *pmoveAnim = panim->pMovement( panim->nummovements - 1 );
@@ -5631,9 +5633,9 @@ bool Studio_AnimPosition( mstudioanimdesc_t *panim, float flCycle, Vector &vecPo
 		}
 		else
 		{
-			prevframe = pmove->endframe;
-			vecPos = pmove->position;
-			vecAngle.y = pmove->angle;
+			prevframe = pmove.endframe;
+			vecPos = pmove.position;
+			vecAngle.y = pmove.angle;
 		}
 	}
 
