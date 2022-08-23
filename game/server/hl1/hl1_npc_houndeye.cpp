@@ -994,7 +994,7 @@ int CNPC_Houndeye::SquadRecruit( int searchRadius, int maxMembers )
 	}
 	else
 	{
-		char szSquadName[64];
+		static char szSquadName[64];
 		Q_snprintf( szSquadName, sizeof( szSquadName ), "squad%d\n", s_iSquadIndex );
 
 		m_SquadName = MAKE_STRING( szSquadName );
