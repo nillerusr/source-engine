@@ -17,10 +17,11 @@ jobs:
     - name: Build linux-i386
       run: |
         scripts/build-ubuntu-i386.sh
+        zip -r build-linux-i386.zip build
     - uses: actions/upload-artifact@v2
       with:
         name: Source Engine - Linux 32-bit
-        path: build/*.zip
+        path: *.zip
 
   build-linux-amd64:
     runs-on: ubuntu-18.04
@@ -30,10 +31,11 @@ jobs:
     - name: Build linux-amd64
       run: |
         scripts/build-ubuntu-amd64.sh
+        zip -r build-linux-amd64.zip build
     - uses: actions/upload-artifact@v2
       with:
         name: Source Engine - Linux 64-bit
-        path: build/*.zip
+        path: *.zip
 
   build-android-armv7a:
     runs-on: ubuntu-18.04
@@ -43,10 +45,11 @@ jobs:
     - name: Build android-armv7a
       run: |
         scripts/build-android-armv7a.sh
+        zip -r build-android-armv7a.zip build
     - uses: actions/upload-artifact@v2
       with:
         name: Source Engine - Android armv7a
-        path: build/*.zip
+        path: *.zip
 
   build-windows-i386:
     runs-on: windows-2019
@@ -58,10 +61,12 @@ jobs:
         git submodule init && git submodule update
         ./waf.bat configure -T debug
         ./waf.bat build
+        choco install zip
+        zip -r build-windows-i386.zip build
     - uses: actions/upload-artifact@v2
       with:
         name: Source Engine - Windows 32-bit
-        path: build/*.zip
+        path: *.zip
 
   build-dedicated-windows-i386:
     runs-on: windows-2019
