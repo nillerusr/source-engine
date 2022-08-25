@@ -21,7 +21,7 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         name: Source Engine - Linux 32-bit
-        path: *.zip
+        path: ./*.zip
 
   build-linux-amd64:
     runs-on: ubuntu-18.04
@@ -35,7 +35,7 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         name: Source Engine - Linux 64-bit
-        path: *.zip
+        path: ./*.zip
 
   build-android-armv7a:
     runs-on: ubuntu-18.04
@@ -49,7 +49,7 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         name: Source Engine - Android armv7a
-        path: *.zip
+        path: ./*.zip
 
   build-windows-i386:
     runs-on: windows-2019
@@ -66,7 +66,7 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         name: Source Engine - Windows 32-bit
-        path: *.zip
+        path: ./*.zip
 
   build-dedicated-windows-i386:
     runs-on: windows-2019
