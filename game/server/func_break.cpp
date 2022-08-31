@@ -1250,10 +1250,9 @@ void CPushable::Spawn( void )
 		CreateVPhysics();
 	}
 
-// nillerusr: VALVEWHY?
-#if 0 //def HL1_DLL
+#ifdef HL1_DLL
 	// Force HL1 Pushables to stay axially aligned.
-	VPhysicsGetObject()->SetInertia( Vector( 1e30, 1e30, 1e30 ) );
+	VPhysicsGetObject()->SetInertia( Vector( 3.f, 3.f, 3.f ) );
 #endif//HL1_DLL
 }
 
