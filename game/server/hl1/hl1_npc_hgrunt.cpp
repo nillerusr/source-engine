@@ -487,10 +487,10 @@ int CNPC_HGrunt::SquadRecruit( int searchRadius, int maxMembers )
 	}
 	else
 	{
-		static char szSquadName[64];
+		char szSquadName[64];
 		Q_snprintf( szSquadName, sizeof( szSquadName ), "squad%d\n", g_iSquadIndex );
 
-		m_SquadName = MAKE_STRING( szSquadName );
+		m_SquadName = AllocPooledString( szSquadName );
 
 		while ( ( pEntity = gEntList.FindEntityInSphere( pEntity, GetAbsOrigin(), searchRadius ) ) != NULL )
 		{

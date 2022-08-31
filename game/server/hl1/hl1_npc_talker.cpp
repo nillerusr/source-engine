@@ -572,20 +572,22 @@ void CHL1NPCTalker::SetHeadDirection( const Vector &vTargetPos, float flInterval
 bool CHL1NPCTalker::CorpseGib( const CTakeDamageInfo &info )
 {
 	CEffectData	data;
-	
+
 	data.m_vOrigin = WorldSpaceCenter();
 	data.m_vNormal = data.m_vOrigin - info.GetDamagePosition();
 	VectorNormalize( data.m_vNormal );
-	
+
 	data.m_flScale = RemapVal( m_iHealth, 0, -500, 1, 3 );
 	data.m_flScale = clamp( data.m_flScale, 1, 3 );
 
-    data.m_nMaterial = 1;
+	data.m_nMaterial = 1;
 	data.m_nHitBox = -m_iHealth;
 
 	data.m_nColor = BloodColor();
-	
+
 	DispatchEffect( "HL1Gib", data );
+
+	BaseClass::CorpseGib( info );
 
 	CSoundEnt::InsertSound( SOUND_MEAT, GetAbsOrigin(), 256, 0.5f, this );
 

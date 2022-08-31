@@ -180,7 +180,7 @@ bool CHL1BaseNPC::CorpseGib( const CTakeDamageInfo &info )
 
 	CSoundEnt::InsertSound( SOUND_MEAT, GetAbsOrigin(), 256, 0.5f, this );
 
-///	BaseClass::CorpseGib( info );
+	BaseClass::CorpseGib( info );
 
 	return true;
 }

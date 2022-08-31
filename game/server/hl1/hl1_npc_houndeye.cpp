@@ -994,10 +994,10 @@ int CNPC_Houndeye::SquadRecruit( int searchRadius, int maxMembers )
 	}
 	else
 	{
-		static char szSquadName[64];
+		char szSquadName[64];
 		Q_snprintf( szSquadName, sizeof( szSquadName ), "squad%d\n", s_iSquadIndex );
 
-		m_SquadName = MAKE_STRING( szSquadName );
+		m_SquadName = AllocPooledString( szSquadName );
 
 		while ( ( pEntity = gEntList.FindEntityInSphere( pEntity, GetAbsOrigin(), searchRadius ) ) != NULL && squadCount < maxMembers )
 		{
