@@ -246,7 +246,7 @@ GL_FUNC_VOID(OpenGL,true,glUniform4fv,(GLint a,GLsizei b,const GLfloat *c),(a,b,
 GL_FUNC_VOID(OpenGL,true,glColor4f,(GLfloat a,GLfloat b,GLfloat c,GLfloat d),(a,b,c,d))
 GL_FUNC_VOID(OpenGL,true,glSamplerParameterf,(GLuint a, GLenum b, GLfloat c), (a, b, c))
 GL_FUNC_VOID(OpenGL,true,glSamplerParameterfv,(GLuint a, GLenum b, const GLfloat *c), (a, b, c))
-GL_FUNC_VOID(GL_QCOM_alpha_test,false,glAlphaFuncQCOM,(GLenum a, GLfloat b),(a,b))
+GL_FUNC_VOID(OpenGL,false,glAlphaFuncQCOM,(GLenum a, GLfloat b),(a,b))
 GL_FUNC_VOID(OpenGL,true,glClearDepthf,(GLfloat a),(a))
 GL_FUNC_VOID(OpenGL,true,glDepthRangef,(GLfloat a,GLfloat b),(a,b))
 GL_FUNC_VOID(OpenGL,true,glGetFramebufferAttachmentParameteriv,(GLenum a,GLenum b,GLenum c,GLint *d),(a,b,c,d))
