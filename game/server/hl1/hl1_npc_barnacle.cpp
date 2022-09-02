@@ -387,7 +387,6 @@ void CNPC_Barnacle::BarnacleThink ( void )
 	//Msg("tounge %f\n", m_flAltitude + m_flTongueAdj );
 	//NDebugOverlay::Box( GetAbsOrigin() - Vector( 0, 0, m_flAltitude ), Vector( -2, -2, -2 ), Vector( 2, 2, 2 ), 255,255,255, 0, 0.1 );
 
-	SetBoneController( 0, 0.f );
 	SetBoneController( 0, -(m_flAltitude + m_flTongueAdj) );
 	StudioFrameAdvance();
 }

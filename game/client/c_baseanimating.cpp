@@ -2647,7 +2647,7 @@ CMouthInfo *C_BaseAnimating::GetMouth( void )
 #ifdef DEBUG_BONE_SETUP_THREADING
 ConVar cl_warn_thread_contested_bone_setup("cl_warn_thread_contested_bone_setup", "0" );
 #endif
-//ConVar cl_threaded_bone_setup("cl_threaded_bone_setup", "1", 0, "Enable parallel processing of C_BaseAnimating::SetupBones()" );
+ConVar cl_threaded_bone_setup("cl_threaded_bone_setup", "0", 0, "Enable parallel processing of C_BaseAnimating::SetupBones()" );
 
 //-----------------------------------------------------------------------------
 // Purpose: Do the default sequence blending rules as done in HL1
@@ -2682,7 +2682,7 @@ void C_BaseAnimating::ShutdownBoneSetupThreadPool()
 
 void C_BaseAnimating::ThreadedBoneSetup()
 {
-	g_bDoThreadedBoneSetup = true; //cl_threaded_bone_setup.GetBool();
+	g_bDoThreadedBoneSetup = cl_threaded_bone_setup.GetBool();
 	if ( g_bDoThreadedBoneSetup )
 	{
 		int nCount = g_PreviousBoneSetups.Count();

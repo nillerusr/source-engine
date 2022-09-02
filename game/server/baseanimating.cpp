@@ -2743,8 +2743,9 @@ float CBaseAnimating::SetBoneController ( int iController, float flValue )
 
 	float newValue;
 	float retVal = Studio_SetController( pmodel, iController, flValue, newValue );
-	m_flEncodedController.Set( iController, newValue );
 
+	float &val = m_flEncodedController.GetForModify( iController );
+	val = newValue;
 	return retVal;
 }
 
