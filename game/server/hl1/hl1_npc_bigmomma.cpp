@@ -987,7 +987,7 @@ void CNPC_BigMomma::LayHeadcrab( void )
 
 	trace_t tr;
 	UTIL_TraceLine( GetAbsOrigin(), GetAbsOrigin() - Vector(0,0,100), MASK_SOLID, this, COLLISION_GROUP_NONE, &tr );
-	UTIL_DecalTrace( &tr, "Splash" );
+	UTIL_DecalTrace( &tr, "MommaBlob" );
 
 	CPASAttenuationFilter filter( this );
 	EmitSound( filter, entindex(), "BigMomma.LayHeadcrab" );
@@ -1233,7 +1233,7 @@ void CBMortar::Touch( CBaseEntity *pOther )
 	{
 		// make a splat on the wall
 		UTIL_TraceLine( GetAbsOrigin(), GetAbsOrigin() + GetAbsVelocity() * 10, MASK_SOLID, this, COLLISION_GROUP_NONE, &tr );
-		UTIL_DecalTrace( &tr, "Splash" );
+		UTIL_DecalTrace( &tr, "MommaBlob" );
 	}
 	else
 	{
