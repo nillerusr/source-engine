@@ -23,6 +23,7 @@ GNU General Public License for more details.
 #include <SDL_version.h>
 #include "tier0/dbg.h"
 #include "tier0/threadtools.h"
+#include <sys/system_properties.h>
 
 char *LauncherArgv[512];
 char java_args[4096];
@@ -33,13 +34,13 @@ extern void InitCrashHandler();
 
 DLL_EXPORT int Java_com_valvesoftware_ValveActivity2_setenv(JNIEnv *jenv, jclass *jclass, jstring env, jstring value, jint over)
 {
-	Msg( "Java_com_valvesoftware_ValveActivity2_setenv %s=%s", jenv->GetStringUTFChars(env, NULL), jenv->GetStringUTFChars(value, NULL) );
+	Msg( "Java_com_valvesoftware_ValveActivity2_setenv %s=%s\n", jenv->GetStringUTFChars(env, NULL), jenv->GetStringUTFChars(value, NULL) );
 	return setenv( jenv->GetStringUTFChars(env, NULL), jenv->GetStringUTFChars(value, NULL), over );
 }
 
 DLL_EXPORT void Java_com_valvesoftware_ValveActivity2_nativeOnActivityResult()
 {
-	Msg( "Java_com_valvesoftware_ValveActivity_nativeOnActivityResult" );
+//	Msg( "Java_com_valvesoftware_ValveActivity_nativeOnActivityResult\n" );
 }
 
 DLL_EXPORT void Java_com_valvesoftware_ValveActivity2_setArgs(JNIEnv *env, jclass *clazz, jstring str)
@@ -55,7 +56,6 @@ void SetLauncherArgs()
 
 	static char binPath[2048];
 	snprintf(binPath, sizeof binPath, "%s/hl2_linux", getenv("APP_DATA_PATH") );
-	Msg(binPath);
 	D(binPath);
 
 	D("-nouserclip");
@@ -77,12 +77,50 @@ void SetLauncherArgs()
 #undef D
 }
 
+float GetTotalMemory()
+{
+	int64_t mem = 0;
+
+	char meminfo[8196] = { 0 };
+	FILE *f = fopen("/proc/meminfo", "r");
+	if( !f )
+		return 0.f;
+
+	size_t size = fread(meminfo, 1, sizeof(meminfo), f);
+	if( !size )
+		return 0.f;
+
+	char *s = strstr(meminfo, "MemTotal:");
+
+	if( !s ) return 0.f;
+
+	sscanf(s+9, "%lld", &mem);
+	fclose(f);
+
+	return mem/1024/1024.f;
+}
+
+void android_property_print(const char *name)
+{
+	char value[1024];
+
+	if( __system_property_get( name, value ) != 0 )
+		Msg("prop %s=%s\n", name, value);
+}
+
+
 DLL_EXPORT int LauncherMainAndroid( int argc, char **argv )
 {
 	SDL_version ver;
 	SDL_GetVersion( &ver );
 
 	Msg("SDL version: %d.%d.%d rev: %s\n", (int)ver.major, (int)ver.minor, (int)ver.patch, SDL_GetRevision());
+	Msg("GetTotalMemory() = %.2f GiB\n", GetTotalMemory());
+	android_property_print("ro.build.version.sdk");
+	android_property_print("ro.product.system.device");
+	android_property_print("ro.product.system.manufacturer");
+	android_property_print("ro.product.system.model");
+	android_property_print("ro.product.system.name");
 
 	InitCrashHandler();
 	SetLauncherArgs();

@@ -206,8 +206,6 @@ void *VoidFnPtrLookup_GlMgr(const char *fn, bool &okay, const bool bRequired, vo
 	{
 		retval = _glGetProcAddress(fn);
 
-		Msg("_glGetProcAddress(%s) = %x\n", fn, retval);
-
 		if( !retval && l_gles )
 			retval = dlsym( l_gles, fn );
 	}

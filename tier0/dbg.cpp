@@ -50,6 +50,10 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+extern const tchar* GetProcessorArchName();
+
+#define MAX_MSGS 4196
+
 class CDbgLogger : public IDbgLogger
 {
 public:
@@ -58,18 +62,35 @@ public:
 
 	void Init(const char *logfile);
 	void Write(const char *data);
+	void Disable();
 
 private:
 	FILE *file;
 	float flStartTime;
 	bool bShouldLog;
+
+	char *pMsgs[MAX_MSGS];
+	size_t iMsg;
 };
 
 
 CDbgLogger::CDbgLogger()
 {
-	bShouldLog = false;
+	bShouldLog = true;
 	flStartTime = Plat_FloatTime();
+	file = NULL;
+	iMsg = 0;
+}
+
+void CDbgLogger::Disable()
+{
+	bShouldLog = false;
+
+	while( iMsg > 0 )
+	{
+		delete[] pMsgs[iMsg];
+		iMsg--;
+	}
 }
 
 void CDbgLogger::Init(const char *logfile)
@@ -86,13 +107,33 @@ void CDbgLogger::Init(const char *logfile)
 	Plat_ctime( &timeCur, szTime, sizeof(szTime) );
 
 	file = fopen(logfile, "w+");
-	fprintf(file, ">>> Engine started at %s\n", szTime);
-	fflush(file);
+	if( file )
+	{
+#ifdef GIT_COMMIT_HASH
+		fprintf(file, ">>> Engine(arch:%s commit:" GIT_COMMIT_HASH ") started at %s\n", GetProcessorArchName(), szTime);
+#else
+		fprintf(file, ">>> Engine(arch:%s) started at %s\n", GetProcessorArchName(), szTime);
+#endif
+		fflush(file);
+
+		for( int i = 0; i < iMsg; i++ )
+		{
+			Write(pMsgs[i]);
+			delete[] pMsgs[i];
+		}
+		iMsg = 0;
+	}
 }
 
 CDbgLogger::~CDbgLogger()
 {
-	if( !bShouldLog )
+	while( iMsg > 0 )
+	{
+		delete[] pMsgs[iMsg];
+		iMsg--;
+	}
+
+	if( !file )
 		return;
 
 	time_t timeCur;
@@ -113,9 +154,21 @@ void CDbgLogger::Write(const char *data)
 	if( !bShouldLog )
 		return;
 
-	fprintf(file, "[%.4f] ", Plat_FloatTime() - flStartTime);
-	fprintf(file, "%s", data);
-	fflush(file);
+	size_t len = strlen(data);
+
+	if( file )
+	{
+		fprintf(file, "[%.4f] ", Plat_FloatTime() - flStartTime);
+		fprintf(file, "%s", data);
+		fflush(file);
+	}
+	else if( iMsg < MAX_MSGS )
+	{
+		pMsgs[iMsg] = new char[len+8];
+		memcpy(pMsgs[iMsg], data, len);
+		pMsgs[iMsg][len] = 0;
+		iMsg++;
+	}
 }
 
 static CDbgLogger g_DbgLogger;

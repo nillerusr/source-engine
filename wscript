@@ -282,7 +282,9 @@ def configure(conf):
 	conf.load('subproject xcompile compiler_c compiler_cxx gitversion clang_compilation_database strip_on_install waf_unit_test enforce_pic')
 	if conf.env.DEST_OS == 'win32' and conf.env.DEST_CPU == 'amd64':
 		conf.load('masm')
+
 	define_platform(conf)
+	conf.define('GIT_COMMIT_HASH', conf.env.GIT_VERSION)
 
 	if conf.env.TOGLES:
 		projects['game'] += ['togles']
