@@ -693,6 +693,7 @@ CGLMShaderPair::CGLMShaderPair( GLMContext *ctx  )
 	m_program = gGL->glCreateProgram();
 
 	m_locVertexParams = -1;
+	m_locAlphaRef = -1;
 	m_locVertexBoneParams = -1;
 	m_locVertexScreenParams = -1;
 	m_nScreenWidthHeight = 0xFFFFFFFF;
