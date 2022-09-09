@@ -21,3 +21,5 @@ Discord: https://discord.gg/hZRB7WMgGw
 
 
 # [How to Build?](https://github.com/nillerusr/source-engine/wiki/How-to-build)
+# [How to download the latest development build?](https://github.com/stephen-cusi/Pick-and-roll/actions)
+The stability is not guaranteed. If there is a bug, please report it to the issues page in time.
