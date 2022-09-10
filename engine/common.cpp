@@ -900,10 +900,19 @@ void COM_InitFilesystem( const char *pFullModPath )
 		}
 		else
 		{
+			char *szLang = getenv("LANG");
+
 			// still allow command line override even when not running steam
 			if (CommandLine()->CheckParm("-audiolanguage"))
 			{
 				Q_strncpy(language, CommandLine()->ParmValue("-audiolanguage", "english"), sizeof( language ) - 1);
+			}
+			else if( szLang )
+			{
+				ELanguage lang = PchLanguageICUCodeToELanguage(szLang, k_Lang_English);
+				const char *szShortLang = GetLanguageShortName(lang);
+				if( Q_strncmp(szShortLang, "none", 4) != 0 )
+					Q_strncpy(language, szShortLang, sizeof( language ) - 1);
 			}
 		}
 
