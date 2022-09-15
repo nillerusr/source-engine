@@ -77,6 +77,15 @@ struct event_s
 } typedef touch_event_t;
 
 
+struct CTouchTexture
+{
+	IVTFTexture *vtf;
+
+	float X0, Y0, X1, Y1; // position in atlas texture
+	int height, width;
+	char szName[1024];
+};
+
 class CTouchButton
 {
 public:
@@ -85,9 +94,6 @@ public:
 
 	// Field of button in pixels
 	float x1, y1, x2, y2;
-
-	// Button texture
-	int texture;
 
 	rgba_t color;
 	char texturefile[256];
@@ -99,7 +105,7 @@ public:
 	float fadespeed;
 	float fadeend;
 	float aspect;
-	int textureID;
+	CTouchTexture* texture;
 };
 
 class CTouchPanel : public vgui::Panel
@@ -149,7 +155,6 @@ public:
 	}
 };
 
-
 class CTouchControls
 {
 public:
@@ -188,6 +193,7 @@ public:
 	void GetTouchDelta( float yaw, float pitch, float *dx, float *dy );
 	void EditEvent( touch_event_t *ev );
 	void EnableTouchEdit(bool enable);
+	void CreateAtlasTexture();
 
 	CTouchPanel *touchPanel;
 	float screen_h, screen_w;
@@ -199,12 +205,17 @@ private:
 	bool initialized = false;
 	ETouchState state;
 	CUtlLinkedList<CTouchButton*> btns;
+	CUtlVector<CTouchTexture*> textureList;
 
 	int look_finger, move_finger, wheel_finger;
 	CTouchButton *move_button;
 
 	float move_start_x, move_start_y;
 	float m_flPreviousYaw, m_flPreviousPitch;
+
+	int touchTextureID;
+	IMesh* m_pMesh;
+	CMeshBuilder meshBuilder;
 
 	// editing
 	CTouchButton *edit;
