@@ -409,6 +409,10 @@ void CTouchControls::Init()
 	else
 		ResetToDefaults();
 
+	CTouchTexture *texture = new CTouchTexture;
+	Q_strncpy( texture->szName, "vgui/touch/back", sizeof(texture->szName) );
+	textureList.AddToTail(texture);
+
 	CreateAtlasTexture();
 
 	initialized = true;
@@ -476,8 +480,7 @@ void CTouchControls::CreateAtlasTexture()
 	if( !textureList.Count() )
 		return;
 
-	int atlasHeight = nextPowerOfTwo(sqrt(atlasSize));
-
+	int atlasHeight = nextPowerOfTwo(sqrt((double)atlasSize));
 	int sizeInBytes = atlasHeight*atlasHeight*4;
 	unsigned char *dest = new unsigned char[sizeInBytes];
 	memset(dest, 0, sizeInBytes);
@@ -506,10 +509,13 @@ void CTouchControls::CreateAtlasTexture()
 
 			memcpy(row_dest, row_src, t->height*4);
 		}
+
+		DestroyVTFTexture(t->vtf);
 	}
 
 	touchTextureID = vgui::surface()->CreateNewTextureID( true );
 	vgui::surface()->DrawSetTextureRGBA( touchTextureID, dest, atlasHeight, atlasHeight, 1, true );
+
 
 	free(nodes);
 	free(rects);
@@ -587,6 +593,10 @@ void CTouchControls::Paint( )
 	if (!initialized)
 		return;
 
+	CUtlLinkedList<CTouchButton*>::iterator it;
+
+	CMatRenderContextPtr pRenderContext( g_pMaterialSystem );
+
 	if( state == state_edit )
 	{
 		vgui::surface()->DrawSetColor(gridcolor.r, gridcolor.g, gridcolor.b, gridcolor.a*3); // 255, 0, 0, 200 <- default here
@@ -597,16 +607,41 @@ void CTouchControls::Paint( )
 
 		for( y = 0.0f; y < 1.0f; y += GRID_Y )
 			vgui::surface()->DrawLine( 0, screen_h*y, screen_w, screen_h*y );
+
+		for( it = btns.begin(); it != btns.end(); it++ )
+		{
+			CTouchButton *btn = *it;
+
+			if( !(btn->flags & TOUCH_FL_NOEDIT) )
+			{
+				if( touch_button_info.GetInt() )
+				{
+					g_pMatSystemSurface->DrawColoredText( 2, btn->x1*screen_w, btn->y1*screen_h, 255, 255, 255, 255, "N: %s", btn->name );			// name
+					g_pMatSystemSurface->DrawColoredText( 2, btn->x1*screen_w, btn->y1*screen_h+10, 255, 255, 255, 255, "T: %s", btn->texturefile );	// texture
+					g_pMatSystemSurface->DrawColoredText( 2, btn->x1*screen_w, btn->y1*screen_h+20, 255, 255, 255, 255, "C: %s", btn->command );		// command
+					g_pMatSystemSurface->DrawColoredText( 2, btn->x1*screen_w, btn->y1*screen_h+30, 255, 255, 255, 255, "F: %i", btn->flags );		// flags
+					g_pMatSystemSurface->DrawColoredText( 2, btn->x1*screen_w, btn->y1*screen_h+40, 255, 255, 255, 255, "RGBA: %d %d %d %d", btn->color.r, btn->color.g, btn->color.b, btn->color.a );// color
+				}
+
+				vgui::surface()->DrawSetColor(gridcolor.r, gridcolor.g, gridcolor.b, gridcolor.a); // 255, 0, 0, 50 <- default here
+				vgui::surface()->DrawFilledRect( btn->x1*screen_w, btn->y1*screen_h, btn->x2*screen_w, btn->y2*screen_h );
+			}
+		}
 	}
-
-	CUtlLinkedList<CTouchButton*>::iterator it;
-
-	CMatRenderContextPtr pRenderContext( g_pMaterialSystem );
 
 	pRenderContext->Bind( g_pMatSystemSurface->DrawGetTextureMaterial(touchTextureID) );
 	m_pMesh = pRenderContext->GetDynamicMesh();
 
-	meshBuilder.Begin( m_pMesh, MATERIAL_QUADS, btns.Count()-2 );
+	int meshCount = 0;
+	for( it = btns.begin(); it != btns.end(); it++ )
+	{
+		CTouchButton *btn = *it;
+
+		if( btn->type != touch_move && btn->type != touch_look && !(btn->flags & TOUCH_FL_HIDE) )
+			meshCount++;
+	}
+
+	meshBuilder.Begin( m_pMesh, MATERIAL_QUADS, meshCount );
 
 	for( it = btns.begin(); it != btns.end(); it++ )
 	{
@@ -637,26 +672,10 @@ void CTouchControls::Paint( )
 			meshBuilder.TexCoord2f( 0, t->X0, t->Y1 );
 			meshBuilder.AdvanceVertexF<VTX_HAVEPOS | VTX_HAVECOLOR, 1>();
 		}
-
-		if( state == state_edit && !(btn->flags & TOUCH_FL_NOEDIT) )
-		{
-			if( touch_button_info.GetInt() )
-			{
-				g_pMatSystemSurface->DrawColoredText( 2, btn->x1*screen_w, btn->y1*screen_h, 255, 255, 255, 255, "N: %s", btn->name );			// name
-				g_pMatSystemSurface->DrawColoredText( 2, btn->x1*screen_w, btn->y1*screen_h+10, 255, 255, 255, 255, "T: %s", btn->texturefile );	// texture
-				g_pMatSystemSurface->DrawColoredText( 2, btn->x1*screen_w, btn->y1*screen_h+20, 255, 255, 255, 255, "C: %s", btn->command );		// command
-				g_pMatSystemSurface->DrawColoredText( 2, btn->x1*screen_w, btn->y1*screen_h+30, 255, 255, 255, 255, "F: %i", btn->flags );		// flags
-				g_pMatSystemSurface->DrawColoredText( 2, btn->x1*screen_w, btn->y1*screen_h+40, 255, 255, 255, 255, "RGBA: %d %d %d %d", btn->color.r, btn->color.g, btn->color.b, btn->color.a );// color
-			}
-
-			vgui::surface()->DrawSetColor(gridcolor.r, gridcolor.g, gridcolor.b, gridcolor.a); // 255, 0, 0, 50 <- default here
-			vgui::surface()->DrawFilledRect( btn->x1*screen_w, btn->y1*screen_h, btn->x2*screen_w, btn->y2*screen_h );
-		}
 	}
 
 	meshBuilder.End();
 	m_pMesh->Draw();
-
 }
 
 void CTouchControls::AddButton( const char *name, const char *texturefile, const char *command, float x1, float y1, float x2, float y2, rgba_t color, int round, float aspect, int flags )
