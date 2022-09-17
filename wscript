@@ -75,6 +75,7 @@ projects={
 		'vpklib',
 		'vstdlib',
 		'vtf',
+		'utils/vtex',
 		'unicode'
 	],
 	'tests': [
@@ -500,12 +501,12 @@ def configure(conf):
 			for i in a:
 				conf.check_cc(lib = i)
 
-		conf.check(lib='libz', uselib_store='ZLIB')
+		conf.check(lib='libz', uselib_store='ZLIB', define_name='USE_ZLIB')
 		# conf.check(lib='nvtc', uselib_store='NVTC')
 		# conf.check(lib='ati_compress_mt_vc10', uselib_store='ATI_COMPRESS_MT_VC10')
 		conf.check(lib='SDL2', uselib_store='SDL2')
-		conf.check(lib='libjpeg', uselib_store='JPEG')
-		conf.check(lib='libpng', uselib_store='PNG')
+		conf.check(lib='libjpeg', uselib_store='JPEG', define_name='HAVE_JPEG')
+		conf.check(lib='libpng', uselib_store='PNG', define_name='HAVE_PNG')
 		conf.check(lib='d3dx9', uselib_store='D3DX9')
 		conf.check(lib='d3d9', uselib_store='D3D9')
 		conf.check(lib='dsound', uselib_store='DSOUND')

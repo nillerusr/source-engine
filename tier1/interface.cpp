@@ -311,11 +311,19 @@ CSysModule *Sys_LoadModule( const char *pModuleName, Sys_Flags flags /* = SYS_NO
 		char *modLibPath = getenv("APP_MOD_LIB");
 		if( modLibPath && *modLibPath ) // first load library from mod launcher
 		{
+			bool bFound = true;
 			Q_snprintf(szAbsoluteModuleName, sizeof(szAbsoluteModuleName), "%s/lib%s", modLibPath, pModuleName);
 			if( stat(szAbsoluteModuleName, &statBuf) != 0 )
+			{
 				Q_snprintf(szAbsoluteModuleName, sizeof(szAbsoluteModuleName), "%s/%s", modLibPath, pModuleName);
+				if( stat(szAbsoluteModuleName, &statBuf) != 0 )
+					bFound = false;
+			}
 
 			hDLL = Sys_LoadLibrary(szAbsoluteModuleName, flags);
+
+			if( !hDLL && bFound )
+				Error("Can't load mod library %s\n", szAbsoluteModuleName);
 		}
 
 		Q_snprintf(szAbsoluteModuleName, sizeof(szAbsoluteModuleName), "%s/lib%s", libPath ,pModuleName);
