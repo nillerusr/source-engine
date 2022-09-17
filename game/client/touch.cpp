@@ -529,8 +529,8 @@ void CTouchControls::CreateAtlasTexture()
 
 void CTouchControls::Shutdown( )
 {
-	btns.PurgeAndDeleteElements();
 	textureList.PurgeAndDeleteElements();
+	btns.PurgeAndDeleteElements();
 }
 
 void CTouchControls::RemoveButtons()
@@ -642,7 +642,7 @@ void CTouchControls::Paint( )
 	{
 		CTouchButton *btn = *it;
 
-		if( btn->type != touch_move && btn->type != touch_look && !(btn->flags & TOUCH_FL_HIDE) )
+		if( btn->texture != NULL && !(btn->flags & TOUCH_FL_HIDE) )
 			meshCount++;
 	}
 
@@ -652,7 +652,7 @@ void CTouchControls::Paint( )
 	{
 		CTouchButton *btn = *it;
 
-		if( btn->type != touch_move && btn->type != touch_look && !(btn->flags & TOUCH_FL_HIDE) )
+		if( btn->texture != NULL && !(btn->flags & TOUCH_FL_HIDE) )
 		{
 			CTouchTexture *t = btn->texture;
 
@@ -717,6 +717,7 @@ void CTouchControls::AddButton( const char *name, const char *texturefile, const
 
 	if( btn->texturefile[0] == 0 )
 	{
+		btn->texture = NULL;
 		btns.AddToTail(btn);
 		return;
 	}
@@ -732,6 +733,7 @@ void CTouchControls::AddButton( const char *name, const char *texturefile, const
 	}
 
 	CTouchTexture *texture = new CTouchTexture;
+	btn->texture = texture;
 	Q_strncpy( texture->szName, btn->texturefile, sizeof(btn->texturefile) );
 	textureList.AddToTail(texture);
 
