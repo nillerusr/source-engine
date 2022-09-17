@@ -83,6 +83,7 @@ struct CTouchTexture
 
 	float X0, Y0, X1, Y1; // position in atlas texture
 	int height, width;
+	bool isInAtlas;
 	char szName[1024];
 };
 

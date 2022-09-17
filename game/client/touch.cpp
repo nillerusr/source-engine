@@ -420,13 +420,13 @@ void CTouchControls::Init()
 
 int nextPowerOfTwo(int x)
 {
-		if( (x & (x - 1)) == 0)
-				return x;
+	if( (x & (x - 1)) == 0)
+		return x;
 
-		int t = 1 << 30;
-		while (x < t) t >>= 1;
+	int t = 1 << 30;
+	while (x < t) t >>= 1;
 
-		return t << 1;
+	return t << 1;
 }
 
 void CTouchControls::CreateAtlasTexture()
@@ -437,6 +437,9 @@ void CTouchControls::CreateAtlasTexture()
 
 	stbrp_rect *rects = (stbrp_rect*)malloc(textureList.Count()*sizeof(stbrp_rect));
 	memset(rects, 0, sizeof(stbrp_node)*textureList.Count());
+
+	if( touchTextureID )
+		vgui::surface()->DeleteTextureByID( touchTextureID );
 
 	for( int i = 0; i < textureList.Count(); i++ )
 	{
@@ -516,6 +519,7 @@ void CTouchControls::CreateAtlasTexture()
 		}
 
 		DestroyVTFTexture(t->vtf);
+		t->isInAtlas = true;
 	}
 
 	touchTextureID = vgui::surface()->CreateNewTextureID( true );
@@ -643,7 +647,12 @@ void CTouchControls::Paint( )
 		CTouchButton *btn = *it;
 
 		if( btn->texture != NULL && !(btn->flags & TOUCH_FL_HIDE) )
+		{
+			if( !btn->texture->isInAtlas )
+				CreateAtlasTexture();
+
 			meshCount++;
+		}
 	}
 
 	meshBuilder.Begin( m_pMesh, MATERIAL_QUADS, meshCount );
@@ -734,6 +743,8 @@ void CTouchControls::AddButton( const char *name, const char *texturefile, const
 
 	CTouchTexture *texture = new CTouchTexture;
 	btn->texture = texture;
+	texture->isInAtlas = false;
+	texture->X0 = 0; texture->X1 = 0; texture->Y0 = 0; texture->Y1 = 0;
 	Q_strncpy( texture->szName, btn->texturefile, sizeof(btn->texturefile) );
 	textureList.AddToTail(texture);
 
