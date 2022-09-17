@@ -23,7 +23,6 @@ GNU General Public License for more details.
 #include <SDL_version.h>
 #include "tier0/dbg.h"
 #include "tier0/threadtools.h"
-#include <sys/system_properties.h>
 
 char *LauncherArgv[512];
 char java_args[4096];
@@ -102,10 +101,20 @@ float GetTotalMemory()
 
 void android_property_print(const char *name)
 {
-	char value[1024];
+	char prop[1024];
 
-	if( __system_property_get( name, value ) != 0 )
-		Msg("prop %s=%s\n", name, value);
+	char strValue[64];
+	memset (strValue, 0, 64);
+	snprintf(prop, sizeof(prop), "getprop %s", name);
+	FILE *fp = NULL;
+	fp = popen(prop, "r");
+	if (!fp) return;
+
+	fgets(strValue, sizeof(strValue), fp);
+	pclose(fp);
+	fp = NULL;
+
+	Msg("prop %s=%s", name, strValue);
 }
 
 
@@ -117,10 +126,10 @@ DLL_EXPORT int LauncherMainAndroid( int argc, char **argv )
 	Msg("SDL version: %d.%d.%d rev: %s\n", (int)ver.major, (int)ver.minor, (int)ver.patch, SDL_GetRevision());
 	Msg("GetTotalMemory() = %.2f GiB\n", GetTotalMemory());
 	android_property_print("ro.build.version.sdk");
-	android_property_print("ro.product.system.device");
-	android_property_print("ro.product.system.manufacturer");
-	android_property_print("ro.product.system.model");
-	android_property_print("ro.product.system.name");
+	android_property_print("ro.product.device");
+	android_property_print("ro.product.manufacturer");
+	android_property_print("ro.product.model");
+	android_property_print("ro.product.name");
 
 	InitCrashHandler();
 	SetLauncherArgs();

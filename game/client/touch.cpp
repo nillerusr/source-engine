@@ -462,6 +462,11 @@ void CTouchControls::CreateAtlasTexture()
 		t->vtf = CreateVTFTexture();
 		if (t->vtf->Unserialize(buf))
 		{
+			if( t->vtf->Format() != IMAGE_FORMAT_RGBA8888 && t->vtf->Format() != IMAGE_FORMAT_BGRA8888 )
+			{
+				Msg("Format=%d\n", t->vtf->Format());
+				Error("Use RGBA8888/BGRA88888 for touch buttons!\n");
+			}
 			if( t->vtf->Height() != t->vtf->Width() || (t->vtf->Height() & (t->vtf->Height() - 1)) != 0 )
 				Error("Touch texture is wrong! Don't use npot textures for touch.");
 
