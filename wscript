@@ -454,13 +454,14 @@ def configure(conf):
 	else:
 		conf.check(lib='SDL2', uselib_store='SDL2')
 		conf.check(lib='freetype2', uselib_store='FT2')
-		conf.check(lib='openal', uselib_store='OPENAL')
-		conf.check(lib='jpeg', uselib_store='JPEG')
-		conf.check(lib='png', uselib_store='PNG')
-		conf.check(lib='curl', uselib_store='CURL')
-		conf.check(lib='z', uselib_store='ZLIB')
-		conf.check(lib='crypto', uselib_store='CRYPTO')
-		conf.check(lib='ssl', uselib_store='SSL')
+		conf.check(lib='jpeg', uselib_store='JPEG', define_name='HAVE_JPEG')
+		conf.check(lib='png', uselib_store='PNG', define_name='HAVE_PNG')
+		conf.check(lib='curl', uselib_store='CURL', define_name='HAVE_CURL')
+		conf.check(lib='z', uselib_store='ZLIB', define_name='HAVE_ZLIB')
+		if conf.env.DEST_CPU != 'aarch64':
+			conf.check(lib='unwind', uselib_store='UNWIND')
+			conf.check(lib='crypto', uselib_store='CRYPTO')
+			conf.check(lib='ssl', uselib_store='SSL')
 		conf.check(lib='android_support', uselib_store='ANDROID_SUPPORT')
 		conf.check(lib='opus', uselib_store='OPUS')
 
