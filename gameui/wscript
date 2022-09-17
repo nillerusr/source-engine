@@ -109,7 +109,8 @@ def build(bld):
 		'../public/tier0',
 		'../public/tier1',
 		'../common',
-		'../common/GameUI'
+		'../common/GameUI',
+		'../thirdparty'
 	]
 
 	defines = []

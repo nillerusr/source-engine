@@ -54,6 +54,8 @@ extern void longjmp( jmp_buf, int ) __attribute__((noreturn));
 	extern IEngineReplay *g_pEngine;
 #elif ENGINE_DLL
 	#include "EngineInterface.h"
+#elif UTILS
+	// OwO
 #else
 	#include "cdll_int.h"
 	extern IVEngineClient *engine;
@@ -61,10 +63,23 @@ extern void longjmp( jmp_buf, int ) __attribute__((noreturn));
 
 // use the JPEGLIB_USE_STDIO define so that we can read in jpeg's from outside the game directory tree.
 #define JPEGLIB_USE_STDIO
+#if ANDROID
+#include "android/jpeglib/jpeglib.h"
+#else
 #include "jpeglib/jpeglib.h"
+#endif
 #undef JPEGLIB_USE_STDIO
 
+
+#if HAVE_PNG
+
+#if ANDROID
 #include "libpng/png.h"
+#else
+#include <png.h>
+#endif
+
+#endif
 
 #include <setjmp.h>
 
@@ -665,11 +680,29 @@ unsigned char *ImgUtl_ReadPNGAsRGBA( const char *pngPath, int &width, int &heigh
 
 	// Just load the whole file into a memory buffer
 	CUtlBuffer bufFileContents;
+
+#if UTILS
+	static char buf[8192];
+	FILE *readfile = fopen(pngPath, "rb");
+	if( !readfile )
+	{
+		errcode = CE_CANT_OPEN_SOURCE_FILE;
+		return NULL;
+	}
+
+	size_t size;
+	while( ( size = fread(buf, 1, sizeof(buf), readfile ) ) > 0 )
+		bufFileContents.Put( buf, size );
+
+	// Load it
+	return ImgUtl_ReadPNGAsRGBAFromBuffer( bufFileContents, width, height, errcode );
+#else
 	if ( !g_pFullFileSystem->ReadFile( pngPath, NULL, bufFileContents ) )
 	{
 		errcode = CE_CANT_OPEN_SOURCE_FILE;
 		return NULL;
 	}
+#endif
 
 	// Load it
 	return ImgUtl_ReadPNGAsRGBAFromBuffer( bufFileContents, width, height, errcode );
@@ -1473,7 +1506,7 @@ ConversionErrorType ImgUtl_ConvertTGAToVTF(const char *tgaPath, int nMaxWidth/*=
 	inbuf.SeekPut( CUtlBuffer::SEEK_HEAD, nBytesRead );
 
 	// load vtex_dll.dll and get the interface to it.
-	CSysModule *vtexmod = Sys_LoadModule("vtex_dll");
+	CSysModule *vtexmod = Sys_LoadModule("vtex_dll" DLL_EXT_STRING);
 	if (vtexmod == NULL)
 	{
 		Msg( "Failed to open TGA conversion module vtex_dll: %s\n", tgaPath);
@@ -1522,6 +1555,17 @@ static void DoCopyFile( const char *source, const char *destination )
 	::COM_CopyFile( source, destination );
 #elif REPLAY_DLL
 	g_pEngine->CopyFile( source, destination );
+#elif UTILS
+	static char buf[16384];
+	FILE *readfile = fopen(source, "rb");
+	FILE *writefile = fopen(destination, "wb");
+
+	size_t size = 0;
+	while( (size = fread(buf, sizeof(buf), 1, readfile)) != 0 )
+		fwrite(buf, size, 1, writefile);
+
+	fclose(readfile);
+	fclose(writefile);
 #else
 	engine->CopyLocalFile( source, destination );
 #endif
@@ -1712,12 +1756,12 @@ ConversionErrorType	ImgUtl_ConvertToVTFAndDumpVMT( const char *pInPath, const ch
 		Q_strncpy(finalPath, com_gamedir, sizeof(finalPath));
 #elif REPLAY_DLL
 		Q_strncpy(finalPath, g_pEngine->GetGameDir(), sizeof(finalPath));
-#else
+#elif !UTILS
 		Q_strncpy(finalPath, engine->GetGameDirectory(), sizeof(finalPath));
 #endif
 		Q_strncat(finalPath, szOutDir, sizeof(finalPath), COPY_ALL_CHARACTERS);
 		Q_strncat(finalPath, vtfFilename, sizeof(finalPath), COPY_ALL_CHARACTERS);
-	
+
 		c = finalPath + strlen(finalPath);
 		while ((c > finalPath) && (*(c-1) != '.'))
 		{
@@ -1829,6 +1873,7 @@ ConversionErrorType ImgUtl_WriteGenericVMT( const char *vtfPath, const char *pMa
 	return CE_SUCCESS;
 }
 
+#if HAVE_PNG
 static void WritePNGData( png_structp png_ptr, png_bytep inBytes, png_size_t byteCountToWrite )
 {
 
@@ -1847,7 +1892,6 @@ static void FlushPNGData( png_structp png_ptr )
 	// We're writing to a memory buffer, it's a NOP
 }
 
-#if HAVE_PNG
 ConversionErrorType ImgUtl_WriteRGBAAsPNGToBuffer( const unsigned char *pRGBAData, int nWidth, int nHeight, CUtlBuffer &bufOutData, int nStride )
 {
 #if !defined( _X360 )
