@@ -441,6 +441,8 @@ void CTouchControls::CreateAtlasTexture()
 	if( touchTextureID )
 		vgui::surface()->DeleteTextureByID( touchTextureID );
 
+	int rectCount = 0;
+
 	for( int i = 0; i < textureList.Count(); i++ )
 	{
 		CTouchTexture *t = textureList[i];
@@ -494,8 +496,9 @@ void CTouchControls::CreateAtlasTexture()
 			continue;
 		}
 
-		rects[i].h = t->height;
-		rects[i].w = t->width;
+		rects[rectCount].h = t->height;
+		rects[rectCount].w = t->width;
+		rectCount++;
 	}
 
 	if( !textureList.Count() )
@@ -512,27 +515,29 @@ void CTouchControls::CreateAtlasTexture()
 
 	stbrp_context context;
 	stbrp_init_target( &context, atlasHeight, atlasHeight, nodes, nodesCount );
-	stbrp_pack_rects(&context, rects, textureList.Count());
+	stbrp_pack_rects(&context, rects, rectCount);
 
+	rectCount = 0;
 	for( int i = 0; i < textureList.Count(); i++ )
 	{
 		CTouchTexture *t = textureList[i];
 		if( t->textureID )
 			continue;
 
-		t->X0 = rects[i].x / (float)atlasHeight;
-		t->Y0 = rects[i].y / (float)atlasHeight;
+		t->X0 = rects[rectCount].x / (float)atlasHeight;
+		t->Y0 = rects[rectCount].y / (float)atlasHeight;
 		t->X1 = t->X0 + t->width / (float)atlasHeight;
 		t->Y1 = t->Y0 + t->height / (float)atlasHeight;
 
 		unsigned char *src = t->vtf->ImageData(0, 0, 0);
 		for( int row = 0; row < t->height; row++)
 		{
-			unsigned char *row_dest = dest+(row+rects[i].y)*atlasHeight*4+rects[i].x*4;
+			unsigned char *row_dest = dest+(row+rects[rectCount].y)*atlasHeight*4+rects[rectCount].x*4;
 			unsigned char *row_src = src+row*t->height*4;
 
 			memcpy(row_dest, row_src, t->height*4);
 		}
+		rectCount++;
 
 		DestroyVTFTexture(t->vtf);
 	}
