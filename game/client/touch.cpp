@@ -448,7 +448,12 @@ void CTouchControls::CreateAtlasTexture()
 
 		FileHandle_t fp;
 		fp = ::filesystem->Open( fullFileName, "rb" );
-		if( !fp ) return;
+		if( !fp )
+		{
+			t->textureID = vgui::surface()->CreateNewTextureID();
+			vgui::surface()->DrawSetTextureFile( t->textureID, t->szName, true, false );
+			continue;
+		}
 
 		::filesystem->Seek( fp, 0, FILESYSTEM_SEEK_TAIL );
 		int srcVTFLength = ::filesystem->Tell( fp );
@@ -467,19 +472,27 @@ void CTouchControls::CreateAtlasTexture()
 		{
 			if( t->vtf->Format() != IMAGE_FORMAT_RGBA8888 && t->vtf->Format() != IMAGE_FORMAT_BGRA8888 )
 			{
-				Msg("Format=%d\n", t->vtf->Format());
-				Error("Use RGBA8888/BGRA88888 for touch buttons!\n");
+				t->textureID = vgui::surface()->CreateNewTextureID();
+				vgui::surface()->DrawSetTextureFile( t->textureID, t->szName, true, false);
+				DestroyVTFTexture(t->vtf);
+				continue;
 			}
 			if( t->vtf->Height() != t->vtf->Width() || (t->vtf->Height() & (t->vtf->Height() - 1)) != 0 )
-				Error("Touch texture is wrong! Don't use npot textures for touch.");
+				Error("%s texture is wrong! Don't use npot textures for touch.");
 
 			t->height = t->vtf->Height();
 			t->width = t->vtf->Width();
+			t->isInAtlas = true;
 
 			atlasSize += t->width*t->height;
 		}
-
-		buf.Clear();
+		else
+		{
+			DestroyVTFTexture(t->vtf);
+			t->textureID = vgui::surface()->CreateNewTextureID();
+			vgui::surface()->DrawSetTextureFile( t->textureID, t->szName, true, false);
+			continue;
+		}
 
 		rects[i].h = t->height;
 		rects[i].w = t->width;
@@ -504,6 +517,9 @@ void CTouchControls::CreateAtlasTexture()
 	for( int i = 0; i < textureList.Count(); i++ )
 	{
 		CTouchTexture *t = textureList[i];
+		if( t->textureID )
+			continue;
+
 		t->X0 = rects[i].x / (float)atlasHeight;
 		t->Y0 = rects[i].y / (float)atlasHeight;
 		t->X1 = t->X0 + t->width / (float)atlasHeight;
@@ -519,12 +535,10 @@ void CTouchControls::CreateAtlasTexture()
 		}
 
 		DestroyVTFTexture(t->vtf);
-		t->isInAtlas = true;
 	}
 
 	touchTextureID = vgui::surface()->CreateNewTextureID( true );
 	vgui::surface()->DrawSetTextureRGBA( touchTextureID, dest, atlasHeight, atlasHeight, 1, true );
-
 
 	free(nodes);
 	free(rects);
@@ -603,7 +617,6 @@ void CTouchControls::Paint( )
 		return;
 
 	CUtlLinkedList<CTouchButton*>::iterator it;
-
 	CMatRenderContextPtr pRenderContext( g_pMaterialSystem );
 
 	if( state == state_edit )
@@ -638,7 +651,6 @@ void CTouchControls::Paint( )
 		}
 	}
 
-	pRenderContext->Bind( g_pMatSystemSurface->DrawGetTextureMaterial(touchTextureID) );
 	m_pMesh = pRenderContext->GetDynamicMesh();
 
 	int meshCount = 0;
@@ -648,20 +660,53 @@ void CTouchControls::Paint( )
 
 		if( btn->texture != NULL && !(btn->flags & TOUCH_FL_HIDE) )
 		{
-			if( !btn->texture->isInAtlas )
+			CTouchTexture *t = btn->texture;
+
+			if( t->textureID )
+			{
+				pRenderContext->Bind( g_pMatSystemSurface->DrawGetTextureMaterial(t->textureID) );
+				meshBuilder.Begin( m_pMesh, MATERIAL_QUADS, meshCount );
+
+				rgba_t color(btn->color.r, btn->color.g, btn->color.b, btn->color.a);
+				meshBuilder.Position3f( btn->x1*screen_w, btn->y1*screen_h, 0 );
+				meshBuilder.Color4ubv( color );
+				meshBuilder.TexCoord2f( 0, 0, 0 );
+				meshBuilder.AdvanceVertexF<VTX_HAVEPOS | VTX_HAVECOLOR, 1>();
+
+				meshBuilder.Position3f( btn->x2*screen_w, btn->y1*screen_h, 0 );
+				meshBuilder.Color4ubv( color );
+				meshBuilder.TexCoord2f( 0, 1, 0 );
+				meshBuilder.AdvanceVertexF<VTX_HAVEPOS | VTX_HAVECOLOR, 1>();
+
+				meshBuilder.Position3f( btn->x2*screen_w, btn->y2*screen_h, 0 );
+				meshBuilder.Color4ubv( color );
+				meshBuilder.TexCoord2f( 0, 1, 1 );
+				meshBuilder.AdvanceVertexF<VTX_HAVEPOS | VTX_HAVECOLOR, 1>();
+
+				meshBuilder.Position3f( btn->x1*screen_w, btn->y2*screen_h, 0 );
+				meshBuilder.Color4ubv( color );
+				meshBuilder.TexCoord2f( 0, 0, 1 );
+				meshBuilder.AdvanceVertexF<VTX_HAVEPOS | VTX_HAVECOLOR, 1>();
+
+				meshBuilder.End();
+				m_pMesh->Draw();
+			}
+			else if( !btn->texture->isInAtlas )
 				CreateAtlasTexture();
 
-			meshCount++;
+			if( !t->textureID )
+				meshCount++;
 		}
 	}
 
+	pRenderContext->Bind( g_pMatSystemSurface->DrawGetTextureMaterial(touchTextureID) );
 	meshBuilder.Begin( m_pMesh, MATERIAL_QUADS, meshCount );
 
 	for( it = btns.begin(); it != btns.end(); it++ )
 	{
 		CTouchButton *btn = *it;
 
-		if( btn->texture != NULL && !(btn->flags & TOUCH_FL_HIDE) )
+		if( btn->texture != NULL && !(btn->flags & TOUCH_FL_HIDE) && !btn->texture->textureID )
 		{
 			CTouchTexture *t = btn->texture;
 
@@ -744,6 +789,7 @@ void CTouchControls::AddButton( const char *name, const char *texturefile, const
 	CTouchTexture *texture = new CTouchTexture;
 	btn->texture = texture;
 	texture->isInAtlas = false;
+	texture->textureID = 0;
 	texture->X0 = 0; texture->X1 = 0; texture->Y0 = 0; texture->Y1 = 0;
 	Q_strncpy( texture->szName, btn->texturefile, sizeof(btn->texturefile) );
 	textureList.AddToTail(texture);
