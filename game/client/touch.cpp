@@ -410,6 +410,10 @@ void CTouchControls::Init()
 		ResetToDefaults();
 
 	CTouchTexture *texture = new CTouchTexture;
+	texture->isInAtlas = false;
+	texture->textureID = 0;
+	texture->X0 = 0; texture->X1 = 0; texture->Y0 = 0; texture->Y1 = 0;
+
 	Q_strncpy( texture->szName, "vgui/touch/back", sizeof(texture->szName) );
 	textureList.AddToTail(texture);
 
