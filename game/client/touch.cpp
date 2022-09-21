@@ -328,7 +328,7 @@ void CTouchControls::ResetToDefaults()
 		AddButton( "attack2", "vgui/touch/shoot_alt", "+attack2", 0.760000, 0.320000, 0.880000, 0.533333, color );
 		AddButton( "duck", "vgui/touch/crouch", "+duck", 0.880000, 0.746667, 1.000000, 0.960000, color );
 		AddButton( "tduck", "vgui/touch/tduck", ";+duck", 0.560000, 0.817778, 0.620000, 0.924444, color );
-		AddButton( "zoom", "vgui/touch/zoom", "+zoom", 0.680000, 0.00000, 0.760000, 0.142222, color );
+		AddButton( "zoom", "vgui/touch/zoom", "+zoom", 0.680000, 0.000000, 0.760000, 0.142222, color );
 		AddButton( "speed", "vgui/touch/speed", "+speed", 0.180000, 0.568889, 0.280000, 0.746667, color );
 		AddButton( "loadquick", "vgui/touch/load", "load quick", 0.760000, 0.000000, 0.840000, 0.142222, color );
 		AddButton( "savequick", "vgui/touch/save", "save quick", 0.840000, 0.000000, 0.920000, 0.142222, color );
@@ -337,7 +337,8 @@ void CTouchControls::ResetToDefaults()
 		AddButton( "invnext", "vgui/touch/next_weap", "invnext", 0.000000, 0.533333, 0.120000, 0.746667, color );
 		AddButton( "invprev", "vgui/touch/prev_weap", "invprev", 0.000000, 0.071111, 0.120000, 0.284444, color );
 		AddButton( "edit", "vgui/touch/settings", "touch_enableedit", 0.420000, 0.000000, 0.500000, 0.151486, color );
-		AddButton( "menu", "vgui/touch/menu", "gameui_activate", 0.000000, 0.00000, 0.080000, 0.142222, color );
+		AddButton( "menu", "vgui/touch/menu", "gameui_activate", 0.000000, 0.000000, 0.080000, 0.142222, color );
+		AddButton( "squad", "vgui/touch/squad", "impulse 50", 0.680000, 0.177778, 0.760000, 0.355556, color );
 	}
 	else
 	{
@@ -387,7 +388,7 @@ void CTouchControls::Init()
 	AddButton( "attack2", "vgui/touch/shoot_alt", "+attack2", 0.760000, 0.320000, 0.880000, 0.533333, color );
 	AddButton( "duck", "vgui/touch/crouch", "+duck", 0.880000, 0.746667, 1.000000, 0.960000, color );
 	AddButton( "tduck", "vgui/touch/tduck", ";+duck", 0.560000, 0.817778, 0.620000, 0.924444, color );
-	AddButton( "zoom", "vgui/touch/zoom", "+zoom", 0.680000, 0.00000, 0.760000, 0.142222, color );
+	AddButton( "zoom", "vgui/touch/zoom", "+zoom", 0.680000, 0.000000, 0.760000, 0.142222, color );
 	AddButton( "speed", "vgui/touch/speed", "+speed", 0.180000, 0.568889, 0.280000, 0.746667, color );
 	AddButton( "loadquick", "vgui/touch/load", "load quick", 0.760000, 0.000000, 0.840000, 0.142222, color );
 	AddButton( "savequick", "vgui/touch/save", "save quick", 0.840000, 0.000000, 0.920000, 0.142222, color );
@@ -396,7 +397,8 @@ void CTouchControls::Init()
 	AddButton( "invnext", "vgui/touch/next_weap", "invnext", 0.000000, 0.533333, 0.120000, 0.746667, color );
 	AddButton( "invprev", "vgui/touch/prev_weap", "invprev", 0.000000, 0.071111, 0.120000, 0.284444, color );
 	AddButton( "edit", "vgui/touch/settings", "touch_enableedit", 0.420000, 0.000000, 0.500000, 0.151486, color );
-	AddButton( "menu", "vgui/touch/menu", "gameui_activate", 0.000000, 0.00000, 0.080000, 0.142222, color );
+	AddButton( "menu", "vgui/touch/menu", "gameui_activate", 0.000000, 0.000000, 0.080000, 0.142222, color );
+	AddButton( "squad", "vgui/touch/squad", "impulse 50", 0.680000, 0.177778, 0.760000, 0.355556, color );
 
 	char buf[256];
 
@@ -883,7 +885,7 @@ void CTouchControls::ProcessEvent(touch_event_t *ev)
 		EditEvent(ev);
 		return;
 	}
-	
+
 	if( ev->type == IE_FingerMotion )
 		FingerMotion( ev );
 	else
@@ -896,9 +898,9 @@ void CTouchControls::EditEvent(touch_event_t *ev)
 	const float y = ev->y;
 
 	//CUtlLinkedList<CTouchButton*>::iterator it;
-	
+
 	if( ev->type == IE_FingerDown )
-	{		
+	{
 		//for( it = btns.end(); it != btns.begin(); it-- ) unexpected, doesn't work
 		for( int i = btns.Count()-1; i >= 0; i-- )
 		{
@@ -907,7 +909,7 @@ void CTouchControls::EditEvent(touch_event_t *ev)
 			{
 				if( btn->flags & TOUCH_FL_HIDE )
 					continue;
-				
+
 				if( btn->flags & TOUCH_FL_NOEDIT )
 				{
 					engine->ClientCmd_Unrestricted( btn->command );
@@ -1152,7 +1154,7 @@ void CTouchControls::WriteConfig()
 		for( it = btns.begin(); it != btns.end(); it++ )
 		{
 			CTouchButton *b = *it;
-		
+
 			if( b->flags & TOUCH_FL_CLIENT )
 				continue; //skip temporary buttons
 
@@ -1161,9 +1163,9 @@ void CTouchControls::WriteConfig()
 
 			if( b->flags & TOUCH_FL_DEF_HIDE )
 				b->flags |= TOUCH_FL_HIDE;
-			
+
 			float aspect = ( b->y2 - b->y1 ) / ( ( b->x2 - b->x1 )/(screen_h/screen_w) );
-	
+
 			filesystem->FPrintf( f, "touch_addbutton \"%s\" \"%s\" \"%s\" %f %f %f %f %d %d %d %d %d %f\n",
 				b->name, b->texturefile, b->command,
 				b->x1, b->y1, b->x2, b->y2,
