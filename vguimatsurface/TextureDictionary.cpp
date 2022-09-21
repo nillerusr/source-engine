@@ -440,14 +440,14 @@ void CMatSystemTexture::SetTextureRGBA( const char *rgba, int wide, int tall, Im
 		++nTextureId;
 
 		ITexture *pTexture = g_pMaterialSystem->CreateProceduralTexture( 
-			pTextureName, 
-			TEXTURE_GROUP_VGUI, 
+			pTextureName,
+			TEXTURE_GROUP_VGUI,
 			width,
 			height,
 			format,
-			TEXTUREFLAGS_CLAMPS | TEXTUREFLAGS_CLAMPT | 
-			TEXTUREFLAGS_NOMIP | TEXTUREFLAGS_NOLOD | 
-			TEXTUREFLAGS_PROCEDURAL | TEXTUREFLAGS_SINGLECOPY | TEXTUREFLAGS_POINTSAMPLE );
+			TEXTUREFLAGS_CLAMPS | TEXTUREFLAGS_CLAMPT |
+			TEXTUREFLAGS_NOMIP | TEXTUREFLAGS_NOLOD |
+			TEXTUREFLAGS_PROCEDURAL | TEXTUREFLAGS_SINGLECOPY );
 
 		KeyValues *pVMTKeyValues = new KeyValues( "UnlitGeneric" );
 		pVMTKeyValues->SetInt( "$vertexcolor", 1 );

@@ -20,6 +20,7 @@ GNU General Public License for more details.
 #include "tier0/dbg.h"
 #include <stdlib.h>
 #include <inttypes.h>
+#include "libunwind/libunwind.h"
 
 struct sigaction old_sa;
 
@@ -32,6 +33,14 @@ namespace __cxxabiv1
 	}
 }
 
+#define MAX_FRAMES 2048
+
+struct backtrace_t
+{
+	int count;
+	uintptr_t frames[MAX_FRAMES];
+};
+
 #define Log(msg) __android_log_print(ANDROID_LOG_DEBUG, "SRCENG", "%s", msg); DebugLogger()->Write(msg);
 
 void printPC(void *pc)
@@ -43,7 +52,13 @@ void printPC(void *pc)
 	Dl_info info = { 0 };
 	const char *fname = "unknown";
 
-	dladdr(pc, &info);
+	if( dladdr(pc, &info) <= 0 )
+	{
+		snprintf( message, sizeof(message), "0x%" PRIXPTR "\n", (uintptr_t)pc );
+		Log(message);
+		return;
+	}
+
 	if( info.dli_fname )
 		fname = info.dli_fname;
 
@@ -62,28 +77,61 @@ void printPC(void *pc)
 	Log(message);
 }
 
-_Unwind_Reason_Code UnwindBacktraceWithSkippingCallback(struct _Unwind_Context* unwind_context, void* state_voidp)
+_Unwind_Reason_Code UnwindBacktraceCallback(struct _Unwind_Context* unwind_context, void* state_voidp)
 {
 	uintptr_t pc = _Unwind_GetIP(unwind_context);
-	printPC((void*)pc);
+	backtrace_t *bt = (backtrace_t*)state_voidp;
+
+	if( bt->count < MAX_FRAMES )
+		bt->frames[bt->count++] = pc;
+	else
+		return _URC_END_OF_STACK;
 
 	return _URC_NO_REASON;
 }
 
 static void CrashHandler( int sig, siginfo_t *si, void *uc)
 {
-	char message[4096], symbol[256];
+	static char message[4096], symbol[256];
 	int len, line, logfd, i = 0;
+
+
+	const ucontext_t* signal_ucontext = (ucontext_t*)uc;
+	const mcontext_t* signal_mcontext = &(signal_ucontext->uc_mcontext);
+#ifdef __aarch64__
+	// Doesn't work good on armv7a
+	static backtrace_t bt;
+	bt.count = 0;
+
+	_Unwind_Backtrace(UnwindBacktraceCallback, &bt);
 
 	Log(">>> crash report begin\n");
 
 	snprintf(message, sizeof(message), "Signal=%d, errno=%d, code=%d, addr=0x%" PRIXPTR "\n", sig, si->si_errno, si->si_code, (uintptr_t)si->si_addr);
 	Log(message);
 
-	const ucontext_t* signal_ucontext = (ucontext_t*)uc;
-	const mcontext_t* signal_mcontext = &(signal_ucontext->uc_mcontext);
+	for( int i = 0; i < bt.count; i++ )
+	{
+		printPC( (void*)bt.frames[i] );
+	}
+#else
+	Log(">>> crash report begin\n");
 
-	_Unwind_Backtrace(UnwindBacktraceWithSkippingCallback, NULL);
+	snprintf(message, sizeof(message), "Signal=%d, errno=%d, code=%d, addr=0x%" PRIXPTR "\n", sig, si->si_errno, si->si_code, (uintptr_t)si->si_addr);
+	Log(message);
+
+	// Initialize unw_context and unw_cursor.
+	unw_context_t unw_context = {};
+	unw_getcontext(&unw_context);
+	unw_cursor_t  unw_cursor = {};
+	unw_init_local(&unw_cursor, &unw_context);
+
+	while (unw_step(&unw_cursor) > 0) {
+		unw_word_t ip = 0;
+		unw_get_reg(&unw_cursor, UNW_REG_IP, &ip);
+		printPC( (void*)ip );
+	}
+#endif
 
 	Log(">>> crash report end\n");
 

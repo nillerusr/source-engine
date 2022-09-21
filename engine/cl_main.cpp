@@ -2738,6 +2738,7 @@ static ConCommand startupmenu( "startupmenu", &CL_CheckToDisplayStartupMenus, "O
 ConVar cl_language( "cl_language", "english", FCVAR_USERINFO, "Language (from HKCU\\Software\\Valve\\Steam\\Language)" );
 void CL_InitLanguageCvar()
 {
+	Msg("CL_InitLanguageCvar\n");
 	if ( Steam3Client().SteamApps() )
 	{
 		cl_language.SetValue( Steam3Client().SteamApps()->GetCurrentGameLanguage() );
@@ -2747,15 +2748,22 @@ void CL_InitLanguageCvar()
 		char *szLang = getenv("LANG");
 
 		if ( CommandLine()->CheckParm( "-language" ) )
+		{
 			cl_language.SetValue( CommandLine()->ParmValue( "-language", "english") );
+			return;
+		}
 		else if( szLang )
 		{
 			ELanguage lang = PchLanguageICUCodeToELanguage(szLang, k_Lang_English);
 			const char *szShortLang = GetLanguageShortName(lang);
-			cl_language.SetValue( szShortLang );
+			if( Q_strncmp(szShortLang, "none", 4) != 0 )
+			{
+				cl_language.SetValue( szShortLang );
+				return;
+			}
 		}
-		else
-			cl_language.SetValue( "english" );
+
+		cl_language.SetValue( "english" );
 	}
 }
 

@@ -1,0 +1,48 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from waflib import Utils
+import os
+
+top = '.'
+PROJECT_NAME = 'vtexconv'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	conf.define('PROTECTED_THINGS_DISABLE', 1)
+
+def build(bld):
+	source = [
+		'vtex_launcher.cpp'
+	]
+
+	includes = [
+		'.',
+		'../../public',
+		'../../public/tier0',
+		'../../public/tier1',
+		'../../common'
+	]
+
+	defines = []
+
+	libs = ['tier0', 'appframework','tier1','tier2','tier3','vstdlib']
+
+	install_path = bld.env.BINDIR
+
+	bld(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx cxxprogram',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		install_path = install_path,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)
+

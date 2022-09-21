@@ -37,9 +37,6 @@ ConVar cl_showtextmsg( "cl_showtextmsg", "1", 0, "Enable/disable text messages p
 ConVar cl_chatfilters( "cl_chatfilters", "63", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Stores the chat filter settings " );
 ConVar cl_chatfilter_version( "cl_chatfilter_version", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_HIDDEN, "Stores the chat filter version" );
 
-#undef IsAndroid
-#define IsAndroid() 1
-
 const int kChatFilterVersion = 1;
 
 Color g_ColorBlue( 153, 204, 255, 255 );
