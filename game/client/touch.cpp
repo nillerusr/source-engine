@@ -505,8 +505,11 @@ void CTouchControls::CreateAtlasTexture()
 		rectCount++;
 	}
 
-	if( !textureList.Count() )
+	if( !textureList.Count() || rectCount == 0 )
+	{
+		free(rects);
 		return;
+	}
 
 	int atlasHeight = nextPowerOfTwo(sqrt((double)atlasSize));
 	int sizeInBytes = atlasHeight*atlasHeight*4;
