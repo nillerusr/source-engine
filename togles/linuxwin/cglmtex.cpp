@@ -1153,7 +1153,7 @@ GLubyte *CGLMTex::ReadTexels( GLMTexLockDesc *desc, bool readWholeSlice, bool re
 
 		if( readOnly )
 		{
-			data = m_backing + m_layout->m_slices[ desc->m_sliceIndex ].m_storageOffset;	// this would change for PBO
+			data = (GLubyte*)(m_backing + m_layout->m_slices[ desc->m_sliceIndex ].m_storageOffset);	// this would change for PBO
 			//int sliceSize = m_layout->m_slices[ desc->m_sliceIndex ].m_storageSize;
 
 			// interestingly enough, we can use the same path for both 2D and 3D fetch
@@ -3944,10 +3944,10 @@ void CGLMTex::Lock( GLMTexLockParams *params, char** addressOut, int* yStrideOut
 	{
 		// read the whole slice
 		// (odds are we'll never request anything but a whole slice to be read..)
-		*addressOut = ReadTexels( desc, true, params->m_readonly );
+		*addressOut = (char*)ReadTexels( desc, true, params->m_readonly );
 
 		if( !params->m_readonly )
-			m_mapped = *addressOut;
+			m_mapped = (GLubyte*)*addressOut;
 	}
 	else
 	{
