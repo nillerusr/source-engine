@@ -1111,7 +1111,7 @@ bool CParticleMgr::Init(unsigned long count, IMaterialSystem *pMaterials)
 void CParticleMgr::Term()
 {
 	// Free all the effects.
-	int iNext;
+	intp iNext;
 	for ( intp i = m_Effects.Head(); i != m_Effects.InvalidIndex(); i = iNext )
 	{
 		iNext = m_Effects.Next( i );
@@ -1388,12 +1388,11 @@ void CParticleMgr::RemoveAllNewEffects()
 
 void CParticleMgr::RemoveAllEffects()
 {
-	int iNext;
+	intp iNext;
 	for ( intp i = m_Effects.Head(); i != m_Effects.InvalidIndex(); i = iNext )
 	{
 		iNext = m_Effects.Next( i );
 		RemoveEffect( m_Effects[i] );
-
 	}
 
 	RemoveAllNewEffects();
@@ -1970,7 +1969,7 @@ void CParticleMgr::UpdateAllEffects( float flTimeDelta )
 	m_bUpdatingEffects = false;
 
 	// Remove any effects that were flagged to be removed.
-	int iNext;
+	intp iNext;
 	for ( intp i = m_Effects.Head(); i != m_Effects.InvalidIndex(); i=iNext )
 	{
 		iNext = m_Effects.Next( i );
