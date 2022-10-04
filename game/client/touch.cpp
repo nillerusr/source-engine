@@ -11,6 +11,7 @@
 #include "filesystem.h"
 #include "tier0/icommandline.h"
 #include "vgui_controls/Button.h"
+#include "viewrender.h"
 
 #define STB_RECT_PACK_IMPLEMENTATION
 #include "stb_rect_pack.h"
@@ -629,7 +630,6 @@ void CTouchControls::Paint( )
 		return;
 
 	CUtlLinkedList<CTouchButton*>::iterator it;
-	CMatRenderContextPtr pRenderContext( g_pMaterialSystem );
 
 	if( state == state_edit )
 	{
@@ -663,9 +663,10 @@ void CTouchControls::Paint( )
 		}
 	}
 
-	m_pMesh = pRenderContext->GetDynamicMesh();
-
+	CMatRenderContextPtr pRenderContext( g_pMaterialSystem );
 	int meshCount = 0;
+
+	// Draw non-atlas touch textures
 	for( it = btns.begin(); it != btns.end(); it++ )
 	{
 		CTouchButton *btn = *it;
@@ -676,9 +677,9 @@ void CTouchControls::Paint( )
 
 			if( t->textureID )
 			{
-				pRenderContext->Bind( g_pMatSystemSurface->DrawGetTextureMaterial(t->textureID) );
-				meshBuilder.Begin( m_pMesh, MATERIAL_QUADS, meshCount );
+				m_pMesh = pRenderContext->GetDynamicMesh( true, NULL, NULL, g_pMatSystemSurface->DrawGetTextureMaterial(t->textureID) );
 
+				meshBuilder.Begin( m_pMesh, MATERIAL_QUADS, 1 );
 				rgba_t color(btn->color.r, btn->color.g, btn->color.b, btn->color.a);
 				meshBuilder.Position3f( btn->x1*screen_w, btn->y1*screen_h, 0 );
 				meshBuilder.Color4ubv( color );
@@ -701,6 +702,7 @@ void CTouchControls::Paint( )
 				meshBuilder.AdvanceVertexF<VTX_HAVEPOS | VTX_HAVECOLOR, 1>();
 
 				meshBuilder.End();
+
 				m_pMesh->Draw();
 			}
 			else if( !btn->texture->isInAtlas )
@@ -711,7 +713,7 @@ void CTouchControls::Paint( )
 		}
 	}
 
-	pRenderContext->Bind( g_pMatSystemSurface->DrawGetTextureMaterial(touchTextureID) );
+	m_pMesh = pRenderContext->GetDynamicMesh( true, NULL, NULL, g_pMatSystemSurface->DrawGetTextureMaterial(touchTextureID) );
 	meshBuilder.Begin( m_pMesh, MATERIAL_QUADS, meshCount );
 
 	for( it = btns.begin(); it != btns.end(); it++ )
