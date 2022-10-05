@@ -238,6 +238,10 @@ private:
 	bool config_loaded;
 	vgui::HFont textfont;
 	int mouse_events;
+
+	bool m_bCutScene;
+	float m_flHideTouch;
+	int m_AlphaDiff;
 };
 
 extern CTouchControls gTouch;
