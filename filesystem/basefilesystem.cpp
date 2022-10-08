@@ -5042,10 +5042,11 @@ CSysModule *CBaseFileSystem::LoadModule( const char *pFileName, const char *pPat
 
 	char tempPathID[ MAX_PATH ];
 	ParsePathID( pFileName, pPathID, tempPathID );
-	
+
 	CUtlSymbol lookup = g_PathIDTable.AddString( pPathID );
 
 	// a pathID has been specified, find the first match in the path list
+#ifndef ANDROID
 	int c = m_SearchPaths.Count();
 	for ( int i = 0; i < c; i++ )
 	{
@@ -5070,14 +5071,6 @@ CSysModule *CBaseFileSystem::LoadModule( const char *pFileName, const char *pPat
 		if ( pModule )
 			return pModule;
 #endif
-	}
-
-
-#ifdef POSIX
-	if( !pModule )
-	{
-		Q_snprintf( tempPathID, sizeof(tempPathID), "lib%s", pFileName );
-		pModule = Sys_LoadModule( tempPathID );
 	}
 #endif
 
