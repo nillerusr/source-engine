@@ -3946,7 +3946,7 @@ void CGLMTex::Lock( GLMTexLockParams *params, char** addressOut, int* yStrideOut
 		// (odds are we'll never request anything but a whole slice to be read..)
 		*addressOut = (char*)ReadTexels( desc, true, params->m_readonly );
 
-		if( !params->m_readonly )
+		if( params->m_readonly == false )
 			m_mapped = (GLubyte*)*addressOut;
 	}
 	else
@@ -4039,7 +4039,7 @@ void CGLMTex::Unlock( GLMTexLockParams *params )
 				
 				// fullyDirty |= (m_sliceFlags[ desc->m_sliceIndex ] & kSliceStorageValid);
 				
-				if( m_layout->m_key.m_texFlags & kGLMTexDynamic )
+				if( m_layout->m_key.m_texFlags & kGLMTexDynamic && m_mapped )
 				{
 					gGL->glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
 

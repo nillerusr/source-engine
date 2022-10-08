@@ -1041,7 +1041,7 @@ HRESULT IDirect3DSurface9::LockRect(D3DLOCKED_RECT* pLockedRect,CONST RECT* pRec
 		lockreq.m_readback = true;
 	}
 
-	lockreq.m_readonly = Flags & D3DLOCK_READONLY;
+	lockreq.m_readonly = (Flags & D3DLOCK_READONLY) ? true : false;
 
 	char	*lockAddress;
 	int		yStride;
