@@ -7,10 +7,10 @@
 #include "audio_pch.h"
 
 #include "mouthinfo.h"
-#include "../../cl_main.h"
+#include "cl_main.h"
 #include "icliententitylist.h"
 #include "icliententity.h"
-#include "../../sys_dll.h"
+#include "sys_dll.h"
 #include "video/ivideoservices.h"
 #include "engine/IEngineSound.h"
 

@@ -9,8 +9,8 @@
 #if !DEDICATED
 
 #include "tier0/dynfunction.h"
-#include "video//ivideoservices.h"
-#include "../../sys_dll.h"
+#include "video/ivideoservices.h"
+#include "sys_dll.h"
 
 // prevent some conflicts in SDL headers...
 #undef M_PI

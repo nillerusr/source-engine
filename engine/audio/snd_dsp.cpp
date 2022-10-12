@@ -12,7 +12,7 @@
 #include "snd_mix_buf.h"
 
 #include "iprediction.h"
-#include "../../common.h"		// for parsing routines
+#include "common.h"		// for parsing routines
 #include "vstdlib/random.h"
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"

@@ -13,28 +13,28 @@
 #include "con_nprint.h"
 #include "tier0/icommandline.h"
 #include "vox_private.h"
-#include "../../traceinit.h"
-#include "../../cmd.h"
+#include "traceinit.h"
+#include "cmd.h"
 #include "toolframework/itoolframework.h"
 #include "vstdlib/random.h"
 #include "vstdlib/jobthread.h"
 #include "vaudio/ivaudio.h"
-#include "../../client.h"
-#include "../../cl_main.h"
+#include "client.h"
+#include "cl_main.h"
 #include "utldict.h"
 #include "mempool.h"
-#include "../../enginetrace.h"			// for traceline
-#include "../../public/bspflags.h"		// for traceline
-#include "../../public/gametrace.h"		// for traceline
+#include "enginetrace.h"			// for traceline
+#include "bspflags.h"		// for traceline
+#include "gametrace.h"		// for traceline
 #include "vphysics_interface.h"		// for surface props
-#include "../../ispatialpartitioninternal.h"	// for entity enumerator
-#include "../../debugoverlay.h"
+#include "ispatialpartitioninternal.h"	// for entity enumerator
+#include "debugoverlay.h"
 #include "icliententity.h"
-#include "../../cmodel_engine.h"
-#include "../../staticpropmgr.h"
-#include "../../server.h"
+#include "cmodel_engine.h"
+#include "staticpropmgr.h"
+#include "server.h"
 #include "edict.h"
-#include "../../pure_server.h"
+#include "pure_server.h"
 #include "filesystem/IQueuedLoader.h"
 #include "voice.h"
 #if defined( _X360 )

@@ -191,35 +191,35 @@ def build(bld):
 		'../common/SourceAppInfo.cpp',
 		'snd_io.cpp',
 		'EngineSoundServer.cpp',
-		'audio/private/voice_wavefile.cpp',
-		'audio/private/vox.cpp',
+		'audio/voice_wavefile.cpp',
+		'audio/vox.cpp',
 
-		#'audio/private/snd_dev_xaudio.cpp',[$X360]
-		#'audio/private/snd_wave_mixer_xma.cpp',	[$X360]
+		#'audio/snd_dev_xaudio.cpp',[$X360]
+		#'audio/snd_wave_mixer_xma.cpp',	[$X360]
 
-		#'audio/private/snd_dev_openal.cpp', # [$OSXALL]
-		#'audio/private/snd_dev_mac_audioqueue.cpp',#	[$OSXALL]
-		#'audio/private/voice_record_mac_audioqueue.cpp',	#[$OSXALL]
+		#'audio/snd_dev_openal.cpp', # [$OSXALL]
+		#'audio/snd_dev_mac_audioqueue.cpp',#	[$OSXALL]
+		#'audio/voice_record_mac_audioqueue.cpp',	#[$OSXALL]
 	]
 
 	if bld.env.SDL:
 		source += [
-			'audio/private/snd_dev_sdl.cpp',		#[$SDL && !$OSXALL]
-			'audio/private/voice_record_sdl.cpp' #[$OSXALL||$LINUXALL]
+			'audio/snd_dev_sdl.cpp',		#[$SDL && !$OSXALL]
+			'audio/voice_record_sdl.cpp' #[$OSXALL||$LINUXALL]
 		]
 
 	if bld.env.DEST_OS == 'win32':
 		source += [	
 			'../public/tier0/memoverride.cpp',
-			'audio/private/snd_dev_direct.cpp',
-			'audio/private/snd_dev_wave.cpp',
-			'audio/private/voice_mixer_controls.cpp',
-			'audio/private/voice_record_dsound.cpp',
+			'audio/snd_dev_direct.cpp',
+			'audio/snd_dev_wave.cpp',
+			'audio/voice_mixer_controls.cpp',
+			'audio/voice_record_dsound.cpp',
 		]
 	else:
 		source += [
 			'sys_linuxwind.cpp',
-			'audio/private/snd_posix.cpp',
+			'audio/snd_posix.cpp',
 		]
 
 	if bld.env.DEDICATED:
@@ -286,29 +286,29 @@ def build(bld):
 			'sys_getmodes.cpp',
 			'vgui_askconnectpanel.cpp',
 			'xboxsystem.cpp',
-			'audio/audio_pch.cpp',
+#			'audio/audio_pch.cpp',
 			'EngineSoundClient.cpp',
 			'engsoundservice.cpp',
-			'audio/private/MPAFile.cpp', #[!$X360]
-			'audio/private/MPAHeader.cpp', #[!$X360]
-			'audio/private/circularbuffer.cpp',
-			'audio/private/snd_dev_common.cpp',
-			'audio/private/snd_dma.cpp',
-			'audio/private/snd_dsp.cpp',
-			'audio/private/snd_mix.cpp',
-			'audio/private/snd_sentence_mixer.cpp',
-			'audio/private/snd_wave_data.cpp',
-			'audio/private/snd_wave_mixer.cpp',
-			'audio/private/snd_wave_mixer_adpcm.cpp',
-			'audio/private/snd_wave_source.cpp',
-			'audio/private/snd_wave_temp.cpp',
-			'audio/private/snd_win.cpp',
-			'audio/private/voice_gain.cpp',	
-			'audio/private/snd_mp3_source.cpp',
-			'audio/private/snd_wave_mixer_mp3.cpp',
-			'audio/private/VBRHeader.cpp', #[!$X360]
-			'audio/private/voice.cpp', #[!$X360]
-			'audio/private/voice_sound_engine_interface.cpp', #[!$X360]
+			'audio/MPAFile.cpp', #[!$X360]
+			'audio/MPAHeader.cpp', #[!$X360]
+			'audio/circularbuffer.cpp',
+			'audio/snd_dev_common.cpp',
+			'audio/snd_dma.cpp',
+			'audio/snd_dsp.cpp',
+			'audio/snd_mix.cpp',
+			'audio/snd_sentence_mixer.cpp',
+			'audio/snd_wave_data.cpp',
+			'audio/snd_wave_mixer.cpp',
+			'audio/snd_wave_mixer_adpcm.cpp',
+			'audio/snd_wave_source.cpp',
+			'audio/snd_wave_temp.cpp',
+			'audio/snd_win.cpp',
+			'audio/voice_gain.cpp',	
+			'audio/snd_mp3_source.cpp',
+			'audio/snd_wave_mixer_mp3.cpp',
+			'audio/VBRHeader.cpp', #[!$X360]
+			'audio/voice.cpp', #[!$X360]
+			'audio/voice_sound_engine_interface.cpp', #[!$X360]
 			'../public/vgui_controls/vgui_controls.cpp',
 			'../common/vgui/vgui_basebudgetpanel.cpp',
 			'../common/vgui/vgui_budgetbargraphpanel.cpp',
@@ -329,8 +329,8 @@ def build(bld):
 		
 		if bld.env.DEST_OS != 'win32':
 			source += [	
-				'audio/private/voice_mixer_controls_openal.cpp', #[$OSXALL||$LINUXALL]
-				'audio/private/voice_record_openal.cpp' #[$OSXALL||$LINUXALL]
+				'audio/voice_mixer_controls_openal.cpp', #[$OSXALL||$LINUXALL]
+				'audio/voice_record_openal.cpp' #[$OSXALL||$LINUXALL]
 			]
 
 	includes = [
@@ -340,8 +340,8 @@ def build(bld):
 		'../public/tier1',
 		'../common',
 		'audio',
-		'audio/public',
-		'audio/private',
+		'../public/engine/audio/',
+		'audio/',
 	]
 
 	defines = []

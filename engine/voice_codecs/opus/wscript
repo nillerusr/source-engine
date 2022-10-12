@@ -29,7 +29,7 @@ def build(bld):
 		'../../../public/tier0',
 		'../../',
 		'../../../common',
-		'../../audio/public',
+		'../../../public/engine/audio',
 		'celt'
 	]
 

@@ -10,7 +10,7 @@
 #include "snd_mp3_source.h"
 #include "utlsymbol.h"
 #include "checksum_crc.h"
-#include "../../host.h"
+#include "host.h"
 #include "xwvfile.h"
 #include "filesystem/IQueuedLoader.h"
 #include "tier1/lzmaDecoder.h"
