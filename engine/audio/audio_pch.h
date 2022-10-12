@@ -62,5 +62,5 @@
 #include "xbox/xbox_win32stubs.h"
 #include <xhv2.h>
 #elif POSIX
-#include "audio/private/posix_stubs.h"
+#include "audio/posix_stubs.h"
 #endif

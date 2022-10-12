@@ -107,7 +107,6 @@ IAudioDevice *IAudioDevice::AutoDetectInit( bool waveOnly )
 #elif defined( USE_SDL )
 		DevMsg( "Trying SDL Audio Interface\n" );
 		pDevice = Audio_CreateSDLAudioDevice();
-
 #ifdef NEVER
 		// Jul 2012. mikesart. E-mail exchange with Ryan Gordon after figuring out that
 		// Audio_CreatePulseAudioDevice() wasn't working on Ubuntu 12.04 (lots of stuttering).
