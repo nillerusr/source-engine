@@ -8,6 +8,8 @@
 #ifndef SND_MIX_BUF_H
 #define SND_MIX_BUF_H
 
+#include "utlvector.h"
+
 #if defined( _WIN32 )
 #pragma once
 #endif

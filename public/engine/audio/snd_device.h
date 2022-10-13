@@ -10,8 +10,8 @@
 #define SND_DEVICE_H
 #pragma once
 
-#include "snd_fixedint.h"
-#include "snd_mix_buf.h"
+#include "engine/audio/snd_fixedint.h"
+#include "engine/audio/snd_mix_buf.h"
 
 // sound engine rate defines
 #define SOUND_DMA_SPEED		44100		// hardware playback rate

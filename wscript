@@ -76,7 +76,8 @@ projects={
 		'vstdlib',
 		'vtf',
 		'utils/vtex',
-		'unicode'
+		'unicode',
+		'video',
 	],
 	'tests': [
 		'appframework',
@@ -336,13 +337,12 @@ def configure(conf):
 		flags += ['-fsanitize=%s'%conf.options.SANITIZE, '-fno-sanitize=vptr']
 
 	if conf.env.DEST_OS != 'win32':
-		flags += ['-pipe', '-fPIC']
+		flags += ['-pipe', '-fPIC', '-L'+os.path.abspath('.')+'/lib/'+conf.env.DEST_OS+'/'+conf.env.DEST_CPU+'/']
 	if conf.env.COMPILER_CC != 'msvc':
 		flags += ['-pthread']
 
 	if conf.env.DEST_OS == 'android':
 		flags += [
-			'-L'+os.path.abspath('.')+'/lib/android/'+conf.env.DEST_CPU+'/',
 			'-I'+os.path.abspath('.')+'/thirdparty/curl/include',
 			'-I'+os.path.abspath('.')+'/thirdparty/SDL',
 			'-I'+os.path.abspath('.')+'/thirdparty/openal-soft/include/',
