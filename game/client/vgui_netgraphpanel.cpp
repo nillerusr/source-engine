@@ -733,8 +733,8 @@ void CNetGraphPanel::DrawTextFields( int graphvalue, int x, int y, int w, netban
 	int textTall = surface()->GetFontTall( font );
 
 	Q_snprintf( sz, sizeof( sz ), "fps:%4i   ping: %i ms", (int)(1.0f / m_Framerate), (int)(m_AvgLatency*1000.0f) );
-	
-	g_pMatSystemSurface->DrawColoredText( font, x, y, GRAPH_RED, GRAPH_GREEN, GRAPH_BLUE, 255, sz );
+
+	g_pMatSystemSurface->DrawColoredText( font, x, y, GRAPH_RED, GRAPH_GREEN, GRAPH_BLUE, 255, "%s", sz );
 
 	// Draw update rate
 	DrawUpdateRate( x + w, y );
@@ -752,12 +752,12 @@ void CNetGraphPanel::DrawTextFields( int graphvalue, int x, int y, int w, netban
 	}
 
 	int totalsize = graph[ ( m_IncomingSequence & ( TIMINGS - 1 ) ) ].msgbytes[INetChannelInfo::TOTAL];
-	
+
 	Q_snprintf( sz, sizeof( sz ), "in :%4i   %2.2f k/s ", totalsize, m_IncomingData );
 
 	int textWidth = g_pMatSystemSurface->DrawTextLen( font, "%s", sz );
 
-	g_pMatSystemSurface->DrawColoredText( font, x, y, GRAPH_RED, GRAPH_GREEN, GRAPH_BLUE, 255, sz );
+	g_pMatSystemSurface->DrawColoredText( font, x, y, GRAPH_RED, GRAPH_GREEN, GRAPH_BLUE, 255, "%s", sz );
 
 	Q_snprintf( sz, sizeof( sz ), "lerp: %5.1f ms", GetClientInterpAmount() * 1000.0f );
 
@@ -781,23 +781,23 @@ void CNetGraphPanel::DrawTextFields( int graphvalue, int x, int y, int w, netban
 		}
 	}
 
-	g_pMatSystemSurface->DrawColoredText( font, x + textWidth, y, interpcolor[ 0 ], interpcolor[ 1 ], interpcolor[ 2 ], 255, sz );
+	g_pMatSystemSurface->DrawColoredText( font, x + textWidth, y, interpcolor[ 0 ], interpcolor[ 1 ], interpcolor[ 2 ], 255, "%s", sz );
 
 	Q_snprintf( sz, sizeof( sz ), "%3.1f/s", m_AvgPacketIn );
 	textWidth = g_pMatSystemSurface->DrawTextLen( font, "%s", sz );
 
-	g_pMatSystemSurface->DrawColoredText( font, x + w - textWidth - 1, y, GRAPH_RED, GRAPH_GREEN, GRAPH_BLUE, 255, sz );
+	g_pMatSystemSurface->DrawColoredText( font, x + w - textWidth - 1, y, GRAPH_RED, GRAPH_GREEN, GRAPH_BLUE, 255, "%s", sz );
 
 	y += textTall;
 
 	Q_snprintf( sz, sizeof( sz ), "out:%4i   %2.2f k/s", out, m_OutgoingData );
 
-	g_pMatSystemSurface->DrawColoredText( font, x, y, GRAPH_RED, GRAPH_GREEN, GRAPH_BLUE, 255, sz );
+	g_pMatSystemSurface->DrawColoredText( font, x, y, GRAPH_RED, GRAPH_GREEN, GRAPH_BLUE, 255, "%s", sz );
 
 	Q_snprintf( sz, sizeof( sz ), "%3.1f/s", m_AvgPacketOut );
 	textWidth = g_pMatSystemSurface->DrawTextLen( font, "%s", sz );
 
-	g_pMatSystemSurface->DrawColoredText( font, x + w - textWidth - 1, y, GRAPH_RED, GRAPH_GREEN, GRAPH_BLUE, 255, sz );
+	g_pMatSystemSurface->DrawColoredText( font, x + w - textWidth - 1, y, GRAPH_RED, GRAPH_GREEN, GRAPH_BLUE, 255, "%s", sz );
 
 	y += textTall;
 
@@ -809,7 +809,7 @@ void CNetGraphPanel::DrawTextFields( int graphvalue, int x, int y, int w, netban
 
 		textWidth = g_pMatSystemSurface->DrawTextLen( font, "%s", sz );
 
-		g_pMatSystemSurface->DrawColoredText( font, x, y, GRAPH_RED, GRAPH_GREEN, GRAPH_BLUE, 255, sz );
+		g_pMatSystemSurface->DrawColoredText( font, x, y, GRAPH_RED, GRAPH_GREEN, GRAPH_BLUE, 255, "%s", sz );
 
 		y += textTall;
 
@@ -832,7 +832,7 @@ void CNetGraphPanel::DrawTextFields( int graphvalue, int x, int y, int w, netban
 				servercolor[ 2 ] = 0;
 			}
 
-			g_pMatSystemSurface->DrawColoredText( font, x, y, servercolor[ 0 ], servercolor[ 1 ], servercolor[ 2 ], 255, sz );
+			g_pMatSystemSurface->DrawColoredText( font, x, y, servercolor[ 0 ], servercolor[ 1 ], servercolor[ 2 ], 255, "%s", sz );
 
 			y += textTall;
 		}
@@ -1119,14 +1119,14 @@ void CNetGraphPanel::DrawLargePacketSizes( int x, int w, int graphtype, float wa
 			char sz[ 32 ];
 			Q_snprintf( sz, sizeof( sz ), "%i", nTotalBytes );
 
-			int len = g_pMatSystemSurface->DrawTextLen( m_hFont, sz );
+			int len = g_pMatSystemSurface->DrawTextLen( m_hFont, "%s", sz );
 
 			int textx, texty;
 
 			textx = rcFill.x - len / 2;
 			texty = MAX( 0, rcFill.y - 11 );
 
-			g_pMatSystemSurface->DrawColoredText( m_hFont, textx, texty, 255, 255, 255, 255, sz );
+			g_pMatSystemSurface->DrawColoredText( m_hFont, textx, texty, 255, 255, 255, 255, "%s", sz );
 		}
 	}
 }
