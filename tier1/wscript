@@ -84,6 +84,8 @@ def build(bld):
 	libs = []
 	if bld.env.DEST_OS == 'win32':
 		libs += ['RPCRT4']
+	elif bld.env.DEST_OS == "darwin":
+		libs += ['ICONV']
 		
 	bld.stlib(
 		source   = source,

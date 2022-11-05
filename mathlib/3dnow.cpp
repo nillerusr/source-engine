@@ -16,7 +16,7 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-#if !defined(COMPILER_MSVC64) && !defined(LINUX)
+#if !defined(COMPILER_MSVC64) && !defined(LINUX) && !defined(OSX)
 // Implement for 64-bit Windows if needed.
 // Clang hits "fatal error: error in backend:" and other errors when trying
 // to compile the inline assembly below. 3DNow support is highly unlikely to

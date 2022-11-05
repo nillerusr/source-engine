@@ -1087,7 +1087,7 @@ bool CParticleMgr::Init(unsigned long count, IMaterialSystem *pMaterials)
 	if ( IsX360() )
 	{
 		//m_pThreadPool[0] = CreateThreadPool();
-		m_pThreadPool[1] = CreateThreadPool();
+		m_pThreadPool[1] = CreateThreadPool1();
 
 		ThreadPoolStartParams_t startParams;
 		startParams.nThreads = 3;
