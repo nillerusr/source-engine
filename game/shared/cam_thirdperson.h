@@ -41,7 +41,7 @@ class CThirdPersonManager
 {
 public:
 
-	CThirdPersonManager();
+	CThirdPersonManager() = default;
 	void	SetCameraOffsetAngles( Vector vecOffset ) { m_vecCameraOffset = vecOffset; }
 	Vector	GetCameraOffsetAngles( void ) { return m_vecCameraOffset; }
 	

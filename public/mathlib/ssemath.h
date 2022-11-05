@@ -2604,9 +2604,7 @@ public:
 		return Vector( X(idx), Y(idx), Z(idx) );
 	}
 	
-	FourVectors(void)
-	{
-	}
+	FourVectors(void) = default;
 
 	FourVectors( FourVectors const &src )
 	{

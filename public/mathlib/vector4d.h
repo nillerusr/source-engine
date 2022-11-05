@@ -42,7 +42,16 @@ public:
 	vec_t x, y, z, w;
 
 	// Construction/destruction
-	Vector4D(void);
+#if defined( _DEBUG ) && defined( VECTOR_PARANOIA )
+	inline Vector4D(void)
+	{
+		// Initialize to NAN to catch errors
+		x = y = z = w = VEC_T_NAN;
+	}
+#else
+	Vector4D(void) = default;
+#endif
+
 	Vector4D(vec_t X, vec_t Y, vec_t Z, vec_t W);
 	Vector4D(const float *pFloat);
 
@@ -139,7 +148,7 @@ const Vector4D vec4_invalid( FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX );
 class ALIGN16 Vector4DAligned : public Vector4D
 {
 public:
-	Vector4DAligned(void) {}
+	Vector4DAligned(void) = default;
 	Vector4DAligned( vec_t X, vec_t Y, vec_t Z, vec_t W );
 
 	inline void Set( vec_t X, vec_t Y, vec_t Z, vec_t W );
@@ -204,15 +213,6 @@ void Vector4DLerp(Vector4D const& src1, Vector4D const& src2, vec_t t, Vector4D&
 //-----------------------------------------------------------------------------
 // constructors
 //-----------------------------------------------------------------------------
-
-inline Vector4D::Vector4D(void)									
-{ 
-#ifdef _DEBUG
-	// Initialize to NAN to catch errors
-	x = y = z = w = VEC_T_NAN;
-#endif
-}
-
 inline Vector4D::Vector4D(vec_t X, vec_t Y, vec_t Z, vec_t W )
 { 
 	x = X; y = Y; z = Z; w = W;

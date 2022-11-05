@@ -41,7 +41,7 @@ extern IVEngineClient *engine;
 class CCollisionEvent : public IPhysicsCollisionEvent, public IPhysicsCollisionSolver, public IPhysicsObjectEvent
 {
 public:
-	CCollisionEvent( void );
+	CCollisionEvent( void ) = default;
 
 	void	ObjectSound( int index, vcollisionevent_t *pEvent );
 	void	PreCollision( vcollisionevent_t *pEvent ) {}
@@ -477,12 +477,6 @@ void CPhysicsSystem::PhysicsSimulate()
 void PhysicsSimulate()
 {
 	g_PhysicsSystem.PhysicsSimulate();
-}
-
-
-
-CCollisionEvent::CCollisionEvent( void ) 
-{ 
 }
 
 void CCollisionEvent::ObjectSound( int index, vcollisionevent_t *pEvent )

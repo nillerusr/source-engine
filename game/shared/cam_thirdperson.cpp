@@ -51,10 +51,6 @@ ConVar cl_thirdperson( "cl_thirdperson", "0", FCVAR_NOT_CONNECTED | FCVAR_USERIN
 
 #endif
 
-CThirdPersonManager::CThirdPersonManager( void )
-{
-}
-
 void CThirdPersonManager::Init( void )
 {
 	m_bOverrideThirdPerson = false;

@@ -149,7 +149,7 @@ class Quaternion64
 {
 public:
 	// Construction/destruction:
-	Quaternion64(void) {};
+	Quaternion64(void) = default;
 	Quaternion64(vec_t X, vec_t Y, vec_t Z);
 
 	// assignment
@@ -197,7 +197,7 @@ class Quaternion48
 {
 public:
 	// Construction/destruction:
-	Quaternion48(void) {};
+	Quaternion48(void) = default;
 	Quaternion48(vec_t X, vec_t Y, vec_t Z);
 
 	// assignment
@@ -501,7 +501,7 @@ protected:
 class float16_with_assign : public float16
 {
 public:
-	float16_with_assign() {}
+	float16_with_assign() = default;
 	float16_with_assign( float f ) { m_storage.rawWord = ConvertFloatTo16bits(f); }
 
 	float16& operator=(const float16 &other) { m_storage.rawWord = ((float16_with_assign &)other).m_storage.rawWord; return *this; }
@@ -518,7 +518,7 @@ class Vector48
 {
 public:
 	// Construction/destruction:
-	Vector48(void) {}
+	Vector48(void) = default;
 	Vector48(vec_t X, vec_t Y, vec_t Z) { x.SetFloat( X ); y.SetFloat( Y ); z.SetFloat( Z ); }
 
 	// assignment
@@ -562,7 +562,7 @@ class Vector2d32
 {
 public:
 	// Construction/destruction:
-	Vector2d32(void) {}
+	Vector2d32(void) = default;
 	Vector2d32(vec_t X, vec_t Y) { x.SetFloat( X ); y.SetFloat( Y ); }
 
 	// assignment

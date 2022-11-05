@@ -22,7 +22,7 @@
 class CVertIndex
 {
 public:
-				CVertIndex();
+				CVertIndex() = default;
 				CVertIndex( short ix, short iy );
 	
 	void		Init( short ix, short iy );
@@ -61,11 +61,6 @@ inline CVertIndex BuildOffsetVertIndex(
 // ------------------------------------------------------------------ //
 // CVertIndex inlines.
 // ------------------------------------------------------------------ //
-
-inline CVertIndex::CVertIndex()
-{
-}
-
 
 inline CVertIndex::CVertIndex( short ix, short iy )
 {

@@ -273,7 +273,7 @@ private:
 template<typename Type>
 struct CInterpolatedVarEntryBase<Type, false>
 {
-	CInterpolatedVarEntryBase() {}
+	CInterpolatedVarEntryBase() = default;
 	~CInterpolatedVarEntryBase() {}
 
 	const Type *GetValue() const { return &value; }

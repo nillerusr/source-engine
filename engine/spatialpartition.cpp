@@ -168,7 +168,7 @@ class CVoxelHash
 {
 public:
 	// Constructor, destructor
-	CVoxelHash();
+	CVoxelHash() = default;
 	~CVoxelHash();
 
 	// Call this to clear out the spatial partition and to re-initialize it given a particular world size (ISpatialPartitionInternal)
@@ -481,10 +481,6 @@ inline CVoxelTree *CSpatialPartition::VoxelTreeForHandle( SpatialPartitionHandle
 //-----------------------------------------------------------------------------
 // Constructor, destructor
 //-----------------------------------------------------------------------------
-CVoxelHash::CVoxelHash( )
-{
-}
-
 CVoxelHash::~CVoxelHash()
 {
 	Shutdown();

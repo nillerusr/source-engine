@@ -278,7 +278,7 @@ private:
 
 		CHashElement( const CBaseEntity *pEntity, int index) : pEntity(pEntity), index(index) {}
 		CHashElement( const CBaseEntity *pEntity ) : pEntity(pEntity) {}
-		CHashElement() {}
+		CHashElement() = default;
 	};
 
 	class CHashFuncs

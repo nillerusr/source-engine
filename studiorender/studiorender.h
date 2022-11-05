@@ -86,7 +86,7 @@ struct lightpos_t
 	float	falloff;	// light distance falloff
 	float	dot;		// light direction * delta;
 
-	lightpos_t() {}
+	lightpos_t() = default;
 
 private:
 	// Copy constructors are not allowed
@@ -106,7 +106,7 @@ struct eyeballstate_t
 	
 	Vector	cornea;		// world center of cornea
 
-	eyeballstate_t() {}
+	eyeballstate_t() = default;
 
 private:
 	// Copy constructors are not allowed
@@ -170,7 +170,7 @@ struct DecalVertex_t
 	unsigned short	m_Group;
 #endif
 
-	DecalVertex_t() {}
+	DecalVertex_t() = default;
 	DecalVertex_t( const DecalVertex_t& src )
 	{
 		m_Position = src.m_Position;

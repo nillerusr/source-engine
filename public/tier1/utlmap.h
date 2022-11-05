@@ -175,9 +175,7 @@ public:
 
 	struct Node_t
 	{
-		Node_t()
-		{
-		}
+		Node_t() = default;
 
 		Node_t( const Node_t &from )
 		  : key( from.key ),

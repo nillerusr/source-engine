@@ -86,7 +86,7 @@ private:
 	{
 		DmObjectId_t m_oldId;
 		DmObjectId_t m_newId;
-		DmIdPair_t() {}
+		DmIdPair_t() = default;
 		DmIdPair_t( const DmObjectId_t &id )
 		{
 			CopyUniqueId( id, &m_oldId );

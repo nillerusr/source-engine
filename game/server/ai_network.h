@@ -52,7 +52,7 @@ public:
 
 struct AI_NearNode_t
 {
-	AI_NearNode_t() {}
+	AI_NearNode_t() = default;
 	AI_NearNode_t( int index, float nodedist ) { dist = nodedist; nodeIndex = index; }
 	float	dist;
 	int		nodeIndex;

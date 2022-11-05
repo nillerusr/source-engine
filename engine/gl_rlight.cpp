@@ -37,9 +37,7 @@ ConVar r_visualizelighttracesshowfulltrace( "r_visualizelighttracesshowfulltrace
 //-----------------------------------------------------------------------------
 struct LightVecState_t
 {
-	LightVecState_t()
-	{
-	}
+	LightVecState_t() = default;
 	Ray_t	m_Ray;
 	float	m_HitFrac;
 	float*	m_pTextureS;

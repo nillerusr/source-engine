@@ -433,7 +433,7 @@ class TSLIST_HEAD_ALIGN CTSList : public CTSListBase
 public:
 	struct TSLIST_NODE_ALIGN Node_t : public TSLNodeBase_t
 	{
-		Node_t() {}
+		Node_t() = default;
 		Node_t( const T &init ) : elem( init ) {}
 		T elem;
 
@@ -524,7 +524,7 @@ class TSLIST_HEAD_ALIGN CTSListWithFreeList : public CTSListBase
 public:
 	struct TSLIST_NODE_ALIGN Node_t : public TSLNodeBase_t
 	{
-		Node_t() {}
+		Node_t() = default;
 		Node_t( const T &init ) : elem( init ) {}
 
 		T elem;
@@ -692,7 +692,7 @@ public:
 			MemAlloc_FreeAligned( p );
 		}
 
-		Node_t() {}
+		Node_t() = default;
 		Node_t( const T &init ) : elem( init ) {}
 
 		Node_t *pNext;

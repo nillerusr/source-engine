@@ -57,7 +57,7 @@ public:
 	K m_key;
 	V m_value;
 
-	CUtlKeyValuePair() {}
+	CUtlKeyValuePair() = default;
 
 	template < typename KInit >
 	explicit CUtlKeyValuePair( const KInit &k ) : m_key( k ) {}
@@ -76,7 +76,7 @@ public:
 	typedef const K ValueReturn_t;
 	K m_key;
 
-	CUtlKeyValuePair() {}
+	CUtlKeyValuePair() = default;
 
 	template < typename KInit >
 	explicit CUtlKeyValuePair( const KInit &k ) : m_key( k ) {}

@@ -44,7 +44,7 @@ class CHandle : public CBaseHandle
 {
 public:
 
-			CHandle();
+			CHandle() = default;
 			CHandle( int iEntry, int iSerialNumber );
 			CHandle( const CBaseHandle &handle );
 			CHandle( T *pVal );
@@ -70,12 +70,6 @@ public:
 // ----------------------------------------------------------------------- //
 // Inlines.
 // ----------------------------------------------------------------------- //
-
-template<class T>
-CHandle<T>::CHandle()
-{
-}
-
 
 template<class T>
 CHandle<T>::CHandle( int iEntry, int iSerialNumber )
