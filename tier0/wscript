@@ -12,6 +12,8 @@ def options(opt):
 	return
 
 def configure(conf):
+	conf.define('WAF_CFLAGS', conf.env.CFLAGS)
+	conf.define('WAF_LDFLAGS', conf.env.LINKFLAGS)
 	conf.define('TIER0_DLL_EXPORT',1)
 #	conf.define('NO_HOOK_MALLOC',1)
 

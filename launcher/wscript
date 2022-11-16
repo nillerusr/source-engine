@@ -13,6 +13,8 @@ def options(opt):
 
 def configure(conf):
 	conf.define('LAUNCHERONLY',1)
+	conf.define('CFLAGS', conf.env.CFLAGS)
+	conf.define('LDFLAGS', conf.env.LINKFLAGS)
 
 def build(bld):
 	source = [
