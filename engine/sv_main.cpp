@@ -72,6 +72,7 @@
 #include "cl_rcon.h"
 #include "host_state.h"
 #include "voice.h"
+#include "cbenchmark.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -2845,6 +2846,9 @@ void SV_Think( bool bIsSimulating )
 	bIsSimulating =  bIsSimulating && ( sv.IsMultiplayer() || cl.IsActive() );
 
 	g_pServerPluginHandler->GameFrame( bIsSimulating );
+
+	if( bIsSimulating )
+		GetBenchResultsMgr()->Frame();
 }
 
 //-----------------------------------------------------------------------------
@@ -2920,6 +2924,7 @@ void SV_Frame( bool finalTick )
 	// unlock sting tables to allow changes, helps to find unwanted changes (bebug build only)
 	networkStringTableContainerServer->Lock( false );
 	
+
 	// Run any commands from client and play client Think functions if it is time.
 	sv.RunFrame(); // read network input etc
 

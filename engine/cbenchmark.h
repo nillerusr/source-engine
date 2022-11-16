@@ -34,13 +34,19 @@ public:
 	void StopBenchmark();
 	void SetResultsFilename( const char *pFilename );
 	void Upload();
+	void Frame();
 
 private:
 	bool m_bIsTestRunning;
 	char m_szFilename[256];
 
-	int m_flStartTime;
+	float m_flStartTime;
 	int m_iStartFrame;
+
+	float m_flNextSecondTime;
+	int m_iNextSecondFrame;
+
+	CUtlVector<int> m_FPSInfo;
 };
 
 inline CBenchmarkResults *GetBenchResultsMgr()
