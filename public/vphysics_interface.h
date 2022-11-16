@@ -1039,10 +1039,6 @@ struct fluidparams_t
 //-----------------------------------------------------------------------------
 struct springparams_t
 {
-	springparams_t()
-	{
-		memset( this, 0, sizeof(*this) );
-	}
 	float	constant;		// spring constant
 	float	naturalLength;// relaxed length
 	float	damping;		// damping factor

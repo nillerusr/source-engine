@@ -2613,6 +2613,13 @@ public:
 		z=src.z;
 	}
 
+	FourVectors( fltx4 x, fltx4 y, fltx4 z )
+	{
+		this->x=x;
+		this->y=y;
+		this->z=z;
+	}
+
 	FORCEINLINE void operator=( FourVectors const &src )
 	{
 		x=src.x;
