@@ -63,7 +63,7 @@ GL_FUNC_VOID(OpenGL,true,glDrawArrays,(GLenum a,GLint b,GLsizei c),(a,b,c))
 GL_FUNC_VOID(OpenGL,true,glDrawBuffer,(GLenum a),(a))
 GL_FUNC_VOID(OpenGL,true,glDrawBuffers,(GLsizei a,const GLenum *b),(a,b))
 GL_FUNC_VOID(OpenGL,true,glDrawRangeElements,(GLenum a,GLuint b,GLuint c,GLsizei d,GLenum e,const GLvoid *f),(a,b,c,d,e,f))
-#ifndef OSX // 10.6/GL 2.1 compatability
+#if 1 //ifndef OSX // 10.6/GL 2.1 compatability
 GL_FUNC_VOID(OpenGL,true,glDrawRangeElementsBaseVertex,(GLenum a,GLuint b,GLuint c,GLsizei d,GLenum e,const GLvoid *f, GLenum g),(a,b,c,d,e,f,g))
 #endif
 GL_FUNC_VOID(OpenGL,true,glEnable,(GLenum a),(a))

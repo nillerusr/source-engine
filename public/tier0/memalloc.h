@@ -36,7 +36,6 @@
 #if defined( OSX )
 #include <malloc/malloc.h>
 #endif
-#include <stdio.h>
 
 #include "tier0/mem.h"
 
@@ -627,9 +626,6 @@ of 16 will be 16-byte aligned. Existing uses of this class were not changed beca
 the cost/benefit did not justify it.
 */
 // template here to allow adding alignment at levels of hierarchy that aren't the base
-
-#include <stdio.h>
-
 template< int bytesAlignment = 16, class T = aligned_tmp_t >
 class CAlignedNewDelete : public T
 {

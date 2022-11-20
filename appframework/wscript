@@ -51,7 +51,6 @@ def build(bld):
 
 	libs = []
 
-
 	bld.stlib(
 		source   = source,
 		target   = PROJECT_NAME,
