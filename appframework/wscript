@@ -18,12 +18,16 @@ def build(bld):
 	source = [
 		'AppSystemGroup.cpp',
 		'../public/filesystem_init.cpp',
-#		'glmrendererinfo_osx.mm'		[$OSXALL]
 	]
 
 	if bld.env.SDL:
 		source += [
 			'sdlmgr.cpp'
+		]
+	
+	if bld.env.DEST_OS == 'darwin':
+		source += [
+			'glmrendererinfo_osx.mm'
 		]
 
 	if bld.env.DEST_OS == 'win32':

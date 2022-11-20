@@ -15,6 +15,9 @@ def configure(conf):
 	if conf.options.DEDICATED:
 		conf.define('SWDS', 1)
 		conf.define('NO_STEAM', 1)
+	else:
+		if conf.env.DEST_OS == 'darwin':
+			conf.define('HAVE_OPENAL', 1)
 
 	conf.env.append_unique('DEFINES',[
 		'__USEA3D',
@@ -204,8 +207,16 @@ def build(bld):
 
 	if bld.env.SDL:
 		source += [
-			'audio/snd_dev_sdl.cpp',		#[$SDL && !$OSXALL]
 			'audio/voice_record_sdl.cpp' #[$OSXALL||$LINUXALL]
+		]
+		if bld.env.DEST_OS != "darwin":
+			source += ['audio/snd_dev_sdl.cpp']
+	
+	if bld.env.DEST_OS == 'darwin':
+		source += [
+			'audio/snd_dev_openal.cpp', # [$OSXALL]
+			'audio/snd_dev_mac_audioqueue.cpp',#	[$OSXALL]
+			'audio/voice_record_mac_audioqueue.cpp',	#[$OSXALL]
 		]
 
 	if bld.env.DEST_OS == 'win32':
@@ -352,6 +363,8 @@ def build(bld):
 		libs += ['SSL', 'CRYPTO'] # android curl was built with openssl
 	elif bld.env.DEST_OS == 'win32':
 		libs += ['USER32', 'WINMM', 'WININET', 'DSOUND', 'DXGUID', 'GDI32', 'bzip2']
+	elif bld.env.DEST_OS == 'darwin':
+		libs += ['COREAUDIO', 'AUDIOTOOLBOX', 'SYSTEMCONFIGURATION']
 		
 	install_path = bld.env.LIBDIR
 

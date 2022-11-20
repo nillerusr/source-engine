@@ -419,7 +419,7 @@ public:
 
 //-----------------------------------------------------------------------------
 
-JOB_INTERFACE IThreadPool *CreateThreadPool();
+JOB_INTERFACE IThreadPool *CreateThreadPool1();
 JOB_INTERFACE void DestroyThreadPool( IThreadPool *pPool );
 
 //-------------------------------------

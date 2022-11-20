@@ -12,7 +12,11 @@
 #include "tier1/strtools.h"
 
 #ifndef _PS3
+#ifdef _OSX
+#include <malloc/malloc.h>
+#else
 #include <malloc.h>
+#endif
 #endif
 
 // Should be last include
