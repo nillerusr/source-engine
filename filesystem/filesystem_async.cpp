@@ -663,7 +663,7 @@ void CBaseFileSystem::InitAsync()
 	if ( VCRGetMode() == VCR_Disabled )
 	{
 		// create the i/o thread pool
-		m_pThreadPool = CreateThreadPool1();
+		m_pThreadPool = CreateThreadPool();
 
 		ThreadPoolStartParams_t params;
 		params.iThreadPriority = 0;

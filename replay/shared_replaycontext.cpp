@@ -75,7 +75,7 @@ bool CSharedReplayContext::InitThreadPool()
 {
 	// Create thread pool
 	Log( "Replay: Creating thread pool..." );
-	IThreadPool *pThreadPool = CreateThreadPool1();
+	IThreadPool *pThreadPool = CreateThreadPool();
 	if ( !pThreadPool )
 	{
 		Log( "failed!\n" );

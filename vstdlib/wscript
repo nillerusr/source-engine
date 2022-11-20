@@ -48,11 +48,13 @@ def build(bld):
 	defines = []
 
 	libs = ['tier0','tier1']
+	linkflags = []
 
 	if bld.env.DEST_OS == 'android':
 		libs += ['ANDROID_SUPPORT']
 	elif bld.env.DEST_OS == 'darwin':
-		libs += ['ICONV', 'COREFOUNDATION', 'CORESERVICES']
+		libs += ['ICONV', 'COREFOUNDATION']
+		linkflags += ['-framework', 'CoreServices']
 
 	install_path = bld.env.LIBDIR
 
@@ -64,6 +66,7 @@ def build(bld):
 		includes = includes,
 		defines  = defines,
 		use      = libs,
+		linkflags = linkflags,
 		install_path = install_path,
 		subsystem = bld.env.MSVC_SUBSYSTEM,
 		idx      = bld.get_taskgen_count()
