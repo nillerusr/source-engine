@@ -373,7 +373,7 @@ public:
 	int		FindNextSetBit(int iStartBit) const; // returns -1 if no set bit was found
 
 protected:
-	CFixedBitVecBase()				{}
+	CFixedBitVecBase() = default;
 	CFixedBitVecBase(int numBits)	{ Assert( numBits == NUM_BITS ); } // doesn't make sense, really. Supported to simplify templates & allow easy replacement of variable 
 	
 	void 		ValidateOperand( const CFixedBitVecBase<NUM_BITS> &operand ) const	{ } // no need, compiler does so statically
@@ -428,10 +428,8 @@ template < int NUM_BITS >
 class CBitVec : public CBitVecT< CFixedBitVecBase<NUM_BITS> >
 {
 public:
-	CBitVec()
-	{
-	}
-	
+	CBitVec() = default;
+
 	CBitVec(int numBits)
 	 : CBitVecT< CFixedBitVecBase<NUM_BITS> >(numBits)
 	{

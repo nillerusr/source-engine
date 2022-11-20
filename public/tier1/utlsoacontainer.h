@@ -39,7 +39,7 @@ public:
 		m_nStride = nByteStride / sizeof( T );
 	}
 
-	FORCEINLINE CStridedPtr<T>( void ) {}
+	FORCEINLINE CStridedPtr<T>( void ) = default;
 	T *operator->(void) const
 	{
 		return m_pData;
@@ -81,7 +81,7 @@ public:
 		m_nStride = nByteStride / sizeof( T );
 	}
 
-	FORCEINLINE CStridedConstPtr<T>( void ) {}
+	FORCEINLINE CStridedConstPtr<T>( void ) = default;
 
 	const T *operator->(void) const
 	{

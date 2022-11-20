@@ -30,7 +30,7 @@
 #include "materialsystem/deformations.h"
 #include "materialsystem/imaterialsystemhardwareconfig.h"
 #include "materialsystem/IColorCorrection.h"
-
+#include "tier1/memhelpers.h"
 
 //-----------------------------------------------------------------------------
 // forward declarations
@@ -1563,12 +1563,9 @@ public:
 
 template< class E > inline E* IMatRenderContext::LockRenderDataTyped( int nCount, const E* pSrcData )
 {
-	int nSizeInBytes = nCount * sizeof(E);
-	E *pDstData = (E*)LockRenderData( nSizeInBytes );
+	E *pDstData = (E*)LockRenderData( nCount*sizeof(E) );
 	if ( pSrcData && pDstData )
-	{
-		memcpy( pDstData, pSrcData, nSizeInBytes );
-	}
+		memutils::copy( pDstData, pSrcData, nCount );
 	return pDstData;
 }
 
@@ -1751,7 +1748,7 @@ class CMatRenderContextPtr : public CRefPtr<IMatRenderContext>
 {
 	typedef CRefPtr<IMatRenderContext> BaseClass;
 public:
-	CMatRenderContextPtr()																					{}
+	CMatRenderContextPtr() = default;
 	CMatRenderContextPtr( IMatRenderContext *pInit )			: BaseClass( pInit )						{ if ( BaseClass::m_pObject ) BaseClass::m_pObject->BeginRender(); }
 	CMatRenderContextPtr( IMaterialSystem *pFrom )				: BaseClass( pFrom->GetRenderContext() )	{ if ( BaseClass::m_pObject ) BaseClass::m_pObject->BeginRender(); }
 	~CMatRenderContextPtr()																					{ if ( BaseClass::m_pObject ) BaseClass::m_pObject->EndRender(); }

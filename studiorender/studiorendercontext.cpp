@@ -19,6 +19,7 @@
 #include "tier1/callqueue.h"
 #include "cmodel.h"
 #include "tier0/vprof.h"
+#include "tier1/memhelpers.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -1994,7 +1995,7 @@ void CStudioRenderContext::SetAmbientLightColors( const Vector *pColors )
 
 void CStudioRenderContext::SetAmbientLightColors( const Vector4D *pColors )
 {
-	memcpy( m_RC.m_LightBoxColors, pColors, 6 * sizeof(Vector4D) );
+	memutils::copy( &m_RC.m_LightBoxColors[0], pColors, 6 );
 
 	// FIXME: Would like to get this into the render thread, but there's systemic confusion
 	// about whether to set lighting state here or in the material system

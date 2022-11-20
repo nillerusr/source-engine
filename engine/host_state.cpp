@@ -67,7 +67,7 @@ typedef enum
 class CHostState
 {
 public:
-				CHostState();
+				CHostState() = default;
 	void		Init();
 	void		FrameUpdate( float time );
 	void		SetNextState( HOSTSTATES nextState );
@@ -274,10 +274,6 @@ static void WatchDogHandler()
 //-----------------------------------------------------------------------------
 // Class implementation
 //-----------------------------------------------------------------------------
-
-CHostState::CHostState()
-{
-}
 
 void CHostState::Init()
 {

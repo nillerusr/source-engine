@@ -408,7 +408,7 @@ private:
 
 	struct CachedAssetList_t
 	{
-		CachedAssetList_t() {}
+		CachedAssetList_t() = default;
 		CachedAssetList_t( const char *pSearchSubDir, int nExtCount, const char **ppSearchExt )	:
 			m_pSubDir( pSearchSubDir, Q_strlen( pSearchSubDir ) + 1 )
 		{

@@ -167,7 +167,7 @@ class CRefPtr : public CBaseAutoPtr<T>
 {
 	typedef CBaseAutoPtr<T> BaseClass;
 public:
-	CRefPtr()												{}
+	CRefPtr() = default;
 	CRefPtr( T *pInit )										: BaseClass( pInit ) {}
 	CRefPtr( const CRefPtr<T> &from )						: BaseClass( from ) {}
 	~CRefPtr()												{ if ( BaseClass::m_pObject ) BaseClass::m_pObject->Release(); }

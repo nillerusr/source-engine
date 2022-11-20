@@ -56,9 +56,7 @@ CTSPool<TraceInfo_t> g_TraceInfoPool;
 class CTraceInfoPool : public CTSList<TraceInfo_t *>
 {
 public:
-	CTraceInfoPool()
-	{
-	}
+	CTraceInfoPool() = default;
 };
 
 CTraceInfoPool g_TraceInfoPool;

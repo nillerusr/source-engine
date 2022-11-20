@@ -138,9 +138,7 @@ protected:
 	class CStringPoolIndex
 	{
 	public:
-		inline CStringPoolIndex()
-		{
-		}
+		inline CStringPoolIndex() = default;
 
 		inline CStringPoolIndex( unsigned short iPool, unsigned short iOffset )
 			: 	m_iPool(iPool), m_iOffset(iOffset)

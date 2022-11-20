@@ -6478,7 +6478,8 @@ HRESULT	ID3DXMatrixStack::Create()
 	m_stack.EnsureCapacity( 16 );	// 1KB ish
 	m_stack.AddToTail();
 	m_stackTop = 0;				// top of stack is at index 0 currently
-	
+	m_mark = false;
+
 	LoadIdentity();
 	
 	return S_OK;

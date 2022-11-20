@@ -53,7 +53,7 @@ private:
 		Vector	deltavelocity;
 		trace_t trace;
 
-		touchlist_t() {}
+		touchlist_t() = default;
 
 	private:
 		touchlist_t( const touchlist_t &src );

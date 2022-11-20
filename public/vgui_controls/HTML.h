@@ -301,7 +301,7 @@ private:
 
 	struct CustomCursorCache_t
 	{
-		CustomCursorCache_t() {}
+		CustomCursorCache_t() = default;
 		CustomCursorCache_t( const void *pchData ) { m_pchData = pchData; }
 		float m_CacheTime; // the time we cached the cursor
 		CursorCode m_Cursor; // the vgui handle to it

@@ -147,7 +147,7 @@ struct mstudioaxisinterpbone_t
 	Vector			pos[6];	// X+, X-, Y+, Y-, Z+, Z-
 	Quaternion		quat[6];// X+, X-, Y+, Y-, Z+, Z-
 
-	mstudioaxisinterpbone_t(){}
+	mstudioaxisinterpbone_t() = default;
 private:
 	// No copy constructors allowed
 	mstudioaxisinterpbone_t(const mstudioaxisinterpbone_t& vOther);
@@ -162,7 +162,7 @@ struct mstudioquatinterpinfo_t
 	Vector			pos;		// new position
 	Quaternion		quat;		// new angle
 
-	mstudioquatinterpinfo_t(){}
+	mstudioquatinterpinfo_t() = default;
 private:
 	// No copy constructors allowed
 	mstudioquatinterpinfo_t(const mstudioquatinterpinfo_t& vOther);
@@ -176,7 +176,7 @@ struct mstudioquatinterpbone_t
 	int				triggerindex;
 	inline mstudioquatinterpinfo_t *pTrigger( int i ) const { return  (mstudioquatinterpinfo_t *)(((byte *)this) + triggerindex) + i; };
 
-	mstudioquatinterpbone_t(){}
+	mstudioquatinterpbone_t() = default;
 private:
 	// No copy constructors allowed
 	mstudioquatinterpbone_t(const mstudioquatinterpbone_t& vOther);
@@ -261,7 +261,7 @@ struct mstudioaimatbone_t
 	Vector			upvector;
 	Vector			basepos;
 
-	mstudioaimatbone_t() {}
+	mstudioaimatbone_t() = default;
 private:
 	// No copy constructors allowed
 	mstudioaimatbone_t(const mstudioaimatbone_t& vOther);
@@ -297,7 +297,7 @@ struct mstudiobone_t
 
 	int					unused[8];		// remove as appropriate
 
-	mstudiobone_t(){}
+	mstudiobone_t() = default;
 private:
 	// No copy constructors allowed
 	mstudiobone_t(const mstudiobone_t& vOther);
@@ -339,7 +339,7 @@ struct mstudiolinearbone_t
 
 	int unused[6];
 
-	mstudiolinearbone_t(){}
+	mstudiolinearbone_t() = default;
 private:
 	// No copy constructors allowed
 	mstudiolinearbone_t(const mstudiolinearbone_t& vOther);
@@ -370,7 +370,7 @@ struct mstudioboneflexdrivercontrol_t
 	float m_flMin;				// Min value of bone component mapped to 0 on flex controller
 	float m_flMax;				// Max value of bone component mapped to 1 on flex controller
 
-	mstudioboneflexdrivercontrol_t(){}
+	mstudioboneflexdrivercontrol_t() = default;
 private:
 	// No copy constructors allowed
 	mstudioboneflexdrivercontrol_t( const mstudioboneflexdrivercontrol_t &vOther );
@@ -396,7 +396,7 @@ struct mstudioboneflexdriver_t
 
 	int unused[3];
 
-	mstudioboneflexdriver_t(){}
+	mstudioboneflexdriver_t() = default;
 private:
 	// No copy constructors allowed
 	mstudioboneflexdriver_t( const mstudioboneflexdriver_t &vOther );
@@ -468,7 +468,7 @@ struct mstudiobbox_t
 		return ((const char*)this) + szhitboxnameindex;
 	}
 
-	mstudiobbox_t() {}
+	mstudiobbox_t() = default;
 
 private:
 	// No copy constructors allowed
@@ -532,7 +532,7 @@ struct mstudioikerror_t
 	Vector		pos;
 	Quaternion	q;
 
-	mstudioikerror_t() {}
+	mstudioikerror_t() = default;
 
 private:
 	// No copy constructors allowed
@@ -547,7 +547,7 @@ struct mstudiocompressedikerror_t
 	float	scale[6];
 	short	offset[6];
 	inline mstudioanimvalue_t *pAnimvalue( int i ) const { if (offset[i] > 0) return  (mstudioanimvalue_t *)(((byte *)this) + offset[i]); else return NULL; };
-	mstudiocompressedikerror_t(){}
+	mstudiocompressedikerror_t() = default;
 
 private:
 	// No copy constructors allowed
@@ -598,7 +598,7 @@ struct mstudioikrule_t
 
 	int			unused[7];
 
-	mstudioikrule_t() {}
+	mstudioikrule_t() = default;
 
 private:
 	// No copy constructors allowed
@@ -699,7 +699,8 @@ struct mstudiomovement_t
 	Vector				vector;		// movement vector relative to this blocks initial angle
 	Vector				position;	// relative to start of animation???
 
-	mstudiomovement_t(){}
+	mstudiomovement_t() = default;
+
 private:
 	// No copy constructors allowed
 	mstudiomovement_t(const mstudiomovement_t& vOther);
@@ -768,7 +769,7 @@ struct mstudioanimdesc_t
 	byte				*pZeroFrameData( ) const { if (zeroframeindex) return (((byte *)this) + zeroframeindex); else return NULL; };
 	mutable float		zeroframestalltime;		// saved during read stalls
 
-	mstudioanimdesc_t(){}
+	mstudioanimdesc_t() = default;
 private:
 	// No copy constructors allowed
 	mstudioanimdesc_t(const mstudioanimdesc_t& vOther);
@@ -900,7 +901,7 @@ struct mstudioseqdesc_t
 
 	int					unused[5];		// remove/add as appropriate (grow back to 8 ints on version change!)
 
-	mstudioseqdesc_t(){}
+	mstudioseqdesc_t() = default;
 private:
 	// No copy constructors allowed
 	mstudioseqdesc_t(const mstudioseqdesc_t& vOther);
@@ -1100,7 +1101,7 @@ public:
 	};
 	friend class CSortByIndex;
 
-	mstudiovertanim_t(){}
+	mstudiovertanim_t() = default;
 //private:
 // No copy constructors allowed, but it's needed for std::sort()
 //	mstudiovertanim_t(const mstudiovertanim_t& vOther);
@@ -1211,7 +1212,7 @@ struct mstudiovertex_t
 	Vector				m_vecNormal;
 	Vector2D			m_vecTexCoord;
 
-	mstudiovertex_t() {}
+	mstudiovertex_t() = default;
 
 private:
 	// No copy constructors allowed
@@ -1269,7 +1270,7 @@ struct mstudioeyeball_t
 	char	unused3[3];
 	int		unused4[7];
 
-	mstudioeyeball_t(){}
+	mstudioeyeball_t() = default;
 private:
 	// No copy constructors allowed
 	mstudioeyeball_t(const mstudioeyeball_t& vOther);
@@ -1284,7 +1285,7 @@ struct mstudioiklink_t
 	Vector	kneeDir;	// ideal bending direction (per link, if applicable)
 	Vector	unused0;	// unused
 
-	mstudioiklink_t(){}
+	mstudioiklink_t() = default;
 private:
 	// No copy constructors allowed
 	mstudioiklink_t(const mstudioiklink_t& vOther);
@@ -1411,7 +1412,7 @@ struct mstudiomesh_t
 	int					unused[8]; // remove as appropriate
 #endif
 
-	mstudiomesh_t(){}
+	mstudiomesh_t() = default;
 private:
 	// No copy constructors allowed
 	mstudiomesh_t(const mstudiomesh_t& vOther);
@@ -1697,7 +1698,7 @@ struct mstudiomouth_t
 	Vector				forward;
 	int					flexdesc;
 
-	mstudiomouth_t(){}
+	mstudiomouth_t() = default;
 private:
 	// No copy constructors allowed
 	mstudiomouth_t(const mstudiomouth_t& vOther);
@@ -3297,17 +3298,19 @@ inline int Studio_LoadVertexes( const vertexFileHeader_t *pTempVvdHdr, vertexFil
 		}
 
 		// copy vertexes
+
+		// TODO(nillerusr): That sucks and needs to be fixed
 		memcpy(
-			(mstudiovertex_t *)((byte *)pNewVvdHdr+pNewVvdHdr->vertexDataStart) + target,
-			(mstudiovertex_t *)((byte *)pTempVvdHdr+pTempVvdHdr->vertexDataStart) + pFixupTable[i].sourceVertexID,
+			(byte*)((mstudiovertex_t *)((byte *)pNewVvdHdr+pNewVvdHdr->vertexDataStart) + target),
+			(byte*)((mstudiovertex_t *)((byte *)pTempVvdHdr+pTempVvdHdr->vertexDataStart) + pFixupTable[i].sourceVertexID),
 			pFixupTable[i].numVertexes*sizeof(mstudiovertex_t) );
 
 		if (bNeedsTangentS)
 		{
 			// copy tangents
 			memcpy(
-				(Vector4D *)((byte *)pNewVvdHdr+pNewVvdHdr->tangentDataStart) + target,
-				(Vector4D *)((byte *)pTempVvdHdr+pTempVvdHdr->tangentDataStart) + pFixupTable[i].sourceVertexID,
+				(byte*)((Vector4D *)((byte *)pNewVvdHdr+pNewVvdHdr->tangentDataStart) + target),
+				(byte*)((Vector4D *)((byte *)pTempVvdHdr+pTempVvdHdr->tangentDataStart) + pFixupTable[i].sourceVertexID),
 				pFixupTable[i].numVertexes*sizeof(Vector4D) );
 		}
 

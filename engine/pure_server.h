@@ -69,7 +69,7 @@ private:
 	class CCommand
 	{
 	public:
-		CCommand();
+		CCommand() = default;
 		~CCommand();
 
 		EPureServerFileClass m_eFileClass;

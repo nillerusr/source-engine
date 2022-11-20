@@ -30,9 +30,8 @@ template<class ELEMTYPE> class Dar : public CUtlVector< ELEMTYPE >
 	typedef CUtlVector< ELEMTYPE > BaseClass;
 	
 public:
-	Dar()
-	{
-	}
+	Dar() = default;
+
 	Dar(int initialCapacity) :
 		BaseClass( 0, initialCapacity )
 	{

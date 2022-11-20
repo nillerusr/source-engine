@@ -227,7 +227,7 @@ CUtlVector< FileNameHandle_t > CBaseFileSystem::m_ExcludePaths;
 class CStoreIDEntry
 {
 public:
-	CStoreIDEntry() {}
+	CStoreIDEntry() = default;
 	CStoreIDEntry( const char *pPathIDStr, int storeID )
 	{
 		m_PathIDString = pPathIDStr;

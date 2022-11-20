@@ -20,7 +20,6 @@ GNU General Public License for more details.
 #include <string.h>
 #include <unistd.h>
 #include <SDL_hints.h>
-#include <SDL_version.h>
 #include "tier0/dbg.h"
 #include "tier0/threadtools.h"
 
@@ -29,7 +28,6 @@ char java_args[4096];
 int iLastArgs = 0;
 
 DLL_EXPORT int LauncherMain( int argc, char **argv ); // from launcher.cpp
-extern void InitCrashHandler();
 
 DLL_EXPORT int Java_com_valvesoftware_ValveActivity2_setenv(JNIEnv *jenv, jclass *jclass, jstring env, jstring value, jint over)
 {
@@ -120,18 +118,14 @@ void android_property_print(const char *name)
 
 DLL_EXPORT int LauncherMainAndroid( int argc, char **argv )
 {
-	SDL_version ver;
-	SDL_GetVersion( &ver );
+	Msg("GetTotalMemory() = %.2f \n", GetTotalMemory());
 
-	Msg("SDL version: %d.%d.%d rev: %s\n", (int)ver.major, (int)ver.minor, (int)ver.patch, SDL_GetRevision());
-	Msg("GetTotalMemory() = %.2f GiB\n", GetTotalMemory());
 	android_property_print("ro.build.version.sdk");
 	android_property_print("ro.product.device");
 	android_property_print("ro.product.manufacturer");
 	android_property_print("ro.product.model");
 	android_property_print("ro.product.name");
 
-	InitCrashHandler();
 	SetLauncherArgs();
 
 	SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");

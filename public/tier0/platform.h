@@ -1266,12 +1266,12 @@ struct CPUInformation
 
 	uint8 m_nLogicalProcessors;		// Number op logical processors.
 	uint8 m_nPhysicalProcessors;	// Number of physical processors
-	
+
 	bool m_bSSE3 : 1,
 		 m_bSSSE3 : 1,
 		 m_bSSE4a : 1,
 		 m_bSSE41 : 1,
-		 m_bSSE42 : 1;	
+		 m_bSSE42 : 1;
 
 	int64 m_Speed;						// In cycles per second.
 
@@ -1280,7 +1280,7 @@ struct CPUInformation
 	uint32 m_nModel;
 	uint32 m_nFeatures[3];
 
-	CPUInformation(): m_Size(0){}
+	CPUInformation() = default;
 };
 
 // Have to return a pointer, not a reference, because references are not compatible with the

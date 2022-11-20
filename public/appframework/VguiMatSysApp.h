@@ -30,7 +30,7 @@ class CVguiMatSysApp : public CVguiSteamApp
 	typedef CVguiSteamApp BaseClass;
 
 public:
-	CVguiMatSysApp();
+	CVguiMatSysApp() = default;
 
 	// Methods of IApplication
 	virtual bool Create();

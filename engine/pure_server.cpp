@@ -26,10 +26,6 @@ extern ConVar sv_pure_consensus;
 extern ConVar sv_pure_retiretime;
 extern ConVar sv_pure_trace;
 
-CPureServerWhitelist::CCommand::CCommand()
-{
-}
-
 CPureServerWhitelist::CCommand::~CCommand()
 {
 }

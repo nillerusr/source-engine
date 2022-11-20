@@ -116,7 +116,7 @@ template < class T >
 class CDmAbstractElementFactory : public IDmElementFactoryInternal
 {
 public:
-	CDmAbstractElementFactory() {}
+	CDmAbstractElementFactory() = default;
 
 	// Creation, destruction
 	virtual CDmElement* Create( DmElementHandle_t handle, const char *pElementType, const char *pElementName, DmFileId_t fileid, const DmObjectId_t &id )

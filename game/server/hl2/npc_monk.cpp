@@ -37,7 +37,7 @@ class CNPC_Monk : public CAI_PlayerAlly
 
 public:
 
-	CNPC_Monk() {}
+	CNPC_Monk() = default;
 	void Spawn();
 	void Precache();
 

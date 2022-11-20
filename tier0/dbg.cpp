@@ -114,6 +114,12 @@ void CDbgLogger::Init(const char *logfile)
 #else
 		fprintf(file, ">>> Engine(arch:%s) started at %s\n", GetProcessorArchName(), szTime);
 #endif
+
+#ifdef GNUC
+		fprintf(file, "Compiler version: %s\n", __VERSION__);
+#endif
+		fprintf(file, "Compiler CFLAGS: %s\n", WAF_CFLAGS);
+		fprintf(file, "Compiler LDFLAGS: %s\n", WAF_LDFLAGS);
 		fflush(file);
 
 		for( int i = 0; i < iMsg; i++ )

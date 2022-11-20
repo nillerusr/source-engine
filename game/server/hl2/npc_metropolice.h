@@ -34,7 +34,7 @@ class CNPC_MetroPolice : public CAI_BaseActor
 	DECLARE_DATADESC();
 
 public:
-	CNPC_MetroPolice();
+	CNPC_MetroPolice() = default;
 
 	virtual bool CreateComponents();
 	bool CreateBehaviors();

@@ -1422,9 +1422,8 @@ public:
 class CM128AttributeWriteIterator : public CStridedPtr<fltx4>
 {
 public:
-	FORCEINLINE CM128AttributeWriteIterator( void )
-	{
-	}
+	FORCEINLINE CM128AttributeWriteIterator( void ) = default;
+
 	FORCEINLINE void Init ( int nAttribute, CParticleCollection *pParticles )
 	{
 		m_pData = pParticles->GetM128AttributePtrForWrite( nAttribute, &m_nStride );

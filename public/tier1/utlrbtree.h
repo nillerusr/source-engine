@@ -32,7 +32,7 @@ template <typename T>
 class CDefLess
 {
 public:
-	CDefLess() {}
+	CDefLess() = default;
 	CDefLess( int i ) {}
 	inline bool operator()( const T &lhs, const T &rhs ) const { return ( lhs < rhs );	}
 	inline bool operator!() const { return false; }
