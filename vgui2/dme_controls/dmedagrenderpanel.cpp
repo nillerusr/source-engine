@@ -263,7 +263,7 @@ void CDmeDagRenderPanel::DrawJointNames( CDmeDag *pRoot, CDmeDag *pDag, const ma
 		{
 			Q_snprintf( pJointName, sizeof(pJointName), "%s", pJoint->GetName() );
 		}
-		g_pMatSystemSurface->DrawColoredText( m_hFont, vecPanelPos.x + 5, vecPanelPos.y, 255, 255, 255, 255, pJointName );
+		g_pMatSystemSurface->DrawColoredText( m_hFont, vecPanelPos.x + 5, vecPanelPos.y, 255, 255, 255, 255, "%s", pJointName );
 	}
 
 	int nCount = pDag->GetChildCount();
