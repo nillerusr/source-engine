@@ -31,7 +31,7 @@ struct CachedPosNormTan_t
 	Vector		m_Normal;
 	Vector4D	m_TangentS;
 
-	CachedPosNormTan_t() {}
+	CachedPosNormTan_t() = default;
 
 	CachedPosNormTan_t( CachedPosNormTan_t const& src )
 	{
@@ -51,7 +51,7 @@ struct CachedPosNorm_t
 	Vector4DAligned	m_Position;
 	Vector4DAligned	m_Normal;
 
-	CachedPosNorm_t() {}
+	CachedPosNorm_t() = default;
 
 	CachedPosNorm_t( CachedPosNorm_t const& src )
 	{

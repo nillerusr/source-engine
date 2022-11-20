@@ -609,7 +609,7 @@ private:
 	class CThreadLocalPtr : private CThreadLocalBase
 	{
 	public:
-		CThreadLocalPtr() {}
+		CThreadLocalPtr() = default;
 
 		operator const void *() const          					{ return (const T *)Get(); }
 		operator void *()                      					{ return (T *)Get(); }

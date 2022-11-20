@@ -36,7 +36,7 @@ int CopyLocalLightingState( int nMaxLights, LightDesc_t *pDest, int nLightCount,
 	for( int i = 0; i < nLightCount; i++ )
 	{
 		LightDesc_t *pLight = &pDest[i];
-		memcpy( pLight, &pSrc[i], sizeof( LightDesc_t ) );
+		*pLight = pSrc[i];
 		pLight->m_Flags = 0;
 		if( pLight->m_Attenuation0 != 0.0f )
 		{

@@ -51,7 +51,7 @@ typedef unsigned long HFont;
 
 struct Vertex_t
 {
-	Vertex_t() {}
+	Vertex_t() = default;
 	Vertex_t( const Vector2D &pos, const Vector2D &coord = Vector2D( 0, 0 ) )
 	{
 		m_Position = pos;

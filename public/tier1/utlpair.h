@@ -17,7 +17,7 @@ template<typename T1, typename T2>
 class CUtlPair
 {
 public:
-	CUtlPair() {}
+	CUtlPair() = default;
 	CUtlPair( T1 t1, T2 t2 ) : first( t1 ), second( t2 ) {}
 
 	bool operator<( const CUtlPair<T1,T2> &rhs ) const {

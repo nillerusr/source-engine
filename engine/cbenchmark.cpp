@@ -71,13 +71,16 @@ void CBenchmarkResults::StartBenchmark( const CCommand &args )
 	SetResultsFilename( pszFilename );
 
 	// set any necessary settings
-	host_framerate.SetValue( (float)(1.0f / host_state.interval_per_tick) );
+	//host_framerate.SetValue( (float)(1.0f / host_state.interval_per_tick) );
 
 	// get the current frame and time
 	m_iStartFrame = host_framecount;
 	m_flStartTime = realtime;
+
+	m_flNextSecondTime = realtime + 1.0f;
+	m_iNextSecondFrame = host_framecount;
 }
-	
+
 //-----------------------------------------------------------------------------
 // Purpose: writes out results to file
 //-----------------------------------------------------------------------------
@@ -86,7 +89,7 @@ void CBenchmarkResults::StopBenchmark()
 	m_bIsTestRunning = false;
 
 	// reset
-	host_framerate.SetValue( 0 );
+	//host_framerate.SetValue( 0 );
 
 	// print out some stats
 	int numticks = host_framecount - m_iStartFrame;
@@ -103,12 +106,23 @@ void CBenchmarkResults::StopBenchmark()
 	kv->SetFloat( "framerate", framerate );
 	kv->SetInt( "build", build_number() );
 
+	CUtlString str;
+	for( int i = 0; i < m_FPSInfo.Count(); i++ )
+	{
+		str += m_FPSInfo[i];
+		if( i != m_FPSInfo.Count()-1 )
+			str += ',';
+	}
+	kv->SetString( "framerates", str );
+
 	// get material system info
 	GetMaterialSystemConfigForBenchmarkUpload( kv );
 
 	// save
 	kv->SaveToFile( g_pFileSystem, szFilename, "MOD" );
 	kv->deleteThis();
+
+	m_FPSInfo.Purge();
 }
 
 //-----------------------------------------------------------------------------
@@ -151,6 +165,20 @@ void CBenchmarkResults::Upload()
 	kv->deleteThis();
 #endif
 }
+
+void CBenchmarkResults::Frame()
+{
+	if( !m_bIsTestRunning )
+		return;
+
+	if( m_flNextSecondTime <= realtime )
+	{
+		m_FPSInfo.AddToTail( host_framecount-m_iNextSecondFrame );
+		m_flNextSecondTime += 1.0f;
+		m_iNextSecondFrame = host_framecount;
+	}
+}
+
 
 CON_COMMAND_F( bench_start, "Starts gathering of info. Arguments: filename to write results into", FCVAR_CHEAT )
 {

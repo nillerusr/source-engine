@@ -62,9 +62,7 @@ private:
 
 	struct DecalEntry
 	{
-		DecalEntry()
-		{
-		}
+		DecalEntry() = default;
 
 		DecalEntry( const DecalEntry& src )
 		{

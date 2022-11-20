@@ -325,7 +325,7 @@ struct DynamicState_t
 	bool	m_bBuffer2Frames;
 #endif
 	
-	DynamicState_t() {}
+	DynamicState_t() = default;
 
 private:
 	DynamicState_t( DynamicState_t const& );

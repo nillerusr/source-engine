@@ -222,16 +222,12 @@ inline void IncrementFloatPointer( float* &pBufferPointer, int vertexSize )
 class CPrimList
 {
 public:
-	CPrimList();
+	CPrimList() = default;
 	CPrimList( int nFirstIndex, int nIndexCount );
 
 	int			m_FirstIndex;
 	int			m_NumIndices;
 };
-
-inline CPrimList::CPrimList()
-{
-}
 
 inline CPrimList::CPrimList( int nFirstIndex, int nIndexCount )
 {

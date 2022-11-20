@@ -44,9 +44,7 @@ class CActivityRemapCache
 {
 public:
 
-	CActivityRemapCache()
-	{
-	}
+	CActivityRemapCache() = default;
 
 	CActivityRemapCache( const CActivityRemapCache& src )
 	{

@@ -72,7 +72,7 @@ public:
 	// Otherwise, this is the hitbox index.
 	int			hitbox;					// box hit by trace in studio
 
-	CGameTrace() {}
+	CGameTrace() = default;
 
 private:
 	// No copy constructors allowed

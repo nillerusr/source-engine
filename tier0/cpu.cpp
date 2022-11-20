@@ -498,9 +498,6 @@ const CPUInformation* GetCPUInformation()
 	if ( pi.m_Size == sizeof(pi) )
 		return &pi;
 
-	// Redundant, but just in case the user somehow messes with the size.
-	memset(&pi, 0x0, sizeof(pi));
-
 	// Fill out the structure, and return it:
 	pi.m_Size = sizeof(pi);
 

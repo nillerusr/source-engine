@@ -118,7 +118,7 @@ template < class FunctionType >
 class CDynamicFunctionMustInit : public CDynamicFunction < FunctionType >
 {
 private:  // forbid default constructor.
-	CDynamicFunctionMustInit() {}
+	CDynamicFunctionMustInit() = default;
 
 public:
 	CDynamicFunctionMustInit(const char *libname, const char *fn, FunctionType fallback=NULL)

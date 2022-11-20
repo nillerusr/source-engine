@@ -123,7 +123,7 @@ class CDemoRecorder : public IDemoRecorder
 {
 public:
 	~CDemoRecorder();
-	CDemoRecorder();
+	CDemoRecorder() = default;
 
 	CDemoFile *GetDemoFile( void );
 	int		GetRecordingTick( void );

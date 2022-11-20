@@ -50,7 +50,7 @@ private:
 class CClientSendTable
 {
 public:
-								CClientSendTable();
+								CClientSendTable() = default;
 								~CClientSendTable();
 	
 	int							GetNumProps() const		{ return m_SendTable.m_nProps; }

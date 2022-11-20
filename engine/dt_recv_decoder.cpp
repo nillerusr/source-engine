@@ -29,12 +29,6 @@ CClientSendProp::~CClientSendProp()
 	delete [] m_pTableName;
 }
 
-
-CClientSendTable::CClientSendTable()
-{
-}
-
-
 CClientSendTable::~CClientSendTable()
 {
 	delete [] m_SendTable.m_pNetTableName;

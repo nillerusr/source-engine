@@ -427,11 +427,11 @@ public:
 
 #define DECLARE_ATTRIBUTE_ARRAY_VARIABLE( _className, _elementType )	\
 	public:																\
-		_className() {}
+		_className() = default;
 
 #define DECLARE_ATTRIBUTE_ARRAY_REFERENCE( _className, _elementType )	\
 	public:																\
-		_className() {}													\
+		_className() = default;													\
 		_className( CDmAttribute* pAttribute ) { BaseClass::Init( pAttribute ); }	\
 		_className( CDmElement *pElement, const char *pAttributeName, bool bAddAttribute = false ) { BaseClass::Init( pElement, pAttributeName, bAddAttribute ); } \
 		_className( CDmaArray<_className>& var ) { BaseClass::Init( var.GetAttribute() ); } \
@@ -439,7 +439,7 @@ public:
 
 #define DECLARE_ATTRIBUTE_ARRAY_CONST_REFERENCE( _className, _elementType )	\
 	public:																	\
-		_className() {}														\
+		_className() = default;														\
 		_className( const CDmAttribute* pAttribute ) { BaseClass::Init( pAttribute ); } \
 		_className( const CDmElement *pElement, const char *pAttributeName ) { BaseClass::Init( pElement, pAttributeName ); } \
 		_className( const CDmaArray<_className>& var ) { BaseClass::Init( var.GetAttribute() ); } \

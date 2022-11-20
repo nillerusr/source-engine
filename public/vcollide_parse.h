@@ -30,7 +30,7 @@ struct fluid_t
 
 	fluidparams_t params;
 
-	fluid_t() {}
+	fluid_t() = default;
 	fluid_t( fluid_t const& src ) : params(src.params)
 	{
 		index = src.index;

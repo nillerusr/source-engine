@@ -80,7 +80,7 @@ private:
 	// A list of all vertices affecting a particular morph target
 	struct MorphVertexList_t
 	{
-		MorphVertexList_t() {}
+		MorphVertexList_t() = default;
 		MorphVertexList_t( const MorphVertexList_t& src ) : m_nMorphTargetId( src.m_nMorphTargetId ) {}
 
 		int m_nMorphTargetId;

@@ -637,10 +637,6 @@ void CDemoRecorder::StartupDemoFile( void )
 	g_ClientDLL->OnDemoRecordStart( m_szDemoBaseName );
 }
 
-CDemoRecorder::CDemoRecorder()
-{
-}
-
 CDemoRecorder::~CDemoRecorder()
 {
 	CloseDemoFile();	

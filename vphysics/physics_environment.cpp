@@ -683,7 +683,7 @@ private:
 	
 	struct corepair_t
 	{
-		corepair_t() {}
+		corepair_t() = default;
 		corepair_t( IVP_Friction_Core_Pair *pair )
 		{
 			int index = ( pair->objs[0] < pair->objs[1] ) ? 0 : 1;
