@@ -362,7 +362,7 @@ def configure(conf):
 		]
 
 		flags += ['-funwind-tables', '-fvisibility=default']
-	elif conf.env.COMPILER_CC not in ['msvc', 'clang']:
+	elif conf.env.COMPILER_CC != 'msvc' and conf.env.DEST_OS != 'darwin':
 		flags += ['-march=native']
 
 	if conf.env.DEST_CPU in ['x86', 'x86_64']:
