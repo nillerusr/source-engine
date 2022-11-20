@@ -129,7 +129,7 @@ static void DebugPrintf( const char *pMsg, ... )
 	Plat_DebugString( buf );
 }
 
- #define SDLAPP_DEBUG
+// #define SDLAPP_DEBUG
 #ifdef SDLAPP_DEBUG
 class LinuxAppFuncLogger
 {

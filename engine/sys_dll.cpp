@@ -459,23 +459,14 @@ void Sys_Error_Internal( bool bMinidump, const char *error, va_list argsList )
 
 			// We always get here because the above filter evaluates to EXCEPTION_EXECUTE_HANDLER
 		}
-#elif defined( OSX ) || defined(BSD)
+#elif defined( OSX ) || defined(BSD) || defined(LINUX)
 		// Doing this doesn't quite work the way we want because there is no "crashing" thread
 		// and we see "No thread was identified as the cause of the crash; No signature could be created because we do not know which thread crashed" on the back end
 		//SteamAPI_WriteMiniDump( 0, NULL, build_number() );
 		printf("\n ##### Sys_Error: %s", text );
 		fflush(stdout );
 
-#ifndef BSD
-		int *p = 0;
-		*p = 0xdeadbeef;
-#endif
-#elif defined( LINUX )
-		// Doing this doesn't quite work the way we want because there is no "crashing" thread
-		// and we see "No thread was identified as the cause of the crash; No signature could be created because we do not know which thread crashed" on the back end
-		//SteamAPI_WriteMiniDump( 0, NULL, build_number() );
-		int *p = 0;
-		*p = 0xdeadbeef;
+		raise(SIGTRAP);
 #else
 #warning "need minidump impl on sys_error"
 #endif
@@ -1602,7 +1593,7 @@ CON_COMMAND( star_memory, "Dump memory stats" )
 		 memstats.bytes_free / ( 1024.0 * 1024.0), memstats.bytes_used / ( 1024.0 * 1024.0 ), memstats.chunks_used );
 #elif BSD
 # warning TODO: Implement memory stats (peace of sheet of course)
-#else
+#else // Win32
 	MEMORYSTATUS stat;
 	GlobalMemoryStatus( &stat );
 	Msg( "Available: %.2f MB, Used: %.2f MB, Free: %.2f MB\n", 
