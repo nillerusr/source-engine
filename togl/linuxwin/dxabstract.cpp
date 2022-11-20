@@ -404,7 +404,7 @@ HRESULT IDirect3DDevice9::CreateTexture(UINT Width,UINT Height,UINT Levels,DWORD
 	
 	if (Usage & D3DUSAGE_DYNAMIC)
 	{
-		key.m_texFlags |= kGLMTexDynamic;
+		// GLMPRINTF(("-X- DYNAMIC tex usage ignored.."));	//FIXME
 	}
 	
 	if (Usage & D3DUSAGE_TEXTURE_SRGB)
@@ -617,7 +617,7 @@ HRESULT IDirect3DDevice9::CreateCubeTexture(UINT EdgeLength,UINT Levels,DWORD Us
 		
 	if (Usage & D3DUSAGE_DYNAMIC)
 	{
-		key.m_texFlags |= kGLMTexDynamic;
+		//GLMPRINTF(("-X- DYNAMIC tex usage ignored.."));	//FIXME
 	}
 	
 	if (Usage & D3DUSAGE_TEXTURE_SRGB)
@@ -823,7 +823,7 @@ HRESULT IDirect3DDevice9::CreateVolumeTexture(UINT Width,UINT Height,UINT Depth,
 	
 	if (Usage & D3DUSAGE_DYNAMIC)
 	{
-		key.m_texFlags |= kGLMTexDynamic;
+		GLMPRINTF(("-X- DYNAMIC tex usage ignored.."));	//FIXME
 	}
 	
 	if (Usage & D3DUSAGE_TEXTURE_SRGB)
@@ -1040,9 +1040,7 @@ HRESULT IDirect3DSurface9::LockRect(D3DLOCKED_RECT* pLockedRect,CONST RECT* pRec
 		// smells like readback, force texel readout
 		lockreq.m_readback = true;
 	}
-
-	lockreq.m_readonly = (Flags & D3DLOCK_READONLY) ? true : false;
-
+	
 	char	*lockAddress;
 	int		yStride;
 	int		zStride;
@@ -5329,7 +5327,7 @@ HRESULT IDirect3DDevice9::DrawPrimitiveUP(D3DPRIMITIVETYPE PrimitiveType,UINT Pr
 //	[in] Number of primitives to render. The number of vertices used is a function of the primitive count and the primitive type. The maximum number of primitives allowed is determined by checking the MaxPrimitiveCount member of the D3DCAPS9 structure.
 
 // BE VERY CAREFUL what you do in this function. It's extremely hot, and calling the wrong GL API's in here will crush perf. on NVidia threaded drivers.
-#ifndef OSX
+#if 1 //ifndef OSX
 
 HRESULT IDirect3DDevice9::DrawIndexedPrimitive( D3DPRIMITIVETYPE Type, INT BaseVertexIndex, UINT MinVertexIndex, UINT NumVertices, UINT startIndex, UINT primCount )
 {

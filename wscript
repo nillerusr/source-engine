@@ -212,6 +212,14 @@ def define_platform(conf):
 			'_ALLOW_MSC_VER_MISMATCH',
 			'NO_X360_XDK'
 		])
+	elif conf.env.DEST_OS == 'darwin':
+		conf.env.append_unique('DEFINES', [
+			'OSX=1', '_OSX=1',
+			'POSIX=1', '_POSIX=1', 'PLATFORM_POSIX=1',
+			'GNUC',
+			'NO_HOOK_MALLOC',
+			'_DLL_EXT=.dylib'
+		])
 
 	if conf.options.DEBUG_ENGINE:
 		conf.env.append_unique('DEFINES', [
@@ -284,6 +292,8 @@ def configure(conf):
 	conf.load('subproject xcompile compiler_c compiler_cxx gitversion clang_compilation_database strip_on_install waf_unit_test enforce_pic')
 	if conf.env.DEST_OS == 'win32' and conf.env.DEST_CPU == 'amd64':
 		conf.load('masm')
+	elif conf.env.DEST_OS == 'darwin':
+		conf.load('mm_hook')
 
 	define_platform(conf)
 	conf.define('GIT_COMMIT_HASH', conf.env.GIT_VERSION)
@@ -302,8 +312,7 @@ def configure(conf):
 	conf.env.BIT32_MANDATORY = not conf.options.ALLOW64
 	if conf.env.BIT32_MANDATORY:
 		Logs.info('WARNING: will build engine for 32-bit target')
-
-	conf.load('force_32bit')
+		conf.load('force_32bit')
 
 	if conf.options.DISABLE_WARNS:
 		compiler_optional_flags = ['-w']
@@ -353,7 +362,7 @@ def configure(conf):
 		]
 
 		flags += ['-funwind-tables', '-fvisibility=default']
-	elif conf.env.COMPILER_CC != 'msvc':
+	elif conf.env.COMPILER_CC not in ['msvc', 'clang']:
 		flags += ['-march=native']
 
 	if conf.env.DEST_CPU in ['x86', 'x86_64']:
@@ -444,7 +453,10 @@ def configure(conf):
 			else:
 				conf.check_pkg('freetype2', 'FT2', FT2_CHECK)
 				conf.check_pkg('fontconfig', 'FC', FC_CHECK)
-				conf.check_cfg(package='openal', uselib_store='OPENAL', args=['--cflags', '--libs'])
+				if conf.env.DEST_OS == "darwin":
+					conf.env.FRAMEWORK_OPENAL = "OpenAL"
+				else:
+					conf.check_cfg(package='openal', uselib_store='OPENAL', args=['--cflags', '--libs'])
 				conf.check_cfg(package='libjpeg', uselib_store='JPEG', args=['--cflags', '--libs'])
 				conf.check_cfg(package='libpng', uselib_store='PNG', args=['--cflags', '--libs'])
 				conf.check_cfg(package='libcurl', uselib_store='CURL', args=['--cflags', '--libs'])
@@ -465,6 +477,21 @@ def configure(conf):
 			conf.check(lib='ssl', uselib_store='SSL')
 		conf.check(lib='android_support', uselib_store='ANDROID_SUPPORT')
 		conf.check(lib='opus', uselib_store='OPUS')
+
+	if conf.env.DEST_OS == "darwin":
+		conf.check(lib='iconv', uselib_store='ICONV')
+		conf.env.FRAMEWORK_APPKIT = "AppKit"
+		conf.env.FRAMEWORK_IOKIT = "IOKit"
+		conf.env.FRAMEWORK_FOUNDATION = "Foundation"
+		conf.env.FRAMEWORK_COREFOUNDATION = "CoreFoundation"
+		conf.env.FRAMEWORK_COREGRAPHICS = "CoreGraphics"
+		conf.env.FRAMEWORK_OPENGL = "OpenGL"
+		conf.env.FRAMEWORK_CARBON = "Carbon"
+		conf.env.FRAMEWORK_APPLICATIONSERVICES = "ApplicationServices"
+		conf.env.FRAMEWORK_CORESERVICES = "CoreServices"
+		conf.env.FRAMEWORK_COREAUDIO = "CoreAudio"
+		conf.env.FRAMEWORK_AUDIOTOOLBOX = "AudioToolbox"
+		conf.env.FRAMEWORK_SYSTEMCONFIGURATION = "SystemConfiguration"
 
 	if conf.env.DEST_OS != 'win32':
 		conf.check_cc(lib='dl', mandatory=False)
