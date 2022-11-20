@@ -3,7 +3,7 @@
 
 #ifdef ANDROID
 #include <sys/cdefs.h>
-#elif defined(OSX)
+#elif defined(OSX) || defined(BSD)
 #include <stdint.h>
 #else
 #include <bits/wordsize.h>

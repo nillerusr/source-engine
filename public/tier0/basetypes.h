@@ -41,8 +41,10 @@
 // stdio.h
 #ifndef NULL
 #define NULL 0
+#elif defined(__FreeBSD__)
+# undef NULL
+# define NULL 0
 #endif
-
 
 #ifdef POSIX
 #include <stdint.h>

@@ -61,7 +61,7 @@ void AppShutdown( CAppSystemGroup *pAppSystemGroup );
 		extern int ValveCocoaMain( int argc, char **argv, CAppSystemGroup *pAppSystemGroup ); \
 		return ValveCocoaMain( argc, argv, &_globalVarName ); \
 	}
-#elif defined( LINUX )
+#elif defined( LINUX ) || defined(BSD)
 #define DEFINE_WINDOWED_APPLICATION_OBJECT_GLOBALVAR( _globalVarName ) \
 	int main( int argc, char **argv )										\
 	{																							\

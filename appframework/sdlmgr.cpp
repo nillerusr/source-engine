@@ -129,7 +129,7 @@ static void DebugPrintf( const char *pMsg, ... )
 	Plat_DebugString( buf );
 }
 
-// #define SDLAPP_DEBUG
+ #define SDLAPP_DEBUG
 #ifdef SDLAPP_DEBUG
 class LinuxAppFuncLogger
 {
@@ -270,7 +270,7 @@ public:
 
 	// Get the next N events. The function returns the number of events that were filled into your array.
 	virtual int GetEvents( CCocoaEvent *pEvents, int nMaxEventsToReturn, bool debugEvents = false );
-#ifdef LINUX
+#if defined(LINUX) || defined(BSD)
 	virtual int PeekAndRemoveKeyboardEvents( bool *pbEsc, bool *pbReturn, bool *pbSpace, bool debugEvent = false );
 #endif
 
@@ -1004,7 +1004,7 @@ int CSDLMgr::GetEvents( CCocoaEvent *pEvents, int nMaxEventsToReturn, bool debug
 	return nToWrite;
 }
 
-#ifdef LINUX
+#if defined(LINUX) || defined(BSD)
 
 int CSDLMgr::PeekAndRemoveKeyboardEvents( bool *pbEsc, bool *pbReturn, bool *pbSpace, bool debugEvent )
 {

@@ -579,7 +579,7 @@ int CFileSystem_Stdio::FS_chmod( const char *pathT, int pmode )
 	CBaseFileSystem::FixUpPath ( pathT, path, sizeof( path ) );
 
 	int rt = _chmod( path, pmode );
-#if defined(LINUX)
+#if defined(LINUX) || defined(BSD)
 	if (rt==-1)
 	{
 		char caseFixedName[ MAX_PATH ];
@@ -707,7 +707,7 @@ int CFileSystem_Stdio::FS_stat( const char *pathT, struct _stat *buf, bool *pbLo
 	}
 #endif // defined(_WIN32) && defined(FILESYSTEM_MSVC2015_STAT_BUG_WORKAROUND)
 
-#if defined(LINUX)
+#if defined(LINUX) || defined(BSD)
 	if ( rt == -1 )
 	{
 		char caseFixedName[ MAX_PATH ];
@@ -866,7 +866,7 @@ CStdioFile *CStdioFile::FS_fopen( const char *filenameT, const char *options, in
 		}
 	}
 
-#if defined(LINUX)
+#if defined(LINUX) || defined(BSD)
 	if(!pFile && !strchr(options,'w') && !strchr(options,'+') ) // try opening the lower cased version
 	{
 		char caseFixedName[ MAX_PATH ];

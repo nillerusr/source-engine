@@ -556,7 +556,7 @@ private:
 	int m_nFullscreenViewportHeight;
 	ITexture *m_pFullscreenRenderTarget;
 
-#if defined(LINUX) || defined(OSX)
+#if defined(LINUX) || defined(OSX) || defined(BSD)
 	struct font_entry
 	{
 		void *data;

@@ -20,7 +20,12 @@
 #include <tier0/dbg.h>
 #include <vgui/ISurface.h>
 #include <utlbuffer.h>
-#include <fontconfig/fontconfig.h>
+#ifdef __FreeBSD__
+  // why not -I/usr/local/include? this breaks other part of code
+# include "/usr/local/include/fontconfig/fontconfig.h"
+#else
+# include <fontconfig/fontconfig.h>
+#endif
 #include <freetype/ftbitmap.h>
 #include "materialsystem/imaterialsystem.h"
 
@@ -31,6 +36,11 @@
 #include "tier0/memdbgon.h"
 
 #define FT_LOAD_FLAGS	0 //$ (FT_LOAD_TARGET_LIGHT)
+
+#ifdef BSD
+#undef HAVE_FC
+#define HAVE_FC 0
+#endif
 
 namespace {
 
