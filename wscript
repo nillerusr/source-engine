@@ -292,6 +292,8 @@ def configure(conf):
 	conf.load('subproject xcompile compiler_c compiler_cxx gitversion clang_compilation_database strip_on_install waf_unit_test enforce_pic')
 	if conf.env.DEST_OS == 'win32' and conf.env.DEST_CPU == 'amd64':
 		conf.load('masm')
+	elif conf.env.DEST_OS == 'darwin':
+		conf.load('mm_hook')
 
 	define_platform(conf)
 	conf.define('GIT_COMMIT_HASH', conf.env.GIT_VERSION)
@@ -559,13 +561,6 @@ def configure(conf):
 		conf.add_subproject(projects['dedicated'])
 	else:
 		conf.add_subproject(projects['game'])
-
-from waflib import TaskGen
-@TaskGen.extension('.mm')
-def m_hook(self, node):
-	"""Alias .mm files to be compiled the same as .cpp files, gcc will do the right thing."""
-	return self.create_compiled_task('cxx', node)
-
 
 def build(bld):
 	os.environ["CCACHE_DIR"] = os.path.abspath('.ccache/'+bld.env.COMPILER_CC+'/'+bld.env.DEST_OS+'/'+bld.env.DEST_CPU)
