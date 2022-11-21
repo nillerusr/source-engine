@@ -22,6 +22,10 @@ def configure(conf):
 		conf.find_program('strip', var='STRIP')
 		if not conf.env.STRIPFLAGS:
 			conf.env.STRIPFLAGS = os.environ['STRIPFLAGS'] if 'STRIPFLAGS' in os.environ else []
+
+		if conf.env.DEST_BINFMT == 'mac-o':
+			conf.env.STRIPFLAGS += ['-x']
+			return # macOS don't have objcopy
 		
 		# a1ba: I am lazy to add `export OBJCOPY=` everywhere in my scripts
 		# so just try to deduce which objcopy we have
@@ -47,26 +51,26 @@ def copy_fun(self, src, tgt):
 
 	if getattr(self.generator, 'link_task', None) and self.generator.link_task.outputs[0] in self.inputs:
 		tgt_debug = tgt + '.debug'
-		strip_cmd = self.env.STRIP + self.env.STRIPFLAGS + [tgt]
-		ocopy_cmd = self.env.OBJCOPY + ['--only-keep-debug', tgt, tgt_debug]
-		ocopy_debuglink_cmd = self.env.OBJCOPY + ['--add-gnu-debuglink=%s' % tgt_debug, tgt]
 		c1 = Logs.colors.NORMAL
 		c2 = Logs.colors.CYAN
 		c3 = Logs.colors.YELLOW
 		c4 = Logs.colors.BLUE
 		try:
-			if self.generator.bld.options.strip_to_file:
+			if self.generator.bld.options.strip_to_file and self.env.DEST_BINFMT == 'elf':
+				ocopy_cmd = self.env.OBJCOPY + ['--only-keep-debug', tgt, tgt_debug]
 				self.generator.bld.cmd_and_log(ocopy_cmd, output=Context.BOTH, quiet=Context.BOTH)
 				if not self.generator.bld.progress_bar:
 					Logs.info('%s+ objcopy --only-keep-debug %s%s%s %s%s%s', c1, c4, tgt, c1, c3, tgt_debug, c1)
 			
+			strip_cmd = self.env.STRIP + self.env.STRIPFLAGS + [tgt]
 			self.generator.bld.cmd_and_log(strip_cmd, output=Context.BOTH, quiet=Context.BOTH)
 			if not self.generator.bld.progress_bar:
 				f1 = os.path.getsize(src)
 				f2 = os.path.getsize(tgt)
 				Logs.info('%s+ strip %s%s%s (%d bytes change)', c1, c2, tgt, c1, f2 - f1)
 				
-			if self.generator.bld.options.strip_to_file:
+			if self.generator.bld.options.strip_to_file and self.env.DEST_BINFMT == 'elf':
+				ocopy_debuglink_cmd = self.env.OBJCOPY + ['--add-gnu-debuglink=%s' % tgt_debug, tgt]
 				self.generator.bld.cmd_and_log(ocopy_debuglink_cmd, output=Context.BOTH, quiet=Context.BOTH)
 				if not self.generator.bld.progress_bar:
 					Logs.info('%s+ objcopy --add-gnu-debuglink=%s%s%s %s%s%s', c1, c3, tgt_debug, c1, c2, tgt, c1)
