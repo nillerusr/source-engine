@@ -108,6 +108,7 @@
 	#define IsLinux() false
 	#define IsOSX() false
 	#define IsPosix() false
+	#define IsBSD() false
 	#define PLATFORM_WINDOWS 1 // Windows PC or Xbox 360
 	#ifndef _X360
 		#define IsWindows() true
@@ -1391,7 +1392,7 @@ PLATFORM_INTERFACE void* Plat_SimpleLog( const tchar* file, int line );
 PLATFORM_INTERFACE bool Plat_IsInDebugSession();
 PLATFORM_INTERFACE void Plat_DebugString( const char * );
 #else
-#warning Plat_IsInDebugSession isn't working properly
+#warning "Plat_IsInDebugSession isn't working properly"
 inline bool Plat_IsInDebugSession( bool bForceRecheck = false ) { return false; }
 #define Plat_DebugString(s) ((void)0)
 #endif

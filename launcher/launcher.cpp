@@ -10,7 +10,7 @@
 #include <windows.h>
 #include "shlwapi.h" // registry stuff
 #include <direct.h>
-#elif defined ( LINUX ) || defined( OSX ) || defined(BSD)
+#elif defined(POSIX)
 	#define O_EXLOCK 0
 	#include <sys/types.h>
 	#include <sys/stat.h>

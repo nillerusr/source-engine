@@ -39,11 +39,11 @@
 #endif
 
 // stdio.h
-#ifndef NULL
-#define NULL 0
-#elif defined(__FreeBSD__)
+#if !defined(NULL) || defined(__FreeBSD__)
+#ifdef NULL
 # undef NULL
-# define NULL 0
+#endif
+#define NULL 0
 #endif
 
 #ifdef POSIX

@@ -15,6 +15,7 @@
 #elif defined(BSD)
 #include <sys/types.h>
 #include <sys/sysctl.h>
+#define HW_MEMSIZE HW_PHYSMEM
 #endif
 #if defined(LINUX)
 #include <unistd.h>
@@ -459,7 +460,7 @@ void Sys_Error_Internal( bool bMinidump, const char *error, va_list argsList )
 
 			// We always get here because the above filter evaluates to EXCEPTION_EXECUTE_HANDLER
 		}
-#elif defined( OSX ) || defined(BSD) || defined(LINUX)
+#elif defined(POSIX)
 		// Doing this doesn't quite work the way we want because there is no "crashing" thread
 		// and we see "No thread was identified as the cause of the crash; No signature could be created because we do not know which thread crashed" on the back end
 		//SteamAPI_WriteMiniDump( 0, NULL, build_number() );
@@ -668,13 +669,7 @@ void Sys_InitMemory( void )
 	uint64_t memsize = ONE_HUNDRED_TWENTY_EIGHT_MB;
 
 #if defined(OSX) || defined(BSD)
-	int mib[2] = { CTL_HW,
-#ifdef BSD
-    HW_PHYSMEM
-#else
-    HW_MEMSIZE
-#endif
-  };
+	int mib[2] = { CTL_HW, HW_MEMSIZE };
 	u_int namelen = sizeof(mib) / sizeof(mib[0]);
 	size_t len = sizeof(memsize);
 

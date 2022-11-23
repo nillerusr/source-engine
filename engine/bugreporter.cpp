@@ -24,6 +24,7 @@
 # include <sys/sysctl.h>
 # include <sys/types.h>
 # include <fcntl.h>
+# define HW_MEMSIZE HW_PHYSMEM
 #elif defined(LINUX)
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -144,13 +145,7 @@ unsigned long GetRam()
 	GlobalMemoryStatus( &stat );
 	return (stat.dwTotalPhys / (1024 * 1024));
 #elif defined(OSX) || defined(BSD)
-	int mib[2] = { CTL_HW,
-#ifdef OSX
-    HW_MEMSIZE
-#else
-    HW_PHYSMEM
-#endif
-  };
+	int mib[2] = { CTL_HW, HW_MEMSIZE };
 	u_int namelen = sizeof(mib) / sizeof(mib[0]);
 	uint64_t memsize;
 	size_t len = sizeof(memsize);
