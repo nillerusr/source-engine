@@ -2208,10 +2208,10 @@ bool EvaluateConditional( const char *str )
 		return IsWindows() ^ bNot;
 
 	if ( Q_stristr( str, "$OSX" ) )
-		return IsOSX() ^ bNot;
+		return bNot;
 
 	if ( Q_stristr( str, "$LINUX" ) )
-		return IsLinux() ^ bNot;
+		return (IsLinux() || IsOSX()) ^ bNot;
 
 	if ( Q_stristr( str, "$POSIX" ) )
 		return IsPosix() ^ bNot;
