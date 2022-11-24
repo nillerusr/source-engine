@@ -566,7 +566,7 @@ public:
 
 			if ( sysctl( mib, Q_ARRAYSIZE( mib ), &val, &len, NULL, 0 ) == 0 )
 			{
-				CommentPrintf( " %s: %" PRIu64 "\n", s_ctl_names[ i ].name, val );
+				CommentPrintf( " %s: %d\n", s_ctl_names[ i ].name, val );
 			}
 		}
 
