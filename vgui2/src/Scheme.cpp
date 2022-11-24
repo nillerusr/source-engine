@@ -922,6 +922,12 @@ void CScheme::ReloadFontGlyphs()
 			{
 				int nRangeMin, nRangeMax;
 
+#ifdef OSX
+				if (tall == 11) { // workaround FL_Load_Glyph error
+					tall = 12;
+				}
+#endif
+
 				if ( GetFontRange( fontdata->GetString( "name" ), nRangeMin, nRangeMax ) )
 				{
 					// add the new set
