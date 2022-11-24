@@ -136,7 +136,7 @@ void CGameMenuItem::ApplySchemeSettings(IScheme *pScheme)
 	// make fully transparent
 	SetFgColor(GetSchemeColor("MainMenu.TextColor", pScheme));
 	SetBgColor(Color(0, 0, 0, 0));
-	SetDefaultColor(GetSchemeColor("MainMenu.TextColor", pScheme), Color(0, 0, 0, 255));
+	SetDefaultColor(GetSchemeColor("MainMenu.TextColor", pScheme), Color(0, 0, 0, 0));
 	SetArmedColor(GetSchemeColor("MainMenu.ArmedTextColor", pScheme), Color(0, 0, 0, 0));
 	SetDepressedColor(GetSchemeColor("MainMenu.DepressedTextColor", pScheme), Color(0, 0, 0, 0));
 	SetContentAlignment(Label::a_west);
