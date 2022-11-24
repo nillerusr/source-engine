@@ -39,10 +39,12 @@
 #endif
 
 // stdio.h
-#ifndef NULL
+#if !defined(NULL) || defined(__FreeBSD__)
+#ifdef NULL
+# undef NULL
+#endif
 #define NULL 0
 #endif
-
 
 #ifdef POSIX
 #include <stdint.h>

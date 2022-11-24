@@ -16,12 +16,17 @@
 #include <sys/resource.h>
 #include <unistd.h>
 
-#ifdef OSX
-#include <mach/mach.h>
-#include <mach/mach_time.h>
+#if defined(OSX) || defined(BSD)
+# ifdef BSD
+#  include <sys/proc.h>
+#  include <sys/user.h>
+# else
+#  include <mach/mach.h>
+#  include <mach/mach_time.h>
+# endif
 #include <stdbool.h>
-#include <sys/types.h>
 #include <unistd.h>
+#include <sys/types.h>
 #include <sys/sysctl.h>
 #endif
 #ifdef LINUX
@@ -436,41 +441,29 @@ PLATFORM_INTERFACE void Plat_SetAllocErrorFn( Plat_AllocErrorFn fn )
 
 #endif // !NO_HOOK_MALLOC
 
-#if defined( OSX )
+#if defined( OSX ) || defined(BSD)
 
 // From the Apple tech note: http://developer.apple.com/library/mac/#qa/qa1361/_index.html
 bool Plat_IsInDebugSession()
 {
+	static int s_IsInDebugSession;
 	int                 junk;
-	int                 mib[4];
 	struct kinfo_proc   info;
 	size_t              size;
-	static int s_IsInDebugSession = -1;
+	int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid()};
+#ifndef BSD
+	info.kp_proc.p_flag = 0;
+#endif
 
-	if ( s_IsInDebugSession == -1 )
-	{
-		// Initialize the flags so that, if sysctl fails for some bizarre 
-		// reason, we get a predictable result.
+	size = sizeof(info);
+	junk = sysctl(mib, sizeof(mib) / sizeof(*mib), &info, &size, NULL, 0);
 
-		info.kp_proc.p_flag = 0;
-
-		// Initialize mib, which tells sysctl the info we want, in this case
-		// we're looking for information about a specific process ID.
-
-		mib[0] = CTL_KERN;
-		mib[1] = KERN_PROC;
-		mib[2] = KERN_PROC_PID;
-		mib[3] = getpid();
-
-		// Call sysctl.
-
-		size = sizeof(info);
-		junk = sysctl(mib, sizeof(mib) / sizeof(*mib), &info, &size, NULL, 0);
-
-		// We're being debugged if the P_TRACED flag is set.
-
-		s_IsInDebugSession = ( (info.kp_proc.p_flag & P_TRACED) != 0 );
-	}
+	// We're being debugged if the P_TRACED flag is set.
+#ifdef BSD
+	s_IsInDebugSession = info.ki_flag & P_TRACED;
+#else
+	s_IsInDebugSession = info.kp_proc.p_flag & P_TRACED;
+#endif
 
 	return !!s_IsInDebugSession;
 }
@@ -508,7 +501,6 @@ bool Plat_IsInDebugSession()
 
 	return ( tracerpid > 0 );
 }
-
 
 #endif // defined( LINUX )
 
@@ -567,7 +559,7 @@ PLATFORM_INTERFACE const char *Plat_GetCommandLineA()
 
 PLATFORM_INTERFACE bool GetMemoryInformation( MemoryInformation *pOutMemoryInfo )
 {
-	#if defined( LINUX ) || defined( OSX )
+	#if defined( LINUX ) || defined( OSX ) || defined(BSD)
 		return false;
 	#else
 		#error "Need to fill out GetMemoryInformation or at least return false for this platform"
@@ -579,7 +571,7 @@ PLATFORM_INTERFACE bool Is64BitOS()
 {
 #if defined OSX
 	return true;
-#elif defined LINUX
+#elif defined(LINUX) || defined(BSD)
 	FILE *pp = popen( "uname -m", "r" );
 	if ( pp != NULL )
 	{
@@ -789,7 +781,7 @@ static void InstallHooks( void )
 	__realloc_hook = ReallocHook;
 
 }
-#elif OSX
+#elif OSX || BSD
 
 
 static void RemoveHooks( void )

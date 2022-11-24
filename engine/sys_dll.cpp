@@ -12,6 +12,10 @@
 #elif defined(OSX)
 #include <Carbon/Carbon.h>
 #include <sys/sysctl.h>
+#elif defined(BSD)
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#define HW_MEMSIZE HW_PHYSMEM
 #endif
 #if defined(LINUX)
 #include <unistd.h>
@@ -456,21 +460,14 @@ void Sys_Error_Internal( bool bMinidump, const char *error, va_list argsList )
 
 			// We always get here because the above filter evaluates to EXCEPTION_EXECUTE_HANDLER
 		}
-#elif defined( OSX )
+#elif defined(POSIX)
 		// Doing this doesn't quite work the way we want because there is no "crashing" thread
 		// and we see "No thread was identified as the cause of the crash; No signature could be created because we do not know which thread crashed" on the back end
 		//SteamAPI_WriteMiniDump( 0, NULL, build_number() );
 		printf("\n ##### Sys_Error: %s", text );
 		fflush(stdout );
 
-		int *p = 0;
-		*p = 0xdeadbeef;
-#elif defined( LINUX )
-		// Doing this doesn't quite work the way we want because there is no "crashing" thread
-		// and we see "No thread was identified as the cause of the crash; No signature could be created because we do not know which thread crashed" on the back end
-		//SteamAPI_WriteMiniDump( 0, NULL, build_number() );
-		int *p = 0;
-		*p = 0xdeadbeef;
+		raise(SIGTRAP);
 #else
 #warning "need minidump impl on sys_error"
 #endif
@@ -671,7 +668,7 @@ void Sys_InitMemory( void )
 #elif defined(POSIX)
 	uint64_t memsize = ONE_HUNDRED_TWENTY_EIGHT_MB;
 
-#if defined(OSX)
+#if defined(OSX) || defined(BSD)
 	int mib[2] = { CTL_HW, HW_MEMSIZE };
 	u_int namelen = sizeof(mib) / sizeof(mib[0]);
 	size_t len = sizeof(memsize);
@@ -1589,7 +1586,9 @@ CON_COMMAND( star_memory, "Dump memory stats" )
 	struct mstats memstats = mstats( );
 	Msg( "Available %.2f MB, Used: %.2f MB, #mallocs = %lu\n",
 		 memstats.bytes_free / ( 1024.0 * 1024.0), memstats.bytes_used / ( 1024.0 * 1024.0 ), memstats.chunks_used );
-#else
+#elif BSD
+# warning TODO: Implement memory stats (peace of sheet of course)
+#else // Win32
 	MEMORYSTATUS stat;
 	GlobalMemoryStatus( &stat );
 	Msg( "Available: %.2f MB, Used: %.2f MB, Free: %.2f MB\n", 

@@ -16,7 +16,7 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-#if !defined(COMPILER_MSVC64) && !defined(LINUX) && !defined(OSX)
+#if !defined(COMPILER_MSVC64) && !defined(LINUX) && !defined(COMPILER_CLANG)
 // Implement for 64-bit Windows if needed.
 // Clang hits "fatal error: error in backend:" and other errors when trying
 // to compile the inline assembly below. 3DNow support is highly unlikely to
@@ -102,7 +102,7 @@ float FASTCALL _3DNow_VectorNormalize (Vector& vec)
 			movd		radius, mm1
 			femms
 		}
-#elif LINUX	
+#elif LINUX
 		long long a,c;
     		int b,d;
     		memcpy(&a,&vec[0],sizeof(a));

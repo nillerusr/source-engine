@@ -1130,7 +1130,7 @@ void CBasePanel::UpdateBackgroundState()
 			vgui::GetAnimationController()->RunAnimationCommand( m_pGameLogo, "alpha", targetTitleAlpha, 0.0f, duration, AnimationController::INTERPOLATOR_LINEAR );
 		}
 
-		// Msg( "animating title (%d => %d at time %.2f)\n", m_pGameMenuButton->GetAlpha(), (int)targetTitleAlpha, engine->Time());
+		// Msg( "animating title (%d => %d at time %.2f)\n", m_pGameMenuButtons[0]->GetAlpha(), (int)targetTitleAlpha, engine->Time());
 		for ( i=0; i<m_pGameMenuButtons.Count(); ++i )
 		{
 			vgui::GetAnimationController()->RunAnimationCommand( m_pGameMenuButtons[i], "alpha", targetTitleAlpha, 0.0f, duration, AnimationController::INTERPOLATOR_LINEAR );
@@ -1650,7 +1650,7 @@ void CBasePanel::PerformLayout()
 	for ( int i=0; i<m_pGameMenuButtons.Count(); ++i )
 	{
 		// Get the size of the logo text
-		//int textWide, textTall;
+		// int textWide, textTall;
 		m_pGameMenuButtons[i]->SizeToContents();
 		//vgui::surface()->GetTextSize( m_pGameMenuButtons[i]->GetFont(), ModInfo().GetGameTitle(), textWide, textTall );
 
@@ -2220,7 +2220,7 @@ void CBasePanel::RunMenuCommand(const char *command)
 
 				RegCloseKey(hKey);
 			}
-#elif defined( OSX ) || defined( LINUX )
+#elif defined( OSX ) || defined( LINUX ) || defined(BSD)
 			FILE *fp = fopen( "/tmp/hl2_relaunch", "w+" );
 			if ( fp )
 			{

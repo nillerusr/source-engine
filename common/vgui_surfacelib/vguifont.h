@@ -23,7 +23,7 @@ struct newChar_t
 #ifdef WIN32
 #include "Win32Font.h"
 typedef CWin32Font font_t;
-#elif defined(LINUX) || defined(OSX)
+#elif defined(POSIX)
 #include "linuxfont.h"
 typedef CLinuxFont font_t;
 #else

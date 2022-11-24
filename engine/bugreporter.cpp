@@ -20,6 +20,11 @@
 #include <copyfile.h>
 #import <mach/mach_host.h>
 #import <sys/sysctl.h>
+#elif defined(BSD)
+# include <sys/sysctl.h>
+# include <sys/types.h>
+# include <fcntl.h>
+# define HW_MEMSIZE HW_PHYSMEM
 #elif defined(LINUX)
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -105,7 +110,7 @@
 #define BUG_REPOSITORY_URL "\\\\fileserver\\bugs"
 #elif defined(OSX)
 #define BUG_REPOSITORY_URL "/Volumes/bugs"
-#elif defined(LINUX)
+#elif defined(LINUX) || defined(BSD)
 #define BUG_REPOSITORY_URL "\\\\fileserver\\bugs"
 #else
 //#error
@@ -139,7 +144,7 @@ unsigned long GetRam()
 	MEMORYSTATUS stat;
 	GlobalMemoryStatus( &stat );
 	return (stat.dwTotalPhys / (1024 * 1024));
-#elif defined(OSX)
+#elif defined(OSX) || defined(BSD)
 	int mib[2] = { CTL_HW, HW_MEMSIZE };
 	u_int namelen = sizeof(mib) / sizeof(mib[0]);
 	uint64_t memsize;
@@ -340,6 +345,12 @@ void DisplaySystemVersion( char *osversion, int maxlen )
 
 		fclose( fpKernelVer );
 	}
+#elif BSD
+  #ifdef __FreeBSD__
+    osversion = (char *)"FreeBSD";
+  #else
+    osversion = (char *)"*BSD";
+  #endif
 #endif
 }
 
@@ -2246,7 +2257,7 @@ void NonFileSystem_CreatePath (const char *path)
 	}
 }
 
-#ifdef LINUX
+#if defined(LINUX) || defined(BSD)
 #define COPYFILE_ALL 0
 #define BSIZE 65535
 int copyfile( const char *local, const char *remote, void *ignored, int ignoredFlags )

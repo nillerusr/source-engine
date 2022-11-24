@@ -36,7 +36,7 @@
 #pragma once
 #endif
 
-#ifdef _LINUX
+#if defined(_LINUX) || defined(BSD)
 #include <dlfcn.h> // dlopen,dlclose, et al
 #include <unistd.h>
 

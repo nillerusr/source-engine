@@ -631,8 +631,8 @@ void    GLMDisplayInfo::Dump( int which )
 {
         SDLAPP_FUNC;
 
-        GLMPRINTF(("\n         #%d: GLMDisplayInfo @ %08x, pixwidth=%d  pixheight=%d",
-                           which, (int)this,  m_info.m_displayPixelWidth,  m_info.m_displayPixelHeight ));
+        GLMPRINTF(("\n         #%d: GLMDisplayInfo @ %p, pixwidth=%d  pixheight=%d",
+                           which, this,  m_info.m_displayPixelWidth,  m_info.m_displayPixelHeight ));
 
         FOR_EACH_VEC( *m_modes, i )
         {

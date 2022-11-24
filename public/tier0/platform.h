@@ -64,7 +64,11 @@
 
 #ifdef POSIX
 // need this for _alloca
-#include <alloca.h>
+# ifdef BSD
+#  define va_list __va_list
+# else
+#  include <alloca.h>
+# endif
 #include <unistd.h>
 #include <signal.h>
 #include <time.h>
@@ -104,6 +108,7 @@
 	#define IsLinux() false
 	#define IsOSX() false
 	#define IsPosix() false
+	#define IsBSD() false
 	#define PLATFORM_WINDOWS 1 // Windows PC or Xbox 360
 	#ifndef _X360
 		#define IsWindows() true
@@ -156,7 +161,13 @@
 	#else
 		#define IsOSX() false
 	#endif
-	
+
+	#ifdef BSD
+		#define IsBSD() true
+	#else
+		#define IsBSD() false
+	#endif
+
 	#define IsPosix() true
 	#define IsPlatformOpenGL() true
 #else
@@ -439,20 +450,20 @@ typedef void * HINSTANCE;
 #else
 	// On OSX, SIGTRAP doesn't really stop the thread cold when debugging.
 	// So if being debugged, use INT3 which is precise.
-#ifdef OSX
-#if defined(__arm__) || defined(__aarch64__)
-#ifdef __clang__
-#define DebuggerBreak()  do { if ( Plat_IsInDebugSession() ) { __builtin_debugtrap(); } else { raise(SIGTRAP); } } while(0)
-#elif defined __GNUC__
-#define DebuggerBreak()  do { if ( Plat_IsInDebugSession() ) { __builtin_trap(); } else { raise(SIGTRAP); } } while(0)
+#if defined(OSX) || defined(BSD)
+# if defined(__arm__) || defined(__aarch64__)
+#  ifdef __clang__
+#   define DebuggerBreak()  do { if ( Plat_IsInDebugSession() ) { __builtin_debugtrap(); } else { raise(SIGTRAP); } } while(0)
+#  elif defined __GNUC__
+#   define DebuggerBreak()  do { if ( Plat_IsInDebugSession() ) { __builtin_trap(); } else { raise(SIGTRAP); } } while(0)
+#  else
+#   define DebuggerBreak()  raise(SIGTRAP)
+#  endif
+# else
+#  define DebuggerBreak()  do { if ( Plat_IsInDebugSession() ) { __asm ( "int $3" ); } else { raise(SIGTRAP); } } while(0)
+# endif
 #else
-#define DebuggerBreak()  raise(SIGTRAP)
-#endif
-#else
-#define DebuggerBreak()  do { if ( Plat_IsInDebugSession() ) { __asm ( "int $3" ); } else { raise(SIGTRAP); } } while(0)
-#endif
-#else
-#define DebuggerBreak()  raise(SIGTRAP)
+# define DebuggerBreak()  raise(SIGTRAP)
 #endif
 #endif
 #define	DebuggerBreakIfDebugging() if ( !Plat_IsInDebugSession() ) ; else DebuggerBreak()
@@ -550,7 +561,7 @@ typedef void * HINSTANCE;
 //-----------------------------------------------------------------------------
 #if defined( GNUC )
 	#define stackalloc( _size )		alloca( ALIGN_VALUE( _size, 16 ) )
-#ifdef _LINUX
+#if defined(_LINUX) || defined(BSD)
 	#define mallocsize( _p )	( malloc_usable_size( _p ) )
 #elif defined(OSX)
 	#define mallocsize( _p )	( malloc_size( _p ) )
@@ -1377,10 +1388,11 @@ PLATFORM_INTERFACE void* Plat_SimpleLog( const tchar* file, int line );
 //-----------------------------------------------------------------------------
 // Returns true if debugger attached, false otherwise
 //-----------------------------------------------------------------------------
-#if defined(_WIN32) || defined(LINUX) || defined(OSX)
+#if defined(_WIN32) || defined(LINUX) || defined(OSX) || defined(BSD)
 PLATFORM_INTERFACE bool Plat_IsInDebugSession();
 PLATFORM_INTERFACE void Plat_DebugString( const char * );
 #else
+#warning "Plat_IsInDebugSession isn't working properly"
 inline bool Plat_IsInDebugSession( bool bForceRecheck = false ) { return false; }
 #define Plat_DebugString(s) ((void)0)
 #endif

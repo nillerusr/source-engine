@@ -3947,7 +3947,7 @@ bool DLL_LOCAL Host_IsValidSignature( const char *pFilename, bool bAllowUnknown 
 #if defined( SWDS ) || defined(_X360)
 	return true;
 #else
-	if ( sv.IsDedicated() || IsOSX() || IsLinux() )
+	if ( sv.IsDedicated() || IsOSX() || IsLinux() || IsBSD() )
 	{
 		// dedicated servers and Mac and Linux  binaries don't check signatures
 		return true;

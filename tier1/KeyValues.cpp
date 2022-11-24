@@ -2211,7 +2211,7 @@ bool EvaluateConditional( const char *str )
 		return bNot;
 
 	if ( Q_stristr( str, "$LINUX" ) )
-		return (IsLinux() || IsOSX()) ^ bNot;
+		return ( IsLinux() || IsBSD() || IsOSX() ) ^ bNot;
 
 	if ( Q_stristr( str, "$POSIX" ) )
 		return IsPosix() ^ bNot;

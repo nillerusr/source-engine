@@ -11,7 +11,7 @@
 #include <windows.h>
 #elif defined(_LINUX)
 #include <stdlib.h>
-#elif defined(OSX)
+#elif defined(OSX) || defined(BSD)
 #include <sys/sysctl.h>
 #endif
 
@@ -273,7 +273,7 @@ bool CheckSSE4aTechnology( void )
 
 static bool Check3DNowTechnology(void)
 {
-#if defined( _X360 ) || defined( _PS3 ) || defined (__arm__) || defined(__SANITIZE_ADDRESS__)
+#if defined( _X360 ) || defined( _PS3 ) || defined (__arm__) || defined(__SANITIZE_ADDRESS__) || (defined(BSD) && defined(COMPILER_CLANG))
 	return false;
 #else
 	uint32 eax, unused;
@@ -448,7 +448,9 @@ uint64 CalculateCPUFreq(); // from cpu_linux.cpp
 static int64 CalculateClockSpeed()
 {
 #if defined( _WIN32 )
-#if !defined( _X360 )
+#if defined( _X360 )
+	return 3200000000LL;
+#else
 	LARGE_INTEGER waitTime, startCount, curCount;
 	CCycleCount start, end;
 
@@ -476,15 +478,14 @@ static int64 CalculateClockSpeed()
 		freq = 2000000000;
 	}
 	return freq;
-
-#else
-	return 3200000000LL;
 #endif
+#elif defined(BSD)
+	return CalculateCPUFreq() * 1000000.0f;
 #elif defined(POSIX)
 	int64 freq =(int64)CalculateCPUFreq();
 	if ( freq == 0 ) // couldn't calculate clock speed
 	{
-		Error( "Unable to determine CPU Frequency\n" );
+		Warning( "Unable to determine CPU Frequency\n" );
 	}
 	return freq;
 #endif
@@ -583,7 +584,7 @@ const CPUInformation* GetCPUInformation()
 		pi.m_nLogicalProcessors  = 1;
 		Assert( !"couldn't read cpu information from /proc/cpuinfo" );
 	}
-#elif defined(OSX)
+#elif defined(OSX) || defined(BSD)
 	int mib[2], num_cpu = 1;
 	size_t len;
 	mib[0] = CTL_HW;

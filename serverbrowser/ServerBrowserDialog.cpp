@@ -25,7 +25,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <winsock.h>
 #endif
-#ifdef LINUX
+#if defined(LINUX) || defined(BSD)
 #include <arpa/inet.h>
 #endif
 
