@@ -1457,7 +1457,7 @@ private:
 
 	FORCEINLINE void SetTransform( D3DTRANSFORMSTATETYPE State, CONST D3DXMATRIX *pMatrix )
 	{
-#if !defined( _X360 ) && !defined(BSD)
+#if !defined( _X360 )
 		Dx9Device()->SetTransform( State, pMatrix );
 #endif
 	}
@@ -10917,7 +10917,7 @@ void CShaderAPIDx8::SetSkinningMatrices()
 	if ( m_DynamicState.m_NumBones == 0 )
 	{
 		// ###OSX### punting on OSX for now
-#if defined( DX_TO_GL_ABSTRACTION ) && !defined( OSX) && !defined(BSD)
+#if defined( DX_TO_GL_ABSTRACTION ) && !defined( OSX)
 		Dx9Device()->SetMaxUsedVertexShaderConstantsHint( VERTEX_SHADER_BONE_TRANSFORM( 0 ) + 3 );
 #endif
 		return;
