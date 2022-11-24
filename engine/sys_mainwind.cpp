@@ -25,7 +25,7 @@
 #elif defined(_X360)
 	// nothing to include for 360
 #elif defined(OSX)
-#elif defined(LINUX) || defined(BSD)
+#elif defined(LINUX) || defined(PLATFORM_BSD)
 	#include "tier0/dynfunction.h"
 #elif defined(_WIN32)
 	#include "tier0/dynfunction.h"
@@ -833,7 +833,7 @@ LRESULT CGame::WindowProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     // return 0 if handled message, 1 if not
     return lRet;
 }
-#elif defined(OSX) || defined(LINUX) || defined(_WIN32) || defined(BSD)
+#elif defined(OSX) || defined(LINUX) || defined(_WIN32) || defined(PLATFORM_BSD)
 
 #else
 #error

@@ -43,7 +43,7 @@
 	#define OS_TO_PTHREAD(x) pthread_from_mach_thread_np( x )
 #endif // !OSX
 
-#ifdef BSD
+#ifdef PLATFORM_BSD
 # undef OS_TO_PTRHEAD
 # define OS_TO_PTHREAD(x) (pthread_t)(x)
 #endif
@@ -1685,7 +1685,7 @@ bool CThreadFullMutex::Release()
 //
 //-----------------------------------------------------------------------------
 
-#if defined( WIN32 ) || defined( _PS3 ) || defined( _OSX ) || defined (_LINUX) || defined(BSD)
+#if defined( WIN32 ) || defined( _PS3 ) || defined( _OSX ) || defined (_LINUX) || defined(PLATFORM_BSD)
 #if !defined(_PS3)
 namespace GenericThreadLocals
 {

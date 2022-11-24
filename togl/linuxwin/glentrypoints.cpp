@@ -43,7 +43,7 @@
 #include "tier1.h"
 #include "tier2/tier2.h"
 
-#if (defined(_LINUX) || defined(BSD)) && !defined(__ANDROID__)
+#if (defined(_LINUX) || defined(PLATFORM_BSD)) && !defined(__ANDROID__)
 #include <GL/glx.h>
 #endif
 
@@ -54,7 +54,7 @@
 #error
 #endif
 
-#if defined(OSX) || defined(LINUX) || (defined (WIN32) && defined( DX_TO_GL_ABSTRACTION )) || defined(BSD)
+#if defined(OSX) || defined(LINUX) || (defined (WIN32) && defined( DX_TO_GL_ABSTRACTION )) || defined(PLATFORM_BSD)
 	#include "appframework/ilaunchermgr.h"
 	ILauncherMgr *g_pLauncherMgr = NULL;
 #endif

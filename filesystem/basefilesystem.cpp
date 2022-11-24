@@ -2841,7 +2841,7 @@ time_t CBaseFileSystem::FastFileTime( const CSearchPath *path, const char *pFile
 		{
 			return buf.st_mtime;
 		}
-#if defined(LINUX) || defined(BSD)
+#if defined(LINUX) || defined(PLATFORM_BSD)
 		char caseFixedName[ MAX_PATH ];
 		bool found = findFileInDirCaseInsensitive_safe( pTmpFileName, caseFixedName );
 		if ( found && FS_stat( caseFixedName, &buf ) != -1 )

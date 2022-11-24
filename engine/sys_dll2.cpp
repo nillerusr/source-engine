@@ -15,7 +15,7 @@
 #include <Psapi.h>
 #endif
 
-#if defined( OSX ) || defined(BSD)
+#if defined( OSX ) || defined(PLATFORM_BSD)
 #include <sys/sysctl.h>
 #endif
 
@@ -278,7 +278,7 @@ static void posix_signal_handler( int i )
 #define DO_TRY		if ( sigsetjmp( g_mark, 1 ) == 0 )
 #define DO_CATCH	else
 
-#if defined( OSX ) || defined(BSD)
+#if defined( OSX ) || defined(PLATFORM_BSD)
 #define __sighandler_t sig_t
 #endif
 
@@ -537,7 +537,7 @@ public:
 			FreeLibrary( hInst );
 		}
 
-#elif defined( OSX ) || defined(BSD)
+#elif defined( OSX ) || defined(PLATFORM_BSD)
 
 		static const struct
 		{
@@ -548,7 +548,7 @@ public:
 		#define _XTAG( _x ) { _x, #_x }
 			_XTAG( HW_PHYSMEM ),
 			_XTAG( HW_USERMEM ),
-#ifdef BSD
+#ifdef PLATFORM_BSD
 			_XTAG( HW_PHYSMEM ),
 			_XTAG( HW_NCPU ),
 #else

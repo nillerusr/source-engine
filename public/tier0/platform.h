@@ -64,7 +64,7 @@
 
 #ifdef POSIX
 // need this for _alloca
-# ifdef BSD
+# ifdef PLATFORM_BSD
 #  define va_list __va_list
 # else
 #  include <alloca.h>
@@ -162,7 +162,7 @@
 		#define IsOSX() false
 	#endif
 
-	#ifdef BSD
+	#ifdef PLATFORM_BSD
 		#define IsBSD() true
 	#else
 		#define IsBSD() false
@@ -450,7 +450,7 @@ typedef void * HINSTANCE;
 #else
 	// On OSX, SIGTRAP doesn't really stop the thread cold when debugging.
 	// So if being debugged, use INT3 which is precise.
-#if defined(OSX) || defined(BSD)
+#if defined(OSX) || defined(PLATFORM_BSD)
 # if defined(__arm__) || defined(__aarch64__)
 #  ifdef __clang__
 #   define DebuggerBreak()  do { if ( Plat_IsInDebugSession() ) { __builtin_debugtrap(); } else { raise(SIGTRAP); } } while(0)
@@ -561,7 +561,7 @@ typedef void * HINSTANCE;
 //-----------------------------------------------------------------------------
 #if defined( GNUC )
 	#define stackalloc( _size )		alloca( ALIGN_VALUE( _size, 16 ) )
-#if defined(_LINUX) || defined(BSD)
+#if defined(_LINUX) || defined(PLATFORM_BSD)
 	#define mallocsize( _p )	( malloc_usable_size( _p ) )
 #elif defined(OSX)
 	#define mallocsize( _p )	( malloc_size( _p ) )
@@ -1388,7 +1388,7 @@ PLATFORM_INTERFACE void* Plat_SimpleLog( const tchar* file, int line );
 //-----------------------------------------------------------------------------
 // Returns true if debugger attached, false otherwise
 //-----------------------------------------------------------------------------
-#if defined(_WIN32) || defined(LINUX) || defined(OSX) || defined(BSD)
+#if defined(_WIN32) || defined(LINUX) || defined(OSX) || defined(PLATFORM_BSD)
 PLATFORM_INTERFACE bool Plat_IsInDebugSession();
 PLATFORM_INTERFACE void Plat_DebugString( const char * );
 #else

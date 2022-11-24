@@ -23,7 +23,7 @@
 //$ #include <uuid/uuid.h>
 #ifdef OSX
 #include <uuid/uuid.h>
-#elif defined(BSD)
+#elif defined(PLATFORM_BSD)
 #include <uuid.h>
 #else
 typedef unsigned char uuid_t[16];
@@ -398,7 +398,7 @@ public:
 			uuid_t newId;
 #ifdef OSX
 			uuid_generate( newId );
-#elif defined(BSD)
+#elif defined(PLATFORM_BSD)
 			uint32_t status;
 			uuid_create( &newId, &status );
 #endif

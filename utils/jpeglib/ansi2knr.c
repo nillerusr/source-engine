@@ -155,7 +155,7 @@ program under the GPL.
 
 /* Otherwise do it the hard way */
 
-# ifdef BSD
+# ifdef PLATFORM_BSD
 #  include <strings.h>
 # else
 #  ifdef VMS

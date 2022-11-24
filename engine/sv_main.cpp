@@ -2714,7 +2714,7 @@ bool CGameServer::SpawnServer( const char *szMapName, const char *szMapFile, con
 		event->SetString( "os", "LINUX" );
 #elif defined ( OSX )
 		event->SetString( "os", "OSX" );
-#elif defined(BSD)
+#elif defined(PLATFORM_BSD)
     event->SetString("os",
 #    ifdef __FreeBSD__
       "FreeBSD"

@@ -51,7 +51,7 @@ static inline uint64 diff(uint64 v1, uint64 v2)
 		return -d;
 }
 
-#if defined(OSX) || defined(BSD)
+#if defined(OSX) || defined(PLATFORM_BSD)
 
 // Mac or BSD
 uint64 GetCPUFreqFromPROC()
@@ -101,7 +101,7 @@ uint64 GetCPUFreqFromPROC()
 
 uint64 CalculateCPUFreq()
 {
-#if defined(__APPLE__) || defined(BSD)
+#if defined(__APPLE__) || defined(PLATFORM_BSD)
 	return GetCPUFreqFromPROC();
 #else
 	// Try to open cpuinfo_max_freq. If the kernel was built with cpu scaling support disabled, this will fail.
