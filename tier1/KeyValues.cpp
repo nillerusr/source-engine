@@ -2208,7 +2208,7 @@ bool EvaluateConditional( const char *str )
 		return IsWindows() ^ bNot;
 
 	if ( Q_stristr( str, "$OSX" ) )
-		return IsOSX() ^ bNot;
+		return bNot;
 
 	if ( Q_stristr( str, "$LINUX" ) )
 		return ( IsLinux() || IsBSD() || IsOSX() ) ^ bNot;
