@@ -51,6 +51,9 @@ def build(bld):
 
 	libs = []
 
+	if bld.env.DEST_OS == 'darwin':
+		libs += ['FOUNDATION', 'APPKIT', 'IOKIT']
+
 	bld.stlib(
 		source   = source,
 		target   = PROJECT_NAME,
