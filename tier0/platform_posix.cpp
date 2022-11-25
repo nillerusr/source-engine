@@ -781,7 +781,7 @@ static void InstallHooks( void )
 	__realloc_hook = ReallocHook;
 
 }
-#elif OSX || BSD
+#elif OSX || PLATFORM_BSD
 
 
 static void RemoveHooks( void )
