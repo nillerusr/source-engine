@@ -16,6 +16,7 @@
 #endif
 
 #if defined( OSX ) || defined(PLATFORM_BSD)
+#include <sys/types.h>
 #include <sys/sysctl.h>
 #endif
 
