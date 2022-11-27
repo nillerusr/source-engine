@@ -225,7 +225,7 @@ def define_platform(conf):
 		conf.env.append_unique('DEFINES', [
 			'POSIX=1', '_POSIX=1', 'PLATFORM_POSIX=1',
 			'GNUC', # but uses clang
-			'BSD=1',
+			'PLATFORM_BSD=1',
 			'_DLL_EXT=.so'
 		])
 

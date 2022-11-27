@@ -28,7 +28,7 @@
 #include "vgui_key_translation.h"
 #include "filesystem.h"
 
-#if defined(OSX) || defined(BSD)
+#if defined(OSX) || defined(PLATFORM_BSD)
 #include <sys/param.h>
 #include <sys/mount.h>
 #elif defined(LINUX)
@@ -292,7 +292,7 @@ void CSystem::ShellExecute(const char *command, const char *file)
 	if ( pid == 0 )
 	{
 		// Child
-#if defined(LINUX) || defined(BSD)
+#if defined(LINUX) || defined(PLATFORM_BSD)
 		// Escape steam runtime if necessary
 		const char *szSteamRuntime = getenv( "STEAM_RUNTIME" );
 		if ( szSteamRuntime )
@@ -587,7 +587,7 @@ int CSystem::GetAvailableDrives(char *buf, int bufLen)
 //-----------------------------------------------------------------------------
 double CSystem::GetFreeDiskSpace(const char *path)
 {
-#if __DARWIN_ONLY_64_BIT_INO_T || BSD
+#if __DARWIN_ONLY_64_BIT_INO_T || PLATFORM_BSD
     // MoeMod: newer macOS only support 64bit, so no statfs64 is provided
     struct statfs buf;
     int ret = statfs( path, &buf );

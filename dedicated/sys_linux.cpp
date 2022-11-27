@@ -12,7 +12,11 @@
 #include <stdarg.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#ifdef OSX
+#include <malloc/malloc.h>
+#else
 #include <malloc.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <dlfcn.h>

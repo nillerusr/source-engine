@@ -10,7 +10,7 @@
 #include <windows.h>
 #elif defined( OSX )
 #include <Carbon/Carbon.h>
-#elif defined( LINUX ) || defined(BSD)
+#elif defined( LINUX ) || defined(PLATFORM_BSD)
 //#error
 #elif defined( _X360 )
 #else

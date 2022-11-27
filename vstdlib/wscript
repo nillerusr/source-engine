@@ -53,7 +53,6 @@ def build(bld):
 	if bld.env.DEST_OS == 'android':
 		libs += ['ANDROID_SUPPORT']
 	elif bld.env.DEST_OS == 'darwin':
-		libs += ['ICONV', 'COREFOUNDATION']
 		linkflags += ['-framework', 'CoreServices']
 
 	install_path = bld.env.LIBDIR

@@ -12,7 +12,7 @@
 #elif defined(OSX)
 #include <Carbon/Carbon.h>
 #include <sys/sysctl.h>
-#elif defined(BSD)
+#elif defined(PLATFORM_BSD)
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #define HW_MEMSIZE HW_PHYSMEM
@@ -668,7 +668,7 @@ void Sys_InitMemory( void )
 #elif defined(POSIX)
 	uint64_t memsize = ONE_HUNDRED_TWENTY_EIGHT_MB;
 
-#if defined(OSX) || defined(BSD)
+#if defined(OSX) || defined(PLATFORM_BSD)
 	int mib[2] = { CTL_HW, HW_MEMSIZE };
 	u_int namelen = sizeof(mib) / sizeof(mib[0]);
 	size_t len = sizeof(memsize);
@@ -1586,7 +1586,7 @@ CON_COMMAND( star_memory, "Dump memory stats" )
 	struct mstats memstats = mstats( );
 	Msg( "Available %.2f MB, Used: %.2f MB, #mallocs = %lu\n",
 		 memstats.bytes_free / ( 1024.0 * 1024.0), memstats.bytes_used / ( 1024.0 * 1024.0 ), memstats.chunks_used );
-#elif BSD
+#elif PLATFORM_BSD
 # warning TODO: Implement memory stats (peace of sheet of course)
 #else // Win32
 	MEMORYSTATUS stat;

@@ -212,12 +212,6 @@ def build(bld):
 		if bld.env.DEST_OS != "darwin":
 			source += ['audio/snd_dev_sdl.cpp']
 	
-	if bld.env.DEST_OS == 'darwin':
-		source += [
-			'audio/snd_dev_openal.cpp', # [$OSXALL]
-			'audio/snd_dev_mac_audioqueue.cpp',#	[$OSXALL]
-			'audio/voice_record_mac_audioqueue.cpp',	#[$OSXALL]
-		]
 
 	if bld.env.DEST_OS == 'win32':
 		source += [	
@@ -343,6 +337,12 @@ def build(bld):
 				'audio/voice_mixer_controls_openal.cpp', #[$OSXALL||$LINUXALL]
 				'audio/voice_record_openal.cpp' #[$OSXALL||$LINUXALL]
 			]
+		if bld.env.DEST_OS == 'darwin':
+			source += [
+				'audio/snd_dev_openal.cpp', # [$OSXALL]
+				'audio/snd_dev_mac_audioqueue.cpp',#	[$OSXALL]
+				'audio/voice_record_mac_audioqueue.cpp',	#[$OSXALL]
+			]
 
 	includes = [
 		'.',
@@ -363,7 +363,7 @@ def build(bld):
 		libs += ['SSL', 'CRYPTO'] # android curl was built with openssl
 	elif bld.env.DEST_OS == 'win32':
 		libs += ['USER32', 'WINMM', 'WININET', 'DSOUND', 'DXGUID', 'GDI32', 'bzip2']
-	elif bld.env.DEST_OS == 'darwin':
+	elif bld.env.DEST_OS == 'darwin' and not bld.env.DEDICATED:
 		libs += ['APPKIT', 'COREAUDIO', 'AUDIOTOOLBOX', 'SYSTEMCONFIGURATION']
 		
 	install_path = bld.env.LIBDIR
