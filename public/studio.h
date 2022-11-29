@@ -67,26 +67,26 @@ Studio models are position independent, so the cache manager can move them.
 ==============================================================================
 */
 
-#define STUDIO_VERSION		48
+#define STUDIO_VERSION		49
 
 #ifndef _XBOX
 #define MAXSTUDIOTRIANGLES	65536	// TODO: tune this
 #define MAXSTUDIOVERTS		65536	// TODO: tune this
 #define	MAXSTUDIOFLEXVERTS	10000	// max number of verts that can be flexed per mesh.  TODO: tune this
 #else
-#define MAXSTUDIOTRIANGLES	25000
-#define MAXSTUDIOVERTS		10000
-#define	MAXSTUDIOFLEXVERTS	1000
+#define MAXSTUDIOTRIANGLES	65536
+#define MAXSTUDIOVERTS		32768
+#define	MAXSTUDIOFLEXVERTS	5000
 #endif
 #define MAXSTUDIOSKINS		32		// total textures
-#define MAXSTUDIOBONES		128		// total bones actually used
+#define MAXSTUDIOBONES		256		// total bones actually used
 #define MAXSTUDIOFLEXDESC	1024	// maximum number of low level flexes (actual morph targets)
 #define MAXSTUDIOFLEXCTRL	96		// maximum number of flexcontrollers (input sliders)
 #define MAXSTUDIOPOSEPARAM	24
 #define MAXSTUDIOBONECTRLS	5
 #define MAXSTUDIOANIMBLOCKS 256
 
-#define MAXSTUDIOBONEBITS	7		// NOTE: MUST MATCH MAXSTUDIOBONES
+#define MAXSTUDIOBONEBITS	8		// NOTE: MUST MATCH MAXSTUDIOBONES
 
 // NOTE!!! : Changing this number also changes the vtx file format!!!!!
 #define MAX_NUM_BONES_PER_VERT 3
@@ -3101,7 +3101,7 @@ inline const mstudioflexcontroller_t *mstudioflexcontrollerui_t::pController( in
 // If we only support the current version, this function should be empty.
 inline bool Studio_ConvertStudioHdrToNewVersion( studiohdr_t *pStudioHdr )
 {
-	COMPILE_TIME_ASSERT( STUDIO_VERSION == 48 ); //  put this to make sure this code is updated upon changing version.
+	COMPILE_TIME_ASSERT( STUDIO_VERSION == 49 ); //  put this to make sure this code is updated upon changing version.
 
 	int version = pStudioHdr->version;
 	if ( version == STUDIO_VERSION )
@@ -3143,7 +3143,7 @@ inline bool Studio_ConvertStudioHdrToNewVersion( studiohdr_t *pStudioHdr )
 			pAnim->zeroframeindex = 0;
 			pAnim->zeroframespan = 0;
 		}
-	} 
+	}
 	else if (version == 47)
 	{
 		for (int i = 0; i < pStudioHdr->numlocalanim; i++)
@@ -3159,7 +3159,9 @@ inline bool Studio_ConvertStudioHdrToNewVersion( studiohdr_t *pStudioHdr )
 	}
 
 	// for now, just slam the version number since they're compatible
-	pStudioHdr->version = STUDIO_VERSION;
+
+	// nillerusr: that's stupid, comment this shit
+	//pStudioHdr->version = STUDIO_VERSION;
 
 	return bResult;
 }

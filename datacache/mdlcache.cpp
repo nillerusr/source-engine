@@ -1680,6 +1680,36 @@ bool CMDLCache::BuildHardwareData( MDLHandle_t handle, studiodata_t *pStudioData
 
 	Assert( GetVertexData( handle ) );
 
+	if( pStudioHdr->version == 49 )
+	{
+		for( int i = 0; i < pVtxHdr->numBodyParts; i++)
+		{
+			OptimizedModel::BodyPartHeader_t *pBodyPartHdr = pVtxHdr->pBodyPart(i);
+
+			for( int j = 0; j < pBodyPartHdr->numModels; j++ )
+			{
+				OptimizedModel::ModelHeader_t *pModelHdr = pBodyPartHdr->pModel(j);
+
+				for( int k = 0; k < pModelHdr->numLODs; k++)
+				{
+					OptimizedModel::ModelLODHeader_t *pModelLODHdr = pModelHdr->pLOD(k);
+
+					for( int l = 0; l < pModelLODHdr->numMeshes; l++ )
+					{
+						OptimizedModel::MeshHeader_t *pMeshHdr = pModelLODHdr->pMesh(l);
+						pMeshHdr->flags |= OptimizedModel::MESH_IS_MDL49;
+
+						for( int m = 0; m < pMeshHdr->numStripGroups; m++ )
+						{
+							OptimizedModel::StripGroupHeader_t *pStripGroupHdr = pMeshHdr->pStripGroup(m);
+							pStripGroupHdr->flags |= OptimizedModel::STRIPGROUP_IS_MDL49;
+						}
+					}
+				}
+			}
+		}
+	}
+
 	BeginLock();
 	bool bLoaded = g_pStudioRender->LoadModel( pStudioHdr, pVtxHdr, &pStudioData->m_HardwareData );
 	EndLock();

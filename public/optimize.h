@@ -56,8 +56,6 @@ enum StripHeaderFlags_t {
 	STRIP_IS_TRISTRIP	= 0x02
 };
 
-// a strip is a piece of a stripgroup that is divided by bones 
-// (and potentially tristrips if we remove some degenerates.)
 struct StripHeader_t
 {
 	DECLARE_BYTESWAP_DATADESC();
@@ -84,12 +82,42 @@ struct StripHeader_t
 	};
 };
 
+struct StripHeader_v49_t
+{
+	DECLARE_BYTESWAP_DATADESC();
+	// indexOffset offsets into the mesh's index array.
+	int numIndices;
+	int indexOffset;
+
+	// vertexOffset offsets into the mesh's vert array.
+	int numVerts;
+	int vertOffset;
+
+	// use this to enable/disable skinning.  
+	// May decide (in optimize.cpp) to put all with 1 bone in a different strip 
+	// than those that need skinning.
+	short numBones;  
+	
+	unsigned char flags;
+	
+	int numBoneStateChanges;
+	int boneStateChangeOffset;
+	inline BoneStateChangeHeader_t *pBoneStateChange( int i ) const 
+	{ 
+		return (BoneStateChangeHeader_t *)(((byte *)this) + boneStateChangeOffset) + i; 
+	};
+
+	int numTopologyIndices;
+	int topologyOffset;
+};
+
 enum StripGroupFlags_t 
 {
 	STRIPGROUP_IS_FLEXED		= 0x01,
 	STRIPGROUP_IS_HWSKINNED		= 0x02,
 	STRIPGROUP_IS_DELTA_FLEXED	= 0x04,
 	STRIPGROUP_SUPPRESS_HW_MORPH = 0x08,	// NOTE: This is a temporary flag used at run time.
+	STRIPGROUP_IS_MDL49 = 0x80
 };
 
 // a locking group
@@ -117,16 +145,51 @@ struct StripGroupHeader_t
 	int stripOffset;
 	inline StripHeader_t *pStrip( int i ) const 
 	{ 
-		return (StripHeader_t *)(((byte *)this) + stripOffset) + i; 
+		if( flags & STRIPGROUP_IS_MDL49 )
+			return (StripHeader_t *)((StripHeader_v49_t *)(((byte *)this) + stripOffset) + i);
+		else
+			return (StripHeader_t *)(((byte *)this) + stripOffset) + i; 
 	};
 
 	unsigned char flags;
 };
 
+struct StripGroupHeader_v49_t
+{
+	DECLARE_BYTESWAP_DATADESC();
+	// These are the arrays of all verts and indices for this mesh.  strips index into this.
+	int numVerts;
+	int vertOffset;
+	inline Vertex_t *pVertex( int i ) const 
+	{ 
+		return (Vertex_t *)(((byte *)this) + vertOffset) + i; 
+	};
+
+	int numIndices;
+	int indexOffset;
+	inline unsigned short *pIndex( int i ) const 
+	{ 
+		return (unsigned short *)(((byte *)this) + indexOffset) + i; 
+	};
+
+	int numStrips;
+	int stripOffset;
+	inline StripHeader_v49_t *pStrip( int i ) const 
+	{ 
+		return (StripHeader_v49_t *)(((byte *)this) + stripOffset) + i; 
+	};
+
+	unsigned char flags;
+
+	int numTopologyIndices;
+	int topologyOffset;
+};
+
 enum MeshFlags_t { 
 	// these are both material properties, and a mesh has a single material.
-	MESH_IS_TEETH	= 0x01, 
-	MESH_IS_EYES	= 0x02
+	MESH_IS_TEETH	= 0x01,
+	MESH_IS_EYES	= 0x02,
+	MESH_IS_MDL49 = 0x80
 };
 
 // a collection of locking groups:
@@ -144,8 +207,10 @@ struct MeshHeader_t
 	int stripGroupHeaderOffset;
 	inline StripGroupHeader_t *pStripGroup( int i ) const 
 	{ 
-		StripGroupHeader_t *pDebug = (StripGroupHeader_t *)(((byte *)this) + stripGroupHeaderOffset) + i; 
-		return pDebug;
+		if( flags & STRIPGROUP_IS_MDL49 )
+			return (StripGroupHeader_t *)((StripGroupHeader_v49_t *)(((byte *)this) + stripGroupHeaderOffset) + i);
+		else
+			return (StripGroupHeader_t *)(((byte *)this) + stripGroupHeaderOffset) + i; 
 	};
 	unsigned char flags;
 };
