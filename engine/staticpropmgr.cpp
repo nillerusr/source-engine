@@ -535,12 +535,12 @@ bool CStaticProp::Init( int index, StaticPropLump_t &lump, model_t *pModel )
 	m_Flags = ( lump.m_Flags & (STATIC_PROP_SCREEN_SPACE_FADE | STATIC_PROP_FLAG_FADES | STATIC_PROP_NO_PER_VERTEX_LIGHTING) );
 
 	int nCurrentDXLevel = g_pMaterialSystemHardwareConfig->GetDXSupportLevel();
-	bool bNoDraw = ( lump.m_nMinDXLevel && lump.m_nMinDXLevel >	nCurrentDXLevel );
+/*	bool bNoDraw = ( lump.m_nMinDXLevel && lump.m_nMinDXLevel >	nCurrentDXLevel );
 	bNoDraw = bNoDraw || ( lump.m_nMaxDXLevel && lump.m_nMaxDXLevel < nCurrentDXLevel );
 	if ( bNoDraw )
 	{
 		m_Flags |= STATIC_PROP_NO_DRAW;
-	}
+	}*/
 
 	// Cache the model to world matrix since it never changes.
 	AngleMatrix( lump.m_Angles, lump.m_Origin, m_ModelToWorld );
@@ -1328,24 +1328,70 @@ void CStaticPropMgr::UnserializeModels( CUtlBuffer& buf )
 
 	// Gotta preallocate the static props here so no rellocations take place
 	// the leaf list stores pointers to these tricky little guys.
-	m_StaticProps.AddMultipleToTail(count);
+	bool bSkip = false;
+	m_StaticProps.EnsureCapacity(count);
 	for ( int i = 0; i < count; ++i )
 	{
+		// Reset every loop.
+		bSkip = false;
+
 		StaticPropLump_t lump;
 		switch ( nLumpVersion )
 		{
-			case 4: UnserializeLump<StaticPropLumpV4_t>(&lump, buf); break;
-			case 5: UnserializeLump<StaticPropLumpV5_t>(&lump, buf); break;
-			case 6: UnserializeLump<StaticPropLumpV6_t>(&lump, buf); break;
-			case 7: // Falls down to version 10. We promoted TF to version 10 to deal with SFM. 
-			case 10: UnserializeLump<StaticPropLump_t>(&lump, buf); break;
+		case 4:
+			buf.Get( &lump, sizeof(StaticPropLumpV4_t) );
+			lump.m_flForcedFadeScale = 1.0f;
+			lump.m_nMinCPULevel = lump.m_nMaxCPULevel = lump.m_nMinGPULevel = lump.m_nMaxGPULevel = 0;
+			lump.m_DiffuseModulation.r = lump.m_DiffuseModulation.g = lump.m_DiffuseModulation.b = lump.m_DiffuseModulation.a = 255; // default color/alpha modulation to identity
+			lump.m_bDisableX360 = false;
+			lump.m_FlagsEx = 0;
+			break;
 
-				break;
-			default:
-				Assert("Unexpected version while deserializing lumps.");
+		case 5:
+			buf.Get( &lump, sizeof(StaticPropLumpV5_t) );
+			lump.m_nMinCPULevel = lump.m_nMaxCPULevel = lump.m_nMinGPULevel = lump.m_nMaxGPULevel = 0;
+			lump.m_DiffuseModulation.r = lump.m_DiffuseModulation.g = lump.m_DiffuseModulation.b = lump.m_DiffuseModulation.a = 255; // default color/alpha modulation to identity
+			lump.m_bDisableX360 = false;
+			lump.m_FlagsEx = 0;
+			break;
+
+		case 6:
+			buf.Get( &lump, sizeof( StaticPropLumpV6_t ) );
+			lump.m_nMinCPULevel = lump.m_nMaxCPULevel = lump.m_nMinGPULevel = lump.m_nMaxGPULevel = 0;
+			lump.m_DiffuseModulation.r = lump.m_DiffuseModulation.g = lump.m_DiffuseModulation.b = lump.m_DiffuseModulation.a = 255; // default color/alpha modulation to identity
+			lump.m_bDisableX360 = false;
+			lump.m_FlagsEx = 0;
+			break;
+
+		case 7:
+			buf.Get( &lump, sizeof( StaticPropLumpV7_t ) );
+			lump.m_nMinCPULevel = lump.m_nMaxCPULevel = lump.m_nMinGPULevel = lump.m_nMaxGPULevel = 0;
+			lump.m_bDisableX360 = false;
+			lump.m_FlagsEx = 0;
+			break;
+
+		case 8:
+			buf.Get( &lump, sizeof( StaticPropLumpV8_t ) );
+			lump.m_bDisableX360 = false;
+			lump.m_FlagsEx = 0;
+			break;
+
+		case 9:
+			buf.Get( &lump, sizeof( StaticPropLumpV9_t ) );
+			lump.m_FlagsEx = 0;
+			break;
+
+		case 10:
+			buf.Get( &lump, sizeof( StaticPropLumpV10_t ) );
+			break;
+
+		case 11:
+			buf.Get( &lump, sizeof( StaticPropLump_t ) );
+			break;
 		}
 
-		m_StaticProps[i].Init( i, lump, m_StaticPropDict[lump.m_PropType].m_pModel );
+		int j = m_StaticProps.AddToTail();
+		m_StaticProps[j].Init( j, lump, m_StaticPropDict[lump.m_PropType].m_pModel );
 
 		// For distance-based fading, keep a list of the things that need
 		// to be faded out. Not sure if this is the optimal way of doing it

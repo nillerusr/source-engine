@@ -1143,9 +1143,55 @@ void Mod_LoadWorldlights( CMapLoadHelper &lh, bool bIsHDR )
 		lh.GetMap()->worldlights = NULL;
 		return;
 	}
-	lh.GetMap()->numworldlights = lh.LumpSize() / sizeof( dworldlight_t );
-	lh.GetMap()->worldlights = (dworldlight_t *)Hunk_AllocName( lh.LumpSize(), va( "%s [%s]", lh.GetLoadName(), "worldlights" ) );
-	memcpy (lh.GetMap()->worldlights, lh.LumpBase(), lh.LumpSize());
+
+	switch ( lh.LumpVersion() )
+	{
+		case LUMP_WORLDLIGHTS_VERSION:
+		{
+			lh.GetMap()->numworldlights = lh.LumpSize() / sizeof( dworldlight_t );
+			lh.GetMap()->worldlights = (dworldlight_t *)Hunk_AllocName( lh.LumpSize(), va( "%s [%s]", lh.GetLoadName(), "worldlights" ) );
+			memcpy( lh.GetMap()->worldlights, lh.LumpBase(), lh.LumpSize() );
+			break;
+		}
+
+		case 0:
+		{
+			int nNumWorldLights = lh.LumpSize() / sizeof( dworldlight_version0_t );
+			lh.GetMap()->numworldlights = nNumWorldLights;
+			lh.GetMap()->worldlights = (dworldlight_t *)Hunk_AllocName( nNumWorldLights * sizeof( dworldlight_t ), va( "%s [%s]", lh.GetLoadName(), "worldlights" ) );
+			dworldlight_version0_t* RESTRICT pOldWorldLight = reinterpret_cast<dworldlight_version0_t*>( lh.LumpBase() );
+			dworldlight_t* RESTRICT pNewWorldLight = lh.GetMap()->worldlights;
+
+			for ( int i = 0; i < nNumWorldLights; i++ )
+			{
+				pNewWorldLight->origin			= pOldWorldLight->origin;
+				pNewWorldLight->intensity		= pOldWorldLight->intensity;
+				pNewWorldLight->normal			= pOldWorldLight->normal;
+				pNewWorldLight->shadow_cast_offset.Init( 0.0f, 0.0f, 0.0f );
+				pNewWorldLight->cluster			= pOldWorldLight->cluster;
+				pNewWorldLight->type			= pOldWorldLight->type;
+				pNewWorldLight->style			= pOldWorldLight->style;
+				pNewWorldLight->stopdot			= pOldWorldLight->stopdot;
+				pNewWorldLight->stopdot2		= pOldWorldLight->stopdot2;
+				pNewWorldLight->exponent		= pOldWorldLight->exponent;
+				pNewWorldLight->radius			= pOldWorldLight->radius;
+				pNewWorldLight->constant_attn	= pOldWorldLight->constant_attn;	
+				pNewWorldLight->linear_attn		= pOldWorldLight->linear_attn;
+				pNewWorldLight->quadratic_attn	= pOldWorldLight->quadratic_attn;
+				pNewWorldLight->flags			= pOldWorldLight->flags;
+				pNewWorldLight->texinfo			= pOldWorldLight->texinfo;
+				pNewWorldLight->owner			= pOldWorldLight->owner;
+				pNewWorldLight++;
+				pOldWorldLight++;
+			}
+			break;
+		}
+
+		default:
+			Host_Error( "Invalid worldlight lump version!\n" );
+			break;
+	}
+
 #if !defined( SWDS )
 	if ( r_lightcache_zbuffercache.GetInt() )
 	{

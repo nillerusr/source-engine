@@ -22,7 +22,7 @@
 
 // MINBSPVERSION is the minimum acceptable version.  The engine will load MINBSPVERSION through BSPVERSION
 #define MINBSPVERSION 19
-#define BSPVERSION 20
+#define BSPVERSION 21
 
 
 // This needs to match the value in gl_lightmap.h
@@ -62,7 +62,7 @@
 #define	MAX_MAP_ENTITIES				8192
 #define	MAX_MAP_TEXINFO					12288
 #define MAX_MAP_TEXDATA					2048
-#define MAX_MAP_DISPINFO				2048
+#define MAX_MAP_DISPINFO				10240
 #define MAX_MAP_DISP_VERTS				( MAX_MAP_DISPINFO * ((1<<MAX_MAP_DISP_POWER)+1) * ((1<<MAX_MAP_DISP_POWER)+1) )
 #define MAX_MAP_DISP_TRIS				( (1 << MAX_MAP_DISP_POWER) * (1 << MAX_MAP_DISP_POWER) * 2 )
 #define MAX_DISPVERTS					NUM_DISP_POWER_VERTS( MAX_MAP_DISP_POWER )
@@ -364,6 +364,7 @@ enum
 	LUMP_OCCLUSION_VERSION         = 2,
 	LUMP_LEAFS_VERSION			   = 1,
 	LUMP_LEAF_AMBIENT_LIGHTING_VERSION = 1,
+	LUMP_WORLDLIGHTS_VERSION           = 1
 };
 
 
@@ -966,7 +967,31 @@ enum emittype_t
 
 // Flags for dworldlight_t::flags
 #define DWL_FLAGS_INAMBIENTCUBE		0x0001	// This says that the light was put into the per-leaf ambient cubes.
+#define DWL_FLAGS_CASTENTITYSHADOWS	0x0002	// This says that the light will cast shadows from entities
 
+// Old version of the worldlight struct, used for backward compatibility loading.
+struct dworldlight_version0_t
+{
+	DECLARE_BYTESWAP_DATADESC();
+	Vector		origin;
+	Vector		intensity;
+	Vector		normal;			// for surfaces and spotlights
+	int			cluster;
+	emittype_t	type;
+	int			style;
+	float		stopdot;		// start of penumbra for emit_spotlight
+	float		stopdot2;		// end of penumbra for emit_spotlight
+	float		exponent;		// 
+	float		radius;			// cutoff distance
+	// falloff for emit_spotlight + emit_point: 
+	// 1 / (constant_attn + linear_attn * dist + quadratic_attn * dist^2)
+	float		constant_attn;	
+	float		linear_attn;
+	float		quadratic_attn;
+	int			flags;			// Uses a combination of the DWL_FLAGS_ defines.
+	int			texinfo;		// 
+	int			owner;			// entity that this light it relative to
+};
 
 struct dworldlight_t
 {
@@ -974,6 +999,7 @@ struct dworldlight_t
 	Vector		origin;
 	Vector		intensity;
 	Vector		normal;			// for surfaces and spotlights
+	Vector		shadow_cast_offset;	// gets added to the light origin when this light is used as a shadow caster (only if DWL_FLAGS_CASTENTITYSHADOWS flag is set)
 	int			cluster;
 	emittype_t	type;
     int			style;
