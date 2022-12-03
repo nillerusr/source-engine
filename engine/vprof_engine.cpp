@@ -328,42 +328,6 @@ CON_COMMAND( vprof_dump_groupnames, "Write the names of all of the vprof groups 
 	}
 }
 
-DEFERRED_CON_COMMAND( vprof_cachemiss, "Toggle VProf cache miss checking" )
-{
-	if ( !g_fVprofCacheMissOnByUI )
-	{
-		Msg("VProf cache miss enabled.\n");
-		g_VProfCurrentProfile.PMEEnable( true );
-		g_fVprofCacheMissOnByUI = true;
-	}
-	else
-	{
-		Msg("VProf cache miss disabled.\n");
-		g_VProfCurrentProfile.PMEEnable( false );
-		g_fVprofCacheMissOnByUI = false;
-	}
-}
-
-DEFERRED_CON_COMMAND( vprof_cachemiss_on, "Turn on VProf cache miss checking" )
-{
-	if ( !g_fVprofCacheMissOnByUI )
-	{
-		Msg("VProf cache miss enabled.\n");
-		g_VProfCurrentProfile.PMEEnable( true );
-		g_fVprofCacheMissOnByUI = true;
-	}
-}
-
-DEFERRED_CON_COMMAND( vprof_cachemiss_off, "Turn off VProf cache miss checking" )
-{
-	if ( g_fVprofCacheMissOnByUI )
-	{
-		Msg("VProf cache miss disabled.\n");
-		g_VProfCurrentProfile.PMEEnable( false );
-		g_fVprofCacheMissOnByUI = false;
-	}
-}
-
 DEFERRED_CON_COMMAND( vprof, "Toggle VProf profiler" )
 {
 	if ( !g_fVprofOnByUI )
@@ -408,30 +372,6 @@ DEFERRED_CON_COMMAND( vprof_novsync_off, "Leaves vsync on when vxconsole brings 
 DEFERRED_CON_COMMAND( vprof_show_time, "Shows time in vprof" )
 {
 	g_VProfCurrentProfile.VXConsoleReportMode( CVProfile::VXCONSOLE_REPORT_TIME );
-}
-
-DEFERRED_CON_COMMAND( vprof_show_cachemiss, "Shows cachemisses in vprof" )
-{
-	if ( !g_fVprofCacheMissOnByUI )
-	{
-		Msg("VProf cache miss enabled.\n");
-		g_VProfCurrentProfile.PMEEnable( true );
-		g_fVprofCacheMissOnByUI = true;
-	}
-
-	g_VProfCurrentProfile.VXConsoleReportMode( CVProfile::VXCONSOLE_REPORT_L2CACHE_MISSES );
-}
-
-DEFERRED_CON_COMMAND( vprof_show_loadhitstore, "Shows load-hit-stores in vprof" )
-{
-	if ( !g_fVprofCacheMissOnByUI )
-	{
-		Msg("VProf cache miss enabled.\n");
-		g_VProfCurrentProfile.PMEEnable( true );
-		g_fVprofCacheMissOnByUI = true;
-	}
-
-	g_VProfCurrentProfile.VXConsoleReportMode( CVProfile::VXCONSOLE_REPORT_LOAD_HIT_STORE );
 }
 
 DEFERRED_CON_COMMAND( vprof_time_scale, "Scale used when displaying time (0 = use default)" )

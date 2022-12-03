@@ -34,7 +34,6 @@
 
 #include "tier0/valve_on.h"
 #include "tier0/vprof.h"
-#include "tier0/l2cache.h"
 #include "tier0/tslist.h"
 #include "tier0/dynfunction.h"
 
@@ -112,12 +111,7 @@ void CVProfNode::EnterScope()
 	if ( m_nRecursions++ == 0 ) 
 	{
 		m_Timer.Start();
-#ifndef _X360
-		if ( g_VProfCurrentProfile.UsePME() )
-		{
-			m_L2Cache.Start();
-		}
-#else // 360 code:
+#ifdef _X360
 		if ( g_VProfCurrentProfile.UsePME() || ((m_iBitFlags & kRecordL2) != 0) ) 
 		{
 			m_PMCData.Start();
@@ -160,13 +154,7 @@ bool CVProfNode::ExitScope()
 	{
 		m_Timer.End();
 		m_CurFrameTime += m_Timer.GetDuration();
-#ifndef _X360
-		if ( g_VProfCurrentProfile.UsePME() )
-		{
-			m_L2Cache.End();
-			m_iCurL2CacheMiss += m_L2Cache.GetL2CacheMisses();
-		}
-#else // 360 code:
+#ifdef _X360
 		if ( g_VProfCurrentProfile.UsePME() || ((m_iBitFlags & kRecordL2) != 0) ) 
 		{
 			m_PMCData.End();
@@ -270,13 +258,7 @@ void CVProfNode::Pause()
 		m_Timer.End();
 		m_CurFrameTime += m_Timer.GetDuration();
 
-#ifndef _X360
-		if ( g_VProfCurrentProfile.UsePME() )
-		{
-			m_L2Cache.End();
-			m_iCurL2CacheMiss += m_L2Cache.GetL2CacheMisses();
-		}
-#else // 360 code:
+#ifdef _X360
 		if ( g_VProfCurrentProfile.UsePME() || ((m_iBitFlags & kRecordL2) != 0) ) 
 		{
 			m_PMCData.End();
@@ -303,12 +285,7 @@ void CVProfNode::Resume()
 	{
 		m_Timer.Start();
 
-#ifndef _X360
-		if ( g_VProfCurrentProfile.UsePME() )
-		{
-			m_L2Cache.Start();
-		}
-#else
+#ifdef _X360
 		if ( g_VProfCurrentProfile.UsePME() || ((m_iBitFlags & kRecordL2) != 0) ) 
 		{
 			m_PMCData.Start();
@@ -340,10 +317,6 @@ void CVProfNode::Reset()
 	
 	m_PeakTime.Init();
 
-	m_iPrevL2CacheMiss = 0;
-	m_iCurL2CacheMiss = 0;
-	m_iTotalL2CacheMiss = 0;
-
 #ifdef _X360
 	m_iPrevLoadHitStores = 0;
 	m_iCurLoadHitStores = 0;
@@ -367,7 +340,6 @@ void CVProfNode::MarkFrame()
 {
 	m_nPrevFrameCalls = m_nCurFrameCalls;
 	m_PrevFrameTime = m_CurFrameTime;
-	m_iPrevL2CacheMiss = m_iCurL2CacheMiss;
 #ifdef _X360
 	m_iPrevLoadHitStores = m_iCurLoadHitStores;
 #endif
@@ -381,8 +353,6 @@ void CVProfNode::MarkFrame()
 	
 	m_CurFrameTime.Init();
 	m_nCurFrameCalls = 0;
-	m_iTotalL2CacheMiss += m_iCurL2CacheMiss;
-	m_iCurL2CacheMiss = 0;
 #ifdef _X360
 	m_iTotalLoadHitStores += m_iCurLoadHitStores;
 	m_iCurLoadHitStores = 0;
@@ -428,8 +398,6 @@ void CVProfNode::SetCurFrameTime( unsigned long milliseconds )
 void CVProfNode::Validate( CValidator &validator, tchar *pchName )
 {
 	validator.Push( _T("CVProfNode"), this, pchName );
-
-	m_L2Cache.Validate( validator, _T("m_L2Cache") );
 
 	if ( m_pSibling )
 		m_pSibling->Validate( validator, _T("m_pSibling") );

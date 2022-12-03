@@ -40,7 +40,7 @@ BOOL WINAPI DllMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
 	{
 //		ivp_set_message_print_function( ivu_string_print_function );
 
-		MathLib_Init( 2.2f, 2.2f, 0.0f, 2.0f, false, false, false, false );
+		MathLib_Init( 2.2f, 2.2f, 0.0f, 2.0f, false, false, false );
 		// store out module handle
 		//gPhysicsDLLHandle = (HMODULE)hinstDLL;
 	}
@@ -58,7 +58,7 @@ void vphysics_init(void)
 {
 //	ivp_set_message_print_function( ivu_string_print_function );
 
-	MathLib_Init( 2.2f, 2.2f, 0.0f, 2.0f, false, false, false, false );
+	MathLib_Init( 2.2f, 2.2f, 0.0f, 2.0f, false, false, false );
 }
 #endif
 

@@ -169,10 +169,6 @@ public:
 
 };
 
-#include "P5P6PerformanceCounters.h"    
-#include "P4PerformanceCounters.h"    
-#include "K8PerformanceCounters.h"    
-
 enum PerfErrors
 {
     E_UNKNOWN_CPU_VENDOR	= -1,

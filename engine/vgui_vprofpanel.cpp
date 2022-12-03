@@ -604,8 +604,7 @@ void CVProfPanel::PerformLayout()
 	Q_snprintf( header, sizeof( header ), DATA_FMT_STR,
 		"Frame Calls + Time + NoChild",
 		"Avg Calls   + Time + NoChild",
-		"Sum Calls   + Time + NoChild + Peak",
-		"L2Miss" );
+		"Sum Calls   + Time + NoChild + Peak" );
 
 	m_pHierarchy->SetColumnInfo( 2, header, 775, CTreeViewListControl::CI_HEADER_LEFTALIGN );
 }
@@ -895,7 +894,6 @@ int CVProfPanel::UpdateVProfTreeEntry( KeyValues *pKeyValues, CVProfNode *pNode,
 	CFmtStrN< 256 > frame;
 	CFmtStrN< 256 > avgstr;
 	CFmtStrN< 256 > sum;
-	CFmtStrN< 256 > l2miss;
 
 	frame.sprintf( "[%4d] %7.2f %7.2f", pNode->GetCurCalls(), pNode->GetCurTime(), curTimeLessChildren );
 	
@@ -912,16 +910,10 @@ int CVProfPanel::UpdateVProfTreeEntry( KeyValues *pKeyValues, CVProfNode *pNode,
 		sum.sprintf( "[%7d] %9.2f %9.2f %8.2fp", pNode->GetTotalCalls(), pNode->GetTotalTime(), pNode->GetTotalTimeLessChildren(), pNode->GetPeakTime() );
 	}
 
-	if ( m_pVProfile->UsePME() )
-	{
-		l2miss.sprintf( "%5d", pNode->GetL2CacheMisses() );
-	}
-
 	msg.sprintf( DATA_FMT_STR,
 		(const char *)frame,
 		(const char *)avgstr,
-		(const char *)sum,
-		(const char *)l2miss );
+		(const char *)sum );
 	pKeyValues->SetString( "data", msg );
 
 	pKeyValues->SetFloat( "Time", avgLessChildren );

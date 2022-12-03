@@ -270,27 +270,6 @@ bool CheckSSE4aTechnology( void )
 #endif
 }
 
-
-static bool Check3DNowTechnology(void)
-{
-#if defined( _X360 ) || defined( _PS3 ) || defined (__arm__) || defined(__SANITIZE_ADDRESS__) || (defined(PLATFORM_BSD) && defined(COMPILER_CLANG))
-	return false;
-#else
-	uint32 eax, unused;
-    if ( !cpuid(0x80000000,eax,unused,unused,unused) )
-		return false;
-
-    if ( eax > 0x80000000L )
-    {
-     	if ( !cpuid(0x80000001,unused,unused,unused,eax) )
-			return false;
-
-		return ( eax & 1<<31 ) != 0;
-    }
-    return false;
-#endif
-}
-
 static bool CheckCMOVTechnology()
 {
 #if defined( _X360 ) || defined( _PS3 ) || defined (__arm__) || defined(__SANITIZE_ADDRESS__)
@@ -603,11 +582,10 @@ const CPUInformation* GetCPUInformation()
 	pi.m_bSSE          = CheckSSETechnology();
 	pi.m_bSSE2         = CheckSSE2Technology();
 	pi.m_bSSE3         = CheckSSE3Technology();
-	pi.m_bSSSE3		   = CheckSSSE3Technology();
+	pi.m_bSSSE3        = CheckSSSE3Technology();
 	pi.m_bSSE4a        = CheckSSE4aTechnology();
 	pi.m_bSSE41        = CheckSSE41Technology();
 	pi.m_bSSE42        = CheckSSE42Technology();
-	pi.m_b3DNow        = Check3DNowTechnology();
 	pi.m_szProcessorID = (tchar*)GetProcessorVendorId();
 	pi.m_bHT		   = HTSupported();
 

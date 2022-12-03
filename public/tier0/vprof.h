@@ -10,7 +10,6 @@
 
 #include "tier0/dbg.h"
 #include "tier0/fasttimer.h"
-#include "tier0/l2cache.h"
 #include "tier0/threadtools.h"
 #include "tier0/vprof_telemetry.h"
 
@@ -303,12 +302,9 @@ public:
 	double GetPrevTimeLessChildren();
 	double GetTotalTimeLessChildren();
 
-	int GetPrevL2CacheMissLessChildren();
 	int GetPrevLoadHitStoreLessChildren();
 
 	void ClearPrevTime();
-
-	int GetL2CacheMisses();
 
 	// Not used in the common case...
 	void SetCurFrameTime( unsigned long milliseconds );
@@ -341,15 +337,7 @@ private:
 	const tchar *m_pszName;
 	CFastTimer	m_Timer;
 
-	// L2 Cache data.
-	int			m_iPrevL2CacheMiss;
-	int			m_iCurL2CacheMiss;
-	int			m_iTotalL2CacheMiss;
-
-#ifndef _X360	
-	// L2 Cache data.
-	CL2Cache	m_L2Cache;
-#else // 360:
+#ifdef _X360
 	
 	unsigned int m_iBitFlags; // see enum below for settings
 	CPMCData	m_PMCData;
@@ -471,10 +459,6 @@ public:
 	void VXProfileUpdate();
 	void VXEnableUpdateMode( int event, bool bEnable );
 	void VXSendNodes( void );
-	
-	void PMCDisableAllNodes(CVProfNode *pStartNode = NULL);  ///< turn off l2 and lhs recording for everywhere
-	bool PMCEnableL2Upon(const tchar *pszNodeName, bool bRecursive = false); ///< enable l2 and lhs recording for one given node
-	bool PMCDisableL2Upon(const tchar *pszNodeName, bool bRecursive = false); ///< enable l2 and lhs recording for one given node
 
 	void DumpEnabledPMCNodes( void );
 
@@ -952,19 +936,6 @@ inline double CVProfNode::GetPrevTimeLessChildren()
 }
 
 //-----------------------------------------------------------------------------
-inline int CVProfNode::GetPrevL2CacheMissLessChildren()
-{
-	int result = m_iPrevL2CacheMiss;
-	CVProfNode *pChild = GetChild();
-	while ( pChild )
-	{
-		result -= pChild->m_iPrevL2CacheMiss;
-		pChild = pChild->GetSibling();
-	}
-	return result;
-}
-
-//-----------------------------------------------------------------------------
 inline int CVProfNode::GetPrevLoadHitStoreLessChildren()
 {
 #ifndef _X360
@@ -986,16 +957,6 @@ inline int CVProfNode::GetPrevLoadHitStoreLessChildren()
 inline void CVProfNode::ClearPrevTime()
 {
 	m_PrevFrameTime.Init();
-}
-
-//-----------------------------------------------------------------------------
-inline int CVProfNode::GetL2CacheMisses( void )
-{ 
-#ifndef _X360
-	return m_L2Cache.GetL2CacheMisses(); 
-#else
-	return m_iTotalL2CacheMiss;
-#endif
 }
 
 #ifdef _X360

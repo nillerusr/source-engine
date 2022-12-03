@@ -25,7 +25,6 @@ def build(bld):
 		'sseconst.cpp',
 		'sse.cpp',	#				[$WINDOWS||$POSIX]
 		'ssenoise.cpp',				
-		'3dnow.cpp', #					[$WINDOWS||$LINUX]
 		'anorms.cpp',
 		'bumpvects.cpp',
 		'IceKey.cpp',
@@ -46,7 +45,7 @@ def build(bld):
 		'../public',
 		'../public/tier0',
 		'../public/mathlib'
-	]	
+	]
 
 	defines = []
 

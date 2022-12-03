@@ -1271,7 +1271,6 @@ struct CPUInformation
 		 m_bFCMOV : 1,  // Is FCMOV supported?
 		 m_bSSE	  : 1,	// Is SSE supported?
 		 m_bSSE2  : 1,	// Is SSE2 Supported?
-		 m_b3DNow : 1,	// Is 3DNow! Supported?
 		 m_bMMX   : 1,	// Is MMX supported?
 		 m_bHT	  : 1;	// Is HyperThreading supported?
 

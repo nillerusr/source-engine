@@ -54,7 +54,6 @@ def build(bld):
 			'assert_dialog.rc',
 			#'etwprof.cpp',			[$WINDOWS]
 			'platform.cpp',
-			'pme.cpp',
 			'vcrmode.cpp',
 			'win32consoleio.cpp'
 		]
@@ -66,7 +65,6 @@ def build(bld):
 		source += [
 			'cpu_posix.cpp',
 			'platform_posix.cpp',
-			'pme_posix.cpp',
 			'vcrmode_posix.cpp'
 		]
 
@@ -82,6 +80,9 @@ def build(bld):
 		libs = ['ADVAPI32', 'WS2_32']
 	else:
 		libs = ['DL', 'M', 'LOG']
+
+	if bld.env.DEST_OS == 'freebsd':
+		libs += ['EXECINFO']
 
 	install_path = bld.env.LIBDIR
 

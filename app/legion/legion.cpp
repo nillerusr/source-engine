@@ -64,7 +64,7 @@ bool CLegionApp::Create()
 	SpewOutputFunc( SpewFunc );
 
 	// FIXME: Put this into tier1librariesconnect
-	MathLib_Init( 2.2f, 2.2f, 0.0f, 2.0f, false );
+	MathLib_Init( 2.2f, 2.2f, 0.0f, 2.0f );
 
 	if ( !BaseClass::Create() )
 		return false;

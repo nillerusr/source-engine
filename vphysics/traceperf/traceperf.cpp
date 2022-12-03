@@ -219,7 +219,7 @@ DEFINE_CONSOLE_STEAM_APPLICATION_OBJECT( CBenchmarkApp );
 //-----------------------------------------------------------------------------
 bool CBenchmarkApp::Create()
 {
-	MathLib_Init( 2.2f, 2.2f, 0.0f, 2.0f, false, false, false, false );
+	MathLib_Init( 2.2f, 2.2f, 0.0f, 2.0f, false, false, false );
 
 	// Add in the cvar factory
 	//AppModule_t cvarModule = LoadModule( VStdLib_GetICVarFactory() );

@@ -11,14 +11,12 @@
 bool CheckMMXTechnology(void) { return false; }
 bool CheckSSETechnology(void) { return false; }
 bool CheckSSE2Technology(void) { return false; }
-bool Check3DNowTechnology(void) { return false; }
 
 #elif defined( _WIN32 ) && defined( PLATFORM_64BITS )
 
 bool CheckMMXTechnology(void) { return true; }
 bool CheckSSETechnology(void) { return true; }
 bool CheckSSE2Technology(void) { return true; }
-bool Check3DNowTechnology(void) { return false; }
 
 #elif defined( _WIN32 ) && !defined( _X360 )
 
@@ -206,69 +204,6 @@ bool CheckSSE2Technology(void)
 		else
 			retval = false;
 	}
-#ifdef CPUID
-	_asm popad;
-#endif
-
-    return retval;
-}
-
-bool Check3DNowTechnology(void)
-{
-    int retval = true;
-    unsigned int RegEAX = 0;
-
-#ifdef CPUID
-	_asm pushad;
-#endif
-
-    // First see if we can execute CPUID at all
-	__try
-	{
-        _asm
-		{
-#ifdef CPUID
-//			xor edx, edx			// Clue the compiler that EDX is about to be used.
-#endif
-            mov eax, 0x80000000     // setup CPUID to return whether AMD >0x80000000 function are supported.
-									// 0x80000000 = Highest 0x80000000+ function, 0x80000001 = 3DNow support
-            CPUID					// code bytes = 0fh,  0a2h
-            mov RegEAX, eax			// result returned in eax
-		}
-    } 
-	__except(EXCEPTION_EXECUTE_HANDLER) 
-	{ 
-		retval = false; 
-	}
-
-	// If CPUID not supported, then there is definitely no 3DNow support
-    if (retval)
-	{
-		// Are there any "higher" AMD CPUID functions?
-		if (RegEAX > 0x80000000L )				
-		{
-		   __try 
-			{
-			_asm
-				{
-					mov			eax, 0x80000001		// setup to test for CPU features
-					CPUID							// code bytes = 0fh,  0a2h
-					shr			edx, 31				// If bit 31 is set, we have 3DNow support!
-					mov			retval, edx			// Save the return value for end of function
-				}
-			}
-			__except(EXCEPTION_EXECUTE_HANDLER) 
-			{ 
-				retval = false; 
-			}
-		}
-		else
-		{
-			// processor supports CPUID but does not support AMD CPUID functions
-			retval = false;					
-		}
-	}
-
 #ifdef CPUID
 	_asm popad;
 #endif

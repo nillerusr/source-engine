@@ -2695,7 +2695,7 @@ int CVTex::VTex( int argc, char **argv )
 		SpewOutputFunc( VTexOutputFunc );
 	}
 
-	MathLib_Init(  2.2f, 2.2f, 0.0f, 1.0f, false, false, false, false );
+	MathLib_Init(  2.2f, 2.2f, 0.0f, 1.0f, false, false, false );
 	if( argc < 2 )
 	{
 		Usage();

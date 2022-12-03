@@ -221,7 +221,9 @@ def define_platform(conf):
 			'_DLL_EXT=.dylib'
 		])
 
-	elif conf.env.DEST_OS in ['freebsd', 'openbsd', 'netbsd', 'dragonflybsd']: # Tested only in freebsd
+	elif conf.env.DEST_OS in ['freebsd', 'openbsd', 'netbsd']: # Tested only in freebsd
+		if conf.env.DEST_OS == 'freebsd':
+			conf.check_cc(lib='execinfo', mandatory=False)
 		conf.env.append_unique('DEFINES', [
 			'POSIX=1', '_POSIX=1', 'PLATFORM_POSIX=1',
 			'GNUC', # but uses clang
@@ -377,9 +379,6 @@ def configure(conf):
 		flags += ['-mfpmath=sse']
 	elif conf.env.DEST_CPU in ['arm', 'aarch64']:
 		flags += ['-fsigned-char']
-
-	if conf.env.DEST_OS == 'freebsd':
-		linkflags += ['-lexecinfo']
 
 	if conf.env.DEST_OS != 'win32':
 		cflags += flags
