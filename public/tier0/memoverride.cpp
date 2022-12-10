@@ -389,6 +389,10 @@ extern "C"
 }
 #endif
 
+// Er2: PS3 moment to always include own allocator?
+#ifdef PLATFORM_BSD
+# define NO_MEMOVERRIDE_NEW_DELETE
+#endif
 
 //-----------------------------------------------------------------------------
 // Prevents us from using an inappropriate new or delete method,
