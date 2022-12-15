@@ -325,6 +325,10 @@ void R_Shutdown( void );
 
 bool g_bAbortServerSet = false;
 
+#ifdef _WIN32
+static bool s_bInitPME = false;
+#endif
+
 CON_COMMAND( mem_dump, "Dump memory stats to text file." )
 {
 	ConMsg("Writing memory stats to file memstats.txt\n");
@@ -3832,6 +3836,14 @@ void Host_InitProcessor( void )
 			szFeatureString
 			);
 	}
+
+#if defined( _WIN32 )
+	if ( s_bInitPME )
+	{
+		// Initialize the performance monitoring events code.
+		InitPME();
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -4055,6 +4067,13 @@ void Host_Init( bool bDedicated )
 {
 	realtime = 0;
 	host_idealtime = 0;
+
+#if defined(_WIN32)
+	if ( CommandLine()->FindParm( "-pme" ) )
+	{
+		s_bInitPME = true;
+	}
+#endif
 
 	if ( Host_IsSecureServerAllowed() )
 	{
@@ -4968,6 +4987,13 @@ void Host_Shutdown(void)
 
 	DTI_Term();
 	ServerDTI_Term();
+
+#if defined(_WIN32)
+	if ( s_bInitPME )
+	{
+		ShutdownPME();
+	}
+#endif
 
 	if ( host_checkheap )
 	{
