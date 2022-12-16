@@ -19,7 +19,7 @@ namespace memutils
 	}
 
 	template<typename T>
-	inline void set( T *dest, T value, size_t n )
+	inline void set( T *dest, const T &value, size_t n )
 	{
 		do
 		{

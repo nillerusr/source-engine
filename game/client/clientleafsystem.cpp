@@ -1337,7 +1337,7 @@ void CClientLeafSystem::ComputeTranslucentRenderLeaf( int count, const LeafIndex
 
 	static CUtlVector<RenderableInfo_t *> orderedList; // @MULTICORE (toml 8/30/2006): will need to make non-static if thread this function
 	static CUtlVector<IClientRenderable *> renderablesToUpdate;
-	int leaf = 0;
+	intp leaf = 0;
 	for ( i = 0; i < count; ++i )
 	{
 		leaf = pLeafList[i];
