@@ -46,7 +46,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Build windows-i386
+    - name: Build windows-amd64
       run: |
         git submodule init && git submodule update
         ./waf.bat configure -T debug -8

@@ -322,10 +322,17 @@ int ParseDirective( const char *pText )
 		{
 			if ( ParseFloats( pText, tempFloat, 4 ) )
 			{
-				for ( int i = 0; i < 4; ++i )
+				// that's original code, msvc2015 generates illegal instruction on amd64 architecture
+				/*for ( int i = 0; i < 4; ++i )
 				{
 					gMessageParms.boxcolor[ i ] = (byte)(int)tempFloat[ i ];
-				}
+				}*/
+
+				// workaround
+				gMessageParms.boxcolor[0] = (int)tempFloat[0];
+				gMessageParms.boxcolor[1] = (int)tempFloat[1];
+				gMessageParms.boxcolor[2] = (int)tempFloat[2];
+				gMessageParms.boxcolor[3] = (int)tempFloat[3];
 			}
 		}
 		else if ( IsToken( pText, "clearmessage" ) )
