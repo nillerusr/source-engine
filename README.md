@@ -21,6 +21,7 @@ This project is using waf buildsystem. If you have waf-related questions look ht
 - Modern toolchains support
 - Fixed many undefined behaviours
 - Touch support( even on windows/linux/osx )
+- VTF 7.5 support
 - PBR support
 - bsp v19-v21 support( bsp v21 support is partial, portal 2 and csgo maps works fine )
 - mdl v46-49 support
