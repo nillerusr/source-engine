@@ -75,7 +75,7 @@ CVPC::CVPC()
 	}
 
 #ifdef WIN32
-	m_eVSVersion = k_EVSVersion_2019;
+	m_eVSVersion = k_EVSVersion_2022;
 	m_bUseVS2010FileFormat = true;
 	m_bUseUnity = false;
 #else
@@ -624,7 +624,8 @@ void CVPC::SpewUsage( void )
 			Log_Msg( LOG_VPC, "[/srcctl]:     Enable P4SCC source control integration - can also set environment variable VPC_SRCCTL to 1\n" );
 #endif
 			Log_Msg( LOG_VPC, "[/mirror]:     <path> - Mirror output files to specified path. Used for A:B testing.\n" );
-			Log_Msg( LOG_VPC, "[/2019]:       Generate projects and solutions for Visual Studio 2019 [default]\n" );
+			Log_Msg( LOG_VPC, "[/2022]:       Generate projects and solutions for Visual Studio 2022 [default]\n");
+			Log_Msg( LOG_VPC, "[/2019]:       Generate projects and solutions for Visual Studio 2019\n" );
 			Log_Msg( LOG_VPC, "[/2015]:       Generate projects and solutions for Visual Studio 2015\n" );
 			Log_Msg( LOG_VPC, "[/2013]:       Generate projects and solutions for Visual Studio 2013\n" );
 			Log_Msg( LOG_VPC, "[/2012]:       Generate projects and solutions for Visual Studio 2012\n" );
@@ -997,6 +998,11 @@ void CVPC::HandleSingleCommandLineArg( const char *pArg )
 		else if ( !V_stricmp( pArgName, "2019" ) )
 		{
 			m_eVSVersion = k_EVSVersion_2019;
+			m_ExtraOptionsCRCString += pArgName;
+		}
+		else if ( !V_stricmp(pArgName, "2022") )
+		{
+			m_eVSVersion = k_EVSVersion_2022;
 			m_ExtraOptionsCRCString += pArgName;
 		}
 		else if ( !V_stricmp( pArgName, "nounity" ) )
@@ -1820,6 +1826,16 @@ void CVPC::SetMacrosAndConditionals()
 		// VS2010 is strictly win32/xbox360
 		switch ( m_eVSVersion )
 		{
+		case k_EVSVersion_2022:
+			m_ExtraOptionsCRCString += "VS2022";
+			SetConditional("VS2022", true);
+
+			// allow VS2013 conditionals also as there are many. Won't fix.
+			SetConditional("VS2013", true);
+
+			m_bUseVS2010FileFormat = true;
+			break;
+
 		case k_EVSVersion_2019:
 			m_ExtraOptionsCRCString += "VS2019";
 			SetConditional( "VS2019", true );
@@ -2366,17 +2382,36 @@ void CVPC::SetupGenerators()
 		else
 		{
 			// spew what we are generating
-			const char *pchLogLine = "Generating for Visual Studio 2005.\n";
-			if ( m_eVSVersion == k_EVSVersion_2019 )
+			const char *pchLogLine;
+			switch (m_eVSVersion)
+			{
+			case k_EVSVersion_2022:
+				pchLogLine = "Generating for Visual Studio 2022.\n";
+				break;
+
+			case k_EVSVersion_2019:
 				pchLogLine = "Generating for Visual Studio 2019.\n";
-			else if ( m_eVSVersion == k_EVSVersion_2015 )
+				break;
+
+			case k_EVSVersion_2015:
 				pchLogLine = "Generating for Visual Studio 2015.\n";
-			else if ( m_eVSVersion == k_EVSVersion_2013 )
+				break;
+
+			case k_EVSVersion_2013:
 				pchLogLine = "Generating for Visual Studio 2013.\n";
-			else if ( m_eVSVersion == k_EVSVersion_2012 )
+				break;
+
+			case k_EVSVersion_2012:
 				pchLogLine = "Generating for Visual Studio 2012.\n";
-			else if ( m_eVSVersion == k_EVSVersion_2010 )
+				break;
+
+			case k_EVSVersion_2010:
 				pchLogLine = "Generating for Visual Studio 2010.\n";
+				break;
+			default:
+				pchLogLine = "Generating for Visual Studio 2005.\n";
+				break;
+			}
 
 			Log_Msg( LOG_VPC, Color( 0, 255, 255, 255 ), pchLogLine );
 

@@ -183,6 +183,7 @@ enum EVSVersion
 	k_EVSVersion_2013,
 	k_EVSVersion_2015,
 	k_EVSVersion_2019,
+	k_EVSVersion_2022,
 };
 
 class CVPC
@@ -216,10 +217,11 @@ public:
 	const char *GetDecorateString()		{ return m_strDecorate.String(); }
 	bool		IsCheckFiles()			{ return m_bCheckFiles; }
 	bool		Is2010()				{ return m_bUseVS2010FileFormat || m_eVSVersion == k_EVSVersion_2010; }
-	bool		Is2012()				{ return m_eVSVersion == k_EVSVersion_2012; }	// When this returns true so does Is2010() because of the file format similarities
-	bool		Is2013()				{ return m_eVSVersion == k_EVSVersion_2013; }	// When this returns true so does Is2010() because of the file format similarities
-	bool		Is2015()				{ return m_eVSVersion == k_EVSVersion_2015; }	// When this returns true so does Is2010() because of the file format similarities
-	bool		Is2019()				{ return m_eVSVersion == k_EVSVersion_2019; }	// When this returns true so does Is2010() because of the file format similarities
+	bool		Is2012()				{ return m_eVSVersion == k_EVSVersion_2012; }	//-|
+	bool		Is2013()				{ return m_eVSVersion == k_EVSVersion_2013; }	// |
+	bool		Is2015()				{ return m_eVSVersion == k_EVSVersion_2015; }	// | When these return true, so does Is2010() because of the file format similarities
+	bool		Is2019()				{ return m_eVSVersion == k_EVSVersion_2019; }	// |
+	bool		Is2022()				{ return m_eVSVersion == k_EVSVersion_2022; }	//-|
 	bool		BUse2008()				{ return m_eVSVersion == k_EVSVersion_2008; }
 	bool		IsDedicatedBuild()		{ return m_bDedicatedBuild;	}
 	bool		IsUnity()				{ return m_bUseUnity; }
