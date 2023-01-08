@@ -101,84 +101,98 @@ def fix_dos_path( path ):
 			return find_path+file
 	return find_path+filename
 
-def parse_vpcs( env ,vpcs, basedir ):
-	back_path = os.path.abspath('.')
-	os.chdir(env.SUBPROJECT_PATH[0])
+def parse_vpcs( env, vpcs, basedir ):
+	defines = []
+	includes = []
+	sources = []
 
+	for vpc in vpcs:
+		contents = parse_vpc(env, vpc, basedir)
+		defines += contents["defines"]
+		includes += contents["includes"]
+		sources += contents["sources"]
+
+
+	return {'defines':defines, 'includes':includes, 'sources': sources}
+
+def parse_vpc( env, vpc, basedir ):
 	sources = []
 	defines = []
 	includes = []
 
-	for vpc in vpcs:
-		f=open(vpc, 'r').read().replace('\\\n', ';')
+	back_path = os.path.abspath('.')
+	os.chdir(env.SUBPROJECT_PATH[0])
 
-		re.sub(r'//.*', '', f)
-		l = f.split('\n')
+	f=open(vpc, 'r').read().replace('\\\n', ';')
 
-		iBrackets = 0
+	re.sub(r'//.*', '', f)
+	l = f.split('\n')
 
-		next_br = False
-		ret = {}
-		cur_key = ''
+	iBrackets = 0
 
-		for i in l:
-			if i == '': continue
+	next_br = False
+	ret = {}
+	cur_key = ''
 
-			s = match_statement.search(i)
-			if s and not compute_statement(env.DEFINES+defines, s.group(0)):
-				continue
+	for i in l:
+		if i == '': continue
 
-			if i.startswith('$') and iBrackets == 0:
-				ret.update({i:[]})
-				cur_key = i
-				next_br = True
-			elif i == '{':
-				iBrackets += 1
-				next_br = False
-			elif i == '}':
-				iBrackets -= 1
-			elif iBrackets > 0:
-				ret[cur_key].append(i)
+		s = match_statement.search(i)
+		if s and not compute_statement(env.DEFINES+defines, s.group(0)):
+			continue
 
-			if next_br:
-				next_br = False
+		if i.startswith('$') and iBrackets == 0:
+			ret.update({i:[]})
+			cur_key = i
+			next_br = True
+		elif i == '{':
+			iBrackets += 1
+			next_br = False
+		elif i == '}':
+			iBrackets -= 1
+		elif iBrackets > 0:
+			ret[cur_key].append(i)
 
-		key = project_key(ret)
-		l=ret[key]
+		if next_br:
+			next_br = False
 
-		for i in l:
-			if '-$File' in i and '.h"' not in i:
-				for k in i.split(';'):
-					k = k.replace('$SRCDIR', basedir)
-					s = fix_dos_path(k.split('"')[1])
+	key = project_key(ret)
+	l=ret[key]
 
-					for j in range(len(sources)):
-						if sources[j] == s:
-							del sources[j]
-							break
+	for i in l:
+		if '-$File' in i and '.h"' not in i:
+			for k in i.split(';'):
+				k = k.replace('$SRCDIR', basedir)
+				s = fix_dos_path(k.split('"')[1])
 
-			elif '$File' in i and '.h"' not in i:
-				for j in i.split(';'):
-					j = j.replace('$SRCDIR', basedir)
-					s = fix_dos_path(j.split('"')[1])
-					sources.append(s)
+				for j in range(len(sources)):
+					if sources[j] == s:
+						del sources[j]
+						break
 
-		for i in ret['$Configuration']:
-			if '$PreprocessorDefinitions' in i:
-				i = i.replace('$BASE', '')
-				s = i.split('"')[1]
-				s = re.split(';|,', s)
-				for j in s:
-					if j != '' and j not in defines:
-						defines.append(j)
-			if '$AdditionalIncludeDirectories' in i:
-				i = i.replace('$BASE', '').replace('$SRCDIR', basedir)
-				s = i.split('"')[1]
-				s = re.split(';|,', s)
-				for j in s:
-					j = j.replace('\\','/')
-					if j != '' and j not in includes:
-						includes.append(j)
+		elif '$File' in i and '.h"' not in i:
+			for j in i.split(';'):
+				j = j.replace('$SRCDIR', basedir)
+				s = fix_dos_path(j.split('"')[1])
+				sources.append(s)
+
+	for i in ret['$Configuration']:
+		if '$PreprocessorDefinitions' in i:
+			i = i.replace('$BASE', '')
+			s = i.split('"')[1]
+			s = re.split(';|,', s)
+			for j in s:
+				if j != '' and j not in defines:
+					defines.append(j)
+		if '$AdditionalIncludeDirectories' in i:
+			i = i.replace('$BASE', '').replace('$SRCDIR', basedir)
+			s = i.split('"')[1]
+			s = re.split(';|,', s)
+			for j in s:
+				j = j.replace('\\','/')
+				if j != '' and j not in includes:
+					includes.append(j)
+
 	os.chdir(back_path)
 
 	return {'defines':defines, 'includes':includes, 'sources': sources}
