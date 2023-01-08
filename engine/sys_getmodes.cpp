@@ -819,10 +819,13 @@ void CVideoMode_Common::SetupStartupGraphic()
 
     // loading.vtf
 	buf.Clear();	// added this Clear() because we saw cases where LoadVTF was not emptying the buf fully in the above section
-    m_pLoadingTexture = LoadVTF( buf, "materials/console/startup_loading.vtf" );
+    const char* loading = "materials/console/startup_loading.vtf";
+    if ( IsSteamDeck() )
+        loading = "materials/gamepadui/game_logo.vtf";
+    m_pLoadingTexture = LoadVTF( buf, loading );
     if ( !m_pLoadingTexture )
     {
-        Error( "Can't find background image materials/console/startup_loading.vtf\n" );
+        Error( "Can't find background image '%s'\n", loading );
         return;
     }
 }
@@ -883,8 +886,12 @@ void CVideoMode_Common::DrawStartupGraphic()
     pVMTKeyValues->SetInt( "$nocull", 1 );
     IMaterial *pMaterial = g_pMaterialSystem->CreateMaterial( "__background", pVMTKeyValues );
 
+    const char* loading = "console/startup_loading.vtf";
+    if ( IsSteamDeck() )
+        loading = "gamepadui/game_logo.vtf";
+
     pVMTKeyValues = new KeyValues( "UnlitGeneric" );
-    pVMTKeyValues->SetString( "$basetexture", "Console/startup_loading.vtf" );
+    pVMTKeyValues->SetString( "$basetexture", loading );
     pVMTKeyValues->SetInt( "$translucent", 1 );
     pVMTKeyValues->SetInt( "$ignorez", 1 );
     pVMTKeyValues->SetInt( "$nofog", 1 );
@@ -922,7 +929,11 @@ void CVideoMode_Common::DrawStartupGraphic()
 				slide = 0;
 				
 				DrawScreenSpaceRectangle( pMaterial, 0, 0+slide, w, h-50, 0, 0, tw-1, th-1, tw, th, NULL,1,1,depth );
-				DrawScreenSpaceRectangle( pLoadingMaterial, w-lw, h-lh+slide/2, lw, lh, 0, 0, lw-1, lh-1, lw, lh, NULL,1,1,depth-0.1 );
+                if ( !IsSteamDeck() )
+                    DrawScreenSpaceRectangle( pLoadingMaterial, w-lw, h-lh+slide/2, lw, lh, 0, 0, lw-1, lh-1, lw, lh, NULL,1,1,depth-0.1 );
+                else
+                    // TODO: Steam Deck
+                    DrawScreenSpaceRectangle( pLoadingMaterial, w-lw, h-lh+slide/2, lw, lh, 0, 0, lw-1, lh-1, lw, lh, NULL,1,1,depth-0.1 );
 			}
 
 			if(0)
