@@ -5,7 +5,7 @@
 //-----------------------------------------------------------------------------
 
 $macro SRCDIR		".."
- 
+
 $include "$SRCDIR\vpc_scripts\source_lib_base.vpc"
 
 $Configuration
@@ -39,6 +39,7 @@ $Project "tier1"
 		$File	"generichash.cpp"
 		$File	"ilocalize.cpp"
 		$File	"interface.cpp"
+		$File	"interval.cpp"
 		$File	"KeyValues.cpp"
 		$File	"keyvaluesjson.cpp"
 		$File	"kvpacker.cpp"
@@ -58,7 +59,7 @@ $Project "tier1"
 				}
 			}
 		}
-		
+
 		$File	"processor_detect_linux.cpp"	[$POSIX]
 		$File	"qsort_s.cpp"	[$LINUXALL||$PS3]
 		$File	"rangecheckedvar.cpp"
@@ -79,6 +80,8 @@ $Project "tier1"
 		$File	"snappy.cpp"
 		$File	"snappy-sinksource.cpp"
 		$File	"snappy-stubs-internal.cpp"
+		$File	"mapbase_con_groups.cpp" [$MAPBASE]
+		$File	"mapbase_matchers_base.cpp" [$MAPBASE]
 	}
 
 	// Select bits from the LZMA SDK to support lzmaDecoder.h
@@ -121,6 +124,8 @@ $Project "tier1"
 		$File	"$SRCDIR\public\tier1\kvpacker.h"
 		$File	"$SRCDIR\public\tier1\lzmaDecoder.h"
 		$File	"$SRCDIR\public\tier1\lzss.h"
+		$File	"$SRCDIR\public\tier1\mapbase_con_groups.h"	[$MAPBASE]
+		$File	"$SRCDIR\public\tier1\mapbase_matchers_base.h"	[$MAPBASE]
 		$File	"$SRCDIR\public\tier1\mempool.h"
 		$File	"$SRCDIR\public\tier1\memstack.h"
 		$File	"$SRCDIR\public\tier1\netadr.h"

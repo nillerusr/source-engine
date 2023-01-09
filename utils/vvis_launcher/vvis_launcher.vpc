@@ -30,7 +30,7 @@ $Project "Vvis_launcher"
 	$Folder	"Source Files"
 	{
 		$File	"vvis_launcher.cpp"
-		
+
 		$File	"StdAfx.cpp"
 		{
 			$Configuration

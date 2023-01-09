@@ -41,7 +41,7 @@ TextImage::TextImage(const char *text) : Image()
 {
 	_utext = NULL;
 	_textBufferLen = 0;
-	_font = INVALID_FONT; 
+	_font = INVALID_FONT;
 	_fallbackFont = INVALID_FONT;
 	_unlocalizedTextSymbol = INVALID_LOCALIZE_STRING_INDEX;
 	_drawWidth = 0;
@@ -55,7 +55,7 @@ TextImage::TextImage(const char *text) : Image()
 	m_bUseFallbackFont = false;
 	m_bRenderUsingFallbackFont = false;
 	m_bAllCaps = false;
-	
+
 	SetText(text); // set the text.
 }
 
@@ -106,7 +106,7 @@ void TextImage::SetText(const char *text)
 	{
 		// try lookup in localization tables
 		_unlocalizedTextSymbol = g_pVGuiLocalize->FindIndex(text + 1);
-		
+
 		if (_unlocalizedTextSymbol != INVALID_LOCALIZE_STRING_INDEX)
 		{
 			wchar_t *unicode = g_pVGuiLocalize->GetValueByIndex(_unlocalizedTextSymbol);
@@ -326,7 +326,7 @@ void TextImage::Paint()
 {
 	int wide, tall;
 	GetSize(wide, tall);
-		
+
 	if (!_utext || GetFont() == INVALID_FONT )
 		return;
 
@@ -535,12 +535,12 @@ void TextImage::GetTextSize(int &wide, int &tall)
 		surface()->GetCharABCwide(font, ch, a, b, c);
 		wide += (a + b + c);
 #endif
-		
+
 
 		if (ch == '\n')
 		{
 			tall += fontHeight;
-			if(wide>maxWide) 
+			if(wide>maxWide)
 			{
 				maxWide=wide;
 			}
@@ -554,7 +554,7 @@ void TextImage::GetTextSize(int &wide, int &tall)
 				if ( &text[i] == m_LineBreaks[j] )
 				{
 					tall += fontHeight;
-					if(wide>maxWide) 
+					if(wide>maxWide)
 					{
 						maxWide=wide;
 					}
@@ -562,7 +562,7 @@ void TextImage::GetTextSize(int &wide, int &tall)
 				}
 			}
 		}
-		
+
 	}
 #ifdef OSX
 	wide += 2;
@@ -570,7 +570,7 @@ void TextImage::GetTextSize(int &wide, int &tall)
 		wide += 3;
 #endif
 	if (wide < maxWide)
-	{ 
+	{
 		// maxWide only gets set if a newline is in the label
 		wide = maxWide;
 	}
@@ -600,31 +600,31 @@ void TextImage::ResizeImageToContent()
 void TextImage::RecalculateNewLinePositions()
 {
 	HFont font = GetFont();
-	
+
 	int charWidth;
 	int x = 0;
-	
+
 	//int wordStartIndex = 0;
 	wchar_t *wordStartIndex = _utext;
 	int wordLength = 0;
 	bool hasWord = false;
 	bool justStartedNewLine = true;
 	bool wordStartedOnNewLine = true;
-	
+
 	int startChar = 0;
-	
+
 	// clear the line breaks list
 	m_LineBreaks.RemoveAll();
 	m_LineXIndent.RemoveAll();
-	
+
 	// handle the case where this char is a new line, in that case
 	// we have already taken its break index into account above so skip it.
-	if (_utext[startChar] == '\r' || _utext[startChar] == '\n') 
+	if (_utext[startChar] == '\r' || _utext[startChar] == '\n')
 	{
 		startChar++;
 	}
-		
-	// loop through all the characters	
+
+	// loop through all the characters
 	for (wchar_t *wsz = &_utext[startChar]; *wsz != 0; wsz++)
 	{
 		// handle stupid special characters, these should be removed
@@ -640,7 +640,7 @@ void TextImage::RecalculateNewLinePositions()
 		{
 			ch = towupper( ch );
 		}
-		
+
 		// line break only on whitespace characters
 		if (!iswspace(ch))
 		{
@@ -660,7 +660,7 @@ void TextImage::RecalculateNewLinePositions()
 			// end the word
 			hasWord = false;
 		}
-		
+
 		// get the width
 #if USE_GETKERNEDCHARWIDTH
 		wchar_t chBefore = 0;
@@ -678,13 +678,13 @@ void TextImage::RecalculateNewLinePositions()
 		{
 			justStartedNewLine = false;
 		}
-				
+
 		// check to see if the word is past the end of the line [wordStartIndex, i)
 		if ((x + charWidth) > _drawWidth || ch == '\r' || ch == '\n')
 		{
 			justStartedNewLine = true;
 			hasWord = false;
-			
+
 			if (ch == '\r' || ch == '\n')
 			{
 				// set the break at the current character
@@ -700,18 +700,18 @@ void TextImage::RecalculateNewLinePositions()
 			{
 				// set it at the last word Start
 				m_LineBreaks.AddToTail(wordStartIndex);
-				
+
 				// just back to reparse the next line of text
 				// ywb 8/1/07:  Back off one extra char since the 'continue' will increment wsz for us by one in the for loop
 				wsz = wordStartIndex - 1;
 			}
-			
+
 			// reset word length
 			wordLength = 0;
 			x = 0;
 			continue;
 		}
-		
+
 		// add to the size
 		x += charWidth;
 		wordLength += charWidth;
@@ -741,7 +741,7 @@ void TextImage::RecalculateEllipsesPosition()
 		int h;
 		GetSize( _drawWidth, h );
 	}
-	
+
 	for ( int check = 0; check < (m_bUseFallbackFont ? 2 : 1); ++check )
 	{
 		HFont font = GetFont();
@@ -751,7 +751,7 @@ void TextImage::RecalculateEllipsesPosition()
 			font = _fallbackFont;
 			m_bRenderUsingFallbackFont = true;
 		}
-		
+
 		int ellipsesWidth = 3 * surface()->GetCharacterWidth(font, '.');
 		int x = 0;
 
@@ -966,7 +966,7 @@ void TextImage::RecalculateCenterWrapIndents()
 #else
 		iCurLineW += surface()->GetCharacterWidth(font, ch);
 #endif
-	}	
+	}
 
 	// Add the final line
 	int iIdx = m_LineXIndent.AddToTail();
@@ -987,3 +987,117 @@ void TextImage::SetColorChangeStream( CUtlSortVector<label_colorchange_t,CColorC
 
 	m_ColorChangeStream = *pUtlVecStream;
 }
+
+#ifdef MAPBASE
+void TextImage::GetNewlinePositions( CUtlVector<int> *pOutCoords, bool bIgnoreEmptyLines )
+{
+	HFont font = GetFont();
+	if (!_utext || font == INVALID_FONT )
+		return;
+
+	// Early out if there's no newlines in our text
+	if (wcschr( _utext, L'\n' ) == NULL)
+		return;
+
+	if (m_bRecalculateTruncation)
+	{
+		if ( m_bWrap || m_bWrapCenter )
+		{
+			RecalculateNewLinePositions();
+		}
+
+		RecalculateEllipsesPosition();
+	}
+
+	int lineHeight = surface()->GetFontTall( GetFont() );
+	float x = 0.0f;
+	int y = 0;
+	int iIndent = 0;
+
+	int px, py;
+	GetPos(px, py);
+
+	int currentLineBreak = 0;
+
+	if ( m_bWrapCenter && m_LineXIndent.Count() )
+	{
+		x = m_LineXIndent[0];
+	}
+
+	for (wchar_t *wsz = _utext; *wsz != 0; wsz++)
+	{
+		wchar_t ch = wsz[0];
+
+		if ( m_bAllCaps )
+		{
+			ch = towupper( ch );
+		}
+
+		// check for special characters
+		if ( ch == '\r' || ch <= 8 )
+		{
+			// ignore, just use \n for newlines
+			continue;
+		}
+		else if (ch == '\n')
+		{
+			// newline
+			iIndent++;
+			if ( m_bWrapCenter && iIndent < m_LineXIndent.Count() )
+			{
+				x = m_LineXIndent[iIndent];
+			}
+			else
+			{
+				x = 0;
+			}
+			y += lineHeight;
+
+			if (!bIgnoreEmptyLines || (*(wsz + 1) != 0 && wsz[1] != '\n'))
+			{
+				pOutCoords->AddToTail( y );
+			}
+
+			continue;
+		}
+		else if (ch == '&')
+		{
+			// "&&" means draw a single ampersand, single one is a shortcut character
+			if (wsz[1] == '&')
+			{
+				// just move on and draw the second ampersand
+				wsz++;
+			}
+		}
+
+		// see if we've hit the truncated portion of the string
+		if (wsz == m_pwszEllipsesPosition)
+		{
+			// do nothing
+		}
+
+		if (currentLineBreak != m_LineBreaks.Count())
+		{
+			if (wsz == m_LineBreaks[currentLineBreak])
+			{
+				// newline
+				iIndent++;
+				if ( m_bWrapCenter && iIndent < m_LineXIndent.Count() )
+				{
+					x = m_LineXIndent[iIndent];
+				}
+				else
+				{
+					x = 0;
+				}
+
+				y += lineHeight;
+				currentLineBreak++;
+			}
+		}
+
+		// Underlined text wants to draw the spaces anyway
+		x += surface()->GetCharacterWidth(font, ch);
+	}
+}
+#endif // MAPBASE

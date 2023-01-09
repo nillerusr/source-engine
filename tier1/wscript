@@ -30,6 +30,7 @@ def build(bld):
 		'generichash.cpp',
 		'ilocalize.cpp',
 		'interface.cpp',
+		'interval.cpp',
 		'KeyValues.cpp',
 		'keyvaluesjson.cpp',
 		'kvpacker.cpp',
@@ -43,6 +44,8 @@ def build(bld):
 		'reliabletimer.cpp',
 		'snappy-sinksource.cpp',
 		'snappy-stubs-internal.cpp',
+		'mapbase_con_groups.h', # [$MAPBASE]
+		'mapbase_matchers_base.h', # [$MAPBASE]
 		'snappy.cpp',
 		'sparsematrix.cpp',
 		'splitstring.cpp',
@@ -86,7 +89,7 @@ def build(bld):
 		libs += ['RPCRT4']
 	elif bld.env.DEST_OS == "darwin":
 		libs += ['ICONV']
-		
+
 	bld.stlib(
 		source   = source,
 		target   = PROJECT_NAME,

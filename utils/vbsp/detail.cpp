@@ -15,7 +15,7 @@ face_t *ComputeVisibleBrushSides( bspbrush_t *list );
 
 //-----------------------------------------------------------------------------
 // Purpose: Copies a face and its winding
-// Input  : *pFace - 
+// Input  : *pFace -
 // Output : face_t
 //-----------------------------------------------------------------------------
 face_t *CopyFace( face_t *pFace )
@@ -28,8 +28,8 @@ face_t *CopyFace( face_t *pFace )
 
 //-----------------------------------------------------------------------------
 // Purpose: Link this brush into the list for this leaf
-// Input  : *node - 
-//			*brush - 
+// Input  : *node -
+//			*brush -
 //-----------------------------------------------------------------------------
 void AddBrushToLeaf( node_t *node, bspbrush_t *brush )
 {
@@ -39,8 +39,8 @@ void AddBrushToLeaf( node_t *node, bspbrush_t *brush )
 
 //-----------------------------------------------------------------------------
 // Purpose: Recursively filter a brush through the tree
-// Input  : *node - 
-//			*brush - 
+// Input  : *node -
+//			*brush -
 //-----------------------------------------------------------------------------
 void MergeBrush_r( node_t *node, bspbrush_t *brush )
 {
@@ -149,8 +149,8 @@ bool MergeFace_r( node_t *node, face_t *face, face_t *original )
 
 //-----------------------------------------------------------------------------
 // Purpose: Loop through each face and filter it into the tree
-// Input  : *out - 
-//			*pFaces - 
+// Input  : *out -
+//			*pFaces -
 //-----------------------------------------------------------------------------
 face_t *FilterFacesIntoTree( tree_t *out, face_t *pFaces )
 {
@@ -183,7 +183,7 @@ face_t *FilterFacesIntoTree( tree_t *out, face_t *pFaces )
 //-----------------------------------------------------------------------------
 // Purpose: Splits the face list into faces from the same plane and tries to merge
 //			them if possible
-// Input  : **pFaceList - 
+// Input  : **pFaceList -
 //-----------------------------------------------------------------------------
 void TryMergeFaceList( face_t **pFaceList )
 {
@@ -223,7 +223,7 @@ void TryMergeFaceList( face_t **pFaceList )
 		{
 			MergeFaceList( &pPlaneList[i] );
 		}
-		
+
 		// move these over to the output face list
 		face_t *list = pPlaneList[i];
 		while ( list )
@@ -251,8 +251,8 @@ void TryMergeFaceList( face_t **pFaceList )
 
 //-----------------------------------------------------------------------------
 // Purpose: filter each brush in the list into the tree
-// Input  : *out - 
-//			*brushes - 
+// Input  : *out -
+//			*brushes -
 //-----------------------------------------------------------------------------
 void FilterBrushesIntoTree( tree_t *out, bspbrush_t *brushes )
 {
@@ -266,9 +266,9 @@ void FilterBrushesIntoTree( tree_t *out, bspbrush_t *brushes )
 
 //-----------------------------------------------------------------------------
 // Purpose: Build faces for the detail brushes and merge them into the BSP
-// Input  : *worldtree - 
-//			brush_start - 
-//			brush_end - 
+// Input  : *worldtree -
+//			brush_start -
+//			brush_end -
 //-----------------------------------------------------------------------------
 face_t *MergeDetailTree( tree_t *worldtree, int brush_start, int brush_end )
 {
@@ -316,8 +316,8 @@ face_t *MergeDetailTree( tree_t *worldtree, int brush_start, int brush_end )
 
 //-----------------------------------------------------------------------------
 // Purpose: Quick overlap test for brushes
-// Input  : *p1 - 
-//			*p2 - 
+// Input  : *p1 -
+//			*p2 -
 // Output : Returns false if the brushes cannot intersect
 //-----------------------------------------------------------------------------
 bool BrushBoxOverlap( bspbrush_t *p1, bspbrush_t *p2 )
@@ -335,7 +335,7 @@ bool BrushBoxOverlap( bspbrush_t *p1, bspbrush_t *p2 )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 // Input  : *pFace - input face to test
 //			*pbrush - brush to clip face against
 //			**pOutputList - list of faces clipped from pFace
@@ -385,11 +385,11 @@ bool ClipFaceToBrush( face_t *pFace, bspbrush_t *pbrush, face_t **pOutputList )
 			int index = sortedSides[i];
 			if ( index == foundSide )
 				continue;
-			
+
 			plane_t *plane = &g_MainMap->mapplanes[pbrush->sides[index].planenum];
 			winding_t *frontwinding, *backwinding;
 			ClipWindingEpsilon_Offset(currentface->w, plane->normal, plane->dist, 0.001, &frontwinding, &backwinding, offset);
-			
+
 			// only clip if some part of this face is on the back side of all brush sides
 			if ( !backwinding || WindingIsTiny(backwinding))
 			{
@@ -403,7 +403,7 @@ bool ClipFaceToBrush( face_t *pFace, bspbrush_t *pbrush, face_t **pOutputList )
 				// make a face for the fragment
 				face_t *f = NewFaceFromFace( pFace );
 				f->w = frontwinding;
-				
+
 				// link the fragment in
 				f->next = *pOutputList;
 				*pOutputList = f;
@@ -428,7 +428,7 @@ bool ClipFaceToBrush( face_t *pFace, bspbrush_t *pbrush, face_t **pOutputList )
 
 
 //-----------------------------------------------------------------------------
-// Purpose: Given an original side and chopped winding, make a face_t 
+// Purpose: Given an original side and chopped winding, make a face_t
 // Input  : *side - side of the original brush
 //			*winding - winding for this face (portion of the side)
 // Output : face_t
@@ -440,6 +440,9 @@ face_t *MakeBrushFace( side_t *originalSide, winding_t *winding )
 	f->split[0] = f->split[1] = NULL;
 	f->w = CopyWinding( winding );
 	f->originalface = originalSide;
+#ifdef MAPBASE
+	f->smoothingGroups = originalSide->smoothingGroups;
+#endif
 	//
 	// save material info
 	//
@@ -456,7 +459,7 @@ face_t *MakeBrushFace( side_t *originalSide, winding_t *winding )
 
 //-----------------------------------------------------------------------------
 // Purpose: Chop away sides that are inside other brushes.
-//			Brushes have already been chopped up so that they do not overlap, 
+//			Brushes have already been chopped up so that they do not overlap,
 //			they merely touch.
 // Input  : *list - list of brushes
 // Output : face_t * - list of visible faces (some marked bad/split)
@@ -620,7 +623,7 @@ face_t *ComputeVisibleBrushSides( bspbrush_t *list )
 			winding_t *winding = pbrush->sides[i].winding;
 			if ( !winding )
 				continue;
-			
+
 			if (! (pbrush->sides[i].contents & ALL_VISIBLE_CONTENTS) )
 				continue;
 
@@ -663,7 +666,7 @@ face_t *ComputeVisibleBrushSides( bspbrush_t *list )
 					{
 						// it cut into more than one visible fragment
 						// Don't fragment details
-						// UNDONE: Build 2d convex hull of this list and swap face winding 
+						// UNDONE: Build 2d convex hull of this list and swap face winding
 						// with that polygon?  That would fix the remaining issues.
 						FreeFaceList( pClip );
 						pClip = NULL;
@@ -671,7 +674,7 @@ face_t *ComputeVisibleBrushSides( bspbrush_t *list )
 				}
 			}
 		}
-	
+
 		// move visible fragments to global face list
 		while ( pFaces )
 		{

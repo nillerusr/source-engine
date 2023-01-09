@@ -3,7 +3,8 @@
 // builds the analyze.vpc file will not be listed as a dependency.
 $Include "$SRCDIR\vpc_scripts\source_win32_analyze.vpc" [$ANALYZE]
 
-$Conditional	$AT_LEAST_VS2015	"true" [$VS2015]
+$Conditional	$AT_LEAST_VS2017	"true" [$VS2017 || $VS2019 || $VS2022]
+$Conditional	$AT_LEAST_VS2015	"true" [$VS2015 || $AT_LEAST_VS2017]
 $Conditional	$AT_LEAST_VS2013	"true" [$VS2013 || $AT_LEAST_VS2015]
 
 $Configuration
@@ -14,11 +15,14 @@ $Configuration
 		$PlatformToolset "v100" [$VS2010]
 		$PlatformToolset "v110_xp" [$VS2012 && !$ANALYZE] // VS 2012 targeting Windows XP - http://msdn.microsoft.com/en-us/library/vstudio/jj851139.aspx
 		$PlatformToolset "v110" [$VS2012 && $ANALYZE] // VS 2012 for /analyze
-		$PlatformToolset "v120_xp" [$VS2013 && !$ANALYZE] // VS 2013 targeting Windows XP - http://msdn.microsoft.com/en-us/library/vstudio/jj851139.aspx
+		$PlatformToolset "v120_xp" [$VS2013 && !$ANALYZE] // VS 2013 targeting Windows XP
 		$PlatformToolset "v120" [$VS2013 && $ANALYZE] // VS 2013 for /analyze
-		$PlatformToolset "v140_xp" [$VS2015 && !$ANALYZE] // VS 2015 for /analyze
+		$PlatformToolset "v140_xp" [$VS2015 && !$ANALYZE] // VS 2015 targeting Windows XP
 		$PlatformToolset "v140" [$VS2015 && $ANALYZE] // VS 2015 for /analyze
-		$PlatformToolset "v142" [$VS2019] // VS 2019
+		$PlatformToolset "v141_xp" [($AT_LEAST_VS2017) && !$ANALYZE] // VS 2017+ targeting Windows XP
+		$PlatformToolset "v141" [$VS2017] // VS 2017 for /analyze
+		$PlatformToolset "v142" [$VS2019] // VS 2019 for /analyze
+		$PlatformToolset "v143" [$VS2022] // VS 2022 for /analyze
 	}
 
 	$General
@@ -41,6 +45,10 @@ $Configuration
 
 		// following are needed for VS2015 using old Windows SDK. Would like to move to each include location
 		$DisableSpecificWarnings			"$BASE;4577;4091"	[$WINDOWS && $AT_LEAST_VS2015]
+
+		// warning C4838: conversion requires a narrowing conversion
+		// warning C4456-4459: variable shadowing. TODO: fix those!
+		$DisableSpecificWarnings	"$BASE;4316;4838;4456;4457;4458;4459" [($AT_LEAST_VS2015)]
 
 
 		// Having lots of warnings makes it harder to notice new, and possibly
@@ -67,7 +75,7 @@ $Configuration
 
 		$AdditionalOptions	"$BASE /Zc:threadSafeInit-" [$AT_LEAST_VS2015] //thread-safe static initialization will crash on Windows XP if the dll is dynamically loaded
 
-		$AdditionalOptions	"$BASE /Wv:18" [$AT_LEAST_VS2015&&!$WARN_ALL] //warning C4456: declaration of 'accFactorZ' hides previous local declaration suppression
+		$AdditionalOptions	"$BASE /Wv:18" [$AT_LEAST_VS2015 && !$WARN_ALL] //warning C4456: declaration of 'accFactorZ' hides previous local declaration suppression
 
 	}
 }

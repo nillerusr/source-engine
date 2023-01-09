@@ -89,6 +89,7 @@ projects={
 		'video',
 		'vphysics',
 		'vpklib',
+		'vscript',
 		'vstdlib',
 		'vtf',
 		'utils/vtex',
@@ -143,6 +144,7 @@ projects={
 		'vgui2/vgui_controls',
 		'vphysics',
 		'vpklib',
+		'vscript'
 		'vstdlib',
 		'vtf',
 		'stub_steam'

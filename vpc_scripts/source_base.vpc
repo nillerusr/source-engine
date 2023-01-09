@@ -15,6 +15,15 @@
 // rel/tf_beta branch:
 //$Conditional TF_BETA	"1"
 
+//-----------------------------------------------------------------------------
+
+// Mapbase functionality conditionals
+$Conditional MAPBASE	"1" // Equivalent to (and required for) our MAPBASE preprocessor defined below
+$Conditional MAPBASE_VSCRIPT	"1" // Toggles VScript implementation (note: interfaces still exist, just the provided implementation is not present)
+$Conditional NEW_RESPONSE_SYSTEM	"1" // Toggles the new Response System library based on the Alien Swarm SDK
+
+//-----------------------------------------------------------------------------
+
 $Configuration "Debug"
 {
 	$Compiler
@@ -27,6 +36,9 @@ $Configuration "Debug"
 // Need to revisit the code to make things run with the _RETAIL preprocessor definition
 // This line was added in the previous check-in, but had previously not been defined in this branch
 //		$PreprocessorDefinitions		"$BASE;_RETAIL"		[$RETAIL]
+
+		// Mapbase base definitions
+		$PreprocessorDefinitions		"$BASE;MAPBASE"		[$MAPBASE]
 	}
 }
 
@@ -42,5 +54,8 @@ $Configuration "Release"
 // Need to revisit the code to make things run with the _RETAIL preprocessor definition
 // This line was added in the previous check-in, but had previously not been defined in this branch
 //		$PreprocessorDefinitions		"$BASE;_RETAIL"		[$RETAIL]
+
+		// Mapbase base definitions
+		$PreprocessorDefinitions		"$BASE;MAPBASE"		[$MAPBASE]
 	}
 }

@@ -61,6 +61,7 @@ def build(bld):
 		'steam_api',
 		'bitmap',
 		'vtf',
+		'vscript'
 		'RT',
 		'ZLIB'
 	]

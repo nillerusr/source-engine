@@ -6,6 +6,7 @@
 
 $Macro SRCDIR		"..\.."
 $Macro OUTBINDIR	"$LIBPUBLIC"
+$Macro OUTBINNAME	"vrad_dll"
 
 $Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
 

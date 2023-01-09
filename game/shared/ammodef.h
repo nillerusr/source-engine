@@ -72,6 +72,9 @@ public:
 	Ammo_t				m_AmmoType[MAX_AMMO_TYPES];
 
 	Ammo_t				*GetAmmoOfIndex(int nAmmoIndex);
+#ifdef MAPBASE
+	const char*			Name(int nAmmoIndex);
+#endif // MAPBASE
 	int					Index(const char *psz);
 	int					PlrDamage(int nAmmoIndex);
 	int					NPCDamage(int nAmmoIndex);
@@ -91,8 +94,12 @@ public:
 
 private:
 	bool				AddAmmoType(char const* name, int damageType, int tracerType, int nFlags, int minSplashSize, int maxSplashSize );
-};
 
+#ifdef MAPBASE_VSCRIPT
+	ALLOW_SCRIPT_ACCESS();
+	int					GetNumAmmoTypes() { return m_nAmmoIndex; }
+#endif // MAPBASE_VSCRIPT
+};
 
 // Get the global ammodef object. This is usually implemented in each mod's game rules file somewhere,
 // so the mod can setup custom ammo types.

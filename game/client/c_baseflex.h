@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $NoKeywords: $
 //
@@ -61,7 +61,7 @@ struct FS_LocalToGlobal_t
 		m_nCount( 0 ),
 		m_Mapping( 0 )
 	{
-	}		
+	}
 
 	void SetCount( int count )
 	{
@@ -103,7 +103,7 @@ public:
 };
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 struct Emphasized_Phoneme
 {
@@ -121,7 +121,7 @@ struct Emphasized_Phoneme
 };
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 class C_BaseFlex : public C_BaseAnimatingOverlay, public IHasLocalToGlobalFlexSettings
 {
@@ -214,7 +214,7 @@ public:
 	virtual	bool		ClearSceneEvent( CSceneEventInfo *info, bool fastKill, bool canceled );
 
 	// Add the event to the queue for this actor
-	void				AddSceneEvent( CChoreoScene *scene, CChoreoEvent *event, C_BaseEntity *pTarget = NULL, bool bClientSide = false );
+	void				AddSceneEvent( CChoreoScene *scene, CChoreoEvent *event, C_BaseEntity *pTarget = NULL, bool bClientSide = false, C_SceneEntity* pSceneEntity = NULL );
 
 	// Remove the event from the queue for this actor
 	void				RemoveSceneEvent( CChoreoScene *scene, CChoreoEvent *event, bool fastKill );
@@ -239,7 +239,7 @@ private:
 
 	bool ProcessFlexAnimationSceneEvent( CSceneEventInfo *info, CChoreoScene *scene, CChoreoEvent *event );
 	bool ProcessFlexSettingSceneEvent( CSceneEventInfo *info, CChoreoScene *scene, CChoreoEvent *event );
-	void AddFlexSetting( const char *expr, float scale, 
+	void AddFlexSetting( const char *expr, float scale,
 		const flexsettinghdr_t *pSettinghdr, bool newexpression );
 
 	// Array of active SceneEvents, in order oldest to newest

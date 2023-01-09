@@ -599,6 +599,11 @@ $Project "mathlib"
 	"mathlib\mathlib.vpc" [$WINDOWS||$X360||$POSIX]
 }
 
+$Project "responserules"
+{
+	"responserules\runtime\response_rules.vpc" [($WINDOWS||$X360||$POSIX) && $NEW_RESPONSE_SYSTEM]
+}
+
 $Project "matsys_controls"
 {
 	"vgui2\matsys_controls\matsys_controls.vpc" [$WINDOWS||$X360||$POSIX]
@@ -1424,6 +1429,11 @@ $Project "coroutine_osx"
 $Project "vstdlib"
 {
 	"vstdlib\vstdlib.vpc"		[$WINDOWS || $X360||$POSIX]
+}
+
+$Project "vscript"
+{
+	"vscript\vscript.vpc"
 }
 
 $Project "vtaexp"

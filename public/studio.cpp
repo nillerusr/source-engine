@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $NoKeywords: $
 //
@@ -20,7 +20,7 @@
 //-----------------------------------------------------------------------------
 
 mstudioanimdesc_t &studiohdr_t::pAnimdesc( int i ) const
-{ 
+{
 	if (numincludemodels == 0)
 	{
 		return *pLocalAnimdesc( i );
@@ -189,7 +189,7 @@ mstudioikrule_t *mstudioanimdesc_t::pIKRule( int i ) const
 		else
 		{
 			byte *pAnimBlocks = pStudiohdr()->GetAnimBlock( animblock );
-			
+
 			if ( pAnimBlocks )
 			{
 				return (mstudioikrule_t *)(pAnimBlocks + animblockikruleindex) + i;
@@ -212,7 +212,7 @@ mstudiolocalhierarchy_t *mstudioanimdesc_t::pHierarchy( int i ) const
 		else
 		{
 			byte *pAnimBlocks = pStudiohdr()->GetAnimBlock( animblock );
-			
+
 			if ( pAnimBlocks )
 			{
 				return (mstudiolocalhierarchy_t *)(pAnimBlocks + localhierarchyindex) + i;
@@ -674,7 +674,7 @@ int	studiohdr_t::CopyAutoplaySequences( unsigned short *pOut, int outCount ) con
 // Purpose:	maps local sequence bone to global bone
 //-----------------------------------------------------------------------------
 
-int	studiohdr_t::RemapSeqBone( int iSequence, int iLocalBone ) const	
+int	studiohdr_t::RemapSeqBone( int iSequence, int iLocalBone ) const
 {
 	// remap bone
 	virtualmodel_t *pVModel = GetVirtualModel();
@@ -707,7 +707,7 @@ int	studiohdr_t::RemapAnimBone( int iAnim, int iLocalBone ) const
 // Purpose:
 //-----------------------------------------------------------------------------
 
-CStudioHdr::CStudioHdr( void ) 
+CStudioHdr::CStudioHdr( void )
 {
 	// set pointer to bogus value
 	m_nFrameUnlockCounter = 0;
@@ -715,7 +715,7 @@ CStudioHdr::CStudioHdr( void )
 	Init( NULL );
 }
 
-CStudioHdr::CStudioHdr( const studiohdr_t *pStudioHdr, IMDLCache *mdlcache ) 
+CStudioHdr::CStudioHdr( const studiohdr_t *pStudioHdr, IMDLCache *mdlcache )
 {
 	// preset pointer to bogus value (it may be overwritten with legitimate data later)
 	m_nFrameUnlockCounter = 0;
@@ -807,7 +807,7 @@ const virtualmodel_t * CStudioHdr::ResetVModel( const virtualmodel_t *pVModel ) 
 		{
 			m_pStudioHdrCache[ i ] = NULL;
 		}
-		
+
 		return const_cast<virtualmodel_t *>(pVModel);
 	}
 	else
@@ -886,7 +886,7 @@ const studiohdr_t *CStudioHdr::pAnimStudioHdr( int animation )
 
 
 mstudioanimdesc_t &CStudioHdr::pAnimdesc( int i )
-{ 
+{
 	if (m_pVModel == NULL)
 	{
 		return *m_pStudioHdr->pLocalAnimdesc( i );
@@ -933,7 +933,7 @@ mstudioseqdesc_t &CStudioHdr::pSeqdesc( int i )
 		// Avoid reading random memory.
 		i = 0;
 	}
-	
+
 	if (m_pVModel == NULL)
 	{
 		return *m_pStudioHdr->pLocalSeqdesc( i );
@@ -1163,7 +1163,7 @@ void CStudioHdr::SetAttachmentBone( int iAttachment, int iBone )
 // Purpose:
 //-----------------------------------------------------------------------------
 
-char *CStudioHdr::pszNodeName( int iNode )
+const char *CStudioHdr::pszNodeName( int iNode )
 {
 	if (m_pVModel == NULL)
 	{
@@ -1174,7 +1174,7 @@ char *CStudioHdr::pszNodeName( int iNode )
 		return "Invalid node";
 
 	const studiohdr_t *pStudioHdr = GroupStudioHdr( m_pVModel->m_node[iNode-1].group );
-	
+
 	return pStudioHdr->pszLocalNodeName( m_pVModel->m_node[iNode-1].index );
 }
 
@@ -1211,22 +1211,22 @@ int	CStudioHdr::GetActivityListVersion( void )
 		return m_pStudioHdr->activitylistversion;
 	}
 
-	int version = m_pStudioHdr->activitylistversion;
+	int versionLocl = m_pStudioHdr->activitylistversion;
 
 	int i;
 	for (i = 1; i < m_pVModel->m_group.Count(); i++)
 	{
 		const studiohdr_t *pStudioHdr = GroupStudioHdr( i );
 		Assert( pStudioHdr );
-		version = min( version, pStudioHdr->activitylistversion );
+		versionLocl = min( versionLocl, pStudioHdr->activitylistversion );
 	}
 
-	return version;
+	return versionLocl;
 }
 
-void CStudioHdr::SetActivityListVersion( int version )
+void CStudioHdr::SetActivityListVersion( int iVersion )
 {
-	m_pStudioHdr->activitylistversion = version;
+	m_pStudioHdr->activitylistversion = iVersion;
 
 	if (m_pVModel == NULL)
 	{
@@ -1238,7 +1238,7 @@ void CStudioHdr::SetActivityListVersion( int version )
 	{
 		const studiohdr_t *pStudioHdr = GroupStudioHdr( i );
 		Assert( pStudioHdr );
-		pStudioHdr->SetActivityListVersion( version );
+		pStudioHdr->SetActivityListVersion( iVersion );
 	}
 }
 
@@ -1348,7 +1348,7 @@ int	CStudioHdr::CopyAutoplaySequences( unsigned short *pOut, int outCount ) cons
 // Purpose:	maps local sequence bone to global bone
 //-----------------------------------------------------------------------------
 
-int	CStudioHdr::RemapSeqBone( int iSequence, int iLocalBone ) const	
+int	CStudioHdr::RemapSeqBone( int iSequence, int iLocalBone ) const
 {
 	// remap bone
 	if (m_pVModel)
@@ -1375,7 +1375,7 @@ int	CStudioHdr::RemapAnimBone( int iAnim, int iLocalBone ) const
 
 
 //-----------------------------------------------------------------------------
-// Purpose: run the interpreted FAC's expressions, converting flex_controller 
+// Purpose: run the interpreted FAC's expressions, converting flex_controller
 //			values into FAC weights
 //-----------------------------------------------------------------------------
 void CStudioHdr::RunFlexRules( const float *src, float *dest )
@@ -1422,17 +1422,17 @@ void CStudioHdr::RunFlexRules( const float *src, float *dest )
 				{
 					stack[k-2] = 0;
 				}
-				k--; 
+				k--;
 				break;
 			case STUDIO_NEG: stack[k-1] = -stack[k-1]; break;
 			case STUDIO_MAX: stack[k-2] = max( stack[k-2], stack[k-1] ); k--; break;
 			case STUDIO_MIN: stack[k-2] = min( stack[k-2], stack[k-1] ); k--; break;
 			case STUDIO_CONST: stack[k] = pops->d.value; k++; break;
-			case STUDIO_FETCH1: 
-				{ 
+			case STUDIO_FETCH1:
+				{
 				int m = pFlexcontroller( (LocalFlexController_t)pops->d.index)->localToGlobal;
 				stack[k] = src[m];
-				k++; 
+				k++;
 				break;
 				}
 			case STUDIO_FETCH2:
@@ -1464,17 +1464,17 @@ void CStudioHdr::RunFlexRules( const float *src, float *dest )
 				}
 				break;
 			case STUDIO_2WAY_0:
-				{ 
+				{
 					int m = pFlexcontroller( (LocalFlexController_t)pops->d.index )->localToGlobal;
 					stack[ k ] = RemapValClamped( src[m], -1.0f, 0.0f, 1.0f, 0.0f );
-					k++; 
+					k++;
 				}
 				break;
 			case STUDIO_2WAY_1:
-				{ 
+				{
 					int m = pFlexcontroller( (LocalFlexController_t)pops->d.index )->localToGlobal;
 					stack[ k ] = RemapValClamped( src[m], 0.0f, 1.0f, 0.0f, 1.0f );
-					k++; 
+					k++;
 				}
 				break;
 			case STUDIO_NWAY:
@@ -1506,11 +1506,11 @@ void CStudioHdr::RunFlexRules( const float *src, float *dest )
 
 					stack[ k - 5 ] = flValue * src[ v ];
 
-					k -= 4; 
+					k -= 4;
 				}
 				break;
 			case STUDIO_DME_LOWER_EYELID:
-				{ 
+				{
 					const mstudioflexcontroller_t *const pCloseLidV = pFlexcontroller( (LocalFlexController_t)pops->d.index );
 					const float flCloseLidV = RemapValClamped( src[ pCloseLidV->localToGlobal ], pCloseLidV->min, pCloseLidV->max, 0.0f, 1.0f );
 
@@ -1545,7 +1545,7 @@ void CStudioHdr::RunFlexRules( const float *src, float *dest )
 				}
 				break;
 			case STUDIO_DME_UPPER_EYELID:
-				{ 
+				{
 					const mstudioflexcontroller_t *const pCloseLidV = pFlexcontroller( (LocalFlexController_t)pops->d.index );
 					const float flCloseLidV = RemapValClamped( src[ pCloseLidV->localToGlobal ], pCloseLidV->min, pCloseLidV->max, 0.0f, 1.0f );
 
@@ -1620,7 +1620,7 @@ void CStudioHdr::CActivityToSequenceMapping::Initialize( CStudioHdr * __restrict
 {
 	// Algorithm: walk through every sequence in the model, determine to which activity
 	// it corresponds, and keep a count of sequences per activity. Once the total count
-	// is available, allocate an array large enough to contain them all, update the 
+	// is available, allocate an array large enough to contain them all, update the
 	// starting indices for every activity's section in the array, and go back through,
 	// populating the array with its data.
 
@@ -1636,10 +1636,10 @@ void CStudioHdr::CActivityToSequenceMapping::Initialize( CStudioHdr * __restrict
 #if STUDIO_SEQUENCE_ACTIVITY_LAZY_INITIALIZE
 	m_bIsInitialized = true;
 #endif
-	
+
 	// Some studio headers have no activities at all. In those
 	// cases we can avoid a lot of this effort.
-	bool bFoundOne = false;	
+	bool bFoundOne = false;
 
 	// for each sequence in the header...
 	const int NumSeq = pstudiohdr->GetNumSeq();
@@ -1663,7 +1663,7 @@ void CStudioHdr::CActivityToSequenceMapping::Initialize( CStudioHdr * __restrict
 			HashValueType entry(seqdesc.activity, 0, 1, iabs(seqdesc.actweight));
 			UtlHashHandle_t handle = m_ActToSeqHash.Find(entry);
 			if ( m_ActToSeqHash.IsValidHandle(handle) )
-			{	
+			{
 				// we already have an entry and must update it by incrementing count
 				HashValueType * __restrict toUpdate = &m_ActToSeqHash.Element(handle);
 				toUpdate->count += 1;
@@ -1685,11 +1685,11 @@ void CStudioHdr::CActivityToSequenceMapping::Initialize( CStudioHdr * __restrict
 	if (!bFoundOne)
 		return;
 
-	// Now, create starting indices for each activity. For an activity n, 
-	// the starting index is of course the sum of counts [0..n-1]. 
+	// Now, create starting indices for each activity. For an activity n,
+	// the starting index is of course the sum of counts [0..n-1].
 	int sequenceCount = 0;
 	int topActivity = 0; // this will store the highest seen activity number (used later to make an ad hoc map on the stack)
-	for ( UtlHashHandle_t handle = m_ActToSeqHash.GetFirstHandle() ; 
+	for ( UtlHashHandle_t handle = m_ActToSeqHash.GetFirstHandle() ;
 		  m_ActToSeqHash.IsValidHandle(handle) ;
 		  handle = m_ActToSeqHash.GetNextHandle(handle) )
 	{
@@ -1698,7 +1698,7 @@ void CStudioHdr::CActivityToSequenceMapping::Initialize( CStudioHdr * __restrict
 		sequenceCount += element.count;
 		topActivity = max(topActivity, element.activityIdx);
 	}
-	
+
 
 	// Allocate the actual array of sequence information. Note the use of restrict;
 	// this is an important optimization, but means that you must never refer to this
@@ -1709,18 +1709,18 @@ void CStudioHdr::CActivityToSequenceMapping::Initialize( CStudioHdr * __restrict
 
 
 
-	// Now we're going to actually populate that list with the relevant data. 
+	// Now we're going to actually populate that list with the relevant data.
 	// First, create an array on the stack to store how many sequences we've written
 	// so far for each activity. (This is basically a very simple way of doing a map.)
-	// This stack may potentially grow very large; so if you have problems with it, 
+	// This stack may potentially grow very large; so if you have problems with it,
 	// go to a utlmap or similar structure.
 	unsigned int allocsize = (topActivity + 1) * sizeof(int);
-#define ALIGN_VALUE( val, alignment ) ( ( val + alignment - 1 ) & ~( alignment - 1 ) ) //  need macro for constant expression
+//#define ALIGN_VALUE( val, alignment ) ( ( val + alignment - 1 ) & ~( alignment - 1 ) ) //  need macro for constant expression
 	allocsize = ALIGN_VALUE(allocsize,16);
 	int * __restrict seqsPerAct = static_cast<int *>(stackalloc(allocsize));
 	memset(seqsPerAct, 0, allocsize);
 
-	// okay, walk through all the sequences again, and write the relevant data into 
+	// okay, walk through all the sequences again, and write the relevant data into
 	// our little table.
 	for ( int i = 0 ; i < NumSeq ; ++i )
 	{
@@ -1728,8 +1728,8 @@ void CStudioHdr::CActivityToSequenceMapping::Initialize( CStudioHdr * __restrict
 		if (seqdesc.activity >= 0)
 		{
 			const HashValueType &element = m_ActToSeqHash[m_ActToSeqHash.Find(HashValueType(seqdesc.activity, 0, 0, 0))];
-			
-			// If this assert trips, we've written more sequences per activity than we allocated 
+
+			// If this assert trips, we've written more sequences per activity than we allocated
 			// (therefore there must have been a miscount in the first for loop above).
 			int tupleOffset = seqsPerAct[seqdesc.activity];
 			Assert( tupleOffset < element.count );
@@ -1802,7 +1802,7 @@ const CStudioHdr::CActivityToSequenceMapping::SequenceTuple *CStudioHdr::CActivi
 
 	HashValueType entry(forActivity, 0, 0, 0);
 	UtlHashHandle_t handle = m_ActToSeqHash.Find(entry);
-	
+
 	if (m_ActToSeqHash.IsValidHandle(handle))
 	{
 		const HashValueType &element = m_ActToSeqHash[handle];
@@ -1822,7 +1822,7 @@ const CStudioHdr::CActivityToSequenceMapping::SequenceTuple *CStudioHdr::CActivi
 
 int CStudioHdr::CActivityToSequenceMapping::NumSequencesForActivity( int forActivity )
 {
-	// If this trips, you've called this function on something that doesn't 
+	// If this trips, you've called this function on something that doesn't
 	// have activities.
 	//Assert(m_pSequenceTuples != NULL);
 	if ( m_pSequenceTuples == NULL )

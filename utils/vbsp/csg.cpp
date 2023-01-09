@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $NoKeywords: $
 //
@@ -29,7 +29,7 @@ evaluate split side
 cost = 0
 for all sides
 	for all sides
-		get 
+		get
 		if side splits side and splitside is on same child
 			cost++;
 }
@@ -199,7 +199,7 @@ bspbrush_t	*ClipBrushToBox (bspbrush_t *brush, const Vector& clipmins, const Vec
 	for (i=0 ; i<brush->numsides ; i++)
 	{
 		p = brush->sides[i].planenum & ~1;
-		if (p == maxplanenums[0] || p == maxplanenums[1] 
+		if (p == maxplanenums[0] || p == maxplanenums[1]
 			|| p == minplanenums[0] || p == minplanenums[1])
 		{
 			brush->sides[i].texinfo = TEXINFO_NODE;
@@ -297,7 +297,7 @@ void CopyMatchingTexinfos( side_t *pDestSides, int numDestSides, const bspbrush_
 		mapbrush_t *pSourceBrush = pSource->original;
 		Assert( pSourceBrush );
 
-		const side_t *pSourceSide = pSourceBrush->original_sides;	
+		const side_t *pSourceSide = pSourceBrush->original_sides;
 		const side_t *pBestSide = NULL;
 		float flBestDot = -1.0f;
 		for ( int j = 0; j < pSourceBrush->numsides; ++j, ++pSourceSide )
@@ -339,8 +339,8 @@ void CopyMatchingTexinfos( side_t *pDestSides, int numDestSides, const bspbrush_
 // This is a hack to allow areaportals to work in water
 // It was done this way for ease of implementation.
 // This searches a brush list to find intersecting areaportals and water
-// If an areaportal is found inside water, then the water contents and 
-// texture information is copied over to the areaportal so that the 
+// If an areaportal is found inside water, then the water contents and
+// texture information is copied over to the areaportal so that the
 // resulting space has the same properties as the water (normal areaportals assume "empty" surroundings)
 void FixupAreaportalWaterBrushes( bspbrush_t *pList )
 {
@@ -367,7 +367,7 @@ void FixupAreaportalWaterBrushes( bspbrush_t *pList )
 			FreeBrush( pIntersect );
 			pAreaportal->original->contents |= pWater->original->contents;
 
-			// HACKHACK: Ideally, this should have been done before the bspbrush_t was 
+			// HACKHACK: Ideally, this should have been done before the bspbrush_t was
 			// created from the map brush.  But since it hasn't been, retexture the original map
 			// brush's sides
 			CopyMatchingTexinfos( pAreaportal->sides, pAreaportal->numsides, pWater );
@@ -378,7 +378,7 @@ void FixupAreaportalWaterBrushes( bspbrush_t *pList )
 
 
 //-----------------------------------------------------------------------------
-// MakeBspBrushList 
+// MakeBspBrushList
 //-----------------------------------------------------------------------------
 // UNDONE: Put detail brushes in a separate brush array and pass that instead of "onlyDetail" ?
 bspbrush_t *MakeBspBrushList (int startbrush, int endbrush, const Vector& clipmins, const Vector& clipmaxs, int detailScreen)
@@ -415,7 +415,7 @@ bspbrush_t *MakeBspBrushList (int startbrush, int endbrush, const Vector& clipmi
 
 
 //-----------------------------------------------------------------------------
-// A version which uses a passed-in list of brushes 
+// A version which uses a passed-in list of brushes
 //-----------------------------------------------------------------------------
 bspbrush_t *MakeBspBrushList (mapbrush_t **pBrushes, int nBrushCount, const Vector& clipmins, const Vector& clipmaxs)
 {
@@ -561,7 +561,7 @@ void WriteBrushVMF(char *name, bspbrush_t *list)
 			BasisForPlane( mapplanes[s->planenum].normal, u, v );
 			fprintf( f, "\t\t\t\"uaxis\" \"[%.3f %.3f %.3f 0] 1.0\"\n", u[0], u[1], u[2] );
 			fprintf( f, "\t\t\t\"vaxis\" \"[%.3f %.3f %.3f 0] 1.0\"\n", v[0], v[1], v[2] );
-			
+
 			fprintf( f, "\t\t\t\"rotation\" \"0.0\"\n" );
 			fprintf( f, "\t\t\t\"lightmapscale\" \"16.0\"\n" );
 
@@ -594,6 +594,13 @@ void PrintBrushContentsToString( int contents, char *pOut, int nMaxChars )
 	ADD_CONTENTS(CONTENTS_BLOCKLOS)
 	ADD_CONTENTS(CONTENTS_OPAQUE)
 	ADD_CONTENTS(CONTENTS_TESTFOGVOLUME)
+#ifdef MAPBASE
+	ADD_CONTENTS(CONTENTS_UNUSED)
+	ADD_CONTENTS(CONTENTS_UNUSED6)
+	ADD_CONTENTS(CONTENTS_TEAM1)
+	ADD_CONTENTS(CONTENTS_TEAM2)
+	ADD_CONTENTS(CONTENTS_IGNORE_NODRAW_OPAQUE)
+#endif // MAPBASE
 	ADD_CONTENTS(CONTENTS_MOVEABLE)
 	ADD_CONTENTS(CONTENTS_AREAPORTAL)
 	ADD_CONTENTS(CONTENTS_PLAYERCLIP)
@@ -632,14 +639,14 @@ qboolean BrushGE (bspbrush_t *b1, bspbrush_t *b2)
 	// Areaportals are allowed to bite water + slime
 	// NOTE: This brush combo should have been fixed up
 	// in a first pass (FixupAreaportalWaterBrushes)
-	if( (b2->original->contents & MASK_SPLITAREAPORTAL) && 
+	if( (b2->original->contents & MASK_SPLITAREAPORTAL) &&
 		(b1->original->contents & CONTENTS_AREAPORTAL) )
 	{
 		return true;
 	}
-	
+
 	// detail brushes never bite structural brushes
-	if ( (b1->original->contents & CONTENTS_DETAIL) 
+	if ( (b1->original->contents & CONTENTS_DETAIL)
 		&& !(b2->original->contents & CONTENTS_DETAIL) )
 		return false;
 	if (b1->original->contents & CONTENTS_SOLID)
@@ -656,7 +663,7 @@ qboolean BrushGE (bspbrush_t *b1, bspbrush_t *b2)
 ChopBrushes
 
 Carves any intersecting solid brushes into the minimum number
-of non-intersecting brushes. 
+of non-intersecting brushes.
 =================
 */
 bspbrush_t *ChopBrushes (bspbrush_t *head)
