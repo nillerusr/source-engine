@@ -1,0 +1,42 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Configure Waf for host OS: x86",
+            "type": "shell",
+            "problemMatcher": [],
+            "command": "./waf configure -T release --prefix=out/",
+            "windows": {
+                "command": "./waf.bat configure -T release --prefix=out/"
+            }
+        },
+        {
+            "label": "Configure Waf for host OS: x86_64",
+            "type": "shell",
+            "problemMatcher": [],
+            "command": "./waf configure -T release --64bits --prefix=out/",
+            "windows": {
+                "command": "./waf.bat configure -T release --64bits --prefix=out/"
+            }
+        },
+        {
+            "label": "Configure Waf for outdated Android",
+            "type": "shell",
+            "problemMatcher": [],
+            "command": "./waf configure -T release --android=armeabi-v7a-hard,4.9,21",
+            "windows": {
+                "command": "echo \"Not supported on Windows.\""
+            }
+        },
+        {
+            "label": "Build",
+            "type": "shell",
+            "problemMatcher": [],
+            "command": "./waf install",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}
