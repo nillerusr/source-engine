@@ -15,7 +15,9 @@
 #include "basetypes.h"
 #include "dbgflag.h"
 #include "platform.h"
+#if _MSC_VER < 1900
 #include <math.h>
+#endif
 #include <stdio.h>
 #include <stdarg.h>
 

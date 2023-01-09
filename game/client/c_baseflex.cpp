@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $NoKeywords: $
 //===========================================================================//
@@ -117,8 +117,8 @@ bool GetHWMExpressionFileName( const char *pFilename, char *pHWMFilename )
 	return true;
 }
 
-C_BaseFlex::C_BaseFlex() : 
-	m_iv_viewtarget( "C_BaseFlex::m_iv_viewtarget" ), 
+C_BaseFlex::C_BaseFlex() :
+	m_iv_viewtarget( "C_BaseFlex::m_iv_viewtarget" ),
 	m_iv_flexWeight("C_BaseFlex:m_iv_flexWeight" ),
 #ifdef HL2_CLIENT_DLL
 	m_iv_vecLean("C_BaseFlex:m_iv_vecLean" ),
@@ -192,7 +192,7 @@ void C_BaseFlex::SetupMappings( char const *pchFileRoot )
 CStudioHdr *C_BaseFlex::OnNewModel()
 {
 	CStudioHdr *hdr = BaseClass::OnNewModel();
-	
+
 	// init to invalid setting
 	m_iBlink = -1;
 	m_iEyeUpdown = LocalFlexController_t(-1);
@@ -288,7 +288,7 @@ bool C_BaseFlex::GetSoundSpatialization( SpatializationInfo_t& info )
 		{
 			Vector origin;
 			QAngle angles;
-			
+
 			C_BaseAnimating::AutoAllowBoneAccess boneaccess( true, false );
 
 			if (GetAttachment( m_iMouthAttachment, origin, angles ))
@@ -311,7 +311,7 @@ bool C_BaseFlex::GetSoundSpatialization( SpatializationInfo_t& info )
 
 
 //-----------------------------------------------------------------------------
-// Purpose: run the interpreted FAC's expressions, converting global flex_controller 
+// Purpose: run the interpreted FAC's expressions, converting global flex_controller
 //			values into FAC weights
 //-----------------------------------------------------------------------------
 void C_BaseFlex::RunFlexRules( CStudioHdr *hdr, float *dest )
@@ -337,7 +337,7 @@ void C_BaseFlex::RunFlexRules( CStudioHdr *hdr, float *dest )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 bool CFlexSceneFileManager::Init()
 {
@@ -353,7 +353,7 @@ bool CFlexSceneFileManager::Init()
 
 #if defined( TF_CLIENT_DLL )
 	// HACK TO ALL TF TO HAVE PER CLASS OVERRIDES
-	char const *pTFClasses[] = 
+	char const *pTFClasses[] =
 	{
 		"scout",
 		"sniper",
@@ -411,8 +411,8 @@ void CFlexSceneFileManager::Shutdown()
 
 //-----------------------------------------------------------------------------
 // Purpose: Sets up translations
-// Input  : *instance - 
-//			*pSettinghdr - 
+// Input  : *instance -
+//			*pSettinghdr -
 // Output : 	void
 //-----------------------------------------------------------------------------
 void CFlexSceneFileManager::EnsureTranslations( IHasLocalToGlobalFlexSettings *instance, const flexsettinghdr_t *pSettinghdr )
@@ -425,15 +425,15 @@ void CFlexSceneFileManager::EnsureTranslations( IHasLocalToGlobalFlexSettings *i
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void *CFlexSceneFileManager::FindSceneFile( IHasLocalToGlobalFlexSettings *instance, const char *filename, bool allowBlockingIO )
 {
 	char szFilename[MAX_PATH];
 	Assert( V_strlen( filename ) < MAX_PATH );
 	V_strcpy( szFilename, filename );
-	
-#if defined( TF_CLIENT_DLL )	
+
+#if defined( TF_CLIENT_DLL )
 	char szHWMFilename[MAX_PATH];
 	if ( GetHWMExpressionFileName( szFilename, szHWMFilename ) )
 	{
@@ -455,7 +455,7 @@ void *CFlexSceneFileManager::FindSceneFile( IHasLocalToGlobalFlexSettings *insta
 			return file->buffer;
 		}
 	}
-	
+
 	if ( !allowBlockingIO )
 	{
 		return NULL;
@@ -491,7 +491,7 @@ void *CFlexSceneFileManager::FindSceneFile( IHasLocalToGlobalFlexSettings *insta
 		for ( int i = 0; i < pHdr->numflexsettings; ++i, ++pFlexSetting )
 		{
 			swap.SwapFieldsToTargetEndian( pFlexSetting );
-			
+
 			flexweight_t *pWeight = (flexweight_t*)(((byte*)pFlexSetting) + pFlexSetting->settingindex );
 			for ( int j = 0; j < pFlexSetting->numsettings; ++j, ++pWeight )
 			{
@@ -520,7 +520,7 @@ void *CFlexSceneFileManager::FindSceneFile( IHasLocalToGlobalFlexSettings *insta
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CFlexSceneFileManager::DeleteSceneFiles()
 {
@@ -536,8 +536,8 @@ void CFlexSceneFileManager::DeleteSceneFiles()
 CFlexSceneFileManager g_FlexSceneFileManager;
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *filename - 
+// Purpose:
+// Input  : *filename -
 //-----------------------------------------------------------------------------
 void *C_BaseFlex::FindSceneFile( const char *filename )
 {
@@ -582,7 +582,7 @@ Vector C_BaseFlex::SetViewTarget( CStudioHdr *pStudioHdr )
 
 		Vector local;
 		VectorITransform( tmp, attToWorld, local );
-		
+
 		// FIXME: clamp distance to something based on eyeball distance
 		if (local.x < 6)
 		{
@@ -599,7 +599,7 @@ Vector C_BaseFlex::SetViewTarget( CStudioHdr *pStudioHdr )
 			mstudioflexcontroller_t *pflex = pStudioHdr->pFlexcontroller( m_iEyeUpdown );
 			eyeAng.x = g_flexweight[ pflex->localToGlobal ];
 		}
-		
+
 		if ( m_iEyeRightleft != -1 )
 		{
 			mstudioflexcontroller_t *pflex = pStudioHdr->pFlexcontroller( m_iEyeRightleft );
@@ -644,8 +644,8 @@ Vector C_BaseFlex::SetViewTarget( CStudioHdr *pStudioHdr )
 	modelrender->SetViewTarget( GetModelPtr(), GetBody(), tmp );
 
 	/*
-	debugoverlay->AddTextOverlay( GetAbsOrigin() + Vector( 0, 0, 64 ), 0, 0, "%.2f %.2f %.2f  : %.2f %.2f %.2f", 
-		m_viewtarget.x, m_viewtarget.y, m_viewtarget.z, 
+	debugoverlay->AddTextOverlay( GetAbsOrigin() + Vector( 0, 0, 64 ), 0, 0, "%.2f %.2f %.2f  : %.2f %.2f %.2f",
+		m_viewtarget.x, m_viewtarget.y, m_viewtarget.z,
 		m_prevviewtarget.x, m_prevviewtarget.y, m_prevviewtarget.z );
 	*/
 
@@ -656,14 +656,14 @@ Vector C_BaseFlex::SetViewTarget( CStudioHdr *pStudioHdr )
 #define WEAK_CROSSFADE_START		0.40f
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 // Here's the formula
 // 0.5 is neutral 100 % of the default setting
 // Crossfade starts at STRONG_CROSSFADE_START and is full at STRONG_CROSSFADE_END
 // If there isn't a strong then the intensity of the underlying phoneme is fixed at 2 x STRONG_CROSSFADE_START
 //  so we don't get huge numbers
-// Input  : *classes - 
-//			emphasis_intensity - 
+// Input  : *classes -
+//			emphasis_intensity -
 //-----------------------------------------------------------------------------
 void C_BaseFlex::ComputeBlendedSetting( Emphasized_Phoneme *classes, float emphasis_intensity )
 {
@@ -683,7 +683,7 @@ void C_BaseFlex::ComputeBlendedSetting( Emphasized_Phoneme *classes, float empha
 			float frac = dist_remaining / ( 1.0f - STRONG_CROSSFADE_START );
 
 			classes[ PHONEME_CLASS_NORMAL ].amount = (frac) * 2.0f * STRONG_CROSSFADE_START;
-			classes[ PHONEME_CLASS_STRONG ].amount = 1.0f - frac; 
+			classes[ PHONEME_CLASS_STRONG ].amount = 1.0f - frac;
 		}
 		else
 		{
@@ -700,7 +700,7 @@ void C_BaseFlex::ComputeBlendedSetting( Emphasized_Phoneme *classes, float empha
 			float frac = dist_remaining / ( WEAK_CROSSFADE_START );
 
 			classes[ PHONEME_CLASS_NORMAL ].amount = (1.0f - frac) * 2.0f * WEAK_CROSSFADE_START;
-			classes[ PHONEME_CLASS_WEAK ].amount = frac; 
+			classes[ PHONEME_CLASS_WEAK ].amount = frac;
 		}
 		else
 		{
@@ -716,11 +716,11 @@ void C_BaseFlex::ComputeBlendedSetting( Emphasized_Phoneme *classes, float empha
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *classes - 
-//			phoneme - 
-//			scale - 
-//			newexpression - 
+// Purpose:
+// Input  : *classes -
+//			phoneme -
+//			scale -
+//			newexpression -
 //-----------------------------------------------------------------------------
 void C_BaseFlex::AddViseme( Emphasized_Phoneme *classes, float emphasis_intensity, int phoneme, float scale, bool newexpression )
 {
@@ -733,7 +733,7 @@ void C_BaseFlex::AddViseme( Emphasized_Phoneme *classes, float emphasis_intensit
 	{
 		return;
 	}
-		
+
 	// Compute blend weights
 	ComputeBlendedSetting( classes, emphasis_intensity );
 
@@ -772,7 +772,7 @@ void C_BaseFlex::AddViseme( Emphasized_Phoneme *classes, float emphasis_intensit
 // Purpose: A lot of the one time setup and also resets amount to 0.0f default
 //  for strong/weak/normal tracks
 // Returning true == skip this phoneme
-// Input  : *classes - 
+// Input  : *classes -
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
 bool C_BaseFlex::SetupEmphasisBlend( Emphasized_Phoneme *classes, int phoneme )
@@ -813,17 +813,17 @@ bool C_BaseFlex::SetupEmphasisBlend( Emphasized_Phoneme *classes, int phoneme )
 			info->valid = true;
 		}
 	}
-	
+
 	return skip;
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *classes - 
-//			*sentence - 
-//			t - 
-//			dt - 
-//			juststarted - 
+// Purpose:
+// Input  : *classes -
+//			*sentence -
+//			t -
+//			dt -
+//			juststarted -
 //-----------------------------------------------------------------------------
 ConVar g_CV_PhonemeSnap("phonemesnap", "2", 0, "Lod at level at which visemes stops always considering two phonemes, regardless of duration." );
 void C_BaseFlex::AddVisemesForSentence( Emphasized_Phoneme *classes, float emphasis_intensity, CSentence *sentence, float t, float dt, bool juststarted )
@@ -917,8 +917,8 @@ void C_BaseFlex::AddVisemesForSentence( Emphasized_Phoneme *classes, float empha
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *classes - 
+// Purpose:
+// Input  : *classes -
 //-----------------------------------------------------------------------------
 void C_BaseFlex::ProcessVisemes( Emphasized_Phoneme *classes )
 {
@@ -1075,7 +1075,7 @@ void C_BaseFlex::GetToolRecordingState( KeyValues *msg )
 			{
 				rightleft = RemapVal( rightleft, flexrightleft->min, flexrightleft->max, 0.0f, 1.0f );
 			}
-	
+
 			g_flexweight[ flexupdown->localToGlobal ] = updown;
 			g_flexweight[ flexrightleft->localToGlobal ] = rightleft;
 		}
@@ -1102,7 +1102,7 @@ void C_BaseFlex::GetToolRecordingState( KeyValues *msg )
 
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void C_BaseFlex::OnThreadedDrawSetup()
 {
@@ -1128,7 +1128,7 @@ bool C_BaseFlex::UsesFlexDelayedWeights()
 
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void C_BaseFlex::LinkToGlobalFlexControllers( CStudioHdr *hdr )
 {
@@ -1149,7 +1149,10 @@ void C_BaseFlex::SetupWeights( const matrix3x4_t *pBoneToWorld, int nFlexWeightC
 {
 	// hack in an initialization
 	LinkToGlobalFlexControllers( GetModelPtr() );
+
+#ifndef MAPBASE
 	m_iBlink = AddGlobalFlexController( "blink" );
+#endif
 
 	if ( SetupGlobalWeights( pBoneToWorld, nFlexWeightCount, pFlexWeights, pFlexDelayedWeights ) )
 	{
@@ -1398,7 +1401,7 @@ const flexsetting_t *C_BaseFlex::FindNamedSetting( const flexsettinghdr_t *pSett
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void C_BaseFlex::StartChoreoScene( CChoreoScene *scene )
 {
@@ -1412,7 +1415,7 @@ void C_BaseFlex::StartChoreoScene( CChoreoScene *scene )
 
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void C_BaseFlex::RemoveChoreoScene( CChoreoScene *scene )
 {
@@ -1474,11 +1477,11 @@ bool C_BaseFlex::ClearSceneEvent( CSceneEventInfo *info, bool fastKill, bool can
 
 //-----------------------------------------------------------------------------
 // Purpose: Add string indexed scene/expression/duration to list of active SceneEvents
-// Input  : scenefile - 
-//			expression - 
-//			duration - 
+// Input  : scenefile -
+//			expression -
+//			duration -
 //-----------------------------------------------------------------------------
-void C_BaseFlex::AddSceneEvent( CChoreoScene *scene, CChoreoEvent *event, CBaseEntity *pTarget, bool bClientSide )
+void C_BaseFlex::AddSceneEvent( CChoreoScene *scene, CChoreoEvent *event, CBaseEntity *pTarget, bool bClientSide, C_SceneEntity* pSceneEntity )
 {
 	if ( !scene || !event )
 	{
@@ -1503,6 +1506,7 @@ void C_BaseFlex::AddSceneEvent( CChoreoScene *scene, CChoreoEvent *event, CBaseE
 	info.m_hTarget		= pTarget;
 	info.m_bStarted		= false;
 	info.m_bClientSide	= bClientSide;
+	info.m_hSceneEntity = pSceneEntity;
 
 	if (StartSceneEvent( &info, scene, event, actor, pTarget ))
 	{
@@ -1516,7 +1520,7 @@ void C_BaseFlex::AddSceneEvent( CChoreoScene *scene, CChoreoEvent *event, CBaseE
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 bool C_BaseFlex::StartSceneEvent( CSceneEventInfo *info, CChoreoScene *scene, CChoreoEvent *event, CChoreoActor *actor, CBaseEntity *pTarget )
 {
@@ -1531,8 +1535,8 @@ bool C_BaseFlex::StartSceneEvent( CSceneEventInfo *info, CChoreoScene *scene, CC
 
 	case CChoreoEvent::EXPRESSION:
 		return true;
-		
-	case CChoreoEvent::SEQUENCE: 
+
+	case CChoreoEvent::SEQUENCE:
 		if ( info->m_bClientSide )
 		{
 			return RequestStartSequenceSceneEvent( info, scene, event, actor, pTarget );
@@ -1551,7 +1555,7 @@ bool C_BaseFlex::StartSceneEvent( CSceneEventInfo *info, CChoreoScene *scene, CC
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 bool C_BaseFlex::RequestStartSequenceSceneEvent( CSceneEventInfo *info, CChoreoScene *scene, CChoreoEvent *event, CChoreoActor *actor, CBaseEntity *pTarget )
 {
@@ -1567,8 +1571,8 @@ bool C_BaseFlex::RequestStartSequenceSceneEvent( CSceneEventInfo *info, CChoreoS
 
 //-----------------------------------------------------------------------------
 // Purpose: Remove expression
-// Input  : scenefile - 
-//			expression - 
+// Input  : scenefile -
+//			expression -
 //-----------------------------------------------------------------------------
 void C_BaseFlex::RemoveSceneEvent( CChoreoScene *scene, CChoreoEvent *event, bool fastKill )
 {
@@ -1619,7 +1623,7 @@ bool C_BaseFlex::CheckSceneEvent( float currenttime, CChoreoScene *scene, CChore
 
 		if ( info->m_pEvent != event)
 			continue;
-		
+
 		return CheckSceneEventCompletion( info, currenttime, scene, event );
 	}
 	return true;
@@ -1666,7 +1670,7 @@ float C_BaseFlex::GetFlexWeight( LocalFlexController_t index )
 		{
 			return m_flexWeight[index] * (pflexcontroller->max - pflexcontroller->min) + pflexcontroller->min;
 		}
-				
+
 		return m_flexWeight[index];
 	}
 	return 0.0;
@@ -1728,7 +1732,7 @@ void C_BaseFlex::ProcessSceneEvents( bool bFlexEvents )
 }
 
 //-----------------------------------------------------------------------------
-// Various methods to process facial SceneEvents: 
+// Various methods to process facial SceneEvents:
 //-----------------------------------------------------------------------------
 bool C_BaseFlex::ProcessFlexAnimationSceneEvent( CSceneEventInfo *info, CChoreoScene *scene, CChoreoEvent *event )
 {
@@ -1751,7 +1755,7 @@ bool C_BaseFlex::ProcessFlexSettingSceneEvent( CSceneEventInfo *info, CChoreoSce
 	// Look up the actual strings
 	const char *scenefile	= event->GetParameters();
 	const char *name		= event->GetParameters2();
-	
+
 	// Have to find both strings
 	if ( scenefile && name )
 	{
@@ -1760,9 +1764,9 @@ bool C_BaseFlex::ProcessFlexSettingSceneEvent( CSceneEventInfo *info, CChoreoSce
 		if ( pExpHdr )
 		{
 			float scenetime = scene->GetTime();
-			
+
 			float scale = event->GetIntensity( scenetime );
-			
+
 			// Add the named expression
 			AddFlexSetting( name, scale, pExpHdr, !info->m_bStarted );
 		}
@@ -1774,8 +1778,8 @@ bool C_BaseFlex::ProcessFlexSettingSceneEvent( CSceneEventInfo *info, CChoreoSce
 //-----------------------------------------------------------------------------
 // Purpose: Each CBaseFlex maintains a UtlRBTree of mappings, one for each loaded flex scene file it uses.  This is used to
 //  sort the entries in the RBTree
-// Input  : lhs - 
-//			rhs - 
+// Input  : lhs -
+//			rhs -
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
 bool FlexSettingLessFunc( const FS_LocalToGlobal_t& lhs, const FS_LocalToGlobal_t& rhs )
@@ -1784,9 +1788,9 @@ bool FlexSettingLessFunc( const FS_LocalToGlobal_t& lhs, const FS_LocalToGlobal_
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Since everyone shared a pSettinghdr now, we need to set up the localtoglobal mapping per entity, but 
+// Purpose: Since everyone shared a pSettinghdr now, we need to set up the localtoglobal mapping per entity, but
 //  we just do this in memory with an array of integers (could be shorts, I suppose)
-// Input  : *pSettinghdr - 
+// Input  : *pSettinghdr -
 //-----------------------------------------------------------------------------
 void C_BaseFlex::EnsureTranslations( const flexsettinghdr_t *pSettinghdr )
 {
@@ -1810,8 +1814,8 @@ void C_BaseFlex::EnsureTranslations( const flexsettinghdr_t *pSettinghdr )
 
 //-----------------------------------------------------------------------------
 // Purpose: Look up instance specific mapping
-// Input  : *pSettinghdr - 
-//			key - 
+// Input  : *pSettinghdr -
+//			key -
 // Output : int
 //-----------------------------------------------------------------------------
 int C_BaseFlex::FlexControllerLocalToGlobal( const flexsettinghdr_t *pSettinghdr, int key )
@@ -1840,13 +1844,13 @@ int C_BaseFlex::FlexControllerLocalToGlobal( const flexsettinghdr_t *pSettinghdr
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *expr - 
-//			scale - 
-//			*pSettinghdr - 
-//			newexpression - 
+// Purpose:
+// Input  : *expr -
+//			scale -
+//			*pSettinghdr -
+//			newexpression -
 //-----------------------------------------------------------------------------
-void C_BaseFlex::AddFlexSetting( const char *expr, float scale, 
+void C_BaseFlex::AddFlexSetting( const char *expr, float scale,
 	const flexsettinghdr_t *pSettinghdr, bool newexpression )
 {
 	int i;
@@ -1888,7 +1892,7 @@ void C_BaseFlex::AddFlexSetting( const char *expr, float scale,
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 bool C_BaseFlex::ProcessSceneEvent( bool bFlexEvents, CSceneEventInfo *info, CChoreoScene *scene, CChoreoEvent *event )
 {
@@ -1933,9 +1937,9 @@ bool C_BaseFlex::ProcessSceneEvent( bool bFlexEvents, CSceneEventInfo *info, CCh
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *actor - 
-//			*parameters - 
+// Purpose:
+// Input  : *actor -
+//			*parameters -
 //-----------------------------------------------------------------------------
 bool C_BaseFlex::ProcessSequenceSceneEvent( CSceneEventInfo *info, CChoreoScene *scene, CChoreoEvent *event )
 {
@@ -1947,11 +1951,11 @@ bool C_BaseFlex::ProcessSequenceSceneEvent( CSceneEventInfo *info, CChoreoScene 
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *event - 
+// Purpose:
+// Input  : *event -
 //-----------------------------------------------------------------------------
 void C_BaseFlex::AddFlexAnimation( CSceneEventInfo *info )
-{	
+{
 	if ( !info )
 		return;
 

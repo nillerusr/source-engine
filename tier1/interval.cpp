@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $NoKeywords: $
 //=============================================================================//
@@ -14,20 +14,20 @@
 #include "tier0/memdbgon.h"
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pString - 
+// Purpose:
+// Input  : *pString -
 // Output : interval_t
 //-----------------------------------------------------------------------------
 interval_t ReadInterval( const char *pString )
 {
 	interval_t tmp;
-	
+
 	tmp.start = 0;
 	tmp.range = 0;
 
 	char tempString[128];
 	Q_strncpy( tempString, pString, sizeof(tempString) );
-	
+
 	char *token = strtok( tempString, "," );
 	if ( token )
 	{
@@ -43,8 +43,8 @@ interval_t ReadInterval( const char *pString )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : &interval - 
+// Purpose:
+// Input  : &interval -
 // Output : float
 //-----------------------------------------------------------------------------
 float RandomInterval( const interval_t &interval )

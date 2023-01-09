@@ -177,6 +177,7 @@ $Project
 		$File	"$SRCDIR\game\shared\achievementmgr.h"
 		$File   "$SRCDIR\game\shared\achievements_and_stats_interface.h"
 		$File	"$SRCDIR\game\shared\achievements_hlx.cpp"
+		$File	"$SRCDIR\game\shared\ai_criteria_new.cpp"
 		$File	"achievement_notification_panel.cpp"
 		$File	"achievement_notification_panel.h"
 		$File	"$SRCDIR\game\shared\activitylist.cpp"
@@ -214,6 +215,7 @@ $Project
 		$File	"c_basedoor.cpp"
 		$File	"c_baseentity.cpp"
 		$File	"c_baseflex.cpp"
+		$File	"c_baselesson.cpp"
 		$File	"c_baseplayer.cpp"
 		$File	"c_baseviewmodel.cpp"
 		$File	"c_breakableprop.cpp"
@@ -683,6 +685,7 @@ $Project
 		$File	"c_basedoor.h"
 		$File	"c_baseentity.h"
 		$File	"c_baseflex.h"
+		$File	"c_baselesson.h"
 		$File	"c_baseplayer.h"
 		$File	"c_basetempentity.h"
 		$File	"c_baseviewmodel.h"
@@ -1098,10 +1101,11 @@ $Project
 		$File   "$SRCDIR\public\haptics\haptic_utils.h"	[$WIN32]
 	}
 
-	$Folder	"Game Shared Header Files"
+	$Folder	"Shared Header Files"
 	{
 		$File	"$SRCDIR\game\shared\activitylist.h"
 		$File	"$SRCDIR\game\shared\ai_activity.h"
+		$File	"$SRCDIR\game\shared\ai_criteria_new.h"
 		$File	"$SRCDIR\game\shared\ai_debug_shared.h"
 		$File	"$SRCDIR\game\shared\ammodef.h"
 		$File	"$SRCDIR\game\shared\animation.h"

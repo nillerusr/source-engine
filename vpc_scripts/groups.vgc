@@ -40,6 +40,7 @@ $Group "shaders"
 	"stdshader_dx7"
 	"stdshader_dx8"
 	"stdshader_dx9"
+	"mathlib"
 }
 
 $Group "ShaderCompile"
@@ -191,11 +192,17 @@ $Group "game"
 	"vphysics"
 	"video_services"
     "vpklib"
+	"vscript"
 	"vstdlib"
 	"vtf"
 	"coroutine_osx"
 	"unicode"
 //  "zlib"
+}
+
+$Group "shaderdlls"
+{
+	"game_shader_dx9
 }
 
 $Group "everything"
@@ -313,6 +320,7 @@ $Group "everything"
 	"remoteshadercompile"
 	"replay"
 	"replay_common"
+	"responsrules"
 	"rt_test"
 	"sampletool"
 	"scenefilecache"
@@ -410,6 +418,7 @@ $Group "everything"
 	"vrad_dll"
 	"vrad_launcher"
 	"vsblendeditor_maya2009"
+	"vscript"
 	"vsdmxio_maya2009"
 	"vsdmxio_maya2010"
 	"vsdmxio_maya2011"
@@ -501,6 +510,20 @@ $Group "dedicated"
 	"vpklib"
 	"vstdlib"
 	"vtf"
+}
+
+$Group "maptools"
+{
+	"vbsp"
+	"vrad_dll"
+	"vrad_launcher"
+	"vvis_dll"
+	"vvis_launcher"
+	"fgdlib"
+	"mathlib"
+	"raytrace"
+	"tier1"
+	"vscript"
 }
 
 // A dummy group so that we can include the dedicated project by itself.

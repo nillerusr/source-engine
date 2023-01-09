@@ -233,7 +233,9 @@ void CacheOptimizedTriangle::ChangeIntoIntersectionFormat(void)
 
 }
 
+#ifndef MAPBASE
 int n_intersection_calculations=0;
+#endif // MAPBASE
 
 int CacheOptimizedTriangle::ClassifyAgainstAxisSplit(int split_plane, float split_value)
 {
@@ -368,8 +370,8 @@ void RayTracingEnvironment::Trace4Rays(const FourRays &rays, fltx4 TMin, fltx4 T
 		TMin=MaxSIMD(TMin,MinSIMD(isect_min_t,isect_max_t));
 		TMax=MinSIMD(TMax,MaxSIMD(isect_min_t,isect_max_t));
 	}
-	fltx4 active=CmpLeSIMD(TMin,TMax);					// mask of which rays are active
-	if (! IsAnyNegative(active) )
+	fltx4 activeLocl=CmpLeSIMD(TMin,TMax);					// mask of which rays are active
+	if (! IsAnyNegative(activeLocl) )
 		return;												// missed bounding box
 
 	int32 mailboxids[MAILBOX_HASH_SIZE];					// used to avoid redundant triangle tests
@@ -423,11 +425,11 @@ void RayTracingEnvironment::Trace4Rays(const FourRays &rays, fltx4 TMin, fltx4 T
 				MulSIMD(
 					SubSIMD(ReplicateX4(CurNode->SplittingPlaneValue),
 							   rays.origin[split_plane_number]),OneOverRayDir[split_plane_number]);
-			active=CmpLeSIMD(TMin,TMax);			// mask of which rays are active
+			activeLocl=CmpLeSIMD(TMin,TMax);			// mask of which rays are active
 
 			// now, decide how to traverse children. can either do front,back, or do front and push
 			// back.
-			fltx4 hits_front=AndSIMD(active,CmpGeSIMD(dist_to_sep_plane,TMin));
+			fltx4 hits_front=AndSIMD(activeLocl,CmpGeSIMD(dist_to_sep_plane,TMin));
 			if (! IsAnyNegative(hits_front))
 			{
 				// missed the front. only traverse back
@@ -476,7 +478,9 @@ void RayTracingEnvironment::Trace4Rays(const FourRays &rays, fltx4 TMin, fltx4 T
 				TriIntersectData_t const *tri = &( OptimizedTriangleList[tnum].m_Data.m_IntersectData );
 				if ( ( mailboxids[mbox_slot] != tnum ) && ( tri->m_nTriangleID != skip_id ) )
 				{
+#ifndef MABASE
 					n_intersection_calculations++;
+#endif // MAPBASE
 					mailboxids[mbox_slot] = tnum;
 					// compute plane intersection
 

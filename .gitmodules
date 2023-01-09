@@ -7,3 +7,6 @@
 [submodule "lib"]
 	path = lib
 	url = https://github.com/nillerusr/source-engine-libs.git
+[submodule "vscript/squirrel"]
+	path = vscript/squirrel
+	url = https://github.com/albertodemichelis/squirrel

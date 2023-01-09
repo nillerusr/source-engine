@@ -57,7 +57,7 @@ struct StaticPropBuild_t
 	int		m_LightmapResolutionX;
 	int		m_LightmapResolutionY;
 };
- 
+
 
 //-----------------------------------------------------------------------------
 // Used to cache collision model generation
@@ -104,6 +104,7 @@ isstaticprop_ret IsStaticProp( studiohdr_t* pHdr )
 	if (!(pHdr->flags & STUDIOHDR_FLAGS_STATIC_PROP))
 		return RET_FAIL_NOT_MARKED_STATIC_PROP;
 
+#ifndef MAPBASE
 	// If it's got a propdata section in the model's keyvalues, it's not allowed to be a prop_static
 	KeyValues *modelKeyValues = new KeyValues(pHdr->pszName());
 	if ( StudioKeyValues( pHdr, modelKeyValues ) )
@@ -119,6 +120,7 @@ isstaticprop_ret IsStaticProp( studiohdr_t* pHdr )
 		}
 	}
 	modelKeyValues->deleteThis();
+#endif // MAPBASE
 
 	return RET_VALID;
 }
@@ -311,7 +313,7 @@ static CPhysCollide* GetCollisionModel( char const* pModelName )
 // Tests a single leaf against the static prop
 //-----------------------------------------------------------------------------
 
-static bool TestLeafAgainstCollide( int depth, int* pNodeList, 
+static bool TestLeafAgainstCollide( int depth, int* pNodeList,
 	Vector const& origin, QAngle const& angles, CPhysCollide* pCollide )
 {
 	// Copy the planes in the node list into a list of planes
@@ -408,9 +410,9 @@ static void ComputeConvexHullLeaves_R( int node, int depth, int* pNodeList,
 			pNodeList[depth] = node;
 			++depth;
 
-			ComputeConvexHullLeaves_R( pNode->children[1], 
+			ComputeConvexHullLeaves_R( pNode->children[1],
 				depth, pNodeList, mins, maxs, origin, angles, pCollide, leafList );
-			
+
 			pNodeList[depth - 1] = - node - 1;
 			ComputeConvexHullLeaves_R( pNode->children[0],
 				depth, pNodeList, mins, maxs, origin, angles, pCollide, leafList );
@@ -434,7 +436,7 @@ static void ComputeConvexHullLeaves_R( int node, int depth, int* pNodeList,
 // Places Static Props in the level
 //-----------------------------------------------------------------------------
 
-static void ComputeStaticPropLeaves( CPhysCollide* pCollide, Vector const& origin, 
+static void ComputeStaticPropLeaves( CPhysCollide* pCollide, Vector const& origin,
 				QAngle const& angles, CUtlVector<unsigned short>& leafList )
 {
 	// Compute an axis-aligned bounding box for the collide
@@ -492,7 +494,7 @@ static void AddStaticPropToLump( StaticPropBuild_t const& build )
 	// Insert an element into the lump data...
 	int i = s_StaticPropLump.AddToTail( );
 	StaticPropLump_t& propLump = s_StaticPropLump[i];
-	propLump.m_PropType = AddStaticPropDictLump( build.m_pModelName ); 
+	propLump.m_PropType = AddStaticPropDictLump( build.m_pModelName );
 	VectorCopy( build.m_Origin, propLump.m_Origin );
 	VectorCopy( build.m_Angles, propLump.m_Angles );
 	propLump.m_FirstLeaf = s_StaticPropLeafLump.Count();
@@ -509,7 +511,7 @@ static void AddStaticPropToLump( StaticPropBuild_t const& build )
 	propLump.m_flForcedFadeScale = build.m_flForcedFadeScale;
 	propLump.m_nMinDXLevel = build.m_nMinDXLevel;
 	propLump.m_nMaxDXLevel = build.m_nMaxDXLevel;
-	
+
 	if (build.m_pLightingOrigin && *build.m_pLightingOrigin)
 	{
 		if (ComputeLightingOrigin( build, propLump.m_LightingOrigin ))
@@ -569,6 +571,10 @@ static void SetLumpData( )
 
 void EmitStaticProps()
 {
+#ifdef MAPBASE
+	Msg("Placing static props...\n");
+#endif // MAPBASE
+
 	CreateInterfaceFn physicsFactory = GetPhysicsFactory();
 	if ( physicsFactory )
 	{
@@ -592,13 +598,43 @@ void EmitStaticProps()
 	for ( i = 0; i < num_entities; ++i)
 	{
 		char* pEntity = ValueForKey(&entities[i], "classname");
+#ifdef MAPBASE
+		const int iInsertAsStatic = IntForKey( &entities[i], "insertasstaticprop" ); // If the key is absent, IntForKey will return 0.
+		bool bInsertAsStatic = g_bPropperInsertAllAsStatic;
+
+		// 1 = No, 2 = Yes;  Any other number will just use what g_bPropperInsertAllAsStatic is set as.
+		if ( iInsertAsStatic == 1 ) { bInsertAsStatic = false; }
+		else if ( iInsertAsStatic == 2 ) { bInsertAsStatic = true; }
+
+		if ( !strcmp( pEntity, "static_prop" ) || !strcmp( pEntity, "prop_static" ) || ( !strcmp( pEntity, "propper_model" ) && bInsertAsStatic ) )
+#else
 		if (!strcmp(pEntity, "static_prop") || !strcmp(pEntity, "prop_static"))
+#endif // MAPBASE
 		{
 			StaticPropBuild_t build;
 
 			GetVectorForKey( &entities[i], "origin", build.m_Origin );
 			GetAnglesForKey( &entities[i], "angles", build.m_Angles );
+#ifdef MAPBASE
+			if ( !strcmp( pEntity, "propper_model" ) )
+			{
+				char* pModelName = ValueForKey( &entities[i], "modelname" );
+
+				// The modelname keyvalue lacks 'models/' at the start and '.mdl' at the end, so we have to add them.
+				char modelpath[MAX_VALUE];
+				sprintf( modelpath, "models/%s.mdl", pModelName );
+
+				Msg( "Inserting propper_model (%.0f %.0f %.0f) as prop_static: %s\n", build.m_Origin[0], build.m_Origin[1], build.m_Origin[2], modelpath );
+
+				build.m_pModelName = modelpath;
+			}
+			else // Otherwise we just assume it's a normal prop_static
+			{
+				build.m_pModelName = ValueForKey( &entities[i], "model" );
+			}
+#else
 			build.m_pModelName = ValueForKey( &entities[i], "model" );
+#endif // MAPBASE
 			build.m_Solid = IntForKey( &entities[i], "solid" );
 			build.m_Skin = IntForKey( &entities[i], "skin" );
 			build.m_FadeMaxDist = FloatForKey( &entities[i], "fademaxdist" );
@@ -627,7 +663,7 @@ void EmitStaticProps()
 
 			if (IntForKey( &entities[i], "generatelightmaps") == 0)
 			{
-				build.m_Flags |= STATIC_PROP_NO_PER_TEXEL_LIGHTING;			
+				build.m_Flags |= STATIC_PROP_NO_PER_TEXEL_LIGHTING;
 				build.m_LightmapResolutionX = 0;
 				build.m_LightmapResolutionY = 0;
 			}
@@ -649,11 +685,11 @@ void EmitStaticProps()
 			build.m_FadesOut = (build.m_FadeMaxDist > 0);
 			build.m_pLightingOrigin = ValueForKey( &entities[i], "lightingorigin" );
 			if (build.m_FadesOut)
-			{			  
+			{
 				build.m_FadeMinDist = FloatForKey( &entities[i], "fademindist" );
 				if (build.m_FadeMinDist < 0)
 				{
-					build.m_FadeMinDist = build.m_FadeMaxDist; 
+					build.m_FadeMinDist = build.m_FadeMaxDist;
 				}
 			}
 			else
@@ -667,6 +703,13 @@ void EmitStaticProps()
 			// strip this ent from the .bsp file
 			entities[i].epairs = 0;
 		}
+#ifdef MAPBASE
+		else if ( g_bPropperStripEntities && !strncmp( pEntity, "propper_", 8 ) ) // Strip out any entities with 'propper_' in their classname, as they don't actually exist in-game.
+		{
+			Warning( "Not including %s in BSP compile due to it being a propper entity that isn't used in-game.\n", pEntity );
+			entities[i].epairs = 0;
+		}
+#endif // MAPBASE
 	}
 
 	// Strip out lighting origins; has to be done here because they are used when
@@ -715,7 +758,7 @@ const vertexFileHeader_t * mstudiomodel_t::CacheVertexData( void * pModelData )
 
 	// mandatory callback to make requested data resident
 	// load and persist the vertex file
-	strcpy( fileName, "models/" );	
+	strcpy( fileName, "models/" );
 	strcat( fileName, g_pActiveStudioHdr->pszName() );
 	Q_StripExtension( fileName, fileName, sizeof( fileName ) );
 	strcat( fileName, ".vvd" );

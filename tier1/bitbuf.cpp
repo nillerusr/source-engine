@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $NoKeywords: $
 //
@@ -85,7 +85,7 @@ void SetBitBufErrorHandler( BitBufErrorHandler fn )
 
 uint32 g_LittleBits[32];
 
-// Precalculated bit masks for WriteUBitLong. Using these tables instead of 
+// Precalculated bit masks for WriteUBitLong. Using these tables instead of
 // doing the calculations gives a 33% speedup in WriteUBitLong.
 uint32 g_BitWriteMasks[32][33];
 
@@ -114,7 +114,7 @@ public:
 
 		for ( unsigned int littleBit=0; littleBit < 32; littleBit++ )
 			StoreLittleDWord( &g_LittleBits[littleBit], 0, 1u<<littleBit );
-	}                     
+	}
 };
 static CBitWriteMasksInit g_BitWriteMasksInit;
 
@@ -214,7 +214,7 @@ void bf_write::WriteSBitLong( int data, int numbits )
 	int nSignExtension = ( nValue >> 31 ) & ~nPreserveBits;
 	nValue &= nPreserveBits;
 	nValue |= nSignExtension;
-	
+
 	AssertMsg2( nValue == data, "WriteSBitLong: 0x%08x does not fit in %d bits", data, numbits );
 
 	WriteUBitLong( nValue, numbits, false );
@@ -273,7 +273,7 @@ void bf_write::WriteVarInt32( uint32 data )
 	}
 	else // Slow path
 	{
-		while ( data > 0x7F ) 
+		while ( data > 0x7F )
 		{
 			WriteUBitLong( (data & 0x7F) | 0x80, 8 );
 			data >>= 7;
@@ -387,7 +387,7 @@ void bf_write::WriteVarInt64( uint64 data )
 	}
 	else // slow path
 	{
-		while ( data > 0x7F ) 
+		while ( data > 0x7F )
 		{
 			WriteUBitLong( (data & 0x7F) | 0x80, 8 );
 			data >>= 7;
@@ -469,13 +469,13 @@ bool bf_write::WriteBits(const void *pInData, int nBits)
 		++pOut;
 		nBitsLeft -= 8;
 	}
-	
+
 	if ( IsPC() && (nBitsLeft >= 32) && (m_iCurBit & 7) == 0 )
 	{
 		// current bit is byte aligned, do block copy
-		int numbytes = nBitsLeft >> 3; 
+		int numbytes = nBitsLeft >> 3;
 		int numbits = numbytes << 3;
-		
+
 		Q_memcpy( (char*)m_pData+(m_iCurBit>>3), pOut, numbytes );
 		pOut += numbytes;
 		nBitsLeft -= numbits;
@@ -501,7 +501,7 @@ bool bf_write::WriteBits(const void *pInData, int nBits)
 			*pData &= bitMaskLeft;
 			*pData |= curData << iBitsRight;
 
-			pData++; 
+			pData++;
 
 			if ( iBitsLeft < 32 )
 			{
@@ -523,7 +523,7 @@ bool bf_write::WriteBits(const void *pInData, int nBits)
 		++pOut;
 		nBitsLeft -= 8;
 	}
-	
+
 	// write remaining bits
 	if ( nBitsLeft )
 	{
@@ -570,7 +570,7 @@ void bf_write::WriteBitCoordMP( const float f, bool bIntegral, bool bLowPrecisio
 #endif
 	int		signbit = (f <= -( bLowPrecision ? COORD_RESOLUTION_LOWPRECISION : COORD_RESOLUTION ));
 	int		intval = (int)abs(f);
-	int		fractval = bLowPrecision ? 
+	int		fractval = bLowPrecision ?
 		( abs((int)(f*COORD_DENOMINATOR_LOWPRECISION)) & (COORD_DENOMINATOR_LOWPRECISION-1) ) :
 		( abs((int)(f*COORD_DENOMINATOR)) & (COORD_DENOMINATOR-1) );
 
@@ -642,7 +642,7 @@ void bf_write::WriteBitCoord (const float f)
 			intval--;
 			WriteUBitLong( (unsigned int)intval, COORD_INTEGER_BITS );
 		}
-		
+
 		// Send the fraction if we have one
 		if ( fractval )
 		{
@@ -703,7 +703,7 @@ void bf_write::WriteBitVec3Normal( const Vector& fa )
 		WriteBitNormal( fa[0] );
 	if ( yflag )
 		WriteBitNormal( fa[1] );
-	
+
 	// Write z sign bit
 	int	signbit = (fa[2] <= -NORMAL_RESOLUTION);
 	WriteOneBit( signbit );
@@ -870,7 +870,7 @@ unsigned int bf_read::CheckReadUBitLong(int numbits)
 		r |= nBitValue << i;
 	}
 	m_iCurBit -= numbits;
-	
+
 	return r;
 }
 
@@ -883,7 +883,7 @@ void bf_read::ReadBits(void *pOutData, int nBits)
 	unsigned char *pOut = (unsigned char*)pOutData;
 	int nBitsLeft = nBits;
 
-	
+
 	// align output to dword boundary
 	while( ((size_t)pOut & 3) != 0 && nBitsLeft >= 8 )
 	{
@@ -911,7 +911,7 @@ void bf_read::ReadBits(void *pOutData, int nBits)
 		++pOut;
 		nBitsLeft -= 8;
 	}
-	
+
 	// read remaining bits
 	if ( nBitsLeft )
 	{
@@ -982,7 +982,7 @@ unsigned int bf_read::PeekUBitLong( int numbits )
 			r |= BitForBitnum(i);
 		}
 	}
-	
+
 	*this = savebf;
 
 #ifdef BIT_VERBOSE
@@ -1024,9 +1024,9 @@ uint32 bf_read::ReadVarInt32()
 	int count = 0;
 	uint32 b;
 
-	do 
+	do
 	{
-		if ( count == bitbuf::kMaxVarint32Bytes ) 
+		if ( count == bitbuf::kMaxVarint32Bytes )
 		{
 			return result;
 		}
@@ -1044,9 +1044,9 @@ uint64 bf_read::ReadVarInt64()
 	int count = 0;
 	uint64 b;
 
-	do 
+	do
 	{
-		if ( count == bitbuf::kMaxVarintBytes ) 
+		if ( count == bitbuf::kMaxVarintBytes )
 		{
 			return result;
 		}
@@ -1148,7 +1148,7 @@ float bf_read::ReadBitCoordMP( bool bIntegral, bool bLowPrecision )
 		}
 		return 0.f;
 	}
-	
+
 	static const float mul_table[4] =
 	{
 		1.f/(1<<COORD_FRACTIONAL_BITS),
@@ -1177,7 +1177,7 @@ float bf_read::ReadBitCoordMP( bool bIntegral, bool bLowPrecision )
 		// Shuffle the bits to remap the integer portion from [0,N] to [1,N+1]
 		// and then paste in front of the fractional parts so we only need one
 		// int-to-float conversion.
-		
+
 		uint fracbitsMP = bits >> COORD_INTEGER_BITS_MP;
 		uint fracbits = bits >> COORD_INTEGER_BITS;
 
@@ -1198,7 +1198,7 @@ float bf_read::ReadBitCoordMP( bool bIntegral, bool bLowPrecision )
 		uint intbitsLow = intpart << COORD_FRACTIONAL_BITS_MP_LOWPRECISION;
 		uint intbits = intpart << COORD_FRACTIONAL_BITS;
 		uint selectNotLow = (uint)bLowPrecision - 1;
-		
+
 		intbits -= intbitsLow;
 		intbits &= selectNotLow;
 		intbits += intbitsLow;
@@ -1272,12 +1272,12 @@ void bf_read::ReadBitVec3Coord( Vector& fa )
 {
 	int		xflag, yflag, zflag;
 
-	// This vector must be initialized! Otherwise, If any of the flags aren't set, 
+	// This vector must be initialized! Otherwise, If any of the flags aren't set,
 	// the corresponding component will not be read and will be stack garbage.
 	fa.Init( 0, 0, 0 );
 
 	xflag = ReadOneBit();
-	yflag = ReadOneBit(); 
+	yflag = ReadOneBit();
 	zflag = ReadOneBit();
 
 	if ( xflag )
@@ -1309,7 +1309,7 @@ float bf_read::ReadBitNormal (void)
 void bf_read::ReadBitVec3Normal( Vector& fa )
 {
 	int xflag = ReadOneBit();
-	int yflag = ReadOneBit(); 
+	int yflag = ReadOneBit();
 
 	if (xflag)
 		fa[0] = ReadBitNormal();
@@ -1357,13 +1357,13 @@ int64 bf_read::ReadLongLong()
 
 float bf_read::ReadFloat()
 {
-	float ret;
-	Assert( sizeof(ret) == 4 );
-	ReadBits(&ret, 32);
+	float retLocl;
+	Assert( sizeof(retLocl) == 4 );
+	ReadBits(&retLocl, 32);
 
 	// Swap the float, since ReadBits reads raw data
-	LittleFloat( &ret, &ret );
-	return ret;
+	LittleFloat( &retLocl, &retLocl );
+	return retLocl;
 }
 
 bool bf_read::ReadBytes(void *pOut, int nBytes)
@@ -1411,7 +1411,7 @@ bool bf_read::ReadString( char *pStr, int maxLen, bool bLine, int *pOutNumChars 
 char* bf_read::ReadAndAllocateString( bool *pOverflow )
 {
 	char str[2048];
-	
+
 	int nChars;
 	bool bOverflow = !ReadString( str, sizeof( str ), false, &nChars );
 	if ( pOverflow )
@@ -1441,7 +1441,7 @@ void bf_read::ExciseBits( int startbit, int bitstoremove )
 	}
 
 	Seek( startbit );
-	
+
 	m_nDataBits -= bitstoremove;
 	m_nDataBytes = m_nDataBits >> 3;
 }
@@ -1475,7 +1475,7 @@ int bf_read::CompareBitsAt( int offset, bf_read * RESTRICT other, int otherOffse
 		x ^= LoadLittleDWord( (uint32*)pData2, 1 ) << (32 - iStartBit2);
 		if ( x != 0 )
 		{
-			return x; 
+			return x;
 		}
 		++pData1;
 		++pData2;

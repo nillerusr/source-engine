@@ -1,10 +1,10 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
-//
-// Purpose: 
-//
-//=============================================================================//
-#pragma warning( disable : 4244 ) // conversion from 'double' to 'float', possible loss of data
-
+{
+    "workbench.iconTheme": "vscode-icons",
+    "git.autofetch": true,
+    "workbench.colorTheme": "Visual Studio Dark - C++",
+    "explorer.confirmDelete": false
+}   "window.zoomLevel": 1
+}
 #include <vgui/IScheme.h>
 #include <vgui/ISurface.h>
 #include <vgui/ISystem.h>
@@ -30,6 +30,11 @@
 using namespace vgui;
 
 static CUtlSymbolTable g_ScriptSymbols(0, 128, true);
+
+#ifdef MAPBASE
+// Allows animation sequences to be overridden by map-specific files
+extern bool g_bUsingCustomHudAnimations;
+#endif
 
 // singleton accessor for animation controller for use by the vgui controls
 namespace vgui
@@ -59,8 +64,8 @@ AnimationController::AnimationController(Panel *parent) : BaseClass(parent, NULL
 
 	// get the names of common types
 	m_sPosition = g_ScriptSymbols.AddString("position");
-	m_sSize = g_ScriptSymbols.AddString("size"); 
-	m_sFgColor = g_ScriptSymbols.AddString("fgcolor"); 
+	m_sSize = g_ScriptSymbols.AddString("size");
+	m_sFgColor = g_ScriptSymbols.AddString("fgcolor");
 	m_sBgColor = g_ScriptSymbols.AddString("bgcolor");
 
 	m_sXPos = g_ScriptSymbols.AddString("xpos");
@@ -116,7 +121,7 @@ void AnimationController::ReloadScriptFile()
 {
 	// Clear all current sequences
 	m_Sequences.RemoveAll();
-	
+
 	UpdateScreenSize();
 
 	// Reload each file we've loaded
@@ -188,7 +193,7 @@ AnimationController::RelativeAlignmentLookup AnimationController::g_AlignmentLoo
 };
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 AnimationController::RelativeAlignment AnimationController::LookupAlignment( char const *token )
 {
@@ -206,7 +211,7 @@ AnimationController::RelativeAlignment AnimationController::LookupAlignment( cha
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Parse position including right edge and center adjustment out of a 
+// Purpose: Parse position including right edge and center adjustment out of a
 //  token.  This is relative to the screen
 //-----------------------------------------------------------------------------
 void AnimationController::SetupPosition( AnimCmdAnimate_t& cmd, float *output, char const *psz, int screendimension )
@@ -239,7 +244,7 @@ void AnimationController::SetupPosition( AnimCmdAnimate_t& cmd, float *output, c
 
 					if ( Q_strlen( panelName ) > 0 )
 					{
-						// 
+						//
 						cmd.align.relativePosition	= true;
 						cmd.align.alignPanel			= g_ScriptSymbols.AddString(panelName);
 						cmd.align.alignment			= ra;
@@ -318,18 +323,44 @@ bool AnimationController::ParseScriptFile(char *pMem, int length)
 			Warning("Couldn't parse script file: expected <event name>, found nothing\n");
 			return false;
 		}
-		
-		int seqIndex;
+
+		int seqIndex = -1;
 		UtlSymId_t nameIndex = g_ScriptSymbols.AddString(token);
-				
+
 		// Create a new sequence
-		seqIndex = m_Sequences.AddToTail();
+#ifdef MAPBASE
+		if (g_bUsingCustomHudAnimations)
+		{
+			// look through for the sequence
+			for (seqIndex = 0; seqIndex < m_Sequences.Count(); seqIndex++)
+			{
+				if (m_Sequences[seqIndex].name == nameIndex)
+					break;
+			}
+
+			if (seqIndex >= m_Sequences.Count())
+				seqIndex = -1;
+			else
+			{
+				// Clear some stuff
+				m_Sequences[seqIndex].cmdList.RemoveAll();
+			}
+		}
+
+		if (seqIndex == -1)
+#endif // MAPBASE
+		{
+			// Create a new sequence
+			seqIndex = m_Sequences.AddToTail();
+		}
+
 		AnimSequence_t &seq = m_Sequences[seqIndex];
 		seq.name = nameIndex;
 		seq.duration = 0.0f;
 
 		// get the open brace or a conditional
 		pMem = ParseFile(pMem, token, NULL);
+
 		if ( Q_stristr( token, "[$" ) || Q_stristr( token, "[!$" ) )
 		{
 			bAccepted = EvaluateConditional( token );
@@ -395,16 +426,16 @@ bool AnimationController::ParseScriptFile(char *pMem, int length)
 					// XPos and YPos both use target ".a"
 					SetupPosition( cmdAnimate, &cmdAnimate.target.a, token, screenTall );
 				}
-				else 
+				else
 				{
 					// parse the floating point values right out
 					if (0 == sscanf(token, "%f %f %f %f", &cmdAnimate.target.a, &cmdAnimate.target.b, &cmdAnimate.target.c, &cmdAnimate.target.d))
 					{
 						//=============================================================================
 						// HPE_BEGIN:
-						// [pfreese] Improved handling colors not defined in scheme 
+						// [pfreese] Improved handling colors not defined in scheme
 						//=============================================================================
-						
+
 						// could be referencing a value in the scheme file, lookup
 						Color default_invisible_black(0, 0, 0, 0);
 						Color col = scheme->GetColor(token, default_invisible_black);
@@ -423,7 +454,7 @@ bool AnimationController::ParseScriptFile(char *pMem, int length)
 // 								Warning("Missing color in scheme: %s\n", token);
 // 							}
 						}
-						
+
 						//=============================================================================
 						// HPE_END
 						//=============================================================================
@@ -453,7 +484,7 @@ bool AnimationController::ParseScriptFile(char *pMem, int length)
 						cmdAnimate.target.a = static_cast<float>( vgui::scheme()->GetProportionalScaledValueEx(GetScheme(), cmdAnimate.target.a) );
 					}
 				}
-				
+
 				// interpolation function
 				pMem = ParseFile(pMem, token, NULL);
 				if (!stricmp(token, "Accel"))
@@ -652,7 +683,7 @@ bool AnimationController::ParseScriptFile(char *pMem, int length)
 				Warning("Couldn't parse script sequence '%s': expected <anim command>, found '%s'\n", g_ScriptSymbols.String(seq.name), token);
 				return false;
 			}
-			
+
 			// Look ahead one token for a conditional
 			char *peek = ParseFile(pMem, token, NULL);
 			if ( Q_stristr( token, "[$" ) || Q_stristr( token, "[!$" ) )
@@ -669,7 +700,7 @@ bool AnimationController::ParseScriptFile(char *pMem, int length)
 		{
 			// Attempt to find a collision in the sequences, replacing the old one if found
 			int seqIterator;
-			for ( seqIterator = 0; seqIterator < m_Sequences.Count()-1; seqIterator++ )	
+			for ( seqIterator = 0; seqIterator < m_Sequences.Count()-1; seqIterator++ )
 			{
 				if ( m_Sequences[seqIterator].name == nameIndex )
 				{
@@ -732,14 +763,14 @@ void AnimationController::UpdatePostedMessages(bool bRunToCompletion)
 				curEvent.event = msg.event;
 
 				curEvent.pParent = msg.parent.Get();
-				
+
 				// run the event, but only if we haven't already run it this frame, for this parent
 				if (!eventsRanThisFrame.HasElement(curEvent))
 				{
 					eventsRanThisFrame.AddToTail(curEvent);
 					RunCmd_RunEvent(msg);
 				}
-			}	
+			}
 			break;
 		case CMD_RUNEVENTCHILD:
 			{
@@ -749,7 +780,7 @@ void AnimationController::UpdatePostedMessages(bool bRunToCompletion)
 
 				curEvent.pParent = msg.parent.Get()->FindChildByName( g_ScriptSymbols.String(msg.variable), true );
 				msg.parent = curEvent.pParent;
-		
+
 				// run the event, but only if we haven't already run it this frame, for this parent
 				if (!eventsRanThisFrame.HasElement(curEvent))
 				{
@@ -885,9 +916,9 @@ bool AnimationController::UpdateScreenSize()
 		surface()->GetScreenSize(screenWide, screenTall);
 	}
 
-	bool changed =	m_nScreenBounds[ 0 ] != sx || 
+	bool changed =	m_nScreenBounds[ 0 ] != sx ||
 					m_nScreenBounds[ 1 ] != sy ||
-					m_nScreenBounds[ 2 ] != screenWide || 
+					m_nScreenBounds[ 2 ] != screenWide ||
 					m_nScreenBounds[ 3 ] != screenTall;
 
 	m_nScreenBounds[ 0 ] = sx;
@@ -1033,7 +1064,7 @@ void AnimationController::SetAutoReloadScript(bool state)
 //-----------------------------------------------------------------------------
 bool AnimationController::StartAnimationSequence(const char *sequenceName, bool bCanBeCancelled )
 {
-	// We support calling an animation on elements that are not the calling 
+	// We support calling an animation on elements that are not the calling
 	// panel's children. Use the base parent to start the search.
 
 	return StartAnimationSequence( GetParent(), sequenceName, bCanBeCancelled );
@@ -1078,7 +1109,7 @@ bool AnimationController::StartAnimationSequence(Panel *pWithinParent, const cha
 		ExecAnimationCommand(seqName, m_Sequences[i].cmdList[cmdIndex], pWithinParent, bCanBeCancelled);
 	}
 
-	return true;	
+	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -1374,7 +1405,7 @@ void AnimationController::RunCmd_StopPanelAnimations(PostedMessage_t &msg)
 	if (!panel)
 		return;
 
-	// loop through all the active animations cancelling any that 
+	// loop through all the active animations cancelling any that
 	// are operating on said panel,	except for the event specified
 	for (int i = 0; i < m_ActiveAnimations.Count(); i++)
 	{
@@ -1400,7 +1431,7 @@ void AnimationController::RunCmd_StopAnimation(PostedMessage_t &msg)
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void AnimationController::RunCmd_SetFont( PostedMessage_t &msg )
 {
@@ -1426,7 +1457,7 @@ void AnimationController::RunCmd_SetFont( PostedMessage_t &msg )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void AnimationController::RunCmd_SetTexture( PostedMessage_t &msg )
 {
@@ -1445,7 +1476,7 @@ void AnimationController::RunCmd_SetTexture( PostedMessage_t &msg )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void AnimationController::RunCmd_SetString( PostedMessage_t &msg )
 {
@@ -1464,7 +1495,7 @@ void AnimationController::RunCmd_SetString( PostedMessage_t &msg )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 int AnimationController::GetRelativeOffset( AnimAlign_t& align, bool xcoord )
 {
@@ -1748,7 +1779,7 @@ PanelAnimationMap *CPanelAnimationDictionary::FindPanelAnimationMap( char const 
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 PanelAnimationMap *CPanelAnimationDictionary::FindOrAddPanelAnimationMap( char const *className )
 {
@@ -1765,7 +1796,7 @@ PanelAnimationMap *CPanelAnimationDictionary::FindOrAddPanelAnimationMap( char c
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CPanelAnimationDictionary::PanelAnimationDumpMap( PanelAnimationMap *map, bool recursive )
 {
@@ -1787,7 +1818,7 @@ void CPanelAnimationDictionary::PanelAnimationDumpMap( PanelAnimationMap *map, b
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CPanelAnimationDictionary::PanelAnimationDumpVars( char const *className )
 {
@@ -1822,7 +1853,7 @@ CPanelAnimationDictionary& GetPanelAnimationDictionary()
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 PanelAnimationMap *FindOrAddPanelAnimationMap( char const *className )
 {
@@ -1838,7 +1869,7 @@ PanelAnimationMap *FindPanelAnimationMap( char const *className )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void PanelAnimationDumpVars( char const *className )
 {

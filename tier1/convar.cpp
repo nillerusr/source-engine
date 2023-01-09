@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $NoKeywords: $
 //
@@ -32,7 +32,7 @@
 
 
 //-----------------------------------------------------------------------------
-// Statically constructed list of ConCommandBases, 
+// Statically constructed list of ConCommandBases,
 // used for registering them with the ICVar interface
 //-----------------------------------------------------------------------------
 ConCommandBase			*ConCommandBase::s_pConCommandBases = NULL;
@@ -120,18 +120,18 @@ ConCommandBase::ConCommandBase( const char *pName, const char *pHelpString /*=0*
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 ConCommandBase::~ConCommandBase( void )
 {
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
 bool ConCommandBase::IsCommand( void ) const
-{ 
+{
 //	Assert( 0 ); This can't assert. . causes a recursive assert in Sys_Printf, etc.
 	return true;
 }
@@ -147,11 +147,11 @@ CVarDLLIdentifier_t ConCommandBase::GetDLLIdentifier() const
 
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pName - 
-//			callback - 
-//			*pHelpString - 
-//			flags - 
+// Purpose:
+// Input  : *pName -
+//			callback -
+//			*pHelpString -
+//			flags -
 //-----------------------------------------------------------------------------
 void ConCommandBase::CreateBase( const char *pName, const char *pHelpString /*= 0*/, int flags /*= 0*/ )
 {
@@ -219,8 +219,8 @@ const char *ConCommandBase::GetName( void ) const
 
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : flag - 
+// Purpose:
+// Input  : flag -
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
 bool ConCommandBase::IsFlagSet( int flag ) const
@@ -229,8 +229,8 @@ bool ConCommandBase::IsFlagSet( int flag ) const
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : flags - 
+// Purpose:
+// Input  : flags -
 //-----------------------------------------------------------------------------
 void ConCommandBase::AddFlags( int flags )
 {
@@ -243,7 +243,7 @@ void ConCommandBase::AddFlags( int flags )
 
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 // Output : const ConCommandBase
 //-----------------------------------------------------------------------------
 const ConCommandBase *ConCommandBase::GetNext( void ) const
@@ -259,7 +259,7 @@ ConCommandBase *ConCommandBase::GetNext( void )
 
 //-----------------------------------------------------------------------------
 // Purpose: Copies string using local new/delete operators
-// Input  : *from - 
+// Input  : *from -
 // Output : char
 //-----------------------------------------------------------------------------
 char *ConCommandBase::CopyString( const char *from )
@@ -282,7 +282,7 @@ char *ConCommandBase::CopyString( const char *from )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 // Output : const char
 //-----------------------------------------------------------------------------
 const char *ConCommandBase::GetHelpText( void ) const
@@ -410,7 +410,7 @@ bool CCommand::Tokenize( const char *pCommand, characterset_t *pBreakSet )
 	memcpy( m_pArgSBuffer, pCommand, nLen + 1 );
 
 	// Parse the current command into the current command buffer
-	CUtlBuffer bufParse( m_pArgSBuffer, nLen, CUtlBuffer::TEXT_BUFFER | CUtlBuffer::READ_ONLY ); 
+	CUtlBuffer bufParse( m_pArgSBuffer, nLen, CUtlBuffer::TEXT_BUFFER | CUtlBuffer::READ_ONLY );
 	int nArgvBufferSize = 0;
 	while ( bufParse.IsValid() && ( m_nArgc < COMMAND_MAX_ARGC ) )
 	{
@@ -489,7 +489,7 @@ int CCommand::FindArgInt( const char *pName, int nDefaultVal ) const
 
 
 //-----------------------------------------------------------------------------
-// Default console command autocompletion function 
+// Default console command autocompletion function
 //-----------------------------------------------------------------------------
 int DefaultCompletionFunc( const char *partial, char commands[ COMMAND_COMPLETION_MAXITEMS ][ COMMAND_COMPLETION_ITEM_LENGTH ] )
 {
@@ -553,10 +553,10 @@ ConCommand::~ConCommand( void )
 
 
 //-----------------------------------------------------------------------------
-// Purpose: Returns true if this is a command 
+// Purpose: Returns true if this is a command
 //-----------------------------------------------------------------------------
 bool ConCommand::IsCommand( void ) const
-{ 
+{
 	return true;
 }
 
@@ -624,7 +624,7 @@ int	ConCommand::AutoCompleteSuggest( const char *partial, CUtlVector< CUtlString
 
 
 //-----------------------------------------------------------------------------
-// Returns true if the console command can autocomplete 
+// Returns true if the console command can autocomplete
 //-----------------------------------------------------------------------------
 bool ConCommand::CanAutoComplete( void )
 {
@@ -691,7 +691,10 @@ ConVar::~ConVar( void )
 //-----------------------------------------------------------------------------
 void ConVar::InstallChangeCallback( FnChangeCallback_t callback )
 {
+#ifndef MAPBASE_VSCRIPT
 	Assert( !m_pParent->m_fnChangeCallback || !callback );
+#endif // MAPBASE_VSCRIPT
+
 	m_pParent->m_fnChangeCallback = callback;
 
 	if ( m_pParent->m_fnChangeCallback )
@@ -731,17 +734,17 @@ const char *ConVar::GetName( void ) const
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
 bool ConVar::IsCommand( void ) const
-{ 
+{
 	return false;
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : 
+// Purpose:
+// Input  :
 //-----------------------------------------------------------------------------
 void ConVar::Init()
 {
@@ -749,8 +752,8 @@ void ConVar::Init()
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *value - 
+// Purpose:
+// Input  : *value -
 //-----------------------------------------------------------------------------
 void ConVar::InternalSetValue( const char *value )
 {
@@ -794,8 +797,8 @@ void ConVar::InternalSetValue( const char *value )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *tempVal - 
+// Purpose:
+// Input  : *tempVal -
 //-----------------------------------------------------------------------------
 void ConVar::ChangeStringValue( const char *tempVal, float flOldValue )
 {
@@ -803,7 +806,7 @@ void ConVar::ChangeStringValue( const char *tempVal, float flOldValue )
 
  	char* pszOldValue = (char*)stackalloc( m_StringLength );
 	memcpy( pszOldValue, m_pszString, m_StringLength );
-	
+
 	if ( tempVal )
 	{
 		int len = Q_strlen(tempVal) + 1;
@@ -821,7 +824,7 @@ void ConVar::ChangeStringValue( const char *tempVal, float flOldValue )
 
 		memcpy( m_pszString, tempVal, len );
 	}
-	else 
+	else
 	{
 		*m_pszString = 0;
 	}
@@ -843,7 +846,7 @@ void ConVar::ChangeStringValue( const char *tempVal, float flOldValue )
 
 //-----------------------------------------------------------------------------
 // Purpose: Check whether to clamp and then perform clamp
-// Input  : value - 
+// Input  : value -
 // Output : Returns true if value changed
 //-----------------------------------------------------------------------------
 bool ConVar::ClampValue( float& value )
@@ -890,8 +893,8 @@ bool ConVar::ClampValue( float& value )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *value - 
+// Purpose:
+// Input  : *value -
 //-----------------------------------------------------------------------------
 void ConVar::InternalSetFloatValue( float fNewValue, bool bForce /*= false */ )
 {
@@ -930,8 +933,8 @@ void ConVar::InternalSetFloatValue( float fNewValue, bool bForce /*= false */ )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *value - 
+// Purpose:
+// Input  : *value -
 //-----------------------------------------------------------------------------
 void ConVar::InternalSetIntValue( int nValue )
 {
@@ -977,7 +980,7 @@ void ConVar::InternalSetIntValue( int nValue )
 //-----------------------------------------------------------------------------
 void ConVar::Create( const char *pName, const char *pDefaultValue, int flags /*= 0*/,
 	const char *pHelpString /*= NULL*/, bool bMin /*= false*/, float fMin /*= 0.0*/,
-	bool bMax /*= false*/, float fMax /*= false*/, bool bCompMin /*= false */, 
+	bool bMax /*= false*/, float fMax /*= false*/, bool bCompMin /*= false */,
 	float fCompMin /*= 0.0*/, bool bCompMax /*= false*/, float fCompMax /*= 0.0*/,
 	FnChangeCallback_t callback /*= NULL*/ )
 {
@@ -989,7 +992,7 @@ void ConVar::Create( const char *pName, const char *pDefaultValue, int flags /*=
 	m_StringLength = V_strlen( m_pszDefaultValue ) + 1;
 	m_pszString = new char[m_StringLength];
 	memcpy( m_pszString, m_pszDefaultValue, m_StringLength );
-	
+
 	m_bHasMin = bMin;
 	m_fMinVal = fMin;
 	m_bHasMax = bMax;
@@ -1001,7 +1004,7 @@ void ConVar::Create( const char *pName, const char *pDefaultValue, int flags /*=
 	m_fCompMaxVal = fCompMax;
 
 	m_bCompetitiveRestrictions = false;
-	
+
 	m_fnChangeCallback = callback;
 
 	m_fValue = ( float )atof( m_pszString );
@@ -1015,8 +1018,8 @@ void ConVar::Create( const char *pName, const char *pDefaultValue, int flags /*=
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *value - 
+// Purpose:
+// Input  : *value -
 //-----------------------------------------------------------------------------
 void ConVar::SetValue(const char *value)
 {
@@ -1025,8 +1028,8 @@ void ConVar::SetValue(const char *value)
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : value - 
+// Purpose:
+// Input  : value -
 //-----------------------------------------------------------------------------
 void ConVar::SetValue( float value )
 {
@@ -1035,8 +1038,8 @@ void ConVar::SetValue( float value )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : value - 
+// Purpose:
+// Input  : value -
 //-----------------------------------------------------------------------------
 void ConVar::SetValue( int value )
 {
@@ -1055,8 +1058,8 @@ void ConVar::Revert( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : minVal - 
+// Purpose:
+// Input  : minVal -
 // Output : true if there is a min set
 //-----------------------------------------------------------------------------
 bool ConVar::GetMin( float& minVal ) const
@@ -1066,8 +1069,8 @@ bool ConVar::GetMin( float& minVal ) const
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : maxVal - 
+// Purpose:
+// Input  : maxVal -
 //-----------------------------------------------------------------------------
 bool ConVar::GetMax( float& maxVal ) const
 {
@@ -1076,8 +1079,8 @@ bool ConVar::GetMax( float& maxVal ) const
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : minVal - 
+// Purpose:
+// Input  : minVal -
 // Output : true if there is a min set
 //-----------------------------------------------------------------------------
 bool ConVar::GetCompMin( float& minVal ) const
@@ -1087,8 +1090,8 @@ bool ConVar::GetCompMin( float& minVal ) const
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : maxVal - 
+// Purpose:
+// Input  : maxVal -
 //-----------------------------------------------------------------------------
 bool ConVar::GetCompMax( float& maxVal ) const
 {
@@ -1097,9 +1100,9 @@ bool ConVar::GetCompMax( float& maxVal ) const
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Sets that competitive mode is enabled for this var, and then 
-// attempts to clamp to competitive values. 
-// Input  : maxVal - 
+// Purpose: Sets that competitive mode is enabled for this var, and then
+// attempts to clamp to competitive values.
+// Input  : maxVal -
 // Output : true if the value was successfully updated, otherwise false.
 //-----------------------------------------------------------------------------
 bool ConVar::SetCompetitiveMode( bool bCompetitive )
@@ -1114,7 +1117,7 @@ bool ConVar::SetCompetitiveMode( bool bCompetitive )
 
 	bool bRequiresClamp = ( var->m_bHasCompMin && var->m_fCompMinVal > var->m_fValue )
 					   || ( var->m_bHasCompMax && var->m_fCompMaxVal < var->m_fValue );
-	bool bForceToDefault = !var->m_bHasCompMin && !var->m_bHasCompMax 
+	bool bForceToDefault = !var->m_bHasCompMin && !var->m_bHasCompMax
 		               && ( fabs( var->m_fValue - ( fDefaultAsFloat = V_atof( var->m_pszDefaultValue ) ) ) > 0.00001f );
 
 	if ( bRequiresClamp )
@@ -1127,7 +1130,7 @@ bool ConVar::SetCompetitiveMode( bool bCompetitive )
 	}
 
 	// The clamping should've worked, so if it didn't--need to understand why.
-	Assert( !bRequiresClamp || IsFlagSet( FCVAR_MATERIAL_THREAD_MASK ) || ( ( !var->m_bHasCompMin || var->m_fCompMinVal <= var->m_fValue ) 
+	Assert( !bRequiresClamp || IsFlagSet( FCVAR_MATERIAL_THREAD_MASK ) || ( ( !var->m_bHasCompMin || var->m_fCompMinVal <= var->m_fValue )
 							  && ( !var->m_bHasCompMax || var->m_fCompMaxVal >= var->m_fValue ) ) );
 	Assert( !bForceToDefault || IsFlagSet( FCVAR_MATERIAL_THREAD_MASK ) || ( var->m_fValue == fDefaultAsFloat ) );
 	return true;
@@ -1136,7 +1139,7 @@ bool ConVar::SetCompetitiveMode( bool bCompetitive )
 
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 // Output : const char
 //-----------------------------------------------------------------------------
 const char *ConVar::GetDefault( void ) const
@@ -1144,8 +1147,8 @@ const char *ConVar::GetDefault( void ) const
 	return m_pParent->m_pszDefaultValue;
 }
 
-void ConVar::SetDefault( const char *pszDefault ) 
-{ 
+void ConVar::SetDefault( const char *pszDefault )
+{
 	m_pszDefaultValue = pszDefault ? pszDefault : "";
 	Assert( m_pszDefaultValue );
 }
@@ -1213,7 +1216,7 @@ bool ConVarRef::IsValid() const
 
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void ConVar_PrintFlags( const ConCommandBase *var )
 {
@@ -1286,7 +1289,7 @@ void ConVar_PrintFlags( const ConCommandBase *var )
 
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void ConVar_PrintDescription( const ConCommandBase *pVar )
 {
@@ -1313,7 +1316,7 @@ void ConVar_PrintDescription( const ConCommandBase *pVar )
 		if ( pBounded || var->IsFlagSet( FCVAR_NEVER_AS_STRING ) )
 		{
 			value = tempVal;
-			
+
 			int intVal = pBounded ? pBounded->GetInt() : var->GetInt();
 			float floatVal = pBounded ? pBounded->GetFloat() : var->GetFloat();
 

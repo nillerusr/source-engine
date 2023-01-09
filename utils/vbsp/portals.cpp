@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $NoKeywords: $
 //
@@ -28,12 +28,12 @@ portal_t *AllocPortal (void)
 	static int s_PortalCount = 0;
 
 	portal_t	*p;
-	
+
 	if (numthreads == 1)
 		c_active_portals++;
 	if (c_active_portals > c_peak_portals)
 		c_peak_portals = c_active_portals;
-	
+
 	p = (portal_t*)malloc (sizeof(portal_t));
 	memset (p, 0, sizeof(portal_t));
 	p->id = s_PortalCount;
@@ -155,7 +155,7 @@ qboolean Portal_EntityFlood (portal_t *p, int s)
 		|| p->nodes[1]->planenum != PLANENUM_LEAF)
 		Error ("Portal_EntityFlood: not a leaf");
 
-	// can never cross to a solid 
+	// can never cross to a solid
 	if ( (p->nodes[0]->contents & CONTENTS_SOLID)
 	|| (p->nodes[1]->contents & CONTENTS_SOLID) )
 		return false;
@@ -196,7 +196,7 @@ void AddPortalToNodes (portal_t *p, node_t *front, node_t *back)
 	p->nodes[0] = front;
 	p->next[0] = front->portals;
 	front->portals = p;
-	
+
 	p->nodes[1] = back;
 	p->next[1] = back->portals;
 	back->portals = p;
@@ -211,14 +211,14 @@ RemovePortalFromNode
 void RemovePortalFromNode (portal_t *portal, node_t *l)
 {
 	portal_t	**pp, *t;
-	
+
 // remove reference to the current portal
 	pp = &l->portals;
 	while (1)
 	{
 		t = *pp;
 		if (!t)
-			Error ("RemovePortalFromNode: portal not in leaf");	
+			Error ("RemovePortalFromNode: portal not in leaf");
 
 		if ( t == portal )
 			break;
@@ -230,7 +230,7 @@ void RemovePortalFromNode (portal_t *portal, node_t *l)
 		else
 			Error ("RemovePortalFromNode: portal not bounding leaf");
 	}
-	
+
 	if (portal->nodes[0] == l)
 	{
 		*pp = portal->next[0];
@@ -238,7 +238,7 @@ void RemovePortalFromNode (portal_t *portal, node_t *l)
 	}
 	else if (portal->nodes[1] == l)
 	{
-		*pp = portal->next[1];	
+		*pp = portal->next[1];
 		portal->nodes[1] = NULL;
 	}
 }
@@ -249,7 +249,7 @@ void PrintPortal (portal_t *p)
 {
 	int			i;
 	winding_t	*w;
-	
+
 	w = p->winding;
 	for (i=0 ; i<w->numpoints ; i++)
 		Msg ("(%5.0f,%5.0f,%5.0f)\n",w->p[i][0]
@@ -293,7 +293,7 @@ void MakeHeadnodePortals (tree_t *tree)
 		bounds[0][i] = tree->mins[i] - SIDESPACE;
 		bounds[1][i] = tree->maxs[i] + SIDESPACE;
 	}
-	
+
 	tree->outside_node.planenum = PLANENUM_LEAF;
 	tree->outside_node.brushlist = NULL;
 	tree->outside_node.portals = NULL;
@@ -306,7 +306,7 @@ void MakeHeadnodePortals (tree_t *tree)
 
 			p = AllocPortal ();
 			portals[n] = p;
-			
+
 			pl = &bplanes[n];
 			memset (pl, 0, sizeof(*pl));
 			if (j)
@@ -323,7 +323,7 @@ void MakeHeadnodePortals (tree_t *tree)
 			p->winding = BaseWindingForPlane (pl->normal, pl->dist);
 			AddPortalToNodes (p, node, &tree->outside_node);
 		}
-		
+
 // clip the basewindings by all the other planes
 	for (i=0 ; i<6 ; i++)
 	{
@@ -400,7 +400,7 @@ void MakeNodePortal (node_t *node)
 	w = BaseWindingForNode (node);
 
 	// clip the portal by all the other portals in the node
-	for (p = node->portals ; p && w; p = p->next[side])	
+	for (p = node->portals ; p && w; p = p->next[side])
 	{
 		if (p->nodes[0] == node)
 		{
@@ -438,7 +438,7 @@ void MakeNodePortal (node_t *node)
 	new_portal = AllocPortal ();
 	new_portal->plane = g_MainMap->mapplanes[node->planenum];
 	new_portal->onnode = node;
-	new_portal->winding = w;	
+	new_portal->winding = w;
 
 	AddPortalToNodes (new_portal, node->children[0], node->children[1]);
 }
@@ -464,7 +464,7 @@ void SplitNodePortals (node_t *node)
 	f = node->children[0];
 	b = node->children[1];
 
-	for (p = node->portals ; p ; p = next_portal)	
+	for (p = node->portals ; p ; p = next_portal)
 	{
 		if (p->nodes[0] == node)
 			side = 0;
@@ -521,7 +521,7 @@ void SplitNodePortals (node_t *node)
 				AddPortalToNodes (p, other_node, f);
 			continue;
 		}
-		
+
 	// the winding is split
 		new_portal = AllocPortal ();
 		*new_portal = *p;
@@ -558,7 +558,7 @@ void CalcNodeBounds (node_t *node)
 
 	// calc mins/maxs for both leafs and nodes
 	ClearBounds (node->mins, node->maxs);
-	for (p = node->portals ; p ; p = p->next[s])	
+	for (p = node->portals ; p ; p = p->next[s])
 	{
 		s = (p->nodes[1] == node);
 		for (i=0 ; i<p->winding->numpoints ; i++)
@@ -632,8 +632,8 @@ FLOOD ENTITIES
 // Purpose: Floods outward from the given node, marking visited nodes with
 //			the number of hops from a node with an entity. If we ever mark
 //			the outside_node for this tree, we've leaked.
-// Input  : node - 
-//			dist - 
+// Input  : node -
+//			dist -
 //-----------------------------------------------------------------------------
 void FloodPortals_r (node_t *node, int dist)
 {
@@ -700,9 +700,9 @@ void FloodAreaLeak( node_t *headnode, node_t *pFirstSide )
 //			BSP tree that the entity occupies.
 //
 //			We then flood outward from that leaf to see if the entity leaks.
-// Input  : headnode - 
-//			origin - 
-//			occupant - 
+// Input  : headnode -
+//			origin -
+//			occupant -
 // Output : Returns false if the entity is in solid, true if it is not.
 //-----------------------------------------------------------------------------
 qboolean PlaceOccupant (node_t *headnode, Vector& origin, entity_t *occupant)
@@ -852,7 +852,7 @@ void FloodAreas_r (node_t *node, portal_t *pSeeThrough)
 			Warning("WARNING: areaportal entity %i (brush %i) touches > 2 areas\n", b->original->entitynum, b->original->id );
 			return;
 		}
-		
+
 		if (e->portalareas[0])
 		{
 			e->portalareas[1] = c_areas;
@@ -920,6 +920,9 @@ void FindAreas_r (node_t *node)
 	FloodAreas_r (node, NULL);
 }
 
+#ifdef MAPBASE
+extern qboolean	noleaktest;
+#endif
 
 void ReportAreaportalLeak( tree_t *tree, node_t *node )
 {
@@ -968,6 +971,14 @@ void ReportAreaportalLeak( tree_t *tree, node_t *node )
 			AreaportalLeakFile( tree, pStart, pBest, pBest->nodes[s] );
 		}
 	}
+
+#ifdef MAPBASE
+	if (!noleaktest)
+	{
+		Warning( ("--- AREAPORTAL LEAK ---\n") );
+		exit(0);
+	}
+#endif
 }
 
 
@@ -1042,7 +1053,7 @@ int FindUniquePoints( const Vector2D *pPoints, int nPoints, int *indexMap, int n
 			indexMap[nUniquePoints++] = i;
 		}
 	}
-	
+
 	return nUniquePoints;
 }
 
@@ -1087,7 +1098,7 @@ int Convex2D( Vector2D const *pPoints, int nPoints, int *indices, int nMaxIndice
 		Vector2D const *pStartPoint = &pPoints[ indices[nIndices-1] ];
 
 		float flEdgeAngle = atan2( curEdge.y, curEdge.x );
-		
+
 		int iMinAngle = -1;
 		float flMinAngle = 5000;
 
@@ -1151,15 +1162,15 @@ int Convex2D( Vector2D const *pPoints, int nPoints, int *indices, int nMaxIndice
 
 		curEdge = pPoints[indices[nIndices-1]] - pPoints[indices[nIndices-2]];
 	}
-	
+
 	return nIndices;
 }
 
-void FindPortalsLeadingToArea_R( 
-	node_t *pHeadNode, 
-	int iSrcArea, 
-	int iDestArea, 
-	plane_t *pPlane, 
+void FindPortalsLeadingToArea_R(
+	node_t *pHeadNode,
+	int iSrcArea,
+	int iDestArea,
+	plane_t *pPlane,
 	CUtlVector<portal_t*> &portals )
 {
 	if (pHeadNode->planenum != PLANENUM_LEAF)
@@ -1177,7 +1188,7 @@ void FindPortalsLeadingToArea_R(
 
 		if( !p->nodes[0]->occupied || !p->nodes[1]->occupied )
 			continue;
-	
+
 		if( p->nodes[1]->area == iDestArea && p->nodes[0]->area == iSrcArea ||
 			p->nodes[0]->area == iDestArea && p->nodes[1]->area == iSrcArea )
 		{
@@ -1203,10 +1214,10 @@ void EmitClipPortalGeometry( node_t *pHeadNode, portal_t *pPortal, int iSrcArea,
 {
 	// Build a list of all the points in portals from the same original face.
 	CUtlVector<portal_t*> portals;
-	FindPortalsLeadingToArea_R( 
-		pHeadNode, 
-		iSrcArea, 
-		dp->otherarea, 
+	FindPortalsLeadingToArea_R(
+		pHeadNode,
+		iSrcArea,
+		dp->otherarea,
 		&pPortal->plane,
 		portals );
 
@@ -1260,7 +1271,7 @@ void EmitClipPortalGeometry( node_t *pHeadNode, portal_t *pPortal, int iSrcArea,
 		Vector *p = pPortal->winding->p;
 		Error( "MAX_MAP_PORTALVERTS (probably a broken areaportal near %.1f %.1f %.1f ", p->x, p->y, p->z );
 	}
-	
+
 	for( i=0; i < nIndices; i++ )
 	{
 		g_ClipPortalVerts[g_nClipPortalVerts] = points[ indices[i] ];
@@ -1285,7 +1296,7 @@ void SetNodeAreaIndices_R( node_t *node )
 	if( node->children[0]->area == node->children[1]->area )
 		node->area = node->children[0]->area;
 	else
-		node->area = -1;	
+		node->area = -1;
 }
 
 
@@ -1316,7 +1327,7 @@ void EmitAreaPortals (node_t *headnode)
 			e = &entities[j];
 			if (!e->areaportalnum)
 				continue;
-			
+
 			if (e->portalareas[0] == iSrcArea || e->portalareas[1] == iSrcArea)
 			{
 				int iSide = (e->portalareas[0] == iSrcArea);
