@@ -427,7 +427,7 @@ bool	GLMGenTexels( GLMGenTexelParams *params )
 		DebuggerBreak();
 		return FALSE;
 	}
-	
+
 	// verify that the amount you want to write will not exceed the limit byte count
 	unsigned long destByteCount = chunksize * params->m_chunkCount;
 	
@@ -3828,7 +3828,7 @@ void CGLMTex::Lock( GLMTexLockParams *params, char** addressOut, int* yStrideOut
 	// d - the params of the lock request have been saved in the lock table (in the context)
 	
 	// so step 1 is unambiguous.  If there's no backing storage, make some.
-	if (!m_backing)
+	if (!m_backing && !(m_layout->m_key.m_texFlags & kGLMTexDynamic))
 	{
 		if ( gl_pow2_tempmem.GetBool() )
 		{
@@ -3940,7 +3940,7 @@ void CGLMTex::Lock( GLMTexLockParams *params, char** addressOut, int* yStrideOut
 
 	desc->m_sliceRegionOffset = offsetInSlice + desc->m_sliceBaseOffset;
 
-	if ( copyout && ( (m_layout->m_key.m_texFlags & kGLMTexDynamic) || params->m_readonly ) )
+	if ( (m_layout->m_key.m_texFlags & kGLMTexDynamic) || (params->m_readonly && copyout) )
 	{
 		// read the whole slice
 		// (odds are we'll never request anything but a whole slice to be read..)
@@ -4080,7 +4080,7 @@ void CGLMTex::Unlock( GLMTexLockParams *params )
 		// because it reuploads the whole thing each slice; we only use 3D textures
 		// for the 32x32x32 colorpsace conversion lookups and debugging the problem
 		// would not save any more memory.
-		if ( !m_texClientStorage && ( m_texGLTarget == GL_TEXTURE_2D ) )
+		if ( !m_texClientStorage && ( m_texGLTarget == GL_TEXTURE_2D ) && m_backing )
 		{
 			free(m_backing);
 			m_backing = NULL;
