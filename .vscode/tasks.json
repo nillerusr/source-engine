@@ -31,7 +31,10 @@
             "command": "./waf configure -T release --android=armeabi-v7a-hard,4.9,21",
             "problemMatcher": [],
             "windows": {
-                "command": "echo \"Not supported on Windows.\""
+                "command": "./waf.bat configure -T release --android=armeabi-v7a-hard,4.9,21"
+            },
+            "osx": {
+                "command": "python3 waf configure -T release --android=armeabi-v7a-hard,4.9,21"
             }
         },
         {
