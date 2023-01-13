@@ -8,6 +8,9 @@
             "problemMatcher": [],
             "windows": {
                 "command": "./waf.bat configure -T debug --prefix=out/"
+            },
+            "osx": {
+                "command": "python3 waf configure -T debug --prefix=out/"
             }
         },
         {
@@ -17,6 +20,9 @@
             "problemMatcher": [],
             "windows": {
                 "command": "./waf.bat configure -T debug --64bits --prefix=out/"
+            },
+            "osx": {
+                "command": "python3 waf configure -T debug --64bits --prefix=out/"
             }
         },
         {
@@ -46,6 +52,9 @@
                     "base": "$msCompile",
                     "fileLocation": ["relative", "${workspaceFolder}/build"]
                 }
+            },
+            "osx": {
+                "command": "python3 waf install"
             }
         }
     ]
