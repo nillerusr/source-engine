@@ -7,22 +7,22 @@
             "command": "./waf configure -T debug --prefix=out/",
             "problemMatcher": [],
             "windows": {
-                "command": "./waf.bat configure -T debug --prefix=out/"
+                "command": "./waf.bat configure -T debug --prefix=build/out/"
             },
             "osx": {
-                "command": "python3 waf configure -T debug --prefix=out/"
+                "command": "python3 waf configure -T debug --prefix=build/out/"
             }
         },
         {
             "label": "Configure Waf for Debug 64-bit",
             "type": "shell",
-            "command": "./waf configure -T debug --64bits --prefix=out/",
+            "command": "./waf configure -T debug --64bits --prefix=build/out/",
             "problemMatcher": [],
             "windows": {
-                "command": "./waf.bat configure -T debug --64bits --prefix=out/"
+                "command": "./waf.bat configure -T debug --64bits --prefix=build/out/"
             },
             "osx": {
-                "command": "python3 waf configure -T debug --64bits --prefix=out/"
+                "command": "python3 waf configure -T debug --64bits --prefix=build/out/"
             }
         },
         {
