@@ -2,28 +2,28 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Configure Waf for host OS: x86",
+            "label": "Configure Waf for Debug 32-bit",
             "type": "shell",
+            "command": "./waf configure -T debug --prefix=out/",
             "problemMatcher": [],
-            "command": "./waf configure -T release --prefix=out/",
             "windows": {
-                "command": "./waf.bat configure -T release --prefix=out/"
+                "command": "./waf.bat configure -T debug --prefix=out/"
             }
         },
         {
-            "label": "Configure Waf for host OS: x86_64",
+            "label": "Configure Waf for Debug 64-bit",
             "type": "shell",
+            "command": "./waf configure -T debug --64bits --prefix=out/",
             "problemMatcher": [],
-            "command": "./waf configure -T release --64bits --prefix=out/",
             "windows": {
-                "command": "./waf.bat configure -T release --64bits --prefix=out/"
+                "command": "./waf.bat configure -T debug --64bits --prefix=out/"
             }
         },
         {
-            "label": "Configure Waf for outdated Android",
+            "label": "Configure Waf for Debug on outdated Android",
             "type": "shell",
-            "problemMatcher": [],
             "command": "./waf configure -T release --android=armeabi-v7a-hard,4.9,21",
+            "problemMatcher": [],
             "windows": {
                 "command": "echo \"Not supported on Windows.\""
             }
@@ -31,11 +31,21 @@
         {
             "label": "Build",
             "type": "shell",
-            "problemMatcher": [],
             "command": "./waf install",
+            "problemMatcher": {
+                "base": "$gcc",
+                "fileLocation": ["relative", "${workspaceFolder}/build"]
+            },
             "group": {
                 "kind": "build",
                 "isDefault": true
+            },
+            "windows": {
+                "command": "./waf.bat install",
+                "problemMatcher": {
+                    "base": "$msCompile",
+                    "fileLocation": ["relative", "${workspaceFolder}/build"]
+                }
             }
         }
     ]
