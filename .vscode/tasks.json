@@ -26,7 +26,7 @@
             }
         },
         {
-            "label": "Configure Waf for Debug on outdated Android",
+            "label": "Configure Waf for Debug on Android (NDK r10e)",
             "type": "shell",
             "command": "./waf configure -T release --android=armeabi-v7a-hard,4.9,21",
             "problemMatcher": [],
