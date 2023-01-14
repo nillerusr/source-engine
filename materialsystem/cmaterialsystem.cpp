@@ -1029,7 +1029,7 @@ bool CMaterialSystem::AllowThreading( bool bAllow, int nServiceThread )
 
 	bool bOldAllow = m_bAllowQueuedRendering;
 
-	if ( GetCPUInformation()->m_nPhysicalProcessors >= 2 )
+	if ( GetCPUInformation()->m_nLogicalProcessors >= 2 )
 	{
 		m_bAllowQueuedRendering = bAllow;
 		bool bQueued = m_IdealThreadMode != MATERIAL_SINGLE_THREADED;
@@ -1806,11 +1806,7 @@ static ConVar mat_normalmaps(		"mat_normalmaps", "0", FCVAR_CHEAT );
 static ConVar mat_measurefillrate(	"mat_measurefillrate", "0", FCVAR_CHEAT );
 static ConVar mat_fillrate(			"mat_fillrate", "0", FCVAR_CHEAT );
 static ConVar mat_reversedepth(		"mat_reversedepth", "0", FCVAR_CHEAT );
-#ifdef DX_TO_GL_ABSTRACTION
-static ConVar mat_bufferprimitives( "mat_bufferprimitives", "0" );	// I'm not seeing any benefit speed wise for buffered primitives on GLM/POSIX (checked via TF2 timedemo) - default to zero
-#else
 static ConVar mat_bufferprimitives( "mat_bufferprimitives", "1" );
-#endif
 static ConVar mat_drawflat(			"mat_drawflat","0", FCVAR_CHEAT );
 static ConVar mat_softwarelighting( "mat_softwarelighting", "0", FCVAR_ALLOWED_IN_COMPETITIVE );
 static ConVar mat_proxy(			"mat_proxy", "0", FCVAR_CHEAT, "", MatProxyCallback );
@@ -2780,8 +2776,8 @@ IMaterial* CMaterialSystem::FindMaterialEx( char const* pMaterialName, const cha
 {
 	// We need lower-case symbols for this to work
 	int nLen = Q_strlen( pMaterialName ) + 1;
-	char *pFixedNameTemp = (char*)malloc( nLen );
-	char *pTemp = (char*)malloc( nLen );
+	char *pFixedNameTemp = (char*)stackalloc( nLen );
+	char *pTemp = (char*)stackalloc( nLen );
 	Q_strncpy( pFixedNameTemp, pMaterialName, nLen );
 	Q_strlower( pFixedNameTemp );
 #ifdef POSIX
@@ -2882,9 +2878,6 @@ IMaterial* CMaterialSystem::FindMaterialEx( char const* pMaterialName, const cha
 			DevWarning( "material \"%s\" not found.\n", name );
 		}
 	}
-
-	free(pTemp);
-	free(pFixedNameTemp);
 
 	return g_pErrorMaterial->GetRealTimeVersion();
 }
@@ -3103,20 +3096,12 @@ void CMaterialSystem::ResetTempHWMemory( bool bExitingLevel )
 //-----------------------------------------------------------------------------
 void CMaterialSystem::CacheUsedMaterials( )
 {
+	printf("Cache materials\n");
+
 	g_pShaderAPI->EvictManagedResources();
-	size_t count = 0;
+
 	for (MaterialHandle_t i = FirstMaterial(); i != InvalidMaterial(); i = NextMaterial(i) )
 	{
-		// Some (mac) drivers (amd) seem to keep extra resources around on uploads until the next frame swap.  This
-		// injects pointless synthetic swaps (between already-static load frames)
-		if ( mat_texture_reload_frame_swap_workaround.GetBool() )
-		{
-			if ( count++ % 20 == 0 )
-			{
-				Flush(true);
-				SwapBuffers(); // Not the right thing to call
-			}
-		}
 		IMaterialInternal* pMat = GetMaterialInternal(i);
 		Assert( pMat->GetReferenceCount() >= 0 );
 		if( pMat->GetReferenceCount() > 0 )
@@ -3703,9 +3688,13 @@ void CMaterialSystem::EndFrame( void )
 				ThreadAcquire( true );
 			}
 
+			IThreadPool* pThreadPool = CreateMatQueueThreadPool();
+
 			if ( m_pActiveAsyncJob && !m_pActiveAsyncJob->IsFinished() )
 			{
-				m_pActiveAsyncJob->WaitForFinish();
+				m_pActiveAsyncJob->WaitForFinish(TT_INFINITE, pThreadPool);
+
+				// Sync with GPU if we had a job for it, even if it finished early on CPU!
 				if ( !IsPC() && g_config.ForceHWSync() )
 				{
 					g_pShaderAPI->ForceHardwareSync();
@@ -3730,7 +3719,6 @@ void CMaterialSystem::EndFrame( void )
 				}
 			}
 
-			IThreadPool *pThreadPool = CreateMatQueueThreadPool();
 			pThreadPool->AddJob( m_pActiveAsyncJob );
 			break;
 		}
@@ -4664,19 +4652,8 @@ void CMaterialSystem::BeginRenderTargetAllocation( void )
 
 void CMaterialSystem::EndRenderTargetAllocation( void )
 {
-	// Any GPU newer than 2005 doesn't need to do this, and it eats up ~40% of our level load time! 
-	const bool cbRequiresRenderTargetAllocationFirst = mat_requires_rt_alloc_first.GetBool();
-
 	g_pShaderAPI->FlushBufferedPrimitives();
 	m_bAllocatingRenderTargets = false;
-
-	if ( IsPC() && cbRequiresRenderTargetAllocationFirst && g_pShaderAPI->CanDownloadTextures() )
-	{
-		// Simulate an Alt-Tab...will cause RTs to be allocated first
-
-		g_pShaderDevice->ReleaseResources();
-		g_pShaderDevice->ReacquireResources();
-	}
 
 	TextureManager()->CacheExternalStandardRenderTargets();
 }

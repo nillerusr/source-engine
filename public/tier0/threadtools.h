@@ -52,6 +52,12 @@
 #pragma once
 #pragma warning(push)
 #pragma warning(disable:4251)
+
+extern "C"
+{
+	void __declspec(dllimport) __stdcall Sleep( unsigned long );
+}
+
 #endif
 
 #ifdef COMPILER_MSVC64
@@ -194,8 +200,6 @@ PLATFORM_INTERFACE bool ReleaseThreadHandle( ThreadHandle_t );
 
 //-----------------------------------------------------------------------------
 
-PLATFORM_INTERFACE void ThreadSleep(unsigned duration = 0);
-PLATFORM_INTERFACE void ThreadNanoSleep(unsigned ns);
 PLATFORM_INTERFACE ThreadId_t ThreadGetCurrentId();
 PLATFORM_INTERFACE ThreadHandle_t ThreadGetCurrentHandle();
 PLATFORM_INTERFACE int ThreadGetPriority( ThreadHandle_t hThread = NULL );
@@ -229,10 +233,10 @@ inline void ThreadPause()
 {
 #if defined( COMPILER_PS3 )
 	__db16cyc();
-#elif defined(__arm__) || defined(__aarch64__)
-        sched_yield();
-#elif defined( COMPILER_GCC )
+#elif defined( COMPILER_GCC ) && (defined( __i386__ ) || defined( __x86_64__ ))
 	__asm __volatile( "pause" );
+#elif defined( POSIX )
+        sched_yield();
 #elif defined ( COMPILER_MSVC64 )
 	_mm_pause();
 #elif defined( COMPILER_MSVC32 )
@@ -244,6 +248,36 @@ inline void ThreadPause()
 	__asm { or r1,r1,r1 } 
 #else
 #error "implement me"
+#endif
+}
+
+inline void ThreadSleep(unsigned nMilliseconds = 0)
+{
+	if( nMilliseconds == 0 )
+	{
+		ThreadPause();
+		return;
+        }
+
+#ifdef _WIN32
+
+#ifdef _WIN32_PC
+        static bool bInitialized = false;
+        if ( !bInitialized )
+        {
+                bInitialized = true;
+                // Set the timer resolution to 1 ms (default is 10.0, 15.6, 2.5, 1.0 or
+                // some other value depending on hardware and software) so that we can
+                // use Sleep( 1 ) to avoid wasting CPU time without missing our frame
+                // rate.
+                timeBeginPeriod( 1 );
+        }
+#endif
+	Sleep( nMilliseconds );
+#elif PS3
+	sys_timer_usleep( nMilliseconds * 1000 );
+#elif defined(POSIX)
+        usleep( nMilliseconds * 1000 );
 #endif
 }
 

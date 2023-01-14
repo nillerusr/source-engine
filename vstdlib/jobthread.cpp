@@ -214,7 +214,11 @@ public:
 	//-----------------------------------------------------
 	virtual int YieldWait( CThreadEvent **pEvents, int nEvents, bool bWaitAll = true, unsigned timeout = TT_INFINITE );
 	virtual int YieldWait( CJob **, int nJobs, bool bWaitAll = true, unsigned timeout = TT_INFINITE );
-	void Yield( unsigned timeout );
+	inline void Yield( unsigned timeout )
+	{
+		Assert( ThreadInMainThread() );
+		ThreadSleep( timeout );
+	}
 
 	//-----------------------------------------------------
 	// Add a native job to the queue (master thread)
@@ -654,20 +658,6 @@ int CThreadPool::YieldWait( CJob **ppJobs, int nJobs, bool bWaitAll, unsigned ti
 	}
 
 	return YieldWait( handles.Base(), handles.Count(), bWaitAll, timeout);
-}
-
-//---------------------------------------------------------
-
-void CThreadPool::Yield( unsigned timeout )
-{
-	// @MULTICORE (toml 10/24/2006): not implemented
-	Assert( ThreadInMainThread() );
-	if ( !ThreadInMainThread() )
-	{
-		ThreadSleep( timeout );
-		return;
-	}
-	ThreadSleep( timeout );
 }
 
 //---------------------------------------------------------

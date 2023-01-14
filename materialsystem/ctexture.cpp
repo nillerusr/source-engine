@@ -2458,15 +2458,8 @@ bool CTexture::AsyncReadTextureFromFile( IVTFTexture* pVTFTexture, unsigned int 
 		return false;
 	}
 
-	if ( V_strstr( GetName(), "c_sniperrifle_scope" ) )
-	{
-		int i = 0;
-		i = 3;
-	}
-
-
 	tmZone( TELEMETRY_LEVEL0, TMZF_NONE, "%s - %s", __FUNCTION__, tmDynamicString( TELEMETRY_LEVEL0, pCacheFileName ) );
-	
+
 	// OSX hackery
 	int nPreserveFlags = nAdditionalCreationFlags;
 	if ( m_nFlags & TEXTUREFLAGS_SRGB )
@@ -4188,12 +4181,6 @@ bool SLoadTextureBitsFromFile( IVTFTexture **ppOutVtfTexture, FileHandle_t hFile
 	// NOTE! NOTE! NOTE! implications. It can be called synchronously by the Main thread, 
 	// NOTE! NOTE! NOTE! or by the streaming texture code!
 	Assert( ppOutVtfTexture != NULL && *ppOutVtfTexture != NULL );
-
-	if ( V_strstr( pName, "c_rocketlauncher/c_rocketlauncher" ) )
-	{
-		int i = 0;
-		i = 3;
-	}
 
 	CUtlBuffer buf;
 
