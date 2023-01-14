@@ -28,13 +28,13 @@
         {
             "label": "Configure Waf for Debug on Android (NDK r10e)",
             "type": "shell",
-            "command": "./waf configure -T release --android=armeabi-v7a-hard,4.9,21",
+            "command": "./waf configure -T debug --android=armeabi-v7a-hard,4.9,21",
             "problemMatcher": [],
             "windows": {
-                "command": "./waf.bat configure -T release --android=armeabi-v7a-hard,4.9,21"
+                "command": "./waf.bat configure -T debug --android=armeabi-v7a-hard,4.9,21"
             },
             "osx": {
-                "command": "python3 waf configure -T release --android=armeabi-v7a-hard,4.9,21"
+                "command": "python3 waf configure -T debug --android=armeabi-v7a-hard,4.9,21"
             }
         },
         {
