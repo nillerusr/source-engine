@@ -4,7 +4,7 @@
         {
             "label": "Configure Waf for Debug 32-bit",
             "type": "shell",
-            "command": "./waf configure -T debug --prefix=out/",
+            "command": "./waf configure -T debug --prefix=build/out/",
             "problemMatcher": [],
             "windows": {
                 "command": "./waf.bat configure -T debug --prefix=build/out/"
