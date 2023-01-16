@@ -65,13 +65,10 @@ def build(bld):
 		'ZLIB'
 	]
 
-	linkflags = []
 	install_path = bld.env.PREFIX
 
 	if bld.env.DEST_OS != 'android':
 		install_path += '/'+bld.env.GAMES+'/bin'
-	elif bld.env.DEST_OS == "darwin":
-		linkflags += ['-install_name', '@rpath/lib'+PROJECT_NAME+'.dylib']
 
 	source = [ 'in_touch.cpp' ]
 	if bld.env.DEST_OS == 'win32':
