@@ -27,10 +27,11 @@ def build(bld):
 		libs += ['USER32', 'SHELL32']
 		source += ['dedicated_main.rc']
 
-	if bld.env.DEST_OS == "linux":
-		linkflags += ['-rpath', '$ORIGIN/bin/']
-	elif bld.env.DEST_OS == "darwin":
-		linkflags += ['-rpath', '@loader_path/bin/']
+	if bld.env.DEST_OS != 'win32':
+		if bld.env.DEST_OS == "darwin":
+			linkflags += ['-rpath', '@loader_path/bin/']
+		else:
+			linkflags += ['-rpath', '$ORIGIN/bin/']
 
 	install_path = bld.env.BINDIR
 	bld(
