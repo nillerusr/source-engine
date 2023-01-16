@@ -49,11 +49,14 @@ def build(bld):
 	defines = []
 
 	libs = ['bitmap','mathlib','tier0','vgui_controls','tier1','vstdlib','tier2','tier3','vgui_surfacelib','FT2','FC','SDL2']
+	linkflags = []
 
 	if bld.env.DEST_OS == 'android':
 		libs += ['EXPAT']
 	elif bld.env.DEST_OS == 'win32':
 		libs += ['USER32', 'GDI32']
+	elif bld.env.DEST_OS == 'darwin':
+		linkflags += ['-install_name', '@rpath/lib'+PROJECT_NAME+'.dylib']
 
 	install_path = bld.env.LIBDIR
 
@@ -65,6 +68,7 @@ def build(bld):
 		includes = includes,
 		defines  = defines,
 		use      = libs,
+		linkflags = linkflags,
 		install_path = install_path,
 		subsystem = bld.env.MSVC_SUBSYSTEM,
 		idx      = bld.get_taskgen_count()

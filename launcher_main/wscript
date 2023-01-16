@@ -22,12 +22,18 @@ def build(bld):
 	includes = ['../public']
 	defines = []
 	libs = []
+	linkflags = []
 
 	if bld.env.DEST_OS != 'win32':
 		libs += [ 'DL', 'LOG' ]
 	else:
 		libs += ['USER32', 'SHELL32']
 		source += ['launcher_main.rc']
+	
+	if bld.env.DEST_OS == "linux":
+		linkflags += ['-rpath', '$ORIGIN/bin/']
+	elif bld.env.DEST_OS == "darwin":
+		linkflags += ['-rpath', '@loader_path/bin/']
 
 	install_path = bld.env.BINDIR
 	bld(
@@ -38,6 +44,7 @@ def build(bld):
 		includes = includes,
 		defines  = defines,
 		use      = libs,
+		linkflags = linkflags,
 		install_path = install_path,
 		subsystem = bld.env.MSVC_SUBSYSTEM,
 		idx      = bld.get_taskgen_count()

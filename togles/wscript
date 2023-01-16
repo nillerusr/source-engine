@@ -47,9 +47,11 @@ def build(bld):
 	defines = []
 
 	libs = ['tier0','tier1','tier2','vstdlib','mathlib']
+	linkflags = []
 
 	if bld.env.DEST_OS == "darwin":
 		libs += ["OPENGL", "CARBON"]
+		linkflags += ['-install_name', '@rpath/lib'+PROJECT_NAME+'.dylib']
 
 	install_path = bld.env.LIBDIR
 
@@ -61,6 +63,7 @@ def build(bld):
 		includes = includes,
 		defines  = defines,
 		use      = libs,
+		linkflags = linkflags,
 		install_path = install_path,
 		subsystem = bld.env.MSVC_SUBSYSTEM,
 		idx      = bld.get_taskgen_count()

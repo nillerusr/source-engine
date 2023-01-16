@@ -68,11 +68,14 @@ def build(bld):
 	defines = []
 
 	libs = ['tier0','tier1','tier2','vstdlib','togl','bitmap','mathlib']
+	linkflags = []
 
 	if bld.env.DEST_OS == 'android':
 		libs += ['ANDROID_SUPPORT']
 	elif bld.env.DEST_OS == 'win32' and not bld.env.GL:
 		libs += ['D3D9', 'D3DX9', 'bzip2']
+	elif bld.env.DEST_OS == "darwin":
+		linkflags += ['-install_name', '@rpath/lib'+PROJECT_NAME+'.dylib']
 	
 	install_path = bld.env.LIBDIR
 
@@ -84,6 +87,7 @@ def build(bld):
 		includes = includes,
 		defines  = defines,
 		use      = libs,
+		linkflags = linkflags,
 		install_path = install_path,
 		subsystem = bld.env.MSVC_SUBSYSTEM,
 		idx      = bld.get_taskgen_count()
