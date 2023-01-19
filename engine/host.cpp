@@ -125,7 +125,7 @@
 #include "xbox/xbox_win32stubs.h"
 #include "audio_pch.h"
 #endif
-#if defined( LINUX )
+#if defined( POSIX )
 #include <locale.h>
 
 #ifdef USE_SDL
@@ -3899,7 +3899,7 @@ void Host_PostInit()
 		EngineVGui()->PostInit();
 	}
 
-#if defined( LINUX ) && !defined ANDROID
+#if defined( POSIX ) && !defined ANDROID
 	const char en_US[] = "en_US.UTF-8";
 	const char *CurrentLocale = setlocale( LC_ALL, NULL );
 	if ( !CurrentLocale )
@@ -3998,7 +3998,7 @@ bool DLL_LOCAL Host_IsValidSignature( const char *pFilename, bool bAllowUnknown 
 // This keeps legitimate users with modified binaries from getting VAC banned because of them
 bool DLL_LOCAL Host_AllowLoadModule( const char *pFilename, const char *pPathID, bool bAllowUnknown, bool bIsServerOnly /* = false */ )
 {
-#if defined( SWDS ) || defined ( OSX ) || defined( LINUX )
+#if defined( SWDS ) || defined ( OSX ) || defined( POSIX )
 	// dedicated servers and Mac and Linux binaries don't check signatures
 	return true;
 #else

@@ -194,7 +194,7 @@ static FcPattern* FontMatch(const char* type, ...)
         FcPatternAdd(pattern, type, fcvalue, FcFalse);
 
         type = va_arg(ap, const char *);
-        if (!type)
+        if (!type || *type > FcTypeRange)
             break;
     };
     va_end(ap);
