@@ -432,7 +432,7 @@ bool CVTFTexture::Init( int nWidth, int nHeight, int nDepth, ImageFormat fmt, in
 
 	m_nFrameCount = iFrameCount;
 
-	m_nFaceCount = (iFlags & TEXTUREFLAGS_ENVMAP) ? (CUBEMAP_FACE_COUNT-1) : 1;
+	m_nFaceCount = (iFlags & TEXTUREFLAGS_ENVMAP) ? CUBEMAP_FACE_COUNT : 1;
 
 #if defined( _X360 )
 	m_nMipSkipCount = 0;
@@ -601,7 +601,7 @@ void CVTFTexture::ImageFileInfo( int nFrame, int nFace, int nMipLevel, int *pSta
 	int nFacesToRead = m_nFaceCount;
 	if ( IsCubeMap() )
 	{
-		if ((m_nVersion[0] == 7) && (m_nVersion[1] < 1))
+		if ((m_nVersion[0] == 7) && (m_nVersion[1] < 1 || m_nVersion[1] > 4))
 		{
 			nFacesToRead = 6;
 			if (nFace == CUBEMAP_FACE_SPHEREMAP)
@@ -1068,7 +1068,7 @@ bool CVTFTexture::UnserializeEx( CUtlBuffer &buf, bool bHeaderOnly, int nForceFl
 	m_nFrameCount = header.numFrames;
 
 
-	m_nFaceCount = (m_nFlags & TEXTUREFLAGS_ENVMAP) ? (CUBEMAP_FACE_COUNT-1) : 1;
+	m_nFaceCount = (m_nFlags & TEXTUREFLAGS_ENVMAP) ? CUBEMAP_FACE_COUNT : 1;
 
 	// NOTE: We're going to store space for all mip levels, even if we don't 
 	// have data on disk for them. This is for backward compatibility

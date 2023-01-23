@@ -1801,8 +1801,11 @@ void CBasePanel::ApplySchemeSettings(IScheme *pScheme)
 		// load the loading icon
 		if ( m_iLoadingImageID == -1 )
 		{
+			const char* loading = "console/startup_loading";
+			if ( IsSteamDeck() )
+				loading = "gamepadui/game_logo";
 			m_iLoadingImageID = surface()->CreateNewTextureID();
-			surface()->DrawSetTextureFile( m_iLoadingImageID, "Console/startup_loading", false, false );
+			surface()->DrawSetTextureFile( m_iLoadingImageID, loading, false, false );
 		}
 	}
 }

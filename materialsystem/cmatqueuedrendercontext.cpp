@@ -455,14 +455,11 @@ public:
 			}
 			else
 			{
-				ALIGN16 uint16 tempIndices[16];
+				static ALIGN16 uint16 tempIndices[256];
 
+				// original method
 				int i = 0;
-				if ( (size_t)desc.m_pIndices % 4 == 2 )
-				{
-					desc.m_pIndices[i] = pIndexData[i] + desc.m_nFirstVertex;
-					i++;
-				}
+
 				while ( i < nIndices )
 				{
 					int nToCopy = min( (int)ARRAYSIZE(tempIndices), nIndices - i );

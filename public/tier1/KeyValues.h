@@ -428,6 +428,8 @@ inline bool  KeyValues::IsEmpty( int keySymbol )
 	return dat ? dat->IsEmpty( ) : true;
 }
 
+bool IsSteamDeck();
+
 bool EvaluateConditional( const char *str );
 
 class CUtlSortVectorKeyValuesByName

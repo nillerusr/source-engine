@@ -27,6 +27,7 @@ char *LauncherArgv[512];
 char java_args[4096];
 int iLastArgs = 0;
 
+extern void InitCrashHandler();
 DLL_EXPORT int LauncherMain( int argc, char **argv ); // from launcher.cpp
 
 DLL_EXPORT int Java_com_valvesoftware_ValveActivity2_setenv(JNIEnv *jenv, jclass *jclass, jstring env, jstring value, jint over)
@@ -118,6 +119,8 @@ void android_property_print(const char *name)
 
 DLL_EXPORT int LauncherMainAndroid( int argc, char **argv )
 {
+	InitCrashHandler();
+
 	Msg("GetTotalMemory() = %.2f \n", GetTotalMemory());
 
 	android_property_print("ro.build.version.sdk");
