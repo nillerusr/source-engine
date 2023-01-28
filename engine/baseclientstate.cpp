@@ -37,6 +37,7 @@
 #include "sv_plugin.h"
 #include "sys_dll.h"
 #include "host.h"
+#include "master.h"
 #if defined( REPLAY_ENABLED )
 #include "replay_internal.h"
 #include "replayserver.h"
@@ -874,6 +875,8 @@ bool CBaseClientState::ProcessConnectionlessPacket( netpacket_t *packet )
 	VPROF( "ProcessConnectionlessPacket" );
 
 	Assert( packet );
+
+	master->ProcessConnectionlessPacket( packet );
 
 	bf_read &msg = packet->message;	// handy shortcut 
 

@@ -13,6 +13,7 @@
 #include "net_ws_headers.h"
 #include "net_ws_queued_packet_sender.h"
 #include "fmtstr.h"
+#include "master.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -1644,7 +1645,7 @@ netpacket_t *NET_GetPacket (int sock, byte *scratch )
 	// Check loopback first
 	if ( !NET_GetLoopPacket( &inpacket ) )
 	{
-		if ( !NET_IsMultiplayer() )
+		if ( !NET_IsMultiplayer() && sock != NS_CLIENT )
 		{
 			return NULL;
 		}
@@ -2351,7 +2352,7 @@ int NET_SendPacket ( INetChannel *chan, int sock,  const netadr_t &to, const uns
 		Msg("UDP -> %s: sz=%i OOB '%c'\n", to.ToString(), length, data[4] );
 	}
 
-	if ( !NET_IsMultiplayer() || to.type == NA_LOOPBACK || ( to.IsLocalhost() && !net_usesocketsforloopback.GetBool() ) )
+	if ( (!NET_IsMultiplayer() && sock != NS_CLIENT) || to.type == NA_LOOPBACK || ( to.IsLocalhost() && !net_usesocketsforloopback.GetBool() ) )
 	{
 		Assert( !pVoicePayload );
 
@@ -2988,6 +2989,8 @@ void NET_RunFrame( double flRealtime )
 
 #endif // SWDS
 
+	master->RunFrame();
+
 #ifdef _X360
 	if ( net_logserver.GetInt() )
 	{
@@ -3110,7 +3113,7 @@ void NET_ListenSocket( int sock, bool bListen )
 		NET_CloseSocket( netsock->hTCP, sock );
 	}
 
-	if ( !NET_IsMultiplayer() || net_notcp )
+	if ( (!NET_IsMultiplayer() && sock != NS_CLIENT) || net_notcp )
 		return;
 
 	if ( bListen )
@@ -3295,6 +3298,11 @@ void NET_Init( bool bIsDedicated )
 	{
 		ipname.SetValue( ip );  // update the cvar right now, this will get overwritten by "stuffcmds" later
 	}
+
+	const int nProtocol = X360SecureNetwork() ? IPPROTO_VDP : IPPROTO_UDP;
+
+	// open client socket for masterserver
+	OpenSocketInternal( NS_CLIENT, clientport.GetInt(), PORT_SERVER, "client", nProtocol, true );
 
 	if ( bIsDedicated )
 	{
