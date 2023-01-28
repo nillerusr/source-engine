@@ -1138,7 +1138,7 @@ public:
 		if ( nHasSIMD )
 		{
 			// Precaches the data
-			_mm_prefetch( (char*)((int)pGroupToMesh & (~0x1F)), _MM_HINT_NTA );
+			_mm_prefetch( (char*)((intp)pGroupToMesh & (~0x1F)), _MM_HINT_NTA );
 		}
 #endif
 		for ( int i = 0; i < PREFETCH_VERT_COUNT; ++i )
@@ -1165,7 +1165,7 @@ public:
 			if ( nHasSIMD )
 			{
 				char *pMem = (char*)&pGroupToMesh[j + PREFETCH_VERT_COUNT + 1];
-				_mm_prefetch( (char*)((int)pMem & (~0x1F)), _MM_HINT_NTA );
+				_mm_prefetch( (char*)((intp)pMem & (~0x1F)), _MM_HINT_NTA );
 			}
 #endif
 			idx = j & (PREFETCH_VERT_COUNT-1);

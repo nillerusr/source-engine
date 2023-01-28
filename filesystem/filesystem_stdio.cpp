@@ -1413,7 +1413,7 @@ size_t CWin32ReadOnlyFile::FS_fread( void *dest, size_t destSize, size_t size )
 	if ( m_hFileUnbuffered != INVALID_HANDLE_VALUE )
 	{
 		const int destBaseAlign = ( IsX360() ) ? 4 : m_SectorSize;
-		bool bDestBaseIsAligned = ( (DWORD)dest % destBaseAlign == 0 );
+		bool bDestBaseIsAligned = ( (DWORD_PTR)dest % destBaseAlign == 0 );
 		bool bCanReadUnbufferedDirect = ( bDestBaseIsAligned && ( destSize % m_SectorSize == 0 ) && ( m_ReadPos % m_SectorSize == 0 ) );
 
 		if ( bCanReadUnbufferedDirect )

@@ -1,12 +1,6 @@
 name: Tests
 
-on:
-  push:
-    branches:
-      - "*"
-  pull_request:
-    branches:
-      - "*"
+on: [push, pull_request]
 
 jobs:
   tests-linux-i386:
@@ -36,6 +30,20 @@ jobs:
       run: |
         git submodule init && git submodule update
         ./waf.bat configure -T release --tests --prefix=out/
+        ./waf.bat install
+        cd out
+        $env:Path = "bin";
+        ./unittest.exe
+
+  tests-windows-amd64:
+    runs-on: windows-2019
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Run tests windows-amd64
+      run: |
+        git submodule init && git submodule update
+        ./waf.bat configure -T release --tests --prefix=out/ -8
         ./waf.bat install
         cd out
         $env:Path = "bin";

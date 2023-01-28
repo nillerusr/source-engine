@@ -1,12 +1,6 @@
 name: Build
 
-on:
-  push:
-    branches:
-      - "*"
-  pull_request:
-    branches:
-      - "*"
+on: [push, pull_request]
 
 jobs:
   build-linux-i386:
@@ -47,6 +41,17 @@ jobs:
         ./waf.bat configure -T debug
         ./waf.bat build
 
+  build-windows-amd64:
+    runs-on: windows-2019
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build windows-amd64
+      run: |
+        git submodule init && git submodule update
+        ./waf.bat configure -T debug -8
+        ./waf.bat build
+
   build-dedicated-windows-i386:
     runs-on: windows-2019
 
@@ -56,6 +61,17 @@ jobs:
       run: |
         git submodule init && git submodule update
         ./waf.bat configure -T debug -d
+        ./waf.bat build
+
+  build-dedicated-windows-amd64:
+    runs-on: windows-2019
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build dedicated windows-amd64
+      run: |
+        git submodule init && git submodule update
+        ./waf.bat configure -T debug -d -8
         ./waf.bat build
 
   build-dedicated-linux-i386:

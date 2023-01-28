@@ -425,7 +425,7 @@ DWORD __stdcall DownloadThread( void *voidPtr )
 		//Thread_DPrintf( "Requesting full download\n%s", headers );
 	}
 
-	rc.hDataResource = InternetOpenUrl(rc.hOpenResource, fullURL, headerPtr, headerLen, flags,(DWORD)(&rc) );
+	rc.hDataResource = InternetOpenUrl(rc.hOpenResource, fullURL, headerPtr, headerLen, flags, (DWORD_PTR)(&rc) );
 
 	// send the request off
 	if ( !rc.hDataResource )
