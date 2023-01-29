@@ -2205,7 +2205,7 @@ void CBaseGamesPage::ServerResponded( newgameserver_t &server )
 {
 	Msg("Serverbrowser: hostname %s\n", server.GetName());
 
-	Assert( server.m_NetAdr.GetIP() != 0 );
+	Assert( server.m_NetAdr.GetIPHostByteOrder() != 0 );
 
 	newgameserver_t *pServerItem = &server;
 
