@@ -370,23 +370,3 @@ void CDialogAddServer::FinishAddServer( gameserveritem_t &pServer )
 {
 	ServerBrowserDialog().AddServerToFavorites( pServer );
 }
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CDialogAddBlacklistedServer::FinishAddServer( gameserveritem_t &pServer )
-{
-	ServerBrowserDialog().AddServerToBlacklist( pServer );
-	ServerBrowserDialog().BlacklistsChanged();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CDialogAddBlacklistedServer::ApplySchemeSettings( vgui::IScheme *pScheme )
-{
-	BaseClass::ApplySchemeSettings( pScheme );
-
-	m_pAddServerButton->SetText( "#ServerBrowser_AddAddressToBlacklist" );
-	m_pAddSelectedServerButton->SetText( "#ServerBrowser_AddSelectedToBlacklist" );
-}

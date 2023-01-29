@@ -58,18 +58,4 @@ protected:
 	CUtlVector<HServerQuery> m_Queries;
 };
 
-class CDialogAddBlacklistedServer : public CDialogAddServer 
-{
-	DECLARE_CLASS_SIMPLE( CDialogAddBlacklistedServer, CDialogAddServer );
-public:
-	CDialogAddBlacklistedServer( vgui::Panel *parent, IGameList *gameList) :
-		CDialogAddServer( parent, gameList )
-	{
-	}
-
-	virtual void FinishAddServer( gameserveritem_t &pServer );
-	void ApplySchemeSettings( vgui::IScheme *pScheme );
-	virtual bool AllowInvalidIPs( void ) { return true; }
-};
-
 #endif // DIALOGADDSERVER_H

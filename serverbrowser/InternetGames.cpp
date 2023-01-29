@@ -23,7 +23,7 @@ CInternetGames::CInternetGames(vgui::Panel *parent, const char *panelName, EPage
 	m_fLastSort = 0.0f;
 	m_bDirty = false;
 	m_bRequireUpdate = true;
-	m_bOfflineMode = !IsSteamGameServerBrowsingEnabled();
+	m_bOfflineMode = false; //ro!IsSteamGameServerBrowsingEnabled();
 
 	m_bAnyServersRetrievedFromMaster = false;
 	m_bNoServersListedOnMaster = false;
@@ -124,19 +124,20 @@ void CInternetGames::OnTick()
 // Purpose: Handles incoming server refresh data
 //			updates the server browser with the refreshed information from the server itself
 //-----------------------------------------------------------------------------
-void CInternetGames::ServerResponded( HServerListRequest hReq, int iServer )
+void CInternetGames::ServerResponded( newgameserver_t &server )
 {
 	m_bDirty = true;
-	BaseClass::ServerResponded( hReq, iServer );
+	Msg("InternetGames::ServerResponded hostname = %s\n", server.GetName());
+
+	BaseClass::ServerResponded( server );
 	m_bAnyServersRespondedToQuery = true;
 	m_bAnyServersRetrievedFromMaster = true;
 }
 
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CInternetGames::ServerFailedToRespond( HServerListRequest hReq, int iServer )
+/*void CInternetGames::ServerFailedToRespond( HServerListRequest hReq, int iServer )
 {
 	m_bDirty = true;
 	gameserveritem_t *pServer = steamapicontext->SteamMatchmakingServers()->GetServerDetails( hReq, iServer );
@@ -145,7 +146,7 @@ void CInternetGames::ServerFailedToRespond( HServerListRequest hReq, int iServer
 	if ( pServer->m_bHadSuccessfulResponse )
 	{
 		// if it's had a successful response in the past, leave it on
-		ServerResponded( hReq, iServer );
+		//ServerResponded( hReq, iServer );
 	}
 	else
 	{
@@ -155,24 +156,24 @@ void CInternetGames::ServerFailedToRespond( HServerListRequest hReq, int iServer
 		// we've never had a good response from this server, remove it from the list
 		m_iServerRefreshCount++;
 	}
-}
+}*/
 
 
 //-----------------------------------------------------------------------------
 // Purpose: Called when server refresh has been completed
 //-----------------------------------------------------------------------------
-void CInternetGames::RefreshComplete( HServerListRequest hReq, EMatchMakingServerResponse response )
+void CInternetGames::RefreshComplete( NServerResponse response )
 {
 	SetRefreshing(false);
 	UpdateFilterSettings();
 
-	if ( response != eServerFailedToRespond )
+	if ( response != nServerFailedToRespond )
 	{
 		if ( m_bAnyServersRespondedToQuery )
 		{
 			m_pGameList->SetEmptyListText( GetStringNoUnfilteredServers() );
 		}
-		else if ( response == eNoServersListedOnMasterServer )
+		else if ( response == nNoServersListedOnMasterServer )
 		{
 			m_pGameList->SetEmptyListText( GetStringNoUnfilteredServersOnMaster() );
 		}
@@ -196,7 +197,7 @@ void CInternetGames::RefreshComplete( HServerListRequest hReq, EMatchMakingServe
 
 	UpdateStatus();
 
-	BaseClass::RefreshComplete( hReq, response );
+	BaseClass::RefreshComplete( response );
 }
 
 

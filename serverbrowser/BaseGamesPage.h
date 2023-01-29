@@ -12,6 +12,7 @@
 #endif
 
 #include "tier1/utldict.h"
+#include "engine/iserversinfo.h"
 
 class CBaseGamesPage;
 
@@ -82,7 +83,7 @@ struct gametypes_t
 //-----------------------------------------------------------------------------
 // Purpose: Base property page for all the games lists (internet/favorites/lan/etc.)
 //-----------------------------------------------------------------------------
-class CBaseGamesPage : public vgui::PropertyPage, public IGameList, public ISteamMatchmakingServerListResponse, public ISteamMatchmakingPingResponse
+class CBaseGamesPage : public vgui::PropertyPage, public IGameList, public IServerListResponse //, public ISteamMatchmakingPingResponse
 {
 	DECLARE_CLASS_SIMPLE( CBaseGamesPage, vgui::PropertyPage );
 
@@ -138,7 +139,6 @@ public:
 
 	// adds a server to the favorites
 	MESSAGE_FUNC( OnAddToFavorites, "AddToFavorites" );
-	MESSAGE_FUNC( OnAddToBlacklist, "AddToBlacklist" );
 
 	virtual void StartRefresh();
 
@@ -173,14 +173,14 @@ protected:
 	void UpdateStatus();
 
 	// ISteamMatchmakingServerListResponse callbacks
-	virtual void ServerResponded( HServerListRequest hReq, int iServer );
-	virtual void ServerResponded( int iServer, gameserveritem_t *pServerItem );
-	virtual void ServerFailedToRespond( HServerListRequest hReq, int iServer );
-	virtual void RefreshComplete( HServerListRequest hReq, EMatchMakingServerResponse response ) = 0;
+	virtual void ServerResponded( newgameserver_t &server );
+	virtual void RefreshComplete( NServerResponse response );
 
 	// ISteamMatchmakingPingResponse callbacks
-	virtual void ServerResponded( gameserveritem_t &server );
-	virtual void ServerFailedToRespond() {}
+	//virtual void ServerResponded( gameserveritem_t &server );
+	//virtual void ServerFailedToRespond() {}
+
+	virtual void ServerResponded( int iServer, gameserveritem_t *pServerItem );
 
 	// Removes server from list
 	void RemoveServer( serverdisplay_t &server );
@@ -190,10 +190,10 @@ protected:
 
 	// filtering methods
 	// returns true if filters passed; false if failed
-	virtual bool CheckPrimaryFilters( gameserveritem_t &server);
-	virtual bool CheckSecondaryFilters( gameserveritem_t &server );
-	virtual bool CheckTagFilter( gameserveritem_t &server ) { return true; }
-	virtual bool CheckWorkshopFilter( gameserveritem_t &server ) { return true; }
+	virtual bool CheckPrimaryFilters( newgameserver_t &server);
+	virtual bool CheckSecondaryFilters( newgameserver_t &server );
+	virtual bool CheckTagFilter( newgameserver_t &server ) { return true; }
+	virtual bool CheckWorkshopFilter( newgameserver_t &server ) { return true; }
 	virtual int GetInvalidServerListID();
 
 	virtual void OnSaveFilter(KeyValues *filter);
@@ -236,6 +236,9 @@ protected:
 	CUtlMap<uint64, int> m_mapGamesFilterItem;
 	CUtlMap<int, serverdisplay_t> m_mapServers;
 	CUtlMap<netadr_t, int> m_mapServerIP;
+
+	CUtlVector<newgameserver_t> m_serversInfo;
+
 	CUtlVector<MatchMakingKeyValuePair_t> m_vecServerFilters;
 	CUtlDict< CQuickListMapServerList, int > m_quicklistserverlist;
 	int m_iServerRefreshCount;
@@ -316,7 +319,6 @@ private:
 	bool m_bFilterNoEmptyServers;
 	bool m_bFilterNoPasswordedServers;
 	int m_iSecureFilter;
-	int m_iServersBlacklisted;
 	bool m_bFilterReplayServers;
 
 	CGameID m_iLimitToAppID;

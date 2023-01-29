@@ -57,15 +57,11 @@
 
 // game list
 #include "BaseGamesPage.h"
-#include "BlacklistedServers.h"
 #include "InternetGames.h"
 #include "FavoriteGames.h"
-#include "SpectateGames.h"
+//#include "SpectateGames.h"
 #include "LanGames.h"
-#include "FriendsGames.h"
 #include "HistoryGames.h"
-#include "SpectateGames.h"
-#include "CustomGames.h"
 #include "ServerBrowserDialog.h"
 #include "QuickListPanel.h"
 #include "vgui_controls/PanelListPanel.h"

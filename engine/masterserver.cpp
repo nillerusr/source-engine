@@ -80,12 +80,16 @@ private:
 	bool	m_bNoMasters;
 
 	CUtlLinkedList<netadr_t> m_serverAddresses;
+
+	IServerListResponse *m_serverListResponse;
 };
 
 static CMaster s_MasterServer;
 IMaster *master = (IMaster *)&s_MasterServer;
 
 IServersInfo *g_pServersInfo = (IServersInfo*)&s_MasterServer;
+
+EXPOSE_SINGLE_INTERFACE_GLOBALVAR( CMaster, IServersInfo, SERVERLIST_INTERFACE_VERSION, s_MasterServer );
 
 #define	HEARTBEAT_SECONDS	140.0
 
@@ -97,6 +101,9 @@ CMaster::CMaster( void )
 	m_pMasterAddresses	= NULL;
 	m_bNoMasters		= false;
 	m_bInitialized = false;
+
+	m_serverListResponse = NULL;
+
 	Init();
 }
 
@@ -165,6 +172,11 @@ void CMaster::ProcessConnectionlessPacket( netpacket_t *packet )
 			char hostname[1024];
 			msg.ReadString(hostname, sizeof(hostname));
 
+			newgameserver_t s;
+			s.m_NetAdr = packet->from;
+			s.SetName( hostname );
+
+			m_serverListResponse->ServerResponded( s );
 			break;
 		}
 	}
@@ -179,6 +191,8 @@ void CMaster::RequestServersInfo()
 	FOR_EACH_LL( m_serverAddresses, i )
 	{
 		const netadr_t adr = m_serverAddresses[i];
+
+		Msg("Request server info %s\n", adr.ToString());
 
 		msg.WriteLong( CONNECTIONLESS_HEADER );
 		msg.WriteByte( C2S_INFOREQUEST );
@@ -473,6 +487,8 @@ void CMaster::Shutdown(void)
 void CMaster::RequestInternetServerList(const char *gamedir, IServerListResponse *response)
 {
 	if( m_bNoMasters ) return;
+
+	m_serverListResponse = response;
 
 	ALIGN4 char buf[256] ALIGN4_POST;
 	bf_write msg(buf, sizeof(buf));
