@@ -13,11 +13,11 @@
 #define MAX_GAME_DESCRIPTION 8192
 #define MAX_SERVER_NAME 2048
 
-enum ServerResponse
+enum NServerResponse
 {
-	ServerResponded = 0,
-	ServerFailedToRespond,
-	NoServersListedOnMasterServer,
+	nServerResponded = 0,
+	nServerFailedToRespond,
+	nNoServersListedOnMasterServer,
 };
 
 class newgameserver_t
@@ -25,8 +25,11 @@ class newgameserver_t
 public:
 	newgameserver_t() = default;
 
-	const char* GetName() const;
-	void SetName( const char *pName );
+	const char* GetName() const { return m_szServerName; }
+	void SetName( const char *pName )
+	{
+		strncpy( m_szServerName, pName, sizeof(m_szServerName) );
+	}
 
 	netadr_t m_NetAdr;								///< IP/Query Port/Connection Port for this server
 	int m_nPing;											///< current ping time in milliseconds
@@ -50,6 +53,7 @@ class IServerListResponse
 public:
 	// Server has responded ok with updated data
 	virtual void ServerResponded( newgameserver_t &server ) = 0;
+	virtual void RefreshComplete( NServerResponse response ) = 0;
 };
 
 //-----------------------------------------------------------------------------
@@ -93,5 +97,7 @@ public:
 
 };
 #define SERVERLIST_INTERFACE_VERSION "ServerList001"
+
+extern IServersInfo *g_pServersInfo;
 
 #endif // ISERVERSINFO_H
