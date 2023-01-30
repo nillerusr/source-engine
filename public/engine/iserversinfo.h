@@ -25,25 +25,23 @@ class newgameserver_t
 public:
 	newgameserver_t() = default;
 
-	const char* GetName() const { return m_szServerName; }
-	void SetName( const char *pName )
-	{
-		strncpy( m_szServerName, pName, sizeof(m_szServerName) );
-	}
-
 	netadr_t m_NetAdr;								///< IP/Query Port/Connection Port for this server
 	int m_nPing;											///< current ping time in milliseconds
+	int m_nProtocolVersion;
 	bool m_bHadSuccessfulResponse;	///< server has responded successfully in the past
 	bool m_bDoNotRefresh;						///< server is marked as not responding and should no longer be refreshed
 	char m_szGameDir[MAX_PATH];				 ///< current game directory
 	char m_szMap[MAX_PATH];					///< current map
+	char m_szGameTags[MAX_PATH];
 	char m_szGameDescription[MAX_GAME_DESCRIPTION]; ///< game description
 
 	int m_nPlayers;
 	int m_nMaxPlayers;										///< Maximum players that can join this server
 	int m_nBotPlayers;										///< Number of bots (i.e simulated players) on this server
 	bool m_bPassword;										///< true if this server needs a password to join
-private:
+
+	int m_iFlags;
+
 	/// Game server name
 	char m_szServerName[MAX_SERVER_NAME];
 };

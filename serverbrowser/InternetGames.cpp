@@ -127,7 +127,6 @@ void CInternetGames::OnTick()
 void CInternetGames::ServerResponded( newgameserver_t &server )
 {
 	m_bDirty = true;
-	Msg("InternetGames::ServerResponded hostname = %s\n", server.GetName());
 
 	BaseClass::ServerResponded( server );
 	m_bAnyServersRespondedToQuery = true;

@@ -16,8 +16,13 @@
 #include "master.h"
 #include "proto_oob.h"
 #include "host.h"
+#include "eiface.h"
+#include "server.h"
 
+extern ConVar sv_tags;
 extern ConVar sv_lan;
+
+#define S2A_EXTRA_DATA_HAS_GAMETAG_DATA                         0x01            // Next bytes are the game tag string
 
 //-----------------------------------------------------------------------------
 // Purpose: List of master servers and some state info about them
@@ -65,6 +70,8 @@ public:
 
 	void RunFrame();
 	void RequestServersInfo();
+	void ReplyInfo( const netadr_t &adr );
+	newgameserver_t &ProcessInfo( bf_read &buf );
 
 	// SeversInfo
 	void RequestInternetServerList( const char *gamedir, IServerListResponse *response );
@@ -116,6 +123,79 @@ void CMaster::RunFrame()
 	CheckHeartbeat();
 }
 
+void CMaster::ReplyInfo( const netadr_t &adr )
+{
+	static char gamedir[MAX_OSPATH];
+	Q_FileBase( com_gamedir, gamedir, sizeof( gamedir ) );
+
+	CUtlBuffer buf;
+	buf.EnsureCapacity( 2048 );
+
+	buf.PutUnsignedInt( LittleDWord( CONNECTIONLESS_HEADER ) );
+	buf.PutUnsignedChar( S2C_INFOREPLY );
+
+	buf.PutUnsignedChar( PROTOCOL_VERSION ); // Hardcoded protocol version number
+	buf.PutString( sv.GetName() );
+	buf.PutString( sv.GetMapName() );
+	buf.PutString( gamedir );
+	buf.PutString( serverGameDLL->GetGameDescription() );
+
+	// player info
+	buf.PutUnsignedChar( sv.GetNumClients() );
+	buf.PutUnsignedChar( sv.GetMaxClients() );
+	buf.PutUnsignedChar( sv.GetNumFakeClients() );
+
+	// Password?
+	buf.PutUnsignedChar( sv.GetPassword() != NULL ? 1 : 0 );
+
+	// Write a byte with some flags that describe what is to follow.
+	const char *pchTags = sv_tags.GetString();
+	int nFlags = 0;
+
+	if ( pchTags && pchTags[0] != '\0' )
+		nFlags |= S2A_EXTRA_DATA_HAS_GAMETAG_DATA;
+
+	buf.PutUnsignedInt( nFlags );
+
+	if ( nFlags & S2A_EXTRA_DATA_HAS_GAMETAG_DATA )
+	{
+		buf.PutString( pchTags );
+	}
+
+	NET_SendPacket( NULL, NS_SERVER, adr, (unsigned char *)buf.Base(), buf.TellPut() );
+}
+
+newgameserver_t &CMaster::ProcessInfo(bf_read &buf)
+{
+	static newgameserver_t s;
+	memset( &s, 0, sizeof(s) );
+
+	s.m_nProtocolVersion = buf.ReadByte();
+
+	buf.ReadString( s.m_szServerName, sizeof(s.m_szServerName) );
+	buf.ReadString( s.m_szMap, sizeof(s.m_szMap) );
+	buf.ReadString( s.m_szGameDir, sizeof(s.m_szGameDir) );
+
+	buf.ReadString( s.m_szGameDescription, sizeof(s.m_szGameDescription) );
+
+	// player info
+	s.m_nPlayers = buf.ReadByte();
+	s.m_nMaxPlayers = buf.ReadByte();
+	s.m_nBotPlayers = buf.ReadByte();
+
+	// Password?
+	s.m_bPassword = buf.ReadByte();
+
+	s.m_iFlags = buf.ReadLong();
+
+	if( s.m_iFlags & S2A_EXTRA_DATA_HAS_GAMETAG_DATA )
+	{
+		buf.ReadString( s.m_szGameTags, sizeof(s.m_szGameTags) );
+	}
+
+	return s;
+}
+
 void CMaster::ProcessConnectionlessPacket( netpacket_t *packet )
 {
 	static ALIGN4 char string[2048] ALIGN4_POST;    // Buffer for sending heartbeat
@@ -158,25 +238,22 @@ void CMaster::ProcessConnectionlessPacket( netpacket_t *packet )
 		}
 		case C2S_INFOREQUEST:
 		{
-			bf_write p(string, sizeof(string));
-			p.WriteLong(CONNECTIONLESS_HEADER);
-			p.WriteByte(S2C_INFOREPLY);
-			p.WriteString(sv.GetName());
-
-			NET_SendPacket(NULL, NS_SERVER, packet->from, p.GetData(), p.GetNumBytesWritten());
-
+			ReplyInfo(packet->from);
 			break;
 		}
 		case S2C_INFOREPLY:
 		{
-			char hostname[1024];
-			msg.ReadString(hostname, sizeof(hostname));
+			newgameserver_t &s = ProcessInfo( msg );
+			Msg("hostname = %s\nplayers: %d/%d\nbots: %d\n", s.m_szServerName, s.m_nPlayers, s.m_nMaxPlayers, s.m_nBotPlayers);
 
-			newgameserver_t s;
 			s.m_NetAdr = packet->from;
-			s.SetName( hostname );
-
 			m_serverListResponse->ServerResponded( s );
+			break;
+		}
+		case A2A_PING:
+		{
+			const char p = A2A_ACK;
+			NET_SendPacket( NULL, NS_SERVER, packet->from, (unsigned char*)&p, 1);
 			break;
 		}
 	}

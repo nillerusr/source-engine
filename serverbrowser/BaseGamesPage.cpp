@@ -2203,8 +2203,6 @@ const char *CBaseGamesPage::GetConnectCode()
 
 void CBaseGamesPage::ServerResponded( newgameserver_t &server )
 {
-	Msg("Serverbrowser: hostname %s\n", server.GetName());
-
 	Assert( server.m_NetAdr.GetIPHostByteOrder() != 0 );
 
 	newgameserver_t *pServerItem = &server;
@@ -2232,7 +2230,7 @@ void CBaseGamesPage::ServerResponded( newgameserver_t &server )
 	// new entry
 	KeyValues *kv = new KeyValues("Server");
 
-	kv->SetString("name", pServerItem->GetName());
+	kv->SetString("name", pServerItem->m_szServerName);
 	kv->SetString("map", pServerItem->m_szMap);
 	kv->SetString("GameDir", pServerItem->m_szGameDir);
 	kv->SetString("GameDesc", pServerItem->m_szGameDescription);
@@ -2277,15 +2275,6 @@ void CBaseGamesPage::ServerResponded( newgameserver_t &server )
 			kv->SetString("LastPlayed", buf);
 		}
 	}*/
-
-//	if ( pServer->m_bDoNotRefresh )
-	{
-		// clear out the vars
-		kv->SetString("Ping", "");
-		kv->SetWString("GameDesc", g_pVGuiLocalize->Find("#ServerBrowser_NotResponding"));
-		kv->SetString("Players", "");
-		kv->SetString("map", "");
-	}
 
 	int iServerIndex = m_serversInfo.AddToTail( server );
 
