@@ -28,16 +28,7 @@
 //===============================================================================
 
 #pragma once
-
-#ifdef OSX
-#include <OpenGL/gl.h>
-#include <OpenGL/glext.h>
-#elif defined(DX_TO_GL_ABSTRACTION)
-#include <GL/gl.h>
-#include <GL/glext.h>
-#else
-#error
-#endif
+#include "SDL_opengl.h"
 
 #ifndef GL_EXT_framebuffer_sRGB
 	#define GL_FRAMEBUFFER_SRGB_EXT                 0x8DB9
