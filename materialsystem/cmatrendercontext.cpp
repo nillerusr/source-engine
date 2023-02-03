@@ -18,7 +18,9 @@
 #include "ctype.h"
 
 #include "tier1/fmtstr.h"
+#ifndef DEDICATED
 #include "togl/rendermechanism.h"
+#endif
 
 // NOTE: This must be the last file included!!!
 #include "tier0/memdbgon.h"
