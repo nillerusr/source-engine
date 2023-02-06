@@ -1881,7 +1881,13 @@ void CMaterialSystem::ReadConfigFromConVars( MaterialSystem_Config_t *pConfig )
 	pConfig->bMipMapTextures = mat_mipmaptextures.GetInt() ? true : false;
 	pConfig->nShowMipLevels = mat_showmiplevels.GetInt();
 	pConfig->bReverseDepth = mat_reversedepth.GetInt() ? true : false;
+
+#ifdef DX_TO_GL_ABSTRACTION
+	pConfig->bBufferPrimitives = false; // nillerusr: causes rendering bugs and sefaults with nvidia driver
+#else
 	pConfig->bBufferPrimitives = mat_bufferprimitives.GetInt() ? true : false;
+#endif
+
 	pConfig->bDrawFlat = mat_drawflat.GetInt() ? true : false;
 	pConfig->bSoftwareLighting = mat_softwarelighting.GetInt() ? true : false;
 	pConfig->proxiesTestMode = mat_proxy.GetInt();
