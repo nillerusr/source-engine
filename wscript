@@ -370,13 +370,13 @@ def configure(conf):
 		]
 
 		flags += ['-funwind-tables', '-fvisibility=default']
-	elif conf.env.COMPILER_CC != 'msvc' and conf.env.DEST_OS != 'darwin':
-		flags += ['-march=native']
+	elif conf.env.COMPILER_CC != 'msvc' and conf.env.DEST_OS != 'darwin' and conf.env.DEST_CPU in ['x86', 'x86_64']:
+		flags += ['-march=core2']
 
 	if conf.env.DEST_CPU in ['x86', 'x86_64']:
 		flags += ['-mfpmath=sse']
 	elif conf.env.DEST_CPU in ['arm', 'aarch64']:
-		flags += ['-fsigned-char']
+		flags += ['-fsigned-char', '-mfpu=neon-vfpv4']
 
 	if conf.env.DEST_OS == 'freebsd':
 		linkflags += ['-lexecinfo']
