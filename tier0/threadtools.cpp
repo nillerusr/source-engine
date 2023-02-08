@@ -27,13 +27,8 @@
 	#define GetLastError() errno
 	typedef void *LPVOID;
 #if !defined(OSX)
-#if defined(ANDROID)
         #include <fcntl.h>
         #include <unistd.h>
-#else
-        #include <sys/fcntl.h>
-        #include <sys/unistd.h>
-#endif
 	#define sem_unlink( arg )
 	#define OS_TO_PTHREAD(x) (x)
 #else
@@ -43,7 +38,7 @@
 	#define OS_TO_PTHREAD(x) pthread_from_mach_thread_np( x )
 #endif // !OSX
 
-#ifdef PLATFORM_BSD
+#if defined(PLATFORM_BSD) || defined(PLATFORM_HAIKU)
 # undef OS_TO_PTRHEAD
 # define OS_TO_PTHREAD(x) (pthread_t)(x)
 #endif
@@ -1632,7 +1627,7 @@ bool CThreadFullMutex::Release()
 //
 //-----------------------------------------------------------------------------
 
-#if defined( WIN32 ) || defined( _PS3 ) || defined( _OSX ) || defined (_LINUX) || defined(PLATFORM_BSD)
+#if defined( WIN32 ) || defined( _PS3 ) || defined(POSIX)
 #if !defined(_PS3)
 namespace GenericThreadLocals
 {

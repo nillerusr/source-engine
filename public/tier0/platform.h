@@ -66,6 +66,8 @@
 // need this for _alloca
 # ifdef PLATFORM_BSD
 #  define va_list __va_list
+# elif defined(PLATFORM_HAIKU)
+#  include <SupportDefs.h>
 # else
 #  include <alloca.h>
 # endif
@@ -213,12 +215,14 @@ typedef signed char int8;
 
 #else // _WIN32
 
+#if !defined(PLATFORM_HAIKU)
 	typedef short					int16;
 	typedef unsigned short			uint16;
 	typedef int						int32;
 	typedef unsigned int			uint32;
 	typedef long long				int64;
 	typedef unsigned long long		uint64;
+#endif
 
     typedef long int lint64;
     typedef unsigned long int ulint64;
@@ -561,7 +565,7 @@ typedef void * HINSTANCE;
 //-----------------------------------------------------------------------------
 #if defined( GNUC )
 	#define stackalloc( _size )		alloca( ALIGN_VALUE( _size, 16 ) )
-#if defined(_LINUX) || defined(PLATFORM_BSD)
+#if defined(_LINUX) || defined(PLATFORM_BSD) || defined(PLATFORM_HAIKU)
 	#define mallocsize( _p )	( malloc_usable_size( _p ) )
 #elif defined(OSX)
 	#define mallocsize( _p )	( malloc_size( _p ) )
@@ -1388,11 +1392,11 @@ PLATFORM_INTERFACE void* Plat_SimpleLog( const tchar* file, int line );
 //-----------------------------------------------------------------------------
 // Returns true if debugger attached, false otherwise
 //-----------------------------------------------------------------------------
-#if defined(_WIN32) || defined(LINUX) || defined(OSX) || defined(PLATFORM_BSD)
+#if defined(_WIN32) || defined(POSIX)
 PLATFORM_INTERFACE bool Plat_IsInDebugSession();
 PLATFORM_INTERFACE void Plat_DebugString( const char * );
 #else
-#warning "Plat_IsInDebugSession isn't working properly"
+#error "Plat_IsInDebugSession isn't working properly"
 inline bool Plat_IsInDebugSession( bool bForceRecheck = false ) { return false; }
 #define Plat_DebugString(s) ((void)0)
 #endif

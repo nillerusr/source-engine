@@ -42,6 +42,8 @@ def build(bld):
 	] + bld.env.INCLUDES_FC + bld.env.INCLUDES_FT2
 
 	defines = []
+	if bld.env.DEST_OS == 'haiku':
+		defines += ['HAVE_FC=0']
 
 	libs = []
 

@@ -1771,7 +1771,7 @@ void GLMContext::PreloadTex( CGLMTex *tex, bool force )
 	// bind texture and sampling params
 	CGLMTex *pPrevTex = m_samplers[15].m_pBoundTex;
 
-#ifndef OSX // 10.6
+#if !defined(OSX) && !defined(PLATFORM_HAIKU)
 	if ( m_bUseSamplerObjects )
 	{
 		gGL->glBindSampler( 15, 0 );
@@ -2410,7 +2410,7 @@ void GLMContext::Present( CGLMTex *tex )
 	m_nTotalVSUniformCalls = 0, m_nTotalVSUniformBoneCalls = 0, m_nTotalVSUniformsSet = 0, m_nTotalVSUniformsBoneSet = 0, m_nTotalPSUniformCalls = 0, m_nTotalPSUniformsSet = 0;
 #endif
 
-#ifndef OSX
+#if !defined(OSX) && !defined(PLATFORM_HAIKU)
 	GLMGPUTimestampManagerTick();
 #endif
 }
@@ -2609,7 +2609,7 @@ GLMContext::GLMContext( IDirect3DDevice9 *pDevice, GLMDisplayParams *params )
 
 	m_texLayoutTable = new CGLMTexLayoutTable;
 
-#ifndef OSX
+#if !defined(OSX) && !defined(PLATFORM_HAIKU)
 	if ( m_bUseSamplerObjects )
 	{
 		memset( m_samplerObjectHash, 0, sizeof( m_samplerObjectHash ) );
@@ -2850,7 +2850,7 @@ void GLMContext::Reset()
 
 GLMContext::~GLMContext	()
 {
-#ifndef OSX
+#if !defined(OSX) && !defined(PLATFORM_HAIKU)
 	GLMGPUTimestampManagerDeinit();
 		
 	for ( uint t = 0; t < cNumPinnedMemoryBuffers; t++ )

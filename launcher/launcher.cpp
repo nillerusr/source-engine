@@ -950,7 +950,7 @@ bool GrabSourceMutex()
 
 #ifdef ANDROID
 	return true;
-#elif defined (LINUX) || defined(PLATFORM_BSD)
+#elif defined (POSIX) && !defined(OSX)
 	/*
 	 * Linux
  	 */
@@ -1198,7 +1198,7 @@ DLL_EXPORT int LauncherMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR
 DLL_EXPORT int LauncherMain( int argc, char **argv )
 #endif
 {
-#if (defined(LINUX) || defined(PLATFORM_BSD)) && !defined ANDROID
+#if (defined(POSIX)) && !defined ANDROID
 	// Temporary fix to stop us from crashing in printf/sscanf functions that don't expect
 	//  localization to mess with your "." and "," float seperators. Mac OSX also sets LANG
 	//  to en_US.UTF-8 before starting up (in info.plist I believe).
@@ -1225,7 +1225,7 @@ DLL_EXPORT int LauncherMain( int argc, char **argv )
 	Msg("SDL version: %d.%d.%d rev: %s\n", (int)ver.major, (int)ver.minor, (int)ver.patch, SDL_GetRevision());
 #endif
 
-#if (defined LINUX || defined PLATFORM_BSD) && defined USE_SDL && defined TOGLES && !defined ANDROID
+#if defined POSIX && defined USE_SDL && defined TOGLES && !defined ANDROID
 	SDL_SetHint(SDL_HINT_VIDEO_X11_FORCE_EGL, "1");
 #endif
 
@@ -1553,7 +1553,7 @@ DLL_EXPORT int LauncherMain( int argc, char **argv )
 		RegCloseKey(hKey);
 	}
 
-#elif defined( OSX ) || defined( LINUX ) || defined(PLATFORM_BSD)
+#elif defined( POSIX )
 	struct stat st;
 	if ( stat( RELAUNCH_FILE, &st ) == 0 ) 
 	{

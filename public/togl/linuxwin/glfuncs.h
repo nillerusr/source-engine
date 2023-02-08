@@ -126,7 +126,9 @@ GL_FUNC_VOID(OpenGL,true,glDisableClientState,(GLenum a),(a))
 GL_FUNC_VOID(OpenGL,true,glClientActiveTexture,(GLenum a),(a))
 GL_FUNC_VOID(OpenGL,true,glVertexPointer,(GLint a,GLenum b,GLsizei c,const GLvoid *d),(a,b,c,d))
 GL_FUNC_VOID(OpenGL,true,glTexCoordPointer,(GLint a,GLenum b,GLsizei c,const GLvoid *d),(a,b,c,d))
+#ifndef PLATFORM_HAIKU
 GL_FUNC_VOID(OpenGL,true,glProgramEnvParameters4fvEXT,(GLenum a,GLuint b,GLsizei c,const GLfloat *d),(a,b,c,d))
+#endif
 GL_FUNC_VOID(OpenGL,true,glColor4sv,(const GLshort  *a),(a))
 GL_FUNC_VOID(OpenGL,true,glStencilOpSeparate,(GLenum a,GLenum b,GLenum c,GLenum d),(a,b,c,d))
 GL_FUNC_VOID(OpenGL,true,glStencilFuncSeparate,(GLenum a,GLenum b,GLint c,GLuint d),(a,b,c,d))
@@ -223,7 +225,7 @@ GL_EXT(GL_EXT_direct_state_access,-1,-1)
 GL_FUNC_VOID(GL_EXT_direct_state_access,false,glBindMultiTextureEXT,(GLenum a,GLuint b, GLuint c),(a,b,c))
 GL_EXT(GL_NV_bindless_texture,-1,-1)
 
-#ifndef OSX
+#if !defined(OSX) && !defined(PLATFORM_HAIKU)
 GL_FUNC_VOID(OpenGL, true, glGenSamplers, (GLuint a, GLuint *b), (a, b))
 GL_FUNC_VOID(OpenGL, true, glDeleteSamplers, (GLsizei a, const GLuint *b), (a, b))
 GL_FUNC_VOID(OpenGL, true, glBindSampler, (GLuint a, GLuint b), (a, b))

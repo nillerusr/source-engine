@@ -4243,7 +4243,7 @@ ZRESULT TUnzip::Unzip(int index,void *dst,unsigned int len,DWORD flags)
 	{
 #ifdef _WIN32
 		SetFileTime(h,&ze.ctime,&ze.atime,&ze.mtime);
-#elif defined( ANDROID )
+#elif defined( ANDROID ) || defined(PLATFORM_HAIKU)
 	struct timespec ts[2];
         ts[0].tv_sec = ze.atime;
         ts[0].tv_nsec = 0;

@@ -82,7 +82,7 @@
 #ifdef ANDROID
 #include "common/iconv.h"
 #elif POSIX
-#include <iconv.h>
+# include <iconv.h>
 #endif
 
 static int FastToLower( char c )
@@ -2953,11 +2953,11 @@ extern "C" void qsort_s( void *base, size_t num, size_t width, int (*compare )(v
 
 void V_qsort_s( void *base, size_t num, size_t width, int ( __cdecl *compare )(void *, const void *, const void *), void * context ) 
 {
-#if defined(OSX) || defined(PLATFORM_BSD)
-	// the arguments are swapped 'round on the mac - awesome, huh?
-	return qsort_r( base, num, width, context, compare );
-#else
+#if defined(_WIN32) || defined(LINUX)
+	// the arguments are swapped 'round on the win32 - awesome, huh?
 	return qsort_s( base, num, width, compare, context );
+#else
+	return qsort_r( base, num, width, context, compare );
 #endif
 }
 

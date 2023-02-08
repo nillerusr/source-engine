@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+# vim: noexpandtab
 # encoding: utf-8
 # nillerusr
 
@@ -221,11 +222,27 @@ def define_platform(conf):
 			'_DLL_EXT=.dylib'
 		])
 
-	elif conf.env.DEST_OS in ['freebsd', 'openbsd', 'netbsd', 'dragonflybsd']: # Tested only in freebsd
+	elif conf.env.DEST_OS in ['freebsd', 'openbsd', 'netbsd']: # Tested only in freebsd
+		if conf.env.DEST_OS == 'freebsd':
+			conf.env.append_unique('DEFINES', ['PLATFORM_FBSD=1'])
 		conf.env.append_unique('DEFINES', [
 			'POSIX=1', '_POSIX=1', 'PLATFORM_POSIX=1',
 			'GNUC', # but uses clang
+			'NO_HOOK_MALLOC',
 			'PLATFORM_BSD=1',
+			'_DLL_EXT=.so'
+		])
+
+	elif conf.env.DEST_OS == 'haiku':
+		conf.check_cc(lib='iconv')
+		conf.check_cc(lib='gnu')
+		conf.check_cc(lib='network')
+		conf.env.append_unique('DEFINES', [
+			'POSIX=1', '_POSIX=1', 'PLATFORM_POSIX=1',
+			'GNUC',
+			'NO_HOOK_MALLOC',
+			'_GNU_SOURCE',
+			'PLATFORM_HAIKU=1',
 			'_DLL_EXT=.so'
 		])
 
@@ -378,9 +395,6 @@ def configure(conf):
 	elif conf.env.DEST_CPU in ['arm', 'aarch64']:
 		flags += ['-fsigned-char', '-mfpu=neon-vfpv4']
 
-	if conf.env.DEST_OS == 'freebsd':
-		linkflags += ['-lexecinfo']
-
 	if conf.env.DEST_OS != 'win32':
 		cflags += flags
 		linkflags += flags
@@ -454,7 +468,6 @@ def configure(conf):
 	conf.env.append_unique('CFLAGS', cflags)
 	conf.env.append_unique('CXXFLAGS', cxxflags)
 	conf.env.append_unique('LINKFLAGS', linkflags)
-	conf.env.append_unique('INCLUDES', [os.path.abspath('common/')])
 
 	if conf.env.DEST_OS != 'android':
 		if conf.env.DEST_OS != 'win32':
@@ -490,7 +503,7 @@ def configure(conf):
 		conf.check(lib='android_support', uselib_store='ANDROID_SUPPORT')
 		conf.check(lib='opus', uselib_store='OPUS')
 
-	if conf.env.DEST_OS == "darwin":
+	if conf.env.DEST_OS == 'darwin':
 		conf.check(lib='iconv', uselib_store='ICONV')
 		conf.env.FRAMEWORK_APPKIT = "AppKit"
 		conf.env.FRAMEWORK_IOKIT = "IOKit"
@@ -557,7 +570,9 @@ def configure(conf):
 
 	# indicate if we are packaging for Linux/BSD
 	if conf.env.DEST_OS != 'android':
-		conf.env.LIBDIR = conf.env.PREFIX+'/bin/'
+		if conf.env.DEST_OS in ['haiku']:
+			conf.env.LIBDIR = conf.env.PREFIX+'/lib/'
+		else: conf.env.LIBDIR = conf.env.PREFIX+'/bin/'
 		conf.env.TESTDIR = conf.env.PREFIX+'/tests/'
 		conf.env.BINDIR = conf.env.PREFIX
 	else:
@@ -595,3 +610,4 @@ def build(bld):
 			projects['game'] += ['togl']
 
 		bld.add_subproject(projects['game'])
+

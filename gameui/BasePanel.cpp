@@ -2223,7 +2223,7 @@ void CBasePanel::RunMenuCommand(const char *command)
 
 				RegCloseKey(hKey);
 			}
-#elif defined( OSX ) || defined( LINUX ) || defined(PLATFORM_BSD)
+#elif defined( POSIX )
 			FILE *fp = fopen( "/tmp/hl2_relaunch", "w+" );
 			if ( fp )
 			{

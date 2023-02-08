@@ -9,8 +9,10 @@
 #include <sys/types.h>
 #ifdef LINUX
 #include <linux/sysctl.h>
+#elif defined(PLATFORM_HAIKU)
+# include <OS.h>
 #else
-#include <sys/sysctl.h>
+# include <sys/sysctl.h>
 # ifdef __APPLE__
 #  define CPUFREQ_SYSCTL "hw.cpufrequency_max"
 # else
@@ -62,6 +64,18 @@ uint64 GetCPUFreqFromPROC()
 	return freq_hz;
 }
 
+#elif defined(PLATFORM_HAIKU)
+
+// Haiku and BeOS
+uint64 GetCPUFreqFromPROC()
+{
+	cpu_info *info;
+	status_t status = get_cpu_info(0, 1, info);
+	if (status != 0)
+		return 0;
+	return info->current_frequency;
+}
+
 #else
 
 // Linux
@@ -101,7 +115,7 @@ uint64 GetCPUFreqFromPROC()
 
 uint64 CalculateCPUFreq()
 {
-#if defined(__APPLE__) || defined(PLATFORM_BSD)
+#if !defined(LINUX)
 	return GetCPUFreqFromPROC();
 #else
 	// Try to open cpuinfo_max_freq. If the kernel was built with cpu scaling support disabled, this will fail.

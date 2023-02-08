@@ -1071,7 +1071,7 @@ void CGLMBuffer::Unlock( int nActualSize, const void *pActualData )
 		g_nTotalVBLockBytes += nActualSize;
 #endif
 
-#ifndef OSX
+#if !defined(OSX) && !defined(PLATFORM_HAIKU)
 	if ( m_nPinnedMemoryOfs >= 0 )
 	{
 #if TOGL_SUPPORT_NULL_DEVICE

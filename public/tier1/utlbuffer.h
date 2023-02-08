@@ -109,7 +109,7 @@ typedef unsigned short ushort;
 
 template < class A >
 static const char *GetFmtStr( int nRadix = 10, bool bPrint = true ) { Assert( 0 ); return ""; }
-#if defined( LINUX ) || defined( __clang__ ) || ( defined( _MSC_VER ) && _MSC_VER >= 1900 )
+#if defined( LINUX ) || defined( __clang__ ) || ( defined( _MSC_VER ) && _MSC_VER >= 1900 ) || defined(PLATFORM_HAIKU)
 template <> const char *GetFmtStr< short >	( int nRadix, bool bPrint ) { Assert( nRadix == 10 ); return "%hd"; }
 template <> const char *GetFmtStr< ushort >	( int nRadix, bool bPrint ) { Assert( nRadix == 10 ); return "%hu"; }
 template <> const char *GetFmtStr< int >		( int nRadix, bool bPrint ) { Assert( nRadix == 10 ); return "%d"; }

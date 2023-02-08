@@ -12,7 +12,7 @@ FORCEINLINE uint32 bitmix32(uint32 a)
 	return a;
 }
 
-#ifndef OSX
+#if !defined(OSX) && !defined(PLATFORM_HAIKU)
 
 FORCEINLINE GLuint GLMContext::FindSamplerObject( const GLMTexSamplingParams &desiredParams )
 {
@@ -255,7 +255,7 @@ FORCEINLINE void GLMContext::FlushDrawStates( uint nStartIndex, uint nEndIndex, 
 	
 	GL_BATCH_PERF( m_FlushStats.m_nNumChangedSamplers += m_nNumDirtySamplers );
 
-#if !defined( OSX ) // no support for sampler objects in OSX 10.6 (GL 2.1 profile)
+#if !defined( OSX ) && !defined(PLATFORM_HAIKU) // no support for sampler objects in OSX 10.6 (GL 2.1 profile)
 	if ( m_bUseSamplerObjects)
 	{
 		while ( m_nNumDirtySamplers )
