@@ -89,6 +89,7 @@ class IServersInfo
 public:
 	virtual void RequestInternetServerList( const char *gamedir, IServerListResponse *response ) = 0;
 	virtual void RequestLANServerList( const char *gamedir, IServerListResponse *response ) = 0;
+	virtual void StopRefresh() = 0;
 
 	//virtual HServerQuery PingServer( uint32 unIP, uint16 usPort, ISteamMatchmakingPingResponse *pRequestServersResponse ) = 0; 
 	//virtual HServerQuery PlayerDetails( uint32 unIP, uint16 usPort, ISteamMatchmakingPlayersResponse *pRequestServersResponse ) = 0;

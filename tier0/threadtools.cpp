@@ -485,6 +485,59 @@ bool ReleaseThreadHandle( ThreadHandle_t hThread )
 //
 //-----------------------------------------------------------------------------
 
+void ThreadSleep(unsigned nMilliseconds)
+{
+#ifdef _WIN32
+
+#ifdef _WIN32_PC
+	static bool bInitialized = false;
+	if ( !bInitialized )
+	{
+		bInitialized = true;
+		// Set the timer resolution to 1 ms (default is 10.0, 15.6, 2.5, 1.0 or
+		// some other value depending on hardware and software) so that we can
+		// use Sleep( 1 ) to avoid wasting CPU time without missing our frame
+		// rate.
+		timeBeginPeriod( 1 );
+	}
+#endif
+
+	Sleep( nMilliseconds );
+#elif PS3
+	if( nMilliseconds == 0 )
+	{
+		// sys_ppu_thread_yield doesn't seem to function properly, so sleep instead.
+//		sys_timer_usleep( 60 );
+		sys_ppu_thread_yield();
+	}
+	else
+	{
+		sys_timer_usleep( nMilliseconds * 1000 );
+	}
+#elif defined(POSIX)
+   usleep( nMilliseconds * 1000 ); 
+#endif
+}
+
+//-----------------------------------------------------------------------------
+void ThreadNanoSleep(unsigned ns)
+{
+#ifdef _WIN32
+	// ceil
+	Sleep( ( ns + 999 ) / 1000 );
+#elif PS3
+	sys_timer_usleep( ns );
+#elif defined(POSIX)
+	struct timespec tm;
+	tm.tv_sec = 0;
+	tm.tv_nsec = ns;
+	nanosleep( &tm, NULL ); 
+#endif
+}
+
+
+//-----------------------------------------------------------------------------
+
 #ifndef ThreadGetCurrentId
 ThreadId_t ThreadGetCurrentId()
 {

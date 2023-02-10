@@ -18,11 +18,14 @@
 #include "host.h"
 #include "eiface.h"
 #include "server.h"
+#include "utlmap.h"
 
 extern ConVar sv_tags;
 extern ConVar sv_lan;
 
 #define S2A_EXTRA_DATA_HAS_GAMETAG_DATA                         0x01            // Next bytes are the game tag string
+#define RETRY_INFO_REQUEST_TIME 0.4 // seconds
+#define INFO_REQUEST_TIMEOUT 5.0 // seconds
 
 //-----------------------------------------------------------------------------
 // Purpose: List of master servers and some state info about them
@@ -62,6 +65,7 @@ public:
 	void UseDefault ( void );
 	void CheckHeartbeat (void);
 	void RespondToHeartbeatChallenge( netadr_t &from, bf_read &msg );
+	void PingServer( netadr_t &svadr );
 
 	void ProcessConnectionlessPacket( netpacket_t *packet );
 
@@ -70,23 +74,35 @@ public:
 
 	void RunFrame();
 	void RequestServersInfo();
-	void ReplyInfo( const netadr_t &adr );
+
+	void ReplyInfo( const netadr_t &adr, uint sequence );
 	newgameserver_t &ProcessInfo( bf_read &buf );
 
 	// SeversInfo
 	void RequestInternetServerList( const char *gamedir, IServerListResponse *response );
 	void RequestLANServerList( const char *gamedir, IServerListResponse *response );
 	void AddServerAddresses( netadr_t **adr, int count );
+	void StopRefresh();
+
 private:
 	// List of known master servers
 	adrlist_t *m_pMasterAddresses;
 
 	bool m_bInitialized;
+	bool m_bWaitingForReplys;
+
+	int m_iServersResponded;
+
+	double m_flStartRequestTime;
+	double m_flRetryRequestTime;
+
+	uint m_iInfoSequence;
 
 	// If nomaster is true, the server will not send heartbeats to the master server
 	bool	m_bNoMasters;
 
-	CUtlLinkedList<netadr_t> m_serverAddresses;
+	CUtlMap<netadr_t, bool> m_serverAddresses;
+	CUtlMap<uint, double> m_serversRequestTime;
 
 	IServerListResponse *m_serverListResponse;
 };
@@ -108,8 +124,13 @@ CMaster::CMaster( void )
 	m_pMasterAddresses	= NULL;
 	m_bNoMasters		= false;
 	m_bInitialized = false;
+	m_iServersResponded = 0;
 
 	m_serverListResponse = NULL;
+	SetDefLessFunc( m_serverAddresses );
+	SetDefLessFunc( m_serversRequestTime );
+	m_bWaitingForReplys = false;
+	m_iInfoSequence = 0;
 
 	Init();
 }
@@ -121,9 +142,34 @@ CMaster::~CMaster( void )
 void CMaster::RunFrame()
 {
 	CheckHeartbeat();
+
+	if( !m_bWaitingForReplys )
+		return;
+
+	if( m_serverListResponse &&
+		m_flStartRequestTime < Plat_FloatTime()-INFO_REQUEST_TIMEOUT   )
+	{
+		m_serverListResponse->RefreshComplete( NServerResponse::nServerFailedToRespond );
+		m_bWaitingForReplys = false;
+	}
+
+	if( m_flRetryRequestTime < Plat_FloatTime() - RETRY_INFO_REQUEST_TIME )
+	{
+		m_flRetryRequestTime = Plat_FloatTime();
+
+		if( m_iServersResponded < m_serverAddresses.Count() )
+			RequestServersInfo();
+	}
 }
 
-void CMaster::ReplyInfo( const netadr_t &adr )
+void CMaster::StopRefresh()
+{
+	m_bWaitingForReplys = false;
+	m_serverAddresses.RemoveAll();
+	m_serversRequestTime.RemoveAll();
+}
+
+void CMaster::ReplyInfo( const netadr_t &adr, uint sequence )
 {
 	static char gamedir[MAX_OSPATH];
 	Q_FileBase( com_gamedir, gamedir, sizeof( gamedir ) );
@@ -134,6 +180,7 @@ void CMaster::ReplyInfo( const netadr_t &adr )
 	buf.PutUnsignedInt( LittleDWord( CONNECTIONLESS_HEADER ) );
 	buf.PutUnsignedChar( S2C_INFOREPLY );
 
+	buf.PutUnsignedInt(sequence);
 	buf.PutUnsignedChar( PROTOCOL_VERSION ); // Hardcoded protocol version number
 	buf.PutString( sv.GetName() );
 	buf.PutString( sv.GetMapName() );
@@ -217,8 +264,7 @@ void CMaster::ProcessConnectionlessPacket( netpacket_t *packet )
 		}
 		case M2C_QUERY:
 		{
-			if( m_serverAddresses.Count() > 0 )
-				m_serverAddresses.RemoveAll();
+			m_serverAddresses.RemoveAll();
 
 			ip = msg.ReadLong();
 			port = msg.ReadShort();
@@ -227,33 +273,48 @@ void CMaster::ProcessConnectionlessPacket( netpacket_t *packet )
 			{
 				netadr_t adr(ip, port);
 
-				m_serverAddresses.AddToHead(adr);
+				m_serverAddresses.Insert(adr, false);
 
 				ip = msg.ReadLong();
 				port = msg.ReadShort();
 			}
 
+			m_iServersResponded = 0;
 			RequestServersInfo();
+			m_flRetryRequestTime = m_flStartRequestTime = Plat_FloatTime();
 			break;
 		}
 		case C2S_INFOREQUEST:
 		{
-			ReplyInfo(packet->from);
+			ReplyInfo(packet->from, msg.ReadLong());
 			break;
 		}
 		case S2C_INFOREPLY:
 		{
+			uint sequence = msg.ReadLong();
 			newgameserver_t &s = ProcessInfo( msg );
-			Msg("hostname = %s\nplayers: %d/%d\nbots: %d\n", s.m_szServerName, s.m_nPlayers, s.m_nMaxPlayers, s.m_nBotPlayers);
 
+			unsigned short index = m_serverAddresses.Find(packet->from);
+			unsigned short rindex = m_serversRequestTime.Find(sequence);
+
+			if( index == m_serverAddresses.InvalidIndex() ||
+				rindex == m_serversRequestTime.InvalidIndex() )
+				break;
+
+			double requestTime = m_serversRequestTime[rindex];
+
+			m_serverAddresses[index] = true;
+			s.m_nPing = (packet->received-requestTime)*1000.0;
 			s.m_NetAdr = packet->from;
 			m_serverListResponse->ServerResponded( s );
-			break;
-		}
-		case A2A_PING:
-		{
-			const char p = A2A_ACK;
-			NET_SendPacket( NULL, NS_SERVER, packet->from, (unsigned char*)&p, 1);
+
+			m_iServersResponded++;
+
+			if( m_iServersResponded >= m_serverAddresses.Count() )
+			{
+				StopRefresh();
+				m_serverListResponse->RefreshComplete( NServerResponse::nServerResponded );
+			}
 			break;
 		}
 	}
@@ -265,17 +326,24 @@ void CMaster::RequestServersInfo()
 
 	bf_write msg( string, sizeof(string) );
 
-	FOR_EACH_LL( m_serverAddresses, i )
+	FOR_EACH_MAP_FAST( m_serverAddresses, i )
 	{
-		const netadr_t adr = m_serverAddresses[i];
+		bool bResponded = m_serverAddresses.Element(i);
+		if( bResponded )
+			continue;
 
-		Msg("Request server info %s\n", adr.ToString());
+		const netadr_t adr = m_serverAddresses.Key(i);
 
 		msg.WriteLong( CONNECTIONLESS_HEADER );
 		msg.WriteByte( C2S_INFOREQUEST );
+		msg.WriteLong( m_iInfoSequence );
+		m_serversRequestTime.Insert(m_iInfoSequence, net_time);
 
+		m_iInfoSequence++;
 		NET_SendPacket( NULL, NS_CLIENT, adr, msg.GetData(), msg.GetNumBytesWritten() );
 	}
+
+	m_bWaitingForReplys = true;
 }
 
 //-----------------------------------------------------------------------------
@@ -410,7 +478,7 @@ void CMaster::AddServer( netadr_t *adr )
 
 	n = ( adrlist_t * ) malloc ( sizeof( adrlist_t ) );
 	if ( !n )
-		Sys_Error( "Error allocating %i bytes for master address.", sizeof( adrlist_t ) );
+		Sys_Error( "Error allocating %zd bytes for master address.", sizeof( adrlist_t ) );
 
 	memset( n, 0, sizeof( adrlist_t ) );
 
