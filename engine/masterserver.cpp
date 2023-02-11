@@ -25,6 +25,7 @@ extern ConVar sv_lan;
 
 #define S2A_EXTRA_DATA_HAS_GAMETAG_DATA                         0x01            // Next bytes are the game tag string
 #define RETRY_INFO_REQUEST_TIME 0.4 // seconds
+#define MASTER_RESPONSE_TIMEOUT 1.5 // seconds
 #define INFO_REQUEST_TIMEOUT 5.0 // seconds
 
 static char g_MasterServers[][64] =
@@ -102,6 +103,7 @@ private:
 
 	double m_flStartRequestTime;
 	double m_flRetryRequestTime;
+	double m_flMasterRequestTime;
 
 	uint m_iInfoSequence;
 	char m_szGameDir[256];
@@ -159,6 +161,15 @@ void CMaster::RunFrame()
 	{
 		m_serverListResponse->RefreshComplete( NServerResponse::nServerFailedToRespond );
 		StopRefresh();
+	}
+
+	if( m_iServersResponded > 0 &&
+			m_iServersResponded >= m_serverAddresses.Count() &&
+			m_flMasterRequestTime < Plat_FloatTime() - MASTER_RESPONSE_TIMEOUT )
+	{
+		StopRefresh();
+		m_serverListResponse->RefreshComplete( NServerResponse::nServerResponded );
+		return;
 	}
 
 	if( m_flRetryRequestTime < Plat_FloatTime() - RETRY_INFO_REQUEST_TIME )
@@ -250,7 +261,7 @@ newgameserver_t &CMaster::ProcessInfo(bf_read &buf)
 
 	// Password?
 	s.m_bPassword = buf.ReadByte();
-
+m_iServersResponded
 	s.m_iFlags = buf.ReadLong();
 
 	if( s.m_iFlags & S2A_EXTRA_DATA_HAS_GAMETAG_DATA )
@@ -333,12 +344,6 @@ void CMaster::ProcessConnectionlessPacket( netpacket_t *packet )
 			m_serverListResponse->ServerResponded( s );
 
 			m_iServersResponded++;
-
-			if( m_iServersResponded >= m_serverAddresses.Count() )
-			{
-				StopRefresh();
-				m_serverListResponse->RefreshComplete( NServerResponse::nServerResponded );
-			}
 			break;
 		}
 	}
@@ -676,7 +681,7 @@ void CMaster::RequestInternetServerList(const char *gamedir, IServerListResponse
 		StopRefresh();
 		m_bWaitingForReplys = true;
 		m_serverListResponse = response;
-		m_flRetryRequestTime = m_flStartRequestTime = Plat_FloatTime();
+		m_flRetryRequestTime = m_flStartRequestTime = m_flMasterRequestTime = Plat_FloatTime();
 	}
 
 	ALIGN4 char buf[256] ALIGN4_POST;
@@ -690,7 +695,6 @@ void CMaster::RequestInternetServerList(const char *gamedir, IServerListResponse
 	p = m_pMasterAddresses;
 	while ( p )
 	{
-		Msg("master server %s request\n", p->adr.ToString());
 		NET_SendPacket(NULL, NS_CLIENT, p->adr, msg.GetData(), msg.GetNumBytesWritten() );
 		p = p->next;
 	}
