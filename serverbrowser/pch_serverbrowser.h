@@ -69,7 +69,7 @@
 #include "replay/ienginereplay.h"
 
 extern bool GameSupportsReplay();
-extern bool IsReplayServer( gameserveritem_t &server );
+extern bool IsReplayServer( newgameserver_t &server );
 
 #pragma warning( disable: 4355 )  //  warning C4355: 'this' : used in base member initializer list
 

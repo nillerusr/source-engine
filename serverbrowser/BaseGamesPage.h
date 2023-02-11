@@ -66,12 +66,10 @@ public:
 	virtual void OnCursorExited();
 };
 
-struct servermaps_t
+struct serverping_t
 {
-	const char *pOriginalName;
-	const char *pFriendlyName;
-	int			iPanelIndex;
-	bool		bOnDisk;
+	int	m_nPing;
+	int	iPanelIndex;
 };
 
 struct gametypes_t
@@ -120,7 +118,7 @@ public:
 	virtual void ApplySchemeSettings(vgui::IScheme *pScheme);
 
 	// gets information about specified server
-	virtual gameserveritem_t *GetServer(unsigned int serverID);
+	virtual newgameserver_t *GetServer(unsigned int serverID);
 	virtual const char *GetConnectCode();
 
 	uint32 GetServerFilters( MatchMakingKeyValuePair_t **pFilters );
@@ -144,7 +142,7 @@ public:
 
 	virtual void UpdateDerivedLayouts( void );
 	
-	void		PrepareQuickListMap( const char *pMapName, int iListID );
+	void		PrepareQuickListMap( newgameserver_t *server, int iListID );
 	void		SelectQuickListServers( void );
 	vgui::Panel *GetActiveList( void );
 	virtual bool IsQuickListButtonChecked()
@@ -242,7 +240,7 @@ protected:
 	CUtlVector<MatchMakingKeyValuePair_t> m_vecServerFilters;
 	CUtlDict< CQuickListMapServerList, int > m_quicklistserverlist;
 	int m_iServerRefreshCount;
-	CUtlVector< servermaps_t > m_vecMapNamesFound;
+	CUtlVector<serverping_t> m_vecServersFound;
 	
 
 	EPageType m_eMatchMakingType;

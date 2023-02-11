@@ -23,7 +23,7 @@ CInternetGames::CInternetGames(vgui::Panel *parent, const char *panelName, EPage
 	m_fLastSort = 0.0f;
 	m_bDirty = false;
 	m_bRequireUpdate = true;
-	m_bOfflineMode = false; //ro!IsSteamGameServerBrowsingEnabled();
+	m_bOfflineMode = false;
 
 	m_bAnyServersRetrievedFromMaster = false;
 	m_bNoServersListedOnMaster = false;
@@ -311,7 +311,7 @@ int CInternetGames::GetRegionCodeToFilter()
 bool CInternetGames::CheckTagFilter( gameserveritem_t &server )
 {
 	// Servers without tags go in the official games, servers with tags go in custom games
-	bool bOfficialServer = !( server.m_szGameTags && server.m_szGameTags[0] );
+	bool bOfficialServer = !server.m_szGameTags[0];
 	if ( !bOfficialServer )
 		return false;
 

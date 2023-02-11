@@ -46,13 +46,13 @@ bool GameSupportsReplay()
 #endif
 
 //--------------------------------------------------------------------------------------------------------
-bool IsReplayServer( gameserveritem_t &server )
+bool IsReplayServer( newgameserver_t &server )
 {
 	bool bReplay = false;
 
 	if ( GameSupportsReplay() )
 	{
-		if ( server.m_szGameTags && server.m_szGameTags[0] )
+		if ( server.m_szGameTags[0] )
 		{
 			CUtlVector<char*> TagList;
 			V_SplitString( server.m_szGameTags, ",", TagList );
@@ -156,11 +156,11 @@ CBaseGamesPage::CBaseGamesPage( vgui::Panel *parent, const char *name, EPageType
 	m_pConnect = new Button(this, "ConnectButton", "#ServerBrowser_Connect");
 	m_pConnect->SetEnabled(false);
 	m_pRefreshAll = new Button(this, "RefreshButton", "#ServerBrowser_Refresh");
-	m_pRefreshQuick = new Button(this, "RefreshQuickButton", "#ServerBrowser_RefreshQuick");
 	m_pAddServer = new Button(this, "AddServerButton", "#ServerBrowser_AddServer");
 	m_pAddCurrentServer = new Button(this, "AddCurrentServerButton", "#ServerBrowser_AddCurrentServer");
 	m_pGameList = new CGameListPanel(this, "gamelist");
 	m_pGameList->SetAllowUserModificationOfColumns(true);
+	m_pRefreshQuick = new Button(this, "RefreshQuickButton", "#ServerBrowser_RefreshQuick");
 
 	m_pQuickList = new PanelListPanel(this, "quicklist");
 	m_pQuickList->SetFirstColumnWidth( 0 );
@@ -191,14 +191,14 @@ CBaseGamesPage::CBaseGamesPage( vgui::Panel *parent, const char *name, EPageType
 		300,	// maxwidth
 		0		// flags
 		);
-	m_pGameList->AddColumnHeader( k_nColumn_Players, "Players", "#ServerBrowser_Players", 55, ListPanel::COLUMN_FIXEDSIZE);
-	m_pGameList->AddColumnHeader( k_nColumn_Bots, "Bots", "#ServerBrowser_Bots", 40, ListPanel::COLUMN_FIXEDSIZE);
+	m_pGameList->AddColumnHeader( k_nColumn_Players, "Players", "#ServerBrowser_Players", 80, ListPanel::COLUMN_FIXEDSIZE);
+	m_pGameList->AddColumnHeader( k_nColumn_Bots, "Bots", "#ServerBrowser_Bots", 60, ListPanel::COLUMN_FIXEDSIZE);
 	m_pGameList->AddColumnHeader( k_nColumn_Map, "Map", "#ServerBrowser_Map", 90, 
 		90,		// minwidth
 		300,	// maxwidth
 		0		// flags
 		);
-	m_pGameList->AddColumnHeader( k_nColumn_Ping, "Ping", "#ServerBrowser_Latency", 55, ListPanel::COLUMN_FIXEDSIZE);
+	m_pGameList->AddColumnHeader( k_nColumn_Ping, "Ping", "#ServerBrowser_Latency", 55, ListPanel::COLUMN_RESIZEWITHWINDOW);
 
 	m_pGameList->SetColumnHeaderTooltip( k_nColumn_Password, "#ServerBrowser_PasswordColumn_Tooltip");
 	m_pGameList->SetColumnHeaderTooltip( k_nColumn_Bots, "#ServerBrowser_BotColumn_Tooltip");
@@ -280,12 +280,10 @@ void CBaseGamesPage::PerformLayout()
 
 	if (SupportsItem(IGameList::GETNEWLIST))
 	{
-		m_pRefreshQuick->SetVisible(true);
 		m_pRefreshAll->SetText("#ServerBrowser_RefreshAll");
 	}
 	else
 	{
-		m_pRefreshQuick->SetVisible(false);
 		m_pRefreshAll->SetText("#ServerBrowser_Refresh");
 	}
 
@@ -313,25 +311,8 @@ void CBaseGamesPage::PerformLayout()
 		m_pRefreshAll->SetText( "#ServerBrowser_StopRefreshingList" );
 	}
 
-	if (m_pGameList->GetItemCount() > 0)
-	{
-		m_pRefreshQuick->SetEnabled(true);
-	}
-	else
-	{
-		m_pRefreshQuick->SetEnabled(false);
-	}
-
-/*	if ( !steamapicontext->SteamMatchmakingServers() || !steamapicontext->SteamMatchmaking() )
-	{
-		m_pAddCurrentServer->SetVisible( false );
-		m_pRefreshQuick->SetEnabled( false );
-		m_pAddServer->SetEnabled( false );
-		m_pConnect->SetEnabled( false );
-		m_pRefreshAll->SetEnabled( false );
-		m_pAddToFavoritesButton->SetEnabled( false );
-		m_pGameList->SetEmptyListText( "#ServerBrowser_SteamRunning" );
-	}*/
+	m_pRefreshQuick->SetVisible( false );
+	m_pFilter->SetVisible(false);
 
 	Repaint();
 }
@@ -378,20 +359,6 @@ struct serverqualitysort_t
 
 int ServerQualitySort( const serverqualitysort_t *pSQ1, const serverqualitysort_t *pSQ2 )
 {
-	int iMaxP = sb_mod_suggested_maxplayers.GetInt();
-	if ( iMaxP && pSQ1->iMaxPlayerCount != pSQ2->iMaxPlayerCount )
-	{
-		if ( pSQ1->iMaxPlayerCount > iMaxP )
-			return 1;
-		if ( pSQ2->iMaxPlayerCount > iMaxP )
-			return -1;
-	}
-
-	if ( pSQ1->iPing <= 100 && pSQ2->iPing <= 100 && pSQ1->iPlayerCount != pSQ2->iPlayerCount  )
-	{
-		return pSQ2->iPlayerCount - pSQ1->iPlayerCount;
-	}
-
 	return pSQ1->iPing - pSQ2->iPing;
 }
 
@@ -400,156 +367,72 @@ int ServerQualitySort( const serverqualitysort_t *pSQ1, const serverqualitysort_
 //-----------------------------------------------------------------------------
 void CBaseGamesPage::SelectQuickListServers( void )
 {
-	int iIndex = m_pQuickList->FirstItem();
-	
-	while ( iIndex != m_pQuickList->InvalidItemID() )
-	{
-		CQuickListPanel *pQuickListPanel = dynamic_cast< CQuickListPanel *> ( m_pQuickList->GetItemPanel( iIndex ) );
-		
-		if ( pQuickListPanel )
-		{
-			CUtlVector< serverqualitysort_t > vecServerQuality;
-
-			int iElement = m_quicklistserverlist.Find( pQuickListPanel->GetName() );
-
-			if ( iElement != m_quicklistserverlist.InvalidIndex() )
-			{
-				CQuickListMapServerList *vecMapServers = &m_quicklistserverlist[iElement];
-
-				if ( vecMapServers )
-				{
-					for ( int i =0; i < vecMapServers->Count(); i++ )
-					{
-						int iListID = vecMapServers->Element( i );
-
-						serverqualitysort_t serverquality;
-
-						serverquality.iIndex = iListID;
-
-						KeyValues *kv = NULL;
-						if ( m_pGameList->IsValidItemID( iListID ) )
-						{
-							kv = m_pGameList->GetItem( iListID );
-						}
-
-						if ( kv )
-						{
-							serverquality.iPing = kv->GetInt( "ping", 0 );
-							serverquality.iPlayerCount = kv->GetInt( "PlayerCount", 0 );
-							serverquality.iMaxPlayerCount = kv->GetInt( "MaxPlayerCount", 0 );
-						}
-
-						vecServerQuality.AddToTail( serverquality );
-					}
-
-					vecServerQuality.Sort( ServerQualitySort );
-
-					serverqualitysort_t bestserver = vecServerQuality.Head();
-
-					if ( m_pGameList->IsValidItemID( bestserver.iIndex ) )
-					{
-						pQuickListPanel->SetServerInfo( m_pGameList->GetItem( bestserver.iIndex ), bestserver.iIndex, vecServerQuality.Count() );
-					}
-				}
-			}
-		}
-
-		iIndex = m_pQuickList->NextItem( iIndex );
-	}
-
-	//Force the connect button to recalculate its state.
-	OnItemSelected();
 }
 
-int ServerMapnameSortFunc( const servermaps_t *p1,  const servermaps_t *p2 )
+int ServerPingSortFunc( const serverping_t *p1,  const serverping_t *p2 )
 {
-	//If they're both on disc OR both missing then sort them alphabetically
-	if ( (p1->bOnDisk && p2->bOnDisk) || (!p1->bOnDisk && !p2->bOnDisk ) )
-		return Q_strcmp( p1->pFriendlyName, p2->pFriendlyName );
-
-	//Otherwise maps you have show up first
-	return p2->bOnDisk - p1->bOnDisk;
+	return p1->m_nPing - p2->m_nPing;
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: prepares all the QuickListPanel map panels...
 //-----------------------------------------------------------------------------
-void CBaseGamesPage::PrepareQuickListMap( const char *pMapName, int iListID )
+void CBaseGamesPage::PrepareQuickListMap( newgameserver_t *server, int iListID )
 {
 	char szMapName[ 512 ];
-	Q_snprintf( szMapName, sizeof( szMapName ), "%s",  pMapName );
+	Q_snprintf( szMapName, sizeof( szMapName ), "%s", server->m_szMap );
 
 	Q_strlower( szMapName );
 
 	char path[ 512 ];
 	Q_snprintf( path, sizeof( path ), "maps/%s.bsp", szMapName );
-	
-	int iIndex = m_quicklistserverlist.Find( szMapName );
 
-	if ( m_quicklistserverlist.IsValidIndex( iIndex ) == false )
+	char szFriendlyName[MAX_MAP_NAME];
+	const char *pszFriendlyGameTypeName = ServerBrowser().GetMapFriendlyNameAndGameType( szMapName, szFriendlyName, sizeof(szFriendlyName) );
+
+	//Add the map to our list of panels.
+	if ( m_pQuickList )
 	{
-		CQuickListMapServerList vecMapServers;
-		iIndex = m_quicklistserverlist.Insert( szMapName, vecMapServers );
+		serverping_t serverping;
+		const char *pFriendlyName = CloneString( szFriendlyName );
+		const char *pOriginalName = CloneString( szMapName );
 
-		char szFriendlyName[MAX_MAP_NAME];
-		const char *pszFriendlyGameTypeName = ServerBrowser().GetMapFriendlyNameAndGameType( szMapName, szFriendlyName, sizeof(szFriendlyName) );
+		char path[ 512 ];
+		Q_snprintf( path, sizeof( path ), "maps/%s.bsp", szMapName );
 
-		//Add the map to our list of panels.
-		if ( m_pQuickList )
+		CQuickListPanel *pQuickListPanel = new CQuickListPanel( m_pQuickList, "QuickListPanel");
+
+		if ( pQuickListPanel )
 		{
-			servermaps_t servermap;
+			pQuickListPanel->InvalidateLayout();
+			pQuickListPanel->SetName( pOriginalName );
+			pQuickListPanel->SetMapName( pFriendlyName );
+			pQuickListPanel->SetImage( pOriginalName );
+			pQuickListPanel->SetGameType( pszFriendlyGameTypeName );
+			pQuickListPanel->SetVisible( true );
+			pQuickListPanel->SetRefreshing();
+			pQuickListPanel->SetServerInfo( m_pGameList->GetItem( iListID ), iListID, 1 );
 
-			servermap.pFriendlyName = CloneString( szFriendlyName );
-			servermap.pOriginalName = CloneString( szMapName );
+			serverping.iPanelIndex = m_pQuickList->AddItem( NULL, pQuickListPanel );
 
-			char path[ 512 ];
-			Q_snprintf( path, sizeof( path ), "maps/%s.bsp", szMapName );
+			serverping.m_nPing = server->m_nPing;
 
-			servermap.bOnDisk = g_pFullFileSystem->FileExists( path, "MOD" );
-
-			CQuickListPanel *pQuickListPanel = new CQuickListPanel( m_pQuickList, "QuickListPanel");
-
-			if ( pQuickListPanel ) 
-			{
-				pQuickListPanel->InvalidateLayout();
-				pQuickListPanel->SetName( servermap.pOriginalName );
-				pQuickListPanel->SetMapName( servermap.pFriendlyName );
-				pQuickListPanel->SetImage( servermap.pOriginalName );
-				pQuickListPanel->SetGameType( pszFriendlyGameTypeName );
-				pQuickListPanel->SetVisible( true );
-				pQuickListPanel->SetRefreshing();
-
-				servermap.iPanelIndex = m_pQuickList->AddItem( NULL,  pQuickListPanel );
-			}
-
-			m_vecMapNamesFound.AddToTail( servermap );
-			m_vecMapNamesFound.Sort( ServerMapnameSortFunc );
+			m_vecServersFound.AddToTail( serverping );
+			m_vecServersFound.Sort( ServerPingSortFunc );
 		}
 
-		//Now make sure that list is sorted.
-		CUtlVector<int> *pPanelSort = m_pQuickList->GetSortedVector();
-
-		if ( pPanelSort )
-		{
-			pPanelSort->RemoveAll();
-
-			for ( int i = 0; i < m_vecMapNamesFound.Count(); i++ )
-			{
-				pPanelSort->AddToTail( m_vecMapNamesFound[i].iPanelIndex );
-			}
-		}
 	}
 
-	if ( iIndex != m_quicklistserverlist.InvalidIndex() )
-	{
-		CQuickListMapServerList *vecMapServers = &m_quicklistserverlist[iIndex];
+	//Now make sure that list is sorted.
+	CUtlVector<int> *pPanelSort = m_pQuickList->GetSortedVector();
 
-		if ( vecMapServers )
+	if ( pPanelSort )
+	{
+		pPanelSort->RemoveAll();
+
+		for ( int i = 0; i < m_vecServersFound.Count(); i++ )
 		{
-			if ( vecMapServers->Find( iListID ) == vecMapServers->InvalidIndex() )
-			{
-				 vecMapServers->AddToTail( iListID );
-			}
+			pPanelSort->AddToTail( m_vecServersFound[i].iPanelIndex );
 		}
 	}
 }
@@ -557,21 +440,10 @@ void CBaseGamesPage::PrepareQuickListMap( const char *pMapName, int iListID )
 //-----------------------------------------------------------------------------
 // Purpose: gets information about specified server
 //-----------------------------------------------------------------------------
-gameserveritem_t *CBaseGamesPage::GetServer( unsigned int serverID )
+newgameserver_t *CBaseGamesPage::GetServer( unsigned int serverID )
 {
-	if ( !steamapicontext->SteamMatchmakingServers() )
-		return NULL;
-
-	// No point checking for >= 0 when serverID is unsigned.
-	//if ( serverID >= 0 )
-	{
-		return steamapicontext->SteamMatchmakingServers()->GetServerDetails( m_hRequest, serverID );
-	}
-	//else
-	//{
-	//	Assert( !"Unable to return a useful entry" );
-	//	return NULL; // bugbug Alfred: temp Favorites/History objects won't return a good value here...
-	//}
+	if( serverID >= m_serversInfo.Count() ) return NULL;
+	return &m_serversInfo[serverID];
 }
 
 //-----------------------------------------------------------------------------
@@ -680,8 +552,8 @@ void CBaseGamesPage::CreateFilters()
 		int iItemID = m_pGameFilter->AddItem(ModList().GetModName(i), pkv);
 		m_mapGamesFilterItem.Insert( ModList().GetAppID(i).ToUint64(), iItemID );
 	}
-	pkv->deleteThis();
 
+	pkv->deleteThis();
 }
 
 
@@ -710,7 +582,7 @@ void CBaseGamesPage::LoadFilterSettings()
 	m_bFilterNoEmptyServers = filter->GetInt("NoEmpty");
 	m_bFilterNoPasswordedServers = filter->GetInt("NoPassword");
 	m_bFilterReplayServers = filter->GetInt("Replay");
-	m_pQuickListCheckButton->SetSelected( filter->GetInt( "QuickList", 0 ) );
+	m_pQuickListCheckButton->SetSelected( filter->GetInt( "QuickList", IsAndroid() ) );
 
 	int secureFilter = filter->GetInt("Secure");
 	m_pSecureFilter->ActivateItem(secureFilter);
@@ -1005,7 +877,13 @@ void CBaseGamesPage::UpdateFilterAndQuickListVisibility()
 	
 	int wide, tall;
 	GetSize( wide, tall );
-	SetSize( 624, 278 );
+
+	int w = 640; int h = 384;
+
+	w = IsProportional() ? vgui::scheme()->GetProportionalScaledValue(w) : w;
+	h = IsProportional() ? vgui::scheme()->GetProportionalScaledValue(h) : h;
+
+	SetSize( w, h );
 
 	UpdateDerivedLayouts();		
 	UpdateGameFilter();
@@ -1018,12 +896,10 @@ void CBaseGamesPage::UpdateFilterAndQuickListVisibility()
 
 	SetSize( wide, tall );
 
-	
 	m_pQuickList->SetVisible( showQuickList );
 	m_pGameList->SetVisible( !showQuickList );
 	m_pFilter->SetVisible( !showQuickList );
-	m_pFilterString->SetVisible ( !showQuickList );		
-
+	m_pFilterString->SetVisible ( !showQuickList );
 
 	InvalidateLayout();
 
@@ -1638,7 +1514,6 @@ void CBaseGamesPage::SetRefreshing(bool state)
 		m_pGameList->SetEmptyListText("");
 		m_pRefreshAll->SetText("#ServerBrowser_StopRefreshingList");
 		m_pRefreshAll->SetCommand("stoprefresh");
-		m_pRefreshQuick->SetEnabled(false);
 	}
 	else
 	{
@@ -1654,14 +1529,6 @@ void CBaseGamesPage::SetRefreshing(bool state)
 		m_pRefreshAll->SetCommand("GetNewList");
 
 		// 'refresh quick' button is only enabled if there are servers in the list
-		if (m_pGameList->GetItemCount() > 0)
-		{
-			m_pRefreshQuick->SetEnabled(true);
-		}
-		else
-		{
-			m_pRefreshQuick->SetEnabled(false);
-		}
 	}
 }
 
@@ -1762,7 +1629,7 @@ int CBaseGamesPage::GetSelectedItemsCount()
 //-----------------------------------------------------------------------------
 void CBaseGamesPage::OnAddToFavorites()
 {
-	if ( !steamapicontext->SteamMatchmakingServers() )
+/*	if ( !steamapicontext->SteamMatchmakingServers() )
 		return;
 
 	// loop through all the selected favorites
@@ -1776,7 +1643,7 @@ void CBaseGamesPage::OnAddToFavorites()
 			// add to favorites list
 			ServerBrowserDialog().AddServerToFavorites(*pServer);
 		}
-	}
+	}*/
 }
 
 //-----------------------------------------------------------------------------
@@ -1838,6 +1705,8 @@ void CBaseGamesPage::StartRefresh()
 	MatchMakingKeyValuePair_t *pFilters;
 	int nFilters = GetServerFilters( &pFilters );
 
+	m_serversInfo.SetCount(0);
+
 /*	if ( m_hRequest )
 	{
 		steamapicontext->SteamMatchmakingServers()->ReleaseRequest( m_hRequest );
@@ -1852,7 +1721,6 @@ void CBaseGamesPage::StartRefresh()
 		m_hRequest = steamapicontext->SteamMatchmakingServers()->RequestHistoryServerList( GetFilterAppID().AppID(), &pFilters, nFilters, this );
 		break;*/
 	case eInternetServer:
-		Msg("RequestInternetServerList\n");
 		g_pServersInfo->RequestInternetServerList(COM_GetModDirectory(), this);
 		//m_hRequest = steamapicontext->SteamMatchmakingServers()->RequestInternetServerList( GetFilterAppID().AppID(), &pFilters, nFilters, this );
 		break;
@@ -1878,20 +1746,7 @@ void CBaseGamesPage::StartRefresh()
 void CBaseGamesPage::ClearQuickList( void )
 {
 	m_pQuickList->DeleteAllItems();
-	m_vecMapNamesFound.RemoveAll();
-
-	int iIndex = m_quicklistserverlist.First();
-
-	while ( iIndex != m_quicklistserverlist.InvalidIndex() )
-	{
-		CQuickListMapServerList *vecMapServers = &m_quicklistserverlist[iIndex];
-
-		vecMapServers->RemoveAll();
-
-		iIndex = m_quicklistserverlist.Next( iIndex );
-	}
-
-	m_quicklistserverlist.RemoveAll();
+	m_vecServersFound.RemoveAll();
 }
 
 //-----------------------------------------------------------------------------
@@ -1925,8 +1780,7 @@ void CBaseGamesPage::StopRefresh()
 	m_iServerRefreshCount = 0;
 
 	// Stop the server list refreshing
-	if ( steamapicontext->SteamMatchmakingServers() )
-		steamapicontext->SteamMatchmakingServers()->CancelQuery( m_hRequest );
+	g_pServersInfo->StopRefresh();
 
 	// update UI
 	RefreshComplete( nServerResponded );
@@ -1940,7 +1794,8 @@ void CBaseGamesPage::StopRefresh()
 //-----------------------------------------------------------------------------
 void CBaseGamesPage::RefreshComplete( NServerResponse response )
 {
-	SelectQuickListServers();
+	//Force the connect button to recalculate its state.
+	OnItemSelected();
 }
 
 //-----------------------------------------------------------------------------
@@ -2235,12 +2090,7 @@ void CBaseGamesPage::ServerResponded( newgameserver_t &server )
 	kv->SetString("GameDir", pServerItem->m_szGameDir);
 	kv->SetString("GameDesc", pServerItem->m_szGameDescription);
 	kv->SetInt("password", pServerItem->m_bPassword ? m_nImageIndexPassword : 0);
-
-	if ( pServerItem->m_nBotPlayers > 0 )
-		kv->SetInt("bots", pServerItem->m_nBotPlayers);
-	else
-		kv->SetString("bots", "");
-
+	kv->SetInt("bots", pServerItem->m_nBotPlayers);
 
 	kv->SetInt("secure", 0);
 
@@ -2257,51 +2107,21 @@ void CBaseGamesPage::ServerResponded( newgameserver_t &server )
 
 	kv->SetInt("Ping", pServerItem->m_nPing);
 
-	kv->SetString("Tags", "");
+	kv->SetString("Tags", pServerItem->m_szGameTags);
 
 	kv->SetInt("Replay", 0);
 
-/*	if ( pServerItem->m_ulTimeLastPlayed )
-	{
-		// construct a time string for last played time
-		struct tm *now;
-		now = localtime( (time_t*)&pServerItem->m_ulTimeLastPlayed );
-
-		if ( now )
-		{
-			char buf[64];
-			strftime(buf, sizeof(buf), "%a %d %b %I:%M%p", now);
-			Q_strlower(buf + strlen(buf) - 4);
-			kv->SetString("LastPlayed", buf);
-		}
-	}*/
-
 	int iServerIndex = m_serversInfo.AddToTail( server );
 
-	//if ( !m_pGameList->IsValidItemID( pServer->m_iListID ) )
+	// new server, add to list
+	int iListID = m_pGameList->AddItem(kv, iServerIndex, false, false);
 
-		// new server, add to list
-		int iListID = m_pGameList->AddItem(kv, iServerIndex, false, false);
-		/*if ( m_bAutoSelectFirstItemInGameList && m_pGameList->GetItemCount() == 1 )
-		{
-			m_pGameList->AddSelectedItem( pServer->m_iListID );
-		}*/
+	m_pGameList->SetItemVisible( iListID, true );
+	kv->deleteThis();
 
-		m_pGameList->SetItemVisible( iListID, true );
-
-		kv->deleteThis();
-
-/*	else
-	{
-		// tell the list that we've changed the data
-		m_pGameList->ApplyItemChanges( pServer->m_iListID );
-		m_pGameList->SetItemVisible( pServer->m_iListID, !removeItem );
-	}*/
-
-	PrepareQuickListMap( pServerItem->m_szMap, iListID );
+	PrepareQuickListMap( &server, iListID );
 	UpdateStatus();
 	m_iServerRefreshCount++;
-
 }
 
 //-----------------------------------------------------------------------------

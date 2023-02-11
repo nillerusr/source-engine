@@ -31,7 +31,7 @@ public:
 	void		Open( void );
 
 	// gets server info
-	gameserveritem_t *GetServer(unsigned int serverID);
+	newgameserver_t *GetServer(unsigned int serverID);
 	// called every frame
 	virtual void OnTick();
 
@@ -49,7 +49,7 @@ public:
 	static CServerBrowserDialog *GetInstance();
 
 	// Adds a server to the list of favorites
-	void AddServerToFavorites(gameserveritem_t &server);
+	void AddServerToFavorites(newgameserver_t &server);
 
 	// begins the process of joining a server from a game list
 	// the game info dialog it opens will also update the game list
@@ -118,11 +118,12 @@ private:
 
 	// property sheet
 	vgui::PropertySheet *m_pTabPanel;
-	CFavoriteGames *m_pFavorites;
-	CHistoryGames *m_pHistory;
+
 	CInternetGames *m_pInternetGames;
 	//CSpectateGames *m_pSpectateGames;
 	CLanGames *m_pLanGames;
+	CFavoriteGames *m_pFavorites;
+	CHistoryGames *m_pHistory;
 
 	KeyValues *m_pSavedData;
 	KeyValues *m_pFilterData;
