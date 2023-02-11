@@ -45,7 +45,7 @@ static ConVar droppackets	( "net_droppackets", "0", FCVAR_CHEAT, "Drops next n p
 static ConVar fakejitter	( "net_fakejitter", "0", FCVAR_CHEAT, "Jitter fakelag packet time" );
 
 static ConVar net_compressvoice( "net_compressvoice", "0", 0, "Attempt to compress out of band voice payloads (360 only)." );
-ConVar net_usesocketsforloopback( "net_usesocketsforloopback", "1", 0, "Use network sockets layer even for listen server local player's packets (multiplayer only)." );
+ConVar net_usesocketsforloopback( "net_usesocketsforloopback", "0", 0, "Use network sockets layer even for listen server local player's packets (multiplayer only)." );
 
 #ifdef _DEBUG
 static ConVar fakenoise		( "net_fakenoise", "0", FCVAR_CHEAT, "Simulate corrupt network packets (changes n bits per packet randomly)" ); 
