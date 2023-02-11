@@ -261,7 +261,6 @@ newgameserver_t &CMaster::ProcessInfo(bf_read &buf)
 
 	// Password?
 	s.m_bPassword = buf.ReadByte();
-m_iServersResponded
 	s.m_iFlags = buf.ReadLong();
 
 	if( s.m_iFlags & S2A_EXTRA_DATA_HAS_GAMETAG_DATA )
