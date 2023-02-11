@@ -24,7 +24,7 @@ extern ConVar sv_tags;
 extern ConVar sv_lan;
 
 #define S2A_EXTRA_DATA_HAS_GAMETAG_DATA                         0x01            // Next bytes are the game tag string
-#define RETRY_INFO_REQUEST_TIME 0.4 // seconds
+#define RETRY_INFO_REQUEST_TIME 0.3 // seconds
 #define INFO_REQUEST_TIMEOUT 5.0 // seconds
 
 //-----------------------------------------------------------------------------
@@ -97,6 +97,7 @@ private:
 	double m_flRetryRequestTime;
 
 	uint m_iInfoSequence;
+	char m_szGameDir[256];
 
 	// If nomaster is true, the server will not send heartbeats to the master server
 	bool	m_bNoMasters;
@@ -130,7 +131,7 @@ CMaster::CMaster( void )
 	SetDefLessFunc( m_serverAddresses );
 	SetDefLessFunc( m_serversRequestTime );
 	m_bWaitingForReplys = false;
-	m_iInfoSequence = 0;
+	m_iInfoSequence = 1;
 
 	Init();
 }
@@ -150,12 +151,18 @@ void CMaster::RunFrame()
 		m_flStartRequestTime < Plat_FloatTime()-INFO_REQUEST_TIMEOUT   )
 	{
 		m_serverListResponse->RefreshComplete( NServerResponse::nServerFailedToRespond );
-		m_bWaitingForReplys = false;
+		StopRefresh();
 	}
 
 	if( m_flRetryRequestTime < Plat_FloatTime() - RETRY_INFO_REQUEST_TIME )
 	{
 		m_flRetryRequestTime = Plat_FloatTime();
+
+		if( m_serverAddresses.Count() == 0 ) // Retry masterserver request
+		{
+			g_pServersInfo->RequestInternetServerList(m_szGameDir, NULL);
+			return;
+		}
 
 		if( m_iServersResponded < m_serverAddresses.Count() )
 			RequestServersInfo();
@@ -164,6 +171,9 @@ void CMaster::RunFrame()
 
 void CMaster::StopRefresh()
 {
+	if( !m_bWaitingForReplys )
+		return;
+
 	m_bWaitingForReplys = false;
 	m_serverAddresses.RemoveAll();
 	m_serversRequestTime.RemoveAll();
@@ -264,7 +274,8 @@ void CMaster::ProcessConnectionlessPacket( netpacket_t *packet )
 		}
 		case M2C_QUERY:
 		{
-			m_serverAddresses.RemoveAll();
+			if( m_serverAddresses.Count() > 0 )
+				break;
 
 			ip = msg.ReadLong();
 			port = msg.ReadShort();
@@ -281,7 +292,6 @@ void CMaster::ProcessConnectionlessPacket( netpacket_t *packet )
 
 			m_iServersResponded = 0;
 			RequestServersInfo();
-			m_flRetryRequestTime = m_flStartRequestTime = Plat_FloatTime();
 			break;
 		}
 		case C2S_INFOREQUEST:
@@ -303,8 +313,11 @@ void CMaster::ProcessConnectionlessPacket( netpacket_t *packet )
 
 			double requestTime = m_serversRequestTime[rindex];
 
+			if( m_serverAddresses[index] ) // shit happens
+				return;
+
 			m_serverAddresses[index] = true;
-			s.m_nPing = (packet->received-requestTime)*1000.0;
+			s.m_nPing = (Plat_FloatTime()-requestTime)*1000.0;
 			s.m_NetAdr = packet->from;
 			m_serverListResponse->ServerResponded( s );
 
@@ -337,13 +350,11 @@ void CMaster::RequestServersInfo()
 		msg.WriteLong( CONNECTIONLESS_HEADER );
 		msg.WriteByte( C2S_INFOREQUEST );
 		msg.WriteLong( m_iInfoSequence );
-		m_serversRequestTime.Insert(m_iInfoSequence, net_time);
+		m_serversRequestTime.Insert(m_iInfoSequence, Plat_FloatTime());
 
 		m_iInfoSequence++;
 		NET_SendPacket( NULL, NS_CLIENT, adr, msg.GetData(), msg.GetNumBytesWritten() );
 	}
-
-	m_bWaitingForReplys = true;
 }
 
 //-----------------------------------------------------------------------------
@@ -633,7 +644,15 @@ void CMaster::RequestInternetServerList(const char *gamedir, IServerListResponse
 {
 	if( m_bNoMasters ) return;
 
-	m_serverListResponse = response;
+	strncpy( m_szGameDir, gamedir, sizeof(m_szGameDir) );
+
+	if( response )
+	{
+		StopRefresh();
+		m_bWaitingForReplys = true;
+		m_serverListResponse = response;
+		m_flRetryRequestTime = m_flStartRequestTime = Plat_FloatTime();
+	}
 
 	ALIGN4 char buf[256] ALIGN4_POST;
 	bf_write msg(buf, sizeof(buf));
