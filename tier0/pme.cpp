@@ -43,7 +43,9 @@ void InitPME( void )
 		DevMsg( 1, _T("PME Uninitialized.\n") );
 	}
 
+#ifdef VPROF_ENABLED
 	g_VProfCurrentProfile.PMEInitialized( bInit );
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -57,7 +59,9 @@ void ShutdownPME( void )
 	   pPME->SetProcessPriority( ProcessPriorityNormal );
 	}
 
+#ifdef VPROF_ENABLED
 	g_VProfCurrentProfile.PMEInitialized( false );
+#endif
 }
 
 //=============================================================================
