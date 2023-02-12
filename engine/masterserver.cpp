@@ -161,6 +161,7 @@ void CMaster::RunFrame()
 	{
 		m_serverListResponse->RefreshComplete( NServerResponse::nServerFailedToRespond );
 		StopRefresh();
+		return;
 	}
 
 	if( m_iServersResponded > 0 &&

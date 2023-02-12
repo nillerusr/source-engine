@@ -41,8 +41,8 @@ static ConVar	sv_timeout( "sv_timeout", "65", 0, "After this many seconds withou
 static ConVar	sv_maxrate( "sv_maxrate", "0", FCVAR_REPLICATED, "Max bandwidth rate allowed on server, 0 == unlimited" );
 static ConVar	sv_minrate( "sv_minrate", "3500", FCVAR_REPLICATED, "Min bandwidth rate allowed on server, 0 == unlimited" );
        
-       ConVar	sv_maxupdaterate( "sv_maxupdaterate", "66", FCVAR_REPLICATED, "Maximum updates per second that the server will allow" );
-	   ConVar	sv_minupdaterate( "sv_minupdaterate", "10", FCVAR_REPLICATED, "Minimum updates per second that the server will allow" );
+       ConVar	sv_maxupdaterate( "sv_maxupdaterate", "100", FCVAR_REPLICATED, "Maximum updates per second that the server will allow" );
+	   ConVar	sv_minupdaterate( "sv_minupdaterate", "20", FCVAR_REPLICATED, "Minimum updates per second that the server will allow" );
 
 	   ConVar	sv_stressbots("sv_stressbots", "0", FCVAR_DEVELOPMENTONLY, "If set to 1, the server calculates data and fills packets to bots. Used for perf testing.");
 static ConVar	sv_allowdownload ("sv_allowdownload", "1", 0, "Allow clients to download files");
