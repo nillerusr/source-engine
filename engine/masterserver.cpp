@@ -76,7 +76,7 @@ public:
 
 	void ProcessConnectionlessPacket( netpacket_t *packet );
 
-	void SetMaster_f( const CCommand &args );
+	void AddMaster_f( const CCommand &args );
 	void Heartbeat_f( void );
 
 	void RunFrame();
@@ -89,15 +89,15 @@ public:
 	void RequestInternetServerList( const char *gamedir, IServerListResponse *response );
 	void RequestLANServerList( const char *gamedir, IServerListResponse *response );
 	void AddServerAddresses( netadr_t **adr, int count );
-	void StopRefresh();
 	void RequestServerInfo( const netadr_t &adr );
+	void StopRefresh();
 
 private:
 	// List of known master servers
 	adrlist_t *m_pMasterAddresses;
 
 	bool m_bInitialized;
-	bool m_bWaitingForReplys;
+	bool m_bRefreshing;
 
 	int m_iServersResponded;
 
@@ -139,7 +139,7 @@ CMaster::CMaster( void )
 	m_serverListResponse = NULL;
 	SetDefLessFunc( m_serverAddresses );
 	SetDefLessFunc( m_serversRequestTime );
-	m_bWaitingForReplys = false;
+	m_bRefreshing = false;
 	m_iInfoSequence = 1;
 
 	Init();
@@ -153,14 +153,14 @@ void CMaster::RunFrame()
 {
 	CheckHeartbeat();
 
-	if( !m_bWaitingForReplys )
+	if( !m_bRefreshing )
 		return;
 
 	if( m_serverListResponse &&
-		m_flStartRequestTime < Plat_FloatTime()-INFO_REQUEST_TIMEOUT   )
+		m_flStartRequestTime < Plat_FloatTime()-INFO_REQUEST_TIMEOUT )
 	{
-		m_serverListResponse->RefreshComplete( NServerResponse::nServerFailedToRespond );
 		StopRefresh();
+		m_serverListResponse->RefreshComplete( NServerResponse::nServerFailedToRespond );
 		return;
 	}
 
@@ -190,11 +190,11 @@ void CMaster::RunFrame()
 
 void CMaster::StopRefresh()
 {
-	if( !m_bWaitingForReplys )
+	if( !m_bRefreshing )
 		return;
 
 	m_iServersResponded = 0;
-	m_bWaitingForReplys = false;
+	m_bRefreshing = false;
 	m_serverAddresses.RemoveAll();
 	m_serversRequestTime.RemoveAll();
 }
@@ -235,9 +235,7 @@ void CMaster::ReplyInfo( const netadr_t &adr, uint sequence )
 	buf.PutUnsignedInt( nFlags );
 
 	if ( nFlags & S2A_EXTRA_DATA_HAS_GAMETAG_DATA )
-	{
 		buf.PutString( pchTags );
-	}
 
 	NET_SendPacket( NULL, NS_SERVER, adr, (unsigned char *)buf.Base(), buf.TellPut() );
 }
@@ -293,6 +291,9 @@ void CMaster::ProcessConnectionlessPacket( netpacket_t *packet )
 		}
 		case M2C_QUERY:
 		{
+			if( !m_bRefreshing )
+				break;
+
 			ip = msg.ReadLong();
 			port = msg.ReadShort();
 
@@ -323,6 +324,9 @@ void CMaster::ProcessConnectionlessPacket( netpacket_t *packet )
 		}
 		case S2C_INFOREPLY:
 		{
+			if( !m_bRefreshing )
+				break;
+
 			uint sequence = msg.ReadLong();
 			newgameserver_t &s = ProcessInfo( msg );
 
@@ -584,7 +588,7 @@ void CMaster::RespondToHeartbeatChallenge( netadr_t &from, bf_read &msg )
 //-----------------------------------------------------------------------------
 // Purpose: Add/remove master servers
 //-----------------------------------------------------------------------------
-void CMaster::SetMaster_f ( const CCommand &args )
+void CMaster::AddMaster_f ( const CCommand &args )
 {
 	CUtlString cmd( ( args.ArgC() > 1 ) ? args[ 1 ] : "" );
 
@@ -620,9 +624,9 @@ void CMaster::Heartbeat_f (void)
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void SetMaster_f( const CCommand &args )
+void AddMaster_f( const CCommand &args )
 {
-	master->SetMaster_f( args );
+	master->AddMaster_f( args );
 }
 
 //-----------------------------------------------------------------------------
@@ -633,7 +637,7 @@ void Heartbeat1_f( void )
 	master->Heartbeat_f();
 }
 
-static ConCommand setmaster("setmaster", SetMaster_f );
+static ConCommand setmaster("addmaster", AddMaster_f );
 static ConCommand heartbeat("heartbeat", Heartbeat1_f, "Force heartbeat of master servers" ); 
 
 //-----------------------------------------------------------------------------
@@ -679,7 +683,7 @@ void CMaster::RequestInternetServerList(const char *gamedir, IServerListResponse
 	if( response )
 	{
 		StopRefresh();
-		m_bWaitingForReplys = true;
+		m_bRefreshing = true;
 		m_serverListResponse = response;
 		m_flRetryRequestTime = m_flStartRequestTime = m_flMasterRequestTime = Plat_FloatTime();
 	}

@@ -46,7 +46,7 @@ public:
 	// Master sent back a challenge value, read it and send the actual heartbeat
 	virtual void RespondToHeartbeatChallenge( netadr_t &from, bf_read &msg ) = 0;
 	// Console command to set/remove master server
-	virtual void SetMaster_f( const CCommand &args ) = 0;
+	virtual void AddMaster_f( const CCommand &args ) = 0;
 	// Force a heartbeat to be issued right away
 	virtual void Heartbeat_f( void ) = 0;
 
