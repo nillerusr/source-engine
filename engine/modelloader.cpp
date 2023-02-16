@@ -387,7 +387,8 @@ IModelLoader *modelloader = ( IModelLoader * )&g_ModelLoader;
 //-----------------------------------------------------------------------------
 // Globals used by the CMapLoadHelper
 //-----------------------------------------------------------------------------
-static dheader_t		s_MapHeader;
+dheader_t		s_MapHeader;
+
 static FileHandle_t		s_MapFileHandle = FILESYSTEM_INVALID_HANDLE;
 static char				s_szLoadName[128];
 static char				s_szMapName[128];

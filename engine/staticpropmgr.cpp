@@ -60,6 +60,7 @@ ConVar r_staticpropinfo( "r_staticpropinfo", "0" );
 ConVar  r_drawmodeldecals( "r_drawmodeldecals", "1" );
 extern ConVar mat_fullbright;
 static bool g_MakingDevShots = false;
+extern dheader_t s_MapHeader;
 //-----------------------------------------------------------------------------
 // Index into the fade list
 //-----------------------------------------------------------------------------
@@ -1382,7 +1383,10 @@ void CStaticPropMgr::UnserializeModels( CUtlBuffer& buf )
 			break;
 
 		case 10:
-			buf.Get( &lump, sizeof( StaticPropLumpV10_t ) );
+			if( s_MapHeader.version >= 21 )
+				buf.Get( &lump, sizeof( StaticPropLumpV10_21_t ) );
+			else
+				buf.Get( &lump, sizeof( StaticPropLumpV10_t ) );
 			break;
 
 		case 11:
