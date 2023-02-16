@@ -868,7 +868,65 @@ void CFuncTank::Spawn( void )
 void CFuncTank::Activate( void )
 {
 	BaseClass::Activate();
+	
+	CBaseEntity *pParent = gEntList.FindEntityByName( NULL, m_iParent );
 
+	if ((pParent != NULL) && (pParent->edict() != NULL))
+	{
+		SetParent( pParent );
+	}
+
+	if ( GetParent() && GetParent()->GetBaseAnimating() )
+	{
+		CBaseAnimating *pAnim = GetParent()->GetBaseAnimating();
+		if ( m_iszBaseAttachment != NULL_STRING )
+		{
+			int nAttachment = pAnim->LookupAttachment( STRING( m_iszBaseAttachment ) );
+			if ( nAttachment != 0 )
+			{
+				SetParent( pAnim, nAttachment );
+				SetLocalOrigin( vec3_origin );
+				SetLocalAngles( vec3_angle );
+			}
+		}
+
+		m_bUsePoseParameters = (m_iszYawPoseParam != NULL_STRING) && (m_iszPitchPoseParam != NULL_STRING);
+
+		if ( m_iszBarrelAttachment != NULL_STRING )
+		{
+			if ( m_bUsePoseParameters )
+			{
+				pAnim->SetPoseParameter( STRING( m_iszYawPoseParam ), 0 );
+				pAnim->SetPoseParameter( STRING( m_iszPitchPoseParam ), 0 );
+				pAnim->InvalidateBoneCache();
+			}
+
+			m_nBarrelAttachment = pAnim->LookupAttachment( STRING(m_iszBarrelAttachment) );
+
+			Vector vecWorldBarrelPos;
+			QAngle worldBarrelAngle;
+			pAnim->GetAttachment( m_nBarrelAttachment, vecWorldBarrelPos, worldBarrelAngle );
+			VectorITransform( vecWorldBarrelPos, EntityToWorldTransform( ), m_barrelPos );
+		}
+
+		if ( m_bUsePoseParameters )
+		{
+			// In this case, we're relying on the parent to have the gun model
+			AddEffects( EF_NODRAW );
+			QAngle localAngles( m_flPitchPoseCenter, m_flYawPoseCenter, 0 );
+			SetLocalAngles( localAngles );
+			SetSolid( SOLID_NONE );
+			SetMoveType( MOVETYPE_NOCLIP );
+
+			// If our parent is a prop_dynamic, make it use hitboxes for renderbox
+			CDynamicProp *pProp = dynamic_cast<CDynamicProp*>(GetParent());
+			if ( pProp )
+			{
+				pProp->m_bUseHitboxesForRenderBox = true;
+			}
+		}
+	}
+	
 	// Necessary for save/load
 	if ( (m_iszBarrelAttachment != NULL_STRING) && (m_nBarrelAttachment == 0) )
 	{
