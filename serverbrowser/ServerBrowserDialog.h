@@ -31,7 +31,7 @@ public:
 	void		Open( void );
 
 	// gets server info
-	gameserveritem_t *GetServer(unsigned int serverID);
+	newgameserver_t *GetServer(unsigned int serverID);
 	// called every frame
 	virtual void OnTick();
 
@@ -49,27 +49,23 @@ public:
 	static CServerBrowserDialog *GetInstance();
 
 	// Adds a server to the list of favorites
-	void AddServerToFavorites(gameserveritem_t &server);
-	// Adds a server to our list of blacklisted servers
-	void AddServerToBlacklist(gameserveritem_t &server);
-	bool IsServerBlacklisted(gameserveritem_t &server); 
+	void AddServerToFavorites(newgameserver_t &server);
 
 	// begins the process of joining a server from a game list
 	// the game info dialog it opens will also update the game list
-	CDialogGameInfo *JoinGame(IGameList *gameList, unsigned int serverIndex);
+	CDialogGameInfo *JoinGame(IGameList *gameList, newgameserver_t *pServer);
 
 	// joins a game by a specified IP, not attached to any game list
 	CDialogGameInfo *JoinGame(int serverIP, int serverPort, const char *pszConnectCode);
 
 	// opens a game info dialog from a game list
-	CDialogGameInfo *OpenGameInfoDialog(IGameList *gameList, unsigned int serverIndex);
+	CDialogGameInfo *OpenGameInfoDialog(IGameList *gameList, newgameserver_t *pServer);
 
 	// opens a game info dialog by a specified IP, not attached to any game list
 	CDialogGameInfo *OpenGameInfoDialog( int serverIP, uint16 connPort, uint16 queryPort, const char *pszConnectCode );
 
 	// closes all the game info dialogs
 	void CloseAllGameInfoDialogs();
-	CDialogGameInfo *GetDialogGameInfoForFriend( uint64 ulSteamIDFriend );
 
 	// accessor to the filter save data
 	KeyValues *GetFilterSaveData(const char *filterSet);
@@ -90,9 +86,6 @@ public:
 	{
 		return &m_CurrentConnection;
 	}
-
-	void		BlacklistsChanged();
-	CBlacklistedServers *GetBlacklistPage( void ) { return m_pBlacklist; }
 
 private:
 
@@ -125,13 +118,12 @@ private:
 
 	// property sheet
 	vgui::PropertySheet *m_pTabPanel;
-	CFavoriteGames *m_pFavorites;
-	CBlacklistedServers *m_pBlacklist;
-	CHistoryGames *m_pHistory;
+
 	CInternetGames *m_pInternetGames;
-	CSpectateGames *m_pSpectateGames;
+	//CSpectateGames *m_pSpectateGames;
 	CLanGames *m_pLanGames;
-	CFriendsGames *m_pFriendsGames;
+	CFavoriteGames *m_pFavorites;
+	CHistoryGames *m_pHistory;
 
 	KeyValues *m_pSavedData;
 	KeyValues *m_pFilterData;

@@ -1005,7 +1005,7 @@ void Heartbeat_f()
 	}
 }
 
-static ConCommand heartbeat( "heartbeat", Heartbeat_f, "Force heartbeat of master servers", 0 );
+//static ConCommand heartbeat( "heartbeat", Heartbeat_f, "Force heartbeat of master servers", 0 );
 
 
 //-----------------------------------------------------------------------------

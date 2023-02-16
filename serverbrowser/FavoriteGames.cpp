@@ -73,7 +73,7 @@ bool CFavoriteGames::SupportsItem(InterfaceItem_e item)
 //-----------------------------------------------------------------------------
 // Purpose: called when the current refresh list is complete
 //-----------------------------------------------------------------------------
-void CFavoriteGames::RefreshComplete( HServerListRequest hReq, EMatchMakingServerResponse response )
+void CFavoriteGames::RefreshComplete( NServerResponse response )
 {
 	SetRefreshing(false);
 	if ( steamapicontext->SteamMatchmaking() && steamapicontext->SteamMatchmaking()->GetFavoriteGameCount() == 0 )
@@ -88,7 +88,7 @@ void CFavoriteGames::RefreshComplete( HServerListRequest hReq, EMatchMakingServe
 	}
 	m_pGameList->SortList();
 
-	BaseClass::RefreshComplete( hReq, response );
+	BaseClass::RefreshComplete( response );
 }
 
 //-----------------------------------------------------------------------------

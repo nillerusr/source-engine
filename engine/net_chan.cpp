@@ -64,9 +64,6 @@ extern int  NET_ReceiveStream( int nSock, char * buf, int len, int flags );
 // We only need to checksum packets on the PC and only when we're actually sending them over the network.
 static bool ShouldChecksumPackets()
 {
-	if ( !IsPC() )
-		return false;
-
 	return NET_IsMultiplayer();
 }
 

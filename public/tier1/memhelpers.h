@@ -11,15 +11,21 @@ namespace memutils
 	template<typename T>
 	inline void copy( T *dest, const T *src, size_t n )
 	{
-		for(; n; n--)
-			*(dest++) = *(src++);
+		do
+		{
+			--n;
+			*(dest+n) = *(src+n);
+	        } while( n );
 	}
 
 	template<typename T>
-	inline void set( T *dest, const T& value, size_t n )
+	inline void set( T *dest, T value, size_t n )
 	{
-		for(; n; n--)
-			*(dest++) = value;
+		do
+		{
+			--n;
+			*(dest+n) = value;
+		} while( n );
 	}
 }
 

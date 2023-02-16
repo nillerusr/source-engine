@@ -16,6 +16,8 @@
 // This is used, unless overridden in the registry
 #define VALVE_MASTER_ADDRESS "207.173.177.10:27011"
 
+#define HB_TIMEOUT 15
+
 #define PORT_RCON			27015	// defualt RCON port, TCP
 #define	PORT_MASTER			27011	// Default master port, UDP
 #define PORT_CLIENT			27005	// Default client port, UDP/TCP
@@ -28,6 +30,8 @@
 #define PORT_RPT_LISTEN		27036	// RPT connection listener (remote perf testing) port, TCP
 #endif // ENABLE_RPT
 #define PORT_REPLAY			27040	// Default replay port
+
+#define PORT_SERVERSINFO	27069	// Default matchmaking port
 
 // out of band message id bytes
 
@@ -80,16 +84,17 @@
 
 
 // A user is requesting the list of master servers, auth servers, and titan dir servers from the Client Master server
-#define A2M_GETMASTERSERVERS	'v' // + byte (type of request, TYPE_CLIENT_MASTER or TYPE_SERVER_MASTER)
 
 // Master server list response
-#define M2A_MASTERSERVERS		'w'	// + byte type + 6 byte IP/Port List
+#define S2M_GETCHALLENGE		'w' // + dword challenge
+#define S2M_HEARTBEAT			'y'
+#define S2M_SHUTDOWN			'z' // Master peering message
+#define M2S_CHALLENGE			'x' // + dword challenge
+#define M2C_QUERY				'J'	// request module from master
+#define C2M_CLIENTQUERY			'1' // New style server query
 
-#define A2M_GETACTIVEMODS		'x' // + string Request to master to provide mod statistics ( current usage ).  "1" for first mod.
-
-#define M2A_ACTIVEMODS			'y' // response:  modname\r\nusers\r\nservers
-
-#define M2M_MSG					'z' // Master peering message
+#define C2S_INFOREQUEST			'v'
+#define S2C_INFOREPLY			'K'
 
 // SERVER TO CLIENT/ANY
 
@@ -105,9 +110,6 @@
 // Request for detailed server/rule information.
 #define S2A_INFO_SRC			'I' // + Address, hostname, map, gamedir, gamedescription, active players, maxplayers, protocol
 #define S2A_INFO_GOLDSRC		'm' // Reserved for use by goldsrc servers
-
-#define S2M_GETFILE				'J'	// request module from master
-#define M2S_SENDFILE			'K'	// send module to server
 
 #define S2C_REDIRECT			'L'	// + IP x.x.x.x:port, redirect client to other server/proxy 
 
@@ -132,8 +134,6 @@
 #define S2A_PING2REPLY			'Z' // new-style minimalist ping reply
 
 #define A2S_KEY_STRING		"Source Engine Query" // required postfix to a A2S_INFO query
-
-#define A2M_GET_SERVERS_BATCH2	'1' // New style server query
 
 #define A2M_GETACTIVEMODS2		'2' // New style mod info query
 

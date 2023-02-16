@@ -56,6 +56,7 @@
 #include "sv_ipratelimit.h"
 #include "cl_steamauth.h"
 #include "sv_filter.h"
+#include "master.h"
 
 #if defined( _X360 )
 #include "xbox/xbox_win32stubs.h"
@@ -663,6 +664,8 @@ bool CBaseServer::ValidInfoChallenge( netadr_t & adr, const char *nugget )
 
 bool CBaseServer::ProcessConnectionlessPacket(netpacket_t * packet)
 {
+	master->ProcessConnectionlessPacket( packet );
+
 	bf_read msg = packet->message;	// handy shortcut 
 
 	char c = msg.ReadChar();

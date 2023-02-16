@@ -1465,7 +1465,7 @@ void Panel::SetParent(VPANEL newParent)
 		if( ipanel()->IsProportional(GetVParent()) )
 			SetProportional(true);
 
-		if( IsPopup() )
+		if( !IsPopup() )
 		{
 			// most of the time KBInput == parents kbinput
 			if (ipanel()->IsKeyBoardInputEnabled(GetVParent()) != IsKeyBoardInputEnabled())

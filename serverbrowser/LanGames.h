@@ -49,7 +49,7 @@ public:
 	virtual void ServerFailedToRespond( HServerListRequest hReq, int iServer );
 
 	// called when the current refresh list is complete
-	virtual void RefreshComplete( HServerListRequest hReq, EMatchMakingServerResponse response );
+	virtual void RefreshComplete( NServerResponse response );
 
 	// Tell the game list what to put in there when there are no games found.
 	virtual void SetEmptyListText();
