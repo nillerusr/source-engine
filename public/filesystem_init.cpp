@@ -591,6 +591,7 @@ FSReturnCode_t FileSystem_LoadSearchPaths( CFSSearchPathsInit &initInfo )
 
 		FOR_EACH_VEC( vecPaths, idxExtraPath )
 		{
+			FileSystem_AddLoadedSearchPath( initInfo, "PLATFORM", vecPaths[idxExtraPath], false );
 			FileSystem_AddLoadedSearchPath( initInfo, "GAME", vecPaths[idxExtraPath], false );
 		}
 	}
