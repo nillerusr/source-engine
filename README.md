@@ -28,13 +28,13 @@ This project is using waf buildsystem. If you have waf-related questions look ht
 - Removed useless/unnecessary dependencies
 - Achivement system working without steam
 - Fixed many bugs
+- Serverbrowser works without steam
 
 # Current tasks
 - Rewrite materialsystem for OpenGL render
 - dxvk-native support
 - Elbrus port
 - Bink audio support( for video_bink )
-- Rewrite serverbrowser to work without steam
 
 # How to Build?
 - [Building instructions(EN)](https://github.com/nillerusr/source-engine/wiki/Source-Engine-(EN))
