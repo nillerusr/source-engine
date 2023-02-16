@@ -12,7 +12,7 @@
 #endif
 
 // The current network protocol version.  Changing this makes clients and servers incompatible
-#define PROTOCOL_VERSION    24
+#define PROTOCOL_VERSION    25
 
 #define DEMO_BACKWARDCOMPATABILITY
 

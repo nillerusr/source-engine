@@ -1404,12 +1404,12 @@ bool CBaseServer::CheckProtocol( netadr_t &adr, int nProtocol, int clientChallen
 		// Client is newer than server
 		if ( nProtocol > PROTOCOL_VERSION )
 		{
-			RejectConnection( adr, clientChallenge, "#GameUI_ServerRejectOldProtocol" );
+			RejectConnection( adr, clientChallenge, "#GameUI_ServerRejectOldVersion" );
 		}
 		else
 		// Server is newer than client
 		{
-			RejectConnection( adr, clientChallenge, "#GameUI_ServerRejectNewProtocol" );
+			RejectConnection( adr, clientChallenge, "#GameUI_ServerRejectNewVersion" );
 		}
 		return false;
 	}
