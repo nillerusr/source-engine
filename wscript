@@ -369,7 +369,7 @@ def configure(conf):
 			'-lz'
 		]
 
-		flags += ['-funwind-tables', '-fvisibility=default']
+		flags += ['-funwind-tables', '-g']
 	elif conf.env.COMPILER_CC != 'msvc' and conf.env.DEST_OS != 'darwin' and conf.env.DEST_CPU in ['x86', 'x86_64']:
 		flags += ['-march=core2']
 
