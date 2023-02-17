@@ -87,7 +87,7 @@ using namespace vgui;
 #include "tier1/utlstring.h"
 #include "steam/steam_api.h"
 
-#ifdef USE_SDL
+#ifdef ANDROID
 #include <SDL_misc.h>
 #endif
 
@@ -241,7 +241,7 @@ public:
 		if( GameUI().IsInLevel() ) return;
 
 		m_bSelected = false;
-#ifdef USE_SDL
+#ifdef ANDROID
 		if( m_szUrl ) SDL_OpenURL( m_szUrl );
 #endif
 
