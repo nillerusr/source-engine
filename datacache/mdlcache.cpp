@@ -81,7 +81,7 @@ namespace {
 #if defined( _X360 )
 #define AsyncMdlCache() 0	// Explicitly OFF for 360 (incompatible)
 #else
-#define AsyncMdlCache() 1
+#define AsyncMdlCache() 0
 #endif
 
 #define ERROR_MODEL		"models/error.mdl"
