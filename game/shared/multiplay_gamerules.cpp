@@ -1291,13 +1291,6 @@ ConVarRef suitcharger( "sk_suitcharger" );
 			{
 				bIgnore = true;
 			}
-			else if ( !engine->IsMapValid( mapList[i] ) )
-			{
-				bIgnore = true;
-
-				// If the engine doesn't consider it a valid map remove it from the lists
-				Warning( "Invalid map '%s' included in map cycle file. Ignored.\n", mapList[i] );
-			}
 
 			if ( bIgnore )
 			{
