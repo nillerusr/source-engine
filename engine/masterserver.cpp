@@ -34,6 +34,12 @@ static char g_MasterServers[][64] =
 	"168.138.92.21:27016"
 };
 
+#ifdef DEDICATED
+#define IsLan() false
+#else
+#define IsLan() sv_lan.GetInt()
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: List of master servers and some state info about them
 //-----------------------------------------------------------------------------
@@ -421,7 +427,7 @@ void CMaster::CheckHeartbeat (void)
 	ALIGN4 char buf[256] ALIGN4_POST;
 
 	if ( m_bNoMasters ||      // We are ignoring heartbeats
-		sv_lan.GetInt() ||           // Lan servers don't heartbeat
+		IsLan() ||           // Lan servers don't heartbeat
 		(sv.GetMaxClients() <= 1) ||  // not a multiplayer server.
 		!sv.IsActive() )			  // only heartbeat if a server is running.
 		return;
@@ -473,7 +479,7 @@ void CMaster::ShutdownConnection( void )
 		return;
 
 	if ( m_bNoMasters ||      // We are ignoring heartbeats
-		sv_lan.GetInt() ||           // Lan servers don't heartbeat
+		IsLan() ||           // Lan servers don't heartbeat
 		(sv.GetMaxClients() <= 1) )   // not a multiplayer server.
 		return;
 
