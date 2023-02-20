@@ -5449,8 +5449,8 @@ bool CModelLoader::Map_IsValid( char const *pMapFile, bool bQuiet /* = false */ 
 		V_strcpy_safe( szMapFile, szMapName360 );
 	}
 
-	bool bHaveBspFormatInPath = strcasestr(szMapFile, ".bsp");
-	bool bHaveMapsInPath = strcasestr(szMapFile, "maps/");
+	bool bHaveBspFormatInPath = strstr(szMapFile, ".bsp");
+	bool bHaveMapsInPath = strstr(szMapFile, "maps/");
 
 	if( !bHaveMapsInPath )
 		snprintf(szMapFile, sizeof(szMapFile), "maps/%s", pMapFile);
