@@ -5449,6 +5449,15 @@ bool CModelLoader::Map_IsValid( char const *pMapFile, bool bQuiet /* = false */ 
 		V_strcpy_safe( szMapFile, szMapName360 );
 	}
 
+	bool bHaveBspFormatInPath = strcasestr(szMapFile, ".bsp");
+	bool bHaveMapsInPath = strcasestr(szMapFile, "maps/");
+
+	if( !bHaveMapsInPath )
+		snprintf(szMapFile, sizeof(szMapFile), "maps/%s", pMapFile);
+
+	if( !bHaveBspFormatInPath )
+		strncat(szMapFile, ".bsp", sizeof(szMapFile));
+
 	mapfile = g_pFileSystem->OpenEx( szMapFile, "rb", IsX360() ? FSOPEN_NEVERINPACK : 0, "GAME" );
 	if ( mapfile != FILESYSTEM_INVALID_HANDLE )
 	{
