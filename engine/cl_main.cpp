@@ -2367,7 +2367,8 @@ bool CL_ShouldLoadBackgroundLevel( const CCommand &args )
 	// don't load the map in developer or console mode
 	if ( developer.GetInt() || 
 		CommandLine()->CheckParm("-console") || 
-		CommandLine()->CheckParm("-dev") )
+		CommandLine()->CheckParm("-dev") ||
+		CommandLine()->CheckParm("-nobackgroundlevel") )
 		return false;
 
 	// don't load the map if we're going straight into a level
