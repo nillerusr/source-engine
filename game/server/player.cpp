@@ -2615,9 +2615,9 @@ void CBasePlayer::JumptoPosition(const Vector &origin, const QAngle &angles)
     neworigin.y = clamp( origin.y, MIN_COORD_FLOAT, MAX_COORD_FLOAT );
     neworigin.z = clamp( origin.z, MIN_COORD_FLOAT, MAX_COORD_FLOAT );
 
-    newangles.x = clamp( newangles.x, MIN_COORD_FLOAT, MAX_COORD_FLOAT );
-    newangles.y = clamp( newangles.y, MIN_COORD_FLOAT, MAX_COORD_FLOAT );
-    newangles.z = clamp( newangles.z, MIN_COORD_FLOAT, MAX_COORD_FLOAT ); // not clamped in original valve's code, idk why
+    newangles.x = clamp( angles.x, MIN_COORD_FLOAT, MAX_COORD_FLOAT );
+    newangles.y = clamp( angles.y, MIN_COORD_FLOAT, MAX_COORD_FLOAT );
+    newangles.z = clamp( angles.z, MIN_COORD_FLOAT, MAX_COORD_FLOAT ); // not clamped in original valve's code, idk why
 
     SetAbsOrigin( neworigin );
     SetAbsVelocity( vec3_origin );    // stop movement
