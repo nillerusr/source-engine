@@ -36,7 +36,6 @@ ILauncherMgr *g_pLauncherMgr = NULL;
 #include "Input.h"
 #include <vgui/IHTML.h>
 #include <vgui/IVGui.h>
-#include "vgui_surfacelib/FontManager.h"
 #include "FontTextureCache.h"
 #include "MatSystemSurface.h"
 #include "inputsystem/iinputsystem.h"
@@ -56,9 +55,9 @@ ILauncherMgr *g_pLauncherMgr = NULL;
 #include "../vgui2/src/VPanel.h"
 #include <vgui/IInputInternal.h>
 #if defined( _X360 )
-#include "xbox/xbox_win32stubs.h"
+#include "common/xbox/xbox_win32stubs.h"
 #endif
-#include "xbox/xboxstubs.h"
+#include "common/xbox/xboxstubs.h"
 #include "../vgui2/src/Memorybitmap.h"
 
 #pragma warning( disable : 4706 )

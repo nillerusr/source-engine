@@ -6,7 +6,7 @@
 //=============================================================================//
 
 
-#include "vgui_surfacelib/linuxfont.h"
+#include "common/vgui_surfacelib/linuxfont.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -24,7 +24,7 @@
 #include <freetype/ftbitmap.h>
 #include "materialsystem/imaterialsystem.h"
 
-#include "vgui_surfacelib/FontManager.h"
+#include "common/vgui_surfacelib/FontManager.h"
 #include "FontEffects.h"
 
 // memdbgon must be the last include file in a .cpp file!!!

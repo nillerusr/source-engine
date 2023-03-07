@@ -12,7 +12,7 @@
 #endif
 
 #include <vgui/VGUI.h>
-#include "vgui_surfacelib/FontAmalgam.h"
+#include "common/vgui_surfacelib/FontAmalgam.h"
 #include "materialsystem/imaterialsystem.h"
 #include "filesystem.h"
 #include "vguifont.h"

@@ -15,8 +15,8 @@
 #else
 #include <malloc.h>
 #endif
-#include "vgui_surfacelib/BitmapFont.h"
-#include "vgui_surfacelib/FontManager.h"
+#include "common/vgui_surfacelib/BitmapFont.h"
+#include "common/vgui_surfacelib/FontManager.h"
 #include <tier0/dbg.h>
 #include <vgui/ISurface.h>
 #include <tier0/mem.h>

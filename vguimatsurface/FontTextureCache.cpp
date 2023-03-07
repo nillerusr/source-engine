@@ -18,7 +18,7 @@
 #endif
 #include "FontTextureCache.h"
 #include "MatSystemSurface.h"
-#include <vgui_surfacelib/BitmapFont.h>
+#include "common/vgui_surfacelib/BitmapFont.h"
 #include <vgui/IVGui.h>
 #include <vgui_controls/Controls.h>
 #include "bitmap/imageformat.h"

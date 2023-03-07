@@ -38,7 +38,7 @@ def build(bld):
 		'../../public',
 		'../../public/tier0',
 		'../../public/tier1',
-		'../../common',
+		'../..',
 	] + bld.env.INCLUDES_FC + bld.env.INCLUDES_FT2
 
 	defines = []
