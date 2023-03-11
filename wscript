@@ -376,7 +376,10 @@ def configure(conf):
 	if conf.env.DEST_CPU in ['x86', 'x86_64']:
 		flags += ['-mfpmath=sse']
 	elif conf.env.DEST_CPU in ['arm', 'aarch64']:
-		flags += ['-fsigned-char', '-mfpu=neon-vfpv4']
+		flags += ['-fsigned-char']
+
+	if conf.env.DEST_CPU == 'arm':
+		flags += ['-mfpu=neon-vfpv4']
 
 	if conf.env.DEST_OS == 'freebsd':
 		linkflags += ['-lexecinfo']
