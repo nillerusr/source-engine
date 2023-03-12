@@ -206,9 +206,7 @@ private:
 	void		ReadCompleteDemoFile();
 	void		ResyncDemoClock();
 
-#ifndef NO_STEAM
 	void		ReplyInfo( const netadr_t &adr );
-#endif
 		
 
 	// Vector		GetOriginFromPackedEntity(PackedEntity* pe);

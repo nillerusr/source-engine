@@ -16,6 +16,9 @@
 // This is used, unless overridden in the registry
 #define VALVE_MASTER_ADDRESS "207.173.177.10:27011"
 
+// Required postfix to a A2S_INFO query
+#define A2S_KEY_STRING "Source Engine Query"
+
 #define HB_TIMEOUT 15
 
 #define PORT_RCON			27015	// defualt RCON port, TCP

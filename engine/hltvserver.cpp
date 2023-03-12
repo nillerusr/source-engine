@@ -49,8 +49,6 @@
 #define S2A_EXTRA_DATA_HAS_STEAMID					0x10		// Next 8 bytes are the steamID
 #define S2A_EXTRA_DATA_GAMEID						0x01		// Next 8 bytes are the gameID of the server
 
-#define A2S_KEY_STRING_STEAM		"Source Engine Query" // required postfix to a A2S_INFO query
-
 extern CNetworkStringTableContainer *networkStringTableContainerClient;
 extern ConVar sv_tags;
 
@@ -1693,11 +1691,10 @@ bool CHLTVServer::ProcessConnectionlessPacket( netpacket_t * packet )
 
 	switch ( c )
 	{
-#ifndef NO_STEAM
 	case A2S_INFO:
 		char rgchInfoPostfix[64];
 		msg.ReadString( rgchInfoPostfix, sizeof( rgchInfoPostfix ) );
-		if ( !Q_stricmp( rgchInfoPostfix, A2S_KEY_STRING_STEAM ) )
+		if ( !Q_stricmp( rgchInfoPostfix, A2S_KEY_STRING ) )
 		{
 			ReplyInfo( packet->from );
 			return true;
@@ -1706,7 +1703,6 @@ bool CHLTVServer::ProcessConnectionlessPacket( netpacket_t * packet )
 		break;
 	//case A2S_PLAYER:
 	//	return true;
-#endif // #ifndef NO_STEAM
 	}
 
 	return CBaseServer::ProcessConnectionlessPacket( packet );
@@ -2024,7 +2020,6 @@ int CHLTVServer::GetProtocolVersion()
 	return PROTOCOL_VERSION;
 }
 
-#ifndef NO_STEAM
 void CHLTVServer::ReplyInfo( const netadr_t &adr )
 {
 	static char gamedir[MAX_OSPATH];
@@ -2134,7 +2129,6 @@ void CHLTVServer::ReplyInfo( const netadr_t &adr )
 
 	NET_SendPacket( NULL, m_Socket, adr, (unsigned char *)buf.Base(), buf.TellPut() );
 }
-#endif // #ifndef NO_STEAM
 
 CON_COMMAND( tv_status, "Show SourceTV server status." ) 
 {

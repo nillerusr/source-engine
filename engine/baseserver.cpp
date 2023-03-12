@@ -89,6 +89,12 @@ static CIPRateLimit s_connectRateChecker( &sv_max_connects_sec, &sv_max_connects
 // Steam has a matching one in matchmakingtypes.h
 #define MAX_TAG_STRING_LENGTH		128
 
+// A2S_INFO extra data 
+#define S2A_EXTRA_DATA_HAS_SPECTATOR_DATA	0x40		// Next 2 bytes include the spectator port, then the spectator server name.
+#define S2A_EXTRA_DATA_HAS_GAMETAG_DATA		0x20		// Next bytes are the game tag string
+#define S2A_EXTRA_DATA_HAS_STEAMID			0x10		// Next 8 bytes are the steamID
+#define S2A_EXTRA_DATA_GAMEID				0x01		// Next 8 bytes are the gameID of the server
+
 int SortServerTags( char* const *p1, char* const *p2 )
 {
 	return ( Q_strcmp( *p1, *p2 ) > 0 );
@@ -684,7 +690,17 @@ bool CBaseServer::ProcessConnectionlessPacket(netpacket_t * packet)
 			}
 
 			break;
-		
+		case A2S_INFO :
+			char rgchInfoPostfix[64];
+			msg.ReadString( rgchInfoPostfix, sizeof( rgchInfoPostfix ) );
+			if ( !Q_stricmp( rgchInfoPostfix, A2S_KEY_STRING ) )
+			{
+				ReplyInfo( packet->from );
+				return true;
+			}
+
+			break;
+
 		case A2S_SERVERQUERY_GETCHALLENGE:
 			ReplyServerChallenge( packet->from );
 			break;
@@ -2555,4 +2571,116 @@ void CBaseServer::SetPausedForced( bool bPaused, float flDuration /*= -1.f*/ )
 
 	SVC_SetPauseTimed setpause( bPaused, m_flPausedTimeEnd );
 	BroadcastMessage( setpause );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Server responds to the query (A2S_INFO)
+//-----------------------------------------------------------------------------
+void CBaseServer::ReplyInfo( const netadr_t &adr )
+{
+	static bool bUpdateMasterServers = !CommandLine()->FindParm( "-nomaster" );
+	static char gamedir[MAX_OSPATH];
+
+	// No response if we have -nomaster parameter
+	if ( !bUpdateMasterServers )
+		return;
+
+	Q_FileBase( com_gamedir, gamedir, sizeof( gamedir ) );
+
+	CUtlBuffer buf;
+	buf.EnsureCapacity( 2048 );
+
+	buf.PutUnsignedInt( LittleDWord( CONNECTIONLESS_HEADER ) );
+	buf.PutUnsignedChar( S2A_INFO_SRC );
+
+	buf.PutUnsignedChar( PROTOCOL_VERSION );
+	buf.PutString( GetName() );
+	buf.PutString( GetMapName() );
+	buf.PutString( gamedir );
+	buf.PutString( serverGameDLL->GetGameDescription() );
+
+	// The next field is a 16-bit version of the AppID.  If our AppID < 65536,
+	// then let's go ahead and put in in there, to maximize compatibility
+	// with old clients who might be only using this field but not the new one.
+	// However, if our AppID won't fit, there's no way we can be compatible,
+	// anyway, so just put in a zero, which is better than a bogus AppID.
+	uint16 usAppIdShort = (uint16)GetSteamAppID();
+	if ( (AppId_t)usAppIdShort != GetSteamAppID() )
+	{
+		usAppIdShort = 0;
+	}
+	buf.PutShort( LittleWord( usAppIdShort ) );
+
+	// player info
+	buf.PutUnsignedChar( GetNumClients() );
+	buf.PutUnsignedChar( GetMaxClients() );
+	buf.PutUnsignedChar( 0 );
+
+	// NOTE: This key's meaning is changed in the new version. Since we send gameport and specport,
+	// it knows whether we're running SourceTV or not. Then it only needs to know if we're a dedicated or listen server.
+	if ( IsDedicated() )
+		buf.PutUnsignedChar( 'd' );	// d = dedicated server
+	else
+		buf.PutUnsignedChar( 'l' );	// l = listen server
+
+#if defined(_WIN32)
+	buf.PutUnsignedChar( 'w' );
+#elif defined(OSX)
+	buf.PutUnsignedChar( 'm' );
+#else // LINUX?
+	buf.PutUnsignedChar( 'l' );
+#endif
+
+	// Password?
+	buf.PutUnsignedChar( GetPassword() != NULL ? 1 : 0 );
+	//buf.PutUnsignedChar( Steam3Server().BSecure() ? 1 : 0 );
+	buf.PutUnsignedChar( 0 );
+	buf.PutString( GetSteamInfIDVersionInfo().szVersionString );
+
+	//
+	// NEW DATA.
+	//
+
+	// Write a byte with some flags that describe what is to follow.
+	const char *pchTags = sv_tags.GetString();
+	byte nNewFlags = 0;
+
+	if ( Steam3Server().GetGSSteamID().IsValid() )
+		nNewFlags |= S2A_EXTRA_DATA_HAS_STEAMID;
+
+	if ( GetUDPPort() != 0 )
+		nNewFlags |= S2A_EXTRA_DATA_HAS_SPECTATOR_DATA;
+
+	if ( pchTags && pchTags[0] != '\0' )
+		nNewFlags |= S2A_EXTRA_DATA_HAS_GAMETAG_DATA;
+
+	nNewFlags |= S2A_EXTRA_DATA_GAMEID;
+
+	buf.PutUnsignedChar( nNewFlags );
+
+	if ( nNewFlags & S2A_EXTRA_DATA_HAS_STEAMID )
+	{
+		buf.PutUint64( LittleQWord( Steam3Server().GetGSSteamID().ConvertToUint64() ) );
+	}
+
+	if ( nNewFlags & S2A_EXTRA_DATA_HAS_SPECTATOR_DATA )
+	{
+		buf.PutShort( LittleWord( GetUDPPort() ) );
+		buf.PutString( GetName() );
+	}
+
+	if ( nNewFlags & S2A_EXTRA_DATA_HAS_GAMETAG_DATA )
+	{
+		buf.PutString( pchTags );
+	}
+
+	if ( nNewFlags & S2A_EXTRA_DATA_GAMEID )
+	{
+		// !FIXME! Is there a reason we aren't using the other half
+		// of this field?  Shouldn't we put the game mod ID in there, too?
+		// We have the game dir.
+		buf.PutUint64( LittleQWord( CGameID( GetSteamAppID() ).ToUint64() ) );
+	}
+
+	NET_SendPacket( NULL, m_Socket, adr, (unsigned char *)buf.Base(), buf.TellPut() );
 }
