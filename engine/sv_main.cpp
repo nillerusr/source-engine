@@ -80,8 +80,8 @@
 
 extern CNetworkStringTableContainer *networkStringTableContainerServer;
 extern CNetworkStringTableContainer *networkStringTableContainerClient;
-//void OnHibernateWhenEmptyChanged( IConVar *var, const char *pOldValue, float flOldValue );
-//ConVar sv_hibernate_when_empty( "sv_hibernate_when_empty", "1", 0, "Puts the server into extremely low CPU usage mode when no clients connected", OnHibernateWhenEmptyChanged );
+static void OnHibernateWhenEmptyChanged( IConVar *var, const char *pOldValue, float flOldValue );
+ConVar sv_hibernate_when_empty( "sv_hibernate_when_empty", "1", 0, "Puts the server into extremely low CPU usage mode when no clients connected", OnHibernateWhenEmptyChanged );
 //ConVar sv_hibernate_ms( "sv_hibernate_ms", "20", 0, "# of milliseconds to sleep per frame while hibernating" );
 //ConVar sv_hibernate_ms_vgui( "sv_hibernate_ms_vgui", "20", 0, "# of milliseconds to sleep per frame while hibernating but running the vgui dedicated server frontend" );
 //static ConVar sv_hibernate_postgame_delay( "sv_hibernate_postgame_delay", "5", 0, "# of seconds to wait after final client leaves before hibernating.");
@@ -1541,13 +1541,13 @@ CPureServerWhitelist * CGameServer::GetPureServerWhitelist() const
 	return m_pPureServerWhitelist;
 }
 
-//void OnHibernateWhenEmptyChanged( IConVar *var, const char *pOldValue, float flOldValue )
-//{
-//	// We only need to do something special if we were preventing hibernation
-//	// with sv_hibernate_when_empty but we would otherwise have been hibernating.
-//	// In that case, punt all connected clients.
-//	sv.UpdateHibernationState( ); 
-//}
+static void OnHibernateWhenEmptyChanged( IConVar *var, const char *pOldValue, float flOldValue )
+{
+	// We only need to do something special if we were preventing hibernation
+	// with sv_hibernate_when_empty but we would otherwise have been hibernating.
+	// In that case, punt all connected clients.
+	sv.UpdateHibernationState( );
+}
 
 static bool s_bExitWhenEmpty = false;
 static ConVar sv_memlimit(  "sv_memlimit", "0", 0, 
@@ -1753,8 +1753,7 @@ void CGameServer::UpdateHibernationState()
 		s_bExitWhenEmpty = true;
 	}
 
-	//SetHibernating( sv_hibernate_when_empty.GetBool() && hibernateFromGCServer && !bHaveAnyClients );
-	SetHibernating( hibernateFromGCServer && !bHaveAnyClients );
+	SetHibernating( sv_hibernate_when_empty.GetBool() && hibernateFromGCServer && !bHaveAnyClients );
 }
 
 void CGameServer::FinishRestore()
