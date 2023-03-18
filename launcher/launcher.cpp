@@ -104,6 +104,7 @@ static IEngineAPI *g_pEngineAPI;
 static IHammer *g_pHammer;
 
 bool g_bTextMode = false;
+bool g_MultiRun = false;
 
 static char g_szBasedir[MAX_PATH];
 static char g_szGamedir[MAX_PATH];
@@ -922,6 +923,9 @@ char g_lockFilename[MAX_PATH];
 #endif
 bool GrabSourceMutex()
 {
+	if( g_MultiRun )
+		return true;
+
 #ifdef WIN32
 	if ( IsPC() )
 	{
@@ -1016,6 +1020,9 @@ bool GrabSourceMutex()
 
 void ReleaseSourceMutex()
 {
+	if( g_MultiRun )
+		return;
+
 #ifdef WIN32
 	if ( IsPC() && g_hMutex )
 	{
@@ -1278,6 +1285,10 @@ DLL_EXPORT int LauncherMain( int argc, char **argv )
 	// Figure out the directory the executable is running from
 	UTIL_ComputeBaseDir();
 
+	// Allow the user to explicitly say they want to be able to run multiple instances of the source mutex.
+	// Useful for side-by-side comparisons of different renderers.
+	g_MultiRun = CommandLine()->CheckParm( "-multirun" ) != NULL;
+
 #if defined( _X360 )
 	bool bSpewDllInfo = CommandLine()->CheckParm( "-dllinfo" );
 	bool bWaitForConsole = CommandLine()->CheckParm( "-vxconsole" );
@@ -1389,10 +1400,6 @@ DLL_EXPORT int LauncherMain( int argc, char **argv )
 		// Can only run one windowed source app at a time
 		if ( !GrabSourceMutex() )
 		{
-			// Allow the user to explicitly say they want to be able to run multiple instances of the source mutex.
-			// Useful for side-by-side comparisons of different renderers.
-			bool multiRun = CommandLine()->CheckParm( "-multirun" ) != NULL;
-
 			// We're going to hijack the existing session and load a new savegame into it. This will mainly occur when users click on links in Bugzilla that will automatically copy saves and load them
 			// directly from the web browser. The -hijack command prevents the launcher from objecting that there is already an instance of the game.
 			if (CommandLine()->CheckParm( "-hijack" ))
@@ -1430,12 +1437,12 @@ DLL_EXPORT int LauncherMain( int argc, char **argv )
 			}
 			else
 			{
-				if (!multiRun) {
+				if (!g_MultiRun) {
 					::MessageBox(NULL, "Only one instance of the game can be running at one time.", "Source - Warning", MB_ICONINFORMATION | MB_OK);
 				}
 			}
 
-			if (!multiRun) {
+			if (!g_MultiRun) {
 				return retval;
 			}
 		}
@@ -1443,7 +1450,7 @@ DLL_EXPORT int LauncherMain( int argc, char **argv )
 #elif defined( POSIX )
 	else
 	{
-		if ( !GrabSourceMutex() )
+		if ( !GrabSourceMutex() && !g_MultiRun )
 		{
 			::MessageBox(NULL, "Only one instance of the game can be running at one time.", "Source - Warning", 0 );
 			return -1;
