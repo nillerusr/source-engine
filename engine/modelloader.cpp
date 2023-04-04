@@ -396,6 +396,8 @@ static worldbrushdata_t	*s_pMap = NULL;
 static int				s_nMapLoadRecursion = 0;
 static CUtlBuffer		s_MapBuffer;
 
+int s_MapVersion = 0;
+
 // Lump files are patches for a shipped map
 // List of lump files found when map was loaded. Each entry is the lump file index for that lump id.
 struct lumpfiles_t
@@ -468,6 +470,8 @@ void CMapLoadHelper::Init( model_t *pMapModel, const char *loadname )
 			s_MapHeader.version, BSPVERSION );
 		return;
 	}
+
+	s_MapVersion = s_MapHeader.version;
 
 	V_strcpy_safe( s_szLoadName, loadname );
 

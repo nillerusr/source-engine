@@ -443,6 +443,12 @@ struct StaticPropLump_t
 		m_FlagsEx = _rhs.m_FlagsEx;
 		return *this;
 	}
+
+	inline StaticPropLump_t& operator=(const StaticPropLumpV11_t& _rhs)
+	{
+		(*this) = reinterpret_cast<const StaticPropLumpV10_21_t&>(_rhs);
+		return *this;
+	}
 };
 
 struct StaticPropLeafLump_t
