@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   tests-linux-i386:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
 
     steps:
     - uses: actions/checkout@v2
@@ -13,7 +13,7 @@ jobs:
         scripts/tests-ubuntu-i386.sh
 
   tests-linux-amd64:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
 
     steps:
     - uses: actions/checkout@v2
