@@ -3409,8 +3409,8 @@ GLvoid *uncompressDXTc(GLsizei width, GLsizei height, GLenum format, GLsizei ima
     // uncompress a DXTc image
     // get pixel size of uncompressed image => fixed RGBA
     int pixelsize = 4;
-/*	if (format==COMPRESSED_RGB_S3TC_DXT1_EXT)
-        pixelsize = 3;*/
+    if (format == GL_COMPRESSED_RGB_S3TC_DXT1_EXT || format == GL_COMPRESSED_SRGB_S3TC_DXT1_EXT)
+        pixelsize = 3;
     // check with the size of the input data stream if the stream is in fact uncompressed
     if (imageSize == width*height*pixelsize || data==NULL) {
         // uncompressed stream
@@ -3469,16 +3469,16 @@ void CompressedTexImage2D(GLenum target, GLint level, GLenum internalformat,
 	if ((width<=0) || (height<=0)) {
         return;
     }
-	
-	GLenum format = GL_RGBA;
-	GLenum intformat = GL_RGBA;	
-    GLenum type = GL_UNSIGNED_BYTE;
-	GLvoid *pixels = NULL;        
-	
-    if (isDXTc(internalformat)) {
-        pixels = NULL;
-        type = GL_UNSIGNED_BYTE;
 
+	bool hasAlpha = (internalformat != GL_COMPRESSED_RGB_S3TC_DXT1_EXT) && (internalformat != GL_COMPRESSED_SRGB_S3TC_DXT1_EXT);
+
+   	GLenum format = hasAlpha ? GL_RGBA : GL_RGB;
+	GLenum intformat = hasAlpha ? GL_RGBA8 : GL_RGB8;
+	GLenum type = GL_UNSIGNED_BYTE;
+	GLvoid *pixels = NULL;
+
+    if (isDXTc(internalformat))
+    {
         int srgb = isDXTcSRGB(internalformat);
         int simpleAlpha = 0;
         int complexAlpha = 0;
@@ -3492,7 +3492,7 @@ void CompressedTexImage2D(GLenum target, GLint level, GLenum internalformat,
         }
 
 		if( srgb )
-			intformat = GL_SRGB8_ALPHA8;
+			intformat = hasAlpha ? GL_SRGB8_ALPHA8 : GL_SRGB8;
 	}
 
 	gGL->glTexImage2D(target, level, intformat, width, height, border, format, type, pixels);
