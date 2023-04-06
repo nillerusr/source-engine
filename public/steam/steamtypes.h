@@ -56,6 +56,9 @@ typedef __int32 intp;
 typedef unsigned __int32 uintp;
 #endif
 
+#elif defined(PLATFORM_HAIKU)
+// Already defined
+
 #else // _WIN32
 
 typedef short int16;

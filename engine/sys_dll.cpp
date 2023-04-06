@@ -16,6 +16,8 @@
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #define HW_MEMSIZE HW_PHYSMEM
+#elif defined(PLATFORM_HAIKU)
+# include <OS.h>
 #endif
 #if defined(LINUX)
 #include <unistd.h>
@@ -464,7 +466,7 @@ void Sys_Error_Internal( bool bMinidump, const char *error, va_list argsList )
 		// Doing this doesn't quite work the way we want because there is no "crashing" thread
 		// and we see "No thread was identified as the cause of the crash; No signature could be created because we do not know which thread crashed" on the back end
 		//SteamAPI_WriteMiniDump( 0, NULL, build_number() );
-		printf("\n ##### Sys_Error: %s", text );
+		printf("\n ##### Sys_Error: %s\n", text );
 		fflush(stdout );
 
 		raise(SIGTRAP);
@@ -677,6 +679,11 @@ void Sys_InitMemory( void )
 	{
 		memsize = ONE_HUNDRED_TWENTY_EIGHT_MB;
 	}
+#elif defined(PLATFORM_HAIKU)
+	system_info info;
+	get_system_info(&info);
+
+	memsize = (uint64_t)(info.max_pages * B_PAGE_SIZE);
 #elif defined(LINUX)
 	const int fd = open("/proc/meminfo", O_RDONLY);
 	if (fd < 0)
@@ -1586,14 +1593,14 @@ CON_COMMAND( star_memory, "Dump memory stats" )
 	struct mstats memstats = mstats( );
 	Msg( "Available %.2f MB, Used: %.2f MB, #mallocs = %lu\n",
 		 memstats.bytes_free / ( 1024.0 * 1024.0), memstats.bytes_used / ( 1024.0 * 1024.0 ), memstats.chunks_used );
-#elif PLATFORM_BSD
-# warning TODO: Implement memory stats (peace of sheet of course)
-#else // Win32
+#elif _WIN32
 	MEMORYSTATUS stat;
 	GlobalMemoryStatus( &stat );
 	Msg( "Available: %.2f MB, Used: %.2f MB, Free: %.2f MB\n", 
 		stat.dwTotalPhys/( 1024.0f*1024.0f ) - 32.0f,
 		( stat.dwTotalPhys - stat.dwAvailPhys )/( 1024.0f*1024.0f ) - 32.0f, 
 		stat.dwAvailPhys/( 1024.0f*1024.0f ) );
+#else
+# warning TODO: Implement memory stats (peace of sheet of course)
 #endif
 }

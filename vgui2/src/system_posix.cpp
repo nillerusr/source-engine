@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/param.h>
 
@@ -33,6 +32,8 @@
 #include <sys/mount.h>
 #elif defined(LINUX)
 #include <sys/vfs.h>
+#elif defined(PLATFORM_HAIKU)
+# include <sys/statvfs.h>
 #endif
 #ifdef OSX
 #include <Carbon/Carbon.h>
@@ -292,7 +293,7 @@ void CSystem::ShellExecute(const char *command, const char *file)
 	if ( pid == 0 )
 	{
 		// Child
-#if defined(LINUX) || defined(PLATFORM_BSD)
+#if defined(POSIX) && !defined(OSX)
 		// Escape steam runtime if necessary
 		const char *szSteamRuntime = getenv( "STEAM_RUNTIME" );
 		if ( szSteamRuntime )
@@ -587,6 +588,10 @@ int CSystem::GetAvailableDrives(char *buf, int bufLen)
 //-----------------------------------------------------------------------------
 double CSystem::GetFreeDiskSpace(const char *path)
 {
+#if PLATFORM_HAIKU
+	struct statvfs buf;
+	int ret = statvfs(path, &buf);
+#else
 #if __DARWIN_ONLY_64_BIT_INO_T || PLATFORM_BSD
     // MoeMod: newer macOS only support 64bit, so no statfs64 is provided
     struct statfs buf;
@@ -594,6 +599,7 @@ double CSystem::GetFreeDiskSpace(const char *path)
 #else
 	struct statfs64 buf;
 	int ret = statfs64( path, &buf );
+#endif
 #endif
 	if ( ret < 0 )
 		return 0.0;

@@ -25,7 +25,7 @@
 # include <sys/types.h>
 # include <fcntl.h>
 # define HW_MEMSIZE HW_PHYSMEM
-#elif defined(LINUX)
+#elif defined(LINUX) || defined(PLATFORM_HAIKU)
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -110,7 +110,7 @@
 #define BUG_REPOSITORY_URL "\\\\fileserver\\bugs"
 #elif defined(OSX)
 #define BUG_REPOSITORY_URL "/Volumes/bugs"
-#elif defined(LINUX) || defined(PLATFORM_BSD)
+#elif defined(POSIX)
 #define BUG_REPOSITORY_URL "\\\\fileserver\\bugs"
 #else
 //#error
@@ -345,12 +345,14 @@ void DisplaySystemVersion( char *osversion, int maxlen )
 
 		fclose( fpKernelVer );
 	}
+#elif PLATFORM_HAIKU
+	osversion = (char *)"Haiku OS";
 #elif PLATFORM_BSD
-  #ifdef __FreeBSD__
-    osversion = (char *)"FreeBSD";
-  #else
-    osversion = (char *)"*BSD";
-  #endif
+# ifdef PLATFORM_FBSD
+	osversion = (char *)"FreeBSD";
+# else
+	osversion = (char *)"*BSD";
+# endif
 #endif
 }
 
@@ -2257,7 +2259,7 @@ void NonFileSystem_CreatePath (const char *path)
 	}
 }
 
-#if defined(LINUX) || defined(PLATFORM_BSD)
+#if defined(POSIX) && !defined(OSX)
 #define COPYFILE_ALL 0
 #define BSIZE 65535
 int copyfile( const char *local, const char *remote, void *ignored, int ignoredFlags )

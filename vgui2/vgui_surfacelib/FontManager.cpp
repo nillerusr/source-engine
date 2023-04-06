@@ -5,8 +5,8 @@
 //=====================================================================================//
 
 #include <locale.h>
-#include "vgui_surfacelib/BitmapFont.h"
-#include "vgui_surfacelib/FontManager.h"
+#include "common/vgui_surfacelib/BitmapFont.h"
+#include "common/vgui_surfacelib/FontManager.h"
 #include <vgui/ISurface.h>
 #include <tier0/dbg.h>
 
@@ -584,7 +584,13 @@ FallbackFont_t g_FallbackFonts[] =
 	{ NULL, "Monaco" }		// every other font falls back to this
 };
 
-#elif defined(LINUX) || defined(PLATFORM_BSD)
+#elif defined(_PS3)
+// list of how fonts fallback
+FallbackFont_t g_FallbackFonts[] =
+{
+	{ NULL, "Tahoma" },		// every other font falls back to this
+};
+#elif defined(POSIX)
 static const char *g_szValidAsianFonts[] = { "Marlett", "WenQuanYi Zen Hei", "unifont", NULL };
 
 // list of how fonts fallback
@@ -592,12 +598,6 @@ FallbackFont_t g_FallbackFonts[] =
 {
 	{ "DejaVu Sans", NULL },
 	{ NULL, "DejaVu Sans" },		// every other font falls back to this
-};
-#elif defined(_PS3)
-// list of how fonts fallback
-FallbackFont_t g_FallbackFonts[] =
-{
-	{ NULL, "Tahoma" },		// every other font falls back to this
 };
 #else
 #error
@@ -649,10 +649,10 @@ const char *CFontManager::GetForeignFallbackFontName()
 	return "Tahoma";
 #elif defined(OSX)
 	return "Helvetica";
-#elif defined(LINUX) || defined(PLATFORM_BSD)
-	return "WenQuanYi Zen Hei";
 #elif defined(_PS3)
 	return "Tahoma";
+#elif defined(POSIX)
+	return "WenQuanYi Zen Hei";
 #else
 #error
 #endif

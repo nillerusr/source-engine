@@ -58,14 +58,14 @@ DEFINE_ENUM_BITWISE_OPERATORS( EPlatform_t );
 	const EPlatform_t	thisPlatform = PLATFORM_XBOX_360;
 #elif defined( _PS3 )
 	const EPlatform_t	thisPlatform = PLATFORM_PS3;
-#elif defined ( _LINUX ) || defined(PLATFORM_BSD)
+#elif defined(POSIX)
 	const EPlatform_t	thisPlatform = PLATFORM_LINUX;
 #else
   #error "UNABLE TO DETERMINE PLATFORM"
 #endif
 
 
-#if defined( OSX ) || defined( LINUX ) || defined(PLATFORM_BSD)
+#if defined(POSIX)
 ILauncherMgr *g_pLauncherMgr = NULL;
 #endif
 
@@ -1382,7 +1382,7 @@ bool CVideoCommonServices::ProcessFullScreenInput( bool &bAbortEvent, bool &bPau
 	bool bEscPressed    = ( m_bScanEsc )    ? CGEventSourceKeyState( kCGEventSourceStateCombinedSessionState, kVK_Escape ) : false;
 	bool bReturnPressed = ( m_bScanReturn ) ? CGEventSourceKeyState( kCGEventSourceStateCombinedSessionState, kVK_Return ) : false;
 	bool bSpacePressed  = ( m_bScanSpace )  ? CGEventSourceKeyState( kCGEventSourceStateCombinedSessionState, kVK_Space )  : false;
-#elif defined(LINUX) || defined(PLATFORM_BSD)
+#elif defined(POSIX)
 	g_pLauncherMgr->PumpWindowsMessageLoop();
 
 	// Escape, return, or space stops or pauses the playback

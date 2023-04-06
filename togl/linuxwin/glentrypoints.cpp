@@ -43,7 +43,7 @@
 #include "tier1.h"
 #include "tier2/tier2.h"
 
-#if (defined(_LINUX) || defined(PLATFORM_BSD)) && !defined(__ANDROID__)
+#if defined(POSIX) && !defined(__ANDROID__) && !defined(PLATFORM_HAIKU)
 #include <GL/glx.h>
 #endif
 
@@ -54,7 +54,7 @@
 #error
 #endif
 
-#if defined(OSX) || defined(LINUX) || (defined (WIN32) && defined( DX_TO_GL_ABSTRACTION )) || defined(PLATFORM_BSD)
+#if defined(POSIX) || (defined (WIN32) && defined( DX_TO_GL_ABSTRACTION ))
 	#include "appframework/ilaunchermgr.h"
 	ILauncherMgr *g_pLauncherMgr = NULL;
 #endif
@@ -296,7 +296,7 @@ static bool CheckOpenGLExtension_internal(const char *ext, const int coremajor, 
 				return false;
 			}
 		}
-#elif !defined ( OSX ) && !defined( __ANDROID__ )
+#elif !defined ( OSX ) && !defined( __ANDROID__ ) && !defined(PLATFORM_HAIKU)
 		if (!ptr)
 		{
 			static CDynamicFunctionOpenGL< true, Display *( APIENTRY *)( ), Display* > glXGetCurrentDisplay("glXGetCurrentDisplay");
@@ -427,7 +427,7 @@ COpenGLEntryPoints::COpenGLEntryPoints()
 #undef GL_EXT
 #endif
 
-#ifdef OSX
+#if defined(OSX) || defined(PLATFORM_HAIKU)
 	m_bHave_GL_NV_bindless_texture = false;
 	m_bHave_GL_AMD_pinned_memory = false;
 #else

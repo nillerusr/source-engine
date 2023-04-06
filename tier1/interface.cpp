@@ -247,7 +247,7 @@ HMODULE Sys_LoadLibrary( const char *pLibraryName, Sys_Flags flags )
 #elif POSIX
 	int dlopen_mode = RTLD_NOW;
 
-#ifndef ANDROID
+#if !defined(ANDROID) && !defined(PLATFORM_HAIKU)
 	if ( flags & SYS_NOLOAD )
 		dlopen_mode |= RTLD_NOLOAD;
 #endif
@@ -271,6 +271,8 @@ static bool s_bRunningWithDebugModules = false;
 
 #ifdef ANDROID
 #define DEFAULT_LIB_PATH ""
+#elif defined(PLATFORM_HAIKU)
+#define DEFAULT_LIB_PATH "lib/"
 #else
 #define DEFAULT_LIB_PATH "bin/"
 #endif

@@ -2628,11 +2628,6 @@ bool	GLMDetectOGLP( void )
 #include <sys/types.h>  
 #ifndef _WIN32
 	#include <unistd.h>  
-#ifdef LINUX
-#include <linux/sysctl.h>
-#else
-#include <sys/sysctl.h>
-#endif
 #endif
 
 // From Technical Q&A QA1361  
@@ -2643,43 +2638,7 @@ bool	GLMDetectOGLP( void )
 
 bool	GLMDetectGDB( void )			// aka AmIBeingDebugged()
 {
-#ifdef OSX
-	bool				result;	
-    int                 junk;  
-    int                 mib[4];  
-    struct kinfo_proc   info;  
-    size_t              size;  
-  
-    // Initialize the flags so that,  
-    // if sysctl fails for some bizarre  
-    // reason, we get a predictable result.  
-  
-    info.kp_proc.p_flag = 0;  
-  
-    // Initialize mib, which tells sysctl the info  
-    // we want, in this case we're looking for  
-    // information about a specific process ID.  
-  
-    mib[0] = CTL_KERN;  
-    mib[1] = KERN_PROC;  
-    mib[2] = KERN_PROC_PID;  
-    mib[3] = getpid();  
-  
-    // Call sysctl.  
-  
-    size = sizeof(info);  
-    junk = sysctl(mib, sizeof(mib) / sizeof(*mib), &info, &size, NULL, 0);  
-  
-    assert(junk == 0);  
-  
-    // We're being debugged if the P_TRACED  
-    // flag is set.  
-  
-    result = ( (info.kp_proc.p_flag & P_TRACED) != 0 );  
-	return result;
-#else
 	return Sys_IsDebuggerPresent();
-#endif
 }
 
 
@@ -3116,7 +3075,7 @@ void	GLMSetIndent( int indent )
 char sg_pPIXName[128];
 
 
-#ifndef OSX
+#if !defined(OSX) && !defined(PLATFORM_HAIKU)
 ConVar gl_telemetry_gpu_pipeline_flushing( "gl_telemetry_gpu_pipeline_flushing", "0" );
 
 class CGPUTimestampManager
@@ -3724,7 +3683,7 @@ static uint g_nPIXEventIndex;
 
 void GLMBeginPIXEvent( const char *str )
 {
-#ifndef OSX
+#if !defined(OSX) && !defined(PLATFORM_HAIKU)
 	char szName[1024];
 	V_snprintf( szName, sizeof( szName ), "[ID:%u FR:%u] %s", g_nPIXEventIndex, g_GPUTimestampManager.GetCurFrame(), str );
 	const char *p = tmDynamicString( TELEMETRY_LEVEL2, szName ); //p can be null if tm is getting shut down
@@ -3748,7 +3707,7 @@ void GLMBeginPIXEvent( const char *str )
 
 void GLMEndPIXEvent( void )
 {
-#ifndef OSX
+#if !defined(OSX) && !defined(PLATFORM_HAIKU)
 	g_GPUTimestampManager.EndZone();
 #endif
 

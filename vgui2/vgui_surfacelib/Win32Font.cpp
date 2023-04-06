@@ -11,7 +11,7 @@
 #include <string.h>
 #include <math.h>
 #include <malloc.h>
-#include "vgui_surfacelib/Win32Font.h"
+#include "common/vgui_surfacelib/Win32Font.h"
 #include <tier0/dbg.h>
 #include <vgui/ISurface.h>
 #include <tier0/mem.h>

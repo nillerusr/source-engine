@@ -293,7 +293,7 @@ struct GLMTexSamplingParams
 		m_packed.m_isValid = true;
 	}
 
-#ifndef OSX
+#if !defined(OSX) && !defined(PLATFORM_HAIKU)
 	FORCEINLINE void SetToSamplerObject( GLuint nSamplerObject ) const
 	{
 		static const GLenum dxtogl_addressMode[] = { GL_REPEAT, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_BORDER, (GLenum)-1 };

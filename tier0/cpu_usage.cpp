@@ -124,7 +124,7 @@ float GetCPUUsage()
 
 float GetCPUUsage() 
 {
-#ifdef ANDROID
+#if defined(ANDROID) || defined(PLATFORM_HAIKU)
 	return 0;
 #else
 	double loadavg[3];

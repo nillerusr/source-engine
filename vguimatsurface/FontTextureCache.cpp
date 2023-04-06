@@ -10,7 +10,7 @@
 #include <windows.h>
 #elif defined( OSX )
 #include <Carbon/Carbon.h>
-#elif defined( LINUX ) || defined(PLATFORM_BSD)
+#elif defined(POSIX)
 //#error
 #elif defined( _X360 )
 #else
@@ -18,7 +18,7 @@
 #endif
 #include "FontTextureCache.h"
 #include "MatSystemSurface.h"
-#include <vgui_surfacelib/BitmapFont.h>
+#include "common/vgui_surfacelib/BitmapFont.h"
 #include <vgui/IVGui.h>
 #include <vgui_controls/Controls.h>
 #include "bitmap/imageformat.h"

@@ -216,6 +216,7 @@ static void WaitForDebuggerConnect( int argc, char *argv[], int time )
 
 int main( int argc, char *argv[] )
 {
+#ifndef PLATFORM_HAIKU
 	char ld_path[4196];
 	char *path = "bin/";
 	char *ld_env;
@@ -234,6 +235,7 @@ int main( int argc, char *argv[] )
 		setenv("NO_EXECVE_AGAIN", "1", 1);
 		execve(argv[0], argv, environ);
 	}
+#endif
 
 	void *launcher = dlopen( "bin/liblauncher" DLL_EXT_STRING, RTLD_NOW );
 	if ( !launcher )
