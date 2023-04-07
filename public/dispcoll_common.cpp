@@ -429,13 +429,7 @@ void CDispCollTree::AABBTree_CreateLeafs( void )
 	}
 }
 
-#if COMPILER_CLANG
-#define NOASAN __attribute__((no_sanitize("address")))
-#else
-#define NOASAN
-#endif
-
-void NOASAN CDispCollTree::AABBTree_GenerateBoxes_r( int nodeIndex, Vector *pMins, Vector *pMaxs )
+void NO_ASAN CDispCollTree::AABBTree_GenerateBoxes_r( int nodeIndex, Vector *pMins, Vector *pMaxs )
 {
 	// leaf
 	ClearBounds( *pMins, *pMaxs );
@@ -466,8 +460,6 @@ void NOASAN CDispCollTree::AABBTree_GenerateBoxes_r( int nodeIndex, Vector *pMin
 		m_nodes[nodeIndex].m_maxs.LoadAndSwizzle( childMaxs[0], childMaxs[1], childMaxs[2], childMaxs[3] );
 	}
 }
-
-#undef NOASAN
 
 //-----------------------------------------------------------------------------
 // Purpose: 

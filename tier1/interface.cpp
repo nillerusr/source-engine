@@ -292,6 +292,18 @@ bool foundLibraryWithPrefix( char *pModuleAbsolutePath, size_t AbsolutePathSize,
 		bFound |= stat(pModuleAbsolutePath, &statBuf) == 0;
 	}
 
+	if( !bFound )
+	{
+		Q_snprintf(pModuleAbsolutePath, AbsolutePathSize, "%s/lib%s", pPath, str);
+		bFound |= stat(pModuleAbsolutePath, &statBuf) == 0;
+	}
+
+	if( !bFound )
+	{
+		Q_snprintf(pModuleAbsolutePath, AbsolutePathSize, "%s/%s", pPath, str);
+		bFound |= stat(pModuleAbsolutePath, &statBuf) == 0;
+	}
+
 	return bFound;
 }
 

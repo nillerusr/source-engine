@@ -606,6 +606,12 @@ typedef void * HINSTANCE;
 	#define FMTFUNCTION( a, b )
 #endif
 
+#if COMPILER_CLANG || COMPILER_GCC
+#define NO_ASAN __attribute__((no_sanitize("address")))
+#else
+#define NO_ASAN
+#endif
+
 #if defined( _WIN32 )
 
 	// Used for dll exporting and importing

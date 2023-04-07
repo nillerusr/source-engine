@@ -123,21 +123,21 @@ union TSLIST_HEAD_ALIGN TSLHead_t
 		//          but it could perhaps (?) lead to problems with store forwarding. I don't know 'cause I didn't 
 		//          performance-test or design original code, I'm just making it work on PowerPC.
 #ifdef VALVE_BIG_ENDIAN
-		int16	Sequence;
-		int16   Depth;
+		uint16	Sequence;
+		uint16   Depth;
 #else
-		int16   Depth;
-		int16	Sequence;
+		uint16   Depth;
+		uint16	Sequence;
 #endif
 #ifdef PLATFORM_64BITS
-		int32   Padding;
+		uint32   Padding;
 #endif
 	} value;
 
 	struct Value32_t
 	{
 		TSLNodeBase_t *Next_do_not_use_me;
-		int32   DepthAndSequence;
+		uint32   DepthAndSequence;
 	} value32;
 
 #ifdef PLATFORM_64BITS
@@ -254,7 +254,8 @@ public:
 #endif
 	}
 
-	TSLNodeBase_t *Pop()
+	// TODO(nillerusr): fix asan issue later
+	NO_ASAN TSLNodeBase_t *Pop()
 	{
 #ifdef USE_NATIVE_SLIST
 #ifdef _X360

@@ -165,7 +165,7 @@ def define_platform(conf):
 #		conf.options.GL = False
 		conf.define('DEDICATED', 1)
 
-	if conf.options.GL:
+	if conf.options.GL and not conf.options.TESTS:
 		conf.env.append_unique('DEFINES', [
 			'DX_TO_GL_ABSTRACTION',
 			'GL_GLEXT_PROTOTYPES',
@@ -175,7 +175,7 @@ def define_platform(conf):
 	if conf.options.TOGLES:
 		conf.env.append_unique('DEFINES', ['TOGLES'])
 
-	if conf.options.SDL:
+	if conf.options.SDL and not conf.options.TESTS:
 		conf.env.SDL = 1
 		conf.define('USE_SDL', 1)
 
@@ -284,6 +284,111 @@ def options(opt):
 	if sys.platform == 'win32':
 		opt.load('msvc msdev msvs')
 	opt.load('reconfigure')
+
+def check_deps(conf):
+	if conf.env.DEST_OS != 'win32':
+		conf.check_cc(lib='dl', mandatory=False)
+		conf.check_cc(lib='bz2', mandatory=False)
+		conf.check_cc(lib='rt', mandatory=False)
+
+		if not conf.env.LIB_M: # HACK: already added in xcompile!
+			conf.check_cc(lib='m')
+	else:
+		# Common Win32 libraries
+		# Don't check them more than once, to save time
+		# Usually, they are always available
+		# but we need them in uselib
+		a = [
+			'user32',
+			'shell32',
+			'gdi32',
+			'advapi32',
+			'dbghelp',
+			'psapi',
+			'ws2_32',
+			'rpcrt4',
+			'winmm',
+			'wininet',
+			'ole32',
+			'shlwapi',
+			'imm32'
+		]
+
+		if conf.env.COMPILER_CC == 'msvc':
+			for i in a:
+				conf.check_lib_msvc(i)
+		else:
+			for i in a:
+				conf.check_cc(lib = i)
+
+
+	if conf.options.TESTS:
+		return
+
+	if conf.env.DEST_OS != 'android':
+		if conf.env.DEST_OS != 'win32':
+			if conf.options.SDL:
+				conf.check_cfg(package='sdl2', uselib_store='SDL2', args=['--cflags', '--libs'])
+			if conf.options.DEDICATED:
+				conf.check_cfg(package='libedit', uselib_store='EDIT', args=['--cflags', '--libs'])
+			else:
+				conf.check_pkg('freetype2', 'FT2', FT2_CHECK)
+				conf.check_pkg('fontconfig', 'FC', FC_CHECK)
+				if conf.env.DEST_OS == "darwin":
+					conf.env.FRAMEWORK_OPENAL = "OpenAL"
+				else:
+					conf.check_cfg(package='openal', uselib_store='OPENAL', args=['--cflags', '--libs'])
+				conf.check_cfg(package='libjpeg', uselib_store='JPEG', args=['--cflags', '--libs'])
+				conf.check_cfg(package='libpng', uselib_store='PNG', args=['--cflags', '--libs'])
+				conf.check_cfg(package='libcurl', uselib_store='CURL', args=['--cflags', '--libs'])
+			conf.check_cfg(package='zlib', uselib_store='ZLIB', args=['--cflags', '--libs'])
+
+			if conf.options.OPUS:
+				conf.check_cfg(package='opus', uselib_store='OPUS', args=['--cflags', '--libs'])
+	else:
+		conf.check(lib='SDL2', uselib_store='SDL2')
+		conf.check(lib='freetype2', uselib_store='FT2')
+		conf.check(lib='jpeg', uselib_store='JPEG', define_name='HAVE_JPEG')
+		conf.check(lib='png', uselib_store='PNG', define_name='HAVE_PNG')
+		conf.check(lib='curl', uselib_store='CURL', define_name='HAVE_CURL')
+		conf.check(lib='z', uselib_store='ZLIB', define_name='HAVE_ZLIB')
+		if conf.env.DEST_CPU != 'aarch64':
+			conf.check(lib='unwind', uselib_store='UNWIND')
+			conf.check(lib='crypto', uselib_store='CRYPTO')
+			conf.check(lib='ssl', uselib_store='SSL')
+		conf.check(lib='android_support', uselib_store='ANDROID_SUPPORT')
+		conf.check(lib='opus', uselib_store='OPUS')
+
+	if conf.env.DEST_OS == "darwin":
+		conf.check(lib='iconv', uselib_store='ICONV')
+		conf.env.FRAMEWORK_APPKIT = "AppKit"
+		conf.env.FRAMEWORK_IOKIT = "IOKit"
+		conf.env.FRAMEWORK_FOUNDATION = "Foundation"
+		conf.env.FRAMEWORK_COREFOUNDATION = "CoreFoundation"
+		conf.env.FRAMEWORK_COREGRAPHICS = "CoreGraphics"
+		conf.env.FRAMEWORK_OPENGL = "OpenGL"
+		conf.env.FRAMEWORK_CARBON = "Carbon"
+		conf.env.FRAMEWORK_APPLICATIONSERVICES = "ApplicationServices"
+		conf.env.FRAMEWORK_CORESERVICES = "CoreServices"
+		conf.env.FRAMEWORK_COREAUDIO = "CoreAudio"
+		conf.env.FRAMEWORK_AUDIOTOOLBOX = "AudioToolbox"
+		conf.env.FRAMEWORK_SYSTEMCONFIGURATION = "SystemConfiguration"
+
+	if conf.env.DEST_OS == 'win32':
+		conf.check(lib='libz', uselib_store='ZLIB', define_name='USE_ZLIB')
+		# conf.check(lib='nvtc', uselib_store='NVTC')
+		# conf.check(lib='ati_compress_mt_vc10', uselib_store='ATI_COMPRESS_MT_VC10')
+		conf.check(lib='SDL2', uselib_store='SDL2')
+		conf.check(lib='libjpeg', uselib_store='JPEG', define_name='HAVE_JPEG')
+		conf.check(lib='libpng', uselib_store='PNG', define_name='HAVE_PNG')
+		conf.check(lib='d3dx9', uselib_store='D3DX9')
+		conf.check(lib='d3d9', uselib_store='D3D9')
+		conf.check(lib='dsound', uselib_store='DSOUND')
+		conf.check(lib='dxguid', uselib_store='DXGUID')
+		if conf.options.OPUS:
+			conf.check(lib='opus', uselib_store='OPUS')
+
+		# conf.multicheck(*a, run_all_tests = True, mandatory = True)
 
 def configure(conf):
 	conf.load('fwgslib reconfigure compiler_optimizations')
@@ -428,12 +533,6 @@ def configure(conf):
 		cxxflags += ['-std=c++11','-fpermissive']
 
 	if conf.env.COMPILER_CC == 'gcc':
-#		wrapfunctions = ['freopen','creat','access','__xstat','stat','lstat','fopen64','open64',
-#			'opendir','__lxstat','chmod','chown','lchown','symlink','link','__lxstat64','mknod',
-#			'utimes','unlink','rename','utime','__xstat64','mount','mkdir','rmdir','scandir','realpath','mkfifo']
-
-#		for func in wrapfunctions:
-#			linkflags += ['-Wl,--wrap='+func]
 		conf.define('COMPILER_GCC', 1)
 	elif conf.env.COMPILER_CC == 'msvc':
 		conf.define('COMPILER_MSVC', 1)
@@ -459,104 +558,7 @@ def configure(conf):
 	conf.env.append_unique('LINKFLAGS', linkflags)
 	conf.env.append_unique('INCLUDES', [os.path.abspath('common/')])
 
-	if conf.env.DEST_OS != 'android':
-		if conf.env.DEST_OS != 'win32':
-			if conf.options.SDL:
-				conf.check_cfg(package='sdl2', uselib_store='SDL2', args=['--cflags', '--libs'])
-			if conf.options.DEDICATED:
-				conf.check_cfg(package='libedit', uselib_store='EDIT', args=['--cflags', '--libs'])
-			else:
-				conf.check_pkg('freetype2', 'FT2', FT2_CHECK)
-				conf.check_pkg('fontconfig', 'FC', FC_CHECK)
-				if conf.env.DEST_OS == "darwin":
-					conf.env.FRAMEWORK_OPENAL = "OpenAL"
-				else:
-					conf.check_cfg(package='openal', uselib_store='OPENAL', args=['--cflags', '--libs'])
-				conf.check_cfg(package='libjpeg', uselib_store='JPEG', args=['--cflags', '--libs'])
-				conf.check_cfg(package='libpng', uselib_store='PNG', args=['--cflags', '--libs'])
-				conf.check_cfg(package='libcurl', uselib_store='CURL', args=['--cflags', '--libs'])
-			conf.check_cfg(package='zlib', uselib_store='ZLIB', args=['--cflags', '--libs'])
-
-			if conf.options.OPUS:
-				conf.check_cfg(package='opus', uselib_store='OPUS', args=['--cflags', '--libs'])
-	else:
-		conf.check(lib='SDL2', uselib_store='SDL2')
-		conf.check(lib='freetype2', uselib_store='FT2')
-		conf.check(lib='jpeg', uselib_store='JPEG', define_name='HAVE_JPEG')
-		conf.check(lib='png', uselib_store='PNG', define_name='HAVE_PNG')
-		conf.check(lib='curl', uselib_store='CURL', define_name='HAVE_CURL')
-		conf.check(lib='z', uselib_store='ZLIB', define_name='HAVE_ZLIB')
-		if conf.env.DEST_CPU != 'aarch64':
-			conf.check(lib='unwind', uselib_store='UNWIND')
-			conf.check(lib='crypto', uselib_store='CRYPTO')
-			conf.check(lib='ssl', uselib_store='SSL')
-		conf.check(lib='android_support', uselib_store='ANDROID_SUPPORT')
-		conf.check(lib='opus', uselib_store='OPUS')
-
-	if conf.env.DEST_OS == "darwin":
-		conf.check(lib='iconv', uselib_store='ICONV')
-		conf.env.FRAMEWORK_APPKIT = "AppKit"
-		conf.env.FRAMEWORK_IOKIT = "IOKit"
-		conf.env.FRAMEWORK_FOUNDATION = "Foundation"
-		conf.env.FRAMEWORK_COREFOUNDATION = "CoreFoundation"
-		conf.env.FRAMEWORK_COREGRAPHICS = "CoreGraphics"
-		conf.env.FRAMEWORK_OPENGL = "OpenGL"
-		conf.env.FRAMEWORK_CARBON = "Carbon"
-		conf.env.FRAMEWORK_APPLICATIONSERVICES = "ApplicationServices"
-		conf.env.FRAMEWORK_CORESERVICES = "CoreServices"
-		conf.env.FRAMEWORK_COREAUDIO = "CoreAudio"
-		conf.env.FRAMEWORK_AUDIOTOOLBOX = "AudioToolbox"
-		conf.env.FRAMEWORK_SYSTEMCONFIGURATION = "SystemConfiguration"
-
-	if conf.env.DEST_OS != 'win32':
-		conf.check_cc(lib='dl', mandatory=False)
-		conf.check_cc(lib='bz2', mandatory=False)
-		conf.check_cc(lib='rt', mandatory=False)
-
-		if not conf.env.LIB_M: # HACK: already added in xcompile!
-			conf.check_cc(lib='m')
-	else:
-		# Common Win32 libraries
-		# Don't check them more than once, to save time
-		# Usually, they are always available
-		# but we need them in uselib
-		a = [
-			'user32',
-			'shell32',
-			'gdi32',
-			'advapi32',
-			'dbghelp',
-			'psapi',
-			'ws2_32',
-			'rpcrt4',
-			'winmm',
-			'wininet',
-			'ole32',
-			'shlwapi',
-			'imm32'
-		]
-
-		if conf.env.COMPILER_CC == 'msvc':
-			for i in a:
-				conf.check_lib_msvc(i)
-		else:
-			for i in a:
-				conf.check_cc(lib = i)
-
-		conf.check(lib='libz', uselib_store='ZLIB', define_name='USE_ZLIB')
-		# conf.check(lib='nvtc', uselib_store='NVTC')
-		# conf.check(lib='ati_compress_mt_vc10', uselib_store='ATI_COMPRESS_MT_VC10')
-		conf.check(lib='SDL2', uselib_store='SDL2')
-		conf.check(lib='libjpeg', uselib_store='JPEG', define_name='HAVE_JPEG')
-		conf.check(lib='libpng', uselib_store='PNG', define_name='HAVE_PNG')
-		conf.check(lib='d3dx9', uselib_store='D3DX9')
-		conf.check(lib='d3d9', uselib_store='D3D9')
-		conf.check(lib='dsound', uselib_store='DSOUND')
-		conf.check(lib='dxguid', uselib_store='DXGUID')
-		if conf.options.OPUS:
-			conf.check(lib='opus', uselib_store='OPUS')
-
-		# conf.multicheck(*a, run_all_tests = True, mandatory = True)
+	check_deps( conf )
 
 	# indicate if we are packaging for Linux/BSD
 	if conf.env.DEST_OS != 'android':
