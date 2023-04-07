@@ -1385,7 +1385,7 @@ bool COM_BufferToBufferDecompress( void *dest, unsigned int *destLen, const void
 		if ( pHeader->id == LZSS_ID )
 		{
 			CLZSS s;
-			int nActualDecompressedSize = s.SafeUncompress( (byte *)source, (byte *)dest, *destLen );
+			int nActualDecompressedSize = s.SafeUncompress( (byte *)source, sourceLen, (byte *)dest, *destLen );
 			if ( nActualDecompressedSize != nDecompressedSize )
 			{
 				Warning( "NET_BufferToBufferDecompress: header said %d bytes would be decompressed, but we LZSS decompressed %d\n", nDecompressedSize, nActualDecompressedSize );

@@ -14,7 +14,7 @@ def configure(conf):
 	conf.define('TIER1TEST_EXPORTS', 1)
 
 def build(bld):
-	source = ['commandbuffertest.cpp', 'utlstringtest.cpp', 'tier1test.cpp'] #, 'lzsstest.cpp']
+	source = ['commandbuffertest.cpp', 'utlstringtest.cpp', 'tier1test.cpp', 'lzsstest.cpp']
 	includes = ['../../public', '../../public/tier0']
 	defines = []
 	libs = ['tier0', 'tier1', 'mathlib', 'unitlib']

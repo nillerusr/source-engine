@@ -606,6 +606,16 @@ typedef void * HINSTANCE;
 	#define FMTFUNCTION( a, b )
 #endif
 
+#if defined(__has_feature)
+#if __has_feature(address_sanitizer)
+#define USING_ASAN 1
+#endif
+#endif
+
+#if !defined( USING_ASAN ) && defined( __SANITIZE_ADDRESS__ )
+#define USING_ASAN 1
+#endif
+
 #if COMPILER_CLANG || COMPILER_GCC
 #define NO_ASAN __attribute__((no_sanitize("address")))
 #else

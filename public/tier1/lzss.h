@@ -30,7 +30,7 @@ public:
 	unsigned char*	CompressNoAlloc( const unsigned char *pInput, int inputlen, unsigned char *pOutput, unsigned int *pOutputSize );
 	unsigned int	Uncompress( const unsigned char *pInput, unsigned char *pOutput );
 	//unsigned int	Uncompress( unsigned char *pInput, CUtlBuffer &buf );
-	unsigned int	SafeUncompress( const unsigned char *pInput, unsigned char *pOutput, unsigned int unBufSize );
+	unsigned int	SafeUncompress( const unsigned char *pInput, unsigned int inputSize, unsigned char *pOutput, unsigned int unBufSize );
 
 	static bool			IsCompressed( const unsigned char *pInput );
 	static unsigned int	GetActualSize( const unsigned char *pInput );
