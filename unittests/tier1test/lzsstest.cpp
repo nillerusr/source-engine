@@ -19,7 +19,7 @@ static void SafeUncompressTests()
 	unsigned char out[256];
 	char poision3[8192];
 
-#ifdef USING_ASAN
+#if defined( USING_ASAN ) && !defined( COMPILER_GCC )
 	ASAN_POISON_MEMORY_REGION( poision1, 8192 );
 	ASAN_POISON_MEMORY_REGION( poision2, 8192 );
 	ASAN_POISON_MEMORY_REGION( poision3, 8192 );
