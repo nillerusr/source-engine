@@ -1816,14 +1816,14 @@ void CClientState::FinishSignonState_New()
 	//
 	// This is pretty janky, but doesn't really have any cost (and even makes our one-frozen-frame load screen slightly
 	// less likely to trigger OS "not responding" warnings)
-//	extern void V_RenderVGuiOnly();
-//	V_RenderVGuiOnly();
+	extern void V_RenderSwapBuffers();
+	V_RenderSwapBuffers();
 
 	// Before we do anything with the whitelist, make sure we have the proper map pack mounted
 	// this will load the .bsp by setting the world model the string list at the hardcoded index 1.
 	cl.SetModel( 1 );
 
-	//V_RenderVGuiOnly();
+	V_RenderSwapBuffers();
 
 	// Check for a new whitelist. It's good to do it early in the connection process here because if we wait until later,
 	// the client may have loaded some files w/o the proper whitelist restrictions and we'd have to reload them.

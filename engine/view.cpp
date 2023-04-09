@@ -171,6 +171,18 @@ void V_RenderVGuiOnly( void )
 	Shader_SwapBuffers();
 }
 
+void V_RenderSwapBuffers( void )
+{
+	materials->BeginFrame( host_frametime );
+	g_EngineRenderer->FrameBegin();
+
+	UpdateMaterialSystemConfig();
+
+	g_EngineRenderer->FrameEnd( );
+	materials->EndFrame();
+
+	Shader_SwapBuffers();
+}
 
 void FullViewColorAdjustment( )
 {

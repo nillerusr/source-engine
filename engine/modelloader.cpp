@@ -956,13 +956,13 @@ void EnableHDR( bool bEnable )
 	///             ancient bugs, hence the kill switch.
 	bool bUpdateOffline = mod_offline_hdr_switch.GetBool();
 #ifndef DEDICATED
-	extern void V_RenderVGuiOnly();
+	extern void V_RenderSwapBuffers();
 #endif
 
 	if ( bUpdateOffline )
 	{
 #ifndef DEDICATED
-		V_RenderVGuiOnly();
+		V_RenderSwapBuffers();
 #endif
 		materials->ReleaseResources();
 	}
@@ -986,7 +986,7 @@ void EnableHDR( bool bEnable )
 #ifndef DEDICATED
 	if ( bUpdateOffline )
 	{
-		V_RenderVGuiOnly();
+		V_RenderSwapBuffers();
 	}
 #endif
 }
