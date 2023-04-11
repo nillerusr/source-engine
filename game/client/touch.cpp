@@ -624,8 +624,9 @@ void CTouchControls::Frame()
 		return;
 
 	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+	bool isMulti = engine->GetMaxClients() > 1;
 
-	if( pPlayer && (pPlayer->GetFlags() & FL_FROZEN || g_pIntroData != NULL) )
+	if( pPlayer && (pPlayer->GetFlags() & FL_FROZEN || g_pIntroData != NULL) && !isMulti )
 	{
 		if( !m_bCutScene )
 		{
