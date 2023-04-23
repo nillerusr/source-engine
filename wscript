@@ -51,6 +51,7 @@ projects={
 		'launcher',
 		'launcher_main',
 		'materialsystem',
+#		'materialsystem/shaderapiempty',
 		'materialsystem/shaderapidx9',
 		'materialsystem/shaderlib',
 		'materialsystem/stdshaders',
@@ -94,6 +95,7 @@ projects={
 		'unittests/tier1test',
 		'unittests/tier2test',
 		'unittests/tier3test',
+		'unittests/mathlibtest',
 		'utils/unittest'
 	],
 	'dedicated': [
