@@ -1,0 +1,64 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Configure Waf for Debug 32-bit",
+            "type": "shell",
+            "command": "./waf configure -T debug --prefix=build/out/",
+            "problemMatcher": [],
+            "windows": {
+                "command": "./waf.bat configure -T debug --prefix=build/out/"
+            },
+            "osx": {
+                "command": "python3 waf configure -T debug --prefix=build/out/"
+            }
+        },
+        {
+            "label": "Configure Waf for Debug 64-bit",
+            "type": "shell",
+            "command": "./waf configure -T debug --64bits --prefix=build/out/",
+            "problemMatcher": [],
+            "windows": {
+                "command": "./waf.bat configure -T debug --64bits --prefix=build/out/"
+            },
+            "osx": {
+                "command": "python3 waf configure -T debug --64bits --prefix=build/out/"
+            }
+        },
+        {
+            "label": "Configure Waf for Debug on Android (NDK r10e)",
+            "type": "shell",
+            "command": "./waf configure -T debug --android=armeabi-v7a-hard,4.9,21",
+            "problemMatcher": [],
+            "windows": {
+                "command": "./waf.bat configure -T debug --android=armeabi-v7a-hard,4.9,21"
+            },
+            "osx": {
+                "command": "python3 waf configure -T debug --android=armeabi-v7a-hard,4.9,21"
+            }
+        },
+        {
+            "label": "Build",
+            "type": "shell",
+            "command": "./waf install",
+            "problemMatcher": {
+                "base": "$gcc",
+                "fileLocation": ["relative", "${workspaceFolder}/build"]
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "windows": {
+                "command": "./waf.bat install",
+                "problemMatcher": {
+                    "base": "$msCompile",
+                    "fileLocation": ["relative", "${workspaceFolder}/build"]
+                }
+            },
+            "osx": {
+                "command": "python3 waf install"
+            }
+        }
+    ]
+}
