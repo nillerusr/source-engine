@@ -17,6 +17,10 @@
 #define COMPILER_GCC 1
 #endif
 
+#ifdef __GLIBC__
+#define PLATFORM_GLIBC 1
+#endif
+
 #ifdef __clang__
 #define COMPILER_CLANG 1
 #endif

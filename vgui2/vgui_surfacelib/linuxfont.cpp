@@ -20,7 +20,9 @@
 #include <tier0/dbg.h>
 #include <vgui/ISurface.h>
 #include <utlbuffer.h>
+#if HAVE_FC
 #include <fontconfig/fontconfig.h>
+#endif
 #include <freetype/ftbitmap.h>
 #include "materialsystem/imaterialsystem.h"
 
@@ -462,10 +464,14 @@ char *TryFindFont(const char *winFontName, bool bBold, int italic)
 
 	return fontFile;
 #else
-	// "platform/resource/linux_fonts/";
+	bool bRegularPostfix = false;
+	fontName = "dejavusans";
 
 	if( strcmp( winFontName, "Courier New") == 0 )
-		fontName = "liberationmono";
+	{
+		strncpy(fontFile, "platform/resource/linux_fonts/liberationmono-regular.ttf", sizeof(fontFile));
+		return fontFile;
+	}
 
 	if( bBold )
 	{
@@ -477,9 +483,13 @@ char *TryFindFont(const char *winFontName, bool bBold, int italic)
 	else if( italic )
 		fontNamePost = "oblique";
 	else
-		fontNamePost = "regular";
+		fontNamePost = NULL;
 
-	snprintf(fontFile, sizeof fontFile, "platform/resource/linux_fonts/%s-%s.ttf", fontName, fontNamePost);
+	if( fontNamePost )
+		snprintf(fontFile, sizeof fontFile, "platform/resource/linux_fonts/%s-%s.ttf", fontName, fontNamePost);
+	else
+		snprintf(fontFile, sizeof fontFile, "platform/resource/linux_fonts/%s.ttf", fontName );
+
 	return fontFile;
 #endif
 }
@@ -498,14 +508,14 @@ char *CLinuxFont::GetFontFileName( const char *windowsFontName, int flags )
 	else if ( !Q_stricmp( pchFontName, "Arial Black" ) || Q_stristr( pchFontName, "bold" ) )
 		bBold = true;
 
-	const int italic = ( flags & vgui::ISurface::FONTFLAG_ITALIC ) ? FC_SLANT_ITALIC : FC_SLANT_ROMAN;
-
 #if !HAVE_FC
-	char *filename = TryFindFont( windowsFontName, bBold, italic );
-	Msg("Found font: %s\n", filename);
+	char *filename = TryFindFont( windowsFontName, bBold, flags & vgui::ISurface::FONTFLAG_ITALIC );
 	if( !filename ) return NULL;
+	Msg("Found font: %s\n", filename);
 	return strdup( filename );
 #else
+	const int italic = ( flags & vgui::ISurface::FONTFLAG_ITALIC ) ? FC_SLANT_ITALIC : FC_SLANT_ROMAN;
+
 	const int nFcWeight = bBold ? FC_WEIGHT_BOLD : FC_WEIGHT_NORMAL;
 	FcPattern *match = FontMatch( FC_FAMILY, FcTypeString, pchFontName,
 								  FC_WEIGHT, FcTypeInteger, nFcWeight,

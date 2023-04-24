@@ -279,10 +279,6 @@ static void posix_signal_handler( int i )
 #define DO_TRY		if ( sigsetjmp( g_mark, 1 ) == 0 )
 #define DO_CATCH	else
 
-#if defined( OSX ) || defined(PLATFORM_BSD)
-#define __sighandler_t sig_t
-#endif
-
 #else
 
 #define DO_TRY		try
@@ -390,7 +386,7 @@ public:
 		_se_translator_function curfilter = _set_se_translator( &FailSafe );
 #elif defined( POSIX )
 		// Only need to worry about this function crashing when we're dealing with a real crash.
-		__sighandler_t curfilter = bRealCrash ? signal( SIGSEGV, posix_signal_handler ) : 0;
+		sig_t curfilter = bRealCrash ? signal( SIGSEGV, posix_signal_handler ) : 0;
 #endif
 
 		DO_TRY

@@ -38,11 +38,14 @@
 #define XBOX_CODELINE_ONLY() Error_Compiling_Code_Only_Valid_in_Xbox_Codeline
 #endif
 
-// stdio.h
-#if !defined(NULL) || defined(__FreeBSD__)
-#ifdef NULL
-# undef NULL
+#ifdef nullptr
+#undef nullptr
+#define nullptr 0
 #endif
+
+// stdio.h
+#ifdef NULL
+#undef NULL
 #define NULL 0
 #endif
 

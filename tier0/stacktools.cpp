@@ -27,7 +27,7 @@
 #include <set>
 #endif
 
-#if defined( LINUX ) && !defined( ANDROID )
+#if defined( LINUX ) && defined( PLATFORM_GLIBC )
 #include <execinfo.h>
 #endif
 
@@ -38,7 +38,7 @@
 
 #if !defined( ENABLE_RUNTIME_STACK_TRANSLATION ) //disable the whole toolset
 
-#if defined( LINUX ) && !defined( ANDROID )
+#if defined( LINUX ) && defined( PLATFORM_GLIBC )
 
 int GetCallStack( void **pReturnAddressesOut, int iArrayCount, int iSkipCount )
 {
