@@ -80,7 +80,7 @@
 #include "tier0/memdbgon.h"
 
 #ifdef ANDROID
-#include "common/iconv.h"
+#include "common/android/iconv.h"
 #elif POSIX
 #include <iconv.h>
 #endif

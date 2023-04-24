@@ -697,12 +697,14 @@ static bool CreateTempFilename( TempFilename_t &info, const char *filenameBase, 
 				if ( info.fh.file )
 					return true;
 			}
+#if HAVE_ZLIB
 			else
 			{
 				info.fh.gzfile = gzopen( info.Filename, "wb6" );
 				if ( info.fh.gzfile )
 					return true;
 			}
+#endif
 		}
 	}
 

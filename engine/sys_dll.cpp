@@ -1578,7 +1578,7 @@ CON_COMMAND( star_memory, "Dump memory stats" )
 {
 	// get a current stat of available memory
 	// 32 MB is reserved and fixed by OS, so not reporting to allow memory loggers sync
-#ifdef LINUX
+#if defined( PLATFORM_GLIBC )
 	struct mallinfo memstats = mallinfo( );
 	Msg( "sbrk size: %.2f MB, Used: %.2f MB, #mallocs = %d\n",
 		 memstats.arena / ( 1024.0 * 1024.0), memstats.uordblks / ( 1024.0 * 1024.0 ), memstats.hblks );
@@ -1586,14 +1586,14 @@ CON_COMMAND( star_memory, "Dump memory stats" )
 	struct mstats memstats = mstats( );
 	Msg( "Available %.2f MB, Used: %.2f MB, #mallocs = %lu\n",
 		 memstats.bytes_free / ( 1024.0 * 1024.0), memstats.bytes_used / ( 1024.0 * 1024.0 ), memstats.chunks_used );
-#elif PLATFORM_BSD
-# warning TODO: Implement memory stats (peace of sheet of course)
-#else // Win32
+#elif defined( _WIN32 ) // Win32
 	MEMORYSTATUS stat;
 	GlobalMemoryStatus( &stat );
 	Msg( "Available: %.2f MB, Used: %.2f MB, Free: %.2f MB\n", 
 		stat.dwTotalPhys/( 1024.0f*1024.0f ) - 32.0f,
 		( stat.dwTotalPhys - stat.dwAvailPhys )/( 1024.0f*1024.0f ) - 32.0f, 
 		stat.dwAvailPhys/( 1024.0f*1024.0f ) );
+#else
+#warning TODO: Implement memory stats
 #endif
 }
