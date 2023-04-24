@@ -91,3 +91,21 @@ jobs:
     - name: Build dedicated linux-amd64
       run: |
         scripts/build-ubuntu-amd64.sh -d
+
+  build-macos-amd64:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build macos-amd64
+      run: |
+        scripts/build-macos-amd64.sh
+
+  build-dedicated-macos-amd64:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build dedicated macos-amd64
+      run: |
+        scripts/build-macos-amd64.sh -d

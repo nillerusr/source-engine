@@ -288,13 +288,11 @@ int GetNumMipMapLevels( int width, int height, int depth )
 // Turn off warning about FOURCC formats below...
 #pragma warning (disable:4063)
 
-#ifdef DX_TO_GL_ABSTRACTION
 #ifndef MAKEFOURCC
 #define MAKEFOURCC(ch0, ch1, ch2, ch3)                              \
 	((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8) |   \
 	((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24 ))
 #endif //defined(MAKEFOURCC)
-#endif	
 //-----------------------------------------------------------------------------
 // convert back and forth from D3D format to ImageFormat, regardless of
 // whether it's supported or not

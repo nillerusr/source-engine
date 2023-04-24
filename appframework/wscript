@@ -24,11 +24,10 @@ def build(bld):
 		source += [
 			'sdlmgr.cpp'
 		]
-	
-	if bld.env.DEST_OS == 'darwin':
-		source += [
-			'glmrendererinfo_osx.mm'
-		]
+
+	if bld.env.DEST_OS == 'darwin' and bld.env.GL:
+		source += ['glmrendererinfo_osx.mm']
+
 
 	if bld.env.DEST_OS == 'win32':
 		source += [

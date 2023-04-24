@@ -128,7 +128,7 @@ bool CUnitTestApp::Create()
 		while ((dir = readdir(d)) != NULL)
 		{
 			int len = strlen(dir->d_name);
-			if( len > 2 && strcmp(dir->d_name+len-3, ".so") == 0)
+			if( len > 2 && strcmp(dir->d_name+len-strlen(DLL_EXT_STRING), DLL_EXT_STRING) == 0)
 			{
 				static char path[2048];
 				snprintf(path, sizeof(path), "tests/%s", dir->d_name);

@@ -21,6 +21,15 @@ jobs:
       run: |
         scripts/tests-ubuntu-amd64.sh
 
+  tests-macos-amd64:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Run tests macos-amd64
+      run: |
+        scripts/tests-macos-amd64.sh
+
   tests-windows-i386:
     runs-on: windows-2019
 

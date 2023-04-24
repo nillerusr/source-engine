@@ -88,14 +88,7 @@ namespace ImageLoader
 
 		Assert( IsFormatValidForConversion( imageFormat ) );
 
-#if !defined( DX_TO_GL_ABSTRACTION ) && !defined( NO_X360_XDK )
-		if ( IsPC() )
-		{
-			// running as a win32 tool, data is in expected order
-			// for conversion code
-			return;
-		}
-
+#ifdef _X360
 		// running on 360 and converting, input data must be x86 order
 		// swap to ensure conversion code gets valid data
 		XGENDIANTYPE xEndian;
@@ -137,7 +130,7 @@ namespace ImageLoader
 	{
 		Assert( IsFormatValidForConversion( imageFormat ) );
 
-#if !defined( DX_TO_GL_ABSTRACTION ) && !defined( NO_X360_XDK )
+#ifdef _X360
 		// It would have been nice to use the 360 D3DFORMAT bit encodings, but the codes
 		// are different for win32, and this routine is used by a win32 library to
 		// manipulate 360 data, so there can be no reliance on D3DFORMAT bits
@@ -201,7 +194,7 @@ namespace ImageLoader
 	{
 		Assert( IsFormatValidForConversion( imageFormat ) );
 
-#if !defined( DX_TO_GL_ABSTRACTION ) && !defined( NO_X360_XDK )
+#ifdef _X360
 		XGENDIANTYPE xEndian;
 		switch ( imageFormat )
 		{
@@ -256,5 +249,4 @@ namespace ImageLoader
 		}
 #endif
 	}
-	
 }

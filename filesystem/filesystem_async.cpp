@@ -659,8 +659,9 @@ void CBaseFileSystem::InitAsync()
 		Msg( "Async I/O disabled from command line\n" );
 		return;
 	}
-
+#ifndef UNITTESTS
 	if ( VCRGetMode() == VCR_Disabled )
+#endif
 	{
 		// create the i/o thread pool
 		m_pThreadPool = CreateThreadPool();
@@ -668,7 +669,6 @@ void CBaseFileSystem::InitAsync()
 		ThreadPoolStartParams_t params;
 		params.iThreadPriority = 0;
 		params.bIOThreads = true;
-		params.nThreadsMax = 4; // Limit count of IO threads to a maximum of 4.
 		if ( IsX360() )
 		{
 			// override defaults
@@ -678,11 +678,10 @@ void CBaseFileSystem::InitAsync()
 			params.bUseAffinityTable = true;
 			params.iAffinityTable[0] = XBOX_PROCESSOR_3;
 		}
-		else if( IsPC() )
+		else
 		{
-			// override defaults
-			// maximum # of async I/O thread on PC is 2
-			params.nThreads = 1;
+			params.nThreadsMax = MIN(params.nThreads, 4); // Limit count of IO threads to a maximum of 4.
+			params.nStackSize = 256*1024;
 		}
 
 		if ( !m_pThreadPool->Start( params, "IOJob" ) )

@@ -2224,7 +2224,7 @@ GLMDisplayDB *CSDLMgr::GetDisplayDB( void )
 }
 
 #ifndef OSX
-# include "glmdisplaydb_linuxwin.inl"
+#include "glmdisplaydb_linuxwin.inl"
 #endif
 
 
