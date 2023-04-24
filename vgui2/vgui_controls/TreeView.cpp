@@ -1422,7 +1422,7 @@ void TreeNode::OnMouseReleased(MouseCode code)
 
 	if ( input()->GetMouseCapture() == GetVPanel() )
 	{
-		input()->SetMouseCapture( NULL );
+		input()->SetMouseCapture(0);
 		return;
 	}
 	int x, y;

@@ -280,7 +280,7 @@ bool CSceneFileCache::GetSceneDataFromImage( const char *pFileName, int iScene, 
 	{
 		if ( pSceneData )
 		{
-			*pSceneData = NULL;
+			*pSceneData = 0;
 		}
 		if ( pSceneLength )
 		{

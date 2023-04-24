@@ -517,8 +517,8 @@ private:
 	public:
 		TitleEntry()
 		{
-			panel = NULL;
-			title[0] = 0;
+			panel = 0;
+			title[0] = '\0';
 		}
 
 		vgui::VPANEL panel;
@@ -556,7 +556,7 @@ private:
 	int m_nFullscreenViewportHeight;
 	ITexture *m_pFullscreenRenderTarget;
 
-#if defined(LINUX) || defined(OSX) || defined(PLATFORM_BSD)
+#if defined(POSIX)
 	struct font_entry
 	{
 		void *data;

@@ -105,7 +105,7 @@ void PropertyPage::SetVisible(bool state)
         // if we're going away and we have a current button, get rid of it
         if (GetFocusNavGroup().GetCurrentDefaultButton())
         {
-            GetFocusNavGroup().SetCurrentDefaultButton(NULL);
+            GetFocusNavGroup().SetCurrentDefaultButton(0);
         }
     }
 

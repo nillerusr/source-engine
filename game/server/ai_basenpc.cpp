@@ -8803,7 +8803,7 @@ void CAI_BaseNPC::DrawDebugGeometryOverlays(void)
 				{
 					float	r,g,b;
 					char	debugText[255];
-					debugText[0] = NULL;
+					debugText[0] = '\0';
 
 					if (npcEnemy == GetEnemy())
 					{

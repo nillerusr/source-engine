@@ -82,7 +82,7 @@ void CNPC_Mossman::HandleAnimEvent( animevent_t *pEvent )
 //-----------------------------------------------------------------------------
 int CNPC_Mossman::GetSoundInterests ( void )
 {
-	return	NULL;
+	return	0;
 }
 
 //-----------------------------------------------------------------------------

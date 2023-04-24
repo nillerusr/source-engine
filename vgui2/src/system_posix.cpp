@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/param.h>
 
@@ -292,7 +291,7 @@ void CSystem::ShellExecute(const char *command, const char *file)
 	if ( pid == 0 )
 	{
 		// Child
-#if defined(LINUX) || defined(PLATFORM_BSD)
+#if defined(POSIX) && !defined(OSX)
 		// Escape steam runtime if necessary
 		const char *szSteamRuntime = getenv( "STEAM_RUNTIME" );
 		if ( szSteamRuntime )

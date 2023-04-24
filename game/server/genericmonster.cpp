@@ -127,7 +127,7 @@ void CGenericNPC::HandleAnimEvent( animevent_t *pEvent )
 //=========================================================
 int CGenericNPC::GetSoundInterests ( void )
 {
-	return	NULL;
+	return	0;
 }
 
 //=========================================================

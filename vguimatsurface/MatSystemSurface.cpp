@@ -36,7 +36,6 @@ ILauncherMgr *g_pLauncherMgr = NULL;
 #include "Input.h"
 #include <vgui/IHTML.h>
 #include <vgui/IVGui.h>
-#include "vgui_surfacelib/FontManager.h"
 #include "FontTextureCache.h"
 #include "MatSystemSurface.h"
 #include "inputsystem/iinputsystem.h"
@@ -56,9 +55,9 @@ ILauncherMgr *g_pLauncherMgr = NULL;
 #include "../vgui2/src/VPanel.h"
 #include <vgui/IInputInternal.h>
 #if defined( _X360 )
-#include "xbox/xbox_win32stubs.h"
+#include "common/xbox/xbox_win32stubs.h"
 #endif
-#include "xbox/xboxstubs.h"
+#include "common/xbox/xboxstubs.h"
 #include "../vgui2/src/Memorybitmap.h"
 
 #pragma warning( disable : 4706 )
@@ -146,7 +145,7 @@ CMatSystemSurface g_MatSystemSurface;
 EXPOSE_SINGLE_INTERFACE_GLOBALVAR( CMatSystemSurface, ISurface, 
 						VGUI_SURFACE_INTERFACE_VERSION, g_MatSystemSurface );
 
-#if defined(LINUX) || defined(OSX) || defined(PLATFORM_BSD)
+#if defined(POSIX)
 CUtlDict< CMatSystemSurface::font_entry, unsigned short > CMatSystemSurface::m_FontData;
 #endif
 
@@ -407,7 +406,7 @@ InitReturnVal_t CMatSystemSurface::Init( void )
 		FontManager().SetLanguage( "english" );
 	}
 
-#if defined(LINUX) || defined(OSX) || defined(PLATFORM_BSD)
+#if defined(POSIX)
 	FontManager().SetFontDataHelper( &CMatSystemSurface::FontDataHelper );
 #endif
 
@@ -1907,7 +1906,7 @@ bool CMatSystemSurface::AddCustomFontFile( const char *fontName, const char *fon
 	}
 	Assert( success );
 	return success;
-#elif defined(LINUX) || defined(OSX) || defined(PLATFORM_BSD)
+#elif defined(POSIX)
 
 	int size;
 	if ( CMatSystemSurface::FontDataHelper( fontName, size, fontFileName ) )
@@ -1921,7 +1920,7 @@ bool CMatSystemSurface::AddCustomFontFile( const char *fontName, const char *fon
 #endif
 }
 
-#if defined(LINUX) || defined(OSX) || defined(PLATFORM_BSD)
+#if defined(POSIX)
 
 static void RemoveSpaces( CUtlString &str )
 {

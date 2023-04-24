@@ -2346,7 +2346,7 @@ void CMatRenderContext::CopyRenderTargetToTextureEx( ITexture *pTexture, int nRe
 
 void CMatRenderContext::CopyRenderTargetToTexture( ITexture *pTexture )
 {
-	CopyRenderTargetToTextureEx( pTexture, NULL, NULL );
+	CopyRenderTargetToTextureEx( pTexture, 0, NULL );
 }
 
 
@@ -3039,7 +3039,7 @@ void CMatRenderContext::AsyncMap( ITextureInternal* pTexToMap, IAsyncTextureOper
 	}
 
 	void* pMemory = NULL;
-	int nPitch = NULL;
+	int nPitch = 0;
 
 	pTexToMap->Map( &pMemory, &nPitch );
 

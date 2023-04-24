@@ -58,6 +58,7 @@ def build(bld):
 	] + bld.env.INCLUDES_SDL2
 
 	defines = []
+	defines.append('_FORTIFY_SOURCE=0')
 
 	libs = ['tier0','tier1','tier2','vstdlib','mathlib','bitmap','shaderlib','vtf']
 

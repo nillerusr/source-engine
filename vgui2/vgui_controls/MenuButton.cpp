@@ -239,7 +239,7 @@ void MenuButton::OnCursorEntered()
 	KeyValues *msg = new KeyValues ("CursorEnteredMenuButton");
 	// tell the parent this menuitem is the one that was entered so it can open the menu if it wants
 	msg->SetInt("VPanel", GetVPanel());
-	ivgui()->PostMessage(GetVParent(), msg, NULL);
+	ivgui()->PostMessage(GetVParent(), msg, 0);
 }
 
 // This style is like the IE "back" button where the left side acts like a regular button, the the right side has a little

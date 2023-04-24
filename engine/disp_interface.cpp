@@ -1298,7 +1298,7 @@ int DispInfo_ComputeIndex( HDISPINFOARRAY hArray, IDispInfo* pInfo )
 {
 	CDispArray *pArray = static_cast<CDispArray*>( hArray );
 	if( !pArray )
-		return NULL;
+		return 0;
 
 	intp iElement = ((intp)pInfo - (intp)(pArray->m_pDispInfos)) / sizeof(CDispInfo);
 

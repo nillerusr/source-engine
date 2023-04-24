@@ -224,7 +224,7 @@ void MenuItem::OnCursorEntered()
 	// tell the parent this menuitem is the one that was entered so it can highlight it
     msg->SetInt("menuItem", ToHandle() );
 
-	ivgui()->PostMessage(GetVParent(), msg, NULL);
+	ivgui()->PostMessage(GetVParent(), msg, 0);
 }
 
 //-----------------------------------------------------------------------------
@@ -238,7 +238,7 @@ void MenuItem::OnCursorExited()
 	// tell the parent this menuitem is the one that was entered so it can unhighlight it
     msg->SetInt("menuItem", ToHandle() );
 
-	ivgui()->PostMessage(GetVParent(), msg, NULL);
+	ivgui()->PostMessage(GetVParent(), msg, 0);
 }
 
 //-----------------------------------------------------------------------------

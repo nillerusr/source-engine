@@ -1914,7 +1914,7 @@ void GLMContext::DelBuffer( CGLMBuffer *buff )
 		}
 	}
 		
-	BindGLBufferToCtx( buff->m_buffGLTarget, NULL, false );
+	BindGLBufferToCtx( buff->m_buffGLTarget, 0, false );
 			
 	delete buff;
 }

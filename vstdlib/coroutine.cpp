@@ -1076,7 +1076,7 @@ bool Coroutine_Test()
 	while ( vecCoroutineL2.Count() )
 	{
 		if ( hCoroutine && !Coroutine_Continue( hCoroutine, NULL ) )
-			hCoroutine = NULL;
+			hCoroutine = 0;
 
 		FOR_EACH_VEC_BACK( vecCoroutineL2, i )
 		{

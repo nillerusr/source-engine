@@ -41,7 +41,7 @@ CTreeViewListControl::CTreeViewListControl( vgui::Panel *pParent, const char *pN
 {
 	m_pTree = NULL;
 	m_BorderColor.SetColor( 255, 255, 255, 255 );
-	m_TitleBarFont = NULL;
+	m_TitleBarFont = 0;
 	m_TitleBarHeight = 20;
 	SetPostChildPaintEnabled( true );
 }

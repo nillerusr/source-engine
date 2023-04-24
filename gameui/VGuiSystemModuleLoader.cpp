@@ -161,7 +161,7 @@ bool CVGuiSystemModuleLoader::LoadPlatformModules(CreateInterfaceFn *factorylist
 		{
 			dllPath = it->GetString("dll_osx");
 		}
-		else if ( IsLinux() || IsBSD() )
+		else if ( IsPosix() )
 		{
 			dllPath = it->GetString("dll_linux");
 		}
@@ -225,7 +225,7 @@ void CVGuiSystemModuleLoader::ShutdownPlatformModules()
 	int i;
 	for ( i = 0; i < m_Modules.Count(); i++ )
 	{
-		vgui::ivgui()->PostMessage(m_Modules[i].moduleInterface->GetPanel(), new KeyValues("Command", "command", "Quit"), NULL);
+		vgui::ivgui()->PostMessage(m_Modules[i].moduleInterface->GetPanel(), new KeyValues("Command", "command", "Quit"), 0);
 	}
 
 	for ( i = 0; i < m_Modules.Count(); i++ )
@@ -362,7 +362,7 @@ void CVGuiSystemModuleLoader::PostMessageToAllModules(KeyValues *message)
 {
 	for (int i = 0; i < m_Modules.Count(); i++)
 	{
-		vgui::ivgui()->PostMessage(m_Modules[i].moduleInterface->GetPanel(), message->MakeCopy(), NULL);
+		vgui::ivgui()->PostMessage(m_Modules[i].moduleInterface->GetPanel(), message->MakeCopy(), 0);
 	}
 	message->deleteThis();
 }

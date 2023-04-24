@@ -7,12 +7,12 @@
 #if defined( WIN32 ) && !defined( _X360 )
 #include <wtypes.h>
 #include <winuser.h>
-#include "xbox/xboxstubs.h"
+#include "common/xbox/xboxstubs.h"
 #endif
 #include "tier0/dbg.h"
 #include "vgui_key_translation.h"
 #if defined( _X360 )
-#include "xbox/xbox_win32stubs.h"
+#include "common/xbox/xbox_win32stubs.h"
 #endif
 #ifdef POSIX
 #define VK_RETURN -1

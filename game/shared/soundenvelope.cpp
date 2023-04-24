@@ -1056,7 +1056,7 @@ CSoundPatch *CSoundControllerImp::SoundCreate( IRecipientFilter& filter, int nEn
 	CSoundPatch *pSound = new CSoundPatch;
 
 	// FIXME: This is done so we don't have to futz with the public interface
-	EHANDLE hEnt = (nEntIndex != -1) ? g_pEntityList->GetNetworkableHandle( nEntIndex ) : NULL;
+	EHANDLE hEnt = (nEntIndex != -1) ? g_pEntityList->GetNetworkableHandle( nEntIndex ) : 0;
 	pSound->Init( &filter, hEnt.Get(), CHAN_AUTO, pSoundName, SNDLVL_NORM );
 
 	return pSound;
@@ -1073,7 +1073,7 @@ CSoundPatch *CSoundControllerImp::SoundCreate( IRecipientFilter& filter, int nEn
 #endif
 
 	CSoundPatch *pSound = new CSoundPatch;
-	EHANDLE hEnt = (nEntIndex != -1) ? g_pEntityList->GetNetworkableHandle( nEntIndex ) : NULL;
+	EHANDLE hEnt = (nEntIndex != -1) ? g_pEntityList->GetNetworkableHandle( nEntIndex ) : 0;
 	pSound->Init( &filter, hEnt.Get(), channel, pSoundName, ATTN_TO_SNDLVL( attenuation ) );
 
 	return pSound;
@@ -1090,7 +1090,7 @@ CSoundPatch *CSoundControllerImp::SoundCreate( IRecipientFilter& filter, int nEn
 #endif
 
 	CSoundPatch *pSound = new CSoundPatch;
-	EHANDLE hEnt = (nEntIndex != -1) ? g_pEntityList->GetNetworkableHandle( nEntIndex ) : NULL;
+	EHANDLE hEnt = (nEntIndex != -1) ? g_pEntityList->GetNetworkableHandle( nEntIndex ) : 0;
 	pSound->Init( &filter, hEnt.Get(), channel, pSoundName, soundlevel );
 
 	return pSound;
@@ -1101,7 +1101,7 @@ CSoundPatch *CSoundControllerImp::SoundCreate( IRecipientFilter& filter, int nEn
 	CSoundPatch *pSound = new CSoundPatch;
 
 	// FIXME: This is done so we don't have to futz with the public interface
-	EHANDLE hEnt = (nEntIndex != -1) ? g_pEntityList->GetNetworkableHandle( nEntIndex ) : NULL;
+	EHANDLE hEnt = (nEntIndex != -1) ? g_pEntityList->GetNetworkableHandle( nEntIndex ) : 0;
 	pSound->Init( &filter, hEnt.Get(), es.m_nChannel, es.m_pSoundName, es.m_SoundLevel );
 	pSound->ChangeVolume( es.m_flVolume, 0 );
 	pSound->ChangePitch( es.m_nPitch, 0 );

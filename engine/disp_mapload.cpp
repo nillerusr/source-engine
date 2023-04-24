@@ -801,7 +801,7 @@ CDispInfo::CDispInfo()
 
 	m_pMesh = NULL;
 
-	m_Tag = NULL;
+	m_Tag = 0;
 	m_pDispArray = NULL;
 
 	m_FirstDecal = DISP_DECAL_HANDLE_INVALID;

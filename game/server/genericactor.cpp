@@ -92,7 +92,7 @@ void CGenericActor::HandleAnimEvent( animevent_t *pEvent )
 //=========================================================
 int CGenericActor::GetSoundInterests ( void )
 {
-	return	NULL;
+	return	0;
 }
 
 //=========================================================

@@ -16,7 +16,8 @@
 
 #define NeedProportional() (IsAndroid() || CommandLine()->CheckParm("-gameuiproportionality"))
 
-#ifndef NULL
+#if !defined(NULL) || !defined(PLATFORM_GLIBC)
+#undef NULL
 #ifdef __cplusplus
 #define NULL    0
 #else

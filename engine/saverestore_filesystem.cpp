@@ -79,7 +79,7 @@ public:
 			pBuffer = NULL; 
 			pCompressedBuffer = NULL;
 			nSize = 0;
-			nCompressedSize = NULL;
+			nCompressedSize = 0;
 		}
 
 

@@ -10,7 +10,7 @@
 #ifdef LINUX
 #include <linux/sysctl.h>
 #else
-#include <sys/sysctl.h>
+# include <sys/sysctl.h>
 # ifdef __APPLE__
 #  define CPUFREQ_SYSCTL "hw.cpufrequency_max"
 # else
@@ -101,7 +101,7 @@ uint64 GetCPUFreqFromPROC()
 
 uint64 CalculateCPUFreq()
 {
-#if defined(__APPLE__) || defined(PLATFORM_BSD)
+#if !defined(LINUX)
 	return GetCPUFreqFromPROC();
 #else
 	// Try to open cpuinfo_max_freq. If the kernel was built with cpu scaling support disabled, this will fail.

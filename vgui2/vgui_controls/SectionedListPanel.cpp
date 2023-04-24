@@ -1452,7 +1452,7 @@ int SectionedListPanel::GetColumnCountBySection(int sectionID)
 {
 	int index = FindSectionIndexByID(sectionID);
 	if (index < 0)
-		return NULL;
+		return 0;
 
 	return m_Sections[index].m_Columns.Size();
 }

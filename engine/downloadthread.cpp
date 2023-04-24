@@ -587,12 +587,12 @@ static size_t curlHeaderFn( void *ptr, size_t size, size_t nmemb, void *stream)
 	char *pszValue = NULL;
 	RequestContext_t *pRC = (RequestContext_t *) stream;
 	
-	pszHeader[ ( size * nmemb - 1 ) ] = NULL;
+	pszHeader[ ( size * nmemb - 1 ) ] = '\0';
 	pszValue = Q_strstr( pszHeader, ":" );
 	if ( pszValue )
 	{
 		// null terminate the header name, and point pszValue at it's value
-		*pszValue = NULL;
+		*pszValue = '\0';
 		pszValue++;
 		Q_StrTrim( pszValue );
 	}

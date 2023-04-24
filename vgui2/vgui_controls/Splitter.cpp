@@ -122,7 +122,7 @@ void SplitterHandle::OnMouseReleased(MouseCode code)
 {
 	if ( m_bDragging )
 	{
-		input()->SetMouseCapture(NULL);
+		input()->SetMouseCapture(0);
 		m_bDragging = false;
 	}
 }

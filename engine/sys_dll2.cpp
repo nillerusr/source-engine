@@ -279,7 +279,7 @@ static void posix_signal_handler( int i )
 #define DO_TRY		if ( sigsetjmp( g_mark, 1 ) == 0 )
 #define DO_CATCH	else
 
-#if defined( OSX ) || defined(PLATFORM_BSD)
+#if !defined(PLATFORM_GLIBC)
 #define __sighandler_t sig_t
 #endif
 

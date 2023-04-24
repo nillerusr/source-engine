@@ -573,7 +573,7 @@ VPANEL CVGui::HandleToPanel(HPanel index)
 {
 	if ( !m_HandleTable.IsHandleValid( index ) )
 	{
-		return NULL;
+		return 0;
 	}
 	return (VPANEL)m_HandleTable.GetHandle( (UtlHandle_t)index );
 }
@@ -913,7 +913,7 @@ bool CVGui::DispatchMessages()
 //-----------------------------------------------------------------------------
 void CVGui::MarkPanelForDeletion(VPANEL panel)
 {
-	PostMessage(panel, new KeyValues("Delete"), NULL);
+	PostMessage(panel, new KeyValues("Delete"), 0);
 }
 
 //-----------------------------------------------------------------------------
@@ -994,11 +994,11 @@ void CVGui::ShutdownMessage(unsigned int shutdownID)
 	VPANEL panel = g_pSurface->GetEmbeddedPanel();
 	for (int i = 0; i < ((VPanel *)panel)->GetChildCount(); i++)
 	{
-		g_pIVgui->PostMessage((VPANEL)((VPanel *)panel)->GetChild(i), new KeyValues("ShutdownRequest", "id", shutdownID), NULL);
+		g_pIVgui->PostMessage((VPANEL)((VPanel *)panel)->GetChild(i), new KeyValues("ShutdownRequest", "id", shutdownID), 0);
 	}
 
 	// post to the top level window as well
-	g_pIVgui->PostMessage(panel, new KeyValues("ShutdownRequest", "id", shutdownID), NULL);
+	g_pIVgui->PostMessage(panel, new KeyValues("ShutdownRequest", "id", shutdownID), 0);
 }
 
 //-----------------------------------------------------------------------------

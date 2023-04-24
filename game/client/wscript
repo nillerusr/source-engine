@@ -77,6 +77,7 @@ def build(bld):
 	includes += game["includes"]
 	defines = game["defines"]
 
+	defines.append('_FORTIFY_SOURCE=0')
 	defines.remove('PROTECTED_THINGS_ENABLE')
 
 	bld.shlib(

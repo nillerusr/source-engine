@@ -63,15 +63,22 @@
 #define NEW_SOFTWARE_LIGHTING
 
 #ifdef POSIX
-// need this for _alloca
 # ifdef PLATFORM_BSD
 #  define va_list __va_list
 # else
+// need this for _alloca
 #  include <alloca.h>
 # endif
-#include <unistd.h>
-#include <signal.h>
-#include <time.h>
+# include <unistd.h>
+# include <signal.h>
+# include <time.h>
+#endif
+
+#ifdef LINUX
+# include <features.h>
+# ifdef __GLIBC__
+#  define PLATFORM_GLIBC 1
+# endif
 #endif
 
 #ifdef OSX
@@ -1404,11 +1411,11 @@ PLATFORM_INTERFACE void* Plat_SimpleLog( const tchar* file, int line );
 //-----------------------------------------------------------------------------
 // Returns true if debugger attached, false otherwise
 //-----------------------------------------------------------------------------
-#if defined(_WIN32) || defined(LINUX) || defined(OSX) || defined(PLATFORM_BSD)
+#if defined(_WIN32) || defined(POSIX)
 PLATFORM_INTERFACE bool Plat_IsInDebugSession();
 PLATFORM_INTERFACE void Plat_DebugString( const char * );
 #else
-#warning "Plat_IsInDebugSession isn't working properly"
+#error "Plat_IsInDebugSession isn't working properly"
 inline bool Plat_IsInDebugSession( bool bForceRecheck = false ) { return false; }
 #define Plat_DebugString(s) ((void)0)
 #endif

@@ -1999,7 +1999,7 @@ void CChannelCullList::Initialize( CChannelList &list )
 		else
 		{
 			m_channelInfo[i].m_vol = -1;
-			m_channelInfo[i].m_nameHash = NULL; // doesn't matter
+			m_channelInfo[i].m_nameHash = 0; // doesn't matter
 		}
 	}
 

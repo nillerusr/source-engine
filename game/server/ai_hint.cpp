@@ -311,7 +311,7 @@ int CAI_HintManager::FindAllHints( CAI_BaseNPC *pNPC, const Vector &position, co
 	//  If we have no hints, bail
 	int c = CAI_HintManager::gm_AllHints.Count();
 	if ( !c )
-		return NULL;
+		return 0;
 
 	// Remove the nearest flag. It makes now sense with random.
 	bool hadNearest = hintCriteria.HasFlag( bits_HINT_NODE_NEAREST );

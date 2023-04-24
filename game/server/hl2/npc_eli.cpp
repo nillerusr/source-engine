@@ -72,7 +72,7 @@ void CNPC_Eli::HandleAnimEvent( animevent_t *pEvent )
 //-----------------------------------------------------------------------------
 int CNPC_Eli::GetSoundInterests ( void )
 {
-	return	NULL;
+	return	0;
 }
 
 //-----------------------------------------------------------------------------

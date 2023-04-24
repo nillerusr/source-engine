@@ -1710,7 +1710,7 @@ int CPackedStore::GetFileList( const char *pWildCard, CUtlStringList &outFilenam
 	bool bNoBaseWildcard = false;
 	bool bNoExtWildcard = false;
 
-	szWildCardPath[0] = szWildCardExt[0] = szWildCardBase[0] = NULL;
+	szWildCardPath[0] = szWildCardExt[0] = szWildCardBase[0] = '\0';
 
 	// Parse the wildcard string into a base and extension used for string comparisons
 	if ( pWildCard )
@@ -1723,9 +1723,9 @@ int CPackedStore::GetFileList( const char *pWildCard, CUtlStringList &outFilenam
 
 		// Remove '*' from the base and extension strings so that the string comparison calls will match
 		char *pcStar = strchr( szWildCardBase, '*' );
-		pcStar ? *pcStar = NULL : bNoBaseWildcard = true;
+		pcStar ? *pcStar = '\0' : bNoBaseWildcard = true;
 		pcStar = strchr( szWildCardExt, '*' );
-		pcStar ? *pcStar = NULL : bNoExtWildcard = true;
+		pcStar ? *pcStar = '\0' : bNoExtWildcard = true;
 	}
 
 	char const *pData = reinterpret_cast< char const *>( DirectoryData() );
@@ -1928,10 +1928,10 @@ int CPackedStore::GetFileAndDirLists( const char *pWildCard, CUtlStringList &out
 
 		// Remove '*' from the base and extension strings so that the string comparison calls will match
 		char *pcStar = strchr( szWildCardBase, '*' );
-		pcStar ? *pcStar = NULL : bBaseWildcard = false;
+		pcStar ? *pcStar = '\0' : bBaseWildcard = false;
 
 		pcStar = strchr( szWildCardExt, '*' );
-		pcStar ? *pcStar = NULL : bExtWildcard = false;
+		pcStar ? *pcStar = '\0' : bExtWildcard = false;
 
 		nLenWildcardPath = V_strlen( szWildCardPath );
 		nLenWildcardBase = V_strlen( szWildCardBase );
@@ -1960,7 +1960,7 @@ int CPackedStore::GetFileAndDirLists( const char *pWildCard, CUtlStringList &out
 
 				// Set the next / to NULL and we have our subdirectory
 				char *pSlash = strchr( szSubDir, '/' );
-				pSlash ? *pSlash = NULL : NULL;
+				pSlash ? *pSlash = '\0' : 0;
 
 				szSubDirExtension = strchr( szSubDir, '.' );
 				if ( szSubDirExtension )

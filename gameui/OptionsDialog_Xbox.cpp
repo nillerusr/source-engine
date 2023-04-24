@@ -541,7 +541,7 @@ void COptionsDialogXbox::OnCommand(const char *command)
 	}
 	else if ( !Q_stricmp( command, "ReleaseModalWindow" ) )
 	{
-		vgui::surface()->RestrictPaintToSinglePanel(NULL);
+		vgui::surface()->RestrictPaintToSinglePanel(0);
 	}
 	else
 	{

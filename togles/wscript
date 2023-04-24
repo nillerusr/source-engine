@@ -39,12 +39,14 @@ def build(bld):
 
 	includes = [
 		'.',
+		'../common',
 		'../public',
 		'../public/tier0',
 		'../public/tier1'
 	] + bld.env.INCLUDES_SDL2
 
 	defines = []
+	defines.append('_FORTIFY_SOURCE=0')
 
 	libs = ['tier0','tier1','tier2','vstdlib','mathlib']
 

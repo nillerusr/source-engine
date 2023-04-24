@@ -147,7 +147,7 @@ private:
 		CRestoreSceneSound()
 		{
 			actor = NULL;
-			soundname[ 0 ] = NULL;
+			soundname[ 0 ] = '\0';
 			soundlevel = SNDLVL_NORM;
 			time_in_past = 0.0f;
 		}

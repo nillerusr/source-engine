@@ -1514,7 +1514,7 @@ AI_Waypoint_t *CAI_Pathfinder::BuildRadialRoute( const Vector &vStartPos, const 
 		vNextPos.y	+= flRadius * sin( flCurAngle );
 
 		// Build a route from the last position to the current one
-		pNextRoute = BuildLocalRoute( vLastPos, vNextPos, NULL, NULL, NO_NODE, fRouteBits, goalTolerance);
+		pNextRoute = BuildLocalRoute( vLastPos, vNextPos, 0, 0, NO_NODE, fRouteBits, goalTolerance);
 		
 		// If we can't find a route, we failed
 		if ( pNextRoute == NULL )
@@ -1547,7 +1547,7 @@ AI_Waypoint_t *CAI_Pathfinder::BuildRadialRoute( const Vector &vStartPos, const 
 		return NULL;
 
 	// Append a path to the final position
-	pLastRoute = BuildLocalRoute( vLastPos, vGoalPos, NULL, NULL, NO_NODE, bAirRoute ? bits_BUILD_FLY : bits_BUILD_GROUND, goalTolerance );	
+	pLastRoute = BuildLocalRoute( vLastPos, vGoalPos, 0, 0, NO_NODE, bAirRoute ? bits_BUILD_FLY : bits_BUILD_GROUND, goalTolerance );	
 	if ( pLastRoute == NULL )
 		return NULL;
 

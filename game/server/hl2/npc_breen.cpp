@@ -69,7 +69,7 @@ void CNPC_Breen::HandleAnimEvent( animevent_t *pEvent )
 //-----------------------------------------------------------------------------
 int CNPC_Breen::GetSoundInterests ( void )
 {
-	return	NULL;
+	return	0;
 }
 
 //-----------------------------------------------------------------------------

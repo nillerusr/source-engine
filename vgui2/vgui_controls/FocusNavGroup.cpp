@@ -29,10 +29,10 @@ using namespace vgui;
 //-----------------------------------------------------------------------------
 FocusNavGroup::FocusNavGroup(Panel *panel) : _mainPanel(panel)
 {
-	_currentFocus = NULL;
+	_currentFocus = 0;
 	_topLevelFocus = false;
-	_defaultButton = NULL;
-    _currentDefaultButton = NULL;
+	_defaultButton = 0;
+    _currentDefaultButton = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -51,7 +51,7 @@ bool FocusNavGroup::RequestFocusPrev(VPANEL panel)
 	if(panel==0)
 		return false;
 
-	_currentFocus = NULL;
+	_currentFocus = 0;
 	int newPosition = 9999999;
 	if (panel)
 	{
@@ -116,7 +116,7 @@ bool FocusNavGroup::RequestFocusPrev(VPANEL panel)
 				if (ipanel()->RequestFocusPrev(_mainPanel->GetVParent(), _mainPanel->GetVPanel()))
 				{
 					bFound = true;
-					SetCurrentDefaultButton(NULL);
+					SetCurrentDefaultButton(0);
 					break;
 				}
 			}
@@ -141,12 +141,12 @@ bool FocusNavGroup::RequestFocusPrev(VPANEL panel)
             }
 			else
 			{
-				SetCurrentDefaultButton(NULL);
+				SetCurrentDefaultButton(0);
 
 				// we need to ask the parent to set its default button
 				if (_mainPanel->GetVParent())
 				{
-					ivgui()->PostMessage(_mainPanel->GetVParent(), new KeyValues("FindDefaultButton"), NULL);
+					ivgui()->PostMessage(_mainPanel->GetVParent(), new KeyValues("FindDefaultButton"), 0);
 				}
 			}
         }
@@ -168,7 +168,7 @@ bool FocusNavGroup::RequestFocusNext(VPANEL panel)
 	static int stack_depth = 0;
 	stack_depth++;
 
-	_currentFocus = NULL;
+	_currentFocus = 0;
 	int newPosition = 0;
 	if (panel)
 	{
@@ -230,7 +230,7 @@ bool FocusNavGroup::RequestFocusNext(VPANEL panel)
 					if (ipanel()->RequestFocusNext(_mainPanel->GetVParent(), _mainPanel->GetVPanel()))
 					{
 						bFound = true;
-						SetCurrentDefaultButton(NULL);
+						SetCurrentDefaultButton(0);
 						break;
 					}
 
@@ -258,12 +258,12 @@ bool FocusNavGroup::RequestFocusNext(VPANEL panel)
 			}
 			else
 			{
-				SetCurrentDefaultButton(NULL);
+				SetCurrentDefaultButton(0);
 
 				// we need to ask the parent to set its default button
 				if (_mainPanel->GetVParent())
 				{
-					ivgui()->PostMessage(_mainPanel->GetVParent(), new KeyValues("FindDefaultButton"), NULL);
+					ivgui()->PostMessage(_mainPanel->GetVParent(), new KeyValues("FindDefaultButton"), 0);
 				}
 			}
         }
@@ -290,7 +290,7 @@ void FocusNavGroup::SetFocusTopLevel(bool state)
 //-----------------------------------------------------------------------------
 void FocusNavGroup::SetDefaultButton(Panel *panel)
 {
-	VPANEL vpanel = panel ? panel->GetVPanel() : NULL;
+	VPANEL vpanel = panel ? panel->GetVPanel() : 0;
 	if ( vpanel == _defaultButton.Get() )
 		return;
 
@@ -310,14 +310,14 @@ void FocusNavGroup::SetCurrentDefaultButton(VPANEL panel, bool sendCurrentDefaul
 
 	if ( sendCurrentDefaultButtonMessage && _currentDefaultButton.Get() != 0)
 	{
-		ivgui()->PostMessage(_currentDefaultButton, new KeyValues("SetAsCurrentDefaultButton", "state", 0), NULL);
+		ivgui()->PostMessage(_currentDefaultButton, new KeyValues("SetAsCurrentDefaultButton", "state", 0), 0);
 	}
 
 	_currentDefaultButton = panel;
 
 	if ( sendCurrentDefaultButtonMessage && _currentDefaultButton.Get() != 0)
 	{
-		ivgui()->PostMessage(_currentDefaultButton, new KeyValues("SetAsCurrentDefaultButton", "state", 1), NULL);
+		ivgui()->PostMessage(_currentDefaultButton, new KeyValues("SetAsCurrentDefaultButton", "state", 1), 0);
 	}
 }
 

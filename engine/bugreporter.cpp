@@ -110,7 +110,7 @@
 #define BUG_REPOSITORY_URL "\\\\fileserver\\bugs"
 #elif defined(OSX)
 #define BUG_REPOSITORY_URL "/Volumes/bugs"
-#elif defined(LINUX) || defined(PLATFORM_BSD)
+#elif defined(POSIX)
 #define BUG_REPOSITORY_URL "\\\\fileserver\\bugs"
 #else
 //#error
@@ -2257,7 +2257,7 @@ void NonFileSystem_CreatePath (const char *path)
 	}
 }
 
-#if defined(LINUX) || defined(PLATFORM_BSD)
+#if defined(POSIX) && !defined(OSX)
 #define COPYFILE_ALL 0
 #define BSIZE 65535
 int copyfile( const char *local, const char *remote, void *ignored, int ignoredFlags )

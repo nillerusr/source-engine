@@ -190,7 +190,7 @@ const char *VPanel::GetClassName()
 
 HScheme VPanel::GetScheme()
 {
-	return NULL;
+	return 0;
 }
 
 

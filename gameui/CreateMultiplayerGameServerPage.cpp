@@ -165,7 +165,7 @@ void CCreateMultiplayerGameServerPage::OnApplyChanges()
 //-----------------------------------------------------------------------------
 void CCreateMultiplayerGameServerPage::LoadMaps( const char *pszPathID )
 {
-	FileFindHandle_t findHandle = NULL;
+	FileFindHandle_t findHandle = 0;
 
 	KeyValues *hiddenMaps = ModInfo().GetHiddenMaps();
 

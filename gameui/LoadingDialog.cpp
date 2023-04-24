@@ -110,7 +110,7 @@ CLoadingDialog::~CLoadingDialog()
 {
 	if ( input()->GetAppModalSurface() == GetVPanel() )
 	{
-		vgui::surface()->RestrictPaintToSinglePanel( NULL );
+		vgui::surface()->RestrictPaintToSinglePanel(0);
 	}
 }
 
@@ -265,12 +265,12 @@ void CLoadingDialog::HideOtherDialogs( bool bHide )
 		if ( GameUI().HasLoadingBackgroundDialog() )
 		{
 			GameUI().HideLoadingBackgroundDialog();
-			vgui::input()->SetAppModalSurface( NULL );
+			vgui::input()->SetAppModalSurface(0);
 		}
 		else
 		{
 			// remove any rendering restrictions
-			vgui::surface()->RestrictPaintToSinglePanel(NULL);
+			vgui::surface()->RestrictPaintToSinglePanel(0);
 		}
 	}
 }

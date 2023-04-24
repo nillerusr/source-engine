@@ -122,7 +122,6 @@ CAsyncCtxSaveGame::CAsyncCtxSaveGame( CSaveGameDialogXbox *pDlg ) :
 	CBasePanel::CAsyncJobContext( 3.0f ),	// Storage device info for at least 3 seconds
 	m_pSaveGameDlg( pDlg )
 {
-	NULL;
 }
 
 void CAsyncCtxSaveGame::ExecuteAsync()
@@ -260,7 +259,7 @@ void CSaveGameDialogXbox::OnCommand( const char *command )
 	}
 	else if ( !Q_stricmp( command, "ReleaseModalWindow" ) )
 	{
-		vgui::surface()->RestrictPaintToSinglePanel( NULL );
+		vgui::surface()->RestrictPaintToSinglePanel(0);
 	}
 	else if ( !m_bGameSaving )
 	{

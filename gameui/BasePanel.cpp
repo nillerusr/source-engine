@@ -245,7 +245,7 @@ public:
 		if( m_szUrl ) SDL_OpenURL( m_szUrl );
 #endif
 
-		input()->SetMouseCapture(NULL);
+		input()->SetMouseCapture(0);
 	}
 
 	void SetUrl( const char *url )
@@ -332,7 +332,7 @@ public:
 			m_pConsoleFooter = NULL;
 		}
 
-		m_hMainMenuOverridePanel = NULL;
+		m_hMainMenuOverridePanel = 0;
 	}
 
 	virtual void ApplySchemeSettings(IScheme *pScheme)
@@ -844,7 +844,7 @@ CBasePanel::CBasePanel() : Panel(NULL, "BaseGameUIPanel")
 
 	m_pGameMenu = NULL;
 	m_pGameLogo = NULL;
-	m_hMainMenuOverridePanel = NULL;
+	m_hMainMenuOverridePanel = 0;
 
 	if ( SteamClient() )
 	{
@@ -1019,7 +1019,7 @@ static void CC_GameMenuCommand( const CCommand &args )
 		return;
 	}
 
-	vgui::ivgui()->PostMessage( g_pBasePanel->GetVPanel(), new KeyValues("Command", "command", args[1] ), NULL);
+	vgui::ivgui()->PostMessage( g_pBasePanel->GetVPanel(), new KeyValues("Command", "command", args[1] ), 0);
 }
 
 static int CC_GameMenuCompletionFunc( char const *partial, char commands[ COMMAND_COMPLETION_MAXITEMS ][ COMMAND_COMPLETION_ITEM_LENGTH ] )
@@ -1584,7 +1584,7 @@ void CBasePanel::UpdateGameMenus()
 
 	if ( m_hMainMenuOverridePanel )
 	{
-		vgui::ivgui()->PostMessage( m_hMainMenuOverridePanel, new KeyValues( "UpdateMenu" ), NULL );
+		vgui::ivgui()->PostMessage( m_hMainMenuOverridePanel, new KeyValues( "UpdateMenu" ), 0 );
 	}
 
 	// position the menu
@@ -2263,7 +2263,7 @@ void CBasePanel::RunMenuCommand(const char *command)
 	}
 	else if ( !Q_stricmp( command, "ReleaseModalWindow" ) )
 	{
-		vgui::surface()->RestrictPaintToSinglePanel(NULL);
+		vgui::surface()->RestrictPaintToSinglePanel(0);
 	}
 	else if ( Q_stristr( command, "engine " ) )
 	{
@@ -2343,7 +2343,7 @@ void CBasePanel::RunMenuCommand(const char *command)
 
 				RegCloseKey(hKey);
 			}
-#elif defined( OSX ) || defined( LINUX ) || defined(PLATFORM_BSD)
+#elif defined( POSIX )
 			FILE *fp = fopen( "/tmp/hl2_relaunch", "w+" );
 			if ( fp )
 			{
@@ -3002,7 +3002,7 @@ public:
 	virtual void OnClose()
 	{
 		BaseClass::OnClose();
-		vgui::surface()->RestrictPaintToSinglePanel(NULL);
+		vgui::surface()->RestrictPaintToSinglePanel(0);
 		GameUI().AllowEngineHideGameUI();
 	}
 };
@@ -3054,7 +3054,7 @@ public:
 	virtual void OnClose()
 	{
 		BaseClass::OnClose();
-		vgui::surface()->RestrictPaintToSinglePanel(NULL);
+		vgui::surface()->RestrictPaintToSinglePanel(0);
 		GameUI().AllowEngineHideGameUI();
 	}
 };
@@ -4733,7 +4733,7 @@ void CMessageDialogHandler::CloseAllMessageDialogs()
 		CMessageDialog *pDlg = m_hMessageDialogs[i];
 		if ( pDlg )
 		{
-			vgui::surface()->RestrictPaintToSinglePanel(NULL);
+			vgui::surface()->RestrictPaintToSinglePanel(0);
 			if ( vgui_message_dialog_modal.GetBool() )
 			{
 				vgui::input()->ReleaseAppModalSurface();
@@ -4760,7 +4760,7 @@ void CMessageDialogHandler::CloseMessageDialog( const uint nType )
 	CMessageDialog *pDlg = m_hMessageDialogs[nStackIdx];
 	if ( pDlg )
 	{
-		vgui::surface()->RestrictPaintToSinglePanel(NULL);
+		vgui::surface()->RestrictPaintToSinglePanel(0);
 		if ( vgui_message_dialog_modal.GetBool() )
 		{
 			vgui::input()->ReleaseAppModalSurface();

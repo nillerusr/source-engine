@@ -450,7 +450,7 @@ CInputSystem::~CInputSystem()
 //-----------------------------------------------------------------------------
 void CInputSystem::InitInputContext( InputContext_t *pContext )
 {
-	pContext->_rootPanel = NULL;
+	pContext->_rootPanel = 0;
 	pContext->_keyFocus = NULL;
 	pContext->_oldMouseFocus = NULL;
 	pContext->_mouseFocus = NULL;
@@ -568,7 +568,7 @@ void CInputSystem::RunFrame()
 		// when modal dialogs are up messages only get sent to the dialogs children.
 		if (IsChildOfModalPanel((VPANEL)pContext->_keyFocus))
 		{	
-			g_pIVgui->PostMessage((VPANEL)pContext->_keyFocus, new KeyValues("KeyFocusTicked"), NULL);
+			g_pIVgui->PostMessage((VPANEL)pContext->_keyFocus, new KeyValues("KeyFocusTicked"), 0);
 		}
 	}
 
@@ -578,7 +578,7 @@ void CInputSystem::RunFrame()
 		// when modal dialogs are up messages only get sent to the dialogs children.
 		if (IsChildOfModalPanel((VPANEL)pContext->_mouseFocus))
 		{	
-			g_pIVgui->PostMessage((VPANEL)pContext->_mouseFocus, new KeyValues("MouseFocusTicked"), NULL);
+			g_pIVgui->PostMessage((VPANEL)pContext->_mouseFocus, new KeyValues("MouseFocusTicked"), 0);
 		}
 	}
 	// Mouse has wandered "off" the modal panel, just force a regular arrow cursor until it wanders back within the proper bounds
@@ -809,7 +809,7 @@ void CInputSystem::PanelDeleted(VPANEL vfocus, InputContext_t &context)
 	// NOTE: These two will only ever happen for the default context at the moment
 	if (context._mouseCapture == focus)
 	{
-		SetMouseCapture(NULL);
+		SetMouseCapture(0);
 		context._mouseCapture = NULL;
 	}
 	if (context._appModalPanel == focus)
@@ -894,7 +894,7 @@ void CInputSystem::SetMouseFocus(VPANEL newMouseFocus)
 			// only notify of entry if the mouse is not captured or we're the captured panel
 			if ( !pContext->_mouseCapture || pContext->_oldMouseFocus == pContext->_mouseCapture )
 			{
-				g_pIVgui->PostMessage( (VPANEL)pContext->_oldMouseFocus, new KeyValues( "CursorExited" ), NULL );
+				g_pIVgui->PostMessage( (VPANEL)pContext->_oldMouseFocus, new KeyValues( "CursorExited" ), 0 );
 			}
 		}
 
@@ -904,7 +904,7 @@ void CInputSystem::SetMouseFocus(VPANEL newMouseFocus)
 			// only notify of entry if the mouse is not captured or we're the captured panel
 			if ( !pContext->_mouseCapture || pContext->_mouseOver == pContext->_mouseCapture )
 			{
-				g_pIVgui->PostMessage( (VPANEL)pContext->_mouseOver, new KeyValues( "CursorEntered" ), NULL );
+				g_pIVgui->PostMessage( (VPANEL)pContext->_mouseOver, new KeyValues( "CursorEntered" ), 0 );
 			}
 		}
 
@@ -1120,10 +1120,10 @@ void CInputSystem::SetMouseCapture(VPANEL panel)
 	// send a message if the panel is losing mouse capture
 	if (pContext->_mouseCapture && panel != (VPANEL)pContext->_mouseCapture)
 	{
-		g_pIVgui->PostMessage((VPANEL)pContext->_mouseCapture, new KeyValues("MouseCaptureLost"), NULL);
+		g_pIVgui->PostMessage((VPANEL)pContext->_mouseCapture, new KeyValues("MouseCaptureLost"), 0);
 	}
 
-	if (panel == NULL)
+	if (panel == 0)
 	{
 		if (pContext->_mouseCapture != NULL)
 		{
@@ -1431,7 +1431,7 @@ HCursor CInputSystem::GetCursorOveride()
 //-----------------------------------------------------------------------------
 bool CInputSystem::InternalCursorMoved(int x, int y)
 {
-	g_pIVgui->PostMessage((VPANEL) MESSAGE_CURSOR_POS, new KeyValues("SetCursorPosInternal", "xpos", x, "ypos", y), NULL);
+	g_pIVgui->PostMessage((VPANEL) MESSAGE_CURSOR_POS, new KeyValues("SetCursorPosInternal", "xpos", x, "ypos", y), 0);
 	return true;
 }
 
@@ -1484,13 +1484,13 @@ void CInputSystem::PostCursorMessage( )
 			return;	
 
 		// the panel with mouse capture gets all messages
-		g_pIVgui->PostMessage((VPANEL)pContext->_mouseCapture, new KeyValues("CursorMoved", "xpos", pContext->m_nCursorX, "ypos", pContext->m_nCursorY), NULL);
+		g_pIVgui->PostMessage((VPANEL)pContext->_mouseCapture, new KeyValues("CursorMoved", "xpos", pContext->m_nCursorX, "ypos", pContext->m_nCursorY), 0);
 	}
 	else if (pContext->_mouseFocus != NULL)
 	{
 		// mouse focus is current from UpdateMouse focus
 		// so the appmodal check has already been made.
-		g_pIVgui->PostMessage((VPANEL)pContext->_mouseFocus, new KeyValues("CursorMoved", "xpos", pContext->m_nCursorX, "ypos", pContext->m_nCursorY), NULL);
+		g_pIVgui->PostMessage((VPANEL)pContext->_mouseFocus, new KeyValues("CursorMoved", "xpos", pContext->m_nCursorX, "ypos", pContext->m_nCursorY), 0);
 	}
 }
 
@@ -1512,13 +1512,13 @@ bool CInputSystem::InternalMousePressed(MouseCode code)
 		bool captureLost = code == pContext->m_MouseCaptureStartCode || pContext->m_MouseCaptureStartCode == (MouseCode)-1;
 
 		// the panel with mouse capture gets all messages
-		g_pIVgui->PostMessage((VPANEL)pContext->_mouseCapture, new KeyValues("MousePressed", "code", code), NULL);
+		g_pIVgui->PostMessage((VPANEL)pContext->_mouseCapture, new KeyValues("MousePressed", "code", code), 0);
 		pTargetPanel = pContext->_mouseCapture;
 
 		if ( captureLost )
 		{
 			// this has to happen after MousePressed so the panel doesn't Think it got a mouse press after it lost capture
-			SetMouseCapture(NULL);
+			SetMouseCapture(0);
 		}
 	}
 	else if ( (pContext->_mouseFocus != NULL) && IsChildOfModalPanel((VPANEL)pContext->_mouseFocus) )
@@ -1530,7 +1530,7 @@ bool CInputSystem::InternalMousePressed(MouseCode code)
 		bFilter = true;
 
 		// tell the panel with the mouseFocus that the mouse was presssed
-		g_pIVgui->PostMessage((VPANEL)pContext->_mouseFocus, new KeyValues("MousePressed", "code", code), NULL);
+		g_pIVgui->PostMessage((VPANEL)pContext->_mouseFocus, new KeyValues("MousePressed", "code", code), 0);
 //		g_pIVgui->DPrintf2("MousePressed: (%s, %s)\n", _mouseFocus->GetName(), _mouseFocus->GetClassName());
 		pTargetPanel = pContext->_mouseFocus;
 	}
@@ -1548,7 +1548,7 @@ bool CInputSystem::InternalMousePressed(MouseCode code)
 				if ( code == MOUSE_WHEEL_DOWN || code == MOUSE_WHEEL_UP )
 					return true;
 
-				g_pIVgui->PostMessage( ( VPANEL )pContext->m_pUnhandledMouseClickListener, new KeyValues( "UnhandledMouseClick", "code", code ), NULL );
+				g_pIVgui->PostMessage( ( VPANEL )pContext->m_pUnhandledMouseClickListener, new KeyValues( "UnhandledMouseClick", "code", code ), 0 );
 				pTargetPanel = pContext->m_pUnhandledMouseClickListener;
 				bFilter = true;
 			}
@@ -1580,7 +1580,7 @@ bool CInputSystem::InternalMouseDoublePressed(MouseCode code)
 			return true;
 
 		// the panel with mouse capture gets all messages
-		g_pIVgui->PostMessage((VPANEL)pContext->_mouseCapture, new KeyValues("MouseDoublePressed", "code", code), NULL);
+		g_pIVgui->PostMessage((VPANEL)pContext->_mouseCapture, new KeyValues("MouseDoublePressed", "code", code), 0);
 		pTargetPanel = pContext->_mouseCapture;
 		bFilter = true;
 	}
@@ -1591,7 +1591,7 @@ bool CInputSystem::InternalMouseDoublePressed(MouseCode code)
 			return true;
 
 		// tell the panel with the mouseFocus that the mouse was double presssed
-		g_pIVgui->PostMessage((VPANEL)pContext->_mouseFocus, new KeyValues("MouseDoublePressed", "code", code), NULL);
+		g_pIVgui->PostMessage((VPANEL)pContext->_mouseFocus, new KeyValues("MouseDoublePressed", "code", code), 0);
 		pTargetPanel = pContext->_mouseFocus;
 		bFilter = true;
 	}
@@ -1619,7 +1619,7 @@ bool CInputSystem::InternalMouseReleased( MouseCode code )
 			return true;
 
 		// the panel with mouse capture gets all messages
-		g_pIVgui->PostMessage((VPANEL)pContext->_mouseCapture, new KeyValues("MouseReleased", "code", code), NULL );
+		g_pIVgui->PostMessage((VPANEL)pContext->_mouseCapture, new KeyValues("MouseReleased", "code", code), 0 );
 		bFilter = true;
 	}
 	else if ((pContext->_mouseFocus != NULL) && IsChildOfModalPanel((VPANEL)pContext->_mouseFocus))
@@ -1629,7 +1629,7 @@ bool CInputSystem::InternalMouseReleased( MouseCode code )
 			return true;
 
 		//tell the panel with the mouseFocus that the mouse was release
-		g_pIVgui->PostMessage((VPANEL)pContext->_mouseFocus, new KeyValues("MouseReleased", "code", code), NULL );
+		g_pIVgui->PostMessage((VPANEL)pContext->_mouseFocus, new KeyValues("MouseReleased", "code", code), 0 );
 		bFilter = true;
 	}
 
@@ -1645,7 +1645,7 @@ bool CInputSystem::InternalMouseWheeled(int delta)
 	if ((pContext->_mouseFocus != NULL) && IsChildOfModalPanel((VPANEL)pContext->_mouseFocus))
 	{
 		// the mouseWheel works with the mouseFocus, not the keyFocus
-		g_pIVgui->PostMessage((VPANEL)pContext->_mouseFocus, new KeyValues("MouseWheeled", "delta", delta), NULL);
+		g_pIVgui->PostMessage((VPANEL)pContext->_mouseFocus, new KeyValues("MouseWheeled", "delta", delta), 0);
 		bFilter = true;
 	}
 	return bFilter;
@@ -1798,10 +1798,10 @@ bool CInputSystem::PostKeyMessage(KeyValues *message)
 	if( (pContext->_keyFocus!= NULL) && IsChildOfModalPanel((VPANEL)pContext->_keyFocus))
 	{
 #ifdef _X360
-		g_pIVgui->PostMessage((VPANEL) MESSAGE_CURRENT_KEYFOCUS, message, NULL );
+		g_pIVgui->PostMessage((VPANEL) MESSAGE_CURRENT_KEYFOCUS, message, 0 );
 #else
 		//tell the current focused panel that a key was released
-		g_pIVgui->PostMessage((VPANEL)pContext->_keyFocus, message, NULL );
+		g_pIVgui->PostMessage((VPANEL)pContext->_keyFocus, message, 0 );
 #endif
 		return true;
 	}
@@ -3103,7 +3103,7 @@ void CInputSystem::OnKeyCodeUnhandled( int keyCode )
 	for ( int i = 0; i < c; ++i )
 	{
 		VPanel *listener = pContext->m_KeyCodeUnhandledListeners[ i ];
-		g_pIVgui->PostMessage((VPANEL)listener, new KeyValues( "KeyCodeUnhandled", "code", keyCode ), NULL );
+		g_pIVgui->PostMessage((VPANEL)listener, new KeyValues( "KeyCodeUnhandled", "code", keyCode ), 0 );
 	}
 }
 
@@ -3115,7 +3115,7 @@ void CInputSystem::PostModalSubTreeMessage( VPanel *subTree, bool state )
 
 	//tell the current focused panel that a key was released
 	KeyValues *kv = new KeyValues( "ModalSubTree", "state", state ? 1 : 0 );
-	g_pIVgui->PostMessage( (VPANEL)pContext->m_pModalSubTree, kv, NULL );
+	g_pIVgui->PostMessage( (VPANEL)pContext->m_pModalSubTree, kv, 0 );
 }
 
 // Assumes subTree is a child panel of the root panel for the vgui contect

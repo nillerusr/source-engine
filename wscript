@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+# vim: noexpandtab
 # encoding: utf-8
 # nillerusr
 
@@ -228,10 +229,13 @@ def define_platform(conf):
 			'_DLL_EXT=.dylib'
 		])
 
-	elif conf.env.DEST_OS in ['freebsd', 'openbsd', 'netbsd', 'dragonflybsd']: # Tested only in freebsd
+	elif conf.env.DEST_OS in ['freebsd', 'openbsd', 'netbsd']: # Tested only in freebsd
+		if conf.env.DEST_OS == 'freebsd':
+			conf.env.append_unique('DEFINES', ['PLATFORM_FBSD=1'])
 		conf.env.append_unique('DEFINES', [
 			'POSIX=1', '_POSIX=1', 'PLATFORM_POSIX=1',
 			'GNUC', # but uses clang
+			'NO_HOOK_MALLOC',
 			'PLATFORM_BSD=1',
 			'_DLL_EXT=.so'
 		])
@@ -328,7 +332,7 @@ def check_deps(conf):
 			for i in a:
 				conf.check_cc(lib = i)
 
-	if conf.env.DEST_OS == "darwin":
+	if conf.env.DEST_OS == 'darwin':
 		conf.check(lib='iconv', uselib_store='ICONV')
 		conf.env.FRAMEWORK_APPKIT = "AppKit"
 		conf.env.FRAMEWORK_IOKIT = "IOKit"
@@ -492,9 +496,6 @@ def configure(conf):
 	if conf.env.DEST_CPU == 'arm':
 		flags += ['-mfpu=neon-vfpv4']
 
-	if conf.env.DEST_OS == 'freebsd':
-		linkflags += ['-lexecinfo']
-
 	if conf.env.DEST_OS != 'win32':
 		cflags += flags
 		linkflags += flags
@@ -562,7 +563,6 @@ def configure(conf):
 	conf.env.append_unique('CFLAGS', cflags)
 	conf.env.append_unique('CXXFLAGS', cxxflags)
 	conf.env.append_unique('LINKFLAGS', linkflags)
-	conf.env.append_unique('INCLUDES', [os.path.abspath('common/')])
 
 	check_deps( conf )
 
@@ -606,3 +606,4 @@ def build(bld):
 			projects['game'] += ['togl']
 
 		bld.add_subproject(projects['game'])
+

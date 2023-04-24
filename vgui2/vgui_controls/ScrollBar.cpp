@@ -103,7 +103,7 @@ public:
 			}
 			
 			// lock mouse input to going to this button
-			input()->SetMouseCapture(NULL);
+			input()->SetMouseCapture(0);
 		}
 
 		if( input()->GetMouseOver() == GetVPanel() )

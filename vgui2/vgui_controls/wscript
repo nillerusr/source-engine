@@ -97,6 +97,7 @@ def build(bld):
 
 	includes = [
 		'.',
+		'../..',
 		'../../public',
 		'../../public/tier0',
 		'../../public/tier1'
@@ -108,6 +109,7 @@ def build(bld):
 
 	if bld.env.DEST_OS == 'win32':
 		libs += ['SHELL32']
+		includes += ['../../common']
 
 	bld.stlib(
 		source   = source,

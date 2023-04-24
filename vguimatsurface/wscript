@@ -40,10 +40,10 @@ def build(bld):
 
 	includes = [
 		'.',
+		'..',
 		'../public',
 		'../public/tier0',
 		'../public/tier1',
-		'../common',
 	]
 
 	defines = []

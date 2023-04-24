@@ -323,7 +323,7 @@ CSysModule *Sys_LoadModule( const char *pModuleName, Sys_Flags flags /* = SYS_NO
 #ifdef POSIX
 	char szModuleName[1024] = { 0 };
 #endif
-	HMODULE hDLL = NULL;
+	HMODULE hDLL = 0;
 
 	if ( !Q_IsAbsolutePath( pModuleName ) )
 	{
