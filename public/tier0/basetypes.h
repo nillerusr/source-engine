@@ -38,15 +38,17 @@
 #define XBOX_CODELINE_ONLY() Error_Compiling_Code_Only_Valid_in_Xbox_Codeline
 #endif
 
+
+#if !defined(PLATFORM_GLIBC) && defined(LINUX) // fuck musl
 #ifdef nullptr
 #undef nullptr
 #endif
-
 #define nullptr 0
+#endif
 
 
 // stdio.h
-#ifdef NULL
+#if !defined( NULL ) || defined( PLATFORM_BSD )
 #undef NULL
 #define NULL 0
 #endif
