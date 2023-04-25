@@ -198,6 +198,8 @@ def define_platform(conf):
 			'NO_HOOK_MALLOC',
 			'_DLL_EXT=.so'
 		])
+		conf.env.append_unique('CFLAGS', '-U_FORTIFY_SOURCE')
+		conf.env.append_unique('CXXFLAGS', '-U_FORTIFY_SOURCE')
 	elif conf.env.DEST_OS == 'android':
 		conf.env.append_unique('DEFINES', [
 			'ANDROID=1', '_ANDROID=1',
@@ -207,6 +209,7 @@ def define_platform(conf):
 			'NO_HOOK_MALLOC',
 			'_DLL_EXT=.so'
 		])
+		
 	elif conf.env.DEST_OS == 'win32':
 		conf.env.append_unique('DEFINES', [
 			'WIN32=1', '_WIN32=1',
