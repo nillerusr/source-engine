@@ -40,8 +40,10 @@
 
 #ifdef nullptr
 #undef nullptr
-#define nullptr 0
 #endif
+
+#define nullptr 0
+
 
 // stdio.h
 #ifdef NULL
