@@ -30,7 +30,6 @@
 // FP exception clean so this not a turnkey operation.
 //#define FP_EXCEPTIONS_ENABLED
 
-
 #ifdef FP_EXCEPTIONS_ENABLED
 #include <float.h> // For _clearfp and _controlfp_s
 #endif
@@ -93,37 +92,11 @@ private:
 	FPExceptionEnabler& operator=(const FPExceptionEnabler&);
 };
 
-
-
-#ifdef DEBUG  // stop crashing edit-and-continue
-FORCEINLINE float clamp( float val, float minVal, float maxVal )
+inline float clamp( const float val, const float minVal, const float maxVal )
 {
-	if ( maxVal < minVal )
-		return maxVal;
-	else if( val < minVal )
-		return minVal;
-	else if( val > maxVal )
-		return maxVal;
-	else
-		return val;
+	const float t = val < minVal ? minVal : val;
+	return t > maxVal ? maxVal : t;
 }
-#else // DEBUG
-FORCEINLINE float clamp( float val, float minVal, float maxVal )
-{
-#if defined(__i386__) || defined(_M_IX86)
-	_mm_store_ss( &val,
-		_mm_min_ss(
-			_mm_max_ss(
-				_mm_load_ss(&val),
-				_mm_load_ss(&minVal) ),
-			_mm_load_ss(&maxVal) ) );
-#else
-	val = fpmax(minVal, val);
-	val = fpmin(maxVal, val);
-#endif
-	return val;
-}
-#endif // DEBUG
 
 //
 // Returns a clamped value in the range [min, max].
@@ -131,16 +104,9 @@ FORCEINLINE float clamp( float val, float minVal, float maxVal )
 template< class T >
 inline T clamp( T const &val, T const &minVal, T const &maxVal )
 {
-	if ( maxVal < minVal )
-		return maxVal;
-	else if( val < minVal )
-		return minVal;
-	else if( val > maxVal )
-		return maxVal;
-	else
-		return val;
+	const T t = val< minVal ? minVal : val;
+	return t > maxVal ? maxVal : t;
 }
-
 
 // plane_t structure
 // !!! if this is changed, it must be changed in asm code too !!!
