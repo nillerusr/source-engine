@@ -1082,7 +1082,19 @@ void VectorYawRotate( const Vector& in, float flYaw, Vector &out);
 // 0                   1
 //
 // With a biasAmt of 0.5, Bias returns X.
-float Bias( float x, float biasAmt );
+inline float Bias( float x, float biasAmt )
+{
+	// WARNING: not thread safe
+	static float lastAmt = -1;
+	static float lastExponent = 0;
+	if( lastAmt != biasAmt )
+	{
+		lastExponent = log( biasAmt ) * -1.4427f; // (-1.4427 = 1 / log(0.5))
+	}
+	float fRet = pow( x, lastExponent );
+	Assert ( !IS_NAN( fRet ) );
+	return fRet;
+}
 
 
 // Gain is similar to Bias, but biasAmt biases towards or away from 0.5.
@@ -1114,9 +1126,14 @@ float Bias( float x, float biasAmt );
 // |*****
 // |___________________
 // 0                   1
-float Gain( float x, float biasAmt );
-
-
+inline float Gain( float x, float biasAmt )
+{
+	// WARNING: not thread safe
+	if( x < 0.5 )
+		return 0.5f * Bias( 2*x, 1-biasAmt );
+	else
+		return 1 - 0.5f * Bias( 2 - 2*x, 1-biasAmt );
+}
 // SmoothCurve maps a 0-1 value into another 0-1 value based on a cosine wave
 // where the derivatives of the function at 0 and 1 (and 0.5) are 0. This is useful for
 // any fadein/fadeout effect where it should start and end smoothly.

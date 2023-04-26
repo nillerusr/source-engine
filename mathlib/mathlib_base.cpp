@@ -1392,33 +1392,6 @@ void VectorYawRotate( const Vector &in, float flYaw, Vector &out)
 	out.z = in.z;
 }
 
-
-
-float Bias( float x, float biasAmt )
-{
-	// WARNING: not thread safe
-	static float lastAmt = -1;
-	static float lastExponent = 0;
-	if( lastAmt != biasAmt )
-	{
-		lastExponent = log( biasAmt ) * -1.4427f; // (-1.4427 = 1 / log(0.5))
-	}
-	float fRet = pow( x, lastExponent );
-	Assert ( !IS_NAN( fRet ) );
-	return fRet;
-}
-
-
-float Gain( float x, float biasAmt )
-{
-	// WARNING: not thread safe
-	if( x < 0.5 )
-		return 0.5f * Bias( 2*x, 1-biasAmt );
-	else
-		return 1 - 0.5f * Bias( 2 - 2*x, 1-biasAmt );
-}
-
-
 float SmoothCurve( float x )
 {
 	// Actual smooth curve. Visualization:
