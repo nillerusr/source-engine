@@ -420,13 +420,6 @@ void MatrixGetColumn( const matrix3x4_t& in, int column, Vector &out )
 	out.z = in[2][column];
 }
 
-void MatrixSetColumn( const Vector &in, int column, matrix3x4_t& out )
-{
-	out[0][column] = in.x;
-	out[1][column] = in.y;
-	out[2][column] = in.z;
-}
-
 void MatrixScaleBy ( const float flScale, matrix3x4_t &out )
 {
 	out[0][0] *= flScale;
@@ -1091,57 +1084,6 @@ void SetScaleMatrix( float x, float y, float z, matrix3x4_t &dst )
 	dst[1][0] = 0.0f;	dst[1][1] = y;		dst[1][2] = 0.0f;	dst[1][3] = 0.0f;
 	dst[2][0] = 0.0f;	dst[2][1] = 0.0f;	dst[2][2] = z;		dst[2][3] = 0.0f;
 }
-
-
-//-----------------------------------------------------------------------------
-// Purpose: Builds the matrix for a counterclockwise rotation about an arbitrary axis.
-//
-//		   | ax2 + (1 - ax2)cosQ		axay(1 - cosQ) - azsinQ		azax(1 - cosQ) + aysinQ |
-// Ra(Q) = | axay(1 - cosQ) + azsinQ	ay2 + (1 - ay2)cosQ			ayaz(1 - cosQ) - axsinQ |
-//		   | azax(1 - cosQ) - aysinQ	ayaz(1 - cosQ) + axsinQ		az2 + (1 - az2)cosQ     |
-//          
-// Input  : mat - 
-//			vAxisOrRot - 
-//			angle - 
-//-----------------------------------------------------------------------------
-void MatrixBuildRotationAboutAxis( const Vector &vAxisOfRot, float angleDegrees, matrix3x4_t &dst )
-{
-	float radians;
-	float axisXSquared;
-	float axisYSquared;
-	float axisZSquared;
-	float fSin;
-	float fCos;
-
-	radians = angleDegrees * ( M_PI / 180.0 );
-	fSin = sin( radians );
-	fCos = cos( radians );
-
-	axisXSquared = vAxisOfRot[0] * vAxisOfRot[0];
-	axisYSquared = vAxisOfRot[1] * vAxisOfRot[1];
-	axisZSquared = vAxisOfRot[2] * vAxisOfRot[2];
-
-	// Column 0:
-	dst[0][0] = axisXSquared + (1 - axisXSquared) * fCos;
-	dst[1][0] = vAxisOfRot[0] * vAxisOfRot[1] * (1 - fCos) + vAxisOfRot[2] * fSin;
-	dst[2][0] = vAxisOfRot[2] * vAxisOfRot[0] * (1 - fCos) - vAxisOfRot[1] * fSin;
-
-	// Column 1:
-	dst[0][1] = vAxisOfRot[0] * vAxisOfRot[1] * (1 - fCos) - vAxisOfRot[2] * fSin;
-	dst[1][1] = axisYSquared + (1 - axisYSquared) * fCos;
-	dst[2][1] = vAxisOfRot[1] * vAxisOfRot[2] * (1 - fCos) + vAxisOfRot[0] * fSin;
-
-	// Column 2:
-	dst[0][2] = vAxisOfRot[2] * vAxisOfRot[0] * (1 - fCos) + vAxisOfRot[1] * fSin;
-	dst[1][2] = vAxisOfRot[1] * vAxisOfRot[2] * (1 - fCos) - vAxisOfRot[0] * fSin;
-	dst[2][2] = axisZSquared + (1 - axisZSquared) * fCos;
-
-	// Column 3:
-	dst[0][3] = 0;
-	dst[1][3] = 0;
-	dst[2][3] = 0;
-}
-
 
 //-----------------------------------------------------------------------------
 // Computes the transpose

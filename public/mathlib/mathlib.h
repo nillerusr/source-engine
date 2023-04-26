@@ -237,8 +237,8 @@ bool R_CullBoxSkipNear( const Vector& mins, const Vector& maxs, const Frustum_t 
 
 struct matrix3x4_t
 {
-	matrix3x4_t() = default;
-	matrix3x4_t( 
+	inline matrix3x4_t() = default;
+	inline matrix3x4_t(
 		float m00, float m01, float m02, float m03,
 		float m10, float m11, float m12, float m13,
 		float m20, float m21, float m22, float m23 )
@@ -252,7 +252,7 @@ struct matrix3x4_t
 	// Creates a matrix where the X axis = forward
 	// the Y axis = left, and the Z axis = up
 	//-----------------------------------------------------------------------------
-	void Init( const Vector& xAxis, const Vector& yAxis, const Vector& zAxis, const Vector &vecOrigin )
+	inline void Init( const Vector& xAxis, const Vector& yAxis, const Vector& zAxis, const Vector &vecOrigin )
 	{
 		m_flMatVal[0][0] = xAxis.x; m_flMatVal[0][1] = yAxis.x; m_flMatVal[0][2] = zAxis.x; m_flMatVal[0][3] = vecOrigin.x;
 		m_flMatVal[1][0] = xAxis.y; m_flMatVal[1][1] = yAxis.y; m_flMatVal[1][2] = zAxis.y; m_flMatVal[1][3] = vecOrigin.y;
@@ -263,26 +263,23 @@ struct matrix3x4_t
 	// Creates a matrix where the X axis = forward
 	// the Y axis = left, and the Z axis = up
 	//-----------------------------------------------------------------------------
-	matrix3x4_t( const Vector& xAxis, const Vector& yAxis, const Vector& zAxis, const Vector &vecOrigin )
+	inline matrix3x4_t( const Vector& xAxis, const Vector& yAxis, const Vector& zAxis, const Vector &vecOrigin )
 	{
 		Init( xAxis, yAxis, zAxis, vecOrigin );
 	}
 
 	inline void Invalidate( void )
 	{
-		for (int i = 0; i < 3; i++)
+		for( int i=0; i < 12; i++ )
 		{
-			for (int j = 0; j < 4; j++)
-			{
-				m_flMatVal[i][j] = VEC_T_NAN;
-			}
+			((float*)m_flMatVal)[i] = VEC_T_NAN;
 		}
 	}
 
-	float *operator[]( int i )				{ Assert(( i >= 0 ) && ( i < 3 )); return m_flMatVal[i]; }
-	const float *operator[]( int i ) const	{ Assert(( i >= 0 ) && ( i < 3 )); return m_flMatVal[i]; }
-	float *Base()							{ return &m_flMatVal[0][0]; }
-	const float *Base() const				{ return &m_flMatVal[0][0]; }
+	inline float *operator[]( int i )				{ Assert(( i >= 0 ) && ( i < 3 )); return m_flMatVal[i]; }
+	inline const float *operator[]( int i ) const	{ Assert(( i >= 0 ) && ( i < 3 )); return m_flMatVal[i]; }
+	inline float *Base()							{ return &m_flMatVal[0][0]; }
+	inline const float *Base() const				{ return &m_flMatVal[0][0]; }
 
 	float m_flMatVal[3][4];
 };
@@ -565,7 +562,13 @@ void MatrixInvert( const matrix3x4_t &in, matrix3x4_t &out );
 bool MatricesAreEqual( const matrix3x4_t &src1, const matrix3x4_t &src2, float flTolerance = 1e-5 );
 
 void MatrixGetColumn( const matrix3x4_t &in, int column, Vector &out );
-void MatrixSetColumn( const Vector &in, int column, matrix3x4_t &out );
+
+inline void MatrixSetColumn( const Vector &in, int column, matrix3x4_t& out )
+{
+	out[0][column] = in.x;
+	out[1][column] = in.y;
+	out[2][column] = in.z;
+}
 
 inline void MatrixGetTranslation( const matrix3x4_t &in, Vector &out )
 {

@@ -35,7 +35,7 @@ class Vector2D;
 // 4D Vector4D
 //=========================================================
 
-class Vector4D					
+class alignas(16) Vector4D					
 {
 public:
 	// Members
