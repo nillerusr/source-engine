@@ -43,17 +43,8 @@ def build(bld):
 
 	if bld.env.DEST_OS == 'win32':
 		libs += ['USER32']
-		
-	install_path = bld.env.LIBDIR
 
-	# Copy SDL2 dependency
-	if bld.env.DEST_OS == 'win32':
-		bld(
-			rule=(('cp' if 'MSYSTEM' in os.environ or sys.platform != 'win32' else 'copy')+' ${SRC} ${TGT}'),
-			source='../lib/win32/'+bld.env.DEST_CPU+'/SDL2.dll',
-			target='SDL2.dll',
-			install_path=install_path,
-		)
+	install_path = bld.env.LIBDIR
 
 	bld.shlib(
 		source   = source,

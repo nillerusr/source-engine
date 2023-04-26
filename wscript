@@ -591,6 +591,11 @@ def configure(conf):
 def build(bld):
 	os.environ["CCACHE_DIR"] = os.path.abspath('.ccache/'+bld.env.COMPILER_CC+'/'+bld.env.DEST_OS+'/'+bld.env.DEST_CPU)
 
+	if bld.env.DEST_OS in ['win32', 'android']:
+		sdl_name = 'SDL2.dll' if bld.env.DEST_OS == 'win32' else 'libSDL2.so'
+		sdl_path = os.path.join('lib', bld.env.DEST_OS, bld.env.DEST_CPU, sdl_name)
+		bld.install_files('${PREFIX}/', [sdl_path])
+
 	if bld.env.DEST_OS == 'win32':
 		projects['game'] += ['utils/bzip2']
 		projects['dedicated'] += ['utils/bzip2']
