@@ -1042,7 +1042,7 @@ typedef enum _D3DSHADER_PARAM_REGISTER_TYPE
     D3DSPR_FORCE_DWORD  = 0x7fffffff,         // force 32-bit size enum
 } D3DSHADER_PARAM_REGISTER_TYPE;
 
-struct D3DMATRIX 
+struct alignas(16) D3DMATRIX 
 {
     union 
 	{

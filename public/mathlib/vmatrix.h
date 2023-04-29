@@ -114,11 +114,15 @@ public:
 
 	const matrix3x4_t& As3x4() const;
 	void		CopyFrom3x4( const matrix3x4_t &m3x4 );
-	void		Set3x4( matrix3x4_t& matrix3x4 ) const;
+	void		Set3x4( const matrix3x4_t& matrix3x4 );
 
 	bool		operator==( const VMatrix& src ) const {
-		return !memcmp( src.m, m, sizeof(m) );
+		return src.m[0][0] == m[0][0] && src.m[0][1] == m[0][1] && src.m[0][2] == m[0][2] && src.m[0][3] == m[0][3] &&
+			src.m[1][0] == m[1][0] && src.m[1][1] == m[1][1] && src.m[1][2] == m[1][2] && src.m[1][3] == m[1][3] &&
+			src.m[2][0] == m[2][0] && src.m[2][1] == m[2][1] && src.m[2][2] == m[2][2] && src.m[2][3] == m[2][3] &&
+			src.m[3][0] == m[3][0] && src.m[3][1] == m[3][1] && src.m[3][2] == m[3][2] && src.m[3][3] == m[3][3];
 	}
+	
 	bool		operator!=( const VMatrix& src ) const { return !( *this == src ); }
 
 #ifndef VECTOR_NO_SLOW_OPERATIONS
@@ -512,14 +516,12 @@ inline void VMatrix::Init(
 //-----------------------------------------------------------------------------
 // Initialize from a 3x4
 //-----------------------------------------------------------------------------
-inline void VMatrix::Init( const matrix3x4_t& matrix3x4 )
+inline void VMatrix::Init( const matrix3x4_t& _m )
 {
-	memcpy(m, matrix3x4.Base(), sizeof( matrix3x4_t ) );
-
-	m[3][0] = 0.0f;
-	m[3][1] = 0.0f;
-	m[3][2] = 0.0f;
-	m[3][3] = 1.0f;	
+	m[0][0] = _m[0][0]; m[0][1] = _m[0][1]; m[0][2] = _m[0][2]; m[0][3] = _m[0][3]; 
+	m[1][0] = _m[1][0]; m[1][1] = _m[1][1]; m[1][2] = _m[1][2]; m[1][3] = _m[1][3]; 
+	m[2][0] = _m[2][0]; m[2][1] = _m[2][1]; m[2][2] = _m[2][2]; m[2][3] = _m[2][3]; 
+	m[3][0] = 0.0f; m[3][1] = 0.0f; m[3][2] = 0.0f; m[3][3] = 1.0f;	
 }
 
 //-----------------------------------------------------------------------------
@@ -837,14 +839,14 @@ inline const matrix3x4_t& VMatrix::As3x4() const
 
 inline void VMatrix::CopyFrom3x4( const matrix3x4_t &m3x4 )
 {
-	memcpy( m, m3x4.Base(), sizeof( matrix3x4_t ) );
-	m[3][0] = m[3][1] = m[3][2] = 0;
-	m[3][3] = 1;
-}
+	Init(m3x4);
+}	
 
-inline void	VMatrix::Set3x4( matrix3x4_t& matrix3x4 ) const
+inline void	VMatrix::Set3x4( const matrix3x4_t& _m )
 {
-	memcpy(matrix3x4.Base(), m, sizeof( matrix3x4_t ) );
+	m[0][0] = _m[0][0]; m[0][1] = _m[0][1]; m[0][2] = _m[0][2]; m[0][3] = _m[0][3]; 
+	m[1][0] = _m[1][0]; m[1][1] = _m[1][1]; m[1][2] = _m[1][2]; m[1][3] = _m[1][3]; 
+	m[2][0] = _m[2][0]; m[2][1] = _m[2][1]; m[2][2] = _m[2][2]; m[2][3] = _m[2][3]; 
 }
 
 #ifndef VECTOR_NO_SLOW_OPERATIONS
@@ -1805,18 +1807,19 @@ inline void MatrixBuildScale( VMatrix &dst, const Vector& scale )
 	MatrixBuildScale( dst, scale.x, scale.y, scale.z );
 }
 
+// nillerusr: optimize this bruh later
 inline void MatrixBuildPerspective( VMatrix &dst, float fovX, float fovY, float zNear, float zFar )
 {
 	// FIXME: collapse all of this into one matrix after we figure out what all should be in here.
 	float width = 2 * zNear * tan( fovX * ( M_PI/180.0f ) * 0.5f );
 	float height = 2 * zNear * tan( fovY * ( M_PI/180.0f ) * 0.5f );
 
-	memset( dst.Base(), 0, sizeof( dst ) );
-	dst[0][0]  = 2.0F * zNear / width;
-	dst[1][1]  = 2.0F * zNear / height;
-	dst[2][2] = -zFar / ( zNear - zFar );
-	dst[3][2] = 1.0f;
-	dst[2][3] = zNear * zFar / ( zNear - zFar );
+	dst.	Init(
+		2.0f * zNear / width, 0.f, 0.f, 0.f,
+		0.f, 2.0f * zNear / height, 0.f, 0.f,
+		0.f, 0.f, -zFar / ( zNear - zFar ), zNear * zFar / ( zNear - zFar ),
+		0.f, 0.f, 1.f, 0.f
+		);
 
 	// negate X and Y so that X points right, and Y points up.
 	VMatrix negateXY;
@@ -1824,7 +1827,7 @@ inline void MatrixBuildPerspective( VMatrix &dst, float fovX, float fovY, float 
 	negateXY[0][0] = -1.0f;
 	negateXY[1][1] = -1.0f;
 	MatrixMultiply( negateXY, dst, dst );
-	
+
 	VMatrix addW;
 	addW.Identity();
 	addW[0][3] = 1.0f;
