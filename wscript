@@ -514,30 +514,32 @@ def configure(conf):
 			'/TP',
 			'/EHsc'
 		]
-		
+
 		if conf.options.BUILD_TYPE == 'debug':
 			linkflags += [
 				'/INCREMENTAL:NO',
 				'/NODEFAULTLIB:libc',
 				'/NODEFAULTLIB:libcd',
 				'/NODEFAULTLIB:libcmt',
-				'/FORCE'
+				'/FORCE',
+				'/LARGEADDRESSAWARE'
 			]
 		else:
 			linkflags += [
 				'/INCREMENTAL',
 				'/NODEFAULTLIB:libc',
 				'/NODEFAULTLIB:libcd',
-				'/NODEFAULTLIB:libcmtd'
+				'/NODEFAULTLIB:libcmtd',
+				'/LARGEADDRESSAWARE'
 			]
 
 		linkflags += [
 			'/LIBPATH:'+os.path.abspath('.')+'/lib/win32/'+conf.env.DEST_CPU+'/',
 			'/LIBPATH:'+os.path.abspath('.')+'/dx9sdk/lib/'+conf.env.DEST_CPU+'/'
 		]
-		
+
 	# And here C++ flags starts to be treated separately
-	cxxflags = list(cflags) 
+	cxxflags = list(cflags)
 	if conf.env.DEST_OS != 'win32':
 		cxxflags += ['-std=c++11','-fpermissive']
 
