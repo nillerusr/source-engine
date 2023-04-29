@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $Workfile:     $
 // $Date:         $
@@ -19,7 +19,13 @@
 #include "threads.h"
 #include "pacifier.h"
 
+#ifdef MAPBASE
+// This was suggested in that Source 2013 pull request that fixed Vrad.
+// I trust their judgement on this.
+#define	MAX_THREADS	32
+#else
 #define	MAX_THREADS	16
+#endif
 
 
 class CRunThreadsData
@@ -83,7 +89,7 @@ void ThreadWorkerFunction( int iThread, void *pUserData )
 		work = GetThreadWork ();
 		if (work == -1)
 			break;
-		 
+
 		workfunction( iThread, work );
 	}
 }
@@ -92,7 +98,7 @@ void RunThreadsOnIndividual (int workcnt, qboolean showpacifier, ThreadWorkerFn 
 {
 	if (numthreads == -1)
 		ThreadSetDefault ();
-	
+
 	workfunction = func;
 	RunThreadsOn (workcnt, showpacifier, ThreadWorkerFunction);
 }
@@ -218,7 +224,7 @@ void RunThreads_End()
 
 	threaded = false;
 }
-	
+
 
 /*
 =============
@@ -241,7 +247,7 @@ void RunThreadsOn( int workcnt, qboolean showpacifier, RunThreadsFn fn, void *pU
 	return;
 #endif
 
-	
+
 	RunThreads_Start( fn, pUserData );
 	RunThreads_End();
 

@@ -74,6 +74,7 @@ projects={
 		'video',
 		'vphysics',
 		'vpklib',
+		'vscript',
 		'vstdlib',
 		'vtf',
 		'utils/vtex',
@@ -127,6 +128,7 @@ projects={
 		'tier3',
 		'vphysics',
 		'vpklib',
+		'vscript'
 		'vstdlib',
 		'vtf',
 		'thirdparty/StubSteamAPI'

@@ -179,11 +179,20 @@ void CBaseCombatWeapon::Spawn( void )
 	// Assume 
 	m_nViewModelIndex = 0;
 
+#ifdef MAPBASE
+	// Don't reset to default ammo if we're supposed to use the keyvalue
+	if (!HasSpawnFlags( SF_WEAPON_PRESERVE_AMMO ))
+#endif // MAPBASE
+
 	GiveDefaultAmmo();
 
 	if ( GetWorldModel() )
 	{
+#ifdef MAPBASE
+		SetModel( (GetDroppedModel() && GetDroppedModel()[0]) ? GetDroppedModel() : GetWorldModel() );
+#else
 		SetModel( GetWorldModel() );
+#endif // MAPBASE
 	}
 
 #if !defined( CLIENT_DLL )
@@ -239,7 +248,13 @@ void CBaseCombatWeapon::Precache( void )
 
 	// Add this weapon to the weapon registry, and get our index into it
 	// Get weapon data from script file
+#ifdef MAPBASE
+	// Allow custom scripts to be loaded on a map-by-map basis
+	if ( ReadCustomWeaponDataFromFileForSlot( filesystem, GetWeaponScriptName(), &m_hWeaponFileInfo, GetEncryptionKey() ) || 
+		ReadWeaponDataFromFileForSlot( filesystem, GetWeaponScriptName(), &m_hWeaponFileInfo, GetEncryptionKey() ) )
+#else
 	if ( ReadWeaponDataFromFileForSlot( filesystem, GetClassname(), &m_hWeaponFileInfo, GetEncryptionKey() ) )
+#endif // MAPBASE
 	{
 		// Get the ammo indexes for the ammo's specified in the data file
 		if ( GetWpnData().szAmmo1[0] )
@@ -282,6 +297,19 @@ void CBaseCombatWeapon::Precache( void )
 		{
 			m_iWorldModelIndex = CBaseEntity::PrecacheModel( GetWorldModel() );
 		}
+
+#ifdef MAPBASE
+		m_iDroppedModelIndex = 0;
+		if ( GetDroppedModel() && GetDroppedModel()[0] )
+		{
+			m_iDroppedModelIndex = CBaseEntity::PrecacheModel( GetDroppedModel() );
+		}
+		else
+		{
+			// Use the world model index
+			m_iDroppedModelIndex = m_iWorldModelIndex;
+		}
+#endif // MAPBASE
 
 		// Precache sounds, too
 		for ( int i = 0; i < NUM_SHOOT_SOUND_TYPES; ++i )

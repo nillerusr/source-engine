@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $NoKeywords: $
 //
@@ -54,7 +54,7 @@ int	FindMiptex (const char *name)
 	const char *propVal, *propVal2;
 	int opacity;
 	bool found;
-		
+
 	for (i=0 ; i<nummiptex ; i++)
 	{
 		if (!strcmp (name, textureref[i].name))
@@ -80,7 +80,7 @@ int	FindMiptex (const char *name)
 		Warning("Material not found!: %s\n", name );
 
 	// HANDLE ALL OF THE STUFF THAT ISN'T RENDERED WITH THE MATERIAL THAT IS ONE IT.
-	
+
 	// handle sky
 	if( ( propVal = GetMaterialVar( matID, "%compileSky" ) ) &&
 		StringIsTrue( propVal ) )
@@ -131,7 +131,7 @@ int	FindMiptex (const char *name)
 		textureref[i].contents |= CONTENTS_MONSTERCLIP;
 		textureref[i].flags |= SURF_NODRAW | SURF_NOLIGHT;
 	}
-	// handle surface lights which are meant to 
+	// handle surface lights which are meant to
 	else if ( ( propVal = GetMaterialVar( matID, "%compileNoChop" ) ) &&
 		StringIsTrue( propVal ) )
 	{
@@ -148,11 +148,18 @@ int	FindMiptex (const char *name)
 		}
 	}
 	// handle nolight surfs (except water)
-	else if ( (( propVal = GetMaterialVar( matID, "%compileNoLight" ) ) && StringIsTrue( propVal )) && 
+	else if ( (( propVal = GetMaterialVar( matID, "%compileNoLight" ) ) && StringIsTrue( propVal )) &&
 		!(( propVal2 = GetMaterialVar( matID, "%compileWater" ) ) && StringIsTrue( propVal2 ) ) )
 	{
 		textureref[i].flags |= SURF_NOLIGHT;
 	}
+#ifdef MAPBASE
+	// handle Slammin-inspired %compileNoShadows%
+	else if ( ( propVal = GetMaterialVar( matID, "%compileNoShadows" ) ) && StringIsTrue( propVal ) )
+	{
+		textureref[i].flags |= SURF_NOSHADOWS;
+	}
+#endif // MAPBASE
 	else
 	{
 		// HANDLE ALL OF THE STUFF THAT IS RENDERED WITH THE MATERIAL THAT IS ON IT.
@@ -182,7 +189,7 @@ int	FindMiptex (const char *name)
 		{
 			textureref[i].flags |= SURF_BUMPLIGHT;
 		}
-		
+
 		if( GetMaterialShaderPropertyBool( matID, UTILMATLIB_NEEDS_LIGHTMAP ) )
 		{
 			textureref[i].flags &= ~SURF_NOLIGHT;
@@ -193,14 +200,14 @@ int	FindMiptex (const char *name)
 		}
 		// handle nodraw faces/brushes
 		if ( ( propVal = GetMaterialVar( matID, "%compileNoDraw" ) ) && StringIsTrue( propVal ) )
-		{								    
+		{
 			//		textureref[i].contents |= CONTENTS_DETAIL;
 			textureref[i].flags |= SURF_NODRAW | SURF_NOLIGHT;
 		}
 
 		// Just a combination of nodraw + pass bullets, makes things easier
 		if ( ( propVal = GetMaterialVar( matID, "%compileInvisible" ) ) && StringIsTrue( propVal ) )
-		{								    
+		{
 			// change contents to grate, so bullets pass through
 			// NOTE: This has effects on visibility too!
 			textureref[i].contents &= ~CONTENTS_SOLID;
@@ -267,9 +274,9 @@ int	FindMiptex (const char *name)
 			// Set this so that we can check at the end of the process the presence of a a WaterLODControl entity.
 			g_bHasWater = true;
 		}
-	
+
 		opacity = GetMaterialShaderPropertyInt( matID, UTILMATLIB_OPACITY );
-		
+
 		if ( checkWindow && opacity != UTILMATLIB_OPAQUE )
 		{
 			// transparent *and solid* brushes that aren't grates or water must be windows
@@ -279,13 +286,13 @@ int	FindMiptex (const char *name)
 			}
 
 			textureref[i].contents &= ~CONTENTS_SOLID;
-			
+
 			// this affects engine primitive sorting, SURF_TRANS means sort as a translucent primitive
 			if ( opacity == UTILMATLIB_TRANSLUCENT )
 			{
 				textureref[i].flags |= SURF_TRANS;
 			}
-			
+
 		}
 		if ( textureref[i].flags & SURF_NOLIGHT )
 		{
@@ -318,10 +325,10 @@ void TextureAxisFromPlane(plane_t *pln, Vector& xv, Vector& yv)
 	int		bestaxis;
 	vec_t	dot,best;
 	int		i;
-	
+
 	best = 0;
 	bestaxis = 0;
-	
+
 	for (i=0 ; i<6 ; i++)
 	{
 		dot = DotProduct (pln->normal, baseaxis[i*3]);
@@ -331,7 +338,7 @@ void TextureAxisFromPlane(plane_t *pln, Vector& xv, Vector& yv)
 			bestaxis = i;
 		}
 	}
-	
+
 	VectorCopy (baseaxis[bestaxis*3+1], xv);
 	VectorCopy (baseaxis[bestaxis*3+2], yv);
 }
@@ -438,7 +445,7 @@ int FindAliasedTexData( const char *pName_, dtexdata_t *sourceTexture )
 	GetMaterialDimensions( matID, &pTexData->width, &pTexData->height );
 	pTexData->view_width = pTexData->width;  // undone: what is this?
 	pTexData->view_height = pTexData->height;  // undone: what is this?
-	
+
 	GetMaterialReflectivity( matID, pTexData->reflectivity.Base() );
 	g_SurfaceProperties[output] = GetSurfaceProperties( matID, pName );
 
@@ -501,12 +508,12 @@ int FindOrCreateTexData( const char *pName_ )
 	GetMaterialDimensions( matID, &pTexData->width, &pTexData->height );
 	pTexData->view_width = pTexData->width;  // undone: what is this?
 	pTexData->view_height = pTexData->height;  // undone: what is this?
-	
+
 	GetMaterialReflectivity( matID, pTexData->reflectivity.Base() );
 	g_SurfaceProperties[nOutput] = GetSurfaceProperties( matID, pName );
 
 #if 0
-	Msg( "reflectivity: %f %f %f\n", 
+	Msg( "reflectivity: %f %f %f\n",
 		pTexData->reflectivity[0],
 		pTexData->reflectivity[1],
 		pTexData->reflectivity[2] );
@@ -609,7 +616,7 @@ int TexinfoForBrushTexture (plane_t *plane, brush_texture_t *bt, const Vector& o
 		else if (bt->rotate == 270)
 			{ sinv = -1 ; cosv = 0; }
 		else
-		{	
+		{
 			ang = bt->rotate / 180 * M_PI;
 			sinv = sin(ang);
 			cosv = cos(ang);
@@ -621,14 +628,14 @@ int TexinfoForBrushTexture (plane_t *plane, brush_texture_t *bt, const Vector& o
 			sv = 1;
 		else
 			sv = 2;
-					
+
 		if (vecs[1][0])
 			tv = 0;
 		else if (vecs[1][1])
 			tv = 1;
 		else
 			tv = 2;
-						
+
 		for (i=0 ; i<2 ; i++)
 		{
 			ns = cosv * vecs[i][sv] - sinv * vecs[i][tv];
@@ -659,7 +666,7 @@ int TexinfoForBrushTexture (plane_t *plane, brush_texture_t *bt, const Vector& o
 		tx.lightmapVecsLuxelsPerWorldUnits[0][0] = bt->UAxis[0] / bt->lightmapWorldUnitsPerLuxel;
 		tx.lightmapVecsLuxelsPerWorldUnits[0][1] = bt->UAxis[1] / bt->lightmapWorldUnitsPerLuxel;
 		tx.lightmapVecsLuxelsPerWorldUnits[0][2] = bt->UAxis[2] / bt->lightmapWorldUnitsPerLuxel;
-		
+
 		tx.lightmapVecsLuxelsPerWorldUnits[1][0] = bt->VAxis[0] / bt->lightmapWorldUnitsPerLuxel;
 		tx.lightmapVecsLuxelsPerWorldUnits[1][1] = bt->VAxis[1] / bt->lightmapWorldUnitsPerLuxel;
 		tx.lightmapVecsLuxelsPerWorldUnits[1][2] = bt->VAxis[2] / bt->lightmapWorldUnitsPerLuxel;
@@ -668,16 +675,16 @@ int TexinfoForBrushTexture (plane_t *plane, brush_texture_t *bt, const Vector& o
 		shiftScaleV = bt->textureWorldUnitsPerTexel[1] / bt->lightmapWorldUnitsPerLuxel;
 	}
 
-	tx.textureVecsTexelsPerWorldUnits[0][3] = bt->shift[0] + 
+	tx.textureVecsTexelsPerWorldUnits[0][3] = bt->shift[0] +
 		DOT_PRODUCT( origin, tx.textureVecsTexelsPerWorldUnits[0] );
-	tx.textureVecsTexelsPerWorldUnits[1][3] = bt->shift[1] + 
+	tx.textureVecsTexelsPerWorldUnits[1][3] = bt->shift[1] +
 		DOT_PRODUCT( origin, tx.textureVecsTexelsPerWorldUnits[1] );
-	
+
 	tx.lightmapVecsLuxelsPerWorldUnits[0][3] = shiftScaleU * bt->shift[0] +
 		DOT_PRODUCT( origin, tx.lightmapVecsLuxelsPerWorldUnits[0] );
 	tx.lightmapVecsLuxelsPerWorldUnits[1][3] = shiftScaleV * bt->shift[1] +
 		DOT_PRODUCT( origin, tx.lightmapVecsLuxelsPerWorldUnits[1] );
-	
+
 	tx.flags = bt->flags;
 	tx.texdata = FindOrCreateTexData( bt->name );
 

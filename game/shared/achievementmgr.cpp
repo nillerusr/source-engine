@@ -1542,7 +1542,11 @@ void CAchievementMgr::OnKillEvent( CBaseEntity *pVictim, CBaseEntity *pAttacker,
 			}
 
 			CBaseCombatCharacter *pBCC = dynamic_cast<CBaseCombatCharacter *>( pVictim );
+#ifdef MAPBASE
+			if ( pBCC && ( D_FR >= pBCC->IRelationType( pLocalPlayer ) ) )
+#else
 			if ( pBCC && ( D_HT == pBCC->IRelationType( pLocalPlayer ) ) )
+#endif // MAPBASE
 			{
 				bVictimIsPlayerEnemy = true;
 			}
@@ -1652,6 +1656,13 @@ void CAchievementMgr::OnMapEvent( const char *pchEventName )
 		CBaseAchievement *pAchievement = m_vecMapEventListeners[iAchievement];
 		pAchievement->OnMapEvent( pchEventName );
 	}
+
+#ifdef MAPBASE
+	if (cc_achievement_debug.GetBool())
+	{
+		Msg( "CAchievementMgr::OnMapEvent: Achievement \"%s\" not found\n", pchEventName );
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------

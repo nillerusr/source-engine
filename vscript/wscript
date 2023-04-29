@@ -1,0 +1,43 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from waflib import Utils
+import os
+import vpc_parser
+
+top = '.'
+PROJECT_NAME = 'vscript'
+
+def options(opt):
+    return
+
+def configure(conf):
+    conf.load('squirrel')
+    conf.env.SQUIRRELDIR = './squirrel'
+
+def build(bld):
+    project = vpc_parser.parse_vpc( bld.env, 'vscript.vpc', '..' )
+
+    install_path = bld.env.PREFIX
+    if bld.env.DEST_OS != 'android':
+        install_path += '/vscript/bin'
+
+    if bld.env.DEST_OS == 'win32':
+        libs += ['USER32']
+
+    includes = project["includes"]
+    source = project["sources"]
+    defines = project["defines"]
+
+    bld.shlib(
+        source   = source,
+        target   = PROJECT_NAME,
+        name     = PROJECT_NAME,
+        features = 'c cxx squirrel',
+        includes = includes,
+        defines  = defines,
+        install_path = install_path,
+        subsystem    = bld.env.MSVC_SUBSYSTEM,
+        idx          = bld.get_taskgen_count()
+    )
+

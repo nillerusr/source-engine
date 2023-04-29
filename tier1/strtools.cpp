@@ -378,7 +378,7 @@ int64 V_atoi64( const char *str )
 	int64             val;
 	int64             sign;
 	int64             c;
-	
+
 	Assert( str );
 	if (*str == '-')
 	{
@@ -394,7 +394,7 @@ int64 V_atoi64( const char *str )
 	{
 		sign = 1;
 	}
-		
+
 	val = 0;
 
 //
@@ -416,7 +416,7 @@ int64 V_atoi64( const char *str )
 				return val*sign;
 		}
 	}
-	
+
 //
 // check for character
 //
@@ -424,7 +424,7 @@ int64 V_atoi64( const char *str )
 	{
 		return sign * str[1];
 	}
-	
+
 //
 // assume decimal
 //
@@ -435,7 +435,7 @@ int64 V_atoi64( const char *str )
 			return val*sign;
 		val = val*10 + c - '0';
 	}
-	
+
 	return 0;
 }
 
@@ -493,7 +493,7 @@ uint64 V_atoui64( const char *str )
 }
 
 int V_atoi( const char *str )
-{ 
+{
 	return (int)V_atoi64( str );
 }
 
@@ -597,7 +597,7 @@ float V_atof (const char *str)
 }
 
 //-----------------------------------------------------------------------------
-// Normalizes a float string in place.  
+// Normalizes a float string in place.
 //
 // (removes leading zeros, trailing zeros after the decimal point, and the decimal point itself where possible)
 //-----------------------------------------------------------------------------
@@ -634,7 +634,7 @@ char const* V_stristr( char const* pStr, char const* pSearch )
 	AssertValidStringPtr(pStr);
 	AssertValidStringPtr(pSearch);
 
-	if (!pStr || !pSearch) 
+	if (!pStr || !pSearch)
 		return 0;
 
 	char const* pLetter = pStr;
@@ -689,7 +689,7 @@ char const* V_strnistr( char const* pStr, char const* pSearch, int n )
 	AssertValidStringPtr(pStr);
 	AssertValidStringPtr(pSearch);
 
-	if (!pStr || !pSearch) 
+	if (!pStr || !pSearch)
 		return 0;
 
 	char const* pLetter = pStr;
@@ -816,7 +816,7 @@ int V_snwprintf( wchar_t *pDest, int maxLen, const wchar_t *pFormat, ... )
 		len = maxLen;
 		pDest[maxLen-1] = 0;
 	}
-	
+
 	return len;
 }
 
@@ -934,7 +934,7 @@ char *V_strncat(char *pDest, const char *pSrc, size_t destBufferSize, int max_ch
 	Assert( (ptrdiff_t)destBufferSize >= 0 );
 	AssertValidStringPtr( pDest);
 	AssertValidStringPtr( pSrc );
-	
+
 	size_t len = strlen(pDest);
 	size_t srclen = strlen( pSrc );
 	if ( max_chars_to_copy <= COPY_ALL_CHARACTERS )
@@ -966,7 +966,7 @@ wchar_t *V_wcsncat( INOUT_Z_CAP(cchDest) wchar_t *pDest, const wchar_t *pSrc, si
 	size_t charstocopy = (size_t)0;
 
 	Assert( (ptrdiff_t)cchDest >= 0 );
-	
+
 	size_t len = wcslen(pDest);
 	size_t srclen = wcslen( pSrc );
 	if ( max_chars_to_copy <= COPY_ALL_CHARACTERS )
@@ -997,9 +997,9 @@ wchar_t *V_wcsncat( INOUT_Z_CAP(cchDest) wchar_t *pDest, const wchar_t *pSrc, si
 
 //-----------------------------------------------------------------------------
 // Purpose: Converts value into x.xx MB/ x.xx KB, x.xx bytes format, including commas
-// Input  : value - 
-//			2 - 
-//			false - 
+// Input  : value -
+//			2 -
+//			false -
 // Output : char
 //-----------------------------------------------------------------------------
 #define NUM_PRETIFYMEM_BUFFERS 8
@@ -1179,7 +1179,7 @@ char *V_pretifynum( int64 inputValue )
 //			behavior when used in names, web pages, chat windows, etc.
 //
 //			characters in this set are removed from the beginning and/or end of strings
-//			by Q_AggressiveStripPrecedingAndTrailingWhitespaceW() 
+//			by Q_AggressiveStripPrecedingAndTrailingWhitespaceW()
 //-----------------------------------------------------------------------------
 bool Q_IsMeanSpaceW( wchar_t wch )
 {
@@ -1287,7 +1287,7 @@ bool Q_RemoveAllEvilCharacters( char *pch )
 
 	// Null terminate
 	pwch[nWalk-1] = L'\0';
-	
+
 
 	// copy back, if necessary
 	if ( bStrippedWhitespace )
@@ -1414,7 +1414,7 @@ int _V_UCS2ToUnicode( const ucs2 *pUCS2, wchar_t *pUnicode, int cubDestSizeInByt
 	Assert( cubDestSizeInBytes >= sizeof( *pUnicode ) );
 	AssertValidWritePtr(pUnicode);
 	AssertValidReadPtr(pUCS2);
-	
+
 	pUnicode[0] = 0;
 #ifdef _WIN32
 	int cchResult = V_wcslen( pUCS2 );
@@ -1426,7 +1426,7 @@ int _V_UCS2ToUnicode( const ucs2 *pUCS2, wchar_t *pUnicode, int cubDestSizeInByt
 	size_t nMaxUTF8 = cubDestSizeInBytes;
 	char *pIn = (char *)pUCS2;
 	char *pOut = (char *)pUnicode;
-	if ( conv_t > (void*)0 )
+	if ( conv_t )
 	{
 		cchResult = iconv( conv_t, &pIn, &nLenUnicde, &pOut, &nMaxUTF8 );
 		iconv_close( conv_t );
@@ -1437,7 +1437,7 @@ int _V_UCS2ToUnicode( const ucs2 *pUCS2, wchar_t *pUnicode, int cubDestSizeInByt
 	}
 #endif
 	pUnicode[(cubDestSizeInBytes / sizeof(wchar_t)) - 1] = 0;
-	return cchResult;	
+	return cchResult;
 
 }
 
@@ -1466,7 +1466,7 @@ int _V_UnicodeToUCS2( const wchar_t *pUnicode, int cubSrcInBytes, char *pUCS2, i
 	size_t nMaxUCS2 = cubDestSizeInBytes;
 	char *pIn = (char*)pUnicode;
 	char *pOut = pUCS2;
-	if ( conv_t > (void*)0 )
+	if ( conv_t )
 	{
 		cchResult = iconv( conv_t, &pIn, &nLenUnicde, &pOut, &nMaxUCS2 );
 		iconv_close( conv_t );
@@ -1478,7 +1478,7 @@ int _V_UnicodeToUCS2( const wchar_t *pUnicode, int cubSrcInBytes, char *pUCS2, i
 #else
 	#error Must be implemented for this platform
 #endif
-	return cchResult;	
+	return cchResult;
 }
 
 
@@ -1489,7 +1489,7 @@ int _V_UCS2ToUTF8( const ucs2 *pUCS2, char *pUTF8, int cubDestSizeInBytes )
 {
 	AssertValidStringPtr(pUTF8, cubDestSizeInBytes);
 	AssertValidReadPtr(pUCS2);
-	
+
 	pUTF8[0] = 0;
 #ifdef _WIN32
 	// under win32 wchar_t == ucs2, sigh
@@ -1514,7 +1514,7 @@ int _V_UCS2ToUTF8( const ucs2 *pUCS2, char *pUTF8, int cubDestSizeInBytes )
 	size_t nMaxUTF8 = cubDestSizeInBytes - 1;
 	char *pIn = (char *)pUCS2;
 	char *pOut = (char *)pUTF8;
-	if ( conv_t > (void*)0 )
+	if ( conv_t )
 	{
 		const size_t nBytesToWrite = nMaxUTF8;
 		cchResult = iconv( conv_t, &pIn, &nLenUnicde, &pOut, &nMaxUTF8 );
@@ -1532,7 +1532,7 @@ int _V_UCS2ToUTF8( const ucs2 *pUCS2, char *pUTF8, int cubDestSizeInBytes )
 	}
 #endif
 	pUTF8[cubDestSizeInBytes - 1] = 0;
-	return cchResult;	
+	return cchResult;
 }
 
 
@@ -1559,7 +1559,7 @@ int _V_UTF8ToUCS2( const char *pUTF8, int cubSrcInBytes, ucs2 *pUCS2, int cubDes
 	size_t nMaxUTF8 = cubDestSizeInBytes;
 	char *pIn = (char *)pUTF8;
 	char *pOut = (char *)pUCS2;
-	if ( conv_t > (void*)0 )
+	if ( conv_t )
 	{
 		cchResult = iconv( conv_t, &pIn, &nLenUnicde, &pOut, &nMaxUTF8 );
 		iconv_close( conv_t );
@@ -1571,14 +1571,14 @@ int _V_UTF8ToUCS2( const char *pUTF8, int cubSrcInBytes, ucs2 *pUCS2, int cubDes
 	}
 #endif
 	pUCS2[ (cubDestSizeInBytes/sizeof(ucs2)) - 1] = 0;
-	return cchResult;	
+	return cchResult;
 }
 
 
 
 //-----------------------------------------------------------------------------
 // Purpose: Returns the 4 bit nibble for a hex character
-// Input  : c - 
+// Input  : c -
 // Output : unsigned char
 //-----------------------------------------------------------------------------
 unsigned char V_nibble( char c )
@@ -1605,11 +1605,11 @@ unsigned char V_nibble( char c )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *in - 
-//			numchars - 
-//			*out - 
-//			maxoutputbytes - 
+// Purpose:
+// Input  : *in -
+//			numchars -
+//			*out -
+//			maxoutputbytes -
 //-----------------------------------------------------------------------------
 void V_hextobinary( char const *in, int numchars, byte *out, int maxoutputbytes )
 {
@@ -1627,20 +1627,20 @@ void V_hextobinary( char const *in, int numchars, byte *out, int maxoutputbytes 
 	int i;
 
 	p = out;
-	for ( i = 0; 
-		 ( i < numchars ) && ( ( p - out ) < maxoutputbytes ); 
+	for ( i = 0;
+		 ( i < numchars ) && ( ( p - out ) < maxoutputbytes );
 		 i+=2, p++ )
 	{
-		*p = ( V_nibble( in[i] ) << 4 ) | V_nibble( in[i+1] );		
+		*p = ( V_nibble( in[i] ) << 4 ) | V_nibble( in[i+1] );
 	}
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *in - 
-//			inputbytes - 
-//			*out - 
-//			outsize - 
+// Purpose:
+// Input  : *in -
+//			inputbytes -
+//			*out -
+//			outsize -
 //-----------------------------------------------------------------------------
 void V_binarytohex( const byte *in, int inputbytes, char *out, int outsize )
 {
@@ -1670,9 +1670,9 @@ bool PATHSEPARATOR( char c )
 
 //-----------------------------------------------------------------------------
 // Purpose: Extracts the base name of a file (no path, no extension, assumes '/' or '\' as path separator)
-// Input  : *in - 
-//			*out - 
-//			maxlen - 
+// Input  : *in -
+//			*out -
+//			maxlen -
 //-----------------------------------------------------------------------------
 void V_FileBase( const char *in, char *out, int maxlen )
 {
@@ -1689,19 +1689,19 @@ void V_FileBase( const char *in, char *out, int maxlen )
 	int len, start, end;
 
 	len = V_strlen( in );
-	
+
 	// scan backward for '.'
 	end = len - 1;
 	while ( end&& in[end] != '.' && !PATHSEPARATOR( in[end] ) )
 	{
 		end--;
 	}
-	
+
 	if ( in[end] != '.' )		// no '.', copy to end
 	{
 		end = len-1;
 	}
-	else 
+	else
 	{
 		end--;					// Found ',', copy to left of '.'
 	}
@@ -1717,7 +1717,7 @@ void V_FileBase( const char *in, char *out, int maxlen )
 	{
 		start = 0;
 	}
-	else 
+	else
 	{
 		start++;
 	}
@@ -1732,8 +1732,8 @@ void V_FileBase( const char *in, char *out, int maxlen )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *ppath - 
+// Purpose:
+// Input  : *ppath -
 //-----------------------------------------------------------------------------
 void V_StripTrailingSlash( char *ppath )
 {
@@ -1750,8 +1750,8 @@ void V_StripTrailingSlash( char *ppath )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *ppline - 
+// Purpose:
+// Input  : *ppline -
 //-----------------------------------------------------------------------------
 void V_StripTrailingWhitespace( char *ppline )
 {
@@ -1768,8 +1768,8 @@ void V_StripTrailingWhitespace( char *ppline )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *ppline - 
+// Purpose:
+// Input  : *ppline -
 //-----------------------------------------------------------------------------
 void V_StripLeadingWhitespace( char *ppline )
 {
@@ -1788,8 +1788,8 @@ void V_StripLeadingWhitespace( char *ppline )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *ppline - 
+// Purpose:
+// Input  : *ppline -
 //-----------------------------------------------------------------------------
 void V_StripSurroundingQuotes( char *ppline )
 {
@@ -1805,14 +1805,14 @@ void V_StripSurroundingQuotes( char *ppline )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *in - 
-//			*out - 
-//			outSize - 
+// Purpose:
+// Input  : *in -
+//			*out -
+//			outSize -
 //-----------------------------------------------------------------------------
 void V_StripExtension( const char *in, char *out, int outSize )
 {
-	// Find the last dot. If it's followed by a dot or a slash, then it's part of a 
+	// Find the last dot. If it's followed by a dot or a slash, then it's part of a
 	// directory specifier like ../../somedir/./blah.
 
 	// scan backward for '.'
@@ -1842,10 +1842,10 @@ void V_StripExtension( const char *in, char *out, int outSize )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *path - 
-//			*extension - 
-//			pathStringLength - 
+// Purpose:
+// Input  : *path -
+//			*extension -
+//			pathStringLength -
 //-----------------------------------------------------------------------------
 void V_DefaultExtension( char *path, const char *extension, int pathStringLength )
 {
@@ -1865,7 +1865,7 @@ void V_DefaultExtension( char *path, const char *extension, int pathStringLength
 		if (*src == '.')
 		{
 			// it has an extension
-			return;                 
+			return;
 		}
 		src--;
 	}
@@ -1876,9 +1876,9 @@ void V_DefaultExtension( char *path, const char *extension, int pathStringLength
 
 //-----------------------------------------------------------------------------
 // Purpose: Force extension...
-// Input  : *path - 
-//			*extension - 
-//			pathStringLength - 
+// Input  : *path -
+//			*extension -
+//			pathStringLength -
 //-----------------------------------------------------------------------------
 void V_SetExtension( char *path, const char *extension, int pathStringLength )
 {
@@ -1899,7 +1899,7 @@ void V_SetExtension( char *path, const char *extension, int pathStringLength )
 
 //-----------------------------------------------------------------------------
 // Purpose: Remove final filename from string
-// Input  : *path - 
+// Input  : *path -
 // Output : void  V_StripFilename
 //-----------------------------------------------------------------------------
 void  V_StripFilename (char *path)
@@ -1910,7 +1910,7 @@ void  V_StripFilename (char *path)
 	if ( length <= 0 )
 		return;
 
-	while ( length > 0 && 
+	while ( length > 0 &&
 		!PATHSEPARATOR( path[length] ) )
 	{
 		length--;
@@ -1929,8 +1929,8 @@ void  V_StripFilename (char *path)
 
 //-----------------------------------------------------------------------------
 // Purpose: Changes all '/' or '\' characters into separator
-// Input  : *pname - 
-//			separator - 
+// Input  : *pname -
+//			separator -
 //-----------------------------------------------------------------------------
 void V_FixSlashes( char *pname, char separator /* = CORRECT_PATH_SEPARATOR */ )
 {
@@ -1956,8 +1956,8 @@ void V_FixDoubleSlashes( char *pStr )
 	{
 		if ( (pStr[i] == '/' || pStr[i] == '\\') && (pStr[i+1] == '/' || pStr[i+1] == '\\') )
 		{
-			// This means there's a double slash somewhere past the start of the filename. That 
-			// can happen in Hammer if they use a material in the root directory. You'll get a filename 
+			// This means there's a double slash somewhere past the start of the filename. That
+			// can happen in Hammer if they use a material in the root directory. You'll get a filename
 			// that looks like 'materials\\blah.vmt'
 			V_memmove( &pStr[i], &pStr[i+1], len - i );
 			--len;
@@ -1967,17 +1967,17 @@ void V_FixDoubleSlashes( char *pStr )
 
 //-----------------------------------------------------------------------------
 // Purpose: Strip off the last directory from dirName
-// Input  : *dirName - 
-//			maxlen - 
+// Input  : *dirName -
+//			maxlen -
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
 bool V_StripLastDir( char *dirName, int maxlen )
 {
-	if( dirName[0] == 0 || 
-		!V_stricmp( dirName, "./" ) || 
+	if( dirName[0] == 0 ||
+		!V_stricmp( dirName, "./" ) ||
 		!V_stricmp( dirName, ".\\" ) )
 		return false;
-	
+
 	int len = V_strlen( dirName );
 
 	Assert( len < maxlen );
@@ -2012,7 +2012,7 @@ bool V_StripLastDir( char *dirName, int maxlen )
 
 
 //-----------------------------------------------------------------------------
-// Purpose: Returns a pointer to the beginning of the unqualified file name 
+// Purpose: Returns a pointer to the beginning of the unqualified file name
 //			(no path information)
 // Input:	in - file name (may be unqualified, relative or absolute path)
 // Output:	pointer to unqualified file name
@@ -2050,10 +2050,10 @@ void V_ComposeFileName( const char *path, const char *filename, char *dest, int 
 
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *path - 
-//			*dest - 
-//			destSize - 
+// Purpose:
+// Input  : *path -
+//			*dest -
+//			destSize -
 // Output : void V_ExtractFilePath
 //-----------------------------------------------------------------------------
 bool V_ExtractFilePath (const char *path, char *dest, int destSize )
@@ -2082,10 +2082,10 @@ bool V_ExtractFilePath (const char *path, char *dest, int destSize )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *path - 
-//			*dest - 
-//			destSize - 
+// Purpose:
+// Input  : *path -
+//			*dest -
+//			destSize -
 // Output : void V_ExtractFileExtension
 //-----------------------------------------------------------------------------
 void V_ExtractFileExtension( const char *path, char *dest, int destSize )
@@ -2099,7 +2099,7 @@ void V_ExtractFileExtension( const char *path, char *dest, int destSize )
 
 //-----------------------------------------------------------------------------
 // Purpose: Returns a pointer to the file extension within a file name string
-// Input:	in - file name 
+// Input:	in - file name
 // Output:	pointer to beginning of extension (after the "."), or NULL
 //				if there is no extension
 //-----------------------------------------------------------------------------
@@ -2117,7 +2117,7 @@ const char * V_GetFileExtension( const char * path )
 
 	// check to see if the '.' is part of a pathname
 	if (src == path || PATHSEPARATOR( *src ) )
-	{		
+	{
 		return NULL;  // no extension
 	}
 
@@ -2127,8 +2127,8 @@ const char * V_GetFileExtension( const char * path )
 
 //-----------------------------------------------------------------------------
 // Purpose: Returns a pointer to the filename part of a path string
-// Input:	in - file name 
-// Output:	pointer to beginning of filename (after the "/"). If there were no /, 
+// Input:	in - file name
+// Output:	pointer to beginning of filename (after the "/"). If there were no /,
 //          output is identical to input
 //-----------------------------------------------------------------------------
 const char * V_GetFileName( const char * path )
@@ -2225,7 +2225,7 @@ void V_AppendSlash( char *pStr, int strSize )
 	{
 		if ( len+1 >= strSize )
 			Error( "V_AppendSlash: ran out of space on %s.", pStr );
-		
+
 		pStr[len] = CORRECT_PATH_SEPARATOR;
 		pStr[len+1] = 0;
 	}
@@ -2283,7 +2283,7 @@ bool V_MakeRelativePath( const char *pFullPath, const char *pDirectory, char *pR
 	// Strip out common parts of the path
 	const char *pLastCommonPath = NULL;
 	const char *pLastCommonDir = NULL;
-	while ( *pPath && ( FastToLower( *pPath ) == FastToLower( *pDir ) || 
+	while ( *pPath && ( FastToLower( *pPath ) == FastToLower( *pDir ) ||
 						( PATHSEPARATOR( *pPath ) && ( PATHSEPARATOR( *pDir ) || (*pDir == 0) ) ) ) )
 	{
 		if ( PATHSEPARATOR( *pPath ) )
@@ -2385,7 +2385,7 @@ static bool CopyToMaxChars( char *pOut, int outSize, const char *pIn, int nChars
 		++pIn;
 		--nCharsToCopy;
 	}
-	
+
 	pOut[iOut] = 0;
 	return true;
 }
@@ -2406,8 +2406,8 @@ void V_FixupPathName( char *pOut, size_t nOutLen, const char *pPath )
 
 // Returns true if it completed successfully.
 // If it would overflow pOut, it fills as much as it can and returns false.
-bool V_StrSubst( 
-	const char *pIn, 
+bool V_StrSubst(
+	const char *pIn,
 	const char *pMatch,
 	const char *pReplaceWith,
 	char *pOut,
@@ -2433,7 +2433,7 @@ bool V_StrSubst(
 			int copyLen = pTestPos - pInStart;
 			if ( !CopyToMaxChars( pOutPos, nRemainingOut, pInStart, copyLen ) )
 				return false;
-			
+
 			// Did we hit the end of the output string?
 			if ( copyLen > nRemainingOut-1 )
 				return false;
@@ -2446,7 +2446,7 @@ bool V_StrSubst(
 				return false;
 
 			pInStart += copyLen + replaceFromLen;
-			pOutPos += replaceToLen;			
+			pOutPos += replaceToLen;
 		}
 		else
 		{
@@ -2541,7 +2541,7 @@ void V_StrSlice( const char *pStr, int firstChar, int lastCharNonInclusive, char
 {
 	if ( outSize == 0 )
 		return;
-	
+
 	int length = strlen( pStr );
 
 	// Fixup the string indices.
@@ -2714,7 +2714,7 @@ char *V_AddBackSlashesToSpecialChars( char const *pSrc )
 	}
 	char *pRet = new char[ nSpaceNeeded + 1 ];				// +1 for null
 	char *pOut = pRet;
-	
+
 	for( char const *pScan = pSrc; *pScan; pScan++ )
 	{
 		bool bIsSpecial = false;
@@ -2783,7 +2783,7 @@ void Q_URLEncodeInternal( char *pchDest, int nDestLen, const char *pchSource, in
 		// These are the characters allowed by both the original RFC 1738 and the latest RFC 3986.
 		// Current specs also allow '~', but that is forbidden under original RFC 1738.
 		if ( !( pchSource[i] >= 'a' && pchSource[i] <= 'z' ) && !( pchSource[i] >= 'A' && pchSource[i] <= 'Z' ) && !(pchSource[i] >= '0' && pchSource[i] <= '9' )
-			&& pchSource[i] != '-' && pchSource[i] != '_' && pchSource[i] != '.'	
+			&& pchSource[i] != '-' && pchSource[i] != '_' && pchSource[i] != '.'
 			)
 		{
 			if ( bUsePlusForSpace && pchSource[i] == ' ' )
@@ -2897,7 +2897,7 @@ size_t Q_URLDecodeInternal( char *pchDecodeDest, int nDecodeDestLen, const char 
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Encodes a string (or binary data) from URL encoding format, see rfc1738 section 2.2.  
+// Purpose: Encodes a string (or binary data) from URL encoding format, see rfc1738 section 2.2.
 //          This version of the call isn't a strict RFC implementation, but uses + for space as is
 //          the standard in HTML form encoding, despite it not being part of the RFC.
 //
@@ -2910,7 +2910,7 @@ void Q_URLEncode( char *pchDest, int nDestLen, const char *pchSource, int nSourc
 
 
 //-----------------------------------------------------------------------------
-// Purpose: Decodes a string (or binary data) from URL encoding format, see rfc1738 section 2.2.  
+// Purpose: Decodes a string (or binary data) from URL encoding format, see rfc1738 section 2.2.
 //          This version of the call isn't a strict RFC implementation, but uses + for space as is
 //          the standard in HTML form encoding, despite it not being part of the RFC.
 //
@@ -2924,7 +2924,7 @@ size_t Q_URLDecode( char *pchDecodeDest, int nDecodeDestLen, const char *pchEnco
 
 
 //-----------------------------------------------------------------------------
-// Purpose: Encodes a string (or binary data) from URL encoding format, see rfc1738 section 2.2.  
+// Purpose: Encodes a string (or binary data) from URL encoding format, see rfc1738 section 2.2.
 //          This version will not encode space as + (which HTML form encoding uses despite not being part of the RFC)
 //
 //          Dest buffer should be at least as large as source buffer to guarantee room for decode.
@@ -2936,7 +2936,7 @@ void Q_URLEncodeRaw( char *pchDest, int nDestLen, const char *pchSource, int nSo
 
 
 //-----------------------------------------------------------------------------
-// Purpose: Decodes a string (or binary data) from URL encoding format, see rfc1738 section 2.2.  
+// Purpose: Decodes a string (or binary data) from URL encoding format, see rfc1738 section 2.2.
 //          This version will not recognize + as a space (which HTML form encoding uses despite not being part of the RFC)
 //
 //          Dest buffer should be at least as large as source buffer to guarantee room for decode.
@@ -2951,7 +2951,7 @@ size_t Q_URLDecodeRaw( char *pchDecodeDest, int nDecodeDestLen, const char *pchE
 extern "C" void qsort_s( void *base, size_t num, size_t width, int (*compare )(void *, const void *, const void *), void * context );
 #endif
 
-void V_qsort_s( void *base, size_t num, size_t width, int ( __cdecl *compare )(void *, const void *, const void *), void * context ) 
+void V_qsort_s( void *base, size_t num, size_t width, int ( __cdecl *compare )(void *, const void *, const void *), void * context )
 {
 #if defined(OSX) || defined(PLATFORM_BSD)
 	// the arguments are swapped 'round on the mac - awesome, huh?
@@ -3061,7 +3061,7 @@ void V_LogMultiline( bool input, char const *label, const char *data, size_t len
 	const char * direction = (input ? " << " : " >> ");
 	const size_t LINE_SIZE = 24;
 	char hex_line[LINE_SIZE * 9 / 4 + 2], asc_line[LINE_SIZE + 1];
-	while (len > 0) 
+	while (len > 0)
 	{
 		V_memset(asc_line, ' ', sizeof(asc_line));
 		V_memset(hex_line, ' ', sizeof(hex_line));
@@ -3633,7 +3633,7 @@ bool V_BBCodeToHTML( OUT_Z_CAP( nDestSize ) char *pDest, const int nDestSize, ch
 //			behavior when used in names, web pages, chat windows, etc.
 //
 //			characters in this set are removed from the beginning and/or end of strings
-//			by Q_AggressiveStripPrecedingAndTrailingWhitespaceW() 
+//			by Q_AggressiveStripPrecedingAndTrailingWhitespaceW()
 //-----------------------------------------------------------------------------
 bool V_IsMeanUnderscoreW( wchar_t wch )
 {
@@ -3660,7 +3660,7 @@ bool V_IsMeanUnderscoreW( wchar_t wch )
 //			behavior when used in names, web pages, chat windows, etc.
 //
 //			characters in this set are removed from the beginning and/or end of strings
-//			by Q_AggressiveStripPrecedingAndTrailingWhitespaceW() 
+//			by Q_AggressiveStripPrecedingAndTrailingWhitespaceW()
 //-----------------------------------------------------------------------------
 bool V_IsMeanSpaceW( wchar_t wch )
 {
@@ -3744,7 +3744,7 @@ bool V_IsMeanSpaceW( wchar_t wch )
 // Many games don't cope with these characters well, and end up providing opportunities
 // for griefing others. For example, a user might join a game with a malformed player
 // name and it turns out that player name can't be selected or typed into the admin
-// console or UI to mute, kick, or ban the disruptive player. 
+// console or UI to mute, kick, or ban the disruptive player.
 //
 // Ideally, we'd perfectly support these end-to-end but we never realistically will.
 // The benefit of doing so far outweighs the cost, anyway.
@@ -3783,7 +3783,7 @@ bool V_IsValidDomainNameCharacter( const char *pch, int *pAdvanceBytes )
 		*pAdvanceBytes = 0;
 
 
-	// We allow unicode in Domain Names without the an encoding unless it corresponds to 
+	// We allow unicode in Domain Names without the an encoding unless it corresponds to
 	// a whitespace or control sequence or something we think is an underscore looking thing.
 	// If this character is the start of a UTF-8 sequence, try decoding it.
 	unsigned char ch = (unsigned char)*pch;
@@ -4167,7 +4167,7 @@ void V_StripAndPreserveHTMLCore( CUtlBuffer *pbuffer, const char *pchHTML, const
 							const char *szTag = rgszPreserveTags[ iTag ];
 							int cchTag = Q_strlen( szTag );
 
-							//make sure characters match, and are followed by some non-alnum char 
+							//make sure characters match, and are followed by some non-alnum char
 							//  so "i" can match <i> or <i class=...>, but not <img>
 							if ( Q_strnicmp( szTag, szTagStart, cchTag ) == 0 && !V_isalnum( szTagStart[ cchTag ] ) )
 							{
@@ -4299,7 +4299,7 @@ void V_StripAndPreserveHTMLCore( CUtlBuffer *pbuffer, const char *pchHTML, const
 						pbuffer->PutChar( ' ' );
 						bLastCharWasWhitespace = true;
 					}
-					// don't put anything for whitespace if the previous character was whitespace 
+					// don't put anything for whitespace if the previous character was whitespace
 					//  (effectively trimming all blocks of whitespace down to a single ' ')
 				}
 				else

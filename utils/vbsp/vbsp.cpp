@@ -20,6 +20,11 @@
 #include "byteswap.h"
 #include "worldvertextransitionfixup.h"
 
+#ifdef MAPBASE_VSCRIPT
+#include "vscript/ivscript.h"
+#include "vscript_vbsp.h"
+#endif
+
 extern float		g_maxLightmapDimension;
 
 char		source[1024];
@@ -43,7 +48,11 @@ qboolean	noshare;
 qboolean	nosubdiv;
 qboolean	notjunc;
 qboolean	noopt;
+#ifdef MAPBASE
+qboolean	noleaktest;
+#else
 qboolean	leaktest;
+#endif // MAPBASE
 qboolean	verboseentities;
 qboolean	dumpcollide = false;
 qboolean	g_bLowPriority = false;
@@ -56,6 +65,17 @@ bool		g_NodrawTriggers = false;
 bool		g_DisableWaterLighting = false;
 bool		g_bAllowDetailCracks = false;
 bool		g_bNoVirtualMesh = false;
+bool		g_bNoHiddenManifestMaps = false;
+#ifdef MAPBASE
+bool		g_bNoDefaultCubemaps = true;
+bool		g_bSkyboxCubemaps = false;
+bool		g_bPropperInsertAllAsStatic = false;
+bool		g_bPropperStripEntities = false;
+int			g_iDefaultCubemapSize = 32;
+#endif // MAPBASE
+#ifdef MAPBASE_VSCRIPT
+ScriptLanguage_t	g_iScripting = SL_NONE;
+#endif // MAPBASE_VSCRIPT
 
 float		g_defaultLuxelSize = DEFAULT_LUXEL_SIZE;
 float		g_luxelScale = 1.0f;
@@ -68,7 +88,7 @@ char		outbase[32];
 
 char		g_szEmbedDir[MAX_PATH] = { 0 };
 
-// HLTOOLS: Introduce these calcs to make the block algorithm proportional to the proper 
+// HLTOOLS: Introduce these calcs to make the block algorithm proportional to the proper
 // world coordinate extents.  Assumes square spatial constraints.
 #define BLOCKS_SIZE		1024
 #define BLOCKS_SPACE	(COORD_EXTENT/BLOCKS_SIZE)
@@ -182,14 +202,14 @@ void ProcessBlock_Thread (int threadnum, int blocknum)
 		node->contents = CONTENTS_SOLID;
 		block_nodes[xblock+BLOCKX_OFFSET][yblock+BLOCKY_OFFSET] = node;
 		return;
-	}    
+	}
 
 	FixupAreaportalWaterBrushes( brushes );
 	if (!nocsg)
 		brushes = ChopBrushes (brushes);
 
 	tree = BrushBSP (brushes, mins, maxs);
-	
+
 	block_nodes[xblock+BLOCKX_OFFSET][yblock+BLOCKY_OFFSET] = tree->headnode;
 }
 
@@ -296,7 +316,11 @@ void ProcessWorldModel (void)
 			Warning( ("**** leaked ****\n") );
 			leaked = true;
 			LeakFile (tree);
+#ifdef MAPBASE
+			if (!noleaktest)
+#else
 			if (leaktest)
+#endif // MAPBASE
 			{
 				Warning( ("--- MAP LEAKED ---\n") );
 				exit (0);
@@ -343,7 +367,7 @@ void ProcessWorldModel (void)
 	start = Plat_FloatTime();
 
 	Msg("FixTjuncs...\n");
-	
+
 	// This unifies the vertex list for all edges (splits collinear edges to remove t-junctions)
 	// It also welds the list of vertices out of each winding/portal and rounds nearly integer verts to integer
 	pLeafFaceList = FixTjuncs (tree->headnode, pLeafFaceList);
@@ -397,7 +421,7 @@ void ProcessSubModel( )
 	if (!nocsg)
 		list = ChopBrushes (list);
 	tree = BrushBSP (list, mins, maxs);
-	
+
 	// This would wind up crashing the engine because we'd have a negative leaf index in dmodel_t::headnode.
 	if ( tree->headnode->planenum == PLANENUM_LEAF )
 	{
@@ -407,7 +431,7 @@ void ProcessSubModel( )
 	}
 
 	MakeTreePortals (tree);
-	
+
 #if DEBUG_BRUSHMODEL
 	if ( entity_num == DEBUG_BRUSHMODEL )
 		WriteGLView( tree, "tree_all" );
@@ -418,7 +442,7 @@ void ProcessSubModel( )
 
 	FixTjuncs( tree->headnode, NULL );
 	WriteBSP( tree->headnode, NULL );
-	
+
 #if DEBUG_BRUSHMODEL
 	if ( entity_num == DEBUG_BRUSHMODEL )
 	{
@@ -604,7 +628,7 @@ static void EmitOccluderBrushes()
 
 		int nIndex = g_OccluderInfo.AddToTail();
 		g_OccluderInfo[nIndex].m_nOccluderEntityIndex = entity_num;
-		
+
 		sideList.RemoveAll();
 		GenerateOccluderSideList( entity_num, sideList );
 		for ( int i = faceList.Count(); --i >= 0; )
@@ -642,7 +666,7 @@ static void EmitOccluderBrushes()
 				{
 					g_OccluderVertexIndices.AddToTail( f->vertexnums[k] );
 
-					const Vector &p = dvertexes[f->vertexnums[k]].point; 
+					const Vector &p = dvertexes[f->vertexnums[k]].point;
 					VectorMin( occluderData.mins, p, occluderData.mins );
 					VectorMax( occluderData.maxs, p, occluderData.maxs );
 				}
@@ -670,6 +694,8 @@ void SetOccluderArea( int nOccluder, int nArea, int nEntityNum )
 	{
 		g_OccluderData[nOccluder].area = nArea;
 	}
+
+#ifndef MAPBASE
 	else if ( (nArea != 0) && (g_OccluderData[nOccluder].area != nArea) )
 	{
 		const char *pTargetName = ValueForKey( &entities[nEntityNum], "targetname" );
@@ -679,6 +705,7 @@ void SetOccluderArea( int nOccluder, int nArea, int nEntityNum )
 		}
 		Warning("Occluder \"%s\" straddles multiple areas. This is invalid!\n", pTargetName );
 	}
+#endif // MAPBASE
 }
 
 
@@ -712,7 +739,7 @@ void AssignAreaToOccluder( int nOccluder, tree_t *pTree, bool bCrossAreaPortals 
 				if ((!bCrossAreaPortals) && pPortal->nodes[nOtherSideIndex]->contents & CONTENTS_AREAPORTAL)
 					continue;
 
-				int nAdjacentArea = pPortal->nodes[nOtherSideIndex] ? pPortal->nodes[nOtherSideIndex]->area : 0; 
+				int nAdjacentArea = pPortal->nodes[nOtherSideIndex] ? pPortal->nodes[nOtherSideIndex]->area : 0;
 				SetOccluderArea( nOccluder, nAdjacentArea, nEntityNum );
 			}
 		}
@@ -770,7 +797,7 @@ void MarkNoDynamicShadowSides()
 	for ( int i=0; i < g_NoDynamicShadowSides.Count(); i++ )
 	{
 		int brushSideID = g_NoDynamicShadowSides[i];
-	
+
 		// Find the side with this ID.
 		for ( int iSide=0; iSide < g_MainMap->nummapbrushsides; iSide++ )
 		{
@@ -811,7 +838,7 @@ bool Is3DSkyboxArea( int area )
 	return false;
 }
 
-		
+
 /*
 ============
 ProcessModels
@@ -827,7 +854,7 @@ void ProcessModels (void)
 	// emit the displacement surfaces
 	EmitInitialDispInfos();
 
-	// Clip occluder brushes against each other, 
+	// Clip occluder brushes against each other,
 	// Remove them from the list of models to process below
 	EmitOccluderBrushes( );
 
@@ -859,7 +886,12 @@ void ProcessModels (void)
 	}
 
 	// Turn the skybox into a cubemap in case we don't build env_cubemap textures.
+#ifdef MAPBASE
+	if (!g_bNoDefaultCubemaps)
+		Cubemap_CreateDefaultCubemaps();
+#else
 	Cubemap_CreateDefaultCubemaps();
+#endif // MAPBASE
 	EndBSPFile ();
 }
 
@@ -891,7 +923,7 @@ int RunVBSP( int argc, char **argv )
 	MathLib_Init( 2.2f, 2.2f, 0.0f, OVERBRIGHT, false, false, false, false );
 	InstallSpewFunction();
 	SpewActivate( "developer", 1 );
-	
+
 	CmdLib_InitFileSystem( argv[ argc-1 ] );
 
 	Q_StripExtension( ExpandArg( argv[ argc-1 ] ), source, sizeof( source ) );
@@ -1000,11 +1032,19 @@ int RunVBSP( int argc, char **argv )
 			Msg ("microvolume = %f\n", microvolume);
 			i++;
 		}
+#ifdef MAPBASE
+		else if (!Q_stricmp(argv[i], "-noleaktest"))
+		{
+			Msg ("noleaktest = true\n");
+			noleaktest = true;
+		}
+#else
 		else if (!Q_stricmp(argv[i], "-leaktest"))
 		{
 			Msg ("leaktest = true\n");
 			leaktest = true;
 		}
+#endif // MAPBASE
 		else if (!Q_stricmp(argv[i], "-verboseentities"))
 		{
 			Msg ("verboseentities = true\n");
@@ -1036,7 +1076,7 @@ int RunVBSP( int argc, char **argv )
 			block_yl = atoi(argv[i+2]);
 			block_xh = atoi(argv[i+3]);
 			block_yh = atoi(argv[i+4]);
-			Msg ("blocks: %i,%i to %i,%i\n", 
+			Msg ("blocks: %i,%i to %i,%i\n",
 				block_xl, block_yl, block_xh, block_yh);
 			i+=4;
 		}
@@ -1137,6 +1177,108 @@ int RunVBSP( int argc, char **argv )
 		{
 			EnableFullMinidumps( true );
 		}
+		else if ( !Q_stricmp( argv[i], "-nohiddenmaps" ) )
+		{
+			g_bNoHiddenManifestMaps = true;
+		}
+#ifdef MAPBASE
+		// Thanks to Mapbase's shader changes, default all-black cubemaps are no longer needed.
+		// The command has been switched from "-nodefaultcubemap" to "-defaultcubemap",
+		// meaning maps are compiled without them by default.
+		else if ( !Q_stricmp( argv[i], "-defaultcubemap" ) )
+		{
+			g_bNoDefaultCubemaps = false;
+		}
+		// Default cubemaps are supposed to show the sky texture, but Valve disabled this
+		// because they didn't get it working for HDR cubemaps. As a result, all default
+		// cubemaps appear as all-black textures. However, this parameter has been added to
+		// re-enable skybox cubemaps for LDR cubemaps. (HDR skybox cubemaps are not supported)
+		else if ( !Q_stricmp( argv[i], "-skyboxcubemap" ) )
+		{
+			g_bNoDefaultCubemaps = false;
+			g_bSkyboxCubemaps = true;
+		}
+		else if ( !Q_stricmp( argv[i], "-defaultcubemapres" ) )
+		{
+			g_iDefaultCubemapSize = atoi( argv[i + 1] );
+			Msg( "Default cubemap size = %i\n", g_iDefaultCubemapSize );
+			i++;
+		}
+		else if ( !Q_stricmp( argv[i], "-defaultproppermodelsstatic" ) )
+		{
+			g_bPropperInsertAllAsStatic = true;
+		}
+		else if ( !Q_stricmp( argv[i], "-strippropperentities" ) )
+		{
+			g_bPropperStripEntities = true;
+		}
+#endif // MAPBASE
+#ifdef MAPBASE_VSCRIPT
+		else if ( !Q_stricmp( argv[i], "-scripting" ) )
+		{
+			const char *pszScriptLanguage = argv[i + 1];
+			if( pszScriptLanguage[0] == '-')
+			{
+				// It's another command. Just use default
+				g_iScripting = SL_DEFAULT;
+			}
+			else
+			{
+				// Use a specific language
+				if( !Q_stricmp(pszScriptLanguage, "gamemonkey") )
+				{
+					g_iScripting = SL_GAMEMONKEY;
+				}
+				else if( !Q_stricmp(pszScriptLanguage, "squirrel") )
+				{
+					g_iScripting = SL_SQUIRREL;
+				}
+				else if( !Q_stricmp(pszScriptLanguage, "python") )
+				{
+					g_iScripting = SL_PYTHON;
+				}
+				else if( !Q_stricmp(pszScriptLanguage, "lua") )
+				{
+					g_iScripting = SL_LUA;
+				}
+				else
+				{
+					DevWarning("-server_script does not recognize a language named '%s'. virtual machine did NOT start.\n", pszScriptLanguage );
+					g_iScripting = SL_NONE;
+				}
+				i++;
+			}
+		}
+		else if ( !Q_stricmp( argv[i], "-doc" ) )
+		{
+			// Only print the documentation
+
+			if (g_iScripting)
+			{
+				scriptmanager = (IScriptManager*)Sys_GetFactoryThis()(VSCRIPT_INTERFACE_VERSION, NULL);
+				VScriptVBSPInit();
+
+				const char *pszArg1 = argv[i + 1];
+				if (pszArg1[0] == '-')
+				{
+					// It's another command. Just use *
+					pszArg1 = "*";
+				}
+
+				char szCommand[512];
+				_snprintf( szCommand, sizeof( szCommand ), "__Documentation.PrintHelp( \"%s\" );", pszArg1 );
+				g_pScriptVM->Run( szCommand );
+			}
+			else
+			{
+				Warning("Cannot print documentation without scripting enabled!\n");
+			}
+
+			DeleteCmdLine( argc, argv );
+			CmdLib_Cleanup();
+			CmdLib_Exit( 1 );
+		}
+#endif // MAPBASE_VSCRIPT
 		else if ( !Q_stricmp( argv[i], "-embed" ) && i < argc - 1 )
 		{
 			V_MakeAbsolutePath( g_szEmbedDir, sizeof( g_szEmbedDir ), argv[++i], "." );
@@ -1164,7 +1306,7 @@ int RunVBSP( int argc, char **argv )
 	{
 		PrintCommandLine( argc, argv );
 
-		Warning(	
+		Warning(
 			"usage  : vbsp [options...] mapfile\n"
 			"example: vbsp -onlyents c:\\hl2\\hl2\\maps\\test\n"
 			"\n"
@@ -1303,7 +1445,7 @@ int RunVBSP( int argc, char **argv )
 	sprintf (path, "%s.lin", source);
 	remove (path);
 
-	strcpy (name, ExpandArg (argv[i]));	
+	strcpy (name, ExpandArg (argv[i]));
 
 	const char *pszExtension = V_GetFileExtension( name );
 	if ( !pszExtension )
@@ -1414,7 +1556,7 @@ int RunVBSP( int argc, char **argv )
 	}
 
 	end = Plat_FloatTime();
-	
+
 	char str[512];
 	GetHourMinuteSecondsString( (int)( end - start ), str, sizeof( str ) );
 	Msg( "%s elapsed\n", str );
@@ -1423,6 +1565,9 @@ int RunVBSP( int argc, char **argv )
 	ReleasePakFileLumps();
 	DeleteMaterialReplacementKeys();
 	ShutdownMaterialSystem();
+#ifdef MAPBASE_VSCRIPT
+	VScriptVBSPTerm();
+#endif // MAPBASE_VSCRIPT
 	CmdLib_Cleanup();
 	return 0;
 }

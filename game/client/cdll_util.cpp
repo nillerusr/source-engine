@@ -729,11 +729,14 @@ CBaseEntity *CEntitySphereQuery::GetCurrentEntity()
 //			sep - Character to use as separator. UNDONE: allow multiple separator chars
 // Output : Returns a pointer to the next token to be parsed.
 //-----------------------------------------------------------------------------
-const char *nexttoken(char *token, const char *str, char sep)
+const char *nexttoken(char *token, const char *str, char sep, size_t tokenLen)
 {
 	if ((str == NULL) || (*str == '\0'))
 	{
-		*token = '\0';
+		if(tokenLen)
+		{
+			*token = '\0';
+		}
 		return(NULL);
 	}
 

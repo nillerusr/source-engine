@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $NoKeywords: $
 //
@@ -17,18 +17,18 @@
 char* GetLastErrorString()
 {
 	static char err[2048];
-	
+
 	LPVOID lpMsgBuf;
-	FormatMessage( 
-		FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-		FORMAT_MESSAGE_FROM_SYSTEM | 
+	FormatMessage(
+		FORMAT_MESSAGE_ALLOCATE_BUFFER |
+		FORMAT_MESSAGE_FROM_SYSTEM |
 		FORMAT_MESSAGE_IGNORE_INSERTS,
 		NULL,
 		GetLastError(),
 		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
 		(LPTSTR) &lpMsgBuf,
 		0,
-		NULL 
+		NULL
 	);
 
 	strncpy( err, (char*)lpMsgBuf, sizeof( err ) );
@@ -92,31 +92,43 @@ int main(int argc, char* argv[])
 			else
 				printf( "Can't find '%s' specified in vrad.redirect.\n", dllName );
 		}
-		
+
 		fclose( fp );
 	}
 
 	int returnValue = 0;
-	
+
 	for(int mode=0;mode<2;mode++)
 	{
 		if (mode && (! both_arg))
 			continue;
-		
 
-		// If it didn't load the module above, then use the 
+#ifdef MAPBASE
+		// Coming through!
+		if ( !pModule )
+		{
+			// With this, we just load the DLL with our filename.
+			// This allows for custom DLLs without having to bother with the launcher.
+			char filename[64];
+			Q_FileBase(argv[0], filename, sizeof(filename));
+			Q_snprintf(dllName, sizeof(dllName), "%s%s", filename, "_dll.dll");
+			pModule = Sys_LoadModule( dllName );
+		}
+#endif // MAPBASE
+
+		// If it didn't load the module above, then use the
 		if ( !pModule )
 		{
 			strcpy( dllName, "vrad_dll.dll" );
 			pModule = Sys_LoadModule( dllName );
 		}
-		
+
 		if( !pModule )
 		{
 			printf( "vrad_launcher error: can't load %s\n%s", dllName, GetLastErrorString() );
 			return 1;
 		}
-		
+
 		CreateInterfaceFn fn = Sys_GetFactory( pModule );
 		if( !fn )
 		{
@@ -124,7 +136,7 @@ int main(int argc, char* argv[])
 			Sys_UnloadModule( pModule );
 			return 2;
 		}
-		
+
 		int retCode = 0;
 		IVRadDLL *pDLL = (IVRadDLL*)fn( VRAD_INTERFACE_VERSION, &retCode );
 		if( !pDLL )
@@ -133,7 +145,7 @@ int main(int argc, char* argv[])
 			Sys_UnloadModule( pModule );
 			return 3;
 		}
-		
+
 		if (both_arg)
 			strcpy(argv[both_arg],(mode)?"-hdr":"-ldr");
 		returnValue = pDLL->main( argc, argv );

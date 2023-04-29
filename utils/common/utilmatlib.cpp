@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $Workfile:     $
 // $Date:         $
@@ -24,7 +24,7 @@ void LoadMaterialSystemInterface( CreateInterfaceFn fileSystemFactory )
 {
 	if( g_pMaterialSystem )
 		return;
-	
+
 	// materialsystem.dll should be in the path, it's in bin along with vbsp.
 	const char *pDllName = "materialsystem.dll";
 	CSysModule *materialSystemDLLHInst;
@@ -59,6 +59,7 @@ void InitMaterialSystem( const char *materialBaseDirPath, CreateInterfaceFn file
 	LoadMaterialSystemInterface( fileSystemFactory );
 	MaterialSystem_Config_t config;
 	g_pMaterialSystem->OverrideConfig( config, false );
+	g_pMaterialSystem->ModInit();
 }
 
 void ShutdownMaterialSystem( )
@@ -74,7 +75,7 @@ MaterialSystemMaterial_t FindMaterial( const char *materialName, bool *pFound, b
 {
 	IMaterial *pMat = g_pMaterialSystem->FindMaterial( materialName, TEXTURE_GROUP_OTHER, bComplain );
 	MaterialSystemMaterial_t matHandle = pMat;
-	
+
 	if ( pFound )
 	{
 		*pFound = true;
@@ -92,12 +93,12 @@ void GetMaterialDimensions( MaterialSystemMaterial_t materialHandle, int *width,
 	IMaterial *material = ( IMaterial * )materialHandle;
 	bool translucent;
 	retVal = material->GetPreviewImageProperties( width, height, &dummyImageFormat, &translucent );
-	if (retVal != MATERIAL_PREVIEW_IMAGE_OK ) 
+	if (retVal != MATERIAL_PREVIEW_IMAGE_OK )
 	{
 #if 0
-		if (retVal == MATERIAL_PREVIEW_IMAGE_BAD ) 
+		if (retVal == MATERIAL_PREVIEW_IMAGE_BAD )
 		{
-			Error( "problem getting preview image for %s", 
+			Error( "problem getting preview image for %s",
 				g_pMaterialSystem->GetMaterialName( materialInfo[matID].materialHandle ) );
 		}
 #else
