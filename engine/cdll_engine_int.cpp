@@ -1715,6 +1715,7 @@ bool ClientDLL_Load()
 {
 	Assert ( !g_ClientDLLModule );
 
+#if 0
 	// Check the signature on the client dll.  If this fails we load it anyway but put this client
 	// into insecure mode so it won't connect to secure servers and get VAC banned
 	if ( !Host_AllowLoadModule( "client.dll", "GAMEBIN", true ) )
@@ -1723,8 +1724,23 @@ bool ClientDLL_Load()
 		Host_DisallowSecureServers();
 		Host_AllowLoadModule( "client.dll","GAMEBIN", true );
 	}
+#endif
 
+#if 0
 	g_ClientDLLModule = g_pFileSystem->LoadModule( "client", "GAMEBIN", false );
+#else
+	char clientPath[MAX_PATH];
+	const char *modName = CommandLine()->ParmValue("-game");
+
+	Q_snprintf(clientPath, MAX_PATH, "%s/libclient", modName);
+	g_ClientDLLModule = Sys_LoadModule(clientPath);
+
+	if (!g_ClientDLLModule)
+	{
+		Q_snprintf(clientPath, MAX_PATH, "%s/client", modName);
+		g_ClientDLLModule = Sys_LoadModule(clientPath);
+	}
+#endif
 	if ( g_ClientDLLModule )
 	{
 		g_ClientFactory = Sys_GetFactory( g_ClientDLLModule );

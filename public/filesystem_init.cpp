@@ -305,96 +305,13 @@ static bool Sys_GetExecutableName( char *out, int len )
 	return true;
 }
 
-bool FileSystem_GetExecutableDir( char *exedir, int exeDirLen )
-{
-#ifdef ANDROID
-	Q_snprintf( exedir, exeDirLen, "%s", getenv("APP_LIB_PATH") );
-#else
-	exedir[0] = 0;
-
-	if ( s_bUseVProjectBinDir )
-	{
-		const char *pProject = GetVProjectCmdLineValue();
-		if ( !pProject )
-		{
-			// Check their registry.
-			pProject = getenv( GAMEDIR_TOKEN );
-		}
-		if ( pProject )
-		{
-			Q_snprintf( exedir, exeDirLen, "%s%c..%cbin", pProject, CORRECT_PATH_SEPARATOR, CORRECT_PATH_SEPARATOR );
-			return true;
-		}
-		return false;
-	}
-
-	if ( !Sys_GetExecutableName( exedir, exeDirLen ) )
-		return false;
-	Q_StripFilename( exedir );
-
-	if ( IsX360() )
-	{
-		// The 360 can have its exe and dlls reside on different volumes
-		// use the optional basedir as the exe dir
-		if ( CommandLine()->FindParm( "-basedir" ) )
-		{
-			strcpy( exedir, CommandLine()->ParmValue( "-basedir", "" ) );
-		}
-	}
-
-	Q_FixSlashes( exedir );
-
-	const char* libDir = "bin";
-
-	// Return the bin directory as the executable dir if it's not in there
-	// because that's really where we're running from...
-	char ext[MAX_PATH];
-	Q_StrRight( exedir, 4, ext, sizeof( ext ) );
-	if ( ext[0] != CORRECT_PATH_SEPARATOR || Q_stricmp( ext+1, libDir ) != 0 )
-	{
-		Q_strncat( exedir, CORRECT_PATH_SEPARATOR_S, exeDirLen, COPY_ALL_CHARACTERS );
-		Q_strncat( exedir, libDir, exeDirLen, COPY_ALL_CHARACTERS );
-		Q_FixSlashes( exedir );
-	}
-#endif
-
-	return true;
-}
-
 static bool FileSystem_GetBaseDir( char *baseDir, int baseDirLen )
 {
 #ifdef ANDROID
 	strncpy(baseDir, getenv("VALVE_GAME_PATH"), baseDirLen);
 	return true;
 #else
-	if ( FileSystem_GetExecutableDir( baseDir, baseDirLen ) )
-	{
-		Q_StripFilename( baseDir );
-		return true;
-	}
-
-	return false;
-#endif
-}
-
-void LaunchVConfig()
-{
-#if defined( _WIN32 ) && !defined( _X360 )
-	char vconfigExe[MAX_PATH];
-	FileSystem_GetExecutableDir( vconfigExe, sizeof( vconfigExe ) );
-	Q_AppendSlash( vconfigExe, sizeof( vconfigExe ) );
-	Q_strncat( vconfigExe, "vconfig.exe", sizeof( vconfigExe ), COPY_ALL_CHARACTERS );
-
-	char *argv[] =
-	{
-		vconfigExe,
-		"-allowdebug",
-		NULL
-	};
-
-	_spawnv( _P_NOWAIT, vconfigExe, argv );
-#elif defined( _X360 )
-	Msg( "Launching vconfig.exe not supported\n" );
+	return getcwd(baseDir, baseDirLen) != NULL;
 #endif
 }
 
@@ -411,13 +328,6 @@ FSReturnCode_t SetupFileSystemError( bool bRunVConfig, FSReturnCode_t retVal, co
 	va_end( marker );
 
 	Warning( "%s\n", g_FileSystemError );
-
-	// Run vconfig?
-	// Don't do it if they specifically asked for it not to, or if they manually specified a vconfig with -game or -vproject.
-	if ( bRunVConfig && g_FileSystemErrorMode == FS_ERRORMODE_VCONFIG && !CommandLine()->FindParm( CMDLINEOPTION_NOVCONFIG ) && !GetVProjectCmdLineValue() )
-	{
-		LaunchVConfig();
-	}
 
 	if ( g_FileSystemErrorMode == FS_ERRORMODE_AUTO || g_FileSystemErrorMode == FS_ERRORMODE_VCONFIG )
 	{
@@ -1012,32 +922,6 @@ bool DoesPathExistAlready( const char *pPathEnvVar, const char *pTestPath )
 }
 
 
-FSReturnCode_t GetSteamCfgPath( char *steamCfgPath, int steamCfgPathLen )
-{
-	steamCfgPath[0] = 0;
-	char executablePath[MAX_PATH];
-	if ( !FileSystem_GetExecutableDir( executablePath, sizeof( executablePath ) ) )
-	{
-		return SetupFileSystemError( false, FS_INVALID_PARAMETERS, "FileSystem_GetExecutableDir failed." );
-	}
-	Q_strncpy( steamCfgPath, executablePath, steamCfgPathLen );
-	while ( 1 )
-	{
-		if ( DoesFileExistIn( steamCfgPath, "steam.cfg" ) )
-			break;
-	
-		if ( !Q_StripLastDir( steamCfgPath, steamCfgPathLen) )
-		{
-			// the file isnt found, thats ok, its not mandatory
-			return FS_OK;
-		}			
-	}
-	Q_AppendSlash( steamCfgPath, steamCfgPathLen );
-	Q_strncat( steamCfgPath, "steam.cfg", steamCfgPathLen, COPY_ALL_CHARACTERS );
-
-	return FS_OK;
-}
-
 void SetSteamAppUser( KeyValues *pSteamInfo, const char *steamInstallPath, CSteamEnvVars &steamEnvVars )
 {
 	// Always inherit the Steam user if it's already set, since it probably means we (or the
@@ -1092,19 +976,7 @@ void SetSteamUserPassphrase( KeyValues *pSteamInfo, CSteamEnvVars &steamEnvVars 
 
 FSReturnCode_t FileSystem_SetBasePaths( IFileSystem *pFileSystem )
 {
-	pFileSystem->RemoveSearchPaths( "EXECUTABLE_PATH" );
-
-	char executablePath[MAX_PATH];
-	if ( !FileSystem_GetExecutableDir( executablePath, sizeof( executablePath ) )	)
-		return SetupFileSystemError( false, FS_INVALID_PARAMETERS, "FileSystem_GetExecutableDir failed." );
-
-	pFileSystem->AddSearchPath( executablePath, "EXECUTABLE_PATH" );
-
-	if ( !FileSystem_GetBaseDir( executablePath, sizeof( executablePath ) )  )
-		return SetupFileSystemError( false, FS_INVALID_PARAMETERS, "FileSystem_GetBaseDir failed." );
-
-	pFileSystem->AddSearchPath( executablePath, "BASE_PATH" );
-
+	// Er2: Deprecated. Used only in hammer
 	return FS_OK;
 }
 
@@ -1113,43 +985,14 @@ FSReturnCode_t FileSystem_SetBasePaths( IFileSystem *pFileSystem )
 //-----------------------------------------------------------------------------
 FSReturnCode_t FileSystem_GetFileSystemDLLName( char *pFileSystemDLL, int nMaxLen, bool &bSteam )
 {
-#if 0
-	bSteam = false;
-
-	// Inside of here, we don't have a filesystem yet, so we have to assume that the filesystem_stdio or filesystem_steam
-	// is in this same directory with us.
-	char executablePath[MAX_PATH];
-	if ( !FileSystem_GetExecutableDir( executablePath, sizeof( executablePath ) )	)
-		return SetupFileSystemError( false, FS_INVALID_PARAMETERS, "FileSystem_GetExecutableDir failed." );
-
 	// Assume we'll use local files
-	Q_snprintf( pFileSystemDLL, nMaxLen, "%s%cfilesystem_stdio" DLL_EXT_STRING, executablePath, CORRECT_PATH_SEPARATOR );
-
-	#if !defined( _X360 )
-
-		// Use filsystem_steam if it exists?
-		#if defined( OSX ) || defined( LINUX )
-			struct stat statBuf;
-		#endif
-		if (
-			#if defined( OSX ) || defined( LINUX )
-				stat( pFileSystemDLL, &statBuf ) != 0
-			#else
-				_access( pFileSystemDLL, 0 ) != 0
-			#endif
-		) {
-			Q_snprintf( pFileSystemDLL, nMaxLen, "%s%cfilesystem_steam" DLL_EXT_STRING, executablePath, CORRECT_PATH_SEPARATOR );
-			bSteam = true;
-		}
-	#endif
+#ifdef POSIX
+	Q_strncpy( pFileSystemDLL, "libfilesystem_stdio" DLL_EXT_STRING, nMaxLen );
 #else
-	char executablePath[MAX_PATH];
-	if ( !FileSystem_GetExecutableDir( executablePath, sizeof( executablePath ) )	)
-		return SetupFileSystemError( false, FS_INVALID_PARAMETERS, "FileSystem_GetExecutableDir failed." );
+	Q_strncpy( pFileSystemDLL, "filesystem_stdio" DLL_EXT_STRING, nMaxLen );
+#endif
 
-	// Assume we'll use local files
-	Q_snprintf( pFileSystemDLL, nMaxLen, "%s%clibfilesystem_stdio" DLL_EXT_STRING, executablePath, CORRECT_PATH_SEPARATOR );
-
+#if 0
 	#if !defined( _X360 )
 		// Use filsystem_steam if it exists?
 		#if defined( OSX ) || defined( LINUX )
@@ -1162,10 +1005,9 @@ FSReturnCode_t FileSystem_GetFileSystemDLLName( char *pFileSystemDLL, int nMaxLe
 				_access( pFileSystemDLL, 0 ) != 0
 			#endif
 		) {
-			Q_snprintf( pFileSystemDLL, nMaxLen, "%s%cfilesystem_stdio" DLL_EXT_STRING, executablePath, CORRECT_PATH_SEPARATOR );
+			Q_snprintf( pFileSystemDLL, nMaxLen, "filesystem_stdio" DLL_EXT_STRING );
 		}
 	#endif
-
 #endif
 
 	return FS_OK;

@@ -464,7 +464,7 @@ void Sys_Error_Internal( bool bMinidump, const char *error, va_list argsList )
 		// Doing this doesn't quite work the way we want because there is no "crashing" thread
 		// and we see "No thread was identified as the cause of the crash; No signature could be created because we do not know which thread crashed" on the back end
 		//SteamAPI_WriteMiniDump( 0, NULL, build_number() );
-		printf("\n ##### Sys_Error: %s", text );
+		printf("\n ##### Sys_Error: %s\n", text );
 		fflush(stdout );
 
 		raise(SIGTRAP);
@@ -1117,12 +1117,12 @@ void Sys_ShutdownGame( void )
 
 CreateInterfaceFn g_ServerFactory;
 
-
 #pragma optimize( "g", off )
 static bool LoadThisDll( char *szDllFilename, bool bIsServerOnly )
 {
 	CSysModule *pDLL = NULL;
 
+#if 0
 	// check signature, don't let users with modified binaries connect to secure servers, they will get VAC banned
 	if ( !Host_AllowLoadModule( szDllFilename, "GAMEBIN", true, bIsServerOnly ) )
 	{
@@ -1134,6 +1134,16 @@ static bool LoadThisDll( char *szDllFilename, bool bIsServerOnly )
 	// ensures that the game.dll is running under Steam
 	// this will have to be undone when we want mods to be able to run
 	if ((pDLL = g_pFileSystem->LoadModule(szDllFilename, "GAMEBIN", false)) == NULL)
+#endif
+	char dllPath[MAX_PATH];
+	const char *modName = CommandLine()->ParmValue("-game");
+	Q_snprintf(dllPath, MAX_PATH, "%s/lib%s", modName, szDllFilename);
+	if (!(pDLL = Sys_LoadModule(dllPath)))
+	{
+		Q_snprintf(dllPath, MAX_PATH, "%s/%s",modName, szDllFilename);
+		pDLL = Sys_LoadModule(dllPath);
+	}
+	if (!pDLL)
 	{
 		ConMsg("Failed to load %s\n", szDllFilename);
 		goto IgnoreThisDLL;
@@ -1255,7 +1265,7 @@ void LoadEntityDLLs( const char *szBaseDir, bool bIsServerOnly )
 
 	if ( serverGameDLL )
 	{
-		Msg("server%s loaded for \"%s\"\n", DLL_EXT_STRING, (char *)serverGameDLL->GetGameDescription());
+		Msg("server" DLL_EXT_STRING " loaded for \"%s\"\n", (char *)serverGameDLL->GetGameDescription());
 	}
 }
 

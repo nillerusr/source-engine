@@ -188,6 +188,7 @@ static void WaitForDebuggerConnect( int argc, char *argv[], int time )
 
 int main( int argc, char *argv[] )
 {
+#if 0
 	// Must add 'bin' to the path....
 	char* pPath = getenv("LD_LIBRARY_PATH");
 	char szBuffer[4096];
@@ -203,14 +204,11 @@ int main( int argc, char *argv[] )
 	{
 		printf( "%s\n", strerror(errno) );
 	}
-	void *tier0 = dlopen( "libtier0" DLL_EXT_STRING, RTLD_NOW );
-	void *vstdlib = dlopen( "libvstdlib" DLL_EXT_STRING, RTLD_NOW );
+#endif
 
-	const char *pBinaryName = "bin/dedicated" DLL_EXT_STRING;
-
-	void *dedicated = dlopen( pBinaryName, RTLD_NOW );
+	void *dedicated = dlopen( "libdedicated", RTLD_NOW );
 	if ( !dedicated )
-		dedicated = dlopen( "bin/libdedicated" DLL_EXT_STRING, RTLD_NOW );
+		dedicated = dlopen( "dedicated" DLL_EXT_STRING, RTLD_NOW );
 
 	if ( !dedicated )
 	{
@@ -228,7 +226,5 @@ int main( int argc, char *argv[] )
 
 	ret = dedicated_main( argc,argv );
 	dlclose( dedicated );
-	dlclose( vstdlib );
-	dlclose( tier0 );
 }
 #endif

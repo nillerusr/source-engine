@@ -199,15 +199,10 @@ void FileSystem_AddSearchPath_Platform( IFileSystem *pFileSystem, const char *sz
 // See FSErrorMode_t. If you don't specify one here, then the default is FS_ERRORMODE_VCONFIG.
 void FileSystem_SetErrorMode( FSErrorMode_t errorMode = FS_ERRORMODE_VCONFIG );
 
-bool FileSystem_GetExecutableDir( char *exedir, int exeDirLen );
-
 // Clear SteamAppUser, SteamUserPassphrase, and SteamAppId from this process's environment.
 // TODO: always do this after LoadFileSysteModule.. there's no reason it should be
 // in the environment.
 void FileSystem_ClearSteamEnvVars();
-
-// Find the steam.cfg above you for optional stuff
-FSReturnCode_t GetSteamCfgPath( char *steamCfgPath, int steamCfgPathLen );
 
 // Returns the last error.
 const char *FileSystem_GetLastErrorString();
