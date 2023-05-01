@@ -361,7 +361,7 @@ bool FileSystem_GetExecutableDir( char *exedir, int exeDirLen )
 # ifdef POSIX
 	Q_strncpy( exedir, LIBDIR, exeDirLen );
 # else
-	exedir = "bin";
+	Q_strncpy( exedir, "./bin", exeDirLen );
 # endif
 #endif
 
