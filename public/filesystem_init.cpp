@@ -358,7 +358,11 @@ bool FileSystem_GetExecutableDir( char *exedir, int exeDirLen )
 		Q_FixSlashes( exedir );
 	}
 # endif
+# ifdef POSIX
 	Q_strncpy( exedir, LIBDIR, exeDirLen );
+# else
+	exedir = "bin";
+# endif
 #endif
 
 	return true;
