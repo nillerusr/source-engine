@@ -212,7 +212,7 @@ int main( int argc, char *argv[] )
 
 	if ( !dedicated )
 	{
-		printf( "Failed to open %s (%s)\n", pBinaryName, dlerror());
+		printf( "Failed to open dedicated" DLL_EXT_STRING " (%s)\n", dlerror());
 		return -1;
 	}
 	DedicatedMain_t dedicated_main = (DedicatedMain_t)dlsym( dedicated, "DedicatedMain" );

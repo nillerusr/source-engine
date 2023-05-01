@@ -465,9 +465,14 @@ def configure(conf):
 	# installation paths
 	if conf.env.DEST_OS == 'android':
 		conf.env.LIBDIR = conf.env.BINDIR = conf.env.PREFIX
+	elif conf.env.DEST_OS == 'win32':
+		# mustdie
+		conf.env.LIBDIR = conf.env.PREFIX + '/bin'
+		conf.env.BINDIR = conf.env.PREFIX
 	else:
 		conf.env.LIBDIR = conf.env.LIBDIR + '/srceng'
-		conf.env.TESTDIR = conf.env.BINDIR + 'tests'
+
+	conf.env.TESTDIR = conf.env.LIBDIR + '/tests'
 
 	flags = []
 

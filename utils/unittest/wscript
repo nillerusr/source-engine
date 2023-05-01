@@ -17,7 +17,7 @@ def configure(conf):
 def build(bld):
 	source = ['unittest.cpp']
 	includes = ['../../public']
-	defines = []
+	defines = ['LIBDIR="%s"' % bld.env.LIBDIR]
 	libs = ['tier0', 'appframework', 'tier1', 'tier2','tier3', 'vstdlib', 'unitlib']
 
 	if bld.env.DEST_OS != 'win32':
