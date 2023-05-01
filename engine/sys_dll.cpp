@@ -1122,7 +1122,6 @@ static bool LoadThisDll( char *szDllFilename, bool bIsServerOnly )
 {
 	CSysModule *pDLL = NULL;
 
-#if 0
 	// check signature, don't let users with modified binaries connect to secure servers, they will get VAC banned
 	if ( !Host_AllowLoadModule( szDllFilename, "GAMEBIN", true, bIsServerOnly ) )
 	{
@@ -1134,16 +1133,6 @@ static bool LoadThisDll( char *szDllFilename, bool bIsServerOnly )
 	// ensures that the game.dll is running under Steam
 	// this will have to be undone when we want mods to be able to run
 	if ((pDLL = g_pFileSystem->LoadModule(szDllFilename, "GAMEBIN", false)) == NULL)
-#endif
-	char dllPath[MAX_PATH];
-	const char *modName = CommandLine()->ParmValue("-game");
-	Q_snprintf(dllPath, MAX_PATH, "%s/lib%s", modName, szDllFilename);
-	if (!(pDLL = Sys_LoadModule(dllPath)))
-	{
-		Q_snprintf(dllPath, MAX_PATH, "%s/%s",modName, szDllFilename);
-		pDLL = Sys_LoadModule(dllPath);
-	}
-	if (!pDLL)
 	{
 		ConMsg("Failed to load %s\n", szDllFilename);
 		goto IgnoreThisDLL;

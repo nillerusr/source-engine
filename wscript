@@ -473,6 +473,8 @@ def configure(conf):
 		conf.env.LIBDIR = conf.env.LIBDIR + '/srceng'
 
 	conf.env.TESTDIR = conf.env.LIBDIR + '/tests'
+	conf.define('BINDIR', conf.env.BINDIR)
+	conf.define('LIBDIR', conf.env.LIBDIR)
 
 	flags = []
 

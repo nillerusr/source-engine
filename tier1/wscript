@@ -79,7 +79,7 @@ def build(bld):
 		'../common'
 	]
 
-	defines = ['LIBDIR="%s"' % bld.env.LIBDIR]
+	defines = []
 
 	libs = []
 	if bld.env.DEST_OS == 'win32':

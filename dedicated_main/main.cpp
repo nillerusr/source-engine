@@ -205,8 +205,7 @@ int main( int argc, char *argv[] )
 		printf( "%s\n", strerror(errno) );
 	}
 #endif
-
-	void *dedicated = dlopen( "libdedicated", RTLD_NOW );
+	void *dedicated = dlopen( "libdedicated" DLL_EXT_STRING, RTLD_NOW );
 	if ( !dedicated )
 		dedicated = dlopen( "dedicated" DLL_EXT_STRING, RTLD_NOW );
 
