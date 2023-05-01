@@ -476,7 +476,7 @@ def configure(conf):
 
 	if conf.env.DEST_OS != 'win32':
 		flags += ['-pipe', '-fPIC']
-		linkflags += ['-Wl,-rpath=%s' % conf.env.LIBDIR]
+		conf.env.RPATH = [conf.env.LIBDIR]
 	if conf.env.COMPILER_CC != 'msvc':
 		flags += ['-pthread']
 
