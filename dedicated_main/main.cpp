@@ -224,7 +224,8 @@ int main( int argc, char *argv[] )
 
 	WaitForDebuggerConnect( argc, argv, 30 );
 
-	ret = dedicated_main( argc,argv );
+	int ret = dedicated_main( argc,argv );
 	dlclose( dedicated );
+	return ret;
 }
 #endif

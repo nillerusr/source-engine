@@ -94,7 +94,7 @@ bool CUnitTestApp::Create()
 
 #ifdef WIN32
 	WIN32_FIND_DATA findFileData;
-	HANDLE hFind= FindFirstFile(LIBDIR "/tests/*.dll", &findFileData);
+	HANDLE hFind= FindFirstFile("bin/tests/*.dll", &findFileData);
 
 	while (hFind != INVALID_HANDLE_VALUE)
 	{
