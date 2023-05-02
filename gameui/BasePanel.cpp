@@ -108,7 +108,6 @@ static float		g_flAnimationPadding = 0.01f;
 extern const char *COM_GetModDirectory( void );
 
 extern ConVar x360_audio_english;
-extern bool bSteamCommunityFriendsVersion;
 
 static vgui::DHANDLE<vgui::PropertyDialog> g_hOptionsDialog;
 
@@ -845,18 +844,6 @@ CBasePanel::CBasePanel() : Panel(NULL, "BaseGameUIPanel")
 	m_pGameMenu = NULL;
 	m_pGameLogo = NULL;
 	m_hMainMenuOverridePanel = NULL;
-
-	if ( SteamClient() )
-	{
-		HSteamPipe steamPipe = SteamClient()->CreateSteamPipe();
-		ISteamUtils *pUtils = SteamClient()->GetISteamUtils( steamPipe, "SteamUtils002" );
-		if ( pUtils )
-		{
-			bSteamCommunityFriendsVersion = true;
-		}
-
-		SteamClient()->BReleaseSteamPipe( steamPipe );
-	}
 
 	CreateGameMenu();
 	CreateGameLogo();

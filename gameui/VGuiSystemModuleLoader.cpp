@@ -35,8 +35,6 @@ extern vgui::VPANEL GetGameUIBasePanel();
 extern CPlatformMainPanel *g_pMainPanel;
 #endif
 
-bool bSteamCommunityFriendsVersion = false;
-
 #include <tier0/dbg.h>
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -151,8 +149,8 @@ bool CVGuiSystemModuleLoader::LoadPlatformModules(CreateInterfaceFn *factorylist
 
 		const char *pchInterface = it->GetString("interface");
 
-		// don't load friends if we are using Steam Community
-		if ( !Q_stricmp( pchInterface, "VGuiModuleTracker001" ) && bSteamCommunityFriendsVersion )
+		// don't load friends
+		if ( !Q_stricmp( pchInterface, "VGuiModuleTracker001" ) )
 			continue;
 
 		// get copy out of steam cache
