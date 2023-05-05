@@ -33,6 +33,7 @@ CAI_PolicingBehavior::CAI_PolicingBehavior( void )
 	m_bEnabled = false;
 	m_nNumWarnings = 0;
 	m_bTargetIsHostile = false;
+	m_hPoliceGoal = NULL;
 }
 
 //-----------------------------------------------------------------------------

@@ -22,10 +22,16 @@ extern float (*pfFastCos)(float x);
 
 // The following are not declared as macros because they are often used in limiting situations,
 // and sometimes the compiler simply refuses to inline them for some reason
-#define FastSqrt(x)			(*pfSqrt)(x)
-#define	FastRSqrt(x)		(*pfRSqrt)(x)
-#define FastRSqrtFast(x)    (*pfRSqrtFast)(x)
+#define FastSqrt(x)			sqrtf(x)
+#define	FastRSqrt(x)		(1.f/sqrtf(x))
+#define FastRSqrtFast(x)    (1.f/sqrtf(x))
+
+#ifdef _WIN32
 #define FastSinCos(x,s,c)   (*pfFastSinCos)(x,s,c)
+#else
+#define FastSinCos(x,s,c)   sincosf(x,s,c)
+#endif
+
 #define FastCos(x)			(*pfFastCos)(x)
 
 #if defined(__i386__) || defined(_M_IX86)
