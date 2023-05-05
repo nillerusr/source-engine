@@ -95,6 +95,8 @@ TextEntry::TextEntry(Panel *parent, const char *panelName) : BaseClass(parent, p
 	
 	SetEditable(true);
 	
+	_dataChanged = false;
+
 	// initialize the line break array
 	m_LineBreaks.AddToTail(BUFFER_SIZE);
 	
