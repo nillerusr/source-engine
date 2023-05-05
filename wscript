@@ -596,7 +596,7 @@ def build(bld):
 	if bld.env.DEST_OS in ['win32', 'android']:
 		sdl_name = 'SDL2.dll' if bld.env.DEST_OS == 'win32' else 'libSDL2.so'
 		sdl_path = os.path.join('lib', bld.env.DEST_OS, bld.env.DEST_CPU, sdl_name)
-		bld.install_files('${PREFIX}/', [sdl_path])
+		bld.install_files(bld.env.LIBDIR, [sdl_path])
 
 	if bld.env.DEST_OS == 'win32':
 		projects['game'] += ['utils/bzip2']
