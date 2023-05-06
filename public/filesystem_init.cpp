@@ -324,15 +324,14 @@ static bool FileSystem_GetBaseDir( char *baseDir, int baseDirLen )
 {
 #ifdef ANDROID
 	Q_strncpy(baseDir, getenv("VALVE_GAME_PATH"), baseDirLen);
-	return true;
 #else
 	// get relative base dir which appends to other paths
 	// allows to run from everywhere
 	// "hl2/portal" -> "hl2"; "hl2" -> ""
-	Q_strncpy( baseDir, CommandLine()->ParmValue("-game"), baseDirLen );
+	Q_strncpy( baseDir, CommandLine()->ParmValue("-game", ""), baseDirLen );
 	Q_StripFilename( baseDir );
-	return true;
 #endif
+	return true;
 }
 
 void LaunchVConfig()
