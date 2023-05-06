@@ -310,58 +310,10 @@ bool FileSystem_GetExecutableDir( char *exedir, int exeDirLen )
 #ifdef ANDROID
 	Q_strncpy( exedir, getenv("APP_LIB_PATH"), exeDirLen );
 #else
-# if 0
-	exedir[0] = 0;
-
-	if ( s_bUseVProjectBinDir )
-	{
-		const char *pProject = GetVProjectCmdLineValue();
-		if ( !pProject )
-		{
-			// Check their registry.
-			pProject = getenv( GAMEDIR_TOKEN );
-		}
-		if ( pProject )
-		{
-			Q_snprintf( exedir, exeDirLen, "%s%c..%cbin", pProject, CORRECT_PATH_SEPARATOR, CORRECT_PATH_SEPARATOR );
-			return true;
-		}
-		return false;
-	}
-
-	if ( !Sys_GetExecutableName( exedir, exeDirLen ) )
-		return false;
-	Q_StripFilename( exedir );
-
-	if ( IsX360() )
-	{
-		// The 360 can have its exe and dlls reside on different volumes
-		// use the optional basedir as the exe dir
-		if ( CommandLine()->FindParm( "-basedir" ) )
-		{
-			strcpy( exedir, CommandLine()->ParmValue( "-basedir", "" ) );
-		}
-	}
-
-	Q_FixSlashes( exedir );
-
-	const char* libDir = "bin";
-
-	// Return the bin directory as the executable dir if it's not in there
-	// because that's really where we're running from...
-	char ext[MAX_PATH];
-	Q_StrRight( exedir, 4, ext, sizeof( ext ) );
-	if ( ext[0] != CORRECT_PATH_SEPARATOR || Q_stricmp( ext+1, libDir ) != 0 )
-	{
-		Q_strncat( exedir, CORRECT_PATH_SEPARATOR_S, exeDirLen, COPY_ALL_CHARACTERS );
-		Q_strncat( exedir, libDir, exeDirLen, COPY_ALL_CHARACTERS );
-		Q_FixSlashes( exedir );
-	}
-# endif
-# ifdef POSIX
-	Q_strncpy( exedir, LIBDIR, exeDirLen );
-# else
+# ifdef _WIN32
 	Q_strncpy( exedir, "./bin", exeDirLen );
+# else
+	Q_strncpy( exedir, LIBDIR, exeDirLen );
 # endif
 #endif
 
@@ -374,17 +326,12 @@ static bool FileSystem_GetBaseDir( char *baseDir, int baseDirLen )
 	Q_strncpy(baseDir, getenv("VALVE_GAME_PATH"), baseDirLen);
 	return true;
 #else
-# if 0
-	if ( FileSystem_GetExecutableDir( baseDir, baseDirLen ) )
-	{
-		Q_StripFilename( baseDir );
-		return true;
-	}
-
-	return false;
-# else
-	return getcwd(baseDir, baseDirLen) != NULL;
-# endif
+	// get relative base dir which appends to other paths
+	// allows to run from everywhere
+	// "hl2/portal" -> "hl2"; "hl2" -> ""
+	Q_strncpy( baseDir, CommandLine()->ParmValue("-game"), baseDirLen );
+	Q_StripFilename( baseDir );
+	return true;
 #endif
 }
 
@@ -1116,7 +1063,11 @@ FSReturnCode_t FileSystem_SetBasePaths( IFileSystem *pFileSystem )
 
 	pFileSystem->AddSearchPath( path, "BASE_PATH" );
 
-	Q_snprintf( path, MAX_PATH, "%s/%s", LIBDIR, CommandLine()->ParmValue("-game") );
+	// path for client/server libraries
+	// "hl2/portal" -> "LIBDIR/portal"; "hl2" -> "LIBDIR/hl2"
+	char gamePath[MAX_PATH];
+	V_FileBase( CommandLine()->ParmValue("-game"), gamePath, MAX_PATH );
+	Q_snprintf( path, MAX_PATH, "%s/%s", LIBDIR, gamePath );
 	pFileSystem->AddSearchPath( path, "GAMEBIN" );
 
 	return FS_OK;

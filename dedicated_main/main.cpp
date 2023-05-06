@@ -188,23 +188,6 @@ static void WaitForDebuggerConnect( int argc, char *argv[], int time )
 
 int main( int argc, char *argv[] )
 {
-#if 0
-	// Must add 'bin' to the path....
-	char* pPath = getenv("LD_LIBRARY_PATH");
-	char szBuffer[4096];
-	char cwd[ MAX_PATH ];
-	if ( !getcwd( cwd, sizeof(cwd)) )
-	{
-		printf( "getcwd failed (%s)", strerror(errno));
-	}
-
-	snprintf( szBuffer, sizeof( szBuffer ) - 1, "LD_LIBRARY_PATH=%s/bin:%s", cwd, pPath );
-	int ret = putenv( szBuffer );
-	if ( ret )	
-	{
-		printf( "%s\n", strerror(errno) );
-	}
-#endif
 	void *dedicated = dlopen( "libdedicated" DLL_EXT_STRING, RTLD_NOW );
 	if ( !dedicated )
 		dedicated = dlopen( "dedicated" DLL_EXT_STRING, RTLD_NOW );

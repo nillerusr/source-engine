@@ -342,33 +342,34 @@ bool Sys_MessageBox(const char *title, const char *info, bool bShowOkAndCancel)
 		return true;
 	}
 	return false;
-
-#elif defined( USE_SDL )
-
-	int buttonid = 0;
-	SDL_MessageBoxData messageboxdata = { 0 };
-	SDL_MessageBoxButtonData buttondata[] =
-	{
-		{ SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT,	1,	"OK"		},
-		{ SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT,	0,	"Cancel"	},
-	};
-
-	messageboxdata.window = GetAssertDialogParent();
-	messageboxdata.title = title;
-	messageboxdata.message = info;
-	messageboxdata.numbuttons = bShowOkAndCancel ? 2 : 1;
-	messageboxdata.buttons = buttondata;
-
-	SDL_ShowMessageBox( &messageboxdata, &buttonid );
-	return ( buttonid == 1 );
-
-#elif defined( POSIX )
-
-	Warning( "%s\n", info );
-	return true;
-
 #else
-#error "implement me"
+#if defined( USE_SDL )
+	SDL_Window *dialogParent = GetAssertDialogParent();
+	if (dialogParent)
+	{
+		int buttonid = 0;
+		SDL_MessageBoxData messageboxdata = { 0 };
+		SDL_MessageBoxButtonData buttondata[] =
+		{
+			{ SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT,	1,	"OK"		},
+			{ SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT,	0,	"Cancel"	},
+		};
+
+		messageboxdata.window = GetAssertDialogParent();
+		messageboxdata.title = title;
+		messageboxdata.message = info;
+		messageboxdata.numbuttons = bShowOkAndCancel ? 2 : 1;
+		messageboxdata.buttons = buttondata;
+
+		SDL_ShowMessageBox( &messageboxdata, &buttonid );
+		return ( buttonid == 1 );
+	}
+	else
+#endif
+	{
+		Warning( "%s\n", info );
+		return true;
+	}
 #endif
 }
 
