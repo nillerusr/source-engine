@@ -181,18 +181,19 @@ def define_platform(conf):
 
 	if conf.options.LAUNCHER:
 		conf.env.projects += ['main']
-		if conf.options.GL:
-			conf.env.GL = True
-			conf.env.targets += ['togl']
+		conf.env.GL = conf.options.GL or conf.options.TOGLES
+		if conf.options.TOGLES:
+			conf.env.TOGLES = True
+			conf.env.targets += ['togles']
+			conf.env.append_unique('DEFINES', ['TOGLES'])
+		if conf.env.GL:
+			if not conf.env.TOGLES:
+				conf.env.targets += ['togl']
 			conf.env.append_unique('DEFINES', [
 				'DX_TO_GL_ABSTRACTION',
 				'GL_GLEXT_PROTOTYPES',
 				'BINK_VIDEO'
 			])
-		elif conf.options.TOGLES:
-			conf.env.TOGLES = True
-			conf.env.targets += ['togles']
-			conf.env.append_unique('DEFINES', ['TOGLES'])
 
 		if conf.options.SDL:
 			conf.env.SDL = True
@@ -283,7 +284,7 @@ def options(opt):
 	if sys.platform == 'win32':
 		grp.add_option('--use-sdl', action = 'store_true', dest = 'SDL', default = False,
 			help = 'build engine with SDL [default: %default]')
-		grp.add_option('--use-togl', action = 'store_true', dest = 'SDL', default = False,
+		grp.add_option('--use-togl', action = 'store_true', dest = 'GL', default = False,
 			help = 'build engine with ToGL [default: %default]')
 	else:
 		grp.add_option('--no-sdl', action = 'store_false', dest = 'SDL', default = True,
@@ -610,6 +611,8 @@ def configure(conf):
 
 	for proj in conf.env.projects:
 		conf.add_subproject(projects[proj])
+	for targ in conf.env.targets:
+		conf.add_subproject(targ)
 
 def build(bld):
 	os.environ["CCACHE_DIR"] = os.path.abspath('.ccache/'+bld.env.COMPILER_CC+'/'+bld.env.DEST_OS+'/'+bld.env.DEST_CPU)

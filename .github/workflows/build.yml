@@ -60,7 +60,7 @@ jobs:
     - name: Build dedicated windows-i386
       run: |
         git submodule init && git submodule update
-        ./waf.bat configure -T debug -d
+        ./waf.bat configure -T debug -dl
         ./waf.bat build
 
   build-dedicated-windows-amd64:
@@ -71,7 +71,7 @@ jobs:
     - name: Build dedicated windows-amd64
       run: |
         git submodule init && git submodule update
-        ./waf.bat configure -T debug -d -8
+        ./waf.bat configure -T debug -dl -8
         ./waf.bat build
 
   build-dedicated-linux-i386:
@@ -81,7 +81,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: Build dedicated linux-i386
       run: |
-        scripts/build-ubuntu-i386.sh -d
+        scripts/build-ubuntu-i386.sh -dl
 
   build-dedicated-linux-amd64:
     runs-on: ubuntu-20.04
@@ -90,7 +90,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: Build dedicated linux-amd64
       run: |
-        scripts/build-ubuntu-amd64.sh -d
+        scripts/build-ubuntu-amd64.sh -dl
 
   build-macos-amd64:
     runs-on: macos-latest
@@ -108,4 +108,4 @@ jobs:
     - uses: actions/checkout@v2
     - name: Build dedicated macos-amd64
       run: |
-        scripts/build-macos-amd64.sh -d
+        scripts/build-macos-amd64.sh -dl
