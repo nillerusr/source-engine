@@ -10,16 +10,18 @@
 //=============================================================================//
 
 #include "vrad.h"
-#include "Bsplib.h"
-#include "GameBSPFile.h"
-#include "UtlBuffer.h"
-#include "utlvector.h"
-#include "CModel.h"
+#include "bsplib.h"
+#include "gamebspfile.h"
+#include "tier1/utlbuffer.h"
+#include "tier1/utlvector.h"
+#include "cmodel.h"
 #include "studio.h"
 #include "pacifier.h"
 #include "vraddetailprops.h"
 #include "mathlib/halton.h"
+#ifdef MPI
 #include "messbuf.h"
+#endif
 #include "byteswap.h"
 
 bool LoadStudioModel( char const* pModelName, CUtlBuffer& buf );
@@ -227,7 +229,11 @@ static void ComputeMaxDirectLighting( DetailObjectLump_t& prop, Vector* maxcolor
 		normal4.DuplicateVector( normal );
 
 		GatherSampleLightSSE ( out, dl, -1, origin4, &normal4, 1, iThread );
+#ifdef VRAD_SSE
 		VectorMA( maxcolor[dl->light.style], out.m_flFalloff.m128_f32[0] * out.m_flDot[0].m128_f32[0], dl->light.intensity, maxcolor[dl->light.style] );
+#else
+		VectorMA( maxcolor[dl->light.style], out.m_flFalloff[0] * out.m_flDot[0][0], dl->light.intensity, maxcolor[dl->light.style] );
+#endif
 	}
 }
 
@@ -524,7 +530,8 @@ private:
 	bool TestPointAgainstSkySurface( Vector const &pt, dface_t *pFace )
 	{
 		// Create sky face winding.
-		winding_t *pWinding = WindingFromFace( pFace, Vector( 0.0f, 0.0f, 0.0f ) );
+		Vector vec( 0.0f, 0.0f, 0.0f );
+		winding_t *pWinding = WindingFromFace( pFace, vec );
 
 		// Test point in winding. (Since it is at the node, it is in the plane.)
 		bool bRet = PointInWinding( pt, pWinding );
@@ -958,6 +965,7 @@ void UnserializeDetailPropLighting( int lumpID, int lumpVersion, CUtlVector<Deta
 	buf.Get( lumpData.Base(), lightsize );
 }
 
+#ifdef MPI
 DetailObjectLump_t *g_pMPIDetailProps = NULL;
 
 void VMPI_ProcessDetailPropWU( int iThread, int iWorkUnit, MessageBuffer *pBuf )
@@ -1000,6 +1008,7 @@ void VMPI_ReceiveDetailPropWU( int iWorkUnit, MessageBuffer *pBuf, int iWorker )
 		pBuf->read( &l->m_Style, sizeof( l->m_Style ) );
 	}
 }
+#endif
 	
 //-----------------------------------------------------------------------------
 // Computes lighting for the detail props

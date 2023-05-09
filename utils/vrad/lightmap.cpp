@@ -11,7 +11,9 @@
 #include "radial.h"
 #include "mathlib/bumpvects.h"
 #include "tier1/utlvector.h"
+#ifdef MPI
 #include "vmpi.h"
+#endif
 #include "mathlib/anorms.h"
 #include "map_utils.h"
 #include "mathlib/halton.h"
@@ -90,8 +92,8 @@ int CNormalList::FindOrAddNormal( Vector const &vNormal )
 	for( int iDim=0; iDim < 3; iDim++ )
 	{
 		gi[iDim] = (int)( ((vNormal[iDim] + 1.0f) * 0.5f) * NUM_SUBDIVS - 0.000001f );
-		gi[iDim] = min( gi[iDim], NUM_SUBDIVS );
-		gi[iDim] = max( gi[iDim], 0 );
+		gi[iDim] = MIN( gi[iDim], NUM_SUBDIVS );
+		gi[iDim] = MAX( gi[iDim], 0 );
 	}
 
 	// Look for a matching vector in there.
@@ -1327,8 +1329,8 @@ bool CanLeafTraceToSky( int iLeaf )
 	for ( int j = 0; j < NUMVERTEXNORMALS; j+=4 )
 	{
 		// search back to see if we can hit a sky brush
-		delta.LoadAndSwizzle( g_anorms[j], g_anorms[min( j+1, NUMVERTEXNORMALS-1 )],
-			g_anorms[min( j+2, NUMVERTEXNORMALS-1 )], g_anorms[min( j+3, NUMVERTEXNORMALS-1 )] );
+		delta.LoadAndSwizzle( g_anorms[j], g_anorms[MIN( j+1, NUMVERTEXNORMALS-1 )],
+			g_anorms[MIN( j+2, NUMVERTEXNORMALS-1 )], g_anorms[MIN( j+3, NUMVERTEXNORMALS-1 )] );
 		delta *= -MAX_TRACE_LENGTH;
 		delta += center4;
 
@@ -2534,7 +2536,11 @@ static void GatherSampleLightAt4Points( SSE_SampleInfo_t& info, int sampleIdx, i
 			if (info.m_WarnFace != info.m_FaceNum)
 			{
 				Warning ("\nWARNING: Too many light styles on a face at (%f, %f, %f)\n",
+#ifdef VRAD_SSE
 					info.m_Points.x.m128_f32[0], info.m_Points.y.m128_f32[0], info.m_Points.z.m128_f32[0] );
+#else
+					info.m_Points.x[0], info.m_Points.y[0], info.m_Points.z[0] );
+#endif
 				info.m_WarnFace = info.m_FaceNum;
 			}
 			continue;
@@ -3119,7 +3125,7 @@ void BuildFacelights (int iThread, int facenum)
 		int nSample = 4 * grp;
 
 		sample_t *sample = sampleInfo.m_pFaceLight->sample + nSample;
-		int numSamples = min ( 4, sampleInfo.m_pFaceLight->numsamples - nSample );
+		int numSamples = MIN ( 4, sampleInfo.m_pFaceLight->numsamples - nSample );
 
 		FourVectors positions;
 		FourVectors normals;
@@ -3174,7 +3180,9 @@ void BuildFacelights (int iThread, int facenum)
 		}
 	}
 
+#ifdef MPI
 	if (!g_bUseMPI) 
+#endif
 	{
 		//
 		// This is done on the master node when MPI is used

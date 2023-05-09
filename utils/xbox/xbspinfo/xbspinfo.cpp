@@ -17,7 +17,7 @@ BEGIN_BYTESWAP_DATADESC( lump_t )
 	DEFINE_FIELD( fileofs, FIELD_INTEGER ),
 	DEFINE_FIELD( filelen, FIELD_INTEGER ),
 	DEFINE_FIELD( version, FIELD_INTEGER ),
-	DEFINE_ARRAY( fourCC, FIELD_CHARACTER, 4 ),
+//	DEFINE_ARRAY( fourCC, FIELD_CHARACTER, 4 ),
 END_BYTESWAP_DATADESC()
 
 typedef struct
@@ -267,6 +267,7 @@ void DumpInfo( const char *pFilename, void *pBSPFile, int bspSize )
 bool LoadBSPFile( const char* pFilename, void **ppBSPBuffer, int *pBSPSize )
 {
 	CByteswap	byteSwap;
+	dheader_t *pBSPHeader;
 
 	*ppBSPBuffer = NULL;
 	*pBSPSize    = 0;
@@ -298,7 +299,7 @@ bool LoadBSPFile( const char* pFilename, void **ppBSPBuffer, int *pBSPSize )
 		goto cleanUp;
 	}	
 
-	dheader_t *pBSPHeader = (dheader_t *)*ppBSPBuffer;
+	pBSPHeader = (dheader_t *)*ppBSPBuffer;
 
 	if ( pBSPHeader->ident != IDBSPHEADER )
 	{
@@ -327,7 +328,7 @@ bool LoadBSPFile( const char* pFilename, void **ppBSPBuffer, int *pBSPSize )
 		goto cleanUp;
 	}	
 
-	// sucess
+	// success
 	return true;
 
 cleanUp:

@@ -2,12 +2,15 @@
 //
 //=============================================================================
 
+#ifndef POSIX
 #include <windows.h>
 #include <tier0/dbg.h>
 #include <io.h>
-#include <WorldSize.h>
-#include "fgdlib/GameData.h"
-#include "fgdlib/HelperInfo.h"
+#endif
+
+#include "worldsize.h"
+#include "fgdlib/gamedata.h"
+#include "fgdlib/helperinfo.h"
 #include "KeyValues.h"
 #include "filesystem_tools.h"
 #include "tier1/strtools.h"
@@ -276,12 +279,14 @@ void GameData::ClearData(void)
 // Input  : pszFilename - 
 // Output : Returns TRUE on success, FALSE on failure.
 //-----------------------------------------------------------------------------
-BOOL GameData::Load(const char *pszFilename)
+bool GameData::Load(const char *pszFilename)
 {
 	TokenReader tr;
 
+#ifndef POSIX
 	if(GetFileAttributes(pszFilename) == 0xffffffff)
 		return FALSE;
+#endif
 
 	if(!tr.Open(pszFilename))
 		return FALSE;

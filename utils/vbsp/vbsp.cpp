@@ -14,7 +14,9 @@
 #include "tier0/icommandline.h"
 #include "materialsystem/imaterialsystem.h"
 #include "map.h"
+#ifdef _WIN32
 #include "tools_minidump.h"
+#endif
 #include "materialsub.h"
 #include "loadcmdline.h"
 #include "byteswap.h"
@@ -46,7 +48,9 @@ qboolean	noopt;
 qboolean	leaktest;
 qboolean	verboseentities;
 qboolean	dumpcollide = false;
+#ifdef _WIN32
 qboolean	g_bLowPriority = false;
+#endif
 qboolean	g_DumpStaticProps = false;
 qboolean	g_bSkyVis = false;			// skybox vis is off by default, toggle this to enable it
 bool		g_bLightIfMissing = false;
@@ -1088,10 +1092,12 @@ int RunVBSP( int argc, char **argv )
 		{
 			g_BumpAll = true;
 		}
+#ifdef _WIN32
 		else if( !Q_stricmp( argv[i], "-low" ) )
 		{
 			g_bLowPriority = true;
 		}
+#endif
 		else if( !Q_stricmp( argv[i], "-lightifmissing" ) )
 		{
 			g_bLightIfMissing = true;
@@ -1133,10 +1139,12 @@ int RunVBSP( int argc, char **argv )
 		{
 			g_NodrawTriggers = true;
 		}
+#ifdef _WIN32
 		else if ( !Q_stricmp( argv[i], "-FullMinidumps" ) )
 		{
 			EnableFullMinidumps( true );
 		}
+#endif
 		else if ( !Q_stricmp( argv[i], "-embed" ) && i < argc - 1 )
 		{
 			V_MakeAbsolutePath( g_szEmbedDir, sizeof( g_szEmbedDir ), argv[++i], "." );
@@ -1182,7 +1190,9 @@ int RunVBSP( int argc, char **argv )
 			"  -nodetail   : Get rid of all detail geometry. The geometry left over is\n"
 			"                what affects visibility.\n"
 			"  -nowater    : Get rid of water brushes.\n"
+#ifdef _WIN32
 			"  -low        : Run as an idle-priority process.\n"
+#endif
 			"  -embed <directory>  : Use <directory> as an additional search path for assets\n"
 			"                        and embed all assets in this directory into the compiled\n"
 			"                        map\n"
@@ -1235,7 +1245,9 @@ int RunVBSP( int argc, char **argv )
 				"  -x360		   : Generate Xbox360 version of vsp\n"
 				"  -nox360		   : Disable generation Xbox360 version of vsp (default)\n"
 				"  -replacematerials : Substitute materials according to materialsub.txt in content\\maps\n"
+#ifdef _WIN32
 				"  -FullMinidumps  : Write large minidumps on crash.\n"
+#endif
 				);
 			}
 
@@ -1257,11 +1269,13 @@ int RunVBSP( int argc, char **argv )
 
 	start = Plat_FloatTime();
 
+#ifdef _WIN32
 	// Run in the background?
 	if( g_bLowPriority )
 	{
 		SetLowPriority();
 	}
+#endif
 
 	if( ( g_nDXLevel != 0 ) && ( g_nDXLevel < 80 ) )
 	{
@@ -1332,7 +1346,7 @@ int RunVBSP( int argc, char **argv )
 		g_nCubemapSamples = 0;
 
 		// Mark as stale since the lighting could be screwed with new ents.
-		AddBufferToPak( GetPakFile(), "stale.txt", "stale", strlen( "stale" ) + 1, false );
+		AddBufferToPak( GetPakFile(), "stale.txt", (void *)"stale", strlen( "stale" ) + 1, false );
 
 		LoadMapFile (name);
 		SetModelNumbers ();
@@ -1389,7 +1403,7 @@ int RunVBSP( int argc, char **argv )
 		{
 			LoadBSPFile_FileSystemOnly (mapFile);
 			// Mark as stale since the lighting could be screwed with new ents.
-			AddBufferToPak( GetPakFile(), "stale.txt", "stale", strlen( "stale" ) + 1, false );
+			AddBufferToPak( GetPakFile(), "stale.txt", (void *)"stale", strlen( "stale" ) + 1, false );
 		}
 
 		LoadMapFile (name);
@@ -1435,8 +1449,10 @@ main
 */
 int main (int argc, char **argv)
 {
+#ifdef _WIN32
 	// Install an exception handler.
 	SetupDefaultToolsMinidumpHandler();
+#endif
 	return RunVBSP( argc, argv );
 }
 

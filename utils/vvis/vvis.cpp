@@ -7,19 +7,21 @@
 //=============================================================================//
 // vis.c
 
+#ifdef _WIN32
 #include <windows.h>
+#include "vmpi_tools_shared.h"
+#include "vmpi.h"
+#include "mpivis.h"
+#include "tools_minidump.h"
+#endif
 #include "vis.h"
 #include "threads.h"
 #include "stdlib.h"
 #include "pacifier.h"
-#include "vmpi.h"
-#include "mpivis.h"
 #include "tier1/strtools.h"
 #include "collisionutils.h"
 #include "tier0/icommandline.h"
-#include "vmpi_tools_shared.h"
 #include "ilaunchabledll.h"
-#include "tools_minidump.h"
 #include "loadcmdline.h"
 #include "byteswap.h"
 
@@ -54,7 +56,9 @@ portal_t	*sorted_portals[MAX_MAP_PORTALS*2];
 bool		g_bUseRadius = false;
 double		g_VisRadius = 4096.0f * 4096.0f;
 
+#ifdef _WIN32
 bool		g_bLowPriority = false;
+#endif
 
 //=============================================================================
 
@@ -84,7 +88,7 @@ winding_t *NewWinding (int points)
 	if (points > MAX_POINTS_ON_WINDING)
 		Error ("NewWinding: %i points, max %d", points, MAX_POINTS_ON_WINDING);
 	
-	size = (int)(&((winding_t *)0)->points[points]);
+	size = (int)(size_t)(&((winding_t *)0)->points[points]);
 	w = (winding_t*)malloc (size);
 	memset (w, 0, size);
 	
@@ -302,11 +306,13 @@ void CalcPortalVis (void)
 	}
 
 
+#ifdef _WIN32
     if (g_bUseMPI) 
 	{
  		RunMPIPortalFlow();
 	}
 	else 
+#endif
 	{
 		RunThreadsOnIndividual (g_numportals*2, true, PortalFlow);
 	}
@@ -315,7 +321,7 @@ void CalcPortalVis (void)
 
 void CalcVisTrace (void)
 {
-    RunThreadsOnIndividual (g_numportals*2, true, BasePortalVis);
+	RunThreadsOnIndividual (g_numportals*2, true, BasePortalVis);
 	BuildTracePortals( g_TraceClusterStart );
 	// NOTE: We only schedule the one-way portals out of the start cluster here
 	// so don't run g_numportals*2 in this case
@@ -331,11 +337,13 @@ void CalcVis (void)
 {
 	int		i;
 
+#ifdef _WIN32
 	if (g_bUseMPI) 
 	{
 		RunMPIBasePortalVis();
 	}
 	else 
+#endif
 	{
 	    RunThreadsOnIndividual (g_numportals*2, true, BasePortalVis);
 	}
@@ -413,6 +421,7 @@ void LoadPortals (char *name)
 
 	FILE *f;
 
+#ifdef _WIN32
 	// Open the portal file.
 	if ( g_bUseMPI )
 	{
@@ -448,6 +457,7 @@ void LoadPortals (char *name)
 		f = fopen( tempFile, "rSTD" ); // read only, sequential, temporary, delete on close
 	}
 	else
+#endif
 	{
 		f = fopen( name, "r" );
 	}
@@ -949,6 +959,7 @@ int ParseCommandLine( int argc, char **argv )
 		}
 		else if (!Q_stricmp (argv[i],"-tmpin"))
 			strcpy (inbase, "/tmp");
+#ifdef _WIN32
 		else if( !Q_stricmp( argv[i], "-low" ) )
 		{
 			g_bLowPriority = true;
@@ -957,6 +968,7 @@ int ParseCommandLine( int argc, char **argv )
 		{
 			EnableFullMinidumps( true );
 		}
+#endif
 		else if ( !Q_stricmp( argv[i], CMDLINEOPTION_NOVCONFIG ) )
 		{
 		}
@@ -968,6 +980,7 @@ int ParseCommandLine( int argc, char **argv )
 		{
 			// nothing to do here, but don't bail on this option
 		}
+#ifdef _WIN32
 		// NOTE: the -mpi checks must come last here because they allow the previous argument 
 		// to be -mpi as well. If it game before something else like -game, then if the previous
 		// argument was -mpi and the current argument was something valid like -game, it would skip it.
@@ -980,6 +993,7 @@ int ParseCommandLine( int argc, char **argv )
 			if ( i == argc - 1 )
 				break;
 		}
+#endif
 		else if (argv[i][0] == '-')
 		{
 			Warning("VBSP: Unknown option \"%s\"\n\n", argv[i]);
@@ -1016,8 +1030,10 @@ void PrintUsage( int argc, char **argv )
 		"\n"
 		"  -v (or -verbose): Turn on verbose output (also shows more command\n"
 		"  -fast           : Only do first quick pass on vis calculations.\n"
+#ifdef _WIN32
 		"  -mpi            : Use VMPI to distribute computations.\n"
 		"  -low            : Run as an idle-priority process.\n"
+#endif
 		"                    env_fog_controller specifies one.\n"
 		"\n"
 		"  -vproject <directory> : Override the VPROJECT environment variable.\n"
@@ -1026,14 +1042,18 @@ void PrintUsage( int argc, char **argv )
 		"Other options:\n"
 		"  -novconfig      : Don't bring up graphical UI on vproject errors.\n"
 		"  -radius_override: Force a vis radius, regardless of whether an\n"
+#ifdef _WIN32
 		"  -mpi_pw <pw>    : Use a password to choose a specific set of VMPI workers.\n"
+#endif
 		"  -threads        : Control the number of threads vbsp uses (defaults to the #\n"
 		"                    or processors on your machine).\n"
 		"  -nosort         : Don't sort portals (sorting is an optimization).\n"
 		"  -tmpin          : Make portals come from \\tmp\\<mapname>.\n"
 		"  -tmpout         : Make portals come from \\tmp\\<mapname>.\n"
 		"  -trace <start cluster> <end cluster> : Writes a linefile that traces the vis from one cluster to another for debugging map vis.\n"
+#ifdef _WIN32
 		"  -FullMinidumps  : Write large minidumps on crash.\n"
+#endif
 		"  -x360		   : Generate Xbox360 version of vsp\n"
 		"  -nox360		   : Disable generation Xbox360 version of vsp (default)\n"
 		"\n"
@@ -1070,7 +1090,7 @@ void PrintUsage( int argc, char **argv )
 
 int RunVVis( int argc, char **argv )
 {
-	char	portalfile[1024];
+	char		portalfile[1024];
 	char		source[1024];
 	char		mapFile[1024];
 	double		start, end;
@@ -1109,7 +1129,7 @@ int RunVVis( int argc, char **argv )
 
 	start = Plat_FloatTime();
 
-
+#ifdef _WIN32
 	if (!g_bUseMPI)
 	{
 		// Setup the logfile.
@@ -1123,6 +1143,7 @@ int RunVVis( int argc, char **argv )
 	{
 		SetLowPriority();
 	}
+#endif
 
 	ThreadSetDefault ();
 
@@ -1187,10 +1208,12 @@ int RunVVis( int argc, char **argv )
 		{
 			Error("Invalid cluster trace: %d to %d, valid range is 0 to %d\n", g_TraceClusterStart, g_TraceClusterStop, portalclusters-1 );
 		}
+#ifdef _WIN32
 		if ( g_bUseMPI )
 		{
 			Warning("Can't compile trace in MPI mode\n");
 		}
+#endif
 		CalcVisTrace ();
 		WritePortalTrace(source);
 	}
@@ -1203,7 +1226,9 @@ int RunVVis( int argc, char **argv )
 
 	ReleasePakFileLumps();
 	DeleteCmdLine( argc, argv );
+#ifdef _WIN32
 	CmdLib_Cleanup();
+#endif
 	return 0;
 }
 
@@ -1218,6 +1243,7 @@ int main (int argc, char **argv)
 	CommandLine()->CreateCmdLine( argc, argv );
 
 	MathLib_Init( 2.2f, 2.2f, 0.0f, 1.0f, false, false, false, false );
+#ifdef _WIN32
 	InstallAllocationFunctions();
 	InstallSpewFunction();
 
@@ -1228,6 +1254,7 @@ int main (int argc, char **argv)
 		SetupToolsMinidumpHandler( VMPI_ExceptionFilter );
 	else
 		SetupDefaultToolsMinidumpHandler();
+#endif
 
 	return RunVVis( argc, argv );
 }

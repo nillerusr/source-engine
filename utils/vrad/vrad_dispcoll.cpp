@@ -6,11 +6,11 @@
 //=============================================================================//
 
 #include "vrad.h"
-#include "VRAD_DispColl.h"
-#include "DispColl_Common.h"
+#include "vrad_dispcoll.h"
+#include "dispcoll_common.h"
 #include "radial.h"
-#include "CollisionUtils.h"
-#include "tier0\dbg.h"
+#include "collisionutils.h"
+#include "tier0/dbg.h"
 
 #define SAMPLE_BBOX_SLOP		5.0f
 #define TRIEDGE_EPSILON			0.001f
@@ -110,6 +110,7 @@ void CVRADDispColl::CalcSampleRadius2AndBox( dface_t *pFace )
 
 	// Calculate the patch radius - the max sample edge length * the number of luxels per edge "chop."
 	float flSampleSize = max( m_flSampleWidth, m_flSampleHeight );
+	// Calculate the patch radius - the MAX sample edge length * the number of luxels per edge "chop."
 	float flPatchSampleRadius = flSampleSize * dispchop * 2.2f;
 	if ( flPatchSampleRadius > g_MaxDispPatchRadius )
 	{
@@ -440,7 +441,7 @@ void CVRADDispColl::CreateChildPatchesFromRoot( int iParentPatch, int *pChildPat
 	vecEdges[3] = pParentPatch->winding->p[3] - pParentPatch->winding->p[0];
 
 	// Should the patch be subdivided - check the area.
-	float flMaxLength  = max( m_flSampleWidth, m_flSampleHeight );
+	float flMaxLength  = MAX( m_flSampleWidth, m_flSampleHeight );
 	float flMinEdgeLength = flMaxLength * dispchop;
 
 	// Find the longest edge.
@@ -551,7 +552,7 @@ void CVRADDispColl::CreateChildPatches( int iParentPatch, int nLevel )
 		return;
 
 	// Should the patch be subdivided - check the area.
-	float flMaxLength  = max( m_flSampleWidth, m_flSampleHeight );
+	float flMaxLength  = MAX( m_flSampleWidth, m_flSampleHeight );
 	float flMinEdgeLength = flMaxLength * dispchop;
 
 	// Split along the longest edge.
@@ -659,7 +660,7 @@ void CVRADDispColl::CreateChildPatchesSub( int iParentPatch )
 		return;
 
 	// Should the patch be subdivided - check the area.
-	float flMaxLength  = max( m_flSampleWidth, m_flSampleHeight );
+	float flMaxLength  = MAX( m_flSampleWidth, m_flSampleHeight );
 	float flMinEdgeLength = flMaxLength * dispchop;
 
 	// Split along the longest edge.

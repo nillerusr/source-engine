@@ -132,7 +132,9 @@ void CmdLib_Cleanup();
 void CmdLib_Exit( int exitCode );	// Use this to cleanup and call exit().
 
 // entrypoint if chaining spew functions
+#ifdef _WIN32
 SpewRetval_t CmdLib_SpewOutputFunc( SpewType_t type, char const *pMsg );
+#endif
 unsigned short SetConsoleTextColor( int red, int green, int blue, int intensity );
 void RestoreConsoleTextColor( unsigned short color );
 

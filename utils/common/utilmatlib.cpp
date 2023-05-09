@@ -12,26 +12,25 @@
 #include "materialsystem/imaterialsystem.h"
 #include "materialsystem/imaterial.h"
 #include "materialsystem/imaterialvar.h"
-#include <cmdlib.h>
+#include "cmdlib.h"
 #include "utilmatlib.h"
 #include "tier0/dbg.h"
-#include <windows.h>
 #include "filesystem.h"
 #include "materialsystem/materialsystem_config.h"
-#include "mathlib/Mathlib.h"
+#include "mathlib/mathlib.h"
 
 void LoadMaterialSystemInterface( CreateInterfaceFn fileSystemFactory )
 {
 	if( g_pMaterialSystem )
 		return;
-	
+
 	// materialsystem.dll should be in the path, it's in bin along with vbsp.
-	const char *pDllName = "materialsystem.dll";
+	const char *pDllName = "materialsystem" DLL_EXT_STRING;
 	CSysModule *materialSystemDLLHInst;
 	materialSystemDLLHInst = g_pFullFileSystem->LoadModule( pDllName );
 	if( !materialSystemDLLHInst )
 	{
-		Error( "Can't load MaterialSystem.dll\n" );
+		Error( "Can't load MaterialSystem\n" );
 	}
 
 	CreateInterfaceFn clientFactory = Sys_GetFactory( materialSystemDLLHInst );
@@ -40,17 +39,17 @@ void LoadMaterialSystemInterface( CreateInterfaceFn fileSystemFactory )
 		g_pMaterialSystem = (IMaterialSystem *)clientFactory( MATERIAL_SYSTEM_INTERFACE_VERSION, NULL );
 		if ( !g_pMaterialSystem )
 		{
-			Error( "Could not get the material system interface from materialsystem.dll (" __FILE__ ")" );
+			Error( "Could not get the material system interface from materialsystem library (" __FILE__ ")" );
 		}
 	}
 	else
 	{
-		Error( "Could not find factory interface in library MaterialSystem.dll" );
+		Error( "Could not find factory interface in library MaterialSystem!" );
 	}
 
-	if (!g_pMaterialSystem->Init( "shaderapiempty.dll", 0, fileSystemFactory ))
+	if (!g_pMaterialSystem->Init( "shaderapiempty" DLL_EXT_STRING, 0, fileSystemFactory ))
 	{
-		Error( "Could not start the empty shader (shaderapiempty.dll)!" );
+		Error( "Could not start the empty shader (shaderapiempty)!" );
 	}
 }
 

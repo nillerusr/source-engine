@@ -112,8 +112,8 @@ class WCKVBase_Vector
 public:
 	
 	// Iteration helpers.
-	inline int GetCount() const			{ return m_KeyValues.Count(); }
-	inline int GetFirst() const			{ return m_KeyValues.Count() - 1; }
+	inline int GetCount() const			{ return this->m_KeyValues.Count(); }
+	inline int GetFirst() const			{ return this->m_KeyValues.Count() - 1; }
 	inline int GetNext( int i ) const	{ return i - 1; }
 	static inline int GetInvalidIndex()	{ return -1; }
 
@@ -138,8 +138,8 @@ public:
 
 	// Iteration helpers. Note that there is no GetCount() because you can't iterate
 	// these by incrementing a counter.
-	inline int GetFirst() const			{ return m_KeyValues.First(); }
-	inline int GetNext( int i ) const	{ return m_KeyValues.Next( i ); }
+	inline int GetFirst() const			{ return this->m_KeyValues.First(); }
+	inline int GetNext( int i ) const	{ return this->m_KeyValues.Next( i ); }
 	static inline int GetInvalidIndex()	{ return CUtlDict<MDkeyvalue,unsigned short>::InvalidIndex(); }
 
 	int FindByKeyName( const char *pKeyName ) const; // Returns the same value as GetInvalidIndex if not found.
@@ -188,7 +188,7 @@ typedef WCKeyValuesT<WCKVBase_Vector> WCKeyValuesVector;
 template<class Base>
 inline const char *WCKeyValuesT<Base>::GetKey(int nIndex) const
 {
-	return(m_KeyValues.Element(nIndex).szKey);
+	return(this->m_KeyValues.Element(nIndex).szKey);
 }
 
 
@@ -200,7 +200,7 @@ inline const char *WCKeyValuesT<Base>::GetKey(int nIndex) const
 template<class Base>
 inline MDkeyvalue &WCKeyValuesT<Base>::GetKeyValue(int nIndex)
 {
-	return(m_KeyValues.Element(nIndex));
+	return(this->m_KeyValues.Element(nIndex));
 }
 
 
@@ -212,7 +212,7 @@ inline MDkeyvalue &WCKeyValuesT<Base>::GetKeyValue(int nIndex)
 template<class Base>
 inline const MDkeyvalue& WCKeyValuesT<Base>::GetKeyValue(int nIndex) const
 {
-	return(m_KeyValues.Element(nIndex));
+	return(this->m_KeyValues.Element(nIndex));
 }
 
 
@@ -223,7 +223,7 @@ inline const MDkeyvalue& WCKeyValuesT<Base>::GetKeyValue(int nIndex) const
 template<class Base>
 inline const char *WCKeyValuesT<Base>::GetValue(int nIndex) const
 {
-	return(m_KeyValues.Element(nIndex).szValue);
+	return(this->m_KeyValues.Element(nIndex).szValue);
 }
 
 

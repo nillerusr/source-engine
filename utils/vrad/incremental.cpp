@@ -310,10 +310,13 @@ void CIncremental::AddLightToFace(
 	else
 	{
 		bool bNew;
-		
+#ifdef _WIN32
 		EnterCriticalSection( &pLight->m_CS );
+#endif
 			pFace = pLight->FindOrCreateLightFace( iFace, lmSize, &bNew );
+#ifdef _WIN32
 		LeaveCriticalSection( &pLight->m_CS );
+#endif
 
 		pLight->m_pCachedFaces[iThread] = pFace;
 
@@ -460,10 +463,14 @@ void CIncremental::FinishFace(
 		if( pFace->m_CompressedData.TellPut() == 0 )
 		{
 			// No contribution.. delete this face from the light.
+#ifdef _WIN32
 			EnterCriticalSection( &pLight->m_CS );
+#endif
 				pLight->m_LightFaces.Remove( pFace->m_LightFacesIndex );
 				delete pFace;
+#ifdef _WIN32
 			LeaveCriticalSection( &pLight->m_CS );
+#endif
 		}
 		else
 		{
@@ -574,7 +581,7 @@ void CIncremental::AddLightsForActiveLights()
 
 		// Copy the light information.
 		pLight->m_Light = dl->light;
-		pLight->m_flMaxIntensity = max( dl->light.intensity[0], max( dl->light.intensity[1], dl->light.intensity[2] ) );
+		pLight->m_flMaxIntensity = MAX( dl->light.intensity[0], MAX( dl->light.intensity[1], dl->light.intensity[2] ) );
 	}
 }
 
@@ -609,8 +616,8 @@ bool CIncremental::LoadIncrementalFile()
 
 		FileRead( fp, pLight->m_Light );
 		pLight->m_flMaxIntensity = 
-			max( pLight->m_Light.intensity.x, 
-				max( pLight->m_Light.intensity.y, pLight->m_Light.intensity.z ) );
+			MAX( pLight->m_Light.intensity.x, 
+				MAX( pLight->m_Light.intensity.y, pLight->m_Light.intensity.z ) );
 
 		int nFaces;
 		FileRead( fp, nFaces );
@@ -719,14 +726,18 @@ void CIncremental::LinkLightsToFaces( CUtlVector<CFaceLightList> &faceLights )
 CIncLight::CIncLight()
 {
 	memset( m_pCachedFaces, 0, sizeof(m_pCachedFaces) );
+#ifdef _WIN32
 	InitializeCriticalSection( &m_CS );
+#endif
 }
 
 
 CIncLight::~CIncLight()
 {
 	m_LightFaces.PurgeAndDeleteElements();
+#ifdef _WIN32
 	DeleteCriticalSection( &m_CS );
+#endif
 }
 
 

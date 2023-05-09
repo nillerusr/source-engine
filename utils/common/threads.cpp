@@ -13,14 +13,21 @@
 
 #define	USED
 
+#ifdef _WIN32
 #include <windows.h>
+#elif defined(POSIX)
+#include <pthread.h>
+#else
+#error
+#endif
 #include "cmdlib.h"
 #define NO_THREAD_NAMES
 #include "threads.h"
 #include "pacifier.h"
 
-#define	MAX_THREADS	16
+#define	MAX_THREADS	40
 
+int numthreads = -1;
 
 class CRunThreadsData
 {
@@ -40,8 +47,11 @@ qboolean		pacifier;
 qboolean	threaded;
 bool g_bLowPriorityThreads = false;
 
+#ifdef _WIN32
 HANDLE g_ThreadHandles[MAX_THREADS];
-
+#elif defined(POSIX)
+pthread_t g_ThreadHandles[MAX_THREADS];
+#endif
 
 
 /*
@@ -97,7 +107,21 @@ void RunThreadsOnIndividual (int workcnt, qboolean showpacifier, ThreadWorkerFn 
 	RunThreadsOn (workcnt, showpacifier, ThreadWorkerFunction);
 }
 
+void ThreadSetDefault (void)
+{
+	const CPUInformation *ci;
+	if (numthreads == -1)	// not set manually
+	{
+		ci = GetCPUInformation();
+		numthreads = ci->m_nLogicalProcessors;
+		if (numthreads < 1) numthreads = 1;
+		if (numthreads > MAX_THREADS) numthreads = MAX_THREADS;
+	}
 
+	Msg ("%i threads\n", numthreads);
+}
+
+#ifdef _WIN32
 /*
 ===================================================================
 
@@ -106,7 +130,6 @@ WIN32
 ===================================================================
 */
 
-int		numthreads = -1;
 CRITICAL_SECTION		crit;
 static int enter;
 
@@ -120,27 +143,9 @@ public:
 	}
 } g_CritInit;
 
-
-
 void SetLowPriority()
 {
 	SetPriorityClass( GetCurrentProcess(), IDLE_PRIORITY_CLASS );
-}
-
-
-void ThreadSetDefault (void)
-{
-	SYSTEM_INFO info;
-
-	if (numthreads == -1)	// not set manually
-	{
-		GetSystemInfo (&info);
-		numthreads = info.dwNumberOfProcessors;
-		if (numthreads < 1 || numthreads > 32)
-			numthreads = 1;
-	}
-
-	Msg ("%i threads\n", numthreads);
 }
 
 
@@ -172,7 +177,6 @@ DWORD WINAPI InternalRunThreadsFn( LPVOID pParameter )
 	pData->m_Fn( pData->m_iThread, pData->m_pUserData );
 	return 0;
 }
-
 
 void RunThreads_Start( RunThreadsFn fn, void *pUserData, ERunThreadsPriority ePriority )
 {
@@ -218,7 +222,76 @@ void RunThreads_End()
 
 	threaded = false;
 }
-	
+#elif defined(POSIX)
+/*
+===================================================================
+
+POSIX
+
+===================================================================
+*/
+
+pthread_mutex_t crit = PTHREAD_MUTEX_INITIALIZER;
+static int enter;
+
+void SetLowPriority()
+{
+}
+void ThreadLock (void)
+{
+	if (!threaded)
+		return;
+	pthread_mutex_lock (&crit);
+	if (enter)
+		Error ("Recursive ThreadLock\n");
+	enter = 1;
+}
+
+void ThreadUnlock (void)
+{
+	if (!threaded)
+		return;
+	if (!enter)
+		Error ("ThreadUnlock without lock\n");
+	enter = 0;
+	pthread_mutex_unlock (&crit);
+}
+
+void *InternalRunThreadsFn( void *pParameter )
+{
+	CRunThreadsData *pData = (CRunThreadsData*)pParameter;
+	pData->m_Fn( pData->m_iThread, pData->m_pUserData );
+	return NULL;
+}
+
+void RunThreads_Start( RunThreadsFn fn, void *pUserData, ERunThreadsPriority ePriority )
+{
+	Assert( numthreads > 0 );
+	threaded = true;
+
+	if ( numthreads > MAX_TOOL_THREADS )
+		numthreads = MAX_TOOL_THREADS;
+
+	for ( int i=0; i < numthreads ;i++ )
+	{
+		g_RunThreadsData[i].m_iThread = i;
+		g_RunThreadsData[i].m_pUserData = pUserData;
+		g_RunThreadsData[i].m_Fn = fn;
+
+		pthread_create( &g_ThreadHandles[i], NULL, InternalRunThreadsFn, &g_RunThreadsData[i] );
+	}
+}
+
+
+void RunThreads_End()
+{
+	for ( int i=0; i < numthreads; i++ )
+		pthread_join( g_ThreadHandles[i], NULL );
+
+	threaded = false;
+}
+#endif
+
 
 /*
 =============

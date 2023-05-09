@@ -931,7 +931,7 @@ void WriteBSP (node_t *headnode, face_t *pLeafFaceList )
 		}
 	}
 
-	EmitWaterVolumesForBSP( &dmodels[nummodels], headnode );
+//	EmitWaterVolumesForBSP( &dmodels[nummodels], headnode );
 	qprintf ("%5i nodes with faces\n", c_facenodes);
 	qprintf ("%5i nodes without faces\n", c_nofaces);
 	qprintf ("%5i faces\n", numfaces-oldfaces);
@@ -1257,7 +1257,7 @@ void EndBSPFile (void)
 	OverlayTransition_EmitOverlayFaces();
 
 	// phys collision needs dispinfo to operate (needs to generate phys collision for displacement surfs)
-	EmitPhysCollision();
+//	EmitPhysCollision();
 
 	// We can't calculate this properly until vvis (since we need vis to do this), so we set
 	// to zero everywhere by default.

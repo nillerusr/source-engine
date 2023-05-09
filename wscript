@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 # encoding: utf-8
+# vim: noexpandtab
 # nillerusr
 
 from __future__ import print_function
@@ -29,8 +30,18 @@ int main() { return (int)FcInit(); }
 Context.Context.line_just = 55 # should fit for everything on 80x26
 
 projects={
-	'game': [
+	'base': [
 		'appframework',
+		'filesystem',
+		'tier0',
+		'tier1',
+		'tier2',
+		'tier3',
+		'mathlib',
+		'vstdlib',
+		'vpklib',
+	],
+	'main': [
 		'bitmap',
 		'choreoobjects',
 		'datacache',
@@ -38,7 +49,6 @@ projects={
 		'dmxloader',
 		'engine',
 		'engine/voice_codecs/minimp3',
-		'filesystem',
 		'game/client',
 		'game/server',
 		'gameui',
@@ -55,17 +65,12 @@ projects={
 		'materialsystem/shaderapidx9',
 		'materialsystem/shaderlib',
 		'materialsystem/stdshaders',
-		'mathlib',
 		'particles',
 		'scenefilecache',
 		'serverbrowser',
 		'soundemittersystem',
 		'studiorender',
 		'thirdparty/StubSteamAPI',
-		'tier0',
-		'tier1',
-		'tier2',
-		'tier3',
 		'vgui2/matsys_controls',
 		'vgui2/src',
 		'vgui2/vgui_controls',
@@ -73,24 +78,13 @@ projects={
 		'vguimatsurface',
 		'video',
 		'vphysics',
-		'vpklib',
-		'vstdlib',
 		'vtf',
 		'utils/vtex',
 		'unicode',
 		'video',
 	],
 	'tests': [
-		'appframework',
-		'tier0',
-		'tier1',
-		'tier2',
-		'tier3',
 		'unitlib',
-		'mathlib',
-		'vstdlib',
-		'filesystem',
-		'vpklib',
 		'unittests/tier0test',
 		'unittests/tier1test',
 		'unittests/tier2test',
@@ -99,7 +93,6 @@ projects={
 		'utils/unittest'
 	],
 	'dedicated': [
-		'appframework',
 		'bitmap',
 		'choreoobjects',
 		'datacache',
@@ -114,23 +107,42 @@ projects={
 		'ivp/ivp_compact_builder',
 		'ivp/ivp_physics',
 		'materialsystem',
-		'mathlib',
 		'particles',
 		'scenefilecache',
 		'materialsystem/shaderapiempty',
 		'materialsystem/shaderlib',
 		'soundemittersystem',
 		'studiorender',
-		'tier0',
-		'tier1',
-		'tier2',
-		'tier3',
 		'vphysics',
-		'vpklib',
-		'vstdlib',
 		'vtf',
 		'thirdparty/StubSteamAPI'
-	]
+	],
+	'utils': [
+		'bitmap',
+		'vtf',
+		'fgdlib',
+		'raytrace',
+		'vphysics',
+		'ivp/havana',
+		'ivp/havana/havok/hk_base',
+		'ivp/havana/havok/hk_math',
+		'ivp/ivp_compact_builder',
+		'ivp/ivp_physics',
+		'materialsystem',
+		'materialsystem/shaderapiempty',
+		'materialsystem/shaderlib',
+		'utils/vtex',
+		'utils/lzma',
+		'utils/bsppack',
+		'utils/vbspinfo',
+		'utils/xbox/xbspinfo',
+		'utils/vvis',
+		'utils/vvis_launcher',
+		'utils/vrad',
+		'utils/vrad_launcher',
+		'utils/vbsp',
+		'utils/vpk',
+	],
 }
 
 @Configure.conf
@@ -156,38 +168,49 @@ def get_taskgen_count(self):
 	return idx
 
 def define_platform(conf):
-	conf.env.DEDICATED = conf.options.DEDICATED
-	conf.env.TESTS = conf.options.TESTS
-	conf.env.TOGLES = conf.options.TOGLES
-	conf.env.GL = conf.options.GL and not conf.options.TESTS and not conf.options.DEDICATED
-	conf.env.OPUS = conf.options.OPUS
+	if conf.options.ALLOW64:
+		conf.define('PLATFORM_64BITS', 1)
 
+	conf.env.projects = ['base']
+	conf.env.targets = []
 	if conf.options.DEDICATED:
+		conf.env.DEDICATED = True
+		conf.env.projects += ['dedicated']
 		conf.options.SDL = False
 		conf.define('DEDICATED', 1)
 
+	if conf.options.LAUNCHER:
+		conf.env.projects += ['main']
+		if conf.options.GL:
+			conf.env.GL = True
+			conf.env.targets += ['togl']
+			conf.env.append_unique('DEFINES', [
+				'DX_TO_GL_ABSTRACTION',
+				'GL_GLEXT_PROTOTYPES',
+				'BINK_VIDEO'
+			])
+		elif conf.options.TOGLES:
+			conf.env.TOGLES = True
+			conf.env.targets += ['togles']
+			conf.env.append_unique('DEFINES', ['TOGLES'])
+
+		if conf.options.SDL:
+			conf.env.SDL = True
+			conf.define('USE_SDL', 1)
+
 	if conf.options.TESTS:
+		conf.env.TESTS = True
+		conf.env.projects += ['tests']
 		conf.define('UNITTESTS', 1)
 
-	if conf.env.GL:
-		conf.env.append_unique('DEFINES', [
-			'DX_TO_GL_ABSTRACTION',
-			'GL_GLEXT_PROTOTYPES',
-			'BINK_VIDEO'
-		])
+	if conf.options.UTILS:
+		conf.env.projects += ['utils']
 
-	if conf.options.TOGLES:
-		conf.env.append_unique('DEFINES', ['TOGLES'])
-
-	if conf.options.TESTS:
-		conf.define('UNITTESTS', 1)
-
-	if conf.options.SDL and not conf.options.TESTS:
-		conf.env.SDL = 1
-		conf.define('USE_SDL', 1)
-
-	if conf.options.ALLOW64:
-		conf.define('PLATFORM_64BITS', 1)
+	if conf.env.DEST_OS == 'win32' and not conf.env.TESTS:
+		conf.env.targets += ['utils/bzip2']
+	if conf.options.OPUS or conf.env.DEST_OS == 'android' and conf.env.LAUNCHER:
+		conf.env.OPUS = True
+		conf.env.targets += ['engine/voice_codecs/opus']
 
 	if conf.env.DEST_OS == 'linux':
 		conf.define('_GLIBCXX_USE_CXX11_ABI',0)
@@ -252,41 +275,54 @@ def options(opt):
 	grp = opt.add_option_group('Common options')
 
 	grp.add_option('-8', '--64bits', action = 'store_true', dest = 'ALLOW64', default = False,
-		help = 'allow targetting 64-bit engine(Linux/Windows/OSX x86 only) [default: %default]')
-
-	grp.add_option('-d', '--dedicated', action = 'store_true', dest = 'DEDICATED', default = False,
-		help = 'build dedicated server [default: %default]')
-
-	grp.add_option('--tests', action = 'store_true', dest = 'TESTS', default = False,
-		help = 'build unit tests [default: %default]')
+		help = 'allow targetting 64-bit engine [default: %default]')
 
 	grp.add_option('-D', '--debug-engine', action = 'store_true', dest = 'DEBUG_ENGINE', default = False,
 		help = 'build with -DDEBUG [default: %default]')
 
-	grp.add_option('--use-sdl', action = 'store', dest = 'SDL', type = 'int', default = sys.platform != 'win32',
-		help = 'build engine with SDL [default: %default]')
+	if sys.platform == 'win32':
+		grp.add_option('--use-sdl', action = 'store_true', dest = 'SDL', default = False,
+			help = 'build engine with SDL [default: %default]')
+		grp.add_option('--use-togl', action = 'store_true', dest = 'SDL', default = False,
+			help = 'build engine with ToGL [default: %default]')
+	else:
+		grp.add_option('--no-sdl', action = 'store_false', dest = 'SDL', default = True,
+			help = 'build engine with SDL [default: %default]')
+		grp.add_option('--no-togl', action = 'store_false', dest = 'GL', default = True,
+			help = 'build engine with ToGL [default: %default]')
 
-	grp.add_option('--use-togl', action = 'store', dest = 'GL', type = 'int', default = sys.platform != 'win32',
-		help = 'build engine with ToGL [default: %default]')
-
-	grp.add_option('--build-games', action = 'store', dest = 'GAMES', type = 'string', default = 'hl2',
-		help = 'build games [default: %default]')
+	grp.add_option('--use-togles', action = 'store_true', dest = 'TOGLES', default = False,
+		help = 'build engine with ToGLES [default: %default]')
 
 	grp.add_option('--use-ccache', action = 'store_true', dest = 'CCACHE', default = False,
 		help = 'build using ccache [default: %default]')
 
-	grp.add_option('--disable-warns', action = 'store_true', dest = 'DISABLE_WARNS', default = False,
-		help = 'build using ccache [default: %default]')
+	grp.add_option('--no-warns', action = 'store_true', dest = 'DISABLE_WARNS', default = False,
+		help = 'build without warnings [default: %default]')
 
-	grp.add_option('--togles', action = 'store_true', dest = 'TOGLES', default = False,
-		help = 'build engine with ToGLES [default: %default]')
+	grp.add_option('--build-games', action = 'store', dest = 'GAMES', type = 'string', default = 'hl2',
+		help = 'build games [default: %default]')
 
 	# TODO(nillerusr): add wscript for opus building
-	grp.add_option('--enable-opus', action = 'store_true', dest = 'OPUS', default = False,
+	grp.add_option('--use-opus', action = 'store_true', dest = 'OPUS', default = False,
 		help = 'build engine with Opus voice codec [default: %default]')
 
 	grp.add_option('--sanitize', action = 'store', dest = 'SANITIZE', default = '',
 		help = 'build with sanitizers [default: %default]')
+
+	targ = opt.add_option_group('Targets options')
+
+	targ.add_option('-d', '--use-dedicated', action = 'store_true', dest = 'DEDICATED', default = False,
+		help = 'build dedicated server [default: %default]')
+
+	targ.add_option('-l', '--no-launcher', action = 'store_false', dest = 'LAUNCHER', default = True,
+		help = 'build launcher [default: %default]')
+
+	targ.add_option('-t', '--use-tests', action = 'store_true', dest = 'TESTS', default = False,
+		help = 'build unit tests [default: %default]')
+
+	targ.add_option('-u', '--use-utils', action = 'store_true', dest = 'UTILS', default = False,
+		help = 'build Valve utilities such as vbsp, vrad, vvis [default: %default]')
 
 	opt.load('compiler_optimizations subproject')
 
@@ -419,17 +455,6 @@ def configure(conf):
 
 	define_platform(conf)
 	conf.define('GIT_COMMIT_HASH', conf.env.GIT_VERSION)
-
-	if conf.env.TOGLES:
-		projects['game'] += ['togles']
-	elif conf.env.GL:
-		projects['game'] += ['togl']
-
-	if conf.env.DEST_OS == 'win32':
-		projects['game'] += ['utils/bzip2']
-		projects['dedicated'] += ['utils/bzip2']
-	if conf.options.OPUS or conf.env.DEST_OS == 'android':
-		projects['game'] += ['engine/voice_codecs/opus']
 
 	conf.env.BIT32_MANDATORY = not conf.options.ALLOW64
 	if conf.env.BIT32_MANDATORY:
@@ -583,12 +608,8 @@ def configure(conf):
 		conf.env.CC.insert(0, 'ccache')
 		conf.env.CXX.insert(0, 'ccache')
 
-	if conf.options.TESTS:
-		conf.add_subproject(projects['tests'])
-	elif conf.options.DEDICATED:
-		conf.add_subproject(projects['dedicated'])
-	else:
-		conf.add_subproject(projects['game'])
+	for proj in conf.env.projects:
+		conf.add_subproject(projects[proj])
 
 def build(bld):
 	os.environ["CCACHE_DIR"] = os.path.abspath('.ccache/'+bld.env.COMPILER_CC+'/'+bld.env.DEST_OS+'/'+bld.env.DEST_CPU)
@@ -598,21 +619,8 @@ def build(bld):
 		sdl_path = os.path.join('lib', bld.env.DEST_OS, bld.env.DEST_CPU, sdl_name)
 		bld.install_files(bld.env.LIBDIR, [sdl_path])
 
-	if bld.env.DEST_OS == 'win32':
-		projects['game'] += ['utils/bzip2']
-		projects['dedicated'] += ['utils/bzip2']
+	for proj in bld.env.projects:
+		bld.add_subproject(projects[proj])
+	for targ in bld.env.targets:
+		bld.add_subproject(targ)
 
-	if bld.env.OPUS or bld.env.DEST_OS == 'android':
-		projects['game'] += ['engine/voice_codecs/opus']
-
-	if bld.env.TESTS:
-		bld.add_subproject(projects['tests'])
-	elif bld.env.DEDICATED:
-		bld.add_subproject(projects['dedicated'])
-	else:
-		if bld.env.TOGLES:
-			projects['game'] += ['togles']
-		elif bld.env.GL:
-			projects['game'] += ['togl']
-
-		bld.add_subproject(projects['game'])

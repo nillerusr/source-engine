@@ -8,14 +8,13 @@
 #include "vrad.h"
 #include "utlvector.h"
 #include "cmodel.h"
-#include "BSPTreeData.h"
-#include "VRAD_DispColl.h"
-#include "CollisionUtils.h"
+#include "bsptreedata.h"
+#include "vrad_dispcoll.h"
+#include "collisionutils.h"
 #include "lightmap.h"
-#include "Radial.h"
-#include "CollisionUtils.h"
+#include "radial.h"
 #include "mathlib/bumpvects.h"
-#include "utlrbtree.h"
+#include "tier1/utlrbtree.h"
 #include "tier0/fasttimer.h"
 #include "disp_vrad.h"
 
@@ -562,7 +561,7 @@ bool CVRadDispMgr::ClipRayToDisp( DispTested_t &dispTested, Ray_t const &ray )
 	ctx.m_pDispTested = &dispTested;
 
 	// If it got through without a hit, it returns true
-	return !m_pBSPTreeData->EnumerateLeavesAlongRay( ray, &m_EnumDispRay, ( int )&ctx );
+	return !m_pBSPTreeData->EnumerateLeavesAlongRay( ray, &m_EnumDispRay, ( int )(size_t)&ctx );
 }
 
 
@@ -575,7 +574,7 @@ bool CVRadDispMgr::ClipRayToDispInLeaf( DispTested_t &dispTested, Ray_t const &r
 	ctx.m_pRay = &ray;
 	ctx.m_pDispTested = &dispTested;
 
-	return !m_pBSPTreeData->EnumerateElementsInLeaf( ndxLeaf, &m_EnumDispRay, ( int )&ctx );
+	return !m_pBSPTreeData->EnumerateElementsInLeaf( ndxLeaf, &m_EnumDispRay, ( int )(size_t)&ctx );
 }
 
 //-----------------------------------------------------------------------------
@@ -1135,7 +1134,7 @@ void AddPatchLightToRadial( Vector const &patchOrigin, Vector const &patchNormal
 		if( bNeighborBump )
 		{
 			float flScale = patchNormal.Dot( normals[0] );
-			flScale = max( 0.0f, flScale );
+			flScale = MAX( 0.0f, flScale );
 			float flBumpInfluence = influence * flScale;
 
 			for( int ndxBump = 0; ndxBump < ( NUM_BUMP_VECTS+1 ); ndxBump++ )
@@ -1148,7 +1147,7 @@ void AddPatchLightToRadial( Vector const &patchOrigin, Vector const &patchNormal
 		else
 		{
 			float flScale = patchNormal.Dot( normals[0] );
-			flScale = max( 0.0f, flScale );
+			flScale = MAX( 0.0f, flScale );
 			float flBumpInfluence = influence * flScale * 0.05f;
 
 			for( int ndxBump = 0; ndxBump < ( NUM_BUMP_VECTS+1 ); ndxBump++ )
@@ -1162,7 +1161,7 @@ void AddPatchLightToRadial( Vector const &patchOrigin, Vector const &patchNormal
 	else
 	{
 		float flScale = patchNormal.Dot( luxelNormal );
-		flScale = max( 0.0f, flScale );
+		flScale = MAX( 0.0f, flScale );
 		influence *= flScale;
 		pRadial->light[0][ndxRadial].AddWeighted( pPatchLight[0], influence );
 

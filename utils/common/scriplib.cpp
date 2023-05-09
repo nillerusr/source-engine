@@ -1216,7 +1216,7 @@ int CScriptLib::GetFileList( const char* pDirPath, const char* pPattern, CUtlVec
 	FIND_DATA findData;
 	Q_FixSlashes( fullPath );
 	void *h = FindFirstFile( fullPath, &findData );
-	if ( (int)h == -1 )
+	if ( (int)(size_t)h == -1 )
 	{
 		return 0;
 	}

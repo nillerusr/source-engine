@@ -119,7 +119,9 @@ bool CVRadDLL::Init( char const *pFilename )
 	
 	// Set options and run vrad startup code.
 	do_fast = true;
+#ifdef _WIN32
 	g_bLowPriorityThreads = true;
+#endif
 	g_pIncremental = GetIncremental();
 
 	VRAD_LoadBSP( pFilename );
@@ -169,10 +171,18 @@ void CVRadDLL::GetBSPInfo( CBSPInfo *pInfo )
 
 bool CVRadDLL::DoIncrementalLight( char const *pVMFFile )
 {
-	char tempPath[MAX_PATH], tempFilename[MAX_PATH];
+	char
+#ifdef _WIN32
+		tempPath[MAX_PATH],
+#endif
+		tempFilename[MAX_PATH];
+#ifdef _WIN32
 	GetTempPath( sizeof( tempPath ), tempPath );
 	GetTempFileName( tempPath, "vmf_entities_", 0, tempFilename );
-
+#else
+	struct tm *timeinfo = localtime(NULL);
+	strftime( tempFilename, MAX_PATH, "/tmp/vmf_entities_%F-%T", timeinfo );
+#endif
 	FileHandle_t fp = g_pFileSystem->Open( tempFilename, "wb" );
 	if( !fp )
 		return false;

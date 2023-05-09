@@ -8,13 +8,10 @@
 #include "disp_vrad.h"
 #include "utllinkedlist.h"
 #include "utlvector.h"
+#if defined( USE_SCRATCHPAD )
 #include "iscratchpad3d.h"
 #include "scratchpadutils.h"
-
-
-//#define USE_SCRATCHPAD
-#if defined( USE_SCRATCHPAD )
-	static IScratchPad3D *g_pPad = 0;
+static IScratchPad3D *g_pPad = 0;
 #endif
 
 

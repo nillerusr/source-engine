@@ -10,23 +10,18 @@
 #pragma once
 #endif
 
-#pragma warning(push, 1)
-#pragma warning(disable:4701 4702 4530)
-#include <fstream>
-#pragma warning(pop)
-#include "TokenReader.h"
-#include "GDClass.h"
-#include "InputOutput.h"
-#include "UtlString.h"
+#include "tier0/platform.h"
+#include "tier1/tokenreader.h"
+#include "gdclass.h"
+#include "inputoutput.h"
+#include "utlstring.h"
 #include "utlvector.h"
+#include "utlmap.h"
 
 
 class MDkeyvalue;
 class GameData;
 class KeyValues;
-
-enum TEXTUREFORMAT;
-
 
 typedef void (*GameDataMessageFunc_t)(int level, PRINTF_FORMAT_STRING const char *fmt, ...);
 
@@ -71,7 +66,7 @@ class GameData
 		GameData();
 		~GameData();
 
-		BOOL Load(const char *pszFilename);
+		bool Load(const char *pszFilename);
 
 		GDclass *ClassForName(const char *pszName, int *piIndex = NULL);
 

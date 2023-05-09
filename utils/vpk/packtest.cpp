@@ -1922,7 +1922,7 @@ int main(int argc, char **argv)
 	{
 		switch( argv[nCurArg][1] )
 		{
-			case '?':										// args
+			case 'h':										// args
 			{
 				PrintArgSummaryAndExit( 0 ); // return success in this case.
 			}
@@ -2012,7 +2012,7 @@ int main(int argc, char **argv)
 
 	if ( argc < 2 )
 	{
-		Error( "No command specified.  Try 'vpk -?' for info.\n" );
+		Error( "No command specified.  Try 'vpk -h' for info.\n" );
 	}
 
 	const char *pszCommand = argv[1];
@@ -2144,6 +2144,7 @@ int main(int argc, char **argv)
 		//BenchMark( files );
 		//printf( " time pack = %f\n", Plat_FloatTime() - stime );
 	}
+#ifdef VPK_ENABLE_SIGNING
 	else if ( V_strcmp( pszCommand, "rehash" ) == 0 )
 	{
 		if ( argc != 3 )
@@ -2168,7 +2169,6 @@ int main(int argc, char **argv)
 
 		CheckHashes( argv[2] );
 	}
-#ifdef VPK_ENABLE_SIGNING
 	else if ( V_strcmp( pszCommand, "generate_keypair" ) == 0 )
 	{
 		if ( argc != 3 )
@@ -2210,7 +2210,7 @@ int main(int argc, char **argv)
 	}
 	else
 	{
-		Error( "Unknown command '%s'.  Try 'vpk -?' for info.\n", pszCommand );
+		Error( "Unknown command '%s'.  Try 'vpk -h' for info.\n", pszCommand );
 	}
 
 	return 0;

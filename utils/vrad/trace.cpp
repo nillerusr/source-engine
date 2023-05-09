@@ -11,7 +11,7 @@
 
 #include "vrad.h"
 #include "trace.h"
-#include "Cmodel.h"
+#include "cmodel.h"
 #include "mathlib/vmatrix.h"
 
 
@@ -133,7 +133,11 @@ public:
 			addedCoverage[s] = 0.0f;
 			if ( ( sign >> s) & 0x1 )
 			{
+#ifdef VRAD_SSE
 				addedCoverage[s] = ComputeCoverageFromTexture( b0->m128_f32[s], b1->m128_f32[s], b2->m128_f32[s], hitID );
+#else
+				addedCoverage[s] = ComputeCoverageFromTexture( b0[0][s], b1[0][s], b2[0][s], hitID );
+#endif
 			}
 		}
 		m_coverage = AddSIMD( m_coverage, LoadUnalignedSIMD( addedCoverage ) );
@@ -169,7 +173,11 @@ void TestLine( const FourVectors& start, const FourVectors& stop,
 	{
 		visibility[i] = 1.0f;
 		if ( ( rt_result.HitIds[i] != -1 ) &&
+#ifdef VRAD_SSE
 		     ( rt_result.HitDistance.m128_f32[i] < len.m128_f32[i] ) )
+#else
+		     ( rt_result.HitDistance[i] < len[i] ) )
+#endif
 		{
 			visibility[i] = 0.0f;
 		}
@@ -373,7 +381,11 @@ void TestLine_DoesHitSky( FourVectors const& start, FourVectors const& stop,
 	{
 		aOcclusion[i] = 0.0f;
 		if ( ( rt_result.HitIds[i] != -1 ) &&
+#ifdef VRAD_SSE
 		     ( rt_result.HitDistance.m128_f32[i] < len.m128_f32[i] ) )
+#else
+		     ( rt_result.HitDistance[i] < len[i] ) )
+#endif
 		{
 			int id = g_RtEnv.OptimizedTriangleList[rt_result.HitIds[i]].m_Data.m_IntersectData.m_nTriangleID;
 			if ( !( id & TRACE_ID_SKY ) )
