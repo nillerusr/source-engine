@@ -12,6 +12,7 @@
 #include "stdafx.h"
 #include <direct.h>
 #else
+#include <stdio.h>
 #include <dlfcn.h>
 #endif
 #include "tier1/interface.h"

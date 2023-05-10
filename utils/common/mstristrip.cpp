@@ -21,6 +21,8 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
+#include <limits.h>
 #include <algorithm>
 #include <list>
 #include <vector>
