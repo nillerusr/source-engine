@@ -1,0 +1,95 @@
+#! /usr/bin/env python
+# encoding: utf-8
+# vim: noexpandtab
+
+from waflib import Utils
+import os
+
+top = '.'
+PROJECT_NAME = 'movieobjects'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	return
+
+def build(bld):
+	source = [
+		'dmeanimationlist.cpp',
+		'dmeanimationset.cpp',
+		'dmeattachment.cpp',
+		'dmebalancetostereocalculatoroperator.cpp',
+		'dmebookmark.cpp',
+		'dmecamera.cpp',
+		'dmechannel.cpp',
+		'dmeclip.cpp',
+		'dmecombinationoperator.cpp',
+		'dmedag.cpp',
+		'dmedccmakefile.cpp',
+		'dmeeditortypedictionary.cpp',
+		'dmeexpressionoperator.cpp',
+		'dmefaceset.cpp',
+		'dmegamemodel.cpp',
+		'dmegamemodelinput.cpp',
+		'dmeinput.cpp',
+		'dmejoint.cpp',
+		'dmekeyboardinput.cpp',
+		'dmelight.cpp',
+#		'dmelog.cpp',
+		'dmemakefile.cpp',
+		'dmemakefileutils.cpp',
+		'dmematerial.cpp',
+		'dmematerialoverlayfxclip.cpp',
+		'dmemdl.cpp',
+		'dmemdlmakefile.cpp',
+#		'dmemesh.cpp',
+		'dmemodel.cpp',
+		'dmemorphoperator.cpp',
+		'dmemouseinput.cpp',
+		'dmeoperator.cpp',
+		'dmepackoperators.cpp',
+		'dmeparticlesystemdefinition.cpp',
+		'dmephonememapping.cpp',
+		'dmeselection.cpp',
+		'dmeshape.cpp',
+		'dmesound.cpp',
+		'dmetimeframe.cpp',
+		'dmetimeselection.cpp',
+		'dmetrack.cpp',
+		'dmetrackgroup.cpp',
+		'dmetransform.cpp',
+		'dmetransforminput.cpp',
+		'dmetransformlist.cpp',
+		'dmetransformoperator.cpp',
+		'dmeunpackoperators.cpp',
+		'dmevertexdata.cpp',
+		'dmobjserializer.cpp',
+		'movieobjects_interfaces.cpp',
+		'../public/phonemeconverter.cpp',
+	]
+
+	includes = [
+		'.',
+		'../public',
+		'../public/tier0',
+		'../public/tier1',
+	]
+
+	defines = []
+
+	libs = []
+
+	bld.stlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)
+

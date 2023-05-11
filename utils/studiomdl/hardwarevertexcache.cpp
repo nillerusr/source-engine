@@ -7,7 +7,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "HardwareVertexCache.h"
+#include "hardwarevertexcache.h"
 
 CHardwareVertexCache::CHardwareVertexCache()
 {

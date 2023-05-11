@@ -11,6 +11,7 @@
 #endif
 
 #include "datamodel/dmelement.h"
+#include "datamodel/dmelementfactoryhelper.h"
 #include "datamodel/dmattribute.h"
 #include "datamodel/dmattributevar.h"
 #include "datamodel/dmehandle.h"

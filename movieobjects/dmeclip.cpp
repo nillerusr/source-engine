@@ -1025,10 +1025,12 @@ void CDmeFilmClip::OnElementUnserialized( )
 		// Backward compat conversion
 		// If this is an older file with an overlay attribute, strip it out into materialoverlay
 		CDmAttribute *pOverlayAttribute = GetAttribute( "overlay" );
+		CDmAttribute *pOverlayAlphaAttribute;
+		const char *pName;
 		if ( !pOverlayAttribute )
 			goto cleanUp;
 
-		const char *pName = pOverlayAttribute->GetValueString();
+		pName = pOverlayAttribute->GetValueString();
 		if ( !pName || !pName[0] )
 			goto cleanUp;
 
@@ -1041,7 +1043,7 @@ void CDmeFilmClip::OnElementUnserialized( )
 		m_MaterialOverlayEffect->SetOverlayEffect( pName );
 
 		// If this is an older file with an overlayalpha attribute, strip it out into materialoverlay
-		CDmAttribute *pOverlayAlphaAttribute = GetAttribute( "overlayalpha" );
+		pOverlayAlphaAttribute = GetAttribute( "overlayalpha" );
 		if ( pOverlayAlphaAttribute )
 		{
 			float alpha = pOverlayAlphaAttribute->GetValue<float>();

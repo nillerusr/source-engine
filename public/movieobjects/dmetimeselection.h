@@ -11,10 +11,9 @@
 #endif
 
 #include "datamodel/dmelement.h"
+#include "dme_controls/RecordingState.h"
 #include "movieobjects/timeutils.h"
 #include "movieobjects/dmetimeselectiontimes.h"
-
-enum RecordingState_t;
 
 class CDmeTimeSelection : public CDmElement
 {

@@ -202,8 +202,8 @@ void SpewPerfStats( studiohdr_t *pStudioHdr, const char *pFilename, unsigned int
 		}
 
 		// studio render will request these through cache interface
-		pStudioHdr->pVertexBase = (void *)pVvdHdr;
-		pStudioHdr->pIndexBase  = (void *)pVtxHdr;
+		pStudioHdr->SetVertexBase((void *)pVvdHdr);
+		pStudioHdr->SetIndexBase((void *)pVtxHdr);
 
 		g_pStudioRender->LoadModel( pStudioHdr, pVtxHdr, &studioHWData );
 

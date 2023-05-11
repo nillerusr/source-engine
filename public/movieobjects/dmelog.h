@@ -404,7 +404,7 @@ protected:
 template< class T >
 class CDmeTypedCurveInfo : public CDmeCurveInfo
 {
-	DEFINE_ELEMENT( CDmeTypedCurveInfo, CDmeCurveInfo );
+//	DEFINE_ELEMENT( CDmeTypedCurveInfo, CDmeCurveInfo );
 
 public:
 	// For "faceposer" style left/right edges, this controls whether interpolators try to mimic faceposer left/right edge behavior
@@ -447,7 +447,7 @@ template< class T > class CDmeTypedLog;
 template< class T >
 class CDmeTypedLogLayer : public CDmeLogLayer
 {
-	DEFINE_ELEMENT( CDmeTypedLogLayer, CDmeLogLayer );
+//	DEFINE_ELEMENT( CDmeTypedLogLayer, CDmeLogLayer );
 
 public:
 	virtual void CopyLayer( const CDmeLogLayer *src );
@@ -529,7 +529,7 @@ protected:
 template< class T >
 class CDmeTypedLog : public CDmeLog
 {
-	DEFINE_ELEMENT( CDmeTypedLog, CDmeLog );
+//	DEFINE_ELEMENT( CDmeTypedLog, CDmeLog );
 
 public:
 
@@ -836,7 +836,7 @@ template<> void CDmeTypedLogLayer< Vector >::GetValueUsingCurveInfoSkippingKey( 
 template<> void CDmeTypedLogLayer< Quaternion >::GetValueUsingCurveInfo( DmeTime_t time, Quaternion& out ) const;
 template<> void CDmeTypedLogLayer< Quaternion >::GetValueUsingCurveInfoSkippingKey( int nKeyToSkip, Quaternion& out ) const;
 
-template<class T> void CDmeTypedLogLayer< T >::CurveSimplify_R( float thresholdSqr, int startPoint, int endPoint, CDmeTypedLogLayer< T > *output );
+//template<class T> void CDmeTypedLogLayer< T >::CurveSimplify_R( float thresholdSqr, int startPoint, int endPoint, CDmeTypedLogLayer< T > *output );
 template<> void CDmeTypedLogLayer< bool >::CurveSimplify_R( float thresholdSqr, int startPoint, int endPoint, CDmeTypedLogLayer< bool > *output );
 template<> void CDmeTypedLogLayer< int >::CurveSimplify_R( float thresholdSqr, int startPoint, int endPoint, CDmeTypedLogLayer< int > *output );
 template<> void CDmeTypedLogLayer< Color >::CurveSimplify_R( float thresholdSqr, int startPoint, int endPoint, CDmeTypedLogLayer< Color > *output );

@@ -10,7 +10,7 @@
 #include "datamodel/dmelementfactoryhelper.h"
 #include "datamodel/dmehandle.h"
 #include "phonemeconverter.h"
-#include "tier1/utlstringmap.h"
+#include "tier1/UtlStringMap.h"
 #include "tier2/tier2.h"
 #include "filesystem.h"
 #include "studio.h"
@@ -602,7 +602,7 @@ bool CDmePresetGroup::ExportToTXT( const char *pFileName, CDmeAnimationSet *pAni
 #ifdef ALIGN4
 #undef ALIGN4
 #endif // #ifdef ALIGN4
-#define ALIGN4( a ) a = (byte *)((int)((byte *)a + 3) & ~ 3)
+#define ALIGN4( a ) a = (byte *)((size_t)((byte *)a + 3) & ~ 3)
 
 
 //-----------------------------------------------------------------------------

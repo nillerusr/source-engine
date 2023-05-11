@@ -17,7 +17,7 @@
 
 //#define IGNORE_BONES
 
-#define NVTRISTRIP
+//#define NVTRISTRIP
 
 #define EMIT_TRILISTS
 
@@ -28,12 +28,11 @@
 #include "cmdlib.h"
 #include "studio.h"
 #include "studiomdl.h"
-#include "HardwareMatrixState.h"
-#include "HardwareVertexCache.h"
+#include "hardwarematrixstate.h"
+#include "hardwarevertexcache.h"
 #include "optimize.h"
-#include <malloc.h>
-#include <nvtristrip.h>
-#include "FileBuffer.h"
+//#include "nvtristrip.h"
+#include "filebuffer.h"
 #include "tier1/utlvector.h"
 #include "materialsystem/imaterial.h"
 #include "tier1/utllinkedlist.h"
@@ -352,7 +351,7 @@ private:
 	// Memory optimize the strip data
 	void PostProcessStripGroup( mstudiomodel_t *pStudioModel, mstudiomesh_t *pStudioMesh, StripGroup_t *pStripGroup );
 
-	void COptimizedModel::ZeroNumBones( void );
+	void ZeroNumBones( void );
 
 	//
 	// Methods associated with writing VTX files
