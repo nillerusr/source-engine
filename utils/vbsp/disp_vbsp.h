@@ -67,4 +67,6 @@ bool HasDispInfo( mapbrush_t *pBrush );
 // Computes the bounds for a disp info
 void ComputeDispInfoBounds( int dispinfo, Vector& mins, Vector& maxs );
 
+extern void Disp_AddCollisionModels( CUtlVector<CPhysCollisionEntry *> &collisionList, dmodel_t *pModel, int contentsMask );
+extern void Disp_BuildVirtualMesh( int contentsMask );
 #endif // VBSP_DISPINFO_H

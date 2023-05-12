@@ -4,10 +4,8 @@
 //
 //===========================================================================//
 
-#include <windows.h>
-#include <eh.h>
 #include "appframework/AppFramework.h"
-#include "ihammer.h"
+#include "IHammer.h"
 #include "tier0/dbg.h"
 #include "vstdlib/cvar.h"
 #include "filesystem.h"
@@ -17,11 +15,20 @@
 #include "datacache/idatacache.h"
 #include "datacache/imdlcache.h"
 #include "vphysics_interface.h"
-#include "vgui/ivgui.h"
+#include "vgui/IVGui.h"
 #include "vgui/ISurface.h"
 #include "inputsystem/iinputsystem.h"
 #include "tier0/icommandline.h"
 #include "p4lib/ip4.h"
+
+#ifdef USE_SDL
+# include <SDL.h>
+# include <SDL_version.h>
+# ifndef _WIN32
+#  define MB_OK 0
+#  define MB_ICONSTOP 0
+# endif
+#endif
 
 //-----------------------------------------------------------------------------
 // Global systems
@@ -128,6 +135,16 @@ void CHammerApp::Destroy()
 	g_pInputSystem = NULL;
 }
 
+
+#if defined( USE_SDL ) && !defined( _WIN32 )
+
+int MessageBox( HWND hWnd, const char *message, const char *header, unsigned uType )
+{
+	SDL_ShowSimpleMessageBox( 0, header, message, GetAssertDialogParent() );
+	return 0;
+}
+
+#endif
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------

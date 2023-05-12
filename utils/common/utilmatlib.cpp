@@ -49,7 +49,7 @@ void LoadMaterialSystemInterface( CreateInterfaceFn fileSystemFactory )
 
 	if (!g_pMaterialSystem->Init( "shaderapiempty" DLL_EXT_STRING, 0, fileSystemFactory ))
 	{
-		Error( "Could not start the empty shader (shaderapiempty)!" );
+		Error( "Could not start the empty shader (shaderapiempty)!\n" );
 	}
 }
 

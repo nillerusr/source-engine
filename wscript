@@ -8,7 +8,7 @@ from waflib import Logs, Context, Configure
 import sys
 import os
 
-VERSION = '1.0'
+VERSION = '1.17'
 APPNAME = 'source-engine'
 top = '.'
 
@@ -174,29 +174,26 @@ def define_platform(conf):
 	if conf.options.ALLOW64:
 		conf.define('PLATFORM_64BITS', 1)
 
-	conf.env.projects = ['base']
-	conf.env.targets = []
+	conf.env.targets = projects['base']
 	if conf.options.DEDICATED:
 		conf.env.DEDICATED = True
-		conf.env.projects += ['dedicated']
+		conf.env.targets += projects['dedicated']
 		conf.options.SDL = False
 		conf.define('DEDICATED', 1)
 
 	if conf.options.LAUNCHER:
-		conf.env.projects += ['main']
+		conf.env.targets += projects['main']
 		conf.env.GL = conf.options.GL or conf.options.TOGLES
 		if conf.options.TOGLES:
 			conf.env.TOGLES = True
-			conf.env.targets += ['togles']
 			conf.env.append_unique('DEFINES', ['TOGLES'])
 		if conf.env.GL:
-			if not conf.env.TOGLES:
-				conf.env.targets += ['togl']
 			conf.env.append_unique('DEFINES', [
 				'DX_TO_GL_ABSTRACTION',
 				'GL_GLEXT_PROTOTYPES',
 				'BINK_VIDEO'
 			])
+		conf.env.targets += ['togles' if conf.env.TOGLES else 'togl']
 
 		if conf.options.SDL:
 			conf.env.SDL = True
@@ -204,11 +201,11 @@ def define_platform(conf):
 
 	if conf.options.TESTS:
 		conf.env.TESTS = True
-		conf.env.projects += ['tests']
+		conf.env.targets += projects['tests']
 		conf.define('UNITTESTS', 1)
 
 	if conf.options.UTILS:
-		conf.env.projects += ['utils']
+		conf.env.targets += projects['utils']
 
 	if conf.env.DEST_OS == 'win32' and not conf.env.TESTS:
 		conf.env.targets += ['utils/bzip2']
@@ -458,7 +455,8 @@ def configure(conf):
 		conf.load('mm_hook')
 
 	define_platform(conf)
-	conf.define('GIT_COMMIT_HASH', conf.env.GIT_VERSION)
+	conf.env.targets = set(conf.env.targets)
+	conf.env.REL_VERSION = VERSION
 
 	conf.env.BIT32_MANDATORY = not conf.options.ALLOW64
 	if conf.env.BIT32_MANDATORY:
@@ -612,21 +610,16 @@ def configure(conf):
 		conf.env.CC.insert(0, 'ccache')
 		conf.env.CXX.insert(0, 'ccache')
 
-	for proj in conf.env.projects:
-		conf.add_subproject(projects[proj])
-	for targ in conf.env.targets:
-		conf.add_subproject(targ)
+	conf.add_subproject(conf.env.targets)
 
 def build(bld):
-	os.environ["CCACHE_DIR"] = os.path.abspath('.ccache/'+bld.env.COMPILER_CC+'/'+bld.env.DEST_OS+'/'+bld.env.DEST_CPU)
+	if not os.environ.get('CCACHE_DIR'):
+		os.environ['CCACHE_DIR'] = os.path.abspath('.ccache/'+bld.env.COMPILER_CC+'/'+bld.env.DEST_OS+'/'+bld.env.DEST_CPU)
 
 	if bld.env.DEST_OS in ['win32', 'android']:
 		sdl_name = 'SDL2.dll' if bld.env.DEST_OS == 'win32' else 'libSDL2.so'
 		sdl_path = os.path.join('lib', bld.env.DEST_OS, bld.env.DEST_CPU, sdl_name)
 		bld.install_files(bld.env.LIBDIR, [sdl_path])
 
-	for proj in bld.env.projects:
-		bld.add_subproject(projects[proj])
-	for targ in bld.env.targets:
-		bld.add_subproject(targ)
+	bld.add_subproject(bld.env.targets)
 
