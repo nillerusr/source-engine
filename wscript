@@ -455,7 +455,7 @@ def configure(conf):
 		conf.load('mm_hook')
 
 	define_platform(conf)
-	conf.env.targets = set(conf.env.targets)
+	conf.env.targets = list(set(conf.env.targets))
 	conf.env.REL_VERSION = VERSION
 
 	conf.env.BIT32_MANDATORY = not conf.options.ALLOW64
