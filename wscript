@@ -455,7 +455,6 @@ def configure(conf):
 		conf.load('mm_hook')
 
 	define_platform(conf)
-	conf.env.targets = list(set(conf.env.targets))
 	conf.env.REL_VERSION = VERSION
 
 	conf.env.BIT32_MANDATORY = not conf.options.ALLOW64
@@ -610,7 +609,8 @@ def configure(conf):
 		conf.env.CC.insert(0, 'ccache')
 		conf.env.CXX.insert(0, 'ccache')
 
-	conf.add_subproject(conf.env.targets)
+	for v in set(conf.env.targets):
+		conf.add_subproject(v)
 
 def build(bld):
 	if not os.environ.get('CCACHE_DIR'):

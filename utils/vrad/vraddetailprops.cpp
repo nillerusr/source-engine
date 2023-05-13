@@ -24,6 +24,8 @@
 #endif
 #include "byteswap.h"
 
+extern float SoftenCosineTerm( float flDot );
+extern float CalculateAmbientOcclusion( Vector *pPosition, Vector *pNormal );
 bool LoadStudioModel( char const* pModelName, CUtlBuffer& buf );
 
 
@@ -228,12 +230,8 @@ static void ComputeMaxDirectLighting( DetailObjectLump_t& prop, Vector* maxcolor
 		origin4.DuplicateVector( origin );
 		normal4.DuplicateVector( normal );
 
-		GatherSampleLightSSE ( out, dl, -1, origin4, &normal4, 1, iThread );
-#ifdef VRAD_SSE
-		VectorMA( maxcolor[dl->light.style], out.m_flFalloff.m128_f32[0] * out.m_flDot[0].m128_f32[0], dl->light.intensity, maxcolor[dl->light.style] );
-#else
+		GatherSampleLightSSE ( out, dl, -1, origin4, &normal4, 1, iThread, GATHERLFLAGS_STATICPROP );
 		VectorMA( maxcolor[dl->light.style], out.m_flFalloff[0] * out.m_flDot[0][0], dl->light.intensity, maxcolor[dl->light.style] );
-#endif
 	}
 }
 
@@ -659,23 +657,80 @@ static void ComputeAmbientLightingAtPoint( int iThread, const Vector &origin, Ve
 }
 
 //-----------------------------------------------------------------------------
-// Trace hemispherical rays from a vertex, accumulating indirect
-// sources at each ray termination.
+//
+// Trace a ray from position. in the specified direction to determine a positive
+// hit for indirect lighting.
+//
+// Fire ray out from start, with end as start + direction*MAX_TRACE_LENGTH
+// If hit then fire ray back to start to see if it hits a back facing surface that would natually block the incoming light ray
+// If still okay then test explicitly against light blockers, test only in the hit to start direction
+// Update surfEnum and return true if a valid intersection for indirect light.
+//
 //-----------------------------------------------------------------------------
-void ComputeIndirectLightingAtPoint( Vector &position, Vector &normal, Vector &outColor,
-									 int iThread, bool force_fast, bool bIgnoreNormals )
+bool TraceIndirectLightingSample( Vector &position, Vector &direction, CLightSurface &surfEnum, int iThread, bool force_fast )
 {
 	Ray_t			ray;
-	CLightSurface	surfEnum(iThread);
 
-	outColor.Init();
+	// trace to determine surface
+	Vector vEnd, vStart;
+	VectorScale( direction, MAX_TRACE_LENGTH, vEnd );
+	VectorAdd( position, vEnd, vEnd );
 
+	if ( force_fast )
+	{
+		vStart = position;
+	}
+	else
+	{
+		// offset ray start position to compensate for ray leakage due to coincident surfaces (we are seeing some ray tests leak in some situations - e.g. prop vertex lies on ground plane)
+		VectorScale( direction, -EQUAL_EPSILON, vStart );
+		VectorAdd( position, vStart, vStart );
+	}
+	ray.Init( vStart, vEnd, vec3_origin, vec3_origin );
+	if ( !surfEnum.FindIntersection( ray ) )
+		return false;
+
+	// Now test explicitly against light blockers (surfaces don't exist in the bsp nodes we're checking here, and this feels a safer change than updating indirect lighting for static props to use the slower rte path for all rays)
+	// test from hitfrac back to start only
+	VectorScale( direction, MAX_TRACE_LENGTH * surfEnum.m_HitFrac, vEnd );
+	VectorAdd( position, vEnd, vEnd );
+	FourVectors rayStart, rayEnd, rayDirection;
+	fltx4 fractionVisible = Four_Ones;
+	rayStart.DuplicateVector( vStart );
+	rayEnd.DuplicateVector( vEnd );
+
+//	rayDirection.DuplicateVector( direction );
+//	TestLine_LightBlockers( rayStart, rayEnd, &fractionVisible );
+
+	rayDirection.DuplicateVector( -direction );
+	TestLine_LightBlockers( rayEnd, rayStart, &fractionVisible );
+
+
+	if ( fractionVisible[0] < 1.0f )
+	{
+		// ray hit blocker
+		return false;
+	}
+
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Trace hemispherical rays from a vertex, accumulating indirect
+// sources at each ray termination.
+//
+// force_fast = false currently implies 'new/improved' static prop lighting is to be used.
+//-----------------------------------------------------------------------------
+void ComputeIndirectLightingAtPoint( Vector &position, Vector &normal, Vector &outColor,
+									 int iThread, bool force_fast, bool bIgnoreNormals, int nStaticPropToSkip )
+{
+	outColor.Zero();
 	
 	int nSamples = NUMVERTEXNORMALS;
-	if ( do_fast || force_fast )
-		nSamples /= 4;
-	else
-		nSamples *= g_flSkySampleScale;
+ 	if ( do_fast || force_fast )
+ 		nSamples /= 4;
+ 	else
+ 		nSamples *= g_flStaticPropSampleScale;
 
 	float totalDot = 0;
 	DirectionalSampler_t sampler;
@@ -696,15 +751,44 @@ void ComputeIndirectLightingAtPoint( Vector &position, Vector &normal, Vector &o
 		}
 
 		totalDot += dot;
+	
+		// trace static prop indirect
+		Vector staticPropIndirectColor( 0.0f, 0.0f, 0.0f );
+		float flStaticPropHitDist = FLT_MAX;
+		if ( g_bStaticPropBounce )
+		{
+			FourRays myrays;
+			myrays.origin.DuplicateVector( position );
+			myrays.direction.DuplicateVector( samplingNormal );
+			RayTracingResult rt_result;
+			g_RtEnv_RadiosityPatches.Trace4Rays( myrays, ReplicateX4( 10.0f ), ReplicateX4( MAX_TRACE_LENGTH ), &rt_result );
+			if ( rt_result.HitIds[ 0 ] != -1 )
+			{
+				const TriIntersectData_t &intersectData = g_RtEnv_RadiosityPatches.OptimizedTriangleList[ rt_result.HitIds[ 0 ] ].m_Data.m_IntersectData;
+				int nId = intersectData.m_nTriangleID;
+				if ( nId & TRACE_ID_PATCH )
+				{
+					int nPatchId = nId & ~TRACE_ID_PATCH;
+					CPatch &patch = g_Patches[ nPatchId ];
+					if ( patch.staticPropIdx != nStaticPropToSkip )
+					{
+						staticPropIndirectColor = dot * ( patch.totallight.light[ 0 ] + patch.directlight ) * patch.reflectivity;
+						flStaticPropHitDist = SubFloat( rt_result.HitDistance, 0 );
+					}
+				}
+			}
+		}
+
+		// important to put the constructor here to init m_hitfrac, etc
+		CLightSurface	surfEnum( iThread );
 
 		// trace to determine surface
-		Vector vEnd;
-		VectorScale( samplingNormal, MAX_TRACE_LENGTH, vEnd );
-		VectorAdd( position, vEnd, vEnd );
-
-		ray.Init( position, vEnd, vec3_origin, vec3_origin );
-		if ( !surfEnum.FindIntersection( ray ) )
+		if ( !TraceIndirectLightingSample( position, samplingNormal, surfEnum, iThread, force_fast ) ||
+			 flStaticPropHitDist < surfEnum.m_HitFrac * MAX_TRACE_LENGTH )
+		{
+			VectorAdd( outColor, staticPropIndirectColor, outColor );	// we may have hit a static prop patch
 			continue;
+		}
 
 		// get color from surface lightmap
 		texinfo_t* pTex = &texinfo[surfEnum.m_pSurface->texinfo];
@@ -720,7 +804,6 @@ void ComputeIndirectLightingAtPoint( Vector &position, Vector &normal, Vector &o
 			// no light affects this face
 			continue;
 		}
-
 
 		Vector lightmapColor;
 		if ( !surfEnum.m_bHasLuxel )
@@ -744,17 +827,281 @@ void ComputeIndirectLightingAtPoint( Vector &position, Vector &normal, Vector &o
 			ColorRGBExp32ToVector( *pLightmap, lightmapColor );
 		}
 
-		float invLengthSqr = 1.0f / (1.0f + ((vEnd - position) * surfEnum.m_HitFrac / 128.0).LengthSqr());
-		// Include falloff using invsqrlaw.
-		VectorMultiply( lightmapColor, invLengthSqr * dtexdata[pTex->texdata].reflectivity, lightmapColor );
+		if ( force_fast )
+		{
+			VectorMultiply( lightmapColor, dtexdata[pTex->texdata].reflectivity, lightmapColor );
+		}
+		else
+		{
+			// Include dot falloff on accumulating irradiance here
+			// have tried using inv sqr falloff from TF2 changes to vrad (CL#2394791 & 2395471), but the result is very sensitive to the scale factor that is used (too dark or too bright otherwise)
+			// this seems to give the most natural looking result (static props matching brushes)
+			VectorMultiply( lightmapColor, dot * dtexdata[pTex->texdata].reflectivity, lightmapColor );
+		}
 		VectorAdd( outColor, lightmapColor, outColor );
 	}
 
 	if ( totalDot )
 	{
-		VectorScale( outColor, 1.0f/totalDot, outColor );
+		VectorScale( outColor, 1.0f / totalDot, outColor );
 	}
 }
+
+void ComputeIndirectLightingAtPoint( Vector &position, Vector *normals, Vector *outColors, int numNormals,
+											 int iThread, bool force_fast, bool bIgnoreNormals, int nStaticPropToSkip )
+{
+	const Vector vZero(0.0f, 0.0f, 0.0f);
+
+	if ( numNormals != ( NUM_BUMP_VECTS + 1 ) )
+	{
+		for ( int k = 0; k < numNormals; ++k )
+		{
+			ComputeIndirectLightingAtPoint( position, normals[k], outColors[k], iThread, force_fast, bIgnoreNormals, nStaticPropToSkip );
+		}
+		return;
+	}
+
+	// optimize/unroll for num_bump_vects = 3
+	outColors[0].Zero();
+	outColors[1].Zero();
+	outColors[2].Zero();
+	outColors[3].Zero();
+
+	int nSamples = NUMVERTEXNORMALS;
+	if ( do_fast || force_fast )
+		nSamples /= 4;
+	else
+		nSamples *= g_flStaticPropSampleScale;
+
+	float totalDot[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+	DirectionalSampler_t sampler;
+	for ( int j = 0; j < nSamples; j++ )
+	{
+		Vector samplingNormal = sampler.NextValue();
+		float dot[4];
+
+		if ( bIgnoreNormals )
+		{
+			dot[0] = dot[1] = dot[2] = dot[3] = (0.7071 / 2);
+		}
+		else
+		{
+			samplingNormal.NormalizeInPlace();
+			dot[0] = DotProduct( normals[0], samplingNormal );
+			dot[1] = DotProduct( normals[1], samplingNormal );
+			dot[2] = DotProduct( normals[2], samplingNormal );
+			dot[3] = DotProduct( normals[3], samplingNormal );
+		}
+
+		bool bDoRayTrace = false;
+		bool bIncLighting[4] = {false, false, false, false};
+
+		if ( dot[0] > EQUAL_EPSILON )
+		{
+			dot[0] = SoftenCosineTerm( dot[0] );
+			totalDot[0] += dot[0];
+			bDoRayTrace = true;
+			bIncLighting[0] = true;
+		}
+		else
+		{
+			dot[0] = 0.0f;
+		}
+
+		if ( dot[1] > EQUAL_EPSILON )
+		{
+			dot[1] = SoftenCosineTerm( dot[1] );
+			totalDot[1] += dot[1];
+			bDoRayTrace = true;
+			bIncLighting[1] = true;
+		}
+		else
+		{
+			dot[1] = 0.0f;
+		}
+
+		if ( dot[2] > EQUAL_EPSILON )
+		{
+			dot[2] = SoftenCosineTerm( dot[2] );
+			totalDot[2] += dot[2];
+			bDoRayTrace = true;
+			bIncLighting[2] = true;
+		}
+		else
+		{
+			dot[2] = 0.0f;
+		}
+
+		if ( dot[3] > EQUAL_EPSILON )
+		{
+			dot[3] = SoftenCosineTerm( dot[3] );
+			totalDot[3] += dot[3];
+			bDoRayTrace = true;
+			bIncLighting[3] = true;
+		}
+		else
+		{
+			dot[3] = 0.0f;
+		}
+
+		// important to skip 
+		if ( dot[0] <= EQUAL_EPSILON )
+		{
+			continue;
+		}
+
+		if ( bDoRayTrace )
+ 		{
+			Vector staticPropIndirectColor( 0.0f, 0.0f, 0.0f );
+			float flStaticPropHitDist = FLT_MAX;
+			if ( g_bStaticPropBounce )
+			{
+				FourRays myrays;
+				myrays.origin.DuplicateVector( position );
+				myrays.direction.DuplicateVector( samplingNormal );
+				RayTracingResult rt_result;
+				g_RtEnv_RadiosityPatches.Trace4Rays( myrays, ReplicateX4( 10.0f ), ReplicateX4( MAX_TRACE_LENGTH ), &rt_result );
+				if ( rt_result.HitIds[ 0 ] != -1 )
+				{
+					const TriIntersectData_t &intersectData = g_RtEnv_RadiosityPatches.OptimizedTriangleList[ rt_result.HitIds[ 0 ] ].m_Data.m_IntersectData;
+					int nId = intersectData.m_nTriangleID;
+					if ( nId & TRACE_ID_PATCH )
+					{
+						int nPatchId = nId & ~TRACE_ID_PATCH;
+						CPatch &patch = g_Patches[ nPatchId ];
+						if ( patch.staticPropIdx != nStaticPropToSkip )
+						{
+							staticPropIndirectColor = ( patch.totallight.light[ 0 ] + patch.directlight ) * patch.reflectivity;
+							flStaticPropHitDist = SubFloat( rt_result.HitDistance, 0 );
+						}
+					}
+				}
+			}
+
+
+			// important to put the constructor here to init m_hitfrac, etc
+			CLightSurface	surfEnum( iThread );
+
+			// trace to determine surface
+			if ( !TraceIndirectLightingSample( position, samplingNormal, surfEnum, iThread, force_fast ) ||
+				 flStaticPropHitDist < surfEnum.m_HitFrac * MAX_TRACE_LENGTH )
+			{
+				// The dot values are 0 if bIncLighting is false so we don't actually need to branch here.
+				VectorAdd( outColors[ 0 ], dot[ 0 ] * staticPropIndirectColor, outColors[ 0 ] );	// we may have hit a static prop patch
+				VectorAdd( outColors[ 1 ], dot[ 1 ] * staticPropIndirectColor, outColors[ 1 ] );
+				VectorAdd( outColors[ 2 ], dot[ 2 ] * staticPropIndirectColor, outColors[ 2 ] );
+				VectorAdd( outColors[ 3 ], dot[ 3 ] * staticPropIndirectColor, outColors[ 3 ] );
+				continue;
+			}
+
+			// get color from surface lightmap
+			texinfo_t* pTex = &texinfo[surfEnum.m_pSurface->texinfo];
+			if ( !pTex || pTex->flags & SURF_SKY )
+			{
+				// ignore contribution from sky
+				// sky ambient already accounted for during direct pass
+				continue;
+			}
+
+			if ( surfEnum.m_pSurface->styles[0] == 255 || surfEnum.m_pSurface->lightofs < 0 )
+			{
+				// no light affects this face
+				continue;
+			}
+
+			Vector lightmapColor;
+			Vector lightmapColors[4];
+			if ( !surfEnum.m_bHasLuxel )
+			{
+				ColorRGBExp32* pAvgLightmapColor = dface_AvgLightColor( surfEnum.m_pSurface, 0 );
+				ColorRGBExp32ToVector( *pAvgLightmapColor, lightmapColor );
+			}
+			else
+			{
+				// get color from displacement
+				int smax = (surfEnum.m_pSurface->m_LightmapTextureSizeInLuxels[0]) + 1;
+				int tmax = (surfEnum.m_pSurface->m_LightmapTextureSizeInLuxels[1]) + 1;
+
+				// luxelcoord is in the space of the accumulated lightmap page; we need to convert
+				// it to be in the space of the surface
+				int ds = clamp( (int)surfEnum.m_LuxelCoord.x, 0, smax - 1 );
+				int dt = clamp( (int)surfEnum.m_LuxelCoord.y, 0, tmax - 1 );
+
+				ColorRGBExp32* pLightmap = (ColorRGBExp32*)&(*pdlightdata)[surfEnum.m_pSurface->lightofs];
+				pLightmap += dt * smax + ds;
+				ColorRGBExp32ToVector( *pLightmap, lightmapColor );
+			}
+
+			lightmapColor.Max( vZero );
+
+			if ( force_fast )
+			{
+				VectorMultiply( lightmapColor, dtexdata[pTex->texdata].reflectivity, lightmapColors[0] );
+
+				if ( bIncLighting[0] )
+				{
+					VectorAdd( outColors[0], lightmapColors[0], outColors[0] );
+				}
+				if ( bIncLighting[1] )
+				{
+					VectorAdd( outColors[1], lightmapColors[0], outColors[1] );
+				}
+				if ( bIncLighting[2] )
+				{
+					VectorAdd( outColors[2], lightmapColors[0], outColors[2] );
+				}
+				if ( bIncLighting[3] )
+				{
+					VectorAdd( outColors[3], lightmapColors[0], outColors[3] );
+				}
+			}
+			else
+			{
+				// Include dot falloff on accumulating irradiance here
+				// have tried using inv sqr falloff from TF2 changes to vrad (CL#2394791 & 2395471), but the result is very sensitive to the scale factor that is used (too dark or too bright otherwise)
+				// this seems to give the most natural looking result (static props matching brushes)
+				if ( bIncLighting[0] )
+				{
+					VectorMultiply( lightmapColor, dot[0] * dtexdata[pTex->texdata].reflectivity, lightmapColors[0] );
+					VectorAdd( outColors[0], lightmapColors[0], outColors[0] );
+				}
+				if ( bIncLighting[1] )
+				{
+					VectorMultiply( lightmapColor, dot[1] * dtexdata[pTex->texdata].reflectivity, lightmapColors[1] );
+					VectorAdd( outColors[1], lightmapColors[1], outColors[1] );
+				}
+				if ( bIncLighting[2] )
+				{
+					VectorMultiply( lightmapColor, dot[2] * dtexdata[pTex->texdata].reflectivity, lightmapColors[2] );
+					VectorAdd( outColors[2], lightmapColors[2], outColors[2] );
+				}
+				if ( bIncLighting[3] )
+				{
+					VectorMultiply( lightmapColor, dot[3] * dtexdata[pTex->texdata].reflectivity, lightmapColors[3] );
+					VectorAdd( outColors[3], lightmapColors[3], outColors[3] );
+				}
+			}
+		}
+	}
+
+	if ( totalDot[0] )
+	{
+		VectorScale( outColors[0], 1.0f / totalDot[0], outColors[0] );
+	}
+	if ( totalDot[1] )
+	{
+		VectorScale( outColors[1], 1.0f / totalDot[1], outColors[1] );
+	}
+	if ( totalDot[2] )
+	{
+		VectorScale( outColors[2], 1.0f / totalDot[2], outColors[2] );
+	}
+	if ( totalDot[3] )
+	{
+		VectorScale( outColors[3], 1.0f / totalDot[3], outColors[3] );
+	}
+}
+
 
 static void ComputeAmbientLighting( int iThread, DetailObjectLump_t& prop, Vector color[MAX_LIGHTSTYLES] )
 {
@@ -821,7 +1168,7 @@ static void ComputeLighting( DetailObjectLump_t& prop, int iThread )
 		{
 			if (!hasLightstyles)
 			{
-				prop.m_LightStyles = s_pDetailPropLightStyleLump->Size();
+				prop.m_LightStyles = s_pDetailPropLightStyleLump->Count();
 				hasLightstyles = true;
 			}
 
@@ -921,14 +1268,14 @@ static void WriteDetailLightingLump( int lumpID, int lumpVersion, CUtlVector<Det
 	GameLumpHandle_t handle = g_GameLumps.GetGameLumpHandle(lumpID);
 	if (handle != g_GameLumps.InvalidGameLump())
 		g_GameLumps.DestroyGameLump(handle);
-	int lightsize = lumpData.Size() * sizeof(DetailPropLightstylesLump_t);
+	int lightsize = lumpData.Count() * sizeof(DetailPropLightstylesLump_t);
 	int lumpsize = lightsize + sizeof(int);
 
 	handle = g_GameLumps.CreateGameLump( lumpID, lumpsize, 0, lumpVersion );
 
 	// Serialize the data
 	CUtlBuffer buf( g_GameLumps.GetGameLump(handle), lumpsize );
-	buf.PutInt( lumpData.Size() );
+	buf.PutInt( lumpData.Count() );
 	if (lightsize)
 		buf.Put( lumpData.Base(), lightsize );
 }

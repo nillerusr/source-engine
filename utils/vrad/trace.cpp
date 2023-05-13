@@ -133,11 +133,7 @@ public:
 			addedCoverage[s] = 0.0f;
 			if ( ( sign >> s) & 0x1 )
 			{
-#ifdef VRAD_SSE
-				addedCoverage[s] = ComputeCoverageFromTexture( b0->m128_f32[s], b1->m128_f32[s], b2->m128_f32[s], hitID );
-#else
-				addedCoverage[s] = ComputeCoverageFromTexture( b0[0][s], b1[0][s], b2[0][s], hitID );
-#endif
+				addedCoverage[s] = ComputeCoverageFromTexture( (*b0)[s], (*b1)[s], (*b2)[s], hitID );
 			}
 		}
 		m_coverage = AddSIMD( m_coverage, LoadUnalignedSIMD( addedCoverage ) );
@@ -173,11 +169,7 @@ void TestLine( const FourVectors& start, const FourVectors& stop,
 	{
 		visibility[i] = 1.0f;
 		if ( ( rt_result.HitIds[i] != -1 ) &&
-#ifdef VRAD_SSE
-		     ( rt_result.HitDistance.m128_f32[i] < len.m128_f32[i] ) )
-#else
 		     ( rt_result.HitDistance[i] < len[i] ) )
-#endif
 		{
 			visibility[i] = 0.0f;
 		}
@@ -187,7 +179,68 @@ void TestLine( const FourVectors& start, const FourVectors& stop,
 		*pFractionVisible = MinSIMD( *pFractionVisible, coverageCallback.GetFractionVisible() );
 }
 
+void TestLine_IgnoreSky( const FourVectors& start, const FourVectors& stop,
+						 fltx4 *pFractionVisible, int static_prop_index_to_ignore )
+{
+	FourRays myrays;
+	myrays.origin = start;
+	myrays.direction = stop;
+	myrays.direction -= myrays.origin;
+	fltx4 len = myrays.direction.length();
+	myrays.direction *= ReciprocalSIMD( len );
 
+	RayTracingResult rt_result;
+	CCoverageCountTexture coverageCallback;
+
+	g_RtEnv.Trace4Rays(myrays, Four_Zeros, len, &rt_result, TRACE_ID_STATICPROP | static_prop_index_to_ignore, g_bTextureShadows ? &coverageCallback : 0 );
+
+	// Assume we can see the targets unless we get hits
+	float visibility[4];
+	for ( int i = 0; i < 4; i++ )
+	{
+		visibility[i] = 1.0f;
+		if ( ( rt_result.HitIds[i] != -1 ) &&
+			 ( rt_result.HitDistance[i] < len[i] ) )
+		{
+			int id = g_RtEnv.OptimizedTriangleList[rt_result.HitIds[i]].m_Data.m_IntersectData.m_nTriangleID;
+			if ( !( id & TRACE_ID_SKY ) )
+			{
+				visibility[i] = 0.0f;
+			}
+		}
+	}
+	*pFractionVisible = LoadUnalignedSIMD( visibility );
+	if ( g_bTextureShadows )
+		*pFractionVisible = MinSIMD( *pFractionVisible, coverageCallback.GetFractionVisible() );
+}
+
+void TestLine_LightBlockers( const FourVectors& start, const FourVectors& stop,
+							 fltx4 *pFractionVisible )
+{
+	FourRays myrays;
+	myrays.origin = start;
+	myrays.direction = stop;
+	myrays.direction -= myrays.origin;
+	fltx4 len = myrays.direction.length();
+	myrays.direction *= ReciprocalSIMD( len );
+
+	RayTracingResult rt_result;
+
+	g_RtEnv_LightBlockers.Trace4Rays( myrays, Four_Zeros, len, &rt_result, -1, NULL );
+
+	// Assume we can see the targets unless we get hits
+	float visibility[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	if ( (rt_result.HitIds[0] != -1) &&
+		 (rt_result.HitDistance[0] < len[0]) )
+	{
+		fltx4 dotRaySurfaceN = rt_result.surface_normal * myrays.direction;
+		if ( dotRaySurfaceN[0] > 0.0f ) 
+		{
+			visibility[0] = 0.0f;
+		}
+	}
+	*pFractionVisible = LoadUnalignedSIMD( visibility );
+}
 
 /*
 ================
@@ -381,11 +434,7 @@ void TestLine_DoesHitSky( FourVectors const& start, FourVectors const& stop,
 	{
 		aOcclusion[i] = 0.0f;
 		if ( ( rt_result.HitIds[i] != -1 ) &&
-#ifdef VRAD_SSE
-		     ( rt_result.HitDistance.m128_f32[i] < len.m128_f32[i] ) )
-#else
 		     ( rt_result.HitDistance[i] < len[i] ) )
-#endif
 		{
 			int id = g_RtEnv.OptimizedTriangleList[rt_result.HitIds[i]].m_Data.m_IntersectData.m_nTriangleID;
 			if ( !( id & TRACE_ID_SKY ) )
@@ -501,21 +550,91 @@ dmodel_t *BrushmodelForEntity( entity_t *pEntity )
 	return NULL;
 }
 
+// Add one that casts textureshadows
+void AddTexturedBrushWinding( winding_t *w, const VMatrix &xform, texinfo_t *tx, int shadowMaterialIndex )
+{
+	Vector2D uv[MAX_POINTS_ON_WINDING];
+	int mappingWidth = 32;
+	int mappingHeight = 32;
+	GetShadowTextureMapping( shadowMaterialIndex, &mappingWidth, &mappingHeight );
+
+	for ( int j = 0; j < w->numpoints; j++ )
+	{
+		// base texture coordinate
+		uv[j].x = DotProduct( w->p[j].Base(), tx->textureVecsTexelsPerWorldUnits[0] ) + 
+			tx->textureVecsTexelsPerWorldUnits[0][3];
+		uv[j].x /= float(mappingWidth);
+
+		uv[j].y = DotProduct( w->p[j].Base(), tx->textureVecsTexelsPerWorldUnits[1] ) + 
+			tx->textureVecsTexelsPerWorldUnits[1][3];
+		uv[j].y /= float(mappingHeight);
+	}
+	Vector v0, v1, v2;
+
+	for ( int j = 2; j < w->numpoints; j++ )
+	{
+		v0 = xform.VMul4x3(w->p[0]);
+		v1 = xform.VMul4x3(w->p[j-1]);
+		v2 = xform.VMul4x3(w->p[j]);
+		float coverage = ComputeCoverageForTriangle(shadowMaterialIndex, uv[0], uv[j-1], uv[j] );
+		int index = -1;
+		unsigned short flags = 0;
+		Vector fullCoverage(0,0,1);
+		if ( coverage < 1.0 )
+		{
+			index = AddShadowTextureTriangle( shadowMaterialIndex, uv[0], uv[j-1], uv[j] );
+			flags = FCACHETRI_TRANSPARENT;
+			fullCoverage.x = coverage;
+		}
+
+		g_RtEnv.AddTriangle(TRACE_ID_OPAQUE, v0, v1, v2, fullCoverage, flags, index);
+	}
+}
+
 void AddBrushToRaytraceEnvironment( dbrush_t *pBrush, const VMatrix &xform )
 {
-	if ( !( pBrush->contents & MASK_OPAQUE ) )
+	int materialIndexList[256];
+	bool bTextureShadows = false;
+	
+	if ( !( pBrush->contents & (MASK_OPAQUE) ) && !(g_bTextureShadows && (pBrush->contents & CONTENTS_GRATE)) )
 		return;
 
+	if ( pBrush->contents & CONTENTS_LADDER )
+		return;
+
+	// load any transparent textures for shadows
+	if ( g_bTextureShadows && (pBrush->contents & CONTENTS_GRATE) && pBrush->numsides < ARRAYSIZE(materialIndexList) )
+	{
+		for (int i = 0; i < pBrush->numsides; i++ )
+		{
+			dbrushside_t *side = &dbrushsides[pBrush->firstside + i];
+			texinfo_t *tx = &texinfo[side->texinfo];
+			dtexdata_t *pTexData = &dtexdata[tx->texdata];
+			const char *pMaterialName = TexDataStringTable_GetString( pTexData->nameStringTableID );
+			materialIndexList[i] = LoadShadowTexture( pMaterialName );
+			if ( materialIndexList[i] >= 0 )
+			{
+				bTextureShadows = true;
+			}
+		}
+	}
 	Vector v0, v1, v2;
+
 	for (int i = 0; i < pBrush->numsides; i++ )
 	{
 		dbrushside_t *side = &dbrushsides[pBrush->firstside + i];
 		dplane_t *plane = &dplanes[side->planenum];
 		texinfo_t *tx = &texinfo[side->texinfo];
 		winding_t *w = BaseWindingForPlane (plane->normal, plane->dist);
+		bool bIsLightBlocker = false;
 
 		if ( tx->flags & SURF_SKY || side->dispinfo )
 			continue;
+
+		if ( ( pBrush->contents & ( CONTENTS_OPAQUE | CONTENTS_SOLID ) ) && ( tx->flags & SURF_NODRAW ) )
+		{
+			bIsLightBlocker = true;
+		}
 
 		for (int j=0 ; j<pBrush->numsides && w; j++)
 		{
@@ -529,14 +648,28 @@ void AddBrushToRaytraceEnvironment( dbrush_t *pBrush, const VMatrix &xform )
 		}
 		if ( w )
 		{
-			for ( int j = 2; j < w->numpoints; j++ )
+			if ( bTextureShadows && materialIndexList[i] >= 0 )
 			{
-				v0 = xform.VMul4x3(w->p[0]);
-				v1 = xform.VMul4x3(w->p[j-1]);
-				v2 = xform.VMul4x3(w->p[j]);
-				Vector fullCoverage;
-				fullCoverage.x = 1.0f;
-				g_RtEnv.AddTriangle(TRACE_ID_OPAQUE, v0, v1, v2, fullCoverage);
+				AddTexturedBrushWinding( w, xform, tx, materialIndexList[i] );
+			}
+			else
+			{
+				// opaque
+				Vector fullCoverage(1,1,1);
+				for ( int j = 2; j < w->numpoints; j++ )
+				{
+					v0 = xform.VMul4x3(w->p[0]);
+					v1 = xform.VMul4x3(w->p[j-1]);
+					v2 = xform.VMul4x3(w->p[j]);
+					g_RtEnv.AddTriangle( TRACE_ID_OPAQUE, v0, v1, v2, fullCoverage );
+
+					// light blockers
+					if ( bIsLightBlocker )
+					{
+						g_RtEnv_LightBlockers.AddTriangle( TRACE_ID_OPAQUE, v0, v1, v2, fullCoverage );
+						g_RtEnv_RadiosityPatches.AddTriangle( TRACE_ID_OPAQUE, v0, v1, v2, fullCoverage );
+					}
+				}
 			}
 			FreeWinding( w );
 		}
@@ -615,7 +748,7 @@ void AddBrushesForRayTrace( void )
 	CUtlVector<int> brushList;
 	GetBrushes_r ( dmodels[0].headnode, brushList );
 
-	for ( int i = 0; i < brushList.Size(); i++ )
+	for ( int i = 0; i < brushList.Count(); i++ )
 	{
 		dbrush_t *brush = &dbrushes[brushList[i]];
 		AddBrushToRaytraceEnvironment ( brush, identity );

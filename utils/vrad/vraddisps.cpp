@@ -105,6 +105,8 @@ public:
 
 	// utility
 	void GetDispSurfNormal( int ndxFace, Vector &pt, Vector &ptNormal, bool bInside );
+	void GetDispSurfPointAndNormalFromUV( int ndxFace, Vector &pt, Vector &ptNormal,
+										  Vector2D &uv, bool bInside );
 	void GetDispSurf( int ndxFace, CVRADDispColl **ppDispTree );
 
 	// bsp tree functions
@@ -163,7 +165,7 @@ private:
 											radial_t *pRadial, int ndxRadial, bool bBump,
 											CUtlVector<CPatch*> &interestingPatches );
 
-	bool IsNeighbor( int iDispFace, int iNeighborFace );
+	bool IsNeighbor( int iDispFace, int iNeighborFace, bool bCheck2ndDegreeNeighbors = false );
 
 	void GetInterestingPatchesForLuxels( 
 		int ndxFace,
@@ -329,7 +331,7 @@ void CVRadDispMgr::Init( void )
 void CVRadDispMgr::Shutdown( void )
 {
 	// remove all displacements from the tree
-	for( int ndxDisp = m_DispTrees.Size(); ndxDisp >= 0; ndxDisp-- )
+	for( int ndxDisp = m_DispTrees.Count(); ndxDisp >= 0; ndxDisp-- )
 	{
 		RemoveDispFromTree( ndxDisp );
 	}
@@ -500,7 +502,7 @@ void CVRadDispMgr::MakePatches( void )
 	float flTotalArea = 0.0f;
 
 	// Create patches for all of the displacements.
-	int nTreeCount = m_DispTrees.Size();
+	int nTreeCount = m_DispTrees.Count();
 	for( int iTree = 0; iTree < nTreeCount; ++iTree )
 	{
 		// Get the current displacement collision tree.
@@ -537,12 +539,12 @@ void CVRadDispMgr::SubdividePatch( int iPatch )
 //-----------------------------------------------------------------------------
 void CVRadDispMgr::StartRayTest( DispTested_t &dispTested )
 {
-	if( m_DispTrees.Size() > 0 )
+	if( m_DispTrees.Count() > 0 )
 	{
 		if( dispTested.m_pTested == 0 )
 		{
-			dispTested.m_pTested = new int[m_DispTrees.Size()];
-			memset( dispTested.m_pTested, 0, m_DispTrees.Size() * sizeof( int ) );
+			dispTested.m_pTested = new int[m_DispTrees.Count()];
+			memset( dispTested.m_pTested, 0, m_DispTrees.Count() * sizeof( int ) );
 			dispTested.m_Enum = 0;
 		}
 		++dispTested.m_Enum;
@@ -613,7 +615,7 @@ void CVRadDispMgr::ClipRayToDispInLeaf( DispTested_t &dispTested, Ray_t const &r
 
 void CVRadDispMgr::AddPolysForRayTrace( void )
 {
-	int nTreeCount = m_DispTrees.Size();
+	int nTreeCount = m_DispTrees.Count();
 	for( int iTree = 0; iTree < nTreeCount; ++iTree )
 	{
 		// Get the current displacement collision tree.
@@ -656,6 +658,32 @@ void CVRadDispMgr::GetDispSurfNormal( int ndxFace, Vector &pt, Vector &ptNormal,
 	pDispTree->DispUVToSurfPoint( uv, pt, 1.0f );
 }
 
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CVRadDispMgr::GetDispSurfPointAndNormalFromUV( int ndxFace, Vector &pt, Vector &ptNormal,
+													Vector2D &uv, bool bInside )
+{
+	// get the displacement surface data
+	DispCollTree_t &dispTree = m_DispTrees[ g_pFaces[ ndxFace ].dispinfo ];
+	CVRADDispColl *pDispTree = dispTree.m_pDispTree;
+
+	if ( bInside )
+	{
+		if ( uv[ 0 ] < 0.0f || uv[ 0 ] > 1.0f ) { Msg( "Disp UV (%f) outside bounds!\n", uv[ 0 ] ); }
+		if ( uv[ 1 ] < 0.0f || uv[ 1 ] > 1.0f ) { Msg( "Disp UV (%f) outside bounds!\n", uv[ 1 ] ); }
+	}
+
+	if ( uv[ 0 ] < 0.0f ) { uv[ 0 ] = 0.0f; }
+	if ( uv[ 0 ] > 1.0f ) { uv[ 0 ] = 1.0f; }
+	if ( uv[ 1 ] < 0.0f ) { uv[ 1 ] = 0.0f; }
+	if ( uv[ 1 ] > 1.0f ) { uv[ 1 ] = 1.0f; }
+
+	// get the normal at "pt"
+	pDispTree->DispUVToSurfNormal( uv, ptNormal );
+
+	// get the new "pt"
+	pDispTree->DispUVToSurfPoint( uv, pt, 1.0f );
+}
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -778,7 +806,7 @@ bool CVRadDispMgr::DispFaceList_EnumerateLeaf( int ndxLeaf, intp context )
 
 		// check to see if the face already lives in the list
 		int ndx;
-		int size = m_EnumDispFaceList.m_FaceList.Size();
+		int size = m_EnumDispFaceList.m_FaceList.Count();
 		for( ndx = 0; ndx < size; ndx++ )
 		{
 			if( m_EnumDispFaceList.m_FaceList[ndx] == ndxLeafFace )
@@ -807,7 +835,7 @@ bool CVRadDispMgr::DispFaceList_EnumerateElement( int userId, intp context )
 
 	// check to see if the displacement already lives in the list
 	int ndx;
-	int size = m_EnumDispFaceList.m_DispList.Size();
+	int size = m_EnumDispFaceList.m_DispList.Count();
 	for( ndx = 0; ndx < size; ndx++ )
 	{
 		if( m_EnumDispFaceList.m_DispList[ndx] == pDispTree )
@@ -906,7 +934,7 @@ void AddSampleLightToRadial( Vector const &samplePos, Vector const &sampleNormal
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-bool CVRadDispMgr::IsNeighbor( int iFace, int iNeighborFace )
+bool CVRadDispMgr::IsNeighbor( int iFace, int iNeighborFace, bool bCheck2ndDegreeNeighbors )
 {
 	if ( iFace == iNeighborFace )
 		return true;
@@ -916,6 +944,19 @@ bool CVRadDispMgr::IsNeighbor( int iFace, int iNeighborFace )
 	{
 		if ( pFaceNeighbor->neighbor[iNeighbor] == iNeighborFace )
 			return true;
+	}
+
+	if ( bCheck2ndDegreeNeighbors )
+	{
+		for ( int iNeighbor = 0; iNeighbor < pFaceNeighbor->numneighbors; iNeighbor++ )
+		{
+			faceneighbor_t *pFaceNeighbor2 = &faceneighbor[ pFaceNeighbor->neighbor[ iNeighbor ] ];
+			for ( int iNeighbor2 = 0; iNeighbor2 < pFaceNeighbor2->numneighbors; iNeighbor2++ )
+			{
+				if ( pFaceNeighbor2->neighbor[ iNeighbor2 ] == iNeighborFace )
+					return true;
+			}
+		}
 	}
 
 	return false;
@@ -1134,7 +1175,7 @@ void AddPatchLightToRadial( Vector const &patchOrigin, Vector const &patchNormal
 		if( bNeighborBump )
 		{
 			float flScale = patchNormal.Dot( normals[0] );
-			flScale = MAX( 0.0f, flScale );
+			flScale = max( 0.0f, flScale );
 			float flBumpInfluence = influence * flScale;
 
 			for( int ndxBump = 0; ndxBump < ( NUM_BUMP_VECTS+1 ); ndxBump++ )
@@ -1147,7 +1188,7 @@ void AddPatchLightToRadial( Vector const &patchOrigin, Vector const &patchNormal
 		else
 		{
 			float flScale = patchNormal.Dot( normals[0] );
-			flScale = MAX( 0.0f, flScale );
+			flScale = max( 0.0f, flScale );
 			float flBumpInfluence = influence * flScale * 0.05f;
 
 			for( int ndxBump = 0; ndxBump < ( NUM_BUMP_VECTS+1 ); ndxBump++ )
@@ -1161,7 +1202,7 @@ void AddPatchLightToRadial( Vector const &patchOrigin, Vector const &patchNormal
 	else
 	{
 		float flScale = patchNormal.Dot( luxelNormal );
-		flScale = MAX( 0.0f, flScale );
+		flScale = max( 0.0f, flScale );
 		influence *= flScale;
 		pRadial->light[0][ndxRadial].AddWeighted( pPatchLight[0], influence );
 
@@ -1337,7 +1378,7 @@ void CVRadDispMgr::GetInterestingPatchesForLuxels(
 						{
 							pPatch->m_IterationKey = curIterationKey;
 							
-							if ( IsNeighbor( ndxFace, pPatch->faceNumber ) )
+							if ( IsNeighbor( ndxFace, pPatch->faceNumber, g_bLargeDispSampleRadius ) )
 							{
 								interestingPatches.AddToTail( pPatch );
 							}

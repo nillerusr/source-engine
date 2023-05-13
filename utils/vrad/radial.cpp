@@ -647,7 +647,7 @@ void FinalLightFace( int iThread, int facenum )
 	float		    minlight;
 	int			    lightstyles;
 	LightingValue_t lb[NUM_BUMP_VECTS + 1], v[NUM_BUMP_VECTS + 1];
-	unsigned char   *pdata[NUM_BUMP_VECTS + 1];
+	unsigned char   *pdata[NUM_BUMP_VECTS + 2]; // +2 is for flat and additional lightmap alpha data
 	int				bumpSample;
 	radial_t	    *rad = NULL;
 	radial_t	    *prad = NULL;
@@ -734,9 +734,9 @@ void FinalLightFace( int iThread, int facenum )
 		// it isn't going to use those positions (see loop over bumpSample below)
 		// The file offset is correctly computed to only store space for 1 set
 		// of light data if we don't have bumped lighting.
-		for( bumpSample = 0; bumpSample < bumpSampleCount; ++bumpSample )
+		for( bumpSample = 0; bumpSample < bumpSampleCount + 1; ++bumpSample ) // The +1 is for the additional lightmap alpha data
 		{
-			pdata[bumpSample] = &(*pdlightdata)[f->lightofs + (k * bumpSampleCount + bumpSample) * fl->numluxels*4]; 
+			pdata[bumpSample] = &(*pdlightdata)[f->lightofs + ( ( k * ( bumpSampleCount + 1 ) ) + bumpSample) * fl->numluxels*4]; 
 		}
 
 		// Compute the average luxel color, but not for the bump samples
@@ -773,11 +773,11 @@ void FinalLightFace( int iThread, int facenum )
 				// v is indirect light that is received on the luxel.
 				if( !bDisp )
 				{
-					SampleRadial( prad, fl->luxel[j], v, bumpSampleCount );
+					SampleRadial( prad, fl->luxel[j], v, bumpSampleCount ); // indirect on brushes
 				}
 				else
 				{
-					StaticDispMgr()->SampleRadial( facenum, prad, fl->luxel[j], j, v, bumpSampleCount, true );
+					StaticDispMgr()->SampleRadial( facenum, prad, fl->luxel[j], j, v, bumpSampleCount, true ); // indirect on displacements
 				}
 
 				for( bumpSample = 0; bumpSample < bumpSampleCount; ++bumpSample )
@@ -840,6 +840,16 @@ void FinalLightFace( int iThread, int facenum )
 				// convert to a 4 byte r,g,b,signed exponent format
 				VectorToColorRGBExp32( Vector( lb[bumpSample].m_vecLighting.x, lb[bumpSample].m_vecLighting.y,
 											   lb[bumpSample].m_vecLighting.z ), *( ColorRGBExp32 *)pdata[bumpSample] );
+
+				// Generate additional lightmap alpha data
+				if ( bumpSample == 0 )
+				{
+					pdata[bumpSampleCount][0] = uint8( clamp( lb[0].m_flDirectSunAmount, 0.0f, 1.0f ) * 255.0f + 0.5f );
+					pdata[bumpSampleCount][1] = uint8( clamp( lb[1].m_flDirectSunAmount, 0.0f, 1.0f ) * 255.0f + 0.5f );
+					pdata[bumpSampleCount][2] = uint8( clamp( lb[2].m_flDirectSunAmount, 0.0f, 1.0f ) * 255.0f + 0.5f );
+					pdata[bumpSampleCount][3] = uint8( clamp( lb[3].m_flDirectSunAmount, 0.0f, 1.0f ) * 255.0f + 0.5f );
+					pdata[bumpSampleCount]+=4;
+				}
 #endif
 
 				pdata[bumpSample] += 4;

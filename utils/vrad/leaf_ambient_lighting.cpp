@@ -193,8 +193,8 @@ bool IsLeafAmbientSurfaceLight( dworldlight_t *wl )
 	if ( wl->style != 0 )
 		return false;
 
-	float intensity = MAX( wl->intensity[0], wl->intensity[1] );
-	intensity = MAX( intensity, wl->intensity[2] );
+	float intensity = max( wl->intensity[0], wl->intensity[1] );
+	intensity = max( intensity, wl->intensity[2] );
 	
 	return (intensity * g_flWorldLightMinEmitSurfaceDistanceRatio) < g_flWorldLightMinEmitSurface;
 }
@@ -650,7 +650,7 @@ void ComputePerLeafAmbientLighting()
 	{
 		// Distribute the work among the workers.
 		VMPI_SetCurrentStage( "ComputeLeafAmbientLighting" );
-		DistributeWork( numleafs, VMPI_DISTRIBUTEWORK_PACKETID, VMPI_ProcessLeafAmbient, VMPI_ReceiveLeafAmbientResults );
+		DistributeWork( numleafs, VMPI_ProcessLeafAmbient, VMPI_ReceiveLeafAmbientResults );
 	}
 	else
 #endif
