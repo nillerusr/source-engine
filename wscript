@@ -193,7 +193,7 @@ def define_platform(conf):
 				'GL_GLEXT_PROTOTYPES',
 				'BINK_VIDEO'
 			])
-		conf.env.targets += ['togles' if conf.env.TOGLES else 'togl']
+			conf.env.targets += ['togles' if conf.env.TOGLES else 'togl']
 
 		if conf.options.SDL:
 			conf.env.SDL = True
