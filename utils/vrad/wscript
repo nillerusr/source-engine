@@ -14,9 +14,6 @@ def options(opt):
 
 def configure(conf):
 	conf.define('VRAD', 1)
-	conf.define('MAX_TOOL_THREADS', 1)
-	conf.define('THREADINDEX_MAIN', 0)
-	conf.define('NO_THREAD_NAMES', 1)
 	return
 
 def build(bld):

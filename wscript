@@ -123,7 +123,7 @@ projects={
 		'fgdlib',
 		'raytrace',
 		'vphysics',
-		'movieobjects',
+#		'movieobjects',
 #		'hammer_launcher',
 		'ivp/havana',
 		'ivp/havana/havok/hk_base',
@@ -494,12 +494,14 @@ def configure(conf):
 		flags += ['-fsanitize=%s'%conf.options.SANITIZE, '-fno-sanitize=vptr']
 
 	if conf.env.DEST_OS != 'win32':
-		flags += ['-pipe', '-fPIC', '-L'+os.path.abspath('.')+'/lib/'+conf.env.DEST_OS+'/'+conf.env.DEST_CPU+'/']
+		flags += ['-pipe', '-fPIC']
+		conf.env.RPATH = ['$ORIGIN']
 	if conf.env.COMPILER_CC != 'msvc':
 		flags += ['-pthread']
 
 	if conf.env.DEST_OS == 'android':
 		flags += [
+			'-L'+os.path.abspath('.')+'/lib/android/'+conf.env.DEST_CPU+'/',
 			'-I'+os.path.abspath('.')+'/thirdparty/curl/include',
 			'-I'+os.path.abspath('.')+'/thirdparty/SDL',
 			'-I'+os.path.abspath('.')+'/thirdparty/openal-soft/include/',
@@ -510,7 +512,10 @@ def configure(conf):
 		]
 
 		flags += ['-funwind-tables', '-g']
-	elif conf.env.COMPILER_CC != 'msvc' and conf.env.DEST_OS != 'darwin' and conf.env.DEST_CPU in ['x86', 'x86_64']:
+	elif conf.env.DEST_OS == 'win32':
+		flags += ['-L'+os.path.abspath('.')+'/lib/win32/'+conf.env.DEST_CPU+'/']
+
+	if conf.env.COMPILER_CC != 'msvc' and conf.env.DEST_OS != 'darwin' and conf.env.DEST_CPU in ['x86', 'x86_64']:
 		flags += ['-march=core2']
 
 	if conf.env.DEST_CPU in ['x86', 'x86_64']:
@@ -520,9 +525,6 @@ def configure(conf):
 
 	if conf.env.DEST_CPU == 'arm':
 		flags += ['-mfpu=neon-vfpv4']
-
-	if conf.env.DEST_OS == 'freebsd':
-		linkflags += ['-lexecinfo']
 
 	if conf.env.DEST_OS != 'win32':
 		cflags += flags

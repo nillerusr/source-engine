@@ -5,7 +5,7 @@ from waflib import Utils
 import os
 
 top = '.'
-PROJECT_NAME = 'ServerBrowser'
+PROJECT_NAME = 'serverbrowser'
 
 def options(opt):
 	# stub

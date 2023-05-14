@@ -19,6 +19,9 @@ def configure(conf):
 	conf.define('GIT_COMMIT_HASH', conf.env.GIT_VERSION)
 	conf.define('REL_VERSION', conf.env.REL_VERSION)
 
+	if conf.env.DEST_OS == 'freebsd':
+		conf.check_cc(lib='execinfo')
+
 def build(bld):
 	source = [
 		'assert_dialog.cpp',
@@ -84,6 +87,9 @@ def build(bld):
 		libs = ['ADVAPI32', 'WS2_32']
 	else:
 		libs = ['DL', 'M', 'LOG']
+
+	if bld.env.DEST_OS == 'freebsd':
+		libs += ['EXECINFO']
 
 	install_path = bld.env.LIBDIR
 

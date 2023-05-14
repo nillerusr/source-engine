@@ -2,7 +2,7 @@ name: Build
 
 on: [push, pull_request]
 env:
-  WAF_FLAGS: -T debug --no-warns --prefix=build_hl2
+  WAF_FLAGS: -T release --no-warns --prefix=build_hl2
 
 jobs:
   build-linux:
@@ -66,6 +66,7 @@ jobs:
 
   build-macos:
     strategy:
+      fail-fast: false
       matrix:
         flags: ['', '-dl', '-u']
 
@@ -93,6 +94,7 @@ jobs:
 
   build-windows:
     strategy:
+      fail-fast: false
       matrix:
         os: [windows-2019]
         bits: ['', '--64bits']
