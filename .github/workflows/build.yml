@@ -1,111 +1,109 @@
 name: Build
 
 on: [push, pull_request]
+env:
+  WAF_FLAGS: -T debug --no-warns --prefix=build_hl2
 
 jobs:
-  build-linux-i386:
-    runs-on: ubuntu-latest
-
+  build-linux:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        bits: ['', '--64bits']
+        android: ['']
+        dedicated: ['', '-dl']
+        include:
+          - os: ubuntu-20.04
+            bits: ''
+            android: '--android=armeabi-v7a-hard,4.9,21 --use-togles'
+            dedicated: ''
+    runs-on: ${{ matrix.os }}
+    env:
+      DEPS: libopenal-dev libpng-dev libjpeg-dev libfreetype6-dev libfontconfig1-dev libcurl4-gnutls-dev libsdl2-dev zlib1g-dev libbz2-dev libedit-dev
     steps:
-    - uses: actions/checkout@v2
-    - name: Build linux-i386
-      run: |
-        scripts/build-ubuntu-i386.sh -u
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
 
-  build-linux-amd64:
-    runs-on: ubuntu-20.04
+      - name: Install common dependencies
+        run: sudo apt-get update && sudo apt-get install -y g++-multilib gcc-multilib
+      - name: Install 32bit dependencies
+        if: ${{ matrix.bits == '' && !matrix.android }}
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y aptitude
+          sudo aptitude install -y $(echo $DEPS | sed -r 's/[a-z0-9_\-]+/&:i386/g')
+      - name: Install Android dependencies
+        if: ${{ matrix.android != '' }}
+        run: |
+          wget https://dl.google.com/android/repository/android-ndk-r10e-linux-x86_64.zip -o /dev/null
+          unzip android-ndk-r10e-linux-x86_64.zip
+          export NDK_HOME=$PWD/android-ndk-r10e/
+          echo "NDK_HOME=$NDK_HOME" >> $GITHUB_ENV
+          echo "ANDROID_NDK_HOME=$NDK_HOME" >> $GITHUB_ENV
+      - name: Install 64bit dependencies
+        if: ${{ matrix.bits != '' }}
+        run: |
+          sudo apt-get install -y $DEPS
 
-    steps:
-    - uses: actions/checkout@v2
-    - name: Build linux-amd64
-      run: |
-        scripts/build-ubuntu-amd64.sh -u
+      - if: ${{ matrix.bits == '' && !matrix.android }}
+        name: Set PKG_CONFIG_PATH
+        run: echo "PKG_CONFIG_PATH=/usr/lib/i386-linux-gnu/pkgconfig" >> $GITHUB_ENV
 
-  build-android-armv7a:
-    runs-on: ubuntu-20.04
+      - name: Configure
+        run: ./waf configure ${{ matrix.bits }} ${{ matrix.android }} ${{ matrix.dedicated }} $WAF_FLAGS
+      - name: Build ${{ matrix.os }}
+        run: ./waf install
+      - name: Tar binaries
+        run: tar cvf build.tar build_hl2
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Linux${{matrix.bits}}${{matrix.dedicated}}${{matrix.android}}.tar
+          path: build.tar
 
-    steps:
-    - uses: actions/checkout@v2
-    - name: Build android-armv7a
-      run: |
-        scripts/build-android-armv7a.sh
+  build-macos:
+    strategy:
+      matrix:
+        dedicated: ['', '-dl']
 
-  build-windows-i386:
-    runs-on: windows-2019
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Build windows-i386
-      run: |
-        git submodule init && git submodule update
-        ./waf.bat configure -T debug -u
-        ./waf.bat build
-
-  build-windows-amd64:
-    runs-on: windows-2019
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Build windows-amd64
-      run: |
-        git submodule init && git submodule update
-        ./waf.bat configure -T debug -8 -u
-        ./waf.bat build
-
-  build-dedicated-windows-i386:
-    runs-on: windows-2019
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Build dedicated windows-i386
-      run: |
-        git submodule init && git submodule update
-        ./waf.bat configure -T debug -dl
-        ./waf.bat build
-
-  build-dedicated-windows-amd64:
-    runs-on: windows-2019
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Build dedicated windows-amd64
-      run: |
-        git submodule init && git submodule update
-        ./waf.bat configure -T debug -dl -8
-        ./waf.bat build
-
-  build-dedicated-linux-i386:
-    runs-on: ubuntu-20.04
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Build dedicated linux-i386
-      run: |
-        scripts/build-ubuntu-i386.sh -dl
-
-  build-dedicated-linux-amd64:
-    runs-on: ubuntu-20.04
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Build dedicated linux-amd64
-      run: |
-        scripts/build-ubuntu-amd64.sh -dl
-
-  build-macos-amd64:
     runs-on: macos-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Build macos-amd64
-      run: |
-        scripts/build-macos-amd64.sh -u
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
 
-  build-dedicated-macos-amd64:
-    runs-on: macos-latest
+      - name: Install dependencies
+        run: brew install sdl2
 
+      - name: Configure
+        run: ./waf configure --64bits ${{ matrix.dedicated }} $WAF_FLAGS
+      - name: Build macos-amd64
+        run: ./waf install
+      - name: Tar binaries
+        run: tar cvf build.tar build_hl2
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: macOS--64bits${{matrix.dedicated}}.tar
+          path: build.tar
+
+  build-windows:
+    strategy:
+      matrix:
+        os: [windows-2019]
+        bits: ['', '--64bits']
+        dedicated: ['', '-dl']
+    runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v2
-    - name: Build dedicated macos-amd64
-      run: |
-        scripts/build-macos-amd64.sh -dl
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Configure
+        run: ./waf configure ${{ matrix.bits }} ${{ matrix.dedicated }} ${{ env.WAF_FLAGS }}
+      - name: Build ${{ matrix.os }}
+        run: ./waf install
+
