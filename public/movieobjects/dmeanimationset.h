@@ -13,6 +13,7 @@
 #include "datamodel/dmelement.h"
 #include "datamodel/dmattribute.h"
 #include "datamodel/dmattributevar.h"
+#include "movieobjects/dmeclip.h"
 #include "movieobjects/dmephonememapping.h"
 #include "movieobjects/timeutils.h"
 #include "movieobjects/proceduralpresets.h"

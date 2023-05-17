@@ -13,7 +13,7 @@
 #include "mstristrip.h"
 #include "writebsp.h"
 #include "pacifier.h"
-#include "disp_ivp.h"
+#include "disp_vbsp.h"
 #include "builddisp.h"
 #include "mathlib/vector.h"
 

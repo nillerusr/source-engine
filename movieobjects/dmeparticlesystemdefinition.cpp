@@ -12,9 +12,9 @@
 #include "tier1/utlbuffer.h"
 #include "tier1/convar.h"
 #include "particles/particles.h"
-#include "dme_controls/attributeintchoicepanel.h"
-#include "dme_controls/attributeboolchoicepanel.h"
-#include "dme_controls/attributestringchoicepanel.h"
+#include "dme_controls/AttributeIntChoicePanel.h"
+#include "dme_controls/AttributeBoolChoicePanel.h"
+#include "dme_controls/AttributeStringChoicePanel.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"

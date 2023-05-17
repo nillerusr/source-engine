@@ -12,9 +12,11 @@
 #include "physdll.h"
 #include "lightmap.h"
 #include "tier1/strtools.h"
+#ifdef MPI
 #include "vmpi.h"
-#include "macro_texture.h"
 #include "vmpi_tools_shared.h"
+#endif
+#include "macro_texture.h"
 #include "leaf_ambient_lighting.h"
 #include "tools_minidump.h"
 #include "loadcmdline.h"
@@ -23,6 +25,10 @@
 #define ALLOWDEBUGOPTIONS (0 || _DEBUG)
 
 static FileHandle_t pFpTrans = NULL;
+
+#ifdef POSIX
+char g_FileName[MAX_PATH];
+#endif
 
 /*
 
@@ -34,7 +40,7 @@ every surface must be divided into at least two patches each axis
 */
 
 CUtlVector<CPatch>		g_Patches;			
-CUtlVector<int>			g_FacePatches;		// contains all patches, children first
+CUtlVector<int>			g_FacePatches;		// constains all patches, children first
 CUtlVector<int>			faceParents;		// contains only root patches, use next parent to iterate
 CUtlVector<int>			clusterChildren;
 CUtlVector<Vector>		emitlight;
@@ -60,8 +66,7 @@ bool		g_bDumpRtEnv = false;
 bool		bRed2Black = true;
 bool		g_bFastAmbient = false;
 bool        g_bNoSkyRecurse = false;
-bool		g_bDumpPropLightmaps = false;
-
+bool        g_bFiniteFalloffModel = false;					// whether to use 1/xxx or not
 
 int			junk;
 
@@ -71,6 +76,7 @@ float		lightscale = 1.0;
 float		dlight_threshold = 0.1;  // was DIRECT_LIGHT constant
 
 char		source[MAX_PATH] = "";
+char		platformPath[MAX_PATH] = "";
 
 char		level_name[MAX_PATH] = "";	// map filename, without extension or path info
 
@@ -87,14 +93,16 @@ bool		g_bInterrupt = false;	// Wsed with background lighting in WC. Tells VRAD
 float g_SunAngularExtent=0.0;
 
 float g_flSkySampleScale = 1.0;
+float g_flStaticPropSampleScale = 4.0;
 
 bool g_bLargeDispSampleRadius = false;
 
 bool g_bOnlyStaticProps = false;
 bool g_bShowStaticPropNormals = false;
+bool g_bStaticPropBounce = false;
+float g_flStaticPropBounceBoost = 1.0f;
 
-
-float		gamma = 0.5;
+float		qgamma = 0.5;
 float		indirect_sun = 1.0;
 float		reflectivityScale = 1.0;
 qboolean	do_extra = true;
@@ -119,11 +127,15 @@ bool		g_bStaticPropLighting = false;
 bool        g_bStaticPropPolys = false;
 bool        g_bTextureShadows = false;
 bool        g_bDisablePropSelfShadowing = false;
-
+bool		g_bFastStaticProps = false;
+bool		g_bDumpBumpStaticProps = false;
+bool		g_bDisableStaticPropVertexInSolidTest = false;
 
 CUtlVector<byte> g_FacesVisibleToLights;
 
 RayTracingEnvironment g_RtEnv;
+RayTracingEnvironment g_RtEnv_LightBlockers; // ray tracing environment consisting solely of light blockers - used in conjunction with bsp to solve indirect lighting for static props (as opposed to using the full RTE).
+RayTracingEnvironment g_RtEnv_RadiosityPatches;
 
 dface_t *g_pFaces=0;
 
@@ -299,8 +311,6 @@ LightForTexture
 */
 void LightForTexture( const char *name, Vector& result )
 {
-	int		i;
-
 	result[ 0 ] = result[ 1 ] = result[ 2 ] = 0;
 
 	char baseFilename[ MAX_PATH ];
@@ -340,7 +350,7 @@ void LightForTexture( const char *name, Vector& result )
 		}
 	}
 
-	for (i=0 ; i<num_texlights ; i++)
+	for (int i=0 ; i<num_texlights ; i++)
 	{
 		if (!Q_strcasecmp (name, texlights[i].name))
 		{
@@ -542,6 +552,7 @@ void MakePatchForFace (int fn, winding_t *w)
 	patch->child2 = g_Patches.InvalidIndex();
 	patch->parent = g_Patches.InvalidIndex();
 	patch->needsBumpmap = tx->flags & SURF_BUMPLIGHT ? true : false;
+	patch->staticPropIdx = -1;
 
 	// link and save patch data
 	patch->ndxNext = g_FacePatches.Element( fn );
@@ -733,6 +744,11 @@ void MakePatches (void)
 
 	// make the displacement surface patches
 	StaticDispMgr()->MakePatches();
+
+	if ( g_bStaticPropBounce )
+	{
+		StaticPropMgr()->MakePatches();
+	}
 }
 
 /*
@@ -749,6 +765,12 @@ SUBDIVIDE
 //-----------------------------------------------------------------------------
 bool PreventSubdivision( CPatch *patch )
 {
+	if ( patch->faceNumber < 0 )
+	{
+		// static prop patch
+		return true;
+	}
+
 	dface_t *f = g_pFaces + patch->faceNumber;
 	texinfo_t *tx = &texinfo[f->texinfo];
 
@@ -930,13 +952,19 @@ void SubdividePatches (void)
 	if (numbounce == 0)
 		return;
 
-	unsigned int uiPatchCount = g_Patches.Size();
+	unsigned int uiPatchCount = g_Patches.Count();
 	qprintf ("%i patches before subdivision\n", uiPatchCount);
 
 	for (i = 0; i < uiPatchCount; i++)
 	{
 		CPatch *pCur = &g_Patches.Element( i );
 		pCur->planeDist = pCur->plane->dist;
+
+		if ( pCur->faceNumber < 0 )
+		{
+			// This and all following patches are "fake" staticprop patches. Set up parent data structure for them.
+			break;
+		}
 
 		pCur->ndxNextParent = faceParents.Element( pCur->faceNumber );
 		faceParents[pCur->faceNumber] = pCur - g_Patches.Base();
@@ -968,10 +996,16 @@ void SubdividePatches (void)
 		g_FacePatches[i] = g_FacePatches.InvalidIndex();
 	}
 
-	uiPatchCount = g_Patches.Size();
+	uiPatchCount = g_Patches.Count();
 	for (i = 0; i < uiPatchCount; i++)
 	{
 		CPatch *pCur = &g_Patches.Element( i );
+		if ( pCur->faceNumber < 0)
+		{
+			// Static prop patches don't have an associated face
+			continue;
+		}
+
 		pCur->ndxNext = g_FacePatches.Element( pCur->faceNumber );
 		g_FacePatches[pCur->faceNumber] = pCur - g_Patches.Base();
 
@@ -1276,7 +1310,7 @@ void WriteWorld (char *name, int iBump)
 	if (!out)
 		Error ("Couldn't open %s", name);
 
-	unsigned int uiPatchCount = g_Patches.Size();
+	unsigned int uiPatchCount = g_Patches.Count();
 	for (j=0; j<uiPatchCount; j++)
 	{
 		patch = &g_Patches.Element( j );
@@ -1317,7 +1351,7 @@ void WriteRTEnv (char *name)
 	winding_t *triw = AllocWinding( 3 );
 	triw->numpoints = 3;
 
-	for( int i = 0; i < g_RtEnv.OptimizedTriangleList.Size(); i++ )
+	for( int i = 0; i < g_RtEnv.OptimizedTriangleList.Count(); i++ )
 	{
 		triw->p[0] = g_RtEnv.OptimizedTriangleList[i].Vertex( 0);
 		triw->p[1] = g_RtEnv.OptimizedTriangleList[i].Vertex( 1);
@@ -1418,7 +1452,7 @@ void CollectLight( Vector& total )
 	VectorFill( total, 0 );
 
 	// process patches in reverse order so that children are processed before their parents
-	unsigned int uiPatchCount = g_Patches.Size();
+	unsigned int uiPatchCount = g_Patches.Count();
 	for( i = uiPatchCount - 1; i >= 0; i-- )
 	{
 		patch = &g_Patches.Element( i );
@@ -1557,7 +1591,7 @@ void GatherLight (int threadnum, void *pUserData)
 			Vector normals[NUM_BUMP_VECTS+1];
 
 			// Disps
-			bool bDisp = ( g_pFaces[patch->faceNumber].dispinfo != -1 ); 
+			bool bDisp = ( patch->faceNumber >= 0 ) && ( g_pFaces[ patch->faceNumber ].dispinfo != -1 );
 			if ( bDisp )
 			{
 				normals[0] = patch->normal;
@@ -1657,7 +1691,7 @@ void BounceLight (void)
 	char		name[64];
 	qboolean	bouncing = numbounce > 0;
 
-	unsigned int uiPatchCount = g_Patches.Size();
+	unsigned int uiPatchCount = g_Patches.Count();
 	for (i=0 ; i<uiPatchCount; i++)
 	{
 		// totallight has a copy of the direct lighting.  Move it to the emitted light and zero it out (to integrate bounces only)
@@ -1705,7 +1739,7 @@ void BounceLight (void)
 	{
 		// transfer light from to the leaf patches from other patches via transfers
 		// this moves shooter->emitlight to receiver->addlight
-		unsigned int uiPatchCount = g_Patches.Size();
+		uiPatchCount = g_Patches.Count();
 		RunThreadsOn (uiPatchCount, true, GatherLight);
 		// move newly received light (addlight) to light to be sent out (emitlight)
 		// start at children and pull light up to parents
@@ -1822,6 +1856,11 @@ void RadWorld_Start()
 	// add displacement faces to cluster table
 	AddDispsToClusterTable();
 
+	if ( g_bStaticPropBounce )
+	{
+		AddStaticPropPatchesToClusterTable();
+	}
+
 	// create directlights out of patches and lights
 	CreateDirectLights ();
 
@@ -1934,6 +1973,21 @@ void MakeAllScales (void)
 
 	qprintf ("transfer lists: %5.1f megs\n"
 		, (float)total_transfer * sizeof(transfer_t) / (1024*1024));
+
+	if ( g_bStaticPropBounce )
+	{
+		int nTransfers = 0;
+		for ( int i = 0; i < g_Patches.Count(); i++ )
+		{
+			CPatch *pCur = &g_Patches.Element( i );
+			if ( pCur->faceNumber >= 0 )
+			{
+				continue;
+			}
+			nTransfers += pCur->numtransfers;
+		}
+		Msg( "static prop patch transfers %d\n", nTransfers );
+	}
 }
 
 
@@ -2020,14 +2074,50 @@ bool RadWorld_Go()
 	}
 
 	// build initial facelights
+#ifdef MPI
 	if (g_bUseMPI) 
 	{
 		// RunThreadsOnIndividual (numfaces, true, BuildFacelights);
 		RunMPIBuildFacelights();
+		if ( g_bStaticPropBounce )
+		{
+			RunThreadsOnIndividual( g_Patches.Count(), true, BuildStaticPropPatchlights );
+		}
 	}
 	else 
+#endif
 	{
-		RunThreadsOnIndividual (numfaces, true, BuildFacelights);
+		RunThreadsOnIndividual( numfaces, true, BuildFacelights );
+		if ( g_bStaticPropBounce )
+		{
+			RunThreadsOnIndividual( g_Patches.Count(), true, BuildStaticPropPatchlights );
+		}
+#if 0
+		IScratchPad3D *pPad = ScratchPad3D_Create();
+		pPad->SetAutoFlush( false );
+		float flMax = 0.0f;
+		for ( int i = 0; i < g_Patches.Count(); i++ )
+		{
+			if ( g_Patches[ i ].child1 != g_Patches.InvalidIndex() || g_Patches[ i ].child2 != g_Patches.InvalidIndex() )
+				continue;
+			Vector vLight = g_Patches[ i ].directlight;
+			flMax = Max( flMax, vLight.x );
+			flMax = Max( flMax, vLight.y );
+			flMax = Max( flMax, vLight.z );
+		}
+		for ( int i = 0; i < g_Patches.Count(); i++ )
+		{
+			if ( g_Patches[ i ].child1 != g_Patches.InvalidIndex() || g_Patches[ i ].child2 != g_Patches.InvalidIndex() )
+				continue;
+			Vector vLight = g_Patches[ i ].directlight * g_Patches[i].reflectivity;
+			vLight /= flMax;
+			vLight.x = SrgbLinearToGamma( vLight.x );
+			vLight.y = SrgbLinearToGamma( vLight.y );
+			vLight.z = SrgbLinearToGamma( vLight.z );
+			pPad->DrawPolygon( CSPVertList( g_Patches[ i ].winding->p, g_Patches[ i ].winding->numpoints, CSPColor( vLight ) ) );
+		}
+		pPad->Release();
+#endif
 	}
 
 	// Was the process interrupted?
@@ -2060,10 +2150,10 @@ bool RadWorld_Go()
 		if (numbounce > 0)
 		{
 			// allocate memory for emitlight/addlight
-			emitlight.SetSize( g_Patches.Size() );
-			memset( emitlight.Base(), 0, g_Patches.Size() * sizeof( Vector ) );
-			addlight.SetSize( g_Patches.Size() );
-			memset( addlight.Base(), 0, g_Patches.Size() * sizeof( bumplights_t ) );
+			emitlight.SetSize( g_Patches.Count() );
+			memset( emitlight.Base(), 0, g_Patches.Count() * sizeof( Vector ) );
+			addlight.SetSize( g_Patches.Count() );
+			memset( addlight.Base(), 0, g_Patches.Count() * sizeof( bumplights_t ) );
 
 			MakeAllScales ();
 
@@ -2080,12 +2170,16 @@ bool RadWorld_Go()
 		StaticDispMgr()->EndTimer();
 
 		// blend bounced light into direct light and save
+#ifdef MPI
 		VMPI_SetCurrentStage( "FinalLightFace" );
 		if ( !g_bUseMPI || g_bMPIMaster )
+#endif
 			RunThreadsOnIndividual (numfaces, true, FinalLightFace);
 		
+#ifdef MPI
 		// Distribute the lighting data to workers.
 		VMPI_DistributeLightData();
+#endif
 			
 		Msg("FinalLightFace Done\n"); fflush(stdout);
 	}
@@ -2099,7 +2193,7 @@ FileHandle_t pFileSamples[4][4];
 
 void LoadPhysicsDLL( void )
 {
-	PhysicsDLLPath( "VPHYSICS.DLL" );
+	PhysicsDLLPath( "vphysics" DLL_EXT_STRING );
 }
 
 
@@ -2120,7 +2214,6 @@ void InitDumpPatchesFiles()
 	}
 }
 
-extern IFileSystem *g_pOriginalPassThruFileSystem;
 
 void VRAD_LoadBSP( char const *pFilename )
 {
@@ -2128,10 +2221,12 @@ void VRAD_LoadBSP( char const *pFilename )
 
 	g_flStartTime = Plat_FloatTime();
 
+#ifdef _WIN32
 	if( g_bLowPriority )
 	{
 		SetLowPriority();
 	}
+#endif
 
 	strcpy( level_name, source );
 
@@ -2143,7 +2238,9 @@ void VRAD_LoadBSP( char const *pFilename )
 	// so we prepend qdir here.
 	strcpy( source, ExpandPath( source ) );
 
+#ifdef MPI
 	if ( !g_bUseMPI )
+#endif
 	{
 		// Setup the logfile.
 		char logFile[512];
@@ -2160,7 +2257,11 @@ void VRAD_LoadBSP( char const *pFilename )
 		// Otherwise, try looking in the BIN directory from which we were run from
 		Msg( "Could not find lights.rad in %s.\nTrying VRAD BIN directory instead...\n", 
 			    global_lights );
+#ifdef _WIN32
 		GetModuleFileName( NULL, global_lights, sizeof( global_lights ) );
+#else
+		Q_strncpy(global_lights, g_FileName, sizeof(global_lights));
+#endif
 		Q_ExtractFilePath( global_lights, global_lights, sizeof( global_lights ) );
 		strcat( global_lights, "lights.rad" );
 	}
@@ -2181,23 +2282,11 @@ void VRAD_LoadBSP( char const *pFilename )
 	Q_DefaultExtension(source, ".bsp", sizeof( source ));
 
 	Msg( "Loading %s\n", source );
+#ifdef MPI
 	VMPI_SetCurrentStage( "LoadBSPFile" );
+#endif
 	LoadBSPFile (source);
-
-	// Add this bsp to our search path so embedded resources can be found
-	if ( g_bUseMPI && g_bMPIMaster )
-	{
-		// MPI Master, MPI workers don't need to do anything
-		g_pOriginalPassThruFileSystem->AddSearchPath(source, "GAME", PATH_ADD_TO_HEAD);
-		g_pOriginalPassThruFileSystem->AddSearchPath(source, "MOD", PATH_ADD_TO_HEAD);
-	}
-	else if ( !g_bUseMPI )
-	{
-		// Non-MPI
-		g_pFullFileSystem->AddSearchPath(source, "GAME", PATH_ADD_TO_HEAD);
-		g_pFullFileSystem->AddSearchPath(source, "MOD", PATH_ADD_TO_HEAD);
-	}
-
+	
 	// now, set whether or not static prop lighting is present
 	if (g_bStaticPropLighting)
 		g_LevelFlags |= g_bHDR? LVLFLAGS_BAKED_STATIC_PROP_LIGHTING_HDR : LVLFLAGS_BAKED_STATIC_PROP_LIGHTING_NONHDR;
@@ -2272,6 +2361,7 @@ void VRAD_LoadBSP( char const *pFilename )
 	printf ( "Setting up ray-trace acceleration structure... ");
 	float start = Plat_FloatTime();
 	g_RtEnv.SetupAccelerationStructure();
+	g_RtEnv_LightBlockers.SetupAccelerationStructure();
 	float end = Plat_FloatTime();
 	printf ( "Done (%.2f seconds)\n", end-start );
 
@@ -2323,7 +2413,9 @@ void VRAD_Finish()
 	}
 
 	Msg( "Writing %s\n", source );
+#ifdef MPI
 	VMPI_SetCurrentStage( "WriteBSPFile" );
+#endif
 	WriteBSPFile(source);
 
 	if ( g_bDumpPatches )
@@ -2365,16 +2457,29 @@ int ParseCommandLine( int argc, char **argv, bool *onlydetail )
 {
 	*onlydetail = false;
 
-	int mapArg = -1;
-
 	// default to LDR
 	SetHDRMode( false );
 	int i;
 	for( i=1 ; i<argc ; i++ )
 	{
-		if ( !Q_stricmp( argv[i], "-StaticPropLighting" ) )
+		if ( !Q_stricmp( argv[i], "-StaticPropLighting" ) ) // use -final for higher quality
 		{
 			g_bStaticPropLighting = true;
+			extern int g_numVradStaticPropsLightingStreams;
+			g_numVradStaticPropsLightingStreams = 3;
+		}
+		else if ( !Q_stricmp( argv[i], "-StaticPropLightingFinal" ) ) // slower, higher quality - deprecated, remove soon
+		{
+			g_bStaticPropLighting = true;
+			extern int g_numVradStaticPropsLightingStreams;
+			g_numVradStaticPropsLightingStreams = 3;
+		}
+		else if ( !Q_stricmp( argv[i], "-StaticPropLighting3" ) ) // dump bump data - deprecated, remove soon
+		{
+			g_bStaticPropLighting = true;
+			extern int g_numVradStaticPropsLightingStreams;
+			g_numVradStaticPropsLightingStreams = 3;
+			g_bDumpBumpStaticProps = true;
 		}
 		else if ( !stricmp( argv[i], "-StaticPropNormals" ) )
 		{
@@ -2392,11 +2497,15 @@ int ParseCommandLine( int argc, char **argv, bool *onlydetail )
 		{
 			g_bDisablePropSelfShadowing = true;
 		}
+		else if ( !stricmp( argv[i], "-StaticPropDisableInSolidTest" ) )
+		{
+			g_bDisableStaticPropVertexInSolidTest = true;
+		}
 		else if ( !Q_stricmp( argv[i], "-textureshadows" ) )
 		{
 			g_bTextureShadows = true;
 		}
-		else if ( !strcmp(argv[i], "-dump") )
+		else if ( !strcmp( argv[i], "-dump" ) )
 		{
 			g_bDumpPatches = true;
 		}
@@ -2420,26 +2529,21 @@ int ParseCommandLine( int argc, char **argv, bool *onlydetail )
 		{
 			g_bLargeDispSampleRadius = true;
 		}
-		else if (!Q_stricmp( argv[i], "-dumppropmaps"))
-		{
-			g_bDumpPropLightmaps = true;
-		}
 		else if (!Q_stricmp(argv[i],"-bounce"))
 		{
 			if ( ++i < argc )
 			{
-				int bounceParam = atoi (argv[i]);
-				if ( bounceParam < 0 )
+				numbounce = atoi (argv[i]);
+				if ( numbounce < 0 )
 				{
 					Warning("Error: expected non-negative value after '-bounce'\n" );
-					return -1;
+					return 1;
 				}
-				numbounce = (unsigned)bounceParam;
 			}
 			else
 			{
 				Warning("Error: expected a value after '-bounce'\n" );
-				return -1;
+				return 1;
 			}
 		}
 		else if (!Q_stricmp(argv[i],"-verbose") || !Q_stricmp(argv[i],"-v"))
@@ -2454,13 +2558,13 @@ int ParseCommandLine( int argc, char **argv, bool *onlydetail )
 				if ( numthreads <= 0 )
 				{
 					Warning("Error: expected positive value after '-threads'\n" );
-					return -1;
+					return 1;
 				}
 			}
 			else
 			{
 				Warning("Error: expected a value after '-threads'\n" );
-				return -1;
+				return 1;
 			}
 		}
 		else if ( !Q_stricmp(argv[i], "-lights" ) )
@@ -2472,7 +2576,7 @@ int ParseCommandLine( int argc, char **argv, bool *onlydetail )
 			else
 			{
 				Warning("Error: expected a filepath after '-lights'\n" );
-				return -1;
+				return 1;
 			}
 		}
 		else if (!Q_stricmp(argv[i],"-noextra"))
@@ -2490,6 +2594,7 @@ int ParseCommandLine( int argc, char **argv, bool *onlydetail )
 		else if (!Q_stricmp(argv[i],"-fast"))
 		{
 			do_fast = true;
+			g_bFastStaticProps = true;
 		}
 		else if (!Q_stricmp(argv[i],"-noskyboxrecurse"))
 		{
@@ -2498,6 +2603,11 @@ int ParseCommandLine( int argc, char **argv, bool *onlydetail )
 		else if (!Q_stricmp(argv[i],"-final"))
 		{
 			g_flSkySampleScale = 16.0;
+			g_flStaticPropSampleScale = 16.0;
+		}
+		else if (!Q_stricmp( argv[i], "-finitefalloff" ) )
+		{
+			g_bFiniteFalloffModel = true;
 		}
 		else if (!Q_stricmp(argv[i],"-extrasky"))
 		{
@@ -2508,7 +2618,19 @@ int ParseCommandLine( int argc, char **argv, bool *onlydetail )
 			else
 			{
 				Warning("Error: expected a scale factor after '-extrasky'\n" );
-				return -1;
+				return 1;
+			}
+		}
+		else if ( !Q_stricmp( argv[i], "-staticpropsamplescale" ) )
+		{
+			if ( ++i < argc && *argv[i] )
+			{
+				g_flStaticPropSampleScale = atof( argv[i] );
+			}
+			else
+			{
+				Warning( "Error: expected a scale factor after '-extraskystaticprops'\n" );
+				return 1;
 			}
 		}
 		else if (!Q_stricmp(argv[i],"-centersamples"))
@@ -2524,7 +2646,7 @@ int ParseCommandLine( int argc, char **argv, bool *onlydetail )
 			else
 			{
 				Warning("Error: expected an angle after '-smooth'\n" );
-				return -1;
+				return 1;
 			}
 		}
 		else if (!Q_stricmp(argv[i],"-dlightmap"))
@@ -2542,7 +2664,7 @@ int ParseCommandLine( int argc, char **argv, bool *onlydetail )
 			else
 			{
 				Warning("Error: expected a value after '-luxeldensity'\n" );
-				return -1;
+				return 1;
 			}
 		}
 		else if( !Q_stricmp( argv[i], "-low" ) )
@@ -2568,7 +2690,7 @@ int ParseCommandLine( int argc, char **argv, bool *onlydetail )
 			else
 			{
 				Warning("Error: expected an angular extent value (0..180) '-softsun'\n" );
-				return -1;
+				return 1;
 			}
 		}
 		else if ( !Q_stricmp( argv[i], "-maxdispsamplesize" ) )
@@ -2580,7 +2702,7 @@ int ParseCommandLine( int argc, char **argv, bool *onlydetail )
 			else
 			{
 				Warning( "Error: expected a sample size after '-maxdispsamplesize'\n" );
-				return -1;
+				return 1;
 			}
 		}
 		else if ( stricmp( argv[i], "-StopOnExit" ) == 0 )
@@ -2601,10 +2723,12 @@ int ParseCommandLine( int argc, char **argv, bool *onlydetail )
 		{
 			++i;
 		}
+#ifdef _WIN32
 		else if ( !Q_stricmp( argv[i], "-FullMinidumps" ) )
 		{
 			EnableFullMinidumps( true );
 		}
+#endif
 		else if ( !Q_stricmp( argv[i], "-hdr" ) )
 		{
 			SetHDRMode( true );
@@ -2621,13 +2745,13 @@ int ParseCommandLine( int argc, char **argv, bool *onlydetail )
 				if ( maxchop < 1 )
 				{
 					Warning("Error: expected positive value after '-maxchop'\n" );
-					return -1;
+					return 1;
 				}
 			}
 			else
 			{
 				Warning("Error: expected a value after '-maxchop'\n" );
-				return -1;
+				return 1;
 			}
 		}
 		else if (!Q_stricmp(argv[i],"-chop"))
@@ -2638,14 +2762,14 @@ int ParseCommandLine( int argc, char **argv, bool *onlydetail )
 				if ( minchop < 1 )
 				{
 					Warning("Error: expected positive value after '-chop'\n" );
-					return -1;
+					return 1;
 				}
 				minchop = min( minchop, maxchop );
 			}
 			else
 			{
 				Warning("Error: expected a value after '-chop'\n" );
-				return -1;
+				return 1;
 			}
 		}
 		else if ( !Q_stricmp( argv[i], "-dispchop" ) )
@@ -2656,13 +2780,13 @@ int ParseCommandLine( int argc, char **argv, bool *onlydetail )
 				if ( dispchop < 1.0f )
 				{
 					Warning( "Error: expected positive value after '-dipschop'\n" );
-					return -1;
+					return 1;
 				}
 			}
 			else
 			{
 				Warning( "Error: expected a value after '-dispchop'\n" );
-				return -1;
+				return 1;
 			}
 		}
 		else if ( !Q_stricmp( argv[i], "-disppatchradius" ) )
@@ -2673,16 +2797,55 @@ int ParseCommandLine( int argc, char **argv, bool *onlydetail )
 				if ( g_MaxDispPatchRadius < 10.0f )
 				{
 					Warning( "Error: g_MaxDispPatchRadius < 10.0\n" );
-					return -1;
+					return 1;
 				}
 			}
 			else
 			{
 				Warning( "Error: expected a value after '-disppatchradius'\n" );
-				return -1;
+				return 1;
 			}
 		}
-
+		else if ( !Q_stricmp( argv[i], "-reflectivityscale" ) )
+		{
+			if ( ++i < argc )
+			{
+				reflectivityScale = (float)atof (argv[i]);
+			}
+			else
+			{
+				Warning("Error: expected a value after '-reflectivityscale'\n" );
+				return 1;
+			}
+		}
+		else if ( !Q_stricmp( argv[i],"-ambient" ) )
+		{
+			if ( i+3 < argc )
+			{
+				ambient[0] = (float)atof (argv[++i]) * 128;
+				ambient[1] = (float)atof (argv[++i]) * 128;
+				ambient[2] = (float)atof (argv[++i]) * 128;
+			}
+			else
+			{
+				Warning("Error: expected three color values after '-ambient'\n" );
+				return 1;
+			}
+		}
+		else if ( !Q_stricmp( argv[ i ], "-StaticPropBounce" ) )
+		{
+			if ( i + 1 < argc )
+			{
+				g_flStaticPropBounceBoost = (float)atof( argv[ ++i ] );
+			}
+			else
+			{
+				Warning("Error: expected bounce scale after '-StaticPropBounce'\n" );
+				return 1;
+			}
+			
+			g_bStaticPropBounce = true;
+		}
 #if ALLOWDEBUGOPTIONS
 		else if (!Q_stricmp(argv[i],"-scale"))
 		{
@@ -2693,21 +2856,7 @@ int ParseCommandLine( int argc, char **argv, bool *onlydetail )
 			else
 			{
 				Warning("Error: expected a value after '-scale'\n" );
-				return -1;
-			}
-		}
-		else if (!Q_stricmp(argv[i],"-ambient"))
-		{
-			if ( i+3 < argc )
-			{
- 				ambient[0] = (float)atof (argv[++i]) * 128;
- 				ambient[1] = (float)atof (argv[++i]) * 128;
- 				ambient[2] = (float)atof (argv[++i]) * 128;
-			}
-			else
-			{
-				Warning("Error: expected three color values after '-ambient'\n" );
-				return -1;
+				return 1;
 			}
 		}
 		else if (!Q_stricmp(argv[i],"-dlight"))
@@ -2719,7 +2868,7 @@ int ParseCommandLine( int argc, char **argv, bool *onlydetail )
 			else
 			{
 				Warning("Error: expected a value after '-dlight'\n" );
-				return -1;
+				return 1;
 			}
 		}
 		else if (!Q_stricmp(argv[i],"-sky"))
@@ -2731,7 +2880,7 @@ int ParseCommandLine( int argc, char **argv, bool *onlydetail )
 			else
 			{
 				Warning("Error: expected a value after '-sky'\n" );
-				return -1;
+				return 1;
 			}
 		}
 		else if (!Q_stricmp(argv[i],"-notexscale"))
@@ -2747,10 +2896,15 @@ int ParseCommandLine( int argc, char **argv, bool *onlydetail )
 			else
 			{
 				Warning("Error: expected a light threshold after '-coring'\n" );
-				return -1;
+				return 1;
 			}
 		}
 #endif
+		else if ( !Q_stricmp( argv[i], "-tempcontent" ) )
+		{
+			// ... Do nothing, just let this pass to the filesystem
+		}
+#ifdef MPI
 		// NOTE: the -mpi checks must come last here because they allow the previous argument 
 		// to be -mpi as well. If it game before something else like -game, then if the previous
 		// argument was -mpi and the current argument was something valid like -game, it would skip it.
@@ -2763,17 +2917,18 @@ int ParseCommandLine( int argc, char **argv, bool *onlydetail )
 			if ( i == argc - 1 && V_stricmp( argv[i], "-mpi_ListParams" ) != 0 )
 				break;
 		}
-		else if ( mapArg == -1 )
+#endif
+		else if ( !Q_stricmp( argv[i], "-processheap" ) )
 		{
-			mapArg = i;
+			// ... Do nothing, just let this pass to the mem system
 		}
 		else
 		{
-			return -1;
+			break;
 		}
 	}
 
-	return mapArg;
+	return i;
 }
 
 
@@ -2803,9 +2958,12 @@ void PrintUsage( int argc, char **argv )
 		"  -fast           : Quick and dirty lighting.\n"
 		"  -fastambient    : Per-leaf ambient sampling is lower quality to save compute time.\n"
 		"  -final          : High quality processing. equivalent to -extrasky 16.\n"
+		"  -finitefalloff  : use an alternative falloff model that falls off to exactly zero at the zero_percent_distance.\n"
 		"  -extrasky n     : trace N times as many rays for indirect light and sky ambient.\n"
 		"  -low            : Run as an idle-priority process.\n"
+#ifdef MPI
 		"  -mpi            : Use VMPI to distribute computations.\n"
+#endif
 		"  -rederror       : Show errors in red.\n"
 		"\n"
 		"  -vproject <directory> : Override the VPROJECT environment variable.\n"
@@ -2822,13 +2980,17 @@ void PrintUsage( int argc, char **argv )
 		"                    level lights file.\n"
 		"  -noextra        : Disable supersampling.\n"
 		"  -debugextra     : Places debugging data in lightmaps to visualize\n"
-		"                    supersampling.\n"
+		"                    supersampling.\n" 
 		"  -smooth #       : Set the threshold for smoothing groups, in degrees\n"
 		"                    (default 45).\n"
+		);
+	Warning(	
 		"  -dlightmap      : Force direct lighting into different lightmap than\n"
 		"                    radiosity.\n"
 		"  -stoponexit	   : Wait for a keypress on exit.\n"
+#ifdef MPI
 		"  -mpi_pw <pw>    : Use a password to choose a specific set of VMPI workers.\n"
+#endif
 		"  -nodetaillight  : Don't light detail props.\n"
 		"  -centersamples  : Move sample centers.\n"
 		"  -luxeldensity # : Rescale all luxels by the specified amount (default: 1.0).\n"
@@ -2842,15 +3004,16 @@ void PrintUsage( int argc, char **argv )
 		"                    Recommended values are between 0 and 5. Default is 0.\n"
 		"  -FullMinidumps  : Write large minidumps on crash.\n"
 		"  -chop           : Smallest number of luxel widths for a bounce patch, used on edges\n"
-		"  -maxchop		   : Coarsest allowed number of luxel widths for a patch, used in face interiors\n"
-		"\n"
-		"  -LargeDispSampleRadius: This can be used if there are splotches of bounced light\n"
-		"                          on terrain. The compile will take longer, but it will gather\n"
-		"                          light across a wider area.\n"
-        "  -StaticPropLighting   : generate backed static prop vertex lighting\n"
+		"  -maxchop	: Coarsest allowed number of luxel widths for a patch, used in face interiors\n"
+		"  -LargeDispSampleRadius: This can be used if there are splotches of bounced\n"
+		"                          light on terrain. The compile will take longer, but\n"
+		"                          it will gather light across a wider area.\n"
+        "  -StaticPropLighting   : generate baked static prop vertex lighting\n"
+		"  -StaticPropLightingFinal   : generate baked static prop vertex lighting (uses higher/final quality processing)\n"
         "  -StaticPropPolys   : Perform shadow tests of static props at polygon precision\n"
         "  -OnlyStaticProps   : Only perform direct static prop lighting (vrad debug option)\n"
 		"  -StaticPropNormals : when lighting static props, just show their normal vector\n"
+		"  -StaticPropBounce  : Enable static props to bounce light. Experimental option, doesn't work with VMPI right now.\n"
 		"  -textureshadows : Allows texture alpha channels to block light - rays intersecting alpha surfaces will sample the texture\n"
 		"  -noskyboxrecurse : Turn off recursion into 3d skybox (skybox shadows on world)\n"
 		"  -nossprops      : Globally disable self-shadowing on static props\n"
@@ -2885,31 +3048,33 @@ void PrintUsage( int argc, char **argv )
 #endif
 }
 
+#ifdef _WIN32
+#define APP_EXT ".exe"
+#else
+#define APP_EXT ""
+#endif
+
 int RunVRAD( int argc, char **argv )
 {
 #if defined(_MSC_VER) && ( _MSC_VER >= 1310 )
-	Msg("Valve Software - vrad.exe SSE (" __DATE__ ")\n" );
+	Msg("Valve Software - vrad" APP_EXT " SSE (" __DATE__ ")\n" );
 #else
-	Msg("Valve Software - vrad.exe (" __DATE__ ")\n" );
+	Msg("Valve Software - vrad" APP_EXT " (" __DATE__ ")\n" );
 #endif
 
 	Msg("\n      Valve Radiosity Simulator     \n");
 
+	Q_strncpy(g_FileName, argv[0], MAX_PATH);
 	verbose = true;  // Originally FALSE
 
 	bool onlydetail;
 	int i = ParseCommandLine( argc, argv, &onlydetail );
-	if (i == -1)
+	if (i != argc - 1)
 	{
 		PrintUsage( argc, argv );
 		DeleteCmdLine( argc, argv );
-		CmdLib_Exit( 1 );
+		Plat_ExitProcess( 0 );
 	}
-
-	// Initialize the filesystem, so additional commandline options can be loaded
-	Q_StripExtension( argv[ i ], source, sizeof( source ) );
-	CmdLib_InitFileSystem( argv[ i ] );
-	Q_FileBase( source, source, sizeof( source ) );
 
 	VRAD_LoadBSP( argv[i] );
 
@@ -2922,7 +3087,9 @@ int RunVRAD( int argc, char **argv )
 
 	VRAD_Finish();
 
+#ifdef MPI
 	VMPI_SetCurrentStage( "master done" );
+#endif
 
 	DeleteCmdLine( argc, argv );
 	CmdLib_Cleanup();
@@ -2936,9 +3103,17 @@ int VRAD_Main(int argc, char **argv)
 
 	VRAD_Init();
 
+#ifdef MPI
 	// This must come first.
 	VRAD_SetupMPI( argc, argv );
+#endif
 
+	// Initialize the filesystem, so additional commandline options can be loaded
+	Q_StripExtension( argv[ argc - 1 ], source, sizeof( source ) );
+	CmdLib_InitFileSystem( argv[ argc - 1 ] );
+	Q_FileBase( source, source, sizeof( source ) );
+
+#ifdef MPI
 #if !defined( _DEBUG )
 	if ( g_bUseMPI && !g_bMPIMaster )
 	{
@@ -2946,9 +3121,12 @@ int VRAD_Main(int argc, char **argv)
 	}
 	else
 #endif
+#endif
 	{
 		LoadCmdLineFromFile( argc, argv, source, "vrad" ); // Don't do this if we're a VMPI worker..
+#ifdef _WIN32
 		SetupDefaultToolsMinidumpHandler();
+#endif
 	}
 	
 	return RunVRAD( argc, argv );

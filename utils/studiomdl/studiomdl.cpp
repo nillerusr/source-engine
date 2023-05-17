@@ -12,22 +12,23 @@
 // models/<scriptname>.mdl.
 //
 
-
+#ifdef _WIN32
 #pragma warning( disable : 4244 )
 #pragma warning( disable : 4237 )
 #pragma warning( disable : 4305 )
 
 #include <windows.h>
+#include <direct.h>
 #undef GetCurrentDirectory
 
 #include <Shlwapi.h> // PathCanonicalize
 #pragma comment( lib, "shlwapi" )
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <math.h>
-#include <direct.h>
 #include "istudiorender.h"
 #include "filesystem_tools.h"
 #include "tier2/fileutils.h"
@@ -45,9 +46,9 @@
 #include "bspflags.h"
 #include "tier0/icommandline.h"
 #include "utldict.h"
-#include "tier1/utlsortvector.h"
+#include "tier1/UtlSortVector.h"
 #include "bitvec.h"
-#include "appframework/appframework.h"
+#include "appframework/AppFramework.h"
 #include "datamodel/idatamodel.h"
 #include "materialsystem/materialsystem_config.h"
 #include "vstdlib/cvar.h"
@@ -66,6 +67,10 @@
 #include "mdllib/mdllib.h"
 #include "perfstats.h"
 #include "worldsize.h"
+
+#ifdef POSIX
+#define _stat stat
+#endif
 
 bool g_collapse_bones = false;
 bool g_collapse_bones_aggressive = false;
@@ -195,6 +200,7 @@ void EnsureDependencyFileCheckedIn( const char *pFileName )
 	if ( g_bNoP4 )
 		return;
 
+#ifdef _WIN32
 	char pFullPath[MAX_PATH];
 	if ( !GetGlobalFilePath( pFileName, pFullPath, sizeof(pFullPath) ) )
 	{
@@ -206,6 +212,7 @@ void EnsureDependencyFileCheckedIn( const char *pFileName )
 	char bufCanonicalPath[ MAX_PATH ] = {0};
 	PathCanonicalize( bufCanonicalPath, pFullPath );
 	CP4AutoAddFile p4_add_dep_file( bufCanonicalPath );
+#endif
 }
 
 void StudioMdl_ScriptLoadedCallback( char const *pFilenameLoaded, char const *pIncludedFromFileName, int nIncludeLineNumber )
@@ -385,15 +392,17 @@ SpewRetval_t MdlSpewOutputFunc( SpewType_t type, char const *pMsg )
 	{
 		MdlWarning( "%s", pMsg );
 	}
+#if 0
 	else
 	{
 		return CmdLib_SpewOutputFunc( type, pMsg );
 	}
+#endif
 
 	return SPEW_CONTINUE;
 }
 
-
+#ifdef _WIN32
 #ifndef _DEBUG
 
 void MdlHandleCrash( const char *pMessage, bool bAssert )
@@ -472,6 +481,7 @@ void MdlExceptionFilter( unsigned long code )
 }
 
 #endif
+#endif
 
 /*
 =================
@@ -490,7 +500,7 @@ void *kalloc( int num, int size )
 	nMemSize += 511;
 	void *ptr = malloc( nMemSize );
 	memset( ptr, 0, nMemSize );
-	ptr = (byte *)((int)((byte *)ptr + 511) & ~511);
+	ptr = (byte *)((size_t)((byte *)ptr + 511) & ~511);
 	return ptr;
 }
 
@@ -2297,9 +2307,11 @@ int Option_Activity( s_sequence_t *psequence )
 
 int Option_ActivityModifier( s_sequence_t *psequence )
 {
+#if 0
 	GetToken(false);
 	V_strcpy_safe( psequence->activitymodifier[ psequence->numactivitymodifiers++ ].name, token );
 
+#endif
 	return 0;
 }
 
@@ -8366,7 +8378,7 @@ bool GetGlobalFilePath( const char *pSrc, char *pFullPath, int nMaxLen )
 
 			struct _stat buf;
 			int rt = _stat( tmp, &buf );
-			if ( rt != -1 && ( buf.st_size > 0 ) && ( ( buf.st_mode & _S_IFDIR ) == 0 ) )
+			if ( rt != -1 && ( buf.st_size > 0 ) && ( ( buf.st_mode & S_IFDIR ) == 0 ) )
 			{
 				Q_strncpy( pFullPath, tmp, nMaxLen );
 				return true;
@@ -8377,7 +8389,7 @@ bool GetGlobalFilePath( const char *pSrc, char *pFullPath, int nMaxLen )
 
 	struct _stat buf;
 	int rt = _stat( pFileName, &buf );
-	if ( rt != -1 && ( buf.st_size > 0 ) && ( ( buf.st_mode & _S_IFDIR ) == 0 )	)
+	if ( rt != -1 && ( buf.st_size > 0 ) && ( ( buf.st_mode & S_IFDIR ) == 0 )	)
 	{
 		Q_strncpy( pFullPath, pFileName, nMaxLen );
 		return true;
@@ -9463,6 +9475,7 @@ void UsageAndExit()
 		);
 }
 
+#ifdef _WIN32
 #ifndef _DEBUG
 
 LONG __stdcall VExceptionFilter( struct _EXCEPTION_POINTERS *ExceptionInfo )
@@ -9471,6 +9484,7 @@ LONG __stdcall VExceptionFilter( struct _EXCEPTION_POINTERS *ExceptionInfo )
 	return EXCEPTION_EXECUTE_HANDLER; // (never gets here anyway)
 }
 
+#endif
 #endif
 /*
 ==============
@@ -9545,8 +9559,10 @@ bool CStudioMDLApp::Create()
 
  	MathLib_Init( 2.2f, 2.2f, 0.0f, 2.0f, false, false, false, false );
 
+#ifdef _WIN32
 #ifndef _DEBUG
 	SetUnhandledExceptionFilter( VExceptionFilter );
+#endif
 #endif
 
 	if ( CommandLine()->ParmCount() == 1 )

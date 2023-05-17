@@ -759,6 +759,7 @@ Quaternion Add( const Quaternion& v1, const Quaternion& v2 )
 
 IMPLEMENT_ABSTRACT_ELEMENT( DmeLogLayer,			CDmeLogLayer );
 
+/*
 IMPLEMENT_ELEMENT_FACTORY( DmeIntLogLayer,			CDmeIntLogLayer );
 IMPLEMENT_ELEMENT_FACTORY( DmeFloatLogLayer,		CDmeFloatLogLayer );
 IMPLEMENT_ELEMENT_FACTORY( DmeBoolLogLayer,			CDmeBoolLogLayer );
@@ -770,6 +771,7 @@ IMPLEMENT_ELEMENT_FACTORY( DmeQAngleLogLayer,		CDmeQAngleLogLayer );
 IMPLEMENT_ELEMENT_FACTORY( DmeQuaternionLogLayer,	CDmeQuaternionLogLayer );
 IMPLEMENT_ELEMENT_FACTORY( DmeVMatrixLogLayer,		CDmeVMatrixLogLayer );
 IMPLEMENT_ELEMENT_FACTORY( DmeStringLogLayer,		CDmeStringLogLayer );
+*/
 
 //-----------------------------------------------------------------------------
 // explicit template instantiation
@@ -789,6 +791,7 @@ template class CDmeTypedLogLayer<CUtlString>;
 
 IMPLEMENT_ABSTRACT_ELEMENT( DmeCurveInfo,			CDmeCurveInfo );
 
+/*
 IMPLEMENT_ELEMENT_FACTORY( DmeIntCurveInfo,			CDmeIntCurveInfo );
 IMPLEMENT_ELEMENT_FACTORY( DmeFloatCurveInfo,		CDmeFloatCurveInfo );
 IMPLEMENT_ELEMENT_FACTORY( DmeBoolCurveInfo,		CDmeBoolCurveInfo );
@@ -800,6 +803,7 @@ IMPLEMENT_ELEMENT_FACTORY( DmeQAngleCurveInfo,		CDmeQAngleCurveInfo );
 IMPLEMENT_ELEMENT_FACTORY( DmeQuaternionCurveInfo,	CDmeQuaternionCurveInfo );
 IMPLEMENT_ELEMENT_FACTORY( DmeVMatrixCurveInfo,		CDmeVMatrixCurveInfo );
 IMPLEMENT_ELEMENT_FACTORY( DmeStringCurveInfo,		CDmeStringCurveInfo );
+*/
 
 //-----------------------------------------------------------------------------
 // explicit template instantiation
@@ -822,6 +826,7 @@ template class CDmeTypedCurveInfo<CUtlString>;
 //-----------------------------------------------------------------------------
 IMPLEMENT_ABSTRACT_ELEMENT( DmeLog,				CDmeLog );
 
+/*
 IMPLEMENT_ELEMENT_FACTORY( DmeIntLog,			CDmeIntLog );
 IMPLEMENT_ELEMENT_FACTORY( DmeFloatLog,			CDmeFloatLog );
 IMPLEMENT_ELEMENT_FACTORY( DmeBoolLog,			CDmeBoolLog );
@@ -833,6 +838,7 @@ IMPLEMENT_ELEMENT_FACTORY( DmeQAngleLog,		CDmeQAngleLog );
 IMPLEMENT_ELEMENT_FACTORY( DmeQuaternionLog,	CDmeQuaternionLog );
 IMPLEMENT_ELEMENT_FACTORY( DmeVMatrixLog,		CDmeVMatrixLog );
 IMPLEMENT_ELEMENT_FACTORY( DmeStringLog,		CDmeStringLog );
+*/
 
 
 //-----------------------------------------------------------------------------
@@ -854,6 +860,7 @@ template class CDmeTypedLog<CUtlString>;
 //-----------------------------------------------------------------------------
 // instantiate and initialize static vars
 //-----------------------------------------------------------------------------
+/*
 float CDmeIntLog::s_defaultThreshold = 0.0f;
 float CDmeFloatLog::s_defaultThreshold = 0.0f;
 float CDmeBoolLog::s_defaultThreshold = 0.0f;
@@ -865,6 +872,7 @@ float CDmeQAngleLog::s_defaultThreshold = 0.0f;
 float CDmeQuaternionLog::s_defaultThreshold = 0.0f;
 float CDmeVMatrixLog::s_defaultThreshold = 0.0f;
 float CDmeStringLog::s_defaultThreshold = 0.0f;
+*/
 
 
 void CDmeLogLayer::OnConstruction()

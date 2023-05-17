@@ -130,9 +130,9 @@ public:
 template< typename T >
 inline T& CUtlVectorAuto<T>::operator[]( int i )
 {
-	EnsureCount( i + 1 );
+	this->EnsureCount( i + 1 );
 	Assert( IsValidIndex(i) );
-	return Base()[i];
+	return this->Base()[i];
 }
 
 // --------------------------------------------------------------------

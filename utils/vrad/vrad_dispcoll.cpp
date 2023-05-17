@@ -6,11 +6,11 @@
 //=============================================================================//
 
 #include "vrad.h"
-#include "VRAD_DispColl.h"
-#include "DispColl_Common.h"
+#include "vrad_dispcoll.h"
+#include "dispcoll_common.h"
 #include "radial.h"
-#include "CollisionUtils.h"
-#include "tier0\dbg.h"
+#include "collisionutils.h"
+#include "tier0/dbg.h"
 
 #define SAMPLE_BBOX_SLOP		5.0f
 #define TRIEDGE_EPSILON			0.001f
@@ -101,7 +101,7 @@ void CVRADDispColl::CalcSampleRadius2AndBox( dface_t *pFace )
 	m_flSampleHeight = flHeight;
 
 	// Calculate the sample radius squared.
-	float flSampleRadius = sqrt( ( ( flWidth * flWidth ) + ( flHeight * flHeight ) ) ) * 2.2f;//RADIALDIST2; 
+	float flSampleRadius = sqrt( ( ( flWidth * flWidth ) + ( flHeight * flHeight ) ) ); // * 2.2f;//RADIALDIST2; // AV - Removing the 2.2 scalar since 1.0 works better with CS:GO
 	if ( flSampleRadius > g_flMaxDispSampleSize )
 	{
 		flSampleRadius = g_flMaxDispSampleSize;
@@ -110,7 +110,7 @@ void CVRADDispColl::CalcSampleRadius2AndBox( dface_t *pFace )
 
 	// Calculate the patch radius - the max sample edge length * the number of luxels per edge "chop."
 	float flSampleSize = max( m_flSampleWidth, m_flSampleHeight );
-	float flPatchSampleRadius = flSampleSize * dispchop * 2.2f;
+	float flPatchSampleRadius = flSampleSize * dispchop * ( g_bLargeDispSampleRadius ? 2.2f : 1.0f ); // AV - Removing the 2.2 scalar since 1.0 works better with CS:GO. TS - It fixes lighting artefacts in maps with many small displacements.
 	if ( flPatchSampleRadius > g_MaxDispPatchRadius )
 	{
 		flPatchSampleRadius = g_MaxDispPatchRadius;
@@ -665,8 +665,8 @@ void CVRADDispColl::CreateChildPatchesSub( int iParentPatch )
 	// Split along the longest edge.
 	Vector vecEdges[3];
 	vecEdges[0] = pParentPatch->winding->p[1] - pParentPatch->winding->p[0];
-	vecEdges[1] = pParentPatch->winding->p[2] - pParentPatch->winding->p[1];
-	vecEdges[2] = pParentPatch->winding->p[0] - pParentPatch->winding->p[2];
+	vecEdges[1] = pParentPatch->winding->p[2] - pParentPatch->winding->p[0];
+	vecEdges[2] = pParentPatch->winding->p[2] - pParentPatch->winding->p[1];
 
 	// Find the longest edge.
 	float flEdgeLength = 0.0f;
@@ -817,6 +817,7 @@ bool CVRADDispColl::InitParentPatch( int iPatch, Vector *pPoints, float &flArea 
 	pPatch->parent = g_Patches.InvalidIndex();
 	pPatch->ndxNextClusterChild = g_Patches.InvalidIndex();
 	pPatch->ndxNextParent = g_Patches.InvalidIndex();
+	pPatch->staticPropIdx = -1;
 
 	Vector vecEdges[2];
 	vecEdges[0] = pPoints[1] - pPoints[0];
@@ -910,6 +911,7 @@ bool CVRADDispColl::InitPatch( int iPatch, int iParentPatch, int iChild, Vector 
 
 	// Clear the patch data.
 	memset( pPatch, 0, sizeof( CPatch ) );
+	pPatch->staticPropIdx = -1;
 
 	// Setup the parent if we are not the parent.
 	CPatch *pParentPatch = NULL;
@@ -1066,7 +1068,7 @@ void CVRADDispColl::AddPolysForRayTrace( void )
 	if ( !( m_nContents & MASK_OPAQUE ) )
 		return;
 
-	for ( int ndxTri = 0; ndxTri < m_aTris.Size(); ndxTri++ )
+	for ( int ndxTri = 0; ndxTri < m_aTris.Count(); ndxTri++ )
 	{
 		CDispCollTri *tri = m_aTris.Base() + ndxTri;
 		int v[3];

@@ -58,8 +58,9 @@ public:
 
 
 public:
-
+#ifdef _WIN32
 	CRITICAL_SECTION	m_CS;
+#endif
 
 	// This is the light for which m_LightFaces was built.
 	dworldlight_t	m_Light;

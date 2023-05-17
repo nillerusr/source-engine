@@ -1,0 +1,114 @@
+#! /usr/bin/env python
+# encoding: utf-8
+# vim: noexpandtab
+
+from waflib import Utils
+import os
+
+top = '.'
+PROJECT_NAME = 'vrad'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	conf.define('VRAD', 1)
+	return
+
+def build(bld):
+	source = [
+		'disp_vrad.cpp',
+		'imagepacker.cpp',
+		'incremental.cpp',
+		'leaf_ambient_lighting.cpp',
+		'lightmap.cpp',
+		'macro_texture.cpp',
+		'origface.cpp',
+		'radial.cpp',
+		'samplehash.cpp',
+		'trace.cpp',
+		'vismat.cpp',
+		'vrad.cpp',
+		'vrad_dispcoll.cpp',
+		'vraddetailprops.cpp',
+		'vraddisps.cpp',
+		'vraddll.cpp',
+		'vradstaticprops.cpp',
+		'../common/physdll.cpp',
+		'../common/utilmatlib.cpp',
+		'../../public/bsptreedata.cpp',
+		'../../public/collisionutils.cpp',
+		'../../public/disp_common.cpp',
+		'../../public/disp_powerinfo.cpp',
+		'../../public/dispcoll_common.cpp',
+		'../../public/loadcmdline.cpp',
+		'../../public/lumpfiles.cpp',
+		'../../public/zip_utils.cpp',
+
+		# Common files
+		'../common/bsplib.cpp',
+		'../common/cmdlib.cpp',
+		'../common/filesystem_tools.cpp',
+		'../common/map_shared.cpp',
+		'../common/polylib.cpp',
+		'../common/scriplib.cpp',
+		'../common/threads.cpp',
+		'../common/pacifier.cpp',
+		'../../public/builddisp.cpp',
+		'../../public/chunkfile.cpp',
+		'../../public/filesystem_helpers.cpp',
+		'../../public/filesystem_init.cpp',
+		'../../filesystem/linux_support.cpp',
+	]
+
+	if bld.env.DEST_OS == 'win32' and False:
+		source += [
+			'mpivrad.cpp',
+			'../common/MySqlDatabase.cpp',
+			'../common/mpi_stats.cpp',
+			'../common/vmpi_tools_shared.cpp',
+			'../common/tools_minidump.cpp',
+#			'../common/scratchpad_helpers.cpp',
+#			'../../public/scratchpad3d.cpp',
+		]
+
+	includes = [
+		'.',
+		'../common',
+		'../../public',
+		'../../public/tier0',
+		'../../public/tier1',
+		'../../public/tier2',
+		'../../public/tier3',
+		'../../public/mathlib'
+	]
+
+	defines = []
+
+	libs = [
+		'tier0', 'tier1', 'tier2', 'tier3',
+		'vtf',
+		'bitmap',
+		'raytrace',
+		'mathlib',
+		'lzma',
+		'vphysics',
+		'vstdlib',
+	]
+
+	install_path = bld.env.LIBDIR
+
+	bld.shlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		install_path = install_path,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)
+

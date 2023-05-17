@@ -520,7 +520,7 @@ PLATFORM_INTERFACE void ThreadNotifySyncReleasing(void *p);
 
 #ifndef NO_THREAD_LOCAL
 
-#if defined(WIN32) || defined(OSX) ||  defined( _PS3 ) || ( defined (_LINUX) ) || defined(PLATFORM_BSD)
+#if defined(WIN32) || defined(POSIX) ||  defined( _PS3 )
 #ifndef __AFXTLS_H__ // not compatible with some Windows headers
 
 #if defined(_PS3)

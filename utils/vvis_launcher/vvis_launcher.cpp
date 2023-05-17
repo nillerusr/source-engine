@@ -8,14 +8,19 @@
 // vvis_launcher.cpp : Defines the entry point for the console application.
 //
 
+#ifdef _WIN32
 #include "stdafx.h"
 #include <direct.h>
+#else
+#include <stdio.h>
+#include <dlfcn.h>
+#endif
+#include "tier1/interface.h"
 #include "tier1/strtools.h"
 #include "tier0/icommandline.h"
 #include "ilaunchabledll.h"
 
-
-
+#ifdef _WIN32
 char* GetLastErrorString()
 {
 	static char err[2048];
@@ -40,12 +45,15 @@ char* GetLastErrorString()
 
 	return err;
 }
+#elif defined(POSIX)
+#define GetLastErrorString dlerror
+#endif
 
 
 int main(int argc, char* argv[])
 {
 	CommandLine()->CreateCmdLine( argc, argv );
-	const char *pDLLName = "vvis_dll.dll";
+	const char *pDLLName = "vvis" DLL_EXT_STRING;
 	
 	CSysModule *pModule = Sys_LoadModule( pDLLName );
 	if ( !pModule )

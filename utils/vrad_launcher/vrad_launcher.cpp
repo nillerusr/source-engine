@@ -8,12 +8,18 @@
 // vrad_launcher.cpp : Defines the entry point for the console application.
 //
 
-#include "stdafx.h"
+#ifdef _WIN32
+#include <windows.h>
 #include <direct.h>
+#else
+#include <dlfcn.h>
+#endif
+#include "ivraddll.h"
 #include "tier1/strtools.h"
+#include "tier1/interface.h"
 #include "tier0/icommandline.h"
 
-
+#ifdef _WIN32
 char* GetLastErrorString()
 {
 	static char err[2048];
@@ -38,6 +44,9 @@ char* GetLastErrorString()
 
 	return err;
 }
+#else
+#define GetLastErrorString dlerror
+#endif
 
 
 void MakeFullPath( const char *pIn, char *pOut, int outLen )
@@ -107,7 +116,7 @@ int main(int argc, char* argv[])
 		// If it didn't load the module above, then use the 
 		if ( !pModule )
 		{
-			strcpy( dllName, "vrad_dll.dll" );
+			strcpy( dllName, "vrad" DLL_EXT_STRING );
 			pModule = Sys_LoadModule( dllName );
 		}
 		

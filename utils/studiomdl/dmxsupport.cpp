@@ -1142,6 +1142,7 @@ int Load_DMX( s_source_t *pSource )
 	CDmeDag *pSkeleton = pRoot->GetValueElement< CDmeDag >( "skeleton" );
 	CDmeModel *pModel = pRoot->GetValueElement< CDmeModel >( "model" );
 	CDmeCombinationOperator *pCombinationOperator = pRoot->GetValueElement< CDmeCombinationOperator >( "combinationOperator" );
+	CDmeAnimationList *pAnimationList;
 	if ( !pSkeleton )
 		goto dmxError;
 
@@ -1175,7 +1176,7 @@ int Load_DMX( s_source_t *pSource )
 		AddCombination( pSource, pCombinationOperator );
 	}
 
-	CDmeAnimationList *pAnimationList = pRoot->GetValueElement< CDmeAnimationList >( "animationList" );
+	pAnimationList = pRoot->GetValueElement< CDmeAnimationList >( "animationList" );
 	if ( pAnimationList )
 	{
 		LoadAnimations( pSource, pAnimationList, g_currentscale, boneMap );

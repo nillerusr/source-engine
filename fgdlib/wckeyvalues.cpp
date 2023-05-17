@@ -4,7 +4,7 @@
 //
 //=============================================================================
 
-#include "fgdlib/WCKeyValues.h"
+#include "fgdlib/wckeyvalues.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include <tier0/memdbgon.h>
@@ -34,11 +34,11 @@ MDkeyvalue &MDkeyvalue::operator =(const MDkeyvalue &other)
 void WCKVBase_Vector::RemoveKeyAt(int nIndex)
 {
 	Assert(nIndex >= 0);
-	Assert(nIndex < (int)m_KeyValues.Count());
+	Assert(nIndex < (int)this->m_KeyValues.Count());
 
-	if ((nIndex >= 0) && (nIndex < (int)m_KeyValues.Count()))
+	if ((nIndex >= 0) && (nIndex < (int)this->m_KeyValues.Count()))
 	{
-		m_KeyValues.Remove(nIndex);
+		this->m_KeyValues.Remove(nIndex);
 	}
 }
 
@@ -71,14 +71,14 @@ void WCKVBase_Vector::AddKeyValue(const char *pszKey, const char *pszValue)
 	MDkeyvalue newkv;
 	V_strcpy_safe(newkv.szKey, szTmpKey);
 	V_strcpy_safe(newkv.szValue, szTmpValue);
-	m_KeyValues.AddToTail(newkv);
+	this->m_KeyValues.AddToTail(newkv);
 }
 
 int WCKVBase_Vector::FindByKeyName( const char *pKeyName ) const
 {
-	for ( int i=0; i < m_KeyValues.Count(); i++ )
+	for ( int i=0; i < this->m_KeyValues.Count(); i++ )
 	{
-		if ( V_stricmp( m_KeyValues[i].szKey, pKeyName ) == 0 )
+		if ( V_stricmp( this->m_KeyValues[i].szKey, pKeyName ) == 0 )
 			return i;
 	}
 	return GetInvalidIndex();
@@ -86,7 +86,7 @@ int WCKVBase_Vector::FindByKeyName( const char *pKeyName ) const
 
 void WCKVBase_Vector::InsertKeyValue( const MDkeyvalue &kv )
 {
-	m_KeyValues.AddToTail( kv );
+	this->m_KeyValues.AddToTail( kv );
 }
 
 
@@ -94,18 +94,18 @@ void WCKVBase_Vector::InsertKeyValue( const MDkeyvalue &kv )
 //-----------------------------------------------------------------------------
 void WCKVBase_Dict::RemoveKeyAt(int nIndex)
 {
-	m_KeyValues.RemoveAt(nIndex);
+	this->m_KeyValues.RemoveAt(nIndex);
 }
 
 
 int WCKVBase_Dict::FindByKeyName( const char *pKeyName ) const
 {
-	return m_KeyValues.Find( pKeyName );
+	return this->m_KeyValues.Find( pKeyName );
 }
 
 void WCKVBase_Dict::InsertKeyValue( const MDkeyvalue &kv )
 {
-	m_KeyValues.Insert( kv.szKey, kv );
+	this->m_KeyValues.Insert( kv.szKey, kv );
 }
 
 
@@ -125,9 +125,9 @@ template<class Base>
 WCKeyValuesT<Base>::~WCKeyValuesT(void)
 {
 	//int i = 0;
-	//while (i < m_KeyValues.GetSize())
+	//while (i < this->m_KeyValues.GetSize())
 	//{
-	//	delete m_KeyValues.GetAt(i++);
+	//	delete this->m_KeyValues.GetAt(i++);
 	//}
 
 	RemoveAll();
@@ -139,8 +139,8 @@ WCKeyValuesT<Base>::~WCKeyValuesT(void)
 template<class Base>
 const char *WCKeyValuesT<Base>::GetValue(const char *pszKey, int *piIndex) const
 {
-	int i = FindByKeyName( pszKey );
-	if ( i == GetInvalidIndex() )
+	int i = this->FindByKeyName( pszKey );
+	if ( i == this->GetInvalidIndex() )
 	{
 		return NULL;
 	}
@@ -149,7 +149,7 @@ const char *WCKeyValuesT<Base>::GetValue(const char *pszKey, int *piIndex) const
 		if(piIndex)
 			piIndex[0] = i;
 			
-		return m_KeyValues[i].szValue;
+		return this->m_KeyValues[i].szValue;
 	}
 }
 
@@ -169,7 +169,7 @@ template<class Base>
 void WCKeyValuesT<Base>::SetValue(const char *pszKey, int iValue)
 {
 	char szValue[100];
-	itoa(iValue, szValue, 10);
+	Q_snprintf(szValue, sizeof(szValue), "%d", iValue);
 
 	SetValue(pszKey, szValue);
 }
@@ -233,8 +233,8 @@ void WCKeyValuesT<Base>::SetValue(const char *pszKey, const char *pszValue)
 	StripEdgeWhiteSpace(szTmpKey);
 	StripEdgeWhiteSpace(szTmpValue);
 
-	int i = FindByKeyName( szTmpKey );
-	if ( i == GetInvalidIndex() )
+	int i = this->FindByKeyName( szTmpKey );
+	if ( i == this->GetInvalidIndex() )
 	{
 		if ( pszValue )
 		{
@@ -244,21 +244,21 @@ void WCKeyValuesT<Base>::SetValue(const char *pszKey, const char *pszValue)
 			MDkeyvalue newkv;
 			Q_strncpy( newkv.szKey, szTmpKey, sizeof( newkv.szKey ) );
 			Q_strncpy( newkv.szValue, szTmpValue, sizeof( newkv.szValue ) );
-			InsertKeyValue( newkv );
+			this->InsertKeyValue( newkv );
 		}
 	}
 	else
 	{
 		if (pszValue != NULL)
 		{
-			V_strncpy(m_KeyValues[i].szValue, szTmpValue, sizeof(m_KeyValues[i].szValue));
+			V_strncpy(this->m_KeyValues[i].szValue, szTmpValue, sizeof(this->m_KeyValues[i].szValue));
 		}
 		//
 		// If we are setting to a NULL value, delete the key.
 		//
 		else
 		{
-			RemoveKeyAt( i );
+			this->RemoveKeyAt( i );
 		}
 	}
 }
@@ -270,7 +270,7 @@ void WCKeyValuesT<Base>::SetValue(const char *pszKey, const char *pszValue)
 template<class Base>
 void WCKeyValuesT<Base>::RemoveAll(void)
 {
-	m_KeyValues.RemoveAll();
+	this->m_KeyValues.RemoveAll();
 }
 
 

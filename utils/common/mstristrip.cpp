@@ -21,6 +21,8 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
+#include <limits.h>
 #include <algorithm>
 #include <list>
 #include <vector>
@@ -867,7 +869,7 @@ public:
     int iFirstUsed;
     int iOrigIndex;
 
-    bool operator<(const SortEntry& rhs)
+    bool operator<(const SortEntry& rhs) const
     {
         return iFirstUsed < rhs.iFirstUsed;
     }

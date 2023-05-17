@@ -8,8 +8,8 @@
 #include "movieobjects_interfaces.h"
 #include "datamodel/dmelementfactoryhelper.h"
 
-#include "vgui/iinput.h"
-#include "vgui/ipanel.h"
+#include "vgui/IInput.h"
+#include "vgui/IPanel.h"
 #include "tier3/tier3.h"
 
 #include "tier0/dbg.h"

@@ -10,7 +10,6 @@
 #include "utilmatlib.h"
 #include "physdll.h"
 #include <assert.h>
-#include <malloc.h>
 #include "tier1/strtools.h"
 #include "materialpatch.h"
 #include "KeyValues.h"

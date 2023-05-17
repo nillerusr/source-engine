@@ -61,8 +61,6 @@ CUtlLinkedList<SpewHookFn, unsigned short> g_ExtraSpewHooks;
 bool g_bStopOnExit = false;
 void (*g_ExtraSpewHook)(const char*) = NULL;
 
-#if defined( _WIN32 ) || defined( WIN32 )
-
 void CmdLib_FPrintf( FileHandle_t hFile, const char *pFormat, ... )
 {
 	static CUtlVector<char> buf;
@@ -128,10 +126,6 @@ char* CmdLib_FGets( char *pOut, int outSize, FileHandle_t hFile )
 	return pOut;
 }
 
-#if !defined( _X360 )
-#include <wincon.h>
-#endif
-
 // This pauses before exiting if they use -StopOnExit. Useful for debugging.
 class CExitStopper
 {
@@ -141,7 +135,7 @@ public:
 		if ( g_bStopOnExit )
 		{
 			Warning( "\nPress any key to quit.\n" );
-			getch();
+			getchar();
 		}
 	}
 } g_ExitStopper;
@@ -153,7 +147,7 @@ static unsigned short g_BadColor = 0xFFFF;
 static WORD g_BackgroundFlags = 0xFFFF;
 static void GetInitialColors( )
 {
-#if !defined( _X360 )
+#if !defined( _X360 ) && defined( _WIN32 )
 	// Get the old background attributes.
 	CONSOLE_SCREEN_BUFFER_INFO oldInfo;
 	GetConsoleScreenBufferInfo( GetStdHandle( STD_OUTPUT_HANDLE ), &oldInfo );
@@ -175,7 +169,7 @@ static void GetInitialColors( )
 WORD SetConsoleTextColor( int red, int green, int blue, int intensity )
 {
 	WORD ret = g_LastColor;
-#if !defined( _X360 )
+#if !defined( _X360 ) && defined( _WIN32 )
 	
 	g_LastColor = 0;
 	if( red )	g_LastColor |= FOREGROUND_RED;
@@ -194,7 +188,7 @@ WORD SetConsoleTextColor( int red, int green, int blue, int intensity )
 
 void RestoreConsoleTextColor( WORD color )
 {
-#if !defined( _X360 )
+#if !defined( _X360 ) && defined( _WIN32 )
 	SetConsoleTextAttribute( GetStdHandle( STD_OUTPUT_HANDLE ), color | g_BackgroundFlags );
 	g_LastColor = color;
 #endif
@@ -216,6 +210,7 @@ void Error( char const *pMsg, ... )
 
 #else
 
+#ifdef _WIN32
 CRITICAL_SECTION g_SpewCS;
 bool g_bSpewCSInitted = false;
 bool g_bSuppressPrintfOutput = false;
@@ -326,14 +321,16 @@ SpewRetval_t CmdLib_SpewOutputFunc( SpewType_t type, char const *pMsg )
 
 	return retVal;
 }
-
+#endif
 
 void InstallSpewFunction()
 {
 	setvbuf( stdout, NULL, _IONBF, 0 );
 	setvbuf( stderr, NULL, _IONBF, 0 );
 
+#ifdef _WIN32
 	SpewOutputFunc( CmdLib_SpewOutputFunc );
+#endif
 	GetInitialColors();
 }
 
@@ -413,17 +410,12 @@ void CmdLib_Cleanup()
 
 void CmdLib_Exit( int exitCode )
 {
-	TerminateProcess( GetCurrentProcess(), 1 );
+	exit(exitCode);
 }	
 
 
 
 #endif
-
-#endif
-
-
-
 
 /*
 ===================
@@ -811,7 +803,7 @@ FileHandle_t SafeOpenRead( const char *filename )
 void SafeRead( FileHandle_t f, void *buffer, int count)
 {
 	if ( g_pFileSystem->Read (buffer, count, f) != (size_t)count)
-		Error ("File read failure");
+		Error ("File read failure\n");
 }
 
 

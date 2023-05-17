@@ -11,36 +11,87 @@
 
 #include "vrad.h"
 #include "mathlib/vector.h"
-#include "UtlBuffer.h"
+#include "utlbuffer.h"
 #include "utlvector.h"
-#include "GameBSPFile.h"
-#include "BSPTreeData.h"
-#include "VPhysics_Interface.h"
-#include "Studio.h"
-#include "Optimize.h"
-#include "Bsplib.h"
-#include "CModel.h"
-#include "PhysDll.h"
+#include "gamebspfile.h"
+#include "bsptreedata.h"
+#include "vphysics_interface.h"
+#include "studio.h"
+#include "optimize.h"
+#include "bsplib.h"
+#include "cmodel.h"
+#include "physdll.h"
 #include "phyfile.h"
 #include "collisionutils.h"
 #include "tier1/KeyValues.h"
 #include "pacifier.h"
 #include "materialsystem/imaterial.h"
 #include "materialsystem/hardwareverts.h"
-#include "materialsystem/hardwaretexels.h"
 #include "byteswap.h"
 #include "mpivrad.h"
 #include "vtf/vtf.h"
 #include "tier1/utldict.h"
 #include "tier1/utlsymbol.h"
-#include "bitmap/tgawriter.h"
+#include "tier3/tier3.h"
 
+#ifdef MPI
 #include "messbuf.h"
 #include "vmpi.h"
 #include "vmpi_distribute_work.h"
-
+#endif
+#include "iscratchpad3d.h"
 
 #define ALIGN_TO_POW2(x,y) (((x)+(y-1))&~(y-1))
+
+int g_numVradStaticPropsLightingStreams = 3;
+
+static const TableVector g_localUpBumpBasis[NUM_BUMP_VECTS] = 
+{
+	// consistent basis wrt lightmaps
+ 	{	OO_SQRT_2_OVER_3, 0.0f, OO_SQRT_3 },
+ 	{  -OO_SQRT_6, OO_SQRT_2, OO_SQRT_3 },
+ 	{  -OO_SQRT_6, -OO_SQRT_2, OO_SQRT_3 }
+};
+
+void GetStaticPropBumpNormals( const Vector& sVect, const Vector& tVect, const Vector& flatNormal, 
+							   const Vector& phongNormal, Vector bumpNormals[NUM_BUMP_VECTS] )
+{
+	Vector tmpNormal;
+	bool leftHanded;
+	int i;
+
+	assert( NUM_BUMP_VECTS == 3 );
+
+	// Are we left or right handed?
+	CrossProduct( sVect, tVect, tmpNormal );
+	if( DotProduct( flatNormal, tmpNormal ) < 0.0f )
+	{
+		leftHanded = true;
+	}
+	else
+	{
+		leftHanded = false;
+	}
+
+	// Build a basis for the face around the phong normal
+	matrix3x4_t smoothBasis;
+	CrossProduct( phongNormal.Base(), sVect.Base(), smoothBasis[1] );
+	VectorNormalize( smoothBasis[1] );
+	CrossProduct( smoothBasis[1], phongNormal.Base(), smoothBasis[0] );
+	VectorNormalize( smoothBasis[0] );
+	VectorCopy( phongNormal.Base(), smoothBasis[2] );
+
+	if( leftHanded )
+	{
+		VectorNegate( smoothBasis[1] );
+	}
+
+	// move the g_localUpBumpBasis into world space to create bumpNormals
+	for( i = 0; i < 3; i++ )
+	{
+		VectorIRotate( g_localUpBumpBasis[i], smoothBasis, bumpNormals[i] );
+	}
+}
 
 // identifies a vertex embedded in solid
 // lighting will be copied from nearest valid neighbor
@@ -48,27 +99,16 @@ struct badVertex_t
 {
 	int		m_ColorVertex;
 	Vector	m_Position;
-	Vector	m_Normal;
+	Vector	m_Normals[ NUM_BUMP_VECTS + 1 ];
 };
 
 // a final colored vertex
 struct colorVertex_t
 {
-	Vector	m_Color;
+	Vector	m_Colors[ NUM_BUMP_VECTS + 1 ];
+	float   m_SunAmount[ NUM_BUMP_VECTS + 1 ];
 	Vector	m_Position;
 	bool	m_bValid;
-};
-
-// a texel suitable for a model
-struct colorTexel_t
-{
-	Vector		m_Color;
-	Vector		m_WorldPosition;
-	Vector		m_WorldNormal;
-	float		m_fDistanceToTri; // If we are outside of the triangle, how far away is it?
-	bool		m_bValid;
-	bool		m_bPossiblyInteresting;
-
 };
 
 class CComputeStaticPropLightingResults
@@ -77,148 +117,136 @@ public:
 	~CComputeStaticPropLightingResults()
 	{
 		m_ColorVertsArrays.PurgeAndDeleteElements();
-		m_ColorTexelsArrays.PurgeAndDeleteElements();
 	}
 	
 	CUtlVector< CUtlVector<colorVertex_t>* > m_ColorVertsArrays;
-	CUtlVector< CUtlVector<colorTexel_t>* > m_ColorTexelsArrays;
 };
 
-//-----------------------------------------------------------------------------
-struct Rasterizer
+Vector NormalizeVertexBumpedLighting( Vector const *pColorNormal, Vector *pColorBumps )
 {
-	struct Location
+	const Vector &linearUnbumped = *( ( const Vector * )pColorNormal );
+	Vector linearBump1 = *( ( const Vector * )(pColorBumps + 0) );
+	Vector linearBump2 = *( ( const Vector * )(pColorBumps + 1) );
+	Vector linearBump3 = *( ( const Vector * )(pColorBumps + 2) );
+
+	const float flNormalizationFactor = 1.0f / 3.0f;
+
+	// find a scale factor which makes the average of the 3 bumped mapped vectors match the
+	// straight up vector (if possible), so that flat bumpmapped areas match non-bumpmapped
+	// areas.
+	Vector bumpAverage = linearBump1;
+	bumpAverage += linearBump2;
+	bumpAverage += linearBump3;
+	bumpAverage *= flNormalizationFactor;
+
+	Vector correctionScale;
+
+	if( *( int * )&bumpAverage[0] != 0 &&
+		*( int * )&bumpAverage[1] != 0 &&
+		*( int * )&bumpAverage[2] != 0 )
 	{
-		Vector barycentric;
-		Vector2D uv;
-		bool   insideTriangle;
-	};
-
-	Rasterizer(Vector2D t0, Vector2D t1, Vector2D t2, size_t resX, size_t resY)
-	: mT0(t0)
-	, mT1(t1)
-	, mT2(t2)
-	, mResX(resX)
-	, mResY(resY)
-	, mUvStepX(1.0f / resX)
-	, mUvStepY(1.0f / resY)
-	{ 
-		Build();
+		// fast path when we know that we don't have to worry about divide by zero.
+		VectorDivide( linearUnbumped, bumpAverage, correctionScale );
 	}
-
-	CUtlVector< Location >::iterator begin() { return mRasterizedLocations.begin(); }
-	CUtlVector< Location >::iterator end() { return mRasterizedLocations.end(); }
-
-	void Build();
-
-	inline size_t GetRow(float y) const { return size_t(y * mResY); }
-	inline size_t GetCol(float x) const { return size_t(x * mResX); }
-
-	inline size_t GetLinearPos( const CUtlVector< Location >::iterator& it ) const
+	else
 	{
-		// Given an iterator, return what the linear position in the buffer would be for the data.
-		return (size_t)(GetRow(it->uv.y) * mResX)
-			 + (size_t)(GetCol(it->uv.x));
-	}
-	
-private:
-	const Vector2D mT0, mT1, mT2;
-	const size_t mResX, mResY;
-	const float mUvStepX, mUvStepY;
-
-	// Right now, we just fill this out and directly iterate over it. 
-	// It could be large. This is a memory/speed tradeoff. We could instead generate them
-	// on demand. 
-	CUtlVector< Location > mRasterizedLocations;
-};
-
-//-----------------------------------------------------------------------------
-inline Vector ComputeBarycentric( Vector2D _edgeC, Vector2D _edgeA, Vector2D _edgeB, float _dAA, float _dAB, float _dBB, float _invDenom )
-{
-	float dCA = _edgeC.Dot(_edgeA);
-	float dCB = _edgeC.Dot(_edgeB);
-	
-	Vector retVal;
-	retVal.y = (_dBB * dCA - _dAB * dCB) * _invDenom;
-	retVal.z = (_dAA * dCB - _dAB * dCA) * _invDenom;
-	retVal.x = 1.0f - retVal.y - retVal.z;
-
-	return retVal;
-}
-
-//-----------------------------------------------------------------------------
-void Rasterizer::Build()
-{
-	// For now, use the barycentric method. It's easy, I'm lazy. 
-	// We can optimize later if it's a performance issue.
-	const float baseX = mUvStepX / 2.0f;
-	const float baseY = mUvStepY / 2.0f;
-
-
-	float fMinX = min(min(mT0.x, mT1.x), mT2.x);
-	float fMinY = min(min(mT0.y, mT1.y), mT2.y);
-	float fMaxX = max(max(mT0.x, mT1.x), mT2.x);
-	float fMaxY = max(max(mT0.y, mT1.y), mT2.y);
-
-	// Degenerate. Consider warning about these, but otherwise no problem.
-	if (fMinX == fMaxX || fMinY == fMaxY)
-		return;
-
-	// Clamp to 0..1
-	fMinX = max(0, fMinX);
-	fMinY = max(0, fMinY);
-	fMaxX = min(1.0f, fMaxX);
-	fMaxY = min(1.0f, fMaxY);
-
-	// We puff the interesting area up by 1 so we can hit an inflated region for the necessary bilerp data.
-	// If we wanted to support better texturing (almost definitely unnecessary), we'd change this to a larger size.
-	const int kFilterSampleRadius = 1;
-
-	int iMinX = GetCol(fMinX) - kFilterSampleRadius;
-	int iMinY = GetRow(fMinY) - kFilterSampleRadius;
-	int iMaxX = GetCol(fMaxX) + 1 + kFilterSampleRadius;
-	int iMaxY = GetRow(fMaxY) + 1 + kFilterSampleRadius;
-
-	// Clamp to valid texture (integer) locations
-	iMinX = max(0, iMinX);
-	iMinY = max(0, iMinY);
-	iMaxX = min(iMaxX, mResX - 1);
-	iMaxY = min(iMaxY, mResY - 1);
-
-	// Set the size to be as expected. 
-	// TODO: Pass this in from outside to minimize allocations
-	int count = (iMaxY - iMinY + 1) 
-		      * (iMaxX - iMinX + 1);
-	mRasterizedLocations.EnsureCount(count);
-	memset( mRasterizedLocations.Base(), 0, mRasterizedLocations.Count() * sizeof( Location ) );
-	
-	// Computing Barycentrics adapted from here http://gamedev.stackexchange.com/questions/23743/whats-the-most-efficient-way-to-find-barycentric-coordinates
-	Vector2D edgeA = mT1 - mT0;
-	Vector2D edgeB = mT2 - mT0;
-
-	float dAA = edgeA.Dot(edgeA);
-	float dAB = edgeA.Dot(edgeB);
-	float dBB = edgeB.Dot(edgeB);
-	float invDenom = 1.0f / (dAA * dBB - dAB * dAB);
-
-	int linearPos = 0; 
-	for (int j = iMinY; j <= iMaxY; ++j) {
-		for (int i = iMinX; i <= iMaxX; ++i) {
-			Vector2D testPt( i * mUvStepX + baseX, j * mUvStepY + baseY );
-			Vector barycentric = ComputeBarycentric( testPt - mT0, edgeA, edgeB, dAA, dAB, dBB, invDenom );
-
-			// Test whether the point is inside the triangle. 
-			// MCJOHNTODO: Edge rules and whatnot--right now we re-rasterize points on the edge.
-			Location& newLoc = mRasterizedLocations[linearPos++];
-			newLoc.barycentric = barycentric;
-			newLoc.uv = testPt;
-
-			newLoc.insideTriangle = (barycentric.x >= 0.0f && barycentric.x <= 1.0f && barycentric.y >= 0.0f && barycentric.y <= 1.0f && barycentric.z >= 0.0f && barycentric.z <= 1.0f);
+		correctionScale.Init( 0.0f, 0.0f, 0.0f );
+		if( bumpAverage[0] != 0.0f )
+		{
+			correctionScale[0] = linearUnbumped[0] / bumpAverage[0];
+		}
+		if( bumpAverage[1] != 0.0f )
+		{
+			correctionScale[1] = linearUnbumped[1] / bumpAverage[1];
+		}
+		if( bumpAverage[2] != 0.0f )
+		{
+			correctionScale[2] = linearUnbumped[2] / bumpAverage[2];
 		}
 	}
+	linearBump1 *= correctionScale;
+	linearBump2 *= correctionScale;
+	linearBump3 *= correctionScale;
+
+	*((Vector *) (pColorBumps + 0)) = linearBump1;
+	*((Vector *) (pColorBumps + 1)) = linearBump2;
+	*((Vector *) (pColorBumps + 2)) = linearBump3;
+
+	return correctionScale;
 }
 
 
+void NormalizeVertexBumpedSunAmount( float const *pSunAmount0, float *pSunAmount1, float *pSunAmount2, float *pSunAmount3 )
+{
+	const float &linearSunAmountUnbumped = *((const float *)pSunAmount0);
+	float linearSunAmount1 = *((const float *)(pSunAmount1));
+	float linearSunAmount2 = *((const float *)(pSunAmount2));
+	float linearSunAmount3 = *((const float *)(pSunAmount3));
+
+	const float flNormalizationFactor = 1.0f;// / 3.0f; - store in 0..1 space (for 0..255 alpha channel), multiply by 3.0 in the shader
+
+	// find a scale factor which makes the average of the 3 bumped mapped vectors match the
+	// straight up vector (if possible), so that flat bumpmapped areas match non-bumpmapped
+	// areas.
+	float bumpAverage = linearSunAmount1;
+	bumpAverage += linearSunAmount2;
+	bumpAverage += linearSunAmount3;
+	bumpAverage *= flNormalizationFactor;
+
+	float correctionScale;
+
+	if ( *(int *)&bumpAverage != 0 )
+	{
+		// fast path when we know that we don't have to worry about divide by zero.
+		correctionScale = linearSunAmountUnbumped / bumpAverage;
+	}
+	else
+	{
+		correctionScale = 1.0f;
+		if ( bumpAverage != 0.0f )
+		{
+			correctionScale = linearSunAmountUnbumped / bumpAverage;
+		}
+	}
+	linearSunAmount1 *= correctionScale;
+	linearSunAmount2 *= correctionScale;
+	linearSunAmount3 *= correctionScale;
+
+	*((float *)(pSunAmount1)) = linearSunAmount1;
+	*((float *)(pSunAmount2)) = linearSunAmount2;
+	*((float *)(pSunAmount3)) = linearSunAmount3;
+}
+
+
+void DumpElapsedTime( int timeTaken )
+{
+	if ( g_bDumpBumpStaticProps && (g_numVradStaticPropsLightingStreams == 3) )
+	{
+		char mapName[MAX_PATH];
+		Q_FileBase( source, mapName, sizeof( mapName ) );
+
+		char bumpPropFilename[MAX_PATH];
+		sprintf( bumpPropFilename, "vrad_bumpstaticprops_%s.txt", mapName );
+
+		Msg( "Writing %s...\n", bumpPropFilename );
+
+		FILE *fp = fopen( bumpPropFilename, "a" );
+
+		if ( !fp )
+		{
+			Msg( "Writing %s...failed\n", bumpPropFilename );
+			return;
+		}
+
+		char str[512];
+		GetHourMinuteSecondsString( timeTaken, str, sizeof( str ) );
+
+		fprintf( fp, "\n\nUsing -staticpropsamplescale %f (-final defaults to 16)\n", g_flStaticPropSampleScale );
+		fprintf( fp, "\nTotal time taken to bake static prop lighting: %s\n", str );
+
+		fclose( fp );
+	}
+}
 //-----------------------------------------------------------------------------
 // Globals
 //-----------------------------------------------------------------------------
@@ -227,18 +255,6 @@ CUtlSymbolTable g_ForcedTextureShadowsModels;
 // DON'T USE THIS FROM WITHIN A THREAD.  THERE IS A THREAD CONTEXT CREATED 
 // INSIDE PropTested_t.  USE THAT INSTEAD.
 IPhysicsCollision *s_pPhysCollision = NULL;
-
-static void ConvertTexelDataToTexture(unsigned int _resX, unsigned int _resY, ImageFormat _destFmt, const CUtlVector<colorTexel_t>& _srcTexels, CUtlMemory<byte>* _outTexture);
-
-// Such a monstrosity. :(
-static void GenerateLightmapSamplesForMesh( const matrix3x4_t& _matPos, const matrix3x4_t& _matNormal, int _iThread, int _skipProp, int _nFlags, int _lightmapResX, int _lightmapResY, 
-											studiohdr_t* _pStudioHdr, mstudiomodel_t* _pStudioModel, OptimizedModel::ModelHeader_t* _pVtxModel, int _meshID, 
-											CComputeStaticPropLightingResults *_pResults );
-
-// Debug function, converts lightmaps to linear space then dumps them out. 
-// TODO: Write out the file in a .dds instead of a .tga, in whatever format we're supposed to use.
-static void DumpLightmapLinear( const char* _dstFilename, const CUtlVector<colorTexel_t>& _srcTexels, int _width, int _height );
-
 
 //-----------------------------------------------------------------------------
 // Vrad's static prop manager
@@ -258,12 +274,16 @@ public:
 	// iterate all the instanced static props and compute their vertex lighting
 	void ComputeLighting( int iThread );
 
+	virtual void MakePatches() override;
+
 private:
+#ifdef MPI
 	// VMPI stuff.
 	static void VMPI_ProcessStaticProp_Static( int iThread, uint64 iStaticProp, MessageBuffer *pBuf );
 	static void VMPI_ReceiveStaticPropResults_Static( uint64 iStaticProp, MessageBuffer *pBuf, int iWorker );
 	void VMPI_ProcessStaticProp( int iThread, int iStaticProp, MessageBuffer *pBuf );
 	void VMPI_ReceiveStaticPropResults( int iStaticProp, MessageBuffer *pBuf, int iWorker );
+#endif
 	
 	// local thread version
 	static void ThreadComputeStaticPropLighting( int iThread, void *pUserData );
@@ -289,12 +309,15 @@ private:
 		CUtlBuffer		m_VtxBuf;
 		CUtlVector<int>	m_textureShadowIndex;	// each texture has an index if this model casts texture shadows
 		CUtlVector<int>	m_triangleMaterialIndex;// each triangle has an index if this model casts texture shadows
+		Vector			m_vReflectivity;
+		bool			m_bHasBumpmap;
+		bool			m_bHasPhong;
 	};
 
 	struct MeshData_t
 	{
-		CUtlVector<Vector>	m_VertexColors;
-		CUtlMemory<byte>	m_TexelsEncoded;
+		CUtlVector<Vector4D> m_VertColorData; // w has the additional lightmap alpha data
+		int					m_numVerts;
 		int					m_nLod;
 	};
 
@@ -310,16 +333,9 @@ private:
 		BSPTreeDataHandle_t		m_Handle;
 		CUtlVector<MeshData_t>	m_MeshData;
 		int                     m_Flags;
+		int                     m_FlagsEx;
 		bool					m_bLightingOriginValid;
-
-		// Note that all lightmaps for a given prop share the same resolution (and format)--and there can be multiple lightmaps
-		// per prop (if there are multiple pieces--the watercooler is an example).
-		// This is effectively because there's not a good way in hammer for a prop to say "this should be the resolution
-		// of each of my sub-pieces."
-		ImageFormat				m_LightmapImageFormat;
-		unsigned int			m_LightmapImageWidth;
-		unsigned int			m_LightmapImageHeight;
-
+		Vector					m_vReflectivity;
 	};
 
 	// Enumeration context
@@ -336,7 +352,7 @@ private:
 	bool m_bIgnoreStaticPropTrace;
 
 	void ComputeLighting( CStaticProp &prop, int iThread, int prop_index, CComputeStaticPropLightingResults *pResults );
-	void ApplyLightingToStaticProp( int iStaticProp, CStaticProp &prop, const CComputeStaticPropLightingResults *pResults );
+	void ApplyLightingToStaticProp( CStaticProp &prop, const CComputeStaticPropLightingResults *pResults );
 
 	void SerializeLighting();
 	void AddPolysForRayTrace();
@@ -387,6 +403,9 @@ bool IsStaticProp( studiohdr_t* pHdr )
 //-----------------------------------------------------------------------------
 static bool LoadFile( char const* pFileName, CUtlBuffer& buf )
 {
+	if ( ReadFileFromPak( GetPakFile(), pFileName, false, buf ) )
+		return true;
+
 	if ( !g_pFullFileSystem )
 		return false;
 
@@ -451,7 +470,7 @@ CPhysCollide* ComputeConvexHull( studiohdr_t* pStudioHdr )
 
 	// Convert an array of convex elements to a compiled collision model
 	// (this deletes the convex elements)
-	return s_pPhysCollision->ConvertConvexToCollide( convexHulls.Base(), convexHulls.Size() );
+	return s_pPhysCollision->ConvertConvexToCollide( convexHulls.Base(), convexHulls.Count() );
 }
 
 
@@ -495,8 +514,8 @@ bool LoadStudioModel( char const* pModelName, CUtlBuffer& buf )
 	}
 
 	// ensure reset
-	pHdr->pVertexBase = NULL;
-	pHdr->pIndexBase  = NULL;
+	pHdr->SetVertexBase( NULL );
+	pHdr->SetIndexBase( NULL );
 
 	return true;
 }
@@ -527,7 +546,7 @@ bool LoadVTXFile( char const* pModelName, const studiohdr_t *pStudioHdr, CUtlBuf
 
 	// construct filename
 	Q_StripExtension( pModelName, filename, sizeof( filename ) );
-	strcat( filename, ".dx80.vtx" );
+	strcat( filename, ".dx90.vtx" );
 
 	if ( !LoadFile( filename, buf ) )
 	{
@@ -828,21 +847,28 @@ public:
 		if ( bBackface && !tex.allowBackface )
 			return 0;
 		Vector2D uv = coords.x * mat.uv[0] + coords.y * mat.uv[1] + coords.z * mat.uv[2];
-		int u = RoundFloatToInt( uv[0] * tex.width );
-		int v = RoundFloatToInt( uv[1] * tex.height );
-		
-		// asume power of 2, clamp or wrap
-		// UNDONE: Support clamp?  This code should work
-#if 0
-		u = tex.clampU ? clamp(u,0,(tex.width-1)) : (u & (tex.width-1));
-		v = tex.clampV ? clamp(v,0,(tex.height-1)) : (v & (tex.height-1));
-#else
-		// for now always wrap
+		// bilinear filtered sample
+		float ou = uv[0] * tex.width;
+		float ov = uv[1] * tex.height;
+		int u = floor( ou );
+		int v = floor( ov );
+		int u1 = u+1;
+		int v1 = v+1;
 		u &= (tex.width-1);
+		u1 &= (tex.width-1);
 		v &= (tex.height-1);
-#endif
+		v1 &= (tex.height-1);
+		float lerpU = ou - u;
+		float lerpV = ov - v;
+		int x = (tex.pAlphaTexels[v * tex.width + u] * (1-lerpU)) + (lerpU*tex.pAlphaTexels[v * tex.width + u1]);
+		int y = (tex.pAlphaTexels[v1 * tex.width + u] * (1-lerpU)) + (lerpU*tex.pAlphaTexels[v1 * tex.width + u1]);
+		return int( x * (1-lerpV) + (y*lerpV) );
+	}
 
-		return tex.pAlphaTexels[v * tex.width + u];
+	void GetMapping( int shadowTextureIndex, int *pWidth, int *pHeight )
+	{
+		*pWidth = m_Textures[shadowTextureIndex].width;
+		*pHeight = m_Textures[shadowTextureIndex].height;
 	}
 
 	struct alphatexture_t 
@@ -912,9 +938,36 @@ void CleanModelName( const char *pModelName, char *pOutput, int outLen )
 	{
 		*dot = 0;
 	}
-
 }
 
+int LoadShadowTexture( const char *pMaterialName )
+{
+	int textureIndex = -1;
+	// try to add each texture to the transparent shadow manager
+	char szPath[MAX_PATH];
+
+	Q_strncpy( szPath, "materials/", sizeof( szPath ) );
+	Q_strncat( szPath, pMaterialName, sizeof( szPath ), COPY_ALL_CHARACTERS );
+	Q_strncat( szPath, ".vmt", sizeof( szPath ), COPY_ALL_CHARACTERS );
+	Q_FixSlashes( szPath, CORRECT_PATH_SEPARATOR );
+	g_ShadowTextureList.FindOrLoadIfValid( szPath, &textureIndex );
+	return textureIndex;
+}
+
+int AddShadowTextureTriangle( int shadowTextureIndex, const Vector2D &t0, const Vector2D &t1, const Vector2D &t2 )
+{
+	return g_ShadowTextureList.AddMaterialEntry(shadowTextureIndex, t0, t1, t2 );
+}
+
+float ComputeCoverageForTriangle( int shadowTextureIndex, const Vector2D &t0, const Vector2D &t1, const Vector2D &t2 )
+{
+	return g_ShadowTextureList.ComputeCoverageForTriangle(shadowTextureIndex, t0, t1, t2 );
+}
+
+void GetShadowTextureMapping( int shadowTextureIndex, int *pWidth, int *pHeight )
+{
+	g_ShadowTextureList.GetMapping( shadowTextureIndex, pWidth, pHeight );
+}
 
 void ForceTextureShadowsOnModel( const char *pModelName )
 {
@@ -933,6 +986,197 @@ bool IsModelTextureShadowsForced( const char *pModelName )
 	return g_ForcedTextureShadowsModels.Find(buf).IsValid();
 }
 
+bool IsStaticPropBumpmapped( studiohdr_t *pStudioHdr )
+{
+	if ( g_numVradStaticPropsLightingStreams == 1 )
+	{
+		return false;
+	}
+
+	// check if prop uses "$bumpmap" in any materials, use this as an indication of valid tangent data (availability of tangentdata does not imply it's valid/used)
+	for ( int textureIndex = 0; textureIndex < pStudioHdr->numtextures; textureIndex++ )
+	{
+		char szPath[MAX_PATH];
+
+		// iterate quietly through all specified directories until a valid material is found
+		for ( int i = 0; i < pStudioHdr->numcdtextures; i++ )
+		{
+			Q_strncpy( szPath, "materials/", sizeof( szPath ) );
+			Q_strncat( szPath, pStudioHdr->pCdtexture( i ), sizeof( szPath ) );
+			const char *textureName = pStudioHdr->pTexture( textureIndex )->pszName();
+			Q_strncat( szPath, textureName, sizeof( szPath ), COPY_ALL_CHARACTERS );
+			Q_strncat( szPath, ".vmt", sizeof( szPath ), COPY_ALL_CHARACTERS );
+			Q_FixSlashes( szPath, CORRECT_PATH_SEPARATOR );
+
+			KeyValues *pVMT = new KeyValues( "vmt" );
+			CUtlBuffer buf( 0, 0, CUtlBuffer::TEXT_BUFFER );
+			LoadFileIntoBuffer( buf, szPath );
+			if ( pVMT->LoadFromBuffer( szPath, buf ) )
+			{
+				if ( pVMT->FindKey( "$bumpmap" ) )
+				{
+					pVMT->deleteThis();
+					return true;
+				}
+			}
+			pVMT->deleteThis();
+		}
+	}
+
+	return false;
+}
+
+
+void StaticPropHasPhongBump( studiohdr_t *pStudioHdr, bool *pHasBumpmap, bool *pHasPhong )
+{
+	if ( g_numVradStaticPropsLightingStreams == 1 )
+	{
+		return;
+	}
+
+	*pHasBumpmap = false;
+	*pHasPhong   = false;
+
+	// check if prop uses "$bumpmap" in any materials, use this as an indication of valid tangent data (availability of tangentdata does not imply it's valid/used)
+	for ( int textureIndex = 0; textureIndex < pStudioHdr->numtextures; textureIndex++ )
+	{
+		char szPath[MAX_PATH];
+
+		// iterate quietly through all specified directories until a valid material is found
+		for ( int i = 0; i < pStudioHdr->numcdtextures; i++ )
+		{
+			Q_strncpy( szPath, "materials/", sizeof( szPath ) );
+			Q_strncat( szPath, pStudioHdr->pCdtexture( i ), sizeof( szPath ) );
+			const char *textureName = pStudioHdr->pTexture( textureIndex )->pszName();
+			Q_strncat( szPath, textureName, sizeof( szPath ), COPY_ALL_CHARACTERS );
+			Q_strncat( szPath, ".vmt", sizeof( szPath ), COPY_ALL_CHARACTERS );
+			Q_FixSlashes( szPath, CORRECT_PATH_SEPARATOR );
+
+			KeyValues *pVMT = new KeyValues( "vmt" );
+			CUtlBuffer buf( 0, 0, CUtlBuffer::TEXT_BUFFER );
+			LoadFileIntoBuffer( buf, szPath );
+			if ( pVMT->LoadFromBuffer( szPath, buf ) )
+			{
+				if ( pVMT->FindKey( "$bumpmap" ) )
+				{
+					*pHasBumpmap = true;
+
+					// is it also phong
+					if ( pVMT->FindKey( "$phong" ) )
+					{
+						*pHasPhong = true;
+
+						pVMT->deleteThis();
+						return;
+					}
+				}
+			}
+			pVMT->deleteThis();
+		}
+	}
+
+	return;
+}
+
+Vector ReadReflectivityFromVTF( const char *pName )
+{
+	Vector vRefl( 0.18f, 0.18f, 0.18f );
+
+	char szPath[ MAX_PATH ];
+	Q_strncpy( szPath, "materials/", sizeof( szPath ) );
+	Q_strncat( szPath, pName, sizeof( szPath ), COPY_ALL_CHARACTERS );
+	Q_strncat( szPath, ".vtf", sizeof( szPath ), COPY_ALL_CHARACTERS );
+	Q_FixSlashes( szPath, CORRECT_PATH_SEPARATOR );
+
+	int nHeaderSize = VTFFileHeaderSize();
+	unsigned char *pMem = (unsigned char *)stackalloc( nHeaderSize );
+	CUtlBuffer buf( pMem, nHeaderSize );
+	if ( g_pFullFileSystem->ReadFile( szPath, NULL, buf, nHeaderSize ) )
+	{
+		IVTFTexture *pTex = CreateVTFTexture();
+		if ( pTex->Unserialize( buf, true ) )
+		{
+			vRefl = pTex->Reflectivity();
+		}
+		DestroyVTFTexture( pTex );
+	}
+	return vRefl;
+}
+
+Vector ComputeStaticPropReflectivity( studiohdr_t *pStudioHdr )
+{
+	Vector vReflectivity( 0.18f, 0.18f, 0.18f );
+
+	for ( int textureIndex = 0; textureIndex < pStudioHdr->numtextures; textureIndex++ )
+	{
+		char szPath[ MAX_PATH ];
+
+		// iterate quietly through all specified directories until a valid material is found
+		for ( int i = 0; i < pStudioHdr->numcdtextures; i++ )
+		{
+			Q_strncpy( szPath, "materials/", sizeof( szPath ) );
+			Q_strncat( szPath, pStudioHdr->pCdtexture( i ), sizeof( szPath ) );
+			const char *textureName = pStudioHdr->pTexture( textureIndex )->pszName();
+			Q_strncat( szPath, textureName, sizeof( szPath ), COPY_ALL_CHARACTERS );
+			Q_strncat( szPath, ".vmt", sizeof( szPath ), COPY_ALL_CHARACTERS );
+			Q_FixSlashes( szPath, CORRECT_PATH_SEPARATOR );
+
+			Vector vVtfRefl( 1.0f, 1.0f, 1.0f );
+			Vector vTint( 1.0f, 1.0f, 1.0f );
+
+			KeyValues *pVMT = new KeyValues( "vmt" );
+			CUtlBuffer buf( 0, 0, CUtlBuffer::TEXT_BUFFER );
+			LoadFileIntoBuffer( buf, szPath );
+			if ( pVMT->LoadFromBuffer( szPath, buf ) )
+			{
+				KeyValues *pBaseTexture = pVMT->FindKey( "$basetexture" );
+				if ( pBaseTexture )
+				{
+					const char *pBaseTextureName = pBaseTexture->GetString();
+					if ( pBaseTextureName )
+					{
+						vVtfRefl = ReadReflectivityFromVTF( pBaseTextureName );
+					}
+				}
+
+				vReflectivity = vVtfRefl;
+
+				KeyValues *pColorTint = pVMT->FindKey( "color" );
+				if ( pColorTint )
+				{
+					const char *pColorString = pColorTint->GetString();
+					if ( pColorString[ 0 ] == '{' )
+					{
+						int r = 0;
+						int g = 0;
+						int b = 0;
+						sscanf( pColorString, "{%d %d %d}", &r, &g, &b );
+						vTint.x = SrgbGammaToLinear( clamp( float( r ) / 255.0f, 0.0f, 1.0f ) );
+						vTint.y = SrgbGammaToLinear( clamp( float( r ) / 255.0f, 0.0f, 1.0f ) );
+						vTint.z = SrgbGammaToLinear( clamp( float( r ) / 255.0f, 0.0f, 1.0f ) );
+					}
+					else if ( pColorString[ 0 ] == '[' )
+					{
+						sscanf( pColorString, "[%f %f %f]", &vTint.x, &vTint.y, &vTint.z );
+						vTint.x = clamp( vTint.x, 0.0f, 1.0f );
+						vTint.y = clamp( vTint.y, 0.0f, 1.0f );
+						vTint.z = clamp( vTint.z, 0.0f, 1.0f );
+					}
+				}
+			}
+			pVMT->deleteThis();
+
+			vReflectivity = vVtfRefl * vTint;
+			if ( vReflectivity.x == 1.0f && vReflectivity.y == 1.0f && vReflectivity.z == 1.0f )
+			{
+				vReflectivity.Init( 0.18f, 0.18f, 0.18f );
+			}
+			return vReflectivity;
+		}
+	}
+
+	return vReflectivity;
+}
 
 //-----------------------------------------------------------------------------
 // Creates a collision model (based on the render geometry!)
@@ -1005,6 +1249,10 @@ void CVradStaticPropMgr::CreateCollisionModel( char const* pModelName )
 			g_ShadowTextureList.LoadAllTexturesForModel( pHdr, m_StaticPropDict[i].m_textureShadowIndex.Base() );
 		}
 	}
+
+	// mark static props that use $bumpmap, $phong materials
+	StaticPropHasPhongBump( pHdr, &m_StaticPropDict[ i ].m_bHasBumpmap, &m_StaticPropDict[ i ].m_bHasPhong );
+	m_StaticPropDict[ i ].m_vReflectivity = ComputeStaticPropReflectivity( pHdr );
 }
 
 
@@ -1021,12 +1269,98 @@ void CVradStaticPropMgr::UnserializeModelDict( CUtlBuffer& buf )
 		
 		CreateCollisionModel( lump.m_Name );
 	}
+
+ 	// spew bump static prop info
+	if ( g_bDumpBumpStaticProps && (g_numVradStaticPropsLightingStreams == 3) )
+	{
+		char mapName[MAX_PATH];
+		Q_FileBase( source, mapName, sizeof( mapName ) );
+
+		char bumpPropFilename[MAX_PATH];
+		sprintf( bumpPropFilename, "vrad_bumpstaticprops_%s.txt", mapName);
+
+		Msg( "Writing %s...\n", bumpPropFilename );
+
+		FILE *fp = fopen( bumpPropFilename, "w" );
+
+		if ( !fp )
+		{
+			Msg( "Writing %s...failed\n", bumpPropFilename );
+			return;
+		}
+
+		fprintf( fp, "Bumpmap static prop list for %s\n", mapName );
+
+		int numBumpmapStaticProps = 0;
+		int numPhongStaticProps = 0;
+		for ( int i = m_StaticPropDict.Count(); --i >= 0; )
+		{
+			studiohdr_t *pStudioHdr = m_StaticPropDict[i].m_pStudioHdr;
+
+			if ( m_StaticPropDict[i].m_bHasBumpmap )
+			{
+				numBumpmapStaticProps++;
+			}
+
+			if ( m_StaticPropDict[i].m_bHasPhong )
+			{
+				numPhongStaticProps++;
+			}
+
+			if ( m_StaticPropDict[i].m_bHasBumpmap || m_StaticPropDict[i].m_bHasPhong )
+			{
+				fprintf( fp, "\nprop: %s\nvmt's containing $bumpmap, $phong:\n", pStudioHdr->pszName() );
+
+				for ( int textureIndex = 0; textureIndex < pStudioHdr->numtextures; textureIndex++ )
+				{
+					char szPath[MAX_PATH];
+
+					// iterate quietly through all specified directories until a valid material is found
+					for ( int i = 0; i < pStudioHdr->numcdtextures; i++ )
+					{
+						Q_strncpy( szPath, "materials/", sizeof( szPath ) );
+						Q_strncat( szPath, pStudioHdr->pCdtexture( i ), sizeof( szPath ) );
+						const char *textureName = pStudioHdr->pTexture( textureIndex )->pszName();
+						Q_strncat( szPath, textureName, sizeof( szPath ), COPY_ALL_CHARACTERS );
+						Q_strncat( szPath, ".vmt", sizeof( szPath ), COPY_ALL_CHARACTERS );
+						Q_FixSlashes( szPath, CORRECT_PATH_SEPARATOR );
+
+						KeyValues *pVMT = new KeyValues( "vmt" );
+						CUtlBuffer buf( 0, 0, CUtlBuffer::TEXT_BUFFER );
+						LoadFileIntoBuffer( buf, szPath );
+						if ( pVMT->LoadFromBuffer( szPath, buf ) )
+						{
+							if ( pVMT->FindKey( "$bumpmap" ) )
+							{
+								if ( pVMT->FindKey( "$phong" ) )
+								{
+									fprintf( fp, "$bump, $phong: %s\n", szPath );
+								}
+								else
+								{
+									fprintf( fp, "$bump: %s\n", szPath );
+								}
+							}
+							else if ( pVMT->FindKey( "$phong" ) )
+							{
+								// not possible/error?
+								fprintf( fp, "$phong: %s\n", szPath );
+							}
+						}
+						pVMT->deleteThis();
+					}
+				}
+			}
+		}
+		fprintf( fp, "\n%d static props, %d bumped static props (%d phong static props)\n", m_StaticPropDict.Count(), numBumpmapStaticProps, numPhongStaticProps );
+		fclose( fp );
+	}
+
 }
 
 void CVradStaticPropMgr::UnserializeModels( CUtlBuffer& buf )
 {
 	int count = buf.GetInt();
-
 
 	m_StaticProps.AddMultipleToTail(count);
 	for ( int i = 0; i < count; ++i )				  
@@ -1041,12 +1375,11 @@ void CVradStaticPropMgr::UnserializeModels( CUtlBuffer& buf )
 		m_StaticProps[i].m_ModelIdx = lump.m_PropType;
 		m_StaticProps[i].m_Handle = TREEDATA_INVALID_HANDLE;
 		m_StaticProps[i].m_Flags = lump.m_Flags;
-
-		// Changed this from using DXT1 to RGB888 because the compression artifacts were pretty nasty. 
-		// TODO: Consider changing back or basing this on user selection in hammer.
-		m_StaticProps[i].m_LightmapImageFormat = IMAGE_FORMAT_RGB888;
-		m_StaticProps[i].m_LightmapImageWidth = lump.m_nLightmapResolutionX;
-		m_StaticProps[i].m_LightmapImageHeight = lump.m_nLightmapResolutionY;
+		m_StaticProps[ i ].m_FlagsEx = lump.m_FlagsEx;
+		m_StaticProps[ i ].m_vReflectivity.Init( SrgbGammaToLinear( float( lump.m_DiffuseModulation.r ) / 255.0f ),
+												 SrgbGammaToLinear( float( lump.m_DiffuseModulation.g ) / 255.0f ),
+												 SrgbGammaToLinear( float( lump.m_DiffuseModulation.b ) / 255.0f ) );
+		m_StaticProps[ i ].m_vReflectivity *= m_StaticPropDict[ m_StaticProps[ i ].m_ModelIdx ].m_vReflectivity;
 	}
 }
 
@@ -1105,14 +1438,15 @@ void CVradStaticPropMgr::Shutdown()
 {
 
 	// Remove all static prop model data
-	for (int i = m_StaticPropDict.Size(); --i >= 0; )
+	for (int i = m_StaticPropDict.Count(); --i >= 0; )
 	{
 		studiohdr_t *pStudioHdr = m_StaticPropDict[i].m_pStudioHdr;
 		if ( pStudioHdr )
 		{
-			if ( pStudioHdr->pVertexBase )
+			if ( pStudioHdr->VertexBase() )
 			{
-				free( pStudioHdr->pVertexBase );
+				free( pStudioHdr->VertexBase() );
+				pStudioHdr->SetVertexBase( nullptr );
 			}
 			free( pStudioHdr );
 		}
@@ -1134,6 +1468,15 @@ void ComputeLightmapColor( dface_t* pFace, Vector &color )
 
 bool PositionInSolid( Vector &position )
 {
+/* 	Testing enabling/disabling since it erroneously reports verts inside light blockers
+    and there are a number of position offsets applied elsewhere to avoid surface acne
+	that might well be enough */
+
+	if ( g_bDisableStaticPropVertexInSolidTest )
+	{
+		return false;
+	}
+
 	int ndxLeaf = PointLeafnum( position );
 	if ( dleafs[ndxLeaf].contents & CONTENTS_SOLID )
 	{
@@ -1144,15 +1487,26 @@ bool PositionInSolid( Vector &position )
 	return false;
 }
 
+bool PositionIn3DSkybox( Vector &position )
+{
+	int iLeaf = PointLeafnum( position );
+	int area = dleafs[ iLeaf ].area;
+	return area_sky_cameras[ area ] >= 0;
+}
+
 //-----------------------------------------------------------------------------
 // Trace from a vertex to each direct light source, accumulating its contribution.
 //-----------------------------------------------------------------------------
-void ComputeDirectLightingAtPoint( Vector &position, Vector &normal, Vector &outColor, int iThread,
-								   int static_prop_id_to_skip=-1, int nLFlags = 0)
+void ComputeDirectLightingAtPoint( Vector &position, Vector *normals, Vector *outColors, float *outSunAmount, int numNormals, bool bSkipSkyLight, int iThread,
+								   int static_prop_id_to_skip, int nLFlags )
 {
 	SSE_sampleLightOutput_t	sampleOutput;
 
-	outColor.Init();
+	for ( int k = 0; k < numNormals; ++ k )
+	{
+		outColors[k].Init();
+		outSunAmount[k] = 0.0f;
+	}
 
 	// Iterate over all direct lights and accumulate their contribution
 	int cluster = ClusterFromPoint( position );
@@ -1172,6 +1526,8 @@ void ComputeDirectLightingAtPoint( Vector &position, Vector &normal, Vector &out
 		Vector adjusted_pos = position;
 		float flEpsilon = 0.0;
 
+		const float flFudgeFactor = 4.0;
+
 		if  (dl->light.type != emit_skyambient)
 		{
 			// push towards the light
@@ -1183,34 +1539,133 @@ void ComputeDirectLightingAtPoint( Vector &position, Vector &normal, Vector &out
 				fudge = dl->light.origin-position;
 				VectorNormalize( fudge );
 			}
-			fudge *= 4.0;
+			fudge *= flFudgeFactor;
 			adjusted_pos += fudge;
 		}
 		else 
 		{
 			// push out along normal
-			adjusted_pos += 4.0 * normal;
+			adjusted_pos += flFudgeFactor * normals[0];
 //			flEpsilon = 1.0;
 		}
 
 		FourVectors adjusted_pos4;
-		FourVectors normal4;
 		adjusted_pos4.DuplicateVector( adjusted_pos );
-		normal4.DuplicateVector( normal );
 
-		GatherSampleLightSSE( sampleOutput, dl, -1, adjusted_pos4, &normal4, 1, iThread, nLFlags | GATHERLFLAGS_FORCE_FAST,
-		                      static_prop_id_to_skip, flEpsilon );
-		
-		VectorMA( outColor, sampleOutput.m_flFalloff.m128_f32[0] * sampleOutput.m_flDot[0].m128_f32[0], dl->light.intensity, outColor );
+		FourVectors normal4;
+		switch( numNormals )
+		{
+		case 4:
+			normal4.LoadAndSwizzle( normals[0], normals[1], normals[2], normals[3] );
+			break;
+		case 3:
+			normal4.LoadAndSwizzle( normals[0], normals[1], normals[2], normals[0] );
+			break;
+		default:
+			normal4.DuplicateVector( normals[0] );
+			break;
+		}
+
+		GatherSampleLightSSE( sampleOutput, dl, -1, adjusted_pos4, &normal4,
+			1, // really it's number of FourVectors passed
+			iThread, g_bFastStaticProps ? ( nLFlags | GATHERLFLAGS_FORCE_FAST ) : nLFlags,
+			static_prop_id_to_skip, flEpsilon );
+
+		for ( int k = 0; k < numNormals; ++k )
+		{
+			if ( !((dl->light.type == emit_skylight) && bSkipSkyLight) )
+			{
+				VectorMA( outColors[k],
+						  sampleOutput.m_flFalloff[k] * sampleOutput.m_flDot[0][k],
+						  dl->light.intensity,
+						  outColors[k] );
+			}
+
+			outSunAmount[k] += SubFloat( sampleOutput.m_flSunAmount[0], k ) * (sampleOutput.m_flDot[0][0] > 0.0f ? 1.0f : 0.0f);
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// version of above that just computes/returns the sun amount
+//-----------------------------------------------------------------------------
+void ComputeSunAmountAtPoint( Vector &position, Vector *normals, float *outSunAmount, int numNormals, int iThread,
+								   int static_prop_id_to_skip = -1, int nLFlags = 0 )
+{
+	SSE_sampleLightOutput_t	sampleOutput;
+
+	for ( int k = 0; k < numNormals; ++k )
+	{
+		outSunAmount[k] = 0.0f;
+	}
+
+	// Iterate over all direct lights and accumulate their contribution
+	int cluster = ClusterFromPoint( position );
+	for ( directlight_t *dl = activelights; dl != NULL; dl = dl->next )
+	{
+		if ( dl->light.style )
+		{
+			// skip lights with style
+			continue;
+		}
+
+		if ( dl->light.type != emit_skylight )
+		{
+			// skip lights that don't contribue to sunamount
+			continue;
+		}
+
+		// is this lights cluster visible?
+		if ( !PVSCheck( dl->pvs, cluster ) )
+			continue;
+
+		// push the vertex towards the light to avoid surface acne
+		Vector adjusted_pos = position;
+		float flEpsilon = 0.0;
+
+		const float flFudgeFactor = 4.0;
+
+		// push towards the light
+		Vector fudge;
+		fudge = -(dl->light.normal);
+		fudge *= flFudgeFactor;
+		adjusted_pos += fudge;
+
+		FourVectors adjusted_pos4;
+		adjusted_pos4.DuplicateVector( adjusted_pos );
+
+		FourVectors normal4;
+		switch ( numNormals )
+		{
+		case 4:
+			normal4.LoadAndSwizzle( normals[0], normals[1], normals[2], normals[3] );
+			break;
+		case 3:
+			normal4.LoadAndSwizzle( normals[0], normals[1], normals[2], normals[0] );
+			break;
+		default:
+			normal4.DuplicateVector( normals[0] );
+			break;
+		}
+
+		GatherSampleLightSSE( sampleOutput, dl, -1, adjusted_pos4, &normal4,
+							  1, // really it's number of FourVectors passed
+							  iThread, g_bFastStaticProps ? (nLFlags | GATHERLFLAGS_FORCE_FAST) : nLFlags,
+							  static_prop_id_to_skip, flEpsilon );
+
+		for ( int k = 0; k < numNormals; ++k )
+		{
+			outSunAmount[k] += SubFloat( sampleOutput.m_flSunAmount[0], k ) * (sampleOutput.m_flDot[0][0] > 0.0f ? 1.0f : 0.0f);
+		}
 	}
 }
 
 //-----------------------------------------------------------------------------
 // Takes the results from a ComputeLighting call and applies it to the static prop in question.
 //-----------------------------------------------------------------------------
-void CVradStaticPropMgr::ApplyLightingToStaticProp( int iStaticProp, CStaticProp &prop, const CComputeStaticPropLightingResults *pResults )
+void CVradStaticPropMgr::ApplyLightingToStaticProp( CStaticProp &prop, const CComputeStaticPropLightingResults *pResults )
 {
-	if ( pResults->m_ColorVertsArrays.Count() == 0 && pResults->m_ColorTexelsArrays.Count() == 0 )
+	if ( pResults->m_ColorVertsArrays.Count() == 0 )
 		return;
 
 	StaticPropDict_t &dict = m_StaticPropDict[prop.m_ModelIdx];
@@ -1218,9 +1673,8 @@ void CVradStaticPropMgr::ApplyLightingToStaticProp( int iStaticProp, CStaticProp
 	OptimizedModel::FileHeader_t *pVtxHdr = (OptimizedModel::FileHeader_t *)dict.m_VtxBuf.Base();
 	Assert( pStudioHdr && pVtxHdr );
 
+	int const numVertexLightComponents = g_numVradStaticPropsLightingStreams;
 	int iCurColorVertsArray = 0;
-	int iCurColorTexelsArray = 0;
-
 	for ( int bodyID = 0; bodyID < pStudioHdr->numbodyparts; ++bodyID )
 	{
 		OptimizedModel::BodyPartHeader_t* pVtxBodyPart = pVtxHdr->pBodyPart( bodyID );
@@ -1230,9 +1684,8 @@ void CVradStaticPropMgr::ApplyLightingToStaticProp( int iStaticProp, CStaticProp
 		{
 			OptimizedModel::ModelHeader_t* pVtxModel = pVtxBodyPart->pModel( modelID );
 			mstudiomodel_t *pStudioModel = pBodyPart->pModel( modelID );
-						
-			const CUtlVector<colorVertex_t> *colorVerts = pResults->m_ColorVertsArrays.Count() ? pResults->m_ColorVertsArrays[iCurColorVertsArray++] : nullptr;
-			const CUtlVector<colorTexel_t> *colorTexels = pResults->m_ColorTexelsArrays.Count() ? pResults->m_ColorTexelsArrays[iCurColorTexelsArray++] : nullptr;
+
+			const CUtlVector<colorVertex_t> &colorVerts = *pResults->m_ColorVertsArrays[iCurColorVertsArray++];
 			
 			for ( int nLod = 0; nLod < pVtxHdr->numLODs; nLod++ )
 			{
@@ -1247,51 +1700,25 @@ void CVradStaticPropMgr::ApplyLightingToStaticProp( int iStaticProp, CStaticProp
 					{
 						OptimizedModel::StripGroupHeader_t* pStripGroup = pVtxMesh->pStripGroup( nGroup );
 						int nMeshIdx = prop.m_MeshData.AddToTail();
+						prop.m_MeshData[nMeshIdx].m_VertColorData.AddMultipleToTail( pStripGroup->numVerts * numVertexLightComponents );
+						prop.m_MeshData[nMeshIdx].m_numVerts = pStripGroup->numVerts;
+						prop.m_MeshData[nMeshIdx].m_nLod = nLod;
 
-						if (colorVerts)
+						for ( int nVertex = 0; nVertex < pStripGroup->numVerts; ++nVertex )
 						{
-							prop.m_MeshData[nMeshIdx].m_VertexColors.AddMultipleToTail( pStripGroup->numVerts );
-							prop.m_MeshData[nMeshIdx].m_nLod = nLod;
+							int nIndex = pMesh->vertexoffset + pStripGroup->pVertex( nVertex )->origMeshVertID;
 
-							for ( int nVertex = 0; nVertex < pStripGroup->numVerts; ++nVertex )
+							Assert( nIndex < pStudioModel->numvertices );
+							
+							if ( numVertexLightComponents <= 1 )
 							{
-								int nIndex = pMesh->vertexoffset + pStripGroup->pVertex( nVertex )->origMeshVertID;
-
-								Assert( nIndex < pStudioModel->numvertices );
-								prop.m_MeshData[nMeshIdx].m_VertexColors[nVertex] = (*colorVerts)[nIndex].m_Color;
+								prop.m_MeshData[nMeshIdx].m_VertColorData[nVertex].AsVector3D() = colorVerts[nIndex].m_Colors[0];
+								prop.m_MeshData[nMeshIdx].m_VertColorData[nVertex].w = colorVerts[nIndex].m_SunAmount[0];
 							}
-						}
-
-						if (colorTexels)
-						{
-							// TODO: Consider doing this work in the worker threads, because then we distribute it.
-							ConvertTexelDataToTexture(prop.m_LightmapImageWidth, prop.m_LightmapImageHeight, prop.m_LightmapImageFormat, (*colorTexels), &prop.m_MeshData[nMeshIdx].m_TexelsEncoded);
-
-							if (g_bDumpPropLightmaps)
+							else for ( int k = 0 ; k < numVertexLightComponents; ++ k )
 							{
-								char buffer[_MAX_PATH];
-								V_snprintf( 
-									buffer, 
-									_MAX_PATH - 1, 
-									"staticprop_lightmap_%d_%.0f_%.0f_%.0f_%s_%d_%d_%d_%d_%d.tga", 
-									iStaticProp, 
-									prop.m_Origin.x, 
-									prop.m_Origin.y,
-									prop.m_Origin.z,
-									dict.m_pStudioHdr->pszName(), 
-									bodyID, 
-									modelID, 
-									nLod, 
-									nMesh, 
-									nGroup 
-								);
-
-								for ( int i = 0; buffer[i]; ++i ) 
-								{
-									if (buffer[i] == '/' || buffer[i] == '\\')
-										buffer[i] = '-';
-								}
-								DumpLightmapLinear( buffer, (*colorTexels), prop.m_LightmapImageWidth, prop.m_LightmapImageHeight );
+								prop.m_MeshData[nMeshIdx].m_VertColorData[nVertex * numVertexLightComponents + k].AsVector3D() = colorVerts[nIndex].m_Colors[k + 1];
+								prop.m_MeshData[nMeshIdx].m_VertColorData[nVertex * numVertexLightComponents + k].w = colorVerts[nIndex].m_SunAmount[k + 1];
 							}
 						}
 					}
@@ -1300,6 +1727,7 @@ void CVradStaticPropMgr::ApplyLightingToStaticProp( int iStaticProp, CStaticProp
 		}
 	}
 }
+
 
 //-----------------------------------------------------------------------------
 // Trace rays from each unique vertex, accumulating direct and indirect
@@ -1320,41 +1748,40 @@ void CVradStaticPropMgr::ComputeLighting( CStaticProp &prop, int iThread, int pr
 		return;
 	}
 
-	const bool withVertexLighting = (prop.m_Flags & STATIC_PROP_NO_PER_VERTEX_LIGHTING) == 0;
-	const bool withTexelLighting = (prop.m_Flags & STATIC_PROP_NO_PER_TEXEL_LIGHTING) == 0;
+	int nGatherFlags = (prop.m_Flags & STATIC_PROP_IGNORE_NORMALS) ? GATHERLFLAGS_IGNORE_NORMALS : 0;
+	nGatherFlags |= (prop.m_Flags & STATIC_PROP_NO_PER_VERTEX_LIGHTING) ? GATHERLFLAGS_NO_OCCLUSION : 0;
 
-	if (!withVertexLighting && !withTexelLighting)
-		return;
+ 	if ( dict.m_bHasPhong )
+ 	{
+ 		nGatherFlags &= ~GATHERLFLAGS_IGNORE_NORMALS;
+ 	}
 
-	const int skip_prop = (g_bDisablePropSelfShadowing || (prop.m_Flags & STATIC_PROP_NO_SELF_SHADOWING)) ? prop_index : -1;
-	const int nFlags = ( prop.m_Flags & STATIC_PROP_IGNORE_NORMALS ) ? GATHERLFLAGS_IGNORE_NORMALS : 0;
+	nGatherFlags |= GATHERLFLAGS_STATICPROP;
 
+#ifdef MPI
 	VMPI_SetCurrentStage( "ComputeLighting" );
+#endif
 
-	matrix3x4_t	matPos, matNormal;
-	AngleMatrix(prop.m_Angles, prop.m_Origin, matPos);
-	AngleMatrix(prop.m_Angles, matNormal);
-	
+	int numSampleNormals = (g_numVradStaticPropsLightingStreams > 1) ? (NUM_BUMP_VECTS + 1) : 1;
+	bool bCanUseTangents = dict.m_bHasBumpmap;
+	bool bSkipDirectSkylight = true;		// Only computing indirect GI for all static props now. Direct sunlight applied in shader.
+	if ( PositionIn3DSkybox( prop.m_Origin ) )
+	{
+		bSkipDirectSkylight = false;
+	}
+
 	for ( int bodyID = 0; bodyID < pStudioHdr->numbodyparts; ++bodyID )
 	{
-		OptimizedModel::BodyPartHeader_t* pVtxBodyPart = pVtxHdr->pBodyPart( bodyID );
 		mstudiobodyparts_t *pBodyPart = pStudioHdr->pBodypart( bodyID );
 
 		for ( int modelID = 0; modelID < pBodyPart->nummodels; ++modelID )
 		{
-			OptimizedModel::ModelHeader_t* pVtxModel = pVtxBodyPart->pModel(modelID);
 			mstudiomodel_t *pStudioModel = pBodyPart->pModel( modelID );
 
-			if (withTexelLighting)
-			{
-				CUtlVector<colorTexel_t> *pColorTexelArray = new CUtlVector<colorTexel_t>;
-				pResults->m_ColorTexelsArrays.AddToTail(pColorTexelArray);
-			}
-			
 			// light all unique vertexes
 			CUtlVector<colorVertex_t> *pColorVertsArray = new CUtlVector<colorVertex_t>;
 			pResults->m_ColorVertsArrays.AddToTail( pColorVertsArray );
-						
+			
 			CUtlVector<colorVertex_t> &colorVerts = *pColorVertsArray; 
 			colorVerts.EnsureCount( pStudioModel->numvertices );
 			memset( colorVerts.Base(), 0, colorVerts.Count() * sizeof(colorVertex_t) );
@@ -1364,23 +1791,57 @@ void CVradStaticPropMgr::ComputeLighting( CStaticProp &prop, int iThread, int pr
 			{
 				mstudiomesh_t *pStudioMesh = pStudioModel->pMesh( meshID );
 				const mstudio_meshvertexdata_t *vertData = pStudioMesh->GetVertexData((void *)pStudioHdr);
-
-				Assert(vertData); // This can only return NULL on X360 for now
-				
-				// TODO: Move this into its own function. In fact, refactor this whole function.
-				if (withTexelLighting)
-				{
-					GenerateLightmapSamplesForMesh( matPos, matNormal, iThread, skip_prop, nFlags, prop.m_LightmapImageWidth, prop.m_LightmapImageHeight, pStudioHdr, pStudioModel, pVtxModel, meshID, pResults );
-				}
-
-				// If we do lightmapping, we also do vertex lighting as a potential fallback. This may change.
+				Assert( vertData ); // This can only return NULL on X360 for now
 				for ( int vertexID = 0; vertexID < pStudioMesh->numvertices; ++vertexID )
 				{
-					Vector sampleNormal;
+					Vector sampleNormals[ NUM_BUMP_VECTS + 1 ];
 					Vector samplePosition;
 					// transform position and normal into world coordinate system
-					VectorTransform(*vertData->Position(vertexID), matPos, samplePosition);
-					VectorTransform(*vertData->Normal(vertexID), matNormal, sampleNormal);
+					matrix3x4_t	matrix;
+					AngleMatrix( prop.m_Angles, prop.m_Origin, matrix );
+					VectorTransform( *vertData->Position( vertexID ), matrix, samplePosition );
+					AngleMatrix( prop.m_Angles, matrix );
+					VectorTransform( *vertData->Normal( vertexID ), matrix, sampleNormals[0] );
+
+					if( numSampleNormals > 1 )
+					{
+						Vector *bumpVects = &sampleNormals[1];
+						Vector4D *vecTangentS = vertData->HasTangentData() ? vertData->TangentS( vertexID ) : NULL;
+
+						if ( vecTangentS && bCanUseTangents )
+						{
+							Vector vecTexS;
+							VectorTransform( vecTangentS->AsVector3D(), matrix, vecTexS );
+
+							Vector vecTexT;
+							CrossProduct( sampleNormals[0], vecTexS, vecTexT );
+							vecTexT.NormalizeInPlace();
+
+							// recompute S-vector to have S, T, N as an orthonormal basis for hl2 vectors
+							CrossProduct( vecTexT, sampleNormals[0], vecTexS );
+
+							// respect the flip-factor for T-vector
+							vecTexT *= vecTangentS->w;
+
+							GetStaticPropBumpNormals(
+								vecTexS, vecTexT,
+								sampleNormals[0],
+								sampleNormals[0],
+								bumpVects );
+
+							sampleNormals[0].NormalizeInPlace();
+							sampleNormals[1].NormalizeInPlace();
+							sampleNormals[2].NormalizeInPlace();
+							sampleNormals[3].NormalizeInPlace();
+						}
+						else
+						{
+							sampleNormals[1] = sampleNormals[0];
+							sampleNormals[2] = sampleNormals[0];
+							sampleNormals[3] = sampleNormals[0];
+						}
+					}
+
 
 					if ( PositionInSolid( samplePosition ) )
 					{
@@ -1388,39 +1849,105 @@ void CVradStaticPropMgr::ComputeLighting( CStaticProp &prop, int iThread, int pr
 						badVertex_t badVertex;
 						badVertex.m_ColorVertex = numVertexes;
 						badVertex.m_Position = samplePosition;
-						badVertex.m_Normal = sampleNormal;
+						memcpy( badVertex.m_Normals, sampleNormals, sizeof( badVertex.m_Normals ) );
 						badVerts.AddToTail( badVertex );			
 					}
-					else
+					else 
 					{
 						Vector direct_pos=samplePosition;
-							
-						
+						int skip_prop = -1;
+						if ( g_bDisablePropSelfShadowing || ( prop.m_Flags & STATIC_PROP_NO_SELF_SHADOWING ) )
+						{
+							skip_prop = prop_index;
+						}
 
-						Vector directColor(0,0,0);
-						ComputeDirectLightingAtPoint( direct_pos,
-														sampleNormal, directColor, iThread,
-														skip_prop, nFlags );
-						Vector indirectColor(0,0,0);
+						Vector directColors[ NUM_BUMP_VECTS + 1 ];
+						float sunAmount[ NUM_BUMP_VECTS + 1 ];
+						memset( directColors, 0, sizeof( directColors ) );
+						memset( sunAmount, 0, sizeof( sunAmount ) );
+
+						if ( bCanUseTangents )
+						{
+							ComputeDirectLightingAtPoint( direct_pos,
+															sampleNormals, directColors, sunAmount, numSampleNormals, bSkipDirectSkylight,
+															iThread,
+															skip_prop, nGatherFlags );
+						}
+						else
+						{
+							ComputeDirectLightingAtPoint( direct_pos,
+															sampleNormals, directColors, sunAmount, 1, bSkipDirectSkylight,
+															iThread,
+															skip_prop, nGatherFlags );
+							directColors[1] = directColors[0];
+							directColors[2] = directColors[0];
+							directColors[3] = directColors[0];
+							sunAmount[1] = sunAmount[0];
+							sunAmount[2] = sunAmount[0];
+							sunAmount[3] = sunAmount[0];
+						}
+
+						if ( numSampleNormals > 1 )
+						{
+							// doing this for direct and indirect separately helps eliminate errors with CSM blending
+							NormalizeVertexBumpedLighting( directColors, directColors + 1 );
+						}
+
+
+						Vector indirectColors[ NUM_BUMP_VECTS + 1 ];
+						memset( indirectColors, 0, sizeof( indirectColors ) );
 
 						if (g_bShowStaticPropNormals)
 						{
-							directColor= sampleNormal;
-							directColor += Vector(1.0,1.0,1.0);
-							directColor *= 50.0;
+							directColors[0] = sampleNormals[0];
+							directColors[0] += Vector(1.0,1.0,1.0);
+							directColors[0] *= 50.0;
+							directColors[1] = directColors[0];
+							directColors[2] = directColors[0];
+							directColors[3] = directColors[0];
 						}
 						else
 						{
 							if (numbounce >= 1)
-								ComputeIndirectLightingAtPoint( 
-									samplePosition, sampleNormal, 
-									indirectColor, iThread, true,
-									( prop.m_Flags & STATIC_PROP_IGNORE_NORMALS) != 0 );
+							{
+								if ( bCanUseTangents )
+								{
+									ComputeIndirectLightingAtPoint(
+										samplePosition, sampleNormals,
+										indirectColors, numSampleNormals, iThread, g_bFastStaticProps,
+										( prop.m_Flags & STATIC_PROP_IGNORE_NORMALS ) != 0, prop_index );
+								}
+								else
+								{
+									ComputeIndirectLightingAtPoint(
+										samplePosition, sampleNormals,
+										indirectColors, 1, iThread, g_bFastStaticProps,
+										( prop.m_Flags & STATIC_PROP_IGNORE_NORMALS ) != 0, prop_index );
+									indirectColors[1] = indirectColors[0];
+									indirectColors[2] = indirectColors[0];
+									indirectColors[3] = indirectColors[0];
+								}
+
+								if ( numSampleNormals > 1 )
+								{
+									// doing this for direct and indirect separately helps eliminate errors with CSM blending
+									NormalizeVertexBumpedLighting( indirectColors, indirectColors + 1 );
+								}
+							}
 						}
-						
+
 						colorVerts[numVertexes].m_bValid = true;
 						colorVerts[numVertexes].m_Position = samplePosition;
-						VectorAdd( directColor, indirectColor, colorVerts[numVertexes].m_Color );
+						for ( int k = 0; k < numSampleNormals; ++ k )
+						{
+							VectorAdd( directColors[k], indirectColors[k], colorVerts[numVertexes].m_Colors[k] );
+							colorVerts[numVertexes].m_SunAmount[k] = sunAmount[k];
+						}
+						if ( numSampleNormals > 1 )
+						{
+							float *pSunAmountUnbumped = &colorVerts[numVertexes].m_SunAmount[0];
+							NormalizeVertexBumpedSunAmount( pSunAmountUnbumped, pSunAmountUnbumped+1, pSunAmountUnbumped+2, pSunAmountUnbumped+3 );
+						}
 					}
 					
 					numVertexes++;
@@ -1467,7 +1994,7 @@ void CVradStaticPropMgr::ComputeLighting( CStaticProp &prop, int iThread, int pr
 					}
 
 					// crawl toward best position
-					// sudivide to determine a closer valid point to the bad vertex, and re-light
+					// subdivide to determine a closer valid point to the bad vertex, and re-light
 					Vector midPosition;
 					int numIterations = 20;
 					while ( --numIterations > 0 )
@@ -1479,18 +2006,57 @@ void CVradStaticPropMgr::ComputeLighting( CStaticProp &prop, int iThread, int pr
 						bestPosition = midPosition;
 					}
 
-					// re-light from better position
-					Vector directColor;
-					ComputeDirectLightingAtPoint( bestPosition, badVerts[nBadVertex].m_Normal, directColor, iThread );
+					Vector directColors[ NUM_BUMP_VECTS + 1 ];
+					memset( directColors, 0, sizeof( directColors ) );
+					Vector indirectColors[ NUM_BUMP_VECTS + 1 ];
+					memset( indirectColors, 0, sizeof( indirectColors ) );
+					float sunAmount[NUM_BUMP_VECTS + 1];
+					memset( sunAmount, 0, sizeof( sunAmount ) );
 
-					Vector indirectColor;
-					ComputeIndirectLightingAtPoint( bestPosition, badVerts[nBadVertex].m_Normal,
-													indirectColor, iThread, true );
+					// re-light from better position
+					if ( bCanUseTangents )
+					{
+						ComputeDirectLightingAtPoint( bestPosition, badVerts[nBadVertex].m_Normals,
+													  directColors, sunAmount, numSampleNormals, bSkipDirectSkylight, iThread );
+						ComputeIndirectLightingAtPoint( bestPosition, badVerts[nBadVertex].m_Normals,
+														indirectColors, numSampleNormals, iThread, true, false, prop_index );
+					}
+					else
+					{
+						ComputeDirectLightingAtPoint( bestPosition, badVerts[nBadVertex].m_Normals,
+													  directColors, sunAmount, 1, bSkipDirectSkylight, iThread );
+						// doing this for direct and indirect separately helps eliminate errors with CSM blending
+						ComputeIndirectLightingAtPoint( bestPosition, badVerts[nBadVertex].m_Normals,
+														indirectColors, 1, iThread, true, false, prop_index );
+						for ( int k = 1; k < numSampleNormals; ++k )
+						{
+							directColors[k]		= directColors[0];
+							indirectColors[k]	= indirectColors[0];
+							sunAmount[k]		= sunAmount[0];
+						}
+					}
+
+					if ( numSampleNormals > 1 )
+					{
+						// doing this for direct and indirect separately helps eliminate errors with CSM blending
+						NormalizeVertexBumpedLighting( directColors, directColors + 1 );
+						NormalizeVertexBumpedLighting( indirectColors, indirectColors + 1 );
+					}
 
 					// save results, not changing valid status
 					// to ensure this offset position is not considered as a viable candidate
-					colorVerts[badVerts[nBadVertex].m_ColorVertex].m_Position = bestPosition;
-					VectorAdd( directColor, indirectColor, colorVerts[badVerts[nBadVertex].m_ColorVertex].m_Color );
+					const int idxColorVertex = badVerts[nBadVertex].m_ColorVertex;
+					colorVerts[idxColorVertex].m_Position = bestPosition;
+					for ( int k = 0; k < numSampleNormals; ++ k )
+					{
+						VectorAdd( directColors[k], indirectColors[k], colorVerts[idxColorVertex].m_Colors[k] );
+						colorVerts[idxColorVertex].m_SunAmount[k] = sunAmount[k];
+					}
+					if ( numSampleNormals > 1 )
+					{
+						float *pSunAmountUnbumped = &colorVerts[idxColorVertex].m_SunAmount[0];
+						NormalizeVertexBumpedSunAmount( pSunAmountUnbumped, pSunAmountUnbumped + 1, pSunAmountUnbumped + 2, pSunAmountUnbumped + 3 );
+					}
 				}
 			}
 			
@@ -1501,7 +2067,7 @@ void CVradStaticPropMgr::ComputeLighting( CStaticProp &prop, int iThread, int pr
 }
 
 //-----------------------------------------------------------------------------
-// Write the lighitng to bsp pak lump
+// Write the lighting to bsp pak lump
 //-----------------------------------------------------------------------------
 void CVradStaticPropMgr::SerializeLighting()
 {
@@ -1522,10 +2088,6 @@ void CVradStaticPropMgr::SerializeLighting()
 	int size;
 	for (int i = 0; i < count; ++i)
 	{
-		// no need to write this file if we didn't compute the data
-		// props marked this way will not load the info anyway 
-		if ( m_StaticProps[i].m_Flags & STATIC_PROP_NO_PER_VERTEX_LIGHTING )
-			continue;
 
 		if (g_bHDR)
 		{
@@ -1539,13 +2101,15 @@ void CVradStaticPropMgr::SerializeLighting()
 		int totalVertexes = 0;
 		for ( int j=0; j<m_StaticProps[i].m_MeshData.Count(); j++ )
 		{
-			totalVertexes += m_StaticProps[i].m_MeshData[j].m_VertexColors.Count();
+			totalVertexes += m_StaticProps[i].m_MeshData[j].m_numVerts;
 		}
+
+		int numLightingComponents = g_numVradStaticPropsLightingStreams;
 
 		// allocate a buffer with enough padding for alignment
 		size = sizeof( HardwareVerts::FileHeader_t ) + 
 				m_StaticProps[i].m_MeshData.Count()*sizeof(HardwareVerts::MeshHeader_t) +
-				totalVertexes*4 + 2*512;
+				totalVertexes*4*numLightingComponents + 2*512;
 		utlBuf.EnsureCapacity( size );
 		Q_memset( utlBuf.Base(), 0, size );
 
@@ -1553,13 +2117,13 @@ void CVradStaticPropMgr::SerializeLighting()
 
 		// align to start of vertex data
 		unsigned char *pVertexData = (unsigned char *)(sizeof( HardwareVerts::FileHeader_t ) + m_StaticProps[i].m_MeshData.Count()*sizeof(HardwareVerts::MeshHeader_t));
-		pVertexData = (unsigned char*)pVhvHdr + ALIGN_TO_POW2( (unsigned int)pVertexData, 512 );
+		pVertexData = (unsigned char*)pVhvHdr + ALIGN_TO_POW2( (size_t)pVertexData, 512 );
 		
 		// construct header
 		pVhvHdr->m_nVersion     = VHV_VERSION;
 		pVhvHdr->m_nChecksum    = m_StaticPropDict[m_StaticProps[i].m_ModelIdx].m_pStudioHdr->checksum;
-		pVhvHdr->m_nVertexFlags = VERTEX_COLOR;
-		pVhvHdr->m_nVertexSize  = 4;
+		pVhvHdr->m_nVertexFlags = ( numLightingComponents > 1 ) ? VERTEX_NORMAL : VERTEX_COLOR;
+		pVhvHdr->m_nVertexSize  = 4 * numLightingComponents;
 		pVhvHdr->m_nVertexes    = totalVertexes;
 		pVhvHdr->m_nMeshes      = m_StaticProps[i].m_MeshData.Count();
 
@@ -1568,16 +2132,19 @@ void CVradStaticPropMgr::SerializeLighting()
 			// construct mesh dictionary
 			HardwareVerts::MeshHeader_t *pMesh = pVhvHdr->pMesh( n );
 			pMesh->m_nLod      = m_StaticProps[i].m_MeshData[n].m_nLod;
-			pMesh->m_nVertexes = m_StaticProps[i].m_MeshData[n].m_VertexColors.Count();
-			pMesh->m_nOffset   = (unsigned int)pVertexData - (unsigned int)pVhvHdr; 
+			pMesh->m_nVertexes = m_StaticProps[i].m_MeshData[n].m_numVerts;
+			pMesh->m_nOffset   = (size_t)pVertexData - (size_t)pVhvHdr; 
 
 			// construct vertexes
-			for (int k=0; k<pMesh->m_nVertexes; k++)
+			for (int k=0; k<m_StaticProps[i].m_MeshData[n].m_VertColorData.Count(); k++)
 			{
-				Vector &vertexColor = m_StaticProps[i].m_MeshData[n].m_VertexColors[k];
+				Vector &vector = m_StaticProps[i].m_MeshData[n].m_VertColorData[k].AsVector3D();
+
+				//if ( (vector.x > 1024.0f) || (vector.y > 1024.0f) || (vector.z > 1024.0f) )s
+				//	Msg(" *** out of range prop lighting *** \n");
 
 				ColorRGBExp32 rgbColor;
-				VectorToColorRGBExp32( vertexColor, rgbColor );
+				VectorToColorRGBExp32( vector, rgbColor );
 				unsigned char dstColor[4];
 				ConvertRGBExp32ToRGBA8888( &rgbColor, dstColor );
 
@@ -1585,76 +2152,24 @@ void CVradStaticPropMgr::SerializeLighting()
 				pVertexData[0] = dstColor[2];
 				pVertexData[1] = dstColor[1];
 				pVertexData[2] = dstColor[0];
-				pVertexData[3] = dstColor[3];
+
+				// Use the unmodified lighting data to generate the sun percentage, not the output of the RGBE conversions above!
+				float flSunAmount = m_StaticProps[i].m_MeshData[n].m_VertColorData[k].w;
+				pVertexData[3] = uint8( clamp( flSunAmount, 0.0f, 1.0f ) * 255.0f + 0.5f );
+
 				pVertexData += 4;
 			}
 		}
 
 		// align to end of file
-		pVertexData = (unsigned char *)((unsigned int)pVertexData - (unsigned int)pVhvHdr);
-		pVertexData = (unsigned char*)pVhvHdr + ALIGN_TO_POW2( (unsigned int)pVertexData, 512 );
+		pVertexData = (unsigned char *)((size_t)pVertexData - (size_t)pVhvHdr);
+		pVertexData = (unsigned char*)pVhvHdr + ALIGN_TO_POW2( (size_t)pVertexData, 512 );
 
 		AddBufferToPak( GetPakFile(), filename, (void*)pVhvHdr, pVertexData - (unsigned char*)pVhvHdr, false );
 	}
-
-	for (int i = 0; i < count; ++i)
-	{
-		const int kAlignment = 512;
-		// no need to write this file if we didn't compute the data
-		// props marked this way will not load the info anyway 
-		if (m_StaticProps[i].m_Flags & STATIC_PROP_NO_PER_TEXEL_LIGHTING)
-			continue;
-
-		sprintf(filename, "texelslighting_%d.ppl", i);
-
-		ImageFormat fmt = m_StaticProps[i].m_LightmapImageFormat;
-
-		unsigned int totalTexelSizeBytes = 0;
-		for (int j = 0; j < m_StaticProps[i].m_MeshData.Count(); j++)
-		{
-			totalTexelSizeBytes += m_StaticProps[i].m_MeshData[j].m_TexelsEncoded.Count();
-		}
-
-		// allocate a buffer with enough padding for alignment
-		size = sizeof(HardwareTexels::FileHeader_t) 
-			 + m_StaticProps[i].m_MeshData.Count() * sizeof(HardwareTexels::MeshHeader_t) 
-			 + totalTexelSizeBytes
-			 + 2 * kAlignment;
-		
-		utlBuf.EnsureCapacity(size);
-		Q_memset(utlBuf.Base(), 0, size);
-
-		HardwareTexels::FileHeader_t *pVhtHdr = (HardwareTexels::FileHeader_t *)utlBuf.Base();
-
-		// align start of texel data
-		unsigned char *pTexelData = (unsigned char *)(sizeof(HardwareTexels::FileHeader_t) + m_StaticProps[i].m_MeshData.Count() * sizeof(HardwareTexels::MeshHeader_t));
-		pTexelData = (unsigned char*)pVhtHdr + ALIGN_TO_POW2((unsigned int)pTexelData, kAlignment);
-
-		pVhtHdr->m_nVersion	    = VHT_VERSION;
-		pVhtHdr->m_nChecksum    = m_StaticPropDict[m_StaticProps[i].m_ModelIdx].m_pStudioHdr->checksum;
-		pVhtHdr->m_nTexelFormat = fmt;
-		pVhtHdr->m_nMeshes      = m_StaticProps[i].m_MeshData.Count();
-
-		for (int n = 0; n < pVhtHdr->m_nMeshes; n++)
-		{
-			HardwareTexels::MeshHeader_t *pMesh = pVhtHdr->pMesh(n);
-			pMesh->m_nLod = m_StaticProps[i].m_MeshData[n].m_nLod;
-			pMesh->m_nOffset = (unsigned int)pTexelData - (unsigned int)pVhtHdr;
-			pMesh->m_nBytes = m_StaticProps[i].m_MeshData[n].m_TexelsEncoded.Count();
-			pMesh->m_nWidth = m_StaticProps[i].m_LightmapImageWidth;
-			pMesh->m_nHeight = m_StaticProps[i].m_LightmapImageHeight;
-
-			Q_memcpy(pTexelData, m_StaticProps[i].m_MeshData[n].m_TexelsEncoded.Base(), m_StaticProps[i].m_MeshData[n].m_TexelsEncoded.Count());
-			pTexelData += m_StaticProps[i].m_MeshData[n].m_TexelsEncoded.Count();
-		}
-
-		pTexelData = (unsigned char *)((unsigned int)pTexelData - (unsigned int)pVhtHdr);
-		pTexelData = (unsigned char*)pVhtHdr + ALIGN_TO_POW2((unsigned int)pTexelData, kAlignment);
-
-		AddBufferToPak(GetPakFile(), filename, (void*)pVhtHdr, pTexelData - (unsigned char*)pVhtHdr, false);
-	}
 }
 
+#ifdef MPI
 void CVradStaticPropMgr::VMPI_ProcessStaticProp_Static( int iThread, uint64 iStaticProp, MessageBuffer *pBuf )
 {
 	g_StaticPropMgr.VMPI_ProcessStaticProp( iThread, iStaticProp, pBuf );
@@ -1688,17 +2203,6 @@ void CVradStaticPropMgr::VMPI_ProcessStaticProp( int iThread, int iStaticProp, M
 		pBuf->write( &count, sizeof( count ) );
 		pBuf->write( curList.Base(), curList.Count() * sizeof( colorVertex_t ) );
 	}
-
-	nLists = results.m_ColorTexelsArrays.Count();
-	pBuf->write(&nLists, sizeof(nLists));
-
-	for (int i = 0; i < nLists; i++)
-	{
-		CUtlVector<colorTexel_t> &curList = *results.m_ColorTexelsArrays[i];
-		int count = curList.Count();
-		pBuf->write(&count, sizeof(count));
-		pBuf->write(curList.Base(), curList.Count() * sizeof(colorTexel_t));
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -1722,31 +2226,18 @@ void CVradStaticPropMgr::VMPI_ReceiveStaticPropResults( int iStaticProp, Message
 		pList->SetSize( count );
 		pBuf->read( pList->Base(), count * sizeof( colorVertex_t ) );
 	}
-
-	pBuf->read(&nLists, sizeof(nLists));
-
-	for (int i = 0; i < nLists; i++)
-	{
-		CUtlVector<colorTexel_t> *pList = new CUtlVector<colorTexel_t>;
-		results.m_ColorTexelsArrays.AddToTail(pList);
-
-		int count;
-		pBuf->read(&count, sizeof(count));
-		pList->SetSize(count);
-		pBuf->read(pList->Base(), count * sizeof(colorTexel_t));
-	}
 	
 	// Apply the results.
-	ApplyLightingToStaticProp( iStaticProp, m_StaticProps[iStaticProp], &results );
+	ApplyLightingToStaticProp( m_StaticProps[iStaticProp], &results );
 }
-
+#endif
 
 void CVradStaticPropMgr::ComputeLightingForProp( int iThread, int iStaticProp )
 {
 	// Compute the lighting.
 	CComputeStaticPropLightingResults results;
 	ComputeLighting( m_StaticProps[iStaticProp], iThread, iStaticProp, &results );
-	ApplyLightingToStaticProp( iStaticProp, m_StaticProps[iStaticProp], &results );
+	ApplyLightingToStaticProp( m_StaticProps[iStaticProp], &results );
 }
 
 void CVradStaticPropMgr::ThreadComputeStaticPropLighting( int iThread, void *pUserData )
@@ -1775,11 +2266,20 @@ void CVradStaticPropMgr::ComputeLighting( int iThread )
 		return;
 	}
 
+	double start = Plat_FloatTime();
+
 	StartPacifier( "Computing static prop lighting : " );
+
+#if 0
+	CGlViewBuffer glViewBuf;
+	glViewBuf.WriteKDTree( &g_RtEnv );
+	g_pFullFileSystem->WriteFile( "maps/rtenv.gl", "GAME", glViewBuf );
+#endif
 
 	// ensure any traces against us are ignored because we have no inherit lighting contribution
 	m_bIgnoreStaticPropTrace = true;
 
+#ifdef MPI
 	if ( g_bUseMPI )
 	{
 		// Distribute the work among the workers.
@@ -1787,22 +2287,26 @@ void CVradStaticPropMgr::ComputeLighting( int iThread )
 		
 		DistributeWork( 
 			count, 
-			VMPI_DISTRIBUTEWORK_PACKETID,
 			&CVradStaticPropMgr::VMPI_ProcessStaticProp_Static, 
 			&CVradStaticPropMgr::VMPI_ReceiveStaticPropResults_Static );
 	}
 	else
+#endif
 	{
 		RunThreadsOn(count, true, ThreadComputeStaticPropLighting);
 	}
 
 	// restore default
 	m_bIgnoreStaticPropTrace = false;
-
+	 
 	// save data to bsp
 	SerializeLighting();
 
 	EndPacifier( true );
+
+	double end = Plat_FloatTime();
+
+	DumpElapsedTime( (int)(end - start) );
 }
 
 //-----------------------------------------------------------------------------
@@ -1865,11 +2369,17 @@ void CVradStaticPropMgr::AddPolysForRayTrace( void )
 		if ( !pStudioHdr || !pVtxHdr )
 		{
 			// must have model and its verts for decoding triangles
-			return;
+			// must have model and its verts for decoding triangles
+			printf( "Can't get studio header (%p) and vertex data (%p) for %s\n", pStudioHdr, pVtxHdr,
+					pStudioHdr ? pStudioHdr->name : "***unknown***" );
+			continue;
 		}
 		// only init the triangle table the first time
 		bool bInitTriangles = dict.m_triangleMaterialIndex.Count() ? false : true;
 		int triangleIndex = 0;
+		// transform position into world coordinate system
+		matrix3x4_t	matrix;
+		AngleMatrix( prop.m_Angles, prop.m_Origin, matrix );
 
 		// meshes are deeply hierarchial, divided between three stores, follow the white rabbit
 		// body parts -> models -> lod meshes -> strip groups -> strips
@@ -1928,77 +2438,65 @@ void CVradStaticPropMgr::AddPolysForRayTrace( void )
 						{
 							OptimizedModel::StripHeader_t *pStrip = pStripGroup->pStrip( nStrip );
 
-							if ( pStrip->flags & OptimizedModel::STRIP_IS_TRILIST )
+							for ( int i = 0; i < pStrip->numIndices; i += 3 )
 							{
-								for ( int i = 0; i < pStrip->numIndices; i += 3 )
+								int idx = pStrip->indexOffset + i;
+
+								unsigned short i1 = *pStripGroup->pIndex( idx );
+								unsigned short i2 = *pStripGroup->pIndex( idx + 1 );
+								unsigned short i3 = *pStripGroup->pIndex( idx + 2 );
+
+								int vertex1 = pStripGroup->pVertex( i1 )->origMeshVertID;
+								int vertex2 = pStripGroup->pVertex( i2 )->origMeshVertID;
+								int vertex3 = pStripGroup->pVertex( i3 )->origMeshVertID;
+
+								// transform position into world coordinate system
+								matrix3x4_t	matrix;
+								AngleMatrix( prop.m_Angles, prop.m_Origin, matrix );
+								Vector position1;
+								Vector position2;
+								Vector position3;
+								VectorTransform( *vertData->Position( vertex1 ), matrix, position1 );
+								VectorTransform( *vertData->Position( vertex2 ), matrix, position2 );
+								VectorTransform( *vertData->Position( vertex3 ), matrix, position3 );
+								unsigned short flags = 0;
+								int materialIndex = -1;
+								Vector color = vec3_origin;
+								if ( shadowTextureIndex >= 0 )
 								{
-									int idx = pStrip->indexOffset + i;
-
-									unsigned short i1 = *pStripGroup->pIndex( idx );
-									unsigned short i2 = *pStripGroup->pIndex( idx + 1 );
-									unsigned short i3 = *pStripGroup->pIndex( idx + 2 );
-
-									int vertex1 = pStripGroup->pVertex( i1 )->origMeshVertID;
-									int vertex2 = pStripGroup->pVertex( i2 )->origMeshVertID;
-									int vertex3 = pStripGroup->pVertex( i3 )->origMeshVertID;
-
-									// transform position into world coordinate system
-									matrix3x4_t	matrix;
-									AngleMatrix( prop.m_Angles, prop.m_Origin, matrix );
-
-									Vector position1;
-									Vector position2;
-									Vector position3;
-									VectorTransform( *vertData->Position( vertex1 ), matrix, position1 );
-									VectorTransform( *vertData->Position( vertex2 ), matrix, position2 );
-									VectorTransform( *vertData->Position( vertex3 ), matrix, position3 );
-									unsigned short flags = 0;
-									int materialIndex = -1;
-									Vector color = vec3_origin;
-									if ( shadowTextureIndex >= 0 )
+									if ( bInitTriangles )
 									{
-										if ( bInitTriangles )
+										// add texture space and texture index to material database
+										// now
+										float coverage = g_ShadowTextureList.ComputeCoverageForTriangle(shadowTextureIndex, *vertData->Texcoord(vertex1), *vertData->Texcoord(vertex2), *vertData->Texcoord(vertex3) );
+										if ( coverage < 1.0f )
 										{
-											// add texture space and texture index to material database
-											// now
-											float coverage = g_ShadowTextureList.ComputeCoverageForTriangle(shadowTextureIndex, *vertData->Texcoord(vertex1), *vertData->Texcoord(vertex2), *vertData->Texcoord(vertex3) );
-											if ( coverage < 1.0f )
-											{
-												materialIndex = g_ShadowTextureList.AddMaterialEntry( shadowTextureIndex, *vertData->Texcoord(vertex1), *vertData->Texcoord(vertex2), *vertData->Texcoord(vertex3) );
-												color.x = coverage;
-											}
-											else
-											{
-												materialIndex = -1;
-											}
-											dict.m_triangleMaterialIndex.AddToTail(materialIndex);
+											materialIndex = g_ShadowTextureList.AddMaterialEntry( shadowTextureIndex, *vertData->Texcoord(vertex1), *vertData->Texcoord(vertex2), *vertData->Texcoord(vertex3) );
+											color.x = coverage;
 										}
 										else
 										{
-											materialIndex = dict.m_triangleMaterialIndex[triangleIndex];
-											triangleIndex++;
+											materialIndex = -1;
 										}
-										if ( materialIndex >= 0 )
-										{
-											flags = FCACHETRI_TRANSPARENT;
-										}
+										dict.m_triangleMaterialIndex.AddToTail(materialIndex);
 									}
+									else
+									{
+										materialIndex = dict.m_triangleMaterialIndex[triangleIndex];
+										triangleIndex++;
+									}
+									if ( materialIndex >= 0 )
+									{
+										flags = FCACHETRI_TRANSPARENT;
+									}
+								}
 // 		printf( "\ngl 3\n" );
 // 		printf( "gl %6.3f %6.3f %6.3f 1 0 0\n", XYZ(position1));
 // 		printf( "gl %6.3f %6.3f %6.3f 0 1 0\n", XYZ(position2));
 // 		printf( "gl %6.3f %6.3f %6.3f 0 0 1\n", XYZ(position3));
-									g_RtEnv.AddTriangle( TRACE_ID_STATICPROP | nProp,
-														 position1, position2, position3,
-														 color, flags, materialIndex);
-								}
-							}
-							else
-							{
-								// all tris expected to be discrete tri lists
-								// must fixme if stripping ever occurs
-								printf( "unexpected strips found\n" );
-								Assert( 0 );
-								return;
+								g_RtEnv.AddTriangle( TRACE_ID_STATICPROP | nProp,
+													 position1, position2, position3,
+													 color, flags, materialIndex);
 							}
 						}
 					}
@@ -2112,50 +2610,39 @@ void CVradStaticPropMgr::BuildTriList( CStaticProp &prop )
 					{
 						OptimizedModel::StripHeader_t *pStrip = pStripGroup->pStrip( nStrip );
 
-						if ( pStrip->flags & OptimizedModel::STRIP_IS_TRILIST )
+						for ( int i = 0; i < pStrip->numIndices; i += 3 )
 						{
-							for ( int i = 0; i < pStrip->numIndices; i += 3 )
-							{
-								int idx = pStrip->indexOffset + i;
+							int idx = pStrip->indexOffset + i;
 
-								unsigned short i1 = *pStripGroup->pIndex( idx );
-								unsigned short i2 = *pStripGroup->pIndex( idx + 1 );
-								unsigned short i3 = *pStripGroup->pIndex( idx + 2 );
+							unsigned short i1 = *pStripGroup->pIndex( idx );
+							unsigned short i2 = *pStripGroup->pIndex( idx + 1 );
+							unsigned short i3 = *pStripGroup->pIndex( idx + 2 );
 
-								int vertex1 = pStripGroup->pVertex( i1 )->origMeshVertID;
-								int vertex2 = pStripGroup->pVertex( i2 )->origMeshVertID;
-								int vertex3 = pStripGroup->pVertex( i3 )->origMeshVertID;
+							int vertex1 = pStripGroup->pVertex( i1 )->origMeshVertID;
+							int vertex2 = pStripGroup->pVertex( i2 )->origMeshVertID;
+							int vertex3 = pStripGroup->pVertex( i3 )->origMeshVertID;
 
-								// transform position into world coordinate system
-								matrix3x4_t	matrix;
-								AngleMatrix( prop.m_Angles, prop.m_Origin, matrix );
+							// transform position into world coordinate system
+							matrix3x4_t	matrix;
+							AngleMatrix( prop.m_Angles, prop.m_Origin, matrix );
 
-								Vector position1;
-								Vector position2;
-								Vector position3;
-								VectorTransform( *vertData->Position( vertex1 ), matrix, position1 );
-								VectorTransform( *vertData->Position( vertex2 ), matrix, position2 );
-								VectorTransform( *vertData->Position( vertex3 ), matrix, position3 );
+							Vector position1;
+							Vector position2;
+							Vector position3;
+							VectorTransform( *vertData->Position( vertex1 ), matrix, position1 );
+							VectorTransform( *vertData->Position( vertex2 ), matrix, position2 );
+							VectorTransform( *vertData->Position( vertex3 ), matrix, position3 );
 
-								Vector normal1;
-								Vector normal2;
-								Vector normal3;
-								VectorTransform( *vertData->Normal( vertex1 ), matrix, normal1 );
-								VectorTransform( *vertData->Normal( vertex2 ), matrix, normal2 );
-								VectorTransform( *vertData->Normal( vertex3 ), matrix, normal3 );
+							Vector normal1;
+							Vector normal2;
+							Vector normal3;
+							VectorTransform( *vertData->Normal( vertex1 ), matrix, normal1 );
+							VectorTransform( *vertData->Normal( vertex2 ), matrix, normal2 );
+							VectorTransform( *vertData->Normal( vertex3 ), matrix, normal3 );
 
-								AddTriVertsToList( triListVerts, pMesh->vertexoffset + vertex1, position1, position1, position2, position3, normal1, normal2, normal3 );
-								AddTriVertsToList( triListVerts, pMesh->vertexoffset + vertex2, position2, position1, position2, position3, normal1, normal2, normal3 );
-								AddTriVertsToList( triListVerts, pMesh->vertexoffset + vertex3, position3, position1, position2, position3, normal1, normal2, normal3 );
-							}
-						}
-						else
-						{
-							// all tris expected to be discrete tri lists
-							// must fixme if stripping ever occurs
-							printf( "unexpected strips found\n" );
-							Assert( 0 );
-							return;
+							AddTriVertsToList( triListVerts, pMesh->vertexoffset + vertex1, position1, position1, position2, position3, normal1, normal2, normal3 );
+							AddTriVertsToList( triListVerts, pMesh->vertexoffset + vertex2, position2, position1, position2, position3, normal1, normal2, normal3 );
+							AddTriVertsToList( triListVerts, pMesh->vertexoffset + vertex3, position3, position1, position2, position3, normal1, normal2, normal3 );
 						}
 					}
 				}
@@ -2169,9 +2656,9 @@ const vertexFileHeader_t * mstudiomodel_t::CacheVertexData( void *pModelData )
 	studiohdr_t *pActiveStudioHdr = static_cast<studiohdr_t *>(pModelData);
 	Assert( pActiveStudioHdr );
 
-	if ( pActiveStudioHdr->pVertexBase )
+	if ( pActiveStudioHdr->VertexBase() )
 	{
-		return (vertexFileHeader_t *)pActiveStudioHdr->pVertexBase;
+		return (vertexFileHeader_t *)pActiveStudioHdr->VertexBase();
 	}
 
 	// mandatory callback to make requested data resident
@@ -2183,23 +2670,20 @@ const vertexFileHeader_t * mstudiomodel_t::CacheVertexData( void *pModelData )
 	strcat( fileName, ".vvd" );
 
 	// load the model
-	FileHandle_t fileHandle = g_pFileSystem->Open( fileName, "rb" );
-	if ( !fileHandle )
+	CUtlBuffer bufData;
+	if ( !LoadFile( fileName, bufData ) )
 	{
 		Error( "Unable to load vertex data \"%s\"\n", fileName );
 	}
 
 	// Get the file size
-	int vvdSize = g_pFileSystem->Size( fileHandle );
+	int vvdSize = bufData.TellPut();
 	if ( vvdSize == 0 )
 	{
-		g_pFileSystem->Close( fileHandle );
 		Error( "Bad size for vertex data \"%s\"\n", fileName );
 	}
 
-	vertexFileHeader_t *pVvdHdr = (vertexFileHeader_t *)malloc( vvdSize );
-	g_pFileSystem->Read( pVvdHdr, vvdSize, fileHandle );
-	g_pFileSystem->Close( fileHandle );
+	vertexFileHeader_t *pVvdHdr = (vertexFileHeader_t *) bufData.Base();
 
 	// check header
 	if ( pVvdHdr->id != MODEL_VERTEX_FILE_ID )
@@ -2224,471 +2708,150 @@ const vertexFileHeader_t * mstudiomodel_t::CacheVertexData( void *pModelData )
 	}
 
 	// load vertexes and run fixups
-	Studio_LoadVertexes( pVvdHdr, pNewVvdHdr, 0, true );
+	Studio_LoadVertexes(pVvdHdr, pNewVvdHdr, 0, true);
 
 	// discard original
-	free( pVvdHdr );
 	pVvdHdr = pNewVvdHdr;
 
-	pActiveStudioHdr->pVertexBase = (void*)pVvdHdr;
+	pActiveStudioHdr->SetVertexBase( (void*)pVvdHdr );
 	return pVvdHdr;
 }
 
-// ------------------------------------------------------------------------------------------------
-// ------------------------------------------------------------------------------------------------
-// ------------------------------------------------------------------------------------------------
-struct ColorTexelValue
+extern float totalarea;
+extern unsigned num_degenerate_faces;
+extern int fakeplanes;
+extern int	PlaneTypeForNormal( Vector& normal );
+
+void MakePatchForTriangle( winding_t *w, Vector vRefl, int nStaticPropIdx )
 {
-	Vector mLinearColor;	// Linear color value for this texel
-	bool mValidData;		// Whether there is valid data in this texel.
-	size_t mTriangleIndex;	// Which triangle we used to generate the texel.
-};
+	float	    area;
+	CPatch		*patch;
+	Vector		centroid( 0, 0, 0 );
 
-// ------------------------------------------------------------------------------------------------
-inline int ComputeLinearPos( int _x, int _y, int _resX, int _resY )
-{
-	return Min( Max( 0, _y ), _resY - 1 ) * _resX
-		 + Min( Max( 0, _x ), _resX - 1 );
-}
-
-// ------------------------------------------------------------------------------------------------
-inline float ComputeBarycentricDistanceToTri( Vector _barycentricCoord, Vector2D _v[3] )
-{
-	Vector2D realPos = _barycentricCoord.x * _v[0]
-		             + _barycentricCoord.y * _v[1]
-					 + _barycentricCoord.z * _v[2];
-
-	int minIndex = 0;
-	float minVal = _barycentricCoord[0];
-	for (int i = 1; i < 3; ++i) {
-		if (_barycentricCoord[i] < minVal) {
-			minVal = _barycentricCoord[i];
-			minIndex = i;
-		}
-	}
-
-	Vector2D& first  = _v[ (minIndex + 1) % 3];
-	Vector2D& second = _v[ (minIndex + 2) % 3];
-
-	return CalcDistanceToLineSegment2D( realPos, first, second );
-}
-
-// ------------------------------------------------------------------------------------------------
-static void GenerateLightmapSamplesForMesh( const matrix3x4_t& _matPos, const matrix3x4_t& _matNormal, int _iThread, int _skipProp, int _flags, int _lightmapResX, int _lightmapResY, studiohdr_t* _pStudioHdr, mstudiomodel_t* _pStudioModel, OptimizedModel::ModelHeader_t* _pVtxModel, int _meshID, CComputeStaticPropLightingResults *_outResults )
-{
-	// Could iterate and gen this if needed.
-	int nLod = 0;
-
-	OptimizedModel::ModelLODHeader_t *pVtxLOD = _pVtxModel->pLOD(nLod);
-
-	CUtlVector<colorTexel_t> &colorTexels = (*_outResults->m_ColorTexelsArrays.Tail());
-	const int cTotalPixelCount = _lightmapResX * _lightmapResY;
-	colorTexels.EnsureCount(cTotalPixelCount);
-	memset(colorTexels.Base(), 0, colorTexels.Count() * sizeof(colorTexel_t));
-
-	for (int i = 0; i < colorTexels.Count(); ++i) {
-		colorTexels[i].m_fDistanceToTri = FLT_MAX;	
-	}
-
-	mstudiomesh_t* pMesh = _pStudioModel->pMesh(_meshID);
-	OptimizedModel::MeshHeader_t* pVtxMesh = pVtxLOD->pMesh(_meshID);
-	const mstudio_meshvertexdata_t *vertData = pMesh->GetVertexData((void *)_pStudioHdr);
-	Assert(vertData); // This can only return NULL on X360 for now
-
-	for (int nGroup = 0; nGroup < pVtxMesh->numStripGroups; ++nGroup)
+	area = WindingArea( w );
+	if ( area <= 0 )
 	{
-		OptimizedModel::StripGroupHeader_t* pStripGroup = pVtxMesh->pStripGroup(nGroup);
+		num_degenerate_faces++;
+		return;
+	}
 
-		int nStrip;
-		for (nStrip = 0; nStrip < pStripGroup->numStrips; nStrip++)
+	totalarea += area;
+
+	// get a patch
+	int ndxPatch = g_Patches.AddToTail();
+	patch = &g_Patches[ ndxPatch ];
+	memset( patch, 0, sizeof( CPatch ) );
+	patch->ndxNext = g_Patches.InvalidIndex();
+	patch->ndxNextParent = g_Patches.InvalidIndex();
+	patch->ndxNextClusterChild = g_Patches.InvalidIndex();
+	patch->child1 = g_Patches.InvalidIndex();
+	patch->child2 = g_Patches.InvalidIndex();
+	patch->parent = g_Patches.InvalidIndex();
+	patch->needsBumpmap = false;
+	patch->staticPropIdx = nStaticPropIdx;
+
+	patch->scale[ 0 ] = patch->scale[ 1 ] = 1.0f;
+	patch->area = area;
+	patch->sky = false;
+
+	// chop scaled up lightmaps coarser
+	patch->luxscale = 16.0f;
+	patch->chop = maxchop;
+
+	patch->winding = w;
+
+	patch->plane = new dplane_t;
+
+	Vector vecNormal;
+	CrossProduct( w->p[ 2 ] - w->p[ 0 ], w->p[ 1 ] - w->p[ 0 ], vecNormal );
+	VectorNormalize( vecNormal );
+	VectorCopy( vecNormal, patch->plane->normal );
+
+	patch->plane->dist = vecNormal.Dot( w->p[ 0 ] );
+	patch->plane->type = PlaneTypeForNormal( patch->plane->normal );
+	patch->planeDist = patch->plane->dist;
+
+	patch->faceNumber = -1;		// This is a bit hacky and is used to identify static prop patches in other parts of the code
+	WindingCenter( w, patch->origin );
+
+	VectorCopy( patch->plane->normal, patch->normal );
+
+	WindingBounds( w, patch->face_mins, patch->face_maxs );
+	VectorCopy( patch->face_mins, patch->mins );
+	VectorCopy( patch->face_maxs, patch->maxs );
+
+	patch->baselight.Init( 0.0f, 0.0f, 0.0f );
+	patch->basearea = 1;
+	patch->reflectivity = vRefl;
+}
+
+
+
+void CVradStaticPropMgr::MakePatches()
+{
+	int count = m_StaticProps.Count();
+	if ( !count )
+	{
+		// nothing to do
+		return;
+	}
+
+	// Triangle coverage of 1 (full coverage)
+	Vector fullCoverage;
+	fullCoverage.x = 1.0f;
+	int nPatchCount = 0;
+
+	//IScratchPad3D *pPad = ScratchPad3D_Create();
+	//pPad->SetAutoFlush( false );
+	for ( int nProp = 0; nProp < count; ++nProp )
+	{
+		CStaticProp &prop = m_StaticProps[ nProp ];
+		StaticPropDict_t &dict = m_StaticPropDict[ prop.m_ModelIdx ];
+
+		if ( dict.m_pModel )
 		{
-			OptimizedModel::StripHeader_t *pStrip = pStripGroup->pStrip(nStrip);
-
-			// If this hits, re-factor the code to iterate over triangles, and build the triangles
-			// from the underlying structures.
-			Assert((pStrip->flags & OptimizedModel::STRIP_IS_TRISTRIP) == 0);
-
-			if (pStrip->flags & OptimizedModel::STRIP_IS_TRILIST)
+			// Get material, get reflectivity
+			VMatrix xform;
+			xform.SetupMatrixOrgAngles( prop.m_Origin, prop.m_Angles );
+			ICollisionQuery *queryModel = s_pPhysCollision->CreateQueryModel( dict.m_pModel );
+			for ( int nConvex = 0; nConvex < queryModel->ConvexCount(); ++nConvex )
 			{
-				for (int i = 0; i < pStrip->numIndices; i += 3)
+				for ( int nTri = 0; nTri < queryModel->TriangleCount( nConvex ); ++nTri )
 				{
-					int idx = pStrip->indexOffset + i;
+					Vector verts[ 3 ];
+					queryModel->GetTriangleVerts( nConvex, nTri, verts );
+					for ( int nVert = 0; nVert < 3; ++nVert )
+						verts[ nVert ] = xform.VMul4x3( verts[ nVert ] );
 
-					unsigned short i1 = *pStripGroup->pIndex(idx);
-					unsigned short i2 = *pStripGroup->pIndex(idx + 1);
-					unsigned short i3 = *pStripGroup->pIndex(idx + 2);
+					//pPad->DrawPolygon( CSPVertList( verts, 3, CSPColor( prop.m_vReflectivity ) ) );
+					//pPad->DrawLine( CSPVert( g_Patches.Tail().origin ), CSPVert( g_Patches.Tail().origin + 5.0f * g_Patches.Tail().normal) );
 
-					int vertex1 = pStripGroup->pVertex(i1)->origMeshVertID;
-					int vertex2 = pStripGroup->pVertex(i2)->origMeshVertID;
-					int vertex3 = pStripGroup->pVertex(i3)->origMeshVertID;
-
-					Vector modelPos[3] = {
-						*vertData->Position(vertex1),
-						*vertData->Position(vertex2),
-						*vertData->Position(vertex3)
-					};
-
-					Vector modelNormal[3] = {
-						*vertData->Normal(vertex1),
-						*vertData->Normal(vertex2),
-						*vertData->Normal(vertex3)
-					};
-
-					Vector worldPos[3];
-					Vector worldNormal[3];
-
-					VectorTransform(modelPos[0], _matPos, worldPos[0]);
-					VectorTransform(modelPos[1], _matPos, worldPos[1]);
-					VectorTransform(modelPos[2], _matPos, worldPos[2]);
-
-					VectorTransform(modelNormal[0], _matNormal, worldNormal[0]);
-					VectorTransform(modelNormal[1], _matNormal, worldNormal[1]);
-					VectorTransform(modelNormal[2], _matNormal, worldNormal[2]);
-
-					Vector2D texcoord[3] = { 
-						*vertData->Texcoord(vertex1),
-						*vertData->Texcoord(vertex2),
-						*vertData->Texcoord(vertex3)
-					};
-
-					Rasterizer rasterizer(texcoord[0], texcoord[1], texcoord[2],
-					                      _lightmapResX, _lightmapResY);
-
-					for (auto it = rasterizer.begin(); it != rasterizer.end(); ++it)
+					winding_t *w = AllocWinding( 3 );
+					for ( int i = 0; i < 3; i++ )
 					{
-						size_t linearPos = rasterizer.GetLinearPos(it);
-						Assert(linearPos < cTotalPixelCount);
-
-						if ( colorTexels[linearPos].m_bValid )
-						{
-							continue;
-						}						
-
-						float ourDistancetoTri = ComputeBarycentricDistanceToTri( it->barycentric, texcoord );
-
-						bool doWrite =  it->insideTriangle
-							        || !colorTexels[linearPos].m_bPossiblyInteresting
-									||  colorTexels[linearPos].m_fDistanceToTri > ourDistancetoTri;
-
-						if (doWrite)
-						{
-							Vector itWorldPos = worldPos[0] * it->barycentric.x
-											  + worldPos[1] * it->barycentric.y
-											  + worldPos[2] * it->barycentric.z;
-
-							Vector itWorldNormal = worldNormal[0] * it->barycentric.x
-												 + worldNormal[1] * it->barycentric.y
-												 + worldNormal[2] * it->barycentric.z;
-							itWorldNormal.NormalizeInPlace();
-
-							colorTexels[linearPos].m_WorldPosition = itWorldPos;
-							colorTexels[linearPos].m_WorldNormal = itWorldNormal;
-							colorTexels[linearPos].m_bValid = it->insideTriangle;
-							colorTexels[linearPos].m_bPossiblyInteresting = true;
-							colorTexels[linearPos].m_fDistanceToTri = ourDistancetoTri;
-						}
+						w->p[ i ] = verts[ i ];
 					}
+					w->numpoints = 3;
+					MakePatchForTriangle( w, prop.m_vReflectivity, nProp );
+					//pPad->DrawPolygon( CSPVertList( verts, 3 ) );
+					//pPad->DrawLine( CSPVert( g_Patches.Tail().origin ), CSPVert( g_Patches.Tail().origin + 5.0f * g_Patches.Tail().normal) );
+					g_RtEnv_RadiosityPatches.AddTriangle( TRACE_ID_PATCH | (g_Patches.Count() - 1), verts[ 0 ], verts[ 1 ], verts[ 2 ], Vector( 1.0f, 1.0f, 1.0f ) );
+					nPatchCount++;
 				}
 			}
+			s_pPhysCollision->DestroyQueryModel( queryModel );
 		}
-	}
-
-	// Process neighbors to the valid region. Walk through the existing array, look for samples that
-	// are not valid but are adjacent to valid samples. Works if we are only bilinearly sampling
-	// on the other side.
-	// First attempt: Just pretend the triangle was larger and cast a ray from this new world pos 
-	// as above.
-	int linearPos = 0;
-	for ( int j = 0; j < _lightmapResY; ++j )
-	{
-		for (int i = 0; i < _lightmapResX; ++i )
+		else
 		{
-			bool shouldProcess = colorTexels[linearPos].m_bValid;
-			// Are any of the eight neighbors valid??
-			if ( colorTexels[linearPos].m_bPossiblyInteresting )
-			{
-				// Look at our neighborhood (3x3 centerd on us). 
-				shouldProcess = shouldProcess
-				             || colorTexels[ComputeLinearPos( i - 1, j - 1, _lightmapResX, _lightmapResY )].m_bValid  // TL
-							 || colorTexels[ComputeLinearPos( i    , j - 1, _lightmapResX, _lightmapResY )].m_bValid  // T
-							 || colorTexels[ComputeLinearPos( i + 1, j - 1, _lightmapResX, _lightmapResY )].m_bValid  // TR
-
-							 || colorTexels[ComputeLinearPos( i - 1, j    , _lightmapResX, _lightmapResY )].m_bValid  // L
-							 || colorTexels[ComputeLinearPos( i + 1, j    , _lightmapResX, _lightmapResY )].m_bValid  // R
-
-							 || colorTexels[ComputeLinearPos( i - 1, j + 1, _lightmapResX, _lightmapResY )].m_bValid  // BL
-							 || colorTexels[ComputeLinearPos( i    , j + 1, _lightmapResX, _lightmapResY )].m_bValid  // B
-							 || colorTexels[ComputeLinearPos( i + 1, j + 1, _lightmapResX, _lightmapResY )].m_bValid; // BR
-			}
-
-			if (shouldProcess)
-			{
-				Vector directColor(0, 0, 0),
-					   indirectColor(0, 0, 0);
-
-
-				ComputeDirectLightingAtPoint( colorTexels[linearPos].m_WorldPosition, colorTexels[linearPos].m_WorldNormal, directColor, _iThread, _skipProp, _flags);
-
-				if (numbounce >= 1) {
-					ComputeIndirectLightingAtPoint( colorTexels[linearPos].m_WorldPosition, colorTexels[linearPos].m_WorldNormal, indirectColor, _iThread, true, (_flags & GATHERLFLAGS_IGNORE_NORMALS) != 0 );
-				}
-
-				VectorAdd(directColor, indirectColor, colorTexels[linearPos].m_Color);
-			}
-
-			++linearPos;
+			// FIXME
+#if 0
+			VectorAdd( dict.m_Mins, prop.m_Origin, prop.m_mins );
+			VectorAdd( dict.m_Maxs, prop.m_Origin, prop.m_maxs );
+			g_RtEnv.AddAxisAlignedRectangularSolid( TRACE_ID_STATICPROP | nProp, prop.m_mins, prop.m_maxs, fullCoverage );
+#endif
 		}
 	}
-}
-
-// ------------------------------------------------------------------------------------------------
-static int GetTexelCount(unsigned int _resX, unsigned int _resY, bool _mipmaps)
-{
-	// Because they are unsigned, this is a != check--but if we were to change to ints, this would be
-	// the right assert (and it's no worse than != now). 
-	Assert(_resX > 0 && _resY > 0);
-
-	if (_mipmaps == false)
-		return _resX * _resY;
-
-	int retVal = 0;
-	while (_resX > 1 || _resY > 1) 
-	{
-		retVal += _resX * _resY;
-		_resX = max(1, _resX >> 1);
-		_resY = max(1, _resY >> 1);
-	}
-
-	// Add in the 1x1 mipmap level, which wasn't hit above. This could be done in the initializer of 
-	// retVal, but it's more obvious here. 
-	retVal += 1;
-
-	return retVal;
-}
-
-// ------------------------------------------------------------------------------------------------
-static void FilterFineMipmap(unsigned int _resX, unsigned int _resY, const CUtlVector<colorTexel_t>& _srcTexels, CUtlVector<Vector>* _outLinear)
-{
-	Assert(_outLinear);
-	// We can't filter in place, so go ahead and create a linear buffer here.
-	CUtlVector<Vector> filterSrc;
-	filterSrc.EnsureCount(_srcTexels.Count());
-
-	for (int i = 0; i < _srcTexels.Count(); ++i)
-	{
-		ColorRGBExp32 rgbColor;
-		VectorToColorRGBExp32(_srcTexels[i].m_Color, rgbColor);
-		ConvertRGBExp32ToLinear( &rgbColor, &(filterSrc[i]) );
-	}
-
-	const int cRadius = 1;
-	const float cOneOverDiameter = 1.0f / pow(2.0f * cRadius + 1.0f, 2.0f) ;
-	// Filter here.
-	for (int j = 0; j < _resY; ++j) 
-	{
-		for (int i = 0; i < _resX; ++i)
-		{
-			Vector value(0, 0, 0);
-			int thisIndex = ComputeLinearPos(i, j, _resX, _resY);
-
-			if (!_srcTexels[thisIndex].m_bValid)
-			{
-				(*_outLinear)[thisIndex] = filterSrc[thisIndex];
-				continue;
-			}
-
-			// TODO: Check ASM for this, unroll by hand if needed.
-			for ( int offsetJ = -cRadius; offsetJ <= cRadius; ++offsetJ )
-			{
-				for ( int offsetI = -cRadius; offsetI <= cRadius; ++offsetI )
-				{
-					int finalIndex = ComputeLinearPos( i + offsetI, j + offsetJ, _resX, _resY );
-					if ( !_srcTexels[finalIndex].m_bValid )
-					{
-						finalIndex = thisIndex;
-					}
-						
-					value += filterSrc[finalIndex];
-				}
-			}
-
-			(*_outLinear)[thisIndex] = value * cOneOverDiameter;
-		}
-	}
-}
-
-// ------------------------------------------------------------------------------------------------
-static void BuildFineMipmap(unsigned int _resX, unsigned int _resY, bool _applyFilter, const CUtlVector<colorTexel_t>& _srcTexels, CUtlVector<RGB888_t>* _outTexelsRGB888, CUtlVector<Vector>* _outLinear)
-{
-	// At least one of these needs to be non-null, otherwise what are we doing here?
-	Assert(_outTexelsRGB888 || _outLinear);
-	Assert(!_applyFilter || _outLinear);
-	Assert(_srcTexels.Count() == GetTexelCount(_resX, _resY, false));
-
-	int texelCount = GetTexelCount(_resX, _resY, true);
-
-	if (_outTexelsRGB888)
-		(*_outTexelsRGB888).EnsureCount(texelCount);
-
-	if (_outLinear)
-		(*_outLinear).EnsureCount(GetTexelCount(_resX, _resY, false));
-
-	// This code can take awhile, so minimize the branchiness of the inner-loop. 
-	if (_applyFilter)
-	{
-
-		FilterFineMipmap(_resX, _resY, _srcTexels, _outLinear);
-
-		if ( _outTexelsRGB888 )
-		{
-			for (int i = 0; i < _srcTexels.Count(); ++i) 
-			{
-				RGBA8888_t encodedColor;
-
-				Vector linearColor = (*_outLinear)[i];
-
-				ConvertLinearToRGBA8888( &linearColor, (unsigned char*)&encodedColor );
-				(*_outTexelsRGB888)[i].r = encodedColor.r;
-				(*_outTexelsRGB888)[i].g = encodedColor.g;
-				(*_outTexelsRGB888)[i].b = encodedColor.b;
-			}
-		}
-	}
-	else
-	{
-		for (int i = 0; i < _srcTexels.Count(); ++i) 
-		{
-			ColorRGBExp32 rgbColor;
-			RGBA8888_t encodedColor;
-			VectorToColorRGBExp32(_srcTexels[i].m_Color, rgbColor);
-			ConvertRGBExp32ToRGBA8888(&rgbColor, (unsigned char*)&encodedColor, (_outLinear ? (&(*_outLinear)[i]) : NULL) );
-			// We drop alpha on the floor here, if this were to fire we'd need to consider using a different compressed format.
-			Assert(encodedColor.a == 0xFF);
-
-			if (_outTexelsRGB888)
-			{
-				(*_outTexelsRGB888)[i].r = encodedColor.r;
-				(*_outTexelsRGB888)[i].g = encodedColor.g;
-				(*_outTexelsRGB888)[i].b = encodedColor.b;
-			}
-		}
-	}
-}
-
-// ------------------------------------------------------------------------------------------------
-static void FilterCoarserMipmaps(unsigned int _resX, unsigned int _resY, CUtlVector<Vector>* _scratchLinear, CUtlVector<RGB888_t> *_outTexelsRGB888)
-{
-	Assert(_outTexelsRGB888);
-
-	int srcResX = _resX;
-	int srcResY = _resY;
-	int dstResX = max(1, (srcResX >> 1));
-	int dstResY = max(1, (srcResY >> 1));
-	int dstOffset = GetTexelCount(srcResX, srcResY, false);
-
-	// Build mipmaps here, after being converted to linear space. 
-	// TODO: Should do better filtering for downsampling. But this will work for now.
-	while (srcResX > 1 || srcResY > 1)
-	{
-		for (int j = 0; j < srcResY; j += 2) {
-			for (int i = 0; i < srcResX; i += 2) {
-				int srcCol0 = i;
-				int srcCol1 = i + 1 > srcResX - 1 ? srcResX - 1 : i + 1;
-				int srcRow0 = j;
-				int srcRow1 = j + 1 > srcResY - 1 ? srcResY - 1 : j + 1;;
-
-				int dstCol = i >> 1;
-				int dstRow = j >> 1;
-
-
-				const Vector& tl = (*_scratchLinear)[srcCol0 + (srcRow0 * srcResX)];
-				const Vector& tr = (*_scratchLinear)[srcCol1 + (srcRow0 * srcResX)];
-				const Vector& bl = (*_scratchLinear)[srcCol0 + (srcRow1 * srcResX)];
-				const Vector& br = (*_scratchLinear)[srcCol1 + (srcRow1 * srcResX)];
-
-				Vector sample = (tl + tr + bl + br) / 4.0f;
-
-				ConvertLinearToRGBA8888(&sample, (unsigned char*)&(*_outTexelsRGB888)[dstOffset + dstCol + dstRow * dstResX]);
-
-				// Also overwrite the srcBuffer to filter the next loop. This is safe because we won't be reading this source value
-				// again during this mipmap level.
-				(*_scratchLinear)[dstCol + dstRow * dstResX] = sample;
-			}
-		}
-
-		srcResX = dstResX;
-		srcResY = dstResY;
-		dstResX = max(1, (srcResX >> 1));
-		dstResY = max(1, (srcResY >> 1));
-		dstOffset += GetTexelCount(srcResX, srcResY, false);
-	}
-}
-
-// ------------------------------------------------------------------------------------------------
-static void ConvertToDestinationFormat(unsigned int _resX, unsigned int _resY, ImageFormat _destFmt, const CUtlVector<RGB888_t>& _scratchRBG888, CUtlMemory<byte>* _outTexture)
-{
-	const ImageFormat cSrcImageFormat = IMAGE_FORMAT_RGB888;
-
-	// Converts from the scratch RGB888 buffer, which should be fully filled out to the output texture.
-	int destMemoryUsage = ImageLoader::GetMemRequired(_resX, _resY, 1, _destFmt, true);
-	(*_outTexture).EnsureCapacity(destMemoryUsage);
-
-	int srcResX = _resX;
-	int srcResY = _resY;
-	int srcOffset = 0;
-	int dstOffset = 0;
-
-	// The usual case--that they'll be different.
-	if (cSrcImageFormat != _destFmt)
-	{
-		while (srcResX > 1 || srcResY > 1)
-		{
-			// Convert this mipmap level.
-			ImageLoader::ConvertImageFormat((unsigned char*)(&_scratchRBG888[srcOffset]), cSrcImageFormat, (*_outTexture).Base() + dstOffset, _destFmt, srcResX, srcResY);
-
-			// Then update offsets for the next mipmap level.
-			srcOffset += GetTexelCount(srcResX, srcResY, false);
-			dstOffset += ImageLoader::GetMemRequired(srcResX, srcResY, 1, _destFmt, false);
-
-			srcResX = max(1, (srcResX >> 1));
-			srcResY = max(1, (srcResY >> 1));
-		}
-
-		// Do the 1x1 level also.
-		ImageLoader::ConvertImageFormat((unsigned char*)_scratchRBG888.Base() + srcOffset, cSrcImageFormat, (*_outTexture).Base() + dstOffset, _destFmt, srcResX, srcResY);
-	} else {
-		// But sometimes (particularly for debugging) they will be the same.
-		Q_memcpy( (*_outTexture).Base(), _scratchRBG888.Base(), destMemoryUsage );
-	}
-}
-
-// ------------------------------------------------------------------------------------------------
-static void ConvertTexelDataToTexture(unsigned int _resX, unsigned int _resY, ImageFormat _destFmt, const CUtlVector<colorTexel_t>& _srcTexels, CUtlMemory<byte>* _outTexture)
-{
-	Assert(_outTexture);
-	Assert(_srcTexels.Count() == _resX * _resY);
-
-	CUtlVector<RGB888_t> scratchRGB888;
-	CUtlVector<Vector> scratchLinear;
-
-	BuildFineMipmap(_resX, _resY, true, _srcTexels, &scratchRGB888, &scratchLinear);
-	FilterCoarserMipmaps(_resX, _resY, &scratchLinear, &scratchRGB888 );
-	ConvertToDestinationFormat(_resX, _resY, _destFmt, scratchRGB888, _outTexture);
-}
-
-// ------------------------------------------------------------------------------------------------
-static void DumpLightmapLinear( const char* _dstFilename, const CUtlVector<colorTexel_t>& _srcTexels, int _width, int _height )
-{
-	CUtlVector< Vector > linearFloats;
-	CUtlVector< BGR888_t > linearBuffer;
-	BuildFineMipmap( _width, _height, true, _srcTexels, NULL, &linearFloats );
-	linearBuffer.SetCount( linearFloats.Count() );
-
-	for ( int i = 0; i < linearFloats.Count(); ++i ) {
-		linearBuffer[i].b = RoundFloatToByte(linearFloats[i].z * 255.0f);
-		linearBuffer[i].g = RoundFloatToByte(linearFloats[i].y * 255.0f);
-		linearBuffer[i].r = RoundFloatToByte(linearFloats[i].x * 255.0f);
-	}
-	
-	TGAWriter::WriteTGAFile( _dstFilename, _width, _height, IMAGE_FORMAT_BGR888, (uint8*)(linearBuffer.Base()), _width * ImageLoader::SizeInBytes(IMAGE_FORMAT_BGR888) );
+	//pPad->Release();
+	g_RtEnv_RadiosityPatches.SetupAccelerationStructure();
+	qprintf( "%i static prop patches\n", nPatchCount );
 }

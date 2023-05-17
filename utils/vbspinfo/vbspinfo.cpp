@@ -9,17 +9,23 @@
 #include "mathlib/mathlib.h"
 #include "bsplib.h"
 #include "tier0/icommandline.h"
+#ifdef ENABLE_SCRATCHPAD
 #include "iscratchpad3d.h"
+#endif
+
 #include "filesystem_tools.h"
 #include "tier2/fileutils.h"
 #include "gamebspfile.h"
-#include "tier1/utlstringmap.h"
+#include "tier1/UtlStringMap.h"
+#ifdef _WIN32
 #include "tools_minidump.h"
+#endif
 #include "cmdlib.h"
 
 bool g_bTreeInfo = false;
+#ifdef ENABLE_SCRATCHPAD
 bool g_bDrawTree = false;
-
+#endif
 
 float g_nOptimumDepth;
 int g_nMinTreeDepth;
@@ -48,7 +54,7 @@ void CalculateTreeInfo_R( int iNode, int depth )
 	}
 }
 
-
+#ifdef ENABLE_SCRATCHPAD
 void DrawTreeToScratchPad_R( 
 	IScratchPad3D *pPad,
 	int iNode,					// Which node we're drawing.
@@ -98,7 +104,7 @@ void DrawTreeToScratchPad_R(
 			&vMyPos );
 	}
 }
-
+#endif
 
 void CalcTreeDepth_R( int iNode, int iLevel, int &iMaxDepth )
 {
@@ -110,7 +116,7 @@ void CalcTreeDepth_R( int iNode, int iLevel, int &iMaxDepth )
 	CalcTreeDepth_R( dnodes[iNode].children[1], iLevel+1, iMaxDepth );
 }
 
-
+#ifdef ENABLE_SCRATCHPAD
 void DrawTreeToScratchPad()
 {
 	IScratchPad3D *pPad = ScratchPad3D_Create();
@@ -131,6 +137,7 @@ void DrawTreeToScratchPad()
 	
 	pPad->Release();
 }
+#endif
 
 struct WorldTextureStats_t
 {
@@ -319,10 +326,12 @@ void PrintCommandLine( int argc, char **argv )
 	Warning( "\n\n" );
 }
 
-void main (int argc, char **argv)
+int main( int argc, char **argv )
 {
+#ifdef _WIN32
 	// Install an exception handler.
 	SetupDefaultToolsMinidumpHandler();
+#endif
 
 	int			i;
 	char		source[1024];
@@ -347,15 +356,17 @@ void main (int argc, char **argv)
 
 		printf("usage: vbspinfo [parameters] bspfile [bspfiles]\n");
 		printf("   -treeinfo            \n");
-//		printf("   -drawtree            \n"); Remove for now until the option can be fixed
+#ifdef ENABLE_SCRATCHPAD
+		printf("   -drawtree            \n");
+#endif
 		printf("   -worldtexturestats   \n");
 		printf("   -modelstats          \n");
 		printf("   -liststaticprops     \n");
 		printf("   -X[lump ID]          Extract BSP lump to file. i.e -X0 extracts entity lump.\n");
-		printf("   -size				Show .bsp worldmodel bounds\n");
-		Error("Incorrect syntax.");
+		printf("   -size		Show .bsp worldmodel bounds\n");
+		Error("Incorrect syntax.\n");
 	}
-		
+
 	bool bWorldTextureStats = false;
 	bool bModelStats = false;
 	bool bListStaticProps = false;
@@ -368,11 +379,13 @@ void main (int argc, char **argv)
 			g_bTreeInfo = true;
 			continue;
 		}
+#ifdef ENABLE_SCRATCHPAD
 		else if ( stricmp( argv[i], "-drawtree" ) == 0 )
 		{
 			g_bDrawTree = true;
 			continue;
 		}
+#endif
 		else if( stricmp( argv[i], "-worldtexturestats" ) == 0 )
 		{
 			bWorldTextureStats = true;
@@ -415,7 +428,7 @@ void main (int argc, char **argv)
 		}
 		strcpy (source, argv[i]);
 		Q_DefaultExtension (source, ".bsp", sizeof( source ) );
-		
+
 		strcpy( source, ExpandPath( source ) );
 		f = fopen (source, "rb");
 		if (f)
@@ -430,8 +443,8 @@ void main (int argc, char **argv)
 		if( !bWorldTextureStats && !bModelStats && !bListStaticProps )
 		{
 			Msg ("reading %s (%d)\n", source, size);
-		}		
-		
+		}
+
 
 		// If we're extracting, do that and quit.
 		if ( bHaveAnyToExtract )
@@ -440,7 +453,11 @@ void main (int argc, char **argv)
 
 			// If the filename doesn't have a path, prepend with the current directory
 			char fullbspname[MAX_PATH];
+#ifdef _WIN32
 			_fullpath( fullbspname, source, sizeof( fullbspname ) );
+#else
+			realpath( source, fullbspname );
+#endif
 
 			for ( int extract = 0; extract < HEADER_LUMPS; extract++ )
 			{
@@ -454,12 +471,12 @@ void main (int argc, char **argv)
 			CloseBSPFile();
 
 			printf ("Finished extraction.\n" );
-			return;
+			return 0;
 		}
 
 
 
-		LoadBSPFile (source);		
+		LoadBSPFile (source);
 
 		if( bWorldTextureStats )
 		{
@@ -519,8 +536,6 @@ void main (int argc, char **argv)
 			PrintBSPFileSizes ();
 		}
 
-		
-
 		if ( g_bTreeInfo )
 		{
 			g_nOptimumDepth = (int)( log( ( float )numnodes ) / log( 2.0f ) );
@@ -547,15 +562,19 @@ void main (int argc, char **argv)
 					(float)g_TotalTreeDepth / numnodes,
 					(float)g_TotalVariance / numnodes );
 		}
-		
+
+#ifdef ENABLE_SCRATCHPAD
 		if ( g_bDrawTree )
 		{
 			DrawTreeToScratchPad();
 		}
-		
+#endif
+
 		if( !bWorldTextureStats && !bModelStats && !bListStaticProps )
 		{
 			printf ("---------------------\n");
 		}
 	}
+
+	return 0;
 }

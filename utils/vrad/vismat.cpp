@@ -7,8 +7,8 @@
 //=============================================================================//
 
 #include "vrad.h"
-#include "vmpi.h"
 #ifdef MPI
+#include "vmpi.h"
 #include "messbuf.h"
 static MessageBuffer mb;
 #endif
@@ -296,6 +296,29 @@ void AddDispsToClusterTable( void )
 }
 
 
+struct ClusterPatchList_t
+{
+	CUtlVector<int>	patches;
+};
+
+static CUtlVector<ClusterPatchList_t> g_ClusterStaticPropPatches;
+
+void AddStaticPropPatchesToClusterTable()
+{
+	g_ClusterStaticPropPatches.SetCount( g_ClusterLeaves.Count() );
+
+	for ( int i = 0; i < g_Patches.Count(); i++ )
+	{
+		const CPatch &patch = g_Patches[ i ];
+		if ( patch.faceNumber >= 0 || patch.clusterNumber < 0 )
+		{
+			continue;
+		}
+
+		g_ClusterStaticPropPatches[ patch.clusterNumber ].patches.AddToTail( i );
+	}
+}
+
 /*
 ==============
 BuildVisRow
@@ -345,7 +368,7 @@ void BuildVisRow (int patchnum, byte *pvs, int head, transfer_t *transfers, CTra
 			}
 		}
 
-		int dispCount = g_ClusterDispFaces[j].dispFaces.Size();
+		int dispCount = g_ClusterDispFaces[j].dispFaces.Count();
 		for( int ndxDisp = 0; ndxDisp < dispCount; ndxDisp++ )
 		{
 			int ndxFace = g_ClusterDispFaces[j].dispFaces[ndxDisp];
@@ -359,6 +382,20 @@ void BuildVisRow (int patchnum, byte *pvs, int head, transfer_t *transfers, CTra
 				continue;
 
 			TestPatchToFace( patchnum, ndxFace, head, transfers, transferMaker, iThread );
+		}
+
+		if ( g_bStaticPropBounce )
+		{
+			// Test static prop patches
+			int staticPropPatchCount = g_ClusterStaticPropPatches[ j ].patches.Count();
+			for ( int i = 0; i < staticPropPatchCount; i++ )
+			{
+				int nPatchIdx = g_ClusterStaticPropPatches[ j ].patches[ i ];
+				if ( nPatchIdx != patchnum )
+				{
+					TestPatchToPatch( patchnum, nPatchIdx, head, transfers, transferMaker, iThread );
+				}
+			}
 		}
 	}
 
@@ -467,11 +504,13 @@ BuildVisMatrix
 */
 void BuildVisMatrix (void)
 {
+#ifdef MPI
 	if ( g_bUseMPI )
 	{
 		RunMPIBuildVisLeafs();
 	}
 	else 
+#endif
 	{
 		RunThreadsOn (dvis->numclusters, true, BuildVisLeafs);
 	}

@@ -137,5 +137,10 @@ void FreeDLights();
 
 void ExportDirectLightsToWorldLights();
 
+float CalculateAmbientOcclusion( Vector *pPosition, Vector *pNormal );
+fltx4 CalculateAmbientOcclusion4( const FourVectors &position4, const FourVectors &normal4, int static_prop_index_to_ignore );
+
+float SoftenCosineTerm( float flDot );
+fltx4 SoftenCosineTerm( fltx4 dots );
 
 #endif // LIGHTMAP_H

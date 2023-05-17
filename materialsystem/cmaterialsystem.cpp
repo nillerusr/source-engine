@@ -672,7 +672,7 @@ bool CMaterialSystem::Connect( CreateInterfaceFn factory )
 	g_pLauncherMgr = (ILauncherMgr *)factory( "SDLMgrInterface001" /*SDL_MGR_INTERFACE_VERSION*/, NULL );		
 	if ( !g_pLauncherMgr )
 	{
-		return false;
+		Warning("Cannot connect SDL!\n");
 	}
 #endif // USE_SDL
 #endif // !DEDICATED
