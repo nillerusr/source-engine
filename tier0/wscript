@@ -22,8 +22,8 @@ def build(bld):
 		'assert_dialog.cpp',
 		'commandline.cpp',
 		'cpu.cpp',
-		'cpumonitoring.cpp',
 		'cpu_usage.cpp',
+		'cpumonitoring.cpp',
 		'dbg.cpp',
 		'dynfunction.cpp',
 		'fasttimer.cpp',
@@ -54,10 +54,13 @@ def build(bld):
 			'assert_dialog.rc',
 			#'etwprof.cpp',			[$WINDOWS]
 			'platform.cpp',
-			'pme.cpp',
 			'vcrmode.cpp',
 			'win32consoleio.cpp'
 		]
+		if bld.env.DEST_CPU == 'arm':
+			source += ['pme_posix.cpp']
+		else:
+			source += ['pme.cpp']
 		if bld.env.DEST_CPU == 'amd64':
 			source += [
 				'InterlockedCompareExchange128.masm'

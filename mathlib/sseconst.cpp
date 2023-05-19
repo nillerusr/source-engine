@@ -7,35 +7,35 @@
 #include "mathlib/ssemath.h"
 #include "mathlib/ssequaternion.h"
 
-const fltx4 Four_PointFives={0.5,0.5,0.5,0.5};
+const fltx4 Four_PointFives=FLTX4(0.5,0.5,0.5,0.5);
 #ifndef _X360
-const fltx4 Four_Zeros={0.0,0.0,0.0,0.0};
-const fltx4 Four_Ones={1.0,1.0,1.0,1.0};
+const fltx4 Four_Zeros=FLTX4(0.0,0.0,0.0,0.0);
+const fltx4 Four_Ones=FLTX4(1.0,1.0,1.0,1.0);
 #endif
-const fltx4 Four_Twos={2.0,2.0,2.0,2.0};
-const fltx4 Four_Threes={3.0,3.0,3.0,3.0};
-const fltx4 Four_Fours={4.0,4.0,4.0,4.0};
-const fltx4 Four_Origin={0,0,0,1};
-const fltx4 Four_NegativeOnes={-1,-1,-1,-1};
+const fltx4 Four_Twos=FLTX4(2.0,2.0,2.0,2.0);
+const fltx4 Four_Threes=FLTX4(3.0,3.0,3.0,3.0);
+const fltx4 Four_Fours=FLTX4(4.0,4.0,4.0,4.0);
+const fltx4 Four_Origin=FLTX4(0,0,0,1);
+const fltx4 Four_NegativeOnes=FLTX4(-1,-1,-1,-1);
 
-const fltx4 Four_2ToThe21s={ (float) (1<<21), (float) (1<<21), (float) (1<<21), (float)(1<<21) };
-const fltx4 Four_2ToThe22s={ (float) (1<<22), (float) (1<<22), (float) (1<<22), (float)(1<<22) };
-const fltx4 Four_2ToThe23s={ (float) (1<<23), (float) (1<<23), (float) (1<<23), (float)(1<<23) };
-const fltx4 Four_2ToThe24s={ (float) (1<<24), (float) (1<<24), (float) (1<<24), (float)(1<<24) };
+const fltx4 Four_2ToThe21s=FLTX4( (float) (1<<21), (float) (1<<21), (float) (1<<21), (float)(1<<21) );
+const fltx4 Four_2ToThe22s=FLTX4( (float) (1<<22), (float) (1<<22), (float) (1<<22), (float)(1<<22) );
+const fltx4 Four_2ToThe23s=FLTX4( (float) (1<<23), (float) (1<<23), (float) (1<<23), (float)(1<<23) );
+const fltx4 Four_2ToThe24s=FLTX4( (float) (1<<24), (float) (1<<24), (float) (1<<24), (float)(1<<24) );
 
-const fltx4 Four_Point225s={ .225, .225, .225, .225 };
-const fltx4 Four_Epsilons={FLT_EPSILON,FLT_EPSILON,FLT_EPSILON,FLT_EPSILON};
+const fltx4 Four_Point225s=FLTX4( .225, .225, .225, .225 );
+const fltx4 Four_Epsilons=FLTX4(FLT_EPSILON,FLT_EPSILON,FLT_EPSILON,FLT_EPSILON);
 
-const fltx4 Four_FLT_MAX={FLT_MAX,FLT_MAX,FLT_MAX,FLT_MAX};
-const fltx4 Four_Negative_FLT_MAX={-FLT_MAX,-FLT_MAX,-FLT_MAX,-FLT_MAX};
-const fltx4 g_SIMD_0123 = { 0., 1., 2., 3. };
+const fltx4 Four_FLT_MAX=FLTX4(FLT_MAX,FLT_MAX,FLT_MAX,FLT_MAX);
+const fltx4 Four_Negative_FLT_MAX=FLTX4(-FLT_MAX,-FLT_MAX,-FLT_MAX,-FLT_MAX);
+const fltx4 g_SIMD_0123 = FLTX4( 0., 1., 2., 3. );
 
 const fltx4 g_QuatMultRowSign[4] =
 {
-	{  1.0f,  1.0f, -1.0f, 1.0f },
-	{ -1.0f,  1.0f,  1.0f, 1.0f },
-	{  1.0f, -1.0f,  1.0f, 1.0f },
-	{ -1.0f, -1.0f, -1.0f, 1.0f }
+	FLTX4(  1.0f,  1.0f, -1.0f, 1.0f ),
+	FLTX4( -1.0f,  1.0f,  1.0f, 1.0f ),
+	FLTX4(  1.0f, -1.0f,  1.0f, 1.0f ),
+	FLTX4( -1.0f, -1.0f, -1.0f, 1.0f )
 };
 
 const uint32 ALIGN16 g_SIMD_clear_signmask[4] ALIGN16_POST = {0x7fffffff,0x7fffffff,0x7fffffff,0x7fffffff};

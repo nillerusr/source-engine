@@ -6,7 +6,7 @@
 //
 //===========================================================================//
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(_M_ARM)
 #include <windows.h>
 
 #pragma warning( disable : 4530 )   // warning: exception handler -GX option

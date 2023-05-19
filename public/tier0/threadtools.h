@@ -241,6 +241,8 @@ inline void ThreadPause()
 	_mm_pause();
 #elif defined( COMPILER_MSVC32 )
 	__asm pause;
+#elif defined(_M_ARM)
+	__yield();
 #elif defined( COMPILER_MSVCX360 )
 	YieldProcessor(); 
 	__asm { or r0,r0,r0 } 
@@ -445,7 +447,7 @@ PLATFORM_INTERFACE bool ThreadInterlockedAssignIf64( volatile int64 *pDest, int6
 
 PLATFORM_INTERFACE int64 ThreadInterlockedExchange64( int64 volatile *, int64 value ) NOINLINE;
 
-#ifdef COMPILER_MSVC32
+#if COMPILER_MSVC32 || _M_ARM
 PLATFORM_INTERFACE int64 ThreadInterlockedIncrement64( int64 volatile * ) NOINLINE;
 PLATFORM_INTERFACE int64 ThreadInterlockedDecrement64( int64 volatile * ) NOINLINE;
 PLATFORM_INTERFACE int64 ThreadInterlockedExchangeAdd64( int64 volatile *, int64 value ) NOINLINE;

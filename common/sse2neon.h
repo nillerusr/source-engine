@@ -89,9 +89,6 @@
 #define _sse2neon_likely(x) __builtin_expect(!!(x), 1)
 #define _sse2neon_unlikely(x) __builtin_expect(!!(x), 0)
 #elif defined(_MSC_VER)
-#if _MSVC_TRADITIONAL
-#error Using the traditional MSVC preprocessor is not supported! Use /Zc:preprocessor instead.
-#endif
 #ifndef FORCE_INLINE
 #define FORCE_INLINE static inline
 #endif
@@ -184,6 +181,10 @@
     } while (0)
 #endif
 
+#ifdef _M_ARM
+#define vst1q_lane_s64(a, b, c)
+#endif
+
 /* Memory barriers
  * __atomic_thread_fence does not include a compiler barrier; instead,
  * the barrier is part of __atomic_load/__atomic_store's "volatile-like"
@@ -202,7 +203,11 @@ FORCE_INLINE void _sse2neon_smp_mb(void)
 #elif defined(__GNUC__) || defined(__clang__)
     __atomic_thread_fence(__ATOMIC_SEQ_CST);
 #else /* MSVC */
+#ifdef _M_ARM
+    __dmb(_ARM_BARRIER_ISH);
+#else
     __dmb(_ARM64_BARRIER_ISH);
+#endif
 #endif
 }
 
@@ -268,7 +273,7 @@ FORCE_INLINE void _sse2neon_smp_mb(void)
  * we have to perform syscall instead.
  */
 #if (!defined(__aarch64__) && !defined(_M_ARM64))
-#include <sys/time.h>
+#include <time.h>
 #endif
 
 /* "__has_builtin" can be used to query support for built-in functions
@@ -574,10 +579,10 @@ FORCE_INLINE uint32_t _mm_crc32_u8(uint32_t, uint8_t);
 /* Backwards compatibility for compilers with lack of specific type support */
 
 // Older gcc does not define vld1q_u8_x4 type
-#if defined(__GNUC__) && !defined(__clang__) &&                        \
+#if defined(_M_ARM) || (defined(__GNUC__) && !defined(__clang__) &&    \
     ((__GNUC__ <= 12 && defined(__arm__)) ||                           \
      (__GNUC__ == 10 && __GNUC_MINOR__ < 3 && defined(__aarch64__)) || \
-     (__GNUC__ <= 9 && defined(__aarch64__)))
+     (__GNUC__ <= 9 && defined(__aarch64__))))
 FORCE_INLINE uint8x16x4_t _sse2neon_vld1q_u8_x4(const uint8_t *p)
 {
     uint8x16x4_t ret;
@@ -610,6 +615,9 @@ FORCE_INLINE uint8_t _sse2neon_vaddv_u8(uint8x8_t v8)
 }
 #endif
 
+#if defined(_M_ARM)
+#pragma message("TODO: Windows ARM32: Port many SSE2NEON functions")
+#else
 #if !defined(__aarch64__) && !defined(_M_ARM64)
 /* emulate vaddvq u8 variant */
 FORCE_INLINE uint8_t _sse2neon_vaddvq_u8(uint8x16_t a)
@@ -644,6 +652,7 @@ FORCE_INLINE uint16_t _sse2neon_vaddvq_u16(uint16x8_t a)
 {
     return vaddvq_u16(a);
 }
+#endif
 #endif
 
 /* Function Naming Conventions
@@ -1765,6 +1774,7 @@ FORCE_INLINE void _mm_free(void *addr)
 }
 #endif
 
+#ifndef _M_ARM
 FORCE_INLINE uint64_t _sse2neon_get_fpcr()
 {
     uint64_t value;
@@ -1808,6 +1818,7 @@ FORCE_INLINE unsigned int _sse2neon_mm_get_flush_zero_mode()
 
     return r.field.bit24 ? _MM_FLUSH_ZERO_ON : _MM_FLUSH_ZERO_OFF;
 }
+#endif
 
 // Macro: Get the rounding mode bits from the MXCSR control and status register.
 // The rounding mode may contain any of the following flags: _MM_ROUND_NEAREST,
@@ -1826,6 +1837,8 @@ FORCE_INLINE unsigned int _MM_GET_ROUNDING_MODE()
 
 #if defined(__aarch64__) || defined(_M_ARM64)
     r.value = _sse2neon_get_fpcr();
+#elif defined(_M_ARM)
+    r.value = _MoveFromCoprocessor(10,7, 1,0,0);
 #else
     __asm__ __volatile__("vmrs %0, FPSCR" : "=r"(r.value)); /* read */
 #endif
@@ -2247,7 +2260,7 @@ FORCE_INLINE __m128 _mm_or_ps(__m128 a, __m128 b)
 FORCE_INLINE void _mm_prefetch(char const *p, int i)
 {
     (void) i;
-#if defined(_MSC_VER)
+#ifdef _M_ARM64
     switch (i) {
     case _MM_HINT_NTA:
         __prefetch2(p, 1);
@@ -2262,6 +2275,8 @@ FORCE_INLINE void _mm_prefetch(char const *p, int i)
         __prefetch2(p, 4);
         break;
     }
+#elif defined(_M_ARM)
+    // TODO
 #else
     switch (i) {
     case _MM_HINT_NTA:
@@ -2348,6 +2363,7 @@ FORCE_INLINE __m64 _mm_sad_pu8(__m64 a, __m64 b)
         vset_lane_u16((int) vget_lane_u64(t, 0), vdup_n_u16(0), 0));
 }
 
+#ifndef _M_ARM
 // Macro: Set the flush zero bits of the MXCSR control and status register to
 // the value in unsigned 32-bit integer a. The flush zero may contain any of the
 // following flags: _MM_FLUSH_ZERO_ON or _MM_FLUSH_ZERO_OFF
@@ -2379,6 +2395,7 @@ FORCE_INLINE void _sse2neon_mm_set_flush_zero_mode(unsigned int flag)
     __asm__ __volatile__("vmsr FPSCR, %0" ::"r"(r));        /* write */
 #endif
 }
+#endif
 
 // Set packed single-precision (32-bit) floating-point elements in dst with the
 // supplied values.
@@ -2404,6 +2421,7 @@ FORCE_INLINE __m128 _mm_set_ps1(float _w)
 // https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#text=_MM_SET_ROUNDING_MODE
 FORCE_INLINE void _MM_SET_ROUNDING_MODE(int rounding)
 {
+#ifndef _M_ARM
     union {
         fpcr_bitfield field;
 #if defined(__aarch64__) || defined(_M_ARM64)
@@ -2441,6 +2459,7 @@ FORCE_INLINE void _MM_SET_ROUNDING_MODE(int rounding)
     _sse2neon_set_fpcr(r.value);
 #else
     __asm__ __volatile__("vmsr FPSCR, %0" ::"r"(r));        /* write */
+#endif
 #endif
 }
 
@@ -3206,6 +3225,7 @@ FORCE_INLINE __m128d _mm_cmpeq_sd(__m128d a, __m128d b)
     return _mm_move_sd(a, _mm_cmpeq_pd(a, b));
 }
 
+#ifndef _M_ARM
 // Compare packed double-precision (64-bit) floating-point elements in a and b
 // for greater-than-or-equal, and store the results in dst.
 // https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#text=_mm_cmpge_pd
@@ -3247,6 +3267,7 @@ FORCE_INLINE __m128d _mm_cmpge_sd(__m128d a, __m128d b)
     return vreinterpretq_m128d_u64(vld1q_u64(d));
 #endif
 }
+#endif
 
 // Compare packed signed 16-bit integers in a and b for greater-than, and store
 // the results in dst.
@@ -3275,6 +3296,7 @@ FORCE_INLINE __m128i _mm_cmpgt_epi8(__m128i a, __m128i b)
         vcgtq_s8(vreinterpretq_s8_m128i(a), vreinterpretq_s8_m128i(b)));
 }
 
+#ifndef _M_ARM
 // Compare packed double-precision (64-bit) floating-point elements in a and b
 // for greater-than, and store the results in dst.
 // https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#text=_mm_cmpgt_pd
@@ -3358,6 +3380,7 @@ FORCE_INLINE __m128d _mm_cmple_sd(__m128d a, __m128d b)
     return vreinterpretq_m128d_u64(vld1q_u64(d));
 #endif
 }
+#endif
 
 // Compare packed signed 16-bit integers in a and b for less-than, and store the
 // results in dst. Note: This intrinsic emits the pcmpgtw instruction with the
@@ -3389,6 +3412,7 @@ FORCE_INLINE __m128i _mm_cmplt_epi8(__m128i a, __m128i b)
         vcltq_s8(vreinterpretq_s8_m128i(a), vreinterpretq_s8_m128i(b)));
 }
 
+#ifndef _M_ARM
 // Compare packed double-precision (64-bit) floating-point elements in a and b
 // for less-than, and store the results in dst.
 // https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#text=_mm_cmplt_pd
@@ -3429,6 +3453,7 @@ FORCE_INLINE __m128d _mm_cmplt_sd(__m128d a, __m128d b)
     return vreinterpretq_m128d_u64(vld1q_u64(d));
 #endif
 }
+#endif
 
 // Compare packed double-precision (64-bit) floating-point elements in a and b
 // for not-equal, and store the results in dst.
@@ -3456,6 +3481,7 @@ FORCE_INLINE __m128d _mm_cmpneq_sd(__m128d a, __m128d b)
     return _mm_move_sd(a, _mm_cmpneq_pd(a, b));
 }
 
+#ifndef _M_ARM
 // Compare packed double-precision (64-bit) floating-point elements in a and b
 // for not-greater-than-or-equal, and store the results in dst.
 // https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#text=_mm_cmpnge_pd
@@ -3756,6 +3782,7 @@ FORCE_INLINE int _mm_comilt_sd(__m128d a, __m128d b)
     return (*(double *) &a0 < *(double *) &b0);
 #endif
 }
+#endif
 
 // Compare the lower double-precision (64-bit) floating-point element in a and b
 // for equality, and return the boolean result (0 or 1).
@@ -4401,6 +4428,7 @@ FORCE_INLINE __m128i _mm_max_epu8(__m128i a, __m128i b)
         vmaxq_u8(vreinterpretq_u8_m128i(a), vreinterpretq_u8_m128i(b)));
 }
 
+#ifndef _M_ARM
 // Compare packed double-precision (64-bit) floating-point elements in a and b,
 // and store packed maximum values in dst.
 // https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#text=_mm_max_pd
@@ -4487,6 +4515,7 @@ FORCE_INLINE __m128d _mm_min_pd(__m128d a, __m128d b)
     return vreinterpretq_m128d_u64(vld1q_u64(d));
 #endif
 }
+#endif
 
 // Compare the lower double-precision (64-bit) floating-point elements in a and
 // b, store the minimum value in the lower element of dst, and copy the upper
@@ -4793,7 +4822,11 @@ FORCE_INLINE __m128i _mm_packus_epi16(const __m128i a, const __m128i b)
 FORCE_INLINE void _mm_pause()
 {
 #if defined(_MSC_VER)
+#ifdef _M_ARM
+    __isb(_ARM_BARRIER_SY);
+#else
     __isb(_ARM64_BARRIER_SY);
+#endif
 #else
     __asm__ __volatile__("isb\n");
 #endif
@@ -7622,6 +7655,7 @@ FORCE_INLINE int _mm_testz_si128(__m128i a, __m128i b)
 }
 
 /* SSE4.2 */
+#ifndef _M_ARM
 
 const static uint16_t ALIGN_STRUCT(16) _sse2neon_cmpestr_mask16b[8] = {
     0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,
@@ -8463,9 +8497,11 @@ FORCE_INLINE uint32_t _mm_crc32_u8(uint32_t crc, uint8_t v)
     return crc;
 }
 
+#endif
+
 /* AES */
 
-#if !defined(__ARM_FEATURE_CRYPTO) && !defined(_M_ARM64)
+#if !defined(__ARM_FEATURE_CRYPTO) && !defined(_M_ARM64) && !defined(_M_ARM)
 /* clang-format off */
 #define SSE2NEON_AES_SBOX(w)                                           \
     {                                                                  \
@@ -8913,6 +8949,7 @@ FORCE_INLINE __m128i _mm_aeskeygenassist_si128(__m128i a, const int rcon)
 #undef SSE2NEON_MULTIPLY
 #endif
 
+#elif defined(_M_ARM)
 #else /* __ARM_FEATURE_CRYPTO */
 // Implements equivalent of 'aesenc' by combining AESE (with an empty key) and
 // AESMC and then manually applying the real key as an xor operation. This
@@ -9034,6 +9071,7 @@ FORCE_INLINE __m128i _mm_clmulepi64_si128(__m128i _a, __m128i _b, const int imm)
     }
 }
 
+#ifndef _M_ARM
 FORCE_INLINE unsigned int _sse2neon_mm_get_denormals_zero_mode()
 {
     union {
@@ -9053,6 +9091,7 @@ FORCE_INLINE unsigned int _sse2neon_mm_get_denormals_zero_mode()
 
     return r.field.bit24 ? _MM_DENORMALS_ZERO_ON : _MM_DENORMALS_ZERO_OFF;
 }
+#endif
 
 // Count the number of bits set to 1 in unsigned 32-bit integer a, and
 // return that count in dst.
@@ -9113,6 +9152,7 @@ FORCE_INLINE int64_t _mm_popcnt_u64(uint64_t a)
 #endif
 }
 
+#ifndef _M_ARM
 FORCE_INLINE void _sse2neon_mm_set_denormals_zero_mode(unsigned int flag)
 {
     // AArch32 Advanced SIMD arithmetic always uses the Flush-to-zero setting,
@@ -9140,6 +9180,7 @@ FORCE_INLINE void _sse2neon_mm_set_denormals_zero_mode(unsigned int flag)
     __asm__ __volatile__("vmsr FPSCR, %0" ::"r"(r));        /* write */
 #endif
 }
+#endif
 
 // Return the current 64-bit value of the processor's time-stamp counter.
 // https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#text=rdtsc
@@ -9161,6 +9202,9 @@ FORCE_INLINE uint64_t _rdtsc(void)
 #endif
 
     return val;
+#elif defined(_M_ARM)
+	uint32_t val = _MoveFromCoprocessor(15,0, 9,13,0);
+	return ((uint64_t)val) << 6;
 #else
     uint32_t pmccntr, pmuseren, pmcntenset;
     // Read the user mode Performance Monitoring Unit (PMU)

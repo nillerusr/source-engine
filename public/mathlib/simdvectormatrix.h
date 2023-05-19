@@ -135,7 +135,8 @@ public:
 		Assert( m_pData );
 
 		static FourVectors value{Four_Zeros, Four_Zeros, Four_Zeros};
-		memutils::set( m_pData, value, m_nHeight*m_nPaddedWidth );
+		for (size_t n = m_nHeight * m_nPaddedWidth; n; n--)
+			*(m_pData+n) = value;
 	}
 
 	void RaiseToPower( float power );

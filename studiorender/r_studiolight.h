@@ -13,7 +13,7 @@
 
 #include "tier0/platform.h"
 
-#if defined( _WIN32 ) && !defined( _X360 )
+#if defined( _WIN32 ) && !defined( _X360 ) && !defined(_M_ARM)
 #include <xmmintrin.h>
 #endif
 
@@ -40,7 +40,7 @@ float FASTCALL R_WorldLightDistanceFalloff( const LightDesc_t *wl, const Vector&
 // Copies lighting state into a buffer, returns number of lights copied
 int CopyLocalLightingState( int nMaxLights, LightDesc_t *pDest, int nLightCount, const LightDesc_t *pSrc );
 
-#if defined( _WIN32 ) && !defined( _X360 )
+#if defined( _WIN32 ) && !defined( _X360 ) && !defined(_M_ARM)
 // SSE optimized versions
 void R_LightAmbient_4D( const FourVectors& normal, Vector4D* pLightBoxColor, FourVectors &lv );
 __m128 FASTCALL R_WorldLightDistanceFalloff( const LightDesc_t *wl, const FourVectors& delta );

@@ -91,7 +91,7 @@ float _SSE_Sqrt(float x)
 {
 	Assert( s_bMathlibInitialized );
 	float	root = 0.f;
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(_M_ARM)
 	_asm
 	{
 		sqrtss		xmm0, x
@@ -122,7 +122,7 @@ float _SSE_RSqrtAccurate(float x)
 }
 #else
 
-#ifdef POSIX
+#if POSIX || defined(_M_ARM)
 const __m128  f3  = _mm_set_ss(3.0f);  // 3 as SSE value
 const __m128  f05 = _mm_set_ss(0.5f);  // 0.5 as SSE value
 #endif
@@ -131,7 +131,7 @@ const __m128  f05 = _mm_set_ss(0.5f);  // 0.5 as SSE value
 float _SSE_RSqrtAccurate(float a)
 {
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(_M_ARM)
 	float x;
 	float half = 0.5f;
 	float three = 3.f;
@@ -153,7 +153,7 @@ float _SSE_RSqrtAccurate(float a)
 	}
 
 	return x;
-#elif POSIX	
+#elif POSIX || defined(_M_ARM)
 	__m128  xx = _mm_load_ss( &a );
     __m128  xr = _mm_rsqrt_ss( xx );
     __m128  xt;
@@ -764,7 +764,7 @@ float _SSE_cos( float x )
 //-----------------------------------------------------------------------------
 // SSE2 implementations of optimized routines:
 //-----------------------------------------------------------------------------
-#ifdef PLATFORM_WINDOWS_PC32
+#if defined(PLATFORM_WINDOWS_PC32) && !defined(_M_ARM)
 void _SSE2_SinCos(float x, float* s, float* c)  // any x
 {
 #ifdef _WIN32
@@ -850,9 +850,7 @@ void _SSE2_SinCos(float x, float* s, float* c)  // any x
 	#error "Not Implemented"
 #endif
 }
-#endif // PLATFORM_WINDOWS_PC32
 
-#ifdef PLATFORM_WINDOWS_PC32
 float _SSE2_cos(float x)  
 {
 #ifdef _WIN32
@@ -970,9 +968,7 @@ void VectorTransformSSE(const float *in1, const matrix3x4_t& in2, float *out1)
 	#error "Not Implemented"
 #endif
 }
-#endif
 
-#if 0
 void VectorRotateSSE( const float *in1, const matrix3x4_t& in2, float *out1 )
 {
 	Assert( s_bMathlibInitialized );
@@ -1026,9 +1022,7 @@ void VectorRotateSSE( const float *in1, const matrix3x4_t& in2, float *out1 )
 	#error "Not Implemented"
 #endif
 }
-#endif
 
-#ifdef _WIN32
 void _declspec(naked) _SSE_VectorMA( const float *start, float scale, const float *direction, float *dest )
 {
 	// FIXME: This don't work!! It will overwrite memory in the write to dest
@@ -1057,7 +1051,6 @@ void _declspec(naked) _SSE_VectorMA( const float *start, float scale, const floa
 #endif
 	}
 }
-#endif
 
 #ifdef _WIN32
 #ifdef PFN_VECTORMA
@@ -1101,7 +1094,6 @@ float (__cdecl *pfVectorMA)(Vector& v) = _VectorMA;
 //   NJS: (Nov 1 2002) -NOT- faster.  may time a couple cycles faster in a single function like 
 //   this, but when inlined, and instruction scheduled, the C version is faster.  
 //   Verified this via VTune
-/*
 vec_t DotProduct (const vec_t *a, const vec_t *c)
 {
 	vec_t temp;
@@ -1124,6 +1116,6 @@ vec_t DotProduct (const vec_t *a, const vec_t *c)
 		ret
 	}
 }
-*/
+#endif
 
 #endif // COMPILER_MSVC64 

@@ -405,6 +405,9 @@ void inline SinCos( float radians, float *sine, float *cosine )
 {
 #if defined( _X360 )
 	XMScalarSinCos( sine, cosine, radians );
+#elif defined( PLATFORM_WINDOWS_PC64 ) || defined(_M_ARM)
+	*sine = sin( radians );
+	*cosine = cos( radians );
 #elif defined( PLATFORM_WINDOWS_PC32 )
 	_asm
 	{
@@ -417,11 +420,8 @@ void inline SinCos( float radians, float *sine, float *cosine )
 		fstp DWORD PTR [edx]
 		fstp DWORD PTR [eax]
 	}
-#elif defined( PLATFORM_WINDOWS_PC64 )
-	*sine = sin( radians );
-	*cosine = cos( radians );
 #elif defined( OSX )
-    __sincosf(radians, sine, cosine);
+	__sincosf(radians, sine, cosine);
 #elif defined( POSIX )
 	sincosf(radians, sine, cosine);
 #endif

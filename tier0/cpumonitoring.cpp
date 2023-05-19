@@ -23,7 +23,7 @@
 #include "pch_tier0.h"
 #include "tier0/cpumonitoring.h"
 
-#ifdef PLATFORM_WINDOWS_PC32
+#ifdef _M_IX86
 #include "tier0/threadtools.h"
 #define NOMINMAX
 #undef min

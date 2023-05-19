@@ -175,7 +175,9 @@ public:
 	virtual void TexMagFilter( ShaderTexFilterMode_t texFilterMode ) = 0;
 	virtual void TexWrap( ShaderTexCoordComponent_t coord, ShaderTexWrapMode_t wrapMode ) = 0;
 
+#ifndef SHADERAPIDX10
 	virtual void CopyRenderTargetToTexture( ShaderAPITextureHandle_t textureHandle ) = 0;
+#endif
 
 	// Binds a particular material to render with
 	virtual void Bind( IMaterial* pMaterial ) = 0;
@@ -612,6 +614,7 @@ public:
 	//extended clear buffers function with alpha independent from color
 	virtual void ClearBuffersObeyStencilEx( bool bClearColor, bool bClearAlpha, bool bClearDepth ) = 0;
 
+#ifndef SHADERAPIDX10
 	// Allows copying a render target to another texture by specifying them both.
 	virtual void CopyRenderTargetToScratchTexture( ShaderAPITextureHandle_t srcRt, ShaderAPITextureHandle_t dstTex, Rect_t *pSrcRect = NULL, Rect_t *pDstRect = NULL ) = 0;
 
@@ -627,6 +630,7 @@ public:
 	
 	virtual void CopyTextureToTexture( ShaderAPITextureHandle_t srcTex, ShaderAPITextureHandle_t dstTex ) = 0;
 	
+#endif
 };
 
 

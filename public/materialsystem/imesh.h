@@ -1220,7 +1220,7 @@ inline void CVertexBuilder::FastVertexSSE( const ModelVertexDX7_t &vertex )
 	Assert( m_CompressionType == VERTEX_COMPRESSION_NONE ); // FIXME: support compressed verts if needed
 	Assert( m_nCurrentVertex < m_nMaxVertexCount );
 
-#if defined( _WIN32 ) && !defined( _X360 ) && !defined( PLATFORM_64BITS )
+#if defined( _WIN32 ) && !defined( _X360 ) && !defined( PLATFORM_64BITS ) && !defined(_M_ARM)
 	const void *pRead = &vertex;
 	void *pCurrPos = m_pCurrPosition;
 	__asm
@@ -1236,7 +1236,7 @@ inline void CVertexBuilder::FastVertexSSE( const ModelVertexDX7_t &vertex )
 			movntps [edi + 16], xmm1
 			movntps [edi + 32], xmm2
 	}
-#elif defined(GNUC) || defined(PLATFORM_WINDOWS_PC64)
+#elif defined(GNUC) || defined(_WIN32)
 	const char *pRead = (char *)&vertex;
 	char *pCurrPos = (char *)m_pCurrPosition;
 	__m128 m1 = _mm_load_ps( (float *)pRead );
@@ -1267,7 +1267,7 @@ inline void CVertexBuilder::Fast4VerticesSSE(
 	Assert( m_CompressionType == VERTEX_COMPRESSION_NONE ); // FIXME: support compressed verts if needed
 	Assert( m_nCurrentVertex < m_nMaxVertexCount-3 );
 
-#if defined( _WIN32 ) && !defined( _X360 ) && !defined( PLATFORM_64BITS )
+#if defined( _WIN32 ) && !defined( _X360 ) && !defined( PLATFORM_64BITS ) && !defined(_M_ARM)
 	void *pCurrPos = m_pCurrPosition;
 	__asm
 	{
@@ -1309,7 +1309,7 @@ inline void CVertexBuilder::Fast4VerticesSSE(
 			movntps [edi + 80+96], xmm5
 
 	}
-#elif defined(__arm__) || defined(PLATFORM_WINDOWS_PC64)
+#elif defined(__arm__) || defined(_WIN32)
 	const void *pReadA = &vtx_a;
 	const void *pReadB = &vtx_b;
 	const void *pReadC = &vtx_c;
@@ -1430,7 +1430,7 @@ inline void CVertexBuilder::FastVertexSSE( const ModelVertexDX8_t &vertex )
 	Assert( m_CompressionType == VERTEX_COMPRESSION_NONE ); // FIXME: support compressed verts if needed
 	Assert( m_nCurrentVertex < m_nMaxVertexCount );
 
-#if defined( _WIN32 ) && !defined( _X360 ) && !defined( PLATFORM_64BITS )
+#if defined( _WIN32 ) && !defined( _X360 ) && !defined( PLATFORM_64BITS ) && !defined(_M_ARM)
 	const void *pRead = &vertex;
 	void *pCurrPos = m_pCurrPosition;
 	__asm
@@ -1448,20 +1448,9 @@ inline void CVertexBuilder::FastVertexSSE( const ModelVertexDX8_t &vertex )
 			movntps [edi + 32], xmm2
 			movntps [edi + 48], xmm3
 	}
-#elif defined(GNUC) || defined(PLATFORM_WINDOWS_PC64)
+#elif defined(GNUC) || defined(_WIN32)
 	const void *pRead = &vertex;
 	void *pCurrPos = m_pCurrPosition;
-
-/*	__asm__ __volatile__ (
-						  "movaps (%0), %%xmm0\n"
-						  "movaps 16(%0), %%xmm1\n"
-						  "movaps 32(%0), %%xmm2\n"
-						  "movaps 48(%0), %%xmm3\n"
-						  "movntps %%xmm0, (%1)\n"
-						  "movntps %%xmm1, 16(%1)\n"
-						  "movntps %%xmm2, 32(%1)\n"
-						  "movntps %%xmm3, 48(%1)\n"
-						  :: "r" (pRead), "r" (pCurrPos) : "memory"); */
 
 	__m128 m1 = _mm_load_ps( (float *)pRead );
 	__m128 m2 = _mm_load_ps( (float *)((intp)pRead + 16) );

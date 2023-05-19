@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 # encoding: utf-8
+# vim: noexpandtab
 # nillerusr
 
 from __future__ import print_function
@@ -222,6 +223,8 @@ def define_platform(conf):
 			'_ALLOW_MSC_VER_MISMATCH',
 			'NO_X360_XDK'
 		])
+		if conf.env.DEST_CPU == 'arm':
+			conf.env.append_unique('DEFINES', ['__arm__=1'])
 	elif conf.env.DEST_OS == 'darwin':
 		conf.env.append_unique('DEFINES', [
 			'OSX=1', '_OSX=1',
@@ -384,14 +387,16 @@ def check_deps(conf):
 		conf.check(lib='opus', uselib_store='OPUS')
 
 	if conf.env.DEST_OS == 'win32':
-		conf.check(lib='libz', uselib_store='ZLIB', define_name='USE_ZLIB')
-		# conf.check(lib='nvtc', uselib_store='NVTC')
-		# conf.check(lib='ati_compress_mt_vc10', uselib_store='ATI_COMPRESS_MT_VC10')
-		conf.check(lib='SDL2', uselib_store='SDL2')
-		conf.check(lib='libjpeg', uselib_store='JPEG', define_name='HAVE_JPEG')
-		conf.check(lib='libpng', uselib_store='PNG', define_name='HAVE_PNG')
-		conf.check(lib='d3dx9', uselib_store='D3DX9')
-		conf.check(lib='d3d9', uselib_store='D3D9')
+		if conf.env.DEST_CPU == 'arm':
+			conf.check(lib='d3d9', uselib_store='D3D9')
+			conf.check(lib='d3dcompiler', uselib_store='D3DCOMPILER')
+		else:
+			conf.check(lib='libz', uselib_store='ZLIB', define_name='USE_ZLIB')
+			conf.check(lib='SDL2', uselib_store='SDL2')
+			conf.check(lib='libjpeg', uselib_store='JPEG', define_name='HAVE_JPEG')
+			conf.check(lib='libpng', uselib_store='PNG', define_name='HAVE_PNG')
+			conf.check(lib='d3dx9', uselib_store='D3DX9')
+			conf.check(lib='d3d9', uselib_store='D3D9')
 		conf.check(lib='dsound', uselib_store='DSOUND')
 		conf.check(lib='dxguid', uselib_store='DXGUID')
 		if conf.options.OPUS:
@@ -405,10 +410,12 @@ def configure(conf):
 	# Force XP compability, all build targets should add
 	# subsystem=bld.env.MSVC_SUBSYSTEM
 	# TODO: wrapper around bld.stlib, bld.shlib and so on?
-	conf.env.MSVC_SUBSYSTEM = 'WINDOWS,5.01'
-	conf.env.MSVC_TARGETS = ['x86'] # explicitly request x86 target for MSVC
-	if conf.options.ALLOW64:
-		conf.env.MSVC_TARGETS = ['x64']
+	conf.env.MSVC_TARGETS = ['x86' if not conf.options.ALLOW64 else 'x64']
+	if conf.env.MSVC_TARGETS[0] == 'x86':
+		conf.env.MSVC_SUBSYSTEM = 'WINDOWS,5.01'
+	else:
+		conf.env.MSVC_SUBSYSTEM = 'WINDOWS'
+
 	if sys.platform == 'win32':
 		conf.load('msvc_pdb_ext msdev msvs')
 	conf.load('subproject xcompile compiler_c compiler_cxx gitversion clang_compilation_database strip_on_install_v2 waf_unit_test enforce_pic')
@@ -504,7 +511,6 @@ def configure(conf):
 	else:
 		cflags += [
 			'/I'+os.path.abspath('.')+'/thirdparty/SDL',
-			'/arch:SSE' if conf.env.DEST_CPU == 'x86' else '/arch:AVX',
 			'/GF',
 			'/Gy',
 			'/fp:fast',
@@ -514,6 +520,8 @@ def configure(conf):
 			'/TP',
 			'/EHsc'
 		]
+		if conf.env.DEST_CPU != 'arm':
+			cflags += ['/arch:SSE' if conf.env.DEST_CPU == 'x86' else '/arch:AVX']
 
 		if conf.options.BUILD_TYPE == 'debug':
 			linkflags += [
@@ -593,7 +601,7 @@ def configure(conf):
 def build(bld):
 	os.environ["CCACHE_DIR"] = os.path.abspath('.ccache/'+bld.env.COMPILER_CC+'/'+bld.env.DEST_OS+'/'+bld.env.DEST_CPU)
 
-	if bld.env.DEST_OS in ['win32', 'android']:
+	if bld.env.SDL and bld.env.DEST_OS in ['win32', 'android']:
 		sdl_name = 'SDL2.dll' if bld.env.DEST_OS == 'win32' else 'libSDL2.so'
 		sdl_path = os.path.join('lib', bld.env.DEST_OS, bld.env.DEST_CPU, sdl_name)
 		bld.install_files(bld.env.LIBDIR, [sdl_path])
