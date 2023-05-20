@@ -2,7 +2,7 @@ name: Build
 
 on: [push, pull_request]
 env:
-  WAF_FLAGS: -T release --disable-warns --prefix=build_hl2
+  WAF_FLAGS: -T debug --disable-warns --prefix=build_hl2
 
 jobs:
   build-linux:
@@ -52,14 +52,20 @@ jobs:
       - name: Configure
         run: ./waf configure ${{ matrix.bits }} ${{ matrix.android }} ${{ matrix.flags }} $WAF_FLAGS
       - name: Build ${{ matrix.os }}
-        run: ./waf install
-      - name: Tar binaries
-        run: tar cvf build.tar build_hl2
-      - name: Upload artifact
+        run: ./waf install --strip-to-file
+      - name: Upload build
         uses: actions/upload-artifact@v3
         with:
-          name: Linux${{matrix.bits}}${{matrix.flags}}${{matrix.android}}.tar
-          path: build.tar
+          name: linux${{matrix.bits}}${{matrix.flags}}${{matrix.android}}
+          path: |
+            build_hl2
+            !build_hl2/**/*.debug
+      - name: Upload debug symbols
+        uses: actions/upload-artifact@v3
+        with:
+          name: debug-Linux${{matrix.bits}}${{matrix.flags}}${{matrix.android}}
+          path: |
+            build_hl2/**/*.debug
 
   build-macos:
     strategy:
@@ -78,14 +84,20 @@ jobs:
       - name: Configure
         run: ./waf configure --64bits ${{ matrix.flags }} $WAF_FLAGS
       - name: Build macos-amd64
-        run: ./waf install
-      - name: Tar binaries
-        run: tar cvf build.tar build_hl2
-      - name: Upload artifact
+        run: ./waf install --strip-to-file
+      - name: Upload build
         uses: actions/upload-artifact@v3
         with:
-          name: macOS--64bits${{matrix.flags}}.tar
-          path: build.tar
+          name: macOS--64bits${{matrix.flags}}${{matrix.android}}
+          path: |
+            build_hl2
+            !build_hl2/**/*.dSYM
+      - name: Upload debug symbols
+        uses: actions/upload-artifact@v3
+        with:
+          name: debug-macOS--64bits${{matrix.flags}}${{matrix.android}}
+          path: |
+            build_hl2/**/*.dSYM
 
   build-windows:
     strategy:
