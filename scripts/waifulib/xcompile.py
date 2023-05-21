@@ -211,6 +211,11 @@ class Android:
 			return 'llvm-strip'
 		return os.path.join(self.gen_binutils_path(), 'strip')
 
+	def objcopy(self):
+		if self.is_host():
+			return 'llvm-objcopy'
+		return os.path.join(self.gen_binutils_path(), 'objcopy')
+
 	def system_stl(self):
 		# TODO: proper STL support
 		return [
@@ -341,6 +346,7 @@ def configure(conf):
 		conf.environ['CC'] = android.cc()
 		conf.environ['CXX'] = android.cxx()
 		conf.environ['STRIP'] = android.strip()
+		conf.environ['OBJCOPY'] = android.objcopy()
 		conf.env.CFLAGS += android.cflags()
 		conf.env.CXXFLAGS += android.cflags(True)
 		conf.env.LINKFLAGS += android.linkflags()
