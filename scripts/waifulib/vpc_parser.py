@@ -90,6 +90,9 @@ def fix_dos_path( path ):
 	if find_path == '': find_path = './'
 	else: find_path += '/'
 
+	if not os.path.exists(find_path):
+		return find_path+filename
+
 	dirlist = os.listdir(find_path)
 	for file in dirlist:
 		if file == filename:
