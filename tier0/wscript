@@ -83,7 +83,7 @@ def build(bld):
 	else:
 		libs = ['DL', 'M', 'LOG']
 
-	install_path = bld.env.LIBDIR
+	install_path = None if bld.env.BUILD_SDK else bld.env.LIBDIR
 
 	bld.shlib(
 		source   = source,

@@ -29,6 +29,8 @@ def build(bld):
 
 	libs = []
 
+	install_path = None if bld.env.BUILD_SDK else bld.env.LIBDIR
+
 	bld.shlib(
 		source   = source,
 		target   = PROJECT_NAME,
@@ -36,7 +38,7 @@ def build(bld):
 		features = 'c cxx',
 		includes = includes,
 		defines  = defines,
-		install_path = bld.env.LIBDIR,
+		install_path = install_path,
 		use      = libs,
 		subsystem = bld.env.MSVC_SUBSYSTEM,
 		idx      = bld.get_taskgen_count()

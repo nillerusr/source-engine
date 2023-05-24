@@ -55,7 +55,7 @@ def build(bld):
 	elif bld.env.DEST_OS == 'darwin':
 		linkflags += ['-framework', 'CoreServices']
 
-	install_path = bld.env.LIBDIR
+	install_path = None if bld.env.BUILD_SDK else bld.env.LIBDIR
 
 	bld.shlib(
 		source   = source,
