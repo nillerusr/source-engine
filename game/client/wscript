@@ -14,12 +14,7 @@ def options(opt):
 games = {
 	'hl2': ['client_base.vpc', 'client_hl2.vpc'],
 	'hl2mp': ['client_base.vpc', 'client_hl2mp.vpc'],
-	'hl1': ['client_base.vpc', 'client_hl1.vpc'],
 	'episodic': ['client_base.vpc', 'client_episodic.vpc'],
-	'portal': ['client_base.vpc', 'client_portal.vpc'],
-	'hl1mp': ['client_base.vpc', 'client_hl1mp.vpc'],
-	'cstrike': ['client_base.vpc', 'client_cstrike.vpc'],
-	'dod': ['client_base.vpc', 'client_dod.vpc']
 }
 
 def configure(conf):

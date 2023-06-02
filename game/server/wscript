@@ -12,18 +12,6 @@ games = {
 	'hl2': ['server_base.vpc', 'server_hl2.vpc'],
 	'episodic':['server_base.vpc', 'server_episodic.vpc'],
 	'hl2mp': ['server_base.vpc', 'server_hl2mp.vpc'],
-	'portal': ['server_base.vpc', 'server_portal.vpc'],
-	'hl1': ['server_base.vpc', 'server_hl1.vpc'],
-	'hl1mp': ['server_base.vpc', 'server_hl1mp.vpc'],
-	'cstrike': ['server_base.vpc', 'server_cstrike.vpc', 'nav_mesh.vpc'],
-	'dod': ['server_base.vpc', 'server_dod.vpc'],
-	'tf': [
-		'server_base.vpc',
-		'server_econ_base.vpc',
-		'tf/tf_gcmessages_include.vpc',
-		'nav_mesh.vpc',
-		'server_tf.vpc'
-	]
 }
 
 def options(opt):
