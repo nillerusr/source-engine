@@ -696,6 +696,7 @@ int CFileSystem_Stdio::FS_stat( const char *pathT, struct _stat *buf, bool *pbLo
 	int rt = _stat( path, buf );
 
 	// Workaround bug wherein stat() randomly fails on Windows XP.  See comment on function.
+/*
 #if defined(_WIN32) && defined(FILESYSTEM_MSVC2015_STAT_BUG_WORKAROUND)
 	if ( rt == -1 )
 	{
@@ -706,6 +707,7 @@ int CFileSystem_Stdio::FS_stat( const char *pathT, struct _stat *buf, bool *pbLo
 		}
 	}
 #endif // defined(_WIN32) && defined(FILESYSTEM_MSVC2015_STAT_BUG_WORKAROUND)
+*/
 
 #if defined(LINUX) || defined(PLATFORM_BSD)
 	if ( rt == -1 )

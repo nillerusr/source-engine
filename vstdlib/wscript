@@ -21,7 +21,6 @@ def build(bld):
 		'cvar.cpp',
 		'jobthread.cpp',
 		'KeyValuesSystem.cpp',
-		'osversion.cpp',
 		'random.cpp',
 		'vcover.cpp',
 		'../public/tier0/memoverride.cpp'
