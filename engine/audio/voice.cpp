@@ -189,8 +189,6 @@ bool				g_bUsingSteamVoice = false;
 
 #ifdef WIN32
 extern IVoiceRecord* CreateVoiceRecord_DSound(int nSamplesPerSec);
-#elif defined( OSX )
-extern IVoiceRecord* CreateVoiceRecord_AudioQueue(int sampleRate);
 #endif
 
 #ifdef POSIX
@@ -643,13 +641,8 @@ bool Voice_Init( const char *pCodecName, int nSampleRate )
 		return false;
 
 	// Get the voice input device.
-#ifdef OSX
-	g_pVoiceRecord = CreateVoiceRecord_AudioQueue( Voice_SamplesPerSec() );
-	if ( !g_pVoiceRecord )
-	{
-		// Fall back to OpenAL
-		g_pVoiceRecord = CreateVoiceRecord_OpenAL( Voice_SamplesPerSec() );
-	}
+#if defined( OSX )
+	g_pVoiceRecord = CreateVoiceRecord_OpenAL( Voice_SamplesPerSec() );
 #elif defined( WIN32 )
 	g_pVoiceRecord = CreateVoiceRecord_DSound( Voice_SamplesPerSec() );
 #elif defined( USE_SDL )

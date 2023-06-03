@@ -11,10 +11,6 @@
 #endif
 #ifdef OSX
 #include "snd_dev_openal.h"
-#include "snd_dev_mac_audioqueue.h"
-
-ConVar snd_audioqueue( "snd_audioqueue", "1" );
-
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -94,11 +90,6 @@ IAudioDevice *IAudioDevice::AutoDetectInit( bool waveOnly )
 			pDevice = Audio_CreateWaveDevice();
 		}
 #elif defined(OSX)
-		if ( !CommandLine()->CheckParm( "-snd_openal" ) )
-		{
-			DevMsg( "Using AudioQueue Interface\n" );
-			pDevice = Audio_CreateMacAudioQueueDevice();
-		}
 		if ( !pDevice )
 		{
 			DevMsg( "Using OpenAL Interface\n" );
