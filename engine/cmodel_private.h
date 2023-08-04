@@ -42,13 +42,13 @@ struct TraceInfo_t
 		m_nCheckDepth = -1;
 	}
 
-	Vector m_start;
-	Vector m_end;
-	Vector m_mins;
-	Vector m_maxs;
-	Vector m_extents;
-	Vector m_delta;
-	Vector m_invDelta;
+	VectorAligned m_start;
+	VectorAligned m_end;
+	VectorAligned m_mins;
+	VectorAligned m_maxs;
+	VectorAligned m_extents;
+	VectorAligned m_delta;
+	VectorAligned m_invDelta;
 
 	trace_t m_trace;
 	trace_t m_stabTrace;

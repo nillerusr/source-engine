@@ -987,7 +987,7 @@ private:
 	int m_iTree;
 };
 
-
+/*
 class CIntersectPoint : public CPartitionVisitor
 {
 public:
@@ -1009,7 +1009,7 @@ public:
 private:
 	fltx4 m_f4Point;
 };
-
+*/
 
 class CIntersectBox : public CPartitionVisitor
 {
@@ -1040,8 +1040,8 @@ class CIntersectRay : public CPartitionVisitor
 public:
 	CIntersectRay( CVoxelTree *pPartition, const Ray_t &ray, const Vector &vecInvDelta ) : CPartitionVisitor( pPartition )
 	{
-		m_f4Start = LoadUnaligned3SIMD( ray.m_Start.Base() );
-		m_f4Delta = LoadUnaligned3SIMD( ray.m_Delta.Base() );
+		m_f4Start = LoadAlignedSIMD( ray.m_Start.Base() );
+		m_f4Delta = LoadAlignedSIMD( ray.m_Delta.Base() );
 		m_f4InvDelta = LoadUnaligned3SIMD( vecInvDelta.Base() );
 	}
 
@@ -1069,10 +1069,10 @@ class CIntersectSweptBox : public CPartitionVisitor
 public:
 	CIntersectSweptBox( CVoxelTree *pPartition, const Ray_t &ray, const Vector &vecInvDelta ) : CPartitionVisitor( pPartition )
 	{
-		m_f4Start = LoadUnaligned3SIMD( ray.m_Start.Base() );
-		m_f4Delta = LoadUnaligned3SIMD( ray.m_Delta.Base() );
+		m_f4Start = LoadAlignedSIMD( ray.m_Start.Base() );
+		m_f4Delta = LoadAlignedSIMD( ray.m_Delta.Base() );
+		m_f4Extents = LoadAlignedSIMD( ray.m_Extents.Base() );
 		m_f4InvDelta = LoadUnaligned3SIMD( vecInvDelta.Base() );
-		m_f4Extents = LoadUnaligned3SIMD( ray.m_Extents.Base() );
 	}
 
 	bool Intersects( const float *pMins, const float *pMaxs ) const
