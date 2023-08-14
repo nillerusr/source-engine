@@ -455,7 +455,9 @@ bool GetVTFPreload360Data( const char *pDebugName, CUtlBuffer &fileBufferIn, CUt
 // compiler pads, the 360 compiler does NOT.
 //-----------------------------------------------------------------------------
 
-struct VTFFileBaseHeader_t
+// nillerusr: try to avoid problems with pragma pack, remove c++ inheritance to make this structs platform-independent
+
+struct alignas(16) VTFFileBaseHeader_t
 {
 	DECLARE_BYTESWAP_DATADESC();
 	char fileTypeString[4]; // "VTF" Valve texture file
@@ -463,9 +465,13 @@ struct VTFFileBaseHeader_t
 	int headerSize;
 };
 
-struct VTFFileHeaderV7_1_t : public VTFFileBaseHeader_t 
+struct alignas(16) VTFFileHeaderV7_1_t
 {
 	DECLARE_BYTESWAP_DATADESC();
+	char fileTypeString[4]; // "VTF" Valve texture file
+	int version[2]; 		// version[0].version[1]
+	int headerSize;
+
 	unsigned short	width;
 	unsigned short	height;
 	unsigned int	flags;
@@ -484,12 +490,64 @@ struct VTFFileHeaderV7_1_t : public VTFFileBaseHeader_t
 	unsigned char	lowResImageHeight;	
 };
 
-struct VTFFileHeaderV7_2_t : public VTFFileHeaderV7_1_t
+struct alignas(16) VTFFileHeaderV7_2_t
 {
 	DECLARE_BYTESWAP_DATADESC();
 
+	char fileTypeString[4]; // "VTF" Valve texture file
+	int version[2]; 		// version[0].version[1]
+	int headerSize;
+
+	unsigned short	width;
+	unsigned short	height;
+	unsigned int	flags;
+	unsigned short	numFrames;
+	unsigned short	startFrame;
+
+	// must manually align in order to maintain pack(1) expected layout with existing binaries
+	char pad1[4];
+	VectorAligned	reflectivity;
+
+	float			bumpScale;
+	ImageFormat		imageFormat;
+	unsigned char	numMipLevels;
+	ImageFormat		lowResImageFormat;
+	unsigned char	lowResImageWidth;
+	unsigned char	lowResImageHeight;	
 	unsigned short depth;
 };
+
+struct alignas(16) VTFFileHeaderV7_3_t
+{
+	DECLARE_BYTESWAP_DATADESC();
+
+	char fileTypeString[4]; // "VTF" Valve texture file
+	int version[2]; 		// version[0].version[1]
+	int headerSize;
+
+	unsigned short	width;
+	unsigned short	height;
+	unsigned int	flags;
+	unsigned short	numFrames;
+	unsigned short	startFrame;
+
+	// must manually align in order to maintain pack(1) expected layout with existing binaries
+	char pad1[4];
+	VectorAligned	reflectivity;
+
+	float			bumpScale;
+	ImageFormat		imageFormat;
+	unsigned char	numMipLevels;
+	ImageFormat		lowResImageFormat;
+	unsigned char	lowResImageWidth;
+	unsigned char	lowResImageHeight;	
+	unsigned short depth;
+
+	char			pad4[3];
+	unsigned int	numResources;
+};
+
+typedef VTFFileHeaderV7_3_t VTFFileHeader_t;
 
 #define BYTE_POS( byteVal, shft )	uint32( uint32(uint8(byteVal)) << uint8(shft * 8) )
 #if !defined( _X360 )
@@ -533,28 +591,6 @@ struct ResourceEntryInfo
 		unsigned char	chTypeBytes[4];
 	};
 	unsigned int		resData;	// Resource data or offset from the beginning of the file
-};
-
-struct VTFFileHeaderV7_3_t : public VTFFileHeaderV7_2_t
-{
-	DECLARE_BYTESWAP_DATADESC();
-
-	char			pad4[3];
-	unsigned int	numResources;
-
-#if defined( _X360 ) || defined( POSIX )
-	// must manually align in order to maintain pack(1) expected layout with existing binaries
-	char			pad5[8];
-#endif
-	
-	// AFTER THE IMPLICIT PADDING CAUSED BY THE COMPILER....
-	// *** followed by *** ResourceEntryInfo resources[0];
-	// Array of resource entry infos sorted ascending by type
-};
-
-struct VTFFileHeader_t : public VTFFileHeaderV7_3_t
-{
-	DECLARE_BYTESWAP_DATADESC();
 };
 
 #define VTF_X360_MAJOR_VERSION	0x0360
