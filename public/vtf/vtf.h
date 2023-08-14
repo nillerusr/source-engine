@@ -471,14 +471,11 @@ struct VTFFileHeaderV7_1_t : public VTFFileBaseHeader_t
 	unsigned int	flags;
 	unsigned short	numFrames;
 	unsigned short	startFrame;
-#if !defined( POSIX ) && !defined( _X360 )
-	VectorAligned	reflectivity;
-#else
+
 	// must manually align in order to maintain pack(1) expected layout with existing binaries
-	char			pad1[4];
-	Vector			reflectivity;
-	char			pad2[4];
-#endif
+	char pad1[4];
+	VectorAligned	reflectivity;
+
 	float			bumpScale;
 	ImageFormat		imageFormat;
 	unsigned char	numMipLevels;
