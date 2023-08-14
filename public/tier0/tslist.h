@@ -37,7 +37,6 @@
 #if defined( PLATFORM_64BITS ) && !defined(_M_ARM64)
 
 #if defined (PLATFORM_WINDOWS) 
-typedef __int128 int128;
 //typedef __m128i int128;
 //inline int128 int128_zero()	{ return _mm_setzero_si128(); }
 #else  // PLATFORM_WINDOWS
