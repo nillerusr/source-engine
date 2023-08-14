@@ -145,16 +145,10 @@ public:
 
 	struct JoystickInfo_t
 	{
-#ifdef USE_SDL
 		void *m_pDevice;  // Really an SDL_GameController*, NULL if not present.
 		void *m_pHaptic;  // Really an SDL_Haptic*
 		float m_fCurrentRumble;
 		bool m_bRumbleEnabled;
-#elif defined(_WIN32)
-		JOYINFOEX m_JoyInfoEx;
-#else
-#error
-#endif
 		int m_nButtonCount;
 		int m_nAxisFlags;
 		int m_nDeviceId;
@@ -277,9 +271,6 @@ public:
 
 	//Added called and set to true when binding input and set to false once bound
 	void SetNovintPure( bool bPure );
-#ifndef USE_SDL
-	unsigned int AxisValue( JoystickAxis_t axis, JOYINFOEX& ji );
-#endif
 #else
 	void SetNovintPure( bool bPure ) {} // to satify the IInput virtual interface	
 #endif

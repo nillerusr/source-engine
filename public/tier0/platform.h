@@ -405,6 +405,18 @@ FIXME: Enable this when we no longer fear change =)
 #define __i386__	1
 #endif
 
+#ifdef _M_ARM64EC
+#define _M_ARM64	1
+#endif
+
+#ifdef _M_ARM
+#define __arm__		1
+#endif
+
+#ifdef _M_ARM64
+#define __aarch64__	1
+#endif
+
 #elif POSIX
 #if defined( OSX ) && defined( CARBON_WORKAROUND )
 #define DWORD unsigned int
@@ -1025,7 +1037,7 @@ inline T QWordSwapC( T dw )
 		return output;
 	}
 
-#elif defined( _MSC_VER ) && !defined( PLATFORM_WINDOWS_PC64 ) && !defined(_M_ARM)
+#elif defined( _MSC_VER ) && defined( _M_X86 )
 
 	#define WordSwap  WordSwapAsm
 	#define DWordSwap DWordSwapAsm
@@ -1254,8 +1266,9 @@ inline uint64 Plat_Rdtsc()
 #elif defined( _M_IX86 )
 	_asm rdtsc
 #elif defined( _M_ARM )
-	uint32 val = _MoveFromCoprocessor(15,0, 9,13,0);
-	return ((uint64)val) << 6;
+	return __rdpmccntr64();
+	//uint32 val = _MoveFromCoprocessor(15,0, 9,13,0);
+	//return ((uint64)val) << 6;
 #elif defined( _M_ARM64 ) || defined( _M_ARM64EC )
 	return _ReadStatusReg(MSVC_ARM_SYSREG(3,3, 9,12,5));
 #elif defined( COMPILER_MSVC )

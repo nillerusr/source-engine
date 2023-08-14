@@ -152,7 +152,7 @@ CON_COMMAND( vr_toggle, "Toggles VR mode" )
 // --------------------------------------------------------------------
 // Purpose: Returns true if the matrix is orthonormal
 // --------------------------------------------------------------------
-bool IsOrthonormal ( VMatrix Mat, float fTolerance )
+bool IsOrthonormal ( VMatrix& Mat, float fTolerance )
 {
 	float LenFwd = Mat.GetForward().Length();
 	float LenUp = Mat.GetUp().Length();

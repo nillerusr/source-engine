@@ -167,10 +167,8 @@ InitReturnVal_t CInputSystem::Init()
 
 	joy_xcontroller_found.SetValue( 0 );
 	
-#ifdef USE_SDL
 	if( !m_bConsoleTextMode )
 		InitializeTouch();
-#endif
 	
 	if ( IsPC() && !m_bConsoleTextMode )
 	{
@@ -977,9 +975,7 @@ void CInputSystem::SetPrimaryUserId( int userId )
 //-----------------------------------------------------------------------------
 void CInputSystem::SetRumble( float fLeftMotor, float fRightMotor, int userId )
 {
-#ifdef USE_SDL
 	SetXDeviceRumble( fLeftMotor, fRightMotor, userId );
-#endif
 }
 
 

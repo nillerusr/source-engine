@@ -18,6 +18,8 @@ def configure(conf):
 def build(bld):
 	source = [
 		'inputsystem.cpp',
+		'joystick_sdl.cpp',
+		'touch_sdl.cpp',
 		'key_translation.cpp',
 		'steamcontroller.cpp',
 		'../public/tier0/memoverride.cpp'
@@ -38,12 +40,6 @@ def build(bld):
 	defines = []
 
 	libs = ['tier0','tier1','tier2','vstdlib','SDL2','steam_api']
-
-	if bld.options.SDL:
-		source += ['joystick_sdl.cpp', 'touch_sdl.cpp']
-	elif bld.env.DEST_OS == 'win32':
-		source += ['joystick_win32.cpp']
-		libs += ['WINMM']
 
 	if bld.env.DEST_OS == 'win32':
 		libs += ['USER32']

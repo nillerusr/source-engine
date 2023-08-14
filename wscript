@@ -223,8 +223,6 @@ def define_platform(conf):
 			'_ALLOW_MSC_VER_MISMATCH',
 			'NO_X360_XDK'
 		])
-		if conf.env.DEST_CPU == 'arm':
-			conf.env.append_unique('DEFINES', ['__arm__=1'])
 	elif conf.env.DEST_OS == 'darwin':
 		conf.env.append_unique('DEFINES', [
 			'OSX=1', '_OSX=1',
@@ -387,9 +385,11 @@ def check_deps(conf):
 		conf.check(lib='opus', uselib_store='OPUS')
 
 	if conf.env.DEST_OS == 'win32':
-		if conf.env.DEST_CPU == 'arm':
+		if conf.env.DEST_CPU in ['arm', 'arm64']:
 			conf.check(lib='d3d9', uselib_store='D3D9')
 			conf.check(lib='d3dcompiler', uselib_store='D3DCOMPILER')
+			conf.check(lib='d3dx9', uselib_store='D3DX9')
+			conf.check(lib='SDL2', uselib_store='SDL2')
 		else:
 			conf.check(lib='libz', uselib_store='ZLIB', define_name='USE_ZLIB')
 			conf.check(lib='SDL2', uselib_store='SDL2')
@@ -520,7 +520,7 @@ def configure(conf):
 			'/TP',
 			'/EHsc'
 		]
-		if conf.env.DEST_CPU != 'arm':
+		if conf.env.DEST_CPU in ['x86', 'x86_64', 'amd64']:
 			cflags += ['/arch:SSE' if conf.env.DEST_CPU == 'x86' else '/arch:AVX']
 
 		if conf.options.BUILD_TYPE == 'debug':
@@ -601,10 +601,18 @@ def configure(conf):
 def build(bld):
 	os.environ["CCACHE_DIR"] = os.path.abspath('.ccache/'+bld.env.COMPILER_CC+'/'+bld.env.DEST_OS+'/'+bld.env.DEST_CPU)
 
-	if bld.env.SDL and bld.env.DEST_OS in ['win32', 'android']:
+	base_lib_path = os.path.join('lib', bld.env.DEST_OS, bld.env.DEST_CPU)
+	if bld.env.DEST_OS in ['win32', 'android']:
 		sdl_name = 'SDL2.dll' if bld.env.DEST_OS == 'win32' else 'libSDL2.so'
-		sdl_path = os.path.join('lib', bld.env.DEST_OS, bld.env.DEST_CPU, sdl_name)
+		sdl_path = os.path.join(base_lib_path, sdl_name)
 		bld.install_files(bld.env.LIBDIR, [sdl_path])
+
+	if bld.env.DEST_OS == 'win32' and bld.env.DEST_CPU in ['arm', 'arm64']:
+		# because Windows ARM doesn't have D3DX and it is deprecated since Windows 8
+		bld.install_files(bld.env.LIBDIR, [
+			os.path.join(base_lib_path, 'd3dx9.dll'),
+			os.path.join(base_lib_path, 'd3dxof.dll'),
+		])
 
 	if bld.env.DEST_OS == 'win32':
 		projects['game'] += ['utils/bzip2']

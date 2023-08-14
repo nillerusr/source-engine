@@ -34,9 +34,10 @@
 
 //-----------------------------------------------------------------------------
 
-#if defined( PLATFORM_64BITS )
+#if defined( PLATFORM_64BITS ) && !defined(_M_ARM64)
 
 #if defined (PLATFORM_WINDOWS) 
+typedef __int128 int128;
 //typedef __m128i int128;
 //inline int128 int128_zero()	{ return _mm_setzero_si128(); }
 #else  // PLATFORM_WINDOWS
@@ -140,7 +141,7 @@ union TSLIST_HEAD_ALIGN TSLHead_t
 		uint32   DepthAndSequence;
 	} value32;
 
-#ifdef PLATFORM_64BITS
+#if defined(PLATFORM_64BITS) && !defined(_M_ARM64)
 	int128 value64x128;
 #else
 	int64 value64x128;
@@ -194,7 +195,7 @@ public:
 
 #ifdef USE_NATIVE_SLIST
 		InitializeSListHead( &m_Head );
-#elif defined(PLATFORM_64BITS)
+#elif defined(PLATFORM_64BITS) && !defined(_M_ARM64)
 		m_Head.value64x128 = int128_zero();
 #else
 		m_Head.value64x128 = (int64)0;
@@ -720,7 +721,7 @@ public:
 			intp	sequence;
 		} value;
 
-#ifdef PLATFORM_64BITS
+#if defined(PLATFORM_64BITS) && !defined(_M_ARM64)
 		int128 value64x128;
 #else
 		int64 value64x128;

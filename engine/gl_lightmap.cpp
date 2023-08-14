@@ -1333,6 +1333,7 @@ void CacheAndUnloadLightmapData()
 	host_state.worldbrush->unloadedlightmaps = true;
 }
 
+#pragma optimize("", off)
 //sorts the surfaces in place
 static void SortSurfacesByLightmapID( SurfaceHandle_t *pToSort, int iSurfaceCount )
 {
@@ -1448,6 +1449,7 @@ void R_RedownloadAllLightmaps()
 
 	g_RebuildLightmaps = false;
 }
+#pragma optimize("", on)
 
 //-----------------------------------------------------------------------------
 // Purpose: flag the lightmaps as needing to be rebuilt (gamma change)

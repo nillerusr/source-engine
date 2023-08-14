@@ -9182,50 +9182,6 @@ FORCE_INLINE void _sse2neon_mm_set_denormals_zero_mode(unsigned int flag)
 }
 #endif
 
-// Return the current 64-bit value of the processor's time-stamp counter.
-// https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#text=rdtsc
-FORCE_INLINE uint64_t _rdtsc(void)
-{
-#if defined(__aarch64__) || defined(_M_ARM64)
-    uint64_t val;
-
-    /* According to ARM DDI 0487F.c, from Armv8.0 to Armv8.5 inclusive, the
-     * system counter is at least 56 bits wide; from Armv8.6, the counter
-     * must be 64 bits wide.  So the system counter could be less than 64
-     * bits wide and it is attributed with the flag 'cap_user_time_short'
-     * is true.
-     */
-#if defined(_MSC_VER)
-    val = _ReadStatusReg(ARM64_SYSREG(3, 3, 14, 0, 2));
-#else
-    __asm__ __volatile__("mrs %0, cntvct_el0" : "=r"(val));
-#endif
-
-    return val;
-#elif defined(_M_ARM)
-	uint32_t val = _MoveFromCoprocessor(15,0, 9,13,0);
-	return ((uint64_t)val) << 6;
-#else
-    uint32_t pmccntr, pmuseren, pmcntenset;
-    // Read the user mode Performance Monitoring Unit (PMU)
-    // User Enable Register (PMUSERENR) access permissions.
-    __asm__ __volatile__("mrc p15, 0, %0, c9, c14, 0" : "=r"(pmuseren));
-    if (pmuseren & 1) {  // Allows reading PMUSERENR for user mode code.
-        __asm__ __volatile__("mrc p15, 0, %0, c9, c12, 1" : "=r"(pmcntenset));
-        if (pmcntenset & 0x80000000UL) {  // Is it counting?
-            __asm__ __volatile__("mrc p15, 0, %0, c9, c13, 0" : "=r"(pmccntr));
-            // The counter is set up to count every 64th cycle
-            return (uint64_t) (pmccntr) << 6;
-        }
-    }
-
-    // Fallback to syscall as we can't enable PMUSERENR in user mode.
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return (uint64_t) (tv.tv_sec) * 1000000 + tv.tv_usec;
-#endif
-}
-
 #if defined(__GNUC__) || defined(__clang__)
 #pragma pop_macro("ALIGN_STRUCT")
 #pragma pop_macro("FORCE_INLINE")

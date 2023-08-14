@@ -66,13 +66,13 @@ void R_LightAmbient_4D( const Vector& normal, Vector4D* pLightBoxColor, Vector &
 	VectorMA( lv, normal[2]*normal[2], normal[2] > 0.f ? pLightBoxColor[4].AsVector3D() : pLightBoxColor[5].AsVector3D(), lv );
 }
 
-#if defined( _WIN32 ) && !defined( _X360 ) && !defined(_M_ARM)
+#if defined( _WIN32 ) && !defined( _X360 )
 void R_LightAmbient_4D( const FourVectors& normal, Vector4D* pLightBoxColor, FourVectors &lv )
 {
 //	VPROF( "R_LightAmbient" );
 
 	// !!speed!! compute ambient color cube in sse format
-	static fltx4 FourZeros={0.,0.,0.,.0};
+	static fltx4 FourZeros=FLTX4(0.,0.,0.,.0);
 
 	// find the contributions from each axis
 	fltx4 NegMask=CmpLtSIMD(normal.x,FourZeros);

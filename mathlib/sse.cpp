@@ -91,13 +91,13 @@ float _SSE_Sqrt(float x)
 {
 	Assert( s_bMathlibInitialized );
 	float	root = 0.f;
-#if defined(_WIN32) && !defined(_M_ARM)
+#if defined(_WIN32) && !defined(_M_ARM) && !defined(_M_ARM64)
 	_asm
 	{
 		sqrtss		xmm0, x
 		movss		root, xmm0
 	}
-#elif POSIX
+#else
 	_mm_store_ss( &root, _mm_sqrt_ss( _mm_load_ss( &x ) ) );
 #endif
 	return root;
@@ -122,7 +122,7 @@ float _SSE_RSqrtAccurate(float x)
 }
 #else
 
-#if POSIX || defined(_M_ARM)
+#if POSIX || defined(_M_ARM) || defined(_M_ARM64)
 const __m128  f3  = _mm_set_ss(3.0f);  // 3 as SSE value
 const __m128  f05 = _mm_set_ss(0.5f);  // 0.5 as SSE value
 #endif
@@ -131,7 +131,7 @@ const __m128  f05 = _mm_set_ss(0.5f);  // 0.5 as SSE value
 float _SSE_RSqrtAccurate(float a)
 {
 
-#if defined(_WIN32) && !defined(_M_ARM)
+#if defined(_WIN32) && !defined(_M_ARM) && !defined(_M_ARM64)
 	float x;
 	float half = 0.5f;
 	float three = 3.f;
@@ -153,8 +153,8 @@ float _SSE_RSqrtAccurate(float a)
 	}
 
 	return x;
-#elif POSIX || defined(_M_ARM)
-	__m128  xx = _mm_load_ss( &a );
+#else
+    __m128  xx = _mm_load_ss( &a );
     __m128  xr = _mm_rsqrt_ss( xx );
     __m128  xt;
 	
@@ -166,8 +166,6 @@ float _SSE_RSqrtAccurate(float a)
 	
     _mm_store_ss( &a, xr );
     return a;
-#else
-	#error "Not Implemented"
 #endif
 
 }
@@ -764,7 +762,7 @@ float _SSE_cos( float x )
 //-----------------------------------------------------------------------------
 // SSE2 implementations of optimized routines:
 //-----------------------------------------------------------------------------
-#if defined(PLATFORM_WINDOWS_PC32) && !defined(_M_ARM)
+#if defined(_M_IX86)
 void _SSE2_SinCos(float x, float* s, float* c)  // any x
 {
 #ifdef _WIN32

@@ -43,7 +43,7 @@ struct cplane_t;
 	#define M_PI		3.14159265358979323846	// matches value in gcc v2 math.h
 #endif
 
-class VMatrix
+class alignas(16) VMatrix
 {
 public:
 

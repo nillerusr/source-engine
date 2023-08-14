@@ -135,8 +135,12 @@ public:
 		Assert( m_pData );
 
 		static FourVectors value{Four_Zeros, Four_Zeros, Four_Zeros};
-		for (size_t n = m_nHeight * m_nPaddedWidth; n; n--)
+#if defined(_M_ARM) // fuck msvc with C2719 error
+		for (size_t n = m_nHeight*m_nPaddedWidth; n; n--)
 			*(m_pData+n) = value;
+#else
+		memutils::set( m_pData, value, m_nHeight*m_nPaddedWidth );
+#endif
 	}
 
 	void RaiseToPower( float power );

@@ -22,8 +22,8 @@ def build(bld):
 		'assert_dialog.cpp',
 		'commandline.cpp',
 		'cpu.cpp',
-		'cpu_usage.cpp',
 		'cpumonitoring.cpp',
+		'cpu_usage.cpp',
 		'dbg.cpp',
 		'dynfunction.cpp',
 		'fasttimer.cpp',
@@ -57,7 +57,7 @@ def build(bld):
 			'vcrmode.cpp',
 			'win32consoleio.cpp'
 		]
-		if bld.env.DEST_CPU == 'arm':
+		if bld.env.DEST_CPU in ['arm', 'arm64']:
 			source += ['pme_posix.cpp']
 		else:
 			source += ['pme.cpp']

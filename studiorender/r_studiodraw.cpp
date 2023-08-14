@@ -907,7 +907,7 @@ inline void CStudioRender::R_ComputeLightAtPoint3( const Vector &pos, const Vect
 
 // define SPECIAL_SSE_MESH_PROCESSOR to enable code which contains a special optimized SSE lighting loop, significantly
 // improving software vertex processing performace.
-#if defined( _WIN32 ) && !defined( _X360 ) && !defined(_M_ARM)
+#if defined( _WIN32 ) && !defined( _X360 )
 #define SPECIAL_SSE_MESH_PROCESSOR
 #endif
 
