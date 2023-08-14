@@ -114,7 +114,7 @@ inline T clamp( T const &val, T const &minVal, T const &maxVal )
 // FIXME: this should move to a different file
 struct cplane_t
 {
-	Vector	normal;
+	VectorAligned	normal;
 	float	dist;
 	byte	type;			// for fast side tests
 	byte	signbits;		// signx + (signy<<1) + (signz<<1)
