@@ -425,6 +425,13 @@ void CTouchControls::Init()
 	initialized = true;
 }
 
+void CTouchControls::LevelInit()
+{
+	m_bCutScene = false;
+	m_AlphaDiff = 0;
+	m_flHideTouch = 0;
+}
+
 int nextPowerOfTwo(int x)
 {
 	if( (x & (x - 1)) == 0)

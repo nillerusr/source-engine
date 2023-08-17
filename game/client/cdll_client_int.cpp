@@ -1631,6 +1631,7 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 	g_RagdollLVManager.SetLowViolence( pMapName );
 
 	gHUD.LevelInit();
+	gTouch.LevelInit();
 
 #if defined( REPLAY_ENABLED )
 	// Initialize replay ragdoll recorder
