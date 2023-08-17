@@ -119,6 +119,7 @@ public:
 
 	// read and clear accumulated raw input values
 	virtual bool GetRawMouseAccumulators( int& accumX, int& accumY ) = 0;
+	virtual bool GetTouchAccumulators( int fingerId, float &dx, float &dy ) = 0;
 
 	// tell the input system that we're not a game, we're console text mode.
 	// this is used for dedicated servers to not initialize joystick system.
