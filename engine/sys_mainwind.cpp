@@ -263,7 +263,6 @@ GameMessageHandler_t g_GameMessageHandlers[] =
 	{ IE_Quit,					&CGame::HandleMsg_Close },
 };
 
-
 void CGame::AppActivate( bool fActive )
 {
 	// If text mode, force it to be active.
@@ -299,8 +298,18 @@ void CGame::AppActivate( bool fActive )
 			// Clear keyboard states (should be cleared already but...)
 			// VGui_ActivateMouse will reactivate the mouse soon.
 			ClearIOStates();
-			
 			UpdateMaterialSystemConfig();
+
+#ifdef ANDROID
+			ConVarRef mat_queue_mode( "mat_queue_mode" );
+
+			// Hack to reset internal queue buffers
+			int nSavedQueueMode = mat_queue_mode.GetInt();
+			mat_queue_mode.SetValue( 0 );
+			materials->BeginFrame( host_frametime );
+			materials->EndFrame();
+			mat_queue_mode.SetValue( nSavedQueueMode );
+#endif
 		}
 		else
 		{
