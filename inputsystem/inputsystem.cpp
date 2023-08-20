@@ -1530,16 +1530,6 @@ bool CInputSystem::GetRawMouseAccumulators( int& accumX, int& accumY )
 #endif
 }
 
-bool CInputSystem::GetTouchAccumulators( InputEventType_t &event, int &fingerId, int& accumX, int& accumY )
-{
-	event = m_touchAccumEvent;
-	fingerId = m_touchAccumFingerId;
-	accumX = m_touchAccumX;
-	accumY = m_touchAccumY;
-
-	return m_bJoystickInitialized;
-}
-
 void CInputSystem::SetConsoleTextMode( bool bConsoleTextMode )
 {
 	/* If someone calls this after init, shut it down. */

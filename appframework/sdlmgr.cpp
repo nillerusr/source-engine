@@ -404,6 +404,9 @@ private:
 	int m_MouseButtonDownX;
 	int m_MouseButtonDownY;
 
+	bool m_bResetVsync;
+	int m_nFramesToSkip;
+
 	double m_flPrevGLSwapWindowTime;
 };
 
@@ -583,6 +586,9 @@ InitReturnVal_t CSDLMgr::Init()
 	m_nMouseTargetY = 0;
 	m_nWarpDelta = 0;
 	m_bRawInput = false;
+
+	m_nFramesToSkip = 0;
+	m_bResetVsync = false;
 
 	m_flPrevGLSwapWindowTime = 0.0f;
 
@@ -1431,7 +1437,20 @@ void CSDLMgr::ShowPixels( CShowPixelsParams *params )
 
 	m_flPrevGLSwapWindowTime = tm.GetDurationInProgress().GetMillisecondsF();
 
-	
+#ifdef ANDROID
+	// ADRENO GPU MOMENT, SKIP 5 FRAMES
+	if( m_bResetVsync )
+	{
+		if( m_nFramesToSkip <= 0 )
+		{
+			SDL_GL_SetSwapInterval(swapInterval);
+			m_bResetVsync = false;
+		}
+		else
+			m_nFramesToSkip--;
+	}
+#endif
+
 	CheckGLError( __LINE__ );
 }
 #endif // DX_TO_GL_ABSTRACTION
@@ -1887,6 +1906,7 @@ void CSDLMgr::PumpWindowsMessageLoop()
 					}
 					case SDL_WINDOWEVENT_FOCUS_GAINED:
 					{
+						m_bResetVsync = true; m_nFramesToSkip = 3;
 						m_bHasFocus = true;
 						SDL_ShowCursor( m_bCursorVisible ? 1 : 0 );
 						CCocoaEvent theEvent;
