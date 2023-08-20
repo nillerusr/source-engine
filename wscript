@@ -190,6 +190,11 @@ def define_platform(conf):
 	if conf.options.ALLOW64:
 		conf.define('PLATFORM_64BITS', 1)
 
+	if (conf.env.DEST_OS == 'android' or
+	 (conf.env.DEST_OS == 'win32' and conf.env.DEST_CPU in ['arm', 'arm64'])):
+		conf.env.MOBILE = True
+		conf.env.append_unique('DEFINES', ['PLATFORM_MOBILE=1'])
+
 	if conf.env.DEST_OS == 'linux':
 		conf.define('_GLIBCXX_USE_CXX11_ABI',0)
 		conf.env.append_unique('DEFINES', [
