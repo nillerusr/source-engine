@@ -313,7 +313,7 @@ void CTouchControls::ResetToDefaults()
 {
 	rgba_t color(255, 255, 255, 155);
 	char buf[MAX_PATH];
-	gridcolor = rgba_t(255, 0, 0, 50);
+	gridcolor = rgba_t(255, 0, 0, 30);
 
 	RemoveButtons();
 
@@ -372,7 +372,7 @@ void CTouchControls::Init()
 	mouse_events = 0;
 	move_start_x = move_start_y = 0.0f;
 	m_flPreviousYaw = m_flPreviousPitch = 0.f;
-	gridcolor = rgba_t(255, 0, 0, 50);
+	gridcolor = rgba_t(255, 0, 0, 30);
 
 	m_bCutScene = false;
 	showtexture = hidetexture = resettexture = closetexture = joytexture = 0;
@@ -659,6 +659,8 @@ void CTouchControls::Paint()
 
 	CUtlLinkedList<CTouchButton*>::iterator it;
 
+	const rgba_t buttonEditClr = rgba_t( 61, 153, 0, 40 );
+
 	if( state == state_edit )
 	{
 		vgui::surface()->DrawSetColor(gridcolor.r, gridcolor.g, gridcolor.b, gridcolor.a*3); // 255, 0, 0, 200 <- default here
@@ -685,7 +687,7 @@ void CTouchControls::Paint()
 					g_pMatSystemSurface->DrawColoredText( 2, btn->x1*screen_w, btn->y1*screen_h+40, 255, 255, 255, 255, "RGBA: %d %d %d %d", btn->color.r, btn->color.g, btn->color.b, btn->color.a );// color
 				}
 
-				vgui::surface()->DrawSetColor(gridcolor.r, gridcolor.g, gridcolor.b, gridcolor.a); // 255, 0, 0, 50 <- default here
+				vgui::surface()->DrawSetColor(buttonEditClr.r, buttonEditClr.g, buttonEditClr.b, buttonEditClr.a); // 255, 0, 0, 50 <- default here
 				vgui::surface()->DrawFilledRect( btn->x1*screen_w, btn->y1*screen_h, btn->x2*screen_w, btn->y2*screen_h );
 			}
 		}
