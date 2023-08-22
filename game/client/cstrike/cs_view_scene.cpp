@@ -152,13 +152,13 @@ void CCSViewRender::PerformNightVisionEffect( const CViewSetup &view )
 			render->ViewDrawFade( overlaycolor, pMaterial );
 
 			// Only one pass in DX7.
-			if ( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() >= 80 )
+/*			if ( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() >= 80 )
 			{
 				CMatRenderContextPtr pRenderContext( materials );
 				pRenderContext->DrawScreenSpaceQuad( pMaterial );
 				render->ViewDrawFade( overlaycolor, pMaterial );
 				pRenderContext->DrawScreenSpaceQuad( pMaterial );
-			}
+			}*/
 		}
 	}
 }
@@ -211,6 +211,7 @@ void CCSViewRender::PerformFlashbangEffect( const CViewSetup &view )
 		render->ViewDrawFade( overlaycolor, pMaterial );
 
 		// just do one pass for dxlevel < 80.
+/*
 		if (g_pMaterialSystemHardwareConfig->GetDXSupportLevel() >= 80)
 		{
 			pRenderContext->DrawScreenSpaceRectangle( pMaterial, view.x, view.y, view.width, view.height,
@@ -221,6 +222,7 @@ void CCSViewRender::PerformFlashbangEffect( const CViewSetup &view )
 				0, 0, m_pFlashTexture->GetActualWidth()-1, m_pFlashTexture->GetActualHeight()-1, 
 				m_pFlashTexture->GetActualWidth(), m_pFlashTexture->GetActualHeight() );
 		}
+*/
 	}
 	else if ( m_pFlashTexture )
 	{
@@ -233,7 +235,7 @@ void CCSViewRender::PerformFlashbangEffect( const CViewSetup &view )
 		render->ViewDrawFade( overlaycolor, pMaterial );
 
 		// just do one pass for dxlevel < 80.
-		if (g_pMaterialSystemHardwareConfig->GetDXSupportLevel() >= 80)
+/*		if (g_pMaterialSystemHardwareConfig->GetDXSupportLevel() >= 80)
 		{
 			pRenderContext->DrawScreenSpaceRectangle( pMaterial, view.x, view.y, view.width, view.height,
 				0, 0, m_pFlashTexture->GetActualWidth()-1, m_pFlashTexture->GetActualHeight()-1, 
@@ -242,7 +244,7 @@ void CCSViewRender::PerformFlashbangEffect( const CViewSetup &view )
 			pRenderContext->DrawScreenSpaceRectangle( pMaterial, view.x, view.y, view.width, view.height,
 				0, 0, m_pFlashTexture->GetActualWidth()-1, m_pFlashTexture->GetActualHeight()-1, 
 				m_pFlashTexture->GetActualWidth(), m_pFlashTexture->GetActualHeight() );
-		}
+		}*/
 	}
 
 	// this does the pure white overlay part of the flashbang effect.
