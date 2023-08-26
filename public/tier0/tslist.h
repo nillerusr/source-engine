@@ -48,12 +48,78 @@ typedef __int128_t int128;
 #define TSLIST_NODE_ALIGNMENT 16
 
 #ifdef POSIX
+static bool bool_compare_and_suck(int128 *a, int128 *b, int128 *c)
+{
+        register bool result = false;
+
+        asm(
+                "ldr x1, %0\n"
+                "ldr x2, %1\n"
+                "ldr x3, %2\n"
+                "ldxp x4, x5, [x2]\n"
+                "ldxp x6, x7, [x3]\n"
+                "bg%=:\n"
+
+//              "ldxp x3, x4, [x1]\n"
+                "mov x2, x4\n"
+                "mov x3, x5\n"
+                "caspal  x4, x5, x6, x7, [x1]\n"
+                "cmp x4, x2\n"
+                "ccmp x5, x3, 0, eq\n"
+                "cset %w3, eq\n"
+#if 0
+                "cmp x3, x5\n"
+                "ccmp x4, x6, 0, eq\n"
+                "bne l%=\n" // jmp
+                "stlxp %w3, x7, x8, [x1]\n"
+                "cbnz %w3, bg%=\n" // jmp
+                "l%=:\n"
+                "dmb ish\n"
+                "cset %w3, eq\n"
+#endif
+                : "+o"(a), "+o"(b), "+o"(c) ,"+r"(result) :: "x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8"
+        );
+
+
+        return result;
+}
+
+
+static bool bool_compare_and_suck_suck(int128 *a, int128 *b, int128 *c)
+{
+        register bool result = false;
+
+        asm volatile(
+                "ldr x1, %0\n"
+                "ldr x2, %1\n"
+                "ldr x3, %2\n"
+                "ldxp x5, x6, [x2]\n"
+                "ldxp x7, x8, [x3]\n"
+                "bg%=:\n"
+
+                "ldxp x3, x4, [x1]\n"
+                "cmp x3, x5\n"
+                "ccmp x4, x6, 0, eq\n"
+                "bne l%=\n" // jmp
+                "stlxp %w3, x7, x8, [x1]\n"
+                "cbnz %w3, bg%=\n" // jmp
+                "l%=:\n"
+
+                "dmb ish\n"
+                "cset %w3, eq\n"
+                : "+o"(a), "+o"(b), "+o"(c), "+r"(result) :: "x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8"
+        );
+
+
+        return result;
+}
+
 inline bool ThreadInterlockedAssignIf128( int128 volatile * pDest, const int128 &value, const int128 &comparand ) 
 {
     // We do not want the original comparand modified by the swap
     // so operate on a local copy.
     int128 local_comparand = comparand;
-	return __sync_bool_compare_and_swap( pDest, local_comparand, value );
+    return bool_compare_and_suck( pDest, &local_comparand, &value );
 }
 #endif
 
