@@ -1,0 +1,49 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from waflib import Utils
+import os
+
+top = '.'
+PROJECT_NAME = 'sourcevr'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	conf.env.append_unique('DEFINES',['strncpy=use_Q_strncpy_instead',
+		'_snprintf=use_Q_snprintf_instead','SOURCEVR_DLL'])
+	conf.check_cfg(package='openvr', uselib_store='OPENVR', args=['--cflags', '--libs'])
+
+def build(bld):
+	source = [
+		 "sourcevirtualreality.cpp"
+	]
+
+	includes = [
+		'.',
+		'../public',
+		'../public/tier0',
+		'../public/tier1'
+	] + bld.env.INCLUDES_SDL2
+
+	defines = []
+
+	libs = ['tier0','tier1','tier2', 'tier3','vstdlib','mathlib','OPENVR']
+
+	install_path = bld.env.LIBDIR
+
+	bld.shlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		install_path = install_path,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)
+

@@ -207,7 +207,11 @@ void CDistortionTextureRegen::RegenerateTextureBits( ITexture *pTexture, IVTFTex
 			float u = ( (float)x + 0.5f) / fWidth;
 			float v = ( (float)y + 0.5f) / fHeight;
 
-			DistortionCoordinates_t coords = g_SourceVirtualReality.GetHmd()->ComputeDistortion( m_eEye, u, v );
+			DistortionCoordinates_t coords;
+			if(!g_SourceVirtualReality.GetHmd()->ComputeDistortion( m_eEye, u, v, &coords ))
+			{
+				Warning("ComputeDistortion failed");
+			}
 
 			coords.rfRed[0] = Clamp( coords.rfRed[0], 0.f, 1.f ) * fUScale + fUOffset;
 			coords.rfGreen[0] = Clamp( coords.rfGreen[0], 0.f, 1.f ) * fUScale + fUOffset;
@@ -277,9 +281,9 @@ bool CSourceVirtualReality::GetDisplayBounds( VRRect_t *pRect )
 {
 	if( m_pHmd )
 	{
-		int32_t x, y;
-		uint32_t width, height;
-		m_pHmd->GetWindowBounds( &x, &y, &width, &height );
+		int32_t x = 0, y = 0;
+		uint32_t width = 1024, height = 1024;
+		m_pExtDisplay->GetWindowBounds( &x, &y, &width, &height );
 		pRect->nX = x;
 		pRect->nY = y;
 		pRect->nWidth = width;
@@ -421,7 +425,8 @@ void CSourceVirtualReality::GetViewportBounds( VREye eEye, int *pnX, int *pnY, i
 	else
 	{
 		uint32_t x, y, w, h;
-		m_pHmd->GetEyeOutputViewport( SourceEyeToHmdEye( eEye ), &x, &y, &w, &h );
+//		m_pHmd->GetEyeOutputViewport( SourceEyeToHmdEye( eEye ), &x, &y, &w, &h );
+		m_pExtDisplay->GetEyeOutputViewport( SourceEyeToHmdEye( eEye ), &x, &y, &w, &h );
 		if( pnX && pnY )
 		{
 			*pnX = x;
@@ -530,8 +535,8 @@ bool CSourceVirtualReality::WillDriftInYaw()
 void CSourceVirtualReality::AcquireNewZeroPose()
 {
 	// just let the next tracker update re-zero us
-	if( m_pHmd )
-		m_pHmd->ResetSeatedZeroPose();
+	if( m_pChap )
+		m_pChap->ResetZeroPose(TrackingUniverseSeated);
 }
 
 bool CSourceVirtualReality::SampleTrackingState ( float PlayerGameFov, float fPredictionSeconds )
@@ -608,7 +613,7 @@ bool CSourceVirtualReality::DoDistortionProcessing ( VREye eEye )
 
 	// This is where we are rendering to
 	uint32_t x, y, w, h;
-	m_pHmd->GetEyeOutputViewport( SourceEyeToHmdEye( eEye ), &x, &y, &w, &h );
+	m_pExtDisplay->GetEyeOutputViewport( SourceEyeToHmdEye( eEye ), &x, &y, &w, &h );
 
 	pRenderContext->DrawScreenSpaceRectangle (	pDistortMaterial,
 		x, y, w, h,
@@ -682,7 +687,7 @@ bool CSourceVirtualReality::CompositeHud ( VREye eEye, float ndcHudBounds[4], bo
 	CMatRenderContextPtr pRenderContext( materials );
 
 	uint32_t x, y, w, h;
-	m_pHmd->GetEyeOutputViewport( SourceEyeToHmdEye( eEye ), &x, &y, &w, &h );
+	m_pExtDisplay->GetEyeOutputViewport( SourceEyeToHmdEye( eEye ), &x, &y, &w, &h );
 
 	pRenderContext->DrawScreenSpaceRectangle (	pDistortHUDMaterial,
 		x, y, w, h,
@@ -706,14 +711,17 @@ bool CSourceVirtualReality::StartTracker()
 
 	// Initialize SteamVR
 	vr::HmdError err;
-	m_pHmd = vr::VR_Init(  &err );
-	if( err != HmdError_None )
+	m_pHmd = vr::VR_Init(  &err, vr::VRApplication_Scene );
+	m_pExtDisplay = vr::VRExtendedDisplay();
+	m_pChap = vr::VRChaperone();
+	
+	if( err != vr::VRInitError_None )
 	{
 		Msg( "Unable to initialize HMD tracker. Error code %d\n", err );
 		return false;
 	}
 
-	m_pHmd->ResetSeatedZeroPose();
+	m_pChap->ResetZeroPose(TrackingUniverseSeated);
 
 	m_bHaveValidPose = false;
 	m_ZeroFromHeadPose.Identity();

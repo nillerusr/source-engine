@@ -79,6 +79,7 @@ projects={
 		'utils/vtex',
 		'unicode',
 		'video',
+		'sourcevr'
 	],
 	'tests': [
 		'appframework',
@@ -358,10 +359,10 @@ def check_deps(conf):
 			else:
 				conf.check_pkg('freetype2', 'FT2', FT2_CHECK)
 				conf.check_pkg('fontconfig', 'FC', FC_CHECK)
-				if conf.env.DEST_OS == "darwin":
-					conf.env.FRAMEWORK_OPENAL = "OpenAL"
-				else:
-					conf.check_cfg(package='openal', uselib_store='OPENAL', args=['--cflags', '--libs'])
+#				if conf.env.DEST_OS == "darwin":
+#					conf.env.FRAMEWORK_OPENAL = "OpenAL"
+#				else:
+#					conf.check_cfg(package='openal', uselib_store='OPENAL', args=['--cflags', '--libs'])
 				conf.check_cfg(package='libjpeg', uselib_store='JPEG', args=['--cflags', '--libs'])
 				conf.check_cfg(package='libpng', uselib_store='PNG', args=['--cflags', '--libs'])
 				conf.check_cfg(package='libcurl', uselib_store='CURL', args=['--cflags', '--libs'])

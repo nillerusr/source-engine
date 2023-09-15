@@ -124,6 +124,8 @@ private:
 	CMaterialReference m_blackMaterial;
 
 	vr::IVRSystem				*m_pHmd;
+	vr::IVRExtendedDisplay *m_pExtDisplay;
+	vr::IVRChaperone *m_pChap;
 
 	bool	  m_bHaveValidPose;
 	VMatrix   m_ZeroFromHeadPose;
