@@ -15,6 +15,7 @@ def configure(conf):
 	conf.env.append_unique('DEFINES',['strncpy=use_Q_strncpy_instead',
 		'_snprintf=use_Q_snprintf_instead','SOURCEVR_DLL'])
 	conf.check_cfg(package='openvr', uselib_store='OPENVR', args=['--cflags', '--libs'])
+	conf.check(lib='GL', uselib_store='GL')
 
 def build(bld):
 	source = [
@@ -30,7 +31,7 @@ def build(bld):
 
 	defines = []
 
-	libs = ['tier0','tier1','tier2', 'tier3','vstdlib','mathlib','OPENVR']
+	libs = ['tier0','tier1','tier2', 'tier3','vstdlib','mathlib','OPENVR', 'GL']
 
 	install_path = bld.env.LIBDIR
 

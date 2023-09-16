@@ -45,6 +45,7 @@ def build(bld):
 		'cmatrendercontext.cpp',
 		'cmatqueuedrendercontext.cpp',
 		'ctexturecompositor.cpp',
+		'gltexturehack.cpp',
 		'../public/tier0/memoverride.cpp'
 	]
 

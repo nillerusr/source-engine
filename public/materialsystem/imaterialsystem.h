@@ -1093,6 +1093,7 @@ public:
 
 	// Performs final verification of all compositor templates (after they've all been initially loaded).
 	virtual bool				VerifyTextureCompositorTemplates( ) = 0;
+	virtual uint32_t GetShaderAPIGLTexture( ITexture *pTexture, int nFrame, int nTextureChannel ) = 0;
 };
 
 

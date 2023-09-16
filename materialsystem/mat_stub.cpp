@@ -2276,7 +2276,7 @@ public:
 	{
 		return false;	
 	}
-
+	virtual uint32_t GetShaderAPIGLTexture(ITexture*, int, int) {return 0;}
 };
 
 

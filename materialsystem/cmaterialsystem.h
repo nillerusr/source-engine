@@ -501,6 +501,7 @@ public:
 	DELEGATE_TO_OBJECT_0( bool,				OnFlushBufferedPrimitives, GetRenderContextInternal() );
 	void									OnThreadEvent( uint32 threadEvent );
 	ShaderAPITextureHandle_t				GetShaderAPITextureBindHandle( ITexture *pTexture, int nFrame, int nTextureChannel ); // JasonM ????
+	uint32_t				GetShaderAPIGLTexture( ITexture *pTexture, int nFrame, int nTextureChannel ); // fuck
 
 
 

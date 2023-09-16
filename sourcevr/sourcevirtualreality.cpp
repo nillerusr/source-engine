@@ -424,7 +424,7 @@ void CSourceVirtualReality::GetViewportBounds( VREye eEye, int *pnX, int *pnY, i
 	}
 	else
 	{
-		uint32_t x, y, w, h;
+		uint32_t x = 0, y = 0, w = 640, h = 480;
 //		m_pHmd->GetEyeOutputViewport( SourceEyeToHmdEye( eEye ), &x, &y, &w, &h );
 		m_pExtDisplay->GetEyeOutputViewport( SourceEyeToHmdEye( eEye ), &x, &y, &w, &h );
 		if( pnX && pnY )
@@ -543,7 +543,13 @@ bool CSourceVirtualReality::SampleTrackingState ( float PlayerGameFov, float fPr
 {
 	if( !m_pHmd || !m_bActive )
 		return false;
-
+	vr::VREvent_t event;
+	while( m_pHmd->PollNextEvent( &event, sizeof( event ) ) )
+	{
+		//ProcessVREvent( event );
+	}
+	vr::TrackedDevicePose_t m_rTrackedDevicePose[ vr::k_unMaxTrackedDeviceCount ];
+	vr::VRCompositor()->WaitGetPoses(m_rTrackedDevicePose, vr::k_unMaxTrackedDeviceCount, NULL, 0 );
 	// If tracker can't return a pose (it's possibly recalibrating itself)
 	// then we will freeze tracking at its current state, rather than
 	// snapping it back to the zero position
@@ -577,6 +583,7 @@ bool CSourceVirtualReality::SampleTrackingState ( float PlayerGameFov, float fPr
 
 	return true;
 }
+#include "togl/rendermechanism.h"
 
 
 // ----------------------------------------------------------------------
@@ -594,10 +601,16 @@ bool CSourceVirtualReality::DoDistortionProcessing ( VREye eEye )
 	CMatRenderContextPtr pRenderContext( materials );
 
 	IMaterial	*pDistortMaterial;
+	ITexture *pDistortTexture;
+	
 	if( eEye == VREye_Left )
 		pDistortMaterial = m_DistortLeftMaterial;
 	else
 		pDistortMaterial = m_DistortRightMaterial;
+	if( eEye == VREye_Left )
+		pDistortTexture = m_pDistortionTextureLeft;
+	else
+		pDistortTexture = m_pDistortionTextureRight;
 
 	if( !UsingOffscreenRenderTarget() )
 	{
@@ -607,17 +620,46 @@ bool CSourceVirtualReality::DoDistortionProcessing ( VREye eEye )
 			return false;
 
 		Rect_t	r;
+		r.x = !eEye?0:640;
+		r.y = 0;
+		r.width = 640;
+		r.height = 480;
 		this->GetViewportBounds( eEye, &r.x, &r.y, &r.width, &r.height );
 		pRenderContext->CopyRenderTargetToTextureEx( pFullFrameFB1, 0, &r, &r );
 	}
 
 	// This is where we are rendering to
 	uint32_t x, y, w, h;
+		x = !eEye?0:640;
+		y = 0;
+		w = 640;
+		h = 480;
 	m_pExtDisplay->GetEyeOutputViewport( SourceEyeToHmdEye( eEye ), &x, &y, &w, &h );
 
 	pRenderContext->DrawScreenSpaceRectangle (	pDistortMaterial,
 		x, y, w, h,
 		0, 0, distortionTextureSize-1,distortionTextureSize-1,distortionTextureSize,distortionTextureSize);
+	static int id = -1;
+	//static CDynamicFunctionOpenGL< true, GLvoid ( APIENTRY *)(GLenum pname, GLint *params), GLvoid > glGetIntegerv("glGetIntegerv");
+//	pRenderContext->Bind(pDistortMaterial);
+//	pRenderContext->Flush( true );
+//	ShaderAPITextureHandle_t  hndl = materials->GetShaderAPITextureBindHandle(pDistortTexture,0,0);
+	//if(id < 0)
+		id = materials->GetShaderAPIGLTexture(m_pPredistortRT,0,0);
+
+	static int last_tex[2] = {-1, -1};
+//	glGetIntegerv(GL_TEXTURE_BINDING_2D, &id);
+	if(id > 0)
+		last_tex[eEye != VREye_Left] = id;
+	Msg("tex %d\n", id);
+	const vr::VRTextureBounds_t bounds = { 0.0f, 1.0f, 1.0f, 0.0f };
+	vr::Texture_t eyeTexture = {(void*)(uintptr_t)last_tex[eEye != VREye_Left], vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
+	if(last_tex[eEye != VREye_Left] <= 0)
+		return true;
+//	if(eEye != VREye_Left)
+//		return 0;
+	glFinish();
+	vr::VRCompositor()->Submit(SourceEyeToHmdEye( eEye ), &eyeTexture, &bounds );
 
 	return true;
 }
@@ -687,11 +729,15 @@ bool CSourceVirtualReality::CompositeHud ( VREye eEye, float ndcHudBounds[4], bo
 	CMatRenderContextPtr pRenderContext( materials );
 
 	uint32_t x, y, w, h;
+	x = !eEye?0:640;
+	y = 0;
+	w = 640;
+	h = 480;
 	m_pExtDisplay->GetEyeOutputViewport( SourceEyeToHmdEye( eEye ), &x, &y, &w, &h );
 
-	pRenderContext->DrawScreenSpaceRectangle (	pDistortHUDMaterial,
-		x, y, w, h,
-		0, 0, distortionTextureSize-1,distortionTextureSize-1,distortionTextureSize,distortionTextureSize);
+//	pRenderContext->DrawScreenSpaceRectangle (	pDistortHUDMaterial,
+//		x, y, w, h,
+//		0, 0, distortionTextureSize-1,distortionTextureSize-1,distortionTextureSize,distortionTextureSize);
 
 	return true;
 }
@@ -714,11 +760,15 @@ bool CSourceVirtualReality::StartTracker()
 	m_pHmd = vr::VR_Init(  &err, vr::VRApplication_Scene );
 	m_pExtDisplay = vr::VRExtendedDisplay();
 	m_pChap = vr::VRChaperone();
-	
 	if( err != vr::VRInitError_None )
 	{
 		Msg( "Unable to initialize HMD tracker. Error code %d\n", err );
 		return false;
+	}
+
+	if( !vr::VRCompositor() )
+	{
+		Msg("Compositor initialization failed. See log file for details");
 	}
 
 	m_pChap->ResetZeroPose(TrackingUniverseSeated);
