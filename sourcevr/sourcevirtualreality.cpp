@@ -80,7 +80,7 @@ CSourceVirtualReality::CSourceVirtualReality()
 	m_textureGeneratorRight( vr::Eye_Right )
 {
 	m_bActive = false;
-	m_bUsingOffscreenRenderTarget = false;
+	m_bUsingOffscreenRenderTarget = true;
 	m_pHmd = NULL;
 }
 
@@ -451,14 +451,14 @@ VMatrix CSourceVirtualReality::GetMideyePose()
 // ----------------------------------------------------------------------
 inline static void ComposeProjectionTransform(float fLeft, float fRight, float fTop, float fBottom, float zNear, float zFar, float fovScale, VMatrix *pmProj )
 {
-	if( fovScale != 1.0f  && fovScale > 0.f )
+	/*if( fovScale != 1.0f  && fovScale > 0.f )
 	{
 		float fFovScaleAdjusted = tan( atan( fTop  ) / fovScale ) / fTop;
 		fRight *= fFovScaleAdjusted;
 		fLeft *= fFovScaleAdjusted;
 		fTop *= fFovScaleAdjusted;
 		fBottom *= fFovScaleAdjusted;
-	}
+	}*/
 
 	float idx = 1.0f / (fRight - fLeft);
 	float idy = 1.0f / (fBottom - fTop);
@@ -634,11 +634,12 @@ bool CSourceVirtualReality::DoDistortionProcessing ( VREye eEye )
 		y = 0;
 		w = 640;
 		h = 480;
-	m_pExtDisplay->GetEyeOutputViewport( SourceEyeToHmdEye( eEye ), &x, &y, &w, &h );
+	//m_pExtDisplay->GetEyeOutputViewport( SourceEyeToHmdEye( eEye ), &x, &y, &w, &h );
 
-	pRenderContext->DrawScreenSpaceRectangle (	pDistortMaterial,
-		x, y, w, h,
-		0, 0, distortionTextureSize-1,distortionTextureSize-1,distortionTextureSize,distortionTextureSize);
+//	pRenderContext->DrawScreenSpaceRectangle (	pDistortMaterial,
+//		x, y, w, h,
+//		0, 0, distortionTextureSize-1,distortionTextureSize-1,distortionTextureSize,distortionTextureSize);
+
 	static int id = -1;
 	//static CDynamicFunctionOpenGL< true, GLvoid ( APIENTRY *)(GLenum pname, GLint *params), GLvoid > glGetIntegerv("glGetIntegerv");
 //	pRenderContext->Bind(pDistortMaterial);
@@ -651,11 +652,12 @@ bool CSourceVirtualReality::DoDistortionProcessing ( VREye eEye )
 //	glGetIntegerv(GL_TEXTURE_BINDING_2D, &id);
 	if(id > 0)
 		last_tex[eEye != VREye_Left] = id;
-	Msg("tex %d\n", id);
+//	Msg("tex %d\n", id);
 	const vr::VRTextureBounds_t bounds = { 0.0f, 1.0f, 1.0f, 0.0f };
 	vr::Texture_t eyeTexture = {(void*)(uintptr_t)last_tex[eEye != VREye_Left], vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
 	if(last_tex[eEye != VREye_Left] <= 0)
 		return true;
+	materials->Flush();
 //	if(eEye != VREye_Left)
 //		return 0;
 	glFinish();
@@ -734,6 +736,11 @@ bool CSourceVirtualReality::CompositeHud ( VREye eEye, float ndcHudBounds[4], bo
 	w = 640;
 	h = 480;
 	m_pExtDisplay->GetEyeOutputViewport( SourceEyeToHmdEye( eEye ), &x, &y, &w, &h );
+	int id = materials->GetShaderAPIGLTexture(g_StereoGuiTexture,0,0);
+	vr::Texture_t guiTexture = {(void*)(uintptr_t)id, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
+	const vr::VRTextureBounds_t bounds = { 0.0f, 1.0f, 1.0f, 0.0f };
+	vr::VROverlay()->SetOverlayTextureBounds(m_GuiOverlay, &bounds);
+	vr::VROverlay()->SetOverlayTexture(m_GuiOverlay, &guiTexture);
 
 //	pRenderContext->DrawScreenSpaceRectangle (	pDistortHUDMaterial,
 //		x, y, w, h,
@@ -770,7 +777,8 @@ bool CSourceVirtualReality::StartTracker()
 	{
 		Msg("Compositor initialization failed. See log file for details");
 	}
-
+	vr::VROverlay()->CreateOverlay("GuiOverlayKey", "GuiOverlay", &m_GuiOverlay);
+	vr::VROverlay()->ShowOverlay(m_GuiOverlay);
 	m_pChap->ResetZeroPose(TrackingUniverseSeated);
 
 	m_bHaveValidPose = false;
