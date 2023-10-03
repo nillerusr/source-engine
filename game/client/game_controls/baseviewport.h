@@ -1,22 +1,22 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 // $NoKeywords: $
 //=============================================================================//
 
-#ifndef TEAMFORTRESSVIEWPORT_H
-#define TEAMFORTRESSVIEWPORT_H
+#ifndef BASEVIEWPORT_H
+#define BASEVIEWPORT_H
 
 // viewport interface for the rest of the dll
-#include <game/client/iviewport.h>
+#include "game/client/iviewport.h"
 
 #include <utlqueue.h> // a vector based queue template to manage our VGUI menu queue
-#include <vgui_controls/Frame.h>
+#include "vgui_controls/Frame.h"
 #include "vguitextwindow.h"
-#include "vgui/ISurface.h"
+#include "vgui/isurface.h"
 #include "commandmenu.h"
-#include <igameevents.h>
+#include "igameevents.h"
 
 using namespace vgui;
 
@@ -25,7 +25,7 @@ class IGameUIFuncs;
 class IGameEventManager;
 
 //==============================================================================
-class CBaseViewport : public vgui::EditablePanel, public IViewPort, public IGameEventListener2
+class CBaseViewport : public vgui::EditablePanel, public IViewPort, public CGameEventListener
 {
 	DECLARE_CLASS_SIMPLE( CBaseViewport, vgui::EditablePanel );
 
@@ -37,7 +37,9 @@ public:
 	virtual IViewPortPanel* FindPanelByName(const char *szPanelName);
 	virtual IViewPortPanel* GetActivePanel( void );
 	virtual void RemoveAllPanels( void);
+	virtual void RecreatePanel( const char *szPanelName );
 
+	virtual void ShowPanel( const char *pName, bool state, KeyValues *data, bool autoDeleteData );
 	virtual void ShowPanel( const char *pName, bool state );
 	virtual void ShowPanel( IViewPortPanel* pPanel, bool state );
 	virtual bool AddNewPanel( IViewPortPanel* pPanel, char const *pchDebugName );
@@ -52,7 +54,11 @@ public:
 	virtual void ActivateClientUI();
 	virtual void HideClientUI();
 	virtual bool AllowedToPrintText( void );
-	
+
+	void LoadHudLayout( void );
+
+	virtual vgui::VPANEL GetSchemeSizingVPanel( void );
+
 #ifndef _XBOX
 	virtual int GetViewPortScheme() { return m_pBackGround->GetScheme(); }
 	virtual VPANEL GetViewPortPanel() { return m_pBackGround->GetVParent(); }
@@ -70,21 +76,6 @@ public:
 
 	// virtual void ChatInputPosition( int *x, int *y );
 
-	// Check if any panel other than the scoreboard is visible
-	virtual bool IsAnyPanelVisibleExceptScores();
-
-	// Walk through all the panels. Handler should be an object taking an IViewPortPanel*
-	template<typename THandler> void ForEachPanel( THandler handler )
-	{
-		FOR_EACH_VEC( m_Panels, i )
-		{
-			handler( m_Panels[i] );
-		}
-	}
-
-	// Check if the named panel is visible
-	virtual bool IsPanelVisible( const char* panel );
-	
 public: // IGameEventListener:
 	virtual void FireGameEvent( IGameEvent * event);
 
@@ -130,7 +121,7 @@ protected:
 		virtual void OnMousePressed(MouseCode code) { }// don't respond to mouse clicks
 		virtual vgui::VPANEL IsWithinTraverse( int x, int y, bool traversePopups )
 		{
-			return ( vgui::VPANEL )0;
+			return NULL;
 		}
 
 	};
@@ -142,22 +133,30 @@ protected:
 	virtual void OnScreenSizeChanged(int iOldWide, int iOldTall);
 	void PostMessageToPanel( IViewPortPanel* pPanel, KeyValues *pKeyValues );
 
+	void SetAsFullscreenViewportInterface( void );
+	bool IsFullscreenViewport() const;
+
 protected:
 	IGameUIFuncs*		m_GameuiFuncs; // for key binding details
 	IGameEventManager2*	m_GameEventManager;
 #ifndef _XBOX
 	CBackGroundPanel	*m_pBackGround;
 #endif
-	CUtlVector<IViewPortPanel*> m_Panels;
-	
+	CUtlDict<IViewPortPanel*,int>	m_Panels;
+	CUtlVector< IViewPortPanel* >	m_UnorderedPanels;
+
 	bool				m_bHasParent; // Used to track if child windows have parents or not.
 	bool				m_bInitialized;
+	bool				m_bFullscreenViewport;
 	IViewPortPanel		*m_pActivePanel;
 	IViewPortPanel		*m_pLastActivePanel;
 	vgui::HCursor		m_hCursorNone;
 	vgui::AnimationController *m_pAnimController;
 	int					m_OldSize[2];
+
+private:
+	virtual void InitViewportSingletons( void );
 };
 
 
-#endif
+#endif // BASEVIEWPORT_H

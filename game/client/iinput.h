@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -34,15 +34,15 @@ public:
 	virtual	void		Init_All( void ) = 0;
 	virtual void		Shutdown_All( void ) = 0;
 	// Latching button states
-	virtual int			GetButtonBits( int ) = 0;
+	virtual int			GetButtonBits( bool bResetState ) = 0;
 	// Create movement command
 	virtual void		CreateMove ( int sequence_number, float input_sample_frametime, bool active ) = 0;
 	virtual void		ExtraMouseSample( float frametime, bool active ) = 0;
-	virtual bool		WriteUsercmdDeltaToBuffer( bf_write *buf, int from, int to, bool isnewcommand ) = 0;
-	virtual void		EncodeUserCmdToBuffer( bf_write& buf, int slot ) = 0;
-	virtual void		DecodeUserCmdFromBuffer( bf_read& buf, int slot ) = 0;
+	virtual bool		WriteUsercmdDeltaToBuffer( int nSlot, bf_write *buf, int from, int to, bool isnewcommand ) = 0;
+	virtual void		EncodeUserCmdToBuffer( int nSlot, bf_write& buf, int slot ) = 0;
+	virtual void		DecodeUserCmdFromBuffer( int nSlot, bf_read& buf, int slot ) = 0;
 
-	virtual CUserCmd	*GetUserCmd( int sequence_number ) = 0;
+	virtual CUserCmd	*GetUserCmd( int nSlot, int sequence_number ) = 0;
 
 	virtual void		MakeWeaponSelection( C_BaseCombatWeapon *weapon ) = 0;
 
@@ -56,12 +56,13 @@ public:
 	// Issue commands from controllers
 	virtual void		ControllerCommands( void ) = 0;
 	// Extra initialization for some joysticks
-	virtual void		Joystick_Advanced( void ) = 0;
+	virtual bool		ControllerModeActive() = 0;
+	virtual void		Joystick_Advanced( bool bSilent ) = 0;
 	virtual void		Joystick_SetSampleTime( float frametime ) = 0;
 	virtual void		IN_SetSampleTime( float frametime ) = 0;
 
 	// Accumulate mouse delta
-	virtual void		AccumulateMouse( void ) = 0;
+	virtual void		AccumulateMouse( int nSlot ) = 0;
 	// Activate/deactivate mouse
 	virtual void		ActivateMouse( void ) = 0;
 	virtual void		DeactivateMouse( void ) = 0;
@@ -74,23 +75,22 @@ public:
 	// Retrieve mouse position
 	virtual void		GetFullscreenMousePos( int *mx, int *my, int *unclampedx = 0, int *unclampedy = 0 ) = 0;
 	virtual void		SetFullscreenMousePos( int mx, int my ) = 0;
-	virtual void		ResetMouse( void ) = 0;
+	virtual void		ResetMouse() = 0;
 	virtual	float		GetLastForwardMove( void ) = 0;
-	virtual	float		Joystick_GetForward( void ) = 0;
-	virtual	float		Joystick_GetSide( void ) = 0;
-	virtual	float		Joystick_GetPitch( void ) = 0;
-	virtual	float		Joystick_GetYaw( void ) = 0;
 
 	// Third Person camera ( TODO/FIXME:  Move this to a separate interface? )
 	virtual void		CAM_Think( void ) = 0;
-	virtual int			CAM_IsThirdPerson( void ) = 0;
+	virtual int			CAM_IsThirdPerson( int nSlot = -1 ) = 0;
+	virtual void		CAM_GetCameraOffset( Vector& ofs ) = 0;
 	virtual void		CAM_ToThirdPerson(void) = 0;
 	virtual void		CAM_ToFirstPerson(void) = 0;
+	virtual void		CAM_ToThirdPersonShoulder(void) = 0;
 	virtual void		CAM_StartMouseMove(void) = 0;
 	virtual void		CAM_EndMouseMove(void) = 0;
 	virtual void		CAM_StartDistance(void) = 0;
 	virtual void		CAM_EndDistance(void) = 0;
 	virtual int			CAM_InterceptingMouse( void ) = 0;
+	virtual	void		CAM_Command( int command ) = 0;
 
 	// orthographic camera info	( TODO/FIXME:  Move this to a separate interface? )
 	virtual void		CAM_ToOrthographic() = 0;
@@ -109,8 +109,6 @@ public:
 
 	virtual	void		CAM_SetCameraThirdData( CameraThirdData_t *pCameraData, const QAngle &vecCameraOffset ) = 0;
 	virtual void		CAM_CameraThirdThink( void ) = 0;
-
-	virtual	bool		EnableJoystickMode() = 0;
 };
 
 extern ::IInput *input;

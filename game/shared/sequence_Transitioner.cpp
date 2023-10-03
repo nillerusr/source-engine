@@ -1,14 +1,16 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 //=============================================================================//
 
 #include "cbase.h"
-#include "sequence_Transitioner.h"
+#include "sequence_transitioner.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
+
+#include "studio.h"
 
 // -----------------------------------------------------------------------------
 // CSequenceTransitioner implementation.
@@ -31,42 +33,55 @@ void CSequenceTransitioner::CheckForSequenceChange(
 	if (m_animationQueue.Count() == 0)
 	{
 		m_animationQueue.AddToTail();
+#ifdef CLIENT_DLL
+		m_animationQueue[0].SetOwner( NULL );
+#endif
 	}
 
 	CAnimationLayer *currentblend = &m_animationQueue[m_animationQueue.Count()-1];
 
 	if (currentblend->m_flLayerAnimtime && 
-		(currentblend->m_nSequence != nCurSequence || bForceNewSequence ))
+		(currentblend->GetSequence() != nCurSequence || bForceNewSequence ))
 	{
-		mstudioseqdesc_t &seqdesc = hdr->pSeqdesc( nCurSequence );
-		// sequence changed
-		if ((seqdesc.flags & STUDIO_SNAP) || !bInterpolate )
+		if ( nCurSequence < 0 || nCurSequence >= hdr->GetNumSeq() )
 		{
 			// remove all entries
 			m_animationQueue.RemoveAll();
 		}
 		else
 		{
-			mstudioseqdesc_t &prevseqdesc = hdr->pSeqdesc( currentblend->m_nSequence );
-			currentblend->m_flLayerFadeOuttime = MIN( prevseqdesc.fadeouttime, seqdesc.fadeintime );
-			/*
-			// clip blends to time remaining
-			if ( !IsSequenceLooping(hdr, currentblend->m_nSequence) )
+			mstudioseqdesc_t &seqdesc = hdr->pSeqdesc( nCurSequence );
+			// sequence changed
+			if ((seqdesc.flags & STUDIO_SNAP) || !bInterpolate )
 			{
-				float length = Studio_Duration( hdr, currentblend->m_nSequence, flPoseParameter ) / currentblend->m_flPlaybackRate;
-				float timeLeft = (1.0 - currentblend->m_flCycle) * length;
-				if (timeLeft < currentblend->m_flLayerFadeOuttime)
-					currentblend->m_flLayerFadeOuttime = timeLeft;
+				// remove all entries
+				m_animationQueue.RemoveAll();
 			}
-			*/
+			else
+			{
+				mstudioseqdesc_t &prevseqdesc = hdr->pSeqdesc( currentblend->GetSequence() );
+				currentblend->m_flLayerFadeOuttime = MIN( prevseqdesc.fadeouttime, seqdesc.fadeintime );
+				/*
+				// clip blends to time remaining
+				if ( !IsSequenceLooping(hdr, currentblend->GetSequence()) )
+				{
+					float length = Studio_Duration( hdr, currentblend->GetSequence(), flPoseParameter ) / currentblend->GetPlaybackRate();
+					float timeLeft = (1.0 - currentblend->GetCycle()) * length;
+					if (timeLeft < currentblend->m_flLayerFadeOuttime)
+						currentblend->m_flLayerFadeOuttime = timeLeft;
+				}
+				*/
+			}
 		}
 		// push previously set sequence
 		m_animationQueue.AddToTail();
 		currentblend = &m_animationQueue[m_animationQueue.Count()-1];
-
+#ifdef CLIENT_DLL
+		currentblend->SetOwner( NULL );
+#endif
 	}
 
-	currentblend->m_nSequence = -1;
+	currentblend->SetSequence( -1 );
 	currentblend->m_flLayerAnimtime = 0.0;
 	currentblend->m_flLayerFadeOuttime = 0.0;
 }
@@ -86,15 +101,18 @@ void CSequenceTransitioner::UpdateCurrent(
 	if (m_animationQueue.Count() == 0)
 	{
 		m_animationQueue.AddToTail();
+#ifdef CLIENT_DLL
+		m_animationQueue[0].SetOwner( NULL );
+#endif
 	}
 
 	CAnimationLayer *currentblend = &m_animationQueue[m_animationQueue.Count()-1];
 
 	// keep track of current sequence
-	currentblend->m_nSequence = nCurSequence;
+	currentblend->SetSequence( nCurSequence );
 	currentblend->m_flLayerAnimtime = flCurTime;
-	currentblend->m_flCycle = flCurCycle;
-	currentblend->m_flPlaybackRate = flCurPlaybackRate;
+	currentblend->SetCycle( flCurCycle );
+	currentblend->SetPlaybackRate( flCurPlaybackRate );
 
 	// calc blending weights for previous sequences
 	int i;
@@ -104,7 +122,7 @@ void CSequenceTransitioner::UpdateCurrent(
 
 		if (s > 0)
 		{
-			m_animationQueue[i].m_flWeight = s;
+			m_animationQueue[i].SetWeight( s );
 			i++;
 		}
 		else

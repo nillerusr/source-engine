@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -10,8 +10,6 @@
 #ifdef _WIN32
 #pragma once
 #endif
-
-#include "baseprojectile.h"
 
 #if defined( CLIENT_DLL )
 
@@ -31,12 +29,12 @@
 class CTakeDamageInfo;
 
 #if !defined( CLIENT_DLL )
-class CBaseGrenade : public CBaseProjectile, public CDefaultPlayerPickupVPhysics
+class CBaseGrenade : public CBaseCombatCharacter, public CDefaultPlayerPickupVPhysics
 #else
-class CBaseGrenade : public CBaseProjectile
+class CBaseGrenade : public CBaseCombatCharacter
 #endif
 {
-	DECLARE_CLASS( CBaseGrenade, CBaseProjectile );
+	DECLARE_CLASS( CBaseGrenade, CBaseCombatCharacter );
 public:
 
 	CBaseGrenade(void);
@@ -120,7 +118,6 @@ public:
 	bool				m_bHasWarnedAI;				// whether or not this grenade has issued its DANGER sound to the world sound list yet.
 	CNetworkVar( bool, m_bIsLive );					// Is this grenade live, or can it be picked up?
 	CNetworkVar( float, m_DmgRadius );				// How far do I do damage?
-	CNetworkVar( float, m_flNextAttack );
 	float				m_flDetonateTime;			// Time at which to detonate.
 	float				m_flWarnAITime;				// Time at which to warn the AI
 

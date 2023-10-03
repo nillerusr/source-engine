@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -20,6 +20,8 @@
 #define SF_ENTMAKER_CHECK_FOR_SPACE			0x0008
 #define SF_ENTMAKER_CHECK_PLAYER_LOOKING	0x0010
 
+//extern ScriptClassDesc_t * GetScriptDesc( CBaseEntity * );
+
 
 //-----------------------------------------------------------------------------
 // Purpose: An entity that mapmakers can use to ensure there's a required entity never runs out.
@@ -30,6 +32,7 @@ class CEnvEntityMaker : public CPointEntity
 	DECLARE_CLASS( CEnvEntityMaker, CPointEntity );
 public:
 	DECLARE_DATADESC();
+	DECLARE_ENT_SCRIPTDESC();
 
 	virtual void Spawn( void );
 	virtual void Activate( void );
@@ -38,6 +41,11 @@ public:
 	void		 CheckSpawnThink( void );
 	void		 InputForceSpawn( inputdata_t &inputdata );
 	void		 InputForceSpawnAtEntityOrigin( inputdata_t &inputdata );
+
+	void		 SpawnEntityFromScript();
+	void		 SpawnEntityAtEntityOriginFromScript( HSCRIPT hEntity );
+	void		 SpawnEntityAtNamedEntityOriginFromScript( const char *pszName );
+	void		 SpawnEntityAtLocationFromScript( const Vector &vecAlternateOrigin, const Vector &vecAlternateAngles );
 
 private:
 
@@ -87,6 +95,13 @@ BEGIN_DATADESC( CEnvEntityMaker )
 	// Functions
 	DEFINE_THINKFUNC( CheckSpawnThink ),
 END_DATADESC()
+
+BEGIN_ENT_SCRIPTDESC( CEnvEntityMaker, CBaseEntity, "env_entity_maker" )
+	DEFINE_SCRIPTFUNC_NAMED( SpawnEntityFromScript, "SpawnEntity", "Create an entity at the location of the maker" )
+	DEFINE_SCRIPTFUNC_NAMED( SpawnEntityAtEntityOriginFromScript, "SpawnEntityAtEntityOrigin", "Create an entity at the location of a specified entity instance" )
+	DEFINE_SCRIPTFUNC_NAMED( SpawnEntityAtNamedEntityOriginFromScript, "SpawnEntityAtNamedEntityOrigin", "Create an entity at the location of a named entity" )
+	DEFINE_SCRIPTFUNC_NAMED( SpawnEntityAtLocationFromScript, "SpawnEntityAtLocation", "Create an entity at a specified location and orientaton, orientation is Euler angle in degrees (pitch, yaw, roll)" )
+END_SCRIPTDESC()
 
 LINK_ENTITY_TO_CLASS( env_entity_maker, CEnvEntityMaker );
 
@@ -164,7 +179,7 @@ void CEnvEntityMaker::SpawnEntity( Vector vecAlternateOrigin, QAngle vecAlternat
 	}
 
 	CUtlVector<CBaseEntity*> hNewEntities;
-	if ( !pTemplate->CreateInstance( vecSpawnOrigin, vecSpawnAngles, &hNewEntities ) )
+	if ( !pTemplate->CreateInstance( vecSpawnOrigin, vecSpawnAngles, &hNewEntities, this ) )
 		return;
 	
 	//Adrian: oops we couldn't spawn the entity (or entities) for some reason!
@@ -238,8 +253,51 @@ void CEnvEntityMaker::SpawnEntity( Vector vecAlternateOrigin, QAngle vecAlternat
 			}
 		}
 	}
+
+	pTemplate->CreationComplete( hNewEntities );
 }
 
+
+//-----------------------------------------------------------------------------
+// Purpose: Spawn an instance of the entity
+//-----------------------------------------------------------------------------
+void CEnvEntityMaker::SpawnEntityFromScript()
+{
+	SpawnEntity();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Spawn an instance of the entity
+//-----------------------------------------------------------------------------
+void CEnvEntityMaker::SpawnEntityAtEntityOriginFromScript( HSCRIPT hEntity )
+{
+	CBaseEntity *pTargetEntity = ToEnt( hEntity );
+	if ( pTargetEntity )
+	{
+		SpawnEntity( pTargetEntity->GetAbsOrigin(), pTargetEntity->GetAbsAngles() );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Spawn an instance of the entity
+//-----------------------------------------------------------------------------
+void CEnvEntityMaker::SpawnEntityAtNamedEntityOriginFromScript( const char *pszName )
+{
+	CBaseEntity *pTargetEntity = gEntList.FindEntityByName( NULL, pszName, this, NULL, NULL );
+
+	if( pTargetEntity )
+	{
+		SpawnEntity( pTargetEntity->GetAbsOrigin(), pTargetEntity->GetAbsAngles() );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Spawn an instance of the entity
+//-----------------------------------------------------------------------------
+void CEnvEntityMaker::SpawnEntityAtLocationFromScript( const Vector &vecAlternateOrigin, const Vector &vecAlternateAngles )
+{
+	SpawnEntity( vecAlternateOrigin, *((QAngle *)&vecAlternateAngles) );
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Returns whether or not the template entities can fit if spawned.

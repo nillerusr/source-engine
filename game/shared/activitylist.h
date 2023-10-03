@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -44,7 +44,9 @@ class CActivityRemapCache
 {
 public:
 
-	CActivityRemapCache() = default;
+	CActivityRemapCache()
+	{
+	}
 
 	CActivityRemapCache( const CActivityRemapCache& src )
 	{

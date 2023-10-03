@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -33,7 +33,7 @@ public:
 	bool OnMoveBlocked( AIMoveResult_t *pResult );
 
 	// Damage
-	void TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr, CDmgAccumulator *pAccumulator );
+	void TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr );
 
 	// Various start tasks
 	virtual	void StartTaskRangeAttack1( const Task_t *pTask );

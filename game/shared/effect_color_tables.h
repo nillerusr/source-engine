@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -33,10 +33,10 @@ enum
 // Commander mode table
 static colorentry_t commandercolors[] =
 {
-	{ COMMAND_POINT_RED,	1,	0,	0	},
-	{ COMMAND_POINT_BLUE,	0,	0,	1	},
-	{ COMMAND_POINT_GREEN,	0,	1,	0	},
-	{ COMMAND_POINT_YELLOW,	1,	1,	0	},
+	{ COMMAND_POINT_RED,	1.0,	0.0,	0.0	},
+	{ COMMAND_POINT_BLUE,	0.0,	0.0,	1.0	},
+	{ COMMAND_POINT_GREEN,	0.0,	1.0,	0.0	},
+	{ COMMAND_POINT_YELLOW,	1.0,	1.0,	0.0	},
 };
 
 static colorentry_t bloodcolors[] =
@@ -44,7 +44,7 @@ static colorentry_t bloodcolors[] =
 	{ BLOOD_COLOR_RED,		72,		0,		0	},
 	{ BLOOD_COLOR_YELLOW,	195,	195,	0	},
 	{ BLOOD_COLOR_MECH,		20,		20,		20	},
-	{ BLOOD_COLOR_GREEN,	195,	195,	0	},
+	{ BLOOD_COLOR_BRIGHTGREEN,	0,		128,	0	},
 };
 
 #endif // EFFECT_COLOR_TABLES_H

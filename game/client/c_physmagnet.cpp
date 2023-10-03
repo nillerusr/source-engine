@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -46,7 +46,7 @@ void RecvProxyArrayLength_MagnetAttachedArray( void *pStruct, int objectID, int 
 {
 	C_PhysMagnet *pMagnet = (C_PhysMagnet*)pStruct;
 	
-	if ( pMagnet->m_aAttachedObjectsFromServer.Size() != currentArrayLength )
+	if ( pMagnet->m_aAttachedObjectsFromServer.Count() != currentArrayLength )
 		pMagnet->m_aAttachedObjectsFromServer.SetSize( currentArrayLength );
 }
 

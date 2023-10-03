@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -100,10 +100,12 @@ void C_SpotlightEnd::ClientThink(void)
 	if ( m_flLightScale <= 0 )
 		return;
 
+	color24 c = GetRenderColor();
+	float a = GetRenderAlpha() / 255.0f;
 	ColorRGBExp32 color;
-	color.r	= m_clrRender->r * m_clrRender->a;
-	color.g	= m_clrRender->g * m_clrRender->a;
-	color.b	= m_clrRender->b * m_clrRender->a;
+	color.r	= c.r * a;
+	color.g	= c.g * a;
+	color.b	= c.b * a;
 	color.exponent = 0;
 	if ( color.r == 0 && color.g == 0 && color.b == 0 )
 		return;
@@ -134,9 +136,9 @@ void C_SpotlightEnd::ClientThink(void)
 
 	m_pModelLight->radius = m_Radius;
 	m_pModelLight->flags = DLIGHT_NO_WORLD_ILLUMINATION;
-	m_pModelLight->color.r = m_clrRender->r * m_clrRender->a;
-	m_pModelLight->color.g = m_clrRender->g * m_clrRender->a;
-	m_pModelLight->color.b = m_clrRender->b * m_clrRender->a;
+	m_pModelLight->color.r = c.r * c.a;
+	m_pModelLight->color.g = c.g * c.a;
+	m_pModelLight->color.b = c.b * c.a;
 	m_pModelLight->color.exponent	= 1;
 	m_pModelLight->origin		= m_vSpotlightOrg;
 	m_pModelLight->m_InnerAngle = 6;

@@ -1,22 +1,25 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: Controls the pose parameters of a model
 //
 //===========================================================================//
 
-
 #include "cbase.h"
 #include "point_posecontroller.h"
+
+#ifndef CLIENT_DLL
+	#include "baseanimating.h"
+	#include "props.h"
+#endif
+
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
 
 
 #ifndef CLIENT_DLL
 //-----------------------------------------------------------------------------
 // SERVER CLASS
 //-----------------------------------------------------------------------------
-
-#include "baseanimating.h"
-#include "props.h"
-
 
 #define MAX_POSE_INTERPOLATION_TIME 10.0f
 #define MAX_POSE_CYCLE_FREQUENCY 10.0f
@@ -319,7 +322,7 @@ void CPoseController::InputRandomizeFMod( inputdata_t &inputdata )
 void CPoseController::InputGetFMod( inputdata_t &inputdata )
 {
 	DevMsg( "FMod values for pose controller %s\nTYPE: %i\nTIME OFFSET: %f\nRATE: %f\nAMPLITUDE: %f\n", 
-			STRING( GetEntityName() ), 
+			STRING(GetEntityName()),
 			m_nFModType.Get(), 
 			m_fFModTimeOffset.Get(), 
 			m_fFModRate.Get(), 

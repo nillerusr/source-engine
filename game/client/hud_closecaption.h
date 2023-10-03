@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -13,65 +13,14 @@
 
 #include "hudelement.h"
 #include <vgui_controls/Panel.h>
-#include "captioncompiler.h"
-#include "tier1/UtlSortVector.h"
-#include "tier1/utlsymbol.h"
+#include "closedcaptions.h"
 
 class CSentence;
 class C_BaseFlex;
 class CCloseCaptionItem;
 struct WorkUnitParams;
 class CAsyncCaption;
-
-typedef CUtlSortVector< CaptionLookup_t, CCaptionLookupLess > CaptionDictionary_t;
 struct AsyncCaptionData_t;
-struct AsyncCaption_t
-{
-	AsyncCaption_t() : 
-		m_DataBaseFile( UTL_INVAL_SYMBOL ),
-		m_RequestedBlocks( 0, 0, BlockInfo_t::Less )
-	{
-		Q_memset( &m_Header, 0, sizeof( m_Header ) );
-	}
-
-	struct BlockInfo_t
-	{
-		int			fileindex;
-		int			blocknum;
-		memhandle_t handle;
-
-		static bool Less( const BlockInfo_t& lhs, const BlockInfo_t& rhs )
-		{
-			if ( lhs.fileindex != rhs.fileindex )
-				return lhs.fileindex < rhs.fileindex;
-
-			return lhs.blocknum < rhs.blocknum;
-		}
-	};
-
-	AsyncCaption_t& operator =( const AsyncCaption_t& rhs )
-	{
-		if ( this == &rhs )
-			return *this;
-
-		m_CaptionDirectory = rhs.m_CaptionDirectory;
-		m_Header = rhs.m_Header;
-		m_DataBaseFile = rhs.m_DataBaseFile;
-
-		for ( int i = rhs.m_RequestedBlocks.FirstInorder(); i != rhs.m_RequestedBlocks.InvalidIndex(); i = rhs.m_RequestedBlocks.NextInorder( i ) )
-		{
-			m_RequestedBlocks.Insert( rhs.m_RequestedBlocks[ i ] );
-		}
-
-		return *this;
-	}
-
-	CUtlRBTree< BlockInfo_t, unsigned short >	m_RequestedBlocks;
-
-	CaptionDictionary_t		m_CaptionDirectory;
-	CompiledCaptionHeader_t	m_Header;
-	CUtlSymbol				m_DataBaseFile;
-};
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -99,19 +48,21 @@ public:
 	virtual void	Paint();
 
 	void MsgFunc_CloseCaption(bf_read &msg);
+	void MsgFunc_CloseCaptionDirect(bf_read &msg);
 
 	// Clear all CC data
 	void			Reset( void );
-	void			Process( const wchar_t *stream, float duration, char const *tokenstream, bool fromplayer, bool direct = false );
+	void			Process( const wchar_t *stream, float duration, bool fromplayer, bool direct = false );
 	
 	bool			ProcessCaption( char const *tokenname, float duration, bool fromplayer = false, bool direct = false );
+	bool			ProcessCaptionByHash( unsigned int hash, float duration, bool fromplayer, bool direct = false );
 	void			ProcessCaptionDirect( char const *tokenname, float duration, bool fromplayer = false );
 
 	void			ProcessSentenceCaptionStream( char const *tokenstream );
 	void			PlayRandomCaption();
 
-	void				InitCaptionDictionary( char const *dbfile );
-	void				OnFinishAsyncLoad( int nFileIndex, int nBlockNum, AsyncCaptionData_t *pData );
+	void			InitCaptionDictionary( char const *dbfile, bool bForce = false );
+	void			OnFinishAsyncLoad( int nFileIndex, int nBlockNum, AsyncCaptionData_t *pData );
 
 	void			Flush();
 	void			TogglePaintDebug();
@@ -126,14 +77,12 @@ public:
 		CCFONT_MAX
 	};
 
-	static int GetFontNumber( bool bold, bool italic );
+	static int		GetFontNumber( bool bold, bool italic );
 
 	void			Lock( void );
 	void			Unlock( void );
 
 	void			FindSound( char const *pchANSI );
-
-public:
 
 	struct CaptionRepeat
 	{
@@ -155,15 +104,14 @@ private:
 	void ClearAsyncWork();
 	void ProcessAsyncWork();
 	bool AddAsyncWork( char const *tokenstream, bool bIsStream, float duration, bool fromplayer, bool direct = false );
+	bool AddAsyncWorkByHash( unsigned int hash, float duration, bool fromplayer, bool direct = false );
 
 	void _ProcessSentenceCaptionStream( int wordCount, char const *tokenstream, const wchar_t *caption_full );
-	void _ProcessCaption( const wchar_t *caption, char const *tokenname, float duration, bool fromplayer, bool direct = false );
+	void _ProcessCaption( const wchar_t *caption, unsigned int hash, float duration, bool fromplayer, bool direct = false );
 
 	CUtlLinkedList< CAsyncCaption *, unsigned short >	m_AsyncWork;
 
 	CUtlRBTree< CaptionRepeat, int >	m_CloseCaptionRepeats;
-
-private:
 
 	static bool CaptionTokenLessFunc( const CaptionRepeat &lhs, const CaptionRepeat &rhs );
 
@@ -199,6 +147,7 @@ private:
 	float		m_flCurrentAlpha;
 	float		m_flGoalHeightStartTime;
 	float		m_flGoalHeightFinishTime;
+	bool		m_bMouseOverFade;
 
 	CPanelAnimationVar( float, m_flBackgroundAlpha, "BgAlpha", "192" );
 	CPanelAnimationVar( float, m_flGrowTime, "GrowTime", "0.25" );

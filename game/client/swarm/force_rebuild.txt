@@ -1,0 +1,3 @@
+This file exists for the sole purpose of being checked in without changes and the string "*** force rebuild ***" in the changelist description. 
+
+This will cause a full X360 content rebuild.

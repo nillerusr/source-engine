@@ -1,13 +1,14 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 // $NoKeywords: $
 //=============================================================================//
 #include "cbase.h"
-#include "materialsystem/imaterialproxy.h"
-#include "materialsystem/imaterial.h"
+#include "materialsystem/IMaterialProxy.h"
+#include "materialsystem/IMaterial.h"
 
+#include "imaterialproxydict.h"
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -44,4 +45,4 @@ void CDummyMaterialProxy::OnBind( void *pC_BaseEntity )
 	DevMsg( 1, "CDummyMaterialProxy::OnBind( %p )\n", pC_BaseEntity );
 }
 
-EXPOSE_INTERFACE( CDummyMaterialProxy, IMaterialProxy, "Dummy" IMATERIAL_PROXY_INTERFACE_VERSION );
+EXPOSE_MATERIAL_PROXY( CDummyMaterialProxy, Dummy );

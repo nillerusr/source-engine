@@ -1,15 +1,16 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 // $NoKeywords: $
 //=============================================================================//
 #include "cbase.h"
-#include "proxyentity.h"
-#include "materialsystem/imaterialvar.h"
-#include "materialsystem/imaterial.h"
+#include "ProxyEntity.h"
+#include "materialsystem/IMaterialVar.h"
+#include "materialsystem/IMaterial.h"
 #include "view.h"
 
+#include "imaterialproxydict.h"
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -58,6 +59,7 @@ bool CLampBeamProxy::Init( IMaterial *pMaterial, KeyValues* pKeyValues )
 	// Need to get the color variable.
 	bool found;
 	m_pFadeValue = pMaterial->FindVar( "$alpha", &found );
+	pMaterial->SetMaterialVarFlag( MATERIAL_VAR_ALPHA_MODIFIED_BY_PROXY, true );
 	return found;
 }
 
@@ -88,4 +90,4 @@ IMaterial *CLampBeamProxy::GetMaterial()
 	return m_pFadeValue->GetOwningMaterial();
 }
 
-EXPOSE_INTERFACE( CLampBeamProxy, IMaterialProxy, "lampbeam" IMATERIAL_PROXY_INTERFACE_VERSION );
+EXPOSE_MATERIAL_PROXY( CLampBeamProxy, lampbeam );

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -8,20 +8,18 @@
 #include "obstacle_pushaway.h"
 #include "props_shared.h"
 
-#if defined( CSTRIKE_DLL )
-#define SV_PUSH_CONVAR_FLAGS  (FCVAR_REPLICATED)
-#else
-#define SV_PUSH_CONVAR_FLAGS  (FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY)
-#endif // CSTRIKE_DLL
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
 
 //-----------------------------------------------------------------------------------------------------
-ConVar sv_pushaway_force( "sv_pushaway_force", "30000", SV_PUSH_CONVAR_FLAGS, "How hard physics objects are pushed away from the players on the server." );
-ConVar sv_pushaway_min_player_speed( "sv_pushaway_min_player_speed", "75", SV_PUSH_CONVAR_FLAGS, "If a player is moving slower than this, don't push away physics objects (enables ducking behind things)." );
-ConVar sv_pushaway_max_force( "sv_pushaway_max_force", "1000", SV_PUSH_CONVAR_FLAGS, "Maximum amount of force applied to physics objects by players." );
-ConVar sv_pushaway_clientside( "sv_pushaway_clientside", "0", SV_PUSH_CONVAR_FLAGS, "Clientside physics push away (0=off, 1=only localplayer, 1=all players)" );
+ConVar sv_pushaway_force( "sv_pushaway_force", "30000", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "How hard physics objects are pushed away from the players on the server." );
+ConVar sv_pushaway_min_player_speed( "sv_pushaway_min_player_speed", "75", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "If a player is moving slower than this, don't push away physics objects (enables ducking behind things)." );
+ConVar sv_pushaway_max_force( "sv_pushaway_max_force", "1000", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "Maximum amount of force applied to physics objects by players." );
+ConVar sv_pushaway_clientside( "sv_pushaway_clientside", "0", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "Clientside physics push away (0=off, 1=only localplayer, 1=all players)" );
 
-ConVar sv_pushaway_player_force( "sv_pushaway_player_force", "200000", SV_PUSH_CONVAR_FLAGS | FCVAR_CHEAT, "How hard the player is pushed away from physics objects (falls off with inverse square of distance)." );
-ConVar sv_pushaway_max_player_force( "sv_pushaway_max_player_force", "10000", SV_PUSH_CONVAR_FLAGS | FCVAR_CHEAT, "Maximum of how hard the player is pushed away from physics objects." );
+ConVar sv_pushaway_player_force( "sv_pushaway_player_force", "200000", FCVAR_REPLICATED | FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "How hard the player is pushed away from physics objects (falls off with inverse square of distance)." );
+ConVar sv_pushaway_max_player_force( "sv_pushaway_max_player_force", "10000", FCVAR_REPLICATED | FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "Maximum of how hard the player is pushed away from physics objects." );
 
 #ifdef CLIENT_DLL
 ConVar sv_turbophysics( "sv_turbophysics", "0", FCVAR_REPLICATED, "Turns on turbo physics" );
@@ -198,7 +196,14 @@ void AvoidPushawayProps( CBaseCombatCharacter *pPlayer, CUserCmd *pCmd )
 	// against physics objects.
 	Vector currentdir;
 	Vector rightdir;
-	AngleVectors( pCmd->viewangles, &currentdir, &rightdir, NULL );
+	if (g_pGameRules->IsTopDown())
+	{
+		AngleVectors( g_pGameRules->GetTopDownMovementAxis(), &currentdir, &rightdir, NULL );
+	}
+	else
+	{
+		AngleVectors( pCmd->viewangles, &currentdir, &rightdir, NULL );
+	}
 
 	CBaseEntity *props[512];
 #ifdef CLIENT_DLL
@@ -296,7 +301,7 @@ void PerformObstaclePushaway( CBaseCombatCharacter *pPushingEntity )
 
 	// if sv_pushaway_clientside is 1, only local player can push them
 	CBasePlayer *pPlayer = pPushingEntity->IsPlayer() ? (dynamic_cast< CBasePlayer * >(pPushingEntity)) : NULL;
-	if ( (sv_pushaway_clientside.GetInt() == 1) && (!pPlayer || !pPlayer->IsLocalPlayer()) )
+	if ( (sv_pushaway_clientside.GetInt() == 1) && (!pPlayer || !C_BasePlayer::IsLocalPlayer( pPlayer )) )
 		return;
 
 	int nEnts = GetPushawayEnts( pPushingEntity, props, ARRAYSIZE( props ), 3.0f, PARTITION_CLIENT_RESPONSIVE_EDICTS, NULL );

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Simple, small, free-standing tools for building AIs
 //
@@ -53,13 +53,19 @@ public:
 	   m_flMarkTolerance( NO_MARK )
 	{
 	}
+
+	void SetMark( const Vector &v, float tolerance )
+	{
+		m_vMark = v;
+		m_flMarkTolerance = tolerance;
+	}
 	
 	void SetMark( CBaseEntity *pEntity, float tolerance )
 	{
 		if ( pEntity )
 		{
 			m_vMark = pEntity->GetAbsOrigin();
-			m_flMarkTolerance = tolerance;
+			m_flMarkTolerance = tolerance ;
 		}
 	}
 	
@@ -73,26 +79,44 @@ public:
 		return ( m_flMarkTolerance != NO_MARK );
 	}
 
-	bool TargetMoved( CBaseEntity *pEntity )
+	bool TargetMoved( const Vector &v )
 	{
-		if ( IsMarkSet() && pEntity != NULL )
+		if ( IsMarkSet() )
 		{
-			float distance = ( m_vMark - pEntity->GetAbsOrigin() ).Length();
+			float distance = ( m_vMark - v ).Length();
 			if ( distance > m_flMarkTolerance )
 				return true;
 		}
 		return false;
 	}
 
-	bool TargetMoved2D( CBaseEntity *pEntity )
+	bool TargetMoved2D( const Vector2D &v )
 	{
-		if ( IsMarkSet() && pEntity != NULL )
+		if ( IsMarkSet() )
 		{
-			float distance = ( m_vMark.AsVector2D() - pEntity->GetAbsOrigin().AsVector2D() ).Length();
+			float distance = ( m_vMark.AsVector2D() - v ).Length();
 			if ( distance > m_flMarkTolerance )
 				return true;
 		}
 		return false;
+	}
+
+	bool TargetMoved( CBaseEntity *pEntity )
+	{
+		if ( pEntity == NULL )
+		{
+			return false;
+		}
+		return TargetMoved( pEntity->GetAbsOrigin() );
+	}
+
+	bool TargetMoved2D( CBaseEntity *pEntity )
+	{
+		if ( pEntity == NULL )
+		{
+			return false;
+		}
+		return TargetMoved2D( pEntity->GetAbsOrigin().AsVector2D() );
 	}
 
 	Vector GetMarkPos() { return m_vMark; }

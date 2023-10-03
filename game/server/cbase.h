@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -45,6 +45,11 @@
 // tier 3
 #include "vphysics_interface.h"
 
+#ifdef IS_WINDOWS_PC
+#define SERVER_USES_VGUI 1
+#endif
+
+
 // Shared engine/DLL constants
 #include "const.h"
 #include "edict.h"
@@ -77,6 +82,7 @@
 #include "base_transmit_proxy.h"
 #include "soundflags.h"
 #include "networkvar.h"
+#include "sharedvar.h"
 #include "baseentity_shared.h"
 #include "basetoggle.h"
 #include "igameevents.h"
@@ -150,5 +156,7 @@ class CSound;
 #include "physics.h"
 #include "ndebugoverlay.h"
 #include "recipientfilter.h"
+#include "npcevent.h"
+#include "vprof.h"
 
 #endif // CBASE_H

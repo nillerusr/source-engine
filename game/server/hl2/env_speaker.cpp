@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -91,7 +91,7 @@ void CSpeaker::Precache( void )
 		SetNextThink( gpGlobals->curtime + random->RandomFloat(5.0, 15.0) );
 	}
 
-	if ( !m_pInstancedResponseSystem && Q_strlen( STRING(m_iszRuleScriptFile) ) > 0 )
+	if ( !m_pInstancedResponseSystem )
 	{
 		m_pInstancedResponseSystem = PrecacheCustomResponseSystem( STRING( m_iszRuleScriptFile ) );
 	}
@@ -139,7 +139,7 @@ int	CSpeaker::Restore( IRestore &restore )
 			restore.StartBlock( szResponseSystemBlockName );
 			if ( !Q_stricmp( szResponseSystemBlockName, "InstancedResponseSystem" ) )
 			{
-				if ( !m_pInstancedResponseSystem && Q_strlen( STRING(m_iszRuleScriptFile) ) > 0 )
+				if ( !m_pInstancedResponseSystem )
 				{
 					m_pInstancedResponseSystem = PrecacheCustomResponseSystem( STRING( m_iszRuleScriptFile ) );
 					if ( m_pInstancedResponseSystem )

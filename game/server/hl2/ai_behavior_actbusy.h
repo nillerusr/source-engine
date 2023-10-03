@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -99,6 +99,8 @@ public:
 		NEXT_CONDITION,
 	};
 	
+	static const char *GetClassName() { return "behavior_act_busy"; }
+	virtual const char *GetClassNameV() { return GetClassName(); }
 	virtual const char *GetName() {	return "ActBusy"; }
 
 	void	Enable( CAI_ActBusyGoal *pGoal, float flRange, bool bVisibleOnly );

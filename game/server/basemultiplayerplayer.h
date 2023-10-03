@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve LLC, All rights reserved. ============
 //
 //=============================================================================
 #ifndef BASEMULTIPLAYERPLAYER_H
@@ -8,6 +8,13 @@
 #include "player.h"
 #include "ai_speech.h"
 
+enum SpeechPriorityType
+{
+	SPEECH_PRIORITY_LOW,
+	SPEECH_PRIORITY_NORMAL,
+	SPEECH_PRIORITY_MANUAL,
+	SPEECH_PRIORITY_UNINTERRUPTABLE,
+};
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -26,18 +33,18 @@ public:
 	virtual void		PostConstructor( const char *szClassname );
 	virtual void		ModifyOrAppendCriteria( AI_CriteriaSet& criteriaSet );
 
-	virtual bool			SpeakIfAllowed( AIConcept_t concept, const char *modifiers = NULL, char *pszOutResponseChosen = NULL, size_t bufsize = 0, IRecipientFilter *filter = NULL );
-	virtual IResponseSystem *GetResponseSystem();
-	AI_Response				*SpeakConcept( int iConcept );
-	virtual bool			SpeakConceptIfAllowed( int iConcept, const char *modifiers = NULL, char *pszOutResponseChosen = NULL, size_t bufsize = 0, IRecipientFilter *filter = NULL );
+	virtual bool		SpeakIfAllowed( AIConcept_t concept, SpeechPriorityType priority, const char *modifiers = NULL, char *pszOutResponseChosen = NULL, size_t bufsize = 0, IRecipientFilter *filter = NULL );
+	void				SpeakConcept( AI_Response &outresponse, int iConcept );
+	virtual bool		SpeakConceptIfAllowed( int iConcept, const char *modifiers = NULL, char *pszOutResponseChosen = NULL, size_t bufsize = 0, IRecipientFilter *filter = NULL );
 
 	virtual bool		CanHearAndReadChatFrom( CBasePlayer *pPlayer );
 	virtual bool		CanSpeak( void ) { return true; }
-	virtual bool		CanBeAutobalanced() { return true; }
 
 	virtual void		Precache( void )
 	{
+#ifndef SWARM_DLL
 		PrecacheParticleSystem( "achieved" );
+#endif
 
 		BaseClass::Precache();
 	}
@@ -72,7 +79,7 @@ public:
 
 	virtual int	CalculateTeamBalanceScore( void );
 
-	void AwardAchievement( int iAchievement, int iCount = 1 );
+	void AwardAchievement( int iAchievement );
 	int	GetPerLifeCounterKV( const char *name );
 	void SetPerLifeCounterKV( const char *name, int value );
 	void ResetPerLifeCounters( void );
@@ -87,9 +94,12 @@ public:
 
 	float GetConnectionTime( void ) { return m_flConnectionTime; }
 
-	// Command rate limiting.
-	bool ShouldRunRateLimitedCommand( const CCommand &args );
-	bool ShouldRunRateLimitedCommand( const char *pszCommand );
+#if !defined(NO_STEAM)
+	//----------------------------
+	// Steam handling
+	bool		GetSteamID( CSteamID *pID );
+	uint64		GetSteamIDAsUInt64( void );
+#endif
 
 protected:
 	virtual CAI_Expresser *CreateExpresser( void );
@@ -105,9 +115,6 @@ private:
 	int m_iBalanceScore;	// a score used to determine which players are switched to balance the teams
 
 	KeyValues	*m_pAchievementKV;
-
-	// This lets us rate limit the commands the players can execute so they don't overflow things like reliable buffers.
-	CUtlDict<float,int>	m_RateLimitLastCommandTimes;
 };
 
 //-----------------------------------------------------------------------------

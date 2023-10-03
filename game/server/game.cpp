@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -27,19 +27,20 @@ void MapCycleFileChangedCallback( IConVar *var, const char *pOldString, float fl
 ConVar	displaysoundlist( "displaysoundlist","0" );
 ConVar  mapcyclefile( "mapcyclefile", "mapcycle.txt", FCVAR_NONE, "Name of the .txt file used to cycle the maps on multiplayer servers ", MapCycleFileChangedCallback );
 ConVar  servercfgfile( "servercfgfile","server.cfg" );
+#if defined(_X360)
+ConVar  lservercfgfile( "lservercfgfile","listenserver360.cfg" );
+#else
 ConVar  lservercfgfile( "lservercfgfile","listenserver.cfg" );
+#endif
 
 // multiplayer server rules
 ConVar	teamplay( "mp_teamplay","0", FCVAR_NOTIFY );
+ConVar	fraglimit( "mp_fraglimit","0", FCVAR_NOTIFY );
 ConVar	falldamage( "mp_falldamage","0", FCVAR_NOTIFY );
 ConVar	weaponstay( "mp_weaponstay","0", FCVAR_NOTIFY );
 ConVar	forcerespawn( "mp_forcerespawn","1", FCVAR_NOTIFY );
 ConVar	footsteps( "mp_footsteps","1", FCVAR_NOTIFY );
-#ifdef CSTRIKE
-ConVar	flashlight( "mp_flashlight","1", FCVAR_NOTIFY );
-#else
 ConVar	flashlight( "mp_flashlight","0", FCVAR_NOTIFY );
-#endif
 ConVar	aimcrosshair( "mp_autocrosshair","1", FCVAR_NOTIFY );
 ConVar	decalfrequency( "decalfrequency","10", FCVAR_NOTIFY );
 ConVar	teamlist( "mp_teamlist","hgrunt;scientist", FCVAR_NOTIFY );

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -49,8 +49,6 @@ public:
 	void		InputShowModel( inputdata_t &input );
 	void		InputHideModel( inputdata_t &input );
 	void		InputRoundActivate( inputdata_t &inputdata );
-	void		InputSetLocked( inputdata_t &inputdata );
-	void		InputSetUnlockTime( inputdata_t &inputdata );
 
 	// Owner handling
 	void		ForceOwner( int iTeam ); // used when selecting a specific round to play
@@ -86,12 +84,10 @@ public:
 
 	int			PointValue( void );
 
-	bool		HasBeenContested( void ) const;				// return true if this point has ever been contested, false if the enemy has never contested this point yet
 	float		LastContestedAt( void );
 	void		SetLastContestedAt( float flTime );
 
 	void		UpdateCapPercentage( void );
-	float		GetTeamCapPercentage( int iTeam );
 
 	// The specified player took part in capping this point.
 	virtual void PlayerCapped( CBaseMultiplayerPlayer *pPlayer );
@@ -105,15 +101,11 @@ public:
 
 	virtual void StopLoopingSounds( void );
 
-	bool		IsLocked( void ){ return m_bLocked; }
-
-	void EXPORT UnlockThink( void );
-
 private:
 	void		SendCapString( int iCapTeam, int iNumCappingPlayers, int *pCappingPlayers );
 	void		InternalSetOwner( int iCapTeam, bool bMakeSound = true, int iNumCappers = 0, int *iCappingPlayers = NULL );
+	float		GetTeamCapPercentage( int iTeam );
 	void		HandleScoring( int iTeam );
-	void		InternalSetLocked( bool bLocked );
 
 	int			m_iTeam;			
 	int			m_iDefaultOwner;			// Team that initially owns the cap point
@@ -122,8 +114,6 @@ private:
 	string_t	m_iszPrintName;
 	string_t	m_iszWarnSound;				// Sound played if the team needs to be warned about this point being captured
 	bool		m_bRandomOwnerOnRestart;	// Do we want to randomize the owner after a restart?
-	bool		m_bLocked;
-	float		m_flUnlockTime;				// Time to unlock
 
 	// We store a copy of this data for each team, +1 for the un-owned state.
 	struct perteamdata_t
@@ -170,8 +160,6 @@ private:
 
 	COutputEvent	m_OnRoundStartOwnedByTeam1;
 	COutputEvent	m_OnRoundStartOwnedByTeam2;
-
-	COutputEvent	m_OnUnlocked;
 
 	int			m_bPointVisible;		//should this capture point be visible on the hud?
 	int			m_iPointIndex;			//the mapper set index value of this control point

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -22,11 +22,5 @@ extern INetworkStringTable *g_StringTableEffectDispatch;
 extern INetworkStringTable *g_StringTableMaterials;
 extern INetworkStringTable *g_pStringTableInfoPanel;
 extern INetworkStringTable *g_pStringTableClientSideChoreoScenes;
-extern INetworkStringTable *g_pStringTableServerMapCycle;
-
-#ifdef TF_CLIENT_DLL
-extern INetworkStringTable *g_pStringTableServerPopFiles;
-extern INetworkStringTable *g_pStringTableServerMapCycleMvM;
-#endif
 
 #endif // NETWORKSTRINGTABLE_CLIENTDLL_H

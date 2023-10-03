@@ -1,11 +1,15 @@
 
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 'Button' which activates after a specified amount of weight is touching it.
 //
 //=============================================================================//
 
 #include "cbase.h"
+
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
 
 class CWeightButton : public CBaseEntity
 {

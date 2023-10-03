@@ -1,14 +1,17 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
-//=============================================================================//
+//===========================================================================//
 
 #ifndef ENTITYFLAME_H
 #define ENTITYFLAME_H
 #ifdef _WIN32
 #pragma once
 #endif
+
+#include "ai_planesolver.h"
+
 
 #define FLAME_DAMAGE_INTERVAL			0.2f // How often to deal damage.
 #define FLAME_DIRECT_DAMAGE_PER_SEC		5.0f
@@ -19,40 +22,49 @@
 
 #define FLAME_MAX_LIFETIME_ON_DEAD_NPCS	10.0f
 
+class CAI_Link;
+
+
 class CEntityFlame : public CBaseEntity 
 {
-public:
 	DECLARE_SERVERCLASS();
 	DECLARE_CLASS( CEntityFlame, CBaseEntity );
+	DECLARE_DATADESC();
+
+public:
+	static CEntityFlame	*Create( CBaseEntity *pTarget, float flLifetime, float flSize = 0.0f, bool bUseHitboxes = true );
 
 	CEntityFlame( void );
-
-	static CEntityFlame	*Create( CBaseEntity *pTarget, bool useHitboxes = true );
 
 	void	AttachToEntity( CBaseEntity *pTarget );
 	void	SetLifetime( float lifetime );
 	void	SetUseHitboxes( bool use );
+
 	void	SetNumHitboxFires( int iNumHitBoxFires );
 	void	SetHitboxFireScale( float flHitboxFireScale );
 
-	float	GetRemainingLife( void );
+	float	GetRemainingLife( void ) const;
 	int		GetNumHitboxFires( void );
 	float	GetHitboxFireScale( void );
 
 	virtual void Precache();
 	virtual void UpdateOnRemove();
 
-	void	SetSize( float size ) { m_flSize = size; }
+	virtual void Spawn();
+	virtual void Activate();
 
-	DECLARE_DATADESC();
+	void	UseCheapEffect( bool bCheap );
+
+	void	SetSize( float size ) { m_flSize = size; }
+	
+	void	SetAttacker( CBaseEntity *pAttacker ) { m_hAttacker = pAttacker; }
+	CBaseEntity *GetAttacker( void ) const;
 
 protected:
-
-	void InputIgnite( inputdata_t &inputdata );
-
 	void	FlameThink( void );
 
 	CNetworkHandle( CBaseEntity, m_hEntAttached );		// The entity that we are burning (attached to).
+	CNetworkVar( bool, m_bCheapEffect );
 
 	CNetworkVar( float, m_flSize );
 	CNetworkVar( bool, m_bUseHitboxes );
@@ -60,7 +72,14 @@ protected:
 	CNetworkVar( float, m_flHitboxFireScale );
 
 	CNetworkVar( float, m_flLifetime );
-	bool	m_bPlayingSound;
+	string_t	m_iszPlayingSound;	// Track the sound so we can StopSound later
+
+	EHANDLE m_hAttacker;
+
+	int m_iDangerSound;
+	bool m_bPlayingSound;
+	CUtlVector< CAI_Link * > m_DangerLinks;
+	Obstacle_t m_hObstacle;
 };
 
 #endif // ENTITYFLAME_H

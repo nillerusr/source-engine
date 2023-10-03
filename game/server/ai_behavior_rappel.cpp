@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -383,7 +383,7 @@ void CAI_RappelBehavior::CreateZipline()
 	{
 		int attachment = GetOuter()->LookupAttachment( "zipline" );
 
-		if( attachment > 0 )
+		if( attachment != -1 )
 		{
 			CBeam *pBeam;
 			pBeam = CBeam::BeamCreate( "cable/cable.vmt", 1 );

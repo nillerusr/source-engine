@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -12,15 +12,11 @@
 #include "movevars_shared.h"
 #include "in_buttons.h"
 #include "text_message.h"
-#include "vgui_controls/Controls.h"
+#include "vgui_controls/controls.h"
 #include "vgui/ILocalize.h"
 #include "vguicenterprint.h"
 #include "game/client/iviewport.h"
 #include <KeyValues.h>
-
-#ifdef CSTRIKE_DLL
-	#include "c_cs_player.h"
-#endif
 
 ConVar spec_autodirector( "spec_autodirector", "1", FCVAR_CLIENTDLL | FCVAR_CLIENTCMD_CAN_EXECUTE, "Auto-director chooses best view modes while spectating" );
 
@@ -245,7 +241,7 @@ void C_HLTVCamera::CalcChaseCamView( Vector& eyeOrigin, QAngle& eyeAngles, float
 		cameraAngles.y = angle.y;
 		
 		NormalizeAngles( cameraAngles );
-		cameraAngles.x = clamp( cameraAngles.x, -60.f, 60.f );
+		cameraAngles.x = clamp( cameraAngles.x, -60, 60 );
 
 		SmoothCameraAngle( cameraAngles );
 	}
@@ -551,17 +547,7 @@ void C_HLTVCamera::SetMode(int iMode)
 
     Assert( iMode > OBS_MODE_NONE && iMode <= LAST_PLAYER_OBSERVERMODE );
 
-	int iOldMode = m_nCameraMode;
 	m_nCameraMode = iMode;
-
-	IGameEvent *event = gameeventmanager->CreateEvent( "hltv_changed_mode" );
-	if ( event )
-	{
-		event->SetInt( "oldmode", iOldMode );
-		event->SetInt( "newmode", m_nCameraMode );
-		event->SetInt( "obs_target", m_iTraget1 );
-		gameeventmanager->FireEventClientSide( event );
-	}
 }
 
 void C_HLTVCamera::SetPrimaryTarget( int nEntity ) 
@@ -569,7 +555,6 @@ void C_HLTVCamera::SetPrimaryTarget( int nEntity )
  	if ( m_iTraget1 == nEntity )
 		return;
 
-	int iOldTarget = m_iTraget1;
 	m_iTraget1 = nEntity;
 
 	if ( GetMode() == OBS_MODE_ROAMING )
@@ -592,15 +577,6 @@ void C_HLTVCamera::SetPrimaryTarget( int nEntity )
 
 	m_flLastDistance = m_flDistance;
 	m_flLastAngleUpdateTime = -1;
-
-	IGameEvent *event = gameeventmanager->CreateEvent( "hltv_changed_target" );
-	if ( event )
-	{
-		event->SetInt( "mode", m_nCameraMode );
-		event->SetInt( "old_target", iOldTarget );
-		event->SetInt( "obs_target", m_iTraget1 );
-		gameeventmanager->FireEventClientSide( event );
-	}
 }
 
 void C_HLTVCamera::SpecNextPlayer( bool bInverse )
@@ -670,7 +646,7 @@ void C_HLTVCamera::SpecNamedPlayer( const char *szPlayerName )
 
 void C_HLTVCamera::FireGameEvent( IGameEvent * event)
 {
-	if ( !engine->IsHLTV() )
+	if ( !g_bEngineIsHLTV )
 		return;	// not in HLTV mode
 
 	const char *type = event->GetName();
@@ -680,20 +656,20 @@ void C_HLTVCamera::FireGameEvent( IGameEvent * event)
 		Reset();	// reset all camera settings
 
 		// show spectator UI
-		if ( !gViewPortInterface )
+		if ( !GetViewPortInterface() )
 			return;
 
 		if ( engine->IsPlayingDemo() )
         {
 			// for demo playback show full menu
-			gViewPortInterface->ShowPanel( PANEL_SPECMENU, true );
+			GetViewPortInterface()->ShowPanel( PANEL_SPECMENU, true );
 
 			SetMode( OBS_MODE_ROAMING );
 		}
 		else
 		{
 			// during live broadcast only show black bars
-			gViewPortInterface->ShowPanel( PANEL_SPECGUI, true );
+			GetViewPortInterface()->ShowPanel( PANEL_SPECGUI, true );
 		}
 
 		return;
@@ -718,7 +694,7 @@ void C_HLTVCamera::FireGameEvent( IGameEvent * event)
 			g_pVGuiLocalize->ConvertANSIToUnicode( tmpStr, outputBuf, sizeof(outputBuf) );
 		}
 
-		internalCenterPrint->Print( ConvertCRtoNL( outputBuf ) );
+		GetCenterPrint()->Print( ConvertCRtoNL( outputBuf ) );
 		return ;
 	}
 
@@ -782,7 +758,7 @@ void C_HLTVCamera::FireGameEvent( IGameEvent * event)
 
 	if ( Q_strcmp( "hltv_chase", type ) == 0 )
 	{
-		bool bInEye	= event->GetInt( "ineye" );
+		bool bInEye	= event->GetBool( "ineye" );
 
 		// check if we are already in a player chase mode
 		bool bIsInChaseMode = (m_nCameraMode==OBS_MODE_IN_EYE)|| (m_nCameraMode==OBS_MODE_CHASE);
@@ -835,7 +811,7 @@ void C_HLTVCamera::SmoothCameraAngle( QAngle& targetAngle )
 	{
 		float deltaTime = gpGlobals->realtime - m_flLastAngleUpdateTime;
 
-		deltaTime = clamp( deltaTime*m_flInertia, 0.01f, 1.f);
+		deltaTime = clamp( deltaTime*m_flInertia, 0.01, 1);
 
 		InterpolateAngles( m_aCamAngle, targetAngle, m_aCamAngle, deltaTime );
 	}

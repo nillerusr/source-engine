@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -84,7 +84,14 @@ public:
 	DECLARE_DATADESC();
 	
 	int			m_nMaxNumNPCs;			// max number of NPCs this ent can create
-	float		m_flSpawnFrequency;		// delay (in secs) between spawns 
+	float		m_flSpawnFrequency;		// delay (in secs) between spawns
+
+	enum HullCheckMode_t
+	{
+		HULLCHECK_DEFAULT = 0,
+		HULLCHECK_NONE = 1,
+	};
+	int			m_nHullCheckMode;
 
 	COutputEHANDLE m_OnSpawnNPC;
 	COutputEvent m_OnAllSpawned;
@@ -136,6 +143,7 @@ public:
 
 	virtual CNPCSpawnDestination *FindSpawnDestination();
 	virtual void MakeNPC( void );
+	CAI_BaseNPC *MakeNPCFromTemplate( void );
 	void MakeNPCInRadius( void );
 	void MakeNPCInLine( void );
 	virtual void MakeMultipleNPCS( int nNPCs );

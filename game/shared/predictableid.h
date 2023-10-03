@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -11,6 +11,7 @@
 #pragma once
 #endif
 
+#if defined( USE_PREDICTABLEID )
 #if !defined( NO_ENTITY_PREDICTION )
 //-----------------------------------------------------------------------------
 // Purpose: Wraps 32bit predictID to allow access and creation
@@ -70,9 +71,8 @@ private:
 	} m_PredictableID;
 };
 
-// This can be empty, the class has a proper constructor
-FORCEINLINE void NetworkVarConstruct( CPredictableId &x ) {}
-
 #endif
-
+#else
+typedef void *CPredictableId;
+#endif // USE_PREDICTABLEID
 #endif // PREDICTABLEID_H

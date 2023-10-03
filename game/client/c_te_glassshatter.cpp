@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -7,8 +7,8 @@
 //===========================================================================//
 #include "cbase.h"
 #include "c_basetempentity.h"
-#include "particle_simple3d.h"
-#include "tier1/KeyValues.h"
+#include "particle_simple3D.h"
+#include "tier1/keyvalues.h"
 #include "toolframework_client.h"
 #include "fx.h"
 #include "tier0/vprof.h"
@@ -23,15 +23,17 @@
 #define GLASS_SHARD_NOISE	 0.3
 #define GLASS_SHARD_GRAVITY  500
 #define GLASS_SHARD_DAMPING	 0.3
+ 
+#include "precache_register.h"
 
-#include "clienteffectprecachesystem.h"
+PRECACHE_REGISTER_BEGIN( GLOBAL, PrecacheEffectGlassShatter )
+PRECACHE( MATERIAL, "effects/fleck_glass1" )
+PRECACHE( MATERIAL, "effects/fleck_glass2" )
+PRECACHE( MATERIAL, "effects/fleck_tile1" )
+PRECACHE( MATERIAL, "effects/fleck_tile2" )
+PRECACHE_REGISTER_END()
 
-CLIENTEFFECT_REGISTER_BEGIN( PrecacheEffectGlassShatter )
-CLIENTEFFECT_MATERIAL( "effects/fleck_glass1" )
-CLIENTEFFECT_MATERIAL( "effects/fleck_glass2" )
-CLIENTEFFECT_MATERIAL( "effects/fleck_tile1" )
-CLIENTEFFECT_MATERIAL( "effects/fleck_tile2" )
-CLIENTEFFECT_REGISTER_END()
+ConVar fx_glass_velocity_cap("fx_glass_velocity_cap", "0", 0, "Maximum downwards speed of shattered glass particles");
 
 //###################################################
 // > C_TEShatterSurface
@@ -222,6 +224,12 @@ void C_TEShatterSurface::PostDataUpdate( DataUpdateType_t updateType )
 				{
 					vForceVel *= ( 40.0f / flForceDistSqr );
 				}
+			}
+
+			// cap the Z velocity of the shards
+			if (fx_glass_velocity_cap.GetFloat() > 0 && vForceVel.z < -fx_glass_velocity_cap.GetFloat())
+			{
+				vForceVel.z = random->RandomFloat(-fx_glass_velocity_cap.GetFloat(), -(fx_glass_velocity_cap.GetFloat() * 0.66f));
 			}
 
 			if (pParticle)

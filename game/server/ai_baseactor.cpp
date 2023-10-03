@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -15,6 +15,7 @@
 #include "saverestore_utlvector.h"
 #include "bone_setup.h"
 #include "physics_npc_solver.h"
+#include "inforemarkable.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -385,7 +386,7 @@ bool CAI_BaseActor::ProcessSceneEvent( CSceneEventInfo *info, CChoreoScene *scen
 			info->m_bIsMoving = IsMoving();
 
 			// Msg("%f : %f - %f\n", scene->GetTime(), event->GetStartTime(), event->GetEndTime() );
-			float flTime = clamp( scene->GetTime(), event->GetStartTime(), event->GetEndTime() - 0.1f );
+			float flTime = clamp( scene->GetTime(), event->GetStartTime(), event->GetEndTime() - 0.1 );
 			float intensity = event->GetIntensity( flTime );
 
 			// clamp in-ramp to 0.5 seconds
@@ -695,6 +696,51 @@ void CAI_BaseActor::SetViewtarget( const Vector &viewtarget )
 
 
 //-----------------------------------------------------------------------------
+// Purpose: Clear out head/look targets
+//-----------------------------------------------------------------------------
+
+
+void CAI_BaseActor::ClearHeadAdjustment()
+{
+	//DevMsg( "Teleport %s : %.0f %.0f %.0f  : %.0f %.0f %.0f\n", GetEntityNameAsCStr(), Get( m_ParameterHeadYaw ), Get( m_ParameterHeadPitch ), Get( m_ParameterHeadRoll ), m_goalHeadCorrection.x, m_goalHeadCorrection.y, m_goalHeadCorrection.z );
+	m_lookQueue.RemoveAll();
+	m_syntheticLookQueue.RemoveAll();
+	m_randomLookQueue.RemoveAll();
+
+	Set( m_ParameterHeadYaw, 0.0f );
+	Set( m_ParameterHeadPitch, 0.0f );
+	Set( m_ParameterHeadRoll, 0.0f );
+
+	m_goalHeadDirection.Init();
+	m_goalHeadInfluence = 0.0f;
+
+	m_goalSpineYaw = 0.0f;
+	m_goalBodyYaw = 0.0f;
+	m_goalHeadCorrection.Init();
+}
+
+
+void CAI_BaseActor::Teleport( const Vector *newPosition, const QAngle *newAngles, const Vector *newVelocity )
+{
+	ClearHeadAdjustment();
+
+	BaseClass::Teleport( newPosition, newAngles, newVelocity );
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Clear out eye/head latched positions
+//-----------------------------------------------------------------------------
+
+void CAI_BaseActor::InvalidateBoneCache()
+{
+	m_fLatchedPositions &= ~(HUMANOID_LATCHED_ALL);
+
+	BaseClass::InvalidateBoneCache();
+}
+
+
+//-----------------------------------------------------------------------------
 // Purpose: Returns true position of the eyeballs
 //-----------------------------------------------------------------------------
 void CAI_BaseActor::UpdateLatchedValues( ) 
@@ -704,7 +750,7 @@ void CAI_BaseActor::UpdateLatchedValues( )
 		// set head latch
 		m_fLatchedPositions |= HUMANOID_LATCHED_HEAD;
 
-		if (!HasCondition( COND_IN_PVS ) || !GetAttachment( "eyes", m_latchedEyeOrigin, &m_latchedHeadDirection ))
+		if ( CanSkipAnimation() || !GetAttachment( "eyes", m_latchedEyeOrigin, &m_latchedHeadDirection ))
 		{
 			m_latchedEyeOrigin = BaseClass::EyePosition( );
 			AngleVectors( GetLocalAngles(), &m_latchedHeadDirection );
@@ -804,7 +850,7 @@ float CAI_BaseActor::HeadTargetValidity(const Vector &lookTargetPos)
 	Vector vFacing = BodyDirection3D();
 
 	int iForward = LookupAttachment( "forward" );
-	if ( iForward > 0 )
+	if (iForward)
 	{
 		Vector tmp1;
 		GetAttachment( iForward, tmp1, &vFacing, NULL, NULL );
@@ -824,7 +870,7 @@ float CAI_BaseActor::HeadTargetValidity(const Vector &lookTargetPos)
 	// only look if target is within +-135 degrees
 	// scale 1..-0.707 == 1..1,  -.707..-1 == 1..0
 	// 	X * b + b = 1 == 1 / (X + 1) = b, 3.4142
-	float flInterest = clamp( 3.4142f + 3.4142f * dotPr, 0.f, 1.f );
+	float flInterest = clamp( 3.4142 + 3.4142 * dotPr, 0, 1 );
 
 	// stop looking when point too close 
 	if (flDist < MAX_FULL_LOOK_TARGET_DIST)
@@ -907,7 +953,7 @@ void CAI_BaseActor::UpdateBodyControl( )
 }
 
 
-static ConVar scene_clamplookat( "scene_clamplookat", "1", FCVAR_NONE, "Clamp head turns to a max of 20 degrees per think." );
+static ConVar scene_clamplookat( "scene_clamplookat", "1", FCVAR_NONE, "Clamp head turns to a MAX of 20 degrees per think." );
 
 
 void CAI_BaseActor::UpdateHeadControl( const Vector &vHeadTarget, float flHeadInfluence )
@@ -983,7 +1029,7 @@ void CAI_BaseActor::UpdateHeadControl( const Vector &vHeadTarget, float flHeadIn
 		angBias.Init( 0, 0, 0 );
 	}
 
-	matrix3x4_t targetXform;
+	matrix3x4a_t targetXform;
 	targetXform = forwardToWorld;
 	Vector vTargetDir = vHeadTarget - EyePosition();
 
@@ -993,12 +1039,12 @@ void CAI_BaseActor::UpdateHeadControl( const Vector &vHeadTarget, float flHeadIn
 		Vector vTargetLocal;
 		VectorNormalize( vTargetDir );
 		VectorIRotate( vTargetDir, forwardToWorld, vTargetLocal );
-		vTargetLocal.z *= clamp( vTargetLocal.x, 0.1f, 1.0f );
+		vTargetLocal.z *= clamp( vTargetLocal.x, 0.1, 1.0 );
 		VectorNormalize( vTargetLocal );
 		VectorRotate( vTargetLocal, forwardToWorld, vTargetDir );
 
 		// clamp local influence when target is behind the head
-		flHeadInfluence = flHeadInfluence * clamp( vTargetLocal.x * 2.0f + 2.0f, 0.0f, 1.0f );
+		flHeadInfluence = flHeadInfluence * clamp( vTargetLocal.x * 2.0 + 2.0, 0.0, 1.0 );
 	}
 
 	Studio_AlignIKMatrix( targetXform, vTargetDir );
@@ -1412,6 +1458,89 @@ void CAI_BaseActor::StartTaskRangeAttack1( const Task_t *pTask )
 	}
 }
 
+//-----------------------------------------------------------------------------
+#pragma region INFO_REMARKABLE polling
+// hardcode the default rr_remarkables_enabled value for now because I don't know what
+// the current state of unhackable config files is. Should be fixed.
+// (TODO)
+
+#define AI_REMARKABLES_ENABLED_DEFAULT "0"
+
+
+ConVar rr_remarkable_world_entities_replay_limit( "rr_remarkable_world_entities_replay_limit", "1", FCVAR_CHEAT, "TLK_REMARKs will be dispatched no more than this many times for any given info_remarkable" );
+ConVar rr_remarkables_enabled( "rr_remarkables_enabled", AI_REMARKABLES_ENABLED_DEFAULT, FCVAR_CHEAT, "If 1, polling for info_remarkables and issuances of TLK_REMARK is enabled." );
+ConVar rr_remarkable_max_distance( "rr_remarkable_max_distance", "1200", FCVAR_CHEAT, "AIs will not even consider remarkarbles that are more than this many units away." );
+#define AI_REMARK_SPEECH_INTERVAL 1
+/************************************************************************/
+/* TODO: Make perfier
+ *       Plumb through interrupt priority in speech
+/************************************************************************/
+bool CAI_BaseActor::UpdateRemarkableSpeech() RESTRICT
+{
+	// done in caller
+	/*
+	if ( !rr_remarkables_enabled.GetBool() ) 
+		return false;
+	*/
+		
+	VPROF( "CAI_BaseActor::UpdateRemarkableSpeech" );
+	if ( CanPollRemarkables() )
+	{
+		m_fNextRemarkPollTime = gpGlobals->curtime + AI_REMARK_SPEECH_INTERVAL;
+
+		// this is somewhat hokey 12am logic -- we're going to iterate over all 
+		// the remarkables and ask each of them if they're in sight. It's better
+		// to do this the other way (ie the entities would know when they're being
+		// looked at) but we don't seem to have a function for that yet. 
+		CInfoRemarkable::tRemarkableList *pList = CInfoRemarkable::GetListOfAllThatIsRemarkable();
+		const float maxDistSq = rr_remarkable_max_distance.GetFloat() * rr_remarkable_max_distance.GetFloat();
+		const int remarkLimit = rr_remarkable_world_entities_replay_limit.GetInt();
+		for ( int i = pList->Head(); pList->IsValidIndex(i); i = pList->Next(i) )
+		{
+			CInfoRemarkable * RESTRICT remarkable = pList->Element(i);
+			// do a quick distance test for a rough cull.
+			if ( GetAbsOrigin().DistToSqr(remarkable->GetAbsOrigin()) > maxDistSq )
+				continue;
+
+			if ( remarkable->m_iTimesRemarkedUpon < remarkLimit &&
+				 TestRemarkingUpon( remarkable ) )
+			{
+				// remark upon it
+				float distToRemarkable = (remarkable->GetAbsOrigin() - GetAbsOrigin()).Length();
+				const char *pModifiers = UTIL_VarArgs( "Subject:%s,Distance:%f", remarkable->GetRemarkContext(), distToRemarkable );
+
+				if ( CanSpeak() && Speak( "TLK_REMARK", pModifiers ) )
+				{
+					remarkable->m_iTimesRemarkedUpon += 1;
+					return true;
+				}
+			}
+		}
+
+	}
+
+	return false;
+}
+
+
+bool CAI_BaseActor::CanPollRemarkables()
+{
+	return m_bRemarkablePolling &&
+		   ( gpGlobals->curtime > m_fNextRemarkPollTime )	;
+}
+
+bool CAI_BaseActor::TestRemarkingUpon( CInfoRemarkable * RESTRICT pRemarkable )
+{
+	return	IsInFieldOfView( pRemarkable )					&&
+			IsLineOfSightClear( pRemarkable, IGNORE_ACTORS );
+}
+
+
+//-----------------------------------------------------------------------------
+#pragma endregion
+
+
+
 
 //-----------------------------------------------------------------------------
 // Purpose: Set direction that the NPC is looking
@@ -1495,7 +1624,7 @@ void CAI_BaseActor::MaintainLookTargets( float flInterval )
 	}
 
 	// don't bother with any of the rest if the player can't see you
-	if (!HasCondition( COND_IN_PVS ))
+	if ( CanSkipAnimation() )
 	{
 		return;
 	}
@@ -1539,7 +1668,7 @@ void CAI_BaseActor::MaintainLookTargets( float flInterval )
 		if (active[i]->IsThis( this ))
 		{
 			int iForward = LookupAttachment( "forward" );
-			if ( iForward > 0)
+			if (iForward)
 			{
 				Vector tmp1;
 				GetAttachment( iForward, tmp1, &dir, NULL, NULL );
@@ -1929,4 +2058,12 @@ bool CAI_BaseActor::CreateComponents()
 	return true;
 }
 
+void CAI_BaseActor::GatherConditions( void )
+{
+	BaseClass::GatherConditions();
+	if ( rr_remarkables_enabled.GetBool() )
+	{
+		UpdateRemarkableSpeech();
+	}
+}
 //-----------------------------------------------------------------------------

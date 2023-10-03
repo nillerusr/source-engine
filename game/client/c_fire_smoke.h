@@ -1,10 +1,10 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
 // $NoKeywords: $
 //
-//=============================================================================//
+//===========================================================================//
 #ifndef C_FIRE_SMOKE_H
 #define C_FIRE_SMOKE_H
 
@@ -13,6 +13,8 @@
 #include "glow_overlay.h"
 #include "view.h"
 #include "particle_litsmokeemitter.h"
+#include "tier1/utlobjectreference.h"
+
 
 class CFireOverlay;
 
@@ -21,7 +23,7 @@ class C_FireSprite : public C_Sprite
 	DECLARE_CLASS( C_FireSprite, C_Sprite );
 
 private:
-	virtual int DrawModel( int flags )
+	virtual int DrawModel( int flags, const RenderableInstance_t &instance )
 	{
 		if ( m_bFadeFromAbove )
 		{
@@ -45,7 +47,7 @@ private:
 			SetColor( iAlpha, iAlpha, iAlpha );
 		}
 
-		return BaseClass::DrawModel( flags );
+		return BaseClass::DrawModel( flags, instance );
 	}
 
 public:
@@ -57,7 +59,7 @@ class C_FireFromAboveSprite : public C_Sprite
 {
 	DECLARE_CLASS( C_FireFromAboveSprite, C_Sprite );
 
-	virtual int DrawModel( int flags )
+	virtual int DrawModel( int flags, const RenderableInstance_t &instance )
 	{
 		// The sprites become more visible the more you look down or up at them
 		Vector vToPos = GetLocalOrigin() - CurrentViewOrigin();
@@ -78,7 +80,7 @@ class C_FireFromAboveSprite : public C_Sprite
 
 		SetColor( iAlpha, iAlpha, iAlpha );
 
-		return BaseClass::DrawModel( flags );
+		return BaseClass::DrawModel( flags, instance );
 	}
 };
 
@@ -122,7 +124,6 @@ public:
 	~C_FireSmoke();
 
 	void	Start( void );
-	void	Simulate( void );
 
 	void	StartClientOnly( void );
 	void	RemoveClientOnly( void );
@@ -184,7 +185,7 @@ protected:
 	CFireOverlay		*m_pFireOverlay;
 
 	// New Particle Fire Effect
-	CNewParticleEffect *m_hEffect;
+	CUtlReference<CNewParticleEffect> m_hEffect;
 private:
 	C_FireSmoke( const C_FireSmoke & );
 };
@@ -269,34 +270,4 @@ public:
 	int			m_nGUID;
 };
 
-//
-// Entity flame, client-side implementation
-//
-
-#define	NUM_FLAMELETS	5
-
-class C_EntityFlame : public C_BaseEntity
-{
-public:
-	DECLARE_CLIENTCLASS();
-	DECLARE_CLASS( C_EntityFlame, C_BaseEntity );
-
-	C_EntityFlame( void );
-	~C_EntityFlame( void );
-
-	virtual void	Simulate( void );
-	virtual void	UpdateOnRemove( void );
-	virtual void	OnDataChanged( DataUpdateType_t updateType );
-	virtual void	ClientThink( void );
-
-	CNewParticleEffect *m_hEffect;
-	EHANDLE				m_hEntAttached;		// The entity that we are burning (attached to).
-	EHANDLE				m_hOldAttached;
-
-protected:
-
-	void	CreateEffect( void );
-	void	StopEffect( void );
-};
-
-#endif //C_FIRE_SMOKE_H
+#endif // C_FIRE_SMOKE_H

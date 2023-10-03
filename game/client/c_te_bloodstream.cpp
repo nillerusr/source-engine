@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -7,7 +7,7 @@
 //===========================================================================//
 #include "cbase.h"
 #include "c_te_particlesystem.h"
-#include "tier1/KeyValues.h"
+#include "tier1/keyvalues.h"
 #include "toolframework_client.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -114,7 +114,7 @@ void TE_BloodStream( IRecipientFilter& filter, float delay,
 	float		arc = 0.05;
 	int			count, count2;
 	float		num;
-	float		speedCopy = amount;
+	int			speedCopy = amount;
 	
 	Vector dir;
 	VectorCopy( *direction, dir );

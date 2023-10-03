@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright © 1996-2007, Valve Corporation, All rights reserved. =======
 //
 // Purpose: VGUI panel which can play back video, in-engine
 //
@@ -10,13 +10,9 @@
 #pragma once
 #endif
 
-#include <vgui_controls/Panel.h>
-#include <vgui_controls/EditablePanel.h>
-
-//#define QUICKTIME_VIDEO
-//#define BINK_VIDEO
-
-#include "video/ivideoservices.h"
+#include <vgui_controls/panel.h>
+#include <vgui_controls/editablepanel.h>
+#include "avi/ibik.h"
 
 
 class VideoPanel : public vgui::EditablePanel
@@ -24,9 +20,9 @@ class VideoPanel : public vgui::EditablePanel
 	DECLARE_CLASS_SIMPLE( VideoPanel, vgui::EditablePanel );
 public:
 
-	VideoPanel( unsigned int nXPos, unsigned int nYPos, unsigned int nHeight, unsigned int nWidth, bool allowAlternateMedia = true );
+	VideoPanel( unsigned int nXPos, unsigned int nYPos, unsigned int nHeight, unsigned int nWidth );
 
-	virtual ~VideoPanel( void );
+	~VideoPanel( void );
 
 	virtual void Activate( void );
 	virtual void Paint( void );
@@ -45,18 +41,19 @@ public:
 	}
 
 	bool BeginPlayback( const char *pFilename );
+	void StopPlayback( void );
 
 	void SetBlackBackground( bool bBlack ){ m_bBlackBackground = bBlack; }
+	void SetAllowInterrupt( bool bAllowInterrupt ) { m_bAllowInterruption = bAllowInterrupt; }
 
 protected:
 
-	virtual void OnTick( void ) { BaseClass::OnTick(); }
+	virtual void OnTick( void );
 	virtual void OnCommand( const char *pcCommand ) { BaseClass::OnCommand( pcCommand ); }
-	virtual void OnVideoOver(){}
+	virtual void OnVideoOver();
 
 protected:
-	IVideoMaterial *m_VideoMaterial;
-	
+	BIKMaterial_t	m_BIKHandle;
 	IMaterial		*m_pMaterial;
 	int				m_nPlaybackHeight;			// Calculated to address ratio changes
 	int				m_nPlaybackWidth;
@@ -65,8 +62,13 @@ protected:
 	float			m_flU;	// U,V ranges for video on its sheet
 	float			m_flV;
 
+	bool			m_bLooping;
+	bool			m_bStopAllSounds;
+	bool			m_bAllowInterruption;
 	bool			m_bBlackBackground;
-	bool			m_bAllowAlternateMedia;
+	int				m_nShutdownCount;
+
+	bool			m_bStarted;
 };
 
 

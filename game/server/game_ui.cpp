@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Entities that capture the player's UI and move it into game design
 //			as outputs.
@@ -202,7 +202,7 @@ void CGameUI::InputActivate( inputdata_t &inputdata )
 		// Otherwise try to use the activator
 		if ( inputdata.pActivator == NULL || inputdata.pActivator->IsPlayer() == false )
 		{
-			Warning( "%s InputActivate: invalid or missing !activator!\n", GetEntityName().ToCStr() );
+			Warning( "%s InputActivate (%s): invalid or missing !activator!\n", GetEntityName().ToCStr(), inputdata.value.String() );
 			return;
 		}
 

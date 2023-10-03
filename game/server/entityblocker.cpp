@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -66,11 +66,11 @@ void CC_Test_Entity_Blocker( void )
 
 	trace_t tr;
 	Vector vecOrigin = pPlayer->GetAbsOrigin() + (vecForward * 256);
-	UTIL_TraceHull( vecOrigin + Vector(0,0,256), vecOrigin - Vector(0,0,256), VEC_HULL_MIN_SCALED( pPlayer ), VEC_HULL_MAX_SCALED( pPlayer ), MASK_SOLID, pPlayer, COLLISION_GROUP_NONE, &tr );
+	UTIL_TraceHull( vecOrigin + Vector(0,0,256), vecOrigin - Vector(0,0,256), VEC_HULL_MIN, VEC_HULL_MAX, MASK_SOLID, pPlayer, COLLISION_GROUP_NONE, &tr );
 	if ( !tr.allsolid && !tr.startsolid )
 	{
-		CEntityBlocker::Create( tr.endpos, VEC_HULL_MIN_SCALED( pPlayer ), VEC_HULL_MAX_SCALED( pPlayer ), NULL, true );
-		NDebugOverlay::Box( tr.endpos, VEC_HULL_MIN_SCALED( pPlayer ), VEC_HULL_MAX_SCALED( pPlayer ), 0, 255, 0, 64, 1000.0 );
+		CEntityBlocker::Create( tr.endpos, VEC_HULL_MIN, VEC_HULL_MAX, NULL, true );
+		NDebugOverlay::Box( tr.endpos, VEC_HULL_MIN, VEC_HULL_MAX, 0, 255, 0, 64, 1000.0 );
 	}
 }
 static ConCommand test_entity_blocker("test_entity_blocker", CC_Test_Entity_Blocker, "Test command that drops an entity blocker out in front of the player.", FCVAR_CHEAT );

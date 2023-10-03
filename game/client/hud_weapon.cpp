@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -8,7 +8,7 @@
 #include "hud.h"
 #include "hudelement.h"
 #include "iclientmode.h"
-#include <vgui_controls/Controls.h>
+#include <vgui_controls/controls.h>
 #include <vgui/ISurface.h>
 #include <vgui_controls/Panel.h>
 #include "hud_crosshair.h"
@@ -40,7 +40,7 @@ DECLARE_HUDELEMENT( CHudWeapon );
 CHudWeapon::CHudWeapon( const char *pElementName ) :
   CHudElement( pElementName ), BaseClass( NULL, "HudWeapon" )
 {
-	vgui::Panel *pParent = g_pClientMode->GetViewport();
+	vgui::Panel *pParent = GetClientMode()->GetViewport();
 	SetParent( pParent );
 
 	m_pCrosshair = NULL;

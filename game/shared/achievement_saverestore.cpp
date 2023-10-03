@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -41,7 +41,7 @@ public:
 
 		// save global achievement mgr state to separate file if there have been any changes, so in case of a crash
 		// the global state is consistent with last save game
-		pAchievementMgr->SaveGlobalStateIfDirty( pSave->IsAsync() );
+		pAchievementMgr->SaveGlobalStateIfDirty();
 
 		pSave->StartBlock( "Achievements" );
 		int iTotalAchievements = pAchievementMgr->GetAchievementCount();
@@ -49,7 +49,8 @@ public:
 		// count how many achievements should be saved. 
 		for ( int i = 0; i < iTotalAchievements; i++ )
 		{
-			IAchievement *pAchievement = pAchievementMgr->GetAchievementByIndex( i );
+			// We only save games in SP games so the assumption of SINGLE_PLAYER_SLOT is valid
+			IAchievement *pAchievement = pAchievementMgr->GetAchievementByIndex( i, SINGLE_PLAYER_SLOT );
 			if ( pAchievement->ShouldSaveWithGame() )
 			{
 				nSaveCount++;
@@ -60,7 +61,8 @@ public:
 		// Write out each achievement
 		for ( int i = 0; i < iTotalAchievements; i++ )
 		{
-			IAchievement *pAchievement = pAchievementMgr->GetAchievementByIndex( i );
+			// We only save games in SP games so the assumption of SINGLE_PLAYER_SLOT is valid
+			IAchievement *pAchievement = pAchievementMgr->GetAchievementByIndex( i, SINGLE_PLAYER_SLOT );
 			if ( pAchievement->ShouldSaveWithGame() )
 			{				
 				CBaseAchievement *pBaseAchievement = dynamic_cast< CBaseAchievement * >( pAchievement );
@@ -118,7 +120,8 @@ public:
 				// read achievement ID
 				int iAchievementID = pRestore->ReadShort();
 				// find the corresponding achievement object
-				CBaseAchievement *pAchievement = pAchievementMgr->GetAchievementByID( iAchievementID );				
+				// We only save games in SP games so the assumption of SINGLE_PLAYER_SLOT is valid
+				CBaseAchievement *pAchievement = pAchievementMgr->GetAchievementByID( iAchievementID, SINGLE_PLAYER_SLOT );				
 				Assert( pAchievement );		// It's a bug if we don't understand this achievement
 				if ( pAchievement )
 				{

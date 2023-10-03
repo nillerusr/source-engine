@@ -1,14 +1,14 @@
 // FunctorUtils.h
 // Useful functors
-//========= Copyright Valve Corporation, All rights reserved. ============//
+// Author: Michael Booth, August 2005, Copyright 2005 Turtle Rock Studios, Inc.
 
 #ifndef _FUNCTOR_UTILS_H_
 #define _FUNCTOR_UTILS_H_
 
-#ifdef NEXT_BOT
+#ifdef NEXTBOTS
 #include "NextBotInterface.h"
 #include "NextBotManager.h"
-#endif // NEXT_BOT
+#endif
 
 //--------------------------------------------------------------------------------------------------------
 /**
@@ -323,14 +323,12 @@ inline bool ForEachActor( Functor &func )
 		if ( !player->IsConnected() )
 			continue;
 
-#ifdef NEXT_BOT
 		// skip bots - ForEachCombatCharacter will catch them
 		INextBot *bot = player->MyNextBotPointer();
 		if ( bot )
 		{
 			continue;
 		}
-#endif // NEXT_BOT
 
 		if ( func( player ) == false )
 		{
@@ -338,12 +336,12 @@ inline bool ForEachActor( Functor &func )
 		}
 	}
 
-#ifdef NEXT_BOT
 	// iterate all NextBots
+#ifdef NEXTBOTS
 	return TheNextBots().ForEachCombatCharacter( func );
 #else
 	return true;
-#endif // NEXT_BOT
+#endif
 }
 
 
@@ -372,6 +370,7 @@ public:
 template <>
 inline bool ForEachActor( IActorFunctor &func )
 {
+#ifdef NEXTBOTS
 	func.OnBeginIteration();
 
 	bool isComplete = true;
@@ -393,14 +392,12 @@ inline bool ForEachActor( IActorFunctor &func )
 		if ( !player->IsConnected() )
 			continue;
 
-#ifdef NEXT_BOT
 		// skip bots - ForEachCombatCharacter will catch them
 		INextBot *bot = dynamic_cast< INextBot * >( player );
 		if ( bot )
 		{
 			continue;
 		}
-#endif // NEXT_BOT
 
 		if ( func( player ) == false )
 		{
@@ -409,17 +406,19 @@ inline bool ForEachActor( IActorFunctor &func )
 		}
 	}
 
-#ifdef NEXT_BOT
 	if ( !isComplete )
 	{
 		// iterate all NextBots
+
 		isComplete = TheNextBots().ForEachCombatCharacter( func );
 	}
-#endif // NEXT_BOT
 
 	func.OnEndIteration( isComplete );
 
 	return isComplete;
+#else
+	return true;
+#endif
 }
 
 

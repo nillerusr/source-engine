@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Entity which alters the relationships between entities via entity I/O
 //
@@ -56,6 +56,8 @@ private:
 	void	DiscloseNPCLocation( CBaseCombatCharacter *pSubject, CBaseCombatCharacter *pTarget );
 
 	string_t	m_iszSubject;
+	string_t	m_iszSubjectClass;
+	string_t	m_iszTargetClass;
 	int			m_iDisposition;
 	int			m_iRank;
 	bool		m_fStartActive;
@@ -80,6 +82,8 @@ BEGIN_DATADESC( CAI_Relationship )
 	DEFINE_THINKFUNC( ApplyRelationshipThink ),
 	
 	DEFINE_KEYFIELD( m_iszSubject, FIELD_STRING, "subject" ),
+	DEFINE_KEYFIELD( m_iszSubjectClass, FIELD_STRING, "subjectclass" ),
+	DEFINE_KEYFIELD( m_iszTargetClass, FIELD_STRING, "targetclass" ),
 	DEFINE_KEYFIELD( m_iDisposition, FIELD_INTEGER, "disposition" ),
 	DEFINE_KEYFIELD( m_iRank, FIELD_INTEGER, "rank" ),
 	DEFINE_KEYFIELD( m_fStartActive, FIELD_BOOLEAN, "StartActive" ),
@@ -103,12 +107,12 @@ void CAI_Relationship::Spawn()
 {
 	m_bIsActive = false;
 
-	if (m_iszSubject == NULL_STRING)
+	if ( m_iszSubject == NULL_STRING && m_iszSubjectClass == NULL_STRING )
 	{
 		DevWarning("ai_relationship '%s' with no subject specified, removing.\n", GetDebugName());
 		UTIL_Remove(this);
 	}
-	else if (m_target == NULL_STRING)
+	else if ( m_target == NULL_STRING && m_iszTargetClass == NULL_STRING )
 	{
 		DevWarning("ai_relationship '%s' with no target specified, removing.\n", GetDebugName());
 		UTIL_Remove(this);
@@ -253,10 +257,16 @@ void CAI_Relationship::OnRestore()
 //---------------------------------------------------------
 bool CAI_Relationship::IsASubject( CBaseEntity *pEntity )
 {
-	if( pEntity->NameMatches( m_iszSubject ) )
-		return true;
+	if ( m_iszSubject != NULL_STRING )
+	{
+		if ( pEntity->NameMatches( m_iszSubject ) )
+			return true;
 
-	if( pEntity->ClassMatches( m_iszSubject ) )
+		if ( pEntity->ClassMatches( m_iszSubject ) )
+			return true;
+	}	
+
+	if ( m_iszSubjectClass != NULL_STRING && pEntity->ClassMatches( m_iszSubjectClass ) )
 		return true;
 
 	return false;
@@ -266,10 +276,16 @@ bool CAI_Relationship::IsASubject( CBaseEntity *pEntity )
 //---------------------------------------------------------
 bool CAI_Relationship::IsATarget( CBaseEntity *pEntity )
 {
-	if( pEntity->NameMatches( m_target ) )
-		return true;
+	if ( m_target != NULL_STRING )
+	{
+		if ( pEntity->NameMatches( m_target ) )
+			return true;
 
-	if( pEntity->ClassMatches( m_target ) )
+		if ( pEntity->ClassMatches( m_target ) )
+			return true;
+	}
+
+	if ( m_iszTargetClass != NULL_STRING && pEntity->ClassMatches( m_iszTargetClass ) )
 		return true;
 
 	return false;
@@ -420,12 +436,18 @@ void CAI_Relationship::ChangeRelationships( int disposition, int iReverting, CBa
 	// If either list is still empty, we have a problem.
 	if( subjectList.Count() == 0 )
 	{
-		DevMsg( 2, "ai_relationship '%s' finds no subject(s) called: %s\n", GetDebugName(), STRING( m_iszSubject ) );
+		DevMsg( 2, "ai_relationship '%s' finds no subject(s) called: %s or with class %s\n",
+				GetDebugName(),
+				m_iszSubject == NULL_STRING ? "NULL" : STRING( m_iszSubject ),
+				m_iszSubjectClass == NULL_STRING ? "NULL" : STRING( m_iszSubjectClass ) );
 		return;
 	}
 	else if ( targetList.Count() == 0 )
 	{
-		DevMsg( 2, "ai_relationship '%s' finds no target(s) called: %s\n", GetDebugName(), STRING( m_target ) );
+		DevMsg( 2, "ai_relationship '%s' finds no target(s) called: %s or with class %s\n",
+				GetDebugName(),
+				m_target == NULL_STRING ? "NULL" : STRING( m_target ),
+				m_iszTargetClass == NULL_STRING ? "NULL" : STRING( m_iszTargetClass ) );
 		return;
 	}
 

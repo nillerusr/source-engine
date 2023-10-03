@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -9,7 +9,7 @@
 #ifndef PARTICLE_UTIL_H
 #define PARTICLE_UTIL_H
 
-#include "materialsystem/imesh.h"
+#include "materialsystem/IMesh.h"
 #include "particledraw.h"
 #include "particlemgr.h"
 #include "cdll_client_int.h"
@@ -29,7 +29,7 @@ inline Vector VecLerp(const Vector &minVal, const Vector &maxVal, float t)
 // Get a random floating point number between the two specified numbers.
 inline float FRand(float minVal, float maxVal)
 {
-	return minVal + ((float)rand() / VALVE_RAND_MAX) * (maxVal - minVal);
+	return minVal + ((float)rand() / RAND_MAX) * (maxVal - minVal);
 }
 
 // Apply velocity and acceleration to position and acceleration to velocity.

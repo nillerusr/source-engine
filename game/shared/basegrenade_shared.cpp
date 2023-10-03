@@ -1,9 +1,9 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
 // $NoKeywords: $
-//=============================================================================//
+//===========================================================================//
 #include "cbase.h"
 #include "decals.h"
 #include "basegrenade_shared.h"
@@ -14,16 +14,16 @@
 
 #include "soundent.h"
 #include "entitylist.h"
-#include "gamestats.h"
+#include "GameStats.h"
 
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-extern short	g_sModelIndexFireball;		// (in combatweapon.cpp) holds the index for the fireball 
-extern short	g_sModelIndexWExplosion;	// (in combatweapon.cpp) holds the index for the underwater explosion
-extern short	g_sModelIndexSmoke;			// (in combatweapon.cpp) holds the index for the smoke cloud
+extern int	g_sModelIndexFireball;		// (in combatweapon.cpp) holds the index for the fireball 
+extern int	g_sModelIndexWExplosion;	// (in combatweapon.cpp) holds the index for the underwater explosion
+extern int	g_sModelIndexSmoke;			// (in combatweapon.cpp) holds the index for the smoke cloud
 extern ConVar    sk_plr_dmg_grenade;
 
 #if !defined( CLIENT_DLL )
@@ -127,13 +127,9 @@ void CBaseGrenade::Explode( trace_t *pTrace, int bitsDamageType )
 	}
 
 	Vector vecAbsOrigin = GetAbsOrigin();
-	int contents = UTIL_PointContents ( vecAbsOrigin );
+	int contents = UTIL_PointContents ( vecAbsOrigin, MASK_ALL );
 
-#if defined( TF_DLL )
-	// Since this code only runs on the server, make sure it shows the tempents it creates.
-	// This solves a problem with remote detonating the pipebombs (client wasn't seeing the explosion effect)
-	CDisablePredictionFiltering disabler;
-#endif
+
 
 	if ( pTrace->fraction != 1.0 )
 	{
@@ -172,13 +168,12 @@ void CBaseGrenade::Explode( trace_t *pTrace, int bitsDamageType )
 	// Use the thrower's position as the reported position
 	Vector vecReported = m_hThrower ? m_hThrower->GetAbsOrigin() : vec3_origin;
 	
+	EmitSound( "BaseGrenade.Explode" );
 	CTakeDamageInfo info( this, m_hThrower, GetBlastForce(), GetAbsOrigin(), m_flDamage, bitsDamageType, 0, &vecReported );
 
 	RadiusDamage( info, GetAbsOrigin(), m_DmgRadius, CLASS_NONE, NULL );
 
 	UTIL_DecalTrace( pTrace, "Scorch" );
-
-	EmitSound( "BaseGrenade.Explode" );
 
 	SetThink( &CBaseGrenade::SUB_Remove );
 	SetTouch( NULL );
@@ -214,7 +209,7 @@ void CBaseGrenade::Explode( trace_t *pTrace, int bitsDamageType )
 void CBaseGrenade::Smoke( void )
 {
 	Vector vecAbsOrigin = GetAbsOrigin();
-	if ( UTIL_PointContents ( vecAbsOrigin ) & MASK_WATER )
+	if ( UTIL_PointContents ( vecAbsOrigin, MASK_WATER ) & MASK_WATER )
 	{
 		UTIL_Bubbles( vecAbsOrigin - Vector( 64, 64, 64 ), vecAbsOrigin + Vector( 64, 64, 64 ), 100 );
 	}
@@ -412,9 +407,9 @@ void CBaseGrenade::BounceTouch( CBaseEntity *pOther )
 		BounceSound();
 	}
 	m_flPlaybackRate = GetAbsVelocity().Length() / 200.0;
-	if (m_flPlaybackRate > 1.0)
+	if (GetPlaybackRate() > 1.0)
 		m_flPlaybackRate = 1;
-	else if (m_flPlaybackRate < 0.5)
+	else if (GetPlaybackRate() < 0.5)
 		m_flPlaybackRate = 0;
 
 }

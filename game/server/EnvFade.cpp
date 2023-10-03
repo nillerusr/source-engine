@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Implements visual effects entities: sprites, beams, bubbles, etc.
 //
@@ -7,6 +7,10 @@
 
 #include "cbase.h"
 #include "shake.h"
+#ifdef INFESTED_DLL
+#include "asw_marine.h"
+#include "asw_player.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -95,10 +99,22 @@ void CEnvFade::InputFade( inputdata_t &inputdata )
 
 	if ( m_spawnflags & SF_FADE_ONLYONE )
 	{
-		if ( inputdata.pActivator && inputdata.pActivator->IsNetClient() )
+#ifdef INFESTED_DLL
+		if ( inputdata.pActivator->Classify() == CLASS_ASW_MARINE )
+		{
+			CASW_Marine *pMarine = static_cast<CASW_Marine*>( inputdata.pActivator );
+			CASW_Player *pPlayer = pMarine->GetCommander();
+			if ( pPlayer && pMarine->IsInhabited() )
+			{
+				UTIL_ScreenFade( pPlayer, m_clrRender, Duration(), HoldTime(), fadeFlags );
+			}
+		}
+#else
+		if ( inputdata.pActivator->IsNetClient() )
 		{
 			UTIL_ScreenFade( inputdata.pActivator, m_clrRender, Duration(), HoldTime(), fadeFlags );
 		}
+#endif
 	}
 	else
 	{

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -20,11 +20,11 @@ void ShellEjectCallback( const CEffectData &data )
 	IClientRenderable *pRenderable = data.GetRenderable();
 	if ( pRenderable )
 	{
-		tempents->EjectBrass( data.m_vOrigin, data.m_vAngles, pRenderable->GetRenderAngles(), 0 );
+		DevWarning( "Unhandled ShellEject effect\n" );
 	}
 }
 
-DECLARE_CLIENT_EFFECT( "ShellEject", ShellEjectCallback );
+DECLARE_CLIENT_EFFECT( ShellEject, ShellEjectCallback );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -35,11 +35,11 @@ void RifleShellEjectCallback( const CEffectData &data )
 	IClientRenderable *pRenderable = data.GetRenderable();
 	if ( pRenderable )
 	{
-		tempents->EjectBrass( data.m_vOrigin, data.m_vAngles, pRenderable->GetRenderAngles(), 1 );
+		DevWarning( "Unhandled RifleShellEject effect\n" );
 	}
 }
 
-DECLARE_CLIENT_EFFECT( "RifleShellEject", RifleShellEjectCallback );
+DECLARE_CLIENT_EFFECT( RifleShellEject, RifleShellEjectCallback );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -50,10 +50,10 @@ void ShotgunShellEjectCallback( const CEffectData &data )
 	IClientRenderable *pRenderable = data.GetRenderable();
 	if ( pRenderable )
 	{
-		tempents->EjectBrass( data.m_vOrigin, data.m_vAngles, pRenderable->GetRenderAngles(), 2 );
+		DevWarning( "Unhandled ShotgunShellEject effect\n" );
 	}
 }
 
-DECLARE_CLIENT_EFFECT( "ShotgunShellEject", ShotgunShellEjectCallback );
+DECLARE_CLIENT_EFFECT( ShotgunShellEject, ShotgunShellEjectCallback );
 
 

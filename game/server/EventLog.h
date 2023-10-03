@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -30,7 +30,15 @@ public: // IGameEventListener Interface
 public: // CBaseGameSystem overrides
 
 	virtual bool Init();
-	virtual void Shutdown();
+	//virtual void Shutdown() {}
+
+	virtual void FormatPlayer( CBaseEntity *ent, char *str, int len ) const;
+	const char *FormatPlayer( CBaseEntity *ent ) const;
+
+	enum
+	{
+		PLAYER_LOGINFO_SIZE = 256,
+	};
 
 protected:
 
@@ -41,6 +49,6 @@ protected:
 	virtual bool PrintOtherEvent( IGameEvent * event );
 };
 
-extern IGameSystem* GameLogSystem();
+extern CEventLog *GameLogSystem();
 
 #endif // EVENTLOG_H

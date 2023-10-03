@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -306,6 +306,12 @@ public:
 
 		// A string passed to the game code for interpretation
 		GENERIC,
+
+		// Camera control
+		CAMERA,
+
+		// Script function call
+		SCRIPT,
 
 		// THIS MUST BE LAST!!!
 		NUM_TYPES,

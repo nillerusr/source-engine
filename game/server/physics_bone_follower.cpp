@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -443,16 +443,16 @@ void CBoneFollower::Touch( CBaseEntity *pOther )
 //-----------------------------------------------------------------------------
 // Purpose: Pass on trace attack calls to the entity we're following
 //-----------------------------------------------------------------------------
-void CBoneFollower::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr, CDmgAccumulator *pAccumulator )
+void CBoneFollower::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr )
 {
 	CBaseEntity *pOwner = GetOwnerEntity();
 	if ( pOwner )
 	{
-		pOwner->DispatchTraceAttack( info, vecDir, ptr, pAccumulator );
+		pOwner->DispatchTraceAttack( info, vecDir, ptr );
 		return;
 	}
 
-	BaseClass::TraceAttack( info, vecDir, ptr, pAccumulator );
+	BaseClass::TraceAttack( info, vecDir, ptr );
 }
 
 LINK_ENTITY_TO_CLASS( phys_bone_follower, CBoneFollower );
@@ -462,7 +462,7 @@ LINK_ENTITY_TO_CLASS( phys_bone_follower, CBoneFollower );
 // create a manager and a list of followers directly from a ragdoll
 void CreateBoneFollowersFromRagdoll( CBaseAnimating *pEntity, CBoneFollowerManager *pManager, vcollide_t *pCollide )
 {
-	IVPhysicsKeyParser *pParse = physcollision->VPhysicsKeyParserCreate( pCollide->pKeyValues );
+	IVPhysicsKeyParser *pParse = physcollision->VPhysicsKeyParserCreate( pCollide );
 	while ( !pParse->Finished() )
 	{
 		const char *pBlock = pParse->GetCurrentBlockName();

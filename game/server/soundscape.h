@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -22,10 +22,10 @@ struct ss_update_t
 	bool		bInRange;
 };
 
-class CEnvSoundscape : public CPointEntity
+class CEnvSoundscape : public CServerOnlyEntity
 {
 public:
-	DECLARE_CLASS( CEnvSoundscape, CPointEntity );
+	DECLARE_CLASS( CEnvSoundscape, CServerOnlyEntity );
 	DECLARE_DATADESC();
 
 	CEnvSoundscape();
@@ -36,7 +36,6 @@ public:
 	void Precache( void );
 	void UpdateForPlayer( ss_update_t &update );
 	void WriteAudioParamsTo( audioparams_t &audio );
-	virtual int UpdateTransmitState();
 	bool InRangeOfPlayer( CBasePlayer *pPlayer );
 	void DrawDebugGeometryOverlays( void );
 

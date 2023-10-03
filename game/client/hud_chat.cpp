@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -12,9 +12,11 @@
 #include "hud_basechat.h"
 #include <vgui/ILocalize.h>
 
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
 
 
-DECLARE_HUDELEMENT( CHudChat );
+DECLARE_HUDELEMENT_FLAGS( CHudChat, HUDELEMENT_SS_FULLSCREEN_ONLY );
 
 DECLARE_HUD_MESSAGE( CHudChat, SayText );
 DECLARE_HUD_MESSAGE( CHudChat, SayText2 );
@@ -44,7 +46,7 @@ void CHudChat::Init( void )
 void CHudChat::MsgFunc_SayText2( bf_read &msg )
 {
 	int client = msg.ReadByte();
-	bool bWantsToChat = msg.ReadByte();
+	bool bWantsToChat = msg.ReadByte() ? true : false;
 
 	wchar_t szBuf[6][256];
 	char untranslated_msg_text[256];
@@ -148,7 +150,7 @@ void CHudChat::MsgFunc_TextMsg( bf_read &msg )
 	{
 	case HUD_PRINTCENTER:
 		Q_snprintf( psz, sizeof( szBuf[5] ), msg_text, sstr1, sstr2, sstr3, sstr4 );
-		internalCenterPrint->Print( ConvertCRtoNL( psz ) );
+		GetCenterPrint()->Print( ConvertCRtoNL( psz ) );
 		break;
 
 	case HUD_PRINTNOTIFY:

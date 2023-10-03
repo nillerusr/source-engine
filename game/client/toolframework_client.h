@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =====//
 //
 // Purpose: 
 //
@@ -44,18 +44,6 @@ bool ToolsEnabled();
 
 
 //-----------------------------------------------------------------------------
-// View manipulation
-//-----------------------------------------------------------------------------
-void ToolFramework_AdjustEngineViewport( int& x, int& y, int& width, int& height );
-bool ToolFramework_SetupEngineView( Vector &origin, QAngle &angles, float &fov );
-bool ToolFramework_SetupAudioState( AudioState_t &audioState );
-
-//-----------------------------------------------------------------------------
-// material recording - primarily for proxy materials
-//-----------------------------------------------------------------------------
-void ToolFramework_RecordMaterialParams( IMaterial *pMaterial );
-
-//-----------------------------------------------------------------------------
 // Recorded temp entity structures
 //-----------------------------------------------------------------------------
 enum TERecordingType_t
@@ -84,6 +72,13 @@ enum TERecordingType_t
 	TE_RECORDING_TYPE_COUNT,
 };
 
+
+//-----------------------------------------------------------------------------
+// View manipulation
+//-----------------------------------------------------------------------------
+void ToolFramework_AdjustEngineViewport( int& x, int& y, int& width, int& height );
+bool ToolFramework_SetupEngineView( Vector &origin, QAngle &angles, float &fov );
+bool ToolFramework_SetupAudioState( AudioState_t &audioState );
 
 //-----------------------------------------------------------------------------
 // Helper class to indicate ownership of effects

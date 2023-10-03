@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright � 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -24,7 +24,7 @@ using namespace vgui;
 //-----------------------------------------------------------------------------
 CHudNumericDisplay::CHudNumericDisplay(vgui::Panel *parent, const char *name) : BaseClass(parent, name)
 {
-	vgui::Panel *pParent = g_pClientMode->GetViewport();
+	vgui::Panel *pParent = GetClientMode()->GetViewport();
 	SetParent( pParent );
 
 	m_iValue = 0;
@@ -116,18 +116,10 @@ void CHudNumericDisplay::PaintNumbers(HFont font, int xpos, int ypos, int value)
 	{
 		int iMinutes = value / 60;
 		int iSeconds = value - iMinutes * 60;
-#ifdef PORTAL
-		// portal uses a normal font for numbers so we need the seperate to be a renderable ':' char
-		if ( iSeconds < 10 )
-			V_snwprintf( unicode, ARRAYSIZE(unicode), L"%d:0%d", iMinutes, iSeconds );
-		else
-			V_snwprintf( unicode, ARRAYSIZE(unicode), L"%d:%d", iMinutes, iSeconds );		
-#else
 		if ( iSeconds < 10 )
 			V_snwprintf( unicode, ARRAYSIZE(unicode), L"%d`0%d", iMinutes, iSeconds );
 		else
 			V_snwprintf( unicode, ARRAYSIZE(unicode), L"%d`%d", iMinutes, iSeconds );
-#endif
 	}
 
 	// adjust the position to take into account 3 characters

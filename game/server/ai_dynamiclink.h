@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:		A link that can be turned on and off.  Unlike normal links
 //				dyanimc links must be entities so they and receive messages.
@@ -53,10 +53,12 @@ public:
 	DynamicLinkState_t			m_nLinkState;			// 
 	string_t					m_strAllowUse;			// Only this entity name or classname may use the link
 	bool						m_bInvertAllow;			// Instead of only allowing the m_strAllowUse entity, exclude only it
-	
+	bool						m_bPreciseMovement;		// Movement must be precise near here
+
 	bool						m_bFixedUpIds;
 	bool						m_bNotSaved;
 	int							m_nLinkType;
+	int							m_nPriority;
 
 	void						SetLinkState( void );
 	bool						IsLinkValid( void );
@@ -96,6 +98,7 @@ public:
 	CUtlVector< CHandle<CAI_DynamicLink> > m_ControlledLinks;
 	DynamicLinkState_t			m_nLinkState;
 	string_t					m_strAllowUse;		// Only this entity name or classname may use the link
+	int							m_nPriority;
 	bool						m_bInvertAllow;		// Instead of only allowing the m_strAllowUse entity, exclude only it
 	bool						m_bUseAirLinkRadius;
 

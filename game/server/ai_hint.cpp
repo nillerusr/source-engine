@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Hint node utilities and functions
 //
@@ -33,8 +33,11 @@ CHintCriteria::CHintCriteria( void )
 	m_iFirstHintType = HINT_NONE;
 	m_iLastHintType = HINT_NONE;
 	m_strGroup		= NULL_STRING;
+	m_strGenericType = NULL_STRING;
 	m_iFlags		= 0;
 	m_HintTypes.Purge();
+	m_pfnFilter = NULL;
+	m_pFilterContext = NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -96,7 +99,7 @@ bool CHintCriteria::MatchesSingleHintType() const
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CHintCriteria::MatchesHintType( int hintType ) const
+bool CHintCriteria::MatchesHintType( int hintType, string_t iszGenericType ) const
 {
 	int c = m_HintTypes.Count();
  	for ( int i = 0; i < c; ++i )
@@ -119,6 +122,11 @@ bool CHintCriteria::MatchesHintType( int hintType ) const
 			// This search is for a range of hint types.
 			if( hintType < GetFirstHintType() || hintType > GetLastHintType() )
 				return false;
+
+			if ( hintType == HINT_GENERIC && iszGenericType != m_strGenericType )
+			{
+				return false;
+			}
 		}
 
 		return true;
@@ -349,7 +357,7 @@ CAI_Hint *CAI_HintManager::FindHintRandom( CAI_BaseNPC *pNPC, const Vector &posi
 	if ( FindAllHints( pNPC, position, hintCriteria, &hintList ) > 0 )
 	{
 		// Pick one randomly
-		return ( CAI_HintManager::AddFoundHint( hintList[ random->RandomInt( 0, hintList.Size() - 1 ) ]  ) );
+		return ( CAI_HintManager::AddFoundHint( hintList[ random->RandomInt( 0, hintList.Count() - 1 ) ]  ) );
 	}
 
 	// start at the top of the list for the next search
@@ -729,7 +737,7 @@ CAI_Hint *CAI_HintManager::GetFirstHint( AIHintIter_t *pIter )
 { 
 	if ( !gm_AllHints.Count() )
 	{
-		*pIter = (AIHintIter_t)(intp)gm_AllHints.InvalidIndex();
+		*pIter = (AIHintIter_t)gm_AllHints.InvalidIndex();
 		return NULL;
 	}
 	*pIter = (AIHintIter_t)0; 
@@ -741,12 +749,12 @@ CAI_Hint *CAI_HintManager::GetFirstHint( AIHintIter_t *pIter )
 //-----------------------------------------------------------------------------
 CAI_Hint *CAI_HintManager::GetNextHint(  AIHintIter_t *pIter )
 {
-	if ( (intp)*pIter != gm_AllHints.InvalidIndex() )
+	if ( (int)*pIter != gm_AllHints.InvalidIndex() )
 	{
-		intp i = ( (intp)*pIter ) + 1;
+		int i = ( (int)*pIter ) + 1;
 		if ( gm_AllHints.Count() <= i )
 		{
-			*pIter = (AIHintIter_t)(intp)gm_AllHints.InvalidIndex();
+			*pIter = (AIHintIter_t)gm_AllHints.InvalidIndex();
 			return NULL;
 		}
 		*pIter = (AIHintIter_t)i; 
@@ -1192,6 +1200,26 @@ bool CAI_Hint::HintMatchesCriteria( CAI_BaseNPC *pNPC, const CHintCriteria &hint
 		return false;
 	}
 
+	// Test against generic filter
+	if ( !hintCriteria.PassesFilter( this ) )
+	{
+		REPORTFAILURE( "Failed filter test" );
+		return false;
+	}
+
+	int nRadius = GetRadius();
+	if ( nRadius != 0 )
+	{
+		// Calculate our distance
+		float distance = (GetAbsOrigin() - position).LengthSqr();
+
+		if ( distance > nRadius * nRadius )
+		{
+			REPORTFAILURE( "NPC is not within the node's radius." );
+			return false;
+		}
+	}
+
 	if ( hintCriteria.HasFlag(bits_HINT_NPC_IN_NODE_FOV) )
 	{
 		if ( pNPC == NULL )
@@ -1288,7 +1316,7 @@ bool CAI_Hint::HintMatchesCriteria( CAI_BaseNPC *pNPC, const CHintCriteria &hint
 					trace_t tr;
 					Vector vHintPos;
 					GetPosition(pNPC,&vHintPos);
-					AI_TraceLine ( pNPC->EyePosition(), vHintPos + pNPC->GetViewOffset(), MASK_NPCSOLID_BRUSHONLY, pNPC, COLLISION_GROUP_NONE, &tr );
+					AI_TraceLine ( pNPC->EyePosition(), vHintPos + pNPC->GetViewOffset(), pNPC->GetAITraceMask_BrushOnly(), pNPC, COLLISION_GROUP_NONE, &tr );
 					if ( tr.fraction != 1.0f )
 					{
 						REPORTFAILURE( "Node isn't visible to NPC." );
@@ -1311,10 +1339,11 @@ bool CAI_Hint::HintMatchesCriteria( CAI_BaseNPC *pNPC, const CHintCriteria &hint
 		{
 			trace_t tr;
 			// Can my bounding box fit there?
-			AI_TraceHull ( GetAbsOrigin(), GetAbsOrigin(), pNPC->WorldAlignMins(), pNPC->WorldAlignMaxs(), 
+			Vector vStep( 0, 0, pNPC->StepHeight() );
+			AI_TraceHull ( GetAbsOrigin() + vStep, GetAbsOrigin(), pNPC->WorldAlignMins(), pNPC->WorldAlignMaxs() - vStep, 
 				MASK_SOLID, pNPC, COLLISION_GROUP_NONE, &tr );
 
-			if ( tr.fraction != 1.0 )
+			if ( tr.fraction < 0.95 )
 			{
 				REPORTFAILURE( "Node isn't clear." );
 				return false;
@@ -1357,6 +1386,22 @@ bool CAI_Hint::HintMatchesCriteria( CAI_BaseNPC *pNPC, const CHintCriteria &hint
 			if( !pPlayer->FVisible(vecDest) )
 			{
 				REPORTFAILURE( "Do not have LOS to player" );
+				return false;
+			}
+		}
+	}
+
+	if ( hintCriteria.HasFlag( bits_HINT_HAS_NO_EYEPOSITION_LOS_TO_ENEMY ) )
+	{
+		CBaseEntity *pEnemy = pNPC->GetEnemy();
+
+		if( pEnemy != NULL )
+		{
+			Vector vecDest = GetAbsOrigin(); 
+			vecDest += pNPC->GetNodeViewOffset();
+			if( pEnemy->FVisible(vecDest) )
+			{
+				REPORTFAILURE( "Has LOS to enemy" );
 				return false;
 			}
 		}
@@ -1535,9 +1580,6 @@ void CAI_Hint::NPCStoppedUsing( CAI_BaseNPC *pNPC )
 
 CON_COMMAND(ai_dump_hints, "")
 {
-	if ( !UTIL_IsCommandIssuedByServerAdmin() )
-		return;
-
 	CAI_HintManager::ValidateHints();
 	CAI_HintManager::DumpHints();
 }
@@ -1576,11 +1618,12 @@ hinttypedescs_t g_pszHintDescriptions[] =
 
 	{	HINT_TACTICAL_COVER_MED, "Tactical: Cover Medium"	},
 	{	HINT_TACTICAL_COVER_LOW, "Tactical: Cover Low"	},
-	{	HINT_TACTICAL_SPAWN, "Tactical: Spawn"	},
+	//{	HINT_NOT_USED_TACTICAL_SPAWN, "Tactical: Spawn"	},
 	{	HINT_TACTICAL_PINCH, "Tactical: Pinch"	},
 	//{	HINT_NOT_USED_TACTICAL_GUARD, "Obsolete / Unused"	},
 	{	HINT_TACTICAL_ENEMY_DISADVANTAGED, "Tactical: Enemy Disadvantage"	},
 	//{	HINT_NOT_USED_HEALTH_KIT, "Obsolete / Unused"	},
+	{	HINT_TACTICAL_HIGH_GROUND, "Tactical: High Ground"	},
 
 	//{	HINT_NOT_USED_URBAN_STREETCORNER, "Obsolete / Unused"	},
 	//{	HINT_NOT_USED_URBAN_STREETLAMP, "Obsolete / Unused"	},
@@ -1615,12 +1658,9 @@ hinttypedescs_t g_pszHintDescriptions[] =
 
 	{	HINT_PLAYER_ALLY_MOVE_AWAY_DEST, "Ally MoveAway Point"	},
 
-	{	HINT_HL1_WORLD_MACHINERY, "HL1: World: Machinery"	},
-	{	HINT_HL1_WORLD_BLINKING_LIGHT, "HL1: World: Blinking Light"	},
-	{	HINT_HL1_WORLD_HUMAN_BLOOD, "HL1: World: Human Blood"	},
-	{	HINT_HL1_WORLD_ALIEN_BLOOD, "HL1: World: Alien Blood"	},
-
 	{	HINT_CSTRIKE_HOSTAGE_ESCAPE, "CS Port: Hostage Escape"	},
+
+
 };
 
 //-----------------------------------------------------------------------------
@@ -1676,6 +1716,7 @@ void CC_ai_drop_hint( const CCommand &args )
 	nodeData.fIgnoreFacing = HIF_DEFAULT;
 	nodeData.minState = NPC_STATE_IDLE;
 	nodeData.maxState = NPC_STATE_COMBAT;
+	nodeData.nRadius = 0;
 	CAI_Hint *pHint = CAI_HintManager::CreateHint( &nodeData, NULL );
 	if ( pHint )
 	{

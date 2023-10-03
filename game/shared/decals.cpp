@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -10,6 +10,7 @@
 #include "utldict.h"
 #include "KeyValues.h"
 #include "filesystem.h"
+#include <ctype.h>
 
 #ifdef CLIENT_DLL
 #include "iefx.h"
@@ -38,7 +39,6 @@ public:
 
 	// Public interface
 	virtual int			GetDecalIndexForName( char const *decalname );
-	virtual const char *GetDecalNameForIndex( int nIndex );
 	virtual char const *TranslateDecalForGameMaterial( char const *decalName, unsigned char gamematerial );
 
 private:
@@ -62,7 +62,9 @@ private:
 
 	struct DecalEntry
 	{
-		DecalEntry() = default;
+		DecalEntry()
+		{
+		}
 
 		DecalEntry( const DecalEntry& src )
 		{
@@ -142,19 +144,6 @@ int CDecalEmitterSystem::GetDecalIndexForName( char const *decalname )
 	}
 
 	return m_AllDecals[ slot ].precache_index;
-}
-
-const char *CDecalEmitterSystem::GetDecalNameForIndex( int nIndex )
-{
-	for ( int nDecal = 0; nDecal < m_AllDecals.Count(); ++nDecal )
-	{
-		if ( m_AllDecals[ nDecal ].precache_index == nIndex )
-		{
-			return m_DecalFileNames.String( m_AllDecals[ nDecal ].name );
-		}
-	}
-
-	return "";
 }
 
 //-----------------------------------------------------------------------------
@@ -263,7 +252,21 @@ void CDecalEmitterSystem::LoadDecalsFromScript( char const *filename )
 				int idx = m_Decals.Find( sub->GetString() );
 				if ( idx != m_Decals.InvalidIndex() )
 				{
-					m_GameMaterialTranslation.Insert( sub->GetName(), idx );
+					const char *value = sub->GetName();
+					int gameMaterial;
+					if ( !isdigit( value[0]) )
+					{
+						gameMaterial = toupper( value[0] );
+					}
+					else
+					{
+						gameMaterial = atoi( value );
+					}
+
+					char gm[ 2 ];
+					gm[0] = gameMaterial;
+					gm[1] = 0;
+					m_GameMaterialTranslation.Insert( gm, idx );
 				}
 				else
 				{

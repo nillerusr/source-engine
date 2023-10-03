@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -78,6 +78,27 @@ bool CAI_LocalNavigator::HaveObstacles()
 	return m_pPlaneSolver->HaveObstacles();
 }
 
+Obstacle_t CAI_LocalNavigator::AddGlobalObstacle( const Vector &pos, float radius, AI_MoveSuggType_t type )
+{
+	return CAI_PlaneSolver::AddGlobalObstacle( pos, radius, NULL, type );
+}
+
+void CAI_LocalNavigator::RemoveGlobalObstacle( Obstacle_t hObstacle )
+{
+	CAI_PlaneSolver::RemoveGlobalObstacle( hObstacle );
+}
+
+void CAI_LocalNavigator::RemoveGlobalObstacles( void )
+{
+	CAI_PlaneSolver::RemoveGlobalObstacles();
+}
+
+
+bool CAI_LocalNavigator::IsSegmentBlockedByGlobalObstacles( const Vector &vecStart, const Vector &vecEnd )
+{
+	return CAI_PlaneSolver::IsSegmentBlockedByGlobalObstacles( vecStart, vecEnd );
+}
+
 //-------------------------------------
 
 bool CAI_LocalNavigator::MoveCalcDirect( AILocalMoveGoal_t *pMoveGoal, bool bOnlyCurThink, float *pDistClear, AIMoveResult_t *pResult )
@@ -96,7 +117,7 @@ bool CAI_LocalNavigator::MoveCalcDirect( AILocalMoveGoal_t *pMoveGoal, bool bOnl
 
 		if ( pMoveGoal->flags & ( AILMG_TARGET_IS_TRANSITION | AILMG_TARGET_IS_GOAL ) )
 		{
-			// clamp checkDist to be no farther than max distance to goal
+			// clamp checkDist to be no farther than MAX distance to goal
 			checkDist = MIN( checkDist, pMoveGoal->maxDist );
 		}
 
@@ -133,7 +154,7 @@ bool CAI_LocalNavigator::MoveCalcDirect( AILocalMoveGoal_t *pMoveGoal, bool bOnl
 		{
 			testPos = GetLocalOrigin() + pMoveGoal->dir * moveThisInterval;
 			bTraceClear = GetMoveProbe()->MoveLimit( pMoveGoal->navType, GetLocalOrigin(), testPos, 
-													 MASK_NPCSOLID, pMoveGoal->pMoveTarget, 
+													 GetOuter()->GetAITraceMask(), pMoveGoal->pMoveTarget, 
 													 100.0, 
 													 ( pMoveGoal->navType == NAV_GROUND ) ? AIMLF_2D : AIMLF_DEFAULT, 
 													 &pMoveGoal->directTrace );
@@ -175,7 +196,7 @@ bool CAI_LocalNavigator::MoveCalcDirect( AILocalMoveGoal_t *pMoveGoal, bool bOnl
 					checkStepPct = 100.0;
 				
 				bTraceClear = GetMoveProbe()->MoveLimit( pMoveGoal->navType, GetLocalOrigin(), testPos, 
-														 MASK_NPCSOLID, pMoveGoal->pMoveTarget, 
+														 GetOuter()->GetAITraceMask(), pMoveGoal->pMoveTarget, 
 														 checkStepPct, 
 														 ( pMoveGoal->navType == NAV_GROUND ) ? AIMLF_2D : AIMLF_DEFAULT, 
 														 &pMoveGoal->directTrace );

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -113,18 +113,19 @@ entities. Each one is useful under different conditions.
 #include "materialsystem/imaterialsystem.h"
 #include "mathlib/vector.h"
 #include "mathlib/vmatrix.h"
-#include "mathlib/mathlib.h"
+#include "mathlib/Mathlib.h"
 #include "iclientrenderable.h"
 #include "clientleafsystem.h"
 #include "tier0/fasttimer.h"
 #include "utllinkedlist.h"
-#include "utldict.h"
+#include "UtlDict.h"
 #ifdef WIN32
-#include <typeinfo>
+#include <typeinfo.h>
 #else
 #include <typeinfo>
 #endif
 #include "tier1/utlintrusivelist.h"
+#include "tier1/utlobjectreference.h"
 #include "tier1/utlstring.h"
 
 
@@ -519,12 +520,9 @@ public:
 	virtual const matrix3x4_t &		RenderableToWorldTransform();
 	virtual void					GetRenderBounds( Vector& mins, Vector& maxs );
 	virtual bool					ShouldDraw( void );
-	virtual bool					IsTransparent( void );
-	virtual int						DrawModel( int flags );
-
+	virtual int						DrawModel( int flags, const RenderableInstance_t &instance );
 
 private:
-
 	enum
 	{
 		FLAGS_REMOVE =				(1<<0),	// Set in SetRemoveFlag
@@ -581,7 +579,11 @@ private:
 	// Materials this effect is using.
 	enum { EFFECT_MATERIAL_HASH_SIZE = 8 };
 	CEffectMaterial *m_EffectMaterialHash[EFFECT_MATERIAL_HASH_SIZE];
-	
+
+#ifdef INFESTED_PARTICLES
+	// We'll remove this when we move Infested to using the new particle system
+	public:
+#endif
 	// For faster iteration.
 	CUtlLinkedList<CEffectMaterial*, unsigned short> m_Materials;
 
@@ -606,10 +608,39 @@ enum
 };
 
 
+class CParticleCollection;
+
+class CNonDrawingParticleSystem
+{
+public:
+	CNonDrawingParticleSystem *m_pNext;
+	CNonDrawingParticleSystem *m_pPrev;
+	CParticleCollection *m_pSystem;
+
+	FORCEINLINE CParticleCollection *operator()( void ) const
+	{
+		return m_pSystem;
+	}
+
+	FORCEINLINE CParticleCollection *Get( void ) const
+	{
+		return m_pSystem;
+	}
+
+	~CNonDrawingParticleSystem( void );
+};
+
+
+
+
+class CClientTools;
+
 class CParticleMgr
 {
 	friend class CParticleEffectBinding;
 	friend class CParticleCollection;
+	friend class CNonDrawingParticleSystem;
+	friend class CClientTools;
 
 public:
 
@@ -672,6 +703,8 @@ public:
 	void GetDirectionalLightInfo( CParticleLightInfo &info ) const;
 	void SetDirectionalLightInfo( const CParticleLightInfo &info );
 
+	void SpewInfo( bool bDetail );
+
 	// add a class that gets notified of entity events
 	void AddEffectListener( IClientParticleListener *pListener );
 	void RemoveEffectListener( IClientParticleListener *pListener );
@@ -682,19 +715,18 @@ public:
 	// Remove all new effects
 	void RemoveAllNewEffects();
 
+	CNewParticleEffect *FirstNewEffect();
+	CNewParticleEffect *NextNewEffect( CNewParticleEffect *pEffect );
+
 	// Should particle effects be rendered?
 	void RenderParticleSystems( bool bEnable );
 	bool ShouldRenderParticleSystems() const;
 
-	// Quick profiling (counts only, not clock cycles).
-	bool		m_bStatsRunning;
-	int			m_nStatsFramesSinceLastAlert;
+	void RemoveOldParticleEffects( float flTime );   // Removes all particles created more than flTime in the past immediately
+	int GetNumParticles() const { return m_nCurrentParticlesAllocated; }
 
-	void StatsAccumulateActiveParticleSystems();
-	void StatsReset();
-	void StatsSpewResults();
-	void StatsNewParticleEffectDrawn ( CNewParticleEffect *pParticles );
-	void StatsOldParticleEffectDrawn ( CParticleEffectBinding *pParticles );
+
+	CNonDrawingParticleSystem *CreateNonDrawingEffect( const char *pEffectName );
 
 private:
 	struct RetireInfo_t
@@ -708,6 +740,8 @@ private:
 	void UpdateAllEffects( float flTimeDelta );
 
 	void UpdateNewEffects( float flTimeDelta );				// update new particle effects
+
+	void SpewActiveParticleSystems( );
 
 	CParticleSubTextureGroup* FindOrAddSubTextureGroup( IMaterial *pPageMaterial );
 
@@ -739,6 +773,8 @@ private:
 
 	// all the active effects using the new particle interface
 	CUtlIntrusiveDList< CNewParticleEffect > m_NewEffects;
+	CUtlIntrusiveDList< CNonDrawingParticleSystem > m_NonDrawingParticleSystems;
+
 
 	
 	CUtlVector< IClientParticleListener *> m_effectListeners;

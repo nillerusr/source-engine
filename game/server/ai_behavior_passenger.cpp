@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: Behavior for NPCs riding in cars (with boys)
 //
@@ -16,6 +16,10 @@
 #include "ai_node.h"
 #include "ai_moveprobe.h"
 #include "env_debughistory.h"
+
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
 
 // Custom activities
 int ACT_PASSENGER_IDLE;
@@ -463,7 +467,7 @@ bool CAI_PassengerBehavior::FindGroundAtPosition( const Vector &in, float flUpDe
 	CTraceFilterVehicleTransition ignoreFilter( m_hVehicle, GetOuter(), COLLISION_GROUP_NONE );
 
 	trace_t tr;
-	UTIL_TraceHull( startPos, endPos, hullMin, hullMax, MASK_NPCSOLID, &ignoreFilter, &tr );
+	UTIL_TraceHull( startPos, endPos, hullMin, hullMax, GetOuter()->GetAITraceMask(), &ignoreFilter, &tr );
 
 	// Must not have ended up in solid space
 	if ( tr.allsolid )
@@ -612,7 +616,7 @@ bool CAI_PassengerBehavior::IsValidTransitionPoint( const Vector &vecStartPos, c
 
 	trace_t tr;
 	CTraceFilterVehicleTransition skipFilter( GetOuter(), m_hVehicle, COLLISION_GROUP_NONE );
-	UTIL_TraceHull( vecStartPos, vecEndPos, vecHullMins, vecHullMaxs, MASK_NPCSOLID, &skipFilter, &tr );
+	UTIL_TraceHull( vecStartPos, vecEndPos, vecHullMins, vecHullMaxs, GetOuter()->GetAITraceMask(), &skipFilter, &tr );
 
 	// If we're blocked, we can't get out there
 	if ( tr.fraction < 1.0f || tr.allsolid )
@@ -1494,6 +1498,8 @@ void CAI_PassengerBehavior::CacheBlendTargets( void )
 {
 	// Get the keyvalues for this sequence
 	KeyValues *seqValues = GetOuter()->GetSequenceKeyValues( m_nTransitionSequence );
+	KeyValues::AutoDelete autodelete_key( seqValues );
+
 	if ( seqValues == NULL )
 	{
 		Assert( 0 );

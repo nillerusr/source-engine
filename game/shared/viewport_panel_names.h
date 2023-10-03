@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -34,5 +34,9 @@
 
 
 #define PANEL_COMMENTARY_MODELVIEWER	"commentary_modelviewer"
+
+#define PANEL_SURVEY					"surveypanel"
+
+
 
 #endif // VIEWPORT_PANEL_NAMES_H

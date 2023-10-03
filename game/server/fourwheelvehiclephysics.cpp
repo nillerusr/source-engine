@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: A moving vehicle that is used as a battering ram
 //
@@ -339,6 +339,15 @@ void CFourWheelVehiclePhysics::CalcWheelData( vehicleparams_t &vehicle )
 		vehicle.axles[1].raytraceCenterOffset = center;
 		vehicle.axles[1].raytraceOffset = right - center;
 	}
+}
+
+
+//-----------------------------------------------------------------------------
+// Precaches the effect
+//-----------------------------------------------------------------------------
+void CFourWheelVehiclePhysics::Precache()
+{
+	PrecacheEffect( "WheelDust" );
 }
 
 
@@ -1385,7 +1394,7 @@ void CFourWheelVehiclePhysics::UpdateDriverControls( CUserCmd *cmd, float flFram
 		m_bLastThrottle = false;
 	}
 
-	float flSpeedPercentage = clamp( m_nSpeed / m_flMaxSpeed, 0.f, 1.f );
+	float flSpeedPercentage = clamp( m_nSpeed / m_flMaxSpeed, 0, 1 );
 	vbs_sound_update_t params;
 	params.Defaults();
 	params.bReverse = (m_controls.throttle < 0);

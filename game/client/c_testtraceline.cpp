@@ -1,12 +1,12 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
 // $NoKeywords: $
-//=============================================================================//
+//===========================================================================//
 
 #include "cbase.h"
-#include "materialsystem/imesh.h"
+#include "materialsystem/IMesh.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -25,7 +25,7 @@ public:
 
 // IClientEntity overrides.
 public:
-	virtual int			DrawModel( int flags );
+	virtual int			DrawModel( int flags, const RenderableInstance_t &instance );
 	virtual bool		ShouldDraw() { return true; }
 
 private:
@@ -37,7 +37,7 @@ private:
 IMPLEMENT_CLIENTCLASS(C_TestTraceline, DT_TestTraceline, CTestTraceline);
 
 BEGIN_RECV_TABLE_NOBASE(C_TestTraceline, DT_TestTraceline)
-	RecvPropInt(RECVINFO(m_clrRender)),
+	RecvPropInt(RECVINFO(m_clrRender), 0, RecvProxy_Int32ToColor32 ),
 	RecvPropVector( RECVINFO_NAME( m_vecNetworkOrigin, m_vecOrigin ) ),
 	RecvPropFloat( RECVINFO_NAME( m_angNetworkAngles[0], m_angRotation[0] ) ),
 	RecvPropFloat( RECVINFO_NAME( m_angNetworkAngles[1], m_angRotation[1] ) ),
@@ -52,7 +52,7 @@ END_RECV_TABLE()
 
 C_TestTraceline::C_TestTraceline()
 {
-	m_pWireframe = materials->FindMaterial("shadertest/wireframevertexcolor", TEXTURE_GROUP_OTHER);
+	m_pWireframe = materials->FindMaterial("debug/debugwireframevertexcolor", TEXTURE_GROUP_OTHER);
 }
 
 C_TestTraceline::~C_TestTraceline()
@@ -138,7 +138,7 @@ void C_TestTraceline::DrawCube( Vector& center, unsigned char* pColor )
 	}
 }
 
-int C_TestTraceline::DrawModel( int flags )
+int C_TestTraceline::DrawModel( int flags, const RenderableInstance_t &instance )
 {
 	trace_t tr;
 	Vector forward, right, up, endpos, hitpos;

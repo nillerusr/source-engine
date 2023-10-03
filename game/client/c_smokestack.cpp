@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Implements a particle system steam jet.
 //
@@ -179,7 +179,8 @@ C_SmokeStack::C_SmokeStack()
 
 	// Lighting is (base color) + (ambient / dist^2) + bump(directional / dist^2)
 	// By default, we use bottom-up lighting for the directional.
-	SetRenderColor( 0, 0, 0, 255 );
+	SetRenderColor( 0, 0, 0 );
+	SetRenderAlpha( 255 );
 
 	m_AmbientLight.m_vPos.Init(0,0,-100);
 	m_AmbientLight.m_vColor.Init( 40, 40, 40 );
@@ -217,8 +218,6 @@ void C_SmokeStack::OnDataChanged(DataUpdateType_t updateType)
 	m_InvLifetime = m_Speed / m_JetLength;
 }
 
-
-static ConVar mat_reduceparticles( "mat_reduceparticles", "0" );
 
 //-----------------------------------------------------------------------------
 // Purpose: Starts the effect
@@ -262,13 +261,11 @@ void C_SmokeStack::Start(CParticleMgr *pParticleMgr, IPrototypeArgAccess *pArgs)
 		m_MaterialHandle[iCount] = m_ParticleEffect.FindOrAddMaterial( szNames );
 		iCount++;
 	}
-
+		
 	m_iMaxFrames = iCount-1;
-
-	m_ParticleSpawn.Init( mat_reduceparticles.GetBool() ? m_Rate / 4 : m_Rate ); // Obey mat_reduceparticles in episodic
-#else
-	m_ParticleSpawn.Init( m_Rate );
 #endif
+
+	m_ParticleSpawn.Init(m_Rate);
 
 	m_InvLifetime = m_Speed / m_JetLength;
 
@@ -366,7 +363,7 @@ void C_SmokeStack::Update(float fTimeDelta)
 
 	// Setup the twist matrix.
 	float flTwist = (m_flTwist * (M_PI_F * 2.f) / 360.0f) * Helper_GetFrameTime();
-	if( ( m_bTwist = !!flTwist ) )
+	if( m_bTwist = !!flTwist )
 	{
 		m_TwistMat[0][0] =  cos(flTwist);
 		m_TwistMat[0][1] =  sin(flTwist);
@@ -386,10 +383,10 @@ void C_SmokeStack::StartRender( VMatrix &effectMatrix )
 
 void C_SmokeStack::QueueLightParametersInRenderer()
 {
-	m_Renderer.SetBaseColor( Vector( m_clrRender->r / 255.0f, m_clrRender->g / 255.0f, m_clrRender->b / 255.0f ) );
+	m_Renderer.SetBaseColor( Vector( GetRenderColorR() / 255.0f, GetRenderColorG() / 255.0f, GetRenderColorB() / 255.0f ) );
 	m_Renderer.SetAmbientLight( m_AmbientLight );
 	m_Renderer.SetDirectionalLight( m_DirLight );
-	m_flAlphaScale = (float)m_clrRender->a;
+	m_flAlphaScale = (float)GetRenderAlpha();
 } 
 
 
@@ -429,7 +426,7 @@ void C_SmokeStack::SimulateParticles( CParticleSimulateIterator *pIterator )
 	bool bSortNow = true; // Change this to false if we see sorting issues.
 	bool bQuickTest = false;
 
-	bool bDrawn = m_ParticleEffect.WasDrawnPrevFrame();
+	bool bDrawn = m_ParticleEffect.WasDrawnPrevFrame() ? true : false;
 
 	if ( bDrawn == true && m_bInView == false )
 	{

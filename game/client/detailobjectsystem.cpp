@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: Draws grasses and other small objects  
 //
@@ -6,29 +6,23 @@
 // $NoKeywords: $
 //===========================================================================//
 #include "cbase.h"
-#include "detailobjectsystem.h"
-#include "gamebspfile.h"
-#include "tier1/utlbuffer.h"
+#include <algorithm>
+#include "DetailObjectSystem.h"
+#include "GameBspFile.h"
+#include "UtlBuffer.h"
 #include "tier1/utlmap.h"
 #include "view.h"
-#include "clientmode.h"
-#include "iviewrender.h"
-#include "bsptreedata.h"
+#include "ClientMode.h"
+#include "IViewRender.h"
+#include "BSPTreeData.h"
 #include "tier0/vprof.h"
 #include "engine/ivmodelinfo.h"
-#include "materialsystem/imesh.h"
+#include "materialsystem/IMesh.h"
 #include "model_types.h"
 #include "env_detail_controller.h"
 #include "tier0/icommandline.h"
+#include "tier1/callqueue.h"
 #include "c_world.h"
-
-#include "tier0/valve_minmax_off.h"
-#include <algorithm>
-#include "tier0/valve_minmax_on.h"
-
-#if defined(DOD_DLL) || defined(CSTRIKE_DLL)
-#define USE_DETAIL_SHAPES
-#endif
 
 #ifdef USE_DETAIL_SHAPES
 #include "engine/ivdebugoverlay.h"
@@ -48,14 +42,38 @@
 struct model_t;
 
 
-ConVar cl_detaildist( "cl_detaildist", "1200", 0, "Distance at which detail props are no longer visible" );
-ConVar cl_detailfade( "cl_detailfade", "400", 0, "Distance across which detail props fade in" );
 #if defined( USE_DETAIL_SHAPES ) 
 ConVar cl_detail_max_sway( "cl_detail_max_sway", "0", FCVAR_ARCHIVE, "Amplitude of the detail prop sway" );
 ConVar cl_detail_avoid_radius( "cl_detail_avoid_radius", "0", FCVAR_ARCHIVE, "radius around detail sprite to avoid players" );
 ConVar cl_detail_avoid_force( "cl_detail_avoid_force", "0", FCVAR_ARCHIVE, "force with which to avoid players ( in units, percentage of the width of the detail sprite )" );
 ConVar cl_detail_avoid_recover_speed( "cl_detail_avoid_recover_speed", "0", FCVAR_ARCHIVE, "how fast to recover position after avoiding players" );
 #endif
+
+ConVar r_FlashlightDetailProps( "r_FlashlightDetailProps", "1", 0, "Enable a flashlight drawing pass on detail props. 0 = off, 1 = single pass, 2 = multipass (multipass is PC ONLY)" );
+ConVar r_ThreadedDetailProps( "r_threadeddetailprops", "1", 0, "enable threading of detail prop drawing" );
+
+enum DetailPropFlashlightMode_t
+{
+	DPFM_NONE,
+	DPFM_SINGLEPASS,
+	DPFM_MULTIPASS,
+};
+
+inline DetailPropFlashlightMode_t DetailPropFlashlightMode( void )
+{
+	switch( r_FlashlightDetailProps.GetInt() )
+	{
+	case 1:
+		return DPFM_SINGLEPASS;
+#ifndef _X360
+	case 2:
+		return DPFM_MULTIPASS;
+#endif
+	case 0:
+	default:
+		return DPFM_NONE;
+	}
+}
 
 // Per detail instance information
 struct DetailModelAdvInfo_t
@@ -93,10 +111,15 @@ class CDetailObjectSystemPerLeafData
 	}
 };
 
+static void DrawMeshCallback( void *pMesh )
+{
+	((IMesh *)pMesh)->Draw();
+}
+
 //-----------------------------------------------------------------------------
 // Detail models
 //-----------------------------------------------------------------------------
-struct SptrintInfo_t
+struct SpriteInfo_t
 {
 	unsigned short	m_nSpriteIndex;
 	float16			m_flScale;
@@ -122,12 +145,10 @@ public:
 					 int orientation, float flScale, unsigned char type,
 					 unsigned char shapeAngle, unsigned char shapeSize, unsigned char swayAmount );
 
-	void SetAlpha( unsigned char alpha ) { m_Alpha = alpha; }
-
+	bool IsTranslucent() const { return m_bIsTranslucent; }
 
 	// IClientUnknown overrides.
 public:
-
 	virtual IClientUnknown*		GetIClientUnknown()		{ return this; }
 	virtual ICollideable*		GetCollideable()		{ return 0; }		// Static props DO implement this.
 	virtual IClientNetworkable*	GetClientNetworkable()	{ return 0; }
@@ -135,8 +156,8 @@ public:
 	virtual IClientEntity*		GetIClientEntity()		{ return 0; }
 	virtual C_BaseEntity*		GetBaseEntity()			{ return 0; }
 	virtual IClientThinkable*	GetClientThinkable()	{ return 0; }
-
-
+	virtual IClientModelRenderable*	GetClientModelRenderable()	{ return 0; }
+	virtual IClientAlphaProperty*	GetClientAlphaProperty()	{ return 0; }
 	// IClientRenderable overrides.
 public:
 
@@ -145,14 +166,12 @@ public:
 	virtual const QAngle&		GetRenderAngles( );
 	virtual const matrix3x4_t &	RenderableToWorldTransform();
 	virtual bool				ShouldDraw();
-	virtual bool				IsTwoPass( void ) { return false; }
+	virtual uint8				OverrideAlphaModulation( uint8 nAlpha ) { return nAlpha; }
+	virtual uint8				OverrideShadowAlphaModulation( uint8 nAlpha ) { return nAlpha; }
 	virtual void				OnThreadedDrawSetup() {}
-	virtual bool				IsTransparent( void );
 	virtual const model_t*		GetModel( ) const;
-	virtual int					DrawModel( int flags );
-	virtual void				ComputeFxBlend( );
-	virtual int					GetFxBlend( );
-	virtual bool				SetupBones( matrix3x4_t *pBoneToWorldOut, int nMaxBones, int boneMask, float currentTime );
+	virtual int					DrawModel( int flags, const RenderableInstance_t &instance );
+	virtual bool				SetupBones( matrix3x4a_t *pBoneToWorldOut, int nMaxBones, int boneMask, float currentTime );
 	virtual void				SetupWeights( const matrix3x4_t *pBoneToWorld, int nFlexWeightCount, float *pFlexWeights, float *pFlexDelayedWeights );
 	virtual bool				UsesFlexDelayedWeights() { return false; }
 	virtual void				DoAnimationEvents( void );
@@ -162,9 +181,7 @@ public:
 	virtual bool				ShouldReceiveProjectedTextures( int flags );
 	virtual bool				GetShadowCastDistance( float *pDist, ShadowType_t shadowType ) const			{ return false; }
 	virtual bool				GetShadowCastDirection( Vector *pDirection, ShadowType_t shadowType ) const	{ return false; }
-	virtual bool				UsesPowerOfTwoFrameBufferTexture();
-	virtual bool				UsesFullFrameBufferTexture();
-	virtual bool				IgnoresZBuffer( void ) const { return false; }
+	virtual int				    GetRenderFlags( void );
 	virtual bool				LODTest() { return true; }
 
 	virtual ClientShadowHandle_t	GetShadowHandle() const;
@@ -184,6 +201,7 @@ public:
 	virtual float *				GetRenderClipPlane() { return NULL; }
 	virtual int					GetSkin() { return 0; }
 	virtual void				RecordToolMessage() {}
+	virtual bool				ShouldDrawForSplitScreenUser( int nSlot ) { return true; }
 
 	void GetColorModulation( float* color );
 
@@ -191,18 +209,18 @@ public:
 	void ComputeAngles( void );
 
 	// Calls the correct rendering func
-	void DrawSprite( CMeshBuilder &meshBuilder );
+	void DrawSprite( CMeshBuilder &meshBuilder, uint8 nAlpha );
 
 	// Returns the number of quads the sprite will draw
 	int QuadsToDraw() const;
 
 	// Draw functions for the different types of sprite
-	void DrawTypeSprite( CMeshBuilder &meshBuilder );
+	void DrawTypeSprite( CMeshBuilder &meshBuilder, uint8 nAlpha );
 
 
 #ifdef USE_DETAIL_SHAPES
-	void DrawTypeShapeCross( CMeshBuilder &meshBuilder );
-	void DrawTypeShapeTri( CMeshBuilder &meshBuilder );
+	void DrawTypeShapeCross( CMeshBuilder &meshBuilder, uint8 nAlpha );
+	void DrawTypeShapeTri( CMeshBuilder &meshBuilder, uint8 nAlpha );
 
 	// check for players nearby and angle away from them
 	void UpdatePlayerAvoid( void );
@@ -216,7 +234,6 @@ public:
 #endif
 
 	int GetType() const { return m_Type; }
-	unsigned char GetAlpha() const { return m_Alpha; }
 
 	bool IsDetailModelTranslucent();
 
@@ -242,8 +259,7 @@ protected:
 	unsigned char	m_Type:2;
 	unsigned char	m_bHasLightStyle:1;
 	unsigned char	m_bFlipped:1;
-
-	unsigned char	m_Alpha;
+	unsigned char	m_bIsTranslucent:1;
 
 	static CUtlMap<CDetailModel *, LightStyleInfo_t> gm_LightStylesMap;
 
@@ -251,7 +267,7 @@ protected:
 	union
 	{
 		model_t* m_pModel;
-		SptrintInfo_t m_SpriteInfo;
+		SpriteInfo_t m_SpriteInfo;
 	};
 #pragma warning( default : 4201 )
 
@@ -310,6 +326,7 @@ struct FastSpriteQuadBuildoutBufferX4_t
 	uint8 m_RGBColor[4][4];
 	fltx4 m_Alpha;
 	DetailPropSpriteDict_t *m_pSpriteDefs[4];
+	Vector4D m_Normal;
 };
 
 struct FastSpriteQuadBuildoutBufferNonSIMDView_t
@@ -323,8 +340,11 @@ struct FastSpriteQuadBuildoutBufferNonSIMDView_t
 	uint8 m_RGBColor[4][4];
 	float m_Alpha[4];
 	DetailPropSpriteDict_t *m_pSpriteDefs[4];
+	Vector4D m_Normal;
 };
 
+
+FourVectors vgarbage;
 
 class CFastDetailLeafSpriteList : public CClientLeafSubSystemData
 {
@@ -343,6 +363,17 @@ class CFastDetailLeafSpriteList : public CClientLeafSubSystemData
 		m_nNumPendingSprites = 0;
 		m_nStartSpriteIndex = 0;
 	}
+	void TouchData( void )
+	{
+		vgarbage.x = Four_Zeros;
+		vgarbage.y = Four_Zeros;
+		vgarbage.z = Four_Zeros;
+		for( int i =0; i < m_nNumSIMDSprites; i++ )
+		{
+			vgarbage += m_pSprites[i].m_Pos;
+		}
+
+	}
 
 };
 
@@ -352,7 +383,7 @@ class CFastDetailLeafSpriteList : public CClientLeafSubSystemData
 //-----------------------------------------------------------------------------
 // Responsible for managing detail objects
 //-----------------------------------------------------------------------------
-class CDetailObjectSystem : public IDetailObjectSystem, public ISpatialLeafEnumerator
+class CDetailObjectSystem : public IDetailObjectSystem
 {
 public:
 	char const *Name() { return "DetailObjectSystem"; }
@@ -366,8 +397,8 @@ public:
 	// Init, shutdown
 	bool Init()
 	{
-		m_flDefaultFadeStart = cl_detailfade.GetFloat();
-		m_flDefaultFadeEnd = cl_detaildist.GetFloat();
+		m_flDetailFadeStart = 0.0f;
+		m_flDetailFadeEnd = 0.0f;
 		return true;
 	}
 	void PostInit() {}
@@ -384,31 +415,32 @@ public:
 	void SafeRemoveIfDesired() {}
 
     // Gets a particular detail object
-	IClientRenderable* GetDetailModel( int idx );
-
-	// Prepares detail for rendering 
-	void BuildDetailObjectRenderLists( const Vector &vViewOrigin );
+	virtual IClientRenderable* GetDetailModel( int idx );
+	virtual int GetDetailModelCount() const;
+	virtual void BuildRenderingData( DetailRenderableList_t &list, const SetupRenderInfo_t &info, float flDetailDist, const DistanceFadeInfo_t &fadeInfo );
+	virtual float ComputeDetailFadeInfo( DistanceFadeInfo_t *pInfo );
 
 	// Renders all opaque detail objects in a particular set of leaves
 	void RenderOpaqueDetailObjects( int nLeafCount, LeafIndex_t *pLeafList );
 
 	// Renders all translucent detail objects in a particular set of leaves
-	void RenderTranslucentDetailObjects( const Vector &viewOrigin, const Vector &viewForward, const Vector &viewRight, const Vector &viewUp, int nLeafCount, LeafIndex_t *pLeafList );
+	void RenderTranslucentDetailObjects( const DistanceFadeInfo_t &info, const Vector &viewOrigin, const Vector &viewForward, const Vector &viewRight, const Vector &viewUp, int nLeafCount, LeafIndex_t *pLeafList );
 
 	// Renders all translucent detail objects in a particular leaf up to a particular point
-	void RenderTranslucentDetailObjectsInLeaf( const Vector &viewOrigin, const Vector &viewForward, const Vector &viewRight, const Vector &viewUp, int nLeaf, const Vector *pVecClosestPoint );
-	void RenderFastTranslucentDetailObjectsInLeaf( const Vector &viewOrigin, const Vector &viewForward, const Vector &viewRight, const Vector &viewUp, int nLeaf, const Vector *pVecClosestPoint );
-
-
+	void RenderTranslucentDetailObjectsInLeaf( const DistanceFadeInfo_t &info, const Vector &viewOrigin, const Vector &viewForward, const Vector &viewRight, const Vector &viewUp, int nLeaf, const Vector *pVecClosestPoint );
+	void RenderFastTranslucentDetailObjectsInLeaf( CFastDetailLeafSpriteList *pData, const DistanceFadeInfo_t &info, const Vector &viewOrigin, const Vector &viewForward, const Vector &viewRight, const Vector &viewUp, int nLeaf, const Vector &vecClosestPoint, bool bFirstLeaf );
 
 	// Call this before rendering translucent detail objects
 	void BeginTranslucentDetailRendering( );
 
-	// Method of ISpatialLeafEnumerator
-	bool EnumerateLeaf( int leaf, intp context );
-
 	DetailPropLightstylesLump_t& DetailLighting( int i ) { return m_DetailLighting[i]; }
 	DetailPropSpriteDict_t& DetailSpriteDict( int i ) { return m_DetailSpriteDict[i]; }
+
+	void RenderFastSprites( const DistanceFadeInfo_t &info, const Vector &viewOrigin, const Vector &viewForward, const Vector &viewRight, const Vector &viewUp, int nLeafCount, LeafIndex_t const * pLeafList );
+
+	uint8 ComputeDistanceFade( float *pDistSqr, const DistanceFadeInfo_t &info, const Vector &vecViewOrigin, const Vector &vecRenderOrigin ) const;
+
+	void UpdateDetailFadeValues();
 
 private:
 	struct DetailModelDict_t
@@ -424,17 +456,18 @@ private:
 
 	struct SortInfo_t
 	{
-		int m_nIndex;
+		int m_nIndex : 24;
+		int m_nAlpha : 8;
 		float m_flDistance;
 	};
 
 	int BuildOutSortedSprites( CFastDetailLeafSpriteList *pData,
-							   Vector const &viewOrigin,
-							   Vector const &viewForward,
-							   Vector const &viewRight,
-							   Vector const &viewUp );
+								const DistanceFadeInfo_t &info,
+								Vector const &viewOrigin,
+								Vector const &viewForward,
+								Vector const &viewRight,
+								Vector const &viewUp );
 
-	void RenderFastSprites( const Vector &viewOrigin, const Vector &viewForward, const Vector &viewRight, const Vector &viewUp, int nLeafCount, LeafIndex_t const * pLeafList );
 
 	void UnserializeFastSprite( FastSpriteX4_t *pSpritex4, int nSubField, DetailObjectLump_t const &lump, bool bFlipped, Vector const &posOffset );
 
@@ -461,10 +494,10 @@ private:
 
 	// Sorts sprites in back-to-front order
 	static bool SortLessFunc( const SortInfo_t &left, const SortInfo_t &right );
-	int SortSpritesBackToFront( int nLeaf, const Vector &viewOrigin, const Vector &viewForward, SortInfo_t *pSortInfo );
+	int SortSpritesBackToFront( int nLeaf, const Vector &viewOrigin, const DistanceFadeInfo_t &fadeInfo, SortInfo_t *pSortInfo );
 
 	// For fast detail object insertion
-	IterationRetval_t EnumElement( int userId, intp context );
+	IterationRetval_t EnumElement( int userId, int context );
 
 	CUtlVector<DetailModelDict_t>			m_DetailObjectDict;
 	CUtlVector<CDetailModel>				m_DetailObjects;
@@ -486,15 +519,9 @@ private:
 	SortInfo_t *m_pFastSortInfo;
 	FastSpriteQuadBuildoutBufferX4_t *m_pBuildoutBuffer;
 
-	float m_flDefaultFadeStart;
-	float m_flDefaultFadeEnd;
-
-
-	// pre calcs for the current render frame
-	float m_flCurMaxSqDist;
-	float m_flCurFadeSqDist;
-	float m_flCurFalloffFactor;
-
+	bool m_bFirstLeaf;
+	float m_flDetailFadeStart;
+	float m_flDetailFadeEnd;
 };
 
 
@@ -502,12 +529,16 @@ private:
 // System for dealing with detail objects
 //-----------------------------------------------------------------------------
 static CDetailObjectSystem s_DetailObjectSystem;
+IDetailObjectSystem *g_pDetailObjectSystem = &s_DetailObjectSystem;
 
-IDetailObjectSystem* DetailObjectSystem()
+
+static void DetailFadeCallback( IConVar *var, const char *pOldValue, float flOldValue )
 {
-	return &s_DetailObjectSystem;
+	s_DetailObjectSystem.UpdateDetailFadeValues();
 }
-
+								   
+ConVar cl_detaildist( "cl_detaildist", "1200", 0, "Distance at which detail props are no longer visible", DetailFadeCallback );
+ConVar cl_detailfade( "cl_detailfade", "400", 0, "Distance across which detail props fade in", DetailFadeCallback );
 
 
 //-----------------------------------------------------------------------------
@@ -520,8 +551,6 @@ bool CDetailModel::InitCommon( int index, const Vector& org, const QAngle& angle
 {
 	VectorCopy( org, m_Origin );
 	VectorCopy( angles, m_Angles );
-	m_Alpha = 255;
-
 	return true;
 }
 
@@ -579,29 +608,40 @@ bool CDetailModel::GetAttachment( int number, Vector &origin, QAngle &angles )
 	return true;
 }
 
-bool CDetailModel::IsTransparent( void )
-{
-	return (m_Alpha < 255) || modelinfo->IsTranslucent(m_pModel);
-}
-
 bool CDetailModel::ShouldDraw()
 {
 	// Don't draw in commander mode
-	return g_pClientMode->ShouldDrawDetailObjects();
+	return GetClientMode()->ShouldDrawDetailObjects();
 }
 
 void CDetailModel::GetRenderBounds( Vector& mins, Vector& maxs )
 {
-	int nModelType = modelinfo->GetModelType( m_pModel );
-	if (nModelType == mod_studio || nModelType == mod_brush)
+	if ( m_Type == DETAIL_PROP_TYPE_MODEL )
 	{
-		modelinfo->GetModelRenderBounds( GetModel(), mins, maxs );
+		int nModelType = modelinfo->GetModelType( m_pModel );
+		if ( nModelType == mod_studio || nModelType == mod_brush )
+		{
+			modelinfo->GetModelRenderBounds( GetModel(), mins, maxs );
+		}
+		else
+		{
+			mins.Init( 0,0,0 );
+			maxs.Init( 0,0,0 );
+		}
+		return;
 	}
-	else
-	{
-		mins.Init( 0,0,0 );
-		maxs.Init( 0,0,0 );
-	}
+
+	// NOTE: Sway isn't taken into account here
+	DetailPropSpriteDict_t &dict = s_DetailObjectSystem.DetailSpriteDict( m_SpriteInfo.m_nSpriteIndex );
+	Vector2D ul, lr;
+	float flScale = m_SpriteInfo.m_flScale.GetFloat();
+	Vector2DMultiply( dict.m_UL, flScale, ul );
+	Vector2DMultiply( dict.m_LR, flScale, lr );
+	float flSizeX = MAX( fabs(lr.x), fabs(ul.x) );
+	float flSizeY = MAX( fabs(lr.y), fabs(ul.y) );
+	float flRadius = sqrt( flSizeX * flSizeX + flSizeY * flSizeY );
+	mins.Init( -flRadius, -flRadius, -flRadius );
+	maxs.Init( flRadius, flRadius, flRadius );
 }
 
 IPVSNotify* CDetailModel::GetPVSNotifyInterface()
@@ -619,15 +659,11 @@ bool CDetailModel::ShouldReceiveProjectedTextures( int flags )
 	return false;
 }
 
-bool CDetailModel::UsesPowerOfTwoFrameBufferTexture()
+int CDetailModel::GetRenderFlags( void )
 {
-	return false;
+	return 0;
 }
 
-bool CDetailModel::UsesFullFrameBufferTexture()
-{
-	return false;
-}
 
 void CDetailModel::GetShadowRenderBounds( Vector &mins, Vector &maxs, ShadowType_t shadowType )
 {
@@ -649,13 +685,13 @@ ClientRenderHandle_t& CDetailModel::RenderHandle()
 //-----------------------------------------------------------------------------
 // Render setup
 //-----------------------------------------------------------------------------
-bool CDetailModel::SetupBones( matrix3x4_t *pBoneToWorldOut, int nMaxBones, int boneMask, float currentTime )
+bool CDetailModel::SetupBones( matrix3x4a_t *pBoneToWorldOut, int nMaxBones, int boneMask, float currentTime )
 {
 	if (!m_pModel)
 		return false;
 
 	// Setup our transform.
-	matrix3x4_t parentTransform;
+	matrix3x4a_t parentTransform;
 	const QAngle &vRenderAngles = GetRenderAngles();
 	const Vector &vRenderOrigin = GetRenderOrigin();
 	AngleMatrix( vRenderAngles, parentTransform );
@@ -690,11 +726,12 @@ const model_t* CDetailModel::GetModel( ) const
 	return m_pModel;
 }
 
-int CDetailModel::DrawModel( int flags )
+int CDetailModel::DrawModel( int flags, const RenderableInstance_t &instance )
 {
-	if ((m_Alpha == 0) || (!m_pModel))
+	if (( instance.m_nAlpha == 0) || (!m_pModel))
 		return 0;
 
+	render->SetBlend( instance.m_nAlpha / 255.0f );	
 	int drawn = modelrender->DrawModel( 
 		flags, 
 		this,
@@ -712,19 +749,6 @@ int CDetailModel::DrawModel( int flags )
 
 
 //-----------------------------------------------------------------------------
-// Determine alpha and blend amount for transparent objects based on render state info
-//-----------------------------------------------------------------------------
-void CDetailModel::ComputeFxBlend( )
-{
-	// Do nothing, it's already calculate in our m_Alpha
-}
-
-int CDetailModel::GetFxBlend( )
-{
-	return m_Alpha;
-}
-
-//-----------------------------------------------------------------------------
 // Detail models stuff
 //-----------------------------------------------------------------------------
 CDetailModel::CDetailModel()
@@ -733,6 +757,7 @@ CDetailModel::CDetailModel()
 	m_Color.exponent = 0;
 	m_bFlipped = 0;
 	m_bHasLightStyle = 0;
+	m_bIsTranslucent = false;
 
 #ifdef USE_DETAIL_SHAPES
 	m_pAdvInfo = NULL;
@@ -778,6 +803,7 @@ bool CDetailModel::Init( int index, const Vector& org, const QAngle& angles,
 	m_Orientation = orientation;
 	m_Type = DETAIL_PROP_TYPE_MODEL;
 	m_pModel = pModel;
+	m_bIsTranslucent = modelinfo->IsTranslucent( m_pModel );
 	return InitCommon( index, org, angles );
 }
 
@@ -799,6 +825,7 @@ bool CDetailModel::InitSprite( int index, bool bFlipped, const Vector& org, cons
 	m_SpriteInfo.m_nSpriteIndex = nSpriteIndex;
 	m_Type = type;
 	m_SpriteInfo.m_flScale.SetFloat( flScale );
+	m_bIsTranslucent = true;
 
 #ifdef USE_DETAIL_SHAPES
 	m_pAdvInfo = NULL;
@@ -976,21 +1003,21 @@ void CDetailModel::ComputeAngles( void )
 //-----------------------------------------------------------------------------
 // Select which rendering func to call
 //-----------------------------------------------------------------------------
-void CDetailModel::DrawSprite( CMeshBuilder &meshBuilder )
+void CDetailModel::DrawSprite( CMeshBuilder &meshBuilder, uint8 nAlpha )
 {
 	switch( m_Type )
 	{
 #ifdef USE_DETAIL_SHAPES
 	case DETAIL_PROP_TYPE_SHAPE_CROSS:
-		DrawTypeShapeCross( meshBuilder );
+		DrawTypeShapeCross( meshBuilder, nAlpha );
 		break;
 
 	case DETAIL_PROP_TYPE_SHAPE_TRI:
-		DrawTypeShapeTri( meshBuilder );
+		DrawTypeShapeTri( meshBuilder, nAlpha );
 		break;
 #endif
 	case DETAIL_PROP_TYPE_SPRITE:
-		DrawTypeSprite( meshBuilder );
+		DrawTypeSprite( meshBuilder, nAlpha );
 		break;
 
 	default:
@@ -1003,7 +1030,7 @@ void CDetailModel::DrawSprite( CMeshBuilder &meshBuilder )
 //-----------------------------------------------------------------------------
 // Draws the single sprite type
 //-----------------------------------------------------------------------------
-void CDetailModel::DrawTypeSprite( CMeshBuilder &meshBuilder )
+void CDetailModel::DrawTypeSprite( CMeshBuilder &meshBuilder, uint8 nAlpha )
 {
 	Assert( m_Type == DETAIL_PROP_TYPE_SPRITE );
 
@@ -1014,12 +1041,12 @@ void CDetailModel::DrawTypeSprite( CMeshBuilder &meshBuilder )
 	color[0] = (unsigned char)(vecColor[0] * 255.0f);
 	color[1] = (unsigned char)(vecColor[1] * 255.0f);
 	color[2] = (unsigned char)(vecColor[2] * 255.0f);
-	color[3] = m_Alpha;
+	color[3] = nAlpha;
 
 	DetailPropSpriteDict_t &dict = s_DetailObjectSystem.DetailSpriteDict( m_SpriteInfo.m_nSpriteIndex );
 
-	Vector vecOrigin, dx, dy;
-	AngleVectors( m_Angles, NULL, &dx, &dy );
+	Vector vecOrigin, dx, dy, dz;
+	AngleVectors( m_Angles, &dz, &dx, &dy );
 
 	Vector2D ul, lr;
 	float scale = m_SpriteInfo.m_flScale.GetFloat();
@@ -1066,18 +1093,21 @@ void CDetailModel::DrawTypeSprite( CMeshBuilder &meshBuilder )
 
 	meshBuilder.Color4ubv( color );
 	meshBuilder.TexCoord2fv( 0, texul.Base() );
+	meshBuilder.Normal3fv( &dz.x );
 	meshBuilder.AdvanceVertex();
 
 	vecOrigin += dy;
 	meshBuilder.Position3fv( vecOrigin.Base() );
 	meshBuilder.Color4ubv( color );
 	meshBuilder.TexCoord2f( 0, texul.x, texlr.y );
+	meshBuilder.Normal3fv( &dz.x );
 	meshBuilder.AdvanceVertex();
 
 	vecOrigin += dx;
 	meshBuilder.Position3fv( vecOrigin.Base() );
 	meshBuilder.Color4ubv( color );
 	meshBuilder.TexCoord2fv( 0, texlr.Base() );
+	meshBuilder.Normal3fv( &dz.x );
 	meshBuilder.AdvanceVertex();
 
 	vecOrigin -= dy;
@@ -1088,6 +1118,7 @@ void CDetailModel::DrawTypeSprite( CMeshBuilder &meshBuilder )
 #endif
 	meshBuilder.Color4ubv( color );
 	meshBuilder.TexCoord2f( 0, texlr.x, texul.y );
+	meshBuilder.Normal3fv( &dz.x );
 	meshBuilder.AdvanceVertex();
 }
 
@@ -1096,7 +1127,7 @@ void CDetailModel::DrawTypeSprite( CMeshBuilder &meshBuilder )
 // two perpendicular sprites
 //-----------------------------------------------------------------------------
 #ifdef USE_DETAIL_SHAPES
-void CDetailModel::DrawTypeShapeCross( CMeshBuilder &meshBuilder )
+void CDetailModel::DrawTypeShapeCross( CMeshBuilder &meshBuilder, uint8 nAlpha )
 {
 	Assert( m_Type == DETAIL_PROP_TYPE_SHAPE_CROSS );
 
@@ -1107,7 +1138,7 @@ void CDetailModel::DrawTypeShapeCross( CMeshBuilder &meshBuilder )
 	color[0] = (unsigned char)(vecColor[0] * 255.0f);
 	color[1] = (unsigned char)(vecColor[1] * 255.0f);
 	color[2] = (unsigned char)(vecColor[2] * 255.0f);
-	color[3] = m_Alpha;
+	color[3] = nAlpha;
 
 	DetailPropSpriteDict_t &dict = s_DetailObjectSystem.DetailSpriteDict( m_SpriteInfo.m_nSpriteIndex );
 
@@ -1210,7 +1241,7 @@ void CDetailModel::DrawTypeShapeCross( CMeshBuilder &meshBuilder )
 // draws a procedural model, tri shape
 //-----------------------------------------------------------------------------
 #ifdef USE_DETAIL_SHAPES
-void CDetailModel::DrawTypeShapeTri( CMeshBuilder &meshBuilder )
+void CDetailModel::DrawTypeShapeTri( CMeshBuilder &meshBuilder, uint8 nAlpha )
 {
 	Assert( m_Type == DETAIL_PROP_TYPE_SHAPE_TRI );
 
@@ -1221,7 +1252,7 @@ void CDetailModel::DrawTypeShapeTri( CMeshBuilder &meshBuilder )
 	color[0] = (unsigned char)(vecColor[0] * 255.0f);
 	color[1] = (unsigned char)(vecColor[1] * 255.0f);
 	color[2] = (unsigned char)(vecColor[2] * 255.0f);
-	color[3] = m_Alpha;
+	color[3] = nAlpha;
 
 	DetailPropSpriteDict_t &dict = s_DetailObjectSystem.DetailSpriteDict( m_SpriteInfo.m_nSpriteIndex );
 
@@ -1317,7 +1348,7 @@ void CDetailModel::UpdatePlayerAvoid( void )
 	Vector vecMaxAvoid(0,0,0);
 
 	CPlayerEnumerator avoid( flRadius, m_Origin );
-	::partition->EnumerateElementsInSphere( PARTITION_CLIENT_SOLID_EDICTS, m_Origin, flRadius, false, &avoid );
+	partition->EnumerateElementsInSphere( PARTITION_CLIENT_SOLID_EDICTS, m_Origin, flRadius, false, &avoid );
 
 	// Okay, decide how to avoid if there's anything close by
 	int c = avoid.GetObjectCount();
@@ -1440,8 +1471,22 @@ CDetailObjectSystem::~CDetailObjectSystem()
 //-----------------------------------------------------------------------------
 void CDetailObjectSystem::LevelInitPreEntity()
 {
+	if ( m_pFastSpriteData )
+	{
+		MemAlloc_FreeAligned( m_pFastSpriteData );
+		m_pFastSpriteData = NULL;
+	}
+	FreeSortBuffers();
+
 	// Prepare the translucent detail sprite material; we only have 1!
-	m_DetailSpriteMaterial.Init( "detail/detailsprites", TEXTURE_GROUP_OTHER );
+	const char *pDetailSpriteMaterial = DETAIL_SPRITE_MATERIAL;
+	C_World *pWorld = GetClientWorldEntity();
+	if ( pWorld && pWorld->GetDetailSpriteMaterial() && *(pWorld->GetDetailSpriteMaterial()) )
+	{
+		pDetailSpriteMaterial = pWorld->GetDetailSpriteMaterial(); 
+	}
+
+	m_DetailSpriteMaterial.Init( pDetailSpriteMaterial, TEXTURE_GROUP_OTHER );
 	m_DetailWireframeMaterial.Init( "debug/debugspritewireframe", TEXTURE_GROUP_OTHER );
 
 	// Version check
@@ -1477,7 +1522,7 @@ void CDetailObjectSystem::LevelInitPreEntity()
 		PrecacheMaterial( DETAIL_SPRITE_MATERIAL );
 		IMaterial *pMat = m_DetailSpriteMaterial;
 		// adjust for non-square textures (cropped)
-		float flRatio = (float)( pMat->GetMappingWidth() ) / pMat->GetMappingHeight();
+		float flRatio = pMat->GetMappingWidth() / pMat->GetMappingHeight();
 		if ( flRatio > 1.0 )
 		{
 			for( int i = 0; i<m_DetailSpriteDict.Count(); i++ )
@@ -1491,7 +1536,7 @@ void CDetailObjectSystem::LevelInitPreEntity()
 	}
 
 	int detailPropLightingLump;
-	if( g_pMaterialSystemHardwareConfig->GetHDREnabled() )
+	if( g_pMaterialSystemHardwareConfig->GetHDRType() != HDR_TYPE_NONE )
 	{
 		detailPropLightingLump = GAMELUMP_DETAIL_PROP_LIGHTING_HDR;
 	}
@@ -1510,6 +1555,22 @@ void CDetailObjectSystem::LevelInitPreEntity()
 }
 
 
+void CDetailObjectSystem::UpdateDetailFadeValues()
+{
+	m_flDetailFadeEnd = cl_detaildist.GetInt();
+	m_flDetailFadeStart = m_flDetailFadeEnd - cl_detailfade.GetInt();
+	if ( m_flDetailFadeStart < 0 )
+	{
+		m_flDetailFadeStart = 0;
+	}
+
+	if ( GetDetailController() )
+	{
+		m_flDetailFadeStart = MIN( m_flDetailFadeStart, GetDetailController()->m_flFadeStartDist );
+		m_flDetailFadeEnd = MIN( m_flDetailFadeEnd, GetDetailController()->m_flFadeEndDist );
+	}
+}
+
 void CDetailObjectSystem::LevelInitPostEntity()
 {
 	const char *pDetailSpriteMaterial = DETAIL_SPRITE_MATERIAL;
@@ -1519,18 +1580,7 @@ void CDetailObjectSystem::LevelInitPostEntity()
 		pDetailSpriteMaterial = pWorld->GetDetailSpriteMaterial(); 
 	}
 	m_DetailSpriteMaterial.Init( pDetailSpriteMaterial, TEXTURE_GROUP_OTHER );
-
-	if ( GetDetailController() )
-	{
-		cl_detailfade.SetValue( MIN( m_flDefaultFadeStart, GetDetailController()->m_flFadeStartDist ) );
-		cl_detaildist.SetValue( MIN( m_flDefaultFadeEnd, GetDetailController()->m_flFadeEndDist ) );
-	}
-	else
-	{
-		// revert to default values if the map doesn't specify
-		cl_detailfade.SetValue( m_flDefaultFadeStart );
-		cl_detaildist.SetValue( m_flDefaultFadeEnd );
-	}
+	UpdateDetailFadeValues();
 }
 
 void CDetailObjectSystem::LevelShutdownPreEntity()
@@ -1541,12 +1591,6 @@ void CDetailObjectSystem::LevelShutdownPreEntity()
 	m_DetailSpriteDictFlipped.Purge();
 	m_DetailLighting.Purge();
 	m_DetailSpriteMaterial.Shutdown();
-	if ( m_pFastSpriteData )
-	{
-		MemAlloc_FreeAligned( m_pFastSpriteData );
-		m_pFastSpriteData = NULL;
-	}
-	FreeSortBuffers();
 
 }
 
@@ -1555,13 +1599,33 @@ void CDetailObjectSystem::LevelShutdownPostEntity()
 	m_DetailWireframeMaterial.Shutdown();
 }
 
+
+//-----------------------------------------------------------------------------
+// Computes distance fade
+//-----------------------------------------------------------------------------
+inline uint8 CDetailObjectSystem::ComputeDistanceFade( float *pDistSqr, const DistanceFadeInfo_t &info, const Vector &vecViewOrigin, const Vector &vecRenderOrigin ) const
+{
+	float flDistSq = vecViewOrigin.DistToSqr( vecRenderOrigin );
+	*pDistSqr = flDistSq;
+	if ( flDistSq >= info.m_flMaxDistSqr )
+		return 0;
+
+	uint8 nAlpha = 255;
+	if ( flDistSq > info.m_flMinDistSqr ) 
+	{
+		nAlpha = 255.0f * info.m_flFalloffFactor * ( info.m_flMaxDistSqr - flDistSq );
+	}
+	return nAlpha;
+}
+
+
 //-----------------------------------------------------------------------------
 // Before each view, blat out the stored detail sprite state
 //-----------------------------------------------------------------------------
 void CDetailObjectSystem::BeginTranslucentDetailRendering( )
 {
 	m_nSortedLeaf = -1;
-	m_nSortedFastLeaf = -1;
+	m_bFirstLeaf = true;
 	m_nSpriteCount = m_nFirstSprite = 0;
 }
 
@@ -1577,6 +1641,13 @@ IClientRenderable* CDetailObjectSystem::GetDetailModel( int idx )
 		return NULL;
 	
 	return &m_DetailObjects[idx];
+}
+
+
+// How many detail models (as opposed to sprites) are there in the level?
+int CDetailObjectSystem::GetDetailModelCount() const
+{
+	return m_DetailObjects.Count();
 }
 
 
@@ -1617,7 +1688,7 @@ void CDetailObjectSystem::UnserializeDetailSprites( CUtlBuffer& buf )
 		buf.Get( &m_DetailSpriteDict[i], sizeof(DetailSpriteDictLump_t) );
 		int flipi = m_DetailSpriteDictFlipped.AddToTail();
 		m_DetailSpriteDictFlipped[flipi] = m_DetailSpriteDict[i];
-		::V_swap( m_DetailSpriteDictFlipped[flipi].m_TexUL.x, m_DetailSpriteDictFlipped[flipi].m_TexLR.x );
+		V_swap( m_DetailSpriteDictFlipped[flipi].m_TexUL.x, m_DetailSpriteDictFlipped[flipi].m_TexLR.x );
 	}
 }
 
@@ -1737,16 +1808,19 @@ void CDetailObjectSystem::UnserializeModels( CUtlBuffer& buf )
 	{
 		m_pSortInfo = reinterpret_cast<SortInfo_t *> (
 			MemAlloc_AllocAligned( (3 + nMaxOldInLeaf ) * sizeof( SortInfo_t ), sizeof( fltx4 ) ) );
+		Assert( m_pSortInfo );
 	}
 	if ( nMaxFastInLeaf )
 	{
 		m_pFastSortInfo = reinterpret_cast<SortInfo_t *> (
 			MemAlloc_AllocAligned( (3 + nMaxFastInLeaf ) * sizeof( SortInfo_t ), sizeof( fltx4 ) ) );
+		Assert( m_pFastSortInfo );
 
 		m_pBuildoutBuffer = reinterpret_cast<FastSpriteQuadBuildoutBufferX4_t *> (
 			MemAlloc_AllocAligned( 
 				( 1 + nMaxFastInLeaf / 4 ) * sizeof( FastSpriteQuadBuildoutBufferX4_t ),
 				sizeof( fltx4 ) ) );
+		Assert( m_pBuildoutBuffer );
 	}
 
 	if ( nNumFastSpritesToAllocate )
@@ -1757,9 +1831,16 @@ void CDetailObjectSystem::UnserializeModels( CUtlBuffer& buf )
 			MemAlloc_AllocAligned( 
 				( nNumFastSpritesToAllocate >> 2 ) * sizeof( FastSpriteX4_t ),
 				sizeof( fltx4 ) ) );
+		Assert( m_pFastSpriteData );
 	}
 
-	m_DetailObjects.EnsureCapacity( nNumOldStyleObjects  );
+	if ( nNumOldStyleObjects >= 1 << 24 )
+	{
+		Assert( 0 );
+		Warning( "*** CDetailObjectSystem::UnserializeModels: Error! Too many detail objects!\n" );
+	}
+
+	m_DetailObjects.EnsureCapacity( nNumOldStyleObjects );
 
 	int count = buf.GetInt();
 	
@@ -1789,6 +1870,7 @@ void CDetailObjectSystem::UnserializeModels( CUtlBuffer& buf )
 					pCurFastSpriteOut += pNew->m_nNumSIMDSprites;
 					ClientLeafSystem()->SetSubSystemDataInLeaf( 
 						detailObjectLeaf, CLSUBSYSTEM_DETAILOBJECTS, pNew );
+					engine->SetLeafFlag( detailObjectLeaf, LEAF_FLAGS_CONTAINS_DETAILOBJECTS );	// for fast searches
 					// round to see boundary
 					nCurFastObject += ( 0 - nCurFastObject ) & 3;
 					nNumFastObjectsInCurLeaf = 0;
@@ -1874,10 +1956,13 @@ void CDetailObjectSystem::UnserializeModels( CUtlBuffer& buf )
 			pCurFastSpriteOut += pNew->m_nNumSIMDSprites;
 			ClientLeafSystem()->SetSubSystemDataInLeaf( 
 				detailObjectLeaf, CLSUBSYSTEM_DETAILOBJECTS, pNew );
+			engine->SetLeafFlag( detailObjectLeaf, LEAF_FLAGS_CONTAINS_DETAILOBJECTS );	// for fast searches
 		}
 		ClientLeafSystem()->SetDetailObjectsInLeaf( detailObjectLeaf, 
 													firstDetailObject, detailObjectCount );
 	}
+	engine->RecalculateBSPLeafFlags();
+
 }
 
 
@@ -1945,15 +2030,6 @@ void CDetailObjectSystem::UnserializeFastSprite( FastSpriteX4_t *pSpritex4, int 
 	pSpritex4->m_pSpriteDefs[nSubField] = pSDef;
 }
 
-
-
-//-----------------------------------------------------------------------------
-// Renders all opaque detail objects in a particular set of leaves
-//-----------------------------------------------------------------------------
-void CDetailObjectSystem::RenderOpaqueDetailObjects( int nLeafCount, LeafIndex_t *pLeafList )
-{
-	// FIXME: Implement!
-}
 
 
 //-----------------------------------------------------------------------------
@@ -2034,40 +2110,14 @@ int CDetailObjectSystem::CountSpriteQuadsInLeafList( int nLeafCount, LeafIndex_t
 inline bool CDetailObjectSystem::SortLessFunc( const CDetailObjectSystem::SortInfo_t &left, const CDetailObjectSystem::SortInfo_t &right )
 {
 	return TREATASINT( left.m_flDistance ) > TREATASINT( right.m_flDistance );
-//	return left.m_flDistance > right.m_flDistance;
 }
 
 
-int CDetailObjectSystem::SortSpritesBackToFront( int nLeaf, const Vector &viewOrigin, const Vector &viewForward, SortInfo_t *pSortInfo )
+int CDetailObjectSystem::SortSpritesBackToFront( int nLeaf, const Vector &viewOrigin, const DistanceFadeInfo_t &fadeInfo, SortInfo_t *pSortInfo )
 {
 	VPROF_BUDGET( "CDetailObjectSystem::SortSpritesBackToFront", VPROF_BUDGETGROUP_DETAILPROP_RENDERING );
 	int nFirstDetailObject, nDetailObjectCount;
 	ClientLeafSystem()->GetDetailObjectsInLeaf( nLeaf, nFirstDetailObject, nDetailObjectCount );
-
-	float flFactor = 1.0f;
-	C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
-	if ( pLocalPlayer )
-	{
-		flFactor = 1.0 / pLocalPlayer->GetFOVDistanceAdjustFactor();
-	}
-
-	float flMaxSqDist;
-	float flFadeSqDist;
-	float flDetailDist = cl_detaildist.GetFloat();
-
-	flMaxSqDist = flDetailDist * flDetailDist;
-	flFadeSqDist = flDetailDist - cl_detailfade.GetFloat();
-	flMaxSqDist *= flFactor;
-	flFadeSqDist *= flFactor;
-	if (flFadeSqDist > 0)
-	{
-		flFadeSqDist *= flFadeSqDist;
-	}
-	else 
-	{
-		flFadeSqDist = 0;
-	}
-	float flFalloffFactor = 255.0f / (flMaxSqDist - flFadeSqDist);
 
 	Vector vecDelta;
 	int nCount = 0;
@@ -2075,23 +2125,12 @@ int CDetailObjectSystem::SortSpritesBackToFront( int nLeaf, const Vector &viewOr
 	for ( int j = nFirstDetailObject; j < nDetailObjectCount; ++j )
 	{
 		CDetailModel &model = m_DetailObjects[j];
-
-		Vector v;
-		VectorSubtract( model.GetRenderOrigin(), viewOrigin, vecDelta );
-		float flSqDist = vecDelta.LengthSqr();
-		if ( flSqDist >= flMaxSqDist )
+		if ( model.GetType() == DETAIL_PROP_TYPE_MODEL )
 			continue;
 
-		if ((flFadeSqDist > 0) && (flSqDist > flFadeSqDist))
-		{
-			model.SetAlpha( flFalloffFactor * ( flMaxSqDist - flSqDist ) );
-		}
-		else
-		{
-			model.SetAlpha( 255 );
-		}
-
-		if ( (model.GetType() == DETAIL_PROP_TYPE_MODEL) || (model.GetAlpha() == 0) )
+		float flSqDist;
+		uint8 nAlpha = ComputeDistanceFade( &flSqDist, fadeInfo, viewOrigin, model.GetRenderOrigin() );
+		if ( nAlpha == 0 )
 			continue;
 
 		// Perform screen alignment if necessary.
@@ -2099,6 +2138,7 @@ int CDetailObjectSystem::SortSpritesBackToFront( int nLeaf, const Vector &viewOr
 		SortInfo_t *pSortInfoCurrent = &pSortInfo[nCount];
 
 		pSortInfoCurrent->m_nIndex = j;
+		pSortInfoCurrent->m_nAlpha = nAlpha;
 
 		// Compute distance from the camera to each object
 		pSortInfoCurrent->m_flDistance = flSqDist;
@@ -2117,11 +2157,12 @@ int CDetailObjectSystem::SortSpritesBackToFront( int nLeaf, const Vector &viewOr
 
 
 #define MAGIC_NUMBER (1<<23)
-#ifdef VALVE_BIG_ENDIAN
+#ifdef PLAT_BIG_ENDIAN
 #define MANTISSA_LSB_OFFSET 3
 #else
 #define MANTISSA_LSB_OFFSET 0
 #endif
+
 static fltx4 Four_MagicNumbers={ MAGIC_NUMBER, MAGIC_NUMBER, MAGIC_NUMBER, MAGIC_NUMBER };
 static fltx4 Four_255s={ 255.0, 255.0, 255.0, 255.0 };
 
@@ -2129,6 +2170,7 @@ static ALIGN16 int32 And255Mask[4] ALIGN16_POST = {0xff,0xff,0xff,0xff};
 #define PIXMASK ( * ( reinterpret_cast< fltx4 *>( &And255Mask ) ) )
 
 int CDetailObjectSystem::BuildOutSortedSprites( CFastDetailLeafSpriteList *pData,
+											    const DistanceFadeInfo_t &info,
 												Vector const &viewOrigin,
 												Vector const &viewForward,
 												Vector const &viewRight,
@@ -2138,16 +2180,21 @@ int CDetailObjectSystem::BuildOutSortedSprites( CFastDetailLeafSpriteList *pData
 	int nSIMDSprites = pData->m_nNumSIMDSprites;
 	FastSpriteX4_t const *pSprites = pData->m_pSprites;
 	SortInfo_t *pOut = m_pFastSortInfo;
+	pOut[0].m_nIndex = 1;
+
 	FastSpriteQuadBuildoutBufferX4_t *pQuadBufferOut = m_pBuildoutBuffer;
+	pQuadBufferOut->m_Coords[0].x = Four_Zeros;
 	int curidx = 0;
 	int nLastBfMask = 0;
 
+	Vector4D vNormal( -viewForward.x, -viewForward.y, -viewForward.z, 0.0 );
+
 	FourVectors vecViewPos;
 	vecViewPos.DuplicateVector( viewOrigin );
-	fltx4 maxsqdist = ReplicateX4( m_flCurMaxSqDist );
+	fltx4 maxsqdist = ReplicateX4( info.m_flMaxDistSqr );
 
-	fltx4 falloffFactor = ReplicateX4( 1.0/ ( m_flCurMaxSqDist - m_flCurFadeSqDist ) );
-	fltx4 startFade = ReplicateX4( m_flCurFadeSqDist );
+	fltx4 falloffFactor = ReplicateX4( 1.0/ ( info.m_flMaxDistSqr - info.m_flMinDistSqr ) );
+	fltx4 startFade = ReplicateX4( info.m_flMinDistSqr );
 
 	FourVectors vecUp;
 	vecUp.DuplicateVector(Vector(0,0,1) );
@@ -2209,6 +2256,7 @@ int CDetailObjectSystem::BuildOutSortedSprites( CFastDetailLeafSpriteList *pData
 			pOut[2].m_flDistance = SubFloat( distanceSquared, 2 );
 			pOut[3].m_nIndex = curidx+3;
 			pOut[3].m_flDistance = SubFloat( distanceSquared, 3 );
+			pQuadBufferOut->m_Normal = vNormal;
 			curidx += 4;
 			pOut += 4;
 			pQuadBufferOut++;
@@ -2232,7 +2280,13 @@ int CDetailObjectSystem::BuildOutSortedSprites( CFastDetailLeafSpriteList *pData
 }
 
 
-void CDetailObjectSystem::RenderFastSprites( const Vector &viewOrigin, const Vector &viewForward, const Vector &viewRight, const Vector &viewUp, int nLeafCount, LeafIndex_t const * pLeafList )
+static void s_RenderFastSpriteGuts( CDetailObjectSystem *pThis, DistanceFadeInfo_t info, Vector viewOrigin, Vector viewForward, Vector viewRight, Vector viewUp, int nNumLeafs, CUtlEnvelope<LeafIndex_t> const &leaflist )
+{
+	pThis->RenderFastSprites( info, viewOrigin, viewForward, viewRight, viewUp, nNumLeafs, leaflist );
+
+}
+
+void CDetailObjectSystem::RenderFastSprites( const DistanceFadeInfo_t &info, const Vector &viewOrigin, const Vector &viewForward, const Vector &viewRight, const Vector &viewUp, int nLeafCount, LeafIndex_t const * pLeafList )
 {
 	// Here, we must draw all detail objects back-to-front
 	// FIXME: Cache off a sorted list so we don't have to re-sort every frame
@@ -2246,7 +2300,6 @@ void CDetailObjectSystem::RenderFastSprites( const Vector &viewOrigin, const Vec
 	if  ( r_DrawDetailProps.GetInt() == 0 )
 		return;
 
-
 	CMatRenderContextPtr pRenderContext( materials );
 	pRenderContext->MatrixMode( MATERIAL_MODEL );
 	pRenderContext->PushMatrix();
@@ -2259,8 +2312,10 @@ void CDetailObjectSystem::RenderFastSprites( const Vector &viewOrigin, const Vec
 	}
 
 	CMeshBuilder meshBuilder;
-	IMesh *pMesh = pRenderContext->GetDynamicMesh( true, NULL, NULL, pMaterial );
+	DetailPropFlashlightMode_t flashlightMode = DetailPropFlashlightMode();
+	IMesh *pMesh = pRenderContext->GetDynamicMesh( flashlightMode != DPFM_MULTIPASS, NULL, NULL, pMaterial );
 
+	
 	int nMaxVerts, nMaxIndices;
 	pRenderContext->GetMaxToRender( pMesh, false, &nMaxVerts, &nMaxIndices );
 	int nMaxQuadsToDraw = nMaxIndices / 6;
@@ -2268,9 +2323,6 @@ void CDetailObjectSystem::RenderFastSprites( const Vector &viewOrigin, const Vec
 	{
 		nMaxQuadsToDraw = nMaxVerts / 4;
 	}
-
-	if ( nMaxQuadsToDraw == 0 )
-		return;
 
 	int nQuadsToDraw = MIN( nQuadCount, nMaxQuadsToDraw );
 	int nQuadsRemaining = nQuadsToDraw;
@@ -2291,7 +2343,7 @@ void CDetailObjectSystem::RenderFastSprites( const Vector &viewOrigin, const Vec
 		{
 			Assert( pData->m_nNumSprites );					// ptr with no sprites?
 
-			int nCount = BuildOutSortedSprites( pData, viewOrigin, viewForward, viewRight, viewUp );
+			int nCount = BuildOutSortedSprites( pData, info, viewOrigin, viewForward, viewRight, viewUp );
 
 			// part 3 - stuff the sorted sprites into the vb
 			SortInfo_t const *pDraw = m_pFastSortInfo;
@@ -2307,6 +2359,8 @@ void CDetailObjectSystem::RenderFastSprites( const Vector &viewOrigin, const Vec
 				{
 					meshBuilder.End();
 					pMesh->Draw();
+					if( flashlightMode == DPFM_MULTIPASS )
+						shadowmgr->FlashlightDrawCallback( DrawMeshCallback, pMesh );
 					nQuadsRemaining = nQuadsToDraw;
 					meshBuilder.Begin( pMesh, MATERIAL_QUADS, nQuadsToDraw );
 				}
@@ -2320,9 +2374,10 @@ void CDetailObjectSystem::RenderFastSprites( const Vector &viewOrigin, const Vec
 					int nSubIdx = pDraw->m_nIndex & 3;
 
 					FastSpriteQuadBuildoutBufferNonSIMDView_t const *pquad = pQuadBuffer+nSIMDIdx;
+					const Vector4D &vNormal = pquad->m_Normal;
 
 					// voodoo - since everything is in 4s, offset structure pointer by a couple of floats to handle sub-index
-					pquad = (FastSpriteQuadBuildoutBufferNonSIMDView_t const *) ( ( (intp) ( pquad ) )+ ( nSubIdx << 2 ) );
+					pquad = (FastSpriteQuadBuildoutBufferNonSIMDView_t const *) ( ( (int) ( pquad ) )+ ( nSubIdx << 2 ) );
 					uint8 const *pColorsCasted = reinterpret_cast<uint8 const *> ( pquad->m_Alpha );
 
 					uint8 color[4];
@@ -2331,36 +2386,31 @@ void CDetailObjectSystem::RenderFastSprites( const Vector &viewOrigin, const Vec
 					color[2] = pquad->m_RGBColor[0][2];
 					color[3] = pColorsCasted[MANTISSA_LSB_OFFSET];
 
-					DetailPropSpriteDict_t *pDict;
-#ifdef PLATFORM_64BITS
-					if( nSubIdx == 1 )
-						pDict = ((FastSpriteQuadBuildoutBufferNonSIMDView_t*)((intp)pquad+4))->m_pSpriteDefs[0];
-					else if( nSubIdx == 3 )
-						pDict = ((FastSpriteQuadBuildoutBufferNonSIMDView_t*)((intp)pquad-4))->m_pSpriteDefs[0];
-					else
-#endif
-						pDict = pquad->m_pSpriteDefs[0];
-
+					DetailPropSpriteDict_t *pDict = pquad->m_pSpriteDefs[0];
 
 					meshBuilder.Position3f( pquad->m_flX0[0], pquad->m_flY0[0], pquad->m_flZ0[0] );
 					meshBuilder.Color4ubv( color );
 					meshBuilder.TexCoord2f( 0, pDict->m_TexLR.x, pDict->m_TexLR.y );
-					meshBuilder.AdvanceVertex();
+					meshBuilder.Normal3fv( vNormal.Base() );
+					meshBuilder.AdvanceVertexF<VTX_HAVEPOS | VTX_HAVECOLOR | VTX_HAVENORMAL, 1>();
 
 					meshBuilder.Position3f( pquad->m_flX1[0], pquad->m_flY1[0], pquad->m_flZ1[0] );
 					meshBuilder.Color4ubv( color );
 					meshBuilder.TexCoord2f( 0, pDict->m_TexLR.x, pDict->m_TexUL.y );
-					meshBuilder.AdvanceVertex();
+					meshBuilder.Normal3fv( vNormal.Base() );
+					meshBuilder.AdvanceVertexF<VTX_HAVEPOS | VTX_HAVECOLOR | VTX_HAVENORMAL, 1>();
 
 					meshBuilder.Position3f( pquad->m_flX2[0], pquad->m_flY2[0], pquad->m_flZ2[0] );
 					meshBuilder.Color4ubv( color );
 					meshBuilder.TexCoord2f( 0, pDict->m_TexUL.x, pDict->m_TexUL.y );
-					meshBuilder.AdvanceVertex();
+					meshBuilder.Normal3fv( vNormal.Base() );
+					meshBuilder.AdvanceVertexF<VTX_HAVEPOS | VTX_HAVECOLOR | VTX_HAVENORMAL, 1>();
 
 					meshBuilder.Position3f( pquad->m_flX3[0], pquad->m_flY3[0], pquad->m_flZ3[0] );
 					meshBuilder.Color4ubv( color );
 					meshBuilder.TexCoord2f( 0, pDict->m_TexUL.x, pDict->m_TexLR.y );
-					meshBuilder.AdvanceVertex();
+					meshBuilder.Normal3fv( vNormal.Base() );
+					meshBuilder.AdvanceVertexF<VTX_HAVEPOS | VTX_HAVECOLOR | VTX_HAVENORMAL, 1>();
 					pDraw++;
 				}
 			}
@@ -2368,14 +2418,28 @@ void CDetailObjectSystem::RenderFastSprites( const Vector &viewOrigin, const Vec
 	}
 	meshBuilder.End();
 	pMesh->Draw();
+	if( flashlightMode == DPFM_MULTIPASS )
+		shadowmgr->FlashlightDrawCallback( DrawMeshCallback, pMesh );
+
 	pRenderContext->PopMatrix();
 }
 
-
+static void PushSinglePassFlashLightState( DetailPropFlashlightMode_t nMode )
+{
+//#ifndef _X360
+	shadowmgr->PushSinglePassFlashlightStateEnabled( nMode == DPFM_SINGLEPASS );
+//#endif
+}
+static void PopSinglePassFlashLightState( void )
+{
+//#ifndef _X360
+	shadowmgr->PopSinglePassFlashlightStateEnabled();
+//#endif
+}
 //-----------------------------------------------------------------------------
 // Renders all translucent detail objects in a particular set of leaves
 //-----------------------------------------------------------------------------
-void CDetailObjectSystem::RenderTranslucentDetailObjects( const Vector &viewOrigin, const Vector &viewForward, const Vector &viewRight, const Vector &viewUp, int nLeafCount, LeafIndex_t *pLeafList )
+void CDetailObjectSystem::RenderTranslucentDetailObjects( const DistanceFadeInfo_t &info, const Vector &viewOrigin, const Vector &viewForward, const Vector &viewRight, const Vector &viewUp, int nLeafCount, LeafIndex_t *pLeafList )
 {
 	VPROF_BUDGET( "CDetailObjectSystem::RenderTranslucentDetailObjects", VPROF_BUDGETGROUP_DETAILPROP_RENDERING );
 	if (nLeafCount == 0)
@@ -2384,8 +2448,19 @@ void CDetailObjectSystem::RenderTranslucentDetailObjects( const Vector &viewOrig
 	// We better not have any partially drawn leaf of detail sprites!
 	Assert( m_nSpriteCount == m_nFirstSprite );
 
+	DetailPropFlashlightMode_t flashlightMode = DetailPropFlashlightMode();
+	PushSinglePassFlashLightState( flashlightMode );
 	// Here, we must draw all detail objects back-to-front
-	RenderFastSprites( viewOrigin, viewForward, viewRight, viewUp, nLeafCount, pLeafList );
+	CMatRenderContextPtr pRenderContext( materials );
+	Assert( m_pFastSortInfo );
+	ICallQueue *pQueue = pRenderContext->GetCallQueue();
+	if ( pQueue && r_ThreadedDetailProps.GetInt() )
+	{
+		pQueue->QueueCall( s_RenderFastSpriteGuts, this, info, viewOrigin, viewForward, viewRight, viewUp, nLeafCount, CUtlEnvelope<LeafIndex_t>( pLeafList, nLeafCount ) );
+	}
+	else
+		RenderFastSprites( info, viewOrigin, viewForward, viewRight, viewUp, nLeafCount, pLeafList );
+	PopSinglePassFlashLightState();
 
 	// FIXME: Cache off a sorted list so we don't have to re-sort every frame
 
@@ -2394,7 +2469,7 @@ void CDetailObjectSystem::RenderTranslucentDetailObjects( const Vector &viewOrig
 	if ( nQuadCount == 0 )
 		return;
 
-	CMatRenderContextPtr pRenderContext( materials );
+	PushSinglePassFlashLightState( flashlightMode );
 	pRenderContext->MatrixMode( MATERIAL_MODEL );
 	pRenderContext->PushMatrix();
 	pRenderContext->LoadIdentity();
@@ -2406,7 +2481,7 @@ void CDetailObjectSystem::RenderTranslucentDetailObjects( const Vector &viewOrig
 	}
 
 	CMeshBuilder meshBuilder;
-	IMesh *pMesh = pRenderContext->GetDynamicMesh( true, NULL, NULL, pMaterial );
+	IMesh *pMesh = pRenderContext->GetDynamicMesh( flashlightMode != DPFM_MULTIPASS, NULL, NULL, pMaterial );
 
 	int nMaxVerts, nMaxIndices;
 	pRenderContext->GetMaxToRender( pMesh, false, &nMaxVerts, &nMaxIndices );
@@ -2415,9 +2490,6 @@ void CDetailObjectSystem::RenderTranslucentDetailObjects( const Vector &viewOrig
 	{
 		nMaxQuadsToDraw = nMaxVerts / 4;
 	}
-
-	if ( nMaxQuadsToDraw == 0 )
-		return;
 
 	int nQuadsToDraw = nQuadCount;
 	if ( nQuadsToDraw > nMaxQuadsToDraw )
@@ -2437,7 +2509,7 @@ void CDetailObjectSystem::RenderTranslucentDetailObjects( const Vector &viewOrig
 
 		// Sort detail sprites in each leaf independently; then render them
 		SortInfo_t *pSortInfo = m_pSortInfo;
-		int nCount = SortSpritesBackToFront( nLeaf, viewOrigin, viewForward, pSortInfo );
+		int nCount = SortSpritesBackToFront( nLeaf, viewOrigin, info, pSortInfo );
 
 		for ( int j = 0; j < nCount; ++j )
 		{
@@ -2449,6 +2521,8 @@ void CDetailObjectSystem::RenderTranslucentDetailObjects( const Vector &viewOrig
 			{
 				meshBuilder.End();
 				pMesh->Draw();
+				if( flashlightMode == DPFM_MULTIPASS )
+					shadowmgr->FlashlightDrawCallback( DrawMeshCallback, pMesh );
 
 				nQuadCount -= nQuadsDrawn;
 				nQuadsToDraw = nQuadCount;
@@ -2461,7 +2535,7 @@ void CDetailObjectSystem::RenderTranslucentDetailObjects( const Vector &viewOrig
 				nQuadsDrawn = 0;
 			}
 
-			model.DrawSprite( meshBuilder );
+			model.DrawSprite( meshBuilder, pSortInfo[j].m_nAlpha );
 
 			nQuadsDrawn += nQuadsInModel;
 		}
@@ -2469,42 +2543,40 @@ void CDetailObjectSystem::RenderTranslucentDetailObjects( const Vector &viewOrig
 
 	meshBuilder.End();
 	pMesh->Draw();
+	if( flashlightMode == DPFM_MULTIPASS )
+		shadowmgr->FlashlightDrawCallback( DrawMeshCallback, pMesh );
+	PopSinglePassFlashLightState();
 
 	pRenderContext->PopMatrix();
 }
 
 
-void CDetailObjectSystem::RenderFastTranslucentDetailObjectsInLeaf( const Vector &viewOrigin, const Vector &viewForward, const Vector &viewRight, const Vector &viewUp, int nLeaf, const Vector *pVecClosestPoint )
+void CDetailObjectSystem::RenderFastTranslucentDetailObjectsInLeaf( CFastDetailLeafSpriteList *pData, const DistanceFadeInfo_t &info, const Vector &viewOrigin, const Vector &viewForward, const Vector &viewRight, const Vector &viewUp, int nLeaf, const Vector &vecClosestPoint, bool bFirstCallThisFrame )
 {
-	CFastDetailLeafSpriteList *pData = reinterpret_cast< CFastDetailLeafSpriteList *> (
-		ClientLeafSystem()->GetSubSystemDataInLeaf( nLeaf, CLSUBSYSTEM_DETAILOBJECTS ) );
-	if ( ! pData )
-		return;
 
-	if ( m_nSortedFastLeaf != nLeaf )
+	if ( bFirstCallThisFrame || ( m_nSortedFastLeaf != nLeaf ) )
 	{
 		m_nSortedFastLeaf = nLeaf;
-		pData->m_nNumPendingSprites = BuildOutSortedSprites( pData, viewOrigin, viewForward, viewRight, viewUp );
+		pData->m_nNumPendingSprites = BuildOutSortedSprites( pData, info, viewOrigin, viewForward, viewRight, viewUp );
 		pData->m_nStartSpriteIndex = 0;
 	}
 	if ( pData->m_nNumPendingSprites == 0 )
-		return;
-
-	float flMinDistance = 0.0f;
-	if ( pVecClosestPoint )
 	{
-		Vector vecDelta;
-		VectorSubtract( *pVecClosestPoint, viewOrigin, vecDelta );
-		flMinDistance = vecDelta.LengthSqr();
-	}
-		
-	if ( m_pFastSortInfo[pData->m_nStartSpriteIndex].m_flDistance < flMinDistance )
 		return;
+	}
+
+	Vector vecDelta;
+	VectorSubtract( vecClosestPoint, viewOrigin, vecDelta );
+	float flMinDistance = vecDelta.LengthSqr();
+		
+	// we're not supposed to render sprites < flmindistance
+	if ( m_pFastSortInfo[pData->m_nStartSpriteIndex].m_flDistance < flMinDistance )
+	{
+		return;
+	}
+
 
 	int nCount = pData->m_nNumPendingSprites;
-
-	if  ( r_DrawDetailProps.GetInt() == 0 )
-		return;
 
 
 	CMatRenderContextPtr pRenderContext( materials );
@@ -2519,7 +2591,10 @@ void CDetailObjectSystem::RenderFastTranslucentDetailObjectsInLeaf( const Vector
 	}
 		
 	CMeshBuilder meshBuilder;
-	IMesh *pMesh = pRenderContext->GetDynamicMesh( true, NULL, NULL, pMaterial );
+	DetailPropFlashlightMode_t flashlightMode = DetailPropFlashlightMode();
+	IMesh *pMesh = pRenderContext->GetDynamicMesh( false /*flashlightMode != DPFM_MULTIPASS*/, NULL, NULL, pMaterial );
+
+
 
 	int nMaxVerts, nMaxIndices;
 	pRenderContext->GetMaxToRender( pMesh, false, &nMaxVerts, &nMaxIndices );
@@ -2528,9 +2603,6 @@ void CDetailObjectSystem::RenderFastTranslucentDetailObjectsInLeaf( const Vector
 	{
 		nMaxQuadsToDraw = nMaxVerts / 4;
 	}
-	
-	if ( nMaxQuadsToDraw == 0 )
-		return;
 		
 	int nQuadsToDraw = MIN( nCount, nMaxQuadsToDraw );
 	int nQuadsRemaining = nQuadsToDraw;
@@ -2548,13 +2620,14 @@ void CDetailObjectSystem::RenderFastTranslucentDetailObjectsInLeaf( const Vector
 		{
 			meshBuilder.End();
 			pMesh->Draw();
+			if( flashlightMode == DPFM_MULTIPASS )
+				shadowmgr->FlashlightDrawCallback( DrawMeshCallback, pMesh );
 			nQuadsRemaining = nQuadsToDraw;
 			meshBuilder.Begin( pMesh, MATERIAL_QUADS, nQuadsToDraw );
 		}
 		int nToDraw = MIN( nCount, nQuadsRemaining );
 		nCount -= nToDraw;
 		nQuadsRemaining -= nToDraw;
-
 		while( nToDraw-- )
 		{
 			// draw the sucker
@@ -2563,12 +2636,11 @@ void CDetailObjectSystem::RenderFastTranslucentDetailObjectsInLeaf( const Vector
 
 			FastSpriteQuadBuildoutBufferNonSIMDView_t const *pquad = pQuadBuffer+nSIMDIdx;
 
+			const Vector4D &vNormal = pquad->m_Normal;
 
 			// voodoo - since everything is in 4s, offset structure pointer by a couple of floats to handle sub-index
-			pquad = (FastSpriteQuadBuildoutBufferNonSIMDView_t const *) ( ( (intp) ( pquad ) )+ ( nSubIdx << 2 ) );
-
+			pquad = (FastSpriteQuadBuildoutBufferNonSIMDView_t const *) ( ( (int) ( pquad ) )+ ( nSubIdx << 2 ) );
 			uint8 const *pColorsCasted = reinterpret_cast<uint8 const *> ( pquad->m_Alpha );
-
 
 			uint8 color[4];
 			color[0] = pquad->m_RGBColor[0][0];
@@ -2576,35 +2648,31 @@ void CDetailObjectSystem::RenderFastTranslucentDetailObjectsInLeaf( const Vector
 			color[2] = pquad->m_RGBColor[0][2];
 			color[3] = pColorsCasted[MANTISSA_LSB_OFFSET];
 
-			DetailPropSpriteDict_t *pDict;
-#ifdef PLATFORM_64BITS
-			if( nSubIdx == 1 )
-				pDict = ((FastSpriteQuadBuildoutBufferNonSIMDView_t*)((intp)pquad+4))->m_pSpriteDefs[0];
-			else if( nSubIdx == 3 )
-				pDict = ((FastSpriteQuadBuildoutBufferNonSIMDView_t*)((intp)pquad-4))->m_pSpriteDefs[0];
-			else
-#endif
-				pDict = pquad->m_pSpriteDefs[0];
+			DetailPropSpriteDict_t *pDict = pquad->m_pSpriteDefs[0];
 
 			meshBuilder.Position3f( pquad->m_flX0[0], pquad->m_flY0[0], pquad->m_flZ0[0] );
 			meshBuilder.Color4ubv( color );
 			meshBuilder.TexCoord2f( 0, pDict->m_TexLR.x, pDict->m_TexLR.y );
-			meshBuilder.AdvanceVertex();
+			meshBuilder.Normal3fv( vNormal.Base() );
+			meshBuilder.AdvanceVertexF<VTX_HAVEPOS | VTX_HAVECOLOR | VTX_HAVENORMAL, 1>();
 
 			meshBuilder.Position3f( pquad->m_flX1[0], pquad->m_flY1[0], pquad->m_flZ1[0] );
 			meshBuilder.Color4ubv( color );
 			meshBuilder.TexCoord2f( 0, pDict->m_TexLR.x, pDict->m_TexUL.y );
-			meshBuilder.AdvanceVertex();
+			meshBuilder.Normal3fv( vNormal.Base() );
+			meshBuilder.AdvanceVertexF<VTX_HAVEPOS | VTX_HAVECOLOR | VTX_HAVENORMAL, 1>();
 
 			meshBuilder.Position3f( pquad->m_flX2[0], pquad->m_flY2[0], pquad->m_flZ2[0] );
 			meshBuilder.Color4ubv( color );
 			meshBuilder.TexCoord2f( 0, pDict->m_TexUL.x, pDict->m_TexUL.y );
-			meshBuilder.AdvanceVertex();
+			meshBuilder.Normal3fv( vNormal.Base() );
+			meshBuilder.AdvanceVertexF<VTX_HAVEPOS | VTX_HAVECOLOR | VTX_HAVENORMAL, 1>();
 
 			meshBuilder.Position3f( pquad->m_flX3[0], pquad->m_flY3[0], pquad->m_flZ3[0] );
 			meshBuilder.Color4ubv( color );
 			meshBuilder.TexCoord2f( 0, pDict->m_TexUL.x, pDict->m_TexLR.y );
-			meshBuilder.AdvanceVertex();
+			meshBuilder.Normal3fv( vNormal.Base() );
+			meshBuilder.AdvanceVertexF<VTX_HAVEPOS | VTX_HAVECOLOR | VTX_HAVENORMAL, 1>();
 			pDraw++;
 		}
 	}
@@ -2613,17 +2681,54 @@ void CDetailObjectSystem::RenderFastTranslucentDetailObjectsInLeaf( const Vector
 
 	meshBuilder.End();
 	pMesh->Draw();
+	if( flashlightMode == DPFM_MULTIPASS )
+		shadowmgr->FlashlightDrawCallback( DrawMeshCallback, pMesh );
+
+
 	pRenderContext->PopMatrix();
+
 }
 
 //-----------------------------------------------------------------------------
 // Renders a subset of the detail objects in a particular leaf (for interleaving with other translucent entities)
 //-----------------------------------------------------------------------------
-void CDetailObjectSystem::RenderTranslucentDetailObjectsInLeaf( const Vector &viewOrigin, const Vector &viewForward, const Vector &viewRight, const Vector &viewUp, int nLeaf, const Vector *pVecClosestPoint )
+void CDetailObjectSystem::RenderTranslucentDetailObjectsInLeaf( const DistanceFadeInfo_t &info, const Vector &viewOrigin, const Vector &viewForward, const Vector &viewRight, const Vector &viewUp, int nLeaf, const Vector *pVecClosestPoint )
 {
 	VPROF_BUDGET( "CDetailObjectSystem::RenderTranslucentDetailObjectsInLeaf", VPROF_BUDGETGROUP_DETAILPROP_RENDERING );
 
-	RenderFastTranslucentDetailObjectsInLeaf( viewOrigin, viewForward, viewRight, viewUp, nLeaf, pVecClosestPoint );
+	if  ( r_DrawDetailProps.GetInt() == 0 )
+		return;
+
+	DetailPropFlashlightMode_t flashlightMode = DetailPropFlashlightMode();
+	CFastDetailLeafSpriteList *pData = reinterpret_cast< CFastDetailLeafSpriteList *> (
+		ClientLeafSystem()->GetSubSystemDataInLeaf( nLeaf, CLSUBSYSTEM_DETAILOBJECTS ) );
+	if ( pData )
+	{
+		shadowmgr->PushSinglePassFlashlightStateEnabled( flashlightMode == DPFM_SINGLEPASS );
+		CMatRenderContextPtr pRenderContext( materials );
+		Assert( m_pFastSortInfo );
+		ICallQueue *pQueue = pRenderContext->GetCallQueue();
+		Vector cpnt = viewOrigin;
+		if ( pVecClosestPoint )
+		{
+			cpnt = *pVecClosestPoint;
+		}
+		if ( pQueue && r_ThreadedDetailProps.GetInt() )
+		{
+			pQueue->QueueCall( this, &CDetailObjectSystem::RenderFastTranslucentDetailObjectsInLeaf,
+							   pData, RefToVal( info ), viewOrigin, viewForward, viewRight, viewUp, 
+							   nLeaf, cpnt, m_bFirstLeaf );
+		}
+		else
+		{
+			RenderFastTranslucentDetailObjectsInLeaf( pData, info, viewOrigin, viewForward, viewRight, viewUp, 
+													  nLeaf, cpnt, m_bFirstLeaf );
+		}
+
+		m_bFirstLeaf = false;
+		shadowmgr->PopSinglePassFlashlightStateEnabled();
+	}
+
 	// We may have already sorted this leaf. If not, sort the leaf.
 	if ( m_nSortedLeaf != nLeaf )
 	{
@@ -2638,7 +2743,7 @@ void CDetailObjectSystem::RenderTranslucentDetailObjectsInLeaf( const Vector &vi
 			return;
 
 		// Sort detail sprites in each leaf independently; then render them
-		m_nSpriteCount = SortSpritesBackToFront( nLeaf, viewOrigin, viewForward, m_pSortInfo );
+		m_nSpriteCount = SortSpritesBackToFront( nLeaf, viewOrigin, info, m_pSortInfo );
 		Assert( m_nSpriteCount <= nSpriteCount );
 	}
 
@@ -2669,7 +2774,9 @@ void CDetailObjectSystem::RenderTranslucentDetailObjectsInLeaf( const Vector &vi
 	}
 
 	CMeshBuilder meshBuilder;
-	IMesh *pMesh = pRenderContext->GetDynamicMesh( true, NULL, NULL, pMaterial );
+	IMesh *pMesh = pRenderContext->GetDynamicMesh( flashlightMode != DPFM_MULTIPASS, NULL, NULL, pMaterial );
+
+	shadowmgr->PushSinglePassFlashlightStateEnabled( flashlightMode == DPFM_SINGLEPASS );
 
 	int nMaxVerts, nMaxIndices;
 	pRenderContext->GetMaxToRender( pMesh, false, &nMaxVerts, &nMaxIndices );
@@ -2681,10 +2788,6 @@ void CDetailObjectSystem::RenderTranslucentDetailObjectsInLeaf( const Vector &vi
 	{
 		nMaxQuadsToDraw = nMaxVerts / 4;
 	}
-
-	if ( nMaxQuadsToDraw == 0 )
-		return;
-
 	int nQuadsToDraw = nQuadCount;
 	if ( nQuadsToDraw > nMaxQuadsToDraw )
 	{
@@ -2702,6 +2805,8 @@ void CDetailObjectSystem::RenderTranslucentDetailObjectsInLeaf( const Vector &vi
 		{
 			meshBuilder.End();
 			pMesh->Draw();
+			if( flashlightMode == DPFM_MULTIPASS )
+				shadowmgr->FlashlightDrawCallback( DrawMeshCallback, pMesh );
 
 			nQuadCount = ( m_nSpriteCount - m_nFirstSprite ) * 4;
 			nQuadsToDraw = nQuadCount;
@@ -2714,119 +2819,116 @@ void CDetailObjectSystem::RenderTranslucentDetailObjectsInLeaf( const Vector &vi
 			nQuadsDrawn = 0;
 		}
 
-		model.DrawSprite( meshBuilder );
+		model.DrawSprite( meshBuilder, m_pSortInfo[m_nFirstSprite].m_nAlpha );
 		++m_nFirstSprite;
 		nQuadsDrawn += nQuadsInModel;
 	}
 	meshBuilder.End();
 	pMesh->Draw();
+	if( flashlightMode == DPFM_MULTIPASS )
+		shadowmgr->FlashlightDrawCallback( DrawMeshCallback, pMesh );
 
+	shadowmgr->PopSinglePassFlashlightStateEnabled();
  	pRenderContext->PopMatrix();
 }
 
 
 //-----------------------------------------------------------------------------
-// Gets called each view
+// Computes a distance fade factor (returns fade distance)
 //-----------------------------------------------------------------------------
-bool CDetailObjectSystem::EnumerateLeaf( int leaf, intp context )
+float CDetailObjectSystem::ComputeDetailFadeInfo( DistanceFadeInfo_t *pInfo )
 {
-	VPROF_BUDGET( "CDetailObjectSystem::EnumerateLeaf", VPROF_BUDGETGROUP_DETAILPROP_RENDERING );
-	Vector v;
-	int firstDetailObject, detailObjectCount;
+	C_BasePlayer *pLocal = C_BasePlayer::GetLocalPlayer();
+	float flFactor = pLocal ? pLocal->GetFOVDistanceAdjustFactor() : 1.0f;
+	float flDetailDist = m_flDetailFadeEnd / flFactor;
+	pInfo->m_flMaxDistSqr = flDetailDist * flDetailDist;
+	pInfo->m_flMinDistSqr = m_flDetailFadeStart / flFactor;
+	pInfo->m_flMinDistSqr *= pInfo->m_flMinDistSqr;
+	pInfo->m_flMinDistSqr = MIN( pInfo->m_flMinDistSqr, pInfo->m_flMaxDistSqr - 1  );
+	pInfo->m_flFalloffFactor = 1.0f / ( pInfo->m_flMaxDistSqr - pInfo->m_flMinDistSqr );
 
-	EnumContext_t* pCtx = (EnumContext_t*)context;
-	ClientLeafSystem()->DrawDetailObjectsInLeaf( leaf, pCtx->m_BuildWorldListNumber, 
-		firstDetailObject, detailObjectCount );
+	return flDetailDist;
+}
 
-	// Compute the translucency. Need to do it now cause we need to
-	// know that when we're rendering (opaque stuff is rendered first)
-	for ( int i = 0; i < detailObjectCount; ++i)
+
+//-----------------------------------------------------------------------------
+// Builds a list of renderable info for all detail objects to render
+//-----------------------------------------------------------------------------
+void CDetailObjectSystem::BuildRenderingData( DetailRenderableList_t &list, const SetupRenderInfo_t &info, float flDetailDist, const DistanceFadeInfo_t &fadeInfo )
+{
+	// Don't bother if we turned off detail props
+	if ( !GetClientMode()->ShouldDrawDetailObjects() || ( r_DrawDetailProps.GetInt() == 0 ) )
+		return;
+
+	// First, build the list of leaves which are within the appropriate range of detail dist
+	// [box/sphere tests of leaf bounds + sphere]
+	ISpatialQuery* pQuery = engine->GetBSPTreeQuery();
+
+	int nLeafCount = info.m_pWorldListInfo->m_LeafCount;
+	const WorldListLeafData_t *pLeafData = info.m_pWorldListInfo->m_pLeafDataList;
+	int *pValidLeafIndex = (int*)stackalloc( nLeafCount * sizeof(int) );
+	int nValidLeafs = pQuery->ListLeavesInSphereWithFlagSet(
+		pValidLeafIndex, info.m_vecRenderOrigin, flDetailDist, nLeafCount, 
+		(const uint16*)pLeafData, sizeof(WorldListLeafData_t), LEAF_FLAGS_CONTAINS_DETAILOBJECTS );
+
+	if ( nValidLeafs == 0 )
+		return;
+
+	// FIXME: This loop is necessary to deal with marking leaves as needing detail
+	// props. Won't fly in multicore
+	int nFirstDetailObject, nDetailObjectCount;
+	for ( int i = 0; i < nValidLeafs; ++i )
 	{
-		// Calculate distance (badly)
-		CDetailModel& model = m_DetailObjects[firstDetailObject+i];
-		VectorSubtract( model.GetRenderOrigin(), pCtx->m_vViewOrigin, v );
+		int nListLeafIndex = pValidLeafIndex[ i ];
+		int nLeaf = pLeafData[ nListLeafIndex ].leafIndex;
 
-		float sqDist = v.LengthSqr();
+		// FIXME: Inherently not threadsafe ( use of nBuildWorldListNumber )
+		g_pClientLeafSystem->DrawDetailObjectsInLeaf( nLeaf, info.m_nDetailBuildFrame, 
+			nFirstDetailObject, nDetailObjectCount );
+	}
 
-		model.SetAlpha( 255 );
-		if ( sqDist < m_flCurMaxSqDist )
+	// No detail objects? No work remaining.
+	if ( m_DetailObjects.Count() == 0 )
+		return;
+
+	// Then, for each leaf within range, compute alpha factor
+	float flDistSqr;
+	const Vector &vViewOrigin = info.m_vecRenderOrigin;
+	for ( int i = 0; i < nValidLeafs; ++i )
+	{
+		int nListLeafIndex = pValidLeafIndex[ i ];
+		int nLeaf = pLeafData[ nListLeafIndex ].leafIndex;
+
+		// FIXME: Inherently not threadsafe ( use of nBuildWorldListNumber )
+		g_pClientLeafSystem->GetDetailObjectsInLeaf( nLeaf, nFirstDetailObject, nDetailObjectCount );
+
+		// Compute the translucency. Need to do it now cause we need to
+		// know that when we're rendering (opaque stuff is rendered first)
+		for ( int j = 0; j < nDetailObjectCount; ++j)
 		{
-			if ( sqDist > m_flCurFadeSqDist ) 
-			{
-				model.SetAlpha( m_flCurFalloffFactor * ( m_flCurMaxSqDist - sqDist ) );
-			}
-			else
-			{
-				model.SetAlpha( 255 );
-			}
-			
+			// Calculate distance (badly)
+			CDetailModel& model = m_DetailObjects[ nFirstDetailObject + j ];
+			if ( model.GetType() != DETAIL_PROP_TYPE_MODEL )
+				continue;
+
+			uint8 nAlpha = ComputeDistanceFade( &flDistSqr, fadeInfo, vViewOrigin, model.GetRenderOrigin() );
+			if ( nAlpha == 0 )
+				continue;
+
+			// FIXME: Should we return a center + radius so culling can happen?
+			// right now, detail objects are not even frustum culled
+			int d = list.AddToTail();
+			DetailRenderableInfo_t &info = list[d];
+			info.m_pRenderable = &model;
+			info.m_InstanceData.m_nAlpha = nAlpha;
+			info.m_nRenderGroup = ( ( nAlpha != 255 ) || model.IsTranslucent() ) ? RENDER_GROUP_TRANSLUCENT : RENDER_GROUP_OPAQUE;
+			info.m_nLeafIndex = nListLeafIndex;
+
+			// FIXME: Inherently not threadsafe, not to mention not easily SIMDable
+			// move this to happen in DrawModel()
+
 			// Perform screen alignment if necessary.
 			model.ComputeAngles();
 		}
-		else
-		{
-			model.SetAlpha( 0 );
-		}
 	}
-	return true;
 }
-
-
-//-----------------------------------------------------------------------------
-// Gets called each view
-//-----------------------------------------------------------------------------
-void CDetailObjectSystem::BuildDetailObjectRenderLists( const Vector &vViewOrigin )
-{
-	VPROF_BUDGET( "CDetailObjectSystem::BuildDetailObjectRenderLists", VPROF_BUDGETGROUP_DETAILPROP_RENDERING );
-	
-	if (!g_pClientMode->ShouldDrawDetailObjects() || (r_DrawDetailProps.GetInt() == 0))
-		return;
-
-	// Don't bother doing any of this if the level doesn't have detail props.
-	if ( ( ! m_pFastSpriteData ) && ( m_DetailObjects.Count() == 0 ) )
-		return;
-
-	EnumContext_t ctx;
-	ctx.m_vViewOrigin = vViewOrigin;
- 	ctx.m_BuildWorldListNumber = view->BuildWorldListsNumber();
-
-	// We need to recompute translucency information for all detail props
-	for (int i = m_DetailObjectDict.Size(); --i >= 0; )
-	{
-		if (modelinfo->ModelHasMaterialProxy( m_DetailObjectDict[i].m_pModel ))
-		{
-			modelinfo->RecomputeTranslucency( m_DetailObjectDict[i].m_pModel, 0, 0, NULL );
-		}
-	}
-
-	float factor = 1.0f;
-	C_BasePlayer *local = C_BasePlayer::GetLocalPlayer();
-	if ( local )
-	{
-		factor = local->GetFOVDistanceAdjustFactor();
-	}
-
-	// Compute factors to optimize rendering of the detail models
-	m_flCurMaxSqDist = cl_detaildist.GetFloat() * cl_detaildist.GetFloat();
-	m_flCurFadeSqDist = cl_detaildist.GetFloat() - cl_detailfade.GetFloat();
-
-	m_flCurMaxSqDist /= factor;
-	m_flCurFadeSqDist /= factor;
-
-	if ( m_flCurFadeSqDist > 0)
-	{
-		m_flCurFadeSqDist *= m_flCurFadeSqDist;
-	}
-	else 
-	{
-		m_flCurFadeSqDist = 0;
-	}
-	m_flCurFadeSqDist = MIN( m_flCurFadeSqDist, m_flCurMaxSqDist -1  );
-	m_flCurFalloffFactor = 255.0f / ( m_flCurMaxSqDist - m_flCurFadeSqDist );
-
-
-	ISpatialQuery* pQuery = engine->GetBSPTreeQuery();
-	pQuery->EnumerateLeavesInSphere( CurrentViewOrigin(), 
-									 cl_detaildist.GetFloat(), this, (intp)&ctx );
-}
-

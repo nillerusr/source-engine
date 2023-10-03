@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -16,19 +16,19 @@
 
 #include "SoundEmitterSystem/isoundemittersystembase.h"
 #include "tier0/vprof.h"
-#include "collisionutils.h"
-#include "clienteffectprecachesystem.h"
+#include "CollisionUtils.h"
+#include "precache_register.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 //FIXME: All these functions will be moved out to FX_Main.CPP or a individual folder
 
-CLIENTEFFECT_REGISTER_BEGIN( PrecacheEffectsTest )
-CLIENTEFFECT_MATERIAL( "effects/spark" )
-CLIENTEFFECT_MATERIAL( "effects/gunshiptracer" )
-CLIENTEFFECT_MATERIAL( "effects/bluespark" )
-CLIENTEFFECT_REGISTER_END()
+PRECACHE_REGISTER_BEGIN( GLOBAL, PrecacheEffectsTest )
+PRECACHE( MATERIAL, "effects/spark" )
+PRECACHE( MATERIAL, "effects/gunshiptracer" )
+PRECACHE( MATERIAL, "effects/bluespark" )
+PRECACHE_REGISTER_END()
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -208,19 +208,22 @@ CBulletWhizTimer g_BulletWhiz( "CBulletWhizTimer" );
 //-----------------------------------------------------------------------------
 #define LISTENER_HEIGHT 24
 
+ConVar cl_tracer_whiz_distance( "cl_tracer_whiz_distance", "72" );	// putting TRACER_MAX_HEAR_DIST on a cvar, so KellyT can find a good value
+
 void FX_TracerSound( const Vector &start, const Vector &end, int iTracerType )
 {
 	const char *pszSoundName = NULL;
 	float flWhizDist = TRACER_MAX_HEAR_DIST;
 	float flMinWhizTime = TRACER_SOUND_TIME_MIN;
 	float flMaxWhizTime = TRACER_SOUND_TIME_MAX;
-	Vector vecListenOrigin = MainViewOrigin();
+	HACK_GETLOCALPLAYER_GUARD( "FX_TracerSound" );
+	Vector vecListenOrigin = MainViewOrigin(GET_ACTIVE_SPLITSCREEN_SLOT());
 	switch( iTracerType )
 	{
 	case TRACER_TYPE_DEFAULT:
 		{
 			pszSoundName = "Bullets.DefaultNearmiss";
-			flWhizDist = 24;
+			flWhizDist = cl_tracer_whiz_distance.GetFloat();	// was 24
 
 			Ray_t bullet, listener;
 			bullet.Init( start, end );
@@ -231,7 +234,7 @@ void FX_TracerSound( const Vector &start, const Vector &end, int iTracerType )
 
 			float s, t;
 			IntersectRayWithRay( bullet, listener, s, t );
-			t = clamp( t, 0.f, 1.f );
+			t = clamp( t, 0, 1 );
 			vecListenOrigin.z -= t * LISTENER_HEIGHT;
 		}
 		break;
@@ -278,7 +281,7 @@ void FX_TracerSound( const Vector &start, const Vector &end, int iTracerType )
 
 		CLocalPlayerFilter filter;
 		enginesound->EmitSound(	filter, SOUND_FROM_WORLD, CHAN_STATIC, params.soundname, 
-			params.volume, SNDLVL_TO_ATTN(params.soundlevel), 0, params.pitch, 0, &start, &shotDir, NULL);
+			params.volume, SNDLVL_TO_ATTN(params.soundlevel), 0, params.pitch, &start, &shotDir, false);
 	}
 
 	// FIXME: This has a bad behavior when both bullet + strider shots are whizzing by at the same time
@@ -298,15 +301,24 @@ void FX_Tracer( Vector& start, Vector& end, int velocity, bool makeWhiz )
 
 	VectorSubtract( end, start, dir );
 	dist = VectorNormalize( dir );
+	int minDist;
+	float flMinWidth;
+	float flMaxWidth;
 
+		
 	// Don't make short tracers.
-	if ( dist >= 256 )
+	minDist = 256;
+	flMinWidth = 0.75;
+	flMaxWidth = 0.9;
+
+
+	if ( dist >= minDist )
 	{
 		float length = random->RandomFloat( 64.0f, 128.0f );
 		float life = ( dist + length ) / velocity;	//NOTENOTE: We want the tail to finish its run as well
 		
 		//Add it
-		FX_AddDiscreetLine( start, dir, velocity, length, dist, random->RandomFloat( 0.75f, 0.9f ), life, "effects/spark" );
+		FX_AddDiscreetLine( start, dir, velocity, length, dist, random->RandomFloat( flMinWidth, flMaxWidth ), life, "effects/spark" );
 	}
 
 	if( makeWhiz )

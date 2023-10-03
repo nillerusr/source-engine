@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -87,6 +87,7 @@ void CAI_BlendedMotor::MoveStart()
 		SetLayerPlaybackRate( m_iPrimaryLayer, 0.0 );
 		SetLayerNoRestore( m_iPrimaryLayer, true );
 		SetLayerCycle( m_iPrimaryLayer, m_flStartCycle, m_flStartCycle );
+		SetLayerNoEvents( m_iPrimaryLayer, true );
 
 		m_flSecondaryWeight = 0.0;
 	}
@@ -186,6 +187,7 @@ void CAI_BlendedMotor::MoveContinue()
 	SetLayerPlaybackRate( m_iPrimaryLayer, 0.0 );
 	SetLayerNoRestore( m_iPrimaryLayer, true );
 	SetLayerCycle( m_iPrimaryLayer, m_flStartCycle, m_flStartCycle );
+	SetLayerNoEvents( m_iPrimaryLayer, true );
 
 	m_bDeceleratingToGoal = false;
 }
@@ -301,20 +303,20 @@ void CAI_BlendedMotor::SetMoveScriptAnim( float flNewSpeed )
 
 	SetPlaybackRate( m_flCurrRate );
 	// calc weight of idle animation layer that suppresses the run animation
-	float flWeight = 0.0f;
-	if (GetIdealSpeed() > 0.0f)
+	float flWeight = 0.0;
+	if (GetIdealSpeed() > 0.0)
 	{
-		flWeight = 1.0f - (flNewSpeed / (GetIdealSpeed()  * GetPlaybackRate()));
+		flWeight = 1.0 - (flNewSpeed / (GetIdealSpeed()  * GetPlaybackRate()));
 	}
-	if (flWeight < 0.0f)
+	if (flWeight < 0.0)
 	{
 		m_flCurrRate = flNewSpeed / GetIdealSpeed();
-		m_flCurrRate = clamp( m_flCurrRate, 0.0f, 1.0f );
+		m_flCurrRate = clamp( m_flCurrRate, 0.0, 1.0 );
 		SetPlaybackRate( m_flCurrRate );
 		flWeight = 0.0;
 	}
 	// Msg("weight %.3f rate %.3f\n", flWeight, m_flCurrRate );
-	m_flCurrRate = MIN( m_flCurrRate + (1.0 - m_flCurrRate) * 0.8f, 1.0f );
+	m_flCurrRate = MIN( m_flCurrRate + (1.0 - m_flCurrRate) * 0.8, 1.0 );
 
 	if (m_nSavedGoalActivity == ACT_INVALID)
 	{
@@ -389,6 +391,7 @@ void CAI_BlendedMotor::SetMoveScriptAnim( float flNewSpeed )
 				SetLayerPlaybackRate( m_iSecondaryLayer, 1.0 );
 			}
 			SetLayerNoRestore( m_iSecondaryLayer, true );
+			SetLayerNoEvents( m_iSecondaryLayer, true );
 			m_flSecondaryWeight = 0.0;
 		}
 
@@ -448,6 +451,8 @@ int CAI_BlendedMotor::GetInteriorSequence( int fromSequence )
 	m_nPrevMovementSequence = sequence;
 
 	KeyValues *seqKeyValues = GetOuter()->GetSequenceKeyValues( sequence );
+	KeyValues::AutoDelete autodelete_key( seqKeyValues );
+
 	// Msg("sequence %d : %s (%d)\n", sequence,  GetOuter()->GetSequenceName( sequence ), seqKeyValues != NULL );
 	if (seqKeyValues)
 	{
@@ -634,7 +639,7 @@ AIMotorMoveResult_t CAI_BlendedMotor::MoveFlyExecute( const AILocalMoveGoal_t &m
 	VectorMA( vecStart, flTotalDist, move.dir, vecEnd );
 
 	AIMoveTrace_t moveTrace;
-	GetMoveProbe()->MoveLimit( NAV_FLY, vecStart, vecEnd, MASK_NPCSOLID, NULL, &moveTrace );
+	GetMoveProbe()->MoveLimit( NAV_FLY, vecStart, vecEnd, GetOuter()->GetAITraceMask(), NULL, &moveTrace );
 	if ( pTraceResult )
 		*pTraceResult = moveTrace;
 	
@@ -1054,7 +1059,7 @@ void CAI_BlendedMotor::BuildVelocityScript( const AILocalMoveGoal_t &move )
 		}
 
 		m_flPredictiveSpeedAdjust = 1.1 - fabs( flDelta );
-		m_flPredictiveSpeedAdjust = clamp( m_flPredictiveSpeedAdjust, (flHeight > 0.0f) ? 0.5f : 0.8f, 1.0f );
+		m_flPredictiveSpeedAdjust = clamp( m_flPredictiveSpeedAdjust, (flHeight > 0.0) ? 0.5 : 0.8, 1.0 );
 
 		/*
 		if ((GetOuter()->m_debugOverlays & OVERLAY_NPC_SELECTED_BIT))
@@ -1080,16 +1085,16 @@ void CAI_BlendedMotor::BuildVelocityScript( const AILocalMoveGoal_t &move )
 		}
 
 		float newSpeedAdjust = 1.1 - fabs( flDelta );
-		newSpeedAdjust = clamp( newSpeedAdjust, (flHeight > 0.0f) ? 0.5f : 0.8f, 1.0f );
+		newSpeedAdjust = clamp( newSpeedAdjust, (flHeight > 0.0) ? 0.5 : 0.8, 1.0 );
 
 		// debounce speed adjust
 		if (newSpeedAdjust < m_flReactiveSpeedAdjust)
 		{
-			m_flReactiveSpeedAdjust = m_flReactiveSpeedAdjust * 0.2f + newSpeedAdjust * 0.8f;
+			m_flReactiveSpeedAdjust = m_flReactiveSpeedAdjust * 0.2 + newSpeedAdjust * 0.8;
 		}
 		else
 		{
-			m_flReactiveSpeedAdjust = m_flReactiveSpeedAdjust * 0.5f + newSpeedAdjust * 0.5f;
+			m_flReactiveSpeedAdjust = m_flReactiveSpeedAdjust * 0.5 + newSpeedAdjust * 0.5;
 		}
 
 		// filter through origins
@@ -1186,14 +1191,14 @@ void CAI_BlendedMotor::BuildVelocityScript( const AILocalMoveGoal_t &move )
 
 				// FIXME: information about what the jump should look like isn't stored in the waypoints
 				// this'll need to call 
-				//    GetMoveProbe()->MoveLimit( NAV_JUMP, GetLocalOrigin(), GetPath()->CurWaypointPos(), MASK_NPCSOLID, GetNavTargetEntity(), &moveTrace );
+				//    GetMoveProbe()->MoveLimit( NAV_JUMP, GetLocalOrigin(), GetPath()->CurWaypointPos(), GetOuter()->GetAITraceMask(), GetNavTargetEntity(), &moveTrace );
 				// to get how far/fast the jump will be, but this is also stateless, so it'd call it per frame.
 				// So far it's not clear that the moveprobe doesn't also call this.....
 
 				{
 					float minJumpHeight = 0;
 					float maxHorzVel = MAX( GetCurSpeed(), 100 );
-					float gravity = GetCurrentGravity() * GetOuter()->GetGravity();
+					float gravity = sv_gravity.GetFloat() * GetOuter()->GetGravity();
 					Vector vecApex;
 					Vector rawJumpVel = GetMoveProbe()->CalcJumpLaunchVelocity(script.vecLocation, pNext->vecLocation, gravity, &minJumpHeight, maxHorzVel, &vecApex );
 
@@ -1311,7 +1316,7 @@ void CAI_BlendedMotor::BuildVelocityScript( const AILocalMoveGoal_t &move )
 
 		if (dv > 0.0)
 		{
-			// find time, distance to accel to next max vel
+			// find time, distance to accel to next MAX vel
 			float t1 = dv / idealAccel;
 			float d1 = m_scriptMove[i].flMaxVelocity * t1 + 0.5 * (idealAccel) * t1 * t1;
 
@@ -1337,7 +1342,7 @@ void CAI_BlendedMotor::BuildVelocityScript( const AILocalMoveGoal_t &move )
 
 		if (dv < 0.0)
 		{
-			// find time, distance to decal to next max vel
+			// find time, distance to decal to next MAX vel
 			float t1 = -dv / idealAccel;
 			float d1 = m_scriptMove[i].flMaxVelocity * t1 + 0.5 * (idealAccel) * t1 * t1;
 
@@ -1462,7 +1467,7 @@ void CAI_BlendedMotor::BuildVelocityScript( const AILocalMoveGoal_t &move )
 		}
 	}
 
-	// clamp min velocities
+	// clamp MIN velocities
 	for (i = 0; i < m_scriptMove.Count(); i++)
 	{
 		m_scriptMove[i].flMaxVelocity = MAX( m_scriptMove[i].flMaxVelocity, MIN_VELOCITY );
@@ -1739,11 +1744,11 @@ bool CAI_BlendedMotor::AddTurnGesture( float flYD )
 			SetLayerPlaybackRate( iLayer, 1.0 );
 			float actualDuration = GetOuter()->GetLayerDuration( iLayer );
 
-			float rate = random->RandomFloat( 0.5f, 1.1f );
+			float rate = random->RandomFloat( 0.5, 1.1 );
 			float diff = fabs( flYD );
-			float speed = (diff / (turnCompletion * actualDuration / rate)) * 0.1f;
+			float speed = (diff / (turnCompletion * actualDuration / rate)) * 0.1;
 
-			speed = clamp( speed, 15.f, 35.f );
+			speed = clamp( speed, 15, 35 );
 			speed = MIN( speed, diff );
 
 			actualDuration = (diff / (turnCompletion * speed)) * 0.1 ;

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -36,6 +36,7 @@ public:
 	CTeamControlPointMaster();
 
 	// Used to find game specific entities
+	virtual const char *GetTriggerAreaCaptureName( void ) { return "trigger_capture_area"; }
 	virtual const char *GetControlPointName( void ) { return "team_control_point"; }
 	virtual const char *GetControlPointRoundName( void ) { return "team_control_point_round"; }
 
@@ -57,7 +58,7 @@ public:
 
 	void FireTeamWinOutput( int iWinningTeam );
 
-	bool IsInRound( CTeamControlPoint *pPoint );
+	bool PointCanBeCapped( CTeamControlPoint *pPoint );
 	void CheckWinConditions( void );
 
 	bool WouldNewCPOwnerWinGame( CTeamControlPoint *pPoint, int iNewOwner );
@@ -120,14 +121,11 @@ public:
 
 	bool ShouldScorePerCapture( void ){ return m_bScorePerCapture; }
 	bool ShouldPlayAllControlPointRounds( void ){ return m_bPlayAllRounds; }
-	int NumPlayableControlPointRounds( void ); // checks to see if there are any more rounds to play (but doesn't actually "get" one to play)
+	bool FindControlPointRoundToPlay( void ); // checks to see if there are any more rounds to play (but doesn't actually "get" one to play)
 	
 //	void ListRounds( void );
 
 	float GetPartialCapturePointRate( void );
-
-	void SetLastOwnershipChangeTime( float m_flTime ) { m_flLastOwnershipChangeTime = m_flTime; }
-	float GetLastOwnershipChangeTime( void ) { return m_flLastOwnershipChangeTime; }
 
 private:
 	void EXPORT CPMThink( void );
@@ -181,8 +179,6 @@ private:
 	void InputSetWinner( inputdata_t &inputdata );
 	void InputSetWinnerAndForceCaps( inputdata_t &inputdata );
 	void InputSetCapLayout( inputdata_t &inputdata );
-	void InputSetCapLayoutCustomPositionX( inputdata_t &inputdata );
-	void InputSetCapLayoutCustomPositionY( inputdata_t &inputdata );
 
 	void InternalSetWinner( int iTeam );
 
@@ -191,9 +187,6 @@ private:
 	string_t m_iszTeamBaseIcons[MAX_TEAMS];
 	int m_iTeamBaseIcons[MAX_TEAMS];
 	string_t m_iszCapLayoutInHUD;
-
-	float m_flCustomPositionX;
-	float m_flCustomPositionY;
 
 	int m_iInvalidCapWinner;
 	bool m_bSwitchTeamsOnWin;
@@ -206,7 +199,6 @@ private:
 	COutputEvent m_OnWonByTeam2;
 
 	float m_flPartialCapturePointsRate;
-	float m_flLastOwnershipChangeTime;
 };
 
 extern CUtlVector< CHandle<CTeamControlPointMaster> >		g_hControlPointMasters;

@@ -1,10 +1,11 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: This is a panel which is rendered on top of an entity
 //
 // $Revision: $
 // $NoKeywords: $
 //=============================================================================//
+
 #include "cbase.h"
 #include "vgui_EntityPanel.h"
 #include "ienginevgui.h"
@@ -16,6 +17,10 @@
 #include <vgui/IVGui.h>
 #include "cdll_util.h"
 #include "view.h"
+
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
 
 //-----------------------------------------------------------------------------
 // constructor

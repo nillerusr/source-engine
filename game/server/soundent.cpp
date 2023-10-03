@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -58,7 +58,7 @@ void CSound::Clear ( void )
 	m_flExpireTime		= 0;
 	m_bNoExpirationTime = false;
 	m_iNext				= SOUNDLIST_EMPTY;
-	m_iNextAudible		= 0;
+	m_iNextAudible		= SOUNDLIST_EMPTY;
 }
 
 //=========================================================
@@ -115,6 +115,20 @@ bool CSound::FIsScent ( void )
 	default:
 		return false;
 	}
+}
+
+
+//---------------------------------------------------------
+// Returns the sound origin
+//---------------------------------------------------------
+const Vector& CSound::GetSoundOrigin( void )
+{
+	if ( ( m_iType & SOUND_CONTEXT_FOLLOW_OWNER ) != 0 )
+	{
+		if( m_hOwner.Get() != NULL )
+			return m_hOwner->GetAbsOrigin();
+	}
+	return m_vecOrigin;
 }
 
 
@@ -387,6 +401,27 @@ void CSoundEnt::FreeSound ( int iSound, int iPrevious )
 	g_pSoundEnt->m_iFreeSound = iSound;
 }
 
+
+void CSoundEnt::FreeSound( int iSound )
+{
+	// no sound ent!
+	if ( !g_pSoundEnt || ( iSound == SOUNDLIST_EMPTY ) )
+		return;
+
+	int iPrevious = SOUNDLIST_EMPTY;
+	for ( int i = g_pSoundEnt->m_iActiveSound; i != SOUNDLIST_EMPTY; iPrevious = i, i = g_pSoundEnt->m_SoundPool[ i ].m_iNext )
+	{
+		if ( i == iSound )
+		{
+			FreeSound( iSound, iPrevious );
+			return;
+		}
+	}
+
+	Warning( "Attempted to free unknown sound %d!\n", iSound );
+}
+
+
 //=========================================================
 // IAllocSound - moves a sound from the Free list to the 
 // Active list returns the index of the alloc'd sound
@@ -426,12 +461,12 @@ int CSoundEnt::IAllocSound( void )
 // InsertSound - Allocates a free sound and fills it with 
 // sound info.
 //=========================================================
-void CSoundEnt::InsertSound ( int iType, const Vector &vecOrigin, int iVolume, float flDuration, CBaseEntity *pOwner, int soundChannelIndex, CBaseEntity *pSoundTarget )
+int CSoundEnt::InsertSound ( int iType, const Vector &vecOrigin, int iVolume, float flDuration, CBaseEntity *pOwner, int soundChannelIndex, CBaseEntity *pSoundTarget )
 {
 	int	iThisSound;
 
 	if ( !g_pSoundEnt )
-		return;
+		return SOUNDLIST_EMPTY;
 
 	if( soundChannelIndex == SOUNDENT_CHANNEL_UNSPECIFIED )
 	{
@@ -448,7 +483,7 @@ void CSoundEnt::InsertSound ( int iType, const Vector &vecOrigin, int iVolume, f
 	if ( iThisSound == SOUNDLIST_EMPTY )
 	{
 		DevMsg( "Could not AllocSound() for InsertSound() (Game DLL)\n" );
-		return;
+		return SOUNDLIST_EMPTY;
 	}
 
 	CSound *pSound;
@@ -459,8 +494,16 @@ void CSoundEnt::InsertSound ( int iType, const Vector &vecOrigin, int iVolume, f
 	pSound->m_iType = iType;
 	pSound->m_iVolume = iVolume;
 	pSound->m_flOcclusionScale = 0.5;
-	pSound->m_flExpireTime = gpGlobals->curtime + flDuration;
-	pSound->m_bNoExpirationTime = false;
+	if ( flDuration != FLT_MAX )
+	{
+		pSound->m_flExpireTime = gpGlobals->curtime + flDuration;
+		pSound->m_bNoExpirationTime = false;
+	}
+	else
+	{
+		pSound->m_flExpireTime = FLT_MAX;
+		pSound->m_bNoExpirationTime = true;
+	}
 	pSound->m_hOwner.Set( pOwner );
 	pSound->m_hTarget.Set( pSoundTarget );
 	pSound->m_ownerChannelIndex = soundChannelIndex;
@@ -485,6 +528,8 @@ void CSoundEnt::InsertSound ( int iType, const Vector &vecOrigin, int iVolume, f
 	{
 		Msg("  Added Danger Sound! Duration:%f (Time:%f)\n", flDuration, gpGlobals->curtime );
 	}
+
+	return iThisSound;
 }
 
 //---------------------------------------------------------
@@ -525,7 +570,7 @@ void CSoundEnt::Initialize ( void )
 	// In MP, have one for each player and 32 extras.
 	int nTotalSoundsInPool = MAX_WORLD_SOUNDS_SP;
 	if ( gpGlobals->maxClients > 1 )
-		nTotalSoundsInPool = MIN( MAX_WORLD_SOUNDS_MP, gpGlobals->maxClients + 32 );
+		nTotalSoundsInPool = MIN( ( int ) MAX_WORLD_SOUNDS_MP, gpGlobals->maxClients + 32 );
 
 	if ( gpGlobals->maxClients+16 > nTotalSoundsInPool )
 	{

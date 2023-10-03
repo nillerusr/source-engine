@@ -1,13 +1,18 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 // $NoKeywords: $
 //=============================================================================//
+
 #include "cbase.h"
-#include "materialsystem/imaterialproxy.h"
-#include "materialsystem/imaterial.h"
-#include "materialsystem/imaterialvar.h"
+#include "materialsystem/IMaterialProxy.h"
+#include "materialsystem/IMaterial.h"
+#include "materialsystem/IMaterialVar.h"
+
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
 
 // $monitorTextureVar
 class CMonitorMaterialProxy : public IMaterialProxy
@@ -57,4 +62,4 @@ void CMonitorMaterialProxy::OnBind( void *pC_BaseEntity )
 	}
 }
 
-EXPOSE_INTERFACE( CMonitorMaterialProxy, IMaterialProxy, "Monitor" IMATERIAL_PROXY_INTERFACE_VERSION );
+EXPOSE_MATERIAL_PROXY( CMonitorMaterialProxy, Monitor );

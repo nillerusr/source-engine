@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Default schedules.
 //
@@ -97,6 +97,7 @@ void CAI_BaseNPC::InitDefaultScheduleSR(void)
 	ADD_DEF_SCHEDULE( "SCHED_RUN_FROM_ENEMY",				SCHED_RUN_FROM_ENEMY);
 	ADD_DEF_SCHEDULE( "SCHED_RUN_FROM_ENEMY_FALLBACK",		SCHED_RUN_FROM_ENEMY_FALLBACK);
 	ADD_DEF_SCHEDULE( "SCHED_MOVE_TO_WEAPON_RANGE",			SCHED_MOVE_TO_WEAPON_RANGE);
+	ADD_DEF_SCHEDULE( "SCHED_MOVE_OFF_OF_NPC",				SCHED_MOVE_OFF_OF_NPC);
 	ADD_DEF_SCHEDULE( "SCHED_ESTABLISH_LINE_OF_FIRE",		SCHED_ESTABLISH_LINE_OF_FIRE);
 	ADD_DEF_SCHEDULE( "SCHED_SHOOT_ENEMY_COVER",			SCHED_SHOOT_ENEMY_COVER);
 	ADD_DEF_SCHEDULE( "SCHED_ESTABLISH_LINE_OF_FIRE_FALLBACK",		SCHED_ESTABLISH_LINE_OF_FIRE_FALLBACK);
@@ -194,6 +195,7 @@ bool CAI_BaseNPC::LoadDefaultSchedules(void)
 	AI_LOAD_DEF_SCHEDULE( CAI_BaseNPC,					SCHED_RUN_FROM_ENEMY);
 	AI_LOAD_DEF_SCHEDULE( CAI_BaseNPC,					SCHED_RUN_FROM_ENEMY_FALLBACK);
 	AI_LOAD_DEF_SCHEDULE( CAI_BaseNPC,					SCHED_MOVE_TO_WEAPON_RANGE);
+	AI_LOAD_DEF_SCHEDULE( CAI_BaseNPC,					SCHED_MOVE_OFF_OF_NPC );
 	AI_LOAD_DEF_SCHEDULE( CAI_BaseNPC,					SCHED_ESTABLISH_LINE_OF_FIRE);
 	AI_LOAD_DEF_SCHEDULE( CAI_BaseNPC,					SCHED_SHOOT_ENEMY_COVER);
 	AI_LOAD_DEF_SCHEDULE( CAI_BaseNPC,					SCHED_ESTABLISH_LINE_OF_FIRE_FALLBACK);
@@ -477,8 +479,10 @@ public:
 		g_AI_SensedObjectsManager.Term();
 		g_pAINetworkManager->DeleteAllAINetworks();
 		g_AI_SchedulesManager.DeleteAllSchedules();
+		g_AI_AgentSchedulesManager.DeleteAllSchedules();
 		g_AI_SquadManager.DeleteAllSquads();
 		g_AI_SchedulesManager.DestroyStringRegistries();
+		g_AI_AgentSchedulesManager.DestroyStringRegistries();
 	}
 };
 
@@ -1904,6 +1908,19 @@ AI_DEFINE_SCHEDULE
 	"		COND_CAN_MELEE_ATTACK2"
 	"		COND_HEAR_DANGER"
 );
+
+AI_DEFINE_SCHEDULE
+(
+ SCHED_MOVE_OFF_OF_NPC,
+
+ "	Tasks "
+ "		TASK_GET_PATH_OFF_OF_NPC				0"
+ "		TASK_RUN_PATH							0"
+ "		TASK_WAIT_FOR_MOVEMENT					0"
+ ""
+ "	Interrupts "
+ ""
+ );
 
 //=========================================================
 // ESTABLISH_LINE_OF_FIRE

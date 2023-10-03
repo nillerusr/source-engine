@@ -1,14 +1,19 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
 // $NoKeywords: $
 //
 //===========================================================================//
+
 #include "cbase.h"
 #include "igamesystem.h"
 #include "toolframework/iserverenginetools.h"
 #include "init_factory.h"
+
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
 
 //-----------------------------------------------------------------------------
 // Purpose: This is an autogame system which is used to call back into the engine at appropriate points

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -10,13 +10,15 @@
 #include "c_pixel_visibility.h"
 #include "materialsystem/imesh.h"
 #include "materialsystem/imaterial.h"
-#include "clienteffectprecachesystem.h"
+#include "precache_register.h"
 #include "view.h"
 #include "viewrender.h"
 #include "utlmultilist.h"
 #include "vprof.h"
-#include "icommandline.h"
-#include "sourcevr/isourcevirtualreality.h"
+
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
 
 static void PixelvisDrawChanged( IConVar *pPixelvisVar, const char *pOld, float flOldValue );
 
@@ -25,22 +27,6 @@ ConVar r_dopixelvisibility( "r_dopixelvisibility", "1" );
 ConVar r_drawpixelvisibility( "r_drawpixelvisibility", "0", 0, "Show the occlusion proxies", PixelvisDrawChanged );
 ConVar r_pixelvisibility_spew( "r_pixelvisibility_spew", "0" );
 
-#ifdef OSX
-	// GLMgr will set this one to "1" if it senses the new post-10.6.4 driver (m_hasPerfPackage1)
-	ConVar gl_can_query_fast( "gl_can_query_fast", "0" );
-	
-	static bool	HasFastQueries( void )
-	{
-		return gl_can_query_fast.GetBool();
-	}
-#else
-	// non OSX path
-	static bool	HasFastQueries( void )
-	{
-		return true;
-	}
-#endif
-
 extern ConVar building_cubemaps;
 
 #ifndef _X360
@@ -48,6 +34,38 @@ const float MIN_PROXY_PIXELS = 5.0f;
 #else
 const float MIN_PROXY_PIXELS = 25.0f;
 #endif
+
+
+extern view_id_t CurrentViewID();
+
+struct OcclusionHandleViewIDPair_t
+{
+	OcclusionQueryObjectHandle_t hOcclusionHandle;
+	int iViewID;
+	int iLastFrameRendered;
+};
+
+struct OcclusionQueryHiddenData_t
+{
+	COcclusionQuerySet *pOwner;
+	CUtlVector<OcclusionHandleViewIDPair_t> occlusionHandles[MAX_SPLITSCREEN_PLAYERS];
+};
+
+static CUtlVector<OcclusionQueryHiddenData_t> s_OcclusionQueries;
+static inline int FindQueryHandlePairIndex( OcclusionQueryHiddenData_t *pData, int iViewID, int iSplitScreenSlot )
+{
+	int iPairCount = pData->occlusionHandles[iSplitScreenSlot].Count();
+	OcclusionHandleViewIDPair_t *pPairs = pData->occlusionHandles[iSplitScreenSlot].Base();
+	
+	for( int i = 0; i != iPairCount; ++i )
+	{
+		if( pPairs[i].iViewID == iViewID )
+			return i;
+	}
+
+	return pData->occlusionHandles[iSplitScreenSlot].InvalidIndex();
+}
+
 
 float PixelVisibility_DrawProxy( IMatRenderContext *pRenderContext, OcclusionQueryObjectHandle_t queryHandle, Vector origin, float scale, float proxyAspect, IMaterial *pMaterial, bool screenspace )
 {
@@ -231,14 +249,18 @@ public:
 	CPixelVisibilityQuery();
 	~CPixelVisibilityQuery();
 	bool IsValid();
-	bool IsForView( int viewID );
+	bool IsForView( int nPlayerSlot, int viewID );
 	bool IsActive();
 	float GetFractionVisible( float fadeTimeInv );
 	void IssueQuery( IMatRenderContext *pRenderContext, float proxySize, float proxyAspect, IMaterial *pMaterial, bool sizeIsScreenSpace );
 	void IssueCountingQuery( IMatRenderContext *pRenderContext, float proxySize, float proxyAspect, IMaterial *pMaterial, bool sizeIsScreenSpace );
 	void ResetOcclusionQueries();
-	void SetView( int viewID ) 
-	{ 
+	void SetView( int nPlayerSlot, int viewID ) 
+	{
+		// This is necessary since player slot is stored in 2 bits
+		COMPILE_TIME_ASSERT( MAX_SPLITSCREEN_PLAYERS <= 4 );
+
+		Assert( nPlayerSlot >= 0 && nPlayerSlot < MAX_SPLITSCREEN_PLAYERS );
 		m_viewID = viewID;	
 		m_brightnessTarget = 0.0f;
 		m_clipFraction = 1.0f;
@@ -246,6 +268,7 @@ public:
 		m_failed = false;
 		m_wasQueriedThisFrame = false;
 		m_hasValidQueryResults = false;
+		m_nPlayerSlot = nPlayerSlot;
 	}
 
 public:
@@ -259,16 +282,17 @@ private:
 	unsigned short					m_wasQueriedThisFrame : 1;
 	unsigned short					m_failed : 1;
 	unsigned short					m_hasValidQueryResults : 1;
-	unsigned short					m_pad : 13;
+	unsigned short					m_nPlayerSlot : 2;
+	unsigned short					m_pad : 11;
 	unsigned short					m_viewID;
 
-	friend void PixelVisibility_ShiftVisibilityViews( int iSourceViewID, int iDestViewID ); //need direct access to private data to make shifting smooth
+	friend void PixelVisibility_ShiftVisibilityViews( int nPlayerSlot, int iSourceViewID, int iDestViewID ); //need direct access to private data to make shifting smooth
 };
 
 CPixelVisibilityQuery::CPixelVisibilityQuery()
 {
 	CMatRenderContextPtr pRenderContext( materials );
-	SetView( 0xFFFF );
+	SetView( 0, 0xFFFF );
 	m_queryHandle = pRenderContext->CreateOcclusionQueryObject();
 	m_queryHandleCount = pRenderContext->CreateOcclusionQueryObject();
 }
@@ -314,18 +338,20 @@ bool CPixelVisibilityQuery::IsValid()
 {
 	return (m_queryHandle != INVALID_OCCLUSION_QUERY_OBJECT_HANDLE) ? true : false;
 }
-bool CPixelVisibilityQuery::IsForView( int viewID ) 
+
+bool CPixelVisibilityQuery::IsForView( int nPlayerSlot, int viewID ) 
 { 
-	return m_viewID == viewID ? true : false; 
+	return ( m_viewID == viewID ) && ( nPlayerSlot == m_nPlayerSlot ); 
 }
 
 bool CPixelVisibilityQuery::IsActive()
 {
-	return (gpGlobals->framecount - m_frameIssued) > 1 ? false : true;
+	return ( gpGlobals->framecount - m_frameIssued ) > 1 ? false : true;
 }
 
 float CPixelVisibilityQuery::GetFractionVisible( float fadeTimeInv )
 {
+
 	if ( !IsValid() )
 		return 0.0f;
 
@@ -345,7 +371,7 @@ float CPixelVisibilityQuery::GetFractionVisible( float fadeTimeInv )
 
 			if ( r_pixelvisibility_spew.GetBool() && CurrentViewID() == 0 ) 
 			{
-				DevMsg( 1, "Pixels visible: %d (qh:%d) Pixels possible: %d (qh:%d) (frame:%d)\n", pixels, (int)(intp)m_queryHandle, pixelsPossible, (int)(intp)m_queryHandleCount, gpGlobals->framecount );
+				DevMsg( 1, "Pixels visible: %d (qh:%d) Pixels possible: %d (qh:%d) (frame:%d)\n", pixels, m_queryHandle, pixelsPossible, m_queryHandleCount, gpGlobals->framecount );
 			}
 
 			if ( pixels < 0 || pixelsPossible < 0 )
@@ -376,7 +402,7 @@ float CPixelVisibilityQuery::GetFractionVisible( float fadeTimeInv )
 
 			if ( r_pixelvisibility_spew.GetBool() && CurrentViewID() == 0 ) 
 			{
-				DevMsg( 1, "Pixels visible: %d (qh:%d) (frame:%d)\n", pixels, (int)(intp)m_queryHandle, gpGlobals->framecount );
+				DevMsg( 1, "Pixels visible: %d (qh:%d) (frame:%d)\n", pixels, m_queryHandle, gpGlobals->framecount );
 			}
 
 			if ( pixels < 0 )
@@ -415,23 +441,24 @@ void CPixelVisibilityQuery::IssueQuery( IMatRenderContext *pRenderContext, float
 
 		if ( r_pixelvisibility_spew.GetBool() && CurrentViewID() == 0 ) 
 		{
-			DevMsg( 1, "Draw Proxy: qh:%d org:<%d,%d,%d> (frame:%d)\n", (int)(intp)m_queryHandle, (int)m_origin[0], (int)m_origin[1], (int)m_origin[2], gpGlobals->framecount );
+			DevMsg( 1, "Draw Proxy: qh:%d org:<%d,%d,%d> (frame:%d)\n", m_queryHandle, (int)m_origin[0], (int)m_origin[1], (int)m_origin[2], gpGlobals->framecount );
 		}
 
 		m_clipFraction = PixelVisibility_DrawProxy( pRenderContext, m_queryHandle, m_origin, proxySize, proxyAspect, pMaterial, sizeIsScreenSpace );
 		if ( m_clipFraction < 0 )
 		{
 			// NOTE: In this case, the proxy wasn't issued cause it was offscreen
-			// can't set the m_frameissued field since that would cause it to get marked as failed
+			// can't set the m_frameissued[ slot ] field since that would cause it to get marked as failed
 			m_clipFraction = 0;
 			m_wasQueriedThisFrame = false;
 			m_failed = false;
 			return;
 		}
 	}
-#ifndef PORTAL // FIXME: In portal we query visibility multiple times per frame because of portal renders!
-	Assert ( ( m_frameIssued != gpGlobals->framecount ) || UseVR() );
-#endif
+
+	// In split screen we can issue these multiple times
+	Assert( m_frameIssued != gpGlobals->framecount);
+
 
 	m_frameIssued = gpGlobals->framecount;
 	m_wasQueriedThisFrame = false;
@@ -458,10 +485,10 @@ void CPixelVisibilityQuery::IssueCountingQuery( IMatRenderContext *pRenderContex
 }
 
 //Precache the effects
-CLIENTEFFECT_REGISTER_BEGIN( PrecacheOcclusionProxy )
-CLIENTEFFECT_MATERIAL( "engine/occlusionproxy" )
-CLIENTEFFECT_MATERIAL( "engine/occlusionproxy_countdraw" )
-CLIENTEFFECT_REGISTER_END()
+PRECACHE_REGISTER_BEGIN( GLOBAL, PrecacheOcclusionProxy )
+PRECACHE( MATERIAL, "engine/occlusionproxy" )
+PRECACHE( MATERIAL, "engine/occlusionproxy_countdraw" )
+PRECACHE_REGISTER_END()
 
 class CPixelVisibilitySystem : public CAutoGameSystem
 {
@@ -476,8 +503,8 @@ public:
 	float GetFractionVisible( const pixelvis_queryparams_t &params, pixelvis_handle_t *queryHandle );
 	void EndView();
 	void EndScene();
-	unsigned short FindQueryForView( CPixelVisSet *pSet, int viewID );
-	unsigned short FindOrCreateQueryForView( CPixelVisSet *pSet, int viewID );
+	unsigned short FindQueryForView( CPixelVisSet *pSet, int nPlayerSlot, int viewID );
+	unsigned short FindOrCreateQueryForView( CPixelVisSet *pSet, int nPlayerSlot, int viewID );
 
 	void DeleteUnusedQueries( CPixelVisSet *pSet, bool bDeleteAll );
 	void DeleteUnusedSets( bool bDeleteAll );
@@ -507,7 +534,7 @@ private:
 	bool		m_drawQueries;
 
 
-	friend void PixelVisibility_ShiftVisibilityViews( int iSourceViewID, int iDestViewID ); //need direct access to private data to make shifting smooth
+	friend void PixelVisibility_ShiftVisibilityViews( int nPlayerSlot, int iSourceViewID, int iDestViewID ); //need direct access to private data to make shifting smooth
 };
 
 static CPixelVisibilitySystem g_PixelVisibilitySystem;
@@ -520,10 +547,7 @@ CPixelVisibilitySystem::CPixelVisibilitySystem() : CAutoGameSystem( "CPixelVisib
 // Level init, shutdown
 void CPixelVisibilitySystem::LevelInitPreEntity()
 {
-	bool fastqueries = HasFastQueries();
-	// printf("\n ** fast queries: %s **", fastqueries?"true":"false" );
-	
-	m_hwCanTestGlows = r_dopixelvisibility.GetBool() && fastqueries && engine->GetDXSupportLevel() >= 80;
+	m_hwCanTestGlows = r_dopixelvisibility.GetBool();
 	if ( m_hwCanTestGlows )
 	{
 		CMatRenderContextPtr pRenderContext( materials );
@@ -568,12 +592,16 @@ float CPixelVisibilitySystem::GetFractionVisible( const pixelvis_queryparams_t &
 	{
 		return GlowSightDistance( params.position, true ) > 0 ? 1.0f : 0.0f;
 	}
+
 	if ( CurrentViewID() < 0 )
 		return 0.0f;
 
+	ASSERT_LOCAL_PLAYER_RESOLVABLE();
+	int nPlayerSlot = GET_ACTIVE_SPLITSCREEN_SLOT();
+
 	CPixelVisSet *pSet = FindOrCreatePixelVisSet( params, queryHandle );
 	Assert( pSet );
-	unsigned short node = FindOrCreateQueryForView( pSet, CurrentViewID() );
+	unsigned short node = FindOrCreateQueryForView( pSet, nPlayerSlot, CurrentViewID() );
 	m_queryList[node].m_origin = params.position;
 	float fraction = m_queryList[node].GetFractionVisible( pSet->fadeTimeInv );
 	pSet->MarkActive();
@@ -588,6 +616,9 @@ void CPixelVisibilitySystem::EndView()
 	if ( m_setList.Head( m_activeSetsList ) == m_setList.InvalidIndex() )
 		return;
 
+	ASSERT_LOCAL_PLAYER_RESOLVABLE();
+	int nPlayerSlot = GET_ACTIVE_SPLITSCREEN_SLOT();
+
 	CMatRenderContextPtr pRenderContext( materials );
 
 	IMaterial *pProxy = m_drawQueries ? m_pDrawMaterial : m_pProxyMaterial;
@@ -601,7 +632,7 @@ void CPixelVisibilitySystem::EndView()
 		while( node != m_setList.InvalidIndex() )
 		{
 			CPixelVisSet *pSet = &m_setList[node];
-			unsigned short queryNode = FindQueryForView( pSet, CurrentViewID() );
+			unsigned short queryNode = FindQueryForView( pSet, nPlayerSlot, CurrentViewID() );
 			if ( queryNode != m_queryList.InvalidIndex() )
 			{
 				m_queryList[queryNode].IssueCountingQuery( pRenderContext, pSet->proxySize, pSet->proxyAspect, pProxy, pSet->sizeIsScreenSpace );
@@ -616,7 +647,7 @@ void CPixelVisibilitySystem::EndView()
 		while( node != m_setList.InvalidIndex() )
 		{
 			CPixelVisSet *pSet = &m_setList[node];
-			unsigned short queryNode = FindQueryForView( pSet, CurrentViewID() );
+			unsigned short queryNode = FindQueryForView( pSet, nPlayerSlot, CurrentViewID() );
 			if ( queryNode != m_queryList.InvalidIndex() )
 			{
 				m_queryList[queryNode].IssueQuery( pRenderContext, pSet->proxySize, pSet->proxyAspect, pProxy, pSet->sizeIsScreenSpace );
@@ -631,26 +662,26 @@ void CPixelVisibilitySystem::EndScene()
 	DeleteUnusedSets(false);
 }
 
-unsigned short CPixelVisibilitySystem::FindQueryForView( CPixelVisSet *pSet, int viewID )
+unsigned short CPixelVisibilitySystem::FindQueryForView( CPixelVisSet *pSet, int nPlayerSlot, int viewID )
 {
 	unsigned short node = m_queryList.Head( pSet->queryList );
 	while ( node != m_queryList.InvalidIndex() )
 	{
-		if ( m_queryList[node].IsForView( viewID ) )
+		if ( m_queryList[node].IsForView( nPlayerSlot, viewID ) )
 			return node;
 		node = m_queryList.Next( node );
 	}
 	return m_queryList.InvalidIndex();
 }
-unsigned short CPixelVisibilitySystem::FindOrCreateQueryForView( CPixelVisSet *pSet, int viewID )
+unsigned short CPixelVisibilitySystem::FindOrCreateQueryForView( CPixelVisSet *pSet, int nPlayerSlot, int viewID )
 {
-	unsigned short node = FindQueryForView( pSet, viewID );
+	unsigned short node = FindQueryForView( pSet, nPlayerSlot, viewID );
 	if ( node != m_queryList.InvalidIndex() )
 		return node;
 
 	node = AllocQuery();
 	m_queryList.LinkToHead( pSet->queryList, node );
-	m_queryList[node].SetView( viewID );
+	m_queryList[node].SetView( nPlayerSlot, viewID );
 	return node;
 }
 
@@ -817,8 +848,6 @@ void PixelVisibility_EndCurrentView()
 
 void PixelVisibility_EndScene()
 {
-	tmZone( TELEMETRY_LEVEL0, TMZF_NONE, "%s", __FUNCTION__ );
-
 	g_PixelVisibilitySystem.EndScene();
 }
 
@@ -836,13 +865,13 @@ float PixelVisibility_FractionVisible( const pixelvis_queryparams_t &params, pix
 
 bool PixelVisibility_IsAvailable()
 {
-	bool fastqueries = HasFastQueries();
-	return r_dopixelvisibility.GetBool() && fastqueries && g_PixelVisibilitySystem.SupportsOcclusion();
+	return r_dopixelvisibility.GetBool() && g_PixelVisibilitySystem.SupportsOcclusion();
 }
+
 
 //this originally called a class function of CPixelVisibiltySystem to keep the work clean, but that function needed friend access to CPixelVisibilityQuery 
 //and I didn't want to make the whole class a friend or shift all the functions and class declarations around in this file
-void PixelVisibility_ShiftVisibilityViews( int iSourceViewID, int iDestViewID )
+void PixelVisibility_ShiftVisibilityViews( int nPlayerSlot, int iSourceViewID, int iDestViewID )
 {
 	unsigned short node = g_PixelVisibilitySystem.m_setList.Head( g_PixelVisibilitySystem.m_activeSetsList );
 	while ( node != g_PixelVisibilitySystem.m_setList.InvalidIndex() )
@@ -850,8 +879,8 @@ void PixelVisibility_ShiftVisibilityViews( int iSourceViewID, int iDestViewID )
 		unsigned short next = g_PixelVisibilitySystem.m_setList.Next( node );
 		CPixelVisSet *pSet = &g_PixelVisibilitySystem.m_setList[node];
 
-		unsigned short iSourceQueryNode = g_PixelVisibilitySystem.FindQueryForView( pSet, iSourceViewID );
-		unsigned short iDestQueryNode = g_PixelVisibilitySystem.FindQueryForView( pSet, iDestViewID );
+		unsigned short iSourceQueryNode = g_PixelVisibilitySystem.FindQueryForView( pSet, nPlayerSlot, iSourceViewID );
+		unsigned short iDestQueryNode = g_PixelVisibilitySystem.FindQueryForView( pSet, nPlayerSlot, iDestViewID );
 
 		if( iDestQueryNode != g_PixelVisibilitySystem.m_queryList.InvalidIndex() )
 		{
@@ -873,7 +902,239 @@ void PixelVisibility_ShiftVisibilityViews( int iSourceViewID, int iDestViewID )
 
 		node = next;
 	}
+
+	for( int i = 0; i != s_OcclusionQueries.Count(); ++i )
+	{
+		int iPairCount = s_OcclusionQueries[i].occlusionHandles[nPlayerSlot].Count();
+		OcclusionHandleViewIDPair_t *pPairs = s_OcclusionQueries[i].occlusionHandles[nPlayerSlot].Base();
+		int iSourceIndex, iDestIndex, iInvalidIndex;
+		iDestIndex = iSourceIndex = iInvalidIndex = s_OcclusionQueries[i].occlusionHandles[nPlayerSlot].InvalidIndex();
+		for( int j = 0; j != iPairCount; ++j )
+		{
+			if( pPairs[j].iViewID == iSourceViewID )
+			{
+				iSourceIndex = j;
+				if( iDestIndex != iInvalidIndex )
+					break;
+			}
+
+			if( pPairs[j].iViewID == iDestViewID )
+			{
+				iDestIndex = j;
+				if( iSourceIndex != iInvalidIndex )
+					break;
+			}
+		}
+
+		if( iSourceIndex != iInvalidIndex )
+		{
+			//change view id on source
+			pPairs[iSourceIndex].iViewID = iDestViewID;
+		}
+		
+		if( iDestIndex != iInvalidIndex )
+		{
+			//destroy dest
+			materials->GetRenderContext()->DestroyOcclusionQueryObject( pPairs[iDestIndex].hOcclusionHandle );
+			s_OcclusionQueries[i].occlusionHandles[nPlayerSlot].FastRemove( iDestIndex );
+		}
+	}
 }
+
+
+
+COcclusionQuerySet::COcclusionQuerySet( void )
+{	
+	OcclusionQueryHiddenData_t &data = s_OcclusionQueries[s_OcclusionQueries.AddToTail()];
+	data.pOwner = this;
+	m_pManagedData = &data;
+
+	//handle base address shifting
+	if( s_OcclusionQueries.Count() > 1 )
+	{
+		OcclusionQueryHiddenData_t &baseData = s_OcclusionQueries[0];
+		if( baseData.pOwner->m_pManagedData != &baseData )
+		{
+			for( int i = 0; i != s_OcclusionQueries.Count(); ++i )
+			{
+				s_OcclusionQueries[i].pOwner->m_pManagedData = &s_OcclusionQueries[i];
+			}
+		}
+	}
+}
+
+COcclusionQuerySet::~COcclusionQuerySet( void )
+{
+	int iIndex;
+	for( iIndex = 0; iIndex != s_OcclusionQueries.Count(); ++iIndex )
+	{
+		if( &s_OcclusionQueries[iIndex] == m_pManagedData )
+			break;
+	}
+	if( iIndex != s_OcclusionQueries.Count() )
+	{
+		//destroy query handles
+		{
+			CMatRenderContextPtr pRenderContext( materials );
+			OcclusionQueryHiddenData_t &data = s_OcclusionQueries[iIndex];
+			for( int i = 0; i != MAX_SPLITSCREEN_PLAYERS; ++i )
+			{
+				for( int j = 0; j != data.occlusionHandles[i].Count(); ++j )
+				{
+					pRenderContext->DestroyOcclusionQueryObject( data.occlusionHandles[i].Element(j).hOcclusionHandle );
+				}
+			}
+		}
+
+		s_OcclusionQueries.FastRemove( iIndex );
+		if( s_OcclusionQueries.Count() != 0 )
+		{
+			s_OcclusionQueries[iIndex].pOwner->m_pManagedData = &s_OcclusionQueries[iIndex];
+			//handle base address shifting
+			if( s_OcclusionQueries.Count() > 1 )
+			{
+				OcclusionQueryHiddenData_t &baseData = s_OcclusionQueries[iIndex == 0 ? 1 : 0];
+				if( baseData.pOwner->m_pManagedData != &baseData )
+				{
+					for( int i = 0; i != s_OcclusionQueries.Count(); ++i )
+					{
+						s_OcclusionQueries[i].pOwner->m_pManagedData = &s_OcclusionQueries[i];
+					}
+				}
+			}
+		}
+	}
+}
+
+
+
+void COcclusionQuerySet::BeginQueryDrawing( int iViewID, int iSplitScreenSlot )
+{
+	OcclusionQueryHiddenData_t *pData = (OcclusionQueryHiddenData_t *)m_pManagedData;
+
+	int iIndex = FindQueryHandlePairIndex( pData, iViewID, iSplitScreenSlot );
+	if( iIndex == pData->occlusionHandles[iSplitScreenSlot].InvalidIndex() )
+	{
+		//create a new one
+		iIndex = pData->occlusionHandles[iSplitScreenSlot].AddToTail();
+		OcclusionHandleViewIDPair_t &Entry = pData->occlusionHandles[iSplitScreenSlot].Element(iIndex);
+		Entry.iViewID = iViewID;
+		Entry.hOcclusionHandle = materials->GetRenderContext()->CreateOcclusionQueryObject();	
+		materials->GetRenderContext()->ResetOcclusionQueryObject( Entry.hOcclusionHandle );
+	}
+
+	materials->GetRenderContext()->BeginOcclusionQueryDrawing( pData->occlusionHandles[iSplitScreenSlot].Element(iIndex).hOcclusionHandle );
+	pData->occlusionHandles[iSplitScreenSlot].Element(iIndex).iLastFrameRendered = gpGlobals->framecount;
+}
+
+void COcclusionQuerySet::BeginQueryDrawing( void )
+{
+	return BeginQueryDrawing( CurrentViewID(), GET_ACTIVE_SPLITSCREEN_SLOT() );
+}
+
+
+
+void COcclusionQuerySet::EndQueryDrawing( int iViewID, int iSplitScreenSlot )
+{
+	OcclusionQueryHiddenData_t *pData = (OcclusionQueryHiddenData_t *)m_pManagedData;
+
+	int iIndex = FindQueryHandlePairIndex( pData, iViewID, iSplitScreenSlot );
+	if( iIndex != pData->occlusionHandles[iSplitScreenSlot].InvalidIndex() )
+	{
+		materials->GetRenderContext()->EndOcclusionQueryDrawing( pData->occlusionHandles[iSplitScreenSlot].Element(iIndex).hOcclusionHandle );
+	}
+}
+
+void COcclusionQuerySet::EndQueryDrawing( void )
+{
+	return EndQueryDrawing( CurrentViewID(), GET_ACTIVE_SPLITSCREEN_SLOT() );
+}
+
+
+
+int COcclusionQuerySet::QueryNumPixelsRendered( int iViewID, int iSplitScreenSlot )
+{
+	OcclusionQueryHiddenData_t *pData = (OcclusionQueryHiddenData_t *)m_pManagedData;
+
+	int iIndex = FindQueryHandlePairIndex( pData, iViewID, iSplitScreenSlot );
+	if( iIndex != pData->occlusionHandles[iSplitScreenSlot].InvalidIndex() )
+	{
+		return materials->GetRenderContext()->OcclusionQuery_GetNumPixelsRendered( pData->occlusionHandles[iSplitScreenSlot].Element(iIndex).hOcclusionHandle );
+	}
+
+	return 0;
+}
+
+int COcclusionQuerySet::QueryNumPixelsRendered( void )
+{
+	return QueryNumPixelsRendered( CurrentViewID(), GET_ACTIVE_SPLITSCREEN_SLOT() );
+}
+
+
+
+float COcclusionQuerySet::QueryPercentageOfScreenRendered( int iViewID, int iSplitScreenSlot )
+{
+	OcclusionQueryHiddenData_t *pData = (OcclusionQueryHiddenData_t *)m_pManagedData;
+
+	int iIndex = FindQueryHandlePairIndex( pData, iViewID, iSplitScreenSlot );
+	if( iIndex != pData->occlusionHandles[iSplitScreenSlot].InvalidIndex() )
+	{
+		int iX, iY, iWidth, iHeight;
+		materials->GetRenderContext()->GetViewport( iX, iY, iWidth, iHeight );
+		return ((float)materials->GetRenderContext()->OcclusionQuery_GetNumPixelsRendered( pData->occlusionHandles[iSplitScreenSlot].Element(iIndex).hOcclusionHandle )) / ((float)(iWidth * iHeight));
+	}
+
+	return 0.0f;
+}
+
+float COcclusionQuerySet::QueryPercentageOfScreenRendered( void )
+{
+	return QueryPercentageOfScreenRendered( CurrentViewID(), GET_ACTIVE_SPLITSCREEN_SLOT() );
+}
+
+int COcclusionQuerySet::QueryNumPixelsRenderedForAllViewsLastFrame( int iSplitScreenSlot )
+{
+	OcclusionQueryHiddenData_t *pData = (OcclusionQueryHiddenData_t *)m_pManagedData;
+	int iMatchFrame = gpGlobals->framecount - 1;
+	int iResult = 0;
+	CMatRenderContextPtr pRenderContext( materials );
+	
+	for( int i = 0; i != pData->occlusionHandles[iSplitScreenSlot].Count(); ++i )
+	{
+		if( pData->occlusionHandles[iSplitScreenSlot].Element(i).iLastFrameRendered == iMatchFrame )
+		{
+			iResult += pRenderContext->OcclusionQuery_GetNumPixelsRendered( pData->occlusionHandles[iSplitScreenSlot].Element(i).hOcclusionHandle );
+		}
+	}
+
+	return iResult;
+}
+
+int COcclusionQuerySet::QueryNumPixelsRenderedForAllViewsLastFrame( void )
+{
+	return QueryNumPixelsRenderedForAllViewsLastFrame( GET_ACTIVE_SPLITSCREEN_SLOT() );
+}
+
+
+int COcclusionQuerySet::GetLastFrameDrawn( int iViewID, int iSplitScreenSlot )
+{
+	OcclusionQueryHiddenData_t *pData = (OcclusionQueryHiddenData_t *)m_pManagedData;
+
+	int iIndex = FindQueryHandlePairIndex( pData, iViewID, iSplitScreenSlot );
+	if( iIndex != pData->occlusionHandles[iSplitScreenSlot].InvalidIndex() )
+	{
+		return pData->occlusionHandles[iSplitScreenSlot].Element(iIndex).iLastFrameRendered;
+	}
+
+	return -1;
+}
+
+int COcclusionQuerySet::GetLastFrameDrawn( void )
+{
+	return GetLastFrameDrawn( CurrentViewID(), GET_ACTIVE_SPLITSCREEN_SLOT() );
+}
+
+
 
 CON_COMMAND( pixelvis_debug, "Dump debug info" )
 {

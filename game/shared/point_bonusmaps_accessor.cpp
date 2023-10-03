@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -17,7 +17,7 @@
 
 // See interface.h/.cpp for specifics:  basically this ensures that we actually Sys_UnloadModule the dll and that we don't call Sys_LoadModule 
 //  over and over again.
-static CDllDemandLoader g_GameUI( "GameUI" );
+static CDllDemandLoader g_GameUI( "gameui" );
 
 #ifndef CLIENT_DLL
 
@@ -66,17 +66,24 @@ void CPointBonusMapsAccessor::Activate( void )
 
 void CPointBonusMapsAccessor::InputUnlock( inputdata_t& inputdata )
 {
+#if 0
 	if ( m_pGameUI )
-		m_pGameUI->BonusMapUnlock( m_String_tFileName.ToCStr(), m_String_tMapName.ToCStr() );	
+	{
+		m_pGameUI->BonusMapUnlock( m_String_tFileName.ToCStr(), m_String_tMapName.ToCStr() );
+	}
+#endif
 }
 
 void CPointBonusMapsAccessor::InputComplete( inputdata_t& inputdata )
 {
 	if ( m_pGameUI )
 	{
-		m_pGameUI->BonusMapComplete( m_String_tFileName.ToCStr(), m_String_tMapName.ToCStr() );
+		int iNumAdvancedComplete = 0;
 
-		int iNumAdvancedComplete = m_pGameUI->BonusMapNumAdvancedCompleted();
+#if 0
+		m_pGameUI->BonusMapComplete( m_String_tFileName.ToCStr(), m_String_tMapName.ToCStr() );
+		iNumAdvancedComplete = m_pGameUI->BonusMapNumAdvancedCompleted();
+#endif
 
 		IGameEvent *event = gameeventmanager->CreateEvent( "advanced_map_complete" );
 		if ( event )
@@ -89,8 +96,10 @@ void CPointBonusMapsAccessor::InputComplete( inputdata_t& inputdata )
 
 void CPointBonusMapsAccessor::InputSave( inputdata_t& inputdata )
 {
+#if 0
 	if ( m_pGameUI )
 		m_pGameUI->BonusMapDatabaseSave();
+#endif
 }
 
 #endif
@@ -103,10 +112,12 @@ void BonusMapChallengeUpdate( const char *pchFileName, const char *pchMapName, c
 		IGameUI *pGameUI = (IGameUI *) gameUIFactory(GAMEUI_INTERFACE_VERSION, NULL );
 		if ( pGameUI )
 		{
-			pGameUI->BonusMapChallengeUpdate( pchFileName, pchMapName, pchChallengeName, iBest );
+			int piNumMedals[ 3 ] = {0};
 
-			int piNumMedals[ 3 ];
+#if 0
+			pGameUI->BonusMapChallengeUpdate( pchFileName, pchMapName, pchChallengeName, iBest );
 			pGameUI->BonusMapNumMedals( piNumMedals );
+#endif
 
 			IGameEvent *event = gameeventmanager->CreateEvent( "challenge_map_complete" );
 			if ( event )
@@ -122,6 +133,7 @@ void BonusMapChallengeUpdate( const char *pchFileName, const char *pchMapName, c
 
 void BonusMapChallengeNames( char *pchFileName, char *pchMapName, char *pchChallengeName )
 {
+#if 0
 	CreateInterfaceFn gameUIFactory = g_GameUI.GetFactory();
 	if ( gameUIFactory )
 	{
@@ -131,10 +143,12 @@ void BonusMapChallengeNames( char *pchFileName, char *pchMapName, char *pchChall
 			pGameUI->BonusMapChallengeNames( pchFileName, pchMapName, pchChallengeName );
 		}	
 	}
+#endif
 }
 
 void BonusMapChallengeObjectives( int &iBronze, int &iSilver, int &iGold )
 {
+#if 0
 	CreateInterfaceFn gameUIFactory = g_GameUI.GetFactory();
 	if ( gameUIFactory )
 	{
@@ -144,4 +158,5 @@ void BonusMapChallengeObjectives( int &iBronze, int &iSilver, int &iGold )
 			pGameUI->BonusMapChallengeObjectives( iBronze, iSilver, iGold );
 		}
 	}
+#endif
 }

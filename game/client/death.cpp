@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright (c) 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Draws the death notices
 //
@@ -9,13 +9,13 @@
 #include "hudelement.h"
 #include "c_playerresource.h"
 #include "iclientmode.h"
-#include <vgui_controls/Controls.h>
+#include <vgui_controls/controls.h>
 #include <vgui_controls/Panel.h>
 #include <vgui/ISurface.h>
 #include <vgui/ILocalize.h>
 #include <game/client/iviewport.h>
 #include <igameevents.h>
-#include <KeyValues.h>
+#include <keyvalues.h>
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -58,7 +58,7 @@ DECLARE_HUDELEMENT( CHudDeathNotice );
 CHudDeathNotice::CHudDeathNotice( const char *pElementName ) :
 	CHudElement( pElementName ), BaseClass( NULL, "HudDeathNotice" )
 {
-	vgui::Panel *pParent = g_pClientMode->GetViewport();
+	vgui::Panel *pParent = GetClientMode()->GetViewport();
 	SetParent( pParent );
 
 	SetHiddenBits( HIDEHUD_MISCSTATUS );
@@ -108,7 +108,7 @@ void CHudDeathNotice::Init( void )
 //-----------------------------------------------------------------------------
 void CHudDeathNotice::VidInit( void )
 {
-	m_iconD_skull = gHUD.GetIcon( "d_skull" );
+	m_iconD_skull = HudIcons().GetIcon( "d_skull" );
 }
 
 //-----------------------------------------------------------------------------
@@ -241,7 +241,7 @@ void CHudDeathNotice::FireGameEvent( KeyValues * event)
 		rgDeathNoticeList[i].iTeamKill = true;
 
 	// try and find the death identifier in the icon list
-	rgDeathNoticeList[i].iconDeath = gHUD.GetIcon( killedwith );
+	rgDeathNoticeList[i].iconDeath = HudIcons().GetIcon( killedwith );
 	if ( !rgDeathNoticeList[i].iconDeath )
 	{
 		// can't find it, so use the default skull & crossbones icon
@@ -289,7 +289,7 @@ void CHudDeathNotice::FireGameEvent( KeyValues * event)
 		if ( !strcmp( killedwith+2, "gauss" ) )
 			Q_strncpy( killedwith, "d_tau cannon", sizeof( killedwith ) );
 
-		Msg( "%s", killedwith+2 ); // skip over the "d_" part
+		Msg( killedwith+2 ); // skip over the "d_" part
 	}
 
 	Msg( "\n" );

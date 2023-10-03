@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -11,7 +11,7 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-#if !defined( NO_ENTITY_PREDICTION )
+#if !defined( NO_ENTITY_PREDICTION ) && defined( USE_PREDICTABLEID )
 //-----------------------------------------------------------------------------
 // Purpose: Helper class for resetting instance numbers, etc.
 //-----------------------------------------------------------------------------
@@ -20,6 +20,7 @@ class CPredictableIdHelper
 public:
 	CPredictableIdHelper()
 	{
+		memset( m_Entries, 0, sizeof( m_Entries ) );
 		Reset( -1 );
 	}
 
@@ -27,7 +28,6 @@ public:
 	{
 		m_nCurrentCommand = command;
 		m_nCount = 0;
-		memset( m_Entries, 0, sizeof( m_Entries ) );
 	}
 
 	int		AddEntry( int command, int hash )
@@ -58,7 +58,7 @@ private:
 		int		count;
 	};
 
-	entry			*FindOrAddEntry( int hash )
+	entry *FindOrAddEntry( int hash )
 	{
 		int i;
 		for ( i = 0; i < m_nCount; i++ )

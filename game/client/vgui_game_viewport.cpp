@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -28,7 +28,11 @@ public:
 	// Init, shutdown
 	virtual bool Init()
 	{
-		g_pClientMode->Layout();
+		for ( int hh = 0; hh < MAX_SPLITSCREEN_PLAYERS; ++hh )
+		{
+			ACTIVE_SPLITSCREEN_PLAYER_GUARD_VGUI( hh );
+			GetClientMode()->Layout();
+		}
 		return true;
 	}
 	virtual void PostInit() {}

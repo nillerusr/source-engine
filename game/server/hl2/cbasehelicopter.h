@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Base class for helicopters & helicopter-type vehicles
 //
@@ -116,7 +116,7 @@ public:
 	virtual void ApplySidewaysDrag( const Vector &vecRight );
 	virtual void ApplyGeneralDrag( void );
 
-	void	TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr, CDmgAccumulator *pAccumulator );
+	void	TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr );
 
 	virtual bool FireGun( void );
 
@@ -227,7 +227,10 @@ protected:
 	void			InputDisableRotorWash( inputdata_t &inputdata );
 	void			InputMoveTopSpeed( inputdata_t &inputdata );	// Causes the helicopter to immediately accelerate to its desired velocity
 	void			InputMoveSpecifiedSpeed( inputdata_t &inputdata );
+	void			InputSetMaxSpeed( inputdata_t &inputdata );
 	void			InputSetAngles( inputdata_t &inputdata );	// Sets the angles of the helicopter
+
+	void			MoveTopSpeed( float flInstantSpeed );
 
 protected:	
 	// Custom conservative collision volumes

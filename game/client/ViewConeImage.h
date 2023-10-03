@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: This is a panel which draws a viewcone
 //
@@ -10,7 +10,7 @@
 #define VIEWCONEIMAGE_H
 
 #include "shareddefs.h"
-#include "vgui_bitmapimage.h"
+#include "VGUI_BitmapImage.h"
 
 namespace vgui
 {

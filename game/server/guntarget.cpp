@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Implements a moving target that moves along a path of path_tracks
 //			and can be shot and killed. When the target it killed it fires an
@@ -34,8 +34,6 @@ public:
 
 #if defined( HL2_DLL )
 	virtual Class_T Classify( void ) { return CLASS_MILITARY; }
-#elif defined( HL1_DLL )
-	virtual Class_T Classify( void ) { return CLASS_MACHINE; }
 #else
 	virtual Class_T Classify( void ) { return CLASS_NONE; }
 #endif

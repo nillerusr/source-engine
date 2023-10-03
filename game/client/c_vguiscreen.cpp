@@ -1,29 +1,29 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
 // $NoKeywords: $
-//=============================================================================//
+//===========================================================================//
 
 #include "cbase.h"
 #include "networkstringtable_clientdll.h"
 #include <KeyValues.h>
-#include "panelmetaclassmgr.h"
+#include "PanelMetaClassMgr.h"
 #include <vgui_controls/Controls.h>
-#include "mathlib/vmatrix.h"
-#include "VGuiMatSurface/IMatSystemSurface.h"
+#include "mathlib/VMatrix.h"
+#include "VGUIMatSurface/IMatSystemSurface.h"
 #include "view.h"
-#include "collisionutils.h"
+#include "CollisionUtils.h"
 #include <vgui/IInput.h>
 #include <vgui/IPanel.h>
 #include <vgui/IVGui.h>
 #include "ienginevgui.h"
 #include "in_buttons.h"
-#include <vgui/MouseCode.h>
-#include "materialsystem/imesh.h"
-#include "clienteffectprecachesystem.h"
-#include "c_vguiscreen.h"
-#include "iclientmode.h"
+#include <vgui/Mousecode.h>
+#include "materialsystem/IMesh.h"
+#include "precache_register.h"
+#include "C_VGuiScreen.h"
+#include "IClientMode.h"
 #include "vgui_bitmapbutton.h"
 #include "vgui_bitmappanel.h"
 #include "filesystem.h"
@@ -38,9 +38,9 @@ extern vgui::IInputInternal *g_InputInternal;
 #define VGUI_SCREEN_MODE_RADIUS	80
 
 //Precache the materials
-CLIENTEFFECT_REGISTER_BEGIN( PrecacheEffectVGuiScreen )
-CLIENTEFFECT_MATERIAL( "engine/writez" )
-CLIENTEFFECT_REGISTER_END()
+PRECACHE_REGISTER_BEGIN( GLOBAL, PrecacheEffectVGuiScreen )
+PRECACHE( MATERIAL, "engine/writez" )
+PRECACHE_REGISTER_END()
 
 
 // ----------------------------------------------------------------------------- //
@@ -82,7 +82,7 @@ IMPLEMENT_CLIENTCLASS_DT(C_VGuiScreen, DT_VGuiScreen, CVGuiScreen)
 	RecvPropFloat( RECVINFO(m_flHeight) ),
 	RecvPropInt( RECVINFO(m_fScreenFlags) ),
 	RecvPropInt( RECVINFO(m_nPanelName) ),
-	RecvPropInt( RECVINFO(m_nAttachmentIndex) ),
+	RecvPropIntWithMinusOneFlag( RECVINFO(m_nAttachmentIndex) ),
 	RecvPropInt( RECVINFO(m_nOverlayMaterial) ),
 	RecvPropEHandle( RECVINFO(m_hPlayerOwner) ),
 END_RECV_TABLE()
@@ -129,6 +129,9 @@ void C_VGuiScreen::OnDataChanged( DataUpdateType_t type )
 		m_nButtonState = 0;
 	}
 
+	RenderWithViewModels( IsAttachedToViewModel() );
+	OnTranslucencyTypeChanged();
+
 	// Set up the overlay material
 	if (m_nOldOverlayMaterial != m_nOverlayMaterial)
 	{
@@ -146,7 +149,7 @@ void C_VGuiScreen::OnDataChanged( DataUpdateType_t type )
 	}
 }
 
-void FormatViewModelAttachment( Vector &vOrigin, bool bInverse );
+void FormatViewModelAttachment( C_BasePlayer *pPlayer, Vector &vOrigin, bool bInverse );
 
 //-----------------------------------------------------------------------------
 // Returns the attachment render origin + origin
@@ -163,7 +166,9 @@ void C_VGuiScreen::GetAimEntOrigin( IClientEntity *pAttachedTo, Vector *pOrigin,
 		
 		if ( IsAttachedToViewModel() )
 		{
-			FormatViewModelAttachment( *pOrigin, true );
+			C_BasePlayer *pOwner = ToBasePlayer( ((C_BaseViewModel *)pEnt)->GetOwner() );
+			Assert( pOwner );
+			FormatViewModelAttachment( pOwner, *pOrigin, true );
 		}
 	}
 	else
@@ -240,18 +245,6 @@ void C_VGuiScreen::SetAcceptsInput( bool acceptsinput )
 	m_bAcceptsInput = acceptsinput;
 }
 
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Output : RenderGroup_t
-//-----------------------------------------------------------------------------
-RenderGroup_t C_VGuiScreen::GetRenderGroup()
-{
-	if ( IsAttachedToViewModel() )
-		return RENDER_GROUP_VIEW_MODEL_TRANSLUCENT;
-
-	return BaseClass::GetRenderGroup();
-}
 
 //-----------------------------------------------------------------------------
 // Are we only visible to teammates?
@@ -335,7 +328,7 @@ void ScreenToWorld( int mousex, int mousey, float fov,
 	float dist;
 	Vector vpn, vup, vright;
 
-	float scaled_fov = ScaleFOVByWidthRatio( fov, engine->GetScreenAspectRatio() * 0.75f );
+	float scaled_fov = ScaleFOVByWidthRatio( fov, engine->GetScreenAspectRatio( ScreenWidth(), ScreenHeight() ) * 0.75f );
 
 	c_x = ScreenWidth() / 2;
 	c_y = ScreenHeight() / 2;
@@ -410,7 +403,7 @@ void C_VGuiScreen::ClientThink( void )
 		return;
 
 	// This will cause our panel to grab all input!
-	g_pClientMode->ActivateInGameVGuiContext( pPanel );
+	GetClientMode()->ActivateInGameVGuiContext( pPanel );
 
 	// Convert (u,v) into (px,py)
 	int px = (int)(u * m_nPixelWidth + 0.5f);
@@ -451,7 +444,7 @@ void C_VGuiScreen::ClientThink( void )
 		SetNextClientThink( CLIENT_THINK_NEVER );
 	}
 
-	g_pClientMode->DeactivateInGameVGuiContext( );
+	GetClientMode()->DeactivateInGameVGuiContext( );
 }
 
 
@@ -562,7 +555,7 @@ void C_VGuiScreen::DrawScreenOverlay()
 //-----------------------------------------------------------------------------
 // Draws the panel using a 3D transform...
 //-----------------------------------------------------------------------------
-int	C_VGuiScreen::DrawModel( int flags )
+int	C_VGuiScreen::DrawModel( int flags, const RenderableInstance_t &instance )
 {
 	vgui::Panel *pPanel = m_PanelWrapper.GetPanel();
 	if (!pPanel || !IsActive())
@@ -609,10 +602,11 @@ bool C_VGuiScreen::IsVisibleToPlayer( C_BasePlayer *pViewingPlayer )
 	return true;
 }
 
-bool C_VGuiScreen::IsTransparent( void )
+RenderableTranslucencyType_t C_VGuiScreen::ComputeTranslucencyType( void )
 {
-	return (m_fScreenFlags & VGUI_SCREEN_TRANSPARENT) != 0;
+	return ( (m_fScreenFlags & VGUI_SCREEN_TRANSPARENT) != 0 ) ? RENDERABLE_IS_TRANSLUCENT : RENDERABLE_IS_OPAQUE;
 }
+
 
 //-----------------------------------------------------------------------------
 // Purpose: Sometimes we only want a specific player to be able to input to a panel
@@ -835,7 +829,7 @@ bool CVGuiScreenPanel::Init( KeyValues* pKeyValues, VGuiScreenInitData_t* pInitD
 		C_VGuiScreen *screen = dynamic_cast< C_VGuiScreen * >( pInitData->m_pEntity );
 		if ( screen )
 		{
-			bool acceptsInput = pKeyValues->GetInt( "acceptsinput", 1 ) ? true : false;
+			bool acceptsInput = pKeyValues->GetBool( "acceptsinput", true );
 			screen->SetAcceptsInput( acceptsInput );
 		}
 	}

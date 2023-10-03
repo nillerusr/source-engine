@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -70,7 +70,7 @@ static float WeightedAngle( Vector vec1, Vector vec2)
 	return a*a;	// vectors are facing opposite direction
 }
 
-#if !defined( CSTRIKE_DLL ) && !defined( DOD_DLL ) && !defined( TF_DLL )// add your mod here if you use your own director
+
 
 static CHLTVDirector s_HLTVDirector;	// singleton
 
@@ -86,7 +86,7 @@ IGameSystem* HLTVDirectorSystem()
 	return &s_HLTVDirector;
 }
 
-#endif // MODs
+
 
 
 
@@ -562,7 +562,7 @@ void CHLTVDirector::CreateShotFromEvent( CHLTVGameEvent *event )
 			// if we show ineye view, show it more likely from killer
 			if ( RandomFloat(0,1) > (bInEye?0.3f:0.7f)  )
 			{
-				::V_swap( attacker, victim );
+				V_swap( attacker, victim );
 			}
 						
 			// hurting a victim is shown as chase more often

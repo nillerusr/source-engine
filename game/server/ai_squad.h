@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:	Squad classes
 //
@@ -111,6 +111,8 @@ public:
 	bool					SquadIsMember( CBaseEntity *pMember );
 	bool					IsLeader( CAI_BaseNPC *pLeader );
 	CAI_BaseNPC				*GetLeader( void );
+
+	Vector					ComputeSquadCentroid( bool bIncludeSilentMembers, CBaseCombatCharacter *pExcludeMember );
 
 	int						BroadcastInteraction( int interactionType, void *data, CBaseCombatCharacter *sender = NULL );
 

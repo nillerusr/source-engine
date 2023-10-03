@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -10,9 +10,9 @@
 #include "hud_vehicle.h"
 #include "iclientmode.h"
 #include "view.h"
-#include <vgui_controls/Controls.h>
+#include <vgui_controls/controls.h>
 #include <vgui/ISurface.h>
-#include "iclientvehicle.h"
+#include "IClientVehicle.h"
 #include "c_prop_vehicle.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -25,7 +25,7 @@ DECLARE_HUDELEMENT( CHudVehicle );
 CHudVehicle::CHudVehicle( const char *pElementName ) :
   CHudElement( pElementName ), BaseClass( NULL, "HudVehicle" )
 {
-	vgui::Panel *pParent = g_pClientMode->GetViewport();
+	vgui::Panel *pParent = GetClientMode()->GetViewport();
 	SetParent( pParent );
 
 	SetHiddenBits( HIDEHUD_PLAYERDEAD | HIDEHUD_VEHICLE_CROSSHAIR );
@@ -36,7 +36,6 @@ void CHudVehicle::ApplySchemeSettings( IScheme *scheme )
 	BaseClass::ApplySchemeSettings( scheme );
 
 	SetPaintBackgroundEnabled( false );
-	SetForceStereoRenderToFrameBuffer( true );
 }
 
 //-----------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: A panel "metaclass" is a name given to a particular type of 
 // panel with particular instance data. Such panels tend to be dynamically
@@ -8,10 +8,10 @@
 // $NoKeywords: $
 //=============================================================================//
 #include "cbase.h"
-#include "panelmetaclassmgr.h"
+#include "PanelMetaClassMgr.h"
 #include <KeyValues.h>
 #include <vgui_controls/Panel.h>
-#include "utldict.h"
+#include "UtlDict.h"
 #include "filesystem.h"
 #include <KeyValues.h>
 

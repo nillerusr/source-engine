@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:		A link that can be turned on and off.  Unlike normal links
 //				dyanimc links must be entities so they can receive messages.
@@ -32,6 +32,7 @@ BEGIN_DATADESC( CAI_DynamicLinkController )
 	DEFINE_KEYFIELD( m_nLinkState, FIELD_INTEGER, "initialstate" ),
 	DEFINE_KEYFIELD( m_strAllowUse, FIELD_STRING, "AllowUse" ),
 	DEFINE_KEYFIELD( m_bInvertAllow, FIELD_BOOLEAN, "InvertAllow" ),
+	DEFINE_KEYFIELD( m_nPriority, FIELD_INTEGER, "Priority" ),
 	DEFINE_KEYFIELD( m_bUseAirLinkRadius, FIELD_BOOLEAN, "useairlinkradius" ),
 	//				 m_ControlledLinks (rebuilt)
 
@@ -70,39 +71,40 @@ void CAI_DynamicLinkController::GenerateLinksFromVolume()
 	{
 		CAI_Node *pNode = ppNodes[i];
 		const Vector &nodeOrigin = pNode->GetOrigin();
-		if ( origin.DistToSqr(nodeOrigin) < MinDistCareSq )
+		if ( origin.DistToSqr(nodeOrigin) >= MinDistCareSq )
+			continue;
+
+		int nLinks = pNode->NumLinks();
+		for ( int j = 0; j < nLinks; j++ )
 		{
-			int nLinks = pNode->NumLinks();
-			for ( int j = 0; j < nLinks; j++ )
-			{
-				CAI_Link *pLink = pNode->GetLinkByIndex( j );
-				int iLinkDest = pLink->DestNodeID( i );
-				if ( iLinkDest > i )
-				{
-					const Vector &originOther = ppNodes[iLinkDest]->GetOrigin();
-					if ( origin.DistToSqr(originOther) < MinDistCareSq )
-					{
-						if ( IsBoxIntersectingRay( vAbsMins, vAbsMaxs, nodeOrigin, originOther - nodeOrigin ) )
-						{
-							Assert( IsBoxIntersectingRay( vAbsMins, vAbsMaxs, originOther, nodeOrigin - originOther ) );
+			CAI_Link *pLink = pNode->GetLinkByIndex( j );
+			int iLinkDest = pLink->DestNodeID( i );
+			if ( iLinkDest <= i )
+				continue;
 
-							CAI_DynamicLink *pLink = (CAI_DynamicLink *)CreateEntityByName( "info_node_link" );
-							pLink->m_nSrcID = i;
-							pLink->m_nDestID = iLinkDest;
-							pLink->m_nSrcEditID = g_pAINetworkManager->GetEditOps()->GetWCIdFromNodeId( pLink->m_nSrcID );
-							pLink->m_nDestEditID = g_pAINetworkManager->GetEditOps()->GetWCIdFromNodeId( pLink->m_nDestID );
-							pLink->m_nLinkState = m_nLinkState;
-							pLink->m_strAllowUse = m_strAllowUse;
-							pLink->m_bInvertAllow = m_bInvertAllow;
-							pLink->m_bFixedUpIds = true;
-							pLink->m_bNotSaved = true;
+			const Vector &originOther = ppNodes[iLinkDest]->GetOrigin();
+			if ( origin.DistToSqr(originOther) >= MinDistCareSq )
+				continue;
 
-							pLink->Spawn();
-							m_ControlledLinks.AddToTail( pLink );
-						}
-					}
-				}
-			}
+			if ( !IsBoxIntersectingRay( vAbsMins, vAbsMaxs, nodeOrigin, originOther - nodeOrigin ) )
+				continue;
+
+			Assert( IsBoxIntersectingRay( vAbsMins, vAbsMaxs, originOther, nodeOrigin - originOther ) );
+
+			CAI_DynamicLink *pDynamicLink = (CAI_DynamicLink *)CreateEntityByName( "info_node_link" );
+			pDynamicLink->m_nSrcID = i;
+			pDynamicLink->m_nDestID = iLinkDest;
+			pDynamicLink->m_nSrcEditID = g_pAINetworkManager->GetEditOps()->GetWCIdFromNodeId( pDynamicLink->m_nSrcID );
+			pDynamicLink->m_nDestEditID = g_pAINetworkManager->GetEditOps()->GetWCIdFromNodeId( pDynamicLink->m_nDestID );
+			pDynamicLink->m_nLinkState = m_nLinkState;
+			pDynamicLink->m_strAllowUse = m_strAllowUse;
+			pDynamicLink->m_bInvertAllow = m_bInvertAllow;
+			pDynamicLink->m_bFixedUpIds = true;
+			pDynamicLink->m_bNotSaved = true;
+			pDynamicLink->m_nPriority = m_nPriority;
+
+			pDynamicLink->Spawn();
+			m_ControlledLinks.AddToTail( pDynamicLink );
 		}
 	}
 }
@@ -175,17 +177,19 @@ LINK_ENTITY_TO_CLASS(info_node_link, CAI_DynamicLink);
 
 BEGIN_DATADESC( CAI_DynamicLink )
 
-//								m_pNextDynamicLink
-DEFINE_KEYFIELD( m_nLinkState, FIELD_INTEGER, "initialstate" ),
-DEFINE_KEYFIELD( m_nSrcEditID,	FIELD_INTEGER, "startnode" ),
-DEFINE_KEYFIELD( m_nDestEditID,	FIELD_INTEGER, "endnode" ),
-DEFINE_KEYFIELD( m_nLinkType, FIELD_INTEGER, "linktype" ),
-DEFINE_FIELD( m_bInvertAllow, FIELD_BOOLEAN ),
-//				m_nSrcID (rebuilt)
-//				m_nDestID (rebuilt)
-DEFINE_KEYFIELD( m_strAllowUse, FIELD_STRING, "AllowUse" ),
-//				m_bFixedUpIds (part of rebuild)
-//				m_bNotSaved (rebuilt)
+	//								m_pNextDynamicLink
+	DEFINE_KEYFIELD( m_nLinkState, FIELD_INTEGER, "initialstate" ),
+	DEFINE_KEYFIELD( m_nSrcEditID,	FIELD_INTEGER, "startnode" ),
+	DEFINE_KEYFIELD( m_nDestEditID,	FIELD_INTEGER, "endnode" ),
+	DEFINE_KEYFIELD( m_nLinkType, FIELD_INTEGER, "linktype" ),
+	DEFINE_FIELD( m_bInvertAllow, FIELD_BOOLEAN ),
+	DEFINE_KEYFIELD( m_nPriority, FIELD_INTEGER, "Priority" ),
+	DEFINE_KEYFIELD( m_bPreciseMovement, FIELD_BOOLEAN, "preciseMovement" ),
+	//				m_nSrcID (rebuilt)
+	//				m_nDestID (rebuilt)
+	DEFINE_KEYFIELD( m_strAllowUse, FIELD_STRING, "AllowUse" ),
+	//				m_bFixedUpIds (part of rebuild)
+	//				m_bNotSaved (rebuilt)
 
 DEFINE_INPUTFUNC( FIELD_VOID, "TurnOn", InputTurnOn ),
 DEFINE_INPUTFUNC( FIELD_VOID, "TurnOff", InputTurnOff ),
@@ -278,7 +282,9 @@ void CAI_DynamicLink::InitDynamicLinks(void)
 					{
 						pLink = g_pBigAINet->CreateLink( pDynamicLink->m_nSrcID, pDynamicLink->m_nDestID );
 						if ( !pLink )
+						{
 							DevMsg( "Failed to create dynamic link (%d <--> %d)\n", pDynamicLink->m_nSrcEditID, pDynamicLink->m_nDestEditID );
+						}
 					}
 
 				}
@@ -290,7 +296,7 @@ void CAI_DynamicLink::InitDynamicLinks(void)
 					int hullBits = ( pDynamicLink->GetSpawnFlags() & bits_HULL_BITS_MASK );
 					for ( int i = 0; i < NUM_HULLS; i++ )
 					{
-						if ( hullBits & ( 1 << i ) )
+						if ( hullBits & HullToBit( Hull_t(i) ) )
 						{
 							pLink->m_iAcceptedMoveTypes[i] = pDynamicLink->m_nLinkType;
 						}
@@ -479,29 +485,46 @@ void CAI_DynamicLink::SetLinkState(void)
 	//  Nodes share links so we only have to find the node from the src 
 	//  For now just using one big AINetwork so find src node on that network
 	// ------------------------------------------------------------------
-	CAI_Node *	pSrcNode = g_pBigAINet->GetNode(m_nSrcID, false);
-	if ( pSrcNode )
+	CAI_Node *pSrcNode = g_pBigAINet->GetNode( m_nSrcID, false );
+	if ( !pSrcNode )							 
+		return;
+
+	CAI_Link* pLink = FindLink();
+	if ( !pLink )
 	{
-		CAI_Link* pLink = FindLink();
-		if ( pLink )
-		{
-			pLink->m_pDynamicLink = this;
-			if (m_nLinkState == LINK_OFF)
-			{
-				pLink->m_LinkInfo |=  bits_LINK_OFF;
-			}
-			else
-			{
-				pLink->m_LinkInfo &= ~bits_LINK_OFF;
-			}
-		}
-		else
-		{
-			DevMsg("Dynamic Link Error: (%s) unable to form between nodes %d and %d\n", GetDebugName(), m_nSrcID, m_nDestID );
-		}
+		DevMsg("Dynamic Link Error: (%s) unable to form between nodes %d and %d\n", GetDebugName(), m_nSrcID, m_nDestID );
+		return;
 	}
 
+	pLink->m_pDynamicLink = this;
+	if (m_nLinkState == LINK_OFF)
+	{
+		pLink->m_LinkInfo |=  bits_LINK_OFF;
+	}
+	else
+	{
+		pLink->m_LinkInfo &= ~bits_LINK_OFF;
+	}
+
+	if ( m_bPreciseMovement )
+	{
+		pLink->m_LinkInfo |= bits_LINK_PRECISE_MOVEMENT;
+	}
+	else
+	{
+		pLink->m_LinkInfo &= ~bits_LINK_PRECISE_MOVEMENT;
+	}
+
+	if ( m_nPriority == 0 )
+	{
+		pLink->m_LinkInfo &= ~bits_PREFER_AVOID;
+	}
+	else
+	{
+		pLink->m_LinkInfo |= bits_PREFER_AVOID;
+	}
 }
+
 
 //------------------------------------------------------------------------------
 // Purpose : Given two node ID's return the related dynamic link if any or NULL

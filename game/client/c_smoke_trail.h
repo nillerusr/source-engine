@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -303,7 +303,47 @@ private:
 
 
 
+//-----------------------------------------------------------------------------
+// Purpose:  High drag, non color changing particle
+//-----------------------------------------------------------------------------
 
+
+class CDustFollower : public CSimpleEmitter
+{
+public:
+	
+	CDustFollower( const char *pDebugName ) : CSimpleEmitter( pDebugName ) {}
+	
+	//Create
+	static CDustFollower *Create( const char *pDebugName )
+	{
+		return new CDustFollower( pDebugName );
+	}
+
+	//Alpha
+	virtual float UpdateAlpha( const SimpleParticle *pParticle )
+	{
+		return ( ((float)pParticle->m_uchStartAlpha/255.0f) * sin( M_PI * (pParticle->m_flLifetime / pParticle->m_flDieTime) ) );
+	}
+
+	virtual	void	UpdateVelocity( SimpleParticle *pParticle, float timeDelta )
+	{
+		pParticle->m_vecVelocity = pParticle->m_vecVelocity * ExponentialDecay( 0.3, timeDelta );
+	}
+
+	//Roll
+	virtual	float UpdateRoll( SimpleParticle *pParticle, float timeDelta )
+	{
+		pParticle->m_flRoll += pParticle->m_flRollDelta * timeDelta;
+		
+		pParticle->m_flRollDelta *= ExponentialDecay( 0.5, timeDelta );
+
+		return pParticle->m_flRoll;
+	}
+
+private:
+	CDustFollower( const CDustFollower & );
+};
 
 
 

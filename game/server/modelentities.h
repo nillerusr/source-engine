@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -55,6 +55,7 @@ public:
 	bool m_bInvertExclusion;
 
 	DECLARE_DATADESC();
+	DECLARE_SERVERCLASS();
 
 	virtual bool IsOn( void );
 };

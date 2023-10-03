@@ -1,8 +1,9 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
 //=============================================================================
+
 #include "cbase.h"
 #include "const.h"
 #include "toolframework/itoolentity.h"
@@ -13,6 +14,26 @@
 #include "iserverentity.h"
 #include "sceneentity.h"
 #include "particles/particles.h"
+#include "mapentities_shared.h"
+#include "TemplateEntities.h"
+#include "mapentities.h"
+#include "point_template.h"
+
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
+
+class CFoundryEntitySpawnRecord
+{
+public:
+	CUtlVector<char> m_VMFText;
+	int m_iEntityIndex;
+	int m_iHammerID;
+	int m_iSerialNumber;
+	int m_debugOverlays;
+};
+
+static CUtlLinkedList<CFoundryEntitySpawnRecord*,int> g_FoundryEntitySpawnRecords;
 
 
 //-----------------------------------------------------------------------------
@@ -28,52 +49,21 @@ public:
 	virtual int GetPlayerFOV( IClientEntity *pClientPlayer = NULL );
 	virtual bool SetPlayerFOV( int fov, IClientEntity *pClientPlayer = NULL );
 	virtual bool IsInNoClipMode( IClientEntity *pClientPlayer = NULL );
-	virtual CBaseEntity *FirstEntity( void );
-	virtual CBaseEntity *NextEntity( CBaseEntity *pEntity );
-	virtual CBaseEntity *FindEntityByHammerID( int iHammerID );
-	virtual bool GetKeyValue( CBaseEntity *pEntity, const char *szField, char *szValue, int iMaxLen );
-	virtual bool SetKeyValue( CBaseEntity *pEntity, const char *szField, const char *szValue );
-	virtual bool SetKeyValue( CBaseEntity *pEntity, const char *szField, float flValue );
-	virtual bool SetKeyValue( CBaseEntity *pEntity, const char *szField, const Vector &vecValue );
-	virtual CBaseEntity *CreateEntityByName( const char *szClassName );
-	virtual void DispatchSpawn( CBaseEntity *pEntity );
+	virtual void *FirstEntity( void );
+	virtual void *NextEntity( void *pEntity );
+	virtual void *FindEntityByHammerID( int iHammerID );
+	virtual bool GetKeyValue( void *pEntity, const char *szField, char *szValue, int iMaxLen );
+	virtual bool SetKeyValue( void *pEntity, const char *szField, const char *szValue );
+	virtual bool SetKeyValue( void *pEntity, const char *szField, float flValue );
+	virtual bool SetKeyValue( void *pEntity, const char *szField, const Vector &vecValue );
+	virtual void *CreateEntityByName( const char *szClassName );
+	virtual void DispatchSpawn( void *pEntity );
 	virtual void ReloadParticleDefintions( const char *pFileName, const void *pBufData, int nLen );
 	virtual void AddOriginToPVS( const Vector &org );
-	virtual void MoveEngineViewTo( const Vector &vPos, const QAngle &vAngles );
 	virtual bool DestroyEntityByHammerId( int iHammerID );
-	virtual CBaseEntity *GetBaseEntityByEntIndex( int iEntIndex );
-	virtual void RemoveEntity( CBaseEntity *pEntity );
-	virtual void RemoveEntityImmediate( CBaseEntity *pEntity );
-	virtual IEntityFactoryDictionary *GetEntityFactoryDictionary( void );
-	virtual void SetMoveType( CBaseEntity *pEntity, int val );
-	virtual void SetMoveType( CBaseEntity *pEntity, int val, int moveCollide );
-	virtual void ResetSequence( CBaseAnimating *pEntity, int nSequence );
-	virtual void ResetSequenceInfo( CBaseAnimating *pEntity );
-	virtual void ClearMultiDamage( void );
-	virtual void ApplyMultiDamage( void );
-	virtual void AddMultiDamage( const CTakeDamageInfo &pTakeDamageInfo, CBaseEntity *pEntity );
-	virtual void RadiusDamage( const CTakeDamageInfo &info, const Vector &vecSrc, float flRadius, int iClassIgnore, CBaseEntity *pEntityIgnore );
-
-	virtual ITempEntsSystem *GetTempEntsSystem( void );
-	virtual CBaseTempEntity *GetTempEntList( void );
-	virtual CGlobalEntityList *GetEntityList( void );
-	virtual bool IsEntityPtr( void *pTest );
-	virtual CBaseEntity *FindEntityByClassname( CBaseEntity *pStartEntity, const char *szName );
-	virtual CBaseEntity *FindEntityByName( CBaseEntity *pStartEntity, const char *szName, CBaseEntity *pSearchingEntity = NULL, CBaseEntity *pActivator = NULL, CBaseEntity *pCaller = NULL, IEntityFindFilter *pFilter = NULL );
-	virtual CBaseEntity *FindEntityInSphere( CBaseEntity *pStartEntity, const Vector &vecCenter, float flRadius );
-	virtual CBaseEntity *FindEntityByTarget( CBaseEntity *pStartEntity, const char *szName );
-	virtual CBaseEntity *FindEntityByModel( CBaseEntity *pStartEntity, const char *szModelName );
-	virtual CBaseEntity *FindEntityByNameNearest( const char *szName, const Vector &vecSrc, float flRadius, CBaseEntity *pSearchingEntity = NULL, CBaseEntity *pActivator = NULL, CBaseEntity *pCaller = NULL );
-	virtual CBaseEntity *FindEntityByNameWithin( CBaseEntity *pStartEntity, const char *szName, const Vector &vecSrc, float flRadius, CBaseEntity *pSearchingEntity = NULL, CBaseEntity *pActivator = NULL, CBaseEntity *pCaller = NULL );
-	virtual CBaseEntity *FindEntityByClassnameNearest( const char *szName, const Vector &vecSrc, float flRadius );
-	virtual CBaseEntity *FindEntityByClassnameWithin( CBaseEntity *pStartEntity, const char *szName, const Vector &vecSrc, float flRadius );
-	virtual CBaseEntity *FindEntityByClassnameWithin( CBaseEntity *pStartEntity, const char *szName, const Vector &vecMins, const Vector &vecMaxs );
-	virtual CBaseEntity *FindEntityGeneric( CBaseEntity *pStartEntity, const char *szName, CBaseEntity *pSearchingEntity = NULL, CBaseEntity *pActivator = NULL, CBaseEntity *pCaller = NULL );
-	virtual CBaseEntity *FindEntityGenericWithin( CBaseEntity *pStartEntity, const char *szName, const Vector &vecSrc, float flRadius, CBaseEntity *pSearchingEntity = NULL, CBaseEntity *pActivator = NULL, CBaseEntity *pCaller = NULL );
-	virtual CBaseEntity *FindEntityGenericNearest( const char *szName, const Vector &vecSrc, float flRadius, CBaseEntity *pSearchingEntity = NULL, CBaseEntity *pActivator = NULL, CBaseEntity *pCaller = NULL );
-	virtual CBaseEntity *FindEntityNearestFacing( const Vector &origin, const Vector &facing, float threshold );
-	virtual CBaseEntity *FindEntityClassNearestFacing( const Vector &origin, const Vector &facing, float threshold, char *classname );
-	virtual CBaseEntity *FindEntityProcedural( const char *szName, CBaseEntity *pSearchingEntity = NULL, CBaseEntity *pActivator = NULL, CBaseEntity *pCaller = NULL );
+	virtual bool RespawnEntitiesWithEdits( CEntityRespawnInfo *pInfos, int nInfos );
+	virtual void MoveEngineViewTo( const Vector &vPos, const QAngle &vAngles );
+	virtual void RemoveEntity( int nHammerID );
 };
 
 
@@ -81,14 +71,9 @@ public:
 // Singleton
 //-----------------------------------------------------------------------------
 static CServerTools g_ServerTools;
+IServerTools *g_pServerTools = &g_ServerTools;
 
-// VSERVERTOOLS_INTERFACE_VERSION_1 is compatible with the latest since we're only adding things to the end, so expose that as well.
-EXPOSE_SINGLE_INTERFACE_GLOBALVAR( CServerTools, IServerTools001, VSERVERTOOLS_INTERFACE_VERSION_1, g_ServerTools );
-EXPOSE_SINGLE_INTERFACE_GLOBALVAR( CServerTools, IServerTools002, VSERVERTOOLS_INTERFACE_VERSION_2, g_ServerTools );
 EXPOSE_SINGLE_INTERFACE_GLOBALVAR( CServerTools, IServerTools, VSERVERTOOLS_INTERFACE_VERSION, g_ServerTools );
-
-// When bumping the version to this interface, check that our assumption is still valid and expose the older version in the same way
-COMPILE_TIME_ASSERT( VSERVERTOOLS_INTERFACE_VERSION_INT == 3 );
 
 
 IServerEntity *CServerTools::GetIServerEntity( IClientEntity *pClientEntity )
@@ -188,12 +173,12 @@ bool CServerTools::IsInNoClipMode( IClientEntity *pClientPlayer )
 	return pPlayer->GetMoveType() == MOVETYPE_NOCLIP;
 }
 
-CBaseEntity *CServerTools::FirstEntity( void )
+void *CServerTools::FirstEntity( void )
 {
-	return gEntList.FirstEnt();
+	return (void *)gEntList.FirstEnt();
 }
 
-CBaseEntity *CServerTools::NextEntity( CBaseEntity *pEntity )
+void *CServerTools::NextEntity( void *pEntity )
 {
 	CBaseEntity *pEnt;
 
@@ -205,56 +190,179 @@ CBaseEntity *CServerTools::NextEntity( CBaseEntity *pEntity )
 	{
 		pEnt = gEntList.NextEnt( (CBaseEntity *)pEntity );
 	}
-	return pEnt;
+	return (void *)pEnt;
 }
 
-CBaseEntity *CServerTools::FindEntityByHammerID( int iHammerID )
+void *CServerTools::FindEntityByHammerID( int iHammerID )
 {
 	CBaseEntity *pEntity = gEntList.FirstEnt();
 
 	while (pEntity)
 	{
 		if (pEntity->m_iHammerID == iHammerID)
-			return pEntity;
+			return (void *)pEntity;
 		pEntity = gEntList.NextEnt( pEntity );
 	}
 	return NULL;
 }
 
-bool CServerTools::GetKeyValue( CBaseEntity *pEntity, const char *szField, char *szValue, int iMaxLen )
+bool CServerTools::GetKeyValue( void *pEntity, const char *szField, char *szValue, int iMaxLen )
 {
-	return pEntity->GetKeyValue( szField, szValue, iMaxLen );
+	CBaseEntity *pEnt = (CBaseEntity *)pEntity;
+
+	return pEnt->GetKeyValue( szField, szValue, iMaxLen );
 }
 
-bool CServerTools::SetKeyValue( CBaseEntity *pEntity, const char *szField, const char *szValue )
+bool CServerTools::SetKeyValue( void *pEntity, const char *szField, const char *szValue )
 {
-	return pEntity->KeyValue( szField, szValue );
+	CBaseEntity *pEnt = (CBaseEntity *)pEntity;
+
+	return pEnt->KeyValue( szField, szValue );
 }
 
-bool CServerTools::SetKeyValue( CBaseEntity *pEntity, const char *szField, float flValue )
+bool CServerTools::SetKeyValue( void *pEntity, const char *szField, float flValue )
 {
-	return pEntity->KeyValue( szField, flValue );
+	CBaseEntity *pEnt = (CBaseEntity *)pEntity;
+
+	return pEnt->KeyValue( szField, flValue );
 }
 
-bool CServerTools::SetKeyValue( CBaseEntity *pEntity, const char *szField, const Vector &vecValue )
+bool CServerTools::SetKeyValue( void *pEntity, const char *szField, const Vector &vecValue )
 {
-	return pEntity->KeyValue( szField, vecValue );
+	CBaseEntity *pEnt = (CBaseEntity *)pEntity;
+
+	return pEnt->KeyValue( szField, vecValue );
 }
 
 
 //-----------------------------------------------------------------------------
 // entity spawning
 //-----------------------------------------------------------------------------
-CBaseEntity *CServerTools::CreateEntityByName( const char *szClassName )
+void *CServerTools::CreateEntityByName( const char *szClassName )
 {
 	return ::CreateEntityByName( szClassName );
 }
 
-void CServerTools::DispatchSpawn( CBaseEntity *pEntity )
+void CServerTools::DispatchSpawn( void *pEntity )
 {
-	::DispatchSpawn( pEntity );
+	::DispatchSpawn( (CBaseEntity *)pEntity );
 }
 
+bool CServerTools::DestroyEntityByHammerId( int iHammerID )
+{
+	CBaseEntity *pEntity = (CBaseEntity*)FindEntityByHammerID( iHammerID );
+	if ( !pEntity )
+		return false;
+
+	UTIL_Remove( pEntity );
+	return true;
+}
+
+
+void HandleFoundryEntitySpawnRecords()
+{
+	if ( g_FoundryEntitySpawnRecords.Count() == 0 )
+		return;
+
+	VPROF("HandleFoundryEntitySpawnRecords");
+
+	// Create all the entities.
+	CUtlVector<CBaseEntity*> newEnts;
+	
+	CMapEntitySpawner spawner;
+	spawner.m_bFoundryMode = true;
+
+	FOR_EACH_LL( g_FoundryEntitySpawnRecords, i )
+	{
+		CFoundryEntitySpawnRecord *pRecord = g_FoundryEntitySpawnRecords[i];
+
+		if ( pRecord->m_iEntityIndex > 0 )
+		{
+			gEntList.ForceEntSerialNumber( pRecord->m_iEntityIndex, pRecord->m_iSerialNumber );
+			engine->ForceFlushEntity( pRecord->m_iEntityIndex );
+		}
+
+		// Figure out the class name.
+		CEntityMapData entData( pRecord->m_VMFText.Base() );
+		char szClassName[MAPKEY_MAXLENGTH];
+		if ( !entData.ExtractValue( "classname", szClassName ) )
+		{
+			Assert( false );
+			continue;
+		}
+
+		// Respawn it in the same slot.
+		int nIndexToSpawn = pRecord->m_iEntityIndex;
+		if ( nIndexToSpawn == 0 )
+			nIndexToSpawn = -1;
+
+		CBaseEntity *pNewEntity = ::CreateEntityByName( szClassName, nIndexToSpawn );
+		if ( !pNewEntity )
+		{
+			Warning( "HandleFoundryEntitySpawnRecords - CreateEntityByName( %s, %d ) failed\n", szClassName, pRecord->m_iEntityIndex );
+			continue;
+		}
+
+		const char *pBaseMapDataForThisEntity = entData.CurrentBufferPosition();
+		pNewEntity->ParseMapData( &entData );
+
+		if ( pRecord->m_debugOverlays != -1 )
+			pNewEntity->m_debugOverlays = pRecord->m_debugOverlays;
+
+		pNewEntity->m_iHammerID = pRecord->m_iHammerID;
+
+		spawner.AddEntity( pNewEntity, pBaseMapDataForThisEntity, (entData.CurrentBufferPosition() - pBaseMapDataForThisEntity) + 2 );
+	}
+
+	spawner.HandleTemplates();
+	spawner.SpawnAndActivate( true );
+
+	// Now that all of the active entities have been loaded in, precache any entities who need point_template parameters
+	//  to be parsed (the above code has loaded all point_template entities)
+	PrecachePointTemplates();
+
+	// Sometimes an ent will Remove() itself during its precache, so RemoveImmediate won't happen.
+	// This makes sure those ents get cleaned up.
+	gEntList.CleanupDeleteList();
+
+	g_FoundryEntitySpawnRecords.PurgeAndDeleteElements();
+}
+
+
+bool CServerTools::RespawnEntitiesWithEdits( CEntityRespawnInfo *pInfos, int nInfos )
+{
+	// Create a spawn record so it'll respawn the entity next frame.
+	for ( int i=0; i < nInfos; i++ )
+	{
+		CFoundryEntitySpawnRecord *pRecord = new CFoundryEntitySpawnRecord;
+		CEntityRespawnInfo *pInfo = &pInfos[i];
+		
+		pRecord->m_VMFText.SetSize( V_strlen( pInfo->m_pEntText ) + 1 );
+		V_strncpy( pRecord->m_VMFText.Base(), pInfo->m_pEntText, pRecord->m_VMFText.Count() );
+		pRecord->m_iHammerID = pInfo->m_nHammerID;
+
+		CBaseEntity *pOldEntity = (CBaseEntity*)FindEntityByHammerID( pInfo->m_nHammerID );
+		if ( pOldEntity )
+		{
+			// This is a respawn.
+			pRecord->m_iEntityIndex = pOldEntity->entindex();
+			pRecord->m_iSerialNumber = pOldEntity->GetRefEHandle().GetSerialNumber();
+			pRecord->m_debugOverlays = pOldEntity->m_debugOverlays;
+			UTIL_Remove( pOldEntity );
+		}
+		else
+		{
+			// This is a new spawn.
+			pRecord->m_iEntityIndex = -1;
+			pRecord->m_iSerialNumber = -1;
+			pRecord->m_debugOverlays = -1;
+		}
+
+		g_FoundryEntitySpawnRecords.AddToTail( pRecord );
+	}
+	
+return true;
+}
 
 //-----------------------------------------------------------------------------
 // Reload particle definitions
@@ -271,6 +379,7 @@ void CServerTools::AddOriginToPVS( const Vector &org )
 	engine->AddOriginToPVS( org );
 }
 
+
 void CServerTools::MoveEngineViewTo( const Vector &vPos, const QAngle &vAngles )
 {
 	CBasePlayer *pPlayer = UTIL_GetListenServerHost();
@@ -286,231 +395,13 @@ void CServerTools::MoveEngineViewTo( const Vector &vPos, const QAngle &vAngles )
 	pPlayer->SnapEyeAngles( vAngles );
 }
 
-bool CServerTools::DestroyEntityByHammerId( int iHammerID )
-{
-	CBaseEntity *pEntity = (CBaseEntity*)FindEntityByHammerID( iHammerID );
-	if ( !pEntity )
-		return false;
 
-	UTIL_Remove( pEntity );
-	return true;
+void CServerTools::RemoveEntity( int nHammerID )
+{
+	CBaseEntity *pOldEntity = (CBaseEntity*)FindEntityByHammerID( nHammerID );
+	if ( pOldEntity )
+		UTIL_Remove( pOldEntity );
 }
-
-void CServerTools::RemoveEntity( CBaseEntity *pEntity )
-{
-	UTIL_Remove( pEntity );
-}
-
-void CServerTools::RemoveEntityImmediate( CBaseEntity *pEntity )
-{
-	UTIL_RemoveImmediate( pEntity );
-}
-
-CBaseEntity *CServerTools::GetBaseEntityByEntIndex( int iEntIndex )
-{
-	edict_t *pEdict = INDEXENT( iEntIndex );
-	if ( pEdict )
-		return CBaseEntity::Instance( pEdict );
-	else
-		return NULL;
-}
-
-IEntityFactoryDictionary *CServerTools::GetEntityFactoryDictionary( void )
-{
-	return ::EntityFactoryDictionary();
-}
-
-
-void CServerTools::SetMoveType( CBaseEntity *pEntity, int val )
-{
-	pEntity->SetMoveType( (MoveType_t)val );
-}
-
-void CServerTools::SetMoveType( CBaseEntity *pEntity, int val, int moveCollide )
-{
-	pEntity->SetMoveType( (MoveType_t)val, (MoveCollide_t)moveCollide );
-}
-
-void CServerTools::ResetSequence( CBaseAnimating *pEntity, int nSequence )
-{
-	pEntity->ResetSequence( nSequence );
-}
-
-void CServerTools::ResetSequenceInfo( CBaseAnimating *pEntity )
-{
-	pEntity->ResetSequenceInfo();
-}
-
-
-void CServerTools::ClearMultiDamage( void )
-{
-	::ClearMultiDamage();
-}
-
-void CServerTools::ApplyMultiDamage( void )
-{
-	::ApplyMultiDamage();
-}
-
-void CServerTools::AddMultiDamage( const CTakeDamageInfo &pTakeDamageInfo, CBaseEntity *pEntity )
-{
-	::AddMultiDamage( pTakeDamageInfo, pEntity );
-}
-
-void CServerTools::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecSrc, float flRadius, int iClassIgnore, CBaseEntity *pEntityIgnore )
-{
-	::RadiusDamage( info, vecSrc, flRadius, iClassIgnore, pEntityIgnore );
-}
-
-
-ITempEntsSystem *CServerTools::GetTempEntsSystem( void )
-{
-	return (ITempEntsSystem *)te;
-}
-
-CBaseTempEntity *CServerTools::GetTempEntList( void )
-{
-	return CBaseTempEntity::GetList();
-}
-
-CGlobalEntityList *CServerTools::GetEntityList( void )
-{
-	return &gEntList;
-}
-
-bool CServerTools::IsEntityPtr( void *pTest )
-{
-	return gEntList.IsEntityPtr( pTest );
-}
-
-CBaseEntity *CServerTools::FindEntityByClassname( CBaseEntity *pStartEntity, const char *szName )
-{
-	return gEntList.FindEntityByClassname( pStartEntity, szName );
-}
-
-CBaseEntity *CServerTools::FindEntityByName( CBaseEntity *pStartEntity, const char *szName, CBaseEntity *pSearchingEntity, CBaseEntity *pActivator, CBaseEntity *pCaller, IEntityFindFilter *pFilter )
-{
-	return gEntList.FindEntityByName( pStartEntity, szName, pSearchingEntity, pActivator, pCaller, pFilter );
-}
-
-CBaseEntity *CServerTools::FindEntityInSphere( CBaseEntity *pStartEntity, const Vector &vecCenter, float flRadius )
-{
-	return gEntList.FindEntityInSphere( pStartEntity, vecCenter, flRadius );
-}
-
-CBaseEntity *CServerTools::FindEntityByTarget( CBaseEntity *pStartEntity, const char *szName )
-{
-	return gEntList.FindEntityByTarget( pStartEntity, szName );
-}
-
-CBaseEntity *CServerTools::FindEntityByModel( CBaseEntity *pStartEntity, const char *szModelName )
-{
-	return gEntList.FindEntityByModel( pStartEntity, szModelName );
-}
-
-CBaseEntity *CServerTools::FindEntityByNameNearest( const char *szName, const Vector &vecSrc, float flRadius, CBaseEntity *pSearchingEntity, CBaseEntity *pActivator, CBaseEntity *pCaller )
-{
-	return gEntList.FindEntityByNameNearest( szName, vecSrc, flRadius, pSearchingEntity, pActivator, pCaller );
-}
-
-CBaseEntity *CServerTools::FindEntityByNameWithin( CBaseEntity *pStartEntity, const char *szName, const Vector &vecSrc, float flRadius, CBaseEntity *pSearchingEntity, CBaseEntity *pActivator, CBaseEntity *pCaller )
-{
-	return gEntList.FindEntityByNameWithin( pStartEntity, szName, vecSrc, flRadius, pSearchingEntity, pActivator, pCaller );
-}
-
-CBaseEntity *CServerTools::FindEntityByClassnameNearest( const char *szName, const Vector &vecSrc, float flRadius )
-{
-	return gEntList.FindEntityByClassnameNearest( szName, vecSrc, flRadius );
-}
-
-CBaseEntity *CServerTools::FindEntityByClassnameWithin( CBaseEntity *pStartEntity, const char *szName, const Vector &vecSrc, float flRadius )
-{
-	return gEntList.FindEntityByClassnameWithin( pStartEntity, szName, vecSrc, flRadius );
-}
-
-CBaseEntity *CServerTools::FindEntityByClassnameWithin( CBaseEntity *pStartEntity, const char *szName, const Vector &vecMins, const Vector &vecMaxs )
-{
-	return gEntList.FindEntityByClassnameWithin( pStartEntity, szName, vecMins, vecMaxs );
-}
-
-CBaseEntity *CServerTools::FindEntityGeneric( CBaseEntity *pStartEntity, const char *szName, CBaseEntity *pSearchingEntity, CBaseEntity *pActivator, CBaseEntity *pCaller )
-{
-	return gEntList.FindEntityGeneric( pStartEntity, szName, pSearchingEntity, pActivator, pCaller );
-}
-
-CBaseEntity *CServerTools::FindEntityGenericWithin( CBaseEntity *pStartEntity, const char *szName, const Vector &vecSrc, float flRadius, CBaseEntity *pSearchingEntity, CBaseEntity *pActivator, CBaseEntity *pCaller )
-{
-	return gEntList.FindEntityGenericWithin( pStartEntity, szName, vecSrc, flRadius, pSearchingEntity, pActivator, pCaller );
-}
-
-CBaseEntity *CServerTools::FindEntityGenericNearest( const char *szName, const Vector &vecSrc, float flRadius, CBaseEntity *pSearchingEntity, CBaseEntity *pActivator, CBaseEntity *pCaller )
-{
-	return gEntList.FindEntityGenericNearest( szName, vecSrc, flRadius, pSearchingEntity, pActivator, pCaller );
-}
-
-CBaseEntity *CServerTools::FindEntityNearestFacing( const Vector &origin, const Vector &facing, float threshold )
-{
-	return gEntList.FindEntityNearestFacing( origin, facing, threshold );
-}
-
-CBaseEntity *CServerTools::FindEntityClassNearestFacing( const Vector &origin, const Vector &facing, float threshold, char *classname )
-{
-	return gEntList.FindEntityClassNearestFacing( origin, facing, threshold, classname );
-}
-
-CBaseEntity *CServerTools::FindEntityProcedural( const char *szName, CBaseEntity *pSearchingEntity, CBaseEntity *pActivator, CBaseEntity *pCaller )
-{
-	return gEntList.FindEntityProcedural( szName, pSearchingEntity, pActivator, pCaller );
-}
-
-
-// Interface from engine to tools for manipulating entities
-class CServerChoreoTools : public IServerChoreoTools
-{
-public:
-	// Iterates through ALL entities (separate list for client vs. server)
-	virtual EntitySearchResult	NextChoreoEntity( EntitySearchResult currentEnt )
-	{
-		CBaseEntity *ent = reinterpret_cast< CBaseEntity* >( currentEnt );
-		ent = gEntList.FindEntityByClassname( ent, "logic_choreographed_scene" );
-		return reinterpret_cast< EntitySearchResult >( ent );
-	}
-
-	virtual const char			*GetSceneFile( EntitySearchResult sr )
-	{
-		CBaseEntity *ent = reinterpret_cast< CBaseEntity* >( sr );
-		if ( !sr )
-			return "";
-
-		if ( Q_stricmp( ent->GetClassname(), "logic_choreographed_scene" ) )
-			return "";
-
-		return GetSceneFilename( ent );
-	}
-
-	// For interactive editing
-	virtual int	GetEntIndex( EntitySearchResult sr )
-	{
-		CBaseEntity *ent = reinterpret_cast< CBaseEntity* >( sr );
-		if ( !ent )
-			return -1;
-
-		return ent->entindex();
-	}
-
-	virtual void ReloadSceneFromDisk( int entindex )
-	{
-		CBaseEntity *ent = CBaseEntity::Instance( entindex );
-		if ( !ent )
-			return;
-
-		::ReloadSceneFromDisk( ent );
-	}
-};
-
-
-static CServerChoreoTools g_ServerChoreoTools;
-EXPOSE_SINGLE_INTERFACE_GLOBALVAR( CServerChoreoTools, IServerChoreoTools, VSERVERCHOREOTOOLS_INTERFACE_VERSION, g_ServerChoreoTools );
 
 
 //------------------------------------------------------------------------------
@@ -521,43 +412,17 @@ void CC_Ent_Keyvalue( const CCommand &args )
 	// Must have an odd number of arguments.
 	if ( ( args.ArgC() < 4 ) || ( args.ArgC() & 1 ) )
 	{
-		Msg( "Format: ent_keyvalue <entity id> \"key1\" \"value1\" \"key2\" \"value2\" ... \"keyN\" \"valueN\"\n" );
+		Msg( "Format: ent_keyvalue <entity id> \"key1\"=\"value1\" \"key2\" \"value2\" ... \"keyN\" \"valueN\"\n" );
 		return;
 	}
 
-	CBasePlayer *pPlayer = ToBasePlayer( UTIL_GetCommandClient() );
-	CBaseEntity *pEnt;
-	if ( FStrEq( args[1], "" ) || FStrEq( args[1], "!picker" ) )
+	int nID = atoi( args[1] );
+
+	void *pEnt = g_ServerTools.FindEntityByHammerID( nID );
+	if ( !pEnt )
 	{
-		if (!pPlayer)
-			return;
-
-		extern CBaseEntity *FindPickerEntity( CBasePlayer *pPlayer );
-		pEnt = FindPickerEntity( pPlayer );
-
-		if ( !pEnt )
-		{
-			ClientPrint( pPlayer, HUD_PRINTCONSOLE, "No entity in front of player.\n" );
-			return;
-		}
-	}
-	else if ( FStrEq( args[1], "!self" ) || FStrEq( args[1], "!caller" ) || FStrEq( args[1], "!activator" ) )
-	{
-		if (!pPlayer)
-			return;
-
-		pEnt = pPlayer;
-	}
-	else
-	{
-		int nID = atoi( args[1] );
-
-		pEnt = g_ServerTools.FindEntityByHammerID( nID );
-		if ( !pEnt )
-		{
-			Msg( "Entity ID %d not found.\n", nID );
-			return;
-		}
+		Msg( "Entity ID %d not found.\n" );
+		return;
 	}
 
 	int nArg = 2;
@@ -571,4 +436,5 @@ void CC_Ent_Keyvalue( const CCommand &args )
 	}
 } 
 
-static ConCommand ent_keyvalue("ent_keyvalue", CC_Ent_Keyvalue, "Applies the comma delimited key=value pairs to the entity with the given Hammer ID.\n\tFormat: ent_keyvalue <entity id> <key1> <value1> <key2> <value2> ... <keyN> <valueN>\n", FCVAR_CHEAT);
+static ConCommand ent_keyvalue("ent_keyvalue", CC_Ent_Keyvalue, "Applies the comma delimited key=value pairs to the entity with the given Hammer ID.\n\tFormat: ent_keyvalue <entity id> <key1>=<value1>,<key2>=<value2>,...,<keyN>=<valueN>\n", FCVAR_CHEAT);
+

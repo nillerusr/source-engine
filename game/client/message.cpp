@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -21,7 +21,7 @@
 #include "vgui/IScheme.h"
 #include "vgui/ISurface.h"
 #include "client_textmessage.h"
-#include "VGuiMatSurface/IMatSystemSurface.h"
+#include "VguiMatSurface/IMatSystemSurface.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -152,17 +152,13 @@ private:
 //-----------------------------------------------------------------------------
 void DispatchHudText( const char *pszText )
 {
-	CHudMessage *pHudMessage = (CHudMessage *)GET_HUDELEMENT( CHudMessage );
-	if ( pHudMessage )
+	if ( pszText == NULL )
 	{
-		if ( pszText == NULL )
-		{
-			pHudMessage->Reset();
-		}
-		else
-		{
-			pHudMessage->MessageAdd( pszText );
-		}
+		(GET_HUDELEMENT( CHudMessage ))->Reset();
+	}
+	else
+	{
+		(GET_HUDELEMENT( CHudMessage ))->MessageAdd( pszText );
 	}
 }
 
@@ -183,9 +179,12 @@ ITextMessage *textmessage = NULL;
 CHudMessage::CHudMessage( const char *pElementName ) :
 	CHudElement( pElementName ), BaseClass( NULL, "HudMessage" )
 {
-	vgui::Panel *pParent = g_pClientMode->GetViewport();
+	vgui::Panel *pParent = GetClientMode()->GetViewport();
 	SetParent( pParent );
-	textmessage = this;
+	if( textmessage == NULL ) //HACKHACK: Fixes center print text in when MAX_SPLITSCREEN_PLAYERS is greater than 1
+	{
+		textmessage = this;
+	}
 	m_hFont = g_hFontTrebuchet24;
 	m_hDefaultFont = m_hFont;
 	// Clear memory out
@@ -221,8 +220,8 @@ void CHudMessage::Init(void)
 //-----------------------------------------------------------------------------
 void CHudMessage::VidInit( void )
 {
-	m_iconTitleHalf = gHUD.GetIcon( "title_half" );
-	m_iconTitleLife = gHUD.GetIcon( "title_life" );
+	m_iconTitleHalf = HudIcons().GetIcon( "title_half" );
+	m_iconTitleLife = HudIcons().GetIcon( "title_life" );
 };
 
 
@@ -473,7 +472,7 @@ void CHudMessage::MessageDrawScan( client_textmessage_t *pMessage, float time )
 		int tempLen = len + 2;
 		char *localString = (char *)_alloca( tempLen );
 		Q_strncpy( localString, pMessage->pMessage, tempLen );
-		if (V_iscntrl(localString[len - 1]))
+		if (iscntrl(localString[len - 1]))
 		{
 			localString[len - 1] = 0;
 		}
@@ -807,7 +806,11 @@ void CHudMessage::MsgFunc_GameTitle( bf_read &msg )
 		sf.duration = (float)(1<<SCREENFADE_FRACBITS) * 5.0f;
 		sf.holdTime = (float)(1<<SCREENFADE_FRACBITS) * 1.0f;
 		sf.fadeFlags = FFADE_IN | FFADE_PURGE;
-		vieweffects->Fade( sf );
+		FOR_EACH_VALID_SPLITSCREEN_PLAYER( hh )
+		{
+			ACTIVE_SPLITSCREEN_PLAYER_GUARD( hh );
+			GetViewEffects()->Fade( sf );
+		}
 
 		Msg( "%i gametitle fade\n", gpGlobals->framecount );
 	}
@@ -987,7 +990,7 @@ void CHudMessage::AddChar( int r, int g, int b, int a, wchar_t ch )
 //-----------------------------------------------------------------------------
 void CHudMessage::GetTextExtents( int *wide, int *tall, const char *string )
 {
-	*wide = g_pMatSystemSurface->DrawTextLen( m_hFont, "%s", (char *)string );
+	*wide = g_pMatSystemSurface->DrawTextLen( m_hFont, (char *)string );
 	*tall = vgui::surface()->GetFontTall( m_hFont );
 }
 

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -33,7 +33,7 @@ public:
 	// Called each frame to determine the current view fade parameters ( color and alpha )
 	virtual void	GetFadeParams( unsigned char *r, unsigned char *g, unsigned char *b, unsigned char *a, bool *blend ) = 0;
 	// Apply directscreen shake
-	virtual void	Shake( ScreenShake_t &data ) = 0;
+	virtual void	Shake( const ScreenShake_t &data ) = 0;
 	// Apply direct screen fade
 	virtual void	Fade( ScreenFade_t &data ) = 0;
 	// Clear all permanent fades in our fade list
@@ -44,11 +44,16 @@ public:
 	virtual void	CalcShake( void ) = 0;
 	// Apply those values to the passed in vector(s).
 	virtual void	ApplyShake( Vector& origin, QAngle& angles, float factor ) = 0;
+	// Compute screen tilt values for this frame
+	virtual void	CalcTilt( void ) = 0;
+	// Apply those values to the passed in vector(s).
+	virtual void	ApplyTilt( QAngle& angles, float factor ) = 0;
 	// Save / Restore
 	virtual void	Save( ISave *pSave ) = 0;
 	virtual void	Restore( IRestore *pRestore, bool ) = 0;
+	virtual void	ClearAllShakes( void ) = 0;
 };
 
-extern IViewEffects *vieweffects;
+extern IViewEffects *GetViewEffects();
 
 #endif // IVIEWEFFECTS_H

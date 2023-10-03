@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Spawn, think, and touch functions for trains, etc.
 //
@@ -42,10 +42,6 @@ public:
 	string_t	m_NoiseArrived;
 
 	CSoundPatch *m_pMovementSound;
-#ifdef HL1_DLL
-	int			m_MoveSound;
-	int			m_StopSound;
-#endif
 
 	float	m_volume;			// Sound volume
 	float	m_flTWidth;
@@ -57,11 +53,6 @@ BEGIN_DATADESC( CBasePlatTrain )
 	DEFINE_KEYFIELD( m_NoiseMoving, FIELD_SOUNDNAME, "noise1" ),
 	DEFINE_KEYFIELD( m_NoiseArrived, FIELD_SOUNDNAME, "noise2" ),
 
-#ifdef HL1_DLL
-	DEFINE_KEYFIELD( m_MoveSound, FIELD_INTEGER, "movesnd" ),
-	DEFINE_KEYFIELD( m_StopSound, FIELD_INTEGER, "stopsnd" ),
-
-#endif 
 	DEFINE_SOUNDPATCH( m_pMovementSound ),
 
 	DEFINE_KEYFIELD( m_volume, FIELD_FLOAT, "volume" ),
@@ -127,90 +118,6 @@ void CBasePlatTrain::Precache( void )
 	//Fill in a default value if necessary
 	UTIL_ValidateSoundName( m_NoiseMoving, "Plat.DefaultMoving" );
 	UTIL_ValidateSoundName( m_NoiseArrived, "Plat.DefaultArrive" );
-
-#ifdef HL1_DLL
-// set the plat's "in-motion" sound
-	switch (m_MoveSound)
-	{
-	default:
-	case	0:
-		m_NoiseMoving = MAKE_STRING( "Plat.DefaultMoving" );
-		break;
-	case	1:
-		m_NoiseMoving = MAKE_STRING("Plat.BigElev1");
-		break;
-	case	2:
-		m_NoiseMoving = MAKE_STRING("Plat.BigElev2");
-		break;
-	case	3:
-		m_NoiseMoving = MAKE_STRING("Plat.TechElev1");
-		break;
-	case	4:
-		m_NoiseMoving = MAKE_STRING("Plat.TechElev2");
-		break;
-	case	5:
-		m_NoiseMoving = MAKE_STRING("Plat.TechElev3");
-		break;
-	case	6:
-		m_NoiseMoving = MAKE_STRING("Plat.FreightElev1");
-		break;
-	case	7:
-		m_NoiseMoving = MAKE_STRING("Plat.FreightElev2");
-		break;
-	case	8:
-		m_NoiseMoving = MAKE_STRING("Plat.HeavyElev");
-		break;
-	case	9:
-		m_NoiseMoving = MAKE_STRING("Plat.RackElev");
-		break;
-	case	10:
-		m_NoiseMoving = MAKE_STRING("Plat.RailElev");
-		break;
-	case	11:
-		m_NoiseMoving = MAKE_STRING("Plat.SqueakElev");
-		break;
-	case	12:
-		m_NoiseMoving = MAKE_STRING("Plat.OddElev1");
-		break;
-	case	13:
-		m_NoiseMoving = MAKE_STRING("Plat.OddElev2");
-		break;
-	}
-
-// set the plat's 'reached destination' stop sound
-	switch (m_StopSound)
-	{
-	default:
-	case	0:
-		m_NoiseArrived = MAKE_STRING( "Plat.DefaultArrive" );
-		break;
-	case	1:
-		m_NoiseArrived = MAKE_STRING("Plat.BigElevStop1");
-		break;
-	case	2:
-		m_NoiseArrived = MAKE_STRING("Plat.BigElevStop2");
-		break;
-	case	3:
-		m_NoiseArrived = MAKE_STRING("Plat.FreightElevStop");
-		break;
-	case	4:
-		m_NoiseArrived = MAKE_STRING("Plat.HeavyElevStop");
-		break;
-	case	5:
-		m_NoiseArrived = MAKE_STRING("Plat.RackStop");
-		break;
-	case	6:
-		m_NoiseArrived = MAKE_STRING("Plat.RailStop");
-		break;
-	case	7:
-		m_NoiseArrived = MAKE_STRING("Plat.SqueakStop");
-		break;
-	case	8:
-		m_NoiseArrived = MAKE_STRING("Plat.QuickStop");
-		break;
-	}
-
-#endif // HL1_DLL
 
 	//Precache them all
 	PrecacheScriptSound( (char *) STRING(m_NoiseMoving) );
@@ -950,7 +857,7 @@ void CFuncTrain::Next( void )
 	//Check for teleport
 	if ( m_hCurrentTarget->HasSpawnFlags( SF_CORNER_TELEPORT ) )
 	{
-		IncrementInterpolationFrame();
+		AddEffects( EF_NOINTERP );
 
 		// This is supposed to place the center of the func_train at the target's origin.
 		// FIXME: This is totally busted! It's using the wrong space for the computation...
@@ -964,6 +871,7 @@ void CFuncTrain::Next( void )
 		// Normal linear move
 		PlayMovingSound();
 
+		RemoveEffects( EF_NOINTERP );
 		SetMoveDone( &CFuncTrain::Wait );
 
 		// This is supposed to place the center of the func_train at the target's origin.
@@ -1200,10 +1108,6 @@ BEGIN_DATADESC( CFuncTrackTrain )
 	DEFINE_KEYFIELD( m_flAccelSpeed, FIELD_FLOAT, "ManualAccelSpeed" ),
 	DEFINE_KEYFIELD( m_flDecelSpeed, FIELD_FLOAT, "ManualDecelSpeed" ),
 
-#ifdef HL1_DLL
-	DEFINE_FIELD( m_bOnTrackChange, FIELD_BOOLEAN ),
-#endif
-
 	// Inputs
 	DEFINE_INPUTFUNC( FIELD_VOID, "Stop", InputStop ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "StartForward", InputStartForward ),
@@ -1215,8 +1119,6 @@ BEGIN_DATADESC( CFuncTrackTrain )
 	DEFINE_INPUTFUNC( FIELD_FLOAT, "SetSpeedDir", InputSetSpeedDir ),
 	DEFINE_INPUTFUNC( FIELD_FLOAT, "SetSpeedReal", InputSetSpeedReal ),
 	DEFINE_INPUTFUNC( FIELD_FLOAT, "SetSpeedDirAccel", InputSetSpeedDirAccel ),
-	DEFINE_INPUTFUNC( FIELD_STRING, "TeleportToPathTrack", InputTeleportToPathTrack ),
-	DEFINE_INPUTFUNC( FIELD_FLOAT, "SetSpeedForwardModifier", InputSetSpeedForwardModifier ),
 
 	// Outputs
 	DEFINE_OUTPUT( m_OnStart, "OnStart" ),
@@ -1256,11 +1158,6 @@ CFuncTrackTrain::CFuncTrackTrain()
 	m_eVelocityType = TrainVelocity_Instantaneous;
 	m_lastBlockPos.Init();
 	m_lastBlockTick = gpGlobals->tickcount;
-
-	m_flSpeedForwardModifier = 1.0f;
-	m_flUnmodifiedDesiredSpeed = 0.0f;
-
-	m_bDamageChild = false;
 }
 
 
@@ -1469,7 +1366,7 @@ void CFuncTrackTrain::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TY
 //-----------------------------------------------------------------------------
 void CFuncTrackTrain::InputSetSpeedReal( inputdata_t &inputdata )
 {
-	SetSpeed( clamp( inputdata.value.Float(), 0.f, m_maxSpeed ) );
+	SetSpeed( clamp( inputdata.value.Float(), 0, m_maxSpeed ) );
 }
 
 
@@ -1479,7 +1376,7 @@ void CFuncTrackTrain::InputSetSpeedReal( inputdata_t &inputdata )
 //-----------------------------------------------------------------------------
 void CFuncTrackTrain::InputSetSpeed( inputdata_t &inputdata )
 {
-	float flScale = clamp( inputdata.value.Float(), 0.f, 1.f );
+	float flScale = clamp( inputdata.value.Float(), 0, 1 );
 	SetSpeed( m_maxSpeed * flScale );
 }
 
@@ -1495,7 +1392,7 @@ void CFuncTrackTrain::InputSetSpeedDir( inputdata_t &inputdata )
 	float newSpeed = inputdata.value.Float();
 	SetDirForward( newSpeed >= 0 );
 	newSpeed = fabs(newSpeed);
-	float flScale = clamp( newSpeed, 0.f, 1.f );
+	float flScale = clamp( newSpeed, 0, 1 );
 	SetSpeed( m_maxSpeed * flScale );
 }
 
@@ -1507,54 +1404,11 @@ void CFuncTrackTrain::InputSetSpeedDir( inputdata_t &inputdata )
 //-----------------------------------------------------------------------------
 void CFuncTrackTrain::InputSetSpeedDirAccel( inputdata_t &inputdata )
 {
-	SetSpeedDirAccel( inputdata.value.Float() );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CFuncTrackTrain::SetSpeedDirAccel( float flNewSpeed )
-{
-	float newSpeed = flNewSpeed;
+	float newSpeed = inputdata.value.Float();
 	SetDirForward( newSpeed >= 0 );
-	newSpeed = fabs( newSpeed );
-	float flScale = clamp( newSpeed, 0.f, 1.f );
+	newSpeed = fabs(newSpeed);
+	float flScale = clamp( newSpeed, 0, 1 );
 	SetSpeed( m_maxSpeed * flScale, true );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CFuncTrackTrain::InputSetSpeedForwardModifier( inputdata_t &inputdata )
-{
-	SetSpeedForwardModifier( inputdata.value.Float() ) ;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CFuncTrackTrain::SetSpeedForwardModifier( float flModifier )
-{
-	float flSpeedForwardModifier = flModifier;
-	flSpeedForwardModifier = fabs( flSpeedForwardModifier );
-
-	m_flSpeedForwardModifier = clamp( flSpeedForwardModifier, 0.f, 1.f );
-	SetSpeed( m_flUnmodifiedDesiredSpeed, true );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CFuncTrackTrain::InputTeleportToPathTrack( inputdata_t &inputdata )
-{
-	const char *pszName = inputdata.value.String();
-	CPathTrack *pTrack = dynamic_cast<CPathTrack*>( gEntList.FindEntityByName( NULL, pszName ) );
-
-	if ( pTrack )
-	{
-		TeleportToPathTrack( pTrack );
-		m_ppath = pTrack;
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -1564,14 +1418,7 @@ void CFuncTrackTrain::SetSpeed( float flSpeed, bool bAccel /*= false */  )
 {
 	m_bAccelToSpeed = bAccel;
 
- 	m_flUnmodifiedDesiredSpeed = flSpeed;
 	float flOldSpeed = m_flSpeed;
-
-	// are we using a speed forward modifier?
-	if ( m_flSpeedForwardModifier < 1.0 && m_dir > 0 )
-	{
-		flSpeed = flSpeed * m_flSpeedForwardModifier;
-	}
 
 	if ( m_bAccelToSpeed )
 	{
@@ -1646,7 +1493,7 @@ static CBaseEntity *FindPhysicsBlockerForHierarchy( CBaseEntity *pParentEntity )
 			{
 				IPhysicsObject *pOther = pSnapshot->GetObject(1);
 				CBaseEntity *pOtherEntity = static_cast<CBaseEntity *>(pOther->GetGameData());
-				if ( pOtherEntity && pOtherEntity->GetMoveType() == MOVETYPE_VPHYSICS )
+				if ( pOtherEntity->GetMoveType() == MOVETYPE_VPHYSICS )
 				{
 					Vector normal;
 					pSnapshot->GetSurfaceNormal(normal);
@@ -1801,11 +1648,11 @@ void CFuncTrackTrain::SoundUpdate( void )
 	float flSpeedRatio = 0;
 	if ( HasSpawnFlags( SF_TRACKTRAIN_USE_MAXSPEED_FOR_PITCH ) )
 	{
-		flSpeedRatio = clamp( fabs( m_flSpeed ) / m_maxSpeed, 0.f, 1.f );
+		flSpeedRatio = clamp( fabs( m_flSpeed ) / m_maxSpeed, 0, 1 );
 	}
 	else
 	{
-		flSpeedRatio = clamp( fabs( m_flSpeed ) / TRAIN_MAXSPEED, 0.f, 1.f );
+		flSpeedRatio = clamp( fabs( m_flSpeed ) / TRAIN_MAXSPEED, 0, 1 );
 	}
 
 	float flpitch = RemapVal( flSpeedRatio, 0, 1, m_nMoveSoundMinPitch, m_nMoveSoundMaxPitch );
@@ -2011,11 +1858,7 @@ void CFuncTrackTrain::UpdateTrainVelocity( CPathTrack *pPrev, CPathTrack *pNext,
 //-----------------------------------------------------------------------------
 TrainOrientationType_t CFuncTrackTrain::GetTrainOrientationType()
 {
-#ifdef HL1_DLL
-	return TrainOrientation_AtPathTracks;
-#else
 	return m_eOrientationType;
-#endif
 }
 
 
@@ -2268,9 +2111,6 @@ void CFuncTrackTrain::TeleportToPathTrack( CPathTrack *pTeleport )
 
 	Teleport( &pTeleport->GetLocalOrigin(), &nextAngles, NULL );
 	SetLocalAngularVelocity( vec3_angle );
-
-	variant_t emptyVariant;
-	pTeleport->AcceptInput( "InTeleport", this, this, emptyVariant, 0 );
 }
 
 
@@ -2351,9 +2191,6 @@ void CFuncTrackTrain::Next( void )
 			//
 			m_ppath = pNext;
 			ArriveAtNode( pNext );
-#ifdef HL1_DLL
-			m_bOnTrackChange = false;
-#endif
 
 			//
 			// See if we should teleport to the next path track.
@@ -2521,9 +2358,8 @@ void CFuncTrackTrain::Find( void )
 		return;
 
 	if ( !FClassnameIs( m_ppath, "path_track" ) 
-#ifndef PORTAL	//env_portal_path_track is a child of path_track and would like to get found
 		 && !FClassnameIs( m_ppath, "env_portal_path_track" )
-#endif //#ifndef PORTAL
+
 		)
 	{
 		Warning( "func_track_train must be on a path of path_track\n" );
@@ -2617,11 +2453,7 @@ void CFuncTrackTrain::NearestPath( void )
 void CFuncTrackTrain::OnRestore( void )
 {
 	BaseClass::OnRestore();
-	if ( !m_ppath 
-#ifdef HL1_DLL
-		&& !m_bOnTrackChange
-#endif	
-		)
+	if ( !m_ppath )
 	{
 		NearestPath();
 		SetThink( NULL );
@@ -2678,13 +2510,8 @@ void CFuncTrackTrain::Spawn( void )
 	SetModel( STRING( GetModelName() ) );
 	SetMoveType( MOVETYPE_PUSH );
 
-#ifdef HL1_DLL
-	// BUGBUG: For now, just force this for testing.  Remove if we want to tag all of the trains in the levels
-	SetSolid( SOLID_BSP );
-#else
 	SetSolid( HasSpawnFlags( SF_TRACKTRAIN_HL1TRAIN ) ? SOLID_BSP : SOLID_VPHYSICS );
 	//SetSolid( SOLID_VPHYSICS );
-#endif
 
 	if ( HasSpawnFlags( SF_TRACKTRAIN_UNBLOCKABLE_BY_PLAYER ) )
 	{
@@ -2760,23 +2587,6 @@ void CFuncTrackTrain::MoveDone()
 	m_lastBlockPos.Init();
 	m_lastBlockTick = -1;
 	BaseClass::MoveDone();
-}
-
-int CFuncTrackTrain::OnTakeDamage( const CTakeDamageInfo &info )
-{
-	if ( m_bDamageChild )
-	{
-		if ( FirstMoveChild() )
-		{
-			FirstMoveChild()->TakeDamage( info );
-		}
-
-		return 0;
-	}
-	else
-	{
-		return BaseClass::OnTakeDamage( info );
-	}
 }
 
 
@@ -3093,9 +2903,6 @@ void CFuncTrackChange::GoDown( void )
 	{
 		UpdateTrain( m_start );
 		m_train->m_ppath = NULL;
-#ifdef HL1_DLL
-		m_train->m_bOnTrackChange = true;
-#endif
 	}
 }
 

@@ -1,0 +1,227 @@
+"pManagedPanelListKeys"
+{
+	"ManagedPanel"
+	{
+		"Name"		"ExperienceReport"
+		"ParentClass"		"vgui::EditablePanel"
+		"SourceFile"		"swarm/vgui/experience_report.cpp"
+		"HeaderFile"		"swarm/vgui/experience_report.h"
+		"ResFile"		"resource/ui/ExperienceReport.res"
+	}
+	"ManagedPanel"
+	{
+		"Name"		"NB_Main_Panel"
+		"ParentClass"		"vgui::EditablePanel"
+		"SourceFile"		"swarm/vgui/nb_main_panel.cpp"
+		"HeaderFile"		"swarm/vgui/nb_main_panel.h"
+		"ResFile"		"resource/ui/nb_main_panel.res"
+	}
+	"ManagedPanel"
+	{
+		"Name"		"NB_Lobby_Row"
+		"ParentClass"		"vgui::EditablePanel"
+		"SourceFile"		"swarm/vgui/nb_lobby_row.cpp"
+		"HeaderFile"		"swarm/vgui/nb_lobby_row.h"
+		"ResFile"		"resource/ui/nb_lobby_row.res"
+	}
+	"ManagedPanel"
+	{
+		"Name"		"NB_Lobby_Tooltip"
+		"ParentClass"		"vgui::EditablePanel"
+		"SourceFile"		"swarm/vgui/nb_lobby_tooltip.cpp"
+		"HeaderFile"		"swarm/vgui/nb_lobby_tooltip.h"
+		"ResFile"		"resource/ui/nb_lobby_tooltip.res"
+	}
+	"ManagedPanel"
+	{
+		"Name"		"NB_Select_Marine_Panel"
+		"ParentClass"		"vgui::EditablePanel"
+		"SourceFile"		"swarm/vgui/nb_select_marine_panel.cpp"
+		"HeaderFile"		"swarm/vgui/nb_select_marine_panel.h"
+		"ResFile"		"resource/ui/nb_select_marine_panel.res"
+	}
+	"ManagedPanel"
+	{
+		"Name"		"NB_Skill_Panel"
+		"ParentClass"		"vgui::EditablePanel"
+		"SourceFile"		"swarm/vgui/nb_skill_panel.cpp"
+		"HeaderFile"		"swarm/vgui/nb_skill_panel.h"
+		"ResFile"		"resource/ui/nb_skill_panel.res"
+	}
+	"ManagedPanel"
+	{
+		"Name"		"NB_Horiz_List"
+		"ParentClass"		"vgui::EditablePanel"
+		"SourceFile"		"swarm/vgui/nb_horiz_list.cpp"
+		"HeaderFile"		"swarm/vgui/nb_horiz_list.h"
+		"ResFile"		"resource/ui/nb_horiz_list.res"
+	}
+	"ManagedPanel"
+	{
+		"Name"		"NB_Select_Marine_Entry"
+		"ParentClass"		"vgui::EditablePanel"
+		"SourceFile"		"swarm/vgui/nb_select_marine_entry.cpp"
+		"HeaderFile"		"swarm/vgui/nb_select_marine_entry.h"
+		"ResFile"		"resource/ui/nb_select_marine_entry.res"
+	}
+	"ManagedPanel"
+	{
+		"Name"		"NB_Select_Weapon_Panel"
+		"ParentClass"		"vgui::EditablePanel"
+		"SourceFile"		"swarm/vgui/nb_select_weapon_panel.cpp"
+		"HeaderFile"		"swarm/vgui/nb_select_weapon_panel.h"
+		"ResFile"		"resource/ui/nb_select_weapon_panel.res"
+	}
+	"ManagedPanel"
+	{
+		"Name"		"NB_Weapon_Detail"
+		"ParentClass"		"vgui::EditablePanel"
+		"SourceFile"		"swarm/vgui/nb_weapon_detail.cpp"
+		"HeaderFile"		"swarm/vgui/nb_weapon_detail.h"
+		"ResFile"		"resource/ui/nb_weapon_detail.res"
+	}
+	"ManagedPanel"
+	{
+		"Name"		"NB_Select_Weapon_Entry"
+		"ParentClass"		"vgui::EditablePanel"
+		"SourceFile"		"swarm/vgui/nb_select_weapon_entry.cpp"
+		"HeaderFile"		"swarm/vgui/nb_select_weapon_entry.h"
+		"ResFile"		"resource/ui/nb_select_weapon_entry.res"
+	}
+	"ManagedPanel"
+	{
+		"Name"		"NB_Lobby_Row_Small"
+		"ParentClass"		"NB_Lobby_Row"
+		"SourceFile"		"swarm/vgui/nb_lobby_row_small.cpp"
+		"HeaderFile"		"swarm/vgui/nb_lobby_row_small.h"
+		"ResFile"		"resource/ui/nb_lobby_row_small.res"
+	}
+	"ManagedPanel"
+	{
+		"Name"		"NB_Mission_Summary"
+		"ParentClass"		"vgui::EditablePanel"
+		"SourceFile"		"swarm/vgui/nb_mission_summary.cpp"
+		"HeaderFile"		"swarm/vgui/nb_mission_summary.h"
+		"ResFile"		"resource/ui/nb_mission_summary.res"
+	}
+	"ManagedPanel"
+	{
+		"Name"		"NB_Mission_Panel"
+		"ParentClass"		"vgui::EditablePanel"
+		"SourceFile"		"swarm/vgui/nb_mission_panel.cpp"
+		"HeaderFile"		"swarm/vgui/nb_mission_panel.h"
+		"ResFile"		"resource/ui/nb_mission_panel.res"
+	}
+	"ManagedPanel"
+	{
+		"Name"		"NB_Mission_Options"
+		"ParentClass"		"vgui::EditablePanel"
+		"SourceFile"		"swarm/vgui/nb_mission_options.cpp"
+		"HeaderFile"		"swarm/vgui/nb_mission_options.h"
+		"ResFile"		"resource/ui/nb_mission_options.res"
+	}
+	"ManagedPanel"
+	{
+		"Name"		"NB_Header_Footer"
+		"ParentClass"		"vgui::EditablePanel"
+		"SourceFile"		"swarm/vgui/nb_header_footer.cpp"
+		"HeaderFile"		"swarm/vgui/nb_header_footer.h"
+		"ResFile"		"resource/ui/nb_header_footer.res"
+	}
+	"ManagedPanel"
+	{
+		"Name"		"NB_Select_Campaign_Panel"
+		"ParentClass"		"vgui::EditablePanel"
+		"SourceFile"		"swarm/vgui/nb_select_campaign_panel.cpp"
+		"HeaderFile"		"swarm/vgui/nb_select_campaign_panel.h"
+		"ResFile"		"resource/ui/nb_select_campaign_panel.res"
+	}
+	"ManagedPanel"
+	{
+		"Name"		"NB_Select_Campaign_Entry"
+		"ParentClass"		"vgui::EditablePanel"
+		"SourceFile"		"swarm/vgui/nb_select_campaign_entry.cpp"
+		"HeaderFile"		"swarm/vgui/nb_select_campaign_entry.h"
+		"ResFile"		"resource/ui/nb_select_campaign_entry.res"
+	}
+	"ManagedPanel"
+	{
+		"Name"		"NB_Select_Mission_Panel"
+		"ParentClass"		"vgui::EditablePanel"
+		"SourceFile"		"swarm/vgui/nb_select_mission_panel.cpp"
+		"HeaderFile"		"swarm/vgui/nb_select_mission_panel.h"
+		"ResFile"		"resource/ui/nb_select_mission_panel.res"
+	}
+	"ManagedPanel"
+	{
+		"Name"		"NB_Select_Mission_Entry"
+		"ParentClass"		"vgui::EditablePanel"
+		"SourceFile"		"swarm/vgui/nb_select_mission_entry.cpp"
+		"HeaderFile"		"swarm/vgui/nb_select_mission_entry.h"
+		"ResFile"		"resource/ui/nb_select_mission_entry.res"
+	}
+	"ManagedPanel"
+	{
+		"Name"		"NB_Select_Save_Panel"
+		"ParentClass"		"vgui::EditablePanel"
+		"SourceFile"		"swarm/vgui/nb_select_save_panel.cpp"
+		"HeaderFile"		"swarm/vgui/nb_select_save_panel.h"
+		"ResFile"		"resource/ui/nb_select_save_panel.res"
+	}
+	"ManagedPanel"
+	{
+		"Name"		"NB_Select_Save_Entry"
+		"ParentClass"		"vgui::EditablePanel"
+		"SourceFile"		"swarm/vgui/nb_select_save_entry.cpp"
+		"HeaderFile"		"swarm/vgui/nb_select_save_entry.h"
+		"ResFile"		"resource/ui/nb_select_save_entry.res"
+	}
+	"ManagedPanel"
+	{
+		"Name"		"NB_Button"
+		"ParentClass"		"vgui::Button"
+		"SourceFile"		"swarm/vgui/nb_button.cpp"
+		"HeaderFile"		"swarm/vgui/nb_button.h"
+		"ResFile"		"resource/ui/nb_button.res"
+	}
+	"ManagedPanel"
+	{
+		"Name"		"NB_Campaign_Map"
+		"ParentClass"		"vgui::EditablePanel"
+		"SourceFile"		"swarm/vgui/nb_campaign_map.cpp"
+		"HeaderFile"		"swarm/vgui/nb_campaign_map.h"
+		"ResFile"		"resource/ui/nb_campaign_map.res"
+	}
+	"ManagedPanel"
+	{
+		"Name"		"NB_Campaign_Mission_Details"
+		"ParentClass"		"vgui::EditablePanel"
+		"SourceFile"		"swarm/vgui/nb_campaign_mission_details.cpp"
+		"HeaderFile"		"swarm/vgui/nb_campaign_mission_details.h"
+		"ResFile"		"resource/ui/nb_campaign_mission_details.res"
+	}
+	"ManagedPanel"
+	{
+		"Name"		"NB_Commander_List"
+		"ParentClass"		"vgui::EditablePanel"
+		"SourceFile"		"swarm/vgui/nb_commander_list.cpp"
+		"HeaderFile"		"swarm/vgui/nb_commander_list.h"
+		"ResFile"		"resource/ui/nb_commander_list.res"
+	}
+	"ManagedPanel"
+	{
+		"Name"		"NB_Commander_List_Entry"
+		"ParentClass"		"vgui::EditablePanel"
+		"SourceFile"		"swarm/vgui/nb_commander_list_entry.cpp"
+		"HeaderFile"		"swarm/vgui/nb_commander_list_entry.h"
+		"ResFile"		"resource/ui/nb_commander_list_entry.res"
+	}
+	"ManagedPanel"
+	{
+		"Name"		"NB_Weapon_Unlocked"
+		"ParentClass"		"vgui::EditablePanel"
+		"SourceFile"		"swarm/vgui/nb_weapon_unlocked.cpp"
+		"HeaderFile"		"swarm/vgui/nb_weapon_unlocked.h"
+		"ResFile"		"resource/ui/nb_weapon_unlocked.res"
+	}
+}

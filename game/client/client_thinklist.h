@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -12,7 +12,7 @@
 #endif
 
 
-#include "igamesystem.h"
+#include "IGameSystem.h"
 #include "utllinkedlist.h"
 #include "cliententitylist.h"
 #include "iclientthinkable.h"
@@ -115,13 +115,13 @@ private:
 
 inline ClientThinkHandle_t CClientThinkList::GetInvalidThinkHandle()
 {
-	return (ClientThinkHandle_t)(uintp)m_ThinkEntries.InvalidIndex();
+	return (ClientThinkHandle_t)m_ThinkEntries.InvalidIndex();
 }
 
 
 inline CClientThinkList::ThinkEntry_t* CClientThinkList::GetThinkEntry( ClientThinkHandle_t hThink )
 {
-	return &m_ThinkEntries[ (uintp)hThink ];
+	return &m_ThinkEntries[ (unsigned long)hThink ];
 }
 
 

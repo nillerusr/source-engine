@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -80,7 +80,7 @@ void CBaseFilter::InputTestActivator( inputdata_t &inputdata )
 //
 //   Allows one to filter through mutiple filters
 // ###################################################################
-#define MAX_FILTERS 5
+#define MAX_FILTERS 10
 enum filter_t
 {
 	FILTER_AND,
@@ -117,6 +117,11 @@ BEGIN_DATADESC( CFilterMultiple )
 	DEFINE_KEYFIELD(m_iFilterName[2], FIELD_STRING, "Filter03"),
 	DEFINE_KEYFIELD(m_iFilterName[3], FIELD_STRING, "Filter04"),
 	DEFINE_KEYFIELD(m_iFilterName[4], FIELD_STRING, "Filter05"),
+	DEFINE_KEYFIELD(m_iFilterName[5], FIELD_STRING, "Filter06"),
+	DEFINE_KEYFIELD(m_iFilterName[6], FIELD_STRING, "Filter07"),
+	DEFINE_KEYFIELD(m_iFilterName[7], FIELD_STRING, "Filter08"),
+	DEFINE_KEYFIELD(m_iFilterName[8], FIELD_STRING, "Filter09"),
+	DEFINE_KEYFIELD(m_iFilterName[9], FIELD_STRING, "Filter10"),
 	DEFINE_ARRAY( m_hFilter, FIELD_EHANDLE, MAX_FILTERS ),
 
 END_DATADESC()
@@ -268,7 +273,59 @@ BEGIN_DATADESC( CFilterName )
 
 END_DATADESC()
 
+// ###################################################################
+//	> FilterModel
+// ###################################################################
+class CFilterModel : public CBaseFilter
+{
+	DECLARE_CLASS( CFilterModel, CBaseFilter );
+	DECLARE_DATADESC();
 
+public:
+	string_t m_iFilterModel;
+
+	bool PassesFilterImpl( CBaseEntity *pCaller, CBaseEntity *pEntity )
+	{
+		return ( FStrEq( STRING( m_iFilterModel ), STRING( pEntity->GetModelName() ) ) );
+
+	}
+};
+
+LINK_ENTITY_TO_CLASS( filter_activator_model, CFilterModel );
+
+BEGIN_DATADESC( CFilterModel )
+
+	// Keyfields
+	DEFINE_KEYFIELD( m_iFilterModel,	FIELD_STRING,	"model" ),
+
+END_DATADESC()
+
+// ###################################################################
+//	> FilterContext
+// ###################################################################
+class CFilterContext : public CBaseFilter
+{
+	DECLARE_CLASS( CFilterContext, CBaseFilter );
+	DECLARE_DATADESC();
+
+public:
+	string_t m_iFilterContext;
+
+	bool PassesFilterImpl( CBaseEntity *pCaller, CBaseEntity *pEntity )
+	{
+		int i = pEntity->FindContextByName( STRING( m_iFilterContext ) );
+		return ( ( i != -1 && atoi( pEntity->GetContextValue( i ) ) > 0 ) );
+	}
+};
+
+LINK_ENTITY_TO_CLASS( filter_activator_context, CFilterContext );
+
+BEGIN_DATADESC( CFilterContext )
+
+	// Keyfields
+	DEFINE_KEYFIELD( m_iFilterContext,	FIELD_STRING,	"ResponseContext" ),
+
+END_DATADESC()
 
 // ###################################################################
 //	> FilterClass
@@ -310,7 +367,7 @@ public:
 
 	bool PassesFilterImpl( CBaseEntity *pCaller, CBaseEntity *pEntity )
 	{
-	 	return ( pEntity->GetTeamNumber() == m_iFilterTeam );
+	 	return ( pEntity != NULL && pEntity->GetTeamNumber() == m_iFilterTeam );
 	}
 };
 
@@ -372,7 +429,7 @@ protected:
 
 	bool PassesDamageFilterImpl(const CTakeDamageInfo &info)
 	{
-	 	return info.GetDamageType() == m_iDamageType;
+	 	return (info.GetDamageType() & ~DMG_DIRECT) == m_iDamageType;
 	}
 
 	int m_iDamageType;
@@ -411,11 +468,14 @@ private:
 	bool	PassesProximityFilter( CBaseEntity *pCaller, CBaseEntity *pEnemy );
 	bool	PassesMobbedFilter( CBaseEntity *pCaller, CBaseEntity *pEnemy );
 
+
 	string_t	m_iszEnemyName;				// Name or classname
 	float		m_flRadius;					// Radius (enemies are acquired at this range)
 	float		m_flOuterRadius;			// Outer radius (enemies are LOST at this range)
-	int		m_nMaxSquadmatesPerEnemy;	// Maximum number of squadmates who may share the same enemy
+	int			m_nMaxSquadmatesPerEnemy;	// Maximum number of squadmates who may share the same enemy
 	string_t	m_iszPlayerName;			// "!player"
+
+
 };
 
 //-----------------------------------------------------------------------------
@@ -431,7 +491,7 @@ bool CFilterEnemy::PassesFilterImpl( CBaseEntity *pCaller, CBaseEntity *pEntity 
 	if ( HasSpawnFlags( SF_FILTER_ENEMY_NO_LOSE_AQUIRED ) && ( pEntity == pCaller->GetEnemy() ) )
 		return true;
 
-	// This is a little weird, but it's saying that if we're not the entity we're excluding the filter to, then just pass it throughZ
+	// This is a little weird, but it's saying that if we're not the entity we're excluding the filter to, then just pass it through
 	if ( PassesNameFilter( pEntity ) == false )
 		return true;
 
@@ -441,6 +501,8 @@ bool CFilterEnemy::PassesFilterImpl( CBaseEntity *pCaller, CBaseEntity *pEntity 
 	// NOTE: This can result in some weird NPC behavior if used improperly
 	if ( PassesMobbedFilter( pCaller, pEntity ) == false )
 		return false;
+
+
 
 	// The filter has been passed, meaning:
 	//	- If we wanted all criteria to fail, they have
@@ -458,6 +520,8 @@ bool CFilterEnemy::PassesDamageFilterImpl( const CTakeDamageInfo &info )
 	Assert( 0 );
 	return false;
 }
+
+
 
 //-----------------------------------------------------------------------------
 // Purpose: Tests the enemy's name or classname
@@ -536,7 +600,7 @@ bool CFilterEnemy::PassesProximityFilter( CBaseEntity *pCaller, CBaseEntity *pEn
 	float flSmallerRadius = m_flRadius;
 	if ( flSmallerRadius > flLargerRadius )
 	{
-		::V_swap( flLargerRadius, flSmallerRadius );
+		V_swap( flLargerRadius, flSmallerRadius );
 	}
 
 	float flDist;	
@@ -629,3 +693,5 @@ BEGIN_DATADESC( CFilterEnemy )
 	DEFINE_FIELD( m_iszPlayerName, FIELD_STRING ),
 
 END_DATADESC()
+
+

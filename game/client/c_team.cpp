@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Client side CTeam class
 //
@@ -24,7 +24,7 @@ void RecvProxyArrayLength_PlayerArray( void *pStruct, int objectID, int currentA
 {
 	C_Team *pTeam = (C_Team*)pStruct;
 	
-	if ( pTeam->m_aPlayers.Size() != currentArrayLength )
+	if ( pTeam->m_aPlayers.Count() != currentArrayLength )
 		pTeam->m_aPlayers.SetSize( currentArrayLength );
 }
 
@@ -151,7 +151,7 @@ int C_Team::Get_Ping( void )
 //-----------------------------------------------------------------------------
 int C_Team::Get_Number_Players( void )
 {
-	return m_aPlayers.Size();
+	return m_aPlayers.Count();
 }
 
 //-----------------------------------------------------------------------------
@@ -159,7 +159,7 @@ int C_Team::Get_Number_Players( void )
 //-----------------------------------------------------------------------------
 bool C_Team::ContainsPlayer( int iPlayerIndex )
 {
-	for (int i = 0; i < m_aPlayers.Size(); i++ )
+	for (int i = 0; i < m_aPlayers.Count(); i++ )
 	{
 		if ( m_aPlayers[i] == iPlayerIndex )
 			return true;
@@ -252,5 +252,5 @@ bool ArePlayersOnSameTeam( int iPlayerIndex1, int iPlayerIndex2 )
 //-----------------------------------------------------------------------------
 int GetNumberOfTeams( void )
 {
-	return g_Teams.Size();
+	return g_Teams.Count();
 }

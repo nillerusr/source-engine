@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Dissolve entity to be attached to target entity. Serves two purposes:
 //
@@ -146,7 +146,8 @@ void CEntityDissolve::Spawn()
 	}
 
 	m_nRenderMode = kRenderTransColor;
-	SetRenderColor( 255, 255, 255, 255 );
+	SetRenderColor( 255, 255, 255 );
+	SetRenderAlpha( 255 );
 	m_nRenderFX = kRenderFxNone;
 
 	SetThink( &CEntityDissolve::DissolveThink );
@@ -330,7 +331,7 @@ void CEntityDissolve::DissolveThink( void )
 
 	if ( pTarget && pTarget->GetFlags() & FL_TRANSRAGDOLL )
 	{
-		SetRenderColorA( 0 );
+		SetRenderAlpha( 0 );
 	}
 
 	float dt = gpGlobals->curtime - m_flStartTime;

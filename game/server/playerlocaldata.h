@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -15,6 +15,8 @@
 #include "playernet_vars.h"
 #include "networkvar.h"
 #include "fogcontroller.h"
+#include "postprocesscontroller.h"
+#include "colorcorrection.h"
 
 //-----------------------------------------------------------------------------
 // Purpose: Player specific data ( sent only to local player, too )
@@ -50,10 +52,10 @@ public:
 	// In process of duck-jumping
 	CNetworkVar( bool, m_bInDuckJump );
 	// During ducking process, amount of time before full duc
-	CNetworkVar( float, m_flDucktime );
-	CNetworkVar( float, m_flDuckJumpTime );
+	CNetworkVar( int, m_nDuckTimeMsecs );
+	CNetworkVar( int, m_nDuckJumpTimeMsecs );
 	// Jump time, time to auto unduck (since we auto crouch jump now).
-	CNetworkVar( float, m_flJumpTime );
+	CNetworkVar( int, m_nJumpTimeMsecs );
 	// Step sound side flip/flip
 	int m_nStepside;;
 	// Velocity at time when we hit ground
@@ -74,6 +76,9 @@ public:
 	CNetworkVar( bool, m_bPoisoned );
 	CNetworkVar( float, m_flStepSize );
 	CNetworkVar( bool, m_bAllowAutoMovement );
+
+	// Autoaim
+	CNetworkVar( bool,	m_bAutoAimTarget );
 
 	// 3d skybox
 	CNetworkVarEmbedded( sky3dparams_t, m_skybox3d );

@@ -1,13 +1,13 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
 // $NoKeywords: $
-//=============================================================================//
+//===========================================================================//
 
 #include "cbase.h"
 
-#include "iviewrender.h"
+#include "IViewRender.h"
 #include "view.h"
 #include "studio.h"
 #include "bone_setup.h"
@@ -19,16 +19,16 @@
 #include "IEffects.h"
 #include "c_entitydissolve.h"
 #include "movevars_shared.h"
-#include "clienteffectprecachesystem.h"
+#include "precache_register.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-CLIENTEFFECT_REGISTER_BEGIN( PrecacheEffectBuild )
-CLIENTEFFECT_MATERIAL( "effects/tesla_glow_noz" )
-CLIENTEFFECT_MATERIAL( "effects/spark" )
-CLIENTEFFECT_MATERIAL( "effects/combinemuzzle2" )
-CLIENTEFFECT_REGISTER_END()
+PRECACHE_REGISTER_BEGIN( GLOBAL, PrecacheEffectBuild )
+PRECACHE( MATERIAL,"effects/tesla_glow_noz" )
+PRECACHE( MATERIAL,"effects/spark" )
+PRECACHE( MATERIAL,"effects/combinemuzzle2" )
+PRECACHE_REGISTER_END()
 
 //-----------------------------------------------------------------------------
 // Networking
@@ -55,9 +55,8 @@ PMaterialHandle g_Material_AR2Glow = NULL;
 C_EntityDissolve::C_EntityDissolve( void )
 {
 	m_bLinkedToServerEnt = true;
-	m_pController = NULL;
+	m_pController = false;
 	m_bCoreExplode = false;
-	m_vEffectColor = Vector( 255, 255, 255 );
 }
 
 //-----------------------------------------------------------------------------
@@ -112,7 +111,7 @@ IMotionEvent::simresult_e C_EntityDissolve::Simulate( IPhysicsMotionController *
 	angular.Init();
 
 	// Make it zero g
-	linear.z -= -1.02 * GetCurrentGravity();
+	linear.z -= -1.02 * sv_gravity.GetFloat();
 
 	Vector vel;
 	AngularImpulse angVel;
@@ -226,10 +225,12 @@ void C_EntityDissolve::BuildTeslaEffect( mstudiobbox_t *pHitBox, const matrix3x4
 	{
 		if ( !EffectOccluded( tr.endpos ) )
 		{
+			int nSlot = GET_ACTIVE_SPLITSCREEN_SLOT();
+
 			// Move it towards the camera
 			Vector vecFlash = tr.endpos;
 			Vector vecForward;
-			AngleVectors( MainViewAngles(), &vecForward );
+			AngleVectors( MainViewAngles(nSlot), &vecForward );
 			vecFlash -= (vecForward * 8);
 
 			g_pEffects->EnergySplash( vecFlash, -vecForward, false );
@@ -503,26 +504,16 @@ float C_EntityDissolve::GetModelFadeOutPercentage( void )
 //-----------------------------------------------------------------------------
 void C_EntityDissolve::ClientThink( void )
 {
-	C_BaseEntity *pEnt = GetMoveParent();
-	if ( !pEnt )
-		return;
-
-	bool bIsRagdoll;
-#ifdef TF_CLIENT_DLL
-	bIsRagdoll = true;
-#else
 	C_BaseAnimating *pAnimating = GetMoveParent() ? GetMoveParent()->GetBaseAnimating() : NULL;
 	if (!pAnimating)
 		return;
-	bIsRagdoll = pAnimating->IsRagdoll();
-#endif
 
 	// NOTE: IsRagdoll means *client-side* ragdoll. We shouldn't be trying to fight
 	// the server ragdoll (or any server physics) on the client
-	if (( !m_pController ) && ( m_nDissolveType == ENTITY_DISSOLVE_NORMAL ) && bIsRagdoll )
+	if (( !m_pController ) && ( m_nDissolveType == ENTITY_DISSOLVE_NORMAL ) && pAnimating->IsRagdoll())
 	{
 		IPhysicsObject *ppList[VPHYSICS_MAX_OBJECT_LIST_COUNT];
-		int nCount = pEnt->VPhysicsGetObjectList( ppList, ARRAYSIZE(ppList) );
+		int nCount = pAnimating->VPhysicsGetObjectList( ppList, ARRAYSIZE(ppList) );
 		if ( nCount > 0 )
 		{
 			m_pController = physenv->CreateMotionController( this );
@@ -535,14 +526,13 @@ void C_EntityDissolve::ClientThink( void )
 
 	color32 color;
 
-	color.r = ( 1.0f - GetFadeInPercentage() ) * m_vEffectColor.x;
-	color.g = ( 1.0f - GetFadeInPercentage() ) * m_vEffectColor.y;
-	color.b = ( 1.0f - GetFadeInPercentage() ) * m_vEffectColor.z;
+	color.r = color.g = color.b = ( 1.0f - GetFadeInPercentage() ) * 255.0f;
 	color.a = GetModelFadeOutPercentage() * 255.0f;
 
 	// Setup the entity fade
-	pEnt->SetRenderMode( kRenderTransColor );
-	pEnt->SetRenderColor( color.r, color.g, color.b, color.a );
+	pAnimating->SetRenderMode( kRenderTransColor );
+	pAnimating->SetRenderColor( color.r, color.g, color.b );
+	pAnimating->SetRenderAlpha( color.a );
 
 	if ( GetModelFadeOutPercentage() <= 0.2f )
 	{
@@ -566,18 +556,12 @@ void C_EntityDissolve::ClientThink( void )
 		{
 			Release();
 
-			C_ClientRagdoll *pRagdoll = dynamic_cast <C_ClientRagdoll *> ( pEnt );
+			C_ClientRagdoll *pRagdoll = dynamic_cast <C_ClientRagdoll *> ( pAnimating );
 
 			if ( pRagdoll )
 			{
 				pRagdoll->ReleaseRagdoll();
 			}
-#ifdef TF_CLIENT_DLL
-			else
-			{
-				pEnt->Release();
-			}
-#endif
 		}
 	}
 }
@@ -587,7 +571,7 @@ void C_EntityDissolve::ClientThink( void )
 // Input  : flags - 
 // Output : int
 //-----------------------------------------------------------------------------
-int C_EntityDissolve::DrawModel( int flags )
+int C_EntityDissolve::DrawModel( int flags, const RenderableInstance_t &instance )
 {
 	// See if we should draw
 	if ( gpGlobals->frametime == 0 || m_bReadyToDraw == false )
@@ -660,7 +644,7 @@ int C_EntityDissolve::DrawModel( int flags )
 		yDir = yvec;
 		float yScale = VectorNormalize( yDir ) * 0.75f;
 
-		int numParticles = clamp( 3.0f * fadePerc, 0.f, 3.f );
+		int numParticles = clamp( 3.0f * fadePerc, 0, 3 );
 
 		int iTempParts = 2;
 
@@ -737,9 +721,9 @@ int C_EntityDissolve::DrawModel( int flags )
 
 			float alpha = 255;
 
-			sParticle->m_uchColor[0]	= m_vEffectColor.x;
-			sParticle->m_uchColor[1]	= m_vEffectColor.y;
-			sParticle->m_uchColor[2]	= m_vEffectColor.z;
+			sParticle->m_uchColor[0]	= alpha;
+			sParticle->m_uchColor[1]	= alpha;
+			sParticle->m_uchColor[2]	= alpha;
 			sParticle->m_uchStartAlpha	= alpha;
 			sParticle->m_uchEndAlpha	= 0;
 			sParticle->m_uchEndSize		= 0;
@@ -765,9 +749,9 @@ int C_EntityDissolve::DrawModel( int flags )
 
 			float alpha = 255;
 
-			sParticle->m_uchColor[0]	= m_vEffectColor.x;
-			sParticle->m_uchColor[1]	= m_vEffectColor.y;
-			sParticle->m_uchColor[2]	= m_vEffectColor.z;
+			sParticle->m_uchColor[0]	= alpha;
+			sParticle->m_uchColor[1]	= alpha;
+			sParticle->m_uchColor[2]	= alpha;
 			sParticle->m_uchStartAlpha	= alpha;
 			sParticle->m_uchEndAlpha	= 0;
 			sParticle->m_uchEndSize		= 0;

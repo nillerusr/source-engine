@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -45,7 +45,7 @@ inline void ComputePathVector( Navigation_t navType, const Vector &start, const 
 
 inline float ComputePathDirection( Navigation_t navType, const Vector &start, const Vector &end, Vector *pDirection )
 {
-	if (navType == NAV_GROUND)
+	if (navType == NAV_GROUND || navType == NAV_CRAWL)
 	{
 		VectorSubtract( end, start, *pDirection );
 		pDirection->z = 0.0f;

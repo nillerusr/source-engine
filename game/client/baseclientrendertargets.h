@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Has init functions for all the standard render targets used by most games.
 //			Mods who wish to make their own render targets can inherit from this class
@@ -14,7 +14,7 @@
 // $Workfile:     $
 // $Date:         $
 // $NoKeywords: $
-//=============================================================================//
+//===========================================================================//
 #ifndef CLIENTRENDERTARTETS_H_
 #define CLIENTRENDERTARTETS_H_
 #ifdef _WIN32
@@ -35,12 +35,13 @@ class CBaseClientRenderTargets : public IClientRenderTargets
 	DECLARE_CLASS_GAMEROOT( CBaseClientRenderTargets, IClientRenderTargets );
 public:
 	// Interface called by engine during material system startup.
-	virtual void InitClientRenderTargets ( IMaterialSystem* pMaterialSystem, IMaterialSystemHardwareConfig* pHardwareConfig, int iWaterTextureSize = 1024, int iCameraTextureSize = 256 );
+	virtual void InitClientRenderTargets ( IMaterialSystem* pMaterialSystem, IMaterialSystemHardwareConfig* pHardwareConfig );
 	// Shutdown all custom render targets here.
 	virtual void ShutdownClientRenderTargets ( void );
 
 protected:
-	
+	void SetupClientRenderTargets( IMaterialSystem* pMaterialSystem, IMaterialSystemHardwareConfig* pHardwareConfig, int iWaterTextureSize = 1024, int iCameraTextureSize = 256 );
+
 	// Standard render textures used by most mods-- Classes inheriting from
 	// this can choose to init these or not depending on their needs.
 
@@ -50,9 +51,6 @@ protected:
 
 	// Used for monitors
 	CTextureReference		m_CameraTexture;
-
-	// Used for the HUD in stereo and head tracking mode
-	CTextureReference		m_UITexture;
 
 	// Init functions for the common render targets
 	ITexture* CreateWaterReflectionTexture( IMaterialSystem* pMaterialSystem, int iSize = 1024 );

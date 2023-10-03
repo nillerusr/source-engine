@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -14,7 +14,7 @@
 #include "util_shared.h"
 #include "tier0/vprof.h"
 #include "materialsystem/imaterial.h"
-#include "materialsystem/imaterialvar.h"
+#include "materialsystem/IMaterialVar.h"
 #include "view_shared.h"
 #include "viewrender.h"
 #include "tier1/KeyValues.h"
@@ -395,8 +395,7 @@ int C_SpriteRenderer::DrawSprite(
 			// don't draw viewmodel effects in reflections
 			if ( CurrentViewID() == VIEW_REFLECTION )
 			{
-				int group = ent->GetRenderGroup();
-				if ( group == RENDER_GROUP_VIEW_MODEL_TRANSLUCENT || group == RENDER_GROUP_VIEW_MODEL_OPAQUE )
+				if ( g_pClientLeafSystem->IsRenderingWithViewModels( ent->RenderHandle() ) )
 					return 0;
 			}
 			QAngle temp;
@@ -474,7 +473,7 @@ void CSprite::GetToolRecordingState( KeyValues *msg )
 			ent->GetAttachment( m_nAttachment, pState->m_vecRenderOrigin, temp );
 
 			// override viewmodel if we're driven by an attachment
-			bool bViewModel = dynamic_cast< C_BaseViewModel* >( ent ) != NULL;
+			bool bViewModel = ToBaseViewModel( ent ) != NULL;
 			msg->SetInt( "viewmodel", bViewModel );
 		}
 	}
@@ -487,14 +486,16 @@ void CSprite::GetToolRecordingState( KeyValues *msg )
 		renderscale /= flMinSize;
 	}
 
+	color24 c = GetRenderColor();
+
 	// sprite params
 	static SpriteRecordingState_t state;
 	state.m_flRenderScale = renderscale;
 	state.m_flFrame = m_flFrame;
 	state.m_flProxyRadius = m_flGlowProxySize;
 	state.m_nRenderMode = GetRenderMode();
-	state.m_nRenderFX = m_nRenderFX;
-	state.m_Color.SetColor( m_clrRender.GetR(), m_clrRender.GetG(), m_clrRender.GetB(), GetRenderBrightness() );
+	state.m_nRenderFX = GetRenderFX() ? true : false;
+	state.m_Color.SetColor( c.r, c.g, c.b, GetRenderBrightness() );
 
 	msg->SetPtr( "sprite", &state );
 }

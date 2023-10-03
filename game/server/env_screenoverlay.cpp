@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Entity to control screen overlays on a player
 //
@@ -221,7 +221,6 @@ LINK_ENTITY_TO_CLASS( env_screeneffect, CEnvScreenEffect );
 BEGIN_DATADESC( CEnvScreenEffect )
 	DEFINE_FIELD( m_flDuration, FIELD_FLOAT ),
 	DEFINE_KEYFIELD( m_nType, FIELD_INTEGER, "type" ),
-	DEFINE_FIELD( m_flDuration, FIELD_FLOAT ),
 	DEFINE_INPUTFUNC( FIELD_FLOAT, "StartEffect", InputStartEffect ),
 	DEFINE_INPUTFUNC( FIELD_FLOAT, "StopEffect", InputStopEffect ),
 END_DATADESC()

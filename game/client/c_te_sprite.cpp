@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -10,7 +10,7 @@
 #include "c_basetempentity.h"
 #include "c_te_legacytempents.h"
 #include "tempent.h"
-#include "tier1/KeyValues.h"
+#include "tier1/keyvalues.h"
 #include "toolframework_client.h"
 #include "tier0/vprof.h"
 

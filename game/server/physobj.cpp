@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -24,6 +24,8 @@
 #include "collisionutils.h"
 #include "decals.h"
 #include "bone_setup.h"
+
+
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -380,6 +382,7 @@ BEGIN_DATADESC( CPhysBox )
 	DEFINE_KEYFIELD( m_flForceToEnableMotion, FIELD_FLOAT, "forcetoenablemotion" ), 
 	DEFINE_KEYFIELD( m_angPreferredCarryAngles, FIELD_VECTOR, "preferredcarryangles" ),
 	DEFINE_KEYFIELD( m_bNotSolidToWorld, FIELD_BOOLEAN, "notsolid" ),
+	DEFINE_KEYFIELD( m_iExploitableByPlayer, FIELD_INTEGER, "ExploitableByPlayer" ),
 
 	DEFINE_INPUTFUNC( FIELD_VOID, "Wake", InputWake ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "Sleep", InputSleep ),
@@ -419,6 +422,7 @@ void CPhysBox::Spawn( void )
 	m_flDmgModBullet = func_breakdmg_bullet.GetFloat();
 	m_flDmgModClub = func_breakdmg_club.GetFloat();
 	m_flDmgModExplosive = func_breakdmg_explosive.GetFloat();
+	m_flDmgModFire = 1.0f;
 
 	ParsePropData();
 
@@ -1072,7 +1076,7 @@ int CPhysExplosion::DrawDebugTextOverlays( void )
 		text_offset++;
 
 		// print target entity
-		Q_snprintf(tempstr,sizeof(tempstr),"    limit to: %s", STRING(m_targetEntityName));
+		Q_snprintf(tempstr,sizeof(tempstr),"    limit to: %s", STRING( m_targetEntityName ) );
 		EntityText(text_offset,tempstr,0);
 		text_offset++;
 	}
@@ -1168,14 +1172,7 @@ void CPhysImpact::InputImpact( inputdata_t &inputdata )
 	Vector	end		= start + ( dir * dist );
 
 	//Trace out
-	UTIL_TraceLine( start, end, MASK_SHOT, this, COLLISION_GROUP_NONE, &trace );
-	if ( trace.startsolid )
-	{
-		// ep1_citadel_04 has a phys_impact just behind another entity, so if we startsolid then
-		// bump out just a little and retry the trace
-		Vector startOffset = start +  ( dir * 0.1 );
-		UTIL_TraceLine( startOffset , end, MASK_SHOT, this, COLLISION_GROUP_NONE, &trace );
-	}
+	UTIL_TraceLine( start, end, MASK_SHOT, this, 0, &trace );
 
 	if( debug_physimpact.GetBool() )
 	{
@@ -1922,8 +1919,10 @@ public:
 };
 LINK_ENTITY_TO_CLASS( info_mass_center, CInfoMassCenter );
 
+
+
 // =============================================================
-// point_push
+//  point_push
 // =============================================================
 
 class CPointPush : public CPointEntity
@@ -1937,15 +1936,20 @@ public:
 	void	InputEnable( inputdata_t &inputdata );
 	void	InputDisable( inputdata_t &inputdata );
 
+	virtual void DrawDebugGeometryOverlays( void );
+
 	DECLARE_DATADESC();
 
 private:
-	inline void PushEntity( CBaseEntity *pTarget );
+	inline void PushEntity( CBaseEntity *pTarget, const Vector &vecPushPoint );
+
+
 
 	bool	m_bEnabled;
 	float	m_flMagnitude;
 	float	m_flRadius;
-	float	m_flInnerRadius;	// Inner radius where the push eminates from (on a sphere)
+	float	m_flInnerRadius;		// Inner radius where the push eminates from (on a sphere)
+	float	m_flConeOfInfluence;	// Cone (in degrees) in which an entity must lie to be affected
 };
 
 LINK_ENTITY_TO_CLASS( point_push, CPointPush );
@@ -1954,10 +1958,11 @@ BEGIN_DATADESC( CPointPush )
 
 	DEFINE_THINKFUNC( PushThink ),
 	
-	DEFINE_KEYFIELD( m_bEnabled,	FIELD_BOOLEAN,	"enabled" ),
-	DEFINE_KEYFIELD( m_flMagnitude, FIELD_FLOAT,	"magnitude" ),
-	DEFINE_KEYFIELD( m_flRadius,	FIELD_FLOAT,	"radius" ),
-	DEFINE_KEYFIELD( m_flInnerRadius,FIELD_FLOAT,	"inner_radius" ),
+	DEFINE_KEYFIELD( m_bEnabled,			FIELD_BOOLEAN,	"enabled" ),
+	DEFINE_KEYFIELD( m_flMagnitude,			FIELD_FLOAT,	"magnitude" ),
+	DEFINE_KEYFIELD( m_flRadius,			FIELD_FLOAT,	"radius" ),
+	DEFINE_KEYFIELD( m_flInnerRadius,		FIELD_FLOAT,	"inner_radius" ),
+	DEFINE_KEYFIELD( m_flConeOfInfluence,	FIELD_FLOAT,	"influence_cone" ),
 
 	DEFINE_INPUTFUNC( FIELD_VOID, "Enable", InputEnable ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "Disable", InputDisable ),
@@ -1970,6 +1975,15 @@ END_DATADESC();
 #define SF_PUSH_NO_FALLOFF			0x0004
 #define	SF_PUSH_PLAYER				0x0008
 #define SF_PUSH_PHYSICS				0x0010
+
+void CPointPush::DrawDebugGeometryOverlays( void )
+{
+	// Draw our center
+	NDebugOverlay::Box( GetAbsOrigin(), -Vector(2,2,2), Vector(2,2,2), 0, 255, 0, 16, 0.05f );
+
+	// Draw our radius
+	NDebugOverlay::Sphere( GetAbsOrigin(), vec3_angle, m_flRadius, 0, 255, 0, 0, false, 0.05f );
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1989,7 +2003,7 @@ void CPointPush::Activate( void )
 // Purpose: 
 // Input  : *pTarget - 
 //-----------------------------------------------------------------------------
-void CPointPush::PushEntity( CBaseEntity *pTarget )
+void CPointPush::PushEntity( CBaseEntity *pTarget, const Vector &vecPushPoint )
 {
 	Vector vecPushDir;
 	
@@ -1999,7 +2013,7 @@ void CPointPush::PushEntity( CBaseEntity *pTarget )
 	}
 	else
 	{
-		vecPushDir = ( pTarget->BodyTarget( GetAbsOrigin(), false ) - GetAbsOrigin() );
+		vecPushDir = ( pTarget->BodyTarget( vecPushPoint, false ) - vecPushPoint );
 	}
 
 	float dist = VectorNormalize( vecPushDir );
@@ -2055,16 +2069,23 @@ void CPointPush::PushEntity( CBaseEntity *pTarget )
 	}
 }
 
+
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CPointPush::PushThink( void )
 {
+
+
 	// Get a collection of entities in a radius around us
 	CBaseEntity *pEnts[256];
 	int numEnts = UTIL_EntitiesInSphere( pEnts, 256, GetAbsOrigin(), m_flRadius, 0 );
+
 	for ( int i = 0; i < numEnts; i++ )
 	{
+		// NDebugOverlay::Box( pEnts[i]->GetAbsOrigin(), -Vector(2,2,2), Vector(2,2,2), 0, 255, 0, 16, 0.1f );
+
 		// Must be solid
 		if ( pEnts[i]->IsSolid() == false )
 			continue;
@@ -2075,8 +2096,8 @@ void CPointPush::PushThink( void )
 
 		// Must be moveable
 		if ( pEnts[i]->GetMoveType() != MOVETYPE_VPHYSICS && 
-			 pEnts[i]->GetMoveType() != MOVETYPE_WALK && 
-			 pEnts[i]->GetMoveType() != MOVETYPE_STEP )
+			pEnts[i]->GetMoveType() != MOVETYPE_WALK && 
+			pEnts[i]->GetMoveType() != MOVETYPE_STEP )
 			continue; 
 
 		// If we don't want to push players, don't
@@ -2086,6 +2107,22 @@ void CPointPush::PushThink( void )
 		// If we don't want to push physics, don't
 		if ( pEnts[i]->GetMoveType() == MOVETYPE_VPHYSICS && HasSpawnFlags( SF_PUSH_PHYSICS ) == false )
 			continue;
+
+		// See if they're within our cone of influence
+		if ( m_flConeOfInfluence != 0.0f )
+		{
+			Vector vecEndPos = pEnts[i]->BodyTarget( GetAbsOrigin(), false );
+			Vector vecDirToTarget = ( vecEndPos - GetAbsOrigin() );
+			VectorNormalize( vecDirToTarget );
+
+			Vector vecDirection;
+			AngleVectors( GetAbsAngles(), &vecDirection );
+
+			// Test if it's within our cone of influence
+			float flDot = DotProduct( vecDirToTarget, vecDirection );
+			if ( flDot < cos(DEG2RAD(m_flConeOfInfluence)) )
+				continue;		
+		}
 
 		// Test for LOS if asked to
 		if ( HasSpawnFlags( SF_PUSH_TEST_LOS ) )
@@ -2103,11 +2140,11 @@ void CPointPush::PushThink( void )
 
 			trace_t tr;
 			UTIL_TraceLine( vecStartPos, 
-							pEnts[i]->BodyTarget( vecStartPos, false ), 
-							MASK_SOLID_BRUSHONLY, 
-							this, 
-							COLLISION_GROUP_NONE, 
-							&tr );
+				pEnts[i]->BodyTarget( vecStartPos, false ), 
+				MASK_SOLID_BRUSHONLY, 
+				this, 
+				COLLISION_GROUP_NONE, 
+				&tr );
 
 			// Shielded
 			if ( tr.fraction < 1.0f && tr.m_pEnt != pEnts[i] )
@@ -2115,8 +2152,9 @@ void CPointPush::PushThink( void )
 		}
 
 		// Push it along
-		PushEntity( pEnts[i] );
+		PushEntity( pEnts[i], GetAbsOrigin() );
 	}
+
 
 	// Set us up for the next think
 	SetNextThink( gpGlobals->curtime + 0.05f );

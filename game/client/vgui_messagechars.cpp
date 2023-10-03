@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -9,8 +9,8 @@
 #include "cbase.h"
 #include <stdarg.h>
 #include "imessagechars.h"
-#include <vgui/IVGui.h>
-#include "VGuiMatSurface/IMatSystemSurface.h"
+#include <vgui/IVgui.h>
+#include "VguiMatSurface/IMatSystemSurface.h"
 #include <vgui_controls/Panel.h>
 #include <vgui_controls/Controls.h>
 #include <vgui/IScheme.h>
@@ -215,7 +215,7 @@ int CMessageCharsPanel::AddText(
 	char data[ MAX_MESSAGECHARSPANEL_LEN ];
 	int len;
 
-	va_start(argptr, messageID);
+	va_start(argptr, fmt);
 	len = Q_vsnprintf(data, sizeof( data ), fmt, argptr);
 	va_end(argptr);
 
@@ -235,10 +235,9 @@ int CMessageCharsPanel::AddText(
 
 	Assert( !msg->text );
 
-	int textLength = Q_strlen( data ) + 1;
-	msg->text = new char[ textLength ];
+	msg->text = new char[ Q_strlen( data ) + 1 ];
 	Assert( msg->text );
-	Q_strncpy( msg->text, data, textLength );
+	Q_strncpy( msg->text, data, sizeof( msg->text ) );
 
 	if ( flTime )
 		msg->fTTL = gpGlobals->curtime + flTime;
@@ -252,7 +251,7 @@ int CMessageCharsPanel::AddText(
 		msg->hCustomFont = m_hFont;
 
 	// Return new cursor position
-	return x + g_pMatSystemSurface->DrawTextLen( msg->hCustomFont, "%s", data );
+	return x + g_pMatSystemSurface->DrawTextLen( msg->hCustomFont, data );
 }
 
 //-----------------------------------------------------------------------------
@@ -272,7 +271,7 @@ void CMessageCharsPanel::GetTextExtents( vgui::HFont hCustomFont, int *wide, int
 
 	Assert( hCustomFont );
 
-	*wide = g_pMatSystemSurface->DrawTextLen( hCustomFont, "%s", (char *)string );
+	*wide = g_pMatSystemSurface->DrawTextLen( hCustomFont, (char *)string );
 	*tall = vgui::surface()->GetFontTall( hCustomFont );
 }
 
@@ -282,11 +281,7 @@ void CMessageCharsPanel::GetTextExtents( vgui::HFont hCustomFont, int *wide, int
 //-----------------------------------------------------------------------------
 void CMessageCharsPanel::OnTick( void )
 {
-	bool bVisible = ShouldDraw();
-	if ( IsVisible() != bVisible )
-	{
-		SetVisible( bVisible );
-	}
+	SetVisible( ShouldDraw() );
 }
 
 //-----------------------------------------------------------------------------
@@ -310,7 +305,7 @@ void CMessageCharsPanel::Paint()
 	CMessageCharsPanel::message_t *msg = m_pActive;
 	while ( msg )
 	{
-		g_pMatSystemSurface->DrawColoredText( msg->hCustomFont, msg->x, msg->y, msg->r, msg->g, msg->b, msg->a, "%s", msg->text );
+		g_pMatSystemSurface->DrawColoredText( msg->hCustomFont, msg->x, msg->y, msg->r, msg->g, msg->b, msg->a, msg->text );
 		msg = msg->next;
 	}
 
@@ -379,7 +374,6 @@ public:
 		{
 			messageCharsPanel->SetParent( (vgui::Panel *)NULL );
 			delete messageCharsPanel;
-			messageCharsPanel = NULL;
 		}
 	}
 
@@ -389,7 +383,7 @@ public:
 		char data[ MAX_MESSAGECHARSPANEL_LEN ];
 		int len;
 
-		va_start(argptr, messageID);
+		va_start(argptr, fmt);
 		len = Q_vsnprintf(data, sizeof( data ), fmt, argptr);
 		va_end(argptr);
 
@@ -406,7 +400,7 @@ public:
 		int r = 192, g = 192, b = 192;
 
 		va_list argptr;
-		va_start(argptr, messageID);
+		va_start( argptr, fmt );
 		int result = DrawString( hCustomFont, x, y, r, g, b, 255, fmt, messageID, argptr );
 		va_end( argptr );
 		return result;
@@ -420,7 +414,7 @@ public:
 	int DrawString( vgui::HFont hCustomFont, int x, int y, int r, int g, int b, int a, const char *fmt, int messageID, ... )
 	{
 		va_list argptr;
-		va_start(argptr, messageID);
+		va_start( argptr, fmt );
 		int result = DrawStringForTime( 0, hCustomFont, x, y, r, g, b, a, fmt, messageID, argptr );
 		va_end( argptr );
 		return result;
@@ -429,7 +423,7 @@ public:
 	int DrawString( vgui::HFont hCustomFont, int x, int y, const char *fmt, int messageID, ... )
 	{
 		va_list argptr;
-		va_start(argptr, messageID);
+		va_start( argptr, fmt );
 		int result = DrawStringForTime( 0, hCustomFont, x, y, fmt, messageID, argptr );
 		va_end( argptr );
 		return result;

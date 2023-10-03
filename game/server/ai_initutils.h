@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:		AI Utility classes for building the initial AI Networks
 //
@@ -37,11 +37,13 @@ struct HintNodeData
 	int			nNodeID;
 	string_t	strGroup;
 	int			iDisabled;
+	string_t	iszGenericType;
 	string_t	iszActivityName;
 	int			nTargetWCNodeID;
 	HintIgnoreFacing_t fIgnoreFacing;
 	NPC_STATE	minState;
 	NPC_STATE	maxState;
+	int			nRadius;
 
 	int			nWCNodeID;			// Node ID assigned by worldcraft (not same as engine!)
 

@@ -1,12 +1,16 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 //=============================================================================//
 
 #include "cbase.h"
-#include "IconPanel.h"
+#include "iconpanel.h"
 #include "KeyValues.h"
+
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
 
 DECLARE_BUILD_FACTORY( CIconPanel );
 
@@ -21,9 +25,9 @@ void CIconPanel::ApplySettings( KeyValues *inResourceData )
 {
 	Q_strncpy( m_szIcon, inResourceData->GetString( "icon", "" ), sizeof( m_szIcon ) );
 
-	m_icon = gHUD.GetIcon( m_szIcon );
+	m_icon = HudIcons().GetIcon( m_szIcon );
 
-	m_bScaleImage = inResourceData->GetInt("scaleImage", 0);
+	m_bScaleImage = inResourceData->GetBool( "scaleImage", false );
 
 	BaseClass::ApplySettings( inResourceData );
 }
@@ -32,7 +36,7 @@ void CIconPanel::SetIcon( const char *szIcon )
 {
 	Q_strncpy( m_szIcon, szIcon, sizeof(m_szIcon) );
 
-	m_icon = gHUD.GetIcon( m_szIcon );
+	m_icon = HudIcons().GetIcon( m_szIcon );
 }
 
 void CIconPanel::Paint()
@@ -61,7 +65,7 @@ void CIconPanel::ApplySchemeSettings( vgui::IScheme *pScheme )
     
 	if ( m_szIcon[0] != '\0' )
 	{
-		m_icon = gHUD.GetIcon( m_szIcon );
+		m_icon = HudIcons().GetIcon( m_szIcon );
 	}
 
 	SetFgColor( pScheme->GetColor( "FgColor", Color( 255, 255, 255, 255 ) ) );

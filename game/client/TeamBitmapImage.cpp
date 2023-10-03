@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: This is a panel which is rendered image on top of an entity
 //
@@ -6,11 +6,11 @@
 // $NoKeywords: $
 //=============================================================================//
 #include "cbase.h"
-#include "TeamBitmapImage.h"
+#include "teambitmapimage.h"
 #include <KeyValues.h>
-#include "vgui_bitmapimage.h"
-#include "panelmetaclassmgr.h"
-#include "VGuiMatSurface/IMatSystemSurface.h"
+#include "vgui_BitmapImage.h"
+#include "PanelMetaClassMgr.h"
+#include "vguimatsurface/IMatSystemSurface.h"
 #include <vgui_controls/Panel.h>
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -42,14 +42,14 @@ CTeamBitmapImage::~CTeamBitmapImage()
 //-----------------------------------------------------------------------------
 bool CTeamBitmapImage::Init( vgui::Panel *pParent, KeyValues* pInitData, C_BaseEntity* pEntity )
 {
-	static const char *pRelativeTeamNames[BITMAP_COUNT] = 
+	static char *pRelativeTeamNames[BITMAP_COUNT] = 
 	{
 		"NoTeam",
 		"MyTeam",
 		"EnemyTeam",
 	};
 
-	static const char *pAbsoluteTeamNames[BITMAP_COUNT] = 
+	static char *pAbsoluteTeamNames[BITMAP_COUNT] = 
 	{
 		"Team0",
 		"Team1",
@@ -59,7 +59,7 @@ bool CTeamBitmapImage::Init( vgui::Panel *pParent, KeyValues* pInitData, C_BaseE
 	m_pEntity = pEntity;
 	m_bRelativeTeams = (pInitData->GetInt( "relativeteam" ) != 0);
 
-	const char **ppTeamNames = m_bRelativeTeams ? pRelativeTeamNames : pAbsoluteTeamNames;
+	char **ppTeamNames = m_bRelativeTeams ? pRelativeTeamNames : pAbsoluteTeamNames;
 
 	int i;
 	for ( i = 0 ; i < BITMAP_COUNT; ++i )

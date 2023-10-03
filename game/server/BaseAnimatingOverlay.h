@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -16,7 +16,7 @@
 
 class CBaseAnimatingOverlay;
 
-class CAnimationLayer
+class CAnimationLayer : public CMemZeroOnNew
 {
 public:	
 	DECLARE_CLASS_NOBASE( CAnimationLayer );
@@ -43,6 +43,7 @@ public:
 #define ANIM_LAYER_DONTRESTORE	0x0008
 #define ANIM_LAYER_CHECKACCESS	0x0010
 #define ANIM_LAYER_DYING		0x0020
+#define ANIM_LAYER_NOEVENTS		0x0040
 
 	int		m_fFlags;
 
@@ -80,6 +81,19 @@ public:
 	void	Dying( void ) { m_fFlags |= ANIM_LAYER_DYING; }
 	bool	IsDying( void ) { return ((m_fFlags & ANIM_LAYER_DYING) != 0); }
 	void	Dead( void ) { m_fFlags &= ~ANIM_LAYER_DYING; }
+	bool	NoEvents( void ) { return ((m_fFlags & ANIM_LAYER_NOEVENTS) != 0); }
+
+	void	SetSequence( int nSequence );
+	void	SetCycle( float flCycle );
+	void	SetPrevCycle( float flCycle );
+	void	SetPlaybackRate( float flPlaybackRate );
+	void	SetWeight( float flWeight );
+
+	int		GetSequence( ) const;
+	float	GetCycle( ) const;
+	float	GetPrevCycle( ) const;
+	float	GetPlaybackRate( ) const;
+	float	GetWeight( ) const;
 
 	bool	IsAbandoned( void );
 	void	MarkActive( void );
@@ -120,6 +134,55 @@ inline float CAnimationLayer::GetFadeout( float flCurTime )
 	return s;
 }
 
+FORCEINLINE void CAnimationLayer::SetSequence( int nSequence )
+{
+	m_nSequence = nSequence;
+}
+
+FORCEINLINE void CAnimationLayer::SetCycle( float flCycle )
+{
+	m_flCycle = flCycle;
+}
+
+FORCEINLINE void CAnimationLayer::SetWeight( float flWeight )
+{
+	m_flWeight = flWeight;
+}
+
+FORCEINLINE void CAnimationLayer::SetPrevCycle( float flPrevCycle )
+{
+	m_flPrevCycle = flPrevCycle;
+}
+
+FORCEINLINE void CAnimationLayer::SetPlaybackRate( float flPlaybackRate )
+{
+	m_flPlaybackRate = flPlaybackRate;
+}
+
+FORCEINLINE int	CAnimationLayer::GetSequence( ) const
+{
+	return m_nSequence;
+}
+
+FORCEINLINE float CAnimationLayer::GetCycle( ) const
+{
+	return m_flCycle;
+}
+
+FORCEINLINE float CAnimationLayer::GetPrevCycle( ) const
+{
+	return m_flPrevCycle;
+}
+
+FORCEINLINE float CAnimationLayer::GetPlaybackRate( ) const
+{
+	return m_flPlaybackRate;
+}
+
+FORCEINLINE float CAnimationLayer::GetWeight( ) const
+{
+	return m_flWeight;
+}
 
 
 class CBaseAnimatingOverlay : public CBaseAnimating
@@ -139,11 +202,14 @@ private:
 
 public:
 	
+	virtual CBaseAnimatingOverlay *	GetBaseAnimatingOverlay() { return this; }
+	
 	virtual void	OnRestore();
+	virtual void	SetModel( const char *szModelName );
 
 	virtual void	StudioFrameAdvance();
 	virtual	void	DispatchAnimEvents ( CBaseAnimating *eventHandler );
-	virtual void	GetSkeleton( CStudioHdr *pStudioHdr, Vector pos[], Quaternion q[], int boneMask );
+	virtual void	GetSkeleton( CStudioHdr *pStudioHdr, Vector pos[], QuaternionAligned q[], int boneMask );
 
 	int		AddGestureSequence( int sequence, bool autokill = true );
 	int		AddGestureSequence( int sequence, float flDuration, bool autokill = true );
@@ -175,6 +241,7 @@ public:
 	void	SetLayerAutokill( int iLayer, bool bAutokill );
 	void	SetLayerLooping( int iLayer, bool bLooping );
 	void	SetLayerNoRestore( int iLayer, bool bNoRestore );
+	void	SetLayerNoEvents( int iLayer, bool bNoEvents );
 
 	Activity	GetLayerActivity( int iLayer );
 	int			GetLayerSequence( int iLayer );

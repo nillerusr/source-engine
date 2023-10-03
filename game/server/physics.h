@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: This is the abstraction layer for the physics simulation system
 // Any calls to the external physics library (ipion) should be made through this
@@ -87,9 +87,7 @@ struct triggerevent_t
 void PhysSolidOverride( solid_t &solid, string_t overrideScript );
 
 extern CEntityList *g_pShadowEntities;
-#ifdef PORTAL
-extern CEntityList *g_pShadowEntities_Main;
-#endif
+
 void PhysAddShadow( CBaseEntity *pEntity );
 void PhysRemoveShadow( CBaseEntity *pEntity );
 bool PhysHasShadow( CBaseEntity *pEntity );

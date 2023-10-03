@@ -1,20 +1,20 @@
 // SharedFunctorUtils.cpp
 // Useful functors
-//========= Copyright Valve Corporation, All rights reserved. ============//
+// Copyright 2006 Turtle Rock Studios, Inc.
 
 #include "cbase.h"
 #include "SharedFunctorUtils.h"
 #include "collisionutils.h"
-#ifdef CLIENT_DLL
-	#include "ClientTerrorPlayer.h"
-#else
-	#include "TerrorPlayer.h"
-#endif
+// #ifdef CLIENT_DLL
+// 	#include "ClientTerrorPlayer.h"
+// #else
+// 	#include "TerrorPlayer.h"
+// #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-
+#if 0
 //--------------------------------------------------------------------------------------------------------
 bool AvoidActors::operator()( CBaseCombatCharacter *obj )
 {
@@ -81,3 +81,4 @@ bool AvoidActors::operator()( CBaseCombatCharacter *obj )
 
 
 //--------------------------------------------------------------------------------------------------------
+#endif

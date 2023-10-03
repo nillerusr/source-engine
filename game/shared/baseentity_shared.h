@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -11,26 +11,27 @@
 #pragma once
 #endif
 
-
 extern ConVar hl2_episodic;
 
 // Simple shared header file for common base entities
 
 // entity capabilities
 // These are caps bits to indicate what an object's capabilities (currently used for +USE, save/restore and level transitions)
-#define		FCAP_MUST_SPAWN				0x00000001		// Spawn after restore
-#define		FCAP_ACROSS_TRANSITION		0x00000002		// should transfer between transitions 
-// UNDONE: This will ignore transition volumes (trigger_transition), but not the PVS!!!
-#define		FCAP_FORCE_TRANSITION		0x00000004		// ALWAYS goes across transitions
-#define		FCAP_NOTIFY_ON_TRANSITION	0x00000008		// Entity will receive Inside/Outside transition inputs when a transition occurs
-
-#define		FCAP_IMPULSE_USE			0x00000010		// can be used by the player
-#define		FCAP_CONTINUOUS_USE			0x00000020		// can be used by the player
-#define		FCAP_ONOFF_USE				0x00000040		// can be used by the player
-#define		FCAP_DIRECTIONAL_USE		0x00000080		// Player sends +/- 1 when using (currently only tracktrains)
+// NOTE: (For portal 2 and paint) These +use related caps MUST be the first 6 bits!
+#define		FCAP_IMPULSE_USE			0x00000001		// can be used by the player
+#define		FCAP_CONTINUOUS_USE			0x00000002		// can be used by the player
+#define		FCAP_ONOFF_USE				0x00000004		// can be used by the player
+#define		FCAP_DIRECTIONAL_USE		0x00000008		// Player sends +/- 1 when using (currently only tracktrains)
 // NOTE: Normally +USE only works in direct line of sight.  Add these caps for additional searches
-#define		FCAP_USE_ONGROUND			0x00000100
-#define		FCAP_USE_IN_RADIUS			0x00000200
+#define		FCAP_USE_ONGROUND			0x00000010
+#define		FCAP_USE_IN_RADIUS			0x00000020
+
+#define		FCAP_MUST_SPAWN				0x00000040		// Spawn after restore
+#define		FCAP_ACROSS_TRANSITION		0x00000080		// should transfer between transitions 
+// UNDONE: This will ignore transition volumes (trigger_transition), but not the PVS!!!
+#define		FCAP_FORCE_TRANSITION		0x00000100		// ALWAYS goes across transitions
+#define		FCAP_NOTIFY_ON_TRANSITION	0x00000200		// Entity will receive Inside/Outside transition inputs when a transition occurs
+
 #define		FCAP_SAVE_NON_NETWORKABLE	0x00000400
 
 #define		FCAP_MASTER					0x10000000		// Can be used to "master" other entities (like multisource)
@@ -44,18 +45,6 @@ extern ConVar hl2_episodic;
 // Maximum number of vphysics objects per entity
 #define VPHYSICS_MAX_OBJECT_LIST_COUNT	1024
 
-//-----------------------------------------------------------------------------
-// For invalidate physics recursive
-//-----------------------------------------------------------------------------
-enum InvalidatePhysicsBits_t
-{
-	POSITION_CHANGED	= 0x1,
-	ANGLES_CHANGED		= 0x2,
-	VELOCITY_CHANGED	= 0x4,
-	ANIMATION_CHANGED	= 0x8,
-};
-
-
 #if defined( CLIENT_DLL )
 #include "c_baseentity.h"
 #include "c_baseanimating.h"
@@ -68,6 +57,9 @@ enum InvalidatePhysicsBits_t
 
 #endif
 
+#include "vscript/ivscript.h"
+#include "vscript_shared.h"
+
 #if !defined( NO_ENTITY_PREDICTION )
 // CBaseEntity inlines
 inline bool CBaseEntity::IsPlayerSimulated( void ) const
@@ -77,7 +69,7 @@ inline bool CBaseEntity::IsPlayerSimulated( void ) const
 
 inline CBasePlayer *CBaseEntity::GetSimulatingPlayer( void )
 {
-	return m_hPlayerSimulationOwner;
+	return m_hPlayerSimulationOwner.Get();
 }
 #endif
 
@@ -247,64 +239,41 @@ inline bool CBaseEntity::IsEffectActive( int nEffects ) const
 	return (m_fEffects & nEffects) != 0; 
 }
 
+
+inline HSCRIPT ToHScript( CBaseEntity *pEnt )
+{
+	return ( pEnt ) ? pEnt->GetScriptInstance() : NULL;
+}
+
+template <> ScriptClassDesc_t *GetScriptDesc<CBaseEntity>( CBaseEntity * );
+inline CBaseEntity *ToEnt( HSCRIPT hScript )
+{
+
+	return ( hScript ) ? (CBaseEntity *)g_pScriptVM->GetInstanceValue( hScript, GetScriptDescForClass(CBaseEntity) ) : NULL;
+}
+
+// convenience functions for fishing out the vectors of this object
+// equivalent to GetVectors(), but doesn't need an intermediate stack 
+// variable (which might cause an LHS anyway)
+inline Vector	CBaseEntity::Forward() const RESTRICT  ///< get my forward (+x) vector
+{
+	const matrix3x4_t &mat = EntityToWorldTransform();
+	return Vector( mat[0][0], mat[1][0], mat[2][0] );
+}
+
+inline Vector	CBaseEntity::Left() const RESTRICT     ///< get my left    (+y) vector
+{
+	const matrix3x4_t &mat = EntityToWorldTransform();
+	return Vector( mat[0][1], mat[1][1], mat[2][1] );
+}
+
+inline Vector	CBaseEntity::Up() const  RESTRICT      ///< get my up      (+z) vector
+{
+	const matrix3x4_t &mat = EntityToWorldTransform();
+	return Vector( mat[0][2], mat[1][2], mat[2][2] );
+}
+
 // Shared EntityMessage between game and client .dlls
 #define BASEENTITY_MSG_REMOVE_DECALS	1
-
-extern float k_flMaxEntityPosCoord;
-extern float k_flMaxEntityEulerAngle;
-extern float k_flMaxEntitySpeed;
-extern float k_flMaxEntitySpinRate;
-
-inline bool IsEntityCoordinateReasonable ( const vec_t c )
-{
-	float r = k_flMaxEntityPosCoord;
-	return c > -r && c < r;
-}
-
-inline bool IsEntityPositionReasonable( const Vector &v )
-{
-	float r = k_flMaxEntityPosCoord;
-	return
-		v.x > -r && v.x < r &&
-		v.y > -r && v.y < r &&
-		v.z > -r && v.z < r;
-}
-
-// Returns:
-//   -1 - velocity is really, REALLY bad and probably should be rejected.
-//   0  - velocity was suspicious and clamped.
-//   1  - velocity was OK and not modified
-extern int CheckEntityVelocity( Vector &v );
-
-inline bool IsEntityQAngleReasonable( const QAngle &q )
-{
-	float r = k_flMaxEntityEulerAngle;
-	return
-		q.x > -r && q.x < r &&
-		q.y > -r && q.y < r &&
-		q.z > -r && q.z < r;
-}
-
-// Angular velocity in exponential map form
-inline bool IsEntityAngularVelocityReasonable( const Vector &q )
-{
-	float r = k_flMaxEntitySpinRate;
-	return
-		q.x > -r && q.x < r &&
-		q.y > -r && q.y < r &&
-		q.z > -r && q.z < r;
-}
-
-// Angular velocity of each Euler angle.
-inline bool IsEntityQAngleVelReasonable( const QAngle &q )
-{
-	float r = k_flMaxEntitySpinRate;
-	return
-		q.x > -r && q.x < r &&
-		q.y > -r && q.y < r &&
-		q.z > -r && q.z < r;
-}
-
-extern bool CheckEmitReasonablePhysicsSpew();
 
 #endif // BASEENTITY_SHARED_H

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -88,19 +88,31 @@ void CFuncAreaPortalWindow::Activate()
 }
 
 
-bool CFuncAreaPortalWindow::IsWindowOpen( const Vector &vOrigin, float fovDistanceAdjustFactor )
+bool CFuncAreaPortalWindow::IsWindowOpen( const CUtlVector< Vector > &vecOrigins, float fovDistanceAdjustFactor )
 {
-	float flDist = CollisionProp()->CalcDistanceFromPoint( vOrigin );
-	flDist *= fovDistanceAdjustFactor;
-	return ( flDist <= (m_flFadeDist + FADE_DIST_BUFFER) );
+	float flClosestDistance = FLT_MAX;
+	for ( int i = 0; i < vecOrigins.Count(); ++i )
+	{
+		float flDist = CollisionProp()->CalcDistanceFromPoint( vecOrigins[ i ] );
+		if ( flDist < flClosestDistance )
+		{
+			flClosestDistance = flDist;
+		}
+	}
+
+	if ( flClosestDistance == FLT_MAX )
+		return false;
+
+	flClosestDistance *= fovDistanceAdjustFactor;
+	return ( flClosestDistance <= (m_flFadeDist + FADE_DIST_BUFFER) );
 }
 
 
-bool CFuncAreaPortalWindow::UpdateVisibility( const Vector &vOrigin, float fovDistanceAdjustFactor, bool &bIsOpenOnClient )
+bool CFuncAreaPortalWindow::UpdateVisibility( const CUtlVector< Vector > &vecOrigins, float fovDistanceAdjustFactor, bool &bIsOpenOnClient )
 {
-	if ( IsWindowOpen( vOrigin, fovDistanceAdjustFactor ) )
+	if ( IsWindowOpen( vecOrigins, fovDistanceAdjustFactor ) )
 	{
-		return BaseClass::UpdateVisibility( vOrigin, fovDistanceAdjustFactor, bIsOpenOnClient );
+		return BaseClass::UpdateVisibility( vecOrigins, fovDistanceAdjustFactor, bIsOpenOnClient );
 	}
 	else
 	{

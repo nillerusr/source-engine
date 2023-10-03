@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:		An NPC's memory of potential enemies 
 //
@@ -40,6 +40,7 @@ struct AI_EnemyInfo_t
 	float			timeValidEnemy;		// First time can be selected (reaction delay)
 	float			timeLastReceivedDamageFrom;
 	float			timeAtFirstHand;	// Time at which the enemy was seen firsthand
+	int				nFaction;			// The faction the enemy belongs to
 	bool			bDangerMemory;		// Memory of danger position w/o Enemy pointer
 	bool			bEludedMe;			// True if enemy not at last known location 
 	bool			bUnforgettable;

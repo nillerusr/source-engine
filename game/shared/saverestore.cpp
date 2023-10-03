@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright (c) 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Helper classes and functions for the save/restore system.
 //
@@ -20,7 +20,7 @@
 #include "saverestore_utlvector.h"
 #include "model_types.h"
 #include "igamesystem.h"
-#include "interval.h"
+#include "tier2/interval.h"
 #include "vphysics/object_hash.h"
 #include "datacache/imdlcache.h"
 #include "tier0/vprof.h"
@@ -91,8 +91,10 @@ static int gSizes[FIELD_TYPECOUNT] =
 	FIELD_SIZE( FIELD_MATERIALINDEX ),
 
 	FIELD_SIZE( FIELD_VECTOR2D ),
+
 	FIELD_SIZE( FIELD_INTEGER64 ),
-	FIELD_SIZE( FIELD_POINTER ),
+
+	FIELD_SIZE( FIELD_VECTOR4D ),
 };
 
 
@@ -114,15 +116,14 @@ static void Matrix3x4Offset( matrix3x4_t& dest, const matrix3x4_t& matrixIn, con
 
 // This does the necessary casting / extract to grab a pointer to a member function as a void *
 // UNDONE: Cast to BASEPTR or something else here?
-//#define EXTRACT_INPUTFUNC_FUNCTIONPTR(x)		(*(inputfunc_t **)(&(x)))
-
+#define EXTRACT_VOID_FUNCTIONPTR(x)		(*(void **)(&(x)))
 //-----------------------------------------------------------------------------
 // Purpose: Search this datamap for the name of this member function
 //			This is used to save/restore function pointers (convert pointer to text)
 // Input  : *function - pointer to member function
 // Output : const char * - function name
 //-----------------------------------------------------------------------------
-const char *UTIL_FunctionToName( datamap_t *pMap, inputfunc_t function )
+const char *UTIL_FunctionToName( datamap_t *pMap, void *function )
 {
 	while ( pMap )
 	{
@@ -137,8 +138,7 @@ const char *UTIL_FunctionToName( datamap_t *pMap, inputfunc_t function )
 #else
 #error
 #endif
-				inputfunc_t pTest = pMap->dataDesc[i].inputFunc;
-
+				void *pTest = EXTRACT_VOID_FUNCTIONPTR(pMap->dataDesc[i].inputFunc);
 				if ( pTest == function )
 					return pMap->dataDesc[i].fieldName;
 			}
@@ -154,25 +154,19 @@ const char *UTIL_FunctionToName( datamap_t *pMap, inputfunc_t function )
 //			This is used to save/restore function pointers (convert text back to pointer)
 // Input  : *pName - name of the member function
 //-----------------------------------------------------------------------------
-inputfunc_t UTIL_FunctionFromName( datamap_t *pMap, const char *pName )
+void *UTIL_FunctionFromName( datamap_t *pMap, const char *pName )
 {
 	while ( pMap )
 	{
 		for ( int i = 0; i < pMap->dataNumFields; i++ )
 		{
-#ifdef WIN32
 			Assert( sizeof(pMap->dataDesc[i].inputFunc) == sizeof(void *) );
-#elif defined(POSIX)
-			Assert( sizeof(pMap->dataDesc[i].inputFunc) == 8 );
-#else
-#error
-#endif
 
 			if ( pMap->dataDesc[i].flags & FTYPEDESC_FUNCTIONTABLE )
 			{
 				if ( FStrEq( pName, pMap->dataDesc[i].fieldName ) )
 				{
-					return pMap->dataDesc[i].inputFunc;
+					return EXTRACT_VOID_FUNCTIONPTR(pMap->dataDesc[i].inputFunc);
 				}
 			}
 		}
@@ -205,7 +199,6 @@ CSave::CSave( CSaveRestoreData *pdata )
 
 inline int CSave::DataEmpty( const char *pdata, int size )
 {
-	static int void_data = 0;
 	if ( size != 4 )
 	{
 		const char *pLimit = pdata + size;
@@ -217,7 +210,7 @@ inline int CSave::DataEmpty( const char *pdata, int size )
 		return 1;
 	}
 
-	return memcmp(pdata, &void_data, sizeof(int)) == 0;
+	return ( *((int *)pdata) == 0 );
 }
 
 //-----------------------------------------------------------------------------
@@ -296,6 +289,14 @@ void CSave::Log( const char *pName, fieldtype_t fieldType, void *value, int coun
 				int *pValue = ( int* )( value );
 				int nValue = pValue[iCount];
 				Q_snprintf( szTempBuf, sizeof( szTempBuf ), "%d", nValue );
+				Q_strncat( szBuf, szTempBuf, sizeof( szTempBuf ), COPY_ALL_CHARACTERS );
+				break;
+			}
+		case FIELD_INTEGER64:
+			{
+				uint64 *pValue = ( uint64* )( value );
+				uint64 nValue = pValue[iCount];
+				Q_snprintf( szTempBuf, sizeof( szTempBuf ), "%llx", nValue );
 				Q_strncat( szBuf, szTempBuf, sizeof( szTempBuf ), COPY_ALL_CHARACTERS );
 				break;
 			}
@@ -654,7 +655,7 @@ bool CSave::ShouldSaveField( const void *pData, typedescription_t *pField )
 			
 				for ( ; pTestField < pLimit; ++pTestField )
 				{
-					if ( ShouldSaveField( pTestData + pTestField->fieldOffset[ TD_OFFSET_NORMAL ], pTestField ) )
+					if ( ShouldSaveField( pTestData + pTestField->fieldOffset, pTestField ) )
 						return true;
 				}
 
@@ -669,7 +670,7 @@ bool CSave::ShouldSaveField( const void *pData, typedescription_t *pField )
 			SaveRestoreFieldInfo_t fieldInfo =
 			{
 				const_cast<void *>(pData),
-				((char *)pData) - pField->fieldOffset[ TD_OFFSET_NORMAL ],
+				((char *)pData) - pField->fieldOffset,
 				pField
 			};
 			if ( pField->pSaveRestoreOps->IsEmpty( fieldInfo ) )
@@ -688,7 +689,7 @@ bool CSave::ShouldSaveField( const void *pData, typedescription_t *pField )
 			int *pEHandle = (int *)pData;
 			for ( int i = 0; i < pField->fieldSize; ++i, ++pEHandle )
 			{
-				if ( (*pEHandle) != INVALID_EHANDLE_INDEX )
+				if ( (*pEHandle) != 0xFFFFFFFF )
 					return true;
 			}
 		}
@@ -722,11 +723,11 @@ bool CSave::WriteBasicField( const char *pname, void *pData, datamap_t *pRootMap
 		case FIELD_FLOAT:
 			WriteFloat( pField->fieldName, (float *)pData, pField->fieldSize );
 			break;
-
+			
 		case FIELD_STRING:
 			WriteString( pField->fieldName, (string_t *)pData, pField->fieldSize );
 			break;
-
+			
 		case FIELD_VECTOR:
 			WriteVector( pField->fieldName, (Vector *)pData, pField->fieldSize );
 			break;
@@ -737,6 +738,10 @@ bool CSave::WriteBasicField( const char *pname, void *pData, datamap_t *pRootMap
 
 		case FIELD_INTEGER:
 			WriteInt( pField->fieldName, (int *)pData, pField->fieldSize );
+			break;
+
+		case FIELD_INTEGER64:
+			Assert( 0 );
 			break;
 
 		case FIELD_BOOLEAN:
@@ -782,7 +787,7 @@ bool CSave::WriteBasicField( const char *pname, void *pData, datamap_t *pRootMap
 			SaveRestoreFieldInfo_t fieldInfo =
 			{
 				pData,
-				((char *)pData) - pField->fieldOffset[ TD_OFFSET_NORMAL ],
+				((char *)pData) - pField->fieldOffset,
 				pField
 			};
 			pField->pSaveRestoreOps->Save( fieldInfo, this );
@@ -841,7 +846,7 @@ int CSave::WriteFields( const char *pname, const void *pBaseData, datamap_t *pRo
 	for ( int i = 0; i < fieldCount; i++ )
 	{
 		pTest = &pFields[ i ];
-		void *pOutputData = ( (char *)pBaseData + pTest->fieldOffset[ TD_OFFSET_NORMAL ] );
+		void *pOutputData = ( (char *)pBaseData + pTest->fieldOffset );
 			
 		if ( !ShouldSaveField( pOutputData, pTest ) )
 			continue;
@@ -1127,7 +1132,9 @@ void CSave::WritePositionVector( const char *pname, const Vector *value, int cou
 
 void CSave::WritePositionVector( const Vector *value, int count )
 {
-	for ( int i = 0; i < count; i++ )
+	int i;
+	Vector tmp;
+	for ( i = 0; i < count; i++ )
 	{
 		Vector tmp = value[i];
 
@@ -1140,10 +1147,10 @@ void CSave::WritePositionVector( const Vector *value, int count )
 
 //-------------------------------------
 
-void CSave::WriteFunction( datamap_t *pRootMap, const char *pname, inputfunc_t **data, int count )
+void CSave::WriteFunction( datamap_t *pRootMap, const char *pname, const int *data, int count )
 {
 	AssertMsg( count == 1, "Arrays of functions not presently supported" );
-	const char *functionName = UTIL_FunctionToName( pRootMap, *(inputfunc_t*)data );
+	const char *functionName = UTIL_FunctionToName( pRootMap, (void *)(*data) );
 	if ( !functionName )
 	{
 		Warning( "Invalid function pointer in entity!\n" );
@@ -1243,19 +1250,19 @@ bool CSave::WriteGameField( const char *pname, void *pData, datamap_t *pRootMap,
 		case FIELD_CLASSPTR:
 			WriteEntityPtr( pField->fieldName, (CBaseEntity **)pData, pField->fieldSize );
 			break;
-
+	
 		case FIELD_EDICT:
 			WriteEdictPtr( pField->fieldName, (edict_t **)pData, pField->fieldSize );
 			break;
-
+	
 		case FIELD_EHANDLE:
 			WriteEHandle( pField->fieldName, (EHANDLE *)pData, pField->fieldSize );
 			break;
-
+		
 		case FIELD_POSITION_VECTOR:
 			WritePositionVector( pField->fieldName, (Vector *)pData, pField->fieldSize );
 			break;
-
+			
 		case FIELD_TIME:
 			WriteTime( pField->fieldName, (float *)pData, pField->fieldSize );
 			break;
@@ -1263,7 +1270,7 @@ bool CSave::WriteGameField( const char *pname, void *pData, datamap_t *pRootMap,
 		case FIELD_TICK:
 			WriteTick( pField->fieldName, (int *)pData, pField->fieldSize );
 			break;
-
+			
 		case FIELD_MODELINDEX:
 			{
 				int nModelIndex = *(int*)pData;
@@ -1297,9 +1304,9 @@ bool CSave::WriteGameField( const char *pname, void *pData, datamap_t *pRootMap,
 
 		// For now, just write the address out, we're not going to change memory while doing this yet!
 		case FIELD_FUNCTION:
-			WriteFunction( pRootMap, pField->fieldName, (inputfunc_t **)(char *)pData, pField->fieldSize );
+			WriteFunction( pRootMap, pField->fieldName, (int *)(char *)pData, pField->fieldSize );
 			break;
-
+			
 		case FIELD_VMATRIX:
 			WriteVMatrix( pField->fieldName, (VMatrix *)pData, pField->fieldSize );
 			break;
@@ -1313,10 +1320,6 @@ bool CSave::WriteGameField( const char *pname, void *pData, datamap_t *pRootMap,
 
 		case FIELD_INTERVAL:
 			WriteInterval( pField->fieldName, (interval_t *)pData, pField->fieldSize );
-			break;
-
-		case FIELD_POINTER:
-			WriteData( pField->fieldName, sizeof(void*)*pField->fieldSize, (char *)pData );
 			break;
 
 		default:
@@ -1402,6 +1405,12 @@ void CRestore::ReadBasicField( const SaveRestoreRecordHeader_t &header, void *pD
 			break;
 		}
 
+		case FIELD_INTEGER64:
+		{
+			Assert( 0 );
+			break;
+		}
+
 		case FIELD_BOOLEAN:
 		{
 			ReadBool( (bool *)pDest, pField->fieldSize, header.size );
@@ -1461,7 +1470,7 @@ void CRestore::ReadBasicField( const SaveRestoreRecordHeader_t &header, void *pD
 			SaveRestoreFieldInfo_t fieldInfo =
 			{
 				pDest,
-				((char *)pDest) - pField->fieldOffset[ TD_OFFSET_NORMAL ],
+				((char *)pDest) - pField->fieldOffset,
 				pField
 			};
 			
@@ -1553,7 +1562,7 @@ void CRestore::EmptyFields( void *pBaseData, typedescription_t *pFields, int fie
 		if ( !ShouldEmptyField( pField ) )
 			continue;
 
-		void *pFieldData = (char *)pBaseData + pField->fieldOffset[ TD_OFFSET_NORMAL ];
+		void *pFieldData = (char *)pBaseData + pField->fieldOffset;
 		switch( pField->fieldType )
 		{
 		case FIELD_CUSTOM:
@@ -1630,7 +1639,50 @@ void CRestore::EndBlock()
 	m_BlockEndStack.Remove( m_BlockEndStack.Count() - 1 );
 	SetReadPos( endPos );
 }
+
+int CRestore::ScanAheadForHammerID()
+{
+	int oldPosition = m_pData->GetCurPos();
+	int iHammerID = -1;
 	
+	Verify( ReadShort() == sizeof(int) );			// First entry should be an int
+	ReadShort(); // symbol name
+
+	int nFieldsSaved = ReadInt();						// Read field count
+	for ( int i = 0; i < nFieldsSaved; i++ )
+	{
+		SaveRestoreRecordHeader_t header;
+		ReadHeader( &header );
+	
+		// If it's "hammerid", read it and return it...
+		if ( V_stricmp( "m_iHammerID", m_pData->StringFromSymbol( header.symbol ) ) == 0 )
+		{
+			Assert( header.size == 4 );
+			m_pData->Read( &iHammerID, 4 );
+			break;
+		}
+		else
+		{
+			m_pData->MoveCurPos( header.size ); // skip past the data
+		}
+	}
+
+	m_pData->Rewind( m_pData->GetCurPos() - oldPosition );
+	return iHammerID;
+}
+
+void CRestore::SkipEntityData()
+{
+	int nFieldsSaved = ReadInt();						// Read field count
+	for ( int i = 0; i < nFieldsSaved; i++ )
+	{
+		SaveRestoreRecordHeader_t header;
+		ReadHeader( &header );
+		m_pData->MoveCurPos( header.size ); // skip past the data
+	}
+}	
+
+
 //-------------------------------------
 
 int CRestore::ReadFields( const char *pname, void *pBaseData, datamap_t *pRootMap, typedescription_t *pFields, int fieldCount )
@@ -1668,7 +1720,7 @@ int CRestore::ReadFields( const char *pname, void *pBaseData, datamap_t *pRootMa
 		typedescription_t *pField = FindField( m_pData->StringFromSymbol( header.symbol ), pFields, fieldCount, &searchCookie);
 		if ( pField && ShouldReadField( pField ) )
 		{
-			ReadField( header, ((char *)pBaseData + pField->fieldOffset[ TD_OFFSET_NORMAL ]), pRootMap, pField );
+			ReadField( header, ((char *)pBaseData + pField->fieldOffset), pRootMap, pField );
 		}
 		else
 		{
@@ -2032,7 +2084,7 @@ void CRestore::ReadGameField( const SaveRestoreRecordHeader_t &header, void *pDe
 		
 		case FIELD_FUNCTION:
 		{
-			ReadFunction( pRootMap, (inputfunc_t **)pDest, pField->fieldSize, header.size );
+			ReadFunction( pRootMap, (void **)pDest, pField->fieldSize, header.size );
 			break;
 		}
 		
@@ -2159,10 +2211,6 @@ void CRestore::ReadGameField( const SaveRestoreRecordHeader_t &header, void *pDe
 			ReadInterval( (interval_t *)pDest, pField->fieldSize, header.size );
 			break;
 
-		case FIELD_POINTER:
-			ReadData( (char *)pDest, sizeof(void*)*pField->fieldSize, header.size );
-			break;
-
 		default:
 			Warning( "Bad field type\n" );
 			Assert(0);
@@ -2239,7 +2287,7 @@ int CRestore::ReadPositionVector( Vector *pValue, int count, int nBytesAvailable
 
 //-------------------------------------
 
-int CRestore::ReadFunction( datamap_t *pMap, inputfunc_t **pValue, int count, int nBytesAvailable )
+int CRestore::ReadFunction( datamap_t *pMap, void **pValue, int count, int nBytesAvailable )
 {
 	AssertMsg( nBytesAvailable > 0, "CRestore::ReadFunction() implementation does not currently support unspecified bytes available");
 	
@@ -2251,14 +2299,8 @@ int CRestore::ReadFunction( datamap_t *pMap, inputfunc_t **pValue, int count, in
 	if ( *pszFunctionName == 0 )
 		*pValue = NULL;
 	else
-	{
-		inputfunc_t func = UTIL_FunctionFromName( pMap, pszFunctionName );
-#ifdef GNUC
-		Q_memcpy( (void*)pValue, &func, sizeof(void*)*2 );
-#else
-		Q_memcpy( (void*)pValue, &func, sizeof(void*) );
-#endif
-	}
+		*pValue = UTIL_FunctionFromName( pMap, pszFunctionName );
+
 	return 0;
 }
 	
@@ -2722,7 +2764,7 @@ void CEntitySaveRestoreBlockHandler::Restore( IRestore *pRestore, bool createPla
 			if ( pEntInfo->classname != NULL_STRING )
 			{
 				pent = CreateEntityByName( STRING(pEntInfo->classname) );
-				pent->InitializeAsClientEntity( NULL, RENDER_GROUP_OPAQUE_ENTITY );
+				pent->InitializeAsClientEntity( NULL, false );
 				
 				pRestore->SetReadPos( pEntInfo->location );
 
@@ -2749,7 +2791,11 @@ void CEntitySaveRestoreBlockHandler::Restore( IRestore *pRestore, bool createPla
 	IGameSystem::OnRestoreAllSystems();
 
 	// Tell hud elements to modify behavior based on game restoration, if applicable
-	gHUD.OnRestore();
+	for ( int hh = 0; hh < MAX_SPLITSCREEN_PLAYERS; ++hh )
+	{
+		ACTIVE_SPLITSCREEN_PLAYER_GUARD( hh );
+		GetHud().OnRestore();
+	}
 }
 #endif
 
@@ -3291,6 +3337,236 @@ private:
 	int									   m_SizeBodies;
 	CUtlVector<SaveRestoreBlockHeader_t>   m_BlockHeaders;
 };
+
+
+//-----------------------------------------------------------------------------
+// Purpose: iterates through a typedescript data block, so it can insert key/value data into the block
+// Input  : *pObject - pointer to the struct or class the data is to be insterted into
+//			*pFields - description of the data
+//			iNumFields - number of fields contained in pFields
+//			char *szKeyName - name of the variable to look for
+//			char *szValue - value to set the variable to
+// Output : Returns true if the variable is found and set, false if the key is not found.
+//-----------------------------------------------------------------------------
+bool ParseKeyvalue( void *pObject, typedescription_t *pFields, int iNumFields, const char *szKeyName, const char *szValue )
+{
+	int i;
+	typedescription_t 	*pField;
+
+	for ( i = 0; i < iNumFields; i++ )
+	{
+		pField = &pFields[i];
+
+		int fieldOffset = pField->fieldOffset;
+
+		// Check the nested classes, but only if they aren't in array form.
+		if ((pField->fieldType == FIELD_EMBEDDED) && (pField->fieldSize == 1))
+		{
+			for ( datamap_t *dmap = pField->td; dmap != NULL; dmap = dmap->baseMap )
+			{
+				void *pEmbeddedObject = (void*)((char*)pObject + fieldOffset);
+				if ( ParseKeyvalue( pEmbeddedObject, dmap->dataDesc, dmap->dataNumFields, szKeyName, szValue) )
+					return true;
+			}
+		}
+
+		if ( (pField->flags & FTYPEDESC_KEY) && !stricmp(pField->externalName, szKeyName) )
+		{
+			switch( pField->fieldType )
+			{
+			case FIELD_MODELNAME:
+			case FIELD_SOUNDNAME:
+			case FIELD_STRING:
+				(*(string_t *)((char *)pObject + fieldOffset)) = AllocPooledString( szValue );
+				return true;
+
+			case FIELD_TIME:
+			case FIELD_FLOAT:
+				(*(float *)((char *)pObject + fieldOffset)) = atof( szValue );
+				return true;
+
+			case FIELD_BOOLEAN:
+				(*(bool *)((char *)pObject + fieldOffset)) = (bool)(atoi( szValue ) != 0);
+				return true;
+
+			case FIELD_CHARACTER:
+				(*(char *)((char *)pObject + fieldOffset)) = (char)atoi( szValue );
+				return true;
+
+			case FIELD_SHORT:
+				(*(short *)((char *)pObject + fieldOffset)) = (short)atoi( szValue );
+				return true;
+
+			case FIELD_INTEGER:
+			case FIELD_TICK:
+				(*(int *)((char *)pObject + fieldOffset)) = atoi( szValue );
+				return true;
+
+			case FIELD_POSITION_VECTOR:
+			case FIELD_VECTOR:
+				UTIL_StringToVector( (float *)((char *)pObject + fieldOffset), szValue );
+				return true;
+
+			case FIELD_VMATRIX:
+			case FIELD_VMATRIX_WORLDSPACE:
+				UTIL_StringToFloatArray( (float *)((char *)pObject + fieldOffset), 16, szValue );
+				return true;
+
+			case FIELD_MATRIX3X4_WORLDSPACE:
+				UTIL_StringToFloatArray( (float *)((char *)pObject + fieldOffset), 12, szValue );
+				return true;
+
+			case FIELD_COLOR32:
+				V_StringToColor32( (color32 *) ((char *)pObject + fieldOffset), szValue );
+				return true;
+
+			case FIELD_CUSTOM:
+			{
+				SaveRestoreFieldInfo_t fieldInfo =
+				{
+					(char *)pObject + fieldOffset,
+					pObject,
+					pField
+				};
+				pField->pSaveRestoreOps->Parse( fieldInfo, szValue );
+				return true;
+			}
+
+			default:
+			case FIELD_INTERVAL: // Fixme, could write this if needed
+			case FIELD_CLASSPTR:
+			case FIELD_MODELINDEX:
+			case FIELD_MATERIALINDEX:
+			case FIELD_EDICT:
+				Warning( "Bad field in entity!!\n" );
+				AssertMsg3( 0, "Bad field type %d for %s in entity %.16s!!\n" , pField->fieldType, pField->fieldName, 
+					reinterpret_cast<CBaseEntity *>(pObject)->GetDebugName() );
+				break;
+			}
+		}
+	}
+
+	return false;
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: iterates through a typedescript data block, so it can insert key/value data into the block
+// Input  : *pObject - pointer to the struct or class the data is to be insterted into
+//			*pFields - description of the data
+//			iNumFields - number of fields contained in pFields
+//			char *szKeyName - name of the variable to look for
+//			char *szValue - value to set the variable to
+// Output : Returns true if the variable is found and set, false if the key is not found.
+//-----------------------------------------------------------------------------
+bool ExtractKeyvalue( void *pObject, typedescription_t *pFields, int iNumFields, const char *szKeyName, char *szValue, int iMaxLen )
+{
+	int i;
+	typedescription_t 	*pField;
+
+	for ( i = 0; i < iNumFields; i++ )
+	{
+		pField = &pFields[i];
+
+		int fieldOffset = pField->fieldOffset;
+
+		// Check the nested classes, but only if they aren't in array form.
+		if ((pField->fieldType == FIELD_EMBEDDED) && (pField->fieldSize == 1))
+		{
+			for ( datamap_t *dmap = pField->td; dmap != NULL; dmap = dmap->baseMap )
+			{
+				void *pEmbeddedObject = (void*)((char*)pObject + fieldOffset);
+				if ( ExtractKeyvalue( pEmbeddedObject, dmap->dataDesc, dmap->dataNumFields, szKeyName, szValue, iMaxLen ) )
+					return true;
+			}
+		}
+
+		if ( (pField->flags & FTYPEDESC_KEY) && !stricmp(pField->externalName, szKeyName) )
+		{
+			switch( pField->fieldType )
+			{
+			case FIELD_MODELNAME:
+			case FIELD_SOUNDNAME:
+			case FIELD_STRING:
+				Q_strncpy( szValue, ((char *)pObject + fieldOffset), iMaxLen );
+				return true;
+
+			case FIELD_TIME:
+			case FIELD_FLOAT:
+				Q_snprintf( szValue, iMaxLen, "%f", (*(float *)((char *)pObject + fieldOffset)) );
+				return true;
+
+			case FIELD_BOOLEAN:
+				Q_snprintf( szValue, iMaxLen, "%d", (*(bool *)((char *)pObject + fieldOffset)) != 0);
+				return true;
+
+			case FIELD_CHARACTER:
+				Q_snprintf( szValue, iMaxLen, "%d", (*(char *)((char *)pObject + fieldOffset)) );
+				return true;
+
+			case FIELD_SHORT:
+				Q_snprintf( szValue, iMaxLen, "%d", (*(short *)((char *)pObject + fieldOffset)) );
+				return true;
+
+			case FIELD_INTEGER:
+			case FIELD_TICK:
+				Q_snprintf( szValue, iMaxLen, "%d", (*(int *)((char *)pObject + fieldOffset)) );
+				return true;
+
+			case FIELD_POSITION_VECTOR:
+			case FIELD_VECTOR:
+				Q_snprintf( szValue, iMaxLen, "%f %f %f", 
+							( (float *)((char *)pObject + fieldOffset) )[0],
+					        ( (float *)((char *)pObject + fieldOffset) )[1],
+							( (float *)((char *)pObject + fieldOffset) )[2] );
+				return true;
+
+			case FIELD_VMATRIX:
+			case FIELD_VMATRIX_WORLDSPACE:
+				//UTIL_StringToFloatArray( (float *)((char *)pObject + fieldOffset), 16, szValue );
+				return false;
+
+			case FIELD_MATRIX3X4_WORLDSPACE:
+				//UTIL_StringToFloatArray( (float *)((char *)pObject + fieldOffset), 12, szValue );
+				return false;
+
+			case FIELD_COLOR32:
+				Q_snprintf( szValue, iMaxLen, "%d %d %d %d", 
+							( (int *)((char *)pObject + fieldOffset) )[0],
+							( (int *)((char *)pObject + fieldOffset) )[1],
+							( (int *)((char *)pObject + fieldOffset) )[2],
+							( (int *)((char *)pObject + fieldOffset) )[3] );
+				return true;
+
+			case FIELD_CUSTOM:
+			{
+				/*
+				SaveRestoreFieldInfo_t fieldInfo =
+				{
+					(char *)pObject + fieldOffset,
+					pObject,
+					pField
+				};
+				pField->pSaveRestoreOps->Parse( fieldInfo, szValue );
+				*/
+				return false;
+			}
+
+			default:
+			case FIELD_INTERVAL: // Fixme, could write this if needed
+			case FIELD_CLASSPTR:
+			case FIELD_MODELINDEX:
+			case FIELD_MATERIALINDEX:
+			case FIELD_EDICT:
+				Warning( "Bad field in entity!!\n" );
+				Assert(0);
+				break;
+			}
+		}
+	}
+
+	return false;
+}
 
 //-------------------------------------
 

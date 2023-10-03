@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -37,7 +37,8 @@ public:
 		const char *pMaterialName = "cable/cable.vmt",		// Note: whoever creates the rope must
 															// use PrecacheModel for whatever material
 															// it specifies here.
-		int numSegments = 5
+		int numSegments = 5,
+		const char *pClassName = "keyframe_rope"
 		);
 
 	static CRopeKeyframe* CreateWithSecondPointDetached(
@@ -49,7 +50,8 @@ public:
 															// use PrecacheModel for whatever material
 															// it specifies here.
 		int numSegments = 5,
-		bool bInitialHang = false
+		bool bInitialHang = false,
+		const char *pClassName = "keyframe_rope"
 		);
 
 	bool		SetupHangDistance( float flHangDist );
@@ -59,7 +61,7 @@ public:
 	
 	// Shakes all ropes near vCenter. The higher flMagnitude is, the larger the shake will be.
 	static void ShakeRopes( const Vector &vCenter, float flRadius, float flMagnitude );
-
+	static void PrecacheShakeRopes();
 
 // CBaseEntity overrides.
 public:
@@ -68,6 +70,7 @@ public:
 	virtual int		ObjectCaps( void ) { return BaseClass::ObjectCaps() & ~FCAP_ACROSS_TRANSITION; }
 	virtual void	Activate();
 	virtual void	Precache();
+	virtual void	Spawn( void );
 	virtual int		OnTakeDamage( const CTakeDamageInfo &info );
 	virtual bool	KeyValue( const char *szKeyName, const char *szValue );
 
@@ -103,12 +106,11 @@ public:
 	// Toggle wind.
 	void			EnableWind( bool bEnable );
 
-	// Unless this is called during initialization, the caller should have done
-	// PrecacheModel on whatever material they specify in here.
-	void			SetMaterial( const char *pName );
+	CBaseEntity*	GetStartPoint() { return m_hStartPoint.Get(); }
+	int				GetStartAttachment() { return m_iStartAttachment; };
 
 	CBaseEntity*	GetEndPoint() { return m_hEndPoint.Get(); }
-	int				GetEndAttachment() { return m_iStartAttachment; };
+	int				GetEndAttachment() { return m_iEndAttachment; };
 
 	void			SetStartPoint( CBaseEntity *pStartPoint, int attachment = 0 );
 	void			SetEndPoint( CBaseEntity *pEndPoint, int attachment = 0 );
@@ -121,13 +123,18 @@ public:
 	virtual void NotifyPositionChanged( CBaseEntity *pEntity );
 
 private:
+	// Unless this is called during initialization, the caller should have done
+	// PrecacheModel on whatever material they specify in here.
+	void			SetMaterial( const char *pName );
 
+protected:
 	void			SetAttachmentPoint( CBaseHandle &hOutEnt, short &iOutAttachment, CBaseEntity *pEnt, int iAttachment );
 
 	// This is normally called by Activate but if you create the rope at runtime,
 	// you must call it after you have setup its variables.
-	void			Init();
+	virtual void	Init();
 
+private:
 	// These work just like the client-side versions.
 	bool			GetEndPointPos2( CBaseEntity *pEnt, int iAttachment, Vector &v );
 	bool			GetEndPointPos( int iPt, Vector &v );
@@ -152,6 +159,9 @@ public:
 	// Number of subdivisions in between segments.
 	CNetworkVar( int, m_Subdiv );
 	
+	// Used simply to wake up rope on the client side if it has gone to sleep
+	CNetworkVar( unsigned char, m_nChangeCount );
+
 	//EHANDLE		m_hNextLink;
 	
 	CNetworkVar( int, m_RopeLength );	// Rope length at startup, used to calculate tension.

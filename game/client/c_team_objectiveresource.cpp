@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: An entity that networks the state of the game's objectives.
 //
@@ -72,14 +72,6 @@ IMPLEMENT_CLIENTCLASS_DT_NOBASE(C_BaseTeamObjectiveResource, DT_BaseTeamObjectiv
 	RecvPropArray3( RECVINFO_ARRAY(m_iWarnOnCap),		RecvPropInt( RECVINFO(m_iWarnOnCap[0]) ) ),
 	RecvPropArray( RecvPropString( RECVINFO( m_iszWarnSound[0]) ), m_iszWarnSound ),
 	RecvPropArray3( RECVINFO_ARRAY(m_flPathDistance),	RecvPropFloat( RECVINFO(m_flPathDistance[0]) ) ),
-	RecvPropArray3( RECVINFO_ARRAY(m_iCPGroup),			RecvPropInt( RECVINFO(m_iCPGroup[0]) ) ),
-	RecvPropArray3( RECVINFO_ARRAY(m_bCPLocked),		RecvPropBool( RECVINFO(m_bCPLocked[0]) ) ),
-	RecvPropArray3( RECVINFO_ARRAY(m_nNumNodeHillData),	RecvPropInt( RECVINFO(m_nNumNodeHillData[0]) ) ),
-	RecvPropArray3( RECVINFO_ARRAY(m_flNodeHillData),	RecvPropFloat( RECVINFO(m_flNodeHillData[0]) ) ),
-	RecvPropArray3( RECVINFO_ARRAY(m_bTrackAlarm),		RecvPropBool( RECVINFO(m_bTrackAlarm[0]) ) ),
-	RecvPropArray3( RECVINFO_ARRAY(m_flUnlockTimes),	RecvPropFloat( RECVINFO(m_flUnlockTimes[0]) ) ),
-	RecvPropArray3( RECVINFO_ARRAY(m_bHillIsDownhill),	RecvPropBool( RECVINFO(m_bHillIsDownhill[0]) ) ),
-	RecvPropArray3( RECVINFO_ARRAY(m_flCPTimerTimes),	RecvPropFloat( RECVINFO(m_flCPTimerTimes[0]) ) ),
 
 	// state variables
 	RecvPropArray3( RECVINFO_ARRAY(m_iNumTeamMembers),	RecvPropInt( RECVINFO(m_iNumTeamMembers[0]) ) ),
@@ -87,10 +79,7 @@ IMPLEMENT_CLIENTCLASS_DT_NOBASE(C_BaseTeamObjectiveResource, DT_BaseTeamObjectiv
 	RecvPropArray3( RECVINFO_ARRAY(m_iTeamInZone),		RecvPropInt( RECVINFO(m_iTeamInZone[0]) ) ),
 	RecvPropArray3( RECVINFO_ARRAY(m_bBlocked),		RecvPropInt( RECVINFO(m_bBlocked[0]) ) ),
 	RecvPropArray3( RECVINFO_ARRAY(m_iOwner),			RecvPropInt( RECVINFO(m_iOwner[0]), 0, RecvProxy_Owner ) ),
-	RecvPropArray3( RECVINFO_ARRAY(m_bCPCapRateScalesWithPlayers), RecvPropBool( RECVINFO(m_bCPCapRateScalesWithPlayers[0]) ) ),
 	RecvPropString( RECVINFO(m_pszCapLayoutInHUD), 0, RecvProxy_CapLayout ),
-	RecvPropFloat( RECVINFO(m_flCustomPositionX) ),
-	RecvPropFloat( RECVINFO(m_flCustomPositionY) ),
 END_RECV_TABLE()
 
 C_BaseTeamObjectiveResource *g_pObjectiveResource = NULL;
@@ -106,20 +95,15 @@ C_BaseTeamObjectiveResource::C_BaseTeamObjectiveResource()
 	m_iUpdateCapHudParity = 0;
 	m_bControlPointsReset = false;
 
-	int i;
-
-	for ( i=0; i < MAX_CONTROL_POINTS; i++ )
+	for ( int i=0; i < MAX_CONTROL_POINTS; i++ )
 	{
 		m_flCapTimeLeft[i] = 0;
 		m_flCapLastThinkTime[i] = 0;
 		m_flLastCapWarningTime[i] = 0;
 		m_bWarnedOnFinalCap[i] = false; // have we warned
 		m_iWarnOnCap[i] = CP_WARN_NORMAL; // should we warn
-		m_iCPGroup[i] = -1;
 		m_iszWarnSound[i][0] = 0; // what sound should be played
 		m_flLazyCapPerc[i] = 0.0;
-		m_flUnlockTimes[i] = 0.0;
-		m_flCPTimerTimes[i] = -1.0;
 
 		for ( int team = 0; team < MAX_CONTROL_POINT_TEAMS; team++ )
 		{
@@ -143,20 +127,6 @@ C_BaseTeamObjectiveResource::C_BaseTeamObjectiveResource()
 		m_iTeamBaseIcons[team] = 0;
 	}
 
-	for ( i=0; i < TEAM_TRAIN_MAX_TEAMS; i++ )
-	{
-		m_nNumNodeHillData[i] = 0;
-		m_bTrainOnHill[i] = false;
-	}
-
-	for ( i=0; i < TEAM_TRAIN_HILLS_ARRAY_SIZE; i++ )
-	{
-		m_flNodeHillData[i] = 0;
-	}
-
-	m_flCustomPositionX = -1.f;
-	m_flCustomPositionY = -1.f;
-
 	g_pObjectiveResource = this;
 }
 
@@ -179,12 +149,7 @@ void C_BaseTeamObjectiveResource::OnPreDataChanged( DataUpdateType_t updateType 
 	m_iOldUpdateCapHudParity = m_iUpdateCapHudParity;
 	m_bOldControlPointsReset = m_bControlPointsReset;
 
-	m_flOldCustomPositionX = m_flCustomPositionX;
-	m_flOldCustomPositionY = m_flCustomPositionY;
-
 	memcpy( m_flOldLazyCapPerc, m_flLazyCapPerc, sizeof(float)*m_iNumControlPoints );
-	memcpy( m_flOldUnlockTimes, m_flUnlockTimes, sizeof(float)*m_iNumControlPoints );
-	memcpy( m_flOldCPTimerTimes, m_flCPTimerTimes, sizeof(float)*m_iNumControlPoints );
 }
 
 //-----------------------------------------------------------------------------
@@ -215,33 +180,6 @@ void C_BaseTeamObjectiveResource::OnDataChanged( DataUpdateType_t updateType )
 		{
 			m_flCapTimeLeft[i] = m_flLazyCapPerc[i] * m_flTeamCapTime[ TEAM_ARRAY(i,m_iCappingTeam[i]) ];
 		}
-
-		if ( m_flOldUnlockTimes[i] != m_flUnlockTimes[i] )
-		{
-			IGameEvent *event = gameeventmanager->CreateEvent( "controlpoint_unlock_updated" );
-			if ( event )
-			{
-				event->SetInt( "index", i );
-				event->SetFloat( "time", m_flUnlockTimes[i] );
-				gameeventmanager->FireEventClientSide( event );
-			}
-		}
-
-		if ( m_flOldCPTimerTimes[i] != m_flCPTimerTimes[i] )
-		{
-			IGameEvent *event = gameeventmanager->CreateEvent( "controlpoint_timer_updated" );
-			if ( event )
-			{
-				event->SetInt( "index", i );
-				event->SetFloat( "time", m_flCPTimerTimes[i] );
-				gameeventmanager->FireEventClientSide( event );
-			}
-		}
-	}
-
-	if ( m_flOldCustomPositionX != m_flCustomPositionX || m_flOldCustomPositionY != m_flCustomPositionY )
-	{
-		UpdateControlPoint( "controlpoint_updatelayout" );
 	}
 }
 
@@ -387,7 +325,7 @@ void C_BaseTeamObjectiveResource::ClientThink()
 				if ( iPlayersCapping > 0 )
 				{
 					float flReduction = gpGlobals->curtime - m_flCapLastThinkTime[i];
-					if ( mp_capstyle.GetInt() == 1 && m_bCPCapRateScalesWithPlayers[i] )
+					if ( mp_capstyle.GetInt() == 1 )
 					{
 						// Diminishing returns for successive players.
 						for ( int iPlayer = 1; iPlayer < iPlayersCapping; iPlayer++ )
@@ -403,21 +341,26 @@ void C_BaseTeamObjectiveResource::ClientThink()
 
 						if ( !m_bWarnedOnFinalCap[i] )
 						{
-							// If this the local player's team, warn him
-							C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
-							if ( pPlayer )
+							FOR_EACH_VALID_SPLITSCREEN_PLAYER( hh )
 							{
-								if ( m_iCappingTeam[i] != TEAM_UNASSIGNED && 
-									pPlayer->GetTeamNumber() != m_iCappingTeam[i] && 
-									GetCapWarningLevel( i ) == CP_WARN_FINALCAP )
-								{
-									// Prevent spam
-									if ( gpGlobals->curtime > ( m_flLastCapWarningTime[i] + 5 ) )
-									{
-										pPlayer->EmitSound( GetWarnSound( i ) );
+								ACTIVE_SPLITSCREEN_PLAYER_GUARD( hh );
 
-										m_bWarnedOnFinalCap[i] = true;
-										m_flLastCapWarningTime[i] = gpGlobals->curtime;
+								// If this the local player's team, warn him
+								C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+								if ( pPlayer )
+								{
+									if ( m_iCappingTeam[i] != TEAM_UNASSIGNED && 
+										pPlayer->GetTeamNumber() != m_iCappingTeam[i] && 
+										GetCapWarningLevel( i ) == CP_WARN_FINALCAP )
+									{
+										// Prevent spam
+										if ( gpGlobals->curtime > ( m_flLastCapWarningTime[i] + 5 ) )
+										{
+											pPlayer->EmitSound( GetWarnSound( i ) );
+
+											m_bWarnedOnFinalCap[i] = true;
+											m_flLastCapWarningTime[i] = gpGlobals->curtime;
+										}
 									}
 								}
 							}
@@ -437,8 +380,7 @@ void C_BaseTeamObjectiveResource::ClientThink()
 					if ( TeamplayRoundBasedRules() && TeamplayRoundBasedRules()->TeamMayCapturePoint(m_iCappingTeam[i],i) )
 					{
 						float flCapLength = m_flTeamCapTime[ TEAM_ARRAY(i,m_iCappingTeam[i]) ];
-						float flDecreaseScale = m_bCPCapRateScalesWithPlayers[i] ? mp_capdeteriorate_time.GetFloat() : flCapLength;
-						float flDecrease = (flCapLength / flDecreaseScale) * (gpGlobals->curtime - m_flCapLastThinkTime[i]);
+						float flDecrease = (flCapLength / mp_capdeteriorate_time.GetFloat()) * (gpGlobals->curtime - m_flCapLastThinkTime[i]);
 						if ( TeamplayRoundBasedRules() && TeamplayRoundBasedRules()->InOvertime() )
 						{
 							flDecrease *= 6;

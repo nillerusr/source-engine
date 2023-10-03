@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2006, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -13,11 +13,24 @@
 
 #include <vgui_controls/Frame.h>
 #include <game/client/iviewport.h>
-#include "basemodelpanel.h"
+
+// FIXME!!!!!!
+//#include "basemodelpanel.h"
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+
+/*
+// FIXME!!!!!!
+// FIXME!!!!!!
+// FIXME!!!!!!
+
+This should be using the NEW model panels... "CBaseModelPanel" in basemodel_panel.h/.cpp
+Need to comment this out so we can remove the dependence on the old CModelPanel from all but TF.
+This will make it so people don't accidently use it or get confused by its similar structure when
+working with the new class.
+
 class CCommentaryModelPanel : public CModelPanel
 {
 public:
@@ -25,6 +38,8 @@ public:
 
 	CCommentaryModelPanel( vgui::Panel *parent, const char *name );
 };
+
+*/
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -60,12 +75,13 @@ public:
 	vgui::VPANEL GetVPanel( void ) { return BaseClass::GetVPanel(); }
 	virtual bool IsVisible() { return BaseClass::IsVisible(); }
 	virtual void SetParent( vgui::VPANEL parent ) { BaseClass::SetParent( parent ); }
-
-	virtual GameActionSet_t GetPreferredActionSet() { return GAME_ACTION_SET_MENUCONTROLS; }
+	virtual bool WantsBackgroundBlurred( void ) { return false; }
 
 private:
 	IViewPort				*m_pViewPort;
-	CCommentaryModelPanel	*m_pModelPanel;
+
+	// FIXME!!!!!!
+	//CCommentaryModelPanel	*m_pModelPanel;
 
 	Vector					m_vecResetPos;
 	Vector					m_vecResetAngles;

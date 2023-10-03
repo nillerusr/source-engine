@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -54,6 +54,7 @@ CClientScoreBoardDialog::CClientScoreBoardDialog(IViewPort *pViewPort) : Editabl
 	//memset(s_VoiceImage, 0x0, sizeof( s_VoiceImage ));
 	TrackerImage = 0;
 	m_pViewPort = pViewPort;
+	m_alignment = vgui::Label::a_center;
 
 	// initialize dialog
 	SetProportional(true);
@@ -75,12 +76,14 @@ CClientScoreBoardDialog::CClientScoreBoardDialog(IViewPort *pViewPort) : Editabl
 	
 	// update scoreboard instantly if on of these events occure
 	ListenForGameEvent( "hltv_status" );
+	ListenForGameEvent( "replay_status" );
 	ListenForGameEvent( "server_spawn" );
 
 	m_pImageList = NULL;
 
-	m_mapAvatarsToImageList.SetLessFunc( DefLessFunc( CSteamID ) );
+	m_mapAvatarsToImageList.SetLessFunc( AvatarIndexLessFunc );
 	m_mapAvatarsToImageList.RemoveAll();
+	memset( &m_iImageAvatars, 0, sizeof(int) * (MAX_PLAYERS+1) );
 }
 
 //-----------------------------------------------------------------------------
@@ -122,7 +125,7 @@ void CClientScoreBoardDialog::OnThink()
 		if ( !g_pInputSystem->IsButtonDown( m_nCloseKey ) )
 		{
 			m_nCloseKey = BUTTON_CODE_INVALID;
-			gViewPortInterface->ShowPanel( PANEL_SCOREBOARD, false );
+			GetViewPortInterface()->ShowPanel( PANEL_SCOREBOARD, false );
 			GetClientVoiceMgr()->StopSquelchMode();
 		}
 	}
@@ -159,6 +162,54 @@ void CClientScoreBoardDialog::InitScoreboardSections()
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CClientScoreBoardDialog::ApplySettings( KeyValues *inResourceData )
+{
+	BaseClass::ApplySettings( inResourceData );
+
+	const char *alignmentString = inResourceData->GetString( "scoreboard_position", "" );
+	m_alignment = vgui::Label::a_center;
+
+	if ( !stricmp(alignmentString, "north-west") )
+	{
+		m_alignment = vgui::Label::a_northwest;
+	}
+	else if ( !stricmp(alignmentString, "north") )
+	{
+		m_alignment = vgui::Label::a_north;
+	}
+	else if ( !stricmp(alignmentString, "north-east") )
+	{
+		m_alignment = vgui::Label::a_northeast;
+	}
+	else if ( !stricmp(alignmentString, "west") )
+	{
+		m_alignment = vgui::Label::a_west;
+	}
+	else if ( !stricmp(alignmentString, "center") )
+	{
+		m_alignment = vgui::Label::a_center;
+	}
+	else if ( !stricmp(alignmentString, "east") )
+	{
+		m_alignment = vgui::Label::a_east;
+	}
+	else if ( !stricmp(alignmentString, "south-west") )
+	{
+		m_alignment = vgui::Label::a_southwest;
+	}
+	else if ( !stricmp(alignmentString, "south") )
+	{
+		m_alignment = vgui::Label::a_south;
+	}
+	else if ( !stricmp(alignmentString, "south-east") )
+	{
+		m_alignment = vgui::Label::a_southeast;
+	}
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: sets up screen
 //-----------------------------------------------------------------------------
 void CClientScoreBoardDialog::ApplySchemeSettings( IScheme *pScheme )
@@ -170,6 +221,7 @@ void CClientScoreBoardDialog::ApplySchemeSettings( IScheme *pScheme )
 	m_pImageList = new ImageList( false );
 
 	m_mapAvatarsToImageList.RemoveAll();
+	memset( &m_iImageAvatars, 0, sizeof(int) * (MAX_PLAYERS+1) );
 
 	PostApplySchemeSettings( pScheme );
 }
@@ -239,6 +291,14 @@ void CClientScoreBoardDialog::FireGameEvent( IGameEvent *event )
 		m_HLTVSpectators = event->GetInt( "clients" );
 		m_HLTVSpectators -= event->GetInt( "proxies" );
 	}
+
+	else if ( Q_strcmp(type, "replay_status") == 0 )
+	{
+		// spectators = clients - proxies
+		m_ReplaySpectators = event->GetInt( "clients" );
+		m_ReplaySpectators -= event->GetInt( "proxies" );
+	}
+
 	else if ( Q_strcmp(type, "server_spawn") == 0 )
 	{
 		// We'll post the message ourselves instead of using SetControlString()
@@ -290,7 +350,7 @@ void CClientScoreBoardDialog::Update( void )
 		m_pPlayerList->SetSize(wide, m_iDesiredHeight);
 	}
 
-	MoveToCenterOfScreen();
+	PositionScoreboard();
 
 	// update every second
 	m_fNextUpdateTime = gpGlobals->curtime + 1.0f; 
@@ -408,7 +468,7 @@ void CClientScoreBoardDialog::AddSection(int teamType, int teamNumber)
 			teamName = name;
 		}
 
-		g_pVGuiLocalize->ConstructString_safe( string1, g_pVGuiLocalize->Find("#Player"), 2, teamName );
+		g_pVGuiLocalize->ConstructString( string1, sizeof( string1 ), g_pVGuiLocalize->Find("#Player"), 2, teamName );
 		
 		m_pPlayerList->AddSection(m_iSectionId, "", StaticPlayerSortFunc);
 
@@ -498,29 +558,36 @@ void CClientScoreBoardDialog::UpdatePlayerAvatar( int playerIndex, KeyValues *kv
 		{
 			if ( pi.friendsID )
 			{
-				CSteamID steamIDForPlayer( pi.friendsID, 1,  steamapicontext->SteamUtils()->GetConnectedUniverse(), k_EAccountTypeIndividual );
+				CSteamID steamIDForPlayer( pi.friendsID, 1, steamapicontext->SteamUtils()->GetConnectedUniverse(), k_EAccountTypeIndividual );
 
-				// See if we already have that avatar in our list
-				int iMapIndex = m_mapAvatarsToImageList.Find( steamIDForPlayer );
-				int iImageIndex;
-				if ( iMapIndex == m_mapAvatarsToImageList.InvalidIndex() )
+				// See if the avatar's changed
+				int iAvatar = steamapicontext->SteamFriends()->GetFriendAvatar( steamIDForPlayer, k_EAvatarSize32x32 );
+				if ( m_iImageAvatars[playerIndex] != iAvatar )
 				{
-					CAvatarImage *pImage = new CAvatarImage();
-					pImage->SetAvatarSteamID( steamIDForPlayer );
-					pImage->SetAvatarSize( 32, 32 );	// Deliberately non scaling
-					iImageIndex = m_pImageList->AddImage( pImage );
+					m_iImageAvatars[playerIndex] = iAvatar;
 
-					m_mapAvatarsToImageList.Insert( steamIDForPlayer, iImageIndex );
+					// Now see if we already have that avatar in our list
+					int iIndex = m_mapAvatarsToImageList.Find( iAvatar );
+					if ( iIndex == m_mapAvatarsToImageList.InvalidIndex() )
+					{
+						CAvatarImage *pImage = new CAvatarImage();
+						pImage->SetAvatarSteamID( steamIDForPlayer );
+						pImage->SetAvatarSize( 32, 32 );	// Deliberately non scaling
+						int iImageIndex = m_pImageList->AddImage( pImage );
+
+						m_mapAvatarsToImageList.Insert( iAvatar, iImageIndex );
+					}
 				}
-				else
+
+				int iIndex = m_mapAvatarsToImageList.Find( iAvatar );
+
+				if ( iIndex != m_mapAvatarsToImageList.InvalidIndex() )
 				{
-					iImageIndex = m_mapAvatarsToImageList[ iMapIndex ];
+					kv->SetInt( "avatar", m_mapAvatarsToImageList[iIndex] );
+
+					CAvatarImage *pAvIm = (CAvatarImage *)m_pImageList->GetImage( m_mapAvatarsToImageList[iIndex] );
+					pAvIm->UpdateFriendStatus();
 				}
-
-				kv->SetInt( "avatar", iImageIndex );
-
-				CAvatarImage *pAvIm = (CAvatarImage *)m_pImageList->GetImage( iImageIndex );
-				pAvIm->UpdateFriendStatus();
 			}
 		}
 	}
@@ -569,12 +636,53 @@ void CClientScoreBoardDialog::MoveLabelToFront(const char *textEntryName)
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Center the dialog on the screen.  (vgui has this method on
-//			Frame, but we're an EditablePanel, need to roll our own.)
+// Purpose: Center the dialog on the screen.
 //-----------------------------------------------------------------------------
-void CClientScoreBoardDialog::MoveToCenterOfScreen()
+void CClientScoreBoardDialog::PositionScoreboard()
 {
-	int wx, wy, ww, wt;
-	surface()->GetWorkspaceBounds(wx, wy, ww, wt);
-	SetPos((ww - GetWide()) / 2, (wt - GetTall()) / 2);
+	ASSERT_LOCAL_PLAYER_RESOLVABLE();
+	ACTIVE_SPLITSCREEN_PLAYER_GUARD_VGUI( GET_ACTIVE_SPLITSCREEN_SLOT() );
+	int wide, tall;
+	GetSize( wide, tall );
+	int hudWide, hudTall;
+	GetHudSize( hudWide, hudTall );
+
+	switch ( m_alignment )
+	{
+	case vgui::Label::a_northwest:
+		SetPos( 0, 0 );
+		break;
+
+	case vgui::Label::a_north:
+		SetPos( (hudWide - wide)/2, 0 );
+		break;
+
+	case vgui::Label::a_northeast:
+		SetPos( hudWide - wide, 0 );
+		break;
+
+	case vgui::Label::a_west:
+		SetPos( 0, (hudTall - tall)/2 );
+		break;
+
+	case vgui::Label::a_center:
+		SetPos( (hudWide - wide)/2, (hudTall - tall)/2 );
+		break;
+
+	case vgui::Label::a_east:
+		SetPos( hudWide - wide, (hudTall - tall)/2 );
+		break;
+
+	case vgui::Label::a_southwest:
+		SetPos( 0, hudTall - tall );
+		break;
+
+	case vgui::Label::a_south:
+		SetPos( (hudWide - wide)/2, hudTall - tall );
+		break;
+
+	case vgui::Label::a_southeast:
+		SetPos( hudWide - wide, hudTall - tall );
+		break;
+	}
 }

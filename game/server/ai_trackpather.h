@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -23,6 +23,9 @@ class CAI_TrackPather : public CAI_BaseNPC
 {
 	DECLARE_CLASS( CAI_TrackPather, CAI_BaseNPC );
 	DECLARE_DATADESC();
+
+	friend class CNPC_CombineAdvisorRoaming;
+
 public:
 
 	bool			IsOnPathTrack()							{ return (m_pCurrentPathTarget != NULL); }
@@ -134,6 +137,7 @@ protected:
 
 	// Sets up a new current path target
 	void SetupNewCurrentTarget( CPathTrack *pTrack );
+	virtual void OnNewCurrentTarget( CPathTrack *pTrackNew, CPathTrack *pTrackOld ) {}
 
 	// Compute the distance to the leading position
 	float ComputeDistanceToLeadingPosition();
@@ -149,6 +153,8 @@ protected:
 
 	// FIXME: Work this back into the base class
 	virtual bool ShouldUseFixedPatrolLogic() { return false; }
+
+	virtual bool ShouldUseAvoidanceWhenTracking() { return false; }
 
 	// Deal with teleportation
 	void Teleported();

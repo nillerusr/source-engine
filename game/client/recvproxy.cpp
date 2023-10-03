@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: implements various common send proxies
 //
@@ -9,19 +9,6 @@
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
-#include "cdll_client_int.h"
-#include "proto_version.h"
-
-void RecvProxy_IntToColor32( const CRecvProxyData *pData, void *pStruct, void *pOut )
-{
-	color32 *pOutColor = (color32*)pOut;
-	unsigned int inColor = *((unsigned int*)&pData->m_Value.m_Int);
-
-	pOutColor->r = (unsigned char)(inColor >> 24);
-	pOutColor->g = (unsigned char)((inColor >> 16) & 0xFF);
-	pOutColor->b = (unsigned char)((inColor >> 8) & 0xFF);
-	pOutColor->a = (unsigned char)(inColor & 0xFF);
-}
 
 void RecvProxy_IntSubOne( const CRecvProxyData *pData, void *pStruct, void *pOut )
 {
@@ -37,31 +24,9 @@ void RecvProxy_ShortSubOne( const CRecvProxyData *pData, void *pStruct, void *pO
 	*pInt = pData->m_Value.m_Int - 1;
 }
 
-RecvProp RecvPropIntWithMinusOneFlag( const char *pVarName, int offset, int sizeofVar, RecvVarProxyFn proxyFn )
+RecvProp RecvPropIntWithMinusOneFlag( char *pVarName, int offset, int sizeofVar, RecvVarProxyFn proxyFn )
 {
 	return RecvPropInt( pVarName, offset, sizeofVar, 0, proxyFn );
-}
-
-void RecvProxy_IntToModelIndex16_BackCompatible( const CRecvProxyData *pData, void *pStruct, void *pOut )
-{
-	int modelIndex = pData->m_Value.m_Int;
-	if ( modelIndex < -1 && engine->GetProtocolVersion() <= PROTOCOL_VERSION_20 )
-	{
-		Assert( modelIndex > -20000 );
-		modelIndex = -2 - ( ( -2 - modelIndex ) << 1 );
-	}
-	*(int16*)pOut = modelIndex;
-}
-
-void RecvProxy_IntToModelIndex32_BackCompatible( const CRecvProxyData *pData, void *pStruct, void *pOut )
-{
-	int modelIndex = pData->m_Value.m_Int;
-	if ( modelIndex < -1 && engine->GetProtocolVersion() <= PROTOCOL_VERSION_20 )
-	{
-		Assert( modelIndex > -20000 );
-		modelIndex = -2 - ( ( -2 - modelIndex ) << 1 );
-	}
-	*(int32*)pOut = modelIndex;
 }
 
 //-----------------------------------------------------------------------------
@@ -95,7 +60,7 @@ void RecvProxy_IntToEHandle( const CRecvProxyData *pData, void *pStruct, void *p
 }
 
 RecvProp RecvPropEHandle(
-	const char *pVarName, 
+	char *pVarName, 
 	int offset, 
 	int sizeofVar,
 	RecvVarProxyFn proxyFn )
@@ -105,7 +70,7 @@ RecvProp RecvPropEHandle(
 
 
 RecvProp RecvPropBool(
-	const char *pVarName, 
+	char *pVarName, 
 	int offset, 
 	int sizeofVar )
 {
@@ -171,7 +136,7 @@ static void RecvProxy_Time( const CRecvProxyData *pData, void *pStruct, void *pO
 // Output : RecvProp
 //-----------------------------------------------------------------------------
 RecvProp RecvPropTime(
-	const char *pVarName, 
+	char *pVarName, 
 	int offset, 
 	int sizeofVar/*=SIZEOF_IGNORE*/ )
 {
@@ -191,7 +156,7 @@ RecvProp RecvPropTime(
 //			*pStruct - 
 //			*pOut - 
 //-----------------------------------------------------------------------------
-#if !defined( NO_ENTITY_PREDICTION )
+#if !defined( NO_ENTITY_PREDICTION ) && defined( USE_PREDICTABLEID )
 static void RecvProxy_IntToPredictableId( const CRecvProxyData *pData, void *pStruct, void *pOut )
 {
 	CPredictableId *pId = (CPredictableId*)pOut;
@@ -206,7 +171,7 @@ static void RecvProxy_IntToPredictableId( const CRecvProxyData *pData, void *pSt
 // Output : RecvProp
 //-----------------------------------------------------------------------------
 RecvProp RecvPropPredictableId(
-	const char *pVarName, 
+	char *pVarName, 
 	int offset, 
 	int sizeofVar/*=SIZEOF_IGNORE*/ )
 {

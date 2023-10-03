@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -43,7 +43,7 @@ struct PhysBlockHeader_t
 BEGIN_SIMPLE_DATADESC( PhysBlockHeader_t )
 	DEFINE_FIELD( nSaved,	FIELD_INTEGER ),
 	// NOTE: We want to save the actual address here for remapping, so use an integer
-	DEFINE_FIELD( pWorldObject, FIELD_POINTER ),	
+	DEFINE_FIELD( pWorldObject, FIELD_INTEGER ),	
 END_DATADESC()
 
 #if defined(_STATIC_LINKED) && defined(CLIENT_DLL)

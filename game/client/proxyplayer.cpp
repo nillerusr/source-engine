@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -6,18 +6,15 @@
 //=============================================================================//
 #include "cbase.h"
 #include <KeyValues.h>
-#include "materialsystem/imaterialvar.h"
-#include "materialsystem/imaterial.h"
-#include "materialsystem/itexture.h"
-#include "materialsystem/imaterialsystem.h"
-#include "functionproxy.h"
-#include "toolframework_client.h"
+#include "materialsystem/IMaterialVar.h"
+#include "materialsystem/IMaterial.h"
+#include "materialsystem/ITexture.h"
+#include "materialsystem/IMaterialSystem.h"
+#include "FunctionProxy.h"
 
+#include "imaterialproxydict.h"
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
-
-// forward declarations
-void ToolFramework_RecordMaterialParams( IMaterial *pMaterial );
 
 //-----------------------------------------------------------------------------
 // Returns the proximity of the player to the entity
@@ -58,14 +55,9 @@ void CPlayerProximityProxy::OnBind( void *pC_BaseEntity )
 
 	Assert( m_pResult );
 	SetFloatResult( delta.Length() * m_Factor );
-
-	if ( ToolsEnabled() )
-	{
-		ToolFramework_RecordMaterialParams( GetMaterial() );
-	}
 }
 
-EXPOSE_INTERFACE( CPlayerProximityProxy, IMaterialProxy, "PlayerProximity" IMATERIAL_PROXY_INTERFACE_VERSION );
+EXPOSE_MATERIAL_PROXY( CPlayerProximityProxy, PlayerProximity );
 
 
 //-----------------------------------------------------------------------------
@@ -102,14 +94,9 @@ void CPlayerTeamMatchProxy::OnBind( void *pC_BaseEntity )
 
 	Assert( m_pResult );
 	SetFloatResult( (pEntity->GetTeamNumber() == pPlayer->GetTeamNumber()) ? 1.0 : 0.0 );
-
-	if ( ToolsEnabled() )
-	{
-		ToolFramework_RecordMaterialParams( GetMaterial() );
-	}
 }
 
-EXPOSE_INTERFACE( CPlayerTeamMatchProxy, IMaterialProxy, "PlayerTeamMatch" IMATERIAL_PROXY_INTERFACE_VERSION );
+EXPOSE_MATERIAL_PROXY( CPlayerTeamMatchProxy, PlayerTeamMatch );
 
 
 //-----------------------------------------------------------------------------
@@ -154,14 +141,9 @@ void CPlayerViewProxy::OnBind( void *pC_BaseEntity )
 
 	Assert( m_pResult );
 	SetFloatResult( DotProduct( forward, delta ) * m_Factor );
-
-	if ( ToolsEnabled() )
-	{
-		ToolFramework_RecordMaterialParams( GetMaterial() );
-	}
 }
 
-EXPOSE_INTERFACE( CPlayerViewProxy, IMaterialProxy, "PlayerView" IMATERIAL_PROXY_INTERFACE_VERSION );
+EXPOSE_MATERIAL_PROXY( CPlayerViewProxy, PlayerView );
 
 
 //-----------------------------------------------------------------------------
@@ -195,14 +177,9 @@ void CPlayerSpeedProxy::OnBind( void *pC_BaseEntity )
 
 	Assert( m_pResult );
 	SetFloatResult( pPlayer->GetLocalVelocity().Length() * m_Factor );
-
-	if ( ToolsEnabled() )
-	{
-		ToolFramework_RecordMaterialParams( GetMaterial() );
-	}
 }
 
-EXPOSE_INTERFACE( CPlayerSpeedProxy, IMaterialProxy, "PlayerSpeed" IMATERIAL_PROXY_INTERFACE_VERSION );
+EXPOSE_MATERIAL_PROXY( CPlayerSpeedProxy, PlayerSpeed );
 
 
 //-----------------------------------------------------------------------------
@@ -239,14 +216,9 @@ void CPlayerPositionProxy::OnBind( void *pC_BaseEntity )
 	Vector res;
 	VectorMultiply( pPlayer->WorldSpaceCenter(), m_Factor, res ); 
 	m_pResult->SetVecValue( res.Base(), 3 );
-
-	if ( ToolsEnabled() )
-	{
-		ToolFramework_RecordMaterialParams( GetMaterial() );
-	}
 }
 
-EXPOSE_INTERFACE( CPlayerPositionProxy, IMaterialProxy, "PlayerPosition" IMATERIAL_PROXY_INTERFACE_VERSION );
+EXPOSE_MATERIAL_PROXY( CPlayerPositionProxy, PlayerPosition );
 
 
 //-----------------------------------------------------------------------------
@@ -269,14 +241,9 @@ void CEntitySpeedProxy::OnBind( void *pC_BaseEntity )
 
 	Assert( m_pResult );
 	m_pResult->SetFloatValue( pEntity->GetLocalVelocity().Length() );
-
-	if ( ToolsEnabled() )
-	{
-		ToolFramework_RecordMaterialParams( GetMaterial() );
-	}
 }
 
-EXPOSE_INTERFACE( CEntitySpeedProxy, IMaterialProxy, "EntitySpeed" IMATERIAL_PROXY_INTERFACE_VERSION );
+EXPOSE_MATERIAL_PROXY( CEntitySpeedProxy, EntitySpeed );
 
 
 //-----------------------------------------------------------------------------
@@ -314,16 +281,11 @@ void CEntityRandomProxy::OnBind( void *pC_BaseEntity )
 
 	Assert( m_pResult );
 	m_pResult->SetFloatValue( pEntity->ProxyRandomValue() * m_Factor.GetFloat() );
-
-	if ( ToolsEnabled() )
-	{
-		ToolFramework_RecordMaterialParams( GetMaterial() );
-	}
 }
 
-EXPOSE_INTERFACE( CEntityRandomProxy, IMaterialProxy, "EntityRandom" IMATERIAL_PROXY_INTERFACE_VERSION );
+EXPOSE_MATERIAL_PROXY( CEntityRandomProxy, EntityRandom );
 
-#include "utlrbtree.h"
+#include "UtlRBTree.h"
 
 //-----------------------------------------------------------------------------
 // Returns the player speed
@@ -357,9 +319,6 @@ public:
 	}
 
 	virtual IMaterial *GetMaterial();
-
-protected:
-	virtual void	OnLogoBindInternal( int playerindex );
 
 private:
 	IMaterialVar *m_pBaseTextureVar;
@@ -410,7 +369,7 @@ bool CPlayerLogoProxy::Init( IMaterial *pMaterial, KeyValues *pKeyValues )
 void CPlayerLogoProxy::OnBind( void *pC_BaseEntity )
 {
 	// Decal's are bound with the player index as the passed in paramter
-	int playerindex = (intp)pC_BaseEntity;
+	int playerindex = (int)pC_BaseEntity;
 
 	if ( playerindex <= 0 )
 		return;
@@ -421,11 +380,6 @@ void CPlayerLogoProxy::OnBind( void *pC_BaseEntity )
 	if ( !m_pBaseTextureVar )
 		return;
 
-	OnLogoBindInternal( playerindex );
-}
-
-void CPlayerLogoProxy::OnLogoBindInternal( int playerindex )
-{
 	// Find player
 	player_info_t info;
 	engine->GetPlayerInfo( playerindex, &info );
@@ -473,11 +427,6 @@ void CPlayerLogoProxy::OnLogoBindInternal( int playerindex )
 	{
 		m_pBaseTextureVar->SetTextureValue( m_pDefaultTexture );
 	}
-
-	if ( ToolsEnabled() )
-	{
-		ToolFramework_RecordMaterialParams( GetMaterial() );
-	}
 }
 
 IMaterial *CPlayerLogoProxy::GetMaterial()
@@ -485,40 +434,4 @@ IMaterial *CPlayerLogoProxy::GetMaterial()
 	return m_pBaseTextureVar->GetOwningMaterial();
 }
 
-EXPOSE_INTERFACE( CPlayerLogoProxy, IMaterialProxy, "PlayerLogo" IMATERIAL_PROXY_INTERFACE_VERSION );
-
-/* @note Tom Bui: This is here for reference, but we don't want people to use it!
-//-----------------------------------------------------------------------------
-// 
-//-----------------------------------------------------------------------------
-class CPlayerLogoOnModelProxy : public CPlayerLogoProxy
-{
-public:
-	virtual void OnBind( void *pC_BaseEntity );
-};
-
-void CPlayerLogoOnModelProxy::OnBind( void *pC_BaseEntity )
-{
-	if ( pC_BaseEntity )
-	{
-		IClientRenderable *pRend = (IClientRenderable *)pC_BaseEntity;
-		C_BaseEntity *pEntity = pRend->GetIClientUnknown()->GetBaseEntity();
-		if ( pEntity )
-		{
-			if ( !pEntity->IsPlayer() )
-			{
-				pEntity = pEntity->GetRootMoveParent();
-			}
-
-			if ( pEntity && pEntity->IsPlayer() )
-			{
-				int iPlayerIndex = pEntity->entindex();
-
-				OnLogoBindInternal( iPlayerIndex );
-			}
-		}
-	}
-}
-
-EXPOSE_INTERFACE( CPlayerLogoOnModelProxy, IMaterialProxy, "PlayerLogoOnModel" IMATERIAL_PROXY_INTERFACE_VERSION );
-*/
+EXPOSE_MATERIAL_PROXY( CPlayerLogoProxy, PlayerLogo );

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Team management class. Contains all the details for a specific team
 //
@@ -42,7 +42,7 @@ public:
 	virtual int			GetTeamNumber( void ) const;
 	virtual const char *GetName( void );
 	virtual void		UpdateClientData( CBasePlayer *pPlayer );
-	virtual bool		ShouldTransmitToPlayer( CBasePlayer* pRecipient, CBaseEntity* pEntity );
+	virtual int		ShouldTransmitToPlayer( CBasePlayer* pRecipient, CBaseEntity* pEntity );
 
 	//-----------------------------------------------------------------------------
 	// Spawnpoints
@@ -76,8 +76,6 @@ public:
 
 	void AwardAchievement( int iAchievement );
 
-	virtual int GetAliveMembers( void );
-
 public:
 	CUtlVector< CTeamSpawnPoint * > m_aSpawnPoints;
 	CUtlVector< CBasePlayer * >		m_aPlayers;
@@ -97,5 +95,5 @@ public:
 extern CUtlVector< CTeam * > g_Teams;
 extern CTeam *GetGlobalTeam( int iIndex );
 extern int GetNumberOfTeams( void );
-
+extern const char* GetTeamName( int iTeam );
 #endif // TEAM_H

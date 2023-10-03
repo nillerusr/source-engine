@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -115,7 +115,7 @@ private:
 	static unsigned int KeyFunc( const HashEntry &src )
 	{
 		// Shift right to get rid of alignment bits and border the struct on a 16 byte boundary
-		return (unsigned int)(uintp)src.key;
+		return (unsigned int)src.key;
 	}
 
 	CUtlHash< HashEntry >	m_HashTable;

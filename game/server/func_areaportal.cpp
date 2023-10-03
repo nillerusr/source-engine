@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: area portal entity: toggles visibility areas on/off
 //
@@ -40,13 +40,14 @@ public:
 	void InputClose( inputdata_t &inputdata );
 	void InputToggle( inputdata_t &inputdata );
 
-	virtual bool	UpdateVisibility( const Vector &vOrigin, float fovDistanceAdjustFactor, bool &bIsOpenOnClient );
+	virtual bool	UpdateVisibility( const CUtlVector< Vector > &vecOrigins, float fovDistanceAdjustFactor, bool &bIsOpenOnClient );
 
 	DECLARE_DATADESC();
 
 private:
-	bool UpdateState( void );
-	int m_state;
+	bool	UpdateState( void );
+
+	int		m_state;
 };
 
 LINK_ENTITY_TO_CLASS( func_areaportal, CAreaPortal );
@@ -121,12 +122,12 @@ void CAreaPortal::InputToggle( inputdata_t &inputdata )
 }
 
 
-bool CAreaPortal::UpdateVisibility( const Vector &vOrigin, float fovDistanceAdjustFactor, bool &bIsOpenOnClient )
+bool CAreaPortal::UpdateVisibility( const CUtlVector< Vector > &vecOrigins, float fovDistanceAdjustFactor, bool &bIsOpenOnClient )
 {
 	if ( m_state )
 	{
 		// We're not closed, so give the base class a chance to close it.
-		return BaseClass::UpdateVisibility( vOrigin, fovDistanceAdjustFactor, bIsOpenOnClient );
+		return BaseClass::UpdateVisibility( vecOrigins, fovDistanceAdjustFactor, bIsOpenOnClient );
 	}
 	else
 	{

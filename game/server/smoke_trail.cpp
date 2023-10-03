@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -92,7 +92,7 @@ bool SmokeTrail::KeyValue( const char *szKeyName, const char *szValue )
 	if ( FStrEq( szKeyName, "startcolor" ) )
 	{
 		color32 tmp;
-		UTIL_StringToColor32( &tmp, szValue );
+		V_StringToColor32( &tmp, szValue );
 		m_StartColor.GetForModify().Init( tmp.r / 255.0f, tmp.g / 255.0f, tmp.b / 255.0f );
 		return true;
 	}
@@ -100,7 +100,7 @@ bool SmokeTrail::KeyValue( const char *szKeyName, const char *szValue )
 	if ( FStrEq( szKeyName, "endcolor" ) )
 	{
 		color32 tmp;
-		UTIL_StringToColor32( &tmp, szValue );
+		V_StringToColor32( &tmp, szValue );
 		m_EndColor.GetForModify().Init( tmp.r / 255.0f, tmp.g / 255.0f, tmp.b / 255.0f );
 		return true;
 	}
@@ -331,7 +331,8 @@ SporeTrail::SporeTrail( void )
 	m_flStartSize			= 1.0f;
 	m_flEndSize				= 0.0f;
 	m_flSpawnRadius			= 16.0f;
-	SetRenderColor( 255, 255, 255, 255 );
+	SetRenderColor( 255, 255, 255 );
+	SetRenderAlpha( 255 );
 }
 
 //-----------------------------------------------------------------------------
@@ -399,7 +400,8 @@ SporeExplosion::SporeExplosion( void )
 	m_flStartSize			= 1.0f;
 	m_flEndSize				= 0.0f;
 	m_flSpawnRadius			= 16.0f;
-	SetRenderColor( 255, 255, 255, 255 );
+	SetRenderColor( 255, 255, 255 );
+	SetRenderAlpha( 255 );
 	m_bEmit = true;
 	m_bDisabled = false;
 }
@@ -594,7 +596,7 @@ bool DustTrail::KeyValue( const char *szKeyName, const char *szValue )
 	if ( FStrEq( szKeyName, "color" ) )
 	{
 		color32 tmp;
-		UTIL_StringToColor32( &tmp, szValue );
+		V_StringToColor32( &tmp, szValue );
 		m_Color.GetForModify().Init( tmp.r / 255.0f, tmp.g / 255.0f, tmp.b / 255.0f );
 		return true;
 	}

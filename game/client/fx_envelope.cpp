@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -45,7 +45,7 @@ void C_EnvelopeFX::Update( void )
 	{
 		if ( m_hRenderHandle == INVALID_CLIENT_RENDER_HANDLE )
 		{
-			ClientLeafSystem()->AddRenderable( this, RENDER_GROUP_TRANSLUCENT_ENTITY );
+			ClientLeafSystem()->AddRenderable( this, false, RENDERABLE_IS_TRANSLUCENT, RENDERABLE_MODEL_ENTITY );
 		}
 		else
 		{

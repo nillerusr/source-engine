@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2006, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Round timer for team gamerules
 //
@@ -34,7 +34,6 @@ public:
 	virtual int GetTimerMaxLength( void );
 	virtual bool ShowInHud( void );
 	virtual bool StartPaused( void ){ return m_bStartPaused; }
-	bool ShowTimeRemaining( void ) { return m_bShowTimeRemaining; }
 
 	bool IsDisabled( void ) { return m_bIsDisabled; }
 	int GetTimerState( void ){ return m_nState; }
@@ -70,7 +69,6 @@ public:
 	void InputSetMaxTime( inputdata_t &input );
 	void InputAutoCountdown( inputdata_t &input );
 	void InputAddTeamTime( inputdata_t &input );
-	void InputSetSetupTime( inputdata_t &input );
 
 #endif
 
@@ -79,7 +77,6 @@ public:
 	void SetStopWatch( bool bState ) { m_bStopWatchTimer = bState; }
 	bool IsStopWatchTimer( void ) { return m_bStopWatchTimer; }
 	float GetStopWatchTotalTime( void ) { return m_flTotalTime; }
-	bool IsRoundMaxTimerSet( void ) { return m_nTimerMaxLength > 0; }
 	
 
 private:
@@ -93,7 +90,7 @@ private:
 	const char *GetTimeWarningSound( int nWarning );
 
 #else
-	void SetState( int nState, bool bFireOutput = true );
+	void SetState( int nState );
 	void SetTimerThink( int nType );
 	void EXPORT RoundTimerThink( void );
 	void EXPORT RoundTimerSetupThink( void );
@@ -114,7 +111,6 @@ private:
 	CNetworkVar( int, m_nSetupTimeLength );		// current timer's setup time length (setup time is the time before the round begins)
 	CNetworkVar( int, m_nState );				// RT_STATE_SETUP or RT_STATE_NORMAL
 	CNetworkVar( bool, m_bStartPaused );		// start the timer paused when it spawns
-	CNetworkVar( bool, m_bShowTimeRemaining );  //show how much time is left (default) instead of how much time has passed.
 	CNetworkVar( bool, m_bInCaptureWatchState );
 	CNetworkVar( float, m_flTotalTime );
 	CNetworkVar( bool, m_bStopWatchTimer );
@@ -156,8 +152,6 @@ private:
 
 	COutputEvent	m_OnSetupStart;
 	COutputEvent	m_OnSetupFinished;
-
-	float			m_flNextOvertimeNag;
 
 	DECLARE_DATADESC();
 

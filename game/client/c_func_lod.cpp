@@ -1,13 +1,14 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
 // $NoKeywords: $
 //
-//=============================================================================//
+//===========================================================================//
 #include "cbase.h"
 #include "view.h"
 #include "iviewrender.h"
+#include "clientalphaproperty.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -23,17 +24,15 @@ public:
 // C_BaseEntity overrides.
 public:
 
-	unsigned char	GetClientSideFade();
+	virtual void	OnDataChanged( DataUpdateType_t type );
 
 public:
 // Replicated vars from the server.
 // These are documented in the server-side entity.
 public:
-	float			m_fDisappearDist;
+	int m_nDisappearMinDist;
+	int m_nDisappearMaxDist;
 };
-
-
-ConVar lod_TransitionDist("lod_TransitionDist", "800");
 
 
 // ------------------------------------------------------------------------- //
@@ -42,7 +41,8 @@ ConVar lod_TransitionDist("lod_TransitionDist", "800");
 
 // Datatable..
 IMPLEMENT_CLIENTCLASS_DT(C_Func_LOD, DT_Func_LOD, CFunc_LOD)
-	RecvPropFloat(RECVINFO(m_fDisappearDist)),
+	RecvPropInt(RECVINFO(m_nDisappearMinDist)),
+	RecvPropInt(RECVINFO(m_nDisappearMaxDist)),
 END_RECV_TABLE()
 
 
@@ -53,15 +53,18 @@ END_RECV_TABLE()
 
 C_Func_LOD::C_Func_LOD()
 {
-	m_fDisappearDist = 5000.0f;
+	m_nDisappearMinDist = 5000;
+	m_nDisappearMaxDist = 5800;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: Calculate a fade.
-//-----------------------------------------------------------------------------
-unsigned char C_Func_LOD::GetClientSideFade()
+
+void C_Func_LOD::OnDataChanged( DataUpdateType_t type )
 {
-	return UTIL_ComputeEntityFade( this, m_fDisappearDist, m_fDisappearDist + lod_TransitionDist.GetFloat(), 1.0f );
+	BaseClass::OnDataChanged( type );
+
+	bool bCreate = (type == DATA_UPDATE_CREATED) ? true : false;
+	VPhysicsShadowDataChanged(bCreate, this);
+
+	// Copy in fade parameters
+	AlphaProp()->SetFade( 1.0f, m_nDisappearMinDist, m_nDisappearMaxDist );
 }
-
-

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Default schedules.
 //
@@ -50,6 +50,7 @@ enum
 	SCHED_RUN_FROM_ENEMY,
 	SCHED_RUN_FROM_ENEMY_FALLBACK,
 	SCHED_MOVE_TO_WEAPON_RANGE,
+	SCHED_MOVE_OFF_OF_NPC,			// This NPC has ended up on top of another. Get off.
 	SCHED_ESTABLISH_LINE_OF_FIRE,
 	SCHED_ESTABLISH_LINE_OF_FIRE_FALLBACK,
 	SCHED_PRE_FAIL_ESTABLISH_LINE_OF_FIRE,

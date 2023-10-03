@@ -1,12 +1,13 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
-//=============================================================================//
+//===========================================================================//
 
 #include "cbase.h"
 #include "particles_ez.h"
-#include "igamesystem.h"
+#include "IGameSystem.h"
+#include "model_types.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -137,24 +138,27 @@ void AddFireParticle( const SimpleParticle *pParticle, PMaterialHandle hMaterial
 
 void DrawParticleSingletons( bool bInSkybox )
 {
+	RenderableInstance_t instance;
+	instance.m_nAlpha = 255;
+
 	if ( g_pSimpleSingleton[bInSkybox].IsValid() )
 	{
-		g_pSimpleSingleton[bInSkybox]->GetBinding().DrawModel( 1 );
+		g_pSimpleSingleton[bInSkybox]->GetBinding().DrawModel( STUDIO_RENDER, instance );
 	}
 
 	if ( g_pEmberSingleton[bInSkybox].IsValid() )
 	{
-		g_pEmberSingleton[bInSkybox]->GetBinding().DrawModel( 1 );
+		g_pEmberSingleton[bInSkybox]->GetBinding().DrawModel( STUDIO_RENDER, instance );
 	}
 
 	if ( g_pFireSmokeSingleton[bInSkybox].IsValid() )
 	{
-		g_pFireSmokeSingleton[bInSkybox]->GetBinding().DrawModel( 1 );
+		g_pFireSmokeSingleton[bInSkybox]->GetBinding().DrawModel( STUDIO_RENDER, instance );
 	}
 	
 	if ( g_pFireSingleton[bInSkybox].IsValid() )
 	{
-		g_pFireSingleton[bInSkybox]->GetBinding().DrawModel( 1 );
+		g_pFireSingleton[bInSkybox]->GetBinding().DrawModel( STUDIO_RENDER, instance );
 	}
 }
 

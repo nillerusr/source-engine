@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: MiniMap.h: interface for the CMiniMap class.
 //
@@ -18,6 +18,23 @@
 #include <shareddefs.h>
 #include <const.h>
 #include "hudelement.h"
+
+typedef struct MapObject_s {
+	int		objectID;	// unique object ID
+	int		index;		// entity index if any
+	int		icon;		// players texture icon ID
+	Color   color;		// players team color
+	char	name[MAX_PLAYER_NAME_LENGTH];	// show text under icon
+	Vector	position;	// current x,y pos
+	QAngle	angle;		// view origin 0..360
+	float	endtime;	// time stop showing object
+	float	size;		// object size
+	float	status;		// green status bar [0..1], -1 = disabled
+	Color	statusColor;	// color of status bar
+	int		flags;		// MAB_OBJECT_*
+	Color	iconColor;
+	const char *text;	// text to draw underneath the icon
+} MapObject_t;
 
 class IMapOverviewPanel
 {
@@ -91,23 +108,8 @@ protected:	// private structures & types
 		Vector2D trail[MAX_TRAIL_LENGTH];	// save 1 footstep each second for 1 minute
 	} MapPlayer_t;
 
-	typedef struct MapObject_s {
-		int		objectID;	// unique object ID
-		int		index;		// entity index if any
-		int		icon;		// players texture icon ID
-		Color   color;		// players team color
-		char	name[MAX_PLAYER_NAME_LENGTH];	// show text under icon
-		Vector	position;	// current x,y pos
-		QAngle	angle;		// view origin 0..360
-		float	endtime;	// time stop showing object
-		float	size;		// object size
-		float	status;		// green status bar [0..1], -1 = disabled
-		Color	statusColor;	// color of status bar
-		int		flags;		// MAB_OBJECT_*
-		const char *text;	// text to draw underneath the icon
-	} MapObject_t;
-
 #define MAP_OBJECT_ALIGN_TO_MAP	(1<<0)
+#define MAP_OBJECT_DONT_DRAW (1<<1)
 
 public: // IViewPortPanel interface:
 
@@ -161,6 +163,7 @@ public:
 	virtual void SetCenter( const Vector2D &mappos); 
 	virtual void SetAngle( float angle);
 	virtual Vector2D WorldToMap( const Vector &worldpos );
+	Vector2D		MapToPanel( const Vector2D &mappos );
 
 	// Object settings
 	virtual int		AddObject( const char *icon, int entity, float timeToLive ); // returns object ID, 0 = no entity, -1 = forever
@@ -168,6 +171,7 @@ public:
 	virtual void	SetObjectText( int objectID, const char *text, Color color ); // text under icon
 	virtual void	SetObjectStatus( int objectID, float value, Color statusColor ); // status bar under icon
 	virtual void	SetObjectPosition( int objectID, const Vector &position, const QAngle &angle ); // world pos/angles
+	virtual void	SetObjectIconColor( int objectID, Color color );
 	virtual void 	AddObjectFlags( int objectID, int flags );
 	virtual void 	SetObjectFlags( int objectID, int flags );
 	virtual void	RemoveObject( int objectID );
@@ -185,6 +189,8 @@ public:
 
 	virtual int GetIconNumberFromTeamNumber( int teamNumber ){return teamNumber;}
 
+	MapObject_t*	FindObjectByIndex(int objectIndex);
+
 protected:
 
 	virtual void	DrawCamera();
@@ -201,11 +207,10 @@ protected:
 	bool			IsInPanel(Vector2D &pos);
 	MapPlayer_t*	GetPlayerByUserID( int userID );
 	int				AddIconTexture(const char *filename);
-	Vector2D		MapToPanel( const Vector2D &mappos );
 	int				GetPixelOffset( float height );
 	void			UpdateFollowEntity();
 	virtual void	UpdatePlayers();
-	void			UpdateObjects(); // objects bound to entities 
+	virtual void	UpdateObjects(); // objects bound to entities 
 	MapObject_t*	FindObjectByID(int objectID);
 	virtual bool	IsRadarLocked() {return false;}
 
@@ -270,6 +275,7 @@ protected:
 
 };
 
-extern IMapOverviewPanel *g_pMapOverview;
+IMapOverviewPanel *GetMapOverView();
+void SetMapOverView( int nSlot, IMapOverviewPanel *pPanel );
 
 #endif //

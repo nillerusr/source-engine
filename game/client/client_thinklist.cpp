@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -12,6 +12,9 @@
 #include "tier0/memdbgon.h"
 
 CClientThinkList g_ClientThinkList;
+
+
+static ConVar  report_clientthinklist( "report_clientthinklist", "0", FCVAR_CHEAT, "List all clientside entities thinking and time - will report and turn itself off." );
 
 
 CClientThinkList::CClientThinkList()
@@ -120,7 +123,7 @@ void CClientThinkList::SetNextClientThink( ClientEntityHandle_t hEnt, float flNe
 	// Add it to the list if it's not already in there.
 	if ( hThink == INVALID_THINK_HANDLE )
 	{
-		hThink = (ClientThinkHandle_t)(uintp)m_ThinkEntries.AddToTail();
+		hThink = (ClientThinkHandle_t)m_ThinkEntries.AddToTail();
 		pThink->SetThinkHandle( hThink );
 
 		ThinkEntry_t *pEntry = GetThinkEntry( hThink );
@@ -158,7 +161,7 @@ void CClientThinkList::RemoveThinkable( ClientThinkHandle_t hThink )
 	{
 		pThink->SetThinkHandle( INVALID_THINK_HANDLE );
 	}
-	m_ThinkEntries.Remove( (uintp)hThink );
+	m_ThinkEntries.Remove( (unsigned long)hThink );
 }
 
 
@@ -287,24 +290,45 @@ void CClientThinkList::PerformThinkFunctions()
 	// While we're in the loop, no changes to the think list are allowed
 	m_bInThinkLoop = true;
 
-	// Perform thinks on all entities that need it
-	int i;
-	for ( i = 0; i < nThinkCount; ++i )
+	if( !report_clientthinklist.GetBool() )
 	{
-		PerformThinkFunction( ppThinkEntryList[i], gpGlobals->curtime );		
+		// Perform thinks on all entities that need it
+		for ( int i = 0; i < nThinkCount; ++i )
+		{
+			PerformThinkFunction( ppThinkEntryList[i], gpGlobals->curtime );		
+		}
+	}
+	else
+	{
+		CFastTimer fastTimer;
+
+		for ( int i = 0; i < nThinkCount; ++i )
+		{
+			fastTimer.Start();
+			PerformThinkFunction( ppThinkEntryList[i], gpGlobals->curtime );		
+			fastTimer.End();
+
+			C_BaseEntity *pEntity = ClientEntityList().GetBaseEntityFromHandle( ppThinkEntryList[i]->m_hEnt );
+			if ( pEntity )
+			{
+				Msg( "Entity(%d): %s - %f\n", pEntity->entindex(), pEntity->GetDebugName(), fastTimer.GetDuration().GetMillisecondsF() );
+			}
+		}
+
+		report_clientthinklist.SetValue( 0 );
 	}
 
 	m_bInThinkLoop = false;
 
 	// Apply changes to the think list
 	int nCount = m_aChangeList.Count();
-	for ( i = 0; i < nCount; ++i )
+	for ( int i = 0; i < nCount; ++i )
 	{
 		ClientThinkHandle_t hThink = m_aChangeList[i].m_hThink;
 		if ( hThink != INVALID_THINK_HANDLE )
 		{
 			// This can happen if the same think handle was removed twice
-			if ( !m_ThinkEntries.IsInList( (uintp)hThink ) )
+			if ( !m_ThinkEntries.IsInList( (unsigned long)hThink ) )
 				continue;
 
 			// NOTE: This is necessary for the case where the client entity handle

@@ -1,10 +1,10 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
 // $NoKeywords: $
 //
-//=============================================================================//
+//===========================================================================//
 #if !defined( TEMPENT_H )
 #define TEMPENT_H
 #ifdef _WIN32
@@ -50,7 +50,6 @@
 #define FTENT_ALIGNTOMOTION			0x04000000	// Change angles to always point in the direction of motion
 #define FTENT_CLIENTSIDEPARTICLES	0x08000000	// The object has a clientside particle system.
 #define FTENT_USEFASTCOLLISIONS		0x10000000	// Use fast collisions (cl_fasttempentcollision).
-#define FTENT_COLLIDEPROPS			0x20000000	// Collide with the world and props
 
 class C_LocalTempEntity;
 
@@ -66,13 +65,13 @@ public:
 
 	C_LocalTempEntity();
 
-	virtual void					Prepare( const model_t *pmodel, float time );
+	virtual void					Prepare( model_t *pmodel, float time );
 
 	virtual bool					IsActive( void );
 	virtual bool					Frame( float frametime, int framenumber );
 
 	// C_BaseAnimating , etc. override
-	virtual int						DrawModel( int flags );
+	virtual int						DrawModel( int flags, const RenderableInstance_t &instance );
 
 	// Sets the velocity
 	void SetVelocity( const Vector &vecVelocity );
@@ -86,7 +85,7 @@ public:
 	void							OnRemoveTempEntity();
 
 	void							SetImpactEffect( const char *pszImpactEffect ) { m_pszImpactEffect = pszImpactEffect; }
-	CNewParticleEffect*				AddParticleEffect( const char *pszParticleEffect );
+	void							AddParticleEffect( const char *pszParticleEffect );
 	void							SetParticleEffect( const char *pszParticleEffect ) { m_pszParticleEffect = pszParticleEffect; }
 
 protected:
@@ -122,8 +121,6 @@ public:
 	// 
 	float							m_flFrameRate;
 	float							m_flFrame;
-
-	RenderGroup_t					m_RenderGroup;
 
 	const char						*m_pszImpactEffect;
 	const char						*m_pszParticleEffect;

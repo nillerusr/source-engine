@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -169,7 +169,7 @@ void CTEParticleRenderer::SimulateParticles( CParticleSimulateIterator *pIterato
 			float	time1 = 5.0 * ft;
 			float	dvel = 4* ft ;
 
-			float grav = ft * GetCurrentGravity() * 0.05f;
+			float grav = ft * sv_gravity.GetFloat() * 0.05f;
 
 			int		(*colorIndex)[3];
 			int		iRamp;

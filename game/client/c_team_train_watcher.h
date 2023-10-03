@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -11,10 +11,6 @@
 #endif
 
 #include "c_baseentity.h"
-#include "c_physicsprop.h"
-#ifdef GLOWS_ENABLE
-#include "glow_outline_effect.h"
-#endif // GLOWS_ENABLE
 
 class C_TeamTrainWatcher : public C_BaseEntity
 {
@@ -28,21 +24,8 @@ public:
 	virtual void OnPreDataChanged( DataUpdateType_t updateType );
 	virtual void OnDataChanged( DataUpdateType_t updateType );
 
-	virtual void Spawn( void );
-	virtual void UpdateOnRemove( void );
-
 	float GetTotalProgress( void ) { return m_flTotalProgress; }
 	int GetSpeedLevel( void ) { return m_iTrainSpeedLevel; }
-
-	// IClientThinkable overrides.
-public:
-	virtual	void ClientThink();
-
-#ifdef GLOWS_ENABLE
-private:
-	void UpdateGlowEffect( void );
-	void DestroyGlowEffect( void );
-#endif // GLOWS_ENABLE
 
 private:
 
@@ -64,14 +47,13 @@ private:
 
 	CNetworkVar( int, m_nNumCappers );
 	int m_nOldNumCappers;
-
-#ifdef GLOWS_ENABLE
-	EHANDLE m_hGlowEnt;
-	EHANDLE m_hOldGlowEnt;
-	CGlowObject *m_pGlowEffect;
-#endif // GLOWS_ENABLE
 };
 
-extern CUtlVector< CHandle<C_TeamTrainWatcher> > g_hTrainWatchers;
+extern C_TeamTrainWatcher *g_pTrainWatcher;
+
+inline C_TeamTrainWatcher *TrainWatcher()
+{
+	return g_pTrainWatcher;
+}
 
 #endif //C_TEAM_TRAIN_WATCHER_H

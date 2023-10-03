@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -7,9 +7,13 @@
 #include "cbase.h"
 #include "death_pose.h"
 
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
+
 #ifdef CLIENT_DLL
 
-void GetRagdollCurSequenceWithDeathPose( C_BaseAnimating *entity, matrix3x4_t *curBones, float flTime, int activity, int frame )
+void GetRagdollCurSequenceWithDeathPose( C_BaseAnimating *entity, matrix3x4a_t *curBones, float flTime, int activity, int frame )
 {
 	// blow the cached prev bones
 	entity->InvalidateBoneCache();
@@ -29,6 +33,8 @@ void GetRagdollCurSequenceWithDeathPose( C_BaseAnimating *entity, matrix3x4_t *c
 
 		int iTempSequence = entity->GetSequence();
 		float flTempCycle = entity->GetCycle();
+
+		entity->SetEffects( EF_NOINTERP );
 
 		entity->SetSequence( activity );
 
@@ -50,6 +56,8 @@ void GetRagdollCurSequenceWithDeathPose( C_BaseAnimating *entity, matrix3x4_t *c
 		entity->Interpolate( gpGlobals->curtime );
 
 		entity->SetupBones( NULL, -1, BONE_USED_BY_ANYTHING, gpGlobals->curtime );
+
+		entity->RemoveEffects( EF_NOINTERP );
 	}
 	else
 	{

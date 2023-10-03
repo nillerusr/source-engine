@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -6,7 +6,7 @@
 // $NoKeywords: $
 //=============================================================================//
 #include "cbase.h"
-#include "vgui_basepanel.h"
+#include "vgui_BasePanel.h"
 #include <KeyValues.h>
 #include <vgui/IScheme.h>
 #include <vgui/IVGui.h>
@@ -53,11 +53,6 @@ CBasePanel::CBasePanel( vgui::Panel *pParent, const char *panelName, int x, int 
 //-----------------------------------------------------------------------------
 CBasePanel::~CBasePanel( void )
 {
-	if ( vgui::surface() && m_nBackgroundMaterial != -1 )
-	{
-		vgui::surface()->DestroyTextureID( m_nBackgroundMaterial );
-		m_nBackgroundMaterial = -1;
-	}
 }
 
 
@@ -125,10 +120,7 @@ void CBasePanel::SetTexture( const char *texname, bool tiled /*=false*/ )
 	m_bTiled = tiled;
 	Q_strncpy( m_szBgTexture, texname, sizeof( m_szBgTexture ) );
 
-	if ( m_nBackgroundMaterial == -1 )
-	{
-		m_nBackgroundMaterial = vgui::surface()->CreateNewTextureID();
-	}
+	m_nBackgroundMaterial = vgui::surface()->CreateNewTextureID();
 	vgui::surface()->DrawSetTextureFile( m_nBackgroundMaterial, m_szBgTexture , true, true);
 }
 

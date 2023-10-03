@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: A little helper class that computes a spline patch
 //
@@ -11,9 +11,9 @@
 // $NoKeywords: $
 //=============================================================================//
 #include "cbase.h"
-#include "splinepatch.h"
+#include "SplinePatch.h"
 
-#include "mathlib/vmatrix.h"
+#include "mathlib/VMatrix.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"

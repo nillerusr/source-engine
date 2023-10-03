@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -38,7 +38,6 @@ class CBaseCombatCharacter;
 class CBasePlayer;
 class CItem;
 class CAmmoDef;
-class CTacticalMissionManager;
 
 extern ConVar sk_autoaim_mode;
 
@@ -111,7 +110,7 @@ private:
 };
 
 
-abstract_class CGameRules : public CAutoGameSystemPerFrame
+abstract_class CGameRules : public CMemZeroOnNew, public CAutoGameSystemPerFrame
 {
 public:
 	DECLARE_CLASS_GAMEROOT( CGameRules, CAutoGameSystemPerFrame );
@@ -121,7 +120,10 @@ public:
 	// Stuff shared between client and server.
 
 	CGameRules(void);
+
 	virtual ~CGameRules( void );
+
+	virtual	bool	Init();
 
 	// Damage Queries - these need to be implemented by the various subclasses (single-player, multi-player, etc).
 	// The queries represent queries against damage types and properties.
@@ -173,52 +175,29 @@ public:
 
 	virtual bool InRoundRestart( void ) { return false; }
 
-	//Allow thirdperson camera.
-	virtual bool AllowThirdPersonCamera( void ) { return false; }
+	virtual void RegisterScriptFunctions( void ){ };
 
 	virtual void ClientCommandKeyValues( edict_t *pEntity, KeyValues *pKeyValues ) {} 
-
-	// IsConnectedUserInfoChangeAllowed allows the clients to change
-	// cvars with the FCVAR_NOT_CONNECTED rule if it returns true
-	virtual bool IsConnectedUserInfoChangeAllowed( CBasePlayer *pPlayer )
-	{ 
-		Assert( !IsMultiplayer() );
-		return true; 
-	}
 
 #ifdef CLIENT_DLL
 
 	virtual bool IsBonusChallengeTimeBased( void );
-
-	virtual bool AllowMapParticleEffect( const char *pszParticleEffect ) { return true; }
-
-	virtual bool AllowWeatherParticles( void ) { return true; }
-
-	virtual bool AllowMapVisionFilterShaders( void ) { return false; }
-	virtual const char* TranslateEffectForVisionFilter( const char *pchEffectType, const char *pchEffectName ) { return pchEffectName; }
-
-	virtual bool IsLocalPlayer( int nEntIndex );
-
-	virtual void ModifySentChat( char *pBuf, int iBufSize ) { return; }
-
-	virtual bool ShouldWarnOfAbandonOnQuit() { return false; }
 	
 #else
 
 	virtual void GetTaggedConVarList( KeyValues *pCvarTagList ) {}
 
-	// NVNT see if the client of the player entered is using a haptic device.
-	virtual void CheckHaptics(CBasePlayer* pPlayer);
 
 // CBaseEntity overrides.
 public:
 
 // Setup
+	virtual void OnBeginChangeLevel( const char *nextMapName, KeyValues *saveData ) {}	///< called just before a trigger_changelevel starts a changelevel
 	
 	// Called when game rules are destroyed by CWorld
 	virtual void LevelShutdown( void ) { return; };
 
-	virtual void Precache( void ) { return; };
+	virtual void Precache( void );
 
 	virtual void RefreshSkillData( bool forceUpdate );// fill skill data struct with proper values
 	
@@ -268,10 +247,11 @@ public:
 	virtual bool ClientConnected( edict_t *pEntity, const char *pszName, const char *pszAddress, char *reject, int maxrejectlen ) = 0;// a client just connected to the server (player hasn't spawned yet)
 	virtual void InitHUD( CBasePlayer *pl ) = 0;		// the client dll is ready for updating
 	virtual void ClientDisconnected( edict_t *pClient ) = 0;// a client just disconnected from the server
+	virtual bool ShouldTimeoutClient( int nUserID, float flTimeSinceLastReceived ) { return false; } // return true to disconnect client due to timeout (used to do stricter timeouts when the game is sure the client isn't loading a map)
 	
 // Client damage rules
 	virtual float FlPlayerFallDamage( CBasePlayer *pPlayer ) = 0;// this client just hit the ground after a fall. How much damage?
-	virtual bool  FPlayerCanTakeDamage( CBasePlayer *pPlayer, CBaseEntity *pAttacker, const CTakeDamageInfo &info ) {return TRUE;};// can this player take damage from this attacker?
+	virtual bool  FPlayerCanTakeDamage( CBasePlayer *pPlayer, CBaseEntity *pAttacker ) {return TRUE;};// can this player take damage from this attacker?
 	virtual bool ShouldAutoAim( CBasePlayer *pPlayer, edict_t *target ) { return TRUE; }
 	virtual float GetAutoAimScale( CBasePlayer *pPlayer ) { return 1.0f; }
 	virtual int	GetAutoAimMode()	{ return AUTOAIM_ON; }
@@ -335,6 +315,8 @@ public:
 // AI Definitions
 	virtual void			InitDefaultAIRelationships( void ) { return; }
 	virtual const char*		AIClassText(int classType) { return NULL; }
+	virtual int				NumEntityClasses() const	{ return LAST_SHARED_ENTITY_CLASS; }
+	virtual int				NumFactions() const	{ return LAST_SHARED_FACTION; }
 
 // Healthcharger respawn control
 	virtual float FlHealthChargerRechargeTime( void ) = 0;// how long until a depleted HealthCharger recharges itself?
@@ -362,6 +344,7 @@ public:
 // Sounds
 	virtual bool PlayTextureSounds( void ) { return TRUE; }
 	virtual bool PlayFootstepSounds( CBasePlayer *pl ) { return TRUE; }
+	virtual bool AllowSoundscapes( void ) { return TRUE; }
 
 // NPCs
 	virtual bool FAllowNPCs( void ) = 0;//are NPCs allowed
@@ -398,28 +381,21 @@ public:
 
 	virtual void OnNavMeshLoad( void ) { return; }
 
-	// game-specific factories
-	virtual CTacticalMissionManager *TacticalMissionManagerFactory( void );
+	virtual void UpdateGameplayStatsFromSteam( void ) { return; }
 
-	virtual void ProcessVerboseLogOutput( void ){}
-
+	virtual edict_t *DoFindClientInPVS( edict_t *pEdict, unsigned char *pvs, unsigned pvssize );
 #endif
 
 	virtual const char *GetGameTypeName( void ){ return NULL; }
 	virtual int GetGameType( void ){ return 0; }
 
-	virtual bool ShouldDrawHeadLabels(){ return true; }
+	virtual bool ForceSplitScreenPlayersOnToSameTeam() { return true; }
 
-	virtual void ClientSpawned( edict_t * pPlayer ) { return; }
+	virtual bool IsTopDown() { return false; }
+	virtual const QAngle& GetTopDownMovementAxis() { return vec3_angle; }
 
-	virtual void OnFileReceived( const char * fileName, unsigned int transferID ) { return; }
-
-	virtual bool IsHolidayActive( /*EHoliday*/ int eHoliday ) const { return false; }
-
-#ifndef CLIENT_DLL
-private:
-	float m_flNextVerboseLogOutput;
-#endif // CLIENT_DLL
+	// Assume the game doesn't care
+	virtual int GetMaxHumanPlayers() const { return -1; }
 };
 
 

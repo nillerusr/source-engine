@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -30,7 +30,7 @@ enum vehiclesound
 	VS_NUM_SOUNDS,
 };
 
-extern const char *vehiclesound_parsenames[VS_NUM_SOUNDS];
+extern char *vehiclesound_parsenames[VS_NUM_SOUNDS];
 
 // This is a list of vehiclesounds to automatically stop when the vehicle's driver exits the vehicle
 #define NUM_SOUNDS_TO_STOP_ON_EXIT	4

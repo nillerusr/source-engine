@@ -1,9 +1,8 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2006, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
 //=============================================================================//
-
 
 #include "cbase.h"
 #include <KeyValues.h>
@@ -31,6 +30,11 @@
 #include "activitylist.h"
 
 #include "basemodelpanel.h"
+#include "vgui_int.h"
+
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
 
 bool UseHWMorphModels();
 
@@ -79,8 +83,8 @@ void CModelPanel::ApplySettings( KeyValues *inResourceData )
 	BaseClass::ApplySettings( inResourceData );
 
 	m_nFOV = inResourceData->GetInt( "fov", 54 );
-	m_bStartFramed = inResourceData->GetInt( "start_framed", false );
-	m_bAllowOffscreen = inResourceData->GetInt( "allow_offscreen", false );
+	m_bStartFramed = inResourceData->GetBool( "start_framed", false );
+	m_bAllowOffscreen = inResourceData->GetBool( "allow_offscreen", false );
 
 	// do we have a valid "model" section in the .res file?
 	for ( KeyValues *pData = inResourceData->GetFirstSubKey() ; pData != NULL ; pData = pData->GetNextKey() )
@@ -90,21 +94,6 @@ void CModelPanel::ApplySettings( KeyValues *inResourceData )
 			ParseModelInfo( pData );
 		}
 	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CModelPanel::OnCommand( const char *command )
-{
-	if (!Q_strnicmp("animation", command, 9))
-	{
-		UpdateModel();
-		SetSequence( command + 9 + 1 );
-		return;
-	}
-
-	BaseClass::OnCommand(command);
 }
 
 //-----------------------------------------------------------------------------
@@ -291,12 +280,14 @@ void CModelPanel::SetupVCD( void )
 	if ( !pEnt )
 		return;
 
-	if ( pEnt->InitializeAsClientEntity( "", RENDER_GROUP_OTHER ) == false )
+	if ( pEnt->InitializeAsClientEntity( "", false ) == false )
 	{
 		// we failed to initialize this entity so just return gracefully
 		pEnt->Remove();
 		return;
 	}
+
+	g_pClientLeafSystem->EnableRendering( pEnt->RenderHandle(), false );
 
 	// setup the handle
 	m_hScene = pEnt;
@@ -364,23 +355,6 @@ const char *CModelPanel::GetModelName( void )
 	return m_pModelInfo->m_pszModelName;
 }
 
-void CModelPanel::SetBodyGroup( const char* pszBodyGroupName, int nGroup )
-{
-	if ( !m_pModelInfo )
-		return;
-
-	if ( !m_hModel.Get() )
-		return;
-
-	int nBodyGroupNum = m_hModel->FindBodygroupByName( pszBodyGroupName );
-
-	if ( nBodyGroupNum == -1 )
-		return;
-
-	m_pModelInfo->m_mapBodygroupValues.InsertOrReplace( nBodyGroupNum, nGroup );
-	m_bPanelDirty = true;
-}
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -404,7 +378,7 @@ void CModelPanel::SetupModel( void )
 	if ( !pEnt )
 		return;
 
-	if ( pEnt->InitializeAsClientEntity( pszModelName, RENDER_GROUP_OPAQUE_ENTITY ) == false )
+	if ( pEnt->InitializeAsClientEntity( pszModelName, false ) == false )
 	{
 		// we failed to initialize this entity so just return gracefully
 		pEnt->Remove();
@@ -419,12 +393,7 @@ void CModelPanel::SetupModel( void )
 
 	if ( m_pModelInfo->m_nSkin >= 0 )
 	{
-		pEnt->m_nSkin = m_pModelInfo->m_nSkin;
-	}
-
-	FOR_EACH_MAP_FAST( m_pModelInfo->m_mapBodygroupValues, i )
-	{
-		pEnt->SetBodygroup( m_pModelInfo->m_mapBodygroupValues.Key( i ), m_pModelInfo->m_mapBodygroupValues[ i ] );
+		pEnt->SetSkin( m_pModelInfo->m_nSkin );
 	}
 
 	// do we have any animation information?
@@ -469,7 +438,7 @@ void CModelPanel::SetupModel( void )
 
 		if ( pTemp )
 		{
-			if ( pTemp->InitializeAsClientEntity( pInfo->m_pszModelName, RENDER_GROUP_OPAQUE_ENTITY ) == false )
+			if ( pTemp->InitializeAsClientEntity( pInfo->m_pszModelName, false ) == false )
 			{	
 				// we failed to initialize this model so just skip it
 				pTemp->Remove();
@@ -482,7 +451,7 @@ void CModelPanel::SetupModel( void )
 
 			if ( pInfo->m_nSkin >= 0 )
 			{
-				pTemp->m_nSkin = pInfo->m_nSkin;
+				pTemp->SetSkin( pInfo->m_nSkin );
 			}
 
 			pTemp->m_flAnimTime = gpGlobals->curtime;
@@ -513,28 +482,25 @@ void CModelPanel::InitCubeMaps()
 	}
 }
 
-
-//-----------------------------------------------------------------------------
-// Purpose: If the panel is marked as dirty, update it and mark it as clean
-//-----------------------------------------------------------------------------
-void CModelPanel::UpdateModel()
+void CModelPanel::UpdateIfDirty()
 {
-	if ( m_bPanelDirty )
+	if ( !m_bPanelDirty )
 	{
-		InitCubeMaps();
-
-		SetupModel();
-
-		// are we trying to play a VCD?
-		if ( Q_strlen( m_pModelInfo->m_pszVCD ) > 0 )
-		{
-			SetupVCD();
-		}
-
-		m_bPanelDirty = false;
+		return;
 	}
-}
 
+	InitCubeMaps();
+
+	SetupModel();
+
+	// are we trying to play a VCD?
+	if ( Q_strlen( m_pModelInfo->m_pszVCD ) > 0 )
+	{
+		SetupVCD();
+	}
+
+	m_bPanelDirty = false;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -543,14 +509,16 @@ void CModelPanel::Paint()
 {
 	BaseClass::Paint();
 
-	C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
+	ASSERT_LOCAL_PLAYER_RESOLVABLE();
+	VGUI_ABSPOS_SPLITSCREEN_GUARD( GET_ACTIVE_SPLITSCREEN_SLOT() );
 
+	C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
 	if ( !pLocalPlayer || !m_pModelInfo )
 		return;
 
 	MDLCACHE_CRITICAL_SECTION();
 
-	UpdateModel();
+	UpdateIfDirty();
 
 	if ( !m_hModel.Get() )
 		return;
@@ -559,7 +527,7 @@ void CModelPanel::Paint()
 	int x, y, w, h;
 
 	GetBounds( x, y, w, h );
-	ParentLocalToScreen( x, y );
+	// ParentLocalToScreen( x, y );
 
 	if ( !m_bAllowOffscreen && x < 0 )
 	{
@@ -569,7 +537,17 @@ void CModelPanel::Paint()
 	}
 
 	Vector vecExtraModelOffset( 0, 0, 0 );
-	float flWidthRatio = ((float)w / (float)h ) / ( 4.0f / 3.0f );
+
+	int dummyx, dummyy;
+	int sw, sh;
+	VGui_GetHudBounds( GET_ACTIVE_SPLITSCREEN_SLOT(), dummyx, dummyy, sw, sh );
+	
+	x += dummyx;
+	y += dummyy;
+
+	float aspect = (float)sw/(float)sh;
+
+	float flWidthRatio = aspect / ( 4.0f / 3.0f );
 
 	// is this a player model?
 	if ( Q_strstr( GetModelName(), "models/player/" ) )
@@ -595,16 +573,10 @@ void CModelPanel::Paint()
 		m_hModel->FrameAdvance( gpGlobals->frametime );
 	}
 
-	CMatRenderContextPtr pRenderContext( materials );
-	
-	// figure out what our viewport is right now
-	int viewportX, viewportY, viewportWidth, viewportHeight;
-	pRenderContext->GetViewport( viewportX, viewportY, viewportWidth, viewportHeight );
-
 	// Now draw it.
 	CViewSetup view;
-	view.x = x + m_pModelInfo->m_vecViewportOffset.x + viewportX; // we actually want to offset by the 
-	view.y = y + m_pModelInfo->m_vecViewportOffset.y + viewportY; // viewport origin here because Push3DView expects global coords below
+	view.x = x + m_pModelInfo->m_vecViewportOffset.x;
+	view.y = y + m_pModelInfo->m_vecViewportOffset.y;
 	view.width = w;
 	view.height = h;
 
@@ -618,7 +590,7 @@ void CModelPanel::Paint()
 	view.zNear = VIEW_NEARZ;
 	view.zFar = 1000;
 
-	
+	CMatRenderContextPtr pRenderContext( materials );
 
 	// Not supported by queued material system - doesn't appear to be necessary
 //	ITexture *pLocalCube = pRenderContext->GetLocalCubemap();
@@ -633,7 +605,6 @@ void CModelPanel::Paint()
 	}
 
 	pRenderContext->SetLightingOrigin( vec3_origin );
-	pRenderContext->SetAmbientLight( 0.4, 0.4, 0.4 );
 
 	static Vector white[6] = 
 	{
@@ -663,13 +634,15 @@ void CModelPanel::Paint()
 	float color[3] = { 1.0f, 1.0f, 1.0f };
 	render->SetColorModulation( color );
 	render->SetBlend( 1.0f );
-	m_hModel->DrawModel( STUDIO_RENDER );
+	RenderableInstance_t instance;
+	instance.m_nAlpha = 255;
+	m_hModel->DrawModel( STUDIO_RENDER, instance );
 
 	for ( i = 0 ; i < m_AttachedModels.Count() ; i++ )
 	{
 		if ( m_AttachedModels[i].Get() )
 		{
-			m_AttachedModels[i]->DrawModel( STUDIO_RENDER );
+			m_AttachedModels[i]->DrawModel( STUDIO_RENDER, instance );
 		}
 	}
 
@@ -744,21 +717,9 @@ bool CModelPanel::SetSequence( const char *pszName )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CModelPanel::SetSkin( int nSkin )
-{
-	if ( m_pModelInfo )
-	{
-		m_pModelInfo->m_nSkin = nSkin;
-		m_bPanelDirty = true;
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 void CModelPanel::OnSetAnimation( KeyValues *data )
 {
-	UpdateModel();
+	UpdateIfDirty();
 
 	// If there's no model, these commands will be ignored.
 	Assert(m_hModel);

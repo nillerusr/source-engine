@@ -1,13 +1,12 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: Color correction entity.
 //
 // $NoKeywords: $
 //===========================================================================//
 
-#include <string.h>
-
 #include "cbase.h"
+#include "colorcorrection.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -16,64 +15,6 @@
 
 static const char *s_pFadeInContextThink = "ColorCorrectionFadeInThink";
 static const char *s_pFadeOutContextThink = "ColorCorrectionFadeOutThink";
- 
-//------------------------------------------------------------------------------
-// FIXME: This really should inherit from something	more lightweight
-//------------------------------------------------------------------------------
-
-
-//------------------------------------------------------------------------------
-// Purpose : Shadow control entity
-//------------------------------------------------------------------------------
-class CColorCorrection : public CBaseEntity
-{
-	DECLARE_CLASS( CColorCorrection, CBaseEntity );
-public:
-	DECLARE_SERVERCLASS();
-	DECLARE_DATADESC();
-
-	CColorCorrection();
-
-	void Spawn( void );
-	int  UpdateTransmitState();
-	void Activate( void );
-
-	virtual int	ObjectCaps( void ) { return BaseClass::ObjectCaps() & ~FCAP_ACROSS_TRANSITION; }
-
-	// Inputs
-	void	InputEnable( inputdata_t &inputdata );
-	void	InputDisable( inputdata_t &inputdata );
-	void	InputSetFadeInDuration ( inputdata_t &inputdata );
-	void	InputSetFadeOutDuration ( inputdata_t &inputdata );
-
-private:
-	void	FadeIn ( void );
-	void	FadeOut ( void );
-
-	void FadeInThink( void );	// Fades lookup weight from Cur->MaxWeight 
-	void FadeOutThink( void );	// Fades lookup weight from CurWeight->0.0
-
-	
-	
-	float	m_flFadeInDuration;		// Duration for a full 0->MaxWeight transition
-	float	m_flFadeOutDuration;	// Duration for a full Max->0 transition
-	float	m_flStartFadeInWeight;
-	float	m_flStartFadeOutWeight;
-	float	m_flTimeStartFadeIn;
-	float	m_flTimeStartFadeOut;
-	
-	float	m_flMaxWeight;
-
-	bool	m_bStartDisabled;
-	CNetworkVar( bool, m_bEnabled );
-
-	CNetworkVar( float, m_MinFalloff );
-	CNetworkVar( float, m_MaxFalloff );
-	CNetworkVar( float, m_flCurWeight );
-	CNetworkString( m_netlookupFilename, MAX_PATH );
-
-	string_t	m_lookupFilename;
-};
 
 LINK_ENTITY_TO_CLASS(color_correction, CColorCorrection);
 
@@ -97,6 +38,7 @@ BEGIN_DATADESC( CColorCorrection )
 
 	DEFINE_KEYFIELD( m_bEnabled,		  FIELD_BOOLEAN, "enabled" ),
 	DEFINE_KEYFIELD( m_bStartDisabled,    FIELD_BOOLEAN, "StartDisabled" ),
+	DEFINE_KEYFIELD( m_bExclusive,		  FIELD_BOOLEAN, "exclusive" ),
 //	DEFINE_ARRAY( m_netlookupFilename, FIELD_CHARACTER, MAX_PATH ), 
 
 	DEFINE_INPUTFUNC( FIELD_VOID, "Enable", InputEnable ),
@@ -112,8 +54,14 @@ IMPLEMENT_SERVERCLASS_ST_NOBASE(CColorCorrection, DT_ColorCorrection)
 	SendPropFloat(  SENDINFO(m_MinFalloff) ),
 	SendPropFloat(  SENDINFO(m_MaxFalloff) ),
 	SendPropFloat(  SENDINFO(m_flCurWeight) ),
+	SendPropFloat(  SENDINFO(m_flMaxWeight) ),
+	SendPropFloat(  SENDINFO(m_flFadeInDuration) ),
+	SendPropFloat(  SENDINFO(m_flFadeOutDuration) ),
 	SendPropString( SENDINFO(m_netlookupFilename) ),
 	SendPropBool( SENDINFO(m_bEnabled) ),
+	SendPropBool( SENDINFO(m_bMaster) ),
+	SendPropBool( SENDINFO(m_bClientSide) ),
+	SendPropBool( SENDINFO(m_bExclusive) ),
 END_SEND_TABLE()
 
 
@@ -132,6 +80,9 @@ CColorCorrection::CColorCorrection() : BaseClass()
 	m_flTimeStartFadeOut = 0.0f;
 	m_netlookupFilename.GetForModify()[0] = 0;
 	m_lookupFilename = NULL_STRING;
+	m_bMaster = false;
+	m_bClientSide = false;
+	m_bExclusive = false;
 }
 
 
@@ -168,6 +119,9 @@ void CColorCorrection::Spawn( void )
 		m_flCurWeight.Set ( 1.0f );
 	}
 
+	m_bMaster = IsMaster();
+	m_bClientSide = IsClientSide();
+
 	BaseClass::Spawn();
 }
 
@@ -183,6 +137,9 @@ void CColorCorrection::Activate( void )
 //-----------------------------------------------------------------------------
 void CColorCorrection::FadeIn ( void )
 {
+	if ( m_bClientSide || ( m_bEnabled && m_flCurWeight >= m_flMaxWeight ) )
+		return;
+
 	m_bEnabled = true;
 	m_flTimeStartFadeIn = gpGlobals->curtime;
 	m_flStartFadeInWeight = m_flCurWeight;
@@ -194,6 +151,9 @@ void CColorCorrection::FadeIn ( void )
 //-----------------------------------------------------------------------------
 void CColorCorrection::FadeOut ( void )
 {
+	if ( m_bClientSide || ( !m_bEnabled && m_flCurWeight <= 0.0f ) )
+		return;
+
 	m_bEnabled = false;
 	m_flTimeStartFadeOut = gpGlobals->curtime;
 	m_flStartFadeOutWeight = m_flCurWeight;
@@ -230,7 +190,7 @@ void CColorCorrection::FadeInThink( void )
 	flFadeRatio = clamp ( flFadeRatio, 0.0f, 1.0f );
 	m_flStartFadeInWeight = clamp ( m_flStartFadeInWeight, 0.0f, 1.0f );
 
-	m_flCurWeight = Lerp( flFadeRatio, m_flStartFadeInWeight, m_flMaxWeight );
+	m_flCurWeight = Lerp( flFadeRatio, (float)m_flStartFadeInWeight, (float)m_flMaxWeight );
 
 	SetNextThink( gpGlobals->curtime + COLOR_CORRECTION_ENT_THINK_RATE, s_pFadeInContextThink );
 }
@@ -311,4 +271,85 @@ void CColorCorrection::InputSetFadeInDuration( inputdata_t& inputdata )
 void CColorCorrection::InputSetFadeOutDuration( inputdata_t& inputdata )
 {
 	m_flFadeOutDuration = inputdata.value.Float();
+}
+
+
+
+
+
+CColorCorrectionSystem s_ColorCorrectionSystem( "ColorCorrectionSystem" );
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+CColorCorrectionSystem *ColorCorrectionSystem( void )
+{
+	return &s_ColorCorrectionSystem;
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Clear out the fog controller.
+//-----------------------------------------------------------------------------
+void CColorCorrectionSystem::LevelInitPreEntity( void )
+{
+	m_hMasterController = NULL;
+	ListenForGameEvent( "round_start" );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Find the master controller.  If no controller is 
+//			set as Master, use the first controller found.
+//-----------------------------------------------------------------------------
+void CColorCorrectionSystem::InitMasterController( void )
+{
+	CColorCorrection *pColorCorrection = NULL;
+	do
+	{
+		pColorCorrection = dynamic_cast<CColorCorrection*>( gEntList.FindEntityByClassname( pColorCorrection, "color_correction" ) );
+		if ( pColorCorrection )
+		{
+			if ( m_hMasterController.Get() == NULL )
+			{
+				m_hMasterController = pColorCorrection;
+			}
+			else
+			{
+				if ( pColorCorrection->IsMaster() )
+				{
+					m_hMasterController = pColorCorrection;
+				}
+			}
+		}
+	} while ( pColorCorrection );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: On a multiplayer map restart, re-find the master controller.
+//-----------------------------------------------------------------------------
+void CColorCorrectionSystem::FireGameEvent( IGameEvent *pEvent )
+{
+	InitMasterController();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: On level load find the master fog controller.  If no controller is 
+//			set as Master, use the first fog controller found.
+//-----------------------------------------------------------------------------
+void CColorCorrectionSystem::LevelInitPostEntity( void )
+{
+	InitMasterController();
+
+	// HACK: Singleplayer games don't get a call to CBasePlayer::Spawn on level transitions.
+	// CBasePlayer::Activate is called before this is called so that's too soon to set up the fog controller.
+	// We don't have a hook similar to Activate that happens after LevelInitPostEntity
+	// is called, or we could just do this in the player itself.
+	if ( gpGlobals->maxClients == 1 )
+	{
+		CBasePlayer *pPlayer = UTIL_GetLocalPlayer();
+		if ( pPlayer && ( pPlayer->m_hColorCorrectionCtrl.Get() == NULL ) )
+		{
+			pPlayer->InitColorCorrectionController();
+		}
+	}
 }

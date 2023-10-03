@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -18,6 +18,7 @@
 #include "tier0/memdbgon.h"
 
 IMPLEMENT_CLIENTCLASS_DT(C_BreakableProp, DT_BreakableProp, CBreakableProp)
+	RecvPropBool( RECVINFO( m_bClientPhysics ) ),
 END_RECV_TABLE()
 
 //-----------------------------------------------------------------------------
@@ -28,19 +29,23 @@ C_BreakableProp::C_BreakableProp( void )
 	m_takedamage = DAMAGE_YES;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void C_BreakableProp::SetFadeMinMax( float fademin, float fademax )
-{
-	m_fadeMinDist = fademin;
-	m_fadeMaxDist = fademax;
-}
 
 //-----------------------------------------------------------------------------
 // Copy fade from another breakable prop
 //-----------------------------------------------------------------------------
 void C_BreakableProp::CopyFadeFrom( C_BreakableProp *pSource )
 {
-	m_flFadeScale = pSource->m_flFadeScale;
+	SetGlobalFadeScale( pSource->GetGlobalFadeScale() );
+	SetDistanceFade( pSource->GetMinFadeDist(), pSource->GetMaxFadeDist() );
 }
+
+void C_BreakableProp::OnDataChanged( DataUpdateType_t type )
+{
+	BaseClass::OnDataChanged( type );
+	if ( m_bClientPhysics )
+	{
+		bool bCreate = (type == DATA_UPDATE_CREATED) ? true : false;
+		VPhysicsShadowDataChanged(bCreate, this);
+	}
+}
+

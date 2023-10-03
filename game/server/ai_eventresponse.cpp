@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: AI system that makes NPCs verbally respond to game events
 //
@@ -7,6 +7,10 @@
 #include "cbase.h"
 #include "ai_eventresponse.h"
 #include "ai_basenpc.h"
+
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
 
 ConVar	ai_debug_eventresponses( "ai_debug_eventresponses", "0", FCVAR_NONE, "Set to 1 to see all NPC response events trigger, and which NPCs choose to respond to them." );
 

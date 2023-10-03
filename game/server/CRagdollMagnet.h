@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Used to influence the initial force for a dying NPC's ragdoll. 
 //			Passive entity. Just represents position in the world, radius, force
@@ -43,3 +43,4 @@ private:
 };
 
 #endif //CRAGDOLLMAGNET_H
+

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -335,14 +335,11 @@ float CalculatePhysicsImpactDamage( int index, gamevcollisionevent_t *pEvent, co
 
 	if ( pEvent->pObjects[otherIndex]->GetGameFlags() & FVPHYSICS_PLAYER_HELD )
 	{
-		if ( gpGlobals->maxClients == 1 )
+		// if the player is holding the object, use it's real mass (player holding reduced the mass)
+		CBasePlayer *pPlayer = UTIL_GetLocalPlayer();
+		if ( pPlayer )
 		{
-			// if the player is holding the object, use it's real mass (player holding reduced the mass)
-			CBasePlayer *pPlayer = UTIL_GetLocalPlayer();
-			if ( pPlayer )
-			{
-				otherMass = pPlayer->GetHeldObjectMass( pEvent->pObjects[otherIndex] );
-			}
+			otherMass = pPlayer->GetHeldObjectMass( pEvent->pObjects[otherIndex] );
 		}
 	}
 
@@ -438,17 +435,14 @@ float CalculatePhysicsImpactDamage( int index, gamevcollisionevent_t *pEvent, co
 	}
 	else if ( pEvent->pObjects[index]->GetGameFlags() & FVPHYSICS_PLAYER_HELD )
 	{
-		if ( gpGlobals->maxClients == 1 )
+		// if the player is holding the object, use it's real mass (player holding reduced the mass)
+		CBasePlayer *pPlayer = UTIL_GetLocalPlayer();
+		if ( pPlayer )
 		{
-			// if the player is holding the object, use it's real mass (player holding reduced the mass)
-			CBasePlayer *pPlayer = UTIL_GetLocalPlayer();
-			if ( pPlayer )
+			float mass = pPlayer->GetHeldObjectMass( pEvent->pObjects[index] );
+			if ( mass > 0 )
 			{
-				float mass = pPlayer->GetHeldObjectMass( pEvent->pObjects[index] );
-				if ( mass > 0 )
-				{
-					invMass = 1.0f / mass;
-				}
+				invMass = 1.0f / mass;
 			}
 		}
 	}
@@ -459,7 +453,7 @@ float CalculatePhysicsImpactDamage( int index, gamevcollisionevent_t *pEvent, co
 
 	if ( !pEvent->pObjects[otherIndex]->IsStatic() && otherMass < table.smallMassMax && table.smallMassCap > 0 )
 	{
-		damage = clamp( damage, 0.f, table.smallMassCap );
+		damage = clamp( damage, 0, table.smallMassCap );
 	}
 
 	return damage;

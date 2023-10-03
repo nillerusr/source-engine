@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -44,6 +44,9 @@ public:
 	virtual void	Spawn();
 	virtual void	OnRestore();
 	virtual int		DrawDebugTextOverlays();
+
+	virtual void OnActivate() {}
+	virtual void OnDeactivate() {}
 	
 	virtual void 	InputActivate( inputdata_t &inputdata );
 	virtual void 	InputUpdateActors( inputdata_t &inputdata );
@@ -74,6 +77,8 @@ protected:
 	virtual void	EnableGoal( CAI_BaseNPC *pAI )	{}
 	virtual void	DisableGoal( CAI_BaseNPC *pAI  ) {}
 	
+	virtual void	ResolveNames();
+
 	void UpdateActors();
 
 	const CUtlVector<AIHANDLE> &AccessActors()
@@ -81,7 +86,7 @@ protected:
 		return m_actors;
 	}
 	
-private:
+protected:
 	enum Flags_t
 	{
 		ACTIVE			= 0x01,
@@ -97,7 +102,6 @@ private:
 
 	void DelayedRefresh();
 	void PruneActors();
-	void ResolveNames();
 	
 	// From Worldcraft
 	string_t				m_iszActor;
@@ -109,9 +113,7 @@ private:
 	CUtlVector<AIHANDLE>	m_actors;
 	EHANDLE					m_hGoalEntity;
 	unsigned 				m_flags;
-	
-	
-protected:
+
 	DECLARE_DATADESC();
 };
 

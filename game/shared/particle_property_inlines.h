@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: Define inline functions for the CParticleProperty class. The 
 //			definitions	exist in this include file to avoid cluttering up

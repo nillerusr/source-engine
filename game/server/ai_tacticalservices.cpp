@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ====
 //
 //=============================================================================
 
@@ -160,7 +160,7 @@ bool CAI_TacticalServices::TestLateralCover( const Vector &vecCheckStart, const 
 			if ( GetOuter()->IsValidCover ( vecCheckEnd, NULL ) )
 			{
 				AIMoveTrace_t moveTrace;
-				GetOuter()->GetMoveProbe()->MoveLimit( NAV_GROUND, GetLocalOrigin(), vecCheckEnd, MASK_NPCSOLID, NULL, &moveTrace );
+				GetOuter()->GetMoveProbe()->MoveLimit( NAV_GROUND, GetLocalOrigin(), vecCheckEnd, GetOuter()->GetAITraceMask(), NULL, &moveTrace );
 				if (moveTrace.fStatus == AIMR_OK)
 				{
 					DebugFindCover( NO_NODE, vecCheckEnd + GetOuter()->GetViewOffset(), vecCheckStart, 0, 255, 0 );
@@ -347,7 +347,7 @@ int CAI_TacticalServices::FindCoverNode(const Vector &vNearPos, const Vector &vT
 
 	MARK_TASK_EXPENSIVE();
 
-	DebugFindCover( NO_NODE, GetOuter()->EyePosition(), vThreatEyePos, 0, 255, 255 );
+	DebugFindCover( g_AIDebugFindCoverNode, GetOuter()->EyePosition(), vThreatEyePos, 0, 255, 255 );
 
 	int iMyNode = GetPathfinder()->NearestNodeToPoint( vNearPos );
 
@@ -693,7 +693,7 @@ bool CAI_TacticalServices::TestLateralLos( const Vector &vecCheckStart, const Ve
 				if (GetOuter()->TestShootPosition(vecCheckEnd,vecCheckStart))
 				{
 					AIMoveTrace_t moveTrace;
-					GetOuter()->GetMoveProbe()->MoveLimit( NAV_GROUND, GetLocalOrigin(), vecCheckEnd, MASK_NPCSOLID, NULL, &moveTrace );
+					GetOuter()->GetMoveProbe()->MoveLimit( NAV_GROUND, GetLocalOrigin(), vecCheckEnd, GetOuter()->GetAITraceMask(), NULL, &moveTrace );
 					if (moveTrace.fStatus == AIMR_OK)
 					{
 						return true;

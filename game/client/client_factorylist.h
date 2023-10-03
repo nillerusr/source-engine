@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -15,7 +15,6 @@
 struct factorylist_t
 {
 	CreateInterfaceFn appSystemFactory;
-	CreateInterfaceFn physicsFactory;
 };
 
 // Store off the factories

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -9,9 +9,9 @@
 #include "cbase.h"
 #include "itextmessage.h"
 #include <vgui_controls/Panel.h>
-#include <vgui/IVGui.h>
+#include <vgui/IVgui.h>
 #include <vgui/ILocalize.h>
-#include "VGuiMatSurface/IMatSystemSurface.h"
+#include "VguiMatSurface/IMatSystemSurface.h"
 #include <vgui_controls/Controls.h>
 #include <vgui/ISurface.h>
 #include "hud.h"
@@ -238,7 +238,7 @@ void CTextMessagePanel::AddChar( int r, int g, int b, int a, wchar_t ch )
 //-----------------------------------------------------------------------------
 void CTextMessagePanel::GetTextExtents( int *wide, int *tall, const char *string )
 {
-	*wide = g_pMatSystemSurface->DrawTextLen( m_hFont, "%s", (char *)string );
+	*wide = g_pMatSystemSurface->DrawTextLen( m_hFont, (char *)string );
 	*tall = vgui::surface()->GetFontTall( m_hFont );
 }
 

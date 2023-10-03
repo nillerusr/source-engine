@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:			The Escort's Shield weapon effect
 //
@@ -87,7 +87,7 @@ void CSheetSimulator::AddSpring( int p1, int p2, float restLength )
 
 void CSheetSimulator::AddFixedPointSpring( int fixedPoint, int p, float restLength )
 {
-	assert( fixedPoint < m_FixedPointCount );
+	Assert( fixedPoint < m_FixedPointCount );
 	int spring = m_Springs.AddToTail();
 	m_Springs[spring].m_Particle1 = p;
 	m_Springs[spring].m_Particle2 = -(fixedPoint+1);
@@ -224,7 +224,7 @@ const Vector& CSheetSimulator::GetPoint( int i ) const
 // Fixed points
 Vector& CSheetSimulator::GetFixedPoint( int i )
 {
-	assert( i < m_FixedPointCount );
+	Assert( i < m_FixedPointCount );
 	return m_pFixedPoint[i];
 }
 
@@ -278,7 +278,7 @@ void CSheetSimulator::ComputeForces()
 
 	float springConstant;
 	int i;
-	for ( i = 0; i < m_Springs.Size(); ++i )
+	for ( i = 0; i < m_Springs.Count(); ++i )
 	{
 		// Hook's law for a damped spring:
 		// got two particles, a and b with positions xa and xb and velocities va and vb
@@ -320,7 +320,7 @@ void CSheetSimulator::ComputeForces()
 		if (m_Springs[i].m_Particle2 >= 0)
 			m_Particle[m_Springs[i].m_Particle2].m_Force -= force;
 
-		assert( IsFinite( m_Particle[m_Springs[i].m_Particle1].m_Force.x ) &&
+		Assert( IsFinite( m_Particle[m_Springs[i].m_Particle1].m_Force.x ) &&
 			IsFinite( m_Particle[m_Springs[i].m_Particle1].m_Force.y) &&
 			IsFinite( m_Particle[m_Springs[i].m_Particle1].m_Force.z) );
 	}
@@ -533,7 +533,7 @@ void CSheetSimulator::EulerStep( float dt )
 		m_Particle[i].m_Position += m_Particle[i].m_Velocity * dt; 
 		m_Particle[i].m_Velocity += m_Particle[i].m_Force * dt / m_Particle[i].m_Mass;
 
-		assert( IsFinite( m_Particle[i].m_Velocity.x ) &&
+		Assert( IsFinite( m_Particle[i].m_Velocity.x ) &&
 			IsFinite( m_Particle[i].m_Velocity.y) &&
 			IsFinite( m_Particle[i].m_Velocity.z) );
 
@@ -624,7 +624,7 @@ void CIterativeSheetSimulator::BeginSimulation( float dt, int steps, int substep
 
 bool CIterativeSheetSimulator::Think( )
 {
-	assert( m_SimulationSteps >= 0 );
+	Assert( m_SimulationSteps >= 0 );
 
 	// Need to iteratively perform collision detection
 	if (m_CurrentCollisionPt >= 0)

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: implements various common send proxies
 //
@@ -22,34 +22,32 @@ void RecvProxy_IntToColor32( const CRecvProxyData *pData, void *pStruct, void *p
 void RecvProxy_IntSubOne( const CRecvProxyData *pData, void *pStruct, void *pOut );
 void RecvProxy_ShortSubOne( const CRecvProxyData *pData, void *pStruct, void *pOut );
 void RecvProxy_InterpolationAmountChanged( const CRecvProxyData *pData, void *pStruct, void *pOut );
-void RecvProxy_IntToModelIndex16_BackCompatible( const CRecvProxyData *pData, void *pStruct, void *pOut );
-void RecvProxy_IntToModelIndex32_BackCompatible( const CRecvProxyData *pData, void *pStruct, void *pOut );
 
 RecvProp RecvPropTime(
-	const char *pVarName, 
+	char *pVarName, 
 	int offset, 
 	int sizeofVar=SIZEOF_IGNORE );
 
-#if !defined( NO_ENTITY_PREDICTION )
+#if !defined( NO_ENTITY_PREDICTION ) && defined( USE_PREDICTABLEID )
 RecvProp RecvPropPredictableId(
-	const char *pVarName, 
+	char *pVarName, 
 	int offset, 
 	int sizeofVar=SIZEOF_IGNORE );
 #endif
 
 RecvProp RecvPropEHandle(
-	const char *pVarName, 
+	char *pVarName, 
 	int offset, 
 	int sizeofVar=SIZEOF_IGNORE,
 	RecvVarProxyFn proxyFn=RecvProxy_IntToEHandle );
 
 RecvProp RecvPropBool(
-	const char *pVarName, 
+	char *pVarName, 
 	int offset, 
 	int sizeofVar );
 
 RecvProp RecvPropIntWithMinusOneFlag(
-	const char *pVarName, 
+	char *pVarName, 
 	int offset, 
 	int sizeofVar=SIZEOF_IGNORE,
 	RecvVarProxyFn proxyFn=RecvProxy_IntSubOne );

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -25,9 +25,10 @@ class CBoneAccessor;
 
 #include "mathlib/vector.h"
 #include "bone_accessor.h"
+#include "vcollide_parse.h"
 
 // UNDONE: Remove and make dynamic?
-#define RAGDOLL_MAX_ELEMENTS	24
+#define RAGDOLL_MAX_ELEMENTS	32
 #define RAGDOLL_INDEX_BITS		5			// NOTE 1<<RAGDOLL_INDEX_BITS >= RAGDOLL_MAX_ELEMENTS
 
 #define CORE_DISSOLVE_FADE_START 0.2f
@@ -41,15 +42,6 @@ struct ragdollelement_t
 	IPhysicsObject		*pObject;		// all valid elements have an object
 	IPhysicsConstraint	*pConstraint;	// all valid elements have a constraint (except the root)
 	int					parentIndex;
-};
-
-struct ragdollanimatedfriction_t
-{
-	float					flFrictionTimeIn;
-	float					flFrictionTimeOut;
-	float					flFrictionTimeHold;
-	int						iMinAnimatedFriction;
-	int						iMaxAnimatedFriction;
 };
 
 struct ragdoll_t
@@ -76,7 +68,20 @@ struct ragdollparams_t
 	const matrix3x4_t *pCurrentBones;
 	float		jointFrictionScale;
 	bool		allowStretch;
-	bool		fixedConstraints;
+};
+
+class CRagdollEntry
+{
+public:
+	CRagdollEntry( CBaseAnimating *pRagdoll, float flForcedRetireTime ) : m_hRagdoll( pRagdoll ), m_flForcedRetireTime( flForcedRetireTime )
+	{
+	}
+	CBaseAnimating* Get() { return m_hRagdoll.Get(); }
+	float GetForcedRetireTime() { return m_flForcedRetireTime; }
+
+private:
+	CHandle<CBaseAnimating> m_hRagdoll;
+	float m_flForcedRetireTime;
 };
 
 //-----------------------------------------------------------------------------
@@ -94,7 +99,7 @@ public:
 	virtual void FrameUpdatePostEntityThink( void );
 
 	// Move it to the top of the LRU
-	void MoveToTopOfLRU( CBaseAnimating *pRagdoll, bool bImportant = false );
+	void MoveToTopOfLRU( CBaseAnimating *pRagdoll, bool bImportant = false, float flForcedRetireTime = 0.0f );
 	void SetMaxRagdollCount( int iMaxCount ){ m_iMaxRagdolls = iMaxCount; }
 
 	virtual void LevelInitPreEntity( void );
@@ -102,8 +107,8 @@ public:
 
 private:
 	typedef CHandle<CBaseAnimating> CRagdollHandle;
-	CUtlLinkedList< CRagdollHandle > m_LRU; 
-	CUtlLinkedList< CRagdollHandle > m_LRUImportantRagdolls; 
+	CUtlLinkedList< CRagdollEntry > m_LRU; 
+	CUtlLinkedList< CRagdollEntry > m_LRUImportantRagdolls; 
 
 	int m_iMaxRagdolls;
 	int m_iSimulatedRagdollCount;
@@ -146,6 +151,7 @@ int RagdollExtractBoneIndices( int *boneIndexOut, CStudioHdr *pStudioHdr, vcolli
 
 // computes an exact bbox of the ragdoll's physics objects
 void RagdollComputeExactBbox( const ragdoll_t &ragdoll, const Vector &origin, Vector &outMins, Vector &outMaxs );
+void RagdollComputeApproximateBbox( const ragdoll_t &ragdoll, const Vector &origin, Vector &outMins, Vector &outMaxs );
 bool RagdollIsAsleep( const ragdoll_t &ragdoll );
 void RagdollSetupAnimatedFriction( IPhysicsEnvironment *pPhysEnv, ragdoll_t *ragdoll, int iModelIndex );
 

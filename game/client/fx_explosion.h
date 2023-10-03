@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -37,7 +37,6 @@ protected:
 					C_BaseExplosionEffect( void );
 
 	virtual void	PlaySound( void );
-
 	virtual void	CreateCore( void );
 	virtual void	CreateDebris( void );
 	virtual void	CreateMisc( void );
@@ -53,6 +52,7 @@ protected:
 	Vector	m_vecOrigin;
 	Vector	m_vecDirection;
 	float	m_flForce;
+	float	m_flScale;
 	int		m_fFlags;
 
 	PMaterialHandle	m_Material_Smoke;

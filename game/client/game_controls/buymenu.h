@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -13,7 +13,6 @@
 
 #include <vgui_controls/WizardPanel.h>
 #include <game/client/iviewport.h>
-#include "vgui/KeyCode.h"
 
 class CBuySubMenu;
 
@@ -46,11 +45,7 @@ public:
 	vgui::VPANEL GetVPanel( void ) { return BaseClass::GetVPanel(); }
   	virtual bool IsVisible() { return BaseClass::IsVisible(); }
 	virtual void SetParent( vgui::VPANEL parent ) { BaseClass::SetParent( parent ); }
-
-	virtual void OnKeyCodePressed( vgui::KeyCode code );
-	virtual void OnKeyCodeTyped( vgui::KeyCode code );
-
-	virtual GameActionSet_t GetPreferredActionSet() { return GAME_ACTION_SET_MENUCONTROLS; }
+	virtual bool WantsBackgroundBlurred( void ) { return false; }
 
 public:
 	virtual void OnClose();

@@ -1,10 +1,10 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
 // $NoKeywords: $
 //
-//=============================================================================//
+//===========================================================================//
 #include "cbase.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -19,12 +19,12 @@ public:
 // Overrides.
 public:
 	virtual bool	ShouldDraw();
-	virtual int		DrawModel( int flags );
+	virtual int		DrawModel( int flags, const RenderableInstance_t &instance );
 	virtual void	OnDataChanged( DataUpdateType_t updateType );
 
 private:
 	int m_nOccluderIndex;
-	bool m_bActive = false;
+	bool m_bActive;
 };
 
 IMPLEMENT_CLIENTCLASS_DT( C_FuncOccluder, DT_FuncOccluder, CFuncOccluder )
@@ -44,7 +44,7 @@ bool C_FuncOccluder::ShouldDraw()
 	return false;
 }
 
-int C_FuncOccluder::DrawModel( int flags )
+int C_FuncOccluder::DrawModel( int flags, const RenderableInstance_t &instance )
 {
 	Assert(0);
 	return 0;

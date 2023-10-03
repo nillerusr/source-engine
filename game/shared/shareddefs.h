@@ -1,15 +1,17 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//======= Copyright (c) 1996-2009, Valve Corporation, All rights reserved. ======
 //
 // Purpose: Definitions that are shared by the game DLL and the client DLL.
 //
-// $NoKeywords: $
-//=============================================================================//
+//===============================================================================
+
 
 #ifndef SHAREDDEFS_H
 #define SHAREDDEFS_H
 #ifdef _WIN32
 #pragma once
 #endif
+
+#include "bittools.h"
 
 #define TICK_INTERVAL			(gpGlobals->interval_per_tick)
 
@@ -19,18 +21,22 @@
 #define ROUND_TO_TICKS( t )		( TICK_INTERVAL * TIME_TO_TICKS( t ) )
 #define TICK_NEVER_THINK		(-1)
 
-#if defined( TF_DLL )
-#define ANIMATION_CYCLE_BITS		10
-#else
+
 #define ANIMATION_CYCLE_BITS		15
-#endif
+
 #define ANIMATION_CYCLE_MINFRAC		(1.0f / (1<<ANIMATION_CYCLE_BITS))
+
+// Matching the high level concept is significantly better than other criteria
+// FIXME:  Could do this in the script file by making it required and bumping up weighting there instead...
+#define CONCEPT_WEIGHT 5.0f
+
+
 
 // Each mod defines these for itself.
 class CViewVectors
 {
 public:
-	CViewVectors() = default;
+	CViewVectors() {}
 
 	CViewVectors( 
 		Vector vView,
@@ -84,33 +90,25 @@ public:
 
 #define VEC_DEAD_VIEWHEIGHT	g_pGameRules->GetViewVectors()->m_vDeadViewHeight
 
-// If the player (enemy bots) are scaled, adjust the hull
-#define VEC_VIEW_SCALED( player )				( g_pGameRules->GetViewVectors()->m_vView * player->GetModelScale() )
-#define VEC_HULL_MIN_SCALED( player )			( g_pGameRules->GetViewVectors()->m_vHullMin * player->GetModelScale() )
-#define VEC_HULL_MAX_SCALED( player )			( g_pGameRules->GetViewVectors()->m_vHullMax * player->GetModelScale() )
-
-#define VEC_DUCK_HULL_MIN_SCALED( player )		( g_pGameRules->GetViewVectors()->m_vDuckHullMin * player->GetModelScale() )
-#define VEC_DUCK_HULL_MAX_SCALED( player )		( g_pGameRules->GetViewVectors()->m_vDuckHullMax * player->GetModelScale() )
-#define VEC_DUCK_VIEW_SCALED( player )			( g_pGameRules->GetViewVectors()->m_vDuckView * player->GetModelScale() )
-
-#define VEC_OBS_HULL_MIN_SCALED( player )		( g_pGameRules->GetViewVectors()->m_vObsHullMin * player->GetModelScale() )
-#define VEC_OBS_HULL_MAX_SCALED( player )		( g_pGameRules->GetViewVectors()->m_vObsHullMax * player->GetModelScale() )
-
-#define VEC_DEAD_VIEWHEIGHT_SCALED( player )	( g_pGameRules->GetViewVectors()->m_vDeadViewHeight * player->GetModelScale() )
 
 #define WATERJUMP_HEIGHT			8
 
 #define MAX_CLIMB_SPEED		200
 
-#if defined(TF_DLL) || defined(TF_CLIENT_DLL)
-	#define TIME_TO_DUCK		0.2
-	#define TIME_TO_DUCK_MS		200.0f
-#else
-	#define TIME_TO_DUCK		0.4
-	#define TIME_TO_DUCK_MS		400.0f
-#endif 
-#define TIME_TO_UNDUCK		0.2
-#define TIME_TO_UNDUCK_MS	200.0f
+
+	#define TIME_TO_DUCK_MSECS		400
+ 
+#define TIME_TO_UNDUCK_MSECS		200
+
+inline float FractionDucked( int msecs )
+{
+	return clamp( (float)msecs / (float)TIME_TO_DUCK_MSECS, 0.0f, 1.0f );
+}
+
+inline float FractionUnDucked( int msecs )
+{
+	return clamp( (float)msecs / (float)TIME_TO_UNDUCK_MSECS, 0.0f, 1.0f );
+}
 
 #define MAX_WEAPON_SLOTS		6	// hud item selection slots
 #define MAX_WEAPON_POSITIONS	20	// max number of items within a slot
@@ -129,56 +127,6 @@ public:
 #define HUD_PRINTTALK		3
 #define HUD_PRINTCENTER		4
 
-// Vote creation or processing failure codes
-typedef enum
-{
-	VOTE_FAILED_GENERIC = 0,
-	VOTE_FAILED_TRANSITIONING_PLAYERS,
-	VOTE_FAILED_RATE_EXCEEDED,
-	VOTE_FAILED_YES_MUST_EXCEED_NO,
-	VOTE_FAILED_QUORUM_FAILURE,
-	VOTE_FAILED_ISSUE_DISABLED,
-	VOTE_FAILED_MAP_NOT_FOUND,
-	VOTE_FAILED_MAP_NAME_REQUIRED,
-	VOTE_FAILED_FAILED_RECENTLY,
-	VOTE_FAILED_TEAM_CANT_CALL,
-	VOTE_FAILED_WAITINGFORPLAYERS,
-	VOTE_FAILED_PLAYERNOTFOUND,
-	VOTE_FAILED_CANNOT_KICK_ADMIN,
-	VOTE_FAILED_SCRAMBLE_IN_PROGRESS,
-	VOTE_FAILED_SPECTATOR,
-	VOTE_FAILED_NEXTLEVEL_SET,
-	VOTE_FAILED_MAP_NOT_VALID,
-	VOTE_FAILED_CANNOT_KICK_FOR_TIME,
-	VOTE_FAILED_CANNOT_KICK_DURING_ROUND,
-
-	// TF-specific?
-	VOTE_FAILED_MODIFICATION_ALREADY_ACTIVE,
-} vote_create_failed_t;
-
-enum
-{
-#ifdef STAGING_ONLY
-	SERVER_MODIFICATION_ITEM_DURATION_IN_MINUTES = 2
-#else
-	SERVER_MODIFICATION_ITEM_DURATION_IN_MINUTES = 120
-#endif
-};
-
-#define MAX_VOTE_DETAILS_LENGTH 64
-#define INVALID_ISSUE			-1
-#define MAX_VOTE_OPTIONS		5
-#define DEDICATED_SERVER		99
-
-enum CastVote
-{
-	VOTE_OPTION1,  // Use this for Yes
-	VOTE_OPTION2,  // Use this for No
-	VOTE_OPTION3,
-	VOTE_OPTION4,
-	VOTE_OPTION5,
-	VOTE_UNCAST
-};
 
 //===================================================================================================================
 // Close caption flags
@@ -224,19 +172,15 @@ enum CastVote
 //You might be wondering why these aren't multiple of 2. Well the reason is that if servers decide to have HLTV or Replay enabled we need the extra slot.
 //This is ok since MAX_PLAYERS is used for code specific things like arrays and loops, but it doesn't really means that this is the max number of players allowed
 //Since this is decided by the gamerules (and it can be whatever number as long as its less than MAX_PLAYERS).
-#if defined( CSTRIKE_DLL )
-	#define MAX_PLAYERS				65  // Absolute max players supported
-#else
+
 	#define MAX_PLAYERS				33  // Absolute max players supported
-#endif
+
 
 #define MAX_PLACE_NAME_LENGTH		18
 
-#define MAX_FOV						110
-
 //===================================================================================================================
 // Team Defines
-#define TEAM_ANY				-2
+#define TEAM_ANY				-1	// for some team query methods
 #define	TEAM_INVALID			-1
 #define TEAM_UNASSIGNED			0	// not assigned to a team
 #define TEAM_SPECTATOR			1	// spectator team
@@ -250,8 +194,6 @@ enum CastVote
 #define MAX_TEAM_NAME_LENGTH	32	// Max length of a team's name
 
 // Weapon m_iState
-#define WEAPON_IS_ONTARGET				0x40
-
 #define WEAPON_NOT_CARRIED				0	// Weapon is on the ground
 #define WEAPON_IS_CARRIED_BY_PLAYER		1	// This client is carrying this weapon.
 #define WEAPON_IS_ACTIVE				2	// This client is carrying this weapon and it's the currently held weapon
@@ -393,7 +335,7 @@ enum PLAYER_ANIM
 
 // For a means of resolving these consts into debug string text, see function
 // CTakeDamageInfo::DebugGetDamageTypeString(unsigned int DamageType, char *outbuf, unsigned int outbuflength )
-#define DMG_GENERIC			0			// generic damage -- do not use if you want players to flinch and bleed!
+#define DMG_GENERIC			0			// generic damage was done
 #define DMG_CRUSH			(1 << 0)	// crushed by falling or moving object. 
 										// NOTE: It's assumed crush damage is occurring as a result of physics collision, so no extra physics force is generated by crush damage.
 										// DON'T use DMG_CRUSH when damaging entities unless it's the result of a physics collision. You probably want DMG_CLUB instead.
@@ -448,7 +390,8 @@ enum PLAYER_ANIM
 #define	DAMAGE_AIM				3
 
 // Spectator Movement modes
-enum {
+enum
+{
 	OBS_MODE_NONE = 0,	// not in spectator mode
 	OBS_MODE_DEATHCAM,	// special mode for death cam animation
 	OBS_MODE_FREEZECAM,	// zooms to a target, and freeze-frames on them
@@ -479,26 +422,6 @@ enum
 	TYPE_FILE,		// show this local file
 } ;
 
-//=============================================================================
-// HPE_BEGIN:
-// [Forrest] Replaced text window command string with TEXTWINDOW_CMD enumeration
-// of options.  Passing a command string is dangerous and allowed a server network
-// message to run arbitrary commands on the client.
-//=============================================================================
-enum
-{
-	TEXTWINDOW_CMD_NONE = 0,
-	TEXTWINDOW_CMD_JOINGAME,
-	TEXTWINDOW_CMD_CHANGETEAM,
-	TEXTWINDOW_CMD_IMPULSE101,
-	TEXTWINDOW_CMD_MAPINFO,
-	TEXTWINDOW_CMD_CLOSED_HTMLPAGE,
-	TEXTWINDOW_CMD_CHOOSETEAM,
-};
-//=============================================================================
-// HPE_END
-//=============================================================================
-
 // VGui Screen Flags
 enum
 {
@@ -525,8 +448,6 @@ typedef enum
 #define COLOR_YELLOW	Color(255, 178, 0, 255)
 #define COLOR_GREEN		Color(153, 255, 153, 255)
 #define COLOR_GREY		Color(204, 204, 204, 255)
-#define COLOR_WHITE		Color(255, 255, 255, 255)
-#define COLOR_BLACK		Color(0, 0, 0, 255)
 
 // All NPCs need this data
 enum
@@ -542,7 +463,16 @@ enum
 	BLOOD_COLOR_ANTLION,		// FIXME: Move to Base HL2
 	BLOOD_COLOR_ZOMBIE,			// FIXME: Move to Base HL2
 	BLOOD_COLOR_ANTLION_WORKER,
+	BLOOD_COLOR_BLOB,
+	BLOOD_COLOR_BLOB_FROZEN,
 #endif // HL2_EPISODIC
+
+#if defined( INFESTED_DLL )
+	BLOOD_COLOR_BLOB,
+	BLOOD_COLOR_BLOB_FROZEN,
+#endif // INFESTED_DLL
+
+	BLOOD_COLOR_BRIGHTGREEN,
 };
 
 //-----------------------------------------------------------------------------
@@ -580,8 +510,6 @@ enum
 	EFL_SETTING_UP_BONES =		(1<<3),	// Set while a model is setting up its bones.
 	EFL_KEEP_ON_RECREATE_ENTITIES = (1<<4), // This is a special entity that should not be deleted when we restart entities only
 
-	EFL_HAS_PLAYER_CHILD=		(1<<4),	// One of the child entities is a player.
-
 	EFL_DIRTY_SHADOWUPDATE =	(1<<5),	// Client only- need shadow manager to update the shadow...
 	EFL_NOTIFY =				(1<<6),	// Another entity is watching events on this entity (used by teleport)
 
@@ -601,7 +529,7 @@ enum
 	EFL_DIRTY_ABSANGVELOCITY =	(1<<13),
 	EFL_DIRTY_SURROUNDING_COLLISION_BOUNDS	= (1<<14),
 	EFL_DIRTY_SPATIAL_PARTITION = (1<<15),
-//	UNUSED						= (1<<16),
+	EFL_HAS_PLAYER_CHILD=		(1<<16),	// One of the child entities is a player.
 
 	EFL_IN_SKYBOX =				(1<<17),	// This is set if the entity detects that it's in the skybox.
 											// This forces it to pass the "in PVS" for transmission.
@@ -664,6 +592,10 @@ enum FireBulletsFlags_t
 	FIRE_BULLETS_DONT_HIT_UNDERWATER = 0x2,		// If the shot hits its target underwater, don't damage it
 	FIRE_BULLETS_ALLOW_WATER_SURFACE_IMPACTS = 0x4,	// If the shot hits water surface, still call DoImpactEffect
 	FIRE_BULLETS_TEMPORARY_DANGER_SOUND = 0x8,		// Danger sounds added from this impact can be stomped immediately if another is queued
+
+	FIRE_BULLETS_NO_PIERCING_SPARK = 0x16,	// do a piercing spark effect when a bullet penetrates an alien
+	FIRE_BULLETS_HULL = 0x32,	// bullet trace is a hull rather than a line
+	FIRE_BULLETS_ANGULAR_SPREAD = 0x64,	// bullet spread is based on uniform random change to angles rather than gaussian search
 };
 
 
@@ -675,8 +607,8 @@ struct FireBulletsInfo_t
 		m_vecSpread.Init( 0, 0, 0 );
 		m_flDistance = 8192;
 		m_iTracerFreq = 4;
-		m_flDamage = 0;
-		m_iPlayerDamage = 0;
+		m_flDamage = 0.0f;
+		m_flPlayerDamage = 0.0f;
 		m_pAttacker = NULL;
 		m_nFlags = 0;
 		m_pAdditionalIgnoreEnt = NULL;
@@ -700,7 +632,7 @@ struct FireBulletsInfo_t
 		m_iAmmoType = nAmmoType;
 		m_iTracerFreq = 4;
 		m_flDamage = 0;
-		m_iPlayerDamage = 0;
+		m_flPlayerDamage = 0;
 		m_pAttacker = NULL;
 		m_nFlags = 0;
 		m_pAdditionalIgnoreEnt = NULL;
@@ -716,7 +648,7 @@ struct FireBulletsInfo_t
 	int m_iAmmoType;
 	int m_iTracerFreq;
 	float m_flDamage;
-	int m_iPlayerDamage;	// Damage to be used instead of m_flDamage if we hit a player
+	float m_flPlayerDamage;	// Damage to be used instead of m_flDamage if we hit a player
 	int m_nFlags;			// See FireBulletsFlags_t
 	float m_flDamageForceScale;
 	CBaseEntity *m_pAttacker;
@@ -761,6 +693,7 @@ struct StepSimulationData
 	int			m_nLastProcessTickCount;
 	// The computed/interpolated network origin/angles to use
 	Vector		m_vecNetworkOrigin;
+	int			m_networkCell[3];
 	QAngle		m_angNetworkAngles;
 };
 
@@ -791,7 +724,6 @@ struct EmitSound_t
 		m_SoundLevel( SNDLVL_NONE ),
 		m_nFlags( 0 ),
 		m_nPitch( PITCH_NORM ),
-		m_nSpecialDSP( 0 ),
 		m_pOrigin( 0 ),
 		m_flSoundTime( 0.0f ),
 		m_pflSoundDuration( 0 ),
@@ -812,7 +744,6 @@ struct EmitSound_t
 	soundlevel_t				m_SoundLevel;
 	int							m_nFlags;
 	int							m_nPitch;
-	int							m_nSpecialDSP;
 	const Vector				*m_pOrigin;
 	float						m_flSoundTime; ///< NOT DURATION, but rather, some absolute time in the future until which this sound should be delayed
 	float						*m_pflSoundDuration;
@@ -864,6 +795,9 @@ enum
 // NOTE:  This stuff only works on a listen server since it punches a hole from the client .dll to server .dll!!!
 #define PREDICTION_ERROR_CHECK_LEVEL 0
 
+// Set to 1 to spew a call stack in DiffPrint() for the existing side when the other side is missing
+#define PREDICTION_ERROR_CHECK_STACKS_FOR_MISSING 0
+
 //-----------------------------------------------------------------------------
 // Round timer states
 //-----------------------------------------------------------------------------
@@ -881,16 +815,15 @@ enum
 //-----------------------------------------------------------------------------
 // Commentary Mode
 //-----------------------------------------------------------------------------
-#if defined(TF_DLL) || defined(TF_CLIENT_DLL)
-#define GAME_HAS_NO_USE_KEY
 
-#if defined( SPROP_COORD )
-#undef SPROP_COORD
-#endif
 
-#define SPROP_COORD SPROP_COORD_MP
+//-----------------------------------------------------------------------------
+// Cell origin values
+//-----------------------------------------------------------------------------
+#define CELL_COUNT( bits ) ( (MAX_COORD_INTEGER*2) / (1 << (bits)) ) // How many cells on an axis based on the bit size of the cell
+#define CELL_COUNT_BITS( bits ) MINIMUM_BITS_NEEDED( CELL_COUNT( bits ) ) // How many bits are necessary to respresent that cell
+#define CELL_BASEENTITY_ORIGIN_CELL_BITS 5 // default amount of entropy bits for base entity
 
-#endif
 
 // The player's method of starting / stopping commentary
 #ifdef GAME_HAS_NO_USE_KEY
@@ -899,50 +832,71 @@ enum
 #define COMMENTARY_BUTTONS		(IN_USE)
 #endif
 
-#define TEAM_TRAIN_MAX_TEAMS			4
-#define TEAM_TRAIN_MAX_HILLS			5
-#define TEAM_TRAIN_FLOATS_PER_HILL		2
-#define TEAM_TRAIN_HILLS_ARRAY_SIZE		TEAM_TRAIN_MAX_TEAMS * TEAM_TRAIN_MAX_HILLS * TEAM_TRAIN_FLOATS_PER_HILL
+bool IsHeadTrackingEnabled();
 
-enum
+// If this is defined, all of the scopeguard objects are NULL'd out to reduce overhead
+// #define SPLIT_SCREEN_STUBS
+
+
+	#define MAX_SPLITSCREEN_PLAYERS 1
+
+
+inline bool IsSplitScreenSupported()
 {
-	HILL_TYPE_NONE = 0,
-	HILL_TYPE_UPHILL,
-	HILL_TYPE_DOWNHILL,
+	return ( MAX_SPLITSCREEN_PLAYERS > 1 ) ? true : false;
+}
+
+//-----------------------------------------------------------------------------
+// For invalidate physics recursive
+//-----------------------------------------------------------------------------
+enum InvalidatePhysicsBits_t
+{
+	POSITION_CHANGED	= 0x1,
+	ANGLES_CHANGED		= 0x2,
+	VELOCITY_CHANGED	= 0x4,
+	ANIMATION_CHANGED	= 0x8,		// Means cycle has changed, or any other event which would cause render-to-texture shadows to need to be rerendeded
+	BOUNDS_CHANGED		= 0x10,		// Means render bounds have changed, so shadow decal projection is required, etc.
+	SEQUENCE_CHANGED	= 0x20,		// Means sequence has changed, only interesting when surrounding bounds depends on sequence																				
 };
 
-#define NOINTERP_PARITY_MAX			4
-#define NOINTERP_PARITY_MAX_BITS	2
-
-//-----------------------------------------------------------------------------
-// Generic activity lookup support
-//-----------------------------------------------------------------------------
-enum
+enum Class_T
 {
-	kActivityLookup_Unknown = -2,			// hasn't been searched for
-	kActivityLookup_Missing = -1,			// has been searched for but wasn't found
+	CLASS_NONE = 0,
+	CLASS_PLAYER,
+	CLASS_PLAYER_ALLY,
+	CLASS_PLAYER_ALLY_VITAL,
+	CLASS_ANTLION,
+	CLASS_BARNACLE,
+	CLASS_BLOB,
+	CLASS_BULLSEYE,
+	//CLASS_BULLSQUID,	
+	CLASS_CITIZEN_PASSIVE,	
+	CLASS_CITIZEN_REBEL,
+	CLASS_COMBINE,
+	CLASS_COMBINE_GUNSHIP,
+	CLASS_CONSCRIPT,
+	CLASS_HEADCRAB,
+	//CLASS_HOUNDEYE,
+	CLASS_MANHACK,
+	CLASS_METROPOLICE,		
+	CLASS_MILITARY,		
+	CLASS_SCANNER,		
+	CLASS_STALKER,		
+	CLASS_VORTIGAUNT,
+	CLASS_ZOMBIE,
+	CLASS_PROTOSNIPER,
+	CLASS_MISSILE,
+	CLASS_FLARE,
+	CLASS_EARTH_FAUNA,
+	CLASS_HACKED_ROLLERMINE,
+	CLASS_COMBINE_HUNTER,
+
+	LAST_SHARED_ENTITY_CLASS,
 };
 
-#if defined(TF_DLL) || defined(TF_CLIENT_DLL)
-//-----------------------------------------------------------------------------
-// Vision Filters.
-//-----------------------------------------------------------------------------
-// Also used in the item schema to define vision filter or vision mode opt in
-#define TF_VISION_FILTER_NONE			0
-#define TF_VISION_FILTER_PYRO			(1<<0)		// 1
-#define TF_VISION_FILTER_HALLOWEEN		(1<<1)		// 2
-#define TF_VISION_FILTER_ROME			(1<<2)		// 4
-
-// THIS ENUM SHOULD MATCH THE ORDER OF THE FLAGS ABOVE
-enum
-{
-	VISION_MODE_NONE = 0,
-	VISION_MODE_PYRO,
-	VISION_MODE_HALLOWEEN,
-	VISION_MODE_ROME,
-
-	MAX_VISION_MODES
-};
-#endif // TF_DLL || TF_CLIENT_DLL
+// Factions
+#define FACTION_NONE				0					// Not assigned a faction.  Entities not assigned a faction will not do faction tests.
+#define LAST_SHARED_FACTION			(FACTION_NONE)
+#define NUM_SHARED_FACTIONS			(FACTION_NONE + 1)
 
 #endif // SHAREDDEFS_H

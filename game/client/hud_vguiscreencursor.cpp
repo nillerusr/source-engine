@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -10,7 +10,7 @@
 #include "iclientmode.h"
 #include "hudelement.h"
 //#include "view.h"
-//#include "vgui_controls/Controls.h"
+//#include "vgui_controls/controls.h"
 #include "vgui/ISurface.h"
 #include "vgui/IInput.h"
 #include <vgui_controls/Panel.h>
@@ -46,7 +46,7 @@ DECLARE_HUDELEMENT( CHudVguiScreenCursor );
 CHudVguiScreenCursor::CHudVguiScreenCursor( const char *pElementName ) :
 	CHudElement( pElementName ), BaseClass( NULL, "VguiScreenCursor" )
 {
-	vgui::Panel *pParent = g_pClientMode->GetViewport();
+	vgui::Panel *pParent = GetClientMode()->GetViewport();
 	SetParent( pParent );
 
 	m_pCursor = 0;
@@ -61,7 +61,7 @@ void CHudVguiScreenCursor::ApplySchemeSettings( IScheme *scheme )
 	BaseClass::ApplySchemeSettings( scheme );
 
 	m_clrCrosshair = scheme->GetColor( "VguiScreenCursor", Color( 255, 255, 255, 255 ) );
-	m_pCursor = gHUD.GetIcon( "arrow" );
+	m_pCursor = HudIcons().GetIcon( "arrow" );
 
 	SetPaintBackgroundEnabled( false );
 

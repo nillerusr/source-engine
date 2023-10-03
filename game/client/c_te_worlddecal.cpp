@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -7,10 +7,9 @@
 #include "cbase.h"
 #include "c_basetempentity.h"
 #include "iefx.h"
-#include "tier1/KeyValues.h"
+#include "tier1/keyvalues.h"
 #include "toolframework_client.h"
 #include "fx.h"
-#include "decals.h"
 #include "tier0/vprof.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -107,22 +106,7 @@ void C_TEWorldDecal::PostDataUpdate( DataUpdateType_t updateType )
 		C_BaseEntity *ent = cl_entitylist->GetEnt( 0 );
 		if ( ent )
 		{
-			bool bNoBlood = UTIL_IsLowViolence();
-			bool bIsBlood = false;
-
-			if ( bNoBlood )
-			{
-				const char *pchDecalName = decalsystem->GetDecalNameForIndex( m_nIndex );
-				if ( pchDecalName && V_stristr( pchDecalName, "blood" ) )
-				{
-					bIsBlood = true;
-				}
-			}
-
-			if ( !( bNoBlood && bIsBlood ) )
-			{
-				effects->DecalShoot( m_nIndex, 0, ent->GetModel(), ent->GetAbsOrigin(), ent->GetAbsAngles(), m_vecOrigin, 0, 0 );
-			}
+			effects->DecalShoot( m_nIndex, 0, ent->GetModel(), ent->GetAbsOrigin(), ent->GetAbsAngles(), m_vecOrigin, 0, 0 );
 		}
 	}
 	RecordWorldDecal( &m_vecOrigin, m_nIndex );

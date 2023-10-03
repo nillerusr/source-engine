@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -97,7 +97,7 @@ public:
 	void		Precache( void );
 	void		Spawn( void );
 	int			OnTakeDamage_Alive( const CTakeDamageInfo &info );
-	void		TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr, CDmgAccumulator *pAccumulator );
+	void		TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr );
 	void		BuildScheduleTestBits( void );
 	void		GatherConditions( void );
 	void		PrescheduleThink( void );
@@ -169,7 +169,7 @@ public:
 
 	void	ClearBurrowPoint( const Vector &origin );
 
-	void	Flip( bool bZapped = false );
+	void Flip( bool bZapped = false, Vector vForce = vec3_origin );
 
 	bool CanBecomeRagdoll();
 

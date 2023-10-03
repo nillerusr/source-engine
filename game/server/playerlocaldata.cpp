@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -30,10 +30,12 @@ BEGIN_SEND_TABLE_NOBASE( CPlayerLocalData, DT_Local )
 	SendPropInt		(SENDINFO(m_bDucked),	1, SPROP_UNSIGNED ),
 	SendPropInt		(SENDINFO(m_bDucking),	1, SPROP_UNSIGNED ),
 	SendPropInt		(SENDINFO(m_bInDuckJump),	1, SPROP_UNSIGNED ),
-	SendPropFloat	(SENDINFO(m_flDucktime), 12, SPROP_ROUNDDOWN|SPROP_CHANGES_OFTEN, 0.0f, 2048.0f ),
-	SendPropFloat	(SENDINFO(m_flDuckJumpTime), 12, SPROP_ROUNDDOWN, 0.0f, 2048.0f ),
-	SendPropFloat	(SENDINFO(m_flJumpTime), 12, SPROP_ROUNDDOWN, 0.0f, 2048.0f ),
+
 #if PREDICTION_ERROR_CHECK_LEVEL > 1 
+	SendPropInt		(SENDINFO(m_nDuckTimeMsecs), -1, SPROP_NOSCALE|SPROP_CHANGES_OFTEN ),
+	SendPropInt		(SENDINFO(m_nDuckJumpTimeMsecs), -1, SPROP_NOSCALE ),
+	SendPropInt		(SENDINFO(m_nJumpTimeMsecs), -1, SPROP_NOSCALE ),
+	
 	SendPropFloat	(SENDINFO(m_flFallVelocity), 32, SPROP_NOSCALE ),
 
 	SendPropFloat		( SENDINFO_VECTORELEM(m_vecPunchAngle, 0), 32, SPROP_NOSCALE|SPROP_CHANGES_OFTEN ),
@@ -45,6 +47,10 @@ BEGIN_SEND_TABLE_NOBASE( CPlayerLocalData, DT_Local )
 	SendPropFloat		( SENDINFO_VECTORELEM(m_vecPunchAngleVel, 2), 32, SPROP_NOSCALE|SPROP_CHANGES_OFTEN ),
 
 #else
+	SendPropInt		( SENDINFO(m_nDuckTimeMsecs), 10, SPROP_UNSIGNED|SPROP_CHANGES_OFTEN ),
+	SendPropInt		(SENDINFO(m_nDuckJumpTimeMsecs), 10, SPROP_UNSIGNED ),
+	SendPropInt		(SENDINFO(m_nJumpTimeMsecs), 10, SPROP_UNSIGNED ),
+
 	SendPropFloat	(SENDINFO(m_flFallVelocity), 17, SPROP_CHANGES_OFTEN, -4096.0f, 4096.0f ),
 	SendPropVector	(SENDINFO(m_vecPunchAngle),      -1,  SPROP_COORD|SPROP_CHANGES_OFTEN),
 	SendPropVector	(SENDINFO(m_vecPunchAngleVel),      -1,  SPROP_COORD),
@@ -56,6 +62,9 @@ BEGIN_SEND_TABLE_NOBASE( CPlayerLocalData, DT_Local )
 	SendPropFloat	(SENDINFO(m_flStepSize), 16, SPROP_ROUNDUP, 0.0f, 128.0f ),
 	SendPropInt		(SENDINFO(m_bAllowAutoMovement),1, SPROP_UNSIGNED ),
 
+	// Autoaim
+	// SendPropBool( SENDINFO(m_bAutoAimTarget) ),
+
 	// 3d skybox data
 	SendPropInt(SENDINFO_STRUCTELEM(m_skybox3d.scale), 12),
 	SendPropVector	(SENDINFO_STRUCTELEM(m_skybox3d.origin),      -1,  SPROP_COORD),
@@ -63,13 +72,12 @@ BEGIN_SEND_TABLE_NOBASE( CPlayerLocalData, DT_Local )
 	SendPropInt( SENDINFO_STRUCTELEM( m_skybox3d.fog.enable ), 1, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO_STRUCTELEM( m_skybox3d.fog.blend ), 1, SPROP_UNSIGNED ),
 	SendPropVector( SENDINFO_STRUCTELEM(m_skybox3d.fog.dirPrimary), -1, SPROP_COORD),
-	SendPropInt( SENDINFO_STRUCTELEM( m_skybox3d.fog.colorPrimary ), 32, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO_STRUCTELEM( m_skybox3d.fog.colorSecondary ), 32, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO_STRUCTELEM( m_skybox3d.fog.colorPrimary ), 32, SPROP_UNSIGNED, SendProxy_Color32ToInt32 ),
+	SendPropInt( SENDINFO_STRUCTELEM( m_skybox3d.fog.colorSecondary ), 32, SPROP_UNSIGNED, SendProxy_Color32ToInt32 ),
 	SendPropFloat( SENDINFO_STRUCTELEM( m_skybox3d.fog.start ), 0, SPROP_NOSCALE ),
 	SendPropFloat( SENDINFO_STRUCTELEM( m_skybox3d.fog.end ), 0, SPROP_NOSCALE ),
 	SendPropFloat( SENDINFO_STRUCTELEM( m_skybox3d.fog.maxdensity ), 0, SPROP_NOSCALE ),
-
-	SendPropEHandle( SENDINFO_STRUCTELEM( m_PlayerFog.m_hCtrl ) ),
+	SendPropFloat( SENDINFO_STRUCTELEM( m_skybox3d.fog.HDRColorScale ), 0, SPROP_NOSCALE ),
 
 	// audio data
 	SendPropVector( SENDINFO_STRUCTARRAYELEM( m_audio.localSound, 0 ), -1, SPROP_COORD),
@@ -82,7 +90,8 @@ BEGIN_SEND_TABLE_NOBASE( CPlayerLocalData, DT_Local )
 	SendPropVector( SENDINFO_STRUCTARRAYELEM( m_audio.localSound, 7 ), -1, SPROP_COORD),
 	SendPropInt( SENDINFO_STRUCTELEM( m_audio.soundscapeIndex ), 17, 0 ),
 	SendPropInt( SENDINFO_STRUCTELEM( m_audio.localBits ), NUM_AUDIO_LOCAL_SOUNDS, SPROP_UNSIGNED ),
-	SendPropEHandle( SENDINFO_STRUCTELEM( m_audio.ent ) ),
+	SendPropInt( SENDINFO_STRUCTELEM( m_audio.entIndex ) ),
+
 END_SEND_TABLE()
 
 BEGIN_SIMPLE_DATADESC( fogplayerparams_t )
@@ -111,6 +120,7 @@ BEGIN_SIMPLE_DATADESC( fogparams_t )
 	DEFINE_FIELD( colorSecondaryLerpTo, FIELD_COLOR32 ),
 	DEFINE_FIELD( startLerpTo, FIELD_FLOAT ),
 	DEFINE_FIELD( endLerpTo, FIELD_FLOAT ),
+	DEFINE_FIELD( maxdensityLerpTo, FIELD_FLOAT ),
 	DEFINE_FIELD( lerptime, FIELD_TIME ),
 	DEFINE_FIELD( duration, FIELD_FLOAT ),
 END_DATADESC()
@@ -129,7 +139,7 @@ BEGIN_SIMPLE_DATADESC( audioparams_t )
 	DEFINE_AUTO_ARRAY( localSound, FIELD_VECTOR ),
 	DEFINE_FIELD( soundscapeIndex, FIELD_INTEGER ),
 	DEFINE_FIELD( localBits, FIELD_INTEGER ),
-	DEFINE_FIELD( ent, FIELD_EHANDLE ),
+	//DEFINE_FIELD( entIndex, FIELD_INTEGER ),	// not saved
 
 END_DATADESC()
 
@@ -142,9 +152,9 @@ BEGIN_SIMPLE_DATADESC( CPlayerLocalData )
 	DEFINE_FIELD( m_bDucked, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_bDucking, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_bInDuckJump, FIELD_BOOLEAN ),
-	DEFINE_FIELD( m_flDucktime, FIELD_TIME ),
-	DEFINE_FIELD( m_flDuckJumpTime, FIELD_TIME ),
-	DEFINE_FIELD( m_flJumpTime, FIELD_TIME ),
+	DEFINE_FIELD( m_nDuckTimeMsecs, FIELD_INTEGER ),
+	DEFINE_FIELD( m_nDuckJumpTimeMsecs, FIELD_INTEGER ),
+	DEFINE_FIELD( m_nJumpTimeMsecs, FIELD_INTEGER ),
 	DEFINE_FIELD( m_nStepside, FIELD_INTEGER ),
 	DEFINE_FIELD( m_flFallVelocity, FIELD_FLOAT ),
 	DEFINE_FIELD( m_nOldButtons, FIELD_INTEGER ),
@@ -156,7 +166,6 @@ BEGIN_SIMPLE_DATADESC( CPlayerLocalData )
 	DEFINE_FIELD( m_flStepSize, FIELD_FLOAT ),
 	DEFINE_FIELD( m_bAllowAutoMovement, FIELD_BOOLEAN ),
 	DEFINE_EMBEDDED( m_skybox3d ),
-	DEFINE_EMBEDDED( m_PlayerFog ),
 	DEFINE_EMBEDDED( m_fog ),
 	DEFINE_EMBEDDED( m_audio ),
 	
@@ -168,7 +177,7 @@ BEGIN_SIMPLE_DATADESC( CPlayerLocalData )
 	// aren't saved and restored, if the we save before EndTouch is called, it
 	// will never be called after we load."
 	//DEFINE_FIELD( m_bSlowMovement, FIELD_BOOLEAN ),
-	
+
 END_DATADESC()
 
 //-----------------------------------------------------------------------------
@@ -182,22 +191,68 @@ CPlayerLocalData::CPlayerLocalData()
 #endif
 	m_audio.soundscapeIndex = 0;
 	m_audio.localBits = 0;
-	m_audio.ent.Set( NULL );
+	m_audio.entIndex = 0;
 	m_pOldSkyCamera = NULL;
 	m_bDrawViewmodel = true;
 }
 
+static Vector GetPlayerViewPosition( CBasePlayer *pl )
+{
+	CBaseEntity *pView = pl->GetViewEntity();
+	if ( !pView )
+	{
+		pView = pl;
+	}
+	return pView->EyePosition();
+}
 
 void CPlayerLocalData::UpdateAreaBits( CBasePlayer *pl, unsigned char chAreaPortalBits[MAX_AREA_PORTAL_STATE_BYTES] )
 {
-	Vector origin = pl->EyePosition();
+	Vector origin = GetPlayerViewPosition(pl);
 
-	unsigned char tempBits[32];
+	unsigned char tempBits[32] = { 0 };
+
+	COMPILE_TIME_ASSERT( ( sizeof( tempBits ) % 4 ) == 0 );
+
+	int nDWords = sizeof( tempBits ) >> 2;
+
 	COMPILE_TIME_ASSERT( sizeof( tempBits ) >= sizeof( ((CPlayerLocalData*)0)->m_chAreaBits ) );
 
 	int i;
 	int area = engine->GetArea( origin );
 	engine->GetAreaBits( area, tempBits, sizeof( tempBits ) );
+
+	CUtlVector< int > vecAreasSeen;
+	vecAreasSeen.AddToTail( area );
+
+	CUtlVector< CHandle< CBasePlayer > > &list = pl->GetSplitScreenPlayers();
+	for ( i = 0; i < list.Count(); ++i )
+	{
+		CBasePlayer *pSplit = list[ i ];
+		if ( !pSplit )
+			continue;
+
+		unsigned char tempBits2[32] = { 0 };
+		Vector org2 = GetPlayerViewPosition(pSplit);
+		int area2 = engine->GetArea( org2 );
+
+		// Already merged this area in?
+		if ( vecAreasSeen.Find( area2 ) != vecAreasSeen.InvalidIndex() )
+			continue;
+
+		vecAreasSeen.AddToTail( area2 );
+		engine->GetAreaBits( area2, tempBits2, sizeof( tempBits2 ) );
+
+		unsigned int *pBase = (unsigned int *)tempBits;
+		unsigned int *pAdd = (unsigned int *)tempBits2;
+
+		// Now merge them together
+		for ( int j = 0; j < nDWords; ++j )
+		{
+			*pBase++ |= *pAdd++;
+		}
+	}
+
 	for ( i=0; i < m_chAreaBits.Count(); i++ )
 	{
 		if ( tempBits[i] != m_chAreaBits[ i ] )
@@ -209,7 +264,9 @@ void CPlayerLocalData::UpdateAreaBits( CBasePlayer *pl, unsigned char chAreaPort
 	for ( i=0; i < MAX_AREA_PORTAL_STATE_BYTES; i++ )
 	{
 		if ( chAreaPortalBits[i] != m_chAreaPortalBits[i] )
+		{
 			m_chAreaPortalBits.Set( i, chAreaPortalBits[i] );
+		}
 	}
 }
 

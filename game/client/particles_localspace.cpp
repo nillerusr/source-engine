@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Particles which are simulated locally to some space (attachment, bone, etc)
 //
@@ -50,7 +50,7 @@ void CLocalSpaceEmitter::Update( float flTimeDelta )
 	SetupTransformMatrix();
 }
 
-extern void FormatViewModelAttachment( Vector &vOrigin, bool bInverse );
+extern void FormatViewModelAttachment( C_BasePlayer *pPlayer, Vector &vOrigin, bool bInverse );
 
 
 void CLocalSpaceEmitter::SimulateParticles( CParticleSimulateIterator *pIterator )
@@ -94,7 +94,7 @@ void CLocalSpaceEmitter::RenderParticles( CParticleRenderIterator *pIterator )
 		// Correct viewmodel squashing
 		if ( m_fFlags & FLE_VIEWMODEL )
 		{
-			FormatViewModelAttachment( worldPos, false );
+			FormatViewModelAttachment( NULL, worldPos, false );
 		}
 
 		TransformParticle( mModelView, worldPos, screenPos );

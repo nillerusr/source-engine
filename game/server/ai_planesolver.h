@@ -1,9 +1,9 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose:
 //
 // $NoKeywords: $
-//=============================================================================//
+//===========================================================================//
 
 #ifndef AI_PLANE_SOLVER_H
 #define AI_PLANE_SOLVER_H
@@ -40,6 +40,9 @@ enum AI_SuggestorResult_t
 	SR_FAIL
 };
 
+DECLARE_POINTER_HANDLE( Obstacle_t );
+#define OBSTACLE_INVALID ( (Obstacle_t)0 )
+
 class CAI_PlaneSolver
 {
 public:
@@ -55,15 +58,35 @@ public:
 	void Reset();
 	
 	void AddObstacle( const Vector &pos, float radius, CBaseEntity *pEntity = NULL, AI_MoveSuggType_t type = AIMST_AVOID_OBJECT );
-	bool HaveObstacles()	{ return ( m_Obstacles.Count() != 0 ); }
+	bool HaveObstacles()	{ return ( m_Obstacles.Count() != 0 ) || ( s_GlobalObstacles.Count() != 0 ); }
+
+	static Obstacle_t AddGlobalObstacle( const Vector &pos, float radius, CBaseEntity *pEntity = NULL, AI_MoveSuggType_t type = AIMST_AVOID_OBJECT );
+	static void RemoveGlobalObstacle( Obstacle_t hObstacle );
+	static void RemoveGlobalObstacles( void );
+	static bool IsSegmentBlockedByGlobalObstacles( const Vector &vecStart, const Vector &vecEnd );
 
 private:
-
 	enum 
 	{
 		DEGREES_POSITIVE_ARC				   = 270,
 		DEGREES_POSITIVE_ARC_CLOSE_OBSTRUCTION = 340,
 		NUM_PROBES 							   = 5
+	};
+
+	struct CircleObstacles_t
+	{
+		CircleObstacles_t( const Vector &center, float radius, CBaseEntity *pEntity, AI_MoveSuggType_t type )
+			:	center(center), 
+			radius(radius), 
+			hEntity(pEntity),
+			type(type)
+		{
+		}
+
+		Vector				center;
+		float				radius;
+		AI_MoveSuggType_t 	type;
+		EHANDLE				hEntity;
 	};
 
 	// How far ahead does the ground solver look (seconds)
@@ -113,6 +136,7 @@ private:
 						float degreesPositiveArc, bool fDeterOscillation, 
 						Vector *pResult );
 	bool DetectUnsolvable( const AILocalMoveGoal_t &goal );
+	bool GenerateCircleObstacleSuggestion( const CircleObstacles_t &obstacle, const AILocalMoveGoal_t &moveGoal, float probeDist, const Vector& npcLoc, float radiusNpc );
 
 	// --------------------------------
 	
@@ -132,23 +156,8 @@ private:
 	
 	// --------------------------------
 	
-	struct CircleObstacles_t
-	{
-		CircleObstacles_t( const Vector &center, float radius, CBaseEntity *pEntity, AI_MoveSuggType_t type )
-		 :	center(center), 
-			radius(radius), 
-			hEntity(pEntity),
-			type(type)
-		{
-		}
-		
-		Vector				center;
-		float				radius;
-		AI_MoveSuggType_t 	type;
-		EHANDLE				hEntity;
-	};
-	
 	CUtlVector<CircleObstacles_t> m_Obstacles;
+	static CUtlFixedLinkedList<CircleObstacles_t> s_GlobalObstacles;
 	
 	// --------------------------------
 	

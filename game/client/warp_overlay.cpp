@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Screen warp overlay
 //
@@ -8,14 +8,14 @@
 #include "view.h"
 #include "c_sun.h"
 #include "particles_simple.h"
-#include "clienteffectprecachesystem.h"
+#include "precache_register.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-CLIENTEFFECT_REGISTER_BEGIN( PrecacheEffectWarp )
-CLIENTEFFECT_MATERIAL( "sun/overlay" )
-CLIENTEFFECT_REGISTER_END()
+PRECACHE_REGISTER_BEGIN( GLOBAL, PrecacheEffectWarp )
+PRECACHE( MATERIAL, "sun/overlay" )
+PRECACHE_REGISTER_END()
 
 //-----------------------------------------------------------------------------
 // Purpose: Special draw for the warped overlay

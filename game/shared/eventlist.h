@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -69,6 +69,9 @@ typedef enum
 	AE_SV_DUSTTRAIL,
 
 	AE_CL_CREATE_PARTICLE_EFFECT,
+	AE_CL_STOP_PARTICLE_EFFECT,
+	AE_CL_ADD_PARTICLE_EFFECT_CP,
+	AE_CL_CREATE_PARTICLE_BRASS,
 
 	AE_RAGDOLL,
 
@@ -84,6 +87,26 @@ typedef enum
 	AE_WPN_UNHIDE,		// Used to unhide player weapons
 
 	AE_WPN_PLAYWPNSOUND,	// Play a weapon sound from the weapon script file
+
+	// Alien Swarm Infested shared events
+	AE_ASW_FOOTSTEP,		// asw, played as each foot steps down
+	AE_MARINE_FOOTSTEP,
+	AE_MARINE_RELOAD_SOUND_A,	// anim event fired reloading sound
+	AE_MARINE_RELOAD_SOUND_B,	// anim event fired reloading sound
+	AE_MARINE_RELOAD_SOUND_C,	// anim event fired reloading sound
+	AE_REMOVE_CLIENT_AIM,	// asw, removes this entity from the client autoaim list
+
+	AE_MELEE_DAMAGE,
+	AE_MELEE_START_COLLISION_DAMAGE,
+	AE_MELEE_STOP_COLLISION_DAMAGE,
+	AE_SCREEN_SHAKE,
+	AE_START_DETECTING_COMBO,
+	AE_STOP_DETECTING_COMBO,
+	AE_COMBO_TRANSITION,
+	AE_ALLOW_MOVEMENT,
+	AE_SKILL_EVENT,				// marine skill event triggered (event options describes the skill)
+
+	AE_TUG_INCAP,
 
 	LAST_SHARED_ANIMEVENT,
 } Animevent;

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -20,11 +20,17 @@
 
 	ConVar cl_showanimstate( "cl_showanimstate", "-1", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "Show the (client) animation state for the specified entity (-1 for none)." );
 	ConVar showanimstate_log( "cl_showanimstate_log", "0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "1 to output cl_showanimstate to Msg(). 2 to store in AnimStateClient.log. 3 for both." );
+	ConVar showanimstate_activities( "cl_showanimstate_activities", "1", FCVAR_CHEAT, "Show activities in the (client) animation state display." );
 #else
 	#include "player.h"
 	ConVar sv_showanimstate( "sv_showanimstate", "-1", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "Show the (server) animation state for the specified entity (-1 for none)." );
 	ConVar showanimstate_log( "sv_showanimstate_log", "0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "1 to output sv_showanimstate to Msg(). 2 to store in AnimStateServer.log. 3 for both." );
+	ConVar showanimstate_activities( "sv_showanimstate_activities", "1", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "Show activities in the (server) animation state display." );
 #endif
+
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
 
 
 // Below this many degrees, slow down turning rate linearly
@@ -65,7 +71,7 @@ CBasePlayerAnimState::CBasePlayerAnimState()
 	m_flEyePitch = 0.0f;
 	m_bCurrentFeetYawInitialized = false;
 	m_flCurrentTorsoYaw = 0.0f;
-	m_nTurningInPlace = TURN_NONE;
+	m_flCurrentTorsoYaw = TURN_NONE;
 	m_flMaxGroundSpeed = 0.0f;
 	m_flStoredCycle = 0.0f;
 
@@ -268,10 +274,8 @@ void CBasePlayerAnimState::ComputeMainSequence()
 	// Export to our outer class..
 	int animDesired = SelectWeightedSequence( TranslateActivity(idealActivity) );
 
-#if !defined( HL1_CLIENT_DLL ) && !defined ( HL1_DLL )
-	if ( pPlayer->GetSequenceActivity( pPlayer->GetSequence() ) == pPlayer->GetSequenceActivity( animDesired ) )
+	if ( !ShouldResetMainSequence( pPlayer->GetSequence(), animDesired ) )
 		return;
-#endif
 
 	if ( animDesired < 0 )
 		 animDesired = 0;
@@ -279,19 +283,27 @@ void CBasePlayerAnimState::ComputeMainSequence()
 	pPlayer->ResetSequence( animDesired );
 
 #ifdef CLIENT_DLL
-	// If we went from idle to walk, reset the interpolation history.
-	// Kind of hacky putting this here.. it might belong outside the base class.
-	if ( (oldActivity == ACT_CROUCHIDLE || oldActivity == ACT_IDLE) && 
-		 (idealActivity == ACT_WALK || idealActivity == ACT_RUN_CROUCH) )
+	if ( ShouldResetGroundSpeed( oldActivity, idealActivity ) )
 	{
 		ResetGroundSpeed();
 	}
 #endif
 }
 
+bool CBasePlayerAnimState::ShouldResetMainSequence( int iCurrentSequence, int iNewSequence )
+{
+	if ( !GetOuter() )
+		return false;
 
+	return GetOuter()->GetSequenceActivity( iCurrentSequence ) == GetOuter()->GetSequenceActivity( iNewSequence );
+}
 
-
+bool CBasePlayerAnimState::ShouldResetGroundSpeed( Activity oldActivity, Activity idealActivity )
+{
+	// If we went from idle to walk, reset the interpolation history.
+	return ( (oldActivity == ACT_CROUCHIDLE || oldActivity == ACT_IDLE) && 
+			 (idealActivity == ACT_WALK || idealActivity == ACT_RUN_CROUCH) );
+}
 
 void CBasePlayerAnimState::UpdateAimSequenceLayers(
 	float flCycle,
@@ -333,9 +345,9 @@ void CBasePlayerAnimState::UpdateAimSequenceLayers(
 		CAnimationLayer *pSource0 = &pTransitioner->m_animationQueue[0];
 		*pDest0 = *pSource0;
 		
-		pDest0->m_flWeight = 1;
-		pDest1->m_flWeight = 0;
-		pDest0->m_nOrder = iFirstLayer;
+		pDest0->SetWeight( 1 );
+		pDest1->SetWeight( 0 );
+		pDest0->SetOrder( iFirstLayer );
 
 #ifndef CLIENT_DLL
 		pDest0->m_fFlags |= ANIM_LAYER_ACTIVE;
@@ -349,11 +361,11 @@ void CBasePlayerAnimState::UpdateAimSequenceLayers(
 
 		*pDest0 = *pSource0;
 		*pDest1 = *pSource1;
-		Assert( pDest0->m_flWeight >= 0.0f && pDest0->m_flWeight <= 1.0f );
-		pDest1->m_flWeight = 1 - pDest0->m_flWeight;	// This layer just mirrors the other layer's weight (one fades in while the other fades out).
+		Assert( pDest0->GetWeight() >= 0.0f && pDest0->GetWeight() <= 1.0f );
+		pDest1->SetWeight( 1 - pDest0->GetWeight() );	// This layer just mirrors the other layer's weight (one fades in while the other fades out).
 
-		pDest0->m_nOrder = iFirstLayer;
-		pDest1->m_nOrder = iFirstLayer+1;
+		pDest0->SetOrder( iFirstLayer );
+		pDest1->SetOrder( iFirstLayer+1 );
 
 #ifndef CLIENT_DLL
 		pDest0->m_fFlags |= ANIM_LAYER_ACTIVE;
@@ -361,13 +373,14 @@ void CBasePlayerAnimState::UpdateAimSequenceLayers(
 #endif
 	}
 	
-	pDest0->m_flWeight *= flWeightScale * flAimSequenceWeight;
-	pDest0->m_flWeight = clamp( (float)pDest0->m_flWeight, 0.0f, 1.0f );
+	pDest0->SetWeight( pDest0->GetWeight() * flWeightScale * flAimSequenceWeight );
+	pDest0->SetWeight( clamp( (float)pDest0->GetWeight(), 0.0f, 1.0f ) );
 
-	pDest1->m_flWeight *= flWeightScale * flAimSequenceWeight;
-	pDest1->m_flWeight = clamp( (float)pDest1->m_flWeight, 0.0f, 1.0f );
+	pDest1->SetWeight( pDest1->GetWeight() * flWeightScale * flAimSequenceWeight );
+	pDest1->SetWeight( clamp( (float)pDest1->GetWeight(), 0.0f, 1.0f ) );
 
-	pDest0->m_flCycle = pDest1->m_flCycle = flCycle;
+	pDest0->SetCycle( flCycle );
+	pDest1->SetCycle( flCycle );
 }
 
 
@@ -380,18 +393,19 @@ void CBasePlayerAnimState::OptimizeLayerWeights( int iFirstLayer, int nLayers )
 	for ( i=1; i < nLayers; i++ )
 	{
 		CAnimationLayer *pLayer = m_pOuter->GetAnimOverlay( iFirstLayer+i );
-		if ( pLayer->IsActive() && pLayer->m_flWeight > 0.0f )
+		if ( pLayer->IsActive() && pLayer->GetWeight() > 0.0f )
 		{
-			totalWeight += pLayer->m_flWeight;
+			totalWeight += pLayer->GetWeight();
 		}
 	}
 
 	// Set the idle layer's weight to be 1 minus the sum of other layer weights
 	CAnimationLayer *pLayer = m_pOuter->GetAnimOverlay( iFirstLayer );
-	if ( pLayer->IsActive() && pLayer->m_flWeight > 0.0f )
+	if ( pLayer->IsActive() && pLayer->GetWeight() > 0.0f )
 	{
-		pLayer->m_flWeight = 1.0f - totalWeight;
-		pLayer->m_flWeight = MAX( (float)pLayer->m_flWeight, 0.0f);
+		float flWeight = 1.0f - totalWeight;
+		flWeight = MAX( flWeight, 0.0f );
+		pLayer->SetWeight( flWeight );
 	}
 
 	// This part is just an optimization. Since we have the walk/run animations weighted on top of 
@@ -403,7 +417,7 @@ void CBasePlayerAnimState::OptimizeLayerWeights( int iFirstLayer, int nLayers )
 	for ( i=0; i < nLayers; i++ )
 	{
 		CAnimationLayer *pLayer = m_pOuter->GetAnimOverlay( iFirstLayer+i );
-		if ( pLayer->IsActive() && pLayer->m_flWeight > 0.99 )
+		if ( pLayer->IsActive() && pLayer->GetWeight() > 0.99 )
 			iLastOne = i;
 	}
 
@@ -413,7 +427,7 @@ void CBasePlayerAnimState::OptimizeLayerWeights( int iFirstLayer, int nLayers )
 		{
 			CAnimationLayer *pLayer = m_pOuter->GetAnimOverlay( iFirstLayer+i );
 #ifdef CLIENT_DLL 
-			pLayer->m_nOrder = CBaseAnimatingOverlay::MAX_OVERLAYS;
+			pLayer->SetOrder( CBaseAnimatingOverlay::MAX_OVERLAYS );
 #else
 			pLayer->m_nOrder.Set( CBaseAnimatingOverlay::MAX_OVERLAYS );
 			pLayer->m_fFlags = 0;
@@ -521,7 +535,7 @@ float CBasePlayerAnimState::CalcMovementPlaybackRate( bool *bIsMoving )
 		{
 			// Note this gets set back to 1.0 if sequence changes due to ResetSequenceInfo below
 			flReturnValue = speed / flGroundSpeed;
-			flReturnValue = clamp( flReturnValue, 0.01f, 10.f );	// don't go nuts here.
+			flReturnValue = clamp( flReturnValue, 0.01, 10 );	// don't go nuts here.
 		}
 		*bIsMoving = true;
 	}
@@ -674,35 +688,37 @@ void CBasePlayerAnimState::ComputePoseParam_MoveYaw( CStudioHdr *pStudioHdr )
 			// This makes the 8-way blend act like a 9-way blend by blending to 
 			// an idle sequence as he slows down.
 #if defined(CLIENT_DLL)
+#ifndef INFESTED_DLL
 			bool bIsMoving;
 			CAnimationLayer *pLayer = m_pOuter->GetAnimOverlay( MAIN_IDLE_SEQUENCE_LAYER );
 			
-			pLayer->m_flWeight = 1 - CalcMovementPlaybackRate( &bIsMoving );
+			pLayer->SetWeight( 1 - CalcMovementPlaybackRate( &bIsMoving ) );
 			if ( !bIsMoving )
 			{
-				pLayer->m_flWeight = 1;
+				pLayer->SetWeight( 1 );
 			}
 
 			if ( ShouldChangeSequences() )
 			{
 				// Whenever this layer stops blending, we can choose a new idle sequence to blend to, so he 
 				// doesn't always use the same idle.
-				if ( pLayer->m_flWeight < 0.02f || m_iCurrent8WayIdleSequence == -1 )
+				if ( pLayer->GetWeight() < 0.02f || m_iCurrent8WayIdleSequence == -1 )
 				{
 					m_iCurrent8WayIdleSequence = m_pOuter->SelectWeightedSequence( ACT_IDLE );
 					m_iCurrent8WayCrouchIdleSequence = m_pOuter->SelectWeightedSequence( ACT_CROUCHIDLE );
 				}
 
 				if ( m_eCurrentMainSequenceActivity == ACT_CROUCHIDLE || m_eCurrentMainSequenceActivity == ACT_RUN_CROUCH )
-					pLayer->m_nSequence = m_iCurrent8WayCrouchIdleSequence;
+					pLayer->SetSequence( m_iCurrent8WayCrouchIdleSequence );
 				else
-					pLayer->m_nSequence = m_iCurrent8WayIdleSequence;
+					pLayer->SetSequence( m_iCurrent8WayIdleSequence );
 			}
 			
-			pLayer->m_flPlaybackRate = 1;
-			pLayer->m_flCycle += m_pOuter->GetSequenceCycleRate( pStudioHdr, pLayer->m_nSequence ) * gpGlobals->frametime;
-			pLayer->m_flCycle = fmod( pLayer->m_flCycle, 1 );
-			pLayer->m_nOrder = MAIN_IDLE_SEQUENCE_LAYER;
+			pLayer->SetPlaybackRate( 1 );
+			pLayer->SetCycle( pLayer->GetCycle() + m_pOuter->GetSequenceCycleRate( pStudioHdr, pLayer->GetSequence() ) * gpGlobals->frametime );
+			pLayer->SetCycle( fmod( pLayer->GetCycle(), 1 ) );
+			pLayer->SetOrder( MAIN_IDLE_SEQUENCE_LAYER );
+#endif
 #endif
 		}
 	}
@@ -721,7 +737,7 @@ void CBasePlayerAnimState::ComputePoseParam_BodyPitch( CStudioHdr *pStudioHdr )
 	{
 		flPitch -= 360.0f;
 	}
-	flPitch = clamp( flPitch, -90.f, 90.f );
+	flPitch = clamp( flPitch, -90, 90 );
 
 	// See if we have a blender for pitch
 	int pitch = GetOuter()->LookupPoseParameter( pStudioHdr, "body_pitch" );
@@ -762,7 +778,21 @@ int CBasePlayerAnimState::ConvergeAngles( float goal,float maxrate, float maxgap
 	if ( anglediffabs > maxgap )
 	{
 		// gap is too big, jump
-		maxmove = (anglediffabs - maxgap);
+		//maxmove = (anglediffabs - maxgap);
+		float flTooFar = MIN( anglediffabs - maxgap, maxmove * 5 );
+		if ( anglediff > 0 )
+		{
+			current += flTooFar;
+		}
+		else
+		{
+			current -= flTooFar;
+		}
+		current = AngleNormalize( current );
+		anglediff = goal - current;
+		anglediff = AngleNormalize( anglediff );
+		anglediffabs = fabs( anglediff );
+		Msg( "jumped = %f\n", flTooFar );
 	}
 
 	if ( anglediffabs < maxmove )
@@ -853,7 +883,7 @@ void CBasePlayerAnimState::ComputePoseParam_BodyYaw()
 
 	if ( m_flCurrentFeetYaw != m_flGoalFeetYaw )
 	{
-		ConvergeAngles( m_flGoalFeetYaw, mp_feetyawrate.GetFloat(), m_AnimConfig.m_flMaxBodyYawDegrees,
+		ConvergeAngles( m_flGoalFeetYaw, GetFeetYawRate(), m_AnimConfig.m_flMaxBodyYawDegrees,
 			 gpGlobals->frametime, m_flCurrentFeetYaw );
 
 		m_flLastTurnTime = gpGlobals->curtime;
@@ -1001,8 +1031,8 @@ void CBasePlayerAnimState::DebugShowAnimState( int iStartLine )
 		CAnimationLayer *pLayer = m_pOuter->GetAnimOverlay( MAIN_IDLE_SEQUENCE_LAYER );
 
 		AnimStatePrintf( iLine++, "idle: %s, weight: %.2f\n",
-			GetSequenceName( m_pOuter->GetModelPtr(), pLayer->m_nSequence ), 
-			(float)pLayer->m_flWeight );
+			GetSequenceName( m_pOuter->GetModelPtr(), pLayer->GetSequence() ), 
+			(float)pLayer->GetWeight() );
 	}
 
 	for ( int i=0; i < m_pOuter->GetNumAnimOverlays()-1; i++ )
@@ -1010,20 +1040,20 @@ void CBasePlayerAnimState::DebugShowAnimState( int iStartLine )
 		CAnimationLayer *pLayer = m_pOuter->GetAnimOverlay( AIMSEQUENCE_LAYER + i );
 #ifdef CLIENT_DLL
 		AnimStatePrintf( iLine++, "%s(%d), weight: %.2f, cycle: %.2f, order (%d), aim (%d)", 
-			!pLayer->IsActive() ? "-- ": (pLayer->m_nSequence == 0 ? "-- " : GetSequenceName( m_pOuter->GetModelPtr(), pLayer->m_nSequence ) ), 
-			!pLayer->IsActive() ? 0 : (int)pLayer->m_nSequence, 
-			!pLayer->IsActive() ? 0 : (float)pLayer->m_flWeight, 
-			!pLayer->IsActive() ? 0 : (float)pLayer->m_flCycle, 
-			!pLayer->IsActive() ? 0 : (int)pLayer->m_nOrder,
+			!pLayer->IsActive() ? "-- ": (pLayer->GetSequence() == 0 ? "-- " : (showanimstate_activities.GetBool()) ? GetSequenceActivityName( m_pOuter->GetModelPtr(), pLayer->GetSequence() ) : GetSequenceName( m_pOuter->GetModelPtr(), pLayer->GetSequence() ) ), 
+			!pLayer->IsActive() ? 0 : (int)pLayer->GetSequence(), 
+			!pLayer->IsActive() ? 0 : (float)pLayer->GetWeight(), 
+			!pLayer->IsActive() ? 0 : (float)pLayer->GetCycle(), 
+			!pLayer->IsActive() ? 0 : (int)pLayer->GetOrder(),
 			i
 			);
 #else
 		AnimStatePrintf( iLine++, "%s(%d), flags (%d), weight: %.2f, cycle: %.2f, order (%d), aim (%d)", 
-			!pLayer->IsActive() ? "-- " : ( pLayer->m_nSequence == 0 ? "-- " : GetSequenceName( m_pOuter->GetModelPtr(), pLayer->m_nSequence ) ), 
-			!pLayer->IsActive() ? 0 : (int)pLayer->m_nSequence, 
+			!pLayer->IsActive() ? "-- " : ( pLayer->GetSequence() == 0 ? "-- " : (showanimstate_activities.GetBool()) ? GetSequenceActivityName( m_pOuter->GetModelPtr(), pLayer->GetSequence() ) : GetSequenceName( m_pOuter->GetModelPtr(), pLayer->GetSequence() ) ), 
+			!pLayer->IsActive() ? 0 : (int)pLayer->GetSequence(), 
 			!pLayer->IsActive() ? 0 : (int)pLayer->m_fFlags,// Doesn't exist on client
-			!pLayer->IsActive() ? 0 : (float)pLayer->m_flWeight, 
-			!pLayer->IsActive() ? 0 : (float)pLayer->m_flCycle, 
+			!pLayer->IsActive() ? 0 : (float)pLayer->GetWeight(), 
+			!pLayer->IsActive() ? 0 : (float)pLayer->GetCycle(), 
 			!pLayer->IsActive() ? 0 : (int)pLayer->m_nOrder,
 			i
 			);
@@ -1077,3 +1107,7 @@ int CBasePlayerAnimState::SelectWeightedSequence( Activity activity )
 	return GetOuter()->SelectWeightedSequence( activity ); 
 }
 
+float CBasePlayerAnimState::GetFeetYawRate( void )
+{
+	return mp_feetyawrate.GetFloat();
+}

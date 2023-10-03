@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -24,7 +24,7 @@
 void CSimpleKeyInterp::Interp( Vector &out, float t, const CSimpleKeyInterp &start, const CSimpleKeyInterp &end )
 {
 	float delta = end.GetTime() - start.GetTime();
-	t = clamp( t-start.GetTime(), 0.f, delta );
+	t = clamp( t-start.GetTime(), 0, delta );
 
 	float unitT = (delta > 0) ? (t / delta) : 1;
 

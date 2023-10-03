@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -56,6 +56,8 @@ enum
 	SOUND_CONTEXT_DANGER_APPROACH   = 0x08000000, // Treat as a normal danger sound if you see the source, otherwise turn to face source.
 	SOUND_CONTEXT_ALLIES_ONLY		= 0x10000000, // Only player allies can hear this sound
 	SOUND_CONTEXT_PLAYER_VEHICLE	= 0x20000000, // HACK: need this because we're not treating the SOUND_xxx values as true bit values! See switch in OnListened.
+	SOUND_CONTEXT_FROM_FIRE			= 0x40000000,	// A fire is nearby
+	SOUND_CONTEXT_FOLLOW_OWNER		= 0x80000000,	// The sound origin is at the owner
 
 	ALL_CONTEXTS			= 0xFFF00000,
 
@@ -111,7 +113,7 @@ public:
 	bool	DoesSoundExpire() const;
 	float	SoundExpirationTime() const;
 	void	SetSoundOrigin( const Vector &vecOrigin ) { m_vecOrigin = vecOrigin; }
-	const	Vector& GetSoundOrigin( void ) { return m_vecOrigin; }
+	const	Vector& GetSoundOrigin( void );
 	const	Vector& GetSoundReactOrigin( void );
 	bool	FIsSound( void );
 	bool	FIsScent( void );
@@ -231,13 +233,12 @@ public:
 	void Initialize ( void );
 	int ObjectCaps( void ) { return BaseClass::ObjectCaps() & ~FCAP_ACROSS_TRANSITION; }
 
-	static void		InsertSound ( int iType, const Vector &vecOrigin, int iVolume, float flDuration, CBaseEntity *pOwner = NULL, int soundChannelIndex = SOUNDENT_CHANNEL_UNSPECIFIED, CBaseEntity *pSoundTarget = NULL );
-	static void		FreeSound ( int iSound, int iPrevious );
+	static int		InsertSound ( int iType, const Vector &vecOrigin, int iVolume, float flDuration, CBaseEntity *pOwner = NULL, int soundChannelIndex = SOUNDENT_CHANNEL_UNSPECIFIED, CBaseEntity *pSoundTarget = NULL );
 	static int		ActiveList( void );// return the head of the active list
-	static int		FreeList( void );// return the head of the free list
 	static CSound*	SoundPointerForIndex( int iIndex );// return a pointer for this index in the sound list
 	static CSound*	GetLoudestSoundOfType( int iType, const Vector &vecEarPosition );
 	static int		ClientSoundIndex ( edict_t *pClient );
+	static void		FreeSound( int iSound );
 
 	bool	IsEmpty( void );
 	int		ISoundsInList ( int iListType );
@@ -245,6 +246,9 @@ public:
 	int		FindOrAllocateSound( CBaseEntity *pOwner, int soundChannelIndex );
 	
 private:
+	static void		FreeSound ( int iSound, int iPrevious );
+	static int		FreeList( void );// return the head of the free list
+
 	int		m_iFreeSound;	// index of the first sound in the free sound list
 	int		m_iActiveSound; // indes of the first sound in the active sound list
 	int		m_cLastActiveSounds; // keeps track of the number of active sounds at the last update. (for diagnostic work)

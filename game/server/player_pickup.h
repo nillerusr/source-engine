@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: APIs for player pickup of physics objects
 //
@@ -83,7 +83,7 @@ public:
 	virtual QAngle			PreferredCarryAngles( void ) { return vec3_angle; }
 	virtual bool			ForcePhysgunOpen( CBasePlayer *pPlayer ) { return false; }
 	virtual AngularImpulse	PhysGunLaunchAngularImpulse() { return RandomAngularImpulse( -600, 600 ); }
-	virtual bool			ShouldPuntUseLaunchForces( PhysGunForce_t reason ) { return reason == PHYSGUN_FORCE_LAUNCHED; }
+	virtual bool			ShouldPuntUseLaunchForces( PhysGunForce_t reason ) { return false; }
 	virtual Vector			PhysGunLaunchVelocity( const Vector &vecForward, float flMass )
 	{
 		return Pickup_DefaultPhysGunLaunchVelocity( vecForward, flMass );

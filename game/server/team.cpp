@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Team management class. Contains all the details for a specific team
 //
@@ -22,7 +22,7 @@ void SendProxy_PlayerList( const SendProp *pProp, const void *pStruct, const voi
 	CTeam *pTeam = (CTeam*)pData;
 
 	// If this assertion fails, then SendProxyArrayLength_PlayerArray must have failed.
-	Assert( iElement < pTeam->m_aPlayers.Size() );
+	Assert( iElement < pTeam->m_aPlayers.Count() );
 
 	CBasePlayer *pPlayer = pTeam->m_aPlayers[iElement];
 	pOut->m_Int = pPlayer->entindex();
@@ -70,7 +70,20 @@ CTeam *GetGlobalTeam( int iIndex )
 //-----------------------------------------------------------------------------
 int GetNumberOfTeams( void )
 {
-	return g_Teams.Size();
+	return g_Teams.Count();
+}
+
+const char* GetTeamName( int iTeam )
+{
+	CTeam *pTeam = GetGlobalTeam( iTeam );
+	if ( pTeam )
+	{
+		return pTeam->GetName();
+	}
+	else
+	{
+		return "UNKNOWN TEAM";
+	}
 }
 
 
@@ -109,13 +122,13 @@ int CTeam::UpdateTransmitState()
 //-----------------------------------------------------------------------------
 // Visibility/scanners
 //-----------------------------------------------------------------------------
-bool CTeam::ShouldTransmitToPlayer( CBasePlayer* pRecipient, CBaseEntity* pEntity )
+int CTeam::ShouldTransmitToPlayer( CBasePlayer* pRecipient, CBaseEntity* pEntity )
 {
 	// Always transmit the observer target to players
 	if ( pRecipient && pRecipient->IsObserver() && pRecipient->GetObserverTarget() == pEntity )
-		return true;
+		return FL_EDICT_ALWAYS;
 
-	return false;
+	return FL_EDICT_PVSCHECK;
 }
 
 //-----------------------------------------------------------------------------
@@ -179,7 +192,7 @@ void CTeam::AddSpawnpoint( CTeamSpawnPoint *pSpawnpoint )
 //-----------------------------------------------------------------------------
 void CTeam::RemoveSpawnpoint( CTeamSpawnPoint *pSpawnpoint )
 {
-	for (int i = 0; i < m_aSpawnPoints.Size(); i++ )
+	for (int i = 0; i < m_aSpawnPoints.Count(); i++ )
 	{
 		if ( m_aSpawnPoints[i] == pSpawnpoint )
 		{
@@ -194,20 +207,20 @@ void CTeam::RemoveSpawnpoint( CTeamSpawnPoint *pSpawnpoint )
 //-----------------------------------------------------------------------------
 CBaseEntity *CTeam::SpawnPlayer( CBasePlayer *pPlayer )
 {
-	if ( m_aSpawnPoints.Size() == 0 )
+	if ( m_aSpawnPoints.Count() == 0 )
 		return NULL;
 
 	// Randomize the start spot
 	int iSpawn = m_iLastSpawn + random->RandomInt( 1,3 );
-	if ( iSpawn >= m_aSpawnPoints.Size() )
-		iSpawn -= m_aSpawnPoints.Size();
+	if ( iSpawn >= m_aSpawnPoints.Count() )
+		iSpawn -= m_aSpawnPoints.Count();
 	int iStartingSpawn = iSpawn;
 
 	// Now loop through the spawnpoints and pick one
 	int loopCount = 0;
 	do 
 	{
-		if ( iSpawn >= m_aSpawnPoints.Size() )
+		if ( iSpawn >= m_aSpawnPoints.Count() )
 		{
 			++loopCount;
 			iSpawn = 0;
@@ -261,7 +274,7 @@ void CTeam::RemovePlayer( CBasePlayer *pPlayer )
 //-----------------------------------------------------------------------------
 int CTeam::GetNumPlayers( void )
 {
-	return m_aPlayers.Size();
+	return m_aPlayers.Count();
 }
 
 //-----------------------------------------------------------------------------
@@ -269,7 +282,7 @@ int CTeam::GetNumPlayers( void )
 //-----------------------------------------------------------------------------
 CBasePlayer *CTeam::GetPlayer( int iIndex )
 {
-	Assert( iIndex >= 0 && iIndex < m_aPlayers.Size() );
+	Assert( iIndex >= 0 && iIndex < m_aPlayers.Count() );
 	return m_aPlayers[ iIndex ];
 }
 
@@ -326,21 +339,4 @@ void CTeam::AwardAchievement( int iAchievement )
 	UserMessageBegin( filter, "AchievementEvent" );
 		WRITE_SHORT( iAchievement );
 	MessageEnd();
-}
-
-int CTeam::GetAliveMembers( void )
-{
-	int iAlive = 0;
-
-	int iNumPlayers = GetNumPlayers();
-
-	for ( int i=0;i<iNumPlayers;i++ )
-	{
-		if ( GetPlayer(i) && GetPlayer(i)->IsAlive() )
-		{
-			iAlive++;
-		}
-	}
-
-	return iAlive;
 }

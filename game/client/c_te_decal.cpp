@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -10,7 +10,7 @@
 #include "c_basetempentity.h"
 #include "iefx.h"
 #include "engine/IStaticPropMgr.h"
-#include "tier1/KeyValues.h"
+#include "tier1/keyvalues.h"
 #include "tier0/vprof.h"
 #include "toolframework_client.h"
 
@@ -139,7 +139,7 @@ void TE_Decal( IRecipientFilter& filter, float delay,
 		// Only decal the world + brush models
 		// Here we deal with decals on entities.
 		C_BaseEntity* ent;
-		if ( ( ent = cl_entitylist->GetEnt( entity ) ) == NULL )
+		if ( ( ent = cl_entitylist->GetEnt( entity ) ) == false )
 			return;
 
 		ent->AddDecal( *start, *pos, *pos, hitbox, 

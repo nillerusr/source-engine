@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright � 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -27,10 +27,6 @@
 #include "iservervehicle.h"
 #include "func_break.h"
 
-#ifdef HL2MP
-	#include "hl2mp_gamerules.h"
-#endif
-
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -39,54 +35,45 @@ extern int	gEvilImpulse101;		// In Player.h
 // -----------------------------------------
 //	Sprite Index info
 // -----------------------------------------
-short		g_sModelIndexLaser;			// holds the index for the laser beam
+int		g_sModelIndexLaser;			// holds the index for the laser beam
 const char	*g_pModelNameLaser = "sprites/laserbeam.vmt";
-short		g_sModelIndexLaserDot;		// holds the index for the laser beam dot
-short		g_sModelIndexFireball;		// holds the index for the fireball
-short		g_sModelIndexSmoke;			// holds the index for the smoke cloud
-short		g_sModelIndexWExplosion;	// holds the index for the underwater explosion
-short		g_sModelIndexBubbles;		// holds the index for the bubbles model
-short		g_sModelIndexBloodDrop;		// holds the sprite index for the initial blood
-short		g_sModelIndexBloodSpray;	// holds the sprite index for splattered blood
+int		g_sModelIndexLaserDot;		// holds the index for the laser beam dot
+int		g_sModelIndexFireball;		// holds the index for the fireball
+int		g_sModelIndexSmoke;			// holds the index for the smoke cloud
+int		g_sModelIndexWExplosion;	// holds the index for the underwater explosion
+int		g_sModelIndexBubbles;		// holds the index for the bubbles model
+int		g_sModelIndexBloodDrop;		// holds the sprite index for the initial blood
+int		g_sModelIndexBloodSpray;	// holds the sprite index for splattered blood
 
 
 ConVar weapon_showproficiency( "weapon_showproficiency", "0" );
 extern ConVar ai_debug_shoot_positions;
 
 //-----------------------------------------------------------------------------
-// Purpose: Precache global weapon sounds
+// Purpose: Precache global weapon resources
 //-----------------------------------------------------------------------------
+PRECACHE_REGISTER_BEGIN( GLOBAL, WeaponResources )
+
+
+	PRECACHE_INDEX( MODEL, "sprites/zerogxplode.vmt", g_sModelIndexFireball )
+	PRECACHE_INDEX( MODEL, "sprites/steam1.vmt", g_sModelIndexSmoke )
+	PRECACHE_INDEX( MODEL, "sprites/bubble.vmt", g_sModelIndexBubbles )
+	PRECACHE_INDEX( MODEL, "sprites/laserbeam.vmt", g_sModelIndexLaser )
+	PRECACHE( PARTICLE_SYSTEM, "blood_impact_red_01" )
+	PRECACHE( PARTICLE_SYSTEM, "blood_impact_green_01" )
+	PRECACHE( PARTICLE_SYSTEM, "blood_impact_yellow_01" )
+	PRECACHE( MODEL, "models/weapons/w_bullet.mdl" )
+	PRECACHE( MODEL, "effects/bubble.vmt" )
+
+
+	PRECACHE( GAMESOUND, "BaseCombatWeapon.WeaponDrop" )
+	PRECACHE( GAMESOUND, "BaseCombatWeapon.WeaponMaterialize" )
+
+PRECACHE_REGISTER_END()
+
 void W_Precache(void)
 {
 	PrecacheFileWeaponInfoDatabase( filesystem, g_pGameRules->GetEncryptionKey() );
-
-
-
-#ifdef HL1_DLL
-	g_sModelIndexWExplosion = CBaseEntity::PrecacheModel ("sprites/WXplo1.vmt");// underwater fireball
-	g_sModelIndexBloodSpray = CBaseEntity::PrecacheModel ("sprites/bloodspray.vmt"); // initial blood
-	g_sModelIndexBloodDrop = CBaseEntity::PrecacheModel ("sprites/blood.vmt"); // splattered blood 
-	g_sModelIndexLaserDot = CBaseEntity::PrecacheModel("sprites/laserdot.vmt");
-#endif // HL1_DLL
-
-#ifndef TF_DLL
-	g_sModelIndexFireball = CBaseEntity::PrecacheModel ("sprites/zerogxplode.vmt");// fireball
-
-	g_sModelIndexSmoke = CBaseEntity::PrecacheModel ("sprites/steam1.vmt");// smoke
-	g_sModelIndexBubbles = CBaseEntity::PrecacheModel ("sprites/bubble.vmt");//bubbles
-	g_sModelIndexLaser = CBaseEntity::PrecacheModel( (char *)g_pModelNameLaser );
-
-	PrecacheParticleSystem( "blood_impact_red_01" );
-	PrecacheParticleSystem( "blood_impact_green_01" );
-	PrecacheParticleSystem( "blood_impact_yellow_01" );
-
-	CBaseEntity::PrecacheModel ("effects/bubble.vmt");//bubble trails
-
-	CBaseEntity::PrecacheModel("models/weapons/w_bullet.mdl");
-#endif
-
-	CBaseEntity::PrecacheScriptSound( "BaseCombatWeapon.WeaponDrop" );
-	CBaseEntity::PrecacheScriptSound( "BaseCombatWeapon.WeaponMaterialize" );
 }
 
 //-----------------------------------------------------------------------------
@@ -133,17 +120,26 @@ void CBaseCombatWeapon::Operator_FrameUpdate( CBaseCombatCharacter *pOperator )
 #endif
 	}
 
-	// Animation events are passed back to the weapon's owner/operator
-	DispatchAnimEvents( pOperator );
-
-	// Update and dispatch the viewmodel events
 	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
-
 	if ( pOwner == NULL )
 		return;
 
 	CBaseViewModel *vm = pOwner->GetViewModel( m_nViewModelIndex );
-	
+	if ( vm == NULL )
+		return;
+
+	// HACK: Player weapon and view model often use the same mdl, which results
+	// in duplicate anim events.  For now, let the view model handle the events
+	// if they're the same, which is the preferred behavior in general.
+	CStudioHdr *w_hdr = GetModelPtr();
+	CStudioHdr *v_hdr = vm->GetModelPtr();
+	if ( w_hdr->GetRenderHdr() != v_hdr->GetRenderHdr() )
+	{
+		// Animation events are passed back to the weapon's owner/operator
+		DispatchAnimEvents( pOperator );
+	}
+
+	// Update and dispatch the viewmodel events
 	if ( vm != NULL )
 	{
 		vm->StudioFrameAdvance();
@@ -158,15 +154,17 @@ void CBaseCombatWeapon::Operator_FrameUpdate( CBaseCombatCharacter *pOperator )
 //-----------------------------------------------------------------------------
 void CBaseCombatWeapon::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCharacter *pOperator )
 {
+	int nEvent = pEvent->Event();
+	
 	if ( (pEvent->type & AE_TYPE_NEWEVENTSYSTEM) && (pEvent->type & AE_TYPE_SERVER) )
 	{
-		if ( pEvent->event == AE_NPC_WEAPON_FIRE )
+		if ( nEvent == AE_NPC_WEAPON_FIRE )
 		{
 			bool bSecondary = (atoi( pEvent->options ) != 0);
 			Operator_ForceNPCFire( pOperator, bSecondary );
 			return;
 		}
-		else if ( pEvent->event == AE_WPN_PLAYWPNSOUND )
+		else if ( nEvent == AE_WPN_PLAYWPNSOUND )
 		{
 			int iSnd = GetWeaponSoundFromString(pEvent->options);
 			if ( iSnd != -1 )
@@ -176,7 +174,7 @@ void CBaseCombatWeapon::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseComb
 		}
 	}
 
-	DevWarning( 2, "Unhandled animation event %d from %s --> %s\n", pEvent->event, pOperator->GetClassname(), GetClassname() );
+	DevWarning( 2, "Unhandled animation event %d from %s --> %s\n", nEvent, pOperator->GetClassname(), GetClassname() );
 }
 
 // NOTE: This should never be called when a character is operating the weapon.  Animation events should be
@@ -567,27 +565,13 @@ void CBaseCombatWeapon::Materialize( void )
 	if ( IsEffectActive( EF_NODRAW ) )
 	{
 		// changing from invisible state to visible.
-#ifdef HL2MP
-		EmitSound( "AlyxEmp.Charge" );
-#else
 		EmitSound( "BaseCombatWeapon.WeaponMaterialize" );
-#endif
 		
 		RemoveEffects( EF_NODRAW );
 		DoMuzzleFlash();
 	}
-#ifdef HL2MP
-	if ( HasSpawnFlags( SF_NORESPAWN ) == false )
-	{
-		VPhysicsInitNormal( SOLID_BBOX, GetSolidFlags() | FSOLID_TRIGGER, false );
-		SetMoveType( MOVETYPE_VPHYSICS );
-
-		HL2MPRules()->AddLevelDesignerPlacedObject( this );
-	}
-#else
 	SetSolid( SOLID_BBOX );
 	AddSolidFlags( FSOLID_TRIGGER );
-#endif
 
 	SetPickupTouch();
 
@@ -624,70 +608,6 @@ void CBaseCombatWeapon::CheckRespawn( void )
 		return;
 		break;
 	}
-}
-
-class CWeaponList : public CAutoGameSystem
-{
-public:
-	CWeaponList( char const *name ) : CAutoGameSystem( name )
-	{
-	}
-
-
-	virtual void LevelShutdownPostEntity()  
-	{ 
-		m_list.Purge();
-	}
-
-	void AddWeapon( CBaseCombatWeapon *pWeapon )
-	{
-		m_list.AddToTail( pWeapon );
-	}
-
-	void RemoveWeapon( CBaseCombatWeapon *pWeapon )
-	{
-		m_list.FindAndRemove( pWeapon );
-	}
-	CUtlLinkedList< CBaseCombatWeapon * > m_list;
-};
-
-CWeaponList g_WeaponList( "CWeaponList" );
-
-void OnBaseCombatWeaponCreated( CBaseCombatWeapon *pWeapon )
-{
-	g_WeaponList.AddWeapon( pWeapon );
-}
-
-void OnBaseCombatWeaponDestroyed( CBaseCombatWeapon *pWeapon )
-{
-	g_WeaponList.RemoveWeapon( pWeapon );
-}
-
-int CBaseCombatWeapon::GetAvailableWeaponsInBox( CBaseCombatWeapon **pList, int listMax, const Vector &mins, const Vector &maxs )
-{
-	// linear search all weapons
-	int count = 0;
-	int index = g_WeaponList.m_list.Head();
-	while ( index != g_WeaponList.m_list.InvalidIndex() )
-	{
-		CBaseCombatWeapon *pWeapon = g_WeaponList.m_list[index];
-		// skip any held weapon
-		if ( !pWeapon->GetOwner() )
-		{
-			// restrict to mins/maxs
-			if ( IsPointInBox( pWeapon->GetAbsOrigin(), mins, maxs ) )
-			{
-				if ( count < listMax )
-				{
-					pList[count] = pWeapon;
-					count++;
-				}
-			}
-		}
-		index = g_WeaponList.m_list.Next( index );
-	}
-
-	return count;
 }
 
 //-----------------------------------------------------------------------------
@@ -732,3 +652,14 @@ void CBaseCombatWeapon::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_
 	}
 }
 
+void CBaseCombatWeapon::MakeWeaponNameFromEntity( CBaseEntity *pOther )
+{
+	// If I have a name, make my weapon match it with "_weapon" appended
+	if ( pOther->GetEntityName() != NULL_STRING )
+	{
+		const char *pMarineName = STRING( pOther->GetEntityName() );
+		const char *pError = UTIL_VarArgs( "%s_weapon", pMarineName );
+		string_t pooledName = AllocPooledString( pError );
+		SetName( pooledName );
+	}
+}

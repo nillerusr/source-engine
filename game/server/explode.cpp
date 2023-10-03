@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Implements an explosion entity and a support spark shower entity.
 //
@@ -142,7 +142,7 @@ BEGIN_DATADESC( CEnvExplosion )
 	DEFINE_FIELD( m_hInflictor, FIELD_EHANDLE ),
 	DEFINE_FIELD( m_iCustomDamageType, FIELD_INTEGER ),
 
-	DEFINE_FIELD( m_iClassIgnore, FIELD_INTEGER ),
+	DEFINE_KEYFIELD( m_iClassIgnore, FIELD_INTEGER, "ignoredClass" ),
 	DEFINE_KEYFIELD( m_hEntityIgnore, FIELD_EHANDLE, "ignoredEntity" ),
 
 	// Function Pointers
@@ -174,6 +174,9 @@ void CEnvExplosion::Precache( void )
 	{
 		m_sFireballSprite = PrecacheModel( STRING( m_iszFireballSprite ) );
 	}
+
+	//PrecacheParticleSystem( "freeze_explosion" ) ;
+	PrecacheScriptSound( "explode_3" );
 }
 
 void CEnvExplosion::Spawn( void )
@@ -256,10 +259,14 @@ void CEnvExplosion::InputExplode( inputdata_t &inputdata )
 	}
 
 	// draw decal
-	if (! ( m_spawnflags & SF_ENVEXPLOSION_NODECAL))
+	if (! ( m_spawnflags & SF_ENVEXPLOSION_NODECAL ))
 	{
-		UTIL_DecalTrace( &tr, "Scorch" );
+		if ( ! ( m_spawnflags & SF_ENVEXPLOSION_ICE ))
+			UTIL_DecalTrace( &tr, "Scorch" );
+		else
+			UTIL_DecalTrace( &tr, "Ice_Explosion_Decal" );
 	}
+
 
 	// It's stupid that this entity's spawnflags and the flags for the
 	// explosion temp ent don't match up. But because they don't, we
@@ -296,14 +303,19 @@ void CEnvExplosion::InputExplode( inputdata_t &inputdata )
 		nFlags |= TE_EXPLFLAG_NOPARTICLES;
 	}
 
-	if( m_spawnflags & SF_ENVEXPLOSION_NODLIGHTS )
+	if( !(m_spawnflags & SF_ENVEXPLOSION_NODLIGHTS) )
 	{
-		nFlags |= TE_EXPLFLAG_NODLIGHTS;
+		nFlags |= TE_EXPLFLAG_DLIGHT;
 	}
 
 	if ( m_spawnflags & SF_ENVEXPLOSION_NOFIREBALLSMOKE )
 	{
 		nFlags |= TE_EXPLFLAG_NOFIREBALLSMOKE;
+	}
+
+	if ( m_spawnflags & SF_ENVEXPLOSION_ICE )
+	{
+		nFlags |= TE_EXPLFLAG_ICE;
 	}
 
 	//Get the damage override if specified
@@ -352,7 +364,7 @@ void CEnvExplosion::InputExplode( inputdata_t &inputdata )
 	SetNextThink( gpGlobals->curtime + 0.3 );
 
 	// Only do these effects if we're not submerged
-	if ( UTIL_PointContents( GetAbsOrigin() ) & CONTENTS_WATER )
+	if ( UTIL_PointContents( GetAbsOrigin(), MASK_WATER ) & CONTENTS_WATER )
 	{
 		// draw sparks
 		if ( !( m_spawnflags & SF_ENVEXPLOSION_NOSPARKS ) )

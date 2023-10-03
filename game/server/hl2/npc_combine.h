@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -22,6 +22,7 @@
 #include "ai_sentence.h"
 #include "ai_baseactor.h"
 
+
 // Used when only what combine to react to what the spotlight sees
 #define SF_COMBINE_NO_LOOK	(1 << 16)
 #define SF_COMBINE_NO_GRENADEDROP ( 1 << 17 )
@@ -30,7 +31,9 @@
 //=========================================================
 //	>> CNPC_Combine
 //=========================================================
-class CNPC_Combine : public CAI_BaseActor
+class CNPC_Combine :
+	public CAI_BaseActor
+
 {
 	DECLARE_DATADESC();
 	DEFINE_CUSTOM_AI;
@@ -46,13 +49,16 @@ public:
 	bool			CheckCanThrowGrenade( const Vector &vecTarget );
 	virtual	bool	CanGrenadeEnemy( bool bUseFreeKnowledge = true );
 	virtual bool	CanAltFireEnemy( bool bUseFreeKnowledge );
+	virtual bool	CanTeleportFromEnemy( bool bUseFreeKnowledge = true );
+	virtual bool	CanTeleportToLOF( bool bUseFreeKnowledge = true );
+	virtual bool	CanTossTeleportGrenade( Vector const &posTarget );
 	int				GetGrenadeConditions( float flDot, float flDist );
 	int				RangeAttack2Conditions( float flDot, float flDist ); // For innate grenade attack
 	int				MeleeAttack1Conditions( float flDot, float flDist ); // For kick/punch
 	bool			FVisible( CBaseEntity *pEntity, int traceMask = MASK_BLOCKLOS, CBaseEntity **ppBlocker = NULL );
 	virtual bool	IsCurTaskContinuousMove();
 
-	virtual float	GetJumpGravity() const		{ return 1.8f; }
+	virtual float	GetDefaultJumpGravity() const		{ return 1.8f; }
 
 	virtual Vector  GetCrouchEyeOffset( void );
 
@@ -70,6 +76,7 @@ public:
 	void InputAssault( inputdata_t &inputdata );
 	void InputHitByBugbait( inputdata_t &inputdata );
 	void InputThrowGrenadeAtTarget( inputdata_t &inputdata );
+	void InputThrowTeleportGrenadeAtTarget( inputdata_t &inputdata );
 
 	bool			UpdateEnemyMemory( CBaseEntity *pEnemy, const Vector &position, CBaseEntity *pInformer = NULL );
 
@@ -126,7 +133,7 @@ public:
 	// Sounds
 	// -------------
 	void			DeathSound( void );
-	void			PainSound( const CTakeDamageInfo &damageinfo );
+	void			PainSound( void );
 	void			IdleSound( void );
 	void			AlertSound( void );
 	void			LostEnemySound( void );
@@ -148,6 +155,20 @@ public:
 	void			OnStartSchedule( int scheduleType );
 
 	virtual bool	ShouldPickADeathPose( void );
+
+	virtual bool	PassesDamageFilter( const CTakeDamageInfo &info );
+
+protected:
+	virtual bool	ComputeTeleportToss(
+		bool bUseFreeKnowledge, bool bPreferCoverPos,
+		float flAngMin, float flAngMax, float flAngPreference,
+		float flDistMin, float flDistMax, float flDistPreference,
+		float flTravelMinDist, float flTravelMaxDist, float flTravelDistPreference );
+
+	virtual void Advisor_OnStartedLevitating();
+	virtual void Advisor_OnFinishedLevitating();
+	virtual void VPhysicsUpdate( IPhysicsObject *pPhysics );
+	virtual void UpdateOnRemove();
 
 protected:
 	void			SetKickDamage( int nDamage ) { m_nKickDamage = nDamage; }
@@ -192,6 +213,10 @@ private:
 		SCHED_COMBINE_MOVE_TO_FORCED_GREN_LOS,
 		SCHED_COMBINE_FACE_IDEAL_YAW,
 		SCHED_COMBINE_MOVE_TO_MELEE,
+		SCHED_COMBINE_TELEPORT_GRENADE_FROM_ENEMY,
+		SCHED_COMBINE_TELEPORT_GRENADE_LOF,
+		SCHED_COMBINE_FORCED_TELEPORT_GRENADE_THROW,
+		SCHED_COMBINE_ADVISOR_LEVITATE,
 		NEXT_SCHEDULE,
 	};
 
@@ -209,6 +234,8 @@ private:
 		TASK_COMBINE_PLAY_SEQUENCE_FACE_ALTFIRE_TARGET,
 		TASK_COMBINE_GET_PATH_TO_FORCED_GREN_LOS,
 		TASK_COMBINE_SET_STANDING,
+		TASK_WAIT_FOR_TELEPORT,
+		TASK_ADVISOR_LEVITATE,
 		NEXT_TASK
 	};
 
@@ -256,6 +283,12 @@ private:
 	void BeginRappel() { m_RappelBehavior.BeginRappel(); }
 
 private:
+	void OnTossedTeleportProjectile( CBaseEntity *pProjectile );
+	void OnTeleportProjectileAction( CBaseEntity *pProjectile, bool bTeleport );
+
+	void FullyLoadWeaponClips();
+
+private:
 	int				m_nKickDamage;
 	Vector			m_vecTossVelocity;
 	EHANDLE			m_hForcedGrenadeTarget;
@@ -277,6 +310,13 @@ private:
 	CAI_Sentence< CNPC_Combine > m_Sentences;
 
 	int			m_iNumGrenades;
+	
+	int			m_iTeleportGrenades;
+	float		m_flLastTeleportGrenadeTime;
+	float		m_flNextTeleportGrenadeTime;
+	EHANDLE		m_hTeleportProjectile;
+	EHANDLE		m_hTeleportProjectileForcedTarget;
+	
 	CAI_AssaultBehavior			m_AssaultBehavior;
 	CCombineStandoffBehavior	m_StandoffBehavior;
 	CAI_FollowBehavior			m_FollowBehavior;

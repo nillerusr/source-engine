@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -446,7 +446,7 @@ void CNPCSimpleTalker::LimitFollowers( CBaseEntity *pPlayer, int maxFollowers )
 //=========================================================
 void CNPCSimpleTalker::HandleAnimEvent( animevent_t *pEvent )
 {
-	switch( pEvent->event )
+	switch( pEvent->Event() )
 	{		
 	case SCRIPT_EVENT_SENTENCE_RND1:		// Play a named sentence group 25% of the time
 		if (random->RandomInt(0,99) < 75)
@@ -857,10 +857,8 @@ int CNPCSimpleTalker::SelectNonCombatSpeechSchedule()
 //-----------------------------------------------------------------------------
 bool CNPCSimpleTalker::CanSayHello( void )
 {
-#ifndef HL1_DLL
 	if ( Classify() == CLASS_PLAYER_ALLY_VITAL )
 		return false;
-#endif
 	
 	if ( GetSpeechFilter() && GetSpeechFilter()->NeverSayHello() )
 		return false;

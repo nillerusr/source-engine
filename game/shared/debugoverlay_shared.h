@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -46,6 +46,9 @@ namespace NDebugOverlay
 	void	Circle( const Vector &position, const QAngle &angles, float radius, int r, int g, int b, int a, bool bNoDepthTest, float flDuration );
 	void	Circle( const Vector &position, const Vector &xAxis, const Vector &yAxis, float radius, int r, int g, int b, int a, bool bNoDepthTest, float flDuration );
 	void	Sphere( const Vector &position, const QAngle &angles, float radius, int r, int g, int b, int a, bool bNoDepthTest, float flDuration );
+	void	Cone( const Vector &position, const Vector &axis, float angleRadians, float length, int r, int g, int b, int a, bool bNoDepthTest, float flDuration );
+	void	Cross( const Vector &position, float radius, int r, int g, int b, bool bNoDepthTest, float flDuration );
+	void	PurgeTextOverlays();
 };
 
 #endif // DEBUGOVERLAY_SHARED_H

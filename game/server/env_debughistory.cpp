@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -172,7 +172,7 @@ void CDebugHistory::DumpDebugHistory( int iCategory )
 			if ( szMsgBuffer[0] != '\0' )
 			{
 				// Found a full line, so print it
-				Msg( "%s", szMsgBuffer );
+				Msg( szMsgBuffer );
 			}
 
 			// Clear the buffer
@@ -293,6 +293,11 @@ CDebugHistory *GetDebugHistory()
 	return s_DebugHistory;
 }
 
+void ClearDebugHistory()
+{
+	s_DebugHistory = NULL;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -319,9 +324,6 @@ void AddDebugHistoryLine( int iCategory, const char *pszLine )
 //-----------------------------------------------------------------------------
 void CC_DebugHistory_AddLine( const CCommand &args )
 {
-	if ( !UTIL_IsCommandIssuedByServerAdmin() )
-		return;
-
 	if ( args.ArgC() < 3 )
 	{
 		Warning("Incorrect parameters. Format: <category id> <line>\n");
@@ -339,9 +341,6 @@ static ConCommand dbghist_addline( "dbghist_addline", CC_DebugHistory_AddLine, "
 //-----------------------------------------------------------------------------
 void CC_DebugHistory_Dump( const CCommand &args )
 {
-	if ( !UTIL_IsCommandIssuedByServerAdmin() )
-		return;
-
 	if ( args.ArgC() < 2 )
 	{
 		Warning("Incorrect parameters. Format: <category id>\n");

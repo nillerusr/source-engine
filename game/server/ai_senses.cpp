@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -14,9 +14,7 @@
 #include "ai_basenpc.h"
 #include "saverestore_utlvector.h"
 
-#ifdef PORTAL
-	#include "portal_util_shared.h"
-#endif
+
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -49,9 +47,6 @@ struct AISightIterVal_t
 	char  array;
 	short iNext;
 	char  SeenArray;
-#ifdef PLATFORM_64BITS
-    uint32 unused;
-#endif
 };
 
 #pragma pack(pop)
@@ -147,7 +142,10 @@ void CAI_Senses::Listen( void )
 
 bool CAI_Senses::ShouldSeeEntity( CBaseEntity *pSightEnt )
 {
-	if ( pSightEnt == GetOuter() || !pSightEnt->IsAlive() )
+	if ( pSightEnt == GetOuter() )
+		return false;
+		
+	if ( GetOuter()->OnlySeeAliveEntities() && !pSightEnt->IsAlive() )
 		return false;
 
 	if ( pSightEnt->IsPlayer() && ( pSightEnt->GetFlags() & FL_NOTARGET ) )
@@ -173,12 +171,7 @@ bool CAI_Senses::CanSeeEntity( CBaseEntity *pSightEnt )
 	return ( GetOuter()->FInViewCone( pSightEnt ) && GetOuter()->FVisible( pSightEnt ) );
 }
 
-#ifdef PORTAL
-bool CAI_Senses::CanSeeEntityThroughPortal( const CProp_Portal *pPortal, CBaseEntity *pSightEnt )
-{
-	return GetOuter()->FVisibleThroughPortal( pPortal, pSightEnt );
-}
-#endif
+
 
 //-----------------------------------------------------------------------------
 
@@ -275,7 +268,7 @@ CBaseEntity *CAI_Senses::GetFirstSeenEntity( AISightIter_t *pIter, seentype_t iS
 
 CBaseEntity *CAI_Senses::GetNextSeenEntity( AISightIter_t *pIter ) const	
 { 
-	if ( ((intp)*pIter) != -1 )
+	if ( ((int)*pIter) != -1 )
 	{
 		AISightIterVal_t *pIterVal = (AISightIterVal_t *)pIter;
 		
@@ -372,19 +365,7 @@ bool CAI_Senses::Look( CBaseEntity *pSightEnt )
 	return false;
 }
 
-#ifdef PORTAL
-bool CAI_Senses::LookThroughPortal( const CProp_Portal *pPortal, CBaseEntity *pSightEnt )
-{
-	if ( WaitingUntilSeen( pSightEnt ) )
-		return false;
 
-	if ( ShouldSeeEntity( pSightEnt ) && CanSeeEntityThroughPortal( pPortal, pSightEnt ) )
-	{
-		return SeeEntity( pSightEnt );
-	}
-	return false;
-}
-#endif
 
 //-----------------------------------------------------------------------------
 
@@ -398,7 +379,6 @@ int CAI_Senses::LookForHighPriorityEntities( int iDistance )
 		
 		BeginGather();
 	
-		float distSq = ( iDistance * iDistance );
 		const Vector &origin = GetAbsOrigin();
 		
 		// Players
@@ -408,20 +388,11 @@ int CAI_Senses::LookForHighPriorityEntities( int iDistance )
 
 			if ( pPlayer )
 			{
-				if ( origin.DistToSqr(pPlayer->GetAbsOrigin()) < distSq && Look( pPlayer ) )
+				if ( IsWithinSenseDistance( pPlayer->GetAbsOrigin(), origin, iDistance ) && Look( pPlayer ) )
 				{
 					nSeen++;
 				}
-#ifdef PORTAL
-				else
-				{
-					CProp_Portal *pPortal = GetOuter()->FInViewConeThroughPortal( pPlayer );
-					if ( pPortal && UTIL_Portal_DistanceThroughPortalSqr( pPortal, origin, pPlayer->GetAbsOrigin() ) < distSq && LookThroughPortal( pPortal, pPlayer ) )
-					{
-						nSeen++;
-					}
-				}
-#endif
+
 			}
 		}
 	
@@ -445,7 +416,6 @@ int CAI_Senses::LookForHighPriorityEntities( int iDistance )
 int CAI_Senses::LookForNPCs( int iDistance )
 {
 	bool bRemoveStaleFromCache = false;
-	float distSq = ( iDistance * iDistance );
 	const Vector &origin = GetAbsOrigin();
 	AI_Efficiency_t efficiency = GetOuter()->GetEfficiency();
 	float timeNPCs = ( efficiency < AIE_VERY_EFFICIENT ) ? AI_STANDARD_NPC_SEARCH_TIME : AI_EFFICIENT_NPC_SEARCH_TIME;
@@ -465,7 +435,7 @@ int CAI_Senses::LookForNPCs( int iDistance )
 			
 			for ( i = 0; i < g_AI_Manager.NumAIs(); i++ )
 			{
-				if ( ppAIs[i] != GetOuter() && ( ppAIs[i]->ShouldNotDistanceCull() || origin.DistToSqr(ppAIs[i]->GetAbsOrigin()) < distSq ) )
+				if ( ppAIs[i] != GetOuter() && ( ppAIs[i]->ShouldNotDistanceCull() || IsWithinSenseDistance( origin, ppAIs[i]->GetAbsOrigin(), iDistance ) ) )
 				{
 					if ( Look( ppAIs[i] ) )
 					{
@@ -492,7 +462,7 @@ int CAI_Senses::LookForNPCs( int iDistance )
 		else if ( bRemoveStaleFromCache )
 		{
 			if ( ( !((CAI_BaseNPC *)m_SeenNPCs[i].Get())->ShouldNotDistanceCull() && 
-				   origin.DistToSqr(m_SeenNPCs[i]->GetAbsOrigin()) > distSq ) ||
+				   !IsWithinSenseDistance( origin, m_SeenNPCs[i]->GetAbsOrigin(), iDistance ) ) ||
 				 !Look( m_SeenNPCs[i] ) )
 			{
 	    		m_SeenNPCs.FastRemove( i );
@@ -517,7 +487,6 @@ int CAI_Senses::LookForObjects( int iDistance )
 		
 		BeginGather();
 
-		float distSq = ( iDistance * iDistance );
 		const Vector &origin = GetAbsOrigin();
 		int iter;
 		CBaseEntity *pEnt = g_AI_SensedObjectsManager.GetFirst( &iter );
@@ -525,7 +494,7 @@ int CAI_Senses::LookForObjects( int iDistance )
 		{
 			if ( pEnt->GetFlags() & BOX_QUERY_MASK )
 			{
-				if ( origin.DistToSqr(pEnt->GetAbsOrigin()) < distSq && Look( pEnt) )
+				if ( IsWithinSenseDistance( origin, pEnt->GetAbsOrigin(), iDistance ) && Look( pEnt) )
 				{
 					nSeen++;
 				}
@@ -569,11 +538,11 @@ CSound* CAI_Senses::GetFirstHeardSound( AISoundIter_t *pIter )
 
 	if ( iFirst == SOUNDLIST_EMPTY )
 	{
-		*pIter = NULL;
+		*pIter = (AISoundIter_t)SOUNDLIST_EMPTY;
 		return NULL;
 	}
 	
-	*pIter = (AISoundIter_t)(intp)iFirst;
+	*pIter = (AISoundIter_t)iFirst;
 	return CSoundEnt::SoundPointerForIndex( iFirst );
 }
 
@@ -581,26 +550,18 @@ CSound* CAI_Senses::GetFirstHeardSound( AISoundIter_t *pIter )
 
 CSound* CAI_Senses::GetNextHeardSound( AISoundIter_t *pIter )
 {
-	if ( !*pIter )
-		return NULL;
-
-	intp iCurrent = (intp)*pIter;
-	
-	Assert( iCurrent != SOUNDLIST_EMPTY );
+	int iCurrent = (int)*pIter;
 	if ( iCurrent == SOUNDLIST_EMPTY )
 	{
-		*pIter = NULL;
+		*pIter = (AISoundIter_t)SOUNDLIST_EMPTY;
 		return NULL;
 	}
 	
 	iCurrent = CSoundEnt::SoundPointerForIndex( iCurrent )->m_iNextAudible;
-	if ( iCurrent == SOUNDLIST_EMPTY )
-	{
-		*pIter = NULL;
-		return NULL;
-	}
-	
 	*pIter = (AISoundIter_t)iCurrent;
+	if ( iCurrent == SOUNDLIST_EMPTY )
+		return NULL;
+	
 	return CSoundEnt::SoundPointerForIndex( iCurrent );
 }
 

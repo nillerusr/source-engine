@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: A base class that deals with four-wheel vehicles
 //
@@ -38,6 +38,7 @@ public:
 	~CFourWheelVehiclePhysics ();
 
 	// Call Precache + Spawn from the containing entity's Precache + Spawn methods
+	void Precache();
 	void Spawn();
 	void SetOuter( CBaseAnimating *pOuter, CFourWheelServerVehicle *pServerVehicle ); 
 	

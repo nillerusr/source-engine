@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -8,6 +8,7 @@
 #include "c_smoke_trail.h"
 #include "smoke_fog_overlay.h"
 #include "engine/IEngineTrace.h"
+#include "view.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -139,6 +140,7 @@ private:
 	float m_RotationSpeed;
 	float m_MovementSpeed;
 	float m_Density;
+	float m_maxDrawDistance;
 	int	  m_spawnflags;
 
 private:
@@ -163,8 +165,8 @@ private:
 };
 
 IMPLEMENT_CLIENTCLASS_DT( C_FuncSmokeVolume, DT_FuncSmokeVolume, CFuncSmokeVolume )
-	RecvPropInt( RECVINFO( m_Color1 ), 0, RecvProxy_IntToColor32 ),
-	RecvPropInt( RECVINFO( m_Color2 ), 0, RecvProxy_IntToColor32 ),
+	RecvPropInt( RECVINFO( m_Color1 ), 0, RecvProxy_Int32ToColor32 ),
+	RecvPropInt( RECVINFO( m_Color2 ), 0, RecvProxy_Int32ToColor32 ),
 	RecvPropString( RECVINFO( m_MaterialName ) ),
 	RecvPropFloat( RECVINFO( m_ParticleDrawWidth ) ),
 	RecvPropFloat( RECVINFO( m_ParticleSpacingDistance ) ),
@@ -172,6 +174,7 @@ IMPLEMENT_CLIENTCLASS_DT( C_FuncSmokeVolume, DT_FuncSmokeVolume, CFuncSmokeVolum
 	RecvPropFloat( RECVINFO( m_RotationSpeed ) ),
 	RecvPropFloat( RECVINFO( m_MovementSpeed ) ),
 	RecvPropFloat( RECVINFO( m_Density ) ),
+	RecvPropFloat( RECVINFO( m_maxDrawDistance ) ),
 	RecvPropInt( RECVINFO( m_spawnflags ) ),
 	RecvPropDataTable( RECVINFO_DT( m_Collision ), 0, &REFERENCE_RECV_TABLE(DT_CollisionProperty) ),
 END_RECV_TABLE()
@@ -220,8 +223,8 @@ static inline Vector& EngineGetVecRenderOrigin()
 	static Vector dummy(0,0,0);
 	return dummy;
 #else
-	extern Vector g_vecRenderOrigin;
-	return g_vecRenderOrigin;
+	extern Vector g_vecRenderOrigin[ MAX_SPLITSCREEN_PLAYERS ];
+	return g_vecRenderOrigin[ GET_ACTIVE_SPLITSCREEN_SLOT() ];
 #endif
 }
 
@@ -254,7 +257,7 @@ C_FuncSmokeVolume::C_FuncSmokeVolume()
 	m_vLastAngles.Init();
 
 	m_pSmokeParticleInfos = NULL;
-	m_SpacingRadius = 0.0f;
+	m_SpacingRadius = 0.0f;;
 	m_ParticleRadius = 0.0f;
 	m_MinColor.Init( 1.0, 1.0, 1.0 );
 	m_MaxColor.Init( 1.0, 1.0, 1.0 );
@@ -264,8 +267,6 @@ C_FuncSmokeVolume::~C_FuncSmokeVolume()
 {
 	delete [] m_pSmokeParticleInfos;
 }
-
-static ConVar mat_reduceparticles( "mat_reduceparticles", "0" );
 
 void C_FuncSmokeVolume::OnDataChanged( DataUpdateType_t updateType )
 {		
@@ -277,12 +278,6 @@ void C_FuncSmokeVolume::OnDataChanged( DataUpdateType_t updateType )
 	m_MaxColor[1] = ( 1.0f / 255.0f ) * m_Color2.g;
 	m_MaxColor[2] = ( 1.0f / 255.0f ) * m_Color2.b;
 
-	if ( mat_reduceparticles.GetBool() )
-	{
-		m_Density *= 0.5f;
-		m_ParticleSpacingDistance *= 1.5f;
-	}
-
 	m_ParticleRadius = m_ParticleDrawWidth * 0.5f;
 	m_SpacingRadius = m_ParticleSpacingDistance * 0.5f;
 
@@ -291,7 +286,7 @@ void C_FuncSmokeVolume::OnDataChanged( DataUpdateType_t updateType )
 //	Warning( "m_Density: %f\n", m_Density );
 //	Warning( "m_MovementSpeed: %f\n", m_MovementSpeed );
 	
-	if( updateType == DATA_UPDATE_CREATED )
+	if(updateType == DATA_UPDATE_CREATED)
 	{
 		Vector size = WorldAlignMaxs() - WorldAlignMins();
 		m_xCount = 0.5f + ( size.x / ( m_SpacingRadius * 2.0f ) );
@@ -343,21 +338,36 @@ void C_FuncSmokeVolume::Update( float fTimeDelta )
 		m_ParticleEffect.SetBBox( vWorldMins, vWorldMaxs );
 	}
 		
+	float minViewOrigingDistance = FLT_MAX;
+	FOR_EACH_VALID_SPLITSCREEN_PLAYER( hh )
+	{
+		float d = CollisionProp()->CalcDistanceFromPoint( MainViewOrigin(hh) );
+		if ( d < minViewOrigingDistance )
+			minViewOrigingDistance = d;
+	}
+
+
+	float targetDensity = m_Density;
+	if ( m_maxDrawDistance > 0 && minViewOrigingDistance > m_maxDrawDistance )
+	{
+		targetDensity = 0.0f;
+	}
+
 	// lerp m_CurrentDensity towards m_Density at a rate of m_DensityRampSpeed
-	if( m_CurrentDensity < m_Density )
+	if( m_CurrentDensity < targetDensity )
 	{
 		m_CurrentDensity += m_DensityRampSpeed * fTimeDelta;
-		if( m_CurrentDensity > m_Density )
+		if( m_CurrentDensity > targetDensity )
 		{
-			m_CurrentDensity = m_Density;
+			m_CurrentDensity = targetDensity;
 		}
 	}
-	else if( m_CurrentDensity > m_Density )
+	else if( m_CurrentDensity > targetDensity )
 	{
 		m_CurrentDensity -= m_DensityRampSpeed * fTimeDelta;
-		if( m_CurrentDensity < m_Density )
+		if( m_CurrentDensity < targetDensity )
 		{
-			m_CurrentDensity = m_Density;
+			m_CurrentDensity = targetDensity;
 		}
 	}
 
@@ -525,18 +535,14 @@ void C_FuncSmokeVolume::RenderParticles( CParticleRenderIterator *pIterator )
 		TransformParticle( ParticleMgr()->GetModelView(), renderPos, tRenderPos );
 		float sortKey = 1;//tRenderPos.z;
 
-		// If we're reducing particle cost, only render sufficiently opaque particles 
-		if ( ( alpha > 0.05f ) || !mat_reduceparticles.GetBool() )
-		{
-			RenderParticle_ColorSizeAngle(
-				pIterator->GetParticleDraw(),
-				tRenderPos,
-				color,
-				alpha * GetAlphaDistanceFade(tRenderPos, 10, 30),	// Alpha
-				m_ParticleRadius,
-				pParticle->m_CurRotation
-				);
-		}
+		RenderParticle_ColorSizeAngle(
+			pIterator->GetParticleDraw(),
+			tRenderPos,
+			color,
+			alpha * GetAlphaDistanceFade(tRenderPos, 10, 30),	// Alpha
+			m_ParticleRadius,
+			pParticle->m_CurRotation
+			);
 
 		pParticle = (const SmokeGrenadeParticle*)pIterator->GetNext( sortKey );
 	}
@@ -588,7 +594,7 @@ void C_FuncSmokeVolume::FillVolume()
 						if(pParticle)
 						{
 							pParticle->m_Pos = vPos;
-							pParticle->m_ColorInterp = (unsigned char)((rand() * 255) / VALVE_RAND_MAX);
+							pParticle->m_ColorInterp = (unsigned char)((rand() * 255) / RAND_MAX);
 							pParticle->m_RotationFactor = FRand( -1.0f, 1.0f ); // Rotation factor.
 							pParticle->m_CurRotation = FRand( -m_RotationSpeed, m_RotationSpeed );
 						}

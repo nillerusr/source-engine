@@ -1,9 +1,9 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
 // $NoKeywords: $
-//=============================================================================//
+//===========================================================================//
 #include "cbase.h"
 #include "simple_physics.h"
 #include "mathlib/vmatrix.h"
@@ -43,8 +43,8 @@ public:
 // IClientRenderable.
 public:
 
-	virtual int			DrawModel( int flags );
-
+	virtual int			DrawModel( int flags, const RenderableInstance_t &instance );
+	virtual RenderableTranslucencyType_t ComputeTranslucencyType();
 
 
 public:
@@ -166,7 +166,7 @@ void C_Hairball::Init()
 	ClientEntityList().AddNonNetworkableEntity( this );
 	ClientThinkList()->SetNextClientThink( GetClientHandle(), CLIENT_THINK_ALWAYS );
 	
-	AddToLeafSystem( RENDER_GROUP_OPAQUE_ENTITY );
+	AddToLeafSystem( false );
 
 	m_pMaterial = materials->FindMaterial( "cable/cable", TEXTURE_GROUP_OTHER );
 	m_flSitStillTime = 5;
@@ -294,7 +294,12 @@ void C_Hairball::ClientThink()
 }
 
 
-int C_Hairball::DrawModel( int flags )
+RenderableTranslucencyType_t C_Hairball::ComputeTranslucencyType()
+{
+	return ( m_pMaterial && m_pMaterial->IsTranslucent() ) ? RENDERABLE_IS_TRANSLUCENT : RENDERABLE_IS_OPAQUE;
+}
+
+int C_Hairball::DrawModel( int flags, const RenderableInstance_t &instance )
 {
 	if ( !m_pMaterial )
 		return 0;
@@ -311,11 +316,10 @@ int C_Hairball::DrawModel( int flags )
 		{
 			BeamSeg_t seg;
 			seg.m_vPos = pBase[i].m_vPredicted;
-			seg.m_vColor.Init( 0, 0, 0 );
+			seg.m_color.r = seg.m_color.g = seg.m_color.b = seg.m_color.a = 0;
 			seg.m_flTexCoord = 0;
 			static float flHairWidth = 1;
 			seg.m_flWidth = flHairWidth;
-			seg.m_flAlpha = 0;
 
 			beamDraw.NextSeg( &seg );
 		}
@@ -346,5 +350,5 @@ void CreateHairballCallback()
 	}
 }
 
-ConCommand cc_CreateHairball( "CreateHairball", CreateHairballCallback, 0, FCVAR_CHEAT );
+ConCommand cc_CreateHairball( "CreateHairball", CreateHairballCallback, 0, FCVAR_DEVELOPMENTONLY | FCVAR_CHEAT );
 

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -28,7 +28,7 @@ class CUserMessage
 		int				size;	
 		const char		*name;
 		// Client only dispatch function for message
-		CUtlVector<pfnUserMsgHook>	clienthooks;
+		CUtlVector<pfnUserMsgHook>	clienthooks[ MAX_SPLITSCREEN_PLAYERS ];
 };
 
 //-----------------------------------------------------------------------------

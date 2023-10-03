@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -37,10 +37,12 @@ public:
 	float			GetFogMaxDensity();
 	float			GetFogEnd();
 	bool			UseScreenAspectRatio() const { return m_bUseScreenAspectRatio; }
+	bool			IsSkyEnabled() const { return !m_bNoSky; }
+	float			GetBrightness() const { return m_fBrightness; }
 
 	virtual void	GetToolRecordingState( KeyValues *msg );
 
-private:
+protected:
 	float m_FOV;
 	float m_Resolution;
 	bool m_bFogEnable;
@@ -50,6 +52,8 @@ private:
 	float m_flFogMaxDensity;
 	bool m_bActive;
 	bool m_bUseScreenAspectRatio;
+	bool m_bNoSky;
+	float m_fBrightness;
 
 public:
 	C_PointCamera	*m_pNext;

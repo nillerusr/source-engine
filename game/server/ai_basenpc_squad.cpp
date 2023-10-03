@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -121,7 +121,7 @@ bool CAI_BaseNPC::IsValidCover( const Vector &vecCoverLocation, CAI_Hint const *
 	Vector endPos	= startPos;
 	endPos.z += 0.01;
 	trace_t tr;
-	AI_TraceEntity( this, vecCoverLocation, endPos, MASK_NPCSOLID, &tr );
+	AI_TraceEntity( this, vecCoverLocation, endPos, GetAITraceMask(), &tr );
 	if (tr.startsolid)
 	{
 		return false;

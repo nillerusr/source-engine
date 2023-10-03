@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -127,12 +127,12 @@ protected:
 	virtual void ClampMotorForces( Vector &linear, AngularImpulse &angular )
 	{ 
 		// limit reaction forces
-		linear.x = clamp( linear.x, -3000.f, 3000.f );
-		linear.y = clamp( linear.y, -3000.f, 3000.f );
-		linear.z = clamp( linear.z, -3000.f, 3000.f );
+		linear.x = clamp( linear.x, -3000, 3000 );
+		linear.y = clamp( linear.y, -3000, 3000 );
+		linear.z = clamp( linear.z, -3000, 3000 );
 
 		// add in weightlessness
-		linear.z += 800.f;
+		linear.z += 800;
 	}
 
 	// -------------------------------

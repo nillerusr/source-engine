@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -53,24 +53,38 @@ public:
 	virtual void		Shutdown( CSoundPatch *pSound ) = 0;
 
 	virtual CSoundPatch	*SoundCreate( IRecipientFilter& filter, int nEntIndex, const char *pSoundName ) = 0;
+
 	virtual CSoundPatch	*SoundCreate( IRecipientFilter& filter, int nEntIndex, int channel, const char *pSoundName, 
-							float attenuation ) = 0;
+							float attenuation, float scriptVolume = 1.0f ) = 0;
+
+	virtual CSoundPatch	*SoundCreate( IRecipientFilter& filter, int nEntIndex, int channel, const char *pSoundName, 
+						float attenuation, const Vector *pSoundOrigin, float scriptVolume = 1.0f ) = 0;
+
 	virtual CSoundPatch	*SoundCreate( IRecipientFilter& filter, int nEntIndex, int channel, const char *pSoundName, 
 							soundlevel_t soundlevel ) = 0;
+
 	virtual CSoundPatch	*SoundCreate( IRecipientFilter& filter, int nEntIndex, const EmitSound_t &es ) = 0;
+
 	virtual void		SoundDestroy( CSoundPatch	* ) = 0;
 	virtual void		SoundChangePitch( CSoundPatch *pSound, float pitchTarget, float deltaTime ) = 0;
 	virtual void		SoundChangeVolume( CSoundPatch *pSound, float volumeTarget, float deltaTime ) = 0;
 	virtual void		SoundFadeOut( CSoundPatch *pSound, float deltaTime, bool destroyOnFadeout = false ) = 0;
 	virtual float		SoundGetPitch( CSoundPatch *pSound ) = 0;
 	virtual float		SoundGetVolume( CSoundPatch *pSound ) = 0;
-	
+
+#ifdef CLIENT_DLL
+	virtual float		SoundGetElapsedTime( CSoundPatch *pSound) = 0;
+	virtual bool		SoundIsStillPlaying( CSoundPatch *pSound) = 0;
+	virtual int			SoundGetGuid( CSoundPatch	* ) = 0;
+#endif
+
 	virtual float		SoundPlayEnvelope( CSoundPatch *pSound, soundcommands_t soundCommand, envelopePoint_t *points, int numPoints ) = 0;
 	virtual float		SoundPlayEnvelope( CSoundPatch *pSound, soundcommands_t soundCommand, envelopeDescription_t *envelope ) = 0;
 
 	virtual void		CheckLoopingSoundsForPlayer( CBasePlayer *pPlayer ) = 0;
 
 	virtual string_t	SoundGetName( CSoundPatch *pSound ) = 0;
+	virtual string_t	SoundGetScriptName( CSoundPatch *pSound ) = 0;
 	static	CSoundEnvelopeController &GetController( void );
 
 	virtual void		SoundSetCloseCaptionDuration( CSoundPatch *pSound, float flDuration ) = 0;
@@ -85,7 +99,7 @@ class ISaveRestoreOps;
 ISaveRestoreOps *GetSoundSaveRestoreOps( );
 
 #define DEFINE_SOUNDPATCH(name) \
-	{ FIELD_CUSTOM, #name, { offsetof(classNameTypedef,name), 0 }, 1, FTYPEDESC_SAVE, NULL, GetSoundSaveRestoreOps( ), NULL }
+	{ FIELD_CUSTOM, #name, offsetof(classNameTypedef,name), 1, FTYPEDESC_SAVE, NULL, GetSoundSaveRestoreOps( ), NULL }
 
 
 #endif // SOUNDENVELOPE_H

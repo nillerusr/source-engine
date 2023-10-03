@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -181,7 +181,6 @@ void C_AR2Explosion::OnDataChanged(DataUpdateType_t updateType)
 	}
 }
 
-static ConVar mat_reduceparticles( "mat_reduceparticles", "0" );
 
 void C_AR2Explosion::Start(CParticleMgr *pParticleMgr, IPrototypeArgAccess *pArgs)
 {
@@ -240,17 +239,7 @@ void C_AR2Explosion::Start(CParticleMgr *pParticleMgr, IPrototypeArgAccess *pArg
 
 	int iParticlesToSpawn = NUM_AR2_EXPLOSION_PARTICLES;
 
-	// In DX7, much fewer particles
-	if ( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() < 80 )
-	{
-		iParticlesToSpawn *= 0.25;
-	}
-	else if ( mat_reduceparticles.GetBool() )
-	{
-		iParticlesToSpawn *= 0.025;
-	}
-
-	if( nSurfInfos > 0 )
+	if(nSurfInfos > 0)
 	{
 		// For nParticles*N, generate a ray and cast it out. If it hits anything, spawn a particle there.
 		int nTestsPerParticle=3;
@@ -284,7 +273,7 @@ void C_AR2Explosion::Start(CParticleMgr *pParticleMgr, IPrototypeArgAccess *pArg
 					int iIntersection = rand() % nIntersections;
 
 					Vector velocity;
-					//velocity.Init(-1.0f + ((float)rand()/VALVE_RAND_MAX) * 2.0f, -1.0f + ((float)rand()/VALVE_RAND_MAX) * 2.0f, -1.0f + ((float)rand()/VALVE_RAND_MAX) * 2.0f);
+					//velocity.Init(-1.0f + ((float)rand()/RAND_MAX) * 2.0f, -1.0f + ((float)rand()/RAND_MAX) * 2.0f, -1.0f + ((float)rand()/RAND_MAX) * 2.0f);
 					//velocity = velocity * FRand(m_MinSpeed, m_MaxSpeed);
 					Vector direction = (vIntersections[iIntersection] - vCenter );
 					float dist = VectorNormalize( direction );

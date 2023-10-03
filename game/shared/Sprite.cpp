@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Implements visual effects entities: sprites, beams, bubbles, etc.
 //
@@ -15,9 +15,7 @@
 	#include "enginesprite.h"
 	#include "iclientmode.h"
 	#include "c_baseviewmodel.h"
-#	ifdef PORTAL
-		#include "c_prop_portal.h"
-#	endif //ifdef PORTAL
+
 #else
 	#include "baseviewmodel.h"
 #endif
@@ -49,10 +47,7 @@ BEGIN_DATADESC( CSprite )
 	DEFINE_KEYFIELD( m_flSpriteScale, FIELD_FLOAT, "scale" ),
 	DEFINE_KEYFIELD( m_flSpriteFramerate, FIELD_FLOAT, "framerate" ),
 	DEFINE_KEYFIELD( m_flFrame, FIELD_FLOAT, "frame" ),
-#ifdef PORTAL
-	DEFINE_FIELD( m_bDrawInMainRender, FIELD_BOOLEAN ),
-	DEFINE_FIELD( m_bDrawInPortalRender, FIELD_BOOLEAN ),
-#endif
+
 	DEFINE_KEYFIELD( m_flHDRColorScale, FIELD_FLOAT, "HDRColorScale" ),
 
 	DEFINE_KEYFIELD( m_flGlowProxySize,	FIELD_FLOAT, "GlowProxySize" ),
@@ -94,10 +89,7 @@ BEGIN_PREDICTION_DATA( CSprite )
 	DEFINE_PRED_FIELD( m_flSpriteScale, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flSpriteFramerate, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flFrame, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
-#ifdef PORTAL
-	DEFINE_PRED_FIELD( m_bDrawInMainRender, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
-	DEFINE_PRED_FIELD( m_bDrawInPortalRender, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
-#endif
+
 	DEFINE_PRED_FIELD( m_flBrightnessTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_nBrightness, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 
@@ -145,10 +137,7 @@ BEGIN_NETWORK_TABLE( CSprite, DT_Sprite )
 
 	SendPropFloat( SENDINFO(m_flSpriteFramerate ), 8,	SPROP_ROUNDUP,	0,	60.0f),
 	SendPropFloat( SENDINFO(m_flFrame),		20, SPROP_ROUNDDOWN,	0.0f,   256.0f),
-#ifdef PORTAL
-	SendPropBool( SENDINFO(m_bDrawInMainRender) ),
-	SendPropBool( SENDINFO(m_bDrawInPortalRender) ),
-#endif //#ifdef PORTAL
+
 	SendPropFloat( SENDINFO(m_flBrightnessTime ), 0,	SPROP_NOSCALE ),
 	SendPropInt( SENDINFO(m_nBrightness), 8, SPROP_UNSIGNED ),
 	SendPropBool( SENDINFO(m_bWorldSpaceScale) ),
@@ -163,10 +152,7 @@ BEGIN_NETWORK_TABLE( CSprite, DT_Sprite )
 	RecvPropFloat( RECVINFO(m_flHDRColorScale )),
 
 	RecvPropFloat(RECVINFO(m_flFrame)),
-#ifdef PORTAL
-	RecvPropBool( RECVINFO(m_bDrawInMainRender) ),
-	RecvPropBool( RECVINFO(m_bDrawInPortalRender) ),
-#endif //#ifdef PORTAL
+
 	RecvPropFloat(RECVINFO(m_flBrightnessTime)),
 	RecvPropInt(RECVINFO(m_nBrightness)),
 	RecvPropBool( RECVINFO(m_bWorldSpaceScale) ),
@@ -174,15 +160,12 @@ BEGIN_NETWORK_TABLE( CSprite, DT_Sprite )
 END_NETWORK_TABLE()
 
 
-CSprite::CSprite() : BaseClass()
+CSprite::CSprite()
 {
 	m_flGlowProxySize = 2.0f;
 	m_flHDRColorScale = 1.0f;
 
-#ifdef PORTAL
-	m_bDrawInMainRender = true;
-	m_bDrawInPortalRender = true;
-#endif
+
 }
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -200,11 +183,14 @@ void CSprite::Spawn( void )
 	m_flMaxFrame = (float)modelinfo->GetModelFrameCount( GetModel() ) - 1;
 	AddEffects( EF_NOSHADOW | EF_NORECEIVESHADOW );
 
-#if defined( CLIENT_DLL )
-	SetNextClientThink( CLIENT_THINK_ALWAYS );
-#endif
-
 #if !defined( CLIENT_DLL )
+	if ( m_flGlowProxySize > MAX_GLOW_PROXY_SIZE )
+	{
+		// Clamp on Spawn to prevent per-frame spew
+		DevWarning( "env_sprite at setpos %0.0f %0.0f %0.0f has invalid glow size %f - clamping to %f\n",
+			GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z, m_flGlowProxySize.Get(), MAX_GLOW_PROXY_SIZE );
+		m_flGlowProxySize = MAX_GLOW_PROXY_SIZE;
+	}
 	if ( GetEntityName() != NULL_STRING && !(m_spawnflags & SF_SPRITE_STARTON) )
 	{
 		TurnOff();
@@ -232,13 +218,13 @@ void CSprite::Spawn( void )
 	if ( scale < 0 || scale > MAX_SPRITE_SCALE )
 	{
 #if !defined( CLIENT_DLL ) 
-		DevMsg( "LEVEL DESIGN ERROR: Sprite %s with bad scale %f [0..%f]\n", GetDebugName(), m_flSpriteScale.Get(), MAX_SPRITE_SCALE );
+		DevMsg( "LEVEL DESIGN ERROR: Sprite %s with bad scale %f [0..%f]\n", GetDebugName(), m_flSpriteScale, MAX_SPRITE_SCALE );
 #endif
-		scale = clamp( (float) m_flSpriteScale, 0.f, MAX_SPRITE_SCALE );
+		scale = clamp( m_flSpriteScale, 0, MAX_SPRITE_SCALE );
 	}
 
 	//Set our state
-	SetBrightness( m_clrRender->a );
+	SetBrightness( GetRenderAlpha() );
 	SetScale( scale );
 
 #if defined( CLIENT_DLL )
@@ -346,7 +332,7 @@ int CSprite::ShouldTransmit( const CCheckTransmitInfo *pInfo )
 	
 	if ( GetMoveParent() )
 	{
-		CBaseViewModel *pViewModel = dynamic_cast<CBaseViewModel *>( GetMoveParent() );
+		CBaseViewModel *pViewModel = ToBaseViewModel( GetMoveParent() );
 
 		if ( pViewModel )
 		{
@@ -472,14 +458,14 @@ void CSprite::ExpandThink( void )
 	SetSpriteScale( m_flSpriteScale + m_flSpeed * frametime );
 
 	int sub = (int)(m_iHealth * frametime);
-	if ( sub > m_clrRender->a )
+	if ( sub > GetRenderAlpha() )
 	{
-		SetRenderColorA( 0 );
+		SetRenderAlpha( 0 );
 		Remove( );
 	}
 	else
 	{
-		SetRenderColorA( m_clrRender->a - sub );
+		SetRenderAlpha( GetRenderAlpha() - sub );
 		SetNextThink( gpGlobals->curtime );
 		m_flLastTime		= gpGlobals->curtime;
 	}
@@ -603,19 +589,19 @@ void CSprite::InputShowSprite( inputdata_t &inputdata )
 
 void CSprite::InputColorRedValue( inputdata_t &inputdata )
 {
-	int nNewColor = clamp( FastFloatToSmallInt( inputdata.value.Float() ), 0, 255 );
+	int nNewColor = clamp( inputdata.value.Float(), 0, 255 );
 	SetColor( nNewColor, m_clrRender->g, m_clrRender->b );
 }
 
 void CSprite::InputColorGreenValue( inputdata_t &inputdata )
 {
-	int nNewColor = clamp( FastFloatToSmallInt( inputdata.value.Float() ), 0, 255 );
+	int nNewColor = clamp( inputdata.value.Float(), 0, 255 );
 	SetColor( m_clrRender->r, nNewColor, m_clrRender->b );
 }
 
 void CSprite::InputColorBlueValue( inputdata_t &inputdata )
 {
-	int nNewColor = clamp( FastFloatToSmallInt( inputdata.value.Float() ), 0, 255 );
+	int nNewColor = clamp( inputdata.value.Float(), 0, 255 );
 	SetColor( m_clrRender->r, m_clrRender->g, nNewColor );
 }
 
@@ -707,9 +693,6 @@ int	CSprite::GetRenderBrightness( void )
 void CSprite::OnDataChanged( DataUpdateType_t updateType )
 {
 	BaseClass::OnDataChanged( updateType );
-
-	// Only think when sapping
-	SetNextClientThink( CLIENT_THINK_ALWAYS );
 	if ( updateType == DATA_UPDATE_CREATED )
 	{
 		m_flStartScale = m_flDestScale = m_flSpriteScale;
@@ -717,18 +700,27 @@ void CSprite::OnDataChanged( DataUpdateType_t updateType )
 	}
 
 	UpdateVisibility();
+
+	if ( m_flSpriteScale != m_flDestScale || m_nBrightness != m_nDestBrightness )
+	{
+		SetNextClientThink( CLIENT_THINK_ALWAYS );
+	}
+	else
+	{
+		SetNextClientThink( CLIENT_THINK_NEVER );
+	}
 }
 
 void CSprite::ClientThink( void )
 {
-	BaseClass::ClientThink();
-
+	bool bDisableThink = true;
 	// Module render colors over time
 	if ( m_flSpriteScale != m_flDestScale )
 	{
 		m_flStartScale		= m_flDestScale;
 		m_flDestScale		= m_flSpriteScale;
 		m_flScaleTimeStart	= gpGlobals->curtime;
+		bDisableThink = false;
 	}
 
 	if ( m_nBrightness != m_nDestBrightness )
@@ -736,6 +728,12 @@ void CSprite::ClientThink( void )
 		m_nStartBrightness		= m_nDestBrightness;
 		m_nDestBrightness		= m_nBrightness;
 		m_flBrightnessTimeStart = gpGlobals->curtime;
+		bDisableThink = false;
+	}
+
+	if ( bDisableThink )
+	{
+		SetNextClientThink(CLIENT_THINK_NEVER);
 	}
 }
 
@@ -747,26 +745,20 @@ extern ConVar r_drawviewmodel;
 // Input  : flags - 
 // Output : int
 //-----------------------------------------------------------------------------
-int CSprite::DrawModel( int flags )
+int CSprite::DrawModel( int flags, const RenderableInstance_t &instance )
 {
 	VPROF_BUDGET( "CSprite::DrawModel", VPROF_BUDGETGROUP_PARTICLE_RENDERING );
 	//See if we should draw
 	if ( !IsVisible() || ( m_bReadyToDraw == false ) )
 		return 0;
 
-#ifdef PORTAL
-	if ( ( !g_pPortalRender->IsRenderingPortal() && !m_bDrawInMainRender ) || 
-		( g_pPortalRender->IsRenderingPortal() && !m_bDrawInPortalRender ) )
-	{
-		return 0;
-	}
-#endif //#ifdef PORTAL
+
 
 	// Tracker 16432:  If rendering a savegame screenshot then don't draw sprites 
 	//   who have viewmodels as their moveparent
 	if ( g_bRenderingScreenshot || !r_drawviewmodel.GetBool() )
 	{
-		C_BaseViewModel *vm = dynamic_cast< C_BaseViewModel * >( GetMoveParent() );
+		C_BaseViewModel *vm = ToBaseViewModel( GetMoveParent() );
 		if ( vm )
 		{
 			return 0;
@@ -776,7 +768,11 @@ int CSprite::DrawModel( int flags )
 	//Must be a sprite
 	if ( modelinfo->GetModelType( GetModel() ) != mod_sprite )
 	{
-		Assert( 0 );
+		const char *modelName = modelinfo->GetModelName( GetModel() );
+		char msg[256];
+		V_snprintf( msg, 256, "Sprite %d has non-mod_sprite model %s (type %d)\n",
+			entindex(), modelName, modelinfo->GetModelType( GetModel() ) );
+		AssertMsgOnce( 0, msg );
 		return 0;
 	}
 
@@ -798,11 +794,11 @@ int CSprite::DrawModel( int flags )
 		m_hAttachedToEntity,	// attach to
 		m_nAttachment,			// attachment point
 		GetRenderMode(),		// rendermode
-		m_nRenderFX,
-		GetRenderBrightness(),	// alpha
-		m_clrRender->r,
-		m_clrRender->g,
-		m_clrRender->b,
+		GetRenderFX(),
+		(float)( GetRenderBrightness() * instance.m_nAlpha ) * ( 1.0f / 255.0f ) + 0.5f,	// alpha
+		GetRenderColorR(),
+		GetRenderColorG(),
+		GetRenderColorB(),
 		renderscale,			// sprite scale
 		GetHDRColorScale()		// HDR Color Scale
 		);
@@ -860,9 +856,9 @@ void CSpriteOriented::Spawn( void )
 
 #else
 
-bool CSpriteOriented::IsTransparent( void )
+RenderableTranslucencyType_t CSpriteOriented::ComputeTranslucencyType()
 {
-	return true;
+	return RENDERABLE_IS_TRANSLUCENT;
 }
 
 #endif

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -48,7 +48,7 @@ public:
 extern void SendProxy_Angles( const SendProp *pProp, const void *pStruct, const void *pData, DVariant *pOut, int iElement, int objectID );
 
 IMPLEMENT_SERVERCLASS_ST_NOBASE( CLightGlow, DT_LightGlow )
-	SendPropInt( SENDINFO(m_clrRender), 32, SPROP_UNSIGNED, SendProxy_Color32ToInt ),
+	SendPropInt( SENDINFO(m_clrRender), 32, SPROP_UNSIGNED, SendProxy_Color32ToInt32 ),
 	SendPropInt( SENDINFO(m_nHorizontalSize), 16, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO(m_nVerticalSize), 16, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO(m_nMinDist), 16, SPROP_UNSIGNED ),

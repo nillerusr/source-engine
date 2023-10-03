@@ -1,9 +1,9 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
 // $NoKeywords: $
-//=============================================================================//
+//===========================================================================//
 
 #ifndef C_VGUISCREEN_H
 #define C_VGUISCREEN_H
@@ -14,8 +14,8 @@
 
 
 #include <vgui_controls/EditablePanel.h>
-#include "c_baseentity.h"
-#include "panelmetaclassmgr.h"
+#include "C_BaseEntity.h"
+#include "PanelMetaClassMgr.h"
 
 class KeyValues;
 
@@ -71,12 +71,12 @@ public:
 
 	virtual void PreDataUpdate( DataUpdateType_t updateType );
 	virtual void OnDataChanged( DataUpdateType_t type );
-	virtual int DrawModel( int flags );
+	virtual int DrawModel( int flags, const RenderableInstance_t &instance );
 	virtual bool ShouldDraw( void );
 	virtual void ClientThink( );
 	virtual void GetAimEntOrigin( IClientEntity *pAttachedTo, Vector *pOrigin, QAngle *pAngles );
 	virtual bool IsVisibleToPlayer( C_BasePlayer *pViewingPlayer );
-	virtual bool IsTransparent( void );
+	virtual RenderableTranslucencyType_t ComputeTranslucencyType();
 
 	const char *PanelName() const;
 
@@ -103,8 +103,6 @@ public:
 	bool IsVisibleToTeam( int nTeam );
 
 	bool IsAttachedToViewModel() const;
-
-	virtual RenderGroup_t GetRenderGroup();
 
 	bool AcceptsInput() const;
 	void SetAcceptsInput( bool acceptsinput );

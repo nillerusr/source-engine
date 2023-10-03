@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:		An NPC's memory of potential enemies 
 //
@@ -35,6 +35,7 @@ AI_EnemyInfo_t::AI_EnemyInfo_t(void)
 	timeValidEnemy = 0;
 	timeLastReceivedDamageFrom = 0;
 	timeAtFirstHand = AI_INVALID_TIME;
+	nFaction		= FACTION_NONE;
 	bDangerMemory = 0;
 	bEludedMe = 0;
 	bUnforgettable = 0;
@@ -139,6 +140,7 @@ BEGIN_SIMPLE_DATADESC( AI_EnemyInfo_t )
 	DEFINE_FIELD( timeValidEnemy, 	FIELD_TIME ),
 	DEFINE_FIELD( timeLastReceivedDamageFrom, 	FIELD_TIME ),
 	DEFINE_FIELD( timeAtFirstHand,	FIELD_TIME ),
+	DEFINE_FIELD( nFaction,			FIELD_INTEGER ),
 	DEFINE_FIELD( bDangerMemory, 	FIELD_BOOLEAN ),
 	DEFINE_FIELD( bEludedMe, 		FIELD_BOOLEAN ),
 	DEFINE_FIELD( bUnforgettable,	FIELD_BOOLEAN ),
@@ -176,7 +178,7 @@ CAI_Enemies::~CAI_Enemies()
 AI_EnemyInfo_t *CAI_Enemies::GetFirst( AIEnemiesIter_t *pIter )
 {
 	CMemMap::IndexType_t i = m_Map.FirstInorder();
-	*pIter = (AIEnemiesIter_t)(uintp)i;
+	*pIter = (AIEnemiesIter_t)(unsigned)i;
 
 	if ( i == m_Map.InvalidIndex() )
 		return NULL;
@@ -191,13 +193,13 @@ AI_EnemyInfo_t *CAI_Enemies::GetFirst( AIEnemiesIter_t *pIter )
 
 AI_EnemyInfo_t *CAI_Enemies::GetNext( AIEnemiesIter_t *pIter )
 {
-	CMemMap::IndexType_t i = (CMemMap::IndexType_t)((uintp)(*pIter));
+	CMemMap::IndexType_t i = (CMemMap::IndexType_t)((unsigned)(*pIter));
 
 	if ( i == m_Map.InvalidIndex() )
 		return NULL;
 
 	i = m_Map.NextInorder( i );
-	*pIter = (AIEnemiesIter_t)(uintp)i;
+	*pIter = (AIEnemiesIter_t)(unsigned)i;
 	if ( i == m_Map.InvalidIndex() )
 		return NULL;
 
@@ -245,8 +247,15 @@ bool CAI_Enemies::ShouldDiscardMemory( AI_EnemyInfo_t *pMemory )
 	if ( pEnemy )
 	{
 		CAI_BaseNPC *pEnemyNPC = pEnemy->MyNPCPointer();
-		if ( pEnemyNPC && pEnemyNPC->GetState() == NPC_STATE_DEAD )
-			return true;
+		if ( pEnemyNPC )
+		{
+			if ( pEnemyNPC->GetState() == NPC_STATE_DEAD )
+				return true;
+
+			// forget about the enemy if he changes faction
+			if ( pEnemyNPC->GetFaction() != pMemory->nFaction )
+				return true;
+		}
 	}
 	else
 	{
@@ -380,9 +389,16 @@ bool CAI_Enemies::UpdateMemory(CAI_Network* pAINet, CBaseEntity *pEnemy, const V
 
 	pAddMemory->bEludedMe = false;
 
-	// I'm either remembering a postion of an enmey of just a danger position
+	// I'm either remembering a position of an enemy or just a danger position
 	pAddMemory->hEnemy = pEnemy;
 	pAddMemory->bDangerMemory = ( pEnemy == NULL );
+
+	if ( pEnemy )
+	{
+		CAI_BaseNPC *pEnemyNPC = pEnemy->MyNPCPointer();
+		if ( pEnemyNPC )
+			pAddMemory->nFaction = pEnemyNPC->GetFaction();
+	}
 
 	// add to the list
 	m_Map.Insert( pEnemy, pAddMemory );

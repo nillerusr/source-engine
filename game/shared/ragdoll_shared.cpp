@@ -1,8 +1,8 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
-//=============================================================================//
+//===========================================================================//
 
 #include "cbase.h"
 #include "ragdoll_shared.h"
@@ -14,13 +14,14 @@
 #include "tier0/vprof.h"
 #include "engine/ivdebugoverlay.h"
 #include "solidsetdefaults.h"
+
 //CLIENT
 #ifdef CLIENT_DLL 
+#include "c_entityflame.h"
 #include "c_fire_smoke.h"
 #include "c_entitydissolve.h"
 #include "engine/IEngineSound.h"
 #endif
-
 //SERVER
 #if !defined( CLIENT_DLL )
 #include "util.h"
@@ -69,91 +70,58 @@ void CRagdollLowViolenceManager::SetLowViolence( const char *pMapName )
 	}
 }
 
-class CRagdollCollisionRules : public IVPhysicsKeyHandler
+
+// A simple cache to store the ragdoll's data after it has been parsed.  Avoid re-parsing on every create
+struct cache_ragdollsolid_t
 {
-public:
-	CRagdollCollisionRules( IPhysicsCollisionSet *pSet )
-	{
-		m_pSet = pSet;
-		m_bSelfCollisions = true;
-	}
-	virtual void ParseKeyValue( void *pData, const char *pKey, const char *pValue )
-	{
-		if ( !strcmpi( pKey, "selfcollisions" ) )
-		{
-			// keys disabled by default
-			Assert( atoi(pValue) == 0 );
-			m_bSelfCollisions = false;
-		}
-		else if ( !strcmpi( pKey, "collisionpair" ) )
-		{
-			if ( m_bSelfCollisions )
-			{
-				char szToken[256];
-				const char *pStr = nexttoken(szToken, pValue, ',');
-				int index0 = atoi(szToken);
-				nexttoken( szToken, pStr, ',' );
-				int index1 = atoi(szToken);
-
-				m_pSet->EnableCollisions( index0, index1 );
-			}
-			else
-			{
-				Assert(0);
-			}
-		}
-	}
-	virtual void SetDefaults( void *pData ) {}
-
-private:
-	IPhysicsCollisionSet *m_pSet;
-	bool				m_bSelfCollisions;
+	objectparams_t params;
+	int surfacePropIndex;
+	short boneIndex;
+	short collideIndex;
 };
 
-class CRagdollAnimatedFriction : public IVPhysicsKeyHandler
+struct cache_ragdollconstraint_t
 {
-public:
-	CRagdollAnimatedFriction( ragdoll_t *ragdoll )
-	{
-		m_ragdoll = ragdoll;
-	}
-	virtual void ParseKeyValue( void *pData, const char *pKey, const char *pValue )
-	{
-		if ( !strcmpi( pKey, "animfrictionmin" ) )
-		{
-			m_ragdoll->animfriction.iMinAnimatedFriction = atoi( pValue );
-		}
-		else if ( !strcmpi( pKey, "animfrictionmax" ) )
-		{
-			m_ragdoll->animfriction.iMaxAnimatedFriction = atoi( pValue );
-		}
-		else if ( !strcmpi( pKey, "animfrictiontimein" ) )
-		{
-			m_ragdoll->animfriction.flFrictionTimeIn = atof( pValue );
-		}
-		else if ( !strcmpi( pKey, "animfrictiontimeout" ) )
-		{
-			m_ragdoll->animfriction.flFrictionTimeOut = atof( pValue );
-		}
-		else if ( !strcmpi( pKey, "animfrictiontimehold" ) )
-		{
-			m_ragdoll->animfriction.flFrictionTimeHold = atof( pValue );
-		}
-	}
-
-	virtual void SetDefaults( void *pData ) {}
-
-private:
-	ragdoll_t *m_ragdoll;
+	constraint_axislimit_t axes[3];
+	matrix3x4_t constraintToAttached;
+	short parentIndex;
+	short childIndex;
 };
 
+// store the ragdoll as a single allocation header, then solids array, then constraints array linearly in memory
+struct cache_ragdoll_t
+{
+	IPhysicsCollisionSet *pCollisionSet;
+	ragdollanimatedfriction_t animfriction;
+	short solidCount;
+	short constraintCount;
+
+	const cache_ragdollsolid_t *GetSolids() { return (cache_ragdollsolid_t *)(this+1); }
+	const cache_ragdollconstraint_t *GetConstraints() { return (cache_ragdollconstraint_t *)(GetSolids()+solidCount); }
+};
+
+cache_ragdoll_t *CreateRagdollCache( vcollide_t *pOutput, cache_ragdollsolid_t *pSolids, cache_ragdollconstraint_t *pConstraints, cache_ragdoll_t *pRagdoll )
+{
+	size_t memSize = sizeof(cache_ragdoll_t);
+	size_t solidSize = sizeof(cache_ragdollsolid_t) * pRagdoll->solidCount;
+	size_t constraintSize = sizeof(cache_ragdollconstraint_t) * pRagdoll->constraintCount;
+
+	cache_ragdoll_t *pMem = (cache_ragdoll_t *)physcollision->VCollideAllocUserData( pOutput, memSize + solidSize + constraintSize );
+	V_memcpy( pMem, pRagdoll, sizeof(*pMem) );
+	V_memcpy( (void *)pMem->GetSolids(), pSolids, solidSize );
+	V_memcpy( (void *)pMem->GetConstraints(), pConstraints, constraintSize );
+	return pMem;
+}
+
+
+// OPTIMIZE: Slow, hopefully this is only called by save/load
 void RagdollSetupAnimatedFriction( IPhysicsEnvironment *pPhysEnv, ragdoll_t *ragdoll, int iModelIndex )
 {
 	vcollide_t* pCollide = modelinfo->GetVCollide( iModelIndex );
 
 	if ( pCollide )
 	{
-		IVPhysicsKeyParser *pParse = physcollision->VPhysicsKeyParserCreate( pCollide->pKeyValues );
+		IVPhysicsKeyParser *pParse = physcollision->VPhysicsKeyParserCreate( pCollide );
 
 		while ( !pParse->Finished() )
 		{
@@ -161,8 +129,7 @@ void RagdollSetupAnimatedFriction( IPhysicsEnvironment *pPhysEnv, ragdoll_t *rag
 
 			if ( !strcmpi( pBlock, "animatedfriction") ) 
 			{
-				CRagdollAnimatedFriction friction( ragdoll );
-				pParse->ParseCustom( (void*)&friction, &friction );
+				pParse->ParseRagdollAnimatedFriction( &ragdoll->animfriction, NULL );
 			}
 			else
 			{
@@ -174,61 +141,56 @@ void RagdollSetupAnimatedFriction( IPhysicsEnvironment *pPhysEnv, ragdoll_t *rag
 	}
 }
 
-static void RagdollAddSolid( IPhysicsEnvironment *pPhysEnv, ragdoll_t &ragdoll, const ragdollparams_t &params, solid_t &solid )
+static void RagdollAddSolids( IPhysicsEnvironment *pPhysEnv, ragdoll_t &ragdoll, const ragdollparams_t &params, cache_ragdollsolid_t *pSolids, int solidCount, const cache_ragdollconstraint_t *pConstraints, int constraintCount )
 {
-	if ( solid.index >= 0 && solid.index < params.pCollide->solidCount)
+	const char *pszName = params.pStudioHdr->pszName();
+	Vector position;
+	matrix3x4_t xform;
+	// init parent index
+	for ( int i = 0; i < solidCount; i++ )
 	{
-		Assert( ragdoll.listCount == solid.index );
-		int boneIndex = Studio_BoneIndexByName( params.pStudioHdr, solid.name );
-		ragdoll.boneIndex[ragdoll.listCount] = boneIndex;
-
-		if ( boneIndex >= 0 )
-		{
-			if ( params.fixedConstraints )
-			{
-				solid.params.mass = 1000.f;
-			}
-
-			solid.params.rotInertiaLimit = 0.1;
-			solid.params.pGameData = params.pGameData;
-			int surfaceData = physprops->GetSurfaceIndex( solid.surfaceprop );
-
-			if ( surfaceData < 0 )
-				surfaceData = physprops->GetSurfaceIndex( "default" );
-
-			solid.params.pName = params.pStudioHdr->pszName();
-			ragdoll.list[ragdoll.listCount].pObject = pPhysEnv->CreatePolyObject( params.pCollide->solids[solid.index], surfaceData, vec3_origin, vec3_angle, &solid.params );
-			ragdoll.list[ragdoll.listCount].pObject->SetPositionMatrix( params.pCurrentBones[boneIndex], true );
-			ragdoll.list[ragdoll.listCount].parentIndex = -1;
-			ragdoll.list[ragdoll.listCount].pObject->SetGameIndex( ragdoll.listCount );
-
-			ragdoll.listCount++;
-		}
-		else
-		{
-			Msg( "CRagdollProp::CreateObjects:  Couldn't Lookup Bone %s\n", solid.name );
-		}
+		ragdoll.list[i].parentIndex = -1;
 	}
+	// now set from constraints
+	for ( int i = 0; i < constraintCount; i++ )
+	{
+		// save parent index
+		ragdoll.list[pConstraints[i].childIndex].parentIndex = pConstraints[i].parentIndex;
+		MatrixGetColumn( pConstraints[i].constraintToAttached, 3, ragdoll.list[pConstraints[i].childIndex].originParentSpace );
+	}
+
+	// now setup the solids, using parent indices
+	for ( int i = 0; i < solidCount; i++ )
+	{	
+		ragdoll.boneIndex[i] = pSolids[i].boneIndex;
+		pSolids[i].params.pName = pszName;
+		pSolids[i].params.pGameData = params.pGameData;
+		ragdoll.list[i].pObject = pPhysEnv->CreatePolyObject( params.pCollide->solids[pSolids[i].collideIndex], pSolids[i].surfacePropIndex, vec3_origin, vec3_angle, &pSolids[i].params );
+		ragdoll.list[i].pObject->SetGameIndex( i );
+		int parentIndex = ragdoll.list[i].parentIndex;
+		MatrixCopy( params.pCurrentBones[ragdoll.boneIndex[i]], xform );
+		if ( parentIndex >= 0 )
+		{
+			Assert(parentIndex<i);
+			ragdoll.list[parentIndex].pObject->LocalToWorld( &position, ragdoll.list[i].originParentSpace );
+			MatrixSetColumn( position, 3, xform );
+		}
+		ragdoll.list[i].pObject->SetPositionMatrix( xform, true );
+
+		PhysSetGameFlags( ragdoll.list[i].pObject, FVPHYSICS_PART_OF_RAGDOLL );
+
+	}
+	ragdoll.listCount = solidCount;
 }
 
 
-static void RagdollAddConstraint( IPhysicsEnvironment *pPhysEnv, ragdoll_t &ragdoll, const ragdollparams_t &params, constraint_ragdollparams_t &constraint )
+static void RagdollAddConstraints( IPhysicsEnvironment *pPhysEnv, ragdoll_t &ragdoll, const ragdollparams_t &params, const cache_ragdollconstraint_t *pConstraints, int constraintCount )
 {
-	if( constraint.childIndex == constraint.parentIndex )
+	constraint_ragdollparams_t constraint;
+	for ( int i = 0; i < constraintCount; i++ )
 	{
-		DevMsg( 1, "Bogus constraint on ragdoll %s\n", params.pStudioHdr->pszName() );
-		constraint.childIndex = -1;
-		constraint.parentIndex = -1;
-	}
-	if ( constraint.childIndex >= 0 && constraint.parentIndex >= 0 )
-	{
-		Assert(constraint.childIndex<ragdoll.listCount);
-
-
-		ragdollelement_t &childElement = ragdoll.list[constraint.childIndex];
-		// save parent index
-		childElement.parentIndex = constraint.parentIndex;
-	
+		constraint.Defaults();
+		V_memcpy( constraint.axes, pConstraints[i].axes, sizeof(constraint.axes) );
 		if ( params.jointFrictionScale > 0 )
 		{
 			for ( int k = 0; k < 3; k++ )
@@ -236,30 +198,91 @@ static void RagdollAddConstraint( IPhysicsEnvironment *pPhysEnv, ragdoll_t &ragd
 				constraint.axes[k].torque *= params.jointFrictionScale;
 			}
 		}
-		// this parent/child pair is not usually a parent/child pair in the skeleton.  There
-		// are often bones in between that are collapsed for simulation.  So we need to compute
-		// the transform.
-		Studio_CalcBoneToBoneTransform( params.pStudioHdr, ragdoll.boneIndex[constraint.childIndex], ragdoll.boneIndex[constraint.parentIndex], constraint.constraintToAttached );
-		MatrixGetColumn( constraint.constraintToAttached, 3, childElement.originParentSpace );
+		int parentIndex = pConstraints[i].parentIndex;
+		int childIndex = pConstraints[i].childIndex;
+		constraint.childIndex = childIndex;
+		constraint.parentIndex = parentIndex;
+		constraint.useClockwiseRotations = true;
+		constraint.constraintToAttached = pConstraints[i].constraintToAttached;
 		// UNDONE: We could transform the constraint limit axes relative to the bone space
 		// using this data.  Do we need that feature?
 		SetIdentityMatrix( constraint.constraintToReference );
-		if ( params.fixedConstraints )
-		{
-			// Makes the ragdoll a statue...
-			constraint_fixedparams_t fixed;
-			fixed.Defaults();
-			fixed.InitWithCurrentObjectState( childElement.pObject, ragdoll.list[constraint.parentIndex].pObject );
-			fixed.constraint.Defaults();
-			childElement.pConstraint = pPhysEnv->CreateFixedConstraint( childElement.pObject, ragdoll.list[constraint.parentIndex].pObject, ragdoll.pGroup, fixed );
-		}
-		else
-		{
-			childElement.pConstraint = pPhysEnv->CreateRagdollConstraint( childElement.pObject, ragdoll.list[constraint.parentIndex].pObject, ragdoll.pGroup, constraint );
-		}
+		ragdoll.list[childIndex].pConstraint = pPhysEnv->CreateRagdollConstraint( ragdoll.list[childIndex].pObject, ragdoll.list[parentIndex].pObject, ragdoll.pGroup, constraint );
 	}
 }
 
+
+static cache_ragdoll_t *ParseRagdollIntoCache( CStudioHdr *pStudioHdr, vcollide_t *pCollide, int modelIndex )
+{
+	IVPhysicsKeyParser *pParse = physcollision->VPhysicsKeyParserCreate( pCollide );
+	cache_ragdollsolid_t solidList[RAGDOLL_MAX_ELEMENTS];
+	cache_ragdollconstraint_t constraintList[RAGDOLL_MAX_ELEMENTS];
+	solid_t solid;
+	int constraintCount = 0;
+	int solidCount = 0;
+	cache_ragdoll_t cache;
+	V_memset( &cache, 0, sizeof(cache) );
+	while ( !pParse->Finished() )
+	{
+		const char *pBlock = pParse->GetCurrentBlockName();
+		if ( !strcmpi( pBlock, "solid" ) )
+		{
+			pParse->ParseSolid( &solid, &g_SolidSetup );
+			cache_ragdollsolid_t *pSolid = &solidList[solidCount];
+			pSolid->boneIndex = Studio_BoneIndexByName( pStudioHdr, solid.name );
+			if ( pSolid->boneIndex >= 0 )
+			{
+				pSolid->collideIndex = solid.index;
+				pSolid->surfacePropIndex = physprops->GetSurfaceIndex( solid.surfaceprop );
+				if ( pSolid->surfacePropIndex < 0 )
+				{
+					pSolid->surfacePropIndex = physprops->GetSurfaceIndex( "default" );
+				}
+				pSolid->params = solid.params;
+				pSolid->params.enableCollisions = false;
+				solidCount++;
+			}
+			else
+			{
+				Msg( "ParseRagdollIntoCache:  Couldn't Lookup Bone %s\n", solid.name );
+			}
+		}
+		else if ( !strcmpi( pBlock, "ragdollconstraint" ) )
+		{
+			constraint_ragdollparams_t constraint;
+			pParse->ParseRagdollConstraint( &constraint, NULL );
+			if( constraint.childIndex != constraint.parentIndex && constraint.childIndex >= 0 && constraint.parentIndex >= 0)
+			{
+				cache_ragdollconstraint_t *pOut = &constraintList[constraintCount];
+				constraintCount++;
+				V_memcpy( pOut->axes, constraint.axes, sizeof(constraint.axes) );
+				pOut->parentIndex = constraint.parentIndex;
+				pOut->childIndex = constraint.childIndex;
+				Studio_CalcBoneToBoneTransform( pStudioHdr, solidList[constraint.childIndex].boneIndex, solidList[constraint.parentIndex].boneIndex, pOut->constraintToAttached );
+			}
+		}
+		else if ( !strcmpi( pBlock, "collisionrules" ) )
+		{
+			ragdollcollisionrules_t rules;
+			IPhysicsCollisionSet *pSet = physics->FindOrCreateCollisionSet( modelIndex, pCollide->solidCount );
+			rules.Defaults(physics, pSet);
+			pParse->ParseCollisionRules( &rules, NULL );
+			cache.pCollisionSet = rules.pCollisionSet;
+		}
+		else if ( !strcmpi( pBlock, "animatedfriction") ) 
+		{
+			pParse->ParseRagdollAnimatedFriction( &cache.animfriction, NULL );
+		}
+		else
+		{
+			pParse->SkipBlock();
+		}
+	}
+	physcollision->VPhysicsKeyParserDestroy( pParse );
+	cache.solidCount = solidCount;
+	cache.constraintCount = constraintCount;
+	return CreateRagdollCache( pCollide, solidList, constraintList, &cache );
+}
 
 static void RagdollCreateObjects( IPhysicsEnvironment *pPhysEnv, ragdoll_t &ragdoll, const ragdollparams_t &params )
 {
@@ -270,46 +293,24 @@ static void RagdollCreateObjects( IPhysicsEnvironment *pPhysEnv, ragdoll_t &ragd
 	memset( &ragdoll.animfriction, 0, sizeof(ragdoll.animfriction) );
 	
 	if ( !params.pCollide || params.pCollide->solidCount > RAGDOLL_MAX_ELEMENTS )
+	{
+		Warning( "Ragdoll solid count %d exceeds maximum limit of %d - Ragdoll not created", params.pCollide->solidCount, RAGDOLL_MAX_ELEMENTS );
+		Assert( false );
 		return;
+	}
+
+	cache_ragdoll_t *pCache = (cache_ragdoll_t *)params.pCollide->pUserData;
+	if ( !pCache )
+	{
+		pCache = ParseRagdollIntoCache(params.pStudioHdr, params.pCollide, params.modelIndex);
+	}
 
 	constraint_groupparams_t group;
 	group.Defaults();
 	ragdoll.pGroup = pPhysEnv->CreateConstraintGroup( group );
  
-	IVPhysicsKeyParser *pParse = physcollision->VPhysicsKeyParserCreate( params.pCollide->pKeyValues );
-	while ( !pParse->Finished() )
-	{
-		const char *pBlock = pParse->GetCurrentBlockName();
-		if ( !strcmpi( pBlock, "solid" ) )
-		{
-			solid_t solid;
-
-			pParse->ParseSolid( &solid, &g_SolidSetup );
-			RagdollAddSolid( pPhysEnv, ragdoll, params, solid );
-		}
-		else if ( !strcmpi( pBlock, "ragdollconstraint" ) )
-		{
-			constraint_ragdollparams_t constraint;
-			pParse->ParseRagdollConstraint( &constraint, NULL );
-			RagdollAddConstraint( pPhysEnv, ragdoll, params, constraint );
-		}
-		else if ( !strcmpi( pBlock, "collisionrules" ) )
-		{
-			IPhysicsCollisionSet *pSet = physics->FindOrCreateCollisionSet( params.modelIndex, ragdoll.listCount );
-			CRagdollCollisionRules rules(pSet);
-			pParse->ParseCustom( (void *)&rules, &rules );
-		}
-		else if ( !strcmpi( pBlock, "animatedfriction") ) 
-		{
-			CRagdollAnimatedFriction friction( &ragdoll );
-			pParse->ParseCustom( (void*)&friction, &friction );
-		}
-		else
-		{
-			pParse->SkipBlock();
-		}
-	}
-	physcollision->VPhysicsKeyParserDestroy( pParse );
+	RagdollAddSolids( pPhysEnv, ragdoll, params, const_cast<cache_ragdollsolid_t *>(pCache->GetSolids()), pCache->solidCount, pCache->GetConstraints(), pCache->constraintCount );
+	RagdollAddConstraints( pPhysEnv, ragdoll, params, pCache->GetConstraints(), pCache->constraintCount );
 }
 
 void RagdollSetupCollisions( ragdoll_t &ragdoll, vcollide_t *pCollide, int modelIndex )
@@ -321,21 +322,22 @@ void RagdollSetupCollisions( ragdoll_t &ragdoll, vcollide_t *pCollide, int model
 	IPhysicsCollisionSet *pSet = physics->FindCollisionSet( modelIndex );
 	if ( !pSet )
 	{
-		pSet = physics->FindOrCreateCollisionSet( modelIndex, ragdoll.listCount );
+		pSet = physics->FindOrCreateCollisionSet( modelIndex, pCollide->solidCount );
 		if ( !pSet )
 			return;
 
 		bool bFoundRules = false;
 
-		IVPhysicsKeyParser *pParse = physcollision->VPhysicsKeyParserCreate( pCollide->pKeyValues );
+		IVPhysicsKeyParser *pParse = physcollision->VPhysicsKeyParserCreate( pCollide );
 		while ( !pParse->Finished() )
 		{
 			const char *pBlock = pParse->GetCurrentBlockName();
 			if ( !strcmpi( pBlock, "collisionrules" ) )
 			{
-				IPhysicsCollisionSet *pSet = physics->FindOrCreateCollisionSet( modelIndex, ragdoll.listCount );
-				CRagdollCollisionRules rules(pSet);
-				pParse->ParseCustom( (void *)&rules, &rules );
+				ragdollcollisionrules_t rules;
+				rules.Defaults(physics, pSet);
+				pParse->ParseCollisionRules( &rules, NULL );
+				Assert(rules.pCollisionSet == pSet);
 				bFoundRules = true;
 			}
 			else
@@ -374,9 +376,10 @@ void RagdollSetupCollisions( ragdoll_t &ragdoll, vcollide_t *pCollide, int model
 void RagdollActivate( ragdoll_t &ragdoll, vcollide_t *pCollide, int modelIndex, bool bForceWake )
 {
 	RagdollSetupCollisions( ragdoll, pCollide, modelIndex );
+
 	for ( int i = 0; i < ragdoll.listCount; i++ )
 	{
-		ragdoll.list[i].pObject->SetGameIndex( i );
+
 		PhysSetGameFlags( ragdoll.list[i].pObject, FVPHYSICS_MULTIOBJECT_ENTITY );
 		// now that the relationships are set, activate the collision system
 		ragdoll.list[i].pObject->EnableCollisions( true );
@@ -425,20 +428,14 @@ bool RagdollCreate( ragdoll_t &ragdoll, const ragdollparams_t &params, IPhysicsE
 	Vector forcePosition = params.forcePosition;
 	// UNDONE: Test scaling the force by total mass on all bones
 	
-	Assert( forceBone < ragdoll.listCount );
-
+	// UNDONE: forcebone can be out of range when a body part breaks off - it uses the shared force bone from the original model
+	// UNDONE: Remap this?
 	if ( forceBone >= 0 && forceBone < ragdoll.listCount )
 	{
 		ragdoll.list[forceBone].pObject->ApplyForceCenter( nudgeForce );
 		//nudgeForce *= 0.5;
 		ragdoll.list[forceBone].pObject->GetPosition( &forcePosition, NULL );
 	}
-
-	for ( i = 0; i < ragdoll.listCount; i++ )
-	{
-		PhysSetGameFlags( ragdoll.list[i].pObject, FVPHYSICS_PART_OF_RAGDOLL );
-	}
-
 	if ( forcePosition != vec3_origin )
 	{
 		for ( i = 0; i < ragdoll.listCount; i++ )
@@ -450,7 +447,6 @@ bool RagdollCreate( ragdoll_t &ragdoll, const ragdollparams_t &params, IPhysicsE
 			}
 		}
 	}
-
 	return true;
 }
 
@@ -535,7 +531,7 @@ int RagdollExtractBoneIndices( int *boneIndexOut, CStudioHdr *pStudioHdr, vcolli
 {
 	int elementCount = 0;
 
-	IVPhysicsKeyParser *pParse = physcollision->VPhysicsKeyParserCreate( pCollide->pKeyValues );
+	IVPhysicsKeyParser *pParse = physcollision->VPhysicsKeyParserCreate( pCollide );
 	while ( !pParse->Finished() )
 	{
 		const char *pBlock = pParse->GetCurrentBlockName();
@@ -574,8 +570,7 @@ bool RagdollGetBoneMatrix( const ragdoll_t &ragdoll, CBoneAccessor &pBoneToWorld
 	if ( element.parentIndex >= 0 && !ragdoll.allowStretch )
 	{
 		// overwrite the position from physics to force rigid attachment
-		// UNDONE: If we support other types of constraints (or multiple constraints per object)
-		// make sure these don't fight !
+		// NOTE: On the client we actually override this with the proper parent bone in each LOD
 		int parentBoneIndex = ragdoll.boneIndex[element.parentIndex];
 		Vector out;
 		VectorTransform( element.originParentSpace, pBoneToWorld.GetBone( parentBoneIndex ), out );
@@ -592,9 +587,9 @@ void RagdollComputeExactBbox( const ragdoll_t &ragdoll, const Vector &origin, Ve
 	for ( int i = 0; i < ragdoll.listCount; i++ )
 	{
 		Vector mins, maxs;
+		IPhysicsObject *pObject = ragdoll.list[i].pObject;
 		Vector objectOrg;
 		QAngle objectAng;
-		IPhysicsObject *pObject = ragdoll.list[i].pObject;
 		pObject->GetPosition( &objectOrg, &objectAng );
 		physcollision->CollideGetAABB( &mins, &maxs, pObject->GetCollide(), objectOrg, objectAng );
 		for ( int j = 0; j < 3; j++ )
@@ -609,6 +604,27 @@ void RagdollComputeExactBbox( const ragdoll_t &ragdoll, const Vector &origin, Ve
 			}
 		}
 	}
+}
+
+void RagdollComputeApproximateBbox( const ragdoll_t &ragdoll, const Vector &origin, Vector &outMins, Vector &outMaxs )
+{
+	Vector mins, maxs;
+	ClearBounds(mins,maxs);
+	for ( int i = 0; i < ragdoll.listCount; i++ )
+	{
+		Vector objectOrg;
+		ragdoll.list[i].pObject->GetPosition( &objectOrg, NULL );
+		float radius = physcollision->CollideGetRadius( ragdoll.list[i].pObject->GetCollide() );
+		for ( int k = 0; k < 3; k++ )
+		{
+			float ext = objectOrg[k] + radius;
+			maxs[k] = fpmax( maxs[k], ext );
+			ext = objectOrg[k] - radius;
+			mins[k] = fpmin( mins[k], ext );
+		}
+	}
+	outMins = mins;
+	outMaxs = maxs;
 }
 
 bool RagdollIsAsleep( const ragdoll_t &ragdoll )
@@ -646,7 +662,7 @@ void RagdollSolveSeparation( ragdoll_t &ragdoll, CBaseEntity *pEntity )
 			if ( dir.LengthSqr() > 1.0f )
 			{
 				// this fixes a bug in ep2 with antlion grubs, but causes problems in TF2 - revisit, but disable for TF now
-#if !defined(TF_CLIENT_DLL)
+
 				// heuristic: guess that anything separated and small mass ratio is in some state that's 
 				// keeping the solver from fixing it
 				float mass = element.pObject->GetMass();
@@ -660,7 +676,7 @@ void RagdollSolveSeparation( ragdoll_t &ragdoll, CBaseEntity *pEntity )
 					++fixCount;
 					continue;
 				}
-#endif
+
 
 				if ( PhysHasContactWithOtherInDirection(element.pObject, dir) )
 				{
@@ -838,12 +854,12 @@ void CRagdollLRURetirement::Update( float frametime ) // EPISODIC VERSION
 			if ( m_LRU.Count() > iMaxRagdollCount )
 			{
 				//Found one, we're done.
-				if ( ShouldRemoveThisRagdoll( m_LRU[i] ) == true )
+				if ( ShouldRemoveThisRagdoll( pRagdoll ) == true )
 				{
 #ifdef CLIENT_DLL
-					m_LRU[ i ]->SUB_Remove();
+					pRagdoll->SUB_Remove();
 #else
-					m_LRU[ i ]->SUB_StartFadeOut( 0 );
+					pRagdoll->SUB_StartFadeOut( 0 );
 #endif
 
 					m_LRU.Remove(i);
@@ -865,9 +881,10 @@ void CRagdollLRURetirement::Update( float frametime ) // EPISODIC VERSION
 	int furthestOne = m_LRU.Head();
 	float furthestDistSq = 0;
 #ifdef CLIENT_DLL
+	ACTIVE_SPLITSCREEN_PLAYER_GUARD( 0 );
 	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
 #else
-	CBasePlayer  *pPlayer = UTIL_GetLocalPlayer();
+	CBasePlayer  *pPlayer = g_pGameRules->IsMultiplayer() ? NULL : UTIL_GetLocalPlayer();
 #endif
 
 	if (pPlayer && m_LRU.Count() > iMaxRagdollCount) // find the furthest one algorithm
@@ -902,10 +919,11 @@ void CRagdollLRURetirement::Update( float frametime ) // EPISODIC VERSION
 			}
 		}
 
+		CBaseAnimating *pRemoveRagdoll = m_LRU[ furthestOne ].Get();
 #ifdef CLIENT_DLL
-		m_LRU[ furthestOne ]->SUB_Remove();
+		pRemoveRagdoll->SUB_Remove();
 #else
-		m_LRU[ furthestOne ]->SUB_StartFadeOut( 0 );
+		pRemoveRagdoll->SUB_StartFadeOut( 0 );
 #endif
 
 	}
@@ -926,9 +944,9 @@ void CRagdollLRURetirement::Update( float frametime ) // EPISODIC VERSION
 				continue;
 
 	#ifdef CLIENT_DLL
-			m_LRU[ i ]->SUB_Remove();
+			pRagdoll->SUB_Remove();
 	#else
-			m_LRU[ i ]->SUB_StartFadeOut( 0 );
+			pRagdoll->SUB_StartFadeOut( 0 );
 	#endif
 			m_LRU.Remove(i);
 		}
@@ -958,6 +976,31 @@ void CRagdollLRURetirement::Update( float frametime ) // Non-episodic version
 	m_iRagdollCount = 0;
 	m_iSimulatedRagdollCount = 0;
 
+	// remove ragdolls with a forced retire time
+	for ( i = m_LRU.Head(); i < m_LRU.InvalidIndex(); i = next )
+	{
+		next = m_LRU.Next(i);
+
+		CBaseAnimating *pRagdoll = m_LRU[i].Get();
+
+		//Just ignore it until we're done burning/dissolving.
+		if ( pRagdoll && pRagdoll->GetEffectEntity() )
+			continue;
+
+		// ignore if it's not time to force retire this ragdoll
+		if ( m_LRU[i].GetForcedRetireTime() == 0.0f || gpGlobals->curtime < m_LRU[i].GetForcedRetireTime() )
+			continue;
+
+		//Msg(" Removing ragdoll %s due to forced retire time of %f (now = %f)\n", pRagdoll->GetModelName(), m_LRU[i].GetForcedRetireTime(), gpGlobals->curtime );
+
+#ifdef CLIENT_DLL
+		pRagdoll->SUB_Remove();
+#else
+		pRagdoll->SUB_StartFadeOut( 0 );
+#endif
+		m_LRU.Remove(i);
+	}
+
 	for ( i = m_LRU.Head(); i < m_LRU.InvalidIndex(); i = next )
 	{
 		next = m_LRU.Next(i);
@@ -973,12 +1016,12 @@ void CRagdollLRURetirement::Update( float frametime ) // Non-episodic version
 			if ( m_LRU.Count() > iMaxRagdollCount )
 			{
 				//Found one, we're done.
-				if ( ShouldRemoveThisRagdoll( m_LRU[i] ) == true )
+				if ( ShouldRemoveThisRagdoll( pRagdoll ) == true )
 				{
 #ifdef CLIENT_DLL
-					m_LRU[ i ]->SUB_Remove();
+					pRagdoll->SUB_Remove();
 #else
-					m_LRU[ i ]->SUB_StartFadeOut( 0 );
+					pRagdoll->SUB_StartFadeOut( 0 );
 #endif
 
 					m_LRU.Remove(i);
@@ -1012,9 +1055,9 @@ void CRagdollLRURetirement::Update( float frametime ) // Non-episodic version
 			continue;
 
 #ifdef CLIENT_DLL
-		m_LRU[ i ]->SUB_Remove();
+		pRagdoll->SUB_Remove();
 #else
-		m_LRU[ i ]->SUB_StartFadeOut( 0 );
+		pRagdoll->SUB_StartFadeOut( 0 );
 #endif
 		m_LRU.Remove(i);
 	}
@@ -1033,11 +1076,11 @@ ConVar g_ragdoll_important_maxcount( "g_ragdoll_important_maxcount", "2", FCVAR_
 //-----------------------------------------------------------------------------
 // Move it to the top of the LRU
 //-----------------------------------------------------------------------------
-void CRagdollLRURetirement::MoveToTopOfLRU( CBaseAnimating *pRagdoll, bool bImportant )
+void CRagdollLRURetirement::MoveToTopOfLRU( CBaseAnimating *pRagdoll, bool bImportant, float flForcedRetireTime )
 {
 	if ( bImportant )
 	{
-		m_LRUImportantRagdolls.AddToTail( pRagdoll );
+		m_LRUImportantRagdolls.AddToTail( CRagdollEntry( pRagdoll, flForcedRetireTime ) );
 
 		if ( m_LRUImportantRagdolls.Count() > g_ragdoll_important_maxcount.GetInt() )
 		{
@@ -1067,7 +1110,7 @@ void CRagdollLRURetirement::MoveToTopOfLRU( CBaseAnimating *pRagdoll, bool bImpo
 		}
 	}
 
-	m_LRU.AddToTail( pRagdoll );
+	m_LRU.AddToTail( CRagdollEntry( pRagdoll, flForcedRetireTime ) );
 }
 
 
@@ -1083,13 +1126,13 @@ void CRagdollLRURetirement::MoveToTopOfLRU( CBaseAnimating *pRagdoll, bool bImpo
 
 
 
-C_EntityDissolve *DissolveEffect( C_BaseEntity *pTarget, float flTime )
+C_EntityDissolve *DissolveEffect( C_BaseAnimating *pTarget, float flTime )
 {
 	C_EntityDissolve *pDissolve = new C_EntityDissolve;
 
-	if ( pDissolve->InitializeAsClientEntity( "sprites/blueglow1.vmt", RENDER_GROUP_TRANSLUCENT_ENTITY ) == false )
+	if ( pDissolve->InitializeAsClientEntity( "sprites/blueglow1.vmt", false ) == false )
 	{
-		pDissolve->Release();
+		UTIL_Remove( pDissolve );
 		return NULL;
 	}
 
@@ -1124,9 +1167,9 @@ C_EntityFlame *FireEffect( C_BaseAnimating *pTarget, C_BaseEntity *pServerFire, 
 {
 	C_EntityFlame *pFire = new C_EntityFlame;
 
-	if ( pFire->InitializeAsClientEntity( NULL, RENDER_GROUP_TRANSLUCENT_ENTITY ) == false )
+	if ( pFire->InitializeAsClientEntity( NULL, false ) == false )
 	{
-		pFire->Release();
+		UTIL_Remove( pFire );
 		return NULL;
 	}
 
@@ -1204,9 +1247,10 @@ void C_BaseAnimating::TransferDissolveFrom( C_BaseAnimating *pSource )
 				if ( pDissolve )
 				{
 					pDissolve->SetRenderMode( pDissolveChild->GetRenderMode() );
-					pDissolve->m_nRenderFX = pDissolveChild->m_nRenderFX;
-					pDissolve->SetRenderColor( 255, 255, 255, 255 );
-					pDissolveChild->SetRenderColorA( 0 );
+					pDissolve->SetRenderFX( pDissolveChild->GetRenderFX() );
+					pDissolve->SetRenderColor( 255, 255, 255 );
+					pDissolve->SetRenderAlpha( 255 );
+					pDissolveChild->SetRenderAlpha( 0 );
 
 					pDissolve->m_vDissolverOrigin = pDissolveChild->m_vDissolverOrigin;
 					pDissolve->m_nDissolveType = pDissolveChild->m_nDissolveType;

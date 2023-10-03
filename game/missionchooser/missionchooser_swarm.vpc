@@ -1,0 +1,221 @@
+//-----------------------------------------------------------------------------
+//	MISSIONCHOOSER_SWARM.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro GAMENAME 	"mod_swarm"
+$Macro OUTBINNAME	"missionchooser"
+$Macro OUTBINDIR	"$SRCDIR\..\game\$GAMENAME\bin"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration	"Debug"
+{
+	$General
+	{
+		$OutputDirectory			".\Debug_$GAMENAME"
+		$IntermediateDirectory		".\Debug_$GAMENAME"
+	}
+}
+
+$Configuration	"Release"
+{
+	$General
+	{
+		$OutputDirectory			".\Release_$GAMENAME"
+		$IntermediateDirectory		".\Release_$GAMENAME"
+	}
+}
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories	"$BASE;.\;.\vgui;.\vgui\dialogs;.\TileSource;.\keyvalues_editor"
+		$PreprocessorDefinitions		"$BASE;NO_STRING_T;VECTOR;VERSION_SAFE_STEAM_API_INTERFACES;PROTECTED_THINGS_ENABLE;strncpy=use_Q_strncpy_instead;_snprintf=use_Q_snprintf_instead"
+	}
+
+	$Linker
+	{
+		$IgnoreImportLibrary			"TRUE"
+		$AdditionalDependencies			"$BASE winmm.lib"
+	}
+}
+
+$Project "MissionChooser"
+{
+	$Folder	"Public Header Files"
+	{
+		$File	"$SRCDIR\public\chunkfile.h"
+		$File	"$SRCDIR\public\missionchooser\iasw_mission_chooser.h"
+		$File	"$SRCDIR\public\missionchooser\iasw_mission_chooser_source.h"
+		$File	"$SRCDIR\public\missionchooser\iasw_random_missions.h"
+		$File	"$SRCDIR\public\missionchooser\iasw_spawn_selection.h"
+		$File	"$SRCDIR\public\tier1\interface.h"
+	}
+
+	$Folder	"Source Files"
+	{
+		$Folder	"keyvalues_editor"
+		{
+			$File	"keyvalues_editor\kv_combo_leaf_panel.cpp"
+			$File	"keyvalues_editor\kv_combo_leaf_panel.h"
+			$File	"keyvalues_editor\kv_editor.cpp"
+			$File	"keyvalues_editor\kv_editor.h"
+			$File	"keyvalues_editor\kv_editor_base_panel.cpp"
+			$File	"keyvalues_editor\kv_editor_base_panel.h"
+			$File	"keyvalues_editor\kv_editor_frame.cpp"
+			$File	"keyvalues_editor\kv_editor_frame.h"
+			$File	"keyvalues_editor\kv_fit_children_panel.cpp"
+			$File	"keyvalues_editor\kv_fit_children_panel.h"
+			$File	"keyvalues_editor\kv_leaf_panel.cpp"
+			$File	"keyvalues_editor\kv_leaf_panel.h"
+			$File	"keyvalues_editor\kv_node_panel.cpp"
+			$File	"keyvalues_editor\kv_node_panel.h"
+			$File	"$SRCDIR\game\missionchooser\vgui\location_editor\location_editor_frame.cpp"
+			$File	"$SRCDIR\game\missionchooser\vgui\location_editor\location_editor_frame.h"
+			$File	"$SRCDIR\game\missionchooser\vgui\location_editor\location_layout_panel.cpp"
+			$File	"$SRCDIR\game\missionchooser\vgui\location_editor\location_layout_panel.h"
+			$File	"$SRCDIR\game\missionchooser\vgui\location_editor\mission_txt_leaf_panel.cpp"
+			$File	"$SRCDIR\game\missionchooser\vgui\location_editor\mission_txt_leaf_panel.h"
+			$File	"$SRCDIR\game\missionchooser\vgui\mission_editor\theme_room_picker.cpp"
+			$File	"$SRCDIR\game\missionchooser\vgui\mission_editor\theme_room_picker.h"
+		}
+
+		$Folder	"layout_system"
+		{
+			$File	"$SRCDIR\game\missionchooser\layout_system\tilegen_actions.cpp"
+			$File	"$SRCDIR\game\missionchooser\layout_system\tilegen_actions.h"
+			$File	"$SRCDIR\game\missionchooser\layout_system\tilegen_class_factories.cpp"
+			$File	"$SRCDIR\game\missionchooser\layout_system\tilegen_class_factories.h"
+			$File	"$SRCDIR\game\missionchooser\layout_system\tilegen_class_interfaces.h"
+			$File	"$SRCDIR\game\missionchooser\layout_system\tilegen_enum.cpp"
+			$File	"$SRCDIR\game\missionchooser\layout_system\tilegen_enum.h"
+			$File	"$SRCDIR\game\missionchooser\layout_system\tilegen_expressions.cpp"
+			$File	"$SRCDIR\game\missionchooser\layout_system\tilegen_expressions.h"
+			$File	"$SRCDIR\game\missionchooser\layout_system\tilegen_layout_system.cpp"
+			$File	"$SRCDIR\game\missionchooser\layout_system\tilegen_layout_system.h"
+			$File	"$SRCDIR\game\missionchooser\layout_system\tilegen_listeners.cpp"
+			$File	"$SRCDIR\game\missionchooser\layout_system\tilegen_listeners.h"
+			$File	"$SRCDIR\game\missionchooser\layout_system\tilegen_mission_preprocessor.cpp"
+			$File	"$SRCDIR\game\missionchooser\layout_system\tilegen_mission_preprocessor.h"
+			$File	"$SRCDIR\game\missionchooser\layout_system\tilegen_ranges.cpp"
+			$File	"$SRCDIR\game\missionchooser\layout_system\tilegen_ranges.h"
+			$File	"$SRCDIR\game\missionchooser\layout_system\tilegen_rule.cpp"
+			$File	"$SRCDIR\game\missionchooser\layout_system\tilegen_rule.h"
+		}
+
+		$Folder	"layout_system_editor"
+		{
+			$File	"$SRCDIR\game\missionchooser\layout_system_editor\layout_system_kv_editor.cpp"
+			$File	"$SRCDIR\game\missionchooser\layout_system_editor\layout_system_kv_editor.h"
+			$File	"$SRCDIR\game\missionchooser\layout_system_editor\mission_panel.cpp"
+			$File	"$SRCDIR\game\missionchooser\layout_system_editor\mission_panel.h"
+			$File	"$SRCDIR\game\missionchooser\layout_system_editor\node_panel.cpp"
+			$File	"$SRCDIR\game\missionchooser\layout_system_editor\node_panel.h"
+			$File	"$SRCDIR\game\missionchooser\layout_system_editor\rule_instance_node_panel.cpp"
+			$File	"$SRCDIR\game\missionchooser\layout_system_editor\rule_instance_node_panel.h"
+			$File	"$SRCDIR\game\missionchooser\layout_system_editor\rule_instance_parameter_panel.cpp"
+			$File	"$SRCDIR\game\missionchooser\layout_system_editor\rule_instance_parameter_panel.h"
+			$File	"$SRCDIR\game\missionchooser\layout_system_editor\state_node_panel.cpp"
+			$File	"$SRCDIR\game\missionchooser\layout_system_editor\state_node_panel.h"
+		}
+
+		$Folder	"TileSource"
+		{
+			$File	"TileSource\LevelTheme.cpp"
+			$File	"TileSource\LevelTheme.h"
+			$File	"TileSource\MapLayout.cpp"
+			$File	"TileSource\MapLayout.h"
+			$File	"TileSource\Room.cpp"
+			$File	"TileSource\Room.h"
+			$File	"TileSource\RoomTemplate.cpp"
+			$File	"TileSource\RoomTemplate.h"
+			$File	"TileSource\TagList.cpp"
+			$File	"TileSource\TagList.h"
+		}
+
+		$Folder	"vgui"
+		{
+			$Folder	"Dialogs"
+			{
+				$File	"vgui\dialogs\ExitEditDialog.cpp"
+				$File	"vgui\dialogs\ExitEditDialog.h"
+				$File	"vgui\dialogs\RoomTemplateEditDialog.cpp"
+				$File	"vgui\dialogs\RoomTemplateEditDialog.h"
+				$File	"vgui\dialogs\ThemeEditDialog.cpp"
+				$File	"vgui\dialogs\ThemeEditDialog.h"
+				$File	"vgui\dialogs\ThemesDialog.cpp"
+				$File	"vgui\dialogs\ThemesDialog.h"
+				$File	"vgui\dialogs\TileGenDialog.cpp"
+				$File	"vgui\dialogs\TileGenDialog.h"
+			}
+
+			$File	"vgui\MapLayoutPanel.cpp"
+			$File	"vgui\MapLayoutPanel.h"
+			$File	"vgui\missionchooser_tgaimagepanel.cpp"
+			$File	"vgui\missionchooser_tgaimagepanel.h"
+			$File	"vgui\npc_spawns_panel.cpp"
+			$File	"vgui\npc_spawns_panel.h"
+			$File	"vgui\PlacedRoomTemplatePanel.cpp"
+			$File	"vgui\PlacedRoomTemplatePanel.h"
+			$File	"vgui\RoomTemplateListPanel.cpp"
+			$File	"vgui\RoomTemplateListPanel.h"
+			$File	"vgui\RoomTemplatePanel.cpp"
+			$File	"vgui\RoomTemplatePanel.h"
+			$File	"vgui\ScrollingWindow.cpp"
+			$File	"vgui\ScrollingWindow.h"
+			$File	"vgui\tilegen_pages.cpp"
+			$File	"vgui\tilegen_pages.h"
+			$File	"vgui\ToggleExitsPanel.cpp"
+			$File	"vgui\ToggleExitsPanel.h"
+			$File	"$SRCDIR\public\vgui_controls\vgui_controls.cpp"
+		}
+
+		$File	"asw_key_values_database.cpp"
+		$File	"asw_key_values_database.h"
+		$File	"asw_location_grid.cpp"
+		$File	"asw_location_grid.h"
+		$File	"asw_map_builder.cpp"
+		$File	"asw_map_builder.h"
+		$File	"asw_mission_chooser.cpp"
+		$File	"asw_mission_chooser.h"
+		$File	"asw_mission_chooser_source_local.cpp"
+		$File	"asw_mission_chooser_source_local.h"
+		$File	"asw_mission_text_database.cpp"
+		$File	"asw_mission_text_database.h"
+		$File	"asw_npcs.cpp"
+		$File	"asw_npcs.h"
+		$File	"asw_random_missions.cpp"
+		$File	"asw_random_missions.h"
+		$File	"asw_spawn_selection.cpp"
+		$File	"asw_spawn_selection.h"
+		$File	"asw_system.cpp"
+		$File	"asw_system.h"
+		$File	"$SRCDIR\public\chunkfile.cpp"
+		$File	"tile_check.cpp"
+		$File	"tile_check.h"
+		$File	"tilegen_core.h"
+		$File	"VMFExporter.cpp"
+		$File	"VMFExporter.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib		bitmap
+		$Lib		bonesetup
+		$Lib		dmxloader
+		$Lib		fgdlib
+		$Lib		$LIBCOMMON\jpeglib
+		$Lib		mathlib
+		$Lib		matsys_controls
+		$Lib		tier2
+		$Lib		tier3
+		$Lib		vbsp2lib
+		$Lib		vgui_controls
+		$Lib		vtf
+		$ImpLib		steam_api
+ 	}
+}

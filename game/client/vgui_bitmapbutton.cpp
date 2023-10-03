@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: This is a panel which is rendered image on top of an entity
 //
@@ -9,7 +9,7 @@
 #pragma warning (disable: 4514)
 
 #include "vgui_bitmapimage.h"
-#include "vgui_bitmapbutton.h"
+#include "vgui_BitmapButton.h"
 #include <KeyValues.h>
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -26,10 +26,15 @@ CBitmapButton::CBitmapButton( vgui::Panel *pParent, const char *pName, const cha
 	{
 		m_bImageLoaded[i] = false;
 	}
+	_doublePressedActionMessage = NULL;
 }
 
 CBitmapButton::~CBitmapButton()
 {
+	if (_doublePressedActionMessage)
+	{
+		_doublePressedActionMessage->deleteThis();
+	}
 }
 
 
@@ -117,4 +122,34 @@ void CBitmapButton::Paint( void )
 	BaseClass::Paint();
 }
 
+void CBitmapButton::OnMouseDoublePressed( vgui::MouseCode code )
+{
+	BaseClass::OnMouseDoublePressed( code );
 
+	if ( _doublePressedActionMessage )
+	{
+		PostActionSignal( _doublePressedActionMessage->MakeCopy() );	
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: sets the message to send when the button is double clicked
+//-----------------------------------------------------------------------------
+void CBitmapButton::SetDoublePressedCommand( const char *command )
+{
+	SetDoublePressedCommand( new KeyValues( "Command", "command", command ) );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: sets the message to send when the button is double clicked
+//-----------------------------------------------------------------------------
+void CBitmapButton::SetDoublePressedCommand( KeyValues *message )
+{
+	// delete the old message
+	if (_doublePressedActionMessage)
+	{
+		_doublePressedActionMessage->deleteThis();
+	}
+
+	_doublePressedActionMessage = message;
+}

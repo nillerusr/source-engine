@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -7,10 +7,10 @@
 #include "cbase.h"
 #include "particles_simple.h"
 #include "env_wind_shared.h"
-#include "KeyValues.h"
+#include "keyvalues.h"
 #include "toolframework_client.h"
 #include "toolframework/itoolframework.h"
-#include "vstdlib/IKeyValuesSystem.h"
+#include "vstdlib/ikeyvaluessystem.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -225,6 +225,7 @@ CSimpleEmitter::CSimpleEmitter( const char *pDebugName ) : CParticleEffect( pDeb
 {
 	m_flNearClipMin	= 16.0f;
 	m_flNearClipMax	= 64.0f;
+	m_nSplitScreenPlayerSlot = -1;
 }
 
 
@@ -386,6 +387,10 @@ void CSimpleEmitter::SimulateParticles( CParticleSimulateIterator *pIterator )
 
 void CSimpleEmitter::RenderParticles( CParticleRenderIterator *pIterator )
 {
+	ASSERT_LOCAL_PLAYER_RESOLVABLE();
+	if ( m_nSplitScreenPlayerSlot != -1 && m_nSplitScreenPlayerSlot != GET_ACTIVE_SPLITSCREEN_SLOT() )
+		return;
+
 	const SimpleParticle *pParticle = (const SimpleParticle *)pIterator->GetFirst();
 	while ( pParticle )
 	{
@@ -416,6 +421,11 @@ void CSimpleEmitter::RenderParticles( CParticleRenderIterator *pIterator )
 void CSimpleEmitter::SetDrawBeforeViewModel( bool state )
 {
 	m_ParticleEffect.SetDrawBeforeViewModel( state );
+}
+
+void CSimpleEmitter::SetShouldDrawForSplitScreenUser( int nSlot )
+{
+	m_nSplitScreenPlayerSlot = nSlot;
 }
 
 //==================================================

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -29,14 +29,18 @@ public:
 
 	// Tell the client that this camera needs to be rendered
 	void SetActive( bool bActive );
+	bool IsActive( void ) { return m_bActive; }
 	int  UpdateTransmitState(void);
 
 	void ChangeFOVThink( void );
+	float GetFOV() { return m_FOV; }
 
 	void InputChangeFOV( inputdata_t &inputdata );
 	void InputSetOnAndTurnOthersOff( inputdata_t &inputdata );
 	void InputSetOn( inputdata_t &inputdata );
 	void InputSetOff( inputdata_t &inputdata );
+	void InputForceActive( inputdata_t &inputdata );
+	void InputForceInactive( inputdata_t &inputdata );
 
 private:
 	float m_TargetFOV;
@@ -51,6 +55,8 @@ private:
 	CNetworkVar( float, m_flFogMaxDensity );
 	CNetworkVar( bool, m_bActive );
 	CNetworkVar( bool, m_bUseScreenAspectRatio );
+	CNetworkVar( bool, m_bNoSky );
+	CNetworkVar( float, m_fBrightness );
 
 	// Allows the mapmaker to control whether a camera is active or not
 	bool	m_bIsOn;

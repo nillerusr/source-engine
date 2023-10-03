@@ -1,18 +1,15 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2007, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
 // $NoKeywords: $
-//=====================================================================================//
+//===========================================================================//
 #include "cbase.h"
 #include "c_rope.h"
 #include "beamdraw.h"
 #include "view.h"
 #include "env_wind_shared.h"
 #include "input.h"
-#ifdef TF_CLIENT_DLL
-#include "cdll_util.h"
-#endif
 #include "rope_helpers.h"
 #include "engine/ivmodelinfo.h"
 #include "tier0/vprof.h"
@@ -28,6 +25,11 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+//Precache the rope shadowdepth material
+PRECACHE_REGISTER_BEGIN( GLOBAL, PrecacheRopes )
+	PRECACHE( MATERIAL, "cable/rope_shadowdepth" )
+PRECACHE_REGISTER_END()
+
 void RecvProxy_RecomputeSprings( const CRecvProxyData *pData, void *pStruct, void *pOut )
 {
 	// Have the regular proxy store the data.
@@ -39,6 +41,7 @@ void RecvProxy_RecomputeSprings( const CRecvProxyData *pData, void *pStruct, voi
 
 
 IMPLEMENT_CLIENTCLASS_DT_NOBASE( C_RopeKeyframe, DT_RopeKeyframe, CRopeKeyframe )
+	RecvPropInt( RECVINFO(m_nChangeCount) ),
 	RecvPropInt( RECVINFO(m_iRopeMaterialModelIndex) ),
 	RecvPropEHandle( RECVINFO(m_hStartPoint) ),
 	RecvPropEHandle( RECVINFO(m_hEndPoint) ),
@@ -60,13 +63,22 @@ IMPLEMENT_CLIENTCLASS_DT_NOBASE( C_RopeKeyframe, DT_RopeKeyframe, CRopeKeyframe 
 	RecvPropInt( RECVINFO_NAME(m_hNetworkMoveParent, moveparent), 0, RecvProxy_IntToMoveParent ),
 	
 	RecvPropInt( RECVINFO( m_iParentAttachment ) ),
+
+#if 1
+// #ifndef _X360 -- X360 client and Win32 XLSP dedicated server need equivalent SendTables
+	RecvPropInt( RECVINFO( m_nMinCPULevel ) ), 
+	RecvPropInt( RECVINFO( m_nMaxCPULevel ) ), 
+	RecvPropInt( RECVINFO( m_nMinGPULevel ) ), 
+	RecvPropInt( RECVINFO( m_nMaxGPULevel ) ), 
+#endif
+
 END_RECV_TABLE()
 
 #define ROPE_IMPULSE_SCALE	20
 #define ROPE_IMPULSE_DECAY	0.95
 
 static ConVar rope_shake( "rope_shake", "0" );
-static ConVar rope_subdiv( "rope_subdiv", "2", 0, "Rope subdivision amount", true, 0, true, MAX_ROPE_SUBDIVS );
+static ConVar rope_subdiv( "rope_subdiv", "2", FCVAR_MATERIAL_SYSTEM_THREAD, "Rope subdivision amount", true, 0, true, MAX_ROPE_SUBDIVS );
 static ConVar rope_collide( "rope_collide", "1", 0, "Collide rope with the world" );
 
 static ConVar rope_smooth( "rope_smooth", "1", 0, "Do an antialiasing effect on ropes" );
@@ -80,10 +92,7 @@ static ConVar rope_smooth_maxalpha( "rope_smooth_maxalpha", "0.5", 0, "Alpha for
 
 static ConVar mat_fullbright( "mat_fullbright", "0", FCVAR_CHEAT ); // get it from the engine
 static ConVar r_drawropes( "r_drawropes", "1", FCVAR_CHEAT );
-static ConVar r_queued_ropes( "r_queued_ropes", "1" );
 static ConVar r_ropetranslucent( "r_ropetranslucent", "1");
-static ConVar r_rope_holiday_light_scale( "r_rope_holiday_light_scale", "0.055", FCVAR_DEVELOPMENTONLY );
-static ConVar r_ropes_holiday_lights_allowed( "r_ropes_holiday_lights_allowed", "1", FCVAR_DEVELOPMENTONLY );
 
 static ConVar rope_wind_dist( "rope_wind_dist", "1000", 0, "Don't use CPU applying small wind gusts to ropes when they're past this distance." );
 static ConVar rope_averagelight( "rope_averagelight", "1", 0, "Makes ropes use average of cubemap lighting instead of max intensity." );
@@ -98,11 +107,9 @@ static ConVar rope_solid_minalpha( "rope_solid_minalpha", "0.0" );
 static ConVar rope_solid_maxalpha( "rope_solid_maxalpha", "1" );
 
 
-static CCycleCount	g_RopeCollideTicks;
-static CCycleCount	g_RopeDrawTicks;
-static CCycleCount	g_RopeSimulateTicks;
 static int			g_nRopePointsSimulated;
 
+static IMaterial *g_pSplineCableShadowdepth = NULL;
 // Active ropes.
 CUtlLinkedList<C_RopeKeyframe*, int> g_Ropes;
 
@@ -118,107 +125,14 @@ public:
 	}
 } g_FullBrightLightValuesInit;
 
-// Precalculated info for rope subdivision.
-static Vector	g_RopeSubdivs[MAX_ROPE_SUBDIVS][MAX_ROPE_SUBDIVS];
-class CSubdivInit
-{
-public:
-	CSubdivInit()
-	{
-		for ( int iSubdiv=0; iSubdiv < MAX_ROPE_SUBDIVS; iSubdiv++ )
-		{
-			for( int i=0; i <= iSubdiv; i++ )
-			{
-				float t = (float)(i+1) / (iSubdiv+1);
-				g_RopeSubdivs[iSubdiv][i].Init( t, t*t, t*t*t );
-			}
-		}
-	}
-} g_SubdivInit;
-
-//interesting barbed-wire-looking effect
-static int		g_nBarbedSubdivs = 3;
-static Vector	g_BarbedSubdivs[MAX_ROPE_SUBDIVS] = {	Vector(1.5,		1.5*1.5,		1.5*1.5*1.5),
-														Vector(-0.5,	-0.5 * -0.5,	-0.5*-0.5*-0.5),
-														Vector(0.5,		0.5*0.5,		0.5*0.5*0.5) };
-
 // This can be exposed through the entity if we ever care.
 static float g_flLockAmount = 0.1;
 static float g_flLockFalloff = 0.3;
-
-
-
-
-class CQueuedRopeMemoryManager
-{
-public:
-	CQueuedRopeMemoryManager( void )
-	{
-		m_nCurrentStack = 0;
-		MEM_ALLOC_CREDIT();
-		m_QueuedRopeMemory[0].Init( 131072, 0, 16384 );
-		m_QueuedRopeMemory[1].Init( 131072, 0, 16384 );
-	}
-	~CQueuedRopeMemoryManager( void )
-	{
-		m_QueuedRopeMemory[0].FreeAll( true );
-		m_QueuedRopeMemory[1].FreeAll( true );
-		for( int i = 0; i != 2; ++i )
-		{
-			for( int j = m_DeleteOnSwitch[i].Count(); --j >= 0; )
-			{
-				free( m_DeleteOnSwitch[i].Element(j) );
-			}
-
-			m_DeleteOnSwitch[i].RemoveAll();
-		}
-	}
-
-	void SwitchStack( void )
-	{
-		m_nCurrentStack = 1 - m_nCurrentStack;
-		m_QueuedRopeMemory[m_nCurrentStack].FreeAll( false );
-
-		for( int i = m_DeleteOnSwitch[m_nCurrentStack].Count(); --i >= 0; )
-		{
-			free( m_DeleteOnSwitch[m_nCurrentStack].Element(i) );
-		}
-		m_DeleteOnSwitch[m_nCurrentStack].RemoveAll();
-	}
-
-	inline void *Alloc( size_t bytes )
-	{
-		MEM_ALLOC_CREDIT();
-		void *pReturn = m_QueuedRopeMemory[m_nCurrentStack].Alloc( bytes, false );
-		if( pReturn == NULL )
-		{
-			int iMaxSize = m_QueuedRopeMemory[m_nCurrentStack].GetMaxSize();
-			Warning( "Overflowed rope queued rendering memory stack. Needed %d, have %d/%d\n", bytes, iMaxSize - m_QueuedRopeMemory[m_nCurrentStack].GetUsed(), iMaxSize );
-			pReturn = malloc( bytes );
-			m_DeleteOnSwitch[m_nCurrentStack].AddToTail( pReturn );
-		}
-		return pReturn;
-	}
-
-	CMemoryStack	m_QueuedRopeMemory[2];
-	int				m_nCurrentStack;
-	CUtlVector<void *>	m_DeleteOnSwitch[2]; //when we overflow the stack, we do new/delete
-};
 
 //=============================================================================
 //
 // Rope mananger.
 //
-struct RopeSegData_t
-{
-	int			m_nSegmentCount;
-	BeamSeg_t	m_Segments[MAX_ROPE_SEGMENTS];
-	float		m_BackWidths[MAX_ROPE_SEGMENTS];
-
-	// If this is less than rope_solid_minwidth and rope_solid_minalpha is 0, then we can avoid drawing..
-	float		m_flMaxBackWidth;
-};
-
 class CRopeManager : public IRopeManager
 {
 public:
@@ -229,65 +143,35 @@ public:
 	void ResetRenderCache( void );
 	void AddToRenderCache( C_RopeKeyframe *pRope );
 	void DrawRenderCache( bool bShadowDepth );
-	void OnRenderStart( void )
-	{
-		m_QueuedModeMemory.SwitchStack();
-	}
-
-	void SetHolidayLightMode( bool bHoliday ) { m_bDrawHolidayLights = bHoliday; }
-	bool IsHolidayLightMode( void );
-	int GetHolidayLightStyle( void );
 	
-private:
-	struct RopeRenderData_t;
-public:
-	void DrawRenderCache_NonQueued( bool bShadowDepth, RopeRenderData_t *pRenderCache, int nRenderCacheCount, const Vector &vCurrentViewForward, const Vector &vCurrentViewOrigin, C_RopeKeyframe::BuildRopeQueuedData_t *pBuildRopeQueuedData );
-	
-	void			ResetSegmentCache( int nMaxSegments );
-	RopeSegData_t	*GetNextSegmentFromCache( void );
-
 	enum { MAX_ROPE_RENDERCACHE	= 128 };
 
 	void RemoveRopeFromQueuedRenderCaches( C_RopeKeyframe *pRope );
 	
 private:
-
-	void RenderNonSolidRopes( IMatRenderContext *pRenderContext, IMaterial *pMaterial, int nVertCount, int nIndexCount );
-	void RenderSolidRopes( IMatRenderContext *pRenderContext, IMaterial *pMaterial, int nVertCount, int nIndexCount, bool bRenderNonSolid );
-
-private:
-
 	struct RopeRenderData_t
 	{
 		IMaterial			*m_pSolidMaterial;
-		IMaterial			*m_pBackMaterial;
 		int					m_nCacheCount;
 		C_RopeKeyframe		*m_aCache[MAX_ROPE_RENDERCACHE];
 	};
-
-	CUtlVector<RopeRenderData_t>	m_aRenderCache;
-	int								m_nSegmentCacheCount;
-	CUtlVector<RopeSegData_t>		m_aSegmentCache;
-	CThreadFastMutex				m_RenderCacheMutex; //there's only any contention during the switch from r_queued_ropes on to off
-	
-	//in queued material system mode we need to store off data for later use.
-	CQueuedRopeMemoryManager		m_QueuedModeMemory;
-
-	IMaterial* m_pDepthWriteMaterial;
-
 
 	struct RopeQueuedRenderCache_t
 	{
 		RopeRenderData_t *pCaches;
 		int iCacheCount;
+		CThreadFastMutex *m_pRopeDataMutex;
 		RopeQueuedRenderCache_t( void ) : pCaches(NULL), iCacheCount(0) { };
 	};
 
-	CUtlLinkedList<RopeQueuedRenderCache_t> m_RopeQueuedRenderCaches;
+	void DrawRenderCache_NonQueued( bool bShadowDepth, RopeRenderData_t *pRenderCache, int nRenderCacheCount, const Vector &vCurrentViewForward, const Vector &vCurrentViewOrigin, C_RopeKeyframe::BuildRopeQueuedData_t *pBuildRopeQueuedData, CThreadFastMutex *pRopeDataMutex );
 
-	bool m_bDrawHolidayLights;
-	bool m_bHolidayInitialized;
-	int m_nHolidayLightsStyle;
+	CUtlVector<RopeRenderData_t>	m_aRenderCache;
+	
+	//in queued material system mode we need to store off data for later use.
+	IMaterial* m_pDepthWriteMaterial;
+	CUtlLinkedList<RopeQueuedRenderCache_t> m_RopeQueuedRenderCaches;	
+	CThreadFastMutex		m_RopeQueuedRenderCaches_Mutex; //mutex just for changing m_RopeQueuedRenderCaches
 };
 
 static CRopeManager s_RopeManager;
@@ -298,24 +182,13 @@ IRopeManager *RopeManager()
 }
 
 
-inline bool ShouldUseFakeAA( IMaterial *pBackMaterial )
-{
-	return pBackMaterial && rope_smooth.GetInt() && engine->GetDXSupportLevel() > 70 && !g_pMaterialSystemHardwareConfig->IsAAEnabled();
-}
-
-
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
 CRopeManager::CRopeManager()
 {
 	m_aRenderCache.Purge();
-	m_aSegmentCache.Purge();
-	m_nSegmentCacheCount = 0;
 	m_pDepthWriteMaterial = NULL;
-	m_bDrawHolidayLights = false;
-	m_bHolidayInitialized = false;
-	m_nHolidayLightsStyle = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -323,21 +196,7 @@ CRopeManager::CRopeManager()
 //-----------------------------------------------------------------------------
 CRopeManager::~CRopeManager()
 {
-	int nRenderCacheCount = m_aRenderCache.Count();
-	for ( int iRenderCache = 0; iRenderCache < nRenderCacheCount; ++iRenderCache )
-	{
-		if ( m_aRenderCache[iRenderCache].m_pSolidMaterial )
-		{
-			m_aRenderCache[iRenderCache].m_pSolidMaterial->DecrementReferenceCount();
-		}
-		if ( m_aRenderCache[iRenderCache].m_pBackMaterial )
-		{
-			m_aRenderCache[iRenderCache].m_pBackMaterial->DecrementReferenceCount();
-		}
-	}
-
 	m_aRenderCache.Purge();
-	m_aSegmentCache.Purge();
 }
 
 //-----------------------------------------------------------------------------
@@ -367,8 +226,7 @@ void CRopeManager::AddToRenderCache( C_RopeKeyframe *pRope )
 	int nRenderCacheCount = m_aRenderCache.Count();
 	for ( ; iRenderCache < nRenderCacheCount; ++iRenderCache )
 	{
-		if ( ( pRope->GetSolidMaterial() == m_aRenderCache[iRenderCache].m_pSolidMaterial ) &&
-			 ( pRope->GetBackMaterial() == m_aRenderCache[iRenderCache].m_pBackMaterial ) )
+		if ( pRope->GetSolidMaterial() == m_aRenderCache[iRenderCache].m_pSolidMaterial )
 			break;
 	}
 
@@ -378,15 +236,6 @@ void CRopeManager::AddToRenderCache( C_RopeKeyframe *pRope )
 	{
 		int iRenderCache = m_aRenderCache.AddToTail();
 		m_aRenderCache[iRenderCache].m_pSolidMaterial = pRope->GetSolidMaterial();
-		if ( m_aRenderCache[iRenderCache].m_pSolidMaterial )
-		{
-			m_aRenderCache[iRenderCache].m_pSolidMaterial->IncrementReferenceCount();
-		}
-		m_aRenderCache[iRenderCache].m_pBackMaterial = pRope->GetBackMaterial();
-		if ( m_aRenderCache[iRenderCache].m_pBackMaterial )
-		{
-			m_aRenderCache[iRenderCache].m_pBackMaterial->IncrementReferenceCount();
-		}
 		m_aRenderCache[iRenderCache].m_nCacheCount = 0;
 	}
 
@@ -399,22 +248,30 @@ void CRopeManager::AddToRenderCache( C_RopeKeyframe *pRope )
 	m_aRenderCache[iRenderCache].m_aCache[m_aRenderCache[iRenderCache].m_nCacheCount] = pRope;
 	++m_aRenderCache[iRenderCache].m_nCacheCount;
 }
+#define OUTPUT_2SPLINE_VERTS( t, u )									\
+	meshBuilder.Color4ub( nRed, nGreen, nBlue, nAlpha );	\
+	meshBuilder.Position3f( (t), u, 0 );					\
+	meshBuilder.TexCoord4fv( 0, vecP0.Base() );				\
+	meshBuilder.TexCoord4fv( 1, vecP1.Base() );				\
+	meshBuilder.TexCoord4fv( 2, vecP2.Base() );				\
+	meshBuilder.TexCoord4fv( 3, vecP3.Base() );				\
+	meshBuilder.AdvanceVertexF<VTX_HAVEPOS | VTX_HAVECOLOR, 5>(); \
+	meshBuilder.Color4ub( nRed, nGreen, nBlue, nAlpha );	\
+	meshBuilder.Position3f( (t), u, 1 );					\
+	meshBuilder.TexCoord4fv( 0, vecP0.Base() );				\
+	meshBuilder.TexCoord4fv( 1, vecP1.Base() );				\
+	meshBuilder.TexCoord4fv( 2, vecP2.Base() );				\
+	meshBuilder.TexCoord4fv( 3, vecP3.Base() );				\
+	meshBuilder.AdvanceVertexF<VTX_HAVEPOS | VTX_HAVECOLOR, 5>(); 
 
-void CRopeManager::DrawRenderCache_NonQueued( bool bShadowDepth, RopeRenderData_t *pRenderCache, int nRenderCacheCount, const Vector &vCurrentViewForward, const Vector &vCurrentViewOrigin, C_RopeKeyframe::BuildRopeQueuedData_t *pBuildRopeQueuedData )
+
+void CRopeManager::DrawRenderCache_NonQueued( bool bShadowDepth, RopeRenderData_t *pRenderCache, int nRenderCacheCount, const Vector &vCurrentViewForward, const Vector &vCurrentViewOrigin, C_RopeKeyframe::BuildRopeQueuedData_t *pBuildRopeQueuedData, CThreadFastMutex *pRopeDataMutex )
 {
 	VPROF_BUDGET( "CRopeManager::DrawRenderCache", VPROF_BUDGETGROUP_ROPES );
-	AUTO_LOCK( m_RenderCacheMutex ); //contention cases: Toggling from queued mode on to off. Rope deletion from the cache.
-
-	// Check to see if we want to render the ropes.
-	if( !r_drawropes.GetBool() )
-	{
-		if( pBuildRopeQueuedData && (m_RopeQueuedRenderCaches.Count() != 0) )
-		{
-			m_RopeQueuedRenderCaches.Remove( m_RopeQueuedRenderCaches.Head() );
-		}
-
-		return;
-	}
+	
+	CThreadFastMutex dummyMutex;
+	if( pRopeDataMutex == NULL )
+		pRopeDataMutex = &dummyMutex;
 
 	if ( bShadowDepth && !m_pDepthWriteMaterial && g_pMaterialSystem )
 	{
@@ -423,101 +280,225 @@ void CRopeManager::DrawRenderCache_NonQueued( bool bShadowDepth, RopeRenderData_
 		pVMTKeyValues->SetInt( "$alphatest", 0 );
 		pVMTKeyValues->SetInt( "$nocull", 1 );
 		m_pDepthWriteMaterial = g_pMaterialSystem->FindProceduralMaterial( "__DepthWrite01", TEXTURE_GROUP_OTHER, pVMTKeyValues );
-		m_pDepthWriteMaterial->IncrementReferenceCount();
 	}
-
 	CMatRenderContextPtr pRenderContext( materials );
 
-	C_RopeKeyframe::BuildRopeQueuedData_t stackQueuedData;
-	Vector vStackPredictedPositions[MAX_ROPE_SEGMENTS];	
-	
-	for ( int iRenderCache = 0; iRenderCache < nRenderCacheCount; ++iRenderCache )
+	// UNDONE: needs to use the queued data
 	{
-		int nCacheCount = pRenderCache[iRenderCache].m_nCacheCount;
-
-		if ( nCacheCount == 0 )
-			continue;		
-
-		ResetSegmentCache( nCacheCount );
-
-		for ( int iCache = 0; iCache < nCacheCount; ++iCache )
+		AUTO_LOCK_FM( *pRopeDataMutex );
+		int defaultSubdiv = rope_subdiv.GetInt();
+		for ( int iRenderCache = 0; iRenderCache < nRenderCacheCount; ++iRenderCache )
 		{
-			C_RopeKeyframe *pRope = pRenderCache[iRenderCache].m_aCache[iCache];
-			if ( pRope )
-			{
-				RopeSegData_t *pRopeSegment = GetNextSegmentFromCache();
-				
-				if( pBuildRopeQueuedData )
-				{
-					pRope->BuildRope( pRopeSegment, vCurrentViewForward, vCurrentViewOrigin, pBuildRopeQueuedData, true );
-					++pBuildRopeQueuedData;
-				}
-				else
-				{
-					//to unify the BuildRope code, emulate the queued data
-					stackQueuedData.m_iNodeCount = pRope->m_RopePhysics.NumNodes();
-					stackQueuedData.m_pLightValues = pRope->m_LightValues;
-					stackQueuedData.m_vColorMod = pRope->m_vColorMod;
-					stackQueuedData.m_pPredictedPositions = vStackPredictedPositions;
-					stackQueuedData.m_RopeLength = pRope->m_RopeLength;
-					stackQueuedData.m_Slack = pRope->m_Slack;
+			int nCacheCount = pRenderCache[iRenderCache].m_nCacheCount;
 
-					for( int i = 0; i != stackQueuedData.m_iNodeCount; ++i )
-					{
-						vStackPredictedPositions[i] = pRope->m_RopePhysics.GetNode( i )->m_vPredicted;
-					}
+			int nTotalVerts = 0;
+			int nTotalIndices = 0;
+			for ( int iCache = 0; iCache < nCacheCount; ++iCache )
+			{
+				C_RopeKeyframe *pRope = pRenderCache[iRenderCache].m_aCache[iCache];
+				if ( pRope )
+				{
+					int segs =  pRope->m_RopePhysics.NumNodes()-1;
+					int nSubdivCount = (pRope->m_Subdiv != 255 ? pRope->m_Subdiv : defaultSubdiv) + 1;
+					nTotalVerts += ((2 * nSubdivCount) * segs) + 2;
+					nTotalIndices += (6 * nSubdivCount) * segs;
+				}
+			}
+			if ( nTotalVerts == 0 )
+				continue;		
+
+			IMaterial *pMaterial = bShadowDepth ? g_pSplineCableShadowdepth : pRenderCache[iRenderCache].m_pSolidMaterial;
+
+			// Need to make sure that all rope materials use the splinerope shader since there are a lot of assumptions about how the shader interfaces with this code.
+			AssertOnce( V_stricmp( pMaterial->GetShaderName(), "splinerope" ) == 0 );
+
+			pRenderContext->Bind( pMaterial );
+
+			int nMaxVertices = pRenderContext->GetMaxVerticesToRender( pMaterial );
+			int nMaxIndices = pRenderContext->GetMaxIndicesToRender();
+
+			IMesh* pMesh = pRenderContext->GetDynamicMesh( true );
+			CMeshBuilder meshBuilder;
+			int meshVertCount = MIN(nTotalVerts, nMaxVertices);
+			int meshIndexCount = MIN(nTotalIndices, nMaxIndices);
+			meshBuilder.Begin( pMesh, MATERIAL_TRIANGLES, meshVertCount, meshIndexCount );
+			int nCurIDX = 0;
+
+			int availableVerts = meshVertCount;
+			int availableIndices = meshIndexCount;
+			float flLastU = 1.0f;
+
+			for ( int iCache = 0; iCache < nCacheCount; ++iCache )
+			{
+				C_RopeKeyframe *pRope = pRenderCache[iRenderCache].m_aCache[iCache];
+				if ( pRope )
+				{
+					CSimplePhysics::CNode *pNode = pRope->m_RopePhysics.GetFirstNode();
+					int nSegmentsToRender = pRope->m_RopePhysics.NumNodes()-1;
+					if ( !nSegmentsToRender )
+						continue;
+
+					int nParticles = pRope->m_RopePhysics.NumNodes();
+					int nSubdivCount = (pRope->m_Subdiv != 255 ? pRope->m_Subdiv : defaultSubdiv) + 1;
+
+					int nNumIndicesPerSegment = 6 * nSubdivCount;
+					int nNumVerticesPerSegment = 2 * nSubdivCount;
+
+					int nSegmentsAvailableInBuffer = MIN( ( availableVerts - 2 ) / nNumVerticesPerSegment,
+						( availableIndices ) / nNumIndicesPerSegment );
+
+					int segmentsInBuffer = MIN(nSegmentsAvailableInBuffer,nSegmentsToRender);
+					availableIndices -= nNumIndicesPerSegment * segmentsInBuffer;
+					availableVerts -= 2 + (nNumVerticesPerSegment * segmentsInBuffer);
+
+					float width = pRope->m_Width;
+					Vector vModColor = pRope->m_vColorMod;
+					Vector *pColors = pRope->m_LightValues;
 					
-					pRope->BuildRope( pRopeSegment, vCurrentViewForward, vCurrentViewOrigin, &stackQueuedData, false );
+					// Figure out texture scale.
+					float flPixelsPerInch = 4.0f / pRope->m_TextureScale;
+					// This is the total number of texels for the length of the whole rope.
+					float flTotalTexCoord = flPixelsPerInch * ( pRope->m_RopeLength + pRope->m_Slack + ROPESLACK_FUDGEFACTOR );
+					int nTotalPoints = (nSegmentsToRender * (nSubdivCount-1)) + 1;
+					float flDU = ( flTotalTexCoord / nTotalPoints ) / ( float )pRope->m_TextureHeight;
+					float flU = pRope->m_flCurScroll;
+					float m_flTStep = 1.0f / float(nSubdivCount);
+
+					bool bFirstPoint = true;
+
+					// initialize first spline segment
+					Vector4D vecP1;
+					Vector4D vecP2;
+					vecP1.Init( pNode[0].m_vPredicted, pRope->m_Width );
+					vecP2.Init( pNode[1].m_vPredicted, pRope->m_Width );
+					Vector4D vecP0 = vecP1;
+
+					uint8 nRed = 0;
+					uint8 nGreen = 0;
+					uint8 nBlue = 0;
+					uint8 nAlpha = 255;
+
+					Vector4D vecDelta = vecP2;
+					vecDelta -= vecP1;
+					vecP0 -= vecDelta;
+
+					Vector4D vecP3;
+
+					if ( nParticles < 3 )
+					{
+						vecP3 = vecP2;
+						vecP3 += vecDelta;
+					}
+					else
+					{
+						vecP3.Init( pNode[2].m_vPredicted, width );
+					}
+					int nPnt = 3;
+					int nColor = 1;
+					Vector vColor0( pColors[0].x * vModColor.x, pColors[0].y * vModColor.y, pColors[0].z * vModColor.z );
+					Vector vColor1( pColors[1].x * vModColor.x, pColors[1].y * vModColor.y, pColors[1].z * vModColor.z );
+
+					float flT = 0;
+					do
+					{
+						if ( ! nSegmentsAvailableInBuffer )
+						{
+							meshBuilder.End();
+							pMesh->Draw();
+							nTotalVerts -= (meshVertCount - availableVerts);
+							nTotalIndices -= (meshIndexCount - availableIndices);
+							meshVertCount = MIN(nTotalVerts, nMaxVertices);
+							meshIndexCount = MIN(nTotalIndices, nMaxIndices);
+							meshBuilder.Begin( pMesh, MATERIAL_TRIANGLES, meshVertCount, meshIndexCount );
+							availableVerts = meshVertCount;
+							availableIndices = meshIndexCount;
+							// copy the last emitted points
+							OUTPUT_2SPLINE_VERTS( flT, flLastU );
+
+							nSegmentsAvailableInBuffer = MIN( ( availableVerts - 2 ) / nNumVerticesPerSegment,
+								availableIndices / nNumIndicesPerSegment );
+
+							nCurIDX = 0;
+						}
+						nSegmentsAvailableInBuffer--;
+						flT = 0.;
+						for( int nSlice = 0 ; nSlice < nSubdivCount; nSlice++ )
+						{
+							float omt = 1.0f - flT;
+							nRed = FastFToC( (vColor0.x * omt) + (vColor1.x*flT) );
+							nGreen = FastFToC( (vColor0.y * omt) + (vColor1.y*flT) );
+							nBlue = FastFToC( (vColor0.z * omt) + (vColor1.z*flT) );
+							OUTPUT_2SPLINE_VERTS( flT, flU );
+							flT += m_flTStep;
+							flU += flDU;
+							if ( ! bFirstPoint )
+							{
+								meshBuilder.FastIndex( nCurIDX );
+								meshBuilder.FastIndex( nCurIDX+1 );
+								meshBuilder.FastIndex( nCurIDX+2 );
+								meshBuilder.FastIndex( nCurIDX+1 );
+								meshBuilder.FastIndex( nCurIDX+3 );
+								meshBuilder.FastIndex( nCurIDX+2 );
+								nCurIDX += 2;
+							}
+							bFirstPoint = false;
+						}
+						// next segment
+						vColor0 = vColor1;
+						if ( nColor < nParticles-1 )
+						{
+							nColor++;
+							vColor1.Init( pColors[nColor].x * vModColor.x, pColors[nColor].y * vModColor.y, pColors[nColor].z * vModColor.z );
+						}
+						if ( nSegmentsToRender > 1 )
+						{
+							vecP0 = vecP1;
+							vecP1 = vecP2;
+							vecP2 = vecP3;
+
+							if ( nPnt < nParticles )
+							{
+								vecP3.AsVector3D() = pNode[nPnt].m_vPredicted;
+								nPnt++;
+							}
+							else
+							{
+								// fake last point by extrapolating
+								vecP3 += vecP2;
+								vecP3 -= vecP1;
+							}
+						}
+					} while( --nSegmentsToRender );
+
+					// output last piece
+					OUTPUT_2SPLINE_VERTS( 1.0, flU );
+					meshBuilder.FastIndex( nCurIDX );
+					meshBuilder.FastIndex( nCurIDX+1 );
+					meshBuilder.FastIndex( nCurIDX+2 );
+					meshBuilder.FastIndex( nCurIDX+1 );
+					meshBuilder.FastIndex( nCurIDX+3 );
+					meshBuilder.FastIndex( nCurIDX+2 );
+					nCurIDX += 4;
+					flLastU = flU;
 				}
 			}
-			else
-			{
-				if( pBuildRopeQueuedData )
-				{
-					//we should only be here if a rope was in the queue and then deleted. We still have it's relevant data (and need to skip over it).
-					++pBuildRopeQueuedData;
-				}
-			}
-		}
 
-		if ( materials->GetRenderContext()->GetCallQueue() != NULL && pBuildRopeQueuedData == NULL )
-		{
-			// We build ropes outside of queued mode for holidy lights
-			// But we don't want to render them
-			continue;
-		}
-
-		int nVertCount = 0;
-		int nIndexCount = 0;
-		for ( int iSegmentCache = 0; iSegmentCache < m_nSegmentCacheCount; ++iSegmentCache )
-		{
-			nVertCount += ( m_aSegmentCache[iSegmentCache].m_nSegmentCount * 2 );
-			nIndexCount += ( ( m_aSegmentCache[iSegmentCache].m_nSegmentCount - 1 )  * 6 );
-		}
-
-		// Render the non-solid portion of the ropes.
-		bool bRenderNonSolid = !bShadowDepth && ShouldUseFakeAA( pRenderCache[iRenderCache].m_pBackMaterial );
-		if ( bRenderNonSolid )
-		{
-			RenderNonSolidRopes( pRenderContext, pRenderCache[iRenderCache].m_pBackMaterial, nVertCount, nIndexCount );
-		}
-
-		// Render the solid portion of the ropes.
-		if ( rope_rendersolid.GetInt() )
-		{
-			if ( bShadowDepth )
-				RenderSolidRopes( pRenderContext, m_pDepthWriteMaterial, nVertCount, nIndexCount, bRenderNonSolid );
-			else
-				RenderSolidRopes( pRenderContext, pRenderCache[iRenderCache].m_pSolidMaterial, nVertCount, nIndexCount, bRenderNonSolid );
+			meshBuilder.End();
+			pMesh->Draw();
 		}
 	}
-	ResetSegmentCache( 0 );
 
+	m_RopeQueuedRenderCaches_Mutex.Lock();
 	if( pBuildRopeQueuedData && (m_RopeQueuedRenderCaches.Count() != 0) )
 	{
-		m_RopeQueuedRenderCaches.Remove( m_RopeQueuedRenderCaches.Head() );
+		unsigned short iHeadIndex = m_RopeQueuedRenderCaches.Head();
+		delete m_RopeQueuedRenderCaches[iHeadIndex].m_pRopeDataMutex;
+		m_RopeQueuedRenderCaches.Remove( iHeadIndex );
 	}
+	m_RopeQueuedRenderCaches_Mutex.Unlock();
 }
+
+ConVar r_queued_ropes( "r_queued_ropes", "1" );
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -529,15 +510,19 @@ void CRopeManager::DrawRenderCache( bool bShadowDepth )
 	if( iRenderCacheCount == 0 )
 		return;
 
+	// Check to see if we want to render the ropes.
+	if( !r_drawropes.GetBool() )
+		return;
+
 	Vector vForward = CurrentViewForward();
 	Vector vOrigin = CurrentViewOrigin();
 
+	CMatRenderContextPtr pRenderContext(materials);
 	ICallQueue *pCallQueue;
-	if( r_queued_ropes.GetBool() && (pCallQueue = materials->GetRenderContext()->GetCallQueue()) != NULL )
+	if( r_queued_ropes.GetBool() && (pCallQueue = pRenderContext->GetCallQueue()) != NULL )
 	{
 		//material queue available and desired
 		CRopeManager::RopeRenderData_t *pRenderCache = m_aRenderCache.Base();
-		AUTO_LOCK( m_RenderCacheMutex );
 		
 		int iRopeCount = 0;
 		int iNodeCount = 0;
@@ -563,7 +548,8 @@ void CRopeManager::DrawRenderCache( bool bShadowDepth )
 								(iRopeCount * sizeof(C_RopeKeyframe::BuildRopeQueuedData_t)) +
 								(iNodeCount * (sizeof(Vector) * 2));
 
-		void *pMemory = m_QueuedModeMemory.Alloc( iMemoryNeeded );
+		CMatRenderData< byte > rd(pRenderContext, iMemoryNeeded);
+		void *pMemory = rd.Base();
 
 		CRopeManager::RopeRenderData_t *pRenderCachesStart = (CRopeManager::RopeRenderData_t *)pMemory;
 		C_RopeKeyframe::BuildRopeQueuedData_t *pBuildRopeQueuedDataStart = (C_RopeKeyframe::BuildRopeQueuedData_t *)(pRenderCachesStart + iRenderCacheCount);
@@ -574,7 +560,7 @@ void CRopeManager::DrawRenderCache( bool bShadowDepth )
 		RopeQueuedRenderCache_t cache;
 		cache.pCaches = pRenderCachesStart;
 		cache.iCacheCount = iRenderCacheCount;
-		m_RopeQueuedRenderCaches.AddToTail( cache );
+		cache.m_pRopeDataMutex = new CThreadFastMutex;
 		
 		C_RopeKeyframe::BuildRopeQueuedData_t *pWriteRopeQueuedData = pBuildRopeQueuedDataStart;
 		Vector *pVectorWrite = (Vector *)pVectorDataStart;
@@ -587,7 +573,6 @@ void CRopeManager::DrawRenderCache( bool bShadowDepth )
 			int iCacheCount = pReadCache->m_nCacheCount;
 			pWriteCache->m_nCacheCount = 0;
 			pWriteCache->m_pSolidMaterial = pReadCache->m_pSolidMaterial;
-			pWriteCache->m_pBackMaterial = pReadCache->m_pBackMaterial;
 			for( int j = 0; j != iCacheCount; ++j )
 			{
 				C_RopeKeyframe *pRope = pReadCache->m_aCache[j];
@@ -618,193 +603,31 @@ void CRopeManager::DrawRenderCache( bool bShadowDepth )
 				pVectorWrite += iNodes; //so we don't overwrite the light values with the next rope's predicted positions
 			}
 		}
+
+		m_RopeQueuedRenderCaches_Mutex.Lock();
+		unsigned short iLLIndex = m_RopeQueuedRenderCaches.AddToTail( cache );
+		CThreadFastMutex *pRopeDataMutex = m_RopeQueuedRenderCaches[iLLIndex].m_pRopeDataMutex;
+		m_RopeQueuedRenderCaches_Mutex.Unlock();
+
 		Assert( ((void *)pVectorWrite == (void *)(((uint8 *)pMemory) + iMemoryNeeded)) && ((void *)pWriteRopeQueuedData == (void *)pVectorDataStart));		
-		pCallQueue->QueueCall( this, &CRopeManager::DrawRenderCache_NonQueued, bShadowDepth, pRenderCachesStart, iRenderCacheCount, vForward, vOrigin, pBuildRopeQueuedDataStart );
-
-		if ( IsHolidayLightMode() )
-		{
-			// With holiday lights we need to also build the ropes non-queued without rendering them
-			DrawRenderCache_NonQueued( bShadowDepth, m_aRenderCache.Base(), iRenderCacheCount, vForward, vOrigin, NULL );
-		}
+		pCallQueue->QueueCall( this, &CRopeManager::DrawRenderCache_NonQueued, bShadowDepth, pRenderCachesStart, iRenderCacheCount, vForward, vOrigin, pBuildRopeQueuedDataStart, pRopeDataMutex );
 	}
 	else
 	{
-		DrawRenderCache_NonQueued( bShadowDepth, m_aRenderCache.Base(), iRenderCacheCount, vForward, vOrigin, NULL );
+		DrawRenderCache_NonQueued( bShadowDepth, m_aRenderCache.Base(), iRenderCacheCount, vForward, vOrigin, NULL, NULL );
 	}
 }
-
-bool CRopeManager::IsHolidayLightMode( void )
-{
-	if ( !r_ropes_holiday_lights_allowed.GetBool() )
-	{
-		return false;
-	}
-
-	bool bDrawHolidayLights = false;
-
-#ifdef USES_ECON_ITEMS
-	if ( !m_bHolidayInitialized && GameRules() )
-	{
-		m_bHolidayInitialized = true;
-		m_bDrawHolidayLights = GameRules()->IsHolidayActive( kHoliday_Christmas );
-	}
-
-	bDrawHolidayLights = m_bDrawHolidayLights;
-	m_nHolidayLightsStyle = 0;
-
-#ifdef TF_CLIENT_DLL
-	// Turn them on in Pyro-vision too
-	if ( IsLocalPlayerUsingVisionFilterFlags( TF_VISION_FILTER_PYRO ) )
-	{
-		bDrawHolidayLights = true;
-		m_nHolidayLightsStyle = 1;
-	}
-#endif // TF_CLIENT_DLL
-
-#endif // USES_ECON_ITEMS
-
-	return bDrawHolidayLights;
-}
-
-int CRopeManager::GetHolidayLightStyle( void )
-{
-	return m_nHolidayLightsStyle;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CRopeManager::RenderNonSolidRopes( IMatRenderContext *pRenderContext, IMaterial *pMaterial, int nVertCount, int nIndexCount )
-{
-	// Render the solid portion of the ropes.
-	CMeshBuilder meshBuilder;
-	IMesh *pMesh = pRenderContext->GetDynamicMesh( true, NULL, NULL, pMaterial );
-	meshBuilder.Begin( pMesh, MATERIAL_TRIANGLES, nVertCount, nIndexCount );
-
-	CBeamSegDraw beamSegment;
-
-	int nVerts = 0;
-	for ( int iSegmentCache = 0; iSegmentCache < m_nSegmentCacheCount; ++iSegmentCache )
-	{
-		int nSegmentCount = m_aSegmentCache[iSegmentCache].m_nSegmentCount;
-		beamSegment.Start( pRenderContext, nSegmentCount, pMaterial, &meshBuilder, nVerts );
-		for ( int iSegment = 0; iSegment < nSegmentCount; ++iSegment )
-		{
-			beamSegment.NextSeg( &m_aSegmentCache[iSegmentCache].m_Segments[iSegment] );
-		}
-		beamSegment.End();
-		nVerts += ( m_aSegmentCache[iSegmentCache].m_nSegmentCount * 2 );
-	}
-	
-	meshBuilder.End();
-	pMesh->Draw();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CRopeManager::RenderSolidRopes( IMatRenderContext *pRenderContext, IMaterial *pMaterial, int nVertCount, int nIndexCount, bool bRenderNonSolid )
-{
-	// Render the solid portion of the ropes.
-	CMeshBuilder meshBuilder;
-	IMesh *pMesh = pRenderContext->GetDynamicMesh( true, NULL, NULL, pMaterial );
-	meshBuilder.Begin( pMesh, MATERIAL_TRIANGLES, nVertCount, nIndexCount );
-
-	CBeamSegDraw beamSegment;
-
-	if ( bRenderNonSolid )
-	{
-		int nVerts = 0;
-		for ( int iSegmentCache = 0; iSegmentCache < m_nSegmentCacheCount; ++iSegmentCache )
-		{
-			RopeSegData_t *pSegData = &m_aSegmentCache[iSegmentCache];
-			
-			// If it's all going to be 0 alpha, then just skip drawing this one.
-			if ( rope_solid_minalpha.GetFloat() == 0.0 && pSegData->m_flMaxBackWidth <= rope_solid_minwidth.GetFloat() )
-				continue;
-
-			int nSegmentCount = m_aSegmentCache[iSegmentCache].m_nSegmentCount;
-			beamSegment.Start( pRenderContext, nSegmentCount, pMaterial, &meshBuilder, nVerts );
-			for ( int iSegment = 0; iSegment < nSegmentCount; ++iSegment )
-			{
-				BeamSeg_t *pSeg = &m_aSegmentCache[iSegmentCache].m_Segments[iSegment];
-				pSeg->m_flWidth = m_aSegmentCache[iSegmentCache].m_BackWidths[iSegment];
-
-				// To avoid aliasing, the "solid" version of the rope on xbox is just "more solid",
-				// and it has its own values controlling its alpha.
-				pSeg->m_flAlpha = RemapVal( pSeg->m_flWidth, 
-					rope_solid_minwidth.GetFloat(),
-					rope_solid_maxwidth.GetFloat(),
-					rope_solid_minalpha.GetFloat(),
-					rope_solid_maxalpha.GetFloat() );
-				
-				pSeg->m_flAlpha = clamp( pSeg->m_flAlpha, 0.0f, 1.0f );
-				
-				beamSegment.NextSeg( &m_aSegmentCache[iSegmentCache].m_Segments[iSegment] );
-			}
-			beamSegment.End();
-			nVerts += ( m_aSegmentCache[iSegmentCache].m_nSegmentCount * 2 );
-		}
-	}
-	else
-	{
-		int nVerts = 0;
-		for ( int iSegmentCache = 0; iSegmentCache < m_nSegmentCacheCount; ++iSegmentCache )
-		{
-			int nSegmentCount = m_aSegmentCache[iSegmentCache].m_nSegmentCount;
-			beamSegment.Start( pRenderContext, nSegmentCount, pMaterial, &meshBuilder, nVerts );
-			for ( int iSegment = 0; iSegment < nSegmentCount; ++iSegment )
-			{
-				beamSegment.NextSeg( &m_aSegmentCache[iSegmentCache].m_Segments[iSegment] );
-			}
-			beamSegment.End();
-			nVerts += ( m_aSegmentCache[iSegmentCache].m_nSegmentCount * 2 );
-		}
-	}
-
-	meshBuilder.End();
-	pMesh->Draw();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CRopeManager::ResetSegmentCache( int nMaxSegments )
-{
-	MEM_ALLOC_CREDIT();
-	m_nSegmentCacheCount = 0;
-	if ( nMaxSegments )
-		m_aSegmentCache.EnsureCount( nMaxSegments );
-	else
-		m_aSegmentCache.Purge();
-
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-RopeSegData_t *CRopeManager::GetNextSegmentFromCache( void )
-{
-	if ( m_nSegmentCacheCount >= m_aSegmentCache.Count() )
-	{
-		Warning( "CRopeManager::GetNextSegmentFromCache too many segments for cache!\n" );
-		return NULL;
-	}
-
-	++m_nSegmentCacheCount;
-	return &m_aSegmentCache[m_nSegmentCacheCount-1];
-}
-
 
 
 void CRopeManager::RemoveRopeFromQueuedRenderCaches( C_RopeKeyframe *pRope )
 {
-	//remove this rope from queued render caches	
-	AUTO_LOCK( m_RenderCacheMutex );
+	//remove this rope from queued render caches
+	AUTO_LOCK_FM( m_RopeQueuedRenderCaches_Mutex );
+	
 	int index = m_RopeQueuedRenderCaches.Head();
 	while( m_RopeQueuedRenderCaches.IsValidIndex( index ) )
 	{
-		RopeQueuedRenderCache_t &RenderCacheData = m_RopeQueuedRenderCaches[index];
+		RopeQueuedRenderCache_t &RenderCacheData = m_RopeQueuedRenderCaches[index];		
 		for( int i = 0; i != RenderCacheData.iCacheCount; ++i )
 		{
 			RopeRenderData_t *pCache = &RenderCacheData.pCaches[i];
@@ -812,13 +635,15 @@ void CRopeManager::RemoveRopeFromQueuedRenderCaches( C_RopeKeyframe *pRope )
 			{
 				if( pCache->m_aCache[j] == pRope )
 				{
+					RenderCacheData.m_pRopeDataMutex->Lock();
 					pCache->m_aCache[j] = NULL;
+					RenderCacheData.m_pRopeDataMutex->Unlock();
 				}
 			}
-		}
+		}		
 
 		index = m_RopeQueuedRenderCaches.Next( index );
-	}	
+	}
 }
 
 //=============================================================================
@@ -829,9 +654,6 @@ void CRopeManager::RemoveRopeFromQueuedRenderCaches( C_RopeKeyframe *pRope )
 
 void Rope_ResetCounters()
 {
-	g_RopeCollideTicks.Init();
-	g_RopeDrawTicks.Init();
-	g_RopeSimulateTicks.Init();
 	g_nRopePointsSimulated = 0;
 }
 
@@ -855,9 +677,7 @@ void ShakeRopesCallback( const CEffectData &data )
 	}
 }
 
-DECLARE_CLIENT_EFFECT( "ShakeRopes", ShakeRopesCallback );
-
-
+DECLARE_CLIENT_EFFECT( ShakeRopes, ShakeRopesCallback )
 
 
 // ------------------------------------------------------------------------------------ //
@@ -884,7 +704,7 @@ void C_RopeKeyframe::CPhysicsDelegate::GetNodeForces( CSimplePhysics::CNode *pNo
 		}
 		else
 		{
-			if (m_pKeyframe->m_flCurrentGustTimer < m_pKeyframe->m_flCurrentGustLifetime )
+			if ( ( m_pKeyframe->m_flCurrentGustLifetime != 0.0f ) && ( m_pKeyframe->m_flCurrentGustTimer < m_pKeyframe->m_flCurrentGustLifetime ) )
 			{
 				float div = m_pKeyframe->m_flCurrentGustTimer / m_pKeyframe->m_flCurrentGustLifetime;
 				float scale = 1 - cos( div * M_PI );
@@ -902,8 +722,12 @@ void C_RopeKeyframe::CPhysicsDelegate::GetNodeForces( CSimplePhysics::CNode *pNo
 	}
 
 	// Apply any instananeous forces and reset
-	*pAccel += ROPE_IMPULSE_SCALE * m_pKeyframe->m_flImpulse;
-	m_pKeyframe->m_flImpulse *= ROPE_IMPULSE_DECAY;
+	*pAccel += ROPE_IMPULSE_SCALE * m_pKeyframe->m_vecImpulse;
+	m_pKeyframe->m_vecImpulse *= ROPE_IMPULSE_DECAY;
+	if ( m_pKeyframe->m_vecImpulse.LengthSqr() < 0.1f )
+	{
+		m_pKeyframe->m_vecImpulse = vec3_origin;
+	}
 }
 
 
@@ -940,21 +764,19 @@ void C_RopeKeyframe::CPhysicsDelegate::ApplyConstraints( CSimplePhysics::CNode *
 {
 	VPROF( "CPhysicsDelegate::ApplyConstraints" );
 
-	CTraceFilterWorldOnly traceFilter;
-
 	// Collide with the world.
 	if( ((m_pKeyframe->m_RopeFlags & ROPE_COLLIDE) && 
 		rope_collide.GetInt()) || 
 		(rope_collide.GetInt() == 2) )
 	{
-		CTimeAdder adder( &g_RopeCollideTicks );
+		CTraceFilterWorldOnly traceFilter;
 
 		for( int i=0; i < nNodes; i++ )
 		{
 			CSimplePhysics::CNode *pNode = &pNodes[i];
 
 			int iIteration;
-			int nIterations = 10;
+			const int nIterations = 10;
 			for( iIteration=0; iIteration < nIterations; iIteration++ )
 			{
 				trace_t trace;
@@ -972,7 +794,7 @@ void C_RopeKeyframe::CPhysicsDelegate::ApplyConstraints( CSimplePhysics::CNode *
 				}
 
 				// Apply some friction.
-				static float flSlowFactor = 0.3f;
+				const float flSlowFactor = 0.3f;
 				pNode->m_vPos -= (pNode->m_vPos - pNode->m_vPrevPos) * flSlowFactor;
 
 				// Move it out along the face normal.
@@ -1036,14 +858,16 @@ C_RopeKeyframe::C_RopeKeyframe()
 	m_vColorMod.Init( 1, 1, 1 );
 	m_nLinksTouchingSomething = 0;
 	m_Subdiv = 255; // default to using the cvar
-	
+	m_flCurrentGustLifetime = 0.0f;
+	m_flCurrentGustTimer = 0.0f;
+
 	m_fLockedPoints = 0;
 	m_fPrevLockedPoints = 0;
 	
 	m_iForcePointMoveCounter = 0;
 	m_flCurScroll = m_flScrollSpeed = 0;
 	m_TextureScale = 4;	// 4:1
-	m_flImpulse.Init();
+	m_vecImpulse.Init();
 
 	g_Ropes.AddToTail( this );
 }
@@ -1053,12 +877,6 @@ C_RopeKeyframe::~C_RopeKeyframe()
 {
 	s_RopeManager.RemoveRopeFromQueuedRenderCaches( this );	
 	g_Ropes.FindAndRemove( this );
-
-	if ( m_pBackMaterial )
-	{
-		m_pBackMaterial->DecrementReferenceCount();
-		m_pBackMaterial = NULL;
-	}
 }
 
 
@@ -1075,7 +893,7 @@ C_RopeKeyframe* C_RopeKeyframe::Create(
 {
 	C_RopeKeyframe *pRope = new C_RopeKeyframe;
 
-	pRope->InitializeAsClientEntity( NULL, RENDER_GROUP_OPAQUE_ENTITY );
+	pRope->InitializeAsClientEntity( NULL, false );
 	
 	if ( pStartEnt )
 	{
@@ -1248,6 +1066,7 @@ void C_RopeKeyframe::RecomputeSprings()
 void C_RopeKeyframe::ShakeRope( const Vector &vCenter, float flRadius, float flMagnitude )
 {
 	// Sum up whatever it would apply to all of our points.
+	bool bWantsThink = false;
 	for ( int i=0; i < m_nSegments; i++ )
 	{
 		CSimplePhysics::CNode *pNode = m_RopePhysics.GetNode( i );
@@ -1257,8 +1076,14 @@ void C_RopeKeyframe::ShakeRope( const Vector &vCenter, float flRadius, float flM
 		float flShakeAmount = 1.0f - flDist / flRadius;
 		if ( flShakeAmount >= 0 )
 		{
-			m_flImpulse.z += flShakeAmount * flMagnitude;
+			m_vecImpulse.z += flShakeAmount * flMagnitude;
+			bWantsThink = true;
 		}
+	}
+
+	if ( bWantsThink )
+	{
+		SetNextClientThink( CLIENT_THINK_ALWAYS );
 	}
 }
 
@@ -1268,6 +1093,7 @@ void C_RopeKeyframe::OnDataChanged( DataUpdateType_t updateType )
 	BaseClass::OnDataChanged( updateType );
 
 	m_bNewDataThisFrame = true;
+	SetNextClientThink( CLIENT_THINK_ALWAYS );
 
 	if( updateType != DATA_UPDATE_CREATED )
 		return;
@@ -1286,7 +1112,7 @@ void C_RopeKeyframe::OnDataChanged( DataUpdateType_t updateType )
 	}
 	else
 	{
-		Q_strncpy( str, "asdf", sizeof( str ) );
+		Q_strncpy( str, "missing_rope_material", sizeof( str ) );
 	}
 	
 	FinishInit( str );
@@ -1297,24 +1123,18 @@ void C_RopeKeyframe::FinishInit( const char *pMaterialName )
 {
 	// Get the material from the material system.	
 	m_pMaterial = materials->FindMaterial( pMaterialName, TEXTURE_GROUP_OTHER );
+
+	if ( !g_pSplineCableShadowdepth )
+	{
+		g_pSplineCableShadowdepth = g_pMaterialSystem->FindMaterial( "cable/rope_shadowdepth", TEXTURE_GROUP_OTHER );
+		g_pSplineCableShadowdepth->IncrementReferenceCount();
+	}
+
 	if( m_pMaterial )
 		m_TextureHeight = m_pMaterial->GetMappingHeight();
 	else
 		m_TextureHeight = 1;
 
-	char backName[512];
-	Q_snprintf( backName, sizeof( backName ), "%s_back", pMaterialName );
-	
-	m_pBackMaterial = materials->FindMaterial( backName, TEXTURE_GROUP_OTHER, false );
-	if ( IsErrorMaterial( m_pBackMaterial ) )
-		m_pBackMaterial = NULL;
-
-	if ( m_pBackMaterial )
-	{
-		m_pBackMaterial->IncrementReferenceCount();
-		m_pBackMaterial->GetMappingWidth();
-	}
-	
 	// Init rope physics.
 	m_nSegments = clamp( m_nSegments, 2, ROPE_MAX_SEGMENTS );
 	m_RopePhysics.SetNumNodes( m_nSegments );
@@ -1386,24 +1206,31 @@ void C_RopeKeyframe::ClientThink()
 	m_bEndPointAttachmentPositionsDirty = true;
 	m_bEndPointAttachmentAnglesDirty = true;
 	
-	if( !r_drawropes.GetBool() )
-		return;
-
 	if( !InitRopePhysics() ) // init if not already
 		return;
 
-	if( !DetectRestingState( m_bApplyWind ) )
+	if( !r_drawropes.GetBool() )
+		return;
+
+	if ( DetectRestingState( m_bApplyWind ) )
 	{
-		// Update the simulation.
-		CTimeAdder adder( &g_RopeSimulateTicks );
-		
-		RunRopeSimulation( gpGlobals->frametime );
+		if ( ( m_RopeFlags & ROPE_USE_WIND ) == 0 )
+		{
+			SetNextClientThink( CLIENT_THINK_NEVER );
+		}
+		return;
+	}
 
-		g_nRopePointsSimulated += m_RopePhysics.NumNodes();
+	// Update the simulation.
+	RunRopeSimulation( gpGlobals->frametime );
 
-		m_bNewDataThisFrame = false;
+	g_nRopePointsSimulated += m_RopePhysics.NumNodes();
 
-		// Setup a new wind gust?
+	m_bNewDataThisFrame = false;
+
+	// Setup a new wind gust?
+	if ( m_bApplyWind )
+	{
 		m_flCurrentGustTimer += gpGlobals->frametime;
 		m_flTimeToNextGust -= gpGlobals->frametime;
 		if( m_flTimeToNextGust <= 0 )
@@ -1420,13 +1247,13 @@ void C_RopeKeyframe::ClientThink()
 
 			m_flTimeToNextGust = RandomFloat( 3.0f, 4.0f );
 		}
-
-		UpdateBBox();
 	}
+
+	UpdateBBox();
 }
 
 
-int C_RopeKeyframe::DrawModel( int flags )
+int C_RopeKeyframe::DrawModel( int flags, const RenderableInstance_t &instance )
 {
 	VPROF_BUDGET( "C_RopeKeyframe::DrawModel", VPROF_BUDGETGROUP_ROPES );
 	if( !InitRopePhysics() )
@@ -1462,6 +1289,21 @@ bool C_RopeKeyframe::ShouldDraw()
 
 	if( !(m_RopeFlags & ROPE_SIMULATE) )
 		return false;
+
+	if ( !IsX360() )
+	{
+		CPULevel_t nCPULevel = GetCPULevel();
+		bool bNoDraw = ( GetMinCPULevel() && GetMinCPULevel()-1 > nCPULevel );
+		bNoDraw = bNoDraw || ( GetMaxCPULevel() && GetMaxCPULevel()-1 < nCPULevel );
+		if ( bNoDraw )
+			return false;
+
+		GPULevel_t nGPULevel = GetGPULevel();
+		bNoDraw = ( GetMinGPULevel() && GetMinGPULevel()-1 > nGPULevel );
+		bNoDraw = bNoDraw || ( GetMaxGPULevel() && GetMaxGPULevel()-1 < nGPULevel );
+		if ( bNoDraw )
+			return false;
+	}
 
 	return true;
 }
@@ -1545,16 +1387,26 @@ bool C_RopeKeyframe::GetAttachment( int number, Vector &origin, QAngle &angles )
 
 bool C_RopeKeyframe::AnyPointsMoved()
 {
-	for( int i=0; i < m_RopePhysics.NumNodes(); i++ )
+	int nNodeCount = m_RopePhysics.NumNodes();
+	for( int i=0; i < nNodeCount; i++ )
 	{
 		CSimplePhysics::CNode *pNode = m_RopePhysics.GetNode( i );
-		float flMoveDistSqr = (pNode->m_vPos - pNode->m_vPrevPos).LengthSqr();
-		if( flMoveDistSqr > 0.03f )
+		float flMoveDistSqr = pNode->m_vPos.DistToSqr( pNode->m_vPrevPos );
+		if( flMoveDistSqr > 0.25f )
+		{
+			if ( m_iForcePointMoveCounter < 5 )
+			{
+				m_iForcePointMoveCounter = 5;
+			}
 			return true;
+		}
 	}
 
-	if( --m_iForcePointMoveCounter > 0 )
+	if( m_iForcePointMoveCounter >= 0 )
+	{
+		--m_iForcePointMoveCounter;
 		return true;
+	}
 
 	return false;
 }
@@ -1611,17 +1463,28 @@ bool C_RopeKeyframe::DetectRestingState( bool &bApplyWind )
 	Vector &vEnd1 = m_RopePhysics.GetFirstNode()->m_vPos;
 	Vector &vEnd2 = m_RopePhysics.GetLastNode()->m_vPos;
 	
-	if ( !( m_RopeFlags & ROPE_NO_WIND ) )
+	if ( m_RopeFlags & ROPE_USE_WIND )
 	{
 		// Don't apply wind if more than half of the nodes are touching something.
-		float flDist1 = CalcDistanceToLineSegment( MainViewOrigin(), vEnd1, vEnd2 );
+		float flDist1 = FLT_MAX;
+		FOR_EACH_VALID_SPLITSCREEN_PLAYER( hh )
+		{
+			// ACTIVE_SPLITSCREEN_PLAYER_GUARD( hh );
+			float d = CalcDistanceToLineSegment( MainViewOrigin( hh ), vEnd1, vEnd2 );
+			if ( d < flDist1 )
+			{
+				flDist1 = d;
+			}
+		}
 		if( m_nLinksTouchingSomething < (m_RopePhysics.NumNodes() >> 1) )
+		{
 			bApplyWind = flDist1 < rope_wind_dist.GetFloat();
+		}
 	}
 
-	if ( m_flPreviousImpulse != m_flImpulse )
+	if ( m_vecPreviousImpulse != m_vecImpulse )
 	{
-		m_flPreviousImpulse = m_flImpulse;
+		m_vecPreviousImpulse = m_vecImpulse;
 		return false;
 	}
 
@@ -1656,173 +1519,6 @@ inline void Catmull_Rom_Eval( const catmull_t &spline, const Vector &t, Vector &
 	output = spline.c + (t.x * spline.t) + (t.y*spline.t2) + (t.z * spline.t3);
 }
 
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void C_RopeKeyframe::BuildRope( RopeSegData_t *pSegmentData, const Vector &vCurrentViewForward, const Vector &vCurrentViewOrigin, C_RopeKeyframe::BuildRopeQueuedData_t *pQueuedData, bool bQueued )
-{
-	if ( !pSegmentData )
-		return;
-
-	// Get the lighting values.
-	Vector *pLightValues = ( mat_fullbright.GetInt() == 1 ) ? g_FullBright_LightValues : pQueuedData->m_pLightValues;
-
-	// Update the rope subdivisions if necessary.
-	int nSubdivCount;
-	Vector *pSubdivVecList = GetRopeSubdivVectors( &nSubdivCount );
-
-	int nSegmentCount = 0;
-	int iPrevNode = 0;
-	const float subdivScale = 1.0f / (nSubdivCount+1);
-	const int nodeCount = pQueuedData->m_iNodeCount;
-	const int lastNode = nodeCount-1;
-	catmull_t spline;
-
-	Vector *pPredictedPositions = pQueuedData->m_pPredictedPositions;
-	Vector vColorMod = pQueuedData->m_vColorMod;
-
-	for( int iNode = 0; iNode < nodeCount; ++iNode )
-	{
-		pSegmentData->m_Segments[nSegmentCount].m_vPos = pPredictedPositions[iNode];
-		pSegmentData->m_Segments[nSegmentCount].m_vColor = pLightValues[iNode] * vColorMod;
-
-		CEffectData data;
-
-		if ( !bQueued && RopeManager()->IsHolidayLightMode() && r_rope_holiday_light_scale.GetFloat() > 0.0f )
-		{
-			data.m_nMaterial = (intp)this;
-			data.m_nHitBox = ( iNode << 8 );
-			data.m_flScale = r_rope_holiday_light_scale.GetFloat();
-			data.m_vOrigin = pSegmentData->m_Segments[nSegmentCount].m_vPos;
-			DispatchEffect( "TF_HolidayLight", data );
-		}
-
-		++nSegmentCount;
-
-		if ( iNode < lastNode )
-		{
-			// Draw a midpoint to the next segment.
-			int iNext = iNode + 1;
-			int iNextNext = iNode + 2;
-			if ( iNext >= nodeCount )
-			{
-				iNext = iNextNext = lastNode;
-			}
-			else if ( iNextNext >= nodeCount )
-			{
-				iNextNext = lastNode;
-			}
-
-			Vector vecColorInc = subdivScale * ( ( pLightValues[iNode+1] - pLightValues[iNode] ) * vColorMod );
-			// precompute spline basis
-			Catmull_Rom_Spline_Matrix( pPredictedPositions[iPrevNode], pPredictedPositions[iNode], 
-				pPredictedPositions[iNext], pPredictedPositions[iNextNext], spline );
-			for( int iSubdiv = 0; iSubdiv < nSubdivCount; ++iSubdiv )
-			{
-				pSegmentData->m_Segments[nSegmentCount].m_vColor = pSegmentData->m_Segments[nSegmentCount-1].m_vColor + vecColorInc;
-				// simple eval using precomputed basis
-				Catmull_Rom_Eval( spline, pSubdivVecList[iSubdiv], pSegmentData->m_Segments[nSegmentCount].m_vPos );
-
-				if ( !bQueued && RopeManager()->IsHolidayLightMode() && r_rope_holiday_light_scale.GetFloat() > 0.0f )
-				{
-					data.m_nHitBox++;
-					data.m_flScale = r_rope_holiday_light_scale.GetFloat();
-					data.m_vOrigin = pSegmentData->m_Segments[nSegmentCount].m_vPos;
-					DispatchEffect( "TF_HolidayLight", data );
-				}
-
-				++nSegmentCount;
-				Assert( nSegmentCount <= MAX_ROPE_SEGMENTS );
-			}
-
-			iPrevNode = iNode;
-		}
-	}
-	pSegmentData->m_nSegmentCount = nSegmentCount;
-	pSegmentData->m_flMaxBackWidth = 0;
-
-	// Figure out texture scale.
-	float flPixelsPerInch = 4.0f / m_TextureScale;
-	float flTotalTexCoord = flPixelsPerInch * ( pQueuedData->m_RopeLength + pQueuedData->m_Slack + ROPESLACK_FUDGEFACTOR );
-	int nTotalPoints = ( nodeCount - 1 ) * nSubdivCount + 1;
-	float flActualInc = ( flTotalTexCoord / nTotalPoints ) / ( float )m_TextureHeight;
-
-	// First draw a translucent rope underneath the solid rope for an antialiasing effect.
-	if ( ShouldUseFakeAA( m_pBackMaterial ) )
-	{
-		// Compute screen width
-		float flScreenWidth = ScreenWidth();
-		float flHalfScreenWidth = flScreenWidth / 2.0f;
-
-		float flExtraScreenSpaceWidth = rope_smooth_enlarge.GetFloat();
-
-		float flMinAlpha = rope_smooth_minalpha.GetFloat();
-		float flMaxAlpha = rope_smooth_maxalpha.GetFloat();
-
-		float flMinScreenSpaceWidth = rope_smooth_minwidth.GetFloat();
-		float flMaxAlphaScreenSpaceWidth = rope_smooth_maxalphawidth.GetFloat();
-		
-		float flTexCoord = m_flCurScroll;
-		for ( int iSegment = 0; iSegment < nSegmentCount; ++iSegment )
-		{
-			pSegmentData->m_Segments[iSegment].m_flTexCoord = flTexCoord;			
-
-			// Right here, we need to specify a width that will be 1 pixel larger in screen space.
-			float zCoord = vCurrentViewForward.Dot( pSegmentData->m_Segments[iSegment].m_vPos - vCurrentViewOrigin );
-			zCoord = MAX( zCoord, 0.1f );
-							
-			float flScreenSpaceWidth = m_Width * flHalfScreenWidth / zCoord;
-			if ( flScreenSpaceWidth < flMinScreenSpaceWidth )
-			{
-				pSegmentData->m_Segments[iSegment].m_flAlpha = flMinAlpha;
-				pSegmentData->m_Segments[iSegment].m_flWidth = flMinScreenSpaceWidth * zCoord / flHalfScreenWidth;
-				pSegmentData->m_BackWidths[iSegment] = 0.0f;
-			}
-			else
-			{
-				if ( flScreenSpaceWidth > flMaxAlphaScreenSpaceWidth )
-				{
-					pSegmentData->m_Segments[iSegment].m_flAlpha = flMaxAlpha;
-				}
-				else
-				{
-					pSegmentData->m_Segments[iSegment].m_flAlpha = RemapVal( flScreenSpaceWidth, flMinScreenSpaceWidth, flMaxAlphaScreenSpaceWidth, flMinAlpha, flMaxAlpha );
-				}
-
-				pSegmentData->m_Segments[iSegment].m_flWidth = m_Width;
-				pSegmentData->m_BackWidths[iSegment] = m_Width - ( zCoord * flExtraScreenSpaceWidth ) / flScreenWidth;
-				if ( pSegmentData->m_BackWidths[iSegment] < 0.0f )
-				{
-					pSegmentData->m_BackWidths[iSegment] = 0.0f;
-				}
-				else
-				{
-					pSegmentData->m_flMaxBackWidth = MAX( pSegmentData->m_flMaxBackWidth, pSegmentData->m_BackWidths[iSegment] );
-				}
-			}
-
-			// Get the next texture coordinate.
-			flTexCoord += flActualInc;
-		}
-	}
-	else
-	{
-		float flTexCoord = m_flCurScroll;
-
-		// Build the data with no smoothing.
-		for ( int iSegment = 0; iSegment < nSegmentCount; ++iSegment )
-		{
-			pSegmentData->m_Segments[iSegment].m_flTexCoord = flTexCoord;
-			pSegmentData->m_Segments[iSegment].m_flAlpha = 0.3f;
-			pSegmentData->m_Segments[iSegment].m_flWidth = m_Width;
-			pSegmentData->m_BackWidths[iSegment] = -1.0f;
-
-			// Get the next texture coordinate.
-			flTexCoord += flActualInc;
-		}
-	}
-}
 
 void C_RopeKeyframe::UpdateBBox()
 {
@@ -1910,7 +1606,7 @@ bool C_RopeKeyframe::CalculateEndPointAttachment( C_BaseEntity *pEnt, int iAttac
 
 	if ( m_RopeFlags & ROPE_PLAYER_WPN_ATTACH )
 	{
-		C_BasePlayer *pPlayer = dynamic_cast< C_BasePlayer* >( pEnt );
+		C_BasePlayer *pPlayer = ToBasePlayer( pEnt );
 		if ( pPlayer )
 		{
 			C_BaseAnimating *pModel = pPlayer->GetRenderedWeaponModel();
@@ -1962,25 +1658,6 @@ bool C_RopeKeyframe::GetEndPointPos( int iPt, Vector &vPos )
 	return true;
 }
 
-IMaterial* C_RopeKeyframe::GetSolidMaterial( void )
-{
-#ifdef TF_CLIENT_DLL
-	if ( RopeManager()->IsHolidayLightMode() )
-	{
-		if ( RopeManager()->GetHolidayLightStyle() == 1 )
-		{
-			return materials->FindMaterial( "cable/pure_white", TEXTURE_GROUP_OTHER );
-		}
-	}
-#endif
-
-	return m_pMaterial;
-}
-IMaterial* C_RopeKeyframe::GetBackMaterial( void )
-{
-	return m_pBackMaterial;
-}
-
 bool C_RopeKeyframe::GetEndPointAttachment( int iPt, Vector &vPos, QAngle &angle )
 {
 	// By caching the results here, we avoid doing this a bunch of times per frame.
@@ -1996,31 +1673,6 @@ bool C_RopeKeyframe::GetEndPointAttachment( int iPt, Vector &vPos, QAngle &angle
 	vPos = m_vCachedEndPointAttachmentPos[iPt];
 	angle = m_vCachedEndPointAttachmentAngle[iPt];
 	return true;
-}
-
-
-// Look at the global cvar and recalculate rope subdivision data if necessary.
-Vector *C_RopeKeyframe::GetRopeSubdivVectors( int *nSubdivs )
-{
-	if( m_RopeFlags & ROPE_BARBED )
-	{
-		*nSubdivs = g_nBarbedSubdivs;
-		return g_BarbedSubdivs;
-	}
-	else
-	{
-		int subdiv = m_Subdiv;
-		if ( subdiv == 255 )
-		{
-			subdiv = rope_subdiv.GetInt();
-		}
-
-		if ( subdiv >= MAX_ROPE_SUBDIVS )
-			subdiv = MAX_ROPE_SUBDIVS-1;
-
-		*nSubdivs = subdiv;
-		return g_RopeSubdivs[subdiv];
-	}
 }
 
 
@@ -2070,7 +1722,8 @@ void C_RopeKeyframe::ReceiveMessage( int classID, bf_read &msg )
 	}
 
 	// Read instantaneous fore data
-	m_flImpulse.x   = msg.ReadFloat();
-	m_flImpulse.y   = msg.ReadFloat();
-	m_flImpulse.z   = msg.ReadFloat();
+	m_vecImpulse.x   = msg.ReadFloat();
+	m_vecImpulse.y   = msg.ReadFloat();
+	m_vecImpulse.z   = msg.ReadFloat();
 }
+

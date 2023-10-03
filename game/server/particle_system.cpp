@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: An entity that spawns and controls a particle system
 //
@@ -15,6 +15,7 @@
 extern void SendProxy_Origin( const SendProp *pProp, const void *pStruct, const void *pData, DVariant *pOut, int iElement, int objectID );
 extern void SendProxy_Angles( const SendProp *pProp, const void *pStruct, const void *pData, DVariant *pOut, int iElement, int objectID );
 
+
 // Stripped down CBaseEntity send table
 IMPLEMENT_SERVERCLASS_ST_NOBASE(CParticleSystem, DT_ParticleSystem)
 	SendPropVector	(SENDINFO(m_vecOrigin), -1,  SPROP_COORD|SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
@@ -25,20 +26,25 @@ IMPLEMENT_SERVERCLASS_ST_NOBASE(CParticleSystem, DT_ParticleSystem)
 
 	SendPropInt( SENDINFO(m_iEffectIndex), MAX_PARTICLESYSTEMS_STRING_BITS, SPROP_UNSIGNED ),
 	SendPropBool( SENDINFO(m_bActive) ),
+	SendPropInt( SENDINFO( m_nStopType ), Q_log2(CParticleSystem::NUM_STOP_TYPES)+1, SPROP_UNSIGNED ),
 	SendPropFloat( SENDINFO(m_flStartTime) ),
+	SendPropString( SENDINFO(m_szSnapshotFileName) ),
+	SendPropArray3( SENDINFO_ARRAY3(m_vServerControlPoints), SendPropVector(SENDINFO_ARRAY(m_vServerControlPoints)) ),
+	SendPropArray3( SENDINFO_ARRAY3(m_iServerControlPointAssignments), SendPropInt(SENDINFO_ARRAY(m_iServerControlPointAssignments), -1, SPROP_UNSIGNED ) ),
 
 	SendPropArray3( SENDINFO_ARRAY3(m_hControlPointEnts), SendPropEHandle( SENDINFO_ARRAY(m_hControlPointEnts) ) ),
 	SendPropArray3( SENDINFO_ARRAY3(m_iControlPointParents), SendPropInt( SENDINFO_ARRAY(m_iControlPointParents), 3, SPROP_UNSIGNED ) ),
-	SendPropBool( SENDINFO(m_bWeatherEffect) ),
 END_SEND_TABLE()
 
 BEGIN_DATADESC( CParticleSystem )
 	DEFINE_KEYFIELD( m_bStartActive,	FIELD_BOOLEAN, "start_active" ),
-	DEFINE_KEYFIELD( m_bWeatherEffect,	FIELD_BOOLEAN, "flag_as_weather" ),
 	DEFINE_FIELD( m_bActive,			FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_flStartTime,		FIELD_TIME ),
+	DEFINE_ARRAY( m_vServerControlPoints, FIELD_VECTOR, CParticleSystem::kSERVERCONTROLLEDPOINTS ),
+	DEFINE_ARRAY( m_iServerControlPointAssignments, FIELD_CHARACTER, CParticleSystem::kSERVERCONTROLLEDPOINTS ),
 	DEFINE_KEYFIELD( m_iszEffectName,	FIELD_STRING, "effect_name" ),
 	//DEFINE_FIELD( m_iEffectIndex, FIELD_INTEGER ),	// Don't save. Refind after loading.
+	DEFINE_AUTO_ARRAY_KEYFIELD( m_szSnapshotFileName, FIELD_CHARACTER, "snapshot_file" ),
 
 	DEFINE_KEYFIELD( m_iszControlPointNames[0], FIELD_STRING, "cpoint1" ),
 	DEFINE_KEYFIELD( m_iszControlPointNames[1], FIELD_STRING, "cpoint2" ),
@@ -104,18 +110,21 @@ BEGIN_DATADESC( CParticleSystem )
 	DEFINE_KEYFIELD( m_iszControlPointNames[61], FIELD_STRING, "cpoint62" ),
 	DEFINE_KEYFIELD( m_iszControlPointNames[62], FIELD_STRING, "cpoint63" ),
 
-	DEFINE_KEYFIELD( m_iControlPointParents[0], FIELD_CHARACTER, "cpoint1_parent" ),
-	DEFINE_KEYFIELD( m_iControlPointParents[1], FIELD_CHARACTER, "cpoint2_parent" ),
-	DEFINE_KEYFIELD( m_iControlPointParents[2], FIELD_CHARACTER, "cpoint3_parent" ),
-	DEFINE_KEYFIELD( m_iControlPointParents[3], FIELD_CHARACTER, "cpoint4_parent" ),
-	DEFINE_KEYFIELD( m_iControlPointParents[4], FIELD_CHARACTER, "cpoint5_parent" ),
-	DEFINE_KEYFIELD( m_iControlPointParents[5], FIELD_CHARACTER, "cpoint6_parent" ),
-	DEFINE_KEYFIELD( m_iControlPointParents[6], FIELD_CHARACTER, "cpoint7_parent" ),
+	DEFINE_KEYFIELD( m_iControlPointParents.m_Value[0], FIELD_CHARACTER, "cpoint1_parent" ),
+	DEFINE_KEYFIELD( m_iControlPointParents.m_Value[1], FIELD_CHARACTER, "cpoint2_parent" ),
+	DEFINE_KEYFIELD( m_iControlPointParents.m_Value[2], FIELD_CHARACTER, "cpoint3_parent" ),
+	DEFINE_KEYFIELD( m_iControlPointParents.m_Value[3], FIELD_CHARACTER, "cpoint4_parent" ),
+	DEFINE_KEYFIELD( m_iControlPointParents.m_Value[4], FIELD_CHARACTER, "cpoint5_parent" ),
+	DEFINE_KEYFIELD( m_iControlPointParents.m_Value[5], FIELD_CHARACTER, "cpoint6_parent" ),
+	DEFINE_KEYFIELD( m_iControlPointParents.m_Value[6], FIELD_CHARACTER, "cpoint7_parent" ),
 	
 	DEFINE_AUTO_ARRAY( m_hControlPointEnts, FIELD_EHANDLE ),
 
 	DEFINE_INPUTFUNC( FIELD_VOID, "Start", InputStart ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "Stop", InputStop ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "StopPlayEndCap", InputStopEndCap ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "DestroyImmediately", InputDestroy ),
+
 
 	DEFINE_THINKFUNC( StartParticleSystemThink ),
 
@@ -123,12 +132,12 @@ END_DATADESC()
 
 LINK_ENTITY_TO_CLASS( info_particle_system, CParticleSystem );
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-CParticleSystem::CParticleSystem()
+CParticleSystem::CParticleSystem( void ) : m_bNoSave( false )
 {
-	m_bWeatherEffect = false;
+	for( int i = 0; i != kSERVERCONTROLLEDPOINTS; ++i )
+	{
+		m_iServerControlPointAssignments.GetForModify(i) = 255;
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -137,7 +146,7 @@ CParticleSystem::CParticleSystem()
 void CParticleSystem::Precache( void )
 {
 	const char *pParticleSystemName = STRING( m_iszEffectName );
-	if ( pParticleSystemName == NULL || pParticleSystemName[0] == '\0' )
+	if ( pParticleSystemName == NULL || pParticleSystemName[0] == 0 )
 	{
 		Warning( "info_particle_system (%s) has no particle system name specified!\n", GetEntityName().ToCStr() );
 	}
@@ -177,6 +186,32 @@ void CParticleSystem::Activate( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+bool CParticleSystem::KeyValue( const char *szKeyName, const char *szValue )
+{
+	if ( FStrEq( szKeyName, "snapshot_file" ) )
+	{
+		Q_strncpy( m_szSnapshotFileName.GetForModify(), szValue, MAX_PATH );
+		return true;
+	}
+	return BaseClass::KeyValue( szKeyName, szValue );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CParticleSystem::GetKeyValue( const char *szKeyName, char *szValue, int iMaxLen )
+{
+	if ( FStrEq( szKeyName, "snapshot_file" ) )
+	{
+		Q_snprintf( szValue, iMaxLen, "%s", m_szSnapshotFileName.Get() );
+		return true;
+	}
+	return BaseClass::GetKeyValue( szKeyName, szValue, iMaxLen );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CParticleSystem::StartParticleSystemThink( void )
 {
 	StartParticleSystem();
@@ -208,9 +243,10 @@ void CParticleSystem::StartParticleSystem( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CParticleSystem::StopParticleSystem( void )
+void CParticleSystem::StopParticleSystem( int nStopType )
 {
 	m_bActive = false;
+	m_nStopType = nStopType;
 }
 
 //-----------------------------------------------------------------------------
@@ -226,7 +262,17 @@ void CParticleSystem::InputStart( inputdata_t &inputdata )
 //-----------------------------------------------------------------------------
 void CParticleSystem::InputStop( inputdata_t &inputdata )
 {
-	StopParticleSystem();
+	StopParticleSystem( STOP_NORMAL );
+}
+
+void CParticleSystem::InputDestroy( inputdata_t &inputdata )
+{
+	StopParticleSystem( STOP_DESTROY_IMMEDIATELY );
+}
+
+void CParticleSystem::InputStopEndCap( inputdata_t &inputdata )
+{
+	StopParticleSystem( STOP_PLAY_ENDCAP );
 }
 
 //-----------------------------------------------------------------------------
@@ -250,4 +296,42 @@ void CParticleSystem::ReadControlPointEnts( void )
 
 		m_hControlPointEnts.Set( i, pPointEnt );
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Try to allocate one of the server controlled control points to 
+// hold the value. Designed to let the server funnel some variables to
+// particle systems (size, color, swirliness, ...)
+//-----------------------------------------------------------------------------
+bool CParticleSystem::SetControlPointValue( int iControlPoint, const Vector &vValue )
+{
+	for( int i = 0; i != kSERVERCONTROLLEDPOINTS; ++i )
+	{
+		if( m_iServerControlPointAssignments[i] == iControlPoint )
+		{
+			m_vServerControlPoints.GetForModify(i) = vValue;
+			return true;
+		}
+		if( m_iServerControlPointAssignments[i] == 255 )
+		{
+			m_iServerControlPointAssignments.GetForModify(i) = iControlPoint;
+			m_vServerControlPoints.GetForModify(i) = vValue;
+			return true;
+		}
+	}
+
+	Warning( "No free server controlled control points.\n" );
+	return false; //already using up all of our server control points
+}
+
+//-----------------------------------------------------------------------------
+// Inline methods 
+//-----------------------------------------------------------------------------
+int CParticleSystem::ObjectCaps( void )
+{ 
+	int flags = 0;
+	if ( m_bNoSave )
+		flags = FCAP_DONT_SAVE;
+	
+	return BaseClass::ObjectCaps() | flags; 
 }

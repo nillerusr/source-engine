@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright (c) 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -28,7 +28,7 @@
 	public:															\
 		DECLARE_PREDICTABLE();										\
 		DECLARE_CLIENTCLASS();										\
-		C_##className() = default;											\
+		C_##className() {};											\
 	private:														\
 		C_##className( const C_##className & );						\
 	};																\

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -9,8 +9,8 @@
 #include "viewrender.h"
 #include "c_tracer.h"
 #include "dlight.h"
-#include "clienteffectprecachesystem.h"
-#include "fx_sparks.h"
+#include "precache_register.h"
+#include "FX_Sparks.h"
 #include "iefx.h"
 #include "c_te_effect_dispatch.h"
 #include "tier0/vprof.h"
@@ -23,18 +23,18 @@
 #include "tier0/memdbgon.h"
 
 //Precahce the effects
-CLIENTEFFECT_REGISTER_BEGIN( PrecacheEffectSparks )
-CLIENTEFFECT_MATERIAL( "effects/spark" )
-CLIENTEFFECT_MATERIAL( "effects/energysplash" )
-CLIENTEFFECT_MATERIAL( "effects/energyball" )
-CLIENTEFFECT_MATERIAL( "sprites/rico1" )
-CLIENTEFFECT_MATERIAL( "sprites/rico1_noz" )
-CLIENTEFFECT_MATERIAL( "sprites/blueflare1" )
-CLIENTEFFECT_MATERIAL( "effects/yellowflare" )
-CLIENTEFFECT_MATERIAL( "effects/combinemuzzle1_nocull" )
-CLIENTEFFECT_MATERIAL( "effects/combinemuzzle2_nocull" )
-CLIENTEFFECT_MATERIAL( "effects/yellowflare_noz" )
-CLIENTEFFECT_REGISTER_END()
+PRECACHE_REGISTER_BEGIN( GLOBAL, PrecacheEffectSparks )
+	PRECACHE( MATERIAL, "effects/spark" )
+	PRECACHE( MATERIAL, "effects/energysplash" )
+	PRECACHE( MATERIAL, "effects/energyball" )
+	PRECACHE( MATERIAL, "sprites/rico1" )
+	PRECACHE( MATERIAL, "sprites/rico1_noz" )
+	PRECACHE( MATERIAL, "sprites/blueflare1" )
+	PRECACHE( MATERIAL, "effects/yellowflare" )
+	PRECACHE( MATERIAL, "effects/combinemuzzle1_nocull" )
+	PRECACHE( MATERIAL, "effects/combinemuzzle2_nocull" )
+	PRECACHE( MATERIAL, "effects/yellowflare_noz" )
+PRECACHE_REGISTER_END()
 
 PMaterialHandle g_Material_Spark = NULL;
 
@@ -47,12 +47,14 @@ static ConVar fx_drawmetalspark( "fx_drawmetalspark", "1", FCVAR_DEVELOPMENTONLY
 //-----------------------------------------------------------------------------
 bool EffectOccluded( const Vector &pos, pixelvis_handle_t *queryHandle )
 {
+	int nSlot = GET_ACTIVE_SPLITSCREEN_SLOT();
+
 	if ( !queryHandle )
 	{
 		// NOTE: This is called by networking code before the current view is set up.
 		// so use the main view instead
 		trace_t	tr;
-		UTIL_TraceLine( pos, MainViewOrigin(), MASK_OPAQUE, NULL, COLLISION_GROUP_NONE, &tr );
+		UTIL_TraceLine( pos, MainViewOrigin(nSlot), MASK_OPAQUE, NULL, COLLISION_GROUP_NONE, &tr );
 		
 		return ( tr.fraction < 1.0f ) ? true : false;
 	}
@@ -237,8 +239,7 @@ void CTrailParticles::RenderParticles( CParticleRenderIterator *pIterator )
 		float	flWidth	 = ( flLength < pParticle->m_flWidth ) ? flLength : pParticle->m_flWidth;
 
 		//See if we should fade
-		Vector vecScaledDelta = (delta*scale);
-		Tracer_Draw( pIterator->GetParticleDraw(), start, vecScaledDelta, flWidth, color );
+		Tracer_Draw( pIterator->GetParticleDraw(), start, (delta*scale), flWidth, color );
 		
 		pParticle = (const TrailParticle*)pIterator->GetNext( sortKey );
 	}
@@ -644,7 +645,6 @@ void FX_MetalSpark( const Vector &position, const Vector &direction, const Vecto
 	sparkEmitter->GetBinding().SetBBox( offset - Vector( 32, 32, 32 ), offset + Vector( 32, 32, 32 ) );
 
 	int	numSparks = random->RandomInt( 4, 8 ) * ( iScale * 2 );
-	numSparks = (int)( 0.5f + (float)numSparks * g_pParticleSystemMgr->ParticleThrottleScaling() );
 	
 	if ( g_Material_Spark == NULL )
 	{
@@ -1534,4 +1534,4 @@ void ManhackSparkCallback( const CEffectData & data )
 	FX_SparkFan( vecPosition, vecNormal );
 }
 
-DECLARE_CLIENT_EFFECT( "ManhackSparks", ManhackSparkCallback );
+DECLARE_CLIENT_EFFECT( ManhackSparks, ManhackSparkCallback );

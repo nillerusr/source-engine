@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -62,7 +62,7 @@ void CSoundscapeSystem::AddSoundscapeFile( const char *filename )
 	MEM_ALLOC_CREDIT();
 	// Open the soundscape data file, and abort if we can't
 	KeyValues *pKeyValuesData = new KeyValues( filename );
-	if ( pKeyValuesData->LoadFromFile( filesystem, filename, "GAME" ) )
+	if ( filesystem->LoadKeyValues( *pKeyValuesData, IFileSystem::TYPE_SOUNDSCAPE, filename, "GAME" ) )
 	{
 		// parse out all of the top level sections and save their names
 		KeyValues *pKeys = pKeyValuesData;
@@ -91,7 +91,7 @@ void CSoundscapeSystem::AddSoundscapeFile( const char *filename )
 	pKeyValuesData->deleteThis();
 }
 
-CON_COMMAND_F( sv_soundscape_printdebuginfo, "print soundscapes", FCVAR_DEVELOPMENTONLY )
+CON_COMMAND_F(sv_soundscape_printdebuginfo, "print soundscapes", FCVAR_CHEAT)
 {
 	if ( !UTIL_IsCommandIssuedByServerAdmin() )
 		return;
@@ -111,7 +111,7 @@ void CSoundscapeSystem::PrintDebugInfo()
 		Msg( "- %d: %s\n", id, pName );
 	}
 	Msg( "-------- SOUNDSCAPE ENTITIES -----\n" );
-	for( int entityIndex = 0; entityIndex < m_soundscapeEntities.Size(); ++entityIndex )
+	for( int entityIndex = 0; entityIndex < m_soundscapeEntities.Count(); ++entityIndex )
 	{
 		CEnvSoundscape *currentSoundscape = m_soundscapeEntities[entityIndex];
 		Msg("- %d: %s x:%.4f y:%.4f z:%.4f\n", 
@@ -137,7 +137,7 @@ bool CSoundscapeSystem::Init()
 	}
 
 	KeyValues *manifest = new KeyValues( SOUNDSCAPE_MANIFEST_FILE );
-	if( manifest->LoadFromFile( filesystem, SOUNDSCAPE_MANIFEST_FILE, "GAME" ) )
+	if ( filesystem->LoadKeyValues( *manifest, IFileSystem::TYPE_SOUNDSCAPE, SOUNDSCAPE_MANIFEST_FILE, "GAME" ) )
 	{
 		for ( KeyValues *sub = manifest->GetFirstSubKey(); sub != NULL; sub = sub->GetNextKey() )
 		{
@@ -228,7 +228,7 @@ void CSoundscapeSystem::LevelInitPostEntity()
 			if ( myPVS[ j >> 3 ] & (1<<(j&7)) )
 			{
 				float distSq = CalcSqrDistanceToAABB( clusterbounds[j].mins, clusterbounds[j].maxs, position );
-				if ( distSq < radiusSq || radius < 0 )
+				if ( distSq < radiusSq )
 				{
 					m_soundscapesInCluster[j].soundscapeCount++;
 					clusterIndexList.AddToTail(j);
@@ -297,14 +297,10 @@ void CSoundscapeSystem::FrameUpdatePostEntityThink()
 	{
 		int traceCount = 0;
 		int playerCount = 0;
-		// budget tuned for TF.  Do a max of 20 traces.  That's going to happen anyway because a bunch of the maps
-		// use radius -1 for all soundscapes.  So to trace one player you'll often need that many and this code must
-		// always trace one player's soundscapes.
-		// If the map has been optimized, then allow more players to update per frame.
-		int maxPlayers = gpGlobals->maxClients / 2;
-		// maxPlayers has to be at least 1
-		maxPlayers = MAX( 1, maxPlayers );
-		int maxTraces = 20;
+		// budget to do 2 players with 2 traces each tick.  Anything more expensive than that should
+		// get spread across multiple ticks
+		int maxPlayers = 2;
+		int maxTraces = maxPlayers * 2;
 		if ( soundscape_debug.GetBool() )
 		{
 			maxTraces = 9999;
@@ -326,12 +322,11 @@ void CSoundscapeSystem::FrameUpdatePostEntityThink()
 
 				// if we got this far, we're looking at an entity that is contending
 				// for current player sound. the closest entity to player wins.
-				CEnvSoundscape *pCurrent = (CEnvSoundscape *)( audio.ent.Get() );
-				if ( pCurrent )
+				CEnvSoundscape *pCurrent = NULL;
+				if ( audio.entIndex > 0 && audio.entIndex <= m_soundscapeEntities.Count() )
 				{
-					int nEntIndex = pCurrent->m_soundscapeEntityId - 1;
-					NOTE_UNUSED( nEntIndex );
-					Assert( m_soundscapeEntities[nEntIndex] == pCurrent );
+					int ssIndex = audio.entIndex - 1;
+					pCurrent = m_soundscapeEntities[ssIndex];
 				}
 				ss_update_t update;
 				update.pPlayer = pPlayer;

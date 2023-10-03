@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -194,7 +194,7 @@ int CPhysicsCannister::OnTakeDamage( const CTakeDamageInfo &info )
 }
 
 
-void CPhysicsCannister::TraceAttack( const CTakeDamageInfo &info, const Vector &dir, trace_t *ptr, CDmgAccumulator *pAccumulator )
+void CPhysicsCannister::TraceAttack( const CTakeDamageInfo &info, const Vector &dir, trace_t *ptr )
 {
 	if ( !m_active && ptr->hitgroup != 0 )
 	{
@@ -203,7 +203,7 @@ void CPhysicsCannister::TraceAttack( const CTakeDamageInfo &info, const Vector &
 		VectorNormalize( direction );
 		CannisterActivate( info.GetAttacker(), direction );
 	}
-	BaseClass::TraceAttack( info, dir, ptr, pAccumulator );
+	BaseClass::TraceAttack( info, dir, ptr );
 }
 
 
@@ -240,7 +240,7 @@ void CPhysicsCannister::CannisterActivate( CBaseEntity *pActivator, const Vector
 	m_pJet->SetParent( this );
 
 	float extra = m_thruster.m_thrust * (1/5000.f);
-	extra = clamp( extra, 0.f, 1.f );
+	extra = clamp( extra, 0, 1 );
 
 	m_pJet->m_SpreadSpeed = 15 * m_thruster.m_thrust * 0.001;
 	m_pJet->m_Speed = 128 + 100 * extra;

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Bullseyes act as targets for other NPC's to attack and to trigger
 //			events 
@@ -89,6 +89,9 @@ BEGIN_DATADESC( CNPC_Bullseye )
 	DEFINE_KEYFIELD( m_fAutoaimRadius, FIELD_FLOAT, "autoaimradius" ),
 	DEFINE_KEYFIELD( m_flFieldOfView, FIELD_FLOAT, "minangle" ),
 	DEFINE_KEYFIELD( m_flMinDistValidEnemy, FIELD_FLOAT, "mindist" ),
+
+
+
 	// DEFINE_FIELD( m_bPerfectAccuracy, FIELD_BOOLEAN ),	// Don't save
 
 	// Function Pointers
@@ -284,7 +287,7 @@ void CNPC_Bullseye::DecalTrace( trace_t *pOldTrace, char const *decalName )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CNPC_Bullseye::ImpactTrace( trace_t *pTrace, int iDamageType, const char *pCustomImpactName )
+void CNPC_Bullseye::ImpactTrace( trace_t *pTrace, int iDamageType, char *pCustomImpactName )
 {
 	// Get direction of original trace
 	Vector vTraceDir = pTrace->endpos - pTrace->startpos;
@@ -369,6 +372,9 @@ bool CNPC_Bullseye::CanBeAnEnemyOf( CBaseEntity *pEnemy )
 			return false;
 		}
 	}
+
+
+
 	return BaseClass::CanBeAnEnemyOf( pEnemy );
 }
 
@@ -391,7 +397,7 @@ bool CNPC_Bullseye::IsLightDamage( const CTakeDamageInfo &info )
 //			*ptr - 
 //			bitsDamageType - 
 //-----------------------------------------------------------------------------
-void CNPC_Bullseye::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr, CDmgAccumulator *pAccumulator )
+void CNPC_Bullseye::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr )
 {
 	//If specified, we must be the enemy of the target
 	if ( m_spawnflags & SF_BULLSEYE_ENEMYDAMAGEONLY )
@@ -411,7 +417,7 @@ void CNPC_Bullseye::TraceAttack( const CTakeDamageInfo &info, const Vector &vecD
 		TraceBleed( info.GetDamage(), vecDir, ptr, info.GetDamageType() );
 	}
 
-	BaseClass::TraceAttack( info, vecDir, ptr, pAccumulator );
+	BaseClass::TraceAttack( info, vecDir, ptr );
 }
 
 

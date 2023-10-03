@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:		Base combat character with no AI
 //
@@ -71,7 +71,7 @@ enum NodeInfoBits_e
 
 	bits_NODE_CLIMB_EXIT		=	bits_NODE_CLIMB_OFF_FORWARD| bits_NODE_CLIMB_OFF_LEFT | bits_NODE_CLIMB_OFF_RIGHT,
 
-	NODE_ENT_FLAGS_SHIFT			= 5, 
+	NODE_ENT_FLAGS_SHIFT		= 5, 
 
 	//bits_HUMAN_HULL				5
 	//bits_SMALL_CENTERED_HULL		6
@@ -83,11 +83,19 @@ enum NodeInfoBits_e
 	//bits_LARGE_HULL				12
 	//bits_LARGE_CENTERED_HULL		13
 
-	bits_DONT_DROP				=	( 1 << 14 ),
+	// NOTE: bits_DONT_DROP used to be here now that we need more hulls it has been moved. However, this spot needs to be held for legacy.
+	bits_LEGACY_DONT_DROP		=	( 1 << 14 ),
 	
-	/****** NOTE: will need to change node graph save/load code if exceed 16 bits here ******/
+	//bits_MEDIUM_TALL_HULL			15
+	//bits_TINY_FLUID_HULL			16
+	//bits_MEDIUMBIG_HULL			17
 
+	//ADD MORE HULLS HERE (18-26)
 
+	bits_DONT_DROP				=	( 1 << 27 ),
+	
+	/****** NOTE: Previously only the lower 16 bits were saved. This mask will allow us to save more, but ignore the final bits. ******/
+	bits_NODE_SAVE_MASK = 0x0FFFFFFF,
 
 	bits_NODE_WC_NEED_REBUILD	=	0x10000000,	// Used to more nodes in WC edit mode
 	bits_NODE_WC_CHANGED		=	0x20000000,	// Node changed during WC edit
@@ -122,7 +130,7 @@ public:
 	int 			GetZone() const			{ return m_zone; }
 	void 			SetZone( int zone )		{ m_zone = zone; }
 	
-	Vector			GetPosition(int hull);		// Hull specific position for a node
+	Vector			GetPosition(int hull) const;		// Hull specific position for a node
 	CAI_Link*		HasLink(int nNodeID);				// Return link to nNodeID or NULL
 
 	void			ShuffleLinks();						// Called before GetShuffeledLinks to reorder 

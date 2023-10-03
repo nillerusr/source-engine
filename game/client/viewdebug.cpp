@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========== Copyright (c) 2005, Valve Corporation, All rights reserved. ========
 //
 // Purpose:
 //
@@ -11,25 +11,27 @@
 #include "view_scene.h"
 #include "viewrender.h"
 #include "viewdebug.h"
+#include "view.h"
 #include "smoke_fog_overlay.h"
 #include "materialsystem/imaterialvar.h"
+#include "foundryhelpers_client.h"
 
-#ifdef PORTAL
-//#include "C_Portal_Player.h"
-#include "portal_render_targets.h"
-#include "PortalRender.h"
-#endif
+
+
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
 
 //-----------------------------------------------------------------------------
 // debugging overlays
 //-----------------------------------------------------------------------------
 static ConVar cl_drawmaterial( "cl_drawmaterial", "", FCVAR_CHEAT, "Draw a particular material over the frame" );
 static ConVar mat_showwatertextures( "mat_showwatertextures", "0", FCVAR_CHEAT );
-static ConVar mat_wateroverlaysize( "mat_wateroverlaysize", "256" );
+static ConVar mat_wateroverlaysize( "mat_wateroverlaysize", "128" );
 static ConVar mat_showframebuffertexture( "mat_showframebuffertexture", "0", FCVAR_CHEAT );
-static ConVar mat_framebuffercopyoverlaysize( "mat_framebuffercopyoverlaysize", "256" );
+static ConVar mat_framebuffercopyoverlaysize( "mat_framebuffercopyoverlaysize", "128" );
 static ConVar mat_showcamerarendertarget( "mat_showcamerarendertarget", "0", FCVAR_CHEAT );
-static ConVar mat_camerarendertargetoverlaysize( "mat_camerarendertargetoverlaysize", "256", FCVAR_CHEAT );
+static ConVar mat_camerarendertargetoverlaysize( "mat_camerarendertargetoverlaysize", "128", FCVAR_CHEAT );
 static ConVar mat_hsv( "mat_hsv", "0", FCVAR_CHEAT );
 static ConVar mat_yuv( "mat_yuv", "0", FCVAR_CHEAT );
 static ConVar cl_overdraw_test( "cl_overdraw_test", "0", FCVAR_CHEAT | FCVAR_NEVER_AS_STRING );
@@ -63,12 +65,12 @@ public:
 	void Draw()
 	{
 		extern bool s_bCanAccessCurrentView;
-		s_bCanAccessCurrentView = true;
+		AllowCurrentViewAccess( true );
 		Frustum frustum;
 		render->Push3DView( *this, 0, NULL, frustum );
-		BuildWorldRenderLists( this, true, true );
+		BuildWorldRenderLists( true, -1, true, true );
 		render->PopView( frustum );
-		s_bCanAccessCurrentView = false;
+		AllowCurrentViewAccess( false );
 
 		render->DrawLightmaps( m_pWorldRenderList, mat_showlightmappage.GetInt() );
 	}
@@ -260,11 +262,8 @@ static void OverlayShowTexture( const char* textureName, float scale )
 	ITexture		*pTex;
 	float			x, y, w, h;
 
-	// screen safe
-	x = 32;
-	y = 32;
-
-	pMaterial = materials->FindMaterial( "___debug", TEXTURE_GROUP_OTHER, true );
+	// ___error is created in code in CMaterialSystem::CreateDebugMaterials()
+	pMaterial = materials->FindMaterial( "___error", TEXTURE_GROUP_OTHER, true );
 	BaseTextureVar = pMaterial->FindVar( "$basetexture", &foundVar, false );
 	if (!foundVar)
 		return;
@@ -283,6 +282,12 @@ static void OverlayShowTexture( const char* textureName, float scale )
 	{
 		w = h = 64.0f * scale;
 	}
+
+	// Center relative to current viewport
+	int nViewportX, nViewportY, nViewportWidth, nViewportHeight;
+	pRenderContext->GetViewport( nViewportX, nViewportY, nViewportWidth, nViewportHeight );
+	x = ( nViewportWidth - w ) * 0.5f;
+	y = ( nViewportHeight - h ) * 0.5f;
 
 	pRenderContext->Bind( pMaterial );
 	IMesh* pMesh = pRenderContext->GetDynamicMesh( true );
@@ -518,6 +523,9 @@ void CDebugViewRender::Draw3DDebuggingInfo( const CViewSetup &view )
 {
 	VPROF("CViewRender::Draw3DDebuggingInfo");
 
+	// Draw anything Foundry wants to.
+	FoundryHelpers_DrawAll();
+
 	// Draw 3d overlays
 	render->Draw3DDebugOverlays();
 
@@ -531,31 +539,24 @@ void CDebugViewRender::Draw3DDebuggingInfo( const CViewSetup &view )
 //-----------------------------------------------------------------------------
 void CDebugViewRender::Draw2DDebuggingInfo( const CViewSetup &view )
 {
-	if ( IsX360() && IsRetail() )
-		return;
-
 	// HDRFIXME: Assert NULL rendertarget
-	if ( mat_yuv.GetInt() && (engine->GetDXSupportLevel() >= 80) )
+	if ( mat_yuv.GetInt() )
 	{
 		IMaterial *pMaterial;
 		pMaterial = materials->FindMaterial( "debug/yuv", TEXTURE_GROUP_OTHER, true );
 		if( !IsErrorMaterial( pMaterial ) )
 		{
-			pMaterial->IncrementReferenceCount();
 			DrawScreenEffectMaterial( pMaterial, view.x, view.y, view.width, view.height );
-			pMaterial->DecrementReferenceCount();
 		}
 	}
 
-	if ( mat_hsv.GetInt() && (engine->GetDXSupportLevel() >= 90) )
+	if ( mat_hsv.GetInt() )
 	{
 		IMaterial *pMaterial;
 		pMaterial = materials->FindMaterial( "debug/hsv", TEXTURE_GROUP_OTHER, true );
 		if( !IsErrorMaterial( pMaterial ) )
 		{
-			pMaterial->IncrementReferenceCount();
 			DrawScreenEffectMaterial( pMaterial, view.x, view.y, view.width, view.height );
-			pMaterial->DecrementReferenceCount();
 		}
 	}
 
@@ -588,11 +589,9 @@ void CDebugViewRender::Draw2DDebuggingInfo( const CViewSetup &view )
 	{
 		float w = mat_wateroverlaysize.GetFloat();
 		float h = mat_wateroverlaysize.GetFloat();
-#ifdef PORTAL
-		g_pPortalRender->OverlayPortalRenderTargets( w, h );
-#else
+
 		OverlayCameraRenderTarget( "debug/debugcamerarendertarget", 0, 0, w, h );
-#endif
+
 	}
 
 	if ( mat_showframebuffertexture.GetBool() )

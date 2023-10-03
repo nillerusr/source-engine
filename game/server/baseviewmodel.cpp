@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -15,6 +15,7 @@
 #include "vguiscreen.h"
 #include "saverestore_utlvector.h"
 #include "hltvdirector.h"
+#include "replaydirector.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -67,34 +68,54 @@ int CBaseViewModel::UpdateTransmitState()
 
 int CBaseViewModel::ShouldTransmit( const CCheckTransmitInfo *pInfo )
 {
-	// check if receipient owns this weapon viewmodel
+	// Check if recipient owns this weapon viewmodel
 	CBasePlayer *pOwner = ToBasePlayer( m_hOwner );
 
-	if ( pOwner && pOwner->edict() == pInfo->m_pClientEnt )
+	if ( pOwner && 
+		 ( pOwner->edict() == pInfo->m_pClientEnt ||
+			// If we're using the other guys network connection in split screen, then also force transmit
+		 pOwner->IsSplitScreenUserOnEdict( pInfo->m_pClientEnt ) ) )
 	{
 		return FL_EDICT_ALWAYS;
 	}
 
-	// check if recipient spectates the own of this viewmodel
-	CBaseEntity *pRecipientEntity = CBaseEntity::Instance( pInfo->m_pClientEnt );
-
-	if ( pRecipientEntity->IsPlayer() )
+	// check if recipient (or one of his splitscreen parasites) is spectating the owner of this viewmodel
+	CBasePlayer *pPlayer = ToBasePlayer( CBaseEntity::Instance( pInfo->m_pClientEnt ) );
+	if ( pPlayer)
 	{
-		CBasePlayer *pPlayer = static_cast<CBasePlayer*>( pRecipientEntity );
-#ifndef _XBOX
-		if ( pPlayer->IsHLTV() || pPlayer->IsReplay() )
+		// Bug 28591:  In splitscreen, when the second slot is the one in spectator mode, it wouldn't
+		//  get the viewmodel for the spectatee.
+		//
+		// The new logic is to loop through the splitscreen parasites (as well as the host player) 
+		//  and see if any of them are observing the viewmodel owner, and if so, FL_EDICT_ALWAYS the vm for them, too.
+
+		CUtlVector< CBasePlayer * > checkList;
+		checkList.AddToTail( pPlayer );
+		CUtlVector< CHandle< CBasePlayer > > &vecParasites = pPlayer->GetSplitScreenPlayers();
+		for ( int i = 0; i < vecParasites.Count(); ++i )
 		{
-			// if this is the HLTV client, transmit all viewmodels in our PVS
-			return FL_EDICT_PVSCHECK;
+			checkList.AddToTail( vecParasites[ i ] );
 		}
-#endif
-		if ( (pPlayer->GetObserverMode() == OBS_MODE_IN_EYE)  && (pPlayer->GetObserverTarget() == pOwner) )
+
+		for ( int i = 0; i < checkList.Count(); ++i )
 		{
-			return FL_EDICT_ALWAYS;
+			CBasePlayer *pPlayer = checkList[ i ];
+			if ( !pPlayer )
+				continue;
+
+			if ( pPlayer->IsHLTV() || pPlayer->IsReplay() )
+			{
+				// if this is the HLTV or Replay client, transmit all viewmodels in our PVS
+				return FL_EDICT_PVSCHECK;
+			}
+			if ( (pPlayer->GetObserverMode() == OBS_MODE_IN_EYE)  && (pPlayer->GetObserverTarget() == pOwner) )
+			{
+				return FL_EDICT_ALWAYS;
+			}
 		}
 	}
 
-	// Don't send to anyone else except the local player or his spectators
+	// Don't send to anyone else except the local player or his spectator
 	return FL_EDICT_DONTSEND;
 }
 

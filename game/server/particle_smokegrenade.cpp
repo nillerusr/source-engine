@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -40,6 +40,9 @@ ParticleSmokeGrenade::ParticleSmokeGrenade()
 	m_flSpawnTime = gpGlobals->curtime;
 }
 
+ParticleSmokeGrenade::~ParticleSmokeGrenade()
+{
+}
 
 // Smoke grenade particles should always transmitted to clients.  If not, a client who
 // enters the PVS late will see the smoke start billowing from then, allowing better vision.
@@ -51,6 +54,23 @@ int ParticleSmokeGrenade::UpdateTransmitState( void )
 	return SetTransmitState( FL_EDICT_ALWAYS );
 }
 
+void ParticleSmokeGrenade::Spawn()
+{
+	BaseClass::Spawn();
+
+	SetNextThink( gpGlobals->curtime );
+	m_creatorPlayer = NULL;
+}
+
+void ParticleSmokeGrenade::SetCreator(CBasePlayer *creator)
+{
+	m_creatorPlayer = creator;
+}
+
+CBasePlayer* ParticleSmokeGrenade::GetCreator()
+{
+	return (CBasePlayer*)m_creatorPlayer.Get();
+}
 
 void ParticleSmokeGrenade::FillVolume()
 {
@@ -72,4 +92,20 @@ void ParticleSmokeGrenade::SetRelativeFadeTime(float startTime, float endTime)
 
 	m_FadeStartTime = flCurrentTime + startTime;
 	m_FadeEndTime = flCurrentTime + endTime;
+}
+
+void ParticleSmokeGrenade::Think()
+{
+	// Override, don't extend.  (Baseclass's Think just deletes.)
+
+	float now = gpGlobals->curtime;
+	if( now >= (m_flSpawnTime + m_FadeEndTime) )
+	{
+		// We are done
+		UTIL_Remove(this);
+		return;
+	}
+
+	const float PSG_THINK_DELAY = 1.0f;
+	SetNextThink(now + PSG_THINK_DELAY);
 }

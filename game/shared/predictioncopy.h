@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -15,13 +15,15 @@
 #include "datamap.h"
 #include "ehandle.h"
 #include "tier1/utlstring.h"
+#include "tier1/utlrbtree.h"
+#include "tier1/utlstack.h"
 
 #if defined( CLIENT_DLL )
 class C_BaseEntity;
 typedef CHandle<C_BaseEntity> EHANDLE;
 
-#if defined( _DEBUG )
 // #define COPY_CHECK_STRESSTEST
+#if defined( COPY_CHECK_STRESSTEST )
 class IGameSystem;
 IGameSystem* GetPredictionCopyTester( void );
 #endif
@@ -31,18 +33,69 @@ class CBaseEntity;
 typedef CHandle<CBaseEntity> EHANDLE;
 #endif
 
-enum
-{
-	PC_EVERYTHING = 0,
-	PC_NON_NETWORKED_ONLY,
-	PC_NETWORKED_ONLY,
-};
-
-#define PC_DATA_PACKED			true
-#define PC_DATA_NORMAL			false
-
 typedef void ( *FN_FIELD_COMPARE )( const char *classname, const char *fieldname, const char *fieldtype,
 	bool networked, bool noterrorchecked, bool differs, bool withintolerance, const char *value );
+
+// Each datamap_t is broken down into two flattened arrays of fields, 
+//  one for PC_NETWORKED_DATA and one for PC_NON_NETWORKED_ONLY (optimized_datamap_t::datamapinfo_t::flattenedoffsets_t)
+// Each flattened array is sorted by offset for better cache performance
+// Finally, contiguous "runs" off offsets are precomputed (optimized_datamap_t::datamapinfo_t::datacopyruns_t) for fast copy operations
+
+// A data run is a set of DEFINE_PRED_FIELD fields in a c++ object which are contiguous and can be processing
+//  using a single memcpy operation
+struct datarun_t
+{
+	datarun_t() : m_nStartFlatField( 0 ), m_nEndFlatField( 0 ), m_nLength( 0 )
+	{
+		for ( int i = 0 ; i < TD_OFFSET_COUNT; ++i )
+		{
+			m_nStartOffset[ i ] = 0;
+#ifdef _X360
+			// These are the offsets of the next run, for priming the L1 cache
+			m_nPrefetchOffset[ i ] = 0;
+#endif
+		}
+	}
+
+	// Indices of start/end fields in the flattened typedescription_t list
+	int m_nStartFlatField;
+	int m_nEndFlatField;
+
+	// Offsets for run in the packed/unpacked data (I think the run starts need to be properly aligned)
+	int m_nStartOffset[ TD_OFFSET_COUNT ];
+#ifdef _X360
+	// These are the offsets of the next run, for priming the L1 cache
+	int m_nPrefetchOffset[ TD_OFFSET_COUNT ];
+#endif
+	int m_nLength;
+};
+
+struct datacopyruns_t 
+{
+public:
+	CUtlVector< datarun_t > m_vecRuns;
+};
+
+struct flattenedoffsets_t
+{
+	CUtlVector< typedescription_t >	m_Flattened;
+	int								m_nPackedSize; // Contiguous memory to pack all of these together for TD_OFFSET_PACKED
+	int								m_nPackedStartOffset;
+};
+
+struct datamapinfo_t
+{
+	// Flattened list, with FIELD_EMBEDDED, FTYPEDESC_PRIVATE, 
+	//  and FTYPEDESC_OVERRIDE (overridden) fields removed
+	flattenedoffsets_t	m_Flat;
+	datacopyruns_t		m_CopyRuns;
+};
+
+struct optimized_datamap_t
+{
+	// Optimized info for PC_NON_NETWORKED and PC_NETWORKED data
+	datamapinfo_t	m_Info[ PC_COPYTYPE_COUNT ];
+};
 
 class CPredictionCopy
 {
@@ -54,152 +107,164 @@ public:
 		WITHINTOLERANCE,
 	} difftype_t;
 
-	CPredictionCopy( int type, void *dest, bool dest_packed, void const *src, bool src_packed,
-		bool counterrors = false, bool reporterrors = false, bool performcopy = true, 
-		bool describefields = false, FN_FIELD_COMPARE func = NULL );
-
-	void	CopyShort( difftype_t dt, short *outvalue, const short *invalue, int count );
-	void	CopyInt( difftype_t dt, int *outvalue, const int *invalue, int count );		// Copy an int
-	void	CopyBool( difftype_t dt, bool *outvalue, const bool *invalue, int count );		// Copy a bool
-	void	CopyFloat( difftype_t dt, float *outvalue, const float *invalue, int count );	// Copy a float
-	void	CopyString( difftype_t dt, char *outstring, const char *instring );			// Copy a null-terminated string
-	void	CopyVector( difftype_t dt, Vector& outValue, const Vector &inValue );				// Copy a vector
-	void	CopyVector( difftype_t dt, Vector* outValue, const Vector *inValue, int count );	// Copy a vector array
-	void	CopyQuaternion( difftype_t dt, Quaternion& outValue, const Quaternion &inValue );				// Copy a quaternion
-	void	CopyQuaternion( difftype_t dt, Quaternion* outValue, const Quaternion *inValue, int count );				// Copy a quaternion array
-	void	CopyEHandle( difftype_t dt, EHANDLE *outvalue, EHANDLE const *invalue, int count );
-
-	void	FORCEINLINE CopyData( difftype_t dt, int size, char *outdata, const char *indata )		// Copy a binary data block
+	typedef enum
 	{
-		if ( !m_bPerformCopy )
-			return;
+		TRANSFERDATA_COPYONLY = 0,  // Data copying only (uses runs)
+		TRANSFERDATA_ERRORCHECK_NOSPEW, // Checks for errors, returns after first error found
+		TRANSFERDATA_ERRORCHECK_SPEW,   // checks for errors, reports all errors to console
+		TRANSFERDATA_ERRORCHECK_DESCRIBE, // used by hud_pdump, dumps values, etc, for all fields
+	} optype_t;
 
-		if ( dt == IDENTICAL )
-			return;
-
-		memcpy( outdata, indata, size );
-	}
-
+	CPredictionCopy( int type, byte *dest, bool dest_packed, const byte *src, bool src_packed,
+		optype_t opType, FN_FIELD_COMPARE func = NULL );
+	
 	int		TransferData( const char *operation, int entindex, datamap_t *dmap );
 
+	static bool PrepareDataMap( datamap_t *dmap );
+	static const typedescription_t *FindFlatFieldByName( const char *fieldname, const datamap_t *dmap );
 private:
-	void	TransferData_R( int chaincount, datamap_t *dmap );
 
-	void	DetermineWatchField( const char *operation, int entindex,  datamap_t *dmap );
-	void	DumpWatchField( typedescription_t *field );
-	void	WatchMsg( PRINTF_FORMAT_STRING const char *fmt, ... );
+	// Operations:
+	void	TransferDataCopyOnly( const datamap_t *dmap );
+	void	TransferDataErrorCheckNoSpew( char const *pchOperation, const datamap_t *dmap );
+	void	TransferDataErrorCheckSpew( char const *pchOperation, const datamap_t *dmap );
+	void	TransferDataDescribe( char const *pchOperation, const datamap_t *dmap );
 
-	difftype_t	CompareShort( short *outvalue, const short *invalue, int count );
-	difftype_t	CompareInt( int *outvalue, const int *invalue, int count );		// Compare an int
-	difftype_t	CompareBool( bool *outvalue, const bool *invalue, int count );		// Compare a bool
-	difftype_t	CompareFloat( float *outvalue, const float *invalue, int count );	// Compare a float
-	difftype_t	CompareData( int size, char *outdata, const char *indata );		// Compare a binary data block
-	difftype_t	CompareString( char *outstring, const char *instring );			// Compare a null-terminated string
-	difftype_t	CompareVector( Vector& outValue, const Vector &inValue );				// Compare a vector
-	difftype_t	CompareVector( Vector* outValue, const Vector *inValue, int count );	// Compare a vector array
-	difftype_t	CompareQuaternion( Quaternion& outValue, const Quaternion &inValue );				// Compare a Quaternion
-	difftype_t	CompareQuaternion( Quaternion* outValue, const Quaternion *inValue, int count );	// Compare a Quaternion array
-	difftype_t	CompareEHandle( EHANDLE *outvalue, EHANDLE const *invalue, int count );
-
-	void	DescribeShort( difftype_t dt, short *outvalue, const short *invalue, int count );
-	void	DescribeInt( difftype_t dt, int *outvalue, const int *invalue, int count );		// Compare an int
-	void	DescribeBool( difftype_t dt, bool *outvalue, const bool *invalue, int count );		// Compare a bool
-	void	DescribeFloat( difftype_t dt, float *outvalue, const float *invalue, int count );	// Compare a float
-	void	DescribeData( difftype_t dt, int size, char *outdata, const char *indata );		// Compare a binary data block
-	void	DescribeString( difftype_t dt, char *outstring, const char *instring );			// Compare a null-terminated string
-	void	DescribeVector( difftype_t dt, Vector& outValue, const Vector &inValue );				// Compare a vector
-	void	DescribeVector( difftype_t dt, Vector* outValue, const Vector *inValue, int count );	// Compare a vector array
-	void	DescribeQuaternion( difftype_t dt, Quaternion& outValue, const Quaternion &inValue );				// Compare a Quaternion
-	void	DescribeQuaternion( difftype_t dt, Quaternion* outValue, const Quaternion *inValue, int count );	// Compare a Quaternion array
-	void	DescribeEHandle( difftype_t dt, EHANDLE *outvalue, EHANDLE const *invalue, int count );
-
-	void	WatchShort( difftype_t dt, short *outvalue, const short *invalue, int count );
-	void	WatchInt( difftype_t dt, int *outvalue, const int *invalue, int count );		// Compare an int
-	void	WatchBool( difftype_t dt, bool *outvalue, const bool *invalue, int count );		// Compare a bool
-	void	WatchFloat( difftype_t dt, float *outvalue, const float *invalue, int count );	// Compare a float
-	void	WatchData( difftype_t dt, int size, char *outdata, const char *indata );		// Compare a binary data block
-	void	WatchString( difftype_t dt, char *outstring, const char *instring );			// Compare a null-terminated string
-	void	WatchVector( difftype_t dt, Vector& outValue, const Vector &inValue );				// Compare a vector
-	void	WatchVector( difftype_t dt, Vector* outValue, const Vector *inValue, int count );	// Compare a vector array
-	void	WatchQuaternion( difftype_t dt, Quaternion& outValue, const Quaternion &inValue );				// Compare a Quaternion
-	void	WatchQuaternion( difftype_t dt, Quaternion* outValue, const Quaternion *inValue, int count );	// Compare a Quaternion array
-	void	WatchEHandle( difftype_t dt, EHANDLE *outvalue, EHANDLE const *invalue, int count );
 
 	// Report function
-	void	ReportFieldsDiffer( PRINTF_FORMAT_STRING const char *fmt, ... );
-	void	DescribeFields( difftype_t dt, PRINTF_FORMAT_STRING const char *fmt, ... );
+	void	ReportFieldsDiffer( const datamap_t *pCurrentMap, const typedescription_t *pField, const char *fmt, ... );
+	void	OutputFieldDescription( const datamap_t *pCurrentMap, const typedescription_t *pField, difftype_t dt, const char *fmt, ... );
 	
-	bool	CanCheck( void );
+	// Helper for TransferDataCopyOnly
+	void	CopyFlatFieldsUsingRuns( const datamap_t *pCurrentMap, int nPredictionCopyType );
+	void	CopyFlatFields( const datamap_t *pCurrentMap, int nPredictionCopyType );
+	template< class T >
+	FORCEINLINE void CopyField( difftype_t difftype, T *outvalue, const T *invalue, int count );
 
-	void	CopyFields( int chaincount, datamap_t *pMap, typedescription_t *pFields, int fieldCount );
+	// Helper for TransferDataErrorCheckNoSpew
+	void	ErrorCheckFlatFields_NoSpew( const datamap_t *pCurrentMap, int nPredictionCopyType );
+	template< class T >
+	FORCEINLINE void ProcessField_Compare_NoSpew( const datamap_t *pCurrentMap, const typedescription_t *pField, const T *pOutputData, const T *pInputData, int fieldSize );
+
+	// Helper for TransferDataErrorCheckSpew
+	void	ErrorCheckFlatFields_Spew( const datamap_t *pCurrentMap, int nPredictionCopyType );
+	template< class T >
+	FORCEINLINE void ProcessField_Compare_Spew( const datamap_t *pCurrentMap, const typedescription_t *pField, const T *pOutputData, const T *pInputData, int fieldSize );
+
+	// Helper for TransferDataDescribe
+	void	DescribeFields( const CUtlVector< const datamap_t * > &vecGroups, const datamap_t *pCurrentMap, int nPredictionCopyType );
+	// Main entry point
+	template< class T >
+	FORCEINLINE void ProcessField_Describe( const datamap_t *pCurrentMap, const typedescription_t *pField, const T *pOutputData, const T *pInputData, int fieldSize );
+
+	// Helpers for entity field watcher
+	void	DetermineWatchField( const char *operation, int entindex, const datamap_t *dmap );
+	void	WatchMsg( const typedescription_t *pField, const char *fmt, ... );
+	void	DumpWatchField( const typedescription_t *pField, const byte *outvalue, int count );
+	template< class T >
+	FORCEINLINE void WatchField( const typedescription_t *pField, const T *outvalue, int count );
+
+	// Helper for ErrorCheck ops
+	template< class T >
+	FORCEINLINE difftype_t CompareField( const typedescription_t *pField, const T *outvalue, const T *invalue, int count );
+	// Used by TRANSFERDATA_ERRORCHECK_SPEW and by TRANSFERDATA_ERRORCHECK_DESCRIBE
+	template< class T >
+	FORCEINLINE void DescribeField( const datamap_t *pCurrentMap, const typedescription_t *pField, difftype_t difftype, const T *outvalue, const T *invalue, int count );
 
 private:
 
+	optype_t		m_OpType;
 	int				m_nType;
-	void			*m_pDest;
-	void const		*m_pSrc;
+	byte			*m_pDest;
+	const byte		*m_pSrc;
 	int				m_nDestOffsetIndex;
 	int				m_nSrcOffsetIndex;
-
-
-	bool			m_bErrorCheck;
-	bool			m_bReportErrors;
-	bool			m_bDescribeFields;
-	typedescription_t *m_pCurrentField;
-	char const		*m_pCurrentClassName;
-	datamap_t		*m_pCurrentMap;
-	bool			m_bShouldReport;
-	bool			m_bShouldDescribe;
 	int				m_nErrorCount;
-	bool			m_bPerformCopy;
+	int				m_nEntIndex;
 
 	FN_FIELD_COMPARE	m_FieldCompareFunc;
 
-	typedescription_t	 *m_pWatchField;
+	const typedescription_t	 *m_pWatchField;
 	char const			*m_pOperation;
+
+	CUtlStack< const typedescription_t * > m_FieldStack;
 };
 
 typedef void (*FN_FIELD_DESCRIPTION)( const char *classname, const char *fieldname, const char *fieldtype,
 	bool networked, const char *value );
 
-//-----------------------------------------------------------------------------
-// Purpose: Simply dumps all data fields in object
-//-----------------------------------------------------------------------------
-class CPredictionDescribeData
+// 
+// Compare methods
+// 
+// Specializations
+template<> FORCEINLINE CPredictionCopy::difftype_t CPredictionCopy::CompareField( const typedescription_t *pField, const float *outvalue, const float *invalue, int count );
+template<> FORCEINLINE CPredictionCopy::difftype_t CPredictionCopy::CompareField( const typedescription_t *pField, const Vector *outvalue, const Vector *invalue, int count );
+template<> FORCEINLINE CPredictionCopy::difftype_t CPredictionCopy::CompareField( const typedescription_t *pField, const Quaternion *outvalue, const Quaternion *invalue, int count );
+template<> FORCEINLINE CPredictionCopy::difftype_t CPredictionCopy::CompareField( const typedescription_t *pField, const char *outvalue, const char *invalue, int count );
+template<> FORCEINLINE CPredictionCopy::difftype_t CPredictionCopy::CompareField( const typedescription_t *pField, const EHANDLE *outvalue, const EHANDLE *invalue, int count );
+template<> FORCEINLINE CPredictionCopy::difftype_t CPredictionCopy::CompareField( const typedescription_t *pField, const color32 *outvalue, const color32 *invalue, int count );
+
+//
+// Describe Methods
+//
+
+// Specializations
+template<> FORCEINLINE void CPredictionCopy::DescribeField( const datamap_t *pCurrentMap, const typedescription_t *pField, difftype_t difftype, const short *outvalue, const short *invalue, int count );
+template<> FORCEINLINE void CPredictionCopy::DescribeField( const datamap_t *pCurrentMap, const typedescription_t *pField, difftype_t difftype, const int *outvalue, const int *invalue, int count );
+template<> FORCEINLINE void CPredictionCopy::DescribeField( const datamap_t *pCurrentMap, const typedescription_t *pField, difftype_t difftype, const bool *outvalue, const bool *invalue, int count );
+template<> FORCEINLINE void CPredictionCopy::DescribeField( const datamap_t *pCurrentMap, const typedescription_t *pField, difftype_t difftype, const float *outvalue, const float *invalue, int count );
+template<> FORCEINLINE void CPredictionCopy::DescribeField( const datamap_t *pCurrentMap, const typedescription_t *pField, difftype_t difftype, const char *outvalue, const char *invalue, int count );
+template<> FORCEINLINE void CPredictionCopy::DescribeField( const datamap_t *pCurrentMap, const typedescription_t *pField, difftype_t difftype, const Vector* outValue, const Vector *inValue, int count );
+template<> FORCEINLINE void CPredictionCopy::DescribeField( const datamap_t *pCurrentMap, const typedescription_t *pField, difftype_t difftype, const Quaternion* outValue, const Quaternion *inValue, int count );
+template<> FORCEINLINE void CPredictionCopy::DescribeField( const datamap_t *pCurrentMap, const typedescription_t *pField, difftype_t difftype, const EHANDLE *outvalue, const EHANDLE *invalue, int count );
+template<> FORCEINLINE void CPredictionCopy::DescribeField( const datamap_t *pCurrentMap, const typedescription_t *pField, difftype_t difftype, const color32 *outvalue, const color32 *invalue, int count );
+template<> FORCEINLINE void CPredictionCopy::DescribeField( const datamap_t *pCurrentMap, const typedescription_t *pField, difftype_t difftype, const uint8 *outvalue, const uint8 *invalue, int count );
+
+
+//
+// Watch Methods
+//
+// Specializations
+template<> FORCEINLINE void CPredictionCopy::WatchField( const typedescription_t *pField, const short *outvalue,int count );
+template<> FORCEINLINE void CPredictionCopy::WatchField( const typedescription_t *pField, const int *outvalue, int count );
+template<> FORCEINLINE void CPredictionCopy::WatchField( const typedescription_t *pField, const bool *outvalue, int count );
+template<> FORCEINLINE void CPredictionCopy::WatchField( const typedescription_t *pField, const float *outvalue, int count );
+template<> FORCEINLINE void CPredictionCopy::WatchField( const typedescription_t *pField, const Vector *outvalue, int count );
+template<> FORCEINLINE void CPredictionCopy::WatchField( const typedescription_t *pField, const Quaternion *outvalue, int count );
+template<> FORCEINLINE void CPredictionCopy::WatchField( const typedescription_t *pField, const EHANDLE *outvalue, int count );
+template<> FORCEINLINE void CPredictionCopy::WatchField( const typedescription_t *pField, const char *outvalue, int count );
+template<> FORCEINLINE void CPredictionCopy::WatchField( const typedescription_t *pField, const color32 *outvalue, int count );
+//
+// Copy Methods
+//
+// specializations
+template<> FORCEINLINE void CPredictionCopy::CopyField( difftype_t difftype, char *outvalue, const char *invalue, int count );
+
+template< class T >
+FORCEINLINE void CPredictionCopy::ProcessField_Compare_NoSpew( const datamap_t *pCurrentMap, const typedescription_t *pField, const T *pOutputData, const T *pInputData, int fieldSize )
 {
-public:
-	CPredictionDescribeData( void const *src, bool src_packed, FN_FIELD_DESCRIPTION func = 0 );
+	difftype_t difftype = CompareField( pField, pOutputData, pInputData, fieldSize );
+	if ( difftype == DIFFERS )
+	{
+		++m_nErrorCount;
+	}
+}
 
-	void	DescribeShort( const short *invalue, int count );
-	void	DescribeInt( const int *invalue, int count );		
-	void	DescribeBool( const bool *invalue, int count );	
-	void	DescribeFloat( const float *invalue, int count );	
-	void	DescribeData( int size, const char *indata );		
-	void	DescribeString( const char *instring );			
-	void	DescribeVector( const Vector &inValue );
-	void	DescribeVector( const Vector *inValue, int count );
-	void	DescribeQuaternion( const Quaternion &inValue );
-	void	DescribeQuaternion( const Quaternion *inValue, int count );
-	void	DescribeEHandle( EHANDLE const *invalue, int count );
 
-	void	DumpDescription( datamap_t *pMap );
+template< class T >
+FORCEINLINE void CPredictionCopy::ProcessField_Compare_Spew( const datamap_t *pCurrentMap, const typedescription_t *pField, const T *pOutputData, const T *pInputData, int fieldSize )
+{
+	difftype_t difftype = CompareField( pField, pOutputData, pInputData, fieldSize );
+	DescribeField( pCurrentMap, pField, difftype, pOutputData, pInputData, fieldSize );
+}
 
-private:
-	void	DescribeFields_R( int chain_count, datamap_t *pMap, typedescription_t *pFields, int fieldCount );
 
-	void const		*m_pSrc;
-	int				m_nSrcOffsetIndex;
-
-	void			Describe( PRINTF_FORMAT_STRING const char *fmt, ... );
-
-	typedescription_t *m_pCurrentField;
-	char const		*m_pCurrentClassName;
-	datamap_t		*m_pCurrentMap;
-
-	bool			m_bShouldReport;
-
-	FN_FIELD_DESCRIPTION	m_FieldDescFunc;
-};
+template< class T >
+FORCEINLINE void CPredictionCopy::ProcessField_Describe( const datamap_t *pCurrentMap, const typedescription_t *pField, const T *pOutputData, const T *pInputData, int fieldSize )
+{
+	difftype_t difftype = CompareField( pField, pOutputData, pInputData, fieldSize );
+	DescribeField( pCurrentMap, pField, difftype, pOutputData, pInputData, fieldSize );
+}
 
 #if defined( CLIENT_DLL )
 class CValueChangeTracker
@@ -234,7 +299,7 @@ private:
 	bool				m_bActive : 1;
 	bool				m_bTracking : 1;
 	EHANDLE				m_hEntityToTrack;
-	CUtlVector< typedescription_t * > m_FieldStack;
+	const typedescription_t	*m_pTrackField;
 	CUtlString			m_strFieldName;
 	CUtlString			m_strContext;
 	// First 128 bytes of data is all we will consider

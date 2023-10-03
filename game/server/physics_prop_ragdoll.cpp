@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -140,6 +140,14 @@ BEGIN_DATADESC(CRagdollProp)
 	DEFINE_RAGDOLL_ELEMENT( 21 ),
 	DEFINE_RAGDOLL_ELEMENT( 22 ),
 	DEFINE_RAGDOLL_ELEMENT( 23 ),
+	DEFINE_RAGDOLL_ELEMENT( 24 ),
+	DEFINE_RAGDOLL_ELEMENT( 25 ),
+	DEFINE_RAGDOLL_ELEMENT( 26 ),
+	DEFINE_RAGDOLL_ELEMENT( 27 ),
+	DEFINE_RAGDOLL_ELEMENT( 28 ),
+	DEFINE_RAGDOLL_ELEMENT( 29 ),
+	DEFINE_RAGDOLL_ELEMENT( 30 ),
+	DEFINE_RAGDOLL_ELEMENT( 31 ),
 
 END_DATADESC()
 
@@ -148,7 +156,7 @@ END_DATADESC()
 //-----------------------------------------------------------------------------
 void CRagdollProp::DisableAutoFade()
 {
-	m_flFadeScale = 0;
+	SetGlobalFadeScale( 0.0f );
 	m_flDefaultFadeScale = 0;
 }
 
@@ -156,10 +164,10 @@ void CRagdollProp::DisableAutoFade()
 void CRagdollProp::Spawn( void )
 {
 	// Starts out as the default fade scale value
-	m_flDefaultFadeScale = m_flFadeScale;
+	m_flDefaultFadeScale = GetGlobalFadeScale();
 
 	// NOTE: If this fires, then the assert or the datadesc is wrong!  (see DEFINE_RAGDOLL_ELEMENT above)
-	Assert( RAGDOLL_MAX_ELEMENTS == 24 );
+	Assert( RAGDOLL_MAX_ELEMENTS == 32 );
 	Precache();
 	SetModel( STRING( GetModelName() ) );
 
@@ -170,10 +178,10 @@ void CRagdollProp::Spawn( void )
 	}
 	else
 	{
-		m_flFadeScale = m_flDefaultFadeScale;
+		SetGlobalFadeScale( m_flDefaultFadeScale );
 	}
 
-	matrix3x4_t pBoneToWorld[MAXSTUDIOBONES];
+	matrix3x4a_t pBoneToWorld[MAXSTUDIOBONES];
 	BaseClass::SetupBones( pBoneToWorld, BONE_USED_BY_ANYTHING ); // FIXME: shouldn't this be a subset of the bones
 	// this is useless info after the initial conditions are set
 	SetAbsAngles( vec3_angle );
@@ -273,8 +281,8 @@ CRagdollProp::CRagdollProp( void )
 	m_ragdoll.listCount = 0;
 	Assert( (1<<RAGDOLL_INDEX_BITS) >=RAGDOLL_MAX_ELEMENTS );
 	m_allAsleep = false;
-	m_flFadeScale = 1;
-	m_flDefaultFadeScale = 1;
+	SetGlobalFadeScale( 1.0f );
+	m_flDefaultFadeScale = 1.0f;
 }
 
 CRagdollProp::~CRagdollProp( void )
@@ -700,7 +708,6 @@ void CRagdollProp::InitRagdoll( const Vector &forceVector, int forceBone, const 
 	params.pCurrentBones = pBoneToWorld;
 	params.jointFrictionScale = 1.0;
 	params.allowStretch = HasSpawnFlags(SF_RAGDOLLPROP_ALLOW_STRETCH);
-	params.fixedConstraints = false;
 	RagdollCreate( m_ragdoll, params, physenv );
 	RagdollApplyAnimationAsVelocity( m_ragdoll, pPrevBones, pBoneToWorld, dt );
 	if ( m_anglesOverrideString != NULL_STRING && Q_strlen(m_anglesOverrideString.ToCStr()) > 0 )
@@ -813,16 +820,16 @@ void CRagdollProp::RecheckCollisionFilter( void )
 }
 
 
-void CRagdollProp::TraceAttack( const CTakeDamageInfo &info, const Vector &dir, trace_t *ptr, CDmgAccumulator *pAccumulator )
+void CRagdollProp::TraceAttack( const CTakeDamageInfo &info, const Vector &dir, trace_t *ptr )
 {
 	if ( ptr->physicsbone >= 0 && ptr->physicsbone < m_ragdoll.listCount )
 	{
 		VPhysicsSwapObject( m_ragdoll.list[ptr->physicsbone].pObject );
 	}
-	BaseClass::TraceAttack( info, dir, ptr, pAccumulator );
+	BaseClass::TraceAttack( info, dir, ptr );
 }
 
-void CRagdollProp::SetupBones( matrix3x4_t *pBoneToWorld, int boneMask )
+void CRagdollProp::SetupBones( matrix3x4a_t *pBoneToWorld, int boneMask )
 {
 	// no ragdoll, fall through to base class 
 	if ( !m_ragdoll.listCount )
@@ -879,6 +886,7 @@ bool CRagdollProp::TestCollision( const Ray_t &ray, unsigned int mask, trace_t& 
 	}
 #endif
 
+	MDLCACHE_CRITICAL_SECTION();
 	CStudioHdr *pStudioHdr = GetModelPtr( );
 	if (!pStudioHdr)
 		return false;
@@ -971,7 +979,7 @@ void CRagdollProp::VPhysicsUpdate( IPhysicsObject *pPhysics )
 	m_lastUpdateTickCount = gpGlobals->tickcount;
 	//NetworkStateChanged();
 
-	matrix3x4_t boneToWorld[MAXSTUDIOBONES];
+	matrix3x4a_t boneToWorld[MAXSTUDIOBONES];
 	QAngle angles;
 	Vector surroundingMins, surroundingMaxs;
 
@@ -1101,7 +1109,7 @@ void CRagdollProp::FadeOut( float flDelay, float fadeTime )
 	m_flFadeTime = ( fadeTime == -1 ) ? FADE_OUT_LENGTH : fadeTime;
 
 	m_flFadeOutStartTime = gpGlobals->curtime + flDelay;
-	m_flFadeScale = 0;
+	SetGlobalFadeScale( 0 );
 	SetContextThink( &CRagdollProp::FadeOutThink, gpGlobals->curtime + flDelay + 0.01f, s_pFadeOutContext );
 }
 
@@ -1122,7 +1130,7 @@ void CRagdollProp::FadeOutThink(void)
 		float alpha = 1.0f - dt / m_flFadeTime;
 		int nFade = (int)(alpha * 255.0f);
 		m_nRenderMode = kRenderTransTexture;
-		SetRenderColorA( nFade );
+		SetRenderAlpha( nFade );
 		NetworkStateChanged();
 		SetContextThink( &CRagdollProp::FadeOutThink, gpGlobals->curtime + TICK_INTERVAL, s_pFadeOutContext );
 	}
@@ -1275,7 +1283,8 @@ CBaseAnimating *CreateServerRagdollSubmodel( CBaseAnimating *pOwner, const char 
 	CRagdollProp *pRagdoll = (CRagdollProp *)CBaseEntity::CreateNoSpawn( "prop_ragdoll", position, angles, pOwner );
 	pRagdoll->SetModelName( AllocPooledString( pModelName ) );
 	pRagdoll->SetModel( STRING(pRagdoll->GetModelName()) );
-	matrix3x4_t pBoneToWorld[MAXSTUDIOBONES], pBoneToWorldNext[MAXSTUDIOBONES];
+	matrix3x4a_t pBoneToWorld[MAXSTUDIOBONES];
+	matrix3x4a_t pBoneToWorldNext[MAXSTUDIOBONES];
 	pRagdoll->ResetSequence( 0 );
 
 	// let bone merging do the work of copying everything over for us
@@ -1303,7 +1312,8 @@ CBaseEntity *CreateServerRagdoll( CBaseAnimating *pAnimating, int forceBone, con
 	pRagdoll->SetOwnerEntity( pAnimating );
 
 	pRagdoll->InitRagdollAnimation();
-	matrix3x4_t pBoneToWorld[MAXSTUDIOBONES], pBoneToWorldNext[MAXSTUDIOBONES];
+	matrix3x4a_t pBoneToWorld[MAXSTUDIOBONES];
+	matrix3x4a_t pBoneToWorldNext[MAXSTUDIOBONES];
 	
 	float dt = 0.1f;
 
@@ -1403,8 +1413,8 @@ CBaseEntity *CreateServerRagdoll( CBaseAnimating *pAnimating, int forceBone, con
 		
 		// distribute force over mass of entire character
 		float massScale = Studio_GetMass(pAnimating->GetModelPtr());
-		massScale = clamp( massScale, 1.f, 1.e4f );
-		massScale = 1.f / massScale;
+		massScale = clamp( massScale, 1, 1e4 );
+		massScale = 1 / massScale;
 
 		// distribute the force
 		// BUGBUG: This will hit the same bone twice if it has two hitboxes!!!!
@@ -1578,7 +1588,7 @@ CRagdollProp *CreateServerRagdollAttached( CBaseAnimating *pAnimating, const Vec
 	pRagdoll->CopyAnimationDataFrom( pAnimating );
 
 	pRagdoll->InitRagdollAnimation();
-	matrix3x4_t pBoneToWorld[MAXSTUDIOBONES];
+	matrix3x4a_t pBoneToWorld[MAXSTUDIOBONES];
 	pAnimating->SetupBones( pBoneToWorld, BONE_USED_BY_ANYTHING );
 	pRagdoll->InitRagdollAttached( pAttached, vecForce, forceBone, pBoneToWorld, pBoneToWorld, 0.1, collisionGroup, pParentEntity, boneAttach, boneOrigin, parentBoneAttach, originAttached );
 	

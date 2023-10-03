@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: spawn and think functions for editor-placed lights
 //
@@ -218,7 +218,7 @@ void CLight::FadeThink(void)
 	{
 		char sCurString[2];
 		sCurString[0] = m_iCurrentFade;
-		sCurString[1] = 0;
+		sCurString[1] = NULL;
 		engine->LightStyle(m_iStyle, sCurString);
 
 		// UNDONE: Consider making this settable war to control fade speed
@@ -231,6 +231,7 @@ void CLight::FadeThink(void)
 //
 LINK_ENTITY_TO_CLASS( light_spot, CLight );
 LINK_ENTITY_TO_CLASS( light_glspot, CLight );
+LINK_ENTITY_TO_CLASS( light_directional, CLight );
 
 
 class CEnvLight : public CLight

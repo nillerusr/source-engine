@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -10,7 +10,6 @@
 #define ICLIENTMODE_H
 
 #include <vgui/VGUI.h>
-#include "client_virtualreality.h"
 
 class CViewSetup;
 class C_BaseEntity;
@@ -54,16 +53,20 @@ public:
 	// This can re-layout the view and such.
 	// Note that Enable and Disable are called when the DLL initializes and shuts down.
 	virtual void	Enable()=0;
+	virtual void	EnableWithRootPanel( vgui::VPANEL pRoot )=0;
 
 	// Called when it's about to go into another client mode.
 	virtual void	Disable()=0;
 
 	// Called when initializing or when the view changes.
 	// This should move the viewport into the correct position.
-	virtual void	Layout()=0;
+	virtual void	Layout( bool bForce = false )=0;
 
 	// Gets at the viewport, if there is one...
 	virtual vgui::Panel *GetViewport() = 0;
+
+	// Gets a panel hierarchically below the viewport by name like so "ASWHudInventoryMode/SuitAbilityPanel/ItemPanel1"...
+	virtual vgui::Panel *GetPanelFromViewport( const char *pchNamePath ) = 0;
 
 	// Gets at the viewports vgui panel animation controller, if there is one...
 	virtual vgui::AnimationController *GetViewportAnimationController() = 0;
@@ -82,6 +85,7 @@ public:
 	virtual bool	ShouldDrawFog( void ) = 0;
 
 	virtual void	OverrideView( CViewSetup *pSetup ) = 0;
+	virtual void	OverrideAudioState( AudioState_t *pAudioState ) = 0;
 	virtual int		KeyInput( int down, ButtonCode_t keynum, const char *pszCurrentBinding ) = 0;
 	virtual void	StartMessageMode( int iMessageModeType ) = 0;
 	virtual vgui::Panel *GetMessagePanel() = 0;
@@ -112,26 +116,12 @@ public:
 
 	virtual bool	CanRecordDemo( char *errorMsg, int length ) const = 0;
 
-	virtual void	ComputeVguiResConditions( KeyValues *pkvConditions ) = 0;
+	virtual void	OnColorCorrectionWeightsReset( void ) = 0;
+	virtual float	GetColorCorrectionScale( void ) const = 0;
 
-	//=============================================================================
-	// HPE_BEGIN:
-	// [menglish] Save server information shown to the client in a persistent place
-	//=============================================================================
-	 
-	virtual wchar_t* GetServerName() = 0;
-	virtual void SetServerName(wchar_t* name) = 0;
-	virtual wchar_t* GetMapName() = 0;
-	virtual void SetMapName(wchar_t* name) = 0;
-	 
-	//=============================================================================
-	// HPE_END
-	//=============================================================================
+	virtual int		HudElementKeyInput( int down, ButtonCode_t keynum, const char *pszCurrentBinding ) = 0;
 
-	virtual bool	DoPostScreenSpaceEffects( const CViewSetup *pSetup ) = 0;
-
-	virtual void	DisplayReplayMessage( const char *pLocalizeName, float flDuration, bool bUrgent,
-										  const char *pSound, bool bDlg ) = 0;
+	virtual void	DoPostScreenSpaceEffects( const CViewSetup *pSetup ) = 0;
 
 // Updates.
 public:
@@ -139,17 +129,11 @@ public:
 	// Called every frame.
 	virtual void	Update()=0;	
 
-	// Returns true if VR mode should black out everything around the UI
-	virtual bool	ShouldBlackoutAroundHUD() = 0;
-
-	// Returns true if VR mode should black out everything around the UI
-	virtual HeadtrackMovementMode_t ShouldOverrideHeadtrackControl() = 0;
-
-	virtual bool	IsInfoPanelAllowed() = 0;
-	virtual void	InfoPanelDisplayed() = 0;
-	virtual bool	IsHTMLInfoPanelAllowed() = 0;
+	virtual void	SetBlurFade( float scale ) = 0;
+	virtual float	GetBlurFade( void ) = 0;
 };	
 
-extern IClientMode *g_pClientMode;
+extern IClientMode *GetClientMode();
+extern IClientMode *GetFullscreenClientMode();
 
 #endif

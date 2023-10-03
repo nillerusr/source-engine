@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: This is a panel which is rendered image on top of an entity
 //
@@ -10,7 +10,7 @@
 #include <KeyValues.h>
 #include "c_BaseTFPlayer.h"
 #include <vgui/IVGui.h>
-#include "vgui_bitmapimage.h"
+#include "vgui_BitmapImage.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"

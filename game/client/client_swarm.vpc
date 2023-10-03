@@ -1,0 +1,1054 @@
+//-----------------------------------------------------------------------------
+//	CLIENT_SWARM.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro GAMENAME 	"mod_swarm"
+
+$Include "$SRCDIR\game\client\client_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories	"$BASE;.\hl2;.\swarm;.\swarm\vgui;$SRCDIR\game\client\swarm\gameui;..\statemachine;$SRCDIR\game\shared\multiplayer;$SRCDIR\game\shared\swarm"
+		$PreprocessorDefinitions		"$BASE;INFESTED_PARTICLES;INFESTED_DLL;SWARM_DLL;GAMEUI_EMBEDDED;GAMEUI_EXPORTS"
+	}
+}
+
+$Project "Client (Swarm)"
+{
+	$Folder "Source Files"
+	{
+		-$File	"$SRCDIR\game\shared\weapon_parse_default.cpp"
+		-$File	"hud_animationinfo.cpp"
+		-$File	"hud_crosshair.cpp"		
+		-$File	"hud_hintdisplay.cpp"
+		-$File	"hud_weapon.cpp"
+		-$File	"hud_vehicle.cpp"
+	}
+	
+	$Folder	"Source Files"
+	{
+		$File	"voice_menu.cpp"
+		
+		$Folder "From HL2"
+		{
+			$File	"hl2\c_antlion_dust.cpp"
+			$File	"hl2\c_ar2_explosion.cpp"
+			$File	"hl2\c_basehelicopter.cpp"
+			$File	"hl2\c_basehelicopter.h"
+			$File	"hl2\c_npc_combinegunship.cpp"
+			$File	"hl2\c_rotorwash.cpp"
+		}
+
+		$Folder "Swarm"
+		{
+			$Folder "GameUI - Embedded"
+			{
+				$Folder "Base GameUI"
+				{
+					$Folder "Headers"
+					{
+					$File	"swarm\gameui\backgroundmenubutton.h" \
+							"swarm\gameui\basepanel.h" \
+							"swarm\gameui\basesavegamedialog.h" \
+							"swarm\gameui\bitmapimagepanel.h" \
+							"swarm\gameui\commandcheckbutton.h" \
+							"swarm\gameui\contentcontroldialog.h" \
+							"swarm\gameui\createmultiplayergamebotpage.h" \
+							"swarm\gameui\createmultiplayergamedialog.h" \
+							"swarm\gameui\createmultiplayergamegameplaypage.h" \
+							"swarm\gameui\createmultiplayergameserverpage.h" \
+							"swarm\gameui\customtabexplanationdialog.h" \
+							"swarm\gameui\cvarnegatecheckbutton.h" \
+							"swarm\gameui\cvarslider.h" \
+							"swarm\gameui\cvartextentry.h" \
+							"swarm\gameui\cvartogglecheckbutton.h" \
+							"swarm\gameui\engineinterface.h" \
+							"swarm\gameui\gameconsole.h" \
+							"swarm\gameui\gameconsoledialog.h" \
+							"swarm\gameui\gameui_interface.h" \
+							"swarm\gameui\gameui_util.h" \
+							"swarm\gameui\keytogglecheckbutton.h" \
+							"swarm\gameui\labeledcommandcombobox.h" \
+							"swarm\gameui\loadingdialog.h" \
+							"swarm\gameui\loadingtippanel.h" \
+							"swarm\gameui\modinfo.h" \
+							"swarm\gameui\mousemessageforwardingpanel.h" \
+							"swarm\gameui\multiplayeradvanceddialog.h" \
+							"swarm\gameui\optionsdialog.h" \
+							"swarm\gameui\optionssubaudio.h" \
+							"swarm\gameui\optionssubdifficulty.h" \
+							"swarm\gameui\optionssubgame.h" \
+							"swarm\gameui\optionssubkeyboard.h" \
+							"swarm\gameui\optionssubmouse.h" \
+							"swarm\gameui\optionssubmultiplayer.h" \
+							"swarm\gameui\optionssubportal.h" \
+							"swarm\gameui\optionssubvideo.h" \
+							"swarm\gameui\optionssubvoice.h" \
+							"swarm\gameui\panellistpanel.h" \
+							"swarm\gameui\playerlistdialog.h" \
+							"swarm\gameui\rungameengine.h" \
+							"swarm\gameui\scriptobject.h" \
+							"swarm\gameui\sys_utils.h" \
+							"swarm\gameui\textentrybox.h" \
+							"swarm\gameui\urlbutton.h" \
+							"swarm\gameui\vcontrolslistpanel.h" \
+							"swarm\gameui\vguisystemmoduleloader.h"
+					}
+					$File	"swarm\gameui\backgroundmenubutton.cpp" \
+							"swarm\gameui\basesavegamedialog.cpp" \
+							"swarm\gameui\bitmapimagepanel.cpp" \
+							"swarm\gameui\commandcheckbutton.cpp" \
+							"swarm\gameui\contentcontroldialog.cpp" \
+							"swarm\gameui\createmultiplayergamebotpage.cpp" \
+							"swarm\gameui\createmultiplayergamedialog.cpp" \
+							"swarm\gameui\createmultiplayergamegameplaypage.cpp" \
+							"swarm\gameui\createmultiplayergameserverpage.cpp" \
+							"swarm\gameui\customtabexplanationdialog.cpp" \
+							"swarm\gameui\cvarnegatecheckbutton.cpp" \
+							"swarm\gameui\cvarslider.cpp" \
+							"swarm\gameui\cvartextentry.cpp" \
+							"swarm\gameui\cvartogglecheckbutton.cpp" \
+							"swarm\gameui\gameconsole.cpp" \
+							"swarm\gameui\gameconsoledialog.cpp" \
+							"swarm\gameui\gameui_interface.cpp" \
+							"swarm\gameui\gameui_util.cpp" \
+							"swarm\gameui\keytogglecheckbutton.cpp" \
+							"swarm\gameui\labeledcommandcombobox.cpp" \
+							"swarm\gameui\loadingdialog.cpp" \
+							"swarm\gameui\loadingtippanel.cpp" \
+							"swarm\gameui\logofile.cpp" \
+							"swarm\gameui\modinfo.cpp" \
+							"swarm\gameui\mousemessageforwardingpanel.cpp" \
+							"swarm\gameui\multiplayeradvanceddialog.cpp" \
+							"swarm\gameui\optionsdialog.cpp" \
+							"swarm\gameui\optionssubaudio.cpp" \
+							"swarm\gameui\optionssubdifficulty.cpp" \
+							"swarm\gameui\optionssubgame.cpp" \
+							"swarm\gameui\optionssubkeyboard.cpp" \
+							"swarm\gameui\optionssubmouse.cpp" \
+							"swarm\gameui\optionssubmultiplayer.cpp" \
+							"swarm\gameui\optionssubportal.cpp" \
+							"swarm\gameui\optionssubvideo.cpp" \
+							"swarm\gameui\optionssubvoice.cpp" \
+							"swarm\gameui\panellistpanel.cpp" \
+							"swarm\gameui\playerlistdialog.cpp" \
+							"swarm\gameui\rungameengine.cpp" \
+							"swarm\gameui\scriptobject.cpp" \
+							"swarm\gameui\sys_utils.cpp" \
+							"swarm\gameui\textentrybox.cpp" \
+							"swarm\gameui\urlbutton.cpp" \
+							"swarm\gameui\vcontrolslistpanel.cpp" \
+							"swarm\gameui\vguisystemmoduleloader.cpp"
+					{
+						$Configuration
+						{
+							$Compiler
+							{
+								$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+							}
+						}
+					}
+				}
+				
+				$Folder "External Stuff"
+				{
+					$File	"$SRCDIR\common\language.cpp"
+					{
+						$Configuration
+						{
+							$Compiler
+							{
+								$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+							}
+						}
+					}
+				}
+
+				$Folder "Swarm GameUI"
+				{
+					$Folder "Headers"
+					{
+					$File	"swarm\gameui\swarm\basemodframe.h" \
+							"swarm\gameui\swarm\basemodpanel.h" \
+							"swarm\gameui\swarm\basemodui.h" \
+							"swarm\gameui\swarm\gamemodes.h" \
+							"swarm\gameui\swarm\uiavatarimage.h" \
+							"swarm\gameui\swarm\uigamedata.h" \
+							"swarm\gameui\swarm\vachievements.h" \
+							"swarm\gameui\swarm\vaddonassociation.h" \
+							"swarm\gameui\swarm\vaddons.h" \
+							"swarm\gameui\swarm\vattractscreen.h" \
+							"swarm\gameui\swarm\vaudio.h" \
+							"swarm\gameui\swarm\vaudiovideo.h" \
+							"swarm\gameui\swarm\vcloud.h" \
+							"swarm\gameui\swarm\vcontrolleroptions.h" \
+							"swarm\gameui\swarm\vcontrolleroptionsbuttons.h" \
+							"swarm\gameui\swarm\vcontrolleroptionssticks.h" \
+							"swarm\gameui\swarm\vcustomcampaigns.h" \
+							"swarm\gameui\swarm\vdownloadcampaign.h" \
+							"swarm\gameui\swarm\vdownloads.h" \
+							"swarm\gameui\swarm\vdropdownmenu.h" \
+							"swarm\gameui\swarm\vflyoutmenu.h" \
+							"swarm\gameui\swarm\vfooterpanel.h" \
+							"swarm\gameui\swarm\vfoundgames.h" \
+							"swarm\gameui\swarm\vfoundgroupgames.h" \
+							"swarm\gameui\swarm\vfoundpublicgames.h" \
+							"swarm\gameui\swarm\vgamelobby.h" \
+							"swarm\gameui\swarm\vgamelobbychat.h" \
+							"swarm\gameui\swarm\vgameoptions.h" \
+							"swarm\gameui\swarm\vgamesettings.h" \
+							"swarm\gameui\swarm\vgenericconfirmation.h" \
+							"swarm\gameui\swarm\vgenericpanellist.h" \
+							"swarm\gameui\swarm\vgenericwaitscreen.h" \
+							"swarm\gameui\swarm\vgetlegacydata.h" \
+							"swarm\gameui\swarm\vhybridbutton.h" \
+							"swarm\gameui\swarm\vingamechapterselect.h" \
+							"swarm\gameui\swarm\vingamedifficultyselect.h" \
+							"swarm\gameui\swarm\vingamekickplayerlist.h" \
+							"swarm\gameui\swarm\vingamemainmenu.h" \
+							"swarm\gameui\swarm\vjukebox.h" \
+							"swarm\gameui\swarm\vkeyboard.h" \
+							"swarm\gameui\swarm\vkeyboardmouse.h" \
+							"swarm\gameui\swarm\vleaderboard.h" \
+							"swarm\gameui\swarm\vloadingprogress.h" \
+							"swarm\gameui\swarm\vmainmenu.h" \
+							"swarm\gameui\swarm\vmultiplayer.h" \
+							"swarm\gameui\swarm\voptions.h" \
+							"swarm\gameui\swarm\vpasswordentry.h" \
+							"swarm\gameui\swarm\vquickjoin.h" \
+							"swarm\gameui\swarm\vquickjoingroups.h" \
+							"swarm\gameui\swarm\vsignindialog.h" \
+							"swarm\gameui\swarm\vslidercontrol.h" \
+							"swarm\gameui\swarm\vspinnercontrol.h" \
+							"swarm\gameui\swarm\vsteamcloudconfirmation.h" \
+							"swarm\gameui\swarm\vtransitionscreen.h" \
+							"swarm\gameui\swarm\vvideo.h" \
+							"swarm\gameui\swarm\vvoteoptions.h"
+					}
+					$Folder "Win32"
+					{
+					$File	"swarm\gameui\swarm\uiavatarimage.cpp" \
+							"swarm\gameui\swarm\vaddonassociation.cpp" \
+							"swarm\gameui\swarm\vaddons.cpp" \
+							"swarm\gameui\swarm\vcloud.cpp" \
+							"swarm\gameui\swarm\vcustomcampaigns.cpp" \
+							"swarm\gameui\swarm\vdownloadcampaign.cpp" \
+							"swarm\gameui\swarm\vdownloads.cpp" \
+							"swarm\gameui\swarm\vgetlegacydata.cpp" \
+							"swarm\gameui\swarm\vjukebox.cpp" \
+							"swarm\gameui\swarm\vkeyboard.cpp" \
+							"swarm\gameui\swarm\vkeyboardmouse.cpp" \
+							"swarm\gameui\swarm\vsteamcloudconfirmation.cpp"
+					{
+						$Configuration
+						{
+							$Compiler
+							{
+								$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+							}
+						}
+					}
+					}
+					$File	"swarm\gameui\swarm\basemodframe.cpp" \
+							"swarm\gameui\swarm\basemodpanel.cpp" \
+							"swarm\gameui\swarm\gamemodes.cpp" \
+							"swarm\gameui\swarm\uigamedata.cpp" \
+							"swarm\gameui\swarm\uigamedata_invite.cpp" \
+							"swarm\gameui\swarm\uigamedata_storage.cpp" \
+							"swarm\gameui\swarm\vachievements.cpp" \
+							"swarm\gameui\swarm\vattractscreen.cpp" \
+							"swarm\gameui\swarm\vaudio.cpp" \
+							"swarm\gameui\swarm\vaudiovideo.cpp" \
+							"swarm\gameui\swarm\vcontrolleroptions.cpp" \
+							"swarm\gameui\swarm\vcontrolleroptionsbuttons.cpp" \
+							"swarm\gameui\swarm\vcontrolleroptionssticks.cpp" \
+							"swarm\gameui\swarm\vdropdownmenu.cpp" \
+							"swarm\gameui\swarm\vflyoutmenu.cpp" \
+							"swarm\gameui\swarm\vfooterpanel.cpp" \
+							"swarm\gameui\swarm\vfoundgames.cpp" \
+							"swarm\gameui\swarm\vfoundgroupgames.cpp" \
+							"swarm\gameui\swarm\vfoundpublicgames.cpp" \
+							"swarm\gameui\swarm\vgamelobby.cpp" \
+							"swarm\gameui\swarm\vgamelobbychat.cpp" \
+							"swarm\gameui\swarm\vgameoptions.cpp" \
+							"swarm\gameui\swarm\vgamesettings.cpp" \
+							"swarm\gameui\swarm\vgenericconfirmation.cpp" \
+							"swarm\gameui\swarm\vgenericpanellist.cpp" \
+							"swarm\gameui\swarm\vgenericwaitscreen.cpp" \
+							"swarm\gameui\swarm\vhybridbutton.cpp" \
+							"swarm\gameui\swarm\vingamechapterselect.cpp" \
+							"swarm\gameui\swarm\vingamedifficultyselect.cpp" \
+							"swarm\gameui\swarm\vingamekickplayerlist.cpp" \
+							"swarm\gameui\swarm\vingamemainmenu.cpp" \
+							"swarm\gameui\swarm\vleaderboard.cpp" \
+							"swarm\gameui\swarm\vloadingprogress.cpp" \
+							"swarm\gameui\swarm\vmainmenu.cpp" \
+							"swarm\gameui\swarm\vmenubackground.cpp" \
+							"swarm\gameui\swarm\vmultiplayer.cpp" \
+							"swarm\gameui\swarm\voptions.cpp" \
+							"swarm\gameui\swarm\vpasswordentry.cpp" \
+							"swarm\gameui\swarm\vquickjoin.cpp" \
+							"swarm\gameui\swarm\vquickjoingroups.cpp" \
+							"swarm\gameui\swarm\vsignindialog.cpp" \
+							"swarm\gameui\swarm\vslidercontrol.cpp" \
+							"swarm\gameui\swarm\vspinnercontrol.cpp" \
+							"swarm\gameui\swarm\vtransitionscreen.cpp" \
+							"swarm\gameui\swarm\vvideo.cpp" \
+							"swarm\gameui\swarm\vvoteoptions.cpp"
+					{
+						$Configuration
+						{
+							$Compiler
+							{
+								$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+							}
+						}
+					}
+				}
+			}
+			
+			$File	"swarm\asw_bone_merge.cpp"
+			$File	"swarm\asw_bone_merge.h"
+			$File	"swarm\c_asw_steamstats.cpp"
+			$File	"swarm\c_asw_steamstats.h"
+
+			$File	"swarm\asw_briefing.cpp"
+			$File	"swarm\asw_briefing.h"
+			$File	"swarm\ibriefing.h"
+			$File	"swarm\asw_client_entities.cpp"
+			$File	"swarm\asw_client_entities.h"
+			$File	"swarm\asw_fx_impacts.cpp"
+			$File	"swarm\asw_in_camera.cpp"
+			$File	"swarm\asw_in_main.cpp"
+			$File	"swarm\asw_in_mouse.cpp"
+			$File	"swarm\asw_input.cpp"
+			$File	"swarm\asw_input.h"
+			$File	"swarm\asw_marineandobjectenumerator.cpp"
+			$File	"swarm\asw_marineandobjectenumerator.h"
+			$File	"swarm\asw_medal_store.cpp"
+			$File	"swarm\asw_medal_store.h"
+			$File	"swarm\asw_prediction.cpp"
+			$File	"swarm\asw_room_thumbnails.cpp"
+			$File	"swarm\asw_video.cpp"
+			$File	"swarm\asw_video.h"
+			$File	"swarm\asw_view_scene.cpp"
+			$File	"swarm\asw_view_scene.h"
+			$File	"swarm\clientmode_asw.cpp"
+			$File	"swarm\clientmode_asw.h"
+			$File	"swarm\c_asw_alien.cpp"
+			$File	"swarm\c_asw_alien.h"
+			$File	"swarm\c_asw_ammo.cpp"
+			$File	"swarm\c_asw_ammo.h"
+			$File	"swarm\c_asw_ammo_drop.cpp"
+			$File	"swarm\c_asw_ammo_drop.h"
+			$File	"swarm\c_asw_boomer.cpp"
+			$File	"swarm\c_asw_boomer.h"
+			$File	"swarm\c_asw_button_area.cpp"
+			$File	"swarm\c_asw_button_area.h"
+			$File	"swarm\c_asw_buzzer.cpp"
+			$File	"swarm\c_asw_buzzer.h"
+			$File	"swarm\c_asw_camera_volume.cpp"
+			$File	"swarm\c_asw_camera_volume.h"
+			$File	"swarm\c_asw_campaign_save.cpp"
+			$File	"swarm\c_asw_campaign_save.h"
+			$File	"swarm\c_asw_concommands.cpp"
+			$File	"swarm\c_asw_client_corpse.cpp"
+			$File	"swarm\c_asw_client_corpse.h"
+			$File	"swarm\c_asw_clientragdoll.cpp"
+			$File	"swarm\c_asw_clientragdoll.h"
+			$File	"swarm\c_asw_computer_area.cpp"
+			$File	"swarm\c_asw_computer_area.h"
+			$File	"swarm\c_asw_debrief_stats.cpp"
+			$File	"swarm\c_asw_debrief_stats.h"
+			$File	"swarm\c_asw_door.cpp"
+			$File	"swarm\c_asw_door.h"
+			$File	"swarm\c_asw_door_area.cpp"
+			$File	"swarm\c_asw_door_area.h"
+			$File	"swarm\c_asw_drone_advanced.cpp"
+			$File	"swarm\c_asw_drone_advanced.h"
+			$File	"swarm\c_asw_dummy_vehicle.cpp"
+			$File	"swarm\c_asw_dummy_vehicle.h"
+			$File	"swarm\c_asw_dynamic_light.cpp"
+			$File	"swarm\c_asw_dynamic_light.h"
+			$File	"swarm\c_asw_egg.cpp"
+			$File	"swarm\c_asw_egg.h"
+			$File	"swarm\c_asw_entity_dissolve.cpp"
+			$File	"swarm\c_asw_entity_dissolve.h"
+			$File	"swarm\c_asw_extinguisher_projectile.cpp"
+			$File	"swarm\c_asw_extinguisher_projectile.h"
+			$File	"swarm\c_asw_firewall_piece.cpp"
+			$File	"swarm\c_asw_firewall_piece.h"
+			$File	"swarm\c_asw_flamer_projectile.cpp"
+			$File	"swarm\c_asw_flamer_projectile.h"
+			$File	"swarm\c_asw_flare_projectile.cpp"
+			$File	"swarm\c_asw_flare_projectile.h"
+			$File	"swarm\c_asw_fourwheelvehiclephysics.cpp"
+			$File	"swarm\c_asw_fourwheelvehiclephysics.h"
+			$File	"swarm\c_asw_fire.cpp"
+			$File	"swarm\c_asw_fire.h"
+			$File	"swarm\c_asw_fx.cpp"
+			$File	"swarm\c_asw_fx.h"
+			$File	"swarm\c_asw_fx_proxy.cpp"
+			$File	"swarm\c_asw_aoegrenade_projectile.cpp"
+			$File	"swarm\c_asw_aoegrenade_projectile.h"
+			$File	"swarm\c_asw_buffgrenade_projectile.cpp"
+			$File	"swarm\c_asw_buffgrenade_projectile.h"
+			$File	"swarm\c_asw_game_resource.cpp"
+			$File	"swarm\c_asw_game_resource.h"
+			$File	"swarm\c_asw_generic_emitter.cpp"
+			$File	"swarm\c_asw_generic_emitter.h"
+			$File	"swarm\c_asw_generic_emitter_entity.cpp"
+			$File	"swarm\c_asw_generic_emitter_entity.h"
+			$File	"swarm\c_asw_grub.cpp"
+			$File	"swarm\c_asw_grub.h"
+			$File	"swarm\c_asw_gun_smoke_emitter.cpp"
+			$File	"swarm\c_asw_gun_smoke_emitter.h"
+			$File	"swarm\c_asw_hack.cpp"
+			$File	"swarm\c_asw_hack.h"
+			$File	"swarm\c_asw_hack_computer.cpp"
+			$File	"swarm\c_asw_hack_computer.h"
+			$File	"swarm\c_asw_hack_wire_tile.cpp"
+			$File	"swarm\c_asw_hack_wire_tile.h"
+			$File	"swarm\c_asw_jeep.cpp"
+			$File	"swarm\c_asw_jeep.h"
+			$File	"swarm\c_asw_jeep_clientside.cpp"
+			$File	"swarm\c_asw_jeep_clientside.h"
+			$File	"swarm\c_asw_jukebox.cpp"
+			$File	"swarm\c_asw_jukebox.h"
+			$File	"swarm\c_asw_laser_mine.cpp"
+			$File	"swarm\c_asw_laser_mine.h"
+			$File	"swarm\c_asw_lesson.cpp"
+			$File	"swarm\c_asw_level_exploder.cpp"
+			$File	"swarm\c_asw_level_exploder.h"
+			$File	"swarm\c_asw_marine.cpp"
+			$File	"swarm\c_asw_marine.h"
+			$File	"swarm\c_asw_marine_resource.cpp"
+			$File	"swarm\c_asw_marine_resource.h"
+			$File	"swarm\c_asw_marine_speech.cpp"
+			$File	"swarm\c_asw_marker.cpp"
+			$File	"swarm\c_asw_marker.h"
+			$File	"swarm\c_asw_mesh_emitter_entity.cpp"
+			$File	"swarm\c_asw_mesh_emitter_entity.h"
+			$File	"swarm\c_asw_mine.cpp"
+			$File	"swarm\c_asw_mine.h"
+			$File	"swarm\c_asw_objective.cpp"
+			$File	"swarm\c_asw_objective.h"
+			$File	"swarm\c_asw_objective_countdown.cpp"
+			$File	"swarm\c_asw_objective_countdown.h"
+			$File	"swarm\c_asw_objective_kill_aliens.cpp"
+			$File	"swarm\c_asw_objective_kill_aliens.h"
+			$File	"swarm\c_asw_objective_kill_eggs.cpp"
+			$File	"swarm\c_asw_objective_kill_eggs.h"
+			$File	"swarm\c_asw_objective_kill_goo.cpp"
+			$File	"swarm\c_asw_objective_kill_goo.h"
+			$File	"swarm\c_asw_objective_kill_queen.cpp"
+			$File	"swarm\c_asw_objective_kill_queen.h"
+			$File	"swarm\c_asw_order_arrow.cpp"
+			$File	"swarm\c_asw_order_arrow.h"
+			$File	"swarm\c_asw_parasite.cpp"
+			$File	"swarm\c_asw_parasite.h"
+			$File	"swarm\c_asw_pickup.cpp"
+			$File	"swarm\c_asw_pickup.h"
+			$File	"swarm\c_asw_pickup_equipment.cpp"
+			$File	"swarm\c_asw_pickup_equipment.h"
+			$File	"swarm\c_asw_pickup_money.cpp"
+			$File	"swarm\c_asw_pickup_money.h"
+			$File	"swarm\c_asw_pickup_weapon.cpp"
+			$File	"swarm\c_asw_pickup_weapon.h"
+			$File	"swarm\c_asw_player.cpp"
+			$File	"swarm\c_asw_player.h"
+			$File	"swarm\c_asw_playerlocaldata.cpp"
+			$File	"swarm\c_asw_playerlocaldata.h"
+			$File	"swarm\c_asw_point_camera.cpp"
+			$File	"swarm\c_asw_point_camera.h"
+			$File	"swarm\c_asw_prop_physics.cpp"
+			$File	"swarm\c_asw_prop_physics.h"
+			$File	"swarm\c_asw_physics_prop_statue.cpp"
+			$File	"swarm\c_asw_physics_prop_statue.h"
+			
+			$File	"swarm\c_asw_queen.cpp"
+			$File	"swarm\c_asw_queen.h"
+			$File	"swarm\c_asw_queen_spit.cpp"
+			$File	"swarm\c_asw_queen_spit.h"
+			$File	"swarm\c_asw_railgun_beam.cpp"
+			$File	"swarm\c_asw_railgun_beam.h"
+			$File	"swarm\c_asw_ranger.cpp"
+			$File	"swarm\c_asw_ranger.h"
+			$File	"swarm\c_asw_render_targets.cpp"
+			$File	"swarm\c_asw_render_targets.h"
+			$File	"swarm\c_asw_rocket.cpp"
+			$File	"swarm\c_asw_rocket.h"
+			$File	"swarm\c_asw_scanner_info.cpp"
+			$File	"swarm\c_asw_scanner_info.h"
+			$File	"swarm\c_asw_scanner_noise.cpp"
+			$File	"swarm\c_asw_scanner_noise.h"
+			$File	"swarm\c_asw_sentry_base.cpp"
+			$File	"swarm\c_asw_sentry_base.h"
+			$File	"swarm\c_asw_sentry_top.cpp"
+			$File	"swarm\c_asw_sentry_top.h"
+			$File	"swarm\c_asw_sentry_top_flamer.cpp"
+			$File	"swarm\c_asw_sentry_top_flamer.h"
+			$File	"swarm\c_asw_sentry_top_icer.cpp"
+			$File	"swarm\c_asw_sentry_top_icer.h"
+			$File	"swarm\c_asw_shaman.cpp"
+			$File	"swarm\c_asw_shaman.h"
+			$File	"swarm\c_asw_shieldbug.cpp"
+			$File	"swarm\c_asw_shieldbug.h"
+			$File	"swarm\c_asw_simple_alien.cpp"
+			$File	"swarm\c_asw_simple_alien.h"
+			$File	"swarm\c_asw_simple_drone.cpp"
+			$File	"swarm\c_asw_simple_drone.h"
+			$File	"swarm\c_asw_snow_emitter.cpp"
+			$File	"swarm\c_asw_snow_emitter.h"
+			$File	"swarm\c_asw_snow_volume.cpp"
+			$File	"swarm\c_asw_snow_volume.h"
+			$File	"swarm\c_asw_t75.cpp"
+			$File	"swarm\c_asw_t75.h"
+			$File	"swarm\c_asw_tesla_trap.cpp"
+			$File	"swarm\c_asw_tesla_trap.h"
+			$File	"swarm\c_asw_trail_beam.cpp"
+			$File	"swarm\c_asw_trail_beam.h"
+			$File	"swarm\c_asw_use_area.cpp"
+			$File	"swarm\c_asw_use_area.h"
+			$File	"swarm\c_asw_voting_missions.cpp"
+			$File	"swarm\c_asw_voting_missions.h"
+			$File	"swarm\c_asw_voting_mission_chooser_source.cpp"
+			$File	"swarm\c_asw_voting_mission_chooser_source.h"
+			$File	"swarm\c_asw_vphysics_npc.cpp"
+			$File	"swarm\c_asw_vphysics_npc.h"
+			$File	"swarm\c_asw_weapon.cpp"
+			$File	"swarm\c_asw_weapon.h"
+			$File	"swarm\c_asw_weapon_rifle.cpp"
+			$File	"swarm\c_asw_weapon_rifle.h"
+			$File	"swarm\iasw_client_aim_target.h"
+			$File	"swarm\iasw_client_usable_entity.h"
+			$File	"swarm\iasw_client_vehicle.h"
+			$File	"swarm\vgui_rootpanel_asw.cpp"
+			
+			$Folder "vgui"
+			{
+				$file	"swarm\vgui\asw_vgui_music_importer.cpp"
+				$file	"swarm\vgui\asw_vgui_music_importer.h"
+				$file	"swarm\vgui\mission_complete_message.cpp"
+				$file	"swarm\vgui\mission_complete_message.h"
+				$file	"swarm\vgui\nb_promotion_panel.cpp"
+				$file	"swarm\vgui\nb_promotion_panel.h"
+				$file	"swarm\vgui\nb_vote_panel.cpp"
+				$file	"swarm\vgui\nb_vote_panel.h"
+				$file	"swarm\vgui\polygonbutton.cpp"
+				$file	"swarm\vgui\polygonbutton.h"
+				$file	"swarm\vgui\radialmenu.cpp"
+				$file	"swarm\vgui\radialmenu.h"
+				
+				$file	"swarm\vgui\asw_build_map_frame.cpp"
+				$file	"swarm\vgui\asw_build_map_frame.h"
+				$File	"swarm\vgui\asw_circularprogressbar.cpp"
+				$File	"swarm\vgui\asw_circularprogressbar.h"
+				$file	"swarm\vgui\asw_hud_floating_number.cpp"
+				$file	"swarm\vgui\asw_hud_floating_number.h"
+				$file	"swarm\vgui\asw_hudelement.cpp"
+				$file	"swarm\vgui\asw_hudelement.h"
+				$file	"swarm\vgui\asw_hud_3dmarinenames.cpp"
+				$file	"swarm\vgui\asw_hud_3dmarinenames.h"
+				$file	"swarm\vgui\asw_hud_ammo.cpp"
+				$file	"swarm\vgui\asw_hud_chat.cpp"
+				$file	"swarm\vgui\asw_hud_chat.h"
+				$file	"swarm\vgui\asw_hud_crosshair.cpp"
+				$file	"swarm\vgui\asw_hud_crosshair.h"
+				$file	"swarm\vgui\asw_hud_damageindicator.cpp"
+				$file	"swarm\vgui\asw_hud_emotes.cpp"
+				$file	"swarm\vgui\asw_hud_health.cpp"
+				$file	"swarm\vgui\asw_hud_health_cross.cpp"
+				$file	"swarm\vgui\asw_hud_health_cross.h"
+				$file	"swarm\vgui\asw_hud_holdout.cpp"
+				$file	"swarm\vgui\asw_hud_holdout.h"
+				$file	"swarm\vgui\asw_hud_marine_portrait.cpp"
+				$file	"swarm\vgui\asw_hud_marine_portrait.h"
+				$file	"swarm\vgui\asw_hud_master.cpp"
+				$file	"swarm\vgui\asw_hud_master.h"
+				$file	"swarm\vgui\asw_hud_minimap.cpp"
+				$file	"swarm\vgui\asw_hud_minimap.h"
+				$file	"swarm\vgui\asw_hud_money.cpp"
+				$file	"swarm\vgui\asw_hud_objective.cpp"
+				$file	"swarm\vgui\asw_hud_objective.h"
+				$file	"swarm\vgui\asw_hud_overlay_messages.cpp"
+				$file	"swarm\vgui\asw_hud_portraits.cpp"
+				$file	"swarm\vgui\asw_hud_portraits.h"
+				$file	"swarm\vgui\asw_hud_powerups.cpp"
+				$file	"swarm\vgui\asw_hud_powerups.h"
+				$file	"swarm\vgui\asw_hud_squad_hotbar.cpp"
+				$file	"swarm\vgui\asw_hud_squad_hotbar.h"
+				$file	"swarm\vgui\asw_hud_use_area.cpp"
+				$file	"swarm\vgui\asw_hud_use_area.h"
+				$file	"swarm\vgui\asw_hud_use_icon.cpp"
+				$file	"swarm\vgui\asw_hud_use_icon.h"
+				$file	"swarm\vgui\asw_hud_voice.cpp"
+				$file	"swarm\vgui\asw_hud_weapons.cpp"
+				$file	"swarm\vgui\asw_loading_panel.cpp"
+				$file	"swarm\vgui\asw_loading_panel.h"
+				$file	"swarm\vgui\asw_logo_panel.cpp"
+				$file	"swarm\vgui\asw_logo_panel.h"
+				$file	"swarm\vgui\asw_model_panel.cpp"
+				$file	"swarm\vgui\asw_model_panel.h"
+				$file	"swarm\vgui\asw_vgui_ammo_list.cpp"
+				$file	"swarm\vgui\asw_vgui_ammo_list.h"
+				$file	"swarm\vgui\asw_vgui_computer_camera.cpp"
+				$file	"swarm\vgui\asw_vgui_computer_camera.h"
+				$file	"swarm\vgui\asw_vgui_computer_download_docs.cpp"
+				$file	"swarm\vgui\asw_vgui_computer_download_docs.h"
+				$file	"swarm\vgui\asw_vgui_computer_frame.cpp"
+				$file	"swarm\vgui\asw_vgui_computer_frame.h"
+				$file	"swarm\vgui\asw_vgui_computer_mail.cpp"
+				$file	"swarm\vgui\asw_vgui_computer_mail.h"
+				$file	"swarm\vgui\asw_vgui_computer_menu.cpp"
+				$file	"swarm\vgui\asw_vgui_computer_menu.h"
+				$file	"swarm\vgui\asw_vgui_computer_news.cpp"
+				$file	"swarm\vgui\asw_vgui_computer_news.h"
+				$file	"swarm\vgui\asw_vgui_computer_plant.cpp"
+				$file	"swarm\vgui\asw_vgui_computer_plant.h"
+				$file	"swarm\vgui\asw_vgui_computer_splash.cpp"
+				$file	"swarm\vgui\asw_vgui_computer_splash.h"
+				$file	"swarm\vgui\asw_vgui_computer_stocks.cpp"
+				$file	"swarm\vgui\asw_vgui_computer_stocks.h"
+				$file	"swarm\vgui\asw_vgui_computer_tumbler_hack.cpp"
+				$file	"swarm\vgui\asw_vgui_computer_tumbler_hack.h"
+				$file	"swarm\vgui\asw_vgui_computer_weather.cpp"
+				$file	"swarm\vgui\asw_vgui_computer_weather.h"
+				$file	"swarm\vgui\asw_vgui_countdown.cpp"
+				$file	"swarm\vgui\asw_vgui_countdown.h"
+				$file	"swarm\vgui\asw_vgui_door_tooltip.cpp"
+				$file	"swarm\vgui\asw_vgui_door_tooltip.h"
+				$file	"swarm\vgui\asw_vgui_edit_emitter.cpp"
+				$file	"swarm\vgui\asw_vgui_edit_emitter.h"
+				$file	"swarm\vgui\asw_vgui_edit_emitter_dialogs.cpp"
+				$file	"swarm\vgui\asw_vgui_edit_emitter_dialogs.h"
+				$file	"swarm\vgui\asw_vgui_fast_reload.cpp"
+				$file	"swarm\vgui\asw_vgui_fast_reload.h"
+				$file	"swarm\vgui\asw_vgui_frame.cpp"
+				$file	"swarm\vgui\asw_vgui_frame.h"
+				$file	"swarm\vgui\asw_vgui_hack_wire_tile.cpp"
+				$file	"swarm\vgui\asw_vgui_hack_wire_tile.h"
+				$file	"swarm\vgui\asw_vgui_info_message.cpp"
+				$file	"swarm\vgui\asw_vgui_info_message.h"
+				$file	"swarm\vgui\asw_vgui_ingame_panel.cpp"
+				$file	"swarm\vgui\asw_vgui_ingame_panel.h"
+				$file	"swarm\vgui\asw_vgui_manipulator.cpp"
+				$file	"swarm\vgui\asw_vgui_manipulator.h"
+				$file	"swarm\vgui\asw_vgui_marine_ammo_report.cpp"
+				$file	"swarm\vgui\asw_vgui_marine_ammo_report.h"
+				$file	"swarm\vgui\asw_vgui_queen_health.cpp"
+				$file	"swarm\vgui\asw_vgui_queen_health.h"
+				$file	"swarm\vgui\asw_vgui_skip_intro.cpp"
+				$file	"swarm\vgui\asw_vgui_skip_intro.h"
+				$file	"swarm\vgui\asw_vgui_stylin_cam.cpp"
+				$file	"swarm\vgui\asw_vgui_stylin_cam.h"
+				$file	"swarm\vgui\briefingdialog.cpp"
+				$file	"swarm\vgui\briefingdialog.h"
+				$file	"swarm\vgui\briefingframe.cpp"
+				$file	"swarm\vgui\briefingframe.h"
+				$file	"swarm\vgui\briefingimagepanel.cpp"
+				$file	"swarm\vgui\briefingimagepanel.h"
+				$file	"swarm\vgui\briefingpropertysheet.cpp"
+				$file	"swarm\vgui\briefingpropertysheet.h"
+				$file	"swarm\vgui\briefingtooltip.cpp"
+				$file	"swarm\vgui\briefingtooltip.h"
+				$file	"swarm\vgui\cainmailpanel.cpp"
+				$file	"swarm\vgui\cainmailpanel.h"
+				$file	"swarm\vgui\campaignframe.cpp"
+				$file	"swarm\vgui\campaignframe.h"
+				$file	"swarm\vgui\campaignmaplocation.cpp"
+				$file	"swarm\vgui\campaignmaplocation.h"
+				$file	"swarm\vgui\campaignmapsearchlights.cpp"
+				$file	"swarm\vgui\campaignmapsearchlights.h"
+				$file	"swarm\vgui\campaignpanel.cpp"
+				$file	"swarm\vgui\campaignpanel.h"
+				$file	"swarm\vgui\chatechopanel.cpp"
+				$file	"swarm\vgui\chatechopanel.h"
+				$file	"swarm\vgui\creditspanel.cpp"
+				$file	"swarm\vgui\creditspanel.h"
+				$File	"swarm\vgui\controller_focus.cpp"
+				$File	"swarm\vgui\controller_focus.h"
+				$file	"swarm\vgui\debrieftextpage.cpp"
+				$file	"swarm\vgui\debrieftextpage.h"
+				$file	"swarm\vgui\experience_bar.cpp"
+				$file	"swarm\vgui\experience_bar.h"
+				$file	"swarm\vgui\experience_report.cpp"
+				$file	"swarm\vgui\experience_report.h"
+				$file	"swarm\vgui\experience_stat_line.cpp"
+				$file	"swarm\vgui\experience_stat_line.h"
+				$file	"swarm\vgui\fadeinpanel.cpp"
+				$file	"swarm\vgui\fadeinpanel.h"
+				$file	"swarm\vgui\fonttestpanel.cpp"
+				$file	"swarm\vgui\fonttestpanel.h"
+				$file	"swarm\vgui\forcereadypanel.cpp"
+				$file	"swarm\vgui\forcereadypanel.h"
+				$file	"swarm\vgui\holdout_end_score_panel.cpp"
+				$file	"swarm\vgui\holdout_end_score_panel.h"
+				$file	"swarm\vgui\holdout_hud_wave_panel.cpp"
+				$file	"swarm\vgui\holdout_hud_wave_panel.h"
+				$file	"swarm\vgui\holdout_resupply_frame.cpp"
+				$file	"swarm\vgui\holdout_resupply_frame.h"
+				$file	"swarm\vgui\holdout_wave_announce_panel.cpp"
+				$file	"swarm\vgui\holdout_wave_announce_panel.h"
+				$file	"swarm\vgui\holdout_wave_end_panel.cpp"
+				$file	"swarm\vgui\holdout_wave_end_panel.h"
+				$file	"swarm\vgui\imagebutton.cpp"
+				$file	"swarm\vgui\imagebutton.h"
+				$file	"swarm\vgui\mapedgesbox.cpp"
+				$file	"swarm\vgui\mapedgesbox.h"
+				$file	"swarm\vgui\medalarea.cpp"
+				$file	"swarm\vgui\medalarea.h"
+				$file	"swarm\vgui\medalcollectionpanel.cpp"
+				$file	"swarm\vgui\medalcollectionpanel.h"
+				$file	"swarm\vgui\medalpanel.cpp"
+				$file	"swarm\vgui\medalpanel.h"
+				$file	"swarm\vgui\missioncompleteframe.cpp"
+				$file	"swarm\vgui\missioncompleteframe.h"
+				$file	"swarm\vgui\missioncompletepanel.cpp"
+				$file	"swarm\vgui\missioncompletepanel.h"
+				$file	"swarm\vgui\missioncompletestatsline.cpp"
+				$file	"swarm\vgui\missioncompletestatsline.h"
+				$file	"swarm\vgui\missionstatspanel.cpp"
+				$file	"swarm\vgui\missionstatspanel.h"
+				$file	"swarm\vgui\objectivedetailspanel.cpp"
+				$file	"swarm\vgui\objectivedetailspanel.h"
+				$file	"swarm\vgui\objectiveicons.cpp"
+				$file	"swarm\vgui\objectiveicons.h"
+				$file	"swarm\vgui\objectivelistbox.cpp"
+				$file	"swarm\vgui\objectivelistbox.h"
+				$file	"swarm\vgui\objectivemap.cpp"
+				$file	"swarm\vgui\objectivemap.h"
+				$file	"swarm\vgui\objectivemapmarkpanel.cpp"
+				$file	"swarm\vgui\objectivemapmarkpanel.h"
+				$file	"swarm\vgui\objectivepanel.cpp"
+				$file	"swarm\vgui\objectivepanel.h"
+				$file	"swarm\vgui\objectivetitlepanel.cpp"
+				$file	"swarm\vgui\objectivetitlepanel.h"
+				$file	"swarm\vgui\outroframe.cpp"
+				$file	"swarm\vgui\outroframe.h"
+				$file	"swarm\vgui\playerlistcontainer.cpp"
+				$file	"swarm\vgui\playerlistcontainer.h"
+				$file	"swarm\vgui\playerlistline.cpp"
+				$file	"swarm\vgui\playerlistline.h"
+				$file	"swarm\vgui\playerlistpanel.cpp"
+				$file	"swarm\vgui\playerlistpanel.h"
+				$file	"swarm\vgui\playerswaitingpanel.cpp"
+				$file	"swarm\vgui\playerswaitingpanel.h"
+				$file	"swarm\vgui\restartmissionbutton.cpp"
+				$file	"swarm\vgui\restartmissionbutton.h"
+				$file	"swarm\vgui\returncampaignmapbutton.cpp"
+				$file	"swarm\vgui\returncampaignmapbutton.h"
+				$file	"swarm\vgui\scanlinepanel.cpp"
+				$file	"swarm\vgui\scanlinepanel.h"
+				$file	"swarm\vgui\skillanimpanel.cpp"
+				$file	"swarm\vgui\skillanimpanel.h"
+				$file	"swarm\vgui\softline.cpp"
+				$file	"swarm\vgui\softline.h"
+				$file	"swarm\vgui\squad_inventory_panel.cpp"
+				$file	"swarm\vgui\squad_inventory_panel.h"
+				$file	"swarm\vgui\stat_graph.cpp"
+				$file	"swarm\vgui\stat_graph.h"
+				$file	"swarm\vgui\stat_graph_player.cpp"
+				$file	"swarm\vgui\stat_graph_player.h"
+				$file	"swarm\vgui\stats_report.cpp"
+				$file	"swarm\vgui\stats_report.h"
+				$file	"swarm\vgui\statsbar.cpp"
+				$file	"swarm\vgui\statsbar.h"
+				$file	"swarm\vgui\stimmusicselectdialog.cpp"
+				$file	"swarm\vgui\stimmusicselectdialog.h"
+				$file	"swarm\vgui\techmarinefailpanel.cpp"
+				$file	"swarm\vgui\techmarinefailpanel.h"
+				$file	"swarm\vgui\wrappedlabel.cpp"
+				$file	"swarm\vgui\wrappedlabel.h"
+				$file	"swarm\vgui\weapon_unlock_panel.cpp"
+				$file	"swarm\vgui\weapon_unlock_panel.h"
+				
+				$file	"swarm\vgui\asw_difficulty_chooser.cpp"
+				$file	"swarm\vgui\asw_difficulty_chooser.h"
+				$file	"swarm\vgui\asw_mission_chooser_entry.cpp"
+				$file	"swarm\vgui\asw_mission_chooser_entry.h"
+				$file	"swarm\vgui\asw_mission_chooser_frame.cpp"
+				$file	"swarm\vgui\asw_mission_chooser_frame.h"
+				$file	"swarm\vgui\asw_mission_chooser_list.cpp"
+				$file	"swarm\vgui\asw_mission_chooser_list.h"
+				$file	"swarm\vgui\serveroptionspanel.cpp"
+				$file	"swarm\vgui\serveroptionspanel.h"
+
+				$file	"swarm\vgui\asw_scalable_text.cpp"
+				$file	"swarm\vgui\asw_scalable_text.h"
+				
+				$file	"swarm\vgui\medalstooltip.cpp"
+				$file	"swarm\vgui\medalstooltip.h"
+				
+				$File	"$SRCDIR\public\missionchooser\iasw_mission_chooser.h"
+				$File	"$SRCDIR\public\missionchooser\iasw_mission_chooser_source.h"
+				$File	"$SRCDIR\public\missionchooser\iasw_random_missions.h"
+				
+				$Folder	"ManagedPanels"
+				{
+					$file	"swarm/vgui/nb_button.cpp"
+					$file	"swarm/vgui/nb_button.h"
+					$file	"swarm/vgui/nb_campaign_map.cpp"
+					$file	"swarm/vgui/nb_campaign_map.h"
+					$file	"swarm/vgui/nb_campaign_mission_details.cpp"
+					$file	"swarm/vgui/nb_campaign_mission_details.h"
+					$file	"swarm/vgui/nb_commander_list.cpp"
+					$file	"swarm/vgui/nb_commander_list.h"
+					$file	"swarm/vgui/nb_commander_list_entry.cpp"
+					$file	"swarm/vgui/nb_commander_list_entry.h"
+					$file	"swarm/vgui/nb_island.cpp"
+					$file	"swarm/vgui/nb_island.h"
+					$file	"swarm/vgui/nb_suggest_difficulty.cpp"
+					$file	"swarm/vgui/nb_suggest_difficulty.h"
+					$file	"swarm/vgui/nb_weapon_unlocked.cpp"
+					$file	"swarm/vgui/nb_weapon_unlocked.h"
+					
+					$file	"swarm/vgui/nb_select_save_entry.cpp"
+					$file	"swarm/vgui/nb_select_save_entry.h"
+					$file	"swarm/vgui/nb_select_save_panel.cpp"
+					$file	"swarm/vgui/nb_select_save_panel.h"
+					$file	"swarm/vgui/nb_select_mission_entry.cpp"
+					$file	"swarm/vgui/nb_select_mission_entry.h"
+					$file	"swarm/vgui/nb_select_mission_panel.cpp"
+					$file	"swarm/vgui/nb_select_mission_panel.h"
+					$file	"swarm/vgui/nb_select_campaign_entry.cpp"
+					$file	"swarm/vgui/nb_select_campaign_entry.h"
+					$file	"swarm/vgui/nb_select_campaign_panel.cpp"
+					$file	"swarm/vgui/nb_select_campaign_panel.h"
+					$file	"swarm/vgui/nb_header_footer.cpp"
+					$file	"swarm/vgui/nb_header_footer.h"
+					$file	"swarm/vgui/nb_spend_skill_points.cpp"
+					$file	"swarm/vgui/nb_spend_skill_points.h"
+					$file	"swarm/vgui/nb_mission_options.cpp"
+					$file	"swarm/vgui/nb_mission_options.h"
+					$file	"swarm/vgui/nb_mission_panel.cpp"
+					$file	"swarm/vgui/nb_mission_panel.h"
+					$file	"swarm/vgui/nb_mission_summary.cpp"
+					$file	"swarm/vgui/nb_mission_summary.h"
+					$file	"swarm/vgui/nb_lobby_row_small.cpp"
+					$file	"swarm/vgui/nb_lobby_row_small.h"
+					$file	"swarm/vgui/nb_select_weapon_entry.cpp"
+					$file	"swarm/vgui/nb_select_weapon_entry.h"
+					$file	"swarm/vgui/nb_weapon_detail.cpp"
+					$file	"swarm/vgui/nb_weapon_detail.h"
+					$file	"swarm/vgui/nb_select_weapon_panel.cpp"
+					$file	"swarm/vgui/nb_select_weapon_panel.h"
+					$file	"swarm/vgui/nb_select_marine_entry.cpp"
+					$file	"swarm/vgui/nb_select_marine_entry.h"
+					$file	"swarm/vgui/nb_horiz_list.cpp"
+					$file	"swarm/vgui/nb_horiz_list.h"
+					$file	"swarm/vgui/nb_skill_panel.cpp"
+					$file	"swarm/vgui/nb_skill_panel.h"
+					$file	"swarm/vgui/nb_select_marine_panel.cpp"
+					$file	"swarm/vgui/nb_select_marine_panel.h"
+					$file	"swarm/vgui/nb_lobby_tooltip.cpp"
+					$file	"swarm/vgui/nb_lobby_tooltip.h"
+					$file	"swarm/vgui/nb_lobby_row.cpp"
+					$file	"swarm/vgui/nb_lobby_row.h"
+					$file	"swarm/vgui/nb_main_panel.cpp"
+					$file	"swarm/vgui/nb_main_panel.h"
+				}
+			}
+			
+			$Folder	"Shared"
+			{
+				$File	"$SRCDIR\game\shared\swarm\asw_achievements.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_achievements.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_health_bar_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_prop_laserable_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_prop_laserable_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_target_dummy_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_target_dummy_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_blink.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_blink.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_fist.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_fist.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_jump_jet.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_jump_jet.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_smart_bomb.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_smart_bomb.h"
+				
+				$File	"$SRCDIR\game\shared\swarm\asw_alien_goo_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_alien_goo_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_alien_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_alien_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_ammo_drop_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_ammo_drop_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_bouncing_pellet_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_bouncing_pellet_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_campaign_commands.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_campaign_info.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_campaign_info.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_campaign_save_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_equipment_list.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_equipment_list.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_equip_req.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_equip_req.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_env_spark.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_fx_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_fx_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_game_resource_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_gamemovement.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_gamerules.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_gamerules.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_gamestats_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_gamestats_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_hack_computer_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_hack_wire_tile_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_holdout_mode.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_holdout_mode.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_holdout_wave.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_holdout_wave.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_holo_sentry_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_holo_sentry_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_imarinegamemovement.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_info_message_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_info_message_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_laser_mine_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_marine_profile.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_marine_profile.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_marine_command.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_marine_command.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_marine_gamemovement.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_marine_gamemovement.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_marine_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_marine_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_marine_skills.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_marine_skills.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_medals_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_melee_system.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_melee_system.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_missile_round_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_missile_round_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_mortarbug_shell_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_mortarbug_shell_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_movedata.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_pickup_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_playeranimstate.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_playeranimstate.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_player_experience.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_player_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_player_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_powerup_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_powerup_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_queen_divers_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_queen_divers_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_queen_grabber_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_queen_grabber_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_remote_turret_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_remote_turret_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_scanner_objects_enumerator.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_scanner_objects_enumerator.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_shareddefs.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_shareddefs.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_shieldbug_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_shotgun_pellet_predicted_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_shotgun_pellet_predicted_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_trace_filter_melee.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_trace_filter_melee.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_trace_filter_shot.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_trace_filter_shot.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_usableobjectsenumerator.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_usableobjectsenumerator.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_usermessages.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_util_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_util_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_ammo_bag_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_ammo_bag_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_ammo_satchel_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_ammo_satchel_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_assault_shotgun_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_assault_shotgun_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_autogun_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_autogun_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_bait.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_bait.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_buff_grenade.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_buff_grenade.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_chainsaw_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_chainsaw_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_electrified_armor.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_electrified_armor.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_normal_armor.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_normal_armor.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_fire_extinguisher_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_fire_extinguisher_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_flamer_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_flamer_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_flares_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_flares_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_flashlight_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_flashlight_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_flechette_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_flechette_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_freeze_grenades.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_freeze_grenades.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_grenade_launcher.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_grenade_launcher.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_grenades.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_grenades.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_heal_gun_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_heal_gun_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_healgrenade_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_healgrenade_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_hornet_barrage.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_hornet_barrage.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_laser_mines.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_laser_mines.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_medical_satchel_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_medical_satchel_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_medkit_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_medkit_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_mines_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_mines_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_mining_laser_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_mining_laser_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_minigun.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_minigun.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_night_vision.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_night_vision.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_parse.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_parse.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_pdw_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_pdw_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_pistol_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_pistol_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_prifle_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_prifle_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_railgun_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_railgun_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_ricochet_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_ricochet_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_sentry_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_sentry_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_shotgun_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_shotgun_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_sniper_rifle.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_sniper_rifle.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_stim_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_stim_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_t75.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_t75.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_tesla_gun_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_tesla_gun_shared.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_tesla_trap.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_tesla_trap.h"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_welder_shared.cpp"
+				$File	"$SRCDIR\game\shared\swarm\asw_weapon_welder_shared.h"
+			}		
+		}
+	}
+	
+	$Folder	"Link Libraries"
+	{
+		$Lib "$LIBCOMMON\jpeglib"
+		$Lib "$LIBPUBLIC\vpklib"
+	}
+}

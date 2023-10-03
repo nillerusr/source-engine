@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: For the slow removing of the CBaseToggle entity
 //			only old entities that need it for backwards-compatibility should
@@ -15,6 +15,8 @@
 class CBaseToggle : public CBaseEntity
 {
 	DECLARE_CLASS( CBaseToggle, CBaseEntity );
+	DECLARE_SERVERCLASS();
+
 public:
 	CBaseToggle();
 
@@ -52,6 +54,8 @@ public:
 	void AngularMoveDone( void );
 	bool IsLockedByMaster( void );
 	virtual void MoveDone( void );
+
+	virtual void GetGroundVelocityToApply( Vector &vecGroundVel );
 
 	static float AxisValue( int flags, const QAngle &angles );
 	void AxisDir( void );

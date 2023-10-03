@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -24,7 +24,6 @@ public:
 	const CHudTextureHandle& operator=( const CHudTexture *t )
 	{
 		m_pValue = (CHudTexture *)t;
-		return *this;
 	}
 
 	void Set( CHudTexture *t )

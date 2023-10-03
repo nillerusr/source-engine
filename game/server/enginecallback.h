@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -12,7 +12,15 @@
 #include "eiface.h"
 #endif
 
-class IFileSystem;				// include filesystem.h
+#ifdef POSIX
+#define random random_valve// stdlib.h defined random()..., and so does vstdlib/random.h
+#endif
+
+#include "tier3/tier3.h"
+#include "tier2/tier2_logging.h"
+
+class IFileSystem;				// include FileSystem.h
+class IUniformRandomStream;		// include vstdlib/random.h
 class IEngineSound;				// include engine/IEngineSound.h
 class IVEngineServer;			
 class IVoiceServer;
@@ -26,6 +34,8 @@ class IDataCache;
 class IMDLCache;
 class IServerEngineTools;
 class IXboxSystem;
+class IScriptManager;
+class IServerFoundry;
 class CSteamAPIContext;
 class CSteamGameServerAPIContext;
 
@@ -37,15 +47,19 @@ extern ISpatialPartition		*partition;
 extern IEngineSound				*enginesound;
 extern IVModelInfo				*modelinfo;
 extern IEngineTrace				*enginetrace;
+extern IFileLoggingListener		*filelogginglistener;
 extern IGameEventManager2		*gameeventmanager;
 extern IVDebugOverlay			*debugoverlay;
-extern IDataCache				*datacache;
-extern IMDLCache				*mdlcache;
 extern IServerEngineTools		*serverenginetools;
+extern IServerFoundry			*serverfoundry;
 extern IXboxSystem				*xboxsystem; // 360 only
+extern IScriptManager			*scriptmanager;
 extern CSteamAPIContext			*steamapicontext; // available on game clients
 extern CSteamGameServerAPIContext *steamgameserverapicontext; //available on game servers
-
+#ifdef INFESTED_DLL
+class IASW_Mission_Chooser;
+extern IASW_Mission_Chooser *missionchooser;
+#endif
 
 
 //-----------------------------------------------------------------------------
@@ -67,9 +81,17 @@ const char *GetMaterialNameFromIndex( int nMaterialIndex );
 //-----------------------------------------------------------------------------
 // Precache-related methods for particle systems
 //-----------------------------------------------------------------------------
-void PrecacheParticleSystem( const char *pParticleSystemName );
+int PrecacheParticleSystem( const char *pParticleSystemName );
 int GetParticleSystemIndex( const char *pParticleSystemName );
 const char *GetParticleSystemNameFromIndex( int nIndex );
+
+
+//-----------------------------------------------------------------------------
+// Precache-related methods for effects (used by DispatchEffect)
+//-----------------------------------------------------------------------------
+void PrecacheEffect( const char *pParticleSystemName );
+int GetEffectIndex( const char *pParticleSystemName );
+const char *GetEffectNameFromIndex( int nIndex );
 
 
 class IRecipientFilter;
@@ -99,14 +121,7 @@ void MessageWriteBool( bool bValue );
 void MessageWriteUBitLong( unsigned int data, int numbits );
 void MessageWriteSBitLong( int data, int numbits );
 void MessageWriteBits( const void *pIn, int nBits );
-
-#ifndef NO_STEAM
-
-/// Returns Steam ID, given player index.   Returns an invalid SteamID upon
-/// failure
-extern CSteamID GetSteamIDForPlayerIndex( int iPlayerIndex );
-
-#endif
+void MessageWriteBitVecIntegral( const Vector& vecValue );
 
 
 // Bytewise
@@ -130,5 +145,6 @@ extern CSteamID GetSteamIDForPlayerIndex( int iPlayerIndex );
 #define WRITE_UBITLONG	(MessageWriteUBitLong)
 #define WRITE_SBITLONG	(MessageWriteSBitLong)
 #define WRITE_BITS		(MessageWriteBits)
+#define WRITE_VEC3_INTEGRAL  (MessageWriteBitVecIntegral)
 
 #endif		//ENGINECALLBACK_H

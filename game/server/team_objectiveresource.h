@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -58,15 +58,8 @@ public:
 	int GetPreviousPointForPoint( int index, int team, int iPrevIndex );
 	bool TeamCanCapPoint( int index, int team );
 	void SetCapLayoutInHUD( const char *pszLayout ) { Q_strncpy(m_pszCapLayoutInHUD.GetForModify(), pszLayout, MAX_CAPLAYOUT_LENGTH ); }
-	void SetCapLayoutCustomPosition( float flPositionX, float flPositionY ) { m_flCustomPositionX = flPositionX; m_flCustomPositionY = flPositionY; }
 	void SetWarnOnCap( int index, int iWarnLevel );
 	void SetWarnSound( int index, string_t iszSound );
-	void SetCPGroup( int index, int iCPGroup );
-	void SetCPLocked( int index, bool bLocked );
-	void SetTrackAlarm( int index, bool bAlarm );
-	void SetCPUnlockTime( int index, float flTime );
-	void SetCPTimerTime( int index, float flTime );
-	void SetCPCapTimeScalesWithPlayers( int index, bool bScales );
 
 	// State functions, called many times
 	void SetNumPlayers( int index, int team, int iNumPlayers );
@@ -120,53 +113,6 @@ public:
 	// Train Path data
 	void SetTrainPathDistance( int index, float flDistance );
 
-	bool GetCPLocked( int index )
-	{
-		Assert( index < m_iNumControlPoints );
-		return m_bCPLocked[index];
-	}
-
-	void ResetHillData( int team )
-	{
-		if ( team < TEAM_TRAIN_MAX_TEAMS )
-		{
-			m_nNumNodeHillData.Set( team, 0 );
-
-			int nNumEntriesPerTeam = TEAM_TRAIN_MAX_HILLS * TEAM_TRAIN_FLOATS_PER_HILL; 
-			int iStartingIndex = team * nNumEntriesPerTeam;
-			for ( int i = 0 ; i < nNumEntriesPerTeam ; i++ )
-			{
-				m_flNodeHillData.Set( iStartingIndex + i, 0 );
-			}
-
-			iStartingIndex = team * TEAM_TRAIN_MAX_HILLS;
-			for ( int i = 0; i < TEAM_TRAIN_MAX_HILLS; i++ )
-			{
-				m_bHillIsDownhill.Set( iStartingIndex + i, 0 );
-			}
-		}
-	}
-
-	void SetHillData( int team, float flStart, float flEnd, bool bDownhill )
-	{
-		if ( team < TEAM_TRAIN_MAX_TEAMS )
-		{
-			int index = ( m_nNumNodeHillData[team] * TEAM_TRAIN_FLOATS_PER_HILL ) + ( team * TEAM_TRAIN_MAX_HILLS * TEAM_TRAIN_FLOATS_PER_HILL );
-			if ( index < TEAM_TRAIN_HILLS_ARRAY_SIZE - 1 ) // - 1 because we want to add 2 entries
-			{
-				m_flNodeHillData.Set( index, flStart );
-				m_flNodeHillData.Set( index + 1, flEnd );
-
-				if ( m_nNumNodeHillData[team] < TEAM_TRAIN_MAX_HILLS )
-				{
-					m_bHillIsDownhill.Set( m_nNumNodeHillData[team] + ( team * TEAM_TRAIN_MAX_HILLS ), bDownhill );
-				}
-
-				m_nNumNodeHillData.Set( team, m_nNumNodeHillData[team] + 1);
-			}
-		}
-	}
-
 private:
 	CNetworkVar( int, m_iTimerToShowInHUD );	
 	CNetworkVar( int, m_iStopWatchTimer );	
@@ -192,9 +138,6 @@ private:
 	CNetworkArray(	int,		m_iWarnOnCap,		MAX_CONTROL_POINTS );
 	CNetworkArray(	string_t,	m_iszWarnSound,		MAX_CONTROL_POINTS );
 	CNetworkArray(  float,		m_flPathDistance,   MAX_CONTROL_POINTS );
-	CNetworkArray(	bool,		m_bCPLocked,		MAX_CONTROL_POINTS );
-	CNetworkArray(  float,		m_flUnlockTimes,	MAX_CONTROL_POINTS );
-	CNetworkArray(  float,		m_flCPTimerTimes,	MAX_CONTROL_POINTS );
 
 	// change when players enter/exit an area
 	CNetworkArray(  int,	m_iNumTeamMembers,	MAX_CONTROL_POINTS * MAX_CONTROL_POINT_TEAMS );
@@ -207,27 +150,12 @@ private:
 
 	// changes when a point is successfully captured
 	CNetworkArray(  int,    m_iOwner,			MAX_CONTROL_POINTS );
-	CNetworkArray(	bool,	m_bCPCapRateScalesWithPlayers, MAX_CONTROL_POINTS );
 
 	// describes how to lay out the cap points in the hud
 	CNetworkString(  m_pszCapLayoutInHUD,		MAX_CAPLAYOUT_LENGTH );
 
-	// custom screen position for the cap points in the hud
-	CNetworkVar( float, m_flCustomPositionX );
-	CNetworkVar( float, m_flCustomPositionY );
-
-	// the groups the points belong to
-	CNetworkArray(	int,	m_iCPGroup,			MAX_CONTROL_POINTS );
-
 	// Not networked, because the client recalculates it
 	float	m_flCapPercentages[ MAX_CONTROL_POINTS ];
-
-	// hill data for multi-escort payload maps
-	CNetworkArray( int, m_nNumNodeHillData, TEAM_TRAIN_MAX_TEAMS );
-	CNetworkArray( float, m_flNodeHillData, TEAM_TRAIN_HILLS_ARRAY_SIZE );
-
-	CNetworkArray( bool, m_bTrackAlarm, TEAM_TRAIN_MAX_TEAMS );
-	CNetworkArray( bool, m_bHillIsDownhill, TEAM_TRAIN_MAX_HILLS*TEAM_TRAIN_MAX_TEAMS );
 };
 
 extern CBaseTeamObjectiveResource *g_pObjectiveResource;

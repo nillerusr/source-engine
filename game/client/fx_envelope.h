@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -32,7 +32,7 @@ public:
 	virtual const QAngle&			GetRenderAngles( void ) { return vec3_angle; }
 	virtual const matrix3x4_t &		RenderableToWorldTransform();
 	virtual bool					ShouldDraw( void ) { return true; }
-	virtual bool					IsTransparent( void ) { return true; }
+	virtual RenderableTranslucencyType_t ComputeTranslucencyType( void ) { return RENDERABLE_IS_TRANSLUCENT; }
 	virtual bool					ShouldReceiveProjectedTextures( int flags ) { return false; }
 
 	void	SetTime( float t ) { m_t = t; }

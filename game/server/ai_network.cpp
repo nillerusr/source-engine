@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:		Base combat character with no AI
 //
@@ -120,8 +120,6 @@ CAI_Network::CAI_Network()
 #ifdef AI_NODE_TREE
 	m_pNodeTree = NULL;
 #endif
-
-	gEntList.AddListenerEntity( this );
 }
 
 //-----------------------------------------------------------------------------
@@ -135,9 +133,6 @@ CAI_Network::~CAI_Network()
 		m_pNodeTree = NULL;
 	}
 #endif
-
-	gEntList.RemoveListenerEntity( this );
-
 	if ( m_pAInode )
 	{
 		for ( int node = 0; node < m_iNumNodes; node++ )
@@ -289,7 +284,7 @@ int	CAI_Network::NearestNodeToPoint( CAI_BaseNPC *pNPC, const Vector &vecOrigin,
 								m_pAInode[cachedNode]->GetOrigin();
 
 			CTraceFilterNav traceFilter( pNPC, true, pNPC, COLLISION_GROUP_NONE );
-			AI_TraceLine ( vecOrigin, vTestLoc, MASK_NPCSOLID_BRUSHONLY, &traceFilter, &tr );
+			AI_TraceLine ( vecOrigin, vTestLoc, pNPC ? pNPC->GetAITraceMask_BrushOnly() : MASK_NPCSOLID_BRUSHONLY, &traceFilter, &tr );
 
 			if ( tr.fraction != 1.0 )
 				cachedNode = NO_NODE;
@@ -353,7 +348,7 @@ int	CAI_Network::NearestNodeToPoint( CAI_BaseNPC *pNPC, const Vector &vecOrigin,
 			Vector vecVisOrigin = vecOrigin + Vector(0,0,1);
 
 			CTraceFilterNav traceFilter( pNPC, true, pNPC, COLLISION_GROUP_NONE );
-			AI_TraceLine ( vecVisOrigin, vTestLoc, MASK_NPCSOLID_BRUSHONLY, &traceFilter, &tr );
+			AI_TraceLine ( vecVisOrigin, vTestLoc, pNPC ? pNPC->GetAITraceMask_BrushOnly() : MASK_NPCSOLID_BRUSHONLY, &traceFilter, &tr );
 
 			if ( tr.fraction != 1.0 )
 				continue;
@@ -533,7 +528,7 @@ CAI_Node *CAI_Network::AddNode( const Vector &origin, float yaw )
 
 	if (m_iNumNodes >= MAX_NODES)
 	{
-		DevMsg( "ERROR: too many nodes in map, deleting last node.\n" );
+		DevMsg( "ERROR: too many nodes in map, deleting last node.\n", MAX_NODES );
 		m_iNumNodes--;
 	}
 
@@ -560,8 +555,8 @@ CAI_Node *CAI_Network::AddNode( const Vector &origin, float yaw )
 
 CAI_Link *CAI_Network::CreateLink( int srcID, int destID, CAI_DynamicLink *pDynamicLink )
 {
-	CAI_Node *pSrcNode = g_pBigAINet->GetNode( srcID );
-	CAI_Node *pDestNode = g_pBigAINet->GetNode( destID );
+	CAI_Node *pSrcNode = GetNode( srcID );
+	CAI_Node *pDestNode = GetNode( destID );
 
 	Assert( pSrcNode && pDestNode && pSrcNode != pDestNode );
 
@@ -646,23 +641,103 @@ IterationRetval_t CAI_Network::EnumElement( IHandleEntity *pHandleEntity )
 	return ITERATION_CONTINUE;
 }
 
-//=============================================================================
 
-void CAI_Network::OnEntityDeleted( CBaseEntity *pEntity )
+ConVar ai_nav_debug_experimental_pathing( "ai_nav_debug_experimental_pathing", "0", FCVAR_NONE, "Draw paths tried during search for bodysnatcher pathing" );
+// Experimental: starting at a given nav-node, walk the network to try to find a node at least
+// mindist away from a point yet no more than maxdist. Returns NULL on failure. Recursive.
+// supply squares of min, max distance.
+// This algorithm only looks at routes with monotonically increasing distance -- it'll fail to 
+// find any that involve switchbacks, but on the other hand this avoids needing any additional
+// statekeeping to follow cycles. It does tend to hit the same node twice from different origins.
+// @TODO: replace 1/sqrt with hardware reciprocal square root
+CAI_Node *CAI_Network::FindNodeDistanceAwayFromStart( CAI_Node * RESTRICT pStartNode, const Vector &point, float minDistSq, float maxDistSq, const Hull_t hulltype, const Capability_t movetype, const IPathingNodeValidator &validator ) RESTRICT
 {
-	if( pEntity->IsNPC() )
-		return;
+	VPROF("CAI_Network::FindNodeDistanceAwayFromStart()");
+	AssertMsg( pStartNode, "FindNodeDistanceAwayFromStart called with NULL start\n" );
+	if ( pStartNode == NULL ) 
+		return NULL;
 
-	const char *classname = pEntity->GetClassname();
-	if( !classname || strcmp(classname, "ai_hint") != 0 )
-		return;
 
-	for( int i = 0; i < m_iNumNodes; i++)
+	// get origin of start point and squared distance to origin
+	Vector pointToHere = pStartNode->GetOrigin() - point;
+	float distSq = pointToHere.LengthSqr();
+	if ( distSq >= minDistSq )
 	{
-		if(  m_pAInode[i]->GetHint() == (CAI_Hint*)pEntity )
+		if ( distSq <= maxDistSq )
 		{
-			m_pAInode[i]->SetHint( NULL );
-			break;
+			if ( validator.Validate( pStartNode, this ) )
+				return pStartNode; // this node is good
+			// else try to path beyond this
+		}
+		else
+		{
+			return NULL; // we've gone too far.
 		}
 	}
+
+	// okay, we need to traverse a little deeper. build a list of 
+	// node links that go in the correct direction, sorted so that
+	// the correctiest ones are first
+	// this is an icky O(n^2) algorithm 
+	struct linkpair
+	{
+		CAI_Node *node; ///< destination node
+		float distFromStartSq;  ///< dot product
+		inline linkpair(CAI_Node *_node, float _dist) : node(_node), distFromStartSq(_dist) {};
+	};
+	const int maxlinks = pStartNode->NumLinks();
+	CUtlVector<linkpair> linkIds( 0, maxlinks );
+	for ( int i = 0 ; i < maxlinks ; ++i )
+	{
+		// can this hull go through this link
+		CAI_Link * RESTRICT link = pStartNode->GetLinkByIndex(i);
+		if ( link->m_iAcceptedMoveTypes[hulltype] & movetype )
+		{	// yes, we can move through this node
+			// find where to add it into the list 
+			CAI_Node *RESTRICT destNode = this->GetNode(link->DestNodeID( pStartNode->GetId() )); //this->GetNode(link->m_iDestID);
+			Assert(destNode);
+
+			float distToDestSq = (destNode->GetOrigin() - point).LengthSqr();
+
+			// only follow links that face away from the start position (this is what prevents infinite loops)
+			if ( distToDestSq > distSq )
+			{
+				// walk through list from beginning to end and bail out when
+				// finding one further away so can insert before
+				// thus our vector will be sorted in descending order of distance
+				// from origin
+				int j;
+				for ( j = 0 ; (j < linkIds.Count()) && (distToDestSq < linkIds[j].distFromStartSq) ; ++j );
+				linkIds.InsertBefore( j, linkpair( destNode, distToDestSq ) );
+			}
+		}
+	}
+
+	// now try each of the nodes we have accumulated into this vector and recursively call
+	// into any that may match
+	for ( int i = 0 ; i < linkIds.Count() ; ++i )
+	{
+		CAI_Node *retval = FindNodeDistanceAwayFromStart( linkIds[i].node, point, minDistSq, maxDistSq, hulltype, movetype, validator );
+		if ( ai_nav_debug_experimental_pathing.GetBool() )
+		{
+			if ( retval )
+			{
+				NDebugOverlay::HorzArrow( pStartNode->GetOrigin(), linkIds[i].node->GetOrigin(), 4, 0, 255, 255,  255, true, ai_nav_debug_experimental_pathing.GetFloat() );
+				return retval;
+			}
+			else
+			{
+				NDebugOverlay::HorzArrow( pStartNode->GetOrigin(), linkIds[i].node->GetOrigin(),4, 255, 128, 0,  255, true, ai_nav_debug_experimental_pathing.GetFloat() );
+			}
+		}
+		else
+		{
+			if ( retval ) 
+				return retval;
+		}
+	}
+
+	// didn't find anything
+	return NULL;
 }
+//=============================================================================

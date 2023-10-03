@@ -1,22 +1,18 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 // $NoKeywords: $
 //=============================================================================//
 #include "cbase.h"
-#include "baseanimatedtextureproxy.h"
-#include "materialsystem/imaterial.h"
-#include "materialsystem/imaterialvar.h"
-#include "materialsystem/itexture.h"
+#include "BaseAnimatedTextureProxy.h"
+#include "materialsystem/IMaterial.h"
+#include "materialsystem/IMaterialVar.h"
+#include "materialsystem/ITexture.h"
 #include "tier1/KeyValues.h"
-#include "toolframework_client.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
-
-// forward declarations
-void ToolFramework_RecordMaterialParams( IMaterial *pMaterial );
 
 //-----------------------------------------------------------------------------
 // Constructor, destructor: 
@@ -125,11 +121,6 @@ void CBaseAnimatedTextureProxy::OnBind( void *pEntity )
 	}
 
 	m_AnimatedTextureFrameNumVar->SetIntValue( intFrame );
-
-	if ( ToolsEnabled() )
-	{
-		ToolFramework_RecordMaterialParams( GetMaterial() );
-	}
 }
 
 IMaterial *CBaseAnimatedTextureProxy::GetMaterial()

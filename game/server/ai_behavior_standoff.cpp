@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Combat behaviors for AIs in a relatively self-preservationist mode.
 //			Lots of cover taking and attempted shots out of cover.
@@ -25,7 +25,7 @@
 ConVar DrawBattleLines( "ai_drawbattlelines", "0", FCVAR_CHEAT );
 
 
-static AI_StandoffParams_t AI_DEFAULT_STANDOFF_PARAMS = { AIHCR_MOVE_ON_COVER, true, true, 2.5, 1., 3, 25, 0, false, 0.f };
+static AI_StandoffParams_t AI_DEFAULT_STANDOFF_PARAMS = { AIHCR_MOVE_ON_COVER, true, 1.5, 2.5, 1, 3, 25, 0 };
 
 #define MAKE_ACTMAP_KEY( posture, activity ) ( (((unsigned)(posture)) << 16) | ((unsigned)(activity)) )
 
@@ -386,6 +386,8 @@ void CAI_StandoffBehavior::GatherConditions()
 	{
 		m_TimePreventForceNewEnemy.Reset();
 		GetOuter()->SetEnemy( NULL );
+
+		DevMsg(2, "Forcing lose enemy from standoff\n");
 	}
 	BaseClass::GatherConditions();
 	m_fForceNewEnemy = false;

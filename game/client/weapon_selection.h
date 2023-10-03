@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Weapon selection handling
 //
@@ -101,7 +101,7 @@ protected:
 
 	float	m_flSelectionTime;	// most recent time at which weapon selection had input
 
-	static CBaseHudWeaponSelection *s_pInstance;
+	static CBaseHudWeaponSelection *s_pInstance[MAX_SPLITSCREEN_PLAYERS];
 
 	bool	m_bSelectionVisible;
 

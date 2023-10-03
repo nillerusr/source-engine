@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -31,7 +31,7 @@
 //-----------------------------------------------------------------------------
 bool CAI_BaseHumanoid::HandleInteraction(int interactionType, void *data, CBaseCombatCharacter* sourceEnt)
 {
-#ifdef HL2_DLL
+#if defined( HL2_DLL )
 	// Annoying to ifdef this out. Copy it into all the HL2 specific humanoid NPC's instead?
 	if ( interactionType == g_interactionBarnacleVictimDangle )
 	{
@@ -167,7 +167,7 @@ bool CAI_BaseHumanoid::OnMoveBlocked( AIMoveResult_t *pResult )
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 #define SNEAK_ATTACK_DIST	360.0f // 30 feet
-void CAI_BaseHumanoid::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr, CDmgAccumulator *pAccumulator )
+void CAI_BaseHumanoid::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr )
 {
 	bool bSneakAttacked = false;
 
@@ -205,11 +205,11 @@ void CAI_BaseHumanoid::TraceAttack( const CTakeDamageInfo &info, const Vector &v
 		CTakeDamageInfo newInfo = info;
 
 		newInfo.SetDamage( GetHealth() );
-		BaseClass::TraceAttack( newInfo, vecDir, ptr, pAccumulator );
+		BaseClass::TraceAttack( newInfo, vecDir, ptr );
 		return;
 	}
 
-	BaseClass::TraceAttack( info, vecDir, ptr, pAccumulator );
+	BaseClass::TraceAttack( info, vecDir, ptr );
 }
 
 //-----------------------------------------------------------------------------

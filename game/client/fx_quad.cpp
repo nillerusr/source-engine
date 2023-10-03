@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -6,7 +6,7 @@
 
 #include "cbase.h"
 #include "view.h"
-#include "materialsystem/imesh.h"
+#include "materialsystem/IMesh.h"
 #include "fx_quad.h"
 #include "tier0/vprof.h"
 
@@ -39,25 +39,39 @@ void CFXQuad::Draw( double frametime )
 	float	scaleTimePerc, alphaTimePerc;
 
 	//Determine the scale
-	if ( m_FXData.m_uiFlags & FXQUAD_BIAS_SCALE )
+	if ( m_FXData.m_flDieTime == 0.0f )
 	{
-		scaleTimePerc = Bias( ( m_FXData.m_flLifeTime / m_FXData.m_flDieTime ), m_FXData.m_flScaleBias );
+		scaleTimePerc = 1.0f;	// don't divide by 0...
 	}
 	else
 	{
-		scaleTimePerc = ( m_FXData.m_flLifeTime / m_FXData.m_flDieTime );
+		if ( m_FXData.m_uiFlags & FXQUAD_BIAS_SCALE )
+		{
+			scaleTimePerc = Bias( ( m_FXData.m_flLifeTime / m_FXData.m_flDieTime ), m_FXData.m_flScaleBias );
+		}
+		else
+		{
+			scaleTimePerc = ( m_FXData.m_flLifeTime / m_FXData.m_flDieTime );
+		}
 	}
 
 	float scale = m_FXData.m_flStartScale + ( ( m_FXData.m_flEndScale - m_FXData.m_flStartScale ) * scaleTimePerc );
 
 	//Determine the alpha
-	if ( m_FXData.m_uiFlags & FXQUAD_BIAS_ALPHA )
+	if ( m_FXData.m_flDieTime == 0.0f )
 	{
-		alphaTimePerc = Bias( ( m_FXData.m_flLifeTime / m_FXData.m_flDieTime ), m_FXData.m_flAlphaBias );
+		alphaTimePerc = 1.0f;	// don't divide by 0...
 	}
 	else
 	{
-		alphaTimePerc = ( m_FXData.m_flLifeTime / m_FXData.m_flDieTime );
+		if ( m_FXData.m_uiFlags & FXQUAD_BIAS_ALPHA )
+		{
+			alphaTimePerc = Bias( ( m_FXData.m_flLifeTime / m_FXData.m_flDieTime ), m_FXData.m_flAlphaBias );
+		}
+		else
+		{
+			alphaTimePerc = ( m_FXData.m_flLifeTime / m_FXData.m_flDieTime );
+		}
 	}
 
 	float alpha = m_FXData.m_flStartAlpha + ( ( m_FXData.m_flEndAlpha - m_FXData.m_flStartAlpha ) * alphaTimePerc );

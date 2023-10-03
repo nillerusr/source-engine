@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright (c) 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -15,14 +15,10 @@
 #include "inputsystem/InputEnums.h"
 #include "usermessages.h"
 #include "fmtstr.h"
-#include "tier1/utlbuffer.h"
 #ifdef CLIENT_DLL
 #include "achievement_notification_panel.h"
 #include "c_playerresource.h"
-#include "gamestats.h"
-#ifdef TF_CLIENT_DLL
-#include "econ_item_inventory.h"
-#endif //TF_CLIENT_DLL
+
 #else
 #include "enginecallback.h"
 #endif // CLIENT_DLL
@@ -30,43 +26,34 @@
 #include "steam/isteamuserstats.h"
 #include "steam/isteamfriends.h"
 #include "steam/isteamutils.h"
-#include "steam/steam_api.h"
-#include "steam/isteamremotestorage.h"
 #else
 #include "xbox/xbox_win32stubs.h"
 #endif
 #include "tier3/tier3.h"
 #include "vgui/ILocalize.h"
 #ifdef _X360
+#include "GameUI/IGameUI.h"
 #include "ixboxsystem.h"
+#include "ienginevgui.h"
 #endif  // _X360
-#include "engine/imatchmaking.h"
+#include "matchmaking/imatchframework.h"
 #include "tier0/vprof.h"
 
-#if defined(TF_DLL) || defined(TF_CLIENT_DLL)
-#include "tf_gamerules.h"
-#endif
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
 
-ConVar	cc_achievement_debug( "achievement_debug", "0", FCVAR_CHEAT | FCVAR_REPLICATED, "Turn on achievement debug msgs." );
-
-#ifdef CSTRIKE_DLL
-//=============================================================================
-// HPE_BEGIN:
-// [Forrest] Allow achievements/stats to be turned off for a server
-//=============================================================================
-ConVar	sv_nostats( "sv_nostats", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Disable collecting statistics and awarding achievements." );
-//=============================================================================
-// HPE_END
-//=============================================================================
-#endif // CSTRIKE_DLL
-
+ConVar	cc_achievement_debug("achievement_debug", "0", FCVAR_CHEAT | FCVAR_REPLICATED, "Turn on achievement debug msgs." );
 const char *COM_GetModDirectory();
+
+#define matchmaking g_pMatchFramework->GetMatchmaking()
 
 extern ConVar developer;
 
-#define DEBUG_ACHIEVEMENTS_IN_RELEASE 0
+#ifdef _X360
+static CDllDemandLoader g_GameUI( "gameui" );	// FIXME: This is duplicated!
+#endif // _X360
 
-#ifdef SWDS
+#ifdef DEDICATED
 // Hack this for now until we get steam_api recompiling in the Steam codebase.
 ISteamUserStats *SteamUserStats()
 {
@@ -74,224 +61,55 @@ ISteamUserStats *SteamUserStats()
 }
 #endif
 
-//-----------------------------------------------------------------------------
-// Purpose: Write helper
-//-----------------------------------------------------------------------------
-//=============================================================================
-// HPE_BEGIN
-// [dwenger] Steam Cloud Support
-//=============================================================================
+#if defined( XBX_GetPrimaryUserId )
+#undef XBX_GetPrimaryUserId
+#endif
 
-static void WriteAchievementGlobalState( KeyValues *pKV, bool bPersistToSteamCloud = false )
-
-//=============================================================================
-// HPE_END
-//=============================================================================
-
+static int AchievementIDCompare( CBaseAchievement * const *ach1, CBaseAchievement * const *ach2 )
 {
-#ifdef _X360
-	if ( XBX_GetStorageDeviceId() == XBX_INVALID_STORAGE_ID || XBX_GetStorageDeviceId() == XBX_STORAGE_DECLINED )
-		return;
-#endif
-
-	char szFilename[_MAX_PATH];
-
-	if ( IsX360() )
-	{
-		Q_snprintf( szFilename, sizeof( szFilename ), "cfg:/%s_GameState.txt", COM_GetModDirectory() );
-	}
-	else
-	{
-		Q_snprintf( szFilename, sizeof( szFilename ), "GameState.txt" );
-	}
-
-	// Never call pKV->SaveToFile!!!!
-	// Save to a buffer instead.
-	CUtlBuffer buf( 0, 0, CUtlBuffer::TEXT_BUFFER );
-	pKV->RecursiveSaveToFile( buf, 0 );
-	filesystem->WriteFile( szFilename, NULL, buf );
-	pKV->deleteThis();
-
-    //=============================================================================
-    // HPE_BEGIN
-    // [dwenger] Steam Cloud Support
-    //=============================================================================
-
-    if ( bPersistToSteamCloud )
-    {
-#ifndef NO_STEAM
-		if ( IsX360() )
-        {
-            Q_snprintf( szFilename, sizeof( szFilename ), "cfg:/%s_GameState.txt", COM_GetModDirectory() );
-        }
-        else
-        {
-            Q_snprintf( szFilename, sizeof( szFilename ), "GameState.txt" );
-        }
-
-        ISteamRemoteStorage *pRemoteStorage = SteamClient()?(ISteamRemoteStorage *)SteamClient()->GetISteamGenericInterface(
-            SteamAPI_GetHSteamUser(), SteamAPI_GetHSteamPipe(), STEAMREMOTESTORAGE_INTERFACE_VERSION ):NULL;
-
-        if (pRemoteStorage)
-        {
-            int32 availableBytes = 0;
-            int32 totalBytes = 0;
-            if ( pRemoteStorage->GetQuota( &totalBytes, &availableBytes ) )
-            {
-                if ( totalBytes > 0 )
-                {
-                    int32   filesize = (int32)filesystem->Size(szFilename);
-
-                    if (filesize > 0)
-                    {
-                        char*   pData = new char[filesize];
-
-                        if (pData)
-                        {
-                            // Read in the data from the file system GameState.txt file
-                            FileHandle_t    handle = filesystem->Open(szFilename, "r");
-
-                            if (handle)
-                            {
-                                int32 nRead = filesystem->Read(pData, filesize, handle);
-
-                                filesystem->Close(handle);
-
-                                if (nRead == filesize)
-                                {
-                                    // Write out the data to steam cloud
-                                    pRemoteStorage->FileWrite(szFilename, pData, filesize);
-                                }
-                            }
-
-                            // Delete the data array
-                            delete []pData;
-                        }
-                    }
-                }
-            }
-        }
-#endif
-    }
-
-    //=============================================================================
-    // HPE_END
-    //=============================================================================
-
-#ifdef _X360
-	if ( xboxsystem )
-	{
-		xboxsystem->FinishContainerWrites();
-	}
-#endif
+	return (*ach1)->GetAchievementID() < (*ach2)->GetAchievementID();
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: Async save thread
-//-----------------------------------------------------------------------------
-class CAchievementSaveThread : public CWorkerThread 
+static int AchievementOrderCompare( CBaseAchievement * const *ach1, CBaseAchievement * const *ach2 )
 {
-public:
-	CAchievementSaveThread() :
-	  m_pKV( NULL )
-	  {
-		  SetName( "AchievementSaveThread" );	
-	  }
+	return (*ach1)->GetDisplayOrder() - (*ach2)->GetDisplayOrder();
+}
 
-	  ~CAchievementSaveThread()
-	  {
-	  }
-
-	  enum
-	  {
-		  CALL_FUNC,
-		  EXIT,
-	  };
-
-	  void WriteAchievementGlobalState( KeyValues *pKV )
-	  {
-		  Assert( !m_pKV );
-		  m_pKV = pKV;
-		  CallWorker( CALL_FUNC );
-		  Assert( !m_pKV );
-	  }
-
-	  int Run()
-	  {
-		  unsigned nCall;
-		  while ( WaitForCall( &nCall ) )
-		  {
-			  if ( nCall == EXIT )
-			  {
-				  Reply( 1 );
-				  break;
-			  }
-
-			  KeyValues *pKV = m_pKV;
-			  m_pKV = NULL;
-			  Reply( 1 );
-			  ::WriteAchievementGlobalState( pKV );
-		  }
-		  return 0;
-	  }
-
-private:
-	KeyValues *m_pKV;
-};
-
-static CAchievementSaveThread g_AchievementSaveThread;
 
 
 //-----------------------------------------------------------------------------
 // Purpose: constructor
 //-----------------------------------------------------------------------------
-//=============================================================================
-// HPE_BEGIN
-// [dwenger] Steam Cloud Support
-//=============================================================================
-
-CAchievementMgr::CAchievementMgr( SteamCloudPersisting ePersistToSteamCloud ) : CAutoGameSystemPerFrame( "CAchievementMgr" )
-
-//=============================================================================
-// HPE_END
-//=============================================================================
-
+CAchievementMgr::CAchievementMgr() : CAutoGameSystemPerFrame( "CAchievementMgr" )
 #if !defined(NO_STEAM)
 , m_CallbackUserStatsReceived( this, &CAchievementMgr::Steam_OnUserStatsReceived ),
 m_CallbackUserStatsStored( this, &CAchievementMgr::Steam_OnUserStatsStored )
 #endif
 {
-	SetDefLessFunc( m_mapAchievement );
-	SetDefLessFunc( m_mapMetaAchievement );
-	m_flLastClassChangeTime = 0;
-	m_flTeamplayStartTime = 0;
-	m_iMiniroundsCompleted = 0;
+	for ( int i = 0; i < MAX_SPLITSCREEN_PLAYERS; ++i )
+	{
+		SetDefLessFunc( m_mapAchievement[i] );
+		m_flLastClassChangeTime[i] = 0;
+		m_flTeamplayStartTime[i] = 0;
+		m_iMiniroundsCompleted[i] = 0;
+		m_bDirty[i] = false;
+
+		m_AchievementsAwarded[i].RemoveAll();
+		m_AchievementsAwardedDuringCurrentGame[i].RemoveAll();
+		m_bUserSlotActive[i] = false;
+	}
+
 	m_szMap[0] = 0;
-	m_bSteamDataDirty = false;
-	m_bGlobalStateDirty = false;
-	m_bGlobalStateLoaded = false;
 	m_bCheatsEverOn = false;
-	m_flTimeLastSaved = 0;
+	m_flTimeLastUpload = 0;
 
-    //=============================================================================
-    // HPE_BEGIN
-    // [dwenger] Steam Cloud Support
-    //=============================================================================
+	m_flWaitingForStoreStatsCallback = 0.0f;
+	m_bCallStoreStatsAfterCallback = false;
 
-    if ( ePersistToSteamCloud == SteamCloudPersist_Off )
-    {
-        m_bPersistToSteamCloud = false;
-    }
-    else
-    {
-        m_bPersistToSteamCloud = true;
-    }
-
-    //=============================================================================
-    // HPE_END
-    //=============================================================================
-
-	m_AchievementsAwarded.RemoveAll();
+#ifdef _X360
+	// Mark that we're not waiting for an async call to finish
+	m_pendingAchievementState.Purge();
+#endif // _X360
 }
 
 //-----------------------------------------------------------------------------
@@ -319,15 +137,17 @@ bool CAchievementMgr::Init()
 #else
 	ListenForGameEvent( "player_death" );
 	ListenForGameEvent( "player_stats_updated" );
-	usermessages->HookMessage( "AchievementEvent", MsgFunc_AchievementEvent );
+	ListenForGameEvent( "achievement_write_failed" );
+	for ( int hh = 0; hh < MAX_SPLITSCREEN_PLAYERS; ++hh )
+	{
+		ACTIVE_SPLITSCREEN_PLAYER_GUARD( hh );
+		usermessages->HookMessage( "AchievementEvent", MsgFunc_AchievementEvent );
+	}
 #endif // CLIENT_DLL
 
-#ifdef TF_CLIENT_DLL
-	ListenForGameEvent( "localplayer_changeclass" );
-	ListenForGameEvent( "localplayer_changeteam" );
-	ListenForGameEvent( "teamplay_round_start" );	
-	ListenForGameEvent( "teamplay_round_win" );
-#endif // TF_CLIENT_DLL
+
+
+	g_pMatchFramework->GetEventsSubscription()->Subscribe( this );
 
 	return true;
 }
@@ -338,61 +158,60 @@ bool CAchievementMgr::Init()
 //-----------------------------------------------------------------------------
 void CAchievementMgr::PostInit()
 {
-	if ( !g_AchievementSaveThread.IsAlive() )
-	{
-		g_AchievementSaveThread.Start();
-#ifdef WIN32
-		if ( IsX360() )
-		{
-			ThreadSetAffinity( (ThreadHandle_t)g_AchievementSaveThread.GetThreadHandle(), XBOX_PROCESSOR_3 );
-		}
-#endif // WIN32
-	}
-
 	// get current game dir
 	const char *pGameDir = COM_GetModDirectory();
 
 	CBaseAchievementHelper *pAchievementHelper = CBaseAchievementHelper::s_pFirst;
 	while ( pAchievementHelper )
 	{
-		// create and initialize all achievements and insert them in our map
-		CBaseAchievement *pAchievement = pAchievementHelper->m_pfnCreate();
-		pAchievement->m_pAchievementMgr = this;
-		pAchievement->Init();
-		pAchievement->CalcProgressMsgIncrement();
+		for ( int i = 0; i < MAX_SPLITSCREEN_PLAYERS; ++i )
+		{
+			// create and initialize all achievements and insert them in our maps
+			CBaseAchievement *pAchievement = pAchievementHelper->m_pfnCreate();
+			pAchievement->m_pAchievementMgr = this;
+			pAchievement->Init();
+			pAchievement->CalcProgressMsgIncrement();
+			pAchievement->SetUserSlot( i );
 
-		// only add an achievement if it does not have a game filter (only compiled into the game it
-		// applies to, or truly cross-game) or, if it does have a game filter, the filter matches current game.
-		// (e.g. EP 1/2/... achievements are in shared binary but are game specific, they have a game filter for runtime check.)
-		const char *pGameDirFilter = pAchievement->m_pGameDirFilter;
-		if ( !pGameDirFilter || ( 0 == Q_strcmp( pGameDir, pGameDirFilter ) ) )
-		{
-			m_mapAchievement.Insert( pAchievement->GetAchievementID(), pAchievement );
-			if ( pAchievement->IsMetaAchievement() )
+			// only add an achievement if it does not have a game filter (only compiled into the game it
+			// applies to, or truly cross-game) or, if it does have a game filter, the filter matches current game.
+			// (e.g. EP 1/2/... achievements are in shared binary but are game specific, they have a game filter for runtime check.)
+			const char *pGameDirFilter = pAchievement->m_pGameDirFilter;
+			if ( !pGameDirFilter || ( 0 == Q_strcmp( pGameDir, pGameDirFilter ) ) )
 			{
-				m_mapMetaAchievement.Insert( pAchievement->GetAchievementID(), dynamic_cast<CAchievement_AchievedCount*>(pAchievement) );
+				m_mapAchievement[i].Insert( pAchievement->GetAchievementID(), pAchievement );
 			}
-		}
-		else
-		{
-			// achievement is not for this game, don't use it
-			delete pAchievement;
+			else
+			{
+				// achievement is not for this game, don't use it
+				delete pAchievement;
+			}
 		}
 
 		pAchievementHelper = pAchievementHelper->m_pNext;
 	}
 
-	FOR_EACH_MAP( m_mapAchievement, iter )
+	for ( int i = 0; i < MAX_SPLITSCREEN_PLAYERS; ++i )
 	{
-		m_vecAchievement.AddToTail( m_mapAchievement[iter] );
+		// Add each of the achievements to a CUtlVector ordered by achievement ID
+		FOR_EACH_MAP( m_mapAchievement[i], iter )
+		{
+			m_vecAchievement[i].AddToTail( m_mapAchievement[i][iter] );
+		}
+		m_vecAchievement[i].Sort( AchievementIDCompare );
+
+		// Create the vector of achievements in display order
+		m_vecAchievementInOrder[i].AddVectorToTail( m_vecAchievement[i] );
+		m_vecAchievementInOrder[i].Sort( AchievementOrderCompare );
+
+		// Clear the progress and achieved data for each splitscreen player
+		ClearAchievementData( i );
 	}
 
-	// load global state from file
-	LoadGlobalState();
-
-	// download achievements/stats from Steam/XBox Live
-	DownloadUserData();
-
+	if ( IsPC() )
+	{
+		UserConnected( STEAM_PLAYER_SLOT );
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -400,28 +219,32 @@ void CAchievementMgr::PostInit()
 //-----------------------------------------------------------------------------
 void CAchievementMgr::Shutdown()
 {
-	g_AchievementSaveThread.CallWorker( CAchievementSaveThread::EXIT );
 
-	SaveGlobalState( false ); // we just told the thread to shutdown so don't try an async save here
+	SaveGlobalState();
 
-	FOR_EACH_MAP( m_mapAchievement, iter )
+	for ( int i = 0; i < MAX_SPLITSCREEN_PLAYERS; ++i )
 	{
-		delete m_mapAchievement[iter];
+		FOR_EACH_MAP( m_mapAchievement[i], iter )
+		{
+			delete m_mapAchievement[i][iter];
+		}
+		m_mapAchievement[i].RemoveAll();
+		m_vecAchievement[i].RemoveAll();
+		m_vecAchievementInOrder[i].RemoveAll();
+		m_vecKillEventListeners[i].RemoveAll();
+		m_vecMapEventListeners[i].RemoveAll();
+		m_vecComponentListeners[i].RemoveAll();
+		m_AchievementsAwarded[i].RemoveAll();
+		m_AchievementsAwardedDuringCurrentGame[i].RemoveAll();
 	}
-	m_mapAchievement.RemoveAll();
-	m_mapMetaAchievement.RemoveAll();
-	m_vecAchievement.RemoveAll();
-	m_vecKillEventListeners.RemoveAll();
-	m_vecMapEventListeners.RemoveAll();
-	m_vecComponentListeners.RemoveAll();
-	m_AchievementsAwarded.RemoveAll();
-	m_bGlobalStateLoaded = false;
+
+	g_pMatchFramework->GetEventsSubscription()->Unsubscribe( this );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: Cleans up all achievements and then re-initializes them
 //-----------------------------------------------------------------------------
-void CAchievementMgr::InitializeAchievements()
+void CAchievementMgr::InitializeAchievements( )
 {
 	Shutdown();
 	PostInit();
@@ -429,13 +252,6 @@ void CAchievementMgr::InitializeAchievements()
 
 #ifdef CLIENT_DLL
 extern const ConVar *sv_cheats;
-#endif
-
-#ifdef GAME_DLL
-void CAchievementMgr::FrameUpdatePostEntityThink()
-{
-	Update( 0.0f );
-}
 #endif
 
 //-----------------------------------------------------------------------------
@@ -461,26 +277,52 @@ void CAchievementMgr::Update( float frametime )
 	}
 #endif
 
-	// Call think functions. Work backwards, because we may remove achievements from the list.
-	int iCount = m_vecThinkListeners.Count();
-	for ( int i = iCount-1; i >= 0; i-- )
+#ifdef _X360
+	bool bWarningShown = false;
+	for ( int i = m_pendingAchievementState.Count()-1; i >= 0; i-- )	// Iterate backwards to make deletion safe
 	{
-		if ( m_vecThinkListeners[i].m_flThinkTime < gpGlobals->curtime )
-		{
-			m_vecThinkListeners[i].pAchievement->Think();
+		// Check for a pending achievement write
+		uint nResultCode;
+		int nReturn = xboxsystem->GetOverlappedResult( m_pendingAchievementState[i].pOverlappedResult, &nResultCode, false );
+		if ( nReturn == ERROR_IO_PENDING || nReturn == ERROR_IO_INCOMPLETE )
+			continue;
 
-			// The think function may have pushed out the think time. If not, remove ourselves from the list.
-			if ( m_vecThinkListeners[i].pAchievement->IsAchieved() || m_vecThinkListeners[i].m_flThinkTime < gpGlobals->curtime )
+		// Warn if the write failed
+		if ( nReturn != ERROR_SUCCESS )
+		{
+			if ( bWarningShown == false )
 			{
-				m_vecThinkListeners.Remove(i);
+				// Create a game message to pop up a warning to the user
+				IGameEvent *event = gameeventmanager->CreateEvent( "achievement_write_failed" );
+				if ( event )
+				{
+					gameeventmanager->FireEvent( event );
+					bWarningShown = true;
+				}
+			}
+
+			// We need to unaward the achievement in this case!
+			CBaseAchievement *pAchievement = GetAchievementByID( m_pendingAchievementState[i].nAchievementID, m_pendingAchievementState[i].nUserSlot );
+			if ( pAchievement != NULL )
+			{
+				pAchievement->SetAchieved( false );
+				m_bDirty[m_pendingAchievementState[i].nUserSlot] = true;
+				m_AchievementsAwardedDuringCurrentGame->FindAndRemove( m_pendingAchievementState[i].nAchievementID );
+				// FIXME: This doesn't account for incremental progress, but if *will* re-achieve these if you get them again
 			}
 		}
+
+		// We've either succeeded or failed at this point, in both cases we don't care anymore!
+		xboxsystem->ReleaseAsyncHandle( m_pendingAchievementState[i].pOverlappedResult );
+		m_pendingAchievementState.FastRemove( i );
 	}
 
-	if ( m_bSteamDataDirty )
+	const float flStoreStatsTimeout = 10.0f;
+	if ( m_flWaitingForStoreStatsCallback > 0.0f && gpGlobals->curtime > m_flWaitingForStoreStatsCallback + flStoreStatsTimeout )
 	{
-		UploadUserData();
+		m_flWaitingForStoreStatsCallback = 0.0f;
 	}
+#endif // _X360
 }
 
 //-----------------------------------------------------------------------------
@@ -490,27 +332,29 @@ void CAchievementMgr::LevelInitPreEntity()
 {
 	m_bCheatsEverOn = false;
 
-	// load global state if we haven't already; X360 users may not have had a storage device available or selected at boot time
-	EnsureGlobalStateLoaded();
 
-#ifdef GAME_DLL
-	// For single-player games, achievement mgr must live on the server.  (Only the server has detailed knowledge of game state.)
-	Assert( !GameRules()->IsMultiplayer() );	
-#else
-	// For multiplayer games, achievement mgr must live on the client.  (Only the client can read/write player state from Steam/XBox Live.)
-	Assert( GameRules()->IsMultiplayer() );
-#endif 
+#	ifdef GAME_DLL
+		// For single-player games, achievement mgr must live on the server.  (Only the server has detailed knowledge of game state.)
+		Assert( !GameRules()->IsMultiplayer() );
+#	else
+		// For multiplayer games, achievement mgr must live on the client.  (Only the client can read/write player state from Steam/XBox Live.)
+		Assert( GameRules()->IsMultiplayer() );
+#	endif
 
-	// clear list of achievements listening for events
-	m_vecKillEventListeners.RemoveAll();
-	m_vecMapEventListeners.RemoveAll();
-	m_vecComponentListeners.RemoveAll();
 
-	m_AchievementsAwarded.RemoveAll();
+	for ( int i = 0; i < MAX_SPLITSCREEN_PLAYERS; ++i )
+	{
+		// clear list of achievements listening for events
+		m_vecKillEventListeners[i].RemoveAll();
+		m_vecMapEventListeners[i].RemoveAll();
+		m_vecComponentListeners[i].RemoveAll();
 
-	m_flLastClassChangeTime = 0;
-	m_flTeamplayStartTime = 0;
-	m_iMiniroundsCompleted = 0;
+		m_AchievementsAwarded[i].RemoveAll();
+
+		m_flLastClassChangeTime[i] = 0;
+		m_flTeamplayStartTime[i] = 0;
+		m_iMiniroundsCompleted[i] = 0;
+	}
 
 	// client and server have map names available in different forms (full path on client, just file base name on server), 
 	// cache it in base file name form here so we don't have to have different code paths each time we access it
@@ -530,38 +374,44 @@ void CAchievementMgr::LevelInitPreEntity()
 		}
 	}
 
-	// look through all achievements, see which ones we want to have listen for events
-	FOR_EACH_MAP( m_mapAchievement, iAchievement )
+	for ( int i = 0; i < MAX_SPLITSCREEN_PLAYERS; ++i )
 	{
-		CBaseAchievement *pAchievement = m_mapAchievement[iAchievement];
+		// Don't bother listening if a slot is not active
+		if ( m_bUserSlotActive[i] )
+		{
+			// look through all achievements, see which ones we want to have listen for events
+			FOR_EACH_MAP( m_mapAchievement[i], iAchievement )
+			{
+				CBaseAchievement *pAchievement = m_mapAchievement[i][iAchievement];
 
-		// if the achievement only applies to a specific map, and it's not the current map, skip it
-		const char *pMapNameFilter = pAchievement->m_pMapNameFilter;
-		if ( pMapNameFilter && ( 0 != Q_strcmp( m_szMap, pMapNameFilter ) ) )
-			continue;
+				// if the achievement only applies to a specific map, and it's not the current map, skip it
+				const char *pMapNameFilter = pAchievement->m_pMapNameFilter;
+				if ( pMapNameFilter && ( 0 != Q_strcmp( m_szMap, pMapNameFilter ) ) )
+					continue;
 
-		// if the achievement needs kill events, add it as a listener
-		if ( pAchievement->GetFlags() & ACH_LISTEN_KILL_EVENTS )
-		{
-			m_vecKillEventListeners.AddToTail( pAchievement );
-		}
-		// if the achievement needs map events, add it as a listener
-		if ( pAchievement->GetFlags() & ACH_LISTEN_MAP_EVENTS )
-		{
-			m_vecMapEventListeners.AddToTail( pAchievement );
-		}
-		// if the achievement needs map events, add it as a listener
-		if ( pAchievement->GetFlags() & ACH_LISTEN_COMPONENT_EVENTS )
-		{
-			m_vecComponentListeners.AddToTail( pAchievement );
-		}
-		if ( pAchievement->IsActive() )
-		{
-			pAchievement->ListenForEvents();
+				// if the achievement needs kill events, add it as a listener
+				if ( pAchievement->GetFlags() & ACH_LISTEN_KILL_EVENTS )
+				{
+					m_vecKillEventListeners[i].AddToTail( pAchievement );
+				}
+				// if the achievement needs map events, add it as a listener
+				if ( pAchievement->GetFlags() & ACH_LISTEN_MAP_EVENTS )
+				{
+					m_vecMapEventListeners[i].AddToTail( pAchievement );
+				}
+				// if the achievement needs map events, add it as a listener
+				if ( pAchievement->GetFlags() & ACH_LISTEN_COMPONENT_EVENTS )
+				{
+					m_vecComponentListeners[i].AddToTail( pAchievement );
+				}
+				if ( pAchievement->IsActive() )
+				{
+					pAchievement->ListenForEvents();
+				}
+			}
+			m_flLevelInitTime[i] = gpGlobals->curtime;
 		}
 	}
-
-	m_flLevelInitTime = gpGlobals->curtime;
 }
 
 
@@ -570,12 +420,12 @@ void CAchievementMgr::LevelInitPreEntity()
 //-----------------------------------------------------------------------------
 void CAchievementMgr::LevelShutdownPreEntity()
 {
-	// make all achievements stop listening for events 
-	FOR_EACH_MAP( m_mapAchievement, iAchievement )
+	for ( int i = 0; i < MAX_SPLITSCREEN_PLAYERS; ++i )
 	{
-		CBaseAchievement *pAchievement = m_mapAchievement[iAchievement];
-		if ( !pAchievement->AlwaysListen() )
+		// make all achievements stop listening for events 
+		FOR_EACH_MAP( m_mapAchievement[i], iAchievement )
 		{
+			CBaseAchievement *pAchievement = m_mapAchievement[i][iAchievement];
 			pAchievement->StopListeningForAllEvents();
 		}
 	}
@@ -583,18 +433,20 @@ void CAchievementMgr::LevelShutdownPreEntity()
 	// save global state if we have any changes
 	SaveGlobalStateIfDirty();
 
-	UploadUserData();
+// 12/2/2008ywb:  HACK, this needs to know the nUserSlot!!!
+	int nUserSlot = 0;
+	UploadUserData( nUserSlot );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: returns achievement for specified ID
 //-----------------------------------------------------------------------------
-CBaseAchievement *CAchievementMgr::GetAchievementByID( int iAchievementID )
+CBaseAchievement *CAchievementMgr::GetAchievementByID( int iAchievementID, int nUserSlot )
 {
-	int iAchievement = m_mapAchievement.Find( iAchievementID );
-	if ( iAchievement != m_mapAchievement.InvalidIndex() )
+	int iAchievement = m_mapAchievement[nUserSlot].Find( iAchievementID );
+	if ( iAchievement != m_mapAchievement[nUserSlot].InvalidIndex() )
 	{
-		return m_mapAchievement[iAchievement];
+		return m_mapAchievement[nUserSlot][iAchievement];
 	}
 	return NULL;
 }
@@ -604,66 +456,128 @@ CBaseAchievement *CAchievementMgr::GetAchievementByID( int iAchievementID )
 //			all achievements to find the name, intended for debugging purposes.
 //			Use GetAchievementByID for fast lookup.
 //-----------------------------------------------------------------------------
-CBaseAchievement *CAchievementMgr::GetAchievementByName( const char *pchName )
+CBaseAchievement *CAchievementMgr::GetAchievementByName( const char *pchName, int nUserSlot )
 {
 	VPROF("GetAchievementByName");
-	FOR_EACH_MAP_FAST( m_mapAchievement, i )
+	FOR_EACH_MAP_FAST( m_mapAchievement[nUserSlot], i )
 	{
-		CBaseAchievement *pAchievement = m_mapAchievement[i];
+		CBaseAchievement *pAchievement = m_mapAchievement[nUserSlot][i];
 		if ( pAchievement && 0 == ( Q_stricmp( pchName, pAchievement->GetName() ) ) )
 			return pAchievement;
 	}
 	return NULL;
 }
 
+
 //-----------------------------------------------------------------------------
 // Purpose: Returns true if the achievement with the specified name has been achieved
 //-----------------------------------------------------------------------------
-bool CAchievementMgr::HasAchieved( const char *pchName )
+bool CAchievementMgr::HasAchieved( const char *pchName, int nUserSlot )
 {
-	CBaseAchievement *pAchievement = GetAchievementByName( pchName );
+	CBaseAchievement *pAchievement = GetAchievementByName( pchName, nUserSlot );
 	if ( pAchievement )
 		return pAchievement->IsAchieved();
 	return false;
 }
 
+
 //-----------------------------------------------------------------------------
 // Purpose: downloads user data from Steam or XBox Live
 //-----------------------------------------------------------------------------
-void CAchievementMgr::DownloadUserData()
+void CAchievementMgr::UserDisconnected( int nUserSlot )
 {
+	m_bUserSlotActive[nUserSlot] = false;
+
+	ClearAchievementData( nUserSlot );
+}
+
+
+//-----------------------------------------------------------------------------
+// Read our achievement data from the title data.
+//-----------------------------------------------------------------------------
+void CAchievementMgr::ReadAchievementsFromTitleData( int iController, int iSlot )
+{
+	IPlayerLocal *pPlayer = g_pMatchFramework->GetMatchSystem()->GetPlayerManager()->GetLocalPlayer( iController );
+	if ( !pPlayer )
+		return;
+
+	// Set the incremental achievement progress and components
+	for ( int i=0; i<m_vecAchievement[iSlot].Count(); ++i )
+	{
+		CBaseAchievement *pAchievement = m_vecAchievement[iSlot][i];
+		if ( pAchievement )
+		{
+			pAchievement->ReadProgress( pPlayer );
+		}
+	}
+
+/*
+	//DISABLED:  Avatar award support
+
+	for ( int i=0; i<m_vecAward[iSlot].Count(); ++i )
+	{
+		CBaseAchievement *pAward = m_vecAward[iSlot][i];
+		if ( pAward )
+		{
+			pAward->ReadProgress( pPlayer );
+		}
+	}
+*/
+}
+
+
+
+//-----------------------------------------------------------------------------
+// Purpose: downloads user data from Steam or XBox Live
+//-----------------------------------------------------------------------------
+void CAchievementMgr::UserConnected( int nUserSlot )
+{
+#ifdef CLIENT_DLL
 	if ( IsPC() )
 	{
-#ifndef NO_STEAM
+		// ASSERT( STEAM_PLAYER_SLOT == nUserSlot )
 		if ( steamapicontext->SteamUserStats() )
 		{
 			// request stat download; will get called back at OnUserStatsReceived when complete
 			steamapicontext->SteamUserStats()->RequestCurrentStats();
 		}
-#endif
+
+		m_bUserSlotActive[STEAM_PLAYER_SLOT] = true;
+
 	}
 	else if ( IsX360() )
 	{
 #if defined( _X360 )
-		if ( XBX_GetPrimaryUserId() == INVALID_USER_ID )
+
+		if ( XBX_GetUserIsGuest( nUserSlot ) )
 			return;
+
+		const int iController = XBX_GetUserId( nUserSlot );
+
+		if ( iController == XBX_INVALID_USER_ID )
+			return;
+
+		if ( XUserGetSigninState( iController ) == eXUserSigninState_NotSignedIn )
+			return;
+
+		m_bUserSlotActive[nUserSlot] = true;
 
 		// Download achievements from XBox Live
 		bool bDownloadSuccessful = true;
-		int nTotalAchievements = 99;
+		const int nTotalAchievements = GetAchievementCount();
 		uint bytes;
-		int ret = xboxsystem->EnumerateAchievements( XBX_GetPrimaryUserId(), 0, 0, nTotalAchievements, &bytes, 0, false );
+		int ret = xboxsystem->EnumerateAchievements( iController, 0, 0, nTotalAchievements, &bytes, 0, false );
 		if ( ret != ERROR_SUCCESS )
 		{
 			Warning( "Enumerate Achievements failed! Error %d", ret );
 			bDownloadSuccessful = false;
 		}
-		
+
 		// Enumerate the achievements from Live
 		void *pBuffer = new byte[bytes];
 		if ( bDownloadSuccessful )
 		{
-			ret = xboxsystem->EnumerateAchievements( XBX_GetPrimaryUserId(), 0, 0, nTotalAchievements, pBuffer, bytes, false );
+			ret = xboxsystem->EnumerateAchievements( iController, 0, 0, nTotalAchievements, pBuffer, bytes, false );
 
 			if ( ret != nTotalAchievements )
 			{
@@ -679,7 +593,7 @@ void CAchievementMgr::DownloadUserData()
 			XACHIEVEMENT_DETAILS *pXboxAchievements = (XACHIEVEMENT_DETAILS*)pBuffer;
 			for ( int i = 0; i < nTotalAchievements; ++i )
 			{
-				CBaseAchievement *pAchievement = GetAchievementByID( pXboxAchievements[i].dwId );
+				CBaseAchievement *pAchievement = GetAchievementByID( pXboxAchievements[i].dwId, nUserSlot );
 				if ( !pAchievement )
 					continue;
 
@@ -692,8 +606,10 @@ void CAchievementMgr::DownloadUserData()
 		}
 
 		delete pBuffer;
+
 #endif // X360
 	}
+#endif // CLIENT_DLL
 }
 
 const char *COM_GetModDirectory()
@@ -715,191 +631,123 @@ const char *COM_GetModDirectory()
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: uploads user data to steam
+// Purpose: Uploads user data to Steam or XBox Live
 //-----------------------------------------------------------------------------
-void CAchievementMgr::UploadUserData()
+void CAchievementMgr::UploadUserData( int nUserSlot )
 {
-	if ( IsPC() )
+#ifdef CLIENT_DLL
+	if ( IsPC() && ( nUserSlot == STEAM_PLAYER_SLOT ) )
 	{
-#ifndef NO_STEAM
 		if ( steamapicontext->SteamUserStats() )
 		{
+			if ( m_flWaitingForStoreStatsCallback > 0.0f )
+			{
+				m_bCallStoreStatsAfterCallback = true;
+				return;
+			}
 			// Upload current Steam client achievements & stats state to Steam.  Will get called back at OnUserStatsStored when complete.
 			// Only values previously set via SteamUserStats() get uploaded
-			steamapicontext->SteamUserStats()->StoreStats();
-			m_bSteamDataDirty = false;
-		}
-#endif
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: loads global state from file
-//-----------------------------------------------------------------------------
-void CAchievementMgr::LoadGlobalState()
-{
-	if ( IsX360() )
-	{
-#ifdef _X360
-		if ( XBX_GetStorageDeviceId() == XBX_INVALID_STORAGE_ID || XBX_GetStorageDeviceId() == XBX_STORAGE_DECLINED )
-			return;
-#endif
-	}
-
-	char	szFilename[_MAX_PATH];
-
-	if ( IsX360() )
-	{
-		Q_snprintf( szFilename, sizeof( szFilename ), "cfg:/%s_GameState.txt", COM_GetModDirectory() );
-	}
-	else
-	{
-		Q_snprintf( szFilename, sizeof( szFilename ), "GameState.txt" );
-	}
-
-    //=============================================================================
-    // HPE_BEGIN
-    // [dwenger] Steam Cloud Support
-    //=============================================================================
-
-    if ( m_bPersistToSteamCloud )
-    {
-#ifndef NO_STEAM
-        ISteamRemoteStorage *pRemoteStorage = SteamClient()?(ISteamRemoteStorage *)SteamClient()->GetISteamGenericInterface(
-            SteamAPI_GetHSteamUser(), SteamAPI_GetHSteamPipe(), STEAMREMOTESTORAGE_INTERFACE_VERSION ):NULL;
-
-        if (pRemoteStorage)
-        {
-            if (pRemoteStorage->FileExists(szFilename))
-            {
-                int32   fileSize = pRemoteStorage->GetFileSize(szFilename);
-
-                if (fileSize > 0)
-                {
-                    // Allocate space for the file data
-                    char*   pData = new char[fileSize];
-
-                    if (pData)
-                    {
-                        int32   sizeRead = pRemoteStorage->FileRead(szFilename, pData, fileSize);
-
-                        if (sizeRead == fileSize)
-                        {
-                            // Write out data to a filesystem GameState file that can be read by the original code below
-                            FileHandle_t    handle = filesystem->Open(szFilename, "w");
-
-                            if (handle)
-                            {
-                                filesystem->Write(pData, fileSize, handle);
-
-                                filesystem->Close(handle);
-                            }
-                        }
-
-                        // Delete the data array
-                        delete []pData;
-                    }
-                }
-            }
-        }
-#endif
-    }
-
-    //=============================================================================
-    // HPE_END
-    //=============================================================================
-
-	KeyValues *pKV = new KeyValues("GameState" );
-	if ( pKV->LoadFromFile( filesystem, szFilename, "MOD" ) )
-	{
-		KeyValues *pNode = pKV->GetFirstSubKey();
-		while ( pNode )
-		{
-			// look up this achievement
-			int iAchievementID = pNode->GetInt( "id", 0 );
-			if ( iAchievementID > 0 )
+			if ( steamapicontext->SteamUserStats()->StoreStats() )
 			{
-				CBaseAchievement *pAchievement = GetAchievementByID( iAchievementID );
-				if ( pAchievement )
-				{
-					pAchievement->ApplySettings(pNode);
-				}
+				m_flWaitingForStoreStatsCallback = gpGlobals->curtime;
 			}
-
-			pNode = pNode->GetNextKey();
+			m_flTimeLastUpload = Plat_FloatTime();
 		}
-
-		m_bGlobalStateLoaded = true;
 	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: saves global state to file
 //-----------------------------------------------------------------------------
 
-void CAchievementMgr::SaveGlobalState( bool bAsync )
+void CAchievementMgr::SaveGlobalState( )
 {
-	VPROF_BUDGET( "CAchievementMgr::SaveGlobalState", "Achievements" );
-
-	KeyValues *pKV = new KeyValues("GameState" );
-	FOR_EACH_MAP( m_mapAchievement, i )
+	if ( IsPC() )
 	{
-		CBaseAchievement *pAchievement = m_mapAchievement[i];
-		if ( pAchievement->ShouldSaveGlobal() )
+		VPROF_BUDGET( "CAchievementMgr::SaveGlobalState", "Achievements" );
+		// FIXMEL4DTOMAINMERGE
+		// Requires IMatchmaking!!!
+#if 0
+		TitleData2 achievementTitleData;
+
+		// Clear the data structure out
+		memset( &achievementTitleData.sizeofachievements, 0, sizeof ( achievementTitleData.sizeofachievements ) );
+
+		for ( int i = 0; i < m_vecAchievement[STEAM_PLAYER_SLOT].Count(); ++i )
 		{
-			KeyValues *pNode = pKV->CreateNewKey();
-			pNode->SetInt( "id", pAchievement->GetAchievementID() );
+			CBaseAchievement *pAchievement = m_vecAchievement[STEAM_PLAYER_SLOT][i];
 
-			pAchievement->GetSettings(pNode);
-        }
+			achievementTitleData.achievements.uAchievementCount[i] = (uint32)pAchievement->GetCount();
+
+			if ( pAchievement->HasComponents() )
+			{
+				achievementTitleData.achievements.uAchievementComponentBits[i] = pAchievement->GetComponentBits();
+			}
+		}
+		matchmaking->UpdatePlayerData2( 0, achievementTitleData, TitleData2::CONTENTTYPE_ACHIEVEMENTS );
+#endif
+		m_bDirty[0] = false;
 	}
-
-	if ( !bAsync )
+	else if ( IsX360() )
 	{
-		WriteAchievementGlobalState( pKV, m_bPersistToSteamCloud );
-	}
-	else
-	{
-		g_AchievementSaveThread.WriteAchievementGlobalState( pKV );
+#ifdef _X360
+#	if 1
+#		pragma message( __FILE__ "(" __LINE__AS_STRING ") : warning custom: Disabling XBox achievement code for now. Easier than real fixes so we can get 360 compiling" )
+#	else
+		for ( int j = 0; j < MAX_SPLITSCREEN_PLAYERS; ++j )
+		{
+			if ( IsUserConnected( j ) )
+			{
+				TitleData2 achievementTitleData;
+
+				// Clear the data structure out
+				memset( &achievementTitleData.sizeofachievements, 0, sizeof ( achievementTitleData.sizeofachievements ) );
+
+				for ( int i = 0; i < m_vecAchievement[j].Count(); ++i )
+				{
+					CBaseAchievement *pAchievement = m_vecAchievement[j][i];
+
+					achievementTitleData.achievements.uAchievementCount[i] = (uint32)pAchievement->GetCount();
+
+					if ( pAchievement->HasComponents() )
+					{
+						achievementTitleData.achievements.uAchievementComponentBits[i] = pAchievement->GetComponentBits();
+					}
+				}
+				matchmaking->UpdatePlayerData2( XBX_GetUserId( j ), achievementTitleData, TitleData2::CONTENTTYPE_ACHIEVEMENTS );
+			}
+		}
+#	endif
+#endif
 	}
 
-	m_flTimeLastSaved = Plat_FloatTime();
-	m_bGlobalStateDirty = false;
-}
 
-//-----------------------------------------------------------------------------
-// Purpose: loads global state if we have not already successfully loaded it
-//-----------------------------------------------------------------------------
-void CAchievementMgr::EnsureGlobalStateLoaded()
-{
-	if ( !m_bGlobalStateLoaded )
-	{
-		LoadGlobalState();
-	}
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: saves global state to file if there have been any changes
 //-----------------------------------------------------------------------------
-void CAchievementMgr::SaveGlobalStateIfDirty( bool bAsync )
+void CAchievementMgr::SaveGlobalStateIfDirty( )
 {
-	if ( m_bGlobalStateDirty )
+	if ( m_bDirty )
 	{
-		SaveGlobalState( bAsync );
+		SaveGlobalState( );
 	}
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: awards specified achievement
 //-----------------------------------------------------------------------------
-void CAchievementMgr::AwardAchievement( int iAchievementID )
+void CAchievementMgr::AwardAchievement( int iAchievementID, int nUserSlot )
 {
-	CBaseAchievement *pAchievement = GetAchievementByID( iAchievementID );
+#ifdef CLIENT_DLL
+	CBaseAchievement *pAchievement = GetAchievementByID( iAchievementID, nUserSlot );
 	Assert( pAchievement );
 	if ( !pAchievement )
 		return;
 
-	if ( !pAchievement->AlwaysEnabled() && !CheckAchievementsEnabled() )
+	if ( !CheckAchievementsEnabled() )
 	{
 		Msg( "Achievements disabled, ignoring achievement unlock for %s\n", pAchievement->GetName() );
 		return;
@@ -915,43 +763,16 @@ void CAchievementMgr::AwardAchievement( int iAchievementID )
 	}
 	pAchievement->SetAchieved( true );
 
-#ifdef CLIENT_DLL
-	if ( gamestats )
-	{
-		gamestats->Event_AchievementProgress( pAchievement->GetAchievementID(), pAchievement->GetName() );
-	}
-#endif
-
-    //=============================================================================
-    // HPE_BEGIN
-    //=============================================================================
-
-    // [dwenger] Necessary for sorting achievements by award time
-	pAchievement->OnAchieved();
-
-    // [tj]
-    IGameEvent * event = gameeventmanager->CreateEvent( "achievement_earned_local" );
-    if ( event )
-    {
-        event->SetInt( "achievement", pAchievement->GetAchievementID() );
-        gameeventmanager->FireEventClientSide( event );
-    }
-
-    //=============================================================================
-    // HPE_END
-    //=============================================================================
-
 	if ( cc_achievement_debug.GetInt() > 0 )
 	{
 		Msg( "Achievement awarded: %s\n", pAchievement->GetName() );
 	}
 
 	// save state at next good opportunity.  (Don't do it immediately, may hitch at bad time.)
-	SetDirty( true );
+	m_bDirty[nUserSlot] = true;	
 
 	if ( IsPC() )
-	{
-#ifndef DISABLE_STEAM
+	{		
 		if ( steamapicontext->SteamUserStats() )
 		{
 			VPROF_BUDGET( "AwardAchievement", VPROF_BUDGETGROUP_STEAM );
@@ -960,32 +781,46 @@ void CAchievementMgr::AwardAchievement( int iAchievementID )
 			//		Assert( bRet );
 			if ( bRet )
 			{
-				m_AchievementsAwarded.AddToTail( iAchievementID );
+				// upload achievement to steam
+				UploadUserData( nUserSlot );
+				m_AchievementsAwarded[nUserSlot].AddToTail( iAchievementID );
 			}
 		}
-		m_AchievementsAwarded.AddToTail( iAchievementID );
-#endif
+
+
 	}
 	else if ( IsX360() )
 	{
 #ifdef _X360
 		if ( xboxsystem )
-			xboxsystem->AwardAchievement( XBX_GetPrimaryUserId(), iAchievementID );
+		{
+			PendingAchievementInfo_t pendingAchievementState = { iAchievementID, nUserSlot, NULL };
+			xboxsystem->AwardAchievement( XBX_GetUserId( nUserSlot ), iAchievementID, &pendingAchievementState.pOverlappedResult );
+
+			// Save off the results for checking later
+			m_pendingAchievementState.AddToTail( pendingAchievementState );
+		}
 #endif
 	}
+
+	SaveGlobalStateIfDirty();
+
+	// Add this one to the list of achievements earned during current session
+	m_AchievementsAwardedDuringCurrentGame[nUserSlot].AddToTail( iAchievementID );
+#endif // CLIENT_DLL
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: updates specified achievement
 //-----------------------------------------------------------------------------
-void CAchievementMgr::UpdateAchievement( int iAchievementID, int nData )
+void CAchievementMgr::UpdateAchievement( int iAchievementID, int nData, int nUserSlot )
 {
-	CBaseAchievement *pAchievement = GetAchievementByID( iAchievementID );
+	CBaseAchievement *pAchievement = GetAchievementByID( iAchievementID, nUserSlot );
 	Assert( pAchievement );
 	if ( !pAchievement )
 		return;
 
-	if ( !pAchievement->AlwaysEnabled() && !CheckAchievementsEnabled() )
+	if ( !CheckAchievementsEnabled() )
 	{
 		Msg( "Achievements disabled, ignoring achievement update for %s\n", pAchievement->GetName() );
 		return;
@@ -1008,12 +843,12 @@ void CAchievementMgr::UpdateAchievement( int iAchievementID, int nData )
 //-----------------------------------------------------------------------------
 void CAchievementMgr::PreRestoreSavedGame()
 {
-	// load global state if we haven't already; X360 users may not have had a storage device available or selected at boot time
-	EnsureGlobalStateLoaded();
-
-	FOR_EACH_MAP( m_mapAchievement, i )
+	for ( int j = 0; j < MAX_SPLITSCREEN_PLAYERS; ++j )
 	{
-		m_mapAchievement[i]->PreRestoreSavedGame();
+		FOR_EACH_MAP( m_mapAchievement[j], i )
+		{
+			m_mapAchievement[j][i]->PreRestoreSavedGame();
+		}
 	}
 }
 
@@ -1022,36 +857,52 @@ void CAchievementMgr::PreRestoreSavedGame()
 //-----------------------------------------------------------------------------
 void CAchievementMgr::PostRestoreSavedGame()
 {
-	FOR_EACH_MAP( m_mapAchievement, i )
+	for ( int j = 0; j < MAX_SPLITSCREEN_PLAYERS; ++j )
 	{
-		m_mapAchievement[i]->PostRestoreSavedGame();
+		FOR_EACH_MAP( m_mapAchievement[j], i )
+		{
+			m_mapAchievement[j][i]->PostRestoreSavedGame();
+		}
 	}
 }
 
 extern bool IsInCommentaryMode( void );
+
+ConVar	cc_achievement_disable("achievement_disable", "0", FCVAR_CHEAT | FCVAR_REPLICATED, "Turn off achievements." );
+
 //-----------------------------------------------------------------------------
 // Purpose: checks if achievements are enabled
 //-----------------------------------------------------------------------------
-bool CAchievementMgr::CheckAchievementsEnabled()
+bool CAchievementMgr::CheckAchievementsEnabled( )
 {
-	return true;
-
 	// if PC, Steam must be running and user logged in
-#ifndef DISABLE_STEAM
+	if ( cc_achievement_disable.GetBool() )
+		return false;
+
 	if ( IsPC() && !LoggedIntoSteam() )
 	{
 		Msg( "Achievements disabled: Steam not running.\n" );
 		return false;
 	}
+
+	//No achievements in demo version.
+#ifdef _DEMO
+	return false;
 #endif
 
 #if defined( _X360 )
-	uint state = XUserGetSigninState( XBX_GetPrimaryUserId() );
-	if ( state == eXUserSigninState_NotSignedIn )
-	{
-		Msg( "Achievements disabled: not signed in to XBox user account.\n" );
+#	if 1
+#		pragma message( __FILE__ "(" __LINE__AS_STRING ") : warning custom: Disabling XBox achievement code for now. Easier than real fixes so we can get 360 compiling" )
+		Msg( "Achievements disabled: 360 broken for now.\n" );
 		return false;
-	}
+#	else
+		uint state = XUserGetSigninState( XBX_GetActiveUserId() );
+		if ( state == eXUserSigninState_NotSignedIn )
+		{
+			Msg( "Achievements disabled: not signed in to XBox user account.\n" );
+			return false;
+		}
+#	endif
 #endif
 
 	// can't be in commentary mode, user is invincible
@@ -1062,7 +913,7 @@ bool CAchievementMgr::CheckAchievementsEnabled()
 	}
 
 #ifdef CLIENT_DLL
-	// achievements disabled if playing demo
+	// achievements disabled if playing demo (Playback demo)
 	if ( engine->IsPlayingDemo() )
 	{
 		Msg( "Achievements disabled: demo playing.\n" );
@@ -1070,64 +921,35 @@ bool CAchievementMgr::CheckAchievementsEnabled()
 	}
 #endif // CLIENT_DLL
 
-#ifdef CSTRIKE_DLL
-	//=============================================================================
-	// HPE_BEGIN:
-	// [Forrest] Allow achievements/stats to be turned off for a server
-	//=============================================================================
-	if ( sv_nostats.GetBool() )
-	{
-		// prevent message spam
-		const float fNotificationCooldown = 60.0f;
-		static float fNextNotification = 0.0f;
-		if (gpGlobals->curtime >= fNextNotification)
-		{
-			Msg( "Achievements and stats disabled: sv_nostats is set.\n" );
-			fNextNotification = gpGlobals->curtime + fNotificationCooldown;
-		}
-
-		return false;
-	}
-	//=============================================================================
-	// HPE_END
-	//=============================================================================
-#endif // CSTRIKE_DLL	
-
-#if defined(TF_DLL) || defined(TF_CLIENT_DLL)
-	// no achievements for now in training
-	if ( TFGameRules() && TFGameRules()->IsInTraining() && TFGameRules()->AllowTrainingAchievements() == false )
-	{
-		return false;
-	}
-
-	ConVarRef tf_bot_offline_practice( "tf_bot_offline_practice" );
-	// no achievements for offline practice
-	if ( tf_bot_offline_practice.GetInt() != 0 )
-	{
-		return false;
-	}
-#endif
-
-#if DEBUG_ACHIEVEMENTS_IN_RELEASE
-	return true;
-#endif
-
 	if ( IsPC() )
 	{
 		// Don't award achievements if cheats are turned on.  
 		if ( WereCheatsEverOn() )
 		{
-#ifndef NO_STEAM
 			// Cheats get turned on automatically if you run with -dev which many people do internally, so allow cheats if developer is turned on and we're not running
 			// on Steam public
-			if ( developer.GetInt() == 0 || !steamapicontext->SteamUtils() || (k_EUniversePublic == steamapicontext->SteamUtils()->GetConnectedUniverse()) )
+#ifdef CLIENT_DLL
+			if ( ( developer.GetInt() == 0 ) || !steamapicontext->SteamUtils() || ( k_EUniversePublic == steamapicontext->SteamUtils()->GetConnectedUniverse() ) )
+#else
+			if ( developer.GetInt() == 0 )
+#endif
 			{
 				Msg( "Achievements disabled: cheats turned on in this app session.\n" );
 				return false;
 			}
-#endif
 		}
 	}
+
+#ifdef INFESTED_DLL
+#ifndef _DEBUG
+	// no achievements in singleplayer
+	if ( gpGlobals->maxClients <= 1 )
+	{
+		DevMsg( "Achievements disabled in singleplayer.\n" );
+		return false;
+	}
+#endif
+#endif
 
 	return true;
 }
@@ -1159,18 +981,15 @@ bool CalcPlayersOnFriendsList( int iMinFriends )
 
 	if ( IsPC() )
 	{
-#ifndef NO_STEAM
 		if ( !steamapicontext->SteamFriends() || !steamapicontext->SteamUtils() || !g_pGameRules->IsMultiplayer() )
-#endif
 			return false;
-
 	}
 	else if ( IsX360() )
 	{
-		if ( !matchmaking )
+		if ( !g_pMatchFramework )
 			return false;
 
-		XPlayerUid = XBX_GetPrimaryUserId();
+		XPlayerUid = XBX_GetActiveUserId();
 	}
 	else
 	{
@@ -1191,26 +1010,28 @@ bool CalcPlayersOnFriendsList( int iMinFriends )
 					continue;
 				if ( !pi.friendsID )
 					continue;
-#ifndef NO_STEAM
+
 				// check and see if they're on the local player's friends list
 				CSteamID steamID( pi.friendsID, 1, steamapicontext->SteamUtils()->GetConnectedUniverse(), k_EAccountTypeIndividual );
 				if ( !steamapicontext->SteamFriends()->HasFriend( steamID, /*k_EFriendFlagImmediate*/ 0x04 ) )
 					continue;
-#endif
 			}
 			else if ( IsX360() )
 			{
-				uint64 XUid[1];
-				XUid[0] = matchmaking->PlayerIdToXuid( iPlayerIndex );
-				BOOL bFriend;
 #ifdef _X360
-				XUserAreUsersFriends( XPlayerUid, XUid, 1, &bFriend, NULL );
-#endif // _X360
+#	if 1
+#		pragma message( __FILE__ "(" __LINE__AS_STRING ") : warning custom: Disabling XBox achievement code for now. Easier than real fixes so we can get 360 compiling" )
+#	else
+				// check and see if they're on the local player's friends list
+				BOOL bFriend = FALSE;
+				XUserAreUsersFriends( XPlayerUid, &pi.xuid, 1, &bFriend, NULL );
 				if ( !bFriend )
 					continue;
-			}
 
-			iTotalFriends++;
+				iTotalFriends++;
+#	endif
+#endif
+			}
 		}
 	}
 
@@ -1228,7 +1049,6 @@ bool CalcHasNumClanPlayers( int iClanTeammates )
 
 	if ( IsPC() )
 	{
-#ifndef _X360
 		// Do a cheap rejection: check teammate count first to see if we even need to bother checking w/Steam
 		// Subtract 1 for the local player.
 		if ( CalcPlayerCount()-1 < iClanTeammates )
@@ -1264,7 +1084,7 @@ bool CalcHasNumClanPlayers( int iClanTeammates )
 				}
 			}
 		}
-#endif
+
 		return false;
 	}
 	else if ( IsX360() )
@@ -1303,7 +1123,7 @@ int	CalcTeammateCount()
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: Returns the # of teammates of the local player
 //-----------------------------------------------------------------------------
 int	CalcPlayerCount()
 {
@@ -1326,6 +1146,7 @@ int	CalcPlayerCount()
 //-----------------------------------------------------------------------------
 void CAchievementMgr::ResetAchievements()
 {
+#ifdef CLIENT_DLL
 	if ( !IsPC() )
 	{
 		DevMsg( "Only available on PC\n" );
@@ -1338,26 +1159,19 @@ void CAchievementMgr::ResetAchievements()
 		return;
 	}
 
-	FOR_EACH_MAP( m_mapAchievement, i )
+	FOR_EACH_MAP( m_mapAchievement[STEAM_PLAYER_SLOT], i )
 	{
-		CBaseAchievement *pAchievement = m_mapAchievement[i];
+		CBaseAchievement *pAchievement = m_mapAchievement[STEAM_PLAYER_SLOT][i];
 		ResetAchievement_Internal( pAchievement );
 	}
-
-#ifndef NO_STEAM
-	if ( steamapicontext->SteamUserStats() )
-	{
-		steamapicontext->SteamUserStats()->StoreStats();
-	}
-#endif
-	if ( cc_achievement_debug.GetInt() > 0 )
-	{
-		Msg( "All achievements reset.\n" );
-	}
+	UploadUserData( STEAM_PLAYER_SLOT );
+	SaveGlobalState();
+#endif // CLIENT_DLL
 }
 
 void CAchievementMgr::ResetAchievement( int iAchievementID )
 {
+#ifdef CLIENT_DLL
 	if ( !IsPC() )
 	{
 		DevMsg( "Only available on PC\n" );
@@ -1370,22 +1184,15 @@ void CAchievementMgr::ResetAchievement( int iAchievementID )
 		return;
 	}
 
-	CBaseAchievement *pAchievement = GetAchievementByID( iAchievementID );
+	CBaseAchievement *pAchievement = GetAchievementByID( iAchievementID, STEAM_PLAYER_SLOT );
 	Assert( pAchievement );
 	if ( pAchievement )
 	{
 		ResetAchievement_Internal( pAchievement );
-#ifndef NO_STEAM
-		if ( steamapicontext->SteamUserStats() )
-		{
-			steamapicontext->SteamUserStats()->StoreStats();
-		}
-#endif
-		if ( cc_achievement_debug.GetInt() > 0 )
-		{
-			Msg( "Achievement %s reset.\n", pAchievement->GetName() );
-		}
+		UploadUserData( STEAM_PLAYER_SLOT );
+		SaveGlobalState();
 	}
+#endif // CLIENT_DLL
 }
 
 //-----------------------------------------------------------------------------
@@ -1401,9 +1208,9 @@ void CAchievementMgr::PrintAchievementStatus()
 
 	Msg( "%42s %-20s %s\n", "Name:", "Status:", "Point value:" );
 	int iTotalAchievements = 0, iTotalPoints = 0;
-	FOR_EACH_MAP( m_mapAchievement, i )
+	FOR_EACH_MAP( m_mapAchievement[STEAM_PLAYER_SLOT], i )
 	{
-		CBaseAchievement *pAchievement = m_mapAchievement[i];
+		CBaseAchievement *pAchievement = m_mapAchievement[STEAM_PLAYER_SLOT][i];
 
 		Msg( "%42s ", pAchievement->GetName() );	
 
@@ -1437,9 +1244,13 @@ void CAchievementMgr::PrintAchievementStatus()
 //-----------------------------------------------------------------------------
 void CAchievementMgr::FireGameEvent( IGameEvent *event )
 {
+#ifdef CLIENT_DLL
+	int nSplitScreenPlayer = event->GetInt( "splitscreenplayer" );
+	ACTIVE_SPLITSCREEN_PLAYER_GUARD( nSplitScreenPlayer );
+#endif
+
 	VPROF_( "CAchievementMgr::FireGameEvent", 1, VPROF_BUDGETGROUP_STEAM, false, 0 );
 	const char *name = event->GetName();
-	if ( name == NULL ) { return; }
 	if ( 0 == Q_strcmp( name, "entity_killed" ) )
 	{
 #ifdef GAME_DLL
@@ -1467,7 +1278,7 @@ void CAchievementMgr::FireGameEvent( IGameEvent *event )
 	else if ( 0 == Q_strcmp( name, "localplayer_changeclass" ) )
 	{
 		// keep track of when the player last changed class
-		m_flLastClassChangeTime =  gpGlobals->curtime;
+		m_flLastClassChangeTime[nSplitScreenPlayer] =  gpGlobals->curtime;
 	}
 	else if ( 0 == Q_strcmp( name, "localplayer_changeteam" ) )
 	{
@@ -1478,16 +1289,16 @@ void CAchievementMgr::FireGameEvent( IGameEvent *event )
 			int iTeam = pLocalPlayer->GetTeamNumber();
 			if ( iTeam > TEAM_SPECTATOR )
 			{
-				if ( 0 == m_flTeamplayStartTime )
+				if ( 0 == m_flTeamplayStartTime[nSplitScreenPlayer] )
 				{
 					// player transitioned from no/spectator team to a game team, mark the time
-					m_flTeamplayStartTime = gpGlobals->curtime;
+					m_flTeamplayStartTime[nSplitScreenPlayer] = gpGlobals->curtime;
 				}				
 			}
 			else
 			{
 				// player transitioned to no/spectator team, clear the teamplay start time
-				m_flTeamplayStartTime = 0;
+				m_flTeamplayStartTime[nSplitScreenPlayer] = 0;
 			}			
 		}		
 	}
@@ -1496,7 +1307,7 @@ void CAchievementMgr::FireGameEvent( IGameEvent *event )
 		if ( event->GetBool( "full_reset" ) )
 		{
 			// we're starting a full round, clear miniround count
-			m_iMiniroundsCompleted = 0;
+			m_iMiniroundsCompleted[nSplitScreenPlayer] = 0;
 		}
 	}
 	else if ( 0 == Q_strcmp( name, "teamplay_round_win" ) )
@@ -1504,17 +1315,26 @@ void CAchievementMgr::FireGameEvent( IGameEvent *event )
 		if ( false == event->GetBool( "full_round", true ) )
 		{
 			// we just finished a miniround but the round is continuing, increment miniround count
-			m_iMiniroundsCompleted ++;
+			m_iMiniroundsCompleted[nSplitScreenPlayer]++;
 		}
 	}
 	else if ( 0 == Q_strcmp( name, "player_stats_updated" ) )
 	{
-		FOR_EACH_MAP( m_mapAchievement, i )
+		FOR_EACH_MAP( m_mapAchievement[nSplitScreenPlayer], i )
 		{
-			CBaseAchievement *pAchievement = m_mapAchievement[i];
+			CBaseAchievement *pAchievement = m_mapAchievement[nSplitScreenPlayer][i];
 			pAchievement->OnPlayerStatsUpdate();
 		}
 	}
+	else if ( 0 == Q_strcmp( name, "achievement_write_failed" ) )
+	{
+#ifdef _X360
+		// We didn't succeed and we're not waiting, so we failed
+		g_pMatchFramework->GetEventsSubscription()->BroadcastEvent( new KeyValues(
+			"OnProfileUnavailable", "iController", XBX_GetUserId( nSplitScreenPlayer ) ) );
+#endif
+	}
+
 #endif // CLIENT_DLL
 }
 
@@ -1523,6 +1343,12 @@ void CAchievementMgr::FireGameEvent( IGameEvent *event )
 //-----------------------------------------------------------------------------
 void CAchievementMgr::OnKillEvent( CBaseEntity *pVictim, CBaseEntity *pAttacker, CBaseEntity *pInflictor, IGameEvent *event )
 {
+#ifdef CLIENT_DLL
+	int nSplitScreenPlayer = SINGLE_PLAYER_SLOT;
+	nSplitScreenPlayer = event->GetInt( "splitscreenplayer" );
+	ACTIVE_SPLITSCREEN_PLAYER_GUARD( nSplitScreenPlayer );
+#endif
+
 	// can have a NULL victim on client if victim has never entered local player's PVS
 	if ( !pVictim )
 		return;
@@ -1557,69 +1383,62 @@ void CAchievementMgr::OnKillEvent( CBaseEntity *pVictim, CBaseEntity *pAttacker,
 	}
 #endif // GAME_DLL
 
-	// look through all the kill event listeners and notify any achievements whose filters we pass
-	FOR_EACH_VEC( m_vecKillEventListeners, iAchievement )
+	for ( int j = 0; j < MAX_SPLITSCREEN_PLAYERS; ++j )
 	{
-		CBaseAchievement *pAchievement = m_vecKillEventListeners[iAchievement];
+		// look through all the kill event listeners and notify any achievements whose filters we pass
+		FOR_EACH_VEC( m_vecKillEventListeners[j], iAchievement )
+		{
+			CBaseAchievement *pAchievement = m_vecKillEventListeners[j][iAchievement];
 
-		if ( !pAchievement->IsActive() )
-			continue;
+			if ( !pAchievement->IsActive() )
+				continue;
 
-#ifdef CLIENT_DLL
-		// Swallow kill events that can't be earned right now
-		if ( !pAchievement->LocalPlayerCanEarn() )
-			continue;
-#endif
+			// if this achievement only looks for kills where attacker is player and that is not the case here, skip this achievement
+			if ( ( pAchievement->GetFlags() & ACH_FILTER_ATTACKER_IS_PLAYER ) && !bAttackerIsPlayer )
+				continue;
 
-		// if this achievement only looks for kills where attacker is player and that is not the case here, skip this achievement
-		if ( ( pAchievement->GetFlags() & ACH_FILTER_ATTACKER_IS_PLAYER ) && !bAttackerIsPlayer )
-			continue;
-
-		// if this achievement only looks for kills where victim is killer enemy and that is not the case here, skip this achievement
-		if ( ( pAchievement->GetFlags() & ACH_FILTER_VICTIM_IS_PLAYER_ENEMY ) && !bVictimIsPlayerEnemy )
-			continue;
+			// if this achievement only looks for kills where victim is killer enemy and that is not the case here, skip this achievement
+			if ( ( pAchievement->GetFlags() & ACH_FILTER_VICTIM_IS_PLAYER_ENEMY ) && !bVictimIsPlayerEnemy )
+				continue;
 
 #if GAME_DLL
-		// if this achievement only looks for a particular victim class name and this victim is a different class, skip this achievement
-		const char *pVictimClassNameFilter = pAchievement->m_pVictimClassNameFilter;
-		if ( pVictimClassNameFilter && !pVictim->ClassMatches( pVictimClassNameFilter ) )
-			continue;
+			// if this achievement only looks for a particular victim class name and this victim is a different class, skip this achievement
+			const char *pVictimClassNameFilter = pAchievement->m_pVictimClassNameFilter;
+			if ( pVictimClassNameFilter && !pVictim->ClassMatches( pVictimClassNameFilter ) )
+				continue;
 
-		// if this achievement only looks for a particular inflictor class name and this inflictor is a different class, skip this achievement
-		const char *pInflictorClassNameFilter = pAchievement->m_pInflictorClassNameFilter;
-		if ( pInflictorClassNameFilter &&  ( ( NULL == pInflictor ) || !pInflictor->ClassMatches( pInflictorClassNameFilter ) ) )
-			continue;
+			// if this achievement only looks for a particular inflictor class name and this inflictor is a different class, skip this achievement
+			const char *pInflictorClassNameFilter = pAchievement->m_pInflictorClassNameFilter;
+			if ( pInflictorClassNameFilter &&  ( ( NULL == pInflictor ) || !pInflictor->ClassMatches( pInflictorClassNameFilter ) ) )
+				continue;
 
-		// if this achievement only looks for a particular attacker class name and this attacker is a different class, skip this achievement
-		const char *pAttackerClassNameFilter = pAchievement->m_pAttackerClassNameFilter;
-		if ( pAttackerClassNameFilter && ( ( NULL == pAttacker ) || !pAttacker->ClassMatches( pAttackerClassNameFilter ) ) )
-			continue;
+			// if this achievement only looks for a particular attacker class name and this attacker is a different class, skip this achievement
+			const char *pAttackerClassNameFilter = pAchievement->m_pAttackerClassNameFilter;
+			if ( pAttackerClassNameFilter && ( ( NULL == pAttacker ) || !pAttacker->ClassMatches( pAttackerClassNameFilter ) ) )
+				continue;
 
-		// if this achievement only looks for a particular inflictor entity name and this inflictor has a different name, skip this achievement
-		const char *pInflictorEntityNameFilter = pAchievement->m_pInflictorEntityNameFilter;
-		if ( pInflictorEntityNameFilter && ( ( NULL == pInflictor ) || !pInflictor->NameMatches( pInflictorEntityNameFilter ) ) )
-			continue;
+			// if this achievement only looks for a particular inflictor entity name and this inflictor has a different name, skip this achievement
+			const char *pInflictorEntityNameFilter = pAchievement->m_pInflictorEntityNameFilter;
+			if ( pInflictorEntityNameFilter && ( ( NULL == pInflictor ) || !pInflictor->NameMatches( pInflictorEntityNameFilter ) ) )
+				continue;
 #endif // GAME_DLL
 
-		// we pass all filters for this achievement, notify the achievement of the kill
-		pAchievement->Event_EntityKilled( pVictim, pAttacker, pInflictor, event );
-	}		
+			// we pass all filters for this achievement, notify the achievement of the kill
+			pAchievement->Event_EntityKilled( pVictim, pAttacker, pInflictor, event );
+		}
+	}
 }
 
-void CAchievementMgr::OnAchievementEvent( int iAchievementID, int iCount )
+void CAchievementMgr::OnAchievementEvent( int iAchievementID, int nUserSlot )
 {
-	// have we loaded the achievements yet?
-	if ( m_mapAchievement.Count() )
+	// handle event for specific achievement
+	CBaseAchievement *pAchievement = GetAchievementByID( iAchievementID, nUserSlot );
+	Assert( pAchievement );
+	if ( pAchievement )
 	{
-		// handle event for specific achievement
-		CBaseAchievement *pAchievement = GetAchievementByID( iAchievementID );
-		Assert( pAchievement );
-		if ( pAchievement )
+		if ( !pAchievement->IsAchieved() )
 		{
-			if ( !pAchievement->IsAchieved() )
-			{
-				pAchievement->IncrementCount( iCount );
-			}
+			pAchievement->IncrementCount();
 		}
 	}
 }
@@ -1627,16 +1446,16 @@ void CAchievementMgr::OnAchievementEvent( int iAchievementID, int iCount )
 //-----------------------------------------------------------------------------
 // Purpose: called when a map-fired achievement event occurs
 //-----------------------------------------------------------------------------
-void CAchievementMgr::OnMapEvent( const char *pchEventName )
+void CAchievementMgr::OnMapEvent( const char *pchEventName, int nUserSlot )
 {
 	Assert( pchEventName && *pchEventName );
 	if ( !pchEventName || !*pchEventName ) 
 		return;
 
 	// see if this event matches the prefix for an achievement component
-	FOR_EACH_VEC( m_vecComponentListeners, iAchievement )
+	FOR_EACH_VEC( m_vecComponentListeners[nUserSlot], iAchievement )
 	{
-		CBaseAchievement *pAchievement = m_vecComponentListeners[iAchievement];
+		CBaseAchievement *pAchievement = m_vecComponentListeners[nUserSlot][iAchievement];
 		Assert( pAchievement->m_pszComponentPrefix );
 		if ( 0 == Q_strncmp( pchEventName, pAchievement->m_pszComponentPrefix, pAchievement->m_iComponentPrefixLen ) )
 		{
@@ -1647,9 +1466,9 @@ void CAchievementMgr::OnMapEvent( const char *pchEventName )
 	}
 
 	// look through all the map event listeners
-	FOR_EACH_VEC( m_vecMapEventListeners, iAchievement )
+	FOR_EACH_VEC( m_vecMapEventListeners[nUserSlot], iAchievement )
 	{
-		CBaseAchievement *pAchievement = m_vecMapEventListeners[iAchievement];
+		CBaseAchievement *pAchievement = m_vecMapEventListeners[nUserSlot][iAchievement];
 		pAchievement->OnMapEvent( pchEventName );
 	}
 }
@@ -1659,11 +1478,24 @@ void CAchievementMgr::OnMapEvent( const char *pchEventName )
 // Input  : index - 
 // Output : IBaseAchievement*
 //-----------------------------------------------------------------------------
-IAchievement* CAchievementMgr::GetAchievementByIndex( int index )
+IAchievement* CAchievementMgr::GetAchievementByIndex( int index, int nUserSlot )
 {
-	Assert( m_vecAchievement.IsValidIndex(index) );
-	return (IAchievement*)m_vecAchievement[index];
+	Assert( m_vecAchievement[nUserSlot].IsValidIndex(index) );
+	return (IAchievement*)m_vecAchievement[nUserSlot][index];
 }
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Returns an achievement as it's abstract object. This interface is used by gameui.dll for getting achievement info.
+// Input  : orderIndex - 
+// Output : IBaseAchievement*
+//-----------------------------------------------------------------------------
+IAchievement* CAchievementMgr::GetAchievementByDisplayOrder( int orderIndex, int nUserSlot )
+{
+	Assert( m_vecAchievementInOrder[nUserSlot].IsValidIndex(orderIndex) );
+	return (IAchievement*)m_vecAchievementInOrder[nUserSlot][orderIndex];
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: Returns total achievement count. This interface is used by gameui.dll for getting achievement info.
@@ -1672,9 +1504,44 @@ IAchievement* CAchievementMgr::GetAchievementByIndex( int index )
 //-----------------------------------------------------------------------------
 int CAchievementMgr::GetAchievementCount()
 {
-	return m_vecAchievement.Count();
+	return m_vecAchievement[SINGLE_PLAYER_SLOT].Count();
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Handles events from the matchmaking framework.
+//-----------------------------------------------------------------------------
+void CAchievementMgr::OnEvent( KeyValues *pEvent )
+{
+	char const *szEvent = pEvent->GetName();
+
+	if ( FStrEq( szEvent, "OnProfileDataLoaded" ) )
+	{
+		// This event is sent when the title data blocks have been loaded.
+		int iController = pEvent->GetInt( "iController" );
+#ifdef _X360
+		int nSlot = XBX_GetSlotByUserId( iController );
+#else
+		int nSlot = STEAM_PLAYER_SLOT;
+#endif
+		ReadAchievementsFromTitleData( iController, nSlot );
+	}
+#ifdef _X360
+	else if ( FStrEq( szEvent, "OnProfilesChanged" ) )
+	{
+		// This is essentially a RESET
+		for ( int i = 0; i < MAX_SPLITSCREEN_PLAYERS; ++i )
+		{
+			UserDisconnected( i );
+		}
+
+		// Mark the valid users as connected and try to download achievement data from LIVE
+		for ( unsigned int i = 0; i < XBX_GetNumGameUsers(); ++i )
+		{
+			UserConnected( i );  
+		}
+	}
+#endif
+}
 
 #if !defined(NO_STEAM)
 //-----------------------------------------------------------------------------
@@ -1682,212 +1549,87 @@ int CAchievementMgr::GetAchievementCount()
 //-----------------------------------------------------------------------------
 void CAchievementMgr::Steam_OnUserStatsReceived( UserStatsReceived_t *pUserStatsReceived )
 {
+#ifdef CLIENT_DLL
 	Assert( steamapicontext->SteamUserStats() );
 	if ( !steamapicontext->SteamUserStats() )
 		return;
 
-	if ( cc_achievement_debug.GetInt() > 0 )
-	{
-		Msg( "CAchievementMgr::Steam_OnUserStatsReceived: result = %i\n", pUserStatsReceived->m_eResult );
-	}
-
 	if ( pUserStatsReceived->m_eResult != k_EResultOK )
 	{
-		DevMsg( "CTFSteamStats: failed to download stats from Steam, EResult %d\n", pUserStatsReceived->m_eResult );
+//		DevMsg( "CAchievementMgr: failed to download stats from Steam, EResult %d\n", pUserStatsReceived->m_eResult );
 		return;
 	}
 
-	UpdateStateFromSteam_Internal();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: called when stat upload is complete
-//-----------------------------------------------------------------------------
-void CAchievementMgr::Steam_OnUserStatsStored( UserStatsStored_t *pUserStatsStored )
-{
-	if ( cc_achievement_debug.GetInt() > 0 )
-	{
-		Msg( "CAchievementMgr::Steam_OnUserStatsStored: result = %i\n", pUserStatsStored->m_eResult );
-	}
-
-	if ( k_EResultOK != pUserStatsStored->m_eResult && k_EResultInvalidParam != pUserStatsStored->m_eResult )
-	{
-		// We had some failure (like not connected or timeout) that means the stats were not stored. Redirty to try again
-		SetDirty( true ); 
-	}
-	else
-	{
-		if ( k_EResultInvalidParam == pUserStatsStored->m_eResult )
-		{
-			// for whatever reason, stats and achievements were rejected by Steam. In order to remain in
-			// synch, we get the current values/state from Steam.
-			UpdateStateFromSteam_Internal();
-
-			// In the case of k_EResultInvalidParam, some of the stats may have been stored, so we should still fall through to 
-			// fire events related to achievements being awarded.
-		}
-
-		while ( m_AchievementsAwarded.Count() > 0 )
-		{
-#ifndef GAME_DLL
-			// send a message to the server about our achievement
-			if ( g_pGameRules && g_pGameRules->IsMultiplayer() )
-			{
-				C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
-				if ( pLocalPlayer )
-				{
-					int nAchievementID = m_AchievementsAwarded[0];
-					CBaseAchievement* pAchievement = GetAchievementByID( nAchievementID );
-
-					// verify that it is still achieved (it could have been rejected by Steam)
-					if ( pAchievement->IsAchieved() )
-					{
-						// Get the unlocked time from Steam
-						uint32 unlockTime;
-						bool bAchieved;
-						bool bRet = steamapicontext->SteamUserStats()->GetAchievementAndUnlockTime( pAchievement->GetName(), &bAchieved, &unlockTime );
-						if ( bRet && bAchieved )
-						{
-							// set the unlock time
-							pAchievement->SetUnlockTime( unlockTime );
-						}
-
-						KeyValues *kv = new KeyValues( "AchievementEarned" );
-						kv->SetInt( "achievementID", nAchievementID );
-						engine->ServerCmdKeyValues( kv );
-					}
-				}
-			}
-#endif			
-			m_AchievementsAwarded.Remove( 0 );
-		}
-
-		CheckMetaAchievements();
-	}
-}
-#endif // !defined(NO_STEAM)
-
-void CAchievementMgr::CheckMetaAchievements( void )
-{
-	// Check the meta completion achievements.
-	// Only one iteration over the achievements set is necessary.
-	FOR_EACH_MAP( m_mapMetaAchievement, iAchievement )
-	{
-		CAchievement_AchievedCount* pMetaAchievement = m_mapMetaAchievement[iAchievement];
-		if ( !pMetaAchievement || pMetaAchievement->IsAchieved() )
-			continue;
-
-		int iAchieved = 0;
-		for ( int i=pMetaAchievement->GetLowRange(); i<=pMetaAchievement->GetHighRange(); i++ )
-		{
-			CBaseAchievement* pAchievement = GetAchievementByID( i );
-			if ( pAchievement && pAchievement->IsAchieved() )
-			{
-				iAchieved++;
-			}
-		}
-		if ( iAchieved >= pMetaAchievement->GetNumRequired() )
-		{
-			pMetaAchievement->IncrementCount();
-		}
-	}
-}
-
-void CAchievementMgr::ResetAchievement_Internal( CBaseAchievement *pAchievement )
-{
-	Assert( pAchievement );
-
-#ifndef NO_STEAM
-	if ( steamapicontext->SteamUserStats() )
-	{
-		steamapicontext->SteamUserStats()->ClearAchievement( pAchievement->GetName() );		
-	}
-#endif	
-	pAchievement->SetAchieved( false );
-	pAchievement->SetCount( 0 );	
-	if ( pAchievement->HasComponents() )
-	{
-		pAchievement->SetComponentBits( 0 );
-	}
-	pAchievement->SetProgressShown( 0 );
-	pAchievement->StopListeningForAllEvents();
-	if ( pAchievement->IsActive() )
-	{
-		pAchievement->ListenForEvents();
-	}
-}
-
-void CAchievementMgr::SetAchievementThink( CBaseAchievement *pAchievement, float flThinkTime )
-{
-	// Is the achievement already in the think list?
-	int iCount = m_vecThinkListeners.Count();
-	for ( int i = 0; i < iCount; i++ )
-	{
-		if ( m_vecThinkListeners[i].pAchievement == pAchievement )
-		{
-			if ( flThinkTime == THINK_CLEAR )
-			{
-				m_vecThinkListeners.Remove(i);
-				return;
-			}
-
-			m_vecThinkListeners[i].m_flThinkTime = gpGlobals->curtime + flThinkTime;
-			return;
-		}
-	}
-
-	if ( flThinkTime == THINK_CLEAR )
-		return;
-
-	// Otherwise, add it to the list
-	int iIdx = m_vecThinkListeners.AddToTail();
-	m_vecThinkListeners[iIdx].pAchievement = pAchievement;
-	m_vecThinkListeners[iIdx].m_flThinkTime = gpGlobals->curtime + flThinkTime;
-}
-
-void CAchievementMgr::UpdateStateFromSteam_Internal()
-{
-#ifndef NO_STEAM
 	// run through the achievements and set their achieved state according to Steam data
-	FOR_EACH_MAP( m_mapAchievement, i )
+	for ( int i = 0; i < m_vecAchievement[STEAM_PLAYER_SLOT].Count(); ++i )
 	{
-		CBaseAchievement *pAchievement = m_mapAchievement[i];
+		CBaseAchievement *pAchievement = m_vecAchievement[STEAM_PLAYER_SLOT][i];
+#ifndef INFESTED_DLL
+		char szFieldName[64];
+#endif
+		int nCount = 0;
+		int nComponentBits = 0;
 		bool bAchieved = false;
+		bool bRet1 = steamapicontext->SteamUserStats()->GetAchievement( pAchievement->GetName(), &bAchieved );
 
-		uint32 unlockTime;
+#ifdef INFESTED_DLL
+		if ( bRet1 )
+#else
+		// TODO: these look hardcoded for L4D2 - remove?
+		Q_snprintf( szFieldName, sizeof( szFieldName ), "TD2.Achievements.Count.%02d", i );
+		bool bRet2 = steamapicontext->SteamUserStats()->GetStat( szFieldName, &nCount );
 
-		// Get the achievement status, and the time it was unlocked if unlocked.
-		// If the return value is true, but the unlock time is zero, that means it was unlocked before Steam 
-		// began tracking achievement unlock times (December 2009). Time is seconds since January 1, 1970.
-		bool bRet = steamapicontext->SteamUserStats()->GetAchievementAndUnlockTime( pAchievement->GetName(), &bAchieved, &unlockTime );
+		Q_snprintf( szFieldName, sizeof( szFieldName ), "TD2.Achievements.Comp.%02d", i );
+		bool bRet3 = steamapicontext->SteamUserStats()->GetStat( szFieldName, &nComponentBits );
 
-		if ( bRet )
+		if ( bRet1 && bRet2 && bRet3 )
+#endif
 		{
 			// set local achievement state
 			pAchievement->SetAchieved( bAchieved );
-			pAchievement->SetUnlockTime(unlockTime);
+			pAchievement->SetCount( nCount );
+
+			if ( pAchievement->HasComponents() )
+			{
+				pAchievement->SetComponentBits( nComponentBits );
+			}
 		}
 		else
 		{
 			DevMsg( "ISteamUserStats::GetAchievement failed for %s\n", pAchievement->GetName() );
 		}
 
+		pAchievement->EvaluateIsAlreadyAchieved();
+
 		if ( pAchievement->StoreProgressInSteam() )
 		{
 			int iValue;
 			char pszProgressName[1024];
-			Q_snprintf( pszProgressName, 1024, "%s_STAT", pAchievement->GetStat() );
-			bRet = steamapicontext->SteamUserStats()->GetStat( pszProgressName, &iValue );
+			Q_snprintf( pszProgressName, 1024, "%s_STAT", pAchievement->GetName() );
+			bool bRet = steamapicontext->SteamUserStats()->GetStat( pszProgressName, &iValue );
 			if ( bRet )
 			{
 				pAchievement->SetCount( iValue );
-				pAchievement->EvaluateNewAchievement();
 			}
 			else
 			{
 				DevMsg( "ISteamUserStats::GetStat failed to get progress value from Steam for achievement %s\n", pszProgressName );
 			}
-		}
+
+			if ( pAchievement->HasComponents() )
+			{
+				Q_snprintf( pszProgressName, 1024, "%s_COMP", pAchievement->GetName() );
+				bool bRet = steamapicontext->SteamUserStats()->GetStat( pszProgressName, &iValue );
+				if ( bRet )
+				{
+					pAchievement->SetComponentBits( iValue );
+				}
+				else
+				{
+					DevMsg( "ISteamUserStats::GetStat failed to get component value from Steam for achievement %s\n", pszProgressName );
+				}
+			}
+		}	
 	}
 
 	// send an event to anyone else who needs Steam user stat data
@@ -1900,7 +1642,90 @@ void CAchievementMgr::UpdateStateFromSteam_Internal()
 		gameeventmanager->FireEventClientSide( event );
 #endif
 	}
-#endif
+
+
+
+#endif // CLIENT_DLL
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: called when stat upload is complete
+//-----------------------------------------------------------------------------
+void CAchievementMgr::Steam_OnUserStatsStored( UserStatsStored_t *pUserStatsStored )
+{
+	if ( k_EResultOK != pUserStatsStored->m_eResult )
+	{
+		DevMsg( "CAchievementMgr: failed to upload stats to Steam, EResult %d\n", pUserStatsStored->m_eResult );
+	} 
+
+	else
+	{
+		if ( m_AchievementsAwarded[STEAM_PLAYER_SLOT].Count() > 0 )
+		{
+#ifndef GAME_DLL
+			// send a message to the server about our achievement
+			if ( g_pGameRules && g_pGameRules->IsMultiplayer() )
+			{
+				C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer( FirstValidSplitScreenSlot() );
+				if ( pLocalPlayer )
+				{
+					char cmd[256];
+					int iPlayerID = pLocalPlayer->GetUserID();
+					unsigned short mask = UTIL_GetAchievementEventMask();
+
+					Q_snprintf( cmd, sizeof( cmd ), "achievement_earned %d %d", m_AchievementsAwarded[STEAM_PLAYER_SLOT][0] ^ mask, ( iPlayerID ^ m_AchievementsAwarded[STEAM_PLAYER_SLOT][0] ) ^ mask );
+					engine->ClientCmd_Unrestricted( cmd );
+				}
+			}
+#endif			
+			m_AchievementsAwarded[STEAM_PLAYER_SLOT].Remove( 0 );
+		}
+
+		// for each achievement that has not been achieved
+		FOR_EACH_MAP( m_mapAchievement[STEAM_PLAYER_SLOT], iAchievement )
+		{
+			CBaseAchievement *pAchievement = m_mapAchievement[STEAM_PLAYER_SLOT][iAchievement];
+
+			if ( !pAchievement->IsAchieved() )
+			{
+				pAchievement->OnSteamUserStatsStored();
+			}
+		}
+	}
+
+	m_flWaitingForStoreStatsCallback = 0.0f;
+	if ( m_bCallStoreStatsAfterCallback )		// while waiting for this callback, we tried to store stats again.  Re-send the request now.
+	{
+		m_bCallStoreStatsAfterCallback = false;
+		UploadUserData( STEAM_PLAYER_SLOT );
+	}
+}
+#endif // !defined(NO_STEAM)
+
+
+void CAchievementMgr::ResetAchievement_Internal( CBaseAchievement *pAchievement )
+{
+#ifdef CLIENT_DLL
+	Assert( pAchievement );
+
+	if ( steamapicontext->SteamUserStats() )
+	{
+		steamapicontext->SteamUserStats()->ClearAchievement( pAchievement->GetName() );		
+	}
+
+	pAchievement->SetAchieved( false );
+	pAchievement->SetCount( 0 );	
+	if ( pAchievement->HasComponents() )
+	{
+		pAchievement->SetComponentBits( 0 );
+	}
+	pAchievement->SetProgressShown( 0 );
+	pAchievement->StopListeningForAllEvents();
+	if ( pAchievement->IsActive() )
+	{
+		pAchievement->ListenForEvents();
+	}
+#endif // CLIENT_DLL
 }
 
 #ifdef CLIENT_DLL
@@ -1908,14 +1733,13 @@ void CAchievementMgr::UpdateStateFromSteam_Internal()
 void MsgFunc_AchievementEvent( bf_read &msg )
 {
 	int iAchievementID = (int) msg.ReadShort();
-	int iCount = (int) msg.ReadShort();
 	CAchievementMgr *pAchievementMgr = dynamic_cast<CAchievementMgr *>( engine->GetAchievementMgr() );
 	if ( !pAchievementMgr )
 		return;
-	pAchievementMgr->OnAchievementEvent( iAchievementID, iCount );
+	pAchievementMgr->OnAchievementEvent( iAchievementID, STEAM_PLAYER_SLOT );
 }
 
-#if defined(_DEBUG) || defined(STAGING_ONLY) || DEBUG_ACHIEVEMENTS_IN_RELEASE
+#ifdef _DEBUG
 CON_COMMAND_F( achievement_reset_all, "Clears all achievements", FCVAR_CHEAT )
 {
 	CAchievementMgr *pAchievementMgr = dynamic_cast<CAchievementMgr *>( engine->GetAchievementMgr() );
@@ -1935,7 +1759,7 @@ CON_COMMAND_F( achievement_reset, "<internal name> Clears specified achievement"
 		Msg( "Usage: achievement_reset <internal name>\n" );
 		return;
 	}
-	CBaseAchievement *pAchievement = pAchievementMgr->GetAchievementByName( args[1] );
+	CBaseAchievement *pAchievement = pAchievementMgr->GetAchievementByName( args[1], STEAM_PLAYER_SLOT );
 	if ( !pAchievement )
 	{
 		Msg( "Achievement %s not found\n", args[1] );
@@ -1964,13 +1788,13 @@ CON_COMMAND_F( achievement_unlock, "<internal name> Unlocks achievement", FCVAR_
 		Msg( "Usage: achievement_unlock <internal name>\n" );
 		return;
 	}
-	CBaseAchievement *pAchievement = pAchievementMgr->GetAchievementByName( args[1] );
+	CBaseAchievement *pAchievement = pAchievementMgr->GetAchievementByName( args[1], STEAM_PLAYER_SLOT );
 	if ( !pAchievement )
 	{
 		Msg( "Achievement %s not found\n", args[1] );
 		return;
 	}
-	pAchievementMgr->AwardAchievement( pAchievement->GetAchievementID() );
+	pAchievementMgr->AwardAchievement( pAchievement->GetAchievementID(), STEAM_PLAYER_SLOT );
 }
 
 CON_COMMAND_F( achievement_unlock_all, "Unlocks all achievements", FCVAR_CHEAT )
@@ -1982,10 +1806,10 @@ CON_COMMAND_F( achievement_unlock_all, "Unlocks all achievements", FCVAR_CHEAT )
 	int iCount = pAchievementMgr->GetAchievementCount();
 	for ( int i = 0; i < iCount; i++ )
 	{
-		IAchievement *pAchievement = pAchievementMgr->GetAchievementByIndex( i );
+		IAchievement *pAchievement = pAchievementMgr->GetAchievementByIndex( i, STEAM_PLAYER_SLOT );
 		if ( !pAchievement->IsAchieved() )
 		{
-			pAchievementMgr->AwardAchievement( pAchievement->GetAchievementID() );
+			pAchievementMgr->AwardAchievement( pAchievement->GetAchievementID(), STEAM_PLAYER_SLOT );
 		}
 	}	
 }
@@ -2001,7 +1825,7 @@ CON_COMMAND_F( achievement_evaluate, "<internal name> Causes failable achievemen
 		Msg( "Usage: achievement_evaluate <internal name>\n" );
 		return;
 	}
-	CBaseAchievement *pAchievement = pAchievementMgr->GetAchievementByName( args[1] );
+	CBaseAchievement *pAchievement = pAchievementMgr->GetAchievementByName( args[1], STEAM_PLAYER_SLOT );
 	if ( !pAchievement )
 	{
 		Msg( "Achievement %s not found\n", args[1] );
@@ -2009,13 +1833,11 @@ CON_COMMAND_F( achievement_evaluate, "<internal name> Causes failable achievemen
 	}
 
 	CFailableAchievement *pFailableAchievement = dynamic_cast<CFailableAchievement *>( pAchievement );
-	if ( !pFailableAchievement )
+	Assert( pFailableAchievement );
+	if ( pFailableAchievement )
 	{
-		Msg( "Achievement %s is not failable\n", args[1] );
-		return;
+		pFailableAchievement->OnEvaluationEvent();
 	}
-
-	pFailableAchievement->OnEvaluationEvent();
 }
 
 CON_COMMAND_F( achievement_test_friend_count, "Counts the # of teammates on local player's friends list", FCVAR_CHEAT )
@@ -2054,7 +1876,7 @@ CON_COMMAND_F( achievement_mark_dirty, "Mark achievement data as dirty", FCVAR_C
 	CAchievementMgr *pAchievementMgr = dynamic_cast<CAchievementMgr *>( engine->GetAchievementMgr() );
 	if ( !pAchievementMgr )
 		return;
-	pAchievementMgr->SetDirty( true );
+	pAchievementMgr->SetDirty( true, STEAM_PLAYER_SLOT );
 }
 #endif // _DEBUG
 
@@ -2077,3 +1899,31 @@ const char *GetModelName( CBaseEntity *pBaseEntity )
 
 	return "";
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: Gets the list of achievements achieved during the current game
+//-----------------------------------------------------------------------------
+const CUtlVector<int>& CAchievementMgr::GetAchievedDuringCurrentGame( int nPlayerSlot )
+{
+	return m_AchievementsAwardedDuringCurrentGame[nPlayerSlot];
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Reset the list of achievements achieved during the current game
+//-----------------------------------------------------------------------------
+void CAchievementMgr::ResetAchievedDuringCurrentGame( int nPlayerSlot )
+{
+	m_AchievementsAwardedDuringCurrentGame[nPlayerSlot].RemoveAll();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Clears achievement data for the a particular user slot
+//-----------------------------------------------------------------------------
+void CAchievementMgr::ClearAchievementData( int nUserSlot )
+{
+	FOR_EACH_VEC( m_vecAchievement[nUserSlot], i )
+	{
+		m_mapAchievement[nUserSlot][i]->ClearAchievementData();
+	}
+}
+

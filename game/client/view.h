@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -24,7 +24,7 @@ class VPlane;
 
 
 // near and far Z it uses to render the world.
-#define VIEW_NEARZ	3
+#define VIEW_NEARZ	7
 //#define VIEW_FARZ	28400
 
 
@@ -34,14 +34,14 @@ class VPlane;
 // what's currently being rendered, which, owing to monitors or water,
 // could be just about anywhere.
 //-----------------------------------------------------------------------------
-const Vector &MainViewOrigin();
-const QAngle &MainViewAngles();
-const Vector &PrevMainViewOrigin();
-const QAngle &PrevMainViewAngles();
-const VMatrix &MainWorldToViewMatrix();
-const Vector &MainViewForward();
-const Vector &MainViewRight();
-const Vector &MainViewUp();
+const Vector &MainViewOrigin( int nSlot );
+const QAngle &MainViewAngles( int nSlot );
+const Vector &PrevMainViewOrigin( int nSlot );
+const QAngle &PrevMainViewAngles( int nSlot );
+const VMatrix &MainWorldToViewMatrix( int nSlot );
+const Vector &MainViewForward( int nSlot );
+const Vector &MainViewRight( int nSlot );
+const Vector &MainViewUp( int nSlot );
 
 const Vector &CurrentViewOrigin();
 const QAngle &CurrentViewAngles();

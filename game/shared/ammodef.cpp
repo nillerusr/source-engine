@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:		Base combat character with no AI
 //
@@ -100,7 +100,7 @@ int	CAmmoDef::NPCDamage(int nAmmoIndex)
 // Input  :
 // Output :
 //-----------------------------------------------------------------------------
-int	CAmmoDef::MaxCarry(int nAmmoIndex)
+int	CAmmoDef::MaxCarry(int nAmmoIndex, const CBaseCombatCharacter *owner)
 {
 	if ( nAmmoIndex < 1 || nAmmoIndex >= m_nAmmoIndex )
 		return 0;
@@ -108,7 +108,7 @@ int	CAmmoDef::MaxCarry(int nAmmoIndex)
 	if ( m_AmmoType[nAmmoIndex].pMaxCarry == USE_CVAR )
 	{
 		if ( m_AmmoType[nAmmoIndex].pMaxCarryCVar )
-			return m_AmmoType[nAmmoIndex].pMaxCarryCVar->GetFloat();
+			return m_AmmoType[nAmmoIndex].pMaxCarryCVar->GetInt();
 
 		return 0;
 	}
@@ -117,6 +117,23 @@ int	CAmmoDef::MaxCarry(int nAmmoIndex)
 		return m_AmmoType[nAmmoIndex].pMaxCarry;
 	}
 }
+
+bool CAmmoDef::CanCarryInfiniteAmmo(int nAmmoIndex)
+{
+	if ( nAmmoIndex < 1 || nAmmoIndex >= m_nAmmoIndex )
+		return false;
+
+	int maxCarry = m_AmmoType[nAmmoIndex].pMaxCarry;
+	if ( maxCarry == USE_CVAR )
+	{
+		if ( m_AmmoType[nAmmoIndex].pMaxCarryCVar )
+		{
+			maxCarry = m_AmmoType[nAmmoIndex].pMaxCarryCVar->GetInt();
+		}
+	}
+	return maxCarry == INFINITE_AMMO ? true : false;
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose:

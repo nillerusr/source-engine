@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -12,7 +12,6 @@
 
 
 #include "entityoutput.h"
-#include "shareddefs.h"
 
 
 //-----------------------------------------------------------------------------
@@ -23,8 +22,6 @@
 #define SF_PATH_ALTREVERSE		0x00000004
 #define SF_PATH_DISABLE_TRAIN	0x00000008
 #define SF_PATH_TELEPORT		0x00000010
-#define SF_PATH_UPHILL			0x00000020
-#define SF_PATH_DOWNHILL		0x00000040
 #define SF_PATH_ALTERNATE		0x00008000
 
 
@@ -72,9 +69,9 @@ public:
 	TrackOrientationType_t GetOrientationType();
 	QAngle GetOrientation( bool bForwardDir );
 
-	CHandle<CPathTrack>	m_pnext;
-	CHandle<CPathTrack>	m_pprevious;
-	CHandle<CPathTrack>	m_paltpath;
+	CPathTrack	*m_pnext;
+	CPathTrack	*m_pprevious;
+	CPathTrack	*m_paltpath;
 
 	float GetRadius() const { return m_flRadius; }
 
@@ -89,28 +86,15 @@ public:
 	void		Visit();
 	bool		HasBeenVisited() const;
 
-	bool		IsUpHill(){ return ( FBitSet( m_spawnflags, SF_PATH_UPHILL ) ) ? true : false; }
-	bool		IsDownHill(){ return ( FBitSet( m_spawnflags, SF_PATH_DOWNHILL ) ) ? true : false; }
-	int	GetHillType()
-	{
-		int iRetVal = HILL_TYPE_NONE;
-		if ( IsUpHill() )
-		{
-			iRetVal = HILL_TYPE_UPHILL;
-		}
-		else if ( IsDownHill() )
-		{
-			iRetVal = HILL_TYPE_DOWNHILL;
-		}
-
-		return iRetVal;
-	}
-
-	bool IsDisabled( void ){ return FBitSet( m_spawnflags, SF_PATH_DISABLED ); }
+private:
+	void		Project( CPathTrack *pstart, CPathTrack *pend, Vector &origin, float dist );
+	void		SetPrevious( CPathTrack *pprevious );
+	void		Link( void );
+	
+	static CPathTrack *Instance( edict_t *pent );
 
 	void InputPass( inputdata_t &inputdata );
-	void InputTeleport( inputdata_t &inputdata );
-
+	
 	void InputToggleAlternatePath( inputdata_t &inputdata );
 	void InputEnableAlternatePath( inputdata_t &inputdata );
 	void InputDisableAlternatePath( inputdata_t &inputdata );
@@ -118,13 +102,6 @@ public:
 	void InputTogglePath( inputdata_t &inputdata );
 	void InputEnablePath( inputdata_t &inputdata );
 	void InputDisablePath( inputdata_t &inputdata );
-
-private:
-	void		Project( CPathTrack *pstart, CPathTrack *pend, Vector &origin, float dist );
-	void		SetPrevious( CPathTrack *pprevious );
-	void		Link( void );
-	
-	static CPathTrack *Instance( edict_t *pent );
 
 	DECLARE_DATADESC();
 
@@ -135,7 +112,6 @@ private:
 	TrackOrientationType_t m_eOrientationType;
 
 	COutputEvent m_OnPass;
-	COutputEvent m_OnTeleport;
 
 	static int	s_nCurrIterVal;
 	static bool s_bIsIterating;

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -34,7 +34,7 @@ public:
 		{
 			(fieldtype_t)FIELD_TYPE, 
 			"elems", 
-			{ 0, 0 },
+			0,
 			1, 
 			FTYPEDESC_SAVE, 
 			NULL, 
@@ -50,9 +50,8 @@ public:
 			1,
 			"uv",
 			NULL,
-			false,
-			false,
 			0,
+			NULL,
 #ifdef _DEBUG
 			true
 #endif
@@ -87,7 +86,7 @@ public:
 		{
 			(fieldtype_t)FIELD_TYPE, 
 			"elems", 
-			{ 0, 0 },
+			0,
 			1, 
 			FTYPEDESC_SAVE, 
 			NULL, 
@@ -103,9 +102,8 @@ public:
 			1,
 			"uv",
 			NULL,
-			false,
-			false,
 			0,
+			NULL,
 #ifdef _DEBUG
 			true
 #endif
@@ -173,10 +171,10 @@ public:
 //-------------------------------------
 
 #define DEFINE_UTLVECTOR(name,fieldtype) \
-	{ FIELD_CUSTOM, #name, { offsetof(classNameTypedef,name), 0 }, 1, FTYPEDESC_SAVE, NULL, CUtlVectorDataopsInstantiator<fieldtype>::GetDataOps(&(((classNameTypedef *)0)->name)), NULL }
+	{ FIELD_CUSTOM, #name, offsetof(classNameTypedef,name), 1, FTYPEDESC_SAVE, NULL, CUtlVectorDataopsInstantiator<fieldtype>::GetDataOps(&(((classNameTypedef *)0)->name)), NULL }
 
 #define DEFINE_GLOBAL_UTLVECTOR(name,fieldtype) \
-{ FIELD_CUSTOM, #name, { offsetof(classNameTypedef,name), 0 }, 1, FTYPEDESC_SAVE|FTYPEDESC_GLOBAL, NULL, CUtlVectorDataopsInstantiator<fieldtype>::GetDataOps(&(((classNameTypedef *)0)->name)), NULL }
+{ FIELD_CUSTOM, #name, offsetof(classNameTypedef,name), 1, FTYPEDESC_SAVE|FTYPEDESC_GLOBAL, NULL, CUtlVectorDataopsInstantiator<fieldtype>::GetDataOps(&(((classNameTypedef *)0)->name)), NULL }
 
 
 #endif // SAVERESTORE_UTLVECTOR_H

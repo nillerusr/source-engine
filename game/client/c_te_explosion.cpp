@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: Client explosions
 //
@@ -7,12 +7,11 @@
 #include "cbase.h"
 #include "tempentity.h"  // FLAGS
 #include "c_te_particlesystem.h"
-#include "ragdollexplosionenumerator.h"
+#include "RagdollExplosionEnumerator.h"
 #include "glow_overlay.h"
 #include "fx_explosion.h"
-#include "clienteffectprecachesystem.h"
 #include "engine/ivdebugoverlay.h"
-#include "tier1/KeyValues.h"
+#include "tier1/keyvalues.h"
 #include "toolframework_client.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -254,7 +253,7 @@ void C_TEExplosion::PostDataUpdate( DataUpdateType_t updateType )
 	AffectRagdolls();
 
 	// Filter out a water explosion
-	if ( UTIL_PointContents( m_vecOrigin ) & CONTENTS_WATER )
+	if ( UTIL_PointContents( m_vecOrigin, MASK_WATER ) & CONTENTS_WATER )
 	{
 		WaterExplosionEffect().Create( m_vecOrigin, m_nMagnitude, m_fScale, m_nFlags );
 		return;

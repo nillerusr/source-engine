@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -16,7 +16,7 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-extern short	g_sModelIndexBubbles;// holds the index for the bubbles model
+extern int	g_sModelIndexBubbles;// holds the index for the bubbles model
 
 //-----------------------------------------------------------------------------
 // Purpose: Dispatches bubbles

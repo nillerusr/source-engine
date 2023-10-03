@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Base explosion effect
 //
@@ -6,13 +6,13 @@
 //=============================================================================//
 #include "cbase.h"
 #include "fx_explosion.h"
-#include "clienteffectprecachesystem.h"
-#include "fx_sparks.h"
+#include "precache_register.h"
+#include "FX_Sparks.h"
 #include "dlight.h"
 #include "tempentity.h"
-#include "iefx.h"
+#include "IEfx.h"
 #include "engine/IEngineSound.h"
-#include "engine/ivdebugoverlay.h"
+#include "engine/IVDebugOverlay.h"
 #include "c_te_effect_dispatch.h"
 #include "fx.h"
 #include "fx_quad.h"
@@ -24,17 +24,17 @@
 
 #define	__EXPLOSION_DEBUG	0
 
-CLIENTEFFECT_REGISTER_BEGIN( PrecacheEffectExplosion )
-CLIENTEFFECT_MATERIAL( "effects/fire_cloud1" )
-CLIENTEFFECT_MATERIAL( "effects/fire_cloud2" )
-CLIENTEFFECT_MATERIAL( "effects/fire_embers1" )
-CLIENTEFFECT_MATERIAL( "effects/fire_embers2" )
-CLIENTEFFECT_MATERIAL( "effects/fire_embers3" )
-CLIENTEFFECT_MATERIAL( "particle/particle_smokegrenade" )
-CLIENTEFFECT_MATERIAL( "particle/particle_smokegrenade1" )
-CLIENTEFFECT_MATERIAL( "effects/splash3" )
-CLIENTEFFECT_MATERIAL( "effects/splashwake1" )
-CLIENTEFFECT_REGISTER_END()
+PRECACHE_REGISTER_BEGIN( GLOBAL, PrecacheEffectExplosion )
+	PRECACHE( MATERIAL, "effects/fire_cloud1" )
+	PRECACHE( MATERIAL, "effects/fire_cloud2" )
+	PRECACHE( MATERIAL, "effects/fire_embers1" )
+	PRECACHE( MATERIAL, "effects/fire_embers2" )
+	PRECACHE( MATERIAL, "effects/fire_embers3" )
+	PRECACHE( MATERIAL, "effects/splash3" )
+	PRECACHE( MATERIAL, "effects/splashwake1" )
+	PRECACHE( MATERIAL, "particle/particle_smokegrenade" )
+	PRECACHE( MATERIAL, "particle/particle_smokegrenade1" )
+PRECACHE_REGISTER_END()
 
 //
 // CExplosionParticle
@@ -173,6 +173,24 @@ void C_BaseExplosionEffect::Create( const Vector &position, float force, float s
 	m_vecOrigin = position;
 	m_fFlags	= flags;
 
+	//if explosion is an ice explosion skip all the other stuff and draw a particle system
+	if ( m_fFlags & TE_EXPLFLAG_ICE )
+	{
+		QAngle	vecAngles;
+		//DispatchParticleEffect( "freeze_explosion", m_vecOrigin , vecAngles );
+		PlaySound();
+		return;
+	}
+
+	if ( m_fFlags & TE_EXPLFLAG_SCALEPARTICLES )
+	{
+		m_flScale = scale;
+	}
+	else
+	{
+		m_flScale = 1.0f;
+	}
+
 	//Find the force of the explosion
 	GetForceDirection( m_vecOrigin, force, &m_vecDirection, &m_flForce );
 
@@ -190,7 +208,7 @@ void C_BaseExplosionEffect::Create( const Vector &position, float force, float s
 	}
 
 	CreateDebris();
-	//FIXME: CreateDynamicLight();
+	CreateDynamicLight();
 	CreateMisc();
 }
 
@@ -202,6 +220,9 @@ void C_BaseExplosionEffect::CreateCore( void )
 	if ( m_fFlags & TE_EXPLFLAG_NOFIREBALL )
 		return;
 
+	if ( m_fFlags & TE_EXPLFLAG_ICE )
+		return;
+	
 	Vector	offset;
 	int		i;
 
@@ -268,9 +289,7 @@ void C_BaseExplosionEffect::CreateCore( void )
 			{
 				pParticle->m_flLifetime = 0.0f;
 
-	#ifdef INVASION_CLIENT_DLL
-				pParticle->m_flDieTime	= random->RandomFloat( 0.5f, 1.0f );
-	#endif
+
 	#ifdef _XBOX
 				pParticle->m_flDieTime	= 1.0f;
 	#else
@@ -288,6 +307,7 @@ void C_BaseExplosionEffect::CreateCore( void )
 				ScaleForceByDeviation( pParticle->m_vecVelocity, m_vecDirection, spread, &fForce );
 
 				pParticle->m_vecVelocity *= fForce;
+				pParticle->m_vecVelocity *= m_flScale;
 				
 				#if __EXPLOSION_DEBUG
 				debugoverlay->AddLineOverlay( m_vecOrigin, m_vecOrigin + pParticle->m_vecVelocity, 255, 0, 0, false, 3 );
@@ -298,7 +318,7 @@ void C_BaseExplosionEffect::CreateCore( void )
 				pParticle->m_uchColor[1] = ( worldLight[1] * nColor );
 				pParticle->m_uchColor[2] = ( worldLight[2] * nColor );
 				
-				pParticle->m_uchStartSize	= 72;
+				pParticle->m_uchStartSize	= 72 * m_flScale;
 				pParticle->m_uchEndSize		= pParticle->m_uchStartSize * 2;
 				
 				pParticle->m_uchStartAlpha	= 255;
@@ -319,6 +339,7 @@ void C_BaseExplosionEffect::CreateCore( void )
 		for ( i = 0; i < 8; i++ )
 		{
 			offset.Random( -16.0f, 16.0f );
+			offset *= m_flScale;
 			offset += m_vecOrigin;
 
 			pParticle = (SimpleParticle *) pSimple->AddParticle( sizeof( SimpleParticle ), m_Material_Smoke, offset );
@@ -327,11 +348,9 @@ void C_BaseExplosionEffect::CreateCore( void )
 			{
 				pParticle->m_flLifetime = 0.0f;
 
-	#ifdef INVASION_CLIENT_DLL
+
 				pParticle->m_flDieTime	= random->RandomFloat( 0.5f, 1.0f );
-	#else
-				pParticle->m_flDieTime	= random->RandomFloat( 0.5f, 1.0f );
-	#endif
+
 
 				pParticle->m_vecVelocity.Random( -spread, spread );
 				pParticle->m_vecVelocity += ( m_vecDirection * random->RandomFloat( 1.0f, 6.0f ) );
@@ -344,6 +363,7 @@ void C_BaseExplosionEffect::CreateCore( void )
 				ScaleForceByDeviation( pParticle->m_vecVelocity, m_vecDirection, spread, &fForce );
 
 				pParticle->m_vecVelocity *= fForce;
+				pParticle->m_vecVelocity *= m_flScale;
 				
 				#if __EXPLOSION_DEBUG
 				debugoverlay->AddLineOverlay( m_vecOrigin, m_vecOrigin + pParticle->m_vecVelocity, 255, 0, 0, false, 3 );
@@ -354,7 +374,7 @@ void C_BaseExplosionEffect::CreateCore( void )
 				pParticle->m_uchColor[1] = ( worldLight[1] * nColor );
 				pParticle->m_uchColor[2] = ( worldLight[2] * nColor );
 						
-				pParticle->m_uchStartSize	= random->RandomInt( 32, 64 );
+				pParticle->m_uchStartSize	= random->RandomInt( 32, 64 ) * m_flScale;
 				pParticle->m_uchEndSize		= pParticle->m_uchStartSize * 2;
 
 				pParticle->m_uchStartAlpha	= random->RandomFloat( 128, 255 );
@@ -375,7 +395,7 @@ void C_BaseExplosionEffect::CreateCore( void )
 
 		Vector	forward;
 
-#ifndef INVASION_CLIENT_DLL
+
 
 #ifndef _XBOX 
 		int	numRingSprites = 32;
@@ -392,7 +412,7 @@ void C_BaseExplosionEffect::CreateCore( void )
 			SinCos( flYaw, &forward.y, &forward.x );
 			forward.z = 0.0f;
 
-			offset = ( RandomVector( -4.0f, 4.0f ) + m_vecOrigin ) + ( forward * random->RandomFloat( 8.0f, 16.0f ) );
+			offset = ( ( RandomVector( -4.0f, 4.0f ) * m_flScale ) + m_vecOrigin ) + ( m_flScale * forward * random->RandomFloat( 8.0f, 16.0f ) );
 
 			pParticle = (SimpleParticle *) pSimple->AddParticle( sizeof( SimpleParticle ), m_Material_Smoke, offset );
 
@@ -409,6 +429,7 @@ void C_BaseExplosionEffect::CreateCore( void )
 				ScaleForceByDeviation( pParticle->m_vecVelocity, pParticle->m_vecVelocity, spread, &fForce );
 
 				pParticle->m_vecVelocity *= fForce;
+				pParticle->m_vecVelocity *= m_flScale;
 				
 				#if __EXPLOSION_DEBUG
 				debugoverlay->AddLineOverlay( m_vecOrigin, m_vecOrigin + pParticle->m_vecVelocity, 255, 0, 0, false, 3 );
@@ -419,7 +440,7 @@ void C_BaseExplosionEffect::CreateCore( void )
 				pParticle->m_uchColor[1] = ( worldLight[1] * nColor );
 				pParticle->m_uchColor[2] = ( worldLight[2] * nColor );
 
-				pParticle->m_uchStartSize	= random->RandomInt( 16, 32 );
+				pParticle->m_uchStartSize	= random->RandomInt( 16, 32 ) * m_flScale;
 				pParticle->m_uchEndSize		= pParticle->m_uchStartSize * 4;
 
 				pParticle->m_uchStartAlpha	= random->RandomFloat( 16, 32 );
@@ -429,7 +450,7 @@ void C_BaseExplosionEffect::CreateCore( void )
 				pParticle->m_flRollDelta	= random->RandomFloat( -8.0f, 8.0f );
 			}
 		}
-#endif
+
 	}
 
 #ifndef _XBOX
@@ -451,6 +472,7 @@ void C_BaseExplosionEffect::CreateCore( void )
 	for ( i = 0; i < 16; i++ )
 	{
 		offset.Random( -32.0f, 32.0f );
+		offset *= m_flScale;
 		offset += m_vecOrigin;
 
 		pParticle = (SimpleParticle *) pSimple->AddParticle( sizeof( SimpleParticle ), m_Material_Embers[random->RandomInt(0,1)], offset );
@@ -471,6 +493,7 @@ void C_BaseExplosionEffect::CreateCore( void )
 			float	vDev = ScaleForceByDeviation( pParticle->m_vecVelocity, m_vecDirection, spread );
 
 			pParticle->m_vecVelocity *= fForce * ( 16.0f * (vDev*vDev*0.5f) );
+			pParticle->m_vecVelocity *= m_flScale;
 			
 			#if __EXPLOSION_DEBUG
 			debugoverlay->AddLineOverlay( m_vecOrigin, m_vecOrigin + pParticle->m_vecVelocity, 255, 0, 0, false, 3 );
@@ -481,7 +504,7 @@ void C_BaseExplosionEffect::CreateCore( void )
 			
 			pParticle->m_uchStartSize	= random->RandomInt( 8, 16 ) * vDev;
 
-			pParticle->m_uchStartSize	= clamp( pParticle->m_uchStartSize, (uint8) 4, (uint8) 32 );
+			pParticle->m_uchStartSize	= clamp( pParticle->m_uchStartSize, 4, 32 ) * m_flScale;
 
 			pParticle->m_uchEndSize		= pParticle->m_uchStartSize;
 			
@@ -512,6 +535,7 @@ void C_BaseExplosionEffect::CreateCore( void )
 	for ( i = 0; i < numFireballs; i++ )
 	{
 		offset.Random( -48.0f, 48.0f );
+		offset *= m_flScale;
 		offset += m_vecOrigin;
 
 		pParticle = (SimpleParticle *) pSimple->AddParticle( sizeof( SimpleParticle ), m_Material_FireCloud, offset );
@@ -532,6 +556,7 @@ void C_BaseExplosionEffect::CreateCore( void )
 			float	vDev = ScaleForceByDeviation( pParticle->m_vecVelocity, m_vecDirection, spread );
 
 			pParticle->m_vecVelocity *= fForce * ( 16.0f * (vDev*vDev*0.5f) );
+			pParticle->m_vecVelocity *= m_flScale;
 
 			#if __EXPLOSION_DEBUG
 			debugoverlay->AddLineOverlay( m_vecOrigin, m_vecOrigin + pParticle->m_vecVelocity, 255, 0, 0, false, 3 );
@@ -542,7 +567,7 @@ void C_BaseExplosionEffect::CreateCore( void )
 			
 			pParticle->m_uchStartSize	= random->RandomInt( 32, 85 ) * vDev;
 
-			pParticle->m_uchStartSize	= clamp( pParticle->m_uchStartSize, (uint8) 32, (uint8) 85 );
+			pParticle->m_uchStartSize	= clamp( pParticle->m_uchStartSize, 32, 85 ) * m_flScale;
 
 			pParticle->m_uchEndSize		= (int)((float)pParticle->m_uchStartSize * 1.5f);
 			
@@ -614,10 +639,11 @@ void C_BaseExplosionEffect::CreateDebris( void )
 		dir += m_vecDirection;
 		VectorNormalize( dir );
 		
-		tParticle->m_flWidth		= random->RandomFloat( 2.0f, 16.0f );
-		tParticle->m_flLength		= random->RandomFloat( 0.05f, 0.1f );
+		tParticle->m_flWidth		= random->RandomFloat( 2.0f, 16.0f ) * m_flScale;
+		tParticle->m_flLength		= random->RandomFloat( 0.05f, 0.1f ) * m_flScale;
 		
 		tParticle->m_vecVelocity	= dir * random->RandomFloat( 1500, 2500 );
+		tParticle->m_vecVelocity *= m_flScale;
 
 		Color32Init( tParticle->m_color, 255, 255, 255, 255 );
 	}
@@ -628,7 +654,7 @@ void C_BaseExplosionEffect::CreateDebris( void )
 	//
 
 	Vector	offset;
-	CSmartPtr<CFleckParticles> fleckEmitter = CFleckParticles::Create( "CreateDebris 2", m_vecOrigin, Vector(128,128,128) );
+	CSmartPtr<CFleckParticles> fleckEmitter = CFleckParticles::Create( "CreateDebris 2", m_vecOrigin, Vector(128,128,128) * m_flScale );
 	if ( !fleckEmitter )
 		return;
 
@@ -646,11 +672,13 @@ void C_BaseExplosionEffect::CreateDebris( void )
 	// Dump out flecks
 	for ( i = 0; i < numFlecks; i++ )
 	{
-		offset = m_vecOrigin + ( m_vecDirection * 16.0f );
+		offset = ( m_vecDirection * 16.0f );
 
 		offset[0] += random->RandomFloat( -8.0f, 8.0f );
 		offset[1] += random->RandomFloat( -8.0f, 8.0f );
 		offset[2] += random->RandomFloat( -8.0f, 8.0f );
+		offset *= m_flScale;
+		offset += m_vecOrigin;
 
 		FleckParticle *pParticle = (FleckParticle *) fleckEmitter->AddParticle( sizeof(FleckParticle), g_Mat_Fleck_Cement[random->RandomInt(0,1)], offset );
 
@@ -664,7 +692,7 @@ void C_BaseExplosionEffect::CreateDebris( void )
 		dir[1] = m_vecDirection[1] + random->RandomFloat( -1.0f, 1.0f );
 		dir[2] = m_vecDirection[2] + random->RandomFloat( -1.0f, 1.0f );
 
-		pParticle->m_uchSize		= random->RandomInt( 1, 3 );
+		pParticle->m_uchSize		= random->RandomInt( 1, 3 ) * m_flScale;
 
 		VectorNormalize( dir );
 
@@ -673,6 +701,7 @@ void C_BaseExplosionEffect::CreateDebris( void )
 		float	fDev = ScaleForceByDeviation( dir, m_vecDirection, 0.8f );
 
 		pParticle->m_vecVelocity = dir * ( fForce * ( 16.0f * (fDev*fDev*0.5f) ) );
+		pParticle->m_vecVelocity *= m_flScale;
 
 		pParticle->m_flRoll			= random->RandomFloat( 0, 360 );
 		pParticle->m_flRollDelta	= random->RandomFloat( 0, 360 );
@@ -697,19 +726,19 @@ void C_BaseExplosionEffect::CreateMisc( void )
 //-----------------------------------------------------------------------------
 void C_BaseExplosionEffect::CreateDynamicLight( void )
 {
-	if ( m_fFlags & TE_EXPLFLAG_NODLIGHTS )
-		return;
-
-	dlight_t *dl = effects->CL_AllocDlight( 0 );
-	
-	VectorCopy (m_vecOrigin, dl->origin);
-	
-	dl->decay	= 200;
-	dl->radius	= 255;
-	dl->color.r = 255;
-	dl->color.g = 220;
-	dl->color.b = 128;
-	dl->die		= gpGlobals->curtime + 0.1f;
+	if ( m_fFlags & TE_EXPLFLAG_DLIGHT )
+	{
+		dlight_t *dl = effects->CL_AllocDlight( 0 );
+		
+		VectorCopy (m_vecOrigin, dl->origin);
+		
+		dl->decay	= 200;
+		dl->radius	= 255 * m_flScale;
+		dl->color.r = 255;
+		dl->color.g = 220;
+		dl->color.b = 128;
+		dl->die		= gpGlobals->curtime + 0.1f;
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -721,6 +750,13 @@ void C_BaseExplosionEffect::PlaySound( void )
 		return;
 
 	CLocalPlayerFilter filter;
+
+	if ( m_fFlags & TE_EXPLFLAG_ICE )
+	{
+		C_BaseEntity::EmitSound( filter, SOUND_FROM_WORLD, "explode_3", &m_vecOrigin );
+		return;
+	}
+	
 	C_BaseEntity::EmitSound( filter, SOUND_FROM_WORLD, "BaseExplosionEffect.Sound", &m_vecOrigin );
 }
 
@@ -801,7 +837,7 @@ void ExplosionCallback( const CEffectData &data )
 	BaseExplosionEffect().Create( data.m_vOrigin, data.m_flMagnitude, data.m_flScale, data.m_fFlags );
 }
 
-DECLARE_CLIENT_EFFECT( "Explosion", ExplosionCallback );
+DECLARE_CLIENT_EFFECT( Explosion, ExplosionCallback );
 
 
 //===============================================================================================================
@@ -986,7 +1022,7 @@ void C_WaterExplosionEffect::CreateCore( void )
 	
 	float radius = 50.0f;
 
-	unsigned int flags = 0;
+	unsigned int flags;
 
 	// Base vertical shaft
 	FXLineData_t lineData;
@@ -1113,11 +1149,9 @@ void C_WaterExplosionEffect::CreateDebris( void )
 		{
 			pParticle->m_flLifetime = 0.0f;
 
-#ifdef INVASION_CLIENT_DLL
-			pParticle->m_flDieTime	= random->RandomFloat( 0.5f, 1.0f );
-#else
+
 			pParticle->m_flDieTime	= random->RandomFloat( 2.0f, 3.0f );
-#endif
+
 
 			pParticle->m_vecVelocity.Random( -spread, spread );
 			pParticle->m_vecVelocity += ( m_vecDirection * random->RandomFloat( 1.0f, 6.0f ) );
@@ -1290,7 +1324,7 @@ void C_WaterExplosionEffect::PlaySound( void )
 	if ( m_fFlags & TE_EXPLFLAG_NOSOUND )
 		return;
 
-	CLocalPlayerFilter filter;
+	CLocalPlayerFilter filter;											   
 	C_BaseEntity::EmitSound( filter, SOUND_FROM_WORLD, "Physics.WaterSplash", &m_vecWaterSurface );
 
 	if ( m_flDepth > 128 )
@@ -1311,7 +1345,7 @@ void WaterSurfaceExplosionCallback( const CEffectData &data )
 	WaterExplosionEffect().Create( data.m_vOrigin, data.m_flMagnitude, data.m_flScale, data.m_fFlags );
 }
 
-DECLARE_CLIENT_EFFECT( "WaterSurfaceExplosion", WaterSurfaceExplosionCallback );
+DECLARE_CLIENT_EFFECT( WaterSurfaceExplosion, WaterSurfaceExplosionCallback );
 
 //Singleton static member definition
 C_MegaBombExplosionEffect	C_MegaBombExplosionEffect::m_megainstance;
@@ -1393,7 +1427,7 @@ void C_MegaBombExplosionEffect::CreateCore( void )
 			
 			pParticle->m_uchStartSize	= random->RandomInt( 32, 85 ) * vDev;
 
-			pParticle->m_uchStartSize	= clamp( pParticle->m_uchStartSize, (uint8) 32, (uint8) 85 );
+			pParticle->m_uchStartSize	= clamp( pParticle->m_uchStartSize, 32, 85 );
 
 			pParticle->m_uchEndSize		= (int)((float)pParticle->m_uchStartSize * 1.5f);
 			
@@ -1415,4 +1449,6 @@ void HelicopterMegaBombCallback( const CEffectData &data )
 	C_MegaBombExplosionEffect().Create( data.m_vOrigin, 1.0f, 1.0f, 0 );
 }
 
-DECLARE_CLIENT_EFFECT( "HelicopterMegaBomb", HelicopterMegaBombCallback );
+DECLARE_CLIENT_EFFECT_BEGIN( HelicopterMegaBomb, HelicopterMegaBombCallback )
+	//PRECACHE( PARTICLE_SYSTEM, "freeze_explosion" )
+DECLARE_CLIENT_EFFECT_END()

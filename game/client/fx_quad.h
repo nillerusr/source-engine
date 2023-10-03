@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -6,8 +6,8 @@
 
 #include "clientsideeffects.h"
 
-#include "materialsystem/imaterial.h"
-#include "materialsystem/imaterialsystem.h"
+#include "materialsystem/IMaterial.h"
+#include "materialsystem/IMaterialSystem.h"
 
 #ifndef FX_QUAD_H
 #define FX_QUAD_H

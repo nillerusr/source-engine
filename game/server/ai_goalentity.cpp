@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -43,8 +43,7 @@ END_DATADESC()
 
 void CAI_GoalEntity::Spawn()
 {
-	SetThink( &CAI_GoalEntity::DelayedRefresh );
-	SetNextThink( gpGlobals->curtime + 0.1f );
+	SetContextThink( &CAI_GoalEntity::DelayedRefresh, gpGlobals->curtime + 0.1f, "Refresh" );
 }
 
 
@@ -74,7 +73,7 @@ void CAI_GoalEntity::DelayedRefresh()
 	else
 		InputUpdateActors( ignored );
 	
-	SetThink( NULL );
+	SetContextThink( NULL, 0, "Refresh" );
 }
 
 //-------------------------------------
@@ -134,6 +133,8 @@ void CAI_GoalEntity::InputActivate( inputdata_t &inputdata )
 {
 	if ( !( m_flags & ACTIVE ) )
 	{
+		OnActivate();
+
 		gEntList.AddListenerEntity( this );
 		
 		UpdateActors();
@@ -190,6 +191,8 @@ void CAI_GoalEntity::InputDeactivate( inputdata_t &inputdata )
 {
 	if ( m_flags & ACTIVE )
 	{
+		OnDeactivate();
+
 		gEntList.RemoveListenerEntity( this );
 		UpdateActors();
 		m_flags &= ~ACTIVE;
@@ -248,8 +251,7 @@ void CAI_GoalEntity::OnEntityCreated( CBaseEntity *pEntity )
 	
 	if ( pEntity->MyNPCPointer() )
 	{
-		SetThink( &CAI_GoalEntity::DelayedRefresh );
-		SetNextThink( gpGlobals->curtime + 0.1f );
+		SetContextThink( &CAI_GoalEntity::DelayedRefresh, gpGlobals->curtime + 0.1f, "Refresh" );
 	}
 	
 }

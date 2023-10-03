@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: insulates client DLL from dependencies on vphysics
 //
@@ -20,8 +20,10 @@ struct solid_t;
 
 // HACKHACK: Make this part of IClientSystem somehow???
 extern bool PhysicsDLLInit( CreateInterfaceFn physicsFactory );
+
 extern void PhysicsReset();
 extern void PhysicsSimulate();
 extern float PhysGetSyncCreateTime();
+extern void VPhysicsShadowDataChanged( bool bCreate, C_BaseEntity *pEntity );
 
 #endif // PHYSICS_H

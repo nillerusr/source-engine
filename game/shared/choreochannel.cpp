@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -45,7 +45,7 @@ CChoreoChannel&	CChoreoChannel::operator=( const CChoreoChannel& src )
 {
 	m_bActive = src.m_bActive;
 	Q_strncpy( m_szName, src.m_szName, sizeof( m_szName ) );
-	for ( int i = 0; i < src.m_Events.Size(); i++ )
+	for ( int i = 0; i < src.m_Events.Count(); i++ )
 	{
 		CChoreoEvent *e = src.m_Events[ i ];
 		CChoreoEvent *newEvent = new CChoreoEvent( e->GetScene() );
@@ -83,7 +83,7 @@ const char *CChoreoChannel::GetName( void )
 //-----------------------------------------------------------------------------
 int CChoreoChannel::GetNumEvents( void )
 {
-	return m_Events.Size();
+	return m_Events.Count();
 }
 
 //-----------------------------------------------------------------------------
@@ -93,7 +93,7 @@ int CChoreoChannel::GetNumEvents( void )
 //-----------------------------------------------------------------------------
 CChoreoEvent *CChoreoChannel::GetEvent( int event )
 {
-	if ( event < 0 || event >= m_Events.Size() )
+	if ( event < 0 || event >= m_Events.Count() )
 	{
 		return NULL;
 	}
@@ -138,7 +138,7 @@ void CChoreoChannel::RemoveAllEvents()
 //-----------------------------------------------------------------------------
 int CChoreoChannel::FindEventIndex( CChoreoEvent *event )
 {
-	for ( int i = 0; i < m_Events.Size(); i++ )
+	for ( int i = 0; i < m_Events.Count(); i++ )
 	{
 		if ( event == m_Events[ i ] )
 		{

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -52,8 +52,8 @@ public:
 };
 
 IMPLEMENT_SERVERCLASS_ST_NOBASE( CSun, DT_Sun )
-	SendPropInt( SENDINFO(m_clrRender), 32, SPROP_UNSIGNED, SendProxy_Color32ToInt ),
-	SendPropInt( SENDINFO(m_clrOverlay), 32, SPROP_UNSIGNED, SendProxy_Color32ToInt ),
+	SendPropInt( SENDINFO(m_clrRender), 32, SPROP_UNSIGNED, SendProxy_Color32ToInt32 ),
+	SendPropInt( SENDINFO(m_clrOverlay), 32, SPROP_UNSIGNED, SendProxy_Color32ToInt32 ),
 	SendPropVector( SENDINFO(m_vDirection), 0, SPROP_NORMAL ),
 	SendPropInt( SENDINFO(m_bOn), 1, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO(m_nSize), 10, SPROP_UNSIGNED ),
