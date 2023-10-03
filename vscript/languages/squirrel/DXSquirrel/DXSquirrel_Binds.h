@@ -1,0 +1,11 @@
+#ifndef _DXSQUIRREL_BINDS_H_
+#define _DXSQUIRREL_BINDS_H_
+
+_DECL_STATIC_NAMESPACE(DX);
+_DECL_CLASS(Device);
+_DECL_CLASS(Vector3);
+_DECL_CLASS(Matrix);
+_DECL_CLASS(BaseMesh);
+_DECL_CLASS(Mesh);
+
+#endif //_DXSQUIRREL_BINDS_H_

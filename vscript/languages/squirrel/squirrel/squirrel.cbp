@@ -1,0 +1,324 @@
+<?xml version="1.0"?>
+<!DOCTYPE CodeBlocks_project_file>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="1"/>
+	<Project>
+		<Option title="squirrel"/>
+		<Option makefile="Makefile"/>
+		<Option makefile_is_custom="0"/>
+		<Option default_target="-1"/>
+		<Option compiler="0"/>
+		<Build>
+			<Target title="Debug">
+				<Option output="..\lib\libsquirrelD.a"/>
+				<Option working_dir=""/>
+				<Option object_output="Debug"/>
+				<Option deps_output=".deps"/>
+				<Option type="2"/>
+				<Option compiler="0"/>
+				<Option createDefFile="1"/>
+				<Option projectResourceIncludeDirsRelation="2"/>
+				<Compiler>
+					<Add option="-DWIN32"/>
+					<Add option="-D_DEBUG"/>
+					<Add option="-D_LIB"/>
+					<Add option="-DGARBAGE_COLLECTOR"/>
+					<Add option="-D_CRT_SECURE_NO_DEPRECATE"/>
+					<Add option="-W"/>
+					<Add option="-O0"/>
+					<Add directory="..\include"/>
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="..\lib\libsquirrel.a"/>
+				<Option working_dir=""/>
+				<Option object_output="Release"/>
+				<Option deps_output=".deps"/>
+				<Option type="2"/>
+				<Option compiler="0"/>
+				<Option createDefFile="1"/>
+				<Option projectResourceIncludeDirsRelation="2"/>
+				<Compiler>
+					<Add option="-DWIN32"/>
+					<Add option="-DNDEBUG"/>
+					<Add option="-D_LIB"/>
+					<Add option="-DGARBAGE_COLLECTOR"/>
+					<Add option="-D_CRT_SECURE_NO_DEPRECATE"/>
+					<Add option="-W"/>
+					<Add option="-O2"/>
+					<Add directory="..\include"/>
+				</Compiler>
+			</Target>
+			<Target title="Debug - Unicode">
+				<Option output="..\lib\libsquirrelDU.a"/>
+				<Option working_dir=""/>
+				<Option object_output="Debug - Unicode"/>
+				<Option deps_output=".deps"/>
+				<Option type="2"/>
+				<Option compiler="0"/>
+				<Option createDefFile="1"/>
+				<Option projectResourceIncludeDirsRelation="2"/>
+				<Compiler>
+					<Add option="-DWIN32"/>
+					<Add option="-D_DEBUG"/>
+					<Add option="-D_LIB"/>
+					<Add option="-DGARBAGE_COLLECTOR"/>
+					<Add option="-D_CRT_SECURE_NO_DEPRECATE"/>
+					<Add option="-D_CRT_NON_CONFORMING_SWPRINTFS"/>
+					<Add option="-W"/>
+					<Add option="-O0"/>
+					<Add directory="..\include"/>
+				</Compiler>
+			</Target>
+			<Target title="Release - Unicode">
+				<Option output="..\lib\libsquirrelU.a"/>
+				<Option working_dir=""/>
+				<Option object_output="Release - Unicode"/>
+				<Option deps_output=".deps"/>
+				<Option type="2"/>
+				<Option compiler="0"/>
+				<Option createDefFile="1"/>
+				<Option projectResourceIncludeDirsRelation="2"/>
+				<Compiler>
+					<Add option="-DWIN32"/>
+					<Add option="-DNDEBUG"/>
+					<Add option="-D_LIB"/>
+					<Add option="-DGARBAGE_COLLECTOR"/>
+					<Add option="-D_CRT_SECURE_NO_DEPRECATE"/>
+					<Add option="-D_CRT_NON_CONFORMING_SWPRINTFS"/>
+					<Add option="-W"/>
+					<Add option="-O2"/>
+					<Add directory="..\include"/>
+				</Compiler>
+			</Target>
+		</Build>
+		<Unit filename="sqapi.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="sqarray.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="sqbaselib.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="sqclass.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="sqclass.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="sqclosure.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="sqcompiler.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="sqcompiler.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="sqdebug.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="sqfuncproto.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="sqfuncstate.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="sqfuncstate.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="sqlexer.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="sqlexer.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="sqmem.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="sqobject.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="sqobject.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="sqopcodes.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="sqpcheader.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="sqstate.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="sqstate.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="sqstring.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="sqtable.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="sqtable.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="squserdata.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="squtils.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="sqvm.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="sqvm.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

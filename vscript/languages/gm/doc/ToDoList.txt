@@ -1,0 +1,27 @@
+-----------------------------------------------------------
+GameMonkey Script TODO list
+
+In no particular order unless otherwise specified.  No time 
+frame for changes or features, so effectively a wish list.
+-----------------------------------------------------------
+
+o Fix empty / commented out script from producing parse error. Work around: Add a ';' semicolon to end of source, or ignore known empty scripts.
+o Change overide 'this' syntax from this:func() to func<this>() to support member chains eg. a.b.c<t>()
+o Put ++, -- operators back, but don't let them be used in conditions for consistency.
+
+
+o Make string hash table resize for efficiency in string intensive applications.
+o Make compiler thread safe.  Probably by moving to Lemon parser and Flex++.
+o Make user type Ids sharable between gmMachine instances so identical registration order is not required.
+o Make 64bit compatible.
+o Add exception handling like try / catch blocks.
+o Possibly move code from gmThread into gmMachine.
+o Possibly optimize byte code by moving to register stack machine.
+o Possibly allow extra (eg. variable number of) parameters to be passes as a table to script functions.
+o Optimize thread code to efficiently handle enormous numbers of threads.
+o Expose more to the debugger.
+o Eventually remove classic garbage collector, leaving only incremental collector.
+o Option for unicode strings.
+o Binding to allow user type creation and operator functions from within script.
+o Possibly store the 'color' bit and 'persistent' bit flags for GCObjects in the lower, unused part of the list pointer.
+o Possibly change the double linked list to a single XOR encoded link.  This CPU for memory trade may not be worthwhile.

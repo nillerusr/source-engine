@@ -1,0 +1,9 @@
+// modified case headers
+
+public/appframework/iappsystem.h
+public/color.h
+
+// replaced headers that breaking/can break sdk 2013
+
+public/igameevents.h
+public/engine/ICollideable.h

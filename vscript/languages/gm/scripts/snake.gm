@@ -1,0 +1,696 @@
+
+/*
+
+  SNAKE
+
+  by matty riek.
+
+*/
+
+global showMemoryUsage = false;
+
+CURSOR(0,0);
+
+global g_sx = 80;
+global g_sy = 24;
+global g_border =
+
+"\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205"
+"\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205"
+"\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205\205";
+
+global LocFromXY = function(a_x, a_y) { return a_y * g_sx + a_x; };
+global XFromLoc = function(a_loc) { return a_loc % g_sx; };
+global YFromLoc = function(a_loc) { return a_loc / g_sx; };
+global background =  CA.B_BLUE;
+
+global fade0 = table(  CA.F_RED|CA.F_BLUE|CA.F_GREEN | CA.F_INTENSITY | background,
+                CA.F_GREEN | CA.F_INTENSITY | CA.F_INTENSITY | background,
+                CA.F_BLUE | background,
+                CA.F_GREEN | CA.F_INTENSITY | background,
+                CA.F_RED|CA.F_GREEN | CA.F_INTENSITY | background,
+                CA.F_RED|CA.F_BLUE|CA.F_GREEN | CA.F_INTENSITY | background,
+                CA.F_BLUE | CA.F_INTENSITY | background,
+                CA.F_BLUE | CA.F_INTENSITY | background,
+                CA.F_RED|CA.F_BLUE|CA.F_GREEN | background,
+                CA.F_BLUE | background,
+                CA.F_BLUE | CA.F_INTENSITY | background,
+                CA.F_RED|CA.F_GREEN | CA.F_INTENSITY | background  );
+
+global fade1 = table( CA.F_RED|CA.F_BLUE|CA.F_GREEN | CA.F_INTENSITY | background,
+                CA.F_RED|CA.F_BLUE|CA.F_GREEN | CA.F_INTENSITY | background,
+                CA.F_RED|CA.F_BLUE|CA.F_GREEN | CA.F_INTENSITY | background,
+                CA.F_RED|CA.F_GREEN | CA.F_INTENSITY | background,
+                CA.F_RED | CA.F_INTENSITY | background,
+                CA.F_RED | background,
+                CA.F_RED | CA.F_INTENSITY | background,
+                CA.F_RED|CA.F_GREEN | CA.F_INTENSITY  | background );
+
+global fadeRed = table( CA.F_RED|CA.F_INTENSITY | background , CA.F_RED | background);
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// CreateGemType
+//
+
+global CreateGemType = function(a_char, a_time, a_score, a_chance, a_length, a_cycle, a_pickup, a_mover)
+{
+  gem = table(m_char = a_char, m_time = a_time * 1000, m_score = a_score, m_chance = a_chance, m_length = a_length, m_cycle = a_cycle, m_mover = a_mover);
+
+  gem.Pickup = function()
+  {
+  };
+
+  if(a_pickup)
+  {
+    gem.Pickup = a_pickup;
+  }
+
+  gem.i = 0;
+  gem.Draw = function(x, y)
+  {
+    .i = .i + 1;
+    if(.i >= tableCount(.m_cycle))
+    {
+      .i = 0;
+    }
+    CATTRIB(.m_cycle[.i]);
+    XYTEXT(x, y, .m_char);
+    CATTRIB(background | CA.F_GREEN | CA.F_INTENSITY);
+  };
+  return gem;
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// DrawScreen
+//
+global DrawScreen = function()
+{
+  //
+  CATTRIB(background | CA.F_GREEN | CA.F_INTENSITY);
+
+  // clear screen
+  CLS();
+
+  // draw border
+  XYTEXT(1, 0, g_border);
+  XYTEXT(1, g_sy - 1, g_border);
+
+  ey = g_sy - 1;
+  for(i = 1; i < ey; i = i + 1)
+  {
+    XYTEXT(0, i, "\186");
+    XYTEXT(g_sx - 1, i, "\186");
+  }
+  XYTEXT(0, 0, "\201");
+  XYTEXT(g_sx - 1, 0, "\187");
+  XYTEXT(0, ey, "\200");
+  XYTEXT(g_sx - 1, ey, "\188");
+
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// EmitGems
+//
+EmitGems = function(a_game)
+{
+  // add a gem
+  for(;;)
+  {
+    // choose a random sleep time
+    sleep( randfloat(
+          a_game.m_levels[a_game.m_level][1] / a_game.m_gameSpeed,
+          a_game.m_levels[a_game.m_level][2] / a_game.m_gameSpeed)
+          );
+
+    // pick a random location
+    x = randint(1, g_sx - 2);
+    y = randint(1, g_sy - 2);
+    loc = LocFromXY(x, y);
+
+    // test if the location is on a existing gem or snake
+    if(a_game.m_gems[loc])
+    {
+      continue;
+    }
+    onsnake = false;
+    foreach(snake in a_game.m_snakes)
+    {
+      if(snake.IsAt(loc))
+      {
+        onsnake = true;
+        break;
+      }
+    }
+    if(onsnake) { continue; }
+
+    // choose a gem
+    found = false;
+    while(!found)
+    {
+      foreach(gem in a_game.m_gemTypes)
+      {
+        if(randint(0, 100) < gem.m_chance)
+        {
+          found = true;
+          break;
+        }
+      }
+    }
+
+    // add the gem
+    gemInstance = table(m_gem = gem, m_expire = sysTime() + (gem.m_time / a_game.m_gameSpeed));
+    a_game.m_gems[loc] = gemInstance;
+    if(gem.m_mover)
+    {
+      gemInstance.m_dirX = randint(-1, 2);
+      gemInstance.m_dirY = randint(-1, 2);
+    }
+
+    // draw the gem
+    gem.Draw(x, y);
+  }
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// ReclaimGems
+//
+ReclaimGems = function(a_game)
+{
+  // add a gem
+  for(;;)
+  {
+    time = sysTime();
+
+    foreach(key and gem in a_game.m_gems)
+    {
+      if(time > gem.m_expire)
+      {
+        // remove from screen
+        XYTEXT(XFromLoc(key), YFromLoc(key), " ");
+        a_game.m_gems[key] = null;
+        b = true;
+        break;
+      }
+    }
+
+    yield();
+  }
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// DrawGems
+//
+DrawGems = function(a_game)
+{
+  for(;;)
+  {
+    foreach(key and gem in a_game.m_gems)
+    {
+      x = XFromLoc(key);
+      y = YFromLoc(key);
+      gem.m_gem.Draw(x, y);
+    }
+    sleep(1 / 30.);
+  }
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Move mover gems
+//
+MoveMovers = function(a_game)
+{
+  for(;;)
+  {
+    movers = table();
+    foreach(key and gem in a_game.m_gems)
+    {
+      if(gem.m_gem.m_mover)
+      {
+        x = XFromLoc(key);
+        y = YFromLoc(key);
+        
+        XYTEXT(x, y, " ");
+
+        x = x + gem.m_dirX;
+        y = y + gem.m_dirY;
+
+        if(x <= 1 or x >= g_sx - 2) { gem.m_dirX = -gem.m_dirX;  }
+        if(y <= 1 or y >= g_sy - 2) { gem.m_dirY = -gem.m_dirY;  }
+        gem.m_newLoc = LocFromXY(x, y);
+        movers[key] = gem;
+      }
+    }
+    
+    foreach(key and gem in movers)
+    {
+      a_game.m_gems[key] = null;
+      a_game.m_gems[gem.m_newLoc] = gem;
+    }
+    sleep(1 / 4.);
+  }
+};
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Snake
+//
+Snake = function(a_id, a_name, a_score, a_scoreX, a_scoreY, a_headChar, a_tailChar, a_startX, a_startY, a_startDir, a_keys)
+{
+  snake = table(
+    m_id = a_id,
+    m_grow = 2,
+    m_credits = 3,
+    m_startX = a_startX,
+    m_startY = a_startY,
+    m_startDir = a_startDir,
+    m_name = a_name,
+    m_score = a_score,
+    m_scoreX = a_scoreX,
+    m_scoreY = a_scoreY,
+    m_body = array(50),
+    m_length = 0,
+    m_dir = a_startDir, // 0 right, 1 up, 2 left, 3 down
+    m_head = table(
+      m_headChar = a_headChar,
+      m_tailChar = a_tailChar,
+      m_x = a_startX,
+      m_y = a_startY
+    ),
+    m_keys = a_keys
+  );
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Die
+  //
+  snake.Die = function() // return true if snake has no credits
+  {
+    // flash a death thinggy
+
+    i = 10;
+    while(i)
+    {
+      if(i & 1) {
+        XYTEXT(.m_scoreX, .m_scoreY, format(" ***  FATALITY ***  ", .m_name));
+      }
+      else {
+        XYTEXT(.m_scoreX, .m_scoreY, format("                    ", .m_name));
+      }
+      sleep(0.2f);
+      i = i - 1;
+    }
+
+    .UpdateScore();
+
+    // clear the snake
+    for(i = 0; i < .m_length; i = i + 1)
+    {
+      loc = .m_body[i];
+      x = XFromLoc(loc);
+      y = YFromLoc(loc);
+      XYTEXT(x, y, " ");
+    }
+    XYTEXT(.m_head.m_x, .m_head.m_y, " ");
+
+    // update the credits
+    .m_credits = .m_credits - 1;
+    if(.m_credits)
+    {
+      .m_head.m_x = .m_startX;
+      .m_head.m_y = .m_startY;
+      .m_dir = .m_startDir;
+      .m_grow = 2;
+      .m_length = 0;
+      return false;
+    }
+    return true;
+  };
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // UpdateScore
+  //
+  snake.UpdateScore = function()
+  {
+    XYTEXT(.m_scoreX, .m_scoreY, format(" %d UP %s SCORE %d  ", .m_credits, .m_name, .m_score));
+  };
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Draw
+  //
+  snake.Draw = function(a_oldX, a_oldY)
+  {
+    // clear the tail.
+    if(.m_length > 0 and .grow == null)
+    {
+      loc = .m_body[.m_length - 1];
+      y = YFromLoc(loc);
+      x = XFromLoc(loc);
+      XYTEXT(x, y, " ");
+    }
+
+    // grow the snake
+    if(.grow)
+    {
+      .m_length = .m_length + 1;
+      if(.m_length >= .m_body.Size())
+      {
+        .m_body.Resize(.m_body.Size() * 2);
+      }
+      .grow = false;
+    }
+
+    // move the body along.
+    for(i = .m_length - 1; i > 0; i = i - 1)
+    {
+      .m_body[i] = .m_body[i - 1];
+    }
+
+    // put the new tail piece in
+    if(.m_length)
+    {
+      .m_body[0] = LocFromXY(a_oldX, a_oldY);
+      XYTEXT(a_oldX, a_oldY, .m_head.m_tailChar);
+    }
+    else
+    {
+      XYTEXT(a_oldX, a_oldY, " ");
+    }
+
+    // draw the new head
+    XYTEXT(.m_head.m_x, .m_head.m_y, .m_head.m_headChar);
+  };
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // IsAt
+  //
+  snake.IsAt = function(a_loc)
+  {
+    for(i = 0; i < .m_length; i = i + 1)
+    {
+      if(a_loc == .m_body[i])
+      {
+        return true;
+      }
+    }
+    if(a_loc == LocFromXY(.m_head.m_x, .m_head.m_y))
+    {
+      return true;
+    }
+    return false;
+  };
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Update
+  //
+  snake.Update = function(a_game)
+  {
+    member UpdateScore;
+
+    UpdateScore();
+    for(;;)
+    {
+      wait = 1.0f / (a_game.m_snakeMoveRate * a_game.m_gameSpeed);
+      sleep(wait);
+
+      x = .m_head.m_x;
+      y = .m_head.m_y;
+
+      if(.m_dir == 0) { x = x + 1; }
+      else if(.m_dir == 1) { y = y - 1; }
+      else if(.m_dir == 2) { x = x - 1; }
+      else if(.m_dir == 3) { y = y + 1; }
+
+      // did we collect a gem?
+      loc = LocFromXY(x, y);
+      gem = a_game.m_gems[loc];
+      if(gem)
+      {
+        // update score
+        .m_score = .m_score + gem.m_gem.m_score;
+        .m_grow = gem.m_gem.m_length;
+        pickup = gem.m_gem.Pickup;
+        this:pickup();
+        UpdateScore();
+
+        // remove the gem
+        a_game.m_gems[loc] = null;
+      }
+
+      // did we run into a wall??
+      dead = false;
+      if(x <= 0 or x >= g_sx - 1 or y <= 0 or y >= g_sy - 1)
+      {
+        dead = true;
+      }
+      
+      // did we run into ourselves?
+      if(!dead and .IsAt(loc))
+      {
+        dead = true;
+      }
+
+      // update position
+      oldX = .m_head.m_x;
+      oldY = .m_head.m_y;
+      .m_head.m_x = x;
+      .m_head.m_y = y;
+
+      // did we run into another snake
+      if(!dead)
+      {
+        foreach(snake in a_game.m_snakes)
+        {
+          if(snake != this and snake.IsAt(loc))
+          {
+            dead = true;
+            break;
+          }
+        }
+      }
+
+      // did we die?
+      if(dead)
+      {
+        .m_head.m_x = oldX;
+        .m_head.m_y = oldY;
+        die = .Die();
+        .UpdateScore();
+        if(die)
+        {
+          a_game.m_snakes[.m_id] = null;
+          threadKill(.kht);
+          exit();
+        }
+      }
+      .Draw(oldX, oldY);
+      
+      if(.m_grow)
+      {
+        .grow = true;
+        .m_grow = .m_grow - 1;
+      }
+    }
+  };
+  
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // KeyHandler
+  //
+  snake.KeyHandler = function(a_game)
+  {
+    wait = 1.0f / a_game.m_keyUpdateRate;
+    for(;;)
+    {
+      for(i = 0; i < 4; i = i + 1)
+      {
+        if(ISPRESSED(.m_keys[i]))
+        {
+          .m_dir = i;
+          break;
+        }
+      }
+      sleep(wait);
+    }
+  };
+
+  return snake;
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Game
+//
+g_game = table(
+
+  // goodies
+  m_gems = table(),
+  
+  m_levels = table(
+  
+  // level is speed, lower spawn time, upper spawn time, next level score
+    table(1.0f, 10, 20, 500),
+    table(2.0f, 8, 18, 1500),
+    table(2.5f, 5, 16, 2700),
+    table(3.0f, 4, 13, 3800),
+    table(3.5f, 3, 10, 5000)
+  ),
+
+  m_gemTypes = table(
+
+    CreateGemType("\4", 22, 50, 40, 3, fade0), // standard 1
+    CreateGemType("\5", 17, 100, 30, 4, fade0), // standard 2
+    CreateGemType("\6", 15, 200, 20, 5, fade1), // standard 3
+    CreateGemType("\3", 30, 20, 15, 0, fadeRed, function() { .m_credits = .m_credits + 1; }, true),  // 1up
+    CreateGemType("\15", 45, 0, 15, 50, fade1) // bomb
+    ),
+
+  // snakes
+  m_snakes = table(
+    Snake(0, "lefty", 0, 8, 23, "\1", "\176", 1, 12, 0, table('D', 'W', 'A', 'S')),
+    Snake(1, "righty", 0, 50, 23, "\2", "\177", 78, 12, 2, table('L', 'I', 'J', 'K'))
+    ),
+
+  // game
+  m_level = 0,
+  m_over = false,
+  m_totalScore = 0,
+
+  // timing
+  m_speedup = 2.0f, // overall speed multiplier
+  m_gameSpeed = 1.0f, // current game speed
+  m_keyUpdateRate = 30.0f, // times per second
+  m_snakeMoveRate = 4.0f // times per second
+);
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Main
+//
+ScoreMonitor = function()
+{
+  .m_gameSpeed = .m_speedup * .m_levels[.m_level][0];
+
+  for(;;)
+  {
+    // update scores and levels.
+    .m_totalScore = 0;
+    foreach(snake in .m_snakes)
+    {
+      .m_totalScore = .m_totalScore + snake.m_score;
+    }
+
+    // are they at the next level
+    if(.m_totalScore >= .m_levels[.m_level][3])
+    {
+      // level up.... have we finished
+      .m_level = .m_level + 1;
+      if(.m_level >= tableCount(.m_levels))
+      {
+        // you win....
+        XYTEXT(0,0,"YOUWIN");
+        sleep(5);
+        .gameover = true;
+      }
+      else
+      {
+        // next level
+        .m_gameSpeed = .m_speedup * .m_levels[.m_level][0];
+      }
+    }
+
+    XYTEXT(8, 0, format("LEVEL %d, SCORE %d, NEXT LEVEL TARGET %d", .m_level, .m_totalScore, .m_levels[.m_level][3]));
+    if(showMemoryUsage)
+    {
+      XYTEXT(8, 1, format("mem %d Desired H: %d S: %d F: %d I: %d W: %d",
+                           sysGetMemoryUsage(), 
+                           sysGetDesiredMemoryUsageHard(), 
+                           sysGetDesiredMemoryUsageSoft(),
+                           sysGetStatsGCNumFullCollects(),
+                           sysGetStatsGCNumIncCollects(),
+                           sysGetStatsGCNumWarnings() ));
+    }
+    sleep(0.1);
+  }
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Title Screen
+//
+
+// todo
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Main
+//
+
+DrawScreen();
+
+// start the snakes
+foreach(snake in g_game.m_snakes)
+{
+  snake.kht = snake:thread(snake.KeyHandler, g_game);
+  snake.ut = snake:thread(snake.Update, g_game);
+}
+
+// start the gems
+egt = thread(EmitGems, g_game);
+rgt = thread(ReclaimGems, g_game);
+dgt = thread(DrawGems, g_game);
+mmt = thread(MoveMovers, g_game);
+smt = g_game:thread(ScoreMonitor);
+
+for(;;)
+{
+  // test for escape key
+  if(g_game.gameover or ISPRESSED(27))
+  {
+    // kill threads
+    threadKill(egt);
+    threadKill(rgt);
+    threadKill(dgt);
+    threadKill(smt);
+    threadKill(mmt);
+
+    foreach(snake in g_game.m_snakes)
+    {
+      threadKill(snake.kht);
+      threadKill(snake.ut);
+    }
+    exit();
+  }
+  yield();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

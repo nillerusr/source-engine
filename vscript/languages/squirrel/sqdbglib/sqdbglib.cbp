@@ -1,0 +1,106 @@
+<?xml version="1.0"?>
+<!DOCTYPE CodeBlocks_project_file>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="1"/>
+	<Project>
+		<Option title="sqdbglib"/>
+		<Option makefile="Makefile"/>
+		<Option makefile_is_custom="0"/>
+		<Option default_target="-1"/>
+		<Option compiler="0"/>
+		<Build>
+			<Target title="Debug">
+				<Option output="..\lib\libsqdbglibD.a"/>
+				<Option working_dir=""/>
+				<Option object_output="Debug"/>
+				<Option deps_output=".deps"/>
+				<Option type="2"/>
+				<Option compiler="0"/>
+				<Option createDefFile="1"/>
+				<Option projectResourceIncludeDirsRelation="2"/>
+				<Compiler>
+					<Add option="-DWIN32"/>
+					<Add option="-D_DEBUG"/>
+					<Add option="-D_LIB"/>
+					<Add option="-D_CRT_SECURE_NO_DEPRECATE"/>
+					<Add option="-W"/>
+					<Add option="-O0"/>
+					<Add directory="..\include"/>
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="..\lib\libsqdbglib.a"/>
+				<Option working_dir=""/>
+				<Option object_output="Release"/>
+				<Option deps_output=".deps"/>
+				<Option type="2"/>
+				<Option compiler="0"/>
+				<Option createDefFile="1"/>
+				<Option projectResourceIncludeDirsRelation="2"/>
+				<Compiler>
+					<Add option="-DWIN32"/>
+					<Add option="-DNDEBUG"/>
+					<Add option="-D_LIB"/>
+					<Add option="-D_CRT_SECURE_NO_DEPRECATE"/>
+					<Add option="-W"/>
+					<Add option="-g"/>
+					<Add directory="..\include"/>
+				</Compiler>
+			</Target>
+			<Target title="Debug - Unicode">
+				<Option output="..\lib\libsqdbglibDU.a"/>
+				<Option working_dir=""/>
+				<Option object_output="Debug - Unicode"/>
+				<Option deps_output=".deps"/>
+				<Option type="2"/>
+				<Option compiler="0"/>
+				<Option createDefFile="1"/>
+				<Option projectResourceIncludeDirsRelation="2"/>
+				<Compiler>
+					<Add option="-DWIN32"/>
+					<Add option="-D_DEBUG"/>
+					<Add option="-D_LIB"/>
+					<Add option="-D_CRT_SECURE_NO_DEPRECATE"/>
+					<Add option="-D_CRT_NON_CONFORMING_SWPRINTFS"/>
+					<Add option="-W"/>
+					<Add option="-O0"/>
+					<Add directory="..\include"/>
+				</Compiler>
+			</Target>
+			<Target title="Release - Unicode">
+				<Option output="..\lib\libsqdbglibU.a"/>
+				<Option working_dir=""/>
+				<Option object_output="Release - Unicode"/>
+				<Option deps_output=".deps"/>
+				<Option type="2"/>
+				<Option compiler="0"/>
+				<Option createDefFile="1"/>
+				<Option projectResourceIncludeDirsRelation="2"/>
+				<Compiler>
+					<Add option="-DWIN32"/>
+					<Add option="-DNDEBUG"/>
+					<Add option="-D_LIB"/>
+					<Add option="-D_CRT_SECURE_NO_DEPRECATE"/>
+					<Add option="-D_CRT_NON_CONFORMING_SWPRINTFS"/>
+					<Add option="-W"/>
+					<Add option="-g"/>
+					<Add directory="..\include"/>
+				</Compiler>
+			</Target>
+		</Build>
+		<Unit filename="..\sqdbg\sqdbgserver.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="..\sqdbg\sqrdbg.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

@@ -1,0 +1,1 @@
+This directory contains the Squirrel 2.1 distribution and the SqPlus binding sytem, acquired 1/18/2008

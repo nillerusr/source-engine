@@ -1,0 +1,44 @@
+// Just a bunch of tests that don't mean anything at present.
+
+global WhatsMyName = function()
+{
+  print("m_name = ", .m_name);
+  print("this = ", this);
+
+  if(.IsValid())
+  {
+    .SetPos(23.0f, 56.0f);
+    print("position(", .GetPosX(), ",", .GetPosY(), ")");
+
+    global g_globalObj = this;
+  }
+};
+
+
+global RunGlobalObject = function ()
+{
+  g_globalObj:WhatsMyName();
+};
+
+
+global ThreadYieldTest = function()
+{
+  count = 0;
+  while(count < 30)
+  {
+    sleep(0.5f);
+    count += 1;
+    print("count=",count);
+    yield();
+  }
+};
+
+
+Console.SetColor(COLOR_RED, COLOR_BLACK);
+Console.Print("Red");
+Console.SetColor(COLOR_GREEN, COLOR_BLACK);
+Console.Print("Green");
+Console.Print("\n");
+Console.SetColor(COLOR_WHITE, COLOR_BLACK);
+
+print("Script compiled and executed. \n");

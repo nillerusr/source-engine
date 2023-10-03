@@ -59,6 +59,7 @@ class IFileList;
 class CRenamedRecvTableInfo;
 class CMouthInfo;
 class IConVar;
+class ISPSharedMemory;
 
 //-----------------------------------------------------------------------------
 // Purpose: This data structure is filled in by the engine when the client .dll requests information about
@@ -518,6 +519,9 @@ public:
 	virtual bool			IsSaveInProgress() = 0;
 	virtual uint			OnStorageDeviceAttached( void ) = 0;
 	virtual void			OnStorageDeviceDetached( void ) = 0;
+
+	//Finds or Creates a shared memory space, the returned pointer will automatically be AddRef()ed
+	virtual ISPSharedMemory *GetSinglePlayerSharedMemorySpace( const char *szName, int ent_num = MAX_EDICTS ) = 0;
 
 	virtual void			ResetDemoInterpolation( void ) = 0;
 

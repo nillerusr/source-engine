@@ -472,6 +472,18 @@ typedef void * HINSTANCE;
 #endif
 #define	DebuggerBreakIfDebugging() if ( !Plat_IsInDebugSession() ) ; else DebuggerBreak()
 
+
+//-----------------------------------------------------------------------------
+// Message Box
+//-----------------------------------------------------------------------------
+//#if defined( PLATFORM_WINDOWS_PC )
+//PLATFORM_INTERFACE void Plat_MessageBox( const char *pTitle, const tchar *pMessage );
+//#else
+// TODO(nillerusr): add message box later
+#define Plat_MessageBox( t, m ) ((void)0)
+//#endif
+
+
 #ifdef STAGING_ONLY
 #define	DebuggerBreakIfDebugging_StagingOnly() if ( !Plat_IsInDebugSession() ) ; else DebuggerBreak()
 #else
@@ -624,6 +636,12 @@ typedef void * HINSTANCE;
 #define NO_ASAN __attribute__((no_sanitize("address")))
 #else
 #define NO_ASAN
+#endif
+
+#if defined( COMPILER_MSVC )
+        #define TEMPLATE_STATIC static
+#else
+        #define TEMPLATE_STATIC
 #endif
 
 #if defined( _WIN32 )

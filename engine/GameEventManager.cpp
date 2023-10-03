@@ -41,11 +41,11 @@ static ConVar net_showevents( "net_showevents", "0", FCVAR_CHEAT, "Dump game eve
 
 EXPOSE_SINGLE_INTERFACE_GLOBALVAR( CGameEventManager, IGameEventManager2, INTERFACEVERSION_GAMEEVENTSMANAGER2, s_GameEventManager );
 
-CGameEvent::CGameEvent( CGameEventDescriptor *descriptor )
+CGameEvent::CGameEvent( CGameEventDescriptor *descriptor, const char *name )
 {
 	Assert( descriptor );
 	m_pDescriptor = descriptor;
-	m_pDataKeys = new KeyValues( descriptor->name );
+	m_pDataKeys = new KeyValues( name );
 }
 
 CGameEvent::~CGameEvent()
@@ -61,6 +61,11 @@ bool CGameEvent::GetBool( const char *keyName, bool defaultValue)
 int CGameEvent::GetInt( const char *keyName, int defaultValue)
 {
 	return m_pDataKeys->GetInt( keyName, defaultValue );
+}
+
+uint64 CGameEvent::GetUint64( const char *keyName, uint64 defaultValue)
+{
+	return m_pDataKeys->GetUint64( keyName, defaultValue );
 }
 
 float CGameEvent::GetFloat( const char *keyName, float defaultValue )
@@ -81,6 +86,11 @@ void CGameEvent::SetBool( const char *keyName, bool value )
 void CGameEvent::SetInt( const char *keyName, int value )
 {
 	m_pDataKeys->SetInt( keyName, value );
+}
+
+void CGameEvent::SetUint64( const char *keyName, uint64 value )
+{
+        m_pDataKeys->SetUint64( keyName, value );
 }
 
 void CGameEvent::SetFloat( const char *keyName, float value )
@@ -158,8 +168,8 @@ void CGameEventManager::Reset()
 	m_Listeners.PurgeAndDeleteElements();
 	m_EventFiles.RemoveAll();
 	m_EventFileNames.RemoveAll();
+	m_EventMap.Purge();
 	m_bClientListenersChanged = true;
-	
 	Assert( m_GameEvents.Count() == 0 );
 }
 
@@ -189,10 +199,12 @@ void CGameEventManager::WriteEventList(SVC_GameEventList *msg)
 
 		Assert( descriptor.eventid >= 0 && descriptor.eventid < MAX_EVENT_NUMBER );
 
+		const char *pName = m_EventMap.GetElementName( descriptor.elementIndex );
+
 		msg->m_DataOut.WriteUBitLong( descriptor.eventid, MAX_EVENT_BITS );
-		msg->m_DataOut.WriteString( descriptor.name );
-		
-		KeyValues *key = descriptor.keys->GetFirstSubKey(); 
+		msg->m_DataOut.WriteString( pName );
+
+		KeyValues *key = descriptor.keys->GetFirstSubKey();
 
 		while ( key )
 		{
@@ -208,7 +220,6 @@ void CGameEventManager::WriteEventList(SVC_GameEventList *msg)
 		}
 
 		msg->m_DataOut.WriteUBitLong( TYPE_LOCAL, 3 ); // end marker
-	
 		msg->m_nNumEvents++;
 	}
 }
@@ -296,7 +307,8 @@ void CGameEventManager::WriteListenEventList(CLC_ListenEvents *msg)
 
 		if ( descriptor.eventid == -1 )
 		{
-			DevMsg("Warning! Client listens to event '%s' unknown by server.\n", descriptor.name );
+			const char *pName = m_EventMap.GetElementName(descriptor.elementIndex);
+			DevMsg("Warning! Client listens to event '%s' unknown by server.\n", pName );
 			continue;
 		}
 
@@ -304,17 +316,17 @@ void CGameEventManager::WriteListenEventList(CLC_ListenEvents *msg)
 	}
 }
 
-IGameEvent *CGameEventManager::CreateEvent( CGameEventDescriptor *descriptor )
+IGameEvent *CGameEventManager::CreateEvent( CGameEventDescriptor *descriptor, const char *name )
 {
-	return new CGameEvent ( descriptor );
+	return new CGameEvent ( descriptor, name );
 }
 
-IGameEvent *CGameEventManager::CreateEvent( const char *name, bool bForce )
+IGameEvent *CGameEventManager::CreateEvent( const char *name, bool bForce, int *pCookie )
 {
 	if ( !name || !name[0] )
 		return NULL;
 
-	CGameEventDescriptor *descriptor = GetEventDescriptor( name );
+	CGameEventDescriptor *descriptor = GetEventDescriptor( name, pCookie );
 
 	// check if this event name is known
 	if ( !descriptor )
@@ -330,7 +342,7 @@ IGameEvent *CGameEventManager::CreateEvent( const char *name, bool bForce )
 	}
 
 	// create & return the new event 
-	return new CGameEvent ( descriptor );
+	return new CGameEvent ( descriptor, name );
 }
 
 bool CGameEventManager::FireEvent( IGameEvent *event, bool bServerOnly )
@@ -351,7 +363,8 @@ IGameEvent *CGameEventManager::DuplicateEvent( IGameEvent *event )
 		return NULL;
 
 	// create new instance
-	CGameEvent *newEvent = new CGameEvent ( gameEvent->m_pDescriptor );
+	const char *pName = m_EventMap.GetElementName(gameEvent->m_pDescriptor->elementIndex );
+	CGameEvent *newEvent = new CGameEvent ( gameEvent->m_pDescriptor, pName );
 
 	// free keys
 	newEvent->m_pDataKeys->deleteThis();
@@ -414,12 +427,16 @@ bool CGameEventManager::FireEventIntern( IGameEvent *event, bool bServerOnly, bo
 	{
 		if ( bClientOnly )
 		{
-			ConMsg( "Game event \"%s\", Tick %i:\n", descriptor->name, cl.GetClientTickCount() );
+#ifndef DEDICATED
+			const char *pName = m_EventMap.GetElementName(descriptor->elementIndex);
+			ConMsg( "Game event \"%s\", Tick %i:\n", pName, cl.GetClientTickCount() );
 			ConPrintEvent( event );
+#endif
 		}
 		else if ( net_showevents.GetInt() > 1 )
 		{
-			ConMsg( "Server event \"%s\", Tick %i:\n", descriptor->name, sv.GetTick() );
+			const char *pName = m_EventMap.GetElementName(descriptor->elementIndex);
+			ConMsg( "Server event \"%s\", Tick %i:\n", pName, sv.GetTick() );
 			ConPrintEvent( event );
 		}
 	}
@@ -491,7 +508,8 @@ bool CGameEventManager::SerializeEvent( IGameEvent *event, bf_write* buf )
 
 	if ( net_showevents.GetInt() > 2 )
 	{
-		DevMsg("Serializing event '%s' (%i):\n", descriptor->name, descriptor->eventid );
+		const char *pName = m_EventMap.GetElementName(descriptor->elementIndex);
+		DevMsg("Serializing event '%s' (%i):\n", pName, descriptor->eventid );
 	}
 	
 	while ( key )
@@ -545,11 +563,12 @@ IGameEvent *CGameEventManager::UnserializeEvent( bf_read *buf)
 	}
 
 	// create new event
-	IGameEvent *event = CreateEvent( descriptor );
+	const char *pName = m_EventMap.GetElementName(descriptor->elementIndex);
+	IGameEvent *event = CreateEvent( descriptor, pName );
 
 	if ( !event )
 	{
-		DevMsg( "CGameEventManager::UnserializeEvent:: failed to create event %s.\n", descriptor->name );
+		DevMsg( "CGameEventManager::UnserializeEvent:: failed to create event %i.\n", descriptor->eventid );
 		return NULL;
 	}
 
@@ -766,9 +785,7 @@ bool CGameEventManager::RegisterEvent( KeyValues * event)
 		int index = m_GameEvents.AddToTail();
 		descriptor =  &m_GameEvents.Element(index);
 
-		AssertMsg2( V_strlen( event->GetName() ) <= MAX_EVENT_NAME_LENGTH, "Event named '%s' exceeds maximum name length %d", event->GetName(), MAX_EVENT_NAME_LENGTH );
-
-		Q_strncpy( descriptor->name, event->GetName(), MAX_EVENT_NAME_LENGTH );	
+		descriptor->elementIndex = m_EventMap.Insert( event->GetName(), index );
 	}
 	else
 	{
@@ -859,20 +876,34 @@ void CGameEventManager::FreeEvent( IGameEvent *event )
 	delete event;
 }
 
-CGameEventDescriptor *CGameEventManager::GetEventDescriptor(const char * name)
+CGameEventDescriptor *CGameEventManager::GetEventDescriptor(const char * name, int *pCookie)
 {
+	const uint32 cookieBit = 0x80000000;
+	const uint32 cookieMask = ~cookieBit;
+
 	if ( !name || !name[0] )
 		return NULL;
 
-	for (int i=0; i < m_GameEvents.Count(); i++ )
+	if ( pCookie && *pCookie )
 	{
-		CGameEventDescriptor *descriptor = &m_GameEvents[i];
+		int gameEventIndex = uint32(*pCookie) & cookieMask;
+		CGameEventDescriptor *pDescriptor = &m_GameEvents[gameEventIndex];
+		if ( !V_stricmp( m_EventMap.GetElementName(pDescriptor->elementIndex), name ) )
+		{
+			return pDescriptor;
+		}
+	}
+	int eventMapIndex = m_EventMap.Find( name );
+	if ( eventMapIndex == m_EventMap.InvalidIndex() )
+		return NULL;
 
-		if ( Q_strcmp( descriptor->name, name ) == 0 )
-			return descriptor;
+	int gameEventIndex = m_EventMap[eventMapIndex];
+	if ( pCookie )
+	{
+		*pCookie = cookieBit | gameEventIndex;
 	}
 
-	return NULL;
+	return &m_GameEvents[gameEventIndex];
 }
 
 bool CGameEventManager::AddListenerAll( void *listener, int nListenerType )

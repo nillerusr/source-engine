@@ -1,0 +1,33 @@
+Descriptions of some of the example scripts
+
+-----------------------------------------------------------
+
+Snake.gm
+Bomber.gm
+BomberRun.gm
+MineSweeper.gm
+
+Were written in a few hours by programmers testing an early 
+version of GameMonkey.  They were given the script 
+reference, a copy of gme.exe and a syntax highlighter file.
+
+-----------------------------------------------------------
+
+gmDoc.gm (and related files)
+
+Is a utility to scan through .cpp files, find comments 
+relating to GM script bindings and generate a .html file 
+documenting those functions.
+
+-----------------------------------------------------------
+
+benchmark.gm
+
+Is a set of benchmarks used by Doug Bagley at 
+http://www.bagley.org/~doug/shootout/
+to compare the performance of several languages.
+( Note that simply executing these scripts with 
+different languages does not provide a true indication 
+of comparative performance. )
+
+-----------------------------------------------------------

@@ -24,7 +24,8 @@ public:
 public: // IGameEventListener Interface
 	
 	void FireGameEvent( IGameEvent *event );
-
+        int m_nDebugID;
+	int GetEventDebugID( void );
 public: 
 
 	bool IsActive( void );	// true if logging is "on"

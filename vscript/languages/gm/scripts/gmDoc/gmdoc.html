@@ -1,0 +1,308 @@
+<HTML><HEAD><TITLE>GM Documentation</TITLE></HEAD><BODY><BR><HR>
+<H1>gm</H1>
+<HR><BR>
+<HR>
+<a name="gm::array"><H3>array</H3>
+</a><B><EM>Brief:</B></EM> array will create a fixed size array object     <BR><B><EM>Param:</B></EM> int size optional (0)     <BR><B><EM>Return:</B></EM> array  <BR><BR><HR>
+<H1>array</H1>
+<HR><BR>
+<HR>
+<a name="array::Size"><H3>Size</H3>
+</a><B><EM>Brief:</B></EM> Size will return the current size of the fixed array     <BR><B><EM>Return:</B></EM> int array size  <BR><HR>
+<a name="array::Resize"><H3>Resize</H3>
+</a><B><EM>Brief:</B></EM> Resize will resize the array to a new size     <BR><B><EM>Param:</B></EM> int size optional (0)     <BR><B><EM>Return:</B></EM> null  <BR><HR>
+<a name="array::Shift"><H3>Shift</H3>
+</a><B><EM>Brief:</B></EM> Shift will shift slide the array elements by a delta, nulls are shifted in     <BR><B><EM>Param:</B></EM> int delta     <BR><B><EM>Return:</B></EM> null  <BR><HR>
+<a name="array::Move"><H3>Move</H3>
+</a><B><EM>Brief:</B></EM> Move will perform a non destructive move on the array     <BR><B><EM>Param:</B></EM> int dst     <BR><B><EM>Param:</B></EM> int src     <BR><B><EM>Param:</B></EM> int size     <BR><B><EM>Return:</B></EM> null  <BR><BR><HR>
+<H1>math</H1>
+<HR><BR>
+<HR>
+<a name="math::abs"><H3>abs</H3>
+</a><B><EM>Brief:</B></EM> abs will return the absolute value of the passed int \ float     <BR><B><EM>Param:</B></EM> int\float     <BR><B><EM>Return:</B></EM> int\float abs(param)  <BR><HR>
+<a name="math::sqrt"><H3>sqrt</H3>
+</a><B><EM>Brief:</B></EM> sqrt will return the square root of the passed int \ float     <BR><B><EM>Param:</B></EM> int\float     <BR><B><EM>Return:</B></EM> int\float sqrt(param)  <BR><HR>
+<a name="math::sqrt"><H3>sqrt</H3>
+</a><B><EM>Brief:</B></EM> sqrt will return the square root of the passed int \ float     <BR><B><EM>Param:</B></EM> int\float A     <BR><B><EM>Param:</B></EM> int\float B     <BR><B><EM>Return:</B></EM> int\float A to the power of B  <BR><HR>
+<a name="math::floor"><H3>floor</H3>
+</a><B><EM>Brief:</B></EM> floor     <BR><B><EM>Param:</B></EM> float A     <BR><B><EM>Return:</B></EM> float floor(A)  <BR><HR>
+<a name="math::ceil"><H3>ceil</H3>
+</a><B><EM>Brief:</B></EM> ceil     <BR><B><EM>Param:</B></EM> float A     <BR><B><EM>Return:</B></EM> float ceil(A)  <BR><HR>
+<a name="math::round"><H3>round</H3>
+</a><B><EM>Brief:</B></EM> round     <BR><B><EM>Param:</B></EM> float A     <BR><B><EM>Return:</B></EM> float round(A)  <BR><HR>
+<a name="math::degtorad"><H3>degtorad</H3>
+</a><B><EM>Brief:</B></EM> degtorad will convert degrees to radians     <BR><B><EM>Param:</B></EM> float\int deg     <BR><B><EM>Return:</B></EM> float  <BR><HR>
+<a name="math::radtodeg"><H3>radtodeg</H3>
+</a><B><EM>Brief:</B></EM> radtodeg will convert radians to degrees     <BR><B><EM>Param:</B></EM> float\int rad     <BR><B><EM>Return:</B></EM> float  <BR><HR>
+<a name="math::cos"><H3>cos</H3>
+</a><B><EM>Brief:</B></EM> cos will return the radian cosine     <BR><B><EM>Param:</B></EM> float     <BR><B><EM>Return:</B></EM> float  <BR><HR>
+<a name="math::sin"><H3>sin</H3>
+</a><B><EM>Brief:</B></EM> sin will return the radian sine     <BR><B><EM>Param:</B></EM> float     <BR><B><EM>Return:</B></EM> float  <BR><HR>
+<a name="math::tan"><H3>tan</H3>
+</a><B><EM>Brief:</B></EM> tan will return the radian tan (sin/cos)     <BR><B><EM>Param:</B></EM> float     <BR><B><EM>Return:</B></EM> float  <BR><HR>
+<a name="math::acos"><H3>acos</H3>
+</a><B><EM>Brief:</B></EM> acos will return the radian arc cosine     <BR><B><EM>Param:</B></EM> float     <BR><B><EM>Return:</B></EM> float  <BR><HR>
+<a name="math::asin"><H3>asin</H3>
+</a><B><EM>Brief:</B></EM> asin will return the radian arc sine     <BR><B><EM>Param:</B></EM> float     <BR><B><EM>Return:</B></EM> float  <BR><HR>
+<a name="math::atan"><H3>atan</H3>
+</a><B><EM>Brief:</B></EM> atan will return the radian arc tangent     <BR><B><EM>Param:</B></EM> float     <BR><B><EM>Return:</B></EM> float  <BR><HR>
+<a name="math::atan"><H3>atan</H3>
+</a><B><EM>Brief:</B></EM> atan will return the radian arc tangent of x / y     <BR><B><EM>Param:</B></EM> float x     <BR><B><EM>Param:</B></EM> float y     <BR><B><EM>Return:</B></EM> float  <BR><HR>
+<a name="math::log"><H3>log</H3>
+</a><B><EM>Brief:</B></EM> log will return the natural logarithm of 1 parameter, or (base, value) the logarithm to base     <BR><B><EM>Param:</B></EM> float natural \ base     <BR><B><EM>Param:</B></EM> float value (optional)     <BR><B><EM>Return:</B></EM> float  <BR><HR>
+<a name="math::min"><H3>min</H3>
+</a><B><EM>Brief:</B></EM> min will return the min of the 2 passed values     <BR><B><EM>Param:</B></EM> float\int A     <BR><B><EM>Param:</B></EM> float\int B     <BR><B><EM>Return:</B></EM> float \ int min(A, B)  <BR><HR>
+<a name="math::max"><H3>max</H3>
+</a><B><EM>Brief:</B></EM> max will return the max of the 2 passed values     <BR><B><EM>Param:</B></EM> float\int A     <BR><B><EM>Param:</B></EM> float\int B     <BR><B><EM>Return:</B></EM> float \ int max(A, B)  <BR><HR>
+<a name="math::clamp"><H3>clamp</H3>
+</a><B><EM>Brief:</B></EM> clamp will return the clamed value. clamp(min, val, max)     <BR><B><EM>Param:</B></EM> float\int MIN     <BR><B><EM>Param:</B></EM> float\int VALUE     <BR><B><EM>Param:</B></EM> float\int MAX     <BR><B><EM>Return:</B></EM> float\int value clamped to min, max  <BR><HR>
+<a name="math::randint"><H3>randint</H3>
+</a><B><EM>Brief:</B></EM> randint will return a random int from lower inclusive to upper.     <BR><B><EM>Param:</B></EM> int lower inclusive     <BR><B><EM>Param:</B></EM> int upper     <BR><B><EM>Return:</B></EM> int   <BR><HR>
+<a name="math::randfloat"><H3>randfloat</H3>
+</a><B><EM>Brief:</B></EM> randfloat will return a random float from lower inclusive to upper.     <BR><B><EM>Param:</B></EM> float lower inclusive     <BR><B><EM>Param:</B></EM> float upper     <BR><B><EM>Return:</B></EM> float   <BR><HR>
+<a name="math::randseed"><H3>randseed</H3>
+</a><B><EM>Brief:</B></EM> randseed will seed the random number generator     <BR><B><EM>Param:</B></EM> int seed  <BR><BR><HR>
+<H1>string</H1>
+<HR><BR>
+<B><EM>Brief:</B></EM> string operations often store a copy of the string on the stack, so keep string sizes reasonable  <BR><HR>
+<a name="string::IsEmpty"><H3>IsEmpty</H3>
+</a><B><EM>Brief:</B></EM> IsEmpty will test to see if the string is 0 length     <BR><B><EM>Return:</B></EM> non-zero if the string is empty  <BR><HR>
+<a name="string::Length"><H3>Length</H3>
+</a><B><EM>Brief:</B></EM> Length will return the length of the string not including the null terminating character     <BR><B><EM>Return:</B></EM> int length  <BR><HR>
+<a name="string::Left"><H3>Left</H3>
+</a><B><EM>Brief:</B></EM> Left will return the left count charaters of the string     <BR><B><EM>Param:</B></EM> int count     <BR><B><EM>Return:</B></EM> string  <BR><HR>
+<a name="string::Right"><H3>Right</H3>
+</a><B><EM>Brief:</B></EM> Right will return the right count charaters of the string     <BR><B><EM>Param:</B></EM> int count     <BR><B><EM>Return:</B></EM> string  <BR><HR>
+<a name="string::RightAt"><H3>RightAt</H3>
+</a><B><EM>Brief:</B></EM> RightAt will return the charaters right of and including the given index     <BR><B><EM>Param:</B></EM> int index     <BR><B><EM>Return:</B></EM> string  <BR><HR>
+<a name="string::Mid"><H3>Mid</H3>
+</a><B><EM>Brief:</B></EM> Mid will return count characters from the start index     <BR><B><EM>Param:</B></EM> int startIndex     <BR><B><EM>Param:</B></EM> int count     <BR><B><EM>Return:</B></EM> string  <BR><HR>
+<a name="string::Compare"><H3>Compare</H3>
+</a><B><EM>Brief:</B></EM> Compare will perform a string compare     <BR><B><EM>Param:</B></EM> string to compare     <BR><B><EM>Return:</B></EM> -1 if the this < compare string, 0 if the strings are equal, 1 otherwise  <BR><HR>
+<a name="string::CompareNoCase"><H3>CompareNoCase</H3>
+</a><B><EM>Brief:</B></EM> CompareNoCase will perform a string compare (case insensitive)     <BR><B><EM>Param:</B></EM> string to compare     <BR><B><EM>Return:</B></EM> -1 if the this < compare string, 0 if the strings are equal, 1 otherwise  <BR><HR>
+<a name="string::Int"><H3>Int</H3>
+</a><B><EM>Brief:</B></EM> Int will return the int value of the string     <BR><B><EM>Return:</B></EM> int value  <BR><HR>
+<a name="string::Float"><H3>Float</H3>
+</a><B><EM>Brief:</B></EM> Float will return the float value of the string     <BR><B><EM>Return:</B></EM> float value  <BR><HR>
+<a name="string::String"><H3>String</H3>
+</a><B><EM>Return:</B></EM> string  <BR><HR>
+<a name="string::Upper"><H3>Upper</H3>
+</a><B><EM>Brief:</B></EM> Upper will return the string as uppercase     <BR><B><EM>Return:</B></EM> string  <BR><HR>
+<a name="string::Lower"><H3>Lower</H3>
+</a><B><EM>Brief:</B></EM> Lower will return the string as lowercase     <BR><B><EM>Return:</B></EM> string  <BR><HR>
+<a name="string::SpanIncluding"><H3>SpanIncluding</H3>
+</a><B><EM>Brief:</B></EM> SpanIncluding will return this string while characters are within the passed string     <BR><B><EM>Param:</B></EM> string charset     <BR><B><EM>Return:</B></EM> string  <BR><HR>
+<a name="string::SpanExcluding"><H3>SpanExcluding</H3>
+</a><B><EM>Brief:</B></EM> SpanExcluding will return this string while characters are not within the passed string     <BR><B><EM>Param:</B></EM> string charset     <BR><B><EM>Return:</B></EM> string  <BR><HR>
+<a name="string::AppendPath"><H3>AppendPath</H3>
+</a><B><EM>Brief:</B></EM> AppendPath will append a path make sure one '\' is maintained     <BR><B><EM>Param:</B></EM> string path to append     <BR><B><EM>Return:</B></EM> string  <BR><HR>
+<a name="string::ReplaceCharsInSet"><H3>ReplaceCharsInSet</H3>
+</a><B><EM>Brief:</B></EM> ReplaceCharsInSet will replace all chars in this that are within the charset with the given int char     <BR><B><EM>Param:</B></EM> int char to replace with     <BR><B><EM>Param:</B></EM> string charset of chars to replace     <BR><B><EM>Return:</B></EM> string  <BR><HR>
+<a name="string::Find"><H3>Find</H3>
+</a><B><EM>Brief:</B></EM> Find will find the first occurance of the passed string within this string     <BR><B><EM>Param:</B></EM> string search string     <BR><B><EM>Param:</B></EM> int start index optional (0)     <BR><B><EM>Return:</B></EM> int index of first occurance, or -1 if the string was not found  <BR><HR>
+<a name="string::Reverse"><H3>Reverse</H3>
+</a><B><EM>Brief:</B></EM> Reverse characters of a string     <BR><B><EM>Return:</B></EM> string  <BR><HR>
+<a name="string::ReverseFind"><H3>ReverseFind</H3>
+</a><B><EM>Brief:</B></EM> ReverseFind will find the first occurance of the passed string within this string starting from the right     <BR><B><EM>Param:</B></EM> string search string     <BR><B><EM>Return:</B></EM> int index of first occurance, or -1 if the string was not found  <BR><HR>
+<a name="string::GetAt"><H3>GetAt</H3>
+</a><B><EM>Brief:</B></EM> GetAt will return the char at the given index     <BR><B><EM>Param:</B></EM> int index     <BR><B><EM>Return:</B></EM> int char, or null if index was out of range  <BR><HR>
+<a name="string::SetAt"><H3>SetAt</H3>
+</a><B><EM>Brief:</B></EM> SetAt will return the string with the character set at the given position     <BR><B><EM>Param:</B></EM> int index     <BR><B><EM>Param:</B></EM> int char     <BR><B><EM>Return:</B></EM> string  <BR><HR>
+<a name="string::TrimLeft"><H3>TrimLeft</H3>
+</a><B><EM>Brief:</B></EM> TrimLeft will return the string with the chars from the passed char set trimmed from the left     <BR><B><EM>Param:</B></EM> string charset optional (" \r\n\v\t")     <BR><B><EM>Return:</B></EM> string  <BR><HR>
+<a name="string::TrimRight"><H3>TrimRight</H3>
+</a><B><EM>Brief:</B></EM> TrimRight will return the string with the chars from the passed char set trimmed from the right     <BR><B><EM>Param:</B></EM> string charset optional (" \r\n\v\t")     <BR><B><EM>Return:</B></EM> string  <BR><HR>
+<a name="string::GetFilenameNoExt"><H3>GetFilenameNoExt</H3>
+</a><B><EM>Brief:</B></EM> GetFilenameNoExt will return the filename part of a path string     <BR><B><EM>Return:</B></EM> string  <BR><HR>
+<a name="string::GetFilename"><H3>GetFilename</H3>
+</a><B><EM>Brief:</B></EM> GetFilename will return the filename part of a path string incl. extension     <BR><B><EM>Return:</B></EM> string  <BR><HR>
+<a name="string::GetExtension"><H3>GetExtension</H3>
+</a><B><EM>Brief:</B></EM> GetExtension will return the file extension     <BR><B><EM>Param:</B></EM> int inclDot optional (0) 1 will include '.', 0 won't     <BR><B><EM>Return:</B></EM> string  <BR><HR>
+<a name="string::SetExtension"><H3>SetExtension</H3>
+</a><B><EM>Brief:</B></EM> SetExtension returns a string with the extension change to the given one.     <BR><B><EM>Param:</B></EM> string ext optional (null) the new extension, with or without the dot. null to remove extension.     <BR><B><EM>Return:</B></EM> string  <BR><HR>
+<a name="string::GetPath"><H3>GetPath</H3>
+</a><B><EM>Brief:</B></EM> GetPath will return the file path from a path string     <BR><B><EM>Param:</B></EM> int inclSlash optional (0) will include a '\' on the end of the path     <BR><B><EM>Return:</B></EM> string  <BR><BR><HR>
+<H1>system</H1>
+<HR><BR>
+<B><EM>Brief:</B></EM> system functions are bound in a "system" table.  <BR><HR>
+<a name="system::Exec"><H3>Exec</H3>
+</a><B><EM>Brief:</B></EM> Exec will execute a system command     <BR><B><EM>Param:</B></EM> string params will be concatinated together with a single space to form the final system command string     <BR><B><EM>Return:</B></EM> integer value returned from system exec call, -1 on error  <BR><HR>
+<a name="system::DoFile"><H3>DoFile</H3>
+</a><B><EM>Brief:</B></EM> DoFile will execute the gm script in the named file     <BR><B><EM>Param:</B></EM> string filename     <BR><B><EM>Param:</B></EM> int optional (1) as 1 will execute string before returning, 0 will execute later.     <BR><B><EM>Param:</B></EM> ref optional (null) set 'this'     <BR><B><EM>Return:</B></EM> thread id of new thread created to execute file  <BR><HR>
+<a name="system::File"><H3>File</H3>
+</a><B><EM>Brief:</B></EM> File will create a file object     <BR><B><EM>Return:</B></EM> file object  <BR><HR>
+<a name="system::FileExists"><H3>FileExists</H3>
+</a><B><EM>Brief:</B></EM> FileExists will test to see if a file exists     <BR><B><EM>Param:</B></EM> string filename      <BR><B><EM>Return:</B></EM> 1 if the file exists, otherwise 0  <BR><HR>
+<a name="system::FileFindFirst"><H3>FileFindFirst</H3>
+</a><B><EM>Brief:</B></EM> FileFindFirst will start a file search will test to see if a file exists     <BR><B><EM>Param:</B></EM> string filesearch (may contain wildcards, eg, `c:\temp\*.txt`)     <BR><B><EM>Return:</B></EM> fileFind object.  fileFind object has .filename and .size member     <BR><B><EM>See Also:</B></EM> fileFind  <BR><HR>
+<a name="system::FileFindNext"><H3>FileFindNext</H3>
+</a><B><EM>Brief:</B></EM> FileFindNext will get the next file matching the file find     <BR><B><EM>Param:</B></EM> fileFind object returned by FileFindFirst call or FileFindNext call     <BR><B><EM>Return:</B></EM> fileFind object     <BR><B><EM>See Also:</B></EM> fileFind  <BR><HR>
+<a name="system::FileInfo"><H3>FileInfo</H3>
+</a><B><EM>Brief:</B></EM> FileInfo will return a file info object that has readonly members for .creationDate     <BR><B><EM>Param:</B></EM> string path     <BR><B><EM>Return:</B></EM> fileInfo object, fileInfo object has a .creationTime, .accessedTime, .modifiedTime and a .size  <BR><HR>
+<a name="system::CreateFolder"><H3>CreateFolder</H3>
+</a><B><EM>Brief:</B></EM> CreateFolder will create a file path if it does not already exist     <BR><B><EM>Param:</B></EM> string path     <BR><B><EM>Return:</B></EM> int 0 on failure, 1 on successful create, 2 if folder already exists  <BR><HR>
+<a name="system::DeleteFolder"><H3>DeleteFolder</H3>
+</a><B><EM>Brief:</B></EM> DeleteFolder will remove a file path     <BR><B><EM>Param:</B></EM> string path     <BR><B><EM>Param:</B></EM> int remove subfiles and folders optional (0)     <BR><B><EM>Return:</B></EM> int 1 on success, 0 con failure  <BR><HR>
+<a name="system::Time"><H3>Time</H3>
+</a><B><EM>Brief:</B></EM> Time will return a unix style time_t as an int     <BR><B><EM>Return:</B></EM> the current time  <BR><HR>
+<a name="system::FormatTime"><H3>FormatTime</H3>
+</a><B><EM>Brief:</B></EM> FormatTime will take a int (time_t) value and format according to the passed format string.     <BR><B><EM>Param:</B></EM> int time (-1) is a (time_t) to be converted to a string, passing -1 gets current time     <BR><B><EM>Param:</B></EM> string format ("%A %d %B %Y, %I:%M:%S %p") is the format string to use.<BR>             %a : Abbreviated weekday name<BR>             %A : Full weekday name<BR>             %b : Abbreviated month name<BR>             %B : Full month name<BR>             %c : Date and time representation appropriate for locale<BR>             %d : Day of month as decimal number (01 – 31)<BR>             %H : Hour in 24-hour format (00 – 23)<BR>             %I : Hour in 12-hour format (01 – 12)<BR>             %j : Day of year as decimal number (001 – 366)<BR>             %m : Month as decimal number (01 – 12)<BR>             %M : Minute as decimal number (00 – 59)<BR>             %p : Current locale’s A.M./P.M. indicator for 12-hour clock<BR>             %S : Second as decimal number (00 – 59)<BR>             %U : Week of year as decimal number, with Sunday as first day of week (00 – 53)<BR>             %w : Weekday as decimal number (0 – 6; Sunday is 0)<BR>             %W : Week of year as decimal number, with Monday as first day of week (00 – 53)<BR>             %x : Date representation for current locale<BR>             %X : Time representation for current locale<BR>             %y : Year without century, as decimal number (00 – 99)<BR>             %Y : Year with century, as decimal number<BR>             %z, %Z : Time-zone name or abbreviation; no characters if time zone is unknown<BR>             %% : Percent sign<BR>     <BR><B><EM>Return:</B></EM> the time as a string.  <BR><BR><HR>
+<H1>fileFind</H1>
+<HR><BR>
+<B><EM>Brief:</B></EM> fileFind object has a "filename" and "size" member  <BR><HR>
+<a name="fileFind::GetAttribute"><H3>GetAttribute</H3>
+</a><B><EM>Brief:</B></EM> GetAttribute will test a file attribute.     <BR><B><EM>Param:</B></EM> int char attribute 'r' readonly, 'a' archive, 's' system, 'h' hidden, 'c' compressed, 'd' directory     <BR><B><EM>Return:</B></EM> 1 if the attribute is set, 0 otherwise  <BR><BR><HR>
+<H1>file</H1>
+<HR><BR>
+<HR>
+<a name="file::Open"><H3>Open</H3>
+</a><B><EM>Brief:</B></EM> Open will open a file in binary mode     <BR><B><EM>Param:</B></EM> string filename     <BR><B><EM>Param:</B></EM> int readonly optional (1)     <BR><B><EM>Return:</B></EM> 1 if the open was successful, 0 otherwise   <BR><HR>
+<a name="file::OpenText"><H3>OpenText</H3>
+</a><B><EM>Brief:</B></EM> OpenText will open a file in text mode     <BR><B><EM>Param:</B></EM> string filename     <BR><B><EM>Param:</B></EM> int readonly optional (1)     <BR><B><EM>Return:</B></EM> 1 if the open was successful, 0 otherwise   <BR><HR>
+<a name="file::Close"><H3>Close</H3>
+</a><B><EM>Brief:</B></EM> Close will close a file  <BR><HR>
+<a name="file::IsOpen"><H3>IsOpen</H3>
+</a><B><EM>Brief:</B></EM> IsOpen will test to see if a file is open     <BR><B><EM>Return:</B></EM> 1 if the file is open, 0 otherwise  <BR><HR>
+<a name="file::Seek"><H3>Seek</H3>
+</a><B><EM>Brief:</B></EM> Move to position within file     <BR><B><EM>Param:</B></EM> int offset positional offset relative to origin     <BR><B><EM>Param:</B></EM> int origin eg. myFile.SEEK_CUR, myFile.SEEK_END, myFile.SEEK_SET for current, end, start origins.     <BR><B><EM>Return:</B></EM> int 1 if operation succeeded, 0 if failed.  <BR><HR>
+<a name="file::Tell"><H3>Tell</H3>
+</a><B><EM>Brief:</B></EM> Tell will return the current cursor position of the file     <BR><B><EM>Return:</B></EM> int the current cursor position, -1 on error  <BR><HR>
+<a name="file::ReadLine"><H3>ReadLine</H3>
+</a><B><EM>Brief:</B></EM> ReadLine will read a line of text from the file.     <BR><B><EM>Param:</B></EM> int keep optional (0) as 1 will keep the "\n" char on the line, otherwise it is removed     <BR><B><EM>Return:</B></EM> string, or null on eof  <BR><HR>
+<a name="file::ReadChar"><H3>ReadChar</H3>
+</a><B><EM>Brief:</B></EM> ReadChar will read a char from the file     <BR><B><EM>Return:</B></EM> int char or null on eof  <BR><HR>
+<a name="file::WriteString"><H3>WriteString</H3>
+</a><B><EM>Brief:</B></EM> WriteString will write a string to the file     <BR><B><EM>Param:</B></EM> string to write to file     <BR><B><EM>Return:</B></EM> 1 on success, null on error  <BR><HR>
+<a name="file::WriteChar"><H3>WriteChar</H3>
+</a><B><EM>Brief:</B></EM> WriteChar will write a char to the file     <BR><B><EM>Param:</B></EM> int char to write to file     <BR><B><EM>Return:</B></EM> 1 on success, null on error  <BR><BR><HR>
+<H1>Vector3</H1>
+<HR><BR>
+<HR>
+<a name="Vector3::Vector3"><H3>Vector3</H3>
+</a><B><EM>Brief:</B></EM> Create a Vector3 object     <BR><B><EM>Param:</B></EM> float x or [0] optional (0)     <BR><B><EM>Param:</B></EM> float y or [1] optional (0)     <BR><B><EM>Param:</B></EM> float z or [2] optional (0)  <BR><BR><HR>
+<H1>Vector3</H1>
+<HR><BR>
+<B><EM>Brief:</B></EM> Vector3 math class  <BR><HR>
+<a name="Vector3::DominantAxis"><H3>DominantAxis</H3>
+</a><B><EM>Brief:</B></EM> Find the index of the largest vector component.     <BR><B><EM>This:</B></EM> Vector to evaluate.     <BR><B><EM>Return:</B></EM> int Index of largest component.  <BR><HR>
+<a name="Vector3::Dot"><H3>Dot</H3>
+</a><B><EM>Brief:</B></EM> Calculate the Dot (or Inner) Product of two vectors.     <BR><B><EM>This:</B></EM> Vector3 First vector.     <BR><B><EM>Param:</B></EM> Vector3 Second vector.     <BR><B><EM>Return:</B></EM> float result.  <BR><HR>
+<a name="Vector3::Length"><H3>Length</H3>
+</a><B><EM>Brief:</B></EM> Length will return the length of the vector.     <BR><B><EM>Return:</B></EM> float Dot product result that is cosine of the angle between the two vectors.  <BR><HR>
+<a name="Vector3::Cross"><H3>Cross</H3>
+</a><B><EM>Brief:</B></EM> Calculate the Cross (or Outer) Product of two vectors.     <BR><B><EM>This:</B></EM> Vector3 First vector.     <BR><B><EM>Param:</B></EM> Vector3 Second vector.     <BR><B><EM>Return:</B></EM> Vector3 Cross product resultant vector that is perpendicular to the two input vectors and length sine of the angle between them.  <BR><HR>
+<a name="Vector3::Normalize"><H3>Normalize</H3>
+</a><B><EM>Brief:</B></EM> Return a unit length copy of this vector.     <BR><B><EM>This:</B></EM> Vector to be copied.     <BR><B><EM>Return:</B></EM> Vector3 Unit length copy of this vector.  <BR><HR>
+<a name="Vector3::LengthSquared"><H3>LengthSquared</H3>
+</a><B><EM>Brief:</B></EM> Return the squared length of the vector.     <BR><B><EM>Return:</B></EM> float Squared length of the vector.  <BR><HR>
+<a name="Vector3::ProjectFrom"><H3>ProjectFrom</H3>
+</a><B><EM>Brief:</B></EM> Project a direction from a point.     <BR><B><EM>This:</B></EM> Vector3 Direction.     <BR><B><EM>Param:</B></EM> Vector3 Start point;     <BR><B><EM>Param:</B></EM> float Distance or time.     <BR><B><EM>Return:</B></EM> Vector3 Projected result.  <BR><HR>
+<a name="Vector3::Clone"><H3>Clone</H3>
+</a><B><EM>Brief:</B></EM> Return a copy of this vector.     <BR><B><EM>Return:</B></EM> A copy of this vector.  <BR><HR>
+<a name="Vector3::Set"><H3>Set</H3>
+</a><B><EM>Brief:</B></EM> Set vector from other vector or 3 components.  <BR><HR>
+<a name="Vector3::LerpToPoint"><H3>LerpToPoint</H3>
+</a><B><EM>Brief:</B></EM> Linear interpolate between two 'point' vectors.     <BR><B><EM>This:</B></EM> Vector3 From vector.     <BR><B><EM>Param:</B></EM> Vector3 To vector.     <BR><B><EM>Param:</B></EM> float Fraction or time between 0 and 1.     <BR><B><EM>Return:</B></EM> Vector3 Resulting inbetween vector.  <BR><HR>
+<a name="Vector3::SlerpToVector"><H3>SlerpToVector</H3>
+</a><B><EM>Brief:</B></EM> Spherical linear interpolate between two vectors.     <BR><B><EM>This:</B></EM> Vector3 From vector.     <BR><B><EM>Param:</B></EM> Vector3 To vector.     <BR><B><EM>Param:</B></EM> float Fraction or time between 0 and 1.     <BR><B><EM>Return:</B></EM> Vector3 Resulting inbetween vector.  <BR><HR>
+<a name="Vector3::RotateAxisAngle"><H3>RotateAxisAngle</H3>
+</a><B><EM>Brief:</B></EM> Rotate around Axis by Angle.     <BR><B><EM>This:</B></EM> Vector3 Vector to rotate.     <BR><B><EM>Param:</B></EM> Vector3 Unit length axis of rotation.     <BR><B><EM>Param:</B></EM> float Angle amount to rotate.     <BR><B><EM>Return:</B></EM> Vector3 Resulting rotated vector.  <BR><HR>
+<a name="Vector3::RotateX"><H3>RotateX</H3>
+</a><B><EM>Brief:</B></EM> Rotate around X Axis by Angle.     <BR><B><EM>This:</B></EM> Vector3 Vector to rotate.     <BR><B><EM>Param:</B></EM> float Angle amount to rotate.     <BR><B><EM>Return:</B></EM> Vector3 Resulting rotated vector.  <BR><HR>
+<a name="Vector3::RotateX"><H3>RotateX</H3>
+</a><B><EM>Brief:</B></EM> Rotate around Y Axis by Angle.     <BR><B><EM>This:</B></EM> Vector3 Vector to rotate.     <BR><B><EM>Param:</B></EM> float Angle amount to rotate.     <BR><B><EM>Return:</B></EM> Vector3 Resulting rotated vector.  <BR><HR>
+<a name="Vector3::RotateZ"><H3>RotateZ</H3>
+</a><B><EM>Brief:</B></EM> Rotate around Z Axis by Angle.     <BR><B><EM>This:</B></EM> Vector3 Vector to rotate.     <BR><B><EM>Param:</B></EM> float Angle amount to rotate.     <BR><B><EM>Return:</B></EM> Vector3 Resulting rotated vector.  <BR><HR>
+<a name="Vector3::SetAdd"><H3>SetAdd</H3>
+</a><B><EM>Brief:</B></EM> Add two vectors, store result in this. Demonstrate relative efficiency compared to operator version.     <BR><B><EM>This:</B></EM> Vector3 Result vector.     <BR><B><EM>Param:</B></EM> Vector3 First vector.     <BR><B><EM>Param:</B></EM> Vector3 Second vector.  <BR><HR>
+<a name="Vector3::Add"><H3>Add</H3>
+</a><B><EM>Brief:</B></EM> Add vector to this. Demonstrate relative efficiency compared to operator version.     <BR><B><EM>This:</B></EM> Vector3 Result vector.     <BR><B><EM>Param:</B></EM> Vector3 vector to add.  <BR><BR><HR>
+<H1>gm</H1>
+<HR><BR>
+<B><EM>Brief:</B></EM> functions in the gm lib are all global scope  <BR><HR>
+<a name="gm::debug"><H3>debug</H3>
+</a><B><EM>Brief:</B></EM> debug will cause a the debugger to break at this point while running.  <BR><BR><HR>
+<H1>gm</H1>
+<HR><BR>
+<B><EM>Brief:</B></EM> functions in the gm lib are all global scope  <BR><HR>
+<a name="gm::gmVersion"><H3>gmVersion</H3>
+</a><B><EM>Brief:</B></EM> gmVersion will return the gmMachine version string.  version string is major type . minor type as a string            and was added at version 1.1     <BR><B><EM>Return:</B></EM> string  <BR><HR>
+<a name="gm::typeId"><H3>typeId</H3>
+</a><B><EM>Brief:</B></EM> typeId will return the type id of the passed var     <BR><B><EM>Param:</B></EM> var     <BR><B><EM>Return:</B></EM> integer type  <BR><HR>
+<a name="gm::typeName"><H3>typeName</H3>
+</a><B><EM>Brief:</B></EM> typeName will return the type name of the passed var     <BR><B><EM>Param:</B></EM> var     <BR><B><EM>Return:</B></EM> string  <BR><HR>
+<a name="gm::typeRegisterOperator"><H3>typeRegisterOperator</H3>
+</a><B><EM>Brief:</B></EM> typeRegisterOperator will register an operator for a type     <BR><B><EM>Param:</B></EM> int typeid     <BR><B><EM>Param:</B></EM> string operator name is one of            "getdot", "setdot", "getind", "setind", "add", "sub", "mul", "div", "mod",           "inc", "dec", "bitor", "bitxor", "bitand", "shiftleft", "shiftright", "bitinv",           "lt", "gt", "lte", "gte", "eq", "neq", "neg", "pos", "not"      <BR><B><EM>Param:</B></EM> function     <BR><B><EM>Return:</B></EM> 1 on success, otherwise 0  <BR><HR>
+<a name="gm::typeRegisterVariable"><H3>typeRegisterVariable</H3>
+</a><B><EM>Brief:</B></EM> typeRegisterVariable will register a variable with a type such that (type).varname will return the variable     <BR><B><EM>Param:</B></EM> int typeid     <BR><B><EM>Param:</B></EM> string var name     <BR><B><EM>Param:</B></EM> var     <BR><B><EM>Return:</B></EM> 1 on success, otherwise 0  <BR><HR>
+<a name="gm::sysCollectGarbage"><H3>sysCollectGarbage</H3>
+</a><B><EM>Brief:</B></EM> sysCollectGarbage will run the garbage collector iff the current mem used is over the desired mem used     <BR><B><EM>Param:</B></EM> forceFullCollect (false) Optionally perform full garbage collection immediately if garbage collection is not disabled.     <BR><B><EM>Return:</B></EM> 1 if the gc was run, 0 otherwise  <BR><HR>
+<a name="gm::sysGetMemoryUsage"><H3>sysGetMemoryUsage</H3>
+</a><B><EM>Brief:</B></EM> sysGetMemoryUsage will return the current memory used in bytes     <BR><B><EM>Return:</B></EM> int memory usage  <BR><HR>
+<a name="gm::sysSetDesiredMemoryUsageHard"><H3>sysSetDesiredMemoryUsageHard</H3>
+</a><B><EM>Brief:</B></EM> sysSetDesiredMemoryUsageHard will set the desired memory useage in bytes.  when this is exceeded the garbage collector will be run.     <BR><B><EM>Param:</B></EM> int desired mem usage in bytes  <BR><HR>
+<a name="gm::sysSetDesiredMemoryUsageSoft"><H3>sysSetDesiredMemoryUsageSoft</H3>
+</a><B><EM>Brief:</B></EM> sysSetDesiredMemoryUsageSoft will set the desired memory useage in bytes.  when this is exceeded the garbage collector will be run.     <BR><B><EM>Param:</B></EM> int desired mem usage in bytes  <BR><HR>
+<a name="gm::sysGetDesiredMemoryUsageHard"><H3>sysGetDesiredMemoryUsageHard</H3>
+</a><B><EM>Brief:</B></EM> sysGetDesiredMemoryUsageHard will get the desired memory useage in bytes.            Note that this value is used to start garbage collection, it is not a strict limit.     <BR><B><EM>Return:</B></EM> int Desired memory usage in bytes.  <BR><HR>
+<a name="gm::sysGetDesiredMemoryUsageSoft"><H3>sysGetDesiredMemoryUsageSoft</H3>
+</a><B><EM>Brief:</B></EM> sysGetDesiredMemoryUsageSoft will get the desired memory useage in bytes.            Note that this value is used to start garbage collection, it is not a strict limit.     <BR><B><EM>Return:</B></EM> int Desired memory usage in bytes.  <BR><HR>
+<a name="gm::sysSetDesiredMemoryUsageAuto"><H3>sysSetDesiredMemoryUsageAuto</H3>
+</a><B><EM>Brief:</B></EM> sysSetDesiredMemoryUsageAuto will enable auto adjustment of the memory limit(s) for subsequent garbage collections.     <BR><B><EM>Param:</B></EM> int enable or disable flag  <BR><HR>
+<a name="gm::sysGetStatsGCNumFullCollects"><H3>sysGetStatsGCNumFullCollects</H3>
+</a><B><EM>Brief:</B></EM> sysGetStatsGCNumFullCollects Return the number of times full garbage collection has occured.     <BR><B><EM>Return:</B></EM> int Number of times full collect has occured.  <BR><HR>
+<a name="gm::sysGetStatsGCNumIncCollects"><H3>sysGetStatsGCNumIncCollects</H3>
+</a><B><EM>Brief:</B></EM> sysGetStatsGCNumIncCollects Return the number of times incremental garbage collection has occured.     This number may increase in twos as the GC has multiple phases which appear as restarts.     <BR><B><EM>Return:</B></EM> int Number of times incremental collect has occured.  <BR><HR>
+<a name="gm::sysGetStatsGCNumWarnings"><H3>sysGetStatsGCNumWarnings</H3>
+</a><B><EM>Brief:</B></EM> sysGetStatsGCNumWarnings Return the number of warnings because the GC or VM thought the GC was poorly configured.     If this number is large and growing rapidly, the GC soft and hard limits need to be configured better.     Do not be concerned if this number grows slowly.     <BR><B><EM>Return:</B></EM> int Number of warnings garbage collect has generated.  <BR><HR>
+<a name="gm::sysIsGCRunning"><H3>sysIsGCRunning</H3>
+</a><B><EM>Brief:</B></EM> Returns true if GC is running a cycle.  <BR><HR>
+<a name="gm::sysTime"><H3>sysTime</H3>
+</a><B><EM>Brief:</B></EM> sysTime will return the machine time in milli seconds     <BR><B><EM>Return:</B></EM> int  <BR><HR>
+<a name="gm::doString"><H3>doString</H3>
+</a><B><EM>Brief:</B></EM> doString will execute the passed gm script     <BR><B><EM>Param:</B></EM> string script     <BR><B><EM>Param:</B></EM> int optional (1) set as true and the string will execute before returning to this thread     <BR><B><EM>Param:</B></EM> ref optional (null) set 'this'     <BR><B><EM>Return:</B></EM> int thread id of thread created for string execution  <BR><HR>
+<a name="gm::globals"><H3>globals</H3>
+</a><B><EM>Brief:</B></EM> globals will return the globals table     <BR><B><EM>Return:</B></EM> table containing all global variables  <BR><HR>
+<a name="gm::threadTime"><H3>threadTime</H3>
+</a><B><EM>Brief:</B></EM> threadTime will return the thread execution time in milliseconds     <BR><B><EM>Return:</B></EM> int   <BR><HR>
+<a name="gm::threadId"><H3>threadId</H3>
+</a><B><EM>Brief:</B></EM> threadId will return the thread id of the current executing script     <BR><B><EM>Return:</B></EM> int   <BR><HR>
+<a name="gm::threadAllIds"><H3>threadAllIds</H3>
+</a><B><EM>Brief:</B></EM> threadIds returns a table of thread Ids     <BR><B><EM>Return:</B></EM> table of thread Ids  <BR><HR>
+<a name="gm::threadKill"><H3>threadKill</H3>
+</a><B><EM>Brief:</B></EM> threadKill will kill the thread with the given id     <BR><B><EM>Param:</B></EM> int threadId optional (0) will kill this thread  <BR><HR>
+<a name="gm::threadKillAll"><H3>threadKillAll</H3>
+</a><B><EM>Brief:</B></EM> threadKillAll will kill all the threads except the current one     <BR><B><EM>Param:</B></EM> bool optional (false) will kill this thread if true  <BR><HR>
+<a name="gm::thread"><H3>thread</H3>
+</a><B><EM>Brief:</B></EM> thread will start a new thread     <BR><B><EM>Param:</B></EM> function entry point of the thread     <BR><B><EM>Param:</B></EM> ... parameters to pass to the entry function     <BR><B><EM>Return:</B></EM> int threadid  <BR><HR>
+<a name="gm::yield"><H3>yield</H3>
+</a><B><EM>Brief:</B></EM> yield will hand execution control to the next thread  <BR><HR>
+<a name="gm::exit"><H3>exit</H3>
+</a><B><EM>Brief:</B></EM> exit will kill this thread  <BR><HR>
+<a name="gm::assert"><H3>assert</H3>
+</a><B><EM>Brief:</B></EM> assert      <BR><B><EM>Param:</B></EM> int expression if true, will do nothing, if false, will cause an exception  <BR><HR>
+<a name="gm::sleep"><H3>sleep</H3>
+</a><B><EM>Brief:</B></EM> sleep will sleep this thread for the given number of seconds      <BR><B><EM>Param:</B></EM> int\float seconds  <BR><HR>
+<a name="gm::signal"><H3>signal</H3>
+</a><B><EM>Brief:</B></EM> signal will signal the given variable, this will unblock dest threads that are blocked on the same variable.     <BR><B><EM>Param:</B></EM> var     <BR><B><EM>Param:</B></EM> int destThreadId optional (0) 0 will signal all threads  <BR><HR>
+<a name="gm::block"><H3>block</H3>
+</a><B><EM>Brief:</B></EM> block will block on all passed vars, execution will halt until another thread signals one of the block variables.  Will yield on null and return null.     <BR><B><EM>Param:</B></EM> ... vars     <BR><B><EM>Return:</B></EM> the unblocking var  <BR><HR>
+<a name="gm::stateSet"><H3>stateSet</H3>
+</a><B><EM>Brief:</B></EM> stateSet will collapse the stack to nothing, and push the passed functions.     <BR><B><EM>Param:</B></EM> function new state function to execute     <BR><B><EM>Param:</B></EM> ... params for new state function  <BR><HR>
+<a name="gm::stateSetOnThread"><H3>stateSetOnThread</H3>
+</a><B><EM>Brief:</B></EM> stateSetOnThread will collapse the stack of the given thread id to nothing, and push the passed functions.     <BR><B><EM>Param:</B></EM> int thread id     <BR><B><EM>Param:</B></EM> function new state function to execute     <BR><B><EM>Param:</B></EM> ... params for new state function  <BR><HR>
+<a name="gm::stateGet"><H3>stateGet</H3>
+</a><B><EM>Brief:</B></EM> stateGet will return the function on the bottom of this threads execution stack iff it was pushed using stateSet     <BR><B><EM>Param:</B></EM> a_threadId Optional Id of thread to get state on.     \reutrn function \ null  <BR><HR>
+<a name="gm::stateGetLast"><H3>stateGetLast</H3>
+</a><B><EM>Brief:</B></EM> stateGetLast will return the last state function of this thread     <BR><B><EM>Param:</B></EM> a_threadId Optional Id of thread to get last state on.         \reutrn function \ null  <BR><HR>
+<a name="gm::stateSetExitFunction"><H3>stateSetExitFunction</H3>
+</a><B><EM>Brief:</B></EM> stateSetExitFunction will set an exit function for this state, that will be called with no parameters if this thread            switches state     <BR><B><EM>Param:</B></EM> function  <BR><HR>
+<a name="gm::tableCount"><H3>tableCount</H3>
+</a><B><EM>Brief:</B></EM> tableCount will return the number of elements in a table object     <BR><B><EM>Param:</B></EM> table     <BR><B><EM>Return:</B></EM> int  <BR><HR>
+<a name="gm::tableDuplicate"><H3>tableDuplicate</H3>
+</a><B><EM>Brief:</B></EM> tableDuplicate will duplicate the passed table object     <BR><B><EM>Param:</B></EM> table     <BR><B><EM>Return:</B></EM> table  <BR><HR>
+<a name="gm::print"><H3>print</H3>
+</a><B><EM>Brief:</B></EM> print will print the given vars to the print handler.  passed strings are concatinated together with a seperating space.     <BR><B><EM>Param:</B></EM> ... strings  <BR><HR>
+<a name="gm::format"><H3>format</H3>
+</a><B><EM>Brief:</B></EM> format (like sprintf, but returns a string) %d, %s, %f, %c, %b, %x, %e     <BR><B><EM>Param:</B></EM> string  <BR></BODY></HTML>

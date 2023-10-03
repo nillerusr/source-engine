@@ -39,8 +39,8 @@ projects={
 		'engine',
 		'engine/voice_codecs/minimp3',
 		'filesystem',
-		'game/client',
-		'game/server',
+#		'game/client',
+#		'game/server',
 		'gameui',
 		'inputsystem',
 		'ivp/havana',
@@ -161,6 +161,8 @@ def define_platform(conf):
 	conf.env.TOGLES = conf.options.TOGLES
 	conf.env.GL = conf.options.GL and not conf.options.TESTS and not conf.options.DEDICATED
 	conf.env.OPUS = conf.options.OPUS
+
+	conf.define('SOURCE_ASW', 1)
 
 	if conf.options.DEDICATED:
 		conf.options.SDL = False

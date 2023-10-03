@@ -1,0 +1,230 @@
+// Set of benchmarks
+
+sysSetDesiredMemoryUsageHard(16 * 1024, 1);
+sysSetDesiredMemoryUsageSoft(sysGetDesiredMemoryUsageHard());
+
+//
+//
+// ACKERMAN
+//
+//
+
+print("*** ACKERMAN ***");
+
+global Ack = function(M, N)
+{
+  if (M == 0)
+  {
+    N=N+1;
+    return(N);
+  }
+	
+  if (N == 0)
+  {
+    M=M-1;
+    return(Ack(M, 1));
+  }
+  N=N-1;
+  return (Ack(M-1, Ack(M, N)));
+};
+
+NUM = 8;
+TICK(); //GD Used to be clock() what was that matt?
+print(Ack(3,NUM));
+print("time = ", TICK());
+
+//
+//
+// FIB
+//
+//
+
+print("*** FIB ***");
+
+global fib = function(n)
+{
+    if (n < 2) { return(1); }
+    return fib(n-2) + fib(n-1);
+};
+
+N = 32;
+TICK();
+print(fib(N));
+print("time = ", TICK());
+
+//
+//
+// MATRIX
+//
+//
+
+print("*** MATRIX ***");
+
+local n = 300;
+local size = 30;
+
+mkmatrix = function(rows, cols)
+{
+  count = 1;
+  mx = table();
+
+  for(i=0; i < rows; i=i+1)
+  {
+    row = table();
+    for(j = 0; j < cols; j=j+1)
+    {
+      row[j] = count;
+      count=count+1;
+    }
+    mx[i] = row;
+  }
+  return mx;
+};
+
+mmult = function(rows, cols, m1, m2)
+{
+  m3 = table();
+
+  for(i = 0; i < rows; i=i+1)
+  {
+    m3[i] = table();
+    m1_i = m1[i];
+    for(j = 0; j < cols; j=j+1)
+    {
+      rowj = 0;
+      for(k = 0; k < cols; k=k+1)
+      {
+        rowj = rowj + m1_i[k] * m2[k][j];
+      }
+      m3[i][j] = rowj;
+    }
+  }
+
+  return m3;
+};
+
+TICK();
+m1 = mkmatrix(size, size);
+m2 = mkmatrix(size, size);
+
+for(i = 0; i < n; i=i+1)
+{
+  mm = mmult(size, size, m1, m2);
+}
+
+t = TICK();
+
+print(mm[0][0], mm[2][3], mm[3][2], mm[4][4]);
+print("time = ", t);
+
+//
+//
+// HASH
+//
+//
+
+print("*** HASH ***");
+
+local n = 80000;
+TICK();
+
+X=table();
+for(i=1; i <= n; i=i+1)
+{
+  //print(format("%x", i), i);
+  X[format("%x", i)] = i;
+}
+
+c = 0;
+
+for(i=n; i>=1; i=i-1)
+{
+  if(X[i+""])
+  {
+    c=c+1;
+  }
+}
+
+print(c);
+print("time = ", TICK());
+
+//
+//
+// HEAPSORT
+//
+//
+
+print("*** HEAPSORT ***");
+
+global IM = 139968.;
+global IA =   3877.;
+global IC =  29573.;
+global LAST = 42.;
+
+gen_random = function(max)
+{
+    global LAST = (LAST * IA + IC) % IM;
+    return ((max * LAST) / IM);
+};
+
+heapsort = function(n, ra)
+{
+  l = n/2 + 1;
+  ir = n;
+
+  for(;;)
+  {
+    if(l > 1)
+    {
+      l=l-1;
+      rra = ra[l];
+    }
+    else
+    {
+      rra = ra[ir];
+      ra[ir] = ra[1];
+      ir=ir-1;
+      if(ir == 1)
+      {
+        ra[1] = rra;
+        return;
+      }
+    }
+
+    i = l;
+    j = l * 2;
+    while(j <= ir)
+    {
+      if(j < ir and ra[j] < ra[j+1])
+      {
+        j=j+1;
+      }
+      if(rra < ra[j])
+      {
+        ra[i] = ra[j];
+        i = j;
+        j = j + i;
+      }
+      else
+      {
+        j = ir + 1;
+      }
+    }
+
+    ra[i] = rra;
+  }
+};
+
+TICK();
+
+local ary = table();
+local N = 80000;
+
+for(i = 0; i < N; i=i+1)
+{
+  ary[i] = gen_random(1.0);
+}
+
+heapsort(N, ary);
+print(ary[N-1]);
+print("time = ", TICK());

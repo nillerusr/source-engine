@@ -158,7 +158,7 @@ struct cnode_t
 TraceInfo_t *BeginTrace();
 void PushTraceVisits( TraceInfo_t *pTraceInfo );
 void PopTraceVisits( TraceInfo_t *pTraceInfo );
-void EndTrace( TraceInfo_t *&pTraceInfo );
+void EndTrace( TraceInfo_t *pTraceInfo );
 
 
 //-----------------------------------------------------------------------------

@@ -1,0 +1,324 @@
+-----------------------------------------------------------
+GameMonkey Script Change Log
+
+Newer entries are at the bottom.
+Dates are dd/mm/yy
+
+Note that very minor changes like a renamed variable or 
+modified comment may not appear in this list.
+-----------------------------------------------------------
+
+
+22/12/03
+o Package 1.0 ready for public release.
+
+02/01/04
+o Updated script reference doc with system functions, compiler string concat and other.
+
+08/01/04
+o Fixed filename case mismatch between filenames and #includes for Unix and other platform.
+o Renamed and modifed gmNetwork to NetClient and NetServer as they are not gm files.
+o Modified GMD project to show gmDebugger in gm file set and use Win32 #defs for windows specific parts.
+o Removed memory display from snake.gm
+o Added sample script descriptions file.
+o Removed GM_MAX() and GM_MIN() macros and replaced with template versions in gmUtil
+o Added gmLog2ge function as faster version of gmHighestBit, and changed gmArraySimple and gmArrayComplex to suit.
+o Fixed buffer overrun bug with gmVariable::AsString function.
+o Removed all warning level 4 warnings bar the warnings generated from flex and bison files.
+o Added GM_VERSION #define to gmMachine.h.  first version @ "1.1".  added gmVersion script binding.
+o Changed some #ifdef DEBUG to #ifdef GM_DEBUG_BUILD
+
+09/01/04
+o Added constant folding for ints and floats
+o Added +=, -=, *=, /= etc.  Some more optimisation is required on this to avoid reavaluation of complex l-value.
+
+10/01/04
+o Added threadKillAll() binding to allow termination of all threads.
+o Added threadIds() binding to allow access to all threads.
+o Modified BomberRun.gm to allow exit from main menu.
+
+16/01/04
+o Added Minimal code to use GM example.
+
+18/01/04
+o Fixed bug in string operator not.  Incorrectly returned true instead of false.
+
+23/01/04
+o Modified copyright message to be 'GameMonkey Script' as that is the full name.
+
+25/01/04
+o Added GameObject example code.
+
+07/02/04
+o Remove GM_ASSERT from macro GM_CHECK_FLOAT_PARAM.  Was probably left in from some previous debugging.
+
+20/02/04
+o gmMachine::Get/SetDesiredByteMemoryUsage() removed and replaced with Get/SetDesiredByteMemoryUsageHard() and Get/SetDesiredByteMemoryUsageSoft().
+o Changed behaviour of gmMachine::SetDesiredByteMemoryUsage***(). No longer sets auto-memory to false, also does not have auto-memory parameter.
+o New incremental garbage collection logic to govern the inc GC system.
+o New GC stats functions: TODO
+o Set gmConfig.h to use incremental GC by default.  Was using atomic GC.
+o Renamed machine bound function threadIds() to threadAllIds() to make it more different from threadId() and more consistent with other naming.
+
+21/02/04
+o Added paranoid check code to Incremental GC.
+o Fixed serious bug in gmTable with IncGC that caused deleted 'values' to go through write barrier.
+o Added Sleep(0) to WIN32 build of GME to improve windows performance which otherwise suffers from unyielding threads.
+
+26/02/04
+o Changed strtol to strtoul in gmParser.y to convert hex and binary numbers to unsigned ints causing them to not be truncated.  They will appear as full signed ints rather than be clipped to 0-2b range.
+
+03/03/04
+o Fixed bug in gmCodeGen.cpp The array container could resize causing pointers to become invalid.  List is now used to hold function pointers.
+
+06/03/04
+o Generate code target to big/little endian regardless of source platform.
+
+09/03/04
+o Modified gmMachine::CollectGarbage() AND binding sysCollectGarbage() to take a optional parameter to perform force full collection.
+o Improved VM GC logic so garbage collector will always free memory when it has the chance after a collect cycle.
+o Added sysSetDesiredMemoryUsageAuto() binding to enable auto adjust of memory limits (used to be flag in old set memory limit functions).
+
+11/03/04
+o Fixed excess memory bug in gmCodeGen.cpp as result of previous bug fix.
+o Improved VM GC logic so garbage collector auto sizes soft and hard limits better, but realize logic is still poor as long as only soft limit is exceeded.
+
+01/04/04
+o Fixed gmRandomFloat to use RAND_MAX instead of 65535.  Effects some platforms as these were not equivalent.
+
+21/04/04
+o Improved gmThread::Param(), returns reference to gmVariable instead of instance.
+
+18/06/04
+o Removed reseting of error log from gmMachine and gmThread.  Allowed memory limit on log.  Updated examples.
+
+23/08/04
+o Fixed gmMachine::Init().  Global table not initialized after ResetAndFreeMemory().
+
+10/10/04
+o Fixed bugs in gmCodeGen.cpp.  Removed remaining array resize bugs.
+
+24/10/04
+o Remove gmArrayComplex and replaced with gmArraySimple to reduce code as it was not necessary.
+o Removed 'no effect' variables that had been there to remove warning 'unreferenced parameter'.
+o Wrapped new with GM_NEW and GM_PLACEMENT_NEW for simpler replacement eg. debug new.
+o Changed multi char constatns 'abcd' to macro version for better compiler compatability.
+o Aligned memory for allocator in gmLibHooks.cpp for PS2.  Added alignment size #define.
+o Moved #include "assert.h" from gm into gm_Configp.h for better compatability.
+o Other minor changes for compiler compatability or reduction of compiler warnings.
+
+25/10/04
+o Changed behaviour of Block() to yeild if blocked on 'null'.
+o Made functions in gmThread const.
+o Added memory presizing functions to allocators and gmMachine.
+
+27/10/04
+o Changed malloc,free,realloc to new,delete equivalents in bison.simple and flex.skl files.
+o Aligned memory addresses in gmCodeTree, gmLog.
+o Added ToDoList.txt to the \docs folder.  Removed readme.txt from src\gm folder.
+
+02/11/04
+o Added new line to end of files to remove warnings on some compilers.
+o Fixed some non-commented comments on preprocessor commands to remove warnings on some compilers.
+o Changed some includes to later standard: cassert, new, to remove warnings on some compilers.
+o Moved non gm header includes into gmConfig.h with comments. External includes now only in gmConfig.h and gmConfig_p.h.
+o Renamed platform\win32 to win32msvc.  Added platform\win32gcc. Adjusted paths in projects to reflect this change.
+
+11/11/04
+o Fixed commented #define in gmParser.y.
+o Fixed bug in gmCallScript.h.  If C called C bound function via script, thread was not exited correctly.
+o Added gmCallScript::BeginFunction() Generic function call, and AddParamTable().
+
+07/12/04
+o Removed platform specific #defines and checks from gmConfig.h
+
+10/12/04
+o Added #include <errno.h> to flex.skl for Linux compile.
+o Fixed bug in GML.  Code used obsolete non 32bit byte code.
+
+11/12/04
+o Added gmCall.  gmCallScript is now deprecated.
+
+27/12/04
+o Replaced GC related 'workLeftToDo' variable names with 'workLeftToGo' so a simple 'todo' search won't find these.
+o Implemented file.Seek() as it was not implemented.
+
+01/01/05
+o gmfrontend.bat strips CR chars from flex and bison script files before generating compiler files.  This should help Linux & Unix builds.
+
+24/01/05
+o Fixed more compiler warnings.
+
+30/01/05
+o Added newline to end of gmDebugger.cpp.  Will have to watch for this in future to keep gcc happy.
+
+03/02/05
+o Added (experimental) new table creation syntax. eg. t = {1,2,3,}; same as t = table(1,2,3); for simplified config files.
+
+04/02/05
+o Added explicit gmVariable() constructors for gmTableObject and gmFunctionObject completing the default set.
+
+10/02/05
+o Modified gmCall to improve access to return variables.
+
+21/03/05
+o Added ability for gmMachine to handle cpp owned gmObjects and handle GC for them.
+o Changed gmMachine::Presize() (and related functions) to take named params instead of int array for clarity and future expansion.
+o Modified gmMemFixedSet to have more smaller memory sizes.
+
+09/04/05
+o Removed Windows specific hack from gmDebugger.cpp and moved it to the example Windows debugger files.
+o Added gmCall::AddParam() for generic gmVariable params.
+
+14/04/05
+o Added syntax highlighting to debugger. (Actually added back old files I found, that were meant for an IDE never finished.)
+o Added line numbering to debugger.  A quick hack, but maybe useful.
+
+16/04/05
+o Changed gmObject derived class constructors to be non-public.  This forces creation by gmMachine.
+o Minor change to gmListDouble to make some compiler happy.
+
+21/04/05
+o Minor changes for compatability with MSVS 2005.  gmMathLib, gmStringLib, platform header.
+
+04/05/05
+o Added GM_FLOAT_OR_INT_PARAM and GM_CHECK_FLOAT_OR_INT_PARAM to gmThread.h to help with numerical parameters.
+
+09/05/05
+o Changed some #defines in gmThread.h gmIncGC.cpp/.h prefixed with GM_ to reduce potential conflict with other code.
+
+10/05/05
+o Fixed/Changed friend declaration used by gmTableObject and gmFunctionObject non-public constructors, to work with MSVC 6, 2003, 2005.  Handling of friend template functions was different and broken.
+o Added optional UserBreak callback to allow external code to break thread execution. Eg. to exit endless loop when user pressed CTRL-BREAK.
+
+05/08/05
+o Fixed bug in GameObject example, String operator= not always used.
+
+29/09/05
+o Fixed bug in gmTableObject.  GC WriteBarrier was not being called with setting values to null.  Old values, reassigned elsewhere could be lost.
+
+30/10/05
+o Changed location of thread create event so 'this' should be available for query.
+
+14/11/05
+o Removed gmShutdownVector3Lib() from Vector3 binds example.
+
+11/01/06
+o Fixed bug in gmMachine::RemoveCPPOwnedGMObject().  Was not calling WriteBarrier.
+o Added gmMachine::IsCPPOwnedGMObject().
+o Added gmMachine::GetTypeTable() (as per DrEvil's mod).
+o Modified gmMachine::RegisterLib(), Allow append/modify existing table (as per Oli's mod).
+o Removed gmCallScript. (Had been depricated for a long time.)
+o Added experimental gmGCRoot to \binds.  Current implementation uses STL, but allows custom containers.
+
+21/01/06
+o Changed gmMachine, all non-public members are now protected instead of private to allow derived access.
+o Changed project and workspaces from MSVC 6 to MSVC 8 (2005)
+  To compile the Windows based examples & utils, you will need at least 'MS Visual C++ 2005 Express' and the 'Platform SDK', both freely downloadable from Microsoft.
+  To run the Windows examples you will need VC8 compatible runtimes installed, The '.Net Framework 2.0' redistributables or 'Windows Update' will provide these.
+  (Left VC6 projects and workspaces in for now.  Debugger still relies on MFC which is not supported by 2005 Express edition.)
+  
+08/03/06
+o Changed doString and (system.)DoFile bindings to take optional 'this' as parameter
+o Added gmThread Param() with default gmVariable param.
+
+10/03/06
+o Removed CrimsonEdit syntax highlighting for binary numbers as it did not behave as expected.
+
+15/03/06
+o Changed GC to start in 'off' state.
+
+02/04/06
+o Fixed gmMachine anomaly where, when a new thread is created just before yielding, and the yield occured in the last running thread, the new thread was skipped until the next execution cycle.
+
+05/04/06
+o Fixed bug where local (shared) strings waiting for finalization were reused.  Made them revive properly.
+o Removed old write barrier from gmTable, leaving new correct code only.
+
+16/04/06
+o Changed AsString() default for reference types to display pointer in hex instead of decimal.
+
+17/04/06
+o Added more info on binding functions to GameMonkeyScriptReference.pdf
+
+22/04/06
+o Changed gmThread so that final stack frame including 'this' is still valid when MC_THREAD_DESTROY occurs.
+
+20/05/06
+o Added config #define GMMACHINE_REMOVECOMPILER to allow compiler to be removed from gmMachine.  Saves some KBs as well as disables compilation.
+
+03/06/06
+o Added optional divide by zero check in operators to create GM exception rather than OS exception, as per DrEvil's suggestion.
+
+19/06/06
+o Changed gmMachine::AddCPPOwnedGMObject() and RemoveCPPOwnedGMObject() to ignore NULL ptrs rather than ASSERT on them, for caller convenience.
+
+24/07/06
+o Added two gmMachine function registration wrappers to provide alternate interface.
+o Added %u to bound function 'format' to support unsigned ints.
+
+01/08/06
+o Added gmVariable::IsNull().
+
+13/09/06
+o Added a bunch of accessor functions to gmVariable and gmTable for convenience.
+
+15/09/06
+o Added #define-able nullify in gmVariable ctor.  Disabled by default.
+
+26/09/06
+o Added #define _USE_32BIT_TIME_T so system binding 32 bit time functions work with MSVC 8 runtimes.
+
+18/10/06
+o Changed new gmVariable helpers to be const.
+
+26/10/06
+o Added user data to function registering.  This can be useful when binding C/C++ functions, particularly when registering MANY script functions to ONE C function that redirects to MANY C/C++ member functions.
+
+05/12/06
+o Fixed setdot misspelled as getdot in gmOperators.cpp and gmMachineLib.cpp.
+
+04/01/07
+o Modified gmKillThread() to behave as its comment describes.
+
+17/01/07
+o Fixed bug where GC was not correctly handling persistent strings. Thanks Kaz.
+
+20/01/07
+o Improved GC stats to reduce false warnings about bad GC config.
+
+21/01/07
+o Added operators implemented from script.  Thanks Seth 'Nightmare'.
+o Added another GC stats related function.
+o Rearranged pragmas and includes in config headers so order could influence subsequent files.
+o Added 'typename' to some template declarations in gmGCRootUtil.
+
+21/02/07
+o Fixed atan2 binding.  Thanks 'blackstormy'.
+
+20/03/07
+o Modified GC auto calibrate to allow no shrink.
+o Moved GC related settings to gmConfig.h.
+o Added gmMachine::GetAutoMemoryUsage().
+o Changed GME initial memory setting.
+o Added example Vector3 non operator Add for efficiency comparison.
+
+03/05/07
+o Added Experimental user type op_bool test for conditions. Thanks Kaz.
+o Modified killed threads.  Callback from killed state before recycle/delete.
+o Added const to more functions in gmThread.
+
+16/06/07
+o Fix bug relating to thread stack resize gmThread::Touch(). Thanks DrEvil.
+o Build .EXEs with VC2005 SP1, static linked VC runtimes except for Debugger which uses MFC.
+  Get vcredist_x86.exe from http://www.microsoft.com/downloads/details.aspx?familyid=200B2FD9-AE1A-4A14-984D-389C36F85647&displaylang=en or search for "Microsoft Visual C++ 2005 SP1 Redistributable Package" if needed.
+
+22/10/07
+o Added gmMachine::BindLibToFunction() Just a call through to existing gmLibHooks.
+o Changed gmGCRoot<>::Set() to handle null.
+o Removed a_filename from gmMachine::ExecuteFunction() since it wasn't used and could confuse users.
+
+11/11/07
+o Modified all GM_*_PARAM() and added overloads for all gmThread:Param*(), to check if invalid type was present.
+o Modified threadKill() to ignore threads with invalid Id instead of killing current thread.
+

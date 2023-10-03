@@ -1,0 +1,333 @@
+//debug();
+
+//
+// This program generates html documentation for script functions.
+// It merely converts comments with a certain syntax into documentation.
+// Example:
+//
+//  /*gm
+//    \lib Library Name
+//  */
+//
+//  /*gm
+//    \function Function name
+//    \brief Brief description of function
+//    \param Parameter description, you should describe type information
+//    \return Return value description
+//  */
+//
+
+
+//
+// \function CreateGMDocumenter
+//
+global CreateGMDocumenter = function()
+{
+  documenter = table
+  (
+    // \function ExtractGmCommentStrings
+    // \param fp is source file handle
+    // \param commentHandler is a function taking 2 params, comment string and context
+    // \param context is passed to comment handler
+    ExtractCommentStrings = function(fp, commentHandler, context)
+    {
+      openGmComment = "/*gm";
+      openGmCommentLen = openGmComment.Length();
+      closeGmComment = "*/";
+      closeGmCommentLen = closeGmComment.Length();
+
+      line = fp.ReadLine();
+      while(line)
+      {
+        pos = line.Find(openGmComment);
+        while(pos >= 0)
+        {
+          pos = pos + openGmCommentLen;
+          line = line.Right(line.Length() - pos);
+          comment = "";
+
+          // eat up lines untill end of comment
+          pos = line.Find(closeGmComment);
+          while(pos < 0)
+          {
+            comment = comment + line;
+            line = fp.ReadLine();
+
+            if(line == null)
+            {
+              pos = 0;
+            }
+            else
+            {
+              pos = line.Find(closeGmComment);
+            }
+          }
+
+          if(line)
+          {
+            comment = comment + line.Left(pos);
+            line = line.Right(line.Length() - (pos + closeGmCommentLen));
+            pos = line.Find(openGmComment);
+          }
+          else
+          {
+            pos = -1;
+          }
+
+          if(comment.Length() > 0)
+          {
+            // process comment string
+            comment = comment.ReplaceCharsInSet(' ', "\r\n\v");
+            commentHandler(comment, context);
+          }
+        }
+        line = fp.ReadLine();
+      }
+    },
+
+    // \function CommentHandler
+    // \param comment is an incoming comment string
+    // \param context is a table with a m_sections table where each m_section
+    //        is a function taking the section string and the context
+    //        context also has a BeginComment() call
+    CommentHandler = function(comment, context)
+    {
+      if(comment and comment.Length())
+      {
+        commentSet = table();
+
+        foreach(section and sectionHandler in context.m_sections)
+        {
+          search = comment;
+          sectionStart = search.Find(section);
+          sectionLength = section.Length();
+          offset = 0;
+
+          while(sectionStart >= 0)
+          {
+            commentSet[offset + sectionStart] = section;
+            offset = offset + sectionLength;
+            search = search.Right(search.Length() - sectionLength);
+            sectionStart = search.Find(section);
+          }
+        }
+
+        // commentSet is now a table containing the start positions of each comment bit.
+        length = comment.Length();
+        local j;
+
+        for(i = 0; i < length; i = i + 1)
+        {
+          if(commentSet[i])
+          {
+            // find the next comment...
+            for(j = i + 1; j < length; j = j + 1)
+            {
+              if(commentSet[j] or j == (length - 1))
+              {
+                section = commentSet[i];
+                sectionLength = section.Length();
+                first = i + sectionLength;
+                count = (j - i) - sectionLength;
+                subComment = comment.Mid(first, count);
+                context.m_sections[section](subComment, context);
+                break;
+              }
+            }
+          }
+        }
+      }
+    },
+
+    m_files = table(),
+
+    // \function AddFile will add a file to be documented
+    AddFile = function(filename)
+    {
+      .m_files[tableCount(.m_files)] = filename;
+    },
+
+    // \function CreateDocumentation will create documentation for all added files
+    // \param path is the output path for the resulting .html docco
+    CreateDocumentation = function(filename)
+    {
+      context = table();
+      context.m_sections = table();
+      context.m_htmlOut = system.File();
+      context.m_xmlOut = system.File();
+      context.m_lib = "";
+
+      context.m_sections[`\lib`] = function(comment, context)
+      {
+        comment = comment.TrimLeft().TrimRight();
+        // trim parenthesis
+
+        context.Write("<BR><HR>\n");
+        context.Heading(1, comment);
+        context.Write("<HR><BR>\n");
+        context.m_lib = comment;
+      };
+      context.m_sections[`\function`] = function(comment, context)
+      {
+        comment = comment.TrimLeft().TrimRight();
+        // trim parenthesis
+
+        context.Write("<HR>\n");
+        context.Write(format(`<a name="%s::%s">`,context.m_lib,comment));
+        context.Heading(3, comment);
+        context.Write(`</a>`);
+        context.XMLWrite(format(`<function name="%s::%s"/>`, context.m_lib, comment));
+      };
+      context.m_sections[`\brief`] = function(comment, context)
+      {
+        context.Write(format("<B><EM>Brief:</B></EM>%s<BR>", comment));
+      };
+      context.m_sections[`\param`] = function(comment, context)
+      {
+        context.Write(format("<B><EM>Param:</B></EM>%s<BR>", comment));
+      };
+      context.m_sections[`\return`] = function(comment, context)
+      {
+        context.Write(format("<B><EM>Return:</B></EM>%s<BR>", comment));
+      };
+      context.m_sections[`\sa`] = function(comment, context)
+      {
+        context.Write(format("<B><EM>See Also:</B></EM>%s<BR>", comment));
+      };
+      context.Heading = function(number, string)
+      {
+        .m_htmlOut.WriteString(format("<H%d>%s</H%d>\n", number, string, number));
+      };
+      context.m_sections[`\this`] = function(comment, context)
+      {
+        context.Write(format("<B><EM>This:</B></EM>%s<BR>", comment));
+      };
+      context.Paragraph = function(string)
+      {
+        .m_htmlOut.WriteString(format("<P>%s</P>\n", string));
+      };
+      context.Write = function(string)
+      {
+        .m_htmlOut.WriteString(string);
+      };
+      context.XMLWrite = function(string)
+      {
+        if(.m_xmlOut)
+        {
+          .m_xmlOut.WriteString(string);
+        }
+      };
+
+
+      xmlFilename = filename.SetExtension("xml");
+      if(!context.m_xmlOut.Open(xmlFilename, 0))
+      {
+        print("** ERROR: Failed to open XML output file '",xmlFilename,"' ! **");
+        context.m_xmlOut = null;
+      }
+
+      context.XMLWrite(`<?xml version="1.0" encoding="utf-8"?>`);
+      context.XMLWrite("<functions>");
+
+      //
+      if(context.m_htmlOut.Open(filename, 0))
+      {
+        // write html head
+        context.Write("<HTML><HEAD><TITLE>GM Documentation</TITLE></HEAD><BODY>");
+        foreach(file in .m_files)
+        {
+          fp = system.File();
+          if(fp.Open(file))
+          {
+            print(`Documenting`, file, `...`);
+
+            .ExtractCommentStrings(fp,.CommentHandler,context);
+
+            fp.Close();
+          }
+        }
+
+        context.XMLWrite("</functions>");
+        if(context.m_xmlOut)
+
+{
+        context.m_xmlOut.Close();
+}
+
+        context.Write("</BODY></HTML>");
+        context.m_htmlOut.Close();
+      }
+    }
+  );
+
+  return documenter;
+};
+
+/*
+ *
+ *  Entry Point
+ *
+*/
+
+print("Starting GMDoc...");
+
+inFile  = arg[0]; // directory/file listings of 'to be documented' files
+outFile = arg[1]; // ouput help files
+
+documenter = CreateGMDocumenter();
+
+dirsFile = system.File();
+
+if(!dirsFile.Open(inFile, 1))
+{
+  print("** Failed to open input file! **");
+}
+else
+{
+  nextLine = dirsFile.ReadLine();
+
+  while(nextLine)
+  {
+    nextLine = nextLine.TrimRight(); // carriage return syndrome
+
+    path = nextLine;
+    filename = nextLine.GetFilename();
+    pos = filename.Find(".cpp",filename.Length() - 5);
+
+    if(pos >= 0) // doc file
+    {
+      if(system.FileExists(path))
+      {
+        documenter.AddFile(path);
+      }
+    }
+    else // doc directory
+    {
+      handle = system.FileFindFirst(path ^ `\*.*`);
+      while(handle)
+      {
+        extension = handle.filename.GetExtension().Lower();
+        print(extension);
+        if(extension == `cpp` or extension == `gm`)
+        {
+          if(system.FileExists(path ^ handle.filename))
+          {
+            documenter.AddFile(path ^ handle.filename);
+          }
+        }
+        handle = system.FileFindNext(handle);
+      }
+    }
+
+    nextLine = dirsFile.ReadLine(); // read next line
+  }
+}
+
+dirsFile.Close();
+
+documenter.CreateDocumentation(outFile);
+
+print(`Done.`);
+
+
+

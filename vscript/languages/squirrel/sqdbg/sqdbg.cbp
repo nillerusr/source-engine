@@ -1,0 +1,162 @@
+<?xml version="1.0"?>
+<!DOCTYPE CodeBlocks_project_file>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="1"/>
+	<Project>
+		<Option title="sqdbg"/>
+		<Option makefile="Makefile"/>
+		<Option makefile_is_custom="0"/>
+		<Option compiler="0"/>
+		<Build>
+			<Target title="Debug">
+				<Option output="Debug\sqdbg.exe"/>
+				<Option working_dir="."/>
+				<Option object_output="Debug"/>
+				<Option deps_output=".deps"/>
+				<Option external_deps="..\lib\libsqdbglibD.a;..\lib\libsquirrelD.a;..\lib\libsqstdlibD.a;"/>
+				<Option type="1"/>
+				<Option compiler="0"/>
+				<Option projectResourceIncludeDirsRelation="1"/>
+				<Compiler>
+					<Add option="-W"/>
+					<Add option="-O0"/>
+					<Add option="-DWIN32"/>
+					<Add option="-D_DEBUG"/>
+					<Add option="-D_CONSOLE"/>
+					<Add option="-D_CRT_SECURE_NO_DEPRECATE"/>
+					<Add directory="..\include"/>
+				</Compiler>
+				<Linker>
+					<Add library="..\lib\libsqdbglibD.a"/>
+					<Add library="..\lib\libsquirrelD.a"/>
+					<Add library="..\lib\libsqstdlibD.a"/>
+					<Add library="wsock32"/>
+					<Add directory="..\lib"/>
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option output="Release\sqdbg.exe"/>
+				<Option working_dir="."/>
+				<Option object_output="Release"/>
+				<Option deps_output=".deps"/>
+				<Option external_deps="..\lib\libsqdbglib.a;..\lib\libsquirrel.a;..\lib\libsqstdlib.a;"/>
+				<Option type="1"/>
+				<Option compiler="0"/>
+				<Option projectResourceIncludeDirsRelation="1"/>
+				<Compiler>
+					<Add option="-W"/>
+					<Add option="-g"/>
+					<Add option="-DWIN32"/>
+					<Add option="-DNDEBUG"/>
+					<Add option="-D_CONSOLE"/>
+					<Add option="-D_CRT_SECURE_NO_DEPRECATE"/>
+					<Add directory="..\include"/>
+				</Compiler>
+				<Linker>
+					<Add library="..\lib\libsqdbglib.a"/>
+					<Add library="..\lib\libsquirrel.a"/>
+					<Add library="..\lib\libsqstdlib.a"/>
+					<Add library="wsock32"/>
+					<Add directory="..\lib"/>
+				</Linker>
+			</Target>
+			<Target title="Debug - Unicode">
+				<Option output="Debug - Unicode\sqdbg.exe"/>
+				<Option working_dir="."/>
+				<Option object_output="Debug - Unicode"/>
+				<Option deps_output=".deps"/>
+				<Option external_deps="..\lib\libsqdbglibDU.a;..\lib\libsquirrelDU.a;..\lib\libsqstdlibDU.a;"/>
+				<Option type="1"/>
+				<Option compiler="0"/>
+				<Option projectResourceIncludeDirsRelation="1"/>
+				<Compiler>
+					<Add option="-W"/>
+					<Add option="-O0"/>
+					<Add option="-DWIN32"/>
+					<Add option="-D_DEBUG"/>
+					<Add option="-D_CONSOLE"/>
+					<Add option="-D_CRT_SECURE_NO_DEPRECATE"/>
+					<Add option="-D_CRT_NON_CONFORMING_SWPRINTFS"/>
+					<Add directory="..\include"/>
+				</Compiler>
+				<Linker>
+					<Add library="..\lib\libsqdbglibDU.a"/>
+					<Add library="..\lib\libsquirrelDU.a"/>
+					<Add library="..\lib\libsqstdlibDU.a"/>
+					<Add library="wsock32"/>
+					<Add directory="..\lib"/>
+				</Linker>
+			</Target>
+			<Target title="Release - Unicode">
+				<Option output="Release - Unicode\sqdbg.exe"/>
+				<Option working_dir="."/>
+				<Option object_output="Release - Unicode"/>
+				<Option deps_output=".deps"/>
+				<Option external_deps="..\lib\libsqdbglibU.a;..\lib\libsquirrelU.a;..\lib\libsqstdlibU.a;"/>
+				<Option type="1"/>
+				<Option compiler="0"/>
+				<Option projectResourceIncludeDirsRelation="1"/>
+				<Compiler>
+					<Add option="-W"/>
+					<Add option="-g"/>
+					<Add option="-DWIN32"/>
+					<Add option="-DNDEBUG"/>
+					<Add option="-D_CONSOLE"/>
+					<Add option="-D_CRT_SECURE_NO_DEPRECATE"/>
+					<Add option="-D_CRT_NON_CONFORMING_SWPRINTFS"/>
+					<Add directory="..\include"/>
+				</Compiler>
+				<Linker>
+					<Add library="..\lib\libsqdbglibU.a"/>
+					<Add library="..\lib\libsquirrelU.a"/>
+					<Add library="..\lib\libsqstdlibU.a"/>
+					<Add library="wsock32"/>
+					<Add directory="..\lib"/>
+				</Linker>
+			</Target>
+		</Build>
+		<Unit filename="..\include\sqdbgserver.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="..\include\sqrdbg.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="main.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="serialize_state.nut">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="test.nut">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

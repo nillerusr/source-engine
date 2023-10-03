@@ -475,6 +475,8 @@ CHLTVServer::CHLTVServer()
 	m_nGlobalSlots = 0;
 	m_nGlobalClients = 0;
 	m_nGlobalProxies = 0;
+
+	m_nDebugID = EVENT_DEBUG_ID_INIT;
 }
 
 CHLTVServer::~CHLTVServer()
@@ -488,6 +490,8 @@ CHLTVServer::~CHLTVServer()
 	// make sure everything was destroyed
 	Assert( m_CurrentFrame == NULL );
 	Assert( CountClientFrames() == 0 );
+
+	m_nDebugID = EVENT_DEBUG_ID_SHUTDOWN;
 }
 
 void CHLTVServer::SetMaxClients( int number )
@@ -1015,9 +1019,13 @@ void CHLTVServer::FireGameEvent(IGameEvent *event)
 	}
 }
 
+int CHLTVServer::GetEventDebugID( void )
+{
+	return m_nDebugID;
+}
+
 bool CHLTVServer::ShouldUpdateMasterServer()
 {
-
 	// If the main game server is active, then we let it update Steam with the server info.
 	return !sv.IsActive();
 }

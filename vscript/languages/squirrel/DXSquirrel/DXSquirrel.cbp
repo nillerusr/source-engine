@@ -1,0 +1,253 @@
+<?xml version="1.0"?>
+<!DOCTYPE CodeBlocks_project_file>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="1"/>
+	<Project>
+		<Option title="DXSquirrel"/>
+		<Option makefile="Makefile"/>
+		<Option makefile_is_custom="0"/>
+		<Option compiler="0"/>
+		<Build>
+			<Target title="Debug">
+				<Option output="Debug\DXSquirrelD.exe"/>
+				<Option working_dir="."/>
+				<Option object_output="Debug"/>
+				<Option deps_output=".deps"/>
+				<Option external_deps="..\lib\libsquirrelD.a;..\lib\libsqstdlibD.a;..\lib\libsqplusD.a;"/>
+				<Option type="0"/>
+				<Option compiler="0"/>
+				<Option projectResourceIncludeDirsRelation="0"/>
+				<Compiler>
+					<Add option="-W"/>
+					<Add option="-O0"/>
+					<Add option="-DWIN32"/>
+					<Add option="-D_DEBUG"/>
+					<Add option="-D_WINDOWS"/>
+					<Add option="-D_CRT_SECURE_NO_DEPRECATE"/>
+					<Add directory="..\include"/>
+					<Add directory="..\sqplus"/>
+				</Compiler>
+				<Linker>
+					<Add library="..\lib\libsqplusD.a"/>
+					<Add library="D:\DX9\Lib\x86\d3dx9.lib"/>
+					<Add library="D:\DX9\Lib\x86\d3d9.lib"/>
+					<Add library="..\lib\libsquirrelD.a"/>
+					<Add library="..\lib\libsqstdlibD.a"/>
+					<Add library="D:\DX9\Lib\x86\dxguid.lib"/>
+					<Add directory="..\lib"/>
+					<Add directory="D:\DX9\Lib\x86"/>
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option output="Release\DXSquirrel.exe"/>
+				<Option working_dir="."/>
+				<Option object_output="Release"/>
+				<Option deps_output=".deps"/>
+				<Option external_deps="..\lib\libsquirrel.a;..\lib\libsqstdlib.a;..\lib\libsqplus.a;"/>
+				<Option type="0"/>
+				<Option compiler="0"/>
+				<Option projectResourceIncludeDirsRelation="0"/>
+				<Compiler>
+					<Add option="-W"/>
+					<Add option="-g"/>
+					<Add option="-DWIN32"/>
+					<Add option="-DNDEBUG"/>
+					<Add option="-D_WINDOWS"/>
+					<Add option="-D_CRT_SECURE_NO_DEPRECATE"/>
+					<Add directory="..\include"/>
+					<Add directory="..\sqplus"/>
+				</Compiler>
+				<Linker>
+					<Add library="D:\DX9\Lib\x86\d3d9.lib"/>
+					<Add library="D:\DX9\Lib\x86\d3dx9.lib"/>
+					<Add library="..\lib\libsqplus.a"/>
+					<Add library="..\lib\libsquirrel.a"/>
+					<Add library="..\lib\libsqstdlib.a"/>
+					<Add directory="..\lib"/>
+					<Add directory="D:\DX9\Lib\x86"/>
+				</Linker>
+			</Target>
+			<Target title="Debug - Unicode">
+				<Option output="Debug - Unicode\DXSquirrel.exe"/>
+				<Option working_dir="."/>
+				<Option object_output="Debug - Unicode"/>
+				<Option deps_output=".deps"/>
+				<Option external_deps="..\lib\libsquirrelDU.a;..\lib\libsqstdlibDU.a;..\lib\libsqplusDU.a;"/>
+				<Option type="0"/>
+				<Option compiler="0"/>
+				<Option projectResourceIncludeDirsRelation="0"/>
+				<Compiler>
+					<Add option="-W"/>
+					<Add option="-O0"/>
+					<Add option="-DWIN32"/>
+					<Add option="-D_DEBUG"/>
+					<Add option="-D_WINDOWS"/>
+					<Add option="-D_CRT_SECURE_NO_DEPRECATE"/>
+					<Add directory="..\include"/>
+					<Add directory="..\sqplus"/>
+				</Compiler>
+				<Linker>
+					<Add library="D:\DX9\Lib\x86\d3d9.lib"/>
+					<Add library="D:\DX9\Lib\x86\d3dx9.lib"/>
+					<Add library="..\lib\libsqplusDU.a"/>
+					<Add library="..\lib\libsquirrelDU.a"/>
+					<Add library="..\lib\libsqstdlibDU.a"/>
+					<Add directory="..\lib"/>
+					<Add directory="D:\DX9\Lib\x86"/>
+				</Linker>
+			</Target>
+			<Target title="Release - Unicode">
+				<Option output="Release - Unicode\DXSquirrel.exe"/>
+				<Option working_dir="."/>
+				<Option object_output="Release - Unicode"/>
+				<Option deps_output=".deps"/>
+				<Option external_deps="..\lib\libsquirrelU.a;..\lib\libsqstdlibU.a;..\lib\libsqplusU.a;"/>
+				<Option type="0"/>
+				<Option compiler="0"/>
+				<Option projectResourceIncludeDirsRelation="0"/>
+				<Compiler>
+					<Add option="-W"/>
+					<Add option="-g"/>
+					<Add option="-DWIN32"/>
+					<Add option="-DNDEBUG"/>
+					<Add option="-D_WINDOWS"/>
+					<Add option="-D_CRT_SECURE_NO_DEPRECATE"/>
+					<Add directory="..\include"/>
+					<Add directory="..\sqplus"/>
+				</Compiler>
+				<Linker>
+					<Add library="D:\DX9\Lib\x86\d3d9.lib"/>
+					<Add library="D:\DX9\Lib\x86\d3dx9.lib"/>
+					<Add library="..\lib\libsqplusU.a"/>
+					<Add library="..\lib\libsquirrelU.a"/>
+					<Add library="..\lib\libsqstdlibU.a"/>
+					<Add directory="..\lib"/>
+					<Add directory="D:\DX9\Lib\x86"/>
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add directory="D:\DX9\Include"/>
+		</Compiler>
+		<Unit filename="DXSquirrel.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="DXSquirrel.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="DXSquirrel.ico">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="DXSquirrel.rc">
+			<Option compilerVar="WINDRES"/>
+			<Option objectName="DXSquirrel.res"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="DXSquirrel_Binds.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="DXSquirrel_Binds.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="DXSquirrel_DX.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="DXSquirrel_Device.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="DXSquirrel_Math.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="DXSquirrel_Mesh.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="Resource.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="dxsquirrel.nut">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="small.ico">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="stdafx.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+		<Unit filename="stdafx.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

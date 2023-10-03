@@ -115,6 +115,8 @@ public: // CBaseServer interface:
 
 public:
 	void	FireGameEvent(IGameEvent *event);
+	int	m_nDebugID;
+	int	GetEventDebugID( void );
 
 public: // IHLTVServer interface:
 	IServer	*GetBaseServer( void );
