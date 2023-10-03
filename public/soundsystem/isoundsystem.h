@@ -10,7 +10,7 @@
 #pragma once
 #endif
 
-#include "appframework/iappsystem.h"
+#include "appframework/IAppSystem.h"
 
 
 //-----------------------------------------------------------------------------

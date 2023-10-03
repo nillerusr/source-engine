@@ -7,3 +7,4 @@ public/color.h
 
 public/igameevents.h
 public/engine/ICollideable.h
+public/datamap.h

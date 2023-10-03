@@ -16,7 +16,7 @@
 #include <soundflags.h>
 #include "mathlib/vector.h"
 #include <shareddefs.h>
-#include "color.h"
+#include "Color.h"
 
 #include "shake.h"
 #include "bitmap/imageformat.h"

@@ -249,7 +249,7 @@ typedef void (CBaseEntity::*inputfunc_t)(inputdata_t &data);
 struct datamap_t;
 struct typedescription_t;
 
-#if 0
+#if SOURCE_ASW
 enum
 {
         PC_NON_NETWORKED_ONLY = 0,

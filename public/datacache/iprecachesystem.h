@@ -17,7 +17,7 @@
 #include "tier0/dbg.h"
 #include "tier2/tier2.h"
 #include "tier2/resourceprecacher.h"
-#include "appframework/iappsystem.h"
+#include "appframework/IAppSystem.h"
 
 //-----------------------------------------------------------------------------
 // Resource access control API

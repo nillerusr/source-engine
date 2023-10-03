@@ -107,7 +107,7 @@ projects={
 		'dedicated_main',
 		'dmxloader',
 		'engine',
-		'game/server',
+#		'game/server',
 		'ivp/havana',
 		'ivp/havana/havok/hk_base',
 		'ivp/havana/havok/hk_math',

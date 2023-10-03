@@ -698,7 +698,8 @@ bool CSceneImage::UpdateSceneImageFile( CUtlBuffer &targetBuffer, char const *pc
 			scene.crcFileName = pEntry->crcFilename;
 			scene.compiledBuffer.Put( pData, pEntry->nDataLength );
 			scene.msecs = pSummary->msecs;
-			scene.lastspeak_msecs = pSummary->lastspeech_msecs;
+			// TODO(nillerusr): support for loading other scene image versions?
+			//scene.lastspeak_msecs = pSummary->lastspeech_msecs;
 			// Load sounds
 			for ( int j = 0 ; j < pSummary->numSounds; ++j )
 			{
