@@ -686,7 +686,7 @@ void CDemoRecorder::CloseDemoFile()
 
 		m_DemoFile.Close();
 
-		g_ClientDLL->OnDemoRecordStop();
+		if( g_ClientDLL ) g_ClientDLL->OnDemoRecordStop();
 	}
 
 	m_bCloseDemoFile = false;
