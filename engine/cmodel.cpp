@@ -50,18 +50,29 @@ csurface_t *CCollisionBSPData::GetSurfaceAtIndex( unsigned short surfaceIndex )
 	return &map_surfaces[surfaceIndex];
 }
 
+#if TEST_TRACE_POOL
+CTSPool<TraceInfo_t> g_TraceInfoPool;
+#else
 class CTraceInfoPool : public CTSList<TraceInfo_t *>
 {
 public:
 	CTraceInfoPool() = default;
 };
 
-TraceInfo_t g_TraceInfo;
+CTraceInfoPool g_TraceInfoPool;
+#endif
 
 TraceInfo_t *BeginTrace()
 {
-	TraceInfo_t * pTraceInfo = &g_TraceInfo;
-
+#if TEST_TRACE_POOL
+	TraceInfo_t *pTraceInfo = g_TraceInfoPool.GetObject();
+#else
+	TraceInfo_t *pTraceInfo;
+	if ( !g_TraceInfoPool.PopItem( &pTraceInfo ) )
+	{
+		pTraceInfo = new TraceInfo_t;
+	}
+#endif
 	if ( pTraceInfo->m_BrushCounters[0].Count() != GetCollisionBSPData()->numbrushes + 1 )
 	{
 		memset( pTraceInfo->m_Count, 0, sizeof( pTraceInfo->m_Count ) );
@@ -107,6 +118,11 @@ void EndTrace( TraceInfo_t *&pTraceInfo )
 {
 	PopTraceVisits( pTraceInfo );
 	Assert( pTraceInfo->m_nCheckDepth == -1 );
+#if TEST_TRACE_POOL
+	g_TraceInfoPool.PutObject( pTraceInfo );
+#else
+	g_TraceInfoPool.PushItem( pTraceInfo );
+#endif
 	pTraceInfo = NULL;
 }
 
