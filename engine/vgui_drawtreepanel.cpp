@@ -268,7 +268,7 @@ public:
 
 			if ( data )
 			{
-				g_DrawTreeSelectedPanel = (data) ? (vgui::VPANEL)data->GetInt( "PanelPtr", 0 ) : 0;
+				g_DrawTreeSelectedPanel = (data) ? (vgui::VPANEL)data->GetPtr( "PanelPtr", 0 ) : 0;
 			}
 			else
 			{
@@ -388,7 +388,7 @@ void VGui_RecursivePrintTree(
 		Q_snprintf( str, sizeof( str ), "%s", name );
 
 	pVal->SetString( "Text", str );
-	pVal->SetInt( "PanelPtr", current );
+	pVal->SetPtr( "PanelPtr", (void*)current );
 
 	pNewParent = pVal;
 
@@ -417,7 +417,7 @@ bool UpdateItemState(
 	vgui::IPanel *ipanel = vgui::ipanel();
 
 	KeyValues *pItemData = pTree->GetItemData( iChildItemId );
-	if ( pItemData->GetInt( "PanelPtr" ) != pSub->GetInt( "PanelPtr" ) ||
+	if ( pItemData->GetPtr( "PanelPtr" ) != pSub->GetPtr( "PanelPtr" ) ||
 		Q_stricmp( pItemData->GetString( "Text" ), pSub->GetString( "Text" ) ) != 0 )
 	{
 		pTree->ModifyItem( iChildItemId, pSub );
@@ -425,7 +425,7 @@ bool UpdateItemState(
 	}
 
 	// Ok, this is a new panel.
-	vgui::VPANEL vPanel = pSub->GetInt( "PanelPtr" );
+	vgui::VPANEL vPanel = (vgui::VPANEL)pSub->GetPtr( "PanelPtr" );
 
 	int iBaseColor[3] = { 255, 255, 255 };
 	if ( ipanel->IsPopup( vPanel ) )
@@ -433,7 +433,7 @@ bool UpdateItemState(
 		iBaseColor[0] = 255;	iBaseColor[1] = 255;	iBaseColor[2] = 0;
 	}
 
-	if ( g_FocusPanelList.Find( vPanel ) != -1 )
+	if ( g_FocusPanelList.Find( vPanel ) != vgui::INVALID_PANEL )
 	{
 		iBaseColor[0] = 0;		iBaseColor[1] = 255;	iBaseColor[2] = 0;
 		pTree->ExpandItem( iChildItemId, true );
