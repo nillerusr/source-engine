@@ -1842,7 +1842,7 @@ void CVEngineServer::PlaybackTempEntity( IRecipientFilter& filter, float delay, 
 
 	newEvent->bits = buffer.GetNumBitsWritten();
 	int size = Bits2Bytes( buffer.GetNumBitsWritten() );
-	newEvent->pData = new byte[size];
+	newEvent->pData = new byte[ALIGN_VALUE(size,4)];
 	Q_memcpy( newEvent->pData, data, size );
 
 	// add to list

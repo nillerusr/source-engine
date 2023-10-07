@@ -1010,7 +1010,7 @@ CUtlString D3DToGL::FixGLSLSwizzle( const char *pDestRegisterName, const char *p
 {
 	bool bAbsWrapper = false; // Parameter wrapped in an abs()
 	bool bAbsNegative = false; // -abs()
-	char szSrcRegister[128];
+	static char szSrcRegister[128];
 	V_strncpy( szSrcRegister, pSrcRegisterName, sizeof(szSrcRegister) );
 
 	// Check for abs() or -abs() wrapper and strip it off during the fixup

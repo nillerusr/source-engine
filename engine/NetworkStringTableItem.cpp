@@ -199,7 +199,7 @@ bool CNetworkStringTableItem::SetUserData( int tick, int length, const void *use
 
 	if ( length > 0 )
 	{
-		m_pUserData = new unsigned char[ length ];
+		m_pUserData = new unsigned char[ALIGN_VALUE( length, 4 )];
 		Q_memcpy( m_pUserData, userData, length );
 	}
 	else

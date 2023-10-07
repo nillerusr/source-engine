@@ -1787,14 +1787,14 @@ FORCEINLINE fltx4 LoadAlignedSIMD( const VectorAligned & pSIMD )
 	return SetWToZeroSIMD( LoadAlignedSIMD(pSIMD.Base()) );
 }
 
-#ifdef __SANITIZE_ADDRESS__
-static __attribute__((no_sanitize("address"))) fltx4 LoadUnalignedSIMD( const void *pSIMD )
+#ifdef USING_ASAN
+static NO_ASAN fltx4 LoadUnalignedSIMD( const void *pSIMD )
 {
 	return _mm_loadu_ps( reinterpret_cast<const float *>( pSIMD ) );
 
 }
 
-static __attribute__((no_sanitize("address"))) fltx4 LoadUnaligned3SIMD( const void *pSIMD )
+static NO_ASAN fltx4 LoadUnaligned3SIMD( const void *pSIMD )
 {
 	return _mm_loadu_ps( reinterpret_cast<const float *>( pSIMD ) );
 }

@@ -921,7 +921,7 @@ void DownloadThread( void *voidPtr )
 	// Delete rc.data, which was allocated in this thread
 	if ( rc.data != NULL )
 	{
-		delete[] rc.data;
+		free(rc.data);
 		rc.data = NULL;
 	}
 	

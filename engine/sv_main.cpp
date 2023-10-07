@@ -1227,7 +1227,7 @@ void SV_DetermineMulticastRecipients( bool usepas, const Vector& origin, CBitVec
 		serverGameClients->ClientEarPosition( pClient->edict, &vecEarPosition );
 
 		int iBitNumber = CM_LeafCluster( CM_PointLeafnum( vecEarPosition ) );
-		if ( !(pMask[iBitNumber>>3] & (1<<(iBitNumber&7)) ) )
+		if ( iBitNumber < 0 || !(pMask[iBitNumber>>3] & (1<<(iBitNumber&7)) ) )
 			continue;
 
 		playerbits.Set( i );
