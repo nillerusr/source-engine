@@ -508,7 +508,7 @@ public:
 		if ( panel == m_pDXLevel && RequiresRestart() )
 		{
 			// notify the user that this will require a disconnect
-			QueryBox *box = new QueryBox("#GameUI_SettingRequiresDisconnect_Title", "#GameUI_SettingRequiresDisconnect_Info");
+			QueryBox *box = new QueryBox("#GameUI_SettingRequiresDisconnect_Title", "#GameUI_SettingRequiresDisconnect_Info", this);
 			box->AddActionSignalTarget( this );
 			box->SetCancelCommand(new KeyValues("ResetDXLevelCombo"));
 			box->DoModal();
