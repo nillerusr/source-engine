@@ -1500,6 +1500,9 @@ void FileOpenDialog::OnOpen()
 	char pFileName[MAX_PATH];
 	GetSelectedFileName( pFileName, sizeof( pFileName ) );
 
+	if( !pFileName[0] )
+		return;
+
 	int nLen = Q_strlen( pFileName );
 	bool bSpecifiedDirectory = ( pFileName[nLen-1] == '/' || pFileName[nLen-1] == '\\' ) && (!IsOSX() || ( IsOSX() && !Q_stristr( pFileName, ".app" ) ) );
 	Q_StripTrailingSlash( pFileName );

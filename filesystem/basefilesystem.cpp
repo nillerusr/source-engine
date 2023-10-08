@@ -4203,7 +4203,7 @@ bool CBaseFileSystem::FindNextFileInVPKOrPakHelper( FindData_t *pFindData )
 	{
 		V_strncpy( pFindData->findData.cFileName, V_UnqualifiedFileName( pFindData->m_fileMatchesFromVPKOrPak[0] ), sizeof( pFindData->findData.cFileName ) );
 		pFindData->findData.dwFileAttributes = 0;
-		delete pFindData->m_fileMatchesFromVPKOrPak.Head();
+		delete[] pFindData->m_fileMatchesFromVPKOrPak.Head();
 		pFindData->m_fileMatchesFromVPKOrPak.RemoveMultipleFromHead( 1 );
 
 		return true;

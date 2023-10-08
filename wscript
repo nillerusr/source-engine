@@ -239,9 +239,9 @@ def define_platform(conf):
 			'_DLL_EXT=.so'
 		])
 
-#	if conf.env.DEST_OS != 'win32':
+	if conf.env.DEST_OS != 'win32':
+		conf.define('NO_MEMOVERRIDE_NEW_DELETE', 1)
 #		conf.define('NO_MALLOC_OVERRIDE', 1)
-#		conf.define('NO_MEMOVERRIDE_NEW_DELETE', 1)
 
 	if conf.options.DEBUG_ENGINE:
 		conf.env.append_unique('DEFINES', [
