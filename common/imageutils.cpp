@@ -65,9 +65,12 @@ extern void longjmp( jmp_buf, int ) __attribute__((noreturn));
 #define JPEGLIB_USE_STDIO
 #if ANDROID
 #include "android/jpeglib/jpeglib.h"
-#else
+#elif defined WIN32
 #include "jpeglib/jpeglib.h"
+#else
+#include <jpeglib.h>
 #endif
+
 #undef JPEGLIB_USE_STDIO
 
 

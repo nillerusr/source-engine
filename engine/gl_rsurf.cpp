@@ -4934,7 +4934,7 @@ static bool EnumerateLeafInBox_R(mnode_t * RESTRICT node, const EnumLeafBoxInfo_
 	*/
 	
 	// take advantage of high throughput/high latency
-	fltx4 planeNormal = LoadAlignedSIMD( plane->normal.Base() );
+	fltx4 planeNormal = LoadUnaligned3SIMD( plane->normal.Base() );
 	fltx4 vecBoxMin = LoadAlignedSIMD(pInfo->m_vecBoxMin);
 	fltx4 vecBoxMax = LoadAlignedSIMD(pInfo->m_vecBoxMax);
 	fltx4 cornermin, cornermax;
