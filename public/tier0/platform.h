@@ -9,12 +9,17 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
-#if defined(__x86_64__) || defined(_WIN64) || defined(__aarch64__)
+#if defined(__x86_64__) || defined(_WIN64) || defined(__aarch64__) || defined(__e2k__)
 #define PLATFORM_64BITS 1
 #endif
 
 #if defined(__GCC__) || defined(__GNUC__)
 #define COMPILER_GCC 1
+#endif
+
+#if defined(__LCC__) && defined(__MCST__)
+// MCST LCC (eLbrus Compiler Collection)
+#define COMPILER_MCST_LCC 1
 #endif
 
 #ifdef __GLIBC__
@@ -898,7 +903,7 @@ static FORCEINLINE double fsel(double fComparand, double fValGE, double fLT)
 
 		#endif
 	#endif
-#elif defined (__arm__) || defined (__aarch64__)
+#elif defined (__arm__) || defined (__aarch64__) || defined(__e2k__)
 	inline void SetupFPUControlWord() {}
 #else
 	inline void SetupFPUControlWord()
@@ -1069,7 +1074,7 @@ inline T QWordSwapC( T dw )
 // The typically used methods.
 //-------------------------------------
 
-#if (defined(__i386__) || defined(__amd64__) || defined(__arm__) || defined(__aarch64__)) && !defined(VALVE_LITTLE_ENDIAN)
+#if (defined(__i386__) || defined(__amd64__) || defined(__arm__) || defined(__aarch64__) || defined(__e2k__)) && !defined(VALVE_LITTLE_ENDIAN)
 #define VALVE_LITTLE_ENDIAN 1
 #endif
 
@@ -1235,7 +1240,7 @@ PLATFORM_INTERFACE struct tm *		Plat_localtime( const time_t *timep, struct tm *
 
 inline uint64 Plat_Rdtsc()
 {
-#if (defined( __arm__ ) || defined( __aarch64__ )) && defined (POSIX)
+#if (defined( __arm__ ) || defined( __aarch64__ ) || defined(__e2k__)) && defined (POSIX)
 	struct timespec t;
 	clock_gettime( CLOCK_REALTIME, &t);
 	return t.tv_sec * 1000000000ULL + t.tv_nsec;
