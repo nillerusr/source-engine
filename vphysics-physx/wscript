@@ -1,0 +1,80 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from waflib import Utils
+import os
+
+top = '.'
+PROJECT_NAME = 'vphysics'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	conf.env.append_unique('DEFINES',[
+		'VPHYSICS_EXPORTS',
+		'HAVANA_CONSTRAINTS',
+		'HAVOK_MOPP'
+	])
+def build(bld):
+	source = [
+		'convert.cpp',
+		'../public/filesystem_helpers.cpp',
+		'ledgewriter.cpp',
+		'main.cpp',
+		'physics_airboat.cpp',
+		'physics_collide.cpp',
+		'physics_constraint.cpp',
+		'physics_controller_raycast_vehicle.cpp',
+		'physics_environment.cpp',
+		'physics_fluid.cpp',
+		'physics_friction.cpp',
+		'physics_material.cpp',
+		'physics_motioncontroller.cpp',
+		'physics_object.cpp',
+		'physics_shadow.cpp',
+		'physics_spring.cpp',
+		'physics_vehicle.cpp',
+		'physics_virtualmesh.cpp',
+		'trace.cpp',
+		'vcollide_parse.cpp',
+		'vphysics_saverestore.cpp',
+		'../public/tier0/memoverride.cpp'
+	]
+
+	includes = [
+		'.',
+		'../public',
+		'../public/tier0',
+		'../public/tier1',
+		'../ivp/ivp_intern',
+		'../ivp/ivp_collision',
+		'../ivp/ivp_physics',
+		'../ivp/ivp_surface_manager',
+		'../ivp/ivp_utility',
+		'../ivp/ivp_controller',
+		'../ivp/ivp_compact_builder',
+		'../ivp/havana/havok',
+		'../ivp/havana'
+	]
+
+	defines = []
+
+	libs = ['tier0','havana_constraints','hk_math','hk_base','ivp_compactbuilder','ivp_physics','tier1','tier2','vstdlib','mathlib']
+
+	install_path = bld.env.LIBDIR
+
+	bld.shlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		install_path = install_path,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)
+

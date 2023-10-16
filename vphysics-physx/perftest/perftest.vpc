@@ -1,0 +1,57 @@
+//-----------------------------------------------------------------------------
+//	PERFTEST.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
+
+$Include "$SRCDIR\vpc_scripts\source_exe_win_win32_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\..\utils\common,..\..\utils\matsysapp,."
+		$PreprocessorDefinitions			"$BASE;VECTOR;PROTECTED_THINGS_DISABLE"
+	}
+
+	$Linker
+	{
+//		$AdditionalDependencies				"comctl32.lib winmm.lib"
+	}
+}
+
+$Project "perftest"
+{
+	$Folder	"Source Files"
+	{
+		$File	"..\..\utils\matsysapp\matsysapp.cpp"
+		$File	"perftest.cpp"
+
+		$Folder	"common files"
+		{
+//			$File	"..\..\utils\common\bsplib.cpp"
+			$File	"..\..\utils\common\cmdlib.cpp"
+			$File	"$SRCDIR\public\filesystem_helpers.cpp"
+			$File	"$SRCDIR\public\filesystem_init.cpp"
+			$File	"..\..\utils\common\filesystem_tools.cpp"
+			$File	"..\..\utils\common\physdll.cpp"
+			$File	"..\..\utils\common\scriplib.cpp"
+		}
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"$SRCDIR\public\vphysics_interface.h"
+		$File	"stdafx.h"
+	}
+
+	$Folder	"Link Libraries"
+	{
+//		$DynamicFile	"$SRCDIR\lib\public\appframework.lib"
+		$DynamicFile	"$SRCDIR\lib\public\mathlib.lib"
+		$DynamicFile	"$SRCDIR\lib\public\tier2.lib"
+	}
+}
