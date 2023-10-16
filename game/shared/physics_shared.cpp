@@ -603,7 +603,7 @@ IPhysicsObject *PhysCreateWorld_Shared( CBaseEntity *pWorld, vcollide_t *pWorldC
 		pWorldCollide->solids[0], surfaceData, vec3_origin, vec3_angle, &params );
 
 	// hint - saves vphysics some work
-	pWorldPhysics->SetCallbackFlags( pWorldPhysics->GetCallbackFlags() | CALLBACK_NEVER_DELETED );
+	//pWorldPhysics->SetCallbackFlags( pWorldPhysics->GetCallbackFlags() | CALLBACK_NEVER_DELETED );
 
 	//PhysCheckAdd( world, "World" );
 	// walk the world keys in case there are some fluid volumes to create
@@ -667,8 +667,8 @@ IPhysicsObject *PhysCreateWorld_Shared( CBaseEntity *pWorld, vcollide_t *pWorldC
 				IPhysicsObject *pWater = physenv->CreatePolyObjectStatic( pWorldCollide->solids[fluid.index], 
 					surfaceData, vec3_origin, vec3_angle, &solid.params );
 
-				pWater->SetCallbackFlags( pWater->GetCallbackFlags() | CALLBACK_NEVER_DELETED );
-				physenv->CreateFluidController( pWater, &fluid.params );
+				//pWater->SetCallbackFlags( pWater->GetCallbackFlags() | CALLBACK_NEVER_DELETED );
+				//physenv->CreateFluidController( pWater, &fluid.params );
 			}
 		}
 		else if ( !strcmpi( pBlock, "materialtable" ) )

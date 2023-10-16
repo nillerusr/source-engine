@@ -269,6 +269,8 @@ static void RagdollCreateObjects( IPhysicsEnvironment *pPhysEnv, ragdoll_t &ragd
 	memset( ragdoll.list, 0, sizeof(ragdoll.list) );
 	memset( &ragdoll.animfriction, 0, sizeof(ragdoll.animfriction) );
 	
+	return;
+
 	if ( !params.pCollide || params.pCollide->solidCount > RAGDOLL_MAX_ELEMENTS )
 		return;
 

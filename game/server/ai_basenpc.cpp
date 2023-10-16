@@ -6586,7 +6586,7 @@ void CAI_BaseNPC::SetupVPhysicsHull()
 #endif
 		IPhysicsShadowController *pController = pPhysObj->GetShadowController();
 		float avgsize = (WorldAlignSize().x + WorldAlignSize().y) * 0.5;
-		pController->SetTeleportDistance( avgsize * 0.5 );
+		//pController->SetTeleportDistance( avgsize * 0.5 );
 		m_bCheckContacts = true;
 	}
 }
@@ -6598,6 +6598,8 @@ void CAI_BaseNPC::SetupVPhysicsHull()
 ConVar ai_auto_contact_solver( "ai_auto_contact_solver", "1" );
 void CAI_BaseNPC::CheckPhysicsContacts()
 {
+	return;
+
 	if ( gpGlobals->frametime <= 0.0f || !ai_auto_contact_solver.GetBool() )
 		return;
 
@@ -6616,6 +6618,8 @@ void CAI_BaseNPC::CheckPhysicsContacts()
 		while ( pSnapshot->IsValid() )
 		{
 			IPhysicsObject *pOther = pSnapshot->GetObject(1);
+			if( !pOther )
+				continue;
 			pOtherEntity = static_cast<CBaseEntity *>(pOther->GetGameData());
 
 			if ( pOtherEntity && pGroundEntity != pOtherEntity )
