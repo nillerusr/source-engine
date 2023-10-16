@@ -189,6 +189,8 @@ CPhysicsFluidController *CreateFluidController( IVP_Environment *pEnvironment, C
 {
 	pFluidObject->BecomeTrigger();
 
+	return NULL;
+
 	IVP_Controller_Phantom *pPhantom = pFluidObject->GetObject()->get_controller_phantom();
 	if ( !pPhantom )
 		return NULL;

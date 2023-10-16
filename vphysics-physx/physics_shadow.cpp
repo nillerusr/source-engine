@@ -288,29 +288,12 @@ void CPlayerController::AttachObject( void )
 {
 	m_pObject->EnableDrag( false );
 	IVP_Real_Object *pivp = m_pObject->GetObject();
-	IVP_Core *pCore = pivp->get_core();
-	m_saveRot = pCore->rot_speed_damp_factor;
-	pCore->rot_speed_damp_factor = IVP_U_Float_Point( 100, 100, 100 );
-	pCore->calc_calc();
-	BEGIN_IVP_ALLOCATION();
-	pivp->get_environment()->get_controller_manager()->add_controller_to_core( this, pCore );
-	END_IVP_ALLOCATION();
-	m_pObject->AddCallbackFlags( CALLBACK_IS_PLAYER_CONTROLLER );
 }
 
 void CPlayerController::DetachObject( void )
 {
 	if ( !m_pObject )
 		return;
-
-	IVP_Real_Object *pivp = m_pObject->GetObject();
-	IVP_Core *pCore = pivp->get_core();
-	pCore->rot_speed_damp_factor = m_saveRot;
-	pCore->calc_calc();
-	m_pObject->RemoveCallbackFlags( CALLBACK_IS_PLAYER_CONTROLLER );
-	m_pObject = NULL;
-	pivp->get_environment()->get_controller_manager()->remove_controller_from_core( this, pCore );
-	SetGround(NULL);
 }
 
 void CPlayerController::SetObject( IPhysicsObject *pObject )
@@ -360,14 +343,14 @@ void CPlayerController::StepUp( float height )
 		return;
 
 	Vector step( 0, 0, height );
-
+/*
 	IVP_Real_Object *pIVP = m_pObject->GetObject();
 	IVP_U_Quat world_f_object;
 	IVP_U_Point positionIVP, deltaIVP;
 	ConvertPositionToIVP( step, deltaIVP );
 	pIVP->get_quat_world_f_object_AT( &world_f_object, &positionIVP );
 	positionIVP.add( &deltaIVP );
-	pIVP->beam_object_to_new_position( &world_f_object, &positionIVP, IVP_TRUE );
+	pIVP->beam_object_to_new_position( &world_f_object, &positionIVP, IVP_TRUE );*/
 }
 
 void CPlayerController::Jump()
@@ -632,34 +615,6 @@ void CPlayerController::Update( const Vector& position, const Vector& velocity, 
 #endif
 
 	m_currentSpeed.set( &targetSpeedIVP );
-
-	IVP_Real_Object *pivp = m_pObject->GetObject();
-	IVP_Core *pCore = pivp->get_core();
-	IVP_Environment *pEnv = pivp->get_environment();
-	pEnv->get_controller_manager()->ensure_core_in_simulation(pCore);
-
-	m_enable = true;
-	// m_onground makes this object anti-grav
-	// UNDONE: Re-evaluate this
-	m_onground = false;//onground;
-	if ( velocity.LengthSqr() <= 0.1f )
-	{
-		// no input velocity, just go where physics takes you.
-		m_enable = false;
-		ground = NULL;
-	}
-	else
-	{
-		MaxSpeed( velocity );
-	}
-
-	CPhysicsObject *pGroundObject = static_cast<CPhysicsObject *>(ground);
-	SetGround( pGroundObject );
-	if ( m_pGround )
-	{
-		const IVP_U_Matrix *pMatrix = m_pGround->GetObject()->get_core()->get_m_world_f_core_PSI();
-		pMatrix->vimult4( &m_targetPosition, &m_groundPosition );
-	}
 }
 
 void CPlayerController::MaxSpeed( const Vector &velocity )

@@ -29,6 +29,7 @@
 
 #include "mathlib/polyhedron.h"
 #include "tier1/byteswap.h"
+#include "physics_globals.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -161,9 +162,110 @@ EXPOSE_SINGLE_INTERFACE_GLOBALVAR( CPhysicsCollision, IPhysicsCollision, VPHYSIC
 // You can disable all of the havok Mopp collision model building by undefining this symbol
 #define ENABLE_IVP_MOPP	0
 
+struct ivpcompactledge_t {
+        DECLARE_BYTESWAP_DATADESC()
+
+        int             c_point_offset; // byte offset from 'this' to (ledge) point array
+        union {
+                int     ledgetree_node_offset;
+                int     client_data;    // if indicates a non terminal ledge
+        };
+
+        union {
+                int bf1;
+
+                struct {
+                        uint    has_chilren_flag:2;
+                        int             is_compact_flag:2;  // if false than compact ledge uses points outside this piece of memory
+                        uint    dummy:4;
+                        uint    size_div_16:24; 
+                };
+        };
+
+        short   n_triangles;
+        short   for_future_use;
+};
+
+// 48 bytes
+// Just like a btCompoundShape.
+struct ivpcompactsurface_t {
+        DECLARE_BYTESWAP_DATADESC()
+
+        float   mass_center[3];
+        float   rotation_inertia[3];
+        float   upper_limit_radius;
+
+        union {
+                int bf1; // HACK: Allow datamap to take address of this bitfield
+
+                struct {
+                        int             max_deviation : 8;
+                        int             byte_size : 24;
+                };
+        };
+
+        int             offset_ledgetree_root;
+        int             dummy[3];                       // dummy[2] is "IVPS" or 0
+};
+
+struct ivpcompactedge_t {
+        DECLARE_BYTESWAP_DATADESC()
+
+        union {
+                int bf1;
+
+                struct {
+                        uint    start_point_index:16;           // point index
+                        int             opposite_index:15;                      // rel to this // maybe extra array, 3 bits more tha>
+                        uint    is_virtual:1;
+                };
+        };
+};
+
+struct ivpcompactledgenode_t {
+        DECLARE_BYTESWAP_DATADESC()
+
+        int             offset_right_node; // (if != 0 than children
+        int             offset_compact_ledge; // (if != 0, pointer to hull that contains all subelements
+        float   center[3];      // in object_coords
+        float   radius; // size of sphere
+        unsigned char box_sizes[3];
+        unsigned char free_0;
+
+        // Functions
+
+        const ivpcompactledge_t *GetCompactLedge() const {
+                Assert(this->offset_right_node == 0);
+                return (ivpcompactledge_t *)((char *)this + this->offset_compact_ledge);
+        }
+
+        const ivpcompactledgenode_t *GetLeftSon() const {
+                Assert(this->offset_right_node);
+                return this + 1;
+        }
+
+        const ivpcompactledgenode_t *GetRightSon() const {
+                Assert(this->offset_right_node);
+                return (ivpcompactledgenode_t *)((char *)this + this->offset_right_node);
+        }
+
+        bool IsTerminal() const {
+                return (this->offset_right_node == 0);
+        }
+
+        const ivpcompactledge_t *GetCompactHull() const {
+                if (this->offset_compact_ledge)
+                        return (ivpcompactledge_t *)((char *)this + this->offset_compact_ledge);
+                else
+                        return NULL;
+        }
+};
+
+
 struct physcollideheader_t
 {
 	DECLARE_BYTESWAP_DATADESC();
+	int	size;
 	int		vphysicsID;
 	short	version;
 	short	modelType;
@@ -306,10 +408,136 @@ void OutputCollideDebugInfo( const CPhysCollide *pCollisionModel )
 	pCollisionModel->OutputDebugInfo();
 }
 
+namespace ivp_compat
+{
+	struct collideheader_t
+	{
+		int		vphysicsID;
+		short	version;
+		short	modelType;
+	};
+
+	struct compactsurfaceheader_t
+	{
+		int		surfaceSize;
+		Vector	dragAxisAreas;
+		int		axisMapSize;
+	};
+
+	struct moppsurfaceheader_t
+	{
+		int moppSize;
+	};
+
+	struct compactsurface_t
+	{
+		float	mass_center[3];
+		float	rotation_inertia[3];
+		float	upper_limit_radius;
+
+		unsigned int	max_factor_surface_deviation	: 8;
+		int		        byte_size						: 24;
+		int		        offset_ledgetree_root;
+		int		        dummy[3];
+	};
+
+	struct compactmopp_t
+	{
+		float	mass_center[3];
+		float	rotation_inertia[3];
+		float	upper_limit_radius;
+
+		unsigned int max_factor_surface_deviation	: 8;
+		int          byte_size						: 24;
+		int	         offset_ledgetree_root;
+		int          offset_ledges;
+		int          size_convex_hull;
+		int	         dummy;
+	};
+
+	struct compactledge_t
+	{
+		int		c_point_offset;
+
+		union
+		{
+			int	ledgetree_node_offset;
+			int	client_data;
+		};
+
+		struct
+		{
+			uint	has_children_flag	: 2;
+			int		is_compact_flag		: 2;
+			uint	dummy				: 4;
+			uint	size_div_16			: 24; 
+		};
+
+		short	n_triangles;
+		short	for_future_use;
+	};
+
+	struct compactedge_t
+	{
+		uint    start_point_index	: 16;
+		int		opposite_index		: 15;
+		uint	is_virtual			: 1;
+	};
+
+	struct compacttriangle_t
+	{
+		uint	tri_index		: 12;
+		uint	pierce_index	: 12;
+		uint	material_index	: 7;
+		uint	is_virtual		: 1;
+		compactedge_t c_three_edges[3];
+	};
+
+	struct compactledgenode_t
+	{
+		int		offset_right_node;
+		int		offset_compact_ledge;
+		float	center[3];
+		float	radius;
+		unsigned char box_sizes[3];
+		unsigned char free_0;
+
+		const compactledge_t *GetCompactLedge() const
+		{
+			//VJoltAssert( this->offset_right_node == 0 );
+			return ( compactledge_t * )( ( char * )this + this->offset_compact_ledge );
+		}
+
+		const compactledgenode_t *GetLeftChild() const
+		{
+			//VJoltAssert( this->offset_right_node );
+			return this + 1;
+		}
+
+		const compactledgenode_t *GetRightChild() const
+		{
+			//VJoltAssert( this->offset_right_node );
+			return ( compactledgenode_t * )( ( char * )this + this->offset_right_node );
+		}
+
+		bool IsTerminal() const
+		{
+			return this->offset_right_node == 0;
+		}
+
+		const compactledge_t *GetCompactHull() const
+		{
+			if ( this->offset_compact_ledge )
+				return ( compactledge_t * )( ( char * )this + this->offset_compact_ledge );
+			else
+				return nullptr;
+		}
+	};
+}
 
 CPhysCollide *CPhysCollide::UnserializeFromBuffer( const char *pBuffer, unsigned int size, int index, bool swap )
 {
-	const physcollideheader_t *pHeader = reinterpret_cast<const physcollideheader_t *>(pBuffer);
+	const ivp_compat::collideheader_t *pHeader = reinterpret_cast<const ivp_compat::collideheader_t *>(pBuffer);
 	if ( pHeader->vphysicsID == VPHYSICS_COLLISION_ID )
 	{
 		Assert(pHeader->version == VPHYSICS_COLLISION_VERSION);
@@ -1623,39 +1851,113 @@ float CPhysicsCollision::CollideSurfaceArea( CPhysCollide *pCollide )
 	return area;
 }
 
+static void GetAllIVPEdges(const ivp_compat::compactledgenode_t *pNode, CUtlVector<const ivp_compat::compactledge_t *> *vecOut)
+{
+	if (!pNode || !vecOut) return;
+
+	if ( !pNode->IsTerminal() )
+	{
+		GetAllIVPEdges( pNode->GetRightChild(), vecOut );
+		GetAllIVPEdges( pNode->GetLeftChild(), vecOut );
+	}
+	else
+		vecOut->AddToTail( pNode->GetCompactLedge() );
+}
+
+CPhysCollide *DeserializeIVP_Poly( const ivp_compat::compactsurface_t* pSurface )
+{
+	const ivp_compat::compactledgenode_t *pFirstLedgeNode = reinterpret_cast< const ivp_compat::compactledgenode_t * >(
+			reinterpret_cast< const char * >( pSurface ) + pSurface->offset_ledgetree_root );
+
+	CUtlVector< const ivp_compat::compactledge_t * > ledges;
+	GetAllIVPEdges( pFirstLedgeNode, &ledges );
+
+	Msg("ledge count - %d\n", ledges.Count());
+
+	return NULL;
+}
+
+CPhysCollide *DeserializeIVP_Poly( const ivp_compat::collideheader_t *pCollideHeader )
+{
+	const ivp_compat::compactsurfaceheader_t *pSurfaceHeader = reinterpret_cast< const ivp_compat::compactsurfaceheader_t* >( pCollideHeader + 1 );
+	const ivp_compat::compactsurface_t *pSurface = reinterpret_cast< const ivp_compat::compactsurface_t* >( pSurfaceHeader + 1 );
+	return DeserializeIVP_Poly( pSurface );
+}
 
 // loads a set of solids into a vcollide_t
 void CPhysicsCollision::VCollideLoad( vcollide_t *pOutput, int solidCount, const char *pBuffer, int bufferSize, bool swap )
 {
 	memset( pOutput, 0, sizeof(*pOutput) );
-	int position = 0;
 
 	pOutput->solidCount = solidCount;
-	pOutput->solids = new CPhysCollide *[solidCount];
+	pOutput->solids = new CPhysCollide*[ solidCount ];
 
-	BEGIN_IVP_ALLOCATION();
-
+	const char *pCursor = pBuffer;
 	for ( int i = 0; i < solidCount; i++ )
 	{
-		int size;
-		memcpy( &size, pBuffer + position, sizeof(int) );
-		position += sizeof(int);
+		// Be safe ahead of time as so much can go wrong with
+		// this mess! :p
+		pOutput->solids[ i ] = nullptr;
 
-		char *tmpbuf = new char[size];
-		memcpy(tmpbuf, pBuffer + position, size);
+		const int solidSize = *reinterpret_cast<const int *>( pCursor );
+		pCursor += sizeof( int );
 
-		pOutput->solids[i] = CPhysCollide::UnserializeFromBuffer( tmpbuf, size, i, swap );
-		position += size;
+		const ivp_compat::collideheader_t *pCollideHeader = reinterpret_cast<const ivp_compat::collideheader_t *>( pCursor );
 
-		delete[] tmpbuf;
+		if ( pCollideHeader->vphysicsID == VPHYSICS_COLLISION_ID )
+		{
+			// This is the main path that everything falls down for a modern
+			// .phy file with the collide header.
+
+			if ( pCollideHeader->version != VPHYSICS_COLLISION_VERSION )
+				Warning( "Solid with unknown version: 0x%x, may crash!\n", pCollideHeader->version );
+
+			switch ( pCollideHeader->modelType )
+			{
+				case COLLIDE_POLY:
+					pOutput->solids[ i ] = DeserializeIVP_Poly( pCollideHeader );
+					break;
+				default:
+					Warning( "Unsupported solid type 0x%x on solid %d. Skipping...\n", (int)pCollideHeader->modelType, i );
+					break;
+			}
+		}
+		else
+		{
+			// This must be a legacy style .phy where it is just a dumped compact surface.
+			// Some props in shipping HL2 still use this format, as they have a .phy, even after their
+			// .qc had the $collisionmodel removed, as they didn't get the stale .phy in the game files deleted.
+
+			const ivp_compat::compactsurface_t *pCompactSurface = reinterpret_cast<const ivp_compat::compactsurface_t*>( pCursor );
+			const int legacyModelType = pCompactSurface->dummy[2];
+			switch ( legacyModelType )
+			{
+				case 0:
+				case IVP_COMPACT_SURFACE_ID:
+				case IVP_COMPACT_SURFACE_ID_SWAPPED:
+					pOutput->solids[i] = DeserializeIVP_Poly( pCollideHeader );
+					break;
+				default:
+					Warning( "Unsupported legacy solid type 0x%x on solid %d. Skipping...\n", legacyModelType, i);
+					break;
+			}
+		}
+
+		pCursor += solidSize;
 	}
 
-	END_IVP_ALLOCATION();
+	// The rest of the buffer is KV.
+	const int keyValuesSize = bufferSize - ( pCursor - pBuffer );
+
+	pOutput->pKeyValues = new char[ keyValuesSize + 1 ];
+	V_memcpy( pOutput->pKeyValues, pCursor, keyValuesSize );
+	pOutput->pKeyValues[ keyValuesSize ] = '\0';
+
+	pOutput->descSize = keyValuesSize;
 	pOutput->isPacked = false;
-	int keySize = bufferSize - position;
-	pOutput->pKeyValues = new char[keySize];
-	memcpy( pOutput->pKeyValues, pBuffer + position, keySize );
-	pOutput->descSize = 0;
+#ifdef GAME_ASW_OR_NEWER
+	pOutput->pUserData = nullptr;
+#endif
 }
 
 // destroys the set of solids created by VCollideCreateCPhysCollide

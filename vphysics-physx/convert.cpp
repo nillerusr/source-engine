@@ -259,89 +259,15 @@ static const IVP_U_Matrix *GetTmpObjectMatrix( IVP_Real_Object *pObject )
 
 void TransformIVPToLocal( const IVP_U_Point &pointIn, IVP_U_Point &pointOut, IVP_Real_Object *pObject, bool translate )
 {
-#if USE_CACHE_OBJECT
-	IVP_Cache_Object *cache = pObject->get_cache_object_no_lock();
-
-	if ( translate )
-	{
-		cache->transform_position_to_object_coords( &pointIn, &pointOut );
-	}
-	else
-	{
-		cache->transform_vector_to_object_coords( &pointIn, &pointOut );
-	}
-#else
-	const IVP_U_Matrix *pMatrix = GetTmpObjectMatrix( pObject );
-	if ( translate )
-	{
-		pMatrix->inline_vimult4( &pointIn, &pointOut );
-	}
-	else
-	{
-		pMatrix->inline_vimult3( &pointIn, &pointOut );
-	}
-#endif
 }
 
 
 void TransformLocalToIVP( const IVP_U_Point &pointIn, IVP_U_Point &pointOut, IVP_Real_Object *pObject, bool translate )
 {
-#if USE_CACHE_OBJECT
-	IVP_Cache_Object *cache = pObject->get_cache_object_no_lock();
-
-	if ( translate )
-	{
-		IVP_U_Float_Point floatPointIn;
-		floatPointIn.set( &pointIn );
-		cache->transform_position_to_world_coords( &floatPointIn, &pointOut );
-	}
-	else
-	{
-		cache->transform_vector_to_world_coords( &pointIn, &pointOut );
-	}
-#else
-	const IVP_U_Matrix *pMatrix = GetTmpObjectMatrix( pObject );
-
-	if ( translate )
-	{
-		pMatrix->inline_vmult4( &pointIn, &pointOut );
-	}
-	else
-	{
-		pMatrix->inline_vmult3( &pointIn, &pointOut );
-	}
-#endif
 }
 
 void TransformLocalToIVP( const IVP_U_Float_Point &pointIn, IVP_U_Point &pointOut, IVP_Real_Object *pObject, bool translate )
 {
-#if USE_CACHE_OBJECT
-	IVP_Cache_Object *cache = pObject->get_cache_object_no_lock();
-
-	if ( translate )
-	{
-		cache->transform_position_to_world_coords( &pointIn, &pointOut );
-	}
-	else
-	{
-		IVP_U_Point doublePointIn;
-		doublePointIn.set( &pointIn );
-		cache->transform_vector_to_world_coords( &doublePointIn, &pointOut );
-	}
-#else
-	const IVP_U_Matrix *pMatrix = GetTmpObjectMatrix( pObject );
-	IVP_U_Float_Point out;
-
-	if ( translate )
-	{
-		pMatrix->inline_vmult4( &pointIn, &out );
-	}
-	else
-	{
-		pMatrix->inline_vmult3( &pointIn, &out );
-	}
-	pointOut.set( &out );
-#endif
 }
 
 void TransformLocalToIVP( const IVP_U_Float_Point &pointIn, IVP_U_Float_Point &pointOut, IVP_Real_Object *pObject, bool translate )

@@ -568,24 +568,8 @@ CPhysicsConstraint::CPhysicsConstraint( CPhysicsObject *pReferenceObject, CPhysi
 	m_constraintType = CONSTRAINT_UNKNOWN;
 	m_isBreakable = false;
 
-	if ( pReferenceObject && pAttachedObject )
-	{
-		m_pObjReference = (CPhysicsObject *)pReferenceObject;
-		m_pObjAttached = (CPhysicsObject *)pAttachedObject;
-		if ( !(m_pObjReference->CallbackFlags() & CALLBACK_NEVER_DELETED) )
-		{
-			m_pObjReference->GetObject()->add_listener_object( this );
-		}
-		if ( !(m_pObjAttached->CallbackFlags() & CALLBACK_NEVER_DELETED) )
-		{
-			m_pObjAttached->GetObject()->add_listener_object( this );
-		}
-	}
-	else
-	{
-		m_pObjReference = NULL;
-		m_pObjAttached = NULL;
-	}
+	m_pObjReference = NULL;
+	m_pObjAttached = NULL;
 }
 
 // Check to see if this is a single degree of freedom joint, if so, convert to a hinge

@@ -12,6 +12,7 @@
 #include "vphysics_interface.h"
 #include "ivu_types.hxx"
 #include "utlvector.h"
+#include "physics_globals.h"
 
 class IVP_Environment;
 class CSleepObjects;
@@ -164,6 +165,9 @@ private:
 	bool							m_queueDeleteObject;
 	bool							m_fixedTimestep;
 	bool							m_enableConstraintNotify;
+
+	PxDefaultCpuDispatcher	*m_pPxDispatcher;
+	PxScene					*m_pPxScene;
 };
 
 extern IPhysicsEnvironment *CreatePhysicsEnvironment( void );

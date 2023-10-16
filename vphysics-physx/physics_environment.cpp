@@ -36,6 +36,7 @@
 #include "ivp_phantom.hxx"
 #include "ivp_range_manager.hxx"
 #include "ivp_clustering_visualizer.hxx"
+#include "physics_globals.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -1113,6 +1114,18 @@ CPhysicsEnvironment::CPhysicsEnvironment( void )
 	m_fixedTimestep = true;	// try to simulate using fixed timesteps
 	m_enableConstraintNotify = false;
 
+	// PHYSX_BEGIN
+
+    PxSceneDesc sceneDesc(gPxPhysics->getTolerancesScale());
+    sceneDesc.gravity = physx::PxVec3(0.0f, -9.81f, 0.0f);
+
+    m_pPxDispatcher = PxDefaultCpuDispatcherCreate(2);
+    sceneDesc.cpuDispatcher	= m_pPxDispatcher;
+	sceneDesc.filterShader	= PxDefaultSimulationFilterShader;
+
+	m_pPxScene = gPxPhysics->createScene(sceneDesc);
+	// PHYSX_END
+
     // build a default environment
     IVP_Environment_Manager *env_manager;
     env_manager = IVP_Environment_Manager::get_environment_manager();
@@ -1440,7 +1453,8 @@ IPhysicsFluidController *CPhysicsEnvironment::CreateFluidController( IPhysicsObj
 
 IPhysicsConstraint *CPhysicsEnvironment::CreateRagdollConstraint( IPhysicsObject *pReferenceObject, IPhysicsObject *pAttachedObject, IPhysicsConstraintGroup *pGroup, const constraint_ragdollparams_t &ragdoll )
 {
-	return ::CreateRagdollConstraint( m_pPhysEnv, (CPhysicsObject *)pReferenceObject, (CPhysicsObject *)pAttachedObject, pGroup, ragdoll );
+	return NULL;
+//	return ::CreateRagdollConstraint( m_pPhysEnv, (CPhysicsObject *)pReferenceObject, (CPhysicsObject *)pAttachedObject, pGroup, ragdoll );
 }
 
 IPhysicsConstraint *CPhysicsEnvironment::CreateHingeConstraint( IPhysicsObject *pReferenceObject, IPhysicsObject *pAttachedObject, IPhysicsConstraintGroup *pGroup, const constraint_hingeparams_t &hinge )
@@ -1511,6 +1525,10 @@ void CPhysicsEnvironment::Simulate( float deltaTime )
 			deltaTime = 0.1f;
 		}
 
+		m_pPxScene->simulate(deltaTime);
+		m_pPxScene->fetchResults(true);
+
+#if 0
 		m_pCollisionSolver->EventPSI( this );
 		m_pCollisionListener->EventPSI( this );
 
@@ -1525,7 +1543,10 @@ void CPhysicsEnvironment::Simulate( float deltaTime )
 		{
 			m_pPhysEnv->simulate_time_step();
 		}
+
 		END_IVP_ALLOCATION();
+#endif
+
 		m_inSimulation = false;
 	}
 

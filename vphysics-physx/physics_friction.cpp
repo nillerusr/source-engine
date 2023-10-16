@@ -55,7 +55,7 @@ private:
 CFrictionSnapshot::CFrictionSnapshot( IVP_Real_Object *pObject ) : m_pObject(pObject)
 {
 	m_pDeleteList = NULL;
-	SetFrictionSynapse( pObject->get_first_friction_synapse() );
+	//SetFrictionSynapse( pObject->get_first_friction_synapse() );
 }
 
 CFrictionSnapshot::~CFrictionSnapshot()
@@ -102,12 +102,7 @@ bool CFrictionSnapshot::IsValid()
 
 IPhysicsObject *CFrictionSnapshot::GetObject( int index )
 {
-	IVP_Synapse_Friction *pFriction = m_pFriction;
-	if ( index == 1 )
-	{
-		pFriction = m_pContactPoint->get_synapse(!m_synapseIndex);
-	}
-	return static_cast<IPhysicsObject *>(pFriction->get_object()->client_data);
+	return NULL;
 }
 
 void CFrictionSnapshot::MarkContactForDelete() 

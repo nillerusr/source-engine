@@ -17,6 +17,19 @@ def configure(conf):
 		'HAVANA_CONSTRAINTS',
 		'HAVOK_MOPP'
 	])
+
+	conf.env.append_unique('LINKFLAGS',  [
+#		"-L/home/nillerusr/projects/PhysX/physx/install/linux/PhysX/bin/linux.clang/release/"
+		"-L/home/nillerusr/projects/PhysX/physx/install/linux/PhysX/bin/linux.clang/debug/"
+	])
+
+	conf.check(lib='PhysX_static_64', uselib_store='PHYSX')
+	conf.check(lib='PhysXFoundation_static_64', uselib_store='PHYSX_FOUNDATION')
+	conf.check(lib='PhysXCommon_static_64', uselib_store='PHYSX_COMMON')
+	conf.check(lib='PhysXPvdSDK_static_64', uselib_store='PHYSX_PVD')
+	conf.check(lib='PhysXExtensions_static_64', uselib_store='PHYSX_EXT')
+	conf.check(lib='PhysXCooking_static_64', uselib_store='PHYSX_COOKING')
+
 def build(bld):
 	source = [
 		'convert.cpp',
@@ -56,12 +69,14 @@ def build(bld):
 		'../ivp/ivp_controller',
 		'../ivp/ivp_compact_builder',
 		'../ivp/havana/havok',
-		'../ivp/havana'
+		'../ivp/havana',
+		'/home/nillerusr/projects/PhysX/physx/install/linux/PhysX/include',
+		'/home/nillerusr/projects/PhysX/physx/install/linux/PxShared/include'
 	]
 
 	defines = []
 
-	libs = ['tier0','havana_constraints','hk_math','hk_base','ivp_compactbuilder','ivp_physics','tier1','tier2','vstdlib','mathlib']
+	libs = ['tier0','havana_constraints','hk_math','hk_base','ivp_compactbuilder','ivp_physics','tier1','tier2','vstdlib','mathlib', 'PHYSX', 'PHYSX_PVD', 'PHYSX_EXT', 'PHYSX_COOKING', 'PHYSX_FOUNDATION', 'PHYSX_COMMON']
 
 	install_path = bld.env.LIBDIR
 

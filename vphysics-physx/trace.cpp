@@ -413,6 +413,8 @@ public:
 
 	bool SetSingleConvex( void )
 	{
+		return false;
+
 		const IVP_Compact_Ledgetree_Node *node = m_pSurface->get_compact_ledge_tree_root();
 		if ( node->is_terminal() == IVP_TRUE )
 		{
@@ -477,6 +479,9 @@ FORCEINLINE fltx4 ConvertDirectionToIVP( const fltx4 & a )
 
 CTraceIVP::CTraceIVP( const CPhysCollide *pCollide, const Vector &origin, const QAngle &angles )
 {
+	if( !pCollide )
+		return;
+
 #if USE_COLLIDE_MAP
 	m_pCollideMap = pCollide->GetCollideMap();
 #else
@@ -1301,13 +1306,6 @@ void CTraceSolverSweptObject::DoSweep( void )
 {
 	VPROF("TraceSolver::DoSweep");
 	InitOSRay();
-
-	// iterate ledge tree of obstacle
-	const IVP_Compact_Surface *pSurface = m_obstacleIVP->m_pSurface;
-
-	const IVP_Compact_Ledgetree_Node *lt_node_root;
-	lt_node_root = pSurface->get_compact_ledge_tree_root();
-	SweepLedgeTree_r( lt_node_root );
 }
 
 void CPhysicsTrace::SweepBoxIVP( const Vector &start, const Vector &end, const Vector &mins, const Vector &maxs, const CPhysCollide *pCollide, const Vector &surfaceOrigin, const QAngle &surfaceAngles, trace_t *ptr )
@@ -2362,6 +2360,8 @@ void TraceGetAABB_r( Vector *pMins, Vector *pMaxs, const IVP_Compact_Ledgetree_N
 
 void CPhysicsTrace::GetAABB( Vector *pMins, Vector *pMaxs, const CPhysCollide *pCollide, const Vector &collideOrigin, const QAngle &collideAngles )
 {
+	return;
+
 	CTraceIVP ivp( pCollide, collideOrigin, collideAngles );
 
 	if ( ivp.SetSingleConvex() )

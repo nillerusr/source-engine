@@ -11,8 +11,9 @@
 #include "vphysics/collision_set.h"
 #include "tier1/tier1.h"
 #include "ivu_vhash.hxx"
+#include "PxPhysicsAPI.h"
 
-
+using namespace physx;
 
 #if defined(_WIN32) && !defined(_X360)
 #define WIN32_LEAN_AND_MEAN
@@ -29,39 +30,24 @@ static void ivu_string_print_function( const char *str )
 	Msg("%s", str);
 }
 
-#if defined(_WIN32) && !defined(_XBOX)
-//HMODULE	gPhysicsDLLHandle;
-
-#pragma warning (disable:4100)
-
-BOOL WINAPI DllMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
+class PhysErrorCallback : public PxErrorCallback
 {
- 	if ( fdwReason == DLL_PROCESS_ATTACH )
+public:
+	virtual void reportError(PxErrorCode::Enum code, const char* message, const char* file,
+		int line)
 	{
-//		ivp_set_message_print_function( ivu_string_print_function );
+		// error processing implementation
+		Warning("Px: %s %s:%d\n", message, file, line);
+    }
+};
 
-		MathLib_Init( 2.2f, 2.2f, 0.0f, 2.0f, false, false, false, false );
-		// store out module handle
-		//gPhysicsDLLHandle = (HMODULE)hinstDLL;
-	}
-	else if ( fdwReason == DLL_PROCESS_DETACH )
-	{
-	}
-	return TRUE;
-}
+PhysErrorCallback gPxErrorCallback;
+PxDefaultAllocator gPxAllocatorCallback;
 
-#endif		// _WIN32
-
-#ifdef POSIX
-void __attribute__ ((constructor)) vphysics_init(void);
-void vphysics_init(void)
-{
-//	ivp_set_message_print_function( ivu_string_print_function );
-
-	MathLib_Init( 2.2f, 2.2f, 0.0f, 2.0f, false, false, false, false );
-}
-#endif
-
+PxFoundation *gPxFoundation = NULL;
+PxPvd *gPxPvd = NULL;
+PxPhysics *gPxPhysics = NULL;
+PxCooking *gPxCooking = NULL;
 
 // simple 32x32 bit array
 class CPhysicsCollisionSet : public IPhysicsCollisionSet
@@ -102,6 +88,8 @@ class CPhysicsInterface : public CTier1AppSystem<IPhysics>
 {
 public:
 	CPhysicsInterface() : m_pCollisionSetHash(NULL) {}
+	virtual InitReturnVal_t Init();
+	virtual void Shutdown();
 	virtual void *QueryInterface( const char *pInterfaceName );
 	virtual	IPhysicsEnvironment *CreateEnvironment( void );
 	virtual void DestroyEnvironment( IPhysicsEnvironment *pEnvironment );
@@ -112,6 +100,7 @@ public:
 	virtual IPhysicsCollisionSet *FindCollisionSet( unsigned int id );
 	virtual void DestroyAllCollisionSets();
 
+	typedef CTier1AppSystem<IPhysics> BaseClass;
 private:
 	CUtlVector<IPhysicsEnvironment *>	m_envList;
 	CUtlVector<CPhysicsCollisionSet>	m_collisionSets;
@@ -125,6 +114,60 @@ private:
 static CPhysicsInterface g_MainDLLInterface;
 IPhysics *g_PhysicsInternal = &g_MainDLLInterface;
 EXPOSE_SINGLE_INTERFACE_GLOBALVAR( CPhysicsInterface, IPhysics, VPHYSICS_INTERFACE_VERSION, g_MainDLLInterface );
+
+#define PVD_HOST "localhost"
+
+InitReturnVal_t CPhysicsInterface::Init()
+{
+	InitReturnVal_t nRetVal = BaseClass::Init();
+	if ( nRetVal != INIT_OK )
+		return nRetVal;
+
+	bool recordMemoryAllocations = true;
+
+	MathLib_Init( 2.2f, 2.2f, 0.0f, 2.0f, false, false, false, false );
+
+	gPxFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, gPxAllocatorCallback, gPxErrorCallback);
+
+	if( !gPxFoundation )
+	{
+		Error("PxCreateFoundation failed!\n");
+		return INIT_FAILED;
+	}
+
+	gPxPvd = PxCreatePvd(*gPxFoundation);
+	PxPvdTransport* transport = PxDefaultPvdSocketTransportCreate(PVD_HOST, 5425, 10000);
+	if(transport)
+		Msg("PxDefaultPvdSocketTransportCreate success\n");
+
+	gPxPvd->connect(*transport,PxPvdInstrumentationFlag::eALL);
+
+	gPxPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *gPxFoundation, PxTolerancesScale(), recordMemoryAllocations, gPxPvd);
+
+	if( !gPxPhysics )
+	{
+		Error("PxCreatePhysics failed!\n");
+		return INIT_FAILED;
+	}
+
+	gPxCooking = PxCreateCooking(PX_PHYSICS_VERSION, *gPxFoundation	, PxCookingParams(PxTolerancesScale()));
+
+
+	return INIT_OK;
+}
+
+
+void CPhysicsInterface::Shutdown()
+{
+	if( gPxPhysics )
+		gPxPhysics->release();
+
+	if( gPxFoundation )
+		gPxFoundation->release();
+
+
+	BaseClass::Shutdown( );
+}
 
 
 //-----------------------------------------------------------------------------
@@ -217,26 +260,4 @@ void CPhysicsInterface::DestroyAllCollisionSets()
 	delete m_pCollisionSetHash;
 	m_pCollisionSetHash = NULL;
 }
-
-	
-
-// In release build, each of these libraries must contain a symbol that indicates it is also a release build
-// You MUST disable this in order to run a release vphysics.dll with a debug library.
-// This should not usually be necessary
-// #if !defined(_DEBUG) && defined(_WIN32)
-// extern int ivp_physics_lib_is_a_release_build;
-// extern int ivp_compactbuilder_lib_is_a_release_build;
-// extern int hk_base_lib_is_a_release_build;
-// extern int hk_math_lib_is_a_release_build;
-// extern int havana_constraints_lib_is_a_release_build;
-
-// void DebugTestFunction()
-// {
-// 	ivp_physics_lib_is_a_release_build = 0;
-// 	ivp_compactbuilder_lib_is_a_release_build = 0;
-// 	hk_base_lib_is_a_release_build = 0;
-// 	hk_math_lib_is_a_release_build = 0;
-// 	havana_constraints_lib_is_a_release_build = 0;
-// }
-// #endif
 
