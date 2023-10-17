@@ -38,3 +38,4 @@ waf3*/
 .depproj/
 source-engine.sln
 *.save
+*.save.*
