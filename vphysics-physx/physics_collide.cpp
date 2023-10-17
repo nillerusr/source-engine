@@ -30,6 +30,7 @@
 #include "mathlib/polyhedron.h"
 #include "tier1/byteswap.h"
 #include "physics_globals.h"
+#include "tier1/smartptr.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -316,32 +317,6 @@ struct moppheader_t : public physcollideheader_t
 		Defaults( COLLIDE_MOPP );
 		moppSize = pMopp->byte_size;
 	}
-};
-#endif
-
-#if ENABLE_IVP_MOPP
-class CPhysCollideMopp : public CPhysCollide
-{
-public:
-	CPhysCollideMopp( const moppheader_t *pHeader );
-	CPhysCollideMopp( IVP_Compact_Mopp *pMopp );
-	CPhysCollideMopp( const char *pBuffer, unsigned int size );
-	~CPhysCollideMopp();
-
-	void Init( const char *pBuffer, unsigned int size );
-
-	// IPhysCollide
-	virtual int GetVCollideIndex() const { return 0; }
-	virtual IVP_SurfaceManager *CreateSurfaceManager( short & ) const;
-	virtual void GetAllLedges( IVP_U_BigVector<IVP_Compact_Ledge> &ledges ) const;
-	virtual unsigned int GetSerializationSize() const;
-	virtual Vector GetMassCenter() const;
-	virtual void SetMassCenter( const Vector &massCenter );
-	virtual unsigned int SerializeToBuffer( char *pDest, bool bSwap = false ) const;
-	virtual void OutputDebugInfo() const;
-
-private:
-	IVP_Compact_Mopp		*m_pMopp;
 };
 #endif
 
@@ -1525,6 +1500,8 @@ CPhysConvex	*CPhysicsCollision::BBoxToConvex( const Vector &mins, const Vector &
 
 CPhysCollide *CPhysicsCollision::BBoxToCollide( const Vector &mins, const Vector &maxs )
 {
+	printf("BBoxToCollide\n");
+
 	// can't create a collision model for an empty box !
 	if ( mins == maxs )
 	{
@@ -1604,7 +1581,8 @@ int	CPhysicsCollision::CollideWrite( char *pDest, CPhysCollide *pCollide, bool b
 
 CPhysCollide *CPhysicsCollision::UnserializeCollide( char *pBuffer, int size, int index )
 {
-	return CPhysCollide::UnserializeFromBuffer( pBuffer, size, index );
+	return NULL;
+//	return CPhysCollide::UnserializeFromBuffer( pBuffer, size, index );
 }
 
 class CPhysPolysoup
@@ -1851,8 +1829,60 @@ float CPhysicsCollision::CollideSurfaceArea( CPhysCollide *pCollide )
 	return area;
 }
 
+PxConvexMesh *IVPLedgeToConvexShape( const ivp_compat::compactledge_t *pLedge )
+{
+	if ( !pLedge->n_triangles )
+		return nullptr;
+
+	const char *pVertices = reinterpret_cast< const char * >( pLedge ) + pLedge->c_point_offset;
+	const ivp_compat::compacttriangle_t *pTriangles = reinterpret_cast< const ivp_compat::compacttriangle_t * >( pLedge + 1 );
+
+	const int nVertCount = pLedge->n_triangles * 3;
+
+	CArrayAutoPtr<PxVec3> convexVerts(new PxVec3[nVertCount]);
+
+	// Each triangle
+	for ( int i = 0; i < pLedge->n_triangles; i++ )
+	{
+		// For each point of the current triangle
+		for ( int j = 0; j < 3; j++ )
+		{
+			static constexpr size_t IVPAlignedVectorSize = 16;
+
+			const int nIndex = pTriangles[ i ].c_three_edges[ j ].start_point_index;
+			const float *pVertex = reinterpret_cast< const float * >( pVertices + ( nIndex * IVPAlignedVectorSize ) );
+
+			convexVerts[ ( i * 3 ) + j ] = PxVec3( IVP2HL(pVertex[0]), IVP2HL(pVertex[1]), IVP2HL(pVertex[2]) );
+		}
+	}
+
+	PxConvexMeshDesc convexDesc;
+	convexDesc.points.count = nVertCount;
+	convexDesc.points.stride = sizeof(PxVec3);
+	convexDesc.points.data = convexVerts.Get();
+	convexDesc.flags = PxConvexFlag::eCOMPUTE_CONVEX;
+
+	PxDefaultMemoryOutputStream buf;
+	PxConvexMeshCookingResult::Enum result;
+	if(!gPxCooking->cookConvexMesh(convexDesc, buf, &result))
+	    return NULL;
+
+	PxDefaultMemoryInputData input(buf.getData(), buf.getSize());
+	PxConvexMesh* convexMesh = gPxPhysics->createConvexMesh(input);
+
+	
+
+	Msg("Cooking success %u!\n", convexMesh->getNbVertices());
+
+	//pConvexShape->SetUserData( pLedge->client_data );
+	return convexMesh;
+}
+
+
 static void GetAllIVPEdges(const ivp_compat::compactledgenode_t *pNode, CUtlVector<const ivp_compat::compactledge_t *> *vecOut)
 {
+
+
 	if (!pNode || !vecOut) return;
 
 	if ( !pNode->IsTerminal() )
@@ -1873,6 +1903,17 @@ CPhysCollide *DeserializeIVP_Poly( const ivp_compat::compactsurface_t* pSurface 
 	GetAllIVPEdges( pFirstLedgeNode, &ledges );
 
 	Msg("ledge count - %d\n", ledges.Count());
+
+	if( ledges.Count() == 1 )
+	{
+		PxConvexMesh *mesh = IVPLedgeToConvexShape( ledges[0] );
+		return (CPhysCollide*)mesh;
+	}
+
+	for( int i = 0; ledges.Count(); i++ )
+	{
+		
+	}
 
 	return NULL;
 }

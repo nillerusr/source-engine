@@ -12,6 +12,7 @@
 #include "tier1/tier1.h"
 #include "ivu_vhash.hxx"
 #include "PxPhysicsAPI.h"
+#include "convert.h"
 
 using namespace physx;
 
@@ -80,7 +81,6 @@ private:
 	unsigned int m_bits[32];
 };
 
-
 //-----------------------------------------------------------------------------
 // Main physics interface
 //-----------------------------------------------------------------------------
@@ -127,6 +127,9 @@ InitReturnVal_t CPhysicsInterface::Init()
 
 	MathLib_Init( 2.2f, 2.2f, 0.0f, 2.0f, false, false, false, false );
 
+	PxTolerancesScale scale;
+	scale.length = g_PhysicsUnits.unitScaleMetersInv; // typical length of an object
+
 	gPxFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, gPxAllocatorCallback, gPxErrorCallback);
 
 	if( !gPxFoundation )
@@ -142,7 +145,7 @@ InitReturnVal_t CPhysicsInterface::Init()
 
 	gPxPvd->connect(*transport,PxPvdInstrumentationFlag::eALL);
 
-	gPxPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *gPxFoundation, PxTolerancesScale(), recordMemoryAllocations, gPxPvd);
+	gPxPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *gPxFoundation, scale, recordMemoryAllocations, gPxPvd);
 
 	if( !gPxPhysics )
 	{
@@ -150,15 +153,16 @@ InitReturnVal_t CPhysicsInterface::Init()
 		return INIT_FAILED;
 	}
 
-	gPxCooking = PxCreateCooking(PX_PHYSICS_VERSION, *gPxFoundation	, PxCookingParams(PxTolerancesScale()));
-
-
+	gPxCooking = PxCreateCooking(PX_PHYSICS_VERSION, *gPxFoundation	, PxCookingParams(scale));
 	return INIT_OK;
 }
 
 
 void CPhysicsInterface::Shutdown()
 {
+	if( gPxCooking )
+		gPxCooking->release();
+
 	if( gPxPhysics )
 		gPxPhysics->release();
 

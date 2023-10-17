@@ -1072,6 +1072,32 @@ CPhysicsObject *CreatePhysicsObject( CPhysicsEnvironment *pEnvironment, const CP
 
 //	IVP_Polygon *realObject = pEnvironment->GetIVPEnvironment()->create_polygon(pSurman, &objectTemplate, &rotation, &pos);
 
+	PxScene *scene = pEnvironment->GetPxScene();
+	PxConvexMesh *mesh = (PxConvexMesh*)pCollisionModel;
+
+	if( pCollisionModel && mesh->getNbVertices() != 0 )
+	{
+		RadianEuler radian(angles);
+		Quaternion qw(radian);
+
+		PxQuat q( qw.x, qw.y, qw.z, qw.w );
+
+		PxTransform t(PxVec3(position.x, position.y, position.z), q);
+		PxMaterial *mat = gPxPhysics->createMaterial(0.5f, 0.5f, 0.6f);
+
+		PxRigidStatic* body = gPxPhysics->createRigidStatic(t);
+
+		if( body )
+		{
+			PxShape* aConvexShape = PxRigidActorExt::createExclusiveShape(*body,
+				PxConvexMeshGeometry(mesh), *mat);
+
+			scene->addActor(*body);
+		}
+//PxRigidActorExt::createExclusiveShape(*aConvexActor,
+//			PxConvexMeshGeometry(mesh), aMaterial);
+	}
+
 	pObject->Init( pCollisionModel, NULL, materialIndex, pParams->volume, pParams->dragCoefficient, pParams->dragCoefficient );
 	pObject->SetGameData( pParams->pGameData );
 

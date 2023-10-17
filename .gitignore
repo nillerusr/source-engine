@@ -37,3 +37,4 @@ waf3*/
 .vscode/
 .depproj/
 source-engine.sln
+*.save

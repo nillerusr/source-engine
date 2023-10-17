@@ -1116,11 +1116,11 @@ CPhysicsEnvironment::CPhysicsEnvironment( void )
 
 	// PHYSX_BEGIN
 
-    PxSceneDesc sceneDesc(gPxPhysics->getTolerancesScale());
-    sceneDesc.gravity = physx::PxVec3(0.0f, -9.81f, 0.0f);
+	PxSceneDesc sceneDesc(gPxPhysics->getTolerancesScale());
+	sceneDesc.gravity = physx::PxVec3(0.0f, -9.81f, 0.0f);
 
-    m_pPxDispatcher = PxDefaultCpuDispatcherCreate(2);
-    sceneDesc.cpuDispatcher	= m_pPxDispatcher;
+	m_pPxDispatcher = PxDefaultCpuDispatcherCreate(2);
+	sceneDesc.cpuDispatcher	= m_pPxDispatcher;
 	sceneDesc.filterShader	= PxDefaultSimulationFilterShader;
 
 	m_pPxScene = gPxPhysics->createScene(sceneDesc);
@@ -1886,11 +1886,11 @@ void CPhysicsEnvironment::PhantomAdd( CPhysicsObject *pObject )
 
 void CPhysicsEnvironment::PhantomRemove( CPhysicsObject *pObject )
 {
-	IVP_Controller_Phantom *pPhantom = pObject->GetObject()->get_controller_phantom();
-	if ( pPhantom )
-	{
-		pPhantom->remove_listener_phantom( m_pCollisionListener );
-	}
+//	IVP_Controller_Phantom *pPhantom = pObject->GetObject()->get_controller_phantom();
+//	if ( pPhantom )
+//	{
+//		pPhantom->remove_listener_phantom( m_pCollisionListener );
+//	}
 }
 
 

@@ -321,8 +321,8 @@ public:
 	CTraceIVP( const CPhysCollide *pCollide, const Vector &origin, const QAngle &angles );
 	~CTraceIVP()
 	{
-		if ( m_pVisitHash )
-			FreeVisitHash(m_pVisitHash);
+//		if ( m_pVisitHash )
+//			FreeVisitHash(m_pVisitHash);
 	}
 	virtual int SupportMap( const Vector &dir, Vector *pOut ) const;
 	virtual Vector GetVertByIndex( int index ) const;
@@ -479,6 +479,8 @@ FORCEINLINE fltx4 ConvertDirectionToIVP( const fltx4 & a )
 
 CTraceIVP::CTraceIVP( const CPhysCollide *pCollide, const Vector &origin, const QAngle &angles )
 {
+	return;
+
 	if( !pCollide )
 		return;
 
