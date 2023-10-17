@@ -11,6 +11,7 @@
 #pragma once
 #endif
 
+#include "physics_globals.h"
 
 class Vector;
 class QAngle;
@@ -49,6 +50,7 @@ public:
 	virtual void SetOrthographicAreas( const Vector &areas ) = 0;
 	virtual float GetSphereRadius() const = 0;
 	virtual void OutputDebugInfo() const = 0;
+	virtual PxShape *GetPxShape() = 0;
 };
 
 #define LEAFMAP_HAS_CUBEMAP					0x0001
@@ -138,6 +140,7 @@ public:
 	virtual void ComputeOrthographicAreas( float epsilon ) {}
 	virtual void SetOrthographicAreas( const Vector &areas ) {}
 	virtual const collidemap_t *GetCollideMap() const { return NULL; }
+	virtual PxShape *GetPxShape() { return NULL; }
 };
 
 class ITraceObject

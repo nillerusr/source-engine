@@ -1062,9 +1062,12 @@ CPhysicsObject *CreatePhysicsObject( CPhysicsEnvironment *pEnvironment, const CP
 
 	CPhysicsObject *pObject = new CPhysicsObject();
 	short collideType;
-	IVP_SurfaceManager *pSurman = CreateSurfaceManager( pCollisionModel, collideType );
-	if ( !pSurman )
-		return NULL;
+
+//	IVP_SurfaceManager *pSurman = CreateSurfaceManager( pCollisionModel, collideType );
+
+//	if ( !pSurman )
+//		return NULL;
+
 	pObject->m_collideType = collideType;
 	pObject->m_asleepSinceCreation = true;
 
@@ -1072,9 +1075,31 @@ CPhysicsObject *CreatePhysicsObject( CPhysicsEnvironment *pEnvironment, const CP
 
 //	IVP_Polygon *realObject = pEnvironment->GetIVPEnvironment()->create_polygon(pSurman, &objectTemplate, &rotation, &pos);
 
-	PxScene *scene = pEnvironment->GetPxScene();
-	PxConvexMesh *mesh = (PxConvexMesh*)pCollisionModel;
+	if( !pCollisionModel )
+		return NULL;
 
+	PxScene *scene = pEnvironment->GetPxScene();
+	PxShape *shape = pCollisionModel->GetPxShape();
+
+	if( shape )
+	{
+		RadianEuler radian(angles);
+		Quaternion qw(radian);
+
+		PxQuat q( qw.x, qw.y, qw.z, qw.w );
+
+		PxTransform t(PxVec3(position.x, position.y, position.z), q);
+		PxRigidStatic* body = gPxPhysics->createRigidStatic(t);
+
+		while( shape )
+		{
+			body->attachShape( *shape );
+			shape = (PxShape*)shape->userData;
+		}
+
+		scene->addActor(*body);
+	}
+#if 0
 	if( pCollisionModel && mesh->getNbVertices() != 0 )
 	{
 		RadianEuler radian(angles);
@@ -1094,9 +1119,8 @@ CPhysicsObject *CreatePhysicsObject( CPhysicsEnvironment *pEnvironment, const CP
 
 			scene->addActor(*body);
 		}
-//PxRigidActorExt::createExclusiveShape(*aConvexActor,
-//			PxConvexMeshGeometry(mesh), aMaterial);
 	}
+#endif
 
 	pObject->Init( pCollisionModel, NULL, materialIndex, pParams->volume, pParams->dragCoefficient, pParams->dragCoefficient );
 	pObject->SetGameData( pParams->pGameData );

@@ -320,6 +320,32 @@ struct moppheader_t : public physcollideheader_t
 };
 #endif
 
+class CPhysCollidePx : public CPhysCollide
+{
+public:
+	CPhysCollidePx(PxShape *shape)
+	{
+		m_pPxShape = shape;
+	}
+
+	virtual PxShape *GetPxShape()
+	{
+		return m_pPxShape;
+	}
+
+	IVP_SurfaceManager *CreateSurfaceManager( short & ) const { return NULL; }
+	virtual void GetAllLedges( IVP_U_BigVector<IVP_Compact_Ledge> &ledges ) const {}
+	unsigned int GetSerializationSize() { return 0; }
+	int GetVCollideIndex() const { return 0; }
+	Vector GetMassCenter() const { return Vector(0, 0, 0); }
+	void SetMassCenter( const Vector &massCenter ) {}
+	void OutputDebugInfo() const {}
+	unsigned int GetSerializationSize() const { return 0; }
+	unsigned int SerializeToBuffer( char *pDest, bool bSwap = false ) const { return 0; }
+private:
+	PxShape *m_pPxShape;
+};
+
 class CPhysCollideCompactSurface : public CPhysCollide
 {
 public:
@@ -1829,7 +1855,7 @@ float CPhysicsCollision::CollideSurfaceArea( CPhysCollide *pCollide )
 	return area;
 }
 
-PxConvexMesh *IVPLedgeToConvexShape( const ivp_compat::compactledge_t *pLedge )
+PxShape *IVPLedgeToConvexShape( const ivp_compat::compactledge_t *pLedge )
 {
 	if ( !pLedge->n_triangles )
 		return nullptr;
@@ -1852,7 +1878,7 @@ PxConvexMesh *IVPLedgeToConvexShape( const ivp_compat::compactledge_t *pLedge )
 			const int nIndex = pTriangles[ i ].c_three_edges[ j ].start_point_index;
 			const float *pVertex = reinterpret_cast< const float * >( pVertices + ( nIndex * IVPAlignedVectorSize ) );
 
-			convexVerts[ ( i * 3 ) + j ] = PxVec3( IVP2HL(pVertex[0]), IVP2HL(pVertex[1]), IVP2HL(pVertex[2]) );
+			convexVerts[ ( i * 3 ) + j ] = PxVec3( IVP2HL(pVertex[0]), IVP2HL(pVertex[2]), -IVP2HL(pVertex[1]) );
 		}
 	}
 
@@ -1870,19 +1896,19 @@ PxConvexMesh *IVPLedgeToConvexShape( const ivp_compat::compactledge_t *pLedge )
 	PxDefaultMemoryInputData input(buf.getData(), buf.getSize());
 	PxConvexMesh* convexMesh = gPxPhysics->createConvexMesh(input);
 
-	
+	PxMaterial *mat = gPxPhysics->createMaterial(0.5f, 0.5f, 0.6f);
+	PxShape *shape = gPxPhysics->createShape( PxConvexMeshGeometry(convexMesh), *mat );
 
-	Msg("Cooking success %u!\n", convexMesh->getNbVertices());
+	if( shape )
+		Msg("Cooking success %u!\n", convexMesh->getNbVertices());
 
 	//pConvexShape->SetUserData( pLedge->client_data );
-	return convexMesh;
+	return shape;
 }
 
 
 static void GetAllIVPEdges(const ivp_compat::compactledgenode_t *pNode, CUtlVector<const ivp_compat::compactledge_t *> *vecOut)
 {
-
-
 	if (!pNode || !vecOut) return;
 
 	if ( !pNode->IsTerminal() )
@@ -1902,20 +1928,27 @@ CPhysCollide *DeserializeIVP_Poly( const ivp_compat::compactsurface_t* pSurface 
 	CUtlVector< const ivp_compat::compactledge_t * > ledges;
 	GetAllIVPEdges( pFirstLedgeNode, &ledges );
 
-	Msg("ledge count - %d\n", ledges.Count());
+//	if( ledges.Count() <= 5 )
+//		return NULL;
+
+	PxShape *mesh = IVPLedgeToConvexShape( ledges[0] );
+	mesh->userData = NULL;
 
 	if( ledges.Count() == 1 )
+		return new CPhysCollidePx( mesh );
+
+//	if( ledges.Count() > 5 )
+//		return NULL;
+
+	PxShape *prevMesh = mesh;
+	for( int i = 1; i < ledges.Count(); i++ )
 	{
-		PxConvexMesh *mesh = IVPLedgeToConvexShape( ledges[0] );
-		return (CPhysCollide*)mesh;
+		PxShape *nextMesh = IVPLedgeToConvexShape( ledges[i] );
+		prevMesh->userData = nextMesh;
+		prevMesh = nextMesh;
 	}
 
-	for( int i = 0; ledges.Count(); i++ )
-	{
-		
-	}
-
-	return NULL;
+	return new CPhysCollidePx( mesh );
 }
 
 CPhysCollide *DeserializeIVP_Poly( const ivp_compat::collideheader_t *pCollideHeader )
@@ -1953,10 +1986,12 @@ void CPhysicsCollision::VCollideLoad( vcollide_t *pOutput, int solidCount, const
 			if ( pCollideHeader->version != VPHYSICS_COLLISION_VERSION )
 				Warning( "Solid with unknown version: 0x%x, may crash!\n", pCollideHeader->version );
 
+			CPhysCollide *collide;
 			switch ( pCollideHeader->modelType )
 			{
 				case COLLIDE_POLY:
-					pOutput->solids[ i ] = DeserializeIVP_Poly( pCollideHeader );
+					collide = DeserializeIVP_Poly( pCollideHeader );
+					pOutput->solids[ i ] = collide;
 					break;
 				default:
 					Warning( "Unsupported solid type 0x%x on solid %d. Skipping...\n", (int)pCollideHeader->modelType, i );
