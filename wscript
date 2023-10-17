@@ -72,7 +72,7 @@ projects={
 		'vgui2/vgui_surfacelib',
 		'vguimatsurface',
 		'video',
-		'vphysics',
+		'vphysics-physx',
 		'vpklib',
 		'vstdlib',
 		'vtf',
