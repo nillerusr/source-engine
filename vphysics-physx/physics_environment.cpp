@@ -1117,7 +1117,7 @@ CPhysicsEnvironment::CPhysicsEnvironment( void )
 	// PHYSX_BEGIN
 
 	PxSceneDesc sceneDesc(gPxPhysics->getTolerancesScale());
-	sceneDesc.gravity = physx::PxVec3(0.0f, -9.81f, 0.0f);
+	sceneDesc.gravity = physx::PxVec3(0.0f, 0.0f, -50.f);
 
 	m_pPxDispatcher = PxDefaultCpuDispatcherCreate(2);
 	sceneDesc.cpuDispatcher	= m_pPxDispatcher;

@@ -1016,6 +1016,45 @@ static void InitObjectTemplate( IVP_Template_Real_Object &objectTemplate, int ma
 	objectTemplate.auto_check_rot_inertia = pParams->rotInertiaLimit;
 }
 
+static PxRigidActor *CreatePxActor(PxTransform &transform, PxShape *shape, int materialIndex, objectparams_t *pParams, bool isStatic )
+{
+	PxRigidActor *actor;
+	if( isStatic )
+		actor = gPxPhysics->createRigidStatic(transform);
+	else
+		actor = gPxPhysics->createRigidDynamic(transform);
+
+	while( shape )
+	{
+		actor->attachShape( *shape );
+		shape = (PxShape*)shape->userData;
+	}
+
+	if( !isStatic )
+		PxRigidBodyExt::setMassAndUpdateInertia( *(PxRigidDynamic*)actor, 0.05 );
+
+	return actor;
+
+//	objectTemplate.mass = clamp( pParams->mass, VPHYSICS_MIN_MASS, VPHYSICS_MAX_MASS );
+//	if ( materialIndex >= 0 )
+//	{
+//		objectTemplate.material = physprops->GetIVPMaterial( materialIndex );
+//	}
+//	else
+//	{
+//		materialIndex = physprops->GetSurfaceIndex( "default" );
+//		objectTemplate.material = physprops->GetIVPMaterial( materialIndex );
+//	}
+
+
+
+//	objectTemplate.rot_inertia.set(inertia, inertia, inertia);
+//	objectTemplate.rot_speed_damp_factor.set(pParams->rotdamping, pParams->rotdamping, pParams->rotdamping);
+//	objectTemplate.speed_damp_factor = pParams->damping;
+//	objectTemplate.auto_check_rot_inertia = pParams->rotInertiaLimit;
+}
+
+
 CPhysicsObject *CreatePhysicsObject( CPhysicsEnvironment *pEnvironment, const CPhysCollide *pCollisionModel, int materialIndex, const Vector &position, const QAngle& angles, objectparams_t *pParams, bool isStatic )
 {
 	if ( materialIndex < 0 )
@@ -1089,14 +1128,7 @@ CPhysicsObject *CreatePhysicsObject( CPhysicsEnvironment *pEnvironment, const CP
 		PxQuat q( qw.x, qw.y, qw.z, qw.w );
 
 		PxTransform t(PxVec3(position.x, position.y, position.z), q);
-		PxRigidStatic* body = gPxPhysics->createRigidStatic(t);
-
-		while( shape )
-		{
-			body->attachShape( *shape );
-			shape = (PxShape*)shape->userData;
-		}
-
+		PxRigidActor *body = CreatePxActor( t, shape, materialIndex, pParams, isStatic );
 		scene->addActor(*body);
 	}
 #if 0

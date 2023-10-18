@@ -127,9 +127,6 @@ InitReturnVal_t CPhysicsInterface::Init()
 
 	MathLib_Init( 2.2f, 2.2f, 0.0f, 2.0f, false, false, false, false );
 
-	PxTolerancesScale scale;
-	scale.length = g_PhysicsUnits.unitScaleMetersInv; // typical length of an object
-
 	gPxFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, gPxAllocatorCallback, gPxErrorCallback);
 
 	if( !gPxFoundation )
@@ -145,6 +142,11 @@ InitReturnVal_t CPhysicsInterface::Init()
 
 	gPxPvd->connect(*transport,PxPvdInstrumentationFlag::eALL);
 
+	PxTolerancesScale scale;
+
+	scale.length = g_PhysicsUnits.unitScaleMetersInv;
+	scale.speed *= g_PhysicsUnits.unitScaleMetersInv;
+
 	gPxPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *gPxFoundation, scale, recordMemoryAllocations, gPxPvd);
 
 	if( !gPxPhysics )
@@ -153,7 +155,7 @@ InitReturnVal_t CPhysicsInterface::Init()
 		return INIT_FAILED;
 	}
 
-	gPxCooking = PxCreateCooking(PX_PHYSICS_VERSION, *gPxFoundation	, PxCookingParams(scale));
+	gPxCooking = PxCreateCooking(PX_PHYSICS_VERSION, *gPxFoundation, PxCookingParams(scale));
 	return INIT_OK;
 }
 
