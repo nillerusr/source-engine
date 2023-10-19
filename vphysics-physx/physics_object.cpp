@@ -1030,12 +1030,14 @@ static PxRigidActor *CreatePxActor(PxTransform &transform, PxShape *shape, int m
 		shape = (PxShape*)shape->userData;
 	}
 
-	if( !isStatic )
-		PxRigidBodyExt::setMassAndUpdateInertia( *(PxRigidDynamic*)actor, 0.05 );
+	if( isStatic )
+		return actor;
 
-	return actor;
+	float mass = clamp( pParams->mass, VPHYSICS_MIN_MASS, VPHYSICS_MAX_MASS );
 
-//	objectTemplate.mass = clamp( pParams->mass, VPHYSICS_MIN_MASS, VPHYSICS_MAX_MASS );
+	PxRigidDynamic *dynamic = (PxRigidDynamic*)actor;
+	PxRigidBodyExt::setMassAndUpdateInertia( *dynamic, mass );
+
 //	if ( materialIndex >= 0 )
 //	{
 //		objectTemplate.material = physprops->GetIVPMaterial( materialIndex );
@@ -1046,12 +1048,14 @@ static PxRigidActor *CreatePxActor(PxTransform &transform, PxShape *shape, int m
 //		objectTemplate.material = physprops->GetIVPMaterial( materialIndex );
 //	}
 
+	PxVec3 massInertia = dynamic->getMassSpaceInertiaTensor();
+	massInertia *= pParams->inertia;
+	dynamic->setMassSpaceInertiaTensor(massInertia);
 
+	dynamic->setAngularDamping( pParams->rotdamping );
+	dynamic->setLinearDamping( pParams->damping );
 
-//	objectTemplate.rot_inertia.set(inertia, inertia, inertia);
-//	objectTemplate.rot_speed_damp_factor.set(pParams->rotdamping, pParams->rotdamping, pParams->rotdamping);
-//	objectTemplate.speed_damp_factor = pParams->damping;
-//	objectTemplate.auto_check_rot_inertia = pParams->rotInertiaLimit;
+	return actor;
 }
 
 
@@ -1131,28 +1135,6 @@ CPhysicsObject *CreatePhysicsObject( CPhysicsEnvironment *pEnvironment, const CP
 		PxRigidActor *body = CreatePxActor( t, shape, materialIndex, pParams, isStatic );
 		scene->addActor(*body);
 	}
-#if 0
-	if( pCollisionModel && mesh->getNbVertices() != 0 )
-	{
-		RadianEuler radian(angles);
-		Quaternion qw(radian);
-
-		PxQuat q( qw.x, qw.y, qw.z, qw.w );
-
-		PxTransform t(PxVec3(position.x, position.y, position.z), q);
-		PxMaterial *mat = gPxPhysics->createMaterial(0.5f, 0.5f, 0.6f);
-
-		PxRigidStatic* body = gPxPhysics->createRigidStatic(t);
-
-		if( body )
-		{
-			PxShape* aConvexShape = PxRigidActorExt::createExclusiveShape(*body,
-				PxConvexMeshGeometry(mesh), *mat);
-
-			scene->addActor(*body);
-		}
-	}
-#endif
 
 	pObject->Init( pCollisionModel, NULL, materialIndex, pParams->volume, pParams->dragCoefficient, pParams->dragCoefficient );
 	pObject->SetGameData( pParams->pGameData );

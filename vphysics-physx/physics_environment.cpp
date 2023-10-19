@@ -1117,7 +1117,7 @@ CPhysicsEnvironment::CPhysicsEnvironment( void )
 	// PHYSX_BEGIN
 
 	PxSceneDesc sceneDesc(gPxPhysics->getTolerancesScale());
-	sceneDesc.gravity = physx::PxVec3(0.0f, 0.0f, -50.f);
+	sceneDesc.gravity = physx::PxVec3(0.0f, 0.0f, -600.f);
 
 	m_pPxDispatcher = PxDefaultCpuDispatcherCreate(2);
 	sceneDesc.cpuDispatcher	= m_pPxDispatcher;
@@ -1525,8 +1525,9 @@ void CPhysicsEnvironment::Simulate( float deltaTime )
 			deltaTime = 0.1f;
 		}
 
-		m_pPxScene->simulate(deltaTime);
+		m_pPxScene->simulate( deltaTime /*1/60.f*/); // nillerusr: Stable simulation for testing in debug builds
 		m_pPxScene->fetchResults(true);
+
 
 #if 0
 		m_pCollisionSolver->EventPSI( this );
