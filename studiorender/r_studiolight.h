@@ -12,8 +12,9 @@
 
 
 #include "tier0/platform.h"
+#include "mathlib/ssemath.h"
 
-#if defined( _WIN32 ) && !defined( _X360 )
+#if defined( _WIN32 ) && !defined( _X360 ) && (defined(_M_IX86) || defined(_M_AMD64))
 #include <xmmintrin.h>
 #endif
 

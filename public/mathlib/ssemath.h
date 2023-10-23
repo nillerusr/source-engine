@@ -8,7 +8,7 @@
 
 #if defined( _X360 )
 #include <xboxmath.h>
-#elif defined(__arm__) || defined(__aarch64__)
+#elif defined(__arm__) || defined(__aarch64__) || defined(_M_ARM) || defined(_M_ARM64)
 #include "sse2neon.h"
 #else
 #include <xmmintrin.h>
@@ -62,6 +62,12 @@ typedef __vector4 u32x4; // a VMX register; just a way of making it explicit tha
 typedef __m128 fltx4;
 typedef __m128 i32x4;
 typedef __m128 u32x4;
+
+#if defined(_M_ARM) || defined(_M_ARM64)
+#define FLTX4(w, x, y, z) {(w) + (unsigned long long(x) << 32), (y) + (unsigned long long(z) << 32)}
+#else
+#define FLTX4(w, x, y, z) {w, x, y, z}
+#endif
 
 #endif
 
@@ -1828,7 +1834,7 @@ FORCEINLINE fltx4 ReplicateX4( float flValue )
 FORCEINLINE float SubFloat( const fltx4 & a, int idx )
 {
 	// NOTE: if the output goes into a register, this causes a Load-Hit-Store stall (don't mix fpu/vpu math!)
-#ifndef POSIX
+#if defined(_WIN32) && (defined(__i386__) || defined(__x86_64__))
 	return a.m128_f32[ idx ];
 #else
 	return (reinterpret_cast<float const *>(&a))[idx];
@@ -1837,7 +1843,7 @@ FORCEINLINE float SubFloat( const fltx4 & a, int idx )
 
 FORCEINLINE float & SubFloat( fltx4 & a, int idx )
 {
-#ifndef POSIX
+#if defined(_WIN32) && (defined(__i386__) || defined(__x86_64__))
 	return a.m128_f32[ idx ];
 #else
 	return (reinterpret_cast<float *>(&a))[idx];
@@ -1851,8 +1857,8 @@ FORCEINLINE uint32 SubFloatConvertToInt( const fltx4 & a, int idx )
 
 FORCEINLINE uint32 SubInt( const fltx4 & a, int idx )
 {
-#ifndef POSIX
-	return a.m128_u32[idx];
+#if defined(_WIN32) && (defined(__i386__) || defined(__x86_64__))
+	return a.m128_u32[ idx ];
 #else
 	return (reinterpret_cast<uint32 const *>(&a))[idx];
 #endif
@@ -1860,8 +1866,8 @@ FORCEINLINE uint32 SubInt( const fltx4 & a, int idx )
 
 FORCEINLINE uint32 & SubInt( fltx4 & a, int idx )
 {
-#ifndef POSIX
-	return a.m128_u32[idx];
+#if defined(_WIN32) && (defined(__i386__) || defined(__x86_64__))
+	return a.m128_u32[ idx ];
 #else
 	return (reinterpret_cast<uint32 *>(&a))[idx];
 #endif

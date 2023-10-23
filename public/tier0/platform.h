@@ -276,6 +276,13 @@ typedef signed char int8;
 #else
 	#define IsAndroid()	false
 #endif
+
+#ifdef PLATFORM_MOBILE
+	#define IsMobile() true
+#else
+	#define IsMobile() false
+#endif
+
 // From steam/steamtypes.h
 // RTime32
 // We use this 32 bit time representing real world time.
@@ -403,6 +410,18 @@ FIXME: Enable this when we no longer fear change =)
 
 #if defined(_M_IX86)
 #define __i386__	1
+#endif
+
+#ifdef _M_ARM64EC
+#define _M_ARM64	1
+#endif
+
+#ifdef _M_ARM
+#define __arm__		1
+#endif
+
+#ifdef _M_ARM64
+#define __aarch64__	1
 #endif
 
 #elif POSIX
@@ -852,7 +871,9 @@ static FORCEINLINE double fsel(double fComparand, double fValGE, double fLT)
 //-----------------------------------------------------------------------------
 //#define CHECK_FLOAT_EXCEPTIONS		1
 
-#if !defined( _X360 )
+#if defined (__arm__) || defined (__aarch64__)
+	inline void SetupFPUControlWord() {}
+#elif !defined( _X360 )
 #if defined( _MSC_VER )
 
 	#if defined( PLATFORM_WINDOWS_PC64 )
@@ -898,8 +919,6 @@ static FORCEINLINE double fsel(double fComparand, double fValGE, double fLT)
 
 		#endif
 	#endif
-#elif defined (__arm__) || defined (__aarch64__)
-	inline void SetupFPUControlWord() {}
 #else
 	inline void SetupFPUControlWord()
 	{
@@ -1025,7 +1044,7 @@ inline T QWordSwapC( T dw )
 		return output;
 	}
 
-#elif defined( _MSC_VER ) && !defined( PLATFORM_WINDOWS_PC64 )
+#elif defined( _MSC_VER ) && defined( _M_X86 )
 
 	#define WordSwap  WordSwapAsm
 	#define DWordSwap DWordSwapAsm
@@ -1229,8 +1248,18 @@ PLATFORM_INTERFACE time_t			Plat_timegm( struct tm *timeptr );
 PLATFORM_INTERFACE struct tm *		Plat_localtime( const time_t *timep, struct tm *result );
 
 #if defined( _WIN32 ) && defined( _MSC_VER ) && ( _MSC_VER >= 1400 )
+#ifdef _M_X64
 	extern "C" unsigned __int64 __rdtsc();
 	#pragma intrinsic(__rdtsc)
+#else
+#include <intrin.h>
+#define MSVC_ARM_SYSREG(op0, op1, crn, crm, op2) \
+        ( ((op0 & 1) << 14) | \
+          ((op1 & 7) << 11) | \
+          ((crn & 15) << 7) | \
+          ((crm & 15) << 3) | \
+          ((op2 & 7) << 0) )
+#endif
 #endif
 
 inline uint64 Plat_Rdtsc()
@@ -1241,15 +1270,16 @@ inline uint64 Plat_Rdtsc()
 	return t.tv_sec * 1000000000ULL + t.tv_nsec;
 #elif defined( _X360 )
 	return ( uint64 )__mftb32();
-#elif defined( _WIN64 )
+#elif defined( _M_IX86 )
+	_asm rdtsc
+#elif defined( _M_ARM )
+	return __rdpmccntr64();
+	//uint32 val = _MoveFromCoprocessor(15,0, 9,13,0);
+	//return ((uint64)val) << 6;
+#elif defined( _M_ARM64 ) || defined( _M_ARM64EC )
+	return _ReadStatusReg(MSVC_ARM_SYSREG(3,3, 9,12,5));
+#elif defined( COMPILER_MSVC )
 	return ( uint64 )__rdtsc();
-#elif defined( _WIN32 )
-  #if defined( _MSC_VER ) && ( _MSC_VER >= 1400 )
-	return ( uint64 )__rdtsc();
-  #else
-    __asm rdtsc;
-	__asm ret;
-  #endif
 #elif defined( __i386__ )
 	uint64 val;
 	__asm__ __volatile__ ( "rdtsc" : "=A" (val) );

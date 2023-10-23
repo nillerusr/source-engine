@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 # encoding: utf-8
+# vim: noexpandtab
 # nillerusr
 
 from __future__ import print_function
@@ -188,6 +189,11 @@ def define_platform(conf):
 
 	if conf.options.ALLOW64:
 		conf.define('PLATFORM_64BITS', 1)
+
+	if (conf.env.DEST_OS == 'android' or
+	 (conf.env.DEST_OS == 'win32' and conf.env.DEST_CPU in ['arm', 'arm64'])):
+		conf.env.MOBILE = True
+		conf.env.append_unique('DEFINES', ['PLATFORM_MOBILE=1'])
 
 	if conf.env.DEST_OS == 'linux':
 		conf.define('_GLIBCXX_USE_CXX11_ABI',0)
@@ -388,14 +394,18 @@ def check_deps(conf):
 		conf.check(lib='opus', uselib_store='OPUS')
 
 	if conf.env.DEST_OS == 'win32':
-		conf.check(lib='libz', uselib_store='ZLIB', define_name='USE_ZLIB')
-		# conf.check(lib='nvtc', uselib_store='NVTC')
-		# conf.check(lib='ati_compress_mt_vc10', uselib_store='ATI_COMPRESS_MT_VC10')
-		conf.check(lib='SDL2', uselib_store='SDL2')
-		conf.check(lib='libjpeg', uselib_store='JPEG', define_name='HAVE_JPEG')
-		conf.check(lib='libpng', uselib_store='PNG', define_name='HAVE_PNG')
-		conf.check(lib='d3dx9', uselib_store='D3DX9')
-		conf.check(lib='d3d9', uselib_store='D3D9')
+		if conf.env.DEST_CPU in ['arm', 'arm64']:
+			conf.check(lib='d3d9', uselib_store='D3D9')
+			conf.check(lib='d3dcompiler', uselib_store='D3DCOMPILER')
+			conf.check(lib='d3dx9', uselib_store='D3DX9')
+			conf.check(lib='SDL2', uselib_store='SDL2')
+		else:
+			conf.check(lib='libz', uselib_store='ZLIB', define_name='USE_ZLIB')
+			conf.check(lib='SDL2', uselib_store='SDL2')
+			conf.check(lib='libjpeg', uselib_store='JPEG', define_name='HAVE_JPEG')
+			conf.check(lib='libpng', uselib_store='PNG', define_name='HAVE_PNG')
+			conf.check(lib='d3dx9', uselib_store='D3DX9')
+			conf.check(lib='d3d9', uselib_store='D3D9')
 		conf.check(lib='dsound', uselib_store='DSOUND')
 		conf.check(lib='dxguid', uselib_store='DXGUID')
 		if conf.options.OPUS:
@@ -409,10 +419,12 @@ def configure(conf):
 	# Force XP compability, all build targets should add
 	# subsystem=bld.env.MSVC_SUBSYSTEM
 	# TODO: wrapper around bld.stlib, bld.shlib and so on?
-	conf.env.MSVC_SUBSYSTEM = 'WINDOWS,5.01'
-	conf.env.MSVC_TARGETS = ['x86'] # explicitly request x86 target for MSVC
-	if conf.options.ALLOW64:
-		conf.env.MSVC_TARGETS = ['x64']
+	conf.env.MSVC_TARGETS = ['x86' if not conf.options.ALLOW64 else 'x64']
+	if conf.env.MSVC_TARGETS[0] == 'x86':
+		conf.env.MSVC_SUBSYSTEM = 'WINDOWS,5.01'
+	else:
+		conf.env.MSVC_SUBSYSTEM = 'WINDOWS'
+
 	if sys.platform == 'win32':
 		conf.load('msvc_pdb_ext msdev msvs')
 	conf.load('subproject xcompile compiler_c compiler_cxx gitversion clang_compilation_database strip_on_install_v2 waf_unit_test enforce_pic')
@@ -508,7 +520,6 @@ def configure(conf):
 	else:
 		cflags += [
 			'/I'+os.path.abspath('.')+'/thirdparty/SDL',
-			'/arch:SSE' if conf.env.DEST_CPU == 'x86' else '/arch:AVX',
 			'/GF',
 			'/Gy',
 			'/fp:fast',
@@ -518,6 +529,8 @@ def configure(conf):
 			'/TP',
 			'/EHsc'
 		]
+		if conf.env.DEST_CPU in ['x86', 'x86_64', 'amd64']:
+			cflags += ['/arch:SSE' if conf.env.DEST_CPU == 'x86' else '/arch:AVX']
 
 		if conf.options.BUILD_TYPE == 'debug':
 			linkflags += [
@@ -597,10 +610,18 @@ def configure(conf):
 def build(bld):
 	os.environ["CCACHE_DIR"] = os.path.abspath('.ccache/'+bld.env.COMPILER_CC+'/'+bld.env.DEST_OS+'/'+bld.env.DEST_CPU)
 
+	base_lib_path = os.path.join('lib', bld.env.DEST_OS, bld.env.DEST_CPU)
 	if bld.env.DEST_OS in ['win32', 'android']:
 		sdl_name = 'SDL2.dll' if bld.env.DEST_OS == 'win32' else 'libSDL2.so'
-		sdl_path = os.path.join('lib', bld.env.DEST_OS, bld.env.DEST_CPU, sdl_name)
+		sdl_path = os.path.join(base_lib_path, sdl_name)
 		bld.install_files(bld.env.LIBDIR, [sdl_path])
+
+	if bld.env.DEST_OS == 'win32' and bld.env.DEST_CPU in ['arm', 'arm64']:
+		# because Windows ARM doesn't have D3DX and it is deprecated since Windows 8
+		bld.install_files(bld.env.LIBDIR, [
+			os.path.join(base_lib_path, 'd3dx9.dll'),
+			os.path.join(base_lib_path, 'd3dxof.dll'),
+		])
 
 	if bld.env.DEST_OS == 'win32':
 		projects['game'] += ['utils/bzip2']

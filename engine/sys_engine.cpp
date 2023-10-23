@@ -104,7 +104,7 @@ extern ConVar host_timer_spin_ms;
 extern float host_nexttick;
 extern IVEngineClient *engineClient;
 
-#ifdef WIN32
+#if defined(_WIN32)
 static void cpu_frequency_monitoring_callback( IConVar *var, const char *pOldValue, float flOldValue )
 {
 	// Set the specified interval for CPU frequency monitoring

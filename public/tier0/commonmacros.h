@@ -68,7 +68,7 @@ inline bool IsPowerOfTwo( T value )
 
 // From crtdefs.h
 #if !defined(UNALIGNED)
-#if defined(_M_IA64) || defined(_M_AMD64)
+#if defined(_M_AMD64) || defined(_M_ARM) || defined(_M_ARM64)
 #define UNALIGNED __unaligned
 #else
 #define UNALIGNED

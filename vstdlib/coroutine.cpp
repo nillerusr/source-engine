@@ -218,7 +218,11 @@ extern "C" byte *GetStackPtr64();
 #define GetStackPtr( pStackPtr)		byte *pStackPtr = GetStackPtr64();
 #else
 #ifdef WIN32
-#define GetStackPtr( pStackPtr )	byte *pStackPtr;	__asm mov pStackPtr, esp	
+# if defined(_M_ARM) || defined(_M_ARM64)
+#  define GetStackPtr( pStackPtr )	byte x; byte *pStackPtr = &x
+# else
+#  define GetStackPtr( pStackPtr )	byte *pStackPtr;	__asm mov pStackPtr, esp	
+# endif
 #elif defined(GNUC)
 // Apple's version of gcc/g++ doesn't return the expected value using the intrinsic, so 
 // do it the old fashioned way - this will also use asm on linux (since we don't compile
@@ -649,7 +653,7 @@ bool Internal_Coroutine_Continue( HCoroutine hCoroutine, const char *pchDebugMsg
 	bool bInCoroutineAlready = GCoroutineMgr().IsAnyCoroutineActive();
 
 #ifdef _WIN32
-#ifndef _WIN64
+#ifdef _M_IX86
 	// make sure nobody has a try/catch block and then yielded
 	// because we hate that and we will crash
 	uint32 topofexceptionchain;
@@ -897,7 +901,7 @@ void Coroutine_YieldToMain()
 	CoroutineDbgMsg( g_fmtstr.sprintf( "Coroutine_YieldToMain() %s#%x -> %s#%x\n", coroutine.m_pchName, coroutine.m_hCoroutine, coroutinePrev.m_pchName, coroutinePrev.m_hCoroutine ) );
 
 #ifdef _WIN32
-#ifndef _WIN64
+#ifdef _M_IX86
 	// make sure nobody has a try/catch block and then yielded
 	// because we hate that and we will crash
 	uint32 topofexceptionchain;

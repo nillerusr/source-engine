@@ -20,7 +20,7 @@
 
 #define MAGIC_NUMBER (1<<15)								// gives 8 bits of fraction
 
-static fltx4 Four_MagicNumbers = { MAGIC_NUMBER, MAGIC_NUMBER, MAGIC_NUMBER, MAGIC_NUMBER };
+static fltx4 Four_MagicNumbers = FLTX4( MAGIC_NUMBER, MAGIC_NUMBER, MAGIC_NUMBER, MAGIC_NUMBER );
 
 
 static ALIGN16 int32 idx_mask[4]= {0xffff, 0xffff, 0xffff, 0xffff};

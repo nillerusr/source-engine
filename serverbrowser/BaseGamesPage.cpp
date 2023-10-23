@@ -582,7 +582,7 @@ void CBaseGamesPage::LoadFilterSettings()
 	m_bFilterNoEmptyServers = filter->GetInt("NoEmpty");
 	m_bFilterNoPasswordedServers = filter->GetInt("NoPassword");
 	m_bFilterReplayServers = filter->GetInt("Replay");
-	m_pQuickListCheckButton->SetSelected( filter->GetInt( "QuickList", IsAndroid() ) );
+	m_pQuickListCheckButton->SetSelected( filter->GetInt( "QuickList", IsMobile() ) );
 
 	int secureFilter = filter->GetInt("Secure");
 	m_pSecureFilter->ActivateItem(secureFilter);

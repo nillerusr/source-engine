@@ -453,7 +453,7 @@ private:
 #ifdef WIN32
 static const 
 #endif
-fltx4 g_IVPToHLDir = { 1.0f, -1.0f, 1.0f, 1.0f };
+fltx4 g_IVPToHLDir = FLTX4( 1.0f, -1.0f, 1.0f, 1.0f );
 
 //static const fltx4 g_IVPToHLPosition = { IVP2HL(1.0f), -IVP2HL(1.0f), IVP2HL(1.0f), IVP2HL(1.0f) };
 
@@ -680,7 +680,7 @@ bool CTraceIVP::BuildLeafmapCache( const leafmap_t * RESTRICT pLeafmap )
 #endif
 }
 
-static const fltx4 g_IndexBase = {0,1,2,3};
+static const fltx4 g_IndexBase =FLTX4(0,1,2,3);
 int CTraceIVP::SupportMapCached( const Vector &dir, Vector *pOut ) const
 {
 	VPROF("SupportMapCached");

@@ -1740,7 +1740,7 @@ bool ThreadInterlockedAssignIf( int32 volatile *pDest, int32 value, int32 comper
 {
 	Assert( (size_t)pDest % 4 == 0 );
 
-#if !(defined(_WIN64) || defined (_X360))
+#ifdef _M_IX86
 	__asm 
 	{
 		mov	eax,comperand
@@ -1773,7 +1773,7 @@ void *ThreadInterlockedCompareExchangePointer( void * volatile *pDest, void *val
 bool ThreadInterlockedAssignPointerIf( void * volatile *pDest, void *value, void *comperand )
 {
 	Assert( (size_t)pDest % 4 == 0 );
-#if !(defined(_WIN64) || defined (_X360))
+#ifdef _M_IX86
 	__asm 
 	{
 		mov	eax,comperand
@@ -1807,13 +1807,19 @@ int64 ThreadInterlockedCompareExchange64( int64 volatile *pDest, int64 value, in
 		lock CMPXCHG8B [esi];			
 	}
 }
+#elif defined(_M_ARM)
+int64 ThreadInterlockedCompareExchange64( int64 volatile *pDest, int64 value, int64 comperand )
+{
+	Assert( (size_t)pDest % 8 == 0 );
+	return InterlockedCompareExchange64( pDest, value, comperand );
+}
 #endif
 
 bool ThreadInterlockedAssignIf64(volatile int64 *pDest, int64 value, int64 comperand ) 
 {
 	Assert( (size_t)pDest % 8 == 0 );
 
-#if defined(_X360) || defined(_WIN64)
+#if defined(_X360) || defined(_WIN64) || defined(_M_ARM) || defined(_M_ARM64)
 	return ( ThreadInterlockedCompareExchange64( pDest, value, comperand ) == comperand ); 
 #else
 	__asm
@@ -1833,7 +1839,7 @@ bool ThreadInterlockedAssignIf64(volatile int64 *pDest, int64 value, int64 compe
 #endif
 }
 
-#ifdef _WIN64
+#if defined(_WIN64) && !defined(_M_ARM64)
 bool ThreadInterlockedAssignIf128( volatile int128 *pDest, const int128 &value, const int128 &comperand )
 {
 	DbgAssert( ( (size_t)pDest % 16 ) == 0 );

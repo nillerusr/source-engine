@@ -287,7 +287,7 @@ namespace ColorSpace
 	{
 		// preload 3.0f onto the returns so that we don't need to multiply the bumpAverage by it
 		// straight away (eg, reschedule this dependent op)
-		static const fltx4 vThree = { 3.0f, 3.0f, 3.0f, 0.0f };
+		static const fltx4 vThree = FLTX4( 3.0f, 3.0f, 3.0f, 0.0f );
 		fltx4 retValBump1 = MulSIMD( vThree, linearBumpColor1);
 		fltx4 retValBump2 = MulSIMD( vThree, linearBumpColor2);
 		fltx4 retValBump3 = MulSIMD( vThree, linearBumpColor3);

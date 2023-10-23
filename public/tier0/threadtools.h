@@ -241,6 +241,8 @@ inline void ThreadPause()
 	_mm_pause();
 #elif defined( COMPILER_MSVC32 )
 	__asm pause;
+#elif defined(_M_ARM) || defined(_M_ARM64)
+	__yield();
 #elif defined( COMPILER_MSVCX360 )
 	YieldProcessor(); 
 	__asm { or r0,r0,r0 } 
@@ -445,7 +447,7 @@ PLATFORM_INTERFACE bool ThreadInterlockedAssignIf64( volatile int64 *pDest, int6
 
 PLATFORM_INTERFACE int64 ThreadInterlockedExchange64( int64 volatile *, int64 value ) NOINLINE;
 
-#ifdef COMPILER_MSVC32
+#if COMPILER_MSVC32 || _M_ARM
 PLATFORM_INTERFACE int64 ThreadInterlockedIncrement64( int64 volatile * ) NOINLINE;
 PLATFORM_INTERFACE int64 ThreadInterlockedDecrement64( int64 volatile * ) NOINLINE;
 PLATFORM_INTERFACE int64 ThreadInterlockedExchangeAdd64( int64 volatile *, int64 value ) NOINLINE;
@@ -465,7 +467,7 @@ inline int64 ThreadInterlockedDecrement64( int64 volatile *p )
 
 #endif
 
-#ifdef COMPILER_MSVC64
+#if COMPILER_MSVC64 || _M_ARM64
 // 64 bit windows can use intrinsics for these, 32-bit can't
 #pragma intrinsic( _InterlockedCompareExchange64 )
 #pragma intrinsic( _InterlockedExchange64 )
@@ -492,7 +494,7 @@ inline bool ThreadInterlockedAssignIf( uint32 volatile *p, uint32 value, uint32 
 //inline bool ThreadInterlockedAssignIf( int volatile *p, int value, int comperand )	{ return ThreadInterlockedAssignIf( (int32 volatile *)p, value, comperand ); }
 
 
-#if defined( _WIN64 )
+#if defined( _WIN64 ) && !defined(_M_ARM64)
 typedef __m128i int128;
 inline int128 int128_zero()	{ return _mm_setzero_si128(); }
 PLATFORM_INTERFACE bool ThreadInterlockedAssignIf128( volatile int128 *pDest, const int128 &value, const int128 &comperand ) NOINLINE;

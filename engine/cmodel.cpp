@@ -862,7 +862,7 @@ BOX TRACING
 
 // Custom SIMD implementation for box brushes
 
-const fltx4 Four_DistEpsilons={DIST_EPSILON,DIST_EPSILON,DIST_EPSILON,DIST_EPSILON};
+const fltx4 Four_DistEpsilons=FLTX4(DIST_EPSILON,DIST_EPSILON,DIST_EPSILON,DIST_EPSILON);
 const int32 ALIGN16 g_CubeFaceIndex0[4] ALIGN16_POST = {0,1,2,-1};
 const int32 ALIGN16 g_CubeFaceIndex1[4] ALIGN16_POST = {3,4,5,-1};
 bool IntersectRayWithBoxBrush( TraceInfo_t *pTraceInfo, const cbrush_t *pBrush, cboxbrush_t *pBox )
@@ -1572,7 +1572,7 @@ void FASTCALL CM_TraceToLeaf( TraceInfo_t * RESTRICT pTraceInfo, int ndxLeaf, fl
 			fltx4 traceStart = LoadAlignedSIMD(pTraceInfo->m_start.Base());
 			fltx4 traceDelta = LoadAlignedSIMD(pTraceInfo->m_delta.Base());
 			fltx4 traceInvDelta = LoadAlignedSIMD(pTraceInfo->m_invDelta.Base());
-			static const fltx4 vecEpsilon = {DISPCOLL_DIST_EPSILON,DISPCOLL_DIST_EPSILON,DISPCOLL_DIST_EPSILON,DISPCOLL_DIST_EPSILON};
+			static const fltx4 vecEpsilon = FLTX4(DISPCOLL_DIST_EPSILON,DISPCOLL_DIST_EPSILON,DISPCOLL_DIST_EPSILON,DISPCOLL_DIST_EPSILON);
 			// only used in !IS_POINT version:
 			fltx4 extents;
 			if (!IS_POINT)
