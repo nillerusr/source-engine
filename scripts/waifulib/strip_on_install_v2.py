@@ -25,6 +25,8 @@ def configure(conf):
 
 		if conf.env.DEST_BINFMT == 'mac-o':
 			conf.env.STRIPFLAGS += ['-x']
+			conf.find_program('dsymutil', var='DSYMUTIL')
+			conf.env.STRIPFLAGS += ['-S'] # we will use .dSYM instead
 			return # macOS don't have objcopy
 		
 		# a1ba: I am lazy to add `export OBJCOPY=` everywhere in my scripts
@@ -56,12 +58,19 @@ def copy_fun(self, src, tgt):
 		c3 = Logs.colors.YELLOW
 		c4 = Logs.colors.BLUE
 		try:
-			if self.generator.bld.options.strip_to_file and self.env.DEST_BINFMT == 'elf':
-				ocopy_cmd = self.env.OBJCOPY + ['--only-keep-debug', tgt, tgt_debug]
-				self.generator.bld.cmd_and_log(ocopy_cmd, output=Context.BOTH, quiet=Context.BOTH)
-				if not self.generator.bld.progress_bar:
-					Logs.info('%s+ objcopy --only-keep-debug %s%s%s %s%s%s', c1, c4, tgt, c1, c3, tgt_debug, c1)
-			
+			if self.generator.bld.options.strip_to_file:
+				if self.env.DEST_BINFMT == 'elf':
+					ocopy_cmd = self.env.OBJCOPY + ['--only-keep-debug', tgt, tgt_debug]
+					self.generator.bld.cmd_and_log(ocopy_cmd, output=Context.BOTH, quiet=Context.BOTH)
+					if not self.generator.bld.progress_bar:
+						Logs.info('%s+ objcopy --only-keep-debug %s%s%s %s%s%s', c1, c4, tgt, c1, c3, tgt_debug, c1)
+				elif self.env.DEST_BINFMT == 'mac-o':
+					tgt_debug = os.path.splitext(tgt)[0] + '.dSYM'
+					dsymutil_cmd = self.env.DSYMUTIL + [tgt, '-o', tgt_debug]
+					self.generator.bld.cmd_and_log(dsymutil_cmd, output=Context.BOTH, quiet=Context.BOTH)
+					if not self.generator.bld.progress_bar:
+						Logs.info('%s+ dsymutil %s%s%s -o %s%s%s', c1, c4, tgt, c1, c3, tgt_debug, c1)
+
 			strip_cmd = self.env.STRIP + self.env.STRIPFLAGS + [tgt]
 			self.generator.bld.cmd_and_log(strip_cmd, output=Context.BOTH, quiet=Context.BOTH)
 			if not self.generator.bld.progress_bar:
