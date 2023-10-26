@@ -451,7 +451,7 @@ void UTIL_TraceEntity( CBaseEntity *pEntity, const Vector &vecAbsStart, const Ve
 
 bool UTIL_EntityHasMatchingRootParent( CBaseEntity *pRootParent, CBaseEntity *pEntity );
 
-inline int UTIL_PointContents( const Vector &vec, int contentsMask )
+inline int UTIL_PointContents( const Vector &vec, int contentsMask = 0 )
 {
 	return enginetrace->GetPointContents( vec, contentsMask );
 }

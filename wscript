@@ -40,7 +40,7 @@ projects={
 		'engine/voice_codecs/minimp3',
 		'filesystem',
 #		'game/client',
-#		'game/server',
+		'game/server',
 		'gameui',
 		'inputsystem',
 		'ivp/havana',
@@ -79,6 +79,7 @@ projects={
 		'utils/vtex',
 		'unicode',
 		'video',
+		'interfaces'
 	],
 	'tests': [
 		'appframework',

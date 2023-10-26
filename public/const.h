@@ -36,6 +36,12 @@
 #define ABSOLUTE_PLAYER_LIMIT 255  // not 256, so we can send the limit as a byte 
 #define ABSOLUTE_PLAYER_LIMIT_DW	( (ABSOLUTE_PLAYER_LIMIT/32) + 1 )
 
+#if ABSOLUTE_PLAYER_LIMIT > 32
+#define CPlayerBitVec CBitVec<ABSOLUTE_PLAYER_LIMIT>
+#else
+#define CPlayerBitVec CDWordBitVec
+#endif
+
 // a player name may have 31 chars + 0 on the PC.
 // the 360 only allows 15 char + 0, but stick with the larger PC size for cross-platform communication
 #define MAX_PLAYER_NAME_LENGTH		32
@@ -45,6 +51,7 @@
 #else
 #define MAX_PLAYERS_PER_CLIENT		1	// One player per PC
 #endif
+
 
 // Max decorated map name, with things like workshop/cp_foo.ugc123456
 #define MAX_MAP_NAME				96

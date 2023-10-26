@@ -14,7 +14,7 @@
 #endif
 
 #include "tier1/interface.h"
-
+#include "interfaces/interfaces.h"
 
 //-----------------------------------------------------------------------------
 // Client systems are singleton objects in the client codebase responsible for
