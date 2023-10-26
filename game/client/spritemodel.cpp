@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -12,7 +12,7 @@
 #include "materialsystem/imaterialvar.h"
 #include "c_sprite.h"
 #include "tier1/callqueue.h"
-#include "tier1/KeyValues.h"
+#include "tier1/keyvalues.h"
 #include "tier2/tier2.h"
 #include "filesystem.h"
 
@@ -220,32 +220,47 @@ static unsigned int spriteOriginCache = 0;
 static unsigned int spriteOrientationCache = 0;
 bool CEngineSprite::Init( const char *pName )
 {
-	m_VideoMaterial = NULL;
-	for ( int i = 0; i < kRenderModeCount; ++i )
-	{
-		m_material[ i ] = NULL;
-	}
-
+	m_hAVIMaterial = AVIMATERIAL_INVALID;
+	m_hBIKMaterial = BIKMATERIAL_INVALID;
 	m_width = m_height = m_numFrames = 1;
 
-	Assert( g_pVideo != NULL );
-	
-	if ( g_pVideo != NULL && g_pVideo->LocateVideoSystemForPlayingFile( pName ) != VideoSystem::NONE ) 
+	const char *pExt = Q_GetFileExtension( pName );
+	bool bIsAVI = pExt && !Q_stricmp( pExt, "avi" );
+#if !defined( _X360 ) || defined( BINK_ENABLED_FOR_X360 )
+	bool bIsBIK = pExt && !Q_stricmp( pExt, "bik" );
+#endif
+	if ( bIsAVI && IsPC() )
 	{
-		m_VideoMaterial = g_pVideo->CreateVideoMaterial( pName, pName, "GAME", VideoPlaybackFlags::DEFAULT_MATERIAL_OPTIONS, VideoSystem::DETERMINE_FROM_FILE_EXTENSION, false ); 
-		
-		if ( m_VideoMaterial == NULL )
+		m_hAVIMaterial = avi->CreateAVIMaterial( pName, pName, "GAME" );
+		if ( m_hAVIMaterial == AVIMATERIAL_INVALID )
 			return false;
 
-		IMaterial *pMaterial = m_VideoMaterial->GetMaterial();
-		m_VideoMaterial->GetVideoImageSize( &m_width, &m_height );
-		m_numFrames = m_VideoMaterial->GetFrameCount();
+		IMaterial *pMaterial = avi->GetMaterial( m_hAVIMaterial );
+		avi->GetFrameSize( m_hAVIMaterial, &m_width, &m_height );
+		m_numFrames = avi->GetFrameCount( m_hAVIMaterial );
 		for ( int i = 0; i < kRenderModeCount; ++i )
 		{
 			m_material[i] = pMaterial;
 			pMaterial->IncrementReferenceCount();
 		}
 	}
+#if !defined( _X360 ) || defined( BINK_ENABLED_FOR_X360 )
+	else if ( bIsBIK )
+	{
+		m_hBIKMaterial = bik->CreateMaterial( pName, pName, "GAME" );
+		if ( m_hBIKMaterial == BIKMATERIAL_INVALID )
+			return false;
+
+		IMaterial *pMaterial = bik->GetMaterial( m_hBIKMaterial );
+		bik->GetFrameSize( m_hBIKMaterial, &m_width, &m_height );
+		m_numFrames = bik->GetFrameCount( m_hBIKMaterial );
+		for ( int i = 0; i < kRenderModeCount; ++i )
+		{
+			m_material[i] = pMaterial;
+			pMaterial->IncrementReferenceCount();
+		}
+	}
+#endif
 	else
 	{
 		char pTemp[MAX_PATH];
@@ -269,6 +284,11 @@ bool CEngineSprite::Init( const char *pName )
 		Q_strncpy( pMaterialPath, pMaterialName, sizeof(pMaterialPath) );
 		Q_SetExtension( pMaterialPath, ".vmt", sizeof(pMaterialPath) );
 
+		for ( int i = 0; i < kRenderModeCount; ++i )
+		{	
+			m_material[i] = NULL;
+		}
+
 		KeyValues *kv = new KeyValues( "vmt" );
 		if ( !kv->LoadFromFile( g_pFullFileSystem, pMaterialPath, "GAME" ) )
 		{
@@ -280,15 +300,15 @@ bool CEngineSprite::Init( const char *pName )
 		{	
 			if ( i == kRenderNone || i == kRenderEnvironmental )
 			{
-				m_material[i] = NULL;
 				continue;
 			}
 
-			Q_snprintf( pMaterialPath, sizeof(pMaterialPath), "%s_rendermode_%d", pMaterialName, i );
+			// strip possible materials/
+			Q_snprintf( pMaterialPath, sizeof(pMaterialPath), "%s_rendermode_%d", pMaterialName + ( bIsUNC ? 0 : 10 ), i );
 			KeyValues *pMaterialKV = kv->MakeCopy();
 			pMaterialKV->SetInt( "$spriteRenderMode", i );
 			m_material[i] = g_pMaterialSystem->FindProceduralMaterial( pMaterialPath, TEXTURE_GROUP_CLIENT_EFFECTS, pMaterialKV );
-			m_material[ i ]->IncrementReferenceCount();
+			m_material[i]->IncrementReferenceCount();	
 		}
 
 		kv->deleteThis();
@@ -338,24 +358,40 @@ bool CEngineSprite::Init( const char *pName )
 //-----------------------------------------------------------------------------
 void CEngineSprite::Shutdown( void )
 {
-	if ( g_pVideo != NULL && m_VideoMaterial != NULL )
+	if ( m_hAVIMaterial != AVIMATERIAL_INVALID )
 	{
-		g_pVideo->DestroyVideoMaterial( m_VideoMaterial );
-		m_VideoMaterial = NULL;
+		avi->DestroyAVIMaterial( m_hAVIMaterial );
+		m_hAVIMaterial = AVIMATERIAL_INVALID;
 	}
+
+#if !defined( _X360 ) || defined( BINK_ENABLED_FOR_X360 )
+	if ( m_hBIKMaterial != BIKMATERIAL_INVALID )
+	{
+		bik->DestroyMaterial( m_hBIKMaterial );
+		m_hBIKMaterial = BIKMATERIAL_INVALID;
+	}
+#endif
 
 	UnloadMaterial();
 }
 
 
+//-----------------------------------------------------------------------------
+// Is the sprite an AVI?
+//-----------------------------------------------------------------------------
+bool CEngineSprite::IsAVI()
+{
+	return ( m_hAVIMaterial != AVIMATERIAL_INVALID );
+}
 
 //-----------------------------------------------------------------------------
-// Is the sprite a video sprite?
+// Is the sprite an BIK?
 //-----------------------------------------------------------------------------
-bool CEngineSprite::IsVideo()
+bool CEngineSprite::IsBIK()
 {
-	return ( m_VideoMaterial != NULL );
+	return ( m_hBIKMaterial != BIKMATERIAL_INVALID );
 }
+
 
 //-----------------------------------------------------------------------------
 // Returns the texture coordinate range	used to draw the sprite
@@ -364,11 +400,16 @@ void CEngineSprite::GetTexCoordRange( float *pMinU, float *pMinV, float *pMaxU, 
 {
 	*pMaxU = 1.0f; 
 	*pMaxV = 1.0f;
-	if ( IsVideo() )
+	if ( IsAVI() )
 	{
-		m_VideoMaterial->GetVideoTexCoordRange( pMaxU, pMaxV );
+		avi->GetTexCoordRange( m_hAVIMaterial, pMaxU, pMaxV );
 	}
-	
+#if !defined( _X360 ) || defined( BINK_ENABLED_FOR_X360 )
+	if ( IsBIK() )
+	{
+		bik->GetTexCoordRange( m_hBIKMaterial, pMaxU, pMaxV );
+	}
+#endif
 	float flOOWidth = ( m_width != 0 ) ? 1.0f / m_width : 1.0f;
 	float flOOHeight = ( m_height!= 0 ) ? 1.0f / m_height : 1.0f;
 
@@ -410,14 +451,23 @@ IMaterial *CEngineSprite::GetMaterial( RenderMode_t nRenderMode, int nFrame )
 	if ( nRenderMode == kRenderNone || nRenderMode == kRenderEnvironmental )
 		return NULL;
 
-	if ( IsVideo() )
+	if ( IsAVI() )
 	{
-		m_VideoMaterial->SetFrame( nFrame );
+		avi->SetFrame( m_hAVIMaterial, nFrame );
+		return m_material[ 0 ];	// render mode is ignored for avi
 	}
-	
+
+#if !defined( _X360 ) || defined( BINK_ENABLED_FOR_X360 )
+	if ( IsBIK() )
+	{
+		bik->SetFrame( m_hBIKMaterial, nFrame );
+		return m_material[ 0 ]; // render mode is ignored for bink
+	}
+#endif
 	
 	IMaterial *pMaterial = m_material[nRenderMode];
-	if( !pMaterial )
+	Assert( pMaterial );
+	if ( pMaterial == NULL )
 		return NULL;
 
 	IMaterialVar* pFrameVar = pMaterial->FindVarFast( "$frame", &frameCache );
@@ -431,12 +481,19 @@ IMaterial *CEngineSprite::GetMaterial( RenderMode_t nRenderMode, int nFrame )
 
 void CEngineSprite::SetFrame( RenderMode_t nRenderMode, int nFrame )
 {
-	if ( IsVideo() )
+	if ( IsAVI() )
 	{
-		m_VideoMaterial->SetFrame( nFrame );
+		avi->SetFrame( m_hAVIMaterial, nFrame );
 		return;
 	}
 
+#if !defined( _X360 ) || defined( BINK_ENABLED_FOR_X360 )
+	if ( IsBIK() )
+	{
+		bik->SetFrame( m_hBIKMaterial, nFrame );
+		return;
+	}
+#endif
 
 	IMaterial *pMaterial = m_material[nRenderMode];
 	if ( !pMaterial )
@@ -495,7 +552,8 @@ void CEngineSprite::DrawFrame( RenderMode_t nRenderMode, int frame, int x, int y
 void CEngineSprite::DrawFrameOfSize( RenderMode_t nRenderMode, int frame, int x, int y, int iWidth, int iHeight, const wrect_t *prcSubRect )
 {
 	// FIXME: If we ever call this with AVIs, need to have it call GetTexCoordRange and make that work
-	Assert( !IsVideo() );
+	Assert( !IsAVI() && !IsBIK() );
+
 	float fLeft = 0;
 	float fRight = 1;
 	float fTop = 0;

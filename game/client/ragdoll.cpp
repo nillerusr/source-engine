@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -16,6 +16,8 @@
 #include "view.h"
 #include "physics_saverestore.h"
 #include "vphysics/constraints.h"
+#include "clientalphaproperty.h"
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -23,12 +25,14 @@
 extern ConVar r_FadeProps;
 #endif
 
+extern ConVar r_sequence_debug;
+
 CRagdoll::CRagdoll()
 {
 	m_ragdoll.listCount = 0;
 	m_vecLastOrigin.Init();
 	m_flLastOriginChangeTime = - 1.0f;
-	
+	m_flAwakeTime = -1.0f;
 	m_lastUpdate = -FLT_MAX;
 }
 
@@ -69,6 +73,14 @@ BEGIN_SIMPLE_DATADESC( CRagdoll )
 	DEFINE_RAGDOLL_ELEMENT( 21 ),
 	DEFINE_RAGDOLL_ELEMENT( 22 ),
 	DEFINE_RAGDOLL_ELEMENT( 23 ),
+	DEFINE_RAGDOLL_ELEMENT( 24 ),
+	DEFINE_RAGDOLL_ELEMENT( 25 ),
+	DEFINE_RAGDOLL_ELEMENT( 26 ),
+	DEFINE_RAGDOLL_ELEMENT( 27 ),
+	DEFINE_RAGDOLL_ELEMENT( 28 ),
+	DEFINE_RAGDOLL_ELEMENT( 29 ),
+	DEFINE_RAGDOLL_ELEMENT( 30 ),
+	DEFINE_RAGDOLL_ELEMENT( 31 ),
 
 END_DATADESC()
 
@@ -82,11 +94,14 @@ void CRagdoll::BuildRagdollBounds( C_BaseEntity *ent )
 	Vector mins, maxs, size;
 	modelinfo->GetModelBounds( ent->GetModel(), mins, maxs );
 	size = (maxs - mins) * 0.5;
-	m_radius = size.Length();
+	float radius = size.Length();
 
-	m_mins.Init(-m_radius,-m_radius,-m_radius);
-	m_maxs.Init(m_radius,m_radius,m_radius);
+	m_mins.Init(-radius,-radius,-radius);
+	m_maxs.Init(radius,radius,radius);
 }
+
+static ConVar cl_ragdoll_self_collision( "cl_ragdoll_self_collision", "1", FCVAR_DEVELOPMENTONLY );
+extern ConVar cl_ragdoll_collide;
 
 void CRagdoll::Init( 
 	C_BaseEntity *ent, 
@@ -96,13 +111,18 @@ void CRagdoll::Init(
 	const matrix3x4_t *pDeltaBones0, 
 	const matrix3x4_t *pDeltaBones1, 
 	const matrix3x4_t *pCurrentBonePosition, 
-	float dt,
-	bool bFixedConstraints )
+	float dt )
 {
 	ragdollparams_t params;
 	params.pGameData = static_cast<void *>( ent );
 	params.modelIndex = ent->GetModelIndex();
 	params.pCollide = modelinfo->GetVCollide( params.modelIndex );
+
+	if ( !params.pCollide )
+	{
+		return;
+	}
+
 	params.pStudioHdr = pstudiohdr;
 	params.forceVector = forceVector;
 	params.forceBoneIndex = forceBone;
@@ -110,18 +130,30 @@ void CRagdoll::Init(
 	params.pCurrentBones = pCurrentBonePosition;
 	params.jointFrictionScale = 1.0;
 	params.allowStretch = false;
-	params.fixedConstraints = bFixedConstraints;
+
 	RagdollCreate( m_ragdoll, params, physenv );
 	ent->VPhysicsSetObject( NULL );
 	ent->VPhysicsSetObject( m_ragdoll.list[0].pObject );
 	// Mark the ragdoll as debris.
 	ent->SetCollisionGroup( COLLISION_GROUP_DEBRIS );
+	// forcibly disable ragdoll self collisions on the client in L4D / x360 to save perf
+	for ( int i = 0; i < m_ragdoll.listCount; i++ )
+	{
+		m_ragdoll.list[i].pObject->SetUseAlternateGravity(true);
+		if ( !cl_ragdoll_self_collision.GetBool() && !cl_ragdoll_collide.GetBool() )
+		{
+			PhysSetGameFlags(m_ragdoll.list[i].pObject, FVPHYSICS_NO_SELF_COLLISIONS);
+			m_ragdoll.list[i].pObject->SetCollisionHints(COLLISION_HINT_DEBRIS);
+		}
+	}
 
 	RagdollApplyAnimationAsVelocity( m_ragdoll, pDeltaBones0, pDeltaBones1, dt );
 	RagdollActivate( m_ragdoll, params.pCollide, ent->GetModelIndex() );
+	m_ragdoll.list[0].pObject->GetPosition( &m_origin, 0 );
 
 	// It's moving now...
-	m_flLastOriginChangeTime = gpGlobals->curtime;
+	m_flLastOriginChangeTime = physenv->GetSimulationTime();
+	m_flAwakeTime = physenv->GetSimulationTime();
 
 	// So traces hit it.
 	ent->AddEFlags( EFL_USE_PARTITION_WHEN_NOT_SOLID );
@@ -173,9 +205,8 @@ void CRagdoll::RagdollBone( C_BaseEntity *ent, mstudiobone_t *pbones, int boneCo
 	}
 }
 
-const Vector& CRagdoll::GetRagdollOrigin( )
+const Vector &CRagdoll::GetRagdollOrigin( )
 {
-	m_ragdoll.list[0].pObject->GetPosition( &m_origin, 0 );
 	return m_origin;
 }
 
@@ -189,61 +220,27 @@ void CRagdoll::VPhysicsUpdate( IPhysicsObject *pPhysics )
 {
 	if ( m_lastUpdate == gpGlobals->curtime )
 		return;
-	m_lastUpdate = gpGlobals->curtime;
-	m_allAsleep = RagdollIsAsleep( m_ragdoll );
-	if ( m_allAsleep )
-	{
-		// NOTE: This is the bbox of the ragdoll's physics
-		// It's not always correct to use for culling, but it sure beats 
-		// using the radius box!
-		Vector origin = GetRagdollOrigin();
-		RagdollComputeExactBbox( m_ragdoll, origin, m_mins, m_maxs );
-		m_mins -= origin;
-		m_maxs -= origin;
-	}
-	else
-	{
-		m_mins.Init(-m_radius,-m_radius,-m_radius);
-		m_maxs.Init(m_radius,m_radius,m_radius);
 
+	m_ragdoll.list[0].pObject->GetPosition( &m_origin, 0 );
+	m_lastUpdate = gpGlobals->curtime;
+
+	Vector origin = GetRagdollOrigin();
+	RagdollComputeApproximateBbox( m_ragdoll, origin, m_mins, m_maxs );
+	m_mins -= origin;
+	m_maxs -= origin;
+	m_allAsleep = RagdollIsAsleep( m_ragdoll );
+
+	if ( !m_allAsleep )
+	{
 		if ( m_ragdoll.pGroup->IsInErrorState() )
 		{
 			C_BaseEntity *pEntity = static_cast<C_BaseEntity *>(m_ragdoll.list[0].pObject->GetGameData());
 			RagdollSolveSeparation( m_ragdoll, pEntity );
 		}
+		// See if we should go to sleep...
+		CheckSettleStationaryRagdoll();
 	}
-
-	// See if we should go to sleep...
-	CheckSettleStationaryRagdoll();
 }
-
-//=============================================================================
-// HPE_BEGIN:
-// [menglish] Transforms a vector from the given bone's space to world space
-//=============================================================================
- 
-bool CRagdoll::TransformVectorToWorld(int iBoneIndex, const Vector *vPosition, Vector *vOut)
-{
-	int listIndex = -1;
-	if( iBoneIndex >= 0 && iBoneIndex < m_ragdoll.listCount)
-	{
-		for ( int i = 0; i < m_ragdoll.listCount; ++i )
-		{
-			if(m_ragdoll.boneIndex[i] == iBoneIndex)
-				listIndex = i;
-		}
-		if(listIndex != -1)
-		{
-			m_ragdoll.list[listIndex].pObject->LocalToWorld(vOut, *vPosition);
-			return true;
-		}
-	}
-	return false;
-}
- 
-//=============================================================================
-// HPE_END
-//=============================================================================
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -251,46 +248,51 @@ bool CRagdoll::TransformVectorToWorld(int iBoneIndex, const Vector *vPosition, V
 //-----------------------------------------------------------------------------
 void CRagdoll::PhysForceRagdollToSleep()
 {
+	IPhysicsObject *pList[32];
+	Vector vel;
+	AngularImpulse angVel;
+	vel.Init();
+	angVel.Init();
 	for ( int i = 0; i < m_ragdoll.listCount; i++ )
 	{
 		if ( m_ragdoll.list[i].pObject )
 		{
-			PhysForceClearVelocity( m_ragdoll.list[i].pObject );
-			m_ragdoll.list[i].pObject->Sleep();
+			m_ragdoll.list[i].pObject->SetVelocity( &vel, &angVel );
+			pList[i] = m_ragdoll.list[i].pObject;
 		}
 	}
+	physenv->ForceObjectsToSleep(pList, m_ragdoll.listCount);
 }
 
 #define RAGDOLL_SLEEP_TOLERANCE	1.0f
-static ConVar ragdoll_sleepaftertime( "ragdoll_sleepaftertime", "5.0f", 0, "After this many seconds of being basically stationary, the ragdoll will go to sleep." );
+static ConVar ragdoll_sleepaftertime( "ragdoll_sleepaftertime", "5", 0, "After this many seconds of being basically stationary, the ragdoll will go to sleep." );
 
 void CRagdoll::CheckSettleStationaryRagdoll()
 {
+	float dt = physenv->GetSimulationTime() - m_flAwakeTime;
+	float tolerance = clamp( (RAGDOLL_SLEEP_TOLERANCE * dt), RAGDOLL_SLEEP_TOLERANCE, (RAGDOLL_SLEEP_TOLERANCE * 10) );
+
 	Vector delta = GetRagdollOrigin() - m_vecLastOrigin;
-	m_vecLastOrigin = GetRagdollOrigin();
 	for ( int i = 0; i < 3; ++i )
 	{
 		// It's still moving...
-		if ( fabs( delta[ i ] ) > RAGDOLL_SLEEP_TOLERANCE )
+		if ( fabs( delta[ i ] ) > tolerance )
 		{
-			m_flLastOriginChangeTime = gpGlobals->curtime;
-			// Msg( "%d [%p] Still moving\n", gpGlobals->tickcount, this );
+			m_flLastOriginChangeTime = physenv->GetSimulationTime();
+			m_vecLastOrigin = GetRagdollOrigin();
+			//Msg( "%d [%p] Still moving (tolerance is %f, dt is %f)\n", gpGlobals->tickcount, this, tolerance, dt );
 			return;
 		}
 	}
 
-	// It's totally asleep, don't worry about forcing it to settle
-	if ( m_allAsleep )
-		return;
-
-	// Msg( "%d [%p] Settling\n", gpGlobals->tickcount, this );
+	//Msg( "%d [%p] Settling - tolerance is %f, delta is %f %f %f\n", gpGlobals->tickcount, this, tolerance, delta.x, delta.y, delta.z );
 
 	// It has stopped moving, see if it
-	float dt = gpGlobals->curtime - m_flLastOriginChangeTime;
+	dt = physenv->GetSimulationTime() - m_flLastOriginChangeTime;
 	if ( dt < ragdoll_sleepaftertime.GetFloat() )
 		return;
 
-	// Msg( "%d [%p] FORCE SLEEP\n",gpGlobals->tickcount, this );
+	//Msg( "%d [%p] FORCE SLEEP\n",gpGlobals->tickcount, this );
 
 	// Force it to go to sleep
 	PhysForceRagdollToSleep();
@@ -298,12 +300,13 @@ void CRagdoll::CheckSettleStationaryRagdoll()
 
 void CRagdoll::ResetRagdollSleepAfterTime( void )
 {
-	m_flLastOriginChangeTime = gpGlobals->curtime;
+	m_flLastOriginChangeTime = physenv->GetSimulationTime();
+	m_flAwakeTime = physenv->GetSimulationTime();
 }
 
 void CRagdoll::DrawWireframe()
 {
-	IMaterial *pWireframe = materials->FindMaterial("shadertest/wireframevertexcolor", TEXTURE_GROUP_OTHER);
+	IMaterial *pWireframe = materials->FindMaterial("debug/debugwireframevertexcolor", TEXTURE_GROUP_OTHER);
 
 	int i;
 	matrix3x4_t matrix;
@@ -352,11 +355,10 @@ CRagdoll *CreateRagdoll(
 	const matrix3x4_t *pDeltaBones0, 
 	const matrix3x4_t *pDeltaBones1, 
 	const matrix3x4_t *pCurrentBonePosition,
-	float dt,
-	bool bFixedConstraints )
+	float dt )
 {
 	CRagdoll *pRagdoll = new CRagdoll;
-	pRagdoll->Init( ent, pstudiohdr, forceVector, forceBone, pDeltaBones0, pDeltaBones1, pCurrentBonePosition, dt, bFixedConstraints );
+	pRagdoll->Init( ent, pstudiohdr, forceVector, forceBone, pDeltaBones0, pDeltaBones1, pCurrentBonePosition, dt );
 
 	if ( !pRagdoll->IsValid() )
 	{
@@ -379,15 +381,18 @@ public:
 
 	C_ServerRagdoll( void );
 
+	// Inherited from IClientUnknown
+public:
+	virtual IClientModelRenderable*	GetClientModelRenderable();
+
 	virtual void PostDataUpdate( DataUpdateType_t updateType );
 
-	virtual int InternalDrawModel( int flags );
+	virtual int InternalDrawModel( int flags, const RenderableInstance_t &instance );
 	virtual CStudioHdr *OnNewModel( void );
-	virtual unsigned char GetClientSideFade();
 	virtual void	SetupWeights( const matrix3x4_t *pBoneToWorld, int nFlexWeightCount, float *pFlexWeights, float *pFlexDelayedWeights );
 
 	void GetRenderBounds( Vector& theMins, Vector& theMaxs );
-	virtual void AddEntity( void );
+	virtual bool Simulate( void );
 	virtual void AccumulateLayers( IBoneSetup &boneSetup, Vector pos[], Quaternion q[], float currentTime );
 	virtual void BuildTransformations( CStudioHdr *pStudioHdr, Vector *pos, Quaternion q[], const matrix3x4_t &cameraTransform, int boneMask, CBoneBitList &boneComputed );
 	IPhysicsObject *GetElement( int elementNum );
@@ -439,17 +444,20 @@ C_ServerRagdoll::C_ServerRagdoll( void ) :
 	m_flBlendWeight = 0.0f;
 	m_flBlendWeightCurrent = 0.0f;
 	m_nOverlaySequence = -1;
-	m_flFadeScale = 1;
 }
 
 void C_ServerRagdoll::PostDataUpdate( DataUpdateType_t updateType )
 {
 	BaseClass::PostDataUpdate( updateType );
 
-	m_iv_ragPos.NoteChanged( gpGlobals->curtime, true );
-	m_iv_ragAngles.NoteChanged( gpGlobals->curtime, true );
+	m_iv_ragPos.NoteChanged( gpGlobals->curtime, gpGlobals->curtime, true );
+	m_iv_ragAngles.NoteChanged( gpGlobals->curtime, gpGlobals->curtime, true );
 	// this is the local client time at which this update becomes stale
 	m_flLastBoneChangeTime = gpGlobals->curtime + GetInterpolationAmount(m_iv_ragPos.GetType());
+	if ( m_flBlendWeightCurrent != m_flBlendWeight )
+	{
+		AddToEntityList( ENTITY_LIST_SIMULATE );
+	}
 }
 
 float C_ServerRagdoll::LastBoneChangedTime()
@@ -457,13 +465,13 @@ float C_ServerRagdoll::LastBoneChangedTime()
 	return m_flLastBoneChangeTime;
 }
 
-int C_ServerRagdoll::InternalDrawModel( int flags )
+int C_ServerRagdoll::InternalDrawModel( int flags, const RenderableInstance_t &instance )
 {
-	int ret = BaseClass::InternalDrawModel( flags );
+	int ret = BaseClass::InternalDrawModel( flags, instance );
 	if ( vcollide_wireframe.GetBool() )
 	{
 		vcollide_t *pCollide = modelinfo->GetVCollide( GetModelIndex() );
-		IMaterial *pWireframe = materials->FindMaterial("shadertest/wireframevertexcolor", TEXTURE_GROUP_OTHER);
+		IMaterial *pWireframe = materials->FindMaterial("debug/debugwireframevertexcolor", TEXTURE_GROUP_OTHER);
 
 		matrix3x4_t matrix;
 		for ( int i = 0; i < m_elementCount; i++ )
@@ -495,12 +503,27 @@ CStudioHdr *C_ServerRagdoll::OnNewModel( void )
 		{
 			m_elementCount = RagdollExtractBoneIndices( m_boneIndex, hdr, pCollide );
 		}
-		m_iv_ragPos.SetMaxCount( m_elementCount );
-		m_iv_ragAngles.SetMaxCount( m_elementCount );
+		m_iv_ragPos.SetMaxCount( gpGlobals->curtime, m_elementCount );
+		m_iv_ragAngles.SetMaxCount( gpGlobals->curtime, m_elementCount );
 	}
 
 	return hdr;
 }
+
+
+//-----------------------------------------------------------------------------
+// Should we participate in the model fast path?
+//-----------------------------------------------------------------------------
+IClientModelRenderable*	C_ServerRagdoll::GetClientModelRenderable()
+{
+	// FIXME: Once we get modelrender->SetViewTarget working in the model fast
+	// path, we can eliminate the check for eye attachment
+	if ( m_iEyeAttachment > 0 )
+		return NULL;
+
+	return BaseClass::GetClientModelRenderable();
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: clear out any face/eye values stored in the material system
@@ -516,8 +539,11 @@ void C_ServerRagdoll::SetupWeights( const matrix3x4_t *pBoneToWorld, int nFlexWe
 	int nFlexDescCount = hdr->numflexdesc();
 	if ( nFlexDescCount )
 	{
-		Assert( !pFlexDelayedWeights );
 		memset( pFlexWeights, 0, nFlexWeightCount * sizeof(float) );
+		if ( pFlexDelayedWeights )
+		{
+			memset( pFlexDelayedWeights, 0, nFlexWeightCount * sizeof(float) );
+		}
 	}
 
 	if ( m_iEyeAttachment > 0 )
@@ -547,12 +573,15 @@ void C_ServerRagdoll::GetRenderBounds( Vector& theMins, Vector& theMaxs )
 	}
 }
 
-void C_ServerRagdoll::AddEntity( void )
+bool C_ServerRagdoll::Simulate( void )
 {
-	BaseClass::AddEntity();
+	bool bRet = BaseClass::Simulate();
 
 	// Move blend weight toward target over 0.2 seconds
 	m_flBlendWeightCurrent = Approach( m_flBlendWeight, m_flBlendWeightCurrent, gpGlobals->frametime * 5.0f );
+	if ( m_flBlendWeightCurrent != m_flBlendWeight )
+		bRet = true;
+	return bRet;
 }
 
 void C_ServerRagdoll::AccumulateLayers( IBoneSetup &boneSetup, Vector pos[], Quaternion q[], float currentTime )
@@ -561,6 +590,10 @@ void C_ServerRagdoll::AccumulateLayers( IBoneSetup &boneSetup, Vector pos[], Qua
 
 	if ( m_nOverlaySequence >= 0 && m_nOverlaySequence < boneSetup.GetStudioHdr()->GetNumSeq() )
 	{
+		if (r_sequence_debug.GetInt() == entindex())
+		{
+			DevMsgRT( "%8.4f : %30s : %5.3f : %4.2f\n", currentTime, boneSetup.GetStudioHdr()->pSeqdesc( m_nOverlaySequence ).pszLabel(), GetCycle(), m_flBlendWeightCurrent );
+		}
 		boneSetup.AccumulatePose( pos, q, m_nOverlaySequence, GetCycle(), m_flBlendWeightCurrent, currentTime, m_pIk );
 	}
 }
@@ -569,7 +602,7 @@ void C_ServerRagdoll::BuildTransformations( CStudioHdr *hdr, Vector *pos, Quater
 {
 	if ( !hdr )
 		return;
-	matrix3x4_t bonematrix;
+	matrix3x4a_t bonematrix;
 	bool boneSimulated[MAXSTUDIOBONES];
 
 	// no bones have been simulated
@@ -630,7 +663,7 @@ void C_ServerRagdoll::BuildTransformations( CStudioHdr *hdr, Vector *pos, Quater
 			} 
 			else 
 			{
-				ConcatTransforms( GetBone( pbones[i].parent ), bonematrix, GetBoneForWrite( i ) );
+				ConcatTransforms_Aligned( GetBone( pbones[i].parent ), bonematrix, GetBoneForWrite( i ) );
 			}
 		}
 
@@ -667,14 +700,6 @@ void C_ServerRagdoll::UpdateOnRemove()
 	BaseClass::UpdateOnRemove();
 }
 
-//-----------------------------------------------------------------------------
-// Fade out
-//-----------------------------------------------------------------------------
-unsigned char C_ServerRagdoll::GetClientSideFade()
-{
-	return UTIL_ComputeEntityFade( this, m_fadeMinDist, m_fadeMaxDist, m_flFadeScale );
-}
-
 static int GetHighestBit( int flags )
 {
 	for ( int i = 31; i >= 0; --i )
@@ -697,7 +722,7 @@ public:
 		m_vecOffset.Init();
 	}
 	DECLARE_CLIENTCLASS();
-	bool SetupBones( matrix3x4_t *pBoneToWorldOut, int nMaxBones, int boneMask, float currentTime )
+	bool SetupBones( matrix3x4a_t *pBoneToWorldOut, int nMaxBones, int boneMask, float currentTime )
 	{
 		if ( GetMoveParent() )
 		{
@@ -722,7 +747,7 @@ public:
 			return;
 
 		float frac = RemapVal( gpGlobals->curtime, m_parentTime, m_parentTime+ATTACH_INTERP_TIME, 0, 1 );
-		frac = clamp( frac, 0.f, 1.f );
+		frac = clamp( frac, 0, 1 );
 		// interpolate offset over some time
 		Vector offset = m_vecOffset * (1-frac);
 

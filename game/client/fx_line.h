@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -33,7 +33,7 @@ struct FXLineData_t
 	IMaterial	*m_pMaterial;
 };
 
-#include "fx_staticline.h"
+#include "FX_StaticLine.h"
 
 class CFXLine : public CClientSideEffect
 {

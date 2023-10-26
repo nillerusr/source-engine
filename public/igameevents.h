@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -75,24 +75,32 @@ public:
 	// Data access
 	virtual bool  GetBool( const char *keyName = NULL, bool defaultValue = false ) = 0;
 	virtual int   GetInt( const char *keyName = NULL, int defaultValue = 0 ) = 0;
+	virtual uint64 GetUint64( const char *keyName = NULL, uint64 defaultValue = 0 ) = 0;
 	virtual float GetFloat( const char *keyName = NULL, float defaultValue = 0.0f ) = 0;
 	virtual const char *GetString( const char *keyName = NULL, const char *defaultValue = "" ) = 0;
 
 	virtual void SetBool( const char *keyName, bool value ) = 0;
 	virtual void SetInt( const char *keyName, int value ) = 0;
+	virtual void SetUint64( const char *keyName, uint64 value ) = 0;
 	virtual void SetFloat( const char *keyName, float value ) = 0;
 	virtual void SetString( const char *keyName, const char *value ) = 0;
 };
 
+#define EVENT_DEBUG_ID_INIT			42
+#define EVENT_DEBUG_ID_SHUTDOWN		13
 
 abstract_class IGameEventListener2
 {
 public:
 	virtual	~IGameEventListener2( void ) {};
 
-	// FireEvent is called by EventManager if event just occurred
+	// FireEvent is called by EventManager if event just occured
 	// KeyValue memory will be freed by manager if not needed anymore
 	virtual void FireGameEvent( IGameEvent *event ) = 0;
+
+#if SOURCE_ASW
+	virtual int	 GetEventDebugID( void ) = 0;
+#endif
 };
 
 abstract_class IGameEventManager2 : public IBaseInterface
@@ -117,7 +125,7 @@ public:
 
 	// create an event by name, but doesn't fire it. returns NULL is event is not
 	// known or no listener is registered for it. bForce forces the creation even if no listener is active
-	virtual IGameEvent *CreateEvent( const char *name, bool bForce = false ) = 0;
+	virtual IGameEvent *CreateEvent( const char *name, bool bForce = false, int *pCookie = NULL ) = 0;
 
 	// fires a server event created earlier, if bDontBroadcast is set, event is not send to clients
 	virtual bool FireEvent( IGameEvent *event, bool bDontBroadcast = false ) = 0;
@@ -143,7 +151,7 @@ abstract_class IGameEventListener
 public:
 	virtual	~IGameEventListener( void ) {};
 
-	// FireEvent is called by EventManager if event just occurred
+	// FireEvent is called by EventManager if event just occured
 	// KeyValue memory will be freed by manager if not needed anymore
 	virtual void FireGameEvent( KeyValues * event) = 0;
 };

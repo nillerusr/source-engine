@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -165,7 +165,7 @@ protected:
 	float				SetBoneController ( int iController, float flValue );
 	float 				GetSequenceMoveYaw( int iSequence );
 	void				SetPlaybackRate( float flRate );
-	float				GetPlaybackRate(); //get
+	float				GetPlaybackRate() const; //get
 	float				SetPoseParameter( const char *szName, float flValue );
 	float				SetPoseParameter( int iParameter, float flValue );
 	float				GetPoseParameter( const char *szName );
@@ -185,10 +185,12 @@ protected:
 	AIMotorMoveResult_t			MoveGroundExecuteWalk( const AILocalMoveGoal_t &move, float speed, float dist, AIMoveTrace_t *pTraceResult );
 	virtual AIMotorMoveResult_t MoveFlyExecute( const AILocalMoveGoal_t &move, AIMoveTrace_t *pTraceResult );
 	
+public:
+	void				SetMoveVel(const Vector &velocity)		{ m_vecVelocity = velocity; }
+
 protected: // made protected while animation transition details worked out, private:
 
 	// --------------------------------
-	void				SetMoveVel(const Vector &velocity)		{ m_vecVelocity = velocity; }
 	float				IdealVelocity();		// how fast should I be moving in an ideal state?
 
 	// --------------------------------

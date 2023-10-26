@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -16,26 +16,28 @@ struct studiohdr_t;
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <tier0/platform.h>
-#include <tier0/dbg.h>
+#include "tier0/platform.h"
+#include "tier0/dbg.h"
+#include "vprof.h"
 
-#include <tier1/strtools.h>
-#include <vstdlib/random.h>
-#include <utlvector.h>
+#include "tier1/strtools.h"
+#include "vstdlib/random.h"
+#include "tier1/utlvector.h"
 
-#include <const.h>
+#include "const.h"
 
 #include "string_t.h"
 
 // These two have to be included very early
-#include <predictableid.h>
-#include <predictable_entity.h>
+#include "predictableid.h"
+#include "predictable_entity.h"
 
 #include "cdll_util.h"
-#include <util_shared.h>
+#include "util_shared.h"
 
-#include <icvar.h>
-#include <baseentity_shared.h>
+#include "icvar.h"
+#include "sharedvar.h"
+#include "baseentity_shared.h"
 
 
 // This is a precompiled header.  Include a bunch of common stuff.
@@ -49,10 +51,13 @@ struct studiohdr_t;
 #include "c_baseplayer.h"
 #include "itempents.h"
 #include "vphysics_interface.h"
+//#include "vphysics2_interface.h"
 #include "physics.h"
 #include "c_recipientfilter.h"
 #include "cdll_client_int.h"
 #include "worldsize.h"
 #include "engine/ivmodelinfo.h"
+#include "npcevent.h"
+#include "debugoverlay_shared.h"
 
 #endif // CBASE_H

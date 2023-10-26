@@ -1,8 +1,11 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
 #include "cbase.h"
 #include "forcefeedback.h"
 #include "hud_macros.h"
 #include "input.h"
+
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
 
 #define FF_CLIENT_FLAG	0x8000
 

@@ -13,6 +13,7 @@
 #pragma once
 #endif 
 
+#include "utldict.h"
 #include <igameevents.h>
 #include <utlvector.h>
 #include <KeyValues.h>
@@ -34,16 +35,16 @@ class CGameEventDescriptor
 public:
 	CGameEventDescriptor()
 	{
-		name[0] = 0;
 		eventid = -1;
 		keys = NULL;
 		local = false;
 		reliable = true;
+		elementIndex = -1;
 	}
 
 public:
-	char		name[MAX_EVENT_NAME_LENGTH];	// name of this event
-	int			eventid;	// network index number, -1 = not networked
+	int		eventid;	// network index number, -1 = not networked
+	int		elementIndex;
 	KeyValues	*keys;		// KeyValue describing data types, if NULL only name 
 	bool		local;		// local event, never tell clients about that
 	bool		reliable;	// send this event as reliable message
@@ -54,7 +55,7 @@ class CGameEvent : public IGameEvent
 {
 public:
 
-	CGameEvent( CGameEventDescriptor *descriptor );
+	CGameEvent( CGameEventDescriptor *descriptor, const char *name );
 	virtual ~CGameEvent();
 
 	const char *GetName() const;
@@ -64,11 +65,13 @@ public:
 
 	bool  GetBool( const char *keyName = NULL, bool defaultValue = false );
 	int   GetInt( const char *keyName = NULL, int defaultValue = 0 );
+	uint64 GetUint64( const char *keyName = NULL, uint64 defaultValue = 0 );
 	float GetFloat( const char *keyName = NULL, float defaultValue = 0.0f );
 	const char *GetString( const char *keyName = NULL, const char *defaultValue = "" );
 
 	void SetBool( const char *keyName, bool value );
 	void SetInt( const char *keyName, int value );
+	void SetUint64( const char *keyName, uint64 value );
 	void SetFloat( const char *keyName, float value );
 	void SetString( const char *keyName, const char *value );
 	
@@ -111,8 +114,9 @@ public:	// IGameEventManager functions
 	bool AddListener( IGameEventListener2 *listener, const char *name, bool bServerSide );
 	bool FindListener( IGameEventListener2 *listener, const char *name );
 	void RemoveListener( IGameEventListener2 *listener);
-		
-	IGameEvent *CreateEvent( const char *name, bool bForce = false );
+
+	IGameEvent *CreateEvent( const char *name, bool bForce = false, int *pCookie = NULL );
+
 	IGameEvent *DuplicateEvent( IGameEvent *event);
 	bool FireEvent( IGameEvent *event, bool bDontBroadcast = false );
 	bool FireEventClientSide( IGameEvent *event );
@@ -127,7 +131,7 @@ public:
 	void ReloadEventDefinitions();	// called by server on new map
 	bool AddListener( void *listener, CGameEventDescriptor *descriptor, int nListenerType );
 
-    CGameEventDescriptor *GetEventDescriptor( const char *name );
+	CGameEventDescriptor *GetEventDescriptor( const char *name, int *pCookie = NULL );
 	CGameEventDescriptor *GetEventDescriptor( IGameEvent *event );
 	CGameEventDescriptor *GetEventDescriptor( int eventid );
 
@@ -145,13 +149,14 @@ public:
 	
 protected:
 
-	IGameEvent *CreateEvent( CGameEventDescriptor *descriptor );
+	IGameEvent *CreateEvent( CGameEventDescriptor *descriptor, const char *name );
 	bool RegisterEvent( KeyValues * keys );
 	void UnregisterEvent(int index);
 	bool FireEventIntern( IGameEvent *event, bool bServerSide, bool bClientOnly );
 	CGameEventCallback* FindEventListener( void* listener );
 	
 	CUtlVector<CGameEventDescriptor>	m_GameEvents;	// list of all known events
+	CUtlDict<int, int>			m_EventMap;
 	CUtlVector<CGameEventCallback*>		m_Listeners;	// list of all registered listeners
 	CUtlSymbolTable						m_EventFiles;	// list of all loaded event files
 	CUtlVector<CUtlSymbol>				m_EventFileNames; 

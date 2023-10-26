@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -34,9 +34,9 @@ public:
 	Class_T Classify( void );
 	void	Event_Killed( const CTakeDamageInfo &info );
 	void	DecalTrace( trace_t *pTrace, char const *decalName );
-	void	ImpactTrace( trace_t *pTrace, int iDamageType, const char *pCustomImpactName );
+	void	ImpactTrace( trace_t *pTrace, int iDamageType, char *pCustomImpactName );
 	bool	IsLightDamage( const CTakeDamageInfo &info );
-	void	TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr, CDmgAccumulator *pAccumulator );
+	void	TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr );
 	int		OnTakeDamage( const CTakeDamageInfo &info );
 	bool	UsePerfectAccuracy( void ) { return m_bPerfectAccuracy; }
 
@@ -61,6 +61,8 @@ protected:
 	bool			m_bPerfectAccuracy;	// Entities that shoot at me should be perfectly accurate
 	float			m_fAutoaimRadius;	// How much to influence player's autoaim.
 	float			m_flMinDistValidEnemy;
+
+
 
 	DECLARE_DATADESC();
 };

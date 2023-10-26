@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -7,10 +7,10 @@
 // $NoKeywords: $
 //=============================================================================//
 #include "cbase.h"
-#include "materialsystem/imaterial.h"
+#include "materialsystem/IMaterial.h"
 #include "clientsideeffects.h"
-#include "fx_line.h"
-#include "materialsystem/imesh.h"
+#include "FX_Line.h"
+#include "materialsystem/IMesh.h"
 #include "view.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -28,11 +28,6 @@ CFXLine::CFXLine( const char *name, const FXLineData_t &data )
 	m_FXData = data;
 	
 	m_FXData.m_flLifeTime = 0.0f;
-	
-	if ( m_FXData.m_pMaterial != NULL )
-	{
-		m_FXData.m_pMaterial->IncrementReferenceCount();
-	}
 }
 
 CFXLine::~CFXLine( void )

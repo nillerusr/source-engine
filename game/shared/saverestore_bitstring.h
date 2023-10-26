@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -20,7 +20,9 @@ template <class BITSTRING>
 class CVarBitVecSaveRestoreOps : public CDefSaveRestoreOps
 {
 public:
-	CVarBitVecSaveRestoreOps() = default;
+	CVarBitVecSaveRestoreOps()
+	{
+	}
 
 	// save data type interface
 	virtual void Save( const SaveRestoreFieldInfo_t &fieldInfo, ISave *pSave )
@@ -87,7 +89,7 @@ ISaveRestoreOps *GetBitstringDataOps(BITSTRING *)
 //-------------------------------------
 
 #define DEFINE_BITSTRING(name) \
-	{ FIELD_CUSTOM, #name, { offsetof(classNameTypedef,name), 0 }, 1, FTYPEDESC_SAVE, NULL, GetBitstringDataOps(&(((classNameTypedef *)0)->name)), NULL }
+	{ FIELD_CUSTOM, #name, offsetof(classNameTypedef,name), 1, FTYPEDESC_SAVE, NULL, GetBitstringDataOps(&(((classNameTypedef *)0)->name)), NULL }
 
 #endif // SAVERESTORE_BITSTRING_H
 

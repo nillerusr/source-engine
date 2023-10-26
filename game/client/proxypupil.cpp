@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -6,12 +6,13 @@
 //=============================================================================//
 #include "cbase.h"
 #include <KeyValues.h>
-#include "materialsystem/imaterialvar.h"
-#include "materialsystem/imaterial.h"
-#include "materialsystem/itexture.h"
+#include "materialsystem/IMaterialVar.h"
+#include "materialsystem/IMaterial.h"
+#include "materialsystem/ITexture.h"
 #include "proxyentity.h"
 #include "functionproxy.h"
 
+#include "imaterialproxydict.h"
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -90,7 +91,7 @@ void CPupilProxy::OnBind( C_BaseEntity *pBaseEntity )
 
 	// Compute the intensity...
 	float flIntensity = ( 0.299f * color[0] + 0.587f * color[1] + 0.114f * color[2] ) * 0.5;
-	flIntensity = clamp( flIntensity, 0.f, 1.f );
+	flIntensity = clamp( flIntensity, 0, 1 );
 	float flLastIntensity = m_pLightingVar->GetFloatValue( );
 	if ( flIntensity > flLastIntensity )
 	{
@@ -124,4 +125,4 @@ IMaterial *CPupilProxy::GetMaterial()
 	return m_pAnimatedTextureVar->GetOwningMaterial();
 }
 
-EXPOSE_INTERFACE( CPupilProxy, IMaterialProxy, "Pupil" IMATERIAL_PROXY_INTERFACE_VERSION );
+EXPOSE_MATERIAL_PROXY( CPupilProxy, Pupil );

@@ -1,20 +1,35 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//======= Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: Rumble effects mixer for XBox
 //
 // $NoKeywords: $
 //
 //=============================================================================//
+
 #include "cbase.h"
 #include "c_rumble.h"
 #include "rumble_shared.h"
 #include "inputsystem/iinputsystem.h"
 
-ConVar cl_rumblescale( "cl_rumblescale", "1.0", FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX, "Scale sensitivity of rumble effects (0 to 1.0)" ); 
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
+void StopAllRumbleEffects( int userID );
+
+#if !defined( _X360 )
+
+// Stub these to nothing on the PC.
+void RumbleEffect( int userID, unsigned char effectIndex, unsigned char rumbleData, unsigned char rumbleFlags ) {};
+void UpdateRumbleEffects( int userID )																			{};
+void UpdateScreenShakeRumble( int userID, float shake, float balance )											{};
+void EnableRumbleOutput( int userID, bool bEnable )																{};
+void StopAllRumbleEffects( int userID )																			{};
+#else
+
+ConVar cl_rumblescale( "cl_rumblescale", "1.0", FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX | FCVAR_SS, "Scale sensitivity of rumble effects (0 to 1.0)" ); 
 ConVar cl_debugrumble( "cl_debugrumble", "0", FCVAR_ARCHIVE, "Turn on rumble debugging spew" );
 
-#define MAX_RUMBLE_CHANNELS 3	// Max concurrent rumble effects
-
+#define MAX_RUMBLE_CHANNELS 3	// Max concurrent rumble effects per player
 #define NUM_WAVE_SAMPLES 30		// Effects play at 10hz
 
 typedef struct
@@ -166,7 +181,7 @@ void GenerateSquareWaveEffect( RumbleWaveform_t *pWaveform, const WaveGenParams_
 
 	while( i < NUM_WAVE_SAMPLES )
 	{
-		for( j = 0 ; j < steps && i < NUM_WAVE_SAMPLES; j++ )
+		for( j = 0 ; j < steps ; j++ )
 		{
 			if( params.leftChannel )
 			{
@@ -177,7 +192,7 @@ void GenerateSquareWaveEffect( RumbleWaveform_t *pWaveform, const WaveGenParams_
 				pWaveform->amplitude_right[i++] = params.minAmplitude;
 			}
 		}
-		for( j = 0 ; j < steps && i < NUM_WAVE_SAMPLES; j++ )
+		for( j = 0 ; j < steps ; j++ )
 		{
 			if( params.leftChannel )
 			{
@@ -255,22 +270,22 @@ public:
 
 	void Init();
 	void SetOutputEnabled( bool bEnable );
-	void StartEffect( unsigned char effectIndex, unsigned char rumbleData, unsigned char rumbleFlags );
-	void StopEffect( int effectIndex );
-	void StopAllEffects();
+	void StartEffect( int userID, unsigned char effectIndex, unsigned char rumbleData, unsigned char rumbleFlags );
+	void StopEffect( int userID, int effectIndex );
+	void StopAllEffects( int userID );
 	void ComputeAmplitudes( RumbleChannel_t *pChannel, float curtime, float *pLeft, float *pRight );
-	void UpdateEffects( float curtime );
-	void UpdateScreenShakeRumble( float shake, float balance );
+	void UpdateEffects( int userID, float curtime );
+	void UpdateScreenShakeRumble( int userID, float shake, float balance );
 
-	RumbleChannel_t *FindExistingChannel( int index );
-	RumbleChannel_t	*FindAvailableChannel( int priority );
+	RumbleChannel_t *FindExistingChannel( int userID, int index );
+	RumbleChannel_t	*FindAvailableChannel( int userID, int priority );
 
 public:
-	RumbleChannel_t	m_Channels[ MAX_RUMBLE_CHANNELS ];
+	RumbleChannel_t	m_Channels[ MAX_SPLITSCREEN_PLAYERS ][ MAX_RUMBLE_CHANNELS ];
 
 	RumbleWaveform_t m_Waveforms[ NUM_RUMBLE_EFFECTS ];
 
-	float	m_flScreenShake;
+	float	m_flScreenShake[ MAX_SPLITSCREEN_PLAYERS ];
 	bool	m_bOutputEnabled;
 };
 
@@ -282,17 +297,19 @@ CRumbleEffects g_RumbleEffects;
 void CRumbleEffects::Init()
 {
 	SetOutputEnabled( true );
-	
-	int i;
 
-	for( i = 0 ; i < MAX_RUMBLE_CHANNELS ; i++ )
+	int userID,channel;
+	for( userID = 0 ; userID < MAX_SPLITSCREEN_PLAYERS ; userID++ )
 	{
-		m_Channels[i].in_use = false;
-		m_Channels[i].priority = 0;
+		for( channel = 0 ; channel < MAX_RUMBLE_CHANNELS ; channel++ )
+		{
+			m_Channels[userID][channel].in_use = false;
+			m_Channels[userID][channel].priority = 0;
+		}
 	}
 
 	// Every effect defaults to this many samples. Call TerminateWaveform() to trim these.
-	for ( i = 0 ; i < NUM_RUMBLE_EFFECTS ; i++ )
+	for ( int i = 0 ; i < NUM_RUMBLE_EFFECTS ; i++ )
 	{
 		m_Waveforms[i].numSamples = NUM_WAVE_SAMPLES;
 	}
@@ -302,23 +319,23 @@ void CRumbleEffects::Init()
 	GenerateFlatEffect( &m_Waveforms[RUMBLE_JEEP_ENGINE_LOOP], params );
 
 	// Pistol
-	params.Set( 1, 1.0f, false, 0.0f, 0.5f );
+	params.Set( 1, 1.0f, false, 0.0f, 0.6f );
 	GenerateFlatEffect( &m_Waveforms[RUMBLE_PISTOL], params );
-	TerminateWaveform( &m_Waveforms[RUMBLE_PISTOL], 3 );
+	TerminateWaveform( &m_Waveforms[RUMBLE_PISTOL], 1 );
 
 	// SMG1
-	params.Set( 1, 1.0f, true, 0.0f, 0.2f );
+	params.Set( 1, 1.0f, true, 0.0f, 0.1f );
 	GenerateFlatEffect( &m_Waveforms[RUMBLE_SMG1], params );
-	params.Set( 1, 1.0f, false, 0.0f, 0.4f );
+	params.Set( 1, 1.0f, false, 0.0f, 0.3f );
 	GenerateFlatEffect( &m_Waveforms[RUMBLE_SMG1], params );
-	TerminateWaveform( &m_Waveforms[RUMBLE_SMG1], 3 );
+	TerminateWaveform( &m_Waveforms[RUMBLE_SMG1], 1 );
 
 	// AR2
 	params.Set( 1, 1.0f, true, 0.0f, 0.5f );
 	GenerateFlatEffect( &m_Waveforms[RUMBLE_AR2], params );
 	params.Set( 1, 1.0f, false, 0.0f, 0.3f );
 	GenerateFlatEffect( &m_Waveforms[RUMBLE_AR2], params );
-	TerminateWaveform( &m_Waveforms[RUMBLE_AR2], 3 );
+	TerminateWaveform( &m_Waveforms[RUMBLE_AR2], 1 );
 
 	// AR2 Alt
 	params.Set( 1, 1.0f, true, 0.0, 0.5f );
@@ -337,9 +354,9 @@ void CRumbleEffects::Init()
 	TerminateWaveform( &m_Waveforms[RUMBLE_357], 2 );
 
 	// Shotgun
-	params.Set( 1, 1.0f, true, 0.0f, 0.8f );
+	params.Set( 1, 1.0f, true, 0.0f, 0.7f );
 	GenerateFlatEffect( &m_Waveforms[RUMBLE_SHOTGUN_SINGLE], params );
-	params.Set( 1, 1.0f, false, 0.0f, 0.8f );
+	params.Set( 1, 1.0f, false, 0.0f, 0.7f );
 	GenerateFlatEffect( &m_Waveforms[RUMBLE_SHOTGUN_SINGLE], params );
 	TerminateWaveform( &m_Waveforms[RUMBLE_SHOTGUN_SINGLE], 3 );
 
@@ -424,13 +441,13 @@ void CRumbleEffects::Init()
 
 //---------------------------------------------------------
 //---------------------------------------------------------
-RumbleChannel_t *CRumbleEffects::FindExistingChannel( int index )
+RumbleChannel_t *CRumbleEffects::FindExistingChannel( int userID, int index )
 {
 	RumbleChannel_t *pChannel;
 
 	for( int i = 0 ; i < MAX_RUMBLE_CHANNELS ; i++ )
 	{
-		pChannel = &m_Channels[i];
+		pChannel = &m_Channels[userID][i];
 
 		if( pChannel->in_use && pChannel->waveformIndex == index )
 		{
@@ -446,14 +463,14 @@ RumbleChannel_t *CRumbleEffects::FindExistingChannel( int index )
 //---------------------------------------------------------
 // priority - the priority of the effect we want to play.
 //---------------------------------------------------------
-RumbleChannel_t	*CRumbleEffects::FindAvailableChannel( int priority )
+RumbleChannel_t	*CRumbleEffects::FindAvailableChannel( int userID, int priority )
 {
 	RumbleChannel_t *pChannel;
 	int i;
 
 	for( i = 0 ; i < MAX_RUMBLE_CHANNELS ; i++ )
 	{
-		pChannel = &m_Channels[i];
+		pChannel = &m_Channels[userID][i];
 
 		if( !pChannel->in_use )
 		{
@@ -465,10 +482,10 @@ RumbleChannel_t	*CRumbleEffects::FindAvailableChannel( int priority )
 	RumbleChannel_t	*pBestChannel = NULL;
 	float oldestChannel = FLT_MAX;
 
-	// All channels already in use. Find a channel to slam.
+	// All channels already in use. Find a channel to slam. Make sure it belongs to this userID
 	for( i = 0 ; i < MAX_RUMBLE_CHANNELS ; i++ )
 	{
-		pChannel = &m_Channels[i];
+		pChannel = &m_Channels[userID][i];
 
 		if( (pChannel->rumbleFlags & RUMBLE_FLAG_LOOP) )
 			continue;
@@ -515,25 +532,27 @@ void CRumbleEffects::SetOutputEnabled( bool bEnable )
 	{
 		// Tell the hardware to shut down motors right now, in case this gets called
 		// and some other process blocks us before the next rumble system update.
-		m_flScreenShake = 0.0f;
-
-		inputsystem->StopRumble();
+		for( int i = 0 ; i < MAX_SPLITSCREEN_PLAYERS ; i++ )
+		{
+			m_flScreenShake[ i ] = 0.0f;
+			StopAllRumbleEffects( i );
+		}
 	}
 }
 
 //---------------------------------------------------------
 //---------------------------------------------------------
-void CRumbleEffects::StartEffect( unsigned char effectIndex, unsigned char rumbleData, unsigned char rumbleFlags )
+void CRumbleEffects::StartEffect( int userID, unsigned char effectIndex, unsigned char rumbleData, unsigned char rumbleFlags )
 {
 	if( effectIndex == RUMBLE_STOP_ALL )
 	{
-		StopAllEffects();
+		StopAllEffects( userID );
 		return;
 	}
 
 	if( rumbleFlags & RUMBLE_FLAG_STOP )
 	{
-		StopEffect( effectIndex );
+		StopEffect( userID, effectIndex );
 		return;
 	}
 
@@ -543,12 +562,12 @@ void CRumbleEffects::StartEffect( unsigned char effectIndex, unsigned char rumbl
 	if( (rumbleFlags & RUMBLE_FLAG_RESTART) )
 	{
 		// Try to find any active instance of this effect and replace it.
-		pChannel = FindExistingChannel( effectIndex );
+		pChannel = FindExistingChannel( userID, effectIndex );
 	}
 
 	if( (rumbleFlags & RUMBLE_FLAG_ONLYONE) )
 	{
-		pChannel = FindExistingChannel( effectIndex );
+		pChannel = FindExistingChannel( userID, effectIndex );
 
 		if( pChannel )
 		{
@@ -559,7 +578,7 @@ void CRumbleEffects::StartEffect( unsigned char effectIndex, unsigned char rumbl
 
 	if( (rumbleFlags & RUMBLE_FLAG_UPDATE_SCALE) )
 	{
-		pChannel = FindExistingChannel( effectIndex );
+		pChannel = FindExistingChannel( userID, effectIndex );
 		if( pChannel )
 		{
 			pChannel->scale = ((float)rumbleData) / 100.0f;
@@ -572,7 +591,7 @@ void CRumbleEffects::StartEffect( unsigned char effectIndex, unsigned char rumbl
 
 	if( !pChannel )
 	{
-		pChannel = FindAvailableChannel( priority );
+		pChannel = FindAvailableChannel( userID, priority );
 	}
 
 	if( pChannel )
@@ -602,27 +621,27 @@ void CRumbleEffects::StartEffect( unsigned char effectIndex, unsigned char rumbl
 //---------------------------------------------------------
 // Find all playing effects of this type and stop them.
 //---------------------------------------------------------
-void CRumbleEffects::StopEffect( int effectIndex )
+void CRumbleEffects::StopEffect( int userID, int effectIndex )
 {
 	for( int i = 0 ; i < MAX_RUMBLE_CHANNELS ; i++ )
 	{
-		if( m_Channels[i].in_use && m_Channels[i].waveformIndex == effectIndex )
+		if( m_Channels[userID][i].in_use && m_Channels[userID][i].waveformIndex == effectIndex )
 		{
-			m_Channels[i].in_use = false;
+			m_Channels[userID][i].in_use = false;
 		}
 	}
 }
 
 //---------------------------------------------------------
 //---------------------------------------------------------
-void CRumbleEffects::StopAllEffects()
+void CRumbleEffects::StopAllEffects( int userID )
 {
 	for( int i = 0 ; i < MAX_RUMBLE_CHANNELS ; i++ )
 	{
-		m_Channels[i].in_use = false;
+		m_Channels[userID][i].in_use = false;
 	}
 
-	m_flScreenShake = 0.0f;
+	m_flScreenShake[ userID ] = 0.0f;
 }
 
 //---------------------------------------------------------
@@ -708,22 +727,22 @@ void CRumbleEffects::ComputeAmplitudes( RumbleChannel_t *pChannel, float curtime
 
 //---------------------------------------------------------
 //---------------------------------------------------------
-void CRumbleEffects::UpdateScreenShakeRumble( float shake, float balance )
+void CRumbleEffects::UpdateScreenShakeRumble( int userID, float shake, float balance )
 {
 	if( m_bOutputEnabled )
 	{
-		m_flScreenShake = shake;
+		m_flScreenShake[ userID ] = shake;
 	}
 	else
 	{
 		// Silence
-		m_flScreenShake = 0.0f;
+		m_flScreenShake[ userID ] = 0.0f;
 	}
 }
 
 //---------------------------------------------------------
 //---------------------------------------------------------
-void CRumbleEffects::UpdateEffects( float curtime )
+void CRumbleEffects::UpdateEffects( int userID, float curtime )
 {
 	float fLeftMotor = 0.0f;
 	float fRightMotor = 0.0f;
@@ -731,7 +750,7 @@ void CRumbleEffects::UpdateEffects( float curtime )
 	for( int i = 0 ; i < MAX_RUMBLE_CHANNELS ; i++ )
 	{
 		// Expire old channels
-		RumbleChannel_t *pChannel = & m_Channels[i];
+		RumbleChannel_t *pChannel = &m_Channels[userID][i];
 
 		if( pChannel->in_use )
 		{
@@ -747,15 +766,15 @@ void CRumbleEffects::UpdateEffects( float curtime )
 	// Add in any screenshake
 	float shakeLeft = 0.0f;
 	float shakeRight = 0.0f;
-	if( m_flScreenShake != 0.0f )
+	if( m_flScreenShake[ userID ] != 0.0f )
 	{
-		if( m_flScreenShake < 0.0f )
+		if( m_flScreenShake[ userID ] < 0.0f )
 		{
-			shakeLeft = fabs( m_flScreenShake );
+			shakeLeft = fabs( m_flScreenShake[ userID ] );
 		}
 		else
 		{
-			shakeRight = m_flScreenShake;
+			shakeRight = m_flScreenShake[ userID ];
 		}
 	}
 
@@ -772,50 +791,54 @@ void CRumbleEffects::UpdateEffects( float curtime )
 		fRightMotor = 0.0f;
 	}
 
-	inputsystem->SetRumble( fLeftMotor, fRightMotor );
+	inputsystem->SetRumble( fLeftMotor, fRightMotor, userID );
 }
 
 //---------------------------------------------------------
 //---------------------------------------------------------
-void StopAllRumbleEffects( void )
+void StopAllRumbleEffects( int userID )
 {
-	g_RumbleEffects.StopAllEffects();
+	// Kill all rumble channels that have effects assigned to this userID,
+	// and stop the motors. 
+	g_RumbleEffects.StopAllEffects( userID );
 
-	inputsystem->StopRumble();
+	inputsystem->StopRumble( userID );
 }
 
 //---------------------------------------------------------
 //---------------------------------------------------------
-void RumbleEffect( unsigned char effectIndex, unsigned char rumbleData, unsigned char rumbleFlags )
+void RumbleEffect( int userID, unsigned char effectIndex, unsigned char rumbleData, unsigned char rumbleFlags )
 {
-	g_RumbleEffects.StartEffect( effectIndex, rumbleData, rumbleFlags );	
+	g_RumbleEffects.StartEffect( userID, effectIndex, rumbleData, rumbleFlags );	
 }
 
 //---------------------------------------------------------
 //---------------------------------------------------------
-void UpdateRumbleEffects()
+void UpdateRumbleEffects( int userID )
 {
-	C_BasePlayer *localPlayer = C_BasePlayer::GetLocalPlayer();
-	if( !localPlayer || !localPlayer->IsAlive() )
+	C_BasePlayer *player = C_BasePlayer::GetLocalPlayer( XBX_GetSlotByUserId( userID ) );
+
+	if( !player || !player->IsAlive() )
 	{
-		StopAllRumbleEffects();
+		StopAllRumbleEffects( userID );
 		return;
 	}
 
-	g_RumbleEffects.UpdateEffects( gpGlobals->curtime );
+	g_RumbleEffects.UpdateEffects( userID, gpGlobals->curtime );
 }
 
 //---------------------------------------------------------
 //---------------------------------------------------------
-void UpdateScreenShakeRumble( float shake, float balance )
+void UpdateScreenShakeRumble( int userID, float shake, float balance )
 {
-	C_BasePlayer *localPlayer = C_BasePlayer::GetLocalPlayer();
-	if( !localPlayer || !localPlayer->IsAlive() )
+	C_BasePlayer *player = C_BasePlayer::GetLocalPlayer( XBX_GetSlotByUserId( userID ) );
+
+	if( !player || !player->IsAlive() )
 	{
 		return;
 	}
 
-	g_RumbleEffects.UpdateScreenShakeRumble( shake, balance );
+	g_RumbleEffects.UpdateScreenShakeRumble( userID, shake, balance );
 }
 
 //---------------------------------------------------------
@@ -824,3 +847,4 @@ void EnableRumbleOutput( bool bEnable )
 {
 	g_RumbleEffects.SetOutputEnabled( bEnable );
 }
+#endif//_X360

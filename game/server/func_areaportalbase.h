@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -93,7 +93,7 @@ public:
 	// Note: when you're standing in the space between the **'s, then the server would stop transmitting
 	// the contents of area 2 because there would be no portal you were on the correct side of to
 	// see into area 2.
-	virtual bool	UpdateVisibility( const Vector &vOrigin, float fovDistanceAdjustFactor, bool &bIsOpenOnClient );
+	virtual bool	UpdateVisibility( const CUtlVector< Vector > &vecOrigins, float fovDistanceAdjustFactor, bool &bIsOpenOnClient );
 
 
 public:

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:		Base class for simple projectiles
 //
@@ -13,7 +13,7 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-LINK_ENTITY_TO_CLASS( baseprojectile, CBaseSpriteProjectile );
+LINK_ENTITY_TO_CLASS( basespriteprojectile, CBaseSpriteProjectile );
 
 //---------------------------------------------------------
 // Save/Restore

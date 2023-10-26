@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -42,7 +42,7 @@ enum FUNCTANK_EFFECT_HANDLING
 {
 	EH_NONE,			// Use the effect settings
 	EH_AR2,				// Use AR2 effects
-	EH_COMBINE_CANNON	// Large Combine cannon
+	EH_COMBINE_CANNON,	// Large Combine cannon
 };
 
 enum TANKBULLET

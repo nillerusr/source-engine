@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -18,7 +18,10 @@
 // order in which they are initialized and updated. They are shut down in
 // reverse order from which they are initialized.
 //-----------------------------------------------------------------------------
-
+#ifdef GAME_DLL
+class CBasePlayer;
+class CUserCmd;
+#endif
 
 // UNDONE: Do these need GameInit/GameShutdown as well?
 // UNDONE: Remove the Pre/Post entity semantics and rely on system ordering?
@@ -40,7 +43,6 @@ public:
 	// entities are created / spawned / precached here
 	virtual void LevelInitPostEntity() = 0;
 
-	virtual void LevelShutdownPreClearSteamAPIContext() {};
 	virtual void LevelShutdownPreEntity() = 0;
 	// Entities are deleted / released here...
 	virtual void LevelShutdownPostEntity() = 0;
@@ -76,7 +78,6 @@ public:
 	static void ShutdownAllSystems();
 	static void LevelInitPreEntityAllSystems( char const* pMapName );
 	static void LevelInitPostEntityAllSystems();
-	static void LevelShutdownPreClearSteamAPIContextAllSystems(); // Called prior to steamgameserverapicontext->Clear()
 	static void LevelShutdownPreEntityAllSystems();
 	static void LevelShutdownPostEntityAllSystems();
 
@@ -95,8 +96,10 @@ public:
 	static void PreClientUpdateAllSystems();
 
 	// Accessors for the above function
+#ifdef GAME_DLL
 	static CBasePlayer *RunCommandPlayer();
 	static CUserCmd *RunCommandUserCmd();
+#endif
 #endif
 };
 
@@ -141,7 +144,6 @@ public:
 	// Level init, shutdown
 	virtual void LevelInitPreEntity() {}
 	virtual void LevelInitPostEntity() {}
-	virtual void LevelShutdownPreClearSteamAPIContext() {}
 	virtual void LevelShutdownPreEntity() {}
 	virtual void LevelShutdownPostEntity() {}
 
@@ -188,7 +190,6 @@ public:
 	// Level init, shutdown
 	virtual void LevelInitPreEntity() {}
 	virtual void LevelInitPostEntity() {}
-	virtual void LevelShutdownPreClearSteamAPIContext() {}
 	virtual void LevelShutdownPreEntity() {}
 	virtual void LevelShutdownPostEntity() {}
 

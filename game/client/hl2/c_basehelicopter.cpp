@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -11,6 +11,7 @@
 #include "materialsystem/imaterialvar.h"
 #include "KeyValues.h"
 
+#include "imaterialproxydict.h"
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -52,6 +53,7 @@ bool CHeliBladeMaterialProxy::Init( IMaterial *pMaterial, KeyValues *pKeyValues 
 	bool foundVar;
 	m_AlphaVar = pMaterial->FindVar( "$alpha", &foundVar, false );
 	m_bFadeOut = pKeyValues->GetInt( "$fadeout", 0 ) != 0;
+	pMaterial->SetMaterialVarFlag( MATERIAL_VAR_ALPHA_MODIFIED_BY_PROXY, true );
 	return foundVar;
 }
 
@@ -87,5 +89,5 @@ IMaterial *CHeliBladeMaterialProxy::GetMaterial()
 	return m_AlphaVar->GetOwningMaterial();
 }
 
-EXPOSE_INTERFACE( CHeliBladeMaterialProxy, IMaterialProxy, "HeliBlade" IMATERIAL_PROXY_INTERFACE_VERSION );
+EXPOSE_MATERIAL_PROXY( CHeliBladeMaterialProxy, HeliBlade );
 

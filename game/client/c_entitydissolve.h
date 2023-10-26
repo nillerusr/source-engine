@@ -1,9 +1,9 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
 // $NoKeywords: $
-//=============================================================================//
+//===========================================================================//
 
 #ifndef C_ENTITY_DISSOLVE_H
 #define C_ENTITY_DISSOLVE_H
@@ -23,13 +23,10 @@ public:
 
 	// Inherited from C_BaseEntity
 	virtual void	GetRenderBounds( Vector& theMins, Vector& theMaxs );
-	virtual int		DrawModel( int flags );
+	virtual int		DrawModel( int flags, const RenderableInstance_t &instance );
 	virtual bool	ShouldDraw() { return true; }
 	virtual void	OnDataChanged( DataUpdateType_t updateType );
 	virtual void	UpdateOnRemove( void );
-
-	virtual Vector	GetEffectColor( void ) { return m_vEffectColor; }
-	virtual void	SetEffectColor( Vector v ) { m_vEffectColor = v; }
 
 	// Inherited from IMotionEvent
 	virtual simresult_e	Simulate( IPhysicsMotionController *pController, IPhysicsObject *pObject, float deltaTime, Vector &linear, AngularImpulse &angular );
@@ -49,8 +46,6 @@ public:
 	float	m_flFadeInLength;
 	int		m_nDissolveType;
 	float   m_flNextSparkTime;
-
-	Vector	m_vEffectColor;
 
 	Vector	m_vDissolverOrigin;
 	int		m_nMagnitude;

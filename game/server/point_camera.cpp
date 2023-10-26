@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -33,7 +33,9 @@ CPointCamera* GetPointCameraList()
 //	DEFINE_KEYFIELD( m_iParent, FIELD_STRING, "parentname" ),
 //	DEFINE_KEYFIELD( m_target, FIELD_STRING, "target" ),
 
+#ifndef INFESTED_DLL
 LINK_ENTITY_TO_CLASS( point_camera, CPointCamera );
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -50,6 +52,7 @@ CPointCamera::CPointCamera()
 	m_bIsOn = false;
 	
 	m_bFogEnable = false;
+	m_fBrightness = -1.0f;
 
 	g_PointCameraList.Insert( this );
 }
@@ -211,6 +214,36 @@ void CPointCamera::InputSetOff( inputdata_t &inputdata )
 	SetActive( false );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CPointCamera::InputForceActive( inputdata_t &inputdata )
+{
+	CBaseEntity *pEntity = NULL;
+	while ((pEntity = gEntList.FindEntityByClassname( pEntity, "point_camera" )) != NULL)
+	{
+		CPointCamera *pCamera = (CPointCamera*)pEntity;
+		pCamera->m_bActive = false;
+	}
+
+	// Now turn myself on
+	InputSetOn( inputdata );
+
+	m_bActive = true;
+
+	UpdateTransmitState();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CPointCamera::InputForceInactive( inputdata_t &inputdata )
+{
+	m_bIsOn = false;
+	SetActive( false );
+	UpdateTransmitState();
+}
+
 BEGIN_DATADESC( CPointCamera )
 
 	// Save/restore Keyvalue fields
@@ -224,6 +257,8 @@ BEGIN_DATADESC( CPointCamera )
 	DEFINE_KEYFIELD( m_bUseScreenAspectRatio, FIELD_BOOLEAN, "UseScreenAspectRatio" ),
 	DEFINE_FIELD( m_bActive,		FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_bIsOn,			FIELD_BOOLEAN ),
+	DEFINE_FIELD( m_bNoSky,			FIELD_BOOLEAN ),
+	DEFINE_FIELD( m_fBrightness,	FIELD_FLOAT ),
 
 	DEFINE_FIELD( m_TargetFOV,		FIELD_FLOAT ),
 	DEFINE_FIELD( m_DegreesPerSecond, FIELD_FLOAT ),
@@ -237,6 +272,8 @@ BEGIN_DATADESC( CPointCamera )
 	DEFINE_INPUTFUNC( FIELD_VOID, "SetOnAndTurnOthersOff", InputSetOnAndTurnOthersOff ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "SetOn", InputSetOn ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "SetOff", InputSetOff ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "Activate", InputForceActive ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "Deactivate", InputForceInactive ),
 
 END_DATADESC()
 
@@ -244,10 +281,12 @@ IMPLEMENT_SERVERCLASS_ST( CPointCamera, DT_PointCamera )
 	SendPropFloat( SENDINFO( m_FOV ), 0, SPROP_NOSCALE ),
 	SendPropFloat( SENDINFO( m_Resolution ), 0, SPROP_NOSCALE ),
 	SendPropInt( SENDINFO( m_bFogEnable ), 1, SPROP_UNSIGNED ),	
-	SendPropInt( SENDINFO_STRUCTELEM( m_FogColor ), 32, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO_STRUCTELEM( m_FogColor ), 32, SPROP_UNSIGNED, SendProxy_Color32ToInt32 ),
 	SendPropFloat( SENDINFO( m_flFogStart ), 0, SPROP_NOSCALE ),	
 	SendPropFloat( SENDINFO( m_flFogEnd ), 0, SPROP_NOSCALE ),	
 	SendPropFloat( SENDINFO( m_flFogMaxDensity ), 0, SPROP_NOSCALE ),	
-	SendPropInt( SENDINFO( m_bActive ), 1, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO( m_bUseScreenAspectRatio ), 1, SPROP_UNSIGNED ),
+	SendPropBool( SENDINFO( m_bActive ) ),
+	SendPropBool( SENDINFO( m_bUseScreenAspectRatio ) ),
+	SendPropBool( SENDINFO( m_bNoSky ) ),
+	SendPropFloat( SENDINFO( m_fBrightness ), 0, SPROP_NOSCALE ),	
 END_SEND_TABLE()

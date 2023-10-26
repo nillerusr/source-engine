@@ -1,0 +1,1689 @@
+//
+// Bomber By Kazys Stepanas
+//
+
+
+//--------------------------------------------------------------------------------------------------
+// Globals.
+//--------------------------------------------------------------------------------------------------
+global bgCol              = CA.B_BLACK;
+global quit               = false;
+global lastTouchedBlock   = -1;
+global player;
+
+global gameLevel          = 1;
+
+global blocks             = table(count = 0);
+global powerups           = table(count = 0);
+global enemies            = table(count = 0);
+global blockDeadZone      = table(x1 = 31, y1 = 8, x2 = 39, y2 = 14);
+global enemyDeadZone      = table(x1 = 22, y1 = 7, x2 = 45, y2 = 16);
+
+// Thing types.
+global T_Space            = 0;
+global T_Player           = 1;
+global T_Bomb             = 2;
+global T_Explosion        = 3;
+global T_Block            = 4;
+global T_Grid             = 5;
+global T_Powerup          = 6;
+global T_Enemy            = 7;
+
+// Powerup types.
+global PT_Bomb            = 1;
+global PT_Size            = 2;
+global PT_Life            = 3;
+
+// Dead zone types.
+global DT_None            = 0;
+global DT_Block           = 1;
+global DT_Enemy           = 2;
+
+//--------------------------------------------------------------------------------------------------
+// Grid control.
+//--------------------------------------------------------------------------------------------------
+global grid = table(startX = 0, startY = 0, spaceX = 1, spaceY = 1, rows = 0, cols = 0);
+
+//--------------------------------------------------------------------------------------------------
+// Constants
+//--------------------------------------------------------------------------------------------------
+global screen             = table(w = 80, h = 23);
+global statusY            = 24;
+
+global bombFuse           = 1.25;
+global explodeTime        = 0.75;
+global explodeCycle       = 0.05;
+global maxPlayerBombs     = 10;
+global maxPlayerSize      = 5;
+global maxPowerups        = 20;
+global maxLives           = 5;
+global startLives         = 3;
+
+global scoreBlock         = 10;
+global scoreNME           = 50;
+
+global nmeMoveTime        = 1.0;
+global powerupChance      = 40;
+global maxLevel           = 10;
+global maxBlockHits       = 3;
+
+//--------------------------------------------------------------------------------------------------
+// Graphics
+//--------------------------------------------------------------------------------------------------
+global playerPix          = "\2";
+global playerDeadPix      = "\5";
+global bombPix            = "\15";
+global expPix             = "+";
+global gridPix            = "\178";
+global block1Pix          = "\176";
+global block2Pix          = "\177";
+global block3Pix          = "\219";
+global nmePix             = "\232";
+global lifePix            = "\3";
+global bombSizePix        = "#";
+global bombExtraPix       = "*";
+global spacePix           = " ";
+
+//--------------------------------------------------------------------------------------------------
+// Colours
+//--------------------------------------------------------------------------------------------------
+global bgColour           = 0;
+global fgColour           = CA.F_RED | CA.F_GREEN;
+
+global playerColour       = CA.F_GREEN | CA.F_BLUE;// | CA.F_INTENSITY;
+global gridColour         = CA.F_RED;
+global blockColour        = CA.F_RED | CA.F_GREEN | CA.F_INTENSITY;
+global nmeColour          = CA.F_RED | CA.F_BLUE;
+global powerupColour      = CA.F_GREEN | CA.F_INTENSITY;
+global puLifeColour       = CA.F_RED;
+
+global statusColour       = CA.F_RED | CA.F_GREEN;
+
+global bombColour         = CA.F_BLUE | CA.F_INTENSITY;
+global expColourCount     = 5;
+global expColours         = array(expColourCount);
+
+global readyColour        = CA.F_RED;
+
+expColours[0] = CA.F_RED | CA.F_INTENSITY;
+expColours[1] = CA.F_BLUE|CA.F_RED;
+expColours[2] = CA.F_RED|CA.F_GREEN | CA.F_INTENSITY;
+expColours[3] = CA.F_RED;
+expColours[4] = CA.F_RED|CA.F_GREEN;
+
+
+//--------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
+global IsPointWithin = function(a_ptx, a_pty, a_rx1, a_ry1, a_rx2, a_ry2)
+{
+  return (a_ptx >= a_rx1 and a_ptx <= a_rx2 and a_pty >= a_ry1 and a_pty <= a_ry2);
+};
+
+global OverlapRect = function(a_r1x1, a_r1y1, a_r1x2, a_r1y2, a_r2x1, a_r2y1, a_r2x2, a_r2y2)
+{
+  // Test one rect against the other.
+  if (IsPointWithin(a_r2x1, a_r2y1, a_r1x1, a_r1y1, a_r1x2, a_r1y2) or
+      IsPointWithin(a_r2x1, a_r2y2, a_r1x1, a_r1y1, a_r1x2, a_r1y2) or
+      IsPointWithin(a_r2x2, a_r2y2, a_r1x1, a_r1y1, a_r1x2, a_r1y2) or
+      IsPointWithin(a_r2x2, a_r2y1, a_r1x1, a_r1y1, a_r1x2, a_r1y2))
+  {
+    return true;
+  }
+
+  // Test the other rect.
+  if (IsPointWithin(a_r1x1, a_r1y1, a_r2x1, a_r2y1, a_r2x2, a_r2y2) or
+      IsPointWithin(a_r1x1, a_r1y2, a_r2x1, a_r2y1, a_r2x2, a_r2y2) or
+      IsPointWithin(a_r1x2, a_r1y2, a_r2x1, a_r2y1, a_r2x2, a_r2y2) or
+      IsPointWithin(a_r1x2, a_r1y1, a_r2x1, a_r2y1, a_r2x2, a_r2y2))
+  {
+    return true;
+  }
+
+  return false;
+};
+
+global ScreenClampX = function(a_x)
+{
+  if (a_x < 0)
+  {
+    return 0;
+  }
+  else if (a_x >= screen.w)
+  {
+    return screen.w-1;
+  }
+
+  return a_x;
+};
+
+global ScreenClampY = function(a_y)
+{
+  if (a_y < 0)
+  {
+    return 0;
+  }
+  else if (a_y >= screen.h)
+  {
+    return screen.h-1;
+  }
+
+  return a_y;
+};
+
+global ScreenClamp = function()
+{
+  .x = ScreenClampX(.x);
+  .y = ScreenClampY(.y);
+};
+
+global BombAt = function(a_x, a_y)
+{
+  for (i = 0; i < player.nextBomb; i=i+1)
+  {
+    bomb = player.bombs[i];
+    if (bomb.x == a_x and bomb.y == a_y)
+    {
+      return true;
+    }
+  }
+  return false;
+};
+
+global PointOverlap = function(a_x1, a_y1, a_x2, a_y2)
+{
+  return IsPointWithin(.x, .y, a_x1, a_y1, a_x2, a_y2);
+};
+
+//--------------------------------------------------------------------------------------------------
+// Player object.
+//--------------------------------------------------------------------------------------------------
+global Player = function()
+{
+  newPlayer = table(x = -1, y = -1);
+  newPlayer.bombSize  = 1;
+  newPlayer.bombFuse  = bombFuse;
+  newPlayer.bombs     = array(maxPlayerBombs);
+  newPlayer.maxBombs  = 1;
+  newPlayer.nextBomb  = 0;
+  newPlayer.threadId  = -1;
+  newPlayer.lastCanMoveThing = null;
+  newPlayer.dead      = false;
+  newPlayer.lives     = startLives;
+  newPlayer.score     = 0;
+  newPlayer.threadId  = -1;
+
+  //------------------------------------
+  //------------------------------------
+  newPlayer.Draw = function()
+  {
+    CATTRIB(bgColour | playerColour);
+    if (!.dead)
+    {
+      XYTEXT(.x, .y, playerPix);
+    }
+    else
+    {
+      XYTEXT(.x, .y, playerDeadPix);
+    }
+  };
+
+  //------------------------------------
+  //------------------------------------
+  newPlayer.DrawStatus = function()
+  {
+    CATTRIB(bgColour | puLifeColour | CA.F_INTENSITY);
+    XYTEXT(0,  statusY, format("%s : %d  ", lifePix, .lives));
+    CATTRIB(bgColour | powerupColour);
+    XYTEXT(10, statusY, format("%s : %d  ", bombExtraPix, .maxBombs));
+    XYTEXT(20, statusY, format("%s : %d  ", bombSizePix, .bombSize));
+    CATTRIB(bgColour | statusColour);
+    XYTEXT(50, statusY, format("Score : %d  ", .score));
+  };
+
+  newPlayer.AddScore = function(a_add)
+  {
+    .score = .score + a_add;
+    .DrawStatus();
+  };
+
+  //------------------------------------
+  //------------------------------------
+  newPlayer.CanMove = function(a_x, a_y)
+  {
+    thing = GetThingAt(a_x, a_y, false);
+    .lastCanMoveThing = thing;
+    return  thing.type == T_Space or thing.type == T_Explosion or
+            thing.type == T_Powerup or thing.type == T_Enemy;
+  };
+
+  //------------------------------------
+  //------------------------------------
+  newPlayer.Move = function(a_dx, a_dy)
+  {
+    if (!.dead)
+    {
+      oldX  = .x;
+      oldY  = .y;
+      newX  = ScreenClampX(.x + a_dx);
+      newY  = ScreenClampY(.y + a_dy);
+
+      if (.CanMove(newX, newY))
+      {
+        .x = newX;
+        .y = newY;
+        if (.lastCanMoveThing.type == T_Powerup)
+        {
+          .lastCanMoveThing.thing.Pickup();
+        }
+        else if (.lastCanMoveThing.type == T_Explosion or .lastCanMoveThing.type == T_Enemy)
+        {
+          .Kill();
+        }
+
+        RefreshXY(oldX, oldY);
+        RefreshXY(.x, .y);
+      }
+    }
+  };
+
+  //------------------------------------
+  //------------------------------------
+  newPlayer.Kill = function()
+  {
+    .dead = true;
+    RefreshXY(.x, .y);
+  };
+
+  //------------------------------------
+  //------------------------------------
+  newPlayer.DropBomb = function()
+  {
+    if (!.dead and .nextBomb < .maxBombs and !BombAt(.x, .y))
+    {
+      newBomb = Bomb(.x, .y, .bombSize, .bombFuse, this);
+      .bombs[.nextBomb] = newBomb;
+      .nextBomb = .nextBomb + 1;
+      newBomb.Draw();
+    }
+  };
+
+  //------------------------------------
+  //------------------------------------
+  newPlayer.FreeBomb = function(a_bomb)
+  {
+    found = false;
+    limit = .nextBomb;
+    for (i = 0; i < limit; i=i+1)
+    {
+      if (.bombs[i] == a_bomb)
+      {
+        found = true;
+        .nextBomb = .nextBomb - 1;
+      }
+      if (found)
+      {
+        if (i+1 < limit)
+        {
+          .bombs[i] = .bombs[i+1];
+        }
+        else
+        {
+          .bombs[i] = null;
+        }
+      }
+    }
+  };
+
+  //------------------------------------
+  //------------------------------------
+  newPlayer.StartThread = function()
+  {
+    this:stateSet(.IdleState);
+  };
+
+  //------------------------------------
+  //------------------------------------
+  newPlayer.IdleState = function()
+  {
+    while (!quit)
+    {
+      pressed = false;
+      if (ISPRESSED(38))
+      {
+        .Move(0, -1);
+        pressed = true;
+      }
+      else if (ISPRESSED(40))
+      {
+        .Move(0, 1);
+        pressed = true;
+      }
+      else if (ISPRESSED(39))
+      {
+        .Move(1, 0);
+        pressed = true;
+      }
+      else if (ISPRESSED(37))
+      {
+        .Move(-1, 0);
+        pressed = true;
+      }
+      else if (ISPRESSED(' '))
+      {
+        .DropBomb();
+        pressed = true;
+      }
+
+      if (pressed)
+      {
+        sleep(0.075);
+      }
+      else if (.dead)
+      {
+        this:stateSet(.DeadState);
+      }
+      else
+      {
+        yield();
+      }
+    }
+  };
+
+  //------------------------------------
+  //------------------------------------
+  newPlayer.DeadState = function()
+  {
+    sleep(explodeTime);
+    if (.lives > 0)
+    {
+      .lives = .lives - 1;
+    }
+    if (.maxBombs > 1)
+    {
+      .maxBombs = .maxBombs - 1;
+    }
+    if (.bombSize > 1)
+    {
+      .bombSize = .bombSize - 1;
+    }
+    .DrawStatus();
+
+    while (!quit)
+    {
+      if (.lives > 0 and ISPRESSED(' '))
+      {
+        while (!quit)
+        {
+          pos = .GetStartPos();
+          thing = GetThingAt(pos.x, pos.y, false);
+          if (thing.type == T_Enemy)
+          {
+            thing.thing.Kill();
+          }
+          sleep(0.2);
+
+          oldX = .x;
+          oldY = .y;
+          .x = pos.x;
+          .y = pos.y;
+
+          .dead = false;
+          RefreshXY(oldX, oldY);
+          RefreshXY(.x, .y);
+          this:stateSet(.IdleState);
+        }
+      }
+      yield();
+    }
+  };
+
+  //------------------------------------
+  //------------------------------------
+  newPlayer.Overlap = PointOverlap;
+
+  //------------------------------------
+  //------------------------------------
+  newPlayer.Cheat = function()
+  {
+    .lives    = 5;
+    .maxBombs = 10;
+    .bombSize = 5;
+    .DrawStatus();
+  };
+
+  newPlayer.GetStartPos = function()
+  {
+    // Position near centre.
+    ptx = grid.startX + (grid.rows/2)*grid.spaceX;
+    pty = grid.startY + (grid.cols/2)*grid.spaceY;
+    return table(x = ptx, y = pty);
+  };
+
+  pos = newPlayer.GetStartPos();
+  newPlayer.x = pos.x;
+  newPlayer.y = pos.y;
+
+  newPlayer.Start = function()
+  {
+    .threadId = this:thread(.StartThread);
+  };
+
+  newPlayer.Stop = function()
+  {
+    threadKill(.threadId);
+  };
+
+  return newPlayer;
+};
+
+//--------------------------------------------------------------------------------------------------
+// Bomb object.
+//--------------------------------------------------------------------------------------------------
+global Bomb = function(a_x, a_y, a_size, a_fuse, a_owner)
+{
+  newBomb = table(x = a_x, y = a_y, size = a_size, fuse = a_fuse, owner = a_owner);
+  newBomb.explode = false;
+  newBomb.expMinX = 0;
+  newBomb.expMaxX = 0;
+  newBomb.expMinY = 0;
+  newBomb.expMaxY = 0;
+  newBomb.visible = true;
+  newBomb.threadId = -1;
+
+  newBomb.CountDown = function()
+  {
+    this:stateSet(.FuseState);
+  };
+
+  newBomb.Explode = function()
+  {
+    this:stateSetOnThread(.threadId, .ExplodeState);
+  };
+
+  newBomb.FuseState = function()
+  {
+    sleep(.fuse);
+    this:stateSet(.ExplodeState);
+  };
+
+  newBomb.ExplodeState = function()
+  {
+    .expMinX = ScreenClampX(.x - .size);
+    .expMaxX = ScreenClampX(.x + .size);
+    .expMinY = ScreenClampY(.y - .size);
+    .expMaxY = ScreenClampY(.y + .size);
+
+    .explode = true;
+    .visible = false;
+    .KillStuff();
+    .visible = true;
+    .Draw();
+    count = 1+g_count;
+
+    inc = explodeCycle/explodeTime;
+    for (i = 0; i < explodeTime; i = i + inc)
+    {
+      sleep(explodeCycle);
+      .Draw();
+    }
+
+    .visible = false;
+    RefreshRect(.expMinX, .expMinY, .expMaxX - .expMinX + 1, .expMaxY - .expMinY + 1);
+    if (.owner != null)
+    {
+      .owner.FreeBomb(this);
+    }
+    exit();
+  };
+
+  newBomb.KillStuff = function()
+  {
+    // Kill stuff.
+    for (x = .x; x >= .expMinX; x=x-1)
+    {
+      if (!.TryKill(GetThingAt(x, .y, true)))
+      {
+        .expMinX = x;
+        break;
+      }
+    }
+    for (x = .x+1; x <= .expMaxX; x=x+1)
+    {
+      if (!.TryKill(GetThingAt(x, .y, true)))
+      {
+        .expMaxX = x;
+        break;
+      }
+    }
+
+    for (y = .y; y >= .expMinY; y=y-1)
+    {
+      if (!.TryKill(GetThingAt(.x, y, true)))
+      {
+        .expMinY = y;
+        break;
+      }
+    }
+    for (y = .y+1; y <= .expMaxY; y=y+1)
+    {
+      if (!.TryKill(GetThingAt(.x, y, true)))
+      {
+        .expMaxY = y;
+        break;
+      }
+    }
+  };
+
+  newBomb.TryKill = function(a_thing)
+  {
+    if (a_thing.type == T_Block)
+    {
+      a_thing.thing.Kill();
+      return false;
+    }
+    else if (a_thing.type == T_Bomb and a_thing.thing != this)
+    {
+      a_thing.thing.Explode();
+    }
+    else if (a_thing.type == T_Player or a_thing.type == T_Enemy)
+    {
+      a_thing.thing.Kill();
+    }
+    return true;
+  };
+
+  newBomb.Draw = function()
+  {
+    if (.visible)
+    {
+      if (.explode)
+      {
+        CATTRIB(bgColour | expColours[randint(0, expColourCount)]);
+        for (x = .expMinX; x <= .expMaxX; x=x+1)
+        {
+          if (IsSpaceOnGrid(x, .y))
+          {
+            XYTEXT(x, .y, expPix);
+          }
+        }
+
+        for (y = .expMinY; y <= .expMaxY; y=y+1)
+        {
+          if (IsSpaceOnGrid(.x, y))
+          {
+            XYTEXT(.x, y, expPix);
+          }
+        }
+      }
+      else
+      {
+        CATTRIB(bgColour | bombColour);
+        XYTEXT(.x, .y, bombPix);
+      }
+    }
+  };
+
+  newBomb.Overlap = function(a_x1, a_y1, a_x2, a_y2)
+  {
+    if (.explode)
+    {
+      return OverlapRect(.expMinX, .y, .expMaxX, .y+1, a_x1, a_y1, a_x2, a_y2) and OverlapRect(.x, .expMinY, .x+1, .expMaxY, a_x1, a_y1, a_x2, a_y2);
+    }
+    return IsPointWithin(.x, .y, a_x1, a_y1, a_x2, a_y2);
+  };
+
+  newBomb.FuseThread = function()
+  {
+    sleep(.fuse);
+    .Explode();
+  };
+
+  newBomb.threadId = newBomb:thread(newBomb.CountDown);
+  newBomb:thread(newBomb.FuseThread);
+  return newBomb;
+};
+
+//--------------------------------------------------------------------------------------------------
+// Block code.
+//--------------------------------------------------------------------------------------------------
+global Block = function(a_x, a_y)
+{
+  newBlock = table(x = a_x, y = a_y, visible = true);
+  newBlock.hits = 1;
+
+  newBlock.Draw = function()
+  {
+    if (.visible)
+    {
+      CATTRIB(bgColour | blockColour);
+      if (.hits == 3)
+      {
+        XYTEXT(.x, .y, block3Pix);
+      }
+      else if (.hits == 2)
+      {
+        XYTEXT(.x, .y, block2Pix);
+      }
+      else
+      {
+        XYTEXT(.x, .y, block1Pix);
+      }
+    }
+  };
+
+  newBlock.Overlap = PointOverlap;
+
+  newBlock.KillThread = function()
+  {
+    yield();
+    yield();
+    if (.visible)
+    {
+      .visible = false;
+      player.AddScore(scoreBlock);
+      if (randint(0, 100) < powerupChance)
+      {
+        AddPowerup(.x, .y);
+      }
+    }
+  };
+
+  newBlock.Kill = function()
+  {
+    .hits = .hits - 1;
+    if (.hits == 0)
+    {
+      this:thread(.KillThread);
+    }
+    RefreshXY(.x, .y);
+  };
+
+  return newBlock;
+};
+
+global CreateBlocks = function(a_num)
+{
+  global maxBlockHits;
+  global blocks = table(count = 0, blocks = array(a_num));
+  for (i = 0; i < a_num; i=i+1)
+  {
+    pos = GetRandomFreePos(DT_Block, true);
+    if (pos.x != -1 and pos.y != -1)
+    {
+      thing = GetThingAt(pos.x, pos.y, false);
+      if (thing.type == DT_Block)
+      {
+        if (thing.thing.hits < maxBlockHits)
+        {
+          thing.thing.hits = thing.thing.hits + 1;
+        }
+      }
+      else
+      {
+        blocks.blocks[i] = Block(pos.x, pos.y);
+        blocks.count = i;
+      }
+    }
+  }
+  blocks.count = a_num;
+};
+
+//--------------------------------------------------------------------------------------------------
+// Powerup.
+//--------------------------------------------------------------------------------------------------
+global Powerup = function(a_x, a_y, a_type)
+{
+  newPu = table(x = a_x, y = a_y, type = a_type);
+
+  if (a_type == PT_Bomb)
+  {
+    newPu.Draw = function()
+    {
+      CATTRIB(bgColour | powerupColour);
+      XYTEXT(.x, .y, bombExtraPix);
+    };
+
+    newPu.Pickup = function()
+    {
+      if (player.maxBombs < maxPlayerBombs)
+      {
+        player.maxBombs = player.maxBombs + 1;
+      }
+      player.DrawStatus();
+      RemovePowerup(this);
+    };
+  }
+  else if (a_type == PT_Size)
+  {
+    newPu.Draw = function()
+    {
+      CATTRIB(bgColour | powerupColour);
+      XYTEXT(.x, .y, bombSizePix);
+    };
+
+    newPu.Pickup = function()
+    {
+      if (player.bombSize < maxPlayerSize)
+      {
+        player.bombSize = player.bombSize + 1;
+      }
+      player.DrawStatus();
+      RemovePowerup(this);
+    };
+  }
+  else if (a_type == PT_Life)
+  {
+    newPu.Draw = function()
+    {
+      CATTRIB(bgColour | puLifeColour);
+      XYTEXT(.x, .y, lifePix);
+    };
+
+    newPu.Pickup = function()
+    {
+      if (player.lives < maxLives)
+      {
+        player.lives = player.lives + 1;
+      }
+      player.DrawStatus();
+      RemovePowerup(this);
+    };
+  }
+  else
+  {
+    newPu.Draw = function()
+    {
+    };
+
+    newPu.Pickup = function()
+    {
+      RemovePowerup(this);
+    };
+  }
+
+  newPu.Overlap = PointOverlap;
+
+  return newPu;
+};
+
+//--------------------------------------------------------------------------------------------------
+// Powerup management.
+//--------------------------------------------------------------------------------------------------
+global RandomPowerupType = function()
+{
+  int = randint(0, 100);
+
+  if (int < 49)
+  {
+    return PT_Bomb;
+  }
+  if (int < 98)
+  {
+    return PT_Size;
+  }
+
+  return PT_Life;
+};
+
+global AddPowerup = function(a_x, a_y)
+{
+  if (powerups.count < maxPowerups)
+  {
+    powerups.powerups[powerups.count] = Powerup(a_x, a_y, RandomPowerupType());
+    powerups.count = powerups.count + 1;
+    RefreshXY(a_x, a_y);
+  }
+};
+
+global RemovePowerup = function(a_pu)
+{
+  found = false;
+  count = powerups.count;
+  for (i = 0; i < count; i = i + 1)
+  {
+    if (powerups.powerups[i] == a_pu)
+    {
+      found = true;
+      powerups.powerups[i] = null;
+      powerups.count = powerups.count - 1;
+    }
+    if (found)
+    {
+      if (i+1 < count)
+      {
+        powerups.powerups[i] = powerups.powerups[i+1];
+      }
+      else
+      {
+        powerups.powerups[i] = null;
+      }
+    }
+  }
+};
+
+global InitPowerups = function()
+{
+  global powerups = table(count = 0, powerups = array(maxPowerups));
+};
+
+//--------------------------------------------------------------------------------------------------
+// Enemies.
+//--------------------------------------------------------------------------------------------------
+global CreateEnemies = function(a_num)
+{
+  global enemies = table(count = 0, enemies = array(a_num));
+
+  for (i = 0; i < a_num; i=i+1)
+  {
+    pos = GetRandomFreePos(DT_Enemy, false);
+    if (pos.x != -1 and pos.y != -1)
+    {
+      enemies.enemies[i] = Enemy(pos.x, pos.y);
+      enemies.count = i+1;
+    }
+  }
+};
+
+global Enemy = function(a_x, a_y)
+{
+  newEnemy = table(x = a_x, y = a_y, dead = false);
+  newEnemy.lastCanMoveThing = null;
+  newEnemy.lastPos          = table(x = a_x, y = a_y);
+  newEnemy.threadId         = -1;
+
+  //------------------------------------
+  //------------------------------------
+  newEnemy.Draw = function()
+  {
+    if (!.dead)
+    {
+      CATTRIB(bgColour | nmeColour);
+      XYTEXT(.x, .y, nmePix);
+    }
+  };
+
+  //------------------------------------
+  //------------------------------------
+  newEnemy.Kill = function()
+  {
+    player.AddScore(scoreNME);
+    .dead = true;
+    if (randint(0, 100) < powerupChance)
+    {
+      AddPowerup(.x, .y);
+    }
+    RefreshXY(.x, .y);
+  };
+
+  //------------------------------------
+  //------------------------------------
+  newEnemy.Overlap = PointOverlap;
+
+  //------------------------------------
+  // Movement.
+  //------------------------------------
+  newEnemy.CanMove = function(a_x, a_y)
+  {
+    if (a_x < 0 or a_x >= screen.w or a_y < 0 or a_y > screen.h)
+    {
+      return false;
+    }
+
+    thing = GetThingAt(a_x, a_y, false);
+    .lastCanMoveThing = thing;
+    return  thing.type == T_Space or thing.type == T_Exlposion or
+            thing.type == T_Powerup or thing.type == T_Player;
+  };
+
+  //------------------------------------
+  //------------------------------------
+  newEnemy.MoveX = function()
+  {
+    // Is the player on the same column?
+    if (.y == player.y)
+    {
+      // Are we within a grid spacing?
+      if (player.x - .x <= grid.spaceX + 1)
+      {
+        if (.x < player.x)
+        {
+          start = .x+1;
+          end   = player.x+1;
+          moveX = start;
+        }
+        else
+        {
+          start = player.x+1;
+          end   = .x;
+          moveX = end-1;
+        }
+        // Do we have a clear path.
+        moveOk = true;
+        for (x = start; moveOk and x < end; x=x+1)
+        {
+          if (!.CanMove(x, .y))
+          {
+            moveOk = false;
+          }
+        }
+        if (moveOk and .CanMove(moveX, .y))
+        {
+          .MoveTo(moveX, .y);
+          return true;
+        }
+      }
+    }
+
+    mx = 1;
+    if (player.x < .x)
+    {
+      mx = -1;
+    }
+    if ((.x+mx != .lastPos.x or .y != .lastPos.y) and .CanMove(.x+mx, .y))
+    {
+      .MoveTo(.x+mx, .y);
+      return true;
+    }
+    return false;
+  };
+
+  //------------------------------------
+  //------------------------------------
+  newEnemy.MoveY = function()
+  {
+    // Is the player on the same row?
+    if (.x == player.x)
+    {
+      // Are we within a grid spacing?
+      if (player.y - .y <= grid.spaceY + 1)
+      {
+        if (.y < player.y)
+        {
+          start = .y+1;
+          end   = player.y+1;
+          moveY = start;
+        }
+        else
+        {
+          start = player.y+1;
+          end   = .y;
+          moveY = end-1;
+        }
+        // Do we have a clear path.
+        moveOk = true;
+        for (y = start; moveOk and y < end; y=y+1)
+        {
+          if (!.CanMove(.x, y))
+          {
+            moveOk = false;
+          }
+        }
+        if (moveOk and .CanMove(.x, moveY))
+        {
+          .MoveTo(.x, moveY);
+          return true;
+        }
+      }
+    }
+
+    my = 1;
+    if (player.y < .y)
+    {
+      my = -1;
+    }
+    if ((.x != .lastPos.x or .y+my != .lastPos.y) and .CanMove(.x, .y+my))
+    {
+      .MoveTo(.x, .y+my);
+      return true;
+    }
+    return false;
+  };
+
+  //------------------------------------
+  //------------------------------------
+  newEnemy.MoveTo = function(a_x, a_y)
+  {
+    .lastPos.x  = .x;
+    .lastPos.y  = .y;
+
+    thing = GetThingAt(a_x, a_y, false);
+
+    .x          = a_x;
+    .y          = a_y;
+
+    if (thing.type == T_Player)
+    {
+      player.Kill();
+    }
+    else if (thing.type == T_Explosion)
+    {
+      .Kill();
+    }
+
+    RefreshXY(.lastPos.x, .lastPos.y);
+    RefreshXY(.x, .y);
+  };
+
+  //------------------------------------
+  //------------------------------------
+  newEnemy.Move = function()
+  {
+    moved = false;
+    if (!player.dead)
+    {
+      // Try move towards the player.
+      preferX = abs(player.x - .x) > abs(player.y - .y);
+      if (preferX)
+      {
+        moved = .MoveX();
+        if (!moved)
+        {
+          moved = .MoveY();
+        }
+      }
+      else
+      {
+        moved = .MoveY();
+        if (!moved)
+        {
+          moved = .MoveX();
+        }
+      }
+
+      // Try move away from the last position.
+      if (!moved)
+      {
+        testX = 2*.x - .lastPos.x;
+        testY = 2*.y - .lastPos.y;
+        if (.CanMove(testX, testY))
+        {
+          .MoveTo(testX, testY);
+          moved = true;
+        }
+      }
+    }
+
+    if (!moved and (.lastPos.x != .x or .lastPos.y != .y) and .CanMove(.lastPos.x, .lastPos.y))
+    {
+      .MoveTo(.lastPos.x, .lastPos.y);
+    }
+  };
+
+  //------------------------------------
+  // Thread functions and states.
+  //------------------------------------
+  newEnemy.Start = function()
+  {
+    .threadId = this:thread(.IdleState);
+  };
+
+  //------------------------------------
+  //------------------------------------
+  newEnemy.IdleState = function()
+  {
+    while (!quit and !.dead)
+    {
+      sleep(nmeMoveTime);
+      .Move();
+    }
+  };
+
+  newEnemy.Start();
+
+  return newEnemy;
+};
+
+//--------------------------------------------------------------------------------------------------
+// Refresh functions.
+//--------------------------------------------------------------------------------------------------
+global Refresh = function()
+{
+  CATTRIB(bgColour | fgColour);
+  CLS();
+
+  // Draw blocks.
+  for (b = 0; b < blocks.count; b=b+1)
+  {
+    blocks.blocks[b].Draw();
+  }
+
+  // Draw powerups.
+  for (p = 0; p < powerups.count; p=p+1)
+  {
+    powerups.powerups[p].Draw();
+  }
+
+  // Draw enemies.
+  for (e = 0; e < enemies.count; e=e+1)
+  {
+    enemies.enemies[e].Draw();
+  }
+
+  // Draw bombs.
+  for (b = 0; b < player.nextBomb; b=b+1)
+  {
+    player.bombs[b].Draw();
+  }
+
+  player.Draw();
+  player.DrawStatus();
+
+  DrawGrid();
+};
+
+global RefreshXY = function(a_x, a_y)
+{
+  RefreshRect(a_x, a_y, 1, 1);
+};
+
+global RefreshRect = function(a_x, a_y, a_w, a_h)
+{
+  // Clear the area.
+  xLimit = a_x + a_w;
+  yLimit = a_y + a_h;
+  CATTRIB(bgColour | fgColour);
+  for (x = a_x; x < xLimit; x=x+1)
+  {
+    for (y = a_y; y < yLimit; y=y+1)
+    {
+      XYTEXT(x, y, spacePix);
+    }
+  }
+
+  // Draw blocks.
+  for (b = 0; b < blocks.count; b=b+1)
+  {
+    blk = blocks.blocks[b];
+    if (blk.Overlap(a_x, a_y, xLimit, yLimit))
+    {
+      blk.Draw();
+    }
+  }
+
+  // Draw powerups.
+  for (p = 0; p < powerups.count; p=p+1)
+  {
+    pu = powerups.powerups[p];
+    if (pu.Overlap(a_x, a_y, xLimit, yLimit))
+    {
+      pu.Draw();
+    }
+  }
+
+  // Draw enemies.
+  for (e = 0; e < enemies.count; e=e+1)
+  {
+    nme = enemies.enemies[e];
+    if (nme.Overlap(a_x, a_y, xLimit, yLimit))
+    {
+      nme.Draw();
+    }
+  }
+
+  // Draw bombs.
+  for (b = 0; b < player.nextBomb; b=b+1)
+  {
+    bomb = player.bombs[b];
+    if (bomb.Overlap(a_x, a_y, xLimit, yLimit))
+    {
+      bomb.Draw();
+    }
+  }
+
+  if (player.Overlap(a_x, a_y, xLimit, yLimit))
+  {
+    player.Draw();
+  }
+
+  DrawGridRect(a_x, a_y, a_w, a_h);
+};
+
+//--------------------------------------------------------------------------------------------------
+// Grid control.
+//--------------------------------------------------------------------------------------------------
+global Grid = function(a_startX, a_startY, a_spaceX, a_spaceY)
+{
+  grid.startX = a_startX;
+  grid.startY = a_startY;
+  grid.spaceX = a_spaceX;
+  grid.spaceY = a_spaceY;
+
+  grid.rows   = (screen.w-grid.startX) / (grid.spaceX + 1);
+  grid.cols   = (screen.h-grid.startY) / (grid.spaceY + 1);
+
+  if ((screen.w-grid.startX) % (grid.spaceX + 1) != 0)
+  {
+    grid.rows = grid.rows + 1;
+  }
+
+  if ((screen.h-grid.startY) % (grid.spaceY + 1) != 0)
+  {
+    grid.cols = grid.cols + 1;
+  }
+};
+
+global DrawGrid = function()
+{
+  DrawGridRect(0, 0, screen.w, screen.h);
+};
+
+global DrawGridRect = function(a_startX, a_startY, a_w, a_h)
+{
+  xLimit = a_startX + a_w;
+  yLimit = a_startY + a_h;
+  CATTRIB(bgColour | gridColour);
+  for (x = a_startX; x < xLimit; x=x+1)
+  {
+    for (y = a_startY; y < yLimit; y=y+1)
+    {
+      if (!IsSpaceOnGrid(x, y))
+      {
+        XYTEXT(x, y, gridPix);
+      }
+    }
+  }
+};
+
+global IsSpaceOnGrid = function(a_x, a_y)
+{
+  return (a_x - grid.startX) % (grid.spaceX+1) == 0 or (a_y - grid.startY) % (grid.spaceY+1) == 0;
+};
+
+global IsFreePos = function(a_x, a_y, a_allowBlocks)
+{
+  thing = GetThingAt(a_x, a_y, true);
+  return thing.type == T_Space or (a_allowBlocks and thing.type == T_Block);
+};
+
+global GetThingAt = function(a_x, a_y, a_ignoreExplosion)
+{
+  if (!IsSpaceOnGrid(a_x, a_y))
+  {
+    return table(thing = grid, type = T_Grid);
+  }
+
+  // Test blocks
+  for (b = 0; b < blocks.count; b=b+1)
+  {
+    blk = blocks.blocks[b];
+    if (blk.visible and blk.x == a_x and blk.y == a_y)
+    {
+      return table(thing = blk, type = T_Block);
+    }
+  }
+
+  // Test enemies.
+  for (e = 0; e < enemies.count; e=e+1)
+  {
+    nme = enemies.enemies[e];
+    if (!nme.dead and nme.x == a_x and nme.y == a_y)
+    {
+      return table(thing = nme, type = T_Enemy);
+    }
+  }
+
+  // Test player pos.
+  if (!player.dead and a_x == player.x and a_y == player.y)
+  {
+    return table(thing = player, type = T_Player);
+  }
+
+  // Test bombs.
+  for (b = 0; b < player.nextBomb; b=b+1)
+  {
+    bomb = player.bombs[b];
+    if (!bomb.explode)
+    {
+      if (bomb.x == a_x and bomb.y == a_y)
+      {
+        return table(thing = bomb, type = T_Bomb);
+      }
+    }
+    else if (!a_ignoreExplosion and bomb.Overlap(a_x, a_y, a_x+1, a_y+1))
+    {
+      return table(thing = bomb, type = T_Explosion);
+    }
+  }
+
+  // Test powerups.
+  for (p = 0; p < powerups.count; p=p+1)
+  {
+    pu = powerups.powerups[p];
+    if (pu.x == a_x and pu.y == a_y)
+    {
+      return table(thing = pu, type = T_Powerup);
+    }
+  }
+
+  return table(thing = null, type = T_Space);
+};
+
+global InDeadZone = function(a_dtType, a_x, a_y)
+{
+  if (a_dtType == DT_Block)
+  {
+    return IsPointWithin(a_x, a_y, blockDeadZone.x1, blockDeadZone.y1, blockDeadZone.x2, blockDeadZone.y2);
+  }
+  if (a_dtType == DT_Enemy)
+  {
+    return IsPointWithin(a_x, a_y, enemyDeadZone.x1, enemyDeadZone.y1, enemyDeadZone.x2, enemyDeadZone.y2);
+  }
+  return false;
+};
+
+global GetRandomFreePos1 = function(a_deadZoneType, a_allowBlocks, a_tries)
+{
+  row = randint(0, grid.rows);
+  col = randint(0, grid.cols);
+
+  px  = row*grid.spaceX + grid.startX;
+  py  = col*grid.spaceY + grid.startY;
+
+  if (a_deadZoneType != DT_None and InDeadZone(a_deadZoneType, px, py))
+  {
+    return GetRandomFreePos1(a_deadZoneType, a_tries);
+  }
+
+  if (IsFreePos(px, py))
+  {
+    return table(x = px, y = py);
+  }
+
+  while (py < screen.h)
+  {
+    py=py+1;
+    if ((a_deadZoneType == DT_None or !InDeadZone(a_deadZoneType, px, py)) and IsFreePos(px, py))
+    {
+      return table(x = px, y = py);
+    }
+  }
+
+  if (tries < 5)
+  {
+    return GetRandomFreePos1(a_tries+1);
+  }
+  return table(x = -1, y = -1);
+};
+
+global GetRandomFreePos = function(a_deadZoneType, a_allowBlocks)
+{
+  return GetRandomFreePos1(a_deadZoneType, a_allowBlocks, 0);
+};
+
+//--------------------------------------------------------------------------------------------------
+// Initialisation.
+//--------------------------------------------------------------------------------------------------
+RenderRect = function(a_rect)
+{
+  CATTRIB(bgColour | gridColour);
+  for (i = a_rect.x1; i <= a_rect.x2; i=i+1)
+  {
+    for (j = a_rect.y1; j <= a_rect.y2; j=j+1)
+    {
+      XYTEXT(i, j, "o");
+    }
+  }
+};
+
+MemThread = function()
+{
+  while (!quit)
+  {
+    CATTRIB(bgColour | statusColour);
+    XYTEXT(65, statusY, format("Mem: %d   ", sysGetMemoryUsage()));
+    sleep(1.0);
+  }
+};
+
+//--------------------------------------------------------------------------------------------------
+// Level thread.
+//--------------------------------------------------------------------------------------------------
+global GameOver = function()
+{
+  CATTRIB(bgColour | statusColour);
+  CLS();
+
+  local score = player.score;
+  KillAll();
+
+  sleep(0.3);
+
+  global quit;
+  while (!quit)
+  {
+    CATTRIB(bgColour | expColours[randint(0, expColourCount)]);
+    x = 8;
+    y = 8;
+    XYTEXT(x, y, "__________________________________________________________"); y=y+1;
+    XYTEXT(x, y, "      __                             __                   "); y=y+1;
+    XYTEXT(x, y, "    /    )                         /    )                 "); y=y+1;
+    XYTEXT(x, y, "   /         __   _  _    __      /    /         __   )__ "); y=y+1;
+    XYTEXT(x, y, "  /  --,   /   ) / /  ) /___)    /    /   | /  /___) /   )"); y=y+1;
+    XYTEXT(x, y, "_(____/___(___(_/_/__/_(___ ____(____/____|/__(___ _/_____"); y=y+1;
+
+    CATTRIB(bgColour | statusColour);
+    XYTEXT(0, statusY, format("Score : %d", score));
+
+    if (threadTime() < 1000 and ISPRESSED(' '))
+    {
+      stateSet(TitleScreenState);
+    }
+    else if (ISPRESSED(27))
+    {
+      quit = true;
+    }
+
+    sleep(randfloat(0.03, 0.3));
+  }
+
+  global player  = null;
+  global blocks  = null;
+  global enemies = null;
+
+  stateSet(TitleScreenState);
+};
+
+global GameState = function()
+{
+  global maxLevel;
+  global player;
+  global blocks;
+  global enemies;
+  global gameLevel;
+  Grid(3, 2, 5, 5);
+  if (player == null or player.lives <= 0)
+  {
+    player = Player();
+  }
+  pos = player.GetStartPos();
+  player.x = pos.x;
+  player.y = pos.y;
+
+  global nmeMoveTime = 1.0 - gameLevel*0.1;
+
+  InitPowerups();
+  CreateBlocks(min(10 + 10*gameLevel, 99));
+  CreateEnemies(5*gameLevel);
+  yield();
+  Refresh();
+
+  yield();
+  player.Start();
+
+  local done = false;
+  while (!quit and !done)
+  {
+    local count;
+
+    done = true;
+    if (ISPRESSED(27))
+    {
+      global quit = true;
+      break;
+    }
+/*
+    // Check blocks.
+    count = blocks.count;
+    for (i = 0; done and i < count; i=i+1)
+    {
+      blk = blocks.blocks[i];
+      if (blk.visible)
+      {
+        done = false;
+      }
+    }
+*/
+    // Check enemies.
+    count = enemies.count;
+    for (i = 0; done and i < count; i=i+1)
+    {
+      nme = enemies.enemies[i];
+      if (!nme.dead)
+      {
+        done = false;
+      }
+    }
+
+    // Check bombs.
+    done = done and player.nextBomb == 0;
+
+    // Check for lives.
+    done = done or player.lives <= 0;
+
+    sleep(0.3);
+  }
+
+  player.Stop();
+
+  if (!quit)
+  {
+    if (player.lives <= 0)
+    {
+      stateSet(GameOver);
+    }
+    global gameLevel;
+    gameLevel=gameLevel+1;
+    stateSet(LevelState);
+  }
+
+  KillAll();
+};
+
+global LevelState = function()
+{
+  global maxLevel;
+  global gameLevel;
+
+  if (gameLevel > maxLevel)
+  {
+    gameLevel = maxLevel;
+  }
+
+  CATTRIB(bgColour | statusColour);
+  CLS();
+
+  sleep(0.3);
+
+  global quit;
+  while (!quit)
+  {
+    CATTRIB(bgColour | expColours[randint(0, expColourCount)]);
+    x = 17;
+    y = 8;
+    XYTEXT(x, y, "___________________________________________"); y=y+1;
+    XYTEXT(x, y, "    ____                              ___  "); y=y+1;
+    XYTEXT(x, y, "    /    )                   /      (    ) "); y=y+1;
+    XYTEXT(x, y, "   /___ /    __    __    __ /          /   "); y=y+1;
+    XYTEXT(x, y, "  /    |   /___) /   ) /   /   /   /  /    "); y=y+1;
+    XYTEXT(x, y, "_/_____|__(___ _(___(_(___/___(___/__o_____"); y=y+1;
+    XYTEXT(x, y, "                                 /         "); y=y+1;
+    XYTEXT(x, y, "                             (_ /          "); y=y+1;
+
+    if (threadTime() > 1000 and ISPRESSED(' '))
+    {
+      CLS();
+      sleep(0.5);
+      stateSet(GameState);
+    }
+    else if (ISPRESSED(27))
+    {
+      quit = true;
+    }
+
+    sleep(randfloat(0.03, 0.3));
+  }
+
+  KillAll();
+};
+
+global KillAll = function()
+{
+  // Kill all threads.
+  global player;
+  global enemies;
+  global blocks;
+
+  if (player)
+  {
+    local count = player.nextBomb;
+    for (i = 0; i < count; i=i+1)
+    {
+      threadKill(player.bombs[i].threadId);
+    }
+    threadKill(player.threadId);
+  }
+
+  if (enemies)
+  {
+    count = enemies.count;
+    for (i = 0; i < count; i=i+1)
+    {
+      threadKill(enemies.enemies[i].threadId);
+    }
+  }
+};
+
+global TitleScreenState = function()
+{
+  CATTRIB(bgColour | statusColour);
+  CLS();
+  sleep(0.3);
+  while (!quit)
+  {
+    CATTRIB(bgColour | expColours[randint(0, expColourCount)]);
+    x = 17;
+    y = 8;
+    XYTEXT(x, y, "_________________________________________"); y=y+1;
+    XYTEXT(x, y, "    ____                                 "); y=y+1;
+    XYTEXT(x, y, "    /   )                 /              "); y=y+1;
+    XYTEXT(x, y, "   /__ /     __   _  _   /__    __   )__ "); y=y+1;
+    XYTEXT(x, y, "  /    )   /   ) / /  ) /   ) /___) /   )"); y=y+1;
+    XYTEXT(x, y, "_/____/___(___/_/_/__/_(___/_(___ _/_____"); y=y+1;
+    XYTEXT(x, y, "_________________________________________"); y=y+1;
+
+    if (ISPRESSED(27))
+    {
+      global quit = true;
+      break;
+    }
+    else if (ISPRESSED(' '))
+    {
+      global gameLevel = 1;
+      stateSet(LevelState);
+    }
+    sleep(randfloat(0.03, 0.3));
+  }
+
+  KillAll();
+  exit();
+};
+
+CURSOR(0, 0); // bool visible, percentage visible
+CATTRIB(fgColour | bgColour);
+
+thread(MemThread);
+
+quit = false;
+CLS();
+
+stateSet(TitleScreenState);

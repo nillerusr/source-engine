@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: LCD support
 //
@@ -11,7 +11,7 @@
 #include "cbase.h"
 
 #ifdef POSIX
-#define HICON intp
+#define HICON int
 const int DT_LEFT = 1;
 const int DT_CENTER = 2;
 const int DT_RIGHT = 3;
@@ -758,8 +758,8 @@ void CLCD::ParsePage( KeyValues *kv )
 	CLCDPage *newPage = new CLCDPage();
 	m_Pages.AddToTail( newPage );
 
-	newPage->m_bTitlePage = kv->GetInt( "titlepage", 0 ) ? true : false;
-	newPage->m_bRequiresPlayer = kv->GetInt( "requiresplayer", 0 ) ? true : false;
+	newPage->m_bTitlePage = kv->GetBool( "titlepage", false );
+	newPage->m_bRequiresPlayer = kv->GetBool( "requiresplayer", false );
 
 	ParseItems_R( newPage, true, kv, newPage->m_Children );
 }
@@ -789,47 +789,34 @@ void CLCD::ParseIconMappings( KeyValues *kv )
 class CDescribeData
 {
 public:
-	CDescribeData( void const *src );
+	CDescribeData( const byte *src );
 
-	void	DescribeShort( const short *invalue, int count );
-	void	DescribeInt( const int *invalue, int count );		
-	void	DescribeBool( const bool *invalue, int count );	
-	void	DescribeFloat( const float *invalue, int count );	
-	void	DescribeSimpleString( const char *indata, int length );		
-	void	DescribeString( const string_t *instring, int count );			
-	void	DescribeVector( const Vector *inValue, int count );
-	void	DescribeColor( const Color *invalue, int count );	
+	void	DescribeShort( const datamap_t *dmap, const typedescription_t *pField, const short *invalue, int count );
+	void	DescribeInt( const datamap_t *dmap, const typedescription_t *pField, const int *invalue, int count );		
+	void	DescribeBool( const datamap_t *dmap, const typedescription_t *pField, const bool *invalue, int count );	
+	void	DescribeFloat( const datamap_t *dmap, const typedescription_t *pField, const float *invalue, int count );	
+	void	DescribeSimpleString( const datamap_t *dmap, const typedescription_t *pField, const char *indata, int length );		
+	void	DescribeString( const datamap_t *dmap, const typedescription_t *pField, const string_t *instring, int count );			
+	void	DescribeVector( const datamap_t *dmap, const typedescription_t *pField, const Vector *inValue, int count );
+	void	DescribeColor( const datamap_t *dmap, const typedescription_t *pField, const Color *invalue, int count );	
 	void	DumpDescription( datamap_t *pMap );
 
-	void	GetValueForField( char const *fieldName, char *buf, size_t bufsize );
-
 private:
-	void	DescribeFields_R( int chain_count, datamap_t *pMap, typedescription_t *pFields, int fieldCount );
-	bool	BuildFieldPath( CUtlString& path );
+	void	DescribeFields( const datamap_t *pMap, int nPredictionCopyType );
 	
-	void const		*m_pSrc;
+	const byte		*m_pSrc;
 	int				m_nSrcOffsetIndex;
 
-	void			Describe( const char *fmt, ... );
-
-	typedescription_t *m_pCurrentField;
-	char const		*m_pCurrentClassName;
-	datamap_t		*m_pCurrentMap;
-
-	CUtlVector< CUtlString > m_FieldPath;
+	void			Describe( const datamap_t *dmap, const typedescription_t *pField, const char *fmt, ... );
 };
 
-CDescribeData::CDescribeData( void const *src )
+CDescribeData::CDescribeData( const byte *src )
 {
 	m_pSrc				= src;
 	m_nSrcOffsetIndex	= TD_OFFSET_NORMAL;
-
-	m_pCurrentField		= NULL;
-	m_pCurrentMap		= NULL;
-	m_pCurrentClassName = NULL;
 }
 
-typedescription_t *FindFieldByName( datamap_t *pMap, char const *fn )
+static typedescription_t *FindByName( datamap_t *pMap, char const *fn )
 {
 	while ( pMap )
 	{
@@ -849,12 +836,12 @@ typedescription_t *FindFieldByName( datamap_t *pMap, char const *fn )
 	return NULL;
 }
 
-typedescription_t *FindField( datamap_t *pMap, char const *relativePath )
+static typedescription_t *FindField( datamap_t *pMap, char const *relativePath )
 {
 	if ( !Q_strstr( relativePath, "." ) )
 	{
 		// Simple case, just look up field name
-		return FindFieldByName( pMap, relativePath );
+		return FindByName( pMap, relativePath );
 	}
 
 	// Complex case
@@ -863,41 +850,14 @@ typedescription_t *FindField( datamap_t *pMap, char const *relativePath )
 	return NULL;
 }
 
-bool CDescribeData::BuildFieldPath( CUtlString& path )
-{
-	int c = m_FieldPath.Count();
-	if ( c == 0 )
-		return false;
-
-	for ( int i = 0; i < c; ++i )
-	{
-		CUtlString& s = m_FieldPath[ i ];
-		if ( i != 0 )
-		{
-			path += ".";
-		}
-		path += s;
-	}
-
-	return true;
-}
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : *fmt - 
 //			... - 
 //-----------------------------------------------------------------------------
-void CDescribeData::Describe( const char *fmt, ... )
+void CDescribeData::Describe( const datamap_t *dmap, const typedescription_t *pField, const char *fmt, ... )
 {
-	Assert( m_pCurrentMap );
-	Assert( m_pCurrentClassName );
-
-	const char *fieldname = "empty";
-
-	if ( m_pCurrentField )
-	{
-		fieldname	= m_pCurrentField->fieldName ? m_pCurrentField->fieldName : "NULL";
-	}
+	const char *fieldname = pField->fieldName ? pField->fieldName : "null";
 
 	va_list argptr;
 	char data[ 4096 ];
@@ -906,20 +866,10 @@ void CDescribeData::Describe( const char *fmt, ... )
 	len = Q_vsnprintf(data, sizeof( data ), fmt, argptr);
 	va_end(argptr);
 
-	CUtlString fp;
-	if ( BuildFieldPath( fp ) )
-	{
-		Msg( "%s.%s%s",
-			fp.String(),
-			fieldname,
-			data );
-	}
-	else
-	{
-		Msg( "%s%s",
-			fieldname,
-			data );
-	}
+	Msg( "%s::%s%s",
+		dmap->dataClassName,
+		fieldname,
+		data );
 }
 
 //-----------------------------------------------------------------------------
@@ -928,244 +878,188 @@ void CDescribeData::Describe( const char *fmt, ... )
 //			*outdata - 
 //			*indata - 
 //-----------------------------------------------------------------------------
-void CDescribeData::DescribeSimpleString( char const *invalue, int count )
+void CDescribeData::DescribeSimpleString( const datamap_t *dmap, const typedescription_t *pField, char const *invalue, int count )
 {
-	Describe( "%s\n", invalue ? invalue : "" );
+	Describe( dmap, pField, "%s\n", invalue ? invalue : "" );
 }
 
 
-void CDescribeData::DescribeShort( const short *invalue, int count )
+void CDescribeData::DescribeShort( const datamap_t *dmap, const typedescription_t *pField, const short *invalue, int count )
 {
 	for ( int i = 0; i < count; ++i )
 	{
 		if ( count == 1 )
 		{
-			Describe( " short (%i)\n", (int)(invalue[i]) );
+			Describe( dmap, pField, " short (%i)\n", (int)(invalue[i]) );
 		}
 		else
 		{
-			Describe( "[%i] short (%i)\n", i, (int)(invalue[i]) );
+			Describe( dmap, pField, "[%i] short (%i)\n", i, (int)(invalue[i]) );
 		}
 	}
 }
 
 
-void CDescribeData::DescribeInt( const int *invalue, int count )
+void CDescribeData::DescribeInt( const datamap_t *dmap, const typedescription_t *pField, const int *invalue, int count )
 {
 	for ( int i = 0; i < count; ++i )
 	{
 		if ( count == 1 )
 		{
-			Describe( " integer (%i)\n", invalue[i] );
+			Describe( dmap, pField, " integer (%i)\n", invalue[i] );
 		}
 		else
 		{
-			Describe( "[%i] integer (%i)\n", i, invalue[i] );
+			Describe( dmap, pField, "[%i] integer (%i)\n", i, invalue[i] );
 		}
 	}
 }
 
-void CDescribeData::DescribeBool( const bool *invalue, int count )
+void CDescribeData::DescribeBool( const datamap_t *dmap, const typedescription_t *pField, const bool *invalue, int count )
 {
 	for ( int i = 0; i < count; ++i )
 	{
 		if ( count == 1 )
 		{
-			Describe( " bool (%s)\n", (invalue[i]) ? "true" : "false" );
+			Describe( dmap, pField, " bool (%s)\n", (invalue[i]) ? "true" : "false" );
 		}
 		else
 		{
-			Describe( "[%i] bool (%s)\n", i, (invalue[i]) ? "true" : "false" );
+			Describe( dmap, pField, "[%i] bool (%s)\n", i, (invalue[i]) ? "true" : "false" );
 		}
 	}
 }
 
-void CDescribeData::DescribeFloat( const float *invalue, int count )
+void CDescribeData::DescribeFloat( const datamap_t *dmap, const typedescription_t *pField, const float *invalue, int count )
 {
 	for ( int i = 0; i < count; ++i )
 	{
 		if ( count == 1 )
 		{
-			Describe( " float (%f)\n", invalue[ i ] );
+			Describe( dmap, pField, " float (%f)\n", invalue[ i ] );
 		}
 		else
 		{
-			Describe( "[%i] float (%f)\n", i, invalue[ i ] );
+			Describe( dmap, pField, "[%i] float (%f)\n", i, invalue[ i ] );
 		}
 	}
 }
 
-void CDescribeData::DescribeString( const string_t *instring, int count )
+void CDescribeData::DescribeString( const datamap_t *dmap, const typedescription_t *pField, const string_t *instring, int count )
 {
 	for ( int i = 0; i < count; ++i )
 	{
 		if ( count == 1 )
 		{
-			Describe( " string (%s)\n", instring[ i ] ? instring[ i ]  : "" );
+			Describe( dmap, pField, " string (%s)\n", instring[ i ] ? instring[ i ]  : "" );
 		}
 		else
 		{
-			Describe( "[%i] string (%s)\n", i, instring[ i ] ? instring[ i ]  : "" );
+			Describe( dmap, pField, "[%i] string (%s)\n", i, instring[ i ] ? instring[ i ]  : "" );
 		}
 	}
 }
 
-void CDescribeData::DescribeColor( const Color *invalue, int count )
+void CDescribeData::DescribeColor( const datamap_t *dmap, const typedescription_t *pField, const Color *invalue, int count )
 {
 	for ( int i = 0; i < count; ++i )
 	{
 		if ( count == 1 )
 		{
-			Describe( " color (%i %i %i %i)\n", invalue[ i ].r(), invalue[ i ].g(), invalue[ i ].b(), invalue[ i ].a() );
+			Describe( dmap, pField, " color (%i %i %i %i)\n", invalue[ i ].r(), invalue[ i ].g(), invalue[ i ].b(), invalue[ i ].a() );
 		}
 		else
 		{
-			Describe( "[%i] color (%i %i %i %i)\n", i, invalue[ i ].r(), invalue[ i ].g(), invalue[ i ].b(), invalue[ i ].a() );
+			Describe( dmap, pField, "[%i] color (%i %i %i %i)\n", i, invalue[ i ].r(), invalue[ i ].g(), invalue[ i ].b(), invalue[ i ].a() );
 		}
 	}
 }
 
-void CDescribeData::DescribeVector( const Vector *inValue, int count )
+void CDescribeData::DescribeVector( const datamap_t *dmap, const typedescription_t *pField, const Vector *inValue, int count )
 {
 	for ( int i = 0; i < count; ++i )
 	{
 		if ( count == 1 )
 		{
-			Describe( " vector (%f %f %f)\n", 
+			Describe( dmap, pField, " vector (%f %f %f)\n", 
 				inValue[i].x, inValue[i].y, inValue[i].z );
 		}
 		else
 		{
-			Describe( "[%i] vector (%f %f %f)\n", 
+			Describe( dmap, pField, "[%i] vector (%f %f %f)\n", 
 				i,
 				inValue[i].x, inValue[i].y, inValue[i].z );
 		}
 	}
 }
 
-void CDescribeData::DescribeFields_R( int chain_count, datamap_t *pRootMap, typedescription_t *pFields, int fieldCount )
+void CDescribeData::DescribeFields( const datamap_t *pRootMap, int nPredictionCopyType )
 {
 	int				i;
 	int				flags;
 	int				fieldOffsetSrc;
 	int				fieldSize;
 
-	m_pCurrentMap = pRootMap;
-	if ( !m_pCurrentClassName )
-	{
-		m_pCurrentClassName = pRootMap->dataClassName;
-	}
+	const flattenedoffsets_t &flat = pRootMap->m_pOptimizedDataMap->m_Info[ nPredictionCopyType ].m_Flat;
+	int fieldCount = flat.m_Flattened.Count();
 
 	for ( i = 0; i < fieldCount; i++ )
 	{
-		m_pCurrentField = &pFields[ i ];
-		flags = m_pCurrentField->flags;
+		const typedescription_t *pField = &flat.m_Flattened[ i ];
+		flags = pField->flags;
 
 		// Skip this field
 		if ( flags & FTYPEDESC_VIEW_NEVER )
 			continue;
-		
-		// Mark any subchains first
-		if ( m_pCurrentField->override_field != NULL )
-		{
-			m_pCurrentField->override_field->override_count = chain_count;
-		}
 
-		// Skip this field?
-		if ( m_pCurrentField->override_count == chain_count )
-		{
-			continue;
-		}
+		fieldSize = pField->fieldSize;
 
-		void const *pInputData;
+		fieldOffsetSrc = pField->flatOffset[ TD_OFFSET_NORMAL ];
+		const byte *pInputData = m_pSrc + fieldOffsetSrc;
 		
-		fieldOffsetSrc = m_pCurrentField->fieldOffset[ m_nSrcOffsetIndex ];
-		fieldSize = m_pCurrentField->fieldSize;
-		
-		pInputData = (void const *)((char *)m_pSrc + fieldOffsetSrc );
-		
-		switch( m_pCurrentField->fieldType )
+		switch( pField->fieldType )
 		{
 		default:
 			break;
 		case FIELD_EMBEDDED:
 			{
-				typedescription_t *save = m_pCurrentField;
-				void const *saveSrc = m_pSrc;
-				const char *saveName = m_pCurrentClassName;
-				
-				m_pCurrentClassName = m_pCurrentField->td->dataClassName;
-				
-				CUtlString str;
-				str = m_pCurrentField->fieldName;
-
-				m_FieldPath.AddToTail( str );
-
-				m_pSrc = pInputData;
-				if ( ( flags & FTYPEDESC_PTR ) && (m_nSrcOffsetIndex == PC_DATA_NORMAL) )
-				{
-					m_pSrc = *((void**)m_pSrc);
-				}
-
-				DescribeFields_R( chain_count, pRootMap, m_pCurrentField->td->dataDesc, m_pCurrentField->td->dataNumFields );
-				
-				m_FieldPath.Remove( m_FieldPath.Count() - 1 );
-
-				m_pCurrentClassName = saveName;
-				m_pCurrentField = save;
-				m_pSrc = saveSrc;
+				Error( "FIELD_EMBEDDED in flattened field list!" );
 			}
 			break;
 		case FIELD_FLOAT:
-			DescribeFloat( (float const *)pInputData, fieldSize );
+			DescribeFloat( pRootMap, pField, (float const *)pInputData, fieldSize );
 			break;
 		case FIELD_STRING:
-			DescribeString( (const string_t*)pInputData, fieldSize );
+			DescribeString( pRootMap, pField, (const string_t*)pInputData, fieldSize );
 			break;
 		case FIELD_VECTOR:
-			DescribeVector( (const Vector *)pInputData, fieldSize );
+			DescribeVector( pRootMap, pField, (const Vector *)pInputData, fieldSize );
 			break;
 		case FIELD_COLOR32:
-			DescribeColor( (const Color *)pInputData, fieldSize );
+			DescribeColor( pRootMap, pField, (const Color *)pInputData, fieldSize );
 			break;
-			
 		case FIELD_BOOLEAN:
-			DescribeBool( (bool const *)pInputData, fieldSize );
+			DescribeBool( pRootMap, pField, (bool const *)pInputData, fieldSize );
 			break;
 		case FIELD_INTEGER:
-			DescribeInt( (int const *)pInputData, fieldSize );
+			DescribeInt( pRootMap, pField, (int const *)pInputData, fieldSize );
 			break;
-			
 		case FIELD_SHORT:
-			DescribeShort( (short const *)pInputData, fieldSize );
+			DescribeShort( pRootMap, pField, (short const *)pInputData, fieldSize );
 			break;
-			
 		case FIELD_CHARACTER:
-			DescribeSimpleString( (const char *)pInputData, fieldSize );
+			DescribeSimpleString( pRootMap, pField, (const char *)pInputData, fieldSize );
 			break;
 		}
 	}
-
-	m_pCurrentClassName = NULL;
 }
-
-static int g_nChainCount = 1;
-extern void ValidateChains_R( datamap_t *dmap );
 
 void CDescribeData::DumpDescription( datamap_t *pMap )
 {
-	++g_nChainCount;
-
-	if ( !pMap->chains_validated )
+	CPredictionCopy::PrepareDataMap( pMap );
+	for ( int pc = 0; pc < PC_COPYTYPE_COUNT; ++pc )
 	{
-		ValidateChains_R( pMap );
-	}
-
-	while ( pMap )
-	{
-        DescribeFields_R( g_nChainCount, pMap, pMap->dataDesc, pMap->dataNumFields );
-
-		pMap = pMap->baseMap;
+		DescribeFields( pMap, pc );
 	}
 }
 
@@ -1178,7 +1072,7 @@ void CLCD::DumpPlayer()
 
 	Msg( "(localplayer)\n\n" );
 
-	CDescribeData helper( player );
+	CDescribeData helper( (const byte *)player );
 	helper.DumpDescription( player->GetPredDescMap() );
 
 	Msg( "(localteam)\n\n" );
@@ -1186,7 +1080,7 @@ void CLCD::DumpPlayer()
 	C_Team *team = player->GetTeam();
 	if ( team )
 	{
-		CDescribeData helper( team );
+		CDescribeData helper( (const byte *)team );
 		helper.DumpDescription( team->GetPredDescMap() );
 	}
 
@@ -1194,7 +1088,7 @@ void CLCD::DumpPlayer()
 
 	if ( g_PR )
 	{
-		CDescribeData helper( g_PR );
+		CDescribeData helper( (const byte *)g_PR );
 		helper.DumpDescription( g_PR->GetPredDescMap() );
 	}
 
@@ -1203,7 +1097,7 @@ void CLCD::DumpPlayer()
 	C_BaseCombatWeapon *active = player->GetActiveWeapon();
 	if ( active )
 	{
-		CDescribeData helper( active );
+		CDescribeData helper( (const byte *)active );
 		helper.DumpDescription( active->GetPredDescMap() );
 	}
 
@@ -1342,7 +1236,7 @@ void CLCD::LookupToken( char const *in, CUtlString& value )
 		return;
 	}
 
-	int fieldOffsetSrc = td->fieldOffset[ TD_OFFSET_NORMAL ];
+	int fieldOffsetSrc = td->fieldOffset;
 	// int fieldSize = td->fieldSize;
 		
 	void const *pInputData = (void const *)((char *)ref + fieldOffsetSrc );
@@ -1591,3 +1485,27 @@ void CLCD::ParseReplacements( KeyValues *kv )
 		SetGlobalStat( key, value );
 	}
 }
+
+CON_COMMAND_F( cl_dumpplayer, "Dumps info about a player", FCVAR_CHEAT )
+{
+	if ( args.ArgC() != 2 )
+		return;
+
+	int n = Q_atoi( args[1] );
+	C_BasePlayer *pPlayer = ToBasePlayer( C_BaseEntity::Instance( n ) );
+	if ( !pPlayer )
+		return;
+
+	Vector absMins, absMaxs;
+	pPlayer->GetRenderBoundsWorldspace( absMins, absMaxs );
+	
+	Msg( "Effects: %x\n", pPlayer->GetEffects() );
+	Msg( "Dormant: %d\n", pPlayer->IsDormant() );
+	Msg( "Worldspace Render Bounds: [%.2f %.2f %.2f] -> [%.2f %.2f %.2f]\n",
+		absMins.x, absMins.y, absMins.z, 
+		absMaxs.x, absMaxs.y, absMaxs.z );
+
+	CDescribeData helper( (const byte *)pPlayer );
+	helper.DumpDescription( pPlayer->GetPredDescMap() );
+}
+

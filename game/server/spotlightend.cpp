@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:		Dynamic light at the end of a spotlight
 //
@@ -46,7 +46,7 @@ void CSpotlightEnd::Spawn( void )
 	Precache();
 	m_flLightScale  = 100;
 	SetSolid( SOLID_NONE );
-	SetMoveType( MOVETYPE_FLY );
+	SetMoveType( MOVETYPE_NONE );
 	UTIL_SetSize( this, vec3_origin, vec3_origin );
 	AddEFlags( EFL_FORCE_CHECK_TRANSMIT );
 }

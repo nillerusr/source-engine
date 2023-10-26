@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright © 1996-2004, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -7,6 +7,10 @@
 #include "cbase.h"
 #include "forcefeedback.h"
 #include "igamesystem.h"
+
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
 
 class CForceFeedback : public IForceFeedback, public CAutoGameSystem
 {

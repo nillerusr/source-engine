@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Point entity used to create templates out of other entities or groups of entities
 //
@@ -19,6 +19,14 @@ struct template_t
 
 	DECLARE_SIMPLE_DATADESC();
 };
+
+void PrecachePointTemplates();
+
+//-----------------------------------------------------------------------------
+
+void ScriptInstallPreSpawnHook();
+bool ScriptPreInstanceSpawn( CScriptScope *pScriptScope, CBaseEntity *pChild, string_t iszKeyValueData );
+void ScriptPostSpawn( CScriptScope *pScriptScope, CBaseEntity **ppEntities, int nEntities );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -48,7 +56,8 @@ public:
 	int				GetTemplateIndexForTemplate( int iTemplate );
 
 	// Template instancing
-	bool			CreateInstance( const Vector &vecOrigin, const QAngle &vecAngles, CUtlVector<CBaseEntity*> *pEntities );
+	bool			CreateInstance( const Vector &vecOrigin, const QAngle &vecAngles, CUtlVector<CBaseEntity*> *pEntities, CBaseEntity *pEntityMaker = NULL, bool bCreateTime = false );
+	void			CreationComplete( const CUtlVector<CBaseEntity*> &entities );
 
 	// Inputs
 	void			InputForceSpawn( inputdata_t &inputdata );

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -140,7 +140,7 @@ void PhysicsSplash( IPhysicsFluidController *pFluid, IPhysicsObject *pObject, CB
 	// proportional to cross-sectional area times velocity squared (fluid pressure)
 	float speed = rawSpeed * rawSpeed * extents[0] * extents[1] * (1.0f / 2500000.0f) * pObject->GetMass() * (0.01f);
 
-	speed = clamp( speed, 0.f, 50.f );
+	speed = clamp( speed, 0, 50 );
 
 	bool bRippleOnly = false;
 

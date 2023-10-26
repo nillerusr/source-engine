@@ -1,0 +1,118 @@
+<?xml version="1.0"?>
+<!DOCTYPE CodeBlocks_project_file>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="1"/>
+	<Project>
+		<Option title="minimalSqPlus"/>
+		<Option makefile="Makefile"/>
+		<Option makefile_is_custom="0"/>
+		<Option compiler="0"/>
+		<Build>
+			<Target title="Debug">
+				<Option output="Debug\minimalSqPlus.exe"/>
+				<Option working_dir="."/>
+				<Option object_output="Debug"/>
+				<Option deps_output=".deps"/>
+				<Option type="1"/>
+				<Option compiler="0"/>
+				<Option projectResourceIncludeDirsRelation="1"/>
+				<Compiler>
+					<Add option="-W"/>
+					<Add option="-O0"/>
+					<Add option="-DWIN32"/>
+					<Add option="-D_DEBUG"/>
+					<Add option="-D_CONSOLE"/>
+					<Add option="-D_CRT_SECURE_NO_DEPRECATE"/>
+					<Add directory="..\include"/>
+					<Add directory="..\sqplus"/>
+				</Compiler>
+				<Linker>
+					<Add library="..\lib\libsqplusD.a"/>
+					<Add library="..\lib\libsquirrelD.a"/>
+					<Add library="..\lib\libsqstdlibD.a"/>
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option output="Release\minimalSqPlus.exe"/>
+				<Option working_dir="."/>
+				<Option object_output="Release"/>
+				<Option deps_output=".deps"/>
+				<Option type="1"/>
+				<Option compiler="0"/>
+				<Option projectResourceIncludeDirsRelation="1"/>
+				<Compiler>
+					<Add option="-W"/>
+					<Add option="-g"/>
+					<Add option="-DWIN32"/>
+					<Add option="-DNDEBUG"/>
+					<Add option="-D_CONSOLE"/>
+					<Add option="-D_CRT_SECURE_NO_DEPRECATE"/>
+					<Add directory="..\include"/>
+					<Add directory="..\sqplus"/>
+				</Compiler>
+				<Linker>
+					<Add library="..\lib\libsqplus.a"/>
+					<Add library="..\lib\libsquirrel.a"/>
+					<Add library="..\lib\libsqstdlib.a"/>
+				</Linker>
+			</Target>
+			<Target title="Debug - Unicode">
+				<Option output="Debug - Unicode\minimalSqPlus.exe"/>
+				<Option working_dir="."/>
+				<Option object_output="Debug - Unicode"/>
+				<Option deps_output=".deps"/>
+				<Option type="1"/>
+				<Option compiler="0"/>
+				<Option projectResourceIncludeDirsRelation="1"/>
+				<Compiler>
+					<Add option="-W"/>
+					<Add option="-O0"/>
+					<Add option="-DWIN32"/>
+					<Add option="-D_DEBUG"/>
+					<Add option="-D_CONSOLE"/>
+					<Add option="-D_CRT_SECURE_NO_DEPRECATE"/>
+					<Add option="-D_CRT_NON_CONFORMING_SWPRINTFS"/>
+					<Add directory="..\include"/>
+					<Add directory="..\sqplus"/>
+				</Compiler>
+				<Linker>
+					<Add library="..\lib\libsqplusDU.a"/>
+					<Add library="..\lib\libsqstdlibDU.a"/>
+					<Add library="..\lib\libsquirrelDU.a"/>
+				</Linker>
+			</Target>
+			<Target title="Release - Unicode">
+				<Option output="Release - Unicode\minimalSqPlus.exe"/>
+				<Option working_dir="."/>
+				<Option object_output="Release - Unicode"/>
+				<Option deps_output=".deps"/>
+				<Option type="1"/>
+				<Option compiler="0"/>
+				<Option projectResourceIncludeDirsRelation="1"/>
+				<Compiler>
+					<Add option="-W"/>
+					<Add option="-g"/>
+					<Add option="-DWIN32"/>
+					<Add option="-DNDEBUG"/>
+					<Add option="-D_CONSOLE"/>
+					<Add option="-D_CRT_SECURE_NO_DEPRECATE"/>
+					<Add option="-D_CRT_NON_CONFORMING_SWPRINTFS"/>
+					<Add directory="..\include"/>
+					<Add directory="..\sqplus"/>
+				</Compiler>
+				<Linker>
+					<Add library="..\lib\libsqplusU.a"/>
+					<Add library="..\lib\libsqstdlibU.a"/>
+					<Add library="..\lib\libsquirrelU.a"/>
+				</Linker>
+			</Target>
+		</Build>
+		<Unit filename="minimalSqPlus.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="Debug"/>
+			<Option target="Release"/>
+			<Option target="Debug - Unicode"/>
+			<Option target="Release - Unicode"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

@@ -1,0 +1,460 @@
+//-----------------------------------------------------------------------------
+//	VSCRIPT.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$macro SRCDIR		".."
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
+$macro OUTBINNAME "vscript"
+
+$include "$SRCDIR\vpc_scripts\source_dll_win32_base.vpc"	[$WIN32||$LINUX]
+$include "$SRCDIR\vpc_scripts\source_dll_x360_base.vpc"		[$X360]
+
+$Configuration
+{
+	$Compiler
+	{
+		$PreprocessorDefinitions		"$BASE;VSCRIPT_DLL_EXPORT;MSVC"
+	}
+
+	$Linker
+	{
+		$AdditionalLibraryDirectories	".\languages\python\python-2.5.1\win32release"
+	}
+}
+
+$Configuration "Release"
+{
+	$General	
+	{
+		$WholeProgramOptimization		"Use Link Time Code Generation"		[!$PROFILE]
+	}
+}
+
+$Project "VScript (SOB)"
+{
+	$Folder	"Source Files"
+	{
+		$File	"vscript.cpp"
+		$File	".\languages\gm\vgm\vgm.cpp"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$AdditionalIncludeDirectories	"$BASE,.\languages\gm\src\gm;.\languages\gm\src\binds;.\languages\gm\src\platform\win32msvc"
+				}
+				$ExcludedFromBuild					"Yes"
+			}
+		}
+		$File	".\languages\lua\vlua\vlua.cpp"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$AdditionalIncludeDirectories	"$BASE,.\languages\lua\lua-5.1.4\src"
+				}
+			}
+		}
+		$File	".\languages\squirrel\vsquirrel\vsquirrel.cpp"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$AdditionalIncludeDirectories	"$BASE,.\languages\squirrel\include;.\languages\squirrel\sqplus"
+				}
+			}
+		}
+
+		$File	".\languages\python\vpython\vpython.cpp"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$AdditionalIncludeDirectories	"$BASE,.\languages\python\python-2.5.1\include"
+				}
+			}
+		}
+
+		$Folder "Script Files"
+		{
+			$File	".\languages\squirrel\vsquirrel\init.nut"
+			{
+				$Configuration
+				{
+					$CustomBuildStep
+					{
+						$CommandLine	"$SRCDIR\devtools\srcsrv\perl\bin\perl.exe $SRCDIR\devtools\bin\texttoarray.pl $(InputPath) g_Script_$(InputName)> $(InputDir)$(InputName)_nut.h" [$WINDOWS]
+						$CommandLine	"perl $SRCDIR\devtools\bin\texttoarray.pl $(InputPath) g_Script_$(InputName)> $(InputDir)$(InputName)_nut.h" [$POSIX]
+						$Description	"$(InputFileName) produces $(InputName)_nut.h"
+						$Outputs		"$(InputDir)$(InputName)_nut.h"
+					}
+				}
+			}
+		}
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	".\languages\gm\vgm\vgm.h"
+		$File	".\languages\squirrel\vsquirrel\vsquirrel.h"
+		$File	".\languages\lua\vlua\vlua.h"
+		$File	".\languages\python\vpython\vpython.h"
+	}
+
+	$Folder	"Interface"
+	{
+		$File	"$SRCDIR\public\vscript\ivscript.h"
+		$File	"$SRCDIR\public\vscript\vscript_templates.h"
+	}
+	
+	$Folder "GameMonkey"
+	{
+		$Folder	"gm"
+		{
+			$Folder	"Source Files"
+			{
+				$File	".\languages\gm\src\gm\gmArraySimple.cpp" \
+						".\languages\gm\src\gm\gmByteCode.cpp" \
+						".\languages\gm\src\gm\gmByteCodeGen.cpp" \
+						".\languages\gm\src\gm\gmCodeGen.cpp" \
+						".\languages\gm\src\gm\gmCodeGenHooks.cpp" \
+						".\languages\gm\src\gm\gmCodeTree.cpp" \
+						".\languages\gm\src\gm\gmCrc.cpp" \
+						".\languages\gm\src\gm\gmDebug.cpp" \
+						".\languages\gm\src\gm\gmFunctionObject.cpp" \
+						".\languages\gm\src\gm\gmHash.cpp" \
+						".\languages\gm\src\gm\gmIncGC.cpp" \
+						".\languages\gm\src\gm\gmLibHooks.cpp" \
+						".\languages\gm\src\gm\gmListDouble.cpp" \
+						".\languages\gm\src\gm\gmLog.cpp" \
+						".\languages\gm\src\gm\gmMachine.cpp" \
+						".\languages\gm\src\gm\gmMachineLib.cpp" \
+						".\languages\gm\src\gm\gmMem.cpp" \
+						".\languages\gm\src\gm\gmMemChain.cpp" \
+						".\languages\gm\src\gm\gmMemFixed.cpp" \
+						".\languages\gm\src\gm\gmMemFixedSet.cpp" \
+						".\languages\gm\src\gm\gmOperators.cpp" \
+						".\languages\gm\src\gm\gmParser.cpp" \
+						".\languages\gm\src\gm\gmScanner.cpp" \
+						".\languages\gm\src\gm\gmStream.cpp" \
+						".\languages\gm\src\gm\gmStreamBuffer.cpp" \
+						".\languages\gm\src\gm\gmStringObject.cpp" \
+						".\languages\gm\src\gm\gmTableObject.cpp" \
+						".\languages\gm\src\gm\gmThread.cpp" \
+						".\languages\gm\src\gm\gmUserObject.cpp" \
+						".\languages\gm\src\gm\gmUtil.cpp" \
+						".\languages\gm\src\gm\gmVariable.cpp"
+				{
+					$Configuration
+					{
+						$Compiler
+						{
+							$AdditionalIncludeDirectories	"$BASE,.\languages\gm\src\gm;.\languages\gm\src\binds;.\languages\gm\src\platform\win32msvc"
+							$PreprocessorDefinitions		"$BASE;PROTECTED_THINGS_DISABLE;VSCRIPT_DLL_EXPORT"
+						}
+						$ExcludedFromBuild					"Yes"
+					}
+				}
+			}
+
+			$Folder "Header Files"
+			{
+				$File	".\languages\gm\src\platform\win32msvc\gmConfig_p.h" \
+						".\languages\gm\src\gm\gmArraySimple.h" \
+						".\languages\gm\src\gm\gmByteCode.h" \
+						".\languages\gm\src\gm\gmByteCodeGen.h" \
+						".\languages\gm\src\gm\gmCodeGen.h" \
+						".\languages\gm\src\gm\gmCodeGenHooks.h" \
+						".\languages\gm\src\gm\gmCodeTree.h" \
+						".\languages\gm\src\gm\gmConfig.h" \
+						".\languages\gm\src\gm\gmCrc.h" \
+						".\languages\gm\src\gm\gmDebug.h" \
+						".\languages\gm\src\gm\gmFunctionObject.h" \
+						".\languages\gm\src\gm\gmHash.h" \
+						".\languages\gm\src\gm\gmIncGC.h" \
+						".\languages\gm\src\gm\gmIterator.h" \
+						".\languages\gm\src\gm\gmLibHooks.h" \
+						".\languages\gm\src\gm\gmListDouble.h" \
+						".\languages\gm\src\gm\gmLog.h" \
+						".\languages\gm\src\gm\gmMachine.h" \
+						".\languages\gm\src\gm\gmMachineLib.h" \
+						".\languages\gm\src\gm\gmMem.h" \
+						".\languages\gm\src\gm\gmMemChain.h" \
+						".\languages\gm\src\gm\gmMemFixed.h" \
+						".\languages\gm\src\gm\gmMemFixedSet.h" \
+						".\languages\gm\src\gm\gmOperators.h" \
+						".\languages\gm\src\gm\gmParser.cpp.h" \
+						".\languages\gm\src\gm\gmScanner.h" \
+						".\languages\gm\src\gm\gmStream.h" \
+						".\languages\gm\src\gm\gmStreamBuffer.h" \
+						".\languages\gm\src\gm\gmStringObject.h" \
+						".\languages\gm\src\gm\gmTableObject.h" \
+						".\languages\gm\src\gm\gmThread.h" \
+						".\languages\gm\src\gm\gmUserObject.h" \
+						".\languages\gm\src\gm\gmUtil.h" \
+						".\languages\gm\src\gm\gmVariable.h"
+			}
+		}
+		
+		$Folder	"binds"
+		{
+			$Folder	"Source Files"
+			{
+				$File	".\languages\gm\src\binds\gmArrayLib.cpp" \
+						".\languages\gm\src\binds\gmCall.cpp" \
+						".\languages\gm\src\binds\gmGCRoot.cpp" \
+						".\languages\gm\src\binds\gmGCRootUtil.cpp" \
+						".\languages\gm\src\binds\gmHelpers.cpp" \
+						".\languages\gm\src\binds\gmMathLib.cpp" \
+						".\languages\gm\src\binds\gmStringLib.cpp" \
+						".\languages\gm\src\binds\gmSystemLib.cpp" \
+						".\languages\gm\src\binds\gmVector3Lib.cpp"
+					{
+						$Configuration
+						{
+							$Compiler
+							{
+								$AdditionalIncludeDirectories	"$BASE,.\languages\gm\src\gm;.\languages\gm\src\binds;.\languages\gm\src\platform\win32msvc"
+								$PreprocessorDefinitions			"$BASE;PROTECTED_THINGS_DISABLE;VSCRIPT_DLL_EXPORT"
+							}
+							$ExcludedFromBuild					"Yes"
+						}
+					}
+
+			}
+			$Folder "Header Files"
+			{
+				$File	".\languages\gm\src\binds\gmArrayLib.h" \
+						".\languages\gm\src\binds\gmCall.h" \
+						".\languages\gm\src\binds\gmGCRoot.h" \
+						".\languages\gm\src\binds\gmGCRootUtil.h" \
+						".\languages\gm\src\binds\gmHelpers.h" \
+						".\languages\gm\src\binds\gmMathLib.h" \
+						".\languages\gm\src\binds\gmStringLib.h" \
+						".\languages\gm\src\binds\gmSystemLib.h" \
+						".\languages\gm\src\binds\gmVector3Lib.h"
+			}
+		}
+
+	}
+
+	$Folder "Squirrel"
+	{
+		$Folder "Header Files"
+		{
+			$File 	".\languages\squirrel\include\sqdbgserver.h"
+			$File 	".\languages\squirrel\include\sqrdbg.h"
+			$File 	".\languages\squirrel\include\sqstdaux.h"
+			$File 	".\languages\squirrel\include\sqstdblob.h"
+			$File 	".\languages\squirrel\include\sqstdio.h"
+			$File 	".\languages\squirrel\include\sqstdmath.h"
+			$File 	".\languages\squirrel\include\sqstdstring.h"
+			$File 	".\languages\squirrel\include\sqstdsystem.h"
+			$File 	".\languages\squirrel\include\squirrel.h"
+		}
+		
+		$Folder "squirrel"
+		{
+			$Folder	"Source Files"
+			{
+				$File 	".\languages\squirrel\squirrel\sqapi.cpp" \
+						".\languages\squirrel\squirrel\sqbaselib.cpp" \
+						".\languages\squirrel\squirrel\sqclass.cpp" \
+						".\languages\squirrel\squirrel\sqcompiler.cpp" \
+						".\languages\squirrel\squirrel\sqdebug.cpp" \
+						".\languages\squirrel\squirrel\sqfuncstate.cpp" \
+						".\languages\squirrel\squirrel\sqlexer.cpp" \
+						".\languages\squirrel\squirrel\sqmem.cpp" \
+						".\languages\squirrel\squirrel\sqobject.cpp" \
+						".\languages\squirrel\squirrel\sqstate.cpp" \
+						".\languages\squirrel\squirrel\sqtable.cpp" \
+						".\languages\squirrel\squirrel\sqvm.cpp" \
+						".\languages\squirrel\sqdbg\sqrdbg.cpp" \
+						".\languages\squirrel\sqdbg\sqdbgserver.cpp"
+				{
+					$Configuration
+					{
+						$Compiler
+						{
+							$AdditionalIncludeDirectories		"$BASE,.\languages\squirrel\include;.\languages\squirrel\sqplus"
+							$WarningLevel						"Level 3 (/W3)"
+							$Detect64bitPortabilityIssues		"No"
+							$PreprocessorDefinitions			"$BASE;PROTECTED_THINGS_DISABLE;VSCRIPT_DLL_EXPORT"
+						}
+					}
+				}
+			}
+
+			$Folder	"Header Files"
+			{
+				$File 	".\languages\squirrel\squirrel\sqarray.h" \
+						".\languages\squirrel\squirrel\sqclass.h" \
+						".\languages\squirrel\squirrel\sqclosure.h" \
+						".\languages\squirrel\squirrel\sqcompiler.h" \
+						".\languages\squirrel\squirrel\sqfuncproto.h" \
+						".\languages\squirrel\squirrel\sqfuncstate.h" \
+						".\languages\squirrel\squirrel\sqlexer.h" \
+						".\languages\squirrel\squirrel\sqobject.h" \
+						".\languages\squirrel\squirrel\sqopcodes.h" \
+						".\languages\squirrel\squirrel\sqpcheader.h" \
+						".\languages\squirrel\squirrel\sqstate.h" \
+						".\languages\squirrel\squirrel\sqstring.h" \
+						".\languages\squirrel\squirrel\sqtable.h" \
+						".\languages\squirrel\squirrel\squserdata.h" \
+						".\languages\squirrel\squirrel\squtils.h" \
+						".\languages\squirrel\squirrel\sqvm.h"
+			}
+		}
+		$Folder "sqstdlib"
+		{
+			$Folder	"Source Files"
+			{
+				$File 	".\languages\squirrel\sqstdlib\sqstdaux.cpp"\
+						".\languages\squirrel\sqstdlib\sqstdblob.cpp" \
+						".\languages\squirrel\sqstdlib\sqstdmath.cpp" \
+						".\languages\squirrel\sqstdlib\sqstdrex.cpp" \
+						".\languages\squirrel\sqstdlib\sqstdstream.cpp" \
+						".\languages\squirrel\sqstdlib\sqstdstring.cpp"
+				{
+					$Configuration
+					{
+						$Compiler
+						{
+							$AdditionalIncludeDirectories		"$BASE,.\languages\squirrel\include;.\languages\squirrel\sqplus"
+							$WarningLevel						"Level 3 (/W3)"
+							$Detect64bitPortabilityIssues		"No"
+							$PreprocessorDefinitions			"$BASE;PROTECTED_THINGS_DISABLE;VSCRIPT_DLL_EXPORT"
+						}
+					}
+				}
+			}
+		}
+		$Folder "sqplus"
+		{
+			$Folder	"Source Files"
+			{
+				$File	".\languages\squirrel\sqplus\SqPlus.cpp" \
+						".\languages\squirrel\sqplus\SquirrelBindingsUtils.cpp" \
+						".\languages\squirrel\sqplus\SquirrelBindingsUtilsWin32.cpp" \
+						".\languages\squirrel\sqplus\SquirrelObject.cpp" \
+						".\languages\squirrel\sqplus\SquirrelVM.cpp"
+				{
+					$Configuration
+					{
+						$Compiler
+						{
+							$AdditionalIncludeDirectories		"$BASE,.\languages\squirrel\include;.\languages\squirrel\sqplus"
+							$WarningLevel						"Level 3 (/W3)"
+							$Detect64bitPortabilityIssues		"No"
+							 // "SQPlus" need exceptions. If commit to squirrel, look into removing that
+							$AdditionalOptions					"/EHa"
+							$PreprocessorDefinitions			"$BASE;PROTECTED_THINGS_DISABLE;VSCRIPT_DLL_EXPORT"
+						}
+					}
+				}
+			}
+			$Folder	"Header Files"
+			{
+				$File	".\languages\squirrel\sqplus\sqplus.h" \
+						".\languages\squirrel\sqplus\SqPlusConst.h" \
+						".\languages\squirrel\sqplus\sqplusWin32.h" \
+						".\languages\squirrel\sqplus\SquirrelBindingsUtils.h" \
+						".\languages\squirrel\sqplus\SquirrelBindingsUtilsWin32.h" \
+						".\languages\squirrel\sqplus\SquirrelObject.h" \
+						".\languages\squirrel\sqplus\SquirrelVM.h"
+			}
+		}
+	}
+	
+	$Folder "Lua"
+	{
+		$Folder "lua-5.1.4"
+		{
+			$Folder	"Source Files"
+			{
+				$File	".\languages\lua\lua-5.1.4\src\lapi.c"	\
+						".\languages\lua\lua-5.1.4\src\lauxlib.c" \
+						".\languages\lua\lua-5.1.4\src\lbaselib.c" \
+						".\languages\lua\lua-5.1.4\src\lcode.c" \
+						".\languages\lua\lua-5.1.4\src\ldblib.c" \
+						".\languages\lua\lua-5.1.4\src\ldebug.c" \
+						".\languages\lua\lua-5.1.4\src\ldo.c" \
+						".\languages\lua\lua-5.1.4\src\ldump.c" \
+						".\languages\lua\lua-5.1.4\src\lfunc.c" \
+						".\languages\lua\lua-5.1.4\src\lgc.c" \
+						".\languages\lua\lua-5.1.4\src\linit.c" \
+						".\languages\lua\lua-5.1.4\src\liolib.c" \
+						".\languages\lua\lua-5.1.4\src\llex.c" \
+						".\languages\lua\lua-5.1.4\src\lmathlib.c" \
+						".\languages\lua\lua-5.1.4\src\lmem.c" \
+						".\languages\lua\lua-5.1.4\src\loadlib.c" \
+						".\languages\lua\lua-5.1.4\src\lobject.c" \
+						".\languages\lua\lua-5.1.4\src\lopcodes.c" \
+						".\languages\lua\lua-5.1.4\src\loslib.c" \
+						".\languages\lua\lua-5.1.4\src\lparser.c" \
+						".\languages\lua\lua-5.1.4\src\lstate.c" \
+						".\languages\lua\lua-5.1.4\src\lstring.c" \
+						".\languages\lua\lua-5.1.4\src\lstrlib.c" \
+						".\languages\lua\lua-5.1.4\src\ltable.c" \
+						".\languages\lua\lua-5.1.4\src\ltablib.c" \
+						".\languages\lua\lua-5.1.4\src\ltm.c" \
+						".\languages\lua\lua-5.1.4\src\lundump.c" \
+						".\languages\lua\lua-5.1.4\src\lvm.c" \
+						".\languages\lua\lua-5.1.4\src\lzio.c" \
+						".\languages\lua\lua-5.1.4\src\print.c"
+				{
+					$Configuration
+					{
+						$Compiler
+						{
+							$WarningLevel						"Level 3 (/W3)"
+							$Detect64bitPortabilityIssues		"No"
+							$CompileAs 							"Default"
+						}
+					}
+				}
+			}
+			$Folder	"Header Files"
+			{
+				$File	".\languages\lua\lua-5.1.4\src\lapi.h" \
+						".\languages\lua\lua-5.1.4\src\lauxlib.h" \
+						".\languages\lua\lua-5.1.4\src\lcode.h" \
+						".\languages\lua\lua-5.1.4\src\ldebug.h" \
+						".\languages\lua\lua-5.1.4\src\ldo.h" \
+						".\languages\lua\lua-5.1.4\src\lfunc.h" \
+						".\languages\lua\lua-5.1.4\src\lgc.h" \
+						".\languages\lua\lua-5.1.4\src\llex.h" \
+						".\languages\lua\lua-5.1.4\src\llimits.h" \
+						".\languages\lua\lua-5.1.4\src\lmem.h" \
+						".\languages\lua\lua-5.1.4\src\lobject.h" \
+						".\languages\lua\lua-5.1.4\src\lopcodes.h" \
+						".\languages\lua\lua-5.1.4\src\lparser.h" \
+						".\languages\lua\lua-5.1.4\src\lstate.h" \
+						".\languages\lua\lua-5.1.4\src\lstring.h" \
+						".\languages\lua\lua-5.1.4\src\ltable.h" \
+						".\languages\lua\lua-5.1.4\src\ltm.h" \
+						".\languages\lua\lua-5.1.4\src\lua.h" \
+						".\languages\lua\lua-5.1.4\src\luaconf.h" \
+						".\languages\lua\lua-5.1.4\src\lualib.h" \
+						".\languages\lua\lua-5.1.4\src\lundump.h" \
+						".\languages\lua\lua-5.1.4\src\lvm.h" \
+						".\languages\lua\lua-5.1.4\src\lzio.h"
+			}
+		}
+		$Folder "Support"
+		{
+			$File 	".\languages\lua\vlua\vec3.cpp"
+			$File 	".\languages\lua\vlua\vec3.h"
+		}
+	}
+	
+	$Folder	"Link Libraries"
+	{
+		$File	"$SRCDIR\lib\public\mathlib.lib"
+	}
+}

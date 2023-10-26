@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -22,10 +22,6 @@ public:
 
 					CTEPhysicsProp( const char *name );
 	virtual			~CTEPhysicsProp( void );
-
-	virtual void	Test( const Vector& current_origin, const QAngle& current_angles );
-	
-	virtual void	Precache( void );
 
 	DECLARE_SERVERCLASS();
 
@@ -60,46 +56,6 @@ CTEPhysicsProp::CTEPhysicsProp( const char *name ) :
 //-----------------------------------------------------------------------------
 CTEPhysicsProp::~CTEPhysicsProp( void )
 {
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTEPhysicsProp::Precache( void )
-{
-	CBaseEntity::PrecacheModel( "models/gibs/hgibs.mdl" );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *current_origin - 
-//			*current_angles - 
-//-----------------------------------------------------------------------------
-void CTEPhysicsProp::Test( const Vector& current_origin, const QAngle& current_angles )
-{
-	// Fill in data
-	m_nModelIndex = CBaseEntity::PrecacheModel( "models/gibs/hgibs.mdl" );
-	m_nSkin = 0;
-	m_vecOrigin = current_origin;
-	m_angRotation = current_angles;
-	
-	m_vecVelocity.Init( random->RandomFloat( -10, 10 ), random->RandomFloat( -10, 10 ), random->RandomFloat( 0, 20 ) );
-	m_nFlags = 0;
-	m_nEffects = 0;
-	
-	Vector forward, right;
-
-	m_vecOrigin += Vector( 0, 0, 24 );
-
-	AngleVectors( current_angles, &forward, &right, 0 );
-	forward[2] = 0.0;
-	VectorNormalize( forward );
-
-	VectorMA( m_vecOrigin, 50.0, forward, m_vecOrigin.GetForModify() );
-	VectorMA( m_vecOrigin, 25.0, right, m_vecOrigin.GetForModify() );
-
-	CBroadcastRecipientFilter filter;
-	Create( filter, 0.0 );
 }
 
 IMPLEMENT_SERVERCLASS_ST(CTEPhysicsProp, DT_TEPhysicsProp)

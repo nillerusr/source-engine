@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2006, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -35,7 +35,7 @@ public:
 	// How much money does the player have
 	virtual int	GetPlayerAccount( void ) { return 0; }
 
-	// Requires game-specific g_pClientMode call, push to derived class
+	// Requires game-specific GetClientMode() call, push to derived class
 	virtual vgui::AnimationController *GetAnimationController( void ) { Assert( 0 ); return NULL; }
 
 private:

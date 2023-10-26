@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Weapon data file parsing, shared by game & client dlls.
 //
@@ -38,7 +38,7 @@ typedef enum {
 	SPECIAL2,
 	SPECIAL3,
 	TAUNT,
-	DEPLOY,
+	FAST_RELOAD,
 
 	// Add new shoot sound types here
 
@@ -98,6 +98,7 @@ public:
 	int						iFlags;									// miscellaneous weapon flags
 	char					szAmmo1[MAX_WEAPON_AMMO_NAME];			// "primary" ammo type
 	char					szAmmo2[MAX_WEAPON_AMMO_NAME];			// "secondary" ammo type
+	char					szAIAddOn[MAX_WEAPON_STRING];			// addon that this weapon can become
 
 	// Sound blocks
 	char					aShootSounds[NUM_SHOOT_SOUND_TYPES][MAX_WEAPON_STRING];	
@@ -151,7 +152,7 @@ void PrecacheFileWeaponInfoDatabase( IFileSystem *filesystem, const unsigned cha
 //
 // (This should be moved into a more appropriate place).
 //
-KeyValues* ReadEncryptedKVFile( IFileSystem *filesystem, const char *szFilenameWithoutExtension, const unsigned char *pICEKey, bool bForceReadEncryptedFile = false );
+KeyValues* ReadEncryptedKVFile( IFileSystem *filesystem, const char *szFilenameWithoutExtension, const unsigned char *pICEKey );
 
 
 // Each game implements this. It can return a derived class and override Parse() if it wants.

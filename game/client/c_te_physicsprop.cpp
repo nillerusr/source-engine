@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -9,7 +9,7 @@
 #include "cbase.h"
 #include "c_basetempentity.h"
 #include "c_te_legacytempents.h"
-#include "tier1/KeyValues.h"
+#include "tier1/keyvalues.h"
 #include "toolframework_client.h"
 #include "tier0/vprof.h"
 
@@ -84,7 +84,7 @@ C_TEPhysicsProp::~C_TEPhysicsProp( void )
 // Recording 
 //-----------------------------------------------------------------------------
 static inline void RecordPhysicsProp( const Vector& start, const QAngle &angles, 
-	const Vector& vel, int nModelIndex, bool bBreakModel, int nSkin, int nEffects )
+	const Vector& vel, int nModelIndex, int flags, int nSkin, int nEffects )
 {
 	if ( !ToolsEnabled() )
 		return;
@@ -109,7 +109,7 @@ static inline void RecordPhysicsProp( const Vector& start, const QAngle &angles,
 		msg->SetFloat( "vely", vel.y );
 		msg->SetFloat( "velz", vel.z );
   		msg->SetString( "model", pModelName );
- 		msg->SetInt( "breakmodel", bBreakModel );
+ 		msg->SetInt( "breakmodel", flags );
 		msg->SetInt( "skin", nSkin );
 		msg->SetInt( "effects", nEffects );
 
@@ -123,10 +123,10 @@ static inline void RecordPhysicsProp( const Vector& start, const QAngle &angles,
 // Purpose: 
 //-----------------------------------------------------------------------------
 void TE_PhysicsProp( IRecipientFilter& filter, float delay,
-	int modelindex, int skin, const Vector& pos, const QAngle &angles, const Vector& vel, bool breakmodel, int effects )
+	int modelindex, int skin, const Vector& pos, const QAngle &angles, const Vector& vel, int flags, int effects )
 {
-	tempents->PhysicsProp( modelindex, skin, pos, angles, vel, breakmodel, effects );
-	RecordPhysicsProp( pos, angles, vel, modelindex, breakmodel, skin, effects );
+	tempents->PhysicsProp( modelindex, skin, pos, angles, vel, flags, effects );
+	RecordPhysicsProp( pos, angles, vel, modelindex, flags, skin, effects );
 }
 
 //-----------------------------------------------------------------------------
@@ -157,9 +157,9 @@ void TE_PhysicsProp( IRecipientFilter& filter, float delay, KeyValues *pKeyValue
 	vecVel.z = pKeyValues->GetFloat( "velz" );
 	const char *pModelName = pKeyValues->GetString( "model" );
 	int nModelIndex = pModelName[0] ? modelinfo->GetModelIndex( pModelName ) : 0;
-	bool bBreakModel = pKeyValues->GetInt( "breakmodel" ) != 0;
+	int flags = pKeyValues->GetInt( "breakmodel" );
 	int nEffects = pKeyValues->GetInt( "effects" );
 
-	TE_PhysicsProp( filter, delay, nModelIndex, nSkin, vecOrigin, angles, vecVel, bBreakModel, nEffects );
+	TE_PhysicsProp( filter, delay, nModelIndex, nSkin, vecOrigin, angles, vecVel, flags, nEffects );
 }
 

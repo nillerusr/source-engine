@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -6,15 +6,15 @@
 //=============================================================================//
 
 #include "cbase.h"
-#include "buysubmenu.h"
+#include "BuySubMenu.h"
 
 #include <KeyValues.h>
 #include <vgui_controls/WizardPanel.h>
-#include <filesystem.h>
+#include <FileSystem.h>
 #include <game/client/iviewport.h>
 #include <cdll_client_int.h>
 
-#include "mouseoverpanelbutton.h"
+#include "MouseOverPanelButton.h"
 // #include "cs_gamerules.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -135,7 +135,7 @@ void CBuySubMenu::OnCommand( const char *command)
 	else 
 	{
 		GetWizardPanel()->Close();
-		gViewPortInterface->ShowBackGround( false );
+		GetViewPortInterface()->ShowBackGround( false );
 	
 		if ( Q_stricmp( command, "vguicancel" ) != 0 )
 			engine->ClientCmd( command );

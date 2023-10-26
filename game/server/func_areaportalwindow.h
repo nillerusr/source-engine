@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -39,12 +39,12 @@ public:
 // CFuncAreaPortalBase stuff.
 public:
 
-	virtual bool	UpdateVisibility( const Vector &vOrigin, float fovDistanceAdjustFactor, bool &bIsOpenOnClient );
+	virtual bool	UpdateVisibility( const CUtlVector< Vector > &vecOrigins, float fovDistanceAdjustFactor, bool &bIsOpenOnClient );
 
 
 public:
 	// Returns false if the viewer is past the fadeout distance.
-	bool IsWindowOpen( const Vector &vOrigin, float fovDistanceAdjustFactor );
+	bool IsWindowOpen( const CUtlVector< Vector > &vecOrigins, float fovDistanceAdjustFactor );
 
 public:
 	

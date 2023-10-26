@@ -1,9 +1,9 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose:
 //
 // $NoKeywords: $
-//=============================================================================//
+//===========================================================================//
 
 #include "cbase.h"
 
@@ -48,10 +48,12 @@ inline float cube( float f )
 	return ( f * f * f );
 }
 
+CUtlFixedLinkedList<CAI_PlaneSolver::CircleObstacles_t> CAI_PlaneSolver::s_GlobalObstacles;
+
+
 //-----------------------------------------------------------------------------
 // Constructor
 //-----------------------------------------------------------------------------
-
 CAI_PlaneSolver::CAI_PlaneSolver( CAI_BaseNPC *pNpc ) 
  :	m_pNpc( pNpc ),
 	m_fSolvedPrev( false ),
@@ -108,7 +110,7 @@ bool CAI_PlaneSolver::MoveLimit( Navigation_t navType, const Vector &target, boo
 
 bool CAI_PlaneSolver::MoveLimit( Navigation_t navType, const Vector &target, bool ignoreTransients, bool fCheckStep, AIMoveTrace_t *pMoveTrace )
 {
-	return MoveLimit( navType, target, ignoreTransients, fCheckStep, MASK_NPCSOLID, pMoveTrace );
+	return MoveLimit( navType, target, ignoreTransients, fCheckStep, GetNpc()->GetAITraceMask(), pMoveTrace );
 }
 
 //-----------------------------------------------------------------------------
@@ -739,114 +741,168 @@ void CAI_PlaneSolver::AddObstacle( const Vector &center, float radius, CBaseEnti
 	m_Obstacles.AddToTail( CircleObstacles_t( center, radius, pEntity, type ) );
 }
 
+Obstacle_t CAI_PlaneSolver::AddGlobalObstacle( const Vector &center, float radius, CBaseEntity *pEntity, AI_MoveSuggType_t type )
+{
+	return (Obstacle_t)s_GlobalObstacles.AddToTail( CircleObstacles_t( center, radius, pEntity, type ) );
+}
+
+void CAI_PlaneSolver::RemoveGlobalObstacle( Obstacle_t hObstacle )
+{
+	s_GlobalObstacles.Remove( (int)hObstacle );
+}
+
+void CAI_PlaneSolver::RemoveGlobalObstacles( void )
+{
+	s_GlobalObstacles.RemoveAll();
+}
+
+bool CAI_PlaneSolver::IsSegmentBlockedByGlobalObstacles( const Vector &vecStart, const Vector &vecEnd )
+{
+	for ( int i = s_GlobalObstacles.Head(); i != s_GlobalObstacles.InvalidIndex(); i = s_GlobalObstacles.Next( i ) )
+	{
+		const CircleObstacles_t& obstacle = s_GlobalObstacles[i];
+		if ( obstacle.type == AIMST_MOVE )
+			continue;
+
+		const Vector &vecObstacle = obstacle.center;
+		float flDistSqr = CalcDistanceSqrToLineSegment( vecObstacle, vecStart, vecEnd );
+		if ( flDistSqr < obstacle.radius * obstacle.radius )
+			return true;
+	}
+	return false;
+}
+
+
+//-----------------------------------------------------------------------------
+// Generates a single suggestion
+//-----------------------------------------------------------------------------
+bool CAI_PlaneSolver::GenerateCircleObstacleSuggestion( const CircleObstacles_t &obstacle, 
+	const AILocalMoveGoal_t &moveGoal, float probeDist, const Vector& npcLoc, float radiusNpc )
+{
+	CBaseEntity *pObstacleEntity = NULL;
+
+	float zDistTooFar;
+	if ( obstacle.hEntity && obstacle.hEntity->CollisionProp() )
+	{
+		pObstacleEntity = obstacle.hEntity.Get();
+
+		// HEY! I'm trying to avoid the very thing I'm trying to get to. This will make we wobble like a drunk as I approach. Don't do it.
+		if( pObstacleEntity == moveGoal.pMoveTarget && (pObstacleEntity->IsNPC() || pObstacleEntity->IsPlayer()) )
+			return false;
+
+		Vector mins, maxs;
+		pObstacleEntity->CollisionProp()->WorldSpaceSurroundingBounds( &mins, &maxs );
+		zDistTooFar = ( maxs.z - mins.z ) * 0.5 + GetNpc()->GetHullHeight() * 0.5;
+	}
+	else
+	{
+		zDistTooFar = GetNpc()->GetHullHeight();
+	}
+
+	if ( fabs( obstacle.center.z - npcLoc.z ) > zDistTooFar )
+		return false;
+
+	Vector vecToNpc = npcLoc - obstacle.center;
+	vecToNpc.z = 0;
+	float distToObstacleSq = sq(vecToNpc.x) + sq(vecToNpc.y);
+	float radius = obstacle.radius + radiusNpc;
+
+	if ( distToObstacleSq <= 0.001 || distToObstacleSq >= sq( radius + probeDist ) )
+		return false;
+
+	Vector vecToObstacle = vecToNpc * -1;
+	float distToObstacle = VectorNormalize( vecToObstacle );
+	float weight;
+	float arc;
+	float radiusSq = sq(radius);
+
+	float flDot = DotProduct( vecToObstacle, moveGoal.dir );
+
+	// Don't steer around to avoid obstacles we've already passed, unless we're right up against them.
+	// That is, do this computation without the probeDist added in.
+	if( flDot < 0.0f && distToObstacleSq > radiusSq )
+		return false;
+
+	if ( radiusSq < distToObstacleSq )
+	{
+		Vector vecTangent;
+		float distToTangent = FastSqrt( distToObstacleSq - radiusSq );
+
+		float oneOverDistToObstacleSq = 1 / distToObstacleSq;
+
+		vecTangent.x = ( -distToTangent * vecToNpc.x + radius * vecToNpc.y ) * oneOverDistToObstacleSq;
+		vecTangent.y = ( -distToTangent * vecToNpc.y - radius * vecToNpc.x ) * oneOverDistToObstacleSq;
+		vecTangent.z = 0;
+
+		float cosHalfArc = vecToObstacle.Dot( vecTangent );
+		arc = RAD2DEG(acosf( cosHalfArc )) * 2.0;
+		weight = 1.0 - (distToObstacle - radius) / probeDist;
+		if ( weight > 0.75 )
+		{
+			arc += (arc * 0.5) * (weight - 0.75) / 0.25;
+		}
+
+		Assert( weight >= 0.0 && weight <= 1.0 );
+
+#if DEBUG_OBSTACLES
+		// -------------------------
+		Msg( "Adding arc %f, w %f\n", arc, weight );
+
+		Vector pointTangent = npcLoc + ( vecTangent * distToTangent );
+
+		NDebugOverlay::Line( npcLoc - Vector( 0, 0, 64 ), npcLoc + Vector(0,0,64), 0,255,0, false, 0.1 );
+		NDebugOverlay::Line( center - Vector( 0, 0, 64 ), center + Vector(0,0,64), 0,255,0, false, 0.1 );
+		NDebugOverlay::Line( pointTangent - Vector( 0, 0, 64 ), pointTangent + Vector(0,0,64), 0,255,0, false, 0.1 );
+
+		NDebugOverlay::Line( npcLoc + Vector(0,0,64), center + Vector(0,0,64), 0,0,255, false, 0.1 );
+		NDebugOverlay::Line( center + Vector(0,0,64), pointTangent + Vector(0,0,64), 0,0,255, false, 0.1 );
+		NDebugOverlay::Line( pointTangent + Vector(0,0,64), npcLoc + Vector(0,0,64), 0,0,255, false, 0.1 );
+#endif
+	}
+	else
+	{
+		arc = 210;
+		weight = 1.0;
+	}
+
+	if ( obstacle.hEntity != NULL )
+	{
+		weight = AdjustRegulationWeight( obstacle.hEntity, weight );
+	}
+
+	AI_MoveSuggestion_t suggestion( obstacle.type, weight, UTIL_VecToYaw(vecToObstacle), arc );
+	m_Solver.AddRegulation( suggestion );
+	return true;
+}
+
+
 //-----------------------------------------------------------------------------
 bool CAI_PlaneSolver::GenerateCircleObstacleSuggestions( const AILocalMoveGoal_t &moveGoal, float probeDist )
 {
 	bool result = false;
-	Vector npcLoc = m_pNpc->WorldSpaceCenter();
 	Vector mins, maxs;
-
+	Vector npcLoc = m_pNpc->WorldSpaceCenter();
 	m_pNpc->CollisionProp()->WorldSpaceSurroundingBounds( &mins, &maxs );
 	float radiusNpc = (mins.AsVector2D() - maxs.AsVector2D()).Length() * 0.5;
 	
 	for ( int i = 0; i < m_Obstacles.Count(); i++ )
 	{
-		CBaseEntity *pObstacleEntity = NULL;
-
-		float zDistTooFar;
-		if ( m_Obstacles[i].hEntity && m_Obstacles[i].hEntity->CollisionProp() )
+		if ( GenerateCircleObstacleSuggestion( m_Obstacles[i], moveGoal, probeDist, npcLoc, radiusNpc ) )
 		{
-			pObstacleEntity = m_Obstacles[i].hEntity.Get();
-
-			if( pObstacleEntity == moveGoal.pMoveTarget && (pObstacleEntity->IsNPC() || pObstacleEntity->IsPlayer()) )
-			{
-				// HEY! I'm trying to avoid the very thing I'm trying to get to. This will make we wobble like a drunk as I approach. Don't do it.
-				continue;
-			}
-
-			pObstacleEntity->CollisionProp()->WorldSpaceSurroundingBounds( &mins, &maxs );
-			zDistTooFar = ( maxs.z - mins.z ) * 0.5 + GetNpc()->GetHullHeight() * 0.5;
-		}
-		else
-			zDistTooFar = GetNpc()->GetHullHeight();
-			
-		if ( fabs( m_Obstacles[i].center.z - npcLoc.z ) > zDistTooFar )
-			continue;
-
-		Vector vecToNpc 		= npcLoc - m_Obstacles[i].center;
-		vecToNpc.z = 0;
-		float distToObstacleSq 	= sq(vecToNpc.x) + sq(vecToNpc.y);
-		float radius = m_Obstacles[i].radius + radiusNpc;
-
-		if ( distToObstacleSq > 0.001 && distToObstacleSq < sq( radius + probeDist ) )
-		{
-			Vector vecToObstacle = vecToNpc * -1;
-			float distToObstacle = VectorNormalize( vecToObstacle );
-			float weight;
-			float arc;
-			float radiusSq = sq(radius);
-
-			float flDot = DotProduct( vecToObstacle, moveGoal.dir );
-
-			// Don't steer around to avoid obstacles we've already passed, unless we're right up against them.
-			// That is, do this computation without the probeDist added in.
-			if( flDot < 0.0f && distToObstacleSq > radiusSq )
-			{
-				continue;
-			}
-
-			if ( radiusSq < distToObstacleSq )
-			{
-				Vector vecTangent;
-				float distToTangent = FastSqrt( distToObstacleSq - radiusSq );
-
-				float oneOverDistToObstacleSq = 1 / distToObstacleSq;
-
-				vecTangent.x = ( -distToTangent * vecToNpc.x + radius * vecToNpc.y ) * oneOverDistToObstacleSq;
-				vecTangent.y = ( -distToTangent * vecToNpc.y - radius * vecToNpc.x ) * oneOverDistToObstacleSq;
-				vecTangent.z = 0;
-
-				float cosHalfArc = vecToObstacle.Dot( vecTangent );
-				arc = RAD2DEG(acosf( cosHalfArc )) * 2.0;
-				weight = 1.0 - (distToObstacle - radius) / probeDist;
-				if ( weight > 0.75 )
-					arc += (arc * 0.5) * (weight - 0.75) / 0.25;
-				
-				Assert( weight >= 0.0 && weight <= 1.0 );
-
-#if DEBUG_OBSTACLES
-				// -------------------------
-				Msg( "Adding arc %f, w %f\n", arc, weight );
-
-				Vector pointTangent = npcLoc + ( vecTangent * distToTangent );
-					
-				NDebugOverlay::Line( npcLoc - Vector( 0, 0, 64 ), npcLoc + Vector(0,0,64), 0,255,0, false, 0.1 );
-				NDebugOverlay::Line( center - Vector( 0, 0, 64 ), center + Vector(0,0,64), 0,255,0, false, 0.1 );
-				NDebugOverlay::Line( pointTangent - Vector( 0, 0, 64 ), pointTangent + Vector(0,0,64), 0,255,0, false, 0.1 );
-				
-				NDebugOverlay::Line( npcLoc + Vector(0,0,64), center + Vector(0,0,64), 0,0,255, false, 0.1 );
-				NDebugOverlay::Line( center + Vector(0,0,64), pointTangent + Vector(0,0,64), 0,0,255, false, 0.1 );
-				NDebugOverlay::Line( pointTangent + Vector(0,0,64), npcLoc + Vector(0,0,64), 0,0,255, false, 0.1 );
-#endif
-			}
-			else
-			{
-				arc = 210;
-				weight = 1.0;
-			}
-
-			if ( m_Obstacles[i].hEntity != NULL )
-			{
-				weight = AdjustRegulationWeight( m_Obstacles[i].hEntity, weight );
-			}
-			
-			AI_MoveSuggestion_t suggestion( m_Obstacles[i].type, weight, UTIL_VecToYaw(vecToObstacle), arc );
-			m_Solver.AddRegulation( suggestion );
 			result = true;
 		}
 	}
-	
 	m_Obstacles.RemoveAll();
+
+	// Global obstacles
+	for ( int i = s_GlobalObstacles.Head(); i != s_GlobalObstacles.InvalidIndex(); i = s_GlobalObstacles.Next( i ) )
+	{
+		if ( GenerateCircleObstacleSuggestion( s_GlobalObstacles[i], moveGoal, probeDist, npcLoc, radiusNpc ) )
+		{
+			result = true;
+		}
+	}
+
 	return result;
 
 }

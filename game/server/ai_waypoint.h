@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -32,6 +32,7 @@ enum WaypointFlags_t
 
 	// Other flags for waypoint
 	bits_WP_DONT_SIMPLIFY =		0x20, // Don't let the route code simplify this waypoint
+	bits_WP_PRECISE_MOVEMENT =	0x40, // Precise movement is necessary near this waypoint
 };
 
 // ----------------------------------------------------------------------------
@@ -87,6 +88,7 @@ public:
 	
 	int					Flags() const;
 	Navigation_t		NavType() const;
+	void				SetNavType( Navigation_t type )		{ m_iWPType = type; }
 
 	// Flag modification method
 	void				ModifyFlags( int fFlags, bool bEnable );
@@ -99,6 +101,7 @@ public:
 	AI_Waypoint_t *		GetNext()					{ return pNext; }
 	const AI_Waypoint_t *GetNext() const			{ return pNext; }
 	
+	void				SetPrev( AI_Waypoint_t *p );
 	AI_Waypoint_t *		GetPrev()					{ return pPrev; }
 	const AI_Waypoint_t *GetPrev() const			{ return pPrev; }
 	
@@ -187,6 +190,24 @@ inline void AI_Waypoint_t::SetNext( AI_Waypoint_t *p )
 			pNext->pPrev->pNext = NULL;
 
 		pNext->pPrev = this; 
+	}
+}
+
+inline void AI_Waypoint_t::SetPrev( AI_Waypoint_t *p )	
+{ 
+	if ( pPrev ) 
+	{
+		pPrev->pNext = NULL; 
+	}
+
+	pPrev = p; 
+
+	if ( pPrev ) 
+	{
+		if ( pPrev->pNext )
+			pPrev->pNext->pPrev = NULL;
+
+		pPrev->pNext = this; 
 	}
 }
 

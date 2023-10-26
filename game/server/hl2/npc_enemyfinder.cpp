@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Bullseyes act as targets for other NPC's to attack and to trigger
 //			events 
@@ -560,7 +560,7 @@ void CNPC_EnemyFinderCombineCannon::Spawn()
 		}
 		else
 		{
-			DevMsg( this, "Enemyfinder %s can't snap to %s because it doesn't exist\n", GetDebugName(), STRING(m_iszSnapToEnt) );
+			DevMsg( this, "Enemyfinder %s can't snap to %s because it doesn't exist\n", GetDebugName(), m_iszSnapToEnt );
 		}
 	}
 }

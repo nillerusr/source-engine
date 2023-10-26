@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Implements two types of doors: linear and rotating.
 //
@@ -13,17 +13,7 @@
 #include "engine/IEngineSound.h"
 #include "physics_npc_solver.h"
 
-#ifdef HL1_DLL
-#include "filters.h"
-#endif
 
-#ifdef CSTRIKE_DLL
-#include "KeyValues.h"
-#endif
-
-#ifdef TF_DLL
-#include "tf_gamerules.h"
-#endif // TF_DLL
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -43,7 +33,6 @@ BEGIN_DATADESC( CBaseDoor )
 	DEFINE_KEYFIELD( m_ChainTarget, FIELD_STRING, "chainstodoor" ),
 	// DEFINE_FIELD( m_isChaining, FIELD_BOOLEAN ),
 	// DEFINE_FIELD( m_ls, locksound_t ),
-//	DEFINE_FIELD( m_isChaining, FIELD_BOOLEAN ),
 	DEFINE_KEYFIELD( m_ls.sLockedSound, FIELD_SOUNDNAME, "locked_sound" ),
 	DEFINE_KEYFIELD( m_ls.sUnlockedSound, FIELD_SOUNDNAME, "unlocked_sound" ),
 	DEFINE_FIELD( m_bLocked, FIELD_BOOLEAN ),
@@ -53,11 +42,6 @@ BEGIN_DATADESC( CBaseDoor )
 
 	DEFINE_KEYFIELD( m_bForceClosed, FIELD_BOOLEAN, "forceclosed" ),
 	DEFINE_FIELD( m_bDoorGroup, FIELD_BOOLEAN ),
-
-#ifdef HL1_DLL
-	DEFINE_KEYFIELD( m_iBlockFilterName,	FIELD_STRING,	"filtername" ),
-	DEFINE_FIELD( m_hBlockFilter, FIELD_EHANDLE ),
-#endif
 
 	DEFINE_KEYFIELD( m_bLoopMoveSound, FIELD_BOOLEAN, "loopmovesound" ),
 	DEFINE_KEYFIELD( m_bIgnoreDebris, FIELD_BOOLEAN, "ignoredebris" ),
@@ -244,9 +228,6 @@ void CBaseDoor::Spawn()
 {
 	Precache();
 
-#ifdef HL1_DLL
-	SetSolid( SOLID_BSP );
-#else
 	if ( GetMoveParent() && GetRootMoveParent()->GetSolid() == SOLID_BSP )
 	{
 		SetSolid( SOLID_BSP );
@@ -255,7 +236,6 @@ void CBaseDoor::Spawn()
 	{
 		SetSolid( SOLID_VPHYSICS );
 	}
-#endif
 
 	// Convert movedir from angles to a vector
 	QAngle angMoveDir = QAngle( m_vecMoveDir.x, m_vecMoveDir.y, m_vecMoveDir.z );
@@ -266,6 +246,18 @@ void CBaseDoor::Spawn()
 
 	// Subtract 2 from size because the engine expands bboxes by 1 in all directions making the size too big
 	Vector vecOBB = CollisionProp()->OBBSize();
+	if ( GetLocalAngles() != vec3_angle )
+	{	// this door must have been rotated from via an instance, so make sure we rotate our bounds
+		Vector		vMinsIn, vMaxsIn, vMinsOut, vMaxsOut;
+		matrix3x4_t	mat;
+
+		vMinsIn = CollisionProp()->OBBMins();
+		vMaxsIn = CollisionProp()->OBBMaxs();
+		AngleMatrix( GetLocalAngles(), mat );
+		RotateAABB( mat, vMinsIn, vMaxsIn, vMinsOut, vMaxsOut );
+
+		vecOBB = ( vMaxsOut - vMinsOut );
+	}
 	vecOBB -= Vector( 2, 2, 2 );
 	m_vecPosition2	= m_vecPosition1 + (m_vecMoveDir * (DotProductAbs( m_vecMoveDir, vecOBB ) - m_flLip));
 
@@ -336,16 +328,6 @@ void CBaseDoor::Spawn()
 	}
 
 	CreateVPhysics();
-
-#ifdef TF_DLL
-	if ( TFGameRules() && TFGameRules()->IsMultiplayer() )
-	{
-		// Never block doors in TF2 - to prevent various exploits.
-		m_bIgnoreNonPlayerEntsOnBlock = true;
-	}
-#else
-	m_bIgnoreNonPlayerEntsOnBlock = false;
-#endif // TF_DLL
 }
 
 void CBaseDoor::MovingSoundThink( void )
@@ -380,18 +362,8 @@ void CBaseDoor::StartMovingSound( void )
 {
 	MovingSoundThink();
 
-#ifdef CSTRIKE_DLL // this event is only used by CS:S bots
 
-	CBasePlayer *player = ToBasePlayer(m_hActivator);
-	IGameEvent * event = gameeventmanager->CreateEvent( "door_moving" );
-	if( event )
-	{
-		event->SetInt( "entindex", entindex() );
-		event->SetInt( "userid", (player)?player->GetUserID():0 );
-		gameeventmanager->FireEvent( event );
-	}
 
-#endif
 }
 
 void CBaseDoor::StopMovingSound(void)
@@ -482,10 +454,6 @@ void CBaseDoor::Activate( void )
 			{
 				// don't do group blocking
 				m_bDoorGroup = false;
-#ifdef HL1_DLL
-				// UNDONE: This should probably fixup m_vecPosition1 & m_vecPosition2
-				Warning("Door group %s has misaligned origin!\n", STRING(GetEntityName()) );
-#endif
 			}
 		}
 	}
@@ -499,14 +467,6 @@ void CBaseDoor::Activate( void )
 		UpdateAreaPortals( false );
 		break;
 	}
-
-#ifdef HL1_DLL
-	// Get a handle to my filter entity if there is one
-	if (m_iBlockFilterName != NULL_STRING)
-	{
-		m_hBlockFilter = dynamic_cast<CBaseFilter *>(gEntList.FindEntityByName( NULL, m_iBlockFilterName, NULL ));
-	}
-#endif
 }
 
 
@@ -546,21 +506,9 @@ void CBaseDoor::Precache( void )
 	{
 		UTIL_ValidateSoundName( m_NoiseMoving,		"DoorSound.DefaultMove" );
 		UTIL_ValidateSoundName( m_NoiseArrived,		"DoorSound.DefaultArrive" );
-#ifndef HL1_DLL		
 		UTIL_ValidateSoundName( m_ls.sLockedSound,	"DoorSound.DefaultLocked" );
-#endif
 		UTIL_ValidateSoundName( m_ls.sUnlockedSound,"DoorSound.Null" );
 	}
-
-#ifdef HL1_DLL
-	if( m_ls.sLockedSound != NULL_STRING && strlen((char*)STRING(m_ls.sLockedSound)) < 4 )
-	{
-		// Too short to be ANYTHING ".wav", so it must be an old index into a long-lost
-		// array of sound choices. slam it to a known "deny" sound. We lose the designer's
-		// original selection, but we don't get unresponsive doors.
-		m_ls.sLockedSound = AllocPooledString("buttons/button2.wav");
-	}
-#endif//HL1_DLL
 
 	//Precache them all
 	PrecacheScriptSound( (char *) STRING(m_NoiseMoving) );
@@ -615,25 +563,12 @@ void CBaseDoor::DoorTouch( CBaseEntity *pOther )
 	// Ignore touches by anything but players.
 	if ( !pOther->IsPlayer() )
 	{
-#ifdef HL1_DLL
-		if( PassesBlockTouchFilter( pOther ) && m_toggle_state == TS_GOING_DOWN )
-		{
-			DoorGoUp();
-		}
-#endif
 		return;
 	}
 
 	// If door is not opened by touch, do nothing.
 	if ( !HasSpawnFlags(SF_DOOR_PTOUCH) )
 	{
-#ifdef HL1_DLL
-		if( m_toggle_state == TS_AT_BOTTOM )
-		{
-			PlayLockSounds(this, &m_ls, TRUE, FALSE);
-		}
-#endif//HL1_DLL
-
 		return; 
 	}
 	
@@ -660,14 +595,6 @@ void CBaseDoor::DoorTouch( CBaseEntity *pOther )
 		SetTouch( NULL );
 	}
 }
-
-#ifdef HL1_DLL
-bool CBaseDoor::PassesBlockTouchFilter(CBaseEntity *pOther)
-{
-	CBaseFilter* pFilter = (CBaseFilter*)(m_hBlockFilter.Get());
-	return ( pFilter && pFilter->PassesFilter( this, pOther ) );
-}
-#endif
 
 
 //-----------------------------------------------------------------------------
@@ -974,13 +901,30 @@ void CBaseDoor::DoorGoUp( void )
 				// Important note:  All doors face East at all times, and twist their local angle to open.
 				//					So you can't look at the door's facing to determine which way to open.
 
+				Vector origin = GetAbsOrigin();
+
 				Vector nearestPoint;
 				CollisionProp()->CalcNearestPoint( m_hActivator->GetAbsOrigin(), &nearestPoint );
 				Vector activatorToNearestPoint = nearestPoint - m_hActivator->GetAbsOrigin();
 				activatorToNearestPoint.z = 0;
 
-				Vector activatorToOrigin = GetAbsOrigin() - m_hActivator->GetAbsOrigin();
+				Vector activatorToOrigin = origin - m_hActivator->GetAbsOrigin();
 				activatorToOrigin.z = 0;
+
+				float nearestPointDistToOrigin = activatorToOrigin.DistTo( activatorToNearestPoint );
+				activatorToOrigin.NormalizeInPlace();
+				activatorToNearestPoint.NormalizeInPlace();
+				float dot = activatorToOrigin.Dot( activatorToNearestPoint );
+				if ( nearestPointDistToOrigin < 5.0f && dot > 0.99f )
+				{
+					// the nearest point and the origin are nearly the same, and we're looking at them in a
+					// line.  This would give us unpredictable results, so let's pull the origin out from
+					// the center some.
+					origin += (origin - WorldSpaceCenter()); // pull the origin out from the center some
+					activatorToOrigin = origin - m_hActivator->GetAbsOrigin();
+					activatorToOrigin.z = 0;
+					activatorToOrigin.NormalizeInPlace();
+				}
 
 				// Point right hand at door hinge, curl hand towards closest spot on door, if thumb
 				// is up, open door CW.  -- Department of Basic Cross Product Understanding for Noobs
@@ -1206,11 +1150,6 @@ void CBaseDoor::Blocked( CBaseEntity *pOther )
 			pOther->TakeDamage( CTakeDamageInfo( this, this, m_flBlockDamage, DMG_CRUSH ) );
 		}
 	}
-	// If set, ignore non-player ents that block us.  Mainly of use in multiplayer to prevent exploits.
-	else if ( pOther && !pOther->IsPlayer() && m_bIgnoreNonPlayerEntsOnBlock )
-	{
-		return;
-	}
 
 	// If we're set to force ourselves closed, keep going
 	if ( m_bForceClosed )
@@ -1396,10 +1335,6 @@ void CRotDoor::Spawn( void )
 		m_toggle_state = TS_AT_BOTTOM;
 	}
 
-#ifdef HL1_DLL
-	SetSolid( SOLID_VPHYSICS );
-#endif
-		
 	// Slam the object back to solid - if we really want it to be solid.
 	if ( m_bSolidBsp )
 	{

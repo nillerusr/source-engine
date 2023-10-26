@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -9,14 +9,14 @@
 // $Log: $
 //
 // $NoKeywords: $
-//=============================================================================//
+//===========================================================================//
 #include "cbase.h"
 #include "te_particlesystem.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-extern short	g_sModelIndexFireball;			// (in combatweapon.cpp) holds the index for the smoke cloud
+extern int	g_sModelIndexFireball;			// (in combatweapon.cpp) holds the index for the smoke cloud
 
 //-----------------------------------------------------------------------------
 // Purpose: Dispatches explosion tempentity
@@ -100,7 +100,7 @@ IMPLEMENT_SERVERCLASS_ST(CTEExplosion, DT_TEExplosion)
 	SendPropModelIndex( SENDINFO(m_nModelIndex) ),
 	SendPropFloat( SENDINFO(m_fScale ), 9, 0, 0.0, 51.2 ),
 	SendPropInt( SENDINFO(m_nFrameRate), 8, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO(m_nFlags), 8, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO(m_nFlags), 10, SPROP_UNSIGNED ),
 	SendPropVector( SENDINFO(m_vecNormal), -1, SPROP_COORD),
 	SendPropInt( SENDINFO(m_chMaterialType), 8, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO(m_nRadius), 32, SPROP_UNSIGNED ),
@@ -111,9 +111,9 @@ END_SEND_TABLE()
 static CTEExplosion g_TEExplosion( "Explosion" );
 
 void TE_Explosion( IRecipientFilter& filter, float delay,
-	const Vector* pos, int modelindex, float scale, int framerate, int flags, int radius, int magnitude, const Vector* normal, unsigned char materialType )
+	const Vector* pPos, int modelindex, float scale, int framerate, int flags, int radius, int magnitude, const Vector* pNormal, unsigned char materialType )
 {
-	g_TEExplosion.m_vecOrigin		= *pos;
+	g_TEExplosion.m_vecOrigin		= *pPos;
 	g_TEExplosion.m_nModelIndex		= modelindex;	
 	g_TEExplosion.m_fScale			= scale;
 	g_TEExplosion.m_nFrameRate		= framerate;
@@ -121,10 +121,9 @@ void TE_Explosion( IRecipientFilter& filter, float delay,
 	g_TEExplosion.m_nRadius			= radius;
 	g_TEExplosion.m_nMagnitude		= magnitude;
 
-	if ( normal )
-		g_TEExplosion.m_vecNormal	= *normal;
-	else 
-		g_TEExplosion.m_vecNormal	= Vector(0,0,1);
+	// Make a copy here so we can re-use it below
+	g_TEExplosion.m_vecNormal		= pNormal ? (*pNormal) : Vector(0,0,1);
+
 	g_TEExplosion.m_chMaterialType	= materialType;
 
 	// Send it over the wire

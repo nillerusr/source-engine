@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -49,7 +49,9 @@ public:
 	bool CanHearSound( int entindex, soundlevel_t soundlevel, float &flVolume, const Vector *pOrigin );
 
 	void SetSensitivity( float flSensitivity );
+	void SetMaxRange( float flMaxRange );
 	void SetSpeakerName( string_t iszSpeakerName );
+	void SetSpeaker( string_t iszSpeakerName, EHANDLE hSpeaker );
 
 	void InputEnable( inputdata_t &inputdata );
 	void InputDisable( inputdata_t &inputdata );
@@ -61,11 +63,15 @@ public:
 	static bool OnSoundPlayed( int entindex, const char *soundname, soundlevel_t soundlevel, 
 		float flVolume, int iFlags, int iPitch, const Vector *pOrigin, float soundtime, CUtlVector< Vector >& soundorigins );
 
+	static void OnSoundStopped( const char *soundname );
+
 private:
 
 	// Per-microphone notification that a sound has played.
 	MicrophoneResult_t SoundPlayed( int entindex, const char *soundname, soundlevel_t soundlevel, 
 		float flVolume, int iFlags, int iPitch, const Vector *pOrigin, float soundtime, CUtlVector< Vector >& soundorigins );
+
+	void SoundStopped( const char *soundname );
 
 	bool		m_bDisabled;			// If true, the microphone will not measure sound.
 	EHANDLE		m_hMeasureTarget;		// Point at which to measure sound level.

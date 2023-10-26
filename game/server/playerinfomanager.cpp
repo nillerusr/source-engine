@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: implementation of player info manager
 //
@@ -8,6 +8,10 @@
 #include "player.h"
 #include "playerinfomanager.h"
 #include "edict.h"
+
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
 
 extern CGlobalVars *gpGlobals;
 static CPlayerInfoManager s_PlayerInfoManager;

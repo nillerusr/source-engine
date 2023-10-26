@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: A blood spray effect, like a big exit wound, used when people are
 //			violently impaled, skewered, eviscerated, etc.
@@ -6,31 +6,31 @@
 //=============================================================================//
 
 #include "cbase.h"
-#include "clienteffectprecachesystem.h"
-#include "fx_sparks.h"
+#include "precache_register.h"
+#include "FX_Sparks.h"
 #include "iefx.h"
 #include "c_te_effect_dispatch.h"
 #include "particles_ez.h"
 #include "decals.h"
 #include "engine/IEngineSound.h"
 #include "fx_quad.h"
-#include "engine/ivdebugoverlay.h"
+#include "engine/IVDebugOverlay.h"
 #include "shareddefs.h"
 #include "fx.h"
 #include "fx_blood.h"
 #include "effect_color_tables.h"
-#include "particle_simple3d.h"
+#include "particle_simple3D.h"
 #include "particle_parse.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-CLIENTEFFECT_REGISTER_BEGIN( PrecacheEffectBloodSpray )
-CLIENTEFFECT_MATERIAL( "effects/blood_core" )
-CLIENTEFFECT_MATERIAL( "effects/blood_gore" )
-CLIENTEFFECT_MATERIAL( "effects/blood_drop" )
-CLIENTEFFECT_MATERIAL( "effects/blood_puff" )
-CLIENTEFFECT_REGISTER_END()
+PRECACHE_REGISTER_BEGIN( GLOBAL, PrecacheEffectBloodSpray )
+PRECACHE( MATERIAL, "effects/blood_core" )
+PRECACHE( MATERIAL, "effects/blood_gore" )
+PRECACHE( MATERIAL, "effects/blood_drop" )
+PRECACHE( MATERIAL, "effects/blood_puff" )
+PRECACHE_REGISTER_END()
 
 // Cached material handles
 PMaterialHandle g_Blood_Core = NULL;
@@ -477,11 +477,15 @@ ParticleForBlood_t	bloodCallbacks[] =
 	{ BLOOD_COLOR_RED,		"blood_impact_red_01" },
 	{ BLOOD_COLOR_GREEN,	"blood_impact_green_01" },
 	{ BLOOD_COLOR_YELLOW,	"blood_impact_yellow_01" },
+
 #if defined( HL2_EPISODIC )
 	{ BLOOD_COLOR_ANTLION,			"blood_impact_antlion_01" },		// FIXME: Move to Base HL2
 	{ BLOOD_COLOR_ZOMBIE,			"blood_impact_zombie_01" },			// FIXME: Move to Base HL2
 	{ BLOOD_COLOR_ANTLION_WORKER,	"blood_impact_antlion_worker_01" },
+	{ BLOOD_COLOR_BLOB,				"blob_impact" },
+	{ BLOOD_COLOR_BLOB_FROZEN,		"blob_impact_frozen" },
 #endif // HL2_EPISODIC
+
 };
 
 //-----------------------------------------------------------------------------
@@ -495,7 +499,7 @@ void BloodSprayCallback( const CEffectData &data )
 	FX_BloodSpray( data.m_vOrigin, data.m_vNormal, data.m_flScale, color.r, color.g, color.b, data.m_fFlags );
 }
 
-DECLARE_CLIENT_EFFECT( "bloodspray", BloodSprayCallback );
+DECLARE_CLIENT_EFFECT( bloodspray, BloodSprayCallback );
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -529,7 +533,16 @@ void BloodImpactCallback( const CEffectData & data )
 	}
 }
 
-DECLARE_CLIENT_EFFECT( "BloodImpact", BloodImpactCallback );
+DECLARE_CLIENT_EFFECT_BEGIN( BloodImpact, BloodImpactCallback )
+	PRECACHE( PARTICLE_SYSTEM, "blood_impact_red_01" )
+	PRECACHE( PARTICLE_SYSTEM, "blood_impact_green_01" )
+	PRECACHE( PARTICLE_SYSTEM, "blood_impact_yellow_01" )
+#if defined( HL2_EPISODIC )
+	PRECACHE( PARTICLE_SYSTEM, "blood_impact_antlion_01" )			// FIXME: Move to Base HL2
+	PRECACHE( PARTICLE_SYSTEM, "blood_impact_zombie_01" )			// FIXME: Move to Base HL2
+	PRECACHE( PARTICLE_SYSTEM, "blood_impact_antlion_worker_01" )
+#endif
+DECLARE_CLIENT_EFFECT_END()
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -588,4 +601,4 @@ void HunterDamageCallback( const CEffectData &data )
 	}
 }
 
-DECLARE_CLIENT_EFFECT( "HunterDamage", HunterDamageCallback );
+DECLARE_CLIENT_EFFECT( HunterDamage, HunterDamageCallback );

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -12,7 +12,10 @@
 #endif
 
 // PlayerUse defines
+
 #define	PLAYER_USE_RADIUS	80.f
+
+
 #define CONE_45_DEGREES		0.707f
 #define CONE_15_DEGREES		0.9659258f
 #define CONE_90_DEGREES		0
@@ -32,16 +35,30 @@
 
 #define DEATH_ANIMATION_TIME	3.0f
 
-typedef struct 
+// multiplayer only
+#define NOINTERP_PARITY_MAX			4
+#define NOINTERP_PARITY_MAX_BITS	2
+
+struct autoaim_params_t
 {
-	Vector		m_vecAutoAimDir;		// The direction autoaim wishes to point.
-	Vector		m_vecAutoAimPoint;		// The point (world space) that autoaim is aiming at.
-	EHANDLE		m_hAutoAimEntity;		// The entity that autoaim is aiming at.
-	bool		m_bAutoAimAssisting;	// If this is true, autoaim is aiming at the target. If false, the player is naturally aiming.
-	bool		m_bOnTargetNatural;		
-	float		m_fScale;
-	float		m_fMaxDist;
-} autoaim_params_t;
+	autoaim_params_t()
+	{
+		m_fScale = 0;
+		m_fMaxDist = 0;
+		m_fMaxDeflection = -1.0f;
+		m_bOnTargetQueryOnly = false;
+	}
+
+	Vector		m_vecAutoAimDir;		// Output: The direction autoaim wishes to point.
+	Vector		m_vecAutoAimPoint;		// Output: The point (world space) that autoaim is aiming at.
+	EHANDLE		m_hAutoAimEntity;		// Output: The entity that autoaim is aiming at.
+	float		m_fScale;				// Input:
+	float		m_fMaxDist;				// Input:
+	float		m_fMaxDeflection;		// Input:
+	bool		m_bOnTargetQueryOnly;	// Input: Don't do expensive assistance, just resolve m_bOnTargetNatural
+	bool		m_bAutoAimAssisting;	// Output: If this is true, autoaim is aiming at the target.
+	bool		m_bOnTargetNatural;		// Output: If true, the player is on target without assistance.
+};
 
 enum stepsoundtimes_t
 {
@@ -50,8 +67,6 @@ enum stepsoundtimes_t
 	STEPSOUNDTIME_WATER_KNEE,
 	STEPSOUNDTIME_WATER_FOOT,
 };
-
-void CopySoundNameWithModifierToken( char *pchDest, const char *pchSource, int nMaxLenInChars, const char *pchToken );
 
 // Shared header file for players
 #if defined( CLIENT_DLL )

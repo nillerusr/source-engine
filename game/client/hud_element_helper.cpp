@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Helper for the CHudElement class to add themselves to the list of hud elements
 //
@@ -20,15 +20,15 @@ CHudElementHelper *CHudElementHelper::m_sHelpers = NULL;
 //					0 is nearest, default is 50
 //
 //-----------------------------------------------------------------------------
-CHudElementHelper::CHudElementHelper( CHudElement *( *pfnCreate )( void ), int depth )
+CHudElementHelper::CHudElementHelper( CHudElement *( *pfnCreate )( void ), int depth, int flags /* = 0 */ )
 {
 	//Insert into the list based on depth
 
 	//List is empty, or element belongs at front, insert here
 	if( m_sHelpers == NULL || depth >= m_sHelpers->m_iDepth )
 	{
-		m_pNext			= m_sHelpers;
-		m_sHelpers		= this;
+		m_pNext	= m_sHelpers;
+		m_sHelpers = this;
 	}
 	else
 	{
@@ -46,7 +46,8 @@ CHudElementHelper::CHudElementHelper( CHudElement *( *pfnCreate )( void ), int d
 		m_pNext = pCurrent;
 	}
 
-	m_iDepth		= depth;
+	m_iDepth = depth;
+	m_iFlags = flags;
 
 	// Set attributes
 	assert( pfnCreate );
@@ -75,14 +76,20 @@ void CHudElementHelper::CreateAllElements( void )
 	CHudElementHelper *p = m_sHelpers;
 	while ( p )
 	{
+		// only create this element in slot 0
+		if ( ( p->m_iFlags & HUDELEMENT_SS_FULLSCREEN_ONLY ) && ( GET_ACTIVE_SPLITSCREEN_SLOT() != 0 ) )
+		{
+			p = p->m_pNext;
+			continue;
+		}
+
 		// Dispatch creation function directly
 		CHudElement *( *fCreate )( void ) = p->m_pfnCreate;
 		CHudElement *newElement = (fCreate)();
 		if ( newElement )
 		{
-			gHUD.AddHudElement( newElement );
+			GetHud().AddHudElement( newElement );				
 		}
-
 		p = p->GetNext();
 	}
 }

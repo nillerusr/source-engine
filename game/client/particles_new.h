@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright (c) 1996-2006, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: provide client-side access to the new particle system, with similar
 // usage to CSimpleEmitter
@@ -14,7 +14,7 @@
 
 #include "particlemgr.h"
 #include "particles/particles.h"
-#include "particlesphererenderer.h"
+#include "ParticleSphereRenderer.h"
 #include "smartptr.h"
 #include "particles_simple.h"
 #include "tier1/utlobjectreference.h"
@@ -31,6 +31,7 @@ public:
 
 public:
 	friend class CRefCountAccessor;
+	friend class CParticleSystemQuery;
 
 	// list management
 	CNewParticleEffect *m_pNext;
@@ -40,13 +41,11 @@ public:
 	// your particles are for sorting amongst other translucent entities.
 	void SetSortOrigin( const Vector &vSortOrigin );
 	bool ShouldDraw( void );
-	virtual bool IsTransparent( void );
-	virtual bool IsTwoPass( void );
-	virtual bool UsesPowerOfTwoFrameBufferTexture( void );
-	virtual bool UsesFullFrameBufferTexture( void );
+	virtual int GetRenderFlags( void );
 	const QAngle& GetRenderAngles( void );
 	const matrix3x4_t& RenderableToWorldTransform();
 	void GetRenderBounds( Vector& mins, Vector& maxs );
+	virtual bool	ShouldDrawForSplitScreenUser( int nSlot );
 
 	// check if the new bounds of the particle system needs its client-leaf info needs to be updated
 	void DetectChanges( void );
@@ -71,17 +70,34 @@ public:
 	void SetOwner( CBaseEntity *pOwner ) { m_hOwner = pOwner; }
 	CNewParticleEffect* ReplaceWith( const char *pParticleSystemName );
 
-	static CSmartPtr<CNewParticleEffect> Create( CBaseEntity *pOwner, const char *pParticleSystemName,
+	static CNewParticleEffect *Create( CBaseEntity *pOwner, const char *pParticleSystemName,
 												 const char *pDebugName = NULL );
-	static CSmartPtr<CNewParticleEffect> Create( CBaseEntity *pOwner, CParticleSystemDefinition *pDef,
+	static CNewParticleEffect *Create( CBaseEntity *pOwner, CParticleSystemDefinition *pDef,
 												 const char *pDebugName = NULL );
-	virtual int DrawModel( int flags );
+	static CNewParticleEffect *CreatePrecached( CBaseEntity *pOwner, int nPrecacheIndex,
+												 const char *pDebugName = NULL );	
+	static CNewParticleEffect *CreateOrAggregate( CBaseEntity *pOwner, const char *pParticleSystemName,
+												  Vector const &vecAggregatePosition, const char *pDebugName = NULL, 
+												  int nSplitScreenUser = -1 );
+	static CNewParticleEffect *CreateOrAggregate( CBaseEntity *pOwner, CParticleSystemDefinition *pDef,
+												  Vector const &vecAggregatePosition, const char *pDebugName = NULL,
+												  int nSplitScreenUser = -1 );
+	static CNewParticleEffect *CreateOrAggregatePrecached( CBaseEntity *pOwner, int nPrecacheIndex,
+														   Vector const &vecAggregatePosition,
+														   const char *pDebugName = NULL,
+														   int nSplitScreenUser = -1 );
 
-	void DebugDrawBbox ( bool bCulled );
+	static void RemoveParticleEffect( int nPrecacheIndex );
+
+	virtual int DrawModel( int flags, const RenderableInstance_t &instance );
+
+	bool SetupBones( matrix3x4a_t *pBoneToWorldOut, int nMaxBones, int boneMask, float currentTime );
+
+	void SetDrawOnlyForSplitScreenUser( int nSlot );
 
 	// CParticleCollection overrides
 public:
-	void StopEmission( bool bInfiniteOnly = false, bool bRemoveAllParticles = false, bool bWakeOnStop = false );
+	void StopEmission( bool bInfiniteOnly = false, bool bRemoveAllParticles = false, bool bWakeOnStop = false, bool bPlayEndCap = false );
 	void SetDormant( bool bDormant );
 	void SetControlPoint( int nWhichPoint, const Vector &v );
 	void SetControlPointEntity( int nWhichPoint, CBaseEntity *pEntity );
@@ -121,13 +137,18 @@ public:
 	virtual bool				ShouldSimulate() const { return m_bSimulate; }
 	virtual void				SetShouldSimulate( bool bSim ) { m_bSimulate = bSim; }
 
+	void SetToolRecording( bool bRecord );
+
 	int AllocateToolParticleEffectId();
 	int GetToolParticleEffectId() const;
-	CNewParticleEffect( CBaseEntity *pOwner, const char *pEffectName );
-	CNewParticleEffect( CBaseEntity *pOwner, CParticleSystemDefinition *pEffect );
+
 	virtual ~CNewParticleEffect();
 
 protected:
+	CNewParticleEffect( CBaseEntity *pOwner, const char *pEffectName );
+	CNewParticleEffect( CBaseEntity *pOwner, CParticleSystemDefinition *pEffect );
+	CNewParticleEffect( CBaseEntity *pOwner, int nPrecacheIndex );
+
 	// Returns nonzero if Release() has been called.
 	int		IsReleased();
 	
@@ -142,8 +163,14 @@ protected:
 	bool		m_bAutoUpdateBBox : 1;
 	bool		m_bAllocated : 1;
 	bool		m_bSimulate : 1;
+	bool		m_bRecord : 1;
 	bool		m_bShouldPerformCullCheck : 1;
 
+	// if a particle system is created through the non-aggregation entry point, we can't aggregate into it
+	bool        m_bDisableAggregation : 1;
+
+	
+	
 	int			m_nToolParticleEffectId;
 	Vector		m_vSortOrigin;
 	EHANDLE		m_hOwner;
@@ -153,16 +180,23 @@ protected:
 	Vector		m_LastMin;
 	Vector		m_LastMax;
 
+	int			m_nSplitScreenUser; // -1 means don't care
+	Vector m_vecAggregationCenter;							// origin for aggregation if aggregation enabled
+
+
 private:
 	// Update the reference count.
 	void		AddRef();
 	void		Release();
 	void		RecordControlPointOrientation( int nWhichPoint );
 	void		Construct();
+	void		RecordCreation();
 	
 	int			m_RefCount;		// When this goes to zero and the effect has no more active
 								// particles, (and it's dynamically allocated), it will delete itself.
 
+	matrix3x4a_t m_DrawModelMatrix;
+	
 	CNewParticleEffect( const CNewParticleEffect & ); // not defined, not accessible
 };
 
@@ -170,6 +204,7 @@ private:
 //-----------------------------------------------------------------------------
 // Inline methods
 //-----------------------------------------------------------------------------
+
 inline int CNewParticleEffect::GetToolParticleEffectId() const
 {
 	return m_nToolParticleEffectId;
@@ -195,12 +230,7 @@ inline const Vector &CNewParticleEffect::GetSortOrigin( void )
 
 inline bool CNewParticleEffect::ShouldDraw( void )
 {
-	return true;
-}
-
-inline bool CNewParticleEffect::IsTransparent( void )
-{
-	return CParticleCollection::IsTranslucent();
+	return m_bDrawn;
 }
 
 inline const QAngle& CNewParticleEffect::GetRenderAngles( void )
@@ -306,7 +336,7 @@ inline void CNewParticleEffect::MarkShouldPerformCullCheck( bool bEnable )
 	m_bShouldPerformCullCheck = bEnable;
 }
 
-inline CSmartPtr<CNewParticleEffect> CNewParticleEffect::Create( CBaseEntity *pOwner, const char *pParticleSystemName, const char *pDebugName )
+inline CNewParticleEffect *CNewParticleEffect::Create( CBaseEntity *pOwner, const char *pParticleSystemName, const char *pDebugName )
 {
 	CNewParticleEffect *pRet = new CNewParticleEffect( pOwner, pParticleSystemName );
 	pRet->m_pDebugName = pDebugName;
@@ -314,13 +344,22 @@ inline CSmartPtr<CNewParticleEffect> CNewParticleEffect::Create( CBaseEntity *pO
 	return pRet;
 }
 
-inline CSmartPtr<CNewParticleEffect> CNewParticleEffect::Create( CBaseEntity *pOwner, CParticleSystemDefinition *pDef, const char *pDebugName )
+inline CNewParticleEffect *CNewParticleEffect::Create( CBaseEntity *pOwner, CParticleSystemDefinition *pDef, const char *pDebugName )
 {
 	CNewParticleEffect *pRet = new CNewParticleEffect( pOwner, pDef );
 	pRet->m_pDebugName = pDebugName;
 	pRet->SetDynamicallyAllocated( true );
 	return pRet;
 }
+
+inline CNewParticleEffect *CNewParticleEffect::CreatePrecached( CBaseEntity *pOwner, int nPrecacheIndex, const char *pDebugName )
+{
+	CNewParticleEffect *pRet = new CNewParticleEffect( pOwner, nPrecacheIndex );
+	pRet->m_pDebugName = pDebugName;
+	pRet->SetDynamicallyAllocated( true );
+	return pRet;
+}
+
 
 //--------------------------------------------------------------------------------
 // If you use an HPARTICLEFFECT instead of a cnewparticleeffect *, you get a pointer

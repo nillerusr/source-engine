@@ -61,6 +61,7 @@ public:
 	int				maxEntities;
 
 	int				serverCount;
+	edict_t                 *pEdicts;
 };
 
 inline CGlobalVars::CGlobalVars( bool bIsClient ) : 

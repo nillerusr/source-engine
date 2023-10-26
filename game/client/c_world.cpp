@@ -1,20 +1,17 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 // $NoKeywords: $
-//=============================================================================//
+//===========================================================================//
 #include "cbase.h"
 #include "c_world.h"
 #include "ivmodemanager.h"
-#include "activitylist.h"
 #include "decals.h"
 #include "engine/ivmodelinfo.h"
 #include "ivieweffects.h"
 #include "shake.h"
-#include "eventlist.h"
-// NVNT haptic include for notification of world precache
-#include "haptics/haptic_utils.h"
+#include "precache_register.h"
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -59,6 +56,7 @@ BEGIN_RECV_TABLE( C_World, DT_World )
 	RecvPropFloat(RECVINFO(m_flMinPropScreenSpaceWidth)),
 	RecvPropString(RECVINFO(m_iszDetailSpriteMaterial)),
 	RecvPropInt(RECVINFO(m_bColdWorld)),
+	RecvPropInt(RECVINFO(m_iTimeOfDay)),
 END_RECV_TABLE()
 
 
@@ -73,15 +71,12 @@ C_World::~C_World( void )
 bool C_World::Init( int entnum, int iSerialNum )
 {
 	m_flWaveHeight = 0.0f;
-	ActivityList_Init();
-	EventList_Init();
 
 	return BaseClass::Init( entnum, iSerialNum );
 }
 
 void C_World::Release()
 {
-	ActivityList_Free();
 	Term();
 }
 
@@ -110,7 +105,11 @@ void C_World::OnDataChanged( DataUpdateType_t updateType )
 			sf.duration = (float)(1<<SCREENFADE_FRACBITS) * 5.0f;
 			sf.holdTime = (float)(1<<SCREENFADE_FRACBITS) * 1.0f;
 			sf.fadeFlags = FFADE_IN | FFADE_PURGE;
-			vieweffects->Fade( sf );
+			FOR_EACH_VALID_SPLITSCREEN_PLAYER( hh )
+			{
+				ACTIVE_SPLITSCREEN_PLAYER_GUARD( hh );
+				GetViewEffects()->Fade( sf );
+			}
 		}
 
 		OcclusionParams_t params;
@@ -122,61 +121,41 @@ void C_World::OnDataChanged( DataUpdateType_t updateType )
 	}
 }
 
-void C_World::RegisterSharedActivities( void )
-{
-	ActivityList_RegisterSharedActivities();
-	EventList_RegisterSharedEvents();
-}
-
 // -----------------------------------------
 //	Sprite Index info
 // -----------------------------------------
-short		g_sModelIndexLaser;			// holds the index for the laser beam
-const char	*g_pModelNameLaser = "sprites/laserbeam.vmt";
-short		g_sModelIndexLaserDot;		// holds the index for the laser beam dot
-short		g_sModelIndexFireball;		// holds the index for the fireball
-short		g_sModelIndexSmoke;			// holds the index for the smoke cloud
-short		g_sModelIndexWExplosion;	// holds the index for the underwater explosion
-short		g_sModelIndexBubbles;		// holds the index for the bubbles model
-short		g_sModelIndexBloodDrop;		// holds the sprite index for the initial blood
-short		g_sModelIndexBloodSpray;	// holds the sprite index for splattered blood
+int		g_sModelIndexLaser;			// holds the index for the laser beam
+int		g_sModelIndexLaserDot;		// holds the index for the laser beam dot
+int		g_sModelIndexFireball;		// holds the index for the fireball
+int		g_sModelIndexSmoke;			// holds the index for the smoke cloud
+int		g_sModelIndexWExplosion;	// holds the index for the underwater explosion
+int		g_sModelIndexBubbles;		// holds the index for the bubbles model
+int		g_sModelIndexBloodDrop;		// holds the sprite index for the initial blood
+int		g_sModelIndexBloodSpray;	// holds the sprite index for splattered blood
 
 //-----------------------------------------------------------------------------
-// Purpose: Precache global weapon sounds
+// Purpose: Precache global weapon resources
 //-----------------------------------------------------------------------------
+PRECACHE_REGISTER_BEGIN( GLOBAL, WeaponSprites )
+	PRECACHE_INDEX( MODEL, "sprites/zerogxplode.vmt", g_sModelIndexFireball )
+	PRECACHE_INDEX( MODEL, "sprites/WXplo1.vmt", g_sModelIndexWExplosion )
+	PRECACHE_INDEX( MODEL, "sprites/steam1.vmt", g_sModelIndexSmoke )
+	PRECACHE_INDEX( MODEL, "sprites/bubble.vmt", g_sModelIndexBubbles )
+	PRECACHE_INDEX( MODEL, "sprites/bloodspray.vmt", g_sModelIndexBloodSpray )
+	PRECACHE_INDEX( MODEL, "sprites/blood.vmt", g_sModelIndexBloodDrop )
+	PRECACHE_INDEX( MODEL, "sprites/laserbeam.vmt", g_sModelIndexLaser )
+	PRECACHE_INDEX( MODEL, "sprites/laserdot.vmt", g_sModelIndexLaserDot )
+PRECACHE_REGISTER_END()
+
 void W_Precache(void)
 {
 	PrecacheFileWeaponInfoDatabase( filesystem, g_pGameRules->GetEncryptionKey() );
-
-	g_sModelIndexFireball = modelinfo->GetModelIndex ("sprites/zerogxplode.vmt");// fireball
-	g_sModelIndexWExplosion = modelinfo->GetModelIndex ("sprites/WXplo1.vmt");// underwater fireball
-	g_sModelIndexSmoke = modelinfo->GetModelIndex ("sprites/steam1.vmt");// smoke
-	g_sModelIndexBubbles = modelinfo->GetModelIndex ("sprites/bubble.vmt");//bubbles
-	g_sModelIndexBloodSpray = modelinfo->GetModelIndex ("sprites/bloodspray.vmt"); // initial blood
-	g_sModelIndexBloodDrop = modelinfo->GetModelIndex ("sprites/blood.vmt"); // splattered blood 
-	g_sModelIndexLaser = modelinfo->GetModelIndex( (char *)g_pModelNameLaser );
-	g_sModelIndexLaserDot = modelinfo->GetModelIndex("sprites/laserdot.vmt");
 }
 
 void C_World::Precache( void )
 {
-	// UNDONE: Make most of these things server systems or precache_registers
-	// =================================================
-	//	Activities
-	// =================================================
-	ActivityList_Free();
-	EventList_Free();
-
-	RegisterSharedActivities();
-
 	// Get weapon precaches
 	W_Precache();	
-
-	// Call all registered precachers.
-	CPrecacheRegister::Precache();
-	// NVNT notify system of precache
-	if (haptics)
-		haptics->WorldPrecache();
 }
 
 void C_World::Spawn( void )

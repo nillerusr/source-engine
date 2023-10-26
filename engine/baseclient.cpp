@@ -66,10 +66,13 @@ CBaseClient::CBaseClient()
 	m_bReportFakeClient = true;
 	m_iTracing = 0;
 	m_bPlayerNameLocked = false;
+
+	m_nDebugID = EVENT_DEBUG_ID_INIT;
 }
 
 CBaseClient::~CBaseClient()
 {
+	m_nDebugID = EVENT_DEBUG_ID_SHUTDOWN;
 }
 
 
@@ -668,6 +671,11 @@ void CBaseClient::FireGameEvent( IGameEvent *event )
 	{
 		DevMsg("GameEventManager: failed to serialize event '%s'.\n", event->GetName() );
 	}
+}
+
+int CBaseClient::GetEventDebugID( void )
+{
+	return m_nDebugID;
 }
 
 bool CBaseClient::SendServerInfo( void )

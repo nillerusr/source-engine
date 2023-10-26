@@ -1,17 +1,24 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2006, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
 //=============================================================================//
 
-
 #include "cbase.h"
 #include "vgui/IInput.h"
-#include <vgui/IVGui.h>
+#include <vgui/IVGUI.h>
 #include "commentary_modelviewer.h"
 #include "iclientmode.h"
 #include "baseviewport.h"
 
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
+
+/*
+// FIXME!!!!!!
+// FIXME!!!!!!
+// FIXME!!!!!!
 DECLARE_BUILD_FACTORY( CCommentaryModelPanel );
 
 //-----------------------------------------------------------------------------
@@ -20,6 +27,7 @@ DECLARE_BUILD_FACTORY( CCommentaryModelPanel );
 CCommentaryModelPanel::CCommentaryModelPanel( vgui::Panel *parent, const char *name ) : CModelPanel( parent, name )
 {
 }
+*/
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -27,7 +35,9 @@ CCommentaryModelPanel::CCommentaryModelPanel( vgui::Panel *parent, const char *n
 CCommentaryModelViewer::CCommentaryModelViewer(IViewPort *pViewPort) : Frame(NULL, PANEL_COMMENTARY_MODELVIEWER )
 {
 	m_pViewPort = pViewPort;
-	m_pModelPanel = NULL;
+
+	// FIXME!!!!!!
+	//m_pModelPanel = NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -46,7 +56,8 @@ void CCommentaryModelViewer::ApplySchemeSettings( vgui::IScheme *pScheme )
 
 	LoadControlSettings( "Resource/UI/CommentaryModelViewer.res" );
 
-	m_pModelPanel = dynamic_cast<CCommentaryModelPanel*>( FindChildByName( "modelpanel" ) );
+	// FIXME!!!!!!
+	//m_pModelPanel = dynamic_cast<CCommentaryModelPanel*>( FindChildByName( "modelpanel" ) );
 }
 
 //-----------------------------------------------------------------------------
@@ -58,10 +69,11 @@ void CCommentaryModelViewer::PerformLayout( void )
 	GetParent()->GetSize( w, h );
 	SetBounds(0,0,w,h);
 
-	if ( m_pModelPanel )
+	// FIXME!!!!!!
+	/*if ( m_pModelPanel )
 	{
 		m_pModelPanel->SetBounds(0,0,w,h);
-	}
+	}*/
 
 	BaseClass::PerformLayout();
 }
@@ -71,6 +83,8 @@ void CCommentaryModelViewer::PerformLayout( void )
 //-----------------------------------------------------------------------------
 void CCommentaryModelViewer::SetModel( const char *pszName, const char *pszAttached )
 {
+	// FIXME!!!!!!
+	/*
 	if ( !m_pModelPanel )
 		return;
 
@@ -82,6 +96,7 @@ void CCommentaryModelViewer::SetModel( const char *pszName, const char *pszAttac
 
 	m_vecResetPos = m_pModelPanel->m_pModelInfo->m_vecOriginOffset;
 	m_vecResetAngles = m_pModelPanel->m_pModelInfo->m_vecAbsAngles;
+	*/
 }
 
 //-----------------------------------------------------------------------------
@@ -138,12 +153,15 @@ void CCommentaryModelViewer::OnKeyCodePressed( vgui::KeyCode code )
 	}
 	else if ( code == KEY_R )
 	{
+		// FIXME!!!!!!
+		/*
 		m_pModelPanel->m_pModelInfo->m_vecOriginOffset = m_vecResetPos;
 		m_pModelPanel->m_pModelInfo->m_vecAbsAngles = m_vecResetAngles;
 		m_flYawSpeed = 0;
 		m_flZoomSpeed = 0;
 
 		m_pModelPanel->ZoomToFrameDistance();
+		*/
 	}
 	else
 	{
@@ -192,14 +210,17 @@ void CCommentaryModelViewer::HandleMovementInput( void )
 	}
 	if ( m_flYawSpeed != 0 )
 	{
+		// FIXME!!!!!!
+		/*
 		if ( m_bTranslating ) 
 		{
-			m_pModelPanel->m_pModelInfo->m_vecOriginOffset.y = clamp( m_pModelPanel->m_pModelInfo->m_vecOriginOffset.y + m_flYawSpeed, -100.f, 100.f );
+			m_pModelPanel->m_pModelInfo->m_vecOriginOffset.y = clamp( m_pModelPanel->m_pModelInfo->m_vecOriginOffset.y + m_flYawSpeed, -100, 100 );
 		}
 		else
 		{
 			m_pModelPanel->m_pModelInfo->m_vecAbsAngles.y = anglemod( m_pModelPanel->m_pModelInfo->m_vecAbsAngles.y + m_flYawSpeed );
 		}
+		*/
 
 		if ( !bLeftDown && !bRightDown )
 		{
@@ -226,9 +247,11 @@ void CCommentaryModelViewer::HandleMovementInput( void )
 	}
 	if ( m_flZoomSpeed != 0 )
 	{
+		// FIXME!!!!!!
+		/*
 		if ( m_bTranslating ) 
 		{
-			m_pModelPanel->m_pModelInfo->m_vecOriginOffset.z = clamp( m_pModelPanel->m_pModelInfo->m_vecOriginOffset.z + m_flZoomSpeed, -100.f, 300.f );
+			m_pModelPanel->m_pModelInfo->m_vecOriginOffset.z = clamp( m_pModelPanel->m_pModelInfo->m_vecOriginOffset.z + m_flZoomSpeed, -100, 300 );
 		}
 		else
 		{
@@ -236,6 +259,7 @@ void CCommentaryModelViewer::HandleMovementInput( void )
 			float flZoomMax = m_pModelPanel->m_flFrameDistance * 1.5;
 			m_pModelPanel->m_pModelInfo->m_vecOriginOffset.x = clamp( m_pModelPanel->m_pModelInfo->m_vecOriginOffset.x + m_flZoomSpeed, flZoomMin, flZoomMax );
 		}
+		*/
 
 		if ( !bForwardDown && !bBackDown )
 		{
@@ -255,7 +279,7 @@ void CommentaryShowModelViewer( const CCommand &args )
 		return;
 	}
 
-	CBaseViewport *pViewport = dynamic_cast<CBaseViewport *>( g_pClientMode->GetViewport() );
+	CBaseViewport *pViewport = dynamic_cast<CBaseViewport *>( GetClientMode()->GetViewport() );
 	if ( pViewport )
 	{
 		IViewPortPanel *pCommentaryPanel = pViewport->FindPanelByName( PANEL_COMMENTARY_MODELVIEWER );

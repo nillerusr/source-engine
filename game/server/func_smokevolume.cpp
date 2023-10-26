@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -37,6 +37,7 @@ private:
 	CNetworkVar( float, m_RotationSpeed );
 	CNetworkVar( float, m_MovementSpeed );
 	CNetworkVar( float, m_Density );
+	CNetworkVar( float, m_maxDrawDistance );
 };
 
 BEGIN_DATADESC( CFuncSmokeVolume )
@@ -52,6 +53,7 @@ BEGIN_DATADESC( CFuncSmokeVolume )
 	DEFINE_KEYFIELD( m_RotationSpeed, FIELD_FLOAT, "RotationSpeed" ),
 	DEFINE_KEYFIELD( m_MovementSpeed, FIELD_FLOAT, "MovementSpeed" ),
 	DEFINE_KEYFIELD( m_Density, FIELD_FLOAT, "Density" ),
+	DEFINE_KEYFIELD( m_maxDrawDistance, FIELD_FLOAT, "MaxDrawDistance" ),
 	// inputs
 	DEFINE_INPUT( m_RotationSpeed, FIELD_FLOAT, "SetRotationSpeed"),
 	DEFINE_INPUT( m_MovementSpeed, FIELD_FLOAT, "SetMovementSpeed"),
@@ -63,8 +65,8 @@ END_DATADESC()
 
 
 IMPLEMENT_SERVERCLASS_ST( CFuncSmokeVolume, DT_FuncSmokeVolume )
-	SendPropInt( SENDINFO( m_Color1 ), 32, SPROP_UNSIGNED, SendProxy_Color32ToInt ),
-	SendPropInt( SENDINFO( m_Color2 ), 32, SPROP_UNSIGNED, SendProxy_Color32ToInt ),
+	SendPropInt( SENDINFO( m_Color1 ), 32, SPROP_UNSIGNED, SendProxy_Color32ToInt32 ),
+	SendPropInt( SENDINFO( m_Color2 ), 32, SPROP_UNSIGNED, SendProxy_Color32ToInt32 ),
 	SendPropString( SENDINFO( m_MaterialName ) ),
 	SendPropFloat( SENDINFO( m_ParticleDrawWidth ), 0, SPROP_NOSCALE ),
 	SendPropFloat( SENDINFO( m_ParticleSpacingDistance ), 0, SPROP_NOSCALE ),
@@ -72,6 +74,7 @@ IMPLEMENT_SERVERCLASS_ST( CFuncSmokeVolume, DT_FuncSmokeVolume )
 	SendPropFloat( SENDINFO( m_RotationSpeed ), 0, SPROP_NOSCALE ),
 	SendPropFloat( SENDINFO( m_MovementSpeed ), 0, SPROP_NOSCALE ),
 	SendPropFloat( SENDINFO( m_Density ), 0, SPROP_NOSCALE ),
+	SendPropFloat( SENDINFO( m_maxDrawDistance ), 0, SPROP_NOSCALE ),
 	SendPropInt( SENDINFO(m_spawnflags), 8, SPROP_UNSIGNED )
 END_SEND_TABLE()
 
@@ -80,6 +83,7 @@ LINK_ENTITY_TO_CLASS( func_smokevolume, CFuncSmokeVolume );
 CFuncSmokeVolume::CFuncSmokeVolume()
 {
 	m_Density = 1.0f;
+	m_maxDrawDistance = 0.0f;
 }
 
 void CFuncSmokeVolume::SetDensity( float density )

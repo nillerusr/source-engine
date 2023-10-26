@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -15,7 +15,7 @@
 #include <vgui/ISurface.h>
 #include <vgui/ILocalize.h>
 #include <vgui_controls/Panel.h>
-#include <vgui/IVGui.h>
+#include <vgui/IVgui.h>
 
 
 using namespace vgui;
@@ -80,7 +80,7 @@ namespace
 //-----------------------------------------------------------------------------
 CHudPosture::CHudPosture( const char *pElementName ) : CHudElement( pElementName ), BaseClass( NULL, "HudPosture" )
 {
-	vgui::Panel *pParent = g_pClientMode->GetViewport();
+	vgui::Panel *pParent = GetClientMode()->GetViewport();
 	SetParent( pParent );
 
 	SetHiddenBits( HIDEHUD_HEALTH | HIDEHUD_PLAYERDEAD | HIDEHUD_NEEDSUIT );
@@ -179,7 +179,7 @@ void CHudPosture::Paint()
 	SetPaintBackgroundEnabled( true );
 
 	Color clr;
-	clr = gHUD.m_clrNormal;
+	clr = GetHud().m_clrNormal;
 	clr[3] = 255;
 
 	// Pick the duck character

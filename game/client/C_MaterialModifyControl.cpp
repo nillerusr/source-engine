@@ -1,19 +1,19 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Material Modify control entity.
 //
 //=============================================================================//
 
 #include "cbase.h"
-#include "proxyentity.h"
-#include "materialsystem/imaterial.h"
-#include "materialsystem/imaterialvar.h"
-#include "materialsystem/itexture.h"
+#include "ProxyEntity.h"
+#include "materialsystem/IMaterial.h"
+#include "materialsystem/IMaterialVar.h"
+#include "materialsystem/ITexture.h"
 #include "iviewrender.h"
 #include "texture_group_names.h"
-#include "baseanimatedtextureproxy.h"
-#include "toolframework_client.h"
+#include "BaseAnimatedTextureProxy.h"
 
+#include "imaterialproxydict.h"
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -28,9 +28,6 @@ enum MaterialModifyMode_t
 	MATERIAL_MODIFY_MODE_ANIM_SEQUENCE = 2,
 	MATERIAL_MODIFY_MODE_FLOAT_LERP = 3,
 };
-
-// forward declarations
-void ToolFramework_RecordMaterialParams( IMaterial *pMaterial );
 
 ConVar debug_materialmodifycontrol_client( "debug_materialmodifycontrol_client", "0" );
 
@@ -327,11 +324,6 @@ void CMaterialModifyProxy::OnBind( void *pEntity )
 //				DevMsg( 1, "numChildren: %d\n", numChildren );
 			}
 		}
-	}
-
-	if ( ToolsEnabled() )
-	{
-		ToolFramework_RecordMaterialParams( GetMaterial() );
 	}
 }
 
@@ -753,11 +745,6 @@ void CMaterialModifyAnimatedProxy::OnBind( void *pEntity )
 	}
 
 	m_AnimatedTextureFrameNumVar->SetIntValue( intFrame );
-
-	if ( ToolsEnabled() )
-	{
-		ToolFramework_RecordMaterialParams( GetMaterial() );
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -794,5 +781,5 @@ void CMaterialModifyAnimatedProxy::AnimationWrapped( void* pArg )
 }
 
 
-EXPOSE_INTERFACE( CMaterialModifyProxy, IMaterialProxy, "MaterialModify" IMATERIAL_PROXY_INTERFACE_VERSION );
-EXPOSE_INTERFACE( CMaterialModifyAnimatedProxy, IMaterialProxy, "MaterialModifyAnimated" IMATERIAL_PROXY_INTERFACE_VERSION );
+EXPOSE_MATERIAL_PROXY( CMaterialModifyProxy, MaterialModify );
+EXPOSE_MATERIAL_PROXY( CMaterialModifyAnimatedProxy, MaterialModifyAnimated );

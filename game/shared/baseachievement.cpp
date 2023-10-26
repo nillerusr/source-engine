@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -9,23 +9,22 @@
 #include "icommandline.h"
 #ifdef CLIENT_DLL
 #include "tier3/tier3.h"
-#include "vgui/ILocalize.h"
+#include "vgui/ilocalize.h"
 #include "achievement_notification_panel.h"
 #include "fmtstr.h"
-#include "gamestats.h"
+#include "cdll_client_int.h"
 #endif // CLIENT_DLL
 
-//=============================================================================
-// HPE_BEGIN
-// [dwenger] Necessary for sorting achievements by award time
-//=============================================================================
+#ifdef INFESTED_DLL
+	#include "asw_gamerules.h"
+#endif
 
-#include <vgui/ISystem.h>
-#include "vgui_controls/Controls.h"
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
 
-//=============================================================================
-// HPE_END
-//=============================================================================
+
+int g_nAchivementBitchCount = 0;
+
 
 CBaseAchievementHelper *CBaseAchievementHelper::s_pFirst = NULL;
 
@@ -65,14 +64,8 @@ CBaseAchievement::CBaseAchievement()
 	m_iCount = 0;
 	m_iProgressShown = 0;
 	m_bAchieved = false;
-	m_uUnlockTime = 0;
 	m_pAchievementMgr = NULL;
-	m_bShowOnHUD = false;
-	m_pszStat = NULL;
-}
-
-CBaseAchievement::~CBaseAchievement()
-{
+	m_nUserSlot = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -91,9 +84,16 @@ void CBaseAchievement::SetFlags( int iFlags )
 //-----------------------------------------------------------------------------
 void CBaseAchievement::FireGameEvent( IGameEvent *event )
 {
-	// perform common filtering to make it simpler to write achievements
+#ifdef CLIENT_DLL
+	ACTIVE_SPLITSCREEN_PLAYER_GUARD( m_nUserSlot );
+#endif
+	//
+	// Perform common filtering to make it simpler to write achievements
+	//
 	if ( !IsActive() )
+	{
 		return;
+	}
 
 	// if the achievement only applies to a specific map, and it's not the current map, skip it
 	if ( m_pMapNameFilter && ( 0 != Q_strcmp( m_pAchievementMgr->GetMapName(), m_pMapNameFilter ) ) )
@@ -188,42 +188,47 @@ void CBaseAchievement::Event_EntityKilled( CBaseEntity *pVictim, CBaseEntity *pA
 		return;
 
 	// default implementation is just to increase count when filter criteria pass
-	// Msg( "Base achievement incremented on kill event.\n" );
 	IncrementCount();
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: called when an event that counts toward an achievement occurs
 //-----------------------------------------------------------------------------
-void CBaseAchievement::IncrementCount( int iOptIncrement )
+void CBaseAchievement::IncrementCount()
 {
-	if ( !IsAchieved() && LocalPlayerCanEarn() )
+#ifdef INFESTED_DLL
+#ifndef _DEBUG
+	// No incrementing if they cheated!
+	if ( ASWGameRules() && ASWGameRules()->m_bCheated )
 	{
-		if ( !AlwaysEnabled() && !m_pAchievementMgr->CheckAchievementsEnabled() )
+		if ( g_nAchivementBitchCount++ < 10 )
 		{
-			Msg( "Achievements disabled, ignoring achievement progress for %s\n", GetName() );
+			DevMsg( "Achievements can't be earned if SV_CHEATS was used in this mission!\n", GetName() );
+		}
+		return;
+	}
+#endif
+#endif
+
+	if ( !IsAchieved() )
+	{
+		if ( !m_pAchievementMgr->CheckAchievementsEnabled() )
+		{
+#ifndef _DEBUG
+			if ( g_nAchivementBitchCount++ < 10 )
+			{
+				DevMsg( "Achievements disabled, ignoring achievement progress for %s\n", GetName() );
+			}
+#endif
 			return;
 		}
 
 		// on client, where the count is kept, increment count
-		if ( iOptIncrement > 0 )
-		{
-			// user specified that we want to increase by more than one.
-			m_iCount += iOptIncrement;
-			if ( m_iCount > m_iGoal )
-			{
-				m_iCount = m_iGoal;
-			}
-		}
-		else
-		{
-			m_iCount++;
-		}
-
+		m_iCount++;
 		// if this achievement gets saved w/global state, flag our global state as dirty
 		if ( GetFlags() & ACH_SAVE_GLOBAL )
 		{
-			m_pAchievementMgr->SetDirty( true );
+			m_pAchievementMgr->SetDirty( true, m_nUserSlot );
 		}
 
 		if ( cc_achievement_debug.GetInt() )
@@ -231,22 +236,48 @@ void CBaseAchievement::IncrementCount( int iOptIncrement )
 			Msg( "Achievement count increased for %s: %d/%d\n", GetName(), m_iCount, m_iGoal );
 		}
 
-#ifndef DISABLE_STEAM
+#if !defined( NO_STEAM )
 		// if this achievement's progress should be stored in Steam, set the steam stat for it
 		if ( StoreProgressInSteam() && steamapicontext->SteamUserStats() )
 		{
 			// Set the Steam stat with the same name as the achievement.  Only cached locally until we upload it.
 			char pszProgressName[1024];
-			Q_snprintf( pszProgressName, 1024, "%s_STAT", GetStat() );
+			Q_snprintf( pszProgressName, 1024, "%s_STAT", GetName() );
 			bool bRet = steamapicontext->SteamUserStats()->SetStat( pszProgressName, m_iCount );
 			if ( !bRet )
 			{
 				DevMsg( "ISteamUserStats::GetStat failed to set progress value in Steam for achievement %s\n", pszProgressName );
 			}
 
-			m_pAchievementMgr->SetDirty( true );
+			if ( HasComponents() )
+			{
+				Q_snprintf( pszProgressName, 1024, "%s_COMP", GetName() );
+				int32 bits = (int32) GetComponentBits();
+				bool bRet = steamapicontext->SteamUserStats()->SetStat( pszProgressName, bits );
+				if ( !bRet )
+				{
+					DevMsg( "ISteamUserStats::GetStat failed to set component value in Steam for achievement %s\n", pszProgressName );
+				}
+			}
+
+			// Upload user data to commit the change to Steam so if the client crashes, progress isn't lost.
+			// Only upload if we haven't uploaded recently, to keep us from spamming Steam with uploads.  If we don't
+			// upload now, it will get uploaded no later than level shutdown.
+#ifdef INFESTED_DLL
+			if ( ( m_pAchievementMgr->GetTimeLastUpload() == 0 ) || ( Plat_FloatTime() - m_pAchievementMgr->GetTimeLastUpload() > 60 * 15 ) 
+				|| ( ASWGameRules() && ASWGameRules()->GetGameState() != ASW_GS_INGAME && ( Plat_FloatTime() - m_pAchievementMgr->GetTimeLastUpload() > 0 ) ) )	// allow achievements to update each second if in the briefing/debrief
+			{
+				m_pAchievementMgr->UploadUserData( m_nUserSlot );
+			}
+#else
+			if ( ( m_pAchievementMgr->GetTimeLastUpload() == 0 ) || ( Plat_FloatTime() - m_pAchievementMgr->GetTimeLastUpload() > 60 * 15 ) )
+			{
+				m_pAchievementMgr->UploadUserData( m_nUserSlot );
+			}
+#endif
 		}
 #endif
+
 		// if we've hit goal, award the achievement
 		if ( m_iGoal > 0 )
 		{
@@ -255,38 +286,29 @@ void CBaseAchievement::IncrementCount( int iOptIncrement )
 				AwardAchievement();
 			}
 			else
-			{
+			{	
 				HandleProgressUpdate();
 			}
 		}
-
 	}
-}
-
-void CBaseAchievement::SetShowOnHUD( bool bShow )
-{
- 	if ( m_bShowOnHUD != bShow )
-	{
- 		m_pAchievementMgr->SetDirty( true );
-	}
-
-	m_bShowOnHUD = bShow;
 }
 
 void CBaseAchievement::HandleProgressUpdate()
 {
-	// which notification is this
-	int iProgress = -1;
-	if( m_iProgressMsgIncrement > 0 ) iProgress = m_iCount / m_iProgressMsgIncrement;
-
-	// if we haven't already shown this progress step, show it
-	if ( iProgress > m_iProgressShown || m_iCount == 1 )
+	// if we've hit the right # of progress steps to show a progress notification, show it
+	if ( ( m_iProgressMsgIncrement > 0 ) && m_iCount >= m_iProgressMsgMinimum && ( 0 == ( m_iCount % m_iProgressMsgIncrement ) ) )
 	{
-		ShowProgressNotification();
-		// remember progress step shown so we don't show it again if the player loads an earlier save game
-		// and gets past this point again
-		m_iProgressShown = iProgress;
-		m_pAchievementMgr->SetDirty( true );
+		// which notification is this
+		int iProgress = m_iCount / m_iProgressMsgIncrement;
+		// if we haven't already shown this progress step, show it
+		if ( iProgress > m_iProgressShown )
+		{
+			ShowProgressNotification();
+			// remember progress step shown so we don't show it again if the player loads an earlier save game
+			// and gets past this point again
+			m_iProgressShown = iProgress;
+			m_pAchievementMgr->SetDirty( true, m_nUserSlot );
+		}					
 	}
 }
 
@@ -318,22 +340,6 @@ void CBaseAchievement::CalcProgressMsgIncrement()
 	{
 		m_iProgressMsgIncrement = 0;
 	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CBaseAchievement::SetNextThink( float flThinkTime ) 
-{ 
-	m_pAchievementMgr->SetAchievementThink( this, flThinkTime ); 
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CBaseAchievement::ClearThink( void ) 
-{ 
-	m_pAchievementMgr->SetAchievementThink( this, THINK_CLEAR ); 
 }
 
 //-----------------------------------------------------------------------------
@@ -377,12 +383,25 @@ void CBaseAchievement::OnMapEvent( const char *pEventName )
 //-----------------------------------------------------------------------------
 void CBaseAchievement::AwardAchievement()
 {
+#ifdef INFESTED_DLL
+#ifndef _DEBUG
+	// No awarding if they cheated!
+	if ( ASWGameRules() && ASWGameRules()->m_bCheated )
+	{
+		if ( g_nAchivementBitchCount++ < 10 )
+		{
+			DevMsg( "Achievements can't be earned if SV_CHEATS was used in this mission!\n", GetName() );
+		}
+		return;
+	}
+#endif
+#endif
+
 	Assert( !IsAchieved() );
 	if ( IsAchieved() )
 		return;
 
-	ShowProgressNotification();
-	m_pAchievementMgr->AwardAchievement( m_iAchievementID );
+	m_pAchievementMgr->AwardAchievement( m_iAchievementID, m_nUserSlot );
 }
 
 //-----------------------------------------------------------------------------
@@ -407,6 +426,20 @@ void CBaseAchievement::OnComponentEvent( const char *pchComponentName )
 //-----------------------------------------------------------------------------
 void CBaseAchievement::EnsureComponentBitSetAndEvaluate( int iBitNumber )
 {
+#ifdef INFESTED_DLL
+#ifndef _DEBUG
+	// No incrementing if they cheated!
+	if ( ASWGameRules() && ASWGameRules()->m_bCheated )
+	{
+		if ( g_nAchivementBitchCount++ < 10 )
+		{
+			DevMsg( "Achievements can't be earned if SV_CHEATS was used in this mission!\n", GetName() );
+		}
+		return;
+	}
+#endif
+#endif
+
 	Assert( iBitNumber < 64 );	// this is bit #, not a bit mask
 
 	if ( IsAchieved() )
@@ -418,7 +451,7 @@ void CBaseAchievement::EnsureComponentBitSetAndEvaluate( int iBitNumber )
 	// see if we already have gotten this component
 	if ( 0 == ( iBitMask & m_iComponentBits ) )
 	{				
-		if ( !AlwaysEnabled() && !m_pAchievementMgr->CheckAchievementsEnabled() )
+		if ( !m_pAchievementMgr->CheckAchievementsEnabled() )
 		{
 			Msg( "Achievements disabled, ignoring achievement component for %s\n", GetName() );
 			return;
@@ -426,10 +459,51 @@ void CBaseAchievement::EnsureComponentBitSetAndEvaluate( int iBitNumber )
 
 		// new component, set the bit and increment the count
 		SetComponentBits( m_iComponentBits | iBitMask );
-		if ( m_iCount != m_iGoal )
+
+#if !defined( NO_STEAM )
+		// if this achievement's progress should be stored in Steam, set the steam stat for it
+		if ( StoreProgressInSteam() && steamapicontext->SteamUserStats() )
+		{
+			// Set the Steam stat with the same name as the achievement.  Only cached locally until we upload it.
+			char pszProgressName[1024];
+			Q_snprintf( pszProgressName, 1024, "%s_STAT", GetName() );
+			bool bRet = steamapicontext->SteamUserStats()->SetStat( pszProgressName, m_iCount );
+			if ( !bRet )
+			{
+				DevMsg( "ISteamUserStats::GetStat failed to set progress value in Steam for achievement %s\n", pszProgressName );
+			}
+
+			if ( HasComponents() )
+			{
+				Q_snprintf( pszProgressName, 1024, "%s_COMP", GetName() );
+				int32 bits = (int32) GetComponentBits();
+				bool bRet = steamapicontext->SteamUserStats()->SetStat( pszProgressName, bits );
+				if ( !bRet )
+				{
+					DevMsg( "ISteamUserStats::GetStat failed to set component value in Steam for achievement %s\n", pszProgressName );
+				}
+			}
+
+			// Upload user data to commit the change to Steam so if the client crashes, progress isn't lost.
+			// Only upload if we haven't uploaded recently, to keep us from spamming Steam with uploads.  If we don't
+			// upload now, it will get uploaded no later than level shutdown.
+			if ( ( m_pAchievementMgr->GetTimeLastUpload() == 0 ) || ( Plat_FloatTime() - m_pAchievementMgr->GetTimeLastUpload() > 60 * 15 ) )
+			{
+				m_pAchievementMgr->UploadUserData( m_nUserSlot );
+			}
+		}
+#endif
+
+		Assert( m_iCount <= m_iGoal );
+		if ( m_iCount == m_iGoal )
+		{
+			// all components found, award the achievement (and save state)
+			AwardAchievement();
+		}
+		else
 		{
 			// save our state at the next good opportunity
-			m_pAchievementMgr->SetDirty( true );		
+			m_pAchievementMgr->SetDirty( true, m_nUserSlot );		
 
 			if ( cc_achievement_debug.GetInt() )
 			{
@@ -437,7 +511,7 @@ void CBaseAchievement::EnsureComponentBitSetAndEvaluate( int iBitNumber )
 			}
 
 			ShowProgressNotification();
-		}
+		}				
 	}
 	else
 	{
@@ -445,15 +519,6 @@ void CBaseAchievement::EnsureComponentBitSetAndEvaluate( int iBitNumber )
 		{
 			Msg( "Component %d for achievement %s found, but already had that component\n", iBitNumber, GetName() );
 		}
-	}
-
-	// Check to see if we've achieved our goal even if the bit is already set 
-	// (this fixes some older achievements that are stuck in the 9/9 state and could never be evaluated)
-	Assert( m_iCount <= m_iGoal );
-	if ( m_iCount == m_iGoal )
-	{
-		// all components found, award the achievement (and save state)
-		AwardAchievement();
 	}
 }
 
@@ -507,17 +572,9 @@ void CBaseAchievement::SetComponentBits( uint64 iComponentBits )
 	Assert( m_iFlags & ACH_HAS_COMPONENTS );
 	// set the bit field
 	m_iComponentBits = iComponentBits; 
+
 	// count how many bits are set and save that as the count
-	int iNumBitsSet = 0;
-	while ( iComponentBits > 0 )
-	{
-		if ( iComponentBits & 1 )
-		{
-			iNumBitsSet++;
-		}
-		iComponentBits >>= 1;
-	}
-	m_iCount = iNumBitsSet;
+	m_iCount = UTIL_CountNumBitsSet( iComponentBits );
 }
 
 //-----------------------------------------------------------------------------
@@ -535,8 +592,8 @@ bool CBaseAchievement::ShouldSaveWithGame()
 //-----------------------------------------------------------------------------
 bool CBaseAchievement::ShouldSaveGlobal() 
 { 
-	// save if we should get saved globally and have a non-zero count, or if we have been achieved, or if the player has pinned this achievement to the HUD
-	return ( ( ( m_iFlags & ACH_SAVE_GLOBAL ) > 0 && ( GetCount() > 0 ) ) || IsAchieved() || ( m_iProgressShown > 0 ) || ShouldShowOnHUD() );
+	// save if we should get saved globally and have a non-zero count, or if we have been achieved
+	return ( ( ( m_iFlags & ACH_SAVE_GLOBAL ) > 0 && ( GetCount() > 0 ) ) || IsAchieved() || ( m_iProgressShown > 0 ) );
 }
 
 //-----------------------------------------------------------------------------
@@ -555,63 +612,18 @@ bool CBaseAchievement::IsActive()
 	return true;
 }
 
-//=============================================================================
-// HPE_BEGIN:
-// [pfreese] Moved serialization from AchievementMgr to here so that derived
-// classes can persist additional data
-//=============================================================================
-
 //-----------------------------------------------------------------------------
-// Purpose: Serialize our data to the KeyValues node
+// Purpose: Clears achievement data
 //-----------------------------------------------------------------------------
-void CBaseAchievement::GetSettings( KeyValues *pNodeOut )
+void CBaseAchievement::ClearAchievementData()
 {
-	pNodeOut->SetInt( "value", IsAchieved() ? 1 : 0 );
-
-	if ( HasComponents() )
+	SetCount( 0 );
+	if ( this->HasComponents() )
 	{
-		pNodeOut->SetUint64( "data", m_iComponentBits );
+		this->SetComponentBits( 0 );
 	}
-	else
-	{
-		if ( !IsAchieved() )
-		{
-			pNodeOut->SetInt( "data", m_iCount );
-		}
-	}
-	pNodeOut->SetInt( "hud", ShouldShowOnHUD() ? 1 : 0 );
-	pNodeOut->SetInt( "msg", m_iProgressShown );
+	SetAchieved( false );
 }
-
-//-----------------------------------------------------------------------------
-// Purpose: Unserialize our data from the KeyValues node
-//-----------------------------------------------------------------------------
-void CBaseAchievement::ApplySettings( KeyValues *pNodeIn )
-{
-	// set the count
-	if ( pNodeIn->GetInt( "value" ) > 0 )
-	{
-		m_iCount = m_iGoal;
-		m_bAchieved = true;
-	}
-	else if ( !HasComponents() )
-	{
-		m_iCount = pNodeIn->GetInt( "data" );
-	}
-
-	// if this achievement has components, set the component bits
-	if ( HasComponents() )
-	{
-		int64 iComponentBits = pNodeIn->GetUint64( "data" );
-		SetComponentBits( iComponentBits );
-	}
-	SetShowOnHUD( !!pNodeIn->GetInt( "hud" ) );
-	m_iProgressShown = pNodeIn->GetInt( "msg" );
-}
-
-//=============================================================================
-// HPE_END
-//=============================================================================
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
@@ -738,8 +750,28 @@ void CAchievement_AchievedCount::Init()
 // Count how many achievements have been earned in our range
 void CAchievement_AchievedCount::OnSteamUserStatsStored( void )
 {
-	// DO NO CALL. REPLACED BY CHECKMETAACHIEVEMENTS!
-	Assert( 0 );
+	int iAllAchievements = m_pAchievementMgr->GetAchievementCount();
+	int iAchieved = 0;
+
+	for ( int i=0; i<iAllAchievements; ++i )
+	{		
+		IAchievement* pCurAchievement = (IAchievement*)m_pAchievementMgr->GetAchievementByIndex( i, STEAM_PLAYER_SLOT );
+		Assert ( pCurAchievement );
+
+		int iAchievementID = pCurAchievement->GetAchievementID();
+		if ( iAchievementID < m_iLowRange || iAchievementID > m_iHighRange )
+			continue;
+
+		if ( pCurAchievement->IsAchieved() )
+		{
+			iAchieved++;
+		}
+	}
+
+	if ( iAchieved >= m_iNumRequired )
+	{
+		IncrementCount();
+	}
 }
 
 void CAchievement_AchievedCount::SetAchievementsRequired( int iNumRequired, int iLowRange, int iHighRange )

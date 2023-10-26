@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -32,6 +32,7 @@ public:
 	static void IncrementSuppressionCount( CBaseEntity *pTarget );
 	static void DecrementSuppressionCount( CBaseEntity *pTarget );
 
+	virtual void Precache();
 	void Spawn();
 
 private:

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -269,7 +269,7 @@ void CFlextalkActor::SetFlexTarget( LocalFlexController_t flexnum, float value )
 	if (1 || random->RandomFloat( 0.0, 1.0 ) < 0.2)
 	{
 		value2 = random->RandomFloat( value - 0.2, value + 0.2 );
-		value2 = clamp( value2, 0.0f, 1.0f );
+		value2 = clamp( value2, 0.0, 1.0 );
 	}
 
 

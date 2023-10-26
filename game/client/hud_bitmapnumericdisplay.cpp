@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -24,7 +24,7 @@ using namespace vgui;
 //-----------------------------------------------------------------------------
 CHudBitmapNumericDisplay::CHudBitmapNumericDisplay(vgui::Panel *parent, const char *name) : vgui::Panel(parent, name)
 {
-	vgui::Panel *pParent = g_pClientMode->GetViewport();
+	vgui::Panel *pParent = GetClientMode()->GetViewport();
 	SetParent( pParent );
 
 	m_iValue = 0;
@@ -110,7 +110,7 @@ void CHudBitmapNumericDisplay::PaintNumbers(int xpos, int ypos, int value, Color
 		{
 			sprintf( a, "number_%d", i );
 
-			m_pNumbers[i] = gHUD.GetIcon( a );
+			m_pNumbers[i] = HudIcons().GetIcon( a );
 		}
 
 		if( !m_pNumbers[0] )

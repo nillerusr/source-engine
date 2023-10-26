@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -44,7 +44,7 @@ class CHandle : public CBaseHandle
 {
 public:
 
-			CHandle() = default;
+			CHandle();
 			CHandle( int iEntry, int iSerialNumber );
 			CHandle( const CBaseHandle &handle );
 			CHandle( T *pVal );
@@ -70,6 +70,12 @@ public:
 // ----------------------------------------------------------------------- //
 // Inlines.
 // ----------------------------------------------------------------------- //
+
+template<class T>
+CHandle<T>::CHandle()
+{
+}
+
 
 template<class T>
 CHandle<T>::CHandle( int iEntry, int iSerialNumber )

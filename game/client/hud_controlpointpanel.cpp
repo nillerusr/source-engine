@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -10,13 +10,17 @@
 #include <vgui_controls/Label.h>
 #include <vgui_controls/EditablePanel.h>
 #include <vgui_controls/ImagePanel.h>
-#include <vgui/ISurface.h>
+#include <vgui/isurface.h>
 #include "c_baseplayer.h"
 #include "iclientmode.h"
 #include "c_team_objectiveresource.h"
 #include "c_team.h"
 #include "view.h"
 #include "teamplay_gamerules.h"
+
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
 
 #define INTRO_NUM_FAKE_PLAYERS		3
 
@@ -127,8 +131,9 @@ CHudCapturePanelProgressBar::CHudCapturePanelProgressBar( vgui::Panel *parent, c
 	if ( m_iTexture == -1 ) // we didn't find it, so create a new one
 	{
 		m_iTexture = vgui::surface()->CreateNewTextureID();	
-		vgui::surface()->DrawSetTextureFile( m_iTexture, "vgui/progress_bar", true, false );
 	}
+
+	vgui::surface()->DrawSetTextureFile( m_iTexture, "vgui/progress_bar", true, false );
 }
 
 //-----------------------------------------------------------------------------
@@ -375,8 +380,9 @@ CHudCapturePanelIcon::CHudCapturePanelIcon( vgui::Panel *parent, const char *nam
 	if ( m_iTexture == -1 ) // we didn't find it, so create a new one
 	{
 		m_iTexture = vgui::surface()->CreateNewTextureID();	
-		vgui::surface()->DrawSetTextureFile( m_iTexture, "vgui/capture_icon", true, false );
 	}
+
+	vgui::surface()->DrawSetTextureFile( m_iTexture, "vgui/capture_icon", true, false );
 }
 
 //-----------------------------------------------------------------------------
@@ -410,7 +416,7 @@ void CHudCapturePanelIcon::Paint()
 //-----------------------------------------------------------------------------
 CHudCapturePanel::CHudCapturePanel( const char *pElementName ) : CHudElement( pElementName ), BaseClass( NULL, "HudCapturePanel" ) 
 {
-	SetParent( g_pClientMode->GetViewport() );
+	SetParent( GetClientMode()->GetViewport() );
 
 	m_iCurrentCP = -1;
 	m_bFakingCapture = false;

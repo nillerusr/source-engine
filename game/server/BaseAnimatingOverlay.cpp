@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -15,6 +15,10 @@
 
 #include "saverestore_utlvector.h"
 #include "dt_utlvector_send.h"
+
+#include "datacache/imdlcache.h"
+
+#include "toolframework/itoolframework.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -104,14 +108,9 @@ void CAnimationLayer::Init( CBaseAnimatingOverlay *pOverlay )
 	m_nSequence = 0;
 	m_nPriority = 0;
 	m_nOrder.Set( CBaseAnimatingOverlay::MAX_OVERLAYS );
-
-	m_flBlendIn = 0.0;
-	m_flBlendOut = 0.0;
-
 	m_flKillRate = 100.0;
 	m_flKillDelay = 0.0;
 	m_flPlaybackRate = 1.0;
-	m_flLastEventCheck = 0.0;
 	m_flLastAccess = gpGlobals->curtime;
 	m_flLayerAnimtime = 0;
 	m_flLayerFadeOuttime = 0;
@@ -254,6 +253,21 @@ void CBaseAnimatingOverlay::VerifyOrder( void )
 }
 
 
+//-----------------------------------------------------------------------------
+// Purpose: Sets the entity's model, clearing animation data
+// Input  : *szModelName - 
+//-----------------------------------------------------------------------------
+void CBaseAnimatingOverlay::SetModel( const char *szModelName )
+{
+	for ( int j=0; j<m_AnimOverlay.Count(); ++j )
+	{
+		m_AnimOverlay[j].Init( this );
+	}
+
+	BaseClass::SetModel( szModelName );
+}
+
+
 //------------------------------------------------------------------------------
 // Purpose : advance the animation frame up to the current time
 //			 if an flInterval is passed in, only advance animation that number of seconds
@@ -281,13 +295,13 @@ void CBaseAnimatingOverlay::StudioFrameAdvance ()
 				if (pLayer->m_flKillDelay > 0)
 				{
 					pLayer->m_flKillDelay -= flAdvance;
-					pLayer->m_flKillDelay = clamp( 	pLayer->m_flKillDelay, 0.0f, 1.0f );
+					pLayer->m_flKillDelay = clamp( 	pLayer->m_flKillDelay, 0.0, 1.0 );
 				}
 				else if (pLayer->m_flWeight != 0.0f)
 				{
 					// give it at least one frame advance cycle to propagate 0.0 to client
 					pLayer->m_flWeight -= pLayer->m_flKillRate * flAdvance;
-					pLayer->m_flWeight = clamp( (float) pLayer->m_flWeight, 0.0f, 1.0f );
+					pLayer->m_flWeight = clamp( 	pLayer->m_flWeight, 0.0, 1.0 );
 				}
 				else
 				{
@@ -354,7 +368,7 @@ void CBaseAnimatingOverlay::DispatchAnimEvents ( CBaseAnimating *eventHandler )
 
 	for ( int i = 0; i < m_AnimOverlay.Count(); i++ )
 	{
-		if (m_AnimOverlay[ i ].IsActive())
+		if (m_AnimOverlay[ i ].IsActive() && !m_AnimOverlay[ i ].NoEvents() )
 		{
 			m_AnimOverlay[ i ].DispatchAnimEvents( eventHandler, this );
 		}
@@ -399,7 +413,7 @@ void CAnimationLayer::DispatchAnimEvents( CBaseAnimating *eventHandler, CBaseAni
 		if (flEnd >= flLastVisibleCycle || flEnd < 0.0) 
 		{
 			m_bSequenceFinished = true;
-			flEnd = 1.0f;
+			flEnd = 1.01f;
 		}
 	}
 	m_flLastEventCheck = flEnd;
@@ -428,13 +442,18 @@ void CAnimationLayer::DispatchAnimEvents( CBaseAnimating *eventHandler, CBaseAni
 		}
 
 		// Msg( "dispatch %d (%d : %.2f)\n", index - 1, event.event, event.eventtime );
+		event.m_bHandledByScript = eventHandler->HandleScriptedAnimEvent( &event );
+		if ( eventHandler->HandleBehaviorAnimEvent( &event ) )
+		{
+			event.m_bHandledByScript = true;
+		}
 		eventHandler->HandleAnimEvent( &event );
 	}
 }
 
 
 
-void CBaseAnimatingOverlay::GetSkeleton( CStudioHdr *pStudioHdr, Vector pos[], Quaternion q[], int boneMask )
+void CBaseAnimatingOverlay::GetSkeleton( CStudioHdr *pStudioHdr, Vector pos[], QuaternionAligned q[], int boneMask )
 {
 	if(!pStudioHdr)
 	{
@@ -453,7 +472,7 @@ void CBaseAnimatingOverlay::GetSkeleton( CStudioHdr *pStudioHdr, Vector pos[], Q
 	boneSetup.AccumulatePose( pos, q, GetSequence(), GetCycle(), 1.0, gpGlobals->curtime, m_pIk );
 
 	// sort the layers
-	int layer[MAX_OVERLAYS] = {};
+	int layer[MAX_OVERLAYS];
 	int i;
 	for (i = 0; i < m_AnimOverlay.Count(); i++)
 	{
@@ -570,6 +589,7 @@ int CBaseAnimatingOverlay::AddGesture( Activity activity, bool autokill /*= true
 		return FindGestureLayer( activity );
 	}
 
+	MDLCACHE_CRITICAL_SECTION();
 	int seq = SelectWeightedSequence( activity );
 	if ( seq <= 0 )
 	{
@@ -717,6 +737,7 @@ int CBaseAnimatingOverlay::AllocateLayer( int iPriority )
 
 		iOpenLayer = m_AnimOverlay.AddToTail();
 		m_AnimOverlay[iOpenLayer].Init( this );
+		m_AnimOverlay[iOpenLayer].NetworkStateChanged();
 	}
 
 	// make sure there's always an empty unused layer so that history slots will be available on the client when it is used
@@ -726,6 +747,7 @@ int CBaseAnimatingOverlay::AllocateLayer( int iPriority )
 		{
 			i = m_AnimOverlay.AddToTail();
 			m_AnimOverlay[i].Init( this );
+			m_AnimOverlay[i].NetworkStateChanged();
 		}
 	}
 
@@ -899,7 +921,7 @@ void CBaseAnimatingOverlay::SetLayerCycle( int iLayer, float flCycle )
 
 	if (!m_AnimOverlay[iLayer].m_bLooping)
 	{
-		flCycle = clamp( flCycle, 0.0f, 1.0f );
+		flCycle = clamp( flCycle, 0.0, 1.0 );
 	}
 	m_AnimOverlay[iLayer].m_flCycle = flCycle;
 	m_AnimOverlay[iLayer].MarkActive( );
@@ -916,8 +938,8 @@ void CBaseAnimatingOverlay::SetLayerCycle( int iLayer, float flCycle, float flPr
 
 	if (!m_AnimOverlay[iLayer].m_bLooping)
 	{
-		flCycle = clamp( flCycle, 0.0f, 1.0f );
-		flPrevCycle = clamp( flPrevCycle, 0.0f, 1.0f );
+		flCycle = clamp( flCycle, 0.0, 1.0 );
+		flPrevCycle = clamp( flPrevCycle, 0.0, 1.0 );
 	}
 	m_AnimOverlay[iLayer].m_flCycle = flCycle;
 	m_AnimOverlay[iLayer].m_flPrevCycle = flPrevCycle;
@@ -1046,6 +1068,23 @@ void CBaseAnimatingOverlay::SetLayerNoRestore( int iLayer, bool bNoRestore )
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CBaseAnimatingOverlay::SetLayerNoEvents( int iLayer, bool bNoEvents )
+{
+	if (!IsValidLayer( iLayer ))
+		return;
+
+	if (bNoEvents)
+	{
+		m_AnimOverlay[iLayer].m_fFlags |= ANIM_LAYER_NOEVENTS;
+	}
+	else
+	{
+		m_AnimOverlay[iLayer].m_fFlags &= ~ANIM_LAYER_NOEVENTS;
+	}
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1126,10 +1165,12 @@ void CBaseAnimatingOverlay::SetNumAnimOverlays( int num )
 	if ( m_AnimOverlay.Count() < num )
 	{
 		m_AnimOverlay.AddMultipleToTail( num - m_AnimOverlay.Count() );
+		NetworkStateChanged();
 	}
 	else if ( m_AnimOverlay.Count() > num )
 	{
 		m_AnimOverlay.RemoveMultiple( num, m_AnimOverlay.Count() - num );
+		NetworkStateChanged();
 	}
 }
 
@@ -1143,5 +1184,3 @@ bool CBaseAnimatingOverlay::HasActiveLayer( void )
 
 	return false;
 }
-
-//-----------------------------------------------------------------------------

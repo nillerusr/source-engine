@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -17,6 +17,7 @@
 #include "tier0/memdbgon.h"
 #undef new
 
+class CHud;
 //-----------------------------------------------------------------------------
 // Purpose: Base class for all hud elements
 //-----------------------------------------------------------------------------
@@ -30,15 +31,17 @@ public:
 	// destructor - removes object from the global list
 	virtual						~CHudElement();
 
+	virtual void				SetHud( CHud *pHud );
+
 	// called when the Hud is initialised (whenever the DLL is loaded)
 	virtual void				Init( void ) { return; }
 
 	// called whenever the video mode changes, and whenever Init() would be called, so the hud can vid init itself
 	virtual void				VidInit( void ) { return; }
 
-	// LevelInit's called whenever a new level is starting
+	// LevelInit's called whenever a new level's starting
 	virtual void				LevelInit( void ) { return; };
-	// LevelShutdown's called whenever a level is finishing
+	// LevelShutdown's called whenever a level's finishing
 	virtual void				LevelShutdown( void ) { return; };
 
 	// called whenever the hud receives "reset" message, which is (usually) every time the client respawns after getting killed
@@ -61,6 +64,9 @@ public:
 
 	bool						IsParentedToClientDLLRootPanel() const;
 	void						SetParentedToClientDLLRootPanel( bool parented );
+
+	// Return true if this HUD element expects an entry in  HudLayout.res
+	virtual bool				WantsHudLayoutEntry( void ) const { return true; }
 
 	// memory handling, uses calloc so members are zero'd out on instantiation
     void *operator new( size_t stAllocateBlock )	
@@ -104,6 +110,11 @@ public:
 	// by panels with a lower priority and will only lock out panels with a lower priority
 	virtual int	GetRenderGroupPriority();
 
+	void SetSplitScreenPlayerSlot( int nSlot );
+	int GetSplitScreenPlayerSlot() const;
+
+	virtual void OnSplitScreenStateChanged() {}
+
 public: // IGameEventListener Interface
 	
 	virtual void FireGameEvent( IGameEvent * event ) {}
@@ -115,6 +126,7 @@ public:
 
 protected:
 	int							m_iHiddenBits;
+	int							m_nSplitScreenPlayerSlot;
 
 private:
 	const char					*m_pElementName;
@@ -122,6 +134,7 @@ private:
 	bool						m_bIsParentedToClientDLLRootPanel;
 
 	CUtlVector< int >			m_HudRenderGroups;
+	CHud						*m_pHud;
 };
 
 #include "utlpriorityqueue.h"

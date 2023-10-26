@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose:		A gib is a chunk of a body, or a piece of wood/metal/rocks/etc.
 //
@@ -342,7 +342,7 @@ void CGib::WaitTillLand ( void )
 
 	if ( GetAbsVelocity() == vec3_origin )
 	{
-		SetRenderColorA( 255 );
+		SetRenderAlpha( 255 );
 		m_nRenderMode = kRenderTransTexture;
 		if ( GetMoveType() != MOVETYPE_VPHYSICS )
 		{
@@ -587,7 +587,7 @@ void CGib::Spawn( const char *szGibModel )
 	
 	// sometimes an entity inherits the edict from a former piece of glass,
 	// and will spawn using the same render FX or m_nRenderMode! bad!
-	SetRenderColorA( 255 );
+	SetRenderAlpha( 255 );
 	m_nRenderMode = kRenderNormal;
 	m_nRenderFX = kRenderFxNone;
 	
@@ -598,11 +598,6 @@ void CGib::Spawn( const char *szGibModel )
 	SetCollisionGroup( COLLISION_GROUP_DEBRIS );
 
 	SetModel( szGibModel );
-
-#ifdef HL1_DLL
-	SetElasticity( 1.0 );
-	UTIL_SetSize( this, vec3_origin, vec3_origin );
-#endif//HL1_DLL
 
 	SetNextThink( gpGlobals->curtime + 4 );
 	m_lifeTime = 25;

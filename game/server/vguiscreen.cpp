@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: This is an entity that represents a vgui screen
 //
@@ -20,7 +20,7 @@
 IMPLEMENT_SERVERCLASS_ST(CVGuiScreen, DT_VGuiScreen)
 	SendPropFloat(SENDINFO(m_flWidth),	0, SPROP_NOSCALE ),
 	SendPropFloat(SENDINFO(m_flHeight),	0, SPROP_NOSCALE ),
-	SendPropInt(SENDINFO(m_nAttachmentIndex), 5, SPROP_UNSIGNED ),
+	SendPropIntWithMinusOneFlag(SENDINFO(m_nAttachmentIndex), 6 ),
 	SendPropInt(SENDINFO(m_nPanelName), MAX_VGUI_SCREEN_STRING_BITS, SPROP_UNSIGNED ),
 	SendPropInt(SENDINFO(m_fScreenFlags), VGUI_SCREEN_MAX_BITS, SPROP_UNSIGNED ),
 	SendPropInt(SENDINFO(m_nOverlayMaterial), MAX_MATERIAL_STRING_BITS, SPROP_UNSIGNED ),

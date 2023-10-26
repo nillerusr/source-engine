@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -27,7 +27,6 @@ public:
 	virtual int		UpdateTransmitState();
 
 	void InputSetMaxRagdollCount(inputdata_t &data);
-	void InputSetMaxRagdollCountDX8(inputdata_t &data);
 
 	int DrawDebugTextOverlays(void);
 
@@ -37,9 +36,7 @@ public:
 
 	CNetworkVar( int,  m_iCurrentMaxRagdollCount );
 
-	int m_iDXLevel;
 	int m_iMaxRagdollCount;
-	int m_iMaxRagdollCountDX8;
 
 	bool m_bSaveImportant;
 };
@@ -53,16 +50,12 @@ LINK_ENTITY_TO_CLASS( game_ragdoll_manager, CRagdollManager );
 
 BEGIN_DATADESC( CRagdollManager )
 
-	//DEFINE_FIELD( m_iDXLevel, FIELD_INTEGER ),
-
 	DEFINE_FIELD( m_iCurrentMaxRagdollCount, FIELD_INTEGER ),
 	DEFINE_KEYFIELD( m_iMaxRagdollCount, FIELD_INTEGER,	"MaxRagdollCount" ),
-	DEFINE_KEYFIELD( m_iMaxRagdollCountDX8, FIELD_INTEGER,	"MaxRagdollCountDX8" ),
 
 	DEFINE_KEYFIELD( m_bSaveImportant, FIELD_BOOLEAN, "SaveImportant" ),
 
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetMaxRagdollCount",  InputSetMaxRagdollCount ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetMaxRagdollCountDX8",  InputSetMaxRagdollCountDX8 ),
 
 END_DATADESC()
 
@@ -72,7 +65,6 @@ END_DATADESC()
 CRagdollManager::CRagdollManager( void )
 {
 	m_iMaxRagdollCount = -1;
-	m_iMaxRagdollCountDX8 = -1;
 	m_iCurrentMaxRagdollCount = -1;
 }
 
@@ -92,11 +84,6 @@ int CRagdollManager::UpdateTransmitState()
 void CRagdollManager::Activate()
 {
 	BaseClass::Activate();
-
-	// Cache off the DX level for use later.
-	ConVarRef mat_dxlevel( "mat_dxlevel" );
-	m_iDXLevel = mat_dxlevel.GetInt();
-	
 	UpdateCurrentMaxRagDollCount();
 }
 
@@ -104,15 +91,7 @@ void CRagdollManager::Activate()
 //-----------------------------------------------------------------------------
 void CRagdollManager::UpdateCurrentMaxRagDollCount()
 {
-	if ( ( m_iDXLevel < 90 ) && ( m_iMaxRagdollCountDX8 >= 0 ) )
-	{
-		m_iCurrentMaxRagdollCount = m_iMaxRagdollCountDX8;
-	}
-	else
-	{
-		m_iCurrentMaxRagdollCount = m_iMaxRagdollCount;
-	}
-
+	m_iCurrentMaxRagdollCount = m_iMaxRagdollCount;
 	s_RagdollLRU.SetMaxRagdollCount( m_iCurrentMaxRagdollCount );
 }
 
@@ -126,12 +105,6 @@ void CRagdollManager::InputSetMaxRagdollCount(inputdata_t &inputdata)
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-void CRagdollManager::InputSetMaxRagdollCountDX8(inputdata_t &inputdata)
-{
-	m_iMaxRagdollCountDX8 = inputdata.value.Int();
-	UpdateCurrentMaxRagDollCount();
-}
-
 bool RagdollManager_SaveImportant( CAI_BaseNPC *pNPC )
 {
 #ifdef HL2_DLL

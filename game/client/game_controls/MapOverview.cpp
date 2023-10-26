@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: MapOverview.cpp: implementation of the CMapOverview class.
 //
@@ -7,10 +7,10 @@
 
 #include "cbase.h"
 #include "mapoverview.h"
-#include <vgui/ISurface.h>
+#include <vgui/isurface.h>
 #include <vgui/ILocalize.h>
 #include <filesystem.h>
-#include <KeyValues.h>
+#include <keyvalues.h>
 #include <convar.h>
 #include "mathlib/mathlib.h"
 #include <game/client/iviewport.h>
@@ -32,7 +32,18 @@ ConVar overview_tracks( "overview_tracks", "1", FCVAR_ARCHIVE | FCVAR_CLIENTCMD_
 ConVar overview_locked( "overview_locked", "1", FCVAR_ARCHIVE | FCVAR_CLIENTCMD_CAN_EXECUTE, "Locks map angle, doesn't follow view angle.\n" );
 ConVar overview_alpha( "overview_alpha",  "1.0", FCVAR_ARCHIVE | FCVAR_CLIENTCMD_CAN_EXECUTE, "Overview map translucency.\n" );
 
-IMapOverviewPanel *g_pMapOverview = NULL; // we assume only one overview is created
+static IMapOverviewPanel *g_pMapOverview[ MAX_SPLITSCREEN_PLAYERS ];
+
+void SetMapOverView( int nSlot, IMapOverviewPanel *pPanel )
+{
+	g_pMapOverview[ nSlot ] = pPanel;
+}
+
+IMapOverviewPanel *GetMapOverView()
+{
+	ASSERT_LOCAL_PLAYER_RESOLVABLE();
+	return g_pMapOverview[ GET_ACTIVE_SPLITSCREEN_SLOT() ];
+}
 
 static int AdjustValue( int curValue, int targetValue, int amount )
 {
@@ -56,7 +67,7 @@ static int AdjustValue( int curValue, int targetValue, int amount )
 
 CON_COMMAND( overview_zoom, "Sets overview map zoom: <zoom> [<time>] [rel]" )
 {
-	if ( !g_pMapOverview || args.ArgC() < 2 )
+	if ( !GetMapOverView() || args.ArgC() < 2 )
 		return;
 
 	float zoom = Q_atof( args[ 1 ] );
@@ -67,15 +78,15 @@ CON_COMMAND( overview_zoom, "Sets overview map zoom: <zoom> [<time>] [rel]" )
 		time = Q_atof( args[ 2 ] );
 
 	if ( args.ArgC() == 4 )
-		zoom *= g_pMapOverview->GetZoom();
+		zoom *= GetMapOverView()->GetZoom();
 
 	// We are going to store their zoom pick as the resultant overview size that it sees.  This way, the value will remain
 	// correct even on a different map that has a different intrinsic zoom.
 	float desiredViewSize = 0.0f;
-	desiredViewSize = (zoom * OVERVIEW_MAP_SIZE * g_pMapOverview->GetFullZoom()) / g_pMapOverview->GetMapScale();
-	g_pMapOverview->SetPlayerPreferredViewSize( desiredViewSize );
+	desiredViewSize = (zoom * OVERVIEW_MAP_SIZE * GetMapOverView()->GetFullZoom()) / GetMapOverView()->GetMapScale();
+	GetMapOverView()->SetPlayerPreferredViewSize( desiredViewSize );
 
-	if( !g_pMapOverview->AllowConCommandsWhileAlive() )
+	if( !GetMapOverView()->AllowConCommandsWhileAlive() )
 	{
 		C_BasePlayer *localPlayer = CBasePlayer::GetLocalPlayer();
 		if( localPlayer && CBasePlayer::GetLocalPlayer()->IsAlive() )
@@ -84,12 +95,12 @@ CON_COMMAND( overview_zoom, "Sets overview map zoom: <zoom> [<time>] [rel]" )
 			return;// In the death cam spiral counts as alive
 	}
 
-	g_pClientMode->GetViewportAnimationController()->RunAnimationCommand( g_pMapOverview->GetAsPanel(), "zoom", zoom, 0.0, time, vgui::AnimationController::INTERPOLATOR_LINEAR );
+	GetClientMode()->GetViewportAnimationController()->RunAnimationCommand( GetMapOverView()->GetAsPanel(), "zoom", zoom, 0.0, time, vgui::AnimationController::INTERPOLATOR_LINEAR );
 }
 
 CON_COMMAND( overview_mode, "Sets overview map mode off,small,large: <0|1|2>" )
 {
-	if ( !g_pMapOverview )
+	if ( !GetMapOverView() )
 		return;
 
 	int mode;
@@ -97,7 +108,7 @@ CON_COMMAND( overview_mode, "Sets overview map mode off,small,large: <0|1|2>" )
 	if ( args.ArgC() < 2 )
 	{
 		// toggle modes
-		mode = g_pMapOverview->GetMode() + 1;
+		mode = GetMapOverView()->GetMode() + 1;
 
 		if ( mode >  CMapOverview::MAP_MODE_FULL )
 			mode = CMapOverview::MAP_MODE_OFF;
@@ -109,9 +120,9 @@ CON_COMMAND( overview_mode, "Sets overview map mode off,small,large: <0|1|2>" )
 	}
 
 	if( mode != CMapOverview::MAP_MODE_RADAR )
-		g_pMapOverview->SetPlayerPreferredMode( mode );
+		GetMapOverView()->SetPlayerPreferredMode( mode );
 
-	if( !g_pMapOverview->AllowConCommandsWhileAlive() )
+	if( !GetMapOverView()->AllowConCommandsWhileAlive() )
 	{
 		C_BasePlayer *localPlayer = CBasePlayer::GetLocalPlayer();
 		if( localPlayer && CBasePlayer::GetLocalPlayer()->IsAlive() )
@@ -120,7 +131,7 @@ CON_COMMAND( overview_mode, "Sets overview map mode off,small,large: <0|1|2>" )
 			return;// In the death cam spiral counts as alive
 	}
 
-	g_pMapOverview->SetMode( mode );
+	GetMapOverView()->SetMode( mode );
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -132,7 +143,7 @@ using namespace vgui;
 
 CMapOverview::CMapOverview( const char *pElementName ) : BaseClass( NULL, pElementName ), CHudElement( pElementName )
 {
-	SetParent( g_pClientMode->GetViewport()->GetVPanel() );
+	SetParent( GetClientMode()->GetViewport()->GetVPanel() );
 
 	SetBounds( 0,0, 256, 256 );
 	SetBgColor( Color( 0,0,0,100 ) );
@@ -173,7 +184,7 @@ CMapOverview::CMapOverview( const char *pElementName ) : BaseClass( NULL, pEleme
 
 	InitTeamColorsAndIcons();
 
-	g_pMapOverview = this;  // for cvars access etc
+	SetMapOverView( GET_ACTIVE_SPLITSCREEN_SLOT(), this );
 }
 
 void CMapOverview::Init( void )
@@ -181,7 +192,7 @@ void CMapOverview::Init( void )
 	// register for events as client listener
 	ListenForGameEvent( "game_newmap" );
 	ListenForGameEvent( "round_start" );
-	ListenForGameEvent( "player_connect_client" );
+	ListenForGameEvent( "player_connect" );
 	ListenForGameEvent( "player_info" );
 	ListenForGameEvent( "player_team" );
 	ListenForGameEvent( "player_spawn" );
@@ -229,8 +240,7 @@ CMapOverview::~CMapOverview()
 	if ( m_MapKeyValues )
 		m_MapKeyValues->deleteThis();
 
-	g_pMapOverview = NULL;
-
+	SetMapOverView( GET_ACTIVE_SPLITSCREEN_SLOT(), NULL );
 	//TODO release Textures ? clear lists
 }
 
@@ -320,7 +330,8 @@ void CMapOverview::UpdateFollowEntity()
 
 		if ( ent )
 		{
-			Vector position = MainViewOrigin();	// Use MainViewOrigin so SourceTV works in 3rd person
+			int nSlot = GET_ACTIVE_SPLITSCREEN_SLOT();
+			Vector position = MainViewOrigin(nSlot);	// Use MainViewOrigin so SourceTV works in 3rd person
 			QAngle angle = ent->EyeAngles();
 
 			if ( m_nFollowEntity <= MAX_PLAYERS )
@@ -564,15 +575,15 @@ void CMapOverview::DrawMapPlayerTrails()
 		
 		player->trail[0] = WorldToMap ( player->position );
 
-		for ( int iTrail=0; iTrail<(MAX_TRAIL_LENGTH-1); iTrail++)
+		for ( int i=0; i<(MAX_TRAIL_LENGTH-1); i++)
 		{
-			if ( player->trail[iTrail +1].x == 0 && player->trail[iTrail +1].y == 0 )
+			if ( player->trail[i+1].x == 0 && player->trail[i+1].y == 0 )
 				break;
 
-			Vector2D pos1 = MapToPanel( player->trail[iTrail] );
-			Vector2D pos2 = MapToPanel( player->trail[iTrail +1] );
+			Vector2D pos1 = MapToPanel( player->trail[i] );
+			Vector2D pos2 = MapToPanel( player->trail[i+1] );
 
-			int intensity = 255 - float(255.0f * iTrail ) / MAX_TRAIL_LENGTH;
+			int intensity = 255 - float(255.0f * i) / MAX_TRAIL_LENGTH;
 
 			Vector2D dist = pos1 - pos2;
 			
@@ -593,6 +604,9 @@ void CMapOverview::DrawObjects( )
 	for (int i=0; i<m_Objects.Count(); i++)
 	{
 		MapObject_t *obj = &m_Objects[i];
+
+		if ( obj->flags & MAP_OBJECT_DONT_DRAW )
+			continue;
 
 		const char *text = NULL;
 
@@ -663,7 +677,7 @@ bool CMapOverview::DrawIcon( MapObject_t *obj )
 		Vertex_t( MapToPanel ( pos4 ), Vector2D(0,1) )
 	};
 
-	surface()->DrawSetColor( 255, 255, 255, 255 );
+	surface()->DrawSetColor( obj->iconColor );
 	surface()->DrawSetTexture( textureID );
 	surface()->DrawTexturedPolygon( 4, points );
 
@@ -933,7 +947,7 @@ void CMapOverview::FireGameEvent( IGameEvent *event )
 		ResetRound();
 	}
 
-	else if ( Q_strcmp(type,"player_connect_client") == 0 )
+	else if ( Q_strcmp(type,"player_connect") == 0 )
 	{
 		int index = event->GetInt("index"); // = entity index - 1 
 
@@ -1019,7 +1033,7 @@ void CMapOverview::SetMode(int mode)
 	{
 		ShowPanel( false );
 
-		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "MapOff" );
+		GetClientMode()->GetViewportAnimationController()->StartAnimationSequence( "MapOff" );
 	}
 	else if ( mode == MAP_MODE_INSET )
 	{
@@ -1041,7 +1055,7 @@ void CMapOverview::SetMode(int mode)
 
 		if ( mode != m_nMode && RunHudAnimations() )
 		{
-			g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "MapZoomToSmall" );
+			GetClientMode()->GetViewportAnimationController()->StartAnimationSequence( "MapZoomToSmall" );
 		}
 	}
 	else if ( mode == MAP_MODE_FULL )
@@ -1061,7 +1075,7 @@ void CMapOverview::SetMode(int mode)
 
 		if ( mode != m_nMode && RunHudAnimations() )
 		{
-			g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "MapZoomToLarge" );
+			GetClientMode()->GetViewportAnimationController()->StartAnimationSequence( "MapZoomToLarge" );
 		}
 	}
 
@@ -1186,7 +1200,7 @@ bool CMapOverview::SetTeamColor(int team, Color color)
 	return true;
 }
 
-CMapOverview::MapObject_t* CMapOverview::FindObjectByID(int objectID)
+MapObject_t* CMapOverview::FindObjectByID(int objectID)
 {
 	for ( int i = 0; i < m_Objects.Count(); i++ )
 	{
@@ -1197,8 +1211,24 @@ CMapOverview::MapObject_t* CMapOverview::FindObjectByID(int objectID)
 	return NULL;
 }
 
+MapObject_t* CMapOverview::FindObjectByIndex(int objectIndex)
+{
+	for ( int i = 0; i < m_Objects.Count(); i++ )
+	{
+		if ( m_Objects[i].index == objectIndex )
+			return &m_Objects[i];
+	}
+
+	return NULL;
+}
+
 int	CMapOverview::AddObject( const char *icon, int entity, float timeToLive )
 {
+	MapObject_t *pOldObject = FindObjectByIndex( entity );
+
+	if ( pOldObject )
+		return pOldObject->objectID;
+
 	MapObject_t obj; Q_memset( &obj, 0, sizeof(obj) );
 
 	obj.objectID = m_ObjectCounterID++;
@@ -1206,6 +1236,7 @@ int	CMapOverview::AddObject( const char *icon, int entity, float timeToLive )
 	obj.icon = AddIconTexture( icon );
 	obj.size = m_flIconSize;
 	obj.status = -1;
+	obj.iconColor = Color( 255, 255, 255, 255 );
 	
 	if ( timeToLive > 0 )
 		obj.endtime = gpGlobals->curtime + timeToLive;
@@ -1256,6 +1287,16 @@ void CMapOverview::SetObjectIcon( int objectID, const char *icon, float size )
 
 	obj->icon = AddIconTexture( icon );
 	obj->size = size;
+}
+
+void CMapOverview::SetObjectIconColor( int objectID, Color color )
+{
+	MapObject_t* obj = FindObjectByID( objectID );
+
+	if ( !obj )
+		return;
+
+	obj->iconColor = color;
 }
 
 void CMapOverview::SetObjectPosition( int objectID, const Vector &position, const QAngle &angle )

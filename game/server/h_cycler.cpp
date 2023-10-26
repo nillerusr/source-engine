@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: The Halflife Cycler NPCs
 //
@@ -18,7 +18,7 @@
 
 #define FCYCLER_NOTSOLID		0x0001
 
-extern short		g_sModelIndexSmoke; // (in combatweapon.cpp) holds the index for the smoke cloud
+extern int		g_sModelIndexSmoke; // (in combatweapon.cpp) holds the index for the smoke cloud
 
 BEGIN_DATADESC( CCycler )
 
@@ -180,7 +180,7 @@ int CCycler::OnTakeDamage( const CTakeDamageInfo &info )
 		m_flPlaybackRate = 1.0;
 		StudioFrameAdvance ();
 		m_flPlaybackRate = 0;
-		Msg( "sequence: %d, frame %.0f\n", GetSequence(), m_flCycle.Get() );
+		Msg( "sequence: %d, frame %.0f\n", GetSequence(), m_flCycle );
 	}
 
 	return 0;
@@ -206,7 +206,7 @@ void CCycler::InputSetSequence( inputdata_t &inputdata )
 			ResetSequence( iSeqNum );
 		}
 
-		if (m_flPlaybackRate == 0.0)
+		if (GetPlaybackRate() == 0.0)
 		{
 			ResetSequence( 0 );
 		}

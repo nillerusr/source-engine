@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Acts exactly like "AnimatedTexture", but ONLY if the texture 
 //			it's working on matches the desired texture to work on.
@@ -8,14 +8,15 @@
 // $NoKeywords: $
 //=============================================================================//
 #include "cbase.h"
-#include "materialsystem/imaterialproxy.h"
-#include "materialsystem/imaterialvar.h"
-#include "materialsystem/imaterial.h"
-#include "materialsystem/itexture.h"
-#include "baseanimatedtextureproxy.h"
+#include "materialsystem/IMaterialProxy.h"
+#include "materialsystem/IMaterialVar.h"
+#include "materialsystem/IMaterial.h"
+#include "materialsystem/ITexture.h"
+#include "BaseAnimatedTextureProxy.h"
 #include "utlstring.h"
 #include <KeyValues.h>
 
+#include "imaterialproxydict.h"
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -50,4 +51,4 @@ void CAnimateSpecificTexture::OnBind( void *pC_BaseEntity )
 	//else do nothing
 }
 
-EXPOSE_INTERFACE( CAnimateSpecificTexture, IMaterialProxy, "AnimateSpecificTexture" IMATERIAL_PROXY_INTERFACE_VERSION );
+EXPOSE_MATERIAL_PROXY( CAnimateSpecificTexture, AnimateSpecificTexture );

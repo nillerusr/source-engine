@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<!DOCTYPE CodeBlocks_project_file>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="1"/>
+	<Project>
+		<Option title="Static library"/>
+		<Option makefile="Makefile"/>
+		<Build>
+			<Target title="default">
+				<Option type="2"/>
+				<Option parameters=""/>
+				<Option includeInTargetAll="1"/>
+				<Option projectCompilerOptionsRelation="3"/>
+				<Option projectLinkerOptionsRelation="3"/>
+				<Option projectIncludeDirsRelation="3"/>
+				<Option projectLibDirsRelation="3"/>
+			</Target>
+		</Build>
+	</Project>
+</CodeBlocks_project_file>

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2006, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -112,7 +112,6 @@ class CModelPanelModelInfo
 {
 public:
 	CModelPanelModelInfo()
-		: m_mapBodygroupValues( DefLessFunc( int ) )
 	{
 		m_pszModelName = NULL;
 		m_pszModelName_HWM = NULL;
@@ -157,7 +156,6 @@ public:
 	Vector2D	m_vecViewportOffset;
 	Vector		m_vecFramedOriginOffset;
 	bool		m_bUseSpotlight;
-	CUtlMap< int, int > m_mapBodygroupValues;
 
 	CUtlVector<CModelPanelModelAnimation*>		m_Animations;
 	CUtlVector<CModelPanelAttachedModelInfo*>	m_AttachedModelsInfo;
@@ -176,15 +174,12 @@ public:
 
 	virtual void Paint();
 	virtual void ApplySettings( KeyValues *inResourceData );
-	virtual void OnCommand( const char *command ) OVERRIDE;
 	virtual void DeleteVCDData( void );
 	virtual void DeleteModelData( void );
 
 	virtual void SetFOV( int nFOV ){ m_nFOV = nFOV; }
 	virtual void SetPanelDirty( void ){ m_bPanelDirty = true; }
 	virtual bool SetSequence( const char *pszSequence );
-	virtual void SetSkin( int nSkin );
-	void SetBodyGroup( const char* pszBodyGroupName, int nGroup );
 
 	MESSAGE_FUNC_PARAMS( OnAddAnimation, "AddAnimation", data );
 	MESSAGE_FUNC_PARAMS( OnSetAnimation, "SetAnimation", data );
@@ -199,7 +194,6 @@ public:
 	void		CalculateFrameDistance( void );
 	void		ZoomToFrameDistance( void );
 
-	void		UpdateModel();
 public: // IGameEventListener:
 	virtual void FireGameEvent( IGameEvent * event );
 
@@ -212,6 +206,8 @@ private:
 	void InitCubeMaps();
 	int FindAnimByName( const char *pszName );
 	void CalculateFrameDistanceInternal( const model_t *pModel );
+
+	void UpdateIfDirty();
 
 public:
 	int								m_nFOV;

@@ -1,0 +1,48 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from gettext import install
+from waflib import Utils
+import os, sys
+
+top = '.'
+PROJECT_NAME = 'interfaces'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	conf.define('VERSION_SAFE_STEAM_API_INTERFACES',1)
+
+def build(bld):
+	source = [
+		'interfaces.cpp',
+	]
+
+	includes = [
+		'.',
+		'../common',
+		'../public',
+		'../public/tier0'
+	]
+
+	defines = []
+
+#	libs = ['tier0','tier1','tier2','vstdlib']
+
+	install_path = bld.env.LIBDIR
+
+	bld.stlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+#		use      = libs,
+		install_path = install_path,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)
+

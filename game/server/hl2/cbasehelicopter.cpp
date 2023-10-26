@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Base class for helicopters & helicopter-type vehicles
 //
@@ -116,6 +116,7 @@ BEGIN_DATADESC( CBaseHelicopter )
 	DEFINE_INPUTFUNC( FIELD_VOID, "DisableRotorWash", InputDisableRotorWash ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "MoveTopSpeed", InputMoveTopSpeed ),
 	DEFINE_INPUTFUNC( FIELD_FLOAT, "MoveSpecifiedSpeed", InputMoveSpecifiedSpeed ),
+	DEFINE_INPUTFUNC( FIELD_FLOAT, "SetMaxSpeed", InputSetMaxSpeed ),
 	DEFINE_INPUTFUNC( FIELD_STRING, "SetAngles", InputSetAngles ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "EnableRotorSound", InputEnableRotorSound ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "DisableRotorSound", InputDisableRotorSound ),
@@ -147,7 +148,10 @@ CBaseHelicopter::CBaseHelicopter( void )
 //------------------------------------------------------------------------------
 void CBaseHelicopter::Precache( void )
 {
+	BaseClass::Precache();
+	CRopeKeyframe::PrecacheShakeRopes();
 }
+
 
 //------------------------------------------------------------------------------
 // Purpose :
@@ -660,7 +664,7 @@ void CBaseHelicopter::DoRotorPhysicsPush( const Vector &vecRotorOrigin, float fl
 
 
 //------------------------------------------------------------------------------
-// Updates the enemy
+// Returns the max distance to search
 //------------------------------------------------------------------------------
 float CBaseHelicopter::EnemySearchDistance( ) 
 {
@@ -1264,14 +1268,14 @@ void CBaseHelicopter::DrawDebugGeometryOverlays(void)
 // Input  :
 // Output : 
 //-----------------------------------------------------------------------------
-void CBaseHelicopter::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr, CDmgAccumulator *pAccumulator )
+void CBaseHelicopter::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr )
 {
 	// Take no damage from trace attacks unless it's blast damage. RadiusDamage() sometimes calls
 	// TraceAttack() as a means for delivering blast damage. Usually when the explosive penetrates
 	// the target. (RPG missiles do this sometimes).
 	if( info.GetDamageType() & (DMG_BLAST|DMG_AIRBOAT) )
 	{
-		BaseClass::TraceAttack( info, vecDir, ptr, pAccumulator );
+		BaseClass::TraceAttack( info, vecDir, ptr );
 	}
 }
 
@@ -1426,6 +1430,11 @@ void CBaseHelicopter::InputDisableRotorWash( inputdata_t &inputdata )
 //-----------------------------------------------------------------------------
 void CBaseHelicopter::InputMoveTopSpeed( inputdata_t &inputdata )
 {
+	MoveTopSpeed( GetMaxSpeed() );
+}
+
+void CBaseHelicopter::MoveTopSpeed( float flInstantSpeed )
+{
 	Vector vecVelocity;
 	ComputeActualTargetPosition( GetMaxSpeed(), 1.0f, 0.0f, &vecVelocity, false );
 	vecVelocity -= GetAbsOrigin();
@@ -1436,7 +1445,7 @@ void CBaseHelicopter::InputMoveTopSpeed( inputdata_t &inputdata )
 		GetVectors( &vecVelocity, NULL, NULL );
 	}
 
-	vecVelocity *= GetMaxSpeed();
+	vecVelocity *= flInstantSpeed;
 	SetAbsVelocity( vecVelocity );
 }
 
@@ -1459,6 +1468,11 @@ void CBaseHelicopter::InputMoveSpecifiedSpeed( inputdata_t &inputdata )
 
 	vecVelocity *= flSpeed;
 	SetAbsVelocity( vecVelocity );
+}
+
+void CBaseHelicopter::InputSetMaxSpeed( inputdata_t &inputdata )
+{
+	m_flMaxSpeed = inputdata.value.Float();
 }
 
 //------------------------------------------------------------------------------

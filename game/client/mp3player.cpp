@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: A simple .mp3 player example
 //
@@ -9,7 +9,7 @@
 #if 0
 #include "mp3player.h"
 #include "KeyValues.h"
-#include "filesystem.h"
+#include "FileSystem.h"
 
 #include "vgui_controls/MenuButton.h"
 #include "vgui_controls/Menu.h"
@@ -18,7 +18,7 @@
 #include "vgui_controls/Slider.h"
 #include "vgui_controls/ListPanel.h"
 #include "vgui/IPanel.h"
-#include "vgui/IVGui.h"
+#include "vgui/IVgui.h"
 #include "vgui/ISurface.h"
 #include "vgui/IInput.h"
 #include "vgui/ILocalize.h"
@@ -1870,7 +1870,7 @@ void CMP3Player::RestoreDirectory( KeyValues *dir, SoundDirectory_t *sd )
 		}
 		else if ( !Q_stricmp( kv->GetName(), "gamesounds" ) )
 		{
-			sd->m_bGameSound = kv->GetInt() ? true : false;
+			sd->m_bGameSound = kv->GetBool();
 		}
 		else if ( !Q_stricmp( kv->GetName(), "dirname" ) )
 		{
@@ -2303,6 +2303,7 @@ void CMP3Player::ShowFileOpenDialog( bool saving )
 	m_hSaveLoadPlaylist = new FileOpenDialog( this, "Choose Playlist", !saving );
 	if ( m_hSaveLoadPlaylist.Get() )
 	{
+		m_hSaveLoadPlaylist->SetDeleteSelfOnClose( false );
 		m_hSaveLoadPlaylist->SetStartDirectory( "resource/" );
 		m_hSaveLoadPlaylist->AddFilter( "*.txt", "Playlists", true );
 		m_hSaveLoadPlaylist->DoModal( m_bSavingFile );

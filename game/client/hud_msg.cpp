@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -11,7 +11,7 @@
 #include "cbase.h"
 #include "clientmode.h"
 #include "hudelement.h"
-#include "KeyValues.h"
+#include "keyvalues.h"
 #include "vgui_controls/AnimationController.h"
 #include "engine/IEngineSound.h"
 #include <bitbuf.h>
@@ -29,14 +29,14 @@ void CHud::MsgFunc_ResetHUD( bf_read &msg )
 void CHud::ResetHUD()
 {
 	// clear all hud data
-	g_pClientMode->GetViewportAnimationController()->CancelAllAnimations();
+	GetClientMode()->GetViewportAnimationController()->CancelAllAnimations();
 
-	for ( int i = 0; i < m_HudList.Size(); i++ )
+	for ( int i = 0; i < GetHudList().Count(); i++ )
 	{
-		m_HudList[i]->Reset();
+		GetHudList()[i]->Reset();
 	}
 
-	g_pClientMode->GetViewportAnimationController()->RunAllAnimationsToCompletion();
+	GetClientMode()->GetViewportAnimationController()->RunAllAnimationsToCompletion();
 #ifndef _XBOX
 	// reset sensitivity
 	m_flMouseSensitivity = 0;

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Implements the Sticky Bolt code. This constraints ragdolls to the world
 //			after being hit by a crossbow bolt. If something here is acting funny
@@ -18,8 +18,8 @@
 #include "decals.h"
 #include "iefx.h"
 #include "engine/IEngineSound.h"
-#include "materialsystem/imaterialvar.h"
-#include "IEffects.h"
+#include "materialsystem/IMaterialVar.h"
+#include "ieffects.h"
 #include "engine/IEngineTrace.h"
 #include "vphysics/constraints.h"
 #include "engine/ivmodelinfo.h"
@@ -126,9 +126,10 @@ private:
 	Vector  m_vWorld;
 };
 
+#define CROSSBOW_BOLT_MODEL "models/crossbow_bolt.mdl" 
 void CreateCrossbowBolt( const Vector &vecOrigin, const Vector &vecDirection )
 {
-	model_t *pModel = (model_t *)engine->LoadModel( "models/crossbow_bolt.mdl" );
+	model_t *pModel = (model_t *)engine->LoadModel( CROSSBOW_BOLT_MODEL );
 
 	QAngle vAngles;
 
@@ -173,4 +174,6 @@ void StickyBoltCallback( const CEffectData &data )
 	 StickRagdollNow( data.m_vOrigin, data.m_vNormal );
 }
 
-DECLARE_CLIENT_EFFECT( "BoltImpact", StickyBoltCallback );
+DECLARE_CLIENT_EFFECT_BEGIN( BoltImpact, StickyBoltCallback )
+	PRECACHE( MODEL, CROSSBOW_BOLT_MODEL )
+DECLARE_CLIENT_EFFECT_END()

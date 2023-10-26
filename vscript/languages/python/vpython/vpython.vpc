@@ -1,0 +1,51 @@
+//-----------------------------------------------------------------------------
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\..\..\.."
+$Macro OUTBINDIR	"."
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_win32_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\python25\include"
+		//$AdditionalIncludeDirectories           "$BASE;$SRCDIR\common\python\$PYTHONVER;$SRCDIR\public\python"
+
+		$PreprocessorDefinitions			"$BASE;PROTECTED_THINGS_DISABLE;VPYTHON_TEST"
+	}
+	
+	$Linker
+	{
+		$AdditionalLibraryDirectories	"..\python25\lib"
+	}
+
+}
+
+$Project "vpython"
+{
+	//$Folder  "Link libraries"
+	//{
+	//	$File  "..\python25\lib\python25.lib"
+	//}
+
+	$Folder "Source Files"
+	{
+		$File	"..\..\..\..\public\vscript\ivscript.h"
+		$File	"..\..\..\..\public\vscript\vscript_templates.h"
+		$File 	"vpython.cpp"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					 //$AdditionalOptions					"/EHa"
+				}
+			}
+		}
+	}
+	
+}
+

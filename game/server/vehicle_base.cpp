@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: UNDONE: Rename this to prop_vehicle.cpp !!!
 //
@@ -84,6 +84,17 @@ CPropVehicle::CPropVehicle() : m_VehiclePhysics( this )
 CPropVehicle::~CPropVehicle ()
 {
 }
+
+
+//-----------------------------------------------------------------------------
+// Precache 
+//-----------------------------------------------------------------------------
+void CPropVehicle::Precache()
+{
+	BaseClass::Precache();
+	GetPhysics()->Precache();
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -962,7 +973,7 @@ int CPropVehicleDriveable::VPhysicsGetObjectList( IPhysicsObject **pList, int li
 //-----------------------------------------------------------------------------
 // Purpose: Handle trace attacks from the physcannon
 //-----------------------------------------------------------------------------
-void CPropVehicleDriveable::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr, CDmgAccumulator *pAccumulator )
+void CPropVehicleDriveable::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr )
 {
 	// If we've just been zapped by the physcannon, try and right ourselves
 	if ( info.GetDamageType() & DMG_PHYSGUN )
@@ -1006,7 +1017,7 @@ void CPropVehicleDriveable::TraceAttack( const CTakeDamageInfo &info, const Vect
 
 	}
 
-	BaseClass::TraceAttack( info, vecDir, ptr, pAccumulator );
+	BaseClass::TraceAttack( info, vecDir, ptr );
 }
 
 //=============================================================================

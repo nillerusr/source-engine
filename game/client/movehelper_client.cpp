@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -6,7 +6,7 @@
 //=============================================================================//
 #include "cbase.h"
 #include <stdarg.h>
-#include "engine/IEngineSound.h"
+#include "engine/ienginesound.h"
 #include "filesystem.h"
 #include "igamemovement.h"
 #include "engine/IEngineTrace.h"
@@ -44,6 +44,8 @@ public:
 
 	virtual bool IsWorldEntity( const CBaseHandle &handle );
 
+	void			SetHost( CBaseEntity *host );
+
 private:
 	// results, tallied on client and server, but only used by server to run SV_Impact.
 	// we store off our velocity in the trace_t structure so that we can determine results
@@ -53,13 +55,15 @@ private:
 		Vector	deltavelocity;
 		trace_t trace;
 
-		touchlist_t() = default;
+		touchlist_t() {}
 
 	private:
 		touchlist_t( const touchlist_t &src );
 	};
 
 	CUtlVector<touchlist_t>			m_TouchList;
+
+	CBaseEntity*	m_pHost;
 };	
 
 //-----------------------------------------------------------------------------
@@ -76,12 +80,25 @@ static CMoveHelperClient s_MoveHelperClient;
 //-----------------------------------------------------------------------------
 CMoveHelperClient::CMoveHelperClient( void )
 {
+	m_pHost = 0;
 	SetSingleton( this );
 }
 
 CMoveHelperClient::~CMoveHelperClient( void )
 {
 	SetSingleton( 0 );
+}
+
+//-----------------------------------------------------------------------------
+// Indicates which entity we're going to move
+//-----------------------------------------------------------------------------
+
+void CMoveHelperClient::SetHost( CBaseEntity *host )
+{
+	m_pHost = host;
+
+	// In case any stuff is ever left over, sigh...
+	ResetTouchList();
 }
 
 //-----------------------------------------------------------------------------
@@ -111,7 +128,7 @@ bool CMoveHelperClient::AddToTouched( const trace_t& tr, const Vector& impactvel
 	int i;
 
 	// Look for duplicates
-	for (i = 0; i < m_TouchList.Size(); i++)
+	for (i = 0; i < m_TouchList.Count(); i++)
 	{
 		if (m_TouchList[i].trace.m_pEnt == tr.m_pEnt)
 		{
@@ -128,47 +145,39 @@ bool CMoveHelperClient::AddToTouched( const trace_t& tr, const Vector& impactvel
 
 void CMoveHelperClient::ProcessImpacts( void )
 {
-	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
-	if ( !pPlayer )
-		return;
-
-	// Relink in order to build absorigin and absmin/max to reflect any changes
-	//  from prediction.  Relink will early out on SOLID_NOT
-
-	// TODO: Touch triggers on the client
-	//pPlayer->PhysicsTouchTriggers();
+	m_pHost->PhysicsTouchTriggers();
 
 	// Don't bother if the player ain't solid
-	if ( pPlayer->IsSolidFlagSet( FSOLID_NOT_SOLID ) )
+	if ( m_pHost->IsSolidFlagSet( FSOLID_NOT_SOLID ) )
 		return;
 
 	// Save off the velocity, cause we need to temporarily reset it
-	Vector vel = pPlayer->GetAbsVelocity();
+	Vector vel = m_pHost->GetAbsVelocity();
 
 	// Touch other objects that were intersected during the movement.
-	for (int i = 0 ; i < m_TouchList.Size(); i++)
+	for (int i = 0 ; i < m_TouchList.Count(); i++)
 	{
 		// Run the impact function as if we had run it during movement.
 		C_BaseEntity *entity = ClientEntityList().GetEnt( m_TouchList[i].trace.m_pEnt->entindex() );
 		if ( !entity )
 			continue;
 
-		Assert( entity != pPlayer );
+		Assert( entity != m_pHost );
 		// Don't ever collide with self!!!!
-		if ( entity == pPlayer )
+		if ( entity == m_pHost )
 			continue;
 
 		// Reconstruct trace results.
 		m_TouchList[i].trace.m_pEnt = entity;
 
 		// Use the velocity we had when we collided, so boxes will move, etc.
-		pPlayer->SetAbsVelocity( m_TouchList[i].deltavelocity );
+		m_pHost->SetAbsVelocity( m_TouchList[i].deltavelocity );
 
-		entity->PhysicsImpact( pPlayer, m_TouchList[i].trace );
+		entity->PhysicsImpact( m_pHost, m_TouchList[i].trace );
 	}
 
 	// Restore the velocity
-	pPlayer->SetAbsVelocity( vel );
+	m_pHost->SetAbsVelocity( vel );
 
 	// So no stuff is ever left over, sigh...
 	ResetTouchList();
@@ -181,7 +190,7 @@ void CMoveHelperClient::StartSound( const Vector& origin, const char *soundname 
 
 	CLocalPlayerFilter filter;
 	filter.UsePredictionRules();
-	C_BaseEntity::EmitSound( filter, SOUND_FROM_LOCAL_PLAYER, soundname, &origin );
+	C_BaseEntity::EmitSound( filter, m_pHost->entindex(), soundname, &origin );
 }
 
 
@@ -206,7 +215,7 @@ void CMoveHelperClient::StartSound( const Vector& origin, int channel,
 		ep.m_nPitch = pitch;
 		ep.m_pOrigin = &origin;
 
-		C_BaseEntity::EmitSound( filter, SOUND_FROM_LOCAL_PLAYER, ep );
+		C_BaseEntity::EmitSound( filter, m_pHost->entindex(), ep );
 	}
 }
 
@@ -247,11 +256,8 @@ void CMoveHelperClient::Con_NPrintf( int idx, char const* pFormat, ...)
 	Q_vsnprintf(msg, sizeof( msg ), pFormat, marker);
 	va_end(marker);
 	
-#if defined( CSTRIKE_DLL ) || defined( DOD_DLL ) // reltodo
-	engine->Con_NPrintf( idx, "%s", msg );
-#else
+
 	engine->Con_NPrintf( idx, msg );
-#endif
 }
 
 //-----------------------------------------------------------------------------

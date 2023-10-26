@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Frequently used global functions.
 //
@@ -152,6 +152,10 @@ BEGIN_DATADESC( CBaseToggle )
 END_DATADESC()
 
 
+IMPLEMENT_SERVERCLASS_ST(CBaseToggle, DT_BaseToggle)
+END_SEND_TABLE()
+
+
 CBaseToggle::CBaseToggle()
 {
 #ifdef _DEBUG
@@ -163,6 +167,14 @@ CBaseToggle::CBaseToggle()
 	m_vecFinalDest.Init();
 	m_vecFinalAngle.Init();
 #endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Returns the velocity imparted to players standing on us.
+//-----------------------------------------------------------------------------
+void CBaseToggle::GetGroundVelocityToApply( Vector &vecGroundVel )
+{
+	vecGroundVel = GetLocalVelocity();
 }
 
 bool CBaseToggle::KeyValue( const char *szKeyName, const char *szValue )

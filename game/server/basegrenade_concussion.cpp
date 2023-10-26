@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -102,7 +102,8 @@ void CBaseGrenadeConcussion::Spawn( void )
 	SetLocalAngles( angles );
 
 	m_nRenderFX = kRenderFxGlowShell;
-	SetRenderColor( 200, 200, 20, 255 );
+	SetRenderColor( 200, 200, 20 );
+	SetRenderAlpha( 255 );
 	
 	// make NPCs afaid of it while in the air
 	SetThink( &CBaseGrenadeConcussion::FallThink );

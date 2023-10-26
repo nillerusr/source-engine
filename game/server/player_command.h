@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -32,7 +32,7 @@ public:
 
 	// Public interfaces:
 	// Run a movement command from the player
-	void			RunCommand ( CBasePlayer *player, CUserCmd *ucmd, IMoveHelper *moveHelper );
+	virtual void	RunCommand ( CBasePlayer *player, CUserCmd *ucmd, IMoveHelper *moveHelper );
 
 protected:
 	// Prepare for running movement

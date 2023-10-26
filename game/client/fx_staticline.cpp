@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -8,9 +8,9 @@
 //=============================================================================//
 #include "cbase.h"
 #include "clientsideeffects.h"
-#include "fx_staticline.h"
-#include "materialsystem/imaterial.h"
-#include "materialsystem/imesh.h"
+#include "FX_StaticLine.h"
+#include "materialsystem/IMaterial.h"
+#include "materialsystem/IMesh.h"
 #include "view.h"
 
 // memdbgon must be the last include file in a .cpp file!!!

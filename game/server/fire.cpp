@@ -1,10 +1,10 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
 // $NoKeywords: $
 //
-//=============================================================================//
+//===========================================================================//
 //---------------------------------------------------------
 //---------------------------------------------------------
 #include "cbase.h"
@@ -17,6 +17,8 @@
 #include "ispatialpartition.h"
 #include "collisionutils.h"
 #include "tier0/vprof.h"
+#include "nav.h"
+#include "nav_mesh.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -175,6 +177,7 @@ protected:
 	float	m_flDamageTime;
 	float	m_lastDamage;
 	float	m_flFireSize;	// size of the fire in world units
+	float	m_flLastNavUpdateTime;	// last time we told the nav mesh about ourselves
 
 	float	m_flHeatLevel;	// Used as a "health" for the fire.  > 0 means the fire is burning
 	float	m_flHeatAbsorb;	// This much heat must be "absorbed" before it gets transferred to the flame size
@@ -867,6 +870,7 @@ void CFire::Start()
 	SpawnEffect( (fireType_e)m_nFireType, FIRE_SCALE_FROM_SIZE(m_flFireSize) );
 	m_OnIgnited.FireOutput( this, this );
 	SetThink( &CFire::BurnThink );
+	m_flLastNavUpdateTime = 0.0f;
 	m_flDamageTime = 0;
 	// think right now
 	BurnThink();
@@ -992,10 +996,9 @@ void CFire::Update( float simTime )
 		CBaseEntity *pOther = pNearby[i];
 
 		if ( pOther == this )
-		{
 			continue;
-		}
-		else if ( FClassnameIs( pOther, "env_fire" ) )
+		
+		if ( FClassnameIs( pOther, "env_fire" ) )
 		{
 			if ( fireCount < ARRAYSIZE(pFires) )
 			{
@@ -1004,36 +1007,30 @@ void CFire::Update( float simTime )
 			}
 			continue;
 		}
-		else if ( pOther->m_takedamage == DAMAGE_NO )
+
+		if ( pOther->m_takedamage == DAMAGE_NO )
+			continue;
+
+		if ( !damage )
+			continue;
+
+		if ( FIRE_SPREAD_DAMAGE_MULTIPLIER != 1.0 || ( pOther->CollisionProp()->GetSurroundingBoundsType() == USE_ROTATION_EXPANDED_SEQUENCE_BOUNDS ) )
 		{
-			pNearby[i] = NULL;
+			// Do a tighter bounds for players and 
+			Vector otherMins, otherMaxs;
+			pOther->CollisionProp()->WorldSpaceAABB( &otherMins, &otherMaxs );
+			bool bDoDamage = IsBoxIntersectingBox( otherMins, otherMaxs, fireEntityDamageMins, fireEntityDamageMaxs );
+			if ( !bDoDamage )
+				continue;
 		}
-		else if ( damage )
+
+		// Make sure can actually see entity (don't damage through walls)
+		trace_t tr;
+		UTIL_TraceLine( this->WorldSpaceCenter(), pOther->WorldSpaceCenter(), MASK_FIRE_SOLID, pOther, COLLISION_GROUP_NONE, &tr );
+
+		if (tr.fraction == 1.0 && !tr.startsolid)
 		{
-			bool bDoDamage;
-
-			if ( FIRE_SPREAD_DAMAGE_MULTIPLIER != 1.0 && !pOther->IsPlayer() ) // if set to 1.0, optimizer will remove this code
-			{
-				Vector otherMins, otherMaxs;
-				pOther->CollisionProp()->WorldSpaceAABB( &otherMins, &otherMaxs );
-				bDoDamage = IsBoxIntersectingBox( otherMins, otherMaxs, 
-												  fireEntityDamageMins, fireEntityDamageMaxs );
-
-			}
-			else
-				bDoDamage = true;
-
-			if ( bDoDamage )
-			{
-				// Make sure can actually see entity (don't damage through walls)
-				trace_t tr;
-				UTIL_TraceLine( this->WorldSpaceCenter(), pOther->WorldSpaceCenter(), MASK_FIRE_SOLID, pOther, COLLISION_GROUP_NONE, &tr );
-
-				if (tr.fraction == 1.0 && !tr.startsolid)
-				{
-					pOther->TakeDamage( CTakeDamageInfo( this, this, outputDamage, damageFlags ) );
-				}
-			}
+			pOther->TakeDamage( CTakeDamageInfo( this, this, outputDamage, damageFlags ) );
 		}
 	}
 
@@ -1068,6 +1065,38 @@ void CFire::BurnThink( void )
 	SetNextThink( gpGlobals->curtime + FIRE_THINK_INTERVAL );
 
 	Update( FIRE_THINK_INTERVAL );
+
+#if 0
+	// Noone is currently using the NavMesh!
+
+	// only need to update the nav mesh infrequently
+	const float NavUpdateDelta = 5.0f;
+	if ( gpGlobals->curtime > m_flLastNavUpdateTime + NavUpdateDelta )
+	{
+		m_flLastNavUpdateTime = gpGlobals->curtime;
+
+		// mark overlapping nav areas as "damaging"
+		NavAreaCollector overlap;
+		Extent extent;
+		CollisionProp()->WorldSpaceAABB( &extent.lo, &extent.hi );
+		extent.lo.z -= HumanHeight;
+
+		// bloat extents enough to ensure any non-damaging area is actually safe
+		// bloat in Z as well to catch nav areas that may be slightly above/below ground
+		const float DangerBloat = 32.0f;
+		Vector dangerBloat( DangerBloat, DangerBloat, DangerBloat );
+		extent.lo -= dangerBloat;
+		extent.hi += dangerBloat;
+
+		TheNavMesh->ForAllAreasOverlappingExtent( overlap, extent );
+
+		FOR_EACH_VEC( overlap.m_area, it )
+		{
+			CNavArea *area = overlap.m_area[ it ];
+			area->MarkAsDamaging( NavUpdateDelta + 1.0f );
+		}
+	}
+#endif
 }
 
 void CFire::GoOutThink()

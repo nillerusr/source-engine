@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Base class for humanoid NPCs intended to fight along side player in close
 // environments
@@ -16,6 +16,7 @@
 #include "ai_behavior_lead.h"
 #include "ai_behavior_actbusy.h"
 #include "ai_behavior_fear.h"
+#include "ai_behavior_fightfromcover.h"
 
 #ifdef HL2_EPISODIC
 #include "ai_behavior_operator.h"
@@ -362,6 +363,7 @@ protected:
 
 	virtual CAI_FollowBehavior &GetFollowBehavior( void ) { return m_FollowBehavior; }
 
+	CAI_FightFromCoverBehavior		m_FightFromCoverBehavior;
 	CAI_AssaultBehavior				m_AssaultBehavior;
 	CAI_FollowBehavior				m_FollowBehavior;
 	CAI_StandoffBehavior			m_StandoffBehavior;

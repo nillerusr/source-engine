@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: This is a panel which is rendered image on top of an entity
 //
@@ -14,7 +14,7 @@
 #endif
 
 #include <vgui_controls/Button.h>
-#include "vgui_bitmapimage.h"
+#include "VGui_BitmapImage.h"
 
 //-----------------------------------------------------------------------------
 // forward declarations
@@ -55,10 +55,15 @@ public:
 	virtual void Paint( void );
 	virtual void PaintBackground( void ) {}
 
+	virtual void OnMouseDoublePressed( vgui::MouseCode code );
+	void SetDoublePressedCommand( const char *command );
+	void SetDoublePressedCommand( KeyValues *message );
+
 private:
 
 	BitmapImage	m_pImage[BUTTON_STATE_COUNT];
 	bool m_bImageLoaded[BUTTON_STATE_COUNT];
+	KeyValues *_doublePressedActionMessage;
 };
 
 

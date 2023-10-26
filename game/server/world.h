@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: The worldspawn entity. This spawns first when each level begins.
 //
@@ -11,6 +11,15 @@
 #pragma once
 #endif
 
+enum
+{
+	TIME_MIDNIGHT	= 0,
+	TIME_DAWN,
+	TIME_MORNING,
+	TIME_AFTERNOON,
+	TIME_DUSK,
+	TIME_EVENING,
+};
 
 class CWorld : public CBaseEntity
 {
@@ -28,6 +37,7 @@ public:
 	static void RegisterSharedEvents( void );
 	virtual void Spawn( void );
 	virtual void Precache( void );
+	virtual void UpdateOnRemove( void );
 	virtual bool KeyValue( const char *szKeyName, const char *szValue );
 	virtual void DecalTrace( trace_t *pTrace, char const *decalName );
 	virtual void VPhysicsCollision( int index, gamevcollisionevent_t *pEvent ) {}
@@ -50,7 +60,12 @@ public:
 	void SetDisplayTitle( bool display );
 	void SetStartDark( bool startdark );
 
+	int GetTimeOfDay() const;
+	void SetTimeOfDay( int iTimeOfDay );
+
 	bool IsColdWorld( void );
+
+	int GetTimeOfDay()	{ return m_iTimeOfDay; }
 
 private:
 	DECLARE_DATADESC();
@@ -69,6 +84,7 @@ private:
 	// start flags
 	CNetworkVar( bool, m_bStartDark );
 	CNetworkVar( bool, m_bColdWorld );
+	CNetworkVar( int, m_iTimeOfDay );
 	bool m_bDisplayTitle;
 };
 

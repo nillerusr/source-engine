@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -6,7 +6,7 @@
 // $NoKeywords: $
 //=============================================================================//
 #include "cbase.h"
-#include "particle_simple3d.h"
+#include "particle_simple3D.h"
 #include "view.h"
 
 // memdbgon must be the last include file in a .cpp file!!!

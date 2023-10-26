@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -88,7 +88,7 @@ public:
 public:
 
 	virtual void	OnDataChanged( DataUpdateType_t updateType );
-	virtual void	Simulate( void );
+	virtual bool	Simulate( void );
 	virtual void	ClientThink( void );
 
 public:
@@ -112,7 +112,7 @@ static void RecvProxy_HDRColorScale( const CRecvProxyData *pData, void *pStruct,
 }
 
 IMPLEMENT_CLIENTCLASS_DT_NOBASE( C_LightGlow, DT_LightGlow, CLightGlow )
-	RecvPropInt( RECVINFO(m_clrRender), 0, RecvProxy_IntToColor32 ),
+	RecvPropInt( RECVINFO(m_clrRender), 0, RecvProxy_Int32ToColor32 ),
 	RecvPropInt( RECVINFO( m_nHorizontalSize ) ),
 	RecvPropInt( RECVINFO( m_nVerticalSize ) ),
 	RecvPropInt( RECVINFO( m_nMinDist ) ),
@@ -134,13 +134,15 @@ m_nHorizontalSize( 0 ), m_nVerticalSize( 0 ), m_nMinDist( 0 ), m_nMaxDist( 0 )
 {
 	m_Glow.m_bDirectional = false;
 	m_Glow.m_bInSky = false;
+	AddToEntityList(ENTITY_LIST_SIMULATE);
 }
 
-void C_LightGlow::Simulate( void )
+bool C_LightGlow::Simulate( void )
 {
 	BaseClass::Simulate();
 
 	m_Glow.m_vPos = GetAbsOrigin();
+	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -156,13 +158,10 @@ void C_LightGlow::OnDataChanged( DataUpdateType_t updateType )
 	if ( updateType == DATA_UPDATE_CREATED )
 	{
 		// Setup our flare.
-		Vector vColor(
-			m_clrRender->r / 255.0f,
-			m_clrRender->g / 255.0f,
-			m_clrRender->b / 255.0f );
+		color24 c = GetRenderColor();
+		Vector vColor( c.r / 255.0f, c.g / 255.0f, c.b / 255.0f );
 
 		m_Glow.m_nSprites = 1;
-
 		m_Glow.m_Sprites[0].m_flVertSize = (float) m_nVerticalSize;
 		m_Glow.m_Sprites[0].m_flHorzSize = (float) m_nHorizontalSize;
 		m_Glow.m_Sprites[0].m_vColor = vColor;
@@ -181,11 +180,8 @@ void C_LightGlow::OnDataChanged( DataUpdateType_t updateType )
 	else if ( updateType == DATA_UPDATE_DATATABLE_CHANGED ) //Right now only color should change.
 	{
 		// Setup our flare.
-		Vector vColor(
-			m_clrRender->r / 255.0f,
-			m_clrRender->g / 255.0f,
-			m_clrRender->b / 255.0f );
-
+		color24 c = GetRenderColor();
+		Vector vColor( c.r / 255.0f, c.g / 255.0f, c.b / 255.0f );
 		m_Glow.m_Sprites[0].m_vColor = vColor;
 	}
 	

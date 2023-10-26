@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright (c) 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -56,7 +56,7 @@
 
 #define GUNSHIP_NUM_DAMAGE_OUTPUTS		4
 
-extern short		g_sModelIndexFireball;		// holds the index for the fireball
+extern int		g_sModelIndexFireball;		// holds the index for the fireball
 
 int g_iGunshipEffectIndex = -1;
 
@@ -273,7 +273,7 @@ public:
 	void	ApplyGeneralDrag( void );
 	void	ApplySidewaysDrag( const Vector &vecRight );
 
-	void	TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr, CDmgAccumulator *pAccumulator );
+	void	TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr );
 
 	void	UpdateEnemyTarget( void );
 
@@ -364,6 +364,8 @@ private:
 
 	CBaseEntity		*m_pRotorWashModel;
 	QAngle			m_vecAngAcceleration;
+	float			m_fMaxAngAcceleration;
+	Vector			m_vMaxAngVelocity;
 
 	float			m_flEndDestructTime;
 
@@ -429,6 +431,8 @@ BEGIN_DATADESC( CNPC_CombineGunship )
 	DEFINE_SOUNDPATCH( m_pAirBlastSound ),
 	DEFINE_SOUNDPATCH( m_pCannonSound ),
 	DEFINE_FIELD( m_vecAngAcceleration,FIELD_VECTOR ),
+	DEFINE_KEYFIELD( m_fMaxAngAcceleration, FIELD_FLOAT, "MaxAngAccel" ),
+	DEFINE_KEYFIELD( m_vMaxAngVelocity, FIELD_VECTOR, "MaxAngVelocity" ),
 	DEFINE_FIELD( m_flDeltaT,			FIELD_FLOAT ),
 	DEFINE_FIELD( m_flTimeNextAttack,	FIELD_TIME ),
 	DEFINE_FIELD( m_flNextSeeEnemySound,	FIELD_TIME ),
@@ -494,6 +498,9 @@ CNPC_CombineGunship::CNPC_CombineGunship( void )
 	m_pCrashingController = NULL;
 	m_hRagdoll = NULL;
 	m_hCrashTarget = NULL;
+
+	m_fMaxAngAcceleration = 1000.0f;
+	m_vMaxAngVelocity = Vector( 300.0f, 120.0f, 300.0f );
 }
 
 
@@ -551,6 +558,8 @@ void CNPC_CombineGunship::Spawn( void )
 	SetHullSizeNormal();
 
 	m_iMaxHealth = m_iHealth = 100;
+
+	m_flFrozenMax = 0.0f;
 
 	m_flFieldOfView = -0.707; // 270 degrees
 
@@ -679,6 +688,11 @@ void CNPC_CombineGunship::Precache( void )
 	PrecacheScriptSound( "NPC_CombineGunship.RotorSound" );
 	PrecacheScriptSound( "NPC_CombineGunship.ExhaustSound" );
 	PrecacheScriptSound( "NPC_CombineGunship.RotorBlastSound" );
+
+	PrecacheEffect( "ImpactGunship" );
+	PrecacheEffect( "AR2Explosion" );
+	PrecacheEffect( "GunshipMuzzleFlash" );
+	PrecacheEffect( "GunshipTracer" );
 
 	if ( hl2_episodic.GetBool() == true )
 	{
@@ -1728,13 +1742,13 @@ void CNPC_CombineGunship::FireCannonRound( void )
 		FireBulletsInfo_t info( 1, vecMuzzle, vecToEnemy, vec3_origin, MAX_COORD_RANGE, m_iAmmoType );
 		info.m_iTracerFreq = 1;
 		CAmmoDef *pAmmoDef = GetAmmoDef();
-		info.m_iPlayerDamage = pAmmoDef->PlrDamage( m_iAmmoType );
+		info.m_flPlayerDamage = pAmmoDef->PlrDamage( m_iAmmoType );
 
 		// If we've already hit the player, do 0 damage. This ensures we don't hit the
 		// player multiple times during a single burst.
 		if ( m_iBurstHits >= GUNSHIP_MAX_HITS_PER_BURST )
 		{
-			info.m_iPlayerDamage = 1;
+			info.m_flPlayerDamage = 1.0f;
 		}
 
 		FireBullets( info );
@@ -2194,7 +2208,6 @@ void CNPC_CombineGunship::Flight( void )
 	goalAngAccel.z = 2.0 * (AngleDiff( goalRoll, AngleNormalize( GetLocalAngles().z ) ) - GetLocalAngularVelocity().z * dt) / (dt * dt);
 
 	goalAngAccel.x = clamp( goalAngAccel.x, -300, 300 );
-	//goalAngAccel.y = clamp( goalAngAccel.y, -60, 60 );
 	goalAngAccel.y = clamp( goalAngAccel.y, -120, 120 );
 	goalAngAccel.z = clamp( goalAngAccel.z, -300, 300 );
 
@@ -2205,9 +2218,9 @@ void CNPC_CombineGunship::Flight( void )
 	angAccelAccel.y = (goalAngAccel.y - m_vecAngAcceleration.y) / dt;
 	angAccelAccel.z = (goalAngAccel.z - m_vecAngAcceleration.z) / dt;
 
-	angAccelAccel.x = clamp( angAccelAccel.x, -1000, 1000 );
-	angAccelAccel.y = clamp( angAccelAccel.y, -1000, 1000 );
-	angAccelAccel.z = clamp( angAccelAccel.z, -1000, 1000 );
+	angAccelAccel.x = clamp( angAccelAccel.x, -m_fMaxAngAcceleration, m_fMaxAngAcceleration );
+	angAccelAccel.y = clamp( angAccelAccel.y, -m_fMaxAngAcceleration, m_fMaxAngAcceleration );
+	angAccelAccel.z = clamp( angAccelAccel.z, -m_fMaxAngAcceleration, m_fMaxAngAcceleration );
 
 	m_vecAngAcceleration += angAccelAccel * 0.1;
 
@@ -2222,9 +2235,9 @@ void CNPC_CombineGunship::Flight( void )
 	QAngle angVel = GetLocalAngularVelocity();
 	angVel += m_vecAngAcceleration * 0.1;
 
-	//angVel.y = clamp( angVel.y, -60, 60 );
-	//angVel.y = clamp( angVel.y, -120, 120 );
-	angVel.y = clamp( angVel.y, -120, 120 );
+	angVel.x = clamp( angVel.x, -m_vMaxAngVelocity.x, m_vMaxAngVelocity.x );
+	angVel.y = clamp( angVel.y, -m_vMaxAngVelocity.y, m_vMaxAngVelocity.y );
+	angVel.z = clamp( angVel.z, -m_vMaxAngVelocity.z, m_vMaxAngVelocity.z );
 
 	SetLocalAngularVelocity( angVel );
 
@@ -2502,11 +2515,13 @@ void CNPC_CombineGunship::SelfDestruct( void )
 
 	UTIL_Remove( this );
 
+#ifndef INFESTED_DLL
 	// Record this so a nearby citizen can respond.
 	if ( GetCitizenResponse() )
 	{
 		GetCitizenResponse()->AddResponseTrigger( CR_PLAYER_KILLED_GUNSHIP );
 	}
+#endif
 
 #ifdef HL2_EPISODIC
 	NPCEventResponse()->TriggerEvent( "TLK_CITIZEN_RESPONSE_KILLED_GUNSHIP", false, false );
@@ -2828,7 +2843,7 @@ void CNPC_CombineGunship::MakeTracer( const Vector &vecTracerSrc, const trace_t 
 //			*ptr - 
 // Output : int
 //-----------------------------------------------------------------------------
-void CNPC_CombineGunship::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr, CDmgAccumulator *pAccumulator )
+void CNPC_CombineGunship::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr )
 {
 	// Reflect bullets
 	if ( info.GetDamageType() & DMG_BULLET )
@@ -2850,10 +2865,12 @@ void CNPC_CombineGunship::TraceAttack( const CTakeDamageInfo &info, const Vector
 		// If this is from a player, record it so a nearby citizen can respond.
 		if ( info.GetAttacker()->IsPlayer() )
 		{
+#ifndef INFESTED_DLL
 			if ( GetCitizenResponse() )
 			{
 				GetCitizenResponse()->AddResponseTrigger( CR_PLAYER_SHOT_GUNSHIP );
 			}
+#endif
 
 #ifdef HL2_EPISODIC
 			NPCEventResponse()->TriggerEvent( "TLK_CITIZEN_RESPONSE_SHOT_GUNSHIP", false, false );
@@ -2863,7 +2880,7 @@ void CNPC_CombineGunship::TraceAttack( const CTakeDamageInfo &info, const Vector
 		return;
 	}
 
-	BaseClass::TraceAttack( info, vecDir, ptr, pAccumulator );
+	BaseClass::TraceAttack( info, vecDir, ptr );
 }
 
 //-----------------------------------------------------------------------------

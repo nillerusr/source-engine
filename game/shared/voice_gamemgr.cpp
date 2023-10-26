@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -37,7 +37,7 @@ ConVar voice_serverdebug( "voice_serverdebug", "0" );
 
 // Set game rules to allow all clients to talk to each other.
 // Muted players still can't talk to each other.
-ConVar sv_alltalk( "sv_alltalk", "0", FCVAR_NOTIFY, "Players can hear all other players, no team restrictions" );
+ConVar sv_alltalk( "sv_alltalk", "0", FCVAR_NOTIFY | FCVAR_RELEASE, "Players can hear all other players, no team restrictions" );
 
 
 CVoiceGameMgr g_VoiceGameMgr;
@@ -52,7 +52,7 @@ static CBasePlayer* FindPlayerByName(const char *pTestName)
 {
 	for(int i=1; i <= gpGlobals->maxClients; i++)
 	{
-		edict_t *pEdict = engine->PEntityOfEntIndex(i);
+		edict_t *pEdict = INDEXENT(i);
 		if(pEdict)
 		{
 			CBaseEntity *pEnt = CBaseEntity::Instance(pEdict);
@@ -162,7 +162,7 @@ bool CVoiceGameMgr::ClientCommand( CBasePlayer *pPlayer, const CCommand &args )
 	{
 		for(int i=1; i < args.ArgC(); i++)
 		{
-			uint32 mask = 0;
+			unsigned int mask = 0;
 			sscanf( args[i], "%x", &mask);
 
 			if( i <= VOICE_MAX_PLAYERS_DW )
@@ -199,7 +199,7 @@ void CVoiceGameMgr::UpdateMasks()
 {
 	m_UpdateInterval = 0;
 
-	bool bAllTalk = !!sv_alltalk.GetInt();
+	bool bAllTalk = sv_alltalk.GetBool();
 
 	for(int iClient=0; iClient < m_nMaxPlayers; iClient++)
 	{
@@ -231,7 +231,7 @@ void CVoiceGameMgr::UpdateMasks()
 			{
 				CBaseEntity *pEnt = UTIL_PlayerByIndex(iOtherClient+1);
 				if(pEnt && pEnt->IsPlayer() && 
-					(bAllTalk || m_pHelper->CanPlayerHearPlayer(pPlayer, (CBasePlayer*)pEnt, bProximity )) )
+					(bAllTalk || m_pHelper->CanPlayerHearPlayer(pPlayer, assert_cast<CBasePlayer*>( pEnt ), bProximity )) )
 				{
 					gameRulesMask[iOtherClient] = true;
 					ProximityMask[iOtherClient] = bProximity;

@@ -60,6 +60,7 @@ class CSteamID;
 class IReplayFactory;
 class IReplaySystem;
 class IServer;
+class ISPSharedMemory;
 
 typedef struct player_info_s player_info_t;
 
@@ -402,6 +403,10 @@ public:
 
 	// Returns the SteamID of the specified player. It'll be NULL if the player hasn't authenticated yet.
 	virtual const CSteamID	*GetClientSteamIDByPlayerIndex( int entnum ) = 0;
+
+	//Finds or Creates a shared memory space, the returned pointer will automatically be AddRef()ed
+        virtual ISPSharedMemory *GetSinglePlayerSharedMemorySpace( const char *szName, int ent_num = MAX_EDICTS ) = 0;
+
 	// Gets a list of all clusters' bounds.  Returns total number of clusters.
 	virtual int GetClusterCount() = 0;
 	virtual int GetAllClusterBounds( bbox_t *pBBoxList, int maxBBox ) = 0;

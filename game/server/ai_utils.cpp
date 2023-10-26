@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -46,7 +46,7 @@ END_DATADESC()
 CAI_ShotRegulator::CAI_ShotRegulator() : m_nMinBurstShots(1), m_nMaxBurstShots(1)
 {
 	m_flMinRestInterval = 0.0f;
-	m_flMaxRestInterval = 0.0f;
+	m_flMinRestInterval = 0.0f;
 	m_flMinBurstInterval = 0.0f;
 	m_flMaxBurstInterval = 0.0f;
 	m_flNextShotTime = -1;
@@ -522,9 +522,6 @@ bool CAI_FreePass::ShouldAllowFVisible(bool bBaseResult )
 
 
 //-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-
-string_t g_iszFuncBrushClassname = NULL_STRING;
 
 //-----------------------------------------------------------------------------
 CTraceFilterNav::CTraceFilterNav( CAI_BaseNPC *pProber, bool bIgnoreTransientEntities, const IServerEntity *passedict, int collisionGroup, bool bAllowPlayerAvoid ) : 
@@ -547,14 +544,6 @@ bool CTraceFilterNav::ShouldHitEntity( IHandleEntity *pHandleEntity, int content
 
 	if ( m_pProber->GetMoveProbe()->ShouldBrushBeIgnored( pEntity ) == true )
 		return false;
-
-#ifdef HL1_DLL 
-	if ( ( contentsMask & CONTENTS_MOVEABLE ) == 0 )
-	{
-		if ( pEntity->ClassMatches( "func_pushable" ) )
-			return false;
-	}
-#endif
 
 	if ( m_bIgnoreTransientEntities && (pEntity->IsPlayer() || pEntity->IsNPC() ) )
 		return false;

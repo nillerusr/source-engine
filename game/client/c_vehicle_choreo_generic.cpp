@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright � 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -7,13 +7,11 @@
 #include "cbase.h"
 #include "hud.h"		
 #include "c_props.h"
-#include "iclientvehicle.h"
+#include "IClientVehicle.h"
 #include <vgui_controls/Controls.h>
 #include <Color.h>
 #include "vehicle_choreo_generic_shared.h"
 #include "vehicle_viewblend_shared.h"
-// NVNT haptic utils
-#include "haptics/haptic_utils.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -147,21 +145,8 @@ void C_PropVehicleChoreoGeneric::PostDataUpdate( DataUpdateType_t updateType )
 {
 	BaseClass::PostDataUpdate( updateType );
 
-	// NVNT if we have entered this vehicle notify the haptics system
-	if ( m_hPlayer && !m_hPrevPlayer )
-	{
-#if defined( WIN32 ) && !defined( _X360 )
-		//They have just entered the vehicle.
-		HapticsEnteredVehicle(this,m_hPlayer);
-#endif
-	}
-
 	if ( !m_hPlayer && m_hPrevPlayer )
 	{
-#if defined( WIN32 ) && !defined( _X360 )
-		// NVNT we have just exited this vehicle so we notify the haptics system
-		HapticsExitedVehicle(this,m_hPrevPlayer);
-#endif
 		// They have just exited the vehicle.
 		// Sometimes we never reach the end of our exit anim, such as if the
 		// animation doesn't have fadeout 0 specified in the QC, so we fail to
@@ -229,12 +214,12 @@ void C_PropVehicleChoreoGeneric::UpdateViewAngles( C_BasePlayer *pLocalPlayer, C
 
 	// Limit the yaw.
 	float flAngleDiff = AngleDiff( pCmd->viewangles.y, vehicleEyeAngles.y );
-	flAngleDiff = clamp( flAngleDiff, (float) m_vehicleView.flYawMin, (float) m_vehicleView.flYawMax );
+	flAngleDiff = clamp( flAngleDiff, m_vehicleView.flYawMin, m_vehicleView.flYawMax );
 	pCmd->viewangles.y = vehicleEyeAngles.y + flAngleDiff;
 
 	// Limit the pitch -- don't let them look down into the empty pod!
 	flAngleDiff = AngleDiff( pCmd->viewangles.x, vehicleEyeAngles.x );
-	flAngleDiff = clamp( flAngleDiff, (float) m_vehicleView.flPitchMin, (float) m_vehicleView.flPitchMax );
+	flAngleDiff = clamp( flAngleDiff, m_vehicleView.flPitchMin, m_vehicleView.flPitchMax );
 	pCmd->viewangles.x = vehicleEyeAngles.x + flAngleDiff;
 }
 

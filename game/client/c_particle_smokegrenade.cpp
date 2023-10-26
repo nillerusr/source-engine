@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -12,13 +12,8 @@
 #include "view.h"
 #include "dlight.h"
 #include "iefx.h"
-#include "tier1/KeyValues.h"
+#include "tier1/keyvalues.h"
 #include "toolframework_client.h"
-#include "engine/ivdebugoverlay.h"
-
-#if CSTRIKE_DLL
-#include "c_cs_player.h"
-#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -379,30 +374,23 @@ void C_ParticleSmokeGrenade::Start(CParticleMgr *pParticleMgr, IPrototypeArgAcce
 
 	m_bStarted = true;
 	SetNextClientThink( CLIENT_THINK_ALWAYS );
-
-#if CSTRIKE_DLL
-	C_CSPlayer *pPlayer = C_CSPlayer::GetLocalCSPlayer();
-
-	if ( pPlayer )
-	{
-		 pPlayer->m_SmokeGrenades.AddToTail( this );
-	}
-#endif
 		 
 }
+
 
 void C_ParticleSmokeGrenade::ClientThink()
 {
 	if ( m_CurrentStage == 1 )
 	{
 		// Add our influence to the global smoke fog alpha.
-		
-		float testDist = (MainViewOrigin() - m_SmokeBasePos ).Length();
+		ASSERT_LOCAL_PLAYER_RESOLVABLE();
+		int nSlot = GET_ACTIVE_SPLITSCREEN_SLOT();
+		float testDist = (MainViewOrigin(nSlot) - m_SmokeBasePos).Length();
 
 		float fadeEnd = m_ExpandRadius;
 
 		// The center of the smoke cloud that always gives full fog overlay
-		float flCoreDistance = fadeEnd * 0.3;
+		float flCoreDistance = fadeEnd * 0.15;
 		
 		if(testDist < fadeEnd)
 		{			
@@ -572,9 +560,8 @@ void C_ParticleSmokeGrenade::Update(float fTimeDelta)
 
 	
 	// Update our bbox.
-
-	Vector vMins = m_SmokeBasePos - Vector( m_SpacingRadius + SMOKEGRENADE_PARTICLERADIUS, m_SpacingRadius + SMOKEGRENADE_PARTICLERADIUS, m_SpacingRadius + SMOKEGRENADE_PARTICLERADIUS );
-	Vector vMaxs = m_SmokeBasePos + Vector( m_SpacingRadius + SMOKEGRENADE_PARTICLERADIUS, m_SpacingRadius + SMOKEGRENADE_PARTICLERADIUS, m_SpacingRadius + SMOKEGRENADE_PARTICLERADIUS );
+	Vector vMins = m_SmokeBasePos - Vector( m_SpacingRadius, m_SpacingRadius, m_SpacingRadius );
+	Vector vMaxs = m_SmokeBasePos + Vector( m_SpacingRadius, m_SpacingRadius, m_SpacingRadius );
 	m_ParticleEffect.SetBBox( vMins, vMaxs );
 
 
@@ -590,10 +577,7 @@ void C_ParticleSmokeGrenade::Update(float fTimeDelta)
 			m_ExpandTimeCounter = SMOKESPHERE_EXPAND_TIME;
 
 		m_ExpandRadius = (m_SpacingRadius*2) * (float)sin(m_ExpandTimeCounter * M_PI * 0.5 / SMOKESPHERE_EXPAND_TIME);
-
-//		debugoverlay->AddBoxOverlay( GetPos(), Vector( -m_ExpandRadius, -m_ExpandRadius, -m_ExpandRadius), Vector( m_ExpandRadius, m_ExpandRadius, m_ExpandRadius), vec3_angle, 0, 255, 0, 1, 1.0f );
-
-
+	
 		// Update all the moving traders and establish new ones.
 		int nTotal = m_xCount * m_yCount * m_zCount;
 		for(int i=0; i < nTotal; i++)
@@ -710,7 +694,7 @@ void C_ParticleSmokeGrenade::RenderParticles( CParticleRenderIterator *pIterator
 			float alpha = 1 - len / m_ExpandRadius;
 			
 			// This changes the ramp to be very solid in the core, then taper off.
-			static float testCutoff=0.3;
+			static float testCutoff=0.7;
 			if(alpha > testCutoff)
 			{
 				alpha = 1;
@@ -735,20 +719,16 @@ void C_ParticleSmokeGrenade::RenderParticles( CParticleRenderIterator *pIterator
 
 			// Lighting.
 			ApplyDynamicLight( renderPos, color );
-
-			color = (color + Vector( 0.5, 0.5, 0.5 )) / 2;   //Desaturate
 			
 			Vector tRenderPos;
 			TransformParticle(ParticleMgr()->GetModelView(), renderPos, tRenderPos);
 			sortKey = tRenderPos.z;
 
-			//debugoverlay->AddBoxOverlay( renderPos, Vector( -2, -2, -2), Vector( 2, 2, 2), vec3_angle, 255, 255, 255, 255, 1.0f );
-
 			RenderParticle_ColorSizeAngle(
 				pIterator->GetParticleDraw(),
 				tRenderPos,
 				color,
-				alpha * GetAlphaDistanceFade(tRenderPos, 0, 10),	// Alpha
+				alpha * GetAlphaDistanceFade(tRenderPos, 100, 200),	// Alpha
 				SMOKEPARTICLE_SIZE,
 				pParticle->m_CurRotation
 				);
@@ -773,15 +753,6 @@ void C_ParticleSmokeGrenade::SimulateParticles( CParticleSimulateIterator *pIter
 void C_ParticleSmokeGrenade::NotifyRemove()
 {
 	m_xCount = m_yCount = m_zCount = 0;
-
-#if CSTRIKE_DLL
-	C_CSPlayer *pPlayer = C_CSPlayer::GetLocalCSPlayer();
-
-	if ( pPlayer )
-	{
-		 pPlayer->m_SmokeGrenades.FindAndRemove( this );
-	}
-#endif
 
 }
 
@@ -838,13 +809,12 @@ void C_ParticleSmokeGrenade::FillVolume()
 				vPos.z = m_SmokeBasePos.z + ((float)z * invNumPerDimZ) * m_SpacingRadius * 2 - m_SpacingRadius;
 
 				// Don't spawn and simulate particles that are inside a wall
-//				int contents = enginetrace->GetPointContents( vPos );
+				int contents = enginetrace->GetPointContents( vPos );
 
-				// Culling out particles in solid makes smoke not fill up small passageways.
-				//if( contents & CONTENTS_SOLID )
-				//{
-				//	continue;
-				//}
+				if( contents & CONTENTS_SOLID )
+				{
+					continue;
+				}
 
 				if(SmokeParticleInfo *pInfo = GetSmokeParticleInfo(x,y,z))
 				{
@@ -864,14 +834,10 @@ void C_ParticleSmokeGrenade::FillVolume()
 						if(pParticle)
 						{
 							pParticle->m_Pos = vPos - m_SmokeBasePos; // store its position in local space
-							pParticle->m_ColorInterp = (unsigned char)((rand() * 255) / VALVE_RAND_MAX);
+							pParticle->m_ColorInterp = (unsigned char)((rand() * 255) / RAND_MAX);
 							pParticle->m_RotationSpeed = FRand(-ROTATION_SPEED, ROTATION_SPEED); // Rotation speed.
 							pParticle->m_CurRotation = FRand(-6, 6);
-
-							//debugoverlay->AddBoxOverlay( vPos, Vector( -2, -2, -2), Vector( 2, 2, 2), vec3_angle, 255, 0, 0, 255, 5.0f );
 						}
-
-						
 
 						#ifdef _DEBUG
 							int testX, testY, testZ;
@@ -968,7 +934,7 @@ void C_ParticleSmokeGrenade::CleanupToolRecordingState( KeyValues *msg )
  		pLifetime->SetFloat( "maxLifetime", m_FadeEndTime );
 
 		KeyValues *pVelocity = pInitializers->FindKey( "DmeAttachmentVelocityInitializer", true );
-		pVelocity->SetPtr( "entindex", (void*)(intp)entindex() );
+		pVelocity->SetPtr( "entindex", (void*)entindex() );
  		pVelocity->SetFloat( "minRandomSpeed", 10 );
  		pVelocity->SetFloat( "maxRandomSpeed", 20 );
 
@@ -982,13 +948,13 @@ void C_ParticleSmokeGrenade::CleanupToolRecordingState( KeyValues *msg )
 
 		KeyValues *pColor = pInitializers->FindKey( "DmeRandomInterpolatedColorInitializer", true );
 		Color c1( 
-			FastFToC( clamp( m_MinColor.x, 0.f, 1.f ) ),
-			FastFToC( clamp( m_MinColor.y, 0.f, 1.f ) ),
-			FastFToC( clamp( m_MinColor.z, 0.f, 1.f ) ), 255 );
+			clamp( m_MinColor.x * 255.0f, 0, 255 ),
+			clamp( m_MinColor.y * 255.0f, 0, 255 ),
+			clamp( m_MinColor.z * 255.0f, 0, 255 ), 255 );
 		Color c2( 
-			FastFToC( clamp( m_MaxColor.x, 0.f, 1.f ) ),
-			FastFToC( clamp( m_MaxColor.y, 0.f, 1.f ) ),
-			FastFToC( clamp( m_MaxColor.z, 0.f, 1.f ) ), 255 );
+			clamp( m_MaxColor.x * 255.0f, 0, 255 ),
+			clamp( m_MaxColor.y * 255.0f, 0, 255 ),
+			clamp( m_MaxColor.z * 255.0f, 0, 255 ), 255 );
 		pColor->SetColor( "color1", c1 );
 		pColor->SetColor( "color2", c2 );
 

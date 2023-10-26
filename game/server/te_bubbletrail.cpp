@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -12,7 +12,7 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-extern short	g_sModelIndexBubbles;// holds the index for the bubbles model
+extern int	g_sModelIndexBubbles;// holds the index for the bubbles model
 
 enum
 {
@@ -132,7 +132,7 @@ void TE_BubbleTrail( IRecipientFilter& filter, float delay,
 	g_TEBubbleTrail.m_vecMaxs = *maxs;
 	g_TEBubbleTrail.m_flWaterZ = flWaterZ;
 	g_TEBubbleTrail.m_nModelIndex = modelindex;
-	g_TEBubbleTrail.m_nCount = MIN( count, BUBBLE_TRAIL_MAX_COUNT );
+	g_TEBubbleTrail.m_nCount = MIN( count, ( int ) BUBBLE_TRAIL_MAX_COUNT );
 	g_TEBubbleTrail.m_fSpeed = speed;
 
 	// Send it over the wire

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -14,9 +14,7 @@
 #include "nav_node.h"
 #include "nav_pathfind.h"
 #include "nav_colors.h"
-#ifdef TERROR
-#include "TerrorShared.h"
-#endif
+
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -255,12 +253,9 @@ void CNavLadder::SetDir( NavDirType dir )
 	Vector to = from - m_normal * 32.0f;
 
 	trace_t result;
-#ifdef TERROR
-	// TERROR: use the MASK_ZOMBIESOLID_BRUSHONLY contents, since that's what zombies use
-	UTIL_TraceLine( from, to, MASK_ZOMBIESOLID_BRUSHONLY, NULL, COLLISION_GROUP_NONE, &result );
-#else
+
 	UTIL_TraceLine( from, to, MASK_NPCSOLID_BRUSHONLY, NULL, COLLISION_GROUP_NONE, &result );
-#endif
+
 
 	if (result.fraction != 1.0f)
 	{

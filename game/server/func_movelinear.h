@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -21,6 +21,10 @@ class CFuncMoveLinear : public CBaseToggle
 {
 public:
 	DECLARE_CLASS( CFuncMoveLinear, CBaseToggle );
+	DECLARE_SERVERCLASS();
+
+	IMPLEMENT_NETWORK_VAR_FOR_DERIVED( m_vecVelocity );
+	IMPLEMENT_NETWORK_VAR_FOR_DERIVED( m_fFlags );
 
 	void		Spawn( void );
 	void		Precache( void );

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Implements visual effects entities: sprites, beams, bubbles, etc.
 //
@@ -145,6 +145,8 @@ public:
 
 	void Init( int iEntIndex, int iRandomSeed, float flTime, int iWindDir, float flInitialWindSpeed );
 
+	void SetLocation( const Vector &location );
+
 	// Method to update the wind speed
 	// Time passed in here is global time, not delta time
 	// The function returns the time at which it must be called again
@@ -157,6 +159,7 @@ public:
 
 	CNetworkVar( int, m_iMinWind );			// the slowest the wind can normally blow
 	CNetworkVar( int, m_iMaxWind );			// the fastest the wind can normally blow
+	CNetworkVar( int, m_windRadius );		// the radius this entity affects with its windiness, so a map can have multiple
 	CNetworkVar( int, m_iMinGust );			// the slowest that a gust can be
 	CNetworkVar( int, m_iMaxGust );			// the fastest that a gust can be
 
@@ -166,9 +169,16 @@ public:
 	CNetworkVar( float, m_flGustDuration );	// max time between gusts
 
 	CNetworkVar( int, m_iGustDirChange );	// max number of degrees wind dir changes on gusts.
+	CNetworkVector( m_location );			// The location of this wind controller
+
 	int m_iszGustSound;		// name of the wind sound to play for gusts.
 	int m_iWindDir;			// wind direction (yaw)
 	float m_flWindSpeed;	// the wind speed
+
+
+	Vector m_currentWindVector;	// For all the talk of proper prediction, we ended up just storing and returning through a static vector.  Now we can have multiple env_wind, so we need this in here.
+	Vector m_CurrentSwayVector;
+	Vector m_PrevSwayVector;
 
 	CNetworkVar( int, m_iInitialWindDir );
 	CNetworkVar( float, m_flInitialWindSpeed );
@@ -196,7 +206,10 @@ private:
 	// Updates the wind sound
 	void UpdateWindSound( float flTotalWindSpeed );
 
+	void UpdateTreeSway( float flTime );
+
 	float	m_flVariationTime;
+	float	m_flSwayTime;
 	float	m_flSimTime;		// What's the time I last simulated up to?
 	float	m_flSwitchTime;		// when do I actually switch from gust to not gust
 	float	m_flAveWindSpeed;	// the average wind speed
@@ -204,6 +217,8 @@ private:
 
 	float m_flWindAngleVariation;
 	float m_flWindSpeedVariation;
+
+
 
 	int m_iEntIndex;
 
@@ -227,15 +242,25 @@ private:
 	CEnvWindShared( const CEnvWindShared & ); // not defined, not accessible
 };
 
+//-----------------------------------------------------------------------------
+inline void CEnvWindShared::SetLocation( const Vector &location )
+{
+	m_location = location;
+}
+
+
+//-----------------------------------------------------------------------------
+// Method to sample the wind speed at a particular location
+//-----------------------------------------------------------------------------
+Vector GetWindspeedAtLocation( const Vector &location );
 
 //-----------------------------------------------------------------------------
 // Method to sample the windspeed at a particular time
 //-----------------------------------------------------------------------------
 void GetWindspeedAtTime( float flTime, Vector &vecVelocity );
 
-
 //-----------------------------------------------------------------------------
-// Method to reset windspeed..
+// Method to reset wind speed..
 //-----------------------------------------------------------------------------
 void ResetWindspeed();
 

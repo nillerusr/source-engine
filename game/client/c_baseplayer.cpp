@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright � 1996-2005, Valve Corporation, All rights reserved. =====//
 //
 // Purpose: Client-side CBasePlayer.
 //
@@ -12,6 +12,7 @@
 #include "history_resource.h"
 #include "iinput.h"
 #include "input.h"
+#include "ammodef.h"
 #include "view.h"
 #include "iviewrender.h"
 #include "iclientmode.h"
@@ -31,31 +32,24 @@
 #include "particles_simple.h"
 #include "fx_water.h"
 #include "hltvcamera.h"
+#if defined( REPLAY_ENABLED )
+#include "replaycamera.h"
+#endif
 #include "toolframework/itoolframework.h"
 #include "toolframework_client.h"
 #include "view_scene.h"
 #include "c_vguiscreen.h"
 #include "datacache/imdlcache.h"
-#include "vgui/ISurface.h"
+#include "vgui/isurface.h"
 #include "voice_status.h"
 #include "fx.h"
-#include "dt_utlvector_recv.h"
-#include "cam_thirdperson.h"
-#if defined( REPLAY_ENABLED )
-#include "replay/replaycamera.h"
-#include "replay/ireplaysystem.h"
-#include "replay/ienginereplay.h"
-#endif
-#include "steam/steam_api.h"
-#include "sourcevr/isourcevirtualreality.h"
-#include "client_virtualreality.h"
+#include "cellcoord.h"
 
-#if defined USES_ECON_ITEMS
-#include "econ_wearable.h"
-#endif
+#include "debugoverlay_shared.h"
 
-// NVNT haptics system interface
-#include "haptics/ihaptics.h"
+#ifdef DEMOPOLISH_ENABLED
+#include "demo_polish/demo_polish.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -70,6 +64,7 @@ int g_nKillCamTarget1 = 0;
 int g_nKillCamTarget2 = 0;
 
 extern ConVar mp_forcecamera; // in gamevars_shared.h
+extern ConVar r_mapextents;
 
 #define FLASHLIGHT_DISTANCE		1000
 #define MAX_VGUI_INPUT_MODE_SPEED 30
@@ -81,13 +76,11 @@ static Vector WALL_MAX(WALL_OFFSET,WALL_OFFSET,WALL_OFFSET);
 bool CommentaryModeShouldSwallowInput( C_BasePlayer *pPlayer );
 
 extern ConVar default_fov;
-#ifndef _XBOX
 extern ConVar sensitivity;
-#endif
 
-static C_BasePlayer *s_pLocalPlayer = NULL;
+static C_BasePlayer *s_pLocalPlayer[ MAX_SPLITSCREEN_PLAYERS ];
 
-static ConVar	cl_customsounds ( "cl_customsounds", "1", 0, "Enable customized player sound playback" );
+static ConVar	cl_customsounds ( "cl_customsounds", "0", 0, "Enable customized player sound playback" );
 static ConVar	spec_track		( "spec_track", "0", 0, "Tracks an entity in spec mode" );
 static ConVar	cl_smooth		( "cl_smooth", "1", 0, "Smooth view/eye origin after prediction errors" );
 static ConVar	cl_smoothtime	( 
@@ -99,35 +92,12 @@ static ConVar	cl_smoothtime	(
 	true, 2.0
 	 );
 
-#ifdef CSTRIKE_DLL
-ConVar	spec_freeze_time( "spec_freeze_time", "5.0", FCVAR_CHEAT | FCVAR_REPLICATED, "Time spend frozen in observer freeze cam." );
-ConVar	spec_freeze_traveltime( "spec_freeze_traveltime", "0.7", FCVAR_CHEAT | FCVAR_REPLICATED, "Time taken to zoom in to frame a target in observer freeze cam.", true, 0.01, false, 0 );
-ConVar	spec_freeze_distance_min( "spec_freeze_distance_min", "80", FCVAR_CHEAT, "Minimum random distance from the target to stop when framing them in observer freeze cam." );
-ConVar	spec_freeze_distance_max( "spec_freeze_distance_max", "90", FCVAR_CHEAT, "Maximum random distance from the target to stop when framing them in observer freeze cam." );
-#else
 ConVar	spec_freeze_time( "spec_freeze_time", "4.0", FCVAR_CHEAT | FCVAR_REPLICATED, "Time spend frozen in observer freeze cam." );
 ConVar	spec_freeze_traveltime( "spec_freeze_traveltime", "0.4", FCVAR_CHEAT | FCVAR_REPLICATED, "Time taken to zoom in to frame a target in observer freeze cam.", true, 0.01, false, 0 );
 ConVar	spec_freeze_distance_min( "spec_freeze_distance_min", "96", FCVAR_CHEAT, "Minimum random distance from the target to stop when framing them in observer freeze cam." );
 ConVar	spec_freeze_distance_max( "spec_freeze_distance_max", "200", FCVAR_CHEAT, "Maximum random distance from the target to stop when framing them in observer freeze cam." );
-#endif
 
-static ConVar	cl_first_person_uses_world_model ( "cl_first_person_uses_world_model", "0", FCVAR_ARCHIVE, "Causes the third person model to be drawn instead of the view model" );
-
-ConVar demo_fov_override( "demo_fov_override", "0", FCVAR_CLIENTDLL | FCVAR_DONTRECORD, "If nonzero, this value will be used to override FOV during demo playback." );
-
-// This only needs to be approximate - it just controls the distance to the pivot-point of the head ("the neck") of the in-game character, not the player's real-world neck length.
-// Ideally we would find this vector by subtracting the neutral-pose difference between the head bone (the pivot point) and the "eyes" attachment point.
-// However, some characters don't have this attachment point, and finding the neutral pose is a pain.
-// This value is found by hand, and a good value depends more on the in-game models than on actual human shapes.
-ConVar cl_meathook_neck_pivot_ingame_up( "cl_meathook_neck_pivot_ingame_up", "7.0" );
-ConVar cl_meathook_neck_pivot_ingame_fwd( "cl_meathook_neck_pivot_ingame_fwd", "3.0" );
-
-void RecvProxy_LocalVelocityX( const CRecvProxyData *pData, void *pStruct, void *pOut );
-void RecvProxy_LocalVelocityY( const CRecvProxyData *pData, void *pStruct, void *pOut );
-void RecvProxy_LocalVelocityZ( const CRecvProxyData *pData, void *pStruct, void *pOut );
-
-void RecvProxy_ObserverTarget( const CRecvProxyData *pData, void *pStruct, void *pOut );
-void RecvProxy_ObserverMode  ( const CRecvProxyData *pData, void *pStruct, void *pOut );
+bool IsDemoPolishRecording();
 
 // -------------------------------------------------------------------------------- //
 // RecvTable for CPlayerState.
@@ -150,9 +120,9 @@ BEGIN_RECV_TABLE_NOBASE( CPlayerLocalData, DT_Local )
 	RecvPropInt		(RECVINFO(m_bDucked)),
 	RecvPropInt		(RECVINFO(m_bDucking)),
 	RecvPropInt		(RECVINFO(m_bInDuckJump)),
-	RecvPropFloat	(RECVINFO(m_flDucktime)),
-	RecvPropFloat	(RECVINFO(m_flDuckJumpTime)),
-	RecvPropFloat	(RECVINFO(m_flJumpTime)),
+	RecvPropInt		(RECVINFO(m_nDuckTimeMsecs)),
+	RecvPropInt		(RECVINFO(m_nDuckJumpTimeMsecs)),
+	RecvPropInt		(RECVINFO(m_nJumpTimeMsecs)),
 	RecvPropFloat	(RECVINFO(m_flFallVelocity)),
 
 #if PREDICTION_ERROR_CHECK_LEVEL > 1 
@@ -182,14 +152,12 @@ BEGIN_RECV_TABLE_NOBASE( CPlayerLocalData, DT_Local )
 	RecvPropInt( RECVINFO( m_skybox3d.fog.enable ) ),
 	RecvPropInt( RECVINFO( m_skybox3d.fog.blend ) ),
 	RecvPropVector( RECVINFO( m_skybox3d.fog.dirPrimary ) ),
-	RecvPropInt( RECVINFO( m_skybox3d.fog.colorPrimary ) ),
-	RecvPropInt( RECVINFO( m_skybox3d.fog.colorSecondary ) ),
+	RecvPropInt( RECVINFO( m_skybox3d.fog.colorPrimary ), 0, RecvProxy_Int32ToColor32 ),
+	RecvPropInt( RECVINFO( m_skybox3d.fog.colorSecondary ), 0, RecvProxy_Int32ToColor32 ),
 	RecvPropFloat( RECVINFO( m_skybox3d.fog.start ) ),
 	RecvPropFloat( RECVINFO( m_skybox3d.fog.end ) ),
 	RecvPropFloat( RECVINFO( m_skybox3d.fog.maxdensity ) ),
-
-	// fog data
-	RecvPropEHandle( RECVINFO( m_PlayerFog.m_hCtrl ) ),
+	RecvPropFloat( RECVINFO( m_skybox3d.fog.HDRColorScale ) ),
 
 	// audio data
 	RecvPropVector( RECVINFO( m_audio.localSound[0] ) ),
@@ -202,7 +170,8 @@ BEGIN_RECV_TABLE_NOBASE( CPlayerLocalData, DT_Local )
 	RecvPropVector( RECVINFO( m_audio.localSound[7] ) ),
 	RecvPropInt( RECVINFO( m_audio.soundscapeIndex ) ),
 	RecvPropInt( RECVINFO( m_audio.localBits ) ),
-	RecvPropEHandle( RECVINFO( m_audio.ent ) ),
+	RecvPropInt( RECVINFO( m_audio.entIndex ) ),
+
 END_RECV_TABLE()
 
 // -------------------------------------------------------------------------------- //
@@ -226,11 +195,10 @@ END_RECV_TABLE()
 		RecvPropInt			( RECVINFO( m_nNextThinkTick ) ),
 
 		RecvPropEHandle		( RECVINFO( m_hLastWeapon ) ),
-		RecvPropEHandle		( RECVINFO( m_hGroundEntity ) ),
 
- 		RecvPropFloat		( RECVINFO(m_vecVelocity[0]), 0, RecvProxy_LocalVelocityX ),
- 		RecvPropFloat		( RECVINFO(m_vecVelocity[1]), 0, RecvProxy_LocalVelocityY ),
- 		RecvPropFloat		( RECVINFO(m_vecVelocity[2]), 0, RecvProxy_LocalVelocityZ ),
+ 		RecvPropFloat		( RECVINFO(m_vecVelocity[0]), 0, C_BasePlayer::RecvProxy_LocalVelocityX ),
+ 		RecvPropFloat		( RECVINFO(m_vecVelocity[1]), 0, C_BasePlayer::RecvProxy_LocalVelocityY ),
+ 		RecvPropFloat		( RECVINFO(m_vecVelocity[2]), 0, C_BasePlayer::RecvProxy_LocalVelocityZ ),
 
 		RecvPropVector		( RECVINFO( m_vecBaseVelocity ) ),
 
@@ -239,11 +207,14 @@ END_RECV_TABLE()
 		RecvPropFloat		( RECVINFO( m_flConstraintRadius )),
 		RecvPropFloat		( RECVINFO( m_flConstraintWidth )),
 		RecvPropFloat		( RECVINFO( m_flConstraintSpeedFactor )),
+		RecvPropBool		( RECVINFO( m_bConstraintPastRadius )),
 
 		RecvPropFloat		( RECVINFO( m_flDeathTime )),
 
 		RecvPropInt			( RECVINFO( m_nWaterLevel ) ),
 		RecvPropFloat		( RECVINFO( m_flLaggedMovementValue )),
+
+		RecvPropEHandle		( RECVINFO( m_hTonemapController ) ),
 
 	END_RECV_TABLE()
 
@@ -251,19 +222,10 @@ END_RECV_TABLE()
 // -------------------------------------------------------------------------------- //
 // DT_BasePlayer datatable.
 // -------------------------------------------------------------------------------- //
-
-#if defined USES_ECON_ITEMS
-	EXTERN_RECV_TABLE(DT_AttributeList);
-#endif
-
 	IMPLEMENT_CLIENTCLASS_DT(C_BasePlayer, DT_BasePlayer, CBasePlayer)
 		// We have both the local and nonlocal data in here, but the server proxies
 		// only send one.
 		RecvPropDataTable( "localdata", 0, 0, &REFERENCE_RECV_TABLE(DT_LocalPlayerExclusive) ),
-
-#if defined USES_ECON_ITEMS
-		RecvPropDataTable(RECVINFO_DT(m_AttributeList),0, &REFERENCE_RECV_TABLE(DT_AttributeList) ),
-#endif
 
 		RecvPropDataTable(RECVINFO_DT(pl), 0, &REFERENCE_RECV_TABLE(DT_PlayerState), DataTableRecvProxy_StaticDataTable),
 
@@ -276,6 +238,9 @@ END_RECV_TABLE()
 		RecvPropEHandle( RECVINFO(m_hVehicle) ),
 		RecvPropEHandle( RECVINFO(m_hUseEntity) ),
 
+		RecvPropEHandle		( RECVINFO( m_hViewEntity ) ),		// L4D: send view entity to everyone for first-person spectating
+		RecvPropEHandle		( RECVINFO( m_hGroundEntity ) ),
+
 		RecvPropInt		(RECVINFO(m_iHealth)),
 		RecvPropInt		(RECVINFO(m_lifeState)),
 
@@ -286,16 +251,22 @@ END_RECV_TABLE()
 		RecvPropInt		(RECVINFO(m_fFlags)),
 
 
-		RecvPropInt		(RECVINFO(m_iObserverMode), 0, RecvProxy_ObserverMode ),
-		RecvPropEHandle	(RECVINFO(m_hObserverTarget), RecvProxy_ObserverTarget ),
+		RecvPropInt		(RECVINFO(m_iObserverMode), 0, C_BasePlayer::RecvProxy_ObserverMode ),
+		RecvPropEHandle	(RECVINFO(m_hObserverTarget), C_BasePlayer::RecvProxy_ObserverTarget ),
 		RecvPropArray	( RecvPropEHandle( RECVINFO( m_hViewModel[0] ) ), m_hViewModel ),
 		
 
 		RecvPropString( RECVINFO(m_szLastPlaceName) ),
+		RecvPropVector( RECVINFO(m_vecLadderNormal) ),
+		RecvPropInt		(RECVINFO(m_ladderSurfaceProps) ),
 
-#if defined USES_ECON_ITEMS
-		RecvPropUtlVector( RECVINFO_UTLVECTOR( m_hMyWearables ), MAX_WEARABLES_SENT_FROM_SERVER,	RecvPropEHandle(NULL, 0, 0) ),
-#endif
+		RecvPropInt( RECVINFO( m_ubEFNoInterpParity ) ),
+
+		RecvPropEHandle( RECVINFO( m_hPostProcessCtrl ) ),		// Send to everybody - for spectating
+		RecvPropEHandle( RECVINFO( m_hColorCorrectionCtrl ) ),	// Send to everybody - for spectating
+
+		// fog data
+		RecvPropEHandle( RECVINFO( m_PlayerFog.m_hCtrl ) ),
 
 	END_RECV_TABLE()
 
@@ -332,9 +303,9 @@ BEGIN_PREDICTION_DATA_NO_BASE( CPlayerLocalData )
 	DEFINE_PRED_FIELD( m_bDucked, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bDucking, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bInDuckJump, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
-	DEFINE_PRED_FIELD( m_flDucktime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
-	DEFINE_PRED_FIELD( m_flDuckJumpTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
-	DEFINE_PRED_FIELD( m_flJumpTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_nDuckTimeMsecs, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_nDuckJumpTimeMsecs, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_nJumpTimeMsecs, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD_TOL( m_flFallVelocity, FIELD_FLOAT, FTYPEDESC_INSENDTABLE, 0.5f ),
 //	DEFINE_PRED_FIELD( m_nOldButtons, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_FIELD( m_nOldButtons, FIELD_INTEGER ),
@@ -371,6 +342,7 @@ BEGIN_PREDICTION_DATA( C_BasePlayer )
 	DEFINE_FIELD( m_flStepSoundTime, FIELD_FLOAT ),
 	DEFINE_FIELD( m_flSwimSoundTime, FIELD_FLOAT ),
 	DEFINE_FIELD( m_vecLadderNormal, FIELD_VECTOR ),
+	DEFINE_FIELD( m_ladderSurfaceProps, FIELD_INTEGER ),
 	DEFINE_FIELD( m_flPhysics, FIELD_INTEGER ),
 	DEFINE_AUTO_ARRAY( m_szAnimExtension, FIELD_CHARACTER ),
 	DEFINE_FIELD( m_afButtonLast, FIELD_INTEGER ),
@@ -396,7 +368,9 @@ BEGIN_PREDICTION_DATA( C_BasePlayer )
 
 END_PREDICTION_DATA()
 
+
 LINK_ENTITY_TO_CLASS( player, C_BasePlayer );
+
 
 // -------------------------------------------------------------------------------- //
 // Functions.
@@ -407,10 +381,15 @@ C_BasePlayer::C_BasePlayer() : m_iv_vecViewOffset( "C_BasePlayer::m_iv_vecViewOf
 	
 #ifdef _DEBUG																
 	m_vecLadderNormal.Init();
+	m_ladderSurfaceProps = 0;
 	m_vecOldViewAngles.Init();
 #endif
+	m_hViewEntity = NULL;
 
-	m_pFlashlight = NULL;
+	for ( int i = 0; i < MAX_SPLITSCREEN_PLAYERS; i++ )
+	{
+		m_bFlashlightEnabled[ i ] = false;
+	}
 
 	m_pCurrentVguiScreen = NULL;
 	m_pCurrentCommand = NULL;
@@ -430,14 +409,10 @@ C_BasePlayer::C_BasePlayer() : m_iv_vecViewOffset( "C_BasePlayer::m_iv_vecViewOf
 	m_pSurfaceData = NULL;
 	m_surfaceFriction = 1.0f;
 	m_chTextureType = 0;
+	m_nSplitScreenSlot = -1;
+	m_bIsLocalPlayer = false;
+	m_afButtonForced = 0;
 
-	m_flNextAchievementAnnounceTime = 0;
-
-	m_bFiredWeapon = false;
-
-	m_nForceVisionFilterFlags = 0;
-
-	ListenForGameEvent( "base_player_teleported" );
 }
 
 //-----------------------------------------------------------------------------
@@ -446,14 +421,24 @@ C_BasePlayer::C_BasePlayer() : m_iv_vecViewOffset( "C_BasePlayer::m_iv_vecViewOf
 C_BasePlayer::~C_BasePlayer()
 {
 	DeactivateVguiScreen( m_pCurrentVguiScreen.Get() );
-	if ( this == s_pLocalPlayer )
+	for ( int i = 0; i < MAX_SPLITSCREEN_PLAYERS; ++i )
 	{
-		s_pLocalPlayer = NULL;
+		if ( this == s_pLocalPlayer[ i ] )
+		{	
+			s_pLocalPlayer[ i ] = NULL;
+		}
+		else if ( s_pLocalPlayer[ i ] )
+		{
+			s_pLocalPlayer[ i ]->RemoveSplitScreenPlayer( this );
+		}
+
+		if ( m_bFlashlightEnabled[ i ] )
+		{
+			FlashlightEffectManager( i ).TurnOffFlashlight( true );
+			m_bFlashlightEnabled[ i ] = false;
+		}
 	}
-
-	delete m_pFlashlight;
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -478,8 +463,6 @@ void C_BasePlayer::Spawn( void )
 	SharedSpawn();
 
 	m_bWasFreezeFraming = false;
-
-	m_bFiredWeapon = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -490,30 +473,22 @@ bool C_BasePlayer::AudioStateIsUnderwater( Vector vecMainViewOrigin )
 	if ( IsObserver() )
 	{
 		// Just check the view position
-		int cont = enginetrace->GetPointContents ( vecMainViewOrigin );
-		return (cont & MASK_WATER);
+		int cont = enginetrace->GetPointContents_WorldOnly( vecMainViewOrigin, MASK_WATER );
+		return (cont & MASK_WATER) ? true : false;
 	}
 
 	return ( GetWaterLevel() >= WL_Eyes );
 }
 
-bool C_BasePlayer::IsHLTV() const
-{
-	return ( IsLocalPlayer() && engine->IsHLTV() );	
-}
-
+#if defined( REPLAY_ENABLED )
 bool C_BasePlayer::IsReplay() const
 {
-#if defined( REPLAY_ENABLED )
-	return ( IsLocalPlayer() && g_pEngineClientReplay->IsPlayingReplayDemo() );
-#else
-	return false;
-#endif
+	return ( IsLocalPlayer( const_cast< C_BasePlayer * >( this ) ) && engine->IsReplay() );
 }
+#endif
 
-CBaseEntity	*C_BasePlayer::GetObserverTarget() const	// returns players target or NULL
+CBaseEntity	*C_BasePlayer::GetObserverTarget() const	// returns players targer or NULL
 {
-#ifndef _XBOX
 	if ( IsHLTV() )
 	{
 		return HLTVCamera()->GetPrimaryTarget();
@@ -524,7 +499,6 @@ CBaseEntity	*C_BasePlayer::GetObserverTarget() const	// returns players target o
 		return ReplayCamera()->GetPrimaryTarget();
 	}
 #endif
-#endif
 	
 	if ( GetObserverMode() == OBS_MODE_ROAMING )
 	{
@@ -532,30 +506,20 @@ CBaseEntity	*C_BasePlayer::GetObserverTarget() const	// returns players target o
 	}
 	else
 	{
-		if ( IsLocalPlayer() && UseVR() )
-		{
-			// In VR mode, certain views cause disorientation and nausea. So let's not.
-			switch ( m_iObserverMode )
-			{
-			case OBS_MODE_NONE:			// not in spectator mode
-			case OBS_MODE_FIXED:		// view from a fixed camera position
-			case OBS_MODE_IN_EYE:		// follow a player in first person view
-			case OBS_MODE_CHASE:		// follow a player in third person view
-			case OBS_MODE_ROAMING:		// free roaming
-				return m_hObserverTarget;
-				break;
-			case OBS_MODE_DEATHCAM:		// special mode for death cam animation
-			case OBS_MODE_FREEZECAM:	// zooms to a target, and freeze-frames on them
-				// These are both terrible - they get overriden to chase, but here we change it to "chase" your own body (which will be ragdolled).
-				return (const_cast<C_BasePlayer*>(this))->GetBaseEntity();
-				break;
-			default:
-				assert ( false );
-				break;
-			}
-		}
-
 		return m_hObserverTarget;
+	}
+}
+
+// Helper method to fix up visiblity across split screen for view models when observer target or mode changes
+static void UpdateViewmodelVisibility( C_BasePlayer *player )
+{
+	// Update view model visibility
+	for ( int i = 0; i < MAX_VIEWMODELS; i++ )
+	{
+		CBaseViewModel *vm = player->GetViewModel( i );
+		if ( !vm )
+			continue;
+		vm->UpdateVisibility();
 	}
 }
 
@@ -580,40 +544,17 @@ void C_BasePlayer::SetObserverTarget( EHANDLE hObserverTarget )
 			gameeventmanager->FireEventClientSide( event );
 		}
 
-		if ( IsLocalPlayer() )
+		if ( IsLocalPlayer( this ) )
 		{
-			ResetToneMapping(1.0);
+			ACTIVE_SPLITSCREEN_PLAYER_GUARD_ENT( this );
+			ResetToneMapping( -1.0f ); // This forces the tonemapping scalar to the average of min and max
 		}
-		// NVNT notify haptics of changed player
-		if ( haptics )
-			haptics->OnPlayerChanged();
-
-		if ( IsLocalPlayer() )
-		{
-			// On a change of viewing mode or target, we may want to reset both head and torso to point at the new target.
-			g_ClientVirtualReality.AlignTorsoAndViewToWeapon();
-		}
+		UpdateViewmodelVisibility( this );
 	}
 }
-
-
-void C_BasePlayer::SetObserverMode ( int iNewMode )
-{
-	if ( m_iObserverMode != iNewMode )
-	{
-		m_iObserverMode = iNewMode;
-		if ( IsLocalPlayer() )
-		{
-			// On a change of viewing mode or target, we may want to reset both head and torso to point at the new target.
-			g_ClientVirtualReality.AlignTorsoAndViewToWeapon();
-		}
-	}
-}
-
 
 int C_BasePlayer::GetObserverMode() const 
 { 
-#ifndef _XBOX
 	if ( IsHLTV() )
 	{
 		return HLTVCamera()->GetMode();
@@ -624,43 +565,10 @@ int C_BasePlayer::GetObserverMode() const
 		return ReplayCamera()->GetMode();
 	}
 #endif
-#endif
-
-	if ( IsLocalPlayer() && UseVR() )
-	{
-		// IN VR mode, certain views cause disorientation and nausea. So let's not.
-		switch ( m_iObserverMode )
-		{
-		case OBS_MODE_NONE:			// not in spectator mode
-		case OBS_MODE_FIXED:		// view from a fixed camera position
-		case OBS_MODE_IN_EYE:		// follow a player in first person view
-		case OBS_MODE_CHASE:		// follow a player in third person view
-		case OBS_MODE_ROAMING:		// free roaming
-			return m_iObserverMode;
-			break;
-		case OBS_MODE_DEATHCAM:		// special mode for death cam animation
-		case OBS_MODE_FREEZECAM:	// zooms to a target, and freeze-frames on them
-			// These are both terrible - just do chase of your ragdoll.
-			return OBS_MODE_CHASE;
-			break;
-		default:
-			assert ( false );
-			break;
-		}
-	}
 
 	return m_iObserverMode; 
 }
 
-bool C_BasePlayer::ViewModel_IsTransparent( void )
-{
-	return IsTransparent();
-}
-
-bool C_BasePlayer::ViewModel_IsUsingFBTexture( void )
-{
-	return UsesPowerOfTwoFrameBufferTexture();
-}
 
 //-----------------------------------------------------------------------------
 // Used by prediction, sets the view angles for the player
@@ -707,20 +615,6 @@ surfacedata_t* C_BasePlayer::GetGroundSurface()
 	return physprops->GetSurfaceData( trace.surface.surfaceProps );
 }
 
-void C_BasePlayer::FireGameEvent( IGameEvent *event )
-{
-	if ( FStrEq( event->GetName(), "base_player_teleported" ) )
-	{
-		const int index = event->GetInt( "entindex" );
-		if ( index == entindex() && IsLocalPlayer() )
-		{
-			// In VR, we want to make sure our head and body
-			// are aligned after we teleport.
-			g_ClientVirtualReality.AlignTorsoAndViewToWeapon();
-		}
-	}
-
-}
 
 //-----------------------------------------------------------------------------
 // returns the player name
@@ -767,7 +661,7 @@ void C_BasePlayer::OnPreDataChanged( DataUpdateType_t updateType )
 	}
 
 	m_bWasFreezeFraming = (GetObserverMode() == OBS_MODE_FREEZECAM);
-	m_hOldFogController = m_Local.m_PlayerFog.m_hCtrl;
+	m_hOldFogController = m_PlayerFog.m_hCtrl;
 
 	BaseClass::OnPreDataChanged( updateType );
 }
@@ -775,6 +669,50 @@ void C_BasePlayer::OnPreDataChanged( DataUpdateType_t updateType )
 void C_BasePlayer::PreDataUpdate( DataUpdateType_t updateType )
 {
 	BaseClass::PreDataUpdate( updateType );
+
+	m_ubOldEFNoInterpParity = m_ubEFNoInterpParity;
+}
+
+void C_BasePlayer::CheckForLocalPlayer( int nSplitScreenSlot )
+{
+	// Make sure s_pLocalPlayer is correct
+	int iLocalPlayerIndex = ( nSplitScreenSlot != -1 ) ? engine->GetLocalPlayer() : 0;
+
+	if ( g_nKillCamMode )
+		iLocalPlayerIndex = g_nKillCamTarget1;
+
+	if ( iLocalPlayerIndex == index )
+	{
+		Assert( s_pLocalPlayer[ nSplitScreenSlot ] == NULL );
+		s_pLocalPlayer[ nSplitScreenSlot ] = this;
+		m_bIsLocalPlayer = true;
+
+		// Tell host player about the parasitic splitscreen user
+		if ( nSplitScreenSlot != 0 )
+		{
+			Assert( s_pLocalPlayer[ 0 ] );
+			m_nSplitScreenSlot = nSplitScreenSlot;
+			m_hSplitOwner = s_pLocalPlayer[ 0 ];
+			if ( s_pLocalPlayer[ 0 ] )
+			{
+				s_pLocalPlayer[ 0 ]->AddSplitScreenPlayer( this );
+			}
+		}
+		else
+		{
+			// We're the host, not the parasite...
+			m_nSplitScreenSlot = 0;
+			m_hSplitOwner = NULL;
+		}
+
+		if ( nSplitScreenSlot == 0 )
+		{
+			// Reset our sound mixed in case we were in a freeze cam when we
+			// changed level, which would cause the snd_soundmixer to be left modified.
+			ConVar *pVar = (ConVar *)cvar->FindVar( "snd_soundmixer" );
+			pVar->Revert();
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -787,30 +725,32 @@ void C_BasePlayer::PostDataUpdate( DataUpdateType_t updateType )
 	//  on this same frame are not stomped because prediction thinks there
 	//  isn't a local player yet!!!
 
-	if ( updateType == DATA_UPDATE_CREATED )
+	int nSlot = -1;
+
+	FOR_EACH_VALID_SPLITSCREEN_PLAYER( i )
 	{
-		// Make sure s_pLocalPlayer is correct
-
-		int iLocalPlayerIndex = engine->GetLocalPlayer();
-
-		if ( g_nKillCamMode )
-			iLocalPlayerIndex = g_nKillCamTarget1;
-
-		if ( iLocalPlayerIndex == index )
+		int nIndex = engine->GetSplitScreenPlayer( i );
+		if ( nIndex == index )
 		{
-			Assert( s_pLocalPlayer == NULL );
-			s_pLocalPlayer = this;
-
-			// Reset our sound mixed in case we were in a freeze cam when we
-			// changed level, which would cause the snd_soundmixer to be left modified.
-			ConVar *pVar = (ConVar *)cvar->FindVar( "snd_soundmixer" );
-			pVar->Revert();
+			nSlot = i;
+			break;
 		}
 	}
+	ACTIVE_SPLITSCREEN_PLAYER_GUARD( nSlot );
 
-	bool bForceEFNoInterp = IsNoInterpolationFrame();
+	bool bRecheck = false;
+	if ( nSlot != -1 && !s_pLocalPlayer[ nSlot ] )
+	{
+		bRecheck = true;
+	}
+	if ( updateType == DATA_UPDATE_CREATED || bRecheck )
+	{
+		CheckForLocalPlayer( nSlot );
+	}
 
-	if ( IsLocalPlayer() )
+	bool bForceEFNoInterp = ( m_ubOldEFNoInterpParity != m_ubEFNoInterpParity );
+
+	if ( IsLocalPlayer( this ) )
 	{
 		SetSimulatedEveryTick( true );
 	}
@@ -820,17 +760,27 @@ void C_BasePlayer::PostDataUpdate( DataUpdateType_t updateType )
 
 		// estimate velocity for non local players
 		float flTimeDelta = m_flSimulationTime - m_flOldSimulationTime;
-		if ( flTimeDelta > 0  &&  !( IsNoInterpolationFrame() || bForceEFNoInterp ) )
+
+		if (IsParentChanging())
+		{
+			bForceEFNoInterp = true;
+		}
+
+		if ( flTimeDelta > 0  &&  !( IsEffectActive(EF_NOINTERP) || bForceEFNoInterp ) )
 		{
 			Vector newVelo = (GetNetworkOrigin() - GetOldOrigin()  ) / flTimeDelta;
-			SetAbsVelocity( newVelo);
+			// This code used to call SetAbsVelocity, which is a no-no since we are in networking and if
+			//  in hieararchy, the parent velocity might not be set up yet.
+			// On top of that GetNetworkOrigin and GetOldOrigin are local coordinates
+			// So we'll just set the local vel and avoid an Assert here
+			SetLocalVelocity( newVelo );
 		}
 	}
 
 	BaseClass::PostDataUpdate( updateType );
 			 
 	// Only care about this for local player
-	if ( IsLocalPlayer() )
+	if ( IsLocalPlayer( this ) )
 	{
 		QAngle angles;
 		engine->GetViewAngles( angles );
@@ -838,42 +788,21 @@ void C_BasePlayer::PostDataUpdate( DataUpdateType_t updateType )
 		{
 			SetLocalViewAngles( angles );
 			m_flOldPlayerZ = GetLocalOrigin().z;
-			// NVNT the local player has just been created.
-			//   set in the "on_foot" navigation.
-			if ( haptics )
-			{
-				haptics->LocalPlayerReset();
-				haptics->SetNavigationClass("on_foot");
-				haptics->ProcessHapticEvent(2,"Movement","BasePlayer");
-			}
-		
 		}
 		SetLocalAngles( angles );
 
 		if ( !m_bWasFreezeFraming && GetObserverMode() == OBS_MODE_FREEZECAM )
 		{
-			m_vecFreezeFrameStart = MainViewOrigin();
+			m_vecFreezeFrameStart = MainViewOrigin( GetSplitScreenPlayerSlot() );
 			m_flFreezeFrameStartTime = gpGlobals->curtime;
 			m_flFreezeFrameDistance = RandomFloat( spec_freeze_distance_min.GetFloat(), spec_freeze_distance_max.GetFloat() );
 			m_flFreezeZOffset = RandomFloat( -30, 20 );
 			m_bSentFreezeFrame = false;
-			m_nForceVisionFilterFlags = 0;
-
-			C_BaseEntity *target = GetObserverTarget();
-			if ( target && target->IsPlayer() )
-			{
-				C_BasePlayer *player = ToBasePlayer( target );
-				if ( player )
-				{
-					m_nForceVisionFilterFlags = player->GetVisionFilterFlags();
-					CalculateVisionUsingCurrentFlags();
-				}
-			}
 
 			IGameEvent *pEvent = gameeventmanager->CreateEvent( "show_freezepanel" );
 			if ( pEvent )
 			{
-				pEvent->SetInt( "killer", target ? target->entindex() : 0 );
+				pEvent->SetInt( "killer", GetObserverTarget() ? GetObserverTarget()->entindex() : 0 );
 				gameeventmanager->FireEventClientSide( pEvent );
 			}
 
@@ -893,9 +822,6 @@ void C_BasePlayer::PostDataUpdate( DataUpdateType_t updateType )
 
 			ConVar *pVar = (ConVar *)cvar->FindVar( "snd_soundmixer" );
 			pVar->Revert();
-
-			m_nForceVisionFilterFlags = 0;
-			CalculateVisionUsingCurrentFlags();
 		}
 	}
 
@@ -905,6 +831,18 @@ void C_BasePlayer::PostDataUpdate( DataUpdateType_t updateType )
 	{
 		ResetLatched();
 	}
+#ifdef DEMOPOLISH_ENABLED
+	if ( engine->IsRecordingDemo() && 
+		 IsDemoPolishRecording() )
+	{
+		m_bBonePolishSetup = true;
+		matrix3x4a_t dummyBones[MAXSTUDIOBONES];
+		C_BaseEntity::SetAbsQueriesValid( true );
+		ForceSetupBonesAtTime( dummyBones, gpGlobals->curtime );
+		C_BaseEntity::SetAbsQueriesValid( false );
+		m_bBonePolishSetup = false;
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -939,16 +877,20 @@ void C_BasePlayer::OnRestore()
 {
 	BaseClass::OnRestore();
 
-	if ( IsLocalPlayer() )
+	if ( IsLocalPlayer( this ) )
 	{
+		ACTIVE_SPLITSCREEN_PLAYER_GUARD_ENT( this );
+
 		// debounce the attack key, for if it was used for restore
 		input->ClearInputButton( IN_ATTACK | IN_ATTACK2 );
 		// GetButtonBits() has to be called for the above to take effect
-		input->GetButtonBits( 0 );
+		input->GetButtonBits( false );
 	}
 
 	// For ammo history icons to current value so they don't flash on level transtions
-	for ( int i = 0; i < MAX_AMMO_TYPES; i++ )
+	int ammoTypes = GetAmmoDef()->NumAmmoTypes();
+	// ammodef is 1 based, use <=
+	for ( int i = 0; i <= ammoTypes; i++ )
 	{
 		m_iOldAmmo[i] = GetAmmoCount(i);
 	}
@@ -960,7 +902,7 @@ void C_BasePlayer::OnRestore()
 void C_BasePlayer::OnDataChanged( DataUpdateType_t updateType )
 {
 #if !defined( NO_ENTITY_PREDICTION )
-	if ( IsLocalPlayer() )
+	if ( IsLocalPlayer( this ) )
 	{
 		SetPredictionEligible( true );
 	}
@@ -969,16 +911,24 @@ void C_BasePlayer::OnDataChanged( DataUpdateType_t updateType )
 	BaseClass::OnDataChanged( updateType );
 
 	// Only care about this for local player
-	if ( IsLocalPlayer() )
+	if ( IsLocalPlayer( this ) )
 	{
-		// Reset engine areabits pointer
-		render->SetAreaState( m_Local.m_chAreaBits, m_Local.m_chAreaPortalBits );
+		int nSlot = GetSplitScreenPlayerSlot();
+		// Reset engine areabits pointer, but only for main local player (not piggybacked split screen users)
+		if ( nSlot == 0 )
+		{
+			render->SetAreaState( m_Local.m_chAreaBits, m_Local.m_chAreaPortalBits );
+		}
 
 		// Check for Ammo pickups.
-		for ( int i = 0; i < MAX_AMMO_TYPES; i++ )
+		int ammoTypes = GetAmmoDef()->NumAmmoTypes();
+		for ( int i = 0; i <= ammoTypes; i++ )
 		{
 			if ( GetAmmoCount(i) > m_iOldAmmo[i] )
 			{
+				// Only add this to the correct Hud
+				ACTIVE_SPLITSCREEN_PLAYER_GUARD( nSlot );
+
 				// Don't add to ammo pickup if the ammo doesn't do it
 				const FileWeaponInfo_t *pWeaponData = gWR.GetWeaponFromAmmo(i);
 
@@ -994,9 +944,13 @@ void C_BasePlayer::OnDataChanged( DataUpdateType_t updateType )
 			}
 		}
 
-		Soundscape_Update( m_Local.m_audio );
+		// Only add this to the correct Hud
+		{
+			ACTIVE_SPLITSCREEN_PLAYER_GUARD( nSlot );
+			Soundscape_Update( m_Local.m_audio );
+		}
 
-		if ( m_hOldFogController != m_Local.m_PlayerFog.m_hCtrl )
+		if ( m_hOldFogController != m_PlayerFog.m_hCtrl )
 		{
 			FogControllerChanged( updateType == DATA_UPDATE_CREATED );
 		}
@@ -1203,83 +1157,101 @@ void C_BasePlayer::TeamChange( int iNewTeam )
 //-----------------------------------------------------------------------------
 void C_BasePlayer::UpdateFlashlight()
 {
-	// The dim light is the flashlight.
-	if ( IsEffectActive( EF_DIMLIGHT ) )
+	ASSERT_LOCAL_PLAYER_RESOLVABLE();
+	int iSsPlayer = GET_ACTIVE_SPLITSCREEN_SLOT();
+
+	// TERROR: if we're in-eye spectating, use that player's flashlight
+	C_BasePlayer *pFlashlightPlayer = this;
+	if ( !IsAlive() )
 	{
-		if (!m_pFlashlight)
+		if ( GetObserverMode() == OBS_MODE_IN_EYE )
+		{
+			pFlashlightPlayer = ToBasePlayer( GetObserverTarget() );
+		}
+	}
+
+	if ( pFlashlightPlayer )
+	{
+		FlashlightEffectManager().SetEntityIndex( pFlashlightPlayer->index );
+	}
+
+	// The dim light is the flashlight.
+	if ( pFlashlightPlayer && pFlashlightPlayer->IsAlive() && pFlashlightPlayer->IsEffectActive( EF_DIMLIGHT ) && !pFlashlightPlayer->GetViewEntity() )
+	{
+		// Make sure we're using the proper flashlight texture
+		const char *pszTextureName = pFlashlightPlayer->GetFlashlightTextureName();
+		if ( !m_bFlashlightEnabled[ iSsPlayer ] )
 		{
 			// Turned on the headlight; create it.
-			m_pFlashlight = new CFlashlightEffect(index);
-
-			if (!m_pFlashlight)
-				return;
-
-			m_pFlashlight->TurnOn();
+			if ( pszTextureName )
+			{
+				FlashlightEffectManager().TurnOnFlashlight( pFlashlightPlayer->index, pszTextureName, pFlashlightPlayer->GetFlashlightFOV(),
+					pFlashlightPlayer->GetFlashlightFarZ(), pFlashlightPlayer->GetFlashlightLinearAtten() );
+			}
+			else
+			{
+				FlashlightEffectManager().TurnOnFlashlight( pFlashlightPlayer->index );
+			}
+			m_bFlashlightEnabled[ iSsPlayer ] = true;
 		}
-
-		Vector vecForward, vecRight, vecUp;
-		EyeVectors( &vecForward, &vecRight, &vecUp );
-
-		// Update the light with the new position and direction.		
-		m_pFlashlight->UpdateLight( EyePosition(), vecForward, vecRight, vecUp, FLASHLIGHT_DISTANCE );
 	}
-	else if (m_pFlashlight)
+	else if ( m_bFlashlightEnabled[ iSsPlayer ] )
 	{
 		// Turned off the flashlight; delete it.
-		delete m_pFlashlight;
-		m_pFlashlight = NULL;
+		FlashlightEffectManager().TurnOffFlashlight();
+		m_bFlashlightEnabled[ iSsPlayer ] = false;
+	}
+
+	if ( pFlashlightPlayer && m_bFlashlightEnabled[ iSsPlayer ] )
+	{
+		Vector vecForward, vecRight, vecUp;
+		Vector vecPos;
+		//Check to see if we have an externally specified flashlight origin, if not, use eye vectors/render origin
+		if ( pFlashlightPlayer->m_vecFlashlightOrigin != vec3_origin && pFlashlightPlayer->m_vecFlashlightOrigin.IsValid() )
+		{
+			vecPos = pFlashlightPlayer->m_vecFlashlightOrigin;
+			vecForward = pFlashlightPlayer->m_vecFlashlightForward;
+			vecRight = pFlashlightPlayer->m_vecFlashlightRight;
+			vecUp = pFlashlightPlayer->m_vecFlashlightUp;
+		}
+		else
+		{
+			EyeVectors( &vecForward, &vecRight, &vecUp );
+			vecPos = GetRenderOrigin() + m_vecViewOffset;
+		}
+
+		// Update the light with the new position and direction.		
+		FlashlightEffectManager().UpdateFlashlight( vecPos, vecForward, vecRight, vecUp, pFlashlightPlayer->GetFlashlightFOV(), 
+			pFlashlightPlayer->CastsFlashlightShadows(), pFlashlightPlayer->GetFlashlightFarZ(), pFlashlightPlayer->GetFlashlightLinearAtten(),
+			pFlashlightPlayer->GetFlashlightTextureName() );
 	}
 }
 
 
 //-----------------------------------------------------------------------------
-// Purpose: Creates player flashlight if it's ative
+// Purpose: Creates player flashlight if it's active
 //-----------------------------------------------------------------------------
 void C_BasePlayer::Flashlight( void )
 {
 	UpdateFlashlight();
-
-	// Check for muzzle flash and apply to view model
-	C_BaseAnimating *ve = this;
-	if ( GetObserverMode() == OBS_MODE_IN_EYE )
-	{
-		ve = dynamic_cast< C_BaseAnimating* >( GetObserverTarget() );
-	}
 }
 
 
 //-----------------------------------------------------------------------------
-// Purpose: Engine is asking whether to add this player to the visible entities list
+// Purpose: Turns off flashlight if it's active (TERROR)
 //-----------------------------------------------------------------------------
-void C_BasePlayer::AddEntity( void )
+void C_BasePlayer::TurnOffFlashlight( void )
 {
-	// FIXME/UNDONE:  Should the local player say yes to adding itself now 
-	// and then, when it ges time to render and it shouldn't still do the render with
-	// STUDIO_EVENTS set so that its attachment points will get updated even if not
-	// in third person?
+	ASSERT_LOCAL_PLAYER_RESOLVABLE();
+	int nSlot = GET_ACTIVE_SPLITSCREEN_SLOT();
 
-	// Add in water effects
-	if ( IsLocalPlayer() )
+	if ( m_bFlashlightEnabled[ nSlot ] )
 	{
-		CreateWaterEffects();
+		FlashlightEffectManager().TurnOffFlashlight();
+		m_bFlashlightEnabled[ nSlot ] = false;
 	}
-
-	// If set to invisible, skip. Do this before resetting the entity pointer so it has 
-	// valid data to decide whether it's visible.
-	if ( !IsVisible() || !g_pClientMode->ShouldDrawLocalPlayer( this ) )
-	{
-		return;
-	}
-
-	// Server says don't interpolate this frame, so set previous info to new info.
-	if ( IsNoInterpolationFrame() || Teleported() )
-	{
-		ResetLatched();
-	}
-
-	// Add in lighting effects
-	CreateLightEffects();
 }
+
 
 extern float UTIL_WaterLevel( const Vector &position, float minz, float maxz );
 
@@ -1372,34 +1344,77 @@ void C_BasePlayer::OverrideView( CViewSetup *pSetup )
 bool C_BasePlayer::ShouldInterpolate()
 {
 	// always interpolate myself
-	if ( IsLocalPlayer() )
+	if ( IsLocalPlayer( this ) )
 		return true;
-#ifndef _XBOX
-	// always interpolate entity if followed by HLTV
+
+	// always interpolate entity if followed by HLTV/Replay
+#if defined( REPLAY_ENABLED )
+	if ( HLTVCamera()->GetCameraMan() == this ||
+		 ReplayCamera()->GetCameraMan() == this )
+		return true;
+#else
 	if ( HLTVCamera()->GetCameraMan() == this )
 		return true;
 #endif
+
 	return BaseClass::ShouldInterpolate();
 }
 
 
 bool C_BasePlayer::ShouldDraw()
 {
-	return ShouldDrawThisPlayer() && BaseClass::ShouldDraw();
+	return ( this != GetSplitScreenViewPlayer() || C_BasePlayer::ShouldDrawLocalPlayer() || (GetObserverMode() == OBS_MODE_DEATHCAM ) ) &&
+		   BaseClass::ShouldDraw();
 }
 
-int C_BasePlayer::DrawModel( int flags )
+int C_BasePlayer::DrawModel( int flags, const RenderableInstance_t &instance )
 {
-#ifndef PORTAL
-	// In Portal this check is already performed as part of
-	// C_Portal_Player::DrawModel()
-	if ( !ShouldDrawThisPlayer() )
+	// if local player is spectating this player in first person mode, don't draw it
+	C_BasePlayer * player = C_BasePlayer::GetLocalPlayer();
+
+	if ( player && player->IsObserver() )
 	{
-		return 0;
+		if ( player->GetObserverMode() == OBS_MODE_IN_EYE &&
+			 player->GetObserverTarget() == this &&
+			 !input->CAM_IsThirdPerson() )
+			return 0;
 	}
-#endif
-	return BaseClass::DrawModel( flags );
+
+	return BaseClass::DrawModel( flags, instance );
 }
+
+//-----------------------------------------------------------------------------
+// Computes the render mode for this player
+//-----------------------------------------------------------------------------
+PlayerRenderMode_t C_BasePlayer::GetPlayerRenderMode( int nSlot )
+{
+	// check if local player chases owner of this weapon in first person
+	C_BasePlayer *pLocalPlayer = GetSplitScreenViewPlayer( nSlot );
+	if ( !pLocalPlayer )
+		return PLAYER_RENDER_THIRDPERSON;
+
+	if ( pLocalPlayer->IsObserver() )
+	{
+		if ( pLocalPlayer->GetObserverTarget() != this )
+			return PLAYER_RENDER_THIRDPERSON;
+		if ( pLocalPlayer->GetObserverMode() != OBS_MODE_IN_EYE )
+			return PLAYER_RENDER_THIRDPERSON;
+	}
+	else
+	{
+		if ( pLocalPlayer != this )
+			return PLAYER_RENDER_THIRDPERSON;
+	}
+
+	if ( input->CAM_IsThirdPerson( nSlot ) )
+		return PLAYER_RENDER_THIRDPERSON;
+
+//	if ( IsInThirdPersonView() )
+//		return PLAYER_RENDER_THIRDPERSON;
+
+	return PLAYER_RENDER_FIRSTPERSON;
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1408,22 +1423,12 @@ Vector C_BasePlayer::GetChaseCamViewOffset( CBaseEntity *target )
 {
 	C_BasePlayer *player = ToBasePlayer( target );
 	
-	if ( player )
+	if ( player && player->IsAlive() )
 	{
-		if ( player->IsAlive() )
-		{
-			if ( player->GetFlags() & FL_DUCKING )
-			{
-				return VEC_DUCK_VIEW_SCALED( player );
-			}
+		if( player->GetFlags() & FL_DUCKING )
+			return VEC_DUCK_VIEW;
 
-			return VEC_VIEW_SCALED( player );
-		}
-		else
-		{
-			// assume it's the players ragdoll
-			return VEC_DEAD_VIEWHEIGHT_SCALED( player );
-		}
+		return VEC_VIEW;
 	}
 
 	// assume it's the players ragdoll
@@ -1466,70 +1471,24 @@ void C_BasePlayer::CalcChaseCamView(Vector& eyeOrigin, QAngle& eyeAngles, float&
 	{
 		viewangles = eyeAngles;
 	}
-	else if ( IsLocalPlayer() )
+	else if ( IsLocalPlayer( this ) )
 	{
 		engine->GetViewAngles( viewangles );
-		if ( UseVR() )
-		{
-			// Don't let people play with the pitch - they drive it into the ground or into the air and 
-			// it's distracting at best, nauseating at worst (e.g. when it clips through the ground plane).
-			viewangles[PITCH] = 20.0f;
-		}
 	}
 	else
 	{
 		viewangles = EyeAngles();
 	}
 
-	//=============================================================================
-	// HPE_BEGIN:
-	// [Forrest] Fix for (at least one potential case of) CSB-194.  Spectating someone
-	// who is headshotted by a teammate and then switching to chase cam leaves
-	// you with a permanent roll to the camera that doesn't decay and is not reset
-	// even when switching to different players or at the start of the next round
-	// if you are still a spectator.  (If you spawn as a player, the view is reset.
-	// if you switch spectator modes, the view is reset.)
-	//=============================================================================
-#ifdef CSTRIKE_DLL
-	// The chase camera adopts the yaw and pitch of the previous camera, but the camera
-	// should not roll.
-	viewangles.z = 0;
-#endif
-	//=============================================================================
-	// HPE_END
-	//=============================================================================
-
 	m_flObserverChaseDistance += gpGlobals->frametime*48.0f;
 
-	float flMinDistance = CHASE_CAM_DISTANCE_MIN;
-	float flMaxDistance = CHASE_CAM_DISTANCE_MAX;
-	
+	float flMaxDistance = CHASE_CAM_DISTANCE;
 	if ( target && target->IsBaseTrain() )
 	{
 		// if this is a train, we want to be back a little further so we can see more of it
 		flMaxDistance *= 2.5f;
 	}
-
-	if ( target )
-	{
-		C_BaseAnimating *pTargetAnimating = target->GetBaseAnimating();
-		if ( pTargetAnimating )
-		{
-			float flScaleSquared = pTargetAnimating->GetModelScale() * pTargetAnimating->GetModelScale();
-			flMinDistance *= flScaleSquared;
-			flMaxDistance *= flScaleSquared;
-			m_flObserverChaseDistance = flMaxDistance;
-		}
-	}
-
-	if ( target && !target->IsPlayer() && target->IsNextBot() )
-	{
-		// if this is a boss, we want to be back a little further so we can see more of it
-		flMaxDistance *= 2.5f;
-		m_flObserverChaseDistance = flMaxDistance;
-	}
-
-	m_flObserverChaseDistance = clamp( m_flObserverChaseDistance, flMinDistance, flMaxDistance );
+	m_flObserverChaseDistance = clamp( m_flObserverChaseDistance, 16, flMaxDistance );
 	
 	AngleVectors( viewangles, &forward );
 
@@ -1568,7 +1527,7 @@ void C_BasePlayer::CalcRoamingView(Vector& eyeOrigin, QAngle& eyeAngles, float& 
 
 	eyeOrigin = target->EyePosition();
 	eyeAngles = target->EyeAngles();
-	
+
 	if ( spec_track.GetInt() > 0 )
 	{
 		C_BaseEntity *target =  ClientEntityList().GetBaseEntity( spec_track.GetInt() );
@@ -1606,7 +1565,7 @@ void C_BasePlayer::CalcFreezeCamView( Vector& eyeOrigin, QAngle& eyeAngles, floa
 
 	// Zoom towards our target
 	float flCurTime = (gpGlobals->curtime - m_flFreezeFrameStartTime);
-	float flBlendPerc = clamp( flCurTime / spec_freeze_traveltime.GetFloat(), 0.f, 1.f );
+	float flBlendPerc = clamp( flCurTime / spec_freeze_traveltime.GetFloat(), 0, 1 );
 	flBlendPerc = SimpleSpline( flBlendPerc );
 
 	Vector vecCamDesired = pTarget->GetObserverCamOrigin();	// Returns ragdoll origin if they're ragdolled
@@ -1615,12 +1574,12 @@ void C_BasePlayer::CalcFreezeCamView( Vector& eyeOrigin, QAngle& eyeAngles, floa
 	if ( pTarget->IsAlive() )
 	{
 		// Look at their chest, not their head
-		Vector maxs = pTarget->GetBaseAnimating() ? VEC_HULL_MAX_SCALED( pTarget->GetBaseAnimating() ) : VEC_HULL_MAX;
+		Vector maxs = GameRules()->GetViewVectors()->m_vHullMax;
 		vecCamTarget.z -= (maxs.z * 0.5);
 	}
 	else
 	{
-		vecCamTarget.z += pTarget->GetBaseAnimating() ? VEC_DEAD_VIEWHEIGHT_SCALED( pTarget->GetBaseAnimating() ).z : VEC_DEAD_VIEWHEIGHT.z;	// look over ragdoll, not through
+		vecCamTarget.z += VEC_DEAD_VIEWHEIGHT.z;	// look over ragdoll, not through
 	}
 
 	// Figure out a view position in front of the target
@@ -1705,38 +1664,28 @@ void C_BasePlayer::CalcInEyeCamView(Vector& eyeOrigin, QAngle& eyeAngles, float&
 	VectorAdd( eyeAngles, GetPunchAngle(), eyeAngles );
 
 #if defined( REPLAY_ENABLED )
-	if( engine->IsHLTV() || g_pEngineClientReplay->IsPlayingReplayDemo() )
+	if( g_bEngineIsHLTV || engine->IsReplay() )
 #else
-	if( engine->IsHLTV() )
+	if( g_bEngineIsHLTV )
 #endif
 	{
-		C_BaseAnimating *pTargetAnimating = target->GetBaseAnimating();
 		if ( target->GetFlags() & FL_DUCKING )
 		{
-			eyeOrigin += pTargetAnimating ? VEC_DUCK_VIEW_SCALED( pTargetAnimating ) : VEC_DUCK_VIEW;
+			eyeOrigin += VEC_DUCK_VIEW;
 		}
 		else
 		{
-			eyeOrigin += pTargetAnimating ? VEC_VIEW_SCALED( pTargetAnimating ) : VEC_VIEW;
+			eyeOrigin += VEC_VIEW;
 		}
 	}
 	else
 	{
-		Vector offset = GetViewOffset();
-#ifdef HL2MP
-		offset = target->GetViewOffset();
-#endif
+		Vector offset = m_vecViewOffset;
 		eyeOrigin += offset; // hack hack
 	}
 
 	engine->SetViewAngles( eyeAngles );
 }
-
-float C_BasePlayer::GetDeathCamInterpolationTime()
-{
-	return DEATH_ANIMATION_TIME;
-}
-
 
 void C_BasePlayer::CalcDeathCamView(Vector& eyeOrigin, QAngle& eyeAngles, float& fov)
 {
@@ -1749,25 +1698,24 @@ void C_BasePlayer::CalcDeathCamView(Vector& eyeOrigin, QAngle& eyeAngles, float&
 		eyeAngles = EyeAngles();
 	}
 
-	float interpolation = ( gpGlobals->curtime - m_flDeathTime ) / GetDeathCamInterpolationTime();
+	float interpolation = ( gpGlobals->curtime - m_flDeathTime ) / DEATH_ANIMATION_TIME;
 	interpolation = clamp( interpolation, 0.0f, 1.0f );
 
 	m_flObserverChaseDistance += gpGlobals->frametime*48.0f;
-	m_flObserverChaseDistance = clamp( m_flObserverChaseDistance, ( CHASE_CAM_DISTANCE_MIN * 2 ), CHASE_CAM_DISTANCE_MAX );
+	m_flObserverChaseDistance = clamp( m_flObserverChaseDistance, 16, CHASE_CAM_DISTANCE );
 
 	QAngle aForward = eyeAngles;
 	Vector origin = EyePosition();			
 
-	// NOTE:  This will create the ragdoll in CSS if m_hRagdoll is set, but m_pRagdoll is not yet presetn
 	IRagdoll *pRagdoll = GetRepresentativeRagdoll();
 	if ( pRagdoll )
 	{
 		origin = pRagdoll->GetRagdollOrigin();
-		origin.z += VEC_DEAD_VIEWHEIGHT_SCALED( this ).z;
+		origin.z += VEC_DEAD_VIEWHEIGHT.z; // look over ragdoll, not through
 	}
 	
 	if ( pKiller && pKiller->IsPlayer() && (pKiller != this) ) 
-	{														
+	{
 		Vector vKiller = pKiller->EyePosition() - origin;
 		QAngle aKiller; VectorAngles( vKiller, aKiller );
 		InterpolateAngles( aForward, aKiller, eyeAngles, interpolation );
@@ -1807,7 +1755,7 @@ C_BaseCombatWeapon *C_BasePlayer::GetActiveWeaponForSelection( void )
 C_BaseAnimating* C_BasePlayer::GetRenderedWeaponModel()
 {
 	// Attach to either their weapon model or their view model.
-	if ( ShouldDrawLocalPlayer() || !IsLocalPlayer() )
+	if ( ShouldDrawLocalPlayer() || !IsLocalPlayer( this ) )
 	{
 		return GetActiveWeapon();
 	}
@@ -1819,12 +1767,51 @@ C_BaseAnimating* C_BasePlayer::GetRenderedWeaponModel()
 
 //-----------------------------------------------------------------------------
 // Purpose: Gets a pointer to the local player, if it exists yet.
-// Output : C_BasePlayer
+// static method
 //-----------------------------------------------------------------------------
-C_BasePlayer *C_BasePlayer::GetLocalPlayer( void )
+C_BasePlayer *C_BasePlayer::GetLocalPlayer( int nSlot /*= -1*/ )
 {
-	return s_pLocalPlayer;
+	if ( nSlot == -1 )
+	{
+//		ASSERT_LOCAL_PLAYER_RESOLVABLE();
+		return s_pLocalPlayer[ GET_ACTIVE_SPLITSCREEN_SLOT() ];
+	}
+	return s_pLocalPlayer[ nSlot ];
 }
+
+void C_BasePlayer::SetRemoteSplitScreenPlayerViewsAreLocalPlayer( bool bSet )
+{
+	for( int i = 0; i != MAX_SPLITSCREEN_PLAYERS; ++i )
+	{
+		if( !IsLocalSplitScreenPlayer( i ) )
+		{
+			s_pLocalPlayer[i] = bSet ? GetSplitScreenViewPlayer( i ) : NULL;
+		}
+	}
+}
+
+bool C_BasePlayer::HasAnyLocalPlayer()
+{
+	FOR_EACH_VALID_SPLITSCREEN_PLAYER( i )
+	{
+		if ( s_pLocalPlayer[ i ] )
+			return true;
+	}
+	return false;
+}
+
+int C_BasePlayer::GetSplitScreenSlotForPlayer( C_BaseEntity *pl )
+{
+	C_BasePlayer *pPlayer = ToBasePlayer( pl );
+
+	if ( !pPlayer )
+	{
+		Assert( 0 );
+		return -1;
+	}
+	return pPlayer->GetSplitScreenPlayerSlot();
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1834,127 +1821,73 @@ void C_BasePlayer::ThirdPersonSwitch( bool bThirdperson )
 {
 	// We've switch from first to third, or vice versa.
 	UpdateVisibility();
-
-	// Update the visibility of anything bone attached to us.
-	if ( IsLocalPlayer() )
-	{
-		bool bShouldDrawLocalPlayer = ShouldDrawLocalPlayer();
-		for ( int i=0; i<GetNumBoneAttachments(); ++i )
-		{
-			C_BaseAnimating* pBoneAttachment = GetBoneAttachment( i );
-			if ( pBoneAttachment )
-			{
-				if ( bShouldDrawLocalPlayer )
-				{
-					pBoneAttachment->RemoveEffects( EF_NODRAW );
-				}
-				else
-				{
-					pBoneAttachment->AddEffects( EF_NODRAW );
-				}
-			}
-		}
-	}
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose: single place to decide whether the camera is in the first-person position
-//          NOTE - ShouldDrawLocalPlayer() can be true even if the camera is in the first-person position, e.g. in VR.
-//-----------------------------------------------------------------------------
-/*static*/ bool C_BasePlayer::LocalPlayerInFirstPersonView()
-{
-	C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
-	if ( pLocalPlayer == NULL )
-	{
-		return false;
-	}
-	int ObserverMode = pLocalPlayer->GetObserverMode();
-	if ( ( ObserverMode == OBS_MODE_NONE ) || ( ObserverMode == OBS_MODE_IN_EYE ) )
-	{
-		return !input->CAM_IsThirdPerson() && ( !ToolsEnabled() || !ToolFramework_IsThirdPersonCamera() );
-	}
-
-	// Not looking at the local player, e.g. in a replay in third person mode or freelook.
-	return false;
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: single place to decide whether the local player should draw
 //-----------------------------------------------------------------------------
-/*static*/ bool C_BasePlayer::ShouldDrawLocalPlayer()
+bool C_BasePlayer::ShouldDrawLocalPlayer()
 {
-	if ( !UseVR() )
-	{
-		return !LocalPlayerInFirstPersonView() || cl_first_person_uses_world_model.GetBool();
-	}
+	int nSlot = GetSplitScreenPlayerSlot();
 
-	static ConVarRef vr_first_person_uses_world_model( "vr_first_person_uses_world_model" );
-	return !LocalPlayerInFirstPersonView() || vr_first_person_uses_world_model.GetBool();
+
+
+	ACTIVE_SPLITSCREEN_PLAYER_GUARD( nSlot );
+	return input->CAM_IsThirdPerson() || ( ToolsEnabled() && ToolFramework_IsThirdPersonCamera() );
 }
 
+//----------------------------------------------------------------------------
+// Hooks into the fast path render system
+//----------------------------------------------------------------------------
+IClientModelRenderable *C_BasePlayer::GetClientModelRenderable()
+{ 
+	// Honor base class eligibility
+	if ( !BaseClass::GetClientModelRenderable() )
+		return NULL;
 
-
-//-----------------------------------------------------------------------------
-// Purpose: single place to decide whether the camera is in the first-person position
-//          NOTE - ShouldDrawLocalPlayer() can be true even if the camera is in the first-person position, e.g. in VR.
-//-----------------------------------------------------------------------------
-bool C_BasePlayer::InFirstPersonView()
-{
-	if ( IsLocalPlayer() )
+	// No fast path for firstperson local players
+	if ( IsLocalPlayer( this ) )
 	{
-		return LocalPlayerInFirstPersonView();
-	}
-	C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
-	if ( pLocalPlayer == NULL )
-	{
-		return false;
-	}
-	// If this is who we're observing in first person, it's counted as the "local" player.
-	if ( pLocalPlayer->GetObserverMode() == OBS_MODE_IN_EYE && pLocalPlayer->GetObserverTarget() == ToBasePlayer(this) )
-	{
-		return LocalPlayerInFirstPersonView();
-	}
-	return false;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: single place to decide whether the player is being drawn with the standard model (i.e. not the viewmodel)
-//          NOTE - ShouldDrawLocalPlayer() can be true even if the camera is in the first-person position, e.g. in VR.
-//-----------------------------------------------------------------------------
-bool C_BasePlayer::ShouldDrawThisPlayer()
-{
-	if ( !InFirstPersonView() )
-	{
-		return true;
-	}
-	if ( !UseVR() && cl_first_person_uses_world_model.GetBool() )
-	{
-		return true;
-	}
-	if ( UseVR() )
-	{
-		static ConVarRef vr_first_person_uses_world_model( "vr_first_person_uses_world_model" );
-		if ( vr_first_person_uses_world_model.GetBool() )
+		bool bThirdPerson = input->CAM_IsThirdPerson() || ( ToolsEnabled() && ToolFramework_IsThirdPersonCamera() );
+		if ( !bThirdPerson )
 		{
-			return true;
+			return NULL;
 		}
 	}
-	return false;
+
+	// if local player is spectating this player in first person mode, don't use fast path, so we can skip drawing it
+	C_BasePlayer *localPlayer = C_BasePlayer::GetLocalPlayer();
+	if ( localPlayer && localPlayer->IsObserver() )
+	{
+		if ( localPlayer->GetObserverMode() == OBS_MODE_IN_EYE &&
+			localPlayer->GetObserverTarget() == this &&
+			!input->CAM_IsThirdPerson() )
+			return NULL;
+	}
+
+	// don't use fastpath for teammates (causes extra work for glows)
+	if ( localPlayer && localPlayer->GetTeamNumber() == GetTeamNumber() )
+	{
+		return NULL;
+	}
+
+	return this; 
 }
-
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
-bool C_BasePlayer::IsLocalPlayer( void ) const
+bool C_BasePlayer::IsLocalPlayer( const C_BaseEntity *pEntity )
 {
-	return ( GetLocalPlayer() == this );
+	if ( !pEntity || 
+		 !pEntity->IsPlayer() )
+		return false;
+
+	return static_cast< const C_BasePlayer * >( pEntity )->m_bIsLocalPlayer;
 }
 
-int	C_BasePlayer::GetUserID( void )
+int	C_BasePlayer::GetUserID( void ) const
 {
 	player_info_t pi;
 
@@ -2014,16 +1947,8 @@ void C_BasePlayer::PostThink( void )
 
 	if ( IsAlive())
 	{
-		// Need to do this on the client to avoid prediction errors
-		if ( GetFlags() & FL_DUCKING )
-		{
-			SetCollisionBounds( VEC_DUCK_HULL_MIN, VEC_DUCK_HULL_MAX );
-		}
-		else
-		{
-			SetCollisionBounds( VEC_HULL_MIN, VEC_HULL_MAX );
-		}
-		
+		UpdateCollisionBounds();
+
 		if ( !CommentaryModeShouldSwallowInput( this ) )
 		{
 			// do weapon stuff
@@ -2061,8 +1986,8 @@ void C_BasePlayer::GetToolRecordingState( KeyValues *msg )
 
 	BaseClass::GetToolRecordingState( msg );
 
-	msg->SetInt( "baseplayer", 1 );
-	msg->SetInt( "localplayer", IsLocalPlayer() ? 1 : 0 );
+	msg->SetBool( "baseplayer", true );
+	msg->SetBool( "localplayer", IsLocalPlayer( this ) );
 	msg->SetString( "playername", GetPlayerName() );
 
 	static CameraRecordingState_t state;
@@ -2078,8 +2003,9 @@ void C_BasePlayer::GetToolRecordingState( KeyValues *msg )
 	// then this code can (should!) be removed
 	if ( state.m_bThirdPerson )
 	{
-		Vector cam_ofs = g_ThirdPersonManager.GetCameraOffsetAngles();
-		
+		Vector cam_ofs;
+		::input->CAM_GetCameraOffset( cam_ofs );
+
 		QAngle camAngles;
 		camAngles[ PITCH ] = cam_ofs[ PITCH ];
 		camAngles[ YAW ] = cam_ofs[ YAW ];
@@ -2101,11 +2027,13 @@ void C_BasePlayer::GetToolRecordingState( KeyValues *msg )
 //-----------------------------------------------------------------------------
 // Purpose: Simulate the player for this frame
 //-----------------------------------------------------------------------------
-void C_BasePlayer::Simulate()
+bool C_BasePlayer::Simulate()
 {
 	//Frame updates
-	if ( this == C_BasePlayer::GetLocalPlayer() )
+	if ( C_BasePlayer::IsLocalPlayer( this ) )
 	{
+		ACTIVE_SPLITSCREEN_PLAYER_GUARD_ENT( this );
+
 		//Update the flashlight
 		Flashlight();
 
@@ -2121,25 +2049,26 @@ void C_BasePlayer::Simulate()
 	}
 
 	BaseClass::Simulate();
-	if ( IsNoInterpolationFrame() || Teleported() )
+
+	// Server says don't interpolate this frame, so set previous info to new info.
+	if ( IsEffectActive( EF_NOINTERP ) || Teleported() )
 	{
 		ResetLatched();
 	}
+	return true;
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Output : CBaseViewModel
-//		Consider using GetRenderedWeaponModel() instead - it will get the
-//		viewmodel or the active weapon as appropriate.
 //-----------------------------------------------------------------------------
-C_BaseViewModel *C_BasePlayer::GetViewModel( int index /*= 0*/, bool bObserverOK )
+C_BaseViewModel *C_BasePlayer::GetViewModel( int index /*= 0*/ )
 {
 	Assert( index >= 0 && index < MAX_VIEWMODELS );
 
 	C_BaseViewModel *vm = m_hViewModel[ index ];
 	
-	if ( bObserverOK && GetObserverMode() == OBS_MODE_IN_EYE )
+	if ( GetObserverMode() == OBS_MODE_IN_EYE )
 	{
 		C_BasePlayer *target =  ToBasePlayer( GetObserverTarget() );
 
@@ -2158,7 +2087,7 @@ C_BaseCombatWeapon	*C_BasePlayer::GetActiveWeapon( void ) const
 	const C_BasePlayer *fromPlayer = this;
 
 	// if localplayer is in InEye spectator mode, return weapon on chased player
-	if ( (fromPlayer == GetLocalPlayer()) && ( GetObserverMode() == OBS_MODE_IN_EYE) )
+	if ( ( C_BasePlayer::IsLocalPlayer( const_cast< C_BasePlayer * >( fromPlayer) ) ) && ( GetObserverMode() == OBS_MODE_IN_EYE) )
 	{
 		C_BaseEntity *target =  GetObserverTarget();
 
@@ -2185,13 +2114,12 @@ Vector C_BasePlayer::GetAutoaimVector( float flScale )
 
 void C_BasePlayer::PlayPlayerJingle()
 {
-#ifndef _XBOX
+	if ( !cl_customsounds.GetBool() )
+		return;
+
 	// Find player sound for shooter
 	player_info_t info;
 	engine->GetPlayerInfo( entindex(), &info );
-
-	if ( !cl_customsounds.GetBool() )
-		return;
 
 	// Doesn't have a jingle sound
 	 if ( !info.customFiles[1] )	
@@ -2207,7 +2135,7 @@ void C_BasePlayer::PlayPlayerJingle()
 	if ( !filesystem->FileExists( fullsoundname ) )
 	{
 		char custname[ 512 ];
-		Q_snprintf( custname, sizeof( custname ), "download/user_custom/%c%c/%s.dat", soundhex[0], soundhex[1], soundhex );
+		Q_snprintf( custname, sizeof( custname ), "downloads/%s.dat", soundhex );
 		// it may have been downloaded but not copied under materials folder
 		if ( !filesystem->FileExists( custname ) )
 			return; // not downloaded yet
@@ -2215,7 +2143,7 @@ void C_BasePlayer::PlayPlayerJingle()
 		// copy from download folder to materials/temp folder
 		// this is done since material system can access only materials/*.vtf files
 
-		if ( !engine->CopyLocalFile( custname, fullsoundname) )
+		if ( !engine->CopyFile( custname, fullsoundname) )
 			return;
 	}
 
@@ -2230,11 +2158,10 @@ void C_BasePlayer::PlayPlayerJingle()
 	ep.m_SoundLevel = SNDLVL_NORM;
 
 	C_BaseEntity::EmitSound( filter, GetSoundSourceIndex(), ep );
-#endif
 }
 
 // Stuff for prediction
-void C_BasePlayer::SetSuitUpdate(const char *name, int fgroup, int iNoRepeat)
+void C_BasePlayer::SetSuitUpdate(char *name, int fgroup, int iNoRepeat)
 {
 	// FIXME:  Do something here?
 }
@@ -2258,12 +2185,20 @@ bool C_BasePlayer::ShouldPredict( void )
 {
 #if !defined( NO_ENTITY_PREDICTION )
 	// Do this before calling into baseclass so prediction data block gets allocated
-	if ( IsLocalPlayer() )
+	if ( IsLocalPlayer( this ) )
 	{
 		return true;
 	}
 #endif
 	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Return the player who will predict this entity
+//-----------------------------------------------------------------------------
+C_BasePlayer *C_BasePlayer::GetPredictionOwner( void )
+{
+	return this;
 }
 
 //-----------------------------------------------------------------------------
@@ -2287,7 +2222,7 @@ void C_BasePlayer::PhysicsSimulate( void )
 
 	m_nSimulationTick = gpGlobals->tickcount;
 
-	if ( !IsLocalPlayer() )
+	if ( !IsLocalPlayer( this ) )
 		return;
 
 	C_CommandContext *ctx = GetCommandContext();
@@ -2310,10 +2245,12 @@ void C_BasePlayer::PhysicsSimulate( void )
 	}
 
 	// Run the next command
+	MoveHelper()->SetHost( this );
 	prediction->RunCommand( 
 		this, 
 		&ctx->cmd, 
 		MoveHelper() );
+	MoveHelper()->SetHost( NULL );
 #endif
 }
 
@@ -2358,26 +2295,26 @@ bool C_BasePlayer::IsUseableEntity( CBaseEntity *pEntity, unsigned int requiredC
 	return false;
 }
 
+C_BaseEntity* C_BasePlayer::GetUseEntity( void ) const 
+{ 
+	return m_hUseEntity;
+}
+
+C_BaseEntity* C_BasePlayer::GetPotentialUseEntity( void ) const 
+{ 
+	return GetUseEntity();
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Output : float
 //-----------------------------------------------------------------------------
-float C_BasePlayer::GetFOV( void )
+float C_BasePlayer::GetFOV( void ) const
 {
-	// Allow users to override the FOV during demo playback
-	bool bUseDemoOverrideFov = engine->IsPlayingDemo() && demo_fov_override.GetFloat() > 0.0f;
-#if defined( REPLAY_ENABLED )
-	bUseDemoOverrideFov = bUseDemoOverrideFov && !g_pEngineClientReplay->IsPlayingReplayDemo();
-#endif
-	if ( bUseDemoOverrideFov )
-	{
-		return clamp( demo_fov_override.GetFloat(), 10.0f, 90.0f );
-	}
-
 	if ( GetObserverMode() == OBS_MODE_IN_EYE )
 	{
-		C_BasePlayer *pTargetPlayer = dynamic_cast<C_BasePlayer*>( GetObserverTarget() );
+		C_BasePlayer *pTargetPlayer = ToBasePlayer( GetObserverTarget() );
 
 		// get fov from observer target. Not if target is observer itself
 		if ( pTargetPlayer && !pTargetPlayer->IsObserver() )
@@ -2388,10 +2325,10 @@ float C_BasePlayer::GetFOV( void )
 
 	// Allow our vehicle to override our FOV if it's currently at the default FOV.
 	float flDefaultFOV;
-	IClientVehicle *pVehicle = GetVehicle();
+	IClientVehicle *pVehicle = const_cast< C_BasePlayer * >(this)->GetVehicle();
 	if ( pVehicle )
 	{
-		CacheVehicleView();
+		const_cast< C_BasePlayer * >(this)->CacheVehicleView();
 		flDefaultFOV = ( m_flVehicleViewFOV == 0 ) ? GetDefaultFOV() : m_flVehicleViewFOV;
 	}
 	else
@@ -2406,7 +2343,7 @@ float C_BasePlayer::GetFOV( void )
 	if ( !prediction->InPrediction() )
 	{
 		// See if we need to lerp the values for local player
-		if ( IsLocalPlayer() && ( fFOV != m_iFOVStart ) && (m_Local.m_flFOVRate > 0.0f ) )
+		if ( IsLocalPlayer( this ) && ( fFOV != m_iFOVStart ) && (m_Local.m_flFOVRate > 0.0f ) )
 		{
 			float deltaTime = (float)( gpGlobals->curtime - m_flFOVTime ) / m_Local.m_flFOVRate;
 
@@ -2423,7 +2360,7 @@ float C_BasePlayer::GetFOV( void )
 			if ( deltaTime >= 1.0f )
 			{
 				//If we're past the zoom time, just take the new value and stop lerping
-				m_iFOVStart = fFOV;
+				const_cast<C_BasePlayer *>(this)->m_iFOVStart = fFOV;
 			}
 			else
 			{
@@ -2435,7 +2372,7 @@ float C_BasePlayer::GetFOV( void )
 	return fFOV;
 }
 
-void RecvProxy_LocalVelocityX( const CRecvProxyData *pData, void *pStruct, void *pOut )
+void C_BasePlayer::RecvProxy_LocalVelocityX( const CRecvProxyData *pData, void *pStruct, void *pOut )
 {
 	C_BasePlayer *pPlayer = (C_BasePlayer *) pStruct;
 
@@ -2452,7 +2389,7 @@ void RecvProxy_LocalVelocityX( const CRecvProxyData *pData, void *pStruct, void 
 	}
 }
 
-void RecvProxy_LocalVelocityY( const CRecvProxyData *pData, void *pStruct, void *pOut )
+void C_BasePlayer::RecvProxy_LocalVelocityY( const CRecvProxyData *pData, void *pStruct, void *pOut )
 {
 	C_BasePlayer *pPlayer = (C_BasePlayer *) pStruct;
 
@@ -2469,7 +2406,7 @@ void RecvProxy_LocalVelocityY( const CRecvProxyData *pData, void *pStruct, void 
 	}
 }
 
-void RecvProxy_LocalVelocityZ( const CRecvProxyData *pData, void *pStruct, void *pOut )
+void C_BasePlayer::RecvProxy_LocalVelocityZ( const CRecvProxyData *pData, void *pStruct, void *pOut )
 {
 	C_BasePlayer *pPlayer = (C_BasePlayer *) pStruct;
 	
@@ -2486,7 +2423,20 @@ void RecvProxy_LocalVelocityZ( const CRecvProxyData *pData, void *pStruct, void 
 	}
 }
 
-void RecvProxy_ObserverTarget( const CRecvProxyData *pData, void *pStruct, void *pOut )
+void C_BasePlayer::RecvProxy_ObserverMode( const CRecvProxyData *pData, void *pStruct, void *pOut )
+{
+	RecvProxy_Int32ToInt32( pData, pStruct, pOut );
+
+	C_BasePlayer *pPlayer = (C_BasePlayer *) pStruct;
+	Assert( pPlayer );
+	if ( C_BasePlayer::IsLocalPlayer( pPlayer ) )
+	{
+		UpdateViewmodelVisibility( pPlayer );
+	}
+
+}
+
+void C_BasePlayer::RecvProxy_ObserverTarget( const CRecvProxyData *pData, void *pStruct, void *pOut )
 {
 	C_BasePlayer *pPlayer = (C_BasePlayer *) pStruct;
 
@@ -2499,13 +2449,48 @@ void RecvProxy_ObserverTarget( const CRecvProxyData *pData, void *pStruct, void 
 	pPlayer->SetObserverTarget( hTarget );
 }
 
-void RecvProxy_ObserverMode( const CRecvProxyData *pData, void *pStruct, void *pOut )
+void C_BasePlayer::RecvProxy_LocalOriginXY( const CRecvProxyData *pData, void *pStruct, void *pOut )
 {
-	C_BasePlayer *pPlayer = (C_BasePlayer *) pStruct;
+	((float*)pOut)[0] = pData->m_Value.m_Vector[0];
+	((float*)pOut)[1] = pData->m_Value.m_Vector[1];
+}
 
-	Assert( pPlayer );
+void C_BasePlayer::RecvProxy_LocalOriginZ( const CRecvProxyData *pData, void *pStruct, void *pOut )
+{
+	*((float*)pOut) = pData->m_Value.m_Float;
+}
 
-	pPlayer->SetObserverMode ( pData->m_Value.m_Int );
+void C_BasePlayer::RecvProxy_NonLocalOriginXY( const CRecvProxyData *pData, void *pStruct, void *pOut )
+{
+	((float*)pOut)[0] = pData->m_Value.m_Vector[0];
+	((float*)pOut)[1] = pData->m_Value.m_Vector[1];
+}
+
+void C_BasePlayer::RecvProxy_NonLocalOriginZ( const CRecvProxyData *pData, void *pStruct, void *pOut )
+{
+	*((float*)pOut) = pData->m_Value.m_Float;
+}
+
+void C_BasePlayer::RecvProxy_NonLocalCellOriginXY( const CRecvProxyData *pData, void *pStruct, void *pOut )
+{
+	C_BasePlayer *player = (C_BasePlayer *) pStruct;
+
+	player->m_vecCellOrigin.x = pData->m_Value.m_Vector[0];
+	player->m_vecCellOrigin.y = pData->m_Value.m_Vector[1];
+
+	register int const cellwidth = player->m_cellwidth; // Load it into a register
+	((float*)pOut)[0] = CoordFromCell( cellwidth, player->m_cellX, pData->m_Value.m_Vector[0] );
+	((float*)pOut)[1] = CoordFromCell( cellwidth, player->m_cellY, pData->m_Value.m_Vector[1] );
+}
+
+void C_BasePlayer::RecvProxy_NonLocalCellOriginZ( const CRecvProxyData *pData, void *pStruct, void *pOut )
+{
+	C_BasePlayer *player = (C_BasePlayer *) pStruct;
+
+	player->m_vecCellOrigin.z = pData->m_Value.m_Float;
+
+	register int const cellwidth = player->m_cellwidth; // Load it into a register
+	*((float*)pOut) = CoordFromCell( cellwidth, player->m_cellZ, pData->m_Value.m_Float );
 }
 
 //-----------------------------------------------------------------------------
@@ -2594,7 +2579,7 @@ void C_BasePlayer::NotePredictionError( const Vector &vDelta )
 // offset curtime and setup bones at that time using fake interpolation
 // fake interpolation means we don't have reliable interpolation history (the local player doesn't animate locally)
 // so we just modify cycle and origin directly and use that as a fake guess
-void C_BasePlayer::ForceSetupBonesAtTimeFakeInterpolation( matrix3x4_t *pBonesOut, float curtimeOffset )
+void C_BasePlayer::ForceSetupBonesAtTimeFakeInterpolation( matrix3x4a_t *pBonesOut, float curtimeOffset )
 {
 	// we don't have any interpolation data, so fake it
 	float cycle = m_flCycle;
@@ -2606,7 +2591,7 @@ void C_BasePlayer::ForceSetupBonesAtTimeFakeInterpolation( matrix3x4_t *pBonesOu
 	Interpolate( gpGlobals->curtime + curtimeOffset );
 
 	// force cycle back by boneDt
-	m_flCycle = fmod( 10 + cycle + m_flPlaybackRate * curtimeOffset, 1.0f );
+	m_flCycle = fmod( 10 + cycle + GetPlaybackRate() * curtimeOffset, 1.0f );
 	SetLocalOrigin( origin + curtimeOffset * GetLocalVelocity() );
 	// Setup bone state to extrapolate physics velocity
 	SetupBones( pBonesOut, MAXSTUDIOBONES, BONE_USED_BY_ANYTHING, gpGlobals->curtime + curtimeOffset );
@@ -2615,9 +2600,9 @@ void C_BasePlayer::ForceSetupBonesAtTimeFakeInterpolation( matrix3x4_t *pBonesOu
 	SetLocalOrigin( origin );
 }
 
-void C_BasePlayer::GetRagdollInitBoneArrays( matrix3x4_t *pDeltaBones0, matrix3x4_t *pDeltaBones1, matrix3x4_t *pCurrentBones, float boneDt )
+void C_BasePlayer::GetRagdollInitBoneArrays( matrix3x4a_t *pDeltaBones0, matrix3x4a_t *pDeltaBones1, matrix3x4a_t *pCurrentBones, float boneDt )
 {
-	if ( !IsLocalPlayer() )
+	if ( !C_BasePlayer::IsLocalPlayer( this ) )
 	{
 		BaseClass::GetRagdollInitBoneArrays(pDeltaBones0, pDeltaBones1, pCurrentBones, boneDt);
 		return;
@@ -2690,9 +2675,9 @@ bool IsInFreezeCam( void )
 //-----------------------------------------------------------------------------
 void C_BasePlayer::FogControllerChanged( bool bSnap )
 {
-	if ( m_Local.m_PlayerFog.m_hCtrl )
+	if ( m_PlayerFog.m_hCtrl )
 	{
-		fogparams_t	*pFogParams = &(m_Local.m_PlayerFog.m_hCtrl->m_fog);
+		fogparams_t	*pFogParams = &(m_PlayerFog.m_hCtrl->m_fog);
 
 		/*
 		Msg("Updating Fog Target: (%d,%d,%d) %.0f,%.0f -> (%d,%d,%d) %.0f,%.0f (%.2f seconds)\n", 
@@ -2703,15 +2688,21 @@ void C_BasePlayer::FogControllerChanged( bool bSnap )
 		
 
 		// Setup the fog color transition.
-		m_Local.m_PlayerFog.m_OldColor = m_CurrentFog.colorPrimary;
-		m_Local.m_PlayerFog.m_flOldStart = m_CurrentFog.start;
-		m_Local.m_PlayerFog.m_flOldEnd = m_CurrentFog.end;
+		m_PlayerFog.m_OldColor = m_CurrentFog.colorPrimary;
+		m_PlayerFog.m_flOldStart = m_CurrentFog.start;
+		m_PlayerFog.m_flOldEnd = m_CurrentFog.end;
+		m_PlayerFog.m_flOldMaxDensity = m_CurrentFog.maxdensity;
+		m_PlayerFog.m_flOldHDRColorScale = m_CurrentFog.HDRColorScale;
+		m_PlayerFog.m_flOldFarZ = m_CurrentFog.farz;
 
-		m_Local.m_PlayerFog.m_NewColor = pFogParams->colorPrimary;
-		m_Local.m_PlayerFog.m_flNewStart = pFogParams->start;
-		m_Local.m_PlayerFog.m_flNewEnd = pFogParams->end;
+		m_PlayerFog.m_NewColor = pFogParams->colorPrimary;
+		m_PlayerFog.m_flNewStart = pFogParams->start;
+		m_PlayerFog.m_flNewEnd = pFogParams->end;
+		m_PlayerFog.m_flNewMaxDensity = pFogParams->maxdensity;
+		m_PlayerFog.m_flNewHDRColorScale = pFogParams->HDRColorScale;
+		m_PlayerFog.m_flNewFarZ = pFogParams->farz;
 
-		m_Local.m_PlayerFog.m_flTransitionTime = bSnap ? -1 : gpGlobals->curtime;
+		m_PlayerFog.m_flTransitionTime = bSnap ? -1 : gpGlobals->curtime;
 
 		m_CurrentFog = *pFogParams;
 
@@ -2725,12 +2716,12 @@ void C_BasePlayer::FogControllerChanged( bool bSnap )
 //-----------------------------------------------------------------------------
 void C_BasePlayer::UpdateFogController( void )
 {
-	if ( m_Local.m_PlayerFog.m_hCtrl )
+	if ( m_PlayerFog.m_hCtrl )
 	{
 		// Don't bother copying while we're transitioning, since it'll be stomped in UpdateFogBlend();
-		if ( m_Local.m_PlayerFog.m_flTransitionTime == -1 && (m_hOldFogController == m_Local.m_PlayerFog.m_hCtrl) )
+		if ( m_PlayerFog.m_flTransitionTime == -1 && (m_hOldFogController == m_PlayerFog.m_hCtrl) )
 		{
-			fogparams_t	*pFogParams = &(m_Local.m_PlayerFog.m_hCtrl->m_fog);
+			fogparams_t	*pFogParams = &(m_PlayerFog.m_hCtrl->m_fog);
 			if ( m_CurrentFog != *pFogParams )
 			{
 				/*
@@ -2765,27 +2756,43 @@ void C_BasePlayer::UpdateFogController( void )
 void C_BasePlayer::UpdateFogBlend( void )
 {
 	// Transition.
-	if ( m_Local.m_PlayerFog.m_flTransitionTime != -1 )
+	if ( m_PlayerFog.m_flTransitionTime != -1 )
 	{
-		float flTimeDelta = gpGlobals->curtime - m_Local.m_PlayerFog.m_flTransitionTime;
+		float flTimeDelta = gpGlobals->curtime - m_PlayerFog.m_flTransitionTime;
 		if ( flTimeDelta < m_CurrentFog.duration )
 		{
 			float flScale = flTimeDelta / m_CurrentFog.duration;
-			m_CurrentFog.colorPrimary.SetR( ( m_Local.m_PlayerFog.m_NewColor.r * flScale ) + ( m_Local.m_PlayerFog.m_OldColor.r * ( 1.0f - flScale ) ) );
-			m_CurrentFog.colorPrimary.SetG( ( m_Local.m_PlayerFog.m_NewColor.g * flScale ) + ( m_Local.m_PlayerFog.m_OldColor.g * ( 1.0f - flScale ) ) );
-			m_CurrentFog.colorPrimary.SetB( ( m_Local.m_PlayerFog.m_NewColor.b * flScale ) + ( m_Local.m_PlayerFog.m_OldColor.b * ( 1.0f - flScale ) ) );
-			m_CurrentFog.start.Set( ( m_Local.m_PlayerFog.m_flNewStart * flScale ) + ( ( m_Local.m_PlayerFog.m_flOldStart * ( 1.0f - flScale ) ) ) );
-			m_CurrentFog.end.Set( ( m_Local.m_PlayerFog.m_flNewEnd * flScale ) + ( ( m_Local.m_PlayerFog.m_flOldEnd * ( 1.0f - flScale ) ) ) );
+			m_CurrentFog.colorPrimary.SetR( ( m_PlayerFog.m_NewColor.r * flScale ) + ( m_PlayerFog.m_OldColor.r * ( 1.0f - flScale ) ) );
+			m_CurrentFog.colorPrimary.SetG( ( m_PlayerFog.m_NewColor.g * flScale ) + ( m_PlayerFog.m_OldColor.g * ( 1.0f - flScale ) ) );
+			m_CurrentFog.colorPrimary.SetB( ( m_PlayerFog.m_NewColor.b * flScale ) + ( m_PlayerFog.m_OldColor.b * ( 1.0f - flScale ) ) );
+			m_CurrentFog.start.Set( ( m_PlayerFog.m_flNewStart * flScale ) + ( ( m_PlayerFog.m_flOldStart * ( 1.0f - flScale ) ) ) );
+			m_CurrentFog.end.Set( ( m_PlayerFog.m_flNewEnd * flScale ) + ( ( m_PlayerFog.m_flOldEnd * ( 1.0f - flScale ) ) ) );
+			m_CurrentFog.maxdensity.Set( ( m_PlayerFog.m_flNewMaxDensity * flScale ) + ( ( m_PlayerFog.m_flOldMaxDensity * ( 1.0f - flScale ) ) ) );
+			m_CurrentFog.HDRColorScale.Set( ( m_PlayerFog.m_flNewHDRColorScale * flScale ) + ( ( m_PlayerFog.m_flOldHDRColorScale * ( 1.0f - flScale ) ) ) );
+
+			// Lerp to a sane FarZ (default value comes from CViewRender::GetZFar())
+			float newFarZ = m_PlayerFog.m_flNewFarZ;
+			if ( newFarZ <= 0 )
+				newFarZ = r_mapextents.GetFloat() * 1.73205080757f;
+
+			float oldFarZ = m_PlayerFog.m_flOldFarZ;
+			if ( oldFarZ <= 0 )
+				oldFarZ = r_mapextents.GetFloat() * 1.73205080757f;
+
+			m_CurrentFog.farz.Set( ( newFarZ * flScale ) + ( ( oldFarZ * ( 1.0f - flScale ) ) ) );
 		}
 		else
 		{
 			// Slam the final fog values.
-			m_CurrentFog.colorPrimary.SetR( m_Local.m_PlayerFog.m_NewColor.r );
-			m_CurrentFog.colorPrimary.SetG( m_Local.m_PlayerFog.m_NewColor.g );
-			m_CurrentFog.colorPrimary.SetB( m_Local.m_PlayerFog.m_NewColor.b );
-			m_CurrentFog.start.Set( m_Local.m_PlayerFog.m_flNewStart );
-			m_CurrentFog.end.Set( m_Local.m_PlayerFog.m_flNewEnd );
-			m_Local.m_PlayerFog.m_flTransitionTime = -1;
+			m_CurrentFog.colorPrimary.SetR( m_PlayerFog.m_NewColor.r );
+			m_CurrentFog.colorPrimary.SetG( m_PlayerFog.m_NewColor.g );
+			m_CurrentFog.colorPrimary.SetB( m_PlayerFog.m_NewColor.b );
+			m_CurrentFog.start.Set( m_PlayerFog.m_flNewStart );
+			m_CurrentFog.end.Set( m_PlayerFog.m_flNewEnd );
+			m_CurrentFog.maxdensity.Set( m_PlayerFog.m_flNewMaxDensity );
+			m_CurrentFog.HDRColorScale.Set( m_PlayerFog.m_flNewHDRColorScale );
+			m_CurrentFog.farz.Set( m_PlayerFog.m_flNewFarZ );
+			m_PlayerFog.m_flTransitionTime = -1;
 
 			/*
 				Msg("Finished transition to (%d,%d,%d) %.0f,%.0f\n", 
@@ -2797,170 +2804,68 @@ void C_BasePlayer::UpdateFogBlend( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+//
 //-----------------------------------------------------------------------------
-bool C_BasePlayer::GetSteamID( CSteamID *pID )
+C_PostProcessController* C_BasePlayer::GetActivePostProcessController() const
 {
-	// try to make this a little more efficient
+	return m_hPostProcessCtrl.Get();
+}
 
-	player_info_t pi;
-	if ( engine->GetPlayerInfo( entindex(), &pi ) )
+//-----------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------
+C_ColorCorrection* C_BasePlayer::GetActiveColorCorrection() const
+{
+	return m_hColorCorrectionCtrl.Get();
+}
+
+bool C_BasePlayer::PreRender( int nSplitScreenPlayerSlot )
+{
+	if ( !IsVisible() || 
+		!GetClientMode()->ShouldDrawLocalPlayer( this ) )
 	{
-		if ( pi.friendsID && steamapicontext && steamapicontext->SteamUtils() )
-		{
-#if 1	// new
-			static EUniverse universe = k_EUniverseInvalid;
-
-			if ( universe == k_EUniverseInvalid )
-				universe = steamapicontext->SteamUtils()->GetConnectedUniverse();
-
-			pID->InstancedSet( pi.friendsID, 1, universe, k_EAccountTypeIndividual );
-#else	// old
-			pID->InstancedSet( pi.friendsID, 1, steamapicontext->SteamUtils()->GetConnectedUniverse(), k_EAccountTypeIndividual );
-#endif
-
-			return true;
-		}
+		return true;
 	}
+
+	// Add in lighting effects
+	return CreateLightEffects();
+}
+
+bool C_BasePlayer::IsSplitScreenPartner( C_BasePlayer *pPlayer )
+{
+	if ( !pPlayer || pPlayer == this )
+		return false;
+
+	for ( int i = 0; i < MAX_SPLITSCREEN_PLAYERS; ++i )
+	{
+		if ( s_pLocalPlayer[i] == pPlayer )
+			return true;
+	}	
+
 	return false;
 }
 
-#if defined USES_ECON_ITEMS
-//-----------------------------------------------------------------------------
-// Purpose: Update the visibility of our worn items.
-//-----------------------------------------------------------------------------
-void C_BasePlayer::UpdateWearables( void )
+int C_BasePlayer::GetSplitScreenPlayerSlot()
 {
-	for ( int i=0; i<m_hMyWearables.Count(); ++i )
-	{
-		CEconWearable* pItem = m_hMyWearables[i];
-		if ( pItem )
-		{
-			pItem->ValidateModelIndex();
-			pItem->UpdateVisibility();
-		}
-	}
-}
-#endif // USES_ECON_ITEMS
-
-
-//-----------------------------------------------------------------------------
-// Purpose: In meathook mode, fix the bone transforms to hang the user's own
-//			avatar under the camera.
-//-----------------------------------------------------------------------------
-void C_BasePlayer::BuildFirstPersonMeathookTransformations( CStudioHdr *hdr, Vector *pos, Quaternion q[], const matrix3x4_t& cameraTransform, int boneMask, CBoneBitList &boneComputed, const char *pchHeadBoneName )
-{
-	// Handle meathook mode. If we aren't rendering, just use last frame's transforms
-	if ( !InFirstPersonView() )
-		return;
-
-	// If we're in third-person view, don't do anything special.
-	// If we're in first-person view rendering the main view and using the viewmodel, we shouldn't have even got here!
-	// If we're in first-person view rendering the main view(s), meathook and headless.
-	// If we're in first-person view rendering shadowbuffers/reflections, don't do anything special either (we could do meathook but with a head?)
-	if ( IsAboutToRagdoll() )
-	{
-		// We're re-animating specifically to set up the ragdoll.
-		// Meathook can push the player through the floor, which makes the ragdoll fall through the world, which is no good.
-		// So do nothing.
-		return;
-	}
-
-	if ( !DrawingMainView() )
-	{
-		return;
-	}
-
-	// If we aren't drawing the player anyway, don't mess with the bones. This can happen in Portal.
-	if( !ShouldDrawThisPlayer() )
-	{
-		return;
-	}
-
-	m_BoneAccessor.SetWritableBones( BONE_USED_BY_ANYTHING );
-
-	int iHead = LookupBone( pchHeadBoneName );
-	if ( iHead == -1 )
-	{
-		return;
-	}
-
-	matrix3x4_t &mHeadTransform = GetBoneForWrite( iHead );
-
-	// "up" on the head bone is along the negative Y axis - not sure why.
-	//Vector vHeadTransformUp ( -mHeadTransform[0][1], -mHeadTransform[1][1], -mHeadTransform[2][1] );
-	//Vector vHeadTransformFwd ( mHeadTransform[0][1], mHeadTransform[1][1], mHeadTransform[2][1] );
-	Vector vHeadTransformTranslation ( mHeadTransform[0][3], mHeadTransform[1][3], mHeadTransform[2][3] );
-
-
-	// Find out where the player's head (driven by the HMD) is in the world.
-	// We can't move this with animations or effects without causing nausea, so we need to move
-	// the whole body so that the animated head is in the right place to match the player-controlled head.
-	Vector vHeadUp;
-	Vector vRealPivotPoint;
-	if( UseVR() )
-	{
-		VMatrix mWorldFromMideye = g_ClientVirtualReality.GetWorldFromMidEye();
-
-		// What we do here is:
-		// * Take the required eye pos+orn - the actual pose the player is controlling with the HMD.
-		// * Go downwards in that space by cl_meathook_neck_pivot_ingame_* - this is now the neck-pivot in the game world of where the player is actually looking.
-		// * Now place the body of the animated character so that the head bone is at that position.
-		// The head bone is the neck pivot point of the in-game character.
-
-		Vector vRealMidEyePos = mWorldFromMideye.GetTranslation();
-		vRealPivotPoint = vRealMidEyePos - ( mWorldFromMideye.GetUp() * cl_meathook_neck_pivot_ingame_up.GetFloat() ) - ( mWorldFromMideye.GetForward() * cl_meathook_neck_pivot_ingame_fwd.GetFloat() );
-	}
-	else
-	{
-		// figure out where to put the body from the aim angles
-		Vector vForward, vRight, vUp;
-		AngleVectors( MainViewAngles(), &vForward, &vRight, &vUp );
-		
-		vRealPivotPoint = MainViewOrigin() - ( vUp * cl_meathook_neck_pivot_ingame_up.GetFloat() ) - ( vForward * cl_meathook_neck_pivot_ingame_fwd.GetFloat() );		
-	}
-
-	Vector vDeltaToAdd = vRealPivotPoint - vHeadTransformTranslation;
-
-
-	// Now add this offset to the entire skeleton.
-	for (int i = 0; i < hdr->numbones(); i++)
-	{
-		// Only update bones reference by the bone mask.
-		if ( !( hdr->boneFlags( i ) & boneMask ) )
-		{
-			continue;
-		}
-		matrix3x4_t& bone = GetBoneForWrite( i );
-		Vector vBonePos;
-		MatrixGetTranslation ( bone, vBonePos );
-		vBonePos += vDeltaToAdd;
-		MatrixSetTranslation ( vBonePos, bone );
-	}
-
-	// Then scale the head to zero, but leave its position - forms a "neck stub".
-	// This prevents us rendering junk all over the screen, e.g. inside of mouth, etc.
-	MatrixScaleByZero( mHeadTransform );
-
-	// TODO: right now we nuke the hats by shrinking them to nothing,
-	// but it feels like we should do something more sensible.
-	// For example, for one sniper taunt he takes his hat off and waves it - would be nice to see it then.
-	int iHelm = LookupBone( "prp_helmet" );
-	if ( iHelm != -1 )
-	{
-		// Scale the helmet.
-		matrix3x4_t  &transformhelmet = GetBoneForWrite( iHelm );
-		MatrixScaleByZero( transformhelmet );
-	}
-
-	iHelm = LookupBone( "prp_hat" );
-	if ( iHelm != -1 )
-	{
-		matrix3x4_t  &transformhelmet = GetBoneForWrite( iHelm );
-		MatrixScaleByZero( transformhelmet );
-	}
+	return m_nSplitScreenSlot;
 }
 
+bool C_BasePlayer::IsSplitScreenPlayer() const
+{
+	return m_nSplitScreenSlot >= 1;
+}
+
+bool C_BasePlayer::ShouldRegenerateOriginFromCellBits() const
+{
+	// Don't use cell bits for local players.
+	// Assumes full update for local players!
+	int nSlot = GET_ACTIVE_SPLITSCREEN_SLOT();
+	int nIndex = engine->GetSplitScreenPlayer( nSlot );
+	if ( nIndex == entindex() )
+		return false;
+
+	return BaseClass::ShouldRegenerateOriginFromCellBits();
+}
 
 
 void CC_DumpClientSoundscapeData( const CCommand& args )
@@ -2971,16 +2876,8 @@ void CC_DumpClientSoundscapeData( const CCommand& args )
 
 	Msg("Client Soundscape data dump:\n");
 	Msg("   Position: %.2f %.2f %.2f\n", pPlayer->GetAbsOrigin().x, pPlayer->GetAbsOrigin().y, pPlayer->GetAbsOrigin().z );
-	Msg("   soundscape index: %d\n", pPlayer->m_Local.m_audio.soundscapeIndex.Get() );
-	Msg("   entity index: %d\n", pPlayer->m_Local.m_audio.ent.Get() ? pPlayer->m_Local.m_audio.ent->entindex() : -1 );
-	if ( pPlayer->m_Local.m_audio.ent.Get() )
-	{
-		Msg("   entity pos: %.2f %.2f %.2f\n", pPlayer->m_Local.m_audio.ent.Get()->GetAbsOrigin().x, pPlayer->m_Local.m_audio.ent.Get()->GetAbsOrigin().y, pPlayer->m_Local.m_audio.ent.Get()->GetAbsOrigin().z );
-		if ( pPlayer->m_Local.m_audio.ent.Get()->IsDormant() )
-		{
-			Msg("     ENTITY IS DORMANT\n");
-		}
-	}
+	Msg("   soundscape index: %d\n", pPlayer->m_Local.m_audio.soundscapeIndex );
+	Msg("   entity index: %d\n", pPlayer->m_Local.m_audio.entIndex );
 	bool bFoundOne = false;
 	for ( int i = 0; i < NUM_AUDIO_LOCAL_SOUNDS; i++ )
 	{

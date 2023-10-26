@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -13,7 +13,7 @@
 
 class C_BaseAnimating;
 class CStudioHdr;
-
+class CBoneBitList;
 
 #include "mathlib/vector.h"
 
@@ -31,11 +31,7 @@ public:
 	
 	// This copies the transform from all bones in the followed entity that have 
 	// names that match our bones.
-	void MergeMatchingBones( int boneMask );
-
-	// copy bones instead of matrices
-	void CopyParentToChild( const Vector parentPos[], const Quaternion parentQ[], Vector childPos[], Quaternion childQ[], int boneMask );
-	void CopyChildToParent( const Vector childPos[], const Quaternion childQ[], Vector parentPos[], Quaternion parentQ[], int boneMask );
+	virtual void MergeMatchingBones( int boneMask, CBoneBitList &boneComputed );
 
 	// Returns true if the specified bone is one that gets merged in MergeMatchingBones.
 	int IsBoneMerged( int iBone ) const;
@@ -43,9 +39,8 @@ public:
 	// Gets the origin for the first merge bone on the parent.
 	bool GetAimEntOrigin( Vector *pAbsOrigin, QAngle *pAbsAngles );
 
-	bool GetRootBone( matrix3x4_t &rootBone );
 
-private:
+protected:
 
 	// This is the entity that we're keeping the cache updated for.
 	C_BaseAnimating *m_pOwner;
@@ -54,7 +49,6 @@ private:
 	// These are either all valid pointers or all NULL.
 	C_BaseAnimating *m_pFollow;
 	CStudioHdr		*m_pFollowHdr;
-	const studiohdr_t	*m_pFollowRenderHdr;
 	CStudioHdr		*m_pOwnerHdr;
 
 	// This is the mask we need to use to set up bones on the followed entity to do the bone merge
@@ -69,14 +63,14 @@ private:
 	};
 
 	CUtlVector<CMergedBone> m_MergedBones;
-	CUtlVector<unsigned char> m_BoneMergeBits;	// One bit for each bone. The bit is set if the bone gets merged.
+	CVarBitVec m_BoneMergeBits;	// One bit for each bone. The bit is set if the bone gets merged.
 };
 
 
 inline int CBoneMergeCache::IsBoneMerged( int iBone ) const
 {
 	if ( m_pOwnerHdr )
-		return m_BoneMergeBits[iBone >> 3] & ( 1 << ( iBone & 7 ) );
+		return m_BoneMergeBits.Get( iBone );
 	else
 		return 0;
 }

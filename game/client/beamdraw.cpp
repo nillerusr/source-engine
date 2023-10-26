@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -9,7 +9,7 @@
 #include "cbase.h"
 #include "beamdraw.h"
 #include "enginesprite.h"
-#include "iviewrender_beams.h"
+#include "IViewRender_Beams.h"
 #include "view.h"
 #include "iviewrender.h"
 #include "engine/ivmodelinfo.h"
@@ -47,7 +47,7 @@ CEngineSprite *Draw_SetSpriteTexture( const model_t *pSpriteModel, int frame, in
 	if ( ShouldDrawInWireFrameMode() || r_DrawBeams.GetInt() == 2 )
 	{
 		if ( !g_pBeamWireframeMaterial )
-			g_pBeamWireframeMaterial = materials->FindMaterial( "shadertest/wireframevertexcolor", TEXTURE_GROUP_OTHER );
+			g_pBeamWireframeMaterial = materials->FindMaterial( "debug/debugwireframevertexcolor", TEXTURE_GROUP_OTHER );
 		pRenderContext->Bind( g_pBeamWireframeMaterial, NULL );
 		return psprite;
 	}
@@ -320,7 +320,7 @@ void DrawSegs( int noise_divisions, float *prgNoise, const model_t* spritemodel,
 	float fadeFraction = fadeLength/ delta.Length();
 	
 	// BUGBUG: This code generates NANs when fadeFraction is zero! REVIST!
-	fadeFraction = clamp(fadeFraction,1.e-6f,1.f);
+	fadeFraction = clamp(fadeFraction,1e-6,1);
 
 	// Choose two vectors that are perpendicular to the beam
 	Vector perp1;
@@ -335,7 +335,6 @@ void DrawSegs( int noise_divisions, float *prgNoise, const model_t* spritemodel,
 	{
 		Assert( noiseIndex < (noise_divisions<<16) );
 		BeamSeg_t curSeg;
-		curSeg.m_flAlpha = 1;
 
 		fraction = i * div;
 
@@ -371,7 +370,9 @@ void DrawSegs( int noise_divisions, float *prgNoise, const model_t* spritemodel,
 			brightness = 1;
 		}
 
-		VectorScale( *((Vector*)color), brightness, curSeg.m_vColor );
+		Vector vecTemp;
+		VectorScale( *((Vector*)color), brightness, vecTemp );
+		curSeg.SetColor( vecTemp, 1.0f );
 
 		// UNDONE: Make this a spline instead of just a line?
 		VectorMA( source, fraction, delta, curSeg.m_vPos );
@@ -450,9 +451,9 @@ void CalcSegOrigin( Vector *vecOut, int iPoint, int noise_divisions, float *prgN
 		{
 			float	s, c;
 			SinCos( fraction*M_PI*length + freq, &s, &c );
-			VectorMA( *vecOut, factor * s, MainViewUp(), *vecOut );
+			VectorMA( *vecOut, factor * s, CurrentViewUp(), *vecOut );
 			// Rotate the noise along the perpendicular axis a bit to keep the bolt from looking diagonal
-			VectorMA( *vecOut, factor * c, MainViewRight(), *vecOut );
+			VectorMA( *vecOut, factor * c, CurrentViewRight(), *vecOut );
 		}
 		else
 		{
@@ -522,7 +523,7 @@ void DrawTeslaSegs( int noise_divisions, float *prgNoise, const model_t* spritem
 	float fadeFraction = fadeLength/ delta.Length();
 	
 	// BUGBUG: This code generates NANs when fadeFraction is zero! REVIST!
-	fadeFraction = clamp(fadeFraction,1.e-6f,1.f);
+	fadeFraction = clamp(fadeFraction,1e-6,1);
 
 	Vector perp;
 	ComputeBeamPerpendicular( delta, &perp );
@@ -542,7 +543,6 @@ void DrawTeslaSegs( int noise_divisions, float *prgNoise, const model_t* spritem
 	for ( i = 0; i < segments; i++ )
 	{
 		BeamSeg_t curSeg;
-		curSeg.m_flAlpha = 1;
 
 		fraction = i * div;
 
@@ -578,7 +578,9 @@ void DrawTeslaSegs( int noise_divisions, float *prgNoise, const model_t* spritem
 			brightness = 1;
 		}
 
-		VectorScale( *((Vector*)color), brightness, curSeg.m_vColor );
+		Vector vecTemp;
+		VectorScale( *((Vector*)color), brightness, vecTemp );
+		curSeg.SetColor( vecTemp, 1.0f );
 
 		CalcSegOrigin( &curSeg.m_vPos, i, noise_divisions, prgNoise, source, delta, perp, segments, freq, scale, fraction, flags );
 
@@ -589,7 +591,7 @@ void DrawTeslaSegs( int noise_divisions, float *prgNoise, const model_t* spritem
 			curSeg.m_flWidth = ((fraction*(endWidth-startWidth))+startWidth) * 2;
 
 		// Reduce the width by the current number of branches we've had
-		for ( int j = 0; j < iBranches; j++ )
+		for ( int j = 0; i < iBranches; j++ )
 		{
 			curSeg.m_flWidth *= 0.5;
 		}
@@ -614,12 +616,12 @@ void DrawTeslaSegs( int noise_divisions, float *prgNoise, const model_t* spritem
 
 				// Get an endpoint for the new branch
 				vecStart = curSeg.m_vPos;
-				vecEnd = source + delta + (MainViewUp() * 32) + (MainViewRight() * 32);
+				vecEnd = source + delta + (CurrentViewUp() * 32) + (CurrentViewRight() * 32);
 				vecEnd -= vecStart;
 
 				// Reduce the end width by the current number of branches we've had
 				flEndWidth = endWidth;
-				for ( int j = 0; j < iBranches; j++ )
+				for ( int j = 0; i < iBranches; j++ )
 				{
 					flEndWidth *= 0.5;
 				}
@@ -798,10 +800,9 @@ void DrawSplineSegs( int noise_divisions, float *prgNoise,
 			brightness = 0;
 
 		BeamSeg_t seg;
-		seg.m_flAlpha = 1;
 
 		VectorScale( color, brightness, scaledColor );
-		seg.m_vColor.Init( scaledColor[0], scaledColor[1], scaledColor[2] );
+		seg.SetColor( scaledColor[0], scaledColor[1], scaledColor[2], 1.0f );
 		
 
 		// -------------------------------------------------
@@ -1495,7 +1496,6 @@ void DrawBeamQuadratic( const Vector &start, const Vector &control, const Vector
 	beamDraw.Start( pRenderContext, subdivisions+1, NULL );
 
 	BeamSeg_t seg;
-	seg.m_flAlpha = 1.0;
 	seg.m_flWidth = width;
 	
 	float t = 0;
@@ -1513,11 +1513,12 @@ void DrawBeamQuadratic( const Vector &start, const Vector &control, const Vector
 		if ( i == 0 || i == subdivisions )
 		{
 			// HACK: fade out the ends a bit
-			seg.m_vColor = vec3_origin;
+			seg.m_color.r = seg.m_color.g = seg.m_color.b = 0;
+			seg.m_color.a = 255;
 		}
 		else
 		{
-			seg.m_vColor = color;
+			seg.SetColor( color, 1.0f );
 		}
 		beamDraw.NextSeg( &seg );
 	}

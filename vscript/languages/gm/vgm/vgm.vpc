@@ -1,0 +1,135 @@
+//-----------------------------------------------------------------------------
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\..\..\.."
+$Macro OUTBINDIR	"."
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_win32_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\src\gm;..\src\binds;..\src\platform\win32msvc"
+		$PreprocessorDefinitions			"$BASE;PROTECTED_THINGS_DISABLE;VGM_TEST"
+	}
+}
+
+$Project "vgm"
+{
+	$Folder "Source Files"
+	{
+		$File	"..\..\..\..\public\vscript\ivscript.h"
+		$File	"..\..\..\..\public\vscript\vscript_templates.h"
+		$File 	"vgm.cpp"
+	}
+	
+	$Folder "GameMonkey"
+	{
+		$Folder	"gm"
+		{
+			$Folder	"Source Files"
+			{
+				$File	"..\src\gm\gmArraySimple.cpp" \
+						"..\src\gm\gmByteCode.cpp" \
+						"..\src\gm\gmByteCodeGen.cpp" \
+						"..\src\gm\gmCodeGen.cpp" \
+						"..\src\gm\gmCodeGenHooks.cpp" \
+						"..\src\gm\gmCodeTree.cpp" \
+						"..\src\gm\gmCrc.cpp" \
+						"..\src\gm\gmDebug.cpp" \
+						"..\src\gm\gmFunctionObject.cpp" \
+						"..\src\gm\gmHash.cpp" \
+						"..\src\gm\gmIncGC.cpp" \
+						"..\src\gm\gmLibHooks.cpp" \
+						"..\src\gm\gmListDouble.cpp" \
+						"..\src\gm\gmLog.cpp" \
+						"..\src\gm\gmMachine.cpp" \
+						"..\src\gm\gmMachineLib.cpp" \
+						"..\src\gm\gmMem.cpp" \
+						"..\src\gm\gmMemChain.cpp" \
+						"..\src\gm\gmMemFixed.cpp" \
+						"..\src\gm\gmMemFixedSet.cpp" \
+						"..\src\gm\gmOperators.cpp" \
+						"..\src\gm\gmParser.cpp" \
+						"..\src\gm\gmScanner.cpp" \
+						"..\src\gm\gmStream.cpp" \
+						"..\src\gm\gmStreamBuffer.cpp" \
+						"..\src\gm\gmStringObject.cpp" \
+						"..\src\gm\gmTableObject.cpp" \
+						"..\src\gm\gmThread.cpp" \
+						"..\src\gm\gmUserObject.cpp" \
+						"..\src\gm\gmUtil.cpp" \
+						"..\src\gm\gmVariable.cpp"
+			}
+
+			$Folder "Header Files"
+			{
+				$File	"..\src\platform\win32msvc\gmConfig_p.h" \
+						"..\src\gm\gmArraySimple.h" \
+						"..\src\gm\gmByteCode.h" \
+						"..\src\gm\gmByteCodeGen.h" \
+						"..\src\gm\gmCodeGen.h" \
+						"..\src\gm\gmCodeGenHooks.h" \
+						"..\src\gm\gmCodeTree.h" \
+						"..\src\gm\gmConfig.h" \
+						"..\src\gm\gmCrc.h" \
+						"..\src\gm\gmDebug.h" \
+						"..\src\gm\gmFunctionObject.h" \
+						"..\src\gm\gmHash.h" \
+						"..\src\gm\gmIncGC.h" \
+						"..\src\gm\gmIterator.h" \
+						"..\src\gm\gmLibHooks.h" \
+						"..\src\gm\gmListDouble.h" \
+						"..\src\gm\gmLog.h" \
+						"..\src\gm\gmMachine.h" \
+						"..\src\gm\gmMachineLib.h" \
+						"..\src\gm\gmMem.h" \
+						"..\src\gm\gmMemChain.h" \
+						"..\src\gm\gmMemFixed.h" \
+						"..\src\gm\gmMemFixedSet.h" \
+						"..\src\gm\gmOperators.h" \
+						"..\src\gm\gmParser.cpp.h" \
+						"..\src\gm\gmScanner.h" \
+						"..\src\gm\gmStream.h" \
+						"..\src\gm\gmStreamBuffer.h" \
+						"..\src\gm\gmStringObject.h" \
+						"..\src\gm\gmTableObject.h" \
+						"..\src\gm\gmThread.h" \
+						"..\src\gm\gmUserObject.h" \
+						"..\src\gm\gmUtil.h" \
+						"..\src\gm\gmVariable.h"
+			}
+		}
+		
+		$Folder	"binds"
+		{
+			$Folder	"Source Files"
+			{
+				$File	"..\src\binds\gmArrayLib.cpp" \
+						"..\src\binds\gmCall.cpp" \
+						"..\src\binds\gmGCRoot.cpp" \
+						"..\src\binds\gmGCRootUtil.cpp" \
+						"..\src\binds\gmHelpers.cpp" \
+						"..\src\binds\gmMathLib.cpp" \
+						"..\src\binds\gmStringLib.cpp" \
+						"..\src\binds\gmSystemLib.cpp" \
+						"..\src\binds\gmVector3Lib.cpp"
+			}
+			$Folder "Header Files"
+			{
+				$File	"..\src\binds\gmArrayLib.h" \
+						"..\src\binds\gmCall.h" \
+						"..\src\binds\gmGCRoot.h" \
+						"..\src\binds\gmGCRootUtil.h" \
+						"..\src\binds\gmHelpers.h" \
+						"..\src\binds\gmMathLib.h" \
+						"..\src\binds\gmStringLib.h" \
+						"..\src\binds\gmSystemLib.h" \
+						"..\src\binds\gmVector3Lib.h"
+			}
+		}
+
+	}
+}

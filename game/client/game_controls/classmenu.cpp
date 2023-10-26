@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -18,12 +18,11 @@
 #include <vgui/ISurface.h>
 #include <KeyValues.h>
 #include <vgui_controls/ImageList.h>
-#include <filesystem.h>
+#include <FileSystem.h>
 
 #include <vgui_controls/TextEntry.h>
 #include <vgui_controls/Button.h>
 #include <vgui_controls/Panel.h>
-#include "inputsystem/iinputsystem.h"
 
 #include "cdll_util.h"
 #include "IGameUIFuncs.h" // for key bindings
@@ -32,6 +31,8 @@ extern IGameUIFuncs *gameuifuncs; // for key binding details
 #endif
 #include <game/client/iviewport.h>
 
+
+
 #include <stdlib.h> // MAX_PATH define
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -39,18 +40,16 @@ extern IGameUIFuncs *gameuifuncs; // for key binding details
 
 using namespace vgui;
 
-#ifdef TF_CLIENT_DLL
-#define HUD_CLASSAUTOKILL_FLAGS		( FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO )
-#else
+
 #define HUD_CLASSAUTOKILL_FLAGS		( FCVAR_CLIENTDLL | FCVAR_ARCHIVE )
-#endif // !TF_CLIENT_DLL
+
 
 ConVar hud_classautokill( "hud_classautokill", "1", HUD_CLASSAUTOKILL_FLAGS, "Automatically kill player after choosing a new playerclass." );
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
-CClassMenu::CClassMenu(IViewPort *pViewPort) : Frame(NULL, PANEL_CLASS)
+CClassMenu::CClassMenu(IViewPort *pViewPort) : BaseClass(NULL, PANEL_CLASS)
 {
 	m_pViewPort = pViewPort;
 	m_iScoreBoardKey = BUTTON_CODE_INVALID; // this is looked up in Activate()
@@ -77,7 +76,7 @@ CClassMenu::CClassMenu(IViewPort *pViewPort) : Frame(NULL, PANEL_CLASS)
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
-CClassMenu::CClassMenu(IViewPort *pViewPort, const char *panelName) : Frame(NULL, panelName)
+CClassMenu::CClassMenu(IViewPort *pViewPort, const char *panelName) : BaseClass(NULL, panelName)
 {
 	m_pViewPort = pViewPort;
 	m_iScoreBoardKey = BUTTON_CODE_INVALID; // this is looked up in Activate()
@@ -167,21 +166,23 @@ void CClassMenu::OnCommand( const char *command )
 {
 	if ( Q_stricmp( command, "vguicancel" ) )
 	{
+
+
 		engine->ClientCmd( const_cast<char *>( command ) );
 
-#if !defined( CSTRIKE_DLL ) && !defined( TF_CLIENT_DLL )
+
 		// They entered a command to change their class, kill them so they spawn with 
 		// the new class right away
 		if ( hud_classautokill.GetBool() )
 		{
             engine->ClientCmd( "kill" );
 		}
-#endif // !CSTRIKE_DLL && !TF_CLIENT_DLL
+
 	}
 
 	Close();
 
-	gViewPortInterface->ShowBackGround( false );
+	GetViewPortInterface()->ShowBackGround( false );
 
 	BaseClass::OnCommand( command );
 }
@@ -255,56 +256,10 @@ void CClassMenu::SetVisibleButton(const char *textEntryName, bool state)
 
 void CClassMenu::OnKeyCodePressed(KeyCode code)
 {
-	int nDir = 0;
-
-	switch ( code )
-	{
-	case KEY_XBUTTON_UP:
-	case KEY_XSTICK1_UP:
-	case KEY_XSTICK2_UP:
-	case KEY_UP:
-	case KEY_XBUTTON_LEFT:
-	case KEY_XSTICK1_LEFT:
-	case KEY_XSTICK2_LEFT:
-	case KEY_LEFT:
-	case STEAMCONTROLLER_DPAD_LEFT:
-		nDir = -1;
-		break;
-
-	case KEY_XBUTTON_DOWN:
-	case KEY_XSTICK1_DOWN:
-	case KEY_XSTICK2_DOWN:
-	case KEY_DOWN:
-	case KEY_XBUTTON_RIGHT:
-	case KEY_XSTICK1_RIGHT:
-	case KEY_XSTICK2_RIGHT:
-	case KEY_RIGHT:
-	case STEAMCONTROLLER_DPAD_RIGHT:
-		nDir = 1;
-		break;
-	}
-
 	if ( m_iScoreBoardKey != BUTTON_CODE_INVALID && m_iScoreBoardKey == code )
 	{
-		gViewPortInterface->ShowPanel( PANEL_SCOREBOARD, true );
-		gViewPortInterface->PostMessageToPanel( PANEL_SCOREBOARD, new KeyValues( "PollHideCode", "code", code ) );
-	}
-	else if ( nDir != 0 )
-	{
-		CUtlSortVector< SortedPanel_t, CSortedPanelYLess > vecSortedButtons;
-		VguiPanelGetSortedChildButtonList( this, (void*)&vecSortedButtons, "&", 0 );
-
-		int nNewArmed = VguiPanelNavigateSortedChildButtonList( (void*)&vecSortedButtons, nDir );
-
-		if ( nNewArmed != -1 )
-		{
-			// Handled!
-			if ( nNewArmed < m_mouseoverButtons.Count() )
-			{
-				m_mouseoverButtons[ nNewArmed ]->OnCursorEntered();
-			}
-			return;
-		}
+		GetViewPortInterface()->ShowPanel( PANEL_SCOREBOARD, true );
+		GetViewPortInterface()->PostMessageToPanel( PANEL_SCOREBOARD, new KeyValues( "PollHideCode", "code", code ) );
 	}
 	else
 	{

@@ -1,10 +1,10 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
 // $NoKeywords: $
 //
-//=============================================================================//
+//===========================================================================//
 
 #ifndef ICLIENTSHADOWMGR_H
 #define ICLIENTSHADOWMGR_H
@@ -13,11 +13,11 @@
 #pragma once
 #endif
 
-#include "igamesystem.h"
-#include "icliententityinternal.h"
+#include "IGameSystem.h"
+#include "IClientEntityInternal.h"
 #include "engine/ishadowmgr.h"
-#include "ivrenderview.h"
-#include "toolframework/itoolentity.h"
+#include "IVRenderView.h"
+#include "toolframework/IToolEntity.h"
 
 //-----------------------------------------------------------------------------
 // Forward decls
@@ -43,7 +43,7 @@ abstract_class IClientShadowMgr : public IGameSystemPerFrame
 {
 public:
 	// Create, destroy shadows
-	virtual ClientShadowHandle_t CreateShadow( ClientEntityHandle_t entity, int flags ) = 0;
+	virtual ClientShadowHandle_t CreateShadow( ClientEntityHandle_t entity, int nEntIndex, int flags, CBitVec< MAX_SPLITSCREEN_PLAYERS > *pSplitScreenBits = NULL ) = 0;
 	virtual void DestroyShadow( ClientShadowHandle_t handle ) = 0;
 
 	// Create flashlight.
@@ -51,7 +51,12 @@ public:
 	virtual ClientShadowHandle_t CreateFlashlight( const FlashlightState_t &lightState ) = 0;
 	virtual void UpdateFlashlightState( ClientShadowHandle_t shadowHandle, const FlashlightState_t &lightState ) = 0;
 	virtual void DestroyFlashlight( ClientShadowHandle_t handle ) = 0;
-	
+
+	// Create simple projected texture.  it is not a light or a shadow, but this system does most of the work already for it
+	virtual ClientShadowHandle_t CreateProjection( const FlashlightState_t &lightState ) = 0;
+	virtual void UpdateProjectionState( ClientShadowHandle_t shadowHandle, const FlashlightState_t &lightState ) = 0;
+	virtual void DestroyProjection( ClientShadowHandle_t handle ) = 0;
+
 	// Indicate that the shadow should be recomputed due to a change in
 	// the client entity
 	virtual void UpdateProjectedTexture( ClientShadowHandle_t handle, bool force = false ) = 0;
@@ -68,7 +73,7 @@ public:
 		IClientRenderable* pRenderable, ShadowReceiver_t type ) = 0;
 
 	// Re-renders all shadow textures for shadow casters that lie in the leaf list
-	virtual void ComputeShadowTextures( const CViewSetup &view, int leafCount, LeafIndex_t* pLeafList ) = 0;
+	virtual void ComputeShadowTextures( const CViewSetup &view, int leafCount, WorldListLeafData_t* pLeafList ) = 0;
 
 	// Frees shadow depth textures for use in subsequent view/frame
 	virtual void UnlockAllShadowDepthTextures() = 0;
@@ -101,6 +106,23 @@ public:
 
 	virtual void ComputeShadowDepthTextures( const CViewSetup &pView ) = 0;
 
+	virtual void DrawVolumetrics( const CViewSetup &view ) = 0;
+
+	// Toggle shadow casting from world light sources
+	virtual void SetShadowFromWorldLightsEnabled( bool bEnable ) = 0;
+
+	virtual void DrawDeferredShadows( const CViewSetup &view, int leafCount, WorldListLeafData_t* pLeafList ) = 0;
+
+	virtual void InitRenderTargets() = 0;
+
+	// Reprojects moved shadows against the world
+	virtual void ReprojectShadows() = 0;
+
+	virtual void UpdateSplitscreenLocalPlayerShadowSkip() = 0;
+
+	virtual void GetFrustumExtents( ClientShadowHandle_t handle, Vector &vecMin, Vector &vecMax ) = 0;
+
+	virtual void ShutdownRenderTargets( void ) =0;
 };
 
 

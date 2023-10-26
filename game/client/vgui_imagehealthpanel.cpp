@@ -1,15 +1,20 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: This is a panel which is rendered image on top of an entity
 //
 // $Revision: $
 // $NoKeywords: $
 //=============================================================================//
+
 #include "cbase.h"
 #include "vgui_imagehealthpanel.h"
 #include "commanderoverlay.h"
 #include <KeyValues.h>
 #include "mapdata.h"
+
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
 
 bool IsLocalPlayerInTactical( void );
 

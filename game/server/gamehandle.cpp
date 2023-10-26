@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright � 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: returns the module handle of the game dll
 //			this is in its own file to protect it from tier0 PROTECTED_THINGS

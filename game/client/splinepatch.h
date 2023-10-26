@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: A little helper class that computes a spline patch
 //
@@ -15,7 +15,7 @@
 #define SPLINEPATCH_H
 #pragma once
 
-#include "mathlib/vector4d.h"
+#include "mathlib/vector4D.h"
 
 //-----------------------------------------------------------------------------
 // Spline patch: 

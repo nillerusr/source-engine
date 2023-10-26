@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -12,7 +12,6 @@
 #include "panelmetaclassmgr.h"
 #include <KeyValues.h>
 #include <vgui/IPanel.h>
-#include <bitmap/bitmap.h>
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -26,7 +25,6 @@ BitmapImage::BitmapImage()
 	m_pos[ 0 ] = m_pos[ 1 ]  = 0;
 	m_pPanelSize = NULL;
 	m_nTextureId = -1;
-	m_bProcedural = false;
 
 	SetViewport( false, 0.0f, 0.0f, 0.0f, 0.0f );
 }
@@ -40,32 +38,12 @@ BitmapImage::BitmapImage( vgui::VPANEL parent, const char *filename )
 	SetViewport( false, 0.0f, 0.0f, 0.0f, 0.0f );
 }
 
-BitmapImage::~BitmapImage()
-{
-	DestroyTexture();
-}
-
-void BitmapImage::DestroyTexture()
-{
-	if ( m_nTextureId != -1 )
-	{
-		vgui::surface()->DestroyTextureID( m_nTextureId );
-		m_nTextureId = -1;
-		m_bProcedural = false;
-	}
-}
-
 bool BitmapImage::Init( vgui::VPANEL pParent, const char *pFileName )
 {
 	UsePanelRenderSize( pParent );
-	if ( pFileName != NULL )
-	{
-		DestroyTexture();
-		m_nTextureId = vgui::surface()->CreateNewTextureID();
-		m_bProcedural = false;
-		vgui::surface()->DrawSetTextureFile( m_nTextureId, pFileName , true, true);
-		GetSize( m_Size[0], m_Size[1] );
-	}
+	m_nTextureId = vgui::surface()->CreateNewTextureID();
+	vgui::surface()->DrawSetTextureFile( m_nTextureId, pFileName , true, true);
+	GetSize( m_Size[0], m_Size[1] );
 	return true;
 }
 
@@ -108,11 +86,9 @@ bool BitmapImage::Init( vgui::VPANEL pParent, KeyValues* pInitData )
 
 void BitmapImage::SetImageFile( const char *newImage )
 {
-	if ( m_nTextureId == -1 || m_bProcedural )
+	if ( m_nTextureId == -1 )
 	{
-		DestroyTexture();
 		m_nTextureId = vgui::surface()->CreateNewTextureID();
-		m_bProcedural = false;
 	}
 
 	vgui::surface()->DrawSetTextureFile( m_nTextureId, newImage , true, true);
@@ -299,22 +275,3 @@ void BitmapImage::SetViewport( bool use, float left, float top, float right, flo
 	m_rgViewport[ 3 ] = bottom;
 }
 
-//-----------------------------------------------------------------------------
-void BitmapImage::SetBitmap( const Bitmap_t &bitmap )
-{
-	if ( m_nTextureId == -1 || !m_bProcedural )
-	{
-		DestroyTexture();
-		m_nTextureId = vgui::surface()->CreateNewTextureID( true );
-		m_bProcedural = true;
-	}
-
-	vgui::surface()->DrawSetTextureRGBA( m_nTextureId, bitmap.GetBits(), bitmap.Width(), bitmap.Height(), 1, true );
-
-	// Initialize render size, if we don't already have one
-	if ( m_Size[0] == 0 )
-	{
-		m_Size[0] = bitmap.Width();
-		m_Size[1] = bitmap.Height();
-	}
-}

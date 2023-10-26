@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -15,7 +15,7 @@
 #include "vphysics/constraints.h"
 #include "vcollide_parse.h"
 #include "ndebugoverlay.h"
-#include "hl2_player.h"
+#include "player.h"
 #include "props.h"
 #include "vehicle_choreo_generic_shared.h"
 #include "ai_utils.h"
@@ -523,12 +523,14 @@ void CPropVehicleChoreoGeneric::InputViewlock( inputdata_t &inputdata )
 //-----------------------------------------------------------------------------
 void CPropVehicleChoreoGeneric::HandleAnimEvent( animevent_t *pEvent )
 {
-	if ( pEvent->event == AE_CHOREO_VEHICLE_OPEN )
+	int nEvent = pEvent->Event();
+
+	if ( nEvent == AE_CHOREO_VEHICLE_OPEN )
 	{
 		m_OnOpen.FireOutput( this, this );
 		m_bLocked = false;
 	}
-	else if ( pEvent->event == AE_CHOREO_VEHICLE_CLOSE )
+	else if ( nEvent == AE_CHOREO_VEHICLE_CLOSE )
 	{
 		m_OnClose.FireOutput( this, this );
 		m_bLocked = true;
@@ -854,8 +856,8 @@ void CChoreoGenericServerVehicle::GetVehicleViewPosition( int nRole, Vector *pAb
 	if ( GetVehicle()->m_bForcePlayerEyePoint )
 	{
 		// Call to BaseClass because CBasePlayer::EyePosition calls this function.
-	  *pAbsOrigin = pPlayer->CBaseCombatCharacter::EyePosition();
-	  *pAbsAngles = pPlayer->CBaseCombatCharacter::EyeAngles();
+		*pAbsOrigin = pPlayer->BaseClass::EyePosition();
+		*pAbsAngles = pPlayer->BaseClass::EyeAngles();
 		return;
 	}
 

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -54,7 +54,7 @@ C_PropJeep::~C_PropJeep()
 	}
 }
 
-void C_PropJeep::Simulate( void )
+bool C_PropJeep::Simulate( void )
 {
 	// The dim light is the flashlight.
 	if ( m_bHeadlightIsOn )
@@ -65,7 +65,7 @@ void C_PropJeep::Simulate( void )
 			m_pHeadlight = new CHeadlightEffect;
 
 			if ( m_pHeadlight == NULL )
-				return;
+				return true;
 
 			m_pHeadlight->TurnOn();
 		}
@@ -76,7 +76,7 @@ void C_PropJeep::Simulate( void )
 
 		int iAttachment = LookupAttachment( "headlight" );
 
-		if ( iAttachment != INVALID_PARTICLE_ATTACHMENT )
+		if ( iAttachment != -1 )
 		{
 			GetAttachment( iAttachment, vVector, vAngle );
 			AngleVectors( vAngle, &vecForward, &vecRight, &vecUp );
@@ -92,6 +92,7 @@ void C_PropJeep::Simulate( void )
 	}
 
 	BaseClass::Simulate();
+	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -323,4 +324,4 @@ void WheelDustCallback( const CEffectData &data )
 	}
 }
 
-DECLARE_CLIENT_EFFECT( "WheelDust", WheelDustCallback );
+DECLARE_CLIENT_EFFECT( WheelDust, WheelDustCallback );

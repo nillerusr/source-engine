@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 // This is a skeleton file for use when creating a new 
 // NPC. Copy and rename this file for the new
 // NPC and add the copy to the build.

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -937,6 +937,8 @@ void CAI_TrackPather::SelectNewDestTarget()
 	if ( !m_bPatrolling )
 		return;
 
+
+
 	// NOTE: This version is bugged, but I didn't want to make the fix
 	// here for fear of breaking a lot of maps late in the day.
 	// So, only the chopper does the "right" thing.
@@ -984,7 +986,9 @@ void CAI_TrackPather::SelectNewDestTarget()
 				break;
 
 			pNextTrack->Visit();
+
 			m_pDestPathTarget = pNextTrack;
+
 		}
 	}
 	else
@@ -1358,6 +1362,9 @@ void CAI_TrackPather::SetupNewCurrentTarget( CPathTrack *pTrack )
 	Assert( pTrack );
 	m_vecSegmentStartPoint = GetAbsOrigin();
 	VectorMA( m_vecSegmentStartPoint, -2.0f, GetAbsVelocity(), m_vecSegmentStartSplinePoint );
+
+	OnNewCurrentTarget( pTrack, m_pCurrentPathTarget );
+
 	m_pCurrentPathTarget = pTrack;
 	SetDesiredPosition( m_pCurrentPathTarget->GetAbsOrigin() );
 }

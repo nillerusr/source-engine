@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -163,7 +163,6 @@ public:
 	}
 
 	const char *GetCapLayoutInHUD( void ) { return m_pszCapLayoutInHUD; }
-	void GetCapLayoutCustomPosition( float& flCustomPositionX, float& flCustomPositionY ) { flCustomPositionX = m_flCustomPositionX; flCustomPositionY = m_flCustomPositionY; }
 
 	bool PlayingMiniRounds( void ){ return m_bPlayingMiniRounds; }
 	bool IsInMiniRound( int index ) { return m_bInMiniRound[index]; }
@@ -172,12 +171,6 @@ public:
 	{
 		Assert( index < m_iNumControlPoints );
 		return m_iWarnOnCap[index];
-	}
-
-	int GetCPGroup( int index )
-	{
-		Assert( index < m_iNumControlPoints );
-		return m_iCPGroup[index];
 	}
 
 	const char *GetWarnSound( int index )
@@ -216,62 +209,6 @@ public:
 		return m_flPathDistance[index];
 	}
 
-	bool GetCPLocked( int index )
-	{
-		Assert( index < m_iNumControlPoints );
-		return m_bCPLocked[index];
-	}
-
-	bool GetTrackAlarm( int index )
-	{
-		Assert( index < TEAM_TRAIN_MAX_TEAMS );
-		return m_bTrackAlarm[index];
-	}
-
-	int GetNumNodeHillData( int team ){ return ( team < TEAM_TRAIN_MAX_TEAMS ) ? m_nNumNodeHillData[team] : 0; }
-
-	void GetHillData( int team, int hill, float &flStart, float &flEnd )
-	{
-		if ( hill < TEAM_TRAIN_MAX_HILLS && team < TEAM_TRAIN_MAX_TEAMS )
-		{
-			int index = ( hill * TEAM_TRAIN_FLOATS_PER_HILL ) + ( team * TEAM_TRAIN_MAX_HILLS * TEAM_TRAIN_FLOATS_PER_HILL );
-			if ( index < TEAM_TRAIN_HILLS_ARRAY_SIZE - 1 ) // - 1 because we want to look at 2 entries
-			{
-   				flStart = m_flNodeHillData[index];
-				flEnd = m_flNodeHillData[index+1];
-			}
-		}
-	}
-
-	void SetTrainOnHill( int team, int hill, bool state )
-	{
-		if ( team < TEAM_TRAIN_MAX_TEAMS && hill < TEAM_TRAIN_MAX_HILLS )
-		{
-			int index = hill + ( team * TEAM_TRAIN_MAX_HILLS ); 
-			m_bTrainOnHill[index] = state;
-		}
-	}
-
-	bool IsTrainOnHill( int team, int hill )
-	{
-		if ( team < TEAM_TRAIN_MAX_TEAMS && hill < TEAM_TRAIN_MAX_HILLS )
-		{
-			return m_bTrainOnHill[hill + ( team * TEAM_TRAIN_MAX_HILLS )];
-		}
-
-		return false;
-	}
-
-	bool IsHillDownhill( int team, int hill )
-	{
-		if ( team < TEAM_TRAIN_MAX_TEAMS && hill < TEAM_TRAIN_MAX_HILLS )
-		{
-			return m_bHillIsDownhill[hill + ( team * TEAM_TRAIN_MAX_HILLS )];
-		}
-
-		return true;
-	}
-
 protected:
 	int		m_iTimerToShowInHUD;
 	int		m_iStopWatchTimer;
@@ -301,12 +238,6 @@ protected:
 	int			m_iWarnOnCap[MAX_CONTROL_POINTS];
 	char		m_iszWarnSound[MAX_CONTROL_POINTS][255];
 	float		m_flPathDistance[MAX_CONTROL_POINTS];
-	int			m_iCPGroup[MAX_CONTROL_POINTS];
-	bool		m_bCPLocked[MAX_CONTROL_POINTS];
-	float		m_flUnlockTimes[MAX_CONTROL_POINTS];
-	float		m_flOldUnlockTimes[MAX_CONTROL_POINTS];
-	float		m_flCPTimerTimes[MAX_CONTROL_POINTS];
-	float		m_flOldCPTimerTimes[MAX_CONTROL_POINTS];
 
 	// state variables
 	int		m_iNumTeamMembers[MAX_CONTROL_POINTS * MAX_CONTROL_POINT_TEAMS];
@@ -314,7 +245,6 @@ protected:
 	int		m_iTeamInZone[MAX_CONTROL_POINTS];
 	bool	m_bBlocked[MAX_CONTROL_POINTS];
 	int		m_iOwner[MAX_CONTROL_POINTS];
-	bool	m_bCPCapRateScalesWithPlayers[MAX_CONTROL_POINTS];
 
 	// client calculated state
 	float	m_flCapTimeLeft[MAX_CONTROL_POINTS];
@@ -323,18 +253,6 @@ protected:
 	bool	m_bWarnedOnFinalCap[MAX_CONTROL_POINTS];
 	float	m_flLastCapWarningTime[MAX_CONTROL_POINTS];
 	char	m_pszCapLayoutInHUD[MAX_CAPLAYOUT_LENGTH];
-	float	m_flOldCustomPositionX;
-	float	m_flOldCustomPositionY;
-	float	m_flCustomPositionX;
-	float	m_flCustomPositionY;
-
-	// hill data for multi-escort payload maps
-	int		m_nNumNodeHillData[TEAM_TRAIN_MAX_TEAMS];
-	float	m_flNodeHillData[TEAM_TRAIN_HILLS_ARRAY_SIZE];
-	bool	m_bTrainOnHill[TEAM_TRAIN_MAX_HILLS*TEAM_TRAIN_MAX_TEAMS];
-
-	bool	m_bTrackAlarm[TEAM_TRAIN_MAX_TEAMS];
-	bool	m_bHillIsDownhill[TEAM_TRAIN_MAX_HILLS*TEAM_TRAIN_MAX_TEAMS];
 };
 
 extern C_BaseTeamObjectiveResource *g_pObjectiveResource;

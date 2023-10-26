@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -36,6 +36,7 @@ public:
 	m_pEvent( 0 ),
 	m_pScene( 0 ),
 	m_pActor( 0 ),
+	m_hSceneEntity( 0 ),
 	m_bStarted( false ),
 	m_iLayer( -1 ),
 	m_iPriority( 0 ),
@@ -50,7 +51,8 @@ public:
 	m_flFacingYaw( 0.0f ),
 	m_nType( 0 ),
 	m_flNext( 0.0f ),
-	m_bClientSide( false )
+	m_bClientSide( false ),
+	m_pExpHdr( NULL )
 	{
 	}
 
@@ -62,6 +64,8 @@ public:
 
 	// Current actor
 	CChoreoActor	*m_pActor;
+
+	CHandle< CSceneEntity >	m_hSceneEntity;
 
 	// Set after the first time the event has been configured ( allows
 	//  bumping markov index only at start of event playback, not every frame )
@@ -92,6 +96,9 @@ public:
 	// is this event only client side?
 	bool					m_bClientSide; 
 
+	// cached flex file
+	const flexsettinghdr_t *m_pExpHdr; 
+
 	void					InitWeight( CBaseFlex *pActor );
 	float					UpdateWeight( CBaseFlex *pActor );
 };
@@ -105,7 +112,7 @@ public:
 	const char	*CurrentToken( void );
 	bool		GetToken( bool crossline );
 	bool		TokenAvailable( void );
-	void		Error( PRINTF_FORMAT_STRING const char *fmt, ... );
+	void		Error( const char *fmt, ... );
 	void		SetBuffer( char *buffer );
 private:
 	const char	*m_pBuffer;
@@ -114,7 +121,7 @@ private:
 
 extern CSceneTokenProcessor g_TokenProcessor;
 
-void Scene_Printf( PRINTF_FORMAT_STRING const char *pFormat, ... );
+void Scene_Printf( const char *pFormat, ... );
 extern ConVar scene_clientflex;
 
 #endif // SCENEENTITY_SHARED_H

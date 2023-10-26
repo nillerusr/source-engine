@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -59,7 +59,6 @@ public:
 extern IEffectsList *clienteffects;
 
 class IMaterialSystem;
-extern IMaterialSystem *materials;
 
 //Actual function references
 void FX_AddCube( const Vector &mins, const Vector &maxs, const Vector &vColor, float life, const char *materialName );

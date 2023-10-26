@@ -1,13 +1,18 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 // $NoKeywords: $
 //=============================================================================//
+
 #include "cbase.h"
-#include "proxyentity.h"
-#include "materialsystem/imaterial.h"
-#include "materialsystem/imaterialvar.h"
+#include "ProxyEntity.h"
+#include "materialsystem/IMaterial.h"
+#include "materialsystem/IMaterialVar.h"
+
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
 
 void HueToRGB( float frac, Vector& color );
 
@@ -102,4 +107,4 @@ return;
 	m_ThermalVar->SetVecValue( color[0], color[1], color[2] );
 }
 
-EXPOSE_INTERFACE( CThermalMaterialProxy, IMaterialProxy, "Thermal" IMATERIAL_PROXY_INTERFACE_VERSION );
+EXPOSE_MATERIAL_PROXY( CThermalMaterialProxy, Thermal );

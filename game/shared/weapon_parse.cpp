@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Weapon data file parsing, shared by game & client dlls.
 //
@@ -34,7 +34,7 @@ const char *pWeaponSoundCategories[ NUM_SHOOT_SOUND_TYPES ] =
 	"special2",
 	"special3",
 	"taunt",
-	"deploy"
+	"fastreload"
 };
 #else
 extern const char *pWeaponSoundCategories[ NUM_SHOOT_SOUND_TYPES ];
@@ -122,7 +122,7 @@ static FileWeaponInfo_t gNullWeaponInfo;
 //-----------------------------------------------------------------------------
 FileWeaponInfo_t *GetFileWeaponInfoFromHandle( WEAPON_FILE_INFO_HANDLE handle )
 {
-	if ( handle < 0 || handle >= m_WeaponInfoDatabase.Count() )
+	if ( handle >= m_WeaponInfoDatabase.Count() )
 	{
 		return &gNullWeaponInfo;
 	}
@@ -166,6 +166,7 @@ void PrecacheFileWeaponInfoDatabase( IFileSystem *filesystem, const unsigned cha
 		return;
 
 	KeyValues *manifest = new KeyValues( "weaponscripts" );
+	manifest->UsesEscapeSequences( true );
 	if ( manifest->LoadFromFile( filesystem, "scripts/weapon_manifest.txt", "GAME" ) )
 	{
 		for ( KeyValues *sub = manifest->GetFirstSubKey(); sub != NULL ; sub = sub->GetNextKey() )
@@ -193,24 +194,20 @@ void PrecacheFileWeaponInfoDatabase( IFileSystem *filesystem, const unsigned cha
 	manifest->deleteThis();
 }
 
-KeyValues* ReadEncryptedKVFile( IFileSystem *filesystem, const char *szFilenameWithoutExtension, const unsigned char *pICEKey, bool bForceReadEncryptedFile /*= false*/ )
+KeyValues* ReadEncryptedKVFile( IFileSystem *filesystem, const char *szFilenameWithoutExtension, const unsigned char *pICEKey )
 {
 	Assert( strchr( szFilenameWithoutExtension, '.' ) == NULL );
 	char szFullName[512];
 
-	const char *pSearchPath = "MOD";
-
-	if ( pICEKey == NULL )
-	{
-		pSearchPath = "GAME";
-	}
+	const char *pSearchPath = "GAME";
 
 	// Open the weapon data file, and abort if we can't
 	KeyValues *pKV = new KeyValues( "WeaponDatafile" );
+	pKV->UsesEscapeSequences( true );
 
 	Q_snprintf(szFullName,sizeof(szFullName), "%s.txt", szFilenameWithoutExtension);
 
-	if ( bForceReadEncryptedFile || !pKV->LoadFromFile( filesystem, szFullName, pSearchPath ) ) // try to load the normal .txt file first
+	if ( !pKV->LoadFromFile( filesystem, szFullName, pSearchPath ) ) // try to load the normal .txt file first
 	{
 #ifndef _XBOX
 		if ( pICEKey )
@@ -284,15 +281,7 @@ bool ReadWeaponDataFromFileForSlot( IFileSystem* filesystem, const char *szWeapo
 
 	char sz[128];
 	Q_snprintf( sz, sizeof( sz ), "scripts/%s", szWeaponName );
-
-	KeyValues *pKV = ReadEncryptedKVFile( filesystem, sz, pICEKey,
-#if defined( DOD_DLL )
-		true			// Only read .ctx files!
-#else
-		false
-#endif
-		);
-
+	KeyValues *pKV = ReadEncryptedKVFile( filesystem, sz, pICEKey );
 	if ( !pKV )
 		return false;
 
@@ -331,6 +320,7 @@ FileWeaponInfo_t::FileWeaponInfo_t()
 	iFlags = 0;
 	szAmmo1[0] = 0;
 	szAmmo2[0] = 0;
+	szAIAddOn[0] = 0;
 	memset( aShootSounds, 0, sizeof( aShootSounds ) );
 	iAmmoType = 0;
 	iAmmo2Type = 0;
@@ -405,12 +395,12 @@ void FileWeaponInfo_t::Parse( KeyValues *pKeyValuesData, const char *szWeaponNam
 	}
 
 
-	bShowUsageHint = ( pKeyValuesData->GetInt( "showusagehint", 0 ) != 0 ) ? true : false;
-	bAutoSwitchTo = ( pKeyValuesData->GetInt( "autoswitchto", 1 ) != 0 ) ? true : false;
-	bAutoSwitchFrom = ( pKeyValuesData->GetInt( "autoswitchfrom", 1 ) != 0 ) ? true : false;
-	m_bBuiltRightHanded = ( pKeyValuesData->GetInt( "BuiltRightHanded", 1 ) != 0 ) ? true : false;
-	m_bAllowFlipping = ( pKeyValuesData->GetInt( "AllowFlipping", 1 ) != 0 ) ? true : false;
-	m_bMeleeWeapon = ( pKeyValuesData->GetInt( "MeleeWeapon", 0 ) != 0 ) ? true : false;
+	bShowUsageHint = pKeyValuesData->GetBool( "showusagehint", false );
+	bAutoSwitchTo = pKeyValuesData->GetBool( "autoswitchto", true );
+	bAutoSwitchFrom = pKeyValuesData->GetBool( "autoswitchfrom", true );
+	m_bBuiltRightHanded = pKeyValuesData->GetBool( "BuiltRightHanded", true );
+	m_bAllowFlipping = pKeyValuesData->GetBool( "AllowFlipping", true );
+	m_bMeleeWeapon = pKeyValuesData->GetBool( "MeleeWeapon", false );
 
 #if defined(_DEBUG) && defined(HL2_CLIENT_DLL)
 	// make sure two weapons aren't in the same slot & position
@@ -445,6 +435,13 @@ void FileWeaponInfo_t::Parse( KeyValues *pKeyValuesData, const char *szWeaponNam
 	else
 		Q_strncpy( szAmmo2, pAmmo, sizeof( szAmmo2 )  );
 	iAmmo2Type = GetAmmoDef()->Index( szAmmo2 );
+
+	// AI AddOn
+	const char *pAIAddOn = pKeyValuesData->GetString( "ai_addon", "ai_addon_basecombatweapon" );
+	if ( strcmp("None", pAIAddOn) == 0)
+		Q_strncpy( szAIAddOn, "", sizeof( szAIAddOn ) );
+	else
+		Q_strncpy( szAIAddOn, pAIAddOn, sizeof( szAIAddOn )  );
 
 	// Now read the weapon sounds
 	memset( aShootSounds, 0, sizeof( aShootSounds ) );

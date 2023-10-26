@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<!DOCTYPE CodeBlocks_workspace_file>
+<CodeBlocks_workspace_file>
+	<Workspace title="squirrel workspace">
+		<Project filename="sqstdlib\sqstdlib.cbp"/>
+		<Project filename="squirrel\squirrel.cbp"/>
+		<Project filename="sqdbglib\sqdbglib.cbp"/>
+		<Project filename="sqplus\sqplus.cbp"/>
+		<Project filename="sqdbg\sqdbg.cbp"/>
+		<Project filename="sq\sq.cbp"/>
+		<Project filename="minimalSqPlus\minimalSqPlus.cbp"/>
+		<Project filename="testSqPlus\testSqPlus.cbp"/>
+		<Project filename="testSqPlus2\testSqPlus2.cbp" active="1"/>
+		<Project filename="Solution Items"/>
+	</Workspace>
+</CodeBlocks_workspace_file>

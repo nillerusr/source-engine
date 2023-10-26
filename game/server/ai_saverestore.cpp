@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -155,6 +155,7 @@ public:
 			pRestore->EndBlock();
 		}
 		
+
 		if ( g_AI_Manager.NumAIs() && g_pBigAINet->NumNodes() == 0 && !g_pAINetworkManager->NetworksLoaded() )
 		{
 			Msg( "***\n");
@@ -163,6 +164,7 @@ public:
 			CAI_BaseNPC::m_nDebugBits |= bits_debugDisableAI;
 			g_pAINetworkManager->MarkDontSaveGraph();
 		}
+
 	}
 
 	void PostRestore( void )

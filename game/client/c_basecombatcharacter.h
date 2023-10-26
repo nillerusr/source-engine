@@ -1,9 +1,9 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: Defines the client-side representation of CBaseCombatCharacter.
 //
 // $NoKeywords: $
-//=============================================================================//
+//===========================================================================//
 
 #ifndef C_BASECOMBATCHARACTER_H
 #define C_BASECOMBATCHARACTER_H
@@ -14,14 +14,11 @@
 
 #include "shareddefs.h"
 #include "c_baseflex.h"
-#ifdef GLOWS_ENABLE
-#include "glow_outline_effect.h"
-#endif // GLOWS_ENABLE
+
+#define BCC_DEFAULT_LOOK_TOWARDS_TOLERANCE 0.9f
 
 class C_BaseCombatWeapon;
 class C_WeaponCombatShield;
-
-#define BCC_DEFAULT_LOOK_TOWARDS_TOLERANCE 0.9f
 
 class C_BaseCombatCharacter : public C_BaseFlex
 {
@@ -32,9 +29,6 @@ public:
 
 					C_BaseCombatCharacter( void );
 	virtual			~C_BaseCombatCharacter( void );
-
-	virtual void	OnPreDataChanged( DataUpdateType_t updateType );
-	virtual void	OnDataChanged( DataUpdateType_t updateType );
 
 	virtual bool	IsBaseCombatCharacter( void ) { return true; };
 	virtual C_BaseCombatCharacter *MyCombatCharacterPointer( void ) { return this; }
@@ -60,7 +54,6 @@ public:
 	virtual bool IsLineOfSightClear( CBaseEntity *entity, LineOfSightCheckType checkType = IGNORE_NOTHING ) const;// strictly LOS check with no other considerations
 	virtual bool IsLineOfSightClear( const Vector &pos, LineOfSightCheckType checkType = IGNORE_NOTHING, CBaseEntity *entityToIgnore = NULL ) const;
 
-
 	// -----------------------
 	// Ammo
 	// -----------------------
@@ -70,7 +63,8 @@ public:
 	int					GetAmmoCount( int iAmmoIndex ) const;
 	int					GetAmmoCount( char *szName ) const;
 
-	C_BaseCombatWeapon*	Weapon_OwnsThisType( const char *pszWeapon, int iSubType = 0 ) const;  // True if already owns a weapon of this class
+	virtual C_BaseCombatWeapon*	Weapon_OwnsThisType( const char *pszWeapon, int iSubType = 0 ) const;  // True if already owns a weapon of this class
+	virtual int			Weapon_GetSlot( const char *pszWeapon, int iSubType = 0 ) const;  // Returns -1 if they don't have one
 	virtual	bool		Weapon_Switch( C_BaseCombatWeapon *pWeapon, int viewmodelindex = 0 );
 	virtual bool		Weapon_CanSwitchTo(C_BaseCombatWeapon *pWeapon);
 	
@@ -78,8 +72,8 @@ public:
 	bool SwitchToNextBestWeapon(C_BaseCombatWeapon *pCurrent);
 
 	virtual C_BaseCombatWeapon	*GetActiveWeapon( void ) const;
-	int					WeaponCount() const;
-	C_BaseCombatWeapon	*GetWeapon( int i ) const;
+	int							WeaponCount() const;
+	virtual C_BaseCombatWeapon	*GetWeapon( int i ) const;
 
 	// This is a sort of hack back-door only used by physgun!
 	void SetAmmoCount( int iCount, int iAmmoIndex );
@@ -92,84 +86,46 @@ public:
 	// Blood color (see BLOOD_COLOR_* macros in baseentity.h)
 	void SetBloodColor( int nBloodColor );
 
-	virtual void		DoMuzzleFlash();
-
-#ifdef GLOWS_ENABLE
-	CGlowObject			*GetGlowObject( void ){ return m_pGlowEffect; }
-	virtual void		GetGlowEffectColor( float *r, float *g, float *b );
-#endif // GLOWS_ENABLE
+	virtual void DoMuzzleFlash();
 
 public:
 
+// BEGIN PREDICTION DATA COMPACTION (these fields are together to allow for faster copying in prediction system)
 	float			m_flNextAttack;
 
-protected:
-
-#ifdef GLOWS_ENABLE	
-	virtual void		UpdateGlowEffect( void );
-	virtual void		DestroyGlowEffect( void );
-#endif // GLOWS_ENABLE
-
-	int			m_bloodColor;			// color of blood particless
+private:
+	bool ComputeLOS( const Vector &vecEyePosition, const Vector &vecTarget ) const;
 
 private:
-	bool				ComputeLOS( const Vector &vecEyePosition, const Vector &vecTarget ) const;
-
 	CNetworkArray( int, m_iAmmo, MAX_AMMO_TYPES );
-
 	CHandle<C_BaseCombatWeapon>		m_hMyWeapons[MAX_WEAPONS];
 	CHandle< C_BaseCombatWeapon > m_hActiveWeapon;
 
-#ifdef GLOWS_ENABLE
-	bool				m_bGlowEnabled;
-	bool				m_bOldGlowEnabled;
-	CGlowObject			*m_pGlowEffect;
-#endif // GLOWS_ENABLE
+// END PREDICTION DATA COMPACTION
+
+protected:
+
+	int			m_bloodColor;			// color of blood particless
+
+
+private:
+
+
 
 private:
 	C_BaseCombatCharacter( const C_BaseCombatCharacter & ); // not defined, not accessible
 
 
 //-----------------------
-#ifdef INVASION_CLIENT_DLL
-public:
-	virtual void	Release( void );
-	virtual void	SetDormant( bool bDormant );
-	virtual void	OnPreDataChanged( DataUpdateType_t updateType );
-	virtual void	OnDataChanged( DataUpdateType_t updateType );
-	virtual void	ClientThink( void );
 
-	// TF2 Powerups
-	virtual bool	CanBePoweredUp( void ) { return true; }
-	bool			HasPowerup( int iPowerup ) { return ( m_iPowerups & (1 << iPowerup) ) != 0; };
-	virtual void	PowerupStart( int iPowerup, bool bInitial );
-	virtual void	PowerupEnd( int iPowerup );
-	void			RemoveAllPowerups( void );
-
-	// Powerup effects
-	void			AddEMPEffect( float flSize );
-	void			AddBuffEffect( float flSize );
-
-	C_WeaponCombatShield		*GetShield( void );
-
-public:
-	int				m_iPowerups;
-	int				m_iPrevPowerups;
-#endif
 
 };
 
 inline C_BaseCombatCharacter *ToBaseCombatCharacter( C_BaseEntity *pEntity )
 {
-	if ( !pEntity || !pEntity->IsBaseCombatCharacter() )
-		return NULL;
-
-#if _DEBUG
-	return dynamic_cast<C_BaseCombatCharacter *>( pEntity );
-#else
-	return static_cast<C_BaseCombatCharacter *>( pEntity );
-#endif
+	return pEntity ? pEntity->MyCombatCharacterPointer() : NULL;
 }
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -177,16 +133,6 @@ inline C_BaseCombatCharacter *ToBaseCombatCharacter( C_BaseEntity *pEntity )
 inline int	C_BaseCombatCharacter::WeaponCount() const
 {
 	return MAX_WEAPONS;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : i - 
-//-----------------------------------------------------------------------------
-inline C_BaseCombatWeapon *C_BaseCombatCharacter::GetWeapon( int i ) const
-{
-	Assert( (i >= 0) && (i < MAX_WEAPONS) );
-	return m_hMyWeapons[i].Get();
 }
 
 EXTERN_RECV_TABLE(DT_BaseCombatCharacter);

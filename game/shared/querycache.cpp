@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2008, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -45,7 +45,7 @@ void QueryCacheKey_t::ComputeHashIndex( void )
 	for( int i = 0 ; i < m_nNumValidPoints; i++ )
 	{
 		ret += ( unsigned int ) m_pEntities[i].ToInt();
-		ret += ( uintp ) m_nOffsetMode;
+		ret += ( unsigned int ) m_nOffsetMode;
 	}
 	ret += *( ( uint32 *) &m_flMinimumUpdateInterval );
 	ret += m_nTraceMask;
@@ -53,7 +53,7 @@ void QueryCacheKey_t::ComputeHashIndex( void )
 }
 
 
-ConVar	sv_disable_querycache("sv_disable_querycache", "0", FCVAR_CHEAT, "debug - disable trace query cache" );
+ConVar	sv_disable_querycache("sv_disable_querycache", "0", FCVAR_CHEAT | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "debug - disable trace query cache" );
 
 static QueryCacheEntry_t *FindOrAllocateCacheEntry( QueryCacheKey_t const &entry )
 {
@@ -216,14 +216,14 @@ void ProcessQueryCacheUpdate( QueryCacheUpdateRecord_t &workItem )
 
 static void PreUpdateQueryCache()
 {
-	//mdlcache->BeginCoarseLock();			// x360 only - will need to port for this in the future
+	mdlcache->BeginCoarseLock();
 	mdlcache->BeginLock();
 }
 
 static void PostUpdateQueryCache()
 {
 	mdlcache->EndLock();
-	//mdlcache->EndCoarseLock();			// x360 only - will need to port for this in the future
+	mdlcache->EndCoarseLock();
 }
 
 
@@ -241,7 +241,7 @@ void UpdateQueryCache( void )
 			workList[i].m_nNumHashChainsToUpdate = ARRAYSIZE( s_HashChains ) - nCurEntry;
 		nCurEntry += ARRAYSIZE( s_HashChains ) / N_WAYS_TO_SPLIT_CACHE_UPDATE;
 	}
-	ParallelProcess( "ProcessQueryCacheUpdate", workList, N_WAYS_TO_SPLIT_CACHE_UPDATE, ProcessQueryCacheUpdate, PreUpdateQueryCache, PostUpdateQueryCache, ( sv_disable_querycache.GetBool() ) ? 0 : INT_MAX );
+	ParallelProcess( workList, N_WAYS_TO_SPLIT_CACHE_UPDATE, ProcessQueryCacheUpdate, PreUpdateQueryCache, PostUpdateQueryCache, ( sv_disable_querycache.GetBool() ) ? 0 : INT_MAX );
 	// now, we need to take all of the obsolete cache entries each thread generated and add them to
 	// the victim cache
 	for( int i = 0 ; i < N_WAYS_TO_SPLIT_CACHE_UPDATE; i++ )
@@ -329,11 +329,6 @@ CON_COMMAND_F( cl_querycache_stats, "Display status of the query cache (client o
 CON_COMMAND( sv_querycache_stats, "Display status of the query cache (client only)" )
 #endif
 {
-#ifndef CLIENT_DLL
-	if ( !UTIL_IsCommandIssuedByServerAdmin() )
-		return;
-#endif
-
 	Warning( "%d queries, %d misses (%d free) suc spec = %d wasted spec=%d\n",
 			 s_nNumCacheQueries, s_nNumCacheMisses, s_VictimList.Count(),
 			 s_SuccessfulSpeculatives, s_WastedSpeculativeUpdates );

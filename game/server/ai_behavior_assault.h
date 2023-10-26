@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -20,8 +20,16 @@
 
 enum RallySelectMethod_t
 {
-	RALLY_POINT_SELECT_DEFAULT = 0,
+	RALLY_POINT_SELECT_CLOSEST = 0,
 	RALLY_POINT_SELECT_RANDOM,
+	RALLY_POINT_SELECT_FURTHEST
+};
+
+enum BranchingMethod_t
+{
+	BRANCH_RANDOM,
+	BRANCH_CLOSEST,
+	BRANCH_FURTHEST
 };
 
 enum AssaultCue_t
@@ -49,6 +57,28 @@ enum
 #define ASSAULT_DIVERSION_TIME		4
 
 #define SF_ASSAULTPOINT_CLEARONARRIVAL	0x00000001
+
+//=============================================================================
+//=============================================================================
+class CAI_AssaultGoal : public CAI_GoalEntity
+{
+	typedef CAI_GoalEntity BaseClass;
+
+	virtual void EnableGoal( CAI_BaseNPC *pAI );
+	virtual void DisableGoal( CAI_BaseNPC *pAI );
+
+	string_t		m_RallyPoint;
+	int				m_AssaultCue;
+	int				m_RallySelectMethod;
+	int				m_BranchMethod;
+
+	void InputBeginAssault( inputdata_t &inputdata );
+
+	DECLARE_DATADESC();
+
+	friend class CAI_AssaultBehavior;
+};
+
 
 //=============================================================================
 //=============================================================================
@@ -91,6 +121,7 @@ public:
 	}
 
 	bool IsLocked( void ) { return (m_hLockedBy.Get() != NULL); }
+	bool ShouldBeLocked( void ) { return m_bShouldLock; }
 
 	int DrawDebugTextOverlays();
 	bool IsExclusive();
@@ -110,6 +141,7 @@ public:
 	bool		m_bForceCrouch;
 	bool		m_bIsUrgent;
 	short		m_sExclusivity;
+	bool		m_bShouldLock;
 
 	COutputEvent	m_OnArrival;
 
@@ -183,6 +215,8 @@ public:
 	virtual int	DrawDebugTextOverlays( int text_offset );
 
 	virtual void OnRestore();
+
+	void SetGoal( CAI_AssaultGoal *pGoal ) { m_hGoal = pGoal; }
 
 	bool CanRunAScriptedNPCInteraction( bool bForced );
 
@@ -290,6 +324,8 @@ private:
 	float			m_flTimeDeferScheduleSelection;
 
 	string_t		m_AssaultPointName;
+
+	CHandle<CAI_AssaultGoal> m_hGoal;
 
 	//---------------------------------
 	

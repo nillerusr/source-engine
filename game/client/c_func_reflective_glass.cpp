@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -6,14 +6,15 @@
 //===========================================================================//
 #include "cbase.h"
 #include "view_shared.h"
+#include "c_func_brush.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-class C_FuncReflectiveGlass : public C_BaseEntity
+class C_FuncReflectiveGlass : public C_FuncBrush
 {
 public:
-	DECLARE_CLASS( C_FuncReflectiveGlass, C_BaseEntity );
+	DECLARE_CLASS( C_FuncReflectiveGlass, C_FuncBrush );
 	DECLARE_CLIENTCLASS();
 
 // C_BaseEntity.
@@ -86,7 +87,7 @@ bool IsReflectiveGlassInView( const CViewSetup& view, cplane_t &plane )
 
 		Vector vecMins, vecMaxs;
 		pReflectiveGlass->GetRenderBoundsWorldspace( vecMins, vecMaxs );
-		if ( R_CullBox( vecMins, vecMaxs, frustum ) )
+		if ( frustum.CullBox( vecMins, vecMaxs ) )
 			continue;
 
 		const model_t *pModel = pReflectiveGlass->GetModel();

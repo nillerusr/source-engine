@@ -43,6 +43,7 @@ def build(bld):
 
 	includes = [
 		'.',
+		'../public',
 		'../shared',
 		'../../utils/common',
 		'../shared/econ',
@@ -50,7 +51,7 @@ def build(bld):
 		'../../common',
 		'../../public/tier0',
 		'../../public/tier1',
-		'../../public'
+		'../../public',
 	]
 
 	defines = []

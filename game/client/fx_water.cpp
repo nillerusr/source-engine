@@ -1,12 +1,12 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 //=============================================================================//
 
 #include "cbase.h"
-#include "clienteffectprecachesystem.h"
-#include "fx_sparks.h"
+#include "precache_register.h"
+#include "FX_Sparks.h"
 #include "iefx.h"
 #include "c_te_effect_dispatch.h"
 #include "particles_ez.h"
@@ -20,12 +20,12 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-CLIENTEFFECT_REGISTER_BEGIN( PrecacheEffectSplash )
-CLIENTEFFECT_MATERIAL( "effects/splash1" )
-CLIENTEFFECT_MATERIAL( "effects/splash2" )
-CLIENTEFFECT_MATERIAL( "effects/splash4" )
-CLIENTEFFECT_MATERIAL( "effects/slime1" )
-CLIENTEFFECT_REGISTER_END()
+PRECACHE_REGISTER_BEGIN( GLOBAL, PrecacheEffectSplash )
+PRECACHE( MATERIAL, "effects/splash1" )
+PRECACHE( MATERIAL, "effects/splash2" )
+PRECACHE( MATERIAL, "effects/splash4" )
+PRECACHE( MATERIAL, "effects/slime1" )
+PRECACHE_REGISTER_END()
 
 
 #define	SPLASH_MIN_SPEED	50.0f
@@ -94,146 +94,51 @@ void FX_WaterRipple( const Vector &origin, float scale, Vector *pColor, float fl
 	
 	if ( tr.fraction < 1.0f )
 	{
-		//Add a ripple quad to the surface
-		FX_AddQuad( tr.endpos + ( tr.plane.normal * 0.5f ), 
-					tr.plane.normal, 
-					16.0f*scale, 
-					128.0f*scale, 
-					0.7f,
-					flAlpha,	// start alpha
-					0.0f,		// end alpha
-					0.25f,
-					random->RandomFloat( 0, 360 ),
-					random->RandomFloat( -16.0f, 16.0f ),
-					color, 
-					flLifetime, 
-					"effects/splashwake1", 
-					(FXQUAD_BIAS_SCALE|FXQUAD_BIAS_ALPHA) );
+		QAngle vecAngles;
+		// we flip the z and the x to match the orientation of how the impact particles are authored
+		// all impact particles are authored with the effect going "up" (0, 0, 1)
+		VectorAngles( Vector( tr.plane.normal.z, tr.plane.normal.y, tr.plane.normal.x ), vecAngles );
+		DispatchParticleEffect( "water_splash_02_surface2", tr.endpos, vecAngles, NULL );
 	}
 }
+
+PRECACHE_REGISTER_BEGIN( SHARED_SYSTEM, FX_WaterRipple )
+	PRECACHE( PARTICLE_SYSTEM, "water_splash_02_surface2" )
+	//PRECACHE( MATERIAL, "effects/splashwake1" )
+PRECACHE_REGISTER_END()
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : &origin - 
 //			&normal - 
 //-----------------------------------------------------------------------------
-void FX_GunshotSplash( const Vector &origin, const Vector &normal, float scale )
+void FX_GunshotSplashVisuals( const Vector &origin, const Vector &normal, float scale )
 {
 	VPROF_BUDGET( "FX_GunshotSplash", VPROF_BUDGETGROUP_PARTICLE_RENDERING );
 	
-	if ( cl_show_splashes.GetBool() == false )
+  	if ( cl_show_splashes.GetBool() == false )
 		return;
 
-	Vector	color;
-	float	luminosity;
-	
-	// Get our lighting information
-	FX_GetSplashLighting( origin + ( normal * scale ), &color, &luminosity );
-
-	float flScale = scale / 8.0f;
-
-	if ( flScale > 4.0f )
+	QAngle vecAngles;
+	// we flip the z and the x to match the orientation of how the impact particles are authored
+	// all impact particles are authored with the effect going "up" (0, 0, 1)
+	VectorAngles( Vector( normal.z, normal.y, normal.x ), vecAngles );
+	if ( scale < 4.0f )
 	{
-		flScale = 4.0f;
+		DispatchParticleEffect( "water_splash_01", origin, vecAngles );
 	}
-
-	// Setup our trail emitter
-	CSmartPtr<CTrailParticles> sparkEmitter = CTrailParticles::Create( "splash" );
-
-	if ( !sparkEmitter )
-		return;
-
-	sparkEmitter->SetSortOrigin( origin );
-	sparkEmitter->m_ParticleCollision.SetGravity( 800.0f );
-	sparkEmitter->SetFlag( bitsPARTICLE_TRAIL_VELOCITY_DAMPEN );
-	sparkEmitter->SetVelocityDampen( 2.0f );
-	sparkEmitter->GetBinding().SetBBox( origin - Vector( 32, 32, 32 ), origin + Vector( 32, 32, 32 ) );
-
-	PMaterialHandle	hMaterial = ParticleMgr()->GetPMaterial( "effects/splash2" );
-
-	TrailParticle	*tParticle;
-
-	Vector	offDir;
-	Vector	offset;
-	float	colorRamp;
-
-	//Dump out drops
-	for ( int i = 0; i < 16; i++ )
+	else if ( scale < 8.0f )
 	{
-		offset = origin;
-		offset[0] += random->RandomFloat( -8.0f, 8.0f ) * flScale;
-		offset[1] += random->RandomFloat( -8.0f, 8.0f ) * flScale;
-
-		tParticle = (TrailParticle *) sparkEmitter->AddParticle( sizeof(TrailParticle), hMaterial, offset );
-
-		if ( tParticle == NULL )
-			break;
-
-		tParticle->m_flLifetime	= 0.0f;
-		tParticle->m_flDieTime	= random->RandomFloat( 0.25f, 0.5f );
-
-		offDir = normal + RandomVector( -0.8f, 0.8f );
-
-		tParticle->m_vecVelocity = offDir * random->RandomFloat( SPLASH_MIN_SPEED * flScale * 3.0f, SPLASH_MAX_SPEED * flScale * 3.0f );
-		tParticle->m_vecVelocity[2] += random->RandomFloat( 32.0f, 64.0f ) * flScale;
-
-		tParticle->m_flWidth		= random->RandomFloat( 1.0f, 3.0f );
-		tParticle->m_flLength		= random->RandomFloat( 0.025f, 0.05f );
-
-		colorRamp = random->RandomFloat( 0.75f, 1.25f );
-
-		tParticle->m_color.r = MIN( 1.0f, color[0] * colorRamp ) * 255;
-		tParticle->m_color.g = MIN( 1.0f, color[1] * colorRamp ) * 255;
-		tParticle->m_color.b = MIN( 1.0f, color[2] * colorRamp ) * 255;
-		tParticle->m_color.a = luminosity * 255;
+		DispatchParticleEffect( "water_splash_02", origin, vecAngles );
 	}
-
-	// Setup the particle emitter
-	CSmartPtr<CSplashParticle> pSimple = CSplashParticle::Create( "splish" );
-	pSimple->SetSortOrigin( origin );
-	pSimple->SetClipHeight( origin.z );
-	pSimple->SetParticleCullRadius( scale * 2.0f );
-	pSimple->GetBinding().SetBBox( origin - Vector( 32, 32, 32 ), origin + Vector( 32, 32, 32 ) );
-
-	SimpleParticle	*pParticle;
-
-	//Main gout
-	for ( int i = 0; i < 8; i++ )
+	else
 	{
-		pParticle = (SimpleParticle *) pSimple->AddParticle( sizeof( SimpleParticle ), hMaterial, origin );
-
-		if ( pParticle == NULL )
-			break;
-
-		pParticle->m_flLifetime = 0.0f;
-		pParticle->m_flDieTime	= 2.0f;	//NOTENOTE: We use a clip plane to realistically control our lifespan
-
-		pParticle->m_vecVelocity.Random( -0.2f, 0.2f );
-		pParticle->m_vecVelocity += ( normal * random->RandomFloat( 4.0f, 6.0f ) );
-		
-		VectorNormalize( pParticle->m_vecVelocity );
-
-		pParticle->m_vecVelocity *= 50 * flScale * (8-i);
-		
-		colorRamp = random->RandomFloat( 0.75f, 1.25f );
-
-		pParticle->m_uchColor[0]	= MIN( 1.0f, color[0] * colorRamp ) * 255.0f;
-		pParticle->m_uchColor[1]	= MIN( 1.0f, color[1] * colorRamp ) * 255.0f;
-		pParticle->m_uchColor[2]	= MIN( 1.0f, color[2] * colorRamp ) * 255.0f;
-		
-		pParticle->m_uchStartSize	= 24 * flScale * RemapValClamped( i, 7, 0, 1, 0.5f );
-		pParticle->m_uchEndSize		= MIN( 255, pParticle->m_uchStartSize * 2 );
-		
-		pParticle->m_uchStartAlpha	= RemapValClamped( i, 7, 0, 255, 32 ) * luminosity;
-		pParticle->m_uchEndAlpha	= 0;
-		
-		pParticle->m_flRoll			= random->RandomInt( 0, 360 );
-		pParticle->m_flRollDelta	= random->RandomFloat( -4.0f, 4.0f );
+		DispatchParticleEffect( "water_splash_03", origin, vecAngles );
 	}
+}
 
-	// Do a ripple
-	FX_WaterRipple( origin, flScale, &color, 1.5f, luminosity );
-
+void FX_GunshotSplashSound( const Vector &origin, const Vector &normal, float scale )
+{
 	//Play a sound
 	CLocalPlayerFilter filter;
 
@@ -246,6 +151,31 @@ void FX_GunshotSplash( const Vector &origin, const Vector &normal, float scale )
 
 
 	C_BaseEntity::EmitSound( filter, SOUND_FROM_WORLD, ep );
+}
+
+PRECACHE_REGISTER_BEGIN( SHARED_SYSTEM, FX_GunshotSplash )
+	PRECACHE( PARTICLE_SYSTEM, "water_splash_01" )
+	PRECACHE( PARTICLE_SYSTEM, "water_splash_02" )
+	PRECACHE( PARTICLE_SYSTEM, "water_splash_03" )
+	//PRECACHE( MATERIAL, "effects/splash2" )
+	PRECACHE( GAMESOUND, "Physics.WaterSplash" )
+PRECACHE_REGISTER_END()
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input  : &origin - 
+//			&normal - 
+//-----------------------------------------------------------------------------
+void FX_GunshotSplash( const Vector &origin, const Vector &normal, float scale )
+{
+	VPROF_BUDGET( "FX_GunshotSplash", VPROF_BUDGETGROUP_PARTICLE_RENDERING );
+
+	if ( cl_show_splashes.GetBool() == false )
+		return;
+
+	FX_GunshotSplashVisuals( origin, normal, scale );
+	FX_GunshotSplashSound( origin, normal, scale );
 }
 
 //-----------------------------------------------------------------------------
@@ -262,125 +192,10 @@ void FX_GunshotSlimeSplash( const Vector &origin, const Vector &normal, float sc
 
 	VPROF_BUDGET( "FX_GunshotSlimeSplash", VPROF_BUDGETGROUP_PARTICLE_RENDERING );
 	
-#if 0
-
-	float	colorRamp;
-	float	flScale = MIN( 1.0f, scale / 8.0f );
-
-	PMaterialHandle	hMaterial = ParticleMgr()->GetPMaterial( "effects/slime1" );
-	PMaterialHandle	hMaterial2 = ParticleMgr()->GetPMaterial( "effects/splash4" );
-
-	Vector	color;
-	float	luminosity;
-	
-	// Get our lighting information
-	FX_GetSplashLighting( origin + ( normal * scale ), &color, &luminosity );
-
-	Vector	offDir;
-	Vector	offset;
-
-	TrailParticle	*tParticle;
-
-	CSmartPtr<CTrailParticles> sparkEmitter = CTrailParticles::Create( "splash" );
-
-	if ( !sparkEmitter )
-		return;
-
-	sparkEmitter->SetSortOrigin( origin );
-	sparkEmitter->m_ParticleCollision.SetGravity( 800.0f );
-	sparkEmitter->SetFlag( bitsPARTICLE_TRAIL_VELOCITY_DAMPEN );
-	sparkEmitter->SetVelocityDampen( 2.0f );
-	if ( IsXbox() )
-	{
-		sparkEmitter->GetBinding().SetBBox( origin - Vector( 32, 32, 64 ), origin + Vector( 32, 32, 64 ) );
-	}
-
-	//Dump out drops
-	for ( int i = 0; i < 24; i++ )
-	{
-		offset = origin;
-		offset[0] += random->RandomFloat( -16.0f, 16.0f ) * flScale;
-		offset[1] += random->RandomFloat( -16.0f, 16.0f ) * flScale;
-
-		tParticle = (TrailParticle *) sparkEmitter->AddParticle( sizeof(TrailParticle), hMaterial, offset );
-
-		if ( tParticle == NULL )
-			break;
-
-		tParticle->m_flLifetime	= 0.0f;
-		tParticle->m_flDieTime	= random->RandomFloat( 0.25f, 0.5f );
-
-		offDir = normal + RandomVector( -0.6f, 0.6f );
-
-		tParticle->m_vecVelocity = offDir * random->RandomFloat( SPLASH_MIN_SPEED * flScale * 3.0f, SPLASH_MAX_SPEED * flScale * 3.0f );
-		tParticle->m_vecVelocity[2] += random->RandomFloat( 32.0f, 64.0f ) * flScale;
-   
-		tParticle->m_flWidth		= random->RandomFloat( 3.0f, 6.0f ) * flScale;
-		tParticle->m_flLength		= random->RandomFloat( 0.025f, 0.05f ) * flScale;
-
-		colorRamp = random->RandomFloat( 0.75f, 1.25f );
-
-		tParticle->m_color.r = MIN( 1.0f, color.x * colorRamp ) * 255;
-		tParticle->m_color.g = MIN( 1.0f, color.y * colorRamp ) * 255;
-		tParticle->m_color.b = MIN( 1.0f, color.z * colorRamp ) * 255;
-		tParticle->m_color.a = 255 * luminosity;
-	}
-
-	// Setup splash emitter
-	CSmartPtr<CSplashParticle> pSimple = CSplashParticle::Create( "splish" );
-	pSimple->SetSortOrigin( origin );
-	pSimple->SetClipHeight( origin.z );
-	pSimple->SetParticleCullRadius( scale * 2.0f );
-
-	if ( IsXbox() )
-	{
-		pSimple->GetBinding().SetBBox( origin - Vector( 32, 32, 64 ), origin + Vector( 32, 32, 64 ) );
-	}
-
-	SimpleParticle	*pParticle;
-
-	// Tint
-	colorRamp = random->RandomFloat( 0.75f, 1.0f );
-	color = Vector( 1.0f, 0.8f, 0.0f ) * color * colorRamp;
-
-	//Main gout
-	for ( int i = 0; i < 8; i++ )
-	{
-		pParticle = (SimpleParticle *) pSimple->AddParticle( sizeof( SimpleParticle ), hMaterial2, origin );
-
-		if ( pParticle == NULL )
-			break;
-
-		pParticle->m_flLifetime = 0.0f;
-		pParticle->m_flDieTime	= 2.0f;	//NOTENOTE: We use a clip plane to realistically control our lifespan
-
-		pParticle->m_vecVelocity.Random( -0.2f, 0.2f );
-		pParticle->m_vecVelocity += ( normal * random->RandomFloat( 4.0f, 6.0f ) );
-		
-		VectorNormalize( pParticle->m_vecVelocity );
-
-		pParticle->m_vecVelocity *= 50 * flScale * (8-i);
-		
-		colorRamp = random->RandomFloat( 0.75f, 1.25f );
-
-		pParticle->m_uchColor[0]	= MIN( 1.0f, color[0] * colorRamp ) * 255.0f;
-		pParticle->m_uchColor[1]	= MIN( 1.0f, color[1] * colorRamp ) * 255.0f;
-		pParticle->m_uchColor[2]	= MIN( 1.0f, color[2] * colorRamp ) * 255.0f;
-		
-		pParticle->m_uchStartSize	= 24 * flScale * RemapValClamped( i, 7, 0, 1, 0.5f );
-		pParticle->m_uchEndSize		= MIN( 255, pParticle->m_uchStartSize * 2 );
-		
-		pParticle->m_uchStartAlpha	= RemapValClamped( i, 7, 0, 255, 32 ) * luminosity;
-		pParticle->m_uchEndAlpha	= 0;
-		
-		pParticle->m_flRoll			= random->RandomInt( 0, 360 );
-		pParticle->m_flRollDelta	= random->RandomFloat( -4.0f, 4.0f );
-	}
-	
-#else
-	
 	QAngle vecAngles;
-	VectorAngles( normal, vecAngles );
+	// we flip the z and the x to match the orientation of how the impact particles are authored
+	// all impact particles are authored with the effect going "up" (0, 0, 1)
+	VectorAngles( Vector( normal.z, normal.y, normal.x ), vecAngles );
 	if ( scale < 2.0f )
 	{
 		DispatchParticleEffect( "slime_splash_01", origin, vecAngles );
@@ -394,8 +209,6 @@ void FX_GunshotSlimeSplash( const Vector &origin, const Vector &normal, float sc
 		DispatchParticleEffect( "slime_splash_03", origin, vecAngles );
 	}
 
-#endif
-
 	//Play a sound
 	CLocalPlayerFilter filter;
 
@@ -408,6 +221,14 @@ void FX_GunshotSlimeSplash( const Vector &origin, const Vector &normal, float sc
 
 	C_BaseEntity::EmitSound( filter, SOUND_FROM_WORLD, ep );
 }
+
+PRECACHE_REGISTER_BEGIN( SHARED_SYSTEM, FX_GunshotSlimeSplash )
+	PRECACHE( PARTICLE_SYSTEM, "slime_splash_01" )
+	PRECACHE( PARTICLE_SYSTEM, "slime_splash_02" )
+	PRECACHE( PARTICLE_SYSTEM, "slime_splash_03" )
+	PRECACHE( GAMESOUND, "Physics.WaterSplash" )
+PRECACHE_REGISTER_END()
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -428,7 +249,33 @@ void SplashCallback( const CEffectData &data )
 	}
 }
 
-DECLARE_CLIENT_EFFECT( "watersplash", SplashCallback );
+DECLARE_CLIENT_EFFECT_BEGIN( watersplash, SplashCallback )
+	PRECACHE( SHARED, "FX_GunshotSlimeSplash" )
+	PRECACHE( SHARED, "FX_GunshotSplash" )
+DECLARE_CLIENT_EFFECT_END()
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void SplashQuietCallback( const CEffectData &data )
+{
+	Vector	normal;
+
+	AngleVectors( data.m_vAngles, &normal );
+
+	if ( data.m_fFlags & FX_WATER_IN_SLIME )
+	{
+		FX_GunshotSlimeSplash( data.m_vOrigin, Vector(0,0,1), data.m_flScale );
+	}
+	else
+	{
+		FX_GunshotSplashVisuals( data.m_vOrigin, Vector(0,0,1), data.m_flScale );
+	}
+}
+
+DECLARE_CLIENT_EFFECT_BEGIN( watersplashquiet, SplashQuietCallback )
+DECLARE_CLIENT_EFFECT_END()
 
 
 //-----------------------------------------------------------------------------
@@ -447,7 +294,11 @@ void GunshotSplashCallback( const CEffectData &data )
 	}
 }
 
-DECLARE_CLIENT_EFFECT( "gunshotsplash", GunshotSplashCallback );
+DECLARE_CLIENT_EFFECT_BEGIN( gunshotsplash, GunshotSplashCallback )
+	PRECACHE( SHARED, "FX_GunshotSlimeSplash" )
+	PRECACHE( SHARED, "FX_GunshotSplash" )
+DECLARE_CLIENT_EFFECT_END()
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -466,7 +317,9 @@ void RippleCallback( const CEffectData &data )
 	FX_WaterRipple( data.m_vOrigin, flScale, &color, 1.5f, luminosity );
 }
 
-DECLARE_CLIENT_EFFECT( "waterripple", RippleCallback );
+DECLARE_CLIENT_EFFECT_BEGIN( waterripple, RippleCallback )
+	PRECACHE( SHARED, "FX_WaterRipple" )
+DECLARE_CLIENT_EFFECT_END()
 
 //-----------------------------------------------------------------------------
 // Purpose: 

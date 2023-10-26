@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -8,23 +8,23 @@
 //=============================================================================//
 #include "cbase.h"
 #include "hud.h"
-#include "inetgraphpanel.h"
+#include "inetGraphpanel.h"
 #include "kbutton.h"
 #include <inetchannelinfo.h>
 #include "input.h"
-#include <vgui/IVGui.h>
-#include "VGuiMatSurface/IMatSystemSurface.h"
+#include <vgui/IVgui.h>
+#include "VguiMatSurface/IMatSystemSurface.h"
 #include <vgui_controls/Panel.h>
 #include <vgui_controls/Controls.h>
 #include <vgui/ISurface.h>
 #include <vgui/IScheme.h>
-#include <vgui/ILocalize.h>
+#include <vgui/ilocalize.h>
 #include "tier0/vprof.h"
 #include "cdll_bounded_cvars.h"
 
-#include "materialsystem/imaterialsystem.h"
-#include "materialsystem/imesh.h"
-#include "materialsystem/imaterial.h"
+#include "materialsystem/IMaterialSystem.h"
+#include "materialsystem/IMesh.h"
+#include "materialsystem/IMaterial.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -307,14 +307,7 @@ void CNetGraphPanel::OnFontChanged()
 	Q_snprintf( str, sizeof( str ), "fps:  435  ping: 533 ms lerp 112.3 ms   0/0" );
 	g_pVGuiLocalize->ConvertANSIToUnicode( str, ustr, sizeof( ustr ) );
 	int textTall;
-	if ( m_hFontProportional == vgui::INVALID_FONT )
-	{
-		m_EstimatedWidth = textTall = 0;
-	}
-	else
-	{
-		g_pMatSystemSurface->GetTextSize( m_hFontProportional, ustr, m_EstimatedWidth, textTall );
-	}
+	g_pMatSystemSurface->GetTextSize( m_hFontProportional, ustr, m_EstimatedWidth, textTall );
 
 	int w, h;
 	surface()->GetScreenSize( w, h );
@@ -733,8 +726,8 @@ void CNetGraphPanel::DrawTextFields( int graphvalue, int x, int y, int w, netban
 	int textTall = surface()->GetFontTall( font );
 
 	Q_snprintf( sz, sizeof( sz ), "fps:%4i   ping: %i ms", (int)(1.0f / m_Framerate), (int)(m_AvgLatency*1000.0f) );
-
-	g_pMatSystemSurface->DrawColoredText( font, x, y, GRAPH_RED, GRAPH_GREEN, GRAPH_BLUE, 255, "%s", sz );
+	
+	g_pMatSystemSurface->DrawColoredText( font, x, y, GRAPH_RED, GRAPH_GREEN, GRAPH_BLUE, 255, sz );
 
 	// Draw update rate
 	DrawUpdateRate( x + w, y );
@@ -752,16 +745,16 @@ void CNetGraphPanel::DrawTextFields( int graphvalue, int x, int y, int w, netban
 	}
 
 	int totalsize = graph[ ( m_IncomingSequence & ( TIMINGS - 1 ) ) ].msgbytes[INetChannelInfo::TOTAL];
-
+	
 	Q_snprintf( sz, sizeof( sz ), "in :%4i   %2.2f k/s ", totalsize, m_IncomingData );
 
 	int textWidth = g_pMatSystemSurface->DrawTextLen( font, "%s", sz );
 
-	g_pMatSystemSurface->DrawColoredText( font, x, y, GRAPH_RED, GRAPH_GREEN, GRAPH_BLUE, 255, "%s", sz );
+	g_pMatSystemSurface->DrawColoredText( font, x, y, GRAPH_RED, GRAPH_GREEN, GRAPH_BLUE, 255, sz );
 
 	Q_snprintf( sz, sizeof( sz ), "lerp: %5.1f ms", GetClientInterpAmount() * 1000.0f );
 
-	int interpcolor[ 3 ] = { (int)GRAPH_RED, (int)GRAPH_GREEN, (int)GRAPH_BLUE }; 
+	int interpcolor[ 3 ] = { GRAPH_RED, GRAPH_GREEN, GRAPH_BLUE }; 
 	float flInterp = GetClientInterpAmount();
 	if ( flInterp > 0.001f )
 	{
@@ -781,23 +774,23 @@ void CNetGraphPanel::DrawTextFields( int graphvalue, int x, int y, int w, netban
 		}
 	}
 
-	g_pMatSystemSurface->DrawColoredText( font, x + textWidth, y, interpcolor[ 0 ], interpcolor[ 1 ], interpcolor[ 2 ], 255, "%s", sz );
+	g_pMatSystemSurface->DrawColoredText( font, x + textWidth, y, interpcolor[ 0 ], interpcolor[ 1 ], interpcolor[ 2 ], 255, sz );
 
 	Q_snprintf( sz, sizeof( sz ), "%3.1f/s", m_AvgPacketIn );
 	textWidth = g_pMatSystemSurface->DrawTextLen( font, "%s", sz );
 
-	g_pMatSystemSurface->DrawColoredText( font, x + w - textWidth - 1, y, GRAPH_RED, GRAPH_GREEN, GRAPH_BLUE, 255, "%s", sz );
+	g_pMatSystemSurface->DrawColoredText( font, x + w - textWidth - 1, y, GRAPH_RED, GRAPH_GREEN, GRAPH_BLUE, 255, sz );
 
 	y += textTall;
 
 	Q_snprintf( sz, sizeof( sz ), "out:%4i   %2.2f k/s", out, m_OutgoingData );
 
-	g_pMatSystemSurface->DrawColoredText( font, x, y, GRAPH_RED, GRAPH_GREEN, GRAPH_BLUE, 255, "%s", sz );
+	g_pMatSystemSurface->DrawColoredText( font, x, y, GRAPH_RED, GRAPH_GREEN, GRAPH_BLUE, 255, sz );
 
 	Q_snprintf( sz, sizeof( sz ), "%3.1f/s", m_AvgPacketOut );
 	textWidth = g_pMatSystemSurface->DrawTextLen( font, "%s", sz );
 
-	g_pMatSystemSurface->DrawColoredText( font, x + w - textWidth - 1, y, GRAPH_RED, GRAPH_GREEN, GRAPH_BLUE, 255, "%s", sz );
+	g_pMatSystemSurface->DrawColoredText( font, x + w - textWidth - 1, y, GRAPH_RED, GRAPH_GREEN, GRAPH_BLUE, 255, sz );
 
 	y += textTall;
 
@@ -809,7 +802,7 @@ void CNetGraphPanel::DrawTextFields( int graphvalue, int x, int y, int w, netban
 
 		textWidth = g_pMatSystemSurface->DrawTextLen( font, "%s", sz );
 
-		g_pMatSystemSurface->DrawColoredText( font, x, y, GRAPH_RED, GRAPH_GREEN, GRAPH_BLUE, 255, "%s", sz );
+		g_pMatSystemSurface->DrawColoredText( font, x, y, GRAPH_RED, GRAPH_GREEN, GRAPH_BLUE, 255, sz );
 
 		y += textTall;
 
@@ -817,7 +810,7 @@ void CNetGraphPanel::DrawTextFields( int graphvalue, int x, int y, int w, netban
 		{
 			Q_snprintf( sz, sizeof( sz ), "sv  : %5.1f   var: %4.2f msec", m_flServerFramerate, m_flServerFramerateStdDeviation * 1000.0f );
 
-			int servercolor[ 3 ] = { (int)GRAPH_RED, (int)GRAPH_GREEN, (int)GRAPH_BLUE };
+			int servercolor[ 3 ] = { GRAPH_RED, GRAPH_GREEN, GRAPH_BLUE };
 
 			if ( m_flServerFramerate < 10.0f )
 			{
@@ -832,7 +825,7 @@ void CNetGraphPanel::DrawTextFields( int graphvalue, int x, int y, int w, netban
 				servercolor[ 2 ] = 0;
 			}
 
-			g_pMatSystemSurface->DrawColoredText( font, x, y, servercolor[ 0 ], servercolor[ 1 ], servercolor[ 2 ], 255, "%s", sz );
+			g_pMatSystemSurface->DrawColoredText( font, x, y, servercolor[ 0 ], servercolor[ 1 ], servercolor[ 2 ], 255, sz );
 
 			y += textTall;
 		}
@@ -865,6 +858,8 @@ void CNetGraphPanel::DrawTextFields( int graphvalue, int x, int y, int w, netban
 		y -= textTall;
 		g_pMatSystemSurface->DrawColoredText( m_hFontSmall, x, y, 0, 255, 255, 255, "events" );
 		y -= textTall;
+		g_pMatSystemSurface->DrawColoredText( m_hFontSmall, x, y, 255, 0, 255, 255, "tempents" );
+		y -= textTall;
 		g_pMatSystemSurface->DrawColoredText( m_hFontSmall, x, y, 128, 128, 0, 255, "usermessages" );
 		y -= textTall;
 		g_pMatSystemSurface->DrawColoredText( m_hFontSmall, x, y, 0, 128, 128, 255, "entmessages" );
@@ -887,8 +882,9 @@ int CNetGraphPanel::GraphValue( void )
 	int graphtype;
 
 	graphtype = net_graph.GetInt();
-	
-	if ( !graphtype && !( in_graph.state & 1 ) )
+
+	ACTIVE_SPLITSCREEN_PLAYER_GUARD_VGUI( 0 );
+	if ( !graphtype && !( in_graph.GetPerUser().state & 1 ) )
 		return 0;
 
 	// With +graph key, use max area
@@ -923,7 +919,7 @@ void CNetGraphPanel::GraphGetXY( vrect_t *rect, int width, int *x, int *y )
 		*x = rect->x + ( rect->width - 10 - width ) / 2;
 		break;
 	default:
-		*x = rect->x + clamp( (int) XRES( net_graphpos.GetInt() ), 5, rect->width - width - 5 );
+		*x = rect->x + clamp( XRES( net_graphpos.GetInt() ), 5, rect->width - width - 5 );
 	}
 
 	*y = rect->y+rect->height - LERP_HEIGHT - 5;
@@ -1082,11 +1078,7 @@ int CNetGraphPanel::DrawDataSegment( vrect_t *rcFill, int bytes, byte r, byte g,
 //-----------------------------------------------------------------------------
 void CNetGraphPanel::OnTick( void )
 {
-	bool bVisible = ShouldDraw();
-	if ( IsVisible() != bVisible )
-	{
-		SetVisible( bVisible );
-	}
+	SetVisible( ShouldDraw() );
 }
 
 bool CNetGraphPanel::ShouldDraw( void )
@@ -1119,28 +1111,16 @@ void CNetGraphPanel::DrawLargePacketSizes( int x, int w, int graphtype, float wa
 			char sz[ 32 ];
 			Q_snprintf( sz, sizeof( sz ), "%i", nTotalBytes );
 
-			int len = g_pMatSystemSurface->DrawTextLen( m_hFont, "%s", sz );
+			int len = g_pMatSystemSurface->DrawTextLen( m_hFont, sz );
 
 			int textx, texty;
 
 			textx = rcFill.x - len / 2;
 			texty = MAX( 0, rcFill.y - 11 );
 
-			g_pMatSystemSurface->DrawColoredText( m_hFont, textx, texty, 255, 255, 255, 255, "%s", sz );
+			g_pMatSystemSurface->DrawColoredText( m_hFont, textx, texty, 255, 255, 255, 255, sz );
 		}
 	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: A basic version (doesn't taken into account the "holding after
-// screenshot" bit like TF does, but is good enough for hud_freezecamhide.
-//-----------------------------------------------------------------------------
-static bool IsTakingAFreezecamScreenshot()
-{
-	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
-	bool bInFreezeCam = ( pPlayer && pPlayer->GetObserverMode() == OBS_MODE_FREEZECAM );
-
-	return ( bInFreezeCam && engine->IsTakingScreenshot() );
 }
 
 //-----------------------------------------------------------------------------
@@ -1149,11 +1129,6 @@ static bool IsTakingAFreezecamScreenshot()
 void CNetGraphPanel::Paint() 
 {
 	VPROF( "CNetGraphPanel::Paint" );
-
-	// Don't display net_graph if taking freezecam screenshot and hud_freezecamhide is enabled
-	extern ConVar hud_freezecamhide;
-	if ( hud_freezecamhide.GetBool() && IsTakingAFreezecamScreenshot() )
-		return;
 
 	int			graphtype;
 
@@ -1175,15 +1150,27 @@ void CNetGraphPanel::Paint()
 		net_scale.SetValue( 0.1f );
 	}
 
+	// Get screen rectangle
 	int sw, sh;
 	surface()->GetScreenSize( sw, sh );
 
-	// Get screen rectangle
-	vrect.x			= 0;
-	vrect.y			= 0;
-	vrect.width		= sw;
-	vrect.height	= sh;
-
+	if ( IsX360() )
+	{
+		// shrink for titlesafe
+		int insetX = XBOX_MINBORDERSAFE * (float)sw;
+		int insetY = XBOX_MINBORDERSAFE * (float)sh;
+		vrect.x = insetX;
+		vrect.y = insetY;
+		vrect.width = sw - 2 * insetX;
+		vrect.height = sh - 2 * insetY;
+	}
+	else
+	{
+		vrect.x = 0;
+		vrect.y = 0;
+		vrect.width  = sw;
+		vrect.height = sh;
+	}
 
 	w = MIN( (int)TIMINGS, m_EstimatedWidth );
 	if ( vrect.width < w + 10 )
@@ -1332,7 +1319,10 @@ void CNetGraphPanel::PaintLineArt( int x, int y, int w, int graphtype, int maxms
 
 		if ( !DrawDataSegment( &rcFill, m_Graph[ i ].msgbytes[INetChannelInfo::EVENTS], 0, 255, 255 ) )
 			continue;
-		
+	
+		if ( !DrawDataSegment( &rcFill, m_Graph[ i ].msgbytes[INetChannelInfo::TEMPENTS], 255, 0, 255 ) )
+			continue;
+
 		if ( !DrawDataSegment( &rcFill, m_Graph[ i ].msgbytes[INetChannelInfo::USERMESSAGES], 128, 128, 0 ) )
 			continue;
 
@@ -1395,30 +1385,38 @@ void CNetGraphPanel::DrawLineSegments()
 	if ( c <= 0 )
 		return;
 
-	CMatRenderContextPtr pRenderContext( materials );
-	IMesh* m_pMesh = pRenderContext->GetDynamicMesh( true, NULL, NULL, m_WhiteMaterial );
-	CMeshBuilder		meshBuilder;
-	meshBuilder.Begin( m_pMesh, MATERIAL_LINES, c );
-
-	int i;
-	for ( i = 0 ; i < c; i++ )
+	int start = 0;
+	while ( start < c )
 	{
-		CLineSegment *seg = &m_Rects[ i ];
+		int consume = MIN( 5000, c - start );
 
-		meshBuilder.Color4ubv( seg->color );
-		meshBuilder.TexCoord2f( 0, 0.0f, 0.0f );
-		meshBuilder.Position3f( seg->x1, seg->y1, 0 );
-		meshBuilder.AdvanceVertex();
+		CMatRenderContextPtr pRenderContext( materials );
+		IMesh* m_pMesh = pRenderContext->GetDynamicMesh( true, NULL, NULL, m_WhiteMaterial );
+		CMeshBuilder		meshBuilder;
+		meshBuilder.Begin( m_pMesh, MATERIAL_LINES, c );
 
-		meshBuilder.Color4ubv( seg->color2 );
-		meshBuilder.TexCoord2f( 0, 0.0f, 0.0f );
-		meshBuilder.Position3f( seg->x2, seg->y2, 0 );
-		meshBuilder.AdvanceVertex();
+		int i;
+		for ( i = start ; i < start + consume; i++ )
+		{
+			CLineSegment *seg = &m_Rects[ i ];
+
+			meshBuilder.Color4ubv( seg->color );
+			meshBuilder.TexCoord2f( 0, 0.0f, 0.0f );
+			meshBuilder.Position3f( seg->x1, seg->y1, 0 );
+			meshBuilder.AdvanceVertex();
+
+			meshBuilder.Color4ubv( seg->color2 );
+			meshBuilder.TexCoord2f( 0, 0.0f, 0.0f );
+			meshBuilder.Position3f( seg->x2, seg->y2, 0 );
+			meshBuilder.AdvanceVertex();
+		}
+
+		meshBuilder.End();
+
+		m_pMesh->Draw();
+
+		start += consume;
 	}
-
-	meshBuilder.End();
-
-	m_pMesh->Draw();
 }
 
 //-----------------------------------------------------------------------------
@@ -1479,7 +1477,7 @@ void CNetGraphPanel::UpdateEstimatedServerFramerate( INetChannelInfo *netchannel
 {
 	float flFrameTime;
 	netchannel->GetRemoteFramerate( &flFrameTime, &m_flServerFramerateStdDeviation );
-	if ( flFrameTime > FLT_EPSILON )
+	if ( flFrameTime > 0.001f )
 	{
 		m_flServerFramerate = 1.0f / flFrameTime;
 	}
@@ -1504,7 +1502,6 @@ public:
 		{
 			netGraphPanel->SetParent( (Panel *)NULL );
 			delete netGraphPanel;
-			netGraphPanel = NULL;
 		}
 	}
 };

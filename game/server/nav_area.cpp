@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright � 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -24,10 +24,7 @@
 #include "props_shared.h"
 #include "func_breakablesurf.h"
 
-#ifdef TERROR
-#include "func_elevator.h"
-#include "AmbientLight.h"
-#endif
+
 
 #include "Color.h"
 #include "collisionutils.h"
@@ -60,7 +57,7 @@ ConVar nav_debug_blocked( "nav_debug_blocked", "0", FCVAR_CHEAT );
 ConVar nav_show_contiguous( "nav_show_continguous", "0", FCVAR_CHEAT, "Highlight non-contiguous connections" );
 
 const float DEF_NAV_VIEW_DISTANCE = 1500.0;
-ConVar nav_max_view_distance( "nav_max_view_distance", "6000", FCVAR_CHEAT, "Maximum range for precomputed nav mesh visibility (0 = default 1500 units)" );
+ConVar nav_max_view_distance( "nav_max_view_distance", "0", FCVAR_CHEAT, "Maximum range for precomputed nav mesh visibility (0 = default 1500 units)" );
 ConVar nav_update_visibility_on_edit( "nav_update_visibility_on_edit", "0", FCVAR_CHEAT, "If nonzero editing the mesh will incrementally recompue visibility" );
 ConVar nav_potentially_visible_dot_tolerance( "nav_potentially_visible_dot_tolerance", "0.98", FCVAR_CHEAT );
 ConVar nav_show_potentially_visible( "nav_show_potentially_visible", "0", FCVAR_CHEAT, "Show areas that are potentially visible from the current nav area" );
@@ -242,8 +239,6 @@ CNavArea::CNavArea( void )
 
 	m_inheritVisibilityFrom.area = NULL;
 	m_isInheritedFrom = false;
-
-	m_funcNavCostVector.RemoveAll();
 }
 
 //--------------------------------------------------------------------------------------------------------------
@@ -527,9 +522,6 @@ public:
  */
 CNavArea::~CNavArea()
 {
-	// spot encounters aren't owned by anything else, so free them up here
-	m_spotEncounters.PurgeAndDeleteElements();
-
 	// if we are resetting the system, don't bother cleaning up - all areas are being destroyed
 	if (m_isReset)
 		return;
@@ -558,99 +550,7 @@ void CNavArea::ConnectElevators( void )
 	m_attributeFlags &= ~NAV_MESH_HAS_ELEVATOR;
 	m_elevatorAreas.RemoveAll();
 
-#ifdef TERROR
-	// connect elevators
-	CFuncElevator *elevator = NULL;
-	while( ( elevator = (CFuncElevator *)gEntList.FindEntityByClassname( elevator, "func_elevator" ) ) != NULL )
-	{
-		if ( elevator->GetNumFloors() < 2 )
-		{
-			// broken elevator
-			continue;
-		}
 
-		Extent elevatorExtent;
-		elevator->CollisionProp()->WorldSpaceSurroundingBounds( &elevatorExtent.lo, &elevatorExtent.hi );
-
-		if ( IsOverlapping( elevatorExtent ) )
-		{
-			// overlaps in 2D - check that this area is within the shaft of the elevator
-			const Vector &center = GetCenter();
-
-			for( int f=0; f<elevator->GetNumFloors(); ++f ) 
-			{
-				const FloorInfo	*floor = elevator->GetFloor( f );
-				const float tolerance = 30.0f;
-
-				if ( center.z <= floor->height + tolerance && center.z >= floor->height - tolerance )
-				{
-					if ( m_elevator )
-					{
-						Warning( "Multiple elevators overlap navigation area #%d\n", GetID() );
-						break;
-					}
-
-					// this area is part of an elevator system
-					m_elevator = elevator;
-					m_attributeFlags |= NAV_MESH_HAS_ELEVATOR;
-
-					// find the largest area overlapping this elevator on each other floor 
-					for( int of=0; of<elevator->GetNumFloors(); ++of ) 
-					{
-						if ( of == f )
-						{
-							// we are on this floor
-							continue;
-						}
-
-						const FloorInfo	*otherFloor = elevator->GetFloor( of );
-
-						// find the largest area at this floor
-						CNavArea *floorArea = NULL;
-						float floorAreaSize = 0.0f;
-
-						FOR_EACH_VEC( TheNavAreas, it )
-						{
-							CNavArea *area = TheNavAreas[ it ];
-
-							if ( area->IsOverlapping( elevatorExtent ) )
-							{
-								if ( area->GetCenter().z <= otherFloor->height + tolerance && area->GetCenter().z >= otherFloor->height - tolerance )
-								{
-									float size = area->GetSizeX() * area->GetSizeY();
-									if ( size > floorAreaSize )
-									{
-										floorArea = area;
-										floorAreaSize = size;
-									}
-								}
-							}
-						}
-
-						if ( floorArea )
-						{
-							// add this area to the set of areas reachable via elevator
-							NavConnect con;
-							con.area = floorArea;
-							con.length = ( floorArea->GetCenter() - GetCenter() ).Length();
-							m_elevatorAreas.AddToTail( con );
-						}
-						else
-						{
-							Warning( "Floor %d ('%s') of elevator at ( %3.2f, %3.2f, %3.2f ) has no matching navigation areas\n", 
-									 of, 
-									 otherFloor->name.ToCStr(),
-									 elevator->GetAbsOrigin().x, elevator->GetAbsOrigin().y, elevator->GetAbsOrigin().z );
-						}
-					}
-
-					// we found our floor
-					break;
-				}
-			}
-		}
-	}
-#endif // TERROR
 }
 
 
@@ -662,7 +562,6 @@ void CNavArea::OnServerActivate( void )
 {
 	ConnectElevators();
 	m_damagingTickCount = 0;
-	ClearAllNavCostEntities();
 }
 
 
@@ -675,7 +574,6 @@ void CNavArea::OnRoundRestart( void )
 	// need to redo this here since func_elevators are deleted and recreated at round restart
 	ConnectElevators();
 	m_damagingTickCount = 0;
-	ClearAllNavCostEntities();
 }
 
 
@@ -761,11 +659,6 @@ void CNavArea::OnDestroyNotify( CNavArea *dead )
 		m_connect[ d ].FindAndRemove( con );
 		m_incomingConnect[ d ].FindAndRemove( con );
 	}
-
-	// remove all visibility info, since we're editing the mesh anyways
-	m_inheritVisibilityFrom.area = NULL;
-	m_potentiallyVisibleAreas.RemoveAll();
-	m_isInheritedFrom = false;
 }
 
 
@@ -2285,21 +2178,6 @@ CNavArea *CNavArea::GetRandomAdjacentArea( NavDirType dir ) const
 	return NULL;
 }
 
-
-//--------------------------------------------------------------------------------------------------------------
-// Build a vector of all adjacent areas
-void CNavArea::CollectAdjacentAreas( CUtlVector< CNavArea * > *adjVector ) const
-{
-	for( int d=0; d<NUM_DIRECTIONS; ++d )
-	{
-		for( int i=0; i<m_connect[d].Count(); ++i )
-		{
-			adjVector->AddToTail( m_connect[d].Element(i).area );
-		}
-	}
-}
-
-
 //--------------------------------------------------------------------------------------------------------------
 /**
  * Compute "portal" between two adjacent areas. 
@@ -3124,18 +3002,8 @@ void CNavArea::DrawFilled( int r, int g, int b, int a, float deltaT, bool noDept
 	Vector sw = GetCorner( SOUTH_WEST ) + Vector( margin, -margin, 0.0f );
 	Vector se = GetCorner( SOUTH_EAST ) + Vector( -margin, -margin, 0.0f );
 
-	if ( a == 0 )
-	{
-		NDebugOverlay::Line( nw, ne, r, g, b, true, deltaT );
-		NDebugOverlay::Line( nw, sw, r, g, b, true, deltaT );
-		NDebugOverlay::Line( sw, se, r, g, b, true, deltaT );
-		NDebugOverlay::Line( se, ne, r, g, b, true, deltaT );
-	}
-	else
-	{
-		NDebugOverlay::Triangle( nw, se, ne, r, g, b, a, noDepthTest, deltaT );
-		NDebugOverlay::Triangle( se, nw, sw, r, g, b, a, noDepthTest, deltaT );
-	}
+	NDebugOverlay::Triangle( nw, se, ne, r, g, b, a, noDepthTest, deltaT );
+	NDebugOverlay::Triangle( se, nw, sw, r, g, b, a, noDepthTest, deltaT );
 
 	// backside
 // 	NDebugOverlay::Triangle( nw, ne, se, r, g, b, a, noDepthTest, deltaT );
@@ -4273,7 +4141,7 @@ bool CNavArea::ComputeLighting( void )
 
 		float ambientIntensity = ambientColor.x + ambientColor.y + ambientColor.z;
 		float lightIntensity = light.x + light.y + light.z;
-		lightIntensity = clamp( lightIntensity, 0.f, 1.f );	// sum can go well over 1.0, but it's the lower region we care about.  if it's bright, we don't need to know *how* bright.
+		lightIntensity = clamp( lightIntensity, 0, 1 );	// sum can go well over 1.0, but it's the lower region we care about.  if it's bright, we don't need to know *how* bright.
 
 		lightIntensity = MAX( lightIntensity, ambientIntensity );
 
@@ -4626,10 +4494,7 @@ bool CNavArea::IsBlocked( int teamID, bool ignoreNavBlockers ) const
 		return false;
 	}
 
-#ifdef TERROR
-	if ( ( teamID == TEAM_SURVIVOR ) && ( m_attributeFlags & CNavArea::NAV_PLAYERCLIP ) )
-		return true;
-#endif
+
 
 	if ( teamID == TEAM_ANY )
 	{
@@ -4771,21 +4636,13 @@ void CNavArea::UpdateBlockedFromNavBlockers( void )
 
 
 //--------------------------------------------------------------------------------------------------------------
-void CNavArea::UnblockArea( int teamID )
+void CNavArea::UnblockArea( void )
 {
-	bool wasBlocked = IsBlocked( teamID );
+	bool wasBlocked = IsBlocked( TEAM_ANY );
 
-	if ( teamID == TEAM_ANY )
+	for ( int i=0; i<MAX_NAV_TEAMS; ++i )
 	{
-		for ( int i=0; i<MAX_NAV_TEAMS; ++i )
-		{
-			m_isBlocked[ i ] = false;
-		}
-	}
-	else
-	{
-		int teamIdx = teamID % MAX_NAV_TEAMS;
-		m_isBlocked[ teamIdx ] = false;
+		m_isBlocked[ i ] = false;
 	}
 
 	if ( wasBlocked )
@@ -4849,12 +4706,9 @@ void CNavArea::UpdateBlocked( bool force, int teamID )
 	bool wasBlocked = IsBlocked( TEAM_ANY );
 
 	// See if spot is valid
-#ifdef TERROR
-	// don't unblock func_doors
-	CTraceFilterWalkableEntities filter( NULL, COLLISION_GROUP_PLAYER_MOVEMENT, WALK_THRU_PROP_DOORS | WALK_THRU_BREAKABLES );
-#else
+
 	CTraceFilterWalkableEntities filter( NULL, COLLISION_GROUP_PLAYER_MOVEMENT, WALK_THRU_DOORS | WALK_THRU_BREAKABLES );
-#endif
+
 	trace_t tr;
 	{
 	VPROF( "CNavArea::UpdateBlocked-Trace" );
@@ -4872,12 +4726,9 @@ void CNavArea::UpdateBlocked( bool force, int teamID )
 	if ( !tr.startsolid )
 	{
 		// unblock ourself
-#ifdef TERROR
-		extern ConVar DebugZombieBreakables;
-		if ( DebugZombieBreakables.GetBool() )
-#else
+
 		if ( false )
-#endif
+
 
 		{
 			NDebugOverlay::Box( origin, bounds.lo, bounds.hi, 0, 255, 0, 10, 5.0f );
@@ -5058,74 +4909,6 @@ void CNavArea::UpdateAvoidanceObstacles( void )
 	{
 		TheNavMesh->OnAvoidanceObstacleLeftArea( this );
 	}
-}
-
-
-//--------------------------------------------------------------------------------------------------------------
-// Clear set of func_nav_cost entities that affect this area
-void CNavArea::ClearAllNavCostEntities( void )
-{
-	RemoveAttributes( NAV_MESH_FUNC_COST );
-	m_funcNavCostVector.RemoveAll();
-}
-
-
-//--------------------------------------------------------------------------------------------------------------
-// Add the given func_nav_cost entity to the cost of this area
-void CNavArea::AddFuncNavCostEntity( CFuncNavCost *cost )
-{
-	SetAttributes( NAV_MESH_FUNC_COST );
-	m_funcNavCostVector.AddToTail( cost );
-}
-
-
-//--------------------------------------------------------------------------------------------------------------
-// Return the cost multiplier of this area's func_nav_cost entities for the given actor
-float CNavArea::ComputeFuncNavCost( CBaseCombatCharacter *who ) const
-{
-	float funcCost = 1.0f;
-
-	for( int i=0; i<m_funcNavCostVector.Count(); ++i )
-	{
-		if ( m_funcNavCostVector[i] != NULL )
-		{
-			funcCost *= m_funcNavCostVector[i]->GetCostMultiplier( who );
-		}
-	}
-
-	return funcCost;
-}
-
-
-//--------------------------------------------------------------------------------------------------------------
-bool CNavArea::HasFuncNavAvoid( void ) const
-{
-	for( int i=0; i<m_funcNavCostVector.Count(); ++i )
-	{
-		CFuncNavAvoid *avoid = dynamic_cast< CFuncNavAvoid * >( m_funcNavCostVector[i].Get() );
-		if ( avoid )
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
-
-//--------------------------------------------------------------------------------------------------------------
-bool CNavArea::HasFuncNavPrefer( void ) const
-{
-	for( int i=0; i<m_funcNavCostVector.Count(); ++i )
-	{
-		CFuncNavPrefer *prefer = dynamic_cast< CFuncNavPrefer * >( m_funcNavCostVector[i].Get() );
-		if ( prefer )
-		{
-			return true;
-		}
-	}
-
-	return false;
 }
 
 
@@ -5609,7 +5392,7 @@ void CNavArea::ComputeVisibilityToMesh( void )
 	SetupPVS();
 
 	g_pCurVisArea = this;
-	ParallelProcess( "CNavArea::ComputeVisibilityToMesh", collector.m_area.Base(), collector.m_area.Count(), &ComputeVisToArea );
+	ParallelProcess( collector.m_area.Base(), collector.m_area.Count(), &ComputeVisToArea );
 
 	m_potentiallyVisibleAreas.EnsureCapacity( g_ComputedVis.Count() );
 	while ( g_ComputedVis.Count() )

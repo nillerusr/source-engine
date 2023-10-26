@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Fires an output when the map spawns (or respawns if not set to 
 //			only fire once). It can be set to check a global state before firing.

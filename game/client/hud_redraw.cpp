@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -15,10 +15,6 @@
 #include "vgui_basepanel.h"
 #include "hud_crosshair.h"
 #include <vgui/ISurface.h>
-
-#if defined( REPLAY_ENABLED )
-#include "replay/ienginereplay.h"
-#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -47,47 +43,44 @@ static ConVar fov_watcher( "_fov", "0", 0, "Automates fov command to server.", F
 //-----------------------------------------------------------------------------
 void CHud::Think(void)
 {
-#if defined( REPLAY_ENABLED )
-	// Don't draw this
-	extern IEngineClientReplay *g_EngineClientReplay;
-	const bool bPlayingReplay = g_pEngineClientReplay && g_pEngineClientReplay->IsPlayingReplayDemo();
-#endif
-
 	// Determine the visibility of all hud elements
-	for ( int i = 0; i < m_HudList.Size(); i++ )
+	CUtlVector< CHudElement * > & list = GetHudList();
+	CUtlVector< vgui::Panel * > & hudPanelList = GetHudPanelList();
+
+	int c = list.Count();
+	Assert( c == hudPanelList.Count() );
+
+	m_bEngineIsInGame = engine->IsInGame() && ( engine->IsLevelMainMenuBackground() == false );
+
+	for ( int i = 0; i < c; ++i )
 	{
+		CHudElement *element = list[i];
+		vgui::Panel *pPanel = hudPanelList[ i ];
+
 		// Visible?
-		bool visible = m_HudList[i]->ShouldDraw();
-
-#if defined( REPLAY_ENABLED )
-		visible = visible && !bPlayingReplay;
-#endif
-
-		m_HudList[i]->SetActive( visible );
-
-		// If it's a vgui panel, hide/show as appropriate
-		vgui::Panel *pPanel = dynamic_cast<vgui::Panel*>(m_HudList[i]);
-		if ( pPanel && pPanel->IsVisible() != visible )
+		bool visible = element->ShouldDraw();
+		element->SetActive( visible );
+		
+		if (pPanel->IsVisible() != visible )
 		{
 			pPanel->SetVisible( visible );
 		}
-		else if ( !pPanel )
-		{
-			// All HUD elements should now derive from vgui!!!
-			Assert( 0 );
-		}
-
+		
 		if ( visible )
 		{
-			m_HudList[i]->ProcessInput();
+			element->ProcessInput();
 		}
 	}
 
 	// Let the active weapon at the keybits
-	C_BaseCombatWeapon *pWeapon = GetActiveWeapon();
-	if ( pWeapon )
+	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+	if ( pPlayer )
 	{
-		pWeapon->HandleInput();
+		C_BaseCombatWeapon *pWeapon = pPlayer->GetActiveWeapon();
+		if ( pWeapon )
+		{
+			pWeapon->HandleInput();
+		}
 	}
 
 	if ( ( m_flScreenShotTime > 0 ) && ( m_flScreenShotTime < gpGlobals->curtime ) )

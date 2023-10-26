@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -19,6 +19,7 @@ class CBasePlayer;
 
 
 void ClientActive( edict_t *pEdict, bool bLoadGame );
+void ClientFullyConnect( edict_t *pEdict );
 void ClientPutInServer( edict_t *pEdict, const char *playername );
 void ClientCommand( CBasePlayer *pSender, const CCommand &args );
 void ClientPrecache( void );

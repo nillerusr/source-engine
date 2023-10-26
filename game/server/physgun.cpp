@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -19,7 +19,7 @@
 #include "ndebugoverlay.h"
 #include "physics_saverestore.h"
 #include "player_pickup.h"
-#include "SoundEmitterSystem/isoundemittersystembase.h"
+#include "soundemittersystem/isoundemittersystembase.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -1481,7 +1481,7 @@ void CC_CollisionTest( const CCommand &args )
 
 	for ( int j = 0; j < 2; j++ )
 	{
-		float startTime = engine->Time();
+		float startTime = Plat_FloatTime();
 		if ( testType == 1 )
 		{
 			const CPhysCollide *pCollide = g_PhysWorldObject->GetCollide();
@@ -1507,7 +1507,7 @@ void CC_CollisionTest( const CCommand &args )
 			}
 		}
 
-		duration += engine->Time() - startTime;
+		duration += Plat_FloatTime() - startTime;
 	}
 	test[testType] = duration;
 	Msg("%d collisions in %.2f ms (%u dots)\n", NUM_COLLISION_TESTS, duration*1000, dots );

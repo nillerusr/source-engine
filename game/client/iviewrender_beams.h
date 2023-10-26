@@ -1,10 +1,10 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
 // $Workfile:     $
 // $NoKeywords: $
-//=============================================================================//
+//===========================================================================//
 #if !defined( IVIEWRENDER_BEAMS_H )
 #define IVIEWRENDER_BEAMS_H
 #ifdef _WIN32
@@ -118,7 +118,7 @@ public:
 	// Updates the state of the temp ent beams
 	virtual void	UpdateTempEntBeams() = 0;
 
-	virtual void	DrawBeam( C_Beam* pbeam, ITraceFilter *pEntityBeamTraceFilter = NULL ) = 0;
+	virtual void	DrawBeam( C_Beam* pbeam, const RenderableInstance_t &instance, ITraceFilter *pEntityBeamTraceFilter = NULL ) = 0;
 	virtual void	DrawBeam( Beam_t *pbeam ) = 0;
 
 	virtual void	KillDeadBeams( CBaseEntity *pEnt ) = 0;

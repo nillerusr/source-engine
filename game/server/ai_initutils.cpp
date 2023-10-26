@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:		AI Utility classes for building the initial AI Networks
 //
@@ -39,11 +39,9 @@ LINK_ENTITY_TO_CLASS( aitesthull, CAI_TestHull );
 //-----------------------------------------------------------------------------
 CAI_TestHull*	CAI_TestHull::pTestHull			= NULL;
 
-#ifdef CSTRIKE_DLL
-#define PLAYER_MODEL "models/player/ct_urban.mdl"
-#else
+
 #define PLAYER_MODEL "models/player.mdl"
-#endif
+
 
 //-----------------------------------------------------------------------------
 // Purpose: Make sure we have a "player.mdl" hull to test with
@@ -167,12 +165,14 @@ BEGIN_SIMPLE_DATADESC( HintNodeData )
 	DEFINE_KEYFIELD( strGroup,			FIELD_STRING,	"Group" ),
 	DEFINE_KEYFIELD( iDisabled,			FIELD_INTEGER,	"StartHintDisabled" ),
 	DEFINE_FIELD(	 nNodeID,			FIELD_INTEGER ),
+	DEFINE_KEYFIELD( iszGenericType,	FIELD_STRING,	"generictype" ),
 	DEFINE_KEYFIELD( iszActivityName,	FIELD_STRING,	"hintactivity" ),
     DEFINE_KEYFIELD( nTargetWCNodeID,	FIELD_INTEGER, "TargetNode" ),
 	DEFINE_KEYFIELD( nWCNodeID,			FIELD_INTEGER,	"nodeid" ),
 	DEFINE_KEYFIELD( fIgnoreFacing,		FIELD_INTEGER,	"IgnoreFacing" ),
 	DEFINE_KEYFIELD( minState,			FIELD_INTEGER,	"MinimumState" ),
 	DEFINE_KEYFIELD( maxState,			FIELD_INTEGER,	"MaximumState" ),
+	DEFINE_KEYFIELD( nRadius,			FIELD_INTEGER,  "radius" ),
 
 END_DATADESC()
 
@@ -311,6 +311,12 @@ int CNodeEnt::Spawn( const char *pMapData )
 	}
 
 	new_node->m_eNodeInfo = ( m_spawnflags << NODE_ENT_FLAGS_SHIFT );
+
+	// Fix up don't drop spawnflag
+	if ( new_node->m_eNodeInfo & bits_LEGACY_DONT_DROP )
+	{
+		new_node->m_eNodeInfo |= bits_DONT_DROP;
+	}
 
 	// If changed as part of WC editing process note that network must be rebuilt
 	if (m_debugOverlays & OVERLAY_WC_CHANGE_ENTITY)

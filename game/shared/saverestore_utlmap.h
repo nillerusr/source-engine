@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -14,7 +14,7 @@
 #pragma once
 #endif
 
-template <class UTLMAP, intp KEY_TYPE, intp FIELD_TYPE>
+template <class UTLMAP, int KEY_TYPE, int FIELD_TYPE>
 class CUtlMapDataOps : public CDefSaveRestoreOps
 {
 public:
@@ -33,7 +33,7 @@ public:
 			{
 				(fieldtype_t)KEY_TYPE, 
 				"K", 
-				{ 0, 0 },
+				0,
 				1, 
 				FTYPEDESC_SAVE, 
 				NULL, 
@@ -46,7 +46,7 @@ public:
 			{
 				(fieldtype_t)FIELD_TYPE, 
 				"T", 
-				{ offsetof(typename UTLMAP::Node_t, elem), 0 },
+				offsetof(typename UTLMAP::Node_t, elem),
 				1, 
 				FTYPEDESC_SAVE, 
 				NULL, 
@@ -63,9 +63,8 @@ public:
 			2,
 			"um",
 			NULL,
-			false,
-			false,
 			0,
+			NULL,
 #ifdef _DEBUG
 			true
 #endif
@@ -99,7 +98,7 @@ public:
 			{
 				(fieldtype_t)KEY_TYPE, 
 				"K", 
-				{ 0, 0 },
+				0,
 				1, 
 				FTYPEDESC_SAVE, 
 				NULL, 
@@ -112,7 +111,7 @@ public:
 			{
 				(fieldtype_t)FIELD_TYPE, 
 				"T", 
-				{ offsetof(typename UTLMAP::Node_t, elem), 0 },
+				offsetof(typename UTLMAP::Node_t, elem),
 				1, 
 				FTYPEDESC_SAVE, 
 				NULL, 
@@ -129,9 +128,8 @@ public:
 			2,
 			"um",
 			NULL,
-			false,
-			false,
 			0,
+			NULL,
 #ifdef _DEBUG
 			true
 #endif
@@ -169,7 +167,7 @@ public:
 
 //-------------------------------------
 
-template <intp KEYTYPE, intp FIELD_TYPE>
+template <int KEYTYPE, int FIELD_TYPE>
 class CUtlMapDataopsInstantiator
 {
 public:
@@ -192,7 +190,7 @@ public:
 //-------------------------------------
 
 #define DEFINE_UTLMAP(name,keyType,fieldtype) \
-	{ FIELD_CUSTOM, #name, { offsetof(classNameTypedef,name), 0 }, 1, FTYPEDESC_SAVE, NULL, CUtlMapDataopsInstantiator<keyType, fieldtype>::GetDataOps(&(((classNameTypedef *)0)->name)), NULL }
+	{ FIELD_CUSTOM, #name, offsetof(classNameTypedef,name), 1, FTYPEDESC_SAVE, NULL, CUtlMapDataopsInstantiator<keyType, fieldtype>::GetDataOps(&(((classNameTypedef *)0)->name)), NULL }
 
 
 #endif // SAVERESTORE_UTLMAP_H

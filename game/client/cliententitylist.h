@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -15,8 +15,8 @@
 #include "tier0/dbg.h"
 #include "icliententitylist.h"
 #include "iclientunknown.h"
-#include "utllinkedlist.h"
-#include "utlvector.h"
+#include "UtlLinkedList.h"
+#include "UtlVector.h"
 #include "icliententityinternal.h"
 #include "ispatialpartition.h"
 #include "cdll_util.h"
@@ -109,6 +109,7 @@ public:
 public:
 
 	virtual IClientNetworkable*	GetClientNetworkable( int entnum );
+	virtual EntityCacheInfo_t	*GetClientNetworkableArray();
 	virtual IClientEntity*		GetClientEntity( int entnum );
 
 	virtual int					NumberOfEntities( bool bIncludeNonNetworkable = false );
@@ -182,16 +183,8 @@ public:
 
 	void NotifyCreateEntity( C_BaseEntity *pEnt );
 	void NotifyRemoveEntity( C_BaseEntity *pEnt );
-
+	void SetDormant( int entityIndex, bool bDormant );
 private:
-
-	// Cached info for networked entities.
-	struct EntityCacheInfo_t
-	{
-		// Cached off because GetClientNetworkable is called a *lot*
-		IClientNetworkable *m_pNetworkable;
-		unsigned short m_BaseEntitiesIndex;	// Index into m_BaseEntities (or m_BaseEntities.InvalidIndex() if none).
-	};
 
 	// Current count
 	int					m_iNumServerEnts;

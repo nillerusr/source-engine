@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -31,6 +31,10 @@ public:
 
 	// paused disc
 	virtual void		SetPausedVisible( bool bVisible ) = 0;
+
+	// level loading progress, returns true if the screen needs updating
+	virtual bool		UpdateProgressBar( float progress, const char *statusText ) = 0;
+	virtual unsigned int	GetLoadingVPANEL( void ) = 0;
 };
 
 extern ILoadingDisc *loadingdisc;

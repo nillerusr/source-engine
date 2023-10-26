@@ -1,8 +1,8 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
-//=============================================================================//
+//===========================================================================//
 
 #ifndef BASEANIMATING_H
 #define BASEANIMATING_H
@@ -16,7 +16,6 @@
 #include "datacache/idatacache.h"
 #include "tier0/threadtools.h"
 
-
 struct animevent_t;
 struct matrix3x4_t;
 class CIKContext;
@@ -25,6 +24,8 @@ FORWARD_DECLARE_HANDLE( memhandle_t );
 
 #define	BCF_NO_ANIMATION_SKIP	( 1 << 0 )	// Do not allow PVS animation skipping (mostly for attachments being critical to an entity)
 #define	BCF_IS_IN_SPAWN			( 1 << 1 )	// Is currently inside of spawn, always evaluate animations
+
+extern IDataCache *datacache;
 
 class CBaseAnimating : public CBaseEntity
 {
@@ -44,6 +45,7 @@ public:
 
 	DECLARE_DATADESC();
 	DECLARE_SERVERCLASS();
+	DECLARE_ENT_SCRIPTDESC();
 
 	virtual void SetModel( const char *szModelName );
 	virtual void Activate();
@@ -56,8 +58,6 @@ public:
 
 	CStudioHdr *GetModelPtr( void );
 	void InvalidateMdlCache();
-
-	virtual CStudioHdr *OnNewModel();
 
 	virtual CBaseAnimating*	GetBaseAnimating() { return this; }
 
@@ -83,12 +83,15 @@ public:
 	virtual void	StudioFrameAdvance(); // advance animation frame to some time in the future
 	void StudioFrameAdvanceManual( float flInterval );
 	bool	IsValidSequence( int iSequence );
+	virtual void	ReachedEndOfSequence() { return; }
 
-	inline float					GetPlaybackRate();
+	inline float					GetPlaybackRate() const;
 	inline void						SetPlaybackRate( float rate );
 
 	inline int GetSequence() { return m_nSequence; }
-	virtual void SetSequence(int nSequence);
+	// inline void SetSequence(int nSequence) { Assert( GetModelPtr( ) && nSequence >= 0 && nSequence < GetModelPtr( )->GetNumSeq() );  m_nSequence = nSequence; }
+	void SetSequence(int nSequence);
+	virtual void OnSequenceSet( int nOldSequence ) {}
 	/* inline */ void ResetSequence(int nSequence);
 	// FIXME: push transitions support down into CBaseAnimating?
 	virtual bool IsActivityFinished( void ) { return m_bSequenceFinished; }
@@ -108,6 +111,7 @@ public:
 	void    ResetEventIndexes ( void );
 	int		SelectWeightedSequence ( Activity activity );
 	int		SelectWeightedSequence ( Activity activity, int curSequence );
+	int		SelectWeightedSequenceFromModifiers( Activity activity, CUtlSymbol *pActivityModifiers, int iModifierCount );
 	int		SelectHeaviestSequence ( Activity activity );
 	int		LookupActivity( const char *label );
 	int		LookupSequence ( const char *label );
@@ -130,16 +134,18 @@ public:
 	virtual bool IsRagdoll();
 	virtual bool CanBecomeRagdoll( void ); //Check if this entity will ragdoll when dead.
 
-	virtual	void GetSkeleton( CStudioHdr *pStudioHdr, Vector pos[], Quaternion q[], int boneMask );
+	virtual	void GetSkeleton( CStudioHdr *pStudioHdr, Vector pos[], QuaternionAligned q[], int boneMask );
 
 	virtual void GetBoneTransform( int iBone, matrix3x4_t &pBoneToWorld );
-	virtual void SetupBones( matrix3x4_t *pBoneToWorld, int boneMask );
+	virtual void SetupBones( matrix3x4a_t *pBoneToWorld, int boneMask );
 	virtual void CalculateIKLocks( float currentTime );
 	virtual void Teleport( const Vector *newPosition, const QAngle *newAngles, const Vector *newVelocity );
 
 	bool HasAnimEvent( int nSequence, int nEvent );
 	virtual	void DispatchAnimEvents ( CBaseAnimating *eventHandler ); // Handle events that have happend since last time called up until X seconds into the future
 	virtual void HandleAnimEvent( animevent_t *pEvent );
+	virtual bool HandleScriptedAnimEvent( animevent_t *pEvent ) { return false; }
+	virtual bool HandleBehaviorAnimEvent( animevent_t *pEvent ) { return false; }
 
 	int		LookupPoseParameter( CStudioHdr *pStudioHdr, const char *szName );
 	inline int	LookupPoseParameter( const char *szName ) { return LookupPoseParameter(GetModelPtr(), szName); }
@@ -186,6 +192,8 @@ public:
 	bool GetAttachment( int iAttachment, Vector &absOrigin, QAngle &absAngles );
 	int GetAttachmentBone( int iAttachment );
 	virtual bool GetAttachment( int iAttachment, matrix3x4_t &attachmentToWorld );
+	const Vector& ScriptGetAttachmentOrigin( int iAttachment );
+	const Vector& ScriptGetAttachmentAngles( int iAttachment );
 
 	// These return the attachment in the space of the entity
 	bool GetAttachmentLocal( const char *szName, Vector &origin, QAngle &angles );
@@ -198,11 +206,17 @@ public:
 
 	void SetBodygroup( int iGroup, int iValue );
 	int GetBodygroup( int iGroup );
+	int GetSkin() { return m_nSkin; }
 
 	const char *GetBodygroupName( int iGroup );
 	int FindBodygroupByName( const char *name );
+	const char *GetBodygroupPartName( int iGroup, int iPart );
 	int GetBodygroupCount( int iGroup );
 	int GetNumBodyGroups( void );
+	int CountBodyGroupVariants( int group );
+	int FindBodyGroupVariant( int group, int variant );	///< Find undamaged bodygroup part index
+	int FindDamagedBodyGroupVariant( int group );		///< Find a damaged version of the current part for the given bodygroup
+	void RandomizeBodygroups( CUtlVector< const char * >& groups );
 
 	void					SetHitboxSet( int setnum );
 	void					SetHitboxSetByName( const char *setname );
@@ -215,6 +229,9 @@ public:
 	// Computes a box that surrounds all hitboxes
 	bool ComputeHitboxSurroundingBox( Vector *pVecWorldMins, Vector *pVecWorldMaxs );
 	bool ComputeEntitySpaceHitboxSurroundingBox( Vector *pVecWorldMins, Vector *pVecWorldMaxs );
+
+	// Computes a box that surrounds a single hitboxes
+	bool ComputeHitboxSurroundingBox( int iHitbox, Vector *pVecWorldMins, Vector *pVecWorldMaxs );
 	
 	// Clone a CBaseAnimating from another (copies model & sequence data)
 	void CopyAnimationDataFrom( CBaseAnimating *pSource );
@@ -256,19 +273,19 @@ public:
 	virtual bool TestCollision( const Ray_t &ray, unsigned int fContentsMask, trace_t& tr );
 	virtual bool TestHitboxes( const Ray_t &ray, unsigned int fContentsMask, trace_t& tr );
 	class CBoneCache *GetBoneCache( void );
-	void InvalidateBoneCache();
+	virtual void InvalidateBoneCache( void );
 	void InvalidateBoneCacheIfOlderThan( float deltaTime );
 	virtual int DrawDebugTextOverlays( void );
+	virtual bool IsViewModel() const { return false; }
 	
 	// See note in code re: bandwidth usage!!!
 	void				DrawServerHitboxes( float duration = 0.0f, bool monocolor = false );
 	void				DrawRawSkeleton( matrix3x4_t boneToWorld[], int boneMask, bool noDepthTest = true, float duration = 0.0f, bool monocolor = false );
 
 	void				SetModelScale( float scale, float change_duration = 0.0f );
-	float				GetModelScale() const { return m_flModelScale; }
+	float				GetModelScale() const;
 
 	void				UpdateModelScale();
-	virtual	void		RefreshCollisionBounds( void );
 	
 	// also calculate IK on server? (always done on client)
 	void EnableServerIK();
@@ -276,8 +293,6 @@ public:
 
 	// for ragdoll vs. car
 	int GetHitboxesFrontside( int *boxList, int boxMax, const Vector &normal, float dist );
-
-	void	GetInputDispatchEffectPosition( const char *sInputString, Vector &pOrigin, QAngle &pAngles );
 
 	virtual void	ModifyOrAppendCriteria( AI_CriteriaSet& set );
 
@@ -287,8 +302,7 @@ public:
 	// Fire
 	virtual void Ignite( float flFlameLifetime, bool bNPCOnly = true, float flSize = 0.0f, bool bCalledByLevelDesigner = false );
 	virtual void IgniteLifetime( float flFlameLifetime );
-	virtual void IgniteNumHitboxFires( int iNumHitBoxFires );
-	virtual void IgniteHitboxFireScale( float flHitboxFireScale );
+	virtual void IgniteUseCheapEffect( bool bUseCheapEffect );
 	virtual void Extinguish() { RemoveFlag( FL_ONFIRE ); }
 	bool IsOnFire() { return ( (GetFlags() & FL_ONFIRE) != 0 ); }
 	void Scorch( int rate, int floor );
@@ -298,8 +312,17 @@ public:
 	void InputIgniteHitboxFireScale( inputdata_t &inputdata );
 	void InputBecomeRagdoll( inputdata_t &inputdata );
 
+	// Ice
+	virtual bool	IsFrozen( void ) { return m_flFrozen >= 1.0f; }
+	float			GetFrozenAmount( void ) const { return m_flFrozen; }
+	float			GetFrozenThawRate( void ) { return m_flFrozenThawRate; }
+	void			Thaw( float flThawAmount );
+	void			ToggleFreeze(void);
+	virtual void	Freeze( float flFreezeAmount = -1.0f, CBaseEntity *pFreezer = NULL, Ray_t *pFreezeRay = NULL );
+	virtual void	Unfreeze();
+
 	// Dissolve, returns true if the ragdoll has been created
-	bool Dissolve( const char *pMaterialName, float flStartTime, bool bNPCOnly = true, int nDissolveType = 0, Vector vDissolverOrigin = vec3_origin, int iMagnitude = 0 );
+	virtual bool Dissolve( const char *pMaterialName, float flStartTime, bool bNPCOnly = true, int nDissolveType = 0, Vector vDissolverOrigin = vec3_origin, int iMagnitude = 0 );
 	bool IsDissolving() { return ( (GetFlags() & FL_DISSOLVING) != 0 ); }
 	void TransferDissolveFrom( CBaseAnimating *pAnim );
 
@@ -331,6 +354,9 @@ public:
 
 	bool PrefetchSequence( int iSequence );
 
+
+
+
 private:
 	void LockStudioHdr();
 	void UnlockStudioHdr();
@@ -338,11 +364,14 @@ private:
 	void StudioFrameAdvanceInternal( CStudioHdr *pStudioHdr, float flInterval );
 	void InputSetLightingOriginRelative( inputdata_t &inputdata );
 	void InputSetLightingOrigin( inputdata_t &inputdata );
-	void InputSetModelScale( inputdata_t &inputdata );
-
-	bool CanSkipAnimation( void );
 
 public:
+	bool CanSkipAnimation( void );
+
+
+
+public:
+
 	CNetworkVar( int, m_nForceBone );
 	CNetworkVector( m_vecForce );
 
@@ -376,10 +405,9 @@ public:
 	Vector	GetStepOrigin( void ) const;
 	QAngle	GetStepAngles( void ) const;
 
-private:
+protected:
 	bool				m_bSequenceFinished;// flag set when StudioAdvanceFrame moves across a frame boundry
 	bool				m_bSequenceLoops;	// true if the sequence loops
-	bool				m_bResetSequenceInfoOnLoad; // true if a ResetSequenceInfo was queued up during dynamic load
 	float				m_flDissolveStartTime;
 
 	// was pev->frame
@@ -408,13 +436,16 @@ private:
 	memhandle_t		m_boneCacheHandle;
 	unsigned short	m_fBoneCacheFlags;		// Used for bone cache state on model
 
-protected:
-	CNetworkVar( float, m_fadeMinDist );	// Point at which fading is absolute
-	CNetworkVar( float, m_fadeMaxDist );	// Point at which fading is inactive
-	CNetworkVar( float, m_flFadeScale );	// Scale applied to min / max
+	CNetworkVar( float, m_flFrozen );		// 0 - 1 amount that the model is frozen
+	float				m_flMovementFrozen;	// How frozen are the movement parts
+	float				m_flAttackFrozen;	// How frozen are the attacking parts
+	float				m_flFrozenThawRate;	// amount it unfreezes per second
+	float				m_flFrozenMax;		// maximum amount this entitiy is allowed to freeze
 
 public:
 	COutputEvent m_OnIgnite;
+
+
 
 private:
 	CStudioHdr			*m_pStudioHdr;
@@ -432,12 +463,9 @@ friend class CBlendingCycler;
 //-----------------------------------------------------------------------------
 inline CStudioHdr *CBaseAnimating::GetModelPtr( void ) 
 { 
-	if ( IsDynamicModelLoading() )
-		return NULL;
-
 #ifdef _DEBUG
 	// GetModelPtr() is often called before OnNewModel() so go ahead and set it up first chance.
-	static IDataCacheSection *pModelCache = datacache->FindSection( "ModelData" );
+	static IDataCacheSection *pModelCache = g_pDataCache->FindSection( "ModelData" );
 	AssertOnce( pModelCache->IsFrameLocking() );
 #endif
 	if ( !m_pStudioHdr && GetModel() )
@@ -464,14 +492,21 @@ inline void CBaseAnimating::InvalidateMdlCache()
 /*
 inline void CBaseAnimating::ResetSequence(int nSequence)
 {
-	m_nSequence = nSequence;
+	if ( nSequence != m_nSequence )
+	{
+		m_nSequence = nSequence;
+		InvalidatePhysicsRecursive( SEQUENCE_CHANGED );
+	}
 	ResetSequenceInfo();
 }
 */
 
-inline float CBaseAnimating::GetPlaybackRate()
+inline float CBaseAnimating::GetPlaybackRate() const
 {
-	return m_flPlaybackRate;
+
+
+	// Slow the animation while partially frozen
+	return m_flPlaybackRate * clamp( 1.0f - m_flFrozen, 0.0f, 1.0f );
 }
 
 inline void CBaseAnimating::SetPlaybackRate( float rate )
@@ -521,11 +556,9 @@ EXTERN_SEND_TABLE(DT_BaseAnimating);
 #define ANIMATION_SKIN_BITS				10	// 1024 body skin selections FIXME: this seems way high
 #define ANIMATION_BODY_BITS				32	// body combinations
 #define ANIMATION_HITBOXSET_BITS		2	// hit box sets 
-#if defined( TF_DLL )
-#define ANIMATION_POSEPARAMETER_BITS	8	// pose parameter resolution
-#else
+
 #define ANIMATION_POSEPARAMETER_BITS	11	// pose parameter resolution
-#endif
+
 #define ANIMATION_PLAYBACKRATE_BITS		8	// default playback rate, only used on leading edge detect sequence changes
 
 #endif // BASEANIMATING_H

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright 1996-2006, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -8,8 +8,8 @@
 #ifndef IMAGE_MOUSE_OVER_BUTTON_H
 #define IMAGE_MOUSE_OVER_BUTTON_H
 
-#include "vgui/ISurface.h"
-#include "vgui/IScheme.h"
+#include "vgui/isurface.h"
+#include "vgui/ischeme.h"
 #include "mouseoverpanelbutton.h"
 
 //===============================================
@@ -64,7 +64,7 @@ CImageMouseOverButton<T>::CImageMouseOverButton( vgui::Panel *parent, const char
 template <class T>
 void CImageMouseOverButton<T>::ApplySettings( KeyValues *inResourceData )
 {
-	m_bScaleImage = inResourceData->GetInt( "scaleImage", 0 );
+	m_bScaleImage = inResourceData->GetBool( "scaleImage", false );
 
 	// Active Image
 	delete [] m_pszActiveImageName;
@@ -111,10 +111,14 @@ void CImageMouseOverButton<T>::ApplySchemeSettings( vgui::IScheme *pScheme )
 	this->SetDepressedBorder( pBorder );
 	this->SetKeyFocusBorder( pBorder );
 
+	Color defaultFgColor = GetSchemeColor( "Button.TextColor", Color(255, 255, 255, 255), pScheme );
+	Color armedFgColor = GetSchemeColor( "Button.ArmedTextColor", Color(255, 255, 255, 255), pScheme );
+	Color depressedFgColor = GetSchemeColor( "Button.DepressedTextColor", Color(255, 255, 255, 255), pScheme );
+
 	Color blank(0,0,0,0);
-	this->SetDefaultColor( this->GetButtonFgColor(), blank );
-	this->SetArmedColor( this->GetButtonArmedFgColor(), blank );
-	this->SetDepressedColor( this->GetButtonDepressedFgColor(), blank );
+	this->SetDefaultColor( defaultFgColor, blank );
+	this->SetArmedColor( armedFgColor, blank );
+	this->SetDepressedColor( depressedFgColor, blank );
 }
 
 template <class T>
@@ -251,6 +255,9 @@ template <class T>
 void CImageMouseOverButton<T>::HidePage( void )
 {
 	MouseOverButton<T>::HidePage();
+
+	// send message to parent that we triggered something
+	this->PostActionSignal( new KeyValues( "ShowPage", "page", this->GetName() ) );
 }
 
 #endif //IMAGE_MOUSE_OVER_BUTTON_H

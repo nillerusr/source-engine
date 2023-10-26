@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -18,6 +18,7 @@
 
 class CAI_PlaneSolver;
 class CAI_MoveProbe;
+FORWARD_DECLARE_HANDLE( Obstacle_t );
 
 //-----------------------------------------------------------------------------
 // CAI_LocalNavigator
@@ -44,6 +45,11 @@ public:
 	
 	void 				AddObstacle( const Vector &pos, float radius, AI_MoveSuggType_t type = AIMST_AVOID_OBJECT );
 	bool				HaveObstacles();
+
+	static Obstacle_t	AddGlobalObstacle( const Vector &pos, float radius, AI_MoveSuggType_t type = AIMST_AVOID_OBJECT );
+	static void 		RemoveGlobalObstacle( Obstacle_t hObstacle );
+	static void 		RemoveGlobalObstacles( void );
+	static bool			IsSegmentBlockedByGlobalObstacles( const Vector &vecStart, const Vector &vecEnd );
 
 protected:
 

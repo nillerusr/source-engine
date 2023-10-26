@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -10,22 +10,20 @@
 #include <stdarg.h>
 #include "vguicenterprint.h"
 #include "ivrenderview.h"
-#include <vgui/IVGui.h>
-#include "VGuiMatSurface/IMatSystemSurface.h"
-#include <vgui_controls/Label.h>
-#include <vgui_controls/Controls.h>
-#include <vgui/ISurface.h>
-#include <vgui/IScheme.h>
-
+#include "vgui/IVgui.h"
+#include "VguiMatSurface/IMatSystemSurface.h"
+#include "vgui_controls/Label.h"
+#include "vgui_controls/Controls.h"
+#include "vgui/ISurface.h"
+#include "vgui/IScheme.h"
+#include "vgui/IPanel.h"
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 
-#ifdef TF_CLIENT_DLL
-static ConVar		scr_centertime( "scr_centertime", "5" );
-#else
+
 static ConVar		scr_centertime( "scr_centertime", "2" );
-#endif
+
 
 //-----------------------------------------------------------------------------
 // Purpose: Implements Center String printing
@@ -76,6 +74,7 @@ CCenterStringLabel::CCenterStringLabel( vgui::VPANEL parent ) :
 	SetKeyBoardInputEnabled( false );
 	SetMouseInputEnabled( false );
 	SetContentAlignment( vgui::Label::a_center );
+	SetScheme( "ClientScheme" );
 
 	m_hFont = 0;
 	SetFgColor( Color( 255, 255, 255, 255 ) );
@@ -109,13 +108,14 @@ void CCenterStringLabel::OnScreenSizeChanged(int iOldWide, int iOldTall)
 void CCenterStringLabel::ComputeSize( void )
 {
 	int w, h;
-	w = ScreenWidth();
-	h = ScreenHeight();
+	if ( GetVParent() )
+	{
+		vgui::ipanel()->GetSize( GetVParent(), w, h );
 
-	int iHeight = (int)(h * 0.3);
-
-	SetSize( w, iHeight );
-	SetPos( 0, ( h * 0.35 ) - ( iHeight / 2 ) );
+		int iHeight = (int)(h * 0.3);
+		SetSize( w, iHeight );
+		SetPos( 0, ( h * 0.35 ) - ( iHeight / 2 ) );
+	}
 }
 
 void CCenterStringLabel::ApplySchemeSettings(vgui::IScheme *pScheme)
@@ -123,16 +123,11 @@ void CCenterStringLabel::ApplySchemeSettings(vgui::IScheme *pScheme)
 	BaseClass::ApplySchemeSettings(pScheme);
 
 	// Use a large font
-	m_hFont = pScheme->GetFont( "Trebuchet24" );
-	assert( m_hFont );
+	m_hFont = pScheme->GetFont( "Default" );
+	Assert( m_hFont );
 	SetFont( m_hFont );
 
-	int w, h;
-	w = ScreenWidth();
-	h = ScreenHeight();
-	int iHeight = (int)(h * 0.3);
-	SetSize( w, iHeight );
-	SetPos( 0, ( h * 0.35 ) - ( iHeight / 2 ) );
+	ComputeSize();
 }
 
 //-----------------------------------------------------------------------------
@@ -198,11 +193,7 @@ void CCenterStringLabel::Clear( void )
 //-----------------------------------------------------------------------------
 void CCenterStringLabel::OnTick( void )
 {
-	bool bVisible = ShouldDraw();
-	if ( IsVisible() != bVisible )
-	{
-		SetVisible( bVisible );
-	}
+	SetVisible( ShouldDraw() );
 }
 
 //-----------------------------------------------------------------------------
@@ -304,7 +295,9 @@ void CCenterPrint::Destroy( void )
 	}
 }
 
-static CCenterPrint g_CenterString;
-CCenterPrint *internalCenterPrint = &g_CenterString;
-
-EXPOSE_SINGLE_INTERFACE_GLOBALVAR( CCenterPrint, ICenterPrint, VCENTERPRINT_INTERFACE_VERSION, g_CenterString );
+static CCenterPrint g_CenterString[ MAX_SPLITSCREEN_PLAYERS ];
+CCenterPrint *GetCenterPrint()
+{
+	ASSERT_LOCAL_PLAYER_RESOLVABLE();
+	return &g_CenterString[ GET_ACTIVE_SPLITSCREEN_SLOT() ];
+}

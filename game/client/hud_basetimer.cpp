@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright � 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Draws a timer in the format "Minutes:Seconds"
 // Seconds are padded with zeros
@@ -8,7 +8,7 @@
 #include "cbase.h"
 #include "hudelement.h"
 #include <vgui_controls/Panel.h>
-#include <vgui/ISurface.h>
+#include <vgui/isurface.h>
 #include "hud_basetimer.h"
 
 // memdbgon must be the last include file in a .cpp file!!!

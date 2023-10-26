@@ -1,9 +1,9 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
 // $NoKeywords: $
-//=============================================================================//
+//===========================================================================//
 
 #include "cbase.h"
 #include "trains.h"
@@ -14,7 +14,7 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-extern short g_sModelIndexFireball;
+extern int g_sModelIndexFireball;
 #define SPRITE_FIREBALL		"sprites/zerogxplode.vmt"
 #define SPRITE_SMOKE		"sprites/steam1.vmt"
 

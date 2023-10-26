@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -52,7 +52,7 @@ public:
 
 struct AI_NearNode_t
 {
-	AI_NearNode_t() = default;
+	AI_NearNode_t() {}
 	AI_NearNode_t( int index, float nodedist ) { dist = nodedist; nodeIndex = index; }
 	float	dist;
 	int		nodeIndex;
@@ -84,13 +84,12 @@ public:
 // Purpose: Stores a node graph through which an AI may pathfind
 //-----------------------------------------------------------------------------
 
-class CAI_Network : public IPartitionEnumerator, public IEntityListener
+class CAI_Network : public IPartitionEnumerator
 {
 public:
+	// Core data management
 	CAI_Network();
 	~CAI_Network();
-
-	void OnEntityDeleted( CBaseEntity *pEntity );
 
 	CAI_Node *		AddNode( const Vector &origin, float yaw );						// Returns a new node in the network
 	CAI_Link *		CreateLink( int srcID, int destID, CAI_DynamicLink *pDynamicLink = NULL );
@@ -103,13 +102,9 @@ public:
 	float			GetNodeYaw( int nodeID );
 
 	static int		FindBSSmallest(CVarBitVec *bitString, float *float_array, int array_size); 
-
-	int				NearestNodeToPoint( CAI_BaseNPC* pNPC, const Vector &vecOrigin, bool bCheckVisiblity, INearestNodeFilter *pFilter );
-	int				NearestNodeToPoint( CAI_BaseNPC* pNPC, const Vector &vecOrigin, bool bCheckVisiblity = true ) { return NearestNodeToPoint( pNPC, vecOrigin, bCheckVisiblity, NULL ); }
-	int				NearestNodeToPoint(const Vector &vPosition, bool bCheckVisiblity = true );
 	
 	int				NumNodes() const 	{ return m_iNumNodes; }
-	CAI_Node*		GetNode( int id, bool bHandleError = true )
+	CAI_Node*		GetNode( int id, bool bHandleError = true ) const
 	{ 
 		if ( id >= 0 && 
 			 id < m_iNumNodes ) 
@@ -129,7 +124,32 @@ public:
 	}
 	
 	CAI_Node**		AccessNodes() const	{ return m_pAInode; }
-	
+
+	////////////////////////////////// 
+	// Tools and utility functions
+
+
+	int			NearestNodeToPoint( CAI_BaseNPC* pNPC, const Vector &vecOrigin, bool bCheckVisiblity, INearestNodeFilter *pFilter );
+	int			NearestNodeToPoint( CAI_BaseNPC* pNPC, const Vector &vecOrigin, bool bCheckVisiblity = true ) { return NearestNodeToPoint( pNPC, vecOrigin, bCheckVisiblity, NULL ); }
+	int			NearestNodeToPoint(const Vector &vPosition, bool bCheckVisiblity = true );
+
+
+	/** @brief Callback lets you customize FindNodeDistanceAwayFromStart to accept or reject specific nodes based on other criteria
+	To use, inherit from this and override Validate(). It's like a closure.
+	*/
+	class IPathingNodeValidator
+	{
+	public:
+		/// FindNodeDistanceAwayFromStart will pass each node it considers acceptable into this function and will reject ones that return false.
+		/// NOTE: this must be const!
+		virtual bool Validate( const CAI_Node *pNode, const CAI_Network * const pNetwork ) const { return true; } /// < default impl accepts everything
+	};
+
+	/// Experimental: starting at a given nav-node, walk the network to try to find a node at least
+	/// mindist away from a point yet no more than maxdist. Returns NULL on failure. Recursive.
+	/// supply squares of min, max distance.
+	CAI_Node *	FindNodeDistanceAwayFromStart( CAI_Node *pStartNode, const Vector &point, float minDistSq, float maxDistSq, const Hull_t hulltype, const Capability_t movetype, const IPathingNodeValidator &validator = IPathingNodeValidator() );
+
 
 	
 private:
@@ -202,6 +222,7 @@ enum DebugNetOverlayBits_e
 	bits_debugOverlayHints			=	0x00000080,		// show hints
 	bits_debugOverlayJumpConnections=	0x00000100,		// show jump connections
 	bits_debugOverlayFlyConnections	=	0x00000200,		// show fly connections
+	bits_debugOverlayCrawlConnections	=	0x00000400,		// show crawl connections
 
 	bits_debugNeedRebuild			=	0x10000000,		// network needs rebuilding
 };

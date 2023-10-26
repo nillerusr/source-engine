@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -58,6 +58,26 @@ public:
 #if defined( HL2_DLL ) || defined( HL2_CLIENT_DLL )
 		entitygroundcontact.RemoveAll();
 #endif
+
+
+
+		// TrackIR
+		headangles.Init();
+		headoffset.Init();
+		// TrackIR
+
+#if defined( INFESTED_DLL )
+		crosshairtrace = vec3_origin;
+#endif
+
+#ifdef INFESTED_DLL
+		crosshair_entity = 0;
+		forced_action = 0;
+		sync_kill_ent = 0;
+		skill_dest.Init();
+		skill_dest_ent = 0;
+#endif
+
 	}
 
 	CUserCmd& operator =( const CUserCmd& src )
@@ -85,6 +105,25 @@ public:
 		entitygroundcontact			= src.entitygroundcontact;
 #endif
 
+
+
+		// TrackIR
+		headangles			= src.headangles;
+		headoffset			= src.headoffset;
+		// TrackIR
+
+#if defined( INFESTED_DLL )
+		crosshairtrace		= src.crosshairtrace;
+#endif
+
+#ifdef INFESTED_DLL
+		crosshair_entity			= src.crosshair_entity;
+		forced_action				= src.forced_action;
+		sync_kill_ent				= src.sync_kill_ent;
+		skill_dest					= src.skill_dest;
+		skill_dest_ent				= src.skill_dest_ent;
+#endif
+
 		return *this;
 	}
 
@@ -109,22 +148,27 @@ public:
 		CRC32_ProcessBuffer( &crc, &weaponselect, sizeof( weaponselect ) );	
 		CRC32_ProcessBuffer( &crc, &weaponsubtype, sizeof( weaponsubtype ) );
 		CRC32_ProcessBuffer( &crc, &random_seed, sizeof( random_seed ) );
+#ifndef INFESTED_DLL		// alien swarm doesn't need these
 		CRC32_ProcessBuffer( &crc, &mousedx, sizeof( mousedx ) );
 		CRC32_ProcessBuffer( &crc, &mousedy, sizeof( mousedy ) );
+#endif
+
+#if defined( INFESTED_DLL )
+		CRC32_ProcessBuffer( &crc, &crosshairtrace, sizeof( crosshairtrace ) );
+#endif
+
+
+
+#ifdef INFESTED_DLL
+		CRC32_ProcessBuffer( &crc, &crosshair_entity, sizeof( crosshair_entity ) );
+		CRC32_ProcessBuffer( &crc, &forced_action, sizeof( forced_action ) );
+		CRC32_ProcessBuffer( &crc, &sync_kill_ent, sizeof( sync_kill_ent ) );
+		CRC32_ProcessBuffer( &crc, &skill_dest, sizeof( skill_dest ) );
+		CRC32_ProcessBuffer( &crc, &skill_dest_ent, sizeof( skill_dest_ent ) );
+#endif
 		CRC32_Final( &crc );
 
 		return crc;
-	}
-
-	// Allow command, but negate gameplay-affecting values
-	void MakeInert( void )
-	{
-		viewangles = vec3_angle;
-		forwardmove = 0.f;
-		sidemove = 0.f;
-		upmove = 0.f;
-		buttons = 0;
-		impulse = 0;
 	}
 
 	// For matching server and client commands for debugging
@@ -163,6 +207,23 @@ public:
 	CUtlVector< CEntityGroundContact > entitygroundcontact;
 #endif
 
+
+	// TrackIR
+	QAngle headangles;
+	Vector headoffset;
+	// TrackIR
+
+#if defined( INFESTED_DLL )
+	Vector crosshairtrace;		// world location directly beneath the player's crosshair
+#endif
+
+#ifdef INFESTED_DLL
+	short crosshair_entity;			// index of the entity under the player's crosshair
+	byte forced_action;
+	short sync_kill_ent;
+	Vector skill_dest;
+	short skill_dest_ent;
+#endif
 };
 
 void ReadUsercmd( bf_read *buf, CUserCmd *move, CUserCmd *from );

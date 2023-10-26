@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -32,17 +32,28 @@
 #include "scenefilecache/ISceneFileCache.h"
 #include "SceneCache.h"
 #include "scripted.h"
+#include "basemultiplayerplayer.h"
 #include "env_debughistory.h"
+#include "datacache/imdlcache.h"
+#include "recipientfilter.h"
+#include "team.h"
+#include "triggers.h"
 
 #ifdef HL2_EPISODIC
 #include "npc_alyx_episodic.h"
 #endif // HL2_EPISODIC
+
+
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 extern ISoundEmitterSystemBase *soundemitterbase;
 extern ISceneFileCache *scenefilecache;
+
+// From SoundEmitterSystem.cpp
+bool GetCaptionHash( char const *pchStringName, bool bWarnIfMissing, unsigned int &hash );
+bool CanEmitCaption( unsigned int hash );
 
 class CSceneEntity;
 class CBaseFlex;
@@ -53,6 +64,7 @@ class CBaseFlex;
 
 static ConVar scene_forcecombined( "scene_forcecombined", "0", 0, "When playing back, force use of combined .wav files even in english." );
 static ConVar scene_maxcaptionradius( "scene_maxcaptionradius", "1200", 0, "Only show closed captions if recipient is within this many units of speaking actor (0==disabled)." );
+ConVar scene_clientplayback( "scene_clientplayback", "1", 0, "Play all vcds on the clients." );
 
 // Assume sound system is 100 msec lagged (only used if we can't find snd_mixahead cvar!)
 #define SOUND_SYSTEM_LATENCY_DEFAULT ( 0.1f )
@@ -129,7 +141,6 @@ public:
 			void			OnClientActive( CBasePlayer *player );
 			
 			void			RemoveActorFromScenes( CBaseFlex *pActor, bool bInstancedOnly, bool bNonIdleOnly, const char *pszThisSceneOnly );
-			void			RemoveScenesInvolvingActor( CBaseFlex *pActor );
 			void			PauseActorsScenes( CBaseFlex *pActor, bool bInstancedOnly  );
 			bool			IsInInterruptableScenes( CBaseFlex *pActor );
 			void			ResumeActorsScenes( CBaseFlex *pActor, bool bInstancedOnly  );
@@ -202,7 +213,7 @@ void LocalScene_Printf( const char *pFormat, ... )
 //			**buffer - 
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
-bool CopySceneFileIntoMemory( char const *pFilename, void **pBuffer, int *pSize )
+bool CopySceneFileIntoMemory( char const *pFilename, byte **pBuffer, int *pSize )
 {
 	size_t bufSize = scenefilecache->GetSceneBufferSize( pFilename );
 	if ( bufSize > 0 )
@@ -220,9 +231,9 @@ bool CopySceneFileIntoMemory( char const *pFilename, void **pBuffer, int *pSize 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void FreeSceneFileMemory( void *buffer )
+void FreeSceneFileMemory( byte *buffer )
 {
-	delete[] (byte*) buffer;
+	delete[] buffer;
 }
 
 //-----------------------------------------------------------------------------
@@ -317,6 +328,8 @@ public:
 
 	DECLARE_CLASS( CSceneEntity, CPointEntity );
 	DECLARE_SERVERCLASS();
+	// script description
+	DECLARE_ENT_SCRIPTDESC();
 
 							CSceneEntity( void );
 							~CSceneEntity( void );
@@ -341,6 +354,8 @@ public:
 
 	virtual void			OnRestore();
 	virtual void			OnLoaded();
+
+	virtual int				DrawDebugTextOverlays();
 
 	DECLARE_DATADESC();
 
@@ -406,7 +421,7 @@ public:
 
 	static bool SpeakEventSoundLessFunc( const SpeakEventSound_t& lhs, const SpeakEventSound_t& rhs );
 
-	bool					GetSoundNameForPlayer( CChoreoEvent *event, CBasePlayer *player, char *buf, size_t buflen, CBaseEntity *pActor );
+	bool					GetSoundNameForPlayer( CChoreoEvent *event, CBasePlayer *player, char *buf, size_t buflen );
 
 	void					BuildSortedSpeakEventSoundsPrefetchList( 
 								CChoreoScene *scene, 
@@ -463,6 +478,9 @@ public:
 	void					SetCurrentTime( float t, bool forceClientSync );
 
 	void					InputScriptPlayerDeath( inputdata_t &inputdata );
+
+	void					AddBroadcastTeamTarget( int nTeamIndex );
+	void					RemoveBroadcastTeamTarget( int nTeamIndex );
 
 // Data
 public:
@@ -525,6 +543,8 @@ public:
 	virtual CBaseEntity		*FindNamedEntity( const char *name, CBaseEntity *pActor = NULL, bool bBaseFlexOnly = false, bool bUseClear = false );
 	CBaseEntity				*FindNamedTarget( string_t iszTarget, bool bBaseFlexOnly = false );
 	virtual CBaseEntity		*FindNamedEntityClosest( const char *name, CBaseEntity *pActor = NULL, bool bBaseFlexOnly = false, bool bUseClear = false, const char *pszSecondary = NULL );
+	HSCRIPT					ScriptFindNamedEntity( const char *name );
+	bool					ScriptLoadSceneFromString( const char * pszFilename, const char *pszData );
 
 private:
 
@@ -558,7 +578,7 @@ private:
 	CChoreoScene			*m_pScene;
 	CNetworkVar( int, m_nSceneStringIndex );
 
-	static const ConVar		*m_pcvSndMixahead;
+	static const ConVar			*m_pcvSndMixahead;
 
 	COutputEvent			m_OnStart;
 	COutputEvent			m_OnCompletion;
@@ -608,6 +628,8 @@ public:
 	void					SetBackground( bool bIsBackground );
 	bool					IsBackground( void );
 };
+
+const ConVar *CSceneEntity::m_pcvSndMixahead = NULL;
 
 LINK_ENTITY_TO_CLASS( logic_choreographed_scene, CSceneEntity );
 LINK_ENTITY_TO_CLASS( scripted_scene, CSceneEntity );
@@ -735,7 +757,16 @@ BEGIN_DATADESC( CSceneEntity )
 	DEFINE_OUTPUT( m_OnTrigger16, "OnTrigger16"),
 END_DATADESC()
 
-const ConVar	*CSceneEntity::m_pcvSndMixahead = NULL;
+
+BEGIN_ENT_SCRIPTDESC( CSceneEntity, CBaseEntity, "Choreographed scene which controls animation and/or dialog on one or more actors." )
+	DEFINE_SCRIPTFUNC( EstimateLength, "Returns length of this scene in seconds." )
+	DEFINE_SCRIPTFUNC( IsPlayingBack, "If this scene is currently playing." )
+	DEFINE_SCRIPTFUNC( IsPaused, "If this scene is currently paused." )
+	DEFINE_SCRIPTFUNC( AddBroadcastTeamTarget, "Adds a team (by index) to the broadcast list" )
+	DEFINE_SCRIPTFUNC( RemoveBroadcastTeamTarget, "Removes a team (by index) from the broadcast list" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptFindNamedEntity, "FindNamedEntity", "given an entity reference, such as !target, get actual entity from scene object" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptLoadSceneFromString, "LoadSceneFromString", "given a dummy scene name and a vcd string, load the scene" )
+END_SCRIPTDESC();
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -768,10 +799,15 @@ CSceneEntity::CSceneEntity( void )
 
 	m_bCompletedEarly	= false;
 
-	if ( !m_pcvSndMixahead )
-		m_pcvSndMixahead	= cvar->FindVar( "snd_mixahead" );
-
 	m_BusyActor			= SCENE_BUSYACTOR_DEFAULT;
+
+	// FindVar is a very slow operation, too slow even to tolerate in a
+	// constructor. We do it once and only once, and store the result in
+	// static space.
+	if (!m_pcvSndMixahead) 
+	{
+		m_pcvSndMixahead = cvar->FindVar( "snd_mixahead" );
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -1420,7 +1456,7 @@ void CSceneEntity::DispatchEndInterrupt( CChoreoScene *scene, CChoreoEvent *even
 //-----------------------------------------------------------------------------
 void CSceneEntity::DispatchStartExpression( CChoreoScene *scene, CBaseFlex *actor, CChoreoEvent *event )
 {
-	actor->AddSceneEvent( scene, event );
+	actor->AddSceneEvent( scene, event, NULL, this );
 }
 
 //-----------------------------------------------------------------------------
@@ -1440,7 +1476,7 @@ void CSceneEntity::DispatchEndExpression( CChoreoScene *scene, CBaseFlex *actor,
 //-----------------------------------------------------------------------------
 void CSceneEntity::DispatchStartFlexAnimation( CChoreoScene *scene, CBaseFlex *actor, CChoreoEvent *event )
 {
-	actor->AddSceneEvent( scene, event );
+	actor->AddSceneEvent( scene, event, NULL, this );
 }
 
 //-----------------------------------------------------------------------------
@@ -1464,7 +1500,7 @@ void CSceneEntity::DispatchStartGesture( CChoreoScene *scene, CBaseFlex *actor, 
 	if ( !Q_stricmp( event->GetName(), "NULL" ) )
 		return;
 
-	actor->AddSceneEvent( scene, event); 
+	actor->AddSceneEvent( scene, event, NULL, this ); 
 }
 
 
@@ -1490,7 +1526,7 @@ void CSceneEntity::DispatchEndGesture( CChoreoScene *scene, CBaseFlex *actor, CC
 void CSceneEntity::DispatchStartGeneric( CChoreoScene *scene, CBaseFlex *actor, CChoreoEvent *event )
 {
 	CBaseEntity *pTarget = FindNamedEntity( event->GetParameters2( ) );
-	actor->AddSceneEvent( scene, event, pTarget );
+	actor->AddSceneEvent( scene, event, pTarget, this );
 }
 
 
@@ -1511,7 +1547,7 @@ void CSceneEntity::DispatchEndGeneric( CChoreoScene *scene, CBaseFlex *actor, CC
 //-----------------------------------------------------------------------------
 void CSceneEntity::DispatchStartLookAt( CChoreoScene *scene, CBaseFlex *actor, CBaseEntity *actor2, CChoreoEvent *event )
 {
-	actor->AddSceneEvent( scene, event, actor2 );
+	actor->AddSceneEvent( scene, event, actor2, this );
 }
 
 
@@ -1530,7 +1566,7 @@ void CSceneEntity::DispatchEndLookAt( CChoreoScene *scene, CBaseFlex *actor, CCh
 //-----------------------------------------------------------------------------
 void CSceneEntity::DispatchStartMoveTo( CChoreoScene *scene, CBaseFlex *actor, CBaseEntity *actor2, CChoreoEvent *event )
 {
-	actor->AddSceneEvent( scene, event, actor2 );
+	actor->AddSceneEvent( scene, event, actor2, this );
 }
 
 
@@ -1584,7 +1620,7 @@ bool AttenuateCaption( const char *token, const Vector& listener, CUtlVector< Ve
 //			buf, buflen:  where to put the data 
 // Output : Returns true if the sound should be played/prefetched
 //-----------------------------------------------------------------------------
-bool CSceneEntity::GetSoundNameForPlayer( CChoreoEvent *event, CBasePlayer *player, char *buf, size_t buflen, CBaseEntity *pActor )
+bool CSceneEntity::GetSoundNameForPlayer( CChoreoEvent *event, CBasePlayer *player, char *buf, size_t buflen )
 {
 	Assert( event );
 	Assert( player );
@@ -1607,15 +1643,8 @@ bool CSceneEntity::GetSoundNameForPlayer( CChoreoEvent *event, CBasePlayer *play
 		validtoken = event->GetPlaybackCloseCaptionToken( tok, sizeof( tok ) );
 	}
 
-	const char* pchToken = "";
-
-	if ( pActor && pActor->IsPlayer() )
-	{
-		pchToken = dynamic_cast< CBasePlayer* >( pActor )->GetSceneSoundToken();
-	}
-
-	// Copy the sound name
-	CopySoundNameWithModifierToken( buf, event->GetParameters(), buflen, pchToken );
+	// For english users, assume we emit the sound normally
+	Q_strncpy( buf, event->GetParameters(), buflen );
 
 	bool usingEnglish = true;
 	if ( !IsXbox() )
@@ -1654,7 +1683,13 @@ bool CSceneEntity::GetSoundNameForPlayer( CChoreoEvent *event, CBasePlayer *play
 	return false;
 }
 
-//-----------------------------------------------------------------------------
+static CAI_BaseActor *ToBaseActor( CBaseFlex *actor )
+{
+	return dynamic_cast<CAI_BaseActor*>( actor );
+
+}
+
+ //-----------------------------------------------------------------------------
 // Purpose: Playback sound file that contains phonemes
 // Input  : *actor - 
 //			*parameters - 
@@ -1664,7 +1699,10 @@ void CSceneEntity::DispatchStartSpeak( CChoreoScene *scene, CBaseFlex *actor, CC
 	// Emit sound
 	if ( actor )
 	{
-		CPASAttenuationFilter filter( actor );
+		CPASAttenuationFilter filter( actor, iSoundlevel );		
+
+
+
 
 		if ( m_pRecipientFilter )
 		{
@@ -1708,12 +1746,12 @@ void CSceneEntity::DispatchStartSpeak( CChoreoScene *scene, CBaseFlex *actor, CC
 		// be continuing speaking with another scene.
 		float flDuration = event->GetDuration() - time_in_past;
 
-		CAI_BaseActor *pBaseActor = dynamic_cast<CAI_BaseActor*>(actor);
+		CAI_BaseActor *pBaseActor = ToBaseActor( actor );
 		if ( pBaseActor )
 		{
 			pBaseActor->NoteSpeaking( flDuration, GetPostSpeakDelay() );
 		}
-		else if ( actor->IsNPC() )
+		else if ( actor->IsNPC() && actor->MyNPCPointer() )
 		{
 			GetSpeechSemaphore( actor->MyNPCPointer() )->Acquire( flDuration + GetPostSpeakDelay(), actor );
 		}
@@ -1729,14 +1767,12 @@ void CSceneEntity::DispatchStartSpeak( CChoreoScene *scene, CBaseFlex *actor, CC
 			es.m_nFlags |= SND_IGNORE_PHONEMES;
 		}
 
-		if ( actor->GetSpecialDSP() != 0 )
-		{
-			es.m_nSpecialDSP = actor->GetSpecialDSP();
-		}
-
 		// No CC since we do it manually
 		// FIXME:  This will  change
 		es.m_bEmitCloseCaption = false;
+
+		// Captions only route to host player (there is only one closecaptioning HUD)
+		filter.RemoveSplitScreenPlayers();
 
 		int c = filter.GetRecipientCount();
 		for ( int i = 0; i < c; ++i )
@@ -1749,7 +1785,7 @@ void CSceneEntity::DispatchStartSpeak( CChoreoScene *scene, CBaseFlex *actor, CC
 			CSingleUserRecipientFilter filter2( player );
 
 			char soundname[ 512 ];
-			if ( !GetSoundNameForPlayer( event, player, soundname, sizeof( soundname ), actor ) )
+			if ( !GetSoundNameForPlayer( event, player, soundname, sizeof( soundname ) ) )
 			{
 				continue;
 			}
@@ -1779,8 +1815,11 @@ void CSceneEntity::DispatchStartSpeak( CChoreoScene *scene, CBaseFlex *actor, CC
 				es.m_nFlags |= SND_CHANGE_PITCH;
 			}
 
+
+
 			EmitSound( filter2, actor->entindex(), es );
-			actor->AddSceneEvent( scene, event );
+
+			actor->AddSceneEvent( scene, event, NULL, this );
 		}
 	
 		// Close captioning only on master token no matter what...
@@ -1810,7 +1849,7 @@ void CSceneEntity::DispatchStartSpeak( CChoreoScene *scene, CBaseFlex *actor, CC
 
 						Vector playerOrigin = player->GetAbsOrigin();
 
-						if ( AttenuateCaption( lowercase, playerOrigin, es.m_UtlVecSoundOrigin ) )
+						if ( iSoundlevel != SNDLVL_NONE && AttenuateCaption( lowercase, playerOrigin, es.m_UtlVecSoundOrigin ) )
 						{
 							// If the player has a view entity, measure the distance to that
 							if ( !player->GetViewEntity() || AttenuateCaption( lowercase, player->GetViewEntity()->GetAbsOrigin(), es.m_UtlVecSoundOrigin ) )
@@ -1830,33 +1869,45 @@ void CSceneEntity::DispatchStartSpeak( CChoreoScene *scene, CBaseFlex *actor, CC
 
 					float duration = MAX( durationShort, durationLong );
 
-
-					byte byteflags = CLOSE_CAPTION_WARNIFMISSING; // warnifmissing
-					/*
-					// Never for .vcds...
-					if ( fromplayer )
-					{
-						byteflags |= CLOSE_CAPTION_FROMPLAYER;
-					}
-					*/
 					char const *pszActorModel = STRING( actor->GetModelName() );
 					gender_t gender = soundemitterbase->GetActorGender( pszActorModel );
 
+					char lowercase_nogender[ 256 ];
+					Q_strncpy( lowercase_nogender, lowercase, sizeof( lowercase_nogender ) );
+					bool bTriedGender = false;
+
 					if ( gender == GENDER_MALE )
 					{
-						byteflags |= CLOSE_CAPTION_GENDER_MALE;
+						Q_strncat( lowercase, "_male", sizeof( lowercase ), COPY_ALL_CHARACTERS );
+						bTriedGender = true;
 					}
 					else if ( gender == GENDER_FEMALE )
 					{ 
-						byteflags |= CLOSE_CAPTION_GENDER_FEMALE;
+						Q_strncat( lowercase, "_female", sizeof( lowercase ), COPY_ALL_CHARACTERS );
+						bTriedGender = true;
 					}
 
-					// Send caption and duration hint down to client
-					UserMessageBegin( filter, "CloseCaption" );
-						WRITE_STRING( lowercase );
-						WRITE_SHORT( MIN( 255, (int)( duration * 10.0f ) ) );
-						WRITE_BYTE( byteflags ); // warn on missing
-					MessageEnd();
+					unsigned int hash = 0u;
+					bool bFound = GetCaptionHash( lowercase, true, hash );
+
+					// if not found, try the no-gender version
+					if ( !bFound && bTriedGender )
+					{
+						bFound = GetCaptionHash( lowercase_nogender, true, hash );
+					}
+
+					if ( bFound )
+					{
+						if ( CanEmitCaption( hash ) )
+						{
+							// Send caption and duration hint down to client
+							UserMessageBegin( filter, "CloseCaption" );
+								WRITE_LONG( hash );
+								WRITE_UBITLONG( clamp( (int)( duration * 10.0f ), 0, 65535 ), 15 ),
+								WRITE_UBITLONG( 0, 1 ),
+							MessageEnd();
+						}
+					}
 				}
 			}
 		}
@@ -1876,7 +1927,7 @@ void CSceneEntity::DispatchEndSpeak( CChoreoScene *scene, CBaseFlex *actor, CCho
 //-----------------------------------------------------------------------------
 void CSceneEntity::DispatchStartFace( CChoreoScene *scene, CBaseFlex *actor, CBaseEntity *actor2, CChoreoEvent *event )
 {
-	actor->AddSceneEvent( scene, event, actor2 );
+	actor->AddSceneEvent( scene, event, actor2, this );
 }
 
 
@@ -1899,7 +1950,7 @@ void CSceneEntity::DispatchEndFace( CChoreoScene *scene, CBaseFlex *actor, CChor
 //-----------------------------------------------------------------------------
 void CSceneEntity::DispatchStartSequence( CChoreoScene *scene, CBaseFlex *actor, CChoreoEvent *event )
 {
-	actor->AddSceneEvent( scene, event );
+	actor->AddSceneEvent( scene, event, NULL, this );
 }
 
 
@@ -2165,7 +2216,7 @@ void CSceneEntity::InputTriggerEvent( inputdata_t &inputdata )
 
 struct NPCInterjection
 {
-	AI_Response *response;
+	AI_Response response;
 	CAI_BaseActor *npc;
 };
 //-----------------------------------------------------------------------------
@@ -2188,7 +2239,7 @@ void CSceneEntity::InputInterjectResponse( inputdata_t &inputdata )
 		if ( !pTestActor )
 			continue;
 
-		CAI_BaseActor *pBaseActor = dynamic_cast<CAI_BaseActor*>(pTestActor);
+		CAI_BaseActor *pBaseActor = ToBaseActor( pTestActor );
 		if ( !pBaseActor )
 			continue;
 
@@ -2218,23 +2269,25 @@ void CSceneEntity::InputInterjectResponse( inputdata_t &inputdata )
 		char modifiers[ 512 ];
 		Q_snprintf( modifiers, sizeof( modifiers ), "scene:%s", STRING( GetEntityName() ) );
 
+		AIConcept_t concept(inputdata.value.String());
 		for ( int i = 0; i < c; i++ )
 		{
 			CAI_BaseActor *npc = candidates[ i ];
 			Assert( npc );
 
-			AI_Response *response = npc->SpeakFindResponse( inputdata.value.String(), modifiers );
-			if ( !response )
+			AI_CriteriaSet set; 
+			npc->GatherCriteria( &set, concept, modifiers );
+			AI_Response response;
+			if ( !npc->FindResponse( response, concept, &set ) )
 				continue;
 
-			float duration = npc->GetResponseDuration( response );
+			float duration = npc->GetResponseDuration( &response );
 			// Couldn't look it up
 			if ( duration <= 0.0f )
 				continue;
 
 			if ( !npc->PermitResponse( duration ) )
 			{
-				delete response;
 				continue;
 			}
 
@@ -2256,11 +2309,11 @@ void CSceneEntity::InputInterjectResponse( inputdata_t &inputdata )
 				NPCInterjection *pInterjection = &validResponses[ i ];
 				if ( i == slot )
 				{
-					pInterjection->npc->SpeakDispatchResponse( inputdata.value.String(), pInterjection->response );
+					pInterjection->npc->SpeakDispatchResponse( inputdata.value.String(), &pInterjection->response, NULL );
 				}
 				else
 				{
-					delete pInterjection->response;
+					// delete pInterjection->response;
 				}
 			}
 		}
@@ -2371,9 +2424,7 @@ bool CSceneEntity::CheckActors()
 	return true;
 }
 
-#if !defined( _RETAIL )
 static ConVar scene_async_prefetch_spew( "scene_async_prefetch_spew", "0", 0, "Display async .ani file loading info." );
-#endif
 
 void CSceneEntity::PrefetchAnimBlocks( CChoreoScene *scene )
 {
@@ -2382,15 +2433,11 @@ void CSceneEntity::PrefetchAnimBlocks( CChoreoScene *scene )
 	// Build a fast lookup, too
 	CUtlMap< CChoreoActor *, CBaseFlex *> actorMap( 0, 0, DefLessFunc( CChoreoActor * ) );
 	
-	int spew = 
-#if !defined( _RETAIL )
-		scene_async_prefetch_spew.GetInt();
-#else 
-		0;
-#endif
-
+	int spew = scene_async_prefetch_spew.GetInt();
 	int resident = 0;
 	int checked = 0;
+
+	MDLCACHE_CRITICAL_SECTION();
 
 	// Iterate events and precache necessary resources
 	for ( int i = 0; i < scene->GetNumEvents(); i++ )
@@ -2449,7 +2496,7 @@ void CSceneEntity::PrefetchAnimBlocks( CChoreoScene *scene )
 
 										// Async load the animation
 										int iFrame = 0;
-										const mstudioanim_t *panim = animdesc.pAnim( &iFrame );
+										const byte *panim = animdesc.pAnim( &iFrame );
 										if ( panim )
 										{
 											++resident;
@@ -2484,7 +2531,7 @@ void CSceneEntity::PrefetchAnimBlocks( CChoreoScene *scene )
 
 void CSceneEntity::OnLoaded()
 {
-	// Nothing
+	m_bMultiplayer = gpGlobals->maxClients > 1;
 }
 
 //-----------------------------------------------------------------------------
@@ -2625,7 +2672,7 @@ void CSceneEntity::BuildSortedSpeakEventSoundsPrefetchList(
 				if ( gpGlobals->maxClients == 1 )
 				{
 					CBasePlayer *player = UTIL_GetLocalPlayer();
-					if ( player && !GetSoundNameForPlayer( event, player, soundname, sizeof( soundname ), player ) )
+					if ( player && !GetSoundNameForPlayer( event, player, soundname, sizeof( soundname ) ) )
 					{
 						// Skip to next event
 						continue;
@@ -2753,6 +2800,7 @@ void CSceneEntity::PitchShiftPlayback( float fPitch )
 			params.m_pSoundName = szBuff;
 			params.m_nPitch = 100.0f * fPitch;
 			params.m_nFlags = SND_CHANGE_PITCH;
+
 			pTestActor->EmitSound( filter, pTestActor->entindex(), params );
 		}
 	}
@@ -2780,14 +2828,15 @@ void CSceneEntity::QueueResumePlayback( void )
 			CBaseFlex *pActor = FindNamedActor( 0 );
 			if ( pActor )
 			{
-				CAI_BaseActor *pBaseActor = dynamic_cast<CAI_BaseActor*>(pActor);
+				CAI_BaseActor *pBaseActor = ToBaseActor( pActor );
 				if ( pBaseActor )
 				{
-					AI_Response *result = pBaseActor->SpeakFindResponse( STRING(m_iszResumeSceneFile), NULL );
-					if ( result )
+					AI_Response result ;
+					AIConcept_t tmpConcept( STRING( m_iszResumeSceneFile ) );
+					if ( pBaseActor->FindResponse( result, tmpConcept, NULL ) )
 					{
 						char response[ 256 ];
-						result->GetResponse( response, sizeof( response ) );
+						result.GetResponse( response, sizeof( response ) );
 						bStartedScene = InstancedScriptedScene( NULL, response, &m_hWaitingForThisResumeScene, 0, false ) != 0;
 					}
 				}
@@ -2866,7 +2915,8 @@ void CSceneEntity::StartEvent( float currenttime, CChoreoScene *scene, CChoreoEv
 
 	CBaseFlex *pActor = NULL;
 	CChoreoActor *actor = event->GetActor();
-	if ( actor )
+
+	if ( actor && (event->GetType() != CChoreoEvent::SCRIPT) && (event->GetType() != CChoreoEvent::CAMERA) )
 	{
 		pActor = FindNamedActor( actor );
 		if (pActor == NULL)
@@ -2932,8 +2982,6 @@ void CSceneEntity::StartEvent( float currenttime, CChoreoScene *scene, CChoreoEv
 				if (event->GetParameters2())
 				{
 					iSoundlevel = (soundlevel_t)atoi( event->GetParameters2() );
-					if (iSoundlevel == SNDLVL_NONE)
-						iSoundlevel = SNDLVL_TALKING;
 				}
 
 				DispatchStartSpeak( scene, pActor, event, iSoundlevel );
@@ -3029,11 +3077,81 @@ void CSceneEntity::StartEvent( float currenttime, CChoreoScene *scene, CChoreoEv
 			}
 		}
 		break;
+
+	case CChoreoEvent::CAMERA:
+		{
+			// begin the camera shot
+			const char *pszShotType = event->GetParameters();
+			
+			CBaseEntity *pActor1 = FindNamedEntity( event->GetParameters2( ), pActor );
+			CBaseEntity *pActor2 = FindNamedEntity( event->GetParameters3( ), pActor );
+			float duration = event->GetDuration();
+
+			// grab any camera we find in the map
+			// TODO: find camera that is nearest this scene entity?
+			CTriggerCamera *pCamera = (CTriggerCamera *)gEntList.FindEntityByClassname( NULL, "point_viewcontrol" );
+
+			if ( !pCamera )
+			{
+				Warning( "CSceneEntity %s unable to find a camera (point_viewcontrol) in this map!\n", STRING(GetEntityName()) );
+			}
+			else
+			{
+				pCamera->StartCameraShot( pszShotType, this, pActor1, pActor2, duration );
+			}
+		}
+		break;
+
+	case CChoreoEvent::SCRIPT:
+		{
+			// NOTE: this is only used by auto-generated vcds to embed script commands to map entities.
+
+			// vscript call - param1 is entity name, param2 is function name, param3 is function parameter string
+			// calls a vscript function defined on the scope of the named CBaseEntity object/actor.
+			// script call is of the format FunctionName(pActor, pThisSceneEntity, pszScriptParameters, duration)
+			const char *pszActorName = event->GetParameters();
+			const char *pszFunctionName = event->GetParameters2();
+			const char *pszScriptParameters = event->GetParameters3();
+
+			float duration = event->GetDuration();
+			
+			// TODO: should be new method CBaseEntity::CallScriptFunctionParams()
+			CBaseEntity *pEntity = (CBaseEntity *)gEntList.FindEntityByName( NULL, pszActorName );
+
+			//START_VMPROFILE
+			if ( !pEntity )
+			{
+				Warning( "CSceneEntity::SCRIPT event - unable to find entity named '%s' in this map!\n", pszActorName );
+			}
+			else
+			{
+			
+				if( !pEntity->ValidateScriptScope() )
+				{
+					DevMsg("\n***\nCChoreoEvent::SCRIPT - FAILED to create private ScriptScope. ABORTING script call\n***\n");
+					break;
+				}
+
+				HSCRIPT hFunc = pEntity->m_ScriptScope.LookupFunction( pszFunctionName );
+
+				if( hFunc )
+				{
+					pEntity->m_ScriptScope.Call( hFunc, NULL, ToHScript(this), pszScriptParameters, duration );
+					pEntity->m_ScriptScope.ReleaseFunction( hFunc );
+
+					//UPDATE_VMPROFILE
+				}
+				else
+				{
+					Warning("CSceneEntity::SCRIPT event - '%s' entity has no script function '%s' defined!\n", pszActorName,pszFunctionName);
+				}
+			}
+
+		}
+		break;
+
 	case CChoreoEvent::FIRETRIGGER:
 		{
-			if ( IsMultiplayer() )
-				break;
-
 			// Don't re-fire triggers during restore, the entities should already reflect all such state...
 			if ( m_bRestoring )
 			{
@@ -3237,6 +3355,19 @@ void CSceneEntity::EndEvent( float currenttime, CChoreoScene *scene, CChoreoEven
 			}
 		}
 		break;
+
+	case CChoreoEvent::CAMERA:
+		{
+			// call the end of camera or call a dispatch function
+		}
+		break;
+
+	case CChoreoEvent::SCRIPT:
+		{
+			// call the end of script or call a dispatch function
+		}
+		break;
+
 	case CChoreoEvent::SEQUENCE:
 		{
 			if ( pActor )
@@ -3353,7 +3484,7 @@ CChoreoScene *CSceneEntity::LoadScene( const char *filename, IChoreoEventCallbac
 	Q_FixSlashes( loadfile );
 
 	// binary compiled vcd
-	void *pBuffer;
+	byte *pBuffer;
 	int fileSize;
 	if ( !CopySceneFileIntoMemory( loadfile, &pBuffer, &fileSize ) )
 	{
@@ -3382,6 +3513,47 @@ CChoreoScene *CSceneEntity::LoadScene( const char *filename, IChoreoEventCallbac
 CChoreoScene *BlockingLoadScene( const char *filename )
 {
 	return CSceneEntity::LoadScene( filename, NULL );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: vscript - create a scene directly from a buffer containing
+// a vcd description, and load it into the scene entity.
+//-----------------------------------------------------------------------------
+
+bool CSceneEntity::ScriptLoadSceneFromString( const char * pszFilename, const char *pszData )
+{
+	CChoreoScene *pScene = new CChoreoScene( NULL ); 
+	
+	// CSceneTokenProcessor SceneTokenProcessor;
+	// SceneTokenProcessor.SetBuffer( pszData );
+	g_TokenProcessor.SetBuffer( (char *)pszData );
+
+	if ( !pScene->ParseFromBuffer( pszFilename, &g_TokenProcessor ) ) //&SceneTokenProcessor ) )
+		{
+			Warning( "CSceneEntity::LoadSceneFromString: Unable to parse scene data '%s'\n", pszFilename );
+			delete pScene;
+			pScene = NULL;
+		}
+		else
+		{
+			pScene->SetPrintFunc( LocalScene_Printf );
+			pScene->SetEventCallbackInterface( this );
+
+			// precache all sounds for the newly constructed scene
+			PrecacheScene( pScene );
+		}
+
+	if ( pScene != NULL )
+	{
+		// release prior scene if present
+		UnloadScene();
+		m_pScene = pScene;
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -3496,7 +3668,7 @@ CBaseFlex *CSceneEntity::FindNamedActor( int index )
 
 	if ( !m_hActorList.IsValidIndex( index ) )
 	{
-		DevWarning( "Scene %s has %d actors, but scene entity only has %d actors\n", m_pScene->GetFilename(), m_pScene->GetNumActors(), m_hActorList.Size() );
+		DevWarning( "Scene %s has %d actors, but scene entity only has %d actors\n", m_pScene->GetFilename(), m_pScene->GetNumActors(), m_hActorList.Count() );
 		return NULL;
 	}
 
@@ -3736,6 +3908,13 @@ private:
 	float		m_flNearestToActor;
 	CBaseEntity *m_pNearestToActor;
 };
+
+
+HSCRIPT CSceneEntity::ScriptFindNamedEntity( const char *name )
+{
+	return ToHScript(FindNamedEntity( name, NULL, false, false ));
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: Search for an actor by name, make sure it can do face poses
@@ -4302,6 +4481,25 @@ void CSceneEntity::OnSceneFinished( bool canceled, bool fireoutput )
 		m_OnCompletion.FireOutput( this, this, 0 );
 	}
 
+	{
+		CBaseFlex *pFlex =  FindNamedActor( 0 ) ;
+		if ( pFlex )
+		{
+			CBaseMultiplayerPlayer *pAsPlayer = dynamic_cast<CBaseMultiplayerPlayer *>(pFlex);
+			if (pAsPlayer)
+			{
+				CAI_Expresser *pExpresser = pAsPlayer->GetExpresser();
+				pExpresser->OnSpeechFinished();
+			}
+			else if ( CAI_BaseActor *pActor = ToBaseActor( pFlex ) )
+			{
+				CAI_Expresser *pExpresser = pActor->GetExpresser();
+				pExpresser->OnSpeechFinished();
+			}
+		}
+	}
+
+
 	// Put face back in neutral pose
 	ClearSceneEvents( m_pScene, canceled );
 
@@ -4360,7 +4558,8 @@ int CSceneEntity::ShouldTransmit( const CCheckTransmitInfo *pInfo )
 
 			CBasePlayer *player = static_cast< CBasePlayer * >( CBaseEntity::Instance( iRecipient ) );
 
-			if ( player && player->edict() == pInfo->m_pClientEnt )
+			if ( player && ( player->edict() == pInfo->m_pClientEnt ||
+				 player->IsSplitScreenUserOnEdict( pInfo->m_pClientEnt ) ) )
 			{
 				bFound = true;
 				break;
@@ -4386,6 +4585,65 @@ void CSceneEntity::SetRecipientFilter( IRecipientFilter *filter )
 	}
 }
 
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+int CSceneEntity::DrawDebugTextOverlays()
+{
+	int nOffset = BaseClass::DrawDebugTextOverlays();
+
+	if (m_debugOverlays & OVERLAY_TEXT_BIT) 
+	{
+		char tempstr[512];
+		Q_snprintf( tempstr, sizeof( tempstr ), "Playing back: %s", m_bIsPlayingBack ? "yes" : "no" );
+		EntityText( nOffset, tempstr, 0 );
+		nOffset++;
+
+		Q_snprintf( tempstr, sizeof( tempstr ), "Paused: %s", m_bPaused ? ( m_bPausedViaInput ? "yes - via input" : "yes" ) : "no" );
+		EntityText( nOffset, tempstr, 0 );
+		nOffset++;
+	}
+
+	return nOffset;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Adds a player (by index) to the recipient filter
+//-----------------------------------------------------------------------------
+void CSceneEntity::AddBroadcastTeamTarget( int nTeamIndex )
+{
+	if ( m_pRecipientFilter == NULL )
+	{
+		CRecipientFilter filter;
+		SetRecipientFilter( &filter );
+	}
+
+	CTeam *pTeam = GetGlobalTeam( nTeamIndex );
+	Assert( pTeam );
+	if ( pTeam == NULL )
+		return;
+
+	m_pRecipientFilter->AddRecipientsByTeam( pTeam );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Removes a player (by index) from the recipient filter
+//-----------------------------------------------------------------------------
+void CSceneEntity::RemoveBroadcastTeamTarget( int nTeamIndex )
+{
+	if ( m_pRecipientFilter == NULL )
+	{
+		CRecipientFilter filter;
+		SetRecipientFilter( &filter );
+	}
+
+	CTeam *pTeam = GetGlobalTeam( nTeamIndex );
+	Assert( pTeam );
+	if ( pTeam == NULL )
+		return;
+
+	m_pRecipientFilter->RemoveRecipientsByTeam( pTeam );
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -4435,21 +4693,11 @@ public:
 								if (PassThrough( actor )) BaseClass::DispatchEndFace( scene, actor, event ); 
 							};
 
-	virtual void			DispatchStartSequence( CChoreoScene *scene, CBaseFlex *actor, CChoreoEvent *event )  
-							{ 
-								if ( IsMultiplayer() )
-								{
-									BaseClass::DispatchStartSequence( scene, actor, event );
-								}
-							};
-	virtual void			DispatchEndSequence( CChoreoScene *scene, CBaseFlex *actor, CChoreoEvent *event )
-							{						
-								if ( IsMultiplayer() )
-								{
-									BaseClass::DispatchEndSequence( scene, actor, event );
-								}
-							};
+
+	virtual void			DispatchStartSequence( CChoreoScene *scene, CBaseFlex *actor, CChoreoEvent *event )  { /* suppress */ };
+	virtual void			DispatchEndSequence( CChoreoScene *scene, CBaseFlex *actor, CChoreoEvent *event ) { /* suppress */ };
 	virtual void			DispatchPauseScene( CChoreoScene *scene, const char *parameters ) { /* suppress */ };
+
 
 	void OnRestore();
 
@@ -4474,6 +4722,70 @@ BEGIN_DATADESC( CInstancedSceneEntity )
 	DEFINE_FIELD( m_bIsBackground,		FIELD_BOOLEAN ),
 
 END_DATADESC()
+
+int SceneNameAutocomplete( char const *partial, char commands[ COMMAND_COMPLETION_MAXITEMS ][ COMMAND_COMPLETION_ITEM_LENGTH ] )
+{
+	// chop the command off the begining of the string
+	char *commandName = "scene_playvcd";
+	int numMatches = 0;
+	partial += Q_strlen( commandName ) + 1;
+	int partialLength = Q_strlen( partial );
+
+	// split the current path into the directory and the file.
+	char dirName[ 512 ];
+	Q_snprintf( dirName, sizeof( dirName ), "%sjunk", partial );
+	Q_ExtractFilePath( dirName, dirName, sizeof( dirName ) );
+	partial += Q_strlen( dirName );
+	partialLength = Q_strlen( partial );
+
+	// now rebuild our path so we can pick up any directory that might have been entered.
+	char path[ 512 ];
+	Q_snprintf( path, sizeof( path ), "scenes/%s%s*.*", dirName, partial );
+
+	FileFindHandle_t findHandle;
+	char txtFilenameNoExtension[ MAX_PATH ];
+	const char *txtFilename = filesystem->FindFirstEx( path, "MOD", &findHandle );
+	while ( txtFilename )
+	{
+		if ( txtFilename[0] != '.' ) // skip the parent and current directories "." and ".."
+		{
+			Q_FileBase( txtFilename, txtFilenameNoExtension, sizeof( txtFilenameNoExtension ) );
+			if ( !Q_strnicmp( txtFilenameNoExtension, partial, partialLength ) )
+			{
+				if ( filesystem->FindIsDirectory( findHandle ) )
+				{
+					// Add the directory name with a slash
+					Q_snprintf( commands[ numMatches++ ], COMMAND_COMPLETION_ITEM_LENGTH, "%s %s%s/", commandName, dirName, txtFilenameNoExtension );
+				}
+				else
+				{
+					// Add the file name to the autocomplete array
+					Q_snprintf( commands[ numMatches++ ], COMMAND_COMPLETION_ITEM_LENGTH, "%s %s%s", commandName, dirName, txtFilenameNoExtension );
+				}
+
+				if ( numMatches == COMMAND_COMPLETION_MAXITEMS )
+				{
+					filesystem->FindClose( findHandle );
+					return numMatches;
+				}
+			}
+		}
+
+		txtFilename = filesystem->FindNext( findHandle );
+	}
+	filesystem->FindClose( findHandle );
+
+	return numMatches;
+}
+
+CON_COMMAND_F_COMPLETION( scene_playvcd, "Play the given VCD as an instanced scripted scene.", FCVAR_CHEAT, SceneNameAutocomplete )
+{
+	char vcdPath[ 512 ];
+	Q_snprintf( vcdPath, sizeof( vcdPath ), "scenes/%s.vcd", args[1] );
+
+	InstancedScriptedScene( NULL, vcdPath );
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: create a one-shot scene, no movement, sequences, etc.
@@ -4622,46 +4934,25 @@ int GetSceneSpeechCount( char const *pszScene )
 	return 0;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: Used for precaching instanced scenes
-// Input  : *pszScene - 
-//-----------------------------------------------------------------------------
-void PrecacheInstancedScene( char const *pszScene )
+
+HSCRIPT ScriptCreateSceneEntity( const char* pszScene )
 {
-	static int nMakingReslists = -1;
-	
-	if ( nMakingReslists == -1 )
+	if ( IsEntityCreationAllowedInScripts() == false )
 	{
-		nMakingReslists = CommandLine()->FindParm( "-makereslists" ) > 0 ? 1 : 0;
+		Warning( "VScript error: A script attempted to create a scene entity mid-game. Entity creation from scripts is only allowed during map init.\n" );
+		return NULL;
 	}
 
-	if ( nMakingReslists == 1 )
+	g_pScriptVM->RegisterClass( GetScriptDescForClass( CSceneEntity ) );
+	CSceneEntity *pScene = (CSceneEntity *)CBaseEntity::CreateNoSpawn( "logic_choreographed_scene", vec3_origin, vec3_angle );
+
+	if ( pScene )
 	{
-		// Just stat the file to add to reslist
-		g_pFullFileSystem->Size( pszScene );
+		pScene->m_iszSceneFile = AllocPooledString( pszScene );
+		DispatchSpawn( pScene );
 	}
 
-	// verify existence, cache is pre-populated, should be there
-	SceneCachedData_t sceneData;
-	if ( !scenefilecache->GetSceneCachedData( pszScene, &sceneData ) )
-	{
-		// Scenes are sloppy and don't always exist.
-		// A scene that is not in the pre-built cache image, but on disk, is a true error.
-		if ( developer.GetInt() && ( IsX360() && ( g_pFullFileSystem->GetDVDMode() != DVDMODE_STRICT ) && g_pFullFileSystem->FileExists( pszScene, "GAME" ) ) )
-		{
-			Warning( "PrecacheInstancedScene: Missing scene '%s' from scene image cache.\nRebuild scene image cache!\n", pszScene );
-		}
-	}
-	else
-	{
-		for ( int i = 0; i < sceneData.numSounds; ++i )
-		{
-			short stringId = scenefilecache->GetSceneCachedSound( sceneData.sceneId, i );
-			CBaseEntity::PrecacheScriptSound( scenefilecache->GetSceneString( stringId ) );
-		}
-	}
-
-	g_pStringTableClientSideChoreoScenes->AddString( CBaseEntity::IsServer(), pszScene );
+	return ToHScript( pScene );
 }
 
 //-----------------------------------------------------------------------------
@@ -4973,52 +5264,11 @@ void CSceneManager::OnClientActive( CBasePlayer *player )
 		es.m_SoundLevel = sound->soundlevel;
 		es.m_flSoundTime = gpGlobals->curtime - sound->time_in_past;
 
+
 		EmitSound( filter, sound->actor->entindex(), es );
 	}
 
 	m_QueuedSceneSounds.RemoveAll();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Deletes scenes involving the specified actor
-//-----------------------------------------------------------------------------
-void CSceneManager::RemoveScenesInvolvingActor( CBaseFlex *pActor )
-{
-	if ( !pActor )
-		return;
-
-	int c = m_ActiveScenes.Count();
-	for ( int i = 0; i < c; i++ )
-	{
-		CSceneEntity *pScene = m_ActiveScenes[ i ].Get();
-		if ( !pScene )
-		{
-			continue;
-		}
-
-		if ( pScene->InvolvesActor( pActor ) ) // NOTE: returns false if scene hasn't loaded yet
-		{
-			LocalScene_Printf( "%s : removed for '%s'\n", STRING( pScene->m_iszSceneFile ), pActor ? pActor->GetDebugName() : "NULL" );
-			pScene->CancelPlayback();
-		}
-		else
-		{
-			CInstancedSceneEntity *pInstancedScene = dynamic_cast< CInstancedSceneEntity * >( pScene );
-			if ( pInstancedScene && pInstancedScene->m_hOwner )
-			{
-				if ( pInstancedScene->m_hOwner == pActor )
-				{
-					if ( pInstancedScene->m_bIsPlayingBack )
-					{
-						pInstancedScene->OnSceneFinished( true, false );
-					}
-
-					LocalScene_Printf( "%s : removed for '%s'\n", STRING( pInstancedScene->m_iszSceneFile ), pActor ? pActor->GetDebugName() : "NULL" );
-					UTIL_Remove( pInstancedScene );
-				}
-			}
-		}
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -5083,7 +5333,7 @@ void CSceneManager::PauseActorsScenes( CBaseFlex *pActor, bool bInstancedOnly  )
 
 		if ( pScene->InvolvesActor( pActor ) && pScene->IsPlayingBack() )
 		{
-			LocalScene_Printf( "Pausing actor %s scripted scene: %s\n", pActor->GetDebugName(), STRING(pScene->m_iszSceneFile) );
+			LocalScene_Printf( "Pausing actor %s scripted scene: %s\n", pActor->GetDebugName(), STRING( pScene->m_iszSceneFile ) );
 
 			variant_t emptyVariant;
 			pScene->AcceptInput( "Pause", pScene, pScene, emptyVariant, 0 );
@@ -5140,7 +5390,7 @@ void CSceneManager::ResumeActorsScenes( CBaseFlex *pActor, bool bInstancedOnly  
 
 		if ( pScene->InvolvesActor( pActor ) && pScene->IsPlayingBack() )
 		{
-			LocalScene_Printf( "Resuming actor %s scripted scene: %s\n", pActor->GetDebugName(), STRING(pScene->m_iszSceneFile) );
+			LocalScene_Printf( "Resuming actor %s scripted scene: %s\n", pActor->GetDebugName(), STRING( pScene->m_iszSceneFile ) );
 
 			variant_t emptyVariant;
 			pScene->AcceptInput( "Resume", pScene, pScene, emptyVariant, 0 );
@@ -5302,13 +5552,6 @@ void CSceneManager::QueueRestoredSound( CBaseFlex *actor, char const *soundname,
 void RemoveActorFromScriptedScenes( CBaseFlex *pActor, bool instancedscenesonly, bool nonidlescenesonly, const char *pszThisSceneOnly )
 {
 	GetSceneManager()->RemoveActorFromScenes( pActor, instancedscenesonly, nonidlescenesonly, pszThisSceneOnly );
-}
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-void RemoveAllScenesInvolvingActor( CBaseFlex *pActor )
-{
-	GetSceneManager()->RemoveScenesInvolvingActor( pActor );
 }
 
 //-----------------------------------------------------------------------------
@@ -5626,9 +5869,6 @@ int GetRecentNPCSpeech( recentNPCSpeech_t speech[ SPEECH_LIST_MAX_SOUNDS ] )
 
 static void ListRecentNPCSpeech( void )
 {
-	if ( !UTIL_IsCommandIssuedByServerAdmin() )
-		return;
-
 	recentNPCSpeech_t speech[ SPEECH_LIST_MAX_SOUNDS ];
 	int  num;
 	int  i;
@@ -5647,9 +5887,6 @@ static ConCommand ListRecentNPCSpeechCmd( "listRecentNPCSpeech", ListRecentNPCSp
 
 CON_COMMAND( scene_flush, "Flush all .vcds from the cache and reload from disk." )
 {
-	if ( !UTIL_IsCommandIssuedByServerAdmin() )
-		return;
-
 	Msg( "Reloading\n" );
 	scenefilecache->Reload();
 	Msg( "   done\n" );

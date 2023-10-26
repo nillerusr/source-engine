@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -12,8 +12,8 @@
 #endif
 
 
-#include <vgui_controls/Panel.h>
-#include <vgui_controls/Label.h>
+#include <vgui_controls/panel.h>
+#include <vgui_controls/label.h>
 
 
 inline int PanelTop(vgui::Panel *pPanel)	{int x,y,w,h; pPanel->GetBounds(x,y,w,h); return y;}

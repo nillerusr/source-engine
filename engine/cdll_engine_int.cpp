@@ -539,6 +539,8 @@ public:
 	virtual bool		REMOVED_SteamRefreshLogin( const char *password, bool isSecure ) { return false; }
 	virtual bool		REMOVED_SteamProcessCall( bool & finished ) { return false; }
 
+	virtual ISPSharedMemory 	*GetSinglePlayerSharedMemorySpace( const char *handle, int ent_num = MAX_EDICTS );
+
 	virtual void SetGamestatsData( CGamestatsData *pGamestatsData );
 	virtual CGamestatsData *GetGamestatsData();
 
@@ -1566,6 +1568,13 @@ void CEngineClient::OnStorageDeviceDetached( void )
 {
 	XBX_SetStorageDeviceId( XBX_INVALID_STORAGE_ID );
 	g_pXboxSystem->CloseContainers();
+}
+
+
+ISPSharedMemory *CEngineClient::GetSinglePlayerSharedMemorySpace( const char *szName, int ent_num )
+{
+	// TODO(nillerusr): it this necessary? Implement later if so
+        return NULL; //g_pSinglePlayerSharedMemoryManager->GetSharedMemory( szName, ent_num );
 }
 
 void CEngineClient::ResetDemoInterpolation( void )

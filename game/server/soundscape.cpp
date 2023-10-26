@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -10,6 +10,7 @@
 #include "soundscape_system.h"
 #include "triggers.h"
 #include "saverestore_utlvector.h"
+#include "gamerules.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -50,6 +51,7 @@ void CEnvSoundscapeProxy::Activate()
 	{
 		// Copy the relevant parameters from our main soundscape.
 		m_soundscapeIndex = m_hProxySoundscape->m_soundscapeIndex;
+
 		for ( int i=0; i < ARRAYSIZE( m_positionNames ); i++ )
 			m_positionNames[i] = m_hProxySoundscape->m_positionNames[i];
 	}
@@ -73,6 +75,7 @@ BEGIN_DATADESC( CEnvSoundscape )
 	DEFINE_KEYFIELD( m_flRadius, FIELD_FLOAT, "radius" ),
 	// don't save, recomputed on load
 	//DEFINE_FIELD( m_soundscapeIndex, FIELD_INTEGER ),
+	//DEFINE_FIELD( m_soundscapeEntityId, FIELD_INTEGER ),
 	DEFINE_FIELD( m_soundscapeName, FIELD_STRING ),
 	DEFINE_FIELD( m_hProxySoundscape, FIELD_EHANDLE ),
 
@@ -146,7 +149,7 @@ void CEnvSoundscape::InputToggleEnabled( inputdata_t &inputdata )
 //-----------------------------------------------------------------------------
 bool CEnvSoundscape::IsEnabled( void ) const
 {
-	return !m_bDisabled;
+	return !m_bDisabled && g_pGameRules->AllowSoundscapes();
 }
 
 
@@ -184,7 +187,7 @@ bool CEnvSoundscape::KeyValue( const char *szKeyName, const char *szValue )
 }
 
 // returns true if the given sound entity is in range 
-// and can see the given player entity (pTarget)
+// and can see the given entity (pTarget)
 
 bool CEnvSoundscape::InRangeOfPlayer( CBasePlayer *pTarget ) 
 {
@@ -209,15 +212,9 @@ bool CEnvSoundscape::InRangeOfPlayer( CBasePlayer *pTarget )
 	return false;
 }
 
-int CEnvSoundscape::UpdateTransmitState()
-{
-	// Always transmit all soundscapes to the player.
-	return SetTransmitState( FL_EDICT_ALWAYS );
-}
-
 void CEnvSoundscape::WriteAudioParamsTo( audioparams_t &audio )
 {
-	audio.ent.Set( this );
+	audio.entIndex = m_soundscapeEntityId;
 	audio.soundscapeIndex = m_soundscapeIndex;
 	audio.localBits = 0;
 	for ( int i = 0; i < ARRAYSIZE(m_positionNames); i++ )
@@ -310,7 +307,7 @@ void CEnvSoundscape::UpdateForPlayer( ss_update_t &update )
  		if ( update.pPlayer )
 		{
 			audioparams_t &audio = update.pPlayer->GetAudioParams();
-			if ( audio.ent.Get() != this )
+			if ( audio.entIndex != entindex() )
 			{
 				if ( InRangeOfPlayer( update.pPlayer ) )
 				{
@@ -360,10 +357,6 @@ void CEnvSoundscape::UpdateForPlayer( ss_update_t &update )
 void CEnvSoundscape::Spawn( )
 {
 	Precache();
-	// Because the soundscape has no model, need to make sure it doesn't get culled from the PVS for this reason and therefore
-	//  never exist on the client, etc.
-	AddEFlags( EFL_FORCE_CHECK_TRANSMIT );
-
 }
 
 void CEnvSoundscape::Precache()
@@ -389,13 +382,13 @@ void CEnvSoundscape::DrawDebugGeometryOverlays( void )
 {
 	if ( m_debugOverlays & (OVERLAY_BBOX_BIT|OVERLAY_PIVOT_BIT|OVERLAY_ABSBOX_BIT) )
 	{
-		CBasePlayer *pPlayer = UTIL_PlayerByIndex(1);
+		CBasePlayer *pPlayer = UTIL_GetListenServerHost();
 		if ( pPlayer )
 		{
 			audioparams_t &audio = pPlayer->GetAudioParams();
-			if ( audio.ent.Get() != this )
+			if ( audio.entIndex != entindex() )
 			{
-				CBaseEntity *pEnt = pPlayer; // ->GetSoundscapeListener();
+				CBaseEntity *pEnt = pPlayer->GetSoundscapeListener();
 				if ( pEnt )
 				{
 					NDebugOverlay::Line(GetAbsOrigin(), pEnt->WorldSpaceCenter(), 255, 0, 255, false, 0 );
@@ -463,7 +456,7 @@ void CEnvSoundscapeTriggerable::DelegateEndTouch( CBaseEntity *pEnt )
 	}
 
 	// No soundscapes left.
-	pPlayer->GetAudioParams().ent = NULL;
+	pPlayer->GetAudioParams().entIndex = 0;
 }
 
 

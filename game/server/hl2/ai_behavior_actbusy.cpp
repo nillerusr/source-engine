@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -68,6 +68,8 @@ BEGIN_DATADESC( CAI_ActBusyBehavior )
 	DEFINE_FIELD( m_flDeferUntil, FIELD_TIME ),
 	DEFINE_FIELD( m_iNumEnemiesInSafeZone, FIELD_INTEGER ),
 END_DATADESC();
+
+LINK_BEHAVIOR_TO_CLASSNAME( CAI_ActBusyBehavior );
 
 enum
 {
@@ -677,7 +679,7 @@ bool CAI_ActBusyBehavior::ShouldIgnoreSound( CSound *pSound )
 			return true;
 		}
 
-		if ( pBusyAnim && ( ( pBusyAnim->iBusyInterruptType == BA_INT_AMBUSH ) || ( pBusyAnim->iBusyInterruptType == BA_INT_COMBAT ) ) )
+		if ( pBusyAnim && ( pBusyAnim->iBusyInterruptType == BA_INT_AMBUSH ) || ( pBusyAnim->iBusyInterruptType == BA_INT_COMBAT ) )
 		{
 			/*
 			// Robin: First version ignored sounds in front of the NPC.
@@ -952,12 +954,14 @@ Activity CAI_ActBusyBehavior::NPC_TranslateActivity( Activity nActivity )
 //-----------------------------------------------------------------------------
 void CAI_ActBusyBehavior::HandleAnimEvent( animevent_t *pEvent )
 {
-	if( pEvent->event == AE_ACTBUSY_WEAPON_FIRE_ON )
+	int nEvent = pEvent->Event();
+
+	if( nEvent == AE_ACTBUSY_WEAPON_FIRE_ON )
 	{
 		m_bAutoFireWeapon = true;
 		return;
 	}
-	else if( pEvent->event == AE_ACTBUSY_WEAPON_FIRE_OFF )
+	else if( nEvent == AE_ACTBUSY_WEAPON_FIRE_OFF )
 	{
 		m_bAutoFireWeapon = false;
 		return;
@@ -1500,7 +1504,7 @@ bool CAI_ActBusyBehavior::ShouldPlayerAvoid( void )
 	{
 		if ( IsCurSchedule ( SCHED_ACTBUSY_START_BUSYING ) )
 		{
-			if ( ( GetCurTask() && GetCurTask()->iTask == TASK_WAIT_FOR_MOVEMENT ) || GetOuter()->GetTask()->iTask == TASK_ACTBUSY_PLAY_ENTRY )
+			if ( GetCurTask() && GetCurTask()->iTask == TASK_WAIT_FOR_MOVEMENT || GetOuter()->GetTask()->iTask == TASK_ACTBUSY_PLAY_ENTRY )
 				return true;
 		}
 		else if ( IsCurSchedule(SCHED_ACTBUSY_STOP_BUSYING) )
@@ -1645,7 +1649,7 @@ void CAI_ActBusyBehavior::PlaySoundForActBusy( busyanimparts_t AnimPart )
 			CAI_Expresser *pExpresser = GetOuter()->GetExpresser();
 			if ( pExpresser )
 			{
-				const char *concept = STRING(pBusyAnim->iszSounds[AnimPart]);
+				AIConcept_t concept(STRING(pBusyAnim->iszSounds[AnimPart]));
 
 				// Must be able to speak the concept
 				if ( !pExpresser->IsSpeaking() && pExpresser->CanSpeakConcept( concept ) )
@@ -2094,7 +2098,7 @@ void CAI_ActBusyBehavior::RunTask( const Task_t *pTask )
 				// Trace my normal hull over this spot to see if I'm able to stand up right now.
 				trace_t tr;
 				CTraceFilterOnlyNPCsAndPlayer filter( GetOuter(), COLLISION_GROUP_NONE );
-				UTIL_TraceHull( GetOuter()->GetAbsOrigin(), GetOuter()->GetAbsOrigin(), NAI_Hull::Mins( HULL_HUMAN ), NAI_Hull::Maxs( HULL_HUMAN ), MASK_NPCSOLID, &filter, &tr );
+				UTIL_TraceHull( GetOuter()->GetAbsOrigin(), GetOuter()->GetAbsOrigin(), NAI_Hull::Mins( HULL_HUMAN ), NAI_Hull::Maxs( HULL_HUMAN ), GetOuter()->GetAITraceMask(), &filter, &tr );
 
 				if( tr.startsolid )
 				{
@@ -2493,7 +2497,7 @@ void CAI_ActBusyGoal::InputForceNPCToActBusy( inputdata_t &inputdata )
 			pHintNode = dynamic_cast<CAI_Hint*>(pEntity);
 			if ( !pHintNode )
 			{
-				Msg("ai_goal_actbusy input ForceNPCToActBusy fired targeting an entity that isn't a hintnode.\n");
+				Msg("ai_goal_actbusy input ForceNPCToActBusy fired targeting an entity that isn't a hintnode.\n", pszParam);
 				return;
 			}
 

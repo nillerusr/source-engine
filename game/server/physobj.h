@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -69,6 +69,8 @@ public:
 	bool		 HasPreferredCarryAnglesForPlayer( CBasePlayer *pPlayer );
 	virtual QAngle PreferredCarryAngles( void ) { return m_angPreferredCarryAngles; }
 
+	int			ExploitableByPlayer() const { return m_iExploitableByPlayer; }
+
 	// inputs
 	void InputWake( inputdata_t &inputdata );
 	void InputSleep( inputdata_t &inputdata );
@@ -87,6 +89,7 @@ protected:
 	float			m_flForceToEnableMotion;
 	QAngle			m_angPreferredCarryAngles;
 	bool			m_bNotSolidToWorld;
+	int				m_iExploitableByPlayer;
 
 	// Outputs
 	COutputEvent	m_OnDamaged;

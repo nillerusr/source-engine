@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -165,7 +165,7 @@ public:
 		}
 	}
 
-	virtual void EndBenchmark( void )
+	void EndBenchmark()
 	{
 		// Write out the results if we're running the build scripts.
 		float flRunTime = Benchmark_ValidTime() - m_fl_ValidTime_BenchmarkStartTime;

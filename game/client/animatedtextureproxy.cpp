@@ -1,12 +1,13 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 // $NoKeywords: $
 //=============================================================================//
 #include "cbase.h"
-#include "baseanimatedtextureproxy.h"
+#include "BaseAnimatedTextureProxy.h"
 
+#include "imaterialproxydict.h"
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -18,7 +19,7 @@ public:
 	virtual float GetAnimationStartTime( void* pBaseEntity );
 };
 
-EXPOSE_INTERFACE( CAnimatedTextureProxy, IMaterialProxy, "AnimatedTexture" IMATERIAL_PROXY_INTERFACE_VERSION );
+EXPOSE_MATERIAL_PROXY( CAnimatedTextureProxy, AnimatedTexture );
 
 #pragma warning (disable : 4100)
 

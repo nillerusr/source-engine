@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -47,7 +47,7 @@ CFuncAreaPortalBase::~CFuncAreaPortalBase()
 }
 
 
-bool CFuncAreaPortalBase::UpdateVisibility( const Vector &vOrigin, float fovDistanceAdjustFactor, bool &bIsOpenOnClient )
+bool CFuncAreaPortalBase::UpdateVisibility( const CUtlVector< Vector > &vecOrigins, float fovDistanceAdjustFactor, bool &bIsOpenOnClient )
 {
 	// NOTE: We leave bIsOpenOnClient alone on purpose here. See the header for a description of why.
 	
@@ -55,15 +55,19 @@ bool CFuncAreaPortalBase::UpdateVisibility( const Vector &vOrigin, float fovDist
 		return false;
 
 	// See if the viewer is on the backside.
-	VPlane plane;
-	if( !engine->GetAreaPortalPlane( vOrigin, m_portalNumber, &plane ) )
-		return true; // leave it open if there's an error here for some reason
+	for ( int i = 0; i < vecOrigins.Count(); ++i )
+	{
+		const Vector &vOrigin = vecOrigins[ i ];
+		VPlane plane;
+		if( !engine->GetAreaPortalPlane( vOrigin, m_portalNumber, &plane ) )
+			return true; // leave it open if there's an error here for some reason
 
-	bool bOpen = false;
-	if( plane.DistTo( vOrigin ) + VIEWER_PADDING > 0 )
-		bOpen = true;
+		// If either players' origin is on the front, the areaportal is considered opened...
+		if( plane.DistTo( vOrigin ) + VIEWER_PADDING > 0 )
+			return true;
+	}
 
-	return bOpen;
+	return false;
 }
 
 

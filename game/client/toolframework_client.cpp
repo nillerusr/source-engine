@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =====//
 //
 // Purpose: 
 //
@@ -7,11 +7,15 @@
 #include "cbase.h"
 #include "toolframework_client.h"
 #include "igamesystem.h"
-#include "tier1/KeyValues.h"
+#include "tier1/keyvalues.h"
 #include "toolframework/iclientenginetools.h"
 #include "client_factorylist.h"
 #include "iviewrender.h"
-#include "materialsystem/imaterialvar.h"
+#include "materialsystem/IMaterialVar.h"
+
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
 
 extern IViewRender *view;
 
@@ -223,134 +227,4 @@ CRecordEffectOwner::~CRecordEffectOwner()
 		ToolFramework_PostToolMessage( HTOOLHANDLE_INVALID, msg );
 		msg->deleteThis();
 	}
-}
-
-
-//-----------------------------------------------------------------------------
-// material recording - primarily for proxy materials
-//-----------------------------------------------------------------------------
-
-void WriteFloat( char *&buf, float f)
-{
-	*( float* )buf = f;
-	buf += sizeof( float );
-}
-
-void WriteInt( char *&buf, int i )
-{
-	*( int* )buf = i;
-	buf += sizeof( int );
-}
-
-void WritePtr( char *&buf, void *p )
-{
-	*( void** )buf = p;
-	buf += sizeof( void* );
-}
-
-void ToolFramework_RecordMaterialParams( IMaterial *pMaterial )
-{
-	Assert( pMaterial );
-	if ( !pMaterial )
-		return;
-
-	if ( !clienttools->IsInRecordingMode() )
-		return;
-
-	C_BaseEntity *pEnt = view->GetCurrentlyDrawingEntity();
-	if ( !pEnt || !pEnt->IsToolRecording() )
-		return;
-
-	KeyValues *msg = new KeyValues( "material_proxy_state" );
-	msg->SetString( "mtlName", pMaterial->GetName() );
-	msg->SetString( "groupName", pMaterial->GetTextureGroupName() );
-
-	int nParams = pMaterial->ShaderParamCount();
-	IMaterialVar **pParams = pMaterial->GetShaderParams();
-
-	char str[ 256 ];
-
-	for ( int i = 0; i < nParams; ++i )
-	{
-		IMaterialVar *pVar = pParams[ i ];
-		const char *pVarName = pVar->GetName();
-		MaterialVarType_t vartype = pVar->GetType();
-		switch ( vartype )
-		{
-		case MATERIAL_VAR_TYPE_FLOAT:
-			msg->SetFloat( pVarName, pVar->GetFloatValue() );
-			break;
-
-		case MATERIAL_VAR_TYPE_INT:
-			msg->SetInt( pVarName, pVar->GetIntValue() );
-			break;
-
-		case MATERIAL_VAR_TYPE_STRING:
-			msg->SetString( pVarName, pVar->GetStringValue() );
-			break;
-
-		case MATERIAL_VAR_TYPE_FOURCC:
-			Assert( 0 ); // JDTODO
-			break;
-
-		case MATERIAL_VAR_TYPE_VECTOR:
-			{
-				const float *pVal = pVar->GetVecValue();
-				int dim = pVar->VectorSize();
-				switch ( dim )
-				{
-				case 2:
-					V_snprintf( str, sizeof( str ), "vector2d: %f %f", pVal[ 0 ], pVal[ 1 ] );
-					break;
-				case 3:
-					V_snprintf( str, sizeof( str ), "vector3d: %f %f %f", pVal[ 0 ], pVal[ 1 ], pVal[ 2 ] );
-					break;
-				case 4:
-					V_snprintf( str, sizeof( str ), "vector4d: %f %f %f %f", pVal[ 0 ], pVal[ 1 ], pVal[ 2 ], pVal[ 3 ] );
-					break;
-				default:
-					Assert( 0 );
-					*str = 0;
-				}
-				msg->SetString( pVarName, str );
-			}
-			break;
-
-		case MATERIAL_VAR_TYPE_MATRIX:
-			{
-				const VMatrix &matrix = pVar->GetMatrixValue();
-				const float *pVal = matrix.Base();
-				V_snprintf( str, sizeof( str ),
-					"matrix: %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f",
-					pVal[ 0 ],  pVal[ 1 ],  pVal[ 2 ],  pVal[ 3 ],
-					pVal[ 4 ],  pVal[ 5 ],  pVal[ 6 ],  pVal[ 7 ],
-					pVal[ 8 ],  pVal[ 9 ],  pVal[ 10 ], pVal[ 11 ],
-					pVal[ 12 ], pVal[ 13 ], pVal[ 14 ], pVal[ 15 ] );
-				msg->SetString( pVarName, str );
-			}
-			break;
-
-		case MATERIAL_VAR_TYPE_TEXTURE:
-			//			V_snprintf( str, sizeof( str ), "texture: %x", pVar->GetTextureValue() );
-			//			msg->SetString( pVarName, str );
-			break;
-
-		case MATERIAL_VAR_TYPE_MATERIAL:
-			//			V_snprintf( str, sizeof( str ), "material: %x", pVar->GetMaterialValue() );
-			//			msg->SetString( pVarName, str );
-			break;
-
-		case MATERIAL_VAR_TYPE_UNDEFINED:
-			//			Assert( 0 ); // these appear to be (mostly? all?) textures, although I don't know why they're not caught by the texture case above...
-			break; // JDTODO
-
-		default:
-			Assert( 0 );
-		}
-	}
-
-	Assert( pEnt->GetToolHandle() );
-	ToolFramework_PostToolMessage( pEnt->GetToolHandle(), msg );
-
-	msg->deleteThis();
 }

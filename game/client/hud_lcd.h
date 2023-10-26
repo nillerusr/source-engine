@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: CLCD Manages the Logitech G-Series Gaming Keyboard LCD
 //
@@ -10,9 +10,9 @@
 #pragma once
 #endif
 
-#include "tier1/utlvector.h"
-#include "tier1/utlstring.h"
-#include "tier1/utldict.h"
+#include "tier1/UtlVector.h"
+#include "tier1/UtlString.h"
+#include "tier1/UtlDict.h"
 
 #include "ihudlcd.h"
 

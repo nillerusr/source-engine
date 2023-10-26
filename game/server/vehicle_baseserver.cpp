@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -2593,7 +2593,7 @@ vehiclesound g_iSoundsToStopOnExit[] =
 	VS_ENGINE2_STOP,
 };
 
-const char *vehiclesound_parsenames[VS_NUM_SOUNDS] =
+char *vehiclesound_parsenames[VS_NUM_SOUNDS] =
 {
 	"skid_lowfriction",
 	"skid_normalfriction",

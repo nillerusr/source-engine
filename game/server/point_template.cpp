@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Point entity used to create templates out of other entities or groups of entities
 //
@@ -13,6 +13,9 @@
 #include "mapentities.h"
 #include "tier0/icommandline.h"
 #include "mapentities_shared.h"
+#ifdef IS_WINDOWS_PC
+//#include "spawn_helper_nut.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -127,6 +130,8 @@ void PrecachePointTemplates()
 void CPointTemplate::Spawn( void )
 {
 	Precache();
+	ScriptInstallPreSpawnHook();
+	ValidateScriptScope();
 }
 
 void CPointTemplate::Precache()
@@ -313,9 +318,10 @@ void CPointTemplate::PerformPrecache()
 // Input  : &vecOrigin - 
 //			&vecAngles - 
 //			pEntities - 
+//			pEntityMaker - The Entity Maker entity that invoked this call.
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
-bool CPointTemplate::CreateInstance( const Vector &vecOrigin, const QAngle &vecAngles, CUtlVector<CBaseEntity*> *pEntities )
+bool CPointTemplate::CreateInstance( const Vector &vecOrigin, const QAngle &vecAngles, CUtlVector<CBaseEntity*> *pEntities, CBaseEntity *pEntityMaker, bool bCreateTime )
 {
 	// Go through all our templated map data and spawn all the entities in it
 	int iTemplates = m_hTemplates.Count();
@@ -339,7 +345,7 @@ bool CPointTemplate::CreateInstance( const Vector &vecOrigin, const QAngle &vecA
 
 		// Some templates have Entity I/O connecting the entities within the template.
 		// Unique versions of these templates need to be created whenever they're instanced.
-		if ( AllowNameFixup() && Templates_IndexRequiresEntityIOFixup( iTemplateIndex ) )
+		if ( AllowNameFixup() && ( Templates_IndexRequiresEntityIOFixup( iTemplateIndex ) || m_ScriptScope.IsInitialized() ) )
 		{
 			// This template requires instancing. 
 			// Create a new mapdata block and ask the template system to fill it in with
@@ -375,12 +381,33 @@ bool CPointTemplate::CreateInstance( const Vector &vecOrigin, const QAngle &vecA
 		pEntity->SetAbsOrigin( vecNewOrigin );
 		pEntity->SetAbsAngles( vecNewAngles );
 
-		pSpawnList[i].m_pEntity = pEntity;
+		if ( ScriptPreInstanceSpawn( &m_ScriptScope, pEntity, Templates_FindByIndex( iTemplateIndex ) ) )
+		{
+			pSpawnList[i].m_pEntity = pEntity;
+		}
+		else
+		{
+			pSpawnList[i].m_pEntity = NULL;
+			UTIL_RemoveImmediate( pEntity );
+		}
 		pSpawnList[i].m_nDepth = 0;
 		pSpawnList[i].m_pDeferredParent = NULL;
 	}
 
 	SpawnHierarchicalList( iTemplates, pSpawnList, true );
+
+	// Set the time of creation for these entities.
+	if ( bCreateTime )
+	{
+		float flCreateTime = gpGlobals->curtime;
+		for ( i = 0; i < iTemplates; ++i )
+		{
+			if ( pSpawnList[i].m_pEntity )
+			{
+				pSpawnList[i].m_pEntity->SetCreateTime( flCreateTime );
+			}
+		}
+	}
 
 	for ( i = 0; i < iTemplates; ++i )
 	{
@@ -391,6 +418,18 @@ bool CPointTemplate::CreateInstance( const Vector &vecOrigin, const QAngle &vecA
 	}
 
 	return true;
+}
+
+
+//-----------------------------------------------------------------------------
+// 
+//-----------------------------------------------------------------------------
+void CPointTemplate::CreationComplete( const CUtlVector<CBaseEntity*> &entities )
+{
+	if ( !entities.Count() )
+		return;
+
+	ScriptPostSpawn( &m_ScriptScope, (CBaseEntity **)entities.Base(), entities.Count() );
 }
 
 //-----------------------------------------------------------------------------
@@ -404,6 +443,76 @@ void CPointTemplate::InputForceSpawn( inputdata_t &inputdata )
 	if ( !CreateInstance( GetAbsOrigin(), GetAbsAngles(), &hNewEntities ) )
 		return;
 	
+	CreationComplete( hNewEntities );
+
 	// Fire our output
 	m_pOutputOnSpawned.FireOutput( this, this );
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void ScriptInstallPreSpawnHook()
+{
+#ifdef IS_WINDOWS_PC
+	if ( !g_pScriptVM->ValueExists( "__ExecutePreSpawn " ) )
+	{
+		//g_pScriptVM->Run( g_Script_spawn_helper );
+	}
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:	This function is called after a spawner creates its child entity
+//			but before the keyvalues are injected. This gives us an 
+//			opportunity to change any keyvalues before the entity is 
+//			configured and spawned. In this case, we see if there is a VScript
+//			that wants to change anything about this entity. 
+//-----------------------------------------------------------------------------
+bool ScriptPreInstanceSpawn( CScriptScope *pScriptScope, CBaseEntity *pChild, string_t iszKeyValueData )
+{
+	if ( !pScriptScope->IsInitialized() )
+		return true;
+
+	ScriptVariant_t result;
+	if ( pScriptScope->Call( "__ExecutePreSpawn", &result, ToHScript( pChild ) ) != SCRIPT_DONE )
+		return true;
+
+	if ( ( result.m_type == FIELD_BOOLEAN && !result.m_bool ) || ( result.m_type == FIELD_INTEGER && !result.m_int ) )
+		return false;
+
+	return true;
+
+}
+
+void ScriptPostSpawn( CScriptScope *pScriptScope, CBaseEntity **ppEntities, int nEntities )
+{
+	if ( !pScriptScope->IsInitialized() )
+		return;
+
+	HSCRIPT hPostSpawnFunc = pScriptScope->LookupFunction( "PostSpawn" );
+
+	if ( !hPostSpawnFunc )
+		return;
+
+	ScriptVariant_t varEntityMakerResultTable;
+	if ( !g_pScriptVM->GetValue( *pScriptScope, "__EntityMakerResult", &varEntityMakerResultTable ) )
+		return;
+
+	if ( varEntityMakerResultTable.m_type != FIELD_HSCRIPT )
+		return;
+
+	HSCRIPT hEntityMakerResultTable = varEntityMakerResultTable.m_hScript;
+	char szEntName[256];
+	for ( int i = 0; i < nEntities; i++ )
+	{
+		V_strncpy( szEntName, ppEntities[i]->GetEntityNameAsCStr(), ARRAYSIZE(szEntName) );
+		char *pAmpersand = V_strrchr( szEntName, '&' );
+		if ( pAmpersand )
+			*pAmpersand = 0;
+		g_pScriptVM->SetValue( hEntityMakerResultTable, szEntName, ToHScript( ppEntities[i] ) );
+	}
+	pScriptScope->Call( hPostSpawnFunc, NULL, hEntityMakerResultTable );
+	pScriptScope->Call( "__FinishSpawn" );
+	g_pScriptVM->ReleaseValue( varEntityMakerResultTable );
+	g_pScriptVM->ReleaseFunction( hPostSpawnFunc );
 }

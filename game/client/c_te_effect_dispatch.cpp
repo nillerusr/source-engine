@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -11,9 +11,10 @@
 #include "networkstringtable_clientdll.h"
 #include "effect_dispatch_data.h"
 #include "c_te_effect_dispatch.h"
-#include "tier1/KeyValues.h"
+#include "tier1/keyvalues.h"
 #include "toolframework_client.h"
 #include "tier0/vprof.h"
+#include "particles_new.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -26,6 +27,9 @@ CClientEffectRegistration *CClientEffectRegistration::s_pHead = NULL;
 
 CClientEffectRegistration::CClientEffectRegistration( const char *pEffectName, ClientEffectCallback fn )
 {
+	AssertMsg1( pEffectName[0] != '\"', "Error: Effect %s. "
+		"Remove quotes around the effect name in DECLARE_CLIENT_EFFECT.\n", pEffectName );
+
 	m_pEffectName = pEffectName;
 	m_pFunction = fn;
 	m_pNext = s_pHead;
@@ -70,19 +74,40 @@ C_TEEffectDispatch::~C_TEEffectDispatch( void )
 //-----------------------------------------------------------------------------
 void DispatchEffectToCallback( const char *pEffectName, const CEffectData &m_EffectData )
 {
-	// Look through all the registered callbacks
-	for ( CClientEffectRegistration *pReg = CClientEffectRegistration::s_pHead; pReg; pReg = pReg->m_pNext )
+	// Built a faster lookup
+	static CUtlStringMap< CClientEffectRegistration* > map;
+	static bool bInitializedMap = false;
+	if ( !bInitializedMap )
 	{
-		// If the name matches, call it
-		if ( Q_stricmp( pReg->m_pEffectName, pEffectName ) == 0 )
+		for ( CClientEffectRegistration *pReg = CClientEffectRegistration::s_pHead; pReg; pReg = pReg->m_pNext )
 		{
-			pReg->m_pFunction( m_EffectData );
-			return;
+			// If the name matches, call it
+			if ( map.Defined( pReg->m_pEffectName ) )
+			{
+				Warning( "Encountered multiple different effects with the same name \"%s\"!\n", pReg->m_pEffectName );
+				continue;
+			}
+
+			map[ pReg->m_pEffectName ] = pReg;
 		}
+		bInitializedMap = true;
 	}
 
-	DevMsg("DispatchEffect: effect '%s' not found on client\n", pEffectName );
+	// Look through all the registered callbacks
+	UtlSymId_t nSym = map.Find( pEffectName );
+	if ( nSym == UTL_INVAL_SYMBOL )
+	{
+		Warning("DispatchEffect: effect \"%s\" not found on client\n", pEffectName );
+		return;
+	}
 
+	// NOTE: Here, we want to scope resource access to only be able to use
+	// those resources specified as being dependencies of this effect
+	g_pPrecacheSystem->LimitResourceAccess( DISPATCH_EFFECT, pEffectName );
+	map[nSym]->m_pFunction( m_EffectData );
+
+	// NOTE: Here, we no longer need to restrict resource access
+	g_pPrecacheSystem->EndLimitedResourceAccess( );
 }
 
 
@@ -132,7 +157,7 @@ static void RecordEffect( const char *pEffectName, const CEffectData &data )
  		msg->SetInt( "attachmentindex", data.m_nAttachmentIndex );
 
 		// NOTE: Ptrs are our way of indicating it's an entindex
-		msg->SetPtr( "entindex", (void*)(intp)data.entindex() );
+		msg->SetPtr( "entindex", (void*)data.entindex() );
 
 		ToolFramework_PostToolMessage( HTOOLHANDLE_INVALID, msg );
 		msg->deleteThis();
@@ -164,26 +189,32 @@ IMPLEMENT_CLIENTCLASS_EVENT_DT( C_TEEffectDispatch, DT_TEEffectDispatch, CTEEffe
 END_RECV_TABLE()
 
 //-----------------------------------------------------------------------------
-// Purpose: Clientside version
+// Client version of dispatch effect, for predicted weapons
 //-----------------------------------------------------------------------------
-void TE_DispatchEffect( IRecipientFilter& filter, float delay, const Vector &pos, const char *pName, const CEffectData &data )
+void DispatchEffect( IRecipientFilter& filter, float delay, const char *pName, const CEffectData &data )
 {
-	DispatchEffectToCallback( pName, data );
-	RecordEffect( pName, data );
+	if ( !te->SuppressTE( filter ) )
+	{
+		DispatchEffectToCallback( pName, data );
+		RecordEffect( pName, data );
+	}
 }
 
-// Client version of dispatch effect, for predicted weapons
 void DispatchEffect( const char *pName, const CEffectData &data )
 {
 	CPASFilter filter( data.m_vOrigin );
-	te->DispatchEffect( filter, 0.0, data.m_vOrigin, pName, data );
+	if ( !te->SuppressTE( filter ) )
+	{
+		DispatchEffectToCallback( pName, data );
+		RecordEffect( pName, data );
+	}
 }
 
 
 //-----------------------------------------------------------------------------
 // Playback
 //-----------------------------------------------------------------------------
-void TE_DispatchEffect( IRecipientFilter& filter, float delay, KeyValues *pKeyValues )
+void DispatchEffect( IRecipientFilter& filter, float delay, KeyValues *pKeyValues )
 {
 	CEffectData data;
 	data.m_nMaterial = 0;
@@ -213,9 +244,31 @@ void TE_DispatchEffect( IRecipientFilter& filter, float delay, KeyValues *pKeyVa
 
 	// NOTE: Ptrs are our way of indicating it's an entindex
 	ClientEntityHandle_t hWorld = ClientEntityList().EntIndexToHandle( 0 );
-	data.m_hEntity = (intp)pKeyValues->GetPtr( "entindex", (void*)(intp)hWorld.ToInt() );
+	data.m_hEntity = (int)pKeyValues->GetPtr( "entindex", (void*)hWorld.ToInt() );
 
 	const char *pEffectName = pKeyValues->GetString( "effectname" );
 
-	TE_DispatchEffect( filter, 0.0f, data.m_vOrigin, pEffectName, data );
+	DispatchEffect( filter, 0.0f, pEffectName, data );
 }
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Displays an error effect in case of missing precache
+//-----------------------------------------------------------------------------
+void ErrorEffectCallback( const CEffectData &data )
+{
+	CSmartPtr<CNewParticleEffect> pEffect = CNewParticleEffect::Create( NULL, "error" );
+	if ( pEffect->IsValid() )
+	{
+		pEffect->SetSortOrigin( data.m_vOrigin );
+		pEffect->SetControlPoint( 0, data.m_vOrigin );
+		pEffect->SetControlPoint( 1, data.m_vStart );
+		Vector vecForward, vecRight, vecUp;
+		AngleVectors( data.m_vAngles, &vecForward, &vecRight, &vecUp );
+		pEffect->SetControlPointOrientation( 0, vecForward, vecRight, vecUp );
+	}
+}
+
+DECLARE_CLIENT_EFFECT_BEGIN( Error, ErrorEffectCallback )
+	PRECACHE( PARTICLE_SYSTEM, "error" )
+DECLARE_CLIENT_EFFECT_END()

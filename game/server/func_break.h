@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Defines a class for objects that break after taking a certain amount
 //			of damage.
@@ -63,7 +63,7 @@ public:
 	virtual int OnTakeDamage( const CTakeDamageInfo &info );
 
 	// To spark when hit
-	void TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr, CDmgAccumulator *pAccumulator );
+	void TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr );
 
 	bool IsBreakable( void );
 	bool SparkWhenHit( void );
@@ -90,9 +90,11 @@ public:
 	void			SetDmgModBullet( float flDmgMod ) { m_flDmgModBullet = flDmgMod; }
 	void			SetDmgModClub( float flDmgMod ) { m_flDmgModClub = flDmgMod; }
 	void			SetDmgModExplosive( float flDmgMod ) { m_flDmgModExplosive = flDmgMod; }
+	void			SetDmgModFire( float flDmgMod ) { m_flDmgModFire = flDmgMod; }
 	float			GetDmgModBullet( void ) { return m_flDmgModBullet; }
 	float			GetDmgModClub( void ) { return m_flDmgModClub; }
 	float			GetDmgModExplosive( void ) { return m_flDmgModExplosive; }
+	float			GetDmgModFire( void ) { return m_flDmgModFire; }
 	void			SetExplosiveRadius( float flRadius ) { m_explodeRadius = flRadius; }
 	void			SetExplosiveDamage( float flDamage ) { m_ExplosionMagnitude = flDamage; }
 	float			GetExplosiveRadius( void ) { return m_explodeRadius; }
@@ -119,7 +121,6 @@ public:
 	mp_break_t		GetMultiplayerBreakMode( void ) const { return MULTIPLAYER_BREAK_DEFAULT; }
 
 protected:
-	float		m_angle;
 	Materials	m_Material;
 	EHANDLE m_hBreaker;			// The entity that broke us. Held as a data member because sometimes breaking is delayed.
 
@@ -150,6 +151,7 @@ protected:
 	float			m_flDmgModBullet;
 	float			m_flDmgModClub;
 	float			m_flDmgModExplosive;
+	float			m_flDmgModFire;
 	string_t		m_iszPhysicsDamageTableName;
 	string_t		m_iszBreakableModel;
 	int				m_iBreakableSkin;

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -13,6 +13,7 @@
 #include "ragdoll_shared.h"
 #include "player_pickup.h"
 
+namespace ResponseRules { class IResponseSystem; };
 
 //-----------------------------------------------------------------------------
 // Purpose: entity class for simple ragdoll physics
@@ -43,17 +44,17 @@ public:
 	// Don't treat as a live target
 	virtual bool IsAlive( void ) { return false; }
 	
-	virtual void TraceAttack( const CTakeDamageInfo &info, const Vector &dir, trace_t *ptr, CDmgAccumulator *pAccumulator );
+	virtual void TraceAttack( const CTakeDamageInfo &info, const Vector &dir, trace_t *ptr );
 	virtual bool TestCollision( const Ray_t &ray, unsigned int mask, trace_t& trace );
 	virtual void Teleport( const Vector *newPosition, const QAngle *newAngles, const Vector *newVelocity );
-	virtual void SetupBones( matrix3x4_t *pBoneToWorld, int boneMask );
+	virtual void SetupBones( matrix3x4a_t *pBoneToWorld, int boneMask );
 	virtual void VPhysicsUpdate( IPhysicsObject *pPhysics );
 	virtual int VPhysicsGetObjectList( IPhysicsObject **pList, int listMax );
 
 	virtual int DrawDebugTextOverlays(void);
 
 	// Response system stuff
-	virtual IResponseSystem *GetResponseSystem();
+	virtual ResponseRules::IResponseSystem *GetResponseSystem();
 	virtual void ModifyOrAppendCriteria( AI_CriteriaSet& set );
 	void SetSourceClassName( const char *pClassname );
 

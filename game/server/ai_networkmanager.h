@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -9,6 +9,7 @@
 
 #include "utlvector.h"
 #include "bitstring.h"
+#include "threadtools.h"
 
 #if defined( _WIN32 )
 #pragma once
@@ -19,6 +20,7 @@ class CAI_Network;
 class CAI_Node;
 class CAI_Link;
 class CAI_TestHull;
+extern ConVar g_ai_threadedgraphbuild;
 
 //-----------------------------------------------------------------------------
 // CAI_NetworkManager
@@ -57,14 +59,16 @@ public:
 
 	void			FixupHints();
 	void			MarkDontSaveGraph();
+	bool			NeedsRebuild( void ) { return m_bNeedGraphRebuild; }
 
 public:
 	CAI_NetworkEditTools *	GetEditOps() { return m_pEditOps; }
-	CAI_Network *			GetNetwork() { return m_pNetwork; }
+	CAI_Network *			GetNetwork() { Assert(!m_ThreadedBuild.pBuildingNetwork); return m_pNetwork; }
 	
 private:
 	
 	void			DelayedInit();
+	void			ThreadedInit(); ///< experimental
 	void			RebuildThink();
 	void			SaveNetworkGraph( void) ;	
 	static bool		IsAIFileCurrent( const char *szMapName );		
@@ -75,9 +79,23 @@ private:
 	CAI_NetworkEditTools *	m_pEditOps;
 	CAI_Network *			m_pNetwork;
 
-
 	bool m_fInitalized;
 	bool	m_bDontSaveGraph;
+
+	/// experimental -- to be replaced with a real job hopefully.
+	/// affinity should be the second hardware thread on the server core
+	struct ThreadedGraphBuildData
+	{
+		CThreadMutex  mutex;
+		CAI_Network  *pBuildingNetwork;
+		CInterlockedInt  nBuildStage;
+		ThreadHandle_t job; ///< hopefully will replace w/ real job
+
+		enum { BUILD_NOT_STARTED, BUILD_UNDERWAY, BUILD_DONE, };
+
+		ThreadedGraphBuildData() : pBuildingNetwork(NULL), nBuildStage(BUILD_NOT_STARTED), job(NULL) {}
+	} m_ThreadedBuild;
+	static unsigned ThreadedBuildJob( /* (ThreadedGraphBuildData *) */ void *pBuildData );
 };
 
 //-----------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -12,8 +12,7 @@
 #pragma once
 #endif
 
-#include "ivguicenterprint.h"
-#include <vgui/VGUI.h>
+#include <vgui/vgui.h>
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -24,7 +23,7 @@ class Panel;
 }
 
 class CCenterStringLabel;
-class CCenterPrint : public ICenterPrint
+class CCenterPrint
 {
 private:
 	CCenterStringLabel	*vguiCenterString;
@@ -43,6 +42,6 @@ public:
 	virtual void		Clear( void );
 };
 
-extern CCenterPrint *internalCenterPrint;
+extern CCenterPrint *GetCenterPrint();
 
 #endif // VGUICENTERPRINT_H

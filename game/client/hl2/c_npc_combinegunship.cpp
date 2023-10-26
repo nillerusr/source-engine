@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -7,14 +7,14 @@
 #include "cbase.h"
 #include "c_basehelicopter.h"
 #include "fx_impact.h"
-#include "IEffects.h"
+#include "ieffects.h"
 #include "simple_keys.h"
 #include "fx_envelope.h"
 #include "fx_line.h"
 #include "iefx.h"
 #include "dlight.h"
 #include "c_sprite.h"
-#include "clienteffectprecachesystem.h"
+#include "precache_register.h"
 #include <bitbuf.h>
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -26,9 +26,9 @@
 
 #define	GUNSHIPFX_BIG_SHOT_TIME			3.0f
 
-CLIENTEFFECT_REGISTER_BEGIN( PrecacheGunshipFX )
-CLIENTEFFECT_MATERIAL( "sprites/bluelaser1" )
-CLIENTEFFECT_REGISTER_END()
+PRECACHE_REGISTER_BEGIN( GLOBAL, PrecacheGunshipFX )
+PRECACHE( MATERIAL, "sprites/bluelaser1" )
+PRECACHE_REGISTER_END()
 
 //-----------------------------------------------------------------------------
 // Big belly shot FX
@@ -52,7 +52,7 @@ public:
 		maxs -= GetRenderOrigin();
 	}
 
-	virtual int	DrawModel( int flags );
+	virtual int	DrawModel( int flags, const RenderableInstance_t &instance );
 
 	C_BaseEntity			*m_pOwner;
 	Vector					m_targetPosition;
@@ -258,7 +258,7 @@ void Gunship_DrawSprite( const Vector &vecOrigin, float size, const color32 &col
 // Purpose: 
 // Input  : int - 
 //-----------------------------------------------------------------------------
-int	C_GunshipFX::DrawModel( int )
+int	C_GunshipFX::DrawModel( int, const RenderableInstance_t &instance )
 {
 	static color32 white = {255,255,255,255};
 	Vector params[GUNSHIPFX_PARAMETERS];
@@ -421,6 +421,9 @@ public:
 		}
 	}
 
+	// Can't participate in fast path because it renders effects in DrawModel()
+	virtual IClientModelRenderable*	GetClientModelRenderable() { return NULL; }
+
 	void OnDataChanged( DataUpdateType_t updateType )
 	{
 		BaseClass::OnDataChanged( updateType );
@@ -428,16 +431,11 @@ public:
 		m_cannonFX.Update( this, m_vecHitPos );
 	}
 
-	virtual RenderGroup_t GetRenderGroup()
+	virtual RenderableTranslucencyType_t ComputeTranslucencyType()
 	{
 		if ( hl2_episodic.GetBool() == true )
-		{
-			return RENDER_GROUP_TWOPASS;
-		}
-		else
-		{
-			return BaseClass::GetRenderGroup();
-		}
+			return RENDERABLE_IS_TWO_PASS;
+		return BaseClass::ComputeTranslucencyType();
 	}
 
 private:
@@ -472,5 +470,5 @@ void ImpactGunshipCallback( const CEffectData &data )
 	PlayImpactSound( pEntity, tr, vecOrigin, nSurfaceProp );
 }
 
-DECLARE_CLIENT_EFFECT( "ImpactGunship", ImpactGunshipCallback );
+DECLARE_CLIENT_EFFECT( ImpactGunship, ImpactGunshipCallback );
 

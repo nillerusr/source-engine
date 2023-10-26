@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -11,16 +11,60 @@
 #pragma once
 #endif
 
+
+#include "eventlist.h"
+
+
 class CBaseAnimating;
 
 struct animevent_t
 {
-	int				event;
+#ifdef CLIENT_DLL
+	// see mstudioevent_for_client_server_t comment below
+	union
+	{
+		unsigned short	_event_highword;
+		unsigned short	event_newsystem;
+	};
+	unsigned short	_event_lowword;
+#else
+	// see mstudioevent_for_client_server_t comment below
+	unsigned short	_event_highword;
+	union
+	{
+		unsigned short	_event_lowword;
+		unsigned short	event_newsystem;
+	};
+#endif
+
 	const char		*options;
 	float			cycle;
 	float			eventtime;
 	int				type;
 	CBaseAnimating	*pSource;
+	bool			m_bHandledByScript;
+
+	// see mstudioevent_for_client_server_t comment below
+	int Event_OldSystem( void ) const { return *static_cast< const int* >( static_cast< const void* >( &_event_highword ) ); }
+	void Event_OldSystem( int nEvent ) { *static_cast< int* >( static_cast< void* >( &_event_highword ) ) = nEvent; }
+	int Event( void ) const
+	{
+		if ( type & AE_TYPE_NEWEVENTSYSTEM )
+			return event_newsystem;
+
+		return Event_OldSystem();
+	}
+	void Event( int nEvent )
+	{
+		if ( type & AE_TYPE_NEWEVENTSYSTEM )
+		{
+			event_newsystem = nEvent;
+		}
+		else
+		{
+			Event_OldSystem( nEvent );
+		}
+	}
 };
 #define EVENT_SPECIFIC			0
 #define EVENT_SCRIPTED			1000		// see scriptevent.h
@@ -73,5 +117,77 @@ struct animevent_t
 
 // NOTE: MUST BE THE LAST WEAPON EVENT -- ONLY WEAPON EVENTS BETWEEN EVENT_WEAPON AND THIS
 #define EVENT_WEAPON_LAST				3999
+
+
+// Because the client and server have a shared memory space for event data,
+// but use different indexes for the event (servers cache them all upfront, 
+// while client creates them as sequences fire) we're going to store the server
+// index in the low word and the client index in the high word.
+//
+// studio.h is a public header, so we'll use this matching struct to do the
+// conversion and not force us to macro all the code that checks the event member.
+// This struct's data MUST match mstudioevent_t
+//
+// BUT events that use the old event system use the entire dword which will always
+// match between client and server. Instead of wrapping everything in if checks, 
+// for ( type & AE_TYPE_NEWEVENTSYSTEM ) we use the Event accessors to set/get 
+// while doing the check under the hood.
+//
+// -Jeep
+struct mstudioevent_for_client_server_t
+{
+	DECLARE_BYTESWAP_DATADESC();
+	float				cycle;
+#ifdef CLIENT_DLL
+	union
+	{
+		// Client shares with the high word
+		unsigned short	_event_highword;
+		unsigned short	event_newsystem;
+	};
+	unsigned short	_event_lowword;		// Placeholder for the low word
+#else
+	unsigned short	_event_highword;	// Placeholder for the high word
+	union
+	{
+		// Server shares with the low word
+		unsigned short	_event_lowword;
+		unsigned short	event_newsystem;
+	};
+#endif
+
+	int					type;
+	inline const char * pszOptions( void ) const { return options; }
+	char				options[64];
+
+	int					szeventindex;
+	inline char * const pszEventName( void ) const { return ((char *)this) + szeventindex; }
+
+	// For setting and getting through Event, check the AE_TYPE_NEWEVENTSYSTEM flag to decide
+	// if we should set/get just the short used by the client/server or use the whole int.
+	int Event_OldSystem( void ) const { return *static_cast< const int* >( static_cast< const void* >( &_event_highword ) ); }
+	void Event_OldSystem( int nEvent ) { *static_cast< int* >( static_cast< void* >( &_event_highword ) ) = nEvent; }
+	int Event( void ) const
+	{
+		if ( type & AE_TYPE_NEWEVENTSYSTEM )
+			return event_newsystem;
+
+		return Event_OldSystem();
+	}
+	void Event( int nEvent )
+	{
+		if ( type & AE_TYPE_NEWEVENTSYSTEM )
+		{
+			event_newsystem = nEvent;
+		}
+		else
+		{
+			Event_OldSystem( nEvent );
+		}
+	}
+};
+
+#define mstudioevent_t mstudioevent_for_client_server_t
+
 
 #endif // NPCEVENT_H

@@ -262,11 +262,13 @@ CON_COMMAND( logaddress_list, "List all addresses currently being used by logadd
 CLog::CLog()
 {
 	Reset();
+	m_nDebugID = EVENT_DEBUG_ID_INIT;
+
 }
 
 CLog::~CLog()
 {
-
+	m_nDebugID = EVENT_DEBUG_ID_SHUTDOWN;
 }
 
 void CLog::Reset( void )	// reset all logging streams
@@ -642,6 +644,11 @@ void CLog::FireGameEvent( IGameEvent *event )
 			}
 		}		
 	}
+}
+
+int CLog::GetEventDebugID( void )
+{
+	return m_nDebugID;
 }
 
 struct TempFilename_t

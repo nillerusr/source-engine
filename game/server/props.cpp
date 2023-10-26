@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright (c) 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: static_prop - don't move, don't animate, don't do anything.
 //			physics_prop - move, take damage, but don't animate
@@ -15,6 +15,7 @@
 #include "filters.h"
 #include "physics.h"
 #include "vphysics_interface.h"
+#include "vphysics/friction.h"
 #include "entityoutput.h"
 #include "vcollide_parse.h"
 #include "studio.h"
@@ -39,8 +40,13 @@
 #include "datacache/imdlcache.h"
 #include "doors.h"
 #include "physics_collisionevent.h"
-#include "gamestats.h"
+#include "GameStats.h"
 #include "vehicle_base.h"
+#include "tier0/icommandline.h"
+
+
+
+#include "vstdlib/ikeyvaluessystem.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -53,8 +59,6 @@
 // How many times to remind the player that supply crates can be broken
 // (displayed when the supply crate is picked up)
 #define NUM_SUPPLY_CRATE_HUD_HINTS		3
-
-extern CBaseEntity *FindPickerEntity( CBasePlayer *pPlayer );
 
 
 ConVar g_debug_doors( "g_debug_doors", "0" );
@@ -79,12 +83,26 @@ ConVar func_breakdmg_explosive( "func_breakdmg_explosive", "1.25" );
 
 ConVar sv_turbophysics( "sv_turbophysics", "0", FCVAR_REPLICATED, "Turns on turbo physics" );
 
+
+
 #ifdef HL2_EPISODIC
 	#define PROP_FLARE_LIFETIME 30.0f
 	#define PROP_FLARE_IGNITE_SUBSTRACT 5.0f
 	CBaseEntity *CreateFlare( Vector vOrigin, QAngle Angles, CBaseEntity *pOwner, float flDuration );
 	void KillFlare( CBaseEntity *pOwnerEntity, CBaseEntity *pEntity, float flKillTime );
 #endif
+
+//--------------------------------------------------------------------------------------------------------
+// Scale damage force by mass to get a velocity the damage should impart to the physics object
+Vector GetVelocityFromDamageForce( const CTakeDamageInfo &info, const CBaseEntity *pEntity )
+{
+	if ( !pEntity || pEntity->VPhysicsGetNonShadowMass() <= 0.0f )
+		return vec3_origin;
+
+	Vector force = info.GetDamageForce();
+	float invMass = 1 / pEntity->VPhysicsGetNonShadowMass();
+	return force * invMass;
+}
 
 
 //-----------------------------------------------------------------------------
@@ -154,6 +172,15 @@ float GetBreakableDamage( const CTakeDamageInfo &inputInfo, IBreakableWithPropDa
 		}
 	}
 
+	// Fire damage?
+	if ( iDmgType & DMG_BURN )
+	{
+		if ( pProp )
+		{
+			flDamage *= pProp->GetDmgModFire();
+		}
+	}
+
 	if ( (iDmgType & DMG_SLASH) && (iDmgType & DMG_CRUSH) )
 	{
 		// Cut by a Ravenholm propeller trap
@@ -180,7 +207,7 @@ void CBaseProp::Spawn( void )
 	char *szModel = (char *)STRING( GetModelName() );
 	if (!szModel || !*szModel)
 	{
-		Warning( "prop at %.0f %.0f %0.f missing modelname\n", GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z );
+		Warning( "prop %s at %.0f %.0f %0.f missing modelname\n", GetClassname(), GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z );
 		UTIL_Remove( this );
 		return;
 	}
@@ -221,9 +248,9 @@ void CBaseProp::Spawn( void )
 		}
 	}
 
+	SetNextThink( TICK_NEVER_THINK );
 	SetMoveType( MOVETYPE_PUSH );
 	m_takedamage = DAMAGE_NO;
-	SetNextThink( TICK_NEVER_THINK );
 
 	m_flAnimTime = gpGlobals->curtime;
 	m_flPlaybackRate = 0.0;
@@ -333,8 +360,10 @@ int CBaseProp::ParsePropData( void )
 		return PARSE_FAILED_NO_DATA;
 	}
 
+	static int keyPropData = KeyValuesSystem()->GetSymbolForString( "prop_data" );
+
 	// Do we have a props section?
-	KeyValues *pkvPropData = modelKeyValues->FindKey("prop_data");
+	KeyValues *pkvPropData = modelKeyValues->FindKey( keyPropData );
 	if ( !pkvPropData )
 	{
 		modelKeyValues->deleteThis();
@@ -367,7 +396,7 @@ void CBaseProp::DrawDebugGeometryOverlays( void )
 		{
 			// Remap health to green brightness
 			float flG = RemapVal( m_iHealth, 0, 100, 64, 255 );
-			flG = clamp( flG, 0.f, 255.f );
+			flG = clamp( flG, 0, 255 );
 			NDebugOverlay::EntityBounds(this, 0, flG, 0, 0, 0 );
 		}
 	}
@@ -730,6 +759,7 @@ static ConCommand prop_debug("prop_debug", CC_Prop_Debug, "Toggle prop debug mod
 // BREAKABLE PROPS
 //=============================================================================================================
 IMPLEMENT_SERVERCLASS_ST(CBreakableProp, DT_BreakableProp)
+	SendPropBool( SENDINFO( m_bClientPhysics ) ),
 END_SEND_TABLE()
 
 BEGIN_DATADESC( CBreakableProp )
@@ -741,11 +771,10 @@ BEGIN_DATADESC( CBreakableProp )
 	DEFINE_FIELD( m_hBreaker, FIELD_EHANDLE ),
 	DEFINE_KEYFIELD( m_PerformanceMode, FIELD_INTEGER, "PerformanceMode" ),
 
-	DEFINE_KEYFIELD( m_iszBreakModelMessage, FIELD_STRING, "BreakModelMessage" ),
-
 	DEFINE_FIELD( m_flDmgModBullet, FIELD_FLOAT ),
 	DEFINE_FIELD( m_flDmgModClub, FIELD_FLOAT ),
 	DEFINE_FIELD( m_flDmgModExplosive, FIELD_FLOAT ),
+	DEFINE_FIELD( m_flDmgModFire, FIELD_FLOAT ),
 	DEFINE_FIELD( m_iszPhysicsDamageTableName, FIELD_STRING ),
 	DEFINE_FIELD( m_iszBreakableModel, FIELD_STRING ),
 	DEFINE_FIELD( m_iBreakableSkin, FIELD_INTEGER ),
@@ -810,9 +839,8 @@ END_DATADESC()
 //-----------------------------------------------------------------------------
 CBreakableProp::CBreakableProp()
 {
-	m_fadeMinDist = -1;
-	m_fadeMaxDist = 0;
-	m_flFadeScale = 1;
+	SetFadeDistance( -1.0f, 0.0f );
+	SetGlobalFadeScale( 1.0f );
 	m_flDefaultFadeScale = 1;
 	m_mpBreakMode = MULTIPLAYER_BREAK_DEFAULT;
 	
@@ -826,19 +854,14 @@ CBreakableProp::CBreakableProp()
 void CBreakableProp::Spawn()
 {
 	// Starts out as the default fade scale value
-	m_flDefaultFadeScale = m_flFadeScale;
+	m_flDefaultFadeScale = GetGlobalFadeScale();
 
 	// Initialize damage modifiers. Must be done before baseclass spawn.
 	m_flDmgModBullet = 1.0;
 	m_flDmgModClub = 1.0;
 	m_flDmgModExplosive = 1.0;
+	m_flDmgModFire = 1.0f;
 	
-	//jmd: I am guessing that the call to Spawn will set any flags that should be set anyway; this
-	//clears flags we don't want (specifically the FL_ONFIRE for explosive barrels in HL2MP)]
-#ifdef HL2MP
-	ClearFlags();
-#endif 
-
 	BaseClass::Spawn();
 	
 	if ( IsMarkedForDeletion() )
@@ -851,7 +874,7 @@ void CBreakableProp::Spawn()
 	}
 	else
 	{
-		m_flFadeScale = m_flDefaultFadeScale;
+		SetGlobalFadeScale( m_flDefaultFadeScale );
 	}
 
 	// If we have no custom breakable chunks, see if we're breaking into generic ones
@@ -868,9 +891,11 @@ void CBreakableProp::Spawn()
 	if ( ( m_iHealth == 0 ) ||
         ( !m_iNumBreakableChunks && 
 		    !HasInteraction( PROPINTER_PHYSGUN_BREAK_EXPLODE ) &&
+			!HasInteraction( PROPINTER_PHYSGUN_BREAK_EXPLODE_ICE ) &&
 		    !HasInteraction( PROPINTER_PHYSGUN_FIRST_BREAK ) &&
 		    !HasInteraction( PROPINTER_FIRE_FLAMMABLE ) &&
 		    !HasInteraction( PROPINTER_FIRE_IGNITE_HALFHEALTH ) &&
+			!HasInteraction( PROPINTER_MELEE_IMMUNE ) &&
 		    !HasInteraction( PROPINTER_FIRE_EXPLOSIVE_RESIST ) ) )
 	{
 		m_iHealth = 0;
@@ -882,7 +907,8 @@ void CBreakableProp::Spawn()
 
 		if( g_pGameRules->GetAutoAimMode() == AUTOAIM_ON_CONSOLE )
 		{
-			if ( HasInteraction( PROPINTER_PHYSGUN_BREAK_EXPLODE ) ||
+			if ( HasInteraction( PROPINTER_PHYSGUN_BREAK_EXPLODE ) || 
+				HasInteraction( PROPINTER_PHYSGUN_BREAK_EXPLODE_ICE ) || 
 				HasInteraction( PROPINTER_FIRE_IGNITE_HALFHEALTH ) )
 			{
 				// Exploding barrels, exploding gas cans
@@ -922,13 +948,17 @@ void CBreakableProp::Spawn()
 	SetTouch( &CBreakableProp::BreakablePropTouch );
 }
 
+void CBreakableProp::UpdateOnRemove()
+{
+	BaseClass::UpdateOnRemove();
+}
 
 //-----------------------------------------------------------------------------
 // Disable auto fading under dx7 or when level fades are specified
 //-----------------------------------------------------------------------------
 void CBreakableProp::DisableAutoFade()
 {
-	m_flFadeScale = 0;
+	SetGlobalFadeScale( 0.0f );
 	m_flDefaultFadeScale = 0;
 }
 
@@ -939,8 +969,8 @@ void CBreakableProp::DisableAutoFade()
 void CBreakableProp::CopyFadeFrom( CBreakableProp *pSource )
 {
 	m_flDefaultFadeScale = pSource->m_flDefaultFadeScale;
-	m_flFadeScale = pSource->m_flFadeScale;
-	if ( m_flFadeScale != m_flDefaultFadeScale )
+	SetGlobalFadeScale( pSource->GetGlobalFadeScale() );
+	if ( GetGlobalFadeScale() != m_flDefaultFadeScale )
 	{
 		float flNextThink = pSource->GetNextThink( s_pFadeScaleThink );
 		if ( flNextThink < gpGlobals->curtime + TICK_INTERVAL )
@@ -1037,7 +1067,7 @@ int CBreakableProp::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 {
 	CTakeDamageInfo info = inputInfo;
 
-	// If attacker can't do at least the min required damage to us, don't take any damage from them
+	// If attacker can't do at least the MIN required damage to us, don't take any damage from them
  	if ( info.GetDamage() < m_iMinHealthDmg )
 		return 0;
 
@@ -1050,9 +1080,22 @@ int CBreakableProp::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	{
 		m_hLastAttacker.Set( info.GetAttacker() );
 	}
+	else if ( info.GetAttacker() )
+	{
+		CBaseEntity *attacker = info.GetAttacker();
+		CBaseEntity *attackerOwner = attacker->GetOwnerEntity();
+		if ( attackerOwner && attackerOwner->MyCombatCharacterPointer() )
+		{
+			m_hLastAttacker.Set( attackerOwner );
+		}
+	}
 
 	float flPropDamage = GetBreakableDamage( info, assert_cast<IBreakableWithPropData*>(this) );
 	info.SetDamage( flPropDamage );
+
+	// If attacker can't do at least the MIN required damage to us, don't take any damage from them
+	if ( info.GetDamage() < m_iMinHealthDmg )
+		return 0;
 
 	// UNDONE: Do this?
 #if 0
@@ -1086,6 +1129,16 @@ int CBreakableProp::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 
 	bool bDeadly = info.GetDamage() >= m_iHealth;
 
+	// Handle melee attack immunity
+	if ( ((info.GetDamageType() & DMG_CLUB) || (info.GetDamageType() & DMG_SLASH)) && HasInteraction( PROPINTER_MELEE_IMMUNE ) )
+	{
+		int saveFlags = m_takedamage;
+		m_takedamage = DAMAGE_EVENTS_ONLY;
+		int ret = BaseClass::OnTakeDamage( info );
+		m_takedamage = saveFlags;
+		return ret;
+	}
+
 	if( bDeadly && (info.GetDamageType() & DMG_BLAST) && HasInteraction( PROPINTER_FIRE_EXPLOSIVE_RESIST ) && info.GetInflictor() )
 	{
 		// This explosion would kill me, but I have a special interaction with explosions.
@@ -1116,7 +1169,7 @@ int CBreakableProp::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		}
 
 		// Change my health so that I burn for flBurnTime seconds.
-		float flIdealHealth = MIN( m_iHealth, FLAME_DIRECT_DAMAGE_PER_SEC *  flBurnTime );
+		float flIdealHealth = fpmin( m_iHealth, FLAME_DIRECT_DAMAGE_PER_SEC *  flBurnTime );
 		float flIdealDamage = m_iHealth - flIdealHealth;
 
 		// Scale the damage to do ideal damage.
@@ -1126,27 +1179,27 @@ int CBreakableProp::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		bDeadly = info.GetDamage() >= m_iHealth;
 	}
 
-	if( !bDeadly && (info.GetDamageType() & DMG_BLAST) )
+	if ( !bDeadly && (info.GetDamageType() & DMG_BLAST) )
 	{
 		Ignite( random->RandomFloat( 10, 15 ), false );
 	}
-	else if( !bDeadly && (info.GetDamageType() & DMG_BURN) )
+	else if ( !bDeadly && (info.GetDamageType() & DMG_BURN) )
 	{
 		// Ignite if burned, and flammable (the Ignite() function takes care of all of this).
 		Ignite( random->RandomFloat( 10, 15 ), false );
 	}
-	else if( !bDeadly && (info.GetDamageType() & DMG_BULLET) )
+	else if ( !bDeadly && (info.GetDamageType() & DMG_BULLET) )
 	{
-		if( HasInteraction( PROPINTER_FIRE_IGNITE_HALFHEALTH ) )
+		if ( HasInteraction( PROPINTER_FIRE_IGNITE_HALFHEALTH ) )
 		{
-			if( (m_iHealth - info.GetDamage()) <= m_iMaxHealth / 2 && !IsOnFire() )
+			if ( (m_iHealth - info.GetDamage()) <= m_iMaxHealth / 2 && !IsOnFire() )
 			{
 				// Bump back up to full health so it burns longer. Magically getting health back isn't
 				// a big problem because if this item takes damage again whilst burning, it will break.
 				m_iHealth = m_iMaxHealth;
 				Ignite( random->RandomFloat( 10, 15 ), false );
 			}
-			else if( IsOnFire() )
+			else if ( IsOnFire() )
 			{
 				// Explode right now!
 				info.ScaleDamage( m_iHealth / info.GetDamage() );
@@ -1156,8 +1209,8 @@ int CBreakableProp::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 
 	int ret = BaseClass::OnTakeDamage( info );
 
-	// Output the new health as a percentage of max health [0..1]
-	float flRatio = clamp( (float)m_iHealth / (float)m_iMaxHealth, 0.f, 1.f );
+	// Output the new health as a percentage of MAX health [0..1]
+	float flRatio = clamp( (float)m_iHealth / (float)m_iMaxHealth, 0, 1 );
 	m_OnHealthChanged.Set( flRatio, info.GetAttacker(), this );
 	m_OnTakeDamage.FireOutput( info.GetAttacker(), this );
 
@@ -1236,8 +1289,8 @@ bool CBreakableProp::UpdateHealth( int iNewHealth, CBaseEntity *pActivator )
 			m_iMaxHealth = 1;
 		}
 
-		// Output the new health as a percentage of max health [0..1]
-		float flRatio = clamp( (float)m_iHealth / (float)m_iMaxHealth, 0.f, 1.f );
+		// Output the new health as a percentage of MAX health [0..1]
+		float flRatio = clamp( (float)m_iHealth / (float)m_iMaxHealth, 0, 1 );
 		m_OnHealthChanged.Set( flRatio, pActivator, this );
 
 		if ( m_iHealth <= 0 )
@@ -1398,6 +1451,8 @@ void CBreakableProp::SetPhysicsAttacker( CBasePlayer *pEntity, float flTime )
 {
 	m_hPhysicsAttacker = pEntity;
 	m_flLastPhysicsInfluenceTime = flTime;
+
+	//Msg( "Prop(%x) phys attacker set to %s.\n", this, pEntity ? pEntity->GetPlayerName() : "nobody" );
 }
 
 	
@@ -1406,17 +1461,17 @@ void CBreakableProp::SetPhysicsAttacker( CBasePlayer *pEntity, float flTime )
 //-----------------------------------------------------------------------------
 void CBreakableProp::ForceFadeScaleToAlwaysVisible()
 {
-	m_flFadeScale = 0.0f;
+	SetGlobalFadeScale( 0.0f );
 	SetContextThink( NULL, gpGlobals->curtime, s_pFadeScaleThink );
 }
 
 
 void CBreakableProp::RampToDefaultFadeScale()
 {
-	m_flFadeScale += m_flDefaultFadeScale * TICK_INTERVAL / 2.0f;
-	if ( m_flFadeScale >= m_flDefaultFadeScale )
+	SetGlobalFadeScale( GetGlobalFadeScale() + m_flDefaultFadeScale * TICK_INTERVAL / 2.0f );
+	if ( GetGlobalFadeScale() >= m_flDefaultFadeScale )
 	{
-		m_flFadeScale = m_flDefaultFadeScale;
+		SetGlobalFadeScale( m_flDefaultFadeScale );
 		SetContextThink( NULL, gpGlobals->curtime, s_pFadeScaleThink );
 	}
 	else
@@ -1490,7 +1545,7 @@ void CBreakableProp::CreateFlare( float flLifetime )
 		pFlare->SetMoveType( MOVETYPE_NONE );
 		pFlare->SetSolid( SOLID_NONE );
 		pFlare->SetRenderMode( kRenderTransAlpha );
-		pFlare->SetRenderColorA( 1 );
+		pFlare->SetRenderAlpha( 1 );
 		pFlare->SetLocalOrigin( vOrigin );
 		pFlare->SetParent( this, iAttachment );
 		RemoveInteraction( PROPINTER_PHYSGUN_CREATE_FLARE );
@@ -1597,6 +1652,7 @@ IPhysicsObject *CBreakableProp::GetRootPhysicsObjectForBreak()
 	return VPhysicsGetObject();
 }
 
+static int g_BreakPropEvent = 0;
 void CBreakableProp::Break( CBaseEntity *pBreaker, const CTakeDamageInfo &info )
 {
 	const char *pModelName = STRING( GetModelName() );
@@ -1626,7 +1682,7 @@ void CBreakableProp::Break( CBaseEntity *pBreaker, const CTakeDamageInfo &info )
 		}
 	}
 
-	IGameEvent * event = gameeventmanager->CreateEvent( "break_prop" );
+	IGameEvent * event = gameeventmanager->CreateEvent( "break_prop", false, &g_BreakPropEvent );
 
 	if ( event )
 	{
@@ -1698,9 +1754,18 @@ void CBreakableProp::Break( CBaseEntity *pBreaker, const CTakeDamageInfo &info )
 				0.0f, this );
 			EmitSound("PropaneTank.Burst");
 		}
+		else if( HasInteraction( PROPINTER_PHYSGUN_BREAK_EXPLODE_ICE ) )
+		{
+			ExplosionCreate( WorldSpaceCenter(), angles, pAttacker, m_explodeDamage, m_explodeRadius, 
+				SF_ENVEXPLOSION_NODAMAGE | SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS | SF_ENVEXPLOSION_NOSMOKE | SF_ENVEXPLOSION_SURFACEONLY | SF_ENVEXPLOSION_NOSOUND | SF_ENVEXPLOSION_ICE,
+				0.0f, this );
+			EmitSound("PropaneTank.Burst");
+		}
 		else
 		{
-			float flScale = GetModelScale();
+
+			float flScale = 1.0f;
+
 			ExplosionCreate( WorldSpaceCenter(), angles, pAttacker, m_explodeDamage * flScale, m_explodeRadius * flScale,
 				SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS | SF_ENVEXPLOSION_NOSMOKE | SF_ENVEXPLOSION_SURFACEONLY,
 				0.0f, this );
@@ -1721,23 +1786,8 @@ void CBreakableProp::Break( CBaseEntity *pBreaker, const CTakeDamageInfo &info )
 		// collide with debris being ejected by breaking
 		params.defCollisionGroup = COLLISION_GROUP_INTERACTIVE;
 	}
+
 	params.defBurstScale = 100;
-
-	if ( m_iszBreakModelMessage != NULL_STRING )
-	{
-		CPVSFilter filter( GetAbsOrigin() );
-		UserMessageBegin( filter, STRING( m_iszBreakModelMessage ) );
-		WRITE_SHORT( GetModelIndex() );
-		WRITE_VEC3COORD( GetAbsOrigin() );
-		WRITE_ANGLES( GetAbsAngles() );
-		MessageEnd();
-
-#ifndef HL2MP
-		UTIL_Remove( this );
-#endif
-		return;
-	}
-
 	// in multiplayer spawn break models as clientside temp ents
 	if ( gpGlobals->maxClients > 1 && breakable_multiplayer.GetBool() )
 	{
@@ -1780,7 +1830,7 @@ void CBreakableProp::Break( CBaseEntity *pBreaker, const CTakeDamageInfo &info )
 		if ( bExploded == false )
 		{
 			ExplosionCreate( origin, angles, pAttacker, 1, m_explodeRadius, 
-				SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS | SF_ENVEXPLOSION_NOSMOKE, 0.0f, this );			
+				SF_ENVEXPLOSION_NODAMAGE | SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS | SF_ENVEXPLOSION_NOSMOKE, 0.0f, this );			
 		}
 
 		// Find and ignite all NPC's within the radius
@@ -1798,18 +1848,45 @@ void CBreakableProp::Break( CBaseEntity *pBreaker, const CTakeDamageInfo &info )
 		}
 	}
 
-#ifndef HL2MP
+	if( HasInteraction( PROPINTER_PHYSGUN_BREAK_EXPLODE_ICE ) )
+	{
+		if ( bExploded == false )
+		{
+			ExplosionCreate( origin, angles, pAttacker, 1, m_explodeRadius, 
+				SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS | SF_ENVEXPLOSION_NOSMOKE | SF_ENVEXPLOSION_ICE, 0.0f, this );			
+		}
+
+		// Find and freeze all NPC's within the radius
+		CBaseEntity *pEntity = NULL;
+		for ( CEntitySphereQuery sphere( origin, m_explodeRadius ); ( pEntity = sphere.GetCurrentEntity() ) != NULL; sphere.NextEntity() )
+		{
+			if( pEntity && pEntity->MyCombatCharacterPointer() )
+			{
+				// Check damage filters so we don't ignite friendlies
+				if ( pEntity->PassesDamageFilter( info ) )
+				{
+					CAI_BaseNPC *pNPC = dynamic_cast<CAI_BaseNPC*>( pEntity );
+					if ( pNPC )
+					{
+						pNPC->Freeze( 4.0f, pAttacker );
+					}
+				}
+			}
+		}
+	}
+
 	UTIL_Remove( this );
-#endif
 }
 
 
 //=============================================================================================================
 // DYNAMIC PROPS
 //=============================================================================================================
+#ifndef INFESTED_DLL
 LINK_ENTITY_TO_CLASS( dynamic_prop, CDynamicProp );
 LINK_ENTITY_TO_CLASS( prop_dynamic, CDynamicProp );	
 LINK_ENTITY_TO_CLASS( prop_dynamic_override, CDynamicProp );	
+#endif
 
 BEGIN_DATADESC( CDynamicProp )
 
@@ -1822,12 +1899,15 @@ BEGIN_DATADESC( CDynamicProp )
 	DEFINE_KEYFIELD( m_flMinRandAnimTime, FIELD_FLOAT, "MinAnimTime"),
 	DEFINE_KEYFIELD( m_flMaxRandAnimTime, FIELD_FLOAT, "MaxAnimTime"),
 	DEFINE_KEYFIELD( m_bStartDisabled, FIELD_BOOLEAN, "StartDisabled" ),
-	DEFINE_KEYFIELD( m_bDisableBoneFollowers, FIELD_BOOLEAN, "DisableBoneFollowers" ),
 	DEFINE_FIELD(	 m_bUseHitboxesForRenderBox, FIELD_BOOLEAN ),
 	DEFINE_FIELD(	m_nPendingSequence, FIELD_SHORT ),
-		
+	DEFINE_KEYFIELD( m_bUpdateAttachedChildren, FIELD_BOOLEAN, "updatechildren" ),
+	DEFINE_KEYFIELD( m_bDisableBoneFollowers, FIELD_BOOLEAN, "DisableBoneFollowers" ),
+	DEFINE_KEYFIELD( m_bHoldAnimation, FIELD_BOOLEAN, "HoldAnimation" ),
+	
 	// Inputs
 	DEFINE_INPUTFUNC( FIELD_STRING,	"SetAnimation",	InputSetAnimation ),
+	DEFINE_INPUTFUNC( FIELD_STRING,	"SetAnimationNoReset",	InputSetAnimationNoReset ),
 	DEFINE_INPUTFUNC( FIELD_STRING,	"SetDefaultAnimation",	InputSetDefaultAnimation ),
 	DEFINE_INPUTFUNC( FIELD_VOID,		"TurnOn",		InputTurnOn ),
 	DEFINE_INPUTFUNC( FIELD_VOID,		"TurnOff",		InputTurnOff ),
@@ -1937,18 +2017,6 @@ void CDynamicProp::Spawn( )
 	}
 
 	//m_debugOverlays |= OVERLAY_ABSBOX_BIT;
-
-#ifdef TF_DLL
-	const char *pszModelName = modelinfo->GetModelName( GetModel() );
-	if ( pszModelName && pszModelName[0] )
-	{
-		if ( FStrEq( pszModelName, "models/bots/boss_bot/carrier_parts.mdl" ) )
-		{
-			SetModelIndexOverride( VISION_MODE_NONE, modelinfo->GetModelIndex( pszModelName ) );
-			SetModelIndexOverride( VISION_MODE_ROME, modelinfo->GetModelIndex( "models/bots/tw2/boss_bot/twcarrier_addon.mdl" ) );
-		}
-	}
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1993,7 +2061,7 @@ bool CDynamicProp::CreateVPhysics( void )
 	if ( GetSolid() == SOLID_NONE || ((GetSolidFlags() & FSOLID_NOT_SOLID) && HasSpawnFlags(SF_DYNAMICPROP_NO_VPHYSICS)))
 		return true;
 
-	if ( !m_bDisableBoneFollowers )
+	if ( m_bDisableBoneFollowers == false )
 	{
 		CreateBoneFollowers();
 	}
@@ -2052,9 +2120,8 @@ void CDynamicProp::CreateBoneFollowers()
 				pBone = pBone->GetNextKey();
 			}
 		}
-
-		modelKeyValues->deleteThis();
 	}
+	modelKeyValues->deleteThis();
 
 	// if we got here, we don't have a bone follower section, but if we have a ragdoll
 	// go ahead and create default bone followers for it
@@ -2084,7 +2151,8 @@ bool CDynamicProp::TestCollision( const Ray_t &ray, unsigned int mask, trace_t& 
 			}
 		}
 	}
-	return false;
+
+	return BaseClass::TestCollision( ray, mask, trace );
 }
 
 
@@ -2117,7 +2185,7 @@ void CDynamicProp::UpdateOnRemove( void )
 //-----------------------------------------------------------------------------
 void CDynamicProp::HandleAnimEvent( animevent_t *pEvent )
 { 
-	switch( pEvent->event )
+	switch( pEvent->Event() )
 	{
 		case SCRIPT_EVENT_FIRE_INPUT:
 		{
@@ -2148,7 +2216,7 @@ void CDynamicProp::HandleAnimEvent( animevent_t *pEvent )
 void CDynamicProp::NotifyPositionChanged( CBaseEntity *pEntity )
 {
 	Assert(pEntity==this);
-	m_BoneFollowerManager.UpdateBoneFollowers(this);
+	UpdateBoneFollowers();
 }
 
 //------------------------------------------------------------------------------
@@ -2192,10 +2260,16 @@ void CDynamicProp::AnimThink( void )
 			}
 			else 
 			{
-				if (m_iszDefaultAnim != NULL_STRING)
+				if ( m_iszDefaultAnim != NULL_STRING && m_bHoldAnimation == false )
 				{
 					PropSetAnim( STRING( m_iszDefaultAnim ) );
-				}	
+				}
+
+				// We need to wait for an animation change to come in
+				if ( m_bHoldAnimation )
+				{
+					SetNextThink( gpGlobals->curtime + 0.1f );
+				}
 			}
 		}
 	}
@@ -2206,9 +2280,25 @@ void CDynamicProp::AnimThink( void )
 
 	StudioFrameAdvance();
 	DispatchAnimEvents(this);
-	m_BoneFollowerManager.UpdateBoneFollowers(this);
+	UpdateBoneFollowers();
+
+	// Update any SetParentAttached children
+	if ( m_bUpdateAttachedChildren )
+	{
+		for ( CBaseEntity *pChild = FirstMoveChild(); pChild; pChild = pChild->NextMovePeer() )
+		{
+			pChild->PhysicsTouchTriggers();
+		}		
+	}
 }
 
+//------------------------------------------------------------------------------
+// Purpose: Cause our bone followers to follow us
+//------------------------------------------------------------------------------
+void CDynamicProp::UpdateBoneFollowers( void )
+{
+	m_BoneFollowerManager.UpdateBoneFollowers( this );
+}
 
 //------------------------------------------------------------------------------
 // Purpose: Sets an animation by sequence name or activity name.
@@ -2243,6 +2333,17 @@ void CDynamicProp::PropSetAnim( const char *szAnim )
 void CDynamicProp::InputSetAnimation( inputdata_t &inputdata )
 {
 	PropSetAnim( inputdata.value.String() );
+}
+
+//------------------------------------------------------------------------------
+// Purpose: Set the animation unless the prop is already set to this particular animation
+//------------------------------------------------------------------------------
+void CDynamicProp::InputSetAnimationNoReset( inputdata_t &inputdata )
+{
+	if ( GetSequence() != LookupSequence( inputdata.value.String() ) )
+	{
+		PropSetAnim( inputdata.value.String() );
+	}
 }
 
 //------------------------------------------------------------------------------
@@ -2405,9 +2506,11 @@ void COrnamentProp::InputDetach( inputdata_t &inputdata )
 //=============================================================================
 // PHYSICS PROPS
 //=============================================================================
+#ifndef INFESTED_DLL
 LINK_ENTITY_TO_CLASS( physics_prop, CPhysicsProp );
 LINK_ENTITY_TO_CLASS( prop_physics, CPhysicsProp );	
 LINK_ENTITY_TO_CLASS( prop_physics_override, CPhysicsProp );	
+#endif
 
 BEGIN_DATADESC( CPhysicsProp )
 
@@ -2424,6 +2527,8 @@ BEGIN_DATADESC( CPhysicsProp )
 	DEFINE_KEYFIELD( m_damageType, FIELD_INTEGER, "Damagetype" ),
 	DEFINE_KEYFIELD( m_iszOverrideScript, FIELD_STRING, "overridescript" ),
 
+
+
 	DEFINE_KEYFIELD( m_damageToEnableMotion, FIELD_INTEGER, "damagetoenablemotion" ), 
 	DEFINE_KEYFIELD( m_flForceToEnableMotion, FIELD_FLOAT, "forcetoenablemotion" ), 
 	DEFINE_OUTPUT( m_OnAwakened, "OnAwakened" ),
@@ -2438,13 +2543,36 @@ BEGIN_DATADESC( CPhysicsProp )
 
 	DEFINE_FIELD( m_bThrownByPlayer, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_bFirstCollisionAfterLaunch, FIELD_BOOLEAN ),
+	DEFINE_KEYFIELD( m_iExploitableByPlayer, FIELD_INTEGER, "ExploitableByPlayer" ),
 
 	DEFINE_THINKFUNC( ClearFlagsThink ),
 
 END_DATADESC()
 
 IMPLEMENT_SERVERCLASS_ST( CPhysicsProp, DT_PhysicsProp )
+	//--------------------------------------------------------------------------------------------------------
+	// Datatable reduction
+	SendPropExclude( "DT_BaseAnimating", "m_flPoseParameter" ),
+	SendPropExclude( "DT_BaseAnimating", "m_flPlaybackRate" ),	
+	//SendPropExclude( "DT_BaseAnimating", "m_nSequence" ),
+	//SendPropExclude( "DT_BaseAnimating", "m_nNewSequenceParity" ),
+	//SendPropExclude( "DT_BaseAnimating", "m_nResetEventsParity" ),
+	SendPropExclude( "DT_BaseAnimating", "m_nMuzzleFlashParity" ),
+	//SendPropExclude( "DT_BaseEntity", "m_angRotation" ),
+	SendPropExclude( "DT_BaseAnimatingOverlay", "overlay_vars" ),
+	SendPropExclude( "DT_BaseFlex", "m_flexWeight" ),
+	SendPropExclude( "DT_BaseFlex", "m_blinktoggle" ),
+
+	// calc mins/maxs on the client, since we have all the info
+	//SendPropExclude( "DT_CollisionProperty", "m_vecMins" ),
+	//SendPropExclude( "DT_CollisionProperty", "m_vecMaxs" ),
+
+	//SendPropExclude( "DT_ServerAnimationData" , "m_flCycle" ),
+
+	//--------------------------------------------------------------------------------------------------------
+
 	SendPropBool( SENDINFO( m_bAwake ) ),
+	//SendPropInt( SENDINFO(m_spawnflags), 16, SPROP_UNSIGNED ),	// Undone: L4D didn't need these bits, but other games do!
 END_SEND_TABLE()
 
 // external function to tell if this entity is a gib physics prop
@@ -2458,8 +2586,17 @@ bool PropIsGib( CBaseEntity *pEntity )
 	return false;
 }
 
+CPhysicsProp::CPhysicsProp( void ) : 
+	m_bHasBeenAwakened( false ), 
+	m_fNextCheckDisableMotionContactsTime( 0 )
+{
+
+}
+
 CPhysicsProp::~CPhysicsProp()
 {
+	TheNavMesh->UnregisterAvoidanceObstacle( this );
+
 	if (HasSpawnFlags(SF_PHYSPROP_IS_GIB))
 	{
 		g_ActiveGibCount--;
@@ -2476,6 +2613,8 @@ bool CPhysicsProp::IsGib()
 //-----------------------------------------------------------------------------
 void CPhysicsProp::Spawn( )
 {
+	SetNetworkQuantizeOriginAngAngles( true );
+
 	if (HasSpawnFlags(SF_PHYSPROP_IS_GIB))
 	{
 		g_ActiveGibCount++;
@@ -2490,6 +2629,8 @@ void CPhysicsProp::Spawn( )
 
 	if ( IsMarkedForDeletion() )
 		return;
+
+	m_flFrozenThawRate = 0.1f;
 
 	// Now condense all classnames to one
 	if ( FClassnameIs( this, "prop_physics_override") )
@@ -2522,6 +2663,76 @@ void CPhysicsProp::Spawn( )
 		DisableAutoFade();
 	}
 	
+	// Set the AI AddOn from the QC key values
+	KeyValues *modelKeyValues = new KeyValues("");
+	if ( modelKeyValues->LoadFromBuffer( modelinfo->GetModelName( GetModel() ), modelinfo->GetModelKeyValueText( GetModel() ) ) )
+	{
+		KeyValues *pkvPropData = modelKeyValues->FindKey( "ai_addon" );
+		if ( pkvPropData )
+		{
+			SetAIAddOn( AllocPooledString( pkvPropData->GetString() ) );
+			modelKeyValues->deleteThis();
+			return;
+		}
+		else
+		{
+			if ( GetAIAddOn().ToCStr()[ 0 ] == '\0' )
+			{
+				// No behavior, so set the default that this thing can be thrown
+				SetAIAddOn( MAKE_STRING( "ai_addon_thrownprojectile" ) );
+			}
+		}
+	}
+
+	modelKeyValues->deleteThis();
+
+	// Do prop_physics_multiplayer stuff here
+	// if no physicsmode was defined by .QC or propdata.txt, 
+	// use auto detect based on size & mass
+	if ( m_iPhysicsMode == PHYSICS_MULTIPLAYER_AUTODETECT )
+	{
+		if ( VPhysicsGetObject() )
+		{
+			m_iPhysicsMode = GetAutoMultiplayerPhysicsMode( 
+				CollisionProp()->OBBSize(), VPhysicsGetObject()->GetMass() );
+		}
+		else
+		{
+			UTIL_Remove( this );
+			return;
+		}
+	}
+ 
+	// check if map maker overrides physics mode to force a server-side entity
+	if ( GetSpawnFlags() & SF_PHYSPROP_FORCE_SERVER_SIDE )
+	{
+		SetPhysicsMode( PHYSICS_MULTIPLAYER_NON_SOLID );
+	}
+
+	if ( m_iPhysicsMode == PHYSICS_MULTIPLAYER_CLIENTSIDE )
+	{
+		if ( engine->IsInEditMode() )
+		{
+			// in map edit mode always spawn as server phys prop
+			SetPhysicsMode( PHYSICS_MULTIPLAYER_NON_SOLID );
+		}
+		else if ( CommandLine()->FindParm( "-makereslists" ) )
+		{
+			// when building reslists always spawn as server phys prop
+			SetPhysicsMode( PHYSICS_MULTIPLAYER_NON_SOLID );
+		}
+		else
+		{
+			// don't spawn clientside props on server
+			UTIL_Remove( this );
+			return;
+		}
+	}
+
+	if ( IsPotentiallyAbleToObstructNavAreas() )
+	{
+		TheNavMesh->RegisterAvoidanceObstacle( this );
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -2578,21 +2789,26 @@ bool CPhysicsProp::CreateVPhysics()
 		SetSolid( SOLID_NONE );
 		SetMoveType( MOVETYPE_NONE );
 		Warning("ERROR!: Can't create physics object for %s\n", STRING( GetModelName() ) );
+		return false;
 	}
-	else
+
+	if ( m_damageType == 1 )
 	{
-		if ( m_damageType == 1 )
+		PhysSetGameFlags( pPhysicsObject, FVPHYSICS_DMG_SLICE );
+	}
+	if ( HasSpawnFlags( SF_PHYSPROP_MOTIONDISABLED ) || m_damageToEnableMotion > 0 || m_flForceToEnableMotion > 0 )
+	{
+		pPhysicsObject->EnableMotion( false );
+#ifndef INFESTED_DLL // - this breaks props that get their motion enabled via a trigger! if a prop wants to be permanently static, it should be a prop_static?
+		if ( m_damageToEnableMotion <= 0 && m_flForceToEnableMotion <= 0 )
 		{
-			PhysSetGameFlags( pPhysicsObject, FVPHYSICS_DMG_SLICE );
+			AddSolidFlags(FSOLID_NOT_MOVEABLE);
 		}
-		if ( HasSpawnFlags( SF_PHYSPROP_MOTIONDISABLED ) || m_damageToEnableMotion > 0 || m_flForceToEnableMotion > 0 )
-		{
-			pPhysicsObject->EnableMotion( false );
-		}
+#endif
 	}
 
 	// fix up any noncompliant blades.
-	if( HasInteraction( PROPINTER_PHYSGUN_LAUNCH_SPIN_Z ) )
+	if( pPhysicsObject && HasInteraction( PROPINTER_PHYSGUN_LAUNCH_SPIN_Z ) )
 	{
 		if( !(VPhysicsGetObject()->GetGameFlags() & FVPHYSICS_DMG_SLICE) )
 		{
@@ -2608,16 +2824,20 @@ bool CPhysicsProp::CreateVPhysics()
 		}
 	}
 
-	if( HasInteraction( PROPINTER_PHYSGUN_DAMAGE_NONE ) )
+	if( pPhysicsObject && HasInteraction( PROPINTER_PHYSGUN_DAMAGE_NONE ) )
 	{
 		PhysSetGameFlags( pPhysicsObject, FVPHYSICS_NO_IMPACT_DMG );
 	}
 
-	if ( HasSpawnFlags(SF_PHYSPROP_PREVENT_PICKUP) )
+	if ( pPhysicsObject && HasSpawnFlags(SF_PHYSPROP_PREVENT_PICKUP) )
 	{
 		PhysSetGameFlags(pPhysicsObject, FVPHYSICS_NO_PLAYER_PICKUP);
 	}
 
+	if ( !pPhysicsObject->IsMoveable() || pPhysicsObject->GetMass() >= VPHYSICS_LARGE_OBJECT_MASS )
+	{
+		m_bClientPhysics = true;
+	}
 	return true;
 }
 
@@ -2909,6 +3129,39 @@ void CPhysicsProp::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE 
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Return true if it's safe to disable movement on this physics prop, i.e. it's not in a situation where we shouldn't.
+//-----------------------------------------------------------------------------
+bool CPhysicsProp::ShouldDisableMotionOnFreeze( void )
+{
+	// is it time to recheck all the contact points?  (don't do this constantly as it's a waste of cpu)
+	if (gpGlobals->curtime < m_fNextCheckDisableMotionContactsTime )
+		return false;
+	m_fNextCheckDisableMotionContactsTime = gpGlobals->curtime + 0.5f;
+						
+	IPhysicsObject *pPhysics = VPhysicsGetObject();
+	IPhysicsFrictionSnapshot *pSnapshot = pPhysics->CreateFrictionSnapshot();
+
+	CBaseEntity *pOtherEntity = NULL;					
+	while ( pSnapshot->IsValid() )
+	{
+		IPhysicsObject *pOther = pSnapshot->GetObject(1);
+		pOtherEntity = static_cast<CBaseEntity*>(pOther->GetGameData());
+		CPhysicsProp *pPhysicsProp = dynamic_cast<CPhysicsProp*>(pOtherEntity);
+		if ( pPhysicsProp )	// we're touching another phys prop
+		{
+			// If this phys prop will never go motion disabled, we shouldn't either
+			if (!pPhysicsProp->HasSpawnFlags(SF_PHYSPROP_DISABLE_MOTION_ON_FREEZE))	
+				return false;
+		}
+
+		pSnapshot->NextFrictionData();
+	}
+	pPhysics->DestroyFrictionSnapshot( pSnapshot );
+
+	return true;
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : *pPhysics - 
 //-----------------------------------------------------------------------------
@@ -2916,6 +3169,7 @@ void CPhysicsProp::VPhysicsUpdate( IPhysicsObject *pPhysics )
 {
 	BaseClass::VPhysicsUpdate( pPhysics );
 	m_bAwake = !pPhysics->IsAsleep();
+	IPhysicsObject *pPhysicsObject = VPhysicsGetObject();
 	NetworkStateChanged();
 	if ( HasSpawnFlags( SF_PHYSPROP_START_ASLEEP ) )
 	{
@@ -2923,6 +3177,11 @@ void CPhysicsProp::VPhysicsUpdate( IPhysicsObject *pPhysics )
 		{
 			m_OnAwakened.FireOutput(this, this);
 			RemoveSpawnFlags( SF_PHYSPROP_START_ASLEEP );
+
+			if (pPhysicsObject && pPhysicsObject->IsMoveable())
+			{
+				m_bHasBeenAwakened = true;
+			}
 		}
 	}
 
@@ -2936,6 +3195,111 @@ void CPhysicsProp::VPhysicsUpdate( IPhysicsObject *pPhysics )
 	{
 		m_OnOutOfWorld.FireOutput( this, this );
 	}
+
+	// consider disabling motion
+	bool bAwake = ( m_bAwake && pPhysicsObject && pPhysicsObject->IsMoveable() );
+	if ( !bAwake && m_bHasBeenAwakened && HasSpawnFlags(SF_PHYSPROP_DISABLE_MOTION_ON_FREEZE) )		// prop has been woken at least once and is now asleep
+	{
+		// check we're not touching any props that don't have the disable motion flag
+		if ( ShouldDisableMotionOnFreeze() )
+		{
+			DevMsg("Disabling motion on phys prop");
+			pPhysicsObject->EnableMotion( false );
+		}
+	}
+
+
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CPhysicsProp::IsPotentiallyAbleToObstructNavAreas( void ) const
+{
+	if ( !IsSolid() )
+		return false;
+
+	if ( IsSolidFlagSet( FSOLID_NOT_SOLID ) )
+		return false;
+
+	const float MinObstructingMass = 100.0f;
+	if ( GetMass() <= MinObstructingMass )
+		return false;
+
+	Extent extent;
+	CollisionProp()->WorldSpaceAABB( &extent.lo, &extent.hi );
+	return (extent.hi - extent.lo).IsLengthGreaterThan( StepHeight );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CPhysicsProp::GetNavObstructionHeight( void ) const
+{
+	Extent extent;
+	CollisionProp()->WorldSpaceAABB( &extent.lo, &extent.hi );
+	return extent.hi.z - extent.lo.z;
+}
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CPhysicsProp::CanObstructNavAreas( void ) const
+{
+	if (m_bAwake )
+		return false;
+
+	const float MinObstructingMass = 100.0f;
+	if ( GetMass() <= MinObstructingMass )
+		return false;
+
+	if ( !IsSolid() )
+		return false;
+
+	if ( IsSolidFlagSet( FSOLID_NOT_SOLID ) )
+		return false;
+
+	Extent extent;
+	CollisionProp()->WorldSpaceAABB( &extent.lo, &extent.hi );
+	float height = extent.hi.z - extent.lo.z;
+
+	if ( height < StepHeight )
+		return false;
+
+	if ( GetHealth() < 300 && m_takedamage == DAMAGE_YES )
+		return false;
+
+	return true;
+}
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CPhysicsProp::OnNavMeshLoaded( void )
+{
+	if ( !m_bAwake )	// tank walls have a different behavior
+	{
+		SetContextThink( &CPhysicsProp::NavThink, gpGlobals->curtime, "NavContext" );
+	}
+}
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CPhysicsProp::NavThink( void )
+{
+	if ( !CanObstructNavAreas() )
+		return;
+
+	Extent extent;
+	CollisionProp()->WorldSpaceAABB( &extent.lo, &extent.hi );
+	extent.lo.z -= HumanHeight;
+	NavAreaCollector overlap;
+	TheNavMesh->ForAllAreasOverlappingExtent( overlap, extent );
+
+	float obstructionHeight = GetNavObstructionHeight();
+	FOR_EACH_VEC( overlap.m_area, it )
+	{
+		CNavArea *area = overlap.m_area[ it ];
+		area->MarkObstacleToAvoid( obstructionHeight );
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -2947,8 +3311,8 @@ void CPhysicsProp::ClearFlagsThink( void )
 	if ( VPhysicsGetObject() )
 	{
 		PhysClearGameFlags( VPhysicsGetObject(), FVPHYSICS_WAS_THROWN );
+		SetContextThink( NULL, 0, "PROP_CLEARFLAGS" );
 	}
-	SetContextThink( NULL, 0, "PROP_CLEARFLAGS" );
 }
 
 
@@ -3190,49 +3554,53 @@ int CPhysicsProp::DrawDebugTextOverlays(void)
 
 	if (m_debugOverlays & OVERLAY_TEXT_BIT) 
 	{
+		int r = 255;
+		int g = 255;
+		int b = 255;
+
 		if (VPhysicsGetObject())
 		{
 			char tempstr[512];
 			Q_snprintf(tempstr, sizeof(tempstr),"Mass: %.2f kg / %.2f lb (%s)", VPhysicsGetObject()->GetMass(), kg2lbs(VPhysicsGetObject()->GetMass()), GetMassEquivalent(VPhysicsGetObject()->GetMass()));
-			EntityText( text_offset, tempstr, 0);
+			EntityText( text_offset, tempstr, 0,r,g,b);
 			text_offset++;
 
 			{
 				vphysics_objectstress_t stressOut;
 				float stress = CalculateObjectStress( VPhysicsGetObject(), this, &stressOut );
 				Q_snprintf(tempstr, sizeof(tempstr),"Stress: %.2f (%.2f / %.2f)", stress, stressOut.exertedStress, stressOut.receivedStress );
-				EntityText( text_offset, tempstr, 0);
+				EntityText( text_offset, tempstr, 0,r,g,b);
 				text_offset++;
 			}
 
 			if ( !VPhysicsGetObject()->IsMoveable() )
 			{
 				Q_snprintf(tempstr, sizeof(tempstr),"Motion Disabled" );
-				EntityText( text_offset, tempstr, 0);
+				EntityText( text_offset, tempstr, 0,r,g,b);
 				text_offset++;
 			}
 
 			if ( m_iszBasePropData != NULL_STRING )
 			{
 				Q_snprintf(tempstr, sizeof(tempstr),"Base PropData: %s", STRING(m_iszBasePropData) );
-				EntityText( text_offset, tempstr, 0);
+				EntityText( text_offset, tempstr, 0,r,g,b);
 				text_offset++;
 			}
 
 			if ( m_iNumBreakableChunks != 0 )
 			{
 				IBreakableWithPropData *pBreakableInterface = assert_cast<IBreakableWithPropData*>(this);
-				Q_snprintf(tempstr, sizeof(tempstr),"Breakable Chunks: %d (Max Size %d)", m_iNumBreakableChunks, pBreakableInterface->GetMaxBreakableSize() );
-				EntityText( text_offset, tempstr, 0);
+				Q_snprintf(tempstr, sizeof(tempstr),"Breakable Chunks: %d (Max Size %d)", (int) m_iNumBreakableChunks, pBreakableInterface->GetMaxBreakableSize() );
+				EntityText( text_offset, tempstr, 0,r,g,b);
 				text_offset++;
 			}
 
 			Q_snprintf(tempstr, sizeof(tempstr),"Skin: %d", m_nSkin.Get() );
-			EntityText( text_offset, tempstr, 0);
+			EntityText( text_offset, tempstr, 0,r,g,b);
 			text_offset++;
 
 			Q_snprintf(tempstr, sizeof(tempstr),"Health: %d, collision group %d", GetHealth(), GetCollisionGroup() );
-			EntityText( text_offset, tempstr, 0);
+			EntityText( text_offset, tempstr, 0,r,g,b);
 			text_offset++;
 		}
 	}
@@ -3262,6 +3630,7 @@ static CBreakableProp *BreakModelCreate_Prop( CBaseEntity *pOwner, breakmodel_t 
 			pEntity->SetDmgModBullet( pBreakableOwner->GetDmgModBullet() );
 			pEntity->SetDmgModClub( pBreakableOwner->GetDmgModClub() );
 			pEntity->SetDmgModExplosive( pBreakableOwner->GetDmgModExplosive() );
+			pEntity->SetDmgModFire( pBreakableOwner->GetDmgModFire() );
 
 			// Copy over the dx7 fade too
 			pEntity->CopyFadeFrom( pBreakableOwner );
@@ -3290,8 +3659,6 @@ static CBreakableProp *BreakModelCreate_Prop( CBaseEntity *pOwner, breakmodel_t 
 			if ( pOwnerFlame )
 			{
 				pEntity->Ignite( pOwnerFlame->GetRemainingLife(), false );
-				pEntity->IgniteNumHitboxFires( pOwnerFlame->GetNumHitboxFires() );
-				pEntity->IgniteHitboxFireScale( pOwnerFlame->GetHitboxFireScale() );
 			}
 			else
 			{
@@ -3575,14 +3942,39 @@ BEGIN_DATADESC(CBasePropDoor)
 	DEFINE_THINKFUNC(DoorOpenMoveDone),
 	DEFINE_THINKFUNC(DoorCloseMoveDone),
 	DEFINE_THINKFUNC(DoorAutoCloseThink),
+	DEFINE_THINKFUNC(DisableAreaPortalThink),
 END_DATADESC()
 
 IMPLEMENT_SERVERCLASS_ST(CBasePropDoor, DT_BasePropDoor)
+	//--------------------------------------------------------------------------------------------------------
+	// Datatable reduction
+	SendPropExclude( "DT_BaseAnimating", "m_flPoseParameter" ),
+	SendPropExclude( "DT_BaseAnimating", "m_flPlaybackRate" ),	
+	//SendPropExclude( "DT_BaseAnimating", "m_nSequence" ),
+	//SendPropExclude( "DT_BaseAnimating", "m_nNewSequenceParity" ),
+	//SendPropExclude( "DT_BaseAnimating", "m_nResetEventsParity" ),
+	SendPropExclude( "DT_BaseAnimating", "m_nMuzzleFlashParity" ),
+	//SendPropExclude( "DT_BaseEntity", "m_angRotation" ),
+	SendPropExclude( "DT_BaseAnimatingOverlay", "overlay_vars" ),
+	SendPropExclude( "DT_BaseFlex", "m_flexWeight" ),
+	SendPropExclude( "DT_BaseFlex", "m_blinktoggle" ),
+
+	// calc mins/maxs on the client, since we have all the info
+	//SendPropExclude( "DT_CollisionProperty", "m_vecMins" ),
+	//SendPropExclude( "DT_CollisionProperty", "m_vecMaxs" ),
+
+	//SendPropExclude( "DT_ServerAnimationData" , "m_flCycle" ),	
+
+
+	//--------------------------------------------------------------------------------------------------------
+
+//	SendPropInt( SENDINFO(m_spawnflags), 16, SPROP_UNSIGNED ),
 END_SEND_TABLE()
 
 CBasePropDoor::CBasePropDoor( void )
 {
 	m_hMaster = NULL;
+	m_nPhysicsMaterial = -1;
 }
 
 //-----------------------------------------------------------------------------
@@ -3635,6 +4027,10 @@ void CBasePropDoor::Spawn()
 
 
 //-----------------------------------------------------------------------------
+bool CBasePropDoor::IsAbleToCloseAreaPortals( void ) const
+{
+	return true; 
+}
 // Purpose: Returns our capabilities mask.
 //-----------------------------------------------------------------------------
 int	CBasePropDoor::ObjectCaps()
@@ -3721,10 +4117,13 @@ void CBasePropDoor::HandleAnimEvent(animevent_t *pEvent)
 {
 	// Opening is called here via an animation event if the open sequence has one,
 	// otherwise it is called immediately when the open sequence is set.
-	if (pEvent->event == AE_DOOR_OPEN)
+	if ( pEvent->Event() == AE_DOOR_OPEN )
 	{
 		DoorActivate();
+		return;
 	}
+
+	BaseClass::HandleAnimEvent( pEvent ); 
 }
 
 
@@ -3745,7 +4144,6 @@ void CBasePropDoor::CalcDoorSounds()
 	string_t strSoundLocked = NULL_STRING;
 	string_t strSoundUnlocked = NULL_STRING;
 
-	bool bFoundSkin = false;
 	// Otherwise, use the sounds specified by the model keyvalues. These are looked up
 	// based on skin and hardware.
 	KeyValues *modelKeyValues = new KeyValues("");
@@ -3764,11 +4162,14 @@ void CBasePropDoor::CalcDoorSounds()
 				strSoundOpen = AllocPooledString( pkvSkinData->GetString( "open" ) );
 				strSoundClose = AllocPooledString( pkvSkinData->GetString( "close" ) );
 				strSoundMoving = AllocPooledString( pkvSkinData->GetString( "move" ) );
-				const char *pSurfaceprop = pkvSkinData->GetString( "surfaceprop" );
-				if ( pSurfaceprop && VPhysicsGetObject() )
+
+				if ( m_nPhysicsMaterial == -1 )
 				{
-					bFoundSkin = true;
-					VPhysicsGetObject()->SetMaterialIndex( physprops->GetSurfaceIndex( pSurfaceprop ) );
+					const char *pSurfaceprop = pkvSkinData->GetString( "surfaceprop" );
+					if ( pSurfaceprop && VPhysicsGetObject() )
+					{
+						m_nPhysicsMaterial = physprops->GetSurfaceIndex( pSurfaceprop );
+					}
 				}
 			}
 
@@ -3801,10 +4202,17 @@ void CBasePropDoor::CalcDoorSounds()
 	}
 	modelKeyValues->deleteThis();
 	modelKeyValues = NULL;
-	if ( !bFoundSkin && VPhysicsGetObject() )
+	if ( VPhysicsGetObject() )
 	{
-		Warning( "%s has Door model (%s) with no door_options! Verify that SKIN is valid, and has a corresponding options block in the model QC file\n", GetDebugName(), modelinfo->GetModelName( GetModel() ) );
-		VPhysicsGetObject()->SetMaterialIndex( physprops->GetSurfaceIndex("wood") );
+		if ( m_nPhysicsMaterial == -1 )
+		{
+			Warning( "%s has Door model (%s) with no door_options or m_nPhysicsMaterial specified! Verify that SKIN is valid, and has a corresponding options block in the model QC file\n", GetDebugName(), modelinfo->GetModelName( GetModel() ) );
+			VPhysicsGetObject()->SetMaterialIndex( physprops->GetSurfaceIndex("wood") );
+		}
+		else
+		{
+			VPhysicsGetObject()->SetMaterialIndex( m_nPhysicsMaterial );
+		}
 	}
 
 	// Any sound data members that are already filled out were specified as level designer overrides,
@@ -3828,7 +4236,13 @@ void CBasePropDoor::CalcDoorSounds()
 	PrecacheScriptSound( STRING( m_ls.sLockedSound ) );
 	PrecacheScriptSound( STRING( m_ls.sUnlockedSound ) );
 }
-
+//-----------------------------------------------------------------------------
+// Purpose: Delay closing of area portals
+//-----------------------------------------------------------------------------
+void CBasePropDoor::DisableAreaPortalThink( void )
+{
+	UpdateAreaPortals( false );
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -3836,6 +4250,13 @@ void CBasePropDoor::CalcDoorSounds()
 //-----------------------------------------------------------------------------
 void CBasePropDoor::UpdateAreaPortals(bool isOpen)
 {
+	SetContextThink( NULL, 0, "AreaPortal" );
+
+	if ( !IsAbleToCloseAreaPortals() )
+	{
+		isOpen = true;
+	}
+
 	string_t name = GetEntityName();
 	if (!name)
 		return;
@@ -3906,7 +4327,7 @@ void CBasePropDoor::OnUse( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TY
 	if (IsDoorClosed() || (IsDoorOpen() && HasSpawnFlags(SF_DOOR_USE_CLOSES)))
 	{
 		// Ready to be opened or closed.
-		if (m_bLocked)
+		if ( IsDoorLocked() )
 		{
 			PropSetSequence(SelectWeightedSequence((Activity)ACT_DOOR_LOCKED));
 			PlayLockSounds(this, &m_ls, TRUE, FALSE);
@@ -3992,7 +4413,7 @@ void CBasePropDoor::InputOpenAwayFrom(inputdata_t &inputdata)
 void CBasePropDoor::OpenIfUnlocked(CBaseEntity *pActivator, CBaseEntity *pOpenAwayFrom)
 {
 	// I'm locked, can't open
-	if (m_bLocked)
+	if ( IsDoorLocked() )
 		return; 
 
 	if (!IsDoorOpen() && !IsDoorOpening())
@@ -4013,7 +4434,7 @@ void CBasePropDoor::InputToggle(inputdata_t &inputdata)
 	if (IsDoorClosed())
 	{	
 		// I'm locked, can't open
-		if (m_bLocked)
+		if ( IsDoorLocked() )
 			return; 
 
 		DoorOpen(NULL);
@@ -4270,7 +4691,9 @@ void CBasePropDoor::DoorCloseMoveDone(void)
 	SetDoorState( DOOR_STATE_CLOSED );
 
 	m_OnFullyClosed.FireOutput(m_hActivator, this);
-	UpdateAreaPortals(false);
+
+	// Close the area portals just after the door closes, to prevent visual artifacts in multiplayer games
+	SetContextThink( &CBasePropDoor::DisableAreaPortalThink, gpGlobals->curtime + 0.5f, "AreaPortal" );
 
 	// Let the leaf class do its thing.
 	OnDoorClosed();
@@ -4555,6 +4978,7 @@ bool CBasePropDoor::TestCollision( const Ray_t &ray, unsigned int mask, trace_t&
 	if ( !VPhysicsGetObject() )
 		return false;
 
+	MDLCACHE_CRITICAL_SECTION();
 	CStudioHdr *pStudioHdr = GetModelPtr( );
 	if (!pStudioHdr)
 		return false;
@@ -4566,6 +4990,10 @@ bool CBasePropDoor::TestCollision( const Ray_t &ray, unsigned int mask, trace_t&
 
 	if ( trace.DidHit() )
 	{
+		trace.contents = pStudioHdr->contents();
+		// use the default surface properties
+		trace.surface.name = "**studio**";
+		trace.surface.flags = 0;
 		trace.surface.surfaceProps = VPhysicsGetObject()->GetMaterialIndex();
 		return true;
 	}
@@ -4586,8 +5014,12 @@ public:
 	DECLARE_CLASS_NOBASE( CTraceFilterDoor );
 	
 	CTraceFilterDoor( const IHandleEntity *pDoor, const IHandleEntity *passentity, int collisionGroup )
-		: m_pDoor(pDoor), m_pPassEnt(passentity), m_collisionGroup(collisionGroup)
+		: m_pDoor(pDoor), m_collisionGroup(collisionGroup)
 	{
+		if ( passentity )
+		{
+			m_pPassEnts.AddToTail( passentity );
+		}
 	}
 	
 	virtual bool ShouldHitEntity( IHandleEntity *pHandleEntity, int contentsMask )
@@ -4598,8 +5030,11 @@ public:
 		if ( !PassServerEntityFilter( pHandleEntity, m_pDoor ) )
 			return false;
 
-		if ( !PassServerEntityFilter( pHandleEntity, m_pPassEnt ) )
-			return false;
+		for ( int i=0; i<m_pPassEnts.Count(); ++i )
+		{
+			if ( !PassServerEntityFilter( pHandleEntity, m_pPassEnts[i] ) )
+				return false;
+		}
 
 		// Don't test if the game code tells us we should ignore this collision...
 		CBaseEntity *pEntity = EntityFromEntityHandle( pHandleEntity );
@@ -4627,10 +5062,15 @@ public:
 		return true;
 	}
 
+	void AddPassEnt( CBaseEntity *pEntity )
+	{
+		m_pPassEnts.AddToTail( pEntity );
+	}
+
 private:
 
+	CUtlVector< const IHandleEntity * > m_pPassEnts;
 	const IHandleEntity *m_pDoor;
-	const IHandleEntity *m_pPassEnt;
 	int m_collisionGroup;
 };
 
@@ -4708,7 +5148,10 @@ public:
 
 	void	InputSetSpeed(inputdata_t &inputdata);
 
+	virtual void ComputeDoorExtent( Extent *extent, unsigned int extentType );	// extent contains the volume encompassing open + closed states
+
 	DECLARE_DATADESC();
+	DECLARE_SERVERCLASS();
 
 private:
 
@@ -4765,6 +5208,9 @@ BEGIN_DATADESC(CPropDoorRotating)
 	//m_vecBackBoundsMin
 	//m_vecBackBoundsMax
 END_DATADESC()
+
+IMPLEMENT_SERVERCLASS_ST( CPropDoorRotating, DT_PropDoorRotating )
+END_SEND_TABLE()
 
 LINK_ENTITY_TO_CLASS(prop_door_rotating, CPropDoorRotating);
 
@@ -4823,7 +5269,7 @@ void CPropDoorRotating::Spawn()
 	// that the model already be set.
 	if ( IsHingeOnLeft() )
 	{
-		::V_swap( m_angRotationOpenForward, m_angRotationOpenBack );
+		V_swap( m_angRotationOpenForward, m_angRotationOpenBack );
 	}
 
 	// Figure out our volumes of movement as this door opens
@@ -4933,6 +5379,8 @@ void CPropDoorRotating::OnDoorOpened( void )
 //-----------------------------------------------------------------------------
 void CPropDoorRotating::OnDoorClosed( void )
 {
+	BaseClass::OnDoorClosed();
+
 	if ( m_hDoorBlocker != NULL )
 	{
 		// Destroy the blocker that was preventing NPCs from getting in our way.
@@ -5025,6 +5473,33 @@ void CPropDoorRotating::OnRestore( void )
 	// Figure out our volumes of movement as this door opens
 	CalculateDoorVolume( GetLocalAngles(), m_angRotationOpenForward, &m_vecForwardBoundsMin, &m_vecForwardBoundsMax );
 	CalculateDoorVolume( GetLocalAngles(), m_angRotationOpenBack, &m_vecBackBoundsMin, &m_vecBackBoundsMax );
+}
+
+// extent contains the volume encompassing open + closed states
+void CPropDoorRotating::ComputeDoorExtent( Extent *extent, unsigned int extentType )
+{
+	if ( !extent )
+		return;
+
+	if ( extentType & DOOR_EXTENT_CLOSED )
+	{
+		Extent closedExtent;
+		CalculateDoorVolume( m_angRotationClosed, m_angRotationClosed, &extent->lo, &extent->hi );
+
+		if ( extentType & DOOR_EXTENT_OPEN )
+		{
+			Extent openExtent;
+			UTIL_ComputeAABBForBounds( m_vecForwardBoundsMin, m_vecForwardBoundsMax, m_vecBackBoundsMin, m_vecBackBoundsMax, &openExtent.lo, &openExtent.hi );
+			extent->Encompass( openExtent );
+		}
+	}
+	else if ( extentType & DOOR_EXTENT_OPEN )
+	{
+		UTIL_ComputeAABBForBounds( m_vecForwardBoundsMin, m_vecForwardBoundsMax, m_vecBackBoundsMin, m_vecBackBoundsMax, &extent->lo, &extent->hi );
+	}
+
+	extent->lo += GetAbsOrigin();
+	extent->hi += GetAbsOrigin();
 }
 
 //-----------------------------------------------------------------------------
@@ -5193,10 +5668,43 @@ void CPropDoorRotating::BeginOpening(CBaseEntity *pOpenAwayFrom)
 	{
 		if (pOpenAwayFrom != NULL)
 		{
-			Vector vecForwardDoor;
-			GetVectors(&vecForwardDoor, NULL, NULL);
+			// Using cross product to determine which side the player is on,
+			// as well as which side "open forward" is on, so we can always try to
+			// open away from the player.
 
-			if (vecForwardDoor.Dot(pOpenAwayFrom->GetAbsOrigin()) > vecForwardDoor.Dot(GetAbsOrigin()))
+			Vector vecForwardDoor = WorldSpaceCenter() - GetAbsOrigin();
+			vecForwardDoor.z = 0;
+			vecForwardDoor.NormalizeInPlace();
+
+			Vector vecToActivator = pOpenAwayFrom->GetAbsOrigin() - GetAbsOrigin();
+			vecToActivator.z = 0;
+			vecToActivator.NormalizeInPlace();
+
+			Vector vecActivatorCross = vecForwardDoor.Cross( vecToActivator );
+			bool isActivatorOnLeft = false;
+			if ( vecActivatorCross.z < 0 )
+			{
+				// activator is on the right of the door (looking from hinge across doorway)
+			}
+			else
+			{
+				// activator is on the left of the door (looking from hinge across doorway)
+				isActivatorOnLeft = true;
+			}
+
+			bool isOpenForwardOnLeft = false;
+			float forwardYaw = AngleNormalize( m_angRotationOpenForward[1] - GetLocalAngles()[1] );
+			if ( forwardYaw < 0 )
+			{
+				// opening forward is on the right of the door (looking from hinge across doorway)
+			}
+			else
+			{
+				// opening forward is on the left of the door (looking from hinge across doorway)
+				isOpenForwardOnLeft = true;
+			}
+
+			if ( isActivatorOnLeft == isOpenForwardOnLeft )
 			{
 				angOpen = m_angRotationOpenBack;
 				eDirCheck = DOOR_CHECK_BACKWARD;
@@ -5300,6 +5808,8 @@ void CPropDoorRotating::BeginClosing( void )
 		}
 	}
 
+	Vector vecAbsMins, vecAbsMaxs;
+	CollisionProp()->WorldSpaceAABB( &vecAbsMins, &vecAbsMaxs );
 	AngularMove(m_angRotationClosed, m_flSpeed);
 }
 
@@ -5387,6 +5897,12 @@ int CPropDoorRotating::DrawDebugTextOverlays(void)
 		EntityText( text_offset, tempstr, 0);
 		text_offset++;
 
+		if ( IsDoorLocked() )
+		{
+			EntityText( text_offset, "LOCKED", 0);
+			text_offset++;
+		}
+
 		if ( IsDoorOpen() )
 		{
 			Q_strncpy(tempstr, "DOOR STATE: OPEN", sizeof(tempstr));
@@ -5460,7 +5976,6 @@ void CPropDoorRotating::InputSetSpeed(inputdata_t &inputdata)
 
 LINK_ENTITY_TO_CLASS( prop_sphere, CPhysSphere );
 
-
 // ------------------------------------------------------------------------------------------ //
 // Special version of func_physbox.
 // ------------------------------------------------------------------------------------------ //
@@ -5521,11 +6036,10 @@ class CPhysicsPropMultiplayer : public CPhysicsProp, public IMultiplayerPhysics
 	DECLARE_SERVERCLASS();
 	DECLARE_DATADESC();
 
-	CPhysicsPropMultiplayer()
+   	CPhysicsPropMultiplayer()
 	{
 		m_iPhysicsMode = PHYSICS_MULTIPLAYER_AUTODETECT;
 		m_usingCustomCollisionBounds = false;
-		m_fMass = 0.f;
 	}
 
 // IBreakableWithPropData:
@@ -5619,8 +6133,7 @@ class CPhysicsPropMultiplayer : public CPhysicsProp, public IMultiplayerPhysics
 			SetCollisionGroup( COLLISION_GROUP_DEBRIS );
 		}
 
-		if(VPhysicsGetObject())
-			m_fMass = VPhysicsGetObject()->GetMass();
+		m_fMass = VPhysicsGetObject()->GetMass();
 
 		// VPhysicsGetObject() is NULL on the client, which prevents the client from finding a decent
 		// AABB surrounding the collision bounds.  If we've got a VPhysicsGetObject()->GetCollide(), we'll
@@ -5950,161 +6463,6 @@ CPhysicsProp* CreatePhysicsProp( const char *pModelName, const Vector &vTraceSta
 	return pProp;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: Scale the object to a new size, taking its render verts and physical verts into account
-//-----------------------------------------------------------------------------
-bool UTIL_CreateScaledPhysObject( CBaseAnimating *pInstance, float flScale )
-{
-	// Don't scale NPCs
-	if ( pInstance->MyCombatCharacterPointer() )
-		return false;
-
-	// FIXME: This needs to work for ragdolls!
-
-	// Get our object
-	IPhysicsObject *pObject = pInstance->VPhysicsGetObject();
-	if ( pObject == NULL )
-	{
-		AssertMsg( 0, "UTIL_CreateScaledPhysObject: Failed to scale physics for object-- It has no physics." );
-		return false;
-	}
-
-	// See if our current physics object is motion disabled
-	bool bWasMotionDisabled = ( pObject->IsMotionEnabled() == false );
-	bool bWasStatic			= ( pObject->IsStatic() );
-
-	vcollide_t *pCollide = modelinfo->GetVCollide( pInstance->GetModelIndex() );
-	if ( pCollide == NULL || pCollide->solidCount == 0 )
-		return NULL;
-
-	CPhysCollide *pNewCollide = pCollide->solids[0];	// FIXME: Needs to iterate over the solids
-
-	if ( flScale != 1.0f )
-	{
-		// Create a query to get more information from the collision object
-		ICollisionQuery *pQuery = physcollision->CreateQueryModel( pCollide->solids[0] );	// FIXME: This should iterate over all solids!
-		if ( pQuery == NULL )
-			return false;
-
-		// Create a container to hold all the convexes we'll create
-		const int nNumConvex = pQuery->ConvexCount();
-		CPhysConvex **pConvexes = (CPhysConvex **) stackalloc( sizeof(CPhysConvex *) * nNumConvex );
-
-		// For each convex, collect the verts and create a convex from it we'll retain for later
-		for ( int i = 0; i < nNumConvex; i++ )
-		{
-			int nNumTris = pQuery->TriangleCount( i );
-			int nNumVerts = nNumTris * 3;
-			// FIXME: Really?  stackalloc?
-			Vector *pVerts = (Vector *) stackalloc( sizeof(Vector) * nNumVerts );
-			Vector **ppVerts = (Vector **) stackalloc( sizeof(Vector *) * nNumVerts );
-			for ( int j = 0; j < nNumTris; j++ )
-			{
-				// Get all the verts for this triangle and scale them up
-				pQuery->GetTriangleVerts( i, j, pVerts+(j*3) );
-				*(pVerts+(j*3)) *= flScale;
-				*(pVerts+(j*3)+1) *= flScale;
-				*(pVerts+(j*3)+2) *= flScale;
-
-				// Setup our pointers (blech!)
-				*(ppVerts+(j*3)) = pVerts+(j*3);
-				*(ppVerts+(j*3)+1) = pVerts+(j*3)+1;
-				*(ppVerts+(j*3)+2) = pVerts+(j*3)+2;
-			}
-
-			// Convert it back to a convex
-			pConvexes[i] = physcollision->ConvexFromVerts( ppVerts, nNumVerts );
-			Assert( pConvexes[i] != NULL );
-			if ( pConvexes[i] == NULL )
-				return false;
-		}
-
-		// Clean up
-		physcollision->DestroyQueryModel( pQuery );
-
-		// Create a collision model from all the convexes
-		pNewCollide = physcollision->ConvertConvexToCollide( pConvexes, nNumConvex );
-		if ( pNewCollide == NULL )
-			return false;
-	}
-
-	// Get our solid info
-	solid_t tmpSolid;
-	if ( !PhysModelParseSolidByIndex( tmpSolid, pInstance, pInstance->GetModelIndex(), -1 ) )
-		return false;
-
-	// Physprops get keyvalues that effect the mass, this block is to respect those fields when we scale
-	CPhysicsProp *pPhysInstance = dynamic_cast<CPhysicsProp*>( pInstance );
-	if ( pPhysInstance )
-	{
-		if ( pPhysInstance->GetMassScale() > 0 )
-		{
-			tmpSolid.params.mass *= pPhysInstance->GetMassScale();
-		}
-
-		PhysSolidOverride( tmpSolid, pPhysInstance->GetPhysOverrideScript() );
-	}			
-
-	// Scale our mass up as well
-	tmpSolid.params.mass *= flScale;
-	tmpSolid.params.volume = physcollision->CollideVolume( pNewCollide );
-
-	// Get our surface prop info
-	int surfaceProp = -1;
-	if ( tmpSolid.surfaceprop[0] )
-	{
-		surfaceProp = physprops->GetSurfaceIndex( tmpSolid.surfaceprop );
-	}
-
-	// Now put it all back (phew!)
-	IPhysicsObject *pNewObject = NULL;
-	if ( bWasStatic )
-	{
-		pNewObject = physenv->CreatePolyObjectStatic( pNewCollide, surfaceProp, pInstance->GetAbsOrigin(), pInstance->GetAbsAngles(), &tmpSolid.params );
-	}
-	else
-	{
-		pNewObject = physenv->CreatePolyObject( pNewCollide, surfaceProp, pInstance->GetAbsOrigin(), pInstance->GetAbsAngles(), &tmpSolid.params );
-	}
-	Assert( pNewObject );
-
-	pInstance->VPhysicsDestroyObject();
-	pInstance->VPhysicsSetObject( pNewObject );
-
-	// Increase our model bounds
-	const model_t *pModel = modelinfo->GetModel( pInstance->GetModelIndex() );
-	if ( pModel )
-	{
-		Vector mins, maxs;
-		modelinfo->GetModelBounds( pModel, mins, maxs );
-		pInstance->SetCollisionBounds( mins*flScale, maxs*flScale );
-	}
-
-	// Scale the base model as well
-	pInstance->SetModelScale( flScale );
-
-	if ( pInstance->GetParent() )
-	{
-		pNewObject->SetShadow( 1e4, 1e4, false, false );
-		pNewObject->UpdateShadow( pInstance->GetAbsOrigin(), pInstance->GetAbsAngles(), false, 0 );
-	}
-
-	if ( bWasMotionDisabled )
-	{
-		pNewObject->EnableMotion( false );
-	}
-	else
-	{
-		// Make sure we start awake!
-		pNewObject->Wake();
-	}
-
-	// Blargh
-	pInstance->SetScaledPhysics( ( flScale != 1.0f ) ? pNewObject : NULL );
-
-	return true;
-}
-
 
 //------------------------------------------------------------------------------
 // Rotates an entity
@@ -6112,7 +6470,9 @@ bool UTIL_CreateScaledPhysObject( CBaseAnimating *pInstance, float flScale )
 void CC_Ent_Rotate( const CCommand &args )
 {
 	CBasePlayer* pPlayer = UTIL_GetCommandClient();
-	CBaseEntity* pEntity = FindPickerEntity( pPlayer );
+	if ( !pPlayer )
+		return;
+	CBaseEntity* pEntity = pPlayer->FindPickerEntity();
 	if ( !pEntity )
 		return;
 
@@ -6131,3 +6491,5 @@ static ConCommand ent_rotate("ent_rotate", CC_Ent_Rotate, "Rotates an entity by 
 
 // This is a dummy. The entity is entirely clientside.
 LINK_ENTITY_TO_CLASS( func_proprrespawnzone, CBaseEntity );
+
+

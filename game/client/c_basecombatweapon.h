@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Client's CBaseCombatWeapon entity
 //
@@ -18,9 +18,5 @@
 
 class CViewSetup;
 class C_BaseViewModel;
-
-// Accessors for local weapons
-C_BaseCombatWeapon *GetActiveWeapon( void );
-
 
 #endif // C_BASECOMBATWEAPON

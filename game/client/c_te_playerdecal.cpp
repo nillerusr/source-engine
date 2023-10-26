@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -11,12 +11,12 @@
 #include "iefx.h"
 #include "fx.h"
 #include "decals.h"
-#include "materialsystem/imaterialsystem.h"
+#include "materialsystem/IMaterialSystem.h"
 #include "filesystem.h"
 #include "materialsystem/imaterial.h"
 #include "materialsystem/itexture.h"
 #include "materialsystem/imaterialvar.h"
-#include "clienteffectprecachesystem.h"
+#include "precache_register.h"
 #include "tier0/vprof.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -25,84 +25,84 @@
 static ConVar cl_playerspraydisable( "cl_playerspraydisable", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Disable player sprays." );
 
 #ifndef _XBOX
-CLIENTEFFECT_REGISTER_BEGIN( PrecachePlayerDecal )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo01" )
-#if !defined(HL2_DLL) || defined(HL2MP)
-CLIENTEFFECT_MATERIAL( "decals/playerlogo02" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo03" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo04" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo05" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo06" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo07" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo08" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo09" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo10" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo11" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo12" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo13" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo14" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo15" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo16" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo17" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo18" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo19" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo20" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo21" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo22" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo23" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo24" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo25" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo26" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo27" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo28" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo29" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo30" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo31" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo32" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo33" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo34" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo35" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo36" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo37" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo38" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo39" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo40" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo41" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo42" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo43" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo44" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo45" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo46" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo47" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo48" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo49" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo40" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo41" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo42" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo43" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo44" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo45" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo46" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo47" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo48" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo49" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo50" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo51" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo52" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo53" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo54" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo55" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo56" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo57" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo58" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo59" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo60" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo61" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo62" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo63" )
-CLIENTEFFECT_MATERIAL( "decals/playerlogo64" )
+PRECACHE_REGISTER_BEGIN( GLOBAL, PrecachePlayerDecal )
+PRECACHE( MATERIAL, "decals/playerlogo01" )
+#if !defined(HL2_DLL)
+PRECACHE( MATERIAL, "decals/playerlogo02" )
+PRECACHE( MATERIAL, "decals/playerlogo03" )
+PRECACHE( MATERIAL, "decals/playerlogo04" )
+PRECACHE( MATERIAL, "decals/playerlogo05" )
+PRECACHE( MATERIAL, "decals/playerlogo06" )
+PRECACHE( MATERIAL, "decals/playerlogo07" )
+PRECACHE( MATERIAL, "decals/playerlogo08" )
+PRECACHE( MATERIAL, "decals/playerlogo09" )
+PRECACHE( MATERIAL, "decals/playerlogo10" )
+PRECACHE( MATERIAL, "decals/playerlogo11" )
+PRECACHE( MATERIAL, "decals/playerlogo12" )
+PRECACHE( MATERIAL, "decals/playerlogo13" )
+PRECACHE( MATERIAL, "decals/playerlogo14" )
+PRECACHE( MATERIAL, "decals/playerlogo15" )
+PRECACHE( MATERIAL, "decals/playerlogo16" )
+PRECACHE( MATERIAL, "decals/playerlogo17" )
+PRECACHE( MATERIAL, "decals/playerlogo18" )
+PRECACHE( MATERIAL, "decals/playerlogo19" )
+PRECACHE( MATERIAL, "decals/playerlogo20" )
+PRECACHE( MATERIAL, "decals/playerlogo21" )
+PRECACHE( MATERIAL, "decals/playerlogo22" )
+PRECACHE( MATERIAL, "decals/playerlogo23" )
+PRECACHE( MATERIAL, "decals/playerlogo24" )
+PRECACHE( MATERIAL, "decals/playerlogo25" )
+PRECACHE( MATERIAL, "decals/playerlogo26" )
+PRECACHE( MATERIAL, "decals/playerlogo27" )
+PRECACHE( MATERIAL, "decals/playerlogo28" )
+PRECACHE( MATERIAL, "decals/playerlogo29" )
+PRECACHE( MATERIAL, "decals/playerlogo30" )
+PRECACHE( MATERIAL, "decals/playerlogo31" )
+PRECACHE( MATERIAL, "decals/playerlogo32" )
+PRECACHE( MATERIAL, "decals/playerlogo33" )
+PRECACHE( MATERIAL, "decals/playerlogo34" )
+PRECACHE( MATERIAL, "decals/playerlogo35" )
+PRECACHE( MATERIAL, "decals/playerlogo36" )
+PRECACHE( MATERIAL, "decals/playerlogo37" )
+PRECACHE( MATERIAL, "decals/playerlogo38" )
+PRECACHE( MATERIAL, "decals/playerlogo39" )
+PRECACHE( MATERIAL, "decals/playerlogo40" )
+PRECACHE( MATERIAL, "decals/playerlogo41" )
+PRECACHE( MATERIAL, "decals/playerlogo42" )
+PRECACHE( MATERIAL, "decals/playerlogo43" )
+PRECACHE( MATERIAL, "decals/playerlogo44" )
+PRECACHE( MATERIAL, "decals/playerlogo45" )
+PRECACHE( MATERIAL, "decals/playerlogo46" )
+PRECACHE( MATERIAL, "decals/playerlogo47" )
+PRECACHE( MATERIAL, "decals/playerlogo48" )
+PRECACHE( MATERIAL, "decals/playerlogo49" )
+PRECACHE( MATERIAL, "decals/playerlogo40" )
+PRECACHE( MATERIAL, "decals/playerlogo41" )
+PRECACHE( MATERIAL, "decals/playerlogo42" )
+PRECACHE( MATERIAL, "decals/playerlogo43" )
+PRECACHE( MATERIAL, "decals/playerlogo44" )
+PRECACHE( MATERIAL, "decals/playerlogo45" )
+PRECACHE( MATERIAL, "decals/playerlogo46" )
+PRECACHE( MATERIAL, "decals/playerlogo47" )
+PRECACHE( MATERIAL, "decals/playerlogo48" )
+PRECACHE( MATERIAL, "decals/playerlogo49" )
+PRECACHE( MATERIAL, "decals/playerlogo50" )
+PRECACHE( MATERIAL, "decals/playerlogo51" )
+PRECACHE( MATERIAL, "decals/playerlogo52" )
+PRECACHE( MATERIAL, "decals/playerlogo53" )
+PRECACHE( MATERIAL, "decals/playerlogo54" )
+PRECACHE( MATERIAL, "decals/playerlogo55" )
+PRECACHE( MATERIAL, "decals/playerlogo56" )
+PRECACHE( MATERIAL, "decals/playerlogo57" )
+PRECACHE( MATERIAL, "decals/playerlogo58" )
+PRECACHE( MATERIAL, "decals/playerlogo59" )
+PRECACHE( MATERIAL, "decals/playerlogo60" )
+PRECACHE( MATERIAL, "decals/playerlogo61" )
+PRECACHE( MATERIAL, "decals/playerlogo62" )
+PRECACHE( MATERIAL, "decals/playerlogo63" )
+PRECACHE( MATERIAL, "decals/playerlogo64" )
 #endif
-CLIENTEFFECT_REGISTER_END()
+PRECACHE_REGISTER_END()
 #endif
 
 //-----------------------------------------------------------------------------
@@ -153,45 +153,6 @@ void C_TEPlayerDecal::Precache( void )
 
 //-----------------------------------------------------------------------------
 // Purpose: 
-//-----------------------------------------------------------------------------
-IMaterial *CreateTempMaterialForPlayerLogo( int iPlayerIndex, player_info_t *info, char *texname, int nchars )
-{
-	// Doesn't have a logo?
-	if ( !info->customFiles[0] )	
-		return NULL;
-
-	IMaterial *logo = materials->FindMaterial( VarArgs("decals/playerlogo%2.2d", iPlayerIndex), TEXTURE_GROUP_DECAL );
-	if ( IsErrorMaterial( logo ) )
-		return NULL;
-
-	char logohex[ 16 ];
-	Q_binarytohex( (byte *)&info->customFiles[0], sizeof( info->customFiles[0] ), logohex, sizeof( logohex ) );
-
-	// See if logo has been downloaded.
-	Q_snprintf( texname, nchars, "temp/%s", logohex );
-	char fulltexname[ 512 ];
-	Q_snprintf( fulltexname, sizeof( fulltexname ), "materials/temp/%s.vtf", logohex );
-
-	if ( !filesystem->FileExists( fulltexname ) )
-	{
-		char custname[ 512 ];
-		Q_snprintf( custname, sizeof( custname ), "download/user_custom/%c%c/%s.dat", logohex[0], logohex[1], logohex );
-		// it may have been downloaded but not copied under materials folder
-		if ( !filesystem->FileExists( custname ) )
-			return NULL; // not downloaded yet
-
-		// copy from download folder to materials/temp folder
-		// this is done since material system can access only materials/*.vtf files
-
-		if ( !engine->CopyLocalFile( custname, fulltexname) )
-			return NULL;
-	}
-
-	return logo;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
 // Input  : filter - 
 //			delay - 
 //			pos - 
@@ -213,11 +174,37 @@ void TE_PlayerDecal( IRecipientFilter& filter, float delay,
 	player_info_t info;
 	engine->GetPlayerInfo( player, &info );
 
-	// Make sure we've got the material for this player's logo
-	char texname[ 512 ];
-	IMaterial *logo = CreateTempMaterialForPlayerLogo( player, &info, texname, 512 );
-	if ( !logo )
+	// Doesn't have a logo
+	 if ( !info.customFiles[0] )	
 		return;
+
+	IMaterial *logo = materials->FindMaterial( VarArgs("decals/playerlogo%2.2d", player), TEXTURE_GROUP_DECAL );
+	if ( IsErrorMaterial( logo ) )
+		return;
+
+	char logohex[ 16 ];
+	Q_binarytohex( (byte *)&info.customFiles[0], sizeof( info.customFiles[0] ), logohex, sizeof( logohex ) );
+
+	// See if logo has been downloaded.
+	char texname[ 512 ];
+	Q_snprintf( texname, sizeof( texname ), "temp/%s", logohex );
+	char fulltexname[ 512 ];
+	Q_snprintf( fulltexname, sizeof( fulltexname ), "materials/temp/%s.vtf", logohex );
+
+	if ( !filesystem->FileExists( fulltexname ) )
+	{
+		char custname[ 512 ];
+		Q_snprintf( custname, sizeof( custname ), "downloads/%s.dat", logohex );
+		// it may have been downloaded but not copied under materials folder
+		if ( !filesystem->FileExists( custname ) )
+			return; // not downloaded yet
+
+		// copy from download folder to materials/temp folder
+		// this is done since material system can access only materials/*.vtf files
+
+		if ( !engine->CopyFile( custname, fulltexname) )
+			return;
+	}
 
 	ITexture *texture = materials->FindTexture( texname, TEXTURE_GROUP_DECAL );
 	if ( IsErrorTexture( texture ) ) 
@@ -240,7 +227,7 @@ void TE_PlayerDecal( IRecipientFilter& filter, float delay,
 	color32 rgbaColor = { 255, 255, 255, 255 };
 	effects->PlayerDecalShoot( 
 		logo, 
-		(void *)(intp)player,
+		(void *)player,
 		entity, 
 		ent->GetModel(), 
 		ent->GetAbsOrigin(), 

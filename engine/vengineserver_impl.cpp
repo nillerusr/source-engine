@@ -1595,6 +1595,12 @@ public:
 		return sv.GetPlayerInfo( (ent_num-1), pinfo );
 	}
 
+	virtual ISPSharedMemory *GetSinglePlayerSharedMemorySpace( const char *szName, int ent_num = MAX_EDICTS )
+	{
+		// TODO(nillerusr): it this necessary? Implement later if so
+		return NULL; //return g_pSinglePlayerSharedMemoryManager->GetSharedMemory( szName, ent_num );
+	}
+
 	bool IsClientFullyAuthenticated( edict_t *pEdict )
 	{
 		int entnum = NUM_FOR_EDICT( pEdict );

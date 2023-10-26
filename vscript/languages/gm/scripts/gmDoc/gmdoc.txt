@@ -1,0 +1,2 @@
+..\..\src\binds
+..\..\src\gm

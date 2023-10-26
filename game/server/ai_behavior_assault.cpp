@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -14,6 +14,9 @@
 
 ConVar ai_debug_assault("ai_debug_assault", "0");
 
+CGameString g_AssaultPointString( "assault_assaultpoint" );
+CGameString g_RallyPointString( "assault_rallypoint" );
+
 BEGIN_DATADESC( CRallyPoint )
 	DEFINE_KEYFIELD( m_AssaultPointName, FIELD_STRING, "assaultpoint" ),
 	DEFINE_KEYFIELD( m_RallySequenceName, FIELD_STRING, "rallysequence" ),
@@ -22,6 +25,7 @@ BEGIN_DATADESC( CRallyPoint )
 	DEFINE_KEYFIELD( m_iStrictness, FIELD_INTEGER, "strict" ),
 	DEFINE_KEYFIELD( m_bForceCrouch, FIELD_BOOLEAN, "forcecrouch" ),
 	DEFINE_KEYFIELD( m_bIsUrgent, FIELD_BOOLEAN, "urgent" ),
+	DEFINE_KEYFIELD( m_bShouldLock, FIELD_BOOLEAN, "lockpoint" ),
 	DEFINE_FIELD( m_hLockedBy, FIELD_EHANDLE ),
 	DEFINE_FIELD( m_sExclusivity, FIELD_SHORT ),
 
@@ -120,6 +124,10 @@ bool CRallyPoint::IsExclusive()
 				}
 
 				pAssaultEnt = (CAssaultPoint *)gEntList.FindEntityByName( NULL, pAssaultEnt->m_NextAssaultPointName );
+				if ( pAssaultEnt && !pAssaultEnt->ClassMatchesExact( g_AssaultPointString ) )
+				{
+					pAssaultEnt = NULL;
+				}
 				
 			} while( (pAssaultEnt != NULL) && (pAssaultEnt != pFirstAssaultEnt) );
 
@@ -169,7 +177,8 @@ BEGIN_DATADESC( CAI_AssaultBehavior )
 	DEFINE_FIELD( m_bDiverting, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_flLastSawAnEnemyAt, FIELD_FLOAT ),
 	DEFINE_FIELD( m_flTimeDeferScheduleSelection, FIELD_TIME ),
-	DEFINE_FIELD( m_AssaultPointName, FIELD_STRING )
+	DEFINE_FIELD( m_AssaultPointName, FIELD_STRING ),
+	DEFINE_FIELD( m_hGoal, FIELD_EHANDLE )
 END_DATADESC();
 
 //-----------------------------------------------------------------------------
@@ -251,12 +260,24 @@ CAssaultPoint *CAI_AssaultBehavior::FindAssaultPoint( string_t iszAssaultPointNa
 	CUtlVector<CAssaultPoint*>pAssaultPoints;
 	CUtlVector<CAssaultPoint*>pClearAssaultPoints;
 
-	CAssaultPoint *pAssaultEnt = (CAssaultPoint *)gEntList.FindEntityByName( NULL, iszAssaultPointName );
-
-	while( pAssaultEnt != NULL )
+	CBaseEntity *pEnt = gEntList.FindEntityByName( NULL, iszAssaultPointName );
+	while( pEnt != NULL )
 	{
-		pAssaultPoints.AddToTail( pAssaultEnt );
-		pAssaultEnt = (CAssaultPoint *)gEntList.FindEntityByName( pAssaultEnt, iszAssaultPointName );
+		CAssaultPoint *pAssaultEnt;
+		
+		if ( !pEnt->Downcast( g_AssaultPointString, &pAssaultEnt) )
+		{
+			if ( !pEnt->ClassMatchesExact( g_RallyPointString ) )
+			{
+				DevMsg( "**ERROR: Entity %s being used as an assault_assaultpoint, but is actually a %s!\n", pEnt->GetDebugName(), pEnt->GetClassname() );
+			}
+		}
+		else
+		{
+			pAssaultPoints.AddToTail( pAssaultEnt );
+		}
+		
+		pEnt = gEntList.FindEntityByName( pEnt, iszAssaultPointName );
 	}
 
 	// Didn't find any?!
@@ -308,13 +329,51 @@ CAssaultPoint *CAI_AssaultBehavior::FindAssaultPoint( string_t iszAssaultPointNa
 
 	// Remove the most recently used 
 	pClearAssaultPoints.Remove( iMostRecentIndex );
-	return pClearAssaultPoints[ random->RandomInt(0, (pClearAssaultPoints.Count() - 1)) ];
+
+	if ( !m_hGoal || m_hGoal->m_BranchMethod == BRANCH_RANDOM )
+	{
+		return pClearAssaultPoints[ random->RandomInt(0, (pClearAssaultPoints.Count() - 1)) ];
+	}
+
+	CAssaultPoint *pBest = NULL;
+	Vector vStart = GetOuter()->GetAbsOrigin();
+	float distBest, distCur;
+
+	if ( m_hGoal->m_BranchMethod == BRANCH_CLOSEST )
+	{
+		distBest = FLT_MAX;
+		for( int i = 0 ; i < pClearAssaultPoints.Count() ; i++ )
+		{
+			distCur = ( pClearAssaultPoints[i]->GetAbsOrigin() - vStart ).LengthSqr();
+			if ( distCur < distBest )
+			{
+				pBest = pClearAssaultPoints[i];
+				distBest = distCur;
+			}
+		}
+	}
+	else
+	{
+		distBest = 0;
+		for( int i = 0 ; i < pClearAssaultPoints.Count() ; i++ )
+		{
+			distCur = ( pClearAssaultPoints[i]->GetAbsOrigin() - vStart ).LengthSqr();
+			if ( distCur > distBest )
+			{
+				pBest = pClearAssaultPoints[i];
+				distBest = distCur;
+			}
+		}
+	}
+
+	return pBest;
 }
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 void CAI_AssaultBehavior::SetAssaultPoint( CAssaultPoint *pAssaultPoint )
 {
+	Assert( pAssaultPoint != NULL );
 	m_hAssaultPoint = pAssaultPoint;
 	pAssaultPoint->m_flTimeLastUsed = gpGlobals->curtime;
 }
@@ -330,7 +389,17 @@ void CAI_AssaultBehavior::ClearAssaultPoint( void )
 	// the assault behavior.
 	// This can also be happen if an assault point has ClearOnContact set, and
 	// an NPC assaulting to this point has seen an enemy.
+	Assert( m_hAssaultPoint != NULL );
+	if ( m_hAssaultPoint == NULL )
+	{
+		DevMsg("**ERROR: ClearAssaultPoint called with no assault point\n" );
 
+		// Bomb out of assault behavior.
+		m_AssaultCue = CUE_NO_ASSAULT;
+		ClearSchedule( "No assault point" );
+		return;
+	}
+	
 	// keep track of the name of the assault point
 	m_AssaultPointName = m_hAssaultPoint->m_NextAssaultPointName;
 
@@ -350,13 +419,22 @@ void CAI_AssaultBehavior::ClearAssaultPoint( void )
 		}
 		else
 		{
-			DevMsg("**ERROR: Can't find next assault point: %s\n", STRING(m_hAssaultPoint->m_NextAssaultPointName) );
+			CBaseEntity *pNextRally = gEntList.FindEntityByName( NULL, m_hAssaultPoint->m_NextAssaultPointName );
+			if ( pNextRally->ClassMatchesExact( g_RallyPointString ) && m_hGoal && m_hGoal->IsActive() )
+			{
+				SetParameters( m_hAssaultPoint->m_NextAssaultPointName, (AssaultCue_t)m_hGoal->m_AssaultCue, m_hGoal->m_RallySelectMethod );
+				return;
+			}
+			else
+			{
+				DevMsg("**ERROR: Can't find next assault point: %s\n", STRING(m_hAssaultPoint->m_NextAssaultPointName) );
 
-			// Bomb out of assault behavior.
-			m_AssaultCue = CUE_NO_ASSAULT;
-			ClearSchedule( "Can't find next assault point" );
+				// Bomb out of assault behavior.
+				m_AssaultCue = CUE_NO_ASSAULT;
+				ClearSchedule( "Can't find next assault point" );
 
-			return;
+				return;
+			}
 		}
 	}
 
@@ -385,12 +463,18 @@ void CAI_AssaultBehavior::OnHitAssaultPoint( void )
 {
 	GetOuter()->SpeakSentence( ASSAULT_SENTENCE_HIT_ASSAULT_POINT );
 	m_bHitAssaultPoint = true;
-	m_hAssaultPoint->m_OnArrival.FireOutput( GetOuter(), m_hAssaultPoint, 0 );
 
-	// Set the assault hint group
-	if( m_hAssaultPoint->m_AssaultHintGroup != NULL_STRING )
+	// dvs: This was unprotected. Is a NULL assault point valid here?
+	Assert( m_hAssaultPoint != NULL );
+	if ( m_hAssaultPoint )
 	{
-		SetHintGroup( m_hAssaultPoint->m_AssaultHintGroup );
+		m_hAssaultPoint->m_OnArrival.FireOutput( GetOuter(), m_hAssaultPoint, 0 );
+
+		// Set the assault hint group
+		if ( m_hAssaultPoint->m_AssaultHintGroup != NULL_STRING )
+		{
+			SetHintGroup( m_hAssaultPoint->m_AssaultHintGroup );
+		}
 	}
 }
 
@@ -416,12 +500,21 @@ void CAI_AssaultBehavior::GatherConditions( void )
 				OnHitAssaultPoint();
 				ClearAssaultPoint();
 
-				AI_NavGoal_t goal( m_hAssaultPoint->GetAbsOrigin() );
-				goal.pTarget = m_hAssaultPoint;
-				
-				if ( GetNavigator()->SetGoal( goal ) == false )
+				if ( m_hAssaultPoint )
 				{
-					TaskFail( "Can't refresh assault path" );
+					AI_NavGoal_t goal( m_hAssaultPoint->GetAbsOrigin() );
+					goal.pTarget = m_hAssaultPoint;
+
+					if ( GetNavigator()->SetGoal( goal ) == false )
+					{
+						TaskFail( "Can't refresh assault path" );
+					}
+				}
+				else
+				{
+					// Bomb out of assault behavior.
+					m_AssaultCue = CUE_NO_ASSAULT;
+					ClearSchedule( "Can't find next assault point" );
 				}
 			}
 		}
@@ -942,7 +1035,8 @@ void CAI_AssaultBehavior::SetParameters( string_t rallypointname, AssaultCue_t a
 
 	switch( rallySelectMethod )
 	{
-	case RALLY_POINT_SELECT_DEFAULT:
+	case RALLY_POINT_SELECT_CLOSEST:
+	case RALLY_POINT_SELECT_FURTHEST:
 		{
 			while( pRallyEnt )
 			{
@@ -966,7 +1060,8 @@ void CAI_AssaultBehavior::SetParameters( string_t rallypointname, AssaultCue_t a
 						flNewDist = ( pRallyEnt->GetAbsOrigin() - vecStart ).LengthSqr();
 						flBestDist = ( pBest->GetAbsOrigin() - vecStart ).LengthSqr();
 
-						if( flNewDist < flBestDist )
+						if( ( rallySelectMethod == RALLY_POINT_SELECT_CLOSEST && flNewDist < flBestDist ) ||
+							( rallySelectMethod == RALLY_POINT_SELECT_FURTHEST && flNewDist > flBestDist ) )
 						{
 							// Priority is already identical. Just take this point.
 							pBest = pRallyEnt;
@@ -1013,7 +1108,11 @@ void CAI_AssaultBehavior::SetParameters( string_t rallypointname, AssaultCue_t a
 		return;
 	}
 
-	pBest->Lock( GetOuter() );
+	if ( pBest->ShouldBeLocked() )
+	{
+		pBest->Lock( GetOuter() );
+	}
+
 	m_hRallyPoint = pBest;
 
 	if( !m_hRallyPoint )
@@ -1043,7 +1142,7 @@ void CAI_AssaultBehavior::InitializeBehavior()
 	m_bHitRallyPoint = false;
 	m_bHitAssaultPoint = false;
 
-	m_hAssaultPoint = 0;
+	m_hAssaultPoint = false;
 
 	m_bDiverting = false;
 	m_flLastSawAnEnemyAt = 0;
@@ -1257,7 +1356,7 @@ int CAI_AssaultBehavior::TranslateSchedule( int scheduleType )
 		break;
 
 	case SCHED_HOLD_RALLY_POINT:
-		if( HasCondition(COND_NO_PRIMARY_AMMO) || HasCondition(COND_LOW_PRIMARY_AMMO) )
+		if( HasCondition(COND_NO_PRIMARY_AMMO) | HasCondition(COND_LOW_PRIMARY_AMMO) )
 		{
 			return SCHED_RELOAD;
 		}
@@ -1523,26 +1622,12 @@ int CAI_AssaultBehavior::SelectSchedule()
 //			
 //
 //-----------------------------------------------------------------------------
-class CAI_AssaultGoal : public CAI_GoalEntity
-{
-	typedef CAI_GoalEntity BaseClass;
-
-	virtual void EnableGoal( CAI_BaseNPC *pAI );
-	virtual void DisableGoal( CAI_BaseNPC *pAI );
-
-	string_t		m_RallyPoint;
-	int				m_AssaultCue;
-	int				m_RallySelectMethod;
-
-	void InputBeginAssault( inputdata_t &inputdata );
-
-	DECLARE_DATADESC();
-};
 
 BEGIN_DATADESC( CAI_AssaultGoal )
 	DEFINE_KEYFIELD( m_RallyPoint, FIELD_STRING, "rallypoint" ),
 	DEFINE_KEYFIELD( m_AssaultCue, FIELD_INTEGER, "AssaultCue" ),
 	DEFINE_KEYFIELD( m_RallySelectMethod, FIELD_INTEGER, "RallySelectMethod" ),
+	DEFINE_KEYFIELD( m_BranchMethod, FIELD_INTEGER, "BranchMethod" ),
 
 	DEFINE_INPUTFUNC( FIELD_VOID, "BeginAssault", InputBeginAssault ),
 END_DATADESC();
@@ -1562,6 +1647,7 @@ void CAI_AssaultGoal::EnableGoal( CAI_BaseNPC *pAI )
 	if ( !pAI->GetBehavior( &pBehavior ) )
 		return;
 
+	pBehavior->SetGoal( this );
 	pBehavior->SetParameters( m_RallyPoint, (AssaultCue_t)m_AssaultCue, m_RallySelectMethod );
 
 	// Duplicate the output
@@ -1582,6 +1668,7 @@ void CAI_AssaultGoal::DisableGoal( CAI_BaseNPC *pAI )
 		pBehavior->UnlockRallyPoint();
 
 		pBehavior->ClearSchedule( "Assault goal disabled" );
+		pBehavior->SetGoal( NULL );
 	}
 }
 

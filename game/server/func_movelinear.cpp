@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Implements a brush model entity that moves along a linear path.
 //			Water whose level can be changed is implemented using the same entity.
@@ -56,6 +56,18 @@ BEGIN_DATADESC( CFuncMoveLinear )
 
 END_DATADESC()
 
+void SendProxy_CropFlagsToConveyorFlagBitsLength( const SendProp *pProp, const void *pStruct, const void *pVarData, DVariant *pOut, int iElement, int objectID)
+{
+	int mask = (1<<13) - 1;
+	int data = *(int *)pVarData;
+
+	pOut->m_Int = ( data & mask );
+}
+
+IMPLEMENT_SERVERCLASS_ST(CFuncMoveLinear, DT_FuncMoveLinear)
+	SendPropVector( SENDINFO( m_vecVelocity ), 0, SPROP_NOSCALE ),
+	SendPropInt			( SENDINFO(m_fFlags), 0, SPROP_UNSIGNED ),
+END_SEND_TABLE()
 
 //------------------------------------------------------------------------------
 // Purpose: Called before spawning, after keyvalues have been parsed.
@@ -84,13 +96,15 @@ void CFuncMoveLinear::Spawn( void )
 		m_flMoveDistance = DotProductAbs( m_vecMoveDir, vecOBB ) - m_flLip;
 	}
 
-	m_vecPosition1 = GetAbsOrigin() - (m_vecMoveDir * m_flMoveDistance * m_flStartPosition);
+	m_vecPosition1 = GetLocalOrigin() - (m_vecMoveDir * m_flMoveDistance * m_flStartPosition);
 	m_vecPosition2 = m_vecPosition1 + (m_vecMoveDir * m_flMoveDistance);
-	m_vecFinalDest = GetAbsOrigin();
+	m_vecFinalDest = GetLocalOrigin();
 
 	SetTouch( NULL );
 
 	Precache();
+
+	AddFlag( FL_CONVEYOR );
 
 	// It is solid?
 	SetSolid( SOLID_VPHYSICS );
@@ -256,11 +270,11 @@ void CFuncMoveLinear::MoveDone( void )
 	SetNextThink( gpGlobals->curtime + 0.1f );
 	BaseClass::MoveDone();
 
-	if ( GetAbsOrigin() == m_vecPosition2 )
+	if ( GetLocalOrigin() == m_vecPosition2 )
 	{
 		m_OnFullyOpen.FireOutput( this, this );
 	}
-	else if ( GetAbsOrigin() == m_vecPosition1 )
+	else if ( GetLocalOrigin() == m_vecPosition1 )
 	{
 		m_OnFullyClosed.FireOutput( this, this );
 	}
@@ -342,13 +356,7 @@ void CFuncMoveLinear::Blocked( CBaseEntity *pOther )
 	// Hurt the blocker 
 	if ( m_flBlockDamage )
 	{
-		if ( pOther->m_takedamage == DAMAGE_EVENTS_ONLY )
-		{
-			if ( FClassnameIs( pOther, "gib" ) )
-				UTIL_Remove( pOther );
-		}
-		else
-			pOther->TakeDamage( CTakeDamageInfo( this, this, m_flBlockDamage, DMG_CRUSH ) );
+		pOther->TakeDamage( CTakeDamageInfo( this, this, m_flBlockDamage, DMG_CRUSH ) );
 	}
 }
 
@@ -362,11 +370,20 @@ void CFuncMoveLinear::InputSetSpeed( inputdata_t &inputdata )
 	m_flSpeed = inputdata.value.Float();
 
 	// FIXME: This is a little questionable.  Do we want to fix the speed, or let it continue on at the old speed?
-	float flDistToGoalSqr = ( m_vecFinalDest - GetAbsOrigin() ).LengthSqr();
+	float flDistToGoalSqr = ( m_vecFinalDest - GetLocalOrigin() ).LengthSqr();
 	if ( flDistToGoalSqr > Square( FLT_EPSILON ) )
 	{
-		// NOTE: We do NOT want to call sound functions here, just vanilla position changes
-		LinearMove( m_vecFinalDest, m_flSpeed );
+		if ( fabs( m_flSpeed ) > FLT_EPSILON )
+		{
+			// NOTE: We do NOT want to call sound functions here, just vanilla position changes
+			LinearMove( m_vecFinalDest, m_flSpeed );
+		}
+		else
+		{
+			// If we set our speed to 0, just move to the current position to stop.
+			m_flSpeed = 1.0f;
+			LinearMove( GetLocalOrigin(), m_flSpeed );
+		}
 	}
 }
 

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -27,6 +27,7 @@ enum AI_TestGroundMoveFlags_t
 	AITGM_IGNORE_INITIAL_STAND_POS	= 0x02,
 	AITGM_2D						= 0x04,
 	AITGM_DRAW_RESULTS				= 0x08,
+	AITGM_CRAWL_LARGE_STEPS			= 0x10,
 };
 
 enum AI_MoveLimitFlags_t
@@ -93,6 +94,7 @@ private:
 		float				minStepLanding;
 		unsigned			collisionMask;
 		StepGroundTest_t	groundTest;
+		unsigned			flags;
 	};
 
 	struct CheckStepResult_t
@@ -101,6 +103,7 @@ private:
 		Vector			hitNormal;
 		bool			fStartSolid;
 		CBaseEntity *	pBlocker;
+		bool			bCrawling;
 	};
 
 	
@@ -123,6 +126,9 @@ private:
 public:
 	Vector 				CalcJumpLaunchVelocity(const Vector &startPos, const Vector &endPos, float gravity, float *pminHeight, float maxHorzVelocity, Vector *vecApex ) const;
 private:
+	void				CheckStepOverLargeCrawl( CheckStepResult_t *pResult, const CheckStepArgs_t &args, const Vector &vecStart, const Vector &vecEnd, const trace_t &blockedTrace ) const;
+	// Confirm 3D connectivity between 2 nodes
+	bool				Confirm3DConnectivity( AIMoveTrace_t *pMoveTrace, unsigned flags, const Vector &vecDesiredEnd ) const;
 
 	// Common services provided by CAI_BaseNPC, Convenience methods to simplify code
 	float				StepHeight() const;
@@ -130,7 +136,7 @@ private:
 
 	bool				m_bIgnoreTransientEntities;
 
-	CTraceListData *	m_pTraceListData;
+	ITraceListData *	m_pTraceListData;
 
 	EHANDLE				m_hLastBlockingEnt;
 

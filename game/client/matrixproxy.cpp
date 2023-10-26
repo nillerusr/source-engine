@@ -1,22 +1,19 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 // $NoKeywords: $
 //=============================================================================//
 #include "cbase.h"
-#include "mathlib/vmatrix.h"
-#include "functionproxy.h"
-#include "materialsystem/imaterialvar.h"
+#include "mathlib/VMatrix.h"
+#include "FunctionProxy.h"
+#include "materialsystem/IMaterialVar.h"
 #include <KeyValues.h>
-#include "materialsystem/imaterial.h"
-#include "toolframework_client.h"
+#include "materialsystem/IMaterial.h"
 
+#include "imaterialproxydict.h"
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
-
-// forward declarations
-void ToolFramework_RecordMaterialParams( IMaterial *pMaterial );
 
 class C_BaseEntity;
 
@@ -110,16 +107,11 @@ void CTextureTransformProxy::OnBind( void *pC_BaseEntity )
 	}
 
 	m_pResult->SetMatrixValue( mat );
-
-	if ( ToolsEnabled() )
-	{
-		ToolFramework_RecordMaterialParams( GetMaterial() );
-	}
 }
 
 
 
-EXPOSE_INTERFACE( CTextureTransformProxy, IMaterialProxy, "TextureTransform" IMATERIAL_PROXY_INTERFACE_VERSION );
+EXPOSE_MATERIAL_PROXY( CTextureTransformProxy, TextureTransform );
 
 
 //-----------------------------------------------------------------------------
@@ -169,14 +161,9 @@ void CMatrixRotateProxy::OnBind( void *pC_BaseEntity )
 
 	MatrixBuildRotationAboutAxis( mat, axis, m_Angle.GetFloat() );
 	m_pResult->SetMatrixValue( mat );
-
-	if ( ToolsEnabled() )
-	{
-		ToolFramework_RecordMaterialParams( GetMaterial() );
-	}
 }
 
 
 
-EXPOSE_INTERFACE( CMatrixRotateProxy, IMaterialProxy, "MatrixRotate" IMATERIAL_PROXY_INTERFACE_VERSION );
+EXPOSE_MATERIAL_PROXY( CMatrixRotateProxy, MatrixRotate );
 

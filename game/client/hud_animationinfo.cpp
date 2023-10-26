@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -70,7 +70,7 @@ DECLARE_HUDELEMENT( CHudAnimationInfo );
 CHudAnimationInfo::CHudAnimationInfo( const char *pElementName )
  : CHudElement( pElementName ), BaseClass( NULL, "HudAnimationInfo" )
 {
-	vgui::Panel *pParent = g_pClientMode->GetViewport();
+	vgui::Panel *pParent = GetClientMode()->GetViewport();
 	SetParent( pParent );
 
 	SetActive( true );
@@ -252,11 +252,11 @@ static int HudElementCompletion( const char *partial, char commands[ COMMAND_COM
 
 	int current = 0;
 
-	int c = gHUD.m_HudList.Count();
+	int c = GetHud().GetHudList().Count();
 	int i;
 	for ( i = 0; i < c; i++ )
 	{
-		CHudElement *e = gHUD.m_HudList[ i ];
+		CHudElement *e = GetHud().GetHudList()[ i ];
 		if ( !e )
 			continue;
 
@@ -301,11 +301,11 @@ CON_COMMAND_F_COMPLETION( cl_animationinfo, "Hud element to examine.", 0, HudEle
 	// Find it
 	CHudElement *element = NULL;
 	
-	for ( int i = 0; i < gHUD.m_HudList.Size(); i++ )
+	for ( int i = 0; i < GetHud().GetHudList().Count(); i++ )
 	{
-		if ( stricmp( gHUD.m_HudList[i]->GetName(), args[1]  ) == 0 )
+		if ( stricmp( GetHud().GetHudList()[i]->GetName(), args[1]  ) == 0 )
 		{
-			element = gHUD.m_HudList[i];
+			element = GetHud().GetHudList()[i];
 			break;
 		}
 	}

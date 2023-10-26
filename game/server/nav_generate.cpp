@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright � 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -18,9 +18,7 @@
 //#include "terror/TerrorShared.h"
 #include "fmtstr.h"
 
-#ifdef TERROR
-#include "func_simpleladder.h"
-#endif
+
 
 // NOTE: This has to be the last file included!
 #include "tier0/memdbgon.h"
@@ -147,15 +145,7 @@ void CNavMesh::BuildLadders( void )
 	// remove any left-over ladders
 	DestroyLadders();
 
-#ifdef TERROR
-	CFuncSimpleLadder *ladder = NULL;
-	while( (ladder = dynamic_cast< CFuncSimpleLadder * >(gEntList.FindEntityByClassname( ladder, "func_simpleladder" ))) != NULL )
-	{
-		Vector mins, maxs;
-		ladder->CollisionProp()->WorldSpaceSurroundingBounds( &mins, &maxs );
-		CreateLadder( mins, maxs, 0.0f );
-	}
-#endif
+
 }
 
 
@@ -603,23 +593,7 @@ private:
 //--------------------------------------------------------------------------------------------------------------
 void CNavMesh::MarkPlayerClipAreas( void )
 {
-#ifdef TERROR
-	FOR_EACH_VEC( TheNavAreas, it )
-	{
-		TerrorNavArea *area = static_cast< TerrorNavArea * >(TheNavAreas[it]);
 
-		// Trace upward a bit from our center point just colliding wtih PLAYERCLIP to see if we're in one, if we are, mark us as accordingly.
-		trace_t trace;
-		Vector start = area->GetCenter() + Vector(0.0f, 0.0f, 16.0f );
-		Vector end = area->GetCenter() + Vector(0.0f, 0.0f, 32.0f );
-		UTIL_TraceHull( start, end, Vector(0,0,0), Vector(0,0,0), CONTENTS_PLAYERCLIP, NULL, &trace);
-
-		if ( trace.fraction < 1.0 )
-		{
-			area->SetAttributes( area->GetAttributes() | TerrorNavArea::NAV_PLAYERCLIP );
-		}
-	}
-#endif
 }
 
 //--------------------------------------------------------------------------------------------------------------
@@ -813,7 +787,7 @@ void CNavMesh::RaiseAreasWithInternalObstacles()
 			}
 
 			// are both edged blocked in this direction, and is the obstacle height in this direction the tallest we've seen?
-			if ( (iEdgesBlocked >= BlockedEdgeCutoff ) && ( MAX( obstacleZThisDir[0], obstacleZThisDir[1] ) ) > obstacleZMax )
+			if ( (iEdgesBlocked >= BlockedEdgeCutoff ) && ( MAX( obstacleZThisDir[0], obstacleZThisDir[2] ) ) > obstacleZMax )
 			{
 				// this is the tallest obstacle we've encountered so far, remember its details
 				obstacleZ[0] = obstacleZThisDir[0];
@@ -859,7 +833,7 @@ void CNavMesh::RaiseAreasWithInternalObstacles()
 				corner[SOUTH_EAST].y = corner[NORTH_EAST].y + obstacleEndDist;
 				corner[NORTH_WEST].y += obstacleStartDist;
 				corner[NORTH_EAST].y += obstacleStartDist;
-				::V_swap( obstacleZ[0], obstacleZ[1] );			// swap left and right Z heights for obstacle so we can run common code below
+				V_swap( obstacleZ[0], obstacleZ[1] );			// swap left and right Z heights for obstacle so we can run common code below
 				break;
 			case EAST:
 				corner[NORTH_EAST].x = corner[NORTH_WEST].x + obstacleEndDist;
@@ -871,7 +845,7 @@ void CNavMesh::RaiseAreasWithInternalObstacles()
 				corner[SOUTH_WEST].x = corner[SOUTH_EAST].x - obstacleEndDist;				
 				corner[NORTH_EAST].x -= obstacleStartDist;
 				corner[SOUTH_EAST].x -= obstacleStartDist;
-				::V_swap( obstacleZ[0], obstacleZ[1] );			// swap left and right Z heights for obstacle so we can run common code below
+				V_swap( obstacleZ[0], obstacleZ[1] );			// swap left and right Z heights for obstacle so we can run common code below
 				break;
 			}
 
@@ -882,11 +856,9 @@ void CNavMesh::RaiseAreasWithInternalObstacles()
 			corner[SOUTH_WEST].z = obstacleZ[0];
 			
 			// move the area
-			RemoveNavArea( area );
 			area->Build( corner[NORTH_WEST], corner[NORTH_EAST], corner[SOUTH_EAST], corner[SOUTH_WEST] );
 			Assert( !area->IsDegenerate() );
-			AddNavArea( area );
-
+//			AddToSelectedSet( area );
 			// remove side-to-side connections if there are any so AI does try to do things like run along fencetops
 			area->RemoveOrthogonalConnections( obstacleDir );
 			area->SetAttributes( area->GetAttributes() | NAV_MESH_NO_MERGE | NAV_MESH_OBSTACLE_TOP );
@@ -1084,8 +1056,8 @@ bool CNavMesh::CreateObstacleTopAreaIfNecessary( CNavArea *area, CNavArea *areaO
 			// for south and west, swap "start" and "end" values of edges so we can use common code below
 			if ( dir == SOUTH || dir == WEST )
 			{
-				::V_swap( obstacleHeightStart, obstacleHeightEnd );
-				::V_swap( zStart, zEnd );
+				V_swap( obstacleHeightStart, obstacleHeightEnd );
+				V_swap( zStart, zEnd );
 			}					
 
 			// Enforce min area width for new area
@@ -1883,10 +1855,6 @@ void CNavMesh::StitchAreaIntoMesh( CNavArea *area, NavDirType dir, Functor &func
 */
 inline bool CheckCliff( const Vector *fromPos, NavDirType dir, bool bExhaustive = true )
 {
-	// cliffs are half-baked, not used by any existing AI, and create poorly behaved nav areas (ie: long, thin, strips) (MSB 8/7/09)
-	return false;
-
-
 	Vector toPos( fromPos->x, fromPos->y, fromPos->z );
 	AddDirectionVector( &toPos, dir, GenerationStepSize );
 
@@ -3404,19 +3372,9 @@ void CNavMesh::BeginGeneration( bool incremental )
 		gameeventmanager->FireEvent( event );
 	}
 
-#ifdef TERROR
-	engine->ServerCommand( "director_stop\nnb_delete_all\n" );
-	if ( !incremental && !engine->IsDedicatedServer() )
-	{
-		CBasePlayer *host = UTIL_GetListenServerHost();
-		if ( host )
-		{
-			host->ChangeTeam( TEAM_SPECTATOR );
-		}
-	}
-#else
+
 	engine->ServerCommand( "bot_kick\n" );
-#endif
+
 
 	// Right now, incrementally-generated areas won't connect to existing areas automatically.
 	// Since this means hand-editing will be necessary, don't do a full analyze.
@@ -3472,40 +3430,7 @@ void CNavMesh::BeginGeneration( bool incremental )
  */
 void CNavMesh::BeginAnalysis( bool quitWhenFinished )
 {
-#ifdef TERROR
-	if ( !engine->IsDedicatedServer() )
-	{
-		CBasePlayer *host = UTIL_GetListenServerHost();
-		if ( host )
-		{
-			host->ChangeTeam( TEAM_SPECTATOR );
-			engine->ServerCommand( "director_no_death_check 1\ndirector_stop\nnb_delete_all\n" );
 
-			ConVarRef mat_fullbright( "mat_fullbright" );
-			ConVarRef mat_hdr_level( "mat_hdr_level" );
-
-			if( mat_fullbright.GetBool() )
-			{
-				Warning( "Setting mat_fullbright 0\n" );
-				mat_fullbright.SetValue( 0 );
-			}
-
-			if ( mat_hdr_level.GetInt() < 2 )
-			{
-				Warning( "Enabling HDR and reloading materials\n" );
-				mat_hdr_level.SetValue( 2 );
-				engine->ClientCommand( host->edict(), "mat_reloadallmaterials\n" );
-			}
-
-			// Running a threaded server breaks our lighting calculations
-			ConVarRef host_thread_mode( "host_thread_mode" );
-			m_hostThreadModeRestoreValue = host_thread_mode.GetInt();
-			host_thread_mode.SetValue( 0 );
-			ConVarRef mat_queue_mode( "mat_queue_mode" );
-			mat_queue_mode.SetValue( 0 );
-		}
-	}
-#endif
 
 	// Remove and re-add elements in TheNavAreas, to ensure indices are useful for progress feedback
 	NavAreaVector tmpSet;

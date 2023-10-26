@@ -1,19 +1,20 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 // $NoKeywords: $
 //
-//=============================================================================//
+//===========================================================================//
 #include "cbase.h"
 #include "particles_simple.h"
-#include "iviewrender.h"
-#include "proxyentity.h"
-#include "materialsystem/imaterialvar.h"
+#include "IViewRender.h"
+#include "ProxyEntity.h"
+#include "materialsystem/IMaterialVar.h"
 #include "model_types.h"
 #include "engine/ivmodelinfo.h"
-#include "clienteffectprecachesystem.h"
+#include "c_physbox.h"
 
+#include "imaterialproxydict.h"
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -73,7 +74,6 @@ struct EdgeTexture_t
 #define BITS_PANEL_IS_SOLID		(1<<0)
 #define BITS_PANEL_IS_STALE		(1<<1)
 
-
 class C_BreakableSurface : public C_BaseEntity, public IBrushRenderer
 {
 public:
@@ -106,10 +106,10 @@ public:
 	virtual void		OnDataChanged( DataUpdateType_t updateType );
 	virtual void		OnPreDataChanged( DataUpdateType_t updateType );
 
-	bool		IsTransparent( void );
+	RenderableTranslucencyType_t ComputeTranslucencyType( void );
 	bool		HavePanel(int nWidth, int nHeight);
 	bool		RenderBrushModelSurface( IClientEntity* pBaseEntity, IBrushSurface* pBrushSurface ); 
-	int			DrawModel( int flags );
+	int			DrawModel( int flags, const RenderableInstance_t &instance );
 	void		DrawSolidBlocks( IBrushSurface* pBrushSurface );
 
 	virtual void	OnRestore();
@@ -154,7 +154,7 @@ private:
 		Assert( type < NUM_EDGE_STYLES );
 		Assert( type >= 0 );
 		// Clear old value
-		m_nPanelBits[ w ][ h ] &= 0xF0; // ( ~0x03 << 2 ); Left shifting a negative value has undefined behavior. Use the constant 0xF0 instead.
+		m_nPanelBits[ w ][ h ] &= ( ~0x03 << 2 );
 		// Insert new value
 		m_nPanelBits[ w ][ h ] |= ( type << 2 );
 	}
@@ -285,7 +285,7 @@ END_RECV_TABLE()
 //-----------------------------------------------------------------------------
 void C_BreakableSurface::FindCrackedMaterial()
 {
-	m_pCrackedMaterial = 0;
+	m_pCrackedMaterial.Init( NULL );
 
 	// First time we've seen it, get the material on the brush model
 	int materialCount = modelinfo->GetModelMaterialCount( const_cast<model_t*>(GetModel()) );
@@ -391,6 +391,9 @@ void C_BreakableSurface::OnDataChanged( DataUpdateType_t updateType )
 {
 	C_BaseEntity::OnDataChanged( updateType );
 
+	// FIXME: Slightly bogus, recomputation only necessary when m_bBroken changed
+	OnTranslucencyTypeChanged();
+
 	if ( updateType == DATA_UPDATE_CREATED )
 	{
 		// Get at the cracked material
@@ -494,22 +497,22 @@ void C_BreakableSurface::OnDataChanged( DataUpdateType_t updateType )
 	Q_memcpy( m_PrevRawPanelBitVec, m_RawPanelBitVec.Base(), sizeof( m_PrevRawPanelBitVec ) );
 }
 
-bool C_BreakableSurface::IsTransparent( void )
+RenderableTranslucencyType_t C_BreakableSurface::ComputeTranslucencyType( void )
 {
 	// Not an identity brush if it's broken
-	if (m_bIsBroken)
-		return true;
+	if ( m_bIsBroken )
+		return RENDERABLE_IS_TRANSLUCENT;
 
-	return C_BaseEntity::IsTransparent();
+	return BaseClass::ComputeTranslucencyType();
 }
-  
+
 
 //------------------------------------------------------------------------------
 // Purpose :
 // Input   :
 // Output  :
 //------------------------------------------------------------------------------
-int C_BreakableSurface::DrawModel( int flags )
+int C_BreakableSurface::DrawModel( int flags, const RenderableInstance_t &instance )
 {
 	if ( !m_bReadyToDraw )
 		return 0;
@@ -519,7 +522,7 @@ int C_BreakableSurface::DrawModel( int flags )
 		render->InstallBrushSurfaceRenderer( this );
 
 	// If it's broken, always draw it translucent
-	BaseClass::DrawModel( m_bIsBroken ? flags | STUDIO_TRANSPARENCY : flags );
+	BaseClass::DrawModel( m_bIsBroken ? flags | STUDIO_TRANSPARENCY : flags, instance );
 
 	// Remove our nonstandard brush surface renderer...
 	render->InstallBrushSurfaceRenderer( 0 );
@@ -1333,4 +1336,4 @@ IMaterial *CBreakableSurfaceProxy::GetMaterial()
 	return m_BaseTextureVar->GetOwningMaterial();
 }
 
-EXPOSE_INTERFACE( CBreakableSurfaceProxy, IMaterialProxy, "BreakableSurface" IMATERIAL_PROXY_INTERFACE_VERSION );
+EXPOSE_MATERIAL_PROXY( CBreakableSurfaceProxy, BreakableSurface );

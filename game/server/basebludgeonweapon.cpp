@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -7,7 +7,7 @@
 //=============================================================================//
 
 #include "cbase.h"
-#include "basehlcombatweapon.h"
+#include "basecombatweapon.h"
 #include "player.h"
 #include "gamerules.h"
 #include "ammodef.h"
@@ -60,6 +60,7 @@ void CBaseHLBludgeonWeapon::Spawn( void )
 void CBaseHLBludgeonWeapon::Precache( void )
 {
 	//Call base class first
+	PrecacheEffect( "watersplash" );
 	BaseClass::Precache();
 }
 
@@ -239,11 +240,11 @@ bool CBaseHLBludgeonWeapon::ImpactWater( const Vector &start, const Vector &end 
 	//		 right now anyway...
 	
 	// We must start outside the water
-	if ( UTIL_PointContents( start ) & (CONTENTS_WATER|CONTENTS_SLIME))
+	if ( UTIL_PointContents( start, MASK_WATER ) & (CONTENTS_WATER|CONTENTS_SLIME))
 		return false;
 
 	// We must end inside of water
-	if ( !(UTIL_PointContents( end ) & (CONTENTS_WATER|CONTENTS_SLIME)))
+	if ( !(UTIL_PointContents( end, MASK_WATER ) & (CONTENTS_WATER|CONTENTS_SLIME)))
 		return false;
 
 	trace_t	waterTrace;

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright � 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -20,14 +20,7 @@
 #include "world.h"
 #include "functorutils.h"
 #include "team.h"
-#ifdef TERROR
-#include "TerrorShared.h"
-#endif
 
-#ifdef DOTA_SERVER_DLL
-#include "dota_npc_base.h"
-#include "dota_player.h"
-#endif
 
 // NOTE: This has to be the last file included!
 #include "tier0/memdbgon.h"
@@ -55,6 +48,11 @@ Color s_dragSelectionSetDeleteColor( 255, 100, 100, 96 );
 #if DEBUG_NAV_NODES
 extern ConVar nav_show_nodes;
 #endif // DEBUG_NAV_NODES
+
+
+//--------------------------------------------------------------------------------------------------------------
+
+
 
 
 //--------------------------------------------------------------------------------------------------------------
@@ -147,25 +145,8 @@ void CNavMesh::GetEditVectors( Vector *pos, Vector *forward )
 		return;
 	}
 
-	//DOTA places the edit cursor where the 2D cursor is located.
-#ifdef DOTA_SERVER_DLL
-	CDOTAPlayer *pDOTAPlayer = ToDOTAPlayer( player );
-
-	if ( pDOTAPlayer && pDOTAPlayer->GetMoveType() != MOVETYPE_NOCLIP )
-	{
-		Vector dir = pDOTAPlayer->GetCrosshairTracePos() - player->EyePosition();
-		VectorNormalize( dir );
-
-		*forward = dir;
-	}
-	else
-	{
-		AngleVectors( player->EyeAngles() + player->GetPunchAngle(), forward );
-	}
-#else
 	Vector dir;
 	AngleVectors( player->EyeAngles() + player->GetPunchAngle(), forward );
-#endif
 
 	*pos = player->EyePosition();
 
@@ -732,6 +713,9 @@ void CNavMesh::DrawEditMode( void )
 	static ConVarRef host_thread_mode( "host_thread_mode" );
 	host_thread_mode.SetValue( 0 );
 
+	static ConVarRef sb_perf_collect( "sb_perf_collect" );
+	sb_perf_collect.SetValue( 0 );
+
 	const float maxRange = 1000.0f;		// 500
 
 #if DEBUG_NAV_NODES
@@ -905,7 +889,7 @@ void CNavMesh::DrawEditMode( void )
 				{
 					V_snprintf( buffer, sizeof( buffer ), "Ladder #%d\n", m_selectedLadder->GetID() );
 				}
-				NDebugOverlay::ScreenText( 0.5, 0.53, buffer, 255, 255, 0, 128, NDEBUG_PERSIST_TILL_NEXT_SERVER );
+				NDebugOverlay::ScreenText( 0.5, 0.53, buffer, 255, 255, 0, 128, nav_show_area_info.GetBool() ? 0.1 : 0.5 );
 			}
 
 			// draw the ladder we are pointing at and all connected areas
@@ -947,9 +931,9 @@ void CNavMesh::DrawEditMode( void )
 				{
 					const char *name = TheNavMesh->PlaceToName( m_selectedArea->GetPlace() );
 					if (name)
-						V_strcpy_safe( locName, name );
+						strcpy( locName, name );
 					else
-						V_strcpy_safe( locName, "ERROR" );
+						strcpy( locName, "ERROR" );
 				}
 				else
 				{
@@ -979,14 +963,9 @@ void CNavMesh::DrawEditMode( void )
 					if ( attributes & NAV_MESH_STAIRS )		Q_strncat( attrib, "STAIRS ", sizeof( attrib ), -1 );
 					if ( attributes & NAV_MESH_OBSTACLE_TOP ) Q_strncat( attrib, "OBSTACLE ", sizeof( attrib ), -1 );
 					if ( attributes & NAV_MESH_CLIFF )		Q_strncat( attrib, "CLIFF ", sizeof( attrib ), -1 );
-#ifdef TERROR
-					if ( attributes & TerrorNavArea::NAV_PLAYERCLIP )		Q_strncat( attrib, "PLAYERCLIP ", sizeof( attrib ), -1 );
-					if ( attributes & TerrorNavArea::NAV_BREAKABLEWALL )	Q_strncat( attrib, "BREAKABLEWALL ", sizeof( attrib ), -1 );
-					if ( m_selectedArea->IsBlocked( TEAM_SURVIVOR ) ) Q_strncat( attrib, "BLOCKED_SURVIVOR ", sizeof( attrib ), -1 );
-					if ( m_selectedArea->IsBlocked( TEAM_ZOMBIE ) ) Q_strncat( attrib, "BLOCKED_ZOMBIE ", sizeof( attrib ), -1 );
-#else
+
 					if ( m_selectedArea->IsBlocked( TEAM_ANY ) ) Q_strncat( attrib, "BLOCKED ", sizeof( attrib ), -1 );
-#endif
+
 					if ( m_selectedArea->HasAvoidanceObstacle() )	Q_strncat( attrib, "OBSTRUCTED ", sizeof( attrib ), -1 );
 					if ( m_selectedArea->IsDamaging() )		Q_strncat( attrib, "DAMAGING ", sizeof( attrib ), -1 );
 					if ( m_selectedArea->IsUnderwater() )	Q_strncat( attrib, "UNDERWATER ", sizeof( attrib ), -1 );
@@ -1450,7 +1429,7 @@ void CNavMesh::CommandNavAddToSelectedSetByID( const CCommand &args )
 	if (player == NULL)
 		return;
 
-	if ( ( !IsEditMode( NORMAL ) && !IsEditMode( PLACE_PAINTING ) ) || args.ArgC() < 2 )
+	if ( !IsEditMode( NORMAL ) && !IsEditMode( PLACE_PAINTING ) || args.ArgC() < 2 )
 		return;
 
 	int id = atoi( args[1] );
@@ -2364,44 +2343,6 @@ void CNavMesh::CommandNavSelectStairs( void )
 
 
 //--------------------------------------------------------------------------------------------------------------
-// Adds areas not connected to mesh to the selected set
-void CNavMesh::CommandNavSelectOrphans( void )
-{
-	CBasePlayer *player = UTIL_GetListenServerHost();
-	if (player == NULL)
-		return;
-
-	if ( !IsEditMode( NORMAL ) && !IsEditMode( PLACE_PAINTING ) )
-		return;
-
-	FindActiveNavArea();
-
-	CNavArea *start = m_selectedArea;
-	if ( !start )
-	{
-		start = m_markedArea;
-	}
-
-	if ( start )
-	{
-		player->EmitSound( "EDIT_DELETE" );
-
-		int connections = INCLUDE_BLOCKED_AREAS | INCLUDE_INCOMING_CONNECTIONS;
-
-		// collect all areas connected to this area
-		SelectCollector collector;
-		SearchSurroundingAreas( start, start->GetCenter(), collector, -1, connections );
-
-		// toggle the selected set to reveal the orphans
-		CommandNavToggleSelectedSet();
-	}
-
-	SetMarkedArea( NULL );			// unmark the mark area
-
-}
-
-
-//--------------------------------------------------------------------------------------------------------------
 void CNavMesh::CommandNavSplit( void )
 {
 	CBasePlayer *player = UTIL_GetListenServerHost();
@@ -3101,55 +3042,6 @@ void CNavMesh::CommandNavDisconnect( void )
 			player->EmitSound( "EDIT_DISCONNECT.NoMarkedArea" );
 		}
 	}
-
-	ClearSelectedSet();
-	SetMarkedArea( NULL );			// unmark the mark area
-	m_markedCorner = NUM_CORNERS;	// clear the corner selection
-}
-
-
-//--------------------------------------------------------------------------------------------------------------
-// Disconnect all outgoing one-way connects from each area in the selected set
-void CNavMesh::CommandNavDisconnectOutgoingOneWays( void )
-{
-	CBasePlayer *player = UTIL_GetListenServerHost();
-	if ( !player )
-		return;
-
-	if ( !IsEditMode( NORMAL ) )
-		return;
-
-	if ( m_selectedSet.Count() == 0 )
-	{
-		FindActiveNavArea();
-
-		if ( !m_selectedArea )
-		{
-			return;
-		}
-
-		m_selectedSet.AddToTail( m_selectedArea );
-	}
-
-	for ( int i = 0; i < m_selectedSet.Count(); ++i )
-	{
-		CNavArea *area = m_selectedSet[i];
-
-		CUtlVector< CNavArea * > adjVector;
-		area->CollectAdjacentAreas( &adjVector );
-
-		for( int j=0; j<adjVector.Count(); ++j )
-		{
-			CNavArea *adj = adjVector[j];
-
-			if ( !adj->IsConnected( area, NUM_DIRECTIONS ) )
-			{
-				// no connect back - this is a one-way connection
-				area->Disconnect( adj );
-			}
-		}
-	}
-	player->EmitSound( "EDIT_DISCONNECT.MarkedArea" );
 
 	ClearSelectedSet();
 	SetMarkedArea( NULL );			// unmark the mark area

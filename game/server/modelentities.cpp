@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -35,6 +35,8 @@ BEGIN_DATADESC( CFuncBrush )
 
 END_DATADESC()
 
+IMPLEMENT_SERVERCLASS_ST(CFuncBrush, DT_FuncBrush)
+END_SEND_TABLE()
 
 void CFuncBrush::Spawn( void )
 {
@@ -70,6 +72,7 @@ void CFuncBrush::Spawn( void )
 
 bool CFuncBrush::CreateVPhysics( void )
 {
+
 	// NOTE: Don't init this static.  It's pretty common for these to be constrained
 	// and dynamically parented.  Initing shadow avoids having to destroy the physics
 	// object later and lose the constraints.

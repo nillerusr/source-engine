@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -11,6 +11,7 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+#if 0
 Initializer	*Initializer::s_pInitializers = 0;
 
 
@@ -59,7 +60,4 @@ void Initializer::FreeAllObjects()
 	}
 }
 
-
-
-
-
+#endif

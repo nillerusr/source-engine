@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -12,13 +12,15 @@
 
 #define TE_EXPLFLAG_NONE		0x0	// all flags clear makes default Half-Life explosion
 #define TE_EXPLFLAG_NOADDITIVE	0x1	// sprite will be drawn opaque (ensure that the sprite you send is a non-additive sprite)
-#define TE_EXPLFLAG_NODLIGHTS	0x2	// do not render dynamic lights
+#define TE_EXPLFLAG_DLIGHT		0x2	// explosion has a DLIGHT
 #define TE_EXPLFLAG_NOSOUND		0x4	// do not play client explosion sound
 #define TE_EXPLFLAG_NOPARTICLES	0x8	// do not draw particles
 #define TE_EXPLFLAG_DRAWALPHA	0x10	// sprite will be drawn alpha
 #define TE_EXPLFLAG_ROTATE		0x20	// rotate the sprite randomly
 #define TE_EXPLFLAG_NOFIREBALL	0x40	// do not draw a fireball
 #define TE_EXPLFLAG_NOFIREBALLSMOKE	0x80	// do not draw smoke with the fireball
+#define TE_EXPLFLAG_ICE			0x100	// do ice effects
+#define TE_EXPLFLAG_SCALEPARTICLES		0x200
 
 #define	TE_BEAMPOINTS		0		// beam effect between two points
 #define TE_SPRITE			1	// additive sprite, plays 1 cycle

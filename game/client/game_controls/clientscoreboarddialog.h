@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -12,6 +12,7 @@
 #endif
 
 #include <vgui_controls/EditablePanel.h>
+#include <vgui_controls/Label.h>
 #include <game/client/iviewport.h>
 #include "GameEventListener.h"
 
@@ -47,25 +48,18 @@ public:
 	virtual bool HasInputElements( void ) { return true; }
 	virtual void ShowPanel( bool bShow );
 
-	virtual bool ShowAvatars() 
-	{ 
-#ifdef CSS_PERF_TEST
-		return false;
-#endif
-		return IsPC(); 
-	}
+	virtual bool ShowAvatars() { return IsPC(); }
 
 	// both vgui::Frame and IViewPortPanel define these, so explicitly define them here as passthroughs to vgui
 	vgui::VPANEL GetVPanel( void ) { return BaseClass::GetVPanel(); }
   	virtual bool IsVisible() { return BaseClass::IsVisible(); }
   	virtual void SetParent( vgui::VPANEL parent ) { BaseClass::SetParent( parent ); }
+	virtual bool WantsBackgroundBlurred( void ) { return false; }
  	
 	// IGameEventListener interface:
 	virtual void FireGameEvent( IGameEvent *event);
 
 	virtual void UpdatePlayerAvatar( int playerIndex, KeyValues *kv );
-
-	virtual GameActionSet_t GetPreferredActionSet() { return GAME_ACTION_SET_NONE;  }
 			
 protected:
 	MESSAGE_FUNC_INT( OnPollHideCode, "PollHideCode", code );
@@ -84,6 +78,7 @@ protected:
 	static bool StaticPlayerSortFunc(vgui::SectionedListPanel *list, int itemID1, int itemID2);
 
 	virtual void ApplySchemeSettings(vgui::IScheme *pScheme);
+	virtual void ApplySettings(KeyValues *inResourceData);
 
 	virtual void PostApplySchemeSettings( vgui::IScheme *pScheme );
 
@@ -102,10 +97,11 @@ protected:
 	float m_fNextUpdateTime;
 
 	void MoveLabelToFront(const char *textEntryName);
-	void MoveToCenterOfScreen();
+	void PositionScoreboard();
 
 	vgui::ImageList				*m_pImageList;
-	CUtlMap<CSteamID,int>		m_mapAvatarsToImageList;
+	int							m_iImageAvatars[MAX_PLAYERS+1];
+	CUtlMap<int,int>			m_mapAvatarsToImageList;
 
 	CPanelAnimationVar( int, m_iAvatarWidth, "avatar_width", "34" );		// Avatar width doesn't scale with resolution
 	CPanelAnimationVarAliasType( int, m_iNameWidth, "name_width", "136", "proportional_int" );
@@ -120,6 +116,7 @@ private:
 	IViewPort	*m_pViewPort;
 	ButtonCode_t m_nCloseKey;
 
+	vgui::Label::Alignment m_alignment;
 
 	// methods
 	void FillScoreBoard();

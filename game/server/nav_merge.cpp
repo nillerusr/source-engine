@@ -1,6 +1,6 @@
 // nav_merge.cpp
 // Save/merge for partial nav meshes
-//========= Copyright Valve Corporation, All rights reserved. ============//
+// Copyright 2005 Turtle Rock Studios, Inc.
 
 #include "cbase.h"
 #include "fmtstr.h"

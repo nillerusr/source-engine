@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -13,7 +13,7 @@
 
 #include "iplayeranimstate.h"
 #include "studio.h"
-#include "sequence_Transitioner.h"
+#include "sequence_transitioner.h"
 
 #ifdef CLIENT_DLL
 	class C_BaseAnimatingOverlay;
@@ -141,8 +141,8 @@ public:
 	void DebugShowAnimStateFull( int iStartLine );
 
 	virtual void DebugShowAnimState( int iStartLine );
-	void AnimStatePrintf( int iLine, PRINTF_FORMAT_STRING const char *pMsg, ... );
-	void AnimStateLog( PRINTF_FORMAT_STRING const char *pMsg, ... );
+	void AnimStatePrintf( int iLine, const char *pMsg, ... );
+	void AnimStateLog( const char *pMsg, ... );
 
 	// Calculate the playback rate for movement layer
 	virtual float CalcMovementPlaybackRate( bool *bIsMoving );
@@ -162,13 +162,15 @@ public:
 
 	void				RestartMainSequence();
 
+	virtual	float		GetFeetYawRate( void );
+
 
 // Helpers for the derived classes to use.
 protected:
 
 	// Sets up the string you specify, looks for that sequence and returns the index. 
 	// Complains in the console and returns 0 if it can't find it.
-	virtual int CalcSequenceIndex( PRINTF_FORMAT_STRING const char *pBaseName, ... );
+	virtual int CalcSequenceIndex( const char *pBaseName, ... );
 
 	Activity GetCurrentMainSequenceActivity() const;
 
@@ -180,18 +182,21 @@ protected:
 
 	float				GetEyeYaw() const { return m_flEyeYaw; }
 
+	void				SetOuterPoseParameter( int iParam, float flValue );
+
 protected:
 	
 	CModAnimConfig		m_AnimConfig;
 	CBaseAnimatingOverlay	*m_pOuter;
 
 protected:
-	int					ConvergeAngles( float goal,float maxrate, float maxgap, float dt, float& current );
+	virtual int			ConvergeAngles( float goal,float maxrate, float maxgap, float dt, float& current );
 	virtual void		ComputePoseParam_MoveYaw( CStudioHdr *pStudioHdr );
 	virtual void		ComputePoseParam_BodyPitch( CStudioHdr *pStudioHdr );
 	virtual void		ComputePoseParam_BodyYaw();
 
 	virtual void		ResetGroundSpeed( void );
+	virtual bool		ShouldResetGroundSpeed( Activity oldActivity, Activity idealActivity );
 
 protected:
 	// The player's eye yaw and pitch angles.
@@ -219,6 +224,8 @@ protected:
 
 	QAngle				m_angRender;
 
+	Vector2D			m_vLastMovePose;
+
 private:
 
 	// Update the prone state machine.
@@ -229,11 +236,9 @@ private:
 
 	Activity			BodyYawTranslateActivity( Activity activity );
 
-	void				SetOuterPoseParameter( int iParam, float flValue );
-
-
 	void				EstimateYaw();
 
+	virtual bool		ShouldResetMainSequence( int iCurrentSequence, int iNewSequence );
 	void				ComputeMainSequence();
 	void				ComputeAimSequence();
 
@@ -257,8 +262,6 @@ private:
 												
 	float				m_flGaitYaw;
 	float				m_flStoredCycle;
-
-	Vector2D			m_vLastMovePose;
 
 	void UpdateAimSequenceLayers(
 		float flCycle,

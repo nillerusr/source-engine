@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -13,6 +13,7 @@
 
 #include "gamerules.h"
 
+
 #ifdef CLIENT_DLL
 
 	#define CMultiplayRules C_MultiplayRules
@@ -20,27 +21,18 @@
 #else
 
 extern ConVar mp_restartgame;
-extern ConVar mp_restartgame_immediate;
 extern ConVar mp_waitingforplayers_time;
 extern ConVar mp_waitingforplayers_restart;
 extern ConVar mp_waitingforplayers_cancel;
 extern ConVar mp_clan_readyrestart;
 extern ConVar mp_clan_ready_signal;
 extern ConVar nextlevel;
-extern INetworkStringTable *g_pStringTableServerMapCycle;
-
-#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL )
-extern INetworkStringTable *g_pStringTableServerPopFiles;
-extern INetworkStringTable *g_pStringTableServerMapCycleMvM;
-#endif
 
 #define VOICE_COMMAND_MAX_SUBTITLE_DIST	1900
 
 class CBaseMultiplayerPlayer;
 
 #endif
-
-extern ConVar mp_show_voice_icons;
 
 #define MAX_SPEAK_CONCEPT_LEN 64
 #define MAX_VOICE_COMMAND_SUBTITLE	256
@@ -69,6 +61,31 @@ typedef struct
 
 extern ConVar mp_timelimit;
 
+// 
+class CBaseMultiplayerPlayer;
+class CSameTeamGroup
+{
+public:
+	CSameTeamGroup();
+	CSameTeamGroup( const CSameTeamGroup &src );
+
+	// Different users will require different logic for whom to add (e.g., all SplitScreen players on same team, or all Steam Friends on same team)
+	virtual void Build( CGameRules *pGameRules, CBasePlayer *pl ) = 0;
+	virtual void MaybeAddPlayer( CBasePlayer *pl ) = 0;
+
+	CBasePlayer *GetPlayer( int idx );
+
+	int						Count() const;
+	int						Score() const;
+
+	static bool Less( const CSameTeamGroup &p1, const CSameTeamGroup &p2 );
+
+protected:
+
+	CUtlVector< CBasePlayer * >				m_Players;
+	int										m_nScore;
+};
+
 //=========================================================
 // CMultiplayRules - rules for the basic half life multiplayer
 // competition
@@ -80,8 +97,6 @@ public:
 
 // Functions to verify the single/multiplayer status of a game
 	virtual bool IsMultiplayer( void );
-
-	virtual	bool	Init();
 
 	// Damage query implementations.
 	virtual bool	Damage_IsTimeBased( int iDmgType );			// Damage types that are time-based.
@@ -101,16 +116,7 @@ public:
 
 	void LoadVoiceCommandScript( void );
 
-	virtual bool ShouldDrawHeadLabels()
-	{ 
-		if ( mp_show_voice_icons.GetBool() == false )
-			return false;
-
-		return BaseClass::ShouldDrawHeadLabels();
-	}
-
 #ifndef CLIENT_DLL
-	virtual void FrameUpdatePostEntityThink();
 
 // GR_Think
 	virtual void Think( void );
@@ -120,7 +126,7 @@ public:
 
 	virtual bool FShouldSwitchWeapon( CBasePlayer *pPlayer, CBaseCombatWeapon *pWeapon );
 	virtual CBaseCombatWeapon *GetNextBestWeapon( CBaseCombatCharacter *pPlayer, CBaseCombatWeapon *pCurrentWeapon );
-	virtual bool SwitchToNextBestWeapon( CBaseCombatCharacter *pPlayer, CBaseCombatWeapon *pCurrentWeapon );
+	bool SwitchToNextBestWeapon( CBaseCombatCharacter *pPlayer, CBaseCombatWeapon *pCurrentWeapon );
 
 // Functions to verify the single/multiplayer status of a game
 	virtual bool IsDeathmatch( void );
@@ -136,7 +142,7 @@ public:
 
 // Client damage rules
 	virtual float FlPlayerFallDamage( CBasePlayer *pPlayer );
-	virtual bool  FPlayerCanTakeDamage( CBasePlayer *pPlayer, CBaseEntity *pAttacker, const CTakeDamageInfo &info );
+	virtual bool  FPlayerCanTakeDamage( CBasePlayer *pPlayer, CBaseEntity *pAttacker );
 	virtual bool AllowDamage( CBaseEntity *pVictim, const CTakeDamageInfo &info );
 
 // Client spawn/respawn control
@@ -214,54 +220,20 @@ public:
 
 	void IncrementMapCycleIndex();
 
-	void HaveAllPlayersSpeakConceptIfAllowed( int iConcept, int iTeam = TEAM_UNASSIGNED, const char *modifiers = NULL );
-	void RandomPlayersSpeakConceptIfAllowed( int iConcept, int iNumRandomPlayer = 1, int iTeam = TEAM_UNASSIGNED, const char *modifiers = NULL );
+	void HaveAllPlayersSpeakConceptIfAllowed( int iConcept );
 
 	virtual void GetTaggedConVarList( KeyValues *pCvarTagList );
 
-	void SkipNextMapInCycle();
-
-	virtual void	ClientCommandKeyValues( edict_t *pEntity, KeyValues *pKeyValues );
-
-public:
-
-	struct ResponseRules_t
-	{
-		CUtlVector<IResponseSystem*> m_ResponseSystems;
-	};
-	CUtlVector<ResponseRules_t>	m_ResponseRules;
-
-	virtual void InitCustomResponseRulesDicts()	{}
-	virtual void ShutdownCustomResponseRulesDicts() {}
-
-	// NVNT virtual to check for haptic device 
-	virtual void ClientSettingsChanged( CBasePlayer *pPlayer );
-	virtual void GetNextLevelName( char *szNextMap, int bufsize, bool bRandom = false );
-
-	static void DetermineMapCycleFilename( char *pszResult, int nSizeResult, bool bForceSpew );
-	static void LoapMapCycleFileIntoVector ( const char *pszMapCycleFile, CUtlVector<char *> &mapList );
-	static void FreeMapCycleFileVector ( CUtlVector<char *> &mapList );
-
-	bool IsMapInMapCycle( const char *pszName );
-
 protected:
 	virtual bool UseSuicidePenalty() { return true; }		// apply point penalty for suicide?
-
-public:
+	virtual void GetNextLevelName( char *szNextMap, int bufsize, bool bRandom = false );
 	virtual void ChangeLevel( void );
-
-protected:
 	virtual void GoToIntermission( void );
-	void LoadMapCycleFile( void );
-	void ChangeLevelToMap( const char *pszMap );
-
 	float m_flIntermissionEndTime;
 	static int m_nMapCycleTimeStamp;
 	static int m_nMapCycleindex;
-	static CUtlVector<char*> m_MapList;
-
-	float m_flTimeLastMapChangeOrPlayerWasConnected;
-
+	static CUtlStringList m_MapList;
+	
 #else
 	
 	public:

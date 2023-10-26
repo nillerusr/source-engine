@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -84,7 +84,7 @@ public:
 	Vector			m_vPos;
 	QAngle			m_vAngles;
 	int				m_nEntIndex;
-	const char		*m_pszSpriteName;
+	char			*m_pszSpriteName;
 	float			m_flBeamWidth;
 	int				m_nBeams;
 	Vector			m_vColor;
@@ -94,8 +94,6 @@ public:
 
 void FX_Tesla( const CTeslaInfo &teslaInfo );
 extern ConVar r_decals;
-
-extern void FX_CacheMaterialHandles( void );
 
 extern PMaterialHandle g_Mat_Fleck_Wood[2];
 extern PMaterialHandle g_Mat_Fleck_Cement[2];

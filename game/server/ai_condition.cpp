@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -102,4 +102,5 @@ void	CAI_BaseNPC::InitDefaultConditionSR(void)
 	ADD_CONDITION_TO_SR( COND_NPC_UNFREEZE );
 	ADD_CONDITION_TO_SR( COND_TALKER_RESPOND_TO_QUESTION );
 	ADD_CONDITION_TO_SR( COND_NO_CUSTOM_INTERRUPTS );
+	ADD_CONDITION_TO_SR( COND_BEHAVIOR_PARAMETERS_CHANGED );
 }

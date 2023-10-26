@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -7,8 +7,12 @@
 #include "cbase.h"
 #include "c_baseplayer.h"
 #include "menu.h"
-#include "KeyValues.h"
+#include "keyvalues.h"
 #include "multiplay_gamerules.h"
+
+// NOTE: This has to be the last file included!
+#include "tier0/memdbgon.h"
+
 
 static int g_ActiveVoiceMenu = 0;
 
@@ -22,19 +26,16 @@ void OpenVoiceMenu( int index )
 	if ( !pPlayer->IsAlive() || pPlayer->IsObserver() )
 		return;
 
-	CHudMenu *pMenu = (CHudMenu *) gHUD.FindElement( "CHudMenu" );
+	CHudMenu *pMenu = (CHudMenu *) GetHud().FindElement( "CHudMenu" );
 	if ( !pMenu )
 		return;
 
 	// if they hit the key again, close the menu
 	if ( g_ActiveVoiceMenu == index )
 	{
-		if ( pMenu->IsMenuOpen() )
-		{
-			pMenu->HideMenu();
-			g_ActiveVoiceMenu = 0;
-			return;
-		}
+		pMenu->HideMenu();
+		g_ActiveVoiceMenu = 0;
+		return;
 	}
 
 	if ( index > 0 && index < 9 )

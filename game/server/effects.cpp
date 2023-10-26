@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Implements a grab bag of visual effects entities.
 //
@@ -24,11 +24,16 @@
 #include "env_wind_shared.h"
 #include "filesystem.h"
 #include "engine/IEngineSound.h"
+#ifdef INFESTED_DLL
+#include "asw_fire.h"
+#else
 #include "fire.h"
+#endif
 #include "te_effect_dispatch.h"
 #include "Sprite.h"
 #include "precipitation_shared.h"
 #include "shot_manipulator.h"
+#include "modelentities.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -107,7 +112,7 @@ void CBubbling::Spawn( void )
 	SetModel( STRING( GetModelName() ) );		// Set size
 
 	// Make it invisible to client
-	SetRenderColorA( 0 );
+	SetRenderAlpha( 0 );
 
 	SetSolid( SOLID_NONE );						// Remove model & collisions
 
@@ -491,9 +496,7 @@ void CGibShooter::InitPointGib( CGib *pGib, const Vector &vecShootDir, float flS
 		pGib->m_lifeTime = (m_flGibLife * random->RandomFloat( 0.95, 1.05 ));	// +/- 5%
 
 		// HL1 gibs always die after a certain time, other games have to opt-in
-#ifndef HL1_DLL
 		if( HasSpawnFlags( SF_SHOOTER_STRICT_REMOVE ) )
-#endif
 		{
 			pGib->SetNextThink( gpGlobals->curtime + pGib->m_lifeTime );
 			pGib->SetThink ( &CGib::DieThink );
@@ -568,9 +571,7 @@ CBaseEntity *CGibShooter::SpawnGib( const Vector &vecShootDir, float flSpeed )
 
 					pPhysicsObject->ApplyTorqueCenter( torque );
 
-#ifndef HL1_DLL
 					if( HasSpawnFlags( SF_SHOOTER_STRICT_REMOVE ) )
-#endif
 					{
 						pGib->m_bForceRemove = true;
 						pGib->SetNextThink( gpGlobals->curtime + pGib->m_lifeTime );
@@ -768,10 +769,9 @@ CGib *CEnvShooter::CreateGib ( void )
 	if ( HasSpawnFlags( SF_SHOOTER_FLAMING ) )
 	{
 		// Tag an entity flame along with us
-		CEntityFlame *pFlame = CEntityFlame::Create( pGib, false );
+		CEntityFlame *pFlame = CEntityFlame::Create( pGib, pGib->m_lifeTime );
 		if ( pFlame != NULL )
 		{
-			pFlame->SetLifetime( pGib->m_lifeTime );
 			pGib->SetFlame( pFlame );
 		}
 	}
@@ -1020,6 +1020,7 @@ class CBlood : public CPointEntity
 public:
 	DECLARE_CLASS( CBlood, CPointEntity );
 
+	void	Precache();
 	void	Spawn( void );
 	bool	KeyValue( const char *szKeyName, const char *szValue );
 
@@ -1066,10 +1067,22 @@ END_DATADESC()
 
 
 //-----------------------------------------------------------------------------
+// Precache
+//-----------------------------------------------------------------------------
+void CBlood::Precache()
+{
+	BaseClass::Precache();
+	UTIL_BloodSprayPrecache();
+}
+
+
+//-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
 void CBlood::Spawn( void )
 {
+	Precache();
+
 	// Convert spraydir from angles to a vector
 	QAngle angSprayDir = QAngle( m_vecSprayDir.x, m_vecSprayDir.y, m_vecSprayDir.z );
 	AngleVectors( angSprayDir, &m_vecSprayDir );
@@ -1146,6 +1159,11 @@ Vector CBlood::BloodPosition( CBaseEntity *pActivator )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
+void UTIL_BloodSprayPrecache()
+{
+	PrecacheEffect( "bloodspray" );
+}
+
 void UTIL_BloodSpray( const Vector &pos, const Vector &dir, int color, int amount, int flags )
 {
 	if( color == DONT_BLEED )
@@ -1213,23 +1231,6 @@ void CBlood::InputEmitBlood( inputdata_t &inputdata )
 		UTIL_BloodSpray(GetAbsOrigin(), Direction(), Color(), BloodAmount(), nFlags);
 	}
 }
-
-
-//-----------------------------------------------------------------------------
-// Purpose: Console command for emitting the blood spray effect from an NPC.
-//-----------------------------------------------------------------------------
-void CC_BloodSpray( const CCommand &args )
-{
-	CBaseEntity *pEnt = NULL;
-	while ( ( pEnt = gEntList.FindEntityGeneric( pEnt, args[1] ) ) != NULL )
-	{
-		Vector forward;
-		pEnt->GetVectors(&forward, NULL, NULL);
-		UTIL_BloodSpray( (forward * 4 ) + ( pEnt->EyePosition() + pEnt->WorldSpaceCenter() ) * 0.5f, forward, BLOOD_COLOR_RED, 4, FX_BLOODSPRAY_ALL );
-	}
-}
-
-static ConCommand bloodspray( "bloodspray", CC_BloodSpray, "blood", FCVAR_CHEAT );
 
 
 //-----------------------------------------------------------------------------
@@ -1434,12 +1435,7 @@ void CItemSoda::CanThink ( void )
 
 	SetSolid( SOLID_BBOX );
 	AddSolidFlags( FSOLID_TRIGGER );
-
-#ifdef HL1_DLL
-	UTIL_SetSize(this, Vector(-16, -16, 0), Vector(16, 16, 16));
-#else
 	UTIL_SetSize ( this, Vector ( -8, -8, 0 ), Vector ( 8, 8, 8 ) );
-#endif
 
 	SetThink ( NULL );
 	SetTouch ( &CItemSoda::CanTouch );
@@ -1485,39 +1481,71 @@ public:
 	DECLARE_SERVERCLASS();
 
 	CPrecipitation();
+	int UpdateTransmitState();
 	void	Spawn( void );
 
 	CNetworkVar( PrecipitationType_t, m_nPrecipType );
+#ifdef INFESTED_DLL
+	CNetworkVar( int, m_nSnowDustAmount );
+#endif
 };
 
 LINK_ENTITY_TO_CLASS( func_precipitation, CPrecipitation );
 
 BEGIN_DATADESC( CPrecipitation )
 	DEFINE_KEYFIELD( m_nPrecipType, FIELD_INTEGER, "preciptype" ),
+#ifdef INFESTED_DLL
+	DEFINE_KEYFIELD( m_nSnowDustAmount, FIELD_INTEGER, "snowDustAmt" ),
+#endif
 END_DATADESC()
 
 // Just send the normal entity crap
 IMPLEMENT_SERVERCLASS_ST( CPrecipitation, DT_Precipitation)
-	SendPropInt( SENDINFO( m_nPrecipType ), Q_log2( NUM_PRECIPITATION_TYPES ) + 1, SPROP_UNSIGNED )
+	SendPropInt( SENDINFO( m_nPrecipType ), Q_log2( NUM_PRECIPITATION_TYPES ) + 1, SPROP_UNSIGNED ),
+#ifdef INFESTED_DLL
+	SendPropInt( SENDINFO( m_nSnowDustAmount ) ),
+#endif
 END_SEND_TABLE()
 
 
 CPrecipitation::CPrecipitation()
 {
 	m_nPrecipType = PRECIPITATION_TYPE_RAIN; // default to rain.
+#ifdef INFESTED_DLL
+	m_nSnowDustAmount = 0;
+#endif
+}
+
+int CPrecipitation::UpdateTransmitState()
+{
+	return SetTransmitState( FL_EDICT_ALWAYS );
 }
 
 void CPrecipitation::Spawn( void )
 {
+	//SetTransmitState( FL_EDICT_ALWAYS );
+	SetTransmitState( FL_EDICT_PVSCHECK );
+
 	PrecacheMaterial( "effects/fleck_ash1" );
 	PrecacheMaterial( "effects/fleck_ash2" );
 	PrecacheMaterial( "effects/fleck_ash3" );
 	PrecacheMaterial( "effects/ember_swirling001" );
-
 	Precache();
-	SetSolid( SOLID_NONE );							// Remove model & collisions
+
 	SetMoveType( MOVETYPE_NONE );
 	SetModel( STRING( GetModelName() ) );		// Set size
+	if ( m_nPrecipType == PRECIPITATION_TYPE_PARTICLERAIN )
+	{
+		SetSolid( SOLID_VPHYSICS );
+		AddSolidFlags( FSOLID_NOT_SOLID );
+		AddSolidFlags( FSOLID_FORCE_WORLD_ALIGNED );
+		VPhysicsInitStatic();
+	}
+	else
+	{
+		SetSolid( SOLID_NONE );							// Remove model & collisions
+	}
+
 
 	// Default to rain.
 	if ( m_nPrecipType < 0 || m_nPrecipType > NUM_PRECIPITATION_TYPES )
@@ -1525,7 +1553,67 @@ void CPrecipitation::Spawn( void )
 
 	m_nRenderMode = kRenderEnvironmental;
 }
+
+
+//=========================================================
+// func_precipitation_blocker - prevents precipitation from happening in this volume
+//=========================================================
+
+class CPrecipitationBlocker : public CBaseEntity
+{
+public:
+	DECLARE_CLASS( CPrecipitationBlocker, CBaseEntity );
+	DECLARE_DATADESC();
+	DECLARE_SERVERCLASS();
+
+	CPrecipitationBlocker();
+	void	Spawn( void );
+	int		UpdateTransmitState( void );
+};
+
+LINK_ENTITY_TO_CLASS( func_precipitation_blocker, CPrecipitationBlocker );
+
+BEGIN_DATADESC( CPrecipitationBlocker )
+END_DATADESC()
+
+// Just send the normal entity crap
+IMPLEMENT_SERVERCLASS_ST( CPrecipitationBlocker, DT_PrecipitationBlocker )
+END_SEND_TABLE()
+
+
+CPrecipitationBlocker::CPrecipitationBlocker()
+{
+}
+
+int CPrecipitationBlocker::UpdateTransmitState()
+{
+	return SetTransmitState( FL_EDICT_ALWAYS );
+}
+
+
+void CPrecipitationBlocker::Spawn( void )							   
+{
+	SetTransmitState( FL_EDICT_ALWAYS );
+	Precache();
+	SetSolid( SOLID_NONE );							// Remove model & collisions
+	SetMoveType( MOVETYPE_NONE );
+	SetModel( STRING( GetModelName() ) );		// Set size
+
+	m_nRenderMode = kRenderEnvironmental;
+}
 #endif
+
+//--------------------------------------------------------------------------------------------------------
+class CDetailBlocker : public CServerOnlyEntity
+{
+	DECLARE_CLASS( CDetailBlocker, CServerOnlyEntity );
+public:
+
+	CDetailBlocker() : CServerOnlyEntity() {}
+	virtual ~CDetailBlocker() {}
+};
+
+LINK_ENTITY_TO_CLASS( func_detail_blocker, CDetailBlocker );
 
 //-----------------------------------------------------------------------------
 // EnvWind - global wind info
@@ -1544,11 +1632,11 @@ public:
 	DECLARE_SERVERCLASS();
 
 private:
-//#ifdef POSIX
+#ifdef GNUC
 	CEnvWindShared m_EnvWindShared; // FIXME - fails to compile as networked var due to operator= problem
-//#else
-//	CNetworkVarEmbedded( CEnvWindShared, m_EnvWindShared );
-//#endif
+#else
+	CNetworkVarEmbedded( CEnvWindShared, m_EnvWindShared );
+#endif
 };
 
 LINK_ENTITY_TO_CLASS( env_wind, CEnvWind );
@@ -1620,7 +1708,8 @@ void CEnvWind::Spawn( void )
 	SetSolid( SOLID_NONE );
 	AddEffects( EF_NODRAW );
 
-	m_EnvWindShared.Init( entindex(), 0, gpGlobals->frametime, GetLocalAngles().y, 0 );
+	m_EnvWindShared.m_iInitialWindDir = (int)( anglemod( m_EnvWindShared.m_iInitialWindDir ) );
+	m_EnvWindShared.Init( entindex(), 0, gpGlobals->curtime, GetLocalAngles().y, 0 );
 
 	SetThink( &CEnvWind::WindThink );
 	SetNextThink( gpGlobals->curtime );
@@ -1700,7 +1789,7 @@ void CEmbers::Spawn( void )
 	SetModel( STRING( GetModelName() ) );
 
 	SetSolid( SOLID_NONE );
-	SetRenderColorA( 0 );
+	SetRenderAlpha( 0 );
 	m_nRenderMode	= kRenderTransTexture;
 
 	SetUse( &CEmbers::EmberUse );
@@ -1902,7 +1991,7 @@ void CEnvMuzzleFlash::Spawn()
 	{
 		CBaseAnimating *pAnim = GetParent()->GetBaseAnimating();
 		int nParentAttachment = pAnim->LookupAttachment( STRING(m_iszParentAttachment) );
-		if ( nParentAttachment > 0 )
+		if ( nParentAttachment != 0 )
 		{
 			SetParent( GetParent(), nParentAttachment );
 			SetLocalOrigin( vec3_origin );
@@ -1932,6 +2021,9 @@ class CEnvSplash : public CPointEntity
 	DECLARE_CLASS( CEnvSplash, CPointEntity );
 
 public:
+	virtual void Precache();
+	virtual void Spawn();
+
 	// Input handlers
 	void	InputSplash( inputdata_t &inputdata );
 
@@ -1954,6 +2046,19 @@ LINK_ENTITY_TO_CLASS( env_splash, CEnvSplash );
 // Purpose:
 // Input  : &inputdata -
 //-----------------------------------------------------------------------------
+
+void CEnvSplash::Precache()
+{
+	BaseClass::Precache();
+	PrecacheEffect( "watersplash" );
+}
+
+void CEnvSplash::Spawn()
+{
+	Precache();
+	BaseClass::Spawn();
+}
+
 #define SPLASH_MAX_DEPTH	120.0f
 void CEnvSplash::InputSplash( inputdata_t &inputdata )
 {
@@ -1965,7 +2070,7 @@ void CEnvSplash::InputSplash( inputdata_t &inputdata )
 
 	if( HasSpawnFlags( SF_ENVSPLASH_FINDWATERSURFACE ) )
 	{
-		if( UTIL_PointContents(GetAbsOrigin()) & MASK_WATER )
+		if( UTIL_PointContents(GetAbsOrigin(), MASK_WATER) & MASK_WATER )
 		{
 			// No splash if I'm supposed to find the surface of the water, but I'm underwater.
 			return;
@@ -2298,24 +2403,14 @@ CEnvQuadraticBeam *CreateQuadraticBeam( const char *pSpriteName, const Vector &s
 	return pBeam;
 }
 
-void EffectsPrecache( void *pUser )
-{
-	CBaseEntity::PrecacheScriptSound( "Underwater.BulletImpact" );
-
-	CBaseEntity::PrecacheScriptSound( "FX_RicochetSound.Ricochet" );
-
-	CBaseEntity::PrecacheScriptSound( "Physics.WaterSplash" );
-	CBaseEntity::PrecacheScriptSound( "BaseExplosionEffect.Sound" );
-	CBaseEntity::PrecacheScriptSound( "Splash.SplashSound" );
-
-	if ( gpGlobals->maxClients > 1 )
-	{
-		CBaseEntity::PrecacheScriptSound( "HudChat.Message" );
-	}
-}
-
-PRECACHE_REGISTER_FN( EffectsPrecache );
-
+PRECACHE_REGISTER_BEGIN( GLOBAL, EffectsPrecache )
+	PRECACHE( GAMESOUND, "Underwater.BulletImpact" )
+	PRECACHE( GAMESOUND, "FX_RicochetSound.Ricochet" )
+	PRECACHE( GAMESOUND, "Physics.WaterSplash" )
+	PRECACHE( GAMESOUND, "BaseExplosionEffect.Sound" )
+	PRECACHE( GAMESOUND, "Splash.SplashSound" )
+	PRECACHE_CONDITIONAL( GAMESOUND, "HudChat.Message", gpGlobals->maxClients > 1 )
+PRECACHE_REGISTER_END()
 
 class CEnvViewPunch : public CPointEntity
 {

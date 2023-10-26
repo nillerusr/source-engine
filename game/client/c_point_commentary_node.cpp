@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -9,7 +9,7 @@
 #include "hudelement.h"
 #include "clientmode.h"
 #include <vgui_controls/Panel.h>
-#include <vgui/ISurface.h>
+#include <vgui/isurface.h>
 #include <vgui/ILocalize.h>
 #include <vgui/IScheme.h>
 #include <vgui_controls/AnimationController.h>
@@ -147,8 +147,9 @@ public:
 	{
 		if ( !g_CommentaryNodes.Count() )
 		{
-			int iRenderGroup = gHUD.LookupRenderGroupIndexByName( "commentary" );
-			gHUD.LockRenderGroup( iRenderGroup );
+			HACK_GETLOCALPLAYER_GUARD( "C_PointCommentaryNode::AddAndLockCommentaryHudGroup" );
+			int iRenderGroup = GetHud().RegisterForRenderGroup( "commentary" );
+			GetHud().LockRenderGroup( iRenderGroup );
 		}
 
 		if ( g_CommentaryNodes.Find(this) == g_CommentaryNodes.InvalidIndex() )
@@ -163,8 +164,9 @@ public:
 
 		if ( !g_CommentaryNodes.Count() )
 		{
-			int iRenderGroup = gHUD.LookupRenderGroupIndexByName( "commentary" );
-			gHUD.UnlockRenderGroup( iRenderGroup );
+			HACK_GETLOCALPLAYER_GUARD( "C_PointCommentaryNode::RemoveAndUnlockCommentaryHudGroup" );
+			int iRenderGroup = GetHud().RegisterForRenderGroup( "commentary" );
+			GetHud().UnlockRenderGroup( iRenderGroup );
 		}
 	}
 
@@ -226,6 +228,8 @@ void C_PointCommentaryNode::OnDataChanged( DataUpdateType_t updateType )
 	if ( m_bWasActive == m_bActive && !m_bRestartAfterRestore )
 		return;
 
+	HACK_GETLOCALPLAYER_GUARD( "C_PointCommentaryNode::OnDataChanged" );
+
 	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
 	if ( m_bActive && pPlayer )
 	{
@@ -273,10 +277,13 @@ void C_PointCommentaryNode::OnDataChanged( DataUpdateType_t updateType )
 			(CSoundEnvelopeController::GetController()).Play( m_sndCommentary, 1.0f, 100, m_flStartTime );
 		}
 
-		// Get the duration so we know when it finishes
-		float flDuration = enginesound->GetSoundDuration( STRING( CSoundEnvelopeController::GetController().SoundGetName( m_sndCommentary ) ) ) ;
+		// Strip the #off of the commentary file path if there is one
+		char *pcCommentaryWAVPath = V_stristr( (char*)STRING( CSoundEnvelopeController::GetController().SoundGetName( m_sndCommentary ) ) , "commentary" );
 
-		CHudCloseCaption *pHudCloseCaption = (CHudCloseCaption *)GET_HUDELEMENT( CHudCloseCaption );
+		// Get the duration so we know when it finishes
+		float flDuration = enginesound->GetSoundDuration( pcCommentaryWAVPath ) ;
+
+		CHudCloseCaption *pHudCloseCaption = (CHudCloseCaption *)GET_FULLSCREEN_HUDELEMENT( CHudCloseCaption );
 		if ( pHudCloseCaption )
 		{
 			// This is where we play the commentary close caption (and lock the other captions out).
@@ -353,7 +360,7 @@ bool IsNodeUnderCrosshair( C_BasePlayer *pPlayer )
 	if ( !tr.m_pEnt )
 		return false;
 
-	return dynamic_cast<C_PointCommentaryNode*>(tr.m_pEnt);
+	return dynamic_cast<C_PointCommentaryNode*>(tr.m_pEnt) ? true : false;
 }
 
 //===================================================================================================================
@@ -366,7 +373,7 @@ DECLARE_HUDELEMENT( CHudCommentary );
 //-----------------------------------------------------------------------------
 CHudCommentary::CHudCommentary( const char *name ) : vgui::Panel( NULL, "HudCommentary" ), CHudElement( name )
 {
-	vgui::Panel *pParent = g_pClientMode->GetViewport();
+	vgui::Panel *pParent = GetClientMode()->GetViewport();
 	SetParent( pParent );
 
 	SetPaintBorderEnabled( false );
@@ -392,16 +399,17 @@ void CHudCommentary::ApplySchemeSettings( vgui::IScheme *pScheme )
 void CHudCommentary::Paint()
 {
 	float flDuration = (m_flEndTime - m_flStartTime);
-	float flPercentage = clamp( ( gpGlobals->curtime - m_flStartTime ) / flDuration, 0.f, 1.f );
+	float flPercentage = clamp( ( gpGlobals->curtime - m_flStartTime ) / flDuration, 0, 1 );
 
 	if ( !m_hActiveNode )
 	{
 		if ( !m_bHiding )
 		{
 			m_bHiding = true;
-			g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "HideCommentary" );
+			GetClientMode()->GetViewportAnimationController()->StartAnimationSequence( "HideCommentary" );
 
-			CHudCloseCaption *pHudCloseCaption = (CHudCloseCaption *)GET_HUDELEMENT( CHudCloseCaption );
+			CHudCloseCaption *pHudCloseCaption = (CHudCloseCaption *)GET_FULLSCREEN_HUDELEMENT( CHudCloseCaption );
+
 			if ( pHudCloseCaption )
 			{
 				pHudCloseCaption->Reset();
@@ -414,7 +422,7 @@ void CHudCommentary::Paint()
 		if ( flPercentage >= 1 && m_hActiveNode )
 		{
 			m_hActiveNode = NULL;
-			g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "HideCommentary" );
+			GetClientMode()->GetViewportAnimationController()->StartAnimationSequence( "HideCommentary" );
 
 			engine->ServerCmd( "commentary_finishnode\n" );
 		}
@@ -546,7 +554,7 @@ void CHudCommentary::StartCommentary( C_PointCommentaryNode *pNode, char *pszSpe
 	// If the commentary just started, play the commentary fade in.
 	if ( fabs(flStartTime - gpGlobals->curtime) < 1.0 )
 	{
-		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "ShowCommentary" );
+		GetClientMode()->GetViewportAnimationController()->StartAnimationSequence( "ShowCommentary" );
 	}
 	else
 	{

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -12,8 +12,10 @@
 #endif
 
 #include "mathlib/vector.h"
-#include "video/ivideoservices.h"
+#include "avi/iavi.h"
+#include "avi/ibik.h"
 #include "const.h"
+
 //-----------------------------------------------------------------------------
 // Forward declarations
 //-----------------------------------------------------------------------------
@@ -48,11 +50,13 @@ public:
 	float GetRight() { return right; }
 	void DrawFrame( RenderMode_t nRenderMode, int frame, int x, int y, const wrect_t *prcSubRect );
 	void DrawFrameOfSize( RenderMode_t nRenderMode, int frame, int x, int y, int iWidth, int iHeight, const wrect_t *prcSubRect);
-	bool		IsVideo();
+	bool IsAVI();
+	bool IsBIK();
 	void GetTexCoordRange( float *pMinU, float *pMinV, float *pMaxU, float *pMaxV );
 
 private:
-	IVideoMaterial *m_VideoMaterial;
+	AVIMaterial_t m_hAVIMaterial;
+	BIKMaterial_t m_hBIKMaterial;
 	int m_width;
 	int m_height;
 	int m_numFrames;

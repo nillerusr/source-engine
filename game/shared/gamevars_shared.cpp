@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -23,11 +23,7 @@ void MPForceCameraCallback( IConVar *var, const char *pOldString, float flOldVal
 // some shared cvars used by game rules
 ConVar mp_forcecamera( 
 	"mp_forcecamera", 
-#ifdef CSTRIKE
-	"0", 
-#else
-	"1",
-#endif
+	"1", 
 	FCVAR_REPLICATED,
 	"Restricts spectator modes for dead players"
 #ifdef GAME_DLL
@@ -53,6 +49,3 @@ ConVar mp_fadetoblack(
 	"0", 
 	FCVAR_REPLICATED | FCVAR_NOTIFY, 
 	"fade a player's screen to black when he dies" );
-
-
-ConVar sv_hudhint_sound( "sv_hudhint_sound", "1", FCVAR_REPLICATED );

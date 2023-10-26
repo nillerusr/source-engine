@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Sets up the tasks for default AI.
 //
@@ -43,13 +43,14 @@ const char * g_ppszTaskFailureText[] =
 	"Route Destination No Longer Valid",             // FAIL_BAD_PATH_GOAL
 	"Stuck on top of something",                     // FAIL_STUCK_ONTOP
 	"Item has been taken",		                     // FAIL_ITEM_TAKEN
+	"Too frozen",									 // FAIL_FROZEN
 };
 
 const char *TaskFailureToString( AI_TaskFailureCode_t code )
 {
 	const char *pszResult;
 	if ( code < 0 || code >= NUM_FAIL_CODES )
-		pszResult = (const char *)(intp)code;
+		pszResult = (const char *)code;
 	else
 		pszResult = g_ppszTaskFailureText[code];
 	return pszResult;
@@ -104,6 +105,7 @@ void CAI_BaseNPC::InitDefaultTaskSR(void)
 	ADD_DEF_TASK( TASK_GET_FLANK_RADIUS_PATH_TO_ENEMY_LOS );
 	ADD_DEF_TASK( TASK_GET_PATH_TO_TARGET );
 	ADD_DEF_TASK( TASK_GET_PATH_TO_TARGET_WEAPON );
+	ADD_DEF_TASK( TASK_GET_PATH_OFF_OF_NPC );
 	ADD_DEF_TASK( TASK_CREATE_PENDING_WEAPON );
 	ADD_DEF_TASK( TASK_GET_PATH_TO_HINTNODE );
 	ADD_DEF_TASK( TASK_STORE_LASTPOSITION );

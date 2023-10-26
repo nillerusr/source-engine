@@ -1,9 +1,9 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
 // $NoKeywords: $
-//=============================================================================//
+//===========================================================================//
 
 #include "cbase.h"
 #include "te.h"
@@ -98,8 +98,6 @@ void TE_MuzzleFlash( IRecipientFilter& filter, float delayt,
 	const Vector &start, const QAngle &angles, float scale, int type );
 void TE_Dust( IRecipientFilter& filter, float delayt,
 			 const Vector &pos, const Vector &dir, float size, float speed );
-void TE_DispatchEffect( IRecipientFilter& filter, float delay,
-				const Vector &pos, const char *pName, const CEffectData &data );
 void TE_PhysicsProp( IRecipientFilter& filter, float delay,
 	int modelindex, int skin, const Vector& pos, const QAngle &angles, const Vector& vel, int flags, int effects );
 void TE_ClientProjectile( IRecipientFilter& filter, float delay,
@@ -112,7 +110,6 @@ void TE_GaussExplosion( IRecipientFilter& filter, float delayt,
 
 class CTempEntsSystem : public ITempEntsSystem
 {
-private:
 	//-----------------------------------------------------------------------------
 	// Purpose: Returning true means don't even call TE func
 	// Input  : filter - 
@@ -485,15 +482,6 @@ public:
 			TE_GaussExplosion( filter, delay, pos, dir, type );
 		}
 #endif
-	}
-
-	virtual void DispatchEffect( IRecipientFilter& filter, float delay,
-				const Vector &pos, const char *pName, const CEffectData &data )
-	{
-		if ( !SuppressTE( filter ) )
-		{
-			TE_DispatchEffect( filter, delay, pos, pName, data );
-		}
 	}
 
 	virtual void PhysicsProp( IRecipientFilter& filter, float delay, int modelindex, int skin,

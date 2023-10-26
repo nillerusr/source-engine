@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:		Namespace for functions having to do with WC Edit mode
 //
@@ -35,8 +35,6 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-extern CAI_Node*		FindPickerAINode( CBasePlayer* pPlayer, NodeType_e nNodeType );
-extern CAI_Link*		FindPickerAILink( CBasePlayer* pPlayer );
 extern float			GetFloorZ(const Vector &origin);
 
 //-----------------------------------------------------------------------------
@@ -76,6 +74,7 @@ bool NWCEdit::IsWCVersionValid(void)
 //------------------------------------------------------------------------------
 Vector NWCEdit::AirNodePlacementPosition( void )
 {
+	AssertMsg( false, "Air node placement in wcedit broken in Left4Dead." );
 	CBasePlayer* pPlayer = UTIL_PlayerByIndex(CBaseEntity::m_nDebugPlayer);
 
 	if (!pPlayer) 
@@ -85,13 +84,14 @@ Vector NWCEdit::AirNodePlacementPosition( void )
 
 	Vector pForward;
 	pPlayer->EyeVectors( &pForward );
-	
+
 	Vector	floorVec = pForward;
 	floorVec.z = 0;
 	VectorNormalize( floorVec );
 	VectorNormalize( pForward );
 
 	float cosAngle = DotProduct(floorVec,pForward);
+
 
 	float lookDist = g_pAINetworkManager->GetEditOps()->m_flAirEditDistance/cosAngle;
 	Vector lookPos = pPlayer->EyePosition()+pForward * lookDist;
@@ -329,7 +329,7 @@ void NWCEdit::DestroyAINode( CBasePlayer *pPlayer )
 		nNodeType = NODE_AIR;
 	}
 
-	CAI_Node* pAINode = FindPickerAINode(pPlayer, nNodeType);
+	CAI_Node* pAINode = pPlayer->FindPickerAINode(nNodeType);
 	if (pAINode)
 	{
 		int status = Editor_DeleteNode(g_pAINetworkManager->GetEditOps()->m_pNodeIndexTable[pAINode->GetId()], false);
@@ -380,12 +380,12 @@ void NWCEdit::CreateAILink( CBasePlayer* pPlayer )
 	// -------------------------------------------------------------
 	//  Check that WC is running with the right map version
 	// -------------------------------------------------------------
-	if (!IsWCVersionValid())
+	if (!IsWCVersionValid() ||!pPlayer)
 	{
 		return;
 	}
 
-	CAI_Link* pAILink = FindPickerAILink(pPlayer);
+	CAI_Link* pAILink = pPlayer->FindPickerAILink();
 	if (pAILink && (pAILink->m_LinkInfo & bits_LINK_OFF))
 	{
 		int nWCSrcID = g_pAINetworkManager->GetEditOps()->m_pNodeIndexTable[pAILink->m_iSrcID];
@@ -418,12 +418,12 @@ void NWCEdit::DestroyAILink( CBasePlayer *pPlayer )
 	// -------------------------------------------------------------
 	//  Check that WC is running with the right map version
 	// -------------------------------------------------------------
-	if (!IsWCVersionValid())
+	if (!IsWCVersionValid() || !pPlayer)
 	{
 		return;
 	}
 
-	CAI_Link* pAILink = FindPickerAILink(pPlayer);
+	CAI_Link* pAILink = pPlayer->FindPickerAILink();
 	if (pAILink)
 	{
 		int nWCSrcID = g_pAINetworkManager->GetEditOps()->m_pNodeIndexTable[pAILink->m_iSrcID];
@@ -740,9 +740,6 @@ END_DATADESC()
 
 CON_COMMAND( hammer_update_entity, "Updates the entity's position/angles when in edit mode" )
 {
-	if ( !UTIL_IsCommandIssuedByServerAdmin() )
-		return;
-
 	if ( args.ArgC() < 2 )
 	{
 		CBasePlayer *pPlayer = UTIL_GetCommandClient();
@@ -771,9 +768,6 @@ CON_COMMAND( hammer_update_safe_entities, "Updates entities in the map that can 
 {
 	int iCount = 0;
 	CBaseEntity *pEnt = NULL;
-
-	if ( !UTIL_IsCommandIssuedByServerAdmin() )
-		return;
 
 	Msg("\n====================================================\nPerforming Safe Entity Update\n" );
 

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: This is a panel which is rendered image on top of an entity
 //
@@ -20,7 +20,6 @@
 //-----------------------------------------------------------------------------
 class KeyValues;
 class BitmapImage;
-struct Bitmap_t;
 
 //-----------------------------------------------------------------------------
 // This is a base class for a panel which always is rendered on top of an entity
@@ -49,9 +48,6 @@ public:
 
 	// Setup for panels that aren't created by the commander overlay factory (i.e. aren't parsed from a keyvalues file)
 	virtual void SetImage( BitmapImage *pImage );
-
-	/// Set bitmap data directly
-	virtual void SetBitmap( const Bitmap_t &bitmap );
 
 	const char *GetMouseOverText( void );
 

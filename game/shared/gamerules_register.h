@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -54,7 +54,7 @@ private:
 
 	// The client forwards this call so the game rules manager can create the appropriate
 	// game rules class.
-	void InstallStringTableCallback_GameRules();
+	void InstallStringTableCallback_GameRules( const char *tableName );
 
 #else
 

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -10,7 +10,7 @@
 #include "tempent.h"
 #include "iefx.h"
 #include "decals.h"
-#include "iviewrender.h"
+#include "IViewRender.h"
 #include "engine/ivmodelinfo.h"
 #include "view.h"
 
@@ -47,7 +47,7 @@ public:
 	C_Plasma();
 	~C_Plasma();
 
-	void	AddEntity( void );
+	bool	Simulate( void );
 
 protected:
 	void	Update( void );
@@ -198,6 +198,7 @@ C_Plasma::C_Plasma()
 	{
 		m_entFlames[i].Clear();
 	}
+	AddToEntityList(ENTITY_LIST_SIMULATE);
 }
 
 C_Plasma::~C_Plasma()
@@ -222,11 +223,11 @@ float C_Plasma::GetFlickerScale( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void C_Plasma::AddEntity( void )
+bool C_Plasma::Simulate( void )
 {
 	//Only do this if we're active
 	if ( ( m_nFlags & bitsFIRESMOKE_ACTIVE ) == false )
-		return;
+		return false;
 
 	Update();
 	AddFlames();
@@ -237,6 +238,7 @@ void C_Plasma::AddEntity( void )
 	// Note: Sprite renderer assumes scale of 0.0 is 1.0
 	m_entGlow.SetScale( MAX( 0.0000001f, (m_flScaleRegister*1.5f) + GetFlickerScale() ) );
 	m_entGlow.SetLocalOriginDim( Z_INDEX, m_entGlow.GetLocalOriginDim( Z_INDEX ) + ( dScale * 32.0f ) );
+	return true;
 }
 
 #define	FLAME_ALPHA_START	0.8f
@@ -269,7 +271,7 @@ void C_Plasma::AddFlames( void )
 			m_entFlames[i].SetBrightness( 255.0f * alpha );
 		}
 
-		m_entFlames[i].AddToLeafSystem();
+		m_entFlames[i].AddToLeafSystem( false );
 	}
 }
 
@@ -284,6 +286,11 @@ void C_Plasma::OnDataChanged( DataUpdateType_t updateType )
 	if ( updateType == DATA_UPDATE_CREATED )
 	{
 		Start();
+	}
+
+	if ( m_nFlags & bitsFIRESMOKE_ACTIVE )
+	{
+		AddToEntityList(ENTITY_LIST_SIMULATE);
 	}
 }
 
@@ -331,8 +338,9 @@ void C_Plasma::Start( void )
 		m_entFlames[i].m_flSpriteFramerate	= (float) random->RandomInt( 15, 20 );
 		m_entFlames[i].SetScale( m_flStartScale );
 		m_entFlames[i].SetRenderMode( kRenderTransAddFrameBlend );
-		m_entFlames[i].m_nRenderFX			= kRenderFxNone;
-		m_entFlames[i].SetRenderColor( 255, 255, 255, 255 );
+		m_entFlames[i].SetRenderFX( kRenderFxNone );
+		m_entFlames[i].SetRenderColor( 255, 255, 255 );
+		m_entFlames[i].SetRenderAlpha( 255 );
 		m_entFlames[i].SetBrightness( 255 );
 		m_entFlames[i].index				= -1;
 		
@@ -352,17 +360,20 @@ void C_Plasma::Start( void )
 	m_entGlow.SetLocalOrigin( GetLocalOrigin() );
 	m_entGlow.SetScale( m_flStartScale );
 	m_entGlow.SetRenderMode( kRenderTransAdd );
-	m_entGlow.m_nRenderFX		= kRenderFxNone;
-	m_entGlow.SetRenderColor( 255, 255, 255, 255 );
+	m_entGlow.SetRenderFX( kRenderFxNone );
+	m_entGlow.SetRenderColor( 255, 255, 255 );
+	m_entGlow.SetRenderAlpha( 255 );
 	m_entGlow.SetBrightness( 255 );
 	m_entGlow.index				= -1;
 	
 	m_flGlowScale				= m_flStartScale;
 
-	m_entGlow.AddToLeafSystem( RENDER_GROUP_TRANSLUCENT_ENTITY );
+	m_entGlow.AddToLeafSystem( false );
 
 	for( i=0; i < NUM_CHILD_FLAMES; i++ )
-		m_entFlames[i].AddToLeafSystem( RENDER_GROUP_TRANSLUCENT_ENTITY );
+	{
+		m_entFlames[i].AddToLeafSystem( false );
+	}
 }
 
 //-----------------------------------------------------------------------------

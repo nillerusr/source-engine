@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -23,7 +23,7 @@
 #endif
 
 // CLIENT DLL includes
-#if defined( CLIENT_DLL )
+#if defined( CLIENT_DLL ) || defined( TOOL_DLL )
 
 #include "iclassmap.h"
 #include "recvproxy.h"
@@ -92,7 +92,7 @@ class SendTable;
 		typedef className classNameTypedef; \
 		static typedescription_t predDesc[] = \
 		{ \
-		{ FIELD_VOID,0, {0,0},0,0,0,0,0,0}, /* so you can define "empty" tables */
+		{ FIELD_VOID,0,0,0,0,0,0,0,0}, /* so you can define "empty" tables */
 
 #define END_PREDICTION_DATA() \
 		}; \
@@ -118,7 +118,7 @@ class SendTable;
 			typedef className classNameTypedef; \
 			typedescription_t predDesc[] = \
 			{ \
-				{ FIELD_VOID,0, {0,0},0,0,0,0,0,0},
+				{ FIELD_VOID,0,0,0,0,0,0,0,0},
 
 #define BEGIN_PREDICTION_DATA_NO_BASE( className ) BEGIN_PREDICTION_DATA( className )
 
@@ -186,18 +186,5 @@ class SendTable;
 	IMPLEMENT_SERVERCLASS_ST(className, dataTable)
 
 #endif																	
-
-// Interface used by client and server to track predictable entities
-abstract_class IPredictableList
-{
-public:
-	// Get predictables by index
-	virtual CBaseEntity		*GetPredictable( int slot ) = 0;
-	// Get count of predictables
-	virtual int				GetPredictableCount( void ) = 0;
-};
-
-// Expose interface to rest of .dll
-extern IPredictableList *predictables;
 
 #endif // PREDICTABLE_ENTITY_H

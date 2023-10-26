@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: This is a panel which is rendered on top of an entity
 //
@@ -13,9 +13,9 @@
 #pragma once
 #endif
 
-#include "c_baseentity.h"
+#include "C_BaseEntity.h"
 #include <vgui/MouseCode.h>
-#include "vgui_basepanel.h"
+#include "VGUI_BasePanel.h"
 
 // forward declarations
 class KeyValues;

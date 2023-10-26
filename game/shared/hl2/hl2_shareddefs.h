@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -35,6 +35,8 @@ enum
 	HL2COLLISION_GROUP_ANTLION,
 	HL2COLLISION_GROUP_LAST_NPC,
 	HL2COLLISION_GROUP_COMBINE_BALL_NPC,
+	 
+
 };
 
 

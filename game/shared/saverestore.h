@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Helper classes and functions for the save/restore system. These
 // 			classes are internally structured to distinguish simple from
@@ -108,7 +108,7 @@ public:
 	void			WriteTick( const char *pname, const int *value, int count = 1 );	           // Save a int (timevalue)
 	void			WritePositionVector( const char *pname, const Vector &value );		           // Offset for landmark if necessary
 	void			WritePositionVector( const char *pname, const Vector *value, int count = 1 );  // array of pos vectors
-	void			WriteFunction( datamap_t *pMap, const char *pname, inputfunc_t **value, int count = 1 ); // Save a function pointer
+	void			WriteFunction( datamap_t *pMap, const char *pname, const int *value, int count = 1 ); // Save a function pointer
 
 	void			WriteEntityPtr( const char *pname, CBaseEntity **ppEntity, int count = 1 );
 	void			WriteEdictPtr( const char *pname, edict_t **ppEdict, int count = 1 );
@@ -248,7 +248,7 @@ public:
 	int				ReadTick( int *pValue, int count = 1, int nBytesAvailable = 0);
 	int				ReadPositionVector( Vector *pValue );
 	int				ReadPositionVector( Vector *pValue, int count = 1, int nBytesAvailable = 0);
-	int				ReadFunction( datamap_t *pMap, inputfunc_t **pValue, int count = 1, int nBytesAvailable = 0);
+	int				ReadFunction( datamap_t *pMap, void **pValue, int count = 1, int nBytesAvailable = 0);
 	
 	int 			ReadEntityPtr( CBaseEntity **ppEntity, int count = 1, int nBytesAvailable = 0 );
 	int				ReadEdictPtr( edict_t **ppEdict, int count = 1, int nBytesAvailable = 0 );
@@ -261,6 +261,8 @@ public:
 	
 	void			SetGlobalMode( int global ) { m_global = global; }
 	void			PrecacheMode( bool mode ) { m_precache = mode; }
+	virtual int		ScanAheadForHammerID();
+	virtual void	SkipEntityData();
 	bool			GetPrecacheMode( void ) { return m_precache; }
 
 	CGameSaveRestoreInfo *GetGameSaveRestoreInfo()	{ return m_pGameInfo; }

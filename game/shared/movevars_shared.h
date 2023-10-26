@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -11,8 +11,6 @@
 #endif
 
 #include "convar.h"
-
-float GetCurrentGravity( void );
 
 extern ConVar sv_gravity;
 extern ConVar sv_stopspeed;

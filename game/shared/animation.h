@@ -1,12 +1,17 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
 // $NoKeywords: $
 //
-//=============================================================================//
+//===========================================================================//
 #ifndef ANIMATION_H
 #define ANIMATION_H
+
+#ifdef _WIN32
+#pragma once
+#endif
+
 
 #define ACTIVITY_NOT_AVAILABLE		-1
 
@@ -25,6 +30,7 @@ int SelectHeaviestSequence( CStudioHdr *pstudiohdr, int activity );
 void SetEventIndexForSequence( mstudioseqdesc_t &seqdesc );
 void BuildAllAnimationEventIndexes( CStudioHdr *pstudiohdr );
 void ResetEventIndexes( CStudioHdr *pstudiohdr );
+float GetSequenceLinearMotionAndDuration( CStudioHdr *pstudiohdr, int iSequence, const float poseParameter[], Vector *pVec );
 
 void GetEyePosition( CStudioHdr *pstudiohdr, Vector &vecEyePosition );
 
@@ -49,6 +55,7 @@ int GetBodygroup( CStudioHdr *pstudiohdr, int body, int iGroup );
 
 const char *GetBodygroupName( CStudioHdr *pstudiohdr, int iGroup );
 int FindBodygroupByName( CStudioHdr *pstudiohdr, const char *name );
+const char *GetBodygroupPartName( CStudioHdr *pstudiohdr, int iGroup, int iPart );
 int GetBodygroupCount( CStudioHdr *pstudiohdr, int iGroup );
 int GetNumBodyGroups( CStudioHdr *pstudiohdr );
 

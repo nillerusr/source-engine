@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -45,7 +45,7 @@ CChoreoActor& CChoreoActor::operator=( const CChoreoActor& src )
 	Q_strncpy( m_szName, src.m_szName, sizeof( m_szName ) );
 	Q_strncpy( m_szFacePoserModelName, src.m_szFacePoserModelName, sizeof( m_szFacePoserModelName ) );
 
-	for ( int i = 0; i < src.m_Channels.Size(); i++ )
+	for ( int i = 0; i < src.m_Channels.Count(); i++ )
 	{
 		CChoreoChannel *c = src.m_Channels[ i ];
 		CChoreoChannel *newChannel = new CChoreoChannel();
@@ -92,7 +92,7 @@ const char *CChoreoActor::GetName( void )
 //-----------------------------------------------------------------------------
 int CChoreoActor::GetNumChannels( void )
 {
-	return m_Channels.Size();
+	return m_Channels.Count();
 }
 
 //-----------------------------------------------------------------------------
@@ -102,7 +102,7 @@ int CChoreoActor::GetNumChannels( void )
 //-----------------------------------------------------------------------------
 CChoreoChannel *CChoreoActor::GetChannel( int channel )
 {
-	if ( channel < 0 || channel >= m_Channels.Size() )
+	if ( channel < 0 || channel >= m_Channels.Count() )
 	{
 		return NULL;
 	}
@@ -161,7 +161,7 @@ void CChoreoActor::SwapChannels( int c1, int c2 )
 //-----------------------------------------------------------------------------
 int CChoreoActor::FindChannelIndex( CChoreoChannel *channel )
 {
-	for ( int i = 0; i < m_Channels.Size(); i++ )
+	for ( int i = 0; i < m_Channels.Count(); i++ )
 	{
 		if ( channel == m_Channels[ i ] )
 		{

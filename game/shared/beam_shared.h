@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -43,6 +43,7 @@
 #include "c_pixel_visibility.h"
 #endif
 
+// I've seen CBeams glitter in the dark near Tannhauser gate...
 class CBeam : public CBaseEntity
 {
 	DECLARE_CLASS( CBeam, CBaseEntity );
@@ -105,8 +106,6 @@ public:
 	void SetFireTime( float flFireTime );
 	void SetFrameRate( float flFrameRate ) { m_flFrameRate = flFrameRate; }
 
-	void SetMinDXLevel( int nMinDXLevel ) { m_nMinDXLevel = nMinDXLevel; }
-
 	void TurnOn( void );
 	void TurnOff( void );
 
@@ -156,29 +155,34 @@ public:
 	void LiveForTime( float time );
 	void BeamDamageInstant( trace_t *ptr, float damage );
 
-// Only supported in TF2 right now
-#if defined( INVASION_CLIENT_DLL )
-	virtual bool	ShouldPredict( void )
-	{
-		return true;
-	}
-#endif
-
 	virtual const char *GetDecalName( void ) { return "BigShot"; }
+
+	// specify whether the beam should always go all the way to 
+	// the end point, or clip against geometry, or clip against
+	// geometry and NPCs. This is only used by env_beams at present, but
+	// need to be in this CBeam because of the way it affects drawing.
+	enum BeamClipStyle_t
+	{
+		kNOCLIP = 0, // don't clip (default)
+		kGEOCLIP = 1,
+		kMODELCLIP = 2,
+
+		kBEAMCLIPSTYLE_NUMBITS = 2, //< number of bits needed to represent this object
+	};
+
+	inline BeamClipStyle_t GetClipStyle() const { return m_nClipStyle; }
 
 #if defined( CLIENT_DLL )
 // IClientEntity overrides.
 public:
-	virtual int			DrawModel( int flags );
-	virtual bool		IsTransparent( void );
-	virtual bool		ShouldDraw();
-	virtual bool		IgnoresZBuffer( void ) const { return true; }
+	virtual int			DrawModel( int flags, const RenderableInstance_t &instance );
+	virtual RenderableTranslucencyType_t ComputeTranslucencyType();
 	virtual void		OnDataChanged( DataUpdateType_t updateType );
 
 	virtual bool		OnPredictedEntityRemove( bool isbeingremoved, C_BaseEntity *predicted );
 
 	// Add beam to visible entities list?
-	virtual void		AddEntity( void );
+	virtual bool		Simulate( void );
 	virtual bool		ShouldReceiveProjectedTextures( int flags )
 	{
 		return false;
@@ -226,8 +230,8 @@ private:
 	CNetworkVar( float, m_fAmplitude );
 	CNetworkVar( float, m_fStartFrame );
 	CNetworkVar( float, m_fSpeed );
-	CNetworkVar( int, m_nMinDXLevel );
 	CNetworkVar( float, m_flFrame );
+	CNetworkVar( BeamClipStyle_t, m_nClipStyle );
 
 	CNetworkVector( m_vecEndPos );
 
@@ -238,10 +242,7 @@ private:
 #endif
 
 public:
-#ifdef PORTAL
-	CNetworkVar( bool, m_bDrawInMainRender );
-	CNetworkVar( bool, m_bDrawInPortalRender );
-#endif //#ifdef PORTAL
+
 };
 
 #if !defined( CLIENT_DLL )
@@ -338,12 +339,12 @@ inline void CBeam::SetNoise( float amplitude )
 
 inline void CBeam::SetColor( int r, int g, int b )		
 { 
-	SetRenderColor( r, g, b, GetRenderColor().a );
+	SetRenderColor( r, g, b );
 }
 
 inline void CBeam::SetBrightness( int brightness )		
 { 
-	SetRenderColorA( brightness ); 
+	SetRenderAlpha( brightness ); 
 }
 
 inline void CBeam::SetFrame( float frame )				
@@ -415,7 +416,7 @@ inline float CBeam::GetNoise( void ) const
 
 inline int CBeam::GetBrightness( void ) const	
 { 
-	return GetRenderColor().a;
+	return GetRenderAlpha();
 }
 
 inline float CBeam::GetFrame( void ) const		

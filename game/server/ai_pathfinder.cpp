@@ -1,9 +1,9 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose:
 //
 // $NoKeywords: $
-//=============================================================================//
+//===========================================================================//
 
 #include "cbase.h"
 
@@ -19,6 +19,7 @@
 #include "ai_routedist.h"
 #include "ai_moveprobe.h"
 #include "ai_dynamiclink.h"
+#include "ai_localnavigator.h"
 #include "ai_hint.h"
 #include "bitstring.h"
 
@@ -65,10 +66,36 @@ Navigation_t MoveBitsToNavType( int fBits )
 	case bits_CAP_MOVE_JUMP:
 		return NAV_JUMP;
 
+	case bits_CAP_MOVE_CRAWL:
+		return NAV_CRAWL;
+
 	default:
 		// This will only happen if more than one bit is set
-		Assert(0);
 		return NAV_NONE;
+	}
+}
+
+int NavTypeToMoveBits( Navigation_t nNavType )
+{
+	switch (nNavType)
+	{
+	case NAV_GROUND:
+		return bits_CAP_MOVE_GROUND;
+
+	case NAV_FLY:
+		return bits_CAP_MOVE_FLY;
+
+	case NAV_CLIMB:
+		return bits_CAP_MOVE_CLIMB;
+
+	case NAV_JUMP:
+		return bits_CAP_MOVE_JUMP;
+
+	case NAV_CRAWL:
+		return bits_CAP_MOVE_CRAWL;
+
+	default:
+		return 0;
 	}
 }
 
@@ -103,35 +130,63 @@ bool CAI_Pathfinder::UseStrongOptimizations()
 //-----------------------------------------------------------------------------
 // Computes the link type
 //-----------------------------------------------------------------------------
-Navigation_t CAI_Pathfinder::ComputeWaypointType( CAI_Node **ppNodes, int parentID, int destID )
+Navigation_t CAI_Pathfinder::ComputeWaypointType( bool *pWantsPreciseMovement, CAI_Node **ppNodes, int parentID, int destID )
 {
 	Navigation_t navType = NAV_NONE;
+	*pWantsPreciseMovement = false;
 
 	CAI_Node *pNode = ppNodes[parentID];
 	for (int link=0; link < pNode->NumLinks();link++) 
 	{
-		if (pNode->GetLinkByIndex(link)->DestNodeID(parentID) == destID)
-		{
-			// BRJ 10/1/02
-			// FIXME: pNPC->CapabilitiesGet() is actually the mechanism by which fliers
-			// filter out the bitfields in the waypoint type (most importantly, bits_MOVE_CAP_GROUND)
-			// that would cause the waypoint distance to be computed in a 2D, as opposed to 3D fashion
-			// This is a super-scary weak link if you ask me.
-			int linkMoveTypeBits = pNode->GetLinkByIndex(link)->m_iAcceptedMoveTypes[GetHullType()];
-			int moveTypeBits = ( linkMoveTypeBits & CapabilitiesGet());
-			if ( !moveTypeBits && linkMoveTypeBits == bits_CAP_MOVE_JUMP )
-			{
-				Assert( pNode->GetHint() && pNode->GetHint()->HintType() == HINT_JUMP_OVERRIDE );
-				ppNodes[destID]->Lock(0.3);
-				moveTypeBits = linkMoveTypeBits;
-			}
-			Navigation_t linkType = MoveBitsToNavType( moveTypeBits );
+		CAI_Link *pLink = pNode->GetLinkByIndex(link);
+		if ( pLink->DestNodeID(parentID) != destID )
+			continue;
 
-			// This will only trigger if the links disagree about their nav type
-			Assert( (navType == NAV_NONE) || (navType == linkType) );
-			navType = linkType; 
-			break;
+		// BRJ 10/1/02
+		// FIXME: pNPC->CapabilitiesGet() is actually the mechanism by which fliers
+		// filter out the bitfields in the waypoint type (most importantly, bits_MOVE_CAP_GROUND)
+		// that would cause the waypoint distance to be computed in a 2D, as opposed to 3D fashion
+		// This is a super-scary weak link if you ask me.
+		int linkMoveTypeBits = pLink->m_iAcceptedMoveTypes[GetHullType()];
+		int moveTypeBits = ( linkMoveTypeBits & CapabilitiesGet());
+		if ( !moveTypeBits && linkMoveTypeBits == bits_CAP_MOVE_JUMP )
+		{
+			Assert( pNode->GetHint() && pNode->GetHint()->HintType() == HINT_JUMP_OVERRIDE );
+			ppNodes[destID]->Lock(0.3);
+			moveTypeBits = linkMoveTypeBits;
 		}
+		*pWantsPreciseMovement = ( pLink->m_LinkInfo & bits_LINK_PRECISE_MOVEMENT ) != 0;
+
+		Navigation_t linkType = NAV_NONE;
+		if ( IsPowerOfTwo( moveTypeBits & bits_CAP_MOVE_GROUP ) )
+		{
+			linkType = MoveBitsToNavType( moveTypeBits );
+		}
+		else
+		{
+			// NOTE: Hack for nodes which say they are jump-capable + crawl-capable
+			if ( navType != NAV_NONE )
+			{
+				// This will only trigger if the links disagree about their nav type
+				Assert( NavTypeToMoveBits( navType ) & moveTypeBits );
+				linkType = navType;
+			}
+			else
+			{
+				// This logic only works assuming crawl nodes are the only
+				// type of node that can overlap with other nodes
+				Assert( moveTypeBits & bits_CAP_MOVE_CRAWL ); 
+				moveTypeBits = ( CapabilitiesGet() & bits_CAP_MOVE_CRAWL ) ? 
+					( moveTypeBits & (~bits_CAP_MOVE_GROUP ) | bits_CAP_MOVE_CRAWL ) : 
+					( moveTypeBits & (~bits_CAP_MOVE_CRAWL) );
+				linkType = MoveBitsToNavType( moveTypeBits );
+			}
+		}
+
+		// This will only trigger if the links disagree about their nav type
+		Assert( (navType == NAV_NONE) || (navType == linkType) );
+		navType = linkType; 
+		break;
 	}
 
 	// @TODO (toml 10-15-02): one would not expect to come out of the above logic
@@ -177,6 +232,7 @@ AI_Waypoint_t* CAI_Pathfinder::MakeRouteFromParents( int *parentArray, int endID
 
 	CAI_Node **pAInode = GetNetwork()->AccessNodes();
 
+	int nNextWaypointFlags = 0;
 	while (currentID != NO_NODE) 
 	{
 		// Try to link it to the previous waypoint
@@ -195,7 +251,8 @@ AI_Waypoint_t* CAI_Pathfinder::MakeRouteFromParents( int *parentArray, int endID
 			destID = pOldWaypoint->iNodeID;
 		}
 
-		Navigation_t waypointType = ComputeWaypointType( pAInode, currentID, destID );
+		bool bWantsPreciseMovement;
+		Navigation_t waypointType = ComputeWaypointType( &bWantsPreciseMovement, pAInode, currentID, destID );
 
 		// BRJ 10/1/02
 		// FIXME: It appears potentially possible for us to compute waypoints 
@@ -204,9 +261,19 @@ AI_Waypoint_t* CAI_Pathfinder::MakeRouteFromParents( int *parentArray, int endID
 		// It's also possible if none of the lines have an appropriate DestNodeID.
 		// Um, shouldn't such a waypoint not be allowed?!?!?
 		Assert( waypointType != NAV_NONE );
+		int nWaypointFlags = bits_WP_TO_NODE | nNextWaypointFlags;
+		if ( bWantsPreciseMovement )
+		{
+			nWaypointFlags |= bits_WP_DONT_SIMPLIFY | bits_WP_PRECISE_MOVEMENT;
+			nNextWaypointFlags = bits_WP_DONT_SIMPLIFY | bits_WP_PRECISE_MOVEMENT;
+		}
+		else
+		{
+			nNextWaypointFlags = 0;
+		}
 
-		pNewWaypoint = new AI_Waypoint_t( pAInode[currentID]->GetPosition(GetHullType()),
-			pAInode[currentID]->GetYaw(), waypointType, bits_WP_TO_NODE, currentID );
+		pNewWaypoint = new AI_Waypoint_t( pAInode[currentID]->GetPosition( GetHullType() ),
+			pAInode[currentID]->GetYaw(), waypointType, nWaypointFlags, currentID );
 
 		// Link it up...
 		pNewWaypoint->SetNext( pOldWaypoint );
@@ -275,7 +342,8 @@ int CAI_Pathfinder::NearestNodeToPoint( const Vector &vecOrigin )
 //-----------------------------------------------------------------------------
 // Purpose: Build a path between two nodes
 //-----------------------------------------------------------------------------
-
+static float s_pDangerDistFactor[3] = { 2048.0f, 4096.0f, 8192.0f };
+					    
 AI_Waypoint_t *CAI_Pathfinder::FindBestPath(int startID, int endID) 
 {
 	AI_PROFILE_SCOPE( CAI_Pathfinder_FindBestPath );
@@ -346,10 +414,23 @@ AI_Waypoint_t *CAI_Pathfinder::FindBestPath(int startID, int endID)
 
 			Vector r1 = pSmallestNode->GetPosition(GetHullType());
 			Vector r2 = pAInode[testID]->GetPosition(GetHullType());
+
 			float dist   = GetOuter()->GetNavigator()->MovementCost( moveType, r1, r2 ); // MovementCost takes ref parameters!!
 
 			if ( dist == FLT_MAX )
 				continue;
+
+			if ( nodeLink->m_LinkInfo & bits_PREFER_AVOID )
+			{
+				dist += 512.0f;
+			}
+
+			if ( nodeLink->m_nDangerCount > 0 )
+			{
+				if ( nodeLink->m_nDangerCount > 3 )
+					continue;
+				dist += s_pDangerDistFactor[ nodeLink->m_nDangerCount - 1 ];
+			}
 
 			float new_g  = nodeG[smallestID] + dist;
 
@@ -597,11 +678,11 @@ bool CAI_Pathfinder::IsLinkUsable(CAI_Link *pLink, int startID)
 	// --------------------------------------------------------------------------
 	// Skip if link turned off
 	// --------------------------------------------------------------------------
-	if (pLink->m_LinkInfo & bits_LINK_OFF)
+	if (pLink->m_LinkInfo & ( bits_LINK_OFF | bits_LINK_ASW_BASHABLE ) )
 	{
 		CAI_DynamicLink *pDynamicLink = pLink->m_pDynamicLink;
 
-		if ( !pDynamicLink || pDynamicLink->m_strAllowUse == NULL_STRING )
+		if ( !pDynamicLink  || pDynamicLink->m_strAllowUse == NULL_STRING )
 			return false;
 
 		const char *pszAllowUse = STRING( pDynamicLink->m_strAllowUse );
@@ -714,6 +795,10 @@ static int NPCBuildFlags( CAI_BaseNPC *pNPC, const Vector &vecOrigin )
 		{
 			buildFlags |= bits_BUILD_JUMP;
 		}
+		if (pNPC->CapabilitiesGet() & bits_CAP_MOVE_CRAWL)
+		{
+			buildFlags |= bits_BUILD_CRAWL;
+		}
 
 		return buildFlags;
 	}
@@ -807,7 +892,7 @@ AI_Waypoint_t* CAI_Pathfinder::RouteFromNode(const Vector &vecOrigin, int buildF
 	if ( !pResult &&
 		 pNode->GetType() == NODE_CLIMB && 
 		 ( vecOrigin - vecNodePosition ).Length2DSqr() < 32.0*32.0 &&
-		 GetOuter()->GetMoveProbe()->CheckStandPosition(vecNodePosition, MASK_NPCSOLID_BRUSHONLY ) )
+		 GetOuter()->GetMoveProbe()->CheckStandPosition(vecNodePosition, GetOuter()->GetAITraceMask_BrushOnly() ) )
 	{
 		pResult = new AI_Waypoint_t( vecOrigin, 0, NAV_GROUND, bits_WP_TO_GOAL, nodeID );
 	}
@@ -822,12 +907,12 @@ AI_Waypoint_t *CAI_Pathfinder::BuildSimpleRoute( Navigation_t navType, const Vec
 	const Vector &vEnd, const CBaseEntity *pTarget, int endFlags, int nodeID, 
 	int nodeTargetType, float flYaw )
 {
-	Assert( navType == NAV_JUMP || navType == NAV_CLIMB ); // this is what this here function is for
+	Assert( navType == NAV_JUMP || navType == NAV_CLIMB || navType == NAV_CRAWL ); // this is what this here function is for
 	// Only allowed to jump to ground nodes
 	if ((nodeID == NO_NODE)	|| (GetNetwork()->GetNode(nodeID)->GetType() == nodeTargetType) )
 	{
 		AIMoveTrace_t moveTrace;
-		GetOuter()->GetMoveProbe()->MoveLimit( navType, vStart, vEnd, MASK_NPCSOLID, pTarget, &moveTrace );
+		GetOuter()->GetMoveProbe()->MoveLimit( navType, vStart, vEnd, GetOuter()->GetAITraceMask(), pTarget, &moveTrace );
 
 		// If I was able to make the move, or the vEnd is the
 		// goal and I'm within tolerance, just move to vEnd
@@ -856,11 +941,11 @@ AI_Waypoint_t *CAI_Pathfinder::BuildComplexRoute( Navigation_t navType, const Ve
 		return new AI_Waypoint_t( vEnd, flYaw, navType, endFlags, nodeID );
 	}
 	
-	unsigned int collideFlags = (buildFlags & bits_BUILD_IGNORE_NPCS) ? MASK_NPCSOLID_BRUSHONLY : MASK_NPCSOLID;
+	unsigned int collideFlags = (buildFlags & bits_BUILD_IGNORE_NPCS) ? GetOuter()->GetAITraceMask_BrushOnly() : GetOuter()->GetAITraceMask();
 
 	bool bCheckGround = (GetOuter()->CapabilitiesGet() & bits_CAP_SKIP_NAV_GROUND_CHECK) ? false : true;
 
-	if ( flTotalDist <= maxLocalNavDistance )
+	if ( flTotalDist <= maxLocalNavDistance || ( buildFlags & bits_BUILD_UNLIMITED_DISTANCE ) )
 	{
 		AIMoveTrace_t moveTrace;
 
@@ -916,7 +1001,7 @@ AI_Waypoint_t *CAI_Pathfinder::BuildComplexRoute( Navigation_t navType, const Ve
 		{
 			// If I can't get there even ignoring NPCs, don't bother to request a giveway
 			AIMoveTrace_t moveTrace2;
-			GetOuter()->GetMoveProbe()->MoveLimit( navType, vStart, vEnd, MASK_NPCSOLID_BRUSHONLY, pTarget, (bCheckGround) ? 100 : 0, &moveTrace2 );
+			GetOuter()->GetMoveProbe()->MoveLimit( navType, vStart, vEnd, GetOuter()->GetAITraceMask_BrushOnly(), pTarget, (bCheckGround) ? 100 : 0, &moveTrace2 );
 
 			if (!IsMoveBlocked(moveTrace2))
 			{							
@@ -931,16 +1016,36 @@ AI_Waypoint_t *CAI_Pathfinder::BuildComplexRoute( Navigation_t navType, const Ve
 	return NULL;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Attempts to build a crawl route between vStart
+//			and vEnd, ignoring entity pTarget
+// Input  :
+// Output : Returns a route if successful or NULL if no local route was possible
+//-----------------------------------------------------------------------------
+AI_Waypoint_t *CAI_Pathfinder::BuildCrawlRoute(const Vector &vStart, const Vector &vEnd, 
+											   const CBaseEntity *pTarget, int endFlags, int nodeID, int buildFlags, float flYaw, float goalTolerance)
+{
+	// Only allowed to jump to ground nodes
+	//return BuildSimpleRoute( NAV_CRAWL, vStart, vEnd, pTarget, 
+	//	endFlags, nodeID, NODE_GROUND, flYaw );
+	return BuildComplexRoute( NAV_CRAWL, vStart, vEnd, pTarget, 
+		endFlags, nodeID, buildFlags, flYaw, goalTolerance, MAX_LOCAL_NAV_DIST_GROUND[UseStrongOptimizations()] );
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Attempts to build a jump route between vStart
 //			and vEnd, ignoring entity pTarget
 // Input  :
-// Output : Returns a route if sucessful or NULL if no local route was possible
+// Output : Returns a route if successful or NULL if no local route was possible
 //-----------------------------------------------------------------------------
 AI_Waypoint_t *CAI_Pathfinder::BuildJumpRoute(const Vector &vStart, const Vector &vEnd, 
 	const CBaseEntity *pTarget, int endFlags, int nodeID, int buildFlags, float flYaw)
 {
+	Vector vecDiff = vStart - vEnd;
+
+	if( fabs(vecDiff.z) <= 24.0f && vecDiff.Length2D() <= Square(600.0f) )
+		return NULL;
+
 	// Only allowed to jump to ground nodes
 	return BuildSimpleRoute( NAV_JUMP, vStart, vEnd, pTarget, 
 		endFlags, nodeID, NODE_GROUND, flYaw );
@@ -950,7 +1055,7 @@ AI_Waypoint_t *CAI_Pathfinder::BuildJumpRoute(const Vector &vStart, const Vector
 // Purpose: Attempts to build a climb route between vStart
 //			and vEnd, ignoring entity pTarget
 // Input  :
-// Output : Returns a route if sucessful or NULL if no climb route was possible
+// Output : Returns a route if successful or NULL if no climb route was possible
 //-----------------------------------------------------------------------------
 AI_Waypoint_t *CAI_Pathfinder::BuildClimbRoute(const Vector &vStart, const Vector &vEnd, const CBaseEntity *pTarget, int endFlags, int nodeID, int buildFlags, float flYaw)
 {
@@ -964,7 +1069,7 @@ AI_Waypoint_t *CAI_Pathfinder::BuildClimbRoute(const Vector &vStart, const Vecto
 // Purpose: Attempts to build a ground route between vStart
 //			and vEnd, ignoring entity pTarget the the given tolerance
 // Input  :
-// Output : Returns a route if sucessful or NULL if no ground route was possible
+// Output : Returns a route if successful or NULL if no ground route was possible
 //-----------------------------------------------------------------------------
 AI_Waypoint_t *CAI_Pathfinder::BuildGroundRoute(const Vector &vStart, const Vector &vEnd, 
 	const CBaseEntity *pTarget, int endFlags, int nodeID, int buildFlags, float flYaw, float goalTolerance)
@@ -978,7 +1083,7 @@ AI_Waypoint_t *CAI_Pathfinder::BuildGroundRoute(const Vector &vStart, const Vect
 // Purpose: Attempts to build a fly route between vStart
 //			and vEnd, ignoring entity pTarget the the given tolerance
 // Input  :
-// Output : Returns a route if sucessful or NULL if no ground route was possible
+// Output : Returns a route if successful or NULL if no ground route was possible
 //-----------------------------------------------------------------------------
 AI_Waypoint_t *CAI_Pathfinder::BuildFlyRoute(const Vector &vStart, const Vector &vEnd, 
 	const CBaseEntity *pTarget, int endFlags, int nodeID, int buildFlags, float flYaw, float goalTolerance)
@@ -992,7 +1097,7 @@ AI_Waypoint_t *CAI_Pathfinder::BuildFlyRoute(const Vector &vStart, const Vector 
 // Purpose: Attempts to build a route between vStart and vEnd, requesting the
 //			pNPCBlocker to get out of the way
 // Input  :
-// Output : Returns a route if sucessful or NULL if giveway failed
+// Output : Returns a route if successful or NULL if giveway failed
 //-----------------------------------------------------------------------------
 bool CAI_Pathfinder::CanGiveWay( const Vector& vStart, const Vector& vEnd, CBaseEntity *pBlocker)
 {
@@ -1036,7 +1141,7 @@ bool CAI_Pathfinder::CanGiveWay( const Vector& vStart, const Vector& vEnd, CBase
 //			and vEnd, ignoring entity pTarget the the given tolerance and
 //			triangulating around a blocking object at blockDist
 // Input  :
-// Output : Returns a route if sucessful or NULL if no local route was possible
+// Output : Returns a route if successful or NULL if no local route was possible
 //-----------------------------------------------------------------------------
 AI_Waypoint_t *CAI_Pathfinder::BuildTriangulationRoute(
 	  const Vector &vStart, // from where
@@ -1105,7 +1210,7 @@ AI_Waypoint_t *CAI_Pathfinder::BuildRouteThroughPoints( Vector *vecPoints, int n
 	int nNextIndex;
 
 	// FIXME: Must be able to move to the first position (these needs some parameterization) 
-	pMoveProbe->MoveLimit( navType, GetOuter()->GetAbsOrigin(), vecPoints[nStartIndex], MASK_NPCSOLID, pTarget, &endTrace );
+	pMoveProbe->MoveLimit( navType, GetOuter()->GetAbsOrigin(), vecPoints[nStartIndex], GetOuter()->GetAITraceMask(), pTarget, &endTrace );
 	if ( IsMoveBlocked( endTrace ) )
 	{
 		// NDebugOverlay::HorzArrow( GetOuter()->GetAbsOrigin(), vecPoints[nStartIndex], 8.0f, 255, 0, 0, 0, true, 4.0f );
@@ -1121,7 +1226,7 @@ AI_Waypoint_t *CAI_Pathfinder::BuildRouteThroughPoints( Vector *vecPoints, int n
 		nNextIndex = GetNextPoint( nCurIndex, nDirection, nNumPoints );
 
 		// Try and build a local route between the current and next point
-		pMoveProbe->MoveLimit( navType, vecPoints[nCurIndex], vecPoints[nNextIndex], MASK_NPCSOLID, pTarget, &endTrace );
+		pMoveProbe->MoveLimit( navType, vecPoints[nCurIndex], vecPoints[nNextIndex], GetOuter()->GetAITraceMask(), pTarget, &endTrace );
 		if ( IsMoveBlocked( endTrace ) )
 		{
 			// TODO: Triangulate here if we failed?
@@ -1352,6 +1457,17 @@ AI_Waypoint_t *CAI_Pathfinder::BuildLocalRoute(const Vector &vStart, const Vecto
 		}
 	}
 
+	// Try a crawl route if NPC can crawl and requested
+	if ((buildFlags & bits_BUILD_CRAWL) && (CapabilitiesGet() & bits_CAP_MOVE_CRAWL))
+	{
+		AI_Waypoint_t *crawlRoute = BuildCrawlRoute(vStart,vEnd,pTarget,endFlags,nodeID,buildFlags,flYaw,goalTolerance);
+
+		if (crawlRoute)
+		{
+			return crawlRoute;
+		}
+	}
+
 	// Try a jump route if NPC can jump and requested
 	if ((buildFlags & bits_BUILD_JUMP) && (CapabilitiesGet() & bits_CAP_MOVE_JUMP))
 	{
@@ -1385,35 +1501,38 @@ AI_Waypoint_t *CAI_Pathfinder::BuildLocalRoute(const Vector &vStart, const Vecto
 
 ConVar ai_no_local_paths( "ai_no_local_paths", "0" );
 
-AI_Waypoint_t *CAI_Pathfinder::BuildRoute( const Vector &vStart, const Vector &vEnd, CBaseEntity *pTarget, float goalTolerance, Navigation_t curNavType, bool bLocalSucceedOnWithinTolerance )
+AI_Waypoint_t *CAI_Pathfinder::BuildRoute( const Vector &vStart, const Vector &vEnd, 
+	CBaseEntity *pTarget, float goalTolerance, Navigation_t curNavType, int nBuildFlags )
 {
-	int buildFlags = 0;
-	bool bTryLocal = !ai_no_local_paths.GetBool();
+	Assert( ( nBuildFlags & ( bits_BUILD_GROUND | bits_BUILD_JUMP | bits_BUILD_FLY | bits_BUILD_CLIMB |
+		bits_BUILD_CRAWL | bits_BUILD_GIVEWAY | bits_BUILD_TRIANG | bits_BUILD_IGNORE_NPCS | bits_BUILD_COLLIDE_NPCS ) ) == 0 );
+	nBuildFlags &= ~( bits_BUILD_GROUND | bits_BUILD_JUMP | bits_BUILD_FLY | bits_BUILD_CLIMB |
+		bits_BUILD_CRAWL | bits_BUILD_GIVEWAY | bits_BUILD_TRIANG | bits_BUILD_IGNORE_NPCS | bits_BUILD_COLLIDE_NPCS );
+
+	bool bTryLocal = !ai_no_local_paths.GetBool() && ( ( nBuildFlags & bits_BUILD_NO_LOCAL_NAV ) == 0 );
 
 	// Set up build flags
 	if (curNavType == NAV_CLIMB)
 	{
 		 // if I'm climbing, then only allow routes that are also climb routes
-		buildFlags = bits_BUILD_CLIMB;
+		nBuildFlags |= bits_BUILD_CLIMB;
 		bTryLocal = false;
 	}
 	else if ( (CapabilitiesGet() & bits_CAP_MOVE_FLY) || (CapabilitiesGet() & bits_CAP_MOVE_SWIM) )
 	{
-		buildFlags = (bits_BUILD_FLY | bits_BUILD_GIVEWAY | bits_BUILD_TRIANG);
+		nBuildFlags |= (bits_BUILD_FLY | bits_BUILD_GIVEWAY | bits_BUILD_TRIANG);
 	}
 	else if (CapabilitiesGet() & bits_CAP_MOVE_GROUND)
 	{
-		buildFlags = (bits_BUILD_GROUND | bits_BUILD_GIVEWAY | bits_BUILD_TRIANG);
+		nBuildFlags |= (bits_BUILD_GROUND | bits_BUILD_GIVEWAY | bits_BUILD_TRIANG);
 		if ( CapabilitiesGet() & bits_CAP_MOVE_JUMP )
 		{
-			buildFlags |= bits_BUILD_JUMP;
+			nBuildFlags |= bits_BUILD_JUMP;
 		}
-	}
-
-	// If our local moves can succeed if we get within the goaltolerance, set the flag
-	if ( bLocalSucceedOnWithinTolerance )
-	{
-		buildFlags |= bits_BUILD_GET_CLOSE;
+		if ( CapabilitiesGet() & bits_CAP_MOVE_CRAWL )
+		{
+			nBuildFlags |= bits_BUILD_CRAWL;
+		}
 	}
 
 	AI_Waypoint_t *pResult = NULL;
@@ -1421,15 +1540,20 @@ AI_Waypoint_t *CAI_Pathfinder::BuildRoute( const Vector &vStart, const Vector &v
 	//  First try a local route 
 	if ( bTryLocal && CanUseLocalNavigation() )
 	{
+		int nLocalBuildFlags = nBuildFlags;
+		if ( CapabilitiesGet() & bits_CAP_NO_LOCAL_NAV_CRAWL )
+		{
+			nLocalBuildFlags &= ~bits_BUILD_CRAWL;
+		}
 		pResult = BuildLocalRoute(vStart, vEnd, pTarget, 
 								  bits_WP_TO_GOAL, NO_NODE, 
-								  buildFlags, goalTolerance);
+								  nLocalBuildFlags, goalTolerance);
 	}
 
 	//  If the fails, try a node route
 	if ( !pResult )
 	{
-		pResult = BuildNodeRoute( vStart, vEnd, buildFlags, goalTolerance );
+		pResult = BuildNodeRoute( vStart, vEnd, nBuildFlags, goalTolerance );
 	}
 
 	m_bIgnoreStaleLinks = false;
@@ -1569,7 +1693,7 @@ AI_Waypoint_t *CAI_Pathfinder::BuildRadialRoute( const Vector &vStartPos, const 
 bool CAI_Pathfinder::CheckStaleNavTypeRoute( Navigation_t navType, const Vector &vStart, const Vector &vEnd )
 {
 	AIMoveTrace_t moveTrace;
-	GetOuter()->GetMoveProbe()->MoveLimit( navType, vStart, vEnd, MASK_NPCSOLID, NULL, 100, AIMLF_IGNORE_TRANSIENTS, &moveTrace);
+	GetOuter()->GetMoveProbe()->MoveLimit( navType, vStart, vEnd, GetOuter()->GetAITraceMask(), NULL, 100, AIMLF_IGNORE_TRANSIENTS, &moveTrace);
 
 	// Is the direct route clear?
 	if (!IsMoveBlocked(moveTrace))
@@ -1592,7 +1716,7 @@ bool CAI_Pathfinder::CheckStaleNavTypeRoute( Navigation_t navType, const Vector 
 	// Try a giveway request, if I can get there ignoring NPCs
 	if ( moveTrace.pObstruction && moveTrace.pObstruction->MyNPCPointer() )
 	{
-		GetOuter()->GetMoveProbe()->MoveLimit( navType, vStart, vEnd, MASK_NPCSOLID_BRUSHONLY, NULL, &moveTrace);
+		GetOuter()->GetMoveProbe()->MoveLimit( navType, vStart, vEnd, GetOuter()->GetAITraceMask_BrushOnly(), NULL, &moveTrace);
 
 		if (!IsMoveBlocked(moveTrace))
 		{
@@ -1639,7 +1763,7 @@ bool CAI_Pathfinder::CheckStaleRoute(const Vector &vStart, const Vector &vEnd, i
 	if (moveTypes & bits_CAP_MOVE_JUMP)
 	{
 		AIMoveTrace_t moveTrace;
-		GetOuter()->GetMoveProbe()->MoveLimit( NAV_JUMP, vStart, vEnd, MASK_NPCSOLID, NULL, &moveTrace);
+		GetOuter()->GetMoveProbe()->MoveLimit( NAV_JUMP, vStart, vEnd, GetOuter()->GetAITraceMask(), NULL, &moveTrace);
 		if (!IsMoveBlocked(moveTrace))
 		{
 			return true;
@@ -1647,7 +1771,7 @@ bool CAI_Pathfinder::CheckStaleRoute(const Vector &vStart, const Vector &vEnd, i
 		else
 		{
 			// Can't tell jump up from jump down at this point
-			GetOuter()->GetMoveProbe()->MoveLimit( NAV_JUMP, vEnd, vStart, MASK_NPCSOLID, NULL, &moveTrace);
+			GetOuter()->GetMoveProbe()->MoveLimit( NAV_JUMP, vEnd, vStart, GetOuter()->GetAITraceMask(), NULL, &moveTrace);
 			if (!IsMoveBlocked(moveTrace))
 				return true;
 		}
@@ -1659,7 +1783,7 @@ bool CAI_Pathfinder::CheckStaleRoute(const Vector &vStart, const Vector &vEnd, i
 	if (moveTypes & bits_CAP_MOVE_CLIMB)
 	{
 		AIMoveTrace_t moveTrace;
-		GetOuter()->GetMoveProbe()->MoveLimit( NAV_CLIMB, vStart, vEnd, MASK_NPCSOLID, NULL, &moveTrace);
+		GetOuter()->GetMoveProbe()->MoveLimit( NAV_CLIMB, vStart, vEnd, GetOuter()->GetAITraceMask(), NULL, &moveTrace);
 		if (!IsMoveBlocked(moveTrace))
 		{	
 			return true;
@@ -1678,18 +1802,17 @@ bool CAI_Pathfinder::CheckStaleRoute(const Vector &vStart, const Vector &vEnd, i
 class CPathfindNearestNodeFilter : public INearestNodeFilter
 {
 public:
-	CPathfindNearestNodeFilter( CAI_Pathfinder *pPathfinder, const Vector &vGoal, bool bToNode, int buildFlags, float goalTolerance )
+	CPathfindNearestNodeFilter( CAI_Pathfinder *pPathfinder, const Vector &vGoal, bool bToNode, int buildFlags, float goalTolerance, bool bAvoidObstacles )
 	 :	m_pPathfinder( pPathfinder ),
 		m_nTries(0),
 		m_vGoal( vGoal ),
 		m_bToNode( bToNode ),
 		m_goalTolerance( goalTolerance ),
-		m_moveTypes( buildFlags & ( bits_BUILD_GROUND | bits_BUILD_FLY | bits_BUILD_JUMP | bits_BUILD_CLIMB ) ),
+		m_moveTypes( buildFlags & ( bits_BUILD_GROUND | bits_BUILD_FLY | bits_BUILD_JUMP | bits_BUILD_CLIMB | bits_BUILD_CRAWL ) ),
+		m_bAvoidObstacles( bAvoidObstacles ),
 		m_pRoute( NULL )
 	{
-		// Cast to int in order to indicate that we are intentionally comparing different
-		// enum types, to suppress gcc warnings.
-		COMPILE_TIME_ASSERT( bits_BUILD_GROUND == (int)bits_CAP_MOVE_GROUND && bits_BUILD_FLY == (int)bits_CAP_MOVE_FLY && bits_BUILD_JUMP == (int)bits_CAP_MOVE_JUMP && bits_BUILD_CLIMB == (int)bits_CAP_MOVE_CLIMB );
+		COMPILE_TIME_ASSERT( bits_BUILD_GROUND == bits_CAP_MOVE_GROUND && bits_BUILD_FLY == bits_CAP_MOVE_FLY && bits_BUILD_JUMP == bits_CAP_MOVE_JUMP && bits_BUILD_CLIMB == bits_CAP_MOVE_CLIMB && bits_BUILD_CRAWL == bits_CAP_MOVE_CRAWL );
 	}
 
 	bool IsValid( CAI_Node *pNode )
@@ -1701,7 +1824,7 @@ public:
 			for ( int i = 0; i < pNode->NumLinks(); i++ )
 			{
 				CAI_Link *pLink = pNode->GetLinkByIndex( i );
-				if ( pLink->m_LinkInfo & ( bits_LINK_STALE_SUGGESTED | bits_LINK_OFF ) )
+				if ( pLink->m_LinkInfo & ( bits_LINK_STALE_SUGGESTED | ( bits_LINK_OFF | bits_LINK_ASW_BASHABLE ) ) )
 				{
 					nStaleLinks++;
 				}
@@ -1714,6 +1837,12 @@ public:
 
 		if ( nStaleLinks && nStaleLinks == pNode->NumLinks() )
 			return false;
+
+		if ( m_bAvoidObstacles )
+		{
+			if ( CAI_LocalNavigator::IsSegmentBlockedByGlobalObstacles( pNode->GetOrigin(), m_vGoal ) )
+				return false;
+		}
 
 		int buildFlags = ( m_nTries < MAX_TRIANGULATIONS ) ? ( bits_BUILD_IGNORE_NPCS | bits_BUILD_TRIANG ) : bits_BUILD_IGNORE_NPCS;
 
@@ -1738,7 +1867,7 @@ public:
 	bool			m_bToNode;
 	float			m_goalTolerance;
 	int				m_moveTypes;
-
+	bool			m_bAvoidObstacles;
 	AI_Waypoint_t *	m_pRoute;
 };
 
@@ -1747,7 +1876,7 @@ AI_Waypoint_t *CAI_Pathfinder::BuildNearestNodeRoute( const Vector &vGoal, bool 
 {
 	AI_PROFILE_SCOPE( CAI_Pathfinder_BuildNearestNodeRoute );
 
-	CPathfindNearestNodeFilter filter( this, vGoal, bToNode, buildFlags, goalTolerance );
+	CPathfindNearestNodeFilter filter( this, vGoal, bToNode, buildFlags, goalTolerance, true );
 	*pNearestNode  = GetNetwork()->NearestNodeToPoint( GetOuter(), vGoal, true, &filter );
 
 	return filter.m_pRoute;
@@ -1843,11 +1972,11 @@ bool CAI_Pathfinder::TestTriangulationRoute( Navigation_t navType, const Vector&
 	bool bPathClear = false;
 
 	// See if we can get from the start point to the triangle apex
-	if ( pMoveProbe->MoveLimit(navType, vecStart, vecApex, MASK_NPCSOLID, pTargetEnt, pStartTrace ) )
+	if ( pMoveProbe->MoveLimit(navType, vecStart, vecApex, GetOuter()->GetAITraceMask(), pTargetEnt, pStartTrace ) )
 	{
 		// Ok, we got from the start to the triangle apex, now try
 		// the triangle apex to the end
-		if ( pMoveProbe->MoveLimit(navType, vecApex, vecEnd, MASK_NPCSOLID, pTargetEnt, &endTrace ) )
+		if ( pMoveProbe->MoveLimit(navType, vecApex, vecEnd, GetOuter()->GetAITraceMask(), pTargetEnt, &endTrace ) )
 		{
 			bPathClear = true;
 		}
@@ -1897,7 +2026,7 @@ bool CAI_Pathfinder::Triangulate( Navigation_t navType, const Vector &vecStart, 
 	{
 		vecEnd = vecForward * MAX_TRIAGULATION_DIST;
 		flTotalDist = MAX_TRIAGULATION_DIST;
-		if ( !GetOuter()->GetMoveProbe()->MoveLimit(navType, vecEnd, vecEndIn, MASK_NPCSOLID, pTargetEnt) )
+		if ( !GetOuter()->GetMoveProbe()->MoveLimit(navType, vecEnd, vecEndIn, GetOuter()->GetAITraceMask(), pTargetEnt) )
 		{
 			return false;
 		}

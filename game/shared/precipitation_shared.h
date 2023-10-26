@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -18,6 +18,10 @@ enum PrecipitationType_t
 	PRECIPITATION_TYPE_SNOW,
 	PRECIPITATION_TYPE_ASH,
 	PRECIPITATION_TYPE_SNOWFALL,
+	PRECIPITATION_TYPE_PARTICLERAIN,
+	PRECIPITATION_TYPE_PARTICLEASH,
+	PRECIPITATION_TYPE_PARTICLERAINSTORM,
+	PRECIPITATION_TYPE_PARTICLESNOW,
 	NUM_PRECIPITATION_TYPES
 };
 

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -61,13 +61,16 @@ public:
 	// Methods associated with a particular entity
 	virtual	char const*		GetName( EntityHandle_t handle ) const = 0;
 
+	// sets the entity being moved
+	virtual void	SetHost( CBaseEntity *host ) = 0;
+
 	// Adds the trace result to touch list, if contact is not already in list.
 	virtual void	ResetTouchList( void ) = 0;
 	virtual bool	AddToTouched( const CGameTrace& tr, const Vector& impactvelocity ) = 0;
 	virtual void	ProcessImpacts( void ) = 0;
-	
+
 	// Numbered line printf
-	virtual void	Con_NPrintf( int idx, PRINTF_FORMAT_STRING char const* fmt, ... ) = 0;
+	virtual void	Con_NPrintf( int idx, char const* fmt, ... ) = 0;
 
 	// These have separate server vs client impementations
 	virtual void	StartSound( const Vector& origin, int channel, char const* sample, float volume, soundlevel_t soundlevel, int fFlags, int pitch ) = 0;

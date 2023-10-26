@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright (c) 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -16,8 +16,10 @@
 #endif
 
 #ifndef _XBOX
+#ifdef POSIX
 #undef min
 #undef max
+#endif
 #pragma warning(push)
 #include <set>
 #pragma warning(pop)
@@ -27,9 +29,11 @@
 #pragma once
 #endif
 
-// the include <set> monkey's with the MAX() define, unbreak it
+#ifdef POSIX
+// the include <set> monkey's with the max() define, unbreak it
 #undef MINMAX_H
 #include "minmax.h"
+#endif
 
 #include "ai_playerally.h"
 

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -28,6 +28,7 @@ static int team_scores[MAX_TEAMS];
 static int num_teams = 0;
 
 extern bool		g_fGameOver;
+extern ConVar sv_allchat;
 
 REGISTER_GAMERULES_CLASS( CTeamplayRules );
 
@@ -53,6 +54,8 @@ CTeamplayRules::CTeamplayRules()
 //-----------------------------------------------------------------------------
 void CTeamplayRules::Precache( void )
 {
+	BaseClass::Precache();
+
 	// Call the Team Manager's precaches
 	for ( int i = 0; i < GetNumberOfTeams(); i++ )
 	{
@@ -288,14 +291,6 @@ void CTeamplayRules::ClientSettingsChanged( CBasePlayer *pPlayer )
 		
 		pPlayer->SetPlayerName( pszName );
 	}
-
-	// NVNT see if this user is still or has began using a haptic device
-	const char *pszHH = engine->GetClientConVarValue( pPlayer->entindex(), "hap_HasDevice" );
-	if(pszHH)
-	{
-		int iHH = atoi(pszHH);
-		pPlayer->SetHaptics(iHH!=0);
-	}
 }
 
 //=========================================================
@@ -352,9 +347,9 @@ bool CTeamplayRules::IsTeamplay( void )
 	return true;
 }
 
-bool CTeamplayRules::FPlayerCanTakeDamage( CBasePlayer *pPlayer, CBaseEntity *pAttacker, const CTakeDamageInfo &info )
+bool CTeamplayRules::FPlayerCanTakeDamage( CBasePlayer *pPlayer, CBaseEntity *pAttacker )
 {
-	if ( pAttacker && PlayerRelationship( pPlayer, pAttacker ) == GR_TEAMMATE && !info.IsForceFriendlyFire() )
+	if ( pAttacker && PlayerRelationship( pPlayer, pAttacker ) == GR_TEAMMATE )
 	{
 		// my teammate hit me.
 		if ( (friendlyfire.GetInt() == 0) && (pAttacker != pPlayer) )
@@ -364,7 +359,7 @@ bool CTeamplayRules::FPlayerCanTakeDamage( CBasePlayer *pPlayer, CBaseEntity *pA
 		}
 	}
 
-	return BaseClass::FPlayerCanTakeDamage( pPlayer, pAttacker, info );
+	return BaseClass::FPlayerCanTakeDamage( pPlayer, pAttacker );
 }
 
 //=========================================================
@@ -392,6 +387,14 @@ int CTeamplayRules::PlayerRelationship( CBaseEntity *pPlayer, CBaseEntity *pTarg
 //-----------------------------------------------------------------------------
 bool CTeamplayRules::PlayerCanHearChat( CBasePlayer *pListener, CBasePlayer *pSpeaker )
 {
+	if ( sv_allchat.GetBool() )
+	{
+		if ( !pSpeaker->IsAlive() )
+		{
+			return !pListener->IsAlive();
+		}
+	}
+
 	return ( PlayerRelationship( pListener, pSpeaker ) == GR_TEAMMATE );
 }
 

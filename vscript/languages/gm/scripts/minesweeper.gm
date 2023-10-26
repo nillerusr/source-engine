@@ -1,0 +1,608 @@
+//
+// MineSweeper By Andriy Doroshchuk
+//
+
+global cursorOverClosed = CA.F_RED | CA.F_INTENSITY | CA.B_BLACK | CA.TRAILING_BYTE;
+global cursorOverOpened = CA.F_RED | CA.F_INTENSITY | CA.B_BLUE | CA.TRAILING_BYTE;
+global frameColor  = CA.F_RED | CA.F_GREEN | CA.F_BLUE | CA.B_BLACK | CA.TRAILING_BYTE;
+global closedColor = CA.F_BLUE | CA.B_BLACK | CA.TRAILING_BYTE;
+global openedColor = CA.F_BLUE | CA.B_BLUE | CA.TRAILING_BYTE;
+global numberColor = CA.F_BLUE | CA.F_GREEN| CA.F_INTENSITY | CA.B_BLUE | CA.TRAILING_BYTE;
+global markColor   = CA.F_BLUE | CA.F_RED  | CA.F_INTENSITY | CA.B_BLUE | CA.TRAILING_BYTE;
+global mineColor   = CA.F_GREEN| CA.F_RED  | CA.B_BLUE | CA.TRAILING_BYTE;
+global helpColor   = CA.F_GREEN| CA.F_RED  | CA.F_BLUE |CA.B_BLUE | CA.TRAILING_BYTE;
+global winColor    = CA.F_GREEN| CA.F_INTENSITY | CA.B_BLACK | CA.TRAILING_BYTE;
+global looseColor  = CA.F_RED  | CA.F_INTENSITY | CA.B_BLACK | CA.TRAILING_BYTE;
+
+// wait till key will be released
+global WaitForKey = function(key)
+{
+  for (;ISPRESSED(key);){}
+};
+
+// print debug message
+global DebugText = function(text)
+{
+  CATTRIB(frameColor);
+  XYTEXT(0, 0, text);
+};
+
+
+game = table(
+  x         = 15,
+  y         = 0,
+  lx        = 30,
+  ly        = 15,
+  mineCurr  = 0,
+  mineMax   = 10,
+  currLevel = 2,
+  cX        = 0,
+  cY        = 0,
+
+  field     = table(),
+
+  // index in the field
+  Index = function(x, y)
+  {
+    return (y*.lx+x);
+  },
+
+  // draw field frame
+  DrawFrame = function()
+  {
+    i;
+
+    // set color
+    CATTRIB(frameColor);
+
+    // borders
+    for (i=.x+1; i<.x+.lx+1; i=i+1)
+    {
+      XYTEXT(i, .y,       "-");
+      XYTEXT(i, .y+.ly+1, "-");
+    }
+    for (i=.y+1; i<.y+.ly+1; i=i+1)
+    {
+      XYTEXT(.x,       i, "|");
+      XYTEXT(.x+.lx+1, i, "|");
+    }
+
+    // corners
+    XYTEXT(.x,       .y,       "\1");
+    XYTEXT(.x+.lx+1, .y,       "\1");
+    XYTEXT(.x,       .y+.ly+1, "\1");
+    XYTEXT(.x+.lx+1, .y+.ly+1, "\1");
+
+    // count
+    XYTEXT(.x+3, .y, "[" + .mineCurr.String() + ":" + .mineMax.String() + "]");
+  },
+
+  // field cell drawing
+  DrawCell = function(x, y, cursor)
+  {
+    index = .Index(x, y);
+    // debug cell = .field[index].String();
+    cell = " ";
+
+    // closed cell
+    if (.field[index] < 10)
+    {
+      if (cursor)
+      {
+        CATTRIB(cursorOverClosed);
+        cell = "W";
+      }
+      else
+      {
+        CATTRIB(closedColor);
+      }
+    }
+    // opened cell
+    else if (.field[index] < 20)
+    {
+      if (.field[index] == 10)
+      {
+        if (cursor)
+        {
+          CATTRIB(cursorOverOpened);
+          cell = "W";
+        }
+        else
+        {
+          CATTRIB(openedColor);
+        }
+      }
+      else if (.field[index] < 19)
+      {
+        if (cursor)
+        {
+          CATTRIB(cursorOverOpened);
+        }
+        else
+        {
+          CATTRIB(numberColor);
+        }
+        val = .field[index] % 10;
+        cell = val.String();
+      }
+      else
+      {
+        CATTRIB(mineColor);
+        cell = "@";
+      }
+    }
+    // intended mine
+    else
+    {
+      if (cursor)
+      {
+        CATTRIB(cursorOverOpened);
+      }
+      else
+      {
+        CATTRIB(markColor);
+      }
+      cell = "?";
+    }
+
+    XYTEXT(.x+x+1, .y+y+1, cell);
+  },
+
+  // field cell drawing
+  DrawCurrCell = function(cursor)
+  {
+    .DrawCell(.cX, .cY, cursor);
+  },
+
+  // field drawing
+  DrawField = function()
+  {
+    i; j;
+
+    .DrawFrame();
+    for (i=0; i<.lx; i=i+1)
+    {
+      for (j=0; j<.ly; j=j+1)
+      {
+        .DrawCell(i, j, 0);
+      }
+    }
+  },
+
+  // help string
+  HelpString = function(msg, line, mode)
+  {
+    if (mode == 1)
+    {
+      CATTRIB(CA.F_BLUE | CA.F_GREEN | CA.F_INTENSITY | CA.B_BLACK | CA.TRAILING_BYTE);
+    }
+    else if (mode == 2)
+    {
+      CATTRIB(CA.F_RED | CA.B_BLACK | CA.TRAILING_BYTE);
+    }
+    else
+    {
+      CATTRIB(CA.F_GREEN | CA.B_BLACK | CA.TRAILING_BYTE);
+    }
+
+
+    XYTEXT(0, 25-line, "                                                                               ");
+    XYTEXT((80-msg.Length())/2, 25-line, msg);
+  },
+
+  // Initialise field
+  InitField = function(level)
+  {
+    i; j;
+    t1;t2;
+    count; position; index;
+
+    // clear screen
+    CATTRIB(frameColor);
+    CLS();
+
+    // set current level
+    .currLevel = level;
+
+    // field extents
+    if (level == 1)
+    {
+      .lx      = 10;
+      .ly      = 10;
+      .mineMax = 8;
+    }
+    else if (level == 2)
+    {
+      .lx      = 18;
+      .ly      = 15;
+      .mineMax = 35;
+    }
+    else
+    {
+      .lx      = 30;
+      .ly      = 15;
+      .mineMax = 90;
+    }
+    .x = (80-.lx)/2;
+    .mineCurr = 0;
+
+    // init field contents
+    max = .lx*.ly;
+    for (i=0; i<max; i=i+1)
+    {
+     .field[i] = 0;
+    }
+
+    // put mines on the field
+    for (count=1; count<=.mineMax; count=count+1)
+    {
+      position = randint(0, .lx*.ly+1-count);
+      for (i=0; i<.lx; i=i+1)
+      {
+        for (j=0; j<.ly; j=j+1)
+        {
+          index = .Index(i, j);
+          if (.field[index] == 0)
+          {
+            if (position == 0)
+            {
+              .field[index] = 9;
+              i = .lx;
+              j = .ly;
+            }
+            else
+            {
+              position = position - 1;
+            }
+          }
+        }
+      }
+    }
+
+    // calculate mines environment
+    for (i=0; i<.lx; i=i+1)
+    {
+      for (j=0; j<.ly; j=j+1)
+      {
+        if (.field[.Index(i, j)] == 9)
+        {
+          for (t1=i-1; t1<i+2; t1=t1+1)
+          {
+            for (t2=j-1; t2<j+2; t2=t2+1)
+            {
+              if ((t1!=i || t2!=j)
+              &&  (t1>=0) && (t1<.lx)
+              &&  (t2>=0) && (t2<.ly))
+              {
+                index = .Index(t1, t2);
+                if (.field[index] < 9)
+                {
+                  .field[index] = .field[index] + 1;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // draw field frame
+    .DrawFrame();
+
+    // set current cell
+    .cX=.lx/2;
+    .cY=.ly/2;
+    .DrawField();
+    .DrawCell(.cX, .cY, 1);
+
+    .HelpString("", 4, 0);
+    .HelpString("F2 - beginner. F3 - intermediate. F4 - expert", 2, 0);
+    .HelpString("Enter - open. Space - mark as a mine. Backspace - open around.", 1, 0);
+  },
+
+  // restart current game
+  RestartField = function()
+  {
+    .InitField(.currLevel);
+  },
+
+  // restart game after finishing
+  Restart = function(win)
+  {
+    .HelpString("", 2, 0);
+    .HelpString("", 1, 0);
+
+    if (win)
+    {
+      .HelpString("Congratulations, you won! Press F1 to continue.", 4, 1);
+      for (; !ISPRESSED(112);){}
+    }
+    else
+    {
+      .HelpString("Sorry, you are dead! Press F1 to continue.", 4, 2);
+      .DrawField();
+    }
+    for (; !ISPRESSED(112);){}
+
+    .RestartField();
+  },
+
+  // field opening when open an empty cell
+  CheckCell = function(x, y)
+  {
+    i; j;
+    index = .Index(x, y);
+
+    if (.field[index] == 0)
+    {
+      .field[index] = 10;
+
+      // check surrounding
+      for (i=x-1; i<x+2; i=i+1)
+      {
+        for (j=y-1; j<y+2; j=j+1)
+        {
+          if  ((i!=x || j!=y)
+          &&   (i>=0) && (i<.lx)
+          &&   (j>=0) && (j<.ly))
+          {
+            .CheckCell(i, j);
+          }
+        }
+      }
+    }
+    else
+    {
+      if (.field[index] < 9)
+      {
+        .field[index] = .field[index] + 10;
+      }
+    }
+
+    .DrawCell(x, y, 0);
+  },
+
+  // check win condition
+  CheckWin = function()
+  {
+    i; j; index;
+    count = 0;
+    for (i=0; i<.lx; i=i+1)
+    {
+      for (j=0; j<.ly; j=j+1)
+      {
+        index = .Index(i, j);
+        if (.field[index] < 10)
+        {
+          count = 0;
+          i = .lx;
+          j = .ly;
+        }
+        else if (.field[index] >= 20)
+        {
+          count = count + 1;
+        }
+      }
+    }
+
+    if (count == .mineMax)
+    {
+      .DrawCell(.cX, .cY, 0);
+      .Restart(1);
+    }
+    else
+    {
+      .DrawCell(.cX, .cY, 1);
+    }
+  },
+
+  // open field cell
+  OpenCell = function(x, y, check)
+  {
+    i; j;
+    index = .Index(x, y);
+    if (!check)
+    {
+      if (.field[index] >= 20)
+      {
+        return;
+      }
+    }
+
+    // check the field
+    if (check && (.field[index] % 10) == 9)
+    {
+      for (i=0; i<.lx; i=i+1)
+      {
+        for (j=0; j<.ly; j=j+1)
+        {
+          index = .Index(i, j);
+          .field[index] = (.field[index] % 10) + 10;
+        }
+      }
+
+      .Restart(0);
+    }
+    else
+    {
+      .CheckCell(x, y);
+      .CheckWin();
+    }
+  },
+
+  // open cells around open mine
+  HelperCell = function()
+  {
+    i; j;
+    index = .Index(.cX, .cY);
+
+    // perform the action only if the cell is already open
+    if (.field[index]>=10 && .field[index]<20)
+    {
+      // calculate mines around this cell
+      mines = 0;
+      for (i=.cX-1; i<.cX+2; i=i+1)
+      {
+        for (j=.cY-1; j<.cY+2; j=j+1)
+        {
+          if  ((i!=.cX || j!=.cY)
+          &&   (i>=0) && (i<.lx)
+          &&   (j>=0) && (j<.ly))
+          {
+            index = .Index(i, j);
+            if (.field[index] >= 20)
+            {
+              mines = mines + 1;
+            }
+          }
+        }
+      }
+
+      // check that we can open
+      index = .Index(.cX, .cY);
+      if (mines == (.field[index] % 10))
+      {
+        for (i=.cX-1; i<.cX+2; i=i+1)
+        {
+          for (j=.cY-1; j<.cY+2; j=j+1)
+          {
+            if  ((i!=.cX || j!=.cY)
+            &&   (i>=0) && (i<.lx)
+            &&   (j>=0) && (j<.ly))
+            {
+              .OpenCell(i, j, 0);
+            }
+          }
+        }
+      }
+    }
+  },
+
+  // move cursor
+  Move = function(dir)
+  {
+    .DrawCurrCell(0);
+    if (dir == 1)
+    {
+      if (.cY > 0)
+      {
+        .cY = .cY - 1;
+      }
+    }
+    else if (dir == 3)
+    {
+      if (.cY<.ly-1)
+      {
+        .cY = .cY + 1;
+      }
+    }
+    else if (dir == 0)
+    {
+      if (.cX > 0)
+      {
+        .cX = .cX - 1;
+      }
+    }
+    else if (dir == 2)
+    {
+      if (.cX<.lx-1)
+      {
+        .cX = .cX + 1;
+      }
+    }
+    WaitForKey(37+dir);
+    .DrawCurrCell(1);
+  },
+
+  // open current cell
+  Open = function()
+  {
+    WaitForKey(13);
+    .OpenCell(.cX, .cY, 1);
+  },
+
+  // mark current cell
+  Mark = function()
+  {
+    WaitForKey(32);
+    index = .Index(.cX, .cY);
+    if (.field[index] < 10)
+    {
+      .field[index] = (.field[index] % 10) + 20;
+      .mineCurr = .mineCurr + 1;
+      .DrawFrame();
+      .CheckWin();
+    }
+    else if (.field[index] >= 20)
+    {
+      .field[index] = .field[index] % 10;
+      .mineCurr = .mineCurr -1;
+      .DrawFrame();
+      .DrawCurrCell(1);
+    }
+  },
+
+  // init the game
+  Run = function()
+  {
+    CURSOR(0, 0);
+    .RestartField();
+
+    for (;!ISPRESSED(27);)
+    {
+      if (ISPRESSED(37))
+      {
+        .Move(0);
+      }
+      else if (ISPRESSED(38))
+      {
+        .Move(1);
+      }
+      else if (ISPRESSED(39))
+      {
+        .Move(2);
+      }
+      else if (ISPRESSED(40))
+      {
+        .Move(3);
+      }
+      else if (ISPRESSED(32))
+      {
+        .Mark();
+      }
+      else if (ISPRESSED(13))
+      {
+        .Open();
+      }
+      else if (ISPRESSED(8))
+      {
+        .HelperCell();
+        WaitForKey(8);
+      }
+      else if (ISPRESSED(113))
+      {
+        WaitForKey(113);
+        .InitField(1);
+      }
+      else if (ISPRESSED(114))
+      {
+        WaitForKey(114);
+        .InitField(2);
+      }
+      else if (ISPRESSED(115))
+      {
+        WaitForKey(115);
+        .InitField(3);
+      }
+      else
+      {
+        DebugText("          ");
+      }
+    }
+  }
+
+);
+
+game.Run();
+
+

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -67,7 +67,7 @@ bool C_RecipientFilter::IsReliable( void ) const
 
 int C_RecipientFilter::GetRecipientCount( void ) const
 {
-	return m_Recipients.Size();
+	return m_Recipients.Count();
 }
 
 int	C_RecipientFilter::GetRecipientIndex( int slot ) const
@@ -80,17 +80,18 @@ int	C_RecipientFilter::GetRecipientIndex( int slot ) const
 
 void C_RecipientFilter::AddAllPlayers( void )
 {
-	if ( !C_BasePlayer::GetLocalPlayer() )
+	if ( !C_BasePlayer::HasAnyLocalPlayer() )
 		return;
 
 	m_Recipients.RemoveAll();
-	AddRecipient( C_BasePlayer::GetLocalPlayer() );
+	FOR_EACH_VALID_SPLITSCREEN_PLAYER( hh )
+	{
+		AddRecipient( C_BasePlayer::GetLocalPlayer( hh ) );
+	}
 }
 
 void C_RecipientFilter::AddRecipient( C_BasePlayer *player )
 {
-	Assert( player );
-
 	if ( !player )
 		return;
 
@@ -100,7 +101,7 @@ void C_RecipientFilter::AddRecipient( C_BasePlayer *player )
 	//  then don't send it to the local player again.
 	if ( m_bUsingPredictionRules )
 	{
-		Assert( player == C_BasePlayer::GetLocalPlayer() );
+		Assert( C_BasePlayer::IsLocalPlayer( player ) );
 		Assert( prediction->InPrediction() );
 
 		// Only add local player if this is the first time doing prediction
@@ -115,7 +116,7 @@ void C_RecipientFilter::AddRecipient( C_BasePlayer *player )
 		return;
 
 	// this is a client side filter, only add the local player
-	if ( !player->IsLocalPlayer() )
+	if ( !C_BasePlayer::IsLocalPlayer( player ) )
 		return;
 
 	m_Recipients.AddToTail( index );
@@ -142,18 +143,21 @@ void C_RecipientFilter::RemoveRecipientsByTeam( C_Team *team )
 	Assert ( 0 );
 }
 
-void C_RecipientFilter::AddPlayersFromBitMask( CBitVec< ABSOLUTE_PLAYER_LIMIT >& playerbits )
+
+void C_RecipientFilter::AddPlayersFromBitMask( CPlayerBitVec& playerbits )
 {
-	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+	FOR_EACH_VALID_SPLITSCREEN_PLAYER( hh )
+	{
+		C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer( hh );
+		if ( !pPlayer )
+			continue;
 
-	if ( !pPlayer )
-		return;
+		// only add the local player on client side
+		if ( !playerbits[ pPlayer->index ] )
+			continue;
 
-	// only add the local player on client side
-	if ( !playerbits[ pPlayer->index ] )
-		return;
-
-	AddRecipient( pPlayer );
+		AddRecipient( pPlayer );
+	}
 }
 
 void C_RecipientFilter::AddRecipientsByPVS( const Vector& origin )
@@ -177,8 +181,7 @@ void C_RecipientFilter::UsePredictionRules( void )
 		return;
 	}
 
-	C_BasePlayer *local = C_BasePlayer::GetLocalPlayer();
-	if ( !local )
+	if ( !C_BasePlayer::HasAnyLocalPlayer() )
 	{
 		Assert( 0 );
 		return;
@@ -193,7 +196,23 @@ void C_RecipientFilter::UsePredictionRules( void )
 
 	if ( !g_RecipientFilterPredictionSystem.CanPredict() )
 	{
-		RemoveRecipient( local );
+		FOR_EACH_VALID_SPLITSCREEN_PLAYER( hh )
+		{
+			RemoveRecipient( C_BasePlayer::GetLocalPlayer( hh ) );
+		}
+	}
+}
+
+void C_RecipientFilter::RemoveSplitScreenPlayers()
+{
+	for ( int i = GetRecipientCount() - 1; i >= 0; --i )
+	{
+		int idx = m_Recipients[ i ];
+		C_BasePlayer *pPlayer = UTIL_PlayerByIndex( idx );
+		if ( !pPlayer || !pPlayer->IsSplitScreenPlayer() )
+			continue;
+
+		m_Recipients.Remove( i );
 	}
 }
 
@@ -212,10 +231,15 @@ void C_RecipientFilter::SetIgnorePredictionCull( bool ignore )
 	m_bIgnorePredictionCull = ignore;
 }
 
+
 CLocalPlayerFilter::CLocalPlayerFilter()
 {
-	if ( C_BasePlayer::GetLocalPlayer() )
+	for ( int hh = 0; hh < MAX_SPLITSCREEN_PLAYERS; ++hh )
 	{
-		AddRecipient( C_BasePlayer::GetLocalPlayer() );
+		ACTIVE_SPLITSCREEN_PLAYER_GUARD( hh );
+		if ( C_BasePlayer::GetLocalPlayer() )
+		{
+			AddRecipient( C_BasePlayer::GetLocalPlayer() );
+		}
 	}
 }

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Implements visual effects entities: sprites, beams, bubbles, etc.
 //
@@ -11,7 +11,7 @@
 #include "KeyValues.h"
 #include "filesystem.h"
 #include "Color.h"
-#include "gamestats.h"
+#include "GameStats.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -189,6 +189,8 @@ void CCredits::Spawn( void )
 	SetMoveType( MOVETYPE_NONE );
 }
 
+
+
 static void CreditsDone_f( void )
 {
 	CCredits *pCredits = (CCredits*)gEntList.FindEntityByClassname( NULL, "env_credits" );
@@ -200,6 +202,8 @@ static void CreditsDone_f( void )
 }
 
 static ConCommand creditsdone("creditsdone", CreditsDone_f );
+
+
 
 extern ConVar sv_unlockedchapters;
 
@@ -276,3 +280,110 @@ void CCredits::InputRollCredits( inputdata_t &inputdata )
 		WRITE_BYTE( 2 );
 	MessageEnd();
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: Play the outtro stats at the end of the campaign
+//-----------------------------------------------------------------------------
+class COuttroStats : public CPointEntity
+{
+public:
+	DECLARE_CLASS( COuttroStats, CPointEntity );
+	DECLARE_DATADESC();
+
+	void Spawn( void );
+	void InputRollCredits( inputdata_t &inputdata );
+	void InputRollStatsCrawl( inputdata_t &inputdata );
+	void InputSkipStateChanged( inputdata_t &inputdata );
+
+	void SkipThink( void );
+	void CalcSkipState( int &skippingPlayers, int &totalPlayers );
+
+	COutputEvent m_OnOuttroStatsDone;
+};
+
+//-----------------------------------------------------------------------------
+LINK_ENTITY_TO_CLASS( env_outtro_stats, COuttroStats );
+
+BEGIN_DATADESC( COuttroStats )
+	DEFINE_INPUTFUNC( FIELD_VOID, "RollStatsCrawl", InputRollStatsCrawl ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "RollCredits", InputRollCredits ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "SkipStateChanged", InputSkipStateChanged ),
+	DEFINE_OUTPUT( m_OnOuttroStatsDone, "OnOuttroStatsDone"),
+END_DATADESC()
+
+//-----------------------------------------------------------------------------
+void COuttroStats::Spawn( void )
+{
+	SetSolid( SOLID_NONE );
+	SetMoveType( MOVETYPE_NONE );
+}
+
+//-----------------------------------------------------------------------------
+void COuttroStats::InputRollStatsCrawl( inputdata_t &inputdata )
+{
+	CReliableBroadcastRecipientFilter players;
+	UserMessageBegin( players, "StatsCrawlMsg" );
+	MessageEnd();
+
+	SetThink( &COuttroStats::SkipThink );
+	SetNextThink( gpGlobals->curtime + 1.0 );
+}
+
+//-----------------------------------------------------------------------------
+void COuttroStats::InputRollCredits( inputdata_t &inputdata )
+{
+	CReliableBroadcastRecipientFilter players;
+	UserMessageBegin( players, "creditsMsg" );
+	MessageEnd();
+}
+
+void COuttroStats::SkipThink( void )
+{
+	// if all valid players are skipping, then end
+	int iNumSkips = 0;
+	int iNumPlayers = 0;
+	CalcSkipState( iNumSkips, iNumPlayers );
+
+	if ( iNumSkips >= iNumPlayers )
+	{
+//		TheDirector->StartScenarioExit();
+	}
+	else
+		SetNextThink( gpGlobals->curtime + 1.0 );
+}
+
+void COuttroStats::CalcSkipState( int &skippingPlayers, int &totalPlayers )
+{
+	// calc skip state
+	skippingPlayers = 0;
+	totalPlayers = 0;
+}
+
+void COuttroStats::InputSkipStateChanged( inputdata_t &inputdata )
+{
+	int iNumSkips = 0;
+	int iNumPlayers = 0;
+	CalcSkipState( iNumSkips, iNumPlayers );
+
+	DevMsg( "COuttroStats: Skip state changed. %d players, %d skips\n", iNumPlayers, iNumSkips );
+	// Don't send to players in singleplayer
+	if ( iNumPlayers > 1 )
+	{
+		CReliableBroadcastRecipientFilter players;
+		UserMessageBegin( players, "StatsSkipState" );
+			WRITE_BYTE( iNumSkips );
+			WRITE_BYTE( iNumPlayers );
+		MessageEnd();
+	}
+}
+
+void CC_Test_Outtro_Stats( const CCommand& args )
+{
+	CBaseEntity *pOuttro = gEntList.FindEntityByClassname( NULL, "env_outtro_stats" );
+	if ( pOuttro )
+	{
+		variant_t emptyVariant;
+		pOuttro->AcceptInput( "RollStatsCrawl", NULL, NULL, emptyVariant, 0 );
+	}
+}
+static ConCommand test_outtro_stats("test_outtro_stats", CC_Test_Outtro_Stats, 0, FCVAR_CHEAT);

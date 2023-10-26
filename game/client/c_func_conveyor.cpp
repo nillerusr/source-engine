@@ -1,23 +1,20 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
 //===========================================================================//
 
 #include "cbase.h"
-#include "materialsystem/imaterialproxy.h"
-#include "materialsystem/imaterial.h"
-#include "materialsystem/imaterialvar.h"
-#include "functionproxy.h"
+#include "materialsystem/IMaterialProxy.h"
+#include "materialsystem/IMaterial.h"
+#include "materialsystem/IMaterialVar.h"
+#include "FunctionProxy.h"
 #include <KeyValues.h>
-#include "mathlib/vmatrix.h"
-#include "toolframework_client.h"
+#include "mathlib/VMatrix.h"
 
+#include "imaterialproxydict.h"
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
-
-// forward declarations
-void ToolFramework_RecordMaterialParams( IMaterial *pMaterial );
 
 class C_FuncConveyor : public C_BaseEntity
 {
@@ -143,11 +140,6 @@ void CConveyorMaterialProxy::OnBind( void *pC_BaseEntity )
 	{
 		m_pTextureScrollVar->SetVecValue( sOffset, tOffset, 0.0f );
 	}
-
-	if ( ToolsEnabled() )
-	{
-		ToolFramework_RecordMaterialParams( GetMaterial() );
-	}
 }
 
 IMaterial *CConveyorMaterialProxy::GetMaterial()
@@ -155,4 +147,4 @@ IMaterial *CConveyorMaterialProxy::GetMaterial()
 	return m_pTextureScrollVar ? m_pTextureScrollVar->GetOwningMaterial() : NULL;
 }
 
-EXPOSE_INTERFACE( CConveyorMaterialProxy, IMaterialProxy, "ConveyorScroll" IMATERIAL_PROXY_INTERFACE_VERSION );
+EXPOSE_MATERIAL_PROXY( CConveyorMaterialProxy, ConveyorScroll );

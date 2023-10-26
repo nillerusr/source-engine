@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -10,7 +10,7 @@
 
 #ifdef GAME_DLL
 #else
-	#include <igameevents.h>
+	#include <IGameEvents.h>
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!

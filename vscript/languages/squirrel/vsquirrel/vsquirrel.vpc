@@ -1,0 +1,180 @@
+//-----------------------------------------------------------------------------
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\..\..\.."
+$Macro OUTBINDIR	"."
+
+$Include "$SRCDIR\vpc_scripts\source_exe_con_win32_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories		"$BASE,..\include;..\sqplus"
+		$PreprocessorDefinitions			"$BASE;PROTECTED_THINGS_DISABLE;VSQUIRREL_TEST"
+	}
+}
+
+$Project "vsquirrel"
+{
+	$Folder "Script Files"
+	{
+		$File	"init.nut"
+		{
+			$Configuration
+			{
+				$CustomBuildStep
+				{
+					$CommandLine	"$SRCDIR\devtools\srcsrv\perl\bin\perl.exe $SRCDIR\devtools\bin\texttoarray.pl $(InputFileName) g_Script_$(InputName)> $(InputName)_nut.h" [$WINDOWS]
+					$CommandLine	"perl $SRCDIR\devtools\bin\texttoarray.pl $(InputFileName) g_Script_$(InputName)> $(InputName)_nut.h" [$POSIX]
+					$Description	"$(InputFileName) produces $(InputName)_nut.h"
+					$Outputs		"$(InputName)_nut.h"
+				}
+			}
+		}
+	}
+	
+	$Folder "Source Files"
+	{
+		$File	"..\..\..\..\public\vscript\ivscript.h"
+		$File	"..\..\..\..\public\vscript\vscript_templates.h"
+		$File 	"vsquirrel.cpp"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					 // "SQPlus" need exceptions. If commit to squirrel, look into removing that
+					$AdditionalOptions					"/EHa"
+				}
+			}
+		}
+	}
+	
+	$Folder "Squirrel"
+	{
+		$Folder "Header Files"
+		{
+			$File 	"..\include\sqdbgserver.h"
+			$File 	"..\include\sqrdbg.h"
+			$File 	"..\include\sqstdaux.h"
+			$File 	"..\include\sqstdblob.h"
+			$File 	"..\include\sqstdio.h"
+			$File 	"..\include\sqstdmath.h"
+			$File 	"..\include\sqstdstring.h"
+			$File 	"..\include\sqstdsystem.h"
+			$File 	"..\include\squirrel.h	"
+		}
+		$Folder "squirrel"
+		{
+			$Folder	"Source Files"
+			{
+				$File 	"..\squirrel\sqapi.cpp" \
+						"..\squirrel\sqbaselib.cpp" \
+						"..\squirrel\sqclass.cpp" \
+						"..\squirrel\sqcompiler.cpp" \
+						"..\squirrel\sqdebug.cpp" \
+						"..\squirrel\sqfuncstate.cpp" \
+						"..\squirrel\sqlexer.cpp" \
+						"..\squirrel\sqmem.cpp" \
+						"..\squirrel\sqobject.cpp" \
+						"..\squirrel\sqstate.cpp" \
+						"..\squirrel\sqtable.cpp" \
+						"..\squirrel\sqvm.cpp" \
+						"..\sqdbg\sqrdbg.cpp" \
+						"..\sqdbg\sqdbgserver.cpp"
+				{
+					$Configuration
+					{
+						$Compiler
+						{
+							$WarningLevel						"Level 3 (/W3)"
+							$Detect64bitPortabilityIssues		"No"
+						}
+					}
+				}
+			}
+
+			$Folder	"Header Files"
+			{
+				$File 	"..\squirrel\sqarray.h" \
+						"..\squirrel\sqclass.h" \
+						"..\squirrel\sqclosure.h" \
+						"..\squirrel\sqcompiler.h" \
+						"..\squirrel\sqfuncproto.h" \
+						"..\squirrel\sqfuncstate.h" \
+						"..\squirrel\sqlexer.h" \
+						"..\squirrel\sqobject.h" \
+						"..\squirrel\sqopcodes.h" \
+						"..\squirrel\sqpcheader.h" \
+						"..\squirrel\sqstate.h" \
+						"..\squirrel\sqstring.h" \
+						"..\squirrel\sqtable.h" \
+						"..\squirrel\squserdata.h" \
+						"..\squirrel\squtils.h" \
+						"..\squirrel\sqvm.h"
+			}
+		}
+		$Folder "sqstdlib"
+		{
+			$Folder	"Source Files"
+			{
+				$File 	"..\sqstdlib\sqstdaux.cpp"\
+						"..\sqstdlib\sqstdblob.cpp" \
+						"..\sqstdlib\sqstdmath.cpp" \
+						"..\sqstdlib\sqstdrex.cpp" \
+						"..\sqstdlib\sqstdstream.cpp" \
+						"..\sqstdlib\sqstdstring.cpp"
+				{
+					$Configuration
+					{
+						$Compiler
+						{
+							$WarningLevel						"Level 3 (/W3)"
+							$Detect64bitPortabilityIssues		"No"
+						}
+					}
+				}
+			}
+		}
+		$Folder "sqplus"
+		{
+			$Folder	"Source Files"
+			{
+				$File	"..\sqplus\SqPlus.cpp" \
+						"..\sqplus\SquirrelBindingsUtils.cpp" \
+						"..\sqplus\SquirrelBindingsUtilsWin32.cpp" \
+						"..\sqplus\SquirrelObject.cpp" \
+						"..\sqplus\SquirrelVM.cpp"
+				{
+					$Configuration
+					{
+						$Compiler
+						{
+							$WarningLevel						"Level 3 (/W3)"
+							$Detect64bitPortabilityIssues		"No"
+							 // "SQPlus" need exceptions. If commit to squirrel, look into removing that
+							$AdditionalOptions					"/EHa"
+						}
+					}
+				}
+			}
+			$Folder	"Header Files"
+			{
+				$File	"..\sqplus\sqplus.h" \
+						"..\sqplus\SqPlusConst.h" \
+						"..\sqplus\sqplusWin32.h" \
+						"..\sqplus\SquirrelBindingsUtils.h" \
+						"..\sqplus\SquirrelBindingsUtilsWin32.h" \
+						"..\sqplus\SquirrelObject.h" \
+						"..\sqplus\SquirrelVM.h"
+			}
+		}
+	}
+	$Folder	"Link Libraries"
+	{
+		$File	"$SRCDIR\lib\public\mathlib.lib"
+	}
+}
+

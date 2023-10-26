@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -28,7 +28,6 @@ public:
 	virtual void ApplySchemeSettings( vgui::IScheme *pScheme );
 
 	void SetIcon( const char *szIcon );
-	void SetIconColor( Color cColor ) { m_IconColor = cColor; }
 
 private:
 	CHudTexture		*m_icon;

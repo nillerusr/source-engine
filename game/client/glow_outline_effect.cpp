@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//============ Copyright (c) Valve Corporation, All rights reserved. ============
 //
 // Functionality to render a glowing outline around client renderable objects.
 //
@@ -9,70 +9,29 @@
 #include "model_types.h"
 #include "shaderapi/ishaderapi.h"
 #include "materialsystem/imaterialvar.h"
-#include "materialsystem/itexture.h"
 #include "view_shared.h"
-#include "viewpostprocess.h"
 
 #define FULL_FRAME_TEXTURE "_rt_FullFrameFB"
 
-#ifdef GLOWS_ENABLE
-
-ConVar glow_outline_effect_enable( "glow_outline_effect_enable", "1", FCVAR_ARCHIVE, "Enable entity outline glow effects." );
-ConVar glow_outline_effect_width( "glow_outline_width", "10.0f", FCVAR_CHEAT, "Width of glow outline effect in screen space." );
-
-extern bool g_bDumpRenderTargets; // in viewpostprocess.cpp
+ConVar glow_outline_effect_enable( "glow_outline_effect_enable", "1", FCVAR_CHEAT, "Enable entity outline glow effects." );
+ConVar glow_outline_effect_width( "glow_outline_width", "6.0f", FCVAR_CHEAT, "Width of glow outline effect in screen space." );
 
 CGlowObjectManager g_GlowObjectManager;
 
-struct ShaderStencilState_t
-{
-	bool m_bEnable;
-	StencilOperation_t m_FailOp;
-	StencilOperation_t m_ZFailOp;
-	StencilOperation_t m_PassOp;
-	StencilComparisonFunction_t m_CompareFunc;
-	int m_nReferenceValue;
-	uint32 m_nTestMask;
-	uint32 m_nWriteMask;
-
-	ShaderStencilState_t()
-	{
-		m_bEnable = false;
-		m_PassOp = m_FailOp = m_ZFailOp = STENCILOPERATION_KEEP;
-		m_CompareFunc = STENCILCOMPARISONFUNCTION_ALWAYS;
-		m_nReferenceValue = 0;
-		m_nTestMask = m_nWriteMask = 0xFFFFFFFF;
-	}
-
-	void SetStencilState( CMatRenderContextPtr &pRenderContext  )
-	{
-		pRenderContext->SetStencilEnable( m_bEnable );
-		pRenderContext->SetStencilFailOperation( m_FailOp );
-		pRenderContext->SetStencilZFailOperation( m_ZFailOp );
-		pRenderContext->SetStencilPassOperation( m_PassOp );
-		pRenderContext->SetStencilCompareFunction( m_CompareFunc );
-		pRenderContext->SetStencilReferenceValue( m_nReferenceValue );
-		pRenderContext->SetStencilTestMask( m_nTestMask );
-		pRenderContext->SetStencilWriteMask( m_nWriteMask );
-	}
-};
-
 void CGlowObjectManager::RenderGlowEffects( const CViewSetup *pSetup, int nSplitScreenSlot )
 {
-	if ( g_pMaterialSystemHardwareConfig->SupportsPixelShaders_2_0() )
+	if ( glow_outline_effect_enable.GetBool() )
 	{
-		if ( glow_outline_effect_enable.GetBool() )
-		{
-			CMatRenderContextPtr pRenderContext( materials );
+		CMatRenderContextPtr pRenderContext( materials );
 
-			int nX, nY, nWidth, nHeight;
-			pRenderContext->GetViewport( nX, nY, nWidth, nHeight );
+		int nX, nY, nWidth, nHeight;
+		pRenderContext->GetViewport( nX, nY, nWidth, nHeight );
 
-			PIXEvent _pixEvent( pRenderContext, "EntityGlowEffects" );
-			ApplyEntityGlowEffects( pSetup, nSplitScreenSlot, pRenderContext, glow_outline_effect_width.GetFloat(), nX, nY, nWidth, nHeight );
-		}
+		PIXEvent _pixEvent( pRenderContext, "EntityGlowEffects" );
+		ApplyEntityGlowEffects( pSetup, nSplitScreenSlot, pRenderContext, glow_outline_effect_width.GetFloat(), nX, nY, nWidth, nHeight );
 	}
 }
+
 
 static void SetRenderTargetAndViewPort( ITexture *rt, int w, int h )
 {
@@ -80,6 +39,11 @@ static void SetRenderTargetAndViewPort( ITexture *rt, int w, int h )
 	pRenderContext->SetRenderTarget(rt);
 	pRenderContext->Viewport(0,0,w,h);
 }
+
+// *** Keep in sync with matsys_interface.cpp, where the texture is declared ***
+// Resolution for glow target chosen to be the largest that we can fit in EDRAM after 720p color/depth textures.		
+#define GLOW_360_RT_WIDTH ( MIN( 1120, pSetup->width ) )
+#define GLOW_360_RT_HEIGHT ( MIN( 624, pSetup->height ) )
 
 void CGlowObjectManager::RenderGlowModels( const CViewSetup *pSetup, int nSplitScreenSlot, CMatRenderContextPtr &pRenderContext )
 {
@@ -95,12 +59,19 @@ void CGlowObjectManager::RenderGlowModels( const CViewSetup *pSetup, int nSplitS
 	render->GetColorModulation( vOrigColor.Base() );
 	float flOrigBlend = render->GetBlend();
 
-	// Get pointer to FullFrameFB
-	ITexture *pRtFullFrame = NULL;
-	pRtFullFrame = materials->FindTexture( FULL_FRAME_TEXTURE, TEXTURE_GROUP_RENDER_TARGET );
+	ITexture *pRtFullFrame = materials->FindTexture( FULL_FRAME_TEXTURE, TEXTURE_GROUP_RENDER_TARGET );
 
-	SetRenderTargetAndViewPort( pRtFullFrame, pSetup->width, pSetup->height );
+	if ( IsX360() )
+	{
+		ITexture *pRtGlowTexture360 = materials->FindTexture( "_rt_Glows360", TEXTURE_GROUP_RENDER_TARGET );
 
+		SetRenderTargetAndViewPort( pRtGlowTexture360, GLOW_360_RT_WIDTH, GLOW_360_RT_HEIGHT );
+	}
+	else
+	{
+		SetRenderTargetAndViewPort( pRtFullFrame, pSetup->width, pSetup->height );
+	}
+	
 	pRenderContext->ClearColor3ub( 0, 0, 0 );
 	pRenderContext->ClearBuffers( true, false, false );
 
@@ -108,19 +79,7 @@ void CGlowObjectManager::RenderGlowModels( const CViewSetup *pSetup, int nSplitS
 	IMaterial *pMatGlowColor = NULL;
 
 	pMatGlowColor = materials->FindMaterial( "dev/glow_color", TEXTURE_GROUP_OTHER, true );
-	g_pStudioRender->ForcedMaterialOverride( pMatGlowColor );
-
-	ShaderStencilState_t stencilState;
-	stencilState.m_bEnable = false;
-	stencilState.m_nReferenceValue = 0;
-	stencilState.m_nTestMask = 0xFF;
-	stencilState.m_CompareFunc = STENCILCOMPARISONFUNCTION_ALWAYS;
-	stencilState.m_PassOp = STENCILOPERATION_KEEP;
-	stencilState.m_FailOp = STENCILOPERATION_KEEP;
-	stencilState.m_ZFailOp = STENCILOPERATION_KEEP;
-
-	stencilState.SetStencilState( pRenderContext );
-
+	
 	//==================//
 	// Draw the objects //
 	//==================//
@@ -129,6 +88,44 @@ void CGlowObjectManager::RenderGlowModels( const CViewSetup *pSetup, int nSplitS
 		if ( m_GlowObjectDefinitions[i].IsUnused() || !m_GlowObjectDefinitions[i].ShouldDraw( nSplitScreenSlot ) )
 			continue;
 
+		g_pStudioRender->ForcedMaterialOverride( pMatGlowColor );
+
+		if ( m_GlowObjectDefinitions[i].m_bFullBloomRender )
+		{
+			
+			// Disabled because stencil test on off-screen buffers doesn't work with MSAA on.
+			// Also, the normal model render does not seem to work on the off-screen buffer
+
+			//g_pStudioRender->ForcedMaterialOverride( NULL );
+
+// 			ShaderStencilState_t stencilState;
+// 			stencilState.m_bEnable = true;
+// 			stencilState.m_nReferenceValue = m_GlowObjectDefinitions[i].m_nFullBloomStencilTestValue;
+// 			stencilState.m_nTestMask = 0xFF;
+// 			stencilState.m_CompareFunc = SHADER_STENCILFUNC_EQUAL;
+// 			stencilState.m_PassOp = SHADER_STENCILOP_KEEP;
+// 			stencilState.m_FailOp = SHADER_STENCILOP_KEEP;
+// 			stencilState.m_ZFailOp = SHADER_STENCILOP_KEEP;
+// 
+// 			pRenderContext->SetStencilState( stencilState );
+		}
+		else
+		{
+			
+			// Disabled because stencil test on off-screen buffers doesn't work with MSAA on
+			// Most features still work, but some (e.g. partial occlusion) don't
+// 			ShaderStencilState_t stencilState;
+// 			stencilState.m_bEnable = true;
+// 			stencilState.m_nReferenceValue = 1;
+// 			stencilState.m_nTestMask = 0x1;
+// 			stencilState.m_CompareFunc = SHADER_STENCILFUNC_EQUAL;
+// 			stencilState.m_PassOp = SHADER_STENCILOP_KEEP;
+// 			stencilState.m_FailOp = SHADER_STENCILOP_KEEP;
+// 			stencilState.m_ZFailOp = SHADER_STENCILOP_KEEP;
+// 
+// 			pRenderContext->SetStencilState( stencilState );
+		}
+		
 		render->SetBlend( m_GlowObjectDefinitions[i].m_flGlowAlpha );
 		Vector vGlowColor = m_GlowObjectDefinitions[i].m_vGlowColor * m_GlowObjectDefinitions[i].m_flGlowAlpha;
 		render->SetColorModulation( &vGlowColor[0] ); // This only sets rgb, not alpha
@@ -136,27 +133,35 @@ void CGlowObjectManager::RenderGlowModels( const CViewSetup *pSetup, int nSplitS
 		m_GlowObjectDefinitions[i].DrawModel();
 	}	
 
-	if ( g_bDumpRenderTargets )
-	{
-		DumpTGAofRenderTarget( pSetup->width, pSetup->height, "GlowModels" );
-	}
-
 	g_pStudioRender->ForcedMaterialOverride( NULL );
 	render->SetColorModulation( vOrigColor.Base() );
 	render->SetBlend( flOrigBlend );
 	
 	ShaderStencilState_t stencilStateDisable;
 	stencilStateDisable.m_bEnable = false;
-	stencilStateDisable.SetStencilState( pRenderContext );
+	pRenderContext->SetStencilState( stencilStateDisable );
+
+	if ( IsX360() )
+	{
+		Rect_t rect;
+		rect.x = rect.y = 0;
+		rect.width = GLOW_360_RT_WIDTH;
+		rect.height = GLOW_360_RT_HEIGHT;
+
+		pRenderContext->CopyRenderTargetToTextureEx( pRtFullFrame, 0, &rect, &rect );
+	}
 
 	pRenderContext->PopRenderTargetAndViewport();
 }
 
 void CGlowObjectManager::ApplyEntityGlowEffects( const CViewSetup *pSetup, int nSplitScreenSlot, CMatRenderContextPtr &pRenderContext, float flBloomScale, int x, int y, int w, int h )
 {
+	static bool s_bFirstPass = true;
+
 	//=======================================================//
 	// Render objects into stencil buffer					 //
 	//=======================================================//
+
 	// Set override shader to the same simple shader we use to render the glow models
 	IMaterial *pMatGlowColor = materials->FindMaterial( "dev/glow_color", TEXTURE_GROUP_OTHER, true );
 	g_pStudioRender->ForcedMaterialOverride( pMatGlowColor );
@@ -169,12 +174,22 @@ void CGlowObjectManager::ApplyEntityGlowEffects( const CViewSetup *pSetup, int n
 	render->SetBlend( 0.0f );
 	pRenderContext->OverrideDepthEnable( true, false );
 
+	RenderableInstance_t instance;
+	instance.m_nAlpha = 255;
+
 	int iNumGlowObjects = 0;
 
 	for ( int i = 0; i < m_GlowObjectDefinitions.Count(); ++ i )
 	{
 		if ( m_GlowObjectDefinitions[i].IsUnused() || !m_GlowObjectDefinitions[i].ShouldDraw( nSplitScreenSlot ) )
 			continue;
+
+		// Full bloom rendered objects should not be stenciled out here
+		if ( m_GlowObjectDefinitions[i].m_bFullBloomRender )
+		{
+			++ iNumGlowObjects;
+			continue;
+		}
 
 		if ( m_GlowObjectDefinitions[i].m_bRenderWhenOccluded || m_GlowObjectDefinitions[i].m_bRenderWhenUnoccluded )
 		{
@@ -183,12 +198,12 @@ void CGlowObjectManager::ApplyEntityGlowEffects( const CViewSetup *pSetup, int n
 				ShaderStencilState_t stencilState;
 				stencilState.m_bEnable = true;
 				stencilState.m_nReferenceValue = 1;
-				stencilState.m_CompareFunc = STENCILCOMPARISONFUNCTION_ALWAYS;
-				stencilState.m_PassOp = STENCILOPERATION_REPLACE;
-				stencilState.m_FailOp = STENCILOPERATION_KEEP;
-				stencilState.m_ZFailOp = STENCILOPERATION_REPLACE;
+				stencilState.m_CompareFunc = SHADER_STENCILFUNC_ALWAYS;
+				stencilState.m_PassOp = SHADER_STENCILOP_SET_TO_REFERENCE;
+				stencilState.m_FailOp = SHADER_STENCILOP_KEEP;
+				stencilState.m_ZFailOp = SHADER_STENCILOP_SET_TO_REFERENCE;
 
-				stencilState.SetStencilState( pRenderContext );
+				pRenderContext->SetStencilState( stencilState );
 
 				m_GlowObjectDefinitions[i].DrawModel();
 			}
@@ -197,12 +212,12 @@ void CGlowObjectManager::ApplyEntityGlowEffects( const CViewSetup *pSetup, int n
 				ShaderStencilState_t stencilState;
 				stencilState.m_bEnable = true;
 				stencilState.m_nReferenceValue = 1;
-				stencilState.m_CompareFunc = STENCILCOMPARISONFUNCTION_ALWAYS;
-				stencilState.m_PassOp = STENCILOPERATION_KEEP;
-				stencilState.m_FailOp = STENCILOPERATION_KEEP;
-				stencilState.m_ZFailOp = STENCILOPERATION_REPLACE;
+				stencilState.m_CompareFunc = SHADER_STENCILFUNC_ALWAYS;
+				stencilState.m_PassOp = SHADER_STENCILOP_KEEP;
+				stencilState.m_FailOp = SHADER_STENCILOP_KEEP;
+				stencilState.m_ZFailOp = SHADER_STENCILOP_SET_TO_REFERENCE;
 
-				stencilState.SetStencilState( pRenderContext );
+				pRenderContext->SetStencilState( stencilState );
 
 				m_GlowObjectDefinitions[i].DrawModel();
 			}
@@ -213,12 +228,12 @@ void CGlowObjectManager::ApplyEntityGlowEffects( const CViewSetup *pSetup, int n
 				stencilState.m_nReferenceValue = 2;
 				stencilState.m_nTestMask = 0x1;
 				stencilState.m_nWriteMask = 0x3;
-				stencilState.m_CompareFunc = STENCILCOMPARISONFUNCTION_EQUAL;
-				stencilState.m_PassOp = STENCILOPERATION_INCRSAT;
-				stencilState.m_FailOp = STENCILOPERATION_KEEP;
-				stencilState.m_ZFailOp = STENCILOPERATION_REPLACE;
+				stencilState.m_CompareFunc = SHADER_STENCILFUNC_EQUAL;
+				stencilState.m_PassOp = SHADER_STENCILOP_INCREMENT_CLAMP;
+				stencilState.m_FailOp = SHADER_STENCILOP_KEEP;
+				stencilState.m_ZFailOp = SHADER_STENCILOP_SET_TO_REFERENCE;
 
-				stencilState.SetStencilState( pRenderContext );
+				pRenderContext->SetStencilState( stencilState );
 
 				m_GlowObjectDefinitions[i].DrawModel();
 			}
@@ -233,16 +248,20 @@ void CGlowObjectManager::ApplyEntityGlowEffects( const CViewSetup *pSetup, int n
 		if ( m_GlowObjectDefinitions[i].IsUnused() || !m_GlowObjectDefinitions[i].ShouldDraw( nSplitScreenSlot ) )
 			continue;
 
+		// Full bloom rendered objects should not be stenciled out here
+		if ( m_GlowObjectDefinitions[i].m_bFullBloomRender )
+			continue;
+
 		if ( m_GlowObjectDefinitions[i].m_bRenderWhenOccluded && !m_GlowObjectDefinitions[i].m_bRenderWhenUnoccluded )
 		{
 			ShaderStencilState_t stencilState;
 			stencilState.m_bEnable = true;
 			stencilState.m_nReferenceValue = 2;
-			stencilState.m_CompareFunc = STENCILCOMPARISONFUNCTION_ALWAYS;
-			stencilState.m_PassOp = STENCILOPERATION_REPLACE;
-			stencilState.m_FailOp = STENCILOPERATION_KEEP;
-			stencilState.m_ZFailOp = STENCILOPERATION_KEEP;
-			stencilState.SetStencilState( pRenderContext );
+			stencilState.m_CompareFunc = SHADER_STENCILFUNC_ALWAYS;
+			stencilState.m_PassOp = SHADER_STENCILOP_SET_TO_REFERENCE;
+			stencilState.m_FailOp = SHADER_STENCILOP_KEEP;
+			stencilState.m_ZFailOp = SHADER_STENCILOP_KEEP;
+			pRenderContext->SetStencilState( stencilState );
 
 			m_GlowObjectDefinitions[i].DrawModel();
 		}
@@ -250,7 +269,7 @@ void CGlowObjectManager::ApplyEntityGlowEffects( const CViewSetup *pSetup, int n
 
 	pRenderContext->OverrideDepthEnable( false, false );
 	render->SetBlend( flSavedBlend );
-	stencilStateDisable.SetStencilState( pRenderContext );
+	pRenderContext->SetStencilState( stencilStateDisable );
 	g_pStudioRender->ForcedMaterialOverride( NULL );
 
 	// If there aren't any objects to glow, don't do all this other stuff
@@ -267,6 +286,16 @@ void CGlowObjectManager::ApplyEntityGlowEffects( const CViewSetup *pSetup, int n
 		RenderGlowModels( pSetup, nSplitScreenSlot, pRenderContext );
 	}
 	
+	//===================================
+	// Setup state for downsample/bloom
+	//===================================
+
+#if defined( _X360 )
+	pRenderContext->PushVertexShaderGPRAllocation( 16 ); // Max out pixel shader threads
+#endif
+
+	pRenderContext->PushRenderTargetAndViewport();
+
 	// Get viewport
 	int nSrcWidth = pSetup->width;
 	int nSrcHeight = pSetup->height;
@@ -274,7 +303,104 @@ void CGlowObjectManager::ApplyEntityGlowEffects( const CViewSetup *pSetup, int n
 	pRenderContext->GetViewport( nViewportX, nViewportY, nViewportWidth, nViewportHeight );
 
 	// Get material and texture pointers
+	IMaterial *pMatDownsample = materials->FindMaterial( "dev/glow_downsample", TEXTURE_GROUP_OTHER, true);
+	IMaterial *pMatBlurX = materials->FindMaterial( "dev/glow_blur_x", TEXTURE_GROUP_OTHER, true );
+	IMaterial *pMatBlurY = materials->FindMaterial( "dev/glow_blur_y", TEXTURE_GROUP_OTHER, true );
+
+	ITexture *pRtFullFrame = materials->FindTexture( FULL_FRAME_TEXTURE, TEXTURE_GROUP_RENDER_TARGET );
+	ITexture *pRtQuarterSize0 = materials->FindTexture( "_rt_SmallFB0", TEXTURE_GROUP_RENDER_TARGET );
 	ITexture *pRtQuarterSize1 = materials->FindTexture( "_rt_SmallFB1", TEXTURE_GROUP_RENDER_TARGET );
+
+	//============================================
+	// Downsample _rt_FullFrameFB to _rt_SmallFB0
+	//============================================
+
+	// First clear the full target to black if we're not going to touch every pixel
+	if ( ( pRtQuarterSize0->GetActualWidth() != ( pSetup->width / 4 ) ) || ( pRtQuarterSize0->GetActualHeight() != ( pSetup->height / 4 ) ) )
+	{
+		SetRenderTargetAndViewPort( pRtQuarterSize0, pRtQuarterSize0->GetActualWidth(), pRtQuarterSize0->GetActualHeight() );
+		pRenderContext->ClearColor3ub( 0, 0, 0 );
+		pRenderContext->ClearBuffers( true, false, false );
+	}
+
+	// Set the viewport
+	SetRenderTargetAndViewPort( pRtQuarterSize0, pSetup->width / 4, pSetup->height / 4 );
+
+	IMaterialVar *pbloomexpvar = pMatDownsample->FindVar( "$bloomexp", null );
+	if ( pbloomexpvar != NULL )
+	{
+		pbloomexpvar->SetFloatValue( 2.5f );
+	}
+
+	IMaterialVar *pbloomsaturationvar = pMatDownsample->FindVar( "$bloomsaturation", null );
+	if ( pbloomsaturationvar != NULL )
+	{
+		pbloomsaturationvar->SetFloatValue( 1.0f );
+	}
+
+	// note the -2's below. Thats because we are downsampling on each axis and the shader
+	// accesses pixels on both sides of the source coord
+	int nFullFbWidth = nSrcWidth;
+	int nFullFbHeight = nSrcHeight;
+	if ( IsX360() )
+	{
+		nFullFbWidth = GLOW_360_RT_WIDTH;
+		nFullFbHeight = GLOW_360_RT_HEIGHT;
+	}
+	pRenderContext->DrawScreenSpaceRectangle( pMatDownsample, 0, 0, nSrcWidth/4, nSrcHeight/4,
+		0, 0, nFullFbWidth - 4, nFullFbHeight - 4,
+		pRtFullFrame->GetActualWidth(), pRtFullFrame->GetActualHeight() );
+
+	if ( IsX360() )
+	{
+		// Need to reset viewport to full size so we can also copy the cleared black pixels around the border
+		SetRenderTargetAndViewPort( pRtQuarterSize0, pRtQuarterSize0->GetActualWidth(), pRtQuarterSize0->GetActualHeight() );
+		pRenderContext->CopyRenderTargetToTextureEx( pRtQuarterSize0, 0, NULL, NULL );
+	}
+
+	//============================//
+	// Guassian blur x rt0 to rt1 //
+	//============================//
+
+	// First clear the full target to black if we're not going to touch every pixel
+	if ( s_bFirstPass || ( pRtQuarterSize1->GetActualWidth() != ( pSetup->width / 4 ) ) || ( pRtQuarterSize1->GetActualHeight() != ( pSetup->height / 4 ) ) )
+	{
+		// On the first render, this viewport may require clearing
+		s_bFirstPass = false;
+		SetRenderTargetAndViewPort( pRtQuarterSize1, pRtQuarterSize1->GetActualWidth(), pRtQuarterSize1->GetActualHeight() );
+		pRenderContext->ClearColor3ub( 0, 0, 0 );
+		pRenderContext->ClearBuffers( true, false, false );
+	}
+
+	// Set the viewport
+	SetRenderTargetAndViewPort( pRtQuarterSize1, pSetup->width / 4, pSetup->height / 4  );
+
+	pRenderContext->DrawScreenSpaceRectangle( pMatBlurX, 0, 0, nSrcWidth/4, nSrcHeight/4,
+		0, 0, nSrcWidth/4-1, nSrcHeight/4-1,
+		pRtQuarterSize0->GetActualWidth(), pRtQuarterSize0->GetActualHeight() );
+
+	if ( IsX360() )
+	{
+		pRenderContext->CopyRenderTargetToTextureEx( pRtQuarterSize1, 0, NULL, NULL );
+	}
+
+	//============================//
+	// Gaussian blur y rt1 to rt0 //
+	//============================//
+	SetRenderTargetAndViewPort( pRtQuarterSize0, pSetup->width / 4, pSetup->height / 4 );
+	IMaterialVar *pBloomAmountVar = pMatBlurY->FindVar( "$bloomamount", NULL );
+	pBloomAmountVar->SetFloatValue( flBloomScale );
+	pRenderContext->DrawScreenSpaceRectangle( pMatBlurY, 0, 0, nSrcWidth / 4, nSrcHeight / 4,
+		0, 0, nSrcWidth / 4 - 1, nSrcHeight / 4 - 1,
+		pRtQuarterSize1->GetActualWidth(), pRtQuarterSize1->GetActualHeight() );
+
+	if ( IsX360() )
+	{
+		pRenderContext->CopyRenderTargetToTextureEx( pRtQuarterSize1, 0, NULL, NULL ); // copy to rt1 instead of rt0 because rt1 has linear reads enabled and works more easily with screenspace_general to fix 360 bloom issues
+	}
+
+	// Pop RT
+	pRenderContext->PopRenderTargetAndViewport();
 
 	{
 		//=======================================================================================================//
@@ -288,17 +414,16 @@ void CGlowObjectManager::ApplyEntityGlowEffects( const CViewSetup *pSetup, int n
 		IMaterialVar *pDimVar = pMatHaloAddToScreen->FindVar( "$C0_X", NULL );
 		pDimVar->SetFloatValue( 1.0f );
 
-		// Set stencil state
 		ShaderStencilState_t stencilState;
 		stencilState.m_bEnable = true;
 		stencilState.m_nWriteMask = 0x0; // We're not changing stencil
-		stencilState.m_nTestMask = 0xFF;
+		stencilState.m_nTestMask = 0x3;
 		stencilState.m_nReferenceValue = 0x0;
-		stencilState.m_CompareFunc = STENCILCOMPARISONFUNCTION_EQUAL;
-		stencilState.m_PassOp = STENCILOPERATION_KEEP;
-		stencilState.m_FailOp = STENCILOPERATION_KEEP;
-		stencilState.m_ZFailOp = STENCILOPERATION_KEEP;
-		stencilState.SetStencilState( pRenderContext );
+		stencilState.m_CompareFunc = SHADER_STENCILFUNC_EQUAL;
+		stencilState.m_PassOp = SHADER_STENCILOP_KEEP;
+		stencilState.m_FailOp = SHADER_STENCILOP_KEEP;
+		stencilState.m_ZFailOp = SHADER_STENCILOP_KEEP;
+		pRenderContext->SetStencilState( stencilState );
 
 		// Draw quad
 		pRenderContext->DrawScreenSpaceRectangle( pMatHaloAddToScreen, 0, 0, nViewportWidth, nViewportHeight,
@@ -306,26 +431,29 @@ void CGlowObjectManager::ApplyEntityGlowEffects( const CViewSetup *pSetup, int n
 			pRtQuarterSize1->GetActualWidth(),
 			pRtQuarterSize1->GetActualHeight() );
 
-		stencilStateDisable.SetStencilState( pRenderContext );
+		// Disable stencil
+		pRenderContext->SetStencilState( stencilStateDisable );
 	}
+
+#if defined( _X360 )
+	pRenderContext->PopVertexShaderGPRAllocation();
+#endif
 }
 
 void CGlowObjectManager::GlowObjectDefinition_t::DrawModel()
 {
-	if ( m_hEntity.Get() )
-	{
-		m_hEntity->DrawModel( STUDIO_RENDER );
-		C_BaseEntity *pAttachment = m_hEntity->FirstMoveChild();
+	RenderableInstance_t instance;
+	instance.m_nAlpha = (uint8)( m_flGlowAlpha * 255.0f );
 
-		while ( pAttachment != NULL )
+	m_pEntity->DrawModel( STUDIO_RENDER | STUDIO_SKIP_FLEXES | STUDIO_DONOTMODIFYSTENCILSTATE | STUDIO_NOLIGHTING_OR_CUBEMAP | STUDIO_SKIP_DECALS, instance );
+	C_BaseEntity *pAttachment = m_pEntity->FirstMoveChild();
+
+	while ( pAttachment != NULL )
+	{
+		if ( pAttachment->ShouldDraw() )
 		{
-			if ( !g_GlowObjectManager.HasGlowEffect( pAttachment ) && pAttachment->ShouldDraw() )
-			{
-				pAttachment->DrawModel( STUDIO_RENDER );
-			}
-			pAttachment = pAttachment->NextMovePeer();
+			pAttachment->DrawModel( STUDIO_RENDER | STUDIO_SKIP_FLEXES | STUDIO_DONOTMODIFYSTENCILSTATE | STUDIO_NOLIGHTING_OR_CUBEMAP | STUDIO_SKIP_DECALS, instance );
 		}
+		pAttachment = pAttachment->NextMovePeer();
 	}
 }
-
-#endif // GLOWS_ENABLE

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: An entity that creates NPCs in the game. There are two types of NPC
 //			makers -- one which creates NPCs using a template NPC, and one which
@@ -17,6 +17,8 @@
 #include "mapentities.h"
 #include "IEffects.h"
 #include "props.h"
+#include "vscript_server.h"
+#include "point_template.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -79,9 +81,10 @@ void CNPCSpawnDestination::OnSpawnedNPC( CAI_BaseNPC *pNPC )
 BEGIN_DATADESC( CBaseNPCMaker )
 
 	DEFINE_KEYFIELD( m_nMaxNumNPCs,			FIELD_INTEGER,	"MaxNPCCount" ),
-	DEFINE_KEYFIELD( m_nMaxLiveChildren,		FIELD_INTEGER,	"MaxLiveChildren" ),
-	DEFINE_KEYFIELD( m_flSpawnFrequency,		FIELD_FLOAT,	"SpawnFrequency" ),
+	DEFINE_KEYFIELD( m_nMaxLiveChildren,	FIELD_INTEGER,	"MaxLiveChildren" ),
+	DEFINE_KEYFIELD( m_flSpawnFrequency,	FIELD_FLOAT,	"SpawnFrequency" ),
 	DEFINE_KEYFIELD( m_bDisabled,			FIELD_BOOLEAN,	"StartDisabled" ),
+	DEFINE_KEYFIELD( m_nHullCheckMode,		FIELD_INTEGER,	"HullCheckMode" ),
 
 	DEFINE_FIELD(	m_nLiveChildren,		FIELD_INTEGER ),
 
@@ -114,6 +117,8 @@ END_DATADESC()
 //-----------------------------------------------------------------------------
 void CBaseNPCMaker::Spawn( void )
 {
+	ScriptInstallPreSpawnHook();
+
 	SetSolid( SOLID_NONE );
 	m_nLiveChildren		= 0;
 	Precache();
@@ -143,6 +148,10 @@ void CBaseNPCMaker::Spawn( void )
 //-----------------------------------------------------------------------------
 bool CBaseNPCMaker::HumanHullFits( const Vector &vecLocation )
 {
+	if ( m_nHullCheckMode == HULLCHECK_NONE )
+		// Pretend like hull always fits when hull checking is disabled
+		return true;
+
 	trace_t tr;
 	UTIL_TraceHull( vecLocation,
 					vecLocation + Vector( 0, 0, 1 ),
@@ -383,11 +392,6 @@ END_DATADESC()
 //-----------------------------------------------------------------------------
 CNPCMaker::CNPCMaker( void )
 {
-	m_strHintGroup = NULL_STRING;
-	m_RelationshipString = NULL_STRING;
-	m_ChildTargetName = NULL_STRING;
-	m_iszNPCClassname = NULL_STRING;
-	m_SquadName = NULL_STRING;
 	m_spawnEquipment = NULL_STRING;
 }
 
@@ -784,8 +788,16 @@ void CTemplateNPCMaker::MakeNPC( void )
 		return;
 	}
 
+	MakeNPCFromTemplate();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CAI_BaseNPC *CTemplateNPCMaker::MakeNPCFromTemplate( void )
+{
 	if (!CanMakeNPC( ( m_iszDestinationGroup != NULL_STRING ) ))
-		return;
+		return NULL;
 
 	CNPCSpawnDestination *pDestination = NULL;
 	if ( m_iszDestinationGroup != NULL_STRING )
@@ -794,7 +806,7 @@ void CTemplateNPCMaker::MakeNPC( void )
 		if ( !pDestination )
 		{
 			DevMsg( 2, "%s '%s' failed to find a valid spawnpoint in destination group: '%s'\n", GetClassname(), STRING(GetEntityName()), STRING(m_iszDestinationGroup) );
-			return;
+			return NULL;
 		}
 	}
 
@@ -809,7 +821,7 @@ void CTemplateNPCMaker::MakeNPC( void )
 	if ( !pent )
 	{
 		Warning("NULL Ent in NPCMaker!\n" );
-		return;
+		return NULL;
 	}
 	
 	if ( pDestination )
@@ -833,6 +845,12 @@ void CTemplateNPCMaker::MakeNPC( void )
 		angles.x = 0.0;
 		angles.z = 0.0;
 		pent->SetAbsAngles( angles );
+	}
+
+	if ( !ScriptPreInstanceSpawn( &m_ScriptScope, pEntity, m_iszTemplateData ) )
+	{
+		UTIL_RemoveImmediate( pEntity );
+		return NULL;
 	}
 
 	m_OnSpawnNPC.Set( pEntity, pEntity, this );
@@ -872,6 +890,10 @@ void CTemplateNPCMaker::MakeNPC( void )
 			SetUse( NULL );
 		}
 	}
+
+	ScriptPostSpawn( &m_ScriptScope, &pEntity, 1 );
+
+	return pent;
 }
 
 //-----------------------------------------------------------------------------

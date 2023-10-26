@@ -1,9 +1,9 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
 // $NoKeywords: $
-//=============================================================================//
+//===========================================================================//
 
 #ifndef BASEVIEWMODEL_SHARED_H
 #define BASEVIEWMODEL_SHARED_H
@@ -15,7 +15,6 @@
 #include "utlvector.h"
 #include "baseplayer_shared.h"
 #include "shared_classnames.h"
-#include "econ/ihasowner.h"
 
 class CBaseCombatWeapon;
 class CBaseCombatCharacter;
@@ -28,7 +27,7 @@ class CVGuiScreen;
 
 #define VIEWMODEL_INDEX_BITS 1
 
-class CBaseViewModel : public CBaseAnimating, public IHasOwner
+class CBaseViewModel : public CBaseAnimating
 {
 	DECLARE_CLASS( CBaseViewModel, CBaseAnimating );
 public:
@@ -78,8 +77,6 @@ public:
 	void					ShowControlPanells( bool show );
 
 	virtual CBaseCombatWeapon *GetOwningWeapon( void );
-	
-	virtual CBaseEntity	*GetOwnerViaInterface( void ) { return GetOwner(); }
 
 	virtual bool			IsSelfAnimating()
 	{
@@ -88,14 +85,8 @@ public:
 
 	Vector					m_vecLastFacing;
 
-	// Only support prediction in TF2 for now
-#if defined( INVASION_DLL ) || defined( INVASION_CLIENT_DLL )
-	// All predicted weapons need to implement and return true
-	virtual bool			IsPredicted( void ) const
-	{ 
-		return true;
-	}
-#endif
+	virtual bool			IsViewModel() const { return true; }
+	virtual bool			IsViewModelOrAttachment() const { return true; }
 
 #if !defined( CLIENT_DLL )
 	virtual int				UpdateTransmitState( void );
@@ -103,26 +94,12 @@ public:
 	virtual void			SetTransmit( CCheckTransmitInfo *pInfo, bool bAlways );
 #else
 
-	virtual RenderGroup_t	GetRenderGroup();
-
-// Only supported in TF2 right now
-#if defined( INVASION_CLIENT_DLL )
-
-	virtual bool ShouldPredict( void )
-	{
-		if ( GetOwner() && GetOwner() == C_BasePlayer::GetLocalPlayer() )
-			return true;
-
-		return BaseClass::ShouldPredict();
-	}
-
-#endif
-
-
 	virtual void			FireEvent( const Vector& origin, const QAngle& angles, int event, const char *options );
 
 	virtual void			OnDataChanged( DataUpdateType_t updateType );
 	virtual void			PostDataUpdate( DataUpdateType_t updateType );
+
+	virtual C_BasePlayer	*GetPredictionOwner( void );
 
 	virtual bool			Interpolate( float currentTime );
 
@@ -132,13 +109,11 @@ public:
 	virtual void			ApplyBoneMatrixTransform( matrix3x4_t& transform );
 
 	virtual bool			ShouldDraw();
-	virtual int				DrawModel( int flags );
-	virtual int				InternalDrawModel( int flags );
-	int						DrawOverriddenViewmodel( int flags );
-	virtual int				GetFxBlend( void );
-	virtual bool			IsTransparent( void );
-	virtual bool			UsesPowerOfTwoFrameBufferTexture( void );
-	
+	virtual int				DrawModel( int flags, const RenderableInstance_t &instance );
+	int						DrawOverriddenViewmodel( int flags, const RenderableInstance_t &instance );
+	virtual uint8			OverrideAlphaModulation( uint8 nAlpha );
+	RenderableTranslucencyType_t ComputeTranslucencyType( void );
+
 	// Should this object cast shadows?
 	virtual ShadowType_t	ShadowCastType() { return SHADOWS_NONE; }
 
@@ -148,9 +123,6 @@ public:
 		return false;
 	}
 
-	// Add entity to visible view models list?
-	virtual void			AddEntity( void );
-
 	virtual void			GetBoneControllers(float controllers[MAXSTUDIOBONECTRLS]);
 
 	// See C_StudioModel's definition of this.
@@ -158,11 +130,10 @@ public:
 
 	// (inherited from C_BaseAnimating)
 	virtual void			FormatViewModelAttachment( int nAttachment, matrix3x4_t &attachmentToWorld );
-	virtual bool			IsViewModel() const;
-	
+
 	CBaseCombatWeapon		*GetWeapon() const { return m_hWeapon.Get(); }
 
-#ifdef CLIENT_DLL
+
 	virtual bool			ShouldResetSequenceOnNewModel( void ) { return false; }
 
 	// Attachments
@@ -171,24 +142,29 @@ public:
 	virtual bool			GetAttachment( int number, Vector &origin );
 	virtual	bool			GetAttachment( int number, Vector &origin, QAngle &angles );
 	virtual bool			GetAttachmentVelocity( int number, Vector &originVel, Quaternion &angleVel );
-#endif
 
 private:
 	CBaseViewModel( const CBaseViewModel & ); // not defined, not accessible
 
 #endif
 
+
+
 private:
+	typedef CHandle< CBaseCombatWeapon > CBaseCombatWeaponHandle;
+// FTYPEDESC_INSENDTABLE STUFF
 	CNetworkVar( int, m_nViewModelIndex );		// Which viewmodel is it?
+	// Used to force restart on client, only needs a few bits
+	CNetworkVar( int, m_nAnimationParity );
+	CNetworkVar( CBaseCombatWeaponHandle, m_hWeapon );
+// FTYPEDESC_INSENDTABLE STUFF (end)
+
 	CNetworkHandle( CBaseEntity, m_hOwner );				// Player or AI carrying this weapon
 
 	// soonest time Update will call WeaponIdle
 	float					m_flTimeWeaponIdle;							
 
 	Activity				m_Activity;
-
-	// Used to force restart on client, only needs a few bits
-	CNetworkVar( int, m_nAnimationParity );
 
 	// Weapon art
 	string_t				m_sVMName;			// View model of this weapon
@@ -199,12 +175,25 @@ private:
 #endif
 
 
-	typedef CHandle< CBaseCombatWeapon > CBaseCombatWeaponHandle;
-	CNetworkVar( CBaseCombatWeaponHandle, m_hWeapon );
+
 
 	// Control panel
 	typedef CHandle<CVGuiScreen>	ScreenHandle_t;
 	CUtlVector<ScreenHandle_t>	m_hScreens;
 };
+
+inline CBaseViewModel *ToBaseViewModel( CBaseAnimating *pAnim )
+{
+	if ( pAnim && pAnim->IsViewModel() )
+		return assert_cast<CBaseViewModel *>(pAnim);
+	return NULL;
+}
+
+inline CBaseViewModel *ToBaseViewModel( CBaseEntity *pEntity )
+{
+	if ( !pEntity )
+		return NULL;
+	return ToBaseViewModel(pEntity->GetBaseAnimating());
+}
 
 #endif // BASEVIEWMODEL_SHARED_H

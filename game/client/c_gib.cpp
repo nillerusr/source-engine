@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -53,7 +53,7 @@ C_Gib *C_Gib::CreateClientsideGib( const char *pszModelName, Vector vecOrigin, V
 //-----------------------------------------------------------------------------
 bool C_Gib::InitializeGib( const char *pszModelName, Vector vecOrigin, Vector vecForceDir, AngularImpulse vecAngularImp, float flLifetime )
 {
-	if ( InitializeAsClientEntity( pszModelName, RENDER_GROUP_OPAQUE_ENTITY ) == false )
+	if ( InitializeAsClientEntity( pszModelName, false ) == false )
 	{
 		Release();
 		return false;
@@ -93,9 +93,9 @@ bool C_Gib::InitializeGib( const char *pszModelName, Vector vecOrigin, Vector ve
 void C_Gib::ClientThink( void )
 {
 	SetRenderMode( kRenderTransAlpha );
-	m_nRenderFX		= kRenderFxFadeFast;
+	SetRenderFX( kRenderFxFadeFast );
 
-	if ( m_clrRender->a == 0 )
+	if ( GetRenderAlpha() == 0 )
 	{
 #ifdef HL2_CLIENT_DLL
 		s_AntlionGibManager.RemoveGib( this );

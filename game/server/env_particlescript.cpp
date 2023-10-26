@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -87,8 +87,8 @@ void CEnvParticleScript::PrecacheAnimationEventMaterials()
 			int ecount = seqdesc.numevents;
 			for ( int j = 0 ; j < ecount; ++j )
 			{
-				const mstudioevent_t* event = seqdesc.pEvent( j );
-				if ( event->event == CL_EVENT_SPRITEGROUP_CREATE )
+				const mstudioevent_t* event = (const mstudioevent_for_client_server_t*)seqdesc.pEvent( j );
+				if ( event->Event() == CL_EVENT_SPRITEGROUP_CREATE )
 				{
 					char pAttachmentName[256];
 					char pSpriteName[256];

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -12,6 +12,7 @@
 
 #include <vgui_controls/Panel.h>
 #include "hudelement.h"
+#include "tier1/UtlSortVector.h"
 
 namespace vgui
 {
@@ -49,28 +50,45 @@ public:
 		bool networked, bool noterrorchecked, bool differs, bool withintolerance, const char *value );
 private:
 
-	void PredictionDumpColor( bool networked, bool errorchecked, bool differs, bool withintolerance,
+	void PredictionDumpColor( bool legend, bool predictable, bool networked, bool errorchecked, bool differs, bool withintolerance,
 		int& r, int& g, int& b, int& a );
 	//-----------------------------------------------------------------------------
 	// Purpose: Stores some info about the various fields of an entity for display
 	//-----------------------------------------------------------------------------
 	struct DumpInfo
 	{
+		int  index;
 		char classname[ DUMP_CLASSNAME_SIZE ];
 		bool networked;
 		char fieldstring[ DUMP_STRING_SIZE ];
 		bool differs;
 		bool withintolerance;
 		bool noterrorchecked;
+
+		class CDumpInfoLess
+		{
+		public:
+			bool Less( const DumpInfo &src1, const DumpInfo &src2, void *pCtx )
+			{
+				int str = Q_stricmp( src1.classname, src2.classname );
+				if ( str < 0 )
+					return true;
+				else if ( str > 0 )
+					return false;
+
+				return src1.index < src2.index;
+			}
+		};
 	};
 
-	CUtlVector< DumpInfo > m_DumpEntityInfo;
+	CUtlSortVector< DumpInfo, DumpInfo::CDumpInfoLess > m_DumpEntityInfo;
 
 	EHANDLE			m_hDumpEntity;
+	int				m_nCurrentIndex;
 
-	CPanelAnimationVar( vgui::HFont, m_FontSmall, "ItemFont", "DefaultVerySmall" );
-	CPanelAnimationVar( vgui::HFont, m_FontMedium, "LabelFont", "DefaultSmall" );
-	CPanelAnimationVar( vgui::HFont, m_FontBig, "TitleFont", "Trebuchet24" );
+	CPanelAnimationVar( vgui::HFont, m_FontSmall, "ItemFont", "DebugOverlay" );
+	CPanelAnimationVar( vgui::HFont, m_FontMedium, "LabelFont", "DebugOverlay" );
+	CPanelAnimationVar( vgui::HFont, m_FontBig, "TitleFont", "DebugOverlay" );
 };
 
 CPDumpPanel *GetPDumpPanel();

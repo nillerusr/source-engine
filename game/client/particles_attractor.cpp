@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -37,7 +37,7 @@ void CParticleAttractor::UpdateVelocity( SimpleParticle *pParticle, float timeDe
 	Vector dir = ( m_vecAttractorOrigin - pParticle->m_Pos );
 	VectorNormalize( dir );
 	
-	speed = clamp( (speed+speed*0.2f), 0.f, 1024.f );
+	speed = clamp( (speed+speed*0.2f), 0, 1024 );
 	pParticle->m_vecVelocity += dir * speed;
 }
 

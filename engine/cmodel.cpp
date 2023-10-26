@@ -50,47 +50,28 @@ csurface_t *CCollisionBSPData::GetSurfaceAtIndex( unsigned short surfaceIndex )
 	return &map_surfaces[surfaceIndex];
 }
 
-#if TEST_TRACE_POOL
-CTSPool<TraceInfo_t> g_TraceInfoPool;
-#else
-class CTraceInfoPool : public CTSList<TraceInfo_t *>
-{
-public:
-	CTraceInfoPool() = default;
-};
-
-CTraceInfoPool g_TraceInfoPool;
-#endif
+static TraceInfo_t g_TraceInfo;
 
 TraceInfo_t *BeginTrace()
 {
-#if TEST_TRACE_POOL
-	TraceInfo_t *pTraceInfo = g_TraceInfoPool.GetObject();
-#else
-	TraceInfo_t *pTraceInfo;
-	if ( !g_TraceInfoPool.PopItem( &pTraceInfo ) )
+	if ( g_TraceInfo.m_BrushCounters[0].Count() != GetCollisionBSPData()->numbrushes + 1 )
 	{
-		pTraceInfo = new TraceInfo_t;
-	}
-#endif
-	if ( pTraceInfo->m_BrushCounters[0].Count() != GetCollisionBSPData()->numbrushes + 1 )
-	{
-		memset( pTraceInfo->m_Count, 0, sizeof( pTraceInfo->m_Count ) );
-		pTraceInfo->m_nCheckDepth = -1;
+		memset( g_TraceInfo.m_Count, 0, sizeof( g_TraceInfo.m_Count ) );
+		g_TraceInfo.m_nCheckDepth = -1;
 
 		for ( int i = 0; i < MAX_CHECK_COUNT_DEPTH; i++ )
 		{
-			pTraceInfo->m_BrushCounters[i].SetCount( GetCollisionBSPData()->numbrushes + 1 );
-			pTraceInfo->m_DispCounters[i].SetCount( g_DispCollTreeCount );
+			g_TraceInfo.m_BrushCounters[i].SetCount( GetCollisionBSPData()->numbrushes + 1 );
+			g_TraceInfo.m_DispCounters[i].SetCount( g_DispCollTreeCount );
 
-			memset( pTraceInfo->m_BrushCounters[i].Base(), 0, pTraceInfo->m_BrushCounters[i].Count() * sizeof(TraceCounter_t) );
-			memset( pTraceInfo->m_DispCounters[i].Base(), 0, pTraceInfo->m_DispCounters[i].Count() * sizeof(TraceCounter_t) );
+			memset( g_TraceInfo.m_BrushCounters[i].Base(), 0, g_TraceInfo.m_BrushCounters[i].Count() * sizeof(TraceCounter_t) );
+			memset( g_TraceInfo.m_DispCounters[i].Base(), 0, g_TraceInfo.m_DispCounters[i].Count() * sizeof(TraceCounter_t) );
 		}
 	}
 
-	PushTraceVisits( pTraceInfo );
+	PushTraceVisits( &g_TraceInfo );
 
-	return pTraceInfo;
+	return &g_TraceInfo;
 }
 
 void PushTraceVisits( TraceInfo_t *pTraceInfo )
@@ -114,16 +95,9 @@ void PopTraceVisits( TraceInfo_t *pTraceInfo )
 	Assert( pTraceInfo->m_nCheckDepth >= -1 );
 }
 
-void EndTrace( TraceInfo_t *&pTraceInfo )
+void EndTrace( TraceInfo_t *pTraceInfo )
 {
 	PopTraceVisits( pTraceInfo );
-	Assert( pTraceInfo->m_nCheckDepth == -1 );
-#if TEST_TRACE_POOL
-	g_TraceInfoPool.PutObject( pTraceInfo );
-#else
-	g_TraceInfoPool.PushItem( pTraceInfo );
-#endif
-	pTraceInfo = NULL;
 }
 
 static ConVar map_noareas( "map_noareas", "0", 0, "Disable area to area connection testing." );

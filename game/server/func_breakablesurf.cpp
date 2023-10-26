@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: A planar textured surface that breaks into increasingly smaller fragments
 //			as it takes damage. Undamaged pieces remain attached to the world
@@ -19,15 +19,6 @@
 #include "globals.h"
 #include "physics_impact_damage.h"
 #include "te_effect_dispatch.h"
-
-//=============================================================================
-// HPE_BEGIN
-// [dwenger] Necessary for stats tracking
-//=============================================================================
-#include "gamestats.h"
-//=============================================================================
-// HPE_END
-//=============================================================================
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -243,6 +234,9 @@ void CBreakableSurface::Precache(void)
 		PrecacheMaterial( "models/brokenglass/glassbroken_03d" );
 	}
 
+	PrecacheEffect( "GlassImpact" );
+	PrecacheEffect( "Impact" );
+
 	BaseClass::Precache();
 }
 
@@ -285,10 +279,10 @@ void CBreakableSurface::SurfaceTouch( CBaseEntity *pOther )
 	PanePos(vTouchPos, &flMaxsWidth, &flMaxsHeight);
 
 	int nMinWidth = Floor2Int(MAX(0,		MIN(flMinsWidth,flMaxsWidth)));
-	int nMaxWidth = Ceil2Int(MIN(m_nNumWide,MAX(flMinsWidth,flMaxsWidth)));
+	int nMaxWidth = Ceil2Int( fpmin(m_nNumWide, MAX(flMinsWidth,flMaxsWidth)));
 
 	int nMinHeight = Floor2Int(MAX(0,		MIN(flMinsHeight,flMaxsHeight)));
-	int nMaxHeight = Ceil2Int(MIN(m_nNumHigh,MAX(flMinsHeight,flMaxsHeight)));
+	int nMaxHeight = Ceil2Int( fpmin(m_nNumHigh, MAX(flMinsHeight,flMaxsHeight)));
 
 	Vector vHitVel;
 	pOther->GetVelocity( &vHitVel, NULL );
@@ -349,7 +343,14 @@ int CBreakableSurface::OnTakeDamage( const CTakeDamageInfo &info )
 		Die( info.GetAttacker(), info.GetDamageForce() );
 		return 0;
 	}
-	
+
+#ifdef INFESTED_DLL
+	if ( m_nSurfaceType == SHATTERSURFACE_GLASS && (info.GetDamageType() & DMG_CLUB) )
+	{
+		Die( info.GetAttacker(), info.GetDamageForce() );
+		return 0;
+	}
+#endif
 
 	return 0;
 }
@@ -358,20 +359,8 @@ int CBreakableSurface::OnTakeDamage( const CTakeDamageInfo &info )
 //------------------------------------------------------------------------------
 // Purpose: Accepts damage and breaks if health drops below zero.
 //------------------------------------------------------------------------------
-void CBreakableSurface::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr, CDmgAccumulator *pAccumulator )
+void CBreakableSurface::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr )
 {
-    //=============================================================================
-    // HPE_BEGIN:
-    // [dwenger] Window break stat tracking
-    //=============================================================================
-
-    // Make sure this pane has not already been shattered
-    bool bWasBroken = m_bIsBroken;
-
-    //=============================================================================
-    // HPE_END
-    //=============================================================================
-
 	// Decrease health
 	m_iHealth -= info.GetDamage();
 	m_OnHealthChanged.Set( m_iHealth, info.GetAttacker(), this );
@@ -393,21 +382,6 @@ void CBreakableSurface::TraceAttack( const CTakeDamageInfo &info, const Vector &
 		
 		if ( ShatterPane(nWidth, nHeight,vecDir*500,ptr->endpos) )
 		{
-            //=============================================================================
-            // HPE_BEGIN:
-            // [dwenger] Window break stat tracking
-            //=============================================================================
-
-            CBasePlayer* pAttacker = ToBasePlayer(info.GetAttacker());
-            if ( ( pAttacker ) && ( !bWasBroken ) )
-            {
-                gamestats->Event_WindowShattered( pAttacker );
-            }
-
-            //=============================================================================
-            // HPE_END
-            //=============================================================================
-
 			// Do an impact hit
 			CEffectData	data;
 
@@ -419,7 +393,7 @@ void CBreakableSurface::TraceAttack( const CTakeDamageInfo &info, const Vector &
 			// client cannot trace against triggers
 			filter.SetIgnorePredictionCull( true );
 
-			te->DispatchEffect( filter, 0.0, data.m_vOrigin, "GlassImpact", data );
+			DispatchEffect( filter, 0.0, "GlassImpact", data );
 		}
 
 		if (m_nSurfaceType == SHATTERSURFACE_GLASS)
@@ -494,28 +468,11 @@ void CBreakableSurface::TraceAttack( const CTakeDamageInfo &info, const Vector &
 		// ----------------------------------------
 		else
 		{
-            //=============================================================================
-            // HPE_BEGIN:
-            // [pfreese] Window break stat tracking
-            //=============================================================================
-
-            CBasePlayer* pAttacker = ToBasePlayer(info.GetAttacker());
-            if ( ( pAttacker ) && ( !bWasBroken ) )
-            {
-                gamestats->Event_WindowShattered( pAttacker );
-            }
-
-            //=============================================================================
-            // HPE_END
-            //=============================================================================
-
 			float flDot = DotProduct(m_vNormal,vecDir);
 
-#ifdef CSTRIKE_DLL
-			float damageMultiplier = info.GetDamage();
-#else
+
 			float damageMultiplier = 1.0f;
-#endif
+
 
 			Vector vBlastDir;
 			if (flDot > 0)
@@ -1195,19 +1152,25 @@ void CBreakableSurface::Spawn(void)
 
 	if (m_nQuadError == QUAD_ERR_MULT_FACES)
 	{
-		Warning("Rejecting func_breakablesurf.  Has multiple faces that aren't NODRAW.\n");
+		Vector center = WorldSpaceCenter();
+		Warning( "Rejecting func_breakablesurf at (%2.2f, %2.2f, %2.2f).  Has multiple faces that aren't NODRAW.\n",
+			center.x, center.y, center.z );
 		UTIL_Remove(this);
 	}
 	else if (m_nQuadError == QUAD_ERR_NOT_QUAD)
 	{
-		Warning("Rejecting func_breakablesurf.  Drawn face isn't a quad.\n");
+		Vector center = WorldSpaceCenter();
+		Warning( "Rejecting func_breakablesurf at (%2.2f, %2.2f, %2.2f).  Drawn face isn't a quad.\n",
+			center.x, center.y, center.z );
 		UTIL_Remove(this);
 	}
 
 	int materialCount = modelinfo->GetModelMaterialCount( const_cast<model_t*>(GetModel()) );
 	if( materialCount != 1 )
 	{
-		Warning( "Encountered func_breakablesurf that has a material applied to more than one surface!\n" );
+		Vector center = WorldSpaceCenter();
+		Warning( "Encountered func_breakablesurf at (%2.2f, %2.2f, %2.2f) that has a material applied to more than one surface!\n",
+			center.x, center.y, center.z );
 		UTIL_Remove(this);
 	}
 
@@ -1218,7 +1181,7 @@ void CBreakableSurface::Spawn(void)
 	// The material should point to a cracked version of itself
 	bool foundVar;
 	IMaterialVar* pCrackName = pMaterial->FindVar( "$crackmaterial", &foundVar, false );
-	if (foundVar)
+	if ( foundVar && IsPrecacheAllowed() )
 	{
 		PrecacheMaterial( pCrackName->GetStringValue() );
 	}

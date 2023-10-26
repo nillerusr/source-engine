@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -10,9 +10,9 @@
 #ifdef CLIENT_DLL
 
 #include "clientsideeffects.h"
-#include "materialsystem/imaterialsystem.h"
-#include "materialsystem/imesh.h"
-#include "mathlib/vmatrix.h"
+#include "materialsystem/IMaterialSystem.h"
+#include "materialsystem/IMesh.h"
+#include "mathlib/VMatrix.h"
 #include "view.h"
 #include "beamdraw.h"
 #include "enginesprite.h"
@@ -37,6 +37,7 @@ extern CEngineSprite *Draw_SetSpriteTexture( const model_t *pSpriteModel, int fr
 #if defined( CLIENT_DLL )
 
 BEGIN_SIMPLE_DATADESC( TrailPoint_t )
+	// DEFINE_FIELD( m_vecScreenPos,	FIELD_CLASSCHECK_IGNORE ) // do this or else we get a warning about multiply-defined fields
 #if SCREEN_SPACE_TRAILS
 	DEFINE_FIELD( m_vecScreenPos,	FIELD_VECTOR ),
 #else
@@ -127,7 +128,6 @@ CSpriteTrail::CSpriteTrail( void )
 	m_vecSkyboxOrigin.Init( 0, 0, 0 );
 	m_flSkyboxScale = 1.0f;
 	m_flEndWidth = -1.0f;
-	m_bDrawForMoveParent = true;
 }
 
 void CSpriteTrail::Spawn( void )
@@ -240,7 +240,6 @@ bool CSpriteTrail::IsInSkybox() const
 {
 	return (m_flSkyboxScale != 1.0f) || (m_vecSkyboxOrigin != vec3_origin);
 }
-
 
 
 #ifdef CLIENT_DLL
@@ -419,7 +418,7 @@ void CSpriteTrail::UpdateTrail( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-int CSpriteTrail::DrawModel( int flags )
+int CSpriteTrail::DrawModel( int flags, const RenderableInstance_t &instance )
 {
 	VPROF_BUDGET( "CSpriteTrail::DrawModel", VPROF_BUDGETGROUP_PARTICLE_RENDERING );
 	
@@ -464,10 +463,9 @@ int CSpriteTrail::DrawModel( int flags )
 		float flLifePerc = (pPoint->m_flDieTime - gpGlobals->curtime) / m_flLifeTime;
 		flLifePerc = clamp( flLifePerc, 0.0f, 1.0f );
 
+		color24 c = GetRenderColor();
 		BeamSeg_t curSeg;
-		curSeg.m_vColor.x = (float) m_clrRender->r / 255.0f;
-		curSeg.m_vColor.y = (float) m_clrRender->g / 255.0f;
-		curSeg.m_vColor.z = (float) m_clrRender->b / 255.0f;
+		curSeg.m_color.r = c.r; curSeg.m_color.g = c.g; curSeg.m_color.b = c.b;
 
 		float flAlphaFade = flLifePerc;
 		if ( flTailAlphaDist > 0.0f )
@@ -487,7 +485,7 @@ int CSpriteTrail::DrawModel( int flags )
 				}
 			}
 		}
-		curSeg.m_flAlpha  = ( (float) GetRenderBrightness() / 255.0f ) * flAlphaFade;
+		curSeg.m_color.a  = GetRenderBrightness() * flAlphaFade;
 
 #if SCREEN_SPACE_TRAILS
 		curSeg.m_vPos = viewMatrix * pPoint->m_vecScreenPos;
@@ -586,77 +584,4 @@ CSpriteTrail *CSpriteTrail::SpriteTrailCreate( const char *pSpriteName, const Ve
 	return pSprite;
 }
 
-//-----------------------------------------------------------------------------
-// 
-//-----------------------------------------------------------------------------
-
-int CSpriteTrail::ShouldTransmit( const CCheckTransmitInfo *pInfo )
-{
-	CBaseEntity *pRecipientEntity = CBaseEntity::Instance( pInfo->m_pClientEnt );
-
-	Assert( pRecipientEntity->IsPlayer() );
-
-	CBasePlayer *pRecipientPlayer = static_cast<CBasePlayer*>( pRecipientEntity );
-
-	if ( !m_bDrawForMoveParent )
-	{
-		if ( GetMoveParent() && !GetMoveParent()->IsPlayer() )
-		{
-			if ( GetMoveParent()->GetMoveParent() == pRecipientPlayer )
-			{
-				return FL_EDICT_DONTSEND;
-			}
-		}
-		else if ( GetMoveParent() == pRecipientPlayer )
-		{
-				return FL_EDICT_DONTSEND;
-		}
-		
-	}
-	
-	return BaseClass::ShouldTransmit( pInfo );
-}
-
 #endif	//CLIENT_DLL == false
-
-#if defined( CLIENT_DLL )
-// It's okay to draw attached entities with these sprites.
-const char* g_spriteWhiteList[] =
-{
-	"effects/beam001_white.vmt",
-	"effects/beam001_red.vmt",
-	"effects/beam001_blu.vmt",
-};
-
-//-----------------------------------------------------------------------------
-// Purpose: TF prevents drawing of any entity attached to players that aren't items in the inventory of the player.
-//			This is to prevent servers creating fake cosmetic items and attaching them to players.
-//-----------------------------------------------------------------------------
-bool CSpriteTrail::ValidateEntityAttachedToPlayer( bool &bShouldRetry )
-{
-	bShouldRetry = false;
-	return true;
-
-	/*
-#if defined( TF_CLIENT_DLL )
-
-	const char *pszModelName = modelinfo->GetModelName( GetModel() );
-	if ( pszModelName && pszModelName[0] )
-	{
-		// We attach sprites directly to players in some cases, such as phase trails on an evading scout
-		for ( int i=0; i<ARRAYSIZE( g_spriteWhiteList ); ++i )
-		{
-			if ( FStrEq( pszModelName, g_spriteWhiteList[i] ) )
-				return true;
-		}
-	}
-	
-	return false;
-
-#else
-	return false;
-#endif
-	*/
-}
-
-#endif

@@ -144,6 +144,8 @@ public: // IClientMessageHandlers
 
 public: // IGameEventListener
 	virtual void	FireGameEvent( IGameEvent *event );
+	int		m_nDebugID;
+	virtual int	GetEventDebugID( void );
 
 public:
 

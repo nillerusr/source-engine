@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -35,40 +35,38 @@
 void CAI_BaseNPC::ForceSelectedGo(CBaseEntity *pPlayer, const Vector &targetPos, const Vector &traceDir, bool bRun) 
 {
 	CAI_BaseNPC *npc = gEntList.NextEntByClass( (CAI_BaseNPC *)NULL );
-
-	while (npc)
+	for ( ; npc; npc = gEntList.NextEntByClass(npc) )
 	{
-		if (npc->m_debugOverlays & OVERLAY_NPC_SELECTED_BIT) 
+		if ( ( npc->m_debugOverlays & OVERLAY_NPC_SELECTED_BIT ) == 0 )
+			continue;
+
+		// If a behavior is active, we need to stop running it
+		npc->SetPrimaryBehavior( NULL );
+
+		Vector chasePosition = targetPos;
+		npc->TranslateNavGoal( pPlayer, chasePosition );
+		// It it legal to drop me here
+		Vector	vUpBit = chasePosition;
+		vUpBit.z += 1;
+
+		trace_t tr;
+		AI_TraceHull( chasePosition, vUpBit, npc->GetHullMins(), 
+			npc->GetHullMaxs(), npc->GetAITraceMask(), npc, COLLISION_GROUP_NONE, &tr );
+		if (tr.startsolid || tr.fraction != 1.0 )
 		{
-			Vector chasePosition = targetPos;
-			npc->TranslateNavGoal( pPlayer, chasePosition );
-			// It it legal to drop me here
-			Vector	vUpBit = chasePosition;
-			vUpBit.z += 1;
-
-			trace_t tr;
-			AI_TraceHull( chasePosition, vUpBit, npc->GetHullMins(), 
-				npc->GetHullMaxs(), MASK_NPCSOLID, npc, COLLISION_GROUP_NONE, &tr );
-			if (tr.startsolid || tr.fraction != 1.0 )
-			{
-				NDebugOverlay::BoxAngles(chasePosition, npc->GetHullMins(), 
-					npc->GetHullMaxs(), npc->GetAbsAngles(), 255,0,0,20,0.5);
-			}
-
-			npc->m_vecLastPosition = chasePosition;
-
-			if (npc->m_hCine != NULL)
-			{
-				npc->ExitScriptedSequence();
-			}
-
-			if ( bRun )
-				npc->SetSchedule( SCHED_FORCED_GO_RUN );
-			else
-				npc->SetSchedule( SCHED_FORCED_GO );
-			npc->m_flMoveWaitFinished = gpGlobals->curtime;
+			NDebugOverlay::BoxAngles(chasePosition, npc->GetHullMins(), 
+				npc->GetHullMaxs(), npc->GetAbsAngles(), 255,0,0,20,0.5);
 		}
-		npc = gEntList.NextEntByClass(npc);
+
+		npc->m_vecLastPosition = chasePosition;
+
+		if (npc->m_hCine != NULL)
+		{
+			npc->ExitScriptedSequence();
+		}
+
+		npc->SetSchedule( bRun ? SCHED_FORCED_GO_RUN : SCHED_FORCED_GO );
+		npc->m_flMoveWaitFinished = gpGlobals->curtime;
 	}
 }
 
@@ -85,6 +83,8 @@ void CAI_BaseNPC::ForceSelectedGoRandom(void)
 	{
 		if (npc->m_debugOverlays & OVERLAY_NPC_SELECTED_BIT) 
 		{
+			// If a behavior is active, we need to stop running it
+			npc->SetPrimaryBehavior( NULL );
 			npc->SetSchedule( SCHED_RUN_RANDOM );
 			npc->GetNavigator()->SetMovementActivity(ACT_RUN);
 		}
@@ -96,6 +96,9 @@ void CAI_BaseNPC::ForceSelectedGoRandom(void)
 //-----------------------------------------------------------------------------
 bool CAI_BaseNPC::ScheduledMoveToGoalEntity( int scheduleType, CBaseEntity *pGoalEntity, Activity movementActivity )
 {
+	// If a behavior is active, we need to stop running it
+	SetPrimaryBehavior( NULL );
+
 	if ( m_NPCState == NPC_STATE_NONE )
 	{
 		// More than likely being grabbed before first think. Set ideal state to prevent schedule stomp
@@ -120,6 +123,9 @@ bool CAI_BaseNPC::ScheduledMoveToGoalEntity( int scheduleType, CBaseEntity *pGoa
 //-----------------------------------------------------------------------------
 bool CAI_BaseNPC::ScheduledFollowPath( int scheduleType, CBaseEntity *pPathStart, Activity movementActivity )
 {
+	// If a behavior is active, we need to stop running it
+	SetPrimaryBehavior( NULL );
+
 	if ( m_NPCState == NPC_STATE_NONE )
 	{
 		// More than likely being grabbed before first think. Set ideal state to prevent schedule stomp
@@ -435,6 +441,28 @@ bool CAI_BaseNPC::AutoMovement( float flInterval, CBaseEntity *pTarget, AIMoveTr
 				if ( !pTarget )
 				{
 					pTarget = GetNavTargetEntity();
+				}
+
+				// allow NPCs to adjust the automatic movement
+				if ( ModifyAutoMovement( newPos ) )
+				{
+					// Set our motor's speed here
+					Vector vecOriginalPosition = GetAbsOrigin();
+					bool bResult = false;
+					if (!TaskIsComplete())
+					{
+						bResult = ( GetMotor()->MoveGroundStep( newPos, pTarget, newAngles.y, false, true, pTraceResult ) == AIM_SUCCESS );
+					}
+
+					Vector change = GetAbsOrigin() - vecOriginalPosition;
+					if (flInterval != 0)
+					{
+						change /= flInterval;
+					}
+
+					GetMotor()->SetMoveVel(change);
+
+					return bResult;
 				}
 
 				return ( GetMotor()->MoveGroundStep( newPos, pTarget, newAngles.y, false, true, pTraceResult ) == AIM_SUCCESS );

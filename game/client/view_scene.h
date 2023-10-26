@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -16,7 +16,7 @@
 #include "iviewrender.h"
 #include "view_shared.h"
 #include "rendertexture.h"
-#include "materialsystem/itexture.h"
+#include "materialsystem/ITexture.h"
 
 
 extern ConVar mat_wireframe;
@@ -29,20 +29,17 @@ void ViewTransform( const Vector &worldSpace, Vector &viewSpace );
 // Transform a world point into normalized screen space (X and Y from -1 to 1).
 // Returns 0 if the point is behind the viewer.
 int ScreenTransform( const Vector& point, Vector& screen );
-int HudTransform( const Vector& point, Vector& screen );
-
 
 extern ConVar r_updaterefracttexture;
 extern int g_viewscene_refractUpdateFrame;
 extern bool g_bAllowMultipleRefractUpdatesPerScenePerFrame;
 bool DrawingShadowDepthView( void );
-bool DrawingMainView();
 
 inline void UpdateRefractTexture( int x, int y, int w, int h, bool bForceUpdate = false )
 {
 	Assert( !DrawingShadowDepthView() );
 
-	if ( !IsRetail() && !r_updaterefracttexture.GetBool() )
+	if ( !r_updaterefracttexture.GetBool() )
 		return;
 
 	CMatRenderContextPtr pRenderContext( materials );

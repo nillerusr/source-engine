@@ -1,14 +1,11 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
 //=============================================================================//
-#undef strncpy // we use std::string below that needs a good strncpy define
-#undef sprintf // "
+
 #include "cbase.h"
-
 #include "ai_behavior_lead.h"
-
 #include "ai_goalentity.h"
 #include "ai_navigator.h"
 #include "ai_speech.h"
@@ -146,13 +143,11 @@ bool CAI_LeadBehavior::IsNavigationUrgent( void )
 
 void CAI_LeadBehavior::LeadPlayer( const AI_LeadArgs_t &leadArgs, CAI_LeadBehaviorHandler *pSink )
 {
-#ifndef CSTRIKE_DLL
 	CAI_PlayerAlly *pOuter = dynamic_cast<CAI_PlayerAlly*>(GetOuter());
 	if ( pOuter && AI_IsSinglePlayer() )
 	{
 		pOuter->SetSpeechTarget( UTIL_GetLocalPlayer() );
 	}
-#endif
 
 	if( SetGoal( leadArgs ) )
 	{
@@ -256,7 +251,7 @@ bool CAI_LeadBehavior::GetClosestPointOnRoute( const Vector &targetPos, Vector *
 			return true;
 
 		// Build a temp route to the gold and use that
-		builtwaypoints = GetOuter()->GetPathfinder()->BuildRoute( GetOuter()->GetAbsOrigin(), m_goal, NULL, GetOuter()->GetDefaultNavGoalTolerance(), GetOuter()->GetNavType(), true );
+		builtwaypoints = GetOuter()->GetPathfinder()->BuildRoute( GetOuter()->GetAbsOrigin(), m_goal, NULL, GetOuter()->GetDefaultNavGoalTolerance(), GetOuter()->GetNavType(), bits_BUILD_GET_CLOSE );
 		if ( !builtwaypoints )
 			return false;
 
@@ -924,7 +919,7 @@ void CAI_LeadBehavior::RunTask( const Task_t *pTask )
 					if ( distance > m_retrievedistance )
 					{
 						Activity followActivity = ACT_WALK;
-						if ( GetOuter()->GetState() == NPC_STATE_COMBAT || ( (!bWithinZ || distance < (m_retrievedistance*4)) && GetOuter()->GetState() != NPC_STATE_COMBAT ) )
+						if ( GetOuter()->GetState() == NPC_STATE_COMBAT || (!bWithinZ || distance < (m_retrievedistance*4)) && GetOuter()->GetState() != NPC_STATE_COMBAT ) 
 						{
 							followActivity = ACT_RUN;
 						}
@@ -1543,7 +1538,7 @@ void CAI_LeadGoal::InputActivate( inputdata_t &inputdata )
 	AI_LeadArgs_t leadArgs = { 
 		GetGoalEntityName(), 
 		STRING(m_iszWaitPointName), 
-		(unsigned)m_spawnflags, 
+		m_spawnflags, 
 		m_flWaitDistance, 
 		m_flLeadDistance, 
 		m_flRetrieveDistance, 

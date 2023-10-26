@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -35,7 +35,7 @@ public:
 #if defined( CLIENT_DLL )
 	virtual bool ShouldPredict( void )
 	{
-		if ( GetOwner() && GetOwner() == C_BasePlayer::GetLocalPlayer() )
+		if ( C_BasePlayer::IsLocalPlayer( GetOwner() ) )
 			return true;
 
 		return BaseClass::ShouldPredict();
@@ -49,6 +49,7 @@ private:
 	// This is used to lag the angles.
 	CInterpolatedVar<QAngle> m_LagAnglesHistory;
 	QAngle m_vLagAngles;
+	Vector	m_vPredictedOffset;
 
 	CPredictedViewModel( const CPredictedViewModel & ); // not defined, not accessible
 

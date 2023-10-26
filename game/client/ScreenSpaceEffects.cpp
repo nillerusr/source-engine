@@ -1,15 +1,14 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
 #include "cbase.h"
 
-#include "KeyValues.h"
+#include "keyvalues.h"
 #include "cdll_client_int.h"
 #include "view_scene.h"
 #include "viewrender.h"
 #include "tier0/icommandline.h"
-#include "materialsystem/imesh.h"
-#include "materialsystem/imaterial.h"
-#include "materialsystem/imaterialsystemhardwareconfig.h"
-#include "materialsystem/imaterialvar.h"
+#include "materialsystem/IMesh.h"
+#include "materialsystem/IMaterial.h"
+#include "materialsystem/IMaterialSystemHardwareConfig.h"
+#include "materialsystem/IMaterialVar.h"
 
 #include "ScreenSpaceEffects.h"
 

@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -17,7 +17,7 @@
 #include <game/client/iviewport.h>
 
 #include <vgui/KeyCode.h>
-#include <utlvector.h>
+#include <UtlVector.h>
 
 namespace vgui
 {
@@ -25,7 +25,6 @@ namespace vgui
 	class HTML;
 }
 class TeamFortressViewport;
-
 
 //-----------------------------------------------------------------------------
 // Purpose: Displays the team menu
@@ -46,13 +45,15 @@ public:
 	virtual bool NeedsUpdate( void ) { return false; }
 	virtual bool HasInputElements( void ) { return true; }
 	virtual void ShowPanel( bool bShow );
+	virtual bool WantsBackgroundBlurred( void ) { return false; }
 
 	// both vgui::Frame and IViewPortPanel define these, so explicitly define them here as passthroughs to vgui
 	vgui::VPANEL GetVPanel( void ) { return BaseClass::GetVPanel(); }
   	virtual bool IsVisible() { return BaseClass::IsVisible(); }
-	virtual void SetParent( vgui::VPANEL parent ) { BaseClass::SetParent( parent ); }
-
-	virtual GameActionSet_t GetPreferredActionSet() { return GAME_ACTION_SET_IN_GAME_HUD; }
+	virtual void SetParent( vgui::VPANEL parent ) 
+	{ 
+		BaseClass::SetParent( parent );
+	}
 
 public:
 	

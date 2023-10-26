@@ -1,4 +1,4 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -17,7 +17,7 @@
 #include "c_te_legacytempents.h"
 #include "cl_mat_stub.h"
 #include "tier0/vprof.h"
-#include "iclientvehicle.h"
+#include "IClientVehicle.h"
 #include "engine/IEngineTrace.h"
 #include "mathlib/vmatrix.h"
 #include "rendertexture.h"
@@ -28,36 +28,39 @@
 #include "bitmap/tgawriter.h"
 #include "hltvcamera.h"
 #if defined( REPLAY_ENABLED )
-#include "replay/replaycamera.h"
-#include "replay/replay_screenshot.h"
+#include "replaycamera.h"
 #endif
 #include "input.h"
 #include "filesystem.h"
 #include "materialsystem/itexture.h"
-#include "materialsystem/imaterialsystem.h"
-#include "materialsystem/materialsystem_config.h"
-#include "VGuiMatSurface/IMatSystemSurface.h"
 #include "toolframework_client.h"
 #include "tier0/icommandline.h"
-#include "ienginevgui.h"
+#include "IEngineVGui.h"
 #include <vgui_controls/Controls.h>
 #include <vgui/ISurface.h>
 #include "ScreenSpaceEffects.h"
-#include "sourcevr/isourcevirtualreality.h"
-#include "client_virtualreality.h"
+#include "vgui_int.h"
+#include "engine/sndinfo.h"
+#ifdef GAMEUI_UISYSTEM2_ENABLED
+#include "gameui.h"
+#endif
+#ifdef GAMEUI_EMBEDDED
 
-#if defined( REPLAY_ENABLED )
-#include "replay/ireplaysystem.h"
-#include "replay/ienginereplay.h"
+#if defined( SWARM_DLL )
+#include "swarm/gameui/swarm/basemodpanel.h"
+#else
+#error "GAMEUI_EMBEDDED"
+#endif
+#endif
+#ifdef INFESTED_DLL
+#include "c_asw_marine.h"
 #endif
 
-#if defined( HL2_CLIENT_DLL ) || defined( CSTRIKE_DLL )
+#if defined( HL2_CLIENT_DLL ) || defined( INFESTED_DLL )
 #define USE_MONITORS
 #endif
 
-#ifdef PORTAL
-#include "c_prop_portal.h" //portal surface rendering functions
-#endif
+
 
 	
 // memdbgon must be the last include file in a .cpp file!!!
@@ -85,63 +88,47 @@ extern ConVar sensitivity;
 
 ConVar zoom_sensitivity_ratio( "zoom_sensitivity_ratio", "1.0", 0, "Additional mouse sensitivity scale factor applied when FOV is zoomed in." );
 
-CViewRender g_DefaultViewRender;
+// Each MOD implements GetViewRenderInstance() and provides either a default object or a subclassed object!!!
 IViewRender *view = NULL;	// set in cldll_client_init.cpp if no mod creates their own
 
 #if _DEBUG
 bool g_bRenderingCameraView = false;
 #endif
 
-
-// These are the vectors for the "main" view - the one the player is looking down.
-// For stereo views, they are the vectors for the middle eye.
-static Vector g_vecRenderOrigin(0,0,0);
-static QAngle g_vecRenderAngles(0,0,0);
-static Vector g_vecPrevRenderOrigin(0,0,0);	// Last frame's render origin
-static QAngle g_vecPrevRenderAngles(0,0,0); // Last frame's render angles
-static Vector g_vecVForward(0,0,0), g_vecVRight(0,0,0), g_vecVUp(0,0,0);
-static VMatrix g_matCamInverse;
+static Vector g_vecRenderOrigin[ MAX_SPLITSCREEN_PLAYERS ];
+static QAngle g_vecRenderAngles[ MAX_SPLITSCREEN_PLAYERS ];
+static Vector g_vecPrevRenderOrigin[ MAX_SPLITSCREEN_PLAYERS ];	// Last frame's render origin
+static QAngle g_vecPrevRenderAngles[ MAX_SPLITSCREEN_PLAYERS ]; // Last frame's render angles
+static Vector g_vecVForward[ MAX_SPLITSCREEN_PLAYERS ], g_vecVRight[ MAX_SPLITSCREEN_PLAYERS ], g_vecVUp[ MAX_SPLITSCREEN_PLAYERS ];
+static VMatrix g_matCamInverse[ MAX_SPLITSCREEN_PLAYERS ];
 
 extern ConVar cl_forwardspeed;
 
 static ConVar v_centermove( "v_centermove", "0.15");
 static ConVar v_centerspeed( "v_centerspeed","500" );
 
-#ifdef TF_CLIENT_DLL
+
 // 54 degrees approximates a 35mm camera - we determined that this makes the viewmodels
 // and motions look the most natural.
-ConVar v_viewmodel_fov( "viewmodel_fov", "54", FCVAR_ARCHIVE );
-#else
 ConVar v_viewmodel_fov( "viewmodel_fov", "54", FCVAR_CHEAT );
-#endif
-ConVar mat_viewportscale( "mat_viewportscale", "1.0", FCVAR_ARCHIVE, "Scale down the main viewport (to reduce GPU impact on CPU profiling)", true, (1.0f / 640.0f), true, 1.0f );
-ConVar mat_viewportupscale( "mat_viewportupscale", "1", FCVAR_ARCHIVE, "Scale the viewport back up" );
+
+
+static ConVar mat_viewportscale( "mat_viewportscale", "1.0", FCVAR_CHEAT, "Scale down the main viewport (to reduce GPU impact on CPU profiling)",
+								  true, (1.0f / 640.0f), true, 1.0f );
 ConVar cl_leveloverview( "cl_leveloverview", "0", FCVAR_CHEAT );
 
-#ifdef ANDROID
-#define MAPEXTENTS_DEFAULT "12288" // small optimization
-#else
-#define MAPEXTENTS_DEFAULT "16384"
-#endif
-
-static ConVar r_mapextents( "r_mapextents", MAPEXTENTS_DEFAULT, FCVAR_CHEAT,
+ConVar r_mapextents( "r_mapextents", "16384", FCVAR_CHEAT, 
 						   "Set the max dimension for the map.  This determines the far clipping plane" );
 
+static ConVar cl_camera_follow_bone_index( "cl_camera_follow_bone_index"  , "-2", FCVAR_CHEAT, "Index of the bone to follow.  -2 == disabled.  -1 == root bone.  0+ is bone index." );
+Vector g_cameraFollowPos;
+
 // UNDONE: Delete this or move to the material system?
-ConVar	gl_clear( "gl_clear", "0");
+ConVar	gl_clear( "gl_clear","0");
 ConVar	gl_clear_randomcolor( "gl_clear_randomcolor", "0", FCVAR_CHEAT, "Clear the back buffer to random colors every frame. Helps spot open seams in geometry." );
 
 static ConVar r_farz( "r_farz", "-1", FCVAR_CHEAT, "Override the far clipping plane. -1 means to use the value in env_fog_controller." );
 static ConVar cl_demoviewoverride( "cl_demoviewoverride", "0", 0, "Override view during demo playback" );
-
-
-void SoftwareCursorChangedCB( IConVar *pVar, const char *pOldValue, float fOldValue )
-{
-	ConVar *pConVar = (ConVar *)pVar;
-	vgui::surface()->SetSoftwareCursor( pConVar->GetBool() || UseVR() );
-}
-static ConVar cl_software_cursor ( "cl_software_cursor", "0", FCVAR_ARCHIVE, "Switches the game to use a larger software cursor instead of the normal OS cursor", SoftwareCursorChangedCB );
-
 
 static Vector s_DemoView;
 static QAngle s_DemoAngle;
@@ -171,74 +158,69 @@ static void CalcDemoViewOverride( Vector &origin, QAngle &angles )
 }
 
 
-
-// Selects the relevant member variable to update. You could do it manually, but...
-// We always set up the MONO eye, even when doing stereo, and it's set up to be mid-way between the left and right,
-// so if you don't really care about L/R (e.g. culling, sound, etc), just use MONO.
-CViewSetup &CViewRender::GetView(StereoEye_t eEye)
+CViewSetup &CViewRender::GetView(int nSlot /*= -1*/)
 {
-	if ( eEye == STEREO_EYE_MONO )
-    {
-		return m_View;
-    }
-	else if ( eEye == STEREO_EYE_RIGHT )
-    {
-        return m_ViewRight;
-    }
-	else
-    {
-        Assert ( eEye == STEREO_EYE_LEFT );
-		return m_ViewLeft;
-    }
+	Assert( m_bAllowViewAccess );
+	if ( nSlot == -1 )
+	{
+		ASSERT_LOCAL_PLAYER_RESOLVABLE();
+		return m_UserView[ GET_ACTIVE_SPLITSCREEN_SLOT() ];
+	}
+	return m_UserView[ nSlot ];
 }
 
-const CViewSetup &CViewRender::GetView(StereoEye_t eEye) const
+const CViewSetup &CViewRender::GetView(int nSlot /*= -1*/) const
 {
-    return (const_cast<CViewRender*>(this))->GetView ( eEye );
+	Assert( m_bAllowViewAccess );
+	if ( nSlot == -1 )
+	{
+		ASSERT_LOCAL_PLAYER_RESOLVABLE();
+		return m_UserView[ GET_ACTIVE_SPLITSCREEN_SLOT() ];
+	}
+	return m_UserView[ nSlot ];
 }
-
 
 //-----------------------------------------------------------------------------
 // Accessors to return the main view (where the player's looking)
 //-----------------------------------------------------------------------------
-const Vector &MainViewOrigin()
+const Vector &MainViewOrigin( int nSlot )
 {
-	return g_vecRenderOrigin;
+	return g_vecRenderOrigin[ nSlot ];
 }
 
-const QAngle &MainViewAngles()
+const QAngle &MainViewAngles( int nSlot )
 {
-	return g_vecRenderAngles;
+	return g_vecRenderAngles[ nSlot ];
 }
 
-const Vector &MainViewForward()
+const Vector &MainViewForward( int nSlot )
 {
-	return g_vecVForward;
+	return g_vecVForward[ nSlot ];
 }
 
-const Vector &MainViewRight()
+const Vector &MainViewRight( int nSlot )
 {
-	return g_vecVRight;
+	return g_vecVRight[ nSlot ];
 }
 
-const Vector &MainViewUp()
+const Vector &MainViewUp( int nSlot )
 {
-	return g_vecVUp;
+	return g_vecVUp[ nSlot ];
 }
 
-const VMatrix &MainWorldToViewMatrix()
+const VMatrix &MainWorldToViewMatrix( int nSlot )
 {
-	return g_matCamInverse;
+	return g_matCamInverse[ nSlot ];
 }
 
-const Vector &PrevMainViewOrigin()
+const Vector &PrevMainViewOrigin( int nSlot )
 {
-	return g_vecPrevRenderOrigin;
+	return g_vecPrevRenderOrigin[ nSlot ];
 }
 
-const QAngle &PrevMainViewAngles()
+const QAngle &PrevMainViewAngles( int nSlot )
 {
-	return g_vecPrevRenderAngles;
+	return g_vecPrevRenderAngles[ nSlot ];
 }
 
 //-----------------------------------------------------------------------------
@@ -288,10 +270,6 @@ static void StartPitchDrift( void )
 
 static ConCommand centerview( "centerview", StartPitchDrift );
 
-extern ConVar default_fov;
-
-
-
 //-----------------------------------------------------------------------------
 // Purpose: Initializes all view systems
 //-----------------------------------------------------------------------------
@@ -309,23 +287,27 @@ void CViewRender::Init( void )
 
 	m_TranslucentSingleColor.Init( "debug/debugtranslucentsinglecolor", TEXTURE_GROUP_OTHER );
 	m_ModulateSingleColor.Init( "engine/modulatesinglecolor", TEXTURE_GROUP_OTHER );
+	m_WhiteMaterial.Init( "vgui/white", TEXTURE_GROUP_OTHER );
 	
 	extern CMaterialReference g_material_WriteZ;
 	g_material_WriteZ.Init( "engine/writez", TEXTURE_GROUP_OTHER );
 
-	// FIXME:  
-	QAngle angles;
-	engine->GetViewAngles( angles );
-	AngleVectors( angles, &m_vecLastFacing );
+	for ( int i = 0; i < MAX_SPLITSCREEN_PLAYERS ; ++i )
+	{
+		g_vecRenderOrigin[ i ].Init();
+		g_vecRenderAngles[ i ].Init();
+		g_vecPrevRenderOrigin[ i ].Init();
+		g_vecPrevRenderAngles[ i ].Init();
+		g_vecVForward[ i ].Init();
+		g_vecVRight[ i ].Init();
+		g_vecVUp[ i ].Init();
+		g_matCamInverse[ i ].Identity();
+	}
+}
 
-#if defined( REPLAY_ENABLED )
-	m_pReplayScreenshotTaker = NULL;
-#endif
-
-#if defined( CSTRIKE_DLL )
-	m_flLastFOV = default_fov.GetFloat();
-#endif
-
+CMaterialReference &CViewRender::GetWhite()
+{
+	return m_WhiteMaterial;
 }
 
 //-----------------------------------------------------------------------------
@@ -339,17 +321,19 @@ void CViewRender::LevelInit( void )
 	m_BuildWorldListsNumber = 0;
 	m_BuildRenderableListsNumber = 0;
 
-	for( int i=0; i < STEREO_EYE_MAX; i++ )
+	for ( int i = 0 ; i < MAX_SPLITSCREEN_PLAYERS; ++i )
 	{
-		m_rbTakeFreezeFrame[ i ] = false;
+		m_FreezeParams[ i ].m_bTakeFreezeFrame = false;
+		m_FreezeParams[ i ].m_flFreezeFrameUntil = 0;
 	}
-	m_flFreezeFrameUntil = 0;
 
 	// Clear our overlay materials
 	m_ScreenOverlayMaterial.Init( NULL );
 
 	// Init all IScreenSpaceEffects
 	g_pScreenSpaceEffects->InitScreenSpaceEffects( );
+
+	InitFadeData();
 }
 
 //-----------------------------------------------------------------------------
@@ -365,10 +349,11 @@ void CViewRender::LevelShutdown( void )
 //-----------------------------------------------------------------------------
 void CViewRender::Shutdown( void )
 {
-	m_TranslucentSingleColor.Shutdown( );
-	m_ModulateSingleColor.Shutdown( );
-	m_ScreenOverlayMaterial.Shutdown();
-	m_UnderWaterOverlayMaterial.Shutdown();
+
+	m_TranslucentSingleColor.Shutdown();
+	m_ModulateSingleColor.Shutdown();
+	m_WhiteMaterial.Shutdown();
+
 	beams->ShutdownBeams();
 	tempents->Shutdown();
 }
@@ -426,9 +411,9 @@ void CViewRender::DriftPitch (void)
 		return;
 
 #if defined( REPLAY_ENABLED )
-	if ( engine->IsHLTV() || g_pEngineClientReplay->IsPlayingReplayDemo() || ( player->GetGroundEntity() == NULL ) || engine->IsPlayingDemo() )
+	if ( g_bEngineIsHLTV || engine->IsReplay() || ( player->GetGroundEntity() == NULL ) || engine->IsPlayingDemo() )
 #else
-	if ( engine->IsHLTV() || ( player->GetGroundEntity() == NULL ) || engine->IsPlayingDemo() )
+	if ( g_bEngineIsHLTV || ( player->GetGroundEntity() == NULL ) || engine->IsPlayingDemo() )
 #endif
 	{
 		m_PitchDrift.driftmove = 0;
@@ -456,7 +441,7 @@ void CViewRender::DriftPitch (void)
 	}
 	
 	// How far off are we
-	delta = prediction->GetIdealPitch() - player->GetAbsAngles()[ PITCH ];
+	delta = prediction->GetIdealPitch( player->GetSplitScreenPlayerSlot() ) - player->GetAbsAngles()[ PITCH ];
 	if ( !delta )
 	{
 		m_PitchDrift.pitchvel = 0;
@@ -489,84 +474,81 @@ void CViewRender::DriftPitch (void)
 	}
 }
 
-
-
-StereoEye_t		CViewRender::GetFirstEye() const
-{
-	if( UseVR() )
-		return STEREO_EYE_LEFT;
-	else
-		return STEREO_EYE_MONO;
-}
-
-StereoEye_t		CViewRender::GetLastEye() const
-{
-	if( UseVR() )
-		return STEREO_EYE_RIGHT;
-	else
-		return STEREO_EYE_MONO;
-}
-
-
-
-
 // This is called by cdll_client_int to setup view model origins. This has to be done before
 // simulation so entities can access attachment points on view models during simulation.
 void CViewRender::OnRenderStart()
 {
 	VPROF_("CViewRender::OnRenderStart", 2, VPROF_BUDGETGROUP_OTHER_UNACCOUNTED, false, 0);
-
-    SetUpViews();
-
-	// Adjust mouse sensitivity based upon the current FOV
-	C_BasePlayer *player = C_BasePlayer::GetLocalPlayer();
-	if ( player )
+	IterateRemoteSplitScreenViewSlots_Push( true );
+	FOR_EACH_VALID_SPLITSCREEN_PLAYER( hh )
 	{
-		default_fov.SetValue( player->m_iDefaultFOV );
+		ACTIVE_SPLITSCREEN_PLAYER_GUARD_VGUI( hh );
 
-		//Update our FOV, including any zooms going on
-		int iDefaultFOV = default_fov.GetInt();
-		int	localFOV	= player->GetFOV();
-		int min_fov		= player->GetMinFOV();
+		// This will fill in one of the m_UserView[ hh ] slots
+		SetUpView();
 
-		// Don't let it go too low
-		localFOV = MAX( min_fov, localFOV );
-
-		gHUD.m_flFOVSensitivityAdjust = 1.0f;
-#ifndef _XBOX
-		if ( gHUD.m_flMouseSensitivityFactor )
+		// Adjust mouse sensitivity based upon the current FOV
+		C_BasePlayer *player = C_BasePlayer::GetLocalPlayer();
+		if ( player )
 		{
-			gHUD.m_flMouseSensitivity = sensitivity.GetFloat() * gHUD.m_flMouseSensitivityFactor;
-		}
-		else
-#endif
-		{
-			// No override, don't use huge sensitivity
-			if ( localFOV == iDefaultFOV )
+			default_fov.SetValue( player->m_iDefaultFOV );
+
+			//Update our FOV, including any zooms going on
+			int iDefaultFOV = default_fov.GetInt();
+			int	localFOV	= player->GetFOV();
+			int min_fov		= player->GetMinFOV();
+
+			// Don't let it go too low
+			localFOV = MAX( min_fov, localFOV );
+
+			GetHud().m_flFOVSensitivityAdjust = 1.0f;
+	#ifndef _XBOX
+			if ( GetHud().m_flMouseSensitivityFactor )
 			{
-#ifndef _XBOX
-				// reset to saved sensitivity
-				gHUD.m_flMouseSensitivity = 0;
-#endif
+				GetHud().m_flMouseSensitivity = sensitivity.GetFloat() * GetHud().m_flMouseSensitivityFactor;
 			}
 			else
-			{  
-				// Set a new sensitivity that is proportional to the change from the FOV default and scaled
-				//  by a separate compensating factor
-				if ( iDefaultFOV == 0 )
+	#endif
+			{
+				// No override, don't use huge sensitivity
+				if ( localFOV == iDefaultFOV )
 				{
-					Assert(0); // would divide by zero, something is broken with iDefatulFOV
-					iDefaultFOV = 1;
+	#ifndef _XBOX
+					// reset to saved sensitivity
+					GetHud().m_flMouseSensitivity = 0;
+	#endif
 				}
-				gHUD.m_flFOVSensitivityAdjust = 
-					((float)localFOV / (float)iDefaultFOV) * // linear fov downscale
-					zoom_sensitivity_ratio.GetFloat(); // sensitivity scale factor
-#ifndef _XBOX
-				gHUD.m_flMouseSensitivity = gHUD.m_flFOVSensitivityAdjust * sensitivity.GetFloat(); // regular sensitivity
-#endif
+				else
+				{  
+					// Set a new sensitivity that is proportional to the change from the FOV default and scaled
+					//  by a separate compensating factor
+					if ( iDefaultFOV == 0 )
+					{
+						Assert(0); // would divide by zero, something is broken with iDefatulFOV
+						iDefaultFOV = 1;
+					}
+					GetHud().m_flFOVSensitivityAdjust = 
+						((float)localFOV / (float)iDefaultFOV) * // linear fov downscale
+						zoom_sensitivity_ratio.GetFloat(); // sensitivity scale factor
+	#ifndef _XBOX
+					GetHud().m_flMouseSensitivity = GetHud().m_flFOVSensitivityAdjust * sensitivity.GetFloat(); // regular sensitivity
+	#endif
+				}
 			}
 		}
 	}
+
+	// Setup the frustum cache for this frame.
+	m_bAllowViewAccess = true;
+	FOR_EACH_VALID_SPLITSCREEN_PLAYER( iSlot )
+	{
+		const CViewSetup &view = GetView( iSlot );
+		FrustumCache()->Add( &view, iSlot );
+	}
+	FrustumCache()->SetUpdated();
+	m_bAllowViewAccess = false;
+
+	IterateRemoteSplitScreenViewSlots_Pop();
 }
 
 
@@ -579,15 +561,19 @@ const CViewSetup *CViewRender::GetViewSetup( void ) const
 	return &m_CurrentView;
 }
 
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Output : const CViewSetup
 //-----------------------------------------------------------------------------
-const CViewSetup *CViewRender::GetPlayerViewSetup( void ) const
+const CViewSetup *CViewRender::GetPlayerViewSetup( int nSlot /*= -1*/ ) const
 {   
-    const CViewSetup &view = GetView ( STEREO_EYE_MONO );
-    return &view;
+	// NOTE:  This code path doesn't require m_bAllowViewAccess == true!!!
+	if ( nSlot == -1 )
+	{
+		ASSERT_LOCAL_PLAYER_RESOLVABLE();
+		return &m_UserView[ GET_ACTIVE_SPLITSCREEN_SLOT() ];
+	}
+	return &m_UserView[ nSlot ];
 }
 
 //-----------------------------------------------------------------------------
@@ -599,8 +585,8 @@ void CViewRender::DisableVis( void )
 }
 
 #ifdef DBGFLAG_ASSERT
-static Vector s_DbgSetupOrigin;
-static QAngle s_DbgSetupAngles;
+static Vector s_DbgSetupOrigin[ MAX_SPLITSCREEN_PLAYERS ];
+static QAngle s_DbgSetupAngles[ MAX_SPLITSCREEN_PLAYERS ];
 #endif
 
 //-----------------------------------------------------------------------------
@@ -637,49 +623,50 @@ float CViewRender::GetZFar()
 	return farZ;
 }
 
-
+	
 //-----------------------------------------------------------------------------
 // Sets up the view parameters
 //-----------------------------------------------------------------------------
-void CViewRender::SetUpViews()
+void CViewRender::SetUpView()
 {
-	VPROF("CViewRender::SetUpViews");
+	ASSERT_LOCAL_PLAYER_RESOLVABLE();
+	int nSlot = GET_ACTIVE_SPLITSCREEN_SLOT();
 
+	m_bAllowViewAccess = true;
+	VPROF("CViewRender::SetUpView");
 	// Initialize view structure with default values
 	float farZ = GetZFar();
 
-	// Set up the mono/middle view.
-	CViewSetup &view = m_View;
+	CViewSetup &view = GetView();
 
-	view.zFar			= farZ;
-	view.zFarViewmodel		= farZ;
-
-	// UNDONE: Make this farther out?
+	view.zFar				= farZ;
+	view.zFarViewmodel	= farZ;
+	// UNDONE: Make this farther out? 
 	//  closest point of approach seems to be view center to top of crouched box
-	view.zNear		= GetZNear();
+	view.zNear			= GetZNear();
 	view.zNearViewmodel	= 1;
-	view.fov		= default_fov.GetFloat();
+	view.fov				= default_fov.GetFloat();
 
 	view.m_bOrtho			= false;
-    view.m_bViewToProjectionOverride = false;
-	view.m_eStereoEye		= STEREO_EYE_MONO;
 
 	// Enable spatial partition access to edicts
 	partition->SuppressLists( PARTITION_ALL_CLIENT_EDICTS, false );
 
 	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
 
-	// You in-view weapon aim.
-	bool bCalcViewModelView = false;
-	Vector ViewModelOrigin;
-	QAngle ViewModelAngles;
+	bool bNoViewEnt = false;
+	if( pPlayer == NULL )
+	{
+		pPlayer = GetSplitScreenViewPlayer( nSlot );
+		bNoViewEnt = true;
+	}
 
-	if ( engine->IsHLTV() )
+	if ( g_bEngineIsHLTV )
 	{
 		HLTVCamera()->CalcView( view.origin, view.angles, view.fov );
 	}
 #if defined( REPLAY_ENABLED )
-	else if ( g_pEngineClientReplay->IsPlayingReplayDemo() )
+	else if ( engine->IsReplay() )
 	{
 		ReplayCamera()->CalcView( view.origin, view.angles, view.fov );
 	}
@@ -692,10 +679,10 @@ void CViewRender::SetUpViews()
 		{
 			pPlayer->CalcView( view.origin, view.angles, view.zNear, view.zFar, view.fov );
 
-			// If we are looking through another entities eyes, then override the angles/origin for view
+			// If we are looking through another entities eyes, then override the angles/origin for GetView()
 			int viewentity = render->GetViewEntity();
 
-			if ( !g_nKillCamMode && (pPlayer->entindex() != viewentity) )
+			if ( !bNoViewEnt && !g_nKillCamMode && (pPlayer->entindex() != viewentity) )
 			{
 				C_BaseEntity *ve = cl_entitylist->GetEnt( viewentity );
 				if ( ve )
@@ -705,20 +692,18 @@ void CViewRender::SetUpViews()
 				}
 			}
 
-			// There is a viewmodel.
-			bCalcViewModelView = true;
-			ViewModelOrigin = view.origin;
-			ViewModelAngles = view.angles;
-		}
-		else
-		{
-			view.origin.Init();
-			view.angles.Init();
+			pPlayer->CalcViewModelView( view.origin, view.angles );
+
+			// Is this the proper place for this code?
+			if ( cl_camera_follow_bone_index.GetInt() >= -1 && input->CAM_IsThirdPerson() )
+			{
+				VectorCopy( g_cameraFollowPos, view.origin );
+			}
 		}
 
 		// Even if the engine is paused need to override the view
 		// for keeping the camera control during pause.
-		g_pClientMode->OverrideView( &view );
+		GetClientMode()->OverrideView( &GetView() );
 	}
 
 	// give the toolsystem a chance to override the view
@@ -738,63 +723,18 @@ void CViewRender::SetUpViews()
 		}
 	}
 
-	//Find the offset our current FOV is from the default value
-	float fDefaultFov = default_fov.GetFloat();
-	float flFOVOffset = fDefaultFov - view.fov;
-
-	//Adjust the viewmodel's FOV to move with any FOV offsets on the viewer's end
-	view.fovViewmodel = fabs( g_pClientMode->GetViewModelFOV() - flFOVOffset );
-
-	if ( UseVR() )
-	{
-		// Let the headtracking read the status of the HMD, etc.
-		// This call can go almost anywhere, but it needs to know the player FOV for sniper weapon zoom, etc
-		if ( flFOVOffset == 0.0f )
-		{
-			g_ClientVirtualReality.ProcessCurrentTrackingState ( 0.0f );
-		}
-		else
-		{
-			g_ClientVirtualReality.ProcessCurrentTrackingState ( view.fov );
-		}
-
-		HeadtrackMovementMode_t hmmOverrideMode = g_pClientMode->ShouldOverrideHeadtrackControl();
-		g_ClientVirtualReality.OverrideView( &m_View, &ViewModelOrigin, &ViewModelAngles, hmmOverrideMode );
-
-		// left and right stereo views should default to being the same as the mono/middle view
-		m_ViewLeft = m_View;
-		m_ViewRight = m_View;
-		m_ViewLeft.m_eStereoEye = STEREO_EYE_LEFT;
-		m_ViewRight.m_eStereoEye = STEREO_EYE_RIGHT;
-
-		g_ClientVirtualReality.OverrideStereoView( &m_View, &m_ViewLeft, &m_ViewRight );
-	}
-	else
-	{
-		// left and right stereo views should default to being the same as the mono/middle view
-		m_ViewLeft = m_View;
-		m_ViewRight = m_View;
-		m_ViewLeft.m_eStereoEye = STEREO_EYE_LEFT;
-		m_ViewRight.m_eStereoEye = STEREO_EYE_RIGHT;
-	}
-
-	if ( bCalcViewModelView )
-	{
-		Assert ( pPlayer != NULL );
-		pPlayer->CalcViewModelView ( ViewModelOrigin, ViewModelAngles );
-	}
-
 	// Disable spatial partition access
 	partition->SuppressLists( PARTITION_ALL_CLIENT_EDICTS, true );
 
-	// Enable access to all model bones
-	C_BaseAnimating::PopBoneAccess( "OnRenderStart->CViewRender::SetUpView" ); // pops the (true, false) bone access set in OnRenderStart
-	C_BaseAnimating::PushAllowBoneAccess( true, true, "CViewRender::SetUpView->OnRenderEnd" ); // pop is in OnRenderEnd()
+	//Find the offset our current FOV is from the default value
+	float flFOVOffset = default_fov.GetFloat() - view.fov;
+
+	//Adjust the viewmodel's FOV to move with any FOV offsets on the viewer's end
+	view.fovViewmodel = GetClientMode()->GetViewModelFOV() - flFOVOffset;
 
 	// Compute the world->main camera transform
-    // This is only done for the main "middle-eye" view, not for the various other views.
 	ComputeCameraVariables( view.origin, view.angles, 
-		&g_vecVForward, &g_vecVRight, &g_vecVUp, &g_matCamInverse );
+		&g_vecVForward[ nSlot ], &g_vecVRight[ nSlot ], &g_vecVUp[ nSlot ], &g_matCamInverse[ nSlot ] );
 
 	// set up the hearing origin...
 	AudioState_t audioState;
@@ -804,32 +744,27 @@ void CViewRender::SetUpViews()
 
 	ToolFramework_SetupAudioState( audioState );
 
-    // TomF: I wonder when the audio tools modify this, if ever...
-    Assert ( view.origin == audioState.m_Origin );
-    Assert ( view.angles == audioState.m_Angles );
 	view.origin = audioState.m_Origin;
 	view.angles = audioState.m_Angles;
 
+	GetClientMode()->OverrideAudioState( &audioState );
 	engine->SetAudioState( audioState );
 
-	g_vecPrevRenderOrigin = g_vecRenderOrigin;
-	g_vecPrevRenderAngles = g_vecRenderAngles;
-	g_vecRenderOrigin = view.origin;
-	g_vecRenderAngles = view.angles;
+	g_vecPrevRenderOrigin[ nSlot ] = g_vecRenderOrigin[ nSlot ];
+	g_vecPrevRenderAngles[ nSlot ] = g_vecRenderAngles[ nSlot ];
+	g_vecRenderOrigin[ nSlot ] = view.origin;
+	g_vecRenderAngles[ nSlot ] = view.angles;
 
 #ifdef DBGFLAG_ASSERT
-	s_DbgSetupOrigin = view.origin;
-	s_DbgSetupAngles = view.angles;
+	s_DbgSetupOrigin[ nSlot ] = view.origin;
+	s_DbgSetupAngles[ nSlot ] = view.angles;
 #endif
+
+	m_bAllowViewAccess = false;
 }
 
-
-
-
-void CViewRender::WriteSaveGameScreenshotOfSize( const char *pFilename, int width, int height, bool bCreatePowerOf2Padded/*=false*/,
-												 bool bWriteVTF/*=false*/ )
+void CViewRender::WriteSaveGameScreenshotOfSize( const char *pFilename, int width, int height )
 {
-#ifndef _X360
 	CMatRenderContextPtr pRenderContext( materials );
 	pRenderContext->MatrixMode( MATERIAL_PROJECTION );
 	pRenderContext->PushMatrix();
@@ -838,119 +773,42 @@ void CViewRender::WriteSaveGameScreenshotOfSize( const char *pFilename, int widt
 	pRenderContext->PushMatrix();
 
 	g_bRenderingScreenshot = true;
+	m_bAllowViewAccess = true;
 
 	// Push back buffer on the stack with small viewport
 	pRenderContext->PushRenderTargetAndViewport( NULL, 0, 0, width, height );
 
 	// render out to the backbuffer
-    CViewSetup viewSetup = GetView ( STEREO_EYE_MONO );
+	CViewSetup viewSetup = GetView();
 	viewSetup.x = 0;
 	viewSetup.y = 0;
 	viewSetup.width = width;
 	viewSetup.height = height;
-	viewSetup.fov = ScaleFOVByWidthRatio( viewSetup.fov, ( (float)width / (float)height ) / ( 4.0f / 3.0f ) );
+	viewSetup.fov = ScaleFOVByWidthRatio( GetView().fov, ( (float)width / (float)height ) / ( 4.0f / 3.0f ) );
 	viewSetup.m_bRenderToSubrectOfLargerScreen = true;
 
 	// draw out the scene
 	// Don't draw the HUD or the viewmodel
-	RenderView( viewSetup, VIEW_CLEAR_DEPTH | VIEW_CLEAR_COLOR, 0 );
+	RenderView( viewSetup, viewSetup, VIEW_CLEAR_DEPTH | VIEW_CLEAR_COLOR, 0 );
 
 	// get the data from the backbuffer and save to disk
 	// bitmap bits
-	unsigned char *pImage = ( unsigned char * )malloc( width * height * 3 );
+	unsigned char *pImage = ( unsigned char * )malloc( width * 3 * height );
 
 	// Get Bits from the material system
 	pRenderContext->ReadPixels( 0, 0, width, height, pImage, IMAGE_FORMAT_RGB888 );
 
-	// Some stuff to be setup dependent on padded vs. not padded
-	int nSrcWidth, nSrcHeight;
-	unsigned char *pSrcImage;
-
-	// Create a padded version if necessary
-	unsigned char *pPaddedImage = NULL;
-	if ( bCreatePowerOf2Padded )
-	{
-		// Setup dimensions as needed
-		int nPaddedWidth = SmallestPowerOfTwoGreaterOrEqual( width );
-		int nPaddedHeight = SmallestPowerOfTwoGreaterOrEqual( height );
-
-		// Allocate
-		int nPaddedImageSize = nPaddedWidth * nPaddedHeight * 3;
-		pPaddedImage = ( unsigned char * )malloc( nPaddedImageSize );
-		
-		// Zero out the entire thing
-		V_memset( pPaddedImage, 255, nPaddedImageSize );
-
-		// Copy over each row individually
-		for ( int nRow = 0; nRow < height; ++nRow )
-		{
-			unsigned char *pDst = pPaddedImage + 3 * ( nRow * nPaddedWidth );
-			const unsigned char *pSrc = pImage + 3 * ( nRow * width );
-			V_memcpy( pDst, pSrc, 3 * width );
-		}
-
-		// Setup source data
-		nSrcWidth = nPaddedWidth;
-		nSrcHeight = nPaddedHeight;
-		pSrcImage = pPaddedImage;
-	}
-	else
-	{
-		// Use non-padded info
-		nSrcWidth = width;
-		nSrcHeight = height;
-		pSrcImage = pImage;
-	}
-
 	// allocate a buffer to write the tga into
-	CUtlBuffer buffer;
+	int iMaxTGASize = 1024 + (width * height * 4);
+	void *pTGA = malloc( iMaxTGASize );
+	CUtlBuffer buffer( pTGA, iMaxTGASize );
 
-	bool bWriteResult;
-	if ( bWriteVTF )
-	{
-		// Create and initialize a VTF texture
-		IVTFTexture *pVTFTexture = CreateVTFTexture();
-		const int nFlags = TEXTUREFLAGS_NOMIP | TEXTUREFLAGS_NOLOD | TEXTUREFLAGS_SRGB;
-		if ( pVTFTexture->Init( nSrcWidth, nSrcHeight, 1, IMAGE_FORMAT_RGB888, nFlags, 1, 1 ) )
-		{
-			// Copy the image data over to the VTF
-			unsigned char *pDestBits = pVTFTexture->ImageData();
-			int nDstSize = nSrcWidth * nSrcHeight * 3;
-			V_memcpy( pDestBits, pSrcImage, nDstSize );
-
-			// Allocate output buffer
-			int iMaxVTFSize = 1024 + ( nSrcWidth * nSrcHeight * 3 );
-			void *pVTF = malloc( iMaxVTFSize );
-			buffer.SetExternalBuffer( pVTF, iMaxVTFSize, 0 );
-
-			// Serialize to the buffer
-			bWriteResult = pVTFTexture->Serialize( buffer );
-		
-			// Free the VTF texture
-			DestroyVTFTexture( pVTFTexture );
-		}
-		else
-		{
-			bWriteResult = false;
-		}
-	}
-	else
-	{
-		// Write TGA format to buffer
-		int iMaxTGASize = 1024 + ( nSrcWidth * nSrcHeight * 4 );
-		void *pTGA = new char[ iMaxTGASize ];
-		buffer.SetExternalBuffer( pTGA, iMaxTGASize, 0 );
-
-		bWriteResult = TGAWriter::WriteToBuffer( pSrcImage, buffer, nSrcWidth, nSrcHeight, IMAGE_FORMAT_RGB888, IMAGE_FORMAT_RGB888 );
-	}
-
-	if ( !bWriteResult )
+	if( !TGAWriter::WriteToBuffer( pImage, buffer, width, height, IMAGE_FORMAT_RGB888, IMAGE_FORMAT_RGB888 ) )
 	{
 		Error( "Couldn't write bitmap data snapshot.\n" );
 	}
 	
 	free( pImage );
-	free( pPaddedImage );
 
 	// async write to disk (this will take ownership of the memory)
 	char szPathedFileName[_MAX_PATH];
@@ -968,31 +826,7 @@ void CViewRender::WriteSaveGameScreenshotOfSize( const char *pFilename, int widt
 	pRenderContext->PopMatrix();
 
 	g_bRenderingScreenshot = false;
-#endif
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: takes a screenshot for the replay system
-//-----------------------------------------------------------------------------
-void CViewRender::WriteReplayScreenshot( WriteReplayScreenshotParams_t &params )
-{
-#if defined( REPLAY_ENABLED )
-	if ( !m_pReplayScreenshotTaker )
-		return;
-
-	m_pReplayScreenshotTaker->TakeScreenshot( params );
-#endif
-}
-
-void CViewRender::UpdateReplayScreenshotCache()
-{
-#if defined( REPLAY_ENABLED )
-	// Delete the old one
-	delete m_pReplayScreenshotTaker;
-
-	// Create a new one
-	m_pReplayScreenshotTaker = new CReplayScreenshotTaker( this, GetView ( STEREO_EYE_MONO ) );
-#endif
+	m_bAllowViewAccess = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -1021,31 +855,29 @@ void CViewRender::SetUpOverView()
 {
 	static int oldCRC = 0;
 
-    CViewSetup &view = GetView ( STEREO_EYE_MONO );
+	GetView().m_bOrtho = true;
 
-	view.m_bOrtho = true;
-
-	float aspect = (float)view.width/(float)view.height;
+	float aspect = (float)GetView().width/(float)GetView().height;
 
 	int size_y = 1024.0f * cl_leveloverview.GetFloat(); // scale factor, 1024 = OVERVIEW_MAP_SIZE
 	int	size_x = size_y * aspect;	// standard screen aspect 
 
-	view.origin.x -= size_x / 2;
-	view.origin.y += size_y / 2;
+	GetView().origin.x -= size_x / 2;
+	GetView().origin.y += size_y / 2;
 
-	view.m_OrthoLeft   = 0;
-	view.m_OrthoTop    = -size_y;
-	view.m_OrthoRight  = size_x;
-	view.m_OrthoBottom = 0;
+	GetView().m_OrthoLeft   = 0;
+	GetView().m_OrthoTop    = -size_y;
+	GetView().m_OrthoRight  = size_x;
+	GetView().m_OrthoBottom = 0;
 
-	view.angles = QAngle( 90, 90, 0 );
+	GetView().angles = QAngle( 90, 90, 0 );
 
 	// simple movement detector, show position if moved
-	int newCRC = view.origin.x + view.origin.y + view.origin.z;
+	int newCRC = GetView().origin.x + GetView().origin.y + GetView().origin.z;
 	if ( newCRC != oldCRC )
 	{
 		Msg( "Overview: scale %.2f, pos_x %.0f, pos_y %.0f\n", cl_leveloverview.GetFloat(),
-			view.origin.x, view.origin.y );
+			GetView().origin.x, GetView().origin.y );
 		oldCRC = newCRC;
 	}
 
@@ -1057,238 +889,123 @@ void CViewRender::SetUpOverView()
 
 //-----------------------------------------------------------------------------
 // Purpose: Render current view into specified rectangle
-// Input  : *rect - is computed by CVideoMode_Common::GetClientViewRect()
+// Input  : *rect - 
 //-----------------------------------------------------------------------------
+ConVar ss_debug_draw_player( "ss_debug_draw_player", "-1", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 void CViewRender::Render( vrect_t *rect )
 {
-	Assert(s_DbgSetupOrigin == m_View.origin);
-	Assert(s_DbgSetupAngles == m_View.angles);
-
 	VPROF_BUDGET( "CViewRender::Render", "CViewRender::Render" );
-	tmZone( TELEMETRY_LEVEL0, TMZF_NONE, "%s", __FUNCTION__ );
 
-	vrect_t vr = *rect;
+	m_bAllowViewAccess = true;
+
+	CUtlVector< vgui::Panel * > roots;
+	VGui_GetPanelList( roots );
 
 	// Stub out the material system if necessary.
 	CMatStubHandler matStub;
-
 	engine->EngineStats_BeginFrame();
-	
+
 	// Assume normal vis
 	m_bForceNoVis			= false;
-	
-	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
 
+	float flViewportScale = mat_viewportscale.GetFloat();
 
-    // Set for console commands, etc.
-    render->SetMainView ( m_View.origin, m_View.angles );
+	vrect_t engineRect = *rect;
 
-    for( StereoEye_t eEye = GetFirstEye(); eEye <= GetLastEye(); eEye = (StereoEye_t)(eEye+1) )
+	// The tool framework wants to adjust the entire 3d viewport, not the per-split screen one from below
+	ToolFramework_AdjustEngineViewport( engineRect.x, engineRect.y, engineRect.width, engineRect.height );
+
+	IterateRemoteSplitScreenViewSlots_Push( true );
+	FOR_EACH_VALID_SPLITSCREEN_PLAYER( hh )
 	{
-		CViewSetup &view = GetView( eEye );
+		ACTIVE_SPLITSCREEN_PLAYER_GUARD_VGUI( hh );
 
-		#if 0 && defined( CSTRIKE_DLL )
-			const bool bPlayingBackReplay = g_pEngineClientReplay && g_pEngineClientReplay->IsPlayingReplayDemo();
-			if ( pPlayer && !bPlayingBackReplay )
-			{
-				C_BasePlayer *pViewTarget = pPlayer;
+		CViewSetup &view = GetView( hh );
 
-				if ( pPlayer->IsObserver() && pPlayer->GetObserverMode() == OBS_MODE_IN_EYE )
-				{
-					pViewTarget = dynamic_cast<C_BasePlayer*>( pPlayer->GetObserverTarget() );
-				}
+		float engineAspectRatio = engine->GetScreenAspectRatio( view.width, view.height );
 
-				if ( pViewTarget )
-				{
-					float targetFOV = (float)pViewTarget->m_iFOV;
+		Assert( s_DbgSetupOrigin[ hh ] == view.origin );
+		Assert( s_DbgSetupAngles[ hh ] == view.angles );
 
-					if ( targetFOV == 0 )
-					{
-						// FOV of 0 means use the default FOV
-						targetFOV = g_pGameRules->DefaultFOV();
-					}
+		// Using this API gives us a chance to "inset" the 3d views as needed for splitscreen
+		int insetX, insetY;
+		VGui_GetEngineRenderBounds( hh, view.x, view.y, view.width, view.height, insetX, insetY );
+			
+		float aspectRatio = engineAspectRatio * 0.75f;	 // / (4/3)
+		view.fov = ScaleFOVByWidthRatio( view.fov,  aspectRatio );
+		view.fovViewmodel = ScaleFOVByWidthRatio( view.fovViewmodel, aspectRatio );
 
-					float deltaFOV = view.fov - m_flLastFOV;
-					float FOVDirection = targetFOV - pViewTarget->m_iFOVStart;
+		// Let the client mode hook stuff.
+		GetClientMode()->PreRender( &view );
+		GetClientMode()->AdjustEngineViewport( view.x, view.y, view.width, view.height );
 
-					// Clamp FOV changes to stop FOV oscillation
-					if ( ( deltaFOV < 0.0f && FOVDirection > 0.0f ) ||
-						( deltaFOV > 0.0f && FOVDirection < 0.0f ) )
-					{
-						view.fov = m_flLastFOV;
-					}
-
-					// Catch case where FOV overshoots its target FOV
-					if ( ( view.fov < targetFOV && FOVDirection <= 0.0f ) ||
-						( view.fov > targetFOV && FOVDirection >= 0.0f ) )
-					{
-						view.fov = targetFOV;
-					}
-
-					m_flLastFOV = view.fov;
-				}
-			}
-		#endif
-
-	    static ConVarRef sv_restrict_aspect_ratio_fov( "sv_restrict_aspect_ratio_fov" );
-	    float aspectRatio = engine->GetScreenAspectRatio() * 0.75f;	 // / (4/3)
-	    float limitedAspectRatio = aspectRatio;
-	    if ( ( sv_restrict_aspect_ratio_fov.GetInt() > 0 && engine->IsWindowedMode() && gpGlobals->maxClients > 1 ) ||
-		    sv_restrict_aspect_ratio_fov.GetInt() == 2 )
-	    {
-		    limitedAspectRatio = MIN( aspectRatio, 1.85f * 0.75f ); // cap out the FOV advantage at a 1.85:1 ratio (about the widest any legit user should be)
-	    }
-
-	    view.fov = ScaleFOVByWidthRatio( view.fov, limitedAspectRatio );
-	    view.fovViewmodel = ScaleFOVByWidthRatio( view.fovViewmodel, aspectRatio );
-
-	    // Let the client mode hook stuff.
-	    g_pClientMode->PreRender(&view);
-
-	    g_pClientMode->AdjustEngineViewport( vr.x, vr.y, vr.width, vr.height );
-
-	    ToolFramework_AdjustEngineViewport( vr.x, vr.y, vr.width, vr.height );
-
-	    float flViewportScale = mat_viewportscale.GetFloat();
-
-		view.m_nUnscaledX = vr.x;
-		view.m_nUnscaledY = vr.y;
-		view.m_nUnscaledWidth = vr.width;
-		view.m_nUnscaledHeight = vr.height;
-
-        switch( eEye )
+		view.width *= flViewportScale;
+		view.height *= flViewportScale;
+		if ( IsX360() )
 		{
-			case STEREO_EYE_MONO:
-			{
-#if 0
-                // Good test mode for debugging viewports that are not full-size.
-	            view.width			= vr.width * flViewportScale * 0.75f;
-	            view.height			= vr.height * flViewportScale * 0.75f;
-	            view.x				= vr.x + view.width * 0.10f;
-	            view.y				= vr.y + view.height * 0.20f;
-#else
-	            view.x				= vr.x * flViewportScale;
-				view.y				= vr.y * flViewportScale;
-				view.width			= vr.width * flViewportScale;
-				view.height			= vr.height * flViewportScale;
-#endif
-			    float engineAspectRatio = engine->GetScreenAspectRatio();
-			    view.m_flAspectRatio	= ( engineAspectRatio > 0.0f ) ? engineAspectRatio : ( (float)view.width / (float)view.height );
-			}
-			break;
-
-			case STEREO_EYE_RIGHT:
-			case STEREO_EYE_LEFT:
-			{
-				g_pSourceVR->GetViewportBounds( (ISourceVirtualReality::VREye)(eEye - 1 ), &view.x, &view.y, &view.width, &view.height );
-				view.m_nUnscaledWidth = view.width;
-				view.m_nUnscaledHeight = view.height;
-				view.m_nUnscaledX = view.x;
-				view.m_nUnscaledY = view.y;
-			}
-			break;
-
-            default:
-                Assert ( false );
-                break;
+			// view must be compliant to resolve restrictions
+			view.width = AlignValue( view.width, GPU_RESOLVE_ALIGNMENT );
+			view.height = AlignValue( view.height, GPU_RESOLVE_ALIGNMENT );
 		}
 
-		// if we still don't have an aspect ratio, compute it from the view size
-		if( view.m_flAspectRatio <= 0.f )
-		    view.m_flAspectRatio	= (float)view.width / (float)view.height;
+		view.m_flAspectRatio = ( engineAspectRatio > 0.0f ) ? engineAspectRatio : ( (float)view.width / (float)view.height );
 
-	    int nClearFlags = VIEW_CLEAR_DEPTH | VIEW_CLEAR_STENCIL;
+		int nClearFlags = VIEW_CLEAR_DEPTH | VIEW_CLEAR_STENCIL;
 
-	    if( gl_clear_randomcolor.GetBool() )
-	    {
-		    CMatRenderContextPtr pRenderContext( materials );
-		    pRenderContext->ClearColor3ub( rand()%256, rand()%256, rand()%256 );
-		    pRenderContext->ClearBuffers( true, false, false );
-		    pRenderContext->Release();
-	    }
-	    else if ( gl_clear.GetBool() )
-	    {
-		    nClearFlags |= VIEW_CLEAR_COLOR;
-	    }
-	    else if ( IsPosix() )
-	    {
-		    MaterialAdapterInfo_t adapterInfo;
-		    materials->GetDisplayAdapterInfo( materials->GetCurrentAdapter(), adapterInfo );
-
-		    // On Posix, on ATI, we always clear color if we're antialiasing
-		    if ( adapterInfo.m_VendorID == 0x1002 )
-		    {
-			    if ( g_pMaterialSystem->GetCurrentConfigForVideoCard().m_nAASamples > 0 )
-			    {
-				    nClearFlags |= VIEW_CLEAR_COLOR;
-			    }
-		    }
-	    }
-
-	    // Determine if we should draw view model ( client mode override )
-	    bool drawViewModel = g_pClientMode->ShouldDrawViewModel();
-
-	    if ( cl_leveloverview.GetFloat() > 0 )
-	    {
-		    SetUpOverView();		
-		    nClearFlags |= VIEW_CLEAR_COLOR;
-		    drawViewModel = false;
-	    }
-
-	    // Apply any player specific overrides
-	    if ( pPlayer )
-	    {
-		    // Override view model if necessary
-		    if ( !pPlayer->m_Local.m_bDrawViewmodel )
-		    {
-			    drawViewModel = false;
-		    }
-	    }
-
-	    int flags = 0;
-		if( eEye == STEREO_EYE_MONO || eEye == STEREO_EYE_LEFT || ( g_ClientVirtualReality.ShouldRenderHUDInWorld() ) )
+		if ( gl_clear_randomcolor.GetBool() )
 		{
-			flags = RENDERVIEW_DRAWHUD;
+			CMatRenderContextPtr pRenderContext( materials );
+			pRenderContext->ClearColor3ub( rand()%256, rand()%256, rand()%256 );
+			pRenderContext->ClearBuffers( true, false, false );
+			pRenderContext->Release();
 		}
-	    if ( drawViewModel )
-	    {
-		    flags |= RENDERVIEW_DRAWVIEWMODEL;
-	    }
-		if( eEye == STEREO_EYE_RIGHT )
+		else if ( gl_clear.GetBool() )
 		{
-			// we should use the monitor view from the left eye for both eyes
-			flags |= RENDERVIEW_SUPPRESSMONITORRENDERING;
+			nClearFlags |= VIEW_CLEAR_COLOR;
 		}
 
-	    RenderView( view, nClearFlags, flags );
-
-		if ( UseVR() )
+		// Determine if we should draw view model ( client mode override )
+		bool drawViewModel = GetClientMode()->ShouldDrawViewModel();
+		// Apply any player specific overrides
+		C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+		if ( pPlayer )
 		{
-			bool bDoUndistort = ! engine->IsTakingScreenshot();
-
-			if ( bDoUndistort )
+			// Override view model if necessary
+			if ( !pPlayer->m_Local.m_bDrawViewmodel )
 			{
-				g_ClientVirtualReality.PostProcessFrame( eEye );
-			}
-
-			// logic here all cloned from code in viewrender.cpp around RenderHUDQuad:
-
-			// figure out if we really want to draw the HUD based on freeze cam
-			bool bInFreezeCam = ( pPlayer && pPlayer->GetObserverMode() == OBS_MODE_FREEZECAM );
-
-			// draw the HUD after the view model so its "I'm closer" depth queues work right.
-			if( !bInFreezeCam && g_ClientVirtualReality.ShouldRenderHUDInWorld() )
-			{
-				// TODO - a bit of a shonky test - basically trying to catch the main menu, the briefing screen, the loadout screen, etc.
-				bool bTranslucent = !g_pMatSystemSurface->IsCursorVisible();
-				g_ClientVirtualReality.OverlayHUDQuadWithUndistort( view, bDoUndistort, g_pClientMode->ShouldBlackoutAroundHUD(), bTranslucent );
+				drawViewModel = false;
 			}
 		}
-    }
 
+		if ( cl_leveloverview.GetFloat() > 0 )
+		{
+			SetUpOverView();		
+			nClearFlags |= VIEW_CLEAR_COLOR;
+			drawViewModel = false;
+		}
 
-	// TODO: should these be inside or outside the stereo eye stuff?
-	g_pClientMode->PostRender();
+		render->SetMainView( view.origin, view.angles );
+
+		int flags = (pPlayer == NULL) ? 0 : RENDERVIEW_DRAWHUD;
+		if ( drawViewModel )
+		{
+			flags |= RENDERVIEW_DRAWVIEWMODEL;
+		}
+
+		// This is the hook for per-split screen player views
+		C_BaseEntity::PreRenderEntities( hh );
+
+		if ( ( ss_debug_draw_player.GetInt() < 0 ) || ( hh == ss_debug_draw_player.GetInt() ) )
+		{
+			CViewSetup hudViewSetup;
+			VGui_GetHudBounds( hh, hudViewSetup.x, hudViewSetup.y, hudViewSetup.width, hudViewSetup.height );
+			RenderView( view, hudViewSetup, nClearFlags, flags );
+		}
+
+		GetClientMode()->PostRender();
+	}
+	IterateRemoteSplitScreenViewSlots_Pop();
+
 	engine->EngineStats_EndFrame();
 
 #if !defined( _X360 )
@@ -1296,34 +1013,67 @@ void CViewRender::Render( vrect_t *rect )
 	matStub.End();
 #endif
 
+	// Render the new-style embedded UI
+	// TODO: when embedded UI will be used for HUD, we will need it to maintain
+	// a separate screen for HUD and a separate screen stack for pause menu & main menu.
+	// for now only render embedded UI in pause menu & main menu
+#if defined( GAMEUI_UISYSTEM2_ENABLED ) && 0
+	BaseModUI::CBaseModPanel *pBaseModPanel = BaseModUI::CBaseModPanel::GetSingletonPtr();
+	// render the new-style embedded UI only if base mod panel is not visible (game-hud)
+	// otherwise base mod panel will render the embedded UI on top of video/productscreen
+	if ( !pBaseModPanel || !pBaseModPanel->IsVisible() )
+	{
+		Rect_t uiViewport;
+		uiViewport.x		= rect->x;
+		uiViewport.y		= rect->y;
+		uiViewport.width	= rect->width;
+		uiViewport.height	= rect->height;
+		g_pGameUIGameSystem->Render( uiViewport, gpGlobals->curtime );
+	}
+#endif
 
 	// Draw all of the UI stuff "fullscreen"
-    // (this is not health, ammo, etc. Nor is it pre-game briefing interface stuff - this is the stuff that appears when you hit Esc in-game)
-	// In stereo mode this is rendered inside of RenderView so it goes into the render target
-	if( !g_ClientVirtualReality.ShouldRenderHUDInWorld() )
+	if ( true ) // For PIXEVENT
 	{
+		#if PIX_ENABLE
+		{
+			CMatRenderContextPtr pRenderContext( materials );
+			PIXEVENT( pRenderContext, "VGui UI" );
+		}
+		#endif
+
 		CViewSetup view2d;
 		view2d.x				= rect->x;
 		view2d.y				= rect->y;
 		view2d.width			= rect->width;
 		view2d.height			= rect->height;
-
 		render->Push2DView( view2d, 0, NULL, GetFrustum() );
-		render->VGui_Paint( PAINT_UIPANELS | PAINT_CURSOR );
-		render->PopView( GetFrustum() );
+		render->VGui_Paint( PAINT_UIPANELS );
+		{
+			// The engine here is trying to access CurrentView() etc. which is bogus
+			ACTIVE_SPLITSCREEN_PLAYER_GUARD( 0 );
+			render->PopView( GetFrustum() );
+		}
 	}
 
-
+	m_bAllowViewAccess = false;
 }
-
-
-
 
 static void GetPos( const CCommand &args, Vector &vecOrigin, QAngle &angles )
 {
-	vecOrigin = MainViewOrigin();
-	angles = MainViewAngles();
-	if ( args.ArgC() == 2 && atoi( args[1] ) == 2 )
+	int nSlot = GET_ACTIVE_SPLITSCREEN_SLOT();
+	vecOrigin = MainViewOrigin(nSlot);
+	angles = MainViewAngles(nSlot);
+
+#ifdef INFESTED_DLL
+	C_ASW_Marine *pMarine = C_ASW_Marine::GetLocalMarine();
+	if ( pMarine )
+	{
+		vecOrigin = pMarine->GetAbsOrigin();
+		angles = pMarine->GetAbsAngles();
+	}
+#endif
+	if ( ( args.ArgC() == 2 && atoi( args[1] ) == 2 ) || FStrEq( args[0], "getpos_exact" ) )
 	{
 		C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
 		if ( pPlayer )
@@ -1351,7 +1101,7 @@ CON_COMMAND( getpos, "dump position and angles to the console" )
 
 	const char *pCommand1 = "setpos";
 	const char *pCommand2 = "setang";
-	if ( args.ArgC() == 2 && atoi( args[1] ) == 2 )
+	if ( ( args.ArgC() == 2 && atoi( args[1] ) == 2 ) || FStrEq( args[0], "getpos_exact" ) )
 	{
 		pCommand1 = "setpos_exact";
 		pCommand2 = "setang_exact";
@@ -1361,3 +1111,4 @@ CON_COMMAND( getpos, "dump position and angles to the console" )
 	Warning( "%s %f %f %f\n", pCommand2, angles.x, angles.y, angles.z );
 }
 
+ConCommand getpos_exact( "getpos_exact", getpos, "dump origin and angles to the console" );
