@@ -451,6 +451,13 @@ def configure(conf):
 	elif conf.env.DEST_OS == 'darwin':
 		conf.load('mm_hook')
 
+	conf.env.BIT32_MANDATORY = conf.options.TARGET32
+	if conf.env.BIT32_MANDATORY:
+		Logs.info('WARNING: will build engine for 32-bit target')
+		conf.load('force_32bit')
+
+	define_platform(conf)
+
 	if conf.env.TOGLES:
 		projects['game'] += ['togles']
 	elif conf.env.GL:
@@ -461,13 +468,6 @@ def configure(conf):
 		projects['dedicated'] += ['utils/bzip2']
 	if conf.options.OPUS or conf.env.DEST_OS == 'android':
 		projects['game'] += ['engine/voice_codecs/opus']
-
-	conf.env.BIT32_MANDATORY = conf.options.TARGET32
-	if conf.env.BIT32_MANDATORY:
-		Logs.info('WARNING: will build engine for 32-bit target')
-		conf.load('force_32bit')
-
-	define_platform(conf)
 
 	if conf.options.DISABLE_WARNS:
 		compiler_optional_flags = ['-w']
