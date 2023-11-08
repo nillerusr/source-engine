@@ -26,6 +26,21 @@ FC_CHECK='''extern "C" {
 int main() { return (int)FcInit(); }
 '''
 
+CPP_64BIT_CHECK='''
+#define TEST(a) (sizeof(void*) == a ? 1 : -1) 
+int g_Test[TEST(8)];
+
+int main () { return 0; }
+'''
+
+CPP_32BIT_CHECK='''
+#define TEST(a) (sizeof(void*) == a ? 1 : -1) 
+int g_Test[TEST(4)];
+
+int main () { return 0; }
+'''
+
+
 Context.Context.line_just = 55 # should fit for everything on 80x26
 
 projects={
@@ -155,12 +170,23 @@ def get_taskgen_count(self):
 	except: idx = 0 # don't set tg_idx_count to not increase counter
 	return idx
 
+@Configure.conf
+def run_test(self, fragment, msg):
+	result = self.check_cxx(fragment=fragment, msg=msg, mandatory = False)
+	return False if result == None else True
+
 def define_platform(conf):
 	conf.env.DEDICATED = conf.options.DEDICATED
 	conf.env.TESTS = conf.options.TESTS
 	conf.env.TOGLES = conf.options.TOGLES
 	conf.env.GL = conf.options.GL and not conf.options.TESTS and not conf.options.DEDICATED
 	conf.env.OPUS = conf.options.OPUS
+
+	arch32 = conf.run_test(CPP_32BIT_CHECK, 'Testing 32bit support')
+	arch64 = conf.run_test(CPP_64BIT_CHECK, 'Testing 64bit support')
+
+	if not (arch32 ^ arch64):
+		conf.fatal('Your compiler sucks')
 
 	if conf.options.DEDICATED:
 		conf.options.SDL = False
@@ -186,7 +212,7 @@ def define_platform(conf):
 		conf.env.SDL = 1
 		conf.define('USE_SDL', 1)
 
-	if conf.options.ALLOW64:
+	if arch64:
 		conf.define('PLATFORM_64BITS', 1)
 
 	if conf.env.DEST_OS == 'linux':
@@ -252,11 +278,14 @@ def define_platform(conf):
 			'NDEBUG'
 		])
 
+	conf.define('GIT_COMMIT_HASH', conf.env.GIT_VERSION)
+
+
 def options(opt):
 	grp = opt.add_option_group('Common options')
 
-	grp.add_option('-8', '--64bits', action = 'store_true', dest = 'ALLOW64', default = False,
-		help = 'allow targetting 64-bit engine(Linux/Windows/OSX x86 only) [default: %default]')
+	grp.add_option('-4', '--32bits', action = 'store_true', dest = 'TARGET32', default = False,
+		help = 'allow targetting 32-bit engine(Linux/Windows/OSX x86 only) [default: %default]')
 
 	grp.add_option('-d', '--dedicated', action = 'store_true', dest = 'DEDICATED', default = False,
 		help = 'build dedicated server [default: %default]')
@@ -410,9 +439,10 @@ def configure(conf):
 	# subsystem=bld.env.MSVC_SUBSYSTEM
 	# TODO: wrapper around bld.stlib, bld.shlib and so on?
 	conf.env.MSVC_SUBSYSTEM = 'WINDOWS,5.01'
-	conf.env.MSVC_TARGETS = ['x86'] # explicitly request x86 target for MSVC
-	if conf.options.ALLOW64:
-		conf.env.MSVC_TARGETS = ['x64']
+	conf.env.MSVC_TARGETS = ['x64'] # explicitly request x86 target for MSVC
+	if conf.options.TARGET32:
+		conf.env.MSVC_TARGETS = ['x32']
+
 	if sys.platform == 'win32':
 		conf.load('msvc_pdb_ext msdev msvs')
 	conf.load('subproject xcompile compiler_c compiler_cxx gitversion clang_compilation_database strip_on_install_v2 waf_unit_test enforce_pic')
@@ -420,9 +450,6 @@ def configure(conf):
 		conf.load('masm')
 	elif conf.env.DEST_OS == 'darwin':
 		conf.load('mm_hook')
-
-	define_platform(conf)
-	conf.define('GIT_COMMIT_HASH', conf.env.GIT_VERSION)
 
 	if conf.env.TOGLES:
 		projects['game'] += ['togles']
@@ -435,10 +462,12 @@ def configure(conf):
 	if conf.options.OPUS or conf.env.DEST_OS == 'android':
 		projects['game'] += ['engine/voice_codecs/opus']
 
-	conf.env.BIT32_MANDATORY = not conf.options.ALLOW64
+	conf.env.BIT32_MANDATORY = conf.options.TARGET32
 	if conf.env.BIT32_MANDATORY:
 		Logs.info('WARNING: will build engine for 32-bit target')
 		conf.load('force_32bit')
+
+	define_platform(conf)
 
 	if conf.options.DISABLE_WARNS:
 		compiler_optional_flags = ['-w']
