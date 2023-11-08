@@ -441,7 +441,7 @@ def configure(conf):
 	conf.env.MSVC_SUBSYSTEM = 'WINDOWS,5.01'
 	conf.env.MSVC_TARGETS = ['x64'] # explicitly request x86 target for MSVC
 	if conf.options.TARGET32:
-		conf.env.MSVC_TARGETS = ['x32']
+		conf.env.MSVC_TARGETS = ['x86']
 
 	if sys.platform == 'win32':
 		conf.load('msvc_pdb_ext msdev msvs')

@@ -38,7 +38,7 @@ jobs:
     - name: Run tests windows-i386
       run: |
         git submodule init && git submodule update
-        ./waf.bat configure -T release --tests --prefix=out/
+        ./waf.bat configure -T release --tests --prefix=out/ --32bits
         ./waf.bat install
         cd out
         $env:Path = "bin";
@@ -52,7 +52,7 @@ jobs:
     - name: Run tests windows-amd64
       run: |
         git submodule init && git submodule update
-        ./waf.bat configure -T release --tests --prefix=out/ -8
+        ./waf.bat configure -T release --tests --prefix=out/
         ./waf.bat install
         cd out
         $env:Path = "bin";
