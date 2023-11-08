@@ -25,9 +25,7 @@
 #define	GLMDEBUG_H
 
 #include "tier0/platform.h"
-#if defined( OSX )
 #include <stdarg.h>
-#endif
 
 // include this anywhere you need to be able to compile-out code related specifically to GLM debugging.
 

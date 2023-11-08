@@ -32,6 +32,7 @@
 #include <sys/param.h>
 #include <sys/mount.h>
 #elif defined(LINUX)
+#define _LARGEFILE64_SOURCE
 #include <sys/vfs.h>
 #endif
 #ifdef OSX
