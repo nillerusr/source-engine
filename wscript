@@ -51,7 +51,7 @@ projects={
 		'datacache',
 		'datamodel',
 		'dmxloader',
-		'engine',
+#		'engine',
 		'engine/voice_codecs/minimp3',
 		'filesystem',
 		'game/client',
@@ -433,7 +433,7 @@ def check_deps(conf):
 		# conf.multicheck(*a, run_all_tests = True, mandatory = True)
 
 def configure(conf):
-	conf.load('fwgslib reconfigure compiler_optimizations')
+	conf.load('fwgslib reconfigure compiler_c compiler_cxx compiler_optimizations gccdeps msvcdeps')
 
 	# Force XP compability, all build targets should add
 	# subsystem=bld.env.MSVC_SUBSYSTEM
@@ -495,7 +495,7 @@ def configure(conf):
 	cflags, linkflags = conf.get_optimization_flags()
 
 
-	flags = []
+	flags = [] #'-M -MT']
 
 	if conf.options.SANITIZE:
 		flags += ['-fsanitize=%s'%conf.options.SANITIZE, '-fno-sanitize=vptr']
