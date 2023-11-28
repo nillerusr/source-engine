@@ -51,7 +51,7 @@ projects={
 		'datacache',
 		'datamodel',
 		'dmxloader',
-#		'engine',
+		'engine',
 		'engine/voice_codecs/minimp3',
 		'filesystem',
 		'game/client',
@@ -433,7 +433,7 @@ def check_deps(conf):
 		# conf.multicheck(*a, run_all_tests = True, mandatory = True)
 
 def configure(conf):
-	conf.load('fwgslib reconfigure compiler_c compiler_cxx compiler_optimizations gccdeps msvcdeps')
+	conf.load('fwgslib reconfigure compiler_optimizations')
 
 	# Force XP compability, all build targets should add
 	# subsystem=bld.env.MSVC_SUBSYSTEM
@@ -444,8 +444,8 @@ def configure(conf):
 		conf.env.MSVC_TARGETS = ['x86']
 
 	if sys.platform == 'win32':
-		conf.load('msvc_pdb_ext msdev msvs')
-	conf.load('subproject xcompile compiler_c compiler_cxx gitversion clang_compilation_database strip_on_install_v2 waf_unit_test enforce_pic')
+		conf.load('msvc_pdb_ext msdev msvs msvcdeps')
+	conf.load('subproject xcompile compiler_c compiler_cxx gccdeps gitversion clang_compilation_database strip_on_install_v2 waf_unit_test enforce_pic')
 	if conf.env.DEST_OS == 'win32' and conf.env.DEST_CPU == 'amd64':
 		conf.load('masm')
 	elif conf.env.DEST_OS == 'darwin':
@@ -495,7 +495,7 @@ def configure(conf):
 	cflags, linkflags = conf.get_optimization_flags()
 
 
-	flags = [] #'-M -MT']
+	flags = []
 
 	if conf.options.SANITIZE:
 		flags += ['-fsanitize=%s'%conf.options.SANITIZE, '-fno-sanitize=vptr']
