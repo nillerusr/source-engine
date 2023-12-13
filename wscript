@@ -554,7 +554,6 @@ def configure(conf):
 				'/NODEFAULTLIB:libc',
 				'/NODEFAULTLIB:libcd',
 				'/NODEFAULTLIB:libcmt',
-				'/FORCE',
 				'/LARGEADDRESSAWARE'
 			]
 		else:
