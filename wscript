@@ -550,6 +550,7 @@ def configure(conf):
 
 		if conf.options.BUILD_TYPE == 'debug':
 			linkflags += [
+				'/FORCE:MULTIPLE',
 				'/INCREMENTAL:NO',
 				'/NODEFAULTLIB:libc',
 				'/NODEFAULTLIB:libcd',
