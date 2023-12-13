@@ -527,7 +527,7 @@ def configure(conf):
 		flags += ['-fsigned-char']
 
 	if conf.env.DEST_CPU == 'arm':
-		flags += ['-mfpu=neon-vfpv4']
+		flags += ['-march=armv7-a', '-mfpu=neon-vfpv4']
 
 	if conf.env.DEST_OS == 'freebsd':
 		linkflags += ['-lexecinfo']
