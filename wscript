@@ -140,6 +140,7 @@ projects={
 		'tier1',
 		'tier2',
 		'tier3',
+		'vgui2/vgui_controls',
 		'vphysics',
 		'vpklib',
 		'vstdlib',

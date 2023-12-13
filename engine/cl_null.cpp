@@ -6,6 +6,7 @@
 
 #include "client_pch.h"
 #ifdef SWDS
+#include "igame.h"
 #include "hltvclientstate.h"
 #include "convar.h"
 #include "enginestats.h"
@@ -37,9 +38,9 @@ bool CL_IsPortalDemo()
 
 bool HandleRedirectAndDebugLog( const char *msg );
 
-void BeginLoadingUpdates( MaterialNonInteractiveMode_t mode ) {}
+//void BeginLoadingUpdates( MaterialNonInteractiveMode_t mode ) {}
+//void EndLoadingUpdates() {}
 void RefreshScreenIfNecessary() {}
-void EndLoadingUpdates() {}
 
 
 void Con_ColorPrintf( const Color& clr, const char *fmt, ... )
@@ -189,5 +190,9 @@ CClientState	cl;
 
 char g_minidumpinfo[ 4096 ] = {0};
 PAGED_POOL_INFO_t g_pagedpoolinfo = { 0 };
+
+int g_iVCRPlaybackSleepInterval = 0;
+IGame *game = NULL;
+
 
 #endif

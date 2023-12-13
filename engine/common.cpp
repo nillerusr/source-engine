@@ -97,22 +97,19 @@ COM_ExplainDisconnection
 */
 void COM_ExplainDisconnection( bool bPrint, const char *fmt, ... )
 {
-	if ( IsX360() )
-	{
-		g_pMatchmaking->SessionNotification( SESSION_NOTIFY_LOST_SERVER );
-	}
-	else
-	{
-		va_list		argptr;
-		char		string[1024];
+#ifdef _X360
+	g_pMatchmaking->SessionNotification( SESSION_NOTIFY_LOST_SERVER );
+#else
+	va_list		argptr;
+	char		string[1024];
 
-		va_start (argptr, fmt);
-		Q_vsnprintf(string, sizeof( string ), fmt,argptr);
-		va_end (argptr);
+	va_start (argptr, fmt);
+	Q_vsnprintf(string, sizeof( string ), fmt,argptr);
+	va_end (argptr);
 
-		Q_strncpy( gszDisconnectReason, string, 256 );
-		gfExtendedError = true;
-	}
+	Q_strncpy( gszDisconnectReason, string, 256 );
+	gfExtendedError = true;
+#endif
 
 	if ( bPrint )
 	{
@@ -146,21 +143,18 @@ COM_ExtendedExplainDisconnection
 */
 void COM_ExtendedExplainDisconnection( bool bPrint, const char *fmt, ... )
 {
-	if ( IsX360() )
-	{
-		g_pMatchmaking->SessionNotification( SESSION_NOTIFY_LOST_SERVER );
-	}
-	else
-	{
-		va_list		argptr;
-		char		string[1024];
-		
-		va_start (argptr, fmt);
-		Q_vsnprintf(string, sizeof( string ), fmt,argptr);
-		va_end (argptr);
+#ifdef _X360
+	g_pMatchmaking->SessionNotification( SESSION_NOTIFY_LOST_SERVER );
+#else
+	va_list		argptr;
+	char		string[1024];
 
-		Q_strncpy( gszExtendedDisconnectReason, string, 256 );
-	}
+	va_start (argptr, fmt);
+	Q_vsnprintf(string, sizeof( string ), fmt,argptr);
+	va_end (argptr);
+
+	Q_strncpy( gszExtendedDisconnectReason, string, 256 );
+#endif
 
 	if ( bPrint )
 	{

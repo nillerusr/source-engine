@@ -4353,20 +4353,20 @@ ModelInstanceHandle_t CModelRender::CreateInstance( IClientRenderable *pRenderab
 
 		// validate static color meshes once, now at load/create time
 		ValidateStaticPropColorData( handle );
-	
+
 		// 360 persists the color meshes across same map loads
-		if ( !IsX360() || instance.m_ColorMeshHandle == DC_INVALID_HANDLE )
+#ifdef _X360
+		if ( r_decalstaticprops.GetBool() && instance.m_LightCacheHandle )
+			instance.m_AmbientLightingState = *(LightcacheGetStatic( *pCache, NULL, LIGHTCACHEFLAGS_STATIC ));
+#else
+		if ( instance.m_ColorMeshHandle == DC_INVALID_HANDLE )
 		{
 			// builds out color meshes or loads disk colors, now at load/create time
 			RecomputeStaticLighting( handle );
 		}
-		else
-			if ( r_decalstaticprops.GetBool() && instance.m_LightCacheHandle )
-			{
-				instance.m_AmbientLightingState = *(LightcacheGetStatic( *pCache, NULL, LIGHTCACHEFLAGS_STATIC ));
-			}
+#endif
 	}
-	
+
 	return handle;
 }
 

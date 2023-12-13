@@ -1534,7 +1534,7 @@ void Sys_NoCrashDialog()
 
 void Sys_TestSendKey( const char *pKey )
 {
-#if defined(_WIN32) && !defined(USE_SDL) && !defined(_XBOX)
+#if defined(_WIN32) && !defined(USE_SDL) && !defined(_XBOX) && !defined(DEDICATED)
 	int key = pKey[0];
 	if ( pKey[0] == '\\' && pKey[1] == 'r' )
 	{
