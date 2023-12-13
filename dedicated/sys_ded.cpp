@@ -278,7 +278,7 @@ bool CDedicatedAppSystemGroup::PreInit( )
 		return false;
 
 #ifdef _WIN32
-	g_bVGui = !CommandLine()->CheckParm( "-console" );
+	g_bVGui = CommandLine()->CheckParm( "-vgui" );
 #endif
 
 	CreateInterfaceFn factory = GetFactory();

@@ -191,8 +191,4 @@ CClientState	cl;
 char g_minidumpinfo[ 4096 ] = {0};
 PAGED_POOL_INFO_t g_pagedpoolinfo = { 0 };
 
-int g_iVCRPlaybackSleepInterval = 0;
-IGame *game = NULL;
-
-
 #endif
