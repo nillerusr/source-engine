@@ -30,6 +30,15 @@ jobs:
       run: |
         scripts/tests-macos-amd64.sh
 
+  tests-macos-arm64:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Run tests macos-arm64
+      run: |
+        scripts/tests-macos-arm64.sh
+
   tests-windows-i386:
     runs-on: windows-2019
 
