@@ -94,6 +94,7 @@ projects={
 		'utils/vtex',
 		'unicode',
 		'video',
+        'game/gamepadui',
 	],
 	'tests': [
 		'appframework',
