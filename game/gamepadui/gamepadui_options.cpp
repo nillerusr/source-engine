@@ -26,7 +26,7 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-const int MAX_OPTIONS_TABS = 8;
+const int MAX_OPTIONS_TABS = 7;
 
 #define GAMEPADUI_OPTIONS_FILE GAMEPADUI_RESOURCE_FOLDER "options.res"
 
@@ -79,7 +79,6 @@ public:
     void ApplySchemeSettings( vgui::IScheme *pScheme ) OVERRIDE;
 
     void SetOptionDescription( GamepadUIString *pStr ) { m_strOptionDescription = pStr; }
-    void SetOptionImage( GamepadUIImage *pImg ) { m_pOptionImage = pImg; }
 
     void SetActiveTab( int nTab );
     int GetActiveTab();
@@ -125,8 +124,6 @@ private:
 
     GamepadUIString *m_strOptionDescription = NULL;
     vgui::HFont m_hDescFont = vgui::INVALID_FONT;
-
-    GamepadUIImage *m_pOptionImage = NULL;
 	
     GamepadUIScrollBar *m_pScrollBar;
 
@@ -162,15 +159,6 @@ public:
             Assert( GamepadUIOptionsPanel::GetInstance() != NULL );
             GamepadUIOptionsPanel::GetInstance()->SetOptionDescription( &m_strButtonDescription );
             m_bDescriptionHide = true;
-
-            if (m_OptionImage.IsValid())
-            {
-                GamepadUIOptionsPanel::GetInstance()->SetOptionImage( &m_OptionImage );
-            }
-            else
-            {
-                GamepadUIOptionsPanel::GetInstance()->SetOptionImage( NULL );
-            }
         }
     }
 
@@ -184,26 +172,8 @@ public:
         return m_bHorizontal;
     }
 
-    inline void SetOptionImage( const char *pName )
-    {
-        if (pName == NULL)
-        {
-            m_OptionImage.Cleanup();
-            return;
-        }
-
-        m_OptionImage.SetImage( pName );
-    }
-
-    inline GamepadUIImage &GetOptionImage()
-    {
-        return m_OptionImage;
-    }
-
 private:
     bool m_bHorizontal = false;
-
-    GamepadUIImage m_OptionImage;
 };
 
 class GamepadUIHeaderButton : public GamepadUIOptionButton
@@ -1628,8 +1598,8 @@ void GamepadUIOptionsPanel::Paint()
     if ( m_rightGlyph.SetupGlyph( nGlyphSize, "menu_rb", true ) )
         m_rightGlyph.PaintGlyph( nLastTabX + nGlyphOffsetX, m_flTabsOffsetY + nGlyphOffsetY / 2, nGlyphSize, 255 );
 
-    // Draw description/image
-    if (m_strOptionDescription != NULL || m_pOptionImage != NULL)
+    // Draw description
+    if (m_strOptionDescription != NULL)
     {
         int nParentW, nParentH;
         GetParent()->GetSize( nParentW, nParentH );
@@ -1637,34 +1607,13 @@ void GamepadUIOptionsPanel::Paint()
         float flX = m_flFooterButtonsOffsetX + m_nFooterButtonWidth + m_flFooterButtonsSpacing;
         float flY = nParentH - m_flFooterButtonsOffsetY - m_nFooterButtonHeight;
 
+        vgui::surface()->DrawSetTextColor( Color( 255, 255, 255, 255 ) );
+        vgui::surface()->DrawSetTextFont( m_hDescFont );
+        vgui::surface()->DrawSetTextPos( flX, flY );
+
         int nMaxWidth = nParentW - flX - (m_flFooterButtonsOffsetX + m_nFooterButtonWidth + m_flFooterButtonsSpacing);
-        
-        if (m_pOptionImage != NULL)
-        {
-            int wide, tall;
-            vgui::surface()->DrawGetTextureSize( *m_pOptionImage, wide, tall );
 
-            // TODO: More defined/controllable dimensions?
-            wide = (wide/tall) * m_nFooterButtonHeight * 3;
-            tall = m_nFooterButtonHeight * 3;
-            nMaxWidth -= wide;
-
-            vgui::surface()->DrawSetTexture( *m_pOptionImage );
-            vgui::surface()->DrawSetColor( Color( 255, 255, 255, 255 ) );
-            vgui::surface()->DrawTexturedRect( flX + nMaxWidth, flY, flX + nMaxWidth + wide, flY + tall );
-
-            // Minor spacing
-            nMaxWidth -= 4;
-        }
-
-        if (m_strOptionDescription != NULL)
-        {
-            vgui::surface()->DrawSetTextColor( Color( 255, 255, 255, 255 ) );
-            vgui::surface()->DrawSetTextFont( m_hDescFont );
-            vgui::surface()->DrawSetTextPos( flX, flY );
-
-            DrawPrintWrappedText( m_hDescFont, flX, flY, m_strOptionDescription->String(), m_strOptionDescription->Length(), nMaxWidth, true );
-        }
+        DrawPrintWrappedText( m_hDescFont, flX, flY, m_strOptionDescription->String(), m_strOptionDescription->Length(), nMaxWidth, true );
     }
 }
 
@@ -2391,7 +2340,6 @@ void GamepadUIOptionsPanel::LoadOptionTabs( const char *pszOptionsFile )
                             pItemData->GetString( "text", "" ), pItemData->GetString( "description", "" ) );
                         button->SetToDefault();
                         button->SetMouseStep( pItemData->GetFloat( "mouse_step", flStep ) );
-                        button->SetOptionImage( pItemData->GetString( "image", NULL ) );
                         m_Tabs[ m_nTabCount ].pButtons.AddToTail( button );
                     }
                     else if ( !V_strcmp( pItemType, "headeryheader" ) )
@@ -2498,7 +2446,6 @@ void GamepadUIOptionsPanel::LoadOptionTabs( const char *pszOptionsFile )
                             }
                         }
                         button->SetToDefault();
-                        button->SetOptionImage( pItemData->GetString( "image", NULL ) );
 
                         // Values which require confirmation before changing
                         KeyValues *pConfirm = pItemData->FindKey( "confirm" );

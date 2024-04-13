@@ -2,6 +2,8 @@
 #include "gamepadui_basepanel.h"
 #include "gamepadui_mainmenu.h"
 
+//#include "..\client\cdll_client_int.h"
+
 #include "vgui/ISurface.h"
 #include "vgui/ILocalize.h"
 #include "vgui/IVGui.h"
@@ -19,7 +21,37 @@ ConVar gamepadui_show_ez2_version( "gamepadui_show_ez2_version", "1", FCVAR_NONE
 ConVar gamepadui_show_old_ui_button( "gamepadui_show_old_ui_button", "1", FCVAR_NONE, "Show button explaining how to switch to the old UI (Changes may not take effect until changing level)" );
 #endif
 
-GamepadUIMainMenu::GamepadUIMainMenu( vgui::Panel* pParent )
+#define BUTTONS_DEVIDE_SIZE 2
+
+float m_flButtonsRealOffsetX = -500;
+float m_flButtonsRealAlpha = 0;
+int m_flButtonsAlpha = 255;
+
+float m_flLogoRealOffsetX = -500;
+int m_flLogoAlpha = 255;
+
+bool ResetFade = false;
+
+int LogoSizeX, LogoSizeY;
+
+int nMaxLogosW = 0, nTotalLogosH = 0;
+
+float TimeDelta = 0;
+float LastTime = 0;
+
+float TimeDeltaLogo = 0;
+float LastTimeLogo = 0;
+
+float curtime = 0;
+
+void CC_ResetFade()
+{
+    ResetFade = true;
+}
+
+ConCommand gamepadui_resetfade("gamepadui_resetfade", CC_ResetFade);
+
+GamepadUIMainMenu::GamepadUIMainMenu( vgui::Panel* pParent )    
     : BaseClass( pParent, "MainMenu" )
 {
     vgui::HScheme hScheme = vgui::scheme()->LoadSchemeFromFileEx( GamepadUI::GetInstance().GetSizingVPanel(), GAMEPADUI_MAINMENU_SCHEME, "SchemeMainMenu" );
@@ -30,13 +62,16 @@ GamepadUIMainMenu::GamepadUIMainMenu( vgui::Panel* pParent )
     {
         if ( pModData->LoadFromFile( g_pFullFileSystem, "gameinfo.txt" ) )
         {
-            m_LogoText[ 0 ] = pModData->GetString( "gamepadui_title", pModData->GetString( "title" ) );
-            m_LogoText[ 1 ] = pModData->GetString( "gamepadui_title2", pModData->GetString( "title2" ) );
+            m_LogoText[ 0 ].SetText(pModData->GetString( "gamepadui_title", pModData->GetString( "title" ) ) );
+            m_LogoText[ 1 ].SetText(pModData->GetString( "gamepadui_title2", pModData->GetString( "title2" ) ) );
         }
         pModData->deleteThis();
     }
 
     LoadMenuButtons();
+
+    TimeDelta = 0;
+    LastTime = GamepadUI::GetInstance().GetEngineClient()->Time();
 
     SetFooterButtons( FooterButtons::Select, FooterButtons::Select );
 }
@@ -45,12 +80,12 @@ void GamepadUIMainMenu::UpdateGradients()
 {
     const float flTime = GamepadUI::GetInstance().GetTime();
     GamepadUI::GetInstance().GetGradientHelper()->ResetTargets( flTime );
-#ifdef GAMEPADUI_GAME_EZ2
+//#if defined(GAMEPADUI_GAME_EZ2) //enabled in city52 as well
     // E:Z2 reduces the gradient so that the background map can be more easily seen
-    GamepadUI::GetInstance().GetGradientHelper()->SetTargetGradient( GradientSide::Left, { 1.0f, GamepadUI::GetInstance().IsInBackgroundLevel() ? 0.333f : 0.666f }, flTime );
-#else
-    GamepadUI::GetInstance().GetGradientHelper()->SetTargetGradient( GradientSide::Left, { 1.0f, 0.666f }, flTime );
-#endif
+    GamepadUI::GetInstance().GetGradientHelper()->SetTargetGradient( GradientSide::Left, { 1.0f, GamepadUI::GetInstance().IsInBackgroundLevel() ? 0 : 0.666f }, flTime );
+//#else
+//    GamepadUI::GetInstance().GetGradientHelper()->SetTargetGradient( GradientSide::Left, { 1.0f, 0.666f }, flTime );
+//#endif
 
     // In case a controller is added mid-game
     SetFooterButtons( FooterButtons::Select, FooterButtons::Select );
@@ -58,6 +93,8 @@ void GamepadUIMainMenu::UpdateGradients()
 
 void GamepadUIMainMenu::LoadMenuButtons()
 {
+
+
     KeyValues* pDataFile = new KeyValues( "MainMenuScript" );
     if ( pDataFile )
     {
@@ -74,6 +111,8 @@ void GamepadUIMainMenu::LoadMenuButtons()
                 pButton->SetName( pData->GetName() );
                 pButton->SetPriority( V_atoi( pData->GetString( "priority", "0" ) ) );
                 pButton->SetVisible( true );
+
+                //pButton->SetSize(pButton->GetWide() / BUTTONS_DEVIDE_SIZE , pButton->GetTall() / BUTTONS_DEVIDE_SIZE);
 
                 const char* pFamily = pData->GetString( "family", "all" );
                 if ( !V_strcmp( pFamily, "ingame" ) || !V_strcmp( pFamily, "all" ) )
@@ -105,13 +144,36 @@ void GamepadUIMainMenu::ApplySchemeSettings( vgui::IScheme* pScheme )
 {
     BaseClass::ApplySchemeSettings( pScheme );
 
+    /*float flX, flY;
+    if (GamepadUI::GetInstance().GetScreenRatio(flX, flY))
+    {
+        m_flButtonsOffsetX *= (flX * flX);
+    }
+
+    int nX, nY;
+    GamepadUI::GetInstance().GetSizingPanelOffset(nX, nY);
+    if (nX > 0)
+    {
+        GamepadUI::GetInstance().GetSizingPanelScale(flX, flY);
+        m_flButtonsOffsetX += ((float)nX) * flX * 0.5f;
+    }*/
+
+    
+
+
     int nParentW, nParentH;
 	GetParent()->GetSize( nParentW, nParentH );
     SetBounds( 0, 0, nParentW, nParentH );
 
     const char *pImage = pScheme->GetResourceString( "Logo.Image" );
-    if ( pImage && *pImage )
-        m_LogoImage.SetImage( pImage );
+
+    Msg(pImage);
+
+    if (pImage && *pImage)
+    {
+        m_LogoImage.SetImage(pImage);
+        m_LogoImage.GetImageSize(LogoSizeX, LogoSizeY);
+    }
     m_hLogoFont = pScheme->GetFont( "Logo.Font", true );
 
 #ifdef GAMEPADUI_GAME_EZ2
@@ -120,18 +182,85 @@ void GamepadUIMainMenu::ApplySchemeSettings( vgui::IScheme* pScheme )
     ConVarRef ez2_version( "ez2_version" );
     m_strEZ2Version = ez2_version.GetString();
 #endif
+
+    if (m_flButtonsStartOffsetX == 0)
+        m_flButtonsRealOffsetX = m_flButtonsStartOffsetX = m_flButtonsOffsetX;
+    else
+        m_flButtonsRealOffsetX = m_flButtonsStartOffsetX;
+
+    m_flButtonsRealAlpha = 0;
+
+    if (m_flLogoStartOffsetX == 0)
+        m_flLogoRealOffsetX = m_flLogoOffsetX;
+    else
+        m_flLogoRealOffsetX = m_flLogoStartOffsetX;
 }
+
+int LogoID;
 
 void GamepadUIMainMenu::LayoutMainMenu()
 {
     int nY = GetCurrentButtonOffset();
     CUtlVector<GamepadUIButton*>& currentButtons = GetCurrentButtons();
+
+
+    //HACK if we have more than 0.7 sec of delay between frames, we possybly lagging
+    if (GamepadUI::GetInstance().GetTime() - LastTime <= 0.7f)
+        TimeDelta = GamepadUI::GetInstance().GetTime() - LastTime;
+
+    curtime += TimeDelta;
+    //curtime = clamp(curtime, 0, m_flButtonsAnimTime); 
+
+
+
+    int i = 0;
     for ( GamepadUIButton *pButton : currentButtons )
     {
+
         nY += pButton->GetTall();
-        pButton->SetPos( m_flButtonsOffsetX, GetTall() - nY );
+        pButton->SetPos( m_flButtonsRealOffsetX, GetTall() - nY );
+        pButton->SetAlpha(m_flButtonsRealAlpha);
+
+        //FIXME ive tried to make this anim seperatly for each button so they whould move next to each other,
+        //but the life planned other plans, so when im subtracting 0.5*i it stopping them at some distance and they dont go all the way.
+        float TdC;
+
+        float func;
+
+
+        if (GetCurrentMenuState() == GamepadUIMenuStates::InGame && !GamepadUI::GetInstance().IsInBackgroundLevel())
+        {
+            TdC = clamp(curtime, 0, m_flButtonsAnimTimeInGame);
+            func = clamp(pow((TdC / m_flButtonsAnimTimeInGame),
+                m_flButtonsAnimPowerInGame) / (pow((TdC / m_flButtonsAnimTimeInGame),
+                m_flButtonsAnimPowerInGame) + pow(1 - (TdC / m_flButtonsAnimTimeInGame),
+                m_flButtonsAnimPowerInGame)), 0, 1);
+        }
+        else
+        {
+            TdC = clamp(curtime, 0, m_flButtonsAnimTime);
+            func = clamp(pow((TdC / m_flButtonsAnimTime),
+                m_flButtonsAnimPower) / (pow((TdC / m_flButtonsAnimTime),
+                m_flButtonsAnimPower) + pow(1 - (TdC / m_flButtonsAnimTime),
+                m_flButtonsAnimPower)), 0, 1);
+        }
+
+        m_flButtonsRealOffsetX = RemapVal(func, 0, 1, m_flButtonsStartOffsetX, m_flButtonsOffsetX);
+        m_flButtonsRealAlpha = RemapVal(func, 0, 1, 0, m_flButtonsAlpha);
+
+        //pButton->SetPos( m_flButtonsOffsetX, GetTall() - nY );
+        i++;
         nY += m_flButtonSpacing;
     }
+
+
+
+    
+    LastTime = GamepadUI::GetInstance().GetTime();
+
+    
+   
+
 
 #ifdef GAMEPADUI_GAME_EZ2
     if ( m_pSwitchToOldUIButton && m_pSwitchToOldUIButton->IsVisible() )
@@ -146,7 +275,11 @@ void GamepadUIMainMenu::LayoutMainMenu()
 
 void GamepadUIMainMenu::PaintLogo()
 {
-    vgui::surface()->DrawSetTextColor( m_colLogoColor );
+#ifdef GAMEPADUI_GAME_HL2 //a little hack to make default hl2 logo be yellow and still be able to change it later in res file
+    vgui::surface()->DrawSetTextColor(m_colLogoNewColor);
+#else
+    vgui::surface()->DrawSetTextColor(m_colLogoColor);
+#endif
     vgui::surface()->DrawSetTextFont( m_hLogoFont );
 
     int nMaxLogosW = 0, nTotalLogosH = 0;
@@ -166,20 +299,54 @@ void GamepadUIMainMenu::PaintLogo()
     if ( m_LogoImage.IsValid() )
     {
         int nY1 = nLogoY;
-        int nY2 = nY1 + nLogoH[ 0 ];
-        int nX1 = m_flLogoOffsetX;
-        int nX2 = nX1 + ( nLogoH[ 0 ] * 3 );
-        vgui::surface()->DrawSetColor( Color( 255, 255, 255, 255 ) );
-        vgui::surface()->DrawSetTexture( m_LogoImage );
-        vgui::surface()->DrawTexturedRect( nX1, nY1, nX2, nY2 );
-        vgui::surface()->DrawSetTexture( 0 );
+        int nY2 = nY1 + /*nLogoH[0]*/ m_flLogoSizeY;
+        //int nX1 = m_flLogoOffsetX;
+
+        int nX1 = m_flLogoRealOffsetX;
+        int nX2 = nX1 + /*(nLogoH[0] * 3)*/ m_flLogoSizeX;
+
+        vgui::surface()->DrawSetColor(Color(255, 255, 255, 255));
+        vgui::surface()->DrawSetTexture(m_LogoImage);
+        vgui::surface()->DrawTexturedRect(nX1, nY1, nX2, nY2);
+        vgui::surface()->DrawSetTexture(0);
+
+        //TimeDeltaLogo = GamepadUI::GetInstance().GetTime() - LastTimeLogo;
+        //TimeDeltaLogo = clamp(TimeDeltaLogo, 0.2, 0.5);
+
+        float TdC;
+
+        //m_flLogoRealOffsetX = Lerp<float>(m_flLogoLerp * TimeDeltaLogo, m_flLogoRealOffsetX, m_flLogoOffsetX);
+        float func;
+
+        if (GetCurrentMenuState() == GamepadUIMenuStates::InGame)
+        {
+            TdC = clamp(curtime, 0, m_flLogoAnimTimeInGame);
+            func = clamp(pow((TdC / m_flLogoAnimTimeInGame), 
+                m_flLogoAnimPowerInGame) / (pow((TdC / m_flLogoAnimTimeInGame), 
+                m_flLogoAnimPowerInGame) + pow(1 - (TdC / m_flLogoAnimTimeInGame), 
+                m_flLogoAnimPowerInGame)), 0, 1);
+        }
+        else
+        {
+            TdC = clamp(curtime, 0, m_flLogoAnimTime);
+            func = clamp(pow((TdC / m_flLogoAnimTime),
+                m_flLogoAnimPower) / (pow((TdC / m_flLogoAnimTime),
+                m_flLogoAnimPower) + pow(1 - (TdC / m_flLogoAnimTime),
+                m_flLogoAnimPower)), 0, 1);
+        }
+
+        m_flLogoRealOffsetX = RemapVal(func, 0, 1, -m_flLogoSizeX, m_flLogoOffsetX);
+
+        //LastTimeLogo = GamepadUI::GetInstance().GetTime();
+
     }
     else
     {
         for ( int i = 1; i >= 0; i-- )
         {
             vgui::surface()->DrawSetTextPos( m_flLogoOffsetX, nLogoY );
-            vgui::surface()->DrawPrintText( m_LogoText[ i ].String(), m_LogoText[ i ].Length() );
+            int aboba = m_LogoText[i].Length();
+            vgui::surface()->DrawPrintText( m_LogoText[ i ].String(), aboba);
 
             nLogoY -= nLogoH[ i ];
         }
@@ -204,13 +371,35 @@ void GamepadUIMainMenu::OnThink()
     BaseClass::OnThink();
 
     LayoutMainMenu();
+
 }
 
 void GamepadUIMainMenu::Paint()
 {
+
     BaseClass::Paint();
 
+    if (ResetFade)
+        {
+            curtime = 0;
+
+            if (m_flButtonsStartOffsetX == 0)
+                m_flButtonsRealOffsetX = m_flButtonsStartOffsetX = m_flButtonsOffsetX;
+            else
+                m_flButtonsRealOffsetX = m_flButtonsStartOffsetX;
+
+            m_flButtonsRealAlpha = 0;
+
+            if (m_flLogoStartOffsetX == 0)
+                m_flLogoRealOffsetX = m_flLogoOffsetX;
+            else
+                m_flLogoRealOffsetX = m_flLogoStartOffsetX;
+
+            ResetFade = false;
+        }
+
     PaintLogo();
+    
 }
 
 void GamepadUIMainMenu::OnCommand( char const* pCommand )
@@ -252,6 +441,7 @@ void GamepadUIMainMenu::OnMenuStateChanged()
 
 void GamepadUIMainMenu::UpdateButtonVisibility()
 {
+
     for ( CUtlVector<GamepadUIButton*>& buttons : m_Buttons )
     {
         for ( GamepadUIButton* pButton : buttons )

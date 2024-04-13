@@ -31,7 +31,7 @@ GamepadUIBasePanel::GamepadUIBasePanel( vgui::VPANEL parent ) : BaseClass( NULL,
 
     m_pSizingPanel = new GamepadUISizingPanel( this );
 
-    m_pMainMenu = new GamepadUIMainMenu( this );
+    m_pMainMenu = new   GamepadUIMainMenu( this );
     OnMenuStateChanged();
 }
 
@@ -82,19 +82,19 @@ void GamepadUIBasePanel::SetCurrentFrame( GamepadUIFrame *pFrame )
 
 void GamepadUIBasePanel::OnMenuStateChanged()
 {
-    if ( m_bBackgroundMusicEnabled && GamepadUI::GetInstance().IsGamepadUIVisible() )
+    if (m_bBackgroundMusicEnabled && GamepadUI::GetInstance().IsGamepadUIVisible())
     {
-        if ( !IsBackgroundMusicPlaying() )
+        if (!IsBackgroundMusicPlaying())
             ActivateBackgroundEffects();
     }
     else
         ReleaseBackgroundMusic();
 
-    if (m_pCurrentFrame && m_pCurrentFrame != m_pMainMenu)
-    {
-        m_pCurrentFrame->Close();
-        m_pCurrentFrame = NULL;
-    }
+   if (m_pCurrentFrame && m_pCurrentFrame != m_pMainMenu)
+   {
+       m_pCurrentFrame->Close();
+       m_pCurrentFrame = NULL;
+   }
 }
 
 void GamepadUIBasePanel::ActivateBackgroundEffects()

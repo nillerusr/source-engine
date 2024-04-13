@@ -134,11 +134,8 @@ CON_COMMAND( gamepadui_opengenerictextdialog, "Opens a generic text dialog.\nFor
         return;
     }
 
-    vgui::Panel *pParent = GamepadUI::GetInstance().GetCurrentFrame();
-    if (!pParent)
-        pParent = GamepadUI::GetInstance().GetBasePanel();
-
-    new GamepadUIGenericConfirmationPanel( pParent, "GenericConfirmationPanel", args.Arg(1), args.Arg(2),
+    // TODO: Parent to current frame
+    new GamepadUIGenericConfirmationPanel( GamepadUI::GetInstance().GetBasePanel(), "GenericConfirmationPanel", args.Arg(1), args.Arg(2),
     [](){}, args.Arg(3)[0] != '0', false );
 }
 
@@ -150,35 +147,15 @@ CON_COMMAND( gamepadui_opengenericconfirmdialog, "Opens a generic confirmation d
         return;
     }
 
-    vgui::Panel *pParent = GamepadUI::GetInstance().GetCurrentFrame();
-    if (!pParent)
-        pParent = GamepadUI::GetInstance().GetBasePanel();
-
-    // To get the command, we just use the remaining string after the small font parameter
-    // This method is fairly dirty and relies a bit on guesswork, but it allows spaces and quotes to be used
-    // without having to worry about how the initial dialog command handles it
-    const char *pCmd = args.GetCommandString();
-    char *pSmallFont = V_strstr( pCmd, args.Arg( 3 )[0] != '0' ? " 1 " : " 0 " );
-    if (!pSmallFont)
-    {
-        // Look for quotes instead
-        pSmallFont = V_strstr( pCmd, args.Arg( 3 )[0] != '0' ? " \"1\" " : " \"0\" " );
-        if (pSmallFont)
-            pCmd += (pSmallFont - pCmd) + 5;
-        else
-        {
-            // Give up and use the 4th argument
-            pCmd = args.Arg( 4 );
-        }
-    }
-    else
-    {
-        pCmd += (pSmallFont - pCmd) + 3;
-    }
-
-    new GamepadUIGenericConfirmationPanel( pParent, "GenericConfirmationPanel", args.Arg(1), args.Arg(2),
+    // TODO: Parent to current frame
+    const char *pCmd = args.Arg( 4 );
+    new GamepadUIGenericConfirmationPanel( GamepadUI::GetInstance().GetBasePanel(), "GenericConfirmationPanel", args.Arg(1), args.Arg(2),
     [pCmd]()
     {
-        GamepadUI::GetInstance().GetEngineClient()->ClientCmd_Unrestricted( pCmd );
+        // Replace '' with quotes
+        char szCmd[512];
+        V_StrSubst( pCmd, "''", "\"", szCmd, sizeof(szCmd) );
+
+        GamepadUI::GetInstance().GetEngineClient()->ClientCmd_Unrestricted( szCmd );
     }, args.Arg(3)[0] != '0', true );
 }

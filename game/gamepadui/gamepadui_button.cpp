@@ -5,6 +5,8 @@
 #include "vgui/IVGui.h"
 #include "vgui/ISurface.h"
 
+#include "../../public/vgui_controls/Panel.h"
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 

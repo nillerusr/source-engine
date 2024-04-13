@@ -35,6 +35,13 @@ public:
         m_nId = vgui::surface()->CreateNewTextureID();
         vgui::surface()->DrawSetTextureFile( m_nId, pName, true, false );
     }
+
+    void  GetImageSize(int& width, int& heigth)
+    {
+        vgui::surface()->DrawGetTextureSize(m_nId, width, heigth);
+
+    }
+
     void SetTGAImage( const char* pName )
     {
         Cleanup();
@@ -63,5 +70,6 @@ public:
 private:
     int m_nId = -1;
 };
+
 
 #endif // GAMEPADUI_IMAGE_H

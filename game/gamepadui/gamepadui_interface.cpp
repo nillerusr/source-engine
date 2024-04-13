@@ -82,7 +82,7 @@ void GamepadUI::Initialize( CreateInterfaceFn factory )
     m_pAnimationController = new vgui::AnimationController( m_pBasePanel );
     m_pAnimationController->SetProportional( false );
 
-    GetMainMenu()->Activate();
+    //GetMainMenu()->Activate();
 }
 
 void GamepadUI::Shutdown()
@@ -108,6 +108,14 @@ void GamepadUI::OnUpdate( float flFrametime )
 {
     if ( m_pAnimationController )
         m_pAnimationController->UpdateAnimations( GetTime() );
+
+    static bool tempNumDraw = true;
+
+    if (ConVarRef("cl_gamepadui_mainmenu_draw").GetBool() && tempNumDraw)
+    {
+        GetMainMenu()->Activate();
+        tempNumDraw=false;
+    }
 }
 
 void GamepadUI::OnLevelInitializePreEntity()
@@ -240,16 +248,6 @@ void GamepadUI::GetSizingPanelOffset( int &nX, int &nY ) const
     if (!pPanel)
         return;
     pPanel->GetPos( nX, nY );
-}
-
-GamepadUIFrame *GamepadUI::GetCurrentFrame() const
-{
-    return m_pBasePanel->GetCurrentFrame();
-}
-
-vgui::VPANEL GamepadUI::GetCurrentFrameVPanel() const
-{
-    return m_pBasePanel->GetCurrentFrame()->GetVPanel();
 }
 
 #ifdef MAPBASE

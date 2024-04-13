@@ -23,9 +23,8 @@ public:
     virtual void OnLevelShutdown() = 0;
 	
     virtual void VidInit() = 0;
-
 #ifdef STEAM_INPUT
-    // TODO: Replace with proper singleton interface in the future
+    //// TODO: Replace with proper singleton interface in the future
     virtual void SetSteamInput( ISource2013SteamInput *pSteamInput ) = 0;
 #endif
 

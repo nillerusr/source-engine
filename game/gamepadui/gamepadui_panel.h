@@ -5,7 +5,7 @@
 #endif
 
 #include "gamepadui_interface.h"
-#include "vgui_controls/Panel.h"
+#include "../../public/vgui_controls/Panel.h"
 
 // There are a lot of really sucky macros in here
 // solely because VGUI base class stuff completely

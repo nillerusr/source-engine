@@ -18,6 +18,7 @@ namespace GamepadUIMenuStates
         Count
     };
 }
+
 using GamepadUIMenuState = GamepadUIMenuStates::GamepadUIMenuState;
 
 class GamepadUIMainMenu : public GamepadUIFrame
@@ -39,6 +40,7 @@ public:
     void LayoutMainMenu();
     void PaintLogo();
     void OnMenuStateChanged();
+
 
     void OnKeyCodeReleased( vgui::KeyCode code );
 
@@ -62,16 +64,35 @@ private:
     GamepadUIString m_LogoText[ 2 ];
     GamepadUIImage  m_LogoImage;
 
+    /////// Animation stuff
+    GAMEPADUI_PANEL_PROPERTY(float, m_flButtonsStartOffsetX, "Buttons.OffsetX.Start", "0", SchemeValueTypes::ProportionalFloat);
+    GAMEPADUI_PANEL_PROPERTY(float, m_flButtonsAnimTime, "Buttons.AnimTime", "1", SchemeValueTypes::Float);
+    GAMEPADUI_PANEL_PROPERTY(float, m_flButtonsAnimTimeInGame, "Buttons.AnimTime.InGame", "1", SchemeValueTypes::Float);
+    GAMEPADUI_PANEL_PROPERTY(float, m_flButtonsAnimPower, "Buttons.AnimPower", "1", SchemeValueTypes::Float);
+    GAMEPADUI_PANEL_PROPERTY(float, m_flButtonsAnimPowerInGame, "Buttons.AnimPower.InGame", "1", SchemeValueTypes::Float);
+
+    GAMEPADUI_PANEL_PROPERTY(float, m_flLogoStartOffsetX, "Logo.OffsetX.Start", "0", SchemeValueTypes::ProportionalFloat);
+    GAMEPADUI_PANEL_PROPERTY(float, m_flLogoAnimTime, "Logo.AnimTime", "1", SchemeValueTypes::Float);
+    GAMEPADUI_PANEL_PROPERTY(float, m_flLogoAnimTimeInGame, "Logo.AnimTime.InGame", "1", SchemeValueTypes::Float);
+    GAMEPADUI_PANEL_PROPERTY(float, m_flLogoAnimPower, "Logo.AnimPower", "1", SchemeValueTypes::Float);
+    GAMEPADUI_PANEL_PROPERTY(float, m_flLogoAnimPowerInGame, "Logo.AnimPower.InGame", "1", SchemeValueTypes::Float);
+    ///////
+
     GAMEPADUI_PANEL_PROPERTY( float, m_flButtonSpacing,  "Buttons.Space",    "0", SchemeValueTypes::ProportionalFloat );
-    GAMEPADUI_PANEL_PROPERTY( float, m_flButtonsOffsetX, "Buttons.OffsetX",  "0", SchemeValueTypes::ProportionalFloat );
+    GAMEPADUI_PANEL_PROPERTY( float, m_flButtonsOffsetX, "Buttons.OffsetX", "0", SchemeValueTypes::ProportionalFloat );
+
     GAMEPADUI_PANEL_PROPERTY( float, m_flButtonsOffsetYMenu,   "Buttons.OffsetY.MainMenu",  "0", SchemeValueTypes::ProportionalFloat );
     GAMEPADUI_PANEL_PROPERTY( float, m_flButtonsOffsetYInGame, "Buttons.OffsetY.InGame",    "0", SchemeValueTypes::ProportionalFloat );
 
     GAMEPADUI_PANEL_PROPERTY( float, m_flLogoOffsetX,       "Logo.OffsetX",          "0", SchemeValueTypes::ProportionalFloat );
+
     GAMEPADUI_PANEL_PROPERTY( float, m_flLogoOffsetYMenu,   "Logo.OffsetY.MainMenu", "0", SchemeValueTypes::ProportionalFloat );
     GAMEPADUI_PANEL_PROPERTY( float, m_flLogoOffsetYInGame, "Logo.OffsetY.InGame",   "0", SchemeValueTypes::ProportionalFloat );
+    GAMEPADUI_PANEL_PROPERTY(float, m_flLogoSizeX, "Logo.SizeX", "0", SchemeValueTypes::ProportionalFloat);
+    GAMEPADUI_PANEL_PROPERTY(float, m_flLogoSizeY, "Logo.SizeY", "0", SchemeValueTypes::ProportionalFloat);
 
     GAMEPADUI_PANEL_PROPERTY( Color, m_colLogoColor, "Logo", "255 255 255 255", SchemeValueTypes::Color );
+    GAMEPADUI_PANEL_PROPERTY( Color, m_colLogoNewColor, "NewLogo", "255 134 44 255", SchemeValueTypes::Color );
 
     vgui::HFont m_hLogoFont;
 
