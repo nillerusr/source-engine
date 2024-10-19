@@ -234,7 +234,7 @@ void DrawParticleLitGeneric_DX9( CBaseVSShader *pShader, IMaterialVar** params,
 			pShader->BindTexture( SHADER_SAMPLER7, info.m_nFlashlightTexture, info.m_nFlashlightTextureFrame );
 		}
 
-		LightState_t lightState = { 0, false, false };
+		LightState_t lightState = LightState_t();
 		if( !hasFlashlight )
 			pShaderAPI->GetDX9LightState( &lightState );
 

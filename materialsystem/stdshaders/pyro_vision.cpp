@@ -638,7 +638,7 @@ BEGIN_VS_SHADER( pyro_vision, "Help for pyro vision" )
 			DynamicCmdsOut.SetPixelShaderConstant( 12, vParms.Base() );
 
 			int numBones = pShaderAPI->GetCurrentNumBones();
-			LightState_t lightState = { 0, false, false };
+			LightState_t lightState = LightState_t();
 			if ( bVertexLit && !bFullBright )
 			{
 				pShaderAPI->GetDX9LightState( &lightState );

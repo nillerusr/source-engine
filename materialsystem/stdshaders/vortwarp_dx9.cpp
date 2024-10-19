@@ -310,7 +310,7 @@ void DrawVortWarp_DX9( CBaseVSShader *pShader, IMaterialVar** params, IShaderDyn
 		}
 
 		// Set up light combo state
-		LightState_t lightState = {0, false, false};
+		LightState_t lightState = LightState_t();
 		if ( bVertexLitGeneric && !hasFlashlight )
 		{
 			pShaderAPI->GetDX9LightState( &lightState );

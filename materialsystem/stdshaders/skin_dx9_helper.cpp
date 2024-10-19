@@ -611,7 +611,7 @@ void DrawSkin_DX9_Internal( CBaseVSShader *pShader, IMaterialVar** params, IShad
 			}
 		}
 
-		LightState_t lightState = { 0, false, false };
+		LightState_t lightState = LightState_t();
 		bool bFlashlightShadows = false;
 		if( bHasFlashlight )
 		{
