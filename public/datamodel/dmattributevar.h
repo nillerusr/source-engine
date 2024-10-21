@@ -368,8 +368,9 @@ protected:
 
 	const T& Value() const { return m_Storage; }
 	T& Value( ) { return m_Storage; }
-	const D& Data() const { return m_Storage; }
 	D& Data( ) { return m_Storage; }
+public:
+	const D& Data() const { return m_Storage; }
 
 private:
 	D m_Storage;
@@ -385,8 +386,9 @@ protected:
 	void Attach( void *pData ) { m_pStorage = (D*)pData; }
 	const T& Value() const { return *m_pStorage; }
 	T& Value( ) { return *m_pStorage; }
-	const D& Data() const { return *m_pStorage; }
 	D& Data( ) { return *m_pStorage; }
+public:
+	const D& Data() const { return *m_pStorage; }
 
 private:
 	D* m_pStorage;
@@ -1152,7 +1154,7 @@ inline void CDmaElement<T>::Init( CDmElement *pOwner, const char *pAttributeName
 template <class T>
 inline UtlSymId_t CDmaElement<T>::GetElementType() const
 {
-	return this->Data().m_ElementType;
+	return static_cast<CDmaDataInternal<const T>*>(this)->Data().m_ElementType;
 }
 
 template <class T>
@@ -1350,7 +1352,8 @@ inline int CDmaStringArrayBase<B>::InsertBefore( int elem, const char *pValue )
 template< class E, class B > 
 inline UtlSymId_t CDmaElementArrayConstBase<E,B>::GetElementType() const
 {
-	return this->Data().m_ElementType;
+	// Fuck MSVC, anyway I'm unsure about if this code was called
+	return static_cast<const B*>(this)->Data().m_ElementType;
 }
 
 template< class E, class B >

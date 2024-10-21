@@ -279,9 +279,6 @@ def define_platform(conf):
 			'NDEBUG'
 		])
 
-	conf.define('GIT_COMMIT_HASH', conf.env.GIT_VERSION)
-
-
 def options(opt):
 	grp = opt.add_option_group('Common options')
 
@@ -518,7 +515,7 @@ def configure(conf):
 		]
 
 		flags += ['-funwind-tables', '-g']
-	elif conf.env.COMPILER_CC != 'msvc' and conf.env.DEST_OS != 'darwin' and conf.env.DEST_CPU in ['x86', 'x86_64']:
+	elif conf.env.COMPILER_CC != 'msvc' and conf.env.DEST_OS not in ['darwin', 'freebsd'] and conf.env.DEST_CPU in ['x86', 'x86_64']:
 		flags += ['-march=core2']
 
 	if conf.env.DEST_CPU in ['x86', 'x86_64']:
