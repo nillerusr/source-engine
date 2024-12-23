@@ -322,6 +322,9 @@ def options(opt):
 	grp.add_option('--sanitize', action = 'store', dest = 'SANITIZE', default = '',
 		help = 'build with sanitizers [default: %default]')
 
+	grp.add_option('--build-flags', action = 'store', dest = 'BUILD_FLAGS', type = 'string',
+		help = 'specify build flags (both cflags and cxxflags) separated by a comma. Note that this does NOT override flags produced automatically by waf!')
+
 	opt.load('compiler_optimizations subproject')
 
 	opt.load('xcompile compiler_cxx compiler_c sdl2 clang_compilation_database strip_on_install_v2 waf_unit_test subproject')
@@ -598,6 +601,13 @@ def configure(conf):
 		cxxflags += conf.filter_cxxflags(compiler_optional_flags, cflags)
 		cflags += conf.filter_cflags(compiler_optional_flags + c_compiler_optional_flags, cflags)
 
+	preferred_flags = conf.options.BUILD_FLAGS
+	if preferred_flags:
+		preferred_flags = preferred_flags.split(',')
+		cflags += preferred_flags
+		cxxflags += preferred_flags
+		linkflags += preferred_flags
+    	
 	conf.env.append_unique('CFLAGS', cflags)
 	conf.env.append_unique('CXXFLAGS', cxxflags)
 	conf.env.append_unique('LINKFLAGS', linkflags)
