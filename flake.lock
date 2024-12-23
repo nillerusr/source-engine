@@ -1,5 +1,37 @@
 {
   "nodes": {
+    "ivp-submodule": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1703378318,
+        "narHash": "sha256-FA5NrzumsKADWmC2JeUiYShHE7LoEWH8E92R5IEana0=",
+        "owner": "nillerusr",
+        "repo": "source-physics",
+        "rev": "47533475e01cbff05fbc3bbe8b4edc485f292cea",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nillerusr",
+        "repo": "source-physics",
+        "type": "github"
+      }
+    },
+    "lib-submodule": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1663437616,
+        "narHash": "sha256-tpK15gJOvFpjDqFAIQ1lyaCW81R1Sxd39sX2xHsWX3o=",
+        "owner": "nillerusr",
+        "repo": "source-engine-libs",
+        "rev": "86a66ee92d9fda0a09f54a435e850faa7ab5d0fa",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nillerusr",
+        "repo": "source-engine-libs",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1734566935,
@@ -17,7 +49,26 @@
     },
     "root": {
       "inputs": {
-        "nixpkgs": "nixpkgs"
+        "ivp-submodule": "ivp-submodule",
+        "lib-submodule": "lib-submodule",
+        "nixpkgs": "nixpkgs",
+        "thirdparty-submodule": "thirdparty-submodule"
+      }
+    },
+    "thirdparty-submodule": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1694693388,
+        "narHash": "sha256-d/vKz9gCwXd2fyxCxU4xE/3hb7A7mCO5AUyAD1vCIuY=",
+        "owner": "nillerusr",
+        "repo": "source-thirdparty",
+        "rev": "3b2f5275072a0acdbac410f14f750b690b9b4c13",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nillerusr",
+        "repo": "source-thirdparty",
+        "type": "github"
       }
     }
   },

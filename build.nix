@@ -1,12 +1,9 @@
 { callPackage
 , symlinkJoin
+, hl2-unwrapped ? callPackage ./hl2-unwrapped.nix { }
+, hl2-wrapper ? callPackage ./hl2-wrapper.nix { inherit hl2-unwrapped; }
 }:
 
-let
-  # Strangely, these are overridable
-  hl2-unwrapped = callPackage ./hl2-unwrapped.nix { };
-  hl2-wrapper = callPackage ./hl2-wrapper.nix { inherit hl2-unwrapped; };
-in
 symlinkJoin {
   name = "hl2";
 
