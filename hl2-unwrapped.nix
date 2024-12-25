@@ -43,6 +43,6 @@ stdenv.mkDerivation {
   wafConfigureFlags = [
     "-T fastnative"
     "--disable-warns"
-    "--build-flags=-Wno-error=format-security,-O3"
+    "--build-flags=-Wno-error=format-security"
   ] ++ extraWafConfigureFlags;
 }

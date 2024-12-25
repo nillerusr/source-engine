@@ -53,6 +53,10 @@ writeShellScriptBin "hl2-wrapper" ''
         resource_path="$2"
 	shift 2
         ;;
+      -p | --parameters)	# Sets parameters passed to hl2 launcher (encapsulated with quotes)
+        launcher_parameters="$2"
+        shift 2
+        ;;
       --impermanent) 		# Don't save newly created files that are not in symlimked folders (you probably don't want to use this)
         impermanent=true
 	shift 1
@@ -101,5 +105,5 @@ writeShellScriptBin "hl2-wrapper" ''
 
   trap cleanup EXIT
 
-  ( cd $tmp_dir ; ./hl2_launcher )
+  ( cd $tmp_dir ; ./hl2_launcher $launcher_parameters )
 ''
