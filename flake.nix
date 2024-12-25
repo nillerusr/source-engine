@@ -33,9 +33,30 @@
     };
   in
   {
+    # Install the game on your own computer
     packages.x86_64-linux = {
       hl2 = pkgs.callPackage ./build.nix { inherit hl2-unwrapped; };
       default = self.packages.x86_64-linux.hl2;
+    };
+
+    # Build the game for others
+    devShells.default = pkgs.mkShell rec {
+      nativeBuildInputs = with pkgs; [
+        makeWrapper
+        SDL2
+        freetype
+        fontconfig
+        zlib
+        bzip2
+        libjpeg
+        libpng
+        curl
+        openal
+        libopus
+        pkg-config
+        gcc
+        python3
+      ];
     };
   };
 }
