@@ -94,6 +94,11 @@ CBaseCombatWeapon::CBaseCombatWeapon() : BASECOMBATWEAPON_DERIVED_FROM()
 
 	m_hWeaponFileInfo = GetInvalidWeaponInfoHandle();
 
+#ifdef GAME_DLL
+	m_bLowered = false;
+	m_flRaiseTime = gpGlobals->curtime;
+#endif
+
 #if defined( TF_DLL )
 	UseClientSideAnimation();
 #endif
