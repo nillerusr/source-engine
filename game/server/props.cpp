@@ -6071,17 +6071,17 @@ bool UTIL_CreateScaledPhysObject( CBaseAnimating *pInstance, float flScale )
 	pInstance->VPhysicsDestroyObject();
 	pInstance->VPhysicsSetObject( pNewObject );
 
+	// Scale the base model as well
+	pInstance->SetModelScale( flScale );
+
 	// Increase our model bounds
 	const model_t *pModel = modelinfo->GetModel( pInstance->GetModelIndex() );
 	if ( pModel )
 	{
 		Vector mins, maxs;
 		modelinfo->GetModelBounds( pModel, mins, maxs );
-		pInstance->SetCollisionBounds( mins*flScale, maxs*flScale );
+		pInstance->SetCollisionBounds( mins, maxs );
 	}
-
-	// Scale the base model as well
-	pInstance->SetModelScale( flScale );
 
 	if ( pInstance->GetParent() )
 	{
