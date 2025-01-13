@@ -7,6 +7,7 @@
 
 #ifndef OPTIONSDIALOG_H
 #define OPTIONSDIALOG_H
+#include "OptionsSubModification.h"
 #ifdef _WIN32
 #pragma once
 #endif
@@ -37,6 +38,7 @@ public:
 private:
 	class COptionsSubAudio *m_pOptionsSubAudio;
 	class COptionsSubVideo *m_pOptionsSubVideo;
+	class COptionsSubModification *m_pOptionsSubModification;
 	vgui::PropertyPage *m_pOptionsSubMultiplayer;
 };
 

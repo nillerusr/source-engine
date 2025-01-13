@@ -18,10 +18,10 @@
 
 
 // Armor given by a battery
-#define MAX_NORMAL_BATTERY	100
+#define MAX_NORMAL_BATTERY	200
 
 // Ammo counts given by ammo items
-#define SIZE_AMMO_PISTOL			20
+#define SIZE_AMMO_PISTOL		    18
 #define SIZE_AMMO_PISTOL_LARGE		100
 #define SIZE_AMMO_SMG1				45
 #define SIZE_AMMO_SMG1_LARGE		225
@@ -31,7 +31,7 @@
 #define SIZE_AMMO_SMG1_GRENADE		1
 #define SIZE_AMMO_BUCKSHOT			20
 #define SIZE_AMMO_357				6
-#define SIZE_AMMO_357_LARGE			20
+#define SIZE_AMMO_357_LARGE			80
 #define SIZE_AMMO_CROSSBOW			6
 #define	SIZE_AMMO_AR2_ALTFIRE		1
 

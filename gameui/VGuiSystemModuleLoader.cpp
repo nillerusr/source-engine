@@ -57,9 +57,7 @@ CVGuiSystemModuleLoader::CVGuiSystemModuleLoader()
 //-----------------------------------------------------------------------------
 // Purpose: Destructor
 //-----------------------------------------------------------------------------
-CVGuiSystemModuleLoader::~CVGuiSystemModuleLoader()
-{
-}
+CVGuiSystemModuleLoader::~CVGuiSystemModuleLoader() = default;
 
 //-----------------------------------------------------------------------------
 // Purpose: returns true if the module loader has acquired the platform mutex and loaded the modules

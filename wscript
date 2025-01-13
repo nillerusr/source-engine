@@ -538,7 +538,7 @@ def configure(conf):
 	else:
 		cflags += [
 			'/I'+os.path.abspath('.')+'/thirdparty/SDL',
-			'/arch:SSE' if conf.env.DEST_CPU == 'x86' else '/arch:AVX',
+			#'/arch:SSE' if conf.env.DEST_CPU == 'x86' else '/arch:AVX', (no AVX Support)
 			'/GF',
 			'/Gy',
 			'/fp:fast',
@@ -548,7 +548,6 @@ def configure(conf):
 			'/TP',
 			'/EHsc'
 		]
-
 		if conf.options.BUILD_TYPE == 'debug':
 			linkflags += [
 				'/FORCE:MULTIPLE',

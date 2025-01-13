@@ -12,8 +12,8 @@
 #include "hl1_clientscoreboard.h"
 
 // default FOV for HL1
-ConVar default_fov( "default_fov", "90", FCVAR_CHEAT );
-ConVar fov_desired( "fov_desired", "90", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets the base field-of-view.", true, 75.0, true, 110.0 );
+ConVar default_fov( "default_fov", "110", FCVAR_CHEAT );
+ConVar fov_desired( "fov_desired", "90", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets the base field-of-view.", true, 75.0, true, 130.0 );
 
 // The current client mode. Always ClientModeNormal in HL.
 IClientMode *g_pClientMode = NULL;
@@ -32,13 +32,9 @@ public:
 	virtual void	LevelShutdown( void );
 };
 
-CHLModeManager::CHLModeManager( void )
-{
-}
+CHLModeManager::CHLModeManager( void ) = default;
 
-CHLModeManager::~CHLModeManager( void )
-{
-}
+CHLModeManager::~CHLModeManager( void ) = default;
 
 void CHLModeManager::Init( void )
 {

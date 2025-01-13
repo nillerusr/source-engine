@@ -29,6 +29,7 @@
 #include "OptionsSubMultiplayer.h"
 #include "OptionsSubDifficulty.h"
 #include "OptionsSubPortal.h"
+#include "OptionsSubModification.h"
 #ifdef WIN32
 // NVNT haptic configuration dialog
 #include "OptionsSubHaptics.h"
@@ -94,7 +95,10 @@ COptionsDialog::COptionsDialog(vgui::Panel *parent) : PropertyDialog(parent, "Op
 	m_pOptionsSubAudio = new COptionsSubAudio(this);
 	AddPage(m_pOptionsSubAudio, "#GameUI_Audio");
 	m_pOptionsSubVideo = new COptionsSubVideo(this);
+	
 	AddPage(m_pOptionsSubVideo, "#GameUI_Video");
+    AddPage(new COptionsSubModification(this), "ModInfo");
+	AddPage(new COptionsSubPortal(this), "#GameUI_Portal");
 
 	if ( !ModInfo().IsSinglePlayerOnly() ) 
 	{
@@ -119,9 +123,7 @@ COptionsDialog::COptionsDialog(vgui::Panel *parent) : PropertyDialog(parent, "Op
 //-----------------------------------------------------------------------------
 // Purpose: Destructor
 //-----------------------------------------------------------------------------
-COptionsDialog::~COptionsDialog()
-{
-}
+COptionsDialog::~COptionsDialog() = default;
 
 //-----------------------------------------------------------------------------
 // Purpose: Brings the dialog to the fore

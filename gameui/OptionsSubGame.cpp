@@ -22,9 +22,7 @@ COptionsSubGame::COptionsSubGame( vgui::Panel *parent, const char *name ) : Base
 //-----------------------------------------------------------------------------
 // Purpose: Destructor
 //-----------------------------------------------------------------------------
-COptionsSubGame::~COptionsSubGame()
-{
-}
+COptionsSubGame::~COptionsSubGame() = default;
 
 void COptionsSubGame::OnClose( void )
 {

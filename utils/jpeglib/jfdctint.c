@@ -1739,7 +1739,7 @@ jpeg_fdct_13x13 (DCTELEM * data, JSAMPARRAY sample_data, JDIMENSION start_col)
 	 MULTIPLY(tmp1 - tmp5, FIX(0.239678205));  /* (c8-c12)/2 */
     z2 = MULTIPLY(tmp0 + tmp2, FIX(0.073342435)) - /* (c4-c6)/2 */
 	 MULTIPLY(tmp3 + tmp4, FIX(0.709910013)) + /* (c2+c10)/2 */
-	 MULTIPLY(tmp1 + tmp5, FIX(0.368787494));  /* (c8+c12)/2 */
+	 MULTIPLY(tmp1 + t, FIX(0.368787494));  /* (c8+c12)/2 */
 
     dataptr[DCTSIZE*4] = (DCTELEM) DESCALE(z1 + z2, CONST_BITS+1);
     dataptr[DCTSIZE*6] = (DCTELEM) DESCALE(z1 - z2, CONST_BITS+1);

@@ -93,6 +93,7 @@ def build(bld):
 		'OptionsSubPortal.cpp',
 		'OptionsSubVideo.cpp',
 		'OptionsSubVoice.cpp',
+		'OptionsSubModification.cpp', #added new page
 		'../public/tier0/memoverride.cpp',
 	]
 

@@ -24,6 +24,7 @@
 #include "pixelwriter.h"
 #include "tier2/tier2.h"
 #include "platform.h"
+#include <iostream>
 
 
 #if defined ( WIN32 )
@@ -340,8 +341,8 @@ VideoResult_t CQuickTimeVideoSubSystem::PlayVideoFileFullScreen( const char *fil
 
 	// what size do we set the output rect to?
 	// Integral scaling is much faster, so always scale the video as such
-	int	nNewWidth  = (int) theQTMovieRect.right;
-	int nNewHeight = (int) theQTMovieRect.bottom;
+	int	nNewWidth  = static_cast<int>theQTMovieRect.right;
+	int nNewHeight = static_cast<int>theQTMovieRect.bottom;
 
 	// Determine the window we are rendering video into
 	int displayWidth  = windowWidth;
