@@ -7,7 +7,7 @@
 //=============================================================================//
 #include "OptionsSubMouse.h"
 // #include "CommandCheckButton.h"
-#include "KeyToggleCheckButton.h"
+//#include "KeyToggleCheckButton.h" (Not used direcly)
 #include "CvarNegateCheckButton.h"
 #include "CvarToggleCheckButton.h"
 #include "cvarslider.h"

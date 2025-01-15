@@ -99,7 +99,7 @@ COptionsDialog::COptionsDialog(vgui::Panel *parent) : PropertyDialog(parent, "Op
 	AddPage(m_pOptionsSubVideo, "#GameUI_Video");
     AddPage(new COptionsSubModification(this), "ModInfo");
 	AddPage(new COptionsSubPortal(this), "#GameUI_Portal");
-
+	
 	if ( !ModInfo().IsSinglePlayerOnly() ) 
 	{
 		AddPage(new COptionsSubVoice(this), "#GameUI_Voice");

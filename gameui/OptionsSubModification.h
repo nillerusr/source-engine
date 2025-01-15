@@ -51,7 +51,8 @@ protected:
 	void UpdateLabel(CCvarSlider *slider, vgui::TextEntry *label);
 
 private:
-	CCvarToggleCheckButton *m_pReverseTouchCheckBox;
+    // Get from OptionsSubTouchSettings.cpp
+	/* CCvarToggleCheckButton *m_pReverseTouchCheckBox;
 	CCvarToggleCheckButton *m_pTouchFilterCheckBox;
 	CCvarToggleCheckButton *m_pTouchRawCheckBox;
 	CCvarToggleCheckButton *m_pTouchAccelerationCheckBox;
@@ -73,7 +74,7 @@ private:
 	CCvarSlider *m_pTouchPitchSensitivitySlider;
 	vgui::Label *m_pTouchPitchSensitivityPreLabel;
 	vgui::TextEntry *m_pTouchYawSensitivityLabel;
-	vgui::TextEntry *m_pTouchPitchSensitivityLabel;
+	vgui::TextEntry *m_pTouchPitchSensitivityLabel; */
 	vgui::TextEntry *m_aspectRatioLabel;
 	CCvarSlider *m_pEnableModificationsCheckBox;
 };

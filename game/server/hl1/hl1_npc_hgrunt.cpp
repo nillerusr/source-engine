@@ -2557,7 +2557,14 @@ AI_BEGIN_CUSTOM_NPC( monster_human_grunt, CNPC_HGrunt )
 
 AI_END_CUSTOM_NPC()
 
+// Nothing , just shit
+/* void MortarSpray(const Vector& position, const Vector& direction, int spriteModel, int count)
+{
+	CPVSFilter filter(position);
 
+	te->SpriteSpray(filter, 0.0, &position, &direction, spriteModel, 200, 80, count);
+}
+ */
 //=========================================================
 // DEAD HGRUNT PROP
 //=========================================================

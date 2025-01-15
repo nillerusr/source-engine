@@ -72,9 +72,7 @@ COptionsSubAudio::COptionsSubAudio(vgui::Panel *parent) : PropertyPage(parent, N
 //-----------------------------------------------------------------------------
 // Purpose: Destructor
 //-----------------------------------------------------------------------------
-COptionsSubAudio::~COptionsSubAudio()
-{
-}
+COptionsSubAudio::~COptionsSubAudio() = default;
 
 //-----------------------------------------------------------------------------
 // Purpose: Reloads data

@@ -88,8 +88,8 @@ enum
 
 // Attack distance constants
 #define	BIG_ATTACKDIST		170
-#define BIG_MORTARDIST		800
-#define BIG_MAXCHILDREN		6			// Max # of live headcrab children
+#define BIG_MORTARDIST		100
+#define BIG_MAXCHILDREN		8			// Max # of live headcrab children
 
 
 #define bits_MEMORY_CHILDPAIR		(bits_MEMORY_CUSTOM1)

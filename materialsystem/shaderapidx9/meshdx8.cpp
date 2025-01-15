@@ -3607,12 +3607,12 @@ bool CDynamicMeshDX8::NeedsVertexFormatReset( VertexFormat_t fmt ) const
 //-----------------------------------------------------------------------------
 // Locks/unlocks the entire mesh
 //-----------------------------------------------------------------------------
-bool CDynamicMeshDX8::HasEnoughRoom( int nVertexCount, int nIndexCount ) const
+bool CDynamicMeshDX8::HasEnoughRoom( int nVertexCount, int nIndexCount ) const 
 {
 	if ( g_pShaderDeviceDx8->IsDeactivated() )
 		return false;
 
-	Assert( m_pVertexBuffer != NULL );
+	//Assert( m_pVertexBuffer != NULL );
 
 	// We need space in both the vertex and index buffer
 	return m_pVertexBuffer->HasEnoughRoom( nVertexCount ) && 

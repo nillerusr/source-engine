@@ -95,16 +95,12 @@ protected:
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-ClientModeHL1Normal::ClientModeHL1Normal()
-{
-}
+ClientModeHL1Normal::ClientModeHL1Normal() = default;
 
 //-----------------------------------------------------------------------------
 // Purpose: If you don't know what a destructor is by now, you are probably going to get fired
 //-----------------------------------------------------------------------------
-ClientModeHL1Normal::~ClientModeHL1Normal()
-{
-}
+ClientModeHL1Normal::~ClientModeHL1Normal() = default;
 
 void ClientModeHL1Normal::InitViewport()
 {
