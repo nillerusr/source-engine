@@ -233,6 +233,10 @@ $Project "GameUI"
 		$File	"OptionsSubVideo.h"
 		$File	"OptionsSubVoice.cpp"
 		$File	"OptionsSubVoice.h"
+		$File   "OptionsSubModificcation.cpp"
+		$File   "OptionsSubModificcation.h"
+		
+
 	}
 	
 	$Folder	"Link Libraries"

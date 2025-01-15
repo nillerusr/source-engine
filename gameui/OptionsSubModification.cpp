@@ -10,11 +10,13 @@
 #include "OptionsSubModification.h"
 #include "CvarSlider.h"
 
+#include "CvarToggleCheckButton.h"
 #include "EngineInterface.h"
 
 #include <KeyValues.h>
 #include <vgui/IScheme.h>
 #include "tier1/convar.h"
+#include "vgui_controls/Controls.h"
 #include <vgui_controls/TextEntry.h>
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -25,7 +27,7 @@ using namespace vgui;
 COptionsSubModification::COptionsSubModification(vgui::Panel *parent) : PropertyPage(parent, nullptr)
 {
     // Create the slider for aspect ratio adjustments
-    m_pEnableModificationsCheckBox = new CCvarSlider(
+    m_pAspectRatioSlider = new CCvarSlider(
         this,
         "AspectRatioSlider",
         "Aspect Ratio",
@@ -33,13 +35,17 @@ COptionsSubModification::COptionsSubModification(vgui::Panel *parent) : Property
         "r_aspectratio",
         true // Allow fractional values
     );
+    
     m_aspectRatioLabel = new TextEntry(this, "AspectRatioLabel");
     m_aspectRatioLabel->AddActionSignalTarget(this);
 
+    m_pChangeCheatFlag = new CCvarToggleCheckButton(
+       this , "ChangeCheatFlag" , "Change Cheat Flag" , "sv_cheats"
+    );
     // Load settings from the associated resource file
     LoadControlSettings("Resource\\OptionsSubModification.res");
 
-    UpdateLabel(m_pEnableModificationsCheckBox, m_aspectRatioLabel);
+    UpdateLabel(m_pAspectRatioSlider, m_aspectRatioLabel);
 }
 COptionsSubModification::~COptionsSubModification() = default;
 
@@ -54,7 +60,7 @@ void COptionsSubModification::OnTextChanged(Panel *panel)
         int numParsed = sscanf(buf, "%f", &fValue);
         if ((numParsed == 1) && (fValue >= 0.0f))
         {
-            m_pEnableModificationsCheckBox->SetSliderValue(fValue);
+            m_pAspectRatioSlider->SetSliderValue(fValue);
             PostActionSignal(new KeyValues("ApplyButtonEnable"));
         }
     }
@@ -64,8 +70,8 @@ void COptionsSubModification::OnTextChanged(Panel *panel)
 //-----------------------------------------------------------------------------
 void COptionsSubModification::OnResetData()
 {
-    m_pEnableModificationsCheckBox->Reset();
-    // m_aspectRatioLabel->Reset();
+    m_pAspectRatioSlider->Reset();
+    m_pChangeCheatFlag->Reset();
 }
 
 //-----------------------------------------------------------------------------
@@ -73,8 +79,9 @@ void COptionsSubModification::OnResetData()
 //-----------------------------------------------------------------------------
 void COptionsSubModification::OnApplyChanges()
 {
-    m_pEnableModificationsCheckBox->ApplyChanges();
-    // m_aspectRatioLabel->ApplyChanges();
+    m_pAspectRatioSlider->ApplyChanges();
+    m_pChangeCheatFlag->ApplyChanges();
+    
 }
 
 //-----------------------------------------------------------------------------
@@ -85,9 +92,9 @@ void COptionsSubModification::OnControlModified(Panel *panel)
     PostActionSignal(new KeyValues("ApplyButtonEnable"));
 
     // Update the label based on slider changes
-    if (panel == m_pEnableModificationsCheckBox && m_pEnableModificationsCheckBox->HasBeenModified())
+    if (panel == m_pAspectRatioSlider && m_pAspectRatioSlider->HasBeenModified())
     {
-        UpdateLabel(m_pEnableModificationsCheckBox, m_aspectRatioLabel);
+        UpdateLabel(m_pAspectRatioSlider, m_aspectRatioLabel);
     }
 }
 
