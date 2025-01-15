@@ -1070,7 +1070,7 @@ COptionsSubVideo::COptionsSubVideo(vgui::Panel *parent) : PropertyPage(parent, N
 		break;
 	}
 #else
-	int iNormalItemID = m_pAspectRatio->AddItem( "lemonparty.org", NULL );
+	int iNormalItemID = m_pAspectRatio->AddItem( "NULL", NULL );
 	m_pAspectRatio->ActivateItem( iNormalItemID );
 
 	m_pGammaButton->SetEnabled(false);

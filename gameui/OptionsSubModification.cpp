@@ -26,6 +26,7 @@ using namespace vgui;
 
 COptionsSubModification::COptionsSubModification(vgui::Panel *parent) : PropertyPage(parent, nullptr)
 {
+#ifndef ANDROID // TODO: Android 
     // Create the slider for aspect ratio adjustments
     m_pAspectRatioSlider = new CCvarSlider(
         this,
@@ -35,10 +36,10 @@ COptionsSubModification::COptionsSubModification(vgui::Panel *parent) : Property
         "r_aspectratio",
         true // Allow fractional values
     );
-    
+ 
     m_aspectRatioLabel = new TextEntry(this, "AspectRatioLabel");
     m_aspectRatioLabel->AddActionSignalTarget(this);
-
+#endif
     m_pChangeCheatFlag = new CCvarToggleCheckButton(
        this , "ChangeCheatFlag" , "Change Cheat Flag" , "sv_cheats"
     );

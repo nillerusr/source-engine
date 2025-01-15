@@ -75,6 +75,7 @@ private:
 	vgui::Label *m_pTouchPitchSensitivityPreLabel;
 	vgui::TextEntry *m_pTouchYawSensitivityLabel;
 	vgui::TextEntry *m_pTouchPitchSensitivityLabel; */
+	
 	vgui::TextEntry *m_aspectRatioLabel;
 	CCvarToggleCheckButton *m_pChangeCheatFlag;
 	CCvarSlider *m_pAspectRatioSlider;

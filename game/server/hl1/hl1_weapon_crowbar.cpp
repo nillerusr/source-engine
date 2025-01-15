@@ -6,8 +6,6 @@
 //=============================================================================//
 
 #include "cbase.h"
-#include "convar.h"
-#include "iconvar.h"
 #include "hl1mp_basecombatweapon_shared.h"
 
 #ifdef CLIENT_DLL
@@ -18,8 +16,6 @@
 #include "player.h"
 #include "soundent.h"
 #endif
-#include "decals.h"
-#include "hl1_basecombatweapon_shared.h"
 
 #include "gamerules.h"
 #include "ammodef.h"
@@ -27,33 +23,29 @@
 #include "in_buttons.h"
 
 #include "vstdlib/random.h"
-//For CrowbarVolume function
-#include <string.h>
 
 extern ConVar sk_plr_dmg_crowbar;
 
-//new conVars for crowbar
 //Crowbar Sounds
-ConVar hl1_crowbar_sound("hl1_crowbar_sound", "1", FCVAR_NONE, NULL);
-ConVar hl1_crowbar_concrete("hl1_crowbar_concrete", "1", FCVAR_NONE, NULL);
-ConVar hl1_crowbar_metal("hl1_crowbar_metal", "1", FCVAR_NONE, NULL);
-ConVar hl1_crowbar_dirt("hl1_crowbar_dirt", "1", FCVAR_NONE, NULL);
-ConVar hl1_crowbar_vent("hl1_crowbar_vent", "1", FCVAR_NONE, NULL);
-ConVar hl1_crowbar_grate("hl1_crowbar_grate", "1", FCVAR_NONE, NULL);
-ConVar hl1_crowbar_tile("hl1_crowbar_tile", "1", FCVAR_NONE, NULL);
-ConVar hl1_crowbar_wood("hl1_crowbar_wood", "1", FCVAR_NONE, NULL);
-ConVar hl1_crowbar_glass("hl1_crowbar_glass", "1", FCVAR_NONE, NULL);
-ConVar hl1_crowbar_computer("hl1_crowbar_computer", "1", FCVAR_NONE, NULL);
+extern ConVar hl1_crowbar_sound;
+extern ConVar hl1_crowbar_concrete;
+extern ConVar hl1_crowbar_metal;
+extern ConVar hl1_crowbar_dirt;
+extern ConVar hl1_crowbar_vent;
+extern ConVar hl1_crowbar_grate;
+extern ConVar hl1_crowbar_tile;
+extern ConVar hl1_crowbar_wood;
+extern ConVar hl1_crowbar_glass;
+extern ConVar hl1_crowbar_computer;
 
-ConVar hl1_crowbar_concrete_vol("hl1_crowbar_concrete_vol", "1", FCVAR_NONE, NULL);
-ConVar hl1_crowbar_metal_vol("hl1_crowbar_metal_vol", "1", FCVAR_NONE, NULL);
-ConVar hl1_crowbar_dirt_vol("hl1_crowbar_dirt_vol", "1", FCVAR_NONE, NULL);
-ConVar hl1_crowbar_vent_vol("hl1_crowbar_vent_vol", "1", FCVAR_NONE, NULL);
-ConVar hl1_crowbar_grate_vol("hl1_crowbar_grate_vol", "1", FCVAR_NONE, NULL);
-ConVar hl1_crowbar_tile_vol("hl1_crowbar_tile_vol", "1", FCVAR_NONE, NULL);
-ConVar hl1_crowbar_wood_vol("hl1_crowbar_wood_vol", "1", FCVAR_NONE, NULL);
-ConVar hl1_crowbar_glass_vol("hl1_crowbar_glass_vol", "1", FCVAR_NONE, NULL);
-ConVar hl1_crowbar_computer_vol("hl1_crowbar_computer_vol", "1", FCVAR_NONE, NULL);
+extern ConVar hl1_crowbar_concrete_vol;
+extern ConVar hl1_crowbar_metal_vol;
+extern ConVar hl1_crowbar_dirt_vol;
+extern ConVar hl1_crowbar_vent_vol;
+extern ConVar hl1_crowbar_grate_vol;
+extern ConVar hl1_crowbar_wood_vol;
+extern ConVar hl1_crowbar_glass_vol;
+extern ConVar hl1_crowbar_computer_vol;
 
 #define	CROWBAR_RANGE		64.0f
 #define	CROWBAR_REFIRE_MISS	0.5f
@@ -64,69 +56,9 @@ ConVar hl1_crowbar_computer_vol("hl1_crowbar_computer_vol", "1", FCVAR_NONE, NUL
 #define CWeaponCrowbar C_WeaponCrowbar
 #endif
 
-
-struct TextureVolume
-{
-    char type;
-    ConVar* enabledVar;
-    ConVar* volumeVar;
-};
 //-----------------------------------------------------------------------------
 // CWeaponCrowbar
 //-----------------------------------------------------------------------------
-// Define texture types and their associated ConVars
-    TextureVolume textureVolumes[] = {
-        {CHAR_TEX_CONCRETE, &hl1_crowbar_concrete, &hl1_crowbar_concrete_vol},
-        {CHAR_TEX_METAL, &hl1_crowbar_metal, &hl1_crowbar_metal_vol},
-        {CHAR_TEX_DIRT, &hl1_crowbar_dirt, &hl1_crowbar_dirt_vol},
-        {CHAR_TEX_VENT, &hl1_crowbar_vent, &hl1_crowbar_vent_vol},
-        {CHAR_TEX_GRATE, &hl1_crowbar_grate, &hl1_crowbar_grate_vol},
-        {CHAR_TEX_TILE, &hl1_crowbar_tile, &hl1_crowbar_tile_vol},
-        {CHAR_TEX_WOOD, &hl1_crowbar_wood, &hl1_crowbar_wood_vol},
-        {CHAR_TEX_GLASS, &hl1_crowbar_glass, &hl1_crowbar_glass_vol},
-        {CHAR_TEX_COMPUTER, &hl1_crowbar_computer, &hl1_crowbar_computer_vol}
-    };
-
-float GetCrowbarVolume(const trace_t &ptr)
-{
-    if (!hl1_crowbar_sound.GetBool())
-        return 0.0f;
-
-    float fvol = 0.0;
-    // Assume we determine the texture type based on entity properties or surface data
-    char mType = 0;
-
-    if (ptr.surface.name)
-    {
-        // Check the surface name for certain substrings to classify texture types
-        if (strstr(ptr.surface.name, "concrete")) mType = CHAR_TEX_CONCRETE;
-        else if (strstr(ptr.surface.name, "metal")) mType = CHAR_TEX_METAL;
-        else if (strstr(ptr.surface.name, "dirt")) mType = CHAR_TEX_DIRT;
-        else if (strstr(ptr.surface.name, "vent")) mType = CHAR_TEX_VENT;
-        else if (strstr(ptr.surface.name, "grate")) mType = CHAR_TEX_GRATE;
-        else if (strstr(ptr.surface.name, "tile")) mType = CHAR_TEX_TILE;
-        else if (strstr(ptr.surface.name, "wood")) mType = CHAR_TEX_WOOD;
-        else if (strstr(ptr.surface.name, "glass")) mType = CHAR_TEX_GLASS;
-        else if (strstr(ptr.surface.name, "computer")) mType = CHAR_TEX_COMPUTER;
-    }
-
-    for (const auto& tv : textureVolumes)
-    {
-        if (mType == tv.type && tv.enabledVar->GetBool())
-        {
-            fvol = tv.volumeVar->GetFloat() / 10;
-            break;
-        }
-    }
-
-    CBaseEntity* pEntity = ptr.m_pEnt;
-    if (pEntity && FClassnameIs(pEntity, "func_breakable"))
-    {
-        fvol /= 2.0;
-    }
-
-    return fvol;
-}
 
 class CWeaponCrowbar : public CBaseHL1MPCombatWeapon
 {
@@ -134,7 +66,7 @@ class CWeaponCrowbar : public CBaseHL1MPCombatWeapon
 public:
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
-#ifndef CLIENT_DLL
+#ifndef CLIENT_DLLhl1_crowbar_tile_vol
 	DECLARE_DATADESC();
 #endif
 
@@ -152,7 +84,7 @@ private:
 	virtual void		Swing( void );
 	virtual	void		Hit( void );
 	virtual	void		ImpactEffect( void );
-	void		ImpactSound( CBaseEntity *pHitEntity);
+	void		ImpactSound( CBaseEntity *pHitEntity , trace_t &hitTrace );
 	virtual Activity	ChooseIntersectionPointAndActivity( trace_t &hitTrace, const Vector &mins, const Vector &maxs, CBasePlayer *pOwner );
 
 public:
@@ -238,7 +170,7 @@ void CWeaponCrowbar::ItemPostFrame( void )
 //------------------------------------------------------------------------------
 void CWeaponCrowbar::PrimaryAttack()
 {
-	this->Swing();
+	Swing();
 }
 
 
@@ -273,7 +205,7 @@ void CWeaponCrowbar::Hit( void )
 		TraceAttackToTriggers( CTakeDamageInfo( GetOwner(), GetOwner(), sk_plr_dmg_crowbar.GetFloat(), DMG_CLUB ), m_traceHit.startpos, m_traceHit.endpos, hitDirection );
 
 		//Play an impact sound	
-		ImpactSound( pHitEntity );
+		ImpactSound( pHitEntity , m_traceHit );
 	}
 #endif
 
@@ -286,7 +218,7 @@ void CWeaponCrowbar::Hit( void )
 // Input  : pHitEntity - entity that we hit
 // assumes pHitEntity is not null
 //-----------------------------------------------------------------------------
-void CWeaponCrowbar::ImpactSound( CBaseEntity *pHitEntity )
+void CWeaponCrowbar::ImpactSound( CBaseEntity *pHitEntity , trace_t &hitTrace )
 {
 	bool bIsWorld = ( pHitEntity->entindex() == 0 );
 #ifndef CLIENT_DLL
@@ -295,19 +227,23 @@ void CWeaponCrowbar::ImpactSound( CBaseEntity *pHitEntity )
 		bIsWorld |=	pHitEntity->Classify() == CLASS_NONE ||  pHitEntity->Classify() == CLASS_MACHINE;
 	}
 #endif
-    trace_t Trace;
-	memset(&Trace, 0, sizeof(trace_t));
-    Trace.m_pEnt = pHitEntity;
 
-    float m_SoundTexture = GetCrowbarVolume(Trace);
 	if (bIsWorld)
-    {
-        WeaponSound(MELEE_HIT_WORLD, m_SoundTexture);
-    }
-    else
-    {
-        WeaponSound(MELEE_HIT, m_SoundTexture);
-    }
+	{
+		switch (random->RandomInt(0, 1))
+		{
+		case 0:
+			UTIL_EmitAmbientSound(GetOwner()->entindex(), GetOwner()->GetAbsOrigin(), "weapons/cbar_hit1.wav", 0.5, SNDLVL_GUNFIRE, 0, 98 + random->RandomInt(0, 3));
+			break;
+		case 1:
+			UTIL_EmitAmbientSound(GetOwner()->entindex(), GetOwner()->GetAbsOrigin(), "weapons/cbar_hit2.wav", 0.5, SNDLVL_GUNFIRE, 0, 98 + random->RandomInt(0, 3));
+			break;
+		}
+	}
+	else
+	{
+		WeaponSound(MELEE_HIT);
+	}
 }
 
 Activity CWeaponCrowbar::ChooseIntersectionPointAndActivity( trace_t &hitTrace, const Vector &mins, const Vector &maxs, CBasePlayer *pOwner )
