@@ -24,6 +24,7 @@ public:
 	void	PrescheduleThink ( void );
 
 	bool	FOkToSpeak( void );
+	bool    CreateVPhysics( void );
 	
 	Class_T	Classify ( void );
 	int     RangeAttack1Conditions ( float flDot, float flDist );

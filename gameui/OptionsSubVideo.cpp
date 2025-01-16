@@ -1544,6 +1544,7 @@ void COptionsSubVideo::OnApplyChanges()
 		bConfigChanged = true;
 	}
 
+
 #if defined( USE_SDL )
 	if ( !windowed )
 	{

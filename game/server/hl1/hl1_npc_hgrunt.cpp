@@ -299,8 +299,25 @@ void CNPC_HGrunt::Spawn()
 	BaseClass::Spawn();
 
 	NPCInit();
+	CreateVPhysics();
 }
 
+bool CNPC_HGrunt::CreateVPhysics(void)
+{
+     VPhysicsDestroyObject();
+
+	CPhysCollide* pModel = PhysCreateBbox(NAI_Hull::Mins(HULL_HUMAN), NAI_Hull::Maxs(HULL_HUMAN));
+	IPhysicsObject* pPhysics = PhysModelCreateCustom(this, pModel, GetAbsOrigin(), GetAbsAngles(), "barney_hull", false);
+
+	VPhysicsSetObject(pPhysics);
+	if (pPhysics)
+	{
+		pPhysics->SetCallbackFlags(CALLBACK_GLOBAL_COLLISION | CALLBACK_SHADOW_COLLISION);
+	}
+	PhysAddShadow(this);
+
+	return true;
+}
 int CNPC_HGrunt::IRelationPriority( CBaseEntity *pTarget )
 {
 	//I hate alien grunts more than anything.
@@ -425,10 +442,13 @@ void CNPC_HGrunt::PrescheduleThink ( void )
 		}
 		else
 		{
-			if ( gpGlobals->curtime - pSquadLeader->m_flLastEnemySightTime > 5 )
+			if ( gpGlobals->curtime - pSquadLeader->m_flLastEnemySightTime > 5.0f )
 			{
 				// been a while since we've seen the enemy
-				pSquadLeader->GetEnemies()->MarkAsEluded( GetEnemy() );
+				if(GetEnemy() != NULL && GetEnemies() != NULL){
+				   pSquadLeader->GetEnemies()->MarkAsEluded( GetEnemy() ); 
+				}
+				 
 			}
 		}
 	}
@@ -1640,6 +1660,7 @@ int CNPC_HGrunt::SelectSchedule( void )
 						// little time and give the player a chance to turn.
 						if ( pSquadLeader && pSquadLeader->EnemyHasEludedMe() && !HasCondition ( COND_ENEMY_FACING_ME ) )
 						{
+							pSquadLeader->EnemyHasEludedMe(); // try to fix bug in chapter we`re all hostiles
 							return SCHED_GRUNT_FOUND_ENEMY;
 						}
 					}

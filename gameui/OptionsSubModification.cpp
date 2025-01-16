@@ -26,7 +26,7 @@ using namespace vgui;
 
 COptionsSubModification::COptionsSubModification(vgui::Panel *parent) : PropertyPage(parent, nullptr)
 {
-#ifndef ANDROID // TODO: Android 
+// TODO: Android 
     // Create the slider for aspect ratio adjustments
     m_pAspectRatioSlider = new CCvarSlider(
         this,
@@ -39,14 +39,20 @@ COptionsSubModification::COptionsSubModification(vgui::Panel *parent) : Property
  
     m_aspectRatioLabel = new TextEntry(this, "AspectRatioLabel");
     m_aspectRatioLabel->AddActionSignalTarget(this);
-#endif
+
     m_pChangeCheatFlag = new CCvarToggleCheckButton(
        this , "ChangeCheatFlag" , "Change Cheat Flag" , "sv_cheats"
     );
+    m_giveWeaponButton = new Button(this, "GiveWeapon", "Give Weapon");
     // Load settings from the associated resource file
     LoadControlSettings("Resource\\OptionsSubModification.res");
+    m_giveWeaponButton->SetCommand("GiveWeapon");
+    m_giveWeaponButton->AddActionSignalTarget(this);
+
 
     UpdateLabel(m_pAspectRatioSlider, m_aspectRatioLabel);
+
+    m_giveWeaponButton->SetEnabled(true);
 }
 COptionsSubModification::~COptionsSubModification() = default;
 
@@ -115,4 +121,16 @@ void COptionsSubModification::UpdateLabel(CCvarSlider *slider, vgui::TextEntry *
     char buf[64];
     Q_snprintf(buf, sizeof(buf), "%.2f", slider->GetSliderValue());
     label->SetText(buf);
+}
+void COptionsSubModification::OnCommand(const char *command)
+{
+    if (!stricmp(command, "GiveWeapon"))
+    {
+        engine->ExecuteClientCmd("impulse 101");
+        Msg("GiveWeapon command triggered\n"); // Debug message
+    }
+    else
+    {
+        BaseClass::OnCommand(command);  // Make sure to call the base class for any other commands
+    }
 }

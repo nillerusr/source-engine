@@ -26,27 +26,6 @@
 
 extern ConVar sk_plr_dmg_crowbar;
 
-//Crowbar Sounds
-extern ConVar hl1_crowbar_sound;
-extern ConVar hl1_crowbar_concrete;
-extern ConVar hl1_crowbar_metal;
-extern ConVar hl1_crowbar_dirt;
-extern ConVar hl1_crowbar_vent;
-extern ConVar hl1_crowbar_grate;
-extern ConVar hl1_crowbar_tile;
-extern ConVar hl1_crowbar_wood;
-extern ConVar hl1_crowbar_glass;
-extern ConVar hl1_crowbar_computer;
-
-extern ConVar hl1_crowbar_concrete_vol;
-extern ConVar hl1_crowbar_metal_vol;
-extern ConVar hl1_crowbar_dirt_vol;
-extern ConVar hl1_crowbar_vent_vol;
-extern ConVar hl1_crowbar_grate_vol;
-extern ConVar hl1_crowbar_wood_vol;
-extern ConVar hl1_crowbar_glass_vol;
-extern ConVar hl1_crowbar_computer_vol;
-
 #define	CROWBAR_RANGE		64.0f
 #define	CROWBAR_REFIRE_MISS	0.5f
 #define	CROWBAR_REFIRE_HIT	0.25f
