@@ -12,6 +12,7 @@
 // $NoKeywords: $
 //=============================================================================//
 
+#include "ai_condition.h"
 #include	"cbase.h"
 #include	"beam_shared.h"
 #include	"ai_default.h"
@@ -236,7 +237,7 @@ void CNPC_HGrunt::Spawn()
 	m_bloodColor		= BLOOD_COLOR_RED;
 	ClearEffects();
 	m_iHealth			= sk_hgrunt_health.GetFloat();
-	m_flFieldOfView		= 0.2;// indicates the width of this monster's forward view cone ( as a dotproduct result )
+	m_flFieldOfView		= 0.4;// indicates the width of this monster's forward view cone ( as a dotproduct result )
 	m_NPCState			= NPC_STATE_NONE;
 	m_flNextGrenadeCheck = gpGlobals->curtime + 1;
 	m_flNextPainTime	= gpGlobals->curtime;
@@ -445,9 +446,7 @@ void CNPC_HGrunt::PrescheduleThink ( void )
 			if ( gpGlobals->curtime - pSquadLeader->m_flLastEnemySightTime > 5.0f )
 			{
 				// been a while since we've seen the enemy
-				if(GetEnemy() != NULL && GetEnemies() != NULL){
-				   pSquadLeader->GetEnemies()->MarkAsEluded( GetEnemy() ); 
-				}
+				pSquadLeader->GetEnemies()->MarkAsEluded( GetEnemy() ); 
 				 
 			}
 		}
@@ -644,6 +643,10 @@ int CNPC_HGrunt::RangeAttack1Conditions ( float flDot, float flDist )
 			// kick nonclients, but don't shoot at them.
 			return COND_NONE;
 		}
+		if (GetEnemy())
+		{
+			return COND_CAN_RANGE_ATTACK1;
+		}
 
 		Vector vecSrc;
 		QAngle angAngles;
@@ -788,7 +791,7 @@ int CNPC_HGrunt::GetGrenadeConditions( float flDot, float flDist  )
 			m_vecTossVelocity = vecToss;
 
 			// don't check again for a while.
-			m_flNextGrenadeCheck = gpGlobals->curtime + 0.3; // 1/3 second.
+			m_flNextGrenadeCheck = gpGlobals->curtime + 0.1; // 1/3 second.
 
 			return COND_CAN_RANGE_ATTACK2;
 		}

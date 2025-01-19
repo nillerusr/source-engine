@@ -67,6 +67,7 @@ void COptionsSubDifficulty::OnApplyChanges()
 	{
 		var.SetValue( 2 );
 	}
+	
 }
 
 

@@ -936,13 +936,13 @@ void CNPC_Tentacle::HitTouch( CBaseEntity *pOther )
 	//as the ragdoll only covers the top portion of the tentacle.
 	if ( pOther->m_takedamage )
 	{
-		CTakeDamageInfo info( this, this, m_iHitDmg, DMG_CLUB );
+		CTakeDamageInfo info( this, this, m_iHitDmg, DMG_CLUB | DMG_ALWAYSGIB );
 
 		Vector vDamageForce = pOther->GetAbsOrigin() - GetAbsOrigin();
 		VectorNormalize( vDamageForce );
 
-		CalculateMeleeDamageForce( &info, vDamageForce, pOther->GetAbsOrigin() );
-		pOther->TakeDamage( info );
+		CalculateMeleeDamageForce( &info, vDamageForce, pOther->GetAbsOrigin());
+		
 
 		m_flHitTime = gpGlobals->curtime + 0.5;
 	}

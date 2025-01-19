@@ -367,7 +367,19 @@ int CNPC_Barney::OnTakeDamage_Alive( const CTakeDamageInfo &inputInfo )
 		{
 			Speak( BA_SHOT );
 		}
+
+	
 	}
+	if (gpGlobals->curtime >= m_flPainTime)
+	{
+		m_flPainTime = gpGlobals->curtime + random->RandomFloat(0.5, 0.75);
+
+		CPASAttenuationFilter filter(this);
+		EmitSound(filter, entindex(), "Barney.Pain");
+	}
+
+
+
 
 	return ret;
 }
