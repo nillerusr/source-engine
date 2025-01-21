@@ -15,7 +15,6 @@
 
 #include <KeyValues.h>
 #include <vgui/IScheme.h>
-#include "tier1/convar.h"
 #include "vgui_controls/Controls.h"
 #include <vgui_controls/TextEntry.h>
 
@@ -26,7 +25,6 @@ using namespace vgui;
 
 COptionsSubModification::COptionsSubModification(vgui::Panel *parent) : PropertyPage(parent, nullptr)
 {
-// TODO: Android 
     // Create the slider for aspect ratio adjustments
     m_pAspectRatioSlider = new CCvarSlider(
         this,
@@ -37,31 +35,35 @@ COptionsSubModification::COptionsSubModification(vgui::Panel *parent) : Property
         true // Allow fractional values
     );
  
-    m_aspectRatioLabel = new TextEntry(this, "AspectRatioLabel");
-    m_aspectRatioLabel->AddActionSignalTarget(this);
+    m_pAspectRatioLabel = new TextEntry(this, "AspectRatioLabel");
+    m_pAspectRatioLabel->AddActionSignalTarget(this);
 
     m_pChangeCheatFlag = new CCvarToggleCheckButton(
        this , "ChangeCheatFlag" , "Change Cheat Flag" , "sv_cheats"
     );
-    m_giveWeaponButton = new Button(this, "GiveWeapon", "Give Weapon");
+    m_pGiveWeaponButton = new Button(this, "GiveWeapon", "Give Weapon");
     // Load settings from the associated resource file
     LoadControlSettings("Resource\\OptionsSubModification.res");
-    m_giveWeaponButton->SetCommand("GiveWeapon");
-    m_giveWeaponButton->AddActionSignalTarget(this);
+    m_pGiveWeaponButton->SetCommand("GiveWeapon");
+    m_pGiveWeaponButton->AddActionSignalTarget(this);
+
+    m_pGiveHealthKitButton = new Button(this, "GiveHealthKit", "Give Health Kit");
+    m_pGiveHealthKitButton->SetCommand("GiveHealthKit");
+    m_pGiveHealthKitButton->AddActionSignalTarget(this);
 
 
-    UpdateLabel(m_pAspectRatioSlider, m_aspectRatioLabel);
+    UpdateLabel(m_pAspectRatioSlider, m_pAspectRatioLabel);
 
-    m_giveWeaponButton->SetEnabled(true);
+    m_pGiveWeaponButton->SetEnabled(true);
 }
 COptionsSubModification::~COptionsSubModification() = default;
 
 void COptionsSubModification::OnTextChanged(Panel *panel)
 {
-    if (panel == m_aspectRatioLabel)
+    if (panel == m_pAspectRatioLabel)
     {
         char buf[64];
-        m_aspectRatioLabel->GetText(buf, 64);
+        m_pAspectRatioLabel->GetText(buf, 64);
 
         float fValue;
         int numParsed = sscanf(buf, "%f", &fValue);
@@ -101,7 +103,7 @@ void COptionsSubModification::OnControlModified(Panel *panel)
     // Update the label based on slider changes
     if (panel == m_pAspectRatioSlider && m_pAspectRatioSlider->HasBeenModified())
     {
-        UpdateLabel(m_pAspectRatioSlider, m_aspectRatioLabel);
+        UpdateLabel(m_pAspectRatioSlider, m_pAspectRatioLabel);
     }
 }
 
@@ -128,6 +130,11 @@ void COptionsSubModification::OnCommand(const char *command)
     {
         engine->ExecuteClientCmd("impulse 101");
         Msg("GiveWeapon command triggered\n"); // Debug message
+    }
+    if(!stricmp(command, "GiveHealthKit"))
+    {
+        engine->ExecuteClientCmd("give item_healthkit");
+        Msg("GiveHealthKit command triggered\n");
     }
     else
     {

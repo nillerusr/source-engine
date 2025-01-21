@@ -55,8 +55,10 @@ protected:
 	void UpdateLabel(CCvarSlider *slider, vgui::TextEntry *label);
 
 private:
-	vgui::TextEntry *m_aspectRatioLabel;
-	vgui::Button *m_giveWeaponButton;
+	vgui::TextEntry *m_pAspectRatioLabel;
+	vgui::Button *m_pGiveWeaponButton;
+	vgui::Button *m_pGiveHealthKitButton;
+	
 
 	CCvarToggleCheckButton *m_pChangeCheatFlag;
 	CCvarSlider *m_pAspectRatioSlider;
