@@ -227,7 +227,19 @@ def define_platform(conf):
 		])
 		conf.env.append_unique('CFLAGS', '-U_FORTIFY_SOURCE')
 		conf.env.append_unique('CXXFLAGS', '-U_FORTIFY_SOURCE')
-	elif conf.env.DEST_OS == 'android':
+    elif conf.env.COMPILER_CC == 'emcc':
+		conf.define('_GLIBCXX_USE_CXX11_ABI',0)
+		conf.env.append_unique('DEFINES', [
+			'EMSCRIPTEN=1', '_EMSCRIPTEN=1',
+			'POSIX=1', '_POSIX=1', 'PLATFORM_POSIX=1',
+			'GNUC',
+			'NO_HOOK_MALLOC',
+			'_DLL_EXT=.js'
+		])
+		conf.env.append_unique('CFLAGS', '-U_FORTIFY_SOURCE')
+		conf.env.append_unique('CXXFLAGS', '-U_FORTIFY_SOURCE')
+    
+    elif conf.env.DEST_OS == 'android':
 		conf.env.append_unique('DEFINES', [
 			'ANDROID=1', '_ANDROID=1',
 			'LINUX=1', '_LINUX=1',
