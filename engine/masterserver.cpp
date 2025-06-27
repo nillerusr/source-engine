@@ -31,7 +31,7 @@ extern ConVar sv_lan;
 static char g_MasterServers[][64] =
 {
 	"185.192.97.130:27010",
-	"168.138.92.21:27016"
+	"ms.workbench.network:27010"
 };
 
 #ifdef DEDICATED
