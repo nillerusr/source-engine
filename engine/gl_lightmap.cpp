@@ -1350,7 +1350,7 @@ static void SortSurfacesByLightmapID( SurfaceHandle_t *pToSort, int iSurfaceCoun
 
 		int iCounts[256] = { 0 };
 		int iBitOffset = radix * 8;
-		for( int i = 0; i != iSurfaceCount; ++i )
+		for( int i = 0; i < iSurfaceCount; ++i )
 		{
 			uint8 val = (materialSortInfoArray[MSurf_MaterialSortID( pSortTemp[i] )].lightmapPageID >> iBitOffset) & 0xFF;
 			++iCounts[val];
@@ -1358,12 +1358,12 @@ static void SortSurfacesByLightmapID( SurfaceHandle_t *pToSort, int iSurfaceCoun
 
 		int iOffsetTable[256];
 		iOffsetTable[0] = 0;
-		for( int i = 0; i != 255; ++i )
+		for( int i = 0; i < 255; ++i )
 		{
 			iOffsetTable[i + 1] = iOffsetTable[i] + iCounts[i];
 		}
 
-		for( int i = 0; i != iSurfaceCount; ++i )
+		for( int i = 0; i < iSurfaceCount; ++i )
 		{
 			uint8 val = (materialSortInfoArray[MSurf_MaterialSortID( pSortTemp[i] )].lightmapPageID >> iBitOffset) & 0xFF;
 			int iWriteIndex = iOffsetTable[val];
