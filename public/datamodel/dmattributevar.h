@@ -1152,7 +1152,7 @@ inline void CDmaElement<T>::Init( CDmElement *pOwner, const char *pAttributeName
 template <class T>
 inline UtlSymId_t CDmaElement<T>::GetElementType() const
 {
-	return this->Data().m_ElementType;
+	return this->m_pAttribute ? this->m_pAttribute->GetElementTypeSymbol() : UTL_INVAL_SYMBOL;
 }
 
 template <class T>
@@ -1350,7 +1350,7 @@ inline int CDmaStringArrayBase<B>::InsertBefore( int elem, const char *pValue )
 template< class E, class B > 
 inline UtlSymId_t CDmaElementArrayConstBase<E,B>::GetElementType() const
 {
-	return this->Data().m_ElementType;
+	return this->m_pAttribute ? this->m_pAttribute->GetElementTypeSymbol() : UTL_INVAL_SYMBOL;
 }
 
 template< class E, class B >
