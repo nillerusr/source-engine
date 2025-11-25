@@ -2179,32 +2179,28 @@ void KeyValues::RecursiveMergeKeyValues( KeyValues *baseKV )
 	}
 }
 
-static int s_nSteamDeckCached = -1;
-
-bool IsSteamDeck()
+//Gamepadui
+bool IsGamepadUI()
 {
-	if (s_nSteamDeckCached == -1) {
-		if ( CommandLine()->CheckParm( "-nogamepadui" ) != 0 )
-		{
-			s_nSteamDeckCached = 0;
-		}
-		else
-		{
-			if ( CommandLine()->CheckParm( "-gamepadui" ) != 0 )
-			{
-				s_nSteamDeckCached = 1;
-			}
-			else
-			{
-				char *deck = getenv("SteamDeck");
-				if ( deck == 0 || *deck == 0 )
-					s_nSteamDeckCached = 0;
-				else
-					s_nSteamDeckCached = atoi(deck) != 0;
-			}
-		}
-	}
-	return s_nSteamDeckCached;
+	//we dont want to use shader editor AND gamepadui at the same time
+	if (CommandLine()->FindParm("-shaderedit"))
+		return false;
+
+	//we dont want tools AND gamepadui at the same time
+	if (CommandLine()->FindParm("-tools"))
+		return false;
+
+	if (CommandLine()->FindParm("-nogamepadui"))
+		return false;
+
+	if (CommandLine()->FindParm("-gamepadui"))
+		return true;
+
+	const char* pszSteamDeckEnv = getenv("SteamDeck");
+	if (pszSteamDeckEnv && *pszSteamDeckEnv)
+		return atoi(pszSteamDeckEnv) != 0;
+
+	return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -2224,7 +2220,7 @@ bool EvaluateConditional( const char *str )
 		bNot = true;
 
 	if ( Q_stristr( str, "$DECK" ) )
-		return IsSteamDeck() ^ bNot;
+		return IsGamepadUI() ^ bNot;
 
 	if ( Q_stristr( str, "$X360" ) )
 		return IsX360() ^ bNot;

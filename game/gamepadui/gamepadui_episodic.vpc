@@ -1,0 +1,23 @@
+//-----------------------------------------------------------------------------
+//	GAMEPADUI_EPISODIC.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro GAMENAME 	"mod_episodic" // Stock SDK2013, Modders should replace this line with their mod folder name if needed.
+$Macro OUTBINNAME	"gamepadui"
+
+$Include "$SRCDIR\game\gamepadui\gamepadui_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$PreprocessorDefinitions			"$BASE;GAMEPADUI_GAME_HL2;GAMEPADUI_GAME_EPISODIC"
+	}
+}
+
+$Project "GamepadUI (Episodic)"
+{
+}
