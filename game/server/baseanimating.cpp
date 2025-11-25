@@ -2693,8 +2693,9 @@ bool CBaseAnimating::TestHitboxes( const Ray_t &ray, unsigned int fContentsMask,
 		tr.surface.name = "**studio**";
 		tr.surface.flags = SURF_HITBOX;
 		tr.surface.surfaceProps = physprops->GetSurfaceIndex( pBone->pszSurfaceProp() );
+		return true;
 	}
-	return true;
+	return false;
 }
 
 void CBaseAnimating::InitBoneControllers ( void ) // FIXME: rename

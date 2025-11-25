@@ -4981,9 +4981,10 @@ bool C_BaseAnimating::TestHitboxes( const Ray_t &ray, unsigned int fContentsMask
 				VPhysicsSetObject( pReplace );
 			}
 		}
+		return true;
 	}
 
-	return true;
+	return false;
 }
 
 
