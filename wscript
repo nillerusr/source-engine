@@ -257,7 +257,12 @@ def define_platform(conf):
 			'NO_HOOK_MALLOC',
 			'_DLL_EXT=.dylib'
 		])
-
+		conf.env.append_unique('INCLUDES', [
+			'/opt/local/include'
+		])
+		conf.env.append_unique('LINKFLAGS', [
+			'-L/opt/local/lib'
+		])
 	elif conf.env.DEST_OS in ['freebsd', 'openbsd', 'netbsd', 'dragonflybsd']: # Tested only in freebsd
 		conf.env.append_unique('DEFINES', [
 			'POSIX=1', '_POSIX=1', 'PLATFORM_POSIX=1',
