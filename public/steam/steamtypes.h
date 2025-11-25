@@ -24,10 +24,6 @@ typedef unsigned char uint8;
 	#define POSIX 1
 #endif
 
-#if defined(__x86_64__) || defined(_WIN64) || defined(__aarch64__)
-#define X64BITS
-#endif
-
 // Make sure VALVE_BIG_ENDIAN gets set on PS3, may already be set previously in Valve internal code.
 #if !defined(VALVE_BIG_ENDIAN) && defined(_PS3)
 #define VALVE_BIG_ENDIAN
@@ -48,7 +44,7 @@ typedef unsigned __int64 uint64;
 typedef int64 lint64;
 typedef uint64 ulint64;
 
-#ifdef X64BITS
+#ifdef PLATFORM_64BITS
 typedef __int64 intp;				// intp is an integer that can accomodate a pointer
 typedef unsigned __int64 uintp;		// (ie, sizeof(intp) >= sizeof(int) && sizeof(intp) >= sizeof(void *)
 #else
@@ -74,7 +70,7 @@ typedef unsigned long long uint64;
 typedef long int lint64;
 typedef unsigned long int ulint64;
 
-#ifdef X64BITS
+#ifdef PLATFORM_64BITS
 typedef long long intp;
 typedef unsigned long long uintp;
 #else

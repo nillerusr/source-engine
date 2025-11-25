@@ -91,6 +91,8 @@ int64 CReliableTimer::GetPerformanceCountNow()
 	struct timespec ts;
 	clock_gettime(CLOCK_REALTIME, &ts);
 	return ts.tv_sec * 1000000000ULL + ts.tv_nsec;
+#elif defined(__e2k__)
+	return (int64)Plat_Rdtsc();
 #else
 	uint64 un64;
 	 __asm__ __volatile__ (

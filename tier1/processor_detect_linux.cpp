@@ -13,7 +13,7 @@ bool CheckMMXTechnology(void) { return false; }
 bool CheckSSETechnology(void) { return false; }
 bool CheckSSE2Technology(void) { return false; }
 bool Check3DNowTechnology(void) { return false; }
-#elif defined (__arm__) || defined (__aarch64__)
+#elif defined (__arm__) || defined (__aarch64__) || defined(__e2k__)
 bool CheckMMXTechnology(void) { return false; }
 bool CheckSSETechnology(void) { return false; }
 bool CheckSSE2Technology(void) { return false; }

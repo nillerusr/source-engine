@@ -532,6 +532,9 @@ def configure(conf):
 	if conf.env.DEST_OS == 'freebsd':
 		linkflags += ['-lexecinfo']
 
+	if conf.env.DEST_OS != 'darwin':
+		linkflags += ['-latomic']
+
 	if conf.env.DEST_OS != 'win32':
 		cflags += flags
 		linkflags += flags

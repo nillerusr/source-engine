@@ -15,6 +15,8 @@
 #include "sse2neon.h"
 #endif
 
+#if !defined(__e2k__)
+
 #include "sse.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -1127,3 +1129,5 @@ vec_t DotProduct (const vec_t *a, const vec_t *c)
 */
 
 #endif // COMPILER_MSVC64 
+
+#endif // !defined(__e2k__)
