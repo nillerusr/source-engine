@@ -274,7 +274,7 @@ void Draw_Eyes_Refract_Internal( CBaseVSShader *pShader, IMaterialVar** params, 
 		if ( bDrawFlashlightAdditivePass == true )
 			pShaderAPI->SetVertexShaderConstant( VERTEX_SHADER_SHADER_SPECIFIC_CONST_4, flashlightState.m_vecLightOrigin.Base(), 1 );
 
-		LightState_t lightState = { 0, false, false };
+		LightState_t lightState = LightState_t();
 		if ( bDrawFlashlightAdditivePass == false )
 		{
 			pShaderAPI->GetDX9LightState( &lightState );

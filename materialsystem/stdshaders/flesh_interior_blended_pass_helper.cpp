@@ -222,7 +222,7 @@ void DrawFleshInteriorBlendedPass( CBaseVSShader *pShader, IMaterialVar** params
 		bool bUseStaticControlFlow = g_pHardwareConfig->SupportsStaticControlFlow();
 
 		// Set Vertex Shader Combos
-		LightState_t lightState = { 0, false, false };
+		LightState_t lightState = LightState_t();
 		pShaderAPI->GetDX9LightState( &lightState );
 		DECLARE_DYNAMIC_VERTEX_SHADER( flesh_interior_blended_pass_vs20 );
 		SET_DYNAMIC_VERTEX_SHADER_COMBO( DOWATERFOG, pShaderAPI->GetSceneFogMode() == MATERIAL_FOG_LINEAR_BELOW_FOG_Z );

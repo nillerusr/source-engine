@@ -206,7 +206,7 @@ void DrawExampleModel_DX9_Internal( CBaseVSShader *pShader, IMaterialVar** param
 			pShaderAPI->BindStandardTexture( SHADER_SAMPLER0, TEXTURE_WHITE );
 		}
 
-		LightState_t lightState = { 0, false, false };
+		LightState_t lightState = LightState_t();
 		bool bFlashlightShadows = false;
 		if( bHasFlashlight )
 		{

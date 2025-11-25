@@ -1188,7 +1188,7 @@ static void DrawVertexLitGeneric_DX9_Internal( CBaseVSShader *pShader, IMaterial
 
 
 		// Set up light combo state
-		LightState_t lightState = {0, false, false};
+		LightState_t lightState = LightState_t();
 		if ( bVertexLitGeneric && (!bHasFlashlight || IsX360() ) )
 		{
 			pShaderAPI->GetDX9LightState( &lightState );
