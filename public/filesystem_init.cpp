@@ -308,54 +308,13 @@ static bool Sys_GetExecutableName( char *out, int len )
 bool FileSystem_GetExecutableDir( char *exedir, int exeDirLen )
 {
 #ifdef ANDROID
-	Q_snprintf( exedir, exeDirLen, "%s", getenv("APP_LIB_PATH") );
+	Q_strncpy( exedir, getenv("APP_LIB_PATH"), exeDirLen );
 #else
-	exedir[0] = 0;
-
-	if ( s_bUseVProjectBinDir )
-	{
-		const char *pProject = GetVProjectCmdLineValue();
-		if ( !pProject )
-		{
-			// Check their registry.
-			pProject = getenv( GAMEDIR_TOKEN );
-		}
-		if ( pProject )
-		{
-			Q_snprintf( exedir, exeDirLen, "%s%c..%cbin", pProject, CORRECT_PATH_SEPARATOR, CORRECT_PATH_SEPARATOR );
-			return true;
-		}
-		return false;
-	}
-
-	if ( !Sys_GetExecutableName( exedir, exeDirLen ) )
-		return false;
-	Q_StripFilename( exedir );
-
-	if ( IsX360() )
-	{
-		// The 360 can have its exe and dlls reside on different volumes
-		// use the optional basedir as the exe dir
-		if ( CommandLine()->FindParm( "-basedir" ) )
-		{
-			strcpy( exedir, CommandLine()->ParmValue( "-basedir", "" ) );
-		}
-	}
-
-	Q_FixSlashes( exedir );
-
-	const char* libDir = "bin";
-
-	// Return the bin directory as the executable dir if it's not in there
-	// because that's really where we're running from...
-	char ext[MAX_PATH];
-	Q_StrRight( exedir, 4, ext, sizeof( ext ) );
-	if ( ext[0] != CORRECT_PATH_SEPARATOR || Q_stricmp( ext+1, libDir ) != 0 )
-	{
-		Q_strncat( exedir, CORRECT_PATH_SEPARATOR_S, exeDirLen, COPY_ALL_CHARACTERS );
-		Q_strncat( exedir, libDir, exeDirLen, COPY_ALL_CHARACTERS );
-		Q_FixSlashes( exedir );
-	}
+# ifdef _WIN32
+	Q_strncpy( exedir, "./bin", exeDirLen );
+# else
+	Q_strncpy( exedir, LIBDIR, exeDirLen );
+# endif
 #endif
 
 	return true;
@@ -364,17 +323,15 @@ bool FileSystem_GetExecutableDir( char *exedir, int exeDirLen )
 static bool FileSystem_GetBaseDir( char *baseDir, int baseDirLen )
 {
 #ifdef ANDROID
-	strncpy(baseDir, getenv("VALVE_GAME_PATH"), baseDirLen);
-	return true;
+	Q_strncpy(baseDir, getenv("VALVE_GAME_PATH"), baseDirLen);
 #else
-	if ( FileSystem_GetExecutableDir( baseDir, baseDirLen ) )
-	{
-		Q_StripFilename( baseDir );
-		return true;
-	}
-
-	return false;
+	// get relative base dir which appends to other paths
+	// allows to run from everywhere
+	// "hl2/portal" -> "hl2"; "hl2" -> ""
+	Q_strncpy( baseDir, CommandLine()->ParmValue("-game", ""), baseDirLen );
+	Q_StripFilename( baseDir );
 #endif
+	return true;
 }
 
 void LaunchVConfig()
@@ -1094,16 +1051,23 @@ FSReturnCode_t FileSystem_SetBasePaths( IFileSystem *pFileSystem )
 {
 	pFileSystem->RemoveSearchPaths( "EXECUTABLE_PATH" );
 
-	char executablePath[MAX_PATH];
-	if ( !FileSystem_GetExecutableDir( executablePath, sizeof( executablePath ) )	)
+	char path[MAX_PATH];
+	if ( !FileSystem_GetExecutableDir( path, MAX_PATH ) )
 		return SetupFileSystemError( false, FS_INVALID_PARAMETERS, "FileSystem_GetExecutableDir failed." );
 
-	pFileSystem->AddSearchPath( executablePath, "EXECUTABLE_PATH" );
+	pFileSystem->AddSearchPath( path, "EXECUTABLE_PATH" );
 
-	if ( !FileSystem_GetBaseDir( executablePath, sizeof( executablePath ) )  )
+	if ( !FileSystem_GetBaseDir( path, MAX_PATH ) )
 		return SetupFileSystemError( false, FS_INVALID_PARAMETERS, "FileSystem_GetBaseDir failed." );
 
-	pFileSystem->AddSearchPath( executablePath, "BASE_PATH" );
+	pFileSystem->AddSearchPath( path, "BASE_PATH" );
+
+	// path for client/server libraries
+	// "hl2/portal" -> "LIBDIR/portal"; "hl2" -> "LIBDIR/hl2"
+	char gamePath[MAX_PATH];
+	V_FileBase( CommandLine()->ParmValue("-game"), gamePath, MAX_PATH );
+	Q_snprintf( path, MAX_PATH, "%s/%s", LIBDIR, gamePath );
+	pFileSystem->AddSearchPath( path, "GAMEBIN" );
 
 	return FS_OK;
 }

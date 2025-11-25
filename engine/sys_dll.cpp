@@ -342,33 +342,34 @@ bool Sys_MessageBox(const char *title, const char *info, bool bShowOkAndCancel)
 		return true;
 	}
 	return false;
-
-#elif defined( USE_SDL )
-
-	int buttonid = 0;
-	SDL_MessageBoxData messageboxdata = { 0 };
-	SDL_MessageBoxButtonData buttondata[] =
-	{
-		{ SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT,	1,	"OK"		},
-		{ SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT,	0,	"Cancel"	},
-	};
-
-	messageboxdata.window = GetAssertDialogParent();
-	messageboxdata.title = title;
-	messageboxdata.message = info;
-	messageboxdata.numbuttons = bShowOkAndCancel ? 2 : 1;
-	messageboxdata.buttons = buttondata;
-
-	SDL_ShowMessageBox( &messageboxdata, &buttonid );
-	return ( buttonid == 1 );
-
-#elif defined( POSIX )
-
-	Warning( "%s\n", info );
-	return true;
-
 #else
-#error "implement me"
+#if defined( USE_SDL )
+	SDL_Window *dialogParent = GetAssertDialogParent();
+	if (dialogParent)
+	{
+		int buttonid = 0;
+		SDL_MessageBoxData messageboxdata = { 0 };
+		SDL_MessageBoxButtonData buttondata[] =
+		{
+			{ SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT,	1,	"OK"		},
+			{ SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT,	0,	"Cancel"	},
+		};
+
+		messageboxdata.window = GetAssertDialogParent();
+		messageboxdata.title = title;
+		messageboxdata.message = info;
+		messageboxdata.numbuttons = bShowOkAndCancel ? 2 : 1;
+		messageboxdata.buttons = buttondata;
+
+		SDL_ShowMessageBox( &messageboxdata, &buttonid );
+		return ( buttonid == 1 );
+	}
+	else
+#endif
+	{
+		Warning( "%s\n", info );
+		return true;
+	}
 #endif
 }
 
@@ -464,7 +465,7 @@ void Sys_Error_Internal( bool bMinidump, const char *error, va_list argsList )
 		// Doing this doesn't quite work the way we want because there is no "crashing" thread
 		// and we see "No thread was identified as the cause of the crash; No signature could be created because we do not know which thread crashed" on the back end
 		//SteamAPI_WriteMiniDump( 0, NULL, build_number() );
-		printf("\n ##### Sys_Error: %s", text );
+		printf("\n ##### Sys_Error: %s\n", text );
 		fflush(stdout );
 
 		raise(SIGTRAP);
@@ -1117,7 +1118,6 @@ void Sys_ShutdownGame( void )
 
 CreateInterfaceFn g_ServerFactory;
 
-
 #pragma optimize( "g", off )
 static bool LoadThisDll( char *szDllFilename, bool bIsServerOnly )
 {
@@ -1255,7 +1255,7 @@ void LoadEntityDLLs( const char *szBaseDir, bool bIsServerOnly )
 
 	if ( serverGameDLL )
 	{
-		Msg("server%s loaded for \"%s\"\n", DLL_EXT_STRING, (char *)serverGameDLL->GetGameDescription());
+		Msg("server" DLL_EXT_STRING " loaded for \"%s\"\n", (char *)serverGameDLL->GetGameDescription());
 	}
 }
 
