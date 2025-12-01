@@ -58,8 +58,10 @@ public:
 
 protected:
 
+#ifndef GAME_DLL
 	bool			m_bLowered;			// Whether the viewmodel is raised or lowered
 	float			m_flRaiseTime;		// If lowered, the time we should raise the viewmodel
+#endif
 	float			m_flHolsterTime;	// When the weapon was holstered
 };
 
