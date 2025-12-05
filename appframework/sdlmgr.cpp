@@ -1472,9 +1472,6 @@ void CSDLMgr::SetWindowFullScreen( bool bFullScreen, int nWidth, int nHeight )
 		}
 
 		mode.format = (Uint32)SDL_PIXELFORMAT_RGBX8888;
-
-		m_flMouseXScale = ( float )nWidth / ( float )mode.w;
-		m_flMouseYScale = ( float )nHeight / ( float )mode.h;
 	}
 	else
 	{
@@ -1483,8 +1480,6 @@ void CSDLMgr::SetWindowFullScreen( bool bFullScreen, int nWidth, int nHeight )
 		mode.w = nWidth;
 		mode.h = nHeight;
 		mode.driverdata = 0;
-		m_flMouseXScale = 1.0f;
-		m_flMouseYScale = 1.0f;
 	}
 
 	SDL_SetWindowDisplayMode( m_Window, &mode );
@@ -1530,6 +1525,31 @@ void CSDLMgr::SetWindowFullScreen( bool bFullScreen, int nWidth, int nHeight )
 		SDL_SetWindowFullscreen( m_Window, bFullScreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0 );
 
 		m_bFullScreen = bFullScreen;
+	}
+
+	if (bFullScreen)
+	{
+		int drawableW, drawableH;
+		SDL_GL_GetDrawableSize(m_Window, &drawableW, &drawableH);
+
+		if ( drawableW > 0 && drawableH > 0 )
+		{
+			// Use drawable size for accurate mouse scaling, including macOS devices
+			// with camera notch
+			m_flMouseXScale = (float)nWidth / (float)drawableW;
+			m_flMouseYScale = (float)nHeight / (float)drawableH;
+		}
+		else {
+			// Fallback to mode dimensions if drawable size unavailable
+			m_flMouseXScale = (float)nWidth / (float)mode.w;
+			m_flMouseYScale = (float)nHeight / (float)mode.h;
+		}
+	}
+	else 
+	{
+		// Use 1:1 scaling for windowed mode
+		m_flMouseXScale = 1.0f;
+		m_flMouseYScale = 1.0f;
 	}
 }
 
