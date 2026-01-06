@@ -22,6 +22,9 @@
 class CRagdollProp : public CBaseAnimating, public CDefaultPlayerPickupVPhysics
 {
 	DECLARE_CLASS( CRagdollProp, CBaseAnimating );
+#ifdef MAPBASE_VSCRIPT
+	DECLARE_ENT_SCRIPTDESC();
+#endif
 
 public:
 	CRagdollProp( void );
@@ -49,6 +52,9 @@ public:
 	virtual void SetupBones( matrix3x4_t *pBoneToWorld, int boneMask );
 	virtual void VPhysicsUpdate( IPhysicsObject *pPhysics );
 	virtual int VPhysicsGetObjectList( IPhysicsObject **pList, int listMax );
+#ifdef MAPBASE
+	int VPhysicsGetFlesh();
+#endif
 
 	virtual int DrawDebugTextOverlays(void);
 
@@ -56,6 +62,17 @@ public:
 	virtual IResponseSystem *GetResponseSystem();
 	virtual void ModifyOrAppendCriteria( AI_CriteriaSet& set );
 	void SetSourceClassName( const char *pClassname );
+#ifdef EZ2
+	string_t GetSourceClassName() { return m_strSourceClassName; }
+	Class_T GetSourceClassification() { return m_iSourceClassification; }
+	void SetSourceClassification( Class_T classification );
+
+	bool	HandleInteraction( int interactionType, void *data, CBaseCombatCharacter* sourceEnt );
+#endif
+
+#ifdef MAPBASE
+	const char *GetSourceClassNameAsCStr() { return STRING( m_strSourceClassName ); }
+#endif
 
 	// Physics attacker
 	virtual CBasePlayer *HasPhysicsAttacker( float dt );
@@ -77,6 +94,17 @@ public:
 	virtual void OnSave( IEntitySaveUtils *pUtils );
 	virtual void OnRestore();
 
+#ifdef EZ2	
+	// Ragdoll smells
+	virtual void EmitScent();
+	virtual void TimeWarpThink();
+	virtual void SetNextScentTime( float flNextScentTime ) { m_flNextScentTime = flNextScentTime; };
+	virtual void SetEmitScent( bool bEmitScent ) { m_bEmitScent = bEmitScent; };
+
+	// Ragdoll flesh / blood type
+	virtual int GetBloodColor();
+#endif
+
 	// Purpose: CDefaultPlayerPickupVPhysics
 	virtual void VPhysicsCollision( int index, gamevcollisionevent_t *pEvent );
  	virtual void OnPhysGunPickup( CBasePlayer *pPhysGunUser, PhysGunPickup_t reason );
@@ -95,15 +123,34 @@ public:
 	void			SetKiller( CBaseEntity *pKiller ) { m_hKiller = pKiller; }
 	void			GetAngleOverrideFromCurrentState( char *pOut, int size );
 
+#ifdef EZ2
+	bool			IsMotionEnabled(void);
+#endif
 	void			DisableMotion( void );
 
 	// Input/Output
 	void			InputStartRadgollBoogie( inputdata_t &inputdata );
 	void			InputEnableMotion( inputdata_t &inputdata );
 	void			InputDisableMotion( inputdata_t &inputdata );
+#ifdef MAPBASE
+	void			InputWake( inputdata_t &inputdata );
+	void			InputSleep( inputdata_t &inputdata );
+#endif
 	void			InputTurnOn( inputdata_t &inputdata );
 	void			InputTurnOff( inputdata_t &inputdata );
 	void			InputFadeAndRemove( inputdata_t &inputdata );
+
+#ifdef MAPBASE_VSCRIPT
+	HSCRIPT			ScriptGetRagdollObject( int iIndex );
+	int				ScriptGetRagdollObjectCount();
+#endif
+
+#ifdef EZ2
+	void			InputEnableScent( inputdata_t &inputdata );
+	void			InputDisableScent( inputdata_t &inputdata );
+
+	void			InputGib( inputdata_t &inputdata );
+#endif
 
 	DECLARE_DATADESC();
 
@@ -136,6 +183,12 @@ private:
 	float				m_flFadeOutStartTime;
 	float				m_flFadeTime;
 
+#ifdef EZ2
+	float				m_flNextScentTime;
+	bool				m_bEmitScent;
+
+	Class_T					m_iSourceClassification;
+#endif
 
 	string_t			m_strSourceClassName;
 	bool				m_bHasBeenPhysgunned;

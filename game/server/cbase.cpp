@@ -84,6 +84,10 @@ OUTPUTS:
 #include "tier1/strtools.h"
 #include "datacache/imdlcache.h"
 #include "env_debughistory.h"
+#ifdef MAPBASE
+#include "mapbase/variant_tools.h"
+#include "mapbase/matchers.h"
+#endif
 
 #include "tier0/vprof.h"
 
@@ -272,7 +276,12 @@ void CBaseEntityOutput::FireOutput(variant_t Value, CBaseEntity *pActivator, CBa
 			//
 			variant_t ValueOverride;
 			ValueOverride.SetString( ev->m_iParameter );
+#ifdef MAPBASE
+			// I found this while making point_advanced_finder. FireOutput()'s own delay parameter doesn't work with...uh...parameters.
+			g_EventQueue.AddEvent( STRING(ev->m_iTarget), STRING(ev->m_iTargetInput), ValueOverride, ev->m_flDelay + fDelay, pActivator, pCaller, ev->m_iIDStamp );
+#else
 			g_EventQueue.AddEvent( STRING(ev->m_iTarget), STRING(ev->m_iTargetInput), ValueOverride, ev->m_flDelay, pActivator, pCaller, ev->m_iIDStamp );
+#endif
 		}
 
 		if ( ev->m_flDelay )
@@ -293,7 +302,11 @@ void CBaseEntityOutput::FireOutput(variant_t Value, CBaseEntity *pActivator, CBa
 						ev->m_flDelay,
 						STRING(ev->m_iParameter) );
 
+#ifdef MAPBASE
+			CGMsg( 2, CON_GROUP_IO_SYSTEM, "%s", szBuffer );
+#else
 			DevMsg( 2, "%s", szBuffer );
+#endif
 			ADD_DEBUG_HISTORY( HISTORY_ENTITY_IO, szBuffer );
 		}
 		else
@@ -312,7 +325,11 @@ void CBaseEntityOutput::FireOutput(variant_t Value, CBaseEntity *pActivator, CBa
 						STRING(ev->m_iTargetInput),
 						STRING(ev->m_iParameter) );
 
+#ifdef MAPBASE
+			CGMsg( 2, CON_GROUP_IO_SYSTEM, "%s", szBuffer );
+#else
 			DevMsg( 2, "%s", szBuffer );
+#endif
 			ADD_DEBUG_HISTORY( HISTORY_ENTITY_IO, szBuffer );
 		}
 
@@ -333,7 +350,12 @@ void CBaseEntityOutput::FireOutput(variant_t Value, CBaseEntity *pActivator, CBa
 			{
 				char szBuffer[256];
 				Q_snprintf( szBuffer, sizeof(szBuffer), "Removing from action list: (%s,%s) -> (%s,%s)\n", pCaller ? STRING(pCaller->m_iClassname) : "NULL", pCaller ? STRING(pCaller->GetEntityName()) : "NULL", STRING(ev->m_iTarget), STRING(ev->m_iTargetInput));
+
+#ifdef MAPBASE
+				CGMsg( 2, CON_GROUP_IO_SYSTEM, "%s", szBuffer );
+#else
 				DevMsg( 2, "%s", szBuffer );
+#endif
 				ADD_DEBUG_HISTORY( HISTORY_ENTITY_IO, szBuffer );
 				bRemove = true;
 			}
@@ -385,6 +407,28 @@ void CBaseEntityOutput::AddEventAction( CEventAction *pEventAction )
 {
 	pEventAction->m_pNext = m_ActionList;
 	m_ActionList = pEventAction;
+}
+
+void CBaseEntityOutput::RemoveEventAction( CEventAction *pEventAction )
+{
+	CEventAction *pAction = GetActionList();
+	CEventAction *pPrevAction = NULL;
+	while ( pAction )
+	{
+		if ( pAction == pEventAction )
+		{
+			if ( !pPrevAction )
+			{
+				m_ActionList = NULL;
+			}
+			else
+			{
+				pPrevAction->m_pNext = pAction->m_pNext;
+			}
+			return;
+		}
+		pAction = pAction->m_pNext;
+	}
 }
 
 
@@ -805,7 +849,12 @@ void CEventQueue::Dump( void )
 //-----------------------------------------------------------------------------
 // Purpose: adds the action into the correct spot in the priority queue, targeting entity via string name
 //-----------------------------------------------------------------------------
-void CEventQueue::AddEvent( const char *target, const char *targetInput, variant_t Value, float fireDelay, CBaseEntity *pActivator, CBaseEntity *pCaller, int outputID )
+#ifdef MAPBASE_VSCRIPT
+int
+#else
+void
+#endif
+CEventQueue::AddEvent( const char *target, const char *targetInput, variant_t Value, float fireDelay, CBaseEntity *pActivator, CBaseEntity *pCaller, int outputID )
 {
 	// build the new event
 	EventQueuePrioritizedEvent_t *newEvent = new EventQueuePrioritizedEvent_t;
@@ -823,12 +872,22 @@ void CEventQueue::AddEvent( const char *target, const char *targetInput, variant
 	newEvent->m_iOutputID = outputID;
 
 	AddEvent( newEvent );
+
+#ifdef MAPBASE_VSCRIPT
+	Assert( sizeof(EventQueuePrioritizedEvent_t*) == sizeof(int) );
+	return reinterpret_cast<intptr_t>(newEvent);  // POINTER_TO_INT
+#endif
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: adds the action into the correct spot in the priority queue, targeting entity via pointer
 //-----------------------------------------------------------------------------
-void CEventQueue::AddEvent( CBaseEntity *target, const char *targetInput, variant_t Value, float fireDelay, CBaseEntity *pActivator, CBaseEntity *pCaller, int outputID )
+#ifdef MAPBASE_VSCRIPT
+int
+#else
+void
+#endif
+CEventQueue::AddEvent( CBaseEntity *target, const char *targetInput, variant_t Value, float fireDelay, CBaseEntity *pActivator, CBaseEntity *pCaller, int outputID )
 {
 	// build the new event
 	EventQueuePrioritizedEvent_t *newEvent = new EventQueuePrioritizedEvent_t;
@@ -846,6 +905,11 @@ void CEventQueue::AddEvent( CBaseEntity *target, const char *targetInput, varian
 	newEvent->m_iOutputID = outputID;
 
 	AddEvent( newEvent );
+
+#ifdef MAPBASE_VSCRIPT
+	Assert( sizeof(EventQueuePrioritizedEvent_t*) == sizeof(int) );
+	return reinterpret_cast<intptr_t>(newEvent); // POINTER_TO_INT
+#endif
 }
 
 void CEventQueue::AddEvent( CBaseEntity *target, const char *action, float fireDelay, CBaseEntity *pActivator, CBaseEntity *pCaller, int outputID )
@@ -922,16 +986,31 @@ void CEventQueue::ServiceEvents( void )
 		{
 			// In the context the event, the searching entity is also the caller
 			CBaseEntity *pSearchingEntity = pe->m_pCaller;
-			CBaseEntity *target = NULL;
-			while ( 1 )
+#ifdef MAPBASE
+			// This is a hack to access the entity from a FIELD_EHANDLE input
+			if ( FStrEq( STRING( pe->m_iTarget ), "!output" ) )
 			{
-				target = gEntList.FindEntityByName( target, pe->m_iTarget, pSearchingEntity, pe->m_pActivator, pe->m_pCaller );
-				if ( !target )
-					break;
+				pe->m_VariantValue.Convert( FIELD_EHANDLE );
+				CBaseEntity *target = pe->m_VariantValue.Entity();
 
 				// pump the action into the target
-				target->AcceptInput( STRING(pe->m_iTargetInput), pe->m_pActivator, pe->m_pCaller, pe->m_VariantValue, pe->m_iOutputID );
+				target->AcceptInput( STRING( pe->m_iTargetInput ), pe->m_pActivator, pe->m_pCaller, pe->m_VariantValue, pe->m_iOutputID );
 				targetFound = true;
+			}
+			else
+#endif
+			{
+				CBaseEntity *target = NULL;
+				while ( 1 )
+				{
+					target = gEntList.FindEntityByName( target, pe->m_iTarget, pSearchingEntity, pe->m_pActivator, pe->m_pCaller );
+					if ( !target )
+						break;
+
+					// pump the action into the target
+					target->AcceptInput( STRING(pe->m_iTargetInput), pe->m_pActivator, pe->m_pCaller, pe->m_VariantValue, pe->m_iOutputID );
+					targetFound = true;
+				}
 			}
 		}
 
@@ -974,7 +1053,11 @@ void CEventQueue::ServiceEvents( void )
 			
 			char szBuffer[256];
 			Q_snprintf( szBuffer, sizeof(szBuffer), "unhandled input: (%s) -> (%s), from (%s,%s); target entity not found\n", STRING(pe->m_iTargetInput), STRING(pe->m_iTarget), pClass, pName );
+#ifdef MAPBASE
+			CGMsg( 2, CON_GROUP_IO_SYSTEM, "%s", szBuffer );
+#else
 			DevMsg( 2, "%s", szBuffer );
+#endif
 			ADD_DEBUG_HISTORY( HISTORY_ENTITY_IO, szBuffer );
 		}
 
@@ -1122,6 +1205,77 @@ void ServiceEventQueue( void )
 }
 
 
+#ifdef MAPBASE_VSCRIPT
+//-----------------------------------------------------------------------------
+// Remove pending events on entity by input.
+//
+// Also removes events that were targeted with their debug name (classname when unnamed).
+// E.g. CancelEventsByInput( pRelay, "Trigger" ) removes all pending logic_relay "Trigger" events.
+//-----------------------------------------------------------------------------
+void CEventQueue::CancelEventsByInput( CBaseEntity *pTarget, const char *szInput )
+{
+	if ( !pTarget )
+		return;
+
+	string_t iszDebugName = MAKE_STRING( pTarget->GetDebugName() );
+	EventQueuePrioritizedEvent_t *pCur = m_Events.m_pNext;
+
+	while ( pCur )
+	{
+		bool bRemove = false;
+
+		if ( pTarget == pCur->m_pEntTarget || pCur->m_iTarget == iszDebugName )
+		{
+			if ( !V_strncmp( STRING(pCur->m_iTargetInput), szInput, strlen(szInput) ) )
+			{
+				bRemove = true;
+			}
+		}
+
+		EventQueuePrioritizedEvent_t *pPrev = pCur;
+		pCur = pCur->m_pNext;
+
+		if ( bRemove )
+		{
+			RemoveEvent(pPrev);
+			delete pPrev;
+		}
+	}
+}
+
+bool CEventQueue::RemoveEvent( int event )
+{
+	EventQueuePrioritizedEvent_t *pe = reinterpret_cast<EventQueuePrioritizedEvent_t*>(event); // INT_TO_POINTER
+
+	for ( EventQueuePrioritizedEvent_t *pCur = m_Events.m_pNext; pCur; pCur = pCur->m_pNext )
+	{
+		if ( pCur == pe )
+		{
+			RemoveEvent(pCur);
+			delete pCur;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+float CEventQueue::GetTimeLeft( int event )
+{
+	EventQueuePrioritizedEvent_t *pe = reinterpret_cast<EventQueuePrioritizedEvent_t*>(event); // INT_TO_POINTER
+
+	for ( EventQueuePrioritizedEvent_t *pCur = m_Events.m_pNext; pCur; pCur = pCur->m_pNext )
+	{
+		if ( pCur == pe )
+		{
+			return (pCur->m_flFireTime - gpGlobals->curtime);
+		}
+	}
+
+	return 0.f;
+}
+#endif // MAPBASE_VSCRIPT
+
 
 // save data description for the event queue
 BEGIN_SIMPLE_DATADESC( CEventQueue )
@@ -1252,6 +1406,23 @@ void variant_t::Set( fieldtype_t ftype, void *data )
 		break;
 	}
 
+#ifdef MAPBASE
+	// There's this output class called COutputVariant which could output any data type, like a FIELD_INPUT input function.
+	// Well...nobody added support for it. It was there, but it wasn't functional.
+	// Mapbase adds support for it so you could variant your outputs as you please.
+	case FIELD_INPUT:
+	{
+		variant_t *variant = (variant_t*)data;
+
+		// Pretty much just copying over its stored value.
+		fieldType = variant->FieldType();
+		variant->SetOther(data);
+
+		Set(fieldType, data);
+		break;
+	}
+#endif
+
 	case FIELD_EHANDLE:		eVal = *((EHANDLE *)data);			break;
 	case FIELD_CLASSPTR:	eVal = *((CBaseEntity **)data);		break;
 	case FIELD_VOID:		
@@ -1292,6 +1463,10 @@ void variant_t::SetOther( void *data )
 	}
 }
 
+#ifdef MAPBASE
+// This way we don't have to use string comparisons when reading failed conversions
+static const char *g_szNoConversion = "No conversion to string";
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Converts the variant to a new type. This function defines which I/O
@@ -1323,6 +1498,24 @@ bool variant_t::Convert( fieldtype_t newType )
 	{
 		return true;
 	}
+
+#ifdef MAPBASE
+	if (newType == FIELD_STRING)
+	{
+		// I got a conversion error when I tried to convert int to string. I'm actually quite baffled.
+		// Was that case really not handled before? Did I do something that overrode something that already did this?
+		const char *szString = ToString();
+
+		// g_szNoConversion is returned in ToString() when we can't convert to a string,
+		// so this is safe and it lets us get away with a pointer comparison.
+		if (szString != g_szNoConversion)
+		{
+			SetString(AllocPooledString(szString));
+			return true;
+		}
+		return false;
+	}
+#endif
 
 	switch ( fieldType )
 	{
@@ -1441,8 +1634,14 @@ bool variant_t::Convert( fieldtype_t newType )
 					CBaseEntity *ent = NULL;
 					if ( iszVal != NULL_STRING )
 					{
+#ifdef MAPBASE
+						// We search by both entity name and class name now.
+						// We also have an entirely new version of Convert specifically for !activators on FIELD_EHANDLE.
+						ent = gEntList.FindEntityGeneric( NULL, STRING(iszVal) );
+#else
 						// FIXME: do we need to pass an activator in here?
 						ent = gEntList.FindEntityByName( NULL, iszVal );
+#endif
 					}
 					SetEntity( ent );
 					return true;
@@ -1452,6 +1651,7 @@ bool variant_t::Convert( fieldtype_t newType )
 			break;
 		}
 
+#ifndef MAPBASE // ToString() above handles this
 		case FIELD_EHANDLE:
 		{
 			switch ( newType )
@@ -1469,11 +1669,63 @@ bool variant_t::Convert( fieldtype_t newType )
 			}
 			break;
 		}
+#endif
+
+#ifdef MAPBASE
+		case FIELD_VOID:
+		{
+			// Many fields already turn into some equivalent of "NULL" when given a null string_t.
+			// This takes advantage of that and allows FIELD_VOID to be converted to more than just empty strings.
+			SetString(NULL_STRING);
+			return Convert(newType);
+		}
+#endif
 	}
 
 	// invalid conversion
 	return false;
 }
+
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Only for when something like !activator needs to become a FIELD_EHANDLE, or when that's a possibility.
+//-----------------------------------------------------------------------------
+bool variant_t::Convert( fieldtype_t newType, CBaseEntity *pSelf, CBaseEntity *pActivator, CBaseEntity *pCaller )
+{
+	// Support for turning !activator, !caller, and !self into a FIELD_EHANDLE.
+	// Extremely necessary.
+	if (newType == FIELD_EHANDLE)
+	{
+		if (newType == fieldType)
+			return true;
+
+		CBaseEntity *ent = NULL;
+		if (iszVal != NULL_STRING)
+		{
+			ent = gEntList.FindEntityGeneric(NULL, STRING(iszVal), pSelf, pActivator, pCaller);
+		}
+		SetEntity(ent);
+		return true;
+	}
+
+#if 0 // This was scrapped almost immediately. See the Trello card for details.
+	// Serves as a way of converting the name of the !activator, !caller, or !self into a string
+	// without passing the text "!activator" and stuff.
+	else if (fieldType == FIELD_STRING && STRING(iszVal)[0] == '&')
+	{
+		const char *val = STRING(iszVal) + 1;
+
+		#define GetRealName(string, ent) if (FStrEq(val, string)) { if (ent) {SetString(ent->GetEntityName());} return true; }
+
+		GetRealName("!activator", pActivator)
+		else GetRealName("!caller", pCaller)
+		else GetRealName("!self", pSelf)
+	}
+#endif
+
+	return Convert(newType);
+}
+#endif
 
 
 //-----------------------------------------------------------------------------
@@ -1542,13 +1794,22 @@ const char *variant_t::ToString( void ) const
 
 	case FIELD_EHANDLE:
 		{
+#ifdef MAPBASE
+			// This is a really bad idea.
+			const char *pszName = (Entity()) ? Entity()->GetDebugName() : "<<null entity>>";
+#else
 			const char *pszName = (Entity()) ? STRING(Entity()->GetEntityName()) : "<<null entity>>";
+#endif
 			Q_strncpy( szBuf, pszName, 512 );
 			return (szBuf);
 		}
 	}
 
+#ifdef MAPBASE
+	return g_szNoConversion;
+#else
 	return("No conversion to string");
+#endif
 }
 
 #define classNameTypedef variant_t // to satisfy DEFINE... macros
@@ -1756,6 +2017,21 @@ class CVariantSaveDataOps : public CDefSaveRestoreOps
 		// Don't no how to. This is okay, since objects of this type
 		// are always born clean before restore, and not reused
 	}
+
+#ifdef MAPBASE
+	// Parses a keyvalue string into a variant_t.
+	// We could just turn it into a string since variant_t can convert it later, but this keyvalue is probably a variant_t for a reason,
+	// meaning it might use strings and numbers completely differently without converting them.
+	// As a result, we try to read it to figure out what type it is.
+	virtual bool Parse( const SaveRestoreFieldInfo_t &fieldInfo, char const* szValue )
+	{
+		variant_t *var = (variant_t*)fieldInfo.pField;
+
+		*var = Variant_Parse(szValue);
+
+		return true;
+	}
+#endif
 };
 
 CVariantSaveDataOps g_VariantSaveDataOps;

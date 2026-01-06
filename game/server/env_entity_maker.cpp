@@ -30,6 +30,7 @@ class CEnvEntityMaker : public CPointEntity
 	DECLARE_CLASS( CEnvEntityMaker, CPointEntity );
 public:
 	DECLARE_DATADESC();
+	DECLARE_ENT_SCRIPTDESC();
 
 	virtual void Spawn( void );
 	virtual void Activate( void );
@@ -38,7 +39,16 @@ public:
 	void		 CheckSpawnThink( void );
 	void		 InputForceSpawn( inputdata_t &inputdata );
 	void		 InputForceSpawnAtEntityOrigin( inputdata_t &inputdata );
-
+#ifdef MAPBASE
+	void		 InputForceSpawnAtEntityCenter( inputdata_t &inputdata );
+	void		 InputForceSpawnAtPosition( inputdata_t &inputdata );
+#endif
+#ifdef VSCRIPT
+	void		 SpawnEntityFromScript();
+	void		 SpawnEntityAtEntityOriginFromScript(HSCRIPT hEntity);
+	void		 SpawnEntityAtNamedEntityOriginFromScript(const char* pszName);
+	void		 SpawnEntityAtLocationFromScript(const Vector& vecAlternateOrigin, const Vector& vecAlternateAngles);
+#endif
 private:
 
 	CPointTemplate *FindTemplate();
@@ -62,6 +72,9 @@ private:
 
 	COutputEvent	m_pOutputOnSpawned;
 	COutputEvent	m_pOutputOnFailedSpawn;
+#ifdef MAPBASE
+	COutputEHANDLE	m_pOutputOutEntity;
+#endif
 };
 
 BEGIN_DATADESC( CEnvEntityMaker )
@@ -79,14 +92,30 @@ BEGIN_DATADESC( CEnvEntityMaker )
 	// Outputs
 	DEFINE_OUTPUT( m_pOutputOnSpawned, "OnEntitySpawned" ),
 	DEFINE_OUTPUT( m_pOutputOnFailedSpawn, "OnEntityFailedSpawn" ),
+#ifdef MAPBASE
+	DEFINE_OUTPUT( m_pOutputOutEntity, "OutSpawnedEntity" ),
+#endif
 
 	// Inputs
 	DEFINE_INPUTFUNC( FIELD_VOID, "ForceSpawn", InputForceSpawn ),
 	DEFINE_INPUTFUNC( FIELD_STRING, "ForceSpawnAtEntityOrigin", InputForceSpawnAtEntityOrigin ),
+#ifdef MAPBASE
+	DEFINE_INPUTFUNC( FIELD_STRING, "ForceSpawnAtEntityCenter", InputForceSpawnAtEntityCenter ),
+	DEFINE_INPUTFUNC( FIELD_VECTOR, "ForceSpawnAtPosition", InputForceSpawnAtPosition ),
+#endif
 
 	// Functions
 	DEFINE_THINKFUNC( CheckSpawnThink ),
 END_DATADESC()
+
+#ifdef VSCRIPT
+BEGIN_ENT_SCRIPTDESC( CEnvEntityMaker, CBaseEntity, "env_entity_maker" )
+	DEFINE_SCRIPTFUNC_NAMED( SpawnEntityFromScript, "SpawnEntity", "Create an entity at the location of the maker" )
+	DEFINE_SCRIPTFUNC_NAMED( SpawnEntityAtEntityOriginFromScript, "SpawnEntityAtEntityOrigin", "Create an entity at the location of a specified entity instance" )
+	DEFINE_SCRIPTFUNC_NAMED( SpawnEntityAtNamedEntityOriginFromScript, "SpawnEntityAtNamedEntityOrigin", "Create an entity at the location of a named entity" )
+	DEFINE_SCRIPTFUNC_NAMED( SpawnEntityAtLocationFromScript, "SpawnEntityAtLocation", "Create an entity at a specified location and orientaton, orientation is Euler angle in degrees (pitch, yaw, roll)" )
+END_SCRIPTDESC()
+#endif
 
 LINK_ENTITY_TO_CLASS( env_entity_maker, CEnvEntityMaker );
 
@@ -201,6 +230,11 @@ void CEnvEntityMaker::SpawnEntity( Vector vecAlternateOrigin, QAngle vecAlternat
 		for ( int i = 0; i < hNewEntities.Count(); i++ )
 		{
 			CBaseEntity *pEntity = hNewEntities[i];
+
+#ifdef MAPBASE
+			m_pOutputOutEntity.Set(pEntity, pEntity, this);
+#endif
+
 			if ( pEntity->GetMoveType() == MOVETYPE_NONE )
 				continue;
 
@@ -238,9 +272,60 @@ void CEnvEntityMaker::SpawnEntity( Vector vecAlternateOrigin, QAngle vecAlternat
 			}
 		}
 	}
+#ifdef MAPBASE
+	else
+	{
+		for ( int i = 0; i < hNewEntities.Count(); i++ )
+		{
+			m_pOutputOutEntity.Set(hNewEntities[i], hNewEntities[i], this);
+		}
+	}
+#endif
+
+	pTemplate->CreationComplete( hNewEntities );
+}
+#ifdef VSCRIPT
+//-----------------------------------------------------------------------------
+// Purpose: Spawn an instance of the entity
+//-----------------------------------------------------------------------------
+void CEnvEntityMaker::SpawnEntityFromScript()
+{
+	SpawnEntity();
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Spawn an instance of the entity
+//-----------------------------------------------------------------------------
+void CEnvEntityMaker::SpawnEntityAtEntityOriginFromScript( HSCRIPT hEntity )
+{
+	CBaseEntity *pTargetEntity = ToEnt( hEntity );
+	if ( pTargetEntity )
+	{
+		SpawnEntity( pTargetEntity->GetAbsOrigin(), pTargetEntity->GetAbsAngles() );
+	}
+}
 
+//-----------------------------------------------------------------------------
+// Purpose: Spawn an instance of the entity
+//-----------------------------------------------------------------------------
+void CEnvEntityMaker::SpawnEntityAtNamedEntityOriginFromScript( const char *pszName )
+{
+	CBaseEntity *pTargetEntity = gEntList.FindEntityByName( NULL, pszName, this, NULL, NULL );
+
+	if( pTargetEntity )
+	{
+		SpawnEntity( pTargetEntity->GetAbsOrigin(), pTargetEntity->GetAbsAngles() );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Spawn an instance of the entity
+//-----------------------------------------------------------------------------
+void CEnvEntityMaker::SpawnEntityAtLocationFromScript( const Vector &vecAlternateOrigin, const Vector &vecAlternateAngles )
+{
+	SpawnEntity( vecAlternateOrigin, *((QAngle *)&vecAlternateAngles) );
+}
+#endif
 //-----------------------------------------------------------------------------
 // Purpose: Returns whether or not the template entities can fit if spawned.
 // Input  : pBlocker - Returns blocker unless NULL.
@@ -364,3 +449,30 @@ void CEnvEntityMaker::InputForceSpawnAtEntityOrigin( inputdata_t &inputdata )
 		SpawnEntity( pTargetEntity->GetAbsOrigin(), pTargetEntity->GetAbsAngles() );
 	}
 }
+
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CEnvEntityMaker::InputForceSpawnAtEntityCenter( inputdata_t &inputdata )
+{
+	CBaseEntity *pTargetEntity = gEntList.FindEntityByName( NULL, inputdata.value.String(), this, inputdata.pActivator, inputdata.pCaller );
+		
+	if( pTargetEntity )
+	{
+		SpawnEntity( pTargetEntity->WorldSpaceCenter(), pTargetEntity->GetAbsAngles() );
+	}
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CEnvEntityMaker::InputForceSpawnAtPosition(inputdata_t &inputdata)
+{
+	Vector vecPos;
+	inputdata.value.Vector3D(vecPos);
+	if (vecPos != vec3_origin && vecPos.IsValid())
+	{
+		SpawnEntity(vecPos, GetLocalAngles());
+	}
+}
+#endif // MAPBASE
+

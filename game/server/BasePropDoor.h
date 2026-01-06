@@ -75,6 +75,18 @@ public:
 	virtual float GetOpenInterval(void) = 0;
 	// }
 
+#ifdef MAPBASE
+	virtual bool PassesDoorFilter(CBaseEntity *pEntity) { return true; }
+
+	virtual bool KeyValue( const char *szKeyName, const char *szValue );
+#endif
+
+#ifdef EZ2
+	bool	HandleInteraction( int interactionType, void *data, CBaseCombatCharacter* sourceEnt );
+	bool	KickOpen( CBaseEntity * pSourceEnt );
+	void	InputKickOpen( inputdata_t &inputdata );
+#endif
+
 protected:
 
 	enum DoorState_t
@@ -98,6 +110,21 @@ protected:
 	CUtlVector< CHandle< CBasePropDoor > >	m_hDoorList;	// List of doors linked to us
 
 	inline CBaseEntity *GetActivator();
+
+#ifdef MAPBASE
+	inline float GetNPCOpenDistance() { return m_flNPCOpenDistance; }
+	inline Activity GetNPCOpenFrontActivity() { return m_eNPCOpenFrontActivity; }
+	inline Activity GetNPCOpenBackActivity() { return m_eNPCOpenBackActivity; }
+#endif
+
+#ifdef EZ2
+	float	m_flKickSpeed;
+	bool	m_bOpenOnKick;
+	bool	m_bUnlockOnKick;
+	bool	m_bKicked;
+
+	virtual bool CanOpenOnKick( CBaseEntity * pEntity ) { return m_bOpenOnKick; }
+#endif
 
 private:
 
@@ -163,6 +190,10 @@ private:
 	void InputOpenAwayFrom(inputdata_t &inputdata);
 	void InputToggle(inputdata_t &inputdata);
 	void InputUnlock(inputdata_t &inputdata);
+#ifdef MAPBASE
+	void InputAllowPlayerUse(inputdata_t &inputdata);
+	void InputDisallowPlayerUse(inputdata_t &inputdata);
+#endif
 
 	void SetDoorBlocker( CBaseEntity *pBlocker );
 
@@ -188,6 +219,12 @@ private:
 	string_t m_SoundOpen;
 	string_t m_SoundClose;
 
+#ifdef MAPBASE
+	float	m_flNPCOpenDistance;
+	Activity	m_eNPCOpenFrontActivity;
+	Activity	m_eNPCOpenBackActivity;
+#endif
+
 	// dvs: FIXME: can we remove m_flSpeed from CBaseEntity?
 	//float m_flSpeed;			// Rotation speed when opening or closing in degrees per second.
 
@@ -209,6 +246,9 @@ private:
 	COutputEvent m_OnClose;					// Triggered when the door is told to close.
 	COutputEvent m_OnOpen;					// Triggered when the door is told to open.
 	COutputEvent m_OnLockedUse;				// Triggered when the user tries to open a locked door.
+#ifdef EZ2
+	COutputEvent m_OnKicked;
+#endif
 };
 
 

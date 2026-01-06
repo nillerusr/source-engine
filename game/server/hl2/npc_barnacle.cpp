@@ -32,6 +32,10 @@
 #include "npc_antlion.h"
 #endif
 
+#ifdef EZ2
+#include "ez2/npc_basepredator.h"
+#endif
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -39,6 +43,10 @@ float GetCurrentGravity( void );
 ConVar	sk_barnacle_health( "sk_barnacle_health","0");
 
 static ConVar npc_barnacle_swallow( "npc_barnacle_swallow", "0", 0, "Use prototype swallow code." );
+
+#ifdef MAPBASE
+ConVar npc_barnacle_ignite( "npc_barnacle_ignite", "0", FCVAR_NONE, "Allows barnacles to be ignited by flares and beyond." );
+#endif
 
 const char *CNPC_Barnacle::m_szGibNames[NUM_BARNACLE_GIBS] =
 {
@@ -69,6 +77,9 @@ int	g_interactionBarnacleVictimDangle	= 0;
 int	g_interactionBarnacleVictimReleased	= 0;
 int	g_interactionBarnacleVictimGrab		= 0;
 int g_interactionBarnacleVictimBite     = 0;
+#ifdef MAPBASE
+int g_interactionBarnacleVictimFinalBite = 0;
+#endif
 
 LINK_ENTITY_TO_CLASS( npc_barnacle, CNPC_Barnacle );
 
@@ -177,7 +188,7 @@ BEGIN_DATADESC( CNPC_Barnacle )
 	DEFINE_INPUTFUNC( FIELD_VOID, "DropTongue", InputDropTongue ),
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetDropTongueSpeed", InputSetDropTongueSpeed ),
 
-#ifdef HL2_EPISODIC
+#if HL2_EPISODIC || MAPBASE
 	DEFINE_INPUTFUNC( FIELD_VOID, "LetGo", InputLetGo ),
 	DEFINE_OUTPUT( m_OnGrab,     "OnGrab" ),
 	DEFINE_OUTPUT( m_OnRelease, "OnRelease" ),
@@ -187,7 +198,9 @@ BEGIN_DATADESC( CNPC_Barnacle )
 	DEFINE_THINKFUNC( BarnacleThink ),
 	DEFINE_THINKFUNC( WaitTillDead ),
 
+#ifndef MAPBASE
 	DEFINE_FIELD( m_bSwallowingBomb, FIELD_BOOLEAN ),
+#endif
 
 END_DATADESC()
 
@@ -207,6 +220,26 @@ Class_T	CNPC_Barnacle::Classify ( void )
 {
 	return	CLASS_BARNACLE;
 }
+
+#ifdef EZ2
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+Disposition_t CNPC_Barnacle::IRelationType( CBaseEntity *pTarget )
+{
+	Disposition_t base = BaseClass::IRelationType(pTarget);
+
+	// Only hate baby bullsquids (mature bullsquids are too big)
+	if (pTarget && pTarget->Classify() == CLASS_BULLSQUID && base == D_HT)
+	{
+		CNPC_BasePredator *pPredator = dynamic_cast<CNPC_BasePredator*>(pTarget);
+		if (pPredator && !pPredator->IsBaby())
+			return D_NU;
+	}
+
+	return base;
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Initialize absmin & absmax to the appropriate box
@@ -233,7 +266,11 @@ void CNPC_Barnacle::HandleAnimEvent( animevent_t *pEvent )
 {
 	if ( pEvent->event== AE_BARNACLE_PUKEGIB )
 	{
+#ifndef EZ
 		CGib::SpawnSpecificGibs( this, 1, 50, 1, "models/gibs/hgibs_rib.mdl");
+#else
+		CGib::SpawnSpecificGibs( this, 1, 50, 1, "models/gibs/hgibs_rib.mdl", BLOOD_COLOR_RED );
+#endif
 		return;
 	}
 	if ( pEvent->event == AE_BARNACLE_BITE )
@@ -275,7 +312,9 @@ void CNPC_Barnacle::Spawn()
 	m_cGibs				= 0;
 	m_bLiftingPrey		= false;
 	m_bSwallowingPrey	= false;
+#ifndef MAPBASE
 	m_bSwallowingBomb	= false;
+#endif
 	m_flDigestFinish	= 0;
 	m_takedamage		= DAMAGE_YES;
 	m_pConstraint		= NULL;
@@ -406,6 +445,16 @@ void CNPC_Barnacle::PlayerHasIlluminatedNPC( CBasePlayer *pPlayer, float flDot )
 	}
 }
 
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CNPC_Barnacle::AllowedToIgnite( void )
+{
+	return npc_barnacle_ignite.GetBool();
+}
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: Initialize tongue position when first spawned
 // Input  :
@@ -509,7 +558,11 @@ void CNPC_Barnacle::BarnacleThink ( void )
 	}
 	else if ( GetEnemy()  )
 	{
+#ifdef MAPBASE
+		if ( m_bLiftingPrey )
+#else
  		if ( m_bLiftingPrey || m_bSwallowingBomb == true )
+#endif
 		{	
 			LiftPrey();
 		}
@@ -585,7 +638,11 @@ void CNPC_Barnacle::BarnacleThink ( void )
 		if ( m_cGibs && random->RandomInt(0,99) == 1 )
 		{
 			// cough up a gib.
-			CGib::SpawnSpecificGibs( this, 1, 50, 1, "models/gibs/hgibs_rib.mdl");
+#ifndef EZ
+			CGib::SpawnSpecificGibs( this, 1, 50, 1, "models/gibs/hgibs_rib.mdl" );
+#else
+			CGib::SpawnSpecificGibs( this, 1, 50, 1, "models/gibs/hgibs_rib.mdl", BLOOD_COLOR_RED );
+#endif
 			m_cGibs--;
 
 			EmitSound( "NPC_Barnacle.Digest" );
@@ -660,9 +717,33 @@ bool CNPC_Barnacle::CanPickup( CBaseCombatCharacter *pBCC )
 	if( !pBCC )
 		return true;
 
+#ifdef EZ2
+	if ( pBCC->IsNPC() && pBCC->GetSolid() == SOLID_VPHYSICS )
+	{
+		// Don't pickup turrets (the * is for Arbeit turrets)
+		if( FClassnameIs( pBCC, "npc*turret_floor" ) )
+			return false;
+
+		// This turret's different, but don't pick him up either
+		if( FClassnameIs( pBCC, "npc_wilson" ) )
+			return false;
+
+		// Don't pick up eggs.
+		// TODO - Eventually, we would like barnacles to eat eggs. This is only disabled to prevent crashes.
+		if (FClassnameIs( pBCC, "npc_egg" ))
+			return false;
+	}
+#else
 	// Don't pickup turrets
 	if( FClassnameIs( pBCC, "npc_turret_floor" ) )
 		return false;
+#endif
+
+#ifdef MAPBASE
+	// Don't pickup rollermines
+	if( FClassnameIs( pBCC, "npc_rollermine" ) )
+		return false;
+#endif
 
 	// Don't pick up a dead player or NPC
 	if( !pBCC->IsAlive() )
@@ -1145,6 +1226,24 @@ void CNPC_Barnacle::LiftPhysicsObject( float flBiteZOffset )
 		// If we got a physics prop, wait until the thing has settled down
 		m_bLiftingPrey = false;
 
+#ifdef MAPBASE
+		Vector tipPos = m_vecTip.Get();
+		Activity curAct = GetActivity();
+
+		// Other, non-character entities use this now
+		if (pVictim->DispatchInteraction( g_interactionBarnacleVictimBite, &tipPos, this ))
+		{
+			// Make sure the interaction isn't making us use an irregular activity
+			// (e.g. biting)
+			if (GetActivity() == curAct)
+				SetActivity( (Activity)ACT_BARNACLE_TASTE_SPIT );
+		}
+		else
+		{
+			// Start the spit animation.
+			SetActivity( (Activity)ACT_BARNACLE_TASTE_SPIT );
+		}
+#else
 		if ( hl2_episodic.GetBool() )
 		{
 			CBounceBomb *pBounce = dynamic_cast<CBounceBomb *>( pVictim );
@@ -1181,6 +1280,7 @@ void CNPC_Barnacle::LiftPhysicsObject( float flBiteZOffset )
 
 			pBCC->DispatchInteraction( g_interactionBarnacleVictimBite, &tipPos, this );
 		}
+#endif
 #endif
 	}
 	else
@@ -1355,7 +1455,7 @@ void CNPC_Barnacle::InputDropTongue( inputdata_t &inputdata )
 void CNPC_Barnacle::AttachTongueToTarget( CBaseEntity *pTouchEnt, Vector vecGrabPos )
 {
 
-#if HL2_EPISODIC
+#if HL2_EPISODIC || MAPBASE
 	m_OnGrab.Set( pTouchEnt, this, this );
 #endif
 
@@ -1577,6 +1677,18 @@ void CNPC_Barnacle::BitePrey( void )
 
 	CBaseCombatCharacter *pVictim = GetEnemyCombatCharacterPointer();
 
+#ifdef MAPBASE
+	if ( pVictim == NULL )
+	{
+		if ( GetEnemy() )
+		{
+			Vector tipPos = m_vecTip.Get();
+			GetEnemy()->DispatchInteraction( g_interactionBarnacleVictimFinalBite, &tipPos, this );
+		}
+
+		return;
+	}
+#else
 #ifdef HL2_EPISODIC
  	if ( pVictim == NULL )
 	{
@@ -1614,6 +1726,7 @@ void CNPC_Barnacle::BitePrey( void )
 	{	
 		return;
 	}
+#endif
 
 	EmitSound( "NPC_Barnacle.FinalBite" );
 
@@ -1699,6 +1812,12 @@ void CNPC_Barnacle::BitePrey( void )
 		return;
 	}
 
+#endif
+
+#ifdef MAPBASE
+	Vector tipPos = m_vecTip.Get();
+	if (pVictim->DispatchInteraction( g_interactionBarnacleVictimFinalBite, &tipPos, this ))
+		return;
 #endif
 
 	// Players are never swallowed, nor is anything we don't have a ragdoll for
@@ -1873,7 +1992,7 @@ void CNPC_Barnacle::RemoveRagdoll( bool bDestroyRagdoll )
 void CNPC_Barnacle::LostPrey( bool bRemoveRagdoll )
 {
 	
-#if HL2_EPISODIC
+#if HL2_EPISODIC || MAPBASE
 	m_OnRelease.Set( GetEnemy(), this, this );
 #endif
 
@@ -1885,13 +2004,20 @@ void CNPC_Barnacle::LostPrey( bool bRemoveRagdoll )
 		PhysEnableEntityCollisions( this, pEnemy );
 #endif
 
+#ifdef MAPBASE
+		// These can be CBaseEntity-based now
+		pEnemy->DispatchInteraction( g_interactionBarnacleVictimReleased, NULL, this );
+#endif
+
 		//No one survives being snatched by a barnacle anymore, so leave
 		// this flag set so that their entity gets removed.
 		//GetEnemy()->RemoveEFlags( EFL_IS_BEING_LIFTED_BY_BARNACLE );
 		CBaseCombatCharacter *pVictim = GetEnemyCombatCharacterPointer();
 		if ( pVictim )
 		{
+#ifndef MAPBASE
 			pVictim->DispatchInteraction( g_interactionBarnacleVictimReleased, NULL, this );
+#endif
 			pVictim->RemoveEFlags( EFL_IS_BEING_LIFTED_BY_BARNACLE );
 
 			if ( m_hRagdoll )
@@ -1968,7 +2094,7 @@ void CNPC_Barnacle::OnTongueTipUpdated()
 //-----------------------------------------------------------------------------
 void CNPC_Barnacle::UpdateTongue( void )
 {
-	if ( m_hTongueTip == NULL || m_hTongueTip->m_pSpring == NULL )
+	if ( m_hTongueTip == NULL )
 		return;
 
 	// Set the spring's length to that of the tongue's extension
@@ -1996,7 +2122,11 @@ void CNPC_Barnacle::SpawnDeathGibs( void )
 	{
 		if ( random->RandomInt( 0, 1 ) )
 		{
+#ifndef EZ
 			CGib::SpawnSpecificGibs( this, 1, 32, 1, m_szGibNames[i] );
+#else
+			CGib::SpawnSpecificGibs( this, 1, 32, 1, m_szGibNames[i], BLOOD_COLOR_RED );
+#endif
 			bDroppedAny = true;
 		}
 	}
@@ -2004,7 +2134,11 @@ void CNPC_Barnacle::SpawnDeathGibs( void )
 	// Make sure we at least drop something
 	if ( bDroppedAny == false )
 	{
+#ifndef EZ
 		CGib::SpawnSpecificGibs( this, 1, 32, 1, m_szGibNames[0] );
+#else
+		CGib::SpawnSpecificGibs( this, 1, 32, 1, m_szGibNames[0], BLOOD_COLOR_RED );
+#endif
 	}
 }
 
@@ -2213,6 +2347,11 @@ bool CNPC_Barnacle::IsPoisonous( CBaseEntity *pVictim )
 	if ( FClassnameIs(pVictim,"npc_headcrab_black") )
 		return true;
 
+#ifdef MAPBASE
+	if (FClassnameIs( pVictim, "npc_poisonzombie" ))
+		return true;
+#endif
+
 	if ( FClassnameIs(pVictim,"npc_antlion") &&
 		 static_cast<CNPC_Antlion *>(pVictim)->IsWorker()
 		)
@@ -2220,10 +2359,12 @@ bool CNPC_Barnacle::IsPoisonous( CBaseEntity *pVictim )
 	
 	return false;
 }
+#endif
 
 
 
 
+#if HL2_EPISODIC || MAPBASE
 //=========================================================
 // script input to immediately abandon whatever I am lifting
 //=========================================================
@@ -2240,8 +2381,10 @@ void CNPC_Barnacle::InputLetGo( inputdata_t &inputdata )
 		LostPrey( false );
 	}
 }
+#endif
 
 
+#if HL2_EPISODIC
 // Barnacle has custom impact damage tables, so it can take grave damage from sawblades.
 static impactentry_t barnacleLinearTable[] =
 {
@@ -2712,6 +2855,9 @@ AI_BEGIN_CUSTOM_NPC( npc_barnacle, CNPC_Barnacle )
 	DECLARE_INTERACTION( g_interactionBarnacleVictimReleased )
 	DECLARE_INTERACTION( g_interactionBarnacleVictimGrab )
 	DECLARE_INTERACTION( g_interactionBarnacleVictimBite )
+#ifdef MAPBASE
+	DECLARE_INTERACTION( g_interactionBarnacleVictimFinalBite )
+#endif
 
 	// Conditions
 		

@@ -25,9 +25,13 @@ IMPLEMENT_SERVERCLASS_ST_NOBASE(CParticleSystem, DT_ParticleSystem)
 
 	SendPropInt( SENDINFO(m_iEffectIndex), MAX_PARTICLESYSTEMS_STRING_BITS, SPROP_UNSIGNED ),
 	SendPropBool( SENDINFO(m_bActive) ),
+#ifdef MAPBASE
+	SendPropBool( SENDINFO(m_bDestroyImmediately) ),
+#endif
 	SendPropFloat( SENDINFO(m_flStartTime) ),
 
 	SendPropArray3( SENDINFO_ARRAY3(m_hControlPointEnts), SendPropEHandle( SENDINFO_ARRAY(m_hControlPointEnts) ) ),
+	SendPropArray3( SENDINFO_ARRAY3(m_vControlPointVecs), SendPropVector( SENDINFO_ARRAY(m_vControlPointVecs) ) ),
 	SendPropArray3( SENDINFO_ARRAY3(m_iControlPointParents), SendPropInt( SENDINFO_ARRAY(m_iControlPointParents), 3, SPROP_UNSIGNED ) ),
 	SendPropBool( SENDINFO(m_bWeatherEffect) ),
 END_SEND_TABLE()
@@ -36,6 +40,9 @@ BEGIN_DATADESC( CParticleSystem )
 	DEFINE_KEYFIELD( m_bStartActive,	FIELD_BOOLEAN, "start_active" ),
 	DEFINE_KEYFIELD( m_bWeatherEffect,	FIELD_BOOLEAN, "flag_as_weather" ),
 	DEFINE_FIELD( m_bActive,			FIELD_BOOLEAN ),
+#ifdef MAPBASE
+	DEFINE_FIELD( m_bDestroyImmediately, FIELD_BOOLEAN ),
+#endif
 	DEFINE_FIELD( m_flStartTime,		FIELD_TIME ),
 	DEFINE_KEYFIELD( m_iszEffectName,	FIELD_STRING, "effect_name" ),
 	//DEFINE_FIELD( m_iEffectIndex, FIELD_INTEGER ),	// Don't save. Refind after loading.
@@ -116,12 +123,16 @@ BEGIN_DATADESC( CParticleSystem )
 
 	DEFINE_INPUTFUNC( FIELD_VOID, "Start", InputStart ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "Stop", InputStop ),
+#ifdef MAPBASE
+	DEFINE_INPUTFUNC( FIELD_VOID, "DestroyImmediately", InputDestroyImmediately ),
+#endif
 
 	DEFINE_THINKFUNC( StartParticleSystemThink ),
 
 END_DATADESC()
 
 LINK_ENTITY_TO_CLASS( info_particle_system, CParticleSystem );
+LINK_ENTITY_TO_CLASS( info_particle_system_coordinate, CParticleSystemCoordinate );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -199,6 +210,9 @@ void CParticleSystem::StartParticleSystem( void )
 	{
 		m_flStartTime = gpGlobals->curtime;
 		m_bActive = true;
+#ifdef MAPBASE
+		m_bDestroyImmediately = false;
+#endif
 		
 		// Setup our control points at this time (in case our targets weren't around at spawn time)
 		ReadControlPointEnts();
@@ -229,6 +243,17 @@ void CParticleSystem::InputStop( inputdata_t &inputdata )
 	StopParticleSystem();
 }
 
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CParticleSystem::InputDestroyImmediately( inputdata_t &inputdata )
+{
+	m_bDestroyImmediately = true;
+	StopParticleSystem();
+}
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: Find each entity referred to by m_iszControlPointNames and 
 // resolve it into the corresponding slot in m_hControlPointEnts
@@ -237,17 +262,28 @@ void CParticleSystem::ReadControlPointEnts( void )
 {
 	for ( int i = 0 ; i < kMAXCONTROLPOINTS; ++i )
 	{
-		if ( m_iszControlPointNames[i] == NULL_STRING )
-			continue;
-
-		CBaseEntity *pPointEnt = gEntList.FindEntityGeneric( NULL, STRING( m_iszControlPointNames[i] ), this );
-		Assert( pPointEnt != NULL );
-		if ( pPointEnt == NULL )
+		if (UsesCoordinates())
 		{
-			Warning("Particle system %s could not find control point entity (%s)\n", GetEntityName().ToCStr(), m_iszControlPointNames[i].ToCStr() );
-			continue;
+			Vector vecCoords;
+			// cast str to vector, add vector to array
+			const char* pszVector = STRING(m_iszControlPointNames[i]);
+			UTIL_StringToVector(vecCoords.Base(), pszVector);
+			m_vControlPointVecs.Set(i, vecCoords);
 		}
+		else
+		{
+			if ( m_iszControlPointNames[i] == NULL_STRING )
+				continue;
 
-		m_hControlPointEnts.Set( i, pPointEnt );
+			CBaseEntity *pPointEnt = gEntList.FindEntityGeneric( NULL, STRING( m_iszControlPointNames[i] ), this );
+			Assert( pPointEnt != NULL );
+			if ( pPointEnt == NULL )
+			{
+				Warning("Particle system %s could not find control point entity (%s)\n", GetEntityName().ToCStr(), m_iszControlPointNames[i].ToCStr() );
+				continue;
+			}
+
+			m_hControlPointEnts.Set( i, pPointEnt );
+		}
 	}
 }

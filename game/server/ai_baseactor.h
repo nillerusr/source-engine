@@ -101,7 +101,11 @@ public:
 
 	virtual void			SetModel( const char *szModelName );
 
+#ifdef MAPBASE
+	virtual bool			StartSceneEvent( CSceneEventInfo *info, CChoreoScene *scene, CChoreoEvent *event, CChoreoActor *actor, CBaseEntity *pTarget, CSceneEntity *pSceneEnt = NULL );
+#else
 	virtual	bool			StartSceneEvent( CSceneEventInfo *info, CChoreoScene *scene, CChoreoEvent *event, CChoreoActor *actor, CBaseEntity *pTarget );
+#endif
 	virtual bool			ProcessSceneEvent( CSceneEventInfo *info, CChoreoScene *scene, CChoreoEvent *event );
 	virtual	bool			ClearSceneEvent( CSceneEventInfo *info, bool fastKill, bool canceled );
 	virtual bool			CheckSceneEventCompletion( CSceneEventInfo *info, float currenttime, CChoreoScene *scene, CChoreoEvent *event );
@@ -133,6 +137,11 @@ public:
 
 	virtual void			AddLookTarget( CBaseEntity *pTarget, float flImportance, float flDuration, float flRamp = 0.0 );
 	virtual void			AddLookTarget( const Vector &vecPosition, float flImportance, float flDuration, float flRamp = 0.0 );
+
+#ifdef EZ2
+	virtual void			OnSeeEntity( CBaseEntity *pEntity );
+	virtual bool			Remark( AI_CriteriaSet &modifiers, CBaseEntity *pRemarkable ) { return false; }
+#endif
 
 	virtual void			SetHeadDirection( const Vector &vTargetPos, float flInterval );
 
@@ -166,6 +175,15 @@ public:
 	void					ClearExpression();
 	const char *			GetExpression();
 
+#ifdef MAPBASE_VSCRIPT
+	//---------------------------------
+
+	void	ScriptAddLookTarget( HSCRIPT pTarget, float flImportance, float flDuration, float flRamp = 0.0 ) { AddLookTarget(ToEnt(pTarget), flImportance, flDuration, flRamp); }
+	void	ScriptAddLookTargetPos( const Vector &vecPosition, float flImportance, float flDuration, float flRamp = 0.0 ) { AddLookTarget(vecPosition, flImportance, flDuration, flRamp); }
+
+	//---------------------------------
+#endif
+
 	enum
 	{
 		SCENE_AI_BLINK = 1,
@@ -177,10 +195,19 @@ public:
 		SCENE_AI_RANDOMHEADFLEX,
 		SCENE_AI_IGNORECOLLISION,
 		SCENE_AI_DISABLEAI
+#ifdef MAPBASE
+		,
+		SCENE_AI_ADDCONTEXT,
+		SCENE_AI_INPUT,
+		SCENE_AI_GAMETEXT, // This is handled in CBaseFlex
+#endif
 	};
 
 
 	DECLARE_DATADESC();
+#ifdef MAPBASE_VSCRIPT
+	DECLARE_ENT_SCRIPTDESC();
+#endif
 private:
 	enum
 	{

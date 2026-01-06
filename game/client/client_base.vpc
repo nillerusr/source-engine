@@ -16,6 +16,10 @@ $MacroRequired "GAMENAME"
 $Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
 $include "$SRCDIR\vpc_scripts\protobuf_builder.vpc"
 $Include "$SRCDIR\vpc_scripts\source_replay.vpc"	[$TF]
+$Include "$SRCDIR\game\protobuf_include.vpc"
+
+// Mapbase stuff
+$Include "$SRCDIR\game\client\client_mapbase.vpc"	 [$MAPBASE]
 
 $Configuration	"Debug"
 {
@@ -362,6 +366,7 @@ $Project
 		$File	"hud_redraw.cpp"
 		$File	"hud_vehicle.cpp"
 		$File	"$SRCDIR\game\shared\igamesystem.cpp"
+		$File	"in_steaminput_client.cpp" [$STEAM_INPUT]
 		$File	"in_camera.cpp"
 		$File	"in_joystick.cpp"
 		$File	"in_main.cpp"
@@ -482,6 +487,10 @@ $Project
 		$File	"viewrender.cpp"
 		$File	"$SRCDIR\game\shared\voice_banmgr.cpp"
 		$File	"$SRCDIR\game\shared\voice_status.cpp"
+		$File	"vscript_client.cpp" [$VSCRIPT]
+		$File	"vscript_client.h" [$VSCRIPT]
+		$File	"$SRCDIR\game\shared\vscript_shared.cpp" [$VSCRIPT]
+		$File	"$SRCDIR\game\shared\vscript_shared.h" [$VSCRIPT]
 		$File	"warp_overlay.cpp"
 		$File	"WaterLODMaterialProxy.cpp"
 		$File	"$SRCDIR\game\shared\weapon_parse.cpp"
@@ -1093,6 +1102,7 @@ $Project
 		$File	"$SRCDIR\public\vgui_controls\WizardSubPanel.h"
 		$File	"$SRCDIR\public\worldsize.h"
 		$File	"$SRCDIR\public\zip_uncompressed.h"
+		$File	"$SRCDIR\public\tier1\interval.h"
 		//Haptics
 		$File   "$SRCDIR\public\haptics\ihaptics.h"	[$WIN32]
 		$File   "$SRCDIR\public\haptics\haptic_utils.h"	[$WIN32]
@@ -1246,6 +1256,9 @@ $Project
 		$Lib		vgui_controls
 		$Lib		vtf
 		$ImpLib		steam_api
+		
+		// Discord integration
+		$Lib	"$LIBPUBLIC\discord-rpc" [$MAPBASE_RPC&&!$LINUXALL]
 		
 		$Lib $LIBCOMMON/libcrypto [$POSIX]
 

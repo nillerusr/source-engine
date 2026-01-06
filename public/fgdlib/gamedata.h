@@ -88,6 +88,11 @@ class GameData
 		bool	RemapNameField( const char *pszInValue, char *pszOutValue, TNameFixup NameFixup );
 		bool	LoadFGDMaterialExclusions( TokenReader &tr );
 		bool	LoadFGDAutoVisGroups( TokenReader &tr );
+
+#ifdef MAPBASE
+		// Sets up for additional instance remap fixes from Mapbase
+		void	SetupInstanceRemapParams( int iStartNodes, int iStartBrushSide, bool bRemapVecLines );
+#endif
 		
 
 		CUtlVector< FGDMatExlcusions_s >	m_FGDMaterialExclusions;

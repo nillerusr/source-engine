@@ -27,6 +27,7 @@
 #include "Color.h"
 #include "vstdlib/IKeyValuesSystem.h"
 #include "tier1/utlsymbol.h"
+#include "tier1/KeyValues.h"
 #include "vgui_controls/BuildGroup.h"
 
 // undefine windows function macros that overlap 
@@ -959,7 +960,6 @@ inline bool	Panel::IsMouseInputDisabledForThisPanel() const
 	return _flags.IsFlagSet( IS_MOUSE_DISABLED_FOR_THIS_PANEL_ONLY );
 }
 
-#if 0
 // This function cannot be defined here because it requires on a full definition of
 // KeyValues (to call KeyValues::MakeCopy()) whereas the rest of this header file
 // assumes a forward declared definition of KeyValues.
@@ -984,7 +984,6 @@ inline void Panel::PostMessageToAllSiblingsOfType( KeyValues *msg, float delaySe
 
 	msg->deleteThis();
 }
-#endif
 
 class Button;
 

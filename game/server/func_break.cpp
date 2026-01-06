@@ -220,6 +220,14 @@ bool CBreakable::KeyValue( const char *szKeyName, const char *szValue )
 		int object = atoi( szValue );
 		if ( object > 0 && object < ARRAYSIZE(pSpawnObjects) )
 			m_iszSpawnObject = MAKE_STRING( pSpawnObjects[object] );
+#ifdef MAPBASE
+		// "0" is the default value of a "choices" field in Hammer, representing nothing selected
+		// atoi() returning 0 may also indicate a failed conversion, so check szValue directly
+		else if ( FStrEq( szValue, "0" ) )
+			m_iszSpawnObject = NULL_STRING;
+		else
+			m_iszSpawnObject = AllocPooledString(szValue);
+#endif
 	}
 	else if (FStrEq(szKeyName, "propdata") )
 	{
@@ -431,9 +439,10 @@ void CBreakable::Precache( void )
 	case matCinderBlock:
 		pGibName = "ConcreteChunks";
 		break;
+
 #endif
 
-#if HL2_EPISODIC 
+#if HL2_EPISODIC || MAPBASE 
 	case matNone:
 		pGibName = "";
 		break;

@@ -107,7 +107,20 @@ void ClientGamePrecache( void )
 {
 	CBaseEntity::PrecacheModel("models/player.mdl");
 	CBaseEntity::PrecacheModel( "models/gibs/agibs.mdl" );
-	CBaseEntity::PrecacheModel ("models/weapons/v_hands.mdl");
+#ifdef EZ
+	CBaseEntity::PrecacheModel( "models/gibs/agibs2.mdl" );
+
+	// Precache human gibs as well
+	CBaseEntity::PrecacheModel( "models/gibs/hgibs.mdl" );
+	CBaseEntity::PrecacheModel( "models/gibs/hgibs_rib.mdl" );
+	CBaseEntity::PrecacheModel( "models/gibs/hgibs_scapula.mdl" );
+	CBaseEntity::PrecacheModel( "models/gibs/hgibs_spine.mdl" );
+#endif
+#ifndef EZ2
+	CBaseEntity::PrecacheModel ( "models/weapons/v_hands.mdl" );
+#else
+	CBaseEntity::PrecacheModel ( "models/weapons/ez2/v_hands.mdl" );
+#endif
 
 	CBaseEntity::PrecacheScriptSound( "HUDQuickInfo.LowAmmo" );
 	CBaseEntity::PrecacheScriptSound( "HUDQuickInfo.LowHealth" );
@@ -137,6 +150,21 @@ void respawn( CBaseEntity *pEdict, bool fCopyCorpse )
 		// respawn player
 		pEdict->Spawn();
 	}
+#ifdef MAPBASE
+	else if (g_pGameRules->AllowSPRespawn())
+	{
+		// In SP respawns, only create corpse if drawing externally
+		CBasePlayer *pPlayer = (CBasePlayer*)pEdict;
+		if ( fCopyCorpse && pPlayer->GetDrawPlayerModelExternally() )
+		{
+			// make a copy of the dead body for appearances sake
+			pPlayer->CreateCorpse();
+		}
+
+		// respawn player
+		pPlayer->Spawn();
+	}
+#endif
 	else
 	{       // restart the entire server
 		engine->ServerCommand("reload\n");

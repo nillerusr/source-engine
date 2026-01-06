@@ -29,6 +29,9 @@ class C_BaseCombatCharacter : public C_BaseFlex
 public:
 	DECLARE_CLIENTCLASS();
 	DECLARE_PREDICTABLE();
+#ifdef MAPBASE_VSCRIPT
+	DECLARE_ENT_SCRIPTDESC();
+#endif
 
 					C_BaseCombatCharacter( void );
 	virtual			~C_BaseCombatCharacter( void );
@@ -96,8 +99,14 @@ public:
 
 #ifdef GLOWS_ENABLE
 	CGlowObject			*GetGlowObject( void ){ return m_pGlowEffect; }
-	virtual void		GetGlowEffectColor( float *r, float *g, float *b );
+	virtual void		GetGlowEffectColor( float *r, float *g, float *b, float *a );
 #endif // GLOWS_ENABLE
+
+#ifdef MAPBASE_VSCRIPT
+	int					ScriptGetAmmoCount( int i );
+	HSCRIPT				ScriptGetActiveWeapon();
+	HSCRIPT				ScriptGetWeapon( int i );
+#endif
 
 public:
 
@@ -124,6 +133,10 @@ private:
 	bool				m_bGlowEnabled;
 	bool				m_bOldGlowEnabled;
 	CGlowObject			*m_pGlowEffect;
+	Vector				m_GlowColor;
+	Vector				m_OldGlowColor;
+	float				m_GlowAlpha;
+	int					m_OldGlowAlpha;
 #endif // GLOWS_ENABLE
 
 private:

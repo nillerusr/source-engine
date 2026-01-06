@@ -45,5 +45,24 @@ enum
 #define DMG_MISSILEDEFENSE	(DMG_LASTGENERICFLAG<<2)	// The only kind of damage missiles take. (special missile defense)
 
 
+#ifdef EZ
+//--------------
+// ENTROPY : ZERO DEFINITIONS
+//--------------
+enum
+{
+	EZ_CHALLENGE_NONE,
+	EZ_CHALLENGE_DAMAGE,
+	EZ_CHALLENGE_BULLETS,
+	EZ_CHALLENGE_TIME,
+	EZ_CHALLENGE_KILLS,
+	EZ_CHALLENGE_MASS,
+
+	// Special Challenges
+	// These are VScript-driven challenges which can be defined by users.
+	EZ_CHALLENGE_SPECIAL = 100,
+};
+#endif
+
 
 #endif // HL2_SHAREDDEFS_H

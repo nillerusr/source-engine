@@ -130,6 +130,25 @@ void Hack_FixEscapeChars( char *str )
 	Q_strncpy( str, osave, len );
 }
 
+#ifdef MAPBASE
+static const ConVar *pHostTimescale;
+static ConVar host_pitchscale( "host_pitchscale", "-1", FCVAR_REPLICATED, "If greater than 0, controls the pitch scale of sounds instead of host_timescale." );
+
+static float GetSoundPitchScale()
+{
+	static ConVarRef sv_cheats( "sv_cheats" );
+	if (sv_cheats.GetBool())
+	{
+		if (host_pitchscale.GetFloat() > 0.0f)
+			return host_pitchscale.GetFloat();
+		else
+			return pHostTimescale->GetFloat();
+	}
+
+	return 1.0f;
+}
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -322,6 +341,10 @@ public:
 				InternalPrecacheWaves( i );
 			}
 		}
+#endif
+
+#ifdef MAPBASE
+		pHostTimescale = cvar->FindVar( "host_timescale" );
 #endif
 	}
 
@@ -525,7 +548,11 @@ public:
 			params.volume,
 			(soundlevel_t)params.soundlevel,
 			ep.m_nFlags,
+#ifdef MAPBASE
+			params.pitch * GetSoundPitchScale(),
+#else
 			params.pitch,
+#endif
 			ep.m_nSpecialDSP,
 			ep.m_pOrigin,
 			NULL,
@@ -604,7 +631,11 @@ public:
 				ep.m_flVolume, 
 				ep.m_SoundLevel, 
 				ep.m_nFlags, 
+#ifdef MAPBASE
+				ep.m_nPitch * GetSoundPitchScale(),
+#else
 				ep.m_nPitch, 
+#endif
 				ep.m_nSpecialDSP,
 				ep.m_pOrigin,
 				NULL, 
@@ -826,6 +857,10 @@ public:
 			params.volume = flVolume;
 		}
 
+#ifdef MAPBASE
+		params.pitch *= GetSoundPitchScale();
+#endif
+
 #if defined( CLIENT_DLL )
 		enginesound->EmitAmbientSound( params.soundname, params.volume, params.pitch, iFlags, soundtime );
 #else
@@ -954,6 +989,10 @@ public:
 
 		if ( pSample && ( Q_stristr( pSample, ".wav" ) || Q_stristr( pSample, ".mp3" )) )
 		{
+#ifdef MAPBASE
+			pitch *= GetSoundPitchScale();
+#endif
+
 #if defined( CLIENT_DLL )
 			enginesound->EmitAmbientSound( pSample, volume, pitch, flags, soundtime );
 #else
@@ -1187,6 +1226,25 @@ void CBaseEntity::EmitSound( const char *soundname, HSOUNDSCRIPTHANDLE& handle, 
 	EmitSound( filter, entindex(), params, handle );
 }
 
+#ifdef VSCRIPT
+#if !defined ( CLIENT_DLL ) || defined( MAPBASE_VSCRIPT )
+void CBaseEntity::ScriptEmitSound( const char *soundname )
+{
+	EmitSound( soundname );
+}
+
+void CBaseEntity::ScriptStopSound( const char *soundname )
+{
+	StopSound( soundname );
+}
+
+float CBaseEntity::ScriptSoundDuration( const char *soundname, const char *actormodel )
+{
+	float duration = CBaseEntity::GetSoundDuration( soundname, actormodel );
+	return duration;
+}
+#endif // !CLIENT
+#endif
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : filter - 
@@ -1366,6 +1424,52 @@ int SENTENCEG_Lookup(const char *sample)
 }
 #endif
 
+#if defined(MAPBASE) && defined(GAME_DLL)
+//-----------------------------------------------------------------------------
+// Purpose: Wrapper to emit a sentence and also a close caption token for the sentence as appropriate.
+// Input  : filter - 
+//			iEntIndex - 
+//			iChannel - 
+//			iSentenceIndex - 
+//			flVolume - 
+//			iSoundlevel - 
+//			iFlags - 
+//			iPitch - 
+//			bUpdatePositions - 
+//			soundtime - 
+//-----------------------------------------------------------------------------
+void CBaseEntity::EmitSentenceByIndex( IRecipientFilter& filter, int iEntIndex, int iChannel, int iSentenceIndex, 
+	float flVolume, soundlevel_t iSoundlevel, int iFlags /*= 0*/, int iPitch /*=PITCH_NORM*/,
+	const Vector *pOrigin /*=NULL*/, const Vector *pDirection /*=NULL*/, 
+	bool bUpdatePositions /*=true*/, float soundtime /*=0.0f*/, int iSpecialDSP /*= 0*/, int iSpeakerIndex /*= 0*/ )
+{
+	CUtlVector< Vector > soundOrigins;
+
+	bool bSwallowed = CEnvMicrophone::OnSentencePlayed( 
+		iEntIndex, 
+		iSentenceIndex, 
+		iSoundlevel, 
+		flVolume, 
+		iFlags, 
+		iPitch, 
+		pOrigin, 
+		soundtime,
+		soundOrigins );
+	if ( bSwallowed )
+		return;
+	
+	CBaseEntity *pEntity = UTIL_EntityByIndex( iEntIndex );
+	if ( pEntity )
+	{
+		pEntity->ModifySentenceParams( iSentenceIndex, iChannel, flVolume, iSoundlevel, iFlags, iPitch,
+			&pOrigin, &pDirection, bUpdatePositions, soundtime, iSpecialDSP, iSpeakerIndex );
+	}
+
+	enginesound->EmitSentenceByIndex( filter, iEntIndex, iChannel, iSentenceIndex, 
+		flVolume, iSoundlevel, iFlags, iPitch * GetSoundPitchScale(), iSpecialDSP, pOrigin, pDirection, &soundOrigins, bUpdatePositions, soundtime, iSpeakerIndex );
+}
+#endif
+
 void UTIL_EmitAmbientSound( int entindex, const Vector &vecOrigin, const char *samp, float vol, soundlevel_t soundlevel, int fFlags, int pitch, float soundtime /*= 0.0f*/, float *duration /*=NULL*/ )
 {
 #ifdef STAGING_ONLY
@@ -1420,7 +1524,17 @@ static const char *UTIL_TranslateSoundName( const char *soundname, const char *a
 
 void CBaseEntity::GenderExpandString( char const *in, char *out, int maxlen )
 {
+#ifdef MAPBASE
+	// This is so models without globalactors.txt declarations can still play scenes.
+	gender_t gender = soundemitterbase->GetActorGender(STRING(GetModelName()));
+
+	if (gender == GENDER_NONE)
+		gender = GENDER_MALE;
+
+	soundemitterbase->GenderExpandString(gender, in, out, maxlen);
+#else
 	soundemitterbase->GenderExpandString( STRING( GetModelName() ), in, out, maxlen );
+#endif
 }
 
 bool CBaseEntity::GetParametersForSound( const char *soundname, CSoundParameters &params, const char *actormodel )
@@ -1445,12 +1559,20 @@ HSOUNDSCRIPTHANDLE CBaseEntity::PrecacheScriptSound( const char *soundname )
 	return soundemitterbase->GetSoundIndex( soundname );
 #endif
 }
+#ifdef VSCRIPT
+#if !defined ( CLIENT_DLL ) || defined( MAPBASE_VSCRIPT )
+// Same as server version of above, but signiture changed so it can be deduced by the macros
+void CBaseEntity::VScriptPrecacheScriptSound(const char* soundname)
+{
+	g_SoundEmitterSystem.PrecacheScriptSound(soundname);
+}
+#endif
+#endif // !CLIENT_DLL
 
 void CBaseEntity::PrefetchScriptSound( const char *soundname )
 {
 	g_SoundEmitterSystem.PrefetchScriptSound( soundname );
 }
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : *soundname - 

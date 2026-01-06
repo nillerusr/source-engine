@@ -194,7 +194,11 @@ void C_SteamJet::Start(CParticleMgr *pParticleMgr, IPrototypeArgAccess *pArgs)
 	{
 	case STEAM_NORMAL:
 	default:
+#ifdef EZ
+		m_MaterialHandle = g_Mat_DustPuff[2];
+#else
 		m_MaterialHandle = g_Mat_DustPuff[0];
+#endif
 		break;
 
 	case STEAM_HEATWAVE:

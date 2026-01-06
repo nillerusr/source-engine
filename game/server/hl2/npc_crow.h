@@ -13,6 +13,9 @@
 #define BIRDTYPE_CROW 1
 #define BIRDTYPE_PIGEON 2
 #define BIRDTYPE_SEAGULL 3
+#ifdef EZ
+#define BIRDTYPE_ALIEN 4
+#endif
 
 //
 // Spawnflags.
@@ -43,6 +46,12 @@ enum
 	SCHED_CROW_FLY_FAIL,
 
 	SCHED_CROW_BARNACLED,
+#ifdef EZ
+	SCHED_CROW_FLY_RANDOM,
+	SCHED_CROW_FLY_AWAY_COVER,
+	SCHED_CROW_FLY_AWAY_RANDOM
+#endif
+
 };
 
 
@@ -181,9 +190,14 @@ protected:
 
 	bool		m_bPlayedLoopingSound;
 
-private:
+#ifdef EZ
+	float m_flTakeOffTime;
+#endif
 
-	Activity NPC_TranslateActivity( Activity eNewActivity );
+private:
+	virtual Activity NPC_TranslateActivity( Activity eNewActivity );
+
+private:
 
 	float				m_flSoarTime;
 	bool				m_bSoar;
@@ -253,4 +267,90 @@ public:
 	}
 };
 
+#ifdef EZ
+//-----------------------------------------------------------------------------
+// Purpose: Alien crow. A stand in for Half-Life boids.
+//-----------------------------------------------------------------------------
+class CNPC_AlienCrow : public CNPC_Crow
+{
+	DECLARE_CLASS( CNPC_AlienCrow, CNPC_Crow );
+
+public:
+	void Spawn( void )
+	{
+		SetModelName( AllocPooledString( "models/aflock.mdl" ) );
+		BaseClass::Spawn();
+
+		m_iBirdType = BIRDTYPE_ALIEN;
+
+		SetBloodColor( BLOOD_COLOR_GREEN );
+	}
+
+	void Precache( void )
+	{
+		PrecacheModel( "models/aflock.mdl" );
+
+		PrecacheScriptSound( "NPC_Boid.Hop" );
+		PrecacheScriptSound( "NPC_Boid.Squawk" );
+		PrecacheScriptSound( "NPC_Boid.Gib" );
+		PrecacheScriptSound( "NPC_Boid.Idle" );
+		PrecacheScriptSound( "NPC_Boid.Alert" );
+		PrecacheScriptSound( "NPC_Boid.Die" );
+		PrecacheScriptSound( "NPC_Boid.Pain" );
+		PrecacheScriptSound( "NPC_Boid.Flap" );
+	}
+
+	void PainSound( const CTakeDamageInfo &info )
+	{
+		EmitSound( "NPC_Boid.Pain" );
+	}
+
+	void DeathSound( const CTakeDamageInfo &info )
+	{
+		EmitSound( "NPC_Boid.Pain" );
+	}
+
+	void IdleSound( void )
+	{
+		EmitSound( "NPC_Boid.Idle" );
+	}
+
+	void AlertSound( void )
+	{
+		EmitSound( "NPC_Boid.Alert" );
+	}
+
+	void FlapSound( void )
+	{
+		EmitSound( "NPC_Boid.Flap" );
+		m_bPlayedLoopingSound = true;
+	}
+
+	void StopLoopingSounds( void )
+	{
+		//
+		// Stop whatever flap sound might be playing.
+		//
+		if (m_bPlayedLoopingSound)
+		{
+			StopSound( "NPC_Boid.Flap" );
+		}
+		BaseClass::StopLoopingSounds();
+	}
+
+	// Set up relationship tables first, then uncomment this!
+	Class_T	Classify( void )
+	{
+		return( CLASS_ALIEN_FAUNA );
+	}
+
+	//-----------------------------------------------------------------------------
+	// Purpose: Boids always gib
+	//-----------------------------------------------------------------------------
+	bool ShouldGib( const CTakeDamageInfo & info )
+	{
+		return true;
+	}
+};
+#endif
 #endif // NPC_CROW_H

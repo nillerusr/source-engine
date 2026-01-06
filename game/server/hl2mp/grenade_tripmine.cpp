@@ -12,15 +12,22 @@
 #include "vstdlib/random.h"
 #include "engine/IEngineSound.h"
 #include "explode.h"
+#ifdef EZ2
+#include "mapbase/matchers.h"
+#endif
+#ifdef EZ2
+#include "hl2_player.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 extern const char* g_pModelNameLaser;
 
-ConVar    sk_plr_dmg_tripmine		( "sk_plr_dmg_tripmine","150"); // commented values in hl2/skill.cfg
-ConVar    sk_npc_dmg_tripmine		( "sk_npc_dmg_tripmine","125");
-ConVar    sk_tripmine_radius		( "sk_tripmine_radius","200");
+ConVar    sk_plr_dmg_tripmine					( "sk_plr_dmg_tripmine","0" );
+ConVar    sk_npc_dmg_tripmine					( "sk_npc_dmg_tripmine","0" );
+ConVar    sk_tripmine_radius					( "sk_tripmine_radius","0" );
+ConVar    sk_tripmine_use_owner_relations		( "sk_tripmine_use_owner_relations", "0" );
 
 LINK_ENTITY_TO_CLASS( npc_tripmine, CTripmineGrenade );
 
@@ -34,6 +41,26 @@ BEGIN_DATADESC( CTripmineGrenade )
 	DEFINE_FIELD( m_pBeam,		FIELD_CLASSPTR ),
 	DEFINE_FIELD( m_posOwner,		FIELD_POSITION_VECTOR ),
 	DEFINE_FIELD( m_angleOwner,	FIELD_VECTOR ),
+#ifdef MAPBASE
+	DEFINE_KEYFIELD( m_flPowerUpTime, FIELD_FLOAT, "PowerUpTime" ),
+	DEFINE_FIELD( m_hAttacker,	FIELD_EHANDLE ),
+
+	// Inputs
+	DEFINE_INPUTFUNC( FIELD_VOID, "Activate", InputActivate ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "Deactivate", InputDeactivate ),
+	DEFINE_INPUTFUNC( FIELD_EHANDLE, "SetOwner", InputSetOwner ),
+
+	// Outputs
+	DEFINE_OUTPUT( m_OnExplode, "OnExplode" ),
+#endif
+
+#ifdef EZ2
+	DEFINE_FIELD( m_nTripmineClass, FIELD_INTEGER ),
+	DEFINE_KEYFIELD( m_nTripmineClassString, FIELD_STRING, "TripmineClass" ),
+	DEFINE_KEYFIELD( m_TripmineColor, FIELD_COLOR32, "TripmineColor" ),
+	DEFINE_FIELD( m_bTripped, FIELD_BOOLEAN ),
+	DEFINE_FIELD( m_hPlacer, FIELD_EHANDLE ),
+#endif
 
 	// Function Pointers
 	DEFINE_THINKFUNC( WarningThink ),
@@ -43,12 +70,31 @@ BEGIN_DATADESC( CTripmineGrenade )
 
 END_DATADESC()
 
+#ifdef EZ2
+IMPLEMENT_NETWORKCLASS_ALIASED( TripmineGrenade, DT_TripmineGrenade )
+
+BEGIN_SEND_TABLE( CTripmineGrenade, DT_TripmineGrenade )
+END_SEND_TABLE()
+#endif
+
 CTripmineGrenade::CTripmineGrenade()
 {
 	m_vecDir.Init();
 	m_vecEnd.Init();
 	m_posOwner.Init();
 	m_angleOwner.Init();
+
+#ifdef MAPBASE
+	m_flPowerUpTime = 2.0;
+#endif
+
+#ifdef EZ2
+	m_nTripmineClass = CLASS_NONE;
+	m_TripmineColor.r = 255;
+	m_TripmineColor.g = 55;
+	m_TripmineColor.b = 52;
+	m_TripmineColor.a = 64;
+#endif
 }
 
 void CTripmineGrenade::Spawn( void )
@@ -59,29 +105,78 @@ void CTripmineGrenade::Spawn( void )
 	SetSolid( SOLID_BBOX );
 	SetModel( "models/Weapons/w_slam.mdl" );
 
-	IPhysicsObject *pObject = VPhysicsInitNormal( SOLID_BBOX, GetSolidFlags() | FSOLID_TRIGGER, true );
+#ifdef EZ2
+	CBaseEntity * pOwner = GetOwnerEntity();
+	if ( pOwner != NULL )
+	{
+		m_nTripmineClass = pOwner->Classify();
+
+		m_hPlacer = pOwner;
+
+		if (m_hPlacer->IsPlayer())
+		{
+			CHL2_Player *pHL2Player = static_cast<CHL2_Player*>(m_hPlacer.Get());
+			if (pHL2Player)
+			{
+				pHL2Player->OnSetupTripmine( this );
+			}
+		}
+	}
+#endif
+
+    IPhysicsObject *pObject = VPhysicsInitNormal( SOLID_BBOX, GetSolidFlags() | FSOLID_TRIGGER, true );
 	pObject->EnableMotion( false );
 	SetCollisionGroup( COLLISION_GROUP_WEAPON );
 
 	SetCycle( 0.0f );
 	m_nBody			= 3;
+#ifdef MAPBASE
+	if (m_flDamage == 0)
+		m_flDamage		= sk_plr_dmg_tripmine.GetFloat();
+	if (m_DmgRadius == 0)
+		m_DmgRadius		= sk_tripmine_radius.GetFloat();
+#else
+	m_flDamage		= sk_plr_dmg_tripmine.GetFloat();
+	m_DmgRadius		= sk_tripmine_radius.GetFloat();
+#endif
+
 	ResetSequenceInfo( );
 	m_flPlaybackRate	= 0;
-
+	
 	UTIL_SetSize(this, Vector( -4, -4, -2), Vector(4, 4, 2));
 
-	m_flPowerUp = gpGlobals->curtime + 2.0;
+#ifdef MAPBASE
+	if (!HasSpawnFlags(SF_TRIPMINE_START_INACTIVE))
+	{
+		if (m_flPowerUpTime > 0)
+		{
+			m_flPowerUp = gpGlobals->curtime + m_flPowerUpTime;
+	
+			SetThink( &CTripmineGrenade::PowerupThink );
+			SetNextThink( gpGlobals->curtime + 0.2 );
+		}
+		else
+		{
+			MakeBeam( );
+			RemoveSolidFlags( FSOLID_NOT_SOLID );
+			m_bIsLive			= true;
 
+			//EmitSound( "TripmineGrenade.Activate" );
+		}
+	}
+#else
+	m_flPowerUp = gpGlobals->curtime + 2.0;
+	
 	SetThink( &CTripmineGrenade::PowerupThink );
 	SetNextThink( gpGlobals->curtime + 0.2 );
+#endif
 
 	m_takedamage		= DAMAGE_YES;
 
 	m_iHealth = 1;
 
 	EmitSound( "TripmineGrenade.Place" );
-	SetDamage( sk_plr_dmg_tripmine.GetFloat() );
-	SetDamageRadius( sk_tripmine_radius.GetFloat() );
+	SetDamage ( 200 );
 
 	// Tripmine sits at 90 on wall so rotate back to get m_vecDir
 	QAngle angles = GetAbsAngles();
@@ -135,6 +230,40 @@ void CTripmineGrenade::KillBeam( void )
 	}
 }
 
+#ifdef EZ2
+bool CTripmineGrenade::KeyValue( const char * szKeyName, const char * szValue )
+{
+	if ( FStrEq( szKeyName, "TripmineClass" ) )
+	{
+		for (int i = CLASS_NONE; i < NUM_AI_CLASSES; i++)
+		{
+			if ( FStrEq( szValue, g_pGameRules->AIClassText( i ) ) )
+			{
+				m_nTripmineClass = (Class_T)i;
+				break;
+			}
+		}
+	}
+
+	return BaseClass::KeyValue( szKeyName, szValue );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+int CTripmineGrenade::UpdateTransmitState()
+{
+	if ( GetThrower() && GetThrower()->IsPlayer() )
+	{
+		// Player tripmines need to be transmitted for HUD glow
+		return SetTransmitState( FL_EDICT_ALWAYS );
+	}
+	else
+	{
+		return BaseClass::UpdateTransmitState();
+	}
+}
+#endif
 
 void CTripmineGrenade::MakeBeam( void )
 {
@@ -169,13 +298,24 @@ void CTripmineGrenade::MakeBeam( void )
 	// to appear if person right in front of it
 	SetNextThink( gpGlobals->curtime + 1.0f );
 
+#ifndef EZ
 	Vector vecTmpEnd = GetLocalOrigin() + m_vecDir * 2048 * drawLength;
+#else
+	Vector vecTmpEnd = GetAbsOrigin() + m_vecDir * 2048 * drawLength;
+#endif
 
 	m_pBeam = CBeam::BeamCreate( g_pModelNameLaser, 0.35 );
 	m_pBeam->PointEntInit( vecTmpEnd, this );
+
+#ifdef EZ2
+	m_pBeam->SetColor( m_TripmineColor.r, m_TripmineColor.g, m_TripmineColor.b );
+	m_pBeam->SetScrollRate( 25.6 );
+	m_pBeam->SetBrightness( m_TripmineColor.a );
+#else
 	m_pBeam->SetColor( 255, 55, 52 );
 	m_pBeam->SetScrollRate( 25.6 );
 	m_pBeam->SetBrightness( 64 );
+#endif
 	
 	int beamAttach = LookupAttachment("beam_attach");
 	m_pBeam->SetEndAttachment( beamAttach );
@@ -217,10 +357,25 @@ void CTripmineGrenade::BeamBreakThink( void  )
 	CBaseEntity *pEntity = tr.m_pEnt;
 	CBaseCombatCharacter *pBCC  = ToBaseCombatCharacter( pEntity );
 
+#ifdef EZ2
+	if ( pBCC && !TargetShouldDetonate(pBCC) )
+	{
+		SetNextThink( gpGlobals->curtime + 0.05f );
+		return;
+	}
+#endif
+
 	if (pBCC || fabs( m_flBeamLength - tr.fraction ) > 0.001)
 	{
 		m_iHealth = 0;
+#ifdef EZ2
+		m_bTripped = true;
+#endif
+#ifdef MAPBASE
+		Event_Killed( CTakeDamageInfo( (CBaseEntity*)m_hOwner, pEntity, 100, GIB_NORMAL ) );
+#else
 		Event_Killed( CTakeDamageInfo( (CBaseEntity*)m_hOwner, this, 100, GIB_NORMAL ) );
+#endif
 		return;
 	}
 
@@ -252,6 +407,10 @@ void CTripmineGrenade::Event_Killed( const CTakeDamageInfo &info )
 {
 	m_takedamage		= DAMAGE_NO;
 
+#ifdef MAPBASE
+	m_hAttacker = info.GetAttacker();
+#endif
+
 	SetThink( &CTripmineGrenade::DelayDeathThink );
 	SetNextThink( gpGlobals->curtime + 0.25 );
 
@@ -266,9 +425,91 @@ void CTripmineGrenade::DelayDeathThink( void )
 	UTIL_TraceLine ( GetAbsOrigin() + m_vecDir * 8, GetAbsOrigin() - m_vecDir * 64,  MASK_SOLID, this, COLLISION_GROUP_NONE, & tr);
 	UTIL_ScreenShake( GetAbsOrigin(), 25.0, 150.0, 1.0, 750, SHAKE_START );
 
-	ExplosionCreate( GetAbsOrigin() + m_vecDir * 8, GetAbsAngles(), m_hOwner, GetDamage(), GetDamageRadius(), 
+	ExplosionCreate( GetAbsOrigin() + m_vecDir * 8, GetAbsAngles(), m_hOwner, GetDamage(), 200, 
 		SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS | SF_ENVEXPLOSION_NOSMOKE, 0.0f, this);
+
+#ifdef MAPBASE
+	m_OnExplode.FireOutput(m_hAttacker.Get(), this);
+#endif
+
+#ifdef EZ2
+	if (m_hPlacer && m_hPlacer->IsPlayer())
+	{
+		CHL2_Player *pHL2Player = static_cast<CHL2_Player*>(m_hPlacer.Get());
+		if (pHL2Player)
+		{
+			if (!m_bTripped)
+			{
+				// UNDONE: Do this in case the attacker might've been from the player
+				//if (m_hAttacker && m_hAttacker->GetOwnerEntity())
+				//	m_hAttacker = m_hAttacker->GetOwnerEntity();
+
+				pHL2Player->OnTripmineExploded( this, m_hAttacker );
+			}
+			else
+			{
+				pHL2Player->OnTripmineExploded( this, GetOwnerEntity() );
+			}
+		}
+	}
+#endif
 
 	UTIL_Remove( this );
 }
 
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose:
+// Input  :
+// Output :
+//-----------------------------------------------------------------------------
+void CTripmineGrenade::InputActivate( inputdata_t &inputdata )
+{
+	if (m_flPowerUpTime > 0)
+	{
+		m_flPowerUp = gpGlobals->curtime + m_flPowerUpTime;
+	
+		SetThink( &CTripmineGrenade::PowerupThink );
+		SetNextThink( gpGlobals->curtime + 0.2 );
+	}
+	else
+	{
+		MakeBeam( );
+		RemoveSolidFlags( FSOLID_NOT_SOLID );
+		m_bIsLive			= true;
+
+		//EmitSound( "TripmineGrenade.Activate" );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+// Input  :
+// Output :
+//-----------------------------------------------------------------------------
+void CTripmineGrenade::InputDeactivate( inputdata_t &inputdata )
+{
+	KillBeam( );
+	//AddSolidFlags( FSOLID_NOT_SOLID );
+	m_bIsLive = false;
+}
+#endif
+
+#ifdef EZ2
+bool CTripmineGrenade::TargetShouldDetonate(CBaseCombatCharacter* pTarget)
+{
+	if ( pTarget && sk_tripmine_use_owner_relations.GetBool() && GetOwnerEntity() && GetOwnerEntity()->IsCombatCharacter() )
+	{
+		return GetOwnerEntity()->MyCombatCharacterPointer()->IRelationType(pTarget) < D_LI;
+	}
+
+	// Tripmines do not detonate when tripped by entities that treat their class as friendly or by the owner
+	if ((pTarget && pTarget->GetDefaultRelationshipDisposition(m_nTripmineClass) == D_LI) || (GetOwnerEntity() && GetOwnerEntity() == pTarget))
+	{
+		return false;
+	}
+
+
+	return true;
+}
+#endif

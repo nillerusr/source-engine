@@ -82,7 +82,15 @@ bool CBaseCombatCharacter::Weapon_CanSwitchTo( CBaseCombatWeapon *pWeapon )
 			return false;
 	}
 
+#ifdef MAPBASE
+	if ( !pWeapon->HasAnyAmmo() && !GetAmmoCount( pWeapon->m_iPrimaryAmmoType ) && !pWeapon->HasSpawnFlags(SF_WEAPON_NO_AUTO_SWITCH_WHEN_EMPTY)
+#ifdef EZ
+		&& GetActiveWeapon() != NULL && GetActiveWeapon() != pWeapon
+#endif
+)
+#else
 	if ( !pWeapon->HasAnyAmmo() && !GetAmmoCount( pWeapon->m_iPrimaryAmmoType ) )
+#endif
 		return false;
 
 	if ( !pWeapon->CanDeploy() )
@@ -207,6 +215,16 @@ void CBaseCombatCharacter::SetBloodColor( int nBloodColor )
 {
 	m_bloodColor = nBloodColor;
 }
+
+#if defined(MAPBASE) && defined(GAME_DLL)
+//-----------------------------------------------------------------------------
+// Purpose: Sets blood color
+//-----------------------------------------------------------------------------
+void CBaseCombatCharacter::InputSetBloodColor( inputdata_t &inputdata )
+{
+	SetBloodColor(inputdata.value.Int());
+}
+#endif
 
 //-----------------------------------------------------------------------------
 /**

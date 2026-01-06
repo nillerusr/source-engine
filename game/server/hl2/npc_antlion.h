@@ -104,7 +104,9 @@ public:
 	void		ZapThink( void );
 	void		BurrowUse( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 	bool		CreateVPhysics();
-				
+#ifdef EZ2
+	EyeGlow_t	* GetEyeGlowData( int i ); // g l o w i n g    b u t t s
+#endif		
 	bool		IsJumpLegal( const Vector &startPos, const Vector &apex, const Vector &endPos ) const;
 	bool		HandleInteraction( int interactionType, void *data, CBaseCombatCharacter *sender = NULL );
 	bool		QuerySeeEntity( CBaseEntity *pEntity, bool bOnlyHateOrFearIfNPC = false );
@@ -143,6 +145,9 @@ public:
 	void		InputJumpAtTarget( inputdata_t &inputdata );
 
 	void		SetFollowTarget( CBaseEntity *pTarget );
+#ifdef MAPBASE
+	void		InputSetFollowTarget( inputdata_t &inputdata );
+#endif
 	int			TranslateSchedule( int scheduleType );
 
 	virtual		Activity NPC_TranslateActivity( Activity baseAct );

@@ -13,6 +13,7 @@ def options(opt):
 
 def configure(conf):
 	conf.env.append_unique('DEFINES', ['TIER1_STATIC_LIB=1'])
+	conf.define('MAPBASE', 1 )
 
 def build(bld):
 	source = [
@@ -56,7 +57,10 @@ def build(bld):
 		'utlbuffer.cpp',
 		'utlbufferutil.cpp',
 		'utlstring.cpp',
-		'utlsymbol.cpp'
+		'utlsymbol.cpp',
+		'mapbase_con_groups.cpp',
+		'mapbase_matchers_base.cpp',
+		'interval.cpp',
 	]
 
 	if bld.env.DEST_OS == 'win32':

@@ -95,7 +95,20 @@ BEGIN_DATADESC( CBaseFlex )
 
 END_DATADESC()
 
+#ifdef VSCRIPT
+#ifdef MAPBASE_VSCRIPT
+BEGIN_ENT_SCRIPTDESC( CBaseFlex, CBaseAnimatingOverlay, "Animated characters who have vertex flex capability." )
+#else
+BEGIN_ENT_SCRIPTDESC( CBaseFlex, CBaseAnimating, "Animated characters who have vertex flex capability." )
+#endif
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetOldestScene, "GetCurrentScene", "Returns the instance of the oldest active scene entity (if any)." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetSceneByIndex, "GetSceneByIndex", "Returns the instance of the scene entity at the specified index." )
 
+#ifdef MAPBASE
+	DEFINE_SCRIPTFUNC( SetViewtarget, "Sets the entity's eye target." )
+#endif
+END_SCRIPTDESC();
+#endif
 
 LINK_ENTITY_TO_CLASS( funCBaseFlex, CBaseFlex ); // meaningless independant class!!
 
@@ -394,7 +407,11 @@ bool CBaseFlex::ClearSceneEvent( CSceneEventInfo *info, bool fastKill, bool canc
 //			expression - 
 //			duration - 
 //-----------------------------------------------------------------------------
+#ifdef MAPBASE
+void CBaseFlex::AddSceneEvent( CChoreoScene *scene, CChoreoEvent *event, CBaseEntity *pTarget, CSceneEntity *pSceneEnt )
+#else
 void CBaseFlex::AddSceneEvent( CChoreoScene *scene, CChoreoEvent *event, CBaseEntity *pTarget )
+#endif
 {
 	if ( !scene || !event )
 	{
@@ -417,9 +434,14 @@ void CBaseFlex::AddSceneEvent( CChoreoScene *scene, CChoreoEvent *event, CBaseEn
 	info.m_pEvent		= event;
 	info.m_pScene		= scene;
 	info.m_hTarget		= pTarget;
-	info.m_bStarted	= false;
+	info.m_bStarted		= false;
+	info.m_hSceneEntity = pSceneEnt;
 
+#ifdef MAPBASE
+	if (StartSceneEvent( &info, scene, event, actor, pTarget, pSceneEnt ))
+#else
 	if (StartSceneEvent( &info, scene, event, actor, pTarget ))
+#endif
 	{
 		m_SceneEvents.AddToTail( info );
 	}
@@ -735,7 +757,11 @@ bool CBaseFlex::StartMoveToSceneEvent( CSceneEventInfo *info, CChoreoScene *scen
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+#ifdef MAPBASE
+bool CBaseFlex::StartSceneEvent( CSceneEventInfo *info, CChoreoScene *scene, CChoreoEvent *event, CChoreoActor *actor, CBaseEntity *pTarget, CSceneEntity *pSceneEnt )
+#else
 bool CBaseFlex::StartSceneEvent( CSceneEventInfo *info, CChoreoScene *scene, CChoreoEvent *event, CChoreoActor *actor, CBaseEntity *pTarget )
+#endif
 {
 	switch ( event->GetType() )
 	{
@@ -761,10 +787,80 @@ bool CBaseFlex::StartSceneEvent( CSceneEventInfo *info, CChoreoScene *scene, CCh
 		return true;
 
 	case CChoreoEvent::SPEAK:
+#ifdef EZ2
+		// TODO - Let's move this into CEZ2_Player if possible
+		if (IsPlayer())
+		{
+			CBasePlayer * pPlayer = static_cast<CBasePlayer*>(this);
+			if (pPlayer)
+				pPlayer->NotePlayerTalked();
+		}
+#endif
 		return true;
 	
 	case CChoreoEvent::EXPRESSION: // These are handled client-side
 		return true;
+
+#ifdef MAPBASE
+	case CChoreoEvent::GENERIC:
+		{
+			// This is handled in CBaseFlex so that any flex entity--including players--could use this text.
+			if (stricmp(event->GetParameters(), "AI_GAMETEXT") == 0)
+			{
+				// game_text-based lines, for placeholders
+				if ( event->GetParameters2() )
+				{
+					info->m_nType = 12; // SCENE_AI_GAMETEXT
+
+					hudtextparms_t textParams;
+					textParams.holdTime = event->GetDuration();
+					textParams.fadeinTime = 0.5f;
+					textParams.fadeoutTime = 0.5f;
+
+					textParams.channel = 3;
+					textParams.x = -1;
+					textParams.y = 0.6;
+					textParams.effect = 0;
+
+					textParams.r1 = 255;
+					textParams.g1 = 255;
+					textParams.b1 = 255;
+
+					if ( GetGameTextSpeechParams( textParams ) )
+					{
+						CRecipientFilter filter;
+						filter.AddAllPlayers();
+						filter.MakeReliable();
+
+						UserMessageBegin( filter, "HudMsg" );
+							WRITE_BYTE ( textParams.channel & 0xFF );
+							WRITE_FLOAT( textParams.x );
+							WRITE_FLOAT( textParams.y );
+							WRITE_BYTE ( textParams.r1 );
+							WRITE_BYTE ( textParams.g1 );
+							WRITE_BYTE ( textParams.b1 );
+							WRITE_BYTE ( textParams.a1 );
+							WRITE_BYTE ( textParams.r2 );
+							WRITE_BYTE ( textParams.g2 );
+							WRITE_BYTE ( textParams.b2 );
+							WRITE_BYTE ( textParams.a2 );
+							WRITE_BYTE ( textParams.effect );
+							WRITE_FLOAT( textParams.fadeinTime );
+							WRITE_FLOAT( textParams.fadeoutTime );
+							WRITE_FLOAT( textParams.holdTime );
+							WRITE_FLOAT( textParams.fxTime );
+							WRITE_STRING( event->GetParameters2() );
+							WRITE_STRING( "" ); // No custom font
+							WRITE_BYTE ( Q_strlen( event->GetParameters2() ) );
+						MessageEnd();
+					}
+					return true;
+				}
+			}
+
+			return false;
+		}
+#endif
 	}
 
 	return false;
@@ -2004,14 +2100,109 @@ float CBaseFlex::PlayScene( const char *pszScene, float flDelay, AI_Response *re
 // Input  : *soundname - 
 // Output : float
 //-----------------------------------------------------------------------------
+#ifdef MAPBASE
+float CBaseFlex::PlayAutoGeneratedSoundScene( const char *soundname, float flDelay, AI_Response *response, IRecipientFilter *filter )
+{
+	return InstancedAutoGeneratedSoundScene( this, soundname, NULL, flDelay, false, response, false, filter );
+}
+#else
 float CBaseFlex::PlayAutoGeneratedSoundScene( const char *soundname )
 {
 	return InstancedAutoGeneratedSoundScene( this, soundname );
 }
+#endif
 
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: Parameters for scene event AI_GameText
+//-----------------------------------------------------------------------------
+bool CBaseFlex::GetGameTextSpeechParams( hudtextparms_t &params )
+{
+#ifdef VSCRIPT
+	ScriptVariant_t varTable;
+	if (g_pScriptVM->GetValue(m_ScriptScope, "m_GameTextSpeechParams", &varTable) && varTable.m_type == FIELD_HSCRIPT)
+	{
+		int nIterator = -1;
+		ScriptVariant_t varKey, varValue;
+		while ((nIterator = g_pScriptVM->GetKeyValue( varTable.m_hScript, nIterator, &varKey, &varValue )) != -1)
+		{
+			if (FStrEq( varKey.m_pszString, "color" ))
+			{
+				params.r1 = varValue.m_pVector->x;
+				params.g1 = varValue.m_pVector->y;
+				params.b1 = varValue.m_pVector->z;
+			}
+			else if (FStrEq( varKey.m_pszString, "color2" ))
+			{
+				params.r2 = varValue.m_pVector->x;
+				params.g2 = varValue.m_pVector->y;
+				params.b2 = varValue.m_pVector->z;
+			}
+			else if (FStrEq( varKey.m_pszString, "channel" ))
+			{
+				params.channel = varValue.m_int;
+			}
+			else if (FStrEq( varKey.m_pszString, "x" ))
+			{
+				params.x = varValue.m_float;
+			}
+			else if (FStrEq( varKey.m_pszString, "y" ))
+			{
+				params.y = varValue.m_float;
+			}
+			else if (FStrEq( varKey.m_pszString, "effect" ))
+			{
+				params.effect = varValue.m_int;
+			}
+			else if (FStrEq( varKey.m_pszString, "fxtime" ))
+			{
+				params.fxTime = varValue.m_float;
+			}
 
+			g_pScriptVM->ReleaseValue( varKey );
+			g_pScriptVM->ReleaseValue( varValue );
+		}
+	}
 
+	return true;
+#else
+	return false;
+#endif
+}
+#ifdef VSCRIPT
+//--------------------------------------------------------------------------------------------------
+// Returns the script instance of the scene entity associated with our oldest ("top level") scene event
+//--------------------------------------------------------------------------------------------------
+HSCRIPT CBaseFlex::ScriptGetOldestScene( void )
+{
+	if ( m_SceneEvents.Count() > 0 )
+	{
+		CSceneEventInfo curScene = m_SceneEvents.Head();
+		return ToHScript( (CBaseEntity*)(curScene.m_hSceneEntity.Get()) );
+	}
+	else
+	{
+		return NULL;
+	}
+}
 
+//--------------------------------------------------------------------------------------------------
+// Returns the script instance of the scene at the specified index, or null if index >= count 
+//--------------------------------------------------------------------------------------------------
+HSCRIPT CBaseFlex::ScriptGetSceneByIndex( int index )
+{
+	if ( m_SceneEvents.IsValidIndex( index ) )
+	{
+		CSceneEventInfo curScene = m_SceneEvents.Element( index ); 
+		return ToHScript( (CBaseEntity*)(curScene.m_hSceneEntity.Get()) );
+	}
+	else
+	{
+		return NULL;
+	}
+}
+#endif
+#endif
 // FIXME: move to CBaseActor
 bool CBaseFlex::EnterSceneSequence( CChoreoScene *scene, CChoreoEvent *event, bool bRestart )
 {
@@ -2157,8 +2348,13 @@ void CBaseFlex::DoBodyLean( void )
 		{
 			m_vecPrevVelocity = vecDelta;
 			float decay =  ExponentialDecay( 0.5, 0.1, dt );
+#ifdef MAPBASE // From Alien Swarm SDK
+			m_vecShift = m_vecShift * decay;
+			m_vecLean = m_vecLean * decay;
+#else
 			m_vecShift = m_vecLean * decay;
 			m_vecLean = m_vecShift * decay;
+#endif
  		}
 
 		m_vecPrevOrigin = vecOrigin;

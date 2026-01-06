@@ -80,6 +80,9 @@
 #include "baseentity_shared.h"
 #include "basetoggle.h"
 #include "igameevents.h"
+#ifdef MAPBASE
+#include "tier1/mapbase_con_groups.h"
+#endif
 
 // saverestore.h declarations
 class ISave;
@@ -100,6 +103,13 @@ extern void FireTargets( const char *targetName, CBaseEntity *pActivator, CBaseE
 #define	GIB_HEALTH_VALUE	-30
 
 #define MAX_OLD_ENEMIES		4 // how many old enemies to remember
+
+#ifdef MAPBASE
+// Use the model keyvalue if it is defined
+#define DefaultOrCustomModel(defaultModel) GetModelName() != NULL_STRING ? STRING(GetModelName()) : defaultModel
+#else
+#define DefaultOrCustomModel() defaultModel
+#endif
 
 // used by suit voice to indicate damage sustained and repaired type to player
 

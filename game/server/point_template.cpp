@@ -55,14 +55,23 @@ BEGIN_DATADESC( CPointTemplate )
 	DEFINE_KEYFIELD( m_iszTemplateEntityNames[14], FIELD_STRING, "Template15"),
 	DEFINE_KEYFIELD( m_iszTemplateEntityNames[15], FIELD_STRING, "Template16"),
 	DEFINE_UTLVECTOR( m_hTemplateEntities, FIELD_CLASSPTR ),
+#ifdef MAPBASE
+	DEFINE_KEYFIELD( m_bFixupExpanded, FIELD_BOOLEAN, "FixupMode" ),
+#endif
 
 	DEFINE_UTLVECTOR( m_hTemplates, FIELD_EMBEDDED ),
 
 	// Inputs
 	DEFINE_INPUTFUNC( FIELD_VOID, "ForceSpawn", InputForceSpawn ),
+#ifdef MAPBASE
+	DEFINE_INPUTFUNC( FIELD_VOID, "ForceSpawnRandomTemplate", InputForceSpawnRandomTemplate ),
+#endif
 
 	// Outputs
 	DEFINE_OUTPUT( m_pOutputOnSpawned, "OnEntitySpawned" ),
+#ifdef MAPBASE
+	DEFINE_OUTPUT( m_pOutputOutEntity, "OutSpawnedEntity" ),
+#endif
 
 END_DATADESC()
 
@@ -127,6 +136,10 @@ void PrecachePointTemplates()
 void CPointTemplate::Spawn( void )
 {
 	Precache();
+#ifdef VSCRIPT
+	ScriptInstallPreSpawnHook();
+	ValidateScriptScope();
+#endif
 }
 
 void CPointTemplate::Precache()
@@ -339,7 +352,11 @@ bool CPointTemplate::CreateInstance( const Vector &vecOrigin, const QAngle &vecA
 
 		// Some templates have Entity I/O connecting the entities within the template.
 		// Unique versions of these templates need to be created whenever they're instanced.
-		if ( AllowNameFixup() && Templates_IndexRequiresEntityIOFixup( iTemplateIndex ) )
+#ifdef VSCRIPT
+		if ( AllowNameFixup() && ( Templates_IndexRequiresEntityIOFixup( iTemplateIndex ) || m_ScriptScope.IsInitialized() ) )
+#else
+		if ( AllowNameFixup() && ( Templates_IndexRequiresEntityIOFixup( iTemplateIndex ) ) )
+#endif
 		{
 			// This template requires instancing. 
 			// Create a new mapdata block and ask the template system to fill it in with
@@ -374,8 +391,17 @@ bool CPointTemplate::CreateInstance( const Vector &vecOrigin, const QAngle &vecA
 		// Set its origin & angles
 		pEntity->SetAbsOrigin( vecNewOrigin );
 		pEntity->SetAbsAngles( vecNewAngles );
-
-		pSpawnList[i].m_pEntity = pEntity;
+#ifdef VSCRIPT 
+		if (ScriptPreInstanceSpawn(&m_ScriptScope, pEntity, Templates_FindByIndex(iTemplateIndex)))
+		{
+			pSpawnList[i].m_pEntity = pEntity;
+		}
+		else
+		{
+			pSpawnList[i].m_pEntity = NULL;
+			UTIL_RemoveImmediate(pEntity);
+		}
+#endif
 		pSpawnList[i].m_nDepth = 0;
 		pSpawnList[i].m_pDeferredParent = NULL;
 	}
@@ -393,6 +419,97 @@ bool CPointTemplate::CreateInstance( const Vector &vecOrigin, const QAngle &vecA
 	return true;
 }
 
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: Spawn one of the entities I contain
+// Input  : &vecOrigin - 
+//			&vecAngles - 
+//			pEntities - 
+// Output : Returns true on success, false on failure.
+//-----------------------------------------------------------------------------
+bool CPointTemplate::CreateSpecificInstance( int iTemplate, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity **pOutEntity )
+{
+	// Go through all our templated map data and spawn all the entities in it
+	int iTemplates = m_hTemplates.Count();
+	if ( !iTemplates )
+	{
+		Msg("CreateInstance called on a point_template that has no templates: %s\n", STRING(GetEntityName()) );
+		return false;
+	}
+
+	// Tell the template system we're about to start a new template
+	Templates_StartUniqueInstance();
+
+	CBaseEntity *pEntity = NULL;
+	char *pMapData;
+	int iTemplateIndex = m_hTemplates[iTemplate].iTemplateIndex;
+
+	// Some templates have Entity I/O connecting the entities within the template.
+	// Unique versions of these templates need to be created whenever they're instanced.
+#ifdef VSCRIPT
+	if ( AllowNameFixup() && ( Templates_IndexRequiresEntityIOFixup( iTemplateIndex ) || m_ScriptScope.IsInitialized() ) )
+#else
+	if ( AllowNameFixup() && ( Templates_IndexRequiresEntityIOFixup( iTemplateIndex ) ) )
+#endif
+	{
+		// This template requires instancing. 
+		// Create a new mapdata block and ask the template system to fill it in with
+		// a unique version (with fixed Entity I/O connections).
+		pMapData = Templates_GetEntityIOFixedMapData( iTemplateIndex );
+	}
+	else
+	{
+		// Use the unmodified mapdata
+		pMapData = (char*)STRING( Templates_FindByIndex( iTemplateIndex ) );
+	}
+
+	// Create the entity from the mapdata
+	MapEntity_ParseEntity( pEntity, pMapData, NULL );
+	if ( pEntity == NULL )
+	{
+		Msg("Failed to initialize templated entity with mapdata: %s\n", pMapData );
+		return false;
+	}
+
+	// Get a matrix that'll convert from world to the new local space
+	VMatrix matNewTemplateToWorld, matStoredLocalToWorld;
+	matNewTemplateToWorld.SetupMatrixOrgAngles( vecOrigin, vecAngles );
+	MatrixMultiply( matNewTemplateToWorld, m_hTemplates[iTemplate].matEntityToTemplate, matStoredLocalToWorld );
+
+	// Get the world origin & angles from the stored local coordinates
+	Vector vecNewOrigin;
+	QAngle vecNewAngles;
+	vecNewOrigin = matStoredLocalToWorld.GetTranslation();
+	MatrixToAngles( matStoredLocalToWorld, vecNewAngles );
+
+	// Set its origin & angles
+	pEntity->SetAbsOrigin( vecNewOrigin );
+	pEntity->SetAbsAngles( vecNewAngles );
+
+	// Spawn it
+	DispatchSpawn( pEntity );
+
+	if (pOutEntity)
+	{
+		*pOutEntity = pEntity;
+	}
+
+	return true;
+}
+#endif
+
+//-----------------------------------------------------------------------------
+// 
+//-----------------------------------------------------------------------------
+void CPointTemplate::CreationComplete( const CUtlVector<CBaseEntity*> &entities )
+{
+	if ( !entities.Count() )
+		return;
+#ifdef VSCRIPT 
+	ScriptPostSpawn( &m_ScriptScope, (CBaseEntity **)entities.Base(), entities.Count() );
+#endif
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : &inputdata - 
@@ -406,4 +523,105 @@ void CPointTemplate::InputForceSpawn( inputdata_t &inputdata )
 	
 	// Fire our output
 	m_pOutputOnSpawned.FireOutput( this, this );
+
+#ifdef MAPBASE
+	for ( int i = 0; i < hNewEntities.Count(); i++ )
+	{
+		m_pOutputOutEntity.Set(hNewEntities[i], hNewEntities[i], this);
+	}
+#endif
 }
+
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: Randomly spawns one of our templates.
+//			This is copied from CreateInstance().
+// Input  : &inputdata - 
+//-----------------------------------------------------------------------------
+void CPointTemplate::InputForceSpawnRandomTemplate( inputdata_t &inputdata )
+{
+	// Spawn our template
+	CBaseEntity *pEntity = NULL;
+	if ( !CreateSpecificInstance( RandomInt(0, GetNumTemplates() - 1), GetAbsOrigin(), GetAbsAngles(), &pEntity ) )
+		return;
+
+	// Fire our output
+	m_pOutputOnSpawned.FireOutput( this, this );
+	m_pOutputOutEntity.Set(pEntity, pEntity, this);
+}
+#endif
+
+#ifdef VSCRIPT
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void ScriptInstallPreSpawnHook()
+{
+#ifdef MAPBASE_VSCRIPT
+	if ( !g_pScriptVM )
+		return;
+#endif
+
+#ifdef IS_WINDOWS_PC
+	if ( !g_pScriptVM->ValueExists( "__ExecutePreSpawn " ) )
+	{
+		//g_pScriptVM->Run( g_Script_spawn_helper );
+	}
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:	This function is called after a spawner creates its child entity
+//			but before the keyvalues are injected. This gives us an 
+//			opportunity to change any keyvalues before the entity is 
+//			configured and spawned. In this case, we see if there is a VScript
+//			that wants to change anything about this entity. 
+//-----------------------------------------------------------------------------
+bool ScriptPreInstanceSpawn( CScriptScope *pScriptScope, CBaseEntity *pChild, string_t iszKeyValueData )
+{
+	if ( !pScriptScope->IsInitialized() )
+		return true;
+
+	ScriptVariant_t result;
+	if ( pScriptScope->Call( "__ExecutePreSpawn", &result, ToHScript( pChild ) ) != SCRIPT_DONE )
+		return true;
+
+	if ( ( result.m_type == FIELD_BOOLEAN && !result.m_bool ) || ( result.m_type == FIELD_INTEGER && !result.m_int ) )
+		return false;
+
+	return true;
+
+}
+
+void ScriptPostSpawn( CScriptScope *pScriptScope, CBaseEntity **ppEntities, int nEntities )
+{
+	if ( !pScriptScope->IsInitialized() )
+		return;
+
+	HSCRIPT hPostSpawnFunc = pScriptScope->LookupFunction( "PostSpawn" );
+
+	if ( !hPostSpawnFunc )
+		return;
+
+	ScriptVariant_t varEntityMakerResultTable;
+	if ( !g_pScriptVM->GetValue( *pScriptScope, "__EntityMakerResult", &varEntityMakerResultTable ) )
+		return;
+
+	if ( varEntityMakerResultTable.m_type != FIELD_HSCRIPT )
+		return;
+
+	HSCRIPT hEntityMakerResultTable = varEntityMakerResultTable.m_hScript;
+	char szEntName[256];
+	for ( int i = 0; i < nEntities; i++ )
+	{
+		V_strncpy( szEntName, ppEntities[i]->GetEntityNameAsCStr(), ARRAYSIZE(szEntName) );
+		char *pAmpersand = V_strrchr( szEntName, '&' );
+		if ( pAmpersand )
+			*pAmpersand = 0;
+		g_pScriptVM->SetValue( hEntityMakerResultTable, szEntName, ToHScript( ppEntities[i] ) );
+	}
+	pScriptScope->Call( hPostSpawnFunc, NULL, hEntityMakerResultTable );
+	pScriptScope->Call( "__FinishSpawn" );
+	g_pScriptVM->ReleaseValue( varEntityMakerResultTable );
+	g_pScriptVM->ReleaseFunction( hPostSpawnFunc );
+}
+#endif

@@ -22,6 +22,9 @@
 #include "tier0/memdbgon.h"
 
 extern ConVar    sk_plr_dmg_smg1_grenade;	
+#ifdef MAPBASE
+extern ConVar    sk_npc_dmg_smg1_grenade;
+#endif
 
 class CWeaponSMG1 : public CHLSelectFireMachineGun
 {
@@ -36,21 +39,29 @@ public:
 	void	Precache( void );
 	void	AddViewKick( void );
 	void	SecondaryAttack( void );
-
+#ifndef EZ2
 	int		GetMinBurst() { return 2; }
 	int		GetMaxBurst() { return 5; }
+#else
+	int		GetMinBurst() { return 8; } // BREADMAN
+	int		GetMaxBurst() { return 15; }
+#endif
 
 	virtual void Equip( CBaseCombatCharacter *pOwner );
 	bool	Reload( void );
 
 	float	GetFireRate( void ) { return 0.075f; }	// 13.3hz
 	int		CapabilitiesGet( void ) { return bits_CAP_WEAPON_RANGE_ATTACK1; }
-	int		WeaponRangeAttack2Condition(/* float flDot, float flDist */);
+	int		WeaponRangeAttack2Condition( float flDot, float flDist );
 	Activity	GetPrimaryAttackActivity( void );
 
 	virtual const Vector& GetBulletSpread( void )
 	{
+#ifdef EZ1
+		static const Vector cone = VECTOR_CONE_2DEGREES;
+#else
 		static const Vector cone = VECTOR_CONE_5DEGREES;
+#endif
 		return cone;
 	}
 
@@ -131,9 +142,52 @@ acttable_t	CWeaponSMG1::m_acttable[] =
 	{ ACT_RANGE_AIM_LOW,			ACT_RANGE_AIM_SMG1_LOW,			false },
 	{ ACT_RELOAD_LOW,				ACT_RELOAD_SMG1_LOW,			false },
 	{ ACT_GESTURE_RELOAD,			ACT_GESTURE_RELOAD_SMG1,		true },
+
+#if EXPANDED_HL2_WEAPON_ACTIVITIES
+	{ ACT_ARM,						ACT_ARM_RIFLE,					false },
+	{ ACT_DISARM,					ACT_DISARM_RIFLE,				false },
+#endif
+
+#if EXPANDED_HL2_COVER_ACTIVITIES
+	{ ACT_RANGE_AIM_MED,			ACT_RANGE_AIM_SMG1_MED,			false },
+	{ ACT_RANGE_ATTACK1_MED,		ACT_RANGE_ATTACK_SMG1_MED,		false },
+
+	{ ACT_COVER_WALL_R,				ACT_COVER_WALL_R_RIFLE,			false },
+	{ ACT_COVER_WALL_L,				ACT_COVER_WALL_L_RIFLE,			false },
+	{ ACT_COVER_WALL_LOW_R,			ACT_COVER_WALL_LOW_R_RIFLE,		false },
+	{ ACT_COVER_WALL_LOW_L,			ACT_COVER_WALL_LOW_L_RIFLE,		false },
+#endif
+
+#ifdef MAPBASE
+	// HL2:DM activities (for third-person animations in SP)
+	{ ACT_HL2MP_IDLE,                    ACT_HL2MP_IDLE_SMG1,                    false },
+	{ ACT_HL2MP_RUN,                    ACT_HL2MP_RUN_SMG1,                    false },
+	{ ACT_HL2MP_IDLE_CROUCH,            ACT_HL2MP_IDLE_CROUCH_SMG1,            false },
+	{ ACT_HL2MP_WALK_CROUCH,            ACT_HL2MP_WALK_CROUCH_SMG1,            false },
+	{ ACT_HL2MP_GESTURE_RANGE_ATTACK,    ACT_HL2MP_GESTURE_RANGE_ATTACK_SMG1,    false },
+	{ ACT_HL2MP_GESTURE_RELOAD,            ACT_HL2MP_GESTURE_RELOAD_SMG1,        false },
+	{ ACT_HL2MP_JUMP,                    ACT_HL2MP_JUMP_SMG1,                    false },
+#if EXPANDED_HL2DM_ACTIVITIES
+	{ ACT_HL2MP_WALK,					ACT_HL2MP_WALK_SMG1,					false },
+	{ ACT_HL2MP_GESTURE_RANGE_ATTACK2,	ACT_HL2MP_GESTURE_RANGE_ATTACK2_SMG1,	false },
+#endif
+#endif
 };
 
 IMPLEMENT_ACTTABLE(CWeaponSMG1);
+
+#ifdef MAPBASE
+// Allows Weapon_BackupActivity() to access the SMG1's activity table.
+acttable_t *GetSMG1Acttable()
+{
+	return CWeaponSMG1::m_acttable;
+}
+
+int GetSMG1ActtableCount()
+{
+	return ARRAYSIZE(CWeaponSMG1::m_acttable);
+}
+#endif
 
 //=========================================================
 CWeaponSMG1::CWeaponSMG1( )
@@ -180,8 +234,12 @@ void CWeaponSMG1::FireNPCPrimaryAttack( CBaseCombatCharacter *pOperator, Vector 
 	WeaponSoundRealtime( SINGLE_NPC );
 
 	CSoundEnt::InsertSound( SOUND_COMBAT|SOUND_CONTEXT_GUNFIRE, pOperator->GetAbsOrigin(), SOUNDENT_VOLUME_MACHINEGUN, 0.2, pOperator, SOUNDENT_CHANNEL_WEAPON, pOperator->GetEnemy() );
+#ifdef EZ
+	pOperator->FireBullets(1, vecShootOrigin, vecShootDir, VECTOR_CONE_10DEGREES, MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 2, entindex(), 0);
+#else
 	pOperator->FireBullets( 1, vecShootOrigin, vecShootDir, VECTOR_CONE_PRECALCULATED,
 		MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 2, entindex(), 0 );
+#endif
 
 	pOperator->DoMuzzleFlash();
 	m_iClip1 = m_iClip1 - 1;
@@ -201,6 +259,10 @@ void CWeaponSMG1::Operator_ForceNPCFire( CBaseCombatCharacter *pOperator, bool b
 	AngleVectors( angShootDir, &vecShootDir );
 	FireNPCPrimaryAttack( pOperator, vecShootOrigin, vecShootDir );
 }
+
+#ifdef MAPBASE
+float GetCurrentGravity( void );
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -228,50 +290,83 @@ void CWeaponSMG1::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatChar
 		}
 		break;
 
-		case EVENT_WEAPON_AR2_ALTFIRE:
+#ifdef MAPBASE
+	case EVENT_WEAPON_AR2_ALTFIRE:
 		{
+			WeaponSound( WPN_DOUBLE );
+
 			CAI_BaseNPC *npc = pOperator->MyNPCPointer();
+			if (!npc)
+				return;
 
 			Vector vecShootOrigin, vecShootDir;
 			vecShootOrigin = pOperator->Weapon_ShootPosition();
-			//vecShootDir = npc->GetShootEnemyDir( vecShootOrigin );
+			vecShootDir = npc->GetShootEnemyDir( vecShootOrigin );
 
-			//Checks if it can fire the grenade
-			WeaponRangeAttack2Condition();
-
-			Vector vecThrow = m_vecTossVelocity;
-
-			//If on the rare case the vector is 0 0 0, cancel for avoid launching the grenade without speed
-			//This should be on WeaponRangeAttack2Condition(), but for some unknown reason return CASE_NONE
-			//doesn't stop the launch
-			if( vecThrow == Vector(0, 0, 0) )
+			Vector vecTarget = npc->GetAltFireTarget();
+			Vector vecThrow;
+			if (vecTarget == vec3_origin)
+				AngleVectors( npc->EyeAngles(), &vecThrow ); // Not much else to do, unfortunately
+			else
 			{
-				break;
+				// Because this is happening right now, we can't "VecCheckThrow" and can only "VecDoThrow", you know what I mean?
+				// ...Anyway, this borrows from that so we'll never return vec3_origin.
+				//vecThrow = VecCheckThrow( this, vecShootOrigin, vecTarget, 600.0, 0.5 );
+
+				vecThrow = (vecTarget - vecShootOrigin);
+
+				// throw at a constant time
+				float time = vecThrow.Length() / 600.0;
+				vecThrow = vecThrow * (1.0 / time);
+
+				// adjust upward toss to compensate for gravity loss
+				vecThrow.z += (GetCurrentGravity() * 0.5) * time * 0.5;
 			}
 
-			CGrenadeAR2 *pGrenade = (CGrenadeAR2*)Create("grenade_ar2", vecShootOrigin, vec3_angle, npc);
+			CGrenadeAR2 *pGrenade = (CGrenadeAR2*)Create( "grenade_ar2", vecShootOrigin, vec3_angle, npc );
 			pGrenade->SetAbsVelocity( vecThrow );
-			pGrenade->SetLocalAngularVelocity(RandomAngle(-400, 400)); //tumble in air
-			pGrenade->SetMoveType( MOVETYPE_FLYGRAVITY, MOVECOLLIDE_FLY_BOUNCE );
+			pGrenade->SetLocalAngularVelocity( QAngle( 0, 400, 0 ) );
+			pGrenade->SetMoveType( MOVETYPE_FLYGRAVITY, MOVECOLLIDE_FLY_BOUNCE ); 
 
-			pGrenade->SetThrower(GetOwner());
+			pGrenade->SetThrower( npc );
 
 			pGrenade->SetGravity(0.5); // lower gravity since grenade is aerodynamic and engine doesn't know it.
 
-			pGrenade->SetDamage( sk_plr_dmg_smg1_grenade.GetFloat() );
+			pGrenade->SetDamage(sk_npc_dmg_smg1_grenade.GetFloat());
 
-			if( g_pGameRules->IsSkillLevel( SKILL_HARD ) )
-			{
-				m_flNextGrenadeCheck = gpGlobals->curtime + RandomFloat(2, 3);
-			}
-			else
-			{
-				m_flNextGrenadeCheck = gpGlobals->curtime + 6;// wait six seconds before even looking again to see if a grenade can be thrown.
-			}
-
-			m_iClip2--;
+			variant_t var;
+			var.SetEntity(pGrenade);
+			npc->FireNamedOutput("OnThrowGrenade", var, pGrenade, npc);
 		}
 		break;
+#else
+		/*//FIXME: Re-enable
+		case EVENT_WEAPON_AR2_GRENADE:
+		{
+		CAI_BaseNPC *npc = pOperator->MyNPCPointer();
+
+		Vector vecShootOrigin, vecShootDir;
+		vecShootOrigin = pOperator->Weapon_ShootPosition();
+		vecShootDir = npc->GetShootEnemyDir( vecShootOrigin );
+
+		Vector vecThrow = m_vecTossVelocity;
+
+		CGrenadeAR2 *pGrenade = (CGrenadeAR2*)Create( "grenade_ar2", vecShootOrigin, vec3_angle, npc );
+		pGrenade->SetAbsVelocity( vecThrow );
+		pGrenade->SetLocalAngularVelocity( QAngle( 0, 400, 0 ) );
+		pGrenade->SetMoveType( MOVETYPE_FLYGRAVITY ); 
+		pGrenade->m_hOwner			= npc;
+		pGrenade->m_pMyWeaponAR2	= this;
+		pGrenade->SetDamage(sk_npc_dmg_ar2_grenade.GetFloat());
+
+		// FIXME: arrgg ,this is hard coded into the weapon???
+		m_flNextGrenadeCheck = gpGlobals->curtime + 6;// wait six seconds before even looking again to see if a grenade can be thrown.
+
+		m_iClip2--;
+		}
+		break;
+		*/
+#endif
 
 	default:
 		BaseClass::Operator_HandleAnimEvent( pEvent, pOperator );
@@ -290,7 +385,7 @@ Activity CWeaponSMG1::GetPrimaryAttackActivity( void )
 
 	if ( m_nShotsFired < 3 )
 		return ACT_VM_RECOIL1;
-
+	
 	if ( m_nShotsFired < 4 )
 		return ACT_VM_RECOIL2;
 
@@ -323,10 +418,16 @@ bool CWeaponSMG1::Reload( void )
 //-----------------------------------------------------------------------------
 void CWeaponSMG1::AddViewKick( void )
 {
+#ifdef EZ
+	#define	EASY_DAMPEN			2.5f	// Breadman
+	#define	MAX_VERTICAL_KICK	11.0f	//Degrees - was 1.0
+	#define	SLIDE_LIMIT			2.0f	//Seconds - was 2.0
+#else
 	#define	EASY_DAMPEN			0.5f
 	#define	MAX_VERTICAL_KICK	1.0f	//Degrees
 	#define	SLIDE_LIMIT			2.0f	//Seconds
-	
+#endif
+
 	//Get the view kick
 	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
 
@@ -386,7 +487,11 @@ void CWeaponSMG1::SecondaryAttack( void )
 	CSoundEnt::InsertSound( SOUND_COMBAT, GetAbsOrigin(), 1000, 0.2, GetOwner(), SOUNDENT_CHANNEL_WEAPON );
 
 	// player "shoot" animation
+#ifdef MAPBASE
+	pPlayer->SetAnimation( PLAYER_ATTACK2 );
+#else
 	pPlayer->SetAnimation( PLAYER_ATTACK1 );
+#endif
 
 	// Decrease ammo
 	pPlayer->RemoveAmmo( 1, m_iSecondaryAmmoType );
@@ -412,11 +517,11 @@ void CWeaponSMG1::SecondaryAttack( void )
 //			flDist - 
 // Output : int
 //-----------------------------------------------------------------------------
-int CWeaponSMG1::WeaponRangeAttack2Condition(/* float flDot, float flDist */)
+int CWeaponSMG1::WeaponRangeAttack2Condition( float flDot, float flDist )
 {
 	CAI_BaseNPC *npcOwner = GetOwner()->MyNPCPointer();
 
-	// return COND_NONE;
+	return COND_NONE;
 
 /*
 	// --------------------------------------------------------

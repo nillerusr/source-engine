@@ -17,6 +17,10 @@
 #include "soundenvelope.h"
 #include "engine/IEngineSound.h"
 #include "ammodef.h"
+#ifdef MAPBASE
+#include "AI_ResponseSystem.h"
+#include "ai_speech.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -75,6 +79,18 @@ envelopePoint_t envZombieMoanIgnited[] =
 	},
 };
 
+#ifdef MAPBASE
+//------------------------------------------------------------------------------
+// Move these to CNPC_BaseZombie if other zombies end up using the response system
+//------------------------------------------------------------------------------
+#define TLK_ZOMBIE_PAIN "TLK_WOUND"
+#define TLK_ZOMBIE_DEATH "TLK_DEATH"
+#define TLK_ZOMBIE_ALERT "TLK_STARTCOMBAT"
+#define TLK_ZOMBIE_IDLE "TLK_QUESTION"
+#define TLK_ZOMBIE_ATTACK "TLK_MELEE"
+#define TLK_ZOMBIE_MOAN "TLK_MOAN"
+#endif
+
 
 //=============================================================================
 //=============================================================================
@@ -114,9 +130,10 @@ public:
 
 	void StartTask( const Task_t *pTask );
 	void RunTask( const Task_t *pTask );
-
+#ifndef EZ
 	virtual const char *GetLegsModel( void );
 	virtual const char *GetTorsoModel( void );
+#endif
 	virtual const char *GetHeadcrabClassname( void );
 	virtual const char *GetHeadcrabModel( void );
 
@@ -147,6 +164,11 @@ public:
 	void FootstepSound( bool fRightFoot );
 	void FootscuffSound( bool fRightFoot );
 
+#ifdef EZ
+	// Beast stealth mode - call the beast over
+	virtual void AlarmSound( void );
+#endif
+
 	const char *GetMoanSound( int nSound );
 	
 public:
@@ -154,7 +176,15 @@ public:
 
 protected:
 	static const char *pMoanSounds[];
+#ifdef EZ
+	static const char *pMoanSoundsRad[];
+	static const char *pMoanSoundsXen[];
 
+	static const char *pModelNames[];
+	static const char *pTorsoModelNames[];
+	static const char *pLegsModelNames[];
+	static const char *pHeadcrabModelNames[];
+#endif
 
 private:
 	CHandle< CBaseDoor > m_hBlockingDoor;
@@ -178,6 +208,66 @@ const char *CZombie::pMoanSounds[] =
 	 "NPC_BaseZombie.Moan3",
 	 "NPC_BaseZombie.Moan4",
 };
+#ifdef EZ
+const char *CZombie::pMoanSoundsRad[] =
+{
+	"NPC_BaseGlowbie.Moan1",
+	"NPC_BaseGlowbie.Moan2",
+	"NPC_BaseGlowbie.Moan3",
+	"NPC_BaseGlowbie.Moan4",
+};
+const char *CZombie::pMoanSoundsXen[] =
+{
+	"NPC_BaseXenbie.Moan1",
+	"NPC_BaseXenbie.Moan2",
+	"NPC_BaseXenbie.Moan3",
+	"NPC_BaseXenbie.Moan4",
+};
+
+const char *CZombie::pModelNames[EZ_VARIANT_COUNT] = {
+	"models/zombie/classic.mdl",
+	"models/zombie/xenbie.mdl",
+	"models/zombie/glowbie.mdl",
+	"models/zombie/timebie.mdl",
+	"models/zombie/arbie.mdl",
+	"models/zombie/bloodbie.mdl",
+	"models/zombie/athenaebie.mdl",
+	"models/zombie/ashbie.mdl",
+};
+
+const char *CZombie::pTorsoModelNames[EZ_VARIANT_COUNT] = {
+	"models/zombie/classic_torso.mdl",
+	"models/zombie/xenbie_torso.mdl",
+	"models/zombie/glowbie_torso.mdl",
+	"models/zombie/timebie_torso.mdl",
+	"models/zombie/arbie_torso.mdl",
+	"models/zombie/bloodbie_torso.mdl",
+	"models/zombie/athenaebie_torso.mdl",
+	"models/zombie/ashbie_torso.mdl",
+};
+
+const char *CZombie::pLegsModelNames[EZ_VARIANT_COUNT] = {
+	"models/zombie/classic_legs.mdl",
+	"models/zombie/xenbie_legs.mdl",
+	"models/zombie/glowbie_legs.mdl",
+	"models/zombie/timebie_legs.mdl",
+	"models/zombie/arbie_legs.mdl",
+	"models/zombie/bloodbie_legs.mdl",
+	"models/zombie/athenaebie_legs.mdl",
+	"models/zombie/ashbie_legs.mdl",
+};
+
+const char *CZombie::pHeadcrabModelNames[EZ_VARIANT_COUNT] = {
+	"models/headcrabclassic.mdl",
+	"models/xencrabclassic.mdl",
+	"models/glowcrabclassic.mdl",
+	"models/timecrabclassic.mdl",
+	"models/arbeitcrabclassic.mdl",
+	"models/bloodcrabclassic.mdl",
+	"models/athenaeumcrabclassic.mdl",
+	"models/ashcrabclassic.mdl",
+};
+#endif
 
 //=========================================================
 // Conditions
@@ -232,8 +322,8 @@ END_DATADESC()
 //-----------------------------------------------------------------------------
 void CZombie::Precache( void )
 {
+#ifndef EZ
 	BaseClass::Precache();
-
 	PrecacheModel( "models/zombie/classic.mdl" );
 	PrecacheModel( "models/zombie/classic_torso.mdl" );
 	PrecacheModel( "models/zombie/classic_legs.mdl" );
@@ -255,6 +345,87 @@ void CZombie::Precache( void )
 	PrecacheScriptSound( "NPC_BaseZombie.Moan2" );
 	PrecacheScriptSound( "NPC_BaseZombie.Moan3" );
 	PrecacheScriptSound( "NPC_BaseZombie.Moan4" );
+#else
+	switch (m_tEzVariant) 
+	{
+		case EZ_VARIANT_RAD:
+			PrecacheScriptSound( "Glowbie.FootstepRight" );
+			PrecacheScriptSound( "Glowbie.FootstepLeft" );
+			PrecacheScriptSound( "Glowbie.FootstepLeft" );
+			PrecacheScriptSound( "Glowbie.ScuffRight" );
+			PrecacheScriptSound( "Glowbie.ScuffLeft" );
+			PrecacheScriptSound( "Glowbie.AttackHit" );
+			PrecacheScriptSound( "Glowbie.AttackMiss" );
+			PrecacheScriptSound( "Glowbie.Pain" );
+			PrecacheScriptSound( "Glowbie.Die" );
+			PrecacheScriptSound( "Glowbie.Alert" );
+			PrecacheScriptSound( "Glowbie.Idle" );
+			PrecacheScriptSound( "Glowbie.Attack" );
+			PrecacheScriptSound( "Glowbie.Alarm" );
+
+			PrecacheScriptSound( "NPC_BaseGlowbie.Moan1" );
+			PrecacheScriptSound( "NPC_BaseGlowbie.Moan2" );
+			PrecacheScriptSound( "NPC_BaseGlowbie.Moan3" );
+			PrecacheScriptSound( "NPC_BaseGlowbie.Moan4" );
+			break;
+		case EZ_VARIANT_XEN:
+			PrecacheScriptSound( "Xenbie.FootstepRight" );
+			PrecacheScriptSound( "Xenbie.FootstepLeft" );
+			PrecacheScriptSound( "Xenbie.FootstepLeft" );
+			PrecacheScriptSound( "Xenbie.ScuffRight" );
+			PrecacheScriptSound( "Xenbie.ScuffLeft" );
+			PrecacheScriptSound( "Xenbie.AttackHit" );
+			PrecacheScriptSound( "Xenbie.AttackMiss" );
+			PrecacheScriptSound( "Xenbie.Pain" );
+			PrecacheScriptSound( "Xenbie.Die" );
+			PrecacheScriptSound( "Xenbie.Alert" );
+			PrecacheScriptSound( "Xenbie.Idle" );
+			PrecacheScriptSound( "Xenbie.Attack" );
+			PrecacheScriptSound( "Xenbie.Alarm" );
+
+			PrecacheScriptSound( "NPC_BaseXenbie.Moan1" );
+			PrecacheScriptSound( "NPC_BaseXenbie.Moan2" );
+			PrecacheScriptSound( "NPC_BaseXenbie.Moan3" );
+			PrecacheScriptSound( "NPC_BaseXenbie.Moan4" );
+			break;
+		default:
+			PrecacheScriptSound( "Zombie.FootstepRight" );
+			PrecacheScriptSound( "Zombie.FootstepLeft" );
+			PrecacheScriptSound( "Zombie.FootstepLeft" );
+			PrecacheScriptSound( "Zombie.ScuffRight" );
+			PrecacheScriptSound( "Zombie.ScuffLeft" );
+			PrecacheScriptSound( "Zombie.AttackHit" );
+			PrecacheScriptSound( "Zombie.AttackMiss" );
+			PrecacheScriptSound( "Zombie.Pain" );
+			PrecacheScriptSound( "Zombie.Die" );
+			PrecacheScriptSound( "Zombie.Alert" );
+			PrecacheScriptSound( "Zombie.Idle" );
+			PrecacheScriptSound( "Zombie.Attack" );
+			PrecacheScriptSound( "Zombie.Alarm" );
+
+			PrecacheScriptSound( "NPC_BaseZombie.Moan1" );
+			PrecacheScriptSound( "NPC_BaseZombie.Moan2" );
+			PrecacheScriptSound( "NPC_BaseZombie.Moan3" );
+			PrecacheScriptSound( "NPC_BaseZombie.Moan4" );
+			break;
+	}
+	if ( GetModelName() == NULL_STRING )
+	{
+		SetModelName( AllocPooledString( pModelNames[ m_tEzVariant ] ) );
+	}
+	if (GetTorsoModelName() == NULL_STRING)
+	{
+		SetTorsoModelName( AllocPooledString( pTorsoModelNames[ m_tEzVariant ] ) );
+	}
+	if (GetLegsModelName() == NULL_STRING)
+	{
+		SetLegsModelName( AllocPooledString( pLegsModelNames[ m_tEzVariant ] ) );
+	}
+
+	PrecacheModel( STRING( GetModelName() ) );
+
+	BaseClass::Precache();
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -263,6 +434,17 @@ void CZombie::Spawn( void )
 {
 	Precache();
 
+#ifdef MAPBASE
+	if( Q_strstr( GetClassname(), "torso" ) )
+	{
+		// This was placed as an npc_zombie_torso
+		m_fIsTorso = true;
+	}
+	else
+	{
+		m_fIsTorso = false;
+	}
+#else
 	if( FClassnameIs( this, "npc_zombie" ) )
 	{
 		m_fIsTorso = false;
@@ -274,9 +456,19 @@ void CZombie::Spawn( void )
 	}
 
 	m_fIsHeadless = false;
+#endif
 
-#ifdef HL2_EPISODIC
-	SetBloodColor( BLOOD_COLOR_ZOMBIE );
+#ifdef EZ
+	if ( m_tEzVariant == EZ_VARIANT_RAD ) 
+	{
+		SetBloodColor( BLOOD_COLOR_BLUE );
+	}
+	else 
+	{
+		SetBloodColor( BLOOD_COLOR_ZOMBIE );
+	}
+#elif HL2_EPISODIC
+	SetBloodColor(BLOOD_COLOR_ZOMBIE);
 #else
 	SetBloodColor( BLOOD_COLOR_GREEN );
 #endif // HL2_EPISODIC
@@ -332,6 +524,25 @@ int CZombie::SelectSchedule ( void )
 //-----------------------------------------------------------------------------
 void CZombie::FootstepSound( bool fRightFoot )
 {
+#ifdef EZ
+	if ( m_tEzVariant == EZ_VARIANT_RAD && fRightFoot )
+	{
+		EmitSound( "Glowbie.FootstepRight" );
+	}
+	else if ( m_tEzVariant == EZ_VARIANT_RAD )
+	{
+		EmitSound( "Glowbie.FootstepLeft" );
+	}
+	else if ( m_tEzVariant == EZ_VARIANT_XEN && fRightFoot )
+	{
+		EmitSound( "Xenbie.FootstepRight" );
+	}
+	else if ( m_tEzVariant == EZ_VARIANT_XEN )
+	{
+		EmitSound( "Xenbie.FootstepLeft" );
+	}
+	else
+#endif
 	if( fRightFoot )
 	{
 		EmitSound(  "Zombie.FootstepRight" );
@@ -347,6 +558,25 @@ void CZombie::FootstepSound( bool fRightFoot )
 //-----------------------------------------------------------------------------
 void CZombie::FootscuffSound( bool fRightFoot )
 {
+#ifdef EZ
+	if ( m_tEzVariant == EZ_VARIANT_RAD && fRightFoot )
+	{
+		EmitSound( "Glowbie.ScuffRight" );
+	}
+	else if ( m_tEzVariant == EZ_VARIANT_RAD )
+	{
+		EmitSound( "Glowbie.ScuffLeft" );
+	}
+	else if ( m_tEzVariant == EZ_VARIANT_XEN && fRightFoot )
+	{
+		EmitSound( "Xenbie.ScuffRight" );
+	}
+	else if ( m_tEzVariant == EZ_VARIANT_XEN )
+	{
+		EmitSound( "Xenbie.ScuffLeft" );
+	}
+	else
+#endif
 	if( fRightFoot )
 	{
 		EmitSound( "Zombie.ScuffRight" );
@@ -362,7 +592,22 @@ void CZombie::FootscuffSound( bool fRightFoot )
 //-----------------------------------------------------------------------------
 void CZombie::AttackHitSound( void )
 {
+#ifdef EZ
+	switch( m_tEzVariant )
+	{
+	case EZ_VARIANT_RAD:
+		EmitSound( "Glowbie.AttackHit" );
+		break;
+	case EZ_VARIANT_XEN:
+		EmitSound( "Xenbie.AttackHit" );
+		break;
+	default:
+		EmitSound( "Zombie.AttackHit" );
+		break;
+	}
+#else
 	EmitSound( "Zombie.AttackHit" );
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -370,8 +615,23 @@ void CZombie::AttackHitSound( void )
 //-----------------------------------------------------------------------------
 void CZombie::AttackMissSound( void )
 {
+#ifdef EZ
+	switch (m_tEzVariant)
+	{
+	case EZ_VARIANT_RAD:
+		EmitSound( "Glowbie.AttackMiss" );
+		break;
+	case EZ_VARIANT_XEN:
+		EmitSound( "Xenbie.AttackMiss" );
+		break;
+	default:
+		EmitSound( "Zombie.AttackMiss" );
+		break;
+	}
+#else
 	// Play a random attack miss sound
 	EmitSound( "Zombie.AttackMiss" );
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -384,15 +644,44 @@ void CZombie::PainSound( const CTakeDamageInfo &info )
 	{
 		return;
 	}
-
+#ifdef EZ
+	switch ( m_tEzVariant )
+	{
+		case EZ_VARIANT_RAD:
+			EmitSound( "Glowbie.Pain" );
+			break;
+		case EZ_VARIANT_XEN:
+			EmitSound( "Xenbie.Pain" );
+			break;
+		default:
+			EmitSound( "Zombie.Pain" );
+			break;
+	}
+#else
 	EmitSound( "Zombie.Pain" );
+#endif
 }
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 void CZombie::DeathSound( const CTakeDamageInfo &info ) 
 {
+#ifdef EZ
+	switch (m_tEzVariant)
+	{
+		case EZ_VARIANT_RAD:
+			EmitSound( "Glowbie.Die" );
+			break;
+		case EZ_VARIANT_XEN:
+			EmitSound( "Xenbie.Die" );
+			break;
+		default:
+			EmitSound( "Zombie.Die" );
+			break;
+	}
+#else
 	EmitSound( "Zombie.Die" );
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -400,18 +689,63 @@ void CZombie::DeathSound( const CTakeDamageInfo &info )
 //-----------------------------------------------------------------------------
 void CZombie::AlertSound( void )
 {
-	EmitSound( "Zombie.Alert" );
+#ifdef EZ
+	switch (m_tEzVariant)
+	{
+	case EZ_VARIANT_RAD:
+		EmitSound( "Glowbie.Alert" );
+		break;
+	case EZ_VARIANT_XEN:
+		EmitSound( "Xenbie.Alert" );
+		break;
+	default:
+		EmitSound( "Zombie.Alert" );
+		break;
+	}
+#else
+	EmitSound( "Zombie.Alert" ); 
+#endif
 
 	// Don't let a moan sound cut off the alert sound.
 	m_flNextMoanSound += random->RandomFloat( 2.0, 4.0 );
 }
+
+#ifdef EZ
+void CZombie::AlarmSound( void )
+{
+	switch (m_tEzVariant)
+	{
+	case EZ_VARIANT_RAD:
+		EmitSound( "Glowbie.Alarm" );
+		break;
+	case EZ_VARIANT_XEN:
+		EmitSound( "Xenbie.Alarm" );
+		break;
+	default:
+		EmitSound( "Zombie.Alarm" );
+		break;
+	}
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Returns a moan sound for this class of zombie.
 //-----------------------------------------------------------------------------
 const char *CZombie::GetMoanSound( int nSound )
 {
+#ifdef EZ
+	switch (m_tEzVariant)
+	{
+		case EZ_VARIANT_RAD:
+			return pMoanSoundsRad[nSound % ARRAYSIZE( pMoanSoundsRad )];
+		case EZ_VARIANT_XEN:
+			return pMoanSoundsXen[nSound % ARRAYSIZE( pMoanSoundsXen )];
+		default:
+			return pMoanSounds[nSound % ARRAYSIZE( pMoanSounds )];
+	}
+#else
 	return pMoanSounds[ nSound % ARRAYSIZE( pMoanSounds ) ];
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -430,8 +764,22 @@ void CZombie::IdleSound( void )
 		// Sleeping zombies are quiet.
 		return;
 	}
-
+#ifdef EZ
+	switch ( m_tEzVariant )
+	{
+		case EZ_VARIANT_RAD:
+			EmitSound( "Glowbie.Idle" );
+			break;
+		case EZ_VARIANT_XEN:
+			EmitSound( "Xenbie.Idle" );
+			break;
+		default:
+			EmitSound( "Zombie.Idle" );
+			break;
+	}
+#else
 	EmitSound( "Zombie.Idle" );
+#endif
 	MakeAISpookySound( 360.0f );
 }
 
@@ -440,7 +788,19 @@ void CZombie::IdleSound( void )
 //-----------------------------------------------------------------------------
 void CZombie::AttackSound( void )
 {
+#ifdef EZ
+	switch ( m_tEzVariant )
+	{
+		case EZ_VARIANT_RAD:
+			EmitSound( "Glowbie.Attack" );
+			break;
+		default:
+			EmitSound( "Zombie.Attack" );
+			break;
+	}
+#else
 	EmitSound( "Zombie.Attack" );
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -455,9 +815,9 @@ const char *CZombie::GetHeadcrabClassname( void )
 //-----------------------------------------------------------------------------
 const char *CZombie::GetHeadcrabModel( void )
 {
-	return "models/headcrabclassic.mdl";
+	return pHeadcrabModelNames[ m_tEzVariant ];
 }
-
+#ifndef EZ
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -472,7 +832,7 @@ const char *CZombie::GetTorsoModel( void )
 {
 	return "models/zombie/classic_torso.mdl";
 }
-
+#endif
 
 //---------------------------------------------------------
 //---------------------------------------------------------
@@ -482,12 +842,20 @@ void CZombie::SetZombieModel( void )
 
 	if ( m_fIsTorso )
 	{
+#ifndef EZ
 		SetModel( "models/zombie/classic_torso.mdl" );
+#else
+		SetModel( GetTorsoModel() );
+#endif
 		SetHullType( HULL_TINY );
 	}
 	else
 	{
+#ifndef EZ
 		SetModel( "models/zombie/classic.mdl" );
+#else
+		SetModel( STRING( GetModelName() ) );
+#endif
 		SetHullType( HULL_HUMAN );
 	}
 
@@ -849,6 +1217,15 @@ bool CZombie::IsHeavyDamage( const CTakeDamageInfo &info )
 			return true;
 	}
 
+#ifdef EZ2
+	// Heavy damage when hit directly by shotgun flechettes
+	if ( info.GetDamageType() & (DMG_DISSOLVE | DMG_NEVERGIB) && info.GetInflictor() && FClassnameIs( info.GetInflictor(), "shotgun_flechette" ) )
+	{
+		if ( !m_fIsTorso )
+			return true;
+	}
+#endif
+
 	// Randomly treat all damage as heavy
 	if ( info.GetDamageType() & (DMG_BULLET | DMG_BUCKSHOT) )
 	{
@@ -880,7 +1257,7 @@ bool CZombie::IsSquashed( const CTakeDamageInfo &info )
 		return false;
 	}
 
-	if( info.GetDamageType() & DMG_CRUSH )
+	if( info.GetDamageType() & DMG_CRUSH && info.GetInflictor() ) // Mapbase - Fixes a crash with inflictor-less crush damage
 	{
 		IPhysicsObject *pCrusher = info.GetInflictor()->VPhysicsGetObject();
 		if( pCrusher && pCrusher->GetMass() >= ZOMBIE_SQUASH_MASS && info.GetInflictor()->WorldSpaceCenter().z > EyePosition().z )
@@ -999,3 +1376,281 @@ AI_BEGIN_CUSTOM_NPC( npc_zombie, CZombie )
 AI_END_CUSTOM_NPC()
 
 //=============================================================================
+
+#ifdef MAPBASE
+class CZombieCustom : public CAI_ExpresserHost<CZombie>
+{
+	DECLARE_DATADESC();
+	DECLARE_CLASS( CZombieCustom, CAI_ExpresserHost<CZombie> );
+
+public:
+	CZombieCustom();
+
+	void Spawn( void );
+	void Precache( void );
+
+	void SpeakIfAllowed( const char *concept, AI_CriteriaSet *modifiers = NULL );
+	void ModifyOrAppendCriteria( AI_CriteriaSet& set );
+	virtual CAI_Expresser *CreateExpresser( void );
+	virtual CAI_Expresser *GetExpresser() { return m_pExpresser; }
+	virtual void		PostConstructor( const char *szClassname );
+
+	void PainSound( const CTakeDamageInfo &info );
+	void DeathSound( const CTakeDamageInfo &info );
+	void AlertSound( void );
+	void IdleSound( void );
+	void AttackSound( void );
+
+	const char *GetMoanSound( int nSound );
+
+	void SetZombieModel( void );
+
+	virtual const char *GetLegsModel( void ) { return STRING(m_iszLegsModel); }
+	virtual const char *GetTorsoModel( void ) { return STRING(m_iszTorsoModel); }
+	virtual const char *GetHeadcrabClassname( void ) { return STRING(m_iszHeadcrabClassname); }
+	virtual const char *GetHeadcrabModel( void ) { return STRING(m_iszHeadcrabModel); }
+
+	string_t m_iszLegsModel;
+	string_t m_iszTorsoModel;
+	string_t m_iszHeadcrabClassname;
+	string_t m_iszHeadcrabModel;
+
+	CAI_Expresser *m_pExpresser;
+};
+
+BEGIN_DATADESC( CZombieCustom )
+
+	DEFINE_KEYFIELD( m_iszLegsModel, FIELD_STRING, "LegsModel" ),
+	DEFINE_KEYFIELD( m_iszTorsoModel, FIELD_STRING, "TorsoModel" ),
+	DEFINE_KEYFIELD( m_iszHeadcrabClassname, FIELD_STRING, "HeadcrabClassname" ),
+	DEFINE_KEYFIELD( m_iszHeadcrabModel, FIELD_STRING, "HeadcrabModel" ),
+
+END_DATADESC()
+
+LINK_ENTITY_TO_CLASS( npc_zombie_custom, CZombieCustom );
+LINK_ENTITY_TO_CLASS( npc_zombie_custom_torso, CZombieCustom );
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CZombieCustom::CZombieCustom()
+{
+	m_iszLegsModel = AllocPooledString( CZombie::GetLegsModel() );
+	m_iszTorsoModel = AllocPooledString( CZombie::GetTorsoModel() );
+	m_iszHeadcrabClassname = AllocPooledString( CZombie::GetHeadcrabClassname() );
+	m_iszHeadcrabModel = AllocPooledString( CZombie::GetHeadcrabModel() );
+
+	SetModelName( AllocPooledString("models/zombie/classic.mdl") );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CZombieCustom::Spawn( void )
+{
+	int iHealth = m_iHealth;
+
+	BaseClass::Spawn();
+
+	if (iHealth > 0)
+	{
+		m_iMaxHealth = iHealth;
+		m_iHealth = iHealth;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CZombieCustom::Precache( void )
+{
+	BaseClass::Precache();
+
+	PrecacheModel(STRING(GetModelName()));
+
+	if (m_iszLegsModel != NULL_STRING)
+		PrecacheModel( STRING(m_iszLegsModel) );
+
+	if (m_iszTorsoModel != NULL_STRING)
+		PrecacheModel( STRING(m_iszTorsoModel) );
+
+	if (m_iszHeadcrabClassname != NULL_STRING)
+		UTIL_PrecacheOther( STRING(m_iszHeadcrabClassname) );
+
+	if (m_iszHeadcrabModel != NULL_STRING)
+		PrecacheModel( STRING(m_iszHeadcrabModel) );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CZombieCustom::SetZombieModel( void )
+{
+	Hull_t lastHull = GetHullType();
+
+	if ( m_fIsTorso )
+	{
+		SetModel( GetTorsoModel() );
+		SetHullType( HULL_TINY );
+	}
+	else
+	{
+		SetModel( STRING(GetModelName()) );
+		SetHullType( HULL_HUMAN );
+	}
+
+	SetBodygroup( ZOMBIE_BODYGROUP_HEADCRAB, !m_fIsHeadless );
+
+	SetHullSizeNormal( true );
+	SetDefaultEyeOffset();
+	SetActivity( ACT_IDLE );
+
+	// hull changed size, notify vphysics
+	// UNDONE: Solve this generally, systematically so other
+	// NPCs can change size
+	if ( lastHull != GetHullType() )
+	{
+		if ( VPhysicsGetObject() )
+		{
+			SetupVPhysicsHull();
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CZombieCustom::PainSound( const CTakeDamageInfo &info )
+{
+	AI_CriteriaSet modifiers;
+	ModifyOrAppendDamageCriteria( modifiers, info );
+	SpeakIfAllowed( TLK_ZOMBIE_PAIN, &modifiers );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CZombieCustom::DeathSound( const CTakeDamageInfo &info ) 
+{
+	AI_CriteriaSet modifiers;
+	ModifyOrAppendDamageCriteria( modifiers, info );
+	SpeakIfAllowed( TLK_ZOMBIE_DEATH, &modifiers );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CZombieCustom::AlertSound( void )
+{
+	SpeakIfAllowed( TLK_ZOMBIE_ALERT );
+
+	// Don't let a moan sound cut off the alert sound.
+	m_flNextMoanSound += random->RandomFloat( 2.0, 4.0 );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Returns a moan sound for this class of zombie.
+//-----------------------------------------------------------------------------
+const char *CZombieCustom::GetMoanSound( int nSound )
+{
+	AI_CriteriaSet modifiers;
+
+	// We could probably do this through the response system alone now, but whatever.
+	modifiers.AppendCriteria( "moansound", UTIL_VarArgs("%i", nSound & 4) );
+
+#ifdef NEW_RESPONSE_SYSTEM
+	AI_Response response;
+	CAI_Concept concept = "TLK_ZOMBIE_MOAN";
+	concept.SetSpeaker( this );
+	if (!FindResponse( response, concept, &modifiers ))
+		return "NPC_BaseZombie.Moan1";
+#else
+	AI_Response *response = SpeakFindResponse(TLK_ZOMBIE_MOAN, modifiers);
+
+	if ( !response )
+		return "NPC_BaseZombie.Moan1";
+#endif
+
+	// Must be static so it could be returned
+	static char szSound[128];
+#ifdef NEW_RESPONSE_SYSTEM
+	response.GetName(szSound, sizeof(szSound));
+#else
+	response->GetName(szSound, sizeof(szSound));
+	delete response;
+#endif
+
+	return szSound;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Play a random idle sound.
+//-----------------------------------------------------------------------------
+void CZombieCustom::IdleSound( void )
+{
+	if( GetState() == NPC_STATE_IDLE && random->RandomFloat( 0, 1 ) == 0 )
+	{
+		// Moan infrequently in IDLE state.
+		return;
+	}
+
+	SpeakIfAllowed( TLK_ZOMBIE_IDLE );
+	MakeAISpookySound( 360.0f );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Play a random attack sound.
+//-----------------------------------------------------------------------------
+void CZombieCustom::AttackSound( void )
+{
+	SpeakIfAllowed( TLK_ZOMBIE_ATTACK );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Speak concept
+//-----------------------------------------------------------------------------
+void CZombieCustom::SpeakIfAllowed(const char *concept, AI_CriteriaSet *modifiers)
+{
+	AI_CriteriaSet empty;
+	Speak( concept, modifiers ? *modifiers : empty );
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CZombieCustom::ModifyOrAppendCriteria( AI_CriteriaSet& set )
+{
+	BaseClass::ModifyOrAppendCriteria( set );
+
+	set.AppendCriteria( "slumped", IsSlumped() ? "1" : "0" );
+
+	// Does this or a name already exist?
+	set.AppendCriteria( "onfire", IsOnFire() ? "1" : "0" );
+
+	// Custom zombies (and zombie torsos) must make zombie sounds.
+	// This can be overridden with response contexts.
+	set.AppendCriteria( "classname", "npc_zombie" );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CAI_Expresser *CZombieCustom::CreateExpresser( void )
+{
+	m_pExpresser = new CAI_Expresser(this);
+	if (!m_pExpresser)
+		return NULL;
+
+	m_pExpresser->Connect(this);
+	return m_pExpresser;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CZombieCustom::PostConstructor(const char *szClassname)
+{
+	BaseClass::PostConstructor(szClassname);
+	CreateExpresser();
+}
+#endif

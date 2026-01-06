@@ -37,6 +37,9 @@
 #define SF_PHYSBOX_NEVER_PICK_UP			0x200000		// Physcannon will never be able to pick this up.
 #define SF_PHYSBOX_NEVER_PUNT				0x400000		// Physcannon will never be able to punt this object.
 #define SF_PHYSBOX_PREVENT_PLAYER_TOUCH_ENABLE 0x800000		// If set, the player will not cause the object to enable its motion when bumped into
+#ifdef MAPBASE
+#define SF_PHYSBOX_RADIUS_PICKUP			0x1000000		// Allows this object to be picked up in a radius, useful for smaller objects. Based on the prop_physics input
+#endif
 
 // UNDONE: Hook collisions into the physics system to generate touch functions and take damage on falls
 // UNDONE: Base class PhysBrush
@@ -76,6 +79,9 @@ public:
 	void InputDisableMotion( inputdata_t &inputdata );
 	void InputForceDrop( inputdata_t &inputdata );
 	void InputDisableFloating( inputdata_t &inputdata );
+#ifdef MAPBASE
+	void InputSetDebris( inputdata_t &inputdata );
+#endif
 
 	DECLARE_DATADESC();
 	
@@ -120,6 +126,9 @@ public:
 
 	// Input handlers
 	void InputExplode( inputdata_t &inputdata );
+#ifdef MAPBASE
+	void InputExplodeAndRemove( inputdata_t &inputdata );
+#endif
 
 	DECLARE_DATADESC();
 private:
@@ -132,6 +141,16 @@ private:
 	float		m_flInnerRadius;
 	
 	COutputEvent	m_OnPushedPlayer;	
+
+#ifdef EZ2
+	CBaseEntity *	pOwner; // Currently, this field is not a saved field because it is only used by vortigaunts
+	bool			m_bDispel;
+public:
+	void	SetOwner( CBaseEntity * pNewOwner ) { pOwner = pNewOwner; }
+
+	static CPhysExplosion * CreatePhysExplosion( const Vector &vecOrigin, CBaseEntity *pOwner, float flMagnitude, float flRadius, float flInnerRadius, bool bDispel );
+
+#endif
 };
 
 
@@ -187,6 +206,9 @@ public:
 	void	Precache( void );
 	void	Touch( CBaseEntity *pOther );
 	void	VPhysicsCollision( int index, gamevcollisionevent_t *pEvent );
+#ifdef MAPBASE
+	bool	CanBePickedUpByPhyscannon( void );
+#endif
 	void	DoMagnetSuck( CBaseEntity *pOther );
 	void	SetConstraintGroup( IPhysicsConstraintGroup *pGroup );
 

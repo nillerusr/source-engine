@@ -25,6 +25,23 @@
 
 #include "eventqueue.h"
 
+#ifdef MAPBASE
+#include "hl2_gamerules.h"
+#include "mapbase/GlobalStrings.h"
+#include "collisionutils.h"
+#endif
+
+#ifdef EZ
+#include "IEffects.h"
+#include "particle_parse.h"
+#include "RagdollBoogie.h"
+#endif
+
+#ifdef EZ2
+#include "ez2/ez2_player.h"
+#include "npc_combine.h"
+#endif
+
 #include "ai_squad.h"
 #include "ai_pathfinder.h"
 #include "ai_route.h"
@@ -61,6 +78,14 @@ ConVar	sk_citizen_heal_ally_min_pct	( "sk_citizen_heal_ally_min_pct",		"0.90");
 ConVar	sk_citizen_player_stare_time	( "sk_citizen_player_stare_time",		"1.0" );
 ConVar  sk_citizen_player_stare_dist	( "sk_citizen_player_stare_dist",		"72" );
 ConVar	sk_citizen_stare_heal_time		( "sk_citizen_stare_heal_time",			"5" );
+#ifdef EZ
+ConVar  sk_citizen_ar2_proficiency("sk_citizen_ar2_proficiency", "2"); // Added by 1upD. Skill rating 0 - 4 of how accurate the AR2 should be
+ConVar  sk_citizen_default_proficiency("sk_citizen_default_proficiency", "1"); // Added by 1upD. Skill rating 0 - 4 of how accurate all weapons but the AR2 should be
+ConVar  sk_citizen_default_willpower("sk_citizen_default_willpower", "1"); // Added by 1upD. Amount of mental stress damage citizen can take before panic
+ConVar  sk_citizen_very_low_willpower( "sk_citizen_very_low_willpower", "-3" ); // Added by 1upD. Amount of willpower below which citizens might flee
+ConVar  sk_citizen_head( "sk_citizen_head", "2.5" ); // Added by Blixibon. Multiplies by sk_npc_head
+ConVar	sk_citizen_longfall_gear( "sk_citizen_longfall_gear", "1.5" ); // Added by Blixibon. Multiplies longfall gear.
+#endif
 
 ConVar	g_ai_citizen_show_enemy( "g_ai_citizen_show_enemy", "0" );
 
@@ -69,6 +94,10 @@ ConVar	npc_citizen_squad_marker( "npc_citizen_squad_marker", "0" );
 ConVar	npc_citizen_explosive_resist( "npc_citizen_explosive_resist", "0" );
 ConVar	npc_citizen_auto_player_squad( "npc_citizen_auto_player_squad", "1" );
 ConVar	npc_citizen_auto_player_squad_allow_use( "npc_citizen_auto_player_squad_allow_use", "0" );
+#ifdef MAPBASE
+ConVar	npc_citizen_squad_secondary_toggle_use_button("npc_citizen_squad_toggle_use_button", "262144"); // IN_WALK by default
+ConVar	npc_citizen_squad_secondary_toggle_use_always( "npc_citizen_squad_secondary_toggle_use_always", "0", FCVAR_NONE, "Allows all citizens not strictly stuck to the player's squad to be toggled via Alt + E." );
+#endif
 
 
 ConVar	npc_citizen_dont_precache_all( "npc_citizen_dont_precache_all", "0" );
@@ -84,14 +113,53 @@ ConVar	sk_citizen_heal_toss_player_delay("sk_citizen_heal_toss_player_delay", "2
 
 
 #define MEDIC_THROW_SPEED npc_citizen_medic_throw_speed.GetFloat()
+#ifdef MAPBASE
+// We use a boolean now, so NameMatches("griggs") is handled in CNPC_Citizen::Spawn().
+#define USE_EXPERIMENTAL_MEDIC_CODE() (npc_citizen_heal_chuck_medkit.GetBool() && m_bTossesMedkits)
+#else
 #define USE_EXPERIMENTAL_MEDIC_CODE() (npc_citizen_heal_chuck_medkit.GetBool() && NameMatches("griggs"))
 #endif
+#endif
 
+#ifdef MAPBASE
+ConVar player_squad_autosummon_enabled( "player_squad_autosummon_enabled", "1" );
+#endif
 ConVar player_squad_autosummon_time( "player_squad_autosummon_time", "5" );
 ConVar player_squad_autosummon_move_tolerance( "player_squad_autosummon_move_tolerance", "20" );
 ConVar player_squad_autosummon_player_tolerance( "player_squad_autosummon_player_tolerance", "10" );
 ConVar player_squad_autosummon_time_after_combat( "player_squad_autosummon_time_after_combat", "8" );
 ConVar player_squad_autosummon_debug( "player_squad_autosummon_debug", "0" );
+#ifdef EZ
+ConVar ai_debug_willpower("ai_debug_willpower", "0"); // 1upD - use this to print messages to the log about Citizen willpower
+ConVar ai_debug_rebel_suppressing_fire("ai_debug_rebel_suppressing_fire", "0"); // 1upD - use this to print messages to the log about Citizen willpower
+ConVar ai_min_suppression_distance("ai_min_suppression_distance", "256", FCVAR_REPLICATED); // 1upD - minimum distance from object for an NPC to use suppressing fire
+ConVar ai_suppression_distance_ratio("ai_suppression_distance_ratio", "0.5", FCVAR_REPLICATED); // 1upD - What percent of distance to suppression target must be covered
+ConVar ai_willpower_translate_schedules("ai_willpower_translate_schedules", "1", FCVAR_REPLICATED); // 1upD - Should new EZ2 schedules be used?
+ConVar ai_suppression_shoot_props( "ai_suppression_shoot_props", "1", FCVAR_REPLICATED ); // 1upD - Should rebels with suppressing fire shoot at props?
+#ifdef EZ1
+// Disable this in EZ1
+ConVar npc_citizen_gib( "npc_citizen_gib", "0" );
+#else
+ConVar npc_citizen_gib( "npc_citizen_gib", "1" );
+#endif
+ConVar npc_citizen_longfall_death_height("npc_citizen_longfall_death_height", "32768");
+ConVar npc_citizen_longfall_glow_chest_jump_fade_enter( "npc_citizen_longfall_glow_chest_jump_fade_enter", "0.25" );
+ConVar npc_citizen_longfall_glow_chest_jump_fade_exit( "npc_citizen_longfall_glow_chest_jump_fade_exit", "0.5" );
+ConVar npc_citizen_longfall_test_high_ground( "npc_citizen_longfall_test_high_ground", "0", FCVAR_NONE, "Should longfall / jump citizens only try to shoot from positions above their target?" );
+ConVar npc_citizen_brute_mask_eject_threshold("npc_citizen_brute_mask_eject_threshold", "100");
+#ifdef EZ2
+ConVar npc_citizen_surrender_auto_distance( "npc_citizen_surrender_auto_distance", "720" );
+ConVar npc_citizen_surrender_ammo_scale_min( "npc_citizen_surrender_ammo_scale_min", "0.05" );
+ConVar npc_citizen_surrender_ammo_scale_max( "npc_citizen_surrender_ammo_scale_max", "0.10" );
+ConVar npc_citizen_surrender_ammo_deplete_multiplier( "npc_citizen_surrender_ammo_deplete_multiplier", "0.80" );
+#endif
+#endif
+
+#ifdef MAPBASE
+ConVar npc_citizen_resupplier_adjust_ammo("npc_citizen_resupplier_adjust_ammo", "1", FCVAR_NONE, "If what ammo we give to the player would go over their max, should we adjust what we give accordingly (1) or cancel it altogether? (0)" );
+
+ConVar npc_citizen_nocollide_player( "npc_citizen_nocollide_player", "0" );
+#endif
 
 #define ShouldAutosquad() (npc_citizen_auto_player_squad.GetBool())
 
@@ -99,6 +167,10 @@ enum SquadSlot_T
 {
 	SQUAD_SLOT_CITIZEN_RPG1	= LAST_SHARED_SQUADSLOT,
 	SQUAD_SLOT_CITIZEN_RPG2,
+#ifdef EZ
+	SQUAD_SLOT_CITIZEN_INVESTIGATE,
+	SQUAD_SLOT_CITIZEN_ADVANCE
+#endif
 };
 
 const float HEAL_MOVE_RANGE = 30*12;
@@ -106,6 +178,28 @@ const float HEAL_TARGET_RANGE = 120; // 10 feet
 #ifdef HL2_EPISODIC
 const float HEAL_TOSS_TARGET_RANGE = 480; // 40 feet when we are throwing medkits 
 const float HEAL_TARGET_RANGE_Z = 72; // a second check that Gordon isn't too far above us -- 6 feet
+#endif
+
+#ifdef EZ
+#define BRUTE_MASK_MODEL "models/humans/group03b/welding_mask.mdl"
+#define BRUTE_MASK_NUM_SKINS 3
+#define BRUTE_MASK_BODYGROUP FindBodygroupByName("mask")
+
+#define LONGFALL_GEAR_BODYGROUP 1
+#define LONGFALL_GLOW_CHEST_SPRITE	"sprites/light_glow01.vmt"
+#define LONGFALL_GLOW_CHEST_BRIGHT	164
+#define LONGFALL_GLOW_CHEST_A		255
+#define LONGFALL_GLOW_CHEST_R		255
+#define LONGFALL_GLOW_CHEST_G		230
+#define LONGFALL_GLOW_CHEST_B		IsMedic() ? 200 : 105
+#define LONGFALL_GLOW_CHEST_SCALE	0.5f
+#define LONGFALL_GLOW_CHEST_JUMP_BRIGHT	255
+#define LONGFALL_GLOW_CHEST_JUMP_A		255
+#define LONGFALL_GLOW_CHEST_JUMP_R		100
+#define LONGFALL_GLOW_CHEST_JUMP_G		230
+#define LONGFALL_GLOW_CHEST_JUMP_B		255
+#define LONGFALL_GLOW_CHEST_JUMP_SCALE	0.75f
+#define LONGFALL_GLOW_SHOULDER_SPRITE	"sprites/glow1.vmt"
 #endif
 
 // player must be at least this distance away from an enemy before we fire an RPG at him
@@ -247,6 +341,10 @@ class CMattsPipe : public CWeaponCrowbar
 	void SetPickupTouch( void )	{	/* do nothing */ }
 };
 
+#ifdef MAPBASE
+LINK_ENTITY_TO_CLASS(weapon_mattpipe, CMattsPipe);
+#endif
+
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
@@ -279,6 +377,12 @@ static const char *g_ppszModelLocs[] =
 	"Group01",
 	"Group02",
 	"Group03%s",
+	"Group03%s",
+	"Group03b%s",
+	"Group03x%s",
+	"Group04%s",
+	"Group05",
+	"Group05b",
 };
 
 #define IsExcludedHead( type, bMedic, iHead) false // see XBox codeline for an implementation
@@ -293,6 +397,13 @@ int	ACT_CIT_BLINDED;		// Blinded by scanner photo
 int ACT_CIT_SHOWARMBAND;
 int ACT_CIT_HEAL;
 int	ACT_CIT_STARTLED;		// Startled by sneaky scanner
+
+#ifdef EZ2
+// "Panicked" activities normally used by readiness, hijacked for EZ2 for unarmed citizens
+int ACT_CROUCH_PANICKED;
+int ACT_WALK_PANICKED;
+int ACT_RUN_PANICKED;
+#endif
 
 //---------------------------------------------------------
 
@@ -335,6 +446,17 @@ BEGIN_DATADESC( CNPC_Citizen )
 	DEFINE_KEYFIELD(	m_bNotifyNavFailBlocked,	FIELD_BOOLEAN, "notifynavfailblocked" ),
 	DEFINE_KEYFIELD(	m_bNeverLeavePlayerSquad,	FIELD_BOOLEAN, "neverleaveplayersquad" ),
 	DEFINE_KEYFIELD(	m_iszDenyCommandConcept,	FIELD_STRING, "denycommandconcept" ),
+#ifdef EZ
+	DEFINE_KEYFIELD(	m_iWillpowerModifier,		FIELD_INTEGER, "willpowermodifier"),
+	DEFINE_KEYFIELD(    m_bWillpowerDisabled,		FIELD_BOOLEAN, "willpowerdisabled"),
+	DEFINE_KEYFIELD(    m_bSuppressiveFireDisabled, FIELD_BOOLEAN, "suppressivefiredisabled" ),
+	DEFINE_KEYFIELD(	m_bUsedBackupWeapon,		FIELD_BOOLEAN, "disablebackupweapon" ),
+	DEFINE_FIELD(		m_vecDecoyObjectTarget,		FIELD_VECTOR),
+#endif
+#ifdef MAPBASE
+	DEFINE_INPUT(		m_bTossesMedkits,			FIELD_BOOLEAN, "SetTossMedkits" ),
+	DEFINE_KEYFIELD(	m_bAlternateAiming,			FIELD_BOOLEAN, "AlternateAiming" ),
+#endif
 
 	DEFINE_OUTPUT(		m_OnJoinedPlayerSquad,	"OnJoinedPlayerSquad" ),
 	DEFINE_OUTPUT(		m_OnLeftPlayerSquad,	"OnLeftPlayerSquad" ),
@@ -342,11 +464,25 @@ BEGIN_DATADESC( CNPC_Citizen )
 	DEFINE_OUTPUT(		m_OnStationOrder,		"OnStationOrder" ),
 	DEFINE_OUTPUT(		m_OnPlayerUse,			"OnPlayerUse" ),
 	DEFINE_OUTPUT(		m_OnNavFailBlocked,		"OnNavFailBlocked" ),
+#ifdef MAPBASE
+	DEFINE_OUTPUT(		m_OnHealedNPC,			"OnHealedNPC" ),
+	DEFINE_OUTPUT(		m_OnHealedPlayer,		"OnHealedPlayer" ),
+	DEFINE_OUTPUT(		m_OnThrowMedkit,		"OnTossMedkit" ),
+	DEFINE_OUTPUT(		m_OnGiveAmmo,			"OnGiveAmmo" ),
+#endif
+
+#ifdef EZ2
+	DEFINE_OUTPUT(		m_OnSurrender,			"OnSurrender" ),
+	DEFINE_OUTPUT(		m_OnStopSurrendering,			"OnStopSurrendering" ),
+#endif
 
 	DEFINE_INPUTFUNC( FIELD_VOID,	"RemoveFromPlayerSquad", InputRemoveFromPlayerSquad ),
 	DEFINE_INPUTFUNC( FIELD_VOID,	"StartPatrolling",	InputStartPatrolling ),
 	DEFINE_INPUTFUNC( FIELD_VOID,	"StopPatrolling",	InputStopPatrolling ),
 	DEFINE_INPUTFUNC( FIELD_VOID,	"SetCommandable",	InputSetCommandable ),
+#ifdef MAPBASE
+	DEFINE_INPUTFUNC( FIELD_VOID,	"SetUnCommandable",	InputSetUnCommandable ),
+#endif
 	DEFINE_INPUTFUNC( FIELD_VOID,	"SetMedicOn",	InputSetMedicOn ),
 	DEFINE_INPUTFUNC( FIELD_VOID,	"SetMedicOff",	InputSetMedicOff ),
 	DEFINE_INPUTFUNC( FIELD_VOID,	"SetAmmoResupplierOn",	InputSetAmmoResupplierOn ),
@@ -357,10 +493,44 @@ BEGIN_DATADESC( CNPC_Citizen )
 	DEFINE_INPUTFUNC( FIELD_VOID,   "ThrowHealthKit", InputForceHealthKitToss ),
 #endif
 
+#ifdef MAPBASE
+	DEFINE_INPUTFUNC( FIELD_STRING, "SetPoliceGoal", InputSetPoliceGoal ),
+#endif
+#ifdef EZ2
+	DEFINE_INPUTFUNC( FIELD_VOID, "Surrender", InputSurrender ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetSurrenderFlags", InputSetSurrenderFlags ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddSurrenderFlags", InputAddSurrenderFlags ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "RemoveSurrenderFlags", InputRemoveSurrenderFlags ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetWillpowerModifier", InputSetWillpowerModifier ),
+	DEFINE_INPUTFUNC( FIELD_BOOLEAN, "SetWillpowerDisabled", InputSetWillpowerDisabled ),
+	DEFINE_INPUTFUNC( FIELD_BOOLEAN, "SetSuppressingFireDisabled", InputSetSuppressiveFireDisabled ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "ForcePanic", InputForcePanic ),
+#endif
+
 	DEFINE_USEFUNC( CommanderUse ),
 	DEFINE_USEFUNC( SimpleUse ),
 
 END_DATADESC()
+
+#ifdef MAPBASE_VSCRIPT
+ScriptHook_t	CNPC_Citizen::g_Hook_SelectModel;
+
+BEGIN_ENT_SCRIPTDESC( CNPC_Citizen, CAI_BaseActor, "npc_citizen from Half-Life 2" )
+
+	DEFINE_SCRIPTFUNC( IsAmmoResupplier, "Returns true if this citizen is an ammo resupplier." )
+	DEFINE_SCRIPTFUNC( CanHeal, "Returns true if this citizen is a medic or ammo resupplier currently able to heal/give ammo." )
+
+	DEFINE_SCRIPTFUNC( GetCitizenType, "Gets the citizen's type. 1 = Downtrodden, 2 = Refugee, 3 = Rebel, 4 = Unique" )
+	DEFINE_SCRIPTFUNC( SetCitizenType, "Sets the citizen's type. 1 = Downtrodden, 2 = Refugee, 3 = Rebel, 4 = Unique" )
+
+	BEGIN_SCRIPTHOOK( CNPC_Citizen::g_Hook_SelectModel, "SelectModel", FIELD_CSTRING, "Called when a citizen is selecting a random model. 'model_path' is the directory of the selected model and 'model_head' is the name. The 'gender' parameter uses the 'GENDER_' constants and is based only on the citizen's random head spawnflags. If a full model path string is returned, it will be used as the model instead." )
+		DEFINE_SCRIPTHOOK_PARAM( "model_path", FIELD_CSTRING )
+		DEFINE_SCRIPTHOOK_PARAM( "model_head", FIELD_CSTRING )
+		DEFINE_SCRIPTHOOK_PARAM( "gender", FIELD_INTEGER )
+	END_SCRIPTHOOK()
+
+END_SCRIPTDESC();
+#endif
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -373,7 +543,15 @@ CSimpleSimTimer CNPC_Citizen::gm_PlayerSquadEvaluateTimer;
 bool CNPC_Citizen::CreateBehaviors()
 {
 	BaseClass::CreateBehaviors();
+#ifdef MAPBASE
+	AddBehavior( &m_RappelBehavior );
+	AddBehavior( &m_PolicingBehavior );
+#else // Moved to CNPC_PlayerCompanion
 	AddBehavior( &m_FuncTankBehavior );
+#endif
+#ifdef EZ2
+	AddBehavior( &m_SurrenderBehavior );
+#endif
 	
 	return true;
 }
@@ -382,13 +560,26 @@ bool CNPC_Citizen::CreateBehaviors()
 //-----------------------------------------------------------------------------
 void CNPC_Citizen::Precache()
 {
+#ifdef MAPBASE
+	// CNPC_PlayerCompanion::Precache() is responsible for calling this now
+	BaseClass::Precache();
+#else
 	SelectModel();
+#endif
 	SelectExpressionType();
 
 	if ( !npc_citizen_dont_precache_all.GetBool() )
 		PrecacheAllOfType( m_Type );
 	else
 		PrecacheModel( STRING( GetModelName() ) );
+
+#ifdef EZ2
+	if ( m_Type >= CT_BRUTE && m_Type <= CT_ARBEIT_SEC ) // CT_BRUTE, CT_LONGFALL, CT_ARCTIC, CT_ARBEIT, CT_ARBEIT_SEC
+	{
+		// Potential backup weapon
+		UTIL_PrecacheOther( "weapon_css_glock" );
+	}
+#endif
 
 	if ( NameMatches( "matt" ) )
 		PrecacheModel( "models/props_canal/mattpipe.mdl" );
@@ -419,7 +610,9 @@ void CNPC_Citizen::Precache()
 		}
 	}
 
+#ifndef MAPBASE // See above
 	BaseClass::Precache();
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -439,7 +632,11 @@ void CNPC_Citizen::PrecacheAllOfType( CitizenType_t type )
 		}
 	}
 
+#ifdef EZ
+	if ( IsMedic() && (m_Type == CT_REBEL || m_Type == CT_ARCTIC || m_Type == CT_BRUTE || m_Type == CT_LONGFALL) )
+#else
 	if ( m_Type == CT_REBEL )
+#endif
 	{
 		for ( i = 0; i < nHeads; ++i )
 		{
@@ -449,6 +646,25 @@ void CNPC_Citizen::PrecacheAllOfType( CitizenType_t type )
 			}
 		}
 	}
+
+#ifdef EZ
+	// Blixibon - Long-fall assets
+	if ( m_Type == CT_LONGFALL )
+	{
+		PrecacheScriptSound("NPC_Citizen_JumpRebel.Jump");
+		PrecacheScriptSound("NPC_Citizen_JumpRebel.Jump_Death");
+		PrecacheScriptSound("NPC_Citizen_JumpRebel.Land");
+
+		PrecacheModel( LONGFALL_GLOW_CHEST_SPRITE );
+		PrecacheModel( LONGFALL_GLOW_SHOULDER_SPRITE );
+
+		PrecacheParticleSystem( "citizen_longfall_jump" );
+	}
+	else if ( m_Type == CT_BRUTE )
+	{
+		PrecacheModel( BRUTE_MASK_MODEL );
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -481,6 +697,26 @@ void CNPC_Citizen::Spawn()
 	m_bShouldPatrol = false;
 	m_iHealth = sk_citizen_health.GetFloat();
 	
+#ifdef MAPBASE
+	// Now only gets citizen_trains.
+	if ( GetMoveParent() && FClassnameIs( GetMoveParent(), "func_tracktrain" ) )
+	{
+		if ( NameMatches("citizen_train_2") )
+		{
+			CapabilitiesRemove( bits_CAP_MOVE_GROUND );
+			SetMoveType( MOVETYPE_NONE );
+			SetSequenceByName( "d1_t01_TrainRide_Sit_Idle" );
+			SetIdealActivity( ACT_DO_NOT_DISTURB );
+		}
+		else if ( NameMatches("citizen_train_1") )
+		{
+			CapabilitiesRemove( bits_CAP_MOVE_GROUND );
+			SetMoveType( MOVETYPE_NONE );
+			SetSequenceByName( "d1_t01_TrainRide_Stand" );
+			SetIdealActivity( ACT_DO_NOT_DISTURB );
+		}
+	}
+#else
 	// Are we on a train? Used in trainstation to have NPCs on trains.
 	if ( GetMoveParent() && FClassnameIs( GetMoveParent(), "func_tracktrain" ) )
 	{
@@ -497,6 +733,7 @@ void CNPC_Citizen::Spawn()
 			SetIdealActivity( ACT_DO_NOT_DISTURB );
 		}
 	}
+#endif
 
 	m_flStopManhackFlinch = -1;
 
@@ -514,11 +751,37 @@ void CNPC_Citizen::Spawn()
 		CapabilitiesRemove( bits_CAP_USE_SHOT_REGULATOR );
 		pRPG->StopGuiding();
 	}
+#ifdef EZ
+	// In Entropy : Zero, armed citizens can use melee attacks if the 'Enable melee' key value is unset
+	CapabilitiesAdd( bits_CAP_INNATE_MELEE_ATTACK1 ); 
+	
+#ifndef EZ2
+	if ( m_Type == CT_LONGFALL )
+	{
+		CapabilitiesAdd( bits_CAP_MOVE_JUMP );
+	}
+	#endif
 
+	if ( m_Type == CT_BRUTE )
+	{
+		// Randomize brute mask skin based on entity index
+		m_nSkin = entindex() % BRUTE_MASK_NUM_SKINS;
+	}
+	else if ( m_Type >= CT_BRUTE && m_Type <= CT_ARBEIT_SEC ) // CT_BRUTE, CT_LONGFALL, CT_ARCTIC, CT_ARBEIT, CT_ARBEIT_SEC
+	{
+		if (GlobalEntity_GetState( "citizens_no_auto_variant" ) != GLOBAL_ON)
+		{
+			// By default, E:Z2's citizen types should be equivalent to EZ_VARIANT_ARBEIT.
+			// This is mainly for dropping Arbeit items.
+			if (m_tEzVariant == EZ_VARIANT_DEFAULT)
+				m_tEzVariant = EZ_VARIANT_ARBEIT;
+		}
+	}
+#endif
 	m_flTimePlayerStare = FLT_MAX;
-
+#ifndef EZ
 	AddEFlags( EFL_NO_DISSOLVE | EFL_NO_MEGAPHYSCANNON_RAGDOLL | EFL_NO_PHYSCANNON_INTERACTION );
-
+#endif
 	NPCInit();
 
 	SetUse( &CNPC_Citizen::CommanderUse );
@@ -528,6 +791,59 @@ void CNPC_Citizen::Spawn()
 
 	// Use render bounds instead of human hull for guys sitting in chairs, etc.
 	m_ActBusyBehavior.SetUseRenderBounds( HasSpawnFlags( SF_CITIZEN_USE_RENDER_BOUNDS ) );
+
+#ifdef MAPBASE
+	if (NameMatches("griggs"))
+	{
+		m_bTossesMedkits = true;
+	}
+#endif
+
+#ifdef EZ2
+	if (!IsMedic() && !IsAmmoResupplier() /*&& m_Type == CT_BRUTE*/ && CanSurrender() && ((m_iszAmmoSupply == NULL_STRING && m_iAmmoAmount == 0) || (FStrEq(STRING(m_iszAmmoSupply), "SMG1") && m_iAmmoAmount == 1)))
+	{
+		// Change the ammo supply and ammo ammount to reflect our equipment (for surrendering purposes)
+		if (m_Type == CT_BRUTE && HasGrenades())
+		{
+			if (IsAltFireCapable())
+			{
+				m_iAmmoAmount = RandomInt( 1, 2 );
+				if (GetActiveWeapon() && GetActiveWeapon()->ClassMatches("weapon_ar2*"))
+					m_iszAmmoSupply = AllocPooledString( "AR2AltFire" );
+				else
+					m_iszAmmoSupply = AllocPooledString( "SMG1_Grenade" );
+			}
+			else
+			{
+				m_iszAmmoSupply = AllocPooledString( "Grenade" );
+				m_iAmmoAmount = RandomInt( 1, 3 );
+			}
+		}
+		else
+		{
+			int iAmmoIndex = 0;
+			const char *pszAmmoName = NULL;
+			if (GetActiveWeapon() && GetActiveWeapon()->UsesPrimaryAmmo())
+			{
+				iAmmoIndex = GetActiveWeapon()->GetPrimaryAmmoType();
+				pszAmmoName = GetAmmoDef()->Name( iAmmoIndex );
+			}
+			else
+			{
+				// Citizens with no starting weapon are rare, so for now, they provide 357 ammo
+				// (totally not a workaround for the ez2_c4_1 jacket rebel)
+				pszAmmoName = "357";
+				iAmmoIndex = GetAmmoDef()->Index( pszAmmoName );
+			}
+
+			if (pszAmmoName)
+			{
+				m_iszAmmoSupply = AllocPooledString( pszAmmoName );
+				m_iAmmoAmount = ceilf((float)GetAmmoDef()->MaxCarry( iAmmoIndex ) * RandomFloat( npc_citizen_surrender_ammo_scale_min.GetFloat(), npc_citizen_surrender_ammo_scale_max.GetFloat() ));
+			}
+		}
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -583,12 +899,23 @@ void CNPC_Citizen::SelectModel()
 		PrecacheAllOfType( CT_DOWNTRODDEN );
 		PrecacheAllOfType( CT_REFUGEE );
 		PrecacheAllOfType( CT_REBEL );
+		PrecacheAllOfType( CT_BRUTE );
+		PrecacheAllOfType( CT_LONGFALL );
+		PrecacheAllOfType( CT_ARCTIC );
 	}
 
 	const char *pszModelName = NULL;
 
 	if ( m_Type == CT_DEFAULT )
 	{
+#ifdef MAPBASE
+		if (HL2GameRules()->GetDefaultCitizenType() != CT_DEFAULT)
+		{
+			m_Type = static_cast<CitizenType_t>(HL2GameRules()->GetDefaultCitizenType());
+		}
+		else
+		{
+#endif
 		struct CitizenTypeMapping
 		{
 			const char *pszMapTag;
@@ -621,6 +948,9 @@ void CNPC_Citizen::SelectModel()
 
 		if ( m_Type == CT_DEFAULT )
 			m_Type = CT_DOWNTRODDEN;
+#ifdef MAPBASE
+		}
+#endif
 	}
 
 	if( HasSpawnFlags( SF_CITIZEN_RANDOM_HEAD | SF_CITIZEN_RANDOM_HEAD_MALE | SF_CITIZEN_RANDOM_HEAD_FEMALE ) || GetModelName() == NULL_STRING )
@@ -681,6 +1011,54 @@ void CNPC_Citizen::SelectModel()
 			pszModelName = g_ppszRandomHeads[m_iHead];
 			SetModelName(NULL_STRING);
 		}
+
+#ifdef MAPBASE_VSCRIPT
+		if (m_ScriptScope.IsInitialized() && g_Hook_SelectModel.CanRunInScope( m_ScriptScope ))
+		{
+			gender_t scriptGender;
+			switch (gender)
+			{
+				case 'm':
+					scriptGender = GENDER_MALE;
+					break;
+				case 'f':
+					scriptGender = GENDER_FEMALE;
+					break;
+				default:
+					scriptGender = GENDER_NONE;
+					break;
+			}
+
+			const char *pszModelPath = CFmtStr( "models/Humans/%s/", (const char *)(CFmtStr( g_ppszModelLocs[m_Type], (IsMedic()) ? "m" : "" )) );
+
+			// model_path, model_head, gender
+			ScriptVariant_t args[] = { pszModelPath, pszModelName, (int)scriptGender };
+			ScriptVariant_t returnValue;
+			g_Hook_SelectModel.Call( m_ScriptScope, &returnValue, args );
+
+			if (returnValue.m_type == FIELD_CSTRING && returnValue.m_pszString[0] != '\0')
+			{
+				// Refresh the head if it's different
+				const char *pszNewHead = strrchr( returnValue.m_pszString, '/' );
+				if ( pszNewHead && Q_stricmp(pszNewHead+1, pszModelName) != 0 )
+				{
+					pszNewHead++;
+					for ( int i = 0; i < ARRAYSIZE(g_ppszRandomHeads); i++ )
+					{
+						if ( Q_stricmp( g_ppszRandomHeads[i], pszModelName ) == 0 )
+						{
+							m_iHead = i;
+							break;
+						}
+					}
+				}
+
+				// Just set the model right here
+				SetModelName( AllocPooledString( returnValue.m_pszString ) );
+				return;
+			}
+		}
+#endif
 	}
 
 	Assert( pszModelName || GetModelName() != NULL_STRING );
@@ -738,7 +1116,12 @@ void CNPC_Citizen::SelectExpressionType()
 	case CT_REBEL:
 		m_ExpressionType = (CitizenExpressionTypes_t)RandomInt( CIT_EXP_SCARED, CIT_EXP_ANGRY );
 		break;
-
+	case CT_BRUTE:
+		m_ExpressionType = (CitizenExpressionTypes_t)RandomInt(CIT_EXP_NORMAL, CIT_EXP_ANGRY); // Brutes show no fear
+	case CT_LONGFALL:
+		m_ExpressionType = (CitizenExpressionTypes_t)RandomInt(CIT_EXP_NORMAL, CIT_EXP_ANGRY); // Long fall boot rebels are crazy
+	case CT_ARCTIC:
+		m_ExpressionType = (CitizenExpressionTypes_t)RandomInt( CIT_EXP_SCARED, CIT_EXP_ANGRY );
 	case CT_DEFAULT:
 	case CT_UNIQUE:
 	default:
@@ -751,7 +1134,11 @@ void CNPC_Citizen::SelectExpressionType()
 void CNPC_Citizen::FixupMattWeapon()
 {
 	CBaseCombatWeapon *pWeapon = GetActiveWeapon();
+#ifdef MAPBASE
+	if ( pWeapon && EntIsClass( pWeapon, gm_isz_class_Crowbar ) && NameMatches( "matt" ) )
+#else
 	if ( pWeapon && pWeapon->ClassMatches( "weapon_crowbar" ) && NameMatches( "matt" ) )
+#endif
 	{
 		Weapon_Drop( pWeapon );
 		UTIL_Remove( pWeapon );
@@ -824,6 +1211,21 @@ Class_T	CNPC_Citizen::Classify()
 	if (GlobalEntity_GetState("citizens_passive") == GLOBAL_ON)
 		return CLASS_CITIZEN_PASSIVE;
 
+#ifdef EZ2
+	if ( IsSurrendered() )
+	{
+		// If we got a weapon back, revert to rebel
+		if ( GetActiveWeapon() != NULL )
+		{
+			//RemoveContext( "surrendered:1" );
+			m_SurrenderBehavior.StopSurrendering();
+			return CLASS_PLAYER_ALLY;
+		}
+
+		return CLASS_CITIZEN_PASSIVE;
+	}
+#endif
+
 	return CLASS_PLAYER_ALLY;
 }
 
@@ -870,6 +1272,13 @@ bool CNPC_Citizen::ShouldBehaviorSelectSchedule( CAI_BehaviorBase *pBehavior )
 			}
 		}
 	}
+#ifdef EZ2
+	// Don't use func_tanks or passively act busy while surrendered
+	else if ( IsSurrendered() && ( pBehavior == &m_FuncTankBehavior || ( pBehavior == &m_ActBusyBehavior /*&& !m_ActBusyBehavior.IsActive()*/ ) ) )
+	{
+		return false;
+	}
+#endif
 
 	return BaseClass::ShouldBehaviorSelectSchedule( pBehavior );
 }
@@ -890,10 +1299,315 @@ void CNPC_Citizen::OnChangeRunningBehavior( CAI_BehaviorBase *pOldBehavior,  CAI
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
+#ifdef EZ
+void CNPC_Citizen::GatherWillpowerConditions()
+{
+	if (m_bWillpowerDisabled || m_NPCState != NPC_STATE_COMBAT)
+		return;
+
+	CBaseCombatWeapon * pWeapon = GetActiveWeapon();
+	if (pWeapon == NULL) // Unarmed citizens do not use willpower
+		return;
+
+	if ( pWeapon->IsMeleeWeapon() ) // Melee citizens do not use willpower
+		return;
+
+	int l_iWillpower = sk_citizen_default_willpower.GetInt() + m_iWillpowerModifier;
+
+	bool typeCanPanic = m_Type != CT_BRUTE && m_Type != CT_LONGFALL && !HasCondition( COND_CIT_WILLPOWER_LOW );
+
+	if( pWeapon->UsesClipsForAmmo1() && ((float)pWeapon->m_iClip1 / (float)pWeapon->GetMaxClip1()) > 0.75) // ratio of rounds left in magazine
+		l_iWillpower++;
+
+	if (HasCondition(COND_LOW_PRIMARY_AMMO))
+		l_iWillpower--;
+
+	if (HasCondition(COND_NO_PRIMARY_AMMO))
+		l_iWillpower--;
+
+	if(pWeapon->ClassMatches("weapon_shotgun"))
+		l_iWillpower++;
+
+	// Lone wolf bonus - I have no squad
+	if (m_pSquad == NULL) {
+		l_iWillpower++;
+	} 
+	else if (m_pSquad && m_pSquad->NumMembers() > 2) // More than 1 squadmate
+	{
+		l_iWillpower++; // I have a squad! Setting this to number of squadmates made it too influential
+	}
+	else  // I'm the last one
+	{
+		l_iWillpower -= 2; // This is a big deal
+	}
+
+	if (HasCondition(COND_BEHIND_ENEMY))
+		l_iWillpower++;
+
+	if (HasCondition(COND_ENEMY_DEAD))
+		l_iWillpower++;
+
+	if (HasCondition(COND_ENEMY_OCCLUDED))
+		l_iWillpower++;
+
+	if (HasCondition(COND_LIGHT_DAMAGE) || HasCondition(COND_HEAVY_DAMAGE)) // Light damage and heavy damage are the same - This is Entropy: Zero
+		l_iWillpower -= 2; // This is a big deal
+
+	if (HasCondition(COND_NEW_ENEMY))
+		l_iWillpower--;
+
+	if (HasCondition(COND_HAVE_ENEMY_LOS))
+		l_iWillpower--;
+
+	if (HasCondition(COND_HEAR_SPOOKY))
+		l_iWillpower--;
+
+	// Bullet impacts make citizens jumpy
+	if (HasCondition(COND_HEAR_BULLET_IMPACT))
+		l_iWillpower--;
+
+	if (HasCondition(COND_HEAR_DANGER))
+		l_iWillpower--;
+
+	if (HasCondition(COND_HEAR_PHYSICS_DANGER))
+		l_iWillpower--;
+
+#ifdef EZ2
+	// If this citizen is not a brute or a jump rebel, their willpower is below a certain threshold, the enemy can see them, and the enemy is either Bad Cop or a soldier,
+	// try to surrender
+	if (typeCanPanic && l_iWillpower <= sk_citizen_very_low_willpower.GetInt() && HasCondition( COND_ENEMY_FACING_ME ) && GetEnemy())
+	{
+		bool bCanSurrender = GetEnemy()->IsPlayer();
+		if (!bCanSurrender)
+		{
+			// Allow surrender if the enemy is a Combine soldier capable of ordering it
+			if (CNPC_Combine *pCombine = dynamic_cast<CNPC_Combine *>(GetEnemy()))
+				bCanSurrender = pCombine->CanOrderSurrender();
+		}
+
+		if (bCanSurrender)
+		{
+			if (!HasCondition( COND_CIT_WILLPOWER_VERY_LOW ))
+			{
+				if (m_pSquad && m_pSquad->NumMembers() == 1) // Last one
+				{
+					MsgWillpower( "%s is now panicked and is the last squadmate!\tWillpower: %i\n", l_iWillpower );
+				}
+				else
+				{
+					MsgWillpower( "%s is now panicked!\tWillpower: %i\n", l_iWillpower );
+				}
+			}
+			ClearCondition( COND_CIT_WILLPOWER_HIGH );
+			SetCondition( COND_CIT_WILLPOWER_LOW );
+			SetCondition( COND_CIT_WILLPOWER_VERY_LOW );
+		}
+	}
+	else
+#endif
+	if (typeCanPanic && l_iWillpower <= 0 )
+	{
+		if ( !HasCondition(COND_CIT_WILLPOWER_LOW) )
+		{
+			if (m_pSquad && m_pSquad->NumMembers() == 1) // Last one
+			{
+				MsgWillpower("%s is now scared and is the last squadmate!\tWillpower: %i\n", l_iWillpower);
+			}
+			else 
+			{
+				MsgWillpower("%s is now scared!\tWillpower: %i\n", l_iWillpower);
+			}
+		}
+		ClearCondition(COND_CIT_WILLPOWER_VERY_LOW);
+		ClearCondition(COND_CIT_WILLPOWER_HIGH);
+		SetCondition(COND_CIT_WILLPOWER_LOW);
+	}
+	else if (l_iWillpower > 1)
+	{
+		if (!HasCondition(COND_CIT_WILLPOWER_HIGH))
+			MsgWillpower("%s is now brave!\tWillpower: %i\n", l_iWillpower);
+		ClearCondition( COND_CIT_WILLPOWER_VERY_LOW );
+		ClearCondition(COND_CIT_WILLPOWER_LOW);
+		SetCondition(COND_CIT_WILLPOWER_HIGH);
+	}
+	else {
+		ClearCondition(COND_CIT_WILLPOWER_HIGH);
+		ClearCondition(COND_CIT_WILLPOWER_LOW);
+		ClearCondition(COND_CIT_WILLPOWER_VERY_LOW);
+	}
+}
+
+#ifdef EZ
+//-----------------------------------------------------------------------------
+// Purpose: Overridden so that citizens cannot melee attack without a weapon
+// Input  :
+// Output :
+//-----------------------------------------------------------------------------
+int CNPC_Citizen::MeleeAttack1Conditions ( float flDot, float flDist )
+{
+	if ( GetActiveWeapon() == NULL )
+	{
+		return COND_NONE;
+	}
+
+	return BaseClass::MeleeAttack1Conditions( flDot, flDist );
+}
+#endif
+
+Disposition_t CNPC_Citizen::IRelationType(CBaseEntity * pTarget)
+{
+	Disposition_t disposition = BaseClass::IRelationType(pTarget);
+	// If the citizen has low willpower, fear an enemy instead of hating them
+	if (disposition == D_HT && HasCondition(COND_CIT_WILLPOWER_LOW)) {
+		return D_FR;
+	}
+
+#ifdef EZ2
+	if (m_SurrenderBehavior.IsSurrendered() && pTarget && pTarget->Classify() == CLASS_CITIZEN_PASSIVE && disposition == D_NU)
+	{
+		// Surrendered citizens like each other (for speech, etc.)
+		return D_LI;
+	}
+#endif
+
+	return disposition;
+}
+
+void CNPC_Citizen::MsgWillpower(const tchar * pMsg, int willpower)
+{
+	if (ai_debug_willpower.GetBool() && m_flLastWillpowerMsgTime <= gpGlobals->curtime) {
+		DevMsg(pMsg, GetDebugName(), willpower);
+		m_flLastWillpowerMsgTime = gpGlobals->curtime + 1.0;
+	}
+}
+
+//-----------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------
+const char* CNPC_Citizen::GetSquadSlotDebugName(int iSquadSlot)
+{
+	switch (iSquadSlot)
+	{
+	case SQUAD_SLOT_CITIZEN_RPG1:			return "SQUAD_SLOT_CITIZEN_RPG1";
+		break;
+	case SQUAD_SLOT_CITIZEN_RPG2:			return "SQUAD_SLOT_CITIZEN_RPG2";
+		break;
+	case SQUAD_SLOT_CITIZEN_INVESTIGATE:	return "SQUAD_SLOT_CITIZEN_INVESTIGATE";
+		break;
+	case SQUAD_SLOT_CITIZEN_ADVANCE:		return "SQUAD_SLOT_CITIZEN_ADVANCE";
+		break;
+	}
+
+	return BaseClass::GetSquadSlotDebugName(iSquadSlot);
+}
+#endif
+
+#ifdef EZ2
+// 
+// Blixibon - Needed so the player's speech AI doesn't pick this up as D_FR before it's apparent (e.g. fast, rapid kills)
+// 
+bool CNPC_Citizen::JustStartedFearing( CBaseEntity *pTarget )
+{
+	Assert( IRelationType( pTarget ) == D_FR );
+
+	// We don't have a built-in way to figue out when we started panicking,
+	// but if we just said TLK_DANGER, our fear sound, don't register.
+	if ( gpGlobals->curtime - GetExpresser()->GetTimeSpokeConcept(TLK_DANGER) < 1.0f )
+		return true;
+
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// This rebel dropped their weapons and might need a new one
+//-----------------------------------------------------------------------------
+bool CNPC_Citizen::GiveBackupWeapon( CBaseCombatWeapon * pWeapon, CBaseEntity * pActivator )
+{
+	if ( m_iLastHolsteredWeapon > 0)
+	{
+		DevMsg( "Already have multiple weapons: %i\n", m_iLastHolsteredWeapon );
+		// Already have another weapon, don't need a new backup
+		// Return true because there is another weapon
+
+		m_bUsedBackupWeapon = true; // Don't give any more backup weapons!
+
+		return true;
+	}
+
+	if ( m_bUsedBackupWeapon )
+	{
+		return false;
+	}
+
+	// Don't give any more backup weapons!
+	m_bUsedBackupWeapon = true;
+
+	if ( pWeapon != NULL )
+	{
+		// Is this a melee weapon?
+		if ( pWeapon->IsMeleeWeapon() || pWeapon->ClassMatches( "weapon_crowbar" ) )
+		{
+			// No more backups
+			return false;
+		}
+		// Is this weapon already a side arm?
+		else if ( pWeapon->ClassMatches( "weapon_smg1" ) || pWeapon->ClassMatches( "weapon_smg2" ) || pWeapon->WeaponClassify() == WEPCLASS_HANDGUN )
+		{
+			// Very lucky citizens get crowbars as backup
+			if ( RandomInt( 1, 6 ) == 1 )
+			{
+				CBaseCombatWeapon * pCrowbar = GiveWeaponHolstered( AllocPooledString( "weapon_crowbar" ) );
+				pCrowbar->SetName( AllocPooledString( "worthless" ) ); // Bad Cop will say the crowbar pickup line upon interacting with this
+
+				return true;
+			}
+			// Others usually just get a pistol if they didn't have one already
+			else if ( !pWeapon->WeaponClassify() != WEPCLASS_HANDGUN && RandomInt( 1, 4 ) != 1 )
+			{
+				// If we're an Arbeit type, 50% chance of giving a glock
+				if (GetEZVariant() == EZ_VARIANT_ARBEIT && RandomInt(1,2) == 1)
+				{
+					GiveWeaponHolstered( AllocPooledString( "weapon_css_glock" ) );
+				}
+				else
+				{
+					GiveWeaponHolstered( AllocPooledString( "weapon_pistol" ) );
+				}
+				return true;
+			}
+
+			return false;
+		}
+	}
+
+	GiveWeaponHolstered( AllocPooledString( m_Type == CT_BRUTE ? "weapon_smg2" : "weapon_smg1" ) );
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Speak TLK_BEG if the right conditions exist
+//		Returns true if the concept is spoken
+//-----------------------------------------------------------------------------
+bool CNPC_Citizen::TrySpeakBeg()
+{
+	// If we are unarmed and not actively searching for a weapon to fight with, beg for mercy
+	if ( GetEnemy() != NULL && GetActiveWeapon() == NULL && m_flNextWeaponSearchTime > gpGlobals->curtime )
+	{
+		return SpeakIfAllowed( TLK_BEG );
+	}
+
+	return false;
+}
+#endif
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void CNPC_Citizen::GatherConditions()
 {
 	BaseClass::GatherConditions();
-
+#ifdef EZ
+	GatherWillpowerConditions();
+#endif
 	if( IsInPlayerSquad() && hl2_episodic.GetBool() )
 	{
 		// Leave the player squad if someone has made me neutral to player.
@@ -942,7 +1656,11 @@ void CNPC_Citizen::GatherConditions()
 		float flStareDist = sk_citizen_player_stare_dist.GetFloat();
 		float flPlayerDamage = pPlayer->GetMaxHealth() - pPlayer->GetHealth();
 
-		if( pPlayer->IsAlive() && flPlayerDamage > 0 && (flDistSqr <= flStareDist * flStareDist) && pPlayer->FInViewCone( this ) && pPlayer->FVisible( this ) )
+		if( pPlayer->IsAlive() && flPlayerDamage > 0 && (flDistSqr <= flStareDist * flStareDist) && pPlayer->FInViewCone( this ) && pPlayer->FVisible( this )
+#ifdef EZ2
+			&& (!IsSurrendered() /*|| m_SurrenderBehavior.IsSurrenderIdleStanding()*/) // For now, surrendered medics only heal if you +USE them
+#endif
+			)
 		{
 			if( m_flTimePlayerStare == FLT_MAX )
 			{
@@ -992,6 +1710,11 @@ void CNPC_Citizen::PredictPlayerPush()
 	bool bHadPlayerPush = HasCondition( COND_PLAYER_PUSHING );
 
 	BaseClass::PredictPlayerPush();
+
+#ifdef EZ2
+	if ( IsSurrendered() /*&& !m_SurrenderBehavior.IsSurrenderIdleStanding()*/ ) // For now, surrendered medics only heal if you +USE them
+		return;
+#endif
 
 	CBasePlayer *pPlayer = UTIL_GetLocalPlayer();
 	if ( !bHadPlayerPush && HasCondition( COND_PLAYER_PUSHING ) && 
@@ -1058,6 +1781,17 @@ void CNPC_Citizen::PrescheduleThink()
 			}
 		}
 	}
+
+#ifdef EZ
+	if( IsOnFire() )
+	{
+		SetCondition( COND_CIT_ON_FIRE );
+	}
+	else
+	{
+		ClearCondition( COND_CIT_ON_FIRE );
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1068,10 +1802,36 @@ void CNPC_Citizen::BuildScheduleTestBits()
 {
 	BaseClass::BuildScheduleTestBits();
 
+#ifdef EZ
+	// Don't stop meleeing to acquire a new target or because of damage taken
+	if (IsCurSchedule ( SCHED_MELEE_ATTACK1 ))
+	{
+		ClearCustomInterruptCondition( COND_NEW_ENEMY );
+		ClearCustomInterruptCondition( COND_LIGHT_DAMAGE );
+		ClearCustomInterruptCondition( COND_HEAVY_DAMAGE );
+		
+	}
+
+	if ( ( IsCurSchedule ( SCHED_ESTABLISH_LINE_OF_FIRE ) || IsCurSchedule ( SCHED_ESTABLISH_LINE_OF_FIRE_FALLBACK ) ) && ( m_Type == CT_BRUTE || m_Type == CT_LONGFALL || m_iMySquadSlot == SQUAD_SLOT_CITIZEN_ADVANCE ) )
+	{
+		ClearCustomInterruptCondition( COND_CAN_RANGE_ATTACK1 );
+	}
+
+	// Being disarmed interrupts any schedule
+	SetCustomInterruptCondition( COND_CIT_DISARMED );
+#endif
+
 	if ( IsCurSchedule( SCHED_IDLE_STAND ) || IsCurSchedule( SCHED_ALERT_STAND ) )
 	{
 		SetCustomInterruptCondition( COND_CIT_START_INSPECTION );
 	}
+
+#ifdef EZ
+	if ( !IsCurSchedule( SCHED_CITIZEN_BURNING_STAND ) && !IsMoving() )
+	{
+		SetCustomInterruptCondition( COND_CIT_ON_FIRE );
+	}
+#endif
 
 	if ( IsMedic() && IsCustomInterruptConditionSet( COND_HEAR_MOVE_AWAY ) )
 	{
@@ -1156,6 +1916,16 @@ int CNPC_Citizen::SelectFailSchedule( int failedSchedule, int failedTask, AI_Tas
 			return SCHED_STANDOFF;
 		}
 		break;
+#ifdef EZ
+	case SCHED_RANGE_ATTACK1:
+		if (!GetShotRegulator()->IsInRestInterval()) // If the reason range attack 1 failed was because of the shot regulator, don't try it again
+		{
+			int attackSchedule = TranslateSuppressingFireSchedule(failedSchedule);
+			if (attackSchedule != failedSchedule)
+				return attackSchedule;
+		}
+		break;
+#endif
 	}
 
 	return BaseClass::SelectFailSchedule( failedSchedule, failedTask, taskFailCode );
@@ -1165,6 +1935,38 @@ int CNPC_Citizen::SelectFailSchedule( int failedSchedule, int failedTask, AI_Tas
 //-----------------------------------------------------------------------------
 int CNPC_Citizen::SelectSchedule()
 {
+#ifdef EZ
+#ifdef EZ2
+	// TODO - Find a better spot for this!
+	TrySpeakBeg();
+#endif
+	// Reserve strategy slot if I am a rebel brute, otherwise clear
+	if ( m_Type == CT_BRUTE && !IsStrategySlotRangeOccupied( SQUAD_SLOT_CITIZEN_ADVANCE, SQUAD_SLOT_CITIZEN_ADVANCE ) )
+	{
+		OccupyStrategySlot( SQUAD_SLOT_CITIZEN_ADVANCE );
+	}
+	else if (m_iMySquadSlot == SQUAD_SLOT_CITIZEN_ADVANCE)
+	{
+		VacateStrategySlot();
+	}
+
+	// Clear the disarmed condition if it was set by being kicked
+	ClearCondition( COND_CIT_DISARMED );
+#endif
+
+#ifdef MAPBASE
+	if ( IsWaitingToRappel() && BehaviorSelectSchedule() )
+	{
+		return BaseClass::SelectSchedule();
+	}
+
+	if ( GetMoveType() == MOVETYPE_NONE && !Q_strncmp(STRING(GetEntityName()), "citizen_train_", 14) )
+	{
+		// Only "sit on train" if we're a citizen_train_
+		Assert( GetMoveParent() && FClassnameIs( GetMoveParent(), "func_tracktrain" ) );
+		return SCHED_CITIZEN_SIT_ON_TRAIN;
+	}
+#else
 	// If we can't move, we're on a train, and should be sitting.
 	if ( GetMoveType() == MOVETYPE_NONE )
 	{
@@ -1173,13 +1975,31 @@ int CNPC_Citizen::SelectSchedule()
 		Assert( GetMoveParent() && FClassnameIs( GetMoveParent(), "func_tracktrain" ) );
 		return SCHED_CITIZEN_SIT_ON_TRAIN;
 	}
+#endif
 
+#ifdef MAPBASE
+	if ( GetActiveWeapon() && EntIsClass(GetActiveWeapon(), gm_isz_class_RPG) )
+	{
+		CWeaponRPG *pRPG = static_cast<CWeaponRPG*>(GetActiveWeapon());
+#else
 	CWeaponRPG *pRPG = dynamic_cast<CWeaponRPG*>(GetActiveWeapon());
+#endif
 	if ( pRPG && pRPG->IsGuiding() )
 	{
 		DevMsg( "Citizen in select schedule but RPG is guiding?\n");
 		pRPG->StopGuiding();
 	}
+#ifdef MAPBASE
+	}
+#endif
+
+#ifdef EZ
+	if ( HasCondition(COND_CIT_ON_FIRE) )
+	{
+		SpeakIfAllowed(TLK_WOUND);
+		return SCHED_CITIZEN_BURNING_STAND;
+	}
+#endif
 	
 	return BaseClass::SelectSchedule();
 }
@@ -1188,6 +2008,11 @@ int CNPC_Citizen::SelectSchedule()
 //-----------------------------------------------------------------------------
 int CNPC_Citizen::SelectSchedulePriorityAction()
 {
+#ifdef EZ2
+	if ( IsSurrendered() && (!m_SurrenderBehavior.ShouldBeStanding() || m_SurrenderBehavior.IsInterruptable()) )
+		return SCHED_NONE;
+#endif
+
 	int schedule = SelectScheduleHeal();
 	if ( schedule != SCHED_NONE )
 		return schedule;
@@ -1213,8 +2038,20 @@ int CNPC_Citizen::SelectScheduleHeal()
 
 	if ( CanHeal() )
 	{
+		float flHealMoveRange = HEAL_MOVE_RANGE;
+#ifdef EZ2
+		// Surrendered medics have limited range
+		if (IsSurrendered())
+			flHealMoveRange = 128.0f;
+#endif
+
 		CBaseEntity *pEntity = PlayerInRange( GetLocalOrigin(), HEAL_TOSS_TARGET_RANGE );
+#ifdef EZ2
+		// Ugh, do I really HAVE to heal you?
+		if ( pEntity && (!IsSurrendered() || HasCondition( COND_CIT_PLAYERHEALREQUEST )) )
+#else
 		if ( pEntity )
+#endif
 		{
 			if ( USE_EXPERIMENTAL_MEDIC_CODE() && IsMedic() )
 			{
@@ -1225,7 +2062,7 @@ int CNPC_Citizen::SelectScheduleHeal()
 					return SCHED_CITIZEN_HEAL_TOSS;
 				}
 			}
-			else if ( PlayerInRange( GetLocalOrigin(), HEAL_MOVE_RANGE ) )
+			else if ( PlayerInRange( GetLocalOrigin(), flHealMoveRange ) )
 			{
 				// use old mechanism for ammo
 				if ( ShouldHealTarget( pEntity, HasCondition( COND_CIT_PLAYERHEALREQUEST ) ) )
@@ -1240,7 +2077,7 @@ int CNPC_Citizen::SelectScheduleHeal()
 		if ( m_pSquad )
 		{
 			pEntity = NULL;
-			float distClosestSq = HEAL_MOVE_RANGE*HEAL_MOVE_RANGE;
+			float distClosestSq = flHealMoveRange*flHealMoveRange;
 			float distCurSq;
 			
 			AISquadIter_t iter;
@@ -1351,7 +2188,11 @@ int CNPC_Citizen::SelectScheduleRetrieveItem()
 			// Been kicked out of the player squad since the time I located the health.
 			ClearCondition( COND_HEALTH_ITEM_AVAILABLE );
 		}
+#ifdef MAPBASE
+		else if ( m_FollowBehavior.GetFollowTarget() )
+#else
 		else
+#endif
 		{
 			CBaseEntity *pBase = FindHealthItem(m_FollowBehavior.GetFollowTarget()->GetAbsOrigin(), Vector( 120, 120, 120 ) );
 			CItem *pItem = dynamic_cast<CItem *>(pBase);
@@ -1439,13 +2280,23 @@ bool CNPC_Citizen::ShouldDeferToFollowBehavior()
 //-----------------------------------------------------------------------------
 int CNPC_Citizen::TranslateSchedule( int scheduleType ) 
 {
+#ifdef EZ
+	if (!m_bWillpowerDisabled && ai_willpower_translate_schedules.GetBool()) {
+		int willpowerSchedule = TranslateWillpowerSchedule(scheduleType);
+		if (willpowerSchedule != SCHED_NONE) {
+			if (ai_debug_willpower.GetBool())
+				DevMsg("Citizen name: %s\tOld Schedule: %s\t New Schedule: %s\tWillpower: %s%s\n", GetDebugName(), GetSchedule(scheduleType)->GetName(), GetSchedule(willpowerSchedule)->GetName(), HasCondition(COND_CIT_WILLPOWER_HIGH) ? "High" : "", HasCondition(COND_CIT_WILLPOWER_LOW) ? "Low" : "");
+			return willpowerSchedule;
+		}
+	}
+#endif
 	CBasePlayer *pLocalPlayer = AI_GetSinglePlayer();
 
 	switch( scheduleType )
 	{
 	case SCHED_IDLE_STAND:
 	case SCHED_ALERT_STAND:
-		if( m_NPCState != NPC_STATE_COMBAT && pLocalPlayer && !pLocalPlayer->IsAlive() && CanJoinPlayerSquad() )
+		if( m_NPCState != NPC_STATE_COMBAT && pLocalPlayer && !pLocalPlayer->IsAlive() && CanJoinPlayerSquad() && IRelationType(UTIL_GetLocalPlayer()) == D_LI)
 		{
 			// Player is dead! 
 			float flDist;
@@ -1461,6 +2312,20 @@ int CNPC_Citizen::TranslateSchedule( int scheduleType )
 
 	case SCHED_ESTABLISH_LINE_OF_FIRE:
 	case SCHED_MOVE_TO_WEAPON_RANGE:
+#ifdef EZ
+		if (GetActiveWeapon() && GetActiveWeapon()->IsMeleeWeapon())
+		{
+			return SCHED_CHASE_ENEMY;
+		}
+
+		// Per Breadman's changes to ai_basenpc_schedule, fire at where you think the enemy will be instead of advancing
+		if ( !HasCondition(COND_SEE_ENEMY) && !HasCondition(COND_TOO_CLOSE_TO_ATTACK)) // We don't want this to use Attack squad slots because it could 'steal' a slot from a squadmate who might need it. 
+		{
+			int suppressingFireSchedule = TranslateSuppressingFireSchedule(scheduleType);
+			if (suppressingFireSchedule != scheduleType)
+				return suppressingFireSchedule;
+		}
+#endif
 		if( !IsMortar( GetEnemy() ) && HaveCommandGoal() )
 		{
 			if ( GetActiveWeapon() && ( GetActiveWeapon()->CapabilitiesGet() & bits_CAP_WEAPON_RANGE_ATTACK1 ) && random->RandomInt( 0, 1 ) && HasCondition(COND_SEE_ENEMY) && !HasCondition ( COND_NO_PRIMARY_AMMO ) )
@@ -1475,13 +2340,43 @@ int CNPC_Citizen::TranslateSchedule( int scheduleType )
 		{
 			return SCHED_STANDOFF;
 		}
+#ifdef EZ2
+		// Don't chase enemies if you're weaponless!
+		if ( GetActiveWeapon() == NULL )
+		{
+			if (m_SurrenderBehavior.SurrenderAutomatically() &&
+				GetEnemy() && (GetEnemy()->GetAbsOrigin() - GetAbsOrigin()).LengthSqr() < Square( npc_citizen_surrender_auto_distance.GetFloat() ))
+			{
+				CBaseCombatCharacter *pBCC = GetEnemy()->MyCombatCharacterPointer();
+				if (pBCC && pBCC->FInViewCone( this ) && (pBCC->IsPlayer() || (pBCC->IsNPC() && pBCC->MyNPCPointer()->IsPlayerAlly())))
+				{
+					// Surrender automatically if we're allowed to
+					if (DispatchInteraction( g_interactionBadCopOrderSurrender, NULL, pBCC ) && m_SurrenderBehavior.CanSelectSchedule())
+					{
+						Msg("Surrendering automatically!\n");
+						return SCHED_STANDOFF;
+					}
+				}
+			}
+
+			return SCHED_STANDOFF;
+		}
+#endif
+
+
 		break;
 
 	case SCHED_RANGE_ATTACK1:
 		// If we have an RPG, we use a custom schedule for it
+#ifdef MAPBASE
+		if ( !IsMortar( GetEnemy() ) && GetActiveWeapon() && EntIsClass(GetActiveWeapon(), gm_isz_class_RPG) )
+		{
+			if ( GetEnemy() && EntIsClass(GetEnemy(), gm_isz_class_Strider) )
+#else
 		if ( !IsMortar( GetEnemy() ) && GetActiveWeapon() && FClassnameIs( GetActiveWeapon(), "weapon_rpg" ) )
 		{
 			if ( GetEnemy() && GetEnemy()->ClassMatches( "npc_strider" ) )
+#endif
 			{
 				if (OccupyStrategySlotRange( SQUAD_SLOT_CITIZEN_RPG1, SQUAD_SLOT_CITIZEN_RPG2 ) )
 				{
@@ -1494,14 +2389,21 @@ int CNPC_Citizen::TranslateSchedule( int scheduleType )
 			}
 			else
 			{
+#ifndef MAPBASE // This has been disabled for now.
 				CBasePlayer *pPlayer = AI_GetSinglePlayer();
+#ifdef MAPBASE
+				// Don't avoid player if notarget is on
+				if ( pPlayer && GetEnemy() && !(pPlayer->GetFlags() & FL_NOTARGET) && ( ( GetEnemy()->GetAbsOrigin() - 
+#else
 				if ( pPlayer && GetEnemy() && ( ( GetEnemy()->GetAbsOrigin() - 
+#endif
 					pPlayer->GetAbsOrigin() ).LengthSqr() < RPG_SAFE_DISTANCE * RPG_SAFE_DISTANCE ) )
 				{
 					// Don't fire our RPG at an enemy too close to the player
 					return SCHED_STANDOFF;
 				}
 				else
+#endif
 				{
 					return SCHED_CITIZEN_RANGE_ATTACK1_RPG;
 				}
@@ -1512,6 +2414,405 @@ int CNPC_Citizen::TranslateSchedule( int scheduleType )
 
 	return BaseClass::TranslateSchedule( scheduleType );
 }
+
+#ifdef EZ
+//-----------------------------------------------------------------------------
+// Purpose: translate the given scheduleType based on the willpower conditions
+// (COND_CIT_WILLPOWER_LOW, COND_CIT_WILLPOWER_HIGH)
+//		1upD
+//-----------------------------------------------------------------------------
+int CNPC_Citizen::TranslateWillpowerSchedule(int scheduleType)
+{
+	if ( GetActiveWeapon() && HasCondition( COND_CIT_WILLPOWER_VERY_LOW ) && ( random->RandomInt( 1, 4 ) == 1 || HasCondition( COND_NO_PRIMARY_AMMO ) ) )
+	{
+		// TODO Add a new schedule. For now, just drop it!
+		Weapon_Drop( GetActiveWeapon() );
+
+		// Don't look for another weapon for 15 seconds!
+		m_flNextWeaponSearchTime = gpGlobals->curtime + 15.0;
+
+		// Never use a backup weapon after this!
+		m_bUsedBackupWeapon = true;
+
+		// Don't shoot!
+		SpeakIfAllowed( TLK_SURRENDER );
+
+		// If we have LOS to the enemy, run away
+		if ( HasCondition( COND_HAVE_ENEMY_LOS ) && random->RandomInt( 1, 2 ) == 1 )
+		{
+			return SCHED_RUN_FROM_ENEMY;
+		}
+
+		// Cower in fear
+		return SCHED_PC_COWER;
+	}
+
+	switch (scheduleType)
+	{
+		// Don't investigate sounds if you're scared or unarmed
+		case SCHED_INVESTIGATE_SOUND:
+		if (HasCondition(COND_CIT_WILLPOWER_LOW) || HasCondition(COND_NO_WEAPON) || !OccupyStrategySlot(SQUAD_SLOT_CITIZEN_INVESTIGATE))
+		{
+			return SCHED_ALERT_FACE_BESTSOUND;
+		}
+		break;
+	case SCHED_CHASE_ENEMY:
+		if (HasCondition(COND_CIT_WILLPOWER_LOW) || HasCondition(COND_NO_WEAPON))
+		{
+#ifdef EZ2
+			if (m_SurrenderBehavior.SurrenderAutomatically() && !GetActiveWeapon() /*&& HasCondition( COND_CIT_WILLPOWER_VERY_LOW )*/ &&
+				GetEnemy() && (GetEnemy()->GetAbsOrigin() - GetAbsOrigin()).LengthSqr() < Square( npc_citizen_surrender_auto_distance.GetFloat() ))
+			{
+				CBaseCombatCharacter *pBCC = GetEnemy()->MyCombatCharacterPointer();
+				if (pBCC && pBCC->FInViewCone( this ) && (pBCC->IsPlayer() || (pBCC->IsNPC() && pBCC->MyNPCPointer()->IsPlayerAlly())))
+				{
+					// Surrender automatically if we're allowed to
+					if (DispatchInteraction( g_interactionBadCopOrderSurrender, NULL, pBCC ) && m_SurrenderBehavior.CanSelectSchedule())
+					{
+						Msg("Surrendering automatically!\n");
+						return SCHED_STANDOFF;
+					}
+				}
+			}
+#endif
+
+			return SCHED_RUN_FROM_ENEMY; // If we are afraid, take cover!
+		}
+		break;
+	case SCHED_COMBAT_FACE:
+		// 1upD - don't just stand there, do something!
+		if (HasCondition(COND_CIT_WILLPOWER_HIGH) && !HasCondition(COND_NO_WEAPON) && OccupyStrategySlot(SQUAD_SLOT_CITIZEN_ADVANCE)) // You have to be pretty brave to just rush at the enemy
+			return SCHED_CHASE_ENEMY; // If we are brave, advance!
+		break;
+	case SCHED_RANGE_ATTACK1:
+		if (!IsMortar(GetEnemy()) && GetActiveWeapon() && FClassnameIs(GetActiveWeapon(), "weapon_rpg")) 
+		{
+			return SCHED_NONE;
+		}
+		// If we are scared, back away while shooting!
+		if (HasCondition(COND_CIT_WILLPOWER_LOW))
+		{
+			return SCHED_TAKE_COVER_FROM_ENEMY;
+		}
+		// If we are brave, fire then advance!
+		else if (HasCondition(COND_CIT_WILLPOWER_HIGH) && OccupyStrategySlot(SQUAD_SLOT_CITIZEN_ADVANCE) && !HasCondition(COND_NO_PRIMARY_AMMO))
+		{
+			return SCHED_CITIZEN_RANGE_ATTACK1_ADVANCE;
+		}
+		break;
+	case SCHED_RELOAD:
+	case SCHED_HIDE_AND_RELOAD:
+		CBaseEntity * pEnemy = GetEnemy();
+
+		if (pEnemy && ai_debug_willpower.GetBool())
+			DevMsg("%s reloading. Distance to enemy: %f\n", GetDebugName(), (pEnemy->GetAbsOrigin() - GetAbsOrigin()).Length());
+
+		// Interrupt reload with melee if possible
+		if (HasCondition(COND_CAN_MELEE_ATTACK1)) {
+			return SCHED_MELEE_ATTACK1;
+		}
+
+		if (pEnemy
+			&& !HasCondition(COND_CIT_WILLPOWER_LOW)
+			&& (pEnemy->GetAbsOrigin() - GetAbsOrigin()).Length() < 128
+			)
+		{
+			if (ai_debug_willpower.GetBool())
+				DevMsg("%s out of ammo! Charging to enemy at distance: %f\n", GetDebugName(), (pEnemy->GetAbsOrigin() - GetAbsOrigin()).Length());
+			return SCHED_CHASE_ENEMY;
+		}
+
+		break;
+	}
+
+	return SCHED_NONE;
+}
+
+
+ //-----------------------------------------------------------------------------
+ // Purpose: trace a firing position to see if this citizen can suppress an enemy's position.
+ //		1upD
+ //-----------------------------------------------------------------------------
+int CNPC_Citizen::TranslateSuppressingFireSchedule(int scheduleType)
+{
+	// First, try to throw a grenade if possible
+	int rangeAttack2Schedule = SelectRangeAttack2Schedule();
+	if (rangeAttack2Schedule != SCHED_NONE)
+	{
+		return rangeAttack2Schedule;
+	}
+
+	// If suppressive fire is disabled, stop
+	if ( m_bSuppressiveFireDisabled )
+	{
+		return scheduleType;
+	}
+
+	if (HasCondition(COND_NO_PRIMARY_AMMO) || HasCondition(COND_NO_WEAPON)) 
+	{
+		return scheduleType;
+	}
+
+	if ( GetActiveWeapon() && GetActiveWeapon()->IsMeleeWeapon() )
+	{
+		return scheduleType;
+	}
+
+	CBaseEntity * pEnemy = GetEnemy();
+
+	if (!pEnemy) 
+	{
+		if(ai_debug_rebel_suppressing_fire.GetBool())
+			DevMsg("NPC_Citizen::TranslateSuppressingFireSchedule: %s tried to suppress but couldn't get enemy! \n", GetDebugName());
+		return scheduleType;
+	}
+
+#ifdef EZ1
+	if(m_flLastAttackTime == 0)
+	{
+		if (ai_debug_rebel_suppressing_fire.GetBool())
+			DevMsg("NPC_Citizen::TranslateSuppressingFireSchedule: %s tried to suppress but hasn't shot at any enemies yet! \n", GetDebugName());
+		return scheduleType;
+	}
+#endif
+
+	m_vecDecoyObjectTarget = vec3_invalid;
+	if (FindDecoyObject() || FindEnemyCoverTarget()) {
+		if (ai_debug_rebel_suppressing_fire.GetBool())
+			DevMsg( "NPC_Citizen::TranslateSuppressingFireSchedule: %s is using suppressing fire! \n", GetDebugName() );
+		return SCHED_CITIZEN_RANGE_ATTACK1_SUPPRESS;
+	}
+
+	return scheduleType;
+}
+
+// Overridden to check if we are panicking currently
+int CNPC_Citizen::SelectRangeAttack2Schedule()
+{
+	if ( !m_bWillpowerDisabled && HasCondition( COND_CIT_WILLPOWER_VERY_LOW ) )
+	{
+		return SCHED_NONE;
+	}
+
+	return BaseClass::SelectRangeAttack2Schedule();
+}
+
+#define CITIZEN_DECOY_RADIUS 128.0f
+#define CITIZEN_NUM_DECOYS 10
+#define CITIZEN_DECOY_MAX_MASS 200.0f
+bool CNPC_Citizen::FindDecoyObject(void)
+{
+	if ( !ai_suppression_shoot_props.GetBool() )
+		return false;
+
+	if(ai_debug_rebel_suppressing_fire.GetBool())
+		DevMsg( "NPC_Citizen::FindDecoyObject: %s searching for decoy objects \n", GetDebugName() );
+	#define SEARCH_DEPTH 50
+
+	CBaseEntity *pDecoys[CITIZEN_NUM_DECOYS];
+	CBaseEntity *pList[SEARCH_DEPTH];
+	CBaseEntity	*pCurrent;
+	int			count;
+	int			i;
+	Vector vecTarget = GetEnemy()->WorldSpaceCenter();
+	Vector vecDelta;
+
+	for (i = 0; i < CITIZEN_NUM_DECOYS; i++)
+	{
+		pDecoys[i] = NULL;
+	}
+
+	vecDelta.x = CITIZEN_DECOY_RADIUS;
+	vecDelta.y = CITIZEN_DECOY_RADIUS;
+	vecDelta.z = CITIZEN_DECOY_RADIUS;
+
+	count = UTIL_EntitiesInBox(pList, SEARCH_DEPTH, vecTarget - vecDelta, vecTarget + vecDelta, 0);
+
+	// Now we have the list of entities near the target. 
+	// Dig through that list and build the list of decoys.
+	int iIterator = 0;
+
+	for (i = 0; i < count; i++)
+	{
+		pCurrent = pList[i];
+
+		if (FClassnameIs(pCurrent, "func_breakable") || FClassnameIs(pCurrent, "prop_physics") || FClassnameIs(pCurrent, "func_physbox"))
+		{
+			if (!pCurrent->VPhysicsGetObject())
+				continue;
+
+			if (pCurrent->VPhysicsGetObject()->GetMass() > CITIZEN_DECOY_MAX_MASS)
+			{
+				// Skip this very heavy object. Probably a car or dumpster.
+				continue;
+			}
+
+			if (pCurrent->VPhysicsGetObject()->GetGameFlags() & FVPHYSICS_PLAYER_HELD)
+			{
+				// Ah! If the player is holding something, try to shoot it!
+				if (FVisible(pCurrent))
+				{
+					if ( ai_debug_rebel_suppressing_fire.GetBool() )
+						DevMsg( "NPC_Citizen::FindDecoyObject: %s found player held object! \n", GetDebugName() );
+					m_vecDecoyObjectTarget = pCurrent->WorldSpaceCenter();
+					SetAimTarget( pCurrent );
+					return true;
+				}
+			}
+
+			pDecoys[iIterator] = pCurrent;
+			if (iIterator == CITIZEN_NUM_DECOYS - 1)
+			{
+				break;
+			}
+			else
+			{
+				iIterator++;
+			}
+		}
+	}
+
+	if (iIterator == 0)
+	{
+		if ( ai_debug_rebel_suppressing_fire.GetBool() )
+			DevMsg( "NPC_Citizen::FindDecoyObject: %s couldn't find any decoy targets. :( \n", GetDebugName() );
+		return false;
+	}
+
+	// If the trace goes off, that's the object!
+	for (i = 0; i < CITIZEN_NUM_DECOYS; i++)
+	{
+		CBaseEntity *pProspect;
+		trace_t		tr, blockTr;
+
+		// // Pick one of the decoys at random.
+		pProspect = pDecoys[random->RandomInt(0, iIterator - 1)];
+		if (pProspect == NULL)
+		{
+			Msg( "Citizen %s tried to access null decoy target \n", GetDebugName() );
+			continue;
+		}
+
+
+		Vector vecDecoyTarget;
+		Vector vecBulletOrigin;
+
+		vecBulletOrigin = Weapon_ShootPosition();
+		pProspect->CollisionProp()->RandomPointInBounds(Vector(.1, .1, .1), Vector(.6, .6, .6), &vecDecoyTarget);
+
+		// Right now, tracing with MASK_BLOCKLOS and checking the fraction as well as the object the trace
+		// has hit makes it possible for the decoy behavior to shoot through glass. 
+		UTIL_TraceLine( vecBulletOrigin, vecDecoyTarget,
+			MASK_BLOCKLOS, this, COLLISION_GROUP_NONE, &tr );
+
+		if (tr.m_pEnt == pProspect || tr.fraction == 1.0)
+		{
+			if (ai_debug_rebel_suppressing_fire.GetBool())
+			{
+				DevMsg( "NPC_Citizen::FindDecoyObject: %s has LOS to decoy target %s\n", GetDebugName(), pProspect->GetDebugName() );
+				// Blue line - successful decoy trace
+				NDebugOverlay::Line( vecBulletOrigin, vecDecoyTarget, 0, 0, 255, false, 5.0f );
+			}
+
+			// One more trace - let's make sure there's nothing immediately in front of the NPC to occlude this firing vector
+			AI_TraceLine( vecBulletOrigin, vecDecoyTarget, MASK_SHOT, this, COLLISION_GROUP_NONE, &blockTr );
+			if ( blockTr.fraction < ai_suppression_distance_ratio.GetFloat())
+			{
+				if(ai_debug_rebel_suppressing_fire.GetBool())
+					DevMsg( "NPC_Citizen::FindDecoyObject: %s covering fire doesn't cover sufficent ratio at: %f\n", GetDebugName(), blockTr.fraction );
+			}
+			else
+			{
+				// Great! A shot will hit this object.
+				m_vecDecoyObjectTarget = tr.endpos;
+				SetAimTarget( pProspect );
+
+				return true;
+			}
+		}
+
+		if (ai_debug_rebel_suppressing_fire.GetBool())
+		{
+			DevMsg( "NPC_Citizen::FindDecoyObject: %s could not trace to decoy target %s\n", GetDebugName(), pProspect->GetDebugName() );
+			// Cyan line - failed decoy trace
+			NDebugOverlay::Line( vecBulletOrigin, vecDecoyTarget, 0, 255, 255, false, 5.0f );
+		}
+	}
+
+	if (ai_debug_rebel_suppressing_fire.GetBool())
+		DevMsg( "NPC_Citizen::FindDecoyObject: %s could not trace to any decoy target \n", GetDebugName() );
+	return false;
+}
+
+bool CNPC_Citizen::FindEnemyCoverTarget(void)
+{
+	if (m_vecDecoyObjectTarget != vec3_invalid)
+	{
+		if (ai_debug_rebel_suppressing_fire.GetBool())
+			DevMsg( "NPC_Citizen::FindEnemyCoverTarget: %s already selected decoy target \n", GetDebugName() );
+		return false;
+	}
+
+	trace_t tr;
+	Vector startpos = this->Weapon_ShootPosition();
+	Vector targetpos = GetEnemy()->EyePosition();
+
+	float distance = UTIL_DistApprox(startpos, targetpos);
+	if (ai_debug_rebel_suppressing_fire.GetBool() && distance <= ai_min_suppression_distance.GetFloat())
+	{
+		DevMsg("NPC_Citizen::FindEnemyCoverTarget: %s too close to target to use suppressing fire at range: %f\n", GetDebugName(), distance);
+	}
+
+	AI_TraceLine(startpos, targetpos, MASK_SHOT, this, COLLISION_GROUP_NONE, &tr);
+	if ( ai_debug_rebel_suppressing_fire.GetBool() )
+	{
+		// Yellow line - successful enemy cover target trace
+		NDebugOverlay::Line( startpos, targetpos, 255, 255, 0, false, 5.0f );
+	}
+
+	float traceLength = abs(tr.fraction  * distance);
+	if (ai_debug_rebel_suppressing_fire.GetBool() && tr.fraction < ai_suppression_distance_ratio.GetFloat())
+	{
+		DevMsg("NPC_Citizen::FindEnemyCoverTarget: %s covering fire doesn't cover sufficent ratio at: %f\n", GetDebugName(), tr.fraction);
+	}
+
+	if (traceLength > ai_min_suppression_distance.GetFloat() && tr.fraction >= ai_suppression_distance_ratio.GetFloat())
+	{
+		if (ai_debug_rebel_suppressing_fire.GetBool())
+			DevMsg("NPC_Citizen::FindEnemyCoverTarget: %s found enemy cover target at range: %f\n", GetDebugName(), traceLength);
+		m_vecDecoyObjectTarget = targetpos;
+		m_vecDecoyObjectTarget.x += RandomInt( -16, 16 );
+		m_vecDecoyObjectTarget.y += RandomInt( -16, 16 );
+		m_vecDecoyObjectTarget.z += RandomInt( -32, 32 );
+		return true;
+	}
+	else if (ai_debug_rebel_suppressing_fire.GetBool()) {
+		DevMsg("NPC_Citizen::FindEnemyCoverTarget: %s failed to use suppressing fire at range: %f\n", GetDebugName(), traceLength);
+	}
+
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CNPC_Citizen::AimGun()
+{
+	Vector vecAimDir;
+	if (m_vecDecoyObjectTarget != vec3_invalid && FInAimCone( m_vecDecoyObjectTarget ))
+	{
+		float flDist;
+		flDist = (m_vecDecoyObjectTarget - GetAbsOrigin()).Length2DSqr();
+
+		// Aim at my target if it's in my cone
+		vecAimDir = m_vecDecoyObjectTarget - Weapon_ShootPosition();;
+		VectorNormalize( vecAimDir );
+		SetAim( vecAimDir );
+		return;
+	}
+
+	BaseClass::AimGun();
+}
+#endif
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -1591,10 +2892,16 @@ void CNPC_Citizen::StartTask( const Task_t *pTask )
 				break;
 			}
 
+#ifdef MAPBASE
+			SetSpeechTarget( GetTarget() );
+#endif
 			Speak( TLK_HEAL );
 		}
 		else if ( IsAmmoResupplier() )
 		{
+#ifdef MAPBASE
+			SetSpeechTarget( GetTarget() );
+#endif
 			Speak( TLK_GIVEAMMO );
 		}
 		SetIdealActivity( (Activity)ACT_CIT_HEAL );
@@ -1616,6 +2923,27 @@ void CNPC_Citizen::StartTask( const Task_t *pTask )
 		}
 		TaskComplete();
 		break;
+#ifdef EZ
+	case TASK_CIT_PAINT_SUPPRESSION_TARGET:
+		// This task is handled once in RunTask
+		break;
+
+	case TASK_CIT_DIE_INSTANTLY:
+		{
+			CTakeDamageInfo info;
+
+			info.SetAttacker( this );
+			info.SetInflictor( this );
+			info.SetDamage( m_iHealth );
+			info.SetDamageType( pTask->flTaskData );
+			info.SetDamageForce( Vector( 0.1, 0.1, 0.1 ) );
+
+			TakeDamage( info );
+
+			TaskComplete();
+		}
+		break;
+#endif
 
 	default:
 		BaseClass::StartTask( pTask );
@@ -1767,19 +3095,34 @@ void CNPC_Citizen::RunTask( const Task_t *pTask )
 					}
 
 					Vector vecEnemyPos = GetEnemy()->BodyTarget(GetAbsOrigin(), false);
+#ifndef MAPBASE // This has been disabled for now.
 					CBasePlayer *pPlayer = AI_GetSinglePlayer();
+#ifdef MAPBASE
+					// Don't avoid player if notarget is on
+					if ( pPlayer && !(pPlayer->GetFlags() & FL_NOTARGET) && ( ( vecEnemyPos - pPlayer->GetAbsOrigin() ).LengthSqr() < RPG_SAFE_DISTANCE * RPG_SAFE_DISTANCE ) )
+#else
 					if ( pPlayer && ( ( vecEnemyPos - pPlayer->GetAbsOrigin() ).LengthSqr() < RPG_SAFE_DISTANCE * RPG_SAFE_DISTANCE ) )
+#endif
 					{
 						m_bRPGAvoidPlayer = true;
 						Speak( TLK_WATCHOUT );
 					}
 					else
+#endif
 					{
 						// Pull the laserdot towards the target
 						Vector vecToTarget = (vecEnemyPos - vecLaserPos);
 						float distToMove = VectorNormalize( vecToTarget );
+#ifdef EZ2
+						// Decrease distToMove the closer it is to the target
+						if ( distToMove > 500 )
+							distToMove -= 100;
+						else if ( distToMove > 90 )
+							distToMove *= 0.8f;
+#else
 						if ( distToMove > 90 )
 							distToMove = 90;
+#endif
 						vecLaserPos += vecToTarget * distToMove;
 					}
 				}
@@ -1804,7 +3147,44 @@ void CNPC_Citizen::RunTask( const Task_t *pTask )
 				pRPG->UpdateNPCLaserPosition( vecLaserPos );
 			}
 			break;
+#ifdef EZ
+		case TASK_CIT_PAINT_SUPPRESSION_TARGET:
+		{
+			// Wait for shot regulator to be ready
+			if ( !GetShotRegulator()->IsInRestInterval() )
+			{
+				CBaseEntity *pEnemy = GetEnemy();
+				if (!pEnemy)
+					TaskFail( FAIL_NO_TARGET );
 
+				CAI_BaseNPC *pTarget = CreateCustomTarget( m_vecDecoyObjectTarget, 2.0f );
+				AddEntityRelationship( pTarget, IRelationType( pEnemy ), IRelationPriority( pEnemy ) );
+
+				// Update or Create a memory entry for this target and make Alyx think she's seen this target recently.
+				// This prevents the baseclass from not recognizing this target and forcing Alyx into 
+				// SCHED_WAKE_ANGRY, which wastes time and causes her to change animation sequences rapidly.
+				GetEnemies()->UpdateMemory( GetNavigator()->GetNetwork(), pTarget, pTarget->GetAbsOrigin(), 0.0f, true );
+				AI_EnemyInfo_t *pMemory = GetEnemies()->Find( pTarget );
+
+				if (pMemory)
+				{
+					// Pretend we've known about this target longer than we really have.
+					pMemory->timeFirstSeen = gpGlobals->curtime - 10.0f;
+				}
+
+				SetEnemy( pTarget );
+
+				if (ai_debug_rebel_suppressing_fire.GetBool())
+				{
+					// Green line - actual suppressing fire
+					NDebugOverlay::Line( Weapon_ShootPosition(), m_vecDecoyObjectTarget, 0, 255, 0, false, 2.0f );
+				}
+
+				TaskComplete();
+			}
+			break;
+		}
+#endif
 		default:
 			BaseClass::RunTask( pTask );
 			break;
@@ -1838,9 +3218,18 @@ Activity CNPC_Citizen::NPC_TranslateActivity( Activity activity )
 {
 	if ( activity == ACT_MELEE_ATTACK1 )
 	{
+#ifdef MAPBASE
+		// It could be the new weapon punt activity.
+		if (GetActiveWeapon() && GetActiveWeapon()->IsMeleeWeapon())
+		{
+			return ACT_MELEE_ATTACK_SWING;
+		}
+#else
 		return ACT_MELEE_ATTACK_SWING;
+#endif
 	}
 
+#ifndef MAPBASE // Covered by the new backup activity system
 	// !!!HACK - Citizens don't have the required animations for shotguns, 
 	// so trick them into using the rifle counterparts for now (sjb)
 	if ( activity == ACT_RUN_AIM_SHOTGUN )
@@ -1851,9 +3240,372 @@ Activity CNPC_Citizen::NPC_TranslateActivity( Activity activity )
 		return ACT_IDLE_ANGRY_SMG1;
 	if ( activity == ACT_RANGE_ATTACK_SHOTGUN_LOW )
 		return ACT_RANGE_ATTACK_SMG1_LOW;
+#endif
+
+#ifdef MAPBASE
+	if (m_bAlternateAiming)
+	{
+		if (activity == ACT_RUN_AIM_RIFLE)
+			return ACT_RUN_AIM_RIFLE_STIMULATED;
+		if (activity == ACT_WALK_AIM_RIFLE)
+			return ACT_WALK_AIM_RIFLE_STIMULATED;
+
+		if (activity == ACT_RUN_AIM_AR2)
+			return ACT_RUN_AIM_AR2_STIMULATED;
+		if (activity == ACT_WALK_AIM_AR2)
+			return ACT_WALK_AIM_AR2_STIMULATED;
+
+#if EXPANDED_HL2_WEAPON_ACTIVITIES
+		if (activity == ACT_RUN_AIM_PISTOL)
+			return ACT_RUN_AIM_PISTOL_STIMULATED;
+		if (activity == ACT_WALK_AIM_PISTOL)
+			return ACT_WALK_AIM_PISTOL_STIMULATED;
+#endif
+	}
+#endif
+
+#ifdef EZ
+	if (IsOnFire())
+	{
+		switch (activity)
+		{
+			case ACT_WALK:
+			case ACT_RUN:		activity = ACT_RUN_ON_FIRE; break;
+			case ACT_IDLE:		activity = ACT_IDLE_ON_FIRE; break;
+		}
+	}
+#endif
+
+#ifdef EZ2
+	// Unarmed citizens use 'panic readiness' activities!
+	// Only if they have no weapon and either cannot throw grenades or are panicking, and are not jump rebels 
+	bool disarmed = GetActiveWeapon() == NULL && m_Type != CT_LONGFALL && ( HasCondition( COND_CIT_WILLPOWER_VERY_LOW ) || !IsGrenadeCapable() || m_iNumGrenades == 0 );
+	if ( (!m_bWillpowerDisabled && disarmed && m_NPCState == NPC_STATE_COMBAT) /*|| IsSurrendered()*/ )
+	{
+		switch (activity)
+		{
+		case ACT_RUN:
+			return (Activity) ACT_RUN_PANICKED;
+		case ACT_IDLE:
+			return (Activity) ACT_CROUCH_PANICKED;
+		case ACT_WALK:
+			return (Activity) ACT_WALK_PANICKED;
+		}
+	}
+#endif
 
 	return BaseClass::NPC_TranslateActivity( activity );
 }
+
+#ifdef EZ
+extern ConVar showhitlocation;
+
+//=========================================================
+// TraceAttack is overridden here for jump rebel purposes.
+//=========================================================
+void CNPC_Citizen::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr, CDmgAccumulator *pAccumulator )
+{
+	m_fNoDamageDecal = false;
+	if ( m_takedamage == DAMAGE_NO )
+		return;
+
+	CTakeDamageInfo subInfo = info;
+
+	SetLastHitGroup( ptr->hitgroup );
+	m_nForceBone = ptr->physicsbone;		// save this bone for physics forces
+
+	Assert( m_nForceBone > -255 && m_nForceBone < 256 );
+
+	bool bDebug = showhitlocation.GetBool();
+
+	switch ( ptr->hitgroup )
+	{
+	case HITGROUP_GENERIC:
+		if( bDebug ) DevMsg("Hit Location: Generic\n");
+		break;
+
+	case HITGROUP_GEAR:
+		// Blixibon - Allows jump rebels to use gear hitgroup as a weak point
+		if (m_Type == CT_LONGFALL)
+			subInfo.ScaleDamage( GetHitgroupDamageMultiplier(ptr->hitgroup, info) );
+		else
+		{
+			subInfo.SetDamage( 0.01 );
+			ptr->hitgroup = HITGROUP_GENERIC;
+		}
+		if( bDebug ) DevMsg("Hit Location: Gear\n");
+		break;
+
+	case HITGROUP_HEAD:
+		subInfo.ScaleDamage( GetHitgroupDamageMultiplier(ptr->hitgroup, info) );
+		if( bDebug ) DevMsg("Hit Location: Head\n");
+		break;
+
+	case HITGROUP_CHEST:
+		subInfo.ScaleDamage( GetHitgroupDamageMultiplier(ptr->hitgroup, info) );
+		if( bDebug ) DevMsg("Hit Location: Chest\n");
+		break;
+
+	case HITGROUP_STOMACH:
+		subInfo.ScaleDamage( GetHitgroupDamageMultiplier(ptr->hitgroup, info) );
+		if( bDebug ) DevMsg("Hit Location: Stomach\n");
+		break;
+
+	case HITGROUP_LEFTARM:
+	case HITGROUP_RIGHTARM:
+		subInfo.ScaleDamage( GetHitgroupDamageMultiplier(ptr->hitgroup, info) );
+		if( bDebug ) DevMsg("Hit Location: Left/Right Arm\n");
+		break
+			;
+	case HITGROUP_LEFTLEG:
+	case HITGROUP_RIGHTLEG:
+		subInfo.ScaleDamage( GetHitgroupDamageMultiplier(ptr->hitgroup, info) );
+		if( bDebug ) DevMsg("Hit Location: Left/Right Leg\n");
+		break;
+
+	default:
+		if( bDebug ) DevMsg("Hit Location: UNKNOWN\n");
+		break;
+	}
+
+	bool bBloodAllowed = DamageFilterAllowsBlood( info );
+	if ( subInfo.GetDamage() >= 1.0 && !(subInfo.GetDamageType() & DMG_SHOCK ) && bBloodAllowed )
+	{
+		if (ptr->hitgroup == HITGROUP_GEAR)
+		{
+			// Blixibon - Jump rebels have weak sparks in response to gear damage
+			g_pEffects->Sparks( ptr->endpos, 2, 2 );
+		}
+		else
+			SpawnBlood( ptr->endpos, vecDir, BloodColor(), subInfo.GetDamage() );// a little surface blood.
+
+		TraceBleed( subInfo.GetDamage(), vecDir, ptr, subInfo.GetDamageType() );
+
+		if ( ptr->hitgroup == HITGROUP_HEAD && m_iHealth - subInfo.GetDamage() > 0 )
+		{
+			m_fNoDamageDecal = true;
+		}
+	}
+	else if (!bBloodAllowed)
+	{
+		m_fNoDamageDecal = true;
+	}
+
+	// Airboat gun will impart major force if it's about to kill him....
+	if ( info.GetDamageType() & DMG_AIRBOAT )
+	{
+		if ( subInfo.GetDamage() >= GetHealth() )
+		{
+			float flMagnitude = subInfo.GetDamageForce().Length();
+			if ( (flMagnitude != 0.0f) && (flMagnitude < 400.0f * 65.0f) )
+			{
+				subInfo.ScaleDamageForce( 400.0f * 65.0f / flMagnitude );
+			}
+		}
+	}
+
+	if( info.GetInflictor() )
+	{
+		subInfo.SetInflictor( info.GetInflictor() );
+	}
+	else
+	{
+		subInfo.SetInflictor( info.GetAttacker() );
+	}
+
+	AddMultiDamage( subInfo, this );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CNPC_Citizen::Event_Killed( const CTakeDamageInfo &info )
+{
+	if (m_Type == CT_BRUTE && GetBodygroup(BRUTE_MASK_BODYGROUP) != 1)
+	{
+		// Make the mask fly off under high damage
+		if (info.GetDamage() >= npc_citizen_brute_mask_eject_threshold.GetFloat() && !(info.GetDamageType() & DMG_REMOVENORAGDOLL))
+		{
+			Vector vecMaskPos;
+			QAngle vecMaskAng;
+			GetAttachment( "anim_attachment_head", vecMaskPos, vecMaskAng );
+
+			CBaseEntity *pGib = CreateNoSpawn( "prop_physics", vecMaskPos, vecMaskAng, this );
+			if (pGib)
+			{
+				pGib->SetModelName( AllocPooledString(BRUTE_MASK_MODEL) );
+				pGib->GetBaseAnimating()->m_nSkin = m_nSkin;
+				pGib->AddSpawnFlags( SF_PHYSPROP_DEBRIS | SF_PHYSPROP_IS_GIB );
+				DispatchSpawn( pGib );
+
+				if (VPhysicsGetObject() && pGib->VPhysicsGetObject())
+				{
+					Vector velocity = info.GetDamageForce() * VPhysicsGetObject()->GetInvMass();
+
+					// Give the mask some extra velocity so it's easier to see
+					velocity.z += 20.0f;
+					velocity *= 3.0f;
+
+					pGib->VPhysicsGetObject()->AddVelocity(&velocity, NULL);
+				}
+
+				if (info.GetDamageType() & DMG_DISSOLVE)
+				{
+					pGib->GetBaseAnimating()->Dissolve( NULL, gpGlobals->curtime, false, ENTITY_DISSOLVE_NORMAL );
+				}
+				else
+				{
+					pGib->SUB_StartFadeOut( 10.0f, false );
+				}
+			}
+
+			SetBodygroup( BRUTE_MASK_BODYGROUP, 1 );
+		}
+	}
+	else if (m_Type == CT_LONGFALL)
+	{
+		// Make the ragdoll bounce up when the gear is shot
+		if (LastHitGroup() == HITGROUP_GEAR)
+		{
+			CTakeDamageInfo myInfo = info;
+
+			Vector vecBackpack;
+			GetAttachment( "backpack_mid", vecBackpack );
+
+			g_pEffects->Sparks( vecBackpack, 4, 4 );
+			UTIL_Smoke( vecBackpack, 20, 5 );
+
+			myInfo.SetDamageForce( info.GetDamageForce() + Vector(0,0,npc_citizen_longfall_death_height.GetFloat()) );
+			EmitSound("NPC_Citizen_JumpRebel.Jump_Death");
+
+			// See if we'll hit a low ceiling
+			Vector vecOrigin = WorldSpaceCenter();
+			trace_t tr;
+			AI_TraceLine(vecOrigin, vecOrigin + (myInfo.GetDamageForce() * VPhysicsGetObject()->GetInvMass() * 0.5f),
+				MASK_SOLID, this, COLLISION_GROUP_NONE, &tr);
+
+			if (tr.fraction != 1.0f)
+			{
+				UTIL_DecalTrace( &tr, "Rollermine.Crater" );
+
+				// It seems that the blood decal now overwrites the rollermine crater
+				//UTIL_DecalTrace( &tr, "Blood" );
+			}
+
+			BaseClass::Event_Killed( myInfo );
+
+			if (m_hDeathRagdoll)
+			{
+				// Add a jump particle to the death ragdoll
+				// TODO: citizen_longfall_jump_death?
+				DispatchParticleEffect( "citizen_longfall_jump", PATTACH_POINT_FOLLOW, m_hDeathRagdoll, LookupAttachment( "backpack_end" ) );
+
+				CRagdollBoogie::Create( m_hDeathRagdoll, 50, gpGlobals->curtime, RandomFloat(2.0f, 3.0f), SF_RAGDOLL_BOOGIE_ELECTRICAL );
+			}
+
+			return;
+		}
+	}
+
+#ifdef EZ2
+	// Medics ALWAYS drop healthkits. Reward the player for taking them out
+	if ( IsMedic() )
+	{
+		DropItem( "item_healthkit", WorldSpaceCenter() + RandomVector( -4, 4 ), RandomAngle( 0, 360 ) );
+	}
+
+#endif
+
+	BaseClass::Event_Killed( info );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CNPC_Citizen::OnChangeActivity( Activity eNewActivity )
+{
+	BaseClass::OnChangeActivity( eNewActivity );
+
+	if (m_Type == CT_LONGFALL)
+	{
+		switch (eNewActivity)
+		{
+			case ACT_JUMP:
+			{
+				// Do the jump particle
+				DispatchParticleEffect( "citizen_longfall_jump", PATTACH_POINT_FOLLOW, this, LookupAttachment( "backpack_end" ) );
+
+				// Make the chest eye a different color while we're jumping
+				if (m_pEyeGlow)
+				{
+					m_pEyeGlow->SetRenderColor( LONGFALL_GLOW_CHEST_JUMP_R, LONGFALL_GLOW_CHEST_JUMP_G, LONGFALL_GLOW_CHEST_JUMP_B, LONGFALL_GLOW_CHEST_JUMP_A );
+					m_pEyeGlow->SetBrightness( LONGFALL_GLOW_CHEST_JUMP_BRIGHT, npc_citizen_longfall_glow_chest_jump_fade_enter.GetFloat() );
+					m_pEyeGlow->SetScale( LONGFALL_GLOW_CHEST_JUMP_SCALE, npc_citizen_longfall_glow_chest_jump_fade_enter.GetFloat() );
+				}
+
+				EmitSound( "NPC_Citizen_JumpRebel.Jump" );
+			} break;
+
+			case ACT_GLIDE:
+				break;
+
+			case ACT_LAND:
+			{
+				EmitSound( "NPC_Citizen_JumpRebel.Land" );
+			}
+			// Need to have a default case here due to jump rebels not always switching to ACT_LAND after jumping
+			default:
+			{
+				// If we were jumping, return the chest eye to its normal color
+				if (m_pEyeGlow && m_pEyeGlow->GetBrightness() == LONGFALL_GLOW_CHEST_JUMP_BRIGHT)
+				{
+					m_pEyeGlow->SetRenderColor( LONGFALL_GLOW_CHEST_R, LONGFALL_GLOW_CHEST_G, LONGFALL_GLOW_CHEST_B, LONGFALL_GLOW_CHEST_A );
+					m_pEyeGlow->SetBrightness( LONGFALL_GLOW_CHEST_BRIGHT, npc_citizen_longfall_glow_chest_jump_fade_exit.GetFloat() );
+					m_pEyeGlow->SetScale( LONGFALL_GLOW_CHEST_SCALE, npc_citizen_longfall_glow_chest_jump_fade_exit.GetFloat() );
+				}
+			}
+			break;
+		}
+	}
+
+	if (eNewActivity == ACT_MELEE_ATTACK1 && GetEnemy())
+	{
+		// Say something when we begin a melee attack
+		SpeakIfAllowed( TLK_MELEE );
+	}
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CNPC_Citizen::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &info )
+{
+	BaseClass::Event_KilledOther( pVictim, info );
+
+	if ( pVictim && pVictim->IsPlayer() )
+	{
+		// Blixibon - Citizens can shoot at Bad Cop's corpse after he dies.
+		if (GetEnemies()->NumEnemies() <= 1 && HasCondition(COND_CIT_WILLPOWER_LOW))
+		{
+			CAI_BaseNPC *pTarget = CreateCustomTarget( pVictim->GetAbsOrigin(), 5.0f );
+			pTarget->SetParent( pVictim );
+
+			AISquadIter_t iter;
+			for ( CAI_BaseNPC *pSquadmate = m_pSquad ? m_pSquad->GetFirstMember(&iter) : this; pSquadmate; pSquadmate = m_pSquad ? m_pSquad->GetNextMember(&iter) : NULL )
+			{
+				if (pSquadmate->GetClassname() != GetClassname())
+					continue;
+
+				// Do the Alyx bullseye relationship code.
+				pSquadmate->AddEntityRelationship( pTarget, IRelationType(pVictim), IRelationPriority(pVictim) );
+				pSquadmate->GetEnemies()->UpdateMemory( GetNavigator()->GetNetwork(), pTarget, pTarget->GetAbsOrigin(), 0.0f, true );
+				AI_EnemyInfo_t *pMemory = pSquadmate->GetEnemies()->Find( pTarget );
+				if( pMemory )
+					pMemory->timeFirstSeen = gpGlobals->curtime - 10.0f;
+			}
+		}
+	}
+}
+#endif
 
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
@@ -1878,7 +3630,12 @@ void CNPC_Citizen::HandleAnimEvent( animevent_t *pEvent )
 	{
 		// Heal my target (if within range)
 #if HL2_EPISODIC
+#ifdef MAPBASE
+		// Don't throw medkits at NPCs, that's not how it works
+		if ( USE_EXPERIMENTAL_MEDIC_CODE() && IsMedic() && GetTarget() && !GetTarget()->IsNPC() )
+#else
 		if ( USE_EXPERIMENTAL_MEDIC_CODE() && IsMedic() )
+#endif
 		{
 			CBaseCombatCharacter *pTarget = dynamic_cast<CBaseCombatCharacter *>( GetTarget() );
 			Assert(pTarget);
@@ -1918,6 +3675,7 @@ void CNPC_Citizen::HandleAnimEvent( animevent_t *pEvent )
 	}
 }
 
+#ifndef MAPBASE // Moved to CAI_BaseNPC
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 void CNPC_Citizen::PickupItem( CBaseEntity *pItem )
@@ -1944,6 +3702,7 @@ void CNPC_Citizen::PickupItem( CBaseEntity *pItem )
 		DevMsg("Citizen doesn't know how to pick up %s!\n", pItem->GetClassname() );
 	}
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -2035,8 +3794,170 @@ void CNPC_Citizen::SimpleUse( CBaseEntity *pActivator, CBaseEntity *pCaller, USE
 		}
 	}
 
+#ifdef EZ2
+	if (IsSurrendered() && m_SurrenderBehavior.IsSurrenderIdle())
+	{
+		if (m_SurrenderBehavior.ShouldBeStanding())
+		{
+			// Check if the player is asking for health
+			if (CanHeal() && ShouldHealTarget( pActivator, true ))
+			{
+				Msg( "Setting heal request\n" );
+				SetCondition( COND_CIT_PLAYERHEALREQUEST );
+			}
+			else
+			{
+				Msg( "Surrendering to ground\n" );
+				m_SurrenderBehavior.SurrenderToGround();
+			}
+		}
+		else
+		{
+			Msg( "Surrendering to standing\n" );
+			m_SurrenderBehavior.SurrenderStand();
+		}
+	}
+#endif
+
 	m_bDontUseSemaphore = false;
 }
+
+#ifdef EZ
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input  : &info - 
+// Output : Returns true on success, false on failure.
+//-----------------------------------------------------------------------------
+bool CNPC_Citizen::ShouldGib( const CTakeDamageInfo &info )
+{
+	if ( !npc_citizen_gib.GetBool() )
+		return false;
+
+	// If the damage type is "always gib", we better gib!
+	if ( info.GetDamageType() & DMG_ALWAYSGIB )
+		return true;
+
+	if ( info.GetDamageType() & ( DMG_NEVERGIB | DMG_DISSOLVE ) )
+		return false;
+
+	// Jump rebels shouldn't gib because flying ragdolls are amusing
+	if (m_Type == CT_LONGFALL)
+		return false;
+
+	if ( ( info.GetDamageType() & ( DMG_BLAST | DMG_ACID | DMG_POISON | DMG_CRUSH ) ) && ( GetAbsOrigin() - info.GetDamagePosition() ).LengthSqr() <= 32.0f )
+		return true;
+
+	return false;
+}
+
+//------------------------------------------------------------------------------
+// Purpose: Override to do rebel specific gibs
+// Output :
+//------------------------------------------------------------------------------
+bool CNPC_Citizen::CorpseGib( const CTakeDamageInfo &info )
+{
+	return BaseClass::CorpseGib( info );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Return the pointer for a given sprite given an index
+//-----------------------------------------------------------------------------
+CSprite	* CNPC_Citizen::GetGlowSpritePtr( int index )
+{
+	if (m_Type == CT_LONGFALL)
+	{
+		switch (index)
+		{
+			case 0:
+				return m_pEyeGlow;
+			case 1:
+				return m_pShoulderGlow;
+		}
+	}
+
+	return BaseClass::GetGlowSpritePtr( index );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Sets the glow sprite at the given index
+//-----------------------------------------------------------------------------
+void CNPC_Citizen::SetGlowSpritePtr( int index, CSprite * sprite )
+{
+	if (m_Type == CT_LONGFALL)
+	{
+		switch (index)
+		{
+			case 0:
+				m_pEyeGlow = sprite;
+				break;
+			case 1:
+				m_pShoulderGlow = sprite;
+				break;
+		}
+	}
+
+	BaseClass::SetGlowSpritePtr( index, sprite );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Return the glow attributes for a given index
+//-----------------------------------------------------------------------------
+EyeGlow_t * CNPC_Citizen::GetEyeGlowData( int index )
+{
+	if (m_Type == CT_LONGFALL)
+	{
+		EyeGlow_t * eyeGlow = new EyeGlow_t();
+
+		switch (index){
+		case 0:
+			eyeGlow->spriteName = AllocPooledString(LONGFALL_GLOW_CHEST_SPRITE);
+			eyeGlow->attachment = AllocPooledString("backpack_eye_chest");
+
+			eyeGlow->alpha = LONGFALL_GLOW_CHEST_A;
+			eyeGlow->brightness = LONGFALL_GLOW_CHEST_BRIGHT;
+
+			eyeGlow->red = LONGFALL_GLOW_CHEST_R;
+			eyeGlow->green = LONGFALL_GLOW_CHEST_G;
+			eyeGlow->blue = LONGFALL_GLOW_CHEST_B;
+
+			eyeGlow->renderMode = kRenderWorldGlow;
+			eyeGlow->scale = 0.5f;
+			eyeGlow->proxyScale = 2.0f;
+
+			return eyeGlow;
+		case 1:
+			eyeGlow->spriteName = AllocPooledString(LONGFALL_GLOW_SHOULDER_SPRITE);
+			eyeGlow->attachment = AllocPooledString("backpack_eye_shoulder");
+
+			eyeGlow->alpha = 192;
+			eyeGlow->brightness = 164;
+
+			eyeGlow->red = 255;
+			eyeGlow->green = 245;
+			eyeGlow->blue = 180;
+
+			eyeGlow->renderMode = kRenderWorldGlow;
+			eyeGlow->scale = 0.15f;
+			eyeGlow->proxyScale = 1.0f;
+
+			return eyeGlow;
+		}
+	}
+
+	return BaseClass::GetEyeGlowData(index);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Return the number of glows
+//-----------------------------------------------------------------------------
+int CNPC_Citizen::GetNumGlows()
+{
+	if (m_Type == CT_LONGFALL)
+		return 2;
+	else
+		return BaseClass::GetNumGlows();
+}
+#endif
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -2044,7 +3965,14 @@ bool CNPC_Citizen::OnBeginMoveAndShoot()
 {
 	if ( BaseClass::OnBeginMoveAndShoot() )
 	{
+#ifdef EZ
+		if ( HasCondition(COND_NO_PRIMARY_AMMO) )
+			return false;
+
+		if( HasAttackSlot() )
+#else
 		if( m_iMySquadSlot == SQUAD_SLOT_ATTACK1 || m_iMySquadSlot == SQUAD_SLOT_ATTACK2 )
+#endif
 			return true; // already have the slot I need
 
 		if( m_iMySquadSlot == SQUAD_SLOT_NONE && OccupyStrategySlotRange( SQUAD_SLOT_ATTACK1, SQUAD_SLOT_ATTACK2 ) )
@@ -2058,14 +3986,31 @@ bool CNPC_Citizen::OnBeginMoveAndShoot()
 //-----------------------------------------------------------------------------
 void CNPC_Citizen::OnEndMoveAndShoot()
 {
+#ifdef EZ
+	// Don't vacate strategy slot if that slot is 'advance'
+	if( m_iMySquadSlot == SQUAD_SLOT_CITIZEN_ADVANCE )
+		return
+#endif
 	VacateStrategySlot();
 }
 
+
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
+#ifdef EZ
+bool CNPC_Citizen::HasAttackSlot()
+{
+	return m_iMySquadSlot == SQUAD_SLOT_CITIZEN_ADVANCE || BaseClass::HasAttackSlot();
+}
+#endif
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+// BREADMAN - This is interesting...
+// I've commented this back in to see what it does!
 void CNPC_Citizen::LocateEnemySound()
 {
-#if 0
+#ifdef EZ
 	if ( !GetEnemy() )
 		return;
 
@@ -2092,7 +4037,12 @@ bool CNPC_Citizen::IsManhackMeleeCombatant()
 {
 	CBaseCombatWeapon *pWeapon = GetActiveWeapon();
 	CBaseEntity *pEnemy = GetEnemy();
+#ifdef MAPBASE
+	// Any melee weapon passes
+	return ( pEnemy && pWeapon && pEnemy->Classify() == CLASS_MANHACK && pWeapon->IsMeleeWeapon() );
+#else
 	return ( pEnemy && pWeapon && pEnemy->Classify() == CLASS_MANHACK && pWeapon->ClassMatches( "weapon_crowbar" ) );
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -2103,6 +4053,14 @@ Vector CNPC_Citizen::GetActualShootPosition( const Vector &shootOrigin )
 {
 	Vector vecTarget = BaseClass::GetActualShootPosition( shootOrigin );
 
+#ifdef MAPBASE
+	// The gunship RPG code does not appear to be funcitonal, so only set the laser position.
+	if ( GetActiveWeapon() && EntIsClass(GetActiveWeapon(), gm_isz_class_RPG) && GetEnemy() )
+	{
+		CWeaponRPG *pRPG = static_cast<CWeaponRPG*>(GetActiveWeapon());
+		pRPG->SetNPCLaserPosition( vecTarget );
+	}
+#else
 	CWeaponRPG *pRPG = dynamic_cast<CWeaponRPG*>(GetActiveWeapon());
 	// If we're firing an RPG at a gunship, aim off to it's side, because we'll auger towards it.
 	if ( pRPG && GetEnemy() )
@@ -2144,6 +4102,7 @@ Vector CNPC_Citizen::GetActualShootPosition( const Vector &shootOrigin )
 		}
 
 	}
+#endif
 
 	return vecTarget;
 }
@@ -2194,19 +4153,31 @@ bool CNPC_Citizen::ShouldLookForBetterWeapon()
 		{
 			bool bDefer = false;
 
+#ifdef MAPBASE
+			if ( EntIsClass(pWeapon, gm_isz_class_AR2) )
+#else
 			if( FClassnameIs( pWeapon, "weapon_ar2" ) )
+#endif
 			{
 				// Content to keep this weapon forever
 				m_flNextWeaponSearchTime = OTHER_DEFER_SEARCH_TIME;
 				bDefer = true;
 			}
+#ifdef MAPBASE
+			else if( EntIsClass(pWeapon, gm_isz_class_RPG) )
+#else
 			else if( FClassnameIs( pWeapon, "weapon_rpg" ) )
+#endif
 			{
 				// Content to keep this weapon forever
 				m_flNextWeaponSearchTime = OTHER_DEFER_SEARCH_TIME;
 				bDefer = true;
 			}
+#ifdef MAPBASE
+			else if ( EntIsClass(pWeapon, gm_isz_class_Shotgun) )
+#else
 			else if( FClassnameIs( pWeapon, "weapon_shotgun" ) )
+#endif
 			{
 				// Shotgunners do not defer their weapon search indefinitely.
 				// If more than one citizen in the squad has a shotgun, we force
@@ -2259,8 +4230,14 @@ int CNPC_Citizen::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 {
 	if( (info.GetDamageType() & DMG_BURN) && (info.GetDamageType() & DMG_DIRECT) )
 	{
+#ifdef EZ
+		// Blixibon - Citizens scorch more, even faster than zombies; makes it more brutal
+#define CITIZEN_SCORCH_RATE		10
+#define CITIZEN_SCORCH_FLOOR	75
+#else
 #define CITIZEN_SCORCH_RATE		6
 #define CITIZEN_SCORCH_FLOOR	75
+#endif
 
 		Scorch( CITIZEN_SCORCH_RATE, CITIZEN_SCORCH_FLOOR );
 	}
@@ -2293,6 +4270,96 @@ int CNPC_Citizen::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 
 	return BaseClass::OnTakeDamage_Alive( newInfo );
 }
+
+#ifdef EZ
+extern ConVar sk_npc_head;
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+float CNPC_Citizen::GetHitgroupDamageMultiplier( int iHitGroup, const CTakeDamageInfo &info )
+{
+	switch( iHitGroup )
+	{
+	case HITGROUP_HEAD:
+		{
+			// Multiplied by sk_npc_head
+		if (m_Type != CT_BRUTE) // Brutes do normal headshot damage
+			return sk_citizen_head.GetFloat() * sk_npc_head.GetFloat();
+		} break;
+
+	case HITGROUP_GEAR:
+		{
+			if (m_Type == CT_LONGFALL)
+				return sk_citizen_longfall_gear.GetFloat();
+		} break;
+	}
+
+	return BaseClass::GetHitgroupDamageMultiplier( iHitGroup, info );
+}
+#endif
+
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CNPC_Citizen::ModifyOrAppendCriteria( AI_CriteriaSet& set )
+{
+	BaseClass::ModifyOrAppendCriteria( set );
+
+	// No need to tell me.
+	set.AppendCriteria("medic", IsMedic() ? "1" : "0");
+
+	set.AppendCriteria("citizentype", UTIL_VarArgs("%i", m_Type));
+
+#ifdef EZ
+	GatherWillpowerConditions();
+
+	int iWillpower = 0;
+	if (HasCondition(COND_CIT_WILLPOWER_VERY_LOW))
+		iWillpower = -2;
+	else if (HasCondition(COND_CIT_WILLPOWER_LOW))
+		iWillpower = -1;
+	else if (HasCondition(COND_CIT_WILLPOWER_HIGH))
+		iWillpower = 1;
+
+	set.AppendCriteria("willpower", UTIL_VarArgs("%i", iWillpower));
+#endif
+}
+#endif
+
+#ifdef EZ2
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CNPC_Citizen::ModifyOrAppendCriteriaForPlayer( CBasePlayer *pPlayer, AI_CriteriaSet& set )
+{
+	BaseClass::ModifyOrAppendCriteriaForPlayer( pPlayer, set );
+
+	set.AppendCriteria("citizentype", UTIL_VarArgs("%i", m_Type));
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CNPC_Citizen::GetGameTextSpeechParams( hudtextparms_t &params )
+{
+	if (NameMatches( "*RadioGuy*" ))
+	{
+		// Radio guy has a specific color
+		params.channel = 3;
+		params.x = -1;
+		params.y = 0.6;
+		params.effect = 0;
+
+		params.r1 = 250;
+		params.g1 = 245;
+		params.b1 = 215;
+
+		return true;
+	}
+
+	return false;
+}
+#endif
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -2336,6 +4403,11 @@ bool CNPC_Citizen::CanJoinPlayerSquad()
 
 	if ( IRelationType( UTIL_GetLocalPlayer() ) != D_LI )
 		return false;
+
+#ifdef MAPBASE
+	if ( IsWaitingToRappel() )
+		return false;
+#endif
 
 	return true;
 }
@@ -2511,6 +4583,64 @@ bool CNPC_Citizen::SpeakCommandResponse( AIConcept_t concept, const char *modifi
 									( modifiers ) ? CFmtStr(",%s", modifiers).operator const char *() : "" ) );
 }
 
+#ifdef MAPBASE
+extern ConVar ai_debug_avoidancebounds;
+
+//-----------------------------------------------------------------------------
+// Purpose: Implements player nocollide.
+//-----------------------------------------------------------------------------
+void CNPC_Citizen::SetPlayerAvoidState( void )
+{
+	bool bShouldPlayerAvoid = false;
+	Vector vNothing;
+
+	GetSequenceLinearMotion( GetSequence(), &vNothing );
+	bool bIsMoving = ( IsMoving() || ( vNothing != vec3_origin ) );
+
+	m_bPlayerAvoidState = ShouldPlayerAvoid();
+	bool bSquadNoCollide = (IsInPlayerSquad() && npc_citizen_nocollide_player.GetBool());
+
+	// If we are coming out of a script, check if we are stuck inside the player.
+	if ( m_bPerformAvoidance || ( m_bPlayerAvoidState && bIsMoving ) || bSquadNoCollide )
+	{
+		trace_t trace;
+		Vector vMins, vMaxs;
+
+		GetPlayerAvoidBounds( &vMins, &vMaxs );
+
+		CBasePlayer *pLocalPlayer = AI_GetSinglePlayer();
+
+		if ( pLocalPlayer )
+		{
+			bShouldPlayerAvoid = (!bSquadNoCollide || !pLocalPlayer->IsMoving()) && IsBoxIntersectingBox( GetAbsOrigin() + vMins, GetAbsOrigin() + vMaxs, 
+				pLocalPlayer->GetAbsOrigin() + pLocalPlayer->WorldAlignMins(), pLocalPlayer->GetAbsOrigin() + pLocalPlayer->WorldAlignMaxs() );
+		}
+
+		if ( ai_debug_avoidancebounds.GetBool() )
+		{
+			int iRed = ( bShouldPlayerAvoid == true ) ? 255 : 0;
+
+			NDebugOverlay::Box( GetAbsOrigin(), vMins, vMaxs, iRed, 0, 255, 64, 0.1 );
+		}
+	}
+
+	m_bPerformAvoidance = bShouldPlayerAvoid;
+
+	if ( GetCollisionGroup() == COLLISION_GROUP_NPC || GetCollisionGroup() == COLLISION_GROUP_NPC_ACTOR )
+	{
+		if ( m_bPerformAvoidance == true ||
+			(bSquadNoCollide && !m_bPlayerAvoidState))
+		{
+			SetCollisionGroup( COLLISION_GROUP_NPC_ACTOR );
+		}
+		else
+		{
+			SetCollisionGroup( COLLISION_GROUP_NPC );
+		}
+	}
+}
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: return TRUE if the commander mode should try to give this order
 //			to more people. return FALSE otherwise. For instance, we don't
@@ -2553,7 +4683,11 @@ void CNPC_Citizen::MoveOrder( const Vector &vecDest, CAI_BaseNPC **Allies, int n
 	if ( !AI_IsSinglePlayer() )
 		return;
 
+#ifdef MAPBASE
+	if ( m_iszDenyCommandConcept != NULL_STRING )
+#else
 	if( hl2_episodic.GetBool() && m_iszDenyCommandConcept != NULL_STRING )
+#endif
 	{
 		SpeakCommandResponse( STRING(m_iszDenyCommandConcept) );
 		return;
@@ -2635,6 +4769,28 @@ void CNPC_Citizen::OnMoveOrder()
 	BaseClass::OnMoveOrder();
 }
 
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+inline bool CNPC_Citizen::ShouldAllowSquadToggleUse( CBasePlayer *pPlayer )
+{
+	if (HasSpawnFlags( SF_CITIZEN_NOT_COMMANDABLE ))
+		return false;
+
+	//if (!HL2GameRules() || !HL2GameRules()->AllowSquadToggleUse())
+	if (!HasSpawnFlags( SF_CITIZEN_PLAYER_TOGGLE_SQUAD ))
+	{
+		if (!npc_citizen_squad_secondary_toggle_use_always.GetBool() || m_bNeverLeavePlayerSquad)
+			return false;
+
+		// npc_citizen_squad_secondary_toggle_use_always was invoked
+		AddSpawnFlags( SF_CITIZEN_PLAYER_TOGGLE_SQUAD );
+	}
+
+	return (pPlayer->m_nButtons & npc_citizen_squad_secondary_toggle_use_button.GetInt()) != 0;
+}
+#endif
+
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 void CNPC_Citizen::CommanderUse( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
@@ -2654,6 +4810,31 @@ void CNPC_Citizen::CommanderUse( CBaseEntity *pActivator, CBaseEntity *pCaller, 
 		// Don't say hi after you've been addressed by the player
 		SetSpokeConcept( TLK_HELLO, NULL );	
 
+#ifdef MAPBASE
+		if ( ShouldAllowSquadToggleUse(UTIL_GetLocalPlayer()) || npc_citizen_auto_player_squad_allow_use.GetBool() )
+		{
+			// Version of TogglePlayerSquadState() that has "used" as a modifier
+			static const char *szSquadUseModifier = "used:1";
+			if ( !IsInPlayerSquad() )
+			{
+				AddToPlayerSquad();
+
+				if ( HaveCommandGoal() )
+				{
+					SpeakCommandResponse( TLK_COMMANDED, szSquadUseModifier );
+				}
+				else if ( m_FollowBehavior.GetFollowTarget() == UTIL_GetLocalPlayer() )
+				{
+					SpeakCommandResponse( TLK_STARTFOLLOW, szSquadUseModifier );
+				}
+			}
+			else
+			{
+				SpeakCommandResponse( TLK_STOPFOLLOW, szSquadUseModifier );
+				RemoveFromPlayerSquad();
+			}
+		}
+#else
 		if ( npc_citizen_auto_player_squad_allow_use.GetBool() )
 		{
 			if ( !ShouldAutosquad() )
@@ -2661,8 +4842,37 @@ void CNPC_Citizen::CommanderUse( CBaseEntity *pActivator, CBaseEntity *pCaller, 
 			else if ( !IsInPlayerSquad() && npc_citizen_auto_player_squad_allow_use.GetBool() )
 				AddToPlayerSquad();
 		}
+#endif
 		else if ( GetCurSchedule() && ConditionInterruptsCurSchedule( COND_IDLE_INTERRUPT ) )
 		{
+#ifdef MAPBASE
+			// Just do regular idle question behavior so question groups, etc. work on +USE.
+			if ( IsAllowedToSpeak( TLK_QUESTION, true ) )
+			{
+				// 1 = Old "SpeakIdleResponse" behavior
+				// 2, 3 = AskQuestion() for QA groups, etc.
+				// 4 = Just speak
+				int iRandom = random->RandomInt(1, 4);
+				if ( iRandom == 1 )
+				{
+					CBaseEntity *pRespondant = FindSpeechTarget( AIST_NPCS );
+					if ( pRespondant )
+					{
+						g_EventQueue.AddEvent( pRespondant, "SpeakIdleResponse", ( GetTimeSpeechComplete() - gpGlobals->curtime ) + .2, this, this );
+					}
+				}
+				if ( iRandom < 4 )
+				{
+					// Ask someone else
+					AskQuestionNow();
+				}
+				else
+				{
+					// Just speak
+					Speak( TLK_QUESTION );
+				}
+			}
+#else
 			if ( SpeakIfAllowed( TLK_QUESTION, NULL, true ) )
 			{
 				if ( random->RandomInt( 1, 4 ) < 4 )
@@ -2674,6 +4884,7 @@ void CNPC_Citizen::CommanderUse( CBaseEntity *pActivator, CBaseEntity *pCaller, 
 					}
 				}
 			}
+#endif
 		}
 	}
 }
@@ -2883,6 +5094,11 @@ void CNPC_Citizen::UpdatePlayerSquad()
 				if ( !pCitizen->CanJoinPlayerSquad() )
 					continue;
 
+#ifdef MAPBASE
+				if ( pCitizen->HasSpawnFlags(SF_CITIZEN_PLAYER_TOGGLE_SQUAD) )
+					continue;
+#endif
+
 				bool bShouldAdd = false;
 
 				if ( pCitizen->HasCondition( COND_SEE_PLAYER ) )
@@ -2940,7 +5156,11 @@ void CNPC_Citizen::UpdatePlayerSquad()
 						if ( ppAIs[j]->GetClassname() != GetClassname() )
 							continue;
 
+#ifdef MAPBASE
+						if ( ppAIs[j]->HasSpawnFlags( SF_CITIZEN_NOT_COMMANDABLE | SF_CITIZEN_PLAYER_TOGGLE_SQUAD ) )
+#else
 						if ( ppAIs[j]->HasSpawnFlags( SF_CITIZEN_NOT_COMMANDABLE ) )
+#endif
 							continue; 
 
 						CNPC_Citizen *pCitizen = assert_cast<CNPC_Citizen *>(ppAIs[j]);
@@ -3204,6 +5424,7 @@ bool CNPC_Citizen::IsFollowingCommandPoint()
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
+#ifndef EZ
 struct SquadMemberInfo_t
 {
 	CNPC_Citizen *	pMember;
@@ -3225,6 +5446,7 @@ int __cdecl SquadSortFunc( const SquadMemberInfo_t *pLeft, const SquadMemberInfo
 
 	return ( pLeft->distSq - pRight->distSq );
 }
+#endif
 
 CAI_BaseNPC *CNPC_Citizen::GetSquadCommandRepresentative()
 {
@@ -3297,6 +5519,12 @@ void CNPC_Citizen::SetSquad( CAI_Squad *pSquad )
 	}
 }
 
+#ifdef EZ
+// External convars to handle bullsquid bites
+extern ConVar sk_gib_carcass_smell;
+extern ConVar sk_bullsquid_dmg_bite;
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose:  This is a generic function (to be implemented by sub-classes) to
 //			 handle specific interactions between different types of characters
@@ -3368,6 +5596,70 @@ bool CNPC_Citizen::HandleInteraction(int interactionType, void *data, CBaseComba
 		}
 		return true;
 	}
+#ifdef EZ
+	else if ( interactionType == g_interactionBullsquidMonch && npc_citizen_gib.GetBool() )
+	{
+		OnTakeDamage ( CTakeDamageInfo( sourceEnt, sourceEnt, sk_bullsquid_dmg_bite.GetFloat() * 1.5f, DMG_CRUSH | DMG_ALWAYSGIB ) );
+		// Give the predator health if gibs do not count as food sources, otherwise don't
+		return !sk_gib_carcass_smell.GetBool();
+	}
+#ifdef EZ2
+	else if ( interactionType == g_interactionBadCopKick )
+	{
+		KickInfo_t * pInfo = static_cast< KickInfo_t *>(data);
+
+		// Only continue if our damage filter allows us to
+		if (pInfo->dmgInfo && !PassesDamageFilter( *pInfo->dmgInfo ))
+			return false;
+
+		// If we have directional information, see if this kick knocked a weapon free
+		trace_t * pTr = pInfo->tr;
+		CBaseCombatWeapon * pWeapon = GetActiveWeapon();
+		if ( pTr && pWeapon )
+		{
+			Vector pWeaponPos = Weapon_ShootPosition();
+			const Vector weaponTarget = pWeaponPos + (pTr->endpos - pTr->startpos);
+			const Vector weaponVelocity = ( (pTr->endpos - pTr->startpos) * 1024.0f );
+
+			SetCondition( COND_CIT_DISARMED );
+
+			Weapon_Drop( pWeapon, &weaponTarget, &weaponVelocity );
+		}
+
+		// Oof
+		SetCondition( COND_HEAVY_DAMAGE );
+
+		if (GetActiveWeapon() == NULL)
+		{
+			// If I don't have any weapons to switch to, lose willpower and stop attacking
+			if ( pWeapon == NULL || !GiveBackupWeapon( pWeapon, sourceEnt ) )
+			{
+				ClearCondition( COND_CIT_WILLPOWER_HIGH );
+				if(!m_bWillpowerDisabled)
+					SetCondition( COND_CIT_WILLPOWER_LOW );
+				SetCondition( COND_TOO_CLOSE_TO_ATTACK );
+			}
+		}
+
+		// Do normal kick handling
+		return false;
+	}
+	// Set the context for surrender
+	else if ( interactionType == g_interactionBadCopOrderSurrender && m_SurrenderBehavior.CanSurrender() && GetActiveWeapon() == NULL )
+	{
+		//AddContext( "surrendered:1" );
+		m_SurrenderBehavior.Surrender( sourceEnt );
+		//m_OnSurrender.FireOutput( sourceEnt, sourceEnt );
+
+		if (sourceEnt)
+		{
+			AddLookTarget( sourceEnt, 1.0f, 3.0f, 1.0f );
+		}
+
+		return true;
+	}
+#endif
+#endif
 
 	return BaseClass::HandleInteraction( interactionType, data, sourceEnt );
 }
@@ -3415,7 +5707,14 @@ bool CNPC_Citizen::ShouldHealTarget( CBaseEntity *pTarget, bool bActiveUse )
 {
 	Disposition_t disposition;
 	
+	if (!pTarget)
+		return false;
+
+#ifdef MAPBASE
+	if ( pTarget && ( ( disposition = IRelationType( pTarget ) ) != D_LI && disposition != D_NU ) )
+#else
 	if ( !pTarget && ( ( disposition = IRelationType( pTarget ) ) != D_LI && disposition != D_NU ) )
+#endif
 		return false;
 
 	// Don't heal if I'm in the middle of talking
@@ -3488,6 +5787,12 @@ bool CNPC_Citizen::ShouldHealTarget( CBaseEntity *pTarget, bool bActiveUse )
 			}
 			else
 			{
+
+#ifdef EZ2
+				// No ammo remaining
+				if (m_iAmmoAmount <= 0)
+					return false;
+#endif
 				// Does the player need the ammo we can give him?
 				int iMax = GetAmmoDef()->MaxCarry(iAmmoType);
 				int iCount = ((CBasePlayer*)pTarget)->GetAmmoCount(iAmmoType);
@@ -3497,6 +5802,14 @@ bool CNPC_Citizen::ShouldHealTarget( CBaseEntity *pTarget, bool bActiveUse )
 					if ( ((CBasePlayer*)pTarget)->Weapon_GetWpnForAmmo( iAmmoType ) )
 						return true;
 				}
+#ifdef MAPBASE
+				else if ( (iMax - iCount) < m_iAmmoAmount && (iMax - iCount) != 0 )
+				{
+					// If we're allowed to adjust our ammo, the amount of ammo we give may be reduced, but that's better than not giving any at all!
+					if (npc_citizen_resupplier_adjust_ammo.GetBool() == true && ((CBasePlayer*)pTarget)->Weapon_GetWpnForAmmo( iAmmoType ))
+						return true;
+				}
+#endif
 			}
 		}
 	}
@@ -3515,14 +5828,25 @@ bool CNPC_Citizen::ShouldHealTossTarget( CBaseEntity *pTarget, bool bActiveUse )
 	if ( !IsMedic() )
 		return false;
 	
+#ifdef MAPBASE
+	if ( pTarget && ( ( disposition = IRelationType( pTarget ) ) != D_LI && disposition != D_NU ) )
+#else
 	if ( !pTarget && ( ( disposition = IRelationType( pTarget ) ) != D_LI && disposition != D_NU ) )
+#endif
 		return false;
 
 	// Don't heal if I'm in the middle of talking
 	if ( IsSpeaking() )
 		return false;
 
+#ifdef MAPBASE
+	// NPCs cannot be healed by throwing medkits at them.
+	// I don't think NPCs even pass through this function anyway, it's just the actual heal event that's the problem.
+	if (!pTarget->IsPlayer())
+		return false;
+#else
 	bool bTargetIsPlayer = pTarget->IsPlayer();
+#endif
 
 	// Don't heal or give ammo to targets in vehicles
 	CBaseCombatCharacter *pCCTarget = pTarget->MyCombatCharacterPointer();
@@ -3550,18 +5874,26 @@ bool CNPC_Citizen::ShouldHealTossTarget( CBaseEntity *pTarget, bool bActiveUse )
 			}
 
 			// Are we ready to heal again?
+#ifdef MAPBASE
+			bool bReadyToHeal = m_flPlayerHealTime <= gpGlobals->curtime;
+#else
 			bool bReadyToHeal = ( ( bTargetIsPlayer && m_flPlayerHealTime <= gpGlobals->curtime ) || 
 				( !bTargetIsPlayer && m_flAllyHealTime <= gpGlobals->curtime ) );
+#endif
 
 			// Only heal if we're ready
 			if ( bReadyToHeal )
 			{
 				int requiredHealth;
 
+#ifdef MAPBASE
+				requiredHealth = pTarget->GetMaxHealth() - sk_citizen_heal_player.GetFloat();
+#else
 				if ( bTargetIsPlayer )
 					requiredHealth = pTarget->GetMaxHealth() - sk_citizen_heal_player.GetFloat();
 				else
 					requiredHealth = pTarget->GetMaxHealth() * sk_citizen_heal_player_min_pct.GetFloat();
+#endif
 
 				if ( ( pTarget->m_iHealth <= requiredHealth ) && IRelationType( pTarget ) == D_LI )
 					return true;
@@ -3582,6 +5914,11 @@ void CNPC_Citizen::Heal()
 		  return;
 
 	CBaseEntity *pTarget = GetTarget();
+
+#ifdef MAPBASE
+	if ( !pTarget )
+		return;
+#endif
 
 	Vector target = pTarget->GetAbsOrigin() - GetAbsOrigin();
 	if ( target.Length() > HEAL_TARGET_RANGE * 2 )
@@ -3625,8 +5962,26 @@ void CNPC_Citizen::Heal()
 				EmitSound( filter, pTarget->entindex(), "HealthKit.Touch" );
 			}
 
+#ifdef MAPBASE
+			pTarget->IsPlayer() ? m_OnHealedPlayer.FireOutput(pTarget, this) : m_OnHealedNPC.FireOutput(pTarget, this);
+#endif
+
 			pTarget->TakeHealth( healAmt, DMG_GENERIC );
 			pTarget->RemoveAllDecals();
+
+#ifdef EZ2
+			if (pTarget->IsPlayer())
+			{
+				// Fire the event (used for surrender behavior)
+				IGameEvent *event = gameeventmanager->CreateEvent( "medic_heal_player" );
+				if (event)
+				{
+					event->SetInt( "userid", ToBasePlayer( pTarget )->GetUserID() );
+					event->SetInt( "medic", entindex() );
+					gameeventmanager->FireEvent( event );
+				}
+			}
+#endif
 		}
 	}
 
@@ -3643,6 +5998,18 @@ void CNPC_Citizen::Heal()
 			else
 			{
 				((CBasePlayer*)pTarget)->GiveAmmo( m_iAmmoAmount, iAmmoType, false );
+
+#ifdef MAPBASE
+				m_OnGiveAmmo.FireOutput(pTarget, this);
+#endif
+
+#ifdef EZ2
+				if (IsSurrendered())
+				{
+					// Surrendered citizens slowly deplete their ammo supply.
+					m_iAmmoAmount = (((float)m_iAmmoAmount) * npc_citizen_surrender_ammo_deplete_multiplier.GetFloat());
+				}
+#endif
 			}
 
 			m_flPlayerGiveAmmoTime = gpGlobals->curtime + sk_citizen_giveammo_player_delay.GetFloat();
@@ -3715,6 +6082,10 @@ void	CNPC_Citizen::TossHealthKit(CBaseCombatCharacter *pThrowAt, const Vector &o
 				pPhysicsObject->SetVelocity( &tossVelocity, &angDummy );
 			}
 		}
+
+#ifdef MAPBASE
+		m_OnThrowMedkit.Set(pHealthKit, pHealthKit, this);
+#endif
 	}
 	else
 	{
@@ -3790,6 +6161,16 @@ void CNPC_Citizen::InputSetCommandable( inputdata_t &inputdata )
 	gm_PlayerSquadEvaluateTimer.Force();
 }
 
+#ifdef MAPBASE
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+void CNPC_Citizen::InputSetUnCommandable( inputdata_t &inputdata )
+{
+	AddSpawnFlags( SF_CITIZEN_NOT_COMMANDABLE );
+	RemoveFromPlayerSquad();
+}
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : &inputdata - 
@@ -3833,6 +6214,99 @@ void CNPC_Citizen::InputSpeakIdleResponse( inputdata_t &inputdata )
 	SpeakIfAllowed( TLK_ANSWER, NULL, true );
 }
 
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input  : &inputdata - 
+//-----------------------------------------------------------------------------
+void CNPC_Citizen::InputSetPoliceGoal( inputdata_t &inputdata )
+{
+	if (/*!inputdata.value.String() ||*/ inputdata.value.String()[0] == 0)
+	{
+		m_PolicingBehavior.Disable();
+		return;
+	}
+
+	CBaseEntity *pGoal = gEntList.FindEntityByName( NULL, inputdata.value.String() );
+
+	if ( pGoal == NULL )
+	{
+		DevMsg( "SetPoliceGoal: %s (%s) unable to find ai_goal_police: %s\n", GetClassname(), GetDebugName(), inputdata.value.String() );
+		return;
+	}
+
+	CAI_PoliceGoal *pPoliceGoal = dynamic_cast<CAI_PoliceGoal *>(pGoal);
+
+	if ( pPoliceGoal == NULL )
+	{
+		DevMsg( "SetPoliceGoal: %s (%s)'s target %s is not an ai_goal_police entity!\n", GetClassname(), GetDebugName(), inputdata.value.String() );
+		return;
+	}
+
+	m_PolicingBehavior.Enable( pPoliceGoal );
+}
+#endif
+
+#ifdef EZ2
+void CNPC_Citizen::InputSurrender( inputdata_t & inputdata )
+{
+	//AddContext( "surrendered:1" );
+	m_SurrenderBehavior.Surrender( ToBaseCombatCharacter( inputdata.pActivator ) );
+	//m_OnSurrender.FireOutput( inputdata.pActivator, inputdata.pCaller );
+}
+
+void CNPC_Citizen::InputSetSurrenderFlags( inputdata_t & inputdata )
+{
+	m_SurrenderBehavior.SetFlags( inputdata.value.Int() );
+}
+
+void CNPC_Citizen::InputAddSurrenderFlags( inputdata_t & inputdata )
+{
+	m_SurrenderBehavior.AddFlags( inputdata.value.Int() );
+}
+
+void CNPC_Citizen::InputRemoveSurrenderFlags( inputdata_t & inputdata )
+{
+	m_SurrenderBehavior.RemoveFlags( inputdata.value.Int() );
+}
+
+void CNPC_Citizen::InputSetWillpowerModifier( inputdata_t & inputdata )
+{
+	m_iWillpowerModifier = inputdata.value.Int();
+}
+
+void CNPC_Citizen::InputSetWillpowerDisabled( inputdata_t & inputdata )
+{
+	m_bWillpowerDisabled = inputdata.value.Bool();
+}
+
+void CNPC_Citizen::InputSetSuppressiveFireDisabled( inputdata_t & inputdata )
+{
+	m_bSuppressiveFireDisabled = inputdata.value.Bool();
+}
+
+void CNPC_Citizen::InputForcePanic( inputdata_t & inputdata )
+{
+	m_iWillpowerModifier = -99999999;
+	m_bWillpowerDisabled = false;
+
+	m_iNumGrenades = 0;
+
+	// Immediately drop weapon
+	Weapon_Drop( GetActiveWeapon() );
+
+	// Don't look for another weapon for 15 seconds!
+	m_flNextWeaponSearchTime = gpGlobals->curtime + 15.0;
+
+	// Never use a backup weapon after this!
+	m_bUsedBackupWeapon = true;
+
+	SetCondition( COND_CIT_WILLPOWER_VERY_LOW );
+	SetCondition( COND_CIT_WILLPOWER_LOW );
+	ClearCondition( COND_CIT_WILLPOWER_HIGH );
+}
+#endif
+
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 void CNPC_Citizen::DeathSound( const CTakeDamageInfo &info )
@@ -3840,13 +6314,39 @@ void CNPC_Citizen::DeathSound( const CTakeDamageInfo &info )
 	// Sentences don't play on dead NPCs
 	SentenceStop();
 
+#ifdef MAPBASE
+	AI_CriteriaSet set;
+	ModifyOrAppendDamageCriteria(set, info);
+	Speak( TLK_DEATH, set );
+#else
 	EmitSound( "NPC_Citizen.Die" );
+#endif
+#ifdef EZ
+	// Blixibon - Don't drop blood decal under these damage types
+	if (!(info.GetDamageType() & (DMG_DISSOLVE | DMG_DROWN | DMG_RADIATION | DMG_POISON | DMG_NERVEGAS)))
+	{
+		// BREADMAN - hijacking this
+		// dump a decal beneath us.
+		trace_t tr;
+		AI_TraceLine(GetAbsOrigin() + Vector(0, 0, 1), GetAbsOrigin() - Vector(0, 0, 64), MASK_SOLID_BRUSHONLY | CONTENTS_PLAYERCLIP | CONTENTS_MONSTERCLIP, this, COLLISION_GROUP_NONE, &tr);
+		UTIL_DecalTrace(&tr, "Blood"); // my bits - trying to dump a big splat on the floor when we die.
+	}
+#endif
 }
 
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 void CNPC_Citizen::FearSound( void )
 {
+#ifdef EZ1
+	SpeakIfAllowed(TLK_DANGER); // Say something when afraid
+#endif
+#ifdef EZ2
+	if ( TrySpeakBeg() == false )
+	{
+		SpeakIfAllowed( TLK_FEAR ); // Say something when afraid
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -3861,6 +6361,144 @@ bool CNPC_Citizen::UseSemaphore( void )
 
 	return BaseClass::UseSemaphore();
 }
+
+#ifdef EZ2
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CNPC_Citizen::CCitizenSurrenderBehavior::Surrender( CBaseCombatCharacter *pCaptor )
+{
+	BaseClass::Surrender( pCaptor );
+
+	// "You surrendered even though you had a weapon the whole time???"
+	// TODO: Maybe keep this and turn backup weapons into a resistance modifier? (i.e. citizens have a weapon concealed and are just waiting for the right time to use it)
+	GetOuterCit()->m_bUsedBackupWeapon = true;
+
+	// Brutes become very, very annoying ammo resuppliers
+	// NEW: Now applies to all non-medic citizens
+	if (/*GetOuterCit()->m_Type == CT_BRUTE &&*/ !GetOuterCit()->IsMedic() && !GetOuterCit()->IsAmmoResupplier() && GetOuterCit()->m_iszAmmoSupply != NULL_STRING)
+	{
+		GetOuterCit()->AddSpawnFlags( SF_CITIZEN_AMMORESUPPLIER );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int CNPC_Citizen::CCitizenSurrenderBehavior::SelectSchedule()
+{
+	int schedule = SCHED_NONE;
+	if (IsSurrenderIdleStanding() || IsSurrenderMovingToIdle())
+	{
+		//if (HasCondition( COND_CIT_PLAYERHEALREQUEST ))
+		{
+			// Heal if needed
+			schedule = GetOuterCit()->SelectScheduleHeal();
+			if (schedule != SCHED_NONE)
+				return schedule;
+		}
+
+		if (GetOuterCit()->m_Type == CT_BRUTE)
+		{
+			// Look for a weapon immediately
+			schedule = GetOuterCit()->SelectScheduleRetrieveItem();
+			if (schedule != SCHED_NONE)
+				return schedule;
+		}
+
+		schedule = GetOuterCit()->SelectSchedulePlayerPush();
+		if (schedule != SCHED_NONE)
+			return schedule;
+	}
+
+	return BaseClass::SelectSchedule();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CNPC_Citizen::CCitizenSurrenderBehavior::BuildScheduleTestBits()
+{
+	BaseClass::BuildScheduleTestBits();
+
+	if (IsSurrenderIdleStanding())
+	{
+		GetOuter()->SetCustomInterruptCondition( COND_CIT_PLAYERHEALREQUEST );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input  : *pTask - 
+//-----------------------------------------------------------------------------
+void CNPC_Citizen::CCitizenSurrenderBehavior::RunTask( const Task_t *pTask )
+{
+	switch( pTask->iTask )
+	{
+	case TASK_SURRENDER_IDLE_LOOP:
+		if (NextSurrenderIdleCheck() < gpGlobals->curtime)
+		{
+			if (IsSurrenderIdleStanding())
+			{
+				// Check if there's anyone in our squad nearby who should be healed
+				// (bit of a hack, but there's no other way to interrupt the schedule)
+				if ( GetOuter()->IsInSquad() )
+				{
+					CBaseEntity *pEntity = NULL;
+					float distClosestSq = Square( 128.0f );
+					float distCurSq;
+			
+					AISquadIter_t iter;
+					CAI_BaseNPC *pSquadmate = GetOuter()->GetSquad()->GetFirstMember( &iter );
+					while ( pSquadmate )
+					{
+						if ( pSquadmate != GetOuter() )
+						{
+							distCurSq = ( GetAbsOrigin() - pSquadmate->GetAbsOrigin() ).LengthSqr();
+							if ( distCurSq < distClosestSq && GetOuterCit()->ShouldHealTarget( pSquadmate ) )
+							{
+								distClosestSq = distCurSq;
+								pEntity = pSquadmate;
+							}
+						}
+
+						pSquadmate = GetOuter()->GetSquad()->GetNextMember( &iter );
+					}
+			
+					if ( pEntity )
+					{
+						// Assume the heal schedule will be selected
+						TaskComplete();
+					}
+				}
+			}
+
+			BaseClass::RunTask( pTask );
+		}
+		break;
+
+	default:
+		BaseClass::RunTask( pTask );
+		break;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int CNPC_Citizen::CCitizenSurrenderBehavior::ModifyResistanceValue( int iVal )
+{
+	iVal = BaseClass::ModifyResistanceValue( iVal );
+
+	iVal += GetOuterCit()->m_iWillpowerModifier;
+
+	// Brutes give resistance a natural bonus
+	if (GetOuterCit()->m_Type == CT_BRUTE)
+		iVal += 3;
+
+	return iVal;
+}
+#endif
 
 //-----------------------------------------------------------------------------
 //
@@ -3879,6 +6517,10 @@ AI_BEGIN_CUSTOM_NPC( npc_citizen, CNPC_Citizen )
 #if HL2_EPISODIC
 	DECLARE_TASK( TASK_CIT_HEAL_TOSS )
 #endif
+#ifdef EZ
+	DECLARE_TASK( TASK_CIT_DIE_INSTANTLY )
+	DECLARE_TASK( TASK_CIT_PAINT_SUPPRESSION_TARGET )
+#endif
 
 	DECLARE_ACTIVITY( ACT_CIT_HANDSUP )
 	DECLARE_ACTIVITY( ACT_CIT_BLINDED )
@@ -3886,9 +6528,28 @@ AI_BEGIN_CUSTOM_NPC( npc_citizen, CNPC_Citizen )
 	DECLARE_ACTIVITY( ACT_CIT_HEAL )
 	DECLARE_ACTIVITY( ACT_CIT_STARTLED )
 
+#ifdef EZ2
+	DECLARE_ACTIVITY( ACT_CROUCH_PANICKED )
+	DECLARE_ACTIVITY( ACT_WALK_PANICKED )
+	DECLARE_ACTIVITY( ACT_RUN_PANICKED )
+#endif
+
+
 	DECLARE_CONDITION( COND_CIT_PLAYERHEALREQUEST )
 	DECLARE_CONDITION( COND_CIT_COMMANDHEAL )
 	DECLARE_CONDITION( COND_CIT_START_INSPECTION )
+#ifdef EZ
+	DECLARE_CONDITION(COND_CIT_WILLPOWER_VERY_LOW)
+	DECLARE_CONDITION(COND_CIT_WILLPOWER_LOW)
+	DECLARE_CONDITION(COND_CIT_WILLPOWER_HIGH)
+	DECLARE_CONDITION(COND_CIT_ON_FIRE)
+	DECLARE_CONDITION(COND_CIT_DISARMED)
+
+	DECLARE_SQUADSLOT(SQUAD_SLOT_CITIZEN_RPG1) // Previously, RPG squad slots were undeclared
+	DECLARE_SQUADSLOT(SQUAD_SLOT_CITIZEN_RPG2)
+	DECLARE_SQUADSLOT(SQUAD_SLOT_CITIZEN_ADVANCE)
+	DECLARE_SQUADSLOT(SQUAD_SLOT_CITIZEN_INVESTIGATE)
+#endif
 
 	//Events
 	DECLARE_ANIMEVENT( AE_CITIZEN_GET_PACKAGE )
@@ -4044,7 +6705,81 @@ AI_BEGIN_CUSTOM_NPC( npc_citizen, CNPC_Citizen )
 		""
 		"	Interrupts"
 	)
+#ifdef EZ
+	//=========================================================
+	// > RangeAttack1Advance
+	//	New schedule by 1upD to fire and then charge towards the player
+	//=========================================================
+	DEFINE_SCHEDULE
+	(
+		SCHED_CITIZEN_RANGE_ATTACK1_ADVANCE,
 
+		"	Tasks"
+		"		TASK_STOP_MOVING		0"
+		"		TASK_FACE_ENEMY			0"
+		"		TASK_ANNOUNCE_ATTACK	1"	// 1 = primary attack
+		"		TASK_RANGE_ATTACK1		0"
+		"		TASK_SET_SCHEDULE		SCHEDULE:SCHED_CHASE_ENEMY"
+		""
+		"	Interrupts"
+		"		COND_NO_PRIMARY_AMMO"
+		"		COND_NEW_ENEMY"
+		"		COND_ENEMY_DEAD"
+		"		COND_ENEMY_UNREACHABLE"
+		"		COND_CAN_MELEE_ATTACK1"
+		"		COND_CAN_RANGE_ATTACK2"
+		"		COND_CAN_MELEE_ATTACK2"
+		"		COND_TOO_CLOSE_TO_ATTACK"
+		"		COND_TASK_FAILED"
+		"		COND_LOST_ENEMY"
+		"		COND_BETTER_WEAPON_AVAILABLE"
+		"		COND_HEAR_DANGER"
+		"		COND_CIT_WILLPOWER_LOW"
+	);
+
+	//===============================================
+	//	> RangeAttack1Suppress
+	//	1upD - Currently essentially the same
+	//		as SCHED_RANGE_ATTACK1, but will
+	//		be updated with new tasks
+	//===============================================
+		DEFINE_SCHEDULE
+	(
+		SCHED_CITIZEN_RANGE_ATTACK1_SUPPRESS,
+
+		"	Tasks"
+		"		TASK_STOP_MOVING					0"
+		"		TASK_CIT_PAINT_SUPPRESSION_TARGET	0"
+		"		TASK_FACE_ENEMY						0"
+		"		TASK_RANGE_ATTACK1					0"
+		""
+		"	Interrupts"
+		"		COND_NO_PRIMARY_AMMO"
+		"		COND_LIGHT_DAMAGE"
+		"		COND_HEAVY_DAMAGE"
+		"		COND_HEAR_DANGER"
+		"		COND_WEAPON_BLOCKED_BY_FRIEND"
+		"		COND_CAN_MELEE_ATTACK1"
+		"		COND_CAN_RANGE_ATTACK2"
+		"		COND_CAN_MELEE_ATTACK2"
+		"		COND_TOO_CLOSE_TO_ATTACK"
+	);
+
+	//=========================================================
+	//=========================================================
+	DEFINE_SCHEDULE
+	(
+		SCHED_CITIZEN_BURNING_STAND,
+
+		"	Tasks"
+		"		TASK_SET_ACTIVITY				ACTIVITY:ACT_IDLE_ON_FIRE"
+		"		TASK_WAIT						3.5" // Blixibon - Metrocops die after 1.5, but 3.5 gives citizens more scorch time and players more traumatization time
+		"		TASK_CIT_DIE_INSTANTLY			DMG_BURN"
+		"		TASK_WAIT						1.0"
+		"	"
+		"	Interrupts"
+	);
+#endif
 AI_END_CUSTOM_NPC()
 
 
@@ -4263,3 +6998,78 @@ int CNPC_Citizen::DrawDebugTextOverlays( void )
 	}
 	return text_offset;
 }
+#ifdef EZ
+//------------------------------------------------------------------------------
+// Added by 1upD. Citizen weapon proficiency should be configurable
+//------------------------------------------------------------------------------
+WeaponProficiency_t CNPC_Citizen::CalcWeaponProficiency(CBaseCombatWeapon *pWeapon)
+{
+	int proficiency;
+
+	if (FClassnameIs(pWeapon, "weapon_ar2"))
+	{
+		proficiency = sk_citizen_ar2_proficiency.GetInt();
+	}
+	else {
+		proficiency = sk_citizen_default_proficiency.GetInt();
+	}
+	
+	// Clamp the upper range of the ConVar to "perfect"
+	// Could also cast the int to the enum if you're feeling dangerous
+	if (proficiency > 4) {
+		return WEAPON_PROFICIENCY_PERFECT;
+	}
+	
+	// Switch values to enum. You could cast the int to the enum here,
+	// but I'm not sure how 'safe' that is since the enum values are
+	// not explicity defined. This also clamps the range.
+	switch (proficiency) {
+		case 4:
+			return WEAPON_PROFICIENCY_PERFECT;
+		case 3:
+			return WEAPON_PROFICIENCY_VERY_GOOD;
+		case 2:
+			return WEAPON_PROFICIENCY_GOOD;
+		case 1:
+			return WEAPON_PROFICIENCY_AVERAGE;
+		default:
+			return WEAPON_PROFICIENCY_POOR;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Returns true if a reasonable jumping distance
+//		1upD - If this rebel is using Aperture Science tech, he should be able
+//				to jump incredible distances
+// Input  :
+// Output :
+//-----------------------------------------------------------------------------
+bool CNPC_Citizen::IsJumpLegal(const Vector &startPos, const Vector &apex, const Vector &endPos) const
+{
+#ifdef EZ2
+	// Jump rebels can jump incredible distances, but not if they have surrendered
+	if ( m_Type == CT_LONGFALL && !m_SurrenderBehavior.IsSurrendered() )
+	{
+		const float MAX_JUMP_RISE = 1024.0f; // This one might need some adjustment - how high is too high?
+		const float MAX_JUMP_DISTANCE = 1024.0f;
+		const float MAX_JUMP_DROP = 8192.0f; // Basically any height
+
+		return BaseClass::IsJumpLegal(startPos, apex, endPos, MAX_JUMP_RISE, MAX_JUMP_DROP, MAX_JUMP_DISTANCE);
+	}
+#endif
+	return BaseClass::IsJumpLegal(startPos, apex, endPos);
+}
+
+//-----------------------------------------------------------------------------
+// Override TestShootPosition for jump rebels - if the potential shoot position is not above the target, don't select it
+//-----------------------------------------------------------------------------
+bool CNPC_Citizen::TestShootPosition( const Vector &vecShootPos, const Vector &targetPos )
+{
+	if ( m_Type == CT_LONGFALL && npc_citizen_longfall_test_high_ground.GetBool() &&  vecShootPos.z <= targetPos.z )
+	{
+		return false;
+	}
+
+	return BaseClass::TestShootPosition( vecShootPos, targetPos );
+}
+#endif

@@ -23,6 +23,13 @@ acttable_t	CWeaponCitizenPackage::m_acttable[] =
 {
 	{ ACT_IDLE,						ACT_IDLE_PACKAGE,					false },
 	{ ACT_WALK,						ACT_WALK_PACKAGE,					false },
+#if EXPANDED_HL2_WEAPON_ACTIVITIES
+	{ ACT_RUN,						ACT_RUN_PACKAGE,					false },
+
+	{ ACT_IDLE_ANGRY,				ACT_IDLE_PACKAGE,					false },
+	{ ACT_WALK_AIM,					ACT_WALK_PACKAGE,					false },
+	{ ACT_RUN_AIM,					ACT_RUN_PACKAGE,					false },
+#endif
 };
 IMPLEMENT_ACTTABLE(CWeaponCitizenPackage);
 
@@ -70,5 +77,32 @@ acttable_t	CWeaponCitizenSuitcase::m_acttable[] =
 {
 	{ ACT_IDLE,						ACT_IDLE_SUITCASE,					false },
 	{ ACT_WALK,						ACT_WALK_SUITCASE,					false },
+#if EXPANDED_HL2_WEAPON_ACTIVITIES
+	{ ACT_RUN,						ACT_RUN_SUITCASE,					false },
+
+	{ ACT_IDLE_ANGRY,				ACT_IDLE_SUITCASE,					false },
+	{ ACT_WALK_AIM,					ACT_WALK_SUITCASE,					false },
+	{ ACT_RUN_AIM,					ACT_RUN_SUITCASE,					false },
+#endif
 };
 IMPLEMENT_ACTTABLE(CWeaponCitizenSuitcase);
+
+#ifdef EZ2
+class CWeaponArbeitClipboard : public CWeaponCitizenPackage
+{
+	DECLARE_CLASS( CWeaponArbeitClipboard, CWeaponCitizenPackage );
+public:
+
+	DECLARE_SERVERCLASS();
+	DECLARE_DATADESC();
+};
+
+IMPLEMENT_SERVERCLASS_ST(CWeaponArbeitClipboard, DT_WeaponArbeitClipboard)
+END_SEND_TABLE()
+
+BEGIN_DATADESC( CWeaponArbeitClipboard )
+END_DATADESC()
+
+LINK_ENTITY_TO_CLASS( weapon_arbeit_clipboard, CWeaponArbeitClipboard );
+PRECACHE_WEAPON_REGISTER( weapon_arbeit_clipboard );
+#endif

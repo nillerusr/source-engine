@@ -36,6 +36,9 @@ enum AI_Formations_t
 	AIF_SIDEKICK,
 	AIF_HUNTER,
 	AIF_VORTIGAUNT,
+#ifdef MAPBASE
+	AIF_NUM_FORMATIONS,
+#endif
 };
 
 enum AI_FollowFormationFlags_t
@@ -67,6 +70,10 @@ public:
 #endif
 
 	int m_iFormation;
+
+#ifdef MAPBASE
+	bool m_bNormalMemoryDiscard = false;
+#endif
 
 	DECLARE_DATADESC();
 };
@@ -228,6 +235,9 @@ protected:
 	bool 			UpdateFollowPosition();
 	const int		GetGoalFlags();
 	float 			GetGoalTolerance();
+#ifdef EZ2
+	virtual
+#endif
 	bool			PlayerIsPushing();
 
 	bool IsFollowTargetInRange( float rangeMultiplier = 1.0 );

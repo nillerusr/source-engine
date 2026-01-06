@@ -10,6 +10,9 @@
 #include "iviewrender.h"
 #include "view_shared.h"
 #include "viewrender.h"
+#ifdef MAPBASE
+#include "c_point_camera.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -53,6 +56,11 @@ private:
 	float	m_flBlendStartTime;
 	bool	m_bActive;
 	EHANDLE	m_hCameraEntity;
+#ifdef MAPBASE
+	bool	m_bDrawSky;
+	bool	m_bDrawSky2;
+	bool	m_bUseEyePosition;
+#endif
 
 	// Fades
 	float	m_flFadeColor[3];			// Server's desired fade color
@@ -71,6 +79,11 @@ IMPLEMENT_CLIENTCLASS_DT( C_ScriptIntro, DT_ScriptIntro, CScriptIntro )
 	RecvPropFloat( RECVINFO( m_flNextBlendTime ) ),
 	RecvPropFloat( RECVINFO( m_flBlendStartTime ) ),
 	RecvPropBool( RECVINFO( m_bActive ) ),
+#ifdef MAPBASE
+	RecvPropBool( RECVINFO( m_bDrawSky ) ),
+	RecvPropBool( RECVINFO( m_bDrawSky2 ) ),
+	RecvPropBool( RECVINFO( m_bUseEyePosition ) ),
+#endif
 	
 	// Fov & fov blends 
 	RecvPropInt( RECVINFO( m_iFOV ) ),
@@ -140,6 +153,10 @@ void C_ScriptIntro::PostDataUpdate( DataUpdateType_t updateType )
 	m_IntroData.m_vecCameraViewAngles = m_vecCameraViewAngles;
 	m_IntroData.m_Passes.SetCount( 0 );
 
+#ifdef MAPBASE
+	m_IntroData.m_bDrawSky = m_bDrawSky;
+#endif
+
 	// Find/Create our first pass
 	IntroDataBlendPass_t *pass1;
 	if ( m_IntroData.m_Passes.Count() == 0 )
@@ -161,6 +178,20 @@ void C_ScriptIntro::PostDataUpdate( DataUpdateType_t updateType )
 	else
 	{
 		m_IntroData.m_bDrawPrimary = true;
+#ifdef MAPBASE
+		m_IntroData.m_bDrawSky2 = m_bDrawSky2;
+
+		// If it's a point_camera and it's ortho, send it to the intro data
+		// Change this code if the purpose of m_hCameraEntity in intro data ever goes beyond ortho
+		if ( m_hCameraEntity && Q_strncmp(m_hCameraEntity->GetClassname(), "point_camera", 12) == 0 )
+		{
+			C_PointCamera *pCamera = dynamic_cast<C_PointCamera*>(m_hCameraEntity.Get());
+			if (pCamera && pCamera->IsOrtho())
+			{
+				m_IntroData.m_hCameraEntity = m_hCameraEntity;
+			}
+		}
+#endif
 	}
 
 	// If we're currently blending to a new mode, set the second pass
@@ -239,8 +270,20 @@ void C_ScriptIntro::ClientThink( void )
 
 	if ( m_hCameraEntity )
 	{
+#ifdef MAPBASE
+		if ( m_bUseEyePosition )
+		{
+			m_hCameraEntity->GetEyePosition( m_IntroData.m_vecCameraView, m_IntroData.m_vecCameraViewAngles );
+		}
+		else
+		{
+			m_IntroData.m_vecCameraView = m_hCameraEntity->GetAbsOrigin();
+			m_IntroData.m_vecCameraViewAngles = m_hCameraEntity->GetAbsAngles();
+		}
+#else
 		m_IntroData.m_vecCameraView = m_hCameraEntity->GetAbsOrigin();
 		m_IntroData.m_vecCameraViewAngles = m_hCameraEntity->GetAbsAngles();
+#endif
 	}
 
 	CalculateFOV();
@@ -324,4 +367,136 @@ void C_ScriptIntro::CalculateAlpha( void )
 
 	m_IntroData.m_flCurrentFadeColor[3] = flNewAlpha;
 }
+
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+class C_PlayerViewProxy : public C_BaseEntity
+{
+	DECLARE_CLASS( C_PlayerViewProxy, C_BaseEntity );
+public:
+	DECLARE_CLIENTCLASS();
+
+	Vector	EyePosition( void );			// position of eyes
+	const QAngle &EyeAngles( void );		// Direction of eyes in world space
+	void GetEyePosition( Vector &vecOrigin, QAngle &angAngles );
+	const QAngle &LocalEyeAngles( void );	// Direction of eyes
+	Vector	EarPosition( void );			// position of ears
+
+#ifdef MAPBASE_MP
+	C_BasePlayer	*GetPlayer() { return m_bEnabled ? (m_hPlayer.Get() ? m_hPlayer.Get() : C_BasePlayer::GetLocalPlayer()) : NULL; }
+#else
+	C_BasePlayer	*GetPlayer() { return m_bEnabled ? C_BasePlayer::GetLocalPlayer() : NULL; }
+#endif
+
+public:
+#ifdef MAPBASE_MP
+	CHandle<C_BasePlayer> m_hPlayer;
+#endif
+
+	bool	m_bEnabled;
+};
+
+IMPLEMENT_CLIENTCLASS_DT( C_PlayerViewProxy, DT_PlayerViewProxy, CPlayerViewProxy )
+#ifdef MAPBASE_MP
+	RecvPropEHandle( RECVINFO( m_hPlayer ) ),
+#endif
+	RecvPropBool( RECVINFO( m_bEnabled ) ),
+END_RECV_TABLE()
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+Vector C_PlayerViewProxy::EyePosition( void )
+{
+	C_BasePlayer *pPlayer = GetPlayer();
+	if (pPlayer)
+	{
+		//Vector vecPlayerOffset = m_hPlayer.Get()->EyePosition() - m_hPlayer.Get()->GetAbsOrigin();
+		//return GetAbsOrigin() + vecPlayerOffset;
+
+		Vector vecOrigin;
+		QAngle angAngles;
+		float fldummy;
+		pPlayer->CalcView( vecOrigin, angAngles, fldummy, fldummy, fldummy );
+
+		return GetAbsOrigin() + (vecOrigin - pPlayer->GetAbsOrigin());
+	}
+	else
+		return BaseClass::EyePosition();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+const QAngle &C_PlayerViewProxy::EyeAngles( void )
+{
+	C_BasePlayer *pPlayer = GetPlayer();
+	if (pPlayer)
+	{
+		Vector vecOrigin;
+		static QAngle angAngles;
+		float fldummy;
+		pPlayer->CalcView( vecOrigin, angAngles, fldummy, fldummy, fldummy );
+
+		angAngles = GetAbsAngles() + (angAngles - pPlayer->GetAbsAngles());
+		return angAngles;
+
+		//return m_hPlayer.Get()->EyeAngles();
+	}
+	else
+		return BaseClass::EyeAngles();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_PlayerViewProxy::GetEyePosition( Vector &vecOrigin, QAngle &angAngles )
+{
+	C_BasePlayer *pPlayer = GetPlayer();
+	if (pPlayer)
+	{
+		float fldummy;
+		pPlayer->CalcView( vecOrigin, angAngles, fldummy, fldummy, fldummy );
+
+		vecOrigin = GetAbsOrigin() + (vecOrigin - pPlayer->GetAbsOrigin());
+		angAngles = GetAbsAngles() + (angAngles - pPlayer->GetAbsAngles());
+	}
+	else
+	{
+		BaseClass::GetEyePosition( vecOrigin, angAngles );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+const QAngle &C_PlayerViewProxy::LocalEyeAngles( void )
+{
+	C_BasePlayer *pPlayer = GetPlayer();
+	if (pPlayer) {
+		static QAngle angAngles;
+		angAngles = GetAbsAngles() + (pPlayer->LocalEyeAngles() - pPlayer->GetAbsAngles());
+		return angAngles;
+	}
+	else
+		return BaseClass::LocalEyeAngles();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+Vector C_PlayerViewProxy::EarPosition( void )
+{
+	C_BasePlayer *pPlayer = GetPlayer();
+	if (pPlayer)
+	{
+		Vector vecPlayerOffset = pPlayer->GetAbsOrigin() - pPlayer->EarPosition();
+		return GetAbsOrigin() + vecPlayerOffset;
+	}
+	else
+		return BaseClass::EarPosition();
+}
+#endif
 

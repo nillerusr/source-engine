@@ -16,6 +16,10 @@ $MacroRequired "GAMENAME"
 $include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
 $include "$SRCDIR\vpc_scripts\protobuf_builder.vpc"
 $Include "$SRCDIR\vpc_scripts\source_replay.vpc"	[$TF]
+$Include "$SRCDIR\game\protobuf_include.vpc"
+
+// Mapbase stuff
+$Include "$SRCDIR\game\server\server_mapbase.vpc"	[$MAPBASE]
 
 $Configuration	"Debug"
 {
@@ -122,8 +126,10 @@ $Project
 		$File	"ai_concommands.cpp"
 		$File	"ai_condition.cpp"
 		$File	"ai_condition.h"
-		$File	"AI_Criteria.cpp"
+		$File	"AI_Criteria.cpp" [!$NEW_RESPONSE_SYSTEM]
 		$File	"AI_Criteria.h"
+		$File	"$SRCDIR\game\shared\ai_criteria_new.cpp" [$NEW_RESPONSE_SYSTEM]
+		$File	"$SRCDIR\game\shared\ai_criteria_new.h" [$NEW_RESPONSE_SYSTEM]
 		$File	"ai_debug.h"
 		$File	"$SRCDIR\game\shared\ai_debug_shared.h"
 		$File	"ai_default.cpp"
@@ -178,8 +184,10 @@ $Project
 		$File	"ai_planesolver.h"
 		$File	"ai_playerally.cpp"
 		$File	"ai_playerally.h"
-		$File	"AI_ResponseSystem.cpp"
+		$File	"AI_ResponseSystem.cpp" [!$NEW_RESPONSE_SYSTEM]
 		$File	"AI_ResponseSystem.h"
+		$File	"$SRCDIR\game\shared\ai_responsesystem_new.cpp" [$NEW_RESPONSE_SYSTEM]
+		$File	"$SRCDIR\game\shared\ai_responsesystem_new.h" [$NEW_RESPONSE_SYSTEM]
 		$File	"ai_route.cpp"
 		$File	"ai_route.h"
 		$File	"ai_routedist.h"
@@ -193,8 +201,10 @@ $Project
 		$File	"ai_senses.h"
 		$File	"ai_sentence.cpp"
 		$File	"ai_sentence.h"
-		$File	"ai_speech.cpp"
+		$File	"ai_speech.cpp" [!$NEW_RESPONSE_SYSTEM]
 		$File	"ai_speech.h"
+		$File	"ai_speech_new.cpp" [$NEW_RESPONSE_SYSTEM]
+		$File	"ai_speech_new.h" [$NEW_RESPONSE_SYSTEM]
 		$File	"ai_speechfilter.cpp"
 		$File	"ai_speechfilter.h"
 		$File	"ai_squad.cpp"
@@ -424,7 +434,6 @@ $Project
 		$File	"init_factory.h"
 		$File	"intermission.cpp"
 		$File	"$SRCDIR\public\interpolatortypes.h"
-		$File	"$SRCDIR\game\shared\interval.h"
 		$File	"$SRCDIR\public\iregistry.h"
 		$File	"$SRCDIR\game\shared\iscenetokenprocessor.h"
 		$File	"iservervehicle.h"
@@ -644,6 +653,10 @@ $Project
 		$File	"$SRCDIR\game\shared\voice_common.h"
 		$File	"$SRCDIR\game\shared\voice_gamemgr.cpp"
 		$File	"$SRCDIR\game\shared\voice_gamemgr.h"
+		$File	"vscript_server.cpp" [$VSCRIPT]
+		$File	"vscript_server.h" [$VSCRIPT]
+		$File	"$SRCDIR\game\shared\vscript_shared.cpp" [$VSCRIPT]
+		$File	"$SRCDIR\game\shared\vscript_shared.h" [$VSCRIPT]
 		$File	"waterbullet.cpp"
 		$File	"waterbullet.h"
 		$File	"WaterLODControl.cpp"
@@ -677,7 +690,6 @@ $Project
 				"h_export.cpp"										\
 				"init_factory.cpp"									\
 				"$SRCDIR\public\interpolatortypes.cpp"				\
-				"$SRCDIR\game\shared\interval.cpp"					\
 				"$SRCDIR\public\keyframe\keyframe.cpp"				\
 				"$SRCDIR\common\language.cpp"						\
 				"$SRCDIR\public\map_utils.cpp"						\
@@ -991,6 +1003,7 @@ $Project
 		$File	"$SRCDIR\public\winlite.h"
 		$File	"$SRCDIR\public\worldsize.h"
 		$File	"$SRCDIR\public\zip_uncompressed.h"
+		$File	"$SRCDIR\public\tier1\interval.h"
 		$File	"$SRCDIR\game\shared\mp_shareddefs.h"
 		$File	"$SRCDIR\game\shared\econ\ihasowner.h"
 		//Haptics

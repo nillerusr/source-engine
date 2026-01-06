@@ -38,6 +38,9 @@
 #include "mapentities.h"
 #include "RagdollBoogie.h"
 #include "physics_collisionevent.h"
+#ifdef EZ
+#include "hl2_player.h"
+#endif
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -141,6 +144,10 @@ enum
 	SCHED_ROLLERMINE_NUDGE_TOWARDS_NODES,
 	SCHED_ROLLERMINE_PATH_TO_PLAYER,
 	SCHED_ROLLERMINE_ROLL_TO_PLAYER,
+#ifdef EZ
+	// Blixibon - Lower tolerance distance for command point rolling
+	SCHED_ROLLERMINE_ROLL_TO_COMMAND_POINT,
+#endif
 	SCHED_ROLLERMINE_POWERDOWN,
 };
 
@@ -154,6 +161,9 @@ enum
 	TASK_ROLLERMINE_UNBURROW,
 	TASK_ROLLERMINE_GET_PATH_TO_FLEE,
 	TASK_ROLLERMINE_NUDGE_TOWARDS_NODES,
+#ifdef EZ
+	TASK_ROLLERMINE_PATH_TO_PLAYER, // Blixibon - For crude rollermine commanding
+#endif
 	TASK_ROLLERMINE_RETURN_TO_PLAYER,
 	TASK_ROLLERMINE_POWERDOWN,
 };
@@ -171,9 +181,15 @@ enum rollingsoundstate_t { ROLL_SOUND_NOT_READY = 0, ROLL_SOUND_OFF, ROLL_SOUND_
 
 //=========================================================
 //=========================================================
+#ifdef EZ
+class CNPC_RollerMine : public CAI_SilentSquadMember< CNPCBaseInteractive<CAI_BaseNPC> >, public CDefaultPlayerPickupVPhysics
+{
+	DECLARE_CLASS( CNPC_RollerMine, CAI_SilentSquadMember< CNPCBaseInteractive<CAI_BaseNPC> > );
+#else
 class CNPC_RollerMine : public CNPCBaseInteractive<CAI_BaseNPC>, public CDefaultPlayerPickupVPhysics
 {
 	DECLARE_CLASS( CNPC_RollerMine, CNPCBaseInteractive<CAI_BaseNPC> );
+#endif
 	DECLARE_SERVERCLASS();
 
 public:
@@ -206,6 +222,14 @@ public:
 	int		SelectSchedule( void );
 	int		TranslateSchedule( int scheduleType );
 	int		GetHackedIdleSchedule( void );
+
+#ifdef EZ
+	// Blixibon - Crude rollermine commanding
+	bool	IsCommandable() { return HasSpawnFlags(SF_ROLLERMINE_FOLLOW_PLAYER); }
+
+	// Why would rollermines become server ragdolls!?
+	bool    CanBecomeServerRagdoll() { return false; }
+#endif
 
 	bool	OverrideMove( float flInterval ) { return true; }
 	bool	IsValidEnemy( CBaseEntity *pEnemy );
@@ -249,11 +273,20 @@ public:
 		if( !m_bTurnedOn )
 			return CLASS_NONE;
 
+#ifdef EZ // Blixibon
+		// While detonating, we're now just CLASS_NONE so we could damage all factions.
+		// This is because we do no damage to the player as a Combine unit and no damage to citizens as a hacked unit.
+		if ( m_flPowerDownDetonateTime > 0.0f && m_flPowerDownDetonateTime <= gpGlobals->curtime )
+			return CLASS_NONE;
+
+		return m_bHackedByAlyx ? CLASS_HACKED_ROLLERMINE : CLASS_COMBINE;
+#else
 		//About to blow up after being hacked so do damage to the player.
 		if ( m_bHackedByAlyx && ( m_flPowerDownDetonateTime > 0.0f && m_flPowerDownDetonateTime <= gpGlobals->curtime ) )
 			return CLASS_COMBINE;
 
 		return ( m_bHeld || m_bHackedByAlyx ) ? CLASS_HACKED_ROLLERMINE : CLASS_COMBINE; 
+#endif
 	}
 
 	virtual bool ShouldGoToIdleState() 
@@ -287,6 +320,33 @@ public:
 
 	virtual unsigned int	PhysicsSolidMaskForEntity( void ) const;
 
+#ifdef EZ
+	// Blixibon -- Allows Bad Cop to pick up friendly rollermines.
+	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
+	{
+		CBasePlayer *pPlayer = ToBasePlayer( pActivator );
+		if ( pPlayer )
+		{
+			// Only allow pickup if we like the player or we're too busy exploding.
+			// If not, shock them for trying.
+			if (IRelationType(pPlayer) < D_FR && m_flPowerDownDetonateTime == 0.0f)
+			{
+				UnstickFromVehicle();
+				ShockTouch(pPlayer);
+			}
+			else
+			{
+				Close();
+				pPlayer->PickupObject( this, false );
+			}
+		}
+	}
+
+	int ObjectCaps()
+	{
+		return BaseClass::ObjectCaps() | FCAP_IMPULSE_USE;
+	}
+#endif
 	void		SetRollerSkin( void );
 
 	COutputEvent m_OnPhysGunDrop;
@@ -309,6 +369,16 @@ protected:
 	void	ShockTarget( CBaseEntity *pOther );
 
 	bool	IsActive() { return m_flActiveTime > gpGlobals->curtime ? false : true; }
+
+	inline float	GetForwardSpeed() const
+	{
+#ifdef MAPBASE
+		if (m_flSpeedModifier != 1.0f)
+			return m_flForwardSpeed * m_flSpeedModifier;
+		else
+#endif
+		return m_flForwardSpeed;
+	}
 
 	// INPCInteractive Functions
 	virtual bool	CanInteractWith( CAI_BaseNPC *pUser ) { return true; }
@@ -388,7 +458,11 @@ BEGIN_DATADESC( CNPC_RollerMine )
 	DEFINE_FIELD( m_bBuried, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_wakeUp, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_bEmbedOnGroundImpact, FIELD_BOOLEAN ),
+#ifdef MAPBASE
+	DEFINE_KEYFIELD( m_bHackedByAlyx, FIELD_BOOLEAN, "Hacked" ),
+#else
 	DEFINE_FIELD( m_bHackedByAlyx, FIELD_BOOLEAN ),
+#endif
 
 	DEFINE_FIELD( m_bPowerDown,	FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_flPowerDownTime,	FIELD_TIME ),
@@ -543,6 +617,9 @@ void CNPC_RollerMine::Spawn( void )
 	BaseClass::Spawn();
 
 	AddEFlags( EFL_NO_DISSOLVE );
+#ifdef MAPBASE
+	AddEFlags( EFL_NO_MEGAPHYSCANNON_RAGDOLL );
+#endif
 
 	CapabilitiesClear();
 	CapabilitiesAdd( bits_CAP_MOVE_GROUND | bits_CAP_INNATE_RANGE_ATTACK1 | bits_CAP_SQUAD );
@@ -928,6 +1005,32 @@ int CNPC_RollerMine::SelectSchedule( void )
 //-----------------------------------------------------------------------------
 int CNPC_RollerMine::GetHackedIdleSchedule( void )
 {
+#ifdef EZ // Blixibon - Re-using hacked rollermine code
+	if ( !HasSpawnFlags(SF_ROLLERMINE_FOLLOW_PLAYER) || m_bHeld )
+		return SCHED_NONE;
+
+	// Don't look through the entity list for a single "!player" if you have a pointer right here.
+	CBaseEntity *pPlayer = UTIL_GetLocalPlayer();
+	if ( !pPlayer )
+		return SCHED_NONE;
+
+	if ( !HaveCommandGoal() )
+	{
+		if ( !HasCondition(COND_SEE_PLAYER) )
+			return SCHED_ROLLERMINE_PATH_TO_PLAYER;
+
+		if ( GetAbsOrigin().DistToSqr( pPlayer->GetAbsOrigin() ) > ROLLERMINE_RETURN_TO_PLAYER_DIST )
+			return SCHED_ROLLERMINE_ROLL_TO_PLAYER;
+	}
+	else
+	{
+		if ( !FVisible(GetCommandGoal()) )
+			return SCHED_ROLLERMINE_PATH_TO_PLAYER;
+
+		if ( GetAbsOrigin().DistToSqr( GetCommandGoal() ) > Square(96.0f) )
+			return SCHED_ROLLERMINE_ROLL_TO_COMMAND_POINT;
+	}
+#else
 	// If we've been hacked, return to the player
 	if ( !m_bHackedByAlyx || m_bHeld )
 		return SCHED_NONE;
@@ -942,6 +1045,7 @@ int CNPC_RollerMine::GetHackedIdleSchedule( void )
 
 	if ( GetAbsOrigin().DistToSqr( pPlayer->GetAbsOrigin() ) > ROLLERMINE_RETURN_TO_PLAYER_DIST )
 		return SCHED_ROLLERMINE_ROLL_TO_PLAYER;
+#endif
 
 	return SCHED_NONE;
 }
@@ -1123,6 +1227,30 @@ void CNPC_RollerMine::StartTask( const Task_t *pTask )
 			pPhysicsObject->Wake();
 		}
 		break;
+
+#ifdef EZ
+	case TASK_ROLLERMINE_PATH_TO_PLAYER:
+		{
+			CBaseEntity *pPlayer = UTIL_GetLocalPlayer();
+
+			AI_NavGoal_t goal;
+
+			if (HaveCommandGoal())
+			{
+				goal.type = GOALTYPE_LOCATION;
+				goal.dest = GetCommandGoal();
+			}
+			else
+			{
+				goal.type = GOALTYPE_LOCATION;
+				goal.dest = pPlayer->WorldSpaceCenter();
+				goal.pTarget = pPlayer;
+			}
+
+			GetNavigator()->SetGoal( goal );
+			break;
+		}
+#endif
 
 	case TASK_ROLLERMINE_CHARGE_ENEMY:
 	case TASK_ROLLERMINE_RETURN_TO_PLAYER:
@@ -1306,7 +1434,7 @@ void CNPC_RollerMine::RunTask( const Task_t *pTask )
 				Vector vecRight;
 				AngleVectors( QAngle( 0, yaw, 0 ), NULL, &vecRight, NULL );
 
-				m_RollerController.m_vecAngular += WorldToLocalRotation( SetupMatrixAngles(GetLocalAngles()), vecRight, -m_flForwardSpeed * 5 );
+				m_RollerController.m_vecAngular += WorldToLocalRotation( SetupMatrixAngles(GetLocalAngles()), vecRight, -GetForwardSpeed() * 5 );
 
 				TaskComplete();
 				return;
@@ -1316,6 +1444,8 @@ void CNPC_RollerMine::RunTask( const Task_t *pTask )
 		}
 
 		{
+			float flForwardSpeed = GetForwardSpeed();
+
 			float yaw = UTIL_VecToYaw( GetNavigator()->GetCurWaypointPos() - GetLocalOrigin() );
 
 			Vector vecRight;
@@ -1355,17 +1485,25 @@ void CNPC_RollerMine::RunTask( const Task_t *pTask )
 				vecCompensate.y = -vecVelocity.x;
 				vecCompensate.z = 0;
 
-				m_RollerController.m_vecAngular = WorldToLocalRotation( SetupMatrixAngles(GetLocalAngles()), vecCompensate, m_flForwardSpeed * -0.75 );
+				m_RollerController.m_vecAngular = WorldToLocalRotation( SetupMatrixAngles(GetLocalAngles()), vecCompensate, flForwardSpeed * -0.75 );
 			}
 
+#ifdef EZ // Blixibon
+			// By default, all rollermines have the hacked rollermine's buffed speed,
+			// which is necessary for regular rollermines becoming companions
+			// and for keeping hacked rollermines "hardcore" as per Entropy : Zero.
+			// On Easy, however, hacked rollermines use the original rollermine speed.
+			if( !g_pGameRules->IsSkillLevel(SKILL_EASY) || !m_bHackedByAlyx )
+#else
 			if( m_bHackedByAlyx )
+#endif
 			{
 				// Move faster. 
-				m_RollerController.m_vecAngular += WorldToLocalRotation( SetupMatrixAngles(GetLocalAngles()), vecRight, m_flForwardSpeed * 2.0f );
+				m_RollerController.m_vecAngular += WorldToLocalRotation( SetupMatrixAngles(GetLocalAngles()), vecRight, flForwardSpeed * 2.0f );
 			}
 			else
 			{
-				m_RollerController.m_vecAngular += WorldToLocalRotation( SetupMatrixAngles(GetLocalAngles()), vecRight, m_flForwardSpeed );
+				m_RollerController.m_vecAngular += WorldToLocalRotation( SetupMatrixAngles(GetLocalAngles()), vecRight, flForwardSpeed );
 			}
 		}
 		break;
@@ -1489,8 +1627,10 @@ void CNPC_RollerMine::RunTask( const Task_t *pTask )
 			vecCompensate.z = 0;
 			VectorNormalize( vecCompensate );
 
-			m_RollerController.m_vecAngular = WorldToLocalRotation( SetupMatrixAngles(GetLocalAngles()), vecCompensate, m_flForwardSpeed * -0.75 );
-			m_RollerController.m_vecAngular += WorldToLocalRotation( SetupMatrixAngles(GetLocalAngles()), vecRight, m_flForwardSpeed  * flTorqueFactor );
+			float flForwardSpeed = GetForwardSpeed();
+
+			m_RollerController.m_vecAngular = WorldToLocalRotation( SetupMatrixAngles(GetLocalAngles()), vecCompensate, flForwardSpeed * -0.75 );
+			m_RollerController.m_vecAngular += WorldToLocalRotation( SetupMatrixAngles(GetLocalAngles()), vecRight, flForwardSpeed  * flTorqueFactor );
 		
 			// Taunt when I get closer
 			if( !(m_iSoundEventFlags & ROLLERMINE_SE_TAUNT) && UTIL_DistApprox( GetLocalOrigin(), vecTargetPosition ) <= 400 )
@@ -1537,7 +1677,13 @@ void CNPC_RollerMine::RunTask( const Task_t *pTask )
 				{
 					if( gpGlobals->curtime - m_flChargeTime > 1.0 && flTorqueFactor > 1 &&  flDot < 0.0 )
 					{
+#ifdef EZ2
+						// Blixibon - Fixes rollermines constantly opening and closing in the hack lab
+						// ("m_bIsOpen" is already checked in Close() too)
+						if ( (GetEnemy()->GetAbsOrigin().AsVector2D() - GetAbsOrigin().AsVector2D()).LengthSqr() > Square(64.0f) )
+#else
 						if( m_bIsOpen )
+#endif
 						{
 							Close();
 						}
@@ -1557,6 +1703,25 @@ void CNPC_RollerMine::RunTask( const Task_t *pTask )
 				return;
 			}
 
+#ifdef EZ
+			Vector vecTargetPosition;
+
+			if (HaveCommandGoal())
+			{
+				vecTargetPosition = GetCommandGoal();
+			}
+			else
+			{
+				CBaseEntity *pPlayer = UTIL_GetLocalPlayer();
+				if ( !pPlayer || m_bHeld || m_hVehicleStuckTo )
+				{
+					TaskFail( FAIL_NO_TARGET );
+					return;
+				}
+
+				vecTargetPosition = pPlayer->GetAbsOrigin();
+			}
+#else
 			CBaseEntity *pPlayer = gEntList.FindEntityByName( NULL, "!player" );
 			if ( !pPlayer || m_bHeld || m_hVehicleStuckTo )
 			{
@@ -1565,6 +1730,7 @@ void CNPC_RollerMine::RunTask( const Task_t *pTask )
 			}
 
 			Vector vecTargetPosition = pPlayer->GetAbsOrigin();
+#endif
 			float flTorqueFactor;
 			Vector vecToTarget = vecTargetPosition - GetLocalOrigin();
 			float yaw = UTIL_VecToYaw( vecToTarget );
@@ -1608,8 +1774,10 @@ void CNPC_RollerMine::RunTask( const Task_t *pTask )
 			vecCompensate.z = 0;
 			VectorNormalize( vecCompensate );
 
-			m_RollerController.m_vecAngular = WorldToLocalRotation( SetupMatrixAngles(GetLocalAngles()), vecCompensate, m_flForwardSpeed * -0.75 );
-			m_RollerController.m_vecAngular += WorldToLocalRotation( SetupMatrixAngles(GetLocalAngles()), vecRight, m_flForwardSpeed  * flTorqueFactor );
+			float flForwardSpeed = GetForwardSpeed();
+
+			m_RollerController.m_vecAngular = WorldToLocalRotation( SetupMatrixAngles(GetLocalAngles()), vecCompensate, flForwardSpeed * -0.75 );
+			m_RollerController.m_vecAngular += WorldToLocalRotation( SetupMatrixAngles(GetLocalAngles()), vecRight, flForwardSpeed  * flTorqueFactor );
 
 			// Once we're near the player, slow & stop
 			if ( GetAbsOrigin().DistToSqr( vecTargetPosition ) < (ROLLERMINE_RETURN_TO_PLAYER_DIST*2.0) )
@@ -1957,6 +2125,10 @@ void CNPC_RollerMine::NotifyInteraction( CAI_BaseNPC *pUser )
 	// Force the rollermine open here. At very least, this ensures that the 
 	// correct, smaller bounding box is recomputed around it.
 	Open();
+
+#ifdef MAPBASE
+	m_OnHacked.FireOutput(pUser, this);
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -2020,6 +2192,40 @@ void CNPC_RollerMine::ShockTouch( CBaseEntity *pOther )
 	Vector vecForce = ( -impulse * pPhysics->GetMass() * 10 );
 	CTakeDamageInfo	info( this, this, vecForce, out, sk_rollermine_shock.GetFloat(), DMG_SHOCK );
 
+#ifdef EZ // Blixibon -- Rollermine boogie for everyone!
+
+	// Rather than dealing a specific amount of damage to citizens or soldiers, I decided to just have them deal twice as much damage to all NPCs.
+	// If rollermine shock damage is set to 20, this would amount to 40, which conveniently
+	// kills citizens in two hits and soldiers in 2-3, depending on how good they are at keeping them away/regenerating health.
+	if ( pOther->IsNPC() )
+	{
+		info.ScaleDamage( 2.0f );
+	}
+
+	if ( pOther->GetHealth() <= info.GetDamage() )
+	{
+		CBaseCombatCharacter *pBCC = pOther->MyCombatCharacterPointer();
+		if (pBCC && pBCC->CanBecomeRagdoll() && pBCC->CanBecomeServerRagdoll() && !pBCC->ShouldGib(info))
+		{
+			// Instant special death for anyone who can become a ragdoll.
+			Vector vecDamageForce = pOther->WorldSpaceCenter() - WorldSpaceCenter();
+			VectorNormalize( vecDamageForce );
+
+			IPhysicsObject *pPhysics = pOther->VPhysicsGetObject();
+
+			if( pPhysics )
+			{
+				vecDamageForce *= (pPhysics->GetMass() * 200.0f);
+
+				// Slam Z component with some good, reliable upwards velocity.
+				vecDamageForce.z = pPhysics->GetMass() * 200.0f;
+			}
+
+			pBCC->BecomeRagdollBoogie( this, vecDamageForce, 5.0f, SF_RAGDOLL_BOOGIE_ELECTRICAL );
+			return;
+		}
+	}
+#else
 	if( FClassnameIs( pOther, "npc_combine_s" ) )
 	{
 		if( pOther->GetHealth() <= (pOther->GetMaxHealth() / 2) ) 
@@ -2046,6 +2252,7 @@ void CNPC_RollerMine::ShockTouch( CBaseEntity *pOther )
 			info.SetDamage( pOther->GetMaxHealth()/2 );
 		}
 	}
+#endif
 
 	pOther->TakeDamage( info );
 
@@ -2561,6 +2768,12 @@ float CNPC_RollerMine::RollingSpeed()
 		float rollingSpeed = angVel.Length() - 90;
 		rollingSpeed = clamp( rollingSpeed, 1, MAX_ROLLING_SPEED );
 		rollingSpeed *= (1/MAX_ROLLING_SPEED);
+#ifdef MAPBASE
+		if (m_flSpeedModifier != 1.0f)
+		{
+			rollingSpeed *= m_flSpeedModifier;
+		}
+#endif
 		return rollingSpeed;
 	}
 	return 0;
@@ -2570,6 +2783,10 @@ float CNPC_RollerMine::RollingSpeed()
 //-----------------------------------------------------------------------------
 float CNPC_RollerMine::GetStunDelay()
 {
+#ifdef EZ // Blixibon
+	// Should be 0.1 by default now
+	return sk_rollermine_stun_delay.GetFloat();
+#else
 	if( m_bHackedByAlyx )
 	{
 		return 0.1f;
@@ -2578,6 +2795,7 @@ float CNPC_RollerMine::GetStunDelay()
 	{
 		return sk_rollermine_stun_delay.GetFloat();
 	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -2851,6 +3069,9 @@ AI_BEGIN_CUSTOM_NPC( npc_rollermine, CNPC_RollerMine )
 	DECLARE_TASK( TASK_ROLLERMINE_UNBURROW )
 	DECLARE_TASK( TASK_ROLLERMINE_GET_PATH_TO_FLEE )
 	DECLARE_TASK( TASK_ROLLERMINE_NUDGE_TOWARDS_NODES )
+#ifdef EZ
+	DECLARE_TASK( TASK_ROLLERMINE_PATH_TO_PLAYER )
+#endif
 	DECLARE_TASK( TASK_ROLLERMINE_RETURN_TO_PLAYER )
 	DECLARE_TASK( TASK_ROLLERMINE_POWERDOWN )
 
@@ -2966,6 +3187,60 @@ AI_BEGIN_CUSTOM_NPC( npc_rollermine, CNPC_RollerMine )
 	""
 	)
 
+#ifdef EZ
+	DEFINE_SCHEDULE
+	(
+		SCHED_ROLLERMINE_PATH_TO_PLAYER,
+
+		"	Tasks"
+		"		TASK_SET_FAIL_SCHEDULE			SCHEDULE:SCHED_ROLLERMINE_ALERT_STAND"
+		"		TASK_SET_TOLERANCE_DISTANCE		200"
+		"		TASK_ROLLERMINE_PATH_TO_PLAYER			0" // Blixibon - Crude rollermine commanding
+		"		TASK_RUN_PATH					0"
+		"		TASK_WAIT_FOR_MOVEMENT			0"
+		""
+		"	Interrupts"
+		"		COND_NEW_ENEMY"
+		"		COND_SEE_ENEMY"
+		"		COND_SEE_FEAR"
+		"		COND_LIGHT_DAMAGE"
+		"		COND_HEAVY_DAMAGE"
+		"		COND_PROVOKED"
+		"		COND_SMELL"
+		"		COND_HEAR_COMBAT"		// sound flags
+		"		COND_HEAR_WORLD"
+		"		COND_HEAR_PLAYER"
+		"		COND_HEAR_DANGER"
+		"		COND_HEAR_BULLET_IMPACT"
+		"		COND_IDLE_INTERRUPT"
+		"		COND_SEE_PLAYER"
+	)
+
+	DEFINE_SCHEDULE
+	(
+		SCHED_ROLLERMINE_ROLL_TO_COMMAND_POINT,
+
+		"	Tasks"
+		"		TASK_SET_FAIL_SCHEDULE				SCHEDULE:SCHED_ROLLERMINE_ALERT_STAND"
+		"		TASK_SET_TOLERANCE_DISTANCE			96" // Blixibon - Lower tolerance distance for command point rolling
+		"		TASK_ROLLERMINE_RETURN_TO_PLAYER	0"
+		""
+		"	Interrupts"
+		"		COND_NEW_ENEMY"
+		"		COND_SEE_ENEMY"
+		"		COND_SEE_FEAR"
+		"		COND_LIGHT_DAMAGE"
+		"		COND_HEAVY_DAMAGE"
+		"		COND_PROVOKED"
+		"		COND_SMELL"
+		"		COND_HEAR_COMBAT"		// sound flags
+		"		COND_HEAR_WORLD"
+		"		COND_HEAR_PLAYER"
+		"		COND_HEAR_DANGER"
+		"		COND_HEAR_BULLET_IMPACT"
+		"		COND_IDLE_INTERRUPT"
+	)
+#else
 	DEFINE_SCHEDULE
 	(
 		SCHED_ROLLERMINE_PATH_TO_PLAYER,
@@ -2993,6 +3268,7 @@ AI_BEGIN_CUSTOM_NPC( npc_rollermine, CNPC_RollerMine )
 		"		COND_IDLE_INTERRUPT"
 		"		COND_SEE_PLAYER"
 	)
+#endif
 
 	DEFINE_SCHEDULE
 	(

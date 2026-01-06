@@ -79,8 +79,11 @@ static char *CopyString( const char *in )
 	return n;
 }
 
-#ifdef STAGING_ONLY
-ConVar tf_strict_mouse_up_events( "tf_strict_mouse_up_events", "0", FCVAR_ARCHIVE, "Only allow Mouse-Release events to happens on panels we also Mouse-Downed in" );
+#ifdef MAPBASE
+ConVar vgui_mapbase_custom_schemes( "vgui_mapbase_custom_schemes", "1" );
+
+// This is used in mapbase_shared.cpp
+HScheme g_iCustomClientSchemeOverride;
 #endif
 
 // Temporary convar to help debug why the MvMVictoryMannUpPanel TabContainer is sometimes way off to the left.
@@ -1702,17 +1705,31 @@ void Panel::DeletePanel()
 //-----------------------------------------------------------------------------
 HScheme Panel::GetScheme()
 {
+	HScheme iScheme;
+
 	if (m_iScheme)
 	{
-		return m_iScheme; // return our internal scheme
+		iScheme = m_iScheme; // return our internal scheme
 	}
-	
-	if (GetVParent()) // recurse down the heirarchy 
+	else if (GetVParent()) // recurse down the heirarchy 
 	{
-		return ipanel()->GetScheme(GetVParent());
+		iScheme = ipanel()->GetScheme(GetVParent());
+	}
+	else
+	{
+		iScheme = scheme()->GetDefaultScheme();
 	}
 
-	return scheme()->GetDefaultScheme();
+#ifdef MAPBASE
+	// If a custom client scheme is available, use the custom scheme.
+	// TODO: Need a better way to detect that this panel actually uses ClientScheme.res
+	if (g_iCustomClientSchemeOverride != 0 && iScheme == scheme()->GetScheme( "ClientScheme" ) && vgui_mapbase_custom_schemes.GetBool())
+	{
+		return g_iCustomClientSchemeOverride;
+	}
+#endif
+
+	return iScheme;
 }
 
 //-----------------------------------------------------------------------------

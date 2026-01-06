@@ -42,6 +42,10 @@ extern int AE_ZOMBIE_POUND;
 #define ZOMBIE_BLOOD_RIGHT_HAND		1
 #define ZOMBIE_BLOOD_BOTH_HANDS		2
 #define ZOMBIE_BLOOD_BITE			3
+
+#ifdef MAPBASE
+#define SF_ZOMBIE_NO_TORSO ( 1 << 15 )
+#endif
 	
 
 enum HeadcrabRelease_t
@@ -73,6 +77,10 @@ enum
 	SCHED_ZOMBIE_MELEE_ATTACK1,
 	SCHED_ZOMBIE_POST_MELEE_WAIT,
 
+#ifdef EZ
+	SCHED_ZOMBIE_ALARM,
+#endif
+
 	LAST_BASE_ZOMBIE_SCHEDULE,
 };
 
@@ -87,6 +95,10 @@ enum
 	TASK_ZOMBIE_DIE,
 	TASK_ZOMBIE_RELEASE_HEADCRAB,
 	TASK_ZOMBIE_WAIT_POST_MELEE,
+
+#ifdef EZ
+	TASK_ZOMBIE_ALARM,
+#endif
 
 	LAST_BASE_ZOMBIE_TASK,
 };
@@ -139,6 +151,14 @@ public:
 	int MeleeAttack1Conditions ( float flDot, float flDist );
 	virtual float GetClawAttackRange() const { return ZOMBIE_MELEE_REACH; }
 
+#ifdef EZ
+	// Zombie scream attack
+	int MeleeAttack2Conditions ( float flDot, float flDist );
+
+	// Interactions - overridden for Bad Cop kick
+	bool HandleInteraction( int interactionType, void *data, CBaseCombatCharacter* sourceEnt );
+#endif
+
 	// No range attacks
 	int RangeAttack1Conditions ( float flDot, float flDist ) { return( 0 ); }
 	
@@ -146,6 +166,8 @@ public:
 	void TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr, CDmgAccumulator *pAccumulator );
 	int OnTakeDamage_Alive( const CTakeDamageInfo &info );
 	virtual float	GetReactionDelay( CBaseEntity *pEnemy ) { return 0.0; }
+
+	bool CanFlinch( void );
 
 	virtual int SelectSchedule ( void );
 	virtual int	SelectFailSchedule( int failedSchedule, int failedTask, AI_TaskFailureCode_t taskFailCode );
@@ -182,9 +204,10 @@ public:
 	// Headcrab releasing/breaking apart
 	void RemoveHead( void );
 	virtual void SetZombieModel( void ) { };
+	virtual void SetModel( const char *szModelName );
 	virtual void BecomeTorso( const Vector &vecTorsoForce, const Vector &vecLegsForce );
 	virtual bool CanBecomeLiveTorso() { return false; }
-	virtual bool HeadcrabFits( CBaseAnimating *pCrab );
+	virtual bool HeadcrabFits( CBaseAnimating *pCrab, const Vector *vecOrigin = NULL );
 	void ReleaseHeadcrab( const Vector &vecOrigin, const Vector &vecVelocity, bool fRemoveHead, bool fRagdollBody, bool fRagdollCrab = false );
 	void SetHeadcrabSpawnLocation( int iCrabAttachment, CBaseAnimating *pCrab );
 
@@ -213,6 +236,15 @@ public:
 	virtual void AttackMissSound( void ) = 0;
 	virtual void FootstepSound( bool fRightFoot ) = 0;
 	virtual void FootscuffSound( bool fRightFoot ) = 0;
+#ifdef EZ
+	// Beast stealth mode - call the beast over
+	virtual void AlarmSound( void ) {}
+	// What sounds can zombies hear?
+	virtual bool QueryHearSound( CSound *pSound );
+
+	// make a sound the beast can hear when in stealth mode
+	void		 MakeAIAlarmSound( float volume, float duration = 0.5 );
+#endif
 
 	// make a sound Alyx can hear when in darkness mode
 	void		 MakeAISpookySound( float volume, float duration = 0.5 );
@@ -223,8 +255,17 @@ public:
 
 	virtual const char *GetMoanSound( int nSound ) = 0;
 	virtual const char *GetHeadcrabClassname( void ) = 0;
+#ifndef EZ
 	virtual const char *GetLegsModel( void ) = 0;
 	virtual const char *GetTorsoModel( void ) = 0;
+#else
+	virtual const char *GetLegsModel( void ) { return STRING ( m_iszLegsModel ); };
+	virtual const char *GetTorsoModel( void ) { return STRING ( m_iszTorsoModel ); };
+	virtual string_t GetLegsModelName( void ) { return m_iszLegsModel; };
+	virtual string_t GetTorsoModelName( void ) { return m_iszTorsoModel; };
+	virtual void SetLegsModelName( string_t modelName ) { m_iszLegsModel = modelName; };
+	virtual void SetTorsoModelName( string_t modelName ) { m_iszTorsoModel = modelName; };
+#endif
 	virtual const char *GetHeadcrabModel( void ) = 0;
 
 	virtual Vector BodyTarget( const Vector &posSrc, bool bNoisy );
@@ -259,6 +300,10 @@ protected:
 	float	m_flBurnDamageResetTime;	// Time at which we reset the burn damage.
 
 	EHANDLE m_hPhysicsEnt;
+#ifdef MAPBASE
+	COutputEHANDLE m_OnSwattedProp;
+	COutputEHANDLE m_OnCrab;
+#endif
 
 	float m_flNextMoanSound;
 	float m_flNextSwat;
@@ -278,7 +323,10 @@ protected:
 	static int ACT_ZOM_SWATRIGHTLOW;
 	static int ACT_ZOM_RELEASECRAB;
 	static int ACT_ZOM_FALL;
-
+#ifdef EZ
+	string_t m_iszTorsoModel;
+	string_t m_iszLegsModel;
+#endif
 	DECLARE_DATADESC();
 
 	DEFINE_CUSTOM_AI;

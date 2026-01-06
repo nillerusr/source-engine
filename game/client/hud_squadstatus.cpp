@@ -143,11 +143,21 @@ void CHudSquadStatus::OnThink( void )
 	{
 		// we have squad members, show the display
 		g_pClientMode->GetViewportAnimationController()->RunAnimationCommand( this, "alpha", 255.0f, 0.0f, 0.4f, AnimationController::INTERPOLATOR_LINEAR);
+
+#ifdef EZ2
+		// Run this sequence as well (for SLAM indicator)
+		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "SquadHasMembers" );
+#endif
 	}
 	else
 	{
 		// no squad members, hide the display
-		g_pClientMode->GetViewportAnimationController()->RunAnimationCommand( this, "alpha", 0.0f, 0.0f, 0.4f, AnimationController::INTERPOLATOR_LINEAR);
+		g_pClientMode->GetViewportAnimationController()->RunAnimationCommand( this, "alpha", 0.0f, 0.0f, 0.4f, AnimationController::INTERPOLATOR_LINEAR );
+
+#ifdef EZ2
+		// Run this sequence as well (for SLAM indicator)
+		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "SquadDoesNotHaveMembers" );
+#endif
 	}
 
 	if ( squadMembers > m_iSquadMembers )

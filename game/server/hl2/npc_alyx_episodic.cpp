@@ -36,6 +36,9 @@
 #include "ai_interactions.h"
 #include "weapon_flaregun.h"
 #include "env_debughistory.h"
+#ifdef MAPBASE
+#include "mapbase/GlobalStrings.h"
+#endif
 
 extern Vector PointOnLineNearestPoint(const Vector& vStartPos, const Vector& vEndPos, const Vector& vPoint);
 
@@ -71,6 +74,10 @@ bool IsInCommentaryMode( void );
 #define ALYX_MIN_ENEMY_DIST_TO_CROUCH			360			// Minimum distance that our enemy must be for me to crouch
 #define ALYX_MIN_ENEMY_HEALTH_TO_CROUCH			15
 #define ALYX_CROUCH_DELAY						5			// Time after crouching before Alyx will crouch again
+
+#ifdef MAPBASE
+ConVar sk_alyx_health( "sk_alyx_health", "80" );
+#endif
 
 //-----------------------------------------------------------------------------
 // Interactions
@@ -136,13 +143,22 @@ END_DATADESC()
 static int AE_ALYX_EMPTOOL_ATTACHMENT;
 static int AE_ALYX_EMPTOOL_SEQUENCE;
 static int AE_ALYX_EMPTOOL_USE;
+#ifndef MAPBASE
 static int COMBINE_AE_BEGIN_ALTFIRE;
 static int COMBINE_AE_ALTFIRE;
+#endif
 
 ConVar npc_alyx_readiness( "npc_alyx_readiness", "1" );
 ConVar npc_alyx_force_stop_moving( "npc_alyx_force_stop_moving", "1" );
 ConVar npc_alyx_readiness_transitions( "npc_alyx_readiness_transitions", "1" );
 ConVar npc_alyx_crouch( "npc_alyx_crouch", "1" );
+
+#ifdef MAPBASE
+ConVar npc_alyx_interact_manhacks( "npc_alyx_interact_manhacks", "1" );
+ConVar npc_alyx_interact_turrets( "npc_alyx_interact_turrets", "0" );
+
+ConVar npc_alyx_allow_fly( "npc_alyx_allow_fly", "0", FCVAR_NONE, "Allows Alyx to use FL_FLY outside of scripted sequences, actbusy, or navigation." );
+#endif
 
 // global pointer to Alyx for fast lookups
 CEntityClassList<CNPC_Alyx> g_AlyxList;
@@ -264,6 +280,7 @@ void CNPC_Alyx::HandleAnimEvent( animevent_t *pEvent )
 		}
 		return;
 	}
+#ifndef MAPBASE
 	else if ( pEvent->event == COMBINE_AE_BEGIN_ALTFIRE )
 	{
 		EmitSound( "Weapon_CombineGuard.Special1" );
@@ -280,6 +297,7 @@ void CNPC_Alyx::HandleAnimEvent( animevent_t *pEvent )
 
 		return;
 	}
+#endif
 
 	switch( pEvent->event )
 	{
@@ -303,7 +321,9 @@ CNPC_Alyx *CNPC_Alyx::GetAlyx( void )
 //=========================================================
 bool CNPC_Alyx::CreateBehaviors()
 {
+#ifndef MAPBASE // Moved to CNPC_PlayerCompanion
 	AddBehavior( &m_FuncTankBehavior );
+#endif
 	bool result = BaseClass::CreateBehaviors();
 
 	return result;
@@ -334,7 +354,11 @@ void CNPC_Alyx::Spawn()
 
 	AddEFlags( EFL_NO_DISSOLVE | EFL_NO_MEGAPHYSCANNON_RAGDOLL | EFL_NO_PHYSCANNON_INTERACTION );
 
+#ifdef MAPBASE
+	m_iHealth = sk_alyx_health.GetInt();
+#else
 	m_iHealth			= 80;
+#endif
 	m_bloodColor		= DONT_BLEED;
 
 	NPCInit();
@@ -379,9 +403,15 @@ void CNPC_Alyx::Precache()
 	UTIL_PrecacheOther( "env_alyxemp" );
 
 	CLASSNAME_ALYXGUN = AllocPooledString( "weapon_alyxgun" );
+#ifdef MAPBASE
+	CLASSNAME_SMG1 = gm_iszSMG1Classname;
+	CLASSNAME_SHOTGUN = gm_iszShotgunClassname;
+	CLASSNAME_AR2 = gm_iszAR2Classname;
+#else
 	CLASSNAME_SMG1 = AllocPooledString( "weapon_smg1" );
 	CLASSNAME_SHOTGUN = AllocPooledString( "weapon_shotgun" );
 	CLASSNAME_AR2 = AllocPooledString( "weapon_ar2" );
+#endif
 }	
 
 //-----------------------------------------------------------------------------
@@ -391,7 +421,15 @@ void CNPC_Alyx::Activate( void )
 {
 	// Alyx always kicks her health back up to full after loading a savegame.
 	// Avoids problems with players saving the game in places where she dies immediately afterwards.
+#ifdef MAPBASE
+	// Alyx's health can be >80 thanks to the new convar, and we don't want a 1000-health Alyx to reload
+	// from 1 health to 1000 health, so this should only kick in if her health is less than her default
+	// (we also probably don't want this to happen if she's not an ally)
+	if (IsPlayerAlly() && m_iHealth < 80)
+		m_iHealth = 80;
+#else
 	m_iHealth = 80;
+#endif
 
 	BaseClass::Activate();
 
@@ -426,6 +464,19 @@ void CNPC_Alyx::Activate( void )
 	{
 		g_HackOutland10DamageHack = true;
 	}
+
+#ifdef MAPBASE
+	// Please, this is not the worst hack you've caught me doing.
+	for ( int i = 0; i < m_ScriptedInteractions.Count(); i++ )
+	{
+		ScriptedNPCInteraction_t *pInteraction = &m_ScriptedInteractions[i];
+
+		if (pInteraction->iszMyWeapon == CLASSNAME_ALYXGUN)
+			pInteraction->iszMyWeapon = AllocPooledString("WEPCLASS_HANDGUN");
+		else if (pInteraction->iszMyWeapon == CLASSNAME_SHOTGUN)
+			pInteraction->iszMyWeapon = AllocPooledString("!=WEPCLASS_HANDGUN");
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -612,11 +663,13 @@ void CNPC_Alyx::PrescheduleThink( void )
 		}
 	}
 
+#ifndef MAPBASE // See CAI_BaseNPC
 	// If Alyx is in combat, and she doesn't have her gun out, fetch it
 	if ( GetState() == NPC_STATE_COMBAT && IsWeaponHolstered() && !m_FuncTankBehavior.IsRunning() )
 	{
 		SetDesiredWeaponState( DESIREDWEAPONSTATE_UNHOLSTERED );
 	}
+#endif
 
 	// If we're in stealth mode, and we can still see the stealth node, keep using it
 	if ( GetReadinessLevel() == AIRL_STEALTH )
@@ -759,11 +812,12 @@ void CNPC_Alyx::GatherConditions()
 		}
 	}
 
-
+#ifndef MAPBASE // Moved to CNPC_PlayerCompanion
 	if ( m_NPCState == NPC_STATE_COMBAT )
 	{
 		DoCustomCombatAI();
 	}
+#endif
 
 	if( HasInteractTarget() )
 	{
@@ -835,7 +889,11 @@ void CNPC_Alyx::GatherConditions()
 
 	// ROBIN: This was here to solve a problem in a playtest. We've since found what we think was the cause.
 	// It's a useful piece of debug to have lying there, so I've left it in.
-	if ( (GetFlags() & FL_FLY) && m_NPCState != NPC_STATE_SCRIPT && !m_ActBusyBehavior.IsActive() && !m_PassengerBehavior.IsEnabled() )
+	if ( (GetFlags() & FL_FLY) && m_NPCState != NPC_STATE_SCRIPT && !m_ActBusyBehavior.IsActive() && !m_PassengerBehavior.IsEnabled()
+#ifdef MAPBASE
+		&& GetNavType() != NAV_CLIMB && !npc_alyx_allow_fly.GetBool()
+#endif
+		 )
 	{
 		Warning( "Removed FL_FLY from Alyx, who wasn't running a script or actbusy. Time %.2f, map %s.\n", gpGlobals->curtime, STRING(gpGlobals->mapname) );
 		RemoveFlag( FL_FLY );
@@ -928,7 +986,12 @@ bool CNPC_Alyx::IsValidEnemy( CBaseEntity *pEnemy )
 			return false;
 		}
 
+#ifdef MAPBASE
+		// Come to the defense of anyone we like, not just ourselves or the player.
+		if( pEnemy->GetEnemy() != this && IRelationType(pEnemy->GetEnemy()) == D_LI )
+#else
 		if( pEnemy->GetEnemy() != this && !pEnemy->GetEnemy()->IsPlayer() )
+#endif
 		{
 			return false;
 		}
@@ -991,7 +1054,12 @@ void CNPC_Alyx::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 		return;
 	}
 
+#ifdef MAPBASE
+	// Don't do the custom target thing against dissolve or blast damage (Alyx can do that with companion grenades/balls)
+	if( !HasShotgun() && !(info.GetDamageType() & (DMG_DISSOLVE | DMG_BLAST)) )
+#else
 	if( !HasShotgun() )
+#endif
 	{
 		CAI_BaseNPC *pTarget = CreateCustomTarget( pVictim->GetAbsOrigin(), 2.0f );
 
@@ -1009,6 +1077,13 @@ void CNPC_Alyx::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 			pMemory->timeFirstSeen = gpGlobals->curtime - 10.0f;
 		}
 	}
+
+#ifdef MAPBASE
+	// This call has a side effect of causing Alyx to speak a regular companion TLK_ENEMY_DEAD, which may conflict with the TLK_ALYX_ENEMY_DEAD
+	// further up, but this is fine because concepts are protected against interrupting each other and Alyx may even be overridden
+	// to use TLK_ENEMY_DEAD instead, which is used by other NPCs and appends more modifiers.
+	BaseClass::Event_KilledOther( pVictim, info );
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1017,10 +1092,14 @@ void CNPC_Alyx::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 //-----------------------------------------------------------------------------
 void CNPC_Alyx::EnemyIgnited( CAI_BaseNPC *pVictim )
 {
+#ifdef MAPBASE
+	BaseClass::EnemyIgnited( pVictim );
+#else
 	if ( FVisible( pVictim ) )
 	{
 		SpeakIfAllowed( TLK_ENEMY_BURNING );
 	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1177,6 +1256,7 @@ void CNPC_Alyx::DoCustomSpeechAI( void )
 
 	CBasePlayer *pPlayer = AI_GetSinglePlayer();
 
+#ifndef MAPBASE // Ported to CNPC_PlayerCompanion
 	if ( HasCondition(COND_NEW_ENEMY) && GetEnemy() )
 	{
 		if ( GetEnemy()->Classify() == CLASS_HEADCRAB )
@@ -1203,6 +1283,7 @@ void CNPC_Alyx::DoCustomSpeechAI( void )
 			}
 		}
 	}
+#endif
 
 	// Darkness mode speech
 	ClearCondition( COND_ALYX_IN_DARK );
@@ -1620,8 +1701,87 @@ Activity CNPC_Alyx::NPC_TranslateActivity( Activity activity )
 		case ACT_DROP_WEAPON:				if ( HasShotgun() ) return (Activity)ACT_DROP_WEAPON_SHOTGUN;
 	}
 
+#if EXPANDED_HL2_WEAPON_ACTIVITIES
+	// Alyx has her own pistol readiness animations which use the default activities
+	switch (activity)
+	{
+	case ACT_IDLE_PISTOL_RELAXED:
+		return ACT_IDLE_RELAXED;
+	case ACT_IDLE_PISTOL_STIMULATED:
+		return ACT_IDLE_STIMULATED;
+	case ACT_WALK_PISTOL_RELAXED:
+		return ACT_WALK;
+	case ACT_WALK_PISTOL_STIMULATED:
+		return ACT_WALK_PISTOL;
+	case ACT_RUN_PISTOL_RELAXED:
+		return ACT_RUN;
+	case ACT_RUN_PISTOL_STIMULATED:
+		return ACT_RUN_PISTOL;
+	}
+#endif
+
 	return activity;
 }
+
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+Activity CNPC_Alyx::Weapon_TranslateActivity( Activity activity, bool *pRequired )
+{
+	activity = BaseClass::Weapon_TranslateActivity( activity, pRequired );
+
+#if EXPANDED_HL2_WEAPON_ACTIVITIES
+	// Alyx has her own pistol readiness animations which use the default activities
+	switch (activity)
+	{
+	case ACT_IDLE_PISTOL_RELAXED:
+		return ACT_IDLE_RELAXED;
+	case ACT_IDLE_PISTOL_STIMULATED:
+		return ACT_IDLE_STIMULATED;
+	case ACT_WALK_PISTOL_RELAXED:
+		return ACT_WALK;
+	case ACT_WALK_PISTOL_STIMULATED:
+		return ACT_WALK_PISTOL;
+	case ACT_RUN_PISTOL_RELAXED:
+		return ACT_RUN;
+	case ACT_RUN_PISTOL_STIMULATED:
+		return ACT_RUN_PISTOL;
+	}
+#endif
+
+	return activity;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+Activity CNPC_Alyx::Weapon_BackupActivity( Activity activity, bool weaponTranslationWasRequired, CBaseCombatWeapon *pSpecificWeapon )
+{
+	activity = BaseClass::Weapon_BackupActivity( activity, weaponTranslationWasRequired, pSpecificWeapon );
+
+#if EXPANDED_HL2_WEAPON_ACTIVITIES
+	// Alyx has her own pistol readiness animations which use the default activities
+	switch (activity)
+	{
+	case ACT_IDLE_PISTOL_RELAXED:
+		return ACT_IDLE_RELAXED;
+	case ACT_IDLE_PISTOL_STIMULATED:
+		return ACT_IDLE_STIMULATED;
+	case ACT_WALK_PISTOL_RELAXED:
+		return ACT_WALK;
+	case ACT_WALK_PISTOL_STIMULATED:
+		return ACT_WALK_PISTOL;
+	case ACT_RUN_PISTOL_RELAXED:
+		return ACT_RUN;
+	case ACT_RUN_PISTOL_STIMULATED:
+		return ACT_RUN_PISTOL;
+	}
+#endif
+
+	return activity;
+}
+#endif
 
 bool CNPC_Alyx::ShouldDeferToFollowBehavior()
 {
@@ -1763,6 +1923,7 @@ int CNPC_Alyx::SelectSchedule( void )
 //-----------------------------------------------------------------------------
 int CNPC_Alyx::SelectScheduleDanger( void )
 {
+#ifndef MAPBASE
 	if( HasCondition( COND_HEAR_DANGER ) )
 	{
 		CSound *pSound;
@@ -1775,6 +1936,7 @@ int CNPC_Alyx::SelectScheduleDanger( void )
 			SpeakIfAllowed( TLK_DANGER_ZOMBINE_GRENADE );
 		}
 	}
+#endif
 	
 	return BaseClass::SelectScheduleDanger();
 }
@@ -1849,6 +2011,29 @@ int CNPC_Alyx::TranslateSchedule( int scheduleType )
 					//Warning("CROUCH: Standing, no enemy.\n" );
 					Stand();
 				}
+
+#ifdef MAPBASE
+				// This stuff was ported from npc_playercompanion to help Alyx use grenades.
+				if (HasGrenades() && !IsCrouching())
+				{
+					if (CanAltFireEnemy( true ) && OccupyStrategySlot( SQUAD_SLOT_SPECIAL_ATTACK ))
+					{
+						return SCHED_PC_AR2_ALTFIRE;
+					}
+
+					if ( !OccupyStrategySlotRange( SQUAD_SLOT_ATTACK1, SQUAD_SLOT_ATTACK2 ) )
+					{
+						// Try throwing a grenade if Alyx is in a squad that already has attacking well in hand.
+						if ( CanGrenadeEnemy() )
+						{
+							if ( OccupyStrategySlot( SQUAD_SLOT_SPECIAL_ATTACK ) )
+							{
+								return SCHED_RANGE_ATTACK2;
+							}
+						}
+					}
+				}
+#endif
 			}
 
 			return SCHED_ALYX_RANGE_ATTACK1;
@@ -2941,7 +3126,12 @@ bool CNPC_Alyx::Crouch( void )
 		return false;
 
 	// Alyx will ignore crouch requests while she has the shotgun
+#ifdef MAPBASE
+	// Alyx will ignore crouch requests from anything that isn't a "pistol", e.g. her Alyx gun.
+	if ( GetActiveWeapon() && GetActiveWeapon()->WeaponClassify() != WEPCLASS_HANDGUN )
+#else
 	if ( HasShotgun() )
+#endif
 		return false;
 
 	bool bWasStanding = !IsCrouching();
@@ -2974,9 +3164,13 @@ void CNPC_Alyx::DesireCrouch( void )
 //-----------------------------------------------------------------------------
 void CNPC_Alyx::ModifyOrAppendCriteria( AI_CriteriaSet &set )
 {
+#ifdef MAPBASE
+	float fLengthOfLastCombat;
+#else
 	AIEnemiesIter_t iter;
 	float fLengthOfLastCombat;
 	int	iNumEnemies;
+#endif
 
 	if ( GetState() == NPC_STATE_COMBAT )
 	{
@@ -2989,6 +3183,7 @@ void CNPC_Alyx::ModifyOrAppendCriteria( AI_CriteriaSet &set )
 	
 	set.AppendCriteria( "combat_length", UTIL_VarArgs( "%.3f", fLengthOfLastCombat ) );
 
+#ifndef MAPBASE // Moved to CNPC_PlayerCompanion
 	iNumEnemies = 0;
 	for ( AI_EnemyInfo_t *pEMemory = GetEnemies()->GetFirst(&iter); pEMemory != NULL; pEMemory = GetEnemies()->GetNext(&iter) )
 	{
@@ -2998,6 +3193,7 @@ void CNPC_Alyx::ModifyOrAppendCriteria( AI_CriteriaSet &set )
 		}
 	}
 	set.AppendCriteria( "num_enemies", UTIL_VarArgs( "%d", iNumEnemies ) );
+#endif
 	set.AppendCriteria( "darkness_mode", UTIL_VarArgs( "%d", HasCondition( COND_ALYX_IN_DARK ) ) );
 	set.AppendCriteria( "water_level", UTIL_VarArgs( "%d", GetWaterLevel() ) );
 
@@ -3149,7 +3345,12 @@ bool CNPC_Alyx::PlayerInSpread( const Vector &sourcePos, const Vector &targetPos
 	{
 		CBasePlayer *pPlayer = UTIL_PlayerByIndex( i );
 
+#ifdef MAPBASE
+		// "> D_FR" means it isn't D_HT, D_FR, or D_ER (error disposition)
+		if ( pPlayer && ( !ignoreHatedPlayers || IRelationType( pPlayer ) > D_FR ) && !(pPlayer->GetFlags() & FL_NOTARGET) )
+#else
 		if ( pPlayer && ( !ignoreHatedPlayers || IRelationType( pPlayer ) != D_HT ) )
+#endif
 		{
 			//If the player is being lifted by a barnacle then go ahead and ignore the player and shoot.
 #ifdef HL2_EPISODIC
@@ -3324,8 +3525,10 @@ AI_BEGIN_CUSTOM_NPC( npc_alyx, CNPC_Alyx )
 	DECLARE_ANIMEVENT( AE_ALYX_EMPTOOL_ATTACHMENT )
 	DECLARE_ANIMEVENT( AE_ALYX_EMPTOOL_SEQUENCE )
 	DECLARE_ANIMEVENT( AE_ALYX_EMPTOOL_USE )
+#ifndef MAPBASE
 	DECLARE_ANIMEVENT( COMBINE_AE_BEGIN_ALTFIRE )
 	DECLARE_ANIMEVENT( COMBINE_AE_ALTFIRE )
+#endif
 
 	DECLARE_CONDITION( COND_ALYX_HAS_INTERACT_TARGET )
 	DECLARE_CONDITION( COND_ALYX_NO_INTERACT_TARGET )

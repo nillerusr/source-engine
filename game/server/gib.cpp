@@ -271,7 +271,11 @@ void CGib::SpawnSpecificGibs(	CBaseEntity*	pVictim,
 								float			vMinVelocity, 
 								float			vMaxVelocity, 
 								const char*		cModelName,
-								float			flLifetime)
+								float			flLifetime
+#ifdef EZ
+								,int			iBloodColor
+#endif
+															)
 {
 	for (int i=0;i<nNumGibs;i++)
 	{
@@ -285,6 +289,10 @@ void CGib::SpawnSpecificGibs(	CBaseEntity*	pVictim,
 		{
 			pGib->SetOwnerEntity( pVictim );
 		}
+
+#ifdef EZ
+		pGib->SetBloodColor( iBloodColor );
+#endif
 	}
 }
 
@@ -300,7 +308,9 @@ void CGib::SpawnRandomGibs( CBaseEntity *pVictim, int cGibs, GibType_e eGibType 
 	for ( cSplat = 0 ; cSplat < cGibs ; cSplat++ )
 	{
 		CGib *pGib = CREATE_ENTITY( CGib, "gib" );
-
+#ifdef EZ
+		int bloodColor = pVictim->BloodColor();
+#endif
 		if ( g_Language.GetInt() == LANGUAGE_GERMAN )
 		{
 			pGib->Spawn( "models/germangibs.mdl" );
@@ -312,19 +322,50 @@ void CGib::SpawnRandomGibs( CBaseEntity *pVictim, int cGibs, GibType_e eGibType 
 			{
 			case GIB_HUMAN:
 				// human pieces
+#ifndef EZ
 				pGib->Spawn( "models/gibs/hgibs.mdl" );
 				pGib->m_nBody = random->RandomInt(1,HUMAN_GIB_COUNT-1);// start at one to avoid throwing random amounts of skulls (0th gib)
+
+#else
+
+				switch ( random->RandomInt(0,2) )
+				{
+				case 0:
+					pGib->Spawn( "models/gibs/hgibs_rib.mdl" );
+					break;
+				case 1:
+					pGib->Spawn( "models/gibs/hgibs_scapula.mdl" );
+					break;
+				default:
+					pGib->Spawn( "models/gibs/hgibs_spine.mdl" );
+					break;
+				}
+				bloodColor = BLOOD_COLOR_RED;
+#endif
+
 				break;
 			case GIB_ALIEN:
 				// alien pieces
+#ifdef EZ
+				pGib->Spawn( "models/gibs/agibs2.mdl" );
+				bloodColor = BLOOD_COLOR_GREEN;
+#else
 				pGib->Spawn( "models/gibs/agibs.mdl" );
+#endif
 				pGib->m_nBody = random->RandomInt(0,ALIEN_GIB_COUNT-1);
 				break;
 			}
 		}
 		pGib->InitGib( pVictim, 300, 400);
+#ifdef EZ
+		pGib->SetBloodColor( bloodColor );
+#endif
 	}
 }
+
+#ifdef EZ
+extern ConVar sk_gib_carcass_smell;
+#endif
 
 //=========================================================
 // WaitTillLand - in order to emit their meaty scent from
@@ -380,9 +421,37 @@ void CGib::WaitTillLand ( void )
 		// If you bleed, you stink!
 		if ( m_bloodColor != DONT_BLEED )
 		{
+#ifndef EZ
 			// ok, start stinkin!
 			// FIXME: It's too easy to fill up the sound queue with all these meat sounds
 			// CSoundEnt::InsertSound ( SOUND_MEAT, GetAbsOrigin(), 384, 25 );
+#else
+
+			// Gibs 'smell' like food to predators, except for zombies
+			if ( sk_gib_carcass_smell.GetBool() )
+			{
+				int flags = SOUND_MEAT;
+				// The 'exlude zombies' thing is a little bit weird. Gonomes spawn these when they create headcrabs, plus headcrabs spawn them.
+				// For that reason, it would be awkward if gonomes could eat these. Maybe that can be improved.
+				if ( m_bloodColor == BLOOD_COLOR_GREEN )
+				{
+					flags |= SOUND_CONTEXT_EXCLUDE_ZOMBIE;
+				}
+
+				CSoundEnt::InsertSound( flags, GetAbsOrigin(), 1024.0f, 10.0f, this );
+
+				// Visually represent this smell with a blood decal
+				if ( g_Language.GetInt() != LANGUAGE_GERMAN )
+				{
+					trace_t tr;
+					Vector vecSpot = GetAbsOrigin() + Vector ( 0, 0, 8 );//move up a bit, and trace down.
+					UTIL_TraceLine ( vecSpot, vecSpot + Vector ( 0, 0, -24 ), MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr );
+
+					UTIL_BloodDecalTrace( &tr, m_bloodColor );
+				}
+			}
+#endif
+
 		}
 	}
 	else
@@ -592,7 +661,12 @@ void CGib::Spawn( const char *szGibModel )
 	m_nRenderFX = kRenderFxNone;
 	
 	// hopefully this will fix the VELOCITY TOO LOW crap
+#ifndef EZ
 	m_takedamage = DAMAGE_EVENTS_ONLY;
+#else
+	m_takedamage = DAMAGE_YES;
+	m_iHealth = 20;
+#endif
 	SetSolid( SOLID_BBOX );
 	AddSolidFlags( FSOLID_NOT_STANDABLE );
 	SetCollisionGroup( COLLISION_GROUP_DEBRIS );
@@ -603,6 +677,14 @@ void CGib::Spawn( const char *szGibModel )
 	SetElasticity( 1.0 );
 	UTIL_SetSize( this, vec3_origin, vec3_origin );
 #endif//HL1_DLL
+
+#ifdef EZ
+	if (sk_gib_carcass_smell.GetBool())
+	{
+		SetThink ( &CGib::WaitTillLand );
+		SetNextThink( gpGlobals->curtime + 1.0f );
+	}
+#endif
 
 	SetNextThink( gpGlobals->curtime + 4 );
 	m_lifeTime = 25;

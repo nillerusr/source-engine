@@ -14,7 +14,11 @@
 #include "items.h"
 #include "in_buttons.h"
 #include "soundent.h"
+#include "gamestats.h"
 #include "grenade_hopwire.h"
+#ifdef EZ2
+#include "ez2/ez2_player.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -36,6 +40,7 @@ class CWeaponHopwire: public CBaseHLCombatWeapon
 public:
 	DECLARE_SERVERCLASS();
 
+	CWeaponHopwire();
 	void	Precache( void );
 	void	Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCharacter *pOperator );
 	void	PrimaryAttack( void );
@@ -52,10 +57,17 @@ public:
 	
 	bool	Reload( void );
 
+	bool	ShouldDisplayHUDHint() { return true; }
+
+
+	virtual HopwireStyle GetHopwireStyle() { return HOPWIRE_XEN; }
+
+protected:
+	virtual void	ThrowGrenade( CBasePlayer *pPlayer );
+	virtual void	RollGrenade( CBasePlayer *pPlayer );
+	virtual void	LobGrenade( CBasePlayer *pPlayer );
+
 private:
-	void	ThrowGrenade( CBasePlayer *pPlayer );
-	void	RollGrenade( CBasePlayer *pPlayer );
-	void	LobGrenade( CBasePlayer *pPlayer );
 	// check a throw from vecSrc.  If not valid, move the position back along the line to vecEye
 	void	CheckThrowPosition( CBasePlayer *pPlayer, const Vector &vecEye, Vector &vecSrc );
 
@@ -90,7 +102,36 @@ IMPLEMENT_SERVERCLASS_ST(CWeaponHopwire, DT_WeaponHopwire)
 END_SEND_TABLE()
 
 LINK_ENTITY_TO_CLASS( weapon_hopwire, CWeaponHopwire );
+
+#ifdef EZ2
+class CWeaponStasisGrenade : public CWeaponHopwire
+{
+	DECLARE_CLASS( CWeaponHopwire, CWeaponHopwire );
+public:
+
+	virtual HopwireStyle GetHopwireStyle() { return HOPWIRE_STASIS; }
+
+	DECLARE_SERVERCLASS();
+};
+
+IMPLEMENT_SERVERCLASS_ST( CWeaponStasisGrenade, DT_WeaponStasisGrenade )
+END_SEND_TABLE()
+
+LINK_ENTITY_TO_CLASS( weapon_stasis_grenade, CWeaponStasisGrenade );
+#endif
+
+// In E:Z2, the hopwire's Xen spawning feature precaches a massive number of assets which shouldn't be used on levels which don't have Xen grenades.
+// As a result, the hopwire is precached in the same way as any other entity. (i.e. not precached at all times like other weapons are)
+#ifndef EZ2
 PRECACHE_WEAPON_REGISTER(weapon_hopwire);
+#endif
+
+CWeaponHopwire::CWeaponHopwire() :
+	CBaseHLCombatWeapon(),
+	m_bRedraw( false )
+{
+	NULL;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -99,7 +140,19 @@ void CWeaponHopwire::Precache( void )
 {
 	BaseClass::Precache();
 
+#ifdef EZ2
+	if (GetHopwireStyle() == HOPWIRE_XEN)
+	{
+		VerifyXenRecipeManager( GetClassname() );
+		UTIL_PrecacheOther( "npc_grenade_hopwire" );
+	}
+	else if (GetHopwireStyle() == HOPWIRE_STASIS)
+	{
+		UTIL_PrecacheOther( "npc_grenade_stasis" );
+	}
+#else
 	UTIL_PrecacheOther( "npc_grenade_hopwire" );
+#endif
 
 	PrecacheScriptSound( "WeaponFrag.Throw" );
 	PrecacheScriptSound( "WeaponFrag.Roll" );
@@ -124,7 +177,7 @@ bool CWeaponHopwire::Deploy( void )
 //-----------------------------------------------------------------------------
 bool CWeaponHopwire::Holster( CBaseCombatWeapon *pSwitchingTo )
 {
-	if ( m_hActiveHopWire != NULL )
+	if ( hopwire_trap.GetBool() && m_hActiveHopWire != NULL )
 		return false;
 
 	m_bRedraw = false;
@@ -204,7 +257,7 @@ void CWeaponHopwire::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatC
 //-----------------------------------------------------------------------------
 bool CWeaponHopwire::HasAnyAmmo( void )
 {
-	if ( m_hActiveHopWire != NULL )
+	if ( hopwire_trap.GetBool() && m_hActiveHopWire != NULL )
 		return true;
 
 	return BaseClass::HasAnyAmmo();
@@ -241,7 +294,6 @@ bool CWeaponHopwire::Reload( void )
 //-----------------------------------------------------------------------------
 void CWeaponHopwire::SecondaryAttack( void )
 {
-	/*
 	if ( m_bRedraw )
 		return;
 
@@ -258,6 +310,19 @@ void CWeaponHopwire::SecondaryAttack( void )
 	if ( pPlayer == NULL )
 		return;
 
+	// See if we're in trap mode
+	if (hopwire_trap.GetBool() && (m_hActiveHopWire != NULL))
+	{
+		// Spring the trap
+		m_hActiveHopWire->Detonate();
+		m_hActiveHopWire = NULL;
+
+		// Don't allow another throw for awhile
+		m_flTimeWeaponIdle = m_flNextSecondaryAttack = gpGlobals->curtime + 2.0f;
+
+		return;
+	}
+
 	// Note that this is a secondary attack and prepare the grenade attack to pause.
 	m_AttackPaused = GRENADE_PAUSED_SECONDARY;
 	SendWeaponAnim( ACT_VM_PULLBACK_LOW );
@@ -267,11 +332,10 @@ void CWeaponHopwire::SecondaryAttack( void )
 	m_flNextSecondaryAttack	= FLT_MAX;
 
 	// If I'm now out of ammo, switch away
-	if ( !HasPrimaryAmmo() )
+	if (!HasPrimaryAmmo() && !hopwire_trap.GetBool())
 	{
 		pPlayer->SwitchToNextBestWeapon( this );
 	}
-	*/
 }
 
 //-----------------------------------------------------------------------------
@@ -279,7 +343,7 @@ void CWeaponHopwire::SecondaryAttack( void )
 //-----------------------------------------------------------------------------
 void CWeaponHopwire::HandleFireOnEmpty( void )
 {
-	if ( m_hActiveHopWire!= NULL )
+	if (hopwire_trap.GetBool() && m_hActiveHopWire!= NULL )
 	{
 		// FIXME: This toggle is hokey
 		m_bRedraw = false;
@@ -296,12 +360,15 @@ void CWeaponHopwire::PrimaryAttack( void )
 	if ( m_bRedraw )
 		return;
 
+	if (!HasPrimaryAmmo())
+		return;
+
 	CBaseCombatCharacter *pOwner  = GetOwner();
 	if ( pOwner == NULL )
 		return;
 
 	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );;
-	if ( !pPlayer )
+	if ( pPlayer == NULL )
 		return;
 
 	// See if we're in trap mode
@@ -318,12 +385,8 @@ void CWeaponHopwire::PrimaryAttack( void )
 	}
 
 	// Note that this is a primary attack and prepare the grenade attack to pause.
-	/*
 	m_AttackPaused = GRENADE_PAUSED_PRIMARY;
 	SendWeaponAnim( ACT_VM_PULLBACK_HIGH );
-	*/
-	m_AttackPaused = GRENADE_PAUSED_SECONDARY;
-	SendWeaponAnim( ACT_VM_PULLBACK_LOW );
 	
 	// Put both of these off indefinitely. We do not know how long
 	// the player will hold the grenade.
@@ -331,12 +394,10 @@ void CWeaponHopwire::PrimaryAttack( void )
 	m_flNextPrimaryAttack = FLT_MAX;
 
 	// If I'm now out of ammo, switch away
-	/*
-	if ( !HasPrimaryAmmo() )
+	if ( !HasPrimaryAmmo() && !hopwire_trap.GetBool() )
 	{
 		pPlayer->SwitchToNextBestWeapon( this );
 	}
-	*/
 }
 
 //-----------------------------------------------------------------------------
@@ -370,7 +431,7 @@ void CWeaponHopwire::ItemPostFrame( void )
 				break;
 
 			case GRENADE_PAUSED_SECONDARY:
-				if( !(pOwner->m_nButtons & (IN_ATTACK|IN_ATTACK2)) )
+				if( !(pOwner->m_nButtons & IN_ATTACK2) )
 				{
 					//See if we're ducking
 					if ( pOwner->m_nButtons & IN_DUCK )
@@ -436,11 +497,35 @@ void CWeaponHopwire::ThrowGrenade( CBasePlayer *pPlayer )
 	Vector vecThrow;
 	pPlayer->GetVelocity( &vecThrow, NULL );
 	vecThrow += vForward * 1200;
-	m_hActiveHopWire = static_cast<CGrenadeHopwire *> (HopWire_Create( vecSrc, vec3_angle, vecThrow, AngularImpulse(600,random->RandomInt(-1200,1200),0), pPlayer, GRENADE_TIMER ));
+
+#ifndef EZ2
+	m_hActiveHopWire = static_cast<CGrenadeHopwire *> (HopWire_Create( vecSrc, vec3_angle, vecThrow, AngularImpulse(600,random->RandomInt(-1200,1200),0), pPlayer, GRENADE_TIMER, GetWorldModel(), GetSecondaryWorldModel()));
+#else
+	switch (GetHopwireStyle())
+	{
+	case HOPWIRE_STASIS:
+		m_hActiveHopWire = static_cast<CGrenadeStasis *> (StasisGrenade_Create( vecSrc, vec3_angle, vecThrow, AngularImpulse( 600, random->RandomInt( -1200, 1200 ), 0 ), pPlayer, stasis_timer.GetFloat(), GetWorldModel(), GetSecondaryWorldModel()));
+		break;
+	default:
+		m_hActiveHopWire = static_cast<CGrenadeHopwire *> (HopWire_Create( vecSrc, vec3_angle, vecThrow, AngularImpulse( 600, random->RandomInt( -1200, 1200 ), 0 ), pPlayer, hopwire_timer.GetFloat(), GetWorldModel(), GetSecondaryWorldModel() ));
+		break;
+
+	}
+#endif
 
 	m_bRedraw = true;
 
 	WeaponSound( SINGLE );
+#ifdef EZ2
+	// Blixibon
+	CEZ2_Player *pEZ2Player = assert_cast<CEZ2_Player*>(pPlayer);
+	if (pEZ2Player)
+	{
+		pEZ2Player->Event_ThrewGrenade(this);
+	}
+#endif
+	m_iPrimaryAttacks++;
+	gamestats->Event_WeaponFired( pPlayer, true, GetClassname() );
 }
 
 //-----------------------------------------------------------------------------
@@ -459,11 +544,28 @@ void CWeaponHopwire::LobGrenade( CBasePlayer *pPlayer )
 	Vector vecThrow;
 	pPlayer->GetVelocity( &vecThrow, NULL );
 	vecThrow += vForward * 350 + Vector( 0, 0, 50 );
-	m_hActiveHopWire = static_cast<CGrenadeHopwire *> (HopWire_Create( vecSrc, vec3_angle, vecThrow, AngularImpulse(200,random->RandomInt(-600,600),0), pPlayer, GRENADE_TIMER ));
+#ifndef EZ2
+	m_hActiveHopWire = static_cast<CGrenadeHopwire *> (HopWire_Create( vecSrc, vec3_angle, vecThrow, AngularImpulse( 200, random->RandomInt( -600, 600 ), 0 ), pPlayer, GRENADE_TIMER, GetWorldModel(), GetSecondaryWorldModel() ));
+#else
+	switch (GetHopwireStyle())
+	{
+	case HOPWIRE_STASIS:
+		m_hActiveHopWire = static_cast<CGrenadeStasis *> (StasisGrenade_Create( vecSrc, vec3_angle, vecThrow, AngularImpulse( 200, random->RandomInt( -600, 600 ), 0 ), pPlayer, stasis_timer.GetFloat(), GetWorldModel(), GetSecondaryWorldModel() ));
+		break;
+	default:
+		m_hActiveHopWire = static_cast<CGrenadeHopwire *> (HopWire_Create( vecSrc, vec3_angle, vecThrow, AngularImpulse( 200, random->RandomInt( -600, 600 ), 0 ), pPlayer, hopwire_timer.GetFloat(), GetWorldModel(), GetSecondaryWorldModel() ));
+		break;
+
+	}
+#endif
+
 
 	WeaponSound( WPN_DOUBLE );
 
 	m_bRedraw = true;
+
+	m_iPrimaryAttacks++;
+	gamestats->Event_WeaponFired( pPlayer, true, GetClassname() );
 }
 
 //-----------------------------------------------------------------------------
@@ -500,9 +602,88 @@ void CWeaponHopwire::RollGrenade( CBasePlayer *pPlayer )
 	QAngle orientation(0,pPlayer->GetLocalAngles().y,-90);
 	// roll it
 	AngularImpulse rotSpeed(0,0,720);
-	m_hActiveHopWire = static_cast<CGrenadeHopwire *> (HopWire_Create( vecSrc, orientation, vecThrow, rotSpeed, pPlayer, GRENADE_TIMER ));
+#ifndef EZ2
+	m_hActiveHopWire = static_cast<CGrenadeHopwire *> (HopWire_Create( vecSrc, orientation, vecThrow, rotSpeed, pPlayer, GRENADE_TIMER, GetWorldModel(), GetSecondaryWorldModel()));
+#else
+	switch (GetHopwireStyle())
+	{
+	case HOPWIRE_STASIS:
+		m_hActiveHopWire = static_cast<CGrenadeStasis *> (StasisGrenade_Create( vecSrc, orientation, vecThrow, rotSpeed, pPlayer, stasis_timer.GetFloat(), GetWorldModel(), GetSecondaryWorldModel() ));
+		break;
+	default:
+		m_hActiveHopWire = static_cast<CGrenadeHopwire *> (HopWire_Create( vecSrc, orientation, vecThrow, rotSpeed, pPlayer, hopwire_timer.GetFloat(), GetWorldModel(), GetSecondaryWorldModel() ));
+		break;
+
+	}
+#endif
 
 	WeaponSound( SPECIAL1 );
 
 	m_bRedraw = true;
+
+	m_iPrimaryAttacks++;
+	gamestats->Event_WeaponFired( pPlayer, true, GetClassname() );
 }
+
+#ifdef EZ
+class CWeaponEndGame : public CWeaponHopwire
+{
+	DECLARE_DATADESC();
+public:
+	DECLARE_CLASS( CWeaponEndGame, CWeaponHopwire );
+	DECLARE_SERVERCLASS();
+
+	void	Precache( void );
+
+	bool	ShouldDisplayHUDHint() { return true; }
+protected:
+	void	ThrowGrenade( CBasePlayer *pPlayer );
+	void	RollGrenade( CBasePlayer *pPlayer );
+	void	LobGrenade( CBasePlayer *pPlayer );
+private:
+	void EndGame();
+	COutputEvent m_OnEndGame;
+
+
+};
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CWeaponEndGame::Precache( void )
+{
+	// Skip Xen grenade precache
+	CBaseHLCombatWeapon::Precache();
+}
+
+void CWeaponEndGame::ThrowGrenade( CBasePlayer * pPlayer )
+{
+	EndGame();
+}
+
+void CWeaponEndGame::RollGrenade( CBasePlayer * pPlayer )
+{
+	EndGame();
+}
+
+void CWeaponEndGame::LobGrenade( CBasePlayer * pPlayer )
+{
+	EndGame();
+}
+
+void CWeaponEndGame::EndGame()
+{
+	m_OnEndGame.FireOutput( this, GetOwnerEntity(), 0.0f );
+}
+
+
+IMPLEMENT_SERVERCLASS_ST( CWeaponEndGame, DT_WeaponEndGame )
+END_SEND_TABLE()
+
+LINK_ENTITY_TO_CLASS( weapon_endgame, CWeaponEndGame );
+PRECACHE_WEAPON_REGISTER( weapon_endgame );
+
+BEGIN_DATADESC( CWeaponEndGame )
+DEFINE_OUTPUT( m_OnEndGame, "OnEndGame" ),
+END_DATADESC()
+#endif

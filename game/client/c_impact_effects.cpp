@@ -33,7 +33,11 @@ CLIENTEFFECT_MATERIAL( "effects/fleck_wood2" )
 CLIENTEFFECT_MATERIAL( "effects/blood" )
 CLIENTEFFECT_MATERIAL( "effects/blood2" )
 CLIENTEFFECT_MATERIAL( "sprites/bloodspray" )
-CLIENTEFFECT_MATERIAL( "particle/particle_noisesphere" )
+#ifndef EZ
+CLIENTEFFECT_MATERIAL("particle/particle_noisesphere")
+#else
+CLIENTEFFECT_MATERIAL("particle/newImpacts/particle_impact_dust2")
+#endif
 CLIENTEFFECT_REGISTER_END()
 
 // Cached handles to commonly used materials
@@ -42,7 +46,7 @@ PMaterialHandle g_Mat_Fleck_Cement[2] = { NULL, NULL };
 PMaterialHandle g_Mat_Fleck_Antlion[2] = { NULL, NULL };
 PMaterialHandle g_Mat_Fleck_Glass[2] = { NULL, NULL };
 PMaterialHandle g_Mat_Fleck_Tile[2] = { NULL, NULL };
-PMaterialHandle g_Mat_DustPuff[2] = { NULL, NULL };
+PMaterialHandle g_Mat_DustPuff[3] = { NULL, NULL, NULL };
 PMaterialHandle g_Mat_BloodPuff[2] = { NULL, NULL };
 PMaterialHandle g_Mat_SMG_Muzzleflash[4] = { NULL, NULL, NULL, NULL };
 PMaterialHandle g_Mat_Combine_Muzzleflash[3] = { NULL, NULL, NULL };
@@ -64,11 +68,17 @@ void FX_CacheMaterialHandles( void )
 	g_Mat_Fleck_Glass[0] = ParticleMgr()->GetPMaterial( "effects/fleck_glass1" );
 	g_Mat_Fleck_Glass[1] = ParticleMgr()->GetPMaterial( "effects/fleck_glass2" );
 
-	g_Mat_Fleck_Tile[0] = ParticleMgr()->GetPMaterial( "effects/fleck_tile1" );
-	g_Mat_Fleck_Tile[1] = ParticleMgr()->GetPMaterial( "effects/fleck_tile2" );
+	g_Mat_Fleck_Tile[0] = ParticleMgr()->GetPMaterial("effects/fleck_tile1");
+	g_Mat_Fleck_Tile[1] = ParticleMgr()->GetPMaterial("effects/fleck_tile2");
 
-	g_Mat_DustPuff[0] = ParticleMgr()->GetPMaterial( "particle/particle_smokegrenade" );
-	g_Mat_DustPuff[1] = ParticleMgr()->GetPMaterial( "particle/particle_noisesphere" );
+#ifdef EZ
+	g_Mat_DustPuff[0] = ParticleMgr()->GetPMaterial("particle/newImpacts/particle_impact_dust1"); // BREADMAN - was particle_smokegrenade
+	g_Mat_DustPuff[1] = ParticleMgr()->GetPMaterial("particle/newImpacts/particle_impact_dust2"); // BREADMAN- was particle_noisesphere
+	g_Mat_DustPuff[2] = ParticleMgr()->GetPMaterial("particle/particle_smokegrenade");
+#else
+	g_Mat_DustPuff[0] = ParticleMgr()->GetPMaterial("particle/particle_smokegrenade");
+	g_Mat_DustPuff[1] = ParticleMgr()->GetPMaterial("particle/particle_noisesphere");
+#endif
 
 	g_Mat_BloodPuff[0] = ParticleMgr()->GetPMaterial( "effects/blood" );
 	g_Mat_BloodPuff[1] = ParticleMgr()->GetPMaterial( "effects/blood2" );
@@ -209,7 +219,11 @@ static void CreateFleckParticles( const Vector& origin, const Vector &color, tra
 		dir[1] = trace->plane.normal[1] + random->RandomFloat( -flAngularSpray, flAngularSpray );
 		dir[2] = trace->plane.normal[2] + random->RandomFloat( -flAngularSpray, flAngularSpray );
 
-		pFleckParticle->m_uchSize		= random->RandomInt( 1, 2 );
+#ifdef EZ
+		pFleckParticle->m_uchSize = random->RandomInt(4, 8); // BREADMAN - fleck size. was 1,2
+#else
+		pFleckParticle->m_uchSize = random->RandomInt(1, 2);
+#endif
 
 		pFleckParticle->m_vecVelocity	= dir * ( random->RandomFloat( FLECK_MIN_SPEED, flMaxSpeed) * ( 3 - pFleckParticle->m_uchSize ) );
 
@@ -374,8 +388,12 @@ void FX_DebrisFlecks( const Vector& origin, trace_t *tr, char materialType, int 
 		dir[1] = tr->plane.normal[1] + random->RandomFloat( -0.8f, 0.8f );
 		dir[2] = tr->plane.normal[2] + random->RandomFloat( -0.8f, 0.8f );
 
-		newParticle.m_uchStartSize	= random->RandomInt( 2, 4 ) * iScale;
-		newParticle.m_uchEndSize	= newParticle.m_uchStartSize * 8 * iScale;
+#ifdef EZ
+		newParticle.m_uchStartSize = random->RandomInt(10, 16) * iScale; // BREADMAN - was 2, 4
+#else
+		newParticle.m_uchStartSize = random->RandomInt(2, 4) * iScale;
+#endif
+		newParticle.m_uchEndSize = newParticle.m_uchStartSize * 8 * iScale;
 
 		newParticle.m_vecVelocity = dir * random->RandomFloat( 2.0f, 24.0f )*(i+1);
 		newParticle.m_vecVelocity[2] -= random->RandomFloat( 8.0f, 32.0f )*(i+1);

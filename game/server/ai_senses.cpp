@@ -147,7 +147,11 @@ void CAI_Senses::Listen( void )
 
 bool CAI_Senses::ShouldSeeEntity( CBaseEntity *pSightEnt )
 {
+#ifdef EZ2
+	if ( pSightEnt == GetOuter() || (!(pSightEnt->GetFlags() & FL_OBJECT) && !pSightEnt->IsAlive()) )
+#else
 	if ( pSightEnt == GetOuter() || !pSightEnt->IsAlive() )
+#endif
 		return false;
 
 	if ( pSightEnt->IsPlayer() && ( pSightEnt->GetFlags() & FL_NOTARGET ) )

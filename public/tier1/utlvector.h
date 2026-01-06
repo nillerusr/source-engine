@@ -1465,6 +1465,18 @@ void CUtlVector<T, A>::Validate( CValidator &validator, char *pchName )
 }
 #endif // DBGFLAG_VALIDATE
 
+// A vector class for storing pointers, so that the elements pointed to by the pointers are deleted
+// on exit.
+template<class T> class CUtlVectorAutoPurge : public CUtlVector< T, CUtlMemory< T, int> >
+{
+public:
+	~CUtlVectorAutoPurge( void )
+	{
+		this->PurgeAndDeleteElements();
+	}
+
+};
+
 // easy string list class with dynamically allocated strings. For use with V_SplitString, etc.
 // Frees the dynamic strings in destructor.
 class CUtlStringList : public CUtlVector< char*, CUtlMemory< char*, int > >

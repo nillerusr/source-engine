@@ -16,9 +16,7 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-#define		SF_BRUSH_ACCDCC	16// brush should accelerate and decelerate when toggled
-#define		SF_BRUSH_HURT		32// rotating brush that inflicts pain based on rotation speed
-#define		SF_ROTATING_NOT_SOLID	64	// some special rotating objects are not solid.
+//Tony; moved the spawnflags to util.h to prevent more mistakes in the future.
 
 // =================== FUNC_WALL ==============================================
 class CFuncWall : public CBaseEntity
@@ -452,6 +450,11 @@ protected:
 
 	bool m_bSolidBsp;				// Brush is SOLID_BSP
 
+#ifdef MAPBASE
+	int		m_iMinPitch = 30; // FANPITCHMIN
+	int		m_iMaxPitch = 100; // FANPITCHMAX
+#endif
+
 public:
 	Vector m_vecClientOrigin;
 	QAngle m_vecClientAngles;
@@ -474,6 +477,10 @@ BEGIN_DATADESC( CFuncRotating )
 	DEFINE_FIELD( m_angStart, FIELD_VECTOR ),
 	DEFINE_FIELD( m_bStopAtStartPos, FIELD_BOOLEAN ),
 	DEFINE_KEYFIELD( m_bSolidBsp, FIELD_BOOLEAN, "solidbsp" ),
+#ifdef MAPBASE
+	DEFINE_KEYFIELD( m_iMinPitch, FIELD_INTEGER, "minpitch" ),
+	DEFINE_KEYFIELD( m_iMaxPitch, FIELD_INTEGER, "maxpitch" ),
+#endif
 
 	// Function Pointers
 	DEFINE_FUNCTION( SpinUpMove ),
@@ -825,8 +832,14 @@ void CFuncRotating::HurtTouch ( CBaseEntity *pOther )
 }
 
 
+#ifdef MAPBASE
+// In Mapbase, use the keyvalues instead
+#define FANPITCHMIN		m_iMinPitch
+#define FANPITCHMAX		m_iMaxPitch
+#else
 #define FANPITCHMIN		30
 #define FANPITCHMAX		100
+#endif
 
 
 //-----------------------------------------------------------------------------
@@ -1091,6 +1104,18 @@ void CFuncRotating::ReverseMove( void )
 void CFuncRotating::RotateMove( void )
 {
 	SetMoveDoneTime( 10 );
+
+#ifdef MAPBASE
+	QAngle angNormalizedAngles = GetLocalAngles();
+	if (m_vecMoveAng.x)
+		angNormalizedAngles.x = AngleNormalize( angNormalizedAngles.x );
+	if (m_vecMoveAng.y)
+		angNormalizedAngles.y = AngleNormalize( angNormalizedAngles.y );
+	if (m_vecMoveAng.z)
+		angNormalizedAngles.z = AngleNormalize( angNormalizedAngles.z );
+
+	SetLocalAngles(angNormalizedAngles);
+#endif
 
 	if ( m_bStopAtStartPos )
 	{
@@ -1380,6 +1405,9 @@ public:
 
 	void InputEnable( inputdata_t &inputdata );
 	void InputDisable( inputdata_t &inputdata );
+#ifdef MAPBASE
+	void InputSetFilter( inputdata_t &inputdata );
+#endif
 
 private:
 
@@ -1394,10 +1422,17 @@ BEGIN_DATADESC( CFuncVPhysicsClip )
 	// Keyfields
 	DEFINE_KEYFIELD( m_iFilterName,	FIELD_STRING,	"filtername" ),
 	DEFINE_FIELD( m_hFilter,	FIELD_EHANDLE ),
+#ifdef MAPBASE
+	DEFINE_KEYFIELD( m_bDisabled, FIELD_BOOLEAN, "StartDisabled" ),
+#else
 	DEFINE_FIELD( m_bDisabled,	FIELD_BOOLEAN ),
+#endif
 
 	DEFINE_INPUTFUNC( FIELD_VOID, "Enable", InputEnable ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "Disable", InputDisable ),
+#ifdef MAPBASE
+	DEFINE_INPUTFUNC( FIELD_EHANDLE, "SetFilter", InputSetFilter ),
+#endif
 
 END_DATADESC()
 
@@ -1440,6 +1475,12 @@ bool CFuncVPhysicsClip::EntityPassesFilter( CBaseEntity *pOther )
 	if ( pFilter )
 		return pFilter->PassesFilter( this, pOther );
 
+#ifdef MAPBASE
+	// I couldn't figure out what else made this crash. The entity shouldn't be NULL.
+	if ( !pOther->VPhysicsGetObject() )
+		return false;
+#endif
+
 	if ( pOther->GetMoveType() == MOVETYPE_VPHYSICS && pOther->VPhysicsGetObject()->IsMoveable() )
 		return true;
 	
@@ -1463,3 +1504,19 @@ void CFuncVPhysicsClip::InputDisable( inputdata_t &inputdata )
 	VPhysicsGetObject()->EnableCollisions(false);
 	m_bDisabled = true;
 }
+
+#ifdef MAPBASE
+void CFuncVPhysicsClip::InputSetFilter( inputdata_t &inputdata )
+{
+	if (inputdata.value.Entity())
+	{
+		m_iFilterName = inputdata.value.Entity()->GetEntityName();
+		m_hFilter = dynamic_cast<CBaseFilter *>(inputdata.value.Entity().Get());
+	}
+	else
+	{
+		m_iFilterName = NULL_STRING;
+		m_hFilter = NULL;
+	}
+}
+#endif

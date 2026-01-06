@@ -202,6 +202,11 @@ void C_BaseExplosionEffect::CreateCore( void )
 	if ( m_fFlags & TE_EXPLFLAG_NOFIREBALL )
 		return;
 
+#ifdef EZ
+	DispatchParticleEffect( "ExplosionCore", m_vecOrigin, vec3_angle );
+	DispatchParticleEffect( "ExplosionEmbers", m_vecOrigin, vec3_angle );
+	DispatchParticleEffect( "ExplosionFlash", m_vecOrigin, vec3_angle );
+#else
 	Vector	offset;
 	int		i;
 
@@ -553,6 +558,7 @@ void C_BaseExplosionEffect::CreateCore( void )
 			pParticle->m_flRollDelta	= random->RandomFloat( -16.0f, 16.0f );
 		}
 	}
+#endif
 }
 
 //-----------------------------------------------------------------------------

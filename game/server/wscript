@@ -9,21 +9,7 @@ top = '.'
 PROJECT_NAME = 'server'
 
 games = {
-	'hl2': ['server_base.vpc', 'server_hl2.vpc'],
-	'episodic':['server_base.vpc', 'server_episodic.vpc'],
-	'hl2mp': ['server_base.vpc', 'server_hl2mp.vpc'],
-	'portal': ['server_base.vpc', 'server_portal.vpc'],
-	'hl1': ['server_base.vpc', 'server_hl1.vpc'],
-	'hl1mp': ['server_base.vpc', 'server_hl1mp.vpc'],
-	'cstrike': ['server_base.vpc', 'server_cstrike.vpc', 'nav_mesh.vpc'],
-	'dod': ['server_base.vpc', 'server_dod.vpc'],
-	'tf': [
-		'server_base.vpc',
-		'server_econ_base.vpc',
-		'tf/tf_gcmessages_include.vpc',
-		'nav_mesh.vpc',
-		'server_tf.vpc'
-	]
+	'EntropyZero': ['server_base.vpc', 'server_mapbase.vpc', 'server_ez1.vpc'],
 }
 
 def options(opt):
@@ -34,6 +20,9 @@ def configure(conf):
 	conf.env.GAMES = game
 
 	conf.env.append_unique('DEFINES', ['DISABLE_STEAM=1'])
+	conf.define('MAPBASE', 1)
+	conf.define('MAPBASE_VSCRIPT', 1)
+	conf.define('VSCRIPT', 1)
 
 	if game not in games.keys():
 		conf.fatal("Couldn't find game: ", game)
@@ -55,7 +44,7 @@ def build(bld):
 
 	defines = []
 
-	libs = ['tier0','particles','dmxloader','tier1','tier2','tier3','mathlib','vstdlib','choreoobjects','steam_api']
+	libs = ['tier0','particles','dmxloader','tier1','tier2','tier3','mathlib','vstdlib','choreoobjects','steam_api', 'vscript']
 	if bld.env.DEST_OS == 'win32':
 		libs += ['USER32']
 

@@ -179,6 +179,11 @@ BEGIN_DATADESC( CNPC_CScanner )
 	DEFINE_INPUTFUNC( FIELD_STRING, "DeployMine", InputDeployMine ),
 	DEFINE_INPUTFUNC( FIELD_STRING, "EquipMine", InputEquipMine ),
 
+#ifdef MAPBASE
+	DEFINE_INPUTFUNC( FIELD_VOID, "DisablePhotos", InputDisablePhotos ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "EnablePhotos", InputEnablePhotos ),
+#endif
+
 	DEFINE_OUTPUT( m_OnPhotographPlayer, "OnPhotographPlayer" ),
 	DEFINE_OUTPUT( m_OnPhotographNPC, "OnPhotographNPC" ),
 
@@ -217,6 +222,10 @@ CNPC_CScanner::CNPC_CScanner()
 	{
 		m_bIsClawScanner = false;
 	}
+
+#ifdef MAPBASE
+	CapabilitiesAdd( bits_CAP_INNATE_MELEE_ATTACK1 );
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -289,7 +298,9 @@ void CNPC_CScanner::Spawn(void)
 
 	// --------------------------------------------
 
+#ifndef MAPBASE // Moved to constructor so keyvalue works
 	CapabilitiesAdd( bits_CAP_INNATE_MELEE_ATTACK1 );
+#endif
 
 	m_bPhotoTaken = false;
 
@@ -318,6 +329,27 @@ void CNPC_CScanner::Activate()
 	m_pEyeFlash->SetBrightness( 0 );
 	m_pEyeFlash->SetScale( 1.4 );
 }
+
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: Cache user entity field values until spawn is called.
+// Input  : szKeyName - Key to handle.
+//			szValue - Value for key.
+// Output : Returns true if the key was handled, false if not.
+//-----------------------------------------------------------------------------
+bool CNPC_CScanner::KeyValue( const char *szKeyName, const char *szValue )
+{
+	// Any "Counter" outputs are changed to "OutCounter" before spawning.
+	if (FStrEq(szKeyName, "DisablePhotos") && FStrEq(szValue, "1"))
+	{
+		CapabilitiesRemove(bits_CAP_INNATE_MELEE_ATTACK1);
+	}
+	else
+		return BaseClass::KeyValue( szKeyName, szValue );
+
+	return true;
+}
+#endif
 
 //------------------------------------------------------------------------------
 // Purpose: Override to split in two when attacked
@@ -958,7 +990,12 @@ void CNPC_CScanner::DeployMine()
 //-----------------------------------------------------------------------------
 float CNPC_CScanner::GetMaxSpeed()
 {
+#ifdef MAPBASE
+	// Don't stomp custom max speed in base class
+	if( IsStriderScout() && m_flCustomMaxSpeed <= 0.0f )
+#else
 	if( IsStriderScout() )
+#endif
 	{
 		return SCANNER_SCOUT_MAX_SPEED;
 	}
@@ -1033,6 +1070,24 @@ void CNPC_CScanner::InputEquipMine(inputdata_t &inputdata)
 
 	pEnt->Spawn();
 }
+
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CNPC_CScanner::InputDisablePhotos( inputdata_t &inputdata )
+{
+	CapabilitiesRemove(bits_CAP_INNATE_MELEE_ATTACK1);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CNPC_CScanner::InputEnablePhotos( inputdata_t &inputdata )
+{
+	CapabilitiesAdd(bits_CAP_INNATE_MELEE_ATTACK1);
+}
+#endif
 
 
 //-----------------------------------------------------------------------------
@@ -1320,7 +1375,7 @@ void CNPC_CScanner::RunTask( const Task_t *pTask )
 			if ( IsWaitFinished() )
 			{	
 				// If light was on turn it off
-				if ( m_pEyeFlash->GetBrightness() > 0 )
+				if ( m_pEyeFlash && m_pEyeFlash->GetBrightness() > 0 )
 				{
 					m_pEyeFlash->SetBrightness( 0 );
 
@@ -1450,6 +1505,10 @@ int CNPC_CScanner::SelectSchedule(void)
 			return SCHED_CSCANNER_SPOTLIGHT_HOVER;
 
 		// Melee attack if possible
+#ifdef MAPBASE
+		if ( CapabilitiesGet() & bits_CAP_INNATE_MELEE_ATTACK1 )
+		{
+#endif
 		if ( HasCondition( COND_CAN_MELEE_ATTACK1 ) )
 		{ 
 			if ( random->RandomInt(0,1) )
@@ -1458,6 +1517,13 @@ int CNPC_CScanner::SelectSchedule(void)
 			// TODO: a schedule where he makes an alarm sound?
 			return SCHED_SCANNER_CHASE_ENEMY;
 		}
+#ifdef MAPBASE
+		}
+		else
+		{
+			return SCHED_CSCANNER_SPOTLIGHT_HOVER;
+		}
+#endif
 
 		// If I'm far from the enemy, stay up high and approach in spotlight mode
 		float fAttack2DDist = ( GetEnemyLKP() - GetAbsOrigin() ).Length2D();
@@ -1866,6 +1932,15 @@ void CNPC_CScanner::UpdateOnRemove( void )
 //------------------------------------------------------------------------------
 void CNPC_CScanner::TakePhoto(void)
 {
+#ifdef MAPBASE
+	// Only take photos if we're allowed
+	if (!(CapabilitiesGet() & bits_CAP_INNATE_MELEE_ATTACK1))
+	{
+		m_bPhotoTaken = true;
+		return;
+	}
+#endif
+
 	ScannerEmitSound( "TakePhoto" );
 	
 	m_pEyeFlash->SetScale( 1.4 );
@@ -1997,6 +2072,11 @@ void CNPC_CScanner::BlindFlashTarget( CBaseEntity *pTarget )
 
 			float flFadeTime = ( IsX360() ) ? 0.5f : 3.0f;
 			UTIL_ScreenFade( pTarget, white, flFadeTime, 0.5, FFADE_IN );
+
+#ifdef EZ2
+			// Bad Cop has special handling for when he's flashed
+			pTarget->MyCombatCharacterPointer()->DispatchInteraction( g_interactionScannerInspectBegin, NULL, this );
+#endif
 		}
 	}
 }
@@ -2491,6 +2571,14 @@ void CNPC_CScanner::MoveToTarget( float flInterval, const Vector &vecMoveTarget 
 	{
 		myZAccel = flDist / flInterval;
 	}
+
+#ifdef MAPBASE
+	if (m_flSpeedModifier != 1.0f)
+	{
+		myAccel *= m_flSpeedModifier;
+		//myZAccel *= m_flSpeedModifier;
+	}
+#endif
 
 	MoveInDirection( flInterval, targetDir, myAccel, myZAccel, myDecay );
 

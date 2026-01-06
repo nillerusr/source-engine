@@ -9,6 +9,16 @@
 #include "playerinfomanager.h"
 #include "edict.h"
 
+#if defined( TF_DLL )
+#include "tf_shareddefs.h"
+#elif defined( CSTRIKE_DLL )
+#include "weapon_csbase.h"
+#elif defined( DOD_DLL )
+#include "weapon_dodbase.h"
+#elif defined( SDK_DLL )
+#include "weapon_sdkbase.h"
+#endif
+
 extern CGlobalVars *gpGlobals;
 static CPlayerInfoManager s_PlayerInfoManager;
 static CPluginBotManager s_BotManager;
@@ -86,7 +96,31 @@ IPlayerInfo *CPlayerInfoManager::GetPlayerInfo( edict_t *pEdict )
 		return NULL;
 	}
 }
+IPlayerInfo *CPlayerInfoManager::GetPlayerInfo( int index )
+{
+	return GetPlayerInfo( engine->PEntityOfEntIndex( index ) );
+}
 
+// Games implementing advanced bot support should override this.
+int CPlayerInfoManager::AliasToWeaponId(const char *weaponName)
+{
+	//Tony; TF doesn't support this. Should it?
+#if defined ( CSTRIKE_DLL ) || defined ( DOD_DLL ) || defined ( SDK_DLL )
+	return AliasToWeaponID(weaponName);
+#endif
+	return -1;
+}
+
+// Games implementing advanced bot support should override this.
+const char *CPlayerInfoManager::WeaponIdToAlias(int weaponId)
+{
+#if defined( TF_DLL )
+	return WeaponIdToAlias(weaponId);
+#elif defined ( CSTRIKE_DLL ) || defined ( DOD_DLL ) || defined ( SDK_DLL )
+	return WeaponIDToAlias(weaponId);
+#endif
+	return "MOD_DIDNT_IMPLEMENT_ME";
+}
 CGlobalVars *CPlayerInfoManager::GetGlobalVars()
 {
 	return gpGlobals;
@@ -121,8 +155,8 @@ edict_t *CPluginBotManager::CreateBot( const char *botname )
 
 	pPlayer->ClearFlags();
 	pPlayer->AddFlag( FL_CLIENT | FL_FAKECLIENT );
-
 	pPlayer->ChangeTeam( TEAM_UNASSIGNED );
+	pPlayer->AddEFlags( EFL_PLUGIN_BASED_BOT );		// Mark it as a plugin based bot
 	pPlayer->RemoveAllItems( true );
 	pPlayer->Spawn();
 

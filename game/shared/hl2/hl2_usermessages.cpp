@@ -41,10 +41,24 @@ void RegisterUserMessages( void )
 	usermessages->Register( "KeyHintText", -1 );	// Displays hint text display
 	usermessages->Register( "SquadMemberDied", 0 );
 	usermessages->Register( "AmmoDenied", 2 );
+#ifdef MAPBASE
+	// This sends the credits file now
+	usermessages->Register( "CreditsMsg", -1 );
+	usermessages->Register( "LogoTimeMsg", -1 );
+#else
 	usermessages->Register( "CreditsMsg", 1 );
 	usermessages->Register( "LogoTimeMsg", 4 );
+#endif
 	usermessages->Register( "AchievementEvent", -1 );
 	usermessages->Register( "UpdateJalopyRadar", -1 );
+
+#ifdef EZ2
+	usermessages->Register( "SLAMExploded", 1 );
+#endif
+
+#ifdef EZ
+	usermessages->Register("HealthVialConsumed", 1);
+#endif
 
 #ifndef _X360
 	// NVNT register haptic user messages

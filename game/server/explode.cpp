@@ -13,9 +13,16 @@
 #include "vstdlib/random.h"
 #include "tier1/strtools.h"
 #include "shareddefs.h"
+#ifdef EZ
+#include "particle_parse.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
+
+#ifdef MAPBASE
+ConVar explosion_sparks("explosion_sparks", "0", FCVAR_NONE);
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Spark shower, created by the explosion entity.
@@ -111,6 +118,9 @@ public:
 
 	// Input handlers
 	void InputExplode( inputdata_t &inputdata );
+#ifdef MAPBASE
+	void InputSetIgnoredEntity( inputdata_t &inputdata );
+#endif
 
 	DECLARE_DATADESC();
 
@@ -150,6 +160,9 @@ BEGIN_DATADESC( CEnvExplosion )
 
 	// Inputs
 	DEFINE_INPUTFUNC(FIELD_VOID, "Explode", InputExplode),
+#ifdef MAPBASE
+	DEFINE_INPUTFUNC(FIELD_EHANDLE, "SetIgnoredEntity", InputSetIgnoredEntity),
+#endif
 
 END_DATADESC()
 
@@ -174,6 +187,13 @@ void CEnvExplosion::Precache( void )
 	{
 		m_sFireballSprite = PrecacheModel( STRING( m_iszFireballSprite ) );
 	}
+
+#ifdef EZ
+	// TODO: Shared global place to put this?
+	PrecacheParticleSystem( "ExplosionCore" );
+	PrecacheParticleSystem( "ExplosionEmbers" );
+	PrecacheParticleSystem( "ExplosionFlash" );
+#endif
 }
 
 void CEnvExplosion::Spawn( void )
@@ -352,7 +372,11 @@ void CEnvExplosion::InputExplode( inputdata_t &inputdata )
 	SetNextThink( gpGlobals->curtime + 0.3 );
 
 	// Only do these effects if we're not submerged
+#ifdef MAPBASE
+	if ( explosion_sparks.GetBool() && !(UTIL_PointContents( GetAbsOrigin() ) & CONTENTS_WATER) )
+#else
 	if ( UTIL_PointContents( GetAbsOrigin() ) & CONTENTS_WATER )
+#endif
 	{
 		// draw sparks
 		if ( !( m_spawnflags & SF_ENVEXPLOSION_NOSPARKS ) )
@@ -368,6 +392,16 @@ void CEnvExplosion::InputExplode( inputdata_t &inputdata )
 		}
 	}
 }
+
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: Input handler for setting the ignored entity.
+//-----------------------------------------------------------------------------
+void CEnvExplosion::InputSetIgnoredEntity( inputdata_t &inputdata )
+{
+	m_hEntityIgnore = inputdata.value.Entity();
+}
+#endif
 
 
 void CEnvExplosion::Smoke( void )
@@ -388,7 +422,7 @@ void ExplosionCreate( const Vector &center, const QAngle &angles,
 
 	CEnvExplosion *pExplosion = (CEnvExplosion*)CBaseEntity::Create( "env_explosion", center, angles, pOwner );
 	Q_snprintf( buf,sizeof(buf), "%3d", magnitude );
-	char *szKeyName = "iMagnitude";
+	const char *szKeyName = "iMagnitude";
 	char *szValue = buf;
 	pExplosion->KeyValue( szKeyName, szValue );
 

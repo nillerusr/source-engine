@@ -6,6 +6,9 @@
 
 #include "cbase.h"
 #include "basehlcombatweapon_shared.h"
+#if defined(EZ2) && defined(GAME_DLL)
+#include "npcevent.h"
+#endif
 
 #include "hl2_player_shared.h"
 
@@ -141,7 +144,21 @@ bool CBaseHLCombatWeapon::Deploy( void )
 	}
 
 	m_bLowered = false;
+
+#if defined(EZ2) && defined(GAME_DLL)
+	if ( BaseClass::Deploy() )
+	{
+		if ( GetLeftHandGun() )
+		{
+			GetLeftHandGun()->RemoveEffects( EF_NODRAW );
+		}
+		return true;
+	}
+
+	return false;
+#else
 	return BaseClass::Deploy();
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -152,6 +169,13 @@ bool CBaseHLCombatWeapon::Holster( CBaseCombatWeapon *pSwitchingTo )
 {
 	if ( BaseClass::Holster( pSwitchingTo ) )
 	{
+#if defined(EZ2) && defined(GAME_DLL)
+		if ( GetLeftHandGun() )
+		{
+			GetLeftHandGun()->AddEffects( EF_NODRAW );
+		}
+#endif
+
 		m_flHolsterTime = gpGlobals->curtime;
 		return true;
 	}
@@ -225,6 +249,170 @@ void CBaseHLCombatWeapon::WeaponIdle( void )
 		}
 	}
 }
+
+#if defined(EZ2) && defined(GAME_DLL)
+// HACKHACK: Draws directly from npc_assassin private animevents
+extern int AE_PISTOL_FIRE_LEFT;
+extern int AE_PISTOL_FIRE_RIGHT;
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CBaseHLCombatWeapon::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCharacter *pOperator )
+{
+	// For dual wielding
+	if (pEvent->event == AE_PISTOL_FIRE_RIGHT)
+	{
+		Vector vecShootOrigin, vecShootDir;
+		vecShootOrigin = pOperator->Weapon_ShootPosition();
+
+		CAI_BaseNPC *npc = pOperator->MyNPCPointer();
+		ASSERT( npc != NULL );
+
+		vecShootDir = npc->GetActualShootTrajectory( vecShootOrigin );
+
+		FireNPCPrimaryAttack( pOperator, vecShootOrigin, vecShootDir );
+		return;
+	}
+	else if (pEvent->event == AE_PISTOL_FIRE_LEFT)
+	{
+		Vector vecShootOrigin, vecShootDir;
+
+		// Use the dual wield's attachment directly
+		CBaseAnimating *pLeftHandGun = GetLeftHandGun();
+		if (pLeftHandGun)
+		{
+			pLeftHandGun->GetAttachment( pLeftHandGun->LookupAttachment( "muzzle" ), vecShootOrigin );
+		}
+
+		CAI_BaseNPC *npc = pOperator->MyNPCPointer();
+		ASSERT( npc != NULL );
+
+		vecShootDir = npc->GetActualShootTrajectory( vecShootOrigin );
+
+		FireNPCPrimaryAttack( pOperator, vecShootOrigin, vecShootDir );
+		return;
+	}
+	else
+	{
+		BaseClass::Operator_HandleAnimEvent( pEvent, pOperator );
+	}
+}
+
+acttable_t	CBaseHLCombatWeapon::m_dual_acttable[] =
+{
+	{ ACT_IDLE,						ACT_IDLE_DUAL_PISTOLS,				true },
+	{ ACT_IDLE_ANGRY,				ACT_IDLE_ANGRY_DUAL_PISTOLS,			true },
+	{ ACT_RANGE_ATTACK1,			ACT_RANGE_ATTACK_DUAL_PISTOLS,		true },
+	{ ACT_RELOAD,					ACT_RELOAD_DUAL_PISTOLS,				true },
+	{ ACT_WALK_AIM,					ACT_WALK_AIM_DUAL_PISTOLS,			true },
+	{ ACT_RUN_AIM,					ACT_RUN_AIM_DUAL_PISTOLS,				true },
+	{ ACT_GESTURE_RANGE_ATTACK1,	ACT_GESTURE_RANGE_ATTACK_DUAL_PISTOLS,true },
+	{ ACT_RELOAD_LOW,				ACT_RELOAD_DUAL_PISTOLS_LOW,			false },
+	{ ACT_RANGE_ATTACK1_LOW,		ACT_RANGE_ATTACK_DUAL_PISTOLS_LOW,	false },
+	{ ACT_COVER_LOW,				ACT_COVER_DUAL_PISTOLS_LOW,			false },
+	{ ACT_RANGE_AIM_LOW,			ACT_RANGE_AIM_DUAL_PISTOLS_LOW,		false },
+	{ ACT_GESTURE_RELOAD,			ACT_GESTURE_RELOAD_DUAL_PISTOLS,		false },
+	{ ACT_WALK,						ACT_WALK_DUAL_PISTOLS,				false },
+	{ ACT_RUN,						ACT_RUN_DUAL_PISTOLS,					false },
+
+	// Readiness activities (not aiming)
+	{ ACT_IDLE_RELAXED,				ACT_IDLE_DUAL_PISTOLS_RELAXED,		false },//never aims
+	{ ACT_IDLE_STIMULATED,			ACT_IDLE_DUAL_PISTOLS_STIMULATED,		false },
+	{ ACT_IDLE_AGITATED,			ACT_IDLE_ANGRY_DUAL_PISTOLS,			false },//always aims
+	{ ACT_IDLE_STEALTH,				ACT_IDLE_STEALTH_PISTOL,		false },
+
+	{ ACT_WALK_RELAXED,				ACT_WALK_DUAL_PISTOLS_RELAXED,		false },//never aims
+	{ ACT_WALK_STIMULATED,			ACT_WALK_DUAL_PISTOLS_STIMULATED,		false },
+	{ ACT_WALK_AGITATED,			ACT_WALK_AIM_DUAL_PISTOLS,			false },//always aims
+	{ ACT_WALK_STEALTH,				ACT_WALK_STEALTH_PISTOL,		false },
+
+	{ ACT_RUN_RELAXED,				ACT_RUN_DUAL_PISTOLS_RELAXED,			false },//never aims
+	{ ACT_RUN_STIMULATED,			ACT_RUN_DUAL_PISTOLS_STIMULATED,		false },
+	{ ACT_RUN_AGITATED,				ACT_RUN_AIM_DUAL_PISTOLS,				false },//always aims
+	{ ACT_RUN_STEALTH,				ACT_RUN_STEALTH_PISTOL,			false },
+
+	// Readiness activities (aiming)
+	{ ACT_IDLE_AIM_RELAXED,			ACT_IDLE_DUAL_PISTOLS_RELAXED,		false },//never aims	
+	{ ACT_IDLE_AIM_STIMULATED,		ACT_IDLE_AIM_DUAL_PISTOLS_STIMULATED,	false },
+	{ ACT_IDLE_AIM_AGITATED,		ACT_IDLE_ANGRY_DUAL_PISTOLS,			false },//always aims
+	{ ACT_IDLE_AIM_STEALTH,			ACT_IDLE_STEALTH_PISTOL,		false },
+
+	{ ACT_WALK_AIM_RELAXED,			ACT_WALK_DUAL_PISTOLS_RELAXED,		false },//never aims
+	{ ACT_WALK_AIM_STIMULATED,		ACT_WALK_AIM_DUAL_PISTOLS,			false },
+	{ ACT_WALK_AIM_AGITATED,		ACT_WALK_AIM_DUAL_PISTOLS,			false },//always aims
+	{ ACT_WALK_AIM_STEALTH,			ACT_WALK_AIM_STEALTH_PISTOL,	false },//always aims
+
+	{ ACT_RUN_AIM_RELAXED,			ACT_RUN_DUAL_PISTOLS_RELAXED,			false },//never aims
+	{ ACT_RUN_AIM_STIMULATED,		ACT_RUN_AIM_DUAL_PISTOLS,				false },
+	{ ACT_RUN_AIM_AGITATED,			ACT_RUN_AIM_DUAL_PISTOLS,				false },//always aims
+	{ ACT_RUN_AIM_STEALTH,			ACT_RUN_AIM_STEALTH_PISTOL,		false },//always aims
+	//End readiness activities
+
+	// Crouch activities
+	{ ACT_CROUCHIDLE_STIMULATED,	ACT_CROUCHIDLE_STIMULATED,		false },
+	{ ACT_CROUCHIDLE_AIM_STIMULATED,ACT_RANGE_AIM_DUAL_PISTOLS_LOW,		false },//always aims
+	{ ACT_CROUCHIDLE_AGITATED,		ACT_RANGE_AIM_DUAL_PISTOLS_LOW,		false },//always aims
+
+	// Readiness translations
+	{ ACT_READINESS_RELAXED_TO_STIMULATED, ACT_READINESS_PISTOL_RELAXED_TO_STIMULATED, false },
+	{ ACT_READINESS_RELAXED_TO_STIMULATED_WALK, ACT_READINESS_PISTOL_RELAXED_TO_STIMULATED_WALK, false },
+	{ ACT_READINESS_AGITATED_TO_STIMULATED, ACT_READINESS_PISTOL_AGITATED_TO_STIMULATED, false },
+	{ ACT_READINESS_STIMULATED_TO_RELAXED, ACT_READINESS_PISTOL_STIMULATED_TO_RELAXED, false },
+
+	//{ ACT_WALK_CROUCH,				ACT_WALK_CROUCH_PISTOL,			true },
+	//{ ACT_WALK_CROUCH_AIM,			ACT_WALK_CROUCH_AIM_PISTOL,		true },
+	//{ ACT_RUN_CROUCH,				ACT_RUN_CROUCH_PISTOL,			true },
+	//{ ACT_RUN_CROUCH_AIM,			ACT_RUN_CROUCH_AIM_PISTOL,		true },
+
+	{ ACT_RANGE_AIM_MED,			ACT_RANGE_AIM_DUAL_PISTOLS_MED,			false },
+	{ ACT_RANGE_ATTACK1_MED,		ACT_RANGE_ATTACK_DUAL_PISTOLS_MED,		false },
+
+	//{ ACT_COVER_WALL_R,			ACT_COVER_WALL_R_DUAL_PISTOLS,		false },
+	//{ ACT_COVER_WALL_L,			ACT_COVER_WALL_L_DUAL_PISTOLS,		false },
+	//{ ACT_COVER_WALL_LOW_R,		ACT_COVER_WALL_LOW_R_DUAL_PISTOLS,	false },
+	//{ ACT_COVER_WALL_LOW_L,		ACT_COVER_WALL_LOW_L_DUAL_PISTOLS,	false },
+
+	// HL2:DM activities (for third-person animations in SP)
+	{ ACT_HL2MP_IDLE,                    ACT_HL2MP_IDLE_DUAL_PISTOLS,                    false },
+	{ ACT_HL2MP_RUN,                    ACT_HL2MP_RUN_DUAL_PISTOLS,                    false },
+	{ ACT_HL2MP_IDLE_CROUCH,            ACT_HL2MP_IDLE_CROUCH_DUAL_PISTOLS,            false },
+	{ ACT_HL2MP_WALK_CROUCH,            ACT_HL2MP_WALK_CROUCH_DUAL_PISTOLS,            false },
+	{ ACT_HL2MP_GESTURE_RANGE_ATTACK,    ACT_HL2MP_GESTURE_RANGE_ATTACK_DUAL_PISTOLS,    false },
+	{ ACT_HL2MP_GESTURE_RELOAD,            ACT_HL2MP_GESTURE_RELOAD_DUAL_PISTOLS,        false },
+	{ ACT_HL2MP_JUMP,                    ACT_HL2MP_JUMP_DUAL_PISTOLS,                    false },
+	{ ACT_HL2MP_WALK,					ACT_HL2MP_WALK_DUAL_PISTOLS,						false },
+	{ ACT_HL2MP_GESTURE_RANGE_ATTACK2,	ACT_HL2MP_GESTURE_RANGE_ATTACK2_DUAL_PISTOLS,		false },
+};
+
+//-----------------------------------------------------------------------------
+// Purpose:
+// Input  :
+// Output :
+//-----------------------------------------------------------------------------
+Activity CBaseHLCombatWeapon::ActivityOverride( Activity baseAct, bool *pRequired )
+{
+	if (GetLeftHandGun())
+	{
+		acttable_t *pTable = m_dual_acttable;
+		int actCount = ARRAYSIZE( m_dual_acttable );
+
+		for (int i = 0; i < actCount; i++, pTable++)
+		{
+			if (baseAct == pTable->baseAct)
+			{
+				if (pRequired)
+				{
+					*pRequired = pTable->required;
+				}
+				return (Activity)pTable->weaponAct;
+			}
+		}
+	}
+
+	return BaseClass::ActivityOverride( baseAct, pRequired );
+}
+#endif
 
 float	g_lateralBob;
 float	g_verticalBob;
@@ -317,6 +505,14 @@ float CBaseHLCombatWeapon::CalcViewmodelBob( void )
 	g_lateralBob = speed*0.005f;
 	g_lateralBob = g_lateralBob*0.3 + g_lateralBob*0.7*sin(cycle);
 	g_lateralBob = clamp( g_lateralBob, -7.0f, 4.0f );
+
+#ifdef MAPBASE
+	if (GetBobScale() != 1.0f)
+	{
+		//g_verticalBob *= GetBobScale();
+		g_lateralBob *= GetBobScale();
+	}
+#endif
 	
 	//NOTENOTE: We don't use this return value in our case (need to restructure the calculation function setup!)
 	return 0.0f;

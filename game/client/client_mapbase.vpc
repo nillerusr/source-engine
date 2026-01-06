@@ -1,0 +1,90 @@
+//-----------------------------------------------------------------------------
+//	CLIENT_MAPBASE.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Configuration
+{
+	$Compiler
+	{
+		$PreprocessorDefinitions		"$BASE;ASW_PROJECTED_TEXTURES;DYNAMIC_RTT_SHADOWS;GLOWS_ENABLE"
+		
+		$PreprocessorDefinitions		"$BASE;MAPBASE_RPC;DISCORD_RPC;STEAM_RPC"	[$MAPBASE_RPC]
+		$PreprocessorDefinitions		"$BASE;MAPBASE_VSCRIPT"		[$MAPBASE_VSCRIPT]
+		$PreprocessorDefinitions		"$BASE;NEW_RESPONSE_SYSTEM"		[$NEW_RESPONSE_SYSTEM]
+	}
+}
+
+$Project
+{
+	$Folder	"Source Files"
+	{
+		$File	"c_env_global_light.cpp"
+		$File	"worldlight.cpp"
+		$File	"worldlight.h"
+		$File	"c_baselesson.cpp"
+		$File	"c_baselesson.h"
+		$File	"c_gameinstructor.cpp"
+		$File	"c_gameinstructor.h"
+		$File	"hud_locator_target.cpp"
+		$File	"hud_locator_target.h"
+		$File	"c_postprocesscontroller.cpp"
+		$File	"c_postprocesscontroller.h"
+		$File	"c_env_dof_controller.cpp"
+		$File	"c_movie_display.cpp"
+		$File	"c_movie_display.h"
+		$File	"vgui_movie_display.cpp"
+		$File	"convarproxy.cpp"
+	
+		$Folder	"Mapbase"
+		{
+			$File	"$SRCDIR\game\shared\mapbase\mapbase_shared.cpp"
+			$File	"$SRCDIR\game\shared\mapbase\mapbase_usermessages.cpp"
+			$File	"$SRCDIR\game\shared\mapbase\mapbase_rpc.cpp"
+			$File	"$SRCDIR\game\shared\mapbase\mapbase_game_log.cpp"
+			$File	"$SRCDIR\game\shared\mapbase\MapEdit.cpp"
+			$File	"$SRCDIR\game\shared\mapbase\MapEdit.h"
+			$File	"$SRCDIR\game\shared\mapbase\matchers.cpp"
+			$File	"$SRCDIR\game\shared\mapbase\matchers.h"
+			$File	"$SRCDIR\game\shared\mapbase\singleplayer_animstate.cpp"
+			$File	"$SRCDIR\game\shared\mapbase\singleplayer_animstate.h"
+			$File	"$SRCDIR\game\shared\mapbase\vscript_funcs_shared.cpp" [$MAPBASE_VSCRIPT]
+			$File	"$SRCDIR\game\shared\mapbase\vscript_funcs_shared.h" [$MAPBASE_VSCRIPT]
+			$File	"$SRCDIR\game\shared\mapbase\vscript_singletons.cpp" [$MAPBASE_VSCRIPT]
+			$File	"$SRCDIR\game\shared\mapbase\vscript_singletons.h" [$MAPBASE_VSCRIPT]
+			$File	"$SRCDIR\game\shared\mapbase\vscript_funcs_hl2.cpp" [$MAPBASE_VSCRIPT]
+			$File	"$SRCDIR\game\shared\mapbase\vscript_consts_shared.cpp" [$MAPBASE_VSCRIPT]
+			$File	"$SRCDIR\game\shared\mapbase\vscript_consts_weapons.cpp" [$MAPBASE_VSCRIPT]
+			$File	"$SRCDIR\game\shared\mapbase\weapon_custom_scripted.cpp" [$MAPBASE_VSCRIPT]
+			$File	"$SRCDIR\game\shared\mapbase\weapon_custom_scripted.h" [$MAPBASE_VSCRIPT]
+			$File	"$SRCDIR\game\shared\mapbase\logic_script_client.cpp" [$MAPBASE_VSCRIPT]
+
+			$File   "mapbase\vscript_vgui.cpp" [$MAPBASE_VSCRIPT]
+			$File   "mapbase\vscript_vgui.h" [$MAPBASE_VSCRIPT]
+
+			$File	"mapbase\c_func_clientclip.cpp"
+			$File	"mapbase\c_func_fake_worldportal.cpp"
+			$File	"mapbase\c_func_fake_worldportal.h"
+			$File	"mapbase\c_point_glow.cpp"
+			$File	"mapbase\c_vgui_text_display.cpp"
+			$File	"mapbase\c_weapon_custom_hl2.cpp"
+			$File	"mapbase\mapbase_autocubemap.cpp"
+		}
+		
+		$Folder	"HL2MP"
+		{
+			$Folder	"Weapons"
+			{
+				$File	"$SRCDIR\game\shared\hl2mp\weapon_slam.cpp"
+				$File	"$SRCDIR\game\shared\hl2mp\weapon_slam.h"
+			}
+		}
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib	"vscript" [$MAPBASE_VSCRIPT]
+		$Lib	"raytrace"
+	}
+}

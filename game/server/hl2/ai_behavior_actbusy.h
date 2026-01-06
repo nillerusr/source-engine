@@ -18,6 +18,15 @@ enum
 {
 	ACTBUSY_TYPE_DEFAULT = 0,
 	ACTBUSY_TYPE_COMBAT,
+
+#ifdef EZ2
+	// For slumped zombies in Chapter 3, this is higher up to avoid
+	// conflicts with any future Mapbase actbusy types
+	ACTBUSY_TYPE_BEAST = 10,
+
+	// For husks
+	ACTBUSY_TYPE_HUSKS = 11,
+#endif
 };
 
 enum busyinterrupt_t
@@ -50,6 +59,9 @@ struct busyanim_t
 	float				flMaxTime;		// Max time spent in this busy animation. 0 means continue until interrupted.
 	busyinterrupt_t		iBusyInterruptType;
 	bool				bUseAutomovement;
+#ifdef MAPBASE
+	bool				bTranslateActivity;
+#endif
 };
 
 struct busysafezone_t
@@ -150,6 +162,15 @@ public:
 	bool	IsInSafeZone( CBaseEntity *pEntity );
 	int		CountEnemiesInSafeZone();
 
+#ifdef EZ2
+	bool	IsBeastActBusy();
+	bool	IsHuskActBusy();
+#endif
+
+#ifdef MAPBASE
+	CAI_ActBusyGoal	*GetActBusyGoal() const { return m_hActBusyGoal; }
+#endif
+
 private:
 	virtual int		SelectSchedule( void );
 	int				SelectScheduleForLeaving( void );
@@ -181,6 +202,10 @@ private:
 	bool			m_bInQueue;
 	int				m_iCurrentBusyAnim;
 	CHandle<CAI_ActBusyGoal> m_hActBusyGoal;
+#ifdef MAPBASE
+	// So exit animations can play
+	CHandle<CAI_ActBusyGoal> m_hNextActBusyGoal;
+#endif
 	bool			m_bNeedToSetBounds;
 	EHANDLE			m_hSeeEntity;
 	float			m_fTimeLastSawSeeEntity;
@@ -189,6 +214,9 @@ private:
 
 	int				m_iNumConsecutivePathFailures; // Count how many times we failed to find a path to a node, so we can consider teleporting.
 	bool			m_bAutoFireWeapon;
+#ifdef MAPBASE
+	float			m_flNextAutoFireTime;
+#endif
 	float			m_flDeferUntil;
 	int				m_iNumEnemiesInSafeZone;
 
@@ -225,6 +253,16 @@ public:
 	int GetType() { return m_iType; }
 	bool IsCombatActBusyTeleportAllowed()	{ return m_bAllowCombatActBusyTeleport; }
 
+#ifdef MAPBASE
+	interval_t &NextBusySearchInterval();
+#endif
+
+#ifdef MAPBASE_VSCRIPT
+	void ScriptForceBusy( HSCRIPT hNPC, HSCRIPT hHint, bool bTeleportOnly );
+	void ScriptForceBusyComplex( HSCRIPT hNPC, HSCRIPT hHint, bool bTeleportOnly, bool bVisibleOnly, bool bUseNearestBusy, float flMaxTime, int activity, HSCRIPT pSeeEntity );
+	void ScriptStopBusy( HSCRIPT hNPC );
+#endif
+
 protected:
 	CAI_ActBusyBehavior *GetBusyBehaviorForNPC( const char *pszActorName, CBaseEntity *pActivator, CBaseEntity *pCaller, const char *sInputName );
 	CAI_ActBusyBehavior *GetBusyBehaviorForNPC( CBaseEntity *pEntity, const char *sInputName );
@@ -238,14 +276,23 @@ protected:
 	void		 InputForceNPCToActBusy( inputdata_t &inputdata );
 	void		 InputForceThisNPCToActBusy( inputdata_t &inputdata );
 	void		 InputForceThisNPCToLeave( inputdata_t &inputdata );
+#ifdef MAPBASE
+	void		InputForceThisNPCToStopBusy( inputdata_t &inputdata );
+#endif
 
 	DECLARE_DATADESC();
+#ifdef MAPBASE_VSCRIPT
+	DECLARE_ENT_SCRIPTDESC();
+#endif
 
 protected:
 	float			m_flBusySearchRange;
 	bool			m_bVisibleOnly;
 	int				m_iType;
 	bool			m_bAllowCombatActBusyTeleport;
+#ifdef MAPBASE
+	interval_t		m_NextBusySearch;
+#endif
 
 public:
 	// Let the actbusy behavior query these so we don't have to duplicate the data.
@@ -257,6 +304,11 @@ public:
 protected:
 	COutputEHANDLE	m_OnNPCStartedBusy;
 	COutputEHANDLE	m_OnNPCFinishedBusy;
+#ifdef MAPBASE
+	COutputEHANDLE	m_OnNPCStartedLeavingBusy;
+	COutputEHANDLE	m_OnNPCMovingToBusy;
+	COutputEHANDLE	m_OnNPCAbortedMoveTo;
+#endif
 	COutputEHANDLE	m_OnNPCLeft;
 	COutputEHANDLE	m_OnNPCLostSeeEntity;
 	COutputEHANDLE	m_OnNPCSeeEnemy;

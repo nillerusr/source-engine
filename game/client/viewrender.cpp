@@ -74,6 +74,11 @@
 #include "c_point_camera.h"
 #endif // USE_MONITORS
 
+#ifdef MAPBASE
+#include "mapbase/c_func_fake_worldportal.h"
+#include "colorcorrectionmgr.h"
+#endif
+
 // Projective textures
 #include "C_Env_Projected_Texture.h"
 
@@ -118,6 +123,10 @@ ConVar r_drawviewmodel( "r_drawviewmodel","1", FCVAR_CHEAT );
 static ConVar r_drawtranslucentrenderables( "r_drawtranslucentrenderables", "1", FCVAR_CHEAT );
 static ConVar r_drawopaquerenderables( "r_drawopaquerenderables", "1", FCVAR_CHEAT );
 static ConVar r_threaded_renderables( "r_threaded_renderables", "0" );
+
+#ifdef MAPBASE
+static ConVar r_skybox_use_complex_views( "r_skybox_use_complex_views", "0", FCVAR_CHEAT, "Enable complex views in skyboxes, like reflective glass" );
+#endif
 
 // FIXME: This is not static because we needed to turn it off for TF2 playtests
 ConVar r_DrawDetailProps( "r_DrawDetailProps", "1", FCVAR_NONE, "0=Off, 1=Normal, 2=Wireframe" );
@@ -171,6 +180,10 @@ static ConVar pyro_dof( "pyro_dof", "1", FCVAR_ARCHIVE );
 extern ConVar cl_leveloverview;
 
 extern ConVar localplayer_visionflags;
+
+#ifdef MAPBASE
+static ConVar r_nearz_skybox( "r_nearz_skybox", "2.0", FCVAR_CHEAT );
+#endif
 
 //-----------------------------------------------------------------------------
 // Globals
@@ -478,6 +491,11 @@ protected:
 
 	void			SSAO_DepthPass();
 	void			DrawDepthOfField();
+
+#ifdef MAPBASE
+	virtual ITexture	*GetRefractionTexture() { return GetWaterRefractionTexture(); }
+	virtual ITexture	*GetReflectionTexture() { return GetWaterReflectionTexture(); }
+#endif
 };
 
 
@@ -664,6 +682,11 @@ public:
 	void Draw();
 
 	cplane_t m_ReflectionPlane;
+
+#ifdef MAPBASE
+	ITexture	*GetReflectionTexture() { return m_pRenderTarget; }
+	ITexture *m_pRenderTarget;
+#endif
 };
 
 class CRefractiveGlassView : public CSimpleWorldView
@@ -681,6 +704,11 @@ public:
 	void Draw();
 
 	cplane_t m_ReflectionPlane;
+
+#ifdef MAPBASE
+	ITexture	*GetRefractionTexture() { return m_pRenderTarget; }
+	ITexture *m_pRenderTarget;
+#endif
 };
 
 
@@ -790,6 +818,8 @@ CLIENTEFFECT_REGISTER_BEGIN( PrecachePostProcessingEffects )
 	CLIENTEFFECT_MATERIAL( "dev/copyfullframefb_vanilla" )
 	CLIENTEFFECT_MATERIAL( "dev/copyfullframefb" )
 	CLIENTEFFECT_MATERIAL( "dev/engine_post" )
+	CLIENTEFFECT_MATERIAL( "dev/depth_of_field" )
+	CLIENTEFFECT_MATERIAL( "dev/blurgaussian_3x3" )
 	CLIENTEFFECT_MATERIAL( "dev/motion_blur" )
 	CLIENTEFFECT_MATERIAL( "dev/upscale" )
 
@@ -1183,6 +1213,73 @@ IMaterial *CViewRender::GetScreenOverlayMaterial( )
 }
 
 
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: Sets the screen space effect material (can't be done during rendering)
+//-----------------------------------------------------------------------------
+void CViewRender::SetIndexedScreenOverlayMaterial( int i, IMaterial *pMaterial )
+{
+	if (i < 0 || i >= MAX_SCREEN_OVERLAYS)
+		return;
+
+	m_IndexedScreenOverlayMaterials[i].Init( pMaterial );
+
+	if (pMaterial == NULL)
+	{
+		// Check if we should set to false
+		int i;
+		for (i = 0; i < MAX_SCREEN_OVERLAYS; i++)
+		{
+			if (m_IndexedScreenOverlayMaterials[i] != NULL)
+				break;
+		}
+
+		if (i == MAX_SCREEN_OVERLAYS)
+			m_bUsingIndexedScreenOverlays = false;
+	}
+	else
+	{
+		m_bUsingIndexedScreenOverlays = true;
+	}
+}
+
+
+//-----------------------------------------------------------------------------
+// 
+//-----------------------------------------------------------------------------
+IMaterial *CViewRender::GetIndexedScreenOverlayMaterial( int i )
+{
+	if (i < 0 || i >= MAX_SCREEN_OVERLAYS)
+		return NULL;
+
+	return m_IndexedScreenOverlayMaterials[i];
+}
+
+
+//-----------------------------------------------------------------------------
+// 
+//-----------------------------------------------------------------------------
+void CViewRender::ResetIndexedScreenOverlays()
+{
+	for (int i = 0; i < MAX_SCREEN_OVERLAYS; i++)
+	{
+		m_IndexedScreenOverlayMaterials[i].Init( NULL );
+	}
+
+	m_bUsingIndexedScreenOverlays = false;
+}
+
+
+//-----------------------------------------------------------------------------
+// 
+//-----------------------------------------------------------------------------
+int CViewRender::GetMaxIndexedScreenOverlays( ) const
+{
+	return MAX_SCREEN_OVERLAYS;
+}
+#endif
+
+
 //-----------------------------------------------------------------------------
 // Purpose: Performs screen space effects, if any
 //-----------------------------------------------------------------------------
@@ -1219,6 +1316,44 @@ void CViewRender::PerformScreenOverlay( int x, int y, int w, int h )
 			render->ViewDrawFade( color, m_ScreenOverlayMaterial );
 		}
 	}
+
+#ifdef MAPBASE
+	if (m_bUsingIndexedScreenOverlays)
+	{
+		for (int i = 0; i < MAX_SCREEN_OVERLAYS; i++)
+		{
+			if (!m_IndexedScreenOverlayMaterials[i])
+				continue;
+
+			tmZone( TELEMETRY_LEVEL0, TMZF_NONE, "%s", __FUNCTION__ );
+
+			if ( m_IndexedScreenOverlayMaterials[i]->NeedsFullFrameBufferTexture() )
+			{
+				// FIXME: check with multi/sub-rect renders. Should this be 0,0,w,h instead?
+				DrawScreenEffectMaterial( m_IndexedScreenOverlayMaterials[i], x, y, w, h );
+			}
+			else if ( m_IndexedScreenOverlayMaterials[i]->NeedsPowerOfTwoFrameBufferTexture() )
+			{
+				// First copy the FB off to the offscreen texture
+				UpdateRefractTexture( x, y, w, h, true );
+
+				// Now draw the entire screen using the material...
+				CMatRenderContextPtr pRenderContext( materials );
+				ITexture *pTexture = GetPowerOfTwoFrameBufferTexture( );
+				int sw = pTexture->GetActualWidth();
+				int sh = pTexture->GetActualHeight();
+				// Note - don't offset by x,y - already done by the viewport.
+				pRenderContext->DrawScreenSpaceRectangle( m_IndexedScreenOverlayMaterials[i], 0, 0, w, h,
+													 0, 0, sw-1, sh-1, sw, sh );
+			}
+			else
+			{
+				byte color[4] = { 255, 255, 255, 255 };
+				render->ViewDrawFade( color, m_IndexedScreenOverlayMaterials[i] );
+			}
+		}
+	}
+#endif
 }
 
 void CViewRender::DrawUnderwaterOverlay( void )
@@ -1325,6 +1460,9 @@ void CViewRender::ViewDrawScene( bool bDrew3dSkybox, SkyboxVisibility_t nSkyboxV
 	if ( r_flashlightdepthtexture.GetBool() && (viewID == VIEW_MAIN) )
 	{
 		g_pClientShadowMgr->ComputeShadowDepthTextures( view );
+#ifdef ASW_PROJECTED_TEXTURES
+		CMatRenderContextPtr pRenderContext( materials );
+#endif
 	}
 
 	m_BaseDrawFlags = baseDrawFlags;
@@ -1960,6 +2098,26 @@ void CViewRender::RenderView( const CViewSetup &view, int nClearFlags, int whatT
 		{
 			CViewSetup viewMiddle = GetView( STEREO_EYE_MONO );
 			DrawMonitors( viewMiddle );	
+
+#ifdef MAPBASE
+			// Any fake world portals?
+			Frustum_t frustum;
+			GeneratePerspectiveFrustum( view.origin, view.angles, view.zNear, view.zFar, view.fov, view.m_flAspectRatio, frustum );
+
+			Vector vecAbsPlaneNormal;
+			float flLocalPlaneDist;
+			C_FuncFakeWorldPortal *pPortalEnt = NextFakeWorldPortal( NULL, view, vecAbsPlaneNormal, flLocalPlaneDist, frustum );
+			while ( pPortalEnt != NULL )
+			{
+				ITexture *pCameraTarget = pPortalEnt->RenderTarget();
+				int width = pCameraTarget->GetActualWidth();
+				int height = pCameraTarget->GetActualHeight();
+
+				DrawFakeWorldPortal( pCameraTarget, pPortalEnt, viewMiddle, C_BasePlayer::GetLocalPlayer(), 0, 0, width, height, view, vecAbsPlaneNormal, flLocalPlaneDist );
+
+				pPortalEnt = NextFakeWorldPortal( pPortalEnt, view, vecAbsPlaneNormal, flLocalPlaneDist, frustum );
+			}
+#endif
 		}
 	#endif
 
@@ -1967,6 +2125,10 @@ void CViewRender::RenderView( const CViewSetup &view, int nClearFlags, int whatT
 
 		// Must be first 
 		render->SceneBegin();
+
+#ifdef MAPBASE // From Alien Swarm SDK
+		g_pColorCorrectionMgr->UpdateColorCorrection();
+#endif
 
 		pRenderContext.GetFrom( materials );
 		pRenderContext->TurnOnToneMapping();
@@ -1978,6 +2140,7 @@ void CViewRender::RenderView( const CViewSetup &view, int nClearFlags, int whatT
 		bool bDrew3dSkybox = false;
 		SkyboxVisibility_t nSkyboxVisible = SKYBOX_NOT_VISIBLE;
 
+#ifndef MAPBASE // Moved to respective ViewDrawScenes() for script_intro skybox fix
 		// if the 3d skybox world is drawn, then don't draw the normal skybox
 		CSkyboxView *pSkyView = new CSkyboxView( this );
 		if ( ( bDrew3dSkybox = pSkyView->Setup( view, &nClearFlags, &nSkyboxVisible ) ) != false )
@@ -1985,6 +2148,7 @@ void CViewRender::RenderView( const CViewSetup &view, int nClearFlags, int whatT
 			AddViewToScene( pSkyView );
 		}
 		SafeRelease( pSkyView );
+#endif
 
 		// Force it to clear the framebuffer if they're in solid space.
 		if ( ( nClearFlags & VIEW_CLEAR_COLOR ) == 0 )
@@ -1995,14 +2159,37 @@ void CViewRender::RenderView( const CViewSetup &view, int nClearFlags, int whatT
 			}
 		}
 
+#ifdef MAPBASE
+		// For script_intro viewmodel fix
+		bool bDrawnViewmodel = false;
+#endif
+
 		// Render world and all entities, particles, etc.
 		if( !g_pIntroData )
 		{
+#ifdef MAPBASE
+			// Moved here for the script_intro skybox fix.
+			// We can't put it in ViewDrawScene() directly because other functions use it as well.
+
+			// if the 3d skybox world is drawn, then don't draw the normal skybox
+			CSkyboxView *pSkyView = new CSkyboxView( this );
+			if ( ( bDrew3dSkybox = pSkyView->Setup( view, &nClearFlags, &nSkyboxVisible ) ) != false )
+			{
+				AddViewToScene( pSkyView );
+			}
+			SafeRelease( pSkyView );
+#endif
+
 			ViewDrawScene( bDrew3dSkybox, nSkyboxVisible, view, nClearFlags, VIEW_MAIN, whatToDraw & RENDERVIEW_DRAWVIEWMODEL );
 		}
 		else
 		{
+#ifdef MAPBASE
+			ViewDrawScene_Intro( view, nClearFlags, *g_pIntroData, bDrew3dSkybox, nSkyboxVisible, whatToDraw & RENDERVIEW_DRAWVIEWMODEL );
+			bDrawnViewmodel = true;
+#else
 			ViewDrawScene_Intro( view, nClearFlags, *g_pIntroData );
+#endif
 		}
 
 		// We can still use the 'current view' stuff set up in ViewDrawScene
@@ -2022,14 +2209,24 @@ void CViewRender::RenderView( const CViewSetup &view, int nClearFlags, int whatT
 		RenderPlayerSprites();
 
 		// Image-space motion blur
-		if ( !building_cubemaps.GetBool() && view.m_bDoBloomAndToneMapping ) // We probably should use a different view. variable here
+		if ( !building_cubemaps.GetBool() /*&& view.m_bDoBloomAndToneMapping*/ ) // We probably should use a different view. variable here
 		{
+			if ( IsDepthOfFieldEnabled() )
+			{
+				pRenderContext.GetFrom( materials );
+				{
+					PIXEVENT( pRenderContext, "DoDepthOfField()" );
+					DoDepthOfField( view );
+				}
+				pRenderContext.SafeRelease();
+			}
+
 			if ( ( mat_motion_blur_enabled.GetInt() ) && ( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() >= 90 ) )
 			{
 				pRenderContext.GetFrom( materials );
 				{
 					PIXEVENT( pRenderContext, "DoImageSpaceMotionBlur" );
-					DoImageSpaceMotionBlur( view, view.x, view.y, view.width, view.height );
+					DoImageSpaceMotionBlur( view );
 				}
 				pRenderContext.SafeRelease();
 			}
@@ -2038,6 +2235,9 @@ void CViewRender::RenderView( const CViewSetup &view, int nClearFlags, int whatT
 		GetClientModeNormal()->DoPostScreenSpaceEffects( &view );
 
 		// Now actually draw the viewmodel
+#ifdef MAPBASE
+		if (!bDrawnViewmodel)
+#endif
 		DrawViewModels( view, whatToDraw & RENDERVIEW_DRAWVIEWMODEL );
 
 		DrawUnderwaterOverlay();
@@ -2556,6 +2756,34 @@ void CViewRender::DrawWorldAndEntities( bool bDrawSkybox, const CViewSetup &view
 	{		     
 		tmZone( TELEMETRY_LEVEL0, TMZF_NONE, "bCheapWater" );
 		cplane_t glassReflectionPlane;
+#ifdef MAPBASE
+		// New expansions allow for custom render targets and multiple mirror renders
+		Frustum_t frustum;
+		GeneratePerspectiveFrustum( viewIn.origin, viewIn.angles, viewIn.zNear, viewIn.zFar, viewIn.fov, viewIn.m_flAspectRatio, frustum );
+
+		ITexture *pTextureTargets[2];
+		C_BaseEntity *pReflectiveGlass = NextReflectiveGlass( NULL, viewIn, glassReflectionPlane, frustum, pTextureTargets );
+		while ( pReflectiveGlass != NULL )
+		{		
+			if (pTextureTargets[0])
+			{
+				CRefPtr<CReflectiveGlassView> pGlassReflectionView = new CReflectiveGlassView( this );
+				pGlassReflectionView->m_pRenderTarget = pTextureTargets[0];
+				pGlassReflectionView->Setup( viewIn, VIEW_CLEAR_DEPTH | VIEW_CLEAR_COLOR, bDrawSkybox, fogVolumeInfo, info, glassReflectionPlane );
+				AddViewToScene( pGlassReflectionView );
+			}
+
+			if (pTextureTargets[1])
+			{
+				CRefPtr<CRefractiveGlassView> pGlassRefractionView = new CRefractiveGlassView( this );
+				pGlassRefractionView->Setup( viewIn, VIEW_CLEAR_DEPTH | VIEW_CLEAR_COLOR, bDrawSkybox, fogVolumeInfo, info, glassReflectionPlane );
+				pGlassRefractionView->m_pRenderTarget = pTextureTargets[1];
+				AddViewToScene( pGlassRefractionView );
+			}
+
+			pReflectiveGlass = NextReflectiveGlass( pReflectiveGlass, viewIn, glassReflectionPlane, frustum, pTextureTargets );
+		}
+#else
 		if ( IsReflectiveGlassInView( viewIn, glassReflectionPlane ) )
 		{								    
 			CRefPtr<CReflectiveGlassView> pGlassReflectionView = new CReflectiveGlassView( this );
@@ -2566,6 +2794,7 @@ void CViewRender::DrawWorldAndEntities( bool bDrawSkybox, const CViewSetup &view
 			pGlassRefractionView->Setup( viewIn, VIEW_CLEAR_DEPTH | VIEW_CLEAR_COLOR, bDrawSkybox, fogVolumeInfo, info, glassReflectionPlane );
 			AddViewToScene( pGlassRefractionView );
 		}
+#endif
 
 		CRefPtr<CSimpleWorldView> pNoWaterView = new CSimpleWorldView( this );
 		pNoWaterView->Setup( viewIn, nClearFlags, bDrawSkybox, fogVolumeInfo, info, pCustomVisibility );
@@ -2699,6 +2928,28 @@ void CViewRender::ViewDrawScene_PortalStencil( const CViewSetup &viewIn, ViewCus
 	QAngle vecOldAngles = CurrentViewAngles();
 
 	int iCurrentViewID = g_CurrentViewID;
+	int iRecursionLevel = g_pPortalRender->GetViewRecursionLevel();
+	Assert( iRecursionLevel > 0 );
+
+	//get references to reflection textures
+	CTextureReference pPrimaryWaterReflectionTexture;
+	pPrimaryWaterReflectionTexture.Init( GetWaterReflectionTexture() );
+	CTextureReference pReplacementWaterReflectionTexture;
+	pReplacementWaterReflectionTexture.Init( portalrendertargets->GetWaterReflectionTextureForStencilDepth( iRecursionLevel ) );
+
+	//get references to refraction textures
+	CTextureReference pPrimaryWaterRefractionTexture;
+	pPrimaryWaterRefractionTexture.Init( GetWaterRefractionTexture() );
+	CTextureReference pReplacementWaterRefractionTexture;
+	pReplacementWaterRefractionTexture.Init( portalrendertargets->GetWaterRefractionTextureForStencilDepth( iRecursionLevel ) );
+
+
+	//swap texture contents for the primary render targets with those we set aside for this recursion level
+	if( pReplacementWaterReflectionTexture != NULL )
+		pPrimaryWaterReflectionTexture->SwapContents( pReplacementWaterReflectionTexture );
+
+	if( pReplacementWaterRefractionTexture != NULL )
+		pPrimaryWaterRefractionTexture->SwapContents( pReplacementWaterRefractionTexture );
 
 	bool bDrew3dSkybox = false;
 	SkyboxVisibility_t nSkyboxVisible = SKYBOX_NOT_VISIBLE;
@@ -2790,6 +3041,14 @@ void CViewRender::ViewDrawScene_PortalStencil( const CViewSetup &viewIn, ViewCus
 	// Return to the previous view
 	SetupCurrentView( vecOldOrigin, vecOldAngles, (view_id_t)iCurrentViewID );
 	g_CurrentViewID = iCurrentViewID; //just in case the cast to view_id_t screwed up the id #
+
+
+	//swap back the water render targets
+	if( pReplacementWaterReflectionTexture != NULL )
+		pPrimaryWaterReflectionTexture->SwapContents( pReplacementWaterReflectionTexture );
+
+	if( pReplacementWaterRefractionTexture != NULL )
+		pPrimaryWaterRefractionTexture->SwapContents( pReplacementWaterRefractionTexture );
 }
 
 void CViewRender::Draw3dSkyboxworld_Portal( const CViewSetup &view, int &nClearFlags, bool &bDrew3dSkybox, SkyboxVisibility_t &nSkyboxVisible, ITexture *pRenderTarget ) 
@@ -2827,7 +3086,12 @@ void CViewRender::GetWaterLODParams( float &flCheapWaterStartDistance, float &fl
 // Input  : &view - 
 //			&introData - 
 //-----------------------------------------------------------------------------
+#ifdef MAPBASE
+void CViewRender::ViewDrawScene_Intro( const CViewSetup &view, int nClearFlags, const IntroData_t &introData,
+	bool bDrew3dSkybox, SkyboxVisibility_t nSkyboxVisible, bool bDrawViewModel, ViewCustomVisibility_t *pCustomVisibility )
+#else
 void CViewRender::ViewDrawScene_Intro( const CViewSetup &view, int nClearFlags, const IntroData_t &introData )
+#endif
 {
 	VPROF( "CViewRender::ViewDrawScene" );
 
@@ -2857,10 +3121,42 @@ void CViewRender::ViewDrawScene_Intro( const CViewSetup &view, int nClearFlags, 
 		CViewSetup playerView( view );
 		playerView.origin = introData.m_vecCameraView;
 		playerView.angles = introData.m_vecCameraViewAngles;
+#ifdef MAPBASE
+		// Ortho handling (change this code if we ever use m_hCameraEntity for other things)
+		if (introData.m_hCameraEntity /*&& introData.m_hCameraEntity->IsOrtho()*/)
+		{
+			playerView.m_bOrtho = true;
+			introData.m_hCameraEntity->GetOrthoDimensions( playerView.m_OrthoTop, playerView.m_OrthoBottom,
+				playerView.m_OrthoLeft, playerView.m_OrthoRight );
+		}
+#endif
 		if ( introData.m_playerViewFOV )
 		{
 			playerView.fov = ScaleFOVByWidthRatio( introData.m_playerViewFOV, engine->GetScreenAspectRatio() / ( 4.0f / 3.0f ) );
 		}
+
+#ifdef MAPBASE
+		bool drawSkybox;
+		int nViewFlags;
+		if (introData.m_bDrawSky2)
+		{
+			drawSkybox = r_skybox.GetBool();
+			nViewFlags = VIEW_CLEAR_DEPTH;
+
+			// if the 3d skybox world is drawn, then don't draw the normal skybox
+			CSkyboxView *pSkyView = new CSkyboxView( this );
+			if ( ( bDrew3dSkybox = pSkyView->Setup( playerView, &nClearFlags, &nSkyboxVisible ) ) != false )
+			{
+				AddViewToScene( pSkyView );
+			}
+			SafeRelease( pSkyView );
+		}
+		else
+		{
+			drawSkybox = false;
+			nViewFlags = (VIEW_CLEAR_COLOR | VIEW_CLEAR_DEPTH);
+		}
+#endif
 
 		g_pClientShadowMgr->PreRender();
 
@@ -2876,10 +3172,38 @@ void CViewRender::ViewDrawScene_Intro( const CViewSetup &view, int nClearFlags, 
 		IGameSystem::PreRenderAllSystems();
 
 		// Start view, clear frame/z buffer if necessary
+#ifdef MAPBASE
+		SetupVis( playerView, visFlags, pCustomVisibility );
+#else
 		SetupVis( playerView, visFlags );
+#endif
+
+#ifdef MAPBASE
+		if (introData.m_bDrawSky2)
+		{
+			if ( !bDrew3dSkybox && 
+				( nSkyboxVisible == SKYBOX_NOT_VISIBLE ) /*&& ( visFlags & IVRenderView::VIEW_SETUP_VIS_EX_RETURN_FLAGS_USES_RADIAL_VIS )*/ )
+			{
+				// This covers the case where we don't see a 3dskybox, yet radial vis is clipping
+				// the far plane.  Need to clear to fog color in this case.
+				nClearFlags |= VIEW_CLEAR_COLOR;
+				//SetClearColorToFogColor( );
+			}
 		
+			if ( bDrew3dSkybox || ( nSkyboxVisible == SKYBOX_NOT_VISIBLE ) )
+			{
+				drawSkybox = false;
+			}
+		}
+#endif
+		
+#ifdef MAPBASE
+		render->Push3DView( playerView, nViewFlags, NULL, GetFrustum() );
+		DrawWorldAndEntities( drawSkybox, playerView, nViewFlags );
+#else
 		render->Push3DView( playerView, VIEW_CLEAR_COLOR | VIEW_CLEAR_DEPTH, NULL, GetFrustum() );
 		DrawWorldAndEntities( true /* drawSkybox */, playerView, VIEW_CLEAR_COLOR | VIEW_CLEAR_DEPTH  );
+#endif
 		render->PopView( GetFrustum() );
 
 		// Free shadow depth textures for use in future view
@@ -2895,12 +3219,28 @@ void CViewRender::ViewDrawScene_Intro( const CViewSetup &view, int nClearFlags, 
 	Rect_t actualRect;
 	UpdateScreenEffectTexture( 0, view.x, view.y, view.width, view.height, false, &actualRect );
 
+#ifdef MAPBASE
+	if (introData.m_bDrawSky)
+	{
+		// if the 3d skybox world is drawn, then don't draw the normal skybox
+		CSkyboxView *pSkyView = new CSkyboxView( this );
+		if ( ( bDrew3dSkybox = pSkyView->Setup( view, &nClearFlags, &nSkyboxVisible ) ) != false )
+		{
+			AddViewToScene( pSkyView );
+		}
+		SafeRelease( pSkyView );
+	}
+#endif
+
 	g_pClientShadowMgr->PreRender();
 
 	// Shadowed flashlights supported on ps_2_b and up...
 	if ( r_flashlightdepthtexture.GetBool() )
 	{
 		g_pClientShadowMgr->ComputeShadowDepthTextures( view );
+#ifdef ASW_PROJECTED_TEXTURES
+		CMatRenderContextPtr pRenderContext( materials );
+#endif
 	}
 
 	// -----------------------------------------------------------------------
@@ -2917,7 +3257,41 @@ void CViewRender::ViewDrawScene_Intro( const CViewSetup &view, int nClearFlags, 
 	// Clear alpha to 255 so that masking with the vortigaunts (0) works properly.
 	pRenderContext->ClearColor4ub( 0, 0, 0, 255 );
 
+#ifdef MAPBASE
+	bool drawSkybox;
+	int nViewFlags;
+	if (introData.m_bDrawSky)
+	{
+		drawSkybox = r_skybox.GetBool();
+		nViewFlags = VIEW_CLEAR_DEPTH;
+
+		if ( !bDrew3dSkybox && 
+			( nSkyboxVisible == SKYBOX_NOT_VISIBLE ) /*&& ( visFlags & IVRenderView::VIEW_SETUP_VIS_EX_RETURN_FLAGS_USES_RADIAL_VIS )*/ )
+		{
+			// This covers the case where we don't see a 3dskybox, yet radial vis is clipping
+			// the far plane.  Need to clear to fog color in this case.
+			nViewFlags |= VIEW_CLEAR_COLOR;
+			//SetClearColorToFogColor( );
+		}
+
+		if ( bDrew3dSkybox || ( nSkyboxVisible == SKYBOX_NOT_VISIBLE ) )
+		{
+			drawSkybox = false;
+		}
+	}
+	else
+	{
+		drawSkybox = false;
+		nViewFlags = (VIEW_CLEAR_COLOR | VIEW_CLEAR_DEPTH);
+	}
+
+	DrawWorldAndEntities( drawSkybox, view, nViewFlags );
+
+	// Solution for viewmodels not drawing in script_intro
+	DrawViewModels( view, bDrawViewModel );
+#else
 	DrawWorldAndEntities( true /* drawSkybox */, view, VIEW_CLEAR_COLOR | VIEW_CLEAR_DEPTH  );
+#endif
 
 	UpdateScreenEffectTexture( 1, view.x, view.y, view.width, view.height );
 
@@ -2996,6 +3370,11 @@ void CViewRender::ViewDrawScene_Intro( const CViewSetup &view, int nClearFlags, 
 	// Let the particle manager simulate things that haven't been simulated.
 	ParticleMgr()->PostRender();
 
+#ifdef MAPBASE
+	// Invoke post-render methods
+	IGameSystem::PostRenderAllSystems();
+#endif
+
 	FinishCurrentView();
 
 	// Free shadow depth textures for use in future view
@@ -3065,14 +3444,229 @@ bool CViewRender::DrawOneMonitor( ITexture *pRenderTarget, int cameraNum, C_Poin
 	monitorView.origin = pCameraEnt->GetAbsOrigin();
 	monitorView.angles = pCameraEnt->GetAbsAngles();
 	monitorView.fov = pCameraEnt->GetFOV();
+#ifdef MAPBASE
+	if (pCameraEnt->IsOrtho())
+	{
+		monitorView.m_bOrtho = true;
+		pCameraEnt->GetOrthoDimensions( monitorView.m_OrthoTop, monitorView.m_OrthoBottom,
+			monitorView.m_OrthoLeft, monitorView.m_OrthoRight );
+	}
+	else
+	{
+		monitorView.m_bOrtho = false;
+	}
+#else
 	monitorView.m_bOrtho = false;
+#endif
 	monitorView.m_flAspectRatio = pCameraEnt->UseScreenAspectRatio() ? 0.0f : 1.0f;
 	monitorView.m_bViewToProjectionOverride = false;
 
+#ifdef MAPBASE
+	// 
+	// Monitor sky handling
+	// 
+	SkyboxVisibility_t nSkyMode = pCameraEnt->SkyMode();
+	if ( nSkyMode == SKYBOX_3DSKYBOX_VISIBLE )
+	{
+		int nClearFlags = (VIEW_CLEAR_DEPTH | VIEW_CLEAR_COLOR);
+		bool bDrew3dSkybox = false;
+
+		Frustum frustum;
+		render->Push3DView( monitorView, nClearFlags, pRenderTarget, (VPlane *)frustum );
+
+		// if the 3d skybox world is drawn, then don't draw the normal skybox
+		CSkyboxView *pSkyView = new CSkyboxView( this );
+		if ( ( bDrew3dSkybox = pSkyView->Setup( monitorView, &nClearFlags, &nSkyMode ) ) != false )
+		{
+			AddViewToScene( pSkyView );
+		}
+		SafeRelease( pSkyView );
+
+		ViewDrawScene( bDrew3dSkybox, nSkyMode, monitorView, nClearFlags, VIEW_MONITOR );
+ 		render->PopView( frustum );
+	}
+	else if (nSkyMode == SKYBOX_NOT_VISIBLE)
+	{
+		// @MULTICORE (toml 8/11/2006): this should be a renderer....
+		Frustum frustum;
+		render->Push3DView( monitorView, VIEW_CLEAR_DEPTH, pRenderTarget, (VPlane *)frustum );
+
+		CMatRenderContextPtr pRenderContext( materials );
+		pRenderContext->PushRenderTargetAndViewport( pRenderTarget );
+		pRenderContext->SetIntRenderingParameter( INT_RENDERPARM_WRITE_DEPTH_TO_DESTALPHA, 1 );
+		if ( pRenderTarget )
+		{
+			pRenderContext->OverrideAlphaWriteEnable( true, true );
+		}
+
+		ViewDrawScene( false, nSkyMode, monitorView, 0, VIEW_MONITOR );
+
+		pRenderContext->PopRenderTargetAndViewport();
+		render->PopView( frustum );
+	}
+	else
+	{
+		// @MULTICORE (toml 8/11/2006): this should be a renderer....
+		Frustum frustum;
+		render->Push3DView( monitorView, VIEW_CLEAR_DEPTH | VIEW_CLEAR_COLOR, pRenderTarget, (VPlane *)frustum );
+		ViewDrawScene( false, nSkyMode, monitorView, 0, VIEW_MONITOR );
+		render->PopView( frustum );
+	}
+#else
 	// @MULTICORE (toml 8/11/2006): this should be a renderer....
 	Frustum frustum;
  	render->Push3DView( monitorView, VIEW_CLEAR_DEPTH | VIEW_CLEAR_COLOR, pRenderTarget, (VPlane *)frustum );
 	ViewDrawScene( false, SKYBOX_2DSKYBOX_VISIBLE, monitorView, 0, VIEW_MONITOR );
+ 	render->PopView( frustum );
+#endif
+
+	// Reset the world fog parameters.
+	if ( fogEnabled )
+	{
+		if ( pFogParams )
+		{
+			*pFogParams = oldFogParams;
+		}
+		monitorView.zFar = flOldZFar;
+	}
+#endif // USE_MONITORS
+	return true;
+}
+
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: Sets up scene and renders WIP fake world portal view.
+//			Based on code from monitors, mirrors, and logic_measure_movement.
+//			
+// Input  : cameraNum - 
+//			&cameraView
+//			*localPlayer - 
+//			x - 
+//			y - 
+//			width - 
+//			height - 
+//			highend - 
+// Output : Returns true on success, false on failure.
+//-----------------------------------------------------------------------------
+bool CViewRender::DrawFakeWorldPortal( ITexture *pRenderTarget, C_FuncFakeWorldPortal *pCameraEnt, const CViewSetup &cameraView, C_BasePlayer *localPlayer, 
+						int x, int y, int width, int height,
+						const CViewSetup &mainView, const Vector &vecAbsPlaneNormal, float flLocalPlaneDist )
+{
+#ifdef USE_MONITORS
+	VPROF_INCREMENT_COUNTER( "cameras rendered", 1 );
+	// Setup fog state for the camera.
+	fogparams_t oldFogParams;
+	float flOldZFar = 0.0f;
+
+	// If fog should be disabled instead of using the player's controller, a blank fog controller can just be used
+	bool fogEnabled = true; //pCameraEnt->IsFogEnabled();
+
+	CViewSetup monitorView = cameraView;
+
+	fogparams_t *pFogParams = NULL;
+
+	if ( fogEnabled )
+	{	
+		if ( !localPlayer )
+			return false;
+
+		pFogParams = localPlayer->GetFogParams();
+
+		// Save old fog data.
+		oldFogParams = *pFogParams;
+
+		if ( pCameraEnt->GetFog() )
+		{
+			*pFogParams = *pCameraEnt->GetFog();
+		}
+	}
+
+	monitorView.x = x;
+	monitorView.y = y;
+	monitorView.width = width;
+	monitorView.height = height;
+	monitorView.m_bOrtho = mainView.m_bOrtho;
+	monitorView.fov = mainView.fov;
+	monitorView.m_flAspectRatio = mainView.m_flAspectRatio;
+	monitorView.m_bViewToProjectionOverride = false;
+
+	matrix3x4_t worldToView;
+	AngleIMatrix( mainView.angles, mainView.origin, worldToView );
+
+	matrix3x4_t targetToWorld;
+	{
+		// NOTE: m_PlaneAngles is angle offset
+		QAngle targetAngles = pCameraEnt->m_hTargetPlane->GetAbsAngles() - pCameraEnt->m_PlaneAngles;
+		AngleMatrix( targetAngles, pCameraEnt->m_hTargetPlane->GetAbsOrigin(), targetToWorld );
+	}
+
+	matrix3x4_t portalToWorld;
+	{
+		Vector left, up;
+		VectorVectors( vecAbsPlaneNormal, left, up );
+		VectorNegate( left );
+		portalToWorld.Init( vecAbsPlaneNormal, left, up, pCameraEnt->GetAbsOrigin() );
+	}
+
+	matrix3x4_t portalToView;
+	ConcatTransforms( worldToView, portalToWorld, portalToView );
+
+	if ( pCameraEnt->m_flScale > 0.0f )
+	{
+		portalToView[0][3] /= pCameraEnt->m_flScale;
+		portalToView[1][3] /= pCameraEnt->m_flScale;
+		portalToView[2][3] /= pCameraEnt->m_flScale;
+	}
+
+	matrix3x4_t viewToPortal;
+	MatrixInvert( portalToView, viewToPortal );
+
+	matrix3x4_t newViewToWorld;
+	ConcatTransforms( targetToWorld, viewToPortal, newViewToWorld );
+
+	MatrixAngles( newViewToWorld, monitorView.angles, monitorView.origin );
+
+
+	// @MULTICORE (toml 8/11/2006): this should be a renderer....
+	int nClearFlags = (VIEW_CLEAR_DEPTH | VIEW_CLEAR_COLOR | VIEW_CLEAR_OBEY_STENCIL);
+	bool bDrew3dSkybox = false;
+
+	Frustum frustum;
+	render->Push3DView( monitorView, nClearFlags, pRenderTarget, (VPlane *)frustum );
+
+	// 
+	// Sky handling
+	// 
+	SkyboxVisibility_t nSkyMode = pCameraEnt->SkyMode();
+	if ( nSkyMode == SKYBOX_3DSKYBOX_VISIBLE )
+	{
+		// if the 3d skybox world is drawn, then don't draw the normal skybox
+		CSkyboxView *pSkyView = new CSkyboxView( this );
+		if ( ( bDrew3dSkybox = pSkyView->Setup( monitorView, &nClearFlags, &nSkyMode ) ) != false )
+		{
+			AddViewToScene( pSkyView );
+		}
+		SafeRelease( pSkyView );
+	}
+
+	Vector4D plane;
+
+	// target direction
+	MatrixGetColumn( targetToWorld, 0, plane.AsVector3D() );
+	VectorNormalize( plane.AsVector3D() );
+	VectorNegate( plane.AsVector3D() );
+
+	plane.w =
+		MatrixColumnDotProduct( targetToWorld, 3, plane.AsVector3D() ) // target clip plane distance
+		- flLocalPlaneDist // portal plane distance on the brush. This distance needs to be accounted for while placing the exit target
+		- 0.1;
+
+	CMatRenderContextPtr pRenderContext( materials );
+	pRenderContext->PushCustomClipPlane( plane.Base() );
+
+	ViewDrawScene( bDrew3dSkybox, nSkyMode, monitorView, nClearFlags, VIEW_MONITOR );
+
+	pRenderContext->PopCustomClipPlane();
  	render->PopView( frustum );
 
 	// Reset the world fog parameters.
@@ -3087,6 +3681,7 @@ bool CViewRender::DrawOneMonitor( ITexture *pRenderTarget, int cameraNum, C_Poin
 #endif // USE_MONITORS
 	return true;
 }
+#endif
 
 void CViewRender::DrawMonitors( const CViewSetup &cameraView )
 {
@@ -3120,6 +3715,17 @@ void CViewRender::DrawMonitors( const CViewSetup &cameraView )
 	{
 		if ( !pCameraEnt->IsActive() || pCameraEnt->IsDormant() )
 			continue;
+
+#ifdef MAPBASE
+		// Check if the camera has its own render target
+		// (Multiple render target support)
+		if ( pCameraTarget != pCameraEnt->RenderTarget() )
+		{
+			pCameraTarget = pCameraEnt->RenderTarget();
+			width = pCameraTarget->GetActualWidth();
+			height = pCameraTarget->GetActualHeight();
+		}
+#endif
 
 		if ( !DrawOneMonitor( pCameraTarget, cameraNum, pCameraEnt, cameraView, player, 0, 0, width, height ) )
 			continue;
@@ -4716,7 +5322,20 @@ void CSkyboxView::DrawInternal( view_id_t iSkyBoxViewID, bool bInvokePreAndPostR
 	// if you can get really close to the skybox geometry it's possible that you'll be able to clip into it
 	// with this near plane.  If so, move it in a bit.  It's at 2.0 to give us more precision.  That means you 
 	// need to keep the eye position at least 2 * scale away from the geometry in the skybox
+#ifdef MAPBASE
+	zNear = r_nearz_skybox.GetFloat();
+
+	// Use the fog's farz if specified
+	if (m_pSky3dParams->fog.farz > 0)
+	{
+		zFar = ( m_pSky3dParams->scale > 0.0f ?
+			m_pSky3dParams->fog.farz / m_pSky3dParams->scale :
+			m_pSky3dParams->fog.farz );
+	}
+	else
+#else
 	zNear = 2.0;
+#endif
 	zFar = MAX_TRACE_LENGTH;
 
 	// scale origin by sky scale
@@ -4726,13 +5345,56 @@ void CSkyboxView::DrawInternal( view_id_t iSkyBoxViewID, bool bInvokePreAndPostR
 		VectorScale( origin, scale, origin );
 	}
 	Enable3dSkyboxFog();
+#ifdef MAPBASE
+	// Skybox angle support.
+	// 
+	// If any of the angles aren't 0, do the rotation code.
+	if (m_pSky3dParams->skycamera)
+	{
+		// Re-use the x coordinate to determine if we shuld do this with angles
+		if (m_pSky3dParams->angles.GetX() != 0)
+		{
+			const matrix3x4_t &matSky = m_pSky3dParams->skycamera->EntityToWorldTransform();
+			matrix3x4_t matView;
+			AngleMatrix( angles, origin, matView );
+			ConcatTransforms( matSky, matView, matView );
+			MatrixAngles( matView, angles, origin );
+		}
+		else
+		{
+			VectorAdd( origin, m_pSky3dParams->skycamera->GetAbsOrigin(), origin );
+		}
+	}
+	else
+	{
+		if (m_pSky3dParams->angles.GetX() != 0 ||
+			m_pSky3dParams->angles.GetY() != 0 ||
+			m_pSky3dParams->angles.GetZ() != 0)
+		{
+			matrix3x4_t matSky, matView;
+			AngleMatrix( m_pSky3dParams->angles, m_pSky3dParams->origin, matSky );
+			AngleMatrix( angles, origin, matView );
+			ConcatTransforms( matSky, matView, matView );
+			MatrixAngles( matView, angles, origin );
+		}
+		else
+		{
+			VectorAdd( origin, m_pSky3dParams->origin, origin );
+		}
+	}
+#else
 	VectorAdd( origin, m_pSky3dParams->origin, origin );
+#endif
 
 	// BUGBUG: Fix this!!!  We shouldn't need to call setup vis for the sky if we're connecting
 	// the areas.  We'd have to mark all the clusters in the skybox area in the PVS of any 
 	// cluster with sky.  Then we could just connect the areas to do our vis.
 	//m_bOverrideVisOrigin could hose us here, so call direct
+#ifdef MAPBASE
+	render->ViewSetupVis( false, 1, m_pSky3dParams->skycamera ? &m_pSky3dParams->skycamera->GetAbsOrigin() : &m_pSky3dParams->origin.Get() );
+#else
 	render->ViewSetupVis( false, 1, &m_pSky3dParams->origin.Get() );
+#endif
 	render->Push3DView( (*this), m_ClearFlags, pRenderTarget, GetFrustum(), pDepthTarget );
 
 	// Store off view origin and angles
@@ -4765,6 +5427,51 @@ void CSkyboxView::DrawInternal( view_id_t iSkyBoxViewID, bool bInvokePreAndPostR
 	// Iterate over all leaves and render objects in those leaves
 	DrawTranslucentRenderables( true, false );
 	DrawNoZBufferTranslucentRenderables();
+
+#ifdef MAPBASE
+	// Allows reflective glass to be drawn in the skybox.
+	// New expansions also allow for custom render targets and multiple mirror renders
+	if (r_skybox_use_complex_views.GetBool())
+	{
+		VisibleFogVolumeInfo_t fogVolumeInfo;
+		render->GetVisibleFogVolume( origin, &fogVolumeInfo );
+
+		WaterRenderInfo_t info;
+		info.m_bCheapWater = true;
+		info.m_bRefract = false;
+		info.m_bReflect = false;
+		info.m_bReflectEntities = false;
+		info.m_bDrawWaterSurface = false;
+		info.m_bOpaqueWater = true;
+
+		cplane_t glassReflectionPlane;
+		Frustum_t frustum;
+		GeneratePerspectiveFrustum( origin, angles, zNear, zFar, fov, m_flAspectRatio, frustum );
+
+		ITexture *pTextureTargets[2];
+		C_BaseEntity *pReflectiveGlass = NextReflectiveGlass( NULL, (*this), glassReflectionPlane, frustum, pTextureTargets );
+		while ( pReflectiveGlass != NULL )
+		{
+			if (pTextureTargets[0])
+			{
+				CRefPtr<CReflectiveGlassView> pGlassReflectionView = new CReflectiveGlassView( m_pMainView );
+				pGlassReflectionView->m_pRenderTarget = pTextureTargets[0];
+				pGlassReflectionView->Setup( (*this), VIEW_CLEAR_DEPTH, true, fogVolumeInfo, info, glassReflectionPlane );
+				m_pMainView->AddViewToScene( pGlassReflectionView );
+			}
+
+			if (pTextureTargets[1])
+			{
+				CRefPtr<CRefractiveGlassView> pGlassRefractionView = new CRefractiveGlassView( m_pMainView );
+				pGlassRefractionView->m_pRenderTarget = pTextureTargets[1];
+				pGlassRefractionView->Setup( (*this), VIEW_CLEAR_DEPTH, true, fogVolumeInfo, info, glassReflectionPlane );
+				m_pMainView->AddViewToScene( pGlassRefractionView );
+			}
+
+			pReflectiveGlass = NextReflectiveGlass( pReflectiveGlass, (*this), glassReflectionPlane, frustum, pTextureTargets );
+		}
+	}
+#endif
 
 	m_pMainView->DisableFog();
 
@@ -4813,6 +5520,20 @@ bool CSkyboxView::Setup( const CViewSetup &view, int *pClearFlags, SkyboxVisibil
 	*pClearFlags |= VIEW_CLEAR_DEPTH; // Need to clear depth after rednering the skybox
 
 	m_DrawFlags = DF_RENDER_UNDERWATER | DF_RENDER_ABOVEWATER | DF_RENDER_WATER;
+#ifdef MAPBASE
+	if (m_pSky3dParams->skycolor.GetA() != 0 && *pSkyboxVisible != SKYBOX_NOT_VISIBLE)
+	{
+		m_ClearFlags |= (VIEW_CLEAR_COLOR | VIEW_CLEAR_DEPTH);
+		m_DrawFlags |= DF_CLIP_SKYBOX;
+
+		color32 color = m_pSky3dParams->skycolor.Get();
+
+		CMatRenderContextPtr pRenderContext( materials );
+		pRenderContext->ClearColor4ub( color.r, color.g, color.b, color.a );
+		pRenderContext.SafeRelease();
+	}
+	else
+#endif
 	if( r_skybox.GetBool() )
 	{
 		m_DrawFlags |= DF_DRAWSKYBOX;
@@ -5086,7 +5807,7 @@ bool CBaseWorldView::AdjustView( float waterHeight )
 {
 	if( m_DrawFlags & DF_RENDER_REFRACTION )
 	{
-		ITexture *pTexture = GetWaterRefractionTexture();
+		ITexture *pTexture = GetRefractionTexture();
 
 		// Use the aspect ratio of the main view! So, don't recompute it here
 		x = y = 0;
@@ -5098,7 +5819,7 @@ bool CBaseWorldView::AdjustView( float waterHeight )
 
 	if( m_DrawFlags & DF_RENDER_REFLECTION )
 	{
-		ITexture *pTexture = GetWaterReflectionTexture();
+		ITexture *pTexture = GetReflectionTexture();
 
 		// If the main view is overriding the projection matrix (for Stereo or
 		// some other nefarious purpose) make sure to include any Y offset in 
@@ -5160,14 +5881,14 @@ void CBaseWorldView::PushView( float waterHeight )
 		pRenderContext->SetHeightClipMode( clipMode );
 
 		// Have to re-set up the view since we reset the size
-		render->Push3DView( *this, m_ClearFlags, GetWaterRefractionTexture(), GetFrustum() );
+		render->Push3DView( *this, m_ClearFlags, GetRefractionTexture(), GetFrustum() );
 
 		return;
 	}
 
 	if( m_DrawFlags & DF_RENDER_REFLECTION )
 	{
-		ITexture *pTexture = GetWaterReflectionTexture();
+		ITexture *pTexture = GetReflectionTexture();
 
 		pRenderContext->SetFogZ( waterHeight );
 
@@ -5221,11 +5942,11 @@ void CBaseWorldView::PopView()
 			// these renders paths used their surfaces, so blit their results
 			if ( m_DrawFlags & DF_RENDER_REFRACTION )
 			{
-				pRenderContext->CopyRenderTargetToTextureEx( GetWaterRefractionTexture(), NULL, NULL );
+				pRenderContext->CopyRenderTargetToTextureEx( GetRefractionTexture(), NULL, NULL );
 			}
 			if ( m_DrawFlags & DF_RENDER_REFLECTION )
 			{
-				pRenderContext->CopyRenderTargetToTextureEx( GetWaterReflectionTexture(), NULL, NULL );
+				pRenderContext->CopyRenderTargetToTextureEx( GetReflectionTexture(), NULL, NULL );
 			}
 		}
 
@@ -6102,7 +6823,11 @@ void CReflectiveGlassView::Setup( const CViewSetup &view, int nClearFlags, bool 
 
 bool CReflectiveGlassView::AdjustView( float flWaterHeight )
 {
+#ifdef MAPBASE
+	ITexture *pTexture = GetReflectionTexture();
+#else
 	ITexture *pTexture = GetWaterReflectionTexture();
+#endif
 		   
 	// Use the aspect ratio of the main view! So, don't recompute it here
 	x = y = 0;
@@ -6128,7 +6853,11 @@ bool CReflectiveGlassView::AdjustView( float flWaterHeight )
 
 void CReflectiveGlassView::PushView( float waterHeight )
 {
+#ifdef MAPBASE
+	render->Push3DView( *this, m_ClearFlags, GetReflectionTexture(), GetFrustum() );
+#else
 	render->Push3DView( *this, m_ClearFlags, GetWaterReflectionTexture(), GetFrustum() );
+#endif
 	 
 	Vector4D plane;
 	VectorCopy( m_ReflectionPlane.normal, plane.AsVector3D() );
@@ -6156,6 +6885,12 @@ void CReflectiveGlassView::Draw()
 	CMatRenderContextPtr pRenderContext( materials );
 	PIXEVENT( pRenderContext, "CReflectiveGlassView::Draw" );
 
+#ifdef MAPBASE
+	// Store off view origin and angles and set the new view
+	int nSaveViewID = CurrentViewID();
+	SetupCurrentView( origin, angles, VIEW_REFLECTION );
+#endif
+
 	// Disable occlusion visualization in reflection
 	bool bVisOcclusion = r_visocclusion.GetInt();
 	r_visocclusion.SetValue( 0 );
@@ -6163,6 +6898,11 @@ void CReflectiveGlassView::Draw()
 	BaseClass::Draw();
 
 	r_visocclusion.SetValue( bVisOcclusion );
+
+#ifdef MAPBASE
+	// finish off the view.  restore the previous view.
+	SetupCurrentView( origin, angles, (view_id_t)nSaveViewID );
+#endif
 
 	pRenderContext->ClearColor4ub( 0, 0, 0, 255 );
 	pRenderContext->Flush();
@@ -6183,7 +6923,11 @@ void CRefractiveGlassView::Setup( const CViewSetup &view, int nClearFlags, bool 
 
 bool CRefractiveGlassView::AdjustView( float flWaterHeight )
 {
+#ifdef MAPBASE
+	ITexture *pTexture = GetRefractionTexture();
+#else
 	ITexture *pTexture = GetWaterRefractionTexture();
+#endif
 
 	// Use the aspect ratio of the main view! So, don't recompute it here
 	x = y = 0;
@@ -6195,7 +6939,11 @@ bool CRefractiveGlassView::AdjustView( float flWaterHeight )
 
 void CRefractiveGlassView::PushView( float waterHeight )
 {
+#ifdef MAPBASE
+	render->Push3DView( *this, m_ClearFlags, GetRefractionTexture(), GetFrustum() );
+#else
 	render->Push3DView( *this, m_ClearFlags, GetWaterRefractionTexture(), GetFrustum() );
+#endif
 
 	Vector4D plane;
 	VectorMultiply( m_ReflectionPlane.normal, -1, plane.AsVector3D() );
@@ -6225,7 +6973,18 @@ void CRefractiveGlassView::Draw()
 	CMatRenderContextPtr pRenderContext( materials );
 	PIXEVENT( pRenderContext, "CRefractiveGlassView::Draw" );
 
+#ifdef MAPBASE
+	// Store off view origin and angles and set the new view
+	int nSaveViewID = CurrentViewID();
+	SetupCurrentView( origin, angles, VIEW_REFRACTION );
+#endif
+
 	BaseClass::Draw();
+
+#ifdef MAPBASE
+	// finish off the view.  restore the previous view.
+	SetupCurrentView( origin, angles, (view_id_t)nSaveViewID );
+#endif
 
 	pRenderContext->ClearColor4ub( 0, 0, 0, 255 );
 	pRenderContext->Flush();

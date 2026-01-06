@@ -15,11 +15,17 @@
 
 class CBeam;
 
+#ifdef MAPBASE
+#define SF_TRIPMINE_START_INACTIVE (1 << 0)
+#endif
 
 class CTripmineGrenade : public CBaseGrenade
 {
 public:
 	DECLARE_CLASS( CTripmineGrenade, CBaseGrenade );
+#ifdef EZ2
+	DECLARE_SERVERCLASS();
+#endif
 
 	CTripmineGrenade();
 	void Spawn( void );
@@ -37,8 +43,33 @@ public:
 	void MakeBeam( void );
 	void KillBeam( void );
 
+#ifdef EZ2
+	virtual bool KeyValue( const char *szKeyName, const char *szValue );
+	int UpdateTransmitState();
+#endif
+
+#ifdef MAPBASE
+	void PowerUp();
+
+	void InputActivate( inputdata_t &inputdata );
+	void InputDeactivate( inputdata_t &inputdata );
+	void InputSetOwner( inputdata_t &inputdata ) { m_hOwner = inputdata.value.Entity(); }
+
+	COutputEvent m_OnExplode;
+#endif
+
+#ifdef EZ2
+	virtual bool	TargetShouldDetonate(CBaseCombatCharacter* pTarget);
+#endif
+
+
 public:
 	EHANDLE		m_hOwner;
+
+#ifdef MAPBASE
+	float		m_flPowerUpTime;
+	EHANDLE		m_hAttacker;
+#endif
 
 private:
 	float		m_flPowerUp;
@@ -49,6 +80,16 @@ private:
 	CBeam		*m_pBeam;
 	Vector		m_posOwner;
 	Vector		m_angleOwner;
+
+#ifdef EZ2
+	Class_T     m_nTripmineClass;
+	string_t	m_nTripmineClassString;
+	color32     m_TripmineColor;
+
+	bool		m_bTripped;
+
+	EHANDLE		m_hPlacer;
+#endif
 
 	DECLARE_DATADESC();
 };

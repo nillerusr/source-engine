@@ -1,0 +1,35 @@
+name: android-build
+
+on: [push, pull_request]
+
+jobs:
+  build-apk-for-android:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Cloning modlaucher repo and preparing for building
+      run: |
+        git clone https://github.com/ItzVladik/srceng-mod-launcher
+        sudo apt-get update
+        sudo apt-get install -f -y openjdk-8-jre zip apksigner imagemagick lib32z1
+    - name: Build Android (32 bit)
+      run: |
+        scripts/build-android-armv7a.sh
+    - name: Build Android (64 bit)
+      run: |
+        chmod +x scripts/build-android-aarch64.sh
+        scripts/build-android-aarch64.sh   
+    - name: Build APK
+      run: |
+        chmod +x scripts/build-apk.sh
+        scripts/build-apk.sh
+    - name: Rename APK
+      run: |
+         mv srceng-mod-launcher/build/android/mod-signed.apk mod-release.apk
+
+    - name: 'Upload Artifact'
+      uses: actions/upload-artifact@v4
+      with:
+        name: mod-apk
+        path: mod-release.apk

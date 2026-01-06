@@ -258,7 +258,12 @@ enum SolidFlags_t
 	FSOLID_ROOT_PARENT_ALIGNED	= 0x0100,	// Collisions are defined in root parent's local coordinate space
 	FSOLID_TRIGGER_TOUCH_DEBRIS	= 0x0200,	// This trigger will touch debris objects
 
-	FSOLID_MAX_BITS	= 10
+#ifdef MAPBASE
+	// From https://developer.valvesoftware.com/wiki/Owner
+	FSOLID_COLLIDE_WITH_OWNER	= 0X0400,
+#endif
+
+	FSOLID_MAX_BITS = 11
 };
 
 //-----------------------------------------------------------------------------
@@ -442,6 +447,18 @@ typedef CThreadMutex CSourceMutex;
 class CThreadNullMutex;
 typedef CThreadNullMutex CSourceMutex;
 #endif
+
+//Tony; added for IPlayerInfo V3.
+//Putting all standard possible stances, but GetStance in CBasePlayer will only return standing or ducking by default -
+//up to the mod to specify the others, or override what GetStance returns.
+enum player_Stance
+{
+	PINFO_STANCE_STANDING = 0,
+	PINFO_STANCE_DUCKING,
+
+	PINFO_STANCE_SPRINTING,
+	PINFO_STANCE_PRONE,
+};
 
 #endif
 

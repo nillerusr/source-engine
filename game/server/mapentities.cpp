@@ -185,6 +185,12 @@ static void SortSpawnListByHierarchy( int nEntities, HierarchicalSpawn_t *pSpawn
 
 	g_pClassnameSpawnPriority->AddString( "prop_physics", 7 );
 	g_pClassnameSpawnPriority->AddString( "prop_ragdoll", 7 );
+
+#if defined(EZ2) && defined(LINUX)
+	// HACKHACK: Fixes dropships spawning before APCs and picking them up improperly on Linux
+	g_pClassnameSpawnPriority->AddString( "prop_vehicle_drivable_apc", 7 );
+#endif
+
 	// Sort the entities (other than the world) by hierarchy depth, in order to spawn them in
 	// that order. This insures that each entity's parent spawns before it does so that
 	// it can properly set up anything that relies on hierarchy.

@@ -188,7 +188,12 @@ void CHudNumericDisplay::Paint()
 	// total ammo
 	if (m_bDisplaySecondaryValue)
 	{
+#ifdef MAPBASE
+		// Bonus progress uses this now (was previously unused)
+		surface()->DrawSetTextColor( UsesUniqueSecondaryColor() ? m_Ammo2Color : GetFgColor() );
+#else
 		surface()->DrawSetTextColor(GetFgColor());
+#endif
 		PaintNumbers(m_hSmallNumberFont, digit2_xpos, digit2_ypos, m_iSecondaryValue);
 	}
 

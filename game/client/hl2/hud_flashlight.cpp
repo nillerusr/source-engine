@@ -65,7 +65,11 @@ CHudFlashlight::CHudFlashlight( const char *pElementName ) : CHudElement( pEleme
 	vgui::Panel *pParent = g_pClientMode->GetViewport();
 	SetParent( pParent );
 
+#ifdef EZ
+	SetHiddenBits( HIDEHUD_HEALTH | HIDEHUD_PLAYERDEAD | HIDEHUD_NEEDSUIT | HIDEHUD_FLASHLIGHT );
+#else
 	SetHiddenBits( HIDEHUD_HEALTH | HIDEHUD_PLAYERDEAD | HIDEHUD_NEEDSUIT );
+#endif
 }
 
 //-----------------------------------------------------------------------------

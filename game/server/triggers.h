@@ -11,7 +11,11 @@
 #pragma once
 #endif
 
+#ifdef MAPBASE
+#include "baseentity.h"
+#else
 #include "basetoggle.h"
+#endif
 #include "entityoutput.h"
 
 //
@@ -33,15 +37,24 @@ enum
 	SF_TRIG_TOUCH_DEBRIS 					= 0x400,	// Will touch physics debris objects
 	SF_TRIGGER_ONLY_NPCS_IN_VEHICLES		= 0X800,	// *if* NPCs can fire this trigger, only NPCs in vehicles do so (respects player ally flag too)
 	SF_TRIGGER_DISALLOW_BOTS                = 0x1000,   // Bots are not allowed to fire this trigger
+#ifdef MAPBASE
+	SF_TRIGGER_ALLOW_ITEMS					= 0x2000,	// MOVETYPE_FLYGRAVITY (Weapons, items, flares, etc.) can fire this trigger
+#endif
 };
 
 // DVS TODO: get rid of CBaseToggle
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+#ifdef MAPBASE
+#define CBaseToggle CBaseEntity
+#endif
 class CBaseTrigger : public CBaseToggle
 {
 	DECLARE_CLASS( CBaseTrigger, CBaseToggle );
+#ifdef MAPBASE
+#undef CBaseToggle
+#endif
 public:
 	CBaseTrigger();
 	
@@ -69,6 +82,9 @@ public:
 	virtual void StartTouch(CBaseEntity *pOther);
 	virtual void EndTouch(CBaseEntity *pOther);
 	bool IsTouching( CBaseEntity *pOther );
+#ifdef MAPBASE_VSCRIPT
+	bool ScriptIsTouching( HSCRIPT hOther );
+#endif
 
 	CBaseEntity *GetTouchedEntityOfType( const char *sClassName );
 
@@ -78,6 +94,13 @@ public:
 	void TraceAttack(CBaseEntity *pAttacker, float flDamage, const Vector &vecDir, trace_t *ptr, int bitsDamageType) {}
 
 	bool PointIsWithin( const Vector &vecPoint );
+
+#ifdef MAPBASE_VSCRIPT
+	bool	ScriptPassesTriggerFilters( HSCRIPT hOther ) { return ToEnt(hOther) ? PassesTriggerFilters( ToEnt(hOther) ) : false; }
+	HSCRIPT	ScriptGetTouchedEntityOfType( const char *sClassName ) { return ToHScript( GetTouchedEntityOfType(sClassName) ); }
+
+	void	ScriptGetTouchingEntities( HSCRIPT hTable );
+#endif
 
 	bool		m_bDisabled;
 	string_t	m_iFilterName;
@@ -96,7 +119,23 @@ protected:
 	// Entities currently being touched by this trigger
 	CUtlVector< EHANDLE >	m_hTouchingEntities;
 
+#ifdef MAPBASE
+	// We don't descend from CBaseToggle anymore. These have to be defined here now.
+	EHANDLE		m_hActivator;
+	float		m_flWait;
+	string_t	m_sMaster;		// If this button has a master switch, this is the targetname.
+								// A master switch must be of the multisource type. If all 
+								// of the switches in the multisource have been triggered, then
+								// the button will be allowed to operate. Otherwise, it will be
+								// deactivated.
+
+	virtual float	GetDelay( void ) { return m_flWait; }
+#endif
+
 	DECLARE_DATADESC();
+#ifdef MAPBASE_VSCRIPT
+	DECLARE_ENT_SCRIPTDESC();
+#endif
 };
 
 //-----------------------------------------------------------------------------
@@ -171,6 +210,10 @@ public:
 	{
 		// This field came along after levels were built so the field defaults to 20 here in the constructor.
 		m_flDamageCap = 20.0f;
+#ifdef MAPBASE
+		// Uh, same here.
+		m_flHurtRate = 0.5f;
+#endif
 	}
 
 	DECLARE_CLASS( CTriggerHurt, CBaseTrigger );
@@ -183,6 +226,10 @@ public:
 	bool HurtEntity( CBaseEntity *pOther, float damage );
 	int HurtAllTouchers( float dt );
 
+#ifdef MAPBASE
+	bool KeyValue( const char *szKeyName, const char *szValue );
+#endif
+
 	DECLARE_DATADESC();
 
 	float	m_flOriginalDamage;	// Damage as specified by the level designer.
@@ -193,6 +240,9 @@ public:
 	int		m_bitsDamageInflict;	// DMG_ damage type that the door or tigger does
 	int		m_damageModel;
 	bool	m_bNoDmgForce;		// Should damage from this trigger impart force on what it's hurting
+#ifdef MAPBASE
+	float	m_flHurtRate;
+#endif
 
 	enum
 	{
@@ -205,6 +255,105 @@ public:
 	COutputEvent m_OnHurtPlayer;
 
 	CUtlVector<EHANDLE>	m_hurtEntities;
+};
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+class CTriggerCamera : public CBaseEntity
+{
+public:
+	DECLARE_CLASS( CTriggerCamera, CBaseEntity );
+	// script description
+	DECLARE_ENT_SCRIPTDESC();
+
+#ifdef MAPBASE
+	CTriggerCamera();
+
+	void UpdateOnRemove();
+#endif
+
+	void Spawn( void );
+	bool KeyValue( const char *szKeyName, const char *szValue );
+	void Enable( void );
+	void Disable( void );
+
+	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
+	void FollowTarget( void );
+	void StartCameraShot( const char *pszShotType, CBaseEntity *pSceneEntity, CBaseEntity *pActor1, CBaseEntity *pActor2, float duration );
+	int ScriptGetFov(void);
+	void ScriptSetFov(int iFOV, float rate);
+#ifdef MAPBASE
+	void MoveThink( void );
+#endif
+	void Move(void);
+
+	// Always transmit to clients so they know where to move the view to
+	virtual int UpdateTransmitState();
+	
+	DECLARE_DATADESC();
+
+	// Input handlers
+	void InputEnable( inputdata_t &inputdata );
+	void InputDisable( inputdata_t &inputdata );
+
+#ifdef MAPBASE
+	void InputSetFOV( inputdata_t &inputdata );
+	void InputSetFOVRate( inputdata_t &inputdata );
+
+	void InputSetTarget( inputdata_t &inputdata );
+	void InputSetTargetAttachment( inputdata_t &inputdata );
+	void InputSetTrackSpeed( inputdata_t &inputdata );
+#endif
+
+private:
+	EHANDLE m_hPlayer;
+	EHANDLE m_hTarget;
+
+	// used for moving the camera along a path (rail rides)
+	CBaseEntity *m_pPath;
+	string_t m_sPath;
+	float m_flWait;
+	float m_flReturnTime;
+	float m_flStopTime;
+	float m_moveDistance;
+	float m_targetSpeed;
+	float m_initialSpeed;
+	float m_acceleration;
+	float m_deceleration;
+	int	  m_state;
+	Vector m_vecMoveDir;
+
+#ifdef MAPBASE
+	float m_fov;
+	float m_fovSpeed;
+	float m_flTrackSpeed;
+
+	bool m_bDontSetPlayerView;
+#endif
+
+	string_t m_iszTargetAttachment;
+	int	  m_iAttachmentIndex;
+	bool  m_bSnapToGoal;
+
+#if HL2_EPISODIC
+	bool  m_bInterpolatePosition;
+
+	// these are interpolation vars used for interpolating the camera over time
+	Vector m_vStartPos, m_vEndPos;
+	float m_flInterpStartTime;
+
+	const static float kflPosInterpTime; // seconds
+#endif
+
+	int   m_nPlayerButtons;
+	int m_nOldTakeDamage;
+
+private:
+	COutputEvent m_OnEndFollow;
+#ifdef MAPBASE
+	COutputEvent m_OnStartFollow;
+#endif
 };
 
 #endif // TRIGGERS_H

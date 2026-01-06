@@ -15,6 +15,9 @@
 #include "entityoutput.h"
 #include "player_pickup.h"
 #include "vphysics/constraints.h"
+#ifdef EZ
+#include "ai_basenpc.h"
+#endif
 
 
 // Armor given by a battery
@@ -35,7 +38,27 @@
 #define SIZE_AMMO_CROSSBOW			6
 #define	SIZE_AMMO_AR2_ALTFIRE		1
 
+#ifdef CSS_WEAPONS_IN_HL2
+#define SIZE_AMMO_45ACP				20
+#define SIZE_AMMO_45ACP_LARGE		60
+#define SIZE_AMMO_357SIG			13
+#define SIZE_AMMO_357SIG_LARGE		39
+#define SIZE_AMMO_556mm			30
+#define SIZE_AMMO_556mm_LARGE		60
+#define SIZE_AMMO_762mm			30
+#define SIZE_AMMO_762mm_LARGE		60
+#endif
+
 #define SF_ITEM_START_CONSTRAINED	0x00000001
+#ifdef MAPBASE
+// Copied from CBaseCombatWeapon's flags, including any additions we made to those.
+// I really, REALLY hope no item uses their own spawnflags either.
+#define SF_ITEM_NO_PLAYER_PICKUP	(1<<1)
+#define SF_ITEM_NO_PHYSCANNON_PUNT (1<<2)
+#define SF_ITEM_NO_NPC_PICKUP	(1<<3)
+
+#define SF_ITEM_ALWAYS_TOUCHABLE	(1<<6) // This needs to stay synced with the weapon spawnflag
+#endif
 
 
 class CItem : public CBaseAnimating, public CDefaultPlayerPickupVPhysics
@@ -79,6 +102,26 @@ public:
 	float  m_flNextResetCheckTime;
 #endif
 
+#ifdef MAPBASE
+	// This appeared to have no prior use in Source SDK 2013.
+	// It may have been originally intended for TF2 or some other game-specific item class.
+	virtual bool IsCombatItem() const { return true; }
+
+	// Used to access item_healthkit values, etc. from outside of the class
+	virtual float GetItemAmount() { return 1.0f; }
+
+	void	InputEnablePlayerPickup( inputdata_t &inputdata );
+	void	InputDisablePlayerPickup( inputdata_t &inputdata );
+	void	InputEnableNPCPickup( inputdata_t &inputdata );
+	void	InputDisableNPCPickup( inputdata_t &inputdata );
+	void	InputBreakConstraint( inputdata_t &inputdata );
+#endif
+
+#ifdef EZ
+	EZ_VARIANT	GetEZVariant() { return m_tEzVariant; }
+	void		SetEZVariant( EZ_VARIANT variant ) { m_tEzVariant = variant; }
+#endif
+
 	DECLARE_DATADESC();
 protected:
 	virtual void ComeToRest( void );
@@ -92,6 +135,10 @@ private:
 	QAngle		m_vOriginalSpawnAngles;
 
 	IPhysicsConstraint		*m_pConstraint;
+
+#ifdef EZ
+	EZ_VARIANT	m_tEzVariant;
+#endif
 };
 
 #endif // ITEMS_H

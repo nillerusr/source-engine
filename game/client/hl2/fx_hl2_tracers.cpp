@@ -531,7 +531,7 @@ DECLARE_CLIENT_EFFECT( "AirboatMuzzleFlash", AirboatMuzzleFlashCallback );
 //-----------------------------------------------------------------------------
 // Chopper muzzle flashes
 //-----------------------------------------------------------------------------
-void MuzzleFlash_Chopper( ClientEntityHandle_t hEntity, int attachmentIndex )
+void MuzzleFlash_Chopper( ClientEntityHandle_t hEntity, int attachmentIndex, float flScale )
 {
 	VPROF_BUDGET( "MuzzleFlash_Chopper", VPROF_BUDGETGROUP_PARTICLE_RENDERING );
 
@@ -545,7 +545,7 @@ void MuzzleFlash_Chopper( ClientEntityHandle_t hEntity, int attachmentIndex )
 	SimpleParticle *pParticle;
 	Vector			forward(1,0,0), offset; //NOTENOTE: All coords are in local space
 
-	float flScale = random->RandomFloat( 2.5f, 4.5f );
+	flScale *= random->RandomFloat( 2.5f, 4.5f );
 
 	// Flash
 	for ( int i = 1; i < 7; i++ )
@@ -587,7 +587,7 @@ void MuzzleFlash_Chopper( ClientEntityHandle_t hEntity, int attachmentIndex )
 //-----------------------------------------------------------------------------
 void ChopperMuzzleFlashCallback( const CEffectData &data )
 {
-	MuzzleFlash_Chopper( data.m_hEntity, data.m_nAttachmentIndex );
+	MuzzleFlash_Chopper( data.m_hEntity, data.m_nAttachmentIndex, data.m_flScale );
 }
 
 DECLARE_CLIENT_EFFECT( "ChopperMuzzleFlash", ChopperMuzzleFlashCallback );

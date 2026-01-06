@@ -157,6 +157,10 @@ typedef wchar_t ucs2; // under windows wchar_t is ucs2
 typedef unsigned short ucs2;
 #endif
 
+#ifdef MAPBASE
+#define TO_THREESTATE(num)	static_cast<ThreeState_t>(num)
+#endif
+
 enum ThreeState_t
 {
 	TRS_FALSE,

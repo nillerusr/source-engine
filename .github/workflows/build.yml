@@ -11,101 +11,56 @@ jobs:
     - name: Build linux-i386
       run: |
         scripts/build-ubuntu-i386.sh
+    - name: 'Upload Artifact'
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-i386
+        path: bin
 
   build-linux-amd64:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
     - name: Build linux-amd64
       run: |
         scripts/build-ubuntu-amd64.sh
-
-  build-android-armv7a:
-    runs-on: ubuntu-20.04
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Build android-armv7a
-      run: |
-        scripts/build-android-armv7a.sh
+    - name: 'Upload Artifact'
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-amd64
+        path: bin
 
   build-windows-i386:
-    runs-on: windows-2019
+    runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v2
     - name: Build windows-i386
       run: |
         git submodule init && git submodule update
-        ./waf.bat configure -T debug --32bits
-        ./waf.bat build
+        ./waf.bat configure -T release --build-games=EntropyZero --prefix=bin --32bits
+        ./waf.bat install
+
+    - name: 'Upload Artifact'
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-i386
+        path: bin
 
   build-windows-amd64:
-    runs-on: windows-2019
+    runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v2
     - name: Build windows-amd64
       run: |
         git submodule init && git submodule update
-        ./waf.bat configure -T debug
-        ./waf.bat build
+        ./waf.bat configure -T release --build-games=EntropyZero --prefix=bin
+        ./waf.bat install
 
-  build-dedicated-windows-i386:
-    runs-on: windows-2019
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Build dedicated windows-i386
-      run: |
-        git submodule init && git submodule update
-        ./waf.bat configure -T debug -d
-        ./waf.bat build
-
-  build-dedicated-windows-amd64:
-    runs-on: windows-2019
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Build dedicated windows-amd64
-      run: |
-        git submodule init && git submodule update
-        ./waf.bat configure -T debug -d
-        ./waf.bat build
-
-  build-dedicated-linux-i386:
-    runs-on: ubuntu-20.04
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Build dedicated linux-i386
-      run: |
-        scripts/build-ubuntu-i386.sh -d
-
-  build-dedicated-linux-amd64:
-    runs-on: ubuntu-20.04
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Build dedicated linux-amd64
-      run: |
-        scripts/build-ubuntu-amd64.sh -d
-
-  build-macos-amd64:
-    runs-on: macos-latest
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Build macos-amd64
-      run: |
-        scripts/build-macos-amd64.sh
-
-  build-dedicated-macos-amd64:
-    runs-on: macos-latest
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Build dedicated macos-amd64
-      run: |
-        scripts/build-macos-amd64.sh -d
+    - name: 'Upload Artifact'
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-amd64
+        path: bin

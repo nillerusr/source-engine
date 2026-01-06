@@ -39,6 +39,9 @@
 static int ACT_CROW_TAKEOFF;
 static int ACT_CROW_SOAR;
 static int ACT_CROW_LAND;
+#ifdef EZ
+static int ACT_FALL;
+#endif
 
 //
 // Animation events.
@@ -56,6 +59,10 @@ ConVar sk_crow_melee_dmg( "sk_crow_melee_dmg","0");
 LINK_ENTITY_TO_CLASS( npc_crow, CNPC_Crow );
 LINK_ENTITY_TO_CLASS( npc_seagull, CNPC_Seagull );
 LINK_ENTITY_TO_CLASS( npc_pigeon, CNPC_Pigeon );
+#ifdef EZ
+LINK_ENTITY_TO_CLASS( npc_aliencrow, CNPC_AlienCrow );
+LINK_ENTITY_TO_CLASS( npc_boid, CNPC_AlienCrow );
+#endif
 
 BEGIN_DATADESC( CNPC_Crow )
 
@@ -75,6 +82,10 @@ BEGIN_DATADESC( CNPC_Crow )
 	DEFINE_FIELD( m_flLastStuckCheck, FIELD_TIME ),
 	DEFINE_FIELD( m_flDangerSoundTime, FIELD_TIME ),
 	DEFINE_KEYFIELD( m_bIsDeaf, FIELD_BOOLEAN, "deaf" ),
+
+#ifdef EZ
+	DEFINE_FIELD( m_flTakeOffTime, FIELD_TIME ),
+#endif
 
 	// Inputs
 	DEFINE_INPUTFUNC( FIELD_STRING, "FlyAway", InputFlyAway ),
@@ -477,6 +488,30 @@ Activity CNPC_Crow::NPC_TranslateActivity( Activity eNewActivity )
 			return ACT_FLY;
 	}
 
+#ifdef EZ
+	// The Aflock model only has three activities, ACT_FLY, ACT_LAND, and ACT_FALL
+	// For now, translate all activities to these three
+	if ( m_iBirdType == BIRDTYPE_ALIEN )
+	{
+
+		if (eNewActivity == ACT_CROW_LAND)
+		{
+			return ACT_LAND;
+		}
+
+		switch (eNewActivity)
+		{
+		case ACT_IDLE:
+		case ACT_WALK:
+			return (Activity)ACT_FALL;
+		case ACT_DIERAGDOLL:
+			return ACT_LAND;
+		default:
+			return ACT_FLY;
+		}
+	}
+#endif
+
 	return BaseClass::NPC_TranslateActivity( eNewActivity );
 }
 
@@ -733,8 +768,19 @@ void CNPC_Crow::Takeoff( const Vector &vGoal )
 		QAngle angles;
 		VectorAngles( vecMoveDir, angles );
 		SetAbsAngles( angles );
-
+#ifndef EZ
 		SetAbsVelocity( vecMoveDir * CROW_TAKEOFF_SPEED );
+#else
+		// Boids tends to get stuck on the ground, so let's give them a massive vertical boost during takeoff
+		if (m_iBirdType == BIRDTYPE_ALIEN)
+		{
+			SetAbsVelocity( vecMoveDir * CROW_TAKEOFF_SPEED + Vector(0, 0, CROW_TAKEOFF_SPEED ) );
+		}
+		else
+		{
+			SetAbsVelocity( vecMoveDir * CROW_TAKEOFF_SPEED );
+		}
+#endif
 	}
 }
 
@@ -795,6 +841,17 @@ void CNPC_Crow::StartTask( const Task_t *pTask )
 
 			FlapSound();
 
+#ifdef EZ
+			// Boids don't have a takeoff animation event, so just take off now!
+			// TODO Clean this up
+			if ( m_iBirdType == BIRDTYPE_ALIEN && GetNavigator()->GetPath()->GetCurWaypoint())
+			{
+				Takeoff( GetNavigator()->GetCurWaypointPos() + Vector( 0, 0, CROW_TAKEOFF_SPEED ) );
+			}
+
+			m_flTakeOffTime = gpGlobals->curtime + 0.2f;
+#endif
+
 			SetIdealActivity( ( Activity )ACT_CROW_TAKEOFF );
 			break;
 		}
@@ -844,6 +901,28 @@ void CNPC_Crow::StartTask( const Task_t *pTask )
 			{
 				SetHintNode(CAI_HintManager::FindHint( this, HINT_CROW_FLYTO_POINT, bits_HINT_NODE_NEAREST | bits_HINT_NODE_USE_GROUP, 10000 ));
 			}
+
+#ifdef EZ
+			// Boids should fail this task if they are within 128 units of the node, forcing them to fall into the next schedule
+			if ( m_iBirdType == BIRDTYPE_ALIEN && GetHintNode() )
+			{
+				Vector vHintPos;
+				GetHintNode()->GetPosition( this, &vHintPos );
+				float flDist = (GetAbsOrigin() - vHintPos).Length();
+				if (flDist <= 128.0f )
+				{
+					// Try it one more time
+					SetHintNode( CAI_HintManager::FindHint( this, HINT_CROW_FLYTO_POINT, bits_HINT_NODE_USE_GROUP, 10000 ) );
+					if (GetHintNode())
+					{
+						GetHintNode()->GetPosition( this, &vHintPos );
+						float flDist = (GetAbsOrigin() - vHintPos).Length();
+						if ( flDist <= 128.0f )
+							TaskFail( FAIL_BAD_PATH_GOAL );
+					}
+				}
+			}
+#endif
 
 			if ( GetHintNode() )
 			{
@@ -970,13 +1049,24 @@ void CNPC_Crow::RunTask( const Task_t *pTask )
 			else
 				TaskFail( FAIL_NO_ROUTE );
 
-			if ( IsActivityFinished() )
+			if ( IsActivityFinished() 
+#ifdef EZ
+				|| ( m_iBirdType == BIRDTYPE_ALIEN && gpGlobals->curtime >= m_flTakeOffTime )
+#endif
+				)
 			{
 				TaskComplete();
 				SetIdealActivity( ACT_FLY );
 
 				m_bSoar = false;
 				m_flSoarTime = gpGlobals->curtime + random->RandomFloat( 2, 5 );
+#ifdef EZ
+				if (m_iBirdType == BIRDTYPE_ALIEN)
+				{
+					// Boids don't seem to want to fly right here
+					SetSchedule( SCHED_CROW_IDLE_FLY );
+				}
+#endif
 			}
 			
 			break;
@@ -1067,6 +1157,14 @@ bool CNPC_Crow::CorpseGib( const CTakeDamageInfo &info )
 
 	// TODO: crow gibs?
 	//CGib::SpawnSpecificGibs( this, CROW_GIB_COUNT, 300, 400, "models/gibs/crow_gibs.mdl");
+
+#ifdef EZ
+	// If this is a boid, spawn alien gibs
+	if ( m_iBirdType == BIRDTYPE_ALIEN )
+	{
+		return BaseClass::CorpseGib( info );
+	}
+#endif
 
 	return true;
 }
@@ -1324,6 +1422,12 @@ void CNPC_Crow::FlapSound( void )
 	m_bPlayedLoopingSound = true;
 }
 
+#ifdef EZ
+extern ConVar sk_gib_carcass_smell;
+#endif
+#ifdef EZ2
+extern int g_interactionXenGrenadeCreate;
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose:  This is a generic function (to be implemented by sub-classes) to
@@ -1359,6 +1463,21 @@ bool CNPC_Crow::HandleInteraction( int interactionType, void *data, CBaseCombatC
 		SetThink( NULL );
 		return true;
 	}
+#ifdef EZ
+	else if ( interactionType == g_interactionBullsquidMonch )
+	{
+		OnTakeDamage ( CTakeDamageInfo( sourceEnt, sourceEnt, m_iHealth, DMG_CRUSH | DMG_ALWAYSGIB ) );
+		// Give the predator health if gibs do not count as food sources, otherwise don't
+		return !sk_gib_carcass_smell.GetBool();
+	}
+#endif
+#ifdef EZ2
+	else if ( interactionType == g_interactionXenGrenadeCreate )
+	{
+		AddSpawnFlags( SF_CROW_FLYING );
+		return true;
+	}
+#endif
 
 	return BaseClass::HandleInteraction( interactionType, data, sourceEnt );
 }
@@ -1423,6 +1542,9 @@ AI_BEGIN_CUSTOM_NPC( npc_crow, CNPC_Crow )
 	DECLARE_ACTIVITY( ACT_CROW_TAKEOFF )
 	DECLARE_ACTIVITY( ACT_CROW_SOAR )
 	DECLARE_ACTIVITY( ACT_CROW_LAND )
+#ifdef EZ
+	DECLARE_ACTIVITY( ACT_FALL )
+#endif
 
 	DECLARE_ANIMEVENT( AE_CROW_HOP )
 	DECLARE_ANIMEVENT( AE_CROW_FLY )
@@ -1526,11 +1648,12 @@ AI_BEGIN_CUSTOM_NPC( npc_crow, CNPC_Crow )
 		"		COND_HEAR_COMBAT"
 	)
 
+#ifndef EZ
 	//=========================================================
 	DEFINE_SCHEDULE
 	(
 		SCHED_CROW_IDLE_FLY,
-		
+
 		"	Tasks"
 		"		TASK_FIND_HINTNODE				0"
 		"		TASK_GET_PATH_TO_HINTNODE		0"
@@ -1554,6 +1677,82 @@ AI_BEGIN_CUSTOM_NPC( npc_crow, CNPC_Crow )
 		"	"
 		"	Interrupts"
 	)
+
+#else
+	//=========================================================
+	DEFINE_SCHEDULE
+	(
+		SCHED_CROW_IDLE_FLY,
+
+		"	Tasks"
+		"		TASK_SET_FAIL_SCHEDULE			SCHEDULE:SCHED_CROW_FLY_RANDOM"
+		"		TASK_FIND_HINTNODE				0"
+		"		TASK_GET_PATH_TO_HINTNODE		0"
+		"		TASK_WAIT_FOR_MOVEMENT			0"
+		"		"
+		"	Interrupts"
+	)
+
+	DEFINE_SCHEDULE
+	(
+		SCHED_CROW_FLY_RANDOM,
+
+		"	Tasks"
+		"		TASK_SET_FAIL_SCHEDULE			SCHEDULE:SCHED_CROW_FLY_FAIL"
+		"		TASK_SET_ROUTE_SEARCH_TIME		1"	// Spend 1 seconds trying to build a path if stuck
+		"		TASK_GET_PATH_TO_RANDOM_NODE	500"
+		"		TASK_WAIT_FOR_MOVEMENT			0"
+		"		"
+		"	Interrupts"
+	)
+
+	//=========================================================
+	DEFINE_SCHEDULE
+	(
+		SCHED_CROW_FLY_AWAY,
+
+		"	Tasks"
+		"		TASK_SET_FAIL_SCHEDULE			SCHEDULE:SCHED_CROW_FLY_AWAY_COVER"
+		"		TASK_STOP_MOVING				0"
+		"		TASK_FIND_HINTNODE				0"
+		"		TASK_GET_PATH_TO_HINTNODE		0"
+		"		TASK_CROW_TAKEOFF				0"
+		"		TASK_WAIT_FOR_MOVEMENT			0"
+		"	"
+		"	Interrupts"
+	)
+
+	DEFINE_SCHEDULE
+	(
+		SCHED_CROW_FLY_AWAY_COVER,
+
+		"	Tasks"
+		"		TASK_SET_FAIL_SCHEDULE			SCHEDULE:SCHED_CROW_FLY_AWAY_RANDOM"
+		"		TASK_STOP_MOVING				0"
+		"		TASK_WAIT						0.2"
+		"		TASK_FIND_COVER_FROM_ENEMY		0"
+		"		TASK_GET_PATH_TO_HINTNODE		0"
+		"		TASK_CROW_TAKEOFF				0"
+		"		TASK_WAIT_FOR_MOVEMENT			0"
+		"	"
+		"	Interrupts"
+	)
+
+	DEFINE_SCHEDULE
+	(
+		SCHED_CROW_FLY_AWAY_RANDOM,
+
+		"	Tasks"
+		"		TASK_SET_FAIL_SCHEDULE			SCHEDULE:SCHED_CROW_FLY_FAIL"
+		"		TASK_STOP_MOVING				0"
+		"		TASK_WAIT						0.2"
+		"		TASK_SET_ROUTE_SEARCH_TIME		1"	// Spend 1 seconds trying to build a path if stuck
+		"		TASK_GET_PATH_TO_RANDOM_NODE	500"
+		"		TASK_CROW_TAKEOFF				0"
+		"	"
+		"	Interrupts"
+	)
+#endif
 
 	//=========================================================
 	DEFINE_SCHEDULE

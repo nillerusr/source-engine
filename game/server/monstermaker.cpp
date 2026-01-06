@@ -18,6 +18,8 @@
 #include "IEffects.h"
 #include "props.h"
 
+#include "point_template.h"
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -114,6 +116,9 @@ END_DATADESC()
 //-----------------------------------------------------------------------------
 void CBaseNPCMaker::Spawn( void )
 {
+#ifdef VSCRIPT
+	ScriptInstallPreSpawnHook();
+#endif
 	SetSolid( SOLID_NONE );
 	m_nLiveChildren		= 0;
 	Precache();
@@ -834,7 +839,13 @@ void CTemplateNPCMaker::MakeNPC( void )
 		angles.z = 0.0;
 		pent->SetAbsAngles( angles );
 	}
-
+#ifdef VSCRIPT
+	if ( !ScriptPreInstanceSpawn( &m_ScriptScope, pEntity, m_iszTemplateData ) )
+	{
+		UTIL_RemoveImmediate( pEntity );
+		return;
+	}
+#endif
 	m_OnSpawnNPC.Set( pEntity, pEntity, this );
 
 	if ( m_spawnflags & SF_NPCMAKER_FADE )
@@ -872,6 +883,9 @@ void CTemplateNPCMaker::MakeNPC( void )
 			SetUse( NULL );
 		}
 	}
+#ifdef VSCRIPT
+	ScriptPostSpawn( &m_ScriptScope, &pEntity, 1 );
+#endif
 }
 
 //-----------------------------------------------------------------------------

@@ -342,7 +342,11 @@ bool CBaseCombatWeapon::WeaponLOSCondition( const Vector &ownerPos, const Vector
 
 	if ( pBCC ) 
 	{
+#ifdef MAPBASE
+		if ( npcOwner->IRelationType( pBCC ) <= D_FR )
+#else
 		if ( npcOwner->IRelationType( pBCC ) == D_HT )
+#endif
 			return true;
 
 		if ( bSetConditions )
@@ -369,7 +373,12 @@ bool CBaseCombatWeapon::WeaponLOSCondition( const Vector &ownerPos, const Vector
 //-----------------------------------------------------------------------------
 int CBaseCombatWeapon::WeaponRangeAttack1Condition( float flDot, float flDist )
 {
+#ifdef MAPBASE
+	// HACKHACK: HasPrimaryAmmo() checks the NPC's reserve ammo counts, which should not be evaluated here if we use clips
+	if ( UsesPrimaryAmmo() && (UsesClipsForAmmo1() ? !m_iClip1 : !HasPrimaryAmmo()) )
+#else
  	if ( UsesPrimaryAmmo() && !HasPrimaryAmmo() )
+#endif
  	{
  		return COND_NO_PRIMARY_AMMO;
  	}
@@ -478,7 +487,11 @@ void CBaseCombatWeapon::Kill( void )
 //-----------------------------------------------------------------------------
 void CBaseCombatWeapon::FallInit( void )
 {
+#ifdef MAPBASE
+	SetModel( (GetDroppedModel() && GetDroppedModel()[0]) ? GetDroppedModel() : GetWorldModel() );
+#else
 	SetModel( GetWorldModel() );
+#endif
 	VPhysicsDestroyObject();
 
 	if ( !VPhysicsInitNormal( SOLID_BBOX, GetSolidFlags() | FSOLID_TRIGGER, false ) )
@@ -716,6 +729,11 @@ void CBaseCombatWeapon::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_
 	{
 		m_OnPlayerUse.FireOutput( pActivator, pCaller );
 
+#ifdef MAPBASE
+		// Mark that we're being +USE'd, not bumped
+		AddSpawnFlags(SF_WEAPON_USED);
+#endif
+
 		//
 		// Bump the weapon to try equipping it before picking it up physically. This is
 		// important in a few spots in the game where the player could potentially +use pickup
@@ -729,6 +747,10 @@ void CBaseCombatWeapon::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_
 		{
 			pPlayer->PickupObject( this );
 		}
+
+#ifdef MAPBASE
+		RemoveSpawnFlags(SF_WEAPON_USED);
+#endif
 	}
 }
 

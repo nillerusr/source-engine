@@ -155,6 +155,9 @@ protected:
 private:
 	bool	GetGoalDirection( Vector *vOut );
 
+#ifdef EZ2
+	virtual
+#endif
 	void	StartSmokeTrail( void );
 
 	// Take damage from being thrown by a physcannon 
@@ -199,6 +202,11 @@ protected:
 	float				m_flAttackNearDist;
 	float				m_flAttackFarDist;
 	float				m_flAttackRange;
+
+#ifdef MAPBASE
+	// Custom max speed for mappers to control
+	float				m_flCustomMaxSpeed;
+#endif
 
 private:
 	CSoundPatch			*m_pEngineSound;

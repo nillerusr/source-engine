@@ -15,6 +15,10 @@
 #include "playernet_vars.h"
 #include "networkvar.h"
 #include "fogcontroller.h"
+#ifdef MAPBASE // From Alien Swarm SDK
+#include "postprocesscontroller.h"
+#include "colorcorrection.h"
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Player specific data ( sent only to local player, too )
@@ -82,6 +86,9 @@ public:
 	fogparams_t			m_fog;
 	// audio environment
 	CNetworkVarEmbedded( audioparams_t, m_audio );
+
+	//Tony; added so tonemap controller can work in multiplayer with inputs.
+	CNetworkVarEmbedded( tonemap_params_t, m_TonemapParams );
 
 	CNetworkVar( bool, m_bSlowMovement );
 };

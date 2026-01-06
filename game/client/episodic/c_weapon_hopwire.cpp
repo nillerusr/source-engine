@@ -44,6 +44,9 @@ public:
 	void			StopExplosion( void );
 	void			StartPreExplosion( void );
 
+	void			SetExplosionType(int explosionType) {
+		m_iExplosionType = explosionType;}
+
 private:
 	CInterpolatedValue		m_FXCoreScale;
 	CInterpolatedValue		m_FXCoreAlpha;
@@ -54,6 +57,8 @@ private:
 	TimedEvent			m_ParticleTimer;
 
 	CHandle<C_BaseEntity>	m_hOwner;
+
+	int m_iExplosionType;
 };
 
 //-----------------------------------------------------------------------------
@@ -137,7 +142,19 @@ void C_HopwireExplosion::AddParticles( void )
 		m_pSimpleEmitter->SetSortOrigin( GetRenderOrigin() );
 
 		// Base of the core effect
+#ifdef EZ2
+		if (m_iExplosionType == 1)
+		{
+			sParticle = (SimpleParticle*)m_pSimpleEmitter->AddParticle(sizeof(SimpleParticle), m_pSimpleEmitter->GetPMaterial("effects/stasis_grenade_flash"), GetRenderOrigin());
+		}
+		else
+		{
+			sParticle = (SimpleParticle*)m_pSimpleEmitter->AddParticle(sizeof(SimpleParticle), m_pSimpleEmitter->GetPMaterial("effects/XenGrenadeFlash"), GetRenderOrigin());
+		}
+
+#else
 		sParticle = (SimpleParticle *) m_pSimpleEmitter->AddParticle( sizeof(SimpleParticle), m_pSimpleEmitter->GetPMaterial( "effects/strider_muzzle" ), GetRenderOrigin() );
+#endif
 
 		if ( sParticle == NULL )
 			return;
@@ -263,9 +280,11 @@ int C_HopwireExplosion::DrawModel( int flags )
 	CMatRenderContextPtr pRenderContext( materials );
 	pRenderContext->Flush();
 	UpdateRefractTexture();
-
+#ifdef EZ
+	IMaterial *pMat = materials->FindMaterial( "effects/strider_bulge_dudv", TEXTURE_GROUP_CLIENT_EFFECTS );
+#else
 	IMaterial *pMat = materials->FindMaterial( "effects/strider_pinch_dudv", TEXTURE_GROUP_CLIENT_EFFECTS );
-
+#endif
 	float refract = m_FXCoreAlpha.Interp( gpGlobals->curtime );
 	float scale = m_FXCoreScale.Interp( gpGlobals->curtime );
 
@@ -345,6 +364,9 @@ public:
 private:
 
 	C_HopwireExplosion	m_ExplosionEffect;	// Explosion effect information and drawing
+#ifdef EZ2
+	int					m_iHopwireType;
+#endif
 };
 
 IMPLEMENT_CLIENTCLASS_DT( C_GrenadeHopwire, DT_GrenadeHopwire, CGrenadeHopwire )
@@ -353,6 +375,7 @@ END_RECV_TABLE()
 #define	HOPWIRE_START_EXPLOSION		0
 #define	HOPWIRE_STOP_EXPLOSION		1
 #define	HOPWIRE_START_PRE_EXPLOSION	2
+#define	STASIS_START_EXPLOSION		3
 
 //-----------------------------------------------------------------------------
 // Constructor
@@ -360,6 +383,10 @@ END_RECV_TABLE()
 C_GrenadeHopwire::C_GrenadeHopwire( void )
 {
 	m_ExplosionEffect.SetActive( false );
+
+#ifdef EZ2
+	m_iHopwireType = 0;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -379,8 +406,17 @@ void C_GrenadeHopwire::ReceiveMessage( int classID, bf_read &msg )
 	int messageType = msg.ReadByte();
 	switch( messageType )
 	{
+#ifdef EZ2
+	case STASIS_START_EXPLOSION:
+		m_iHopwireType = 1;
+		// DO NOT BREAK, pass through to next case
+#endif
+
 	case HOPWIRE_START_EXPLOSION:
 		{
+#ifdef EZ2
+			m_ExplosionEffect.SetExplosionType( m_iHopwireType );
+#endif
 			m_ExplosionEffect.SetActive();
 			m_ExplosionEffect.SetOwner( this );
 			m_ExplosionEffect.StartExplosion();

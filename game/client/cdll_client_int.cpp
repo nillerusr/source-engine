@@ -131,6 +131,11 @@
 #include "haptics/haptic_utils.h"
 #include "haptics/haptic_msgs.h"
 
+#ifdef GAMEPADUI
+#include "../gamepadui/igamepadui.h"
+ConVar cl_gamepadui_mainmenu_draw("cl_gamepadui_mainmenu_draw", "0", FCVAR_DEVELOPMENTONLY);
+#endif // GAMEPADUI
+
 #if defined( TF_CLIENT_DLL )
 #include "abuse_report.h"
 #endif
@@ -146,8 +151,15 @@
 #ifdef WORKSHOP_IMPORT_ENABLED
 #include "fbxsystem/fbxsystem.h"
 #endif
-
 #include "touch.h"
+
+#ifdef MAPBASE_VSCRIPT
+#include "vscript_client.h"
+#endif
+
+#ifdef STEAM_INPUT
+#include "expanded_steam/isteaminput.h"
+#endif
 
 extern vgui::IInputInternal *g_InputInternal;
 
@@ -216,6 +228,21 @@ IEngineReplay *g_pEngineReplay = NULL;
 IEngineClientReplay *g_pEngineClientReplay = NULL;
 IReplaySystem *g_pReplay = NULL;
 #endif
+#ifdef MAPBASE
+IVEngineServer	*serverengine = NULL;
+#endif
+
+#if defined(GAMEPADUI)
+IGamepadUI *g_pGamepadUI = nullptr;
+#endif // GAMEPADUI
+
+#ifdef VSCRIPT
+IScriptManager *scriptmanager = NULL;
+#endif
+
+#ifdef STEAM_INPUT
+ISource2013SteamInput *g_pSteamInput = NULL;
+#endif
 
 IHaptics* haptics = NULL;// NVNT haptics system interface singleton
 
@@ -266,6 +293,8 @@ void ProcessCacheUsedMaterials()
         materials->CacheUsedMaterials();
 	}
 }
+
+void VGui_ClearVideoPanels();
 
 // String tables
 INetworkStringTable *g_pStringTableParticleEffectNames = NULL;
@@ -320,6 +349,9 @@ public:
 
 ISaveRestoreBlockHandler *GetEntitySaveRestoreBlockHandler();
 ISaveRestoreBlockHandler *GetViewEffectsRestoreBlockHandler();
+#ifdef MAPBASE
+ISaveRestoreBlockHandler *GetCustomBonusSaveRestoreBlockHandler();
+#endif
 
 CUtlLinkedList<CDataChangedEvent, unsigned short> g_DataChangedEvents;
 ClientFrameStage_t g_CurFrameStage = FRAME_UNDEFINED;
@@ -335,6 +367,13 @@ static ConVar s_cl_class("cl_class", "default", FCVAR_USERINFO|FCVAR_ARCHIVE, "D
 
 #ifdef HL1MP_CLIENT_DLL
 static ConVar s_cl_load_hl1_content("cl_load_hl1_content", "0", FCVAR_ARCHIVE, "Mount the content from Half-Life: Source if possible");
+#endif
+
+#ifdef MAPBASE_RPC
+// Mapbase stuff
+extern void MapbaseRPC_Init();
+extern void MapbaseRPC_Shutdown();
+extern void MapbaseRPC_Update( int iType, const char *pMapName );
 #endif
 
 
@@ -875,6 +914,28 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 
 #ifndef NO_STEAM
 	ClientSteamContext().Activate();
+
+#ifdef STEAM_INPUT
+	//g_pSteamInput = (ISource2013SteamInput*)appSystemFactory( SOURCE2013STEAMINPUT_INTERFACE_VERSION, NULL );
+	//if (g_pSteamInput == NULL)
+	//{
+	//	g_pSteamInput = (ISource2013SteamInput*)Sys_GetFactoryThis()(SOURCE2013STEAMINPUT_INTERFACE_VERSION, NULL);
+	//}
+
+	g_pSteamInput = CreateSource2013SteamInput();
+	
+	if (g_pSteamInput->IsSteamRunningOnSteamDeck())
+	{
+		CommandLine()->AppendParm( "-deck", NULL );
+		CommandLine()->AppendParm( "-w", "1280" );
+		CommandLine()->AppendParm( "-h", "800" );
+	}
+#endif
+#endif
+
+#ifdef EZ2
+	// For now, always use GamepadUI (overridden by -nogamepadui)
+	CommandLine()->AppendParm( "-gamepadui", NULL );
 #endif
 
 	// We aren't happy unless we get all of our interfaces.
@@ -939,8 +1000,30 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 		return false;
 #endif
 
+#ifdef MAPBASE
+	// Implements the server engine interface on the client.
+	// I'm extremely confused as to how this is even possible, but Saul Rennison's worldlight did it.
+	// If it's really this possible, why wasn't it available before?
+	// Hopefully there's no SP-only magic going on here, because I want to use this for RPC.
+	if ( (serverengine = (IVEngineServer*)appSystemFactory(INTERFACEVERSION_VENGINESERVER, NULL )) == NULL )
+		return false;
+#endif
+
 	if (!g_pMatSystemSurface)
 		return false;
+#ifdef VSCRIPT
+	if ( !CommandLine()->CheckParm( "-noscripting") )
+	{
+#ifndef EZ1
+		scriptmanager = (IScriptManager *)appSystemFactory( VSCRIPT_INTERFACE_VERSION, NULL );
+
+		if (scriptmanager == nullptr)
+		{
+			scriptmanager = (IScriptManager*)Sys_GetFactoryThis()(VSCRIPT_INTERFACE_VERSION, NULL);
+		}
+#endif
+	}
+#endif
 
 #ifdef WORKSHOP_IMPORT_ENABLED
 	if ( !ConnectDataModel( appSystemFactory ) )
@@ -1052,10 +1135,18 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 	vieweffects->Init();
 
 	C_BaseTempEntity::PrecacheTempEnts();
+	
+#ifdef STEAM_INPUT
+	g_pSteamInput->Initialize( appSystemFactory );
+#endif
 
 	input->Init_All();
 
 	VGui_CreateGlobalPanels();
+
+#ifdef EZ2
+#error "EZ2 is not compilable now"
+#endif
 
 	InitSmokeFogOverlay();
 
@@ -1073,9 +1164,15 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 	if ( !PhysicsDLLInit( physicsFactory ) )
 		return false;
 
+#ifdef MAPBASE
+	g_pGameSaveRestoreBlockSet->AddBlockHandler( GetCustomBonusSaveRestoreBlockHandler() ); // In order for the HUD to get the right info, this must come before the entity block handler
+#endif
 	g_pGameSaveRestoreBlockSet->AddBlockHandler( GetEntitySaveRestoreBlockHandler() );
 	g_pGameSaveRestoreBlockSet->AddBlockHandler( GetPhysSaveRestoreBlockHandler() );
 	g_pGameSaveRestoreBlockSet->AddBlockHandler( GetViewEffectsRestoreBlockHandler() );
+#ifdef MAPBASE_VSCRIPT
+	g_pGameSaveRestoreBlockSet->AddBlockHandler( GetVScriptSaveRestoreBlockHandler() );
+#endif
 
 	ClientWorldFactoryInit();
 
@@ -1087,6 +1184,49 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 #endif
 #ifndef _X360
 	HookHapticMessages(); // Always hook the messages
+#endif
+
+#ifdef MAPBASE_RPC
+	MapbaseRPC_Init();
+#endif
+
+#ifdef MAPBASE
+	CommandLine()->AppendParm( "+r_hunkalloclightmaps", "0" );
+#endif
+
+#ifdef EZ2 // NOTE: This could go into Mapbase in the future! In the event of a merge conflict, use Mapbase's implementaton.
+	if (CommandLine()->FindParm( "-deletesoundcache" ) > 0)
+	{
+		char searchPaths[4096];
+		filesystem->GetSearchPath( "GAME", true, searchPaths, sizeof( searchPaths ) );
+
+		for ( char *path = strtok( searchPaths, ";" ); path; path = strtok( NULL, ";" ) )
+		{
+			char fullpath[MAX_PATH];
+			bool vpk = false;
+
+			int len = strlen( path );
+			if (len > 4 && path[len-1] == 'k' && path[len-2] == 'p' &&
+				path[len-3] == 'v' && path[len-4] == '.')
+				vpk = true;
+
+			Q_snprintf( fullpath, sizeof( fullpath ), "%s%ssound.cache", path, vpk ? "." : "sound/" );
+			Q_FixSlashes( fullpath );
+#ifdef EZ2
+			int *iMapbase = nullptr;
+			iMapbase = 1;
+#endif
+			if ( filesystem->IsFileWritable( fullpath ) )
+			{
+				Msg( "	Deleting sound cache file \"%s\"\n", fullpath );
+				filesystem->RemoveFile( fullpath );
+			}
+			else
+			{
+				Msg( "	Unable to delete sound cache file \"%s\"\n", fullpath );
+			}
+		}
+	}
 #endif
 
 	return true;
@@ -1156,6 +1296,52 @@ void CHLClient::PostInit()
 		}
 	}
 #endif
+
+#ifdef STEAM_INPUT
+	g_pSteamInput->PostInit();
+#endif
+
+#if defined( GAMEPADUI )
+	if ( IsSteamDeck()  )
+	{
+		CSysModule* pGamepadUIModule = g_pFullFileSystem->LoadModule( "gamepadui", "GAMEBIN", false );
+		if ( pGamepadUIModule != nullptr )
+		{
+			GamepadUI_Log( "Loaded gamepadui module.\n" );
+
+			CreateInterfaceFn gamepaduiFactory = Sys_GetFactory( pGamepadUIModule );
+			if ( gamepaduiFactory != nullptr )
+			{
+				g_pGamepadUI = (IGamepadUI*) gamepaduiFactory( GAMEPADUI_INTERFACE_VERSION, NULL );
+				if ( g_pGamepadUI != nullptr )
+				{
+					GamepadUI_Log( "Initializing IGamepadUI interface...\n" );
+
+					factorylist_t factories;
+					FactoryList_Retrieve( factories );
+					g_pGamepadUI->Initialize( factories.appSystemFactory );
+
+#ifdef STEAM_INPUT
+					g_pSteamInput->SetGamepadUI( true );
+					g_pGamepadUI->SetSteamInput( g_pSteamInput );
+#endif
+				}
+				else
+				{
+					GamepadUI_Log( "Unable to pull IGamepadUI interface.\n" );
+				}
+			}
+			else
+			{
+				GamepadUI_Log( "Unable to get gamepadui factory.\n" );
+			}
+		}
+		else
+		{
+			GamepadUI_Log( "Unable to load gamepadui module\n" );
+		}
+	}
+#endif // GAMEPADUI
 }
 
 //-----------------------------------------------------------------------------
@@ -1174,12 +1360,20 @@ void CHLClient::Shutdown( void )
 	g_pSixenseInput = NULL;
 #endif
 
+	VGui_ClearVideoPanels();
+
 	C_BaseAnimating::ShutdownBoneSetupThreadPool();
 	ClientWorldFactoryShutdown();
 
 	g_pGameSaveRestoreBlockSet->RemoveBlockHandler( GetViewEffectsRestoreBlockHandler() );
 	g_pGameSaveRestoreBlockSet->RemoveBlockHandler( GetPhysSaveRestoreBlockHandler() );
 	g_pGameSaveRestoreBlockSet->RemoveBlockHandler( GetEntitySaveRestoreBlockHandler() );
+#ifdef MAPBASE
+	g_pGameSaveRestoreBlockSet->RemoveBlockHandler( GetCustomBonusSaveRestoreBlockHandler() );
+#endif
+#ifdef MAPBASE_VSCRIPT
+	g_pGameSaveRestoreBlockSet->RemoveBlockHandler( GetVScriptSaveRestoreBlockHandler() );
+#endif
 
 	ClientVoiceMgr_Shutdown();
 
@@ -1196,6 +1390,11 @@ void CHLClient::Shutdown( void )
 	UncacheAllMaterials();
 
 	IGameSystem::ShutdownAllSystems();
+
+#if defined(GAMEPADUI)
+	if (g_pGamepadUI != nullptr)
+		g_pGamepadUI->Shutdown();
+#endif // GAMEPADUI
 	
 	gHUD.Shutdown();
 	VGui_Shutdown();
@@ -1213,6 +1412,10 @@ void CHLClient::Shutdown( void )
 	ShutdownDataModel();
 	DisconnectDataModel();
 	ShutdownFbx();
+#endif
+
+#ifdef MAPBASE_RPC
+	MapbaseRPC_Shutdown();
 #endif
 	
 	// This call disconnects the VGui libraries which we rely on later in the shutdown path, so don't do it
@@ -1243,6 +1446,11 @@ int CHLClient::HudVidInit( void )
 
 	GetClientVoiceMgr()->VidInit();
 
+#if defined(GAMEPADUI)
+	if (g_pGamepadUI != nullptr)
+		g_pGamepadUI->VidInit();
+#endif // GAMEPADUI
+
 	return 1;
 }
 
@@ -1266,6 +1474,16 @@ void CHLClient::HudUpdate( bool bActive )
 #if defined( TF_CLIENT_DLL )
 	CRTime::UpdateRealTime();
 #endif
+
+#ifdef GAMEPADUI
+	if (IsSteamDeck())
+	{
+		if (!enginevgui->IsGameUIVisible())
+		{
+			engine->ExecuteClientCmd("gamepadui_resetfade");
+		}
+	}
+#endif // GAMEPADUI
 
 	GetClientVoiceMgr()->Frame( frametime );
 
@@ -1293,6 +1511,22 @@ void CHLClient::HudUpdate( bool bActive )
 		g_pSixenseInput->SixenseFrame( 0, NULL ); 
 	}
 #endif
+
+#ifdef STEAM_INPUT
+	//if (g_pSteamInput->IsEnabled())
+	{
+		if( !engine->IsConnected() || engine->IsPaused() || engine->IsLevelMainMenuBackground() )
+		{
+			ActionSet_t iActionSet = AS_MenuControls;
+			g_pSteamInput->RunFrame( iActionSet );
+		}
+	}
+#endif
+
+#if defined(GAMEPADUI)
+	if (g_pGamepadUI != nullptr)
+		g_pGamepadUI->OnUpdate( frametime );
+#endif // GAMEPADUI
 }
 
 //-----------------------------------------------------------------------------
@@ -1301,6 +1535,12 @@ void CHLClient::HudUpdate( bool bActive )
 void CHLClient::HudReset( void )
 {
 	gHUD.VidInit();
+#ifdef GAMEPADUI
+	if (IsSteamDeck())
+	{
+		engine->ExecuteClientCmd("gamepadui_resetfade");
+	}
+#endif // GAMEPADUI
 	PhysicsReset();
 }
 
@@ -1579,6 +1819,10 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 
 	input->LevelInit();
 
+#ifdef STEAM_INPUT
+	g_pSteamInput->LevelInitPreEntity();
+#endif
+
 	vieweffects->LevelInit();
 	
 	//Tony; loadup per-map manifests.
@@ -1595,6 +1839,10 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 	view->LevelInit();
 	tempents->LevelInit();
 	ResetToneMapping(1.0);
+
+#ifdef MAPBASE
+	GetClientWorldEntity()->ParseWorldMapData( engine->GetMapEntitiesString() );
+#endif
 
 	IGameSystem::LevelInitPreEntityAllSystems(pMapName);
 
@@ -1627,6 +1875,13 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 	}
 #endif
 
+#ifdef MAPBASE_RPC
+	if (!g_bTextMode)
+	{
+		MapbaseRPC_Update(RPCSTATE_LEVEL_INIT, pMapName);
+	}
+#endif
+
 	// Check low violence settings for this map
 	g_RagdollLVManager.SetLowViolence( pMapName );
 
@@ -1640,6 +1895,11 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 		CReplayRagdollRecorder::Instance().Init();
 	}
 #endif
+
+#if defined(GAMEPADUI)
+	if (g_pGamepadUI != nullptr)
+		g_pGamepadUI->OnLevelInitializePreEntity();
+#endif // GAMEPADUI
 }
 
 
@@ -1651,6 +1911,11 @@ void CHLClient::LevelInitPostEntity( )
 	IGameSystem::LevelInitPostEntityAllSystems();
 	C_PhysPropClientside::RecreateAll();
 	internalCenterPrint->Clear();
+
+#if defined(GAMEPADUI)
+	if (g_pGamepadUI != nullptr)
+		g_pGamepadUI->OnLevelInitializePostEntity();
+#endif // GAMEPADUI
 }
 
 //-----------------------------------------------------------------------------
@@ -1717,7 +1982,19 @@ void CHLClient::LevelShutdown( void )
 	
 	StopAllRumbleEffects();
 
+#if defined(GAMEPADUI)
+	if (g_pGamepadUI != nullptr)
+		g_pGamepadUI->OnLevelShutdown();
+#endif // GAMEPADUI
+
 	gHUD.LevelShutdown();
+
+#ifdef MAPBASE_RPC
+	if (!g_bTextMode)
+	{
+		MapbaseRPC_Update(RPCSTATE_LEVEL_SHUTDOWN, NULL);
+	}
+#endif
 
 	internalCenterPrint->Clear();
 
@@ -2149,7 +2426,9 @@ void OnRenderStart()
 	// are at the correct location
 	view->OnRenderStart();
 
+#ifndef MAPBASE
 	RopeManager()->OnRenderStart();
+#endif
 	
 	// This will place all entities in the correct position in world space and in the KD-tree
 	C_BaseAnimating::UpdateClientSideAnimations();

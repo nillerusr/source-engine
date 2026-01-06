@@ -29,6 +29,11 @@ BEGIN_RECV_TABLE_NOBASE( C_HL2PlayerLocalData, DT_HL2Local )
 	RecvPropFloat( RECVINFO(m_flFlashBattery) ),
 	RecvPropVector( RECVINFO(m_vecLocatorOrigin) ),
 #endif
+#ifdef EZ2
+	RecvPropInt( RECVINFO( m_iSatchelCount ) ),
+	RecvPropInt( RECVINFO( m_iTripmineCount ) ),
+	RecvPropInt( RECVINFO( m_iDetonatableCount ) ),
+#endif
 END_RECV_TABLE()
 
 BEGIN_PREDICTION_DATA_NO_BASE( C_HL2PlayerLocalData )

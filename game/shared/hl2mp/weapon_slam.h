@@ -15,7 +15,11 @@
 #define	WEAPONSLAM_H
 
 #include "basegrenade_shared.h"
+#ifdef HL2MP
 #include "weapon_hl2mpbasehlmpcombatweapon.h"
+#else
+#include "basehlcombatweapon_shared.h"
+#endif
 
 enum
 {
@@ -26,6 +30,10 @@ enum
 
 #ifdef CLIENT_DLL
 #define CWeapon_SLAM C_Weapon_SLAM
+#endif
+
+#ifndef HL2MP
+#define CBaseHL2MPCombatWeapon CBaseHLCombatWeapon
 #endif
 
 class CWeapon_SLAM : public CBaseHL2MPCombatWeapon
@@ -58,7 +66,17 @@ public:
 	
 	void				SetPickupTouch( void );
 	void				SlamTouch( CBaseEntity *pOther );	// default weapon touch
-	void				ItemPostFrame( void );	
+	void				ItemPostFrame( void );
+#ifdef EZ
+	void SwitchMode();
+
+#ifndef CLIENT_DLL
+	void Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCharacter *pOperator );
+#endif
+
+	int TryThrowOrAttachSLAM();
+#endif
+
 	bool				Reload( void );
 	void				SetSlamState( int newState );
 	bool				CanAttachSLAM(void);		// In position where can attach SLAM?

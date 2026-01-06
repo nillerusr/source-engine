@@ -5,6 +5,7 @@
 // $NoKeywords: $
 //=============================================================================//
 
+#if 0
 #include "cbase.h"
 #include "npcevent.h"
 #include "npc_metropolice.h"
@@ -370,3 +371,4 @@ bool CWeaponStunStick::GetStunState( void )
 {
 	return m_bActive;
 }
+#endif

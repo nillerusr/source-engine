@@ -153,3 +153,34 @@ void UpdateFullScreenDepthTexture( void )
 		pMaterial->DecrementReferenceCount();
 	}
 }
+
+// Breadman
+//NightVision - This came from the Valve Dev webpage regarding Night vision. It's probably not best practice but I'm seeing how well this works with my own textures.
+// I'm putting my own spin on this by displaying a simple overlay. The rest is handled by the flashlight modifications. It uses a new light texture and colour, along with custom sounds.
+// The Convar is called each time the flashlight is toggled. Dirty... some would go as far to say FILTHY. - Breadman
+static void ScreenOver_f(void)
+{
+	IMaterial *pMaterial = materials->FindMaterial("Ezero/Mask_NvMap", TEXTURE_GROUP_OTHER, true);
+	//This is the texture we are going to use for the 'effect' - never use an ext on material files
+
+	{
+		static bool bDisplayed = false;
+
+		if (bDisplayed)
+		{
+			// turn it off
+			view->SetScreenOverlayMaterial(NULL);
+			CLocalPlayerFilter filter;
+		}
+		else
+		{
+			// turn it on
+			view->SetScreenOverlayMaterial(pMaterial);
+			CLocalPlayerFilter filter;
+		}
+
+		bDisplayed = !bDisplayed;
+	}
+}
+// Setup the custom Convar so we can toggle this from the flashlight call.
+static ConCommand Ez_Nvg_On("Ez_Nvg_On", ScreenOver_f, "NVG Mode for Ezero");

@@ -10,17 +10,19 @@
 #include "ai_default.h"
 #include "ai_node.h"
 #include "ai_route.h"
-#include "AI_Navigator.h"
-#include "AI_Motor.h"
+#include "ai_navigator.h"
+#include "ai_motor.h"
 #include "ai_squad.h"
-#include "AI_TacticalServices.h"
+#include "ai_tacticalservices.h"
 #include "soundent.h"
-#include "EntityList.h"
+#include "entitylist.h"
 #include "game.h"
 #include "activitylist.h"
 #include "hl2_shareddefs.h"
+#ifndef EZ
 #include "grenade_energy.h"
 #include "energy_wave.h"
+#endif
 #include "ai_interactions.h"
 #include "ndebugoverlay.h"
 #include "npcevent.h"
@@ -29,11 +31,18 @@
 #include "engine/IEngineSound.h"
 #include "movevars_shared.h"
 
+#ifdef EZ
+#include "particle_parse.h"
+#include "particle_system.h"
+#endif
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 #define	HOUNDEYE_MAX_ATTACK_RADIUS		500
 #define	HOUNDEYE_MIN_ATTACK_RADIUS		100
+
+#define HOUNDEYE_SONIC_PARTICLE "houndeye_sonic_blast"
 
 #define HOUNDEYE_EYE_FRAMES 4 // how many different switchable maps for the eye
 
@@ -166,8 +175,10 @@ BEGIN_DATADESC( CNPC_Houndeye )
 	DEFINE_FIELD( m_fDontBlink,				FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_flNextSecondaryAttack,	FIELD_TIME ),
 	DEFINE_FIELD( m_bLoopClockwise,			FIELD_BOOLEAN ),
+#ifndef EZ
 	DEFINE_FIELD( m_pEnergyWave,				FIELD_CLASSPTR ),
 	DEFINE_FIELD( m_flEndEnergyWaveTime,		FIELD_TIME ),	
+#endif
 
 END_DATADESC()
 
@@ -426,8 +437,10 @@ void CNPC_Houndeye::Spawn()
 	m_flNextSecondaryAttack = 0;
 	m_bLoopClockwise		= random->RandomInt(0,1) ? true : false;
 
+#ifndef EZ
 	m_pEnergyWave			= NULL;
 	m_flEndEnergyWaveTime	= 0;
+#endif
 
 	SetCollisionGroup( HL2COLLISION_GROUP_HOUNDEYE ); 
 
@@ -457,7 +470,12 @@ void CNPC_Houndeye::Precache()
 	PrecacheScriptSound( "NPC_Houndeye.GroupFollow" );
 
 
+#ifndef EZ
 	UTIL_PrecacheOther("grenade_energy");
+#else
+	PrecacheParticleSystem( HOUNDEYE_SONIC_PARTICLE );
+#endif
+
 	BaseClass::Precache();
 }	
 
@@ -521,7 +539,7 @@ void CNPC_Houndeye::AlertSound ( void )
 //=========================================================
 // DeathSound 
 //=========================================================
-void CNPC_Houndeye::DeathSound ( void )
+void CNPC_Houndeye::DeathSound ( const CTakeDamageInfo &info )
 {
 	EmitSound( "NPC_Houndeye.Die" );
 }
@@ -588,6 +606,7 @@ void CNPC_Houndeye::WriteBeamColor ( void )
 //-----------------------------------------------------------------------------
 void CNPC_Houndeye::NPCThink(void)
 {
+#ifndef EZ
 	if (m_pEnergyWave)
 	{
 		if (gpGlobals->curtime > m_flEndEnergyWaveTime)
@@ -596,6 +615,7 @@ void CNPC_Houndeye::NPCThink(void)
 			m_pEnergyWave = NULL;
 		}
 	}
+#endif
 
 	// -----------------------------------------------------
 	//  Update collision group
@@ -680,19 +700,33 @@ void CNPC_Houndeye::SonicAttack ( void )
 {
 	EmitSound( "NPC_Houndeye.SonicAttack" );
 
+#ifndef EZ
 	if (m_pEnergyWave)
 	{
 		UTIL_Remove(m_pEnergyWave);
 	}
+
 	Vector vFacingDir = EyeDirection3D( );
 	m_pEnergyWave = (CEnergyWave*)Create( "energy_wave", EyePosition(), GetLocalAngles() );
 	m_flEndEnergyWaveTime = gpGlobals->curtime + 1; //<<TEMP>> magic
 	m_pEnergyWave->SetAbsVelocity( 100*vFacingDir );
+#else
+	Vector vEnergyWavePos = WorldSpaceCenter();
+	vEnergyWavePos.z = GetFloorZ( vEnergyWavePos );
+
+	DispatchParticleEffect( HOUNDEYE_SONIC_PARTICLE, vEnergyWavePos, GetAbsAngles() );
+#endif
 
 	CBaseEntity *pEntity = NULL;
 	// iterate on all entities in the vicinity.
-	for ( CEntitySphereQuery sphere( GetAbsOrigin(), HOUNDEYE_MAX_ATTACK_RADIUS ); pEntity = sphere.GetCurrentEntity(); sphere.NextEntity() )
+	for ( CEntitySphereQuery sphere( GetAbsOrigin(), HOUNDEYE_MAX_ATTACK_RADIUS ); true; sphere.NextEntity() )
 	{
+		pEntity = sphere.GetCurrentEntity();
+
+		if (pEntity == NULL) {
+			return;
+		}
+
 		if (pEntity->Classify()	== CLASS_HOUNDEYE)
 		{
 			continue;
@@ -760,14 +794,12 @@ void CNPC_Houndeye::SonicAttack ( void )
 				// Throw the player
 				if ( pEntity->IsPlayer() )
 				{
-					Vector forward;
-					AngleVectors( GetLocalAngles(), &forward );
+					Vector forward, up;
+					AngleVectors( GetLocalAngles(), &forward, NULL, &up );
+					pEntity->ApplyAbsVelocityImpulse( ( forward * 250 * flDamageAdjuster ) + ( up * 300 * flDamageAdjuster) );
+					pEntity->ViewPunch( QAngle( random->RandomInt( -20, 20 ), 0, random->RandomInt( -20, 20 ) ) );
 
-					Vector vecVelocity = pEntity->GetAbsVelocity();
-					vecVelocity	+= forward * 250 * flDamageAdjuster;
-					vecVelocity.z = 300 * flDamageAdjuster;
-					pEntity->SetAbsVelocity( vecVelocity );
-					pEntity->ViewPunch( QAngle(random->RandomInt(-20,20), 0, random->RandomInt(-20,20)) );
+					continue;
 				}
 			}
 			// ------------------------------
@@ -802,7 +834,10 @@ void CNPC_Houndeye::StartTask( const Task_t *pTask )
 			Vector vTargetPos = GetEnemyLKP();
 			vTargetPos.z	= GetFloorZ(vTargetPos);
 
-			if (GetNavigator()->SetRadialGoal(vTargetPos, random->RandomInt(50,500), 90, 175, m_bLoopClockwise))
+			// 1upD - Radial goals in HL2 / Source need a center vector as well as a target vector
+			Vector vCenterPos = WorldSpaceCenter();
+
+			if (GetNavigator()->SetRadialGoal(vTargetPos, vCenterPos, random->RandomInt(50,500), 90, 175, m_bLoopClockwise))
 			{
 				TaskComplete();
 				return;

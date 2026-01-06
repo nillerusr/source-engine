@@ -153,6 +153,12 @@ void CHudAmmo::UpdatePlayerAmmo( C_BasePlayer *player )
 	{
 		// we use clip ammo, so the second ammo is the total ammo
 		ammo2 = player->GetAmmoCount(wpn->GetPrimaryAmmoType());
+
+#ifdef EZ
+		// Use the second clip when ammo isn't used (for pulse pistol)
+		if (ammo2 <= 0 && wpn->Clip2() > 0)
+			ammo2 = wpn->Clip2();
+#endif
 	}
 
 	hudlcd->SetGlobalStat( "(ammo_primary)", VarArgs( "%d", ammo1 ) );

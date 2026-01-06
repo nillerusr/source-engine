@@ -25,6 +25,9 @@
 
 ConVar hud_locator_alpha( "hud_locator_alpha", "230" );
 ConVar hud_locator_fov("hud_locator_fov", "350" );
+#ifdef EZ2
+ConVar hud_locator_disable_in_vehicle( "hud_locator_disable_in_vehicle", "0" );
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Shows positions of objects relative to the player.
@@ -125,7 +128,12 @@ bool CHudLocator::ShouldDraw( void )
 	if ( !pPlayer )
 		return false;
 
+#ifdef EZ2
+	// It's important for players to be able to locate Wilson while in the APC
+	if ( pPlayer->GetVehicle() && hud_locator_disable_in_vehicle.GetBool() )
+#else
 	if( pPlayer->GetVehicle() )
+#endif
 		return false;
 
 	if( pPlayer->m_HL2Local.m_vecLocatorOrigin == vec3_invalid )

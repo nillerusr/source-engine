@@ -56,6 +56,12 @@ public:
 	void	Event_Killed( const CTakeDamageInfo &info );
 	void	BuildScheduleTestBits( void );
 	bool	FValidateHintType( CAI_Hint *pHint );
+	
+#ifdef EZ
+	virtual bool ShouldGib( const CTakeDamageInfo &info );
+
+	bool	ShouldDropGooPuddle() { return false; }
+#endif
 
 	bool	IsJumping( void ) { return m_bMidJump; }
 
@@ -118,6 +124,10 @@ protected:
 	void InputStartHangingFromCeiling( inputdata_t &inputdata );
 	void InputDropFromCeiling( inputdata_t &inputdata );
 
+#ifdef EZ
+	bool FindTeleport( const Vector &origin, CBaseEntity *pEntity, int iHull, float distance, bool excludeNear );
+#endif
+
 	int CalcDamageInfo( CTakeDamageInfo *pInfo );
 	void CreateDust( bool placeDecal = true );
 
@@ -149,6 +159,10 @@ protected:
 
 	bool	m_bHangingFromCeiling;
 	float	m_flIlluminatedTime;
+
+#ifdef MAPBASE
+	COutputEvent m_OnLeap;
+#endif
 };
 
 
@@ -239,6 +253,19 @@ public:
 	void Eject( const QAngle &vecAngles, float flVelocityScale, CBaseEntity *pEnemy );
 	void EjectTouch( CBaseEntity *pOther );
 
+#ifdef EZ
+	void	UpdateOnRemove();
+	void	Event_Killed( const CTakeDamageInfo &info );
+	int		OnTakeDamage_Alive( const CTakeDamageInfo &info );
+
+	void GatherEnemyConditions( CBaseEntity *pEnemy );
+
+	void InitTemporalEffects();
+	void CleanupTemporalEffects();
+
+	void TemporalRagdollThink();
+#endif
+
 	//
 	// CBaseHeadcrab implementation.
 	//
@@ -290,6 +317,16 @@ private:
 	bool m_bPanicState;
 	float m_flPanicStopTime;
 	float m_flNextHopTime;		// Keeps us from hopping too often due to damage.
+
+#ifdef EZ
+	CHandle<CBaseAnimating> m_hFakeRagdoll;
+
+	// Stuff from the map logic
+	EHANDLE m_hSpriteTrail;
+	EHANDLE m_hTesla;
+	EHANDLE m_hSprite;
+	EHANDLE m_hDistortionSprite;
+#endif
 };
 
 

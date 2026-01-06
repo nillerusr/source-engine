@@ -56,6 +56,15 @@ static DynamicResupplyItems_t g_DynamicResupplyAmmoItems[] =
 	{ "item_ammo_357",				"357",			SIZE_AMMO_357,			0.0f },
 	{ "item_ammo_crossbow",			"XBowBolt",		SIZE_AMMO_CROSSBOW,		0.0f },
 	{ "item_ammo_ar2_altfire",		"AR2AltFire",	SIZE_AMMO_AR2_ALTFIRE,	0.0f },
+#ifdef EZ2
+	{ "item_hopwire_holder",		"XenGrenade",	3,						0.0f },
+#endif
+#ifdef CSS_WEAPONS_IN_HL2
+	{ "item_css_ammo_45acp",		"45ACP",		SIZE_AMMO_45ACP,		0.0f },
+	{ "item_css_ammo_357sig",		"357SIG",		SIZE_AMMO_357SIG,		0.0f },
+	{ "item_css_ammo_556mm",		"556mm",		SIZE_AMMO_556mm,		0.0f },
+	{ "item_css_ammo_762mm",		"762mm",		SIZE_AMMO_762mm,		0.0f },
+#endif
 };
 
 #define DS_HEALTH_INDEX		0
@@ -92,6 +101,11 @@ public:
 
 	float	GetDesiredHealthPercentage( void ) const { return m_flDesiredHealth[0]; }
 
+#ifdef EZ
+	EZ_VARIANT	GetEZVariant() { return m_tEzVariant; }
+	void		SetEZVariant( EZ_VARIANT variant ) { m_tEzVariant = variant; }
+#endif
+
 private:
 	friend void DynamicResupply_InitFromAlternateMaster( CBaseEntity *pTargetEnt, string_t iszMaster );
 	void FindPotentialItems( int nCount, DynamicResupplyItems_t *pItems, int iDebug, SpawnInfo_t *pSpawnInfo );
@@ -116,9 +130,22 @@ private:
 	float	m_flDesiredAmmo[ NUM_AMMO_ITEMS ];
 
 	bool m_bIsMaster;
+
+#ifdef EZ
+	EZ_VARIANT m_tEzVariant;
+#endif
+
+#ifdef MAPBASE
+	COutputEHANDLE m_OnItem;
+#endif
 };
 
 LINK_ENTITY_TO_CLASS(item_dynamic_resupply, CItem_DynamicResupply);
+
+#ifdef CSS_WEAPONS_IN_HL2
+// Allows the new values to be in a distinct FGD entry
+LINK_ENTITY_TO_CLASS( item_css_dynamic_resupply, CItem_DynamicResupply );
+#endif
 
 // Master
 typedef CHandle<CItem_DynamicResupply> DynamicResupplyHandle_t;
@@ -149,9 +176,26 @@ BEGIN_DATADESC( CItem_DynamicResupply )
 	DEFINE_KEYFIELD( m_flDesiredAmmo[7], FIELD_FLOAT, "DesiredAmmo357" ),
 	DEFINE_KEYFIELD( m_flDesiredAmmo[8], FIELD_FLOAT, "DesiredAmmoCrossbow" ),
 	DEFINE_KEYFIELD( m_flDesiredAmmo[9], FIELD_FLOAT, "DesiredAmmoAR2_AltFire" ),
+#ifdef EZ2
+	DEFINE_KEYFIELD( m_flDesiredAmmo[10], FIELD_FLOAT, "DesiredAmmoXenGrenade" ),
+#endif
+#ifdef CSS_WEAPONS_IN_HL2
+	DEFINE_KEYFIELD( m_flDesiredAmmo[11], FIELD_FLOAT, "DesiredAmmo45ACP" ),
+	DEFINE_KEYFIELD( m_flDesiredAmmo[12], FIELD_FLOAT, "DesiredAmmo357SIG" ),
+	DEFINE_KEYFIELD( m_flDesiredAmmo[13], FIELD_FLOAT, "DesiredAmmo556mm" ),
+	DEFINE_KEYFIELD( m_flDesiredAmmo[14], FIELD_FLOAT, "DesiredAmmo762mm" ),
+#endif
 
 	DEFINE_FIELD( m_version, FIELD_INTEGER ),
 	DEFINE_FIELD( m_bIsMaster, FIELD_BOOLEAN ),
+
+#ifdef EZ
+	DEFINE_KEYFIELD( m_tEzVariant, FIELD_INTEGER, "ezvariant" ),
+#endif
+
+#ifdef MAPBASE
+	DEFINE_OUTPUT( m_OnItem, "OnItem" ),
+#endif
 
 	// Silence, Classcheck!
 //	DEFINE_ARRAY( m_flDesiredHealth, FIELD_FLOAT,  NUM_HEALTH_ITEMS  ),
@@ -181,6 +225,15 @@ CItem_DynamicResupply::CItem_DynamicResupply( void )
 	m_flDesiredAmmo[7] = 0;		// 357
 	m_flDesiredAmmo[8] = 0;		// Crossbow
 	m_flDesiredAmmo[9] = 0;		// AR2 alt-fire
+#ifdef EZ2
+	m_flDesiredAmmo[10] = 0;	// Xen Grenade
+#endif
+#ifdef CSS_WEAPONS_IN_HL2
+	m_flDesiredAmmo[11] = 0;	// .45 ACP
+	m_flDesiredAmmo[12] = 0;	// .357 SIG
+	m_flDesiredAmmo[13] = 0;	// 5.56mm
+	m_flDesiredAmmo[14] = 0;	// 7.62mm
+#endif
 }
 
 
@@ -194,6 +247,11 @@ void CItem_DynamicResupply::Spawn( void )
 		UTIL_Remove( this );
 		return;
 	}
+
+#ifdef CSS_WEAPONS_IN_HL2
+	if (FStrEq( GetClassname(), "item_css_dynamic_resupply" ))
+		SetClassname( "item_dynamic_resupply" );
+#endif
 
 	// Don't callback to spawn
 	Precache();
@@ -247,12 +305,24 @@ void CItem_DynamicResupply::Precache( void )
 	int i;
 	for ( i = 0; i < NUM_HEALTH_ITEMS; i++ )
 	{
+#ifdef EZ
+		// Don't precache unless we might spawn this
+		if (m_flDesiredHealth[i] > 0.0f)
+			UTIL_PrecacheEZVariant( g_DynamicResupplyHealthItems[i].sEntityName, m_tEzVariant );
+#else
 		UTIL_PrecacheOther( g_DynamicResupplyHealthItems[i].sEntityName );
+#endif
 	}
 
 	for ( i = 0; i < NUM_AMMO_ITEMS; i++ )
 	{
+#ifdef EZ
+		// Don't precache unless we might spawn this
+		if (m_flDesiredAmmo[i] > 0.0f)
+			UTIL_PrecacheEZVariant( g_DynamicResupplyAmmoItems[i].sEntityName, m_tEzVariant );
+#else
 		UTIL_PrecacheOther( g_DynamicResupplyAmmoItems[i].sEntityName );
+#endif
 	}
 }
 
@@ -282,6 +352,11 @@ void CItem_DynamicResupply::CheckPVSThink( void )
 //-----------------------------------------------------------------------------
 void CItem_DynamicResupply::InputKill( inputdata_t &data )
 {
+#ifdef MAPBASE
+	// What's the point of this being its own function?
+	m_OnKilled.FireOutput( data.pActivator, this );
+#endif
+
 	UTIL_Remove( this );
 }
 
@@ -345,7 +420,24 @@ void CItem_DynamicResupply::SpawnFullItem( CItem_DynamicResupply *pMaster, CBase
 		// If we're supposed to fallback to just a health vial, do that and finish.
 		if ( pMaster->HasSpawnFlags(SF_DYNAMICRESUPPLY_FALLBACK_TO_VIAL) )
 		{
+#ifdef MAPBASE
+#ifdef EZ
+			CBaseEntity *pItem = CreateNoSpawn( "item_healthvial", GetAbsOrigin(), GetAbsAngles(), this );
+			
+			// Give the item our E:Z variant
+			if (m_tEzVariant != EZ_VARIANT_DEFAULT)
+			{
+				pItem->SetEZVariant( m_tEzVariant );
+			}
+
+			DispatchSpawn( pItem );
+#else
+			CBaseEntity *pItem = CBaseEntity::Create("item_healthvial", GetAbsOrigin(), GetAbsAngles(), this);
+#endif
+			m_OnItem.Set(pItem, pItem, this);
+#else
 			CBaseEntity::Create( "item_healthvial", GetAbsOrigin(), GetAbsAngles(), this );
+#endif
 
 			if ( iDebug )
 			{
@@ -364,7 +456,24 @@ void CItem_DynamicResupply::SpawnFullItem( CItem_DynamicResupply *pMaster, CBase
 	{
 		if ( flChoice <= flRatio[i] )
 		{
+#ifdef MAPBASE
+#ifdef EZ
+			CBaseEntity *pItem = CreateNoSpawn( g_DynamicResupplyAmmoItems[i].sEntityName, GetAbsOrigin(), GetAbsAngles(), this );
+			
+			// Give the item our E:Z variant
+			if (m_tEzVariant != EZ_VARIANT_DEFAULT)
+			{
+				pItem->SetEZVariant( m_tEzVariant );
+			}
+
+			DispatchSpawn( pItem );
+#else
+			CBaseEntity *pItem = CBaseEntity::Create( g_DynamicResupplyAmmoItems[i].sEntityName, GetAbsOrigin(), GetAbsAngles(), this );
+#endif
+			m_OnItem.Set(pItem, pItem, this);
+#else
 			CBaseEntity::Create( g_DynamicResupplyAmmoItems[i].sEntityName, GetAbsOrigin(), GetAbsAngles(), this );
+#endif
 
 			if ( iDebug )
 			{
@@ -542,9 +651,25 @@ bool CItem_DynamicResupply::SpawnItemFromRatio( int nCount, DynamicResupplyItems
 		Msg("Chosen item: %s (had farthest delta, %.2f)\n", pItems[iSelectedIndex].sEntityName, pSpawnInfo[iSelectedIndex].m_flDelta );
 	}
 
+#ifdef EZ
+	CBaseEntity *pEnt = CBaseEntity::CreateNoSpawn( pItems[iSelectedIndex].sEntityName, *pVecSpawnOrigin, GetAbsAngles(), this );
+
+	// Give the item our E:Z variant
+	if (m_tEzVariant != EZ_VARIANT_DEFAULT)
+	{
+		pEnt->SetEZVariant( m_tEzVariant );
+	}
+
+	DispatchSpawn( pEnt );
+#else
 	CBaseEntity *pEnt = CBaseEntity::Create( pItems[iSelectedIndex].sEntityName, *pVecSpawnOrigin, GetAbsAngles(), this );
+#endif
 	pEnt->SetAbsVelocity( GetAbsVelocity() );
 	pEnt->SetLocalAngularVelocity( GetLocalAngularVelocity() );
+
+#ifdef MAPBASE
+	m_OnItem.Set(pEnt, pEnt, this);
+#endif
 
 	// Move the entity up so that it doesn't go below the spawn origin
 	Vector vecWorldMins, vecWorldMaxs;
@@ -653,5 +778,10 @@ void DynamicResupply_InitFromAlternateMaster( CBaseEntity *pTargetEnt, string_t 
 	pTargetResupply->RemoveSpawnFlags( SF_DYNAMICRESUPPLY_USE_MASTER );
 	memcpy( pTargetResupply->m_flDesiredHealth, pMasterResupply->m_flDesiredHealth, sizeof( pMasterResupply->m_flDesiredHealth ) );
 	memcpy( pTargetResupply->m_flDesiredAmmo, pMasterResupply->m_flDesiredAmmo, sizeof( pMasterResupply->m_flDesiredAmmo ) );
+
+#ifdef MAPBASE
+	if (pMasterResupply->HasSpawnFlags(SF_DYNAMICRESUPPLY_FALLBACK_TO_VIAL))
+		pTargetResupply->AddSpawnFlags(SF_DYNAMICRESUPPLY_FALLBACK_TO_VIAL);
+#endif
 
 }

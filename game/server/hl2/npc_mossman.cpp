@@ -16,6 +16,9 @@
 #include "ai_baseactor.h"
 #include "ai_playerally.h"
 #include "ai_behavior_follow.h"
+#ifdef EZ2
+#include "ai_behavior_lead.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -41,8 +44,16 @@ public:
 	bool	CreateBehaviors( void );
 	int		SelectSchedule( void );
 
+#ifdef MAPBASE
+	// Use Mossman's default subtitle color (220,255,198)
+	bool	GetGameTextSpeechParams( hudtextparms_t &params ) { params.r1 = 220; params.g1 = 255; params.b1 = 198; return BaseClass::GetGameTextSpeechParams( params ); }
+#endif
+
 private:
 	CAI_FollowBehavior		m_FollowBehavior;
+#ifdef EZ2
+	CAI_LeadBehavior		m_LeadBehavior;
+#endif
 };
 
 LINK_ENTITY_TO_CLASS( npc_mossman, CNPC_Mossman );
@@ -130,6 +141,9 @@ void CNPC_Mossman::Precache()
 bool CNPC_Mossman::CreateBehaviors()
 {
 	AddBehavior( &m_FollowBehavior );
+#ifdef EZ2
+	AddBehavior( &m_LeadBehavior );
+#endif
 	
 	return BaseClass::CreateBehaviors();
 }

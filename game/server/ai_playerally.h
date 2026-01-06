@@ -61,6 +61,11 @@
 #define TLK_SELECTED		"TLK_SELECTED"	// selected by player in command mode.
 #define TLK_COMMANDED		"TLK_COMMANDED" // received orders from player in command mode
 #define TLK_COMMAND_FAILED	"TLK_COMMAND_FAILED" 
+#define TLK_COMMAND_SEND	"TLK_COMMAND_SEND" // 1upD - issuing order to send squad
+#define TLK_COMMAND_RECALL	"TLK_COMMAND_RECALL" // 1upD - issuing order to recall squad
+#define TLK_COMMAND_ADD		"TLK_COMMAND_ADD" // 1upD - issuing order to join squad
+#define TLK_COMMAND_REMOVE	"TLK_COMMAND_REMOVE" // 1upD - issuing order to leave squad
+#define TLK_DETONATE		"TLK_DETONATE" // 1upD - detonating satchel charges
 #define TLK_DENY_COMMAND	"TLK_DENY_COMMAND" // designer has asked this NPC to politely deny player commands to move the squad
 #define TLK_BETRAYED		"TLK_BETRAYED"	// player killed an ally in front of me.
 #define TLK_ALLY_KILLED		"TLK_ALLY_KILLED" // witnessed an ally die some other way.
@@ -131,6 +136,40 @@
 #define TLK_TGLOSTYOU 	"TLK_TGLOSTYOU"
 #define TLK_TGCATCHUP 	"TLK_TGCATCHUP"
 #define TLK_TGENDTOUR 	"TLK_TGENDTOUR"
+
+#ifdef MAPBASE
+// Additional concepts for companions in mods
+#define TLK_TAKING_FIRE	"TLK_TAKING_FIRE"	// Someone fired at me (regardless of whether I was hit)
+#define TLK_NEW_ENEMY	"TLK_NEW_ENEMY"		// A new enemy appeared while combat was already in progress
+#define TLK_COMBAT_IDLE	"TLK_COMBAT_IDLE"	// Similar to TLK_ATTACKING, but specifically for when *not* currently attacking (e.g. when in cover or reloading)
+#endif
+
+#ifdef EZ
+// Entropy : Zero 2 Citizen contexts
+#define TLK_SURRENDER		"TLK_SURRENDER"	// Citizen just dropped their weapon in fear
+#define TLK_BEG				"TLK_BEG"	// Citizen are unarmed and threatened
+#define TLK_FEAR			"TLK_FEAR"
+#define TLK_MELEE			"TLK_MELEE"
+#define TLK_THROWGRENADE	"TLK_THROWGRENADE"
+#define TLK_USE_SCARE		"TLK_USE_SCARE"
+#endif
+
+#ifdef EZ2
+// Will-E
+#define TLK_TIPPED	"TLK_TIPPED"
+#define TLK_FIDGET	"TLK_FIDGET"
+#define TLK_XEN_GRENADE_RELEASE "TLK_XEN_GRENADE_RELEASE"
+#define TLK_REMIND_PLAYER "TLK_REMIND_PLAYER"
+#define TLK_APC_LOW_CLEARANCE "TLK_APC_LOW_CLEARANCE"
+#define TLK_APC_EJECTED "TLK_APC_EJECTED"
+#define TLK_WITNESS_EAT "TLK_WITNESS_EAT"
+#define TLK_GOODBYE "TLK_GOODBYE"
+#define TLK_SCAN_START "TLK_SCAN_START"
+#define TLK_SCAN_END "TLK_SCAN_END"
+
+// Remarkable!
+#define TLK_REMARK "TLK_REMARK"
+#endif
 
 //-----------------------------------------------------------------------------
 
@@ -244,10 +283,19 @@ enum AISpeechTargetSearchFlags_t
 	AIST_IGNORE_RELATIONSHIP	= (1<<2),
 	AIST_ANY_QUALIFIED			= (1<<3),
 	AIST_FACING_TARGET			= (1<<4),
+#ifdef MAPBASE
+	// I needed this for something
+	AIST_NOT_GAGGED				= (1<<5),
+#endif
 };
 
 struct AISpeechSelection_t
 {
+#ifdef NEW_RESPONSE_SYSTEM
+	std::string		concept;
+	AI_Response		Response;
+	EHANDLE			hSpeechTarget;
+#else
 	AISpeechSelection_t()
 	 :	pResponse(NULL)
 	{
@@ -263,6 +311,7 @@ struct AISpeechSelection_t
 	std::string 		concept;
 	AI_Response *		pResponse;
 	EHANDLE			hSpeechTarget;				
+#endif
 };
 
 //-------------------------------------
@@ -296,10 +345,22 @@ public:
 	void		ClearTransientConditions();
 	void		Touch(	CBaseEntity *pOther );
 
+#ifdef MAPBASE
+	virtual bool		CanFlinch( void );
+#endif
+
+#ifdef EZ2
+	bool		HandleInteraction(int interactionType, void* data, CBaseCombatCharacter* sourceEnt);
+#endif
+
 	//---------------------------------
 	// Combat
 	//---------------------------------
 	void		OnKilledNPC( CBaseCombatCharacter *pKilled );
+
+#ifdef MAPBASE
+	void		OnEnemyRangeAttackedMe( CBaseEntity *pEnemy, const Vector &vecDir, const Vector &vecEnd );
+#endif
 
 	//---------------------------------
 	// Damage handling
@@ -322,9 +383,20 @@ public:
 
 	CBaseEntity *FindSpeechTarget( int flags );
 	virtual bool IsValidSpeechTarget( int flags, CBaseEntity *pEntity );
+
+#ifdef EZ2
+	// Used by Wilson camera targets
+	virtual const Vector &GetSpeechTargetSearchOrigin() { return GetAbsOrigin(); }
+#endif
 	
 	CBaseEntity *GetSpeechTarget()								{ return m_hTalkTarget.Get(); }
 	void		SetSpeechTarget( CBaseEntity *pSpeechTarget ) 	{ m_hTalkTarget = pSpeechTarget; }
+
+#ifdef MAPBASE
+	// Needed for additional speech target responses
+	CBaseEntity *GetPotentialSpeechTarget()								{ return m_hPotentialSpeechTarget.Get(); }
+	void		SetPotentialSpeechTarget( CBaseEntity *pSpeechTarget ) 	{ m_hPotentialSpeechTarget = pSpeechTarget; }
+#endif
 	
 	void		SetSpeechFilter( CAI_SpeechFilter *pFilter )	{ m_hSpeechFilter = pFilter; }
 	CAI_SpeechFilter *GetSpeechFilter( void )					{ return m_hSpeechFilter; }
@@ -336,6 +408,12 @@ public:
 
 	virtual bool SelectInterjection();
 	virtual bool SelectPlayerUseSpeech();
+
+#ifdef EZ2
+	// So Will-E can override idle speech stuff
+	virtual void HandlePrescheduleIdleSpeech();
+	inline void SetNextIdleSpeechTime( float flTime ) { m_flNextIdleSpeechTime = flTime; }
+#endif
 
 	//---------------------------------
 
@@ -362,6 +440,11 @@ public:
 
 	//---------------------------------
 	
+#ifdef EZ2
+	// Blixibon - I didn't want to make this existing function virtual,
+	// but I couldn't really find any better way to change when Will-E is allowed to speak.
+	virtual
+#endif
 	bool		IsOkToSpeak( ConceptCategory_t category, bool fRespondingToPlayer = false );
 	
 	//---------------------------------
@@ -372,7 +455,13 @@ public:
 	
 	bool		ShouldSpeakRandom( AIConcept_t concept, int iChance );
 	bool		IsAllowedToSpeak( AIConcept_t concept, bool bRespondingToPlayer = false );
+#ifdef MAPBASE
+	bool		IsAllowedToSpeakFollowup( AIConcept_t concept, CBaseEntity *pIssuer, bool bSpecific );
+#endif
 	virtual bool SpeakIfAllowed( AIConcept_t concept, const char *modifiers = NULL, bool bRespondingToPlayer = false, char *pszOutResponseChosen = NULL, size_t bufsize = 0 );
+#ifdef MAPBASE
+	virtual bool SpeakIfAllowed( AIConcept_t concept, AI_CriteriaSet& modifiers, bool bRespondingToPlayer = false, char *pszOutResponseChosen = NULL, size_t bufsize = 0 );
+#endif
 	void		ModifyOrAppendCriteria( AI_CriteriaSet& set );
 
 	//---------------------------------
@@ -398,12 +487,26 @@ public:
 	virtual const char		*GetDeathMessageText( void ) { return "GAMEOVER_ALLY"; }
 	void			InputMakeGameEndAlly( inputdata_t &inputdata );
 	void			InputMakeRegularAlly( inputdata_t &inputdata );
+#ifdef MAPBASE
+	bool			AskQuestionNow( CBaseEntity *pSpeechTarget = NULL, int iQARandomNumber = -1, const char *concept = TLK_QUESTION );
+	void			InputAskQuestion( inputdata_t &inputdata );
+#endif
 	void			InputAnswerQuestion( inputdata_t &inputdata );
 	void			InputAnswerQuestionHello( inputdata_t &inputdata );
 	void			InputEnableSpeakWhileScripting( inputdata_t &inputdata );
 	void			InputDisableSpeakWhileScripting( inputdata_t &inputdata );
+
+#ifdef EZ2
+	void			InputAnswerConcept( inputdata_t &inputdata );
+#endif
 	
 	void			AnswerQuestion( CAI_PlayerAlly *pQuestioner, int iQARandomNum, bool bAnsweringHello );
+
+#ifdef EZ
+	// Blixibon - I wanted a more efficient and fool-proof solution than just "Classify() == CLASS_COMBINE" when it comes to
+	// using/deactivating certain code on soldiers since they derive from this now.
+	virtual bool	IsCombine() { return false; }
+#endif
 
 protected:
 	

@@ -16,6 +16,9 @@
 #include "ai_navigator.h"
 #include "world.h"
 #include "ai_moveprobe.h"
+#ifdef MAPBASE_VSCRIPT
+#include "ai_hint.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -30,6 +33,53 @@ extern float MOVE_HEIGHT_EPSILON;
 // For now we just have one AINetwork called "BigNet".  At some
 // later point we will probabaly have multiple AINetworkds per level
 CAI_Network*		g_pBigAINet;			
+
+#ifdef MAPBASE_VSCRIPT
+BEGIN_SCRIPTDESC_ROOT( CAI_Network, SCRIPT_SINGLETON "The global list of AI nodes." )
+	DEFINE_SCRIPTFUNC( NumNodes, "Number of nodes in the level" )
+
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetNodePosition, "GetNodePosition", "Get position of node using a generic human hull" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetNodePositionWithHull, "GetNodePositionWithHull", "Get position of node using the specified hull" )
+	DEFINE_SCRIPTFUNC( GetNodeYaw, "Get yaw of node" )
+
+	DEFINE_SCRIPTFUNC_NAMED( ScriptNearestNodeToPoint, "NearestNodeToPoint", "Get ID of nearest node" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptNearestNodeToPointWithNPC, "NearestNodeToPointForNPC", "Get ID of nearest node using the specified NPC's properties" )
+
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetNodeType, "GetNodeType", "Get a node's type" )
+
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetNodeHint, "GetNodeHint", "Get a node's hint" )
+END_SCRIPTDESC();
+
+HSCRIPT CAI_Network::ScriptGetNodeHint( int nodeID )
+{
+	CAI_Node *pNode = GetNode( nodeID );
+	if (!pNode)
+		return NULL;
+
+	return ToHScript( pNode->GetHint() );
+}
+
+int CAI_Network::ScriptGetNodeType( int nodeID )
+{
+	CAI_Node *pNode = GetNode( nodeID );
+	if (!pNode)
+		return NULL;
+
+	return (int)pNode->GetType();
+}
+
+int CAI_Network::ScriptNearestNodeToPointWithNPC( HSCRIPT hNPC, const Vector &vecPosition, bool bCheckVisibility )
+{
+	CBaseEntity *pEnt = ToEnt( hNPC );
+	if (!pEnt || !pEnt->MyNPCPointer())
+	{
+		Warning("vscript: NearestNodeToPointWithNPC - Invalid NPC\n");
+		return NO_NODE;
+	}
+
+	return NearestNodeToPoint( pEnt->MyNPCPointer(), vecPosition, bCheckVisibility );
+}
+#endif
 
 //-----------------------------------------------------------------------------
 
@@ -93,6 +143,31 @@ public:
 	CAI_BaseNPC	*m_pNPC;
 	int			m_capabilities;	// cache this
 };
+
+#ifdef VSCRIPT
+//-------------------------------------
+// Purpose: A version of CNodeFilter which allows hints to influence the result.
+//-------------------------------------
+class CNodeHintFilter : public CNodeFilter
+{
+public:
+	CNodeHintFilter( CAI_BaseNPC *pNPC, const Vector &pos ) : CNodeFilter( pNPC, pos ) {}
+	CNodeHintFilter( const Vector &pos ) : CNodeFilter( pos ) {}
+
+	virtual float	NodeDistanceSqr( CAI_Node &node )
+	{
+		// Heavier hints are considered closer
+		if ( node.GetHint() && node.GetHint()->GetHintWeight() != 1.0f && (node.GetHint()->GetGroup() == NULL_STRING || node.GetHint()->GetGroup() == m_pNPC->GetHintGroup()) )
+		{
+			return CNodeFilter::NodeDistanceSqr( node ) * node.GetHint()->GetHintWeightInverse();
+		}
+		else
+		{
+			return CNodeFilter::NodeDistanceSqr( node );
+		}
+	}
+};
+#endif
 
 //-----------------------------------------------------------------------------
 // CAI_Network
@@ -306,7 +381,12 @@ int	CAI_Network::NearestNodeToPoint( CAI_BaseNPC *pNPC, const Vector &vecOrigin,
 	// First get nodes distances and eliminate those that are beyond 
 	// the maximum allowed distance for local movements
 	// ---------------------------------------------------------------
+#ifdef VSCRIPT
+	// Allow hint weight to influence supposed distance
+	CNodeHintFilter filter( pNPC, vecOrigin );
+#else
 	CNodeFilter filter( pNPC, vecOrigin );
+#endif
 
 #ifdef AI_PERF_MON
 		m_nPerfStatNN++;
@@ -560,8 +640,13 @@ CAI_Node *CAI_Network::AddNode( const Vector &origin, float yaw )
 
 CAI_Link *CAI_Network::CreateLink( int srcID, int destID, CAI_DynamicLink *pDynamicLink )
 {
+#ifdef MAPBASE // From Alien Swarm SDK
+	CAI_Node *pSrcNode = GetNode( srcID );
+	CAI_Node *pDestNode = GetNode( destID );
+#else
 	CAI_Node *pSrcNode = g_pBigAINet->GetNode( srcID );
 	CAI_Node *pDestNode = g_pBigAINet->GetNode( destID );
+#endif
 
 	Assert( pSrcNode && pDestNode && pSrcNode != pDestNode );
 

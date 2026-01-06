@@ -561,9 +561,15 @@ int CPropAPC::OnTakeDamage( const CTakeDamageInfo &info )
 		m_iHealth -= dmgInfo.GetDamage();
 		if ( m_iHealth <= 0 )
 		{
-			m_iHealth = 0;
-			Event_Killed( dmgInfo );
-			return 0;
+#ifdef MAPBASE_VSCRIPT
+			// False = Cheat death
+			if (ScriptDeathHook( const_cast<CTakeDamageInfo*>(&info) ) != false)
+#endif
+			{
+				m_iHealth = 0;
+				Event_Killed( dmgInfo );
+				return 0;
+			}
 		}
 
 		// Chain
@@ -726,11 +732,12 @@ void CPropAPC::DriveVehicle( float flFrameTime, CUserCmd *ucmd, int iButtonsDown
 void CPropAPC::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
 {
 	BaseClass::Use( pActivator, pCaller, useType, value );
-
+#ifndef EZ // BREADMAN ^ commented this out
 	if ( pActivator->IsPlayer() )
 	{
 		 EmitSound ( "combine.door_lock" );
 	}
+#endif
 }
 
 

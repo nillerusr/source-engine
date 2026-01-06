@@ -423,6 +423,10 @@ public:
 	bool				CanFitAtNode(int nodeNum, unsigned int collisionMask = MASK_NPCSOLID_BRUSHONLY); 
 	float				MovementCost( int moveType, Vector &vecStart, Vector &vecEnd );
 
+#ifdef EZ2
+	float				HintCost( int iHint, float dist, Vector &vecEnd );
+#endif
+
 	bool				CanFitAtPosition( const Vector &vStartPos, unsigned int collisionMask, bool bIgnoreTransients = false, bool bAllowPlayerAvoid = true );
 	bool				IsOnNetwork() const			{ return !m_bNotOnNetwork; }
 

@@ -16,6 +16,7 @@ $Configuration
 	{
 		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\game\shared\hl2;$SRCDIR\game\shared\episodic;.\hl2;.\episodic"
 		$PreprocessorDefinitions		"$BASE;HL2_DLL;HL2_EPISODIC;USES_SAVERESTORE"
+		$PreprocessorDefinitions		"$BASE;CSS_WEAPONS_IN_HL2"
 	}
 }
 
@@ -50,6 +51,22 @@ $Project "Server (Episodic)"
 
 		$Folder	"HL2 DLL"
 		{
+			$Folder	"Mod"
+			{
+				$File	"pointhurt.h"
+				$File	"hl2\npc_bullsquid.h"
+				$File	"hl2\npc_bullsquid.cpp"
+				$File	"episodic\grenade_hopwire.cpp"
+				$File	"episodic\grenade_hopwire.h"
+				$File	"episodic\weapon_hopwire.cpp"
+				$File	"mod\npc_base_custom.h"
+				$File	"mod\npc_base_custom.cpp"
+				$File	"mod\npc_lost_soul.cpp"
+				$File	"mod\npc_shadow_walker.h"
+				$File	"mod\npc_shadow_walker.cpp"
+				$File	"mod\weapon_custom_flaregun.cpp"
+				$File	"mod\weapon_custom_melee.h"
+			}
 			$File	"$SRCDIR\game\shared\episodic\achievements_ep1.cpp"
 			$File	"$SRCDIR\game\shared\episodic\achievements_ep2.cpp"
 			$File	"$SRCDIR\game\shared\episodic\achievements_epx.cpp"
@@ -264,8 +281,8 @@ $Project "Server (Episodic)"
 			$File	"hl2\weapon_smg1.cpp"
 			$File	"episodic\weapon_striderbuster.cpp"
 			$File	"episodic\weapon_striderbuster.h"
-			$File	"hl2\weapon_stunstick.cpp"
-			$File	"hl2\weapon_stunstick.h"
+			$File	"hl2\weapon_stunstick.cpp" [!$MAPBASE] // See server_mapbase.vpc
+			$File	"hl2\weapon_stunstick.h" [!$MAPBASE] // See server_mapbase.vpc
 			$File	"episodic\ep1_gamestats.h"
 			$File	"episodic\ep2_gamestats.h"
 			$File	"episodic\ep1_gamestats.cpp" \
@@ -297,6 +314,18 @@ $Project "Server (Episodic)"
 				$File	"hl2\weapon_cguard.cpp"
 				$File	"hl2\weapon_flaregun.cpp"
 				$File	"hl2\weapon_flaregun.h"
+			}
+
+			$Folder	"CS:S Weapons"
+			{
+				$File	"$SRCDIR\game\shared\hl2\weapon_css_base_activitylists.cpp"
+				$File	"$SRCDIR\game\shared\hl2\weapon_css_base.cpp"
+				$File	"$SRCDIR\game\shared\hl2\weapon_css_base.h"
+				$File	"$SRCDIR\game\shared\hl2\weapon_css_pistols.cpp"
+				$File	"$SRCDIR\game\shared\hl2\weapon_css_rifles.cpp"
+				$File	"$SRCDIR\game\shared\hl2\weapon_css_shotguns.cpp"
+				$File	"$SRCDIR\game\shared\hl2\weapon_css_smgs.cpp"
+				$File	"$SRCDIR\game\shared\hl2\weapon_css_misc.cpp"
 			}
 		}
 	}

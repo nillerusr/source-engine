@@ -33,6 +33,9 @@ class CGrenadeSpit : public CBaseGrenade
 
 public:
 						CGrenadeSpit( void );
+#ifdef EZ2
+						~CGrenadeSpit( void );
+#endif
 
 	virtual void		Spawn( void );
 	virtual void		Precache( void );

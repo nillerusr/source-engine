@@ -35,6 +35,10 @@ CHintCriteria::CHintCriteria( void )
 	m_strGroup		= NULL_STRING;
 	m_iFlags		= 0;
 	m_HintTypes.Purge();
+#ifdef MAPBASE // From Alien Swarm SDK
+	m_pfnFilter = NULL;
+	m_pFilterContext = NULL;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -890,12 +894,43 @@ BEGIN_DATADESC( CAI_Hint )
 	// Inputs
 	DEFINE_INPUTFUNC( FIELD_VOID,		"EnableHint",		InputEnableHint ),
 	DEFINE_INPUTFUNC( FIELD_VOID,		"DisableHint",		InputDisableHint ),
+#ifdef MAPBASE
+	DEFINE_INPUTFUNC( FIELD_STRING,		"SetHintGroup",		InputSetHintGroup ),
+#endif
 
 	// Outputs
 	DEFINE_OUTPUT( m_OnNPCStartedUsing,	"OnNPCStartedUsing" ),
 	DEFINE_OUTPUT( m_OnNPCStoppedUsing,	"OnNPCStoppedUsing" ),
 
+#ifdef MAPBASE
+	DEFINE_OUTPUT( m_OnScriptEvent[0], "OnScriptEvent01" ),
+	DEFINE_OUTPUT( m_OnScriptEvent[1], "OnScriptEvent02" ),
+	DEFINE_OUTPUT( m_OnScriptEvent[2], "OnScriptEvent03" ),
+	DEFINE_OUTPUT( m_OnScriptEvent[3], "OnScriptEvent04" ),
+	DEFINE_OUTPUT( m_OnScriptEvent[4], "OnScriptEvent05" ),
+	DEFINE_OUTPUT( m_OnScriptEvent[5], "OnScriptEvent06" ),
+	DEFINE_OUTPUT( m_OnScriptEvent[6], "OnScriptEvent07" ),
+	DEFINE_OUTPUT( m_OnScriptEvent[7], "OnScriptEvent08" ),
+#endif
+
 END_DATADESC( );
+
+#ifdef MAPBASE_VSCRIPT
+BEGIN_ENT_SCRIPTDESC( CAI_Hint, CBaseEntity, "An entity which gives contextual pointers for NPCs." )
+
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetHintType, "GetHintType", "Get the hint's type ID." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetUser, "GetUser", "Get the hint's current user." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetHintGroup, "GetHintGroup", "Get the name of the hint's group." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetHintActivity, "GetHintActivity", "Get the name of the hint activity." )
+
+	DEFINE_SCRIPTFUNC( IsDisabled, "Check if the hint is disabled." )
+	DEFINE_SCRIPTFUNC( IsLocked, "Check if the hint is locked." )
+	DEFINE_SCRIPTFUNC( GetNodeId, "Get the hint's node ID." )
+	DEFINE_SCRIPTFUNC( Yaw, "Get the hint's yaw." )
+	DEFINE_SCRIPTFUNC( GetDirection, "Get the hint's direction." )
+
+END_SCRIPTDESC();
+#endif
 
 //------------------------------------------------------------------------------
 // Purpose : 
@@ -912,6 +947,18 @@ void CAI_Hint::InputDisableHint( inputdata_t &inputdata )
 {
 	m_NodeData.iDisabled		= true;
 }
+
+#ifdef MAPBASE
+void CAI_Hint::SetGroup( string_t iszNewGroup )
+{
+	m_NodeData.strGroup = iszNewGroup;
+}
+
+void CAI_Hint::InputSetHintGroup( inputdata_t &inputdata )
+{
+	SetGroup(inputdata.value.StringID());
+}
+#endif
 
 
 //------------------------------------------------------------------------------
@@ -1075,6 +1122,85 @@ bool CAI_Hint::IsInNodeFOV( CBaseEntity *pOther )
 	return false;
 }
 
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// An easy way of engaging certain hint parameters on certain hint types that didn't use it before.
+//-----------------------------------------------------------------------------
+void CAI_Hint::NPCHandleStartNav( CAI_BaseNPC *pNPC, bool bDefaultFacing )
+{
+	Assert( pNPC != NULL );
+
+	HintIgnoreFacing_t facing = GetIgnoreFacing();
+	if (facing == HIF_DEFAULT)
+		facing = bDefaultFacing ? HIF_NO : HIF_YES;
+
+	if (facing == HIF_NO)
+		pNPC->GetNavigator()->SetArrivalDirection( GetDirection() );
+
+	if (HintActivityName() != NULL_STRING)
+	{
+		Activity hintActivity = (Activity)CAI_BaseNPC::GetActivityID( STRING(HintActivityName()) );
+		if ( hintActivity != ACT_INVALID )
+		{
+			pNPC->GetNavigator()->SetArrivalActivity( pNPC->GetHintActivity(HintType(), hintActivity) );
+		}
+		else
+		{
+			int iSequence = pNPC->LookupSequence(STRING(HintActivityName()));
+			if ( iSequence != ACT_INVALID )
+			{
+				pNPC->GetNavigator()->SetArrivalSequence( iSequence );
+			}
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Returns true if this hint should override a NPC's yaw even during regular AI.
+//-----------------------------------------------------------------------------
+bool CAI_Hint::OverridesNPCYaw( CAI_BaseNPC *pNPC )
+{
+	switch (HintType())
+	{
+		case HINT_TACTICAL_COVER_CUSTOM:
+		case HINT_TACTICAL_COVER_MED:
+		case HINT_TACTICAL_COVER_LOW:
+			{
+				if (pNPC->HasMemory( bits_MEMORY_INCOVER ))
+				{
+					// By default, don't override yaw on cover nodes unless they use custom activities.
+					HintIgnoreFacing_t facing = GetIgnoreFacing();
+					if (facing == HIF_DEFAULT)
+						return ( HintActivityName() != NULL_STRING );
+
+					return facing == HIF_NO;
+				}
+
+				break;
+			}
+
+		case HINT_PLAYER_ALLY_MOVE_AWAY_DEST:
+			{
+				Vector vHintPos;
+				GetPosition( pNPC, &vHintPos );
+				if (VectorsAreEqual( vHintPos, pNPC->GetAbsOrigin(), 0.1f ))
+				{
+					// By default, don't override yaw on move away destinations unless they use custom activities.
+					HintIgnoreFacing_t facing = GetIgnoreFacing();
+					if (facing == HIF_DEFAULT)
+						return ( HintActivityName() != NULL_STRING );
+
+					return facing == HIF_NO;
+				}
+
+				break;
+			}
+	}
+
+	return false;
+}
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: Locks the node for use by an AI for hints
 // Output : Returns true if the node was available for locking, false on failure.
@@ -1191,6 +1317,30 @@ bool CAI_Hint::HintMatchesCriteria( CAI_BaseNPC *pNPC, const CHintCriteria &hint
 		REPORTFAILURE( "NPC doesn't know how to handle that type." );
 		return false;
 	}
+
+#ifdef MAPBASE
+	// Test against generic filter
+	// (From Alien Swarm SDK)
+	if ( !hintCriteria.PassesFilter( this ) )
+	{
+		REPORTFAILURE( "Failed filter test" );
+		return false;
+	}
+
+	// (From Alien Swarm SDK)
+	int nRadius = GetRadius();
+	if ( nRadius != 0 )
+	{
+		// Calculate our distance
+		float distance = (GetAbsOrigin() - position).LengthSqr();
+
+		if ( distance > nRadius * nRadius )
+		{
+			REPORTFAILURE( "Not within the node's radius." );
+			return false;
+		}
+	}
+#endif
 
 	if ( hintCriteria.HasFlag(bits_HINT_NPC_IN_NODE_FOV) )
 	{
@@ -1311,10 +1461,18 @@ bool CAI_Hint::HintMatchesCriteria( CAI_BaseNPC *pNPC, const CHintCriteria &hint
 		{
 			trace_t tr;
 			// Can my bounding box fit there?
+#ifdef MAPBASE // From Alien Swarm SDK
+			Vector vStep( 0, 0, pNPC->StepHeight() );
+			AI_TraceHull ( GetAbsOrigin() + vStep, GetAbsOrigin(), pNPC->WorldAlignMins(), pNPC->WorldAlignMaxs() - vStep, 
+				MASK_SOLID, pNPC, COLLISION_GROUP_NONE, &tr );
+
+			if ( tr.fraction < 0.95 )
+#else
 			AI_TraceHull ( GetAbsOrigin(), GetAbsOrigin(), pNPC->WorldAlignMins(), pNPC->WorldAlignMaxs(), 
 				MASK_SOLID, pNPC, COLLISION_GROUP_NONE, &tr );
 
 			if ( tr.fraction != 1.0 )
+#endif
 			{
 				REPORTFAILURE( "Node isn't clear." );
 				return false;
@@ -1329,6 +1487,15 @@ bool CAI_Hint::HintMatchesCriteria( CAI_BaseNPC *pNPC, const CHintCriteria &hint
 
 		// Calculate our distance
 		float distance = (GetAbsOrigin() - position).Length();
+
+#ifdef MAPBASE
+		// Divide by hint weight
+		float flWeight = GetHintWeight();
+		if ( flWeight != 1.0f )
+		{
+			distance *= GetHintWeightInverse();
+		}
+#endif
 
 		// Must be closer than the current best
 		if ( distance > *flNearestDistance )
@@ -1426,6 +1593,15 @@ int CAI_Hint::DrawDebugTextOverlays(void)
 		EntityText(text_offset,tempstr,0);
 		text_offset++;
 
+#ifdef MAPBASE
+		if (m_NodeData.strGroup != NULL_STRING)
+		{
+			Q_snprintf(tempstr,sizeof(tempstr),"hintgroup %s", STRING(m_NodeData.strGroup) ) ;
+			EntityText(text_offset,tempstr,0);
+			text_offset++;
+		}
+#endif
+
 		if ( m_NodeData.iDisabled )
 		{
 			Q_snprintf(tempstr,sizeof(tempstr),"DISABLED" );
@@ -1501,6 +1677,14 @@ void CAI_Hint::OnRestore()
 	m_NodeData.nNodeID = g_pAINetworkManager->GetEditOps()->GetNodeIdFromWCId( m_NodeData.nWCNodeID );
 	FixupTargetNode();
 
+#ifdef MAPBASE
+	if (m_NodeData.flWeight != 0.0f && m_NodeData.flWeight != 1.0f)
+	{
+		// Re-invert the weight
+		m_NodeData.flWeightInverse = 1.0f / m_NodeData.flWeight;
+	}
+#endif
+
 	CAI_Node *pNode = GetNode();
 	
 	if ( !pNode )
@@ -1531,6 +1715,19 @@ void CAI_Hint::NPCStoppedUsing( CAI_BaseNPC *pNPC )
 {
 	m_OnNPCStoppedUsing.Set( pNPC, pNPC, this );
 }
+
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CAI_Hint::FireScriptEvent( int nEvent )
+{
+	if ( ( nEvent >= 1 ) && ( nEvent <= 8 ) )
+	{
+		m_OnScriptEvent[nEvent - 1].FireOutput( m_hHintOwner, this );
+	}
+}
+#endif
 
 
 CON_COMMAND(ai_dump_hints, "")
@@ -1621,6 +1818,18 @@ hinttypedescs_t g_pszHintDescriptions[] =
 	{	HINT_HL1_WORLD_ALIEN_BLOOD, "HL1: World: Alien Blood"	},
 
 	{	HINT_CSTRIKE_HOSTAGE_ESCAPE, "CS Port: Hostage Escape"	},
+
+#ifdef EZ2
+	{	HINT_BEAST_HOME, "EZ2: Beast Home"	},
+	{	HINT_BEAST_FRUSTRATION, "EZ2: Beast Frustration"	},
+	{	HINT_SURRENDER_IDLE_DEST, "EZ2: Surrender Idle Destination"	},
+	{	HINT_TACTICAL_VANTAGE_POINT, "Tactical: Vantage Point"	},
+#endif
+
+#ifdef MAPBASE
+	{	HINT_TACTICAL_COVER_CUSTOM, "Mapbase: Custom Cover"	},
+	{	HINT_TACTICAL_GRENADE_THROW, "Mapbase: Grenade Throw Hint"	},
+#endif
 };
 
 //-----------------------------------------------------------------------------
@@ -1676,6 +1885,11 @@ void CC_ai_drop_hint( const CCommand &args )
 	nodeData.fIgnoreFacing = HIF_DEFAULT;
 	nodeData.minState = NPC_STATE_IDLE;
 	nodeData.maxState = NPC_STATE_COMBAT;
+#ifdef MAPBASE
+	nodeData.nRadius = 0;	// From Alien Swarm SDK
+	nodeData.flWeight = 1.0f;
+	nodeData.flWeightInverse = 1.0f;
+#endif
 	CAI_Hint *pHint = CAI_HintManager::CreateHint( &nodeData, NULL );
 	if ( pHint )
 	{

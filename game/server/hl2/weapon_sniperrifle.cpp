@@ -22,6 +22,11 @@
 #include "in_buttons.h"
 #include "soundent.h"
 #include "vstdlib/random.h"
+#include "hl2_player.h"
+#include "gamestats.h"
+#include "ammodef.h"
+
+#include "Human_Error/hlss_weapon_id.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -36,6 +41,12 @@
 
 #define SNIPER_ZOOM_RATE					0.2			// Interval between zoom levels in seconds.
 
+ConVar sk_sniper_battery_needed("sk_sniper_battery_needed", "0");
+
+#define SNIPERRIFLE_POWER_NEEDED sk_sniper_battery_needed.GetInt()
+
+extern ConVar hl2_normspeed;
+extern ConVar hl2_walkspeed;
 
 //-----------------------------------------------------------------------------
 // Discrete zoom levels for the scope.
@@ -46,6 +57,10 @@ static int g_nZoomFOV[] =
 	5
 };
 
+#ifdef MAPBASE
+extern acttable_t *GetAR2Acttable();
+extern int GetAR2ActtableCount();
+#endif
 
 class CWeaponSniperRifle : public CBaseHLCombatWeapon
 {
@@ -55,32 +70,69 @@ public:
 
 	CWeaponSniperRifle(void);
 
+	virtual const int		HLSS_GetWeaponId() { return HLSS_WEAPON_ID_SNIPER; }
+
 	DECLARE_SERVERCLASS();
 
 	void Precache( void );
 
 	int CapabilitiesGet( void ) const;
 
-	const Vector &GetBulletSpread( void );
+	//const Vector &GetBulletSpread( void );
+
+	virtual bool		VisibleInWeaponSelection( void ) { return true; }
+	virtual bool		CanBeSelected( void ) { return true; }
+	virtual bool		HasAnyAmmo( void ) { return true; }
+	virtual bool		HasAmmo( void ) {  return true; }
 
 	bool Holster( CBaseCombatWeapon *pSwitchingTo = NULL );
+	void Drop( const Vector &vecVelocity );
 	void ItemPostFrame( void );
 	void PrimaryAttack( void );
 	bool Reload( void );
-	void Zoom( void );
+	void Zoom( bool bForceOut = false);
 	virtual float GetFireRate( void ) { return 1; };
 
+	bool DecreamentEnergy( CBasePlayer *pOwner );
+	bool NeedsEnergy( CBasePlayer *pOwner );
+
+	bool Deploy(); 
+
+	virtual const Vector& GetBulletSpread( void )
+	{
+		if (m_nZoomLevel == 0)
+		{
+			static const Vector cone = VECTOR_CONE_6DEGREES;
+			return cone;
+		}
+
+		static const Vector zoomedCone = SNIPER_CONE_PLAYER;
+		return zoomedCone;
+	}
+
 	void Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCharacter *pOperator );
+
+#ifdef MAPBASE
+	virtual acttable_t		*GetBackupActivityList() { return GetAR2Acttable(); }
+	virtual int				GetBackupActivityListCount() { return GetAR2ActtableCount(); }
+#endif
 
 	DECLARE_ACTTABLE();
 
 protected:
+	
+	bool m_bCharging;
+	bool m_bShouldShowRechargeHint;
 
-	float m_fNextZoom;
-	int m_nZoomLevel;
+	CNetworkVar( float, m_fNextZoom );
+	CNetworkVar( int, m_nZoomLevel );
+
+	float m_flShouldZoomOut;
 };
 
 IMPLEMENT_SERVERCLASS_ST(CWeaponSniperRifle, DT_WeaponSniperRifle)
+	SendPropFloat(SENDINFO(m_fNextZoom)),
+	SendPropInt(SENDINFO(m_nZoomLevel), SPROP_CHANGES_OFTEN),
 END_SEND_TABLE()
 
 LINK_ENTITY_TO_CLASS( weapon_sniperrifle, CWeaponSniperRifle );
@@ -88,8 +140,11 @@ PRECACHE_WEAPON_REGISTER(weapon_sniperrifle);
 
 BEGIN_DATADESC( CWeaponSniperRifle )
 
-	DEFINE_FIELD( m_fNextZoom, FIELD_FLOAT ),
-	DEFINE_FIELD( m_nZoomLevel, FIELD_INTEGER ),
+	DEFINE_FIELD( m_fNextZoom,					FIELD_TIME ),
+	DEFINE_FIELD( m_nZoomLevel,					FIELD_INTEGER ),
+	DEFINE_FIELD( m_bCharging,					FIELD_BOOLEAN ),
+	DEFINE_FIELD( m_bShouldShowRechargeHint,	FIELD_BOOLEAN ),
+	DEFINE_FIELD( m_flShouldZoomOut,			FIELD_TIME ),
 
 END_DATADESC()
 
@@ -98,7 +153,78 @@ END_DATADESC()
 //-----------------------------------------------------------------------------
 acttable_t	CWeaponSniperRifle::m_acttable[] = 
 {
-	{	ACT_RANGE_ATTACK1, ACT_RANGE_ATTACK_SNIPER_RIFLE, true }
+	{	ACT_RANGE_ATTACK1, ACT_RANGE_ATTACK_SNIPER_RIFLE, true },
+
+#if EXPANDED_HL2_UNUSED_WEAPON_ACTIVITIES
+	// Optional new NPC activities
+	// (these should fall back to AR2 animations when they don't exist on an NPC)
+	{ ACT_RELOAD,					ACT_RELOAD_SNIPER_RIFLE,			true },
+	{ ACT_IDLE,						ACT_IDLE_SNIPER_RIFLE,				true },
+	{ ACT_IDLE_ANGRY,				ACT_IDLE_ANGRY_SNIPER_RIFLE,		true },
+
+// Readiness activities (not aiming)
+	{ ACT_IDLE_RELAXED,				ACT_IDLE_SNIPER_RIFLE_RELAXED,			false },//never aims
+	{ ACT_IDLE_STIMULATED,			ACT_IDLE_SNIPER_RIFLE_STIMULATED,		false },
+	{ ACT_IDLE_AGITATED,			ACT_IDLE_ANGRY_SNIPER_RIFLE,			false },//always aims
+
+	{ ACT_WALK_RELAXED,				ACT_WALK_SNIPER_RIFLE_RELAXED,			false },//never aims
+	{ ACT_WALK_STIMULATED,			ACT_WALK_SNIPER_RIFLE_STIMULATED,		false },
+	{ ACT_WALK_AGITATED,			ACT_WALK_AIM_SNIPER_RIFLE,				false },//always aims
+
+	{ ACT_RUN_RELAXED,				ACT_RUN_SNIPER_RIFLE_RELAXED,			false },//never aims
+	{ ACT_RUN_STIMULATED,			ACT_RUN_SNIPER_RIFLE_STIMULATED,		false },
+	{ ACT_RUN_AGITATED,				ACT_RUN_AIM_SNIPER_RIFLE,				false },//always aims
+
+// Readiness activities (aiming)
+	{ ACT_IDLE_AIM_RELAXED,			ACT_IDLE_SNIPER_RIFLE_RELAXED,			false },//never aims	
+	{ ACT_IDLE_AIM_STIMULATED,		ACT_IDLE_AIM_SNIPER_RIFLE_STIMULATED,	false },
+	{ ACT_IDLE_AIM_AGITATED,		ACT_IDLE_ANGRY_SNIPER_RIFLE,			false },//always aims
+
+	{ ACT_WALK_AIM_RELAXED,			ACT_WALK_SNIPER_RIFLE_RELAXED,			false },//never aims
+	{ ACT_WALK_AIM_STIMULATED,		ACT_WALK_AIM_SNIPER_RIFLE_STIMULATED,	false },
+	{ ACT_WALK_AIM_AGITATED,		ACT_WALK_AIM_SNIPER_RIFLE,				false },//always aims
+
+	{ ACT_RUN_AIM_RELAXED,			ACT_RUN_SNIPER_RIFLE_RELAXED,			false },//never aims
+	{ ACT_RUN_AIM_STIMULATED,		ACT_RUN_AIM_SNIPER_RIFLE_STIMULATED,	false },
+	{ ACT_RUN_AIM_AGITATED,			ACT_RUN_AIM_SNIPER_RIFLE,				false },//always aims
+//End readiness activities
+
+	{ ACT_WALK,						ACT_WALK_SNIPER_RIFLE,					true },
+	{ ACT_WALK_AIM,					ACT_WALK_AIM_SNIPER_RIFLE,				true },
+	{ ACT_WALK_CROUCH,				ACT_WALK_CROUCH_RIFLE,					true },
+	{ ACT_WALK_CROUCH_AIM,			ACT_WALK_CROUCH_AIM_RIFLE,				true },
+	{ ACT_RUN,						ACT_RUN_SNIPER_RIFLE,					true },
+	{ ACT_RUN_AIM,					ACT_RUN_AIM_SNIPER_RIFLE,				true },
+	{ ACT_RUN_CROUCH,				ACT_RUN_CROUCH_RIFLE,					true },
+	{ ACT_RUN_CROUCH_AIM,			ACT_RUN_CROUCH_AIM_RIFLE,				true },
+	{ ACT_GESTURE_RANGE_ATTACK1,	ACT_GESTURE_RANGE_ATTACK_SNIPER_RIFLE,	true },
+	{ ACT_RANGE_ATTACK1_LOW,		ACT_RANGE_ATTACK_SNIPER_RIFLE_LOW,		true },
+	{ ACT_COVER_LOW,				ACT_COVER_SNIPER_RIFLE_LOW,				false },
+	{ ACT_RANGE_AIM_LOW,			ACT_RANGE_AIM_SNIPER_RIFLE_LOW,			false },
+	{ ACT_RELOAD_LOW,				ACT_RELOAD_SNIPER_RIFLE_LOW,			false },
+	{ ACT_GESTURE_RELOAD,			ACT_GESTURE_RELOAD_SNIPER_RIFLE,		true },
+
+	{ ACT_ARM,						ACT_ARM_RIFLE,					false },
+	{ ACT_DISARM,					ACT_DISARM_RIFLE,				false },
+
+#if EXPANDED_HL2_COVER_ACTIVITIES
+	{ ACT_RANGE_AIM_MED,			ACT_RANGE_AIM_SNIPER_RIFLE_MED,			false },
+	{ ACT_RANGE_ATTACK1_MED,		ACT_RANGE_ATTACK_SNIPER_RIFLE_MED,		false },
+#endif
+
+#if EXPANDED_HL2DM_ACTIVITIES
+	// HL2:DM activities (for third-person animations in SP)
+	{ ACT_HL2MP_IDLE,                    ACT_HL2MP_IDLE_SNIPER_RIFLE,                    false },
+	{ ACT_HL2MP_RUN,                    ACT_HL2MP_RUN_SNIPER_RIFLE,                    false },
+	{ ACT_HL2MP_IDLE_CROUCH,            ACT_HL2MP_IDLE_CROUCH_SNIPER_RIFLE,            false },
+	{ ACT_HL2MP_WALK_CROUCH,            ACT_HL2MP_WALK_CROUCH_SNIPER_RIFLE,            false },
+	{ ACT_HL2MP_GESTURE_RANGE_ATTACK,    ACT_HL2MP_GESTURE_RANGE_ATTACK_SNIPER_RIFLE,    false },
+	{ ACT_HL2MP_GESTURE_RELOAD,            ACT_HL2MP_GESTURE_RELOAD_SNIPER_RIFLE,        false },
+	{ ACT_HL2MP_JUMP,                    ACT_HL2MP_JUMP_SNIPER_RIFLE,                    false },
+	{ ACT_HL2MP_WALK,					ACT_HL2MP_WALK_SNIPER_RIFLE,					false },
+	{ ACT_HL2MP_GESTURE_RANGE_ATTACK2,	ACT_HL2MP_GESTURE_RANGE_ATTACK2_SNIPER_RIFLE,    false },
+#endif
+#endif
 };
 
 IMPLEMENT_ACTTABLE(CWeaponSniperRifle);
@@ -111,6 +237,9 @@ CWeaponSniperRifle::CWeaponSniperRifle( void )
 {
 	m_fNextZoom = gpGlobals->curtime;
 	m_nZoomLevel = 0;
+	m_flShouldZoomOut = 0;
+
+	SetPrimaryAmmoCount( 3 );
 
 	m_bReloadsSingly = true;
 
@@ -118,6 +247,10 @@ CWeaponSniperRifle::CWeaponSniperRifle( void )
 	m_fMinRange2		= 65;
 	m_fMaxRange1		= 2048;
 	m_fMaxRange2		= 2048;
+
+	m_bCharging = false;
+
+	m_bShouldShowRechargeHint = true;
 }
 
 
@@ -130,6 +263,15 @@ int CWeaponSniperRifle::CapabilitiesGet( void ) const
 	return bits_CAP_WEAPON_RANGE_ATTACK1;
 }
 
+void CWeaponSniperRifle::Drop( const Vector &vecVelocity )
+{
+	if (m_nZoomLevel != 0)
+	{
+		Zoom( true );
+	}
+
+	BaseClass::Drop( vecVelocity );
+}
 
 
 //-----------------------------------------------------------------------------
@@ -137,10 +279,10 @@ int CWeaponSniperRifle::CapabilitiesGet( void ) const
 //-----------------------------------------------------------------------------
 bool CWeaponSniperRifle::Holster( CBaseCombatWeapon *pSwitchingTo )
 {
-	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
+	/*CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
 	if (pPlayer != NULL)
 	{
-		if ( m_nZoomLevel != 0 )
+		/*if ( m_nZoomLevel != 0 )
 		{
 			if ( pPlayer->SetFOV( this, 0 ) )
 			{
@@ -148,6 +290,12 @@ bool CWeaponSniperRifle::Holster( CBaseCombatWeapon *pSwitchingTo )
 				m_nZoomLevel = 0;
 			}
 		}
+		Zoom( true );
+	}*/
+
+	if (m_nZoomLevel != 0)
+	{
+		Zoom( true );
 	}
 
 	return BaseClass::Holster(pSwitchingTo);
@@ -165,15 +313,59 @@ void CWeaponSniperRifle::ItemPostFrame( void )
 		return;
 	}
 
+	if (m_flShouldZoomOut != 0 && m_flShouldZoomOut < gpGlobals->curtime )
+	{
+		if (m_nZoomLevel != 0)
+		{
+			Zoom( true );
+		}
+
+		m_flShouldZoomOut = 0;
+	}
+
 	if ((m_bInReload) && (m_flNextPrimaryAttack <= gpGlobals->curtime))
 	{
 		FinishReload();
 		m_bInReload = false;
-	}
 
-	if (pPlayer->m_nButtons & IN_ATTACK2)
+		WeaponSound(RELOAD);
+
+		SendWeaponAnim( ACT_VM_THROW );
+
+		m_flNextPrimaryAttack	= gpGlobals->curtime + SequenceDuration();
+	}
+	else if (m_bCharging)
 	{
-		if (m_fNextZoom <= gpGlobals->curtime)
+		if (m_flNextPrimaryAttack <= gpGlobals->curtime)
+		{
+			m_bCharging = DecreamentEnergy( pPlayer );
+
+			if (m_bCharging && NeedsEnergy( pPlayer ))
+			{
+				m_flNextPrimaryAttack = gpGlobals->curtime + 0.8f;
+			}
+			else
+			{
+				m_bCharging = false;
+			}
+		}
+
+		if ( pPlayer->m_nButtons & IN_RELOAD && m_bCharging )
+		{
+			
+		}
+		else
+		{
+			m_bCharging = false;
+
+			SendWeaponAnim( ACT_VM_THROW );
+
+			m_flNextPrimaryAttack	= gpGlobals->curtime + SequenceDuration();
+		}
+	}
+	else if (!m_bInReload && pPlayer->m_nButtons & IN_ATTACK2)
+	{
+		if (m_fNextZoom <= gpGlobals->curtime && m_flShouldZoomOut == 0)
 		{
 			Zoom();
 			pPlayer->m_nButtons &= ~IN_ATTACK2;
@@ -202,16 +394,36 @@ void CWeaponSniperRifle::ItemPostFrame( void )
 			}
 
 			PrimaryAttack();
+
+			/*if (m_nZoomLevel != 0)
+			{
+				Zoom( true );
+			}*/
 		}
 	}
 
 	// -----------------------
 	//  Reload pressed / Clip Empty
 	// -----------------------
-	if ( pPlayer->m_nButtons & IN_RELOAD && UsesClipsForAmmo1() && !m_bInReload ) 
+	if ( pPlayer->m_nButtons & IN_RELOAD && UsesClipsForAmmo1() && !m_bInReload && !m_bCharging) 
 	{
 		// reload when reload is pressed, or if no buttons are down and weapon is empty.
 		Reload();
+
+		if (!m_bInReload && m_flNextPrimaryAttack <= gpGlobals->curtime && NeedsEnergy( pPlayer ))
+		{
+			if (m_nZoomLevel != 0)
+			{
+				Zoom( true );
+			}
+
+			
+			SendWeaponAnim( ACT_VM_PULLBACK );
+
+			//m_flNextPrimaryAttack	= gpGlobals->curtime + SequenceDuration() - 0.1f;
+
+			m_bCharging = true;
+		}
 	}
 
 	// -----------------------
@@ -253,6 +465,11 @@ void CWeaponSniperRifle::ItemPostFrame( void )
 void CWeaponSniperRifle::Precache( void )
 {
 	BaseClass::Precache();
+
+	PrecacheScriptSound("SuitRecharge.Deny");
+
+	PrecacheModel("effects/bluelaser1.vmt");	
+	PrecacheModel("sprites/light_glow03.vmt");
 }
 
 
@@ -273,22 +490,101 @@ bool CWeaponSniperRifle::Reload( void )
 		
 	if (pOwner->GetAmmoCount(m_iPrimaryAmmoType) > 0)
 	{
-		int primary		= MIN(GetMaxClip1() - m_iClip1, pOwner->GetAmmoCount(m_iPrimaryAmmoType));
-		int secondary	= MIN(GetMaxClip2() - m_iClip2, pOwner->GetAmmoCount(m_iSecondaryAmmoType));
+		int primary		= min(GetMaxClip1() - m_iClip1, pOwner->GetAmmoCount(m_iPrimaryAmmoType));
+		//int secondary	= min(GetMaxClip2() - m_iClip2, pOwner->GetAmmoCount(m_iSecondaryAmmoType));
 
-		if (primary > 0 || secondary > 0)
+		if (primary) // > 0 || secondary > 0)
 		{
 			// Play reload on different channel as it happens after every fire
 			// and otherwise steals channel away from fire sound
-			WeaponSound(RELOAD);
-			SendWeaponAnim( ACT_VM_RELOAD );
+		
+			SendWeaponAnim( ACT_VM_PULLBACK );
 
 			m_flNextPrimaryAttack	= gpGlobals->curtime + SequenceDuration();
 
 			m_bInReload = true;
+
+			if (m_nZoomLevel != 0)
+			{
+				Zoom( true );
+			}
 		}
 
 		return true;
+	}
+
+	if (m_bShouldShowRechargeHint)
+	{
+		UTIL_HudHintText( pOwner, "#HLSS_Recharge_SniperRifle" );
+	}
+
+	return false;
+}
+
+bool CWeaponSniperRifle::Deploy()
+{
+	if (m_bShouldShowRechargeHint)
+	{
+		CBaseCombatCharacter *pOwner = GetOwner();
+
+		if (pOwner)
+		{
+			UTIL_HudHintText( pOwner, "#HLSS_Recharge_SniperRifle" );
+		}
+	}
+
+	Zoom( true );
+
+	return BaseClass::Deploy();
+}
+
+bool CWeaponSniperRifle::DecreamentEnergy( CBasePlayer *pOwner )
+{
+	int iCount = pOwner->GetAmmoCount(m_iPrimaryAmmoType);
+
+	if ( iCount < GetAmmoDef()->MaxCarry( m_iPrimaryAmmoType ))
+	{
+		if ( pOwner->ArmorValue() >= SNIPERRIFLE_POWER_NEEDED)
+		{
+			pOwner->DecrementArmorValue( SNIPERRIFLE_POWER_NEEDED );
+
+			WeaponSound(RELOAD);
+
+			pOwner->SetAmmoCount( iCount + 1, m_iPrimaryAmmoType );
+
+			m_bShouldShowRechargeHint = false;
+
+			return true;
+		}
+		else
+		{
+			EmitSound("SuitRecharge.Deny");
+
+			m_flNextPrimaryAttack = gpGlobals->curtime + 0.1f;
+		}
+	}
+
+	return false;
+}
+
+bool CWeaponSniperRifle::NeedsEnergy( CBasePlayer *pOwner )
+{
+	int iCount = pOwner->GetAmmoCount(m_iPrimaryAmmoType);
+
+	if ( iCount < GetAmmoDef()->MaxCarry( m_iPrimaryAmmoType ) )
+	{
+		if (pOwner->ArmorValue() >= SNIPERRIFLE_POWER_NEEDED)
+		{
+			return true;
+		}
+		else
+		{
+			if (m_flNextPrimaryAttack < gpGlobals->curtime)
+			{
+				m_flNextPrimaryAttack = gpGlobals->curtime + 0.3f;
+			}
+			EmitSound("SuitRecharge.Deny");
+		}
 	}
 
 	return false;
@@ -316,6 +612,8 @@ void CWeaponSniperRifle::PrimaryAttack( void )
 			return;
 		}
 
+		m_flShouldZoomOut = gpGlobals->curtime + 0.5f;
+
 		// MUST call sound before removing a round from the clip of a CMachineGun dvs: does this apply to the sniper rifle? I don't know.
 		WeaponSound(SINGLE);
 
@@ -340,6 +638,11 @@ void CWeaponSniperRifle::PrimaryAttack( void )
 
 		QAngle vecPunch(random->RandomFloat( -SNIPER_KICKBACK, SNIPER_KICKBACK ), 0, 0);
 		pPlayer->ViewPunch(vecPunch);
+		
+		Vector forward;
+		GetVectors( &forward, NULL, NULL );
+		forward *= -200.0f;
+		pPlayer->VelocityPunch( forward );
 
 		// Indicate out of ammo condition if we run out of ammo.
 		if (!m_iClip1 && pPlayer->GetAmmoCount(m_iPrimaryAmmoType) <= 0)
@@ -356,23 +659,34 @@ void CWeaponSniperRifle::PrimaryAttack( void )
 //-----------------------------------------------------------------------------
 // Purpose: Zooms in using the sniper rifle scope.
 //-----------------------------------------------------------------------------
-void CWeaponSniperRifle::Zoom( void )
+void CWeaponSniperRifle::Zoom( bool bForceOut )
 {
-	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
+	CHL2_Player *pPlayer = (CHL2_Player *)ToBasePlayer( GetOwner() );
 	if (!pPlayer)
 	{
 		return;
 	}
 
-	if (m_nZoomLevel >= sizeof(g_nZoomFOV) / sizeof(g_nZoomFOV[0]))
+	if ( !bForceOut && m_flShouldZoomOut != 0 && m_flShouldZoomOut > gpGlobals->curtime )
+		return;
+
+	if ( bForceOut || (m_nZoomLevel >= sizeof(g_nZoomFOV) / sizeof(g_nZoomFOV[0])))
 	{
 		if ( pPlayer->SetFOV( this, 0 ) )
 		{
 			pPlayer->ShowViewModel(true);
 			
 			// Zoom out to the default zoom level
-			WeaponSound(SPECIAL2);	
+			if (!bForceOut)
+			{
+				WeaponSound(SPECIAL2);	
+			}
 			m_nZoomLevel = 0;
+
+			m_flShouldZoomOut = 0;
+
+			pPlayer->EnableSprint( true );
+			pPlayer->SetMaxSpeed( hl2_normspeed.GetFloat() );
 		}
 	}
 	else
@@ -382,6 +696,9 @@ void CWeaponSniperRifle::Zoom( void )
 			if (m_nZoomLevel == 0)
 			{
 				pPlayer->ShowViewModel(false);
+
+				pPlayer->EnableSprint( false );
+				pPlayer->SetMaxSpeed( hl2_walkspeed.GetFloat() * 0.6f );
 			}
 
 			WeaponSound(SPECIAL1);
@@ -398,11 +715,11 @@ void CWeaponSniperRifle::Zoom( void )
 // Purpose: 
 // Output : virtual const Vector&
 //-----------------------------------------------------------------------------
-const Vector &CWeaponSniperRifle::GetBulletSpread( void )
+/*const Vector &CWeaponSniperRifle::GetBulletSpread( void )
 {
 	static Vector cone = SNIPER_CONE_PLAYER;
 	return cone;
-}
+}*/
 
 
 //-----------------------------------------------------------------------------

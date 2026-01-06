@@ -78,6 +78,10 @@
 
 #define	MANHACK_CHARGE_MIN_DIST	200
 
+#if defined(MAPBASE) && defined(HL2_EPISODIC)
+extern ConVar npc_alyx_interact_manhacks;
+#endif
+
 ConVar	sk_manhack_health( "sk_manhack_health","0");
 ConVar	sk_manhack_melee_dmg( "sk_manhack_melee_dmg","0");
 ConVar	sk_manhack_v2( "sk_manhack_v2","1");
@@ -149,9 +153,17 @@ BEGIN_DATADESC( CNPC_Manhack )
 	DEFINE_FIELD( m_bGib,					FIELD_BOOLEAN),
 	DEFINE_FIELD( m_bHeld,					FIELD_BOOLEAN),
 	
+#ifdef MAPBASE
+	DEFINE_KEYFIELD( m_bHackedByAlyx, FIELD_BOOLEAN, "Hacked" ),
+#else
 	DEFINE_FIELD( m_bHackedByAlyx,			FIELD_BOOLEAN),
+#endif
 	DEFINE_FIELD( m_vecLoiterPosition,		FIELD_POSITION_VECTOR),
 	DEFINE_FIELD( m_fTimeNextLoiterPulse,	FIELD_TIME),
+
+#ifdef EZ2
+	DEFINE_KEYFIELD( m_bNemesis, FIELD_BOOLEAN, "Nemesis" ),
+#endif
 
 	DEFINE_FIELD( m_flBumpSuppressTime,		FIELD_TIME ),
 
@@ -159,6 +171,10 @@ BEGIN_DATADESC( CNPC_Manhack )
 	DEFINE_FIELD( m_flBladeSpeed,				FIELD_FLOAT),
 	DEFINE_KEYFIELD( m_bIgnoreClipbrushes,	FIELD_BOOLEAN, "ignoreclipbrushes" ),
 	DEFINE_FIELD( m_hSmokeTrail,				FIELD_EHANDLE),
+#ifdef MAPBASE
+	DEFINE_FIELD( m_hPrevOwner,					FIELD_EHANDLE ),
+	DEFINE_KEYFIELD( m_bNoSprites,			FIELD_BOOLEAN,	"NoSprites" ),
+#endif
 
 	// DEFINE_FIELD( m_pLightGlow,				FIELD_CLASSPTR ),
 	// DEFINE_FIELD( m_pEyeGlow,					FIELD_CLASSPTR ),
@@ -187,6 +203,14 @@ BEGIN_DATADESC( CNPC_Manhack )
 	// Function Pointers
 	DEFINE_INPUTFUNC( FIELD_VOID,	"DisableSwarm", InputDisableSwarm ),
 	DEFINE_INPUTFUNC( FIELD_VOID,   "Unpack",		InputUnpack ),
+#ifdef MAPBASE
+	DEFINE_INPUTFUNC( FIELD_VOID, "EnableSprites", InputEnableSprites ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "DisableSprites", InputDisableSprites ),
+#endif
+
+#ifdef EZ2
+	DEFINE_INPUTFUNC( FIELD_BOOLEAN, "SetNemesisManhack", InputSetNemesisManhack ),
+#endif
 
 	DEFINE_ENTITYFUNC( CrashTouch ),
 
@@ -226,6 +250,7 @@ CNPC_Manhack::CNPC_Manhack()
 	m_flEnginePitch1Time = 0;
 	m_bDoSwarmBehavior = true;
 	m_flBumpSuppressTime = 0;
+	m_bShouldFollowPlayer = false;
 }
 
 //------------------------------------------------------------------------------
@@ -240,7 +265,25 @@ CNPC_Manhack::~CNPC_Manhack()
 //-----------------------------------------------------------------------------
 Class_T	CNPC_Manhack::Classify(void)
 {
-	return (m_bHeld||m_bHackedByAlyx) ? CLASS_PLAYER_ALLY : CLASS_MANHACK; 
+#ifdef EZ
+	// If we are being held by a zombine or metrozombie, use CLASS_ZOMBIE
+	if (GetOwnerEntity() && GetOwnerEntity()->Classify() == CLASS_ZOMBIE)
+	{
+		return CLASS_ZOMBIE;
+	}
+#endif
+#ifdef EZ2
+	// This is a "nemesis" manhack
+	if (m_bNemesis)
+		return CLASS_COMBINE_NEMESIS;
+#endif
+
+#ifdef EZ1
+	return CLASS_MANHACK; // Manhacks are always CLASS_MANHACK in EZ1
+#else
+	return ( m_bHeld||m_bHackedByAlyx ) ? CLASS_PLAYER_ALLY : CLASS_MANHACK; 
+#endif
+
 }
 
 
@@ -400,10 +443,11 @@ void CNPC_Manhack::Event_Killed( const CTakeDamageInfo &info )
 	else
 	{
 		m_bGib = false;
-		
+#ifndef EZ		
 		//FIXME: These don't stay with the ragdolls currently -- jdw
 		// Long fadeout on the sprites!!
 		KillSprites( 0.0f );
+#endif
 	}
 
 	BaseClass::Event_Killed( info );
@@ -447,8 +491,11 @@ void CNPC_Manhack::TakeDamageFromPhyscannon( CBasePlayer *pPlayer )
 
 	// Convert velocity into damage.
 	Vector vel;
-	VPhysicsGetObject()->GetVelocity( &vel, NULL );
-	float flSpeed = vel.Length();
+	float flSpeed = 0;
+	if (VPhysicsGetObject()) {
+		VPhysicsGetObject()->GetVelocity( &vel, NULL );
+		flSpeed = vel.Length();
+	}
 
 	float flFactor = flSpeed / MANHACK_SMASH_SPEED;
 
@@ -764,7 +811,7 @@ int	CNPC_Manhack::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		m_vForceVelocity = vecBestDir * info.GetDamage() * 0.5f;
 		m_flBladeSpeed = 10.0;
 
-		EmitSound( "NPC_Manhack.Bat" );	
+		PlayDamagedSound();
 
 		// tdInfo.SetDamage( 1.0 );
 
@@ -882,6 +929,14 @@ void CNPC_Manhack::OnStateChange( NPC_STATE OldState, NPC_STATE NewState )
 		m_spawnflags &= ~SF_NPC_GAG;
 		SoundInit();
 	}
+
+#ifdef EZ
+	// Idle manhacks return to cyan eye color
+	if (NewState != NPC_STATE_COMBAT)
+	{
+		SetEyeState( MANHACK_EYE_STATE_IDLE );
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1519,7 +1574,11 @@ void CNPC_Manhack::Slice( CBaseEntity *pHitEntity, float flInterval, trace_t &tr
 	pHitEntity->TakeDamage( info );
 
 	// Spawn some extra blood where we hit
+#ifdef MAPBASE
+	if ( pHitEntity->BloodColor() == DONT_BLEED || (IRelationType(pHitEntity) > D_FR && !pHitEntity->PassesDamageFilter(info)) )
+#else
 	if ( pHitEntity->BloodColor() == DONT_BLEED )
+#endif
 	{
 		CEffectData data;
 		Vector velocity = GetCurrentVelocity();
@@ -1703,6 +1762,34 @@ void CNPC_Manhack::Bump( CBaseEntity *pHitEntity, float flInterval, trace_t &tr 
 //-----------------------------------------------------------------------------
 void CNPC_Manhack::CheckCollisions(float flInterval)
 {
+#ifdef EZ
+	// Trace forward to see if I hit anything. But trace forward along the
+	// owner's view direction if you're being carried.
+	Vector vecTraceDir, vecCheckPos;
+
+	if (VPhysicsGetObject() == NULL)
+	{
+		AngleVectors( GetLocalAngles(), &vecTraceDir, NULL, NULL );
+	}
+	else
+	{
+		VPhysicsGetObject()->GetVelocity( &vecTraceDir, NULL );
+	}
+	
+	vecTraceDir *= flInterval;
+	if (IsHeldByPhyscannon())
+	{
+		CBasePlayer *pCarrier = HasPhysicsAttacker( FLT_MAX );
+		if (pCarrier)
+		{
+			if (pCarrier->CollisionProp()->CalcDistanceFromPoint( WorldSpaceCenter() ) < 30)
+			{
+				AngleVectors( pCarrier->EyeAngles(), &vecTraceDir, NULL, NULL );
+				vecTraceDir *= 40.0f;
+			}
+		}
+	}
+#else	
 	// Trace forward to see if I hit anything. But trace forward along the
 	// owner's view direction if you're being carried.
 	Vector vecTraceDir, vecCheckPos;
@@ -1720,6 +1807,7 @@ void CNPC_Manhack::CheckCollisions(float flInterval)
 			}
 		}
 	}
+#endif
 
 	VectorAdd( GetAbsOrigin(), vecTraceDir, vecCheckPos );
 	
@@ -1865,8 +1953,14 @@ void CNPC_Manhack::MoveExecute_Alive(float flInterval)
 
 	Vector	vCurrentVelocity = GetCurrentVelocity();
 
+#ifdef EZ
+	// Only wake VPhysics if it exists
+	if (VPhysicsGetObject() != NULL)
+		VPhysicsGetObject()->Wake();
+#else
 	// FIXME: move this
 	VPhysicsGetObject()->Wake();
+#endif
 
 	if( m_fEnginePowerScale < GetMaxEnginePower() && gpGlobals->curtime > m_flWaterSuspendTime )
 	{
@@ -2453,15 +2547,146 @@ void CNPC_Manhack::Spawn(void)
 	SetCollisionGroup( COLLISION_GROUP_NONE );
 
 	m_bHeld = false;
+
+#ifdef EZ1
+	m_bHackedByAlyx = true;
+	SetEyeState( MANHACK_EYE_STATE_IDLE );
+#else
+#ifndef MAPBASE
 	m_bHackedByAlyx = false;
+#endif
+#endif
+
 	StopLoitering();
 }
 
+#ifdef EZ
+//-----------------------------------------------------------------------------
+// Purpose: Return the pointer for a given sprite given an index
+//-----------------------------------------------------------------------------
+CSprite	* CNPC_Manhack::GetGlowSpritePtr(int index) {
+	switch (index) {
+		case 0:
+			return m_pEyeGlow;
+		case 1:
+			return m_pLightGlow;
+		default:
+			return BaseClass::GetGlowSpritePtr(index);
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Sets the glow sprite at the given index
+//-----------------------------------------------------------------------------
+void CNPC_Manhack::SetGlowSpritePtr(int index, CSprite * sprite)
+{
+	switch (index) {
+	case 0:
+		m_pEyeGlow = sprite;
+		break;
+	case 1:
+		m_pLightGlow = sprite;
+		break;
+	default:
+		BaseClass::SetGlowSpritePtr(index, sprite);
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Return the glow attributes for a given index
+//-----------------------------------------------------------------------------
+EyeGlow_t * CNPC_Manhack::GetEyeGlowData(int index)
+{
+	EyeGlow_t * eyeGlow = new EyeGlow_t();
+
+	switch(index){
+	case 0 :
+		eyeGlow->spriteName = MAKE_STRING( MANHACK_GLOW_SPRITE );
+		eyeGlow->attachment = MAKE_STRING("Eye");
+
+		eyeGlow->alpha = 128;
+		eyeGlow->brightness = 164;
+		if (m_bHackedByAlyx)
+		{
+			eyeGlow->red = 0;
+			eyeGlow->green = 255;
+#ifdef EZ1
+			eyeGlow->blue = 255;
+#else
+			eyeGlow->blue = 0;
+#endif
+		}
+		else
+		{
+#ifdef EZ2
+			if (m_bNemesis)
+			{
+				eyeGlow->red = 0;
+				eyeGlow->green = 255;
+				eyeGlow->blue = 255;
+			}
+			else
+#endif
+			{
+				eyeGlow->red = 255;
+				eyeGlow->green = 0;
+				eyeGlow->blue = 0;
+			}
+		}
+		eyeGlow->renderMode = kRenderTransAdd;
+		eyeGlow->scale = 0.25f;
+		return eyeGlow;
+	case 1:
+		eyeGlow->spriteName = MAKE_STRING(MANHACK_GLOW_SPRITE);
+		eyeGlow->attachment = MAKE_STRING("Light");
+
+		eyeGlow->alpha = 128;
+		eyeGlow->brightness = 164;
+		if (m_bHackedByAlyx)
+		{
+			eyeGlow->red = 0;
+			eyeGlow->green = 255;
+#ifdef EZ1
+			eyeGlow->blue = 255;
+#else
+			eyeGlow->blue = 0;
+#endif
+		}
+		else
+		{
+#ifdef EZ2
+			if (m_bNemesis)
+			{
+				eyeGlow->red = 0;
+				eyeGlow->green = 255;
+				eyeGlow->blue = 255;
+			}
+			else
+#endif
+			{
+				eyeGlow->red = 255;
+				eyeGlow->green = 0;
+				eyeGlow->blue = 0;
+			}
+		}
+		eyeGlow->renderMode = kRenderTransAdd;
+		eyeGlow->scale = 0.25f;
+		return eyeGlow;
+	default:
+		return NULL;
+	}
+}
+#else
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CNPC_Manhack::StartEye( void )
 {
+#ifdef MAPBASE
+	if (m_bNoSprites)
+		return;
+#endif
+
 	//Create our Eye sprite
 	if ( m_pEyeGlow == NULL )
 	{
@@ -2497,8 +2722,13 @@ void CNPC_Manhack::StartEye( void )
 		}
 		else
 		{
+#ifdef EZ2
+			m_pLightGlow->SetTransparency( kRenderTransAdd, 0, 255, 255, 128, kRenderFxNoDissipation );
+			m_pLightGlow->SetColor(0, 255, 255);
+#else
 			m_pLightGlow->SetTransparency( kRenderTransAdd, 255, 0, 0, 128, kRenderFxNoDissipation );
 			m_pLightGlow->SetColor( 255, 0, 0 );
+#endif
 		}
 
 		m_pLightGlow->SetBrightness( 164, 0.1f );
@@ -2506,17 +2736,19 @@ void CNPC_Manhack::StartEye( void )
 		m_pLightGlow->SetAsTemporary();
 	}
 }
+#endif
 
 //-----------------------------------------------------------------------------
 
 void CNPC_Manhack::Activate()
 {
 	BaseClass::Activate();
-
+#ifndef EZ
 	if ( IsAlive() )
 	{
 		StartEye();
 	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -2696,6 +2928,40 @@ void CNPC_Manhack::StartTask( const Task_t *pTask )
 			int count = 0;
 			m_vSavePosition = Vector( 0, 0, 0 );
 
+#ifdef EZ
+			if (IsInPlayerSquad())
+			{
+				Vector vecPosition = vec3_origin;
+				if (HaveCommandGoal())
+				{
+					vecPosition = GetCommandGoal();
+				}
+				else
+				{
+					CBasePlayer *pPlayer = UTIL_GetLocalPlayer();
+					if (pPlayer)
+						vecPosition = pPlayer->EyePosition();
+				}
+
+				if (vecPosition != vec3_origin)
+				{
+					m_vSavePosition += vecPosition * 10;
+					count += 10;
+				}
+			}
+			else
+#endif
+			if (m_bShouldFollowPlayer)
+			{
+				CBasePlayer *pPlayer = ToBasePlayer(GetOwnerEntity());
+				if (pPlayer)
+				{
+					//DevMsg("Following player\n");
+					m_vSavePosition += pPlayer->EyePosition() * 10;
+					count += 10;
+				}
+			}
+
 			// give attacking members more influence
 			AISquadIter_t iter;
 			for (CAI_BaseNPC *pSquadMember = m_pSquad->GetFirstMember( &iter ); pSquadMember; pSquadMember = m_pSquad->GetNextMember( &iter ) )
@@ -2788,7 +3054,9 @@ void CNPC_Manhack::StartTask( const Task_t *pTask )
 void CNPC_Manhack::UpdateOnRemove( void )
 {
 	DestroySmokeTrail();
+#ifndef EZ
 	KillSprites( 0.0 );
+#endif
 	BaseClass::UpdateOnRemove();
 }
 
@@ -2813,6 +3081,32 @@ bool CNPC_Manhack::HandleInteraction(int interactionType, void* data, CBaseComba
 		m_fForceMoveTime   = gpGlobals->curtime + 2.0;
 		return false;
 	}
+
+#ifdef EZ
+	if ( interactionType == g_interactionZombinePullGrenade )
+	{
+
+#ifdef EZ2
+		m_bNemesis = true;
+#endif
+
+		int priority;
+		Disposition_t disposition;
+		CBaseEntity * pEnemy;
+
+		// If the zombine that dispatched us has an enemy, prioritize that enemy
+		if (sourceEnt && sourceEnt->GetEnemy())
+		{
+			pEnemy = sourceEnt->GetEnemy();
+			priority = IRelationPriority( pEnemy );
+			disposition = IRelationType( pEnemy );
+
+			AddEntityRelationship( pEnemy, disposition, priority + 1 );
+		}
+
+		return false;
+	}
+#endif
 
 	return false;
 }
@@ -2870,6 +3164,7 @@ void CNPC_Manhack::ClampMotorForces( Vector &linear, AngularImpulse &angular )
 	angular.z *= scale;
 }
 
+#ifndef EZ
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -2896,6 +3191,7 @@ void CNPC_Manhack::KillSprites( float flDelay )
 	}
 	*/
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Tests whether we're above the target's feet but also below their top
@@ -2981,6 +3277,26 @@ void CNPC_Manhack::InputUnpack( inputdata_t &inputdata )
 	SetCondition( COND_LIGHT_DAMAGE );
 }
 
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: Creates the sprite if it has been destroyed
+//-----------------------------------------------------------------------------
+void CNPC_Manhack::InputEnableSprites( inputdata_t &inputdata )
+{
+	m_bNoSprites = false;
+	StartEye();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Destroys the sprite
+//-----------------------------------------------------------------------------
+void CNPC_Manhack::InputDisableSprites( inputdata_t &inputdata )
+{
+	KillSprites( 0.0 );
+	m_bNoSprites = true;
+}
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : *pPhysGunUser - 
@@ -3007,7 +3323,10 @@ void CNPC_Manhack::OnPhysGunPickup( CBasePlayer *pPhysGunUser, PhysGunPickup_t r
 	}
 	else
 	{
-		m_pPrevOwner.Set( GetOwnerEntity() );
+#ifdef MAPBASE
+		// Store the previous owner in case of npc_maker
+		m_hPrevOwner.Set(GetOwnerEntity());
+#endif
 
 		// Suppress collisions between the manhack and the player; we're currently bumping
 		// almost certainly because it's not purely a physics object.
@@ -3024,10 +3343,14 @@ void CNPC_Manhack::OnPhysGunPickup( CBasePlayer *pPhysGunUser, PhysGunPickup_t r
 //-----------------------------------------------------------------------------
 void CNPC_Manhack::OnPhysGunDrop( CBasePlayer *pPhysGunUser, PhysGunDrop_t Reason )
 {
-	SetOwnerEntity( m_pPrevOwner.Get() );
-
 	// Stop suppressing collisions between the manhack and the player
-	m_pPrevOwner.Set( NULL );
+#ifndef MAPBASE
+	SetOwnerEntity( NULL );
+#else
+	SetOwnerEntity( m_hPrevOwner );
+
+	m_hPrevOwner = NULL;
+#endif
 
 	m_bHeld = false;
 
@@ -3046,7 +3369,11 @@ void CNPC_Manhack::OnPhysGunDrop( CBasePlayer *pPhysGunUser, PhysGunDrop_t Reaso
 	}
 	else
 	{
+#ifdef EZ2
+		if( !m_bHackedByAlyx && !GetEnemy() )
+#else
 		if( m_bHackedByAlyx && !GetEnemy() )
+#endif
 		{
 			// If a hacked manhack is released in peaceable conditions, 
 			// just loiter, don't zip off.
@@ -3084,13 +3411,31 @@ CBasePlayer *CNPC_Manhack::HasPhysicsAttacker( float dt )
 //-----------------------------------------------------------------------------
 float CNPC_Manhack::GetMaxEnginePower()
 {
+#ifdef EZ2
+	if( !m_bHackedByAlyx )
+#else
 	if( m_bHackedByAlyx )
+#endif
 	{
 		return 2.0f;
 	}
 
 	return 1.0f;
 }
+
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: Option to restore Alyx's interactions with non-rollermines
+//-----------------------------------------------------------------------------
+bool CNPC_Manhack::CanInteractWith( CAI_BaseNPC *pUser )
+{
+#ifdef HL2_EPISODIC
+	return npc_alyx_interact_manhacks.GetBool();
+#else
+	return false;
+#endif
+}
+#endif
 
 
 //-----------------------------------------------------------------------------
@@ -3139,15 +3484,35 @@ void CNPC_Manhack::ShowHostile( bool hostile /*= true*/)
 	//TODO: Open the manhack panels or close them, depending on the state
 	m_bShowingHostile = hostile;
 
-	if ( hostile )
+	PlayAttackSound(hostile);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Play a sound before charging at the player
+// Input  : hostile - 
+//-----------------------------------------------------------------------------
+void CNPC_Manhack::PlayAttackSound(bool hostile /*= true*/)
+{
+	if (hostile)
 	{
-		EmitSound( "NPC_Manhack.ChargeAnnounce" );
+		EmitSound("NPC_Manhack.ChargeAnnounce");
 	}
 	else
 	{
-		EmitSound( "NPC_Manhack.ChargeEnd" );
+		EmitSound("NPC_Manhack.ChargeEnd");
 	}
 }
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Play a sound before charging at the player
+//-----------------------------------------------------------------------------
+void CNPC_Manhack::PlayDamagedSound(void)
+{
+	EmitSound("NPC_Manhack.Bat");
+}
+
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -3203,16 +3568,43 @@ void CNPC_Manhack::SetEyeState( int state )
 			if ( m_pEyeGlow )
 			{
 				//Toggle our state
+#ifdef MAPBASE
+				// Makes it easier to distinguish between hostile and friendly manhacks.
+				if( m_bHackedByAlyx )
+				{
+					m_pEyeGlow->SetColor( 0, 0, 255 );
+					m_pEyeGlow->SetScale( 0.35f, 0.6f );
+				}
+				else
+				{
+					m_pEyeGlow->SetColor( 255, 128, 0 );
+					m_pEyeGlow->SetScale( 0.15f, 0.1f );
+				}
+#else
 				m_pEyeGlow->SetColor( 255, 128, 0 );
 				m_pEyeGlow->SetScale( 0.15f, 0.1f );
+#endif
 				m_pEyeGlow->SetBrightness( 164, 0.1f );
 				m_pEyeGlow->m_nRenderFX = kRenderFxStrobeFast;
 			}
 			
 			if ( m_pLightGlow )
 			{
+#ifdef MAPBASE
+				if( m_bHackedByAlyx )
+				{
+					m_pLightGlow->SetColor( 0, 0, 255 );
+					m_pLightGlow->SetScale( 0.35f, 0.6f );
+				}
+				else
+				{
+					m_pLightGlow->SetColor( 255, 128, 0 );
+					m_pLightGlow->SetScale( 0.15f, 0.1f );
+				}
+#else
 				m_pLightGlow->SetColor( 255, 128, 0 );
 				m_pLightGlow->SetScale( 0.15f, 0.1f );
+#endif
 				m_pLightGlow->SetBrightness( 164, 0.1f );
 				m_pLightGlow->m_nRenderFX = kRenderFxStrobeFast;
 			}
@@ -3227,12 +3619,19 @@ void CNPC_Manhack::SetEyeState( int state )
 			if ( m_pEyeGlow )
 			{
 				//Toggle our state
+#ifndef EZ1
 				if( m_bHackedByAlyx )
 				{
 					m_pEyeGlow->SetColor( 0, 255, 0 );
 				}
 				else
+#endif
 				{
+#ifdef EZ2
+					if (m_bNemesis)
+						m_pEyeGlow->SetColor( 0, 255, 255 );
+					else
+#endif
 					m_pEyeGlow->SetColor( 255, 0, 0 );
 				}
 
@@ -3243,12 +3642,19 @@ void CNPC_Manhack::SetEyeState( int state )
 			
 			if ( m_pLightGlow )
 			{
+#ifndef EZ1
 				if( m_bHackedByAlyx )
 				{
 					m_pLightGlow->SetColor( 0, 255, 0 );
 				}
 				else
+#endif
 				{
+#ifdef EZ2
+					if (m_bNemesis)
+						m_pLightGlow->SetColor( 0, 255, 255 );
+					else
+#endif
 					m_pLightGlow->SetColor( 255, 0, 0 );
 				}
 
@@ -3259,7 +3665,51 @@ void CNPC_Manhack::SetEyeState( int state )
 
 			break;
 		}
-	
+#ifdef EZ
+	case MANHACK_EYE_STATE_CHASE:
+	case MANHACK_EYE_STATE_IDLE:
+	#ifdef EZ2
+	if( !m_bHackedByAlyx )
+	#endif
+	{
+		if ( m_pEyeGlow )
+		{
+			//Toggle our state
+#ifdef EZ1
+			m_pEyeGlow->SetColor( 0, 255, 255 );
+#elif EZ2
+			if (m_bNemesis)
+				m_pEyeGlow->SetColor( 0, 255, 255 );
+			else
+				m_pEyeGlow->SetColor( 255, 0, 0 );
+#else
+			m_pEyeGlow->SetColor( 255, 0, 0 );
+#endif
+			m_pEyeGlow->SetScale( 0.25f, 0.5f );
+			m_pEyeGlow->SetBrightness( 164, 0.1f );
+			m_pEyeGlow->m_nRenderFX = kRenderFxNone;
+		}
+
+		if ( m_pLightGlow )
+		{
+#ifdef EZ1
+			m_pLightGlow->SetColor( 0, 255, 255 );
+#elif EZ2
+			if (m_bNemesis)
+				m_pLightGlow->SetColor( 0, 255, 255 );
+			else
+				m_pLightGlow->SetColor( 255, 0, 0 );
+#else
+			m_pLightGlow->SetColor( 255, 0, 0 );
+#endif
+			m_pLightGlow->SetScale( 0.25f, 0.5f );
+			m_pLightGlow->SetBrightness( 164, 0.1f );
+			m_pLightGlow->m_nRenderFX = kRenderFxNone;
+		}
+
+		break;
+	}
+#endif
 	default:
 		if ( m_pEyeGlow )
 			m_pEyeGlow->m_nRenderFX = kRenderFxNone;
@@ -3369,6 +3819,33 @@ DEFINE_SCHEDULE
 //=========================================================
 // > SCHED_MANHACK_SWARN
 //=========================================================
+#ifdef EZ
+DEFINE_SCHEDULE
+(
+	SCHED_MANHACK_SWARM_IDLE,
+
+	"	Tasks"
+	"		TASK_STOP_MOVING							0"
+	"		TASK_SET_FAIL_SCHEDULE						SCHEDULE:SCHED_MANHACK_SWARM_FAILURE"
+	"		TASK_MANHACK_FIND_SQUAD_CENTER				0"
+	"		TASK_MANHACK_MOVEAT_SAVEPOSITION			5"
+	"	"
+	"	Interrupts"
+	"		COND_NEW_ENEMY"
+	"		COND_SEE_ENEMY"
+	"		COND_SEE_FEAR"
+	"		COND_LIGHT_DAMAGE"
+	"		COND_HEAVY_DAMAGE"
+	"		COND_SMELL"
+	"		COND_PROVOKED"
+	"		COND_GIVE_WAY"
+	"		COND_HEAR_PLAYER"
+	"		COND_HEAR_DANGER"
+	"		COND_HEAR_COMBAT"
+	"		COND_HEAR_BULLET_IMPACT"
+	"		COND_RECEIVED_ORDERS" // Blixibon - Crude manhack commanding
+);
+#else
 DEFINE_SCHEDULE
 (
 	SCHED_MANHACK_SWARM_IDLE,
@@ -3393,6 +3870,7 @@ DEFINE_SCHEDULE
 	"		COND_HEAR_COMBAT"
 	"		COND_HEAR_BULLET_IMPACT"
 );
+#endif
 
 
 DEFINE_SCHEDULE

@@ -33,6 +33,13 @@
 #include "effect_color_tables.h"
 #include "npc_rollermine.h"
 #include "eventqueue.h"
+#ifdef MAPBASE
+#include "CRagdollMagnet.h"
+#endif
+#ifdef EXPANDED_RESPONSE_SYSTEM_USAGE
+#include "mapbase/expandedrs_combine.h"
+#include "ai_speech.h"
+#endif
 
 #include "effect_dispatch_data.h"
 #include "te_effect_dispatch.h"
@@ -62,6 +69,9 @@ extern ConVar sk_dmg_sniper_penetrate_npc;
 #define SF_SNIPER_STARTDISABLED	(1 << 19)
 #define SF_SNIPER_FAST			(1 << 20) ///< This is faster-shooting sniper. Paint time is decreased 25%. Bullet speed increases 150%.
 #define SF_SNIPER_NOSWEEP		(1 << 21) ///< This sniper doesn't sweep to the target or use decoys.
+#ifdef MAPBASE
+#define SF_SNIPER_DIE_ON_FIRE	(1 << 22) // This sniper dies on fire.
+#endif
 
 // If the last time I fired at someone was between 0 and this many seconds, draw
 // a bead on them much faster. (use subsequent paint time)
@@ -194,9 +204,15 @@ private:
 
 //=========================================================
 //=========================================================
+#ifdef EXPANDED_RESPONSE_SYSTEM_USAGE
+class CProtoSniper : public CAI_ExpresserHost<CAI_BaseNPC>
+{
+	DECLARE_CLASS( CProtoSniper, CAI_ExpresserHost<CAI_BaseNPC> );
+#else
 class CProtoSniper : public CAI_BaseNPC
 {
 	DECLARE_CLASS( CProtoSniper, CAI_BaseNPC );
+#endif
 
 public:
 	CProtoSniper( void );
@@ -234,6 +250,10 @@ public:
 	virtual int SelectSchedule( void );
 	virtual int TranslateSchedule( int scheduleType );
 
+#ifdef MAPBASE
+	Activity	NPC_TranslateActivity( Activity eNewActivity );
+#endif
+
 	bool KeyValue( const char *szKeyName, const char *szValue );
 
 	void PrescheduleThink( void );
@@ -262,7 +282,21 @@ public:
 
 	void NotifyShotMissedTarget();
 
+#ifdef EXPANDED_RESPONSE_SYSTEM_USAGE
+	//DeclareResponseSystem()
+	bool SpeakIfAllowed(const char *concept, const char *modifiers = NULL);
+	void ModifyOrAppendCriteria( AI_CriteriaSet& set );
+
+	virtual CAI_Expresser *CreateExpresser( void );
+	virtual CAI_Expresser *GetExpresser() { return m_pExpresser; }
+	virtual void		PostConstructor( const char *szClassname );
+#endif
+
 private:
+
+#ifdef EXPANDED_RESPONSE_SYSTEM_USAGE
+	CAI_Expresser * m_pExpresser;
+#endif
 	
 	bool ShouldSnapShot( void );
 	void ClearTargetGroup( void );
@@ -303,6 +337,10 @@ private:
 	void PaintTarget( const Vector &vecTarget, float flPaintTime );
 
 	bool IsPlayerAllySniper();
+
+#ifdef MAPBASE
+	const Vector &GetPaintCursor() { return m_vecPaintCursor; }
+#endif
 
 private:
 
@@ -363,11 +401,19 @@ private:
 	bool						m_bKilledPlayer;
 	bool						m_bShootZombiesInChest;		///< if true, do not try to shoot zombies in the headcrab
 
+#ifdef MAPBASE
+	string_t					m_iszBeamName;	// Custom beam texture
+	color32						m_BeamColor;	// Custom beam color
+#endif
+
 	COutputEvent				m_OnShotFired;
 	
 	DEFINE_CUSTOM_AI;
 
 	DECLARE_DATADESC();
+#ifdef MAPBASE_VSCRIPT
+	DECLARE_ENT_SCRIPTDESC();
+#endif
 };
 
 
@@ -440,6 +486,11 @@ BEGIN_DATADESC( CProtoSniper )
 	DEFINE_FIELD( m_bWarnedTargetEntity, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_flTimeLastShotMissed, FIELD_TIME ),
 
+#ifdef MAPBASE
+	DEFINE_KEYFIELD( m_iszBeamName, FIELD_STRING, "BeamName" ),
+	DEFINE_KEYFIELD( m_BeamColor, FIELD_COLOR32, "BeamColor" ),
+#endif
+
 	// Inputs
 	DEFINE_INPUTFUNC( FIELD_VOID, "EnableSniper", InputEnableSniper ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "DisableSniper", InputDisableSniper ),
@@ -459,6 +510,26 @@ BEGIN_DATADESC( CProtoSniper )
 	DEFINE_OUTPUT( m_OnShotFired, "OnShotFired" ),
 	
 END_DATADESC()
+
+#ifdef MAPBASE_VSCRIPT
+BEGIN_ENT_SCRIPTDESC( CProtoSniper, CAI_BaseNPC, "Combine sniper NPC." )
+
+	DEFINE_SCRIPTFUNC( GetBulletSpeed, "" )
+	DEFINE_SCRIPTFUNC( GetBulletOrigin, "" )
+	DEFINE_SCRIPTFUNC( ScopeGlint, "" )
+
+	DEFINE_SCRIPTFUNC( GetPositionParameter, "" )
+	DEFINE_SCRIPTFUNC( IsSweepingRandomly, "" )
+	DEFINE_SCRIPTFUNC( FindFrustratedShot, "" )
+
+	DEFINE_SCRIPTFUNC( IsLaserOn, "" )
+	DEFINE_SCRIPTFUNC( LaserOn, "" )
+	DEFINE_SCRIPTFUNC( LaserOff, "" )
+
+	DEFINE_SCRIPTFUNC( GetPaintCursor, "Get the point the sniper is currently aiming at." )
+
+END_SCRIPTDESC()
+#endif
 
 
 
@@ -496,6 +567,10 @@ enum Sniper_Conds
 	COND_SNIPER_FRUSTRATED,
 	COND_SNIPER_SWEEP_TARGET,
 	COND_SNIPER_NO_SHOT,
+#ifdef MAPBASE
+	// Using COND_ENEMY_DEAD made us take credit for other people's kills
+	COND_SNIPER_KILLED_ENEMY,
+#endif
 };
 
 
@@ -557,7 +632,11 @@ CProtoSniper::CProtoSniper( void ) : m_flKeyfieldPaintTime(SNIPER_DEFAULT_PAINT_
 bool CProtoSniper::QuerySeeEntity( CBaseEntity *pEntity, bool bOnlyHateOrFearIfNPC )
 {
 	Disposition_t disp = IRelationType(pEntity);
+#ifdef MAPBASE
+	if( disp > D_FR )
+#else
 	if( disp != D_HT )
+#endif
 	{
 		// Don't bother with anything I wouldn't shoot.
 		return false;
@@ -643,8 +722,13 @@ void CProtoSniper::LaserOn( const Vector &vecTarget, const Vector &vecDeviance )
 {
 	if (!m_pBeam)
 	{
+#ifdef MAPBASE
+		m_pBeam = CBeam::BeamCreate( STRING(m_iszBeamName), 1.0f );
+		m_pBeam->SetColor( m_BeamColor.r, m_BeamColor.g, m_BeamColor.b );
+#else
 		m_pBeam = CBeam::BeamCreate( "effects/bluelaser1.vmt", 1.0f );
 		m_pBeam->SetColor( 0, 100, 255 );
+#endif
 	}
 	else
 	{
@@ -856,6 +940,14 @@ void CProtoSniper::OnScheduleChange( void )
 {
 	LaserOff();
 
+#ifdef MAPBASE
+	if ( m_bKilledPlayer && HasCondition( COND_SEE_PLAYER ) )
+	{
+		// IMPOSSIBLE! (possible when SP respawn is enabled)
+		m_bKilledPlayer = false;
+	}
+#endif
+
 	BaseClass::OnScheduleChange();
 }
 
@@ -904,10 +996,40 @@ LINK_ENTITY_TO_CLASS( sniperbullet, CSniperBullet );
 //-----------------------------------------------------------------------------
 void CProtoSniper::Precache( void )
 {
+#ifdef MAPBASE
+	if (GetModelName() == NULL_STRING)
+		SetModelName(AllocPooledString("models/combine_soldier.mdl"));
+
+	PrecacheModel(STRING(GetModelName()));
+
+	// Should we bother to make these customizable? These are static, too.
+	sHaloSprite = PrecacheModel("sprites/light_glow03.vmt");
+	sFlashSprite = PrecacheModel( "sprites/muzzleflash1.vmt" );
+
+	if (m_iszBeamName == NULL_STRING)
+	{
+		m_iszBeamName = AllocPooledString("effects/bluelaser1.vmt");
+		m_BeamColor.r = 0;
+		m_BeamColor.g = 100;
+		m_BeamColor.b = 255;
+	}
+	else if (Q_GetFileExtension(STRING(m_iszBeamName)) == NULL)
+	{
+		// The path doesn't have a .vmt. Fix this or we crash!
+		// 
+		// I know I warn against using .vmt even though this code ultimately ensures there is no consequence other than a warning,
+		// but it's bad practice and remember: That old string without the .vmt would likely be floating around somewhere doing nothing.
+		Warning("%s beam name \"%s\" lacks .vmt!\n", GetDebugName(), STRING(m_iszBeamName));
+		m_iszBeamName = AllocPooledString(UTIL_VarArgs("%s.vmt", STRING(m_iszBeamName)));
+	}
+
+	PrecacheModel(STRING(m_iszBeamName));
+#else
 	PrecacheModel("models/combine_soldier.mdl");
 	sHaloSprite = PrecacheModel("sprites/light_glow03.vmt");
 	sFlashSprite = PrecacheModel( "sprites/muzzleflash1.vmt" );
 	PrecacheModel("effects/bluelaser1.vmt");	
+#endif
 
 	UTIL_PrecacheOther( "sniperbullet" );
 
@@ -931,8 +1053,12 @@ void CProtoSniper::Spawn( void )
 {
 	Precache();
 
+#ifdef MAPBASE
+	SetModel( STRING(GetModelName()) );
+#else
 	/// HACK:
 	SetModel( "models/combine_soldier.mdl" );
+#endif
 
 	//m_hBullet = (CSniperBullet *)Create( "sniperbullet", GetBulletOrigin(), GetLocalAngles(), NULL );
 
@@ -985,7 +1111,11 @@ void CProtoSniper::Spawn( void )
 	// Point the cursor straight ahead so that the sniper's
 	// first sweep of the laser doesn't look weird.
 	Vector vecForward;
+#ifdef MAPBASE
+	AngleVectors( GetAbsAngles(), &vecForward );
+#else
 	AngleVectors( GetLocalAngles(), &vecForward );
+#endif
 	m_vecPaintCursor = GetBulletOrigin() + vecForward * 1024;
 
 	m_fWeaponLoaded = true;
@@ -1200,7 +1330,11 @@ Vector CProtoSniper::GetBulletOrigin( void )
 	else
 	{
 		Vector vecForward;
+#ifdef MAPBASE
+		AngleVectors( GetAbsAngles(), &vecForward );
+#else
 		AngleVectors( GetLocalAngles(), &vecForward );
+#endif
 		return WorldSpaceCenter() + vecForward * 20;
 	}
 }
@@ -1327,11 +1461,32 @@ void CProtoSniper::Event_Killed( const CTakeDamageInfo &info )
 {
 	if( !(m_spawnflags & SF_SNIPER_NOCORPSE) )
 	{
+#ifdef MAPBASE
+		Vector vecForce;
+
+		// See if there's a ragdoll magnet that should influence our force.
+		// However, to avoid conflicts with existing maps, only allow magnets that have us as their target.
+		CRagdollMagnet *pMagnet = CRagdollMagnet::FindBestMagnet( this );
+		if( pMagnet && pMagnet->m_target == GetEntityName() )
+		{
+			vecForce = pMagnet->GetForceVector( this );
+			pMagnet->m_OnUsed.Set(vecForce, this, pMagnet);
+		}
+		else
+		{
+			Vector vecForward;
+			AngleVectors( GetAbsAngles(), &vecForward );
+			float flForce = random->RandomFloat( 500, 700 ) * 10;
+
+			vecForce = (vecForward * flForce) + Vector(0, 0, 600);
+		}
+#else
 		Vector vecForward;
 		
 		float flForce = random->RandomFloat( 500, 700 ) * 10;
 
 		AngleVectors( GetLocalAngles(), &vecForward );
+#endif
 		
 		float flFadeTime = 0.0;
 
@@ -1341,8 +1496,13 @@ void CProtoSniper::Event_Killed( const CTakeDamageInfo &info )
 		}
 
 		CBaseEntity *pGib;
+#ifdef MAPBASE
+		bool bShouldIgnite = IsOnFire() || HasSpawnFlags(SF_SNIPER_DIE_ON_FIRE);
+		pGib = CreateRagGib( STRING(GetModelName()), GetAbsOrigin(), GetAbsAngles(), vecForce, flFadeTime, bShouldIgnite );
+#else
 		bool bShouldIgnite = IsOnFire() || hl2_episodic.GetBool();
 		pGib = CreateRagGib( "models/combine_soldier.mdl", GetLocalOrigin(), GetLocalAngles(), (vecForward * flForce) + Vector(0, 0, 600), flFadeTime, bShouldIgnite );
+#endif
 
 	}
 
@@ -1357,7 +1517,11 @@ void CProtoSniper::Event_Killed( const CTakeDamageInfo &info )
 
 	LaserOff();
 
+#ifdef EXPANDED_RESPONSE_SYSTEM_USAGE
+	SpeakIfAllowed( TLK_SNIPER_DIE );
+#else
 	EmitSound( "NPC_Sniper.Die" );
+#endif
 
 	UTIL_Remove( this );
 }
@@ -1366,6 +1530,13 @@ void CProtoSniper::Event_Killed( const CTakeDamageInfo &info )
 //---------------------------------------------------------
 void CProtoSniper::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &info )
 {
+#ifdef MAPBASE
+	BaseClass::Event_KilledOther( pVictim, info );
+
+	if (pVictim == GetEnemy())
+		SetCondition(COND_SNIPER_KILLED_ENEMY);
+#endif
+
 	if( pVictim && pVictim->IsPlayer() )
 	{
 		m_bKilledPlayer = true;
@@ -1384,10 +1555,18 @@ void CProtoSniper::UpdateOnRemove( void )
 //---------------------------------------------------------
 int CProtoSniper::SelectSchedule ( void )
 {
+#ifdef EXPANDED_RESPONSE_SYSTEM_USAGE
+	if (HasCondition(COND_SNIPER_KILLED_ENEMY))
+	{
+		SpeakIfAllowed(TLK_SNIPER_TARGETDESTROYED);
+		ClearCondition(COND_SNIPER_KILLED_ENEMY);
+	}
+#else
 	if( HasCondition(COND_ENEMY_DEAD) && sniperspeak.GetBool() )
 	{
 		EmitSound( "NPC_Sniper.TargetDestroyed" );
 	}
+#endif
 
 	if( !m_fWeaponLoaded )
 	{
@@ -1420,10 +1599,14 @@ int CProtoSniper::SelectSchedule ( void )
 			// probably won't harm him.
 
 			// Also, don't play the sound effect if we're an ally.
+#ifdef EXPANDED_RESPONSE_SYSTEM_USAGE
+			SpeakIfAllowed(TLK_SNIPER_DANGER);
+#else
 			if ( IsPlayerAllySniper() == false )
 			{
 				EmitSound( "NPC_Sniper.HearDanger" );
 			}
+#endif
 		}
 
 		return SCHED_PSNIPER_SUPPRESSED;
@@ -1795,7 +1978,11 @@ int CProtoSniper::RangeAttack1Conditions ( float flDot, float flDist )
 
 			float flDist;
 
+#ifdef MAPBASE
+			flDist = ( GetAbsOrigin() - GetEnemy()->GetAbsOrigin() ).Length2D();
+#else
 			flDist = ( GetLocalOrigin() - GetEnemy()->GetLocalOrigin() ).Length2D();
+#endif
 
 			if( flDist <= m_flPatience )
 			{
@@ -1861,6 +2048,23 @@ int CProtoSniper::TranslateSchedule( int scheduleType )
 	return BaseClass::TranslateSchedule( scheduleType );
 }
 
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+Activity CProtoSniper::NPC_TranslateActivity( Activity eNewActivity )
+{
+	// ACT_IDLE is now just the soldier's unarmed idle animation.
+	// Use a gun-holding animation like what unhidden snipers were using before.
+	if (!HasSpawnFlags( SF_SNIPER_HIDDEN ) && eNewActivity == ACT_IDLE)
+	{
+		eNewActivity = ACT_IDLE_SMG1;
+	}
+
+	return BaseClass::NPC_TranslateActivity( eNewActivity );
+}
+#endif
+
 //---------------------------------------------------------
 //---------------------------------------------------------
 void CProtoSniper::ScopeGlint()
@@ -1893,7 +2097,11 @@ bool CProtoSniper::FireBullet( const Vector &vecTarget, bool bDirectShot )
 
 	vecBulletOrigin = GetBulletOrigin();
 
+#ifdef MAPBASE
+	pBullet = (CSniperBullet *)Create( "sniperbullet", GetBulletOrigin(), GetAbsAngles(), NULL );
+#else
 	pBullet = (CSniperBullet *)Create( "sniperbullet", GetBulletOrigin(), GetLocalAngles(), NULL );
+#endif
 
 	Assert( pBullet != NULL );
 
@@ -1994,10 +2202,18 @@ void CProtoSniper::StartTask( const Task_t *pTask )
 		// Otherwise, sweep from wherever the cursor was.
 		if( m_hSweepTarget->HasSpawnFlags( SF_SNIPERTARGET_SNAPTO ) )
 		{
+#ifdef MAPBASE
+			m_vecPaintCursor = m_hSweepTarget->GetAbsOrigin();
+#else
 			m_vecPaintCursor = m_hSweepTarget->GetLocalOrigin();
+#endif
 		}
 
+#ifdef MAPBASE
+		LaserOn( m_hSweepTarget->GetAbsOrigin(), vec3_origin );
+#else
 		LaserOn( m_hSweepTarget->GetLocalOrigin(), vec3_origin );
+#endif
 		break;
 
 	case TASK_SNIPER_PAINT_ENEMY:
@@ -2066,7 +2282,11 @@ void CProtoSniper::StartTask( const Task_t *pTask )
 			else
 			{
 				// Try to start the laser where the player can't miss seeing it!
+#ifdef MAPBASE
+				AngleVectors( GetEnemy()->GetAbsAngles(), &vecCursor );
+#else
 				AngleVectors( GetEnemy()->GetLocalAngles(), &vecCursor );
+#endif
 				vecCursor = vecCursor * 300;
 				vecCursor += GetEnemy()->EyePosition();				
 				LaserOn( vecCursor, Vector( 16, 16, 16 ) );
@@ -2200,7 +2420,11 @@ void CProtoSniper::RunTask( const Task_t *pTask )
 
 			if ( m_hSweepTarget->HasSpawnFlags( SF_SNIPERTARGET_SHOOTME ) )
 			{
+#ifdef MAPBASE
+				FireBullet( m_hSweepTarget->GetAbsOrigin(), false );
+#else
 				FireBullet( m_hSweepTarget->GetLocalOrigin(), false );
+#endif
 				TaskComplete(); // Force a reload.
 			}
 
@@ -2209,7 +2433,11 @@ void CProtoSniper::RunTask( const Task_t *pTask )
 				// Bump the timer up, update the cursor, paint the new target!
 				// This is done regardless of whether we just fired at the current target.
 
+#ifdef MAPBASE
+				m_vecPaintCursor = m_hSweepTarget->GetAbsOrigin();
+#else
 				m_vecPaintCursor = m_hSweepTarget->GetLocalOrigin();
+#endif
 				if( IsSweepingRandomly() )
 				{
 					// If sweeping randomly, just pick another target.
@@ -2399,7 +2627,11 @@ Vector CProtoSniper::EyePosition( void )
 {
 	if( m_spawnflags & SF_SNIPER_HIDDEN )
 	{
+#ifdef MAPBASE
+		return GetAbsOrigin();
+#else
 		return GetLocalOrigin();
+#endif
 	}
 	else
 	{
@@ -2413,6 +2645,19 @@ Vector CProtoSniper::DesiredBodyTarget( CBaseEntity *pTarget )
 {
 	// By default, aim for the center
 	Vector vecTarget = pTarget->WorldSpaceCenter();
+
+#ifdef MAPBASE_VSCRIPT
+	if (m_ScriptScope.IsInitialized() && g_Hook_GetActualShootPosition.CanRunInScope(m_ScriptScope))
+	{
+		ScriptVariant_t functionReturn;
+		ScriptVariant_t args[] = { GetBulletOrigin(), ToHScript( pTarget ) };
+		if (g_Hook_GetActualShootPosition.Call( m_ScriptScope, &functionReturn, args ))
+		{
+			if (functionReturn.m_type == FIELD_VECTOR && functionReturn.m_pVector->LengthSqr() != 0.0f)
+				return *functionReturn.m_pVector;
+		}
+	}
+#endif
 
 	float flTimeSinceLastMiss = gpGlobals->curtime - m_flTimeLastShotMissed;
 
@@ -2538,7 +2783,11 @@ Vector CProtoSniper::LeadTarget( CBaseEntity *pTarget )
 			vecAngle.x = 0;
 			vecAngle.z = 0;
 
+#ifdef MAPBASE
+			vecAngle.y += pTarget->GetAbsAngles().y;
+#else
 			vecAngle.y += pTarget->GetLocalAngles().y;
+#endif
 
 			AngleVectors( vecAngle, &vecVelocity );
 
@@ -2573,7 +2822,11 @@ Vector CProtoSniper::LeadTarget( CBaseEntity *pTarget )
 	{
 		Vector vecBulletOrigin;
 		vecBulletOrigin = GetBulletOrigin();
+#ifdef MAPBASE
+		CPVSFilter filter( GetAbsOrigin() );
+#else
 		CPVSFilter filter( GetLocalOrigin() );
+#endif
 		te->ShowLine( filter, 0.0, &vecBulletOrigin, &vecAdjustedShot );
 	}
 
@@ -2772,7 +3025,11 @@ bool CProtoSniper::FVisible( CBaseEntity *pEntity, int traceMask, CBaseEntity **
 		vecVerticalOffset = SNIPER_TARGET_VERTICAL_OFFSET;
 	}
 
+#ifdef MAPBASE
+	AngleVectors( pEntity->GetAbsAngles(), NULL, &vecRight, NULL );
+#else
 	AngleVectors( pEntity->GetLocalAngles(), NULL, &vecRight, NULL );
+#endif
 
 	vecEye = vecRight * SNIPER_EYE_DIST - vecVerticalOffset;
 	UTIL_TraceLine( EyePosition(), pEntity->EyePosition() + vecEye, MASK_BLOCKLOS, this, COLLISION_GROUP_NONE, &tr );
@@ -2901,6 +3158,52 @@ void CProtoSniper::NotifyShotMissedTarget()
 	// in these NPCs' walk and run animations.
 }
 
+#ifdef EXPANDED_RESPONSE_SYSTEM_USAGE
+//-----------------------------------------------------------------------------
+// Purpose: Speak concept
+//-----------------------------------------------------------------------------
+bool CProtoSniper::SpeakIfAllowed(const char *concept, const char *modifiers)
+{
+	if (!GetExpresser()->CanSpeakConcept(concept))
+		return false;
+
+	return Speak(concept, modifiers);
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CProtoSniper::ModifyOrAppendCriteria( AI_CriteriaSet& set )
+{
+	BaseClass::ModifyOrAppendCriteria( set );
+
+	// We still need this
+	set.AppendCriteria( "sniperspeak", UTIL_VarArgs("%i", sniperspeak.GetInt()) );
+	set.AppendCriteria( "playerally", UTIL_VarArgs("%d", IsPlayerAllySniper()) );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CAI_Expresser *CProtoSniper::CreateExpresser( void )
+{
+	m_pExpresser = new CAI_Expresser(this);
+	if (!m_pExpresser)
+		return NULL;
+
+	m_pExpresser->Connect(this);
+	return m_pExpresser;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CProtoSniper::PostConstructor(const char *szClassname)
+{
+	BaseClass::PostConstructor(szClassname);
+	CreateExpresser();
+}
+#endif
+
 //-----------------------------------------------------------------------------
 //
 // Schedules
@@ -2916,6 +3219,9 @@ AI_BEGIN_CUSTOM_NPC( proto_sniper, CProtoSniper )
 	DECLARE_CONDITION( COND_SNIPER_FRUSTRATED );
 	DECLARE_CONDITION( COND_SNIPER_SWEEP_TARGET );	
 	DECLARE_CONDITION( COND_SNIPER_NO_SHOT );	
+#ifdef MAPBASE
+	DECLARE_CONDITION( COND_SNIPER_KILLED_ENEMY );
+#endif
 
 	DECLARE_TASK( TASK_SNIPER_FRUSTRATED_ATTACK );
 	DECLARE_TASK( TASK_SNIPER_PAINT_ENEMY );
@@ -3141,6 +3447,18 @@ AI_BEGIN_CUSTOM_NPC( proto_sniper, CProtoSniper )
 
 	//=========================================================
 	//=========================================================
+#ifdef MAPBASE
+	DEFINE_SCHEDULE
+	(
+	SCHED_PSNIPER_PLAYER_DEAD,
+
+	"	Tasks"
+	"		TASK_SNIPER_PLAYER_DEAD		0"
+	"	"
+	"	Interrupts"
+	"		COND_SEE_PLAYER"
+	)
+#else
 	DEFINE_SCHEDULE
 	(
 	SCHED_PSNIPER_PLAYER_DEAD,
@@ -3150,6 +3468,7 @@ AI_BEGIN_CUSTOM_NPC( proto_sniper, CProtoSniper )
 	"	"
 	"	Interrupts"
 	)
+#endif
 
 AI_END_CUSTOM_NPC()
 

@@ -16,6 +16,7 @@ $Configuration
 	{
 		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\game\shared\hl2;.\hl2"
 		$PreprocessorDefinitions		"$BASE;HL2_DLL;USES_SAVERESTORE"
+		$PreprocessorDefinitions		"$BASE;CSS_WEAPONS_IN_HL2"
 	}
 }
 
@@ -247,8 +248,8 @@ $Project "Server (HL2)"
 			$File	"hl2\weapon_rpg.h"
 			$File	"hl2\weapon_shotgun.cpp"
 			$File	"hl2\weapon_smg1.cpp"
-			$File	"hl2\weapon_stunstick.cpp"
-			$File	"hl2\weapon_stunstick.h"
+			$File	"hl2\weapon_stunstick.cpp" [!$MAPBASE] // See server_mapbase.vpc
+			$File	"hl2\weapon_stunstick.h" [!$MAPBASE] // See server_mapbase.vpc
 
 			$Folder	"Unused"
 			{
@@ -263,6 +264,18 @@ $Project "Server (HL2)"
 				$File	"hl2\weapon_cguard.cpp"
 				$File	"hl2\weapon_flaregun.cpp"
 				$File	"hl2\weapon_flaregun.h"
+			}
+
+			$Folder	"CS:S Weapons"
+			{
+				$File	"$SRCDIR\game\shared\hl2\weapon_css_base_activitylists.cpp"
+				$File	"$SRCDIR\game\shared\hl2\weapon_css_base.cpp"
+				$File	"$SRCDIR\game\shared\hl2\weapon_css_base.h"
+				$File	"$SRCDIR\game\shared\hl2\weapon_css_pistols.cpp"
+				$File	"$SRCDIR\game\shared\hl2\weapon_css_rifles.cpp"
+				$File	"$SRCDIR\game\shared\hl2\weapon_css_shotguns.cpp"
+				$File	"$SRCDIR\game\shared\hl2\weapon_css_smgs.cpp"
+				$File	"$SRCDIR\game\shared\hl2\weapon_css_misc.cpp"
 			}
 		}
 	}

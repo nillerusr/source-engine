@@ -31,12 +31,20 @@ ConVar cl_npc_speedmod_outtime( "cl_npc_speedmod_outtime", "1.5", FCVAR_CLIENTDL
 IMPLEMENT_CLIENTCLASS_DT(C_BaseHLPlayer, DT_HL2_Player, CHL2_Player)
 	RecvPropDataTable( RECVINFO_DT(m_HL2Local),0, &REFERENCE_RECV_TABLE(DT_HL2Local) ),
 	RecvPropBool( RECVINFO( m_fIsSprinting ) ),
+#ifdef SP_ANIM_STATE
+	RecvPropFloat( RECVINFO( m_flAnimRenderYaw ) ),
+#endif
 END_RECV_TABLE()
 
 BEGIN_PREDICTION_DATA( C_BaseHLPlayer )
 	DEFINE_PRED_TYPEDESCRIPTION( m_HL2Local, C_HL2PlayerLocalData ),
 	DEFINE_PRED_FIELD( m_fIsSprinting, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 END_PREDICTION_DATA()
+
+// link to the correct class.
+#if !defined ( HL2MP ) && !defined ( PORTAL )
+LINK_ENTITY_TO_CLASS( player, C_BaseHLPlayer );
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Drops player's primary weapon
@@ -66,6 +74,11 @@ C_BaseHLPlayer::C_BaseHLPlayer()
 	m_flZoomRate		= 0.0f;
 	m_flZoomStartTime	= 0.0f;
 	m_flSpeedMod		= cl_forwardspeed.GetFloat();
+
+#ifdef MAPBASE
+	ConVarRef scissor("r_flashlightscissor");
+	scissor.SetValue("0");
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -79,6 +92,13 @@ void C_BaseHLPlayer::OnDataChanged( DataUpdateType_t updateType )
 	{
 		SetNextClientThink( CLIENT_THINK_ALWAYS );
 	}
+
+#ifdef SP_ANIM_STATE
+	if (m_flAnimRenderYaw != FLT_MAX)
+	{
+		m_angAnimRender = QAngle( 0, m_flAnimRenderYaw, 0 );
+	}
+#endif
 
 	BaseClass::OnDataChanged( updateType );
 }
@@ -646,4 +666,22 @@ void C_BaseHLPlayer::BuildTransformations( CStudioHdr *hdr, Vector *pos, Quatern
 	BaseClass::BuildTransformations( hdr, pos, q, cameraTransform, boneMask, boneComputed );
 	BuildFirstPersonMeathookTransformations( hdr, pos, q, cameraTransform, boneMask, boneComputed, "ValveBiped.Bip01_Head1" );
 }
+
+
+#ifdef SP_ANIM_STATE
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+const QAngle& C_BaseHLPlayer::GetRenderAngles( void )
+{
+	if ( m_flAnimRenderYaw != FLT_MAX )
+	{
+		return m_angAnimRender;
+	}
+	else
+	{
+		return BaseClass::GetRenderAngles();	
+	}
+}
+#endif
 

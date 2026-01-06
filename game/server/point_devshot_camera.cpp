@@ -54,24 +54,6 @@ END_DATADESC()
 LINK_ENTITY_TO_CLASS( point_devshot_camera, CPointDevShotCamera );
 
 //-----------------------------------------------------------------------------
-// Purpose: Convenience function so we don't have to make this check all over
-//-----------------------------------------------------------------------------
-static CBasePlayer * UTIL_GetLocalPlayerOrListenServerHost( void )
-{
-	if ( gpGlobals->maxClients > 1 )
-	{
-		if ( engine->IsDedicatedServer() )
-		{
-			return NULL;
-		}
-
-		return UTIL_GetListenServerHost();
-	}
-
-	return UTIL_GetLocalPlayer();
-}
-
-//-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CPointDevShotCamera::Spawn( void )
@@ -244,6 +226,10 @@ public:
 					pkvCamera = pkvCamera->GetNextKey();
 				}
 			}
+
+#ifdef MAPBASE // VDC Memory Leak Fixes
+			pkvMapCameras->deleteThis();
+#endif
 
 			if ( !g_iDevShotCameraCount )
 			{

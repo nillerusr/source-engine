@@ -76,10 +76,12 @@ extern itemFlags_t g_ItemFlags[7];
 
 static CUtlDict< FileWeaponInfo_t*, unsigned short > m_WeaponInfoDatabase;
 
+#ifndef MAPBASE // Mapbase makes weapons in the same slot & position swap each other out, which is a feature mods can intentionally use.
 #ifdef _DEBUG
 // used to track whether or not two weapons have been mistakenly assigned the wrong slot
 bool g_bUsedWeaponSlots[MAX_WEAPON_SLOTS][MAX_WEAPON_POSITIONS] = { 0 };
 
+#endif
 #endif
 
 //-----------------------------------------------------------------------------
@@ -154,8 +156,10 @@ void ResetFileWeaponInfoDatabase( void )
 	}
 	m_WeaponInfoDatabase.RemoveAll();
 
+#ifndef MAPBASE // Mapbase makes weapons in the same slot & position swap each other out, which is a feature mods can intentionally use.
 #ifdef _DEBUG
 	memset(g_bUsedWeaponSlots, 0, sizeof(g_bUsedWeaponSlots));
+#endif
 #endif
 }
 #endif
@@ -192,6 +196,13 @@ void PrecacheFileWeaponInfoDatabase( IFileSystem *filesystem, const unsigned cha
 	}
 	manifest->deleteThis();
 }
+
+#ifdef STEAM_INPUT
+CON_COMMAND( weapon_precache_weapon_info_database, "" )
+{
+	PrecacheFileWeaponInfoDatabase( filesystem, g_pGameRules->GetEncryptionKey() );
+}
+#endif
 
 KeyValues* ReadEncryptedKVFile( IFileSystem *filesystem, const char *szFilenameWithoutExtension, const unsigned char *pICEKey, bool bForceReadEncryptedFile /*= false*/ )
 {
@@ -279,7 +290,11 @@ bool ReadWeaponDataFromFileForSlot( IFileSystem* filesystem, const char *szWeapo
 	FileWeaponInfo_t *pFileInfo = GetFileWeaponInfoFromHandle( *phandle );
 	Assert( pFileInfo );
 
+#ifdef MAPBASE
+	if ( pFileInfo->bParsedScript && !pFileInfo->bCustom )
+#else
 	if ( pFileInfo->bParsedScript )
+#endif
 		return true;
 
 	char sz[128];
@@ -296,12 +311,58 @@ bool ReadWeaponDataFromFileForSlot( IFileSystem* filesystem, const char *szWeapo
 	if ( !pKV )
 		return false;
 
+#ifdef MAPBASE
+	pFileInfo->bCustom = false;
+#endif
 	pFileInfo->Parse( pKV, szWeaponName );
 
 	pKV->deleteThis();
 
 	return true;
 }
+
+#ifdef MAPBASE
+extern const char *g_MapName;
+
+bool ReadCustomWeaponDataFromFileForSlot( IFileSystem* filesystem, const char *szWeaponName, WEAPON_FILE_INFO_HANDLE *phandle, const unsigned char *pICEKey )
+{
+	if ( !phandle )
+	{
+		Assert( 0 );
+		return false;
+	}
+	
+	*phandle = FindWeaponInfoSlot( szWeaponName );
+	FileWeaponInfo_t *pFileInfo = GetFileWeaponInfoFromHandle( *phandle );
+	Assert( pFileInfo );
+
+	// Just parse the custom script anyway even if it was already loaded. This is because after one is loaded,
+	// there's no way of distinguishing between maps with no custom scripts and maps with their own new custom scripts.
+	//if ( pFileInfo->bParsedScript && pFileInfo->bCustom )
+	//	return true;
+
+	char sz[128];
+	Q_snprintf( sz, sizeof( sz ), "maps/%s_%s", g_MapName, szWeaponName );
+
+	KeyValues *pKV = ReadEncryptedKVFile( filesystem, sz, pICEKey,
+#if defined( DOD_DLL )
+		true			// Only read .ctx files!
+#else
+		false
+#endif
+		);
+
+	if ( !pKV )
+		return false;
+
+	pFileInfo->bCustom = true;
+	pFileInfo->Parse( pKV, szWeaponName );
+
+	pKV->deleteThis();
+
+	return true;
+}
+#endif
 
 
 //-----------------------------------------------------------------------------
@@ -347,11 +408,28 @@ FileWeaponInfo_t::FileWeaponInfo_t()
 	bShowUsageHint = false;
 	m_bAllowFlipping = true;
 	m_bBuiltRightHanded = true;
+#ifdef MAPBASE
+	m_flViewmodelFOV = 0.0f;
+	m_flBobScale = 1.0f;
+	m_flSwayScale = 1.0f;
+	m_flSwaySpeedScale = 1.0f;
+	szDroppedModel[0] = 0;
+	m_bUsesHands = false;
+	m_nWeaponRestriction = WPNRESTRICT_NONE;
+#endif
 }
 
 #ifdef CLIENT_DLL
 extern ConVar hud_fastswitch;
 #endif
+
+#ifdef MAPBASE
+const char* pWeaponRestrictions[NUM_WEAPON_RESTRICTION_TYPES] = {
+	"none",
+	"player_only",
+	"npc_only",
+};
+#endif // MAPBASE
 
 void FileWeaponInfo_t::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 {
@@ -365,11 +443,17 @@ void FileWeaponInfo_t::Parse( KeyValues *pKeyValuesData, const char *szWeaponNam
 	// View model & world model
 	Q_strncpy( szViewModel, pKeyValuesData->GetString( "viewmodel" ), MAX_WEAPON_STRING );
 	Q_strncpy( szWorldModel, pKeyValuesData->GetString( "playermodel" ), MAX_WEAPON_STRING );
+	Q_strncpy( szWorldModel2, pKeyValuesData->GetString("secondarymodel"), MAX_WEAPON_STRING);
 	Q_strncpy( szAnimationPrefix, pKeyValuesData->GetString( "anim_prefix" ), MAX_WEAPON_PREFIX );
 	iSlot = pKeyValuesData->GetInt( "bucket", 0 );
 	iPosition = pKeyValuesData->GetInt( "bucket_position", 0 );
 	
 	// Use the console (X360) buckets if hud_fastswitch is set to 2.
+#ifdef STEAM_INPUT
+	// Reserve them for their own vars
+	iSlot360 = pKeyValuesData->GetInt( "bucket_360", iSlot );
+	iPosition360 = pKeyValuesData->GetInt( "bucket_position_360", iPosition );
+#else
 #ifdef CLIENT_DLL
 	if ( hud_fastswitch.GetInt() == 2 )
 #else
@@ -379,6 +463,7 @@ void FileWeaponInfo_t::Parse( KeyValues *pKeyValuesData, const char *szWeaponNam
 		iSlot = pKeyValuesData->GetInt( "bucket_360", iSlot );
 		iPosition = pKeyValuesData->GetInt( "bucket_position_360", iPosition );
 	}
+#endif
 	iMaxClip1 = pKeyValuesData->GetInt( "clip_size", WEAPON_NOCLIP );					// Max primary clips gun can hold (assume they don't use clips by default)
 	iMaxClip2 = pKeyValuesData->GetInt( "clip2_size", WEAPON_NOCLIP );					// Max secondary clips gun can hold (assume they don't use clips by default)
 	iDefaultClip1 = pKeyValuesData->GetInt( "default_clip", iMaxClip1 );		// amount of primary ammo placed in the primary clip when it's picked up
@@ -411,7 +496,41 @@ void FileWeaponInfo_t::Parse( KeyValues *pKeyValuesData, const char *szWeaponNam
 	m_bBuiltRightHanded = ( pKeyValuesData->GetInt( "BuiltRightHanded", 1 ) != 0 ) ? true : false;
 	m_bAllowFlipping = ( pKeyValuesData->GetInt( "AllowFlipping", 1 ) != 0 ) ? true : false;
 	m_bMeleeWeapon = ( pKeyValuesData->GetInt( "MeleeWeapon", 0 ) != 0 ) ? true : false;
+	
+#ifdef CSS_WEAPONS_IN_HL2 // This code originates from Mapbase v7.0. In the event of a merge conflict, it should take precedence over this code.
+	m_flViewmodelFOV = pKeyValuesData->GetFloat( "viewmodel_fov", 0.0f );
+#endif
 
+#ifdef MAPBASE
+	m_flViewmodelFOV = pKeyValuesData->GetFloat( "viewmodel_fov", 0.0f );
+	m_flBobScale = pKeyValuesData->GetFloat( "bob_scale", 1.0f );
+	m_flSwayScale = pKeyValuesData->GetFloat( "sway_scale", 1.0f );
+	m_flSwaySpeedScale = pKeyValuesData->GetFloat( "sway_speed_scale", 1.0f );
+
+	Q_strncpy( szDroppedModel, pKeyValuesData->GetString( "droppedmodel" ), MAX_WEAPON_STRING );
+
+	m_bUsesHands = ( pKeyValuesData->GetInt( "uses_hands", 0 ) != 0 ) ? true : false;
+
+	const char* pszRestrictString = pKeyValuesData->GetString("usage_restriction", nullptr);
+	if (pszRestrictString)
+	{
+		for (int i = 0; i < NUM_WEAPON_RESTRICTION_TYPES; i++)
+		{
+			if (V_stricmp(pszRestrictString, pWeaponRestrictions[i]) == 0)
+			{
+				m_nWeaponRestriction = i;
+				break;
+			}
+		}
+	}
+#endif
+
+#ifdef EZ2
+	m_bAlwaysFirstDraw = (pKeyValuesData->GetInt( "AlwaysFirstDraw", 0 ) != 0) ? true : false;
+	m_bPreventPlayerSwap = (pKeyValuesData->GetInt( "PreventPlayerSwap", 0 ) != 0) ? true : false;
+#endif
+
+#ifndef MAPBASE // Mapbase makes weapons in the same slot & position swap each other out, which is a feature mods can intentionally use.
 #if defined(_DEBUG) && defined(HL2_CLIENT_DLL)
 	// make sure two weapons aren't in the same slot & position
 	if ( iSlot >= MAX_WEAPON_SLOTS ||
@@ -428,6 +547,7 @@ void FileWeaponInfo_t::Parse( KeyValues *pKeyValuesData, const char *szWeaponNam
 		}
 		g_bUsedWeaponSlots[iSlot][iPosition] = true;
 	}
+#endif
 #endif
 
 	// Primary ammo used

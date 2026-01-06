@@ -1,0 +1,81 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from waflib import Utils
+import os
+
+top = '.'
+PROJECT_NAME = 'vscript'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	conf.env.append_unique('DEFINES',[
+		'MAPBASE',
+		'MAPBASE_VSCRIPT',
+	])
+
+def build(bld):
+	source = [
+			'vscript.cpp',
+			'vscript_squirrel.cpp',
+			'vscript_bindings_base.cpp',
+			'vscript_bindings_math.cpp',
+			'squirrel/sqstdlib/sqstdaux.cpp',
+			'squirrel/sqstdlib/sqstdblob.cpp',
+			'squirrel/sqstdlib/sqstdio.cpp',
+			'squirrel/sqstdlib/sqstdmath.cpp',
+			'squirrel/sqstdlib/sqstdrex.cpp',
+			'squirrel/sqstdlib/sqstdstream.cpp',
+			'squirrel/sqstdlib/sqstdstring.cpp',
+			'squirrel/sqstdlib/sqstdsystem.cpp',
+			'squirrel/squirrel/sqapi.cpp',
+			'squirrel/squirrel/sqbaselib.cpp',
+			'squirrel/squirrel/sqclass.cpp',
+			'squirrel/squirrel/sqcompiler.cpp',
+			'squirrel/squirrel/sqdebug.cpp',
+			'squirrel/squirrel/sqfuncstate.cpp',
+			'squirrel/squirrel/sqlexer.cpp',
+			'squirrel/squirrel/sqmem.cpp',
+			'squirrel/squirrel/sqobject.cpp',
+			'squirrel/squirrel/sqstate.cpp',
+			'squirrel/squirrel/sqtable.cpp',
+			'squirrel/squirrel/sqvm.cpp',
+	]
+
+	includes = [
+		'.',
+		'./squirrel/include',
+		'../common',
+		'../public',
+		'../public/tier0',
+		'../public/tier1',
+		'../public/mathlib',
+		'../public/vscript',
+	]	
+
+	defines = []
+
+	libs = [
+		'tier0',
+		'tier1',
+		'tier2',
+		'tier3',
+		'mathlib',
+		'vstdlib',
+	]
+
+	bld.stlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)
+

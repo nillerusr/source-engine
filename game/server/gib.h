@@ -53,7 +53,11 @@ public:
 	static	void SpawnHeadGib( CBaseEntity *pVictim );
 	static	void SpawnRandomGibs( CBaseEntity *pVictim, int cGibs, GibType_e eGibType );
 	static  void SpawnStickyGibs( CBaseEntity *pVictim, Vector vecOrigin, int cGibs );
+#ifndef EZ
 	static	void SpawnSpecificGibs( CBaseEntity *pVictim, int nNumGibs, float fMaxVelocity, float fMinVelocity, const char* cModelName, float flLifetime = 25);
+#else
+	static	void SpawnSpecificGibs( CBaseEntity *pVictim, int nNumGibs, float fMaxVelocity, float fMinVelocity, const char* cModelName, float flLifetime = 25, int iBloodColor = DONT_BLEED );
+#endif
 
 	void SetPhysicsAttacker( CBasePlayer *pEntity, float flTime );
 	virtual void OnPhysGunPickup( CBasePlayer *pPhysGunUser, PhysGunPickup_t reason );

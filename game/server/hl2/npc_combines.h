@@ -35,7 +35,9 @@ public:
 	void		Event_Killed( const CTakeDamageInfo &info );
 	void		OnListened();
 
+#ifndef MAPBASE // Moved to CAI_GrenadeUser
 	void		ClearAttackConditions( void );
+#endif
 
 	bool		m_fIsBlocking;
 
@@ -43,6 +45,7 @@ public:
 	bool		IsHeavyDamage( const CTakeDamageInfo &info );
 
 	virtual	bool		AllowedToIgnite( void ) { return true; }
+
 
 private:
 	bool		ShouldHitPlayer( const Vector &targetDir, float targetDist );

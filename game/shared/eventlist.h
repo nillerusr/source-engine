@@ -69,6 +69,11 @@ typedef enum
 	AE_SV_DUSTTRAIL,
 
 	AE_CL_CREATE_PARTICLE_EFFECT,
+#ifdef MAPBASE // From Alien Swarm SDK
+	AE_CL_STOP_PARTICLE_EFFECT,
+	AE_CL_ADD_PARTICLE_EFFECT_CP,
+	//AE_CL_CREATE_PARTICLE_BRASS,
+#endif
 
 	AE_RAGDOLL,
 
@@ -84,6 +89,19 @@ typedef enum
 	AE_WPN_UNHIDE,		// Used to unhide player weapons
 
 	AE_WPN_PLAYWPNSOUND,	// Play a weapon sound from the weapon script file
+
+#ifdef MAPBASE
+	AE_NPC_RESPONSE,	// Play a response system concept if we're not speaking
+	AE_NPC_RESPONSE_FORCED,		// Always play a response system concept
+	
+	AE_VSCRIPT_RUN,			// Run vscript code (server + client)
+	AE_VSCRIPT_RUN_FILE,	// Run vscript file (server + client)
+#endif
+
+#ifdef EZ2
+	AE_KICKATTACK, // For Bad Cop kicks
+	AE_SLIDERETURN, // For the pulse pistol chambering one charge during 'dry fire'
+#endif
 
 	LAST_SHARED_ANIMEVENT,
 } Animevent;

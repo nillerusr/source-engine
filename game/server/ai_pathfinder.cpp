@@ -348,6 +348,13 @@ AI_Waypoint_t *CAI_Pathfinder::FindBestPath(int startID, int endID)
 			Vector r2 = pAInode[testID]->GetPosition(GetHullType());
 			float dist   = GetOuter()->GetNavigator()->MovementCost( moveType, r1, r2 ); // MovementCost takes ref parameters!!
 
+#ifdef EZ2
+			if ( pAInode[testID]->GetHint() != NULL )
+			{
+				dist = GetOuter()->GetNavigator()->HintCost( pAInode[testID]->GetHint()->HintType(), dist, r2 );
+			}
+#endif
+
 			if ( dist == FLT_MAX )
 				continue;
 
@@ -597,6 +604,17 @@ bool CAI_Pathfinder::IsLinkUsable(CAI_Link *pLink, int startID)
 	// --------------------------------------------------------------------------
 	// Skip if link turned off
 	// --------------------------------------------------------------------------
+#ifdef MAPBASE
+	if (pLink->m_pDynamicLink)
+	{
+		if (!pLink->m_pDynamicLink->UseAllowed(GetOuter(), startID == pLink->m_pDynamicLink->m_nDestID))
+			return false;
+	}
+	else if (pLink->m_LinkInfo & bits_LINK_OFF)
+	{
+		return false;
+	}
+#else
 	if (pLink->m_LinkInfo & bits_LINK_OFF)
 	{
 		CAI_DynamicLink *pDynamicLink = pLink->m_pDynamicLink;
@@ -618,6 +636,7 @@ bool CAI_Pathfinder::IsLinkUsable(CAI_Link *pLink, int startID)
 				return false;
 		}
 	}
+#endif
 
 	// --------------------------------------------------------------------------			
 	//  Get the destination nodeID
@@ -691,6 +710,12 @@ bool CAI_Pathfinder::IsLinkUsable(CAI_Link *pLink, int startID)
 			return false;
 		}
 	}
+#ifdef MAPBASE
+	if (pLink->m_pDynamicLink)
+	{
+		return pLink->m_pDynamicLink->FinalUseAllowed(GetOuter(), startID == pLink->m_pDynamicLink->m_nDestID);
+	}
+#endif
 	return true;
 }
 

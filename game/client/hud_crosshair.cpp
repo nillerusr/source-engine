@@ -259,9 +259,12 @@ void CHudCrosshair::Paint( void )
 	}
 
 	int iScreenDiv = 1600;
+
+#ifdef GAMEPADUI
 	if ( IsSteamDeck() )
 		iScreenDiv = 1440;
-
+#endif
+	
 	float flPlayerScale;
 	if ( !m_pCrosshair->bRenderUsingFont )
 		flPlayerScale = (ScreenHeight() / iScreenDiv) + 1;

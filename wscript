@@ -94,6 +94,8 @@ projects={
 		'utils/vtex',
 		'unicode',
 		'video',
+		'vscript',
+		'raytrace'
 	],
 	'tests': [
 		'appframework',

@@ -16,6 +16,7 @@ $Configuration
 	{
 		$AdditionalIncludeDirectories	".\hl2;.\hl2\elements;$SRCDIR\game\shared\hl2;$BASE"
 		$PreprocessorDefinitions		"$BASE;HL2_CLIENT_DLL"
+		$PreprocessorDefinitions		"$BASE;CSS_WEAPONS_IN_HL2"
 	}
 }
 
@@ -73,7 +74,7 @@ $Project "Client (HL2)"
 			$File	"hl2\c_weapon__stubs_hl2.cpp"
 			$File	"hl2\c_weapon_crossbow.cpp"
 			$File	"hl2\c_weapon_physcannon.cpp"
-			$File	"hl2\c_weapon_stunstick.cpp"
+			$File	"hl2\c_weapon_stunstick.cpp" [!$MAPBASE] // See client_mapbase.vpc
 			$File	"$SRCDIR\game\shared\hl2\citadel_effects_shared.h"
 			$File	"hl2\clientmode_hlnormal.cpp"
 			$File	"hl2\clientmode_hlnormal.h"
@@ -111,6 +112,18 @@ $Project "Client (HL2)"
 			$File	"hl2\shieldproxy.cpp"
 			$File	"hl2\vgui_rootpanel_hl2.cpp"
 			$File 	"episodic\c_vort_charge_token.cpp"
+
+			$Folder	"CS:S Weapons"
+			{
+				//$File	"$SRCDIR\game\shared\hl2\weapon_css_base_activitylists.cpp"
+				$File	"$SRCDIR\game\shared\hl2\weapon_css_base.cpp"
+				$File	"$SRCDIR\game\shared\hl2\weapon_css_base.h"
+				$File	"$SRCDIR\game\shared\hl2\weapon_css_pistols.cpp"
+				$File	"$SRCDIR\game\shared\hl2\weapon_css_rifles.cpp"
+				$File	"$SRCDIR\game\shared\hl2\weapon_css_shotguns.cpp"
+				$File	"$SRCDIR\game\shared\hl2\weapon_css_smgs.cpp"
+				$File	"$SRCDIR\game\shared\hl2\weapon_css_misc.cpp"
+			}
 		}
 	}
 }

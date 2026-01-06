@@ -71,6 +71,67 @@ IMPLEMENT_NETWORKCLASS_ALIASED( GameRulesProxy, DT_GameRulesProxy )
 BEGIN_NETWORK_TABLE_NOBASE( CGameRulesProxy, DT_GameRulesProxy )
 END_NETWORK_TABLE()
 
+#ifdef MAPBASE_VSCRIPT
+BEGIN_SCRIPTDESC_ROOT( CGameRules, SCRIPT_SINGLETON "The container of the game's rules, handling behavior which could be different on a game-by-game basis." )
+
+	DEFINE_SCRIPTFUNC( Name, "Gets the name of these rules." )
+
+	DEFINE_SCRIPTFUNC( Damage_IsTimeBased, "Damage types that are time-based." )
+	DEFINE_SCRIPTFUNC( Damage_ShouldGibCorpse, "Damage types that gib the corpse." )
+	DEFINE_SCRIPTFUNC( Damage_ShowOnHUD, "Damage types that have client HUD art." )
+	DEFINE_SCRIPTFUNC( Damage_NoPhysicsForce, "Damage types that don't have to supply a physics force & position." )
+	DEFINE_SCRIPTFUNC( Damage_ShouldNotBleed, "Damage types that don't make the player bleed." )
+
+	DEFINE_SCRIPTFUNC( ShouldCollide, "Returns whether two collision groups collide with each other in this game." )
+
+	DEFINE_SCRIPTFUNC( DefaultFOV, "Default player FOV in this game." )
+
+	DEFINE_SCRIPTFUNC( GetDamageMultiplier, "Ammo type damage multiplier." )
+
+	DEFINE_SCRIPTFUNC( IsMultiplayer, "Returns true if this is a multiplayer game (like co-op or deathmatch)." )
+
+	DEFINE_SCRIPTFUNC( InRoundRestart, "Returns true if the round is restarting." )
+
+	DEFINE_SCRIPTFUNC( AllowThirdPersonCamera, "Returns true if third-person camera is allowed." )
+
+#ifdef CLIENT_DLL
+
+	DEFINE_SCRIPTFUNC( IsBonusChallengeTimeBased, "" )
+	DEFINE_SCRIPTFUNC( AllowMapParticleEffect, "" )
+	DEFINE_SCRIPTFUNC( AllowWeatherParticles, "" )
+	DEFINE_SCRIPTFUNC( AllowMapVisionFilterShaders, "" )
+	DEFINE_SCRIPTFUNC( TranslateEffectForVisionFilter, "" )
+	DEFINE_SCRIPTFUNC( IsLocalPlayer, "" )
+	DEFINE_SCRIPTFUNC( ShouldWarnOfAbandonOnQuit, "" )
+
+#else
+
+	DEFINE_SCRIPTFUNC( RefreshSkillData, "" )
+
+	DEFINE_SCRIPTFUNC( IsSkillLevel, "Returns true if the game is set to the specified difficulty/skill level." )
+	DEFINE_SCRIPTFUNC( GetSkillLevel, "Returns the game's difficulty/skill level." )
+	DEFINE_SCRIPTFUNC( SetSkillLevel, "Sets the game's difficulty/skill level." )
+
+	DEFINE_SCRIPTFUNC_NAMED( FAllowFlashlight, "AllowFlashlight", "Returns true if players are allowed to switch on their flashlight." )
+
+	DEFINE_SCRIPTFUNC( IsDeathmatch, "" )
+	DEFINE_SCRIPTFUNC( IsTeamplay, "" )
+	DEFINE_SCRIPTFUNC( IsCoOp, "" )
+
+	DEFINE_SCRIPTFUNC( GetGameDescription, "This is the game description that gets seen in server browsers." )
+
+	DEFINE_SCRIPTFUNC( AllowSPRespawn, "" )
+
+	DEFINE_SCRIPTFUNC_NAMED( FAllowNPCs, "AllowNPCs", "Returns true if NPCs are allowed." )
+
+#endif
+
+	DEFINE_SCRIPTFUNC( GetGameTypeName, "" )
+	DEFINE_SCRIPTFUNC( GetGameType, "" )
+
+END_SCRIPTDESC()
+#endif
+
 
 CGameRulesProxy::CGameRulesProxy()
 {
@@ -606,6 +667,30 @@ void CGameRules::EndGameFrame( void )
 		ApplyMultiDamage();
 	}
 }
+
+#ifdef MAPBASE
+void CGameRules::OnSkillLevelChanged( int iNewLevel )
+{
+	variant_t varNewLevel;
+	varNewLevel.SetInt(iNewLevel);
+
+	// Iterate through all logic_skill entities and fire them
+	CBaseEntity *pEntity = gEntList.FindEntityByClassname(NULL, "logic_skill");
+	while (pEntity)
+	{
+		pEntity->AcceptInput("SkillLevelChanged", UTIL_GetLocalPlayer(), NULL, varNewLevel, 0);
+		pEntity = gEntList.FindEntityByClassname(pEntity, "logic_skill");
+	}
+
+	// Fire game event for difficulty level changed
+	IGameEvent *event = gameeventmanager->CreateEvent("skill_changed");
+	if (event)
+	{
+		event->SetInt("skill_level", iNewLevel);
+		gameeventmanager->FireEvent(event);
+	}
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // trace line rules

@@ -8,6 +8,9 @@
 #include "entitylist.h"
 #include "ai_basenpc.h"
 #include "npc_citizen17.h"
+#ifdef EZ
+#include "npc_combine.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -142,9 +145,11 @@ void CAI_AllyManager::CountAllies( int *pTotal, int *pMedics )
 			if( ppAIs[i]->Classify() == CLASS_PLAYER_ALLY_VITAL )
 				continue;
 
+#ifndef EZ // Blixibon - Needed so (regenerating) soldiers can pass through. It's checked by another function later anyway.
 			// They only count if I can use them.
 			if( ppAIs[i]->HasSpawnFlags(SF_CITIZEN_NOT_COMMANDABLE) )
 				continue;
+#endif
 			
 			// They only count if I can use them.
 			if( ppAIs[i]->IRelationType( UTIL_GetLocalPlayer() ) != D_LI )
@@ -157,6 +162,16 @@ void CAI_AllyManager::CountAllies( int *pTotal, int *pMedics )
 				  fabsf( ppAIs[i]->GetAbsOrigin().z - vPlayerPos.z ) > 192 ) )
 				continue;
 
+#ifdef EZ
+			// Blixibon - The soldiers' "IsCommandable" function only checks the spawnflag, so it's fine here
+			if( FClassnameIs( ppAIs[i], "npc_combine_s" ) ) 
+			{
+				CNPC_Combine *pCombine = assert_cast<CNPC_Combine*>(ppAIs[i]);
+				if ( !pCombine->IsCommandable() )
+					continue;
+			}
+			else
+#endif
 			if( FClassnameIs( ppAIs[i], "npc_citizen" ) ) 
 			{  
 				CNPC_Citizen *pCitizen = assert_cast<CNPC_Citizen *>(ppAIs[i]);

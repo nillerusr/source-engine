@@ -30,6 +30,8 @@
 #include "props.h"
 #include "particle_parse.h"
 #include "ai_tacticalservices.h"
+#include "npc_combine.h"
+#include "pointhurt.h"
 
 #ifdef HL2_EPISODIC
 #include "grenade_spit.h"
@@ -43,6 +45,7 @@ ConVar	g_debug_antlion( "g_debug_antlion", "0" );
 
 // base antlion stuff
 ConVar	sk_antlion_health( "sk_antlion_health", "0" );
+ConVar	sk_plr_kicks_to_kill_antlion("sk_plr_kicks_to_kill_antlion", "0");
 ConVar	sk_antlion_swipe_damage( "sk_antlion_swipe_damage", "0" );
 ConVar	sk_antlion_jump_damage( "sk_antlion_jump_damage", "0" );
 ConVar  sk_antlion_air_attack_dmg( "sk_antlion_air_attack_dmg", "0" );
@@ -65,9 +68,14 @@ ConVar  sk_antlion_worker_burst_radius( "sk_antlion_worker_burst_radius", "160",
 
 ConVar  g_test_new_antlion_jump( "g_test_new_antlion_jump", "1", FCVAR_ARCHIVE );
 ConVar	antlion_easycrush( "antlion_easycrush", "1" );
+#ifdef MAPBASE
+ConVar	antlion_no_ignite_die( "antlion_no_ignite_die", "0" );
+#endif
 ConVar g_antlion_cascade_push( "g_antlion_cascade_push", "1", FCVAR_ARCHIVE );
  
 ConVar g_debug_antlion_worker( "g_debug_antlion_worker", "0" );
+
+ConVar sv_antlion_glow("sv_antlion_glow", "1");
 
 extern ConVar bugbait_radius;
 
@@ -107,9 +115,19 @@ int AE_ANTLION_WORKER_DONT_EXPLODE;
 //Interaction IDs
 int g_interactionAntlionFoundTarget = 0;
 int g_interactionAntlionFiredAtTarget = 0;
+#ifdef EZ
+extern int g_interactionCombineBash;
+#endif
+#ifdef EZ2
+extern int g_interactionBadCopKick;
+#endif
 
 #define	ANTLION_MODEL			"models/antlion.mdl"
+#define	ANTLION_XEN_MODEL		"models/antlion_xen.mdl"
+#define	ANTLION_BLUE_MODEL		"models/antlion_blue.mdl"
+#define	ANTLION_BLOOD_MODEL		"models/bloodlion.mdl"
 #define ANTLION_WORKER_MODEL	"models/antlion_worker.mdl"
+#define ANTLION_WORKER_BLOOD_MODEL	"models/bloodlion_worker.mdl"
 
 #define	ANTLION_BURROW_IN	0
 #define	ANTLION_BURROW_OUT	1
@@ -185,6 +203,11 @@ CNPC_Antlion::CNPC_Antlion( void )
 	m_bForcedStuckJump = false;
 	m_nBodyBone = -1;
 	m_bSuppressUnburrowEffects = false;
+
+#ifdef EZ
+	// Antlions should investigate sounds in EZ2
+	m_bInvestigateSounds = true;
+#endif
 }
 
 LINK_ENTITY_TO_CLASS( npc_antlion, CNPC_Antlion );
@@ -247,6 +270,9 @@ BEGIN_DATADESC( CNPC_Antlion )
 	DEFINE_INPUTFUNC( FIELD_VOID,	"IgnoreBugbait", InputIgnoreBugbait ),
 	DEFINE_INPUTFUNC( FIELD_VOID,	"HearBugbait", InputHearBugbait ),
 	DEFINE_INPUTFUNC( FIELD_STRING,	"JumpAtTarget", InputJumpAtTarget ),
+#ifdef MAPBASE
+	DEFINE_INPUTFUNC( FIELD_STRING,	"SetFollowTarget", InputSetFollowTarget ),
+#endif
 
 	DEFINE_OUTPUT( m_OnReachFightGoal, "OnReachedFightGoal" ),
 	DEFINE_OUTPUT( m_OnUnBurrowed, "OnUnBurrowed" ),
@@ -274,14 +300,31 @@ void CNPC_Antlion::Spawn( void )
 #ifdef HL2_EPISODIC
 	if ( IsWorker() )
 	{
-		SetModel( ANTLION_WORKER_MODEL );
+#ifdef EZ
+		SetModel( DefaultOrCustomModel(m_tEzVariant == EZ_VARIANT_BLOODLION ? ANTLION_WORKER_BLOOD_MODEL : ANTLION_WORKER_MODEL) );
+#else
+		SetModel( DefaultOrCustomModel(ANTLION_WORKER_MODEL) );
+#endif
 		AddSpawnFlags( SF_NPC_LONG_RANGE );
 		SetBloodColor( BLOOD_COLOR_ANTLION_WORKER );
 	}
 	else
 	{
+#ifdef EZ
+		SetModel( STRING(GetModelName()) );
+
+		if (m_tEzVariant == EZ_VARIANT_RAD)
+		{
+			SetBloodColor( BLOOD_COLOR_BLUE );
+		}
+		else
+		{
+			SetBloodColor( BLOOD_COLOR_ANTLION );
+		}
+#else
 		SetModel( ANTLION_MODEL );
 		SetBloodColor( BLOOD_COLOR_ANTLION );
+#endif
 	}
 #else
 	SetModel( ANTLION_MODEL );
@@ -361,6 +404,46 @@ void CNPC_Antlion::Spawn( void )
 	BaseClass::Spawn();
 
 	m_nSkin = random->RandomInt( 0, ANTLION_SKIN_COUNT-1 );
+
+#if defined(MAPBASE) && defined(HL2_EPISODIC)
+	// Implement dynamic interactions here since we can't recompile the model
+	if (GetModelPtr())
+	{
+		ScriptedNPCInteraction_t sInteraction01;
+		sInteraction01.iszInteractionName = AllocPooledString( "antlion_v_soldier_01" );
+		sInteraction01.sPhases[SNPCINT_SEQUENCE].iszSequence = AllocPooledString( "antlion_soldier_DI_01" );
+
+		sInteraction01.vecRelativeOrigin = Vector(224, 0, 0);
+		sInteraction01.angRelativeAngles = QAngle(0, 180, 0);
+		//sInteraction01.iFlags |= SCNPC_FLAG_TEST_OTHER_ANGLES;
+		sInteraction01.iFlags |= SCNPC_FLAG_TEST_END_POSITION;
+		sInteraction01.vecRelativeEndPos = Vector(312, -10, 0);
+		sInteraction01.iTriggerMethod = SNPCINT_AUTOMATIC_IN_COMBAT;
+		sInteraction01.flDelay = 15.0f;
+		sInteraction01.iFlags |= SCNPC_FLAG_MAPBASE_ADDITION;
+		sInteraction01.flDistSqr = (8 * 8);
+#ifdef EZ
+		sInteraction01.iFlags |= SCNPC_FLAG_TEST_SQUADMATE_HEALTH;
+#endif
+
+		ScriptedNPCInteraction_t sInteraction02;
+		sInteraction02.iszInteractionName = AllocPooledString( "antlion_v_soldier_02" );
+		sInteraction02.sPhases[SNPCINT_SEQUENCE].iszSequence = AllocPooledString( "antlion_soldier_DI_02" );
+
+		sInteraction02.vecRelativeOrigin = Vector(64, 0, 0);
+		sInteraction02.angRelativeAngles = QAngle(0, 180, 0);
+		//sInteraction01.iFlags |= SCNPC_FLAG_TEST_OTHER_ANGLES;
+		sInteraction02.iTriggerMethod = SNPCINT_AUTOMATIC_IN_COMBAT;
+		sInteraction02.flDelay = 7.5f;
+		sInteraction02.iFlags |= SCNPC_FLAG_MAPBASE_ADDITION;
+		sInteraction02.flDistSqr = (8 * 8);
+#ifdef EZ
+		sInteraction02.iFlags |= SCNPC_FLAG_TEST_SQUADMATE_HEALTH;
+#endif
+		AddScriptedNPCInteraction(&sInteraction01);
+		AddScriptedNPCInteraction(&sInteraction02);
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -427,8 +510,26 @@ void CNPC_Antlion::Precache( void )
 #ifdef HL2_EPISODIC
 	if ( IsWorker() )
 	{
+#ifdef EZ
+		if (GetModelName() == NULL_STRING)
+		{
+			switch (m_tEzVariant)
+			{
+				case EZ_VARIANT_BLOODLION:
+					SetModelName( AllocPooledString( ANTLION_WORKER_BLOOD_MODEL ) );
+					break;
+				default:
+					SetModelName( AllocPooledString( ANTLION_WORKER_MODEL ) );
+					break;
+			}
+		}
+
+		PrecacheModel( STRING(GetModelName()) );
+		PropBreakablePrecacheAll( GetModelName() );
+#else
 		PrecacheModel( ANTLION_WORKER_MODEL );
 		PropBreakablePrecacheAll( MAKE_STRING( ANTLION_WORKER_MODEL ) );
+#endif
 		UTIL_PrecacheOther( "grenade_spit" );
 		PrecacheParticleSystem( "blood_impact_antlion_worker_01" );
 		PrecacheParticleSystem( "antlion_gib_02" );
@@ -436,12 +537,45 @@ void CNPC_Antlion::Precache( void )
 	}
 	else
 #endif // HL2_EPISODIC
+#ifdef EZ
+	if (GetModelName() == NULL_STRING)
+	{
+		switch (m_tEzVariant)
+		{
+			case EZ_VARIANT_RAD:
+				SetModelName( AllocPooledString( ANTLION_BLUE_MODEL ) );
+				break;
+			case EZ_VARIANT_XEN:
+				SetModelName( AllocPooledString( ANTLION_XEN_MODEL ) );
+				break;
+			case EZ_VARIANT_BLOODLION:
+				SetModelName( AllocPooledString( ANTLION_BLOOD_MODEL ) );
+				break;
+			default:
+				SetModelName( AllocPooledString( ANTLION_MODEL ) );
+				break;
+		}
+	}
+	
+	PrecacheModel( STRING( GetModelName() ) );
+	PropBreakablePrecacheAll( GetModelName() );
+	PrecacheParticleSystem( "AntlionGib" );
+	if (m_tEzVariant == EZ_VARIANT_RAD) 
+	{
+		PrecacheParticleSystem( "blood_impact_blue_01" );
+	}
+	else 
+	{
+		PrecacheParticleSystem( "blood_impact_antlion_01" );
+	}
+#else
 	{
 		PrecacheModel( ANTLION_MODEL );
 		PropBreakablePrecacheAll( MAKE_STRING( ANTLION_MODEL ) );
 		PrecacheParticleSystem( "blood_impact_antlion_01" );
 		PrecacheParticleSystem( "AntlionGib" );
 	}
+#endif
 
 	for ( int i = 0; i < NUM_ANTLION_GIBS_UNIQUE; ++i )
 	{
@@ -656,14 +790,20 @@ void CNPC_Antlion::MeleeAttack( float distance, float damage, QAngle &viewPunch,
 	{
 		vecForceDir = ( pHurt->WorldSpaceCenter() - WorldSpaceCenter() );
 
+#ifndef EZ // BREADMAN commented out
 		//FIXME: Until the interaction is setup, kill combine soldiers in one hit -- jdw
+#ifdef MAPBASE
+		if ( pHurt->Classify() == CLASS_COMBINE && FClassnameIs( pHurt, "npc_combine_s" ) && GlobalEntity_GetState("antlion_noinstakill") != GLOBAL_ON )
+#else
 		if ( FClassnameIs( pHurt, "npc_combine_s" ) )
+#endif
 		{
 			CTakeDamageInfo	dmgInfo( this, this, pHurt->m_iHealth+25, DMG_SLASH );
 			CalculateMeleeDamageForce( &dmgInfo, vecForceDir, pHurt->GetAbsOrigin() );
 			pHurt->TakeDamage( dmgInfo );
 			return;
 		}
+#endif
 
 		CBasePlayer *pPlayer = ToBasePlayer( pHurt );
 
@@ -2465,6 +2605,38 @@ int CNPC_Antlion::SelectSchedule( void )
 						return SCHED_ANTLION_WORKER_RANGE_ATTACK1;
 					}
 				}
+
+#ifdef MAPBASE
+				// "Nemesis" is assigned to enemies we hate with 10+ priority.
+				// Since bugbait targets are given 99 priority, this means the AI here usually only applies
+				// when the antlion worker is following bugbait.
+				// 
+				// This is just so antlion workers are more potent when commanded by bugbait,
+				// which wasn't explored in the official games, but may be used in HL2 mods.
+				if ( m_hFollowTarget && IsAllied() /*HasCondition( COND_SEE_NEMESIS )*/ )
+				{
+					// Establish LOF if we can't see the enemy
+					if ( HasCondition( COND_ENEMY_OCCLUDED ) )
+						return SCHED_ESTABLISH_LINE_OF_FIRE;
+
+					// See if we need to destroy breakable cover
+					if ( HasCondition( COND_WEAPON_SIGHT_OCCLUDED ) )
+						return SCHED_SHOOT_ENEMY_COVER;
+
+					// Just face as usual if we're not too close to attack,
+					// otherwise fall back to base class and charge like any other antlion
+					if ( !HasCondition( COND_TOO_CLOSE_TO_ATTACK ) )
+					{
+						// Run around randomly if our target is looking in our direction
+						if ( HasCondition( COND_BEHIND_ENEMY ) == false )
+							return SCHED_ANTLION_WORKER_RUN_RANDOM;
+
+						return SCHED_COMBAT_FACE;
+					}
+				}
+				else
+				{
+#endif
 				
 				// Back up, we're too near an enemy or can't see them
 				if ( HasCondition( COND_TOO_CLOSE_TO_ATTACK ) || HasCondition( COND_ENEMY_OCCLUDED ) )
@@ -2480,6 +2652,9 @@ int CNPC_Antlion::SelectSchedule( void )
 
 				// Face our target and continue to fire
 				return SCHED_COMBAT_FACE;
+#ifdef MAPBASE
+				}
+#endif
 			}
 			else
 			{
@@ -2544,6 +2719,15 @@ int CNPC_Antlion::SelectSchedule( void )
 void CNPC_Antlion::Ignite ( float flFlameLifetime, bool bNPCOnly, float flSize, bool bCalledByLevelDesigner )
 {
 #ifdef HL2_EPISODIC
+
+#ifdef MAPBASE
+	if (antlion_no_ignite_die.GetBool())
+	{
+		BaseClass::Ignite(flFlameLifetime, bNPCOnly, flSize, bCalledByLevelDesigner);
+		return;
+	}
+#endif
+
 	float flDamage = m_iHealth + 1;
 
 	CTakeDamageInfo	dmgInfo( this, this, flDamage, DMG_GENERIC );
@@ -2887,7 +3071,11 @@ int CNPC_Antlion::MeleeAttack1Conditions( float flDot, float flDist )
 	AI_TraceHull( WorldSpaceCenter(), GetEnemy()->WorldSpaceCenter(), -Vector(8,8,8), Vector(8,8,8), MASK_NPCSOLID, this, COLLISION_GROUP_NONE, &tr );
 
 	// If the hit entity isn't our target and we don't hate it, don't hit it
+#ifdef MAPBASE
+	if ( tr.m_pEnt != GetEnemy() && tr.fraction < 1.0f && IRelationType( tr.m_pEnt ) > D_FR )
+#else
 	if ( tr.m_pEnt != GetEnemy() && tr.fraction < 1.0f && IRelationType( tr.m_pEnt ) != D_HT )
+#endif
 		return 0;
 
 #else
@@ -2995,6 +3183,46 @@ bool CNPC_Antlion::HandleInteraction( int interactionType, void *data, CBaseComb
 
 		return true;
 	}
+
+#ifdef EZ
+	// This code was originally created by 1upD as an extension of the original melee attack code,
+	// but it was moved to here by Blixibon since this is what the interaction was designed for.
+	// It also allows the code to operate from the antlion itself and doesn't need to use any casts.
+	bool interactionIsCombineBash = interactionType == g_interactionCombineBash;
+#ifdef EZ2
+	// In EZ2, Bad Cop's kick counts as a Combine bash
+	interactionIsCombineBash = interactionIsCombineBash || interactionType == g_interactionBadCopKick;
+#endif
+
+	if ( interactionIsCombineBash )
+	{
+		Vector vecDir = ( GetAbsOrigin() - sender->GetAbsOrigin() );
+		VectorNormalize(vecDir);
+
+		// This sets up the knockback. We don't need anything complicated.
+		vecDir *= 256.0f;
+		vecDir[2] = 32.0f;
+
+		// Antlions should flip and be pushed back after being hit by a Combine melee.
+		ApplyAbsVelocityImpulse( vecDir );
+		Flip();
+
+		// If the player kicks the antlion, it receives concussion damage without bleeding - HEVcrab
+		if (sender->IsPlayer())
+		{
+			if (sk_plr_kicks_to_kill_antlion.GetFloat() > 0)
+			{
+				float dmg = sk_antlion_health.GetFloat() / sk_plr_kicks_to_kill_antlion.GetFloat(); // Receive damage of 1/kicks_to_kill... fraction of Antlion's max health to kill in kicks_to_kill kick hits
+				CTakeDamageInfo	dmgInfo(sender, sender, dmg, DMG_CLUB);
+				TakeDamage(dmgInfo); // re-enable kick damage to antlions, melee attack should be able to kill the first encountered enemy - HEVcrab
+			}
+			return true;
+		}
+
+		// Return false so the original melee damage code still runs.
+		return false;
+	}
+#endif
 
 	// fixed for episodic: allow interactions to fall through in the base class. ifdefed away
 	// for mainline in case anything depends on this bug.
@@ -4224,6 +4452,25 @@ void CNPC_Antlion::SetFollowTarget( CBaseEntity *pTarget )
 	}
 }
 
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input  : &inputdata - 
+//-----------------------------------------------------------------------------
+void CNPC_Antlion::InputSetFollowTarget( inputdata_t &inputdata )
+{
+	if ( IsAlive() == false )
+		return;
+
+	CBaseEntity *pEntity = gEntList.FindEntityByName( NULL, inputdata.value.String(), NULL, inputdata.pActivator, inputdata.pCaller );
+
+	if ( pEntity != NULL )
+	{
+		SetFollowTarget( pEntity );
+	}
+}
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Output : Returns true on success, false on failure.
@@ -4438,12 +4685,79 @@ bool CNPC_Antlion::IsHeavyDamage( const CTakeDamageInfo &info )
 bool CNPC_Antlion::CanRunAScriptedNPCInteraction( bool bForced /*= false*/ )
 {
 	// Workers shouldn't do DSS's because they explode
+#ifdef MAPBASE
+	// Now that antlions have their DI restored, one might want workers to use them as well.
+	// Forced interactions are allowed now, but I went a step further and enabling dynamic interactions
+	// will disregard this check. This will allow vortigaunts to use dangerous melee interactions with workers,
+	// but if you're concerned about that just turn the antlion's interactions off.
+	if ( IsWorker() && !bForced && m_iDynamicInteractionsAllowed != TRS_TRUE )
+#else
 	if ( IsWorker() )
+#endif
 		return false;
 
 	return BaseClass::CanRunAScriptedNPCInteraction( bForced );
 }
+#ifdef EZ2
+//-----------------------------------------------------------------------------
+// Purpose: g l o w i n g
+//			b u t t s
+//-----------------------------------------------------------------------------
+EyeGlow_t * CNPC_Antlion::GetEyeGlowData(int i)
+{
+	EyeGlow_t * eye_Glow = BaseClass::GetEyeGlowData(i);
+	if (eye_Glow != NULL)
+		return eye_Glow;
 
+	// Only the first glow is valid
+	if (i != 0)
+		return NULL;
+
+	// Default variants have no glow
+	if ( m_tEzVariant == EZ_VARIANT_DEFAULT )
+		return NULL;
+
+	// Antlion workers have no glow
+	if (IsWorker())
+		return NULL;
+
+	if (LookupAttachment( "back" ) == -1)
+		return NULL;
+
+	// Color to use in sprite
+	EyeGlow_t * eyeGlow = new EyeGlow_t();
+	switch ( m_tEzVariant )
+	{
+		case EZ_VARIANT_XEN:
+			eyeGlow->red = 50;
+			eyeGlow->green = 150;
+			eyeGlow->blue = 25;
+			eyeGlow->alpha = 200;
+			break;
+		case EZ_VARIANT_RAD:
+			eyeGlow->red = 0;
+			eyeGlow->green = 255;
+			eyeGlow->blue = 255;
+			eyeGlow->alpha = 200;
+			break;
+		case EZ_VARIANT_BLOODLION:
+		default:
+			eyeGlow->red = 250;
+			eyeGlow->green = 85;
+			eyeGlow->blue = 5;
+			eyeGlow->alpha = 200;
+			break;
+	}
+	eyeGlow->spriteName = MAKE_STRING("sprites/light_glow02.vmt");
+
+	eyeGlow->attachment = MAKE_STRING("back");
+	eyeGlow->scale = 1.0f;
+	eyeGlow->proxyScale = 10.0f;
+	eyeGlow->renderMode = kRenderGlow;
+
+	return eyeGlow;
+}
+#endif
 //---------------------------------------------------------
 // Save/Restore
 //---------------------------------------------------------

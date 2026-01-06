@@ -18,6 +18,13 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+#ifdef MAPBASE
+// This turned out to be causing major issues with VPhysics collision.
+// It's deactivated until a fix is found.
+// See prediction.cpp as well.
+//#define PLAYER_COMMAND_FIX 1
+#endif
+
 extern IGameMovement *g_pGameMovement;
 extern CMoveData *g_pMoveData;	// This is a global because it is subclassed by each game.
 extern ConVar sv_noclipduringpause;
@@ -52,20 +59,25 @@ void CPlayerMove::StartCommand( CBasePlayer *player, CUserCmd *cmd )
 #if defined (HL2_DLL)
 	// pull out backchannel data and move this out
 
-	int i;
-	for (i = 0; i < cmd->entitygroundcontact.Count(); i++)
+	// Let's not bother with IK Ground Contact Info in MP games -- the system needs to be re-worked, every client sends down the same info for each entity, so how would it determine which to use?
+	if ( 1 == gpGlobals->maxClients )
 	{
-		int entindex =  cmd->entitygroundcontact[i].entindex;
-		CBaseEntity *pEntity = CBaseEntity::Instance( engine->PEntityOfEntIndex( entindex) );
-		if (pEntity)
+		int i;
+		for (i = 0; i < cmd->entitygroundcontact.Count(); i++)
 		{
-			CBaseAnimating *pAnimating = pEntity->GetBaseAnimating();
-			if (pAnimating)
+			int entindex =  cmd->entitygroundcontact[i].entindex;
+			CBaseEntity *pEntity = CBaseEntity::Instance( engine->PEntityOfEntIndex( entindex) );
+			if (pEntity)
 			{
-				pAnimating->SetIKGroundContactInfo( cmd->entitygroundcontact[i].minheight, cmd->entitygroundcontact[i].maxheight );
+				CBaseAnimating *pAnimating = pEntity->GetBaseAnimating();
+				if (pAnimating)
+				{
+					pAnimating->SetIKGroundContactInfo( cmd->entitygroundcontact[i].minheight, cmd->entitygroundcontact[i].maxheight );
+				}
 			}
 		}
 	}
+
 
 #endif
 }
@@ -381,7 +393,7 @@ void CPlayerMove::RunCommand ( CBasePlayer *player, CUserCmd *ucmd, IMoveHelper 
 		if ( weapon )
 		{
 			VPROF( "player->SelectItem()" );
-			player->SelectItem( weapon->GetName(), ucmd->weaponsubtype );
+			player->SelectItem( weapon->GetClassname(), ucmd->weaponsubtype );
 		}
 	}
 
@@ -417,6 +429,13 @@ void CPlayerMove::RunCommand ( CBasePlayer *player, CUserCmd *ucmd, IMoveHelper 
 		player->pl.v_angle = ucmd->viewangles + player->pl.anglechange;
 	}
 
+#ifdef PLAYER_COMMAND_FIX
+	// Let server invoke any needed impact functions
+	VPROF_SCOPE_BEGIN( "moveHelper->ProcessImpacts" );
+	moveHelper->ProcessImpacts();
+	VPROF_SCOPE_END();
+#endif
+
 	// Call standard client pre-think
 	RunPreThink( player );
 
@@ -438,16 +457,22 @@ void CPlayerMove::RunCommand ( CBasePlayer *player, CUserCmd *ucmd, IMoveHelper 
 		VPROF( "pVehicle->ProcessMovement()" );
 		pVehicle->ProcessMovement( player, g_pMoveData );
 	}
+
+#ifdef PLAYER_COMMAND_FIX
+	RunPostThink( player );
+#endif
 			
 	// Copy output
 	FinishMove( player, ucmd, g_pMoveData );
 
+#ifndef PLAYER_COMMAND_FIX
 	// Let server invoke any needed impact functions
 	VPROF_SCOPE_BEGIN( "moveHelper->ProcessImpacts" );
 	moveHelper->ProcessImpacts();
 	VPROF_SCOPE_END();
 
 	RunPostThink( player );
+#endif
 
 	g_pGameMovement->FinishTrackPredictionErrors( player );
 

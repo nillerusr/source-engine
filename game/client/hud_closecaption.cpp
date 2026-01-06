@@ -31,12 +31,20 @@
 extern ISoundEmitterSystemBase *soundemitterbase;
 
 // Marked as FCVAR_USERINFO so that the server can cull CC messages before networking them down to us!!!
+#ifdef MAPBASE
+ConVar closecaption( "closecaption", "1", FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX | FCVAR_USERINFO, "Enable close captioning." );
+#else
 ConVar closecaption( "closecaption", "0", FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX | FCVAR_USERINFO, "Enable close captioning." );
+#endif
 extern ConVar cc_lang;
 static ConVar cc_linger_time( "cc_linger_time", "1.0", FCVAR_ARCHIVE, "Close caption linger time." );
 static ConVar cc_predisplay_time( "cc_predisplay_time", "0.25", FCVAR_ARCHIVE, "Close caption delay before showing caption." );
 static ConVar cc_captiontrace( "cc_captiontrace", "1", 0, "Show missing closecaptions (0 = no, 1 = devconsole, 2 = show in hud)" );
+#ifdef MAPBASE
+static ConVar cc_subtitles( "cc_subtitles", "1", FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX, "If set, don't show sound effect captions, just voice overs (i.e., won't help hearing impaired players)." );
+#else
 static ConVar cc_subtitles( "cc_subtitles", "0", FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX, "If set, don't show sound effect captions, just voice overs (i.e., won't help hearing impaired players)." );
+#endif
 ConVar english( "english", "1", FCVAR_USERINFO, "If set to 1, running the english language set of assets." );
 static ConVar cc_smallfontlength( "cc_smallfontlength", "300", 0, "If text stream is this long, force usage of small font size." );
 
@@ -1484,9 +1492,23 @@ void CHudCloseCaption::Process( const wchar_t *stream, float duration, const cha
 
 	if ( m_Items.Count() > 0 )
 	{
+#ifndef MAPBASE
 		// Get the remaining life span of the last item
 		CCloseCaptionItem *final = m_Items[ m_Items.Count() - 1 ];
 		float prevlife = final->GetTimeToLive();
+#else
+		float prevlife = 0.f;
+		// Get the remaining life span of the last displayed item
+		for (int i = m_Items.Count() - 1; i >= 0; i--)
+		{
+			if (m_Items[i]->GetPreDisplayTime() > cc_predisplay_time.GetFloat())
+				continue;
+
+			prevlife = m_Items[i]->GetTimeToLive();
+			break;
+		}
+#endif // !MAPBASE
+
 
 		if ( prevlife > lifespan )
 		{
@@ -1520,7 +1542,31 @@ void CHudCloseCaption::Process( const wchar_t *stream, float duration, const cha
 				if ( wcslen( phrase ) > 0 )
 				{
 					CCloseCaptionItem *item = new CCloseCaptionItem( phrase, lifespan, addedlife, delay, valid, fromplayer );
-					m_Items.AddToTail( item );
+#ifdef MAPBASE
+					if (m_Items.Count())
+					{
+						// Add it where it will appear
+						for (int i = m_Items.Count() - 1; i >= 0; i--)
+						{
+							if (m_Items[i]->GetPreDisplayTime() > delay + cc_predisplay_time.GetFloat())
+							{
+								if (i == 0)
+								{
+									m_Items.AddToHead(item);
+									break;
+								}
+								else
+									continue;
+							}
+
+							m_Items.InsertAfter(i, item);
+							break;
+						}
+					}
+					else
+#endif // MAPBASE
+						m_Items.AddToTail(item);
+
 					if ( StreamHasCommand( phrase, L"sfx" ) )
 					{
 						// SFX show up instantly.
@@ -1529,6 +1575,9 @@ void CHudCloseCaption::Process( const wchar_t *stream, float duration, const cha
 					
 					if ( GetFloatCommandValue( phrase, L"len", override_duration ) )
 					{
+#ifdef MAPBASE
+						override_duration += cc_linger_time.GetFloat();
+#endif // MAPBASE
 						item->SetTimeToLive( override_duration );
 					}
 				}
@@ -1557,7 +1606,30 @@ void CHudCloseCaption::Process( const wchar_t *stream, float duration, const cha
 	if ( wcslen( phrase ) > 0 )
 	{
 		CCloseCaptionItem *item = new CCloseCaptionItem( phrase, lifespan, addedlife, delay, valid, fromplayer );
-		m_Items.AddToTail( item );
+#ifdef MAPBASE
+		if (m_Items.Count())
+		{
+			// Add it where it will appear
+			for (int i = m_Items.Count() - 1; i >= 0; i--)
+			{
+				if (m_Items[i]->GetPreDisplayTime() > delay + cc_predisplay_time.GetFloat())
+				{
+					if (i == 0)
+					{
+						m_Items.AddToHead(item);
+						break;
+					}
+					else
+						continue;
+				}
+
+				m_Items.InsertAfter(i, item);
+				break;
+			}
+		}
+		else
+#endif // MAPBASE
+		m_Items.AddToTail(item);
 
 		if ( StreamHasCommand( phrase, L"sfx" ) )
 		{
@@ -1567,6 +1639,10 @@ void CHudCloseCaption::Process( const wchar_t *stream, float duration, const cha
 
 		if ( GetFloatCommandValue( phrase, L"len", override_duration ) )
 		{
+#ifdef MAPBASE
+			override_duration += cc_linger_time.GetFloat();
+#endif // MAPBASE
+
 			item->SetTimeToLive( override_duration );
 			item->SetInitialLifeSpan( override_duration );
 		}
@@ -1606,6 +1682,9 @@ struct WorkUnitParams
 		clr = Color( 255, 255, 255, 255 );
 		newline = false;
 		font = 0;
+#ifdef MAPBASE
+		customFont = false;
+#endif
 	}
 
 	~WorkUnitParams()
@@ -1651,6 +1730,9 @@ struct WorkUnitParams
 	Color clr;
 	bool	newline;
 	vgui::HFont font;
+#ifdef MAPBASE
+	bool	customFont;
+#endif
 };
 
 void CHudCloseCaption::AddWorkUnit( CCloseCaptionItem *item,
@@ -1765,16 +1847,41 @@ void CHudCloseCaption::ComputeStreamWork( int available_width, CCloseCaptionItem
 			{
 				AddWorkUnit( item, params );
 				params.italic = !params.italic;
+#ifdef MAPBASE
+				params.customFont = false;
+#endif
 			}
 			else if ( !wcscmp( cmd, L"B" ) )
 			{
 				AddWorkUnit( item, params );
 				params.bold = !params.bold;
+#ifdef MAPBASE
+				params.customFont = false;
+#endif
 			}
+#ifdef MAPBASE
+			else if ( !wcscmp( cmd, L"font" ) )
+			{
+				AddWorkUnit( item, params );
+				vgui::IScheme *pScheme = vgui::scheme()->GetIScheme( GetScheme() );
+
+				if ( args[0] != 0 )
+				{
+					char font[64];
+					g_pVGuiLocalize->ConvertUnicodeToANSI( args, font, sizeof( font ) );
+					params.font = pScheme->GetFont( font );
+					params.customFont = true;
+				}
+				else
+				{
+					params.customFont = false;
+				}
+			}
+#endif
 
 			continue;
 		}
-
+		
 		int font;
 		if ( IsPC() )
 		{
@@ -2566,8 +2673,14 @@ void CHudCloseCaption::InitCaptionDictionary( const char *dbfile )
 
 	g_AsyncCaptionResourceManager.Clear();
 
+#ifdef MAPBASE
+	int iBufferSize = filesystem->GetSearchPath("GAME", true, nullptr, 0);
+	char* searchPaths = (char*)stackalloc(iBufferSize);
+	filesystem->GetSearchPath("GAME", true, searchPaths, iBufferSize);
+#else
 	char searchPaths[4096];
 	filesystem->GetSearchPath( "GAME", true, searchPaths, sizeof( searchPaths ) );
+#endif
 
 	for ( char *path = strtok( searchPaths, ";" ); path; path = strtok( NULL, ";" ) )
 	{
@@ -2578,8 +2691,13 @@ void CHudCloseCaption::InitCaptionDictionary( const char *dbfile )
 		} 
 
 		char fullpath[MAX_PATH];
-		Q_snprintf( fullpath, sizeof( fullpath ), "%s%s", path, dbfile );
-		Q_FixSlashes( fullpath );
+#ifndef MAPBASE
+		Q_snprintf(fullpath, sizeof(fullpath), "%s%s", path, dbfile);
+		Q_FixSlashes(fullpath);
+#else
+		V_ComposeFileName(path, dbfile, fullpath, sizeof(fullpath));
+#endif // !MAPBASE
+
 
 		if ( IsX360() )
 		{
@@ -2624,6 +2742,123 @@ void CHudCloseCaption::InitCaptionDictionary( const char *dbfile )
 
 	g_AsyncCaptionResourceManager.SetDbInfo( m_AsyncCaptions );
 }
+
+#ifdef MAPBASE
+void CHudCloseCaption::AddAdditionalCaptionDictionary( const char *dbfile, CUtlVector<CUtlSymbol> &outPathSymbols )
+{
+	CGMsg( 1, CON_GROUP_MAPBASE_MISC, "Adding additional caption dictionary \"%s\"\n", dbfile );
+
+	g_AsyncCaptionResourceManager.Clear();
+
+	char searchPaths[4096];
+	filesystem->GetSearchPath( "MOD", true, searchPaths, sizeof( searchPaths ) );
+
+	for ( char *path = strtok( searchPaths, ";" ); path; path = strtok( NULL, ";" ) )
+	{
+		if ( IsX360() && ( filesystem->GetDVDMode() == DVDMODE_STRICT ) && !V_stristr( path, ".zip" ) )
+		{
+			// only want zip paths
+			continue;
+		} 
+
+		char fullpath[MAX_PATH];
+		V_ComposeFileName(path, dbfile, fullpath, sizeof(fullpath));
+
+		if ( IsX360() )
+		{
+			char fullpath360[MAX_PATH];
+			UpdateOrCreateCaptionFile( fullpath, fullpath360, sizeof( fullpath360 ) );
+			Q_strncpy( fullpath, fullpath360, sizeof( fullpath ) );
+		}
+
+		// Seach for this dictionary. If it already exists, remove it.
+		for (int i = 0; i < m_AsyncCaptions.Count(); ++i)
+		{
+			if (FStrEq( m_AsyncCaptions[i].m_DataBaseFile.String(), fullpath ))
+			{
+				m_AsyncCaptions.Remove( i );
+				break;
+			}
+		}
+
+        FileHandle_t fh = filesystem->Open( fullpath, "rb" );
+		if ( FILESYSTEM_INVALID_HANDLE != fh )
+		{
+			MEM_ALLOC_CREDIT();
+
+			CUtlBuffer dirbuffer;
+
+			AsyncCaption_t& entry = m_AsyncCaptions[ m_AsyncCaptions.AddToTail() ];
+
+			// Read the header
+			filesystem->Read( &entry.m_Header, sizeof( entry.m_Header ), fh );
+			if ( entry.m_Header.magic != COMPILED_CAPTION_FILEID )
+				Error( "Invalid file id for %s\n", fullpath );
+			if ( entry.m_Header.version != COMPILED_CAPTION_VERSION )
+				Error( "Invalid file version for %s\n", fullpath );
+			if ( entry.m_Header.directorysize < 0 || entry.m_Header.directorysize > 64 * 1024 )
+				Error( "Invalid directory size %d for %s\n", entry.m_Header.directorysize, fullpath );
+			//if ( entry.m_Header.blocksize != MAX_BLOCK_SIZE )
+			//	Error( "Invalid block size %d, expecting %d for %s\n", entry.m_Header.blocksize, MAX_BLOCK_SIZE, fullpath );
+
+			int directoryBytes = entry.m_Header.directorysize * sizeof( CaptionLookup_t );
+			entry.m_CaptionDirectory.EnsureCapacity( entry.m_Header.directorysize );
+			dirbuffer.EnsureCapacity( directoryBytes );
+			
+			filesystem->Read( dirbuffer.Base(), directoryBytes, fh );
+			filesystem->Close( fh );
+
+			entry.m_CaptionDirectory.CopyArray( (const CaptionLookup_t *)dirbuffer.PeekGet(), entry.m_Header.directorysize );
+			entry.m_CaptionDirectory.RedoSort( true );
+
+			entry.m_DataBaseFile = fullpath;
+			outPathSymbols.AddToTail( entry.m_DataBaseFile );
+		}
+	}
+
+	g_AsyncCaptionResourceManager.SetDbInfo( m_AsyncCaptions );
+}
+
+void CHudCloseCaption::AddCustomCaptionFile( char const *file, CUtlVector<CUtlSymbol> &outPathSymbols )
+{
+	// 
+	// 'file' should be something like "maps/mapbase_demo01_closecaption_%language%"
+	// 
+
+	CGMsg( 1, CON_GROUP_MAPBASE_MISC, "Adding custom caption file \"%s\"\n", file );
+
+	if (!IsX360())
+	{
+		g_pVGuiLocalize->AddFile( file, "MOD", true );
+	}
+
+	char uilanguage[64];
+	engine->GetUILanguage( uilanguage, sizeof( uilanguage ) );
+
+	char dbfile[512];
+	V_StrSubst( file, "%language%", uilanguage, dbfile, sizeof( dbfile ) );
+	V_SetExtension( dbfile, ".dat", sizeof( dbfile ) );
+	AddAdditionalCaptionDictionary( dbfile, outPathSymbols );
+}
+
+void CHudCloseCaption::RemoveCaptionDictionary( const CUtlSymbol &dbFileSymbol )
+{
+	// 
+	// 'file' should be something like "maps/mapbase_demo01_closecaption_%language%"
+	// 
+
+	CGMsg( 1, CON_GROUP_MAPBASE_MISC, "Removing custom caption file \"%s\"\n", dbFileSymbol.String() );
+
+	for (int i = 0; i < m_AsyncCaptions.Count(); ++i)
+	{
+		if ( m_AsyncCaptions[i].m_DataBaseFile == dbFileSymbol )
+		{
+			m_AsyncCaptions.Remove( i );
+			break;
+		}
+	}
+}
+#endif
 
 void CHudCloseCaption::OnFinishAsyncLoad( int nFileIndex, int nBlockNum, AsyncCaptionData_t *pData )
 {
@@ -2694,6 +2929,11 @@ CON_COMMAND_F_COMPLETION( cc_emit, "Emits a closed caption", 0, EmitCaptionCompl
 		Msg( "usage:  cc_emit tokenname\n" );
 		return;
 	}
+
+#ifdef MAPBASE // 1upD
+	if (!closecaption.GetBool())
+        return;
+#endif
 
 	CHudCloseCaption *hudCloseCaption = GET_HUDELEMENT( CHudCloseCaption );
 	if ( hudCloseCaption )

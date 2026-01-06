@@ -40,6 +40,9 @@ public:
 public:
 	void EXPORT				Detonate(void);
 	CGrenadeAR2(void);
+#ifdef EZ2
+	~CGrenadeAR2();
+#endif
 
 	DECLARE_DATADESC();
 };

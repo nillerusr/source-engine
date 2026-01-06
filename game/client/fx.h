@@ -101,7 +101,7 @@ extern PMaterialHandle g_Mat_Fleck_Wood[2];
 extern PMaterialHandle g_Mat_Fleck_Cement[2];
 extern PMaterialHandle g_Mat_Fleck_Antlion[2];
 extern PMaterialHandle g_Mat_Fleck_Tile[2];
-extern PMaterialHandle g_Mat_DustPuff[2];
+extern PMaterialHandle g_Mat_DustPuff[3];
 extern PMaterialHandle g_Mat_BloodPuff[2];
 extern PMaterialHandle g_Mat_Fleck_Glass[2];
 extern PMaterialHandle g_Mat_SMG_Muzzleflash[4];

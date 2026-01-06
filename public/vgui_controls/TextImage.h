@@ -105,8 +105,10 @@ public:
 	void SetColorChangeStream( CUtlSortVector<label_colorchange_t,CColorChangeListLess> *pUtlVecStream );
 	void ClearColorChangeStream( void ) { m_ColorChangeStream.Purge(); }
 
-	const wchar_t *GetEllipsesPosition( void ) const { return m_pwszEllipsesPosition; }
-	bool IsWrapping() const { return m_LineBreaks.Count() != 0; }
+#ifdef MAPBASE
+	// Gets the relative y coordinates of all new lines created by newline (\n) characters.
+	void GetNewlinePositions( CUtlVector<int> *pOutCoords, bool bIgnoreEmptyLines = true );
+#endif
 
 protected:
 	// truncate the _text string to fit into the draw width

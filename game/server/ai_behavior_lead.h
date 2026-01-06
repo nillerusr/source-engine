@@ -9,12 +9,19 @@
 
 #include "simtimer.h"
 #include "ai_behavior.h"
+#ifdef NEW_RESPONSE_SYSTEM
+#include "ai_speechconcept.h"
+#endif
 
 #if defined( _WIN32 )
 #pragma once
 #endif
 
+#ifdef NEW_RESPONSE_SYSTEM
+typedef CAI_Concept AIConcept_t;
+#else
 typedef const char *AIConcept_t;
+#endif
 
 // Speak concepts
 #define TLK_LEAD_START				"TLK_LEAD_START"
@@ -125,7 +132,11 @@ public:
 	bool Connect( CAI_LeadBehaviorHandler *);
 	bool Disconnect( CAI_LeadBehaviorHandler *);
 
+#ifdef MAPBASE
+	void SetWaitForWeapon( string_t iszWeaponName, float flTimeout = 60 ) { m_weaponname = iszWeaponName; m_flWeaponSafetyTimeOut = gpGlobals->curtime + flTimeout; }
+#else
 	void SetWaitForWeapon( string_t iszWeaponName ) { m_weaponname = iszWeaponName; m_flWeaponSafetyTimeOut = gpGlobals->curtime + 60; }
+#endif
 
 	enum
 	{

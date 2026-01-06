@@ -51,6 +51,9 @@ public:
 	virtual char	*GetScannerSoundPrefix( void );
 	void			Spawn(void);
 	void			Activate();
+#ifdef MAPBASE
+	bool			KeyValue( const char *szKeyName, const char *szValue );
+#endif
 	void			StartTask( const Task_t *pTask );
 	void			UpdateOnRemove( void );
 	void			DeployMine();
@@ -67,6 +70,10 @@ public:
 	void			InputInspectTargetSpotlight( inputdata_t &inputdata );
 	void			InputDeployMine( inputdata_t &inputdata );
 	void			InputEquipMine( inputdata_t &inputdata );
+#ifdef MAPBASE
+	void			InputDisablePhotos( inputdata_t &inputdata );
+	void			InputEnablePhotos( inputdata_t &inputdata );
+#endif
 	void			InputShouldInspect( inputdata_t &inputdata );
 
 	void			InspectTarget( inputdata_t &inputdata, ScannerFlyMode_t eFlyMode );
@@ -141,7 +148,13 @@ protected:
 
 private:
 	bool			MovingToInspectTarget( void );
+#ifdef EZ2
+protected:
 	virtual float	GetGoalDistance( void );
+private:
+#else
+	virtual float	GetGoalDistance( void );
+#endif
 
 	bool m_bIsClawScanner;	// Formerly the shield scanner.
 	bool m_bIsOpen;			// Only for claw scanner

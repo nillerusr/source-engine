@@ -168,6 +168,11 @@ public:
 	void			InputStopFiring( inputdata_t &inputdata );
 	void			InputGotoPathCorner( inputdata_t &inputdata );
 
+#ifdef MAPBASE
+	void			InputSetUseAINodes( inputdata_t &inputdata );
+	void			InputSetUseCombatAI( inputdata_t &inputdata );
+#endif
+
 public:
 	string_t		m_iszVehicleName;
 	IServerVehicle	*m_pVehicleInterface;
@@ -186,6 +191,11 @@ public:
 	float				m_flDistanceAlongSpline;
 	float				m_flDriversMaxSpeed;
 	float				m_flDriversMinSpeed;
+
+#ifdef MAPBASE
+	bool				m_bUseAINodes = false;
+	bool				m_bUseCombatAI = false;
+#endif
 
 	// Speed
 	float				m_flMaxSpeed;		// Maximum speed this driver will go

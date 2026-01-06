@@ -670,7 +670,11 @@ inline void CUtlBuffer::GetObject( T *dest )
 {
 	if ( CheckGet( sizeof(T) ) )
 	{
+#ifdef MAPBASE
+		if ( ( sizeof( T ) == 1 ) || !m_Byteswap.IsSwappingBytes() )
+#else
 		if ( !m_Byteswap.IsSwappingBytes() || ( sizeof( T ) == 1 ) )
+#endif
 		{
 			memcpy( dest, PeekGet(), sizeof( T ) );
 		}
@@ -702,7 +706,11 @@ inline void CUtlBuffer::GetTypeBin( T &dest )
 {
 	if ( CheckGet( sizeof(T) ) )
 	{
+#ifdef MAPBASE
+		if ( ( sizeof( T ) == 1 ) || !m_Byteswap.IsSwappingBytes() )
+#else
 		if ( !m_Byteswap.IsSwappingBytes() || ( sizeof( T ) == 1 ) )
+#endif
 		{
 			memcpy(&dest, PeekGet(), sizeof(T) );
 		}
@@ -1047,7 +1055,11 @@ inline void CUtlBuffer::PutObject( T *src )
 {
 	if ( CheckPut( sizeof(T) ) )
 	{
+#ifdef MAPBASE
+		if ( ( sizeof( T ) == 1 ) || !m_Byteswap.IsSwappingBytes() )
+#else
 		if ( !m_Byteswap.IsSwappingBytes() || ( sizeof( T ) == 1 ) )
+#endif
 		{
 			memcpy( PeekPut(), src, sizeof( T ) );
 		}
@@ -1076,7 +1088,11 @@ inline void CUtlBuffer::PutTypeBin( T src )
 {
 	if ( CheckPut( sizeof(T) ) )
 	{
-		if ( !m_Byteswap.IsSwappingBytes() || ( sizeof( T ) == 1 ) )
+#ifdef MAPBASE
+		if ((sizeof(T) == 1) || !m_Byteswap.IsSwappingBytes())
+#else
+		if (!m_Byteswap.IsSwappingBytes() || (sizeof(T) == 1))
+#endif
 		{
 			memcpy( PeekPut(), &src, sizeof( T ) );
 		}

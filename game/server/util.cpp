@@ -36,10 +36,17 @@
 #include "datacache/imdlcache.h"
 #include "util.h"
 #include "cdll_int.h"
+#ifdef MAPBASE
+#include "fmtstr.h"
+#endif
 
 #ifdef PORTAL
 #include "PortalSimulation.h"
 //#include "Portal_PhysicsEnvironmentMgr.h"
+#endif
+
+#ifdef EZ
+#include "ai_basenpc.h"
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -77,6 +84,10 @@ public:
 	virtual void Destroy( const char *pClassName, IServerNetworkable *pNetworkable );
 	virtual const char *GetCannonicalName( const char *pClassName );
 	void ReportEntitySizes();
+
+#ifdef MAPBASE
+	virtual void UninstallFactory(const char* pClassName);
+#endif // MAPBASE
 
 private:
 	IEntityFactory *FindFactory( const char *pClassName );
@@ -204,6 +215,51 @@ void CEntityFactoryDictionary::ReportEntitySizes()
 	}
 }
 
+#ifdef MAPBASE
+void CEntityFactoryDictionary::UninstallFactory(const char* pClassName)
+{
+	m_Factories.Remove(pClassName);
+}
+
+int EntityFactory_AutoComplete( const char *cmdname, CUtlVector< CUtlString > &commands, CUtlRBTree< CUtlString > &symbols, char *substring, int checklen = 0 )
+{
+	CEntityFactoryDictionary *pFactoryDict = (CEntityFactoryDictionary*)EntityFactoryDictionary();
+	for ( int i = pFactoryDict->m_Factories.First(); i != pFactoryDict->m_Factories.InvalidIndex(); i = pFactoryDict->m_Factories.Next( i ) )
+	{
+		const char *name = pFactoryDict->m_Factories.GetElementName( i );
+		if (Q_strnicmp(name, substring, checklen))
+			continue;
+
+		CUtlString sym = name;
+		int idx = symbols.Find(sym);
+		if (idx == symbols.InvalidIndex())
+		{
+			symbols.Insert(sym);
+		}
+
+		// Too many
+		if (symbols.Count() >= COMMAND_COMPLETION_MAXITEMS)
+			break;
+	}
+
+	// Now fill in the results
+	for (int i = symbols.FirstInorder(); i != symbols.InvalidIndex(); i = symbols.NextInorder(i))
+	{
+		const char *name = symbols[i].String();
+
+		char buf[512];
+		Q_strncpy(buf, name, sizeof(buf));
+		Q_strlower(buf);
+
+		CUtlString command;
+		command = CFmtStr("%s %s", cmdname, buf);
+		commands.AddToTail(command);
+	}
+
+	return symbols.Count();
+}
+#endif
+
 
 //-----------------------------------------------------------------------------
 // class CFlaggedEntitiesEnum
@@ -294,6 +350,14 @@ int UTIL_EntitiesInSphere( const Vector &center, float radius, CFlaggedEntitiesE
 	partition->EnumerateElementsInSphere( PARTITION_ENGINE_NON_STATIC_EDICTS, center, radius, false, pEnum );
 	return pEnum->GetCount();
 }
+
+#ifdef MAPBASE
+int UTIL_EntitiesAtPoint( const Vector &point, CFlaggedEntitiesEnum *pEnum )
+{
+	partition->EnumerateElementsAtPoint( PARTITION_ENGINE_NON_STATIC_EDICTS, point, false, pEnum );
+	return pEnum->GetCount();
+}
+#endif
 
 CEntitySphereQuery::CEntitySphereQuery( const Vector &center, float radius, int flagMask )
 {
@@ -1031,7 +1095,7 @@ void UTIL_ScreenFade( CBaseEntity *pEntity, const color32 &color, float fadeTime
 }
 
 
-void UTIL_HudMessage( CBasePlayer *pToPlayer, const hudtextparms_t &textparms, const char *pMessage )
+void UTIL_HudMessage( CBasePlayer *pToPlayer, const hudtextparms_t &textparms, const char *pMessage, const char *pszFont, bool bAutobreak )
 {
 	CRecipientFilter filter;
 	
@@ -1064,12 +1128,19 @@ void UTIL_HudMessage( CBasePlayer *pToPlayer, const hudtextparms_t &textparms, c
 		WRITE_FLOAT( textparms.holdTime );
 		WRITE_FLOAT( textparms.fxTime );
 		WRITE_STRING( pMessage );
+#ifdef MAPBASE
+		WRITE_STRING( pszFont );
+		if (bAutobreak)
+		{
+			WRITE_BYTE ( Q_strlen( pMessage ) );
+		}
+#endif
 	MessageEnd();
 }
 
-void UTIL_HudMessageAll( const hudtextparms_t &textparms, const char *pMessage )
+void UTIL_HudMessageAll( const hudtextparms_t &textparms, const char *pMessage, const char *pszFont, bool bAutobreak )
 {
-	UTIL_HudMessage( NULL, textparms, pMessage );
+	UTIL_HudMessage( NULL, textparms, pMessage, pszFont, bAutobreak );
 }
 
 void UTIL_HudHintText( CBaseEntity *pEntity, const char *pMessage )
@@ -1295,9 +1366,19 @@ void UTIL_SetModel( CBaseEntity *pEntity, const char *pModelName )
 	int i = modelinfo->GetModelIndex( pModelName );
 	if ( i == -1 )	
 	{
+#if defined(MAPBASE) && !defined(_DEBUG)
+		// Throwing a program-terminating error might be a little too much since we could just precache it here.
+		// If we're not in debug mode, just let it off with a nice warning.
+		if (int newi = CBaseEntity::PrecacheModel(pModelName))
+		{
+			i = newi;
+			Warning("%s was not precached\n", pModelName);
+		}
+#else
 		Error("%i/%s - %s:  UTIL_SetModel:  not precached: %s\n", pEntity->entindex(),
 			STRING( pEntity->GetEntityName() ),
 			pEntity->GetClassname(), pModelName);
+#endif
 	}
 
 	CBaseAnimating *pAnimating = pEntity->GetBaseAnimating();
@@ -1724,19 +1805,40 @@ public:
 	virtual void LevelShutdownPostEntity();
 
 	bool AddOrMarkPrecached( const char *pClassname );
+#ifdef EZ
+	bool AddOrMarkPrecachedVariant( const char *pClassname, EZ_VARIANT variant );
+#endif
 
 private:
+#ifdef EZ
+	CUtlSymbolTable		m_list[EZ_VARIANT_COUNT];
+#else
 	CUtlSymbolTable		m_list;
+#endif
 };
 
 void CPrecacheOtherList::LevelInitPreEntity()
 {
+#ifdef EZ
+	for (int i = 0; i < EZ_VARIANT_COUNT; i++)
+	{
+		m_list[i].RemoveAll();
+	}
+#else
 	m_list.RemoveAll();
+#endif
 }
 
 void CPrecacheOtherList::LevelShutdownPostEntity()
 {
+#ifdef EZ
+	for (int i = 0; i < EZ_VARIANT_COUNT; i++)
+	{
+		m_list[i].RemoveAll();
+	}
+#else
 	m_list.RemoveAll();
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1746,13 +1848,42 @@ void CPrecacheOtherList::LevelShutdownPostEntity()
 //-----------------------------------------------------------------------------
 bool CPrecacheOtherList::AddOrMarkPrecached( const char *pClassname )
 {
+#ifdef EZ
+	CUtlSymbol sym = m_list[EZ_VARIANT_DEFAULT].Find( pClassname );
+#else
 	CUtlSymbol sym = m_list.Find( pClassname );
+#endif
 	if ( sym.IsValid() )
 		return false;
 
+#ifdef EZ
+	m_list[EZ_VARIANT_DEFAULT].AddString( pClassname );
+#else
 	m_list.AddString( pClassname );
+#endif
 	return true;
 }
+
+#ifdef EZ
+
+//-----------------------------------------------------------------------------
+// Purpose: mark or add
+// Input  : *pEntity - 
+// Output : Returns true on success, false on failure.
+//-----------------------------------------------------------------------------
+bool CPrecacheOtherList::AddOrMarkPrecachedVariant( const char *pClassname, EZ_VARIANT variant )
+{
+	if ( variant <= EZ_VARIANT_INVALID || variant >= EZ_VARIANT_COUNT )
+		return false;
+
+	CUtlSymbol sym = m_list[variant].Find( pClassname );
+	if ( sym.IsValid() )
+		return false;
+
+	m_list[variant].AddString( pClassname );
+	return true;
+}
+#endif
 
 CPrecacheOtherList g_PrecacheOtherList( "CPrecacheOtherList" );
 #endif
@@ -1788,6 +1919,80 @@ void UTIL_PrecacheOther( const char *szClassname, const char *modelName )
 
 	UTIL_RemoveImmediate( pEntity );
 }
+
+#ifdef EZ
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input  : *szClassname - 
+//			*modelName - 
+//-----------------------------------------------------------------------------
+void UTIL_PrecacheXenVariant( const char *szClassname )
+{
+	UTIL_PrecacheEZVariant( szClassname, EZ_VARIANT::EZ_VARIANT_XEN );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input  : *szClassname - 
+//			*modelName - 
+//-----------------------------------------------------------------------------
+void UTIL_PrecacheEZVariant( const char *szClassname, int ezvariant )
+{
+#if defined( PRECACHE_OTHER_ONCE )
+	// already done this one?, if not, mark as done
+	if (!g_PrecacheOtherList.AddOrMarkPrecachedVariant( szClassname, (EZ_VARIANT)ezvariant ))
+		return;
+#endif
+
+	CBaseEntity	*pEntity = CreateEntityByName( szClassname );
+	if (!pEntity)
+	{
+		Warning( "NULL Ent in UTIL_PrecacheOther\n" );
+		return;
+	}
+
+	pEntity->SetEZVariant( (EZ_VARIANT)ezvariant );
+
+	if (pEntity)
+		pEntity->Precache();
+
+	UTIL_RemoveImmediate( pEntity );
+}
+#endif
+
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: Tests whether this entity exists in the dictionary and if it does, precaches it. (as opposed to complaining when it's missing)
+// Input  : *szClassname - 
+//			*modelName - 
+//-----------------------------------------------------------------------------
+bool UTIL_TestPrecacheOther( const char *szClassname, const char *modelName )
+{
+#if defined( PRECACHE_OTHER_ONCE )
+	// already done this one?, if not, mark as done
+	if ( !g_PrecacheOtherList.AddOrMarkPrecached( szClassname ) )
+		return true;
+#endif
+
+	// If we can't create it, it probably does not exist
+	CBaseEntity	*pEntity = CreateEntityByName( szClassname );
+	if (!pEntity)
+		return false;
+
+	// If we have a specified model, set it before calling precache
+	if ( modelName && modelName[0] )
+	{
+		pEntity->SetModelName( AllocPooledString( modelName ) );
+	}
+	
+	if (pEntity)
+		pEntity->Precache( );
+
+	UTIL_RemoveImmediate( pEntity );
+
+	return true;
+}
+#endif
 
 //=========================================================
 // UTIL_LogPrintf - Prints a logged message to console.
@@ -1869,7 +2074,7 @@ extern "C" void Sys_Error( char *error, ... )
 //			*mapData - pointer a block of entity map data
 // Output : -1 if the entity was not successfully created; 0 on success
 //-----------------------------------------------------------------------------
-int DispatchSpawn( CBaseEntity *pEntity )
+int DispatchSpawn( CBaseEntity *pEntity, bool bRunVScripts )
 {
 	if ( pEntity )
 	{
@@ -1883,6 +2088,13 @@ int DispatchSpawn( CBaseEntity *pEntity )
 		// is this necessary?
 		//pEntity->SetAbsMins( pEntity->GetOrigin() - Vector(1,1,1) );
 		//pEntity->SetAbsMaxs( pEntity->GetOrigin() + Vector(1,1,1) );
+#ifdef VSCRIPT
+		if (bRunVScripts)
+		{
+			pEntity->RunVScripts();
+			pEntity->RunPrecacheScripts();
+		}
+#endif
 
 #if defined(TRACK_ENTITY_MEMORY) && defined(USE_MEM_DEBUG)
 		const char *pszClassname = NULL;
@@ -1950,8 +2162,13 @@ int DispatchSpawn( CBaseEntity *pEntity )
 		}
 
 		gEntList.NotifySpawn( pEntity );
+#ifdef VSCRIPT
+		if( bRunVScripts )
+		{
+			pEntity->RunOnPostSpawnScripts();
+		}
+#endif
 	}
-
 	return 0;
 }
 
@@ -2443,6 +2660,10 @@ void UTIL_PredictedPosition( CBaseEntity *pTarget, float flTimeDelta, Vector *ve
 			if ( pAnimating != NULL )
 			{
 				vecPredictedVel = pAnimating->GetGroundSpeedVelocity();
+#ifdef MAPBASE
+				if (vecPredictedVel.IsZero())
+					vecPredictedVel = pAnimating->GetSmoothedVelocity();
+#endif
 			}
 			else
 			{
@@ -2455,6 +2676,80 @@ void UTIL_PredictedPosition( CBaseEntity *pTarget, float flTimeDelta, Vector *ve
 	//Get the result
 	(*vecPredictedPosition) = pTarget->GetAbsOrigin() + ( vecPredictedVel * flTimeDelta );
 }
+
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: Same as above, except you don't have to use the absolute origin and can use your own position to predict from.
+//-----------------------------------------------------------------------------
+void UTIL_PredictedPosition( CBaseEntity *pTarget, const Vector &vecActualPosition, float flTimeDelta, Vector *vecPredictedPosition )
+{
+	if ( ( pTarget == NULL ) || ( vecPredictedPosition == NULL ) )
+		return;
+
+	Vector	vecPredictedVel;
+	CBasePlayer	*pPlayer = ToBasePlayer( pTarget );
+	if ( pPlayer != NULL )
+	{
+		if ( pPlayer->IsInAVehicle() )
+			vecPredictedVel = pPlayer->GetVehicleEntity()->GetSmoothedVelocity();
+		else
+			vecPredictedVel = pPlayer->GetSmoothedVelocity();
+	}
+	else
+	{
+		CBaseCombatCharacter *pCCTarget = pTarget->MyCombatCharacterPointer();
+		if ( pCCTarget != NULL && pCCTarget->IsInAVehicle() )
+			vecPredictedVel = pCCTarget->GetVehicleEntity()->GetSmoothedVelocity();
+		else
+		{
+			CBaseAnimating *pAnimating = dynamic_cast<CBaseAnimating *>(pTarget);
+			if ( pAnimating != NULL )
+			{
+				vecPredictedVel = pAnimating->GetGroundSpeedVelocity();
+				if (vecPredictedVel.IsZero())
+					vecPredictedVel = pAnimating->GetSmoothedVelocity();
+			}
+			else
+				vecPredictedVel = pTarget->GetSmoothedVelocity();
+		}
+	}
+
+	// Get the result
+	(*vecPredictedPosition) = vecActualPosition + ( vecPredictedVel * flTimeDelta );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Predicts angles through angular velocity instead of predicting origin through regular velocity.
+//-----------------------------------------------------------------------------
+void UTIL_PredictedAngles( CBaseEntity *pTarget, const QAngle &angActualAngles, float flTimeDelta, QAngle *angPredictedAngles )
+{
+	if ( ( pTarget == NULL ) || ( angPredictedAngles == NULL ) )
+		return;
+
+	QAngle	angPredictedVel;
+	CBasePlayer	*pPlayer = ToBasePlayer( pTarget );
+	if ( pPlayer != NULL )
+	{
+		if ( pPlayer->IsInAVehicle() )
+			angPredictedVel = pPlayer->GetVehicleEntity()->GetLocalAngularVelocity();
+		else
+			angPredictedVel = pPlayer->GetLocalAngularVelocity();
+	}
+	else
+	{
+		CBaseCombatCharacter *pCCTarget = pTarget->MyCombatCharacterPointer();
+		if ( pCCTarget != NULL && pCCTarget->IsInAVehicle() )
+			angPredictedVel = pCCTarget->GetVehicleEntity()->GetLocalAngularVelocity();
+		else
+		{
+			angPredictedVel = pTarget->GetLocalAngularVelocity();
+		}
+	}
+
+	// Get the result
+	(*angPredictedAngles) = angActualAngles + ( angPredictedVel * flTimeDelta );
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Points the destination entity at the target entity

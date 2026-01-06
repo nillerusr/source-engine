@@ -547,7 +547,11 @@ bool CNPC_CombineCamera::FVisible(CBaseEntity *pEntity, int traceMask, CBaseEnti
 	// If we hit something that's okay to hit anyway, still fire
 	if ( pHitEntity && pHitEntity->MyCombatCharacterPointer() )
 	{
+#ifdef MAPBASE
+		if (IRelationType(pHitEntity) <= D_FR)
+#else
 		if (IRelationType(pHitEntity) == D_HT)
+#endif
 			return true;
 	}
 
@@ -623,6 +627,14 @@ void CNPC_CombineCamera::ActiveThink()
 	if ( !pTarget )
 	{
 		// Nobody suspicious. Go back to being idle.
+#ifdef MAPBASE
+		if (m_hEnemyTarget)
+		{
+			m_OnLostEnemy.FireOutput( m_hEnemyTarget, this );
+			if (m_hEnemyTarget->IsPlayer())
+				m_OnLostPlayer.FireOutput( m_hEnemyTarget, this );
+		}
+#endif
 		m_hEnemyTarget = NULL;
 		EmitSound("NPC_CombineCamera.BecomeIdle");
 		SetAngry(false);

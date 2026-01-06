@@ -31,6 +31,11 @@
 #include "sixense/in_sixense.h"
 #endif
 
+#ifdef STEAM_INPUT
+#include "expanded_steam/isteaminput.h"
+#include "c_prop_vehicle.h"
+#endif
+
 #include "client_virtualreality.h"
 #include "sourcevr/isourcevirtualreality.h"
 
@@ -145,6 +150,11 @@ static  kbutton_t   in_grenade1;
 static  kbutton_t   in_grenade2;
 static	kbutton_t	in_attack3;
 kbutton_t	in_ducktoggle;
+
+#ifdef STEAM_INPUT
+kbutton_t	in_lookspin;
+kbutton_t	in_resetcamera;
+#endif
 
 /*
 ===========
@@ -545,6 +555,27 @@ void IN_ScoreUp( const CCommand &args )
 	}
 }
 
+#ifdef STEAM_INPUT
+static ConVar in_lookspin_speed( "in_lookspin_speed", "3.0", 0, "How much to multiply the camera speed in +lookspin." );
+
+static float in_lookspin_time = 0.0f;
+
+void IN_LookSpinDown( const CCommand &args )
+{
+	KeyDown(&in_lookspin, args[1] );
+}
+void IN_LookSpinUp( const CCommand &args )
+{
+	KeyUp(&in_lookspin, args[1] );
+	in_lookspin_time = 0.0f;
+}
+
+static ConVar in_resetcamera_speed( "in_resetcamera_speed", "7.5", 0, "How much to multiply the camera speed in +resetcamera." );
+
+void IN_ResetCameraDown( const CCommand &args ) { KeyDown(&in_resetcamera, args[1] ); }
+void IN_ResetCameraUp( const CCommand &args ) { KeyUp(&in_resetcamera, args[1] ); }
+#endif
+
 
 /*
 ============
@@ -677,6 +708,35 @@ void CInput::AdjustYaw( float speed, QAngle& viewangles )
 		viewangles[YAW] += speed*cl_yawspeed.GetFloat() * KeyState (&in_left);
 	}
 
+#ifdef STEAM_INPUT
+	if ( (in_lookspin.state & 1) )
+	{
+		C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+		if (pPlayer && pPlayer->GetVehicle() && pPlayer->GetVehicle()->GetVehicleEnt())
+		{
+			// Players in vehicles don't need to reset their cameras
+			in_lookspin_time = gpGlobals->curtime;
+		}
+
+		if (in_lookspin_time == 0.0f)
+		{
+			// Figure out how long it would take to turn around
+			in_lookspin_time = gpGlobals->curtime + (180.0f / (cl_yawspeed.GetFloat()*in_lookspin_speed.GetFloat()));
+		}
+
+		if (in_lookspin_time > gpGlobals->curtime)
+		{
+			float flDelta = speed*cl_yawspeed.GetFloat()*in_lookspin_speed.GetFloat() * KeyState (&in_lookspin);
+
+			// Go right or left based on previous angles
+			if (AngleDistance(viewangles[YAW], m_angPreviousViewAngles[YAW]) > 0)
+				viewangles[YAW] += flDelta;
+			else
+				viewangles[YAW] -= flDelta;
+		}
+	}
+#endif
+
 	// thirdperson platformer mode
 	// use movement keys to aim the player relative to the thirdperson camera
 	if ( CAM_IsThirdPerson() && thirdperson_platformer.GetInt() )
@@ -726,6 +786,21 @@ void CInput::AdjustPitch( float speed, QAngle& viewangles )
 			view->StopPitchDrift ();
 		}
 	}	
+
+#ifdef STEAM_INPUT
+	if ( (in_resetcamera.state & 1) )
+	{
+		C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+		if( pPlayer && pPlayer->GetVehicle() && pPlayer->GetVehicle()->GetVehicleEnt() )
+		{
+			viewangles[PITCH] = FLerp( viewangles[PITCH], pPlayer->GetVehicle()->GetVehicleEnt()->GetAbsAngles()[PITCH], speed*KeyState (&in_resetcamera)*in_resetcamera_speed.GetFloat() );
+		}
+		else
+		{
+			viewangles[PITCH] = FLerp( viewangles[PITCH], 0.0f, speed*KeyState (&in_resetcamera)*in_resetcamera_speed.GetFloat() );
+		}
+	}
+#endif
 }
 
 /*
@@ -1119,6 +1194,27 @@ void CInput::CreateMove ( int sequence_number, float input_sample_frametime, boo
 	engine->GetViewAngles( viewangles );
 	QAngle originalViewangles = viewangles;
 
+#ifdef STEAM_INPUT
+	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+	if (pPlayer)
+	{
+		if (!engine->IsPaused() && !engine->IsLevelMainMenuBackground())
+		{
+			ActionSet_t iActionSet;
+			if (pPlayer->GetVehicle())
+			{
+				iActionSet = AS_VehicleControls;
+			}
+			else
+			{
+				iActionSet = AS_GameControls;
+			}
+
+			g_pSteamInput->RunFrame( iActionSet );
+		}
+	}
+#endif
+
 	if ( active || sv_noclipduringpause.GetInt() )
 	{
 		// Determine view angles
@@ -1222,6 +1318,9 @@ void CInput::CreateMove ( int sequence_number, float input_sample_frametime, boo
 	}
 
 	// Let the move manager override anything it wants to.
+#ifdef VGUI_SCREEN_FIX
+	cmd->buttons |= IN_VALIDVGUIINPUT;
+#endif
 	if ( g_pClientMode->CreateMove( input_sample_frametime, cmd ) )
 	{
 		// Get current view angles after the client mode tweaks with it
@@ -1638,6 +1737,14 @@ static ConCommand toggle_duck( "toggle_duck", IN_DuckToggle );
 static ConCommand xboxmove("xmove", IN_XboxStub);
 static ConCommand xboxlook("xlook", IN_XboxStub);
 
+#ifdef STEAM_INPUT
+static ConCommand startlookspin("+lookspin", IN_LookSpinDown);
+static ConCommand endlookspin("-lookspin", IN_LookSpinUp);
+
+static ConCommand startresetcamera("+resetcamera", IN_ResetCameraDown);
+static ConCommand endresetcamera("-resetcamera", IN_ResetCameraUp);
+#endif
+
 /*
 ============
 Init_All
@@ -1674,6 +1781,10 @@ void CInput::Init_All (void)
 		
 	// Initialize third person camera controls.
 	Init_Camera();
+
+#ifdef STEAM_INPUT
+	g_pSteamInput->InitSteamInput();
+#endif
 }
 
 /*
@@ -1691,6 +1802,10 @@ void CInput::Shutdown_All(void)
 
 	delete[] m_pVerifiedCommands;
 	m_pVerifiedCommands = NULL;
+
+#ifdef STEAM_INPUT
+	g_pSteamInput->Shutdown();
+#endif
 }
 
 void CInput::LevelInit( void )

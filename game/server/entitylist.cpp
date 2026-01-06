@@ -20,7 +20,14 @@
 
 #ifdef HL2_DLL
 #include "npc_playercompanion.h"
+#ifdef MAPBASE
+#include "hl2_player.h"
+#include "mapbase_matchers_base.h"
+#endif
 #endif // HL2_DLL
+#ifdef EZ2
+#include "ez2/npc_wilson.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -75,6 +82,15 @@ public:
 
 	// IEntityListener
 	virtual void OnEntityCreated( CBaseEntity *pEntity ) {}
+	virtual void OnEntitySpawned( CBaseEntity *pEntity )
+	{
+		// From Alien Swarm SDK
+		if ( ShouldAddEntity( pEntity ) )
+		{
+			RemoveEntity( pEntity );
+			AddEntity( pEntity );
+		}
+	}
 	virtual void OnEntityDeleted( CBaseEntity *pEntity )
 	{
 		if ( !(pEntity->GetFlags() & FL_AIMTARGET) )
@@ -102,6 +118,10 @@ public:
 		memcpy( pList, m_targetList.Base(), sizeof(CBaseEntity *) * count );
 		return count;
 	}
+	CBaseEntity *ListElement( int iIndex ) // From Alien Swarm SDK
+	{
+		return m_targetList[iIndex];
+	}
 
 private:
 	CUtlVector<CBaseEntity *>	m_targetList;
@@ -116,6 +136,10 @@ int AimTarget_ListCount()
 int AimTarget_ListCopy( CBaseEntity *pList[], int listMax )
 {
 	return g_AimManager.ListCopy( pList, listMax );
+}
+CBaseEntity *AimTarget_ListElement( int iIndex )
+{
+	return g_AimManager.ListElement( iIndex );
 }
 void AimTarget_ForceRepopulateList()
 {
@@ -290,6 +314,10 @@ CBaseEntityClassList::~CBaseEntityClassList()
 {
 }
 
+#ifdef MAPBASE_VSCRIPT
+static CUtlVector<CustomProcedural_t> g_CustomProcedurals;
+#endif
+
 CGlobalEntityList::CGlobalEntityList()
 {
 	m_iHighestEnt = m_iNumEnts = m_iNumEdicts = 0;
@@ -376,6 +404,10 @@ void CGlobalEntityList::Clear( void )
 	CleanupDeleteList();
 	// free the memory
 	g_DeleteList.Purge();
+
+#ifdef MAPBASE_VSCRIPT
+	g_CustomProcedurals.Purge();
+#endif
 
 	CBaseEntity::m_nDebugPlayer = -1;
 	CBaseEntity::m_bInDebugSelect = false; 
@@ -479,7 +511,11 @@ bool CGlobalEntityList::IsEntityPtr( void *pTest )
 // Input  : pStartEntity - Last entity found, NULL to start a new iteration.
 //			szName - Classname to search for.
 //-----------------------------------------------------------------------------
+#ifdef MAPBASE
+CBaseEntity *CGlobalEntityList::FindEntityByClassname( CBaseEntity *pStartEntity, const char *szName, IEntityFindFilter *pFilter )
+#else
 CBaseEntity *CGlobalEntityList::FindEntityByClassname( CBaseEntity *pStartEntity, const char *szName )
+#endif
 {
 	const CEntInfo *pInfo = pStartEntity ? GetEntInfoPtr( pStartEntity->GetRefEHandle() )->m_pNext : FirstEntInfo();
 
@@ -492,8 +528,55 @@ CBaseEntity *CGlobalEntityList::FindEntityByClassname( CBaseEntity *pStartEntity
 			continue;
 		}
 
+#ifdef MAPBASE
+		if ( pEntity->ClassMatches(szName) )
+		{
+			if ( pFilter && !pFilter->ShouldFindEntity(pEntity) )
+				continue;
+
+			return pEntity;
+		}
+#else
 		if ( pEntity->ClassMatches(szName) )
 			return pEntity;
+#endif
+	}
+
+	return NULL;
+}
+
+// From Alien Swarm SDK
+CBaseEntity *CGlobalEntityList::FindEntityByClassnameFast( CBaseEntity *pStartEntity, string_t iszClassname )
+{
+	/*
+	if ( pStartEntity )
+	{
+		return pStartEntity->m_pNextByClass;
+	}
+
+	EntsByStringList_t key = { iszClassname };
+	UtlHashHandle_t hEntry = g_EntsByClassname.Find( key );
+	if ( hEntry != g_EntsByClassname.InvalidHandle() )
+	{
+		return g_EntsByClassname[hEntry].pHead;
+	}
+	*/
+
+	const CEntInfo *pInfo = pStartEntity ? GetEntInfoPtr( pStartEntity->GetRefEHandle() )->m_pNext : FirstEntInfo();
+
+	for ( ;pInfo; pInfo = pInfo->m_pNext )
+	{
+		CBaseEntity *pEntity = (CBaseEntity *)pInfo->m_pEntity;
+		if ( !pEntity )
+		{
+			DevWarning( "NULL entity in global entity list!\n" );
+			continue;
+		}
+
+		if ( pEntity->m_iClassname == iszClassname)
+		{
+			return pEntity;
+		}
 	}
 
 	return NULL;
@@ -551,12 +634,94 @@ CBaseEntity *CGlobalEntityList::FindEntityProcedural( const char *szName, CBaseE
 		}
 		else if ( FStrEq( pName, "picker" ) )
 		{
+#ifdef MAPBASE_MP
+			// TODO: Player could be activator instead
+			CBasePlayer *pPlayer = ToBasePlayer(pSearchingEntity);
+			return FindPickerEntity( pPlayer ? pPlayer : UTIL_PlayerByIndex(1) );
+#else
 			return FindPickerEntity( UTIL_PlayerByIndex(1) );
+#endif
 		}
 		else if ( FStrEq( pName, "self" ) )
 		{
 			return pSearchingEntity;
 		}
+#ifdef MAPBASE
+		else if ( FStrEq( pName, "parent" ) )
+		{
+			return pSearchingEntity ? pSearchingEntity->GetParent() : NULL;
+		}
+		else if ( FStrEq( pName, "owner" ) )
+		{
+			return pSearchingEntity ? pSearchingEntity->GetOwnerEntity() : NULL;
+		}
+		else if ( FStrEq( pName, "plrsquadrep" ) )
+		{
+#ifdef HL2_DLL
+			CHL2_Player *pPlayer = static_cast<CHL2_Player*>(UTIL_PlayerByIndex(1));
+			if (pPlayer)
+			{
+				return pPlayer->GetSquadCommandRepresentative();
+			}
+#endif
+		}
+#ifdef EZ2
+		else if ( strnicmp( pName, "wilson", 6 ) == 0 )
+		{
+			CBaseEntity *pSearchFrom = pSearchingEntity;
+			float flBestDistSqr = FLT_MAX;
+			if ( *(pName + 6) == '_' )
+			{
+				CUtlStringList outStrings;
+				V_SplitString( pName + 7, "_", outStrings );
+				FOR_EACH_VEC( outStrings, i )
+				{
+					switch (i)
+					{
+						// Distance to searching entity
+						case 0:
+						{
+							flBestDistSqr = atof( outStrings[i] );
+							flBestDistSqr *= flBestDistSqr;
+							break;
+						}
+
+						// Entity to search from
+						case 1:
+						{
+							pSearchFrom = FindEntityProcedural( outStrings[i], pSearchingEntity, pActivator, pCaller );
+							break;
+						}
+					}
+				}
+			}
+
+			return CNPC_Wilson::GetBestWilson( flBestDistSqr, pSearchFrom ? &pSearchFrom->GetAbsOrigin() : NULL );
+		}
+#endif
+		else if (strchr(pName, ':'))
+		{
+			char name[128];
+			Q_strncpy(name, pName, strchr(pName, ':')-pName+1);
+
+			CBaseEntity *pEntity = FindEntityProcedural(UTIL_VarArgs("!%s", name), pSearchingEntity, pActivator, pCaller);
+			if (pEntity && pEntity->IsNPC())
+			{
+				const char *target = (Q_strstr(pName, ":") + 1);
+				if (target[0] != '!')
+					target = UTIL_VarArgs("!%s", target);
+
+				return pEntity->MyNPCPointer()->FindNamedEntity(target);
+			}
+		}
+		else if (pSearchingEntity && pSearchingEntity->IsCombatCharacter())
+		{
+			// Perhaps the entity itself has the answer?
+			// This opens up new possibilities. The weird filter is there so it doesn't go through this twice.
+			CNullEntityFilter pFilter;
+			return pSearchingEntity->MyCombatCharacterPointer()->FindNamedEntity(szName, &pFilter);
+		}
+#endif
 		else 
 		{
 			Warning( "Invalid entity search name %s\n", szName );
@@ -566,6 +731,99 @@ CBaseEntity *CGlobalEntityList::FindEntityProcedural( const char *szName, CBaseE
 
 	return NULL;
 }
+
+
+#ifdef MAPBASE_VSCRIPT
+//-----------------------------------------------------------------------------
+// Purpose: Finds an entity given a custom procedural name.
+// Input  : szName - The procedural name to search for, should start with '!'.
+//			pSearchingEntity - 
+//			pActivator - The activator entity if this was called from an input
+//				or Use handler.
+//-----------------------------------------------------------------------------
+CBaseEntity *CGlobalEntityList::FindEntityCustomProcedural( CBaseEntity *pStartEntity, const char *szName, CBaseEntity *pSearchingEntity, CBaseEntity *pActivator, CBaseEntity *pCaller )
+{
+	const char *pName = szName;
+
+	//
+	// Check for the name escape character.
+	//
+	if ( szName[0] == '!' )
+		pName = szName + 1;
+
+	//
+	// Look through the custom procedural list.
+	//
+	for (int i = 0; i < g_CustomProcedurals.Count(); i++)
+	{
+		if (Matcher_NamesMatch( g_CustomProcedurals[i].szName, pName ))
+		{
+			if (pStartEntity && g_CustomProcedurals[i].bCanReturnMultiple == false)
+				return NULL;
+
+			// name, startEntity, searchingEntity, activator, caller
+			ScriptVariant_t functionReturn;
+			ScriptVariant_t args[] = {
+				ScriptVariant_t( pName ),
+				ScriptVariant_t( ToHScript( pStartEntity ) ),
+				ScriptVariant_t( ToHScript( pSearchingEntity ) ),
+				ScriptVariant_t( ToHScript( pActivator ) ),
+				ScriptVariant_t( ToHScript( pCaller ) ),
+			};
+
+			g_pScriptVM->ExecuteFunction( g_CustomProcedurals[i].hFunc, args, 5, &functionReturn, NULL, true );
+
+			if (pStartEntity && ToEnt( functionReturn.m_hScript ) == pStartEntity)
+			{
+				Warning( "WARNING: Custom procedural %s returned entity identical to start entity (%s), returning null\n", g_CustomProcedurals[i].szName, pStartEntity->GetDebugName() );
+				return NULL;
+			}
+
+			return ToEnt( functionReturn.m_hScript );
+		}
+	}
+
+	return NULL;
+}
+
+void CGlobalEntityList::AddCustomProcedural( const char *pszName, HSCRIPT hFunc, bool bCanReturnMultiple )
+{
+	// 
+	// Check for any existing custom procedurals to replace.
+	// 
+	for (int i = 0; i < g_CustomProcedurals.Count(); i++)
+	{
+		if (FStrEq( pszName, g_CustomProcedurals[i].szName ))
+		{
+			g_CustomProcedurals.FastRemove( i );
+			break;
+		}
+	}
+
+	// 
+	// Add a new custom procedural.
+	// 
+	int i = g_CustomProcedurals.AddToTail();
+	g_CustomProcedurals[i].szName = pszName;
+	g_CustomProcedurals[i].hFunc = hFunc;
+	g_CustomProcedurals[i].bCanReturnMultiple = bCanReturnMultiple;
+}
+
+void CGlobalEntityList::RemoveCustomProcedural( const char *pszName )
+{
+	// 
+	// Remove the specified custom procedural.
+	// 
+	for (int i = 0; i < g_CustomProcedurals.Count(); i++)
+	{
+		if (FStrEq( pszName, g_CustomProcedurals[i].szName ))
+		{
+			g_CustomProcedurals.FastRemove( i );
+			break;
+		}
+	}
+}
+#endif
 
 
 //-----------------------------------------------------------------------------
@@ -582,6 +840,16 @@ CBaseEntity *CGlobalEntityList::FindEntityByName( CBaseEntity *pStartEntity, con
 
 	if ( szName[0] == '!' )
 	{
+#ifdef MAPBASE_VSCRIPT
+		if (g_CustomProcedurals.Count() > 0)
+		{
+			// Search for a custom procedural
+			CBaseEntity *ent = FindEntityCustomProcedural( pStartEntity, szName, pSearchingEntity, pActivator, pCaller );
+			if (ent != NULL)
+				return ent;
+		}
+#endif
+
 		//
 		// Avoid an infinite loop, only find one match per procedural search!
 		//
@@ -610,6 +878,35 @@ CBaseEntity *CGlobalEntityList::FindEntityByName( CBaseEntity *pStartEntity, con
 			if ( pFilter && !pFilter->ShouldFindEntity(ent) )
 				continue;
 
+			return ent;
+		}
+	}
+
+	return NULL;
+}
+
+// From Alien Swarm SDK
+CBaseEntity *CGlobalEntityList::FindEntityByNameFast( CBaseEntity *pStartEntity, string_t iszName )
+{
+	if ( iszName == NULL_STRING || STRING(iszName)[0] == 0 )
+		return NULL;
+
+	const CEntInfo *pInfo = pStartEntity ? GetEntInfoPtr( pStartEntity->GetRefEHandle() )->m_pNext : FirstEntInfo();
+
+	for ( ;pInfo; pInfo = pInfo->m_pNext )
+	{
+		CBaseEntity *ent = (CBaseEntity *)pInfo->m_pEntity;
+		if ( !ent )
+		{
+			DevWarning( "NULL entity in global entity list!\n" );
+			continue;
+		}
+
+		if ( !ent->m_iName )
+			continue;
+
+		if ( ent->m_iName == iszName )
+		{
 			return ent;
 		}
 	}
@@ -834,6 +1131,80 @@ CBaseEntity *CGlobalEntityList::FindEntityByClassnameNearest( const char *szName
 }
 
 
+// From Alien Swarm SDK
+CBaseEntity *CGlobalEntityList::FindEntityByClassnameNearestFast( string_t iszName, const Vector &vecSrc, float flRadius )
+{
+	CBaseEntity *pEntity = NULL;
+
+	//
+	// Check for matching class names within the search radius.
+	//
+	float flMaxDist2 = flRadius * flRadius;
+	if (flMaxDist2 == 0)
+	{
+		flMaxDist2 = MAX_TRACE_LENGTH * MAX_TRACE_LENGTH;
+	}
+
+	CBaseEntity *pSearch = NULL;
+	while ((pSearch = gEntList.FindEntityByClassnameFast( pSearch, iszName )) != NULL)
+	{
+		if ( !pSearch->edict() )
+			continue;
+
+		float flDist2 = (pSearch->GetAbsOrigin() - vecSrc).LengthSqr();
+
+		if (flMaxDist2 > flDist2)
+		{
+			pEntity = pSearch;
+			flMaxDist2 = flDist2;
+		}
+	}
+
+	return pEntity;
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Finds the nearest entity by class name withing given search radius.
+//			From Alien Swarm SDK
+// Input  : szName - Entity name to search for. Treated as a target name first,
+//				then as an entity class name, ie "info_target".
+//			vecSrc - Center of search radius.
+//			flRadius - Search radius for classname search, 0 to search everywhere.
+// Output : Returns a pointer to the found entity, NULL if none.
+//-----------------------------------------------------------------------------
+CBaseEntity *CGlobalEntityList::FindEntityByClassnameNearest2D( const char *szName, const Vector &vecSrc, float flRadius )
+{
+	CBaseEntity *pEntity = NULL;
+
+	//
+	// Check for matching class names within the search radius.
+	//
+	float flMaxDist2 = flRadius * flRadius;
+	if (flMaxDist2 == 0)
+	{
+		flMaxDist2 = MAX_TRACE_LENGTH * MAX_TRACE_LENGTH;
+	}
+
+	CBaseEntity *pSearch = NULL;
+	while ((pSearch = gEntList.FindEntityByClassname( pSearch, szName )) != NULL)
+	{
+		if ( !pSearch->edict() )
+			continue;
+
+		float flDist2 = (pSearch->GetAbsOrigin().AsVector2D() - vecSrc.AsVector2D()).LengthSqr();
+
+		if (flMaxDist2 > flDist2)
+		{
+			pEntity = pSearch;
+			flMaxDist2 = flDist2;
+		}
+	}
+
+	return pEntity;
+}
+
+
 
 //-----------------------------------------------------------------------------
 // Purpose: Finds the first entity within radius distance by class name.
@@ -917,6 +1288,20 @@ CBaseEntity *CGlobalEntityList::FindEntityByClassnameWithin( CBaseEntity *pStart
 //				or Use handler, NULL otherwise.
 // Output : Returns a pointer to the found entity, NULL if none.
 //-----------------------------------------------------------------------------
+#ifdef MAPBASE
+CBaseEntity *CGlobalEntityList::FindEntityGeneric( CBaseEntity *pStartEntity, const char *szName, CBaseEntity *pSearchingEntity, CBaseEntity *pActivator, CBaseEntity *pCaller, IEntityFindFilter *pFilter )
+{
+	CBaseEntity *pEntity = NULL;
+
+	pEntity = gEntList.FindEntityByName( pStartEntity, szName, pSearchingEntity, pActivator, pCaller, pFilter );
+	if (!pEntity)
+	{
+		pEntity = gEntList.FindEntityByClassname( pStartEntity, szName, pFilter );
+	}
+
+	return pEntity;
+}
+#else
 CBaseEntity *CGlobalEntityList::FindEntityGeneric( CBaseEntity *pStartEntity, const char *szName, CBaseEntity *pSearchingEntity, CBaseEntity *pActivator, CBaseEntity *pCaller )
 {
 	CBaseEntity *pEntity = NULL;
@@ -929,6 +1314,7 @@ CBaseEntity *CGlobalEntityList::FindEntityGeneric( CBaseEntity *pStartEntity, co
 
 	return pEntity;
 } 
+#endif
 
 
 //-----------------------------------------------------------------------------

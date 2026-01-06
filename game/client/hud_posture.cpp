@@ -16,6 +16,9 @@
 #include <vgui/ILocalize.h>
 #include <vgui_controls/Panel.h>
 #include <vgui/IVGui.h>
+#ifdef STEAM_INPUT
+#include "expanded_steam/isteaminput.h"
+#endif
 
 
 using namespace vgui;
@@ -38,7 +41,7 @@ public:
 	CHudPosture( const char *pElementName );
 	bool			ShouldDraw( void );
 
-#ifdef _X360 	// if not xbox 360, don't waste code space on this
+#if defined(_X360) || defined(STEAM_INPUT) 	// if not xbox 360, don't waste code space on this
 	virtual void	Init( void );
 	virtual void	Reset( void );
 	virtual void	OnTick( void );
@@ -63,6 +66,10 @@ private:
 
 
 DECLARE_HUDELEMENT( CHudPosture );
+
+#ifdef STEAM_INPUT
+static CHudPosture *g_pPostureHUD;
+#endif
 
 
 namespace
@@ -89,6 +96,10 @@ CHudPosture::CHudPosture( const char *pElementName ) : CHudElement( pElementName
 	{
 		vgui::ivgui()->AddTickSignal( GetVPanel(), (1000/HUD_POSTURE_UPDATES_PER_SECOND) );
 	}
+
+#ifdef STEAM_INPUT
+	g_pPostureHUD = this;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -98,7 +109,7 @@ CHudPosture::CHudPosture( const char *pElementName ) : CHudElement( pElementName
 //-----------------------------------------------------------------------------
 bool CHudPosture::ShouldDraw()
 {
-#ifdef _X360
+#if defined(_X360) || defined(STEAM_INPUT)
 	return ( m_duckTimeout >= gpGlobals->curtime &&
 		CHudElement::ShouldDraw() );
 #else
@@ -106,7 +117,7 @@ bool CHudPosture::ShouldDraw()
 #endif
 }
 
-#ifdef _X360
+#if defined(_X360) || defined(STEAM_INPUT)
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -193,3 +204,21 @@ void CHudPosture::Paint()
 
 #endif
 
+#ifdef STEAM_INPUT
+CON_COMMAND( hud_posture_enable, "Enables the posture HUD element" )
+{
+	if (g_pPostureHUD)
+	{
+		vgui::ivgui()->AddTickSignal( g_pPostureHUD->GetVPanel(), (1000/HUD_POSTURE_UPDATES_PER_SECOND) );
+	}
+}
+
+CON_COMMAND( hud_posture_disable, "Disables the posture HUD element" )
+{
+	if (g_pPostureHUD)
+	{
+		vgui::ivgui()->RemoveTickSignal( g_pPostureHUD->GetVPanel() );
+		g_pPostureHUD->SetAlpha( 0 );
+	}
+}
+#endif

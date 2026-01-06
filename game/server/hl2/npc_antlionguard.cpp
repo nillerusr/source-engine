@@ -52,6 +52,12 @@ ConVar	sk_antlionguard_dmg_shove( "sk_antlionguard_dmg_shove", "0" );
 ConVar	g_antlionguard_hemorrhage( "g_antlionguard_hemorrhage", "1", FCVAR_NONE, "If 1, guard will emit a bleeding particle effect when wounded." );
 #endif
 
+#ifdef EZ2
+ConVar	g_antlionguard_dynamic_shove( "g_antlionguard_dynamic_shove", "1", FCVAR_NONE, "Allows guards to dynamically shove props." );
+ConVar	sk_antlionguard_shove_min_mass( "sk_antlionguard_shove_min_mass", "8", FCVAR_NONE, "Minimum mass for dynamic prop shoving." );
+ConVar	sk_antlionguard_shove_max_mass( "sk_antlionguard_shove_max_mass", "2000", FCVAR_NONE, "Maximum mass for dynamic prop shoving." );
+#endif
+
 // Spawnflags 
 #define	SF_ANTLIONGUARD_SERVERSIDE_RAGDOLL	( 1 << 16 )
 #define SF_ANTLIONGUARD_INSIDE_FOOTSTEPS	( 1 << 17 )
@@ -60,6 +66,10 @@ ConVar	g_antlionguard_hemorrhage( "g_antlionguard_hemorrhage", "1", FCVAR_NONE, 
 #define	ANTLIONGUARD_MODEL		"models/antlion_guard.mdl"
 #define	MIN_BLAST_DAMAGE		25.0f
 #define MIN_CRUSH_DAMAGE		20.0f
+
+#define ANTLIONGUARD_BLUE_MODEL		"models/antlion_guard_blue.mdl"
+#define ANTLIONGUARD_XEN_MODEL		"models/antlion_guard_xen.mdl"
+#define ANTLIONGUARD_BLOOD_MODEL	"models/bloodlion_guard.mdl"
 
 //==================================================
 //
@@ -70,6 +80,13 @@ ConVar	g_antlionguard_hemorrhage( "g_antlionguard_hemorrhage", "1", FCVAR_NONE, 
 #define ANTLIONGUARD_MAX_OBJECTS				128
 #define	ANTLIONGUARD_MIN_OBJECT_MASS			8
 #define	ANTLIONGUARD_MAX_OBJECT_MASS			750
+#ifdef EZ2 // E:Z2 is more loose about what guards can punt
+#define	ANTLIONGUARD_MIN_OBJECT_PUNT_MASS		sk_antlionguard_shove_min_mass.GetFloat()
+#define	ANTLIONGUARD_MAX_OBJECT_PUNT_MASS		sk_antlionguard_shove_max_mass.GetFloat()
+#else
+#define	ANTLIONGUARD_MIN_OBJECT_PUNT_MASS		ANTLIONGUARD_MIN_OBJECT_MASS
+#define	ANTLIONGUARD_MAX_OBJECT_PUNT_MASS		ANTLIONGUARD_MAX_OBJECT_MASS
+#endif
 #define	ANTLIONGUARD_FARTHEST_PHYSICS_OBJECT	350
 #define ANTLIONGUARD_OBJECTFINDING_FOV			DOT_45DEGREE // 1/sqrt(2)
 
@@ -189,6 +206,17 @@ Activity ACT_ANTLIONGUARD_CHARGE_CRASH;
 Activity ACT_ANTLIONGUARD_CHARGE_STOP;
 Activity ACT_ANTLIONGUARD_CHARGE_HIT;
 Activity ACT_ANTLIONGUARD_CHARGE_ANTICIPATION;
+
+#ifdef MAPBASE
+// Unused activities
+Activity ACT_ANTLIONGUARD_COVER_ENTER;
+Activity ACT_ANTLIONGUARD_COVER_LOOP;
+Activity ACT_ANTLIONGUARD_COVER_EXIT;
+Activity ACT_ANTLIONGUARD_COVER_ADVANCE;
+Activity ACT_ANTLIONGUARD_COVER_FLINCH;
+Activity ACT_ANTLIONGUARD_SNEAK;
+Activity ACT_ANTLIONGUARD_RUN_FULL;
+#endif
 
 // Anim events
 int AE_ANTLIONGUARD_CHARGE_HIT;
@@ -667,7 +695,28 @@ void CNPC_AntlionGuard::UpdateOnRemove( void )
 //-----------------------------------------------------------------------------
 void CNPC_AntlionGuard::Precache( void )
 {
-	PrecacheModel( ANTLIONGUARD_MODEL );
+#ifdef EZ
+	if (GetModelName() == NULL_STRING)
+	{
+		switch (m_tEzVariant)
+		{
+			case EZ_VARIANT_RAD:
+				SetModelName( AllocPooledString( ANTLIONGUARD_BLUE_MODEL ) );
+				break;
+			case EZ_VARIANT_XEN:
+				SetModelName( AllocPooledString( ANTLIONGUARD_XEN_MODEL ) );
+				break;
+			case EZ_VARIANT_BLOODLION:
+				SetModelName( AllocPooledString( ANTLIONGUARD_BLOOD_MODEL ) );
+				break;
+			default:
+				SetModelName( AllocPooledString( ANTLIONGUARD_MODEL ) );
+				break;
+		}
+	}
+#endif
+
+	PrecacheModel( DefaultOrCustomModel( ANTLIONGUARD_MODEL ) );
 
 	PrecacheScriptSound( "NPC_AntlionGuard.Shove" );
 	PrecacheScriptSound( "NPC_AntlionGuard.HitHard" );
@@ -709,6 +758,19 @@ void CNPC_AntlionGuard::Precache( void )
 	PrecacheParticleSystem( "blood_antlionguard_injured_light" );
 	PrecacheParticleSystem( "blood_antlionguard_injured_heavy" );
 
+#ifdef EZ
+	if (m_tEzVariant == EZ_VARIANT_RAD)
+	{
+		PrecacheParticleSystem( "blood_impact_blue_01" );
+	}
+#endif
+#ifdef EZ2
+	else if (m_tEzVariant == EZ_VARIANT_XEN)
+	{
+		PrecacheParticleSystem( "xenpc_spawn" );
+	}
+#endif
+
 	BaseClass::Precache();
 }
 
@@ -749,7 +811,22 @@ void CNPC_AntlionGuard::CreateGlow( CSprite **pSprite, const char *pAttachName )
 		return;
 
 	(*pSprite)->TurnOn();
+#ifdef EZ
+	switch (m_tEzVariant)
+	{
+		case EZ_VARIANT_XEN:
+			(*pSprite)->SetTransparency( kRenderWorldGlow, 50, 150, 25, 200, kRenderFxNoDissipation );
+			break;
+		case EZ_VARIANT_RAD:
+			(*pSprite)->SetTransparency( kRenderWorldGlow, 0, 255, 255, 200, kRenderFxNoDissipation );
+			break;
+		default:
+			(*pSprite)->SetTransparency( kRenderWorldGlow, 156, 169, 121, 164, kRenderFxNoDissipation );
+			break;
+	}
+#else
 	(*pSprite)->SetTransparency( kRenderWorldGlow, 156, 169, 121, 164, kRenderFxNoDissipation );
+#endif
 	(*pSprite)->SetScale( 1.0f );
 	(*pSprite)->SetGlowProxySize( 16.0f );
 	int nAttachment = LookupAttachment( pAttachName );
@@ -794,7 +871,18 @@ void CNPC_AntlionGuard::Spawn( void )
 	SetMoveType( MOVETYPE_STEP );
 
 	SetNavType( NAV_GROUND );
+#ifdef EZ
+	if (m_tEzVariant == EZ_VARIANT_RAD)
+	{
+		SetBloodColor( BLOOD_COLOR_BLUE );
+	}
+	else
+	{
+		SetBloodColor( BLOOD_COLOR_YELLOW );
+	}
+#else
 	SetBloodColor( BLOOD_COLOR_YELLOW );
+#endif
 
 	m_iHealth = sk_antlionguard_health.GetFloat();
 	m_iMaxHealth = m_iHealth;
@@ -868,34 +956,38 @@ void CNPC_AntlionGuard::Spawn( void )
 //-----------------------------------------------------------------------------
 void CNPC_AntlionGuard::Activate( void )
 {
+	CBaseEntity *pObject = NULL;
 	BaseClass::Activate();
 
-	// Find all nearby physics objects and add them to the list of objects we will sense
-	CBaseEntity *pObject = NULL;
-	while ( ( pObject = gEntList.FindEntityInSphere( pObject, WorldSpaceCenter(), 2500 ) ) != NULL )
-	{
-		// Can't throw around debris
-		if ( pObject->GetCollisionGroup() == COLLISION_GROUP_DEBRIS )
-			continue;
-
-		// We can only throw a few types of things
-		if ( !FClassnameIs( pObject, "prop_physics" ) && !FClassnameIs( pObject, "func_physbox" ) )
-			continue;
-
-		// Ensure it's mass is within range
-		IPhysicsObject *pPhysObj = pObject->VPhysicsGetObject();
-		if( ( pPhysObj == NULL ) || ( pPhysObj->GetMass() > ANTLIONGUARD_MAX_OBJECT_MASS ) || ( pPhysObj->GetMass() < ANTLIONGUARD_MIN_OBJECT_MASS ) )
-			continue;
-
-		// Tell the AI sensing list that we want to consider this
-		g_AI_SensedObjectsManager.AddEntity( pObject );
-
-		if ( g_debug_antlionguard.GetInt() == 5 )
+#ifdef EZ2
+	// This feature was broken prior to E:Z2 changes, so use a cvar to make sure restoring it now doesn't cause problems
+	if (g_antlionguard_dynamic_shove.GetBool())
+#endif
+		// Find all nearby physics objects and add them to the list of objects we will sense
+		while ( ( pObject = gEntList.FindEntityInSphere( pObject, WorldSpaceCenter(), 2500 ) ) != NULL )
 		{
-			Msg("Antlion Guard: Added prop with model '%s' to sense list.\n", STRING(pObject->GetModelName()) );
-			pObject->m_debugOverlays |= OVERLAY_BBOX_BIT;
+			// Can't throw around debris
+			if ( pObject->GetCollisionGroup() == COLLISION_GROUP_DEBRIS )
+				continue;
+
+			// We can only throw a few types of things
+			if ( !FClassnameIs( pObject, "prop_physics" ) && !FClassnameIs( pObject, "func_physbox" ) )
+				continue;
+
+			// Ensure it's mass is within range
+			IPhysicsObject *pPhysObj = pObject->VPhysicsGetObject();
+			if( ( pPhysObj == NULL ) || ( pPhysObj->GetMass() > ANTLIONGUARD_MAX_OBJECT_PUNT_MASS ) || ( pPhysObj->GetMass() < ANTLIONGUARD_MIN_OBJECT_PUNT_MASS ) )
+				continue;
+
+			// Tell the AI sensing list that we want to consider this
+			g_AI_SensedObjectsManager.AddEntity( pObject );
+
+			if ( g_debug_antlionguard.GetInt() == 5 )
+			{
+				Msg("Antlion Guard: Added prop with model '%s' to sense list.\n", STRING(pObject->GetModelName()) );
+				pObject->m_debugOverlays |= OVERLAY_BBOX_BIT;
+			}
 		}
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -1573,7 +1665,11 @@ public:
 			if ( pVictimBCC )
 			{
 				// Can only damage other NPCs that we hate
+#ifdef MAPBASE
+				if ( m_pAttacker->IRelationType( pEntity ) <= D_FR )
+#else
 				if ( m_pAttacker->IRelationType( pEntity ) == D_HT )
+#endif
 				{
 					pEntity->TakeDamage( info );
 					return true;
@@ -2612,8 +2708,15 @@ public:
 			if ( !pEntity->IsNPC() && pEntity->GetMoveType() == MOVETYPE_VPHYSICS )
 			{
 				IPhysicsObject *pPhysics = pEntity->VPhysicsGetObject();
+#ifdef MAPBASE
+				// A MOVETYPE_VPHYSICS object without a VPhysics object is an odd edge case, but it's evidently possible
+				// since my game crashed after an antlion guard tried to see me through an EP2 jalopy.
+				// Perhaps that's a sign of an underlying issue?
+				if ( pPhysics && pPhysics->IsMoveable() && pPhysics->GetMass() < m_minMass )
+#else
 				Assert(pPhysics);
 				if ( pPhysics->IsMoveable() && pPhysics->GetMass() < m_minMass )
+#endif
 					return false;
 			}
 
@@ -2729,7 +2832,11 @@ bool CNPC_AntlionGuard::HandleChargeImpact( Vector vecImpact, CBaseEntity *pEnti
 	}
 
 	// Hit anything we don't like
+#ifdef MAPBASE
+	if ( IRelationType( pEntity ) <= D_FR && ( GetNextAttack() < gpGlobals->curtime ) )
+#else
 	if ( IRelationType( pEntity ) == D_HT && ( GetNextAttack() < gpGlobals->curtime ) )
+#endif
 	{
 		EmitSound( "NPC_AntlionGuard.Shove" );
 
@@ -3175,7 +3282,12 @@ void CNPC_AntlionGuard::SummonAntlions( void )
 
 		// Ensure it's dirt or sand
 		const surfacedata_t *pdata = physprops->GetSurfaceData( tr.surface.surfaceProps );
+#ifdef EZ2
+		// Unless it's a Xen variant
+		if ( m_tEzVariant != EZ_VARIANT_XEN && ( pdata->game.material != CHAR_TEX_DIRT ) && ( pdata->game.material != CHAR_TEX_SAND ) )
+#else
 		if ( ( pdata->game.material != CHAR_TEX_DIRT ) && ( pdata->game.material != CHAR_TEX_SAND ) )
+#endif
 		{
 			if ( g_debug_antlionguard.GetInt() == 2 )
 			{
@@ -3227,12 +3339,36 @@ void CNPC_AntlionGuard::SummonAntlions( void )
 
 		// Make the antlion fire my input when he dies
 		pAntlion->KeyValue( "OnDeath", UTIL_VarArgs("%s,SummonedAntlionDied,,0,-1", STRING(GetEntityName())) );
+#ifdef MAPBASE
+		pAntlion->KeyValue( "OnKilled", UTIL_VarArgs("%s,SummonedAntlionDied,,0,-1", STRING(GetEntityName())) );
+#endif
 
 		// Start the antlion burrowed, and tell him to come up
+#ifdef EZ2
+		pAntlion->m_tEzVariant = m_tEzVariant;
+
+		if (m_tEzVariant == EZ_VARIANT_XEN)
+		{
+			// Xen antlions instead teleport in
+			DispatchSpawn( pAntlion );
+			pAntlion->Activate();
+
+			pAntlion->EmitSound( "WeaponXenGrenade.SpawnXenPC" );
+			DispatchParticleEffect( "xenpc_spawn", pAntlion->WorldSpaceCenter(), pAntlion->GetAbsAngles(), pAntlion );
+		}
+		else
+		{
+			pAntlion->m_bStartBurrowed = true;
+			DispatchSpawn( pAntlion );
+			pAntlion->Activate();
+			g_EventQueue.AddEvent( pAntlion, "Unburrow", RandomFloat(0.1, 1.0), this, this );
+		}
+#else
 		pAntlion->m_bStartBurrowed = true;
 		DispatchSpawn( pAntlion );
 		pAntlion->Activate();
 		g_EventQueue.AddEvent( pAntlion, "Unburrow", RandomFloat(0.1, 1.0), this, this );
+#endif
 
 		// Add it to our squad
 		if ( GetSquad() != NULL )
@@ -3366,6 +3502,11 @@ void CNPC_AntlionGuard::InputClearChargeTarget( inputdata_t &inputdata )
 //-----------------------------------------------------------------------------
 Activity CNPC_AntlionGuard::NPC_TranslateActivity( Activity baseAct )
 {
+#ifdef MAPBASE
+	// Needed for VScript NPC_TranslateActiviy hook
+	baseAct = BaseClass::NPC_TranslateActivity( baseAct );
+#endif
+
 	//See which run to use
 	if ( ( baseAct == ACT_RUN ) && IsCurSchedule( SCHED_ANTLIONGUARD_CHARGE ) )
 		return (Activity) ACT_ANTLIONGUARD_CHARGE_RUN;
@@ -4676,6 +4817,15 @@ AI_BEGIN_CUSTOM_NPC( npc_antlionguard, CNPC_AntlionGuard )
 	DECLARE_ACTIVITY( ACT_ANTLIONGUARD_PHYSHIT_FL )
 	DECLARE_ACTIVITY( ACT_ANTLIONGUARD_PHYSHIT_RR )	
 	DECLARE_ACTIVITY( ACT_ANTLIONGUARD_PHYSHIT_RL )		
+#ifdef MAPBASE
+	DECLARE_ACTIVITY( ACT_ANTLIONGUARD_COVER_ENTER )
+	DECLARE_ACTIVITY( ACT_ANTLIONGUARD_COVER_LOOP )
+	DECLARE_ACTIVITY( ACT_ANTLIONGUARD_COVER_EXIT )
+	DECLARE_ACTIVITY( ACT_ANTLIONGUARD_COVER_ADVANCE )
+	DECLARE_ACTIVITY( ACT_ANTLIONGUARD_COVER_FLINCH )
+	DECLARE_ACTIVITY( ACT_ANTLIONGUARD_SNEAK )
+	DECLARE_ACTIVITY( ACT_ANTLIONGUARD_RUN_FULL )
+#endif
 	
 	//Adrian: events go here
 	DECLARE_ANIMEVENT( AE_ANTLIONGUARD_CHARGE_HIT )

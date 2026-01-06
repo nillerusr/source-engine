@@ -51,6 +51,9 @@ enum AI_Posture_t
 	AIP_INDIFFERENT,
 	AIP_STANDING,
 	AIP_CROUCHING,
+#if EXPANDED_HL2_COVER_ACTIVITIES
+	AIP_CROUCHING_MED,	// See UpdateTranslateActivityMap() for more information on what this is for
+#endif
 	AIP_PEEKING,
 };
 
@@ -103,6 +106,9 @@ public:
 	bool		IsActive( void ) { return m_fActive; }
 	void 		OnChangeTacticalConstraints();
 
+#ifdef EZ2
+	virtual
+#endif
 	bool 		CanSelectSchedule();
 	bool		IsBehindBattleLines( const Vector &point );
 
@@ -149,6 +155,14 @@ protected:
 
 	// Standoff overrides base AI crouch handling
 	bool		IsCrouching( void ) { return false; }
+
+#ifdef MAPBASE
+	// Standoff overrides base cover activity translation
+	bool		CanTranslateCrouchActivity( void ) { return false; }
+
+	// Don't do death poses while crouching
+	bool		ShouldPickADeathPose( void ) { return (GetPosture() != AIP_CROUCHING && GetPosture() != AIP_PEEKING) && BaseClass::ShouldPickADeathPose(); }
+#endif
 	
 private:
 	

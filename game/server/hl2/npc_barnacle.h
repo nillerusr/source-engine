@@ -78,11 +78,18 @@ public:
 	virtual void	Activate( void );
 	void			Precache( void );
 	Class_T			Classify ( void );
+#ifdef EZ2
+	Disposition_t	IRelationType( CBaseEntity *pTarget );
+#endif
 	virtual void	ComputeWorldSpaceSurroundingBox( Vector *pVecWorldMins, Vector *pVecWorldMaxs );
 	virtual void	HandleAnimEvent( animevent_t *pEvent );
 	void			Event_Killed( const CTakeDamageInfo &info );
 	int				OnTakeDamage_Alive( const CTakeDamageInfo &info );
 	void			PlayerHasIlluminatedNPC( CBasePlayer *pPlayer, float flDot );
+
+#ifdef MAPBASE
+	bool			AllowedToIgnite( void );
+#endif
 
 	// The tongue's vphysics updated
 	void OnTongueTipUpdated();
@@ -145,6 +152,19 @@ private:
 
 
 
+#ifdef MAPBASE
+
+#if HL2_EPISODIC
+	/// Decides whether something should poison the barnacle upon eating
+	static bool IsPoisonous( CBaseEntity *pVictim );
+	const impactdamagetable_t &GetPhysicsImpactDamageTable( void );
+#endif
+
+	// Regular HL2 DLL has these now
+	void InputLetGo( inputdata_t &inputdata );
+	COutputEHANDLE m_OnGrab, m_OnRelease;
+
+#else
 #if HL2_EPISODIC
 	/// Decides whether something should poison the barnacle upon eating
 	static bool IsPoisonous( CBaseEntity *pVictim );
@@ -153,6 +173,7 @@ private:
 	COutputEHANDLE m_OnGrab, m_OnRelease;
 
 	const impactdamagetable_t &GetPhysicsImpactDamageTable( void );
+#endif
 #endif
 
 	CNetworkVar( float, m_flAltitude );
@@ -195,7 +216,9 @@ private:
 	Vector						m_vLastEnemyPos;
 	float						m_flLastPull;
 	CSimpleSimTimer				m_StuckTimer;
+#ifndef MAPBASE // Handled by interactions now
 	bool						m_bSwallowingBomb;
+#endif
 #ifdef HL2_EPISODIC
 	bool						m_bSwallowingPoison;
 #endif

@@ -8,6 +8,15 @@
 #include "props.h"
 #include "items.h"
 #include "item_dynamic_resupply.h"
+#ifdef MAPBASE
+#include "point_template.h"
+#endif
+
+#ifdef EZ2
+#include "particle_parse.h"
+#include "ai_basenpc.h"
+#include "grenade_hopwire.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -16,6 +25,9 @@ const char *pszItemCrateModelName[] =
 {
 	"models/items/item_item_crate.mdl",
 	"models/items/item_beacon_crate.mdl",
+#ifdef MAPBASE
+	"models/items/item_item_crate.mdl", // Custom model placeholder/fallback, this should never be selected
+#endif
 };
 
 //-----------------------------------------------------------------------------
@@ -39,14 +51,48 @@ public:
 	virtual void VPhysicsCollision( int index, gamevcollisionevent_t *pEvent );
 	virtual void OnPhysGunPickup( CBasePlayer *pPhysGunUser, PhysGunPickup_t reason );
 
+#ifdef MAPBASE
+	void InputSetContents( inputdata_t &data );
+	void InputSetItemCount( inputdata_t &data );
+	void InputMergeContentsWithPlayer( inputdata_t &data );
+
+	// Item crates always override prop data for custom models
+	bool OverridePropdata( void ) { return true; }
+#endif
+
+#ifdef EZ2
+	// Item crates crates must be alive to be visible like remarkables
+	// I hope this doesn't cause any side effects - 1upD
+	bool IsAlive() { return true; } // Required for NPCs to see this entity
+
+	void Break( CBaseEntity *pBreaker, const CTakeDamageInfo &info );
+
+	// Override to return false to hide item crate hints
+	virtual bool IsItemCrate() { return true; };
+
+	virtual void OnSpawnNPC( CBaseEntity * pEntity, CBaseCombatCharacter * pBreaker ){ }
+
+	EZ_VARIANT	GetEZVariant() { return m_tEzVariant; }
+	void		SetEZVariant( EZ_VARIANT variant ) { m_tEzVariant = variant; }
+#endif
+
 protected:
 	virtual void OnBreak( const Vector &vecVelocity, const AngularImpulse &angVel, CBaseEntity *pBreaker );
+
+#ifdef MAPBASE
+	bool ShouldRandomizeAngles( CBaseEntity *pEnt );
+	#define ITEM_ITEMCRATE_TEMPLATE_TARGET m_strAlternateMaster
+	CPointTemplate *FindTemplate();
+#endif
 
 private:
 	// Crate types. Add more!
 	enum CrateType_t
 	{
 		CRATE_SPECIFIC_ITEM = 0,
+#ifdef MAPBASE
+		CRATE_POINT_TEMPLATE,
+#endif
 		CRATE_TYPE_COUNT,
 	};
 
@@ -54,6 +100,9 @@ private:
 	{
 		CRATE_APPEARANCE_DEFAULT = 0,
 		CRATE_APPEARANCE_RADAR_BEACON,
+#ifdef MAPBASE
+		CRATE_APPEARANCE_CUSTOM,
+#endif
 	};
 
 private:
@@ -63,7 +112,14 @@ private:
 	string_t			m_strAlternateMaster;
 	CrateAppearance_t	m_CrateAppearance;
 
+#ifdef EZ2
+	EZ_VARIANT			m_tEzVariant;
+#endif
+
 	COutputEvent m_OnCacheInteraction;
+#ifdef MAPBASE
+	COutputEHANDLE m_OnItem;
+#endif
 };
 
 
@@ -80,8 +136,20 @@ BEGIN_DATADESC( CItem_ItemCrate )
 	DEFINE_KEYFIELD( m_nItemCount, FIELD_INTEGER, "ItemCount" ),	
 	DEFINE_KEYFIELD( m_strAlternateMaster, FIELD_STRING, "SpecificResupply" ),	
 	DEFINE_KEYFIELD( m_CrateAppearance, FIELD_INTEGER, "CrateAppearance" ),
+
+#ifdef EZ2
+	DEFINE_KEYFIELD( m_tEzVariant, FIELD_INTEGER, "ezvariant" ),
+#endif
+
 	DEFINE_INPUTFUNC( FIELD_VOID, "Kill", InputKill ),
 	DEFINE_OUTPUT( m_OnCacheInteraction, "OnCacheInteraction" ),
+#ifdef MAPBASE
+	DEFINE_OUTPUT( m_OnItem, "OnItem" ),
+
+	DEFINE_INPUTFUNC( FIELD_STRING, "SetContents", InputSetContents ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetItemCount", InputSetItemCount ),
+	DEFINE_INPUTFUNC( FIELD_EHANDLE, "MergeContentsWithPlayer", InputMergeContentsWithPlayer ),
+#endif
 
 END_DATADESC()
 
@@ -92,8 +160,17 @@ END_DATADESC()
 void CItem_ItemCrate::Precache( void )
 {
 	// Set this here to quiet base prop warnings
+#ifdef MAPBASE
+	// Set our model name here instead of in Spawn() so we could use custom crates.
+	if (m_CrateAppearance != CRATE_APPEARANCE_CUSTOM)
+		SetModelName(AllocPooledString(pszItemCrateModelName[m_CrateAppearance]));
+
+	PrecacheModel( STRING(GetModelName()) );
+	SetModel( STRING(GetModelName()) );
+#else
 	PrecacheModel( pszItemCrateModelName[m_CrateAppearance] );
 	SetModel( pszItemCrateModelName[m_CrateAppearance] );
+#endif
 
 	BaseClass::Precache();
 	if ( m_CrateType == CRATE_SPECIFIC_ITEM )
@@ -118,7 +195,9 @@ void CItem_ItemCrate::Spawn( void )
 	}
 
 	DisableAutoFade();
+#ifndef MAPBASE
 	SetModelName( AllocPooledString( pszItemCrateModelName[m_CrateAppearance] ) );
+#endif
 
 	if ( NULL_STRING == m_strItemClass )
 	{
@@ -128,8 +207,18 @@ void CItem_ItemCrate::Spawn( void )
 	}
 
 	Precache( );
+#ifdef MAPBASE
+	SetModel( STRING(GetModelName()) );
+#else
 	SetModel( pszItemCrateModelName[m_CrateAppearance] );
+#endif
 	AddEFlags( EFL_NO_ROTORWASH_PUSH );
+
+#ifdef EZ2
+	// Necessary to make item crates visible like remarkables
+	AddFlag( FL_OBJECT );
+#endif
+
 	BaseClass::Spawn( );
 }
 
@@ -140,8 +229,75 @@ void CItem_ItemCrate::Spawn( void )
 //-----------------------------------------------------------------------------
 void CItem_ItemCrate::InputKill( inputdata_t &data )
 {
+#ifdef MAPBASE
+	// Why is this its own function anyway?
+	// It just overwrites the death notice stuff.
+	m_OnKilled.FireOutput(data.pActivator, this);
+#endif
+
 	UTIL_Remove( this );
 }
+
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input  : &data - 
+//-----------------------------------------------------------------------------
+void CItem_ItemCrate::InputSetContents( inputdata_t &data )
+{
+	switch( m_CrateType )
+	{
+		case CRATE_POINT_TEMPLATE:
+			ITEM_ITEMCRATE_TEMPLATE_TARGET = data.value.StringID();
+			break;
+
+		case CRATE_SPECIFIC_ITEM:
+		default:
+			m_strItemClass = data.value.StringID();
+			break;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input  : &data - 
+//-----------------------------------------------------------------------------
+void CItem_ItemCrate::InputSetItemCount( inputdata_t &data )
+{
+	m_nItemCount = data.value.Int();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input  : &data - 
+//-----------------------------------------------------------------------------
+void CItem_ItemCrate::InputMergeContentsWithPlayer( inputdata_t &data )
+{
+	CBasePlayer *pPlayer = ToBasePlayer(data.value.Entity());
+	if (!pPlayer)
+		pPlayer = UTIL_GetLocalPlayer();
+
+	if (pPlayer)
+	{
+		switch( m_CrateType )
+		{
+			case CRATE_POINT_TEMPLATE:
+			{
+				Warning( "%s: item_itemcrate MergeContentsWithPlayer is not supported on template crates yet!!!\n", GetDebugName() );
+			} break;
+
+			case CRATE_SPECIFIC_ITEM:
+			default:
+			{
+				for (int i = 0; i < m_nItemCount; i++)
+				{
+					pPlayer->GiveNamedItem( STRING( m_strItemClass ) );
+				}
+			} break;
+		}
+	}
+}
+#endif
 
 
 //-----------------------------------------------------------------------------
@@ -178,6 +334,60 @@ void CItem_ItemCrate::VPhysicsCollision( int index, gamevcollisionevent_t *pEven
 }
 
 
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: Finds the template for CRATE_POINT_TEMPLATE.
+//-----------------------------------------------------------------------------
+inline CPointTemplate *CItem_ItemCrate::FindTemplate()
+{
+	return dynamic_cast<CPointTemplate *>(gEntList.FindEntityByName( NULL, STRING(ITEM_ITEMCRATE_TEMPLATE_TARGET) ));
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CItem_ItemCrate::ShouldRandomizeAngles( CBaseEntity *pEnt )
+{
+	// Angles probably not supposed to be randomized.
+	if (m_CrateType == CRATE_POINT_TEMPLATE)
+		return false;
+
+	// If we have only one NPC, it's probably supposed to spawn correctly.
+	// (if we have a bunch, it's probably a gag)
+	if (m_nItemCount == 1 && pEnt->IsNPC())
+		return false;
+
+	return true;
+}
+#endif
+
+
+#ifdef EZ2
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CItem_ItemCrate::Break( CBaseEntity *pBreaker, const CTakeDamageInfo &info )
+{
+	BaseClass::Break( pBreaker, info );
+
+	if ( IsItemCrate() && pBreaker->IsPlayer() )
+	{
+		IGameEvent *event = gameeventmanager->CreateEvent( "player_smash_crate" );
+		if ( event )
+		{
+			event->SetInt( "userid", ToBasePlayer( pBreaker )->GetUserID() );
+			event->SetInt( "damage_type", info.GetDamageType() );
+			event->SetInt( "crate", entindex() );
+			gameeventmanager->FireEvent( event );
+		}
+	}
+}
+#endif
+
+#ifdef EZ2
+extern int g_interactionXenGrenadeCreate;
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -189,7 +399,31 @@ void CItem_ItemCrate::OnBreak( const Vector &vecVelocity, const AngularImpulse &
 
 	m_OnCacheInteraction.FireOutput(pBreaker,this);
 
+#ifdef MAPBASE
+	int iCount = m_nItemCount;
+	CUtlVector<CBaseEntity*> hNewEntities;
+	CPointTemplate *pTemplate = FindTemplate();
+
+	if (m_CrateType == CRATE_POINT_TEMPLATE)
+	{
+		if (pTemplate && pTemplate->CreateInstance(GetLocalOrigin(), GetLocalAngles(), &hNewEntities))
+		{
+			iCount = hNewEntities.Count() * m_nItemCount;
+		}
+		else
+		{
+			// This only runs if our template can't be found or its template instancing didn't work.
+			Warning("item_item_crate %s with CRATE_POINT_TEMPLATE couldn't find point_template %s! Falling back to CRATE_SPECIFIC_ITEM...\n", GetDebugName(), STRING(ITEM_ITEMCRATE_TEMPLATE_TARGET));
+			m_CrateType = CRATE_SPECIFIC_ITEM;
+		}
+	}
+#endif
+
+#ifdef MAPBASE
+	for ( int i = 0; i < iCount; i++ )
+#else
 	for ( int i = 0; i < m_nItemCount; ++i )
+#endif
 	{
 		CBaseEntity *pSpawn = NULL;
 		switch( m_CrateType )
@@ -198,6 +432,25 @@ void CItem_ItemCrate::OnBreak( const Vector &vecVelocity, const AngularImpulse &
 			pSpawn = CreateEntityByName( STRING(m_strItemClass) );
 			break;
 
+#ifdef MAPBASE
+		case CRATE_POINT_TEMPLATE:
+		{
+			if (i >= hNewEntities.Count())
+			{
+				if (!pTemplate || !pTemplate->CreateInstance(GetLocalOrigin(), GetLocalAngles(), &hNewEntities))
+				{
+					pSpawn = NULL;
+					i = iCount;
+					break;
+				}
+
+				i = 0;
+				iCount -= hNewEntities.Count();
+			}
+			pSpawn = hNewEntities[i];
+		} break;
+#endif
+
 		default:
 			break;
 		}
@@ -205,6 +458,65 @@ void CItem_ItemCrate::OnBreak( const Vector &vecVelocity, const AngularImpulse &
 		if ( !pSpawn )
 			return;
 
+#ifdef EZ2
+		pSpawn->SetEZVariant( m_tEzVariant );
+
+		if ( pSpawn->IsNPC() )
+		{
+			OnSpawnNPC( pSpawn, pBreaker ? pBreaker->MyCombatCharacterPointer() : NULL );
+		}
+#endif
+
+
+#ifdef MAPBASE
+		Vector vecOrigin;
+		CollisionProp()->RandomPointInBounds(Vector(0.25, 0.25, 0.25), Vector(0.75, 0.75, 0.75), &vecOrigin);
+		pSpawn->SetAbsOrigin(vecOrigin);
+
+		if (ShouldRandomizeAngles(pSpawn))
+		{
+			// Give a little randomness...
+			QAngle vecAngles;
+			vecAngles.x = random->RandomFloat(-20.0f, 20.0f);
+			vecAngles.y = random->RandomFloat(0.0f, 360.0f);
+			vecAngles.z = random->RandomFloat(-20.0f, 20.0f);
+			pSpawn->SetAbsAngles(vecAngles);
+
+			Vector vecActualVelocity;
+			vecActualVelocity.Random(-10.0f, 10.0f);
+			//		vecActualVelocity += vecVelocity;
+			pSpawn->SetAbsVelocity(vecActualVelocity);
+
+			QAngle angVel;
+			AngularImpulseToQAngle(angImpulse, angVel);
+			pSpawn->SetLocalAngularVelocity(angVel);
+		}
+		else
+		{
+			// Only modify the Y value.
+			QAngle vecAngles;
+			vecAngles.x = 0;
+			vecAngles.y = GetLocalAngles().y;
+			vecAngles.z = 0;
+			pSpawn->SetAbsAngles(vecAngles);
+		}
+
+		// We handle dynamic resupplies differently
+		bool bDynResup = FClassnameIs( pSpawn, "item_dynamic_resupply" );
+		if (!bDynResup)
+			m_OnItem.Set(pSpawn, pSpawn, this);
+		else if (m_OnItem.NumberOfElements() > 0)
+		{
+			// This is here so it could fire OnItem for each item
+			CEventAction *ourlist = m_OnItem.GetActionList();
+			char outputdata[256];
+			for (CEventAction *ev = ourlist; ev != NULL; ev = ev->m_pNext)
+			{
+				Q_snprintf(outputdata, sizeof(outputdata), "%s,%s,%s,%f,%i", STRING(ev->m_iTarget), STRING(ev->m_iTargetInput), STRING(ev->m_iParameter), ev->m_flDelay, ev->m_nTimesToFire);
+				pSpawn->KeyValue("OnItem", outputdata);
+			}
+		}
+#else
 		// Give a little randomness...
 		Vector vecOrigin;
 		CollisionProp()->RandomPointInBounds( Vector(0.25, 0.25, 0.25), Vector( 0.75, 0.75, 0.75 ), &vecOrigin );
@@ -224,6 +536,7 @@ void CItem_ItemCrate::OnBreak( const Vector &vecVelocity, const AngularImpulse &
 		QAngle angVel;
 		AngularImpulseToQAngle( angImpulse, angVel );
 		pSpawn->SetLocalAngularVelocity( angVel );
+#endif
 
 		// If we're creating an item, it can't be picked up until it comes to rest
 		// But only if it wasn't broken by a vehicle
@@ -236,7 +549,11 @@ void CItem_ItemCrate::OnBreak( const Vector &vecVelocity, const AngularImpulse &
 		pSpawn->Spawn();
 
 		// Avoid missing items drops by a dynamic resupply because they don't think immediately
+#ifdef MAPBASE
+		if (bDynResup)
+#else
 		if ( FClassnameIs( pSpawn, "item_dynamic_resupply" ) )
+#endif
 		{
 			if ( m_strAlternateMaster != NULL_STRING )
 			{
@@ -274,3 +591,76 @@ void CItem_ItemCrate::OnPhysGunPickup( CBasePlayer *pPhysGunUser, PhysGunPickup_
 		TakeDamage( CTakeDamageInfo( pPhysGunUser, pPhysGunUser, GetHealth(), DMG_GENERIC ) );
 	}
 }
+
+#ifdef EZ2
+
+class CItem_CreatureCrate : public CItem_ItemCrate, public CDisplacerSink
+{
+public:
+	DECLARE_CLASS( CItem_CreatureCrate, CItem_ItemCrate );
+	DECLARE_DATADESC();
+
+	void Precache( void );
+	void Spawn( void );
+
+	bool IsItemCrate() { return false; }
+
+	void Break( CBaseEntity *pBreaker, const CTakeDamageInfo &info );
+
+	virtual void OnSpawnNPC( CBaseEntity * pEntity, CBaseCombatCharacter * pBreaker );
+
+	void SoundThink();
+
+protected:
+	string_t m_iszSound; // Soundscript to play
+};
+
+//-----------------------------------------------------------------------------
+// Save/load: 
+//-----------------------------------------------------------------------------
+BEGIN_DATADESC( CItem_CreatureCrate )
+
+DEFINE_KEYFIELD( m_iszSound, FIELD_SOUNDNAME, "idlesound" ),
+
+DEFINE_THINKFUNC( SoundThink ),
+
+END_DATADESC()
+// 	
+
+void CItem_CreatureCrate::Precache( void )
+{
+	PrecacheParticleSystem( "creaturecrate_stasisbreak" );
+	PrecacheScriptSound( STRING( m_iszSound ) );
+	BaseClass::Precache();
+}
+
+void CItem_CreatureCrate::Spawn( void )
+{
+	BaseClass::Spawn();
+
+	SetContextThink( &CItem_CreatureCrate::SoundThink, gpGlobals->curtime + 5, "SoundThink" );
+}
+
+void CItem_CreatureCrate::Break( CBaseEntity * pBreaker, const CTakeDamageInfo & info )
+{
+	DispatchParticleEffect( "creaturecrate_stasisbreak", WorldSpaceCenter(), GetAbsAngles() );
+
+	SetContextThink( NULL, TICK_NEVER_THINK, "SoundThink" );
+
+	BaseClass::Break( pBreaker, info );
+}
+
+void CItem_CreatureCrate::OnSpawnNPC( CBaseEntity * pEntity, CBaseCombatCharacter * pBreaker )
+{
+	DisplacementInfo_t dinfo( this, this, &pEntity->GetAbsOrigin(), &pEntity->GetAbsAngles() );
+	pEntity->DispatchInteraction( g_interactionXenGrenadeCreate, &dinfo, pBreaker );
+}
+
+LINK_ENTITY_TO_CLASS( item_creature_crate, CItem_CreatureCrate );
+
+void CItem_CreatureCrate::SoundThink()
+{
+	EmitSound( STRING( m_iszSound ) );
+	SetContextThink( &CItem_CreatureCrate::SoundThink, gpGlobals->curtime + RandomFloat( 5.0f, 20.0f ), "SoundThink" );
+}
+#endif

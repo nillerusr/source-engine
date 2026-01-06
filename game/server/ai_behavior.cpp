@@ -411,6 +411,35 @@ void CAI_BehaviorBase::HandleAnimEvent( animevent_t *pEvent )
 	m_pBackBridge->BackBridge_HandleAnimEvent( pEvent );
 }
 
+#ifdef MAPBASE
+//-------------------------------------
+
+bool CAI_BehaviorBase::CanUnholsterWeapon( void )
+{
+	Assert( m_pBackBridge != NULL );
+
+	return m_pBackBridge->BackBridge_CanUnholsterWeapon();
+}
+
+//-------------------------------------
+
+bool CAI_BehaviorBase::ShouldPickADeathPose( void )
+{
+	Assert( m_pBackBridge != NULL );
+
+	return m_pBackBridge->BackBridge_ShouldPickADeathPose();
+}
+
+//-------------------------------------
+
+bool CAI_BehaviorBase::CanTranslateCrouchActivity( void )
+{
+	Assert( m_pBackBridge != NULL );
+
+	return m_pBackBridge->BackBridge_CanTranslateCrouchActivity();
+}
+#endif
+
 //-------------------------------------
 
 bool CAI_BehaviorBase::NotifyChangeBehaviorStatus( bool fCanFinishSchedule )

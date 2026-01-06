@@ -15,6 +15,9 @@
 //------------------------------------
 #define SF_ROLLERMINE_FRIENDLY		(1 << 16)
 #define SF_ROLLERMINE_PROP_COLLISION		(1 << 17)
+#ifdef EZ
+#define SF_ROLLERMINE_FOLLOW_PLAYER		(1 << 18)	// Blixibon - Makes rollermines follow the player, as per their original non-component schedules.
+#endif
 
 bool NPC_Rollermine_IsRollermine( CBaseEntity *pEntity );
 CBaseEntity *NPC_Rollermine_DropFromPoint( const Vector &originStart, CBaseEntity *pOwner, const char *pszTemplate );

@@ -45,9 +45,7 @@ class CShowZone : public IForEachNavArea
 public:
 	virtual bool Inspect( const CNavArea *area )
 	{
-#ifdef NEXT_BOT
 		area->DrawFilled( 255, 255, 0, 255, 9999.9f );
-#endif
 		return true;
 	}
 };

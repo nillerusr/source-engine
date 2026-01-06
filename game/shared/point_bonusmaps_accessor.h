@@ -17,5 +17,9 @@ void BonusMapChallengeUpdate( const char *pchFileName, const char *pchMapName, c
 void BonusMapChallengeNames( char *pchFileName, char *pchMapName, char *pchChallengeName );
 void BonusMapChallengeObjectives( int &iBronze, int &iSilver, int &iGold );
 
+#ifdef MAPBASE
+void ResolveCustomBonusChallenge( CBasePlayer *pPlayer );
+#endif
+
 
 #endif		// POINT_BONUSMAPS_ACCESSOR_H

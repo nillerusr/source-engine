@@ -34,9 +34,14 @@ public:
 
 	void		InputStart( inputdata_t &inputdata );
 	void		InputStop( inputdata_t &inputdata );
+#ifdef MAPBASE
+	void		InputDestroyImmediately( inputdata_t &inputdata );
+#endif
 	void		StartParticleSystemThink( void );
 
 	enum { kMAXCONTROLPOINTS = 63 }; ///< actually one less than the total number of cpoints since 0 is assumed to be me
+
+	virtual bool UsesCoordinates( void ) { return false; }
 
 protected:
 
@@ -47,13 +52,27 @@ protected:
 	string_t			m_iszEffectName;
 	
 	CNetworkVar( bool,	m_bActive );
+#ifdef MAPBASE
+	CNetworkVar( bool, m_bDestroyImmediately );
+#endif
 	CNetworkVar( int,	m_iEffectIndex )
 	CNetworkVar( float,	m_flStartTime );	// Time at which this effect was started.  This is used after restoring an active effect.
 
 	string_t			m_iszControlPointNames[kMAXCONTROLPOINTS];
 	CNetworkArray( EHANDLE, m_hControlPointEnts, kMAXCONTROLPOINTS );
+	CNetworkArray( Vector, m_vControlPointVecs, kMAXCONTROLPOINTS );
 	CNetworkArray( unsigned char, m_iControlPointParents, kMAXCONTROLPOINTS );
 	CNetworkVar( bool,	m_bWeatherEffect );
+};
+
+//-----------------------------------------------------------------------------
+// Purpose: An entity that spawns and controls a particle system using coordinates. 
+//-----------------------------------------------------------------------------
+class CParticleSystemCoordinate : public CParticleSystem
+{
+	DECLARE_CLASS( CParticleSystemCoordinate, CParticleSystem );
+public:
+	virtual bool UsesCoordinates( void ) { return true; }
 };
 
 #endif // PARTICLE_SYSTEM_H

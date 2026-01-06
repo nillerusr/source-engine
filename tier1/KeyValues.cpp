@@ -30,7 +30,9 @@
 #include "utlqueue.h"
 #include "UtlSortVector.h"
 #include "convar.h"
-
+#ifdef MAPBASE
+#include "icommandline.h"
+#endif
 // memdbgon must be the last include file in a .cpp file!!!
 #include <tier0/memdbgon.h>
 
@@ -2179,32 +2181,28 @@ void KeyValues::RecursiveMergeKeyValues( KeyValues *baseKV )
 	}
 }
 
-static int s_nSteamDeckCached = -1;
-
+//Gamepadui
 bool IsSteamDeck()
 {
-	if (s_nSteamDeckCached == -1) {
-		if ( CommandLine()->CheckParm( "-nogamepadui" ) != 0 )
-		{
-			s_nSteamDeckCached = 0;
-		}
-		else
-		{
-			if ( CommandLine()->CheckParm( "-gamepadui" ) != 0 )
-			{
-				s_nSteamDeckCached = 1;
-			}
-			else
-			{
-				char *deck = getenv("SteamDeck");
-				if ( deck == 0 || *deck == 0 )
-					s_nSteamDeckCached = 0;
-				else
-					s_nSteamDeckCached = atoi(deck) != 0;
-			}
-		}
-	}
-	return s_nSteamDeckCached;
+	//we dont want to use shader editor AND gamepadui at the same time
+	if (CommandLine()->FindParm("-shaderedit"))
+		return false;
+
+	//we dont want tools AND gamepadui at the same time
+	if (CommandLine()->FindParm("-tools"))
+		return false;
+
+	if (CommandLine()->FindParm("-nogamepadui"))
+		return false;
+
+	if (CommandLine()->FindParm("-gamepadui"))
+		return true;
+
+	const char* pszSteamDeckEnv = getenv("SteamDeck");
+	if (pszSteamDeckEnv && *pszSteamDeckEnv)
+		return atoi(pszSteamDeckEnv) != 0;
+
+	return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -2244,6 +2242,28 @@ bool EvaluateConditional( const char *str )
 	if ( Q_stristr( str, "$POSIX" ) )
 		return IsPosix() ^ bNot;
 
+#ifdef MAPBASE
+	// Custom conditional
+	switch( str[bNot ? 1 : 0] )
+	{
+		case '%':
+		{
+			// Look for a cvar
+			ConVarRef cvar( str + (bNot ? 2 : 1), true );
+			if (cvar.IsValid())
+			{
+				return cvar.GetBool() ^ bNot;
+			}
+		} break;
+
+		case '-':
+		{
+			// Look for a command line param
+			return (CommandLine()->CheckParm( bNot ? str+1 : str ) != 0) ^ bNot;
+		} break;
+	}
+#endif
+	
 	return false;
 }
 

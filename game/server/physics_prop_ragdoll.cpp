@@ -20,9 +20,27 @@
 #include "AI_Criteria.h"
 #include "ragdoll_shared.h"
 #include "hierarchy.h"
+#ifdef MAPBASE
+#include "decals.h"
+#endif
+#ifdef EZ2
+#include "gib.h"
+#include "particle_parse.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
+
+#ifdef MAPBASE
+ConVar ragdoll_autointeractions("ragdoll_autointeractions", "1", FCVAR_NONE, "Controls whether we should rely on hardcoded keyvalues or automatic flesh checks for ragdoll physgun interactions.");
+#define IsBody() VPhysicsIsFlesh()
+#endif
+
+#ifdef EZ2
+ConVar ragdoll_ai_scent_radius( "ragdoll_ai_scent_radius", "2048", FCVAR_NONE, "Radius for server ragdoll AI scents" );
+ConVar ragdoll_ai_scent_time( "ragdoll_ai_scent_time", "15", FCVAR_NONE, "Duration for server ragdoll AI scents" );
+ConVar ragdoll_gibs( "ragdoll_gibs", "1", FCVAR_NONE, "Should death ragdolls be destructible?" );
+#endif
 
 //-----------------------------------------------------------------------------
 // Forward declarations
@@ -48,6 +66,9 @@ const float ATTACHED_DAMPING_SCALE = 50.0f;
 #define	SF_RAGDOLLPROP_MOTIONDISABLED		0x4000
 #define	SF_RAGDOLLPROP_ALLOW_STRETCH		0x8000
 #define	SF_RAGDOLLPROP_STARTASLEEP			0x10000
+#ifdef MAPBASE
+#define	SF_RAGDOLLPROP_FIXED_CONSTRAINTS	0x20000
+#endif
 
 //-----------------------------------------------------------------------------
 // Networking
@@ -83,9 +104,26 @@ BEGIN_DATADESC(CRagdollProp)
 
 	DEFINE_KEYFIELD( m_bStartDisabled, FIELD_BOOLEAN, "StartDisabled" ),
 
+#ifdef EZ2
+	DEFINE_KEYFIELD( m_bEmitScent, FIELD_BOOLEAN, "EmitScent" ),
+
+	DEFINE_INPUTFUNC( FIELD_VOID, "EnableScent", InputEnableScent ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "DisableScent", InputDisableScent ),
+
+	DEFINE_INPUTFUNC( FIELD_VOID, "Gib", InputGib ),
+#endif
+
+#ifdef MAPBASE
+	DEFINE_INPUTFUNC( FIELD_FLOAT, "StartRagdollBoogie", InputStartRadgollBoogie ),
+#else
 	DEFINE_INPUTFUNC( FIELD_VOID, "StartRagdollBoogie", InputStartRadgollBoogie ),
+#endif
 	DEFINE_INPUTFUNC( FIELD_VOID, "EnableMotion", InputEnableMotion ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "DisableMotion", InputDisableMotion ),
+#ifdef MAPBASE
+	DEFINE_INPUTFUNC( FIELD_VOID, "Wake", InputWake ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "Sleep", InputSleep ),
+#endif
 	DEFINE_INPUTFUNC( FIELD_VOID, "Enable",		InputTurnOn ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "Disable",	InputTurnOff ),
 	DEFINE_INPUTFUNC( FIELD_FLOAT, "FadeAndRemove", InputFadeAndRemove ),
@@ -104,12 +142,18 @@ BEGIN_DATADESC(CRagdollProp)
 	DEFINE_FIELD( m_flFadeOutStartTime, FIELD_TIME ),
 	DEFINE_FIELD( m_flFadeTime,	FIELD_FLOAT),
 	DEFINE_FIELD( m_strSourceClassName, FIELD_STRING ),
+#ifdef EZ2
+	DEFINE_FIELD( m_iSourceClassification, FIELD_INTEGER ),
+#endif
 	DEFINE_FIELD( m_bHasBeenPhysgunned, FIELD_BOOLEAN ),
 
 	// think functions
 	DEFINE_THINKFUNC( SetDebrisThink ),
 	DEFINE_THINKFUNC( ClearFlagsThink ),
 	DEFINE_THINKFUNC( FadeOutThink ),
+#ifdef EZ2
+	DEFINE_THINKFUNC( EmitScent ),
+#endif
 
 	DEFINE_FIELD( m_ragdoll.listCount, FIELD_INTEGER ),
 	DEFINE_FIELD( m_ragdoll.allowStretch, FIELD_BOOLEAN ),
@@ -140,8 +184,32 @@ BEGIN_DATADESC(CRagdollProp)
 	DEFINE_RAGDOLL_ELEMENT( 21 ),
 	DEFINE_RAGDOLL_ELEMENT( 22 ),
 	DEFINE_RAGDOLL_ELEMENT( 23 ),
+#ifdef MAPBASE
+	DEFINE_RAGDOLL_ELEMENT( 24 ),
+	DEFINE_RAGDOLL_ELEMENT( 25 ),
+	DEFINE_RAGDOLL_ELEMENT( 26 ),
+	DEFINE_RAGDOLL_ELEMENT( 27 ),
+	DEFINE_RAGDOLL_ELEMENT( 28 ),
+	DEFINE_RAGDOLL_ELEMENT( 29 ),
+	DEFINE_RAGDOLL_ELEMENT( 30 ),
+	DEFINE_RAGDOLL_ELEMENT( 31 ),
+#endif
 
 END_DATADESC()
+
+#ifdef MAPBASE_VSCRIPT
+BEGIN_ENT_SCRIPTDESC( CRagdollProp, CBaseAnimating, "Ragdoll physics prop." )
+
+	DEFINE_SCRIPTFUNC_NAMED( GetSourceClassNameAsCStr, "GetSourceClassName", "Gets the ragdoll's source classname." )
+	DEFINE_SCRIPTFUNC( SetSourceClassName, "Sets the ragdoll's source classname." )
+	DEFINE_SCRIPTFUNC( HasPhysgunInteraction, "Checks if the ragdoll has the specified interaction." )
+
+	// TODO: Proper shared ragdoll funcs?
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetRagdollObject, "GetRagdollObject", "Gets the ragdoll object of the specified index." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetRagdollObjectCount, "GetRagdollObjectCount", "Gets the number of ragdoll objects on this ragdoll." )
+
+END_SCRIPTDESC()
+#endif
 
 //-----------------------------------------------------------------------------
 // Disable auto fading under dx7 or when level fades are specified
@@ -158,8 +226,10 @@ void CRagdollProp::Spawn( void )
 	// Starts out as the default fade scale value
 	m_flDefaultFadeScale = m_flFadeScale;
 
+#ifndef MAPBASE
 	// NOTE: If this fires, then the assert or the datadesc is wrong!  (see DEFINE_RAGDOLL_ELEMENT above)
 	Assert( RAGDOLL_MAX_ELEMENTS == 24 );
+#endif
 	Precache();
 	SetModel( STRING( GetModelName() ) );
 
@@ -199,12 +269,25 @@ void CRagdollProp::Spawn( void )
 	{
 		AddEffects( EF_NODRAW );
 	}
+
+#ifdef EZ2
+	RegisterThinkContext( "RagdollScentContext" );
+	m_flNextScentTime = gpGlobals->curtime + ragdoll_ai_scent_time.GetFloat();
+	SetContextThink( &CRagdollProp::EmitScent, m_flNextScentTime, "RagdollScentContext" );
+#endif
 }
 
 void CRagdollProp::SetSourceClassName( const char *pClassname )
 {
 	m_strSourceClassName = MAKE_STRING( pClassname );
 }
+
+#ifdef EZ2
+void CRagdollProp::SetSourceClassification( Class_T classification)
+{
+	m_iSourceClassification = classification;
+}
+#endif
 
 
 void CRagdollProp::OnSave( IEntitySaveUtils *pUtils )
@@ -240,6 +323,96 @@ void CRagdollProp::OnRestore()
 	VPhysicsUpdate( VPhysicsGetObject() );
 }
 
+#ifdef EZ2
+extern ConVar sk_gib_carcass_smell;
+
+void CRagdollProp::EmitScent()
+{
+	// If this is an organic ragdoll, emit a smell upon collision
+	int bloodColor = GetBloodColor();
+	if ( bloodColor != DONT_BLEED && m_bEmitScent )
+	{
+		if ( gpGlobals->curtime >= m_flNextScentTime )
+		{
+			int flags = SOUND_MEAT;
+			// The 'exlude zombies' thing is a little bit weird. Gonomes spawn these when they create headcrabs, plus headcrabs spawn them.
+			// For that reason, it would be awkward if gonomes could eat these. Maybe that can be improved.
+			if ( GetSourceClassification() == CLASS_ZOMBIE || GetSourceClassification() == CLASS_HEADCRAB )
+			{
+				flags |= SOUND_CONTEXT_EXCLUDE_ZOMBIE;
+			}
+
+			CSoundEnt::InsertSound( flags, GetAbsOrigin(), ragdoll_ai_scent_radius.GetFloat(), ragdoll_ai_scent_time.GetFloat(), this );
+
+			// Visually represent this smell with a blood decal
+			if ( g_Language.GetInt() != LANGUAGE_GERMAN )
+			{
+				trace_t tr;
+				Vector vecSpot = GetAbsOrigin() + Vector ( 0, 0, 8 );//move up a bit, and trace down.
+				UTIL_TraceLine ( vecSpot, vecSpot + Vector ( 0, 0, -24 ), MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr );
+
+				UTIL_BloodDecalTrace( &tr, bloodColor );
+			}
+		}
+
+		m_flNextScentTime = gpGlobals->curtime + ragdoll_ai_scent_time.GetFloat();
+		// Next scent will be emitted automatically between 1 and 3 times the next scent time.
+		// If the ragdoll sustains damage after the next scent time, this will be interrupted early
+		SetNextThink( gpGlobals->curtime + ( random->RandomFloat( 1.0f, 2.0f ) * ragdoll_ai_scent_time.GetFloat() ), "RagdollScentContext" );
+	}
+}
+
+// Heavily based on the temporal crab fade out think function in npc_headcrab
+void CRagdollProp::TimeWarpThink()
+{
+	// Check if we've already changed the render mode
+	// TODO - this creates an error case if this render mode is set any other way
+	if ( m_nRenderMode != kRenderTransTexture )
+	{
+		m_nRenderMode = kRenderTransTexture;
+		DispatchParticleEffect( "ShadowCrab_Vanish", WorldSpaceCenter(), GetAbsAngles() );
+		EmitSound( "NPC_TemporalHeadcrab.Vanish" );
+		DisableMotion();
+	}
+
+	float dt = gpGlobals->frametime;
+	if (dt > 0.1f)
+	{
+		dt = 0.1f;
+	}
+	
+	int speed = MAX( 1, 256*dt ); // fade out over 1 second
+	SetRenderColorA( UTIL_Approach( 0, m_clrRender->a, speed ) );
+	SetRenderColorR( UTIL_Approach( 0, m_clrRender->a, speed ) );
+	SetRenderColorG( UTIL_Approach( 0, m_clrRender->a, speed ) );
+	
+	if (m_clrRender->a == 0)
+	{
+		UTIL_Remove( this );
+		SetContextThink( NULL, TICK_NEVER_THINK, "RagdollTimeShiftContext" );
+		return;
+	}
+
+	SetContextThink( &CRagdollProp::TimeWarpThink, gpGlobals->curtime, "RagdollTimeShiftContext" );
+}
+
+int CRagdollProp::GetBloodColor()
+{
+	int iVPhysicsFlesh = VPhysicsGetFlesh();
+	if ( iVPhysicsFlesh == CHAR_TEX_ALIENFLESH || iVPhysicsFlesh == CHAR_TEX_ANTLION )
+	{
+		return BLOOD_COLOR_GREEN;
+	}
+	
+	if ( iVPhysicsFlesh == CHAR_TEX_BLOODYFLESH || iVPhysicsFlesh == CHAR_TEX_FLESH )
+	{
+		return BLOOD_COLOR_RED;
+	}
+
+	return DONT_BLEED;
+}
+#endif
+
 void CRagdollProp::CalcRagdollSize( void )
 {
 	CollisionProp()->SetSurroundingBoundsType( USE_HITBOXES );
@@ -269,6 +442,9 @@ void CRagdollProp::UpdateOnRemove( void )
 CRagdollProp::CRagdollProp( void )
 {
 	m_strSourceClassName = NULL_STRING;
+#ifdef EZ2
+	m_iSourceClassification = CLASS_NONE;
+#endif
 	m_anglesOverrideString = NULL_STRING;
 	m_ragdoll.listCount = 0;
 	Assert( (1<<RAGDOLL_INDEX_BITS) >=RAGDOLL_MAX_ELEMENTS );
@@ -283,6 +459,9 @@ CRagdollProp::~CRagdollProp( void )
 
 void CRagdollProp::Precache( void )
 {
+#ifdef EZ
+	PrecacheParticleSystem( "hgib" );
+#endif
 	PrecacheModel( STRING( GetModelName() ) );
 	BaseClass::Precache();
 }
@@ -342,6 +521,36 @@ void CRagdollProp::ModifyOrAppendCriteria( AI_CriteriaSet& set )
 }
 
 
+#ifdef EZ2
+extern int g_interactionXenGrenadeCreate;
+extern int g_interactionBarnacleVictimFinalBite;
+//-----------------------------------------------------------------------------
+// Purpose:  Uses the new CBaseEntity interaction implementation
+// Input  :  The type of interaction, extra info pointer, and who started it
+// Output :	 true  - if sub-class has a response for the interaction
+//			 false - if sub-class has no response
+//-----------------------------------------------------------------------------
+bool CRagdollProp::HandleInteraction( int interactionType, void *data, CBaseCombatCharacter* sourceEnt )
+{
+	if ( interactionType == g_interactionXenGrenadeCreate )
+	{
+		AddSpawnFlags( SF_RAGDOLLPROP_DEBRIS );
+		return true;
+	}
+#ifdef EZ2
+	// Barnacle final bite gib
+	if ( interactionType == g_interactionBarnacleVictimFinalBite )
+	{
+		CTakeDamageInfo info( this, this, 1000, DMG_CRUSH | DMG_ALWAYSGIB );
+		TakeDamage( info );
+	}
+#endif
+
+	return BaseClass::HandleInteraction(interactionType, data, sourceEnt);
+}
+#endif
+
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -359,7 +568,11 @@ void CRagdollProp::OnPhysGunPickup( CBasePlayer *pPhysGunUser, PhysGunPickup_t r
 	}
 	m_bHasBeenPhysgunned = true;
 
+#ifdef MAPBASE
+	if( (ragdoll_autointeractions.GetBool() == true && IsBody()) || HasPhysgunInteraction( "onpickup", "boogie" ) )
+#else
 	if( HasPhysgunInteraction( "onpickup", "boogie" ) )
+#endif
 	{
 		if ( reason == PUNTED_BY_CANNON )
 		{
@@ -397,7 +610,11 @@ void CRagdollProp::OnPhysGunDrop( CBasePlayer *pPhysGunUser, PhysGunDrop_t Reaso
 	m_hPhysicsAttacker = pPhysGunUser;
 	m_flLastPhysicsInfluenceTime = gpGlobals->curtime;
 
+#ifdef MAPBASE
+	if( (ragdoll_autointeractions.GetBool() == true && IsBody()) || HasPhysgunInteraction( "onpickup", "boogie" ) )
+#else
 	if( HasPhysgunInteraction( "onpickup", "boogie" ) )
+#endif
 	{
 		CRagdollBoogie::Create( this, 150, gpGlobals->curtime, 3.0f, SF_RAGDOLL_BOOGIE_ELECTRICAL );
 	}
@@ -416,7 +633,11 @@ void CRagdollProp::OnPhysGunDrop( CBasePlayer *pPhysGunUser, PhysGunDrop_t Reaso
 	if ( Reason != LAUNCHED_BY_CANNON )
 		return;
 
+#ifdef MAPBASE
+	if( (ragdoll_autointeractions.GetBool() == true && IsBody()) || HasPhysgunInteraction( "onlaunch", "spin_zaxis" ) )
+#else
 	if( HasPhysgunInteraction( "onlaunch", "spin_zaxis" ) )
+#endif
 	{
 		Vector vecAverageCenter( 0, 0, 0 );
 
@@ -462,7 +683,6 @@ CBasePlayer *CRagdollProp::HasPhysicsAttacker( float dt )
 	}
 	return NULL;
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -615,8 +835,21 @@ void CRagdollProp::HandleFirstCollisionInteractions( int index, gamevcollisionev
 		}
 	}
 
+#ifdef MAPBASE
+	int iVPhysicsFlesh = VPhysicsGetFlesh();
+	bool bRagdollAutoInt = (ragdoll_autointeractions.GetBool() == true && iVPhysicsFlesh);
+	bool bAlienBloodSplat = HasPhysgunInteraction( "onfirstimpact", "alienbloodsplat" );
+	if (bRagdollAutoInt && !bAlienBloodSplat)
+	{
+		// Alien blood?
+		bAlienBloodSplat = (iVPhysicsFlesh == CHAR_TEX_ALIENFLESH || iVPhysicsFlesh == CHAR_TEX_ANTLION);
+	}
+
+	if( bRagdollAutoInt || bAlienBloodSplat || HasPhysgunInteraction( "onfirstimpact", "bloodsplat" ) )
+#else
 	bool bAlienBloodSplat = HasPhysgunInteraction( "onfirstimpact", "alienbloodsplat" );
 	if( bAlienBloodSplat || HasPhysgunInteraction( "onfirstimpact", "bloodsplat" ) )
+#endif
 	{
 		IPhysicsObject *pObj = VPhysicsGetObject();
  
@@ -646,7 +879,11 @@ void CRagdollProp::ClearFlagsThink( void )
 //-----------------------------------------------------------------------------
 AngularImpulse CRagdollProp::PhysGunLaunchAngularImpulse()
 {
+#ifdef MAPBASE
+	if( (ragdoll_autointeractions.GetBool() == true && IsBody()) || HasPhysgunInteraction( "onlaunch", "spin_zaxis" ) )
+#else
 	if( HasPhysgunInteraction( "onlaunch", "spin_zaxis" ) )
+#endif
 	{
 		// Don't add in random angular impulse if this object is supposed to spin in a specific way.
 		AngularImpulse ang( 0, 0, 0 );
@@ -687,7 +924,18 @@ void CRagdollProp::InitRagdoll( const Vector &forceVector, int forceBone, const 
 	SetMoveType( MOVETYPE_VPHYSICS );
 	SetSolid( SOLID_VPHYSICS );
 	AddSolidFlags( FSOLID_CUSTOMRAYTEST | FSOLID_CUSTOMBOXTEST );
+#ifndef EZ2
 	m_takedamage = DAMAGE_EVENTS_ONLY;
+#else
+	if ( m_iHealth > 0 )
+	{
+		m_takedamage = DAMAGE_YES;
+	}
+	else
+	{
+		m_takedamage = DAMAGE_EVENTS_ONLY;
+	}
+#endif
 
 	ragdollparams_t params;
 	params.pGameData = static_cast<void *>( static_cast<CBaseEntity *>(this) );
@@ -700,7 +948,11 @@ void CRagdollProp::InitRagdoll( const Vector &forceVector, int forceBone, const 
 	params.pCurrentBones = pBoneToWorld;
 	params.jointFrictionScale = 1.0;
 	params.allowStretch = HasSpawnFlags(SF_RAGDOLLPROP_ALLOW_STRETCH);
+#ifdef MAPBASE
+	params.fixedConstraints = HasSpawnFlags(SF_RAGDOLLPROP_FIXED_CONSTRAINTS);
+#else
 	params.fixedConstraints = false;
+#endif
 	RagdollCreate( m_ragdoll, params, physenv );
 	RagdollApplyAnimationAsVelocity( m_ragdoll, pPrevBones, pBoneToWorld, dt );
 	if ( m_anglesOverrideString != NULL_STRING && Q_strlen(m_anglesOverrideString.ToCStr()) > 0 )
@@ -788,17 +1040,51 @@ void CRagdollProp::SetDamageEntity( CBaseEntity *pEntity )
 //-----------------------------------------------------------------------------
 int	CRagdollProp::OnTakeDamage( const CTakeDamageInfo &info )
 {
+#ifdef EZ2
+	EmitScent();
+	CTakeDamageInfo subInfo = info;
+#endif
+
 	// If we have a damage entity, we want to pass damage to it. Add the
 	// Never Ragdoll flag, on the assumption that if the entity dies, we'll
 	// actually be taking the role of its ragdoll.
 	if ( m_hDamageEntity.Get() )
 	{
+#ifndef EZ2
 		CTakeDamageInfo subInfo = info;
+#endif
 		subInfo.AddDamageType( DMG_REMOVENORAGDOLL );
 		return m_hDamageEntity->OnTakeDamage( subInfo );
 	}
 
+#if EZ2
+	if ( m_takedamage == DAMAGE_YES )
+	{
+		int bloodColor = GetBloodColor();
+		// Ragdolls that take damage only take damage from explosions or alwaysgib attacks
+		if ( !( info.GetDamageType() & DMG_ALWAYSGIB ) )
+		{
+			subInfo.SetDamage( 0.0f );
+		}
+		else if ( m_iHealth - info.GetDamage() <= 0 && bloodColor != DONT_BLEED )
+		{
+			if ( bloodColor == BLOOD_COLOR_RED )
+			{
+				CGib::SpawnHeadGib( this );
+				CGib::SpawnRandomGibs( this, 4, GIB_HUMAN );	// throw some human gibs.
+																// Explode dramatically
+				DispatchParticleEffect( "hgib", WorldSpaceCenter(), GetAbsAngles() );
+			}
+			else
+			{
+				CGib::SpawnRandomGibs( this, 4, GIB_ALIEN );	// throw some alien gibs.
+			}
+		}
+	}
+	return BaseClass::OnTakeDamage( subInfo );
+#else
 	return BaseClass::OnTakeDamage( info );
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1069,6 +1355,23 @@ int CRagdollProp::VPhysicsGetObjectList( IPhysicsObject **pList, int listMax )
 	return m_ragdoll.listCount;
 }
 
+#ifdef MAPBASE
+int CRagdollProp::VPhysicsGetFlesh()
+{
+	IPhysicsObject *pList[VPHYSICS_MAX_OBJECT_LIST_COUNT];
+	int count = VPhysicsGetObjectList( pList, ARRAYSIZE(pList) );
+	for ( int i = 0; i < count; i++ )
+	{
+		int material = pList[i]->GetMaterialIndex();
+		const surfacedata_t *pSurfaceData = physprops->GetSurfaceData( material );
+		// Is flesh ?, don't allow pickup
+		if ( pSurfaceData->game.material == CHAR_TEX_ANTLION || pSurfaceData->game.material == CHAR_TEX_FLESH || pSurfaceData->game.material == CHAR_TEX_BLOODYFLESH || pSurfaceData->game.material == CHAR_TEX_ALIENFLESH )
+			return pSurfaceData->game.material;
+	}
+	return 0;
+}
+#endif
+
 void CRagdollProp::UpdateNetworkDataFromVPhysics( IPhysicsObject *pPhysics, int index )
 {
 	Assert(index < m_ragdoll.listCount);
@@ -1278,6 +1581,16 @@ CBaseAnimating *CreateServerRagdollSubmodel( CBaseAnimating *pOwner, const char 
 	matrix3x4_t pBoneToWorld[MAXSTUDIOBONES], pBoneToWorldNext[MAXSTUDIOBONES];
 	pRagdoll->ResetSequence( 0 );
 
+#ifdef MAPBASE_VSCRIPT
+	// Hook for pre-spawn ragdolling
+	if (pOwner && pOwner->m_ScriptScope.IsInitialized() && CBaseAnimating::g_Hook_OnServerRagdoll.CanRunInScope( pOwner->m_ScriptScope ))
+	{
+		// ragdoll, submodel
+		ScriptVariant_t args[] = { ScriptVariant_t( pRagdoll->GetScriptInstance() ), true };
+		CBaseAnimating::g_Hook_OnServerRagdoll.Call( pOwner->m_ScriptScope, NULL, args );
+	}
+#endif
+
 	// let bone merging do the work of copying everything over for us
 	pRagdoll->SetParent( pOwner );
 	pRagdoll->SetupBones( pBoneToWorld, BONE_USED_BY_ANYTHING );
@@ -1302,6 +1615,43 @@ CBaseEntity *CreateServerRagdoll( CBaseAnimating *pAnimating, int forceBone, con
 	pRagdoll->CopyAnimationDataFrom( pAnimating );
 	pRagdoll->SetOwnerEntity( pAnimating );
 
+#ifdef MAPBASE_VSCRIPT
+	// Hook for pre-spawn ragdolling
+	if (pAnimating->m_ScriptScope.IsInitialized() && CBaseAnimating::g_Hook_OnServerRagdoll.CanRunInScope( pAnimating->m_ScriptScope ))
+	{
+		// ragdoll, submodel
+		ScriptVariant_t args[] = { ScriptVariant_t( pRagdoll->GetScriptInstance() ), false };
+		CBaseAnimating::g_Hook_OnServerRagdoll.Call( pAnimating->m_ScriptScope, NULL, args );
+	}
+#endif
+
+#ifdef EZ2
+	// EZ2 ragdolls have health and can be gibbed
+	if ( ragdoll_gibs.GetBool() )
+	{
+        pRagdoll->SetHealth( pAnimating->GetMaxHealth() );
+	}
+
+	// EZ2 ragdolls are valid displacer targets
+	pRagdoll->SetDisplacementImpossible( false );
+	
+	// There's no spawn, so register the smell context now
+	if ( sk_gib_carcass_smell.GetBool() )
+	{
+		pRagdoll->SetEmitScent( true );
+		pRagdoll->RegisterThinkContext( "RagdollScentContext" );
+		float flNextScentTime = gpGlobals->curtime + 5.0f; // Only five seconds for the initial kill
+		pRagdoll->SetNextScentTime( flNextScentTime );
+		pRagdoll->SetContextThink( &CRagdollProp::EmitScent, flNextScentTime, "RagdollScentContext" );
+	}
+
+	// Temporal ragdolls fade out!
+	if ( pAnimating->MyNPCPointer() && pAnimating->MyNPCPointer()->m_tEzVariant == EZ_VARIANT_TEMPORAL )
+	{
+		pRagdoll->SetContextThink( &CRagdollProp::TimeWarpThink, gpGlobals->curtime + 0.25f, "RagdollTimeShiftContext" );
+	}
+
+#endif
 	pRagdoll->InitRagdollAnimation();
 	matrix3x4_t pBoneToWorld[MAXSTUDIOBONES], pBoneToWorldNext[MAXSTUDIOBONES];
 	
@@ -1317,6 +1667,9 @@ CBaseEntity *CreateServerRagdoll( CBaseAnimating *pAnimating, int forceBone, con
 	// colliding with server ragdolls they kill
 	pRagdoll->SetKiller( info.GetInflictor() );
 	pRagdoll->SetSourceClassName( pAnimating->GetClassname() );
+#ifdef EZ2
+	pRagdoll->SetSourceClassification( pAnimating->Classify() );
+#endif
 
 	// NPC_STATE_DEAD npc's will have their COND_IN_PVS cleared, so this needs to force SetupBones to happen
 	unsigned short fPrevFlags = pAnimating->GetBoneCacheFlags();
@@ -1440,6 +1793,22 @@ CBaseEntity *CreateServerRagdoll( CBaseAnimating *pAnimating, int forceBone, con
 	mins = pAnimating->CollisionProp()->OBBMins();
 	maxs = pAnimating->CollisionProp()->OBBMaxs();
 	pRagdoll->CollisionProp()->SetCollisionBounds( mins, maxs );
+
+#ifdef MAPBASE
+	// If this was a NPC running a dynamic interaction, disable collisions with the interaction partner
+	if (pAnimating->IsNPC() /*&& pAnimating->MyNPCPointer()->IsRunningDynamicInteraction()*/)
+	{
+		CAI_BaseNPC *pNPC = pAnimating->MyNPCPointer();
+		if (pNPC->GetInteractionPartner() && pNPC->GetInteractionPartner()->VPhysicsGetObject())
+		{
+			PhysDisableEntityCollisions( pRagdoll, pNPC->GetInteractionPartner() );
+		}
+	}
+
+	variant_t variant;
+	variant.SetEntity(pRagdoll);
+	pAnimating->FireNamedOutput("OnServerRagdoll", variant, pRagdoll, pAnimating);
+#endif
 
 	return pRagdoll;
 }
@@ -1635,6 +2004,23 @@ void CRagdollProp::GetAngleOverrideFromCurrentState( char *pOut, int size )
 	}
 }
 
+#ifdef EZ2
+bool CRagdollProp::IsMotionEnabled(void)
+{
+	for (int iRagdoll = 0; iRagdoll < m_ragdoll.listCount; ++iRagdoll)
+	{
+		IPhysicsObject* pPhysicsObject = m_ragdoll.list[iRagdoll].pObject;
+		if (pPhysicsObject != NULL && !pPhysicsObject->IsMotionEnabled())
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+#endif
+
+
 void CRagdollProp::DisableMotion( void )
 {
 	for ( int iRagdoll = 0; iRagdoll < m_ragdoll.listCount; ++iRagdoll )
@@ -1683,6 +2069,38 @@ void CRagdollProp::InputDisableMotion( inputdata_t &inputdata )
 	DisableMotion();
 }
 
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: Input handler to start the physics prop simulating.
+//-----------------------------------------------------------------------------
+void CRagdollProp::InputWake( inputdata_t &inputdata )
+{
+	for ( int iRagdoll = 0; iRagdoll < m_ragdoll.listCount; ++iRagdoll )
+	{
+		IPhysicsObject *pPhysicsObject = m_ragdoll.list[ iRagdoll ].pObject;
+		if ( pPhysicsObject != NULL )
+		{
+			pPhysicsObject->Wake();
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Input handler to stop the physics prop simulating.
+//-----------------------------------------------------------------------------
+void CRagdollProp::InputSleep( inputdata_t &inputdata )
+{
+	for ( int iRagdoll = 0; iRagdoll < m_ragdoll.listCount; ++iRagdoll )
+	{
+		IPhysicsObject *pPhysicsObject = m_ragdoll.list[ iRagdoll ].pObject;
+		if ( pPhysicsObject != NULL )
+		{
+			pPhysicsObject->Sleep();
+		}
+	}
+}
+#endif
+
 void CRagdollProp::InputTurnOn( inputdata_t &inputdata )
 {
 	RemoveEffects( EF_NODRAW );
@@ -1702,6 +2120,49 @@ void CRagdollProp::InputFadeAndRemove( inputdata_t &inputdata )
 
 	FadeOut( 0.0f, flFadeDuration );
 }
+
+#ifdef EZ2
+void CRagdollProp::InputEnableScent( inputdata_t & inputdata )
+{
+	// Enable scent emission
+	SetEmitScent( true );
+
+	// Set timer to now
+	m_flNextScentTime = gpGlobals->curtime;
+
+	// Emit a scent now and restart the timer
+	EmitScent();
+}
+
+void CRagdollProp::InputDisableScent( inputdata_t & inputdata )
+{
+	SetEmitScent( false );
+}
+
+void CRagdollProp::InputGib( inputdata_t & inputdata )
+{
+	CTakeDamageInfo info( this, inputdata.pActivator, 1000, DMG_CRUSH | DMG_ALWAYSGIB );
+	TakeDamage( info );
+}
+#endif
+
+#ifdef MAPBASE_VSCRIPT
+HSCRIPT CRagdollProp::ScriptGetRagdollObject( int iIndex )
+{
+	if (iIndex < 0 || iIndex > m_ragdoll.listCount)
+	{
+		Warning("%s GetRagdollObject: Index %i not valid (%i objects)\n", GetDebugName(), iIndex, m_ragdoll.listCount);
+		return NULL;
+	}
+
+	return g_pScriptVM->RegisterInstance( m_ragdoll.list[iIndex].pObject );
+}
+
+int CRagdollProp::ScriptGetRagdollObjectCount()
+{
+	return m_ragdoll.listCount;
+}
+#endif
 
 void Ragdoll_GetAngleOverrideString( char *pOut, int size, CBaseEntity *pEntity )
 {

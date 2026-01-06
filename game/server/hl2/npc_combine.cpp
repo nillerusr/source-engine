@@ -13,6 +13,9 @@
 #include "ai_route.h"
 #include "ai_interactions.h"
 #include "ai_tacticalservices.h"
+#ifdef EZ
+#include "ai_pathfinder.h"
+#endif
 #include "soundent.h"
 #include "game.h"
 #include "npcevent.h"
@@ -29,23 +32,93 @@
 #include "weapon_physcannon.h"
 #include "SoundEmitterSystem/isoundemittersystembase.h"
 #include "npc_headcrab.h"
+#ifdef MAPBASE
+#include "mapbase/GlobalStrings.h"
+#include "globalstate.h"
+#include "sceneentity.h"
+#endif
+#ifdef EZ
+#include "npc_antlion.h"
+#include "hl2_player.h"
+
+#include "npc_manhack.h"
+#include "items.h"
+#endif
+#ifdef EZ2
+#include "ez2/ez2_player.h"
+#include "npc_citizen17.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 int g_fCombineQuestion;				// true if an idle grunt asked a question. Cleared when someone answers. YUCK old global from grunt code
 
+#ifdef MAPBASE
+ConVar npc_combine_idle_walk_easy( "npc_combine_idle_walk_easy", "1", FCVAR_NONE, "Mapbase: Allows Combine soldiers to use ACT_WALK_EASY as a walking animation when idle." );
+ConVar npc_combine_unarmed_anims( "npc_combine_unarmed_anims", "1", FCVAR_NONE, "Mapbase: Allows Combine soldiers to use unarmed idle/walk animations when they have no weapon." );
+ConVar npc_combine_protected_run( "npc_combine_protected_run", "0", FCVAR_NONE, "Mapbase: Allows Combine soldiers to use \"protected run\" animations." );
+ConVar npc_combine_altfire_not_allies_only( "npc_combine_altfire_not_allies_only", "1", FCVAR_NONE, "Mapbase: Elites are normally only allowed to fire their alt-fire attack at the player and the player's allies; This allows elites to alt-fire at other enemies too." );
+
+ConVar npc_combine_new_cover_behavior( "npc_combine_new_cover_behavior", "1", FCVAR_NONE, "Mapbase: Toggles small patches for parts of npc_combine AI related to soldiers failing to take cover. These patches are minimal and only change cases where npc_combine would otherwise look at an enemy without shooting or run up to the player to melee attack when they don't have to. Consult the Mapbase wiki for more information." );
+
+ConVar npc_combine_fixed_shootpos( "npc_combine_fixed_shootpos", "0", FCVAR_NONE, "Mapbase: Toggles fixed Combine soldier shoot position." );
+#endif
+
+#ifdef EZ
+ConVar npc_combine_fear_near_zombies( "npc_combine_fear_near_zombies", "0", FCVAR_NONE, "Makes soldiers afraid of groups of zombies getting too close to them." );
+
+ConVar npc_combine_give_enabled( "npc_combine_give_enabled", "1", FCVAR_NONE, "Allows players to \"give\" weapons to Combine soldiers in their squad by holding one in front of them for a few seconds." );
+ConVar npc_combine_give_stare_dist( "npc_combine_give_stare_dist", "112", FCVAR_NONE, "The distance needed for soldiers to consider the possibility the player wants to give them a weapon." );
+ConVar npc_combine_give_stare_time( "npc_combine_give_stare_time", "1", FCVAR_NONE, "The amount of time the player needs to be staring at a soldier in order for them to pick up a weapon they're holding." );
+
+ConVar npc_combine_order_surrender_max_dist( "npc_combine_order_surrender_max_dist", "224", FCVAR_NONE, "The maximum distance a soldier can order surrenders from. Beyond that, they will only pursue." );
+ConVar npc_combine_order_surrender_min_tlk_surrender( "npc_combine_order_surrender_min_tlk_surrender", "2.0", FCVAR_NONE, "The minimum amount of time that must pass after a citizen speaks TLK_SURRENDER before being considered for surrenders, assuming they haven't already spoken TLK_BEG." );
+ConVar npc_combine_order_surrender_min_tlk_beg( "npc_combine_order_surrender_min_tlk_beg", "0.5", FCVAR_NONE, "The minimum amount of time that must pass after a citizen speaks TLK_BEG before being considered for surrenders, assuming they haven't already spoken TLK_SURRENDER." );
+
+//--------------------------------------------------------------
+
+void CV_SquadmateGlowUpdate( IConVar *var, const char *pOldValue, float flOldValue )
+{
+	CAI_BaseNPC **ppAIs = g_AI_Manager.AccessAIs();
+	int nAIs = g_AI_Manager.NumAIs();
+
+	for ( int i = 0; i < nAIs; i++ )
+	{
+		CAI_BaseNPC *pNPC = ppAIs[ i ];
+
+		// Update glows on all soldier squadmates
+		if (pNPC->IsCommandable() && pNPC->IsInPlayerSquad())
+		{
+			CNPC_Combine *pCombine = dynamic_cast<CNPC_Combine *>(pNPC);
+			pCombine->UpdateSquadGlow();
+		}
+	}
+}
+
+ConVar	sv_squadmate_glow( "sv_squadmate_glow", "1", FCVAR_ARCHIVE, "If 1, Combine soldier squadmates will glow when they are in the player's squad. The color of the glow represents their HP.", CV_SquadmateGlowUpdate );
+ConVar	sv_squadmate_glow_style( "sv_squadmate_glow_style", "1", FCVAR_ARCHIVE, "Different colors for Combine squadmate glows. 0: Green means 100 HP, red means 0 HP\t1: White means 100 HP, red means 0 HP", CV_SquadmateGlowUpdate );
+ConVar	sv_squadmate_glow_alpha( "sv_squadmate_glow_alpha", "0.6", FCVAR_ARCHIVE, "On a scale of 0-1, how much alpha should the squadmate glow have", CV_SquadmateGlowUpdate );
+
+#define COMBINE_GLOW_STYLE_REDGREEN	0
+#define COMBINE_GLOW_STYLE_REDWHITE	1
+#endif
+
 #define COMBINE_SKIN_DEFAULT		0
 #define COMBINE_SKIN_SHOTGUNNER		1
 
 
+#ifndef MAPBASE
 #define COMBINE_GRENADE_THROW_SPEED 650
 #define COMBINE_GRENADE_TIMER		3.5
 #define COMBINE_GRENADE_FLUSH_TIME	3.0		// Don't try to flush an enemy who has been out of sight for longer than this.
 #define COMBINE_GRENADE_FLUSH_DIST	256.0	// Don't try to flush an enemy who has moved farther than this distance from the last place I saw him.
+#endif
 
 #define COMBINE_LIMP_HEALTH				20
+#ifndef MAPBASE
 #define	COMBINE_MIN_GRENADE_CLEAR_DIST	250
+#endif
 
 #define COMBINE_EYE_STANDING_POSITION	Vector( 0, 0, 66 )
 #define COMBINE_GUN_STANDING_POSITION	Vector( 0, 0, 57 )
@@ -55,12 +128,34 @@ int g_fCombineQuestion;				// true if an idle grunt asked a question. Cleared wh
 #define COMBINE_SHOTGUN_CROUCHING_POSITION	Vector( 0, 0, 36 )
 #define COMBINE_MIN_CROUCH_DISTANCE		256.0
 
+#ifdef EZ
+// Added by 1upD - Time to next regeneration sound in seconds
+#define COMBINE_REGEN_SOUND_TIME	10.0;
+
+// 
+// Blixibon - Combine manhack support
+// 
+// Soldiers can now carry and deploy manhacks like metrocops do.
+// 
+
+#define	COMBINE_BODYGROUP_MANHACK	1
+
+// Metrocops use their own squad slot, but for soldiers we can get away with re-using the "special attack" squad slot elites use.
+#define SQUAD_SLOT_COMBINE_DEPLOY_MANHACK SQUAD_SLOT_SPECIAL_ATTACK
+#endif
+
+ConVar sv_combine_eye_tracers("sv_combine_eye_tracers", "1", FCVAR_REPLICATED);
+
 //-----------------------------------------------------------------------------
 // Static stuff local to this file.
 //-----------------------------------------------------------------------------
 // This is the index to the name of the shotgun's classname in the string pool
 // so that we can get away with an integer compare rather than a string compare.
+#ifdef MAPBASE
+#define s_iszShotgunClassname gm_isz_class_Shotgun
+#else
 string_t	s_iszShotgunClassname;
+#endif
 
 //-----------------------------------------------------------------------------
 // Interactions
@@ -73,13 +168,21 @@ int	g_interactionCombineBash		= 0; // melee bash attack
 #define COMBINE_AE_RELOAD			( 2 )
 #define COMBINE_AE_KICK				( 3 )
 #define COMBINE_AE_AIM				( 4 )
+#ifndef MAPBASE
 #define COMBINE_AE_GREN_TOSS		( 7 )
+#endif
 #define COMBINE_AE_GREN_LAUNCH		( 8 )
 #define COMBINE_AE_GREN_DROP		( 9 )
 #define COMBINE_AE_CAUGHT_ENEMY		( 10) // grunt established sight with an enemy (player only) that had previously eluded the squad.
 
+#ifndef MAPBASE
 int COMBINE_AE_BEGIN_ALTFIRE;
 int COMBINE_AE_ALTFIRE;
+#endif
+#ifdef EZ
+static int AE_METROPOLICE_START_DEPLOY;
+static int AE_METROPOLICE_DEPLOY_MANHACK;
+#endif
 
 //=========================================================
 // Combine activities
@@ -91,12 +194,24 @@ int COMBINE_AE_ALTFIRE;
 //Activity ACT_COMBINE_WALKING_AR2;
 //Activity ACT_COMBINE_STANDING_SHOTGUN;
 //Activity ACT_COMBINE_CROUCHING_SHOTGUN;
+#if !SHARED_COMBINE_ACTIVITIES
 Activity ACT_COMBINE_THROW_GRENADE;
+#endif
 Activity ACT_COMBINE_LAUNCH_GRENADE;
 Activity ACT_COMBINE_BUGBAIT;
+#if !SHARED_COMBINE_ACTIVITIES
 Activity ACT_COMBINE_AR2_ALTFIRE;
+#endif
 Activity ACT_WALK_EASY;
-Activity ACT_WALK_MARCH;
+Activity ACT_WALK_MARCH; 
+#ifdef MAPBASE
+Activity ACT_TURRET_CARRY_IDLE;
+Activity ACT_TURRET_CARRY_WALK;
+Activity ACT_TURRET_CARRY_RUN;
+#endif
+#ifdef EZ
+extern int ACT_METROPOLICE_DEPLOY_MANHACK;
+#endif
 
 // -----------------------------------------------
 //	> Squad slots
@@ -114,6 +229,9 @@ enum TacticalVariant_T
 	TACTICAL_VARIANT_DEFAULT = 0,
 	TACTICAL_VARIANT_PRESSURE_ENEMY,				// Always try to close in on the player.
 	TACTICAL_VARIANT_PRESSURE_ENEMY_UNTIL_CLOSE,	// Act like VARIANT_PRESSURE_ENEMY, but go to VARIANT_DEFAULT once within 30 feet
+#ifdef MAPBASE
+	TACTICAL_VARIANT_GRENADE_HAPPY,					// Throw grenades as if you're fighting a turret
+#endif
 };
 
 enum PathfindingVariant_T
@@ -125,6 +243,10 @@ enum PathfindingVariant_T
 #define bits_MEMORY_PAIN_LIGHT_SOUND		bits_MEMORY_CUSTOM1
 #define bits_MEMORY_PAIN_HEAVY_SOUND		bits_MEMORY_CUSTOM2
 #define bits_MEMORY_PLAYER_HURT				bits_MEMORY_CUSTOM3
+#ifdef EZ2
+// Blixibon - Soldiers sometimes stare at things like objects the player is carrying (e.g. Wilson).
+#define bits_MEMORY_SAW_PLAYER_WEIRDNESS	bits_MEMORY_CUSTOM4
+#endif
 
 LINK_ENTITY_TO_CLASS( npc_combine, CNPC_Combine );
 
@@ -135,20 +257,48 @@ BEGIN_DATADESC( CNPC_Combine )
 
 DEFINE_FIELD( m_nKickDamage, FIELD_INTEGER ),
 DEFINE_FIELD( m_vecTossVelocity, FIELD_VECTOR ),
+#ifndef MAPBASE
 DEFINE_FIELD( m_hForcedGrenadeTarget, FIELD_EHANDLE ),
+#endif
 DEFINE_FIELD( m_bShouldPatrol, FIELD_BOOLEAN ),
 DEFINE_FIELD( m_bFirstEncounter, FIELD_BOOLEAN ),
 DEFINE_FIELD( m_flNextPainSoundTime, FIELD_TIME ),
+#ifdef EZ
+DEFINE_FIELD( m_flNextRegenSoundTime, FIELD_TIME),
+#endif
 DEFINE_FIELD( m_flNextAlertSoundTime, FIELD_TIME ),
+#ifndef MAPBASE
 DEFINE_FIELD( m_flNextGrenadeCheck, FIELD_TIME ),
+#endif
 DEFINE_FIELD( m_flNextLostSoundTime, FIELD_TIME ),
 DEFINE_FIELD( m_flAlertPatrolTime, FIELD_TIME ),
+#ifndef MAPBASE
 DEFINE_FIELD( m_flNextAltFireTime, FIELD_TIME ),
+#endif
 DEFINE_FIELD( m_nShots, FIELD_INTEGER ),
 DEFINE_FIELD( m_flShotDelay, FIELD_FLOAT ),
 DEFINE_FIELD( m_flStopMoveShootTime, FIELD_TIME ),
+#ifdef EZ
+DEFINE_FIELD( m_iszOriginalSquad, FIELD_STRING ), // Added by Blixibon to save original squad
+DEFINE_FIELD( m_bHoldPositionGoal, FIELD_BOOLEAN ),
+DEFINE_FIELD( m_flTimePlayerStare, FIELD_TIME ),
+DEFINE_FIELD( m_bTemporarilyNeedWeapon, FIELD_BOOLEAN ),
+DEFINE_FIELD( m_flNextHealthSearchTime, FIELD_TIME ),
+DEFINE_INPUT( m_bLookForItems, FIELD_BOOLEAN, "SetLookForItems" ),
+#endif
+#ifdef EZ2
+DEFINE_FIELD( m_hObstructor, FIELD_EHANDLE ),
+DEFINE_FIELD( m_flTimeSinceObstructed, FIELD_TIME ),
+#endif
+#ifndef MAPBASE // See ai_grenade.h
 DEFINE_KEYFIELD( m_iNumGrenades, FIELD_INTEGER, "NumGrenades" ),
+#else
+DEFINE_INPUT( m_bUnderthrow, FIELD_BOOLEAN, "UnderthrowGrenades" ),
+DEFINE_INPUT( m_bAlternateCapable, FIELD_BOOLEAN, "SetAlternateCapable" ),
+#endif
+#ifndef COMBINE_SOLDIER_USES_RESPONSE_SYSTEM
 DEFINE_EMBEDDED( m_Sentences ),
+#endif
 
 //							m_AssaultBehavior (auto saved by AI)
 //							m_StandoffBehavior (auto saved by AI)
@@ -167,11 +317,59 @@ DEFINE_INPUTFUNC( FIELD_STRING,	"Assault", InputAssault ),
 
 DEFINE_INPUTFUNC( FIELD_VOID,	"HitByBugbait",		InputHitByBugbait ),
 
+#ifndef MAPBASE
 DEFINE_INPUTFUNC( FIELD_STRING,	"ThrowGrenadeAtTarget",	InputThrowGrenadeAtTarget ),
+#else
+DEFINE_INPUTFUNC( FIELD_BOOLEAN,	"SetElite",	InputSetElite ),
 
+DEFINE_INPUTFUNC( FIELD_VOID,	"DropGrenade",	InputDropGrenade ),
+
+DEFINE_INPUTFUNC( FIELD_INTEGER,	"SetTacticalVariant",	InputSetTacticalVariant ),
+
+DEFINE_INPUTFUNC( FIELD_STRING, "SetPoliceGoal", InputSetPoliceGoal ),
+
+DEFINE_AIGRENADE_DATADESC()
+#endif
+
+#ifdef EZ
+DEFINE_INPUTFUNC(FIELD_STRING, "SetCommandable", InputSetCommandable), // New inputs to toggle player commands on / off
+DEFINE_INPUTFUNC(FIELD_STRING, "SetNonCommandable", InputSetNonCommandable),
+
+DEFINE_INPUTFUNC( FIELD_VOID,	"RemoveFromPlayerSquad", InputRemoveFromPlayerSquad ),
+DEFINE_INPUTFUNC( FIELD_VOID,	"AddToPlayerSquad", InputAddToPlayerSquad ),
+
+DEFINE_KEYFIELD( m_iManhacks, FIELD_INTEGER, "manhacks" ),
+DEFINE_FIELD( m_hManhack, FIELD_EHANDLE ),
+DEFINE_INPUTFUNC( FIELD_VOID, "EnableManhackToss", InputEnableManhackToss ),
+DEFINE_INPUTFUNC( FIELD_VOID, "DisableManhackToss", InputDisableManhackToss ),
+DEFINE_INPUTFUNC( FIELD_VOID, "DeployManhack", InputDeployManhack ),
+DEFINE_INPUTFUNC( FIELD_INTEGER, "AddManhacks", InputAddManhacks ),
+DEFINE_INPUTFUNC( FIELD_INTEGER, "SetManhacks", InputSetManhacks ),
+DEFINE_OUTPUT( m_OutManhack, "OutManhack" ),
+
+DEFINE_USEFUNC( Use ),
+DEFINE_OUTPUT( m_OnPlayerUse, "OnPlayerUse" ),
+
+DEFINE_KEYFIELD( m_bDisablePlayerUse, FIELD_BOOLEAN, "DisablePlayerUse" ),
+DEFINE_INPUTFUNC( FIELD_VOID, "EnablePlayerUse", InputEnablePlayerUse ),
+DEFINE_INPUTFUNC( FIELD_VOID, "DisablePlayerUse", InputDisablePlayerUse ),
+
+DEFINE_KEYFIELD( m_iCanOrderSurrender, FIELD_INTEGER, "CanOrderSurrender" ),
+DEFINE_INPUTFUNC( FIELD_VOID, "EnableOrderSurrender", InputEnableOrderSurrender ),
+DEFINE_INPUTFUNC( FIELD_VOID, "DisableOrderSurrender", InputDisableOrderSurrender ),
+
+DEFINE_KEYFIELD( m_iCanPlayerGive, FIELD_INTEGER, "CanPlayerGive" ),
+DEFINE_INPUTFUNC( FIELD_VOID, "EnablePlayerGive", InputEnablePlayerGive ),
+DEFINE_INPUTFUNC( FIELD_VOID, "DisablePlayerGive", InputDisablePlayerGive ),
+#endif
+
+#ifndef MAPBASE
 DEFINE_FIELD( m_iLastAnimEventHandled, FIELD_INTEGER ),
+#endif
 DEFINE_FIELD( m_fIsElite, FIELD_BOOLEAN ),
+#ifndef MAPBASE
 DEFINE_FIELD( m_vecAltFireTarget, FIELD_VECTOR ),
+#endif
 
 DEFINE_KEYFIELD( m_iTacticalVariant, FIELD_INTEGER, "tacticalvariant" ),
 DEFINE_KEYFIELD( m_iPathfindingVariant, FIELD_INTEGER, "pathfindingvariant" ),
@@ -185,8 +383,880 @@ END_DATADESC()
 CNPC_Combine::CNPC_Combine()
 {
 	m_vecTossVelocity = vec3_origin;
+#ifdef EZ
+	// For players who use npc_create
+	AddSpawnFlags( SF_COMBINE_COMMANDABLE | SF_COMBINE_REGENERATE );
+	m_iNumGrenades = 5;
+
+	m_bDontPickupWeapons = true;
+
+	m_iCanOrderSurrender = TRS_NONE;
+	m_iCanPlayerGive = TRS_NONE;
+#endif
 }
 
+#ifdef EZ
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CNPC_Combine::ClearFollowTarget()
+{
+	m_FollowBehavior.SetFollowTarget(NULL);
+	m_FollowBehavior.SetParameters(AIF_SIMPLE);
+}
+
+//-----------------------------------------------------------------------------
+// BREADMAN - lets you 'use' the soldiers - OMG IT WORKS
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CNPC_Combine::Use(CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value)
+{
+	m_OnPlayerUse.FireOutput(pActivator, pCaller);
+
+#ifdef EZ
+	if ( m_bDisablePlayerUse )
+	{
+		return;
+	}
+#endif
+
+	if (pActivator == UTIL_GetLocalPlayer() && IsCommandable())
+	{
+		bool isInPlayerSquad = IsInPlayerSquad();
+		bool bSpoken = false;
+#ifdef EZ2
+		CEZ2_Player *badcop = assert_cast<CEZ2_Player *>(pActivator);
+		if (badcop)
+		{
+			if (isInPlayerSquad)
+			{
+				bSpoken = badcop->HandleRemoveFromPlayerSquad(this);
+			}
+			else
+			{
+				bSpoken = badcop->HandleAddToPlayerSquad(this);
+			}
+		}
+#endif
+
+		// I'm the target! Toggle follow!
+		if (isInPlayerSquad)
+		{
+			// Blixibon - This soldier should stay in the area
+			// in case the player just wants them to hold down
+			m_bHoldPositionGoal = true;
+
+			if (!bSpoken)
+				StopFollowSound();
+
+			RemoveFromPlayerSquad();
+		}
+		else
+		{
+			// Blixibon -- Look at the player when asked to follow. (needs head-turning model)
+			AddLookTarget(pActivator, 0.75, 3.0);
+
+			if (!bSpoken)
+				FollowSound();
+
+			AddToPlayerSquad();
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// 1upD - Determine if this NPC can be commanded
+//-----------------------------------------------------------------------------
+bool CNPC_Combine::IsCommandable()
+{
+	return HasSpawnFlags(SF_COMBINE_COMMANDABLE) || BaseClass::IsCommandable();
+}
+
+//-----------------------------------------------------------------------------
+// 1upD - Should this NPC always think?
+//		Combine soldiers always think if they are commandable.
+//		Thanks Blixibon!
+//-----------------------------------------------------------------------------
+bool CNPC_Combine::ShouldAlwaysThink()
+{
+	return IsCommandable() || BaseClass::ShouldAlwaysThink();
+}
+
+//-----------------------------------------------------------------------------
+// Blixibon - Ported citizen code which allows squadmates to use func_tanks
+//-----------------------------------------------------------------------------
+#define COMBINE_FOLLOWER_DESERT_FUNCTANK_DIST	45.0f*12.0f
+bool CNPC_Combine::ShouldBehaviorSelectSchedule( CAI_BehaviorBase *pBehavior )
+{
+	if( pBehavior == &m_FollowBehavior )
+	{
+		// Suppress follow behavior if I have a func_tank and the func tank is near
+		// what I'm supposed to be following.
+		if( m_FuncTankBehavior.CanSelectSchedule() )
+		{
+			// Is the tank close to the follow target?
+			Vector vecTank = m_FuncTankBehavior.GetFuncTank()->WorldSpaceCenter();
+			Vector vecFollowGoal = m_FollowBehavior.GetFollowGoalInfo().position;
+
+			float flTankDistSqr = (vecTank - vecFollowGoal).LengthSqr();
+			float flAllowDist = m_FollowBehavior.GetFollowGoalInfo().followPointTolerance * 2.0f;
+			float flAllowDistSqr = flAllowDist * flAllowDist;
+			if( flTankDistSqr < flAllowDistSqr )
+			{
+				// Deny follow behavior so the tank can go.
+				return false;
+			}
+		}
+	}
+	else if( IsInPlayerSquad() && pBehavior == &m_FuncTankBehavior && m_FuncTankBehavior.IsMounted() )
+	{
+		if( m_FollowBehavior.GetFollowTarget() )
+		{
+			Vector vecFollowGoal = m_FollowBehavior.GetFollowTarget()->GetAbsOrigin();
+			if( vecFollowGoal.DistToSqr( GetAbsOrigin() ) > Square(COMBINE_FOLLOWER_DESERT_FUNCTANK_DIST) )
+			{
+				return false;
+			}
+		}
+	}
+
+	return BaseClass::ShouldBehaviorSelectSchedule( pBehavior );
+}
+
+//-----------------------------------------------------------------------------
+// 1upD - Get a pointer to the NPC representing this squad. Used by HUD
+//-----------------------------------------------------------------------------
+CAI_BaseNPC * CNPC_Combine::GetSquadCommandRepresentative()
+{
+    // Blixibon - Port of npc_citizen code
+	if ( !AI_IsSinglePlayer() )
+		return NULL;
+
+	if ( IsInPlayerSquad() )
+	{
+		static float lastTime;
+		static AIHANDLE hCurrent;
+
+		if ( gpGlobals->curtime - lastTime > 2.0 || !hCurrent || !hCurrent->IsInPlayerSquad() ) // hCurrent will be NULL after level change
+		{
+			lastTime = gpGlobals->curtime;
+			hCurrent = NULL;
+
+			CUtlVectorFixed<SquadMemberInfo_t, MAX_SQUAD_MEMBERS> candidates;
+			CBasePlayer *pPlayer = UTIL_GetLocalPlayer();
+
+			if ( pPlayer )
+			{
+				AISquadIter_t iter;
+				for ( CAI_BaseNPC *pAllyNpc = m_pSquad->GetFirstMember(&iter); pAllyNpc; pAllyNpc = m_pSquad->GetNextMember(&iter) )
+				{
+					if ( pAllyNpc->IsCommandable() && dynamic_cast<CNPC_PlayerCompanion*>(pAllyNpc) )
+					{
+						int i = candidates.AddToTail();
+						candidates[i].pMember = (CNPC_PlayerCompanion*)(pAllyNpc);
+						candidates[i].bSeesPlayer = pAllyNpc->HasCondition( COND_SEE_PLAYER );
+						candidates[i].distSq = ( pAllyNpc->GetAbsOrigin() - pPlayer->GetAbsOrigin() ).LengthSqr();
+					}
+				}
+
+				if ( candidates.Count() > 0 )
+				{
+					candidates.Sort( SquadSortFunc );
+					hCurrent = candidates[0].pMember;
+				}
+			}
+		}
+
+		if ( hCurrent != NULL )
+		{
+			Assert( dynamic_cast<CNPC_PlayerCompanion*>(hCurrent.Get()) && hCurrent->IsInPlayerSquad() );
+			return hCurrent;
+		}
+	}
+	return NULL;
+}
+
+//-----------------------------------------------------------------------------
+// 1upD - Does this soldier have a command goal?
+//-----------------------------------------------------------------------------
+bool CNPC_Combine::HaveCommandGoal() const
+{
+	if (GetCommandGoal() != vec3_invalid)
+		return true;
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: return TRUE if the commander mode should try to give this order
+//			to more people. return FALSE otherwise. For instance, we don't
+//			try to send all 3 selectedcitizens to pick up the same gun.
+//-----------------------------------------------------------------------------
+bool CNPC_Combine::TargetOrder(CBaseEntity *pTarget, CAI_BaseNPC **Allies, int numAllies)
+{
+	if (pTarget && pTarget->IsPlayer())
+	{
+		ToggleSquadCommand();
+	}
+
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// 1upD	-	Order this soldier to move to a point or regroup
+//-----------------------------------------------------------------------------
+void CNPC_Combine::MoveOrder(const Vector & vecDest, CAI_BaseNPC ** Allies, int numAllies)
+{
+	if( m_StandoffBehavior.IsRunning() )
+	{
+		m_StandoffBehavior.SetStandoffGoalPosition( vecDest );
+	}
+
+	// If in assault, cancel and move.
+	if( m_AssaultBehavior.HasHitRallyPoint() && !m_AssaultBehavior.HasHitAssaultPoint() )
+	{
+		m_AssaultBehavior.Disable();
+		ClearSchedule( "Moving from rally point to assault point" );
+	}
+
+	// Stop following.
+	m_FollowBehavior.SetFollowTarget(NULL);
+
+	BaseClass::MoveOrder( vecDest, Allies, numAllies );
+}
+
+//-----------------------------------------------------------------------------
+// 1upD	-	Handle soldier toggle follow player / command
+//			TODO Rename this method - toggles squad follow state
+//-----------------------------------------------------------------------------
+void CNPC_Combine::ToggleSquadCommand()
+{
+	// Get the player
+	CBasePlayer * pPlayer = UTIL_GetLocalPlayer();
+
+	// I'm the target! Toggle follow!
+	if (IsInPlayerSquad() && m_FollowBehavior.GetFollowTarget() != pPlayer)
+	{
+		ClearFollowTarget();
+		SetCommandGoal(vec3_invalid);
+
+		// Turn follow on!
+		m_AssaultBehavior.Disable();
+		m_FollowBehavior.SetFollowTarget(pPlayer);
+		m_FollowBehavior.SetParameters(AIF_SIMPLE);
+
+		m_OnFollowOrder.FireOutput(this, this);
+	}
+	else
+	{
+		// Stop following.
+		m_FollowBehavior.SetFollowTarget(NULL);
+	}
+}
+
+#ifndef COMBINE_SOLDIER_USES_RESPONSE_SYSTEM
+// This is how we make the soldier actually talk with captions. SWEET!
+void CNPC_Combine::FollowSound()
+{
+	m_Sentences.Speak("COMBINE_EZ2_FOLLOWING", SENTENCE_PRIORITY_INVALID, SENTENCE_CRITERIA_ALWAYS);
+}
+
+// This is how we make the soldier actually talk with captions. SWEET!
+void CNPC_Combine::StopFollowSound()
+{
+	m_Sentences.Speak("COMBINE_EZ2_STOPFOLLOWING", SENTENCE_PRIORITY_INVALID, SENTENCE_CRITERIA_ALWAYS);
+}
+#else
+void CNPC_Combine::FollowSound()
+{
+	SpeakIfAllowed( TLK_STARTFOLLOW );
+}
+void CNPC_Combine::StopFollowSound()
+{
+	SpeakIfAllowed( TLK_STOPFOLLOW );
+}
+#endif
+
+//-----------------------------------------------------------------------------
+// 1upD	-	Add this soldier to the player's squad
+//			Based on Breadman's use function code
+//-----------------------------------------------------------------------------
+void CNPC_Combine::AddToPlayerSquad()
+{
+	if ( IsInPlayerSquad() )
+	{
+		// Already in the player's squad
+		return;
+	}
+
+	m_iszOriginalSquad = m_SquadName;
+	AddToSquad(AllocPooledString(PLAYER_SQUADNAME));
+
+	// Blixibon - If we have a manhack, update its squad status
+	if (m_hManhack != NULL)
+		m_pSquad->AddToSquad(m_hManhack.Get());
+
+	// Blixibon - Soldiers are much better at shooting if they don't have to account for this
+	CapabilitiesRemove( bits_CAP_NO_HIT_SQUADMATES );
+	
+	FixupPlayerSquad();
+}
+
+//-----------------------------------------------------------------------------
+// Blixibon	-	Perform squad fixup methods
+//				Based on 1upD and Breadman's AddToPlayerSquad and use function code, respectively
+//-----------------------------------------------------------------------------
+void CNPC_Combine::FixupPlayerSquad()
+{
+	// Get the current goal from squadmates
+	GetSquadGoal();
+
+	// Don't handle move order if this NPC already has a command goal - ie on load game
+	if (HaveCommandGoal() && !m_bHoldPositionGoal)
+		return;
+
+	m_bHoldPositionGoal = false;
+
+	ToggleSquadCommand();
+
+	UpdateSquadGlow();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Add or remove glow effects as necessary, then update the color
+//-----------------------------------------------------------------------------
+void CNPC_Combine::UpdateSquadGlow()
+{
+	bool shouldGlow = ShouldSquadGlow();
+	if ( !m_bGlowEnabled.Get() && shouldGlow )
+	{
+		AddGlowEffect();
+	}
+	else if ( m_bGlowEnabled.Get() && !shouldGlow )
+	{
+		RemoveGlowEffect();
+	}
+
+	if ( m_bGlowEnabled.Get() )
+	{
+		float healthPercentage = ((float)m_iHealth / ((float)m_iMaxHealth));
+
+		float red = 0;
+		float blue = 0;
+		float green = 0;
+
+		switch (sv_squadmate_glow_style.GetInt())
+		{
+		case COMBINE_GLOW_STYLE_REDGREEN:
+			red = 1.0f - healthPercentage;
+			green = healthPercentage;
+			blue = 0.0f;
+			break;
+		case COMBINE_GLOW_STYLE_REDWHITE:
+			red = 1.0f;
+			green = healthPercentage;
+			blue = healthPercentage;
+			break;
+		}
+
+		SetGlowColor( red, green, blue, sv_squadmate_glow_alpha.GetFloat() );
+	}
+}
+
+bool CNPC_Combine::ShouldSquadGlow()
+{
+	return sv_squadmate_glow.GetBool() && IsCommandable() && IsInPlayerSquad();
+}
+
+//-----------------------------------------------------------------------------
+// 1upD	-	Retrieve the squad's current command goal
+//-----------------------------------------------------------------------------
+void CNPC_Combine::GetSquadGoal()
+{
+	CAI_Squad *pPlayerSquad = g_AI_SquadManager.FindSquad(MAKE_STRING(PLAYER_SQUADNAME));
+	if (pPlayerSquad)
+	{
+		AISquadIter_t iter;
+
+		for (CAI_BaseNPC *pPlayerSquadMember = pPlayerSquad->GetFirstMember(&iter); pPlayerSquadMember; pPlayerSquadMember = pPlayerSquad->GetNextMember(&iter))
+		{
+			if (pPlayerSquadMember->GetCommandGoal() != vec3_invalid) {
+				SetCommandGoal(pPlayerSquadMember->GetCommandGoal());
+				return;
+			}
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// 1upD	-	Add this soldier to the player's squad
+//			Based on Breadman's use function code
+//-----------------------------------------------------------------------------
+void CNPC_Combine::RemoveFromPlayerSquad()
+{
+	if ( !IsInPlayerSquad() )
+	{
+		// Blixibon - Stop holding position
+		if ( m_bHoldPositionGoal )
+			SetCommandGoal( vec3_invalid );
+
+		// Already outside of the player's squad
+		return;
+	}
+
+	if ( m_iszOriginalSquad != NULL_STRING && strcmp( STRING( m_iszOriginalSquad ), PLAYER_SQUADNAME ) != 0 )
+		AddToSquad( m_iszOriginalSquad );
+	else
+		RemoveFromSquad();
+
+	// Blixibon - If we have a manhack, update its squad status
+	if (m_hManhack != NULL)
+		m_pSquad ? m_pSquad->AddToSquad(m_hManhack.Get()) : m_hManhack->RemoveFromSquad();
+
+	CapabilitiesAdd( bits_CAP_NO_HIT_SQUADMATES );
+
+	// Stop following.
+	ToggleSquadCommand();
+
+	// Blixibon - When players remove soldiers from their squad, they will stay in their area
+	if ( m_bHoldPositionGoal )
+	{
+		SetCommandGoal( GetAbsOrigin() );
+	}
+	else
+	{
+		SetCommandGoal( vec3_invalid );
+	}
+
+	UpdateSquadGlow();
+}
+
+//-----------------------------------------------------------------------------
+// 1upD	-	Override PlayerAlly's ShouldRegenerateHealth() to check spawnflag
+//-----------------------------------------------------------------------------
+bool CNPC_Combine::ShouldRegenerateHealth(void)
+{
+	return HasSpawnFlags(SF_COMBINE_REGENERATE);
+}
+
+//-----------------------------------------------------------------------------
+// 1upD	-	Copied from citizen
+//-----------------------------------------------------------------------------
+bool CNPC_Combine::IsFollowingCommandPoint()
+{
+	CBaseEntity *pFollowTarget = m_FollowBehavior.GetFollowTarget();
+	if (pFollowTarget)
+		return FClassnameIs(pFollowTarget, "info_target_command_point");
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// 1upD	-	Copied from citizen
+//-----------------------------------------------------------------------------
+void CNPC_Combine::UpdateFollowCommandPoint()
+{
+	if (!AI_IsSinglePlayer())
+		return;
+
+	if (IsInPlayerSquad())
+	{
+		if (HaveCommandGoal())
+		{
+			CBaseEntity *pFollowTarget = m_FollowBehavior.GetFollowTarget();
+			CBaseEntity *pCommandPoint = gEntList.FindEntityByClassname(NULL, "info_target_command_point");
+
+			if (!pCommandPoint)
+			{
+				DevMsg("**\nVERY BAD THING\nCommand point vanished! Creating a new one\n**\n");
+				pCommandPoint = CreateEntityByName("info_target_command_point");
+			}
+
+			if (pFollowTarget != pCommandPoint)
+			{
+				pFollowTarget = pCommandPoint;
+				m_FollowBehavior.SetFollowTarget(pFollowTarget);
+				m_FollowBehavior.SetParameters(AIF_COMMANDER);
+			}
+
+			if ((pCommandPoint->GetAbsOrigin() - GetCommandGoal()).LengthSqr() > 0.01)
+			{
+				UTIL_SetOrigin(pCommandPoint, GetCommandGoal(), false);
+			}
+		}
+		else
+		{
+			if (IsFollowingCommandPoint())
+				ClearFollowTarget();
+			if (m_FollowBehavior.GetFollowTarget() != UTIL_GetLocalPlayer())
+			{
+				DevMsg("Expected to be following player, but not\n");
+				m_FollowBehavior.SetFollowTarget(UTIL_GetLocalPlayer());
+				m_FollowBehavior.SetParameters(AIF_SIMPLE);
+			}
+		}
+	}
+	else if (IsFollowingCommandPoint())
+		ClearFollowTarget();
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+#define OTHER_DEFER_SEARCH_TIME		FLT_MAX
+bool CNPC_Combine::ShouldLookForBetterWeapon()
+{
+	if ( BaseClass::ShouldLookForBetterWeapon() )
+	{
+		if ( IsInPlayerSquad() && (GetActiveWeapon()&&IsMoving()) && ( m_FollowBehavior.GetFollowTarget() && m_FollowBehavior.GetFollowTarget()->IsPlayer() ) )
+		{
+			// For soldiers in the player squad, you must be unarmed, or standing still (if armed) in order to 
+			// divert attention to looking for a new weapon.
+			return false;
+		}
+
+		if ( GetActiveWeapon() && IsMoving() )
+			return false;
+
+#ifdef DBGFLAG_ASSERT
+		// Cached off to make sure you change this if you ask the code to defer.
+		float flOldWeaponSearchTime = m_flNextWeaponSearchTime;
+#endif
+
+		CBaseCombatWeapon *pWeapon = GetActiveWeapon();
+		if( pWeapon )
+		{
+			bool bDefer = false;
+
+			if ( EntIsClass(pWeapon, gm_isz_class_AR2) )
+			{
+				// Content to keep this weapon forever
+				m_flNextWeaponSearchTime = OTHER_DEFER_SEARCH_TIME;
+				bDefer = true;
+			}
+			else if( EntIsClass(pWeapon, gm_isz_class_RPG) )
+			{
+				// Content to keep this weapon forever
+				m_flNextWeaponSearchTime = OTHER_DEFER_SEARCH_TIME;
+				bDefer = true;
+			}
+			else if ( EntIsClass(pWeapon, gm_isz_class_Shotgun) )
+			{
+				if (m_nSkin == COMBINE_SKIN_SHOTGUNNER)
+				{
+					// Shotgunners are content to keep this weapon forever
+					m_flNextWeaponSearchTime = OTHER_DEFER_SEARCH_TIME;
+					bDefer = true;
+				}
+			}
+
+			if( bDefer )
+			{
+				// I'm happy with my current weapon. Don't search now.
+				// If you ask the code to defer, you must have set m_flNextWeaponSearchTime to when
+				// you next want to try to search.
+				Assert( m_flNextWeaponSearchTime != flOldWeaponSearchTime );
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+bool CNPC_Combine::ShouldLookForHealthItem()
+{
+	if( !m_bLookForItems )
+		return false;
+
+	if( gpGlobals->curtime < m_flNextHealthSearchTime )
+		return false;
+
+	// Wait till you're standing still.
+	if( IsMoving() )
+		return false;
+
+	if (IsCommandable())
+	{
+		// Commandable soldiers cannot get health unless in the player squad.
+		if (!IsInPlayerSquad())
+			return false;
+
+		// Only begin considering this when low on health.
+		if ((GetHealth() / GetMaxHealth()) > 0.5f)
+			return false;
+
+		// Player is hurt, don't steal their health.
+		if( AI_IsSinglePlayer() && UTIL_GetLocalPlayer()->GetHealth() <= UTIL_GetLocalPlayer()->GetHealth() * 0.75f )
+			return false;
+	}
+	else
+	{
+		// Always consider health when not fully healthy.
+		if (GetHealth() >= GetMaxHealth())
+			return false;
+	}
+
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+CBaseEntity *CNPC_Combine::FindHealthItem( const Vector &vecPosition, const Vector &range )
+{
+	CBaseEntity *list[1024];
+	int count = UTIL_EntitiesInBox( list, 1024, vecPosition - range, vecPosition + range, 0 );
+
+	for ( int i = 0; i < count; i++ )
+	{
+		CItem *pItem = dynamic_cast<CItem *>(list[ i ]);
+
+		if( pItem )
+		{
+			if (pItem->HasSpawnFlags(SF_ITEM_NO_NPC_PICKUP))
+				continue;
+
+			// Healthkits, healthvials, and batteries
+			if( (pItem->ClassMatches( "item_health*" ) || pItem->ClassMatches( "item_battery" )) && FVisible( pItem ) )
+			{
+				return pItem;
+			}
+		}
+	}
+
+	return NULL;
+}
+
+//------------------------------------------------------------------------------
+// Purpose: 
+//------------------------------------------------------------------------------
+void CNPC_Combine::PickupItem( CBaseEntity *pItem )
+{
+	BaseClass::PickupItem( pItem );
+
+	// Combine soldiers can pick up batteries and use them as health kits
+	if (FClassnameIs( pItem, "item_battery" ))
+	{
+		if ( TakeHealth( 25, DMG_GENERIC ) )
+		{
+			RemoveAllDecals();
+			UTIL_Remove( pItem );
+			EmitSound( "ItemBattery.Touch" );
+		}
+	}
+
+	// Update squad glow in case our health changed
+	if (ShouldSquadGlow())
+	{
+		UpdateSquadGlow();
+	}
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+int CNPC_Combine::SelectSchedulePriorityAction()
+{
+	int schedule = BaseClass::SelectSchedulePriorityAction();
+	if ( schedule != SCHED_NONE )
+		return schedule;
+
+	schedule = SelectScheduleRetrieveItem();
+	if ( schedule != SCHED_NONE )
+		return schedule;
+
+	return SCHED_NONE;
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+int CNPC_Combine::SelectScheduleRetrieveItem()
+{
+	if ( HasCondition(COND_BETTER_WEAPON_AVAILABLE) )
+	{
+		CBaseCombatWeapon *pWeapon = dynamic_cast<CBaseCombatWeapon *>(Weapon_FindUsable( WEAPON_SEARCH_DELTA ));
+		if ( pWeapon )
+		{
+			m_flNextWeaponSearchTime = gpGlobals->curtime + 10.0;
+			// Now lock the weapon for several seconds while we go to pick it up.
+			pWeapon->Lock( 10.0, this );
+			SetTarget( pWeapon );
+			return SCHED_NEW_WEAPON;
+		}
+	}
+
+	if( HasCondition(COND_HEALTH_ITEM_AVAILABLE) )
+	{
+		if( !IsInPlayerSquad() && IsCommandable() )
+		{
+			// Been kicked out of the player squad since the time I located the health.
+			ClearCondition( COND_HEALTH_ITEM_AVAILABLE );
+		}
+		else
+		{
+			CBaseEntity *pBase = FindHealthItem(
+				m_FollowBehavior.GetFollowTarget() ? m_FollowBehavior.GetFollowTarget()->GetAbsOrigin() : GetAbsOrigin(),
+				m_FollowBehavior.GetFollowTarget() ? Vector( 120, 120, 120 ) : Vector( 240, 240, 240 ) );
+			CItem *pItem = dynamic_cast<CItem *>(pBase);
+
+			if( pItem )
+			{
+				SetTarget( pItem );
+				return SCHED_GET_HEALTHKIT;
+			}
+		}
+	}
+
+	return SCHED_NONE;
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+bool CNPC_Combine::IgnorePlayerPushing( void )
+{
+	CBasePlayer *pPlayer = AI_GetSinglePlayer();
+	if ( pPlayer )
+	{
+		if ( IsCommandable() && !IsInAScript() && npc_combine_give_enabled.GetBool() )
+		{
+			// Don't push if the player is carrying a weapon
+			CBaseEntity *pHeld = GetPlayerHeldEntity( pPlayer );
+			if (pHeld && (pHeld->IsBaseCombatWeapon() || (pHeld->IsCombatItem() && IsGiveableItem(pHeld))))
+				return true;
+		}
+	}
+
+	return BaseClass::IgnorePlayerPushing();
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CNPC_Combine::Weapon_Drop( CBaseCombatWeapon *pWeapon, const Vector *pvecTarget /* = NULL */, const Vector *pVelocity /* = NULL */ )
+{
+	BaseClass::Weapon_Drop( pWeapon, pvecTarget, pVelocity );
+
+	if (m_bDontPickupWeapons && !IsInAScript() && IsCurSchedule( SCHED_NEW_WEAPON ))
+	{
+		// A non-autonomous soldier has dropped their weapon when trying to pick one up.
+		// Make sure they're allowed to re-arm themselves in case they fail to pick up this weapon.
+		m_bTemporarilyNeedWeapon = true;
+		m_bDontPickupWeapons = false;
+		m_flNextWeaponSearchTime = gpGlobals->curtime + 1.0f;
+
+		// Check if we don't have other weapons in our inventory
+		if ( !m_hMyWeapons[1].Get() && GetBackupWeaponClass() != NULL )
+		{
+			// In case we get into combat while unarmed, have a backup weapon on-hand
+			GiveWeaponHolstered( MAKE_STRING( GetBackupWeaponClass() ) );
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CNPC_Combine::PickupWeapon( CBaseCombatWeapon *pWeapon )
+{
+	BaseClass::PickupWeapon( pWeapon );
+
+	if (m_bTemporarilyNeedWeapon)
+	{
+		// We have our weapon now, so turn off weapon pickup
+		m_bTemporarilyNeedWeapon = false;
+		m_bDontPickupWeapons = true;
+	}
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+const char *CNPC_Combine::GetBackupWeaponClass()
+{
+	// Elites can pull out pulse pistols
+	if (IsElite())
+		return "weapon_pulsepistol";
+
+	return "weapon_pistol";
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+bool CNPC_Combine::CanOrderSurrender()
+{
+#ifdef EZ2
+	if (m_iCanOrderSurrender == TRS_NONE && IsPlayerAlly())
+	{
+		// Order surrenders if the player has ordered one before
+		return GlobalEntity_GetState( GLOBAL_PLAYER_ORDER_SURRENDER ) == GLOBAL_ON;
+	}
+
+	return m_iCanOrderSurrender == TRS_TRUE;
+#endif
+	
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+bool CNPC_Combine::IsGiveableItem( CBaseEntity *pItem )
+{
+	if (pItem->IsCombatItem())
+	{
+		if (pItem->ClassMatches( "item_health*" ) || pItem->ClassMatches( "item_battery" ))
+		{
+			// Only take it if we need the health
+			if (GetHealth() >= GetMaxHealth())
+				return false;
+			else
+				return true;
+		}
+
+		return pItem->ClassMatches( "item_ammo_ar2_altfire" ) || pItem->ClassMatches( "item_ammo_smg1_grenade" );
+	}
+	else if (pItem->ClassMatches( "weapon_frag" ))
+	{
+		return true;
+	}
+
+	return false;
+}
+
+ConVar npc_combine_gib( "npc_combine_gib", "0" );
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input  : &info - 
+// Output : Returns true on success, false on failure.
+//-----------------------------------------------------------------------------
+bool CNPC_Combine::ShouldGib( const CTakeDamageInfo &info )
+{
+	if ( !npc_combine_gib.GetBool() )
+		return false;
+	
+	// Don't gib if we're temporal
+	if (m_tEzVariant == EZ_VARIANT_TEMPORAL)
+		return false;
+
+	// If the damage type is "always gib", we better gib!
+	if ( info.GetDamageType() & DMG_ALWAYSGIB )
+		return true;
+
+	if ( info.GetDamageType() & ( DMG_NEVERGIB | DMG_DISSOLVE ) )
+		return false;
+
+	if ( ( info.GetDamageType() & ( DMG_BLAST | DMG_ACID | DMG_POISON | DMG_CRUSH ) ) && ( GetAbsOrigin() - info.GetDamagePosition() ).LengthSqr() <= 32.0f )
+		return true;
+
+	return false;
+}
+
+//------------------------------------------------------------------------------
+// Purpose: Override to do rebel specific gibs
+// Output :
+//------------------------------------------------------------------------------
+bool CNPC_Combine::CorpseGib( const CTakeDamageInfo &info )
+{
+	return BaseClass::CorpseGib( info );
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Create components
@@ -196,7 +1266,9 @@ bool CNPC_Combine::CreateComponents()
 	if ( !BaseClass::CreateComponents() )
 		return false;
 
+#ifndef COMBINE_SOLDIER_USES_RESPONSE_SYSTEM
 	m_Sentences.Init( this, "NPC_Combine.SentenceParameters" );
+#endif
 	return true;
 }
 
@@ -246,9 +1318,17 @@ void CNPC_Combine::InputAssault( inputdata_t &inputdata )
 //-----------------------------------------------------------------------------
 void CNPC_Combine::InputHitByBugbait( inputdata_t &inputdata )
 {
+#ifdef EZ
+	// Ignore if the activator likes us
+	if (inputdata.pActivator && inputdata.pActivator->IsCombatCharacter() &&
+		inputdata.pActivator->MyCombatCharacterPointer()->IRelationType( this ) == D_LI)
+		return;
+#endif
+
 	SetCondition( COND_COMBINE_HIT_BY_BUGBAIT );
 }
 
+#ifndef MAPBASE
 //-----------------------------------------------------------------------------
 // Purpose: Force the combine soldier to throw a grenade at the target
 //			If I'm a combine elite, fire my combine ball at the target instead.
@@ -260,7 +1340,11 @@ void CNPC_Combine::InputThrowGrenadeAtTarget( inputdata_t &inputdata )
 	if ( m_NPCState == NPC_STATE_SCRIPT && m_hCine )
 		return;
 
+#ifdef MAPBASE
+	CBaseEntity *pEntity = gEntList.FindEntityByName( NULL, inputdata.value.String(), this, inputdata.pActivator, inputdata.pCaller );
+#else
 	CBaseEntity *pEntity = gEntList.FindEntityByName( NULL, inputdata.value.String(), NULL, inputdata.pActivator, inputdata.pCaller );
+#endif
 	if ( !pEntity )
 	{
 		DevMsg("%s (%s) received ThrowGrenadeAtTarget input, but couldn't find target entity '%s'\n", GetClassname(), GetDebugName(), inputdata.value.String() );
@@ -272,6 +1356,175 @@ void CNPC_Combine::InputThrowGrenadeAtTarget( inputdata_t &inputdata )
 
 	ClearSchedule( "Told to throw grenade via input" );
 }
+#endif
+
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Instant transformation of arsenal from grenades to energy balls, or vice versa
+//-----------------------------------------------------------------------------
+void CNPC_Combine::InputSetElite( inputdata_t &inputdata )
+{
+	m_fIsElite = inputdata.value.Bool();
+}
+
+//-----------------------------------------------------------------------------
+// We were told to drop a grenade
+//-----------------------------------------------------------------------------
+void CNPC_Combine::InputDropGrenade( inputdata_t &inputdata )
+{
+	SetCondition( COND_COMBINE_DROP_GRENADE );
+
+	ClearSchedule( "Told to drop grenade via input" );
+}
+
+//-----------------------------------------------------------------------------
+// Changes our tactical variant easily
+//-----------------------------------------------------------------------------
+void CNPC_Combine::InputSetTacticalVariant( inputdata_t &inputdata )
+{
+	m_iTacticalVariant = inputdata.value.Int();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input  : &inputdata - 
+//-----------------------------------------------------------------------------
+void CNPC_Combine::InputSetPoliceGoal( inputdata_t &inputdata )
+{
+	if (/*!inputdata.value.String() ||*/ inputdata.value.String()[0] == 0)
+	{
+		m_PolicingBehavior.Disable();
+		return;
+	}
+
+	CBaseEntity *pGoal = gEntList.FindEntityByName( NULL, inputdata.value.String() );
+
+	if ( pGoal == NULL )
+	{
+		DevMsg( "SetPoliceGoal: %s (%s) unable to find ai_goal_police: %s\n", GetClassname(), GetDebugName(), inputdata.value.String() );
+		return;
+	}
+
+	CAI_PoliceGoal *pPoliceGoal = dynamic_cast<CAI_PoliceGoal *>(pGoal);
+
+	if ( pPoliceGoal == NULL )
+	{
+		DevMsg( "SetPoliceGoal: %s (%s)'s target %s is not an ai_goal_police entity!\n", GetClassname(), GetDebugName(), inputdata.value.String() );
+		return;
+	}
+
+	m_PolicingBehavior.Enable( pPoliceGoal );
+}
+#endif
+
+#ifdef EZ
+//-----------------------------------------------------------------------------
+// Purpose: Turn this Combine soldier into a player commandable soldier
+// 1upD
+// Input  : &inputdata - 
+//-----------------------------------------------------------------------------
+void CNPC_Combine::InputSetCommandable(inputdata_t & inputdata)
+{
+	this->AddSpawnFlags(SF_COMBINE_COMMANDABLE);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Turn this Combine soldier into a non-commandable soldier
+// 1upD
+// Input  : &inputdata - 
+//-----------------------------------------------------------------------------
+void CNPC_Combine::InputSetNonCommandable(inputdata_t & inputdata)
+{
+	this->RemoveSpawnFlags(SF_COMBINE_COMMANDABLE);
+	RemoveFromPlayerSquad();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Enables manhack toss
+// Input  : &inputdata - 
+//-----------------------------------------------------------------------------
+void CNPC_Combine::InputEnableManhackToss( inputdata_t &inputdata )
+{
+	if ( HasSpawnFlags( SF_COMBINE_NO_MANHACK_DEPLOY ) )
+	{
+		RemoveSpawnFlags( SF_COMBINE_NO_MANHACK_DEPLOY );
+	}
+}
+
+void CNPC_Combine::InputDisableManhackToss( inputdata_t &inputdata )
+{
+	if ( !HasSpawnFlags( SF_COMBINE_NO_MANHACK_DEPLOY ) )
+	{
+		AddSpawnFlags( SF_COMBINE_NO_MANHACK_DEPLOY );
+	}
+}
+
+void CNPC_Combine::InputDeployManhack( inputdata_t &inputdata )
+{
+	// I am aware this bypasses regular deployment conditions, but the mapper wants us to deploy a manhack, damn it!
+	// We do have to have one, though.
+	if ( m_iManhacks > 0 )
+	{
+		SetSchedule(SCHED_COMBINE_DEPLOY_MANHACK);
+	}
+}
+
+void CNPC_Combine::InputAddManhacks( inputdata_t &inputdata )
+{
+	m_iManhacks += inputdata.value.Int();
+
+	SetBodygroup( COMBINE_BODYGROUP_MANHACK, (m_iManhacks > 0) );
+}
+
+void CNPC_Combine::InputSetManhacks( inputdata_t &inputdata )
+{
+	m_iManhacks = inputdata.value.Int();
+
+	SetBodygroup( COMBINE_BODYGROUP_MANHACK, (m_iManhacks > 0) );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Disables player use
+// Input  : &inputdata - 
+//-----------------------------------------------------------------------------
+void CNPC_Combine::InputDisablePlayerUse( inputdata_t &inputdata )
+{
+	m_bDisablePlayerUse = true;
+}
+
+void CNPC_Combine::InputEnablePlayerUse( inputdata_t &inputdata )
+{
+	m_bDisablePlayerUse = false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Toggles soldier surrendering
+// Input  : &inputdata - 
+//-----------------------------------------------------------------------------
+void CNPC_Combine::InputEnableOrderSurrender( inputdata_t &inputdata )
+{
+	m_iCanOrderSurrender = TRS_TRUE;
+}
+
+void CNPC_Combine::InputDisableOrderSurrender( inputdata_t &inputdata )
+{
+	m_iCanOrderSurrender = TRS_FALSE;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Toggles soldier giving
+// Input  : &inputdata - 
+//-----------------------------------------------------------------------------
+void CNPC_Combine::InputEnablePlayerGive( inputdata_t &inputdata )
+{
+	m_iCanPlayerGive = TRS_TRUE;
+}
+
+void CNPC_Combine::InputDisablePlayerGive( inputdata_t &inputdata )
+{
+	m_iCanPlayerGive = TRS_FALSE;
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -283,8 +1536,13 @@ void CNPC_Combine::Precache()
 
 	PrecacheScriptSound( "NPC_Combine.GrenadeLaunch" );
 	PrecacheScriptSound( "NPC_Combine.WeaponBash" );
+#ifndef MAPBASE // Now that we use WeaponSound(SPECIAL1), this isn't necessary
 	PrecacheScriptSound( "Weapon_CombineGuard.Special1" );
-
+#endif
+#ifdef EZ
+	PrecacheScriptSound( "NPC_Combine.Following" );
+	PrecacheScriptSound( "NPC_Combine.StopFollowing" );
+#endif
 	BaseClass::Precache();
 }
 
@@ -292,7 +1550,9 @@ void CNPC_Combine::Precache()
 //-----------------------------------------------------------------------------
 void CNPC_Combine::Activate()
 {
+#ifndef MAPBASE
 	s_iszShotgunClassname = FindPooledString( "weapon_shotgun" );
+#endif
 	BaseClass::Activate();
 }
 
@@ -303,6 +1563,13 @@ void CNPC_Combine::Activate()
 //-----------------------------------------------------------------------------
 void CNPC_Combine::Spawn( void )
 {
+#ifdef EZ
+	// Use CNPC_PlayerCompanion::Spawn
+	BaseClass::Spawn();
+
+	m_flFieldOfView = -0.2;// indicates the width of this NPC's forward view cone ( as a dotproduct result )
+	CapabilitiesRemove( bits_CAP_FRIENDLY_DMG_IMMUNE );	// Soldiers have their own friendly fire handling
+#else
 	SetHullType(HULL_HUMAN);
 	SetHullSizeNormal();
 
@@ -312,6 +1579,7 @@ void CNPC_Combine::Spawn( void )
 	SetBloodColor( BLOOD_COLOR_RED );
 	m_flFieldOfView			= -0.2;// indicates the width of this NPC's forward view cone ( as a dotproduct result )
 	m_NPCState				= NPC_STATE_NONE;
+#endif
 	m_flNextGrenadeCheck	= gpGlobals->curtime + 1;
 	m_flNextPainSoundTime	= 0;
 	m_flNextAlertSoundTime	= 0;
@@ -320,6 +1588,11 @@ void CNPC_Combine::Spawn( void )
 	//	CapabilitiesAdd( bits_CAP_TURN_HEAD | bits_CAP_MOVE_GROUND | bits_CAP_MOVE_JUMP | bits_CAP_MOVE_CLIMB);
 	// JAY: Disabled jump for now - hard to compare to HL1
 	CapabilitiesAdd( bits_CAP_TURN_HEAD | bits_CAP_MOVE_GROUND );
+
+#ifdef EZ2
+	if ( IsMajorCharacter() ) // Non-commandable combine soldiers in Chapter 1 should not be able to jump!
+		CapabilitiesAdd(bits_CAP_MOVE_JUMP);
+#endif
 
 	CapabilitiesAdd( bits_CAP_AIM_GUN );
 
@@ -350,6 +1623,22 @@ void CNPC_Combine::Spawn( void )
 	m_flNextAltFireTime = gpGlobals->curtime;
 
 	NPCInit();
+
+#ifdef EZ
+	// Start us with a visible manhack if we have one
+	if ( m_iManhacks )
+	{
+		SetBodygroup( COMBINE_BODYGROUP_MANHACK, true );
+	}
+#endif
+
+#ifdef MAPBASE
+	// This was moved from CalcWeaponProficiency() so soldiers don't change skin unnaturally and uncontrollably
+	if ( GetActiveWeapon() && EntIsClass(GetActiveWeapon(), gm_isz_class_Shotgun) && m_nSkin != COMBINE_SKIN_SHOTGUNNER )
+	{
+		m_nSkin = COMBINE_SKIN_SHOTGUNNER;
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -358,12 +1647,22 @@ void CNPC_Combine::Spawn( void )
 //-----------------------------------------------------------------------------
 bool CNPC_Combine::CreateBehaviors()
 {
+#ifdef EZ // Blixibon - We inherit most of our behaviors from CNPC_PlayerCompanion now.
+	AddBehavior( &m_RappelBehavior );
+	AddBehavior( &m_StandoffBehavior );
+	AddBehavior( &m_FollowBehavior );
+	AddBehavior( &m_FuncTankBehavior );
+#else
 	AddBehavior( &m_RappelBehavior );
 	AddBehavior( &m_ActBusyBehavior );
 	AddBehavior( &m_AssaultBehavior );
 	AddBehavior( &m_StandoffBehavior );
 	AddBehavior( &m_FollowBehavior );
 	AddBehavior( &m_FuncTankBehavior );
+#endif
+#ifdef MAPBASE
+	AddBehavior( &m_PolicingBehavior );
+#endif
 
 	return BaseClass::CreateBehaviors();
 }
@@ -372,15 +1671,25 @@ bool CNPC_Combine::CreateBehaviors()
 //-----------------------------------------------------------------------------
 void CNPC_Combine::PostNPCInit()
 {
+#ifndef MAPBASE
 	if( IsElite() )
 	{
 		// Give a warning if a Combine Soldier is equipped with anything other than
 		// an AR2. 
 		if( !GetActiveWeapon() || !FClassnameIs( GetActiveWeapon(), "weapon_ar2" ) )
 		{
-			// DevWarning("**Combine Elite Soldier MUST be equipped with AR2\n");
+			DevWarning("**Combine Elite Soldier MUST be equipped with AR2\n");
 		}
 	}
+#endif
+
+#ifdef EZ
+	// Originally added by 1upD, modified by Blixibon and moved to PostNPCInit() - Save restore squad fixup
+	if (IsInPlayerSquad())
+	{
+		FixupPlayerSquad();
+	}
+#endif
 
 	BaseClass::PostNPCInit();
 }
@@ -395,7 +1704,12 @@ void CNPC_Combine::GatherConditions()
 
 	if( GetState() == NPC_STATE_COMBAT )
 	{
+#ifdef MAPBASE
+		// Don't override the standoff
+		if( IsCurSchedule( SCHED_COMBINE_WAIT_IN_COVER, false ) && !m_StandoffBehavior.IsActive() )
+#else
 		if( IsCurSchedule( SCHED_COMBINE_WAIT_IN_COVER, false ) )
+#endif
 		{
 			// Soldiers that are standing around doing nothing poll for attack slots so
 			// that they can respond quickly when one comes available. If they can 
@@ -418,6 +1732,132 @@ void CNPC_Combine::GatherConditions()
 			}
 		}
 	}
+
+#ifdef EZ
+	if( ShouldLookForHealthItem() )
+	{
+		if( FindHealthItem( GetAbsOrigin(), Vector( 240, 240, 240 ) ) )
+			SetCondition( COND_HEALTH_ITEM_AVAILABLE );
+		else
+			ClearCondition( COND_HEALTH_ITEM_AVAILABLE );
+
+		m_flNextHealthSearchTime = gpGlobals->curtime + 4.0;
+	}
+
+	if ( HasCondition( COND_TALKER_PLAYER_STARING ) && ShouldAllowPlayerGive() && !IsInAScript() && IsInterruptable() && npc_combine_give_enabled.GetBool() )
+	{
+		CBasePlayer *pPlayer = AI_GetSinglePlayer();
+		if (pPlayer /*&& (!m_pSquad || m_pSquad->GetSquadMemberNearestTo( pPlayer->GetAbsOrigin() ) == this)*/)
+		{
+			bool bStareRelevant = false;
+
+			float flDistSqr = ( GetAbsOrigin() - pPlayer->GetAbsOrigin() ).Length2DSqr();
+			float flStareDist = npc_combine_give_stare_dist.GetFloat();
+
+			// Be extra certain that they're staring
+			Vector facingDir = pPlayer->EyeDirection2D();
+			Vector los = ( EyePosition() - pPlayer->EyePosition() );
+			los.z = 0;
+			VectorNormalize( los );
+
+			if( !IsMoving() && pPlayer->IsAlive() && (flDistSqr <= flStareDist * flStareDist) && DotProduct( los, facingDir ) > 0.8f && pPlayer->FVisible( this ) )
+			{
+				// If the player is holding an item in front of us, they might want us to pick it up.
+				CBaseEntity *pHeld = GetPlayerHeldEntity( pPlayer );
+
+				if (pHeld)
+				{
+					bStareRelevant = true;
+
+					if ( gpGlobals->curtime - m_flTimePlayerStare >= npc_combine_give_stare_time.GetFloat() &&
+						!IsCurSchedule(SCHED_NEW_WEAPON) && !IsCurSchedule(SCHED_GET_HEALTHKIT) )
+					{
+						bool bAccepted = false;
+
+						// Is it a weapon?
+						if (pHeld->IsBaseCombatWeapon() && Weapon_CanUse( pHeld->MyCombatWeaponPointer() ) && IsGiveableWeapon( pHeld->MyCombatWeaponPointer() ))
+						{
+							//SetCondition( COND_BETTER_WEAPON_AVAILABLE );
+
+							CBaseCombatWeapon *pWeapon = pHeld->MyCombatWeaponPointer();
+							if (!pWeapon->IsLocked( this ))
+							{
+								Msg( "%s picking up %s held by player\n", GetDebugName(), pHeld->GetDebugName() );
+
+								// Now lock the weapon for a few seconds while we go to pick it up.
+								m_flNextWeaponSearchTime = gpGlobals->curtime + 10.0;
+								pWeapon->Lock( 5.0, this );
+								SetTarget( pWeapon );
+								SetSchedule( SCHED_NEW_WEAPON );
+								StartPlayerGive( pPlayer );
+								bAccepted = true;
+							}
+						}
+
+						// Is it an item?
+						else if (IsGiveableItem(pHeld))
+						{
+							//SetCondition( COND_HEALTH_ITEM_AVAILABLE );
+
+							// See CAI_BaseNPC::PickupItem for items soldiers can absorb
+							SetTarget( pHeld );
+							SetSchedule( SCHED_GET_HEALTHKIT );
+							StartPlayerGive( pPlayer );
+							bAccepted = true;
+						}
+
+						if (!bAccepted)
+							OnCantBeGivenObject( pHeld );
+					}
+				}
+			}
+
+			if (!bStareRelevant)
+			{
+				m_flTimePlayerStare = FLT_MAX;
+			}
+			else if (m_flTimePlayerStare == FLT_MAX)
+			{
+				// Player wasn't looking at me at last think. They started staring now.
+				m_flTimePlayerStare = gpGlobals->curtime;
+			}
+		}
+	}
+#endif
+
+#ifdef EZ2
+	ClearCondition( COND_COMBINE_CAN_ORDER_SURRENDER );
+
+	if (HasCondition(COND_CAN_RANGE_ATTACK1))
+	{
+		if (CanOrderSurrender())
+		{
+			if ( GetEnemy() /*&& GetEnemies()->NumEnemies() <= 2*/ && GetEnemy()->ClassMatches("npc_citizen") && GetEnemy()->MyNPCPointer()->GetActiveWeapon() == NULL )
+			{
+				CNPC_Citizen *pCitizen = static_cast<CNPC_Citizen*>(GetEnemy());
+				if (pCitizen && pCitizen->CanSurrender())
+				{
+					// Make sure they're not about to pick up a weapon
+					if (!pCitizen->IsCurSchedule( SCHED_NEW_WEAPON, false ))
+					{
+						// Finally, check if the citizen has spoken beg or surrender concepts already
+						float flTimeSpeakSurrender = pCitizen->GetTimeSpokeConcept( TLK_SURRENDER );
+						float flTimeSpeakBeg = pCitizen->GetTimeSpokeConcept( TLK_BEG );
+						if ((flTimeSpeakSurrender != -1 && gpGlobals->curtime - flTimeSpeakSurrender >= npc_combine_order_surrender_min_tlk_surrender.GetFloat()) || (flTimeSpeakBeg != -1 && gpGlobals->curtime - flTimeSpeakBeg >= npc_combine_order_surrender_min_tlk_beg.GetFloat()))
+						{
+							SetCondition( COND_COMBINE_CAN_ORDER_SURRENDER );
+
+							// Don't attack while ordering to surrender
+							ClearCondition( COND_CAN_RANGE_ATTACK1 );
+							ClearCondition( COND_CAN_RANGE_ATTACK2 );
+							ClearCondition( COND_CAN_MELEE_ATTACK1 );
+						}
+					}
+				}
+			}
+		}
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -427,8 +1867,22 @@ void CNPC_Combine::PrescheduleThink()
 {
 	BaseClass::PrescheduleThink();
 
+#ifdef EZ
+	// 1upD - Copied from citizen
+	UpdateFollowCommandPoint();
+
+
+	// Update glow if we are commandable
+	if ( ShouldSquadGlow() && ( !m_bGlowEnabled.Get() || ( GetHealth() < GetMaxHealth() && ShouldRegenerateHealth() ) ) )
+	{
+		UpdateSquadGlow();
+	}
+#endif
+
 	// Speak any queued sentences
+#ifndef COMBINE_SOLDIER_USES_RESPONSE_SYSTEM
 	m_Sentences.UpdateSentenceQueue();
+#endif
 
 	if ( IsOnFire() )
 	{
@@ -467,7 +1921,78 @@ void CNPC_Combine::PrescheduleThink()
 	}
 }
 
+#ifdef EZ
+extern int ACT_ANTLION_FLIP;
+extern int ACT_ANTLION_ZAP_FLIP;
 
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+Disposition_t CNPC_Combine::IRelationType( CBaseEntity *pTarget )
+{
+	Disposition_t disposition = BaseClass::IRelationType( pTarget );
+
+	if ( pTarget == NULL )
+		return disposition;
+
+	if (npc_combine_fear_near_zombies.GetBool())
+	{
+		// Zombie fearing behavior based partially on Alyx's code
+		// -Blixibon
+		if( pTarget->Classify() == CLASS_ZOMBIE && disposition == D_HT )
+		{
+			if( GetEnemies()->NumEnemies() > 1 && GetAbsOrigin().DistToSqr(pTarget->GetAbsOrigin()) < Square(96) )
+			{
+				// Be afraid of a zombie that's near if he's not alone. This will make soldiers back away.
+				return D_FR;
+			}
+		}
+	}
+
+	return disposition;
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+int CNPC_Combine::IRelationPriority( CBaseEntity *pTarget )
+{
+	int priority = BaseClass::IRelationPriority( pTarget );
+
+	// Alyx's antlion priority behavior that prioritizes flipped antlions
+	// -Blixibon
+	if( pTarget->Classify() == CLASS_ANTLION )
+	{
+		// Prefer Antlions that are flipped onto their backs.
+		// UNLESS we have a different enemy that could melee attack while our back is turned.
+		CAI_BaseNPC *pNPC = pTarget->MyNPCPointer();
+		if ( pNPC && ( pNPC->GetActivity() == ACT_ANTLION_FLIP || pNPC->GetActivity() == ACT_ANTLION_ZAP_FLIP  ) )
+		{
+			if( GetEnemy() && GetEnemy() != pTarget )
+			{
+				// I have an enemy that is not this thing. If that enemy is near, I shouldn't
+				// become distracted.
+				if( GetAbsOrigin().DistToSqr(GetEnemy()->GetAbsOrigin()) < Square(180) )
+				{
+					return priority;
+				}
+			}
+
+			priority += 1;
+		}
+	}
+
+	CAI_BaseNPC *pNPC = pTarget->MyNPCPointer();
+	if (pNPC && pNPC->GetActiveWeapon() == NULL && pNPC->ClassMatches( "npc_citizen" ) &&
+		(!pNPC->GetRunningBehavior() || pNPC->GetRunningBehavior()->GetName() != m_FuncTankBehavior.GetName()))
+	{
+		// Unarmed citizens have less priority
+		priority -= 2;
+	}
+
+	return priority;
+}
+#endif
+
+#ifndef MAPBASE
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 void CNPC_Combine::DelayAltFireAttack( float flDelay )
@@ -494,7 +2019,11 @@ void CNPC_Combine::DelaySquadAltFireAttack( float flDelay )
 	{
 		CNPC_Combine *pCombine = dynamic_cast<CNPC_Combine*>(pSquadmate);
 
+#ifdef MAPBASE
+		if( pCombine && pCombine->IsAltFireCapable() )
+#else
 		if( pCombine && pCombine->IsElite() )
+#endif
 		{
 			pCombine->DelayAltFireAttack( flDelay );
 		}
@@ -502,6 +2031,7 @@ void CNPC_Combine::DelaySquadAltFireAttack( float flDelay )
 		pSquadmate = m_pSquad->GetNextMember( &iter );
 	}
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: degrees to turn in 0.1 seconds
@@ -546,6 +2076,12 @@ bool CNPC_Combine::ShouldMoveAndShoot()
 	// "It's OK to move and shoot until gpGlobals->curtime == m_flStopMoveShootTime"
 	m_flStopMoveShootTime = FLT_MAX;
 
+#ifdef EZ
+	// 1upD - Commandable Combine should always move and shoot
+	if ( IsMajorCharacter() && !HasCondition(COND_NO_PRIMARY_AMMO, false ) )
+		return true;
+#endif
+
 	if( IsCurSchedule( SCHED_COMBINE_HIDE_AND_RELOAD, false ) )
 		m_flStopMoveShootTime = gpGlobals->curtime + random->RandomFloat( 0.4f, 0.6f );
 
@@ -585,6 +2121,30 @@ Class_T	CNPC_Combine::Classify ( void )
 {
 	return CLASS_COMBINE;
 }
+
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: Function for gauging whether we're capable of alt-firing.
+//-----------------------------------------------------------------------------
+bool CNPC_Combine::IsAltFireCapable( void )
+{
+	// The base class tells us if we're carrying an alt-fire-able weapon.
+#ifdef EZ
+	// HACKHACK: Skip CNPC_PlayerCompanion's grenade capabilities.
+	return (IsElite() || m_bAlternateCapable) && CAI_GrenadeUser<CAI_PlayerAlly>::IsAltFireCapable();
+#else
+	return (IsElite() || m_bAlternateCapable) && BaseClass::IsAltFireCapable();
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Function for gauging whether we're capable of throwing grenades.
+//-----------------------------------------------------------------------------
+bool CNPC_Combine::IsGrenadeCapable( void )
+{
+	return !IsElite() || m_bAlternateCapable;
+}
+#endif
 
 
 //-----------------------------------------------------------------------------
@@ -719,7 +2279,6 @@ void CNPC_Combine::RunTaskChaseEnemyContinuously( const Task_t *pTask )
 	m_vSavePosition = pEnemy->WorldSpaceCenter();
 }
 
-
 //=========================================================
 // start task
 //=========================================================
@@ -777,6 +2336,18 @@ void CNPC_Combine::StartTask( const Task_t *pTask )
 					tosound.z = 0;
 					right.z = 0;
 
+#ifdef EZ
+					if ( DotProduct( right, tosound ) > 0 )
+					{
+						// Right
+						AddGesture( ACT_GESTURE_SIGNAL_RIGHT );
+					}
+					else
+					{
+						// Left
+						AddGesture( ACT_GESTURE_SIGNAL_LEFT );
+					}
+#else
 					if( DotProduct( right, tosound ) > 0 )
 					{
 						// Right
@@ -787,6 +2358,7 @@ void CNPC_Combine::StartTask( const Task_t *pTask )
 						// Left
 						SetIdealActivity( ACT_SIGNAL_LEFT );
 					}
+#endif
 
 					break;
 				}
@@ -813,7 +2385,11 @@ void CNPC_Combine::StartTask( const Task_t *pTask )
 				{
 					m_flLastAttackTime = gpGlobals->curtime;
 
+#ifdef COMBINE_SOLDIER_USES_RESPONSE_SYSTEM
+					SpeakIfAllowed( TLK_CMB_ANNOUNCE, SENTENCE_PRIORITY_HIGH );
+#else
 					m_Sentences.Speak( "COMBINE_ANNOUNCE", SENTENCE_PRIORITY_HIGH );
+#endif
 
 					// Wait two seconds
 					SetWait( 2.0 );
@@ -837,7 +2413,11 @@ void CNPC_Combine::StartTask( const Task_t *pTask )
 			}
 			else
 			{
+#ifdef COMBINE_SOLDIER_USES_RESPONSE_SYSTEM
+				SpeakIfAllowed( TLK_CMB_THROWGRENADE, SENTENCE_PRIORITY_MEDIUM );
+#else
 				m_Sentences.Speak( "COMBINE_THROW_GRENADE", SENTENCE_PRIORITY_MEDIUM );
+#endif
 				SetActivity(ACT_IDLE);
 
 				// Wait two seconds
@@ -857,6 +2437,9 @@ void CNPC_Combine::StartTask( const Task_t *pTask )
 		break;
 
 	case TASK_COMBINE_GET_PATH_TO_FORCED_GREN_LOS:
+#ifdef MAPBASE
+		StartTask_GetPathToForced(pTask);
+#else
 		{
 			if ( !m_hForcedGrenadeTarget )
 			{
@@ -895,6 +2478,7 @@ void CNPC_Combine::StartTask( const Task_t *pTask )
 				m_vInterruptSavePosition = posLos;
 			}
 		}
+#endif
 		break;
 
 	case TASK_COMBINE_IGNORE_ATTACKS:
@@ -912,6 +2496,9 @@ void CNPC_Combine::StartTask( const Task_t *pTask )
 
 	case TASK_COMBINE_DEFER_SQUAD_GRENADES:
 		{
+#ifdef MAPBASE
+			StartTask_DeferSquad(pTask);
+#else
 			if ( m_pSquad )
 			{
 				// iterate my squad and stop everyone from throwing grenades for a little while.
@@ -920,18 +2507,23 @@ void CNPC_Combine::StartTask( const Task_t *pTask )
 				CAI_BaseNPC *pSquadmate = m_pSquad ? m_pSquad->GetFirstMember( &iter ) : NULL;
 				while ( pSquadmate )
 				{
+#ifdef MAPBASE
+					pSquadmate->DelayGrenadeCheck(5);
+#else
 					CNPC_Combine *pCombine = dynamic_cast<CNPC_Combine*>(pSquadmate);
 
 					if( pCombine )
 					{
 						pCombine->m_flNextGrenadeCheck = gpGlobals->curtime + 5;
 					}
+#endif
 
 					pSquadmate = m_pSquad->GetNextMember( &iter );
 				}
 			}
 
 			TaskComplete();
+#endif
 			break;
 		}
 
@@ -973,7 +2565,11 @@ void CNPC_Combine::StartTask( const Task_t *pTask )
 							m_pSquad->SquadRemember(bits_MEMORY_PLAYER_HURT);
 						}
 
+#ifdef COMBINE_SOLDIER_USES_RESPONSE_SYSTEM
+						SpeakIfAllowed( TLK_CMB_PLAYERHIT, SENTENCE_PRIORITY_INVALID );
+#else
 						m_Sentences.Speak( "COMBINE_PLAYERHIT", SENTENCE_PRIORITY_INVALID );
+#endif
 						JustMadeSound( SENTENCE_PRIORITY_HIGH );
 					}
 					if ( pEntity->MyNPCPointer() )
@@ -992,6 +2588,15 @@ void CNPC_Combine::StartTask( const Task_t *pTask )
 		break;
 	case TASK_RANGE_ATTACK1:
 		{
+#ifdef MAPBASE
+			// The game can crash if a soldier's weapon is removed while they're shooting
+			if (!GetActiveWeapon())
+			{
+				TaskFail( "No weapon" );
+				break;
+			}
+#endif
+
 			m_nShots = GetActiveWeapon()->GetRandomBurst();
 			m_flShotDelay = GetActiveWeapon()->GetFireRate();
 
@@ -1057,7 +2662,9 @@ void CNPC_Combine::RunTask( const Task_t *pTask )
 
 	case TASK_COMBINE_SIGNAL_BEST_SOUND:
 		AutoMovement( );
+#ifndef EZ
 		if ( IsActivityFinished() )
+#endif
 		{
 			TaskComplete();
 		}
@@ -1079,6 +2686,19 @@ void CNPC_Combine::RunTask( const Task_t *pTask )
 		}
 		break;
 
+#ifdef MAPBASE
+	case TASK_COMBINE_PLAY_SEQUENCE_FACE_ALTFIRE_TARGET:
+		RunTask_FaceAltFireTarget(pTask);
+		break;
+
+	case TASK_COMBINE_FACE_TOSS_DIR:
+		RunTask_FaceTossDir(pTask);
+		break;
+
+	case TASK_COMBINE_GET_PATH_TO_FORCED_GREN_LOS:
+		RunTask_GetPathToForced(pTask);
+		break;
+#else
 	case TASK_COMBINE_PLAY_SEQUENCE_FACE_ALTFIRE_TARGET:
 		GetMotor()->SetIdealYawToTargetAndUpdate( m_vecAltFireTarget, AI_KEEP_YAW_SPEED );
 
@@ -1124,6 +2744,7 @@ void CNPC_Combine::RunTask( const Task_t *pTask )
 			}
 		}
 		break;
+#endif
 
 	case TASK_RANGE_ATTACK1:
 		{
@@ -1206,10 +2827,46 @@ bool CNPC_Combine::FVisible( CBaseEntity *pEntity, int traceMask, CBaseEntity **
 	return BaseClass::FVisible(pEntity, traceMask, ppBlocker);
 }
 
+#ifdef EZ2
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CNPC_Combine::OnSeeEntity( CBaseEntity *pEntity )
+{
+	BaseClass::OnSeeEntity(pEntity);
+
+	if ( pEntity->IsPlayer() )
+	{
+		CBasePlayer *pPlayer = static_cast<CBasePlayer*>(pEntity);
+		if ( pPlayer->GetUseEntity() && !HasMemory(bits_MEMORY_SAW_PLAYER_WEIRDNESS) && m_NPCState != NPC_STATE_COMBAT && !IsRunningScriptedSceneAndNotPaused(this, false) )
+		{
+			CBaseEntity *pUseEntity = GetPlayerHeldEntity( pPlayer );
+			if (!pUseEntity)
+				PhysCannonGetHeldEntity( pPlayer->GetActiveWeapon() );
+
+			if ( pUseEntity && FVisible(pUseEntity) )
+			{
+				AddLookTarget( pUseEntity, 1.0f, 5.0f, 1.0f );
+				Remember( bits_MEMORY_SAW_PLAYER_WEIRDNESS );
+			}
+		}
+	}
+}
+#endif
+
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 void CNPC_Combine::Event_Killed( const CTakeDamageInfo &info )
 {
+#ifdef EZ
+	// Blixibon - Release the manhack if we're in the middle of deploying him
+	if ( m_hManhack && m_hManhack->IsAlive() )
+	{
+		ReleaseManhack();
+		m_hManhack = NULL;
+	}
+#endif
+
 	// if I was killed before I could finish throwing my grenade, drop
 	// a grenade item that the player can retrieve.
 	if( GetActivity() == ACT_RANGE_ATTACK2 )
@@ -1239,7 +2896,11 @@ void CNPC_Combine::Event_Killed( const CTakeDamageInfo &info )
 				}
 
 				// In the Citadel we need to dissolve this
+#ifdef MAPBASE
+				if ( PlayerHasMegaPhysCannon() && GlobalEntity_GetCounter("super_phys_gun") != 1 )
+#else
 				if ( PlayerHasMegaPhysCannon() )
+#endif
 				{
 					CBaseCombatWeapon *pWeapon = static_cast<CBaseCombatWeapon *>(pItem);
 
@@ -1251,6 +2912,86 @@ void CNPC_Combine::Event_Killed( const CTakeDamageInfo &info )
 
 	BaseClass::Event_Killed( info );
 }
+
+#ifdef EZ
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CNPC_Combine::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &info )
+{
+	BaseClass::Event_KilledOther(pVictim, info);
+
+	// Alyx often brutally shoots the corpses of enemies she kills.
+	// This would look cool on regular Combine soldiers, but it just doesn't work as well with them
+	// due to the way they handle weapons, increased damage sending NPCs farther away, etc.
+	// Instead of shooting corpses, soldiers merely aim at them instead.
+	// This doesn't suffer from the same problems and makes the soldiers feel more natural.
+	// -Blixibon
+	if( GetEnemies()->NumEnemies() == 1 )
+	{
+		if (pVictim->GetAbsOrigin().DistTo(GetAbsOrigin()) > 48.0f &&
+			pVictim->GetFlags() & FL_ONGROUND && pVictim->GetMoveType() == MOVETYPE_STEP)
+		{
+			CAI_BaseNPC *pTarget = CreateCustomTarget( pVictim->GetAbsOrigin(), 2.0f );
+			SetAimTarget(pTarget);
+		}
+	}
+}
+
+ConVar npc_combine_friendly_fire("npc_combine_friendly_fire", "2");
+
+//-----------------------------------------------------------------------------
+// Purpose: Combine friendly fire prevention prototype -Blixibon
+//-----------------------------------------------------------------------------
+bool CNPC_Combine::PassesDamageFilter( const CTakeDamageInfo &info )
+{
+	// 0 = No friendly fire prevention
+	// 1 = NPCs that like us can't damage us (e.g. fellow soldiers, turrets)
+	// 2 = Players and NPCs that like us can't damage us, but players can damage us outside of combat
+	// 3 = Players and NPCs that like us can't damage us at all
+	int iFriendlyFireMode = npc_combine_friendly_fire.GetInt();
+
+	if ( iFriendlyFireMode > 0 && info.GetAttacker() && info.GetAttacker() != this )
+	{
+		CBaseCombatCharacter *pBCC = info.GetAttacker()->MyCombatCharacterPointer();
+		if (pBCC && pBCC->IRelationType(this) == D_LI)
+		{
+			m_fNoDamageDecal = true;
+			if (pBCC->IsPlayer())
+			{
+				if (iFriendlyFireMode > 1)
+				{
+					if (iFriendlyFireMode == 3)
+						return false;
+					else if (iFriendlyFireMode == 2 && (gpGlobals->curtime - GetLastEnemyTime()) <= 2.5f)
+						return false;
+				}
+				m_fNoDamageDecal = false;
+			}
+			else
+			{
+				return false;
+			}
+		}
+	}
+
+	// Crude ragdoll damage prevention
+	// Prevents server ragdolls from flopping on Combine and killing them
+	if ( IsCommandable() && info.GetAttacker() && info.GetAttacker()->ClassMatches( AllocPooledString( "prop_ragdoll" ) ))
+	{
+		return false;
+	}
+
+	return BaseClass::PassesDamageFilter(info);
+}
+
+// Overridden to update glow effects when taking damage
+int CNPC_Combine::OnTakeDamage_Alive( const CTakeDamageInfo & info )
+{
+	int ret = BaseClass::OnTakeDamage_Alive(info);
+	UpdateSquadGlow();
+	return ret;
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Override.  Don't update if I'm not looking
@@ -1275,6 +3016,25 @@ bool CNPC_Combine::UpdateEnemyMemory( CBaseEntity *pEnemy, const Vector &positio
 void CNPC_Combine::BuildScheduleTestBits( void )
 {
 	BaseClass::BuildScheduleTestBits();
+	
+#ifdef EZ
+	if( !IsCurSchedule( SCHED_NEW_WEAPON ) )
+	{
+		SetCustomInterruptCondition( COND_RECEIVED_ORDERS );
+	}
+#endif
+
+#ifdef EZ2
+	if ( !m_StandoffBehavior.IsRunning() )
+	{
+		if ( !IsCurSchedule( SCHED_COMBINE_ORDER_SURRENDER ) && !IsCurSchedule( SCHED_COMBINE_PRESS_ATTACK ) /*&& !IsCurSchedule( SCHED_COMBINE_ESTABLISH_LINE_OF_FIRE ) && !IsCurSchedule( SCHED_MOVE_TO_WEAPON_RANGE )*/ )
+		{
+			SetCustomInterruptCondition( COND_COMBINE_CAN_ORDER_SURRENDER );
+		}
+
+		SetCustomInterruptCondition( COND_COMBINE_OBSTRUCTED );
+	}
+#endif
 
 	if (gpGlobals->curtime < m_flNextAttack)
 	{
@@ -1288,8 +3048,52 @@ void CNPC_Combine::BuildScheduleTestBits( void )
 	{
 		SetCustomInterruptCondition( COND_COMBINE_ON_FIRE );
 	}
+
+#ifdef MAPBASE
+	if (npc_combine_new_cover_behavior.GetBool())
+	{
+		if ( IsCurSchedule( SCHED_COMBINE_COMBAT_FAIL ) )
+		{
+			SetCustomInterruptCondition( COND_NEW_ENEMY );
+			SetCustomInterruptCondition( COND_LIGHT_DAMAGE );
+			SetCustomInterruptCondition( COND_HEAVY_DAMAGE );
+		}
+		else if ( IsCurSchedule( SCHED_COMBINE_MOVE_TO_MELEE ) )
+		{
+			SetCustomInterruptCondition( COND_HEAR_DANGER );
+			SetCustomInterruptCondition( COND_HEAR_MOVE_AWAY );
+		}
+	}
+#endif
 }
 
+
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input  : eNewActivity - 
+// Output : Activity
+//-----------------------------------------------------------------------------
+Activity CNPC_Combine::Weapon_TranslateActivity( Activity eNewActivity, bool *pRequired )
+{
+	return BaseClass::Weapon_TranslateActivity(eNewActivity, pRequired);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+Activity CNPC_Combine::NPC_BackupActivity( Activity eNewActivity )
+{
+	// Some models might not contain ACT_COMBINE_BUGBAIT, which the soldier model uses instead of ACT_IDLE_ON_FIRE.
+	// Contrariwise, soldiers may be called to use ACT_IDLE_ON_FIRE in other parts of the AI and need to translate to ACT_COMBINE_BUGBAIT.
+	if (eNewActivity == ACT_COMBINE_BUGBAIT)
+		return ACT_IDLE_ON_FIRE;
+	else if (eNewActivity == ACT_IDLE_ON_FIRE)
+		return ACT_COMBINE_BUGBAIT;
+
+	return BaseClass::NPC_BackupActivity( eNewActivity );
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Translate base class activities into combot activites
@@ -1302,6 +3106,7 @@ Activity CNPC_Combine::NPC_TranslateActivity( Activity eNewActivity )
 
 	if (eNewActivity == ACT_RANGE_ATTACK2)
 	{
+#ifndef MAPBASE
 		// grunt is going to a secondary long range attack. This may be a thrown 
 		// grenade or fired grenade, we must determine which and pick proper sequence
 		if (Weapon_OwnsThisType( "weapon_grenadelauncher" ) )
@@ -1309,8 +3114,19 @@ Activity CNPC_Combine::NPC_TranslateActivity( Activity eNewActivity )
 			return ( Activity )ACT_COMBINE_LAUNCH_GRENADE;
 		}
 		else
+#else
+		if (m_bUnderthrow)
 		{
+			return ACT_SPECIAL_ATTACK1;
+		}
+		else
+#endif
+		{
+#if SHARED_COMBINE_ACTIVITIES
+			return ACT_COMBINE_THROW_GRENADE;
+#else
 			return ( Activity )ACT_COMBINE_THROW_GRENADE;
+#endif
 		}
 	}
 	else if (eNewActivity == ACT_IDLE)
@@ -1320,6 +3136,19 @@ Activity CNPC_Combine::NPC_TranslateActivity( Activity eNewActivity )
 			eNewActivity = ACT_IDLE_ANGRY;
 		}
 	}
+#ifdef EZ
+	// Blixibon - Visually interesting aiming support
+	else if (!GetEnemy() && GetAimTarget() && !m_bReadinessCapable)
+	{
+		switch (eNewActivity)
+		{
+		case ACT_IDLE:		eNewActivity = ACT_IDLE_ANGRY; break;
+		case ACT_WALK:		eNewActivity = ACT_WALK_AIM; break;
+		case ACT_RUN:		eNewActivity = ACT_RUN_AIM; break;
+		}
+	}
+#endif
+
 
 	if ( m_AssaultBehavior.IsRunning() )
 	{
@@ -1338,6 +3167,35 @@ Activity CNPC_Combine::NPC_TranslateActivity( Activity eNewActivity )
 			break;
 		}
 	}
+#ifdef MAPBASE
+	else if (!GetActiveWeapon() && !npc_combine_unarmed_anims.GetBool())
+	{
+		if (eNewActivity == ACT_IDLE || eNewActivity == ACT_IDLE_ANGRY)
+			eNewActivity = ACT_IDLE_SMG1;
+		else if (eNewActivity == ACT_WALK)
+			eNewActivity = ACT_WALK_RIFLE;
+		else if (eNewActivity == ACT_RUN)
+			eNewActivity = ACT_RUN_RIFLE;
+	}
+	else if (m_NPCState == NPC_STATE_IDLE && eNewActivity == ACT_WALK)
+	{
+		if (npc_combine_idle_walk_easy.GetBool())
+		{
+			// ACT_WALK_EASY has been replaced with ACT_WALK_RELAXED for weapon translation purposes
+			eNewActivity = ACT_WALK_RELAXED;
+		}
+		else if (GetActiveWeapon())
+		{
+			eNewActivity = ACT_WALK_RIFLE;
+		}
+	}
+
+	if ( eNewActivity == ACT_RUN && ( IsCurSchedule( SCHED_TAKE_COVER_FROM_BEST_SOUND ) || IsCurSchedule( SCHED_FLEE_FROM_BEST_SOUND ) ) )
+	{
+		if ( random->RandomInt( 0, 1 ) && npc_combine_protected_run.GetBool() && HaveSequenceForActivity( ACT_RUN_PROTECTED ) )
+			eNewActivity = ACT_RUN_PROTECTED;
+	}
+#endif
 
 	return BaseClass::NPC_TranslateActivity( eNewActivity );
 }
@@ -1363,6 +3221,19 @@ bool CNPC_Combine::QueryHearSound( CSound *pSound )
 
 	if ( pSound->SoundContext() & SOUND_CONTEXT_EXCLUDE_COMBINE )
 		return false;
+
+#ifdef EZ
+	if (pSound->m_hOwner)
+	{
+		// Blixibon - Don't be afraid of allies
+		if (IRelationType( pSound->m_hOwner ) == D_LI)
+			return false;
+
+		// Blixibon - Manhack danger causes soldiers to look stupid
+		if (pSound->m_hOwner->ClassMatches("npc_manhack"))
+			return false;
+	}
+#endif
 
 	return BaseClass::QueryHearSound( pSound );
 }
@@ -1399,13 +3270,24 @@ void CNPC_Combine::AnnounceAssault(void)
 	// Make sure player can see me
 	if ( FVisible( pBCC ) )
 	{
+#ifdef EZ2
+		if (GetSquad() && GetSquad()->NumMembers() > 1)
+			AddGesture( ACT_GESTURE_SIGNAL_ADVANCE );
+#endif
+#ifdef COMBINE_SOLDIER_USES_RESPONSE_SYSTEM
+		SpeakIfAllowed( TLK_CMB_ASSAULT );
+#else
 		m_Sentences.Speak( "COMBINE_ASSAULT" );
+#endif
 	}
 }
 
 
 void CNPC_Combine::AnnounceEnemyType( CBaseEntity *pEnemy )
 {
+#ifdef COMBINE_SOLDIER_USES_RESPONSE_SYSTEM
+	SpeakIfAllowed( TLK_CMB_ENEMY, SENTENCE_PRIORITY_HIGH );
+#else
 	const char *pSentenceName = "COMBINE_MONST";
 	switch ( pEnemy->Classify() )
 	{
@@ -1439,6 +3321,7 @@ void CNPC_Combine::AnnounceEnemyType( CBaseEntity *pEnemy )
 	}
 
 	m_Sentences.Speak( pSentenceName, SENTENCE_PRIORITY_HIGH );
+#endif
 }
 
 void CNPC_Combine::AnnounceEnemyKill( CBaseEntity *pEnemy )
@@ -1446,6 +3329,11 @@ void CNPC_Combine::AnnounceEnemyKill( CBaseEntity *pEnemy )
 	if (!pEnemy )
 		return;
 
+#ifdef COMBINE_SOLDIER_USES_RESPONSE_SYSTEM
+	AI_CriteriaSet set;
+	ModifyOrAppendEnemyCriteria(set, pEnemy);
+	SpeakIfAllowed( TLK_CMB_KILLENEMY, set, SENTENCE_PRIORITY_HIGH );
+#else
 	const char *pSentenceName = "COMBINE_KILL_MONST";
 	switch ( pEnemy->Classify() )
 	{
@@ -1475,6 +3363,7 @@ void CNPC_Combine::AnnounceEnemyKill( CBaseEntity *pEnemy )
 	}
 
 	m_Sentences.Speak( pSentenceName, SENTENCE_PRIORITY_HIGH );
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1509,6 +3398,11 @@ int CNPC_Combine::SelectCombatSchedule()
 			{
 				AnnounceEnemyType( pEnemy );
 			}
+
+#ifdef EZ
+			if( CanDeployManhack() && OccupyStrategySlot( SQUAD_SLOT_COMBINE_DEPLOY_MANHACK ) )
+				return SCHED_COMBINE_DEPLOY_MANHACK;
+#endif
 
 			if ( HasCondition( COND_CAN_RANGE_ATTACK1 ) && OccupyStrategySlot( SQUAD_SLOT_ATTACK1 ) )
 			{
@@ -1547,6 +3441,9 @@ int CNPC_Combine::SelectCombatSchedule()
 				{
 					if( OccupyStrategySlot( SQUAD_SLOT_GRENADE1 ) )
 					{
+#ifdef EZ // Blixibon - Soldiers announce grenades more often
+						SpeakIfAllowed( TLK_CMB_THROWGRENADE );
+#endif
 						return SCHED_RANGE_ATTACK2;
 					}
 				}
@@ -1567,6 +3464,24 @@ int CNPC_Combine::SelectCombatSchedule()
 			}
 		}
 	}
+
+#ifdef EZ2
+	// ---------------------
+	// surrender
+	// ---------------------
+	if (HasCondition( COND_COMBINE_CAN_ORDER_SURRENDER ))
+	{
+		if (HasCondition( COND_SEE_ENEMY ) && GetEnemy() && GetAbsOrigin().DistToSqr( GetEnemy()->GetAbsOrigin() ) <= Square( npc_combine_order_surrender_max_dist.GetFloat() ))
+		{
+			return SCHED_COMBINE_ORDER_SURRENDER;
+		}
+		else
+		{
+			// Get closer
+			return SCHED_COMBINE_PRESS_ATTACK;
+		}
+	}
+#endif
 
 	// ---------------------
 	// no ammo
@@ -1611,7 +3526,11 @@ int CNPC_Combine::SelectCombatSchedule()
 	}
 
 	// If I'm scared of this enemy run away
+#ifdef EZ2
+	if ( IRelationType( GetEnemy() ) == D_FR && !HasCondition( COND_CAN_MELEE_ATTACK1 ) )
+#else
 	if ( IRelationType( GetEnemy() ) == D_FR )
+#endif
 	{
 		if (HasCondition( COND_SEE_ENEMY )	|| 
 			HasCondition( COND_SEE_FEAR )	|| 
@@ -1645,6 +3564,12 @@ int CNPC_Combine::SelectCombatSchedule()
 		Stand();
 		DesireStand();
 
+#ifdef EZ
+		// If you can't attack, but you can deploy a manhack, do it!
+		if( CanDeployManhack() && OccupyStrategySlot( SQUAD_SLOT_COMBINE_DEPLOY_MANHACK ) )
+			return SCHED_COMBINE_DEPLOY_MANHACK;
+#endif
+
 		if( GetEnemy() && !(GetEnemy()->GetFlags() & FL_NOTARGET) && OccupyStrategySlotRange( SQUAD_SLOT_ATTACK1, SQUAD_SLOT_ATTACK2 ) )
 		{
 			// Charge in and break the enemy's cover!
@@ -1667,6 +3592,14 @@ int CNPC_Combine::SelectCombatSchedule()
 	// --------------------------------------------------------------
 	if ( HasCondition( COND_SEE_ENEMY ) && !HasCondition( COND_CAN_RANGE_ATTACK1 ) )
 	{
+#ifdef EZ
+		// If I have a melee weapon and I'm the primary attacker, just chase head-on
+		if (GetActiveWeapon() && GetActiveWeapon()->IsMeleeWeapon() && OccupyStrategySlot( SQUAD_SLOT_ATTACK1 ))
+		{
+			return SCHED_CHASE_ENEMY;
+		}
+		else
+#endif
 		if ( (HasCondition( COND_TOO_FAR_TO_ATTACK ) || IsUsingTacticalVariant(TACTICAL_VARIANT_PRESSURE_ENEMY) ) && OccupyStrategySlotRange( SQUAD_SLOT_ATTACK1, SQUAD_SLOT_ATTACK2 ))
 		{
 			return SCHED_COMBINE_PRESS_ATTACK;
@@ -1705,6 +3638,9 @@ int CNPC_Combine::SelectSchedule( void )
 		{
 			Vector vecTarget = m_hForcedGrenadeTarget->WorldSpaceCenter();
 
+#ifdef MAPBASE
+			// This was switched to IsAltFireCapable() before, but m_bAlternateCapable makes it necessary to use IsElite() again.
+#endif
 			if ( IsElite() )
 			{
 				if ( FVisible( m_hForcedGrenadeTarget ) )
@@ -1732,6 +3668,12 @@ int CNPC_Combine::SelectSchedule( void )
 			return SCHED_COMBINE_MOVE_TO_FORCED_GREN_LOS;
 		}
 	}
+
+#ifdef MAPBASE
+	// Drop a grenade?
+	if ( HasCondition( COND_COMBINE_DROP_GRENADE ) )
+		return SCHED_COMBINE_DROP_GRENADE;
+#endif
 
 	if ( m_NPCState != NPC_STATE_SCRIPT)
 	{
@@ -1776,7 +3718,11 @@ int CNPC_Combine::SelectSchedule( void )
 					{
 						// I hear something dangerous, probably need to take cover.
 						// dangerous sound nearby!, call it out
+#ifndef COMBINE_SOLDIER_USES_RESPONSE_SYSTEM
 						const char *pSentenceName = "COMBINE_DANGER";
+#else
+						bool bGrenade = false;
+#endif
 
 						CBaseEntity *pSoundOwner = pSound->m_hOwner;
 						if ( pSoundOwner )
@@ -1787,12 +3733,20 @@ int CNPC_Combine::SelectSchedule( void )
 								if ( IRelationType( pGrenade->GetThrower() ) != D_LI )
 								{
 									// special case call out for enemy grenades
+#ifndef COMBINE_SOLDIER_USES_RESPONSE_SYSTEM
 									pSentenceName = "COMBINE_GREN";
+#else
+									bGrenade = true;
+#endif
 								}
 							}
 						}
 
+#ifdef COMBINE_SOLDIER_USES_RESPONSE_SYSTEM
+						SpeakIfAllowed( TLK_CMB_DANGER, UTIL_VarArgs( "grenade:%d", bGrenade ) );
+#else
 						m_Sentences.Speak( pSentenceName, SENTENCE_PRIORITY_NORMAL, SENTENCE_CRITERIA_NORMAL );
+#endif
 
 						// If the sound is approaching danger, I have no enemy, and I don't see it, turn to face.
 						if( !GetEnemy() && pSound->IsSoundType(SOUND_CONTEXT_DANGER_APPROACH) && pSound->m_hOwner && !FInViewCone(pSound->GetSoundReactOrigin()) )
@@ -1813,6 +3767,24 @@ int CNPC_Combine::SelectSchedule( void )
 			}
 		}
 
+#ifdef EZ2
+		// If we have an obstruction, just plow through
+		if ( HasCondition( COND_COMBINE_OBSTRUCTED ) )
+		{
+			SetTarget( m_hObstructor );
+			m_hObstructor = NULL;
+			return SCHED_COMBINE_ATTACK_TARGET;
+		}
+#endif
+
+#ifdef EZ // Blixibon - Follow behavior deferring
+		if ( ShouldDeferToFollowBehavior() )
+		{
+			DeferSchedulingToBehavior( &(GetFollowBehavior()) );
+			return BaseClass::SelectSchedule();
+		}
+		else
+#endif
 		if( BehaviorSelectSchedule() )
 		{
 			return BaseClass::SelectSchedule();
@@ -1879,9 +3851,26 @@ int CNPC_Combine::SelectSchedule( void )
 //-----------------------------------------------------------------------------
 int CNPC_Combine::SelectFailSchedule( int failedSchedule, int failedTask, AI_TaskFailureCode_t taskFailCode )
 {
+#ifdef EZ2
+	// If we can swat physics objects, see if we can swat our obstructor
+	if ( IsPathTaskFailure( taskFailCode ) && 
+		 m_hObstructor != NULL && m_hObstructor->VPhysicsGetObject() )
+	{
+		SetTarget( m_hObstructor );
+		m_hObstructor = NULL;
+		return SCHED_COMBINE_ATTACK_TARGET;
+	}
+	m_hObstructor = NULL;
+#endif
+
 	if( failedSchedule == SCHED_COMBINE_TAKE_COVER1 )
 	{
+#ifdef MAPBASE
+		if( IsInSquad() && IsStrategySlotRangeOccupied(SQUAD_SLOT_ATTACK1, SQUAD_SLOT_ATTACK2) && HasCondition(COND_SEE_ENEMY)
+			&& ( !npc_combine_new_cover_behavior.GetBool() || (taskFailCode == FAIL_NO_COVER) ) )
+#else
 		if( IsInSquad() && IsStrategySlotRangeOccupied(SQUAD_SLOT_ATTACK1, SQUAD_SLOT_ATTACK2) && HasCondition(COND_SEE_ENEMY) )
+#endif
 		{
 			// This eases the effects of an unfortunate bug that usually plagues shotgunners. Since their rate of fire is low,
 			// they spend relatively long periods of time without an attack squad slot. If you corner a shotgunner, usually 
@@ -1894,6 +3883,83 @@ int CNPC_Combine::SelectFailSchedule( int failedSchedule, int failedTask, AI_Tas
 
 	return BaseClass::SelectFailSchedule( failedSchedule, failedTask, taskFailCode );
 }
+
+#ifdef EZ2
+ConVar npc_combine_obstruction_behavior( "npc_combine_obstruction_behavior", "0" );
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CNPC_Combine::OnObstructionPreSteer( AILocalMoveGoal_t *pMoveGoal, float distClear, AIMoveResult_t *pResult )
+{
+	if ( pMoveGoal->directTrace.pObstruction && !pMoveGoal->directTrace.pObstruction->IsWorld() && GetGroundEntity() != pMoveGoal->directTrace.pObstruction )
+	{
+		if ( ShouldAttackObstruction( pMoveGoal->directTrace.pObstruction ) )
+		{
+			if (m_hObstructor != pMoveGoal->directTrace.pObstruction)
+			{
+				if (!m_hObstructor)
+					m_flTimeSinceObstructed = gpGlobals->curtime;
+
+				m_hObstructor = pMoveGoal->directTrace.pObstruction;
+			}
+			else
+			{
+				// Interrupt obstructions based on state
+				switch (GetState())
+				{
+					case NPC_STATE_COMBAT:
+					{
+						// Always interrupt when in combat
+						SetCondition( COND_COMBINE_OBSTRUCTED );
+					}
+					break;
+
+					case NPC_STATE_IDLE:
+					case NPC_STATE_ALERT:
+					default:
+					{
+						// Interrupt if we've been obstructed for a bit or we have a command goal
+						if (gpGlobals->curtime - m_flTimeSinceObstructed >= 2.0f || HaveCommandGoal())
+							SetCondition( COND_COMBINE_OBSTRUCTED );
+					}
+					break;
+				}
+			}
+		}
+	}
+
+	return BaseClass::OnObstructionPreSteer( pMoveGoal, distClear, pResult );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CNPC_Combine::ShouldAttackObstruction( CBaseEntity *pEntity )
+{
+	if (!npc_combine_obstruction_behavior.GetBool())
+		return false;
+
+	// Don't attack obstructions if we can't melee attack
+	if ((CapabilitiesGet() & bits_CAP_INNATE_MELEE_ATTACK1) == 0)
+		return false;
+
+	// Only attack physics props
+	if ( pEntity->MyCombatCharacterPointer() || pEntity->GetMoveType() != MOVETYPE_VPHYSICS )
+		return false;
+
+	// Don't attack props which don't have motion enabled or have more than 2x mass than us
+	if ( pEntity->VPhysicsGetObject() && (!pEntity->VPhysicsGetObject()->IsMotionEnabled() || pEntity->VPhysicsGetObject()->GetMass()*2 > GetMass()) )
+		return false;
+
+	// Do not attack props which could explode
+	CBreakableProp *pProp = dynamic_cast<CBreakableProp*>(pEntity);
+	if (pProp && pProp->GetExplosiveDamage() > 0)
+		return false;
+
+	return true;
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Should we charge the player?
@@ -1912,9 +3978,11 @@ bool CNPC_Combine::ShouldChargePlayer()
 
 int CNPC_Combine::SelectScheduleAttack()
 {
+#ifndef MAPBASE // Moved to SelectSchedule()
 	// Drop a grenade?
 	if ( HasCondition( COND_COMBINE_DROP_GRENADE ) )
 		return SCHED_COMBINE_DROP_GRENADE;
+#endif
 
 	// Kick attack?
 	if ( HasCondition( COND_CAN_MELEE_ATTACK1 ) )
@@ -1922,9 +3990,18 @@ int CNPC_Combine::SelectScheduleAttack()
 		return SCHED_MELEE_ATTACK1;
 	}
 
+#ifdef EZ
+	if( GetEnemy() && CanDeployManhack() && OccupyStrategySlot( SQUAD_SLOT_COMBINE_DEPLOY_MANHACK ) )
+		return SCHED_COMBINE_DEPLOY_MANHACK;
+#endif
+
 	// If I'm fighting a combine turret (it's been hacked to attack me), I can't really
 	// hurt it with bullets, so become grenade happy.
+#ifdef MAPBASE
+	if ( GetEnemy() && ( (IsUsingTacticalVariant(TACTICAL_VARIANT_GRENADE_HAPPY)) || GetEnemy()->ClassMatches(gm_isz_class_FloorTurret) ) )
+#else
 	if ( GetEnemy() && GetEnemy()->Classify() == CLASS_COMBINE && FClassnameIs(GetEnemy(), "npc_turret_floor") )
+#endif
 	{
 		// Don't do this until I've been fighting the turret for a few seconds
 		float flTimeAtFirstHand = GetEnemies()->TimeAtFirstHand(GetEnemy());
@@ -1940,7 +4017,12 @@ int CNPC_Combine::SelectScheduleAttack()
 
 		// If we're not in the viewcone of the turret, run up and hit it. Do this a bit later to
 		// give other squadmembers a chance to throw a grenade before I run in.
+#ifdef MAPBASE
+		// Don't do turret charging of we're just grenade happy.
+		if ( !IsUsingTacticalVariant(TACTICAL_VARIANT_GRENADE_HAPPY) && !GetEnemy()->MyNPCPointer()->FInViewCone( this ) && OccupyStrategySlot( SQUAD_SLOT_GRENADE1 ) )
+#else
 		if ( !GetEnemy()->MyNPCPointer()->FInViewCone( this ) && OccupyStrategySlot( SQUAD_SLOT_GRENADE1 ) )
+#endif
 			return SCHED_COMBINE_CHARGE_TURRET;
 	}
 
@@ -2000,6 +4082,9 @@ int CNPC_Combine::SelectScheduleAttack()
 		{
 			if ( OccupyStrategySlot( SQUAD_SLOT_GRENADE1 ) )
 			{
+#ifdef EZ // Blixibon - Soldiers announce grenades more often
+				SpeakIfAllowed( TLK_CMB_THROWGRENADE );
+#endif
 				return SCHED_RANGE_ATTACK2;
 			}
 		}
@@ -2023,6 +4108,9 @@ int CNPC_Combine::SelectScheduleAttack()
 		//Msg("Time: %f   Dist: %f\n", flTime, flDist );
 		if ( flTime <= COMBINE_GRENADE_FLUSH_TIME && flDist <= COMBINE_GRENADE_FLUSH_DIST && CanGrenadeEnemy( false ) && OccupyStrategySlot( SQUAD_SLOT_GRENADE1 ) )
 		{
+#ifdef EZ // Blixibon - Soldiers announce grenades more often
+			SpeakIfAllowed( TLK_CMB_THROWGRENADE );
+#endif
 			return SCHED_RANGE_ATTACK2;
 		}
 	}
@@ -2049,6 +4137,26 @@ int CNPC_Combine::TranslateSchedule( int scheduleType )
 {
 	switch( scheduleType )
 	{
+#ifdef EZ
+	// 1upD - Don't move away if you have a command goal
+	case SCHED_MOVE_TO_WEAPON_RANGE:
+		if (!IsMortar(GetEnemy()) && GetCommandGoal() != vec3_invalid)
+		{
+			if (GetActiveWeapon() && (GetActiveWeapon()->CapabilitiesGet() & bits_CAP_WEAPON_RANGE_ATTACK1) && random->RandomInt(0, 1) && HasCondition(COND_SEE_ENEMY) && !HasCondition(COND_NO_PRIMARY_AMMO))
+				return TranslateSchedule(SCHED_RANGE_ATTACK1);
+
+			return SCHED_STANDOFF;
+		}
+		break;
+
+	case SCHED_CHASE_ENEMY:
+		if (!IsMortar(GetEnemy()) && GetCommandGoal() != vec3_invalid)
+		{
+			return SCHED_STANDOFF;
+		}
+		break;
+	// End command schedule translations
+#endif
 	case SCHED_TAKE_COVER_FROM_ENEMY:
 		{
 			if ( m_pSquad )
@@ -2058,7 +4166,11 @@ int CNPC_Combine::TranslateSchedule( int scheduleType )
 					HasCondition(COND_CAN_RANGE_ATTACK2)		&&
 					OccupyStrategySlot( SQUAD_SLOT_GRENADE1 ) )
 				{
+#ifdef COMBINE_SOLDIER_USES_RESPONSE_SYSTEM
+					SpeakIfAllowed( TLK_CMB_THROWGRENADE );
+#else
 					m_Sentences.Speak( "COMBINE_THROW_GRENADE" );
+#endif
 					return SCHED_COMBINE_TOSS_GRENADE_COVER1;
 				}
 				else
@@ -2087,6 +4199,11 @@ int CNPC_Combine::TranslateSchedule( int scheduleType )
 		}
 	case SCHED_TAKE_COVER_FROM_BEST_SOUND:
 		{
+#ifdef EZ
+			// Blixibon - This means we fall back to SCHED_PC_MOVE_TOWARDS_COVER_FROM_BEST_SOUND instead
+			// Needed for preventing stupidity from worker acid in the antlion standoff at the end of Chapter 1
+			if ( !HaveCommandGoal() )
+#endif
 			return SCHED_COMBINE_TAKE_COVER_FROM_BEST_SOUND;
 		}
 		break;
@@ -2096,6 +4213,13 @@ int CNPC_Combine::TranslateSchedule( int scheduleType )
 			{
 				return TranslateSchedule( SCHED_RANGE_ATTACK1 );
 			}
+
+#ifdef MAPBASE
+			if ( npc_combine_new_cover_behavior.GetBool() && HasCondition( COND_CAN_RANGE_ATTACK2 ) && OccupyStrategySlot( SQUAD_SLOT_GRENADE1 ) )
+			{
+				return TranslateSchedule( SCHED_RANGE_ATTACK2 );
+			}
+#endif
 
 			// Run somewhere randomly
 			return TranslateSchedule( SCHED_FAIL ); 
@@ -2161,7 +4285,17 @@ int CNPC_Combine::TranslateSchedule( int scheduleType )
 				// do so!
 				return SCHED_COMBINE_AR2_ALTFIRE;
 			}
+#ifdef EZ
+			// 1upD - Don't move from point if there is a command goal
+			if (!IsMortar(GetEnemy()) && HaveCommandGoal())
+			{
+				if (GetActiveWeapon() && (GetActiveWeapon()->CapabilitiesGet() & bits_CAP_WEAPON_RANGE_ATTACK1) && random->RandomInt(0, 1) && HasCondition(COND_SEE_ENEMY) && !HasCondition(COND_NO_PRIMARY_AMMO))
+					return TranslateSchedule(SCHED_RANGE_ATTACK1);
 
+				return SCHED_STANDOFF;
+			}
+			// End command goal
+#endif
 			if( IsUsingTacticalVariant( TACTICAL_VARIANT_PRESSURE_ENEMY ) && !IsRunningBehavior() )
 			{
 				if( OccupyStrategySlotRange( SQUAD_SLOT_ATTACK1, SQUAD_SLOT_ATTACK2 ) )
@@ -2236,6 +4370,12 @@ int CNPC_Combine::TranslateSchedule( int scheduleType )
 				// always assume standing
 				Stand();
 			}
+
+#ifdef MAPBASE
+			// SCHED_COMBINE_WAIT_IN_COVER uses INCOVER, but only gets out of it when the soldier moves.
+			// That seems to mess up shooting, so this Forget() attempts to fix that.
+			Forget( bits_MEMORY_INCOVER );
+#endif
 
 			return SCHED_COMBINE_RANGE_ATTACK1;
 		}
@@ -2320,23 +4460,24 @@ void CNPC_Combine::HandleAnimEvent( animevent_t *pEvent )
 	{
 		if ( pEvent->event == COMBINE_AE_BEGIN_ALTFIRE )
 		{
-			if( FClassnameIs( GetActiveWeapon(), "weapon_ar2" ) )
-			{
-				EmitSound( "Weapon_CombineGuard.Special1" );
-			}
-			else if( FClassnameIs( GetActiveWeapon(), "weapon_smg1" ) )
-			{
-				EmitSound( "Weapon_SMG1.Double" );
-			}
-			else
-			{
-				EmitSound( "Weapon_CombineGuard.Special1" );
-			}
+#ifdef MAPBASE
+			if (GetActiveWeapon())
+				GetActiveWeapon()->WeaponSound(SPECIAL1);
+#else
+			EmitSound( "Weapon_CombineGuard.Special1" );
+#endif
+#ifdef COMBINE_SOLDIER_USES_RESPONSE_SYSTEM
+			SpeakIfAllowed( TLK_CMB_THROWGRENADE, "altfire:1", SENTENCE_PRIORITY_MEDIUM );
+#endif
 			handledEvent = true;
 		}
 		else if ( pEvent->event == COMBINE_AE_ALTFIRE )
 		{
-			if( IsElite() )
+#ifdef MAPBASE
+			if ( IsAltFireCapable() && GetActiveWeapon() )
+#else
+			if ( IsElite() )
+#endif
 			{
 				animevent_t fakeEvent;
 
@@ -2354,11 +4495,31 @@ void CNPC_Combine::HandleAnimEvent( animevent_t *pEvent )
 				// that makes sure the elite has grenades in order to fire a combine ball, we
 				// preserve the legacy behavior while making it possible for a designer to prevent
 				// elites from shooting combine balls by setting grenades to '0' in hammer. (sjb) EP2_OUTLAND_10
+#ifdef MAPBASE
+				// 
+				// Here's a tip: In Mapbase, "OnThrowGrenade" is fired during alt-fire as well, fired by the weapon so it could pass its alt-fire projectile.
+				// So if you want elites to decrement on each grenade again, you could fire "!self > AddGrenades -1" every time an elite fires OnThrowGrenade.
+				// 
+				// AddGrenades(-1);
+#else
 				// m_iNumGrenades--;
+#endif
 			}
 
 			handledEvent = true;
 		}
+#ifdef EZ
+		else if ( pEvent->event == AE_METROPOLICE_START_DEPLOY )
+		{
+			OnAnimEventStartDeployManhack();
+			return;
+		}
+		else if ( pEvent->event == AE_METROPOLICE_DEPLOY_MANHACK )
+		{
+			OnAnimEventDeployManhack( pEvent );
+			return;
+		}
+#endif
 		else
 		{
 			BaseClass::HandleAnimEvent( pEvent );
@@ -2378,8 +4539,12 @@ void CNPC_Combine::HandleAnimEvent( animevent_t *pEvent )
 			// We never actually run out of ammo, just need to refill the clip
 			if (GetActiveWeapon())
 			{
+#ifdef MAPBASE
+				GetActiveWeapon()->Reload_NPC();
+#else
 				GetActiveWeapon()->WeaponSound( RELOAD_NPC );
 				GetActiveWeapon()->m_iClip1 = GetActiveWeapon()->GetMaxClip1(); 
+#endif
 				GetActiveWeapon()->m_iClip2 = GetActiveWeapon()->GetMaxClip2();  
 			}
 			ClearCondition(COND_LOW_PRIMARY_AMMO);
@@ -2406,13 +4571,48 @@ void CNPC_Combine::HandleAnimEvent( animevent_t *pEvent )
 
 					GetVectors( &forward, NULL, &up );
 					vecThrow = forward * 750 + up * 175;
+#ifdef MAPBASE
+#ifdef EZ2
+					CBaseEntity *pGrenade = NULL;
+					if ( m_bThrowXenGrenades )
+					{
+						pGrenade = HopWire_Create( vecStart, vec3_angle, vecThrow, vecSpin, this, COMBINE_GRENADE_TIMER );
+					}
+					else
+					{
+						pGrenade = Fraggrenade_Create( vecStart, vec3_angle, vecThrow, vecSpin, this, COMBINE_GRENADE_TIMER, true );
+					}
+#else
+					CBaseEntity *pGrenade = Fraggrenade_Create( vecStart, vec3_angle, vecThrow, vecSpin, this, COMBINE_GRENADE_TIMER, true );
+#endif
+					m_OnThrowGrenade.Set(pGrenade, pGrenade, this);
+#else
 					Fraggrenade_Create( vecStart, vec3_angle, vecThrow, vecSpin, this, COMBINE_GRENADE_TIMER, true );
+#endif
 				}
 				else
 				{
 					// Use the Velocity that AI gave us.
+#ifdef MAPBASE
+#ifdef EZ2
+					CBaseEntity *pGrenade = NULL;
+					if ( m_bThrowXenGrenades )
+					{
+						pGrenade = HopWire_Create( vecStart, vec3_angle, m_vecTossVelocity, vecSpin, this, COMBINE_GRENADE_TIMER );
+					}
+					else
+					{
+						pGrenade = Fraggrenade_Create( vecStart, vec3_angle, m_vecTossVelocity, vecSpin, this, COMBINE_GRENADE_TIMER, !this->IsPlayerAlly() );
+					}
+#else
+					CBaseEntity *pGrenade = Fraggrenade_Create( vecStart, vec3_angle, m_vecTossVelocity, vecSpin, this, COMBINE_GRENADE_TIMER, true );
+#endif
+					m_OnThrowGrenade.Set(pGrenade, pGrenade, this);
+					AddGrenades(-1, pGrenade);
+#else
 					Fraggrenade_Create( vecStart, vec3_angle, m_vecTossVelocity, vecSpin, this, COMBINE_GRENADE_TIMER, true );
 					m_iNumGrenades--;
+#endif
 				}
 
 				// wait six seconds before even looking again to see if a grenade can be thrown.
@@ -2440,10 +4640,34 @@ void CNPC_Combine::HandleAnimEvent( animevent_t *pEvent )
 		case COMBINE_AE_GREN_DROP:
 			{
 				Vector vecStart;
+#ifdef MAPBASE
+				QAngle angStart;
+				m_vecTossVelocity.x = 15;
+				m_vecTossVelocity.y = 0;
+				m_vecTossVelocity.z = 0;
+
+				GetAttachment( "lefthand", vecStart, angStart );
+
+				CBaseEntity *pGrenade = NULL;
+				if (m_NPCState == NPC_STATE_SCRIPT)
+				{
+					// While scripting, have the grenade face upwards like it was originally and also don't decrement grenade count.
+					pGrenade = Fraggrenade_Create( vecStart, vec3_angle, m_vecTossVelocity, vec3_origin, this, COMBINE_GRENADE_TIMER, true );
+				}
+				else
+				{
+					pGrenade = Fraggrenade_Create( vecStart, angStart, m_vecTossVelocity, vec3_origin, this, COMBINE_GRENADE_TIMER, true );
+					AddGrenades(-1);
+				}
+
+				// Well, technically we're not throwing, but...still.
+				m_OnThrowGrenade.Set(pGrenade, pGrenade, this);
+#else
 				GetAttachment( "lefthand", vecStart );
 
 				Fraggrenade_Create( vecStart, vec3_angle, m_vecTossVelocity, vec3_origin, this, COMBINE_GRENADE_TIMER, true );
 				m_iNumGrenades--;
+#endif
 			}
 			handledEvent = true;
 			break;
@@ -2468,21 +4692,75 @@ void CNPC_Combine::HandleAnimEvent( animevent_t *pEvent )
 
 						CTakeDamageInfo info( this, this, m_nKickDamage, DMG_CLUB );
 						CalculateMeleeDamageForce( &info, forward, pBCC->GetAbsOrigin() );
+#ifdef EZ					
+						// 1upD - Commandable Combine soldiers should 1-hit rebels with their melee attack
+						// Blixibon - Damage is changed after damage force is calculated so citizens aren't launched across the room (more natural-looking)
+						if (IsCommandable() && pBCC->ClassMatches("npc_citizen"))
+						{
+							info.SetDamage(pBCC->GetHealth());
+						}
+#endif				
 						pBCC->TakeDamage( info );
 
-						EmitSound( "NPC_Combine.WeaponBash" );
+						BashSound();
 					}
-				}			
+				}	
+#ifdef EZ2
+				else
+				{
+					// Apply a velocity to hit entity if it has a physics movetype
+					if ( pHurt && pHurt->GetMoveType() == MOVETYPE_VPHYSICS )
+					{
+						Vector forward, up;
+						AngleVectors( GetLocalAngles(), &forward, NULL, &up );
+						pHurt->ApplyAbsVelocityImpulse( forward * 100 + up * 50 );
 
+						CTakeDamageInfo info( this, this, m_nKickDamage, DMG_CLUB );
+						CalculateMeleeDamageForce( &info, forward, pHurt->GetAbsOrigin() );
+						pHurt->TakeDamage( info );
+
+						BashSound();
+					}
+				}
+#endif
+
+#ifdef COMBINE_SOLDIER_USES_RESPONSE_SYSTEM
+				SpeakIfAllowed( TLK_CMB_KICK );
+#else
 				m_Sentences.Speak( "COMBINE_KICK" );
+#endif
 				handledEvent = true;
 				break;
 			}
 
 		case COMBINE_AE_CAUGHT_ENEMY:
+#ifdef COMBINE_SOLDIER_USES_RESPONSE_SYSTEM
+			SpeakIfAllowed( TLK_CMB_ENEMY ); //SpeakIfAllowed( "TLK_CMB_ALERT" );
+#else
 			m_Sentences.Speak( "COMBINE_ALERT" );
+#endif
 			handledEvent = true;
 			break;
+
+#ifdef EZ2
+		case NPC_EVENT_ITEM_PICKUP:
+			{
+				// HACKHACK: Because weapon_frag is technically a weapon, Combine soldiers will attempt
+				// to pick it up as a weapon instead of as an item.
+				// A long-term solution to this should be implemented in CAI_BaseNPC in the future.
+				if (GetTarget() && GetTarget()->ClassMatches("weapon_frag"))
+				{
+					// Picking up an item.
+					PickupItem( GetTarget() );
+					TaskComplete();
+				}
+				else
+				{
+					BaseClass::HandleAnimEvent( pEvent );
+				}
+				break;
+			}
+#endif
 
 		default:
 			BaseClass::HandleAnimEvent( pEvent );
@@ -2517,6 +4795,28 @@ Vector CNPC_Combine::Weapon_ShootPosition( )
 
 	// FIXME: rename this "estimated" since it's not based on animation
 	// FIXME: the orientation won't be correct when testing from arbitary positions for arbitary angles
+
+#ifdef MAPBASE
+	// HACKHACK: This weapon shoot position code does not work properly when in close range, causing the aim
+	// to drift to the left as the enemy gets closer to it.
+	// This problem is usually bearable for regular combat, but it causes dynamic interaction yaw to be offset
+	// as well, preventing most from ever being triggered.
+	// Ideally, this should be fixed from the root cause, but due to the sensitivity of such a change, this is
+	// currently being tied to a cvar which is off by default.
+	// 
+	// If the cvar is disabled but the soldier has valid interactions on its current enemy, then a separate hack
+	// will still attempt to correct the drift as the enemy gets closer.
+	if ( npc_combine_fixed_shootpos.GetBool() )
+	{
+		right *= 0.0f;
+	}
+	else if ( HasValidInteractionsOnCurrentEnemy() )
+	{
+		float flDistSqr = GetEnemy()->WorldSpaceCenter().DistToSqr( WorldSpaceCenter() );
+		if (flDistSqr < Square( 128.0f ))
+			right *= (flDistSqr / Square( 128.0f ));
+	}
+#endif
 
 	if  ( bStanding )
 	{
@@ -2567,16 +4867,108 @@ void CNPC_Combine::SpeakSentence( int sentenceType )
 		// If I'm moving more than 20ft, I need to talk about it
 		if ( GetNavigator()->GetPath()->GetPathLength() > 20 * 12.0f )
 		{
+#ifdef COMBINE_SOLDIER_USES_RESPONSE_SYSTEM
+			SpeakIfAllowed( TLK_CMB_FLANK );
+#else
 			m_Sentences.Speak( "COMBINE_FLANK" );
+#endif
 		}
 		break;
+
+#ifdef EZ2
+	case 6: // Ordering enemy to surrender
+		// Make sure the 'order surrender' concept is always dispatched as it is vital to telegraph when a soldier is ordering a citizen to surrender
+		SpeakIfAllowed( TLK_USE, "order_surrender:1", SENTENCE_PRIORITY_INVALID, SENTENCE_CRITERIA_ALWAYS );
+		if (GetEnemy())
+			GetEnemy()->DispatchInteraction( g_interactionBadCopOrderSurrender, NULL, this );
+		break;
+#endif
 	}
 }
+
+#ifdef COMBINE_SOLDIER_USES_RESPONSE_SYSTEM
+//=========================================================
+bool CNPC_Combine::SpeakIfAllowed( const char *concept, const char *modifiers, SentencePriority_t sentencepriority, SentenceCriteria_t sentencecriteria )
+{
+	AI_CriteriaSet set;
+	if (modifiers)
+	{
+#ifdef NEW_RESPONSE_SYSTEM
+		GatherCriteria( &set, concept, modifiers );
+#else
+		GetExpresser()->MergeModifiers(set, modifiers);
+#endif
+	}
+	return SpeakIfAllowed( concept, set, sentencepriority, sentencecriteria );
+}
+
+//=========================================================
+//=========================================================
+bool CNPC_Combine::SpeakIfAllowed( const char *concept, AI_CriteriaSet& modifiers, SentencePriority_t sentencepriority, SentenceCriteria_t sentencecriteria )
+{
+	if ( sentencepriority != SENTENCE_PRIORITY_INVALID && !FOkToMakeSound( sentencepriority ) )
+		return false;
+
+	if ( !GetExpresser()->CanSpeakConcept( concept ) )
+		return false;
+
+	// Don't interrupt scripted VCD dialogue
+	if ( IsRunningScriptedSceneWithSpeechAndNotPaused( this, true ) )
+		return false;
+
+	if ( Speak( concept, modifiers ) )
+	{
+		JustMadeSound( sentencepriority, 2.0f /*GetTimeSpeechComplete()*/ );
+		return true;
+	}
+
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CNPC_Combine::ModifyOrAppendCriteria( AI_CriteriaSet& set )
+{
+	BaseClass::ModifyOrAppendCriteria( set );
+
+	set.AppendCriteria( "numgrenades", UTIL_VarArgs("%d", m_iNumGrenades) );
+	
+	if (IsElite())
+	{
+		set.AppendCriteria( "elite", "1" );
+	}
+	else
+	{
+		set.AppendCriteria( "elite", "0" );
+	}
+
+#ifdef EZ
+	if (IsInSquad())
+		set.AppendCriteria( "squad", GetSquad()->GetName() );
+#endif
+}
+#endif
+
+#ifdef EZ2
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CNPC_Combine::ModifyOrAppendCriteriaForPlayer( CBasePlayer *pPlayer, AI_CriteriaSet& set )
+{
+	BaseClass::ModifyOrAppendCriteriaForPlayer( pPlayer, set );
+
+	set.AppendCriteria( "elite", IsElite() ? "1" : "0" );
+}
+#endif
 
 //=========================================================
 // PainSound
 //=========================================================
-void CNPC_Combine::PainSound ( const CTakeDamageInfo &damageinfo )
+#ifdef MAPBASE
+void CNPC_Combine::PainSound ( const CTakeDamageInfo &info )
+#else
+void CNPC_Combine::PainSound ( void )
+#endif
 {
 	// NOTE: The response system deals with this at the moment
 	if ( GetFlags() & FL_DISSOLVING )
@@ -2584,6 +4976,11 @@ void CNPC_Combine::PainSound ( const CTakeDamageInfo &damageinfo )
 
 	if ( gpGlobals->curtime > m_flNextPainSoundTime )
 	{
+#ifdef COMBINE_SOLDIER_USES_RESPONSE_SYSTEM
+		AI_CriteriaSet set;
+		ModifyOrAppendDamageCriteria(set, info);
+		SpeakIfAllowed( TLK_CMB_PAIN, set, SENTENCE_PRIORITY_INVALID, SENTENCE_CRITERIA_ALWAYS );
+#else
 		const char *pSentenceName = "COMBINE_PAIN";
 		float healthRatio = (float)GetHealth() / (float)GetMaxHealth();
 		if ( !HasMemory(bits_MEMORY_PAIN_LIGHT_SOUND) && healthRatio > 0.9 )
@@ -2598,9 +4995,34 @@ void CNPC_Combine::PainSound ( const CTakeDamageInfo &damageinfo )
 		}
 
 		m_Sentences.Speak( pSentenceName, SENTENCE_PRIORITY_INVALID, SENTENCE_CRITERIA_ALWAYS );
+#endif
 		m_flNextPainSoundTime = gpGlobals->curtime + 1;
 	}
 }
+
+#ifdef EZ
+//=========================================================
+// RegenSound - 1upD
+//=========================================================
+void CNPC_Combine::RegenSound()
+{
+	// Don't call out regeneration immediately after taking damage 
+	if (gpGlobals->curtime <= m_flNextPainSoundTime)
+	{
+		m_flNextRegenSoundTime = gpGlobals->curtime + COMBINE_REGEN_SOUND_TIME;
+	}
+
+	if (gpGlobals->curtime > m_flNextRegenSoundTime )
+	{
+#ifndef COMBINE_SOLDIER_USES_RESPONSE_SYSTEM
+		m_Sentences.Speak("COMBINE_EZ2_REGEN", SENTENCE_PRIORITY_INVALID, SENTENCE_CRITERIA_ALWAYS);
+#else
+		SpeakIfAllowed( TLK_HEAL );
+#endif
+		m_flNextRegenSoundTime = gpGlobals->curtime + COMBINE_REGEN_SOUND_TIME;
+	}
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: implemented by subclasses to give them an opportunity to make
@@ -2613,6 +5035,12 @@ void CNPC_Combine::LostEnemySound( void)
 	if ( gpGlobals->curtime <= m_flNextLostSoundTime )
 		return;
 
+#ifdef COMBINE_SOLDIER_USES_RESPONSE_SYSTEM
+	if (SpeakIfAllowed( TLK_CMB_LOSTENEMY, UTIL_VarArgs("lastseenenemy:%d", GetEnemyLastTimeSeen()) ))
+	{
+		m_flNextLostSoundTime = gpGlobals->curtime + random->RandomFloat(5.0,15.0);
+	}
+#else
 	const char *pSentence;
 	if (!(CBaseEntity*)GetEnemy() || gpGlobals->curtime - GetEnemyLastTimeSeen() > 10)
 	{
@@ -2627,6 +5055,7 @@ void CNPC_Combine::LostEnemySound( void)
 	{
 		m_flNextLostSoundTime = gpGlobals->curtime + random->RandomFloat(5.0,15.0);
 	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -2637,7 +5066,11 @@ void CNPC_Combine::LostEnemySound( void)
 //-----------------------------------------------------------------------------
 void CNPC_Combine::FoundEnemySound( void)
 {
+#ifdef COMBINE_SOLDIER_USES_RESPONSE_SYSTEM
+	SpeakIfAllowed( TLK_CMB_REFINDENEMY, SENTENCE_PRIORITY_HIGH );
+#else
 	m_Sentences.Speak( "COMBINE_REFIND_ENEMY", SENTENCE_PRIORITY_HIGH );
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -2652,7 +5085,11 @@ void CNPC_Combine::AlertSound( void)
 {
 	if ( gpGlobals->curtime > m_flNextAlertSoundTime )
 	{
+#ifdef COMBINE_SOLDIER_USES_RESPONSE_SYSTEM
+		SpeakIfAllowed( TLK_CMB_GOALERT, SENTENCE_PRIORITY_HIGH );
+#else
 		m_Sentences.Speak( "COMBINE_GO_ALERT", SENTENCE_PRIORITY_HIGH );
+#endif
 		m_flNextAlertSoundTime = gpGlobals->curtime + 10.0f;
 	}
 }
@@ -2662,16 +5099,43 @@ void CNPC_Combine::AlertSound( void)
 //=========================================================
 void CNPC_Combine::NotifyDeadFriend ( CBaseEntity* pFriend )
 {
+#ifdef EZ
+	// Blixibon - Manhack handling
+	if ( pFriend == m_hManhack )
+	{
+		//m_Sentences.Speak( "METROPOLICE_MANHACK_KILLED", SENTENCE_PRIORITY_NORMAL, SENTENCE_CRITERIA_NORMAL );
+
+		// This uses a "COP" concept from npc_metropolice.h
+		SpeakIfAllowed( TLK_COP_MANHACKKILLED, "my_manhack:1", SENTENCE_PRIORITY_NORMAL, SENTENCE_CRITERIA_NORMAL );
+
+		DevMsg("My manhack died!\n");
+		m_hManhack = NULL;
+		return;
+	}
+
+	// No notifications for squadmates' dead manhacks
+	if ( FClassnameIs( pFriend, "npc_manhack" ) )
+		return;
+#endif
+#ifndef COMBINE_SOLDIER_USES_RESPONSE_SYSTEM
 	if ( GetSquad()->NumMembers() < 2 )
 	{
 		m_Sentences.Speak( "COMBINE_LAST_OF_SQUAD", SENTENCE_PRIORITY_INVALID, SENTENCE_CRITERIA_NORMAL );
 		JustMadeSound();
 		return;
 	}
+#endif
 	// relaxed visibility test so that guys say this more often
 	//if( FInViewCone( pFriend ) && FVisible( pFriend ) )
 	{
+#ifdef COMBINE_SOLDIER_USES_RESPONSE_SYSTEM
+#ifdef EZ2
+		SetSpeechTarget( pFriend );
+#endif
+		SpeakIfAllowed( TLK_CMB_MANDOWN );
+#else
 		m_Sentences.Speak( "COMBINE_MAN_DOWN" );
+#endif
 	}
 	BaseClass::NotifyDeadFriend(pFriend);
 }
@@ -2679,13 +5143,23 @@ void CNPC_Combine::NotifyDeadFriend ( CBaseEntity* pFriend )
 //=========================================================
 // DeathSound 
 //=========================================================
+#ifdef MAPBASE
+void CNPC_Combine::DeathSound ( const CTakeDamageInfo &info )
+#else
 void CNPC_Combine::DeathSound ( void )
+#endif
 {
+#ifdef COMBINE_SOLDIER_USES_RESPONSE_SYSTEM
+	AI_CriteriaSet set;
+	ModifyOrAppendDamageCriteria(set, info);
+	SpeakIfAllowed(TLK_CMB_DIE, set, SENTENCE_PRIORITY_INVALID, SENTENCE_CRITERIA_ALWAYS);
+#else
 	// NOTE: The response system deals with this at the moment
 	if ( GetFlags() & FL_DISSOLVING )
 		return;
 
 	m_Sentences.Speak( "COMBINE_DIE", SENTENCE_PRIORITY_INVALID, SENTENCE_CRITERIA_ALWAYS );
+#endif
 }
 
 //=========================================================
@@ -2697,6 +5171,11 @@ void CNPC_Combine::IdleSound( void )
 	{
 		if (!g_fCombineQuestion)
 		{
+#ifdef COMBINE_SOLDIER_USES_RESPONSE_SYSTEM
+			int iRandom = random->RandomInt(0, 2);
+			SpeakIfAllowed( TLK_CMB_QUESTION, UTIL_VarArgs("combinequestion:%d", iRandom) );
+			g_fCombineQuestion = iRandom + 1;
+#else
 			// ask question or make statement
 			switch (random->RandomInt(0,2))
 			{
@@ -2718,9 +5197,14 @@ void CNPC_Combine::IdleSound( void )
 				m_Sentences.Speak( "COMBINE_IDLE" );
 				break;
 			}
+#endif
 		}
 		else
 		{
+#ifdef COMBINE_SOLDIER_USES_RESPONSE_SYSTEM
+			SpeakIfAllowed( TLK_CMB_ANSWER, UTIL_VarArgs("combinequestion:%d", g_fCombineQuestion) );
+			g_fCombineQuestion = 0;
+#else
 			switch (g_fCombineQuestion)
 			{
 			case 1: // check in
@@ -2736,6 +5220,7 @@ void CNPC_Combine::IdleSound( void )
 				}
 				break;
 			}
+#endif
 		}
 	}
 }
@@ -2755,6 +5240,7 @@ int	CNPC_Combine::RangeAttack2Conditions( float flDot, float flDist )
 	return COND_NONE;
 }
 
+#ifndef MAPBASE
 //-----------------------------------------------------------------------------
 // Purpose: Return true if the combine has grenades, hasn't checked lately, and
 //			can throw a grenade at the target point.
@@ -2869,12 +5355,17 @@ bool CNPC_Combine::CheckCanThrowGrenade( const Vector &vecTarget )
 		return false;
 	}
 }
+#endif
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 bool CNPC_Combine::CanAltFireEnemy( bool bUseFreeKnowledge )
 {
-	if (!IsElite() )
+#ifdef MAPBASE
+	if ( !IsAltFireCapable() )
+#else
+	if ( !IsElite() )
+#endif
 		return false;
 
 	if (IsCrouching())
@@ -2895,7 +5386,14 @@ bool CNPC_Combine::CanAltFireEnemy( bool bUseFreeKnowledge )
 
 	CBaseEntity *pEnemy = GetEnemy();
 
+#ifdef MAPBASE
+	// "Our weapons alone cannot take down the antlion guard!"
+	// "Wait, you're an elite, don't you have, like, disintegration balls or somethi--"
+	// "SHUT UP!"
+	if ( !npc_combine_altfire_not_allies_only.GetBool() && !pEnemy->IsPlayer() && (!pEnemy->IsNPC() || !pEnemy->MyNPCPointer()->IsPlayerAlly()) )
+#else
 	if( !pEnemy->IsPlayer() && (!pEnemy->IsNPC() || !pEnemy->MyNPCPointer()->IsPlayerAlly()) )
+#endif
 		return false;
 
 	Vector vecTarget;
@@ -2924,14 +5422,23 @@ bool CNPC_Combine::CanAltFireEnemy( bool bUseFreeKnowledge )
 	}
 
 	// Trace a hull about the size of the combine ball.
+#ifdef MAPBASE
+	UTIL_TraceHull( vShootPosition, vecTarget, mins, maxs, MASK_COMBINE_BALL_LOS, this, COLLISION_GROUP_NONE, &tr );
+#else
 	UTIL_TraceHull( vShootPosition, vecTarget, mins, maxs, MASK_SHOT, this, COLLISION_GROUP_NONE, &tr );
+#endif
 
 	float flLength = (vShootPosition - vecTarget).Length();
 
 	flLength *= tr.fraction;
 
 	//If the ball can travel at least 65% of the distance to the player then let the NPC shoot it.
+#ifdef MAPBASE
+	// (unless it hit the world)
+	if( tr.fraction >= 0.65 && (!tr.m_pEnt || !tr.m_pEnt->IsWorld()) && flLength > 128.0f )
+#else
 	if( tr.fraction >= 0.65 && flLength > 128.0f )
+#endif
 	{
 		// Target is valid
 		m_vecAltFireTarget = vecTarget;
@@ -2949,7 +5456,11 @@ bool CNPC_Combine::CanAltFireEnemy( bool bUseFreeKnowledge )
 //-----------------------------------------------------------------------------
 bool CNPC_Combine::CanGrenadeEnemy( bool bUseFreeKnowledge )
 {
-	if( IsElite() )
+#ifdef MAPBASE
+	if ( !IsGrenadeCapable() )
+#else
+	if ( IsElite() )
+#endif
 		return false;
 
 	CBaseEntity *pEnemy = GetEnemy();
@@ -2961,6 +5472,17 @@ bool CNPC_Combine::CanGrenadeEnemy( bool bUseFreeKnowledge )
 		// I'm not allowed to throw grenades during dustoff
 		if ( IsCurSchedule(SCHED_DROPSHIP_DUSTOFF) )
 			return false;
+
+#ifdef EZ2
+		if (GetEnemy()->ClassMatches( "npc_citizen" ) && GetEnemy()->MyNPCPointer())
+		{
+			// Grenading unarmed citizens isn't necessary unless they're using a func_tank
+			CAI_BaseNPC *pNPC = GetEnemy()->MyNPCPointer();
+			if (pNPC->GetActiveWeapon() == NULL &&
+				(!pNPC->GetRunningBehavior() || pNPC->GetRunningBehavior()->GetName() != m_FuncTankBehavior.GetName()))
+				return false;
+		}
+#endif
 
 		if( bUseFreeKnowledge )
 		{
@@ -2997,7 +5519,12 @@ int CNPC_Combine::MeleeAttack1Conditions ( float flDot, float flDist )
 	if ( GetEnemy() && fabs(GetEnemy()->GetAbsOrigin().z - GetAbsOrigin().z) > 64 )
 		return COND_NONE;
 
+#ifdef EZ
+	// Soldiers are incapable of kicking the babies
+	if ( GetEnemy() && GetEnemy()->IsNPC() && GetEnemy()->MyNPCPointer()->GetHullType() == HULL_TINY )
+#else
 	if ( dynamic_cast<CBaseHeadcrab *>(GetEnemy()) != NULL )
+#endif
 	{
 		return COND_NONE;
 	}
@@ -3040,6 +5567,7 @@ Vector CNPC_Combine::EyePosition( void )
 	*/
 }
 
+#ifndef MAPBASE
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 Vector CNPC_Combine::GetAltFireTarget()
@@ -3048,6 +5576,7 @@ Vector CNPC_Combine::GetAltFireTarget()
 
 	return m_vecAltFireTarget;
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -3081,13 +5610,46 @@ Vector CNPC_Combine::GetCrouchEyeOffset( void )
 	return COMBINE_EYE_CROUCHING_POSITION;
 }
 
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CNPC_Combine::IsCrouchedActivity( Activity activity )
+{
+	if (BaseClass::IsCrouchedActivity( activity ))
+		return true;
+
+	Activity realActivity = TranslateActivity(activity);
+
+	// Soldiers need to consider these crouched activities, but not all NPCs should.
+	switch ( realActivity )
+	{
+		case ACT_RANGE_AIM_LOW:
+		case ACT_RANGE_AIM_AR2_LOW:
+		case ACT_RANGE_AIM_SMG1_LOW:
+		case ACT_RANGE_AIM_PISTOL_LOW:
+		case ACT_RANGE_ATTACK1_LOW:
+		case ACT_RANGE_ATTACK_AR2_LOW:
+		case ACT_RANGE_ATTACK_SMG1_LOW:
+		case ACT_RANGE_ATTACK_SHOTGUN_LOW:
+		case ACT_RANGE_ATTACK_PISTOL_LOW:
+		case ACT_RANGE_ATTACK2_LOW:
+			return true;
+	}
+
+	return false;
+}
+#endif
+
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 void CNPC_Combine::SetActivity( Activity NewActivity )
 {
 	BaseClass::SetActivity( NewActivity );
 
+#ifndef MAPBASE // CAI_GrenadeUser
 	m_iLastAnimEventHandled = -1;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -3122,6 +5684,168 @@ NPC_STATE CNPC_Combine::SelectIdealState( void )
 	return GetIdealState();
 }
 
+#ifdef EZ
+//-----------------------------------------------------------------------------
+// Purpose: I want to deploy a manhack. Can I?
+//-----------------------------------------------------------------------------
+bool CNPC_Combine::CanDeployManhack( void )
+{
+	// Nope, don't have any!
+	if( m_iManhacks < 1 )
+		return false;
+
+	if ( HasSpawnFlags( SF_COMBINE_NO_MANHACK_DEPLOY ) )
+		return false;
+
+	// Nope, already have one out.
+	if( m_hManhack != NULL )
+		return false;
+
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Makes the held manhack solid
+//-----------------------------------------------------------------------------
+void CNPC_Combine::ReleaseManhack( void )
+{
+	Assert( m_hManhack );
+
+	// Make us physical
+	m_hManhack->RemoveSpawnFlags( SF_MANHACK_CARRIED );
+	m_hManhack->CreateVPhysics();
+
+	// Release us
+	m_hManhack->RemoveSolidFlags( FSOLID_NOT_SOLID );
+	m_hManhack->SetMoveType( MOVETYPE_VPHYSICS );
+	m_hManhack->SetParent( NULL );
+
+	// Make us active
+	m_hManhack->RemoveSpawnFlags( SF_NPC_WAIT_FOR_SCRIPT );
+	m_hManhack->ClearSchedule( "Manhack released by metropolice" );
+	
+	// Start him with knowledge of our current enemy
+	if ( GetEnemy() )
+	{
+		m_hManhack->SetEnemy( GetEnemy() );
+		m_hManhack->SetState( NPC_STATE_COMBAT );
+
+		m_hManhack->UpdateEnemyMemory( GetEnemy(), GetEnemy()->GetAbsOrigin() );
+	}
+
+	// Place him into our squad so we can communicate
+	if ( m_pSquad )
+	{
+		m_pSquad->AddToSquad( m_hManhack );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input  : *pEvent - 
+//-----------------------------------------------------------------------------
+void CNPC_Combine::OnAnimEventStartDeployManhack( void )
+{
+	Assert( m_iManhacks );
+	
+	if ( m_iManhacks <= 0 )
+	{
+		DevMsg( "Error: Throwing manhack but out of manhacks!\n" );
+		return;
+	}
+
+	m_iManhacks--;
+
+	// Turn off the manhack on our body
+	if ( m_iManhacks <= 0 )
+	{
+		SetBodygroup( COMBINE_BODYGROUP_MANHACK, false );
+	}
+
+	// Create the manhack to throw
+	CNPC_Manhack *pManhack = (CNPC_Manhack *)CreateEntityByName( "npc_manhack" );
+	
+	Vector	vecOrigin;
+	QAngle	vecAngles;
+
+	int handAttachment = LookupAttachment( "lefthand" );
+	GetAttachment( handAttachment, vecOrigin, vecAngles );
+
+	pManhack->SetLocalOrigin( vecOrigin );
+	pManhack->SetLocalAngles( vecAngles );
+	pManhack->AddSpawnFlags( (SF_MANHACK_PACKED_UP|SF_MANHACK_CARRIED|SF_NPC_WAIT_FOR_SCRIPT) );
+	
+	// Also fade if our parent is marked to do it
+	if ( HasSpawnFlags( SF_NPC_FADE_CORPSE ) )
+	{
+		pManhack->AddSpawnFlags( SF_NPC_FADE_CORPSE );
+	}
+
+	// Allow modification of the manhack
+	HandleManhackSpawn( pManhack );
+
+	DispatchSpawn( pManhack );
+
+	// Make us move with his hand until we're deployed
+	pManhack->SetParent( this, handAttachment );
+
+	m_hManhack = pManhack;
+
+	m_OutManhack.Set(m_hManhack, pManhack, this);
+}
+
+//-----------------------------------------------------------------------------
+// Anim event handlers
+//-----------------------------------------------------------------------------
+void CNPC_Combine::OnAnimEventDeployManhack( animevent_t *pEvent )
+{
+	if (!m_hManhack)
+		return;
+
+	// Let it go
+	ReleaseManhack();
+
+	Vector forward, right;
+	GetVectors( &forward, &right, NULL );
+
+	IPhysicsObject *pPhysObj = m_hManhack->VPhysicsGetObject();
+
+	if ( pPhysObj )
+	{
+		Vector	yawOff = right * random->RandomFloat( -1.0f, 1.0f );
+
+		Vector	forceVel = ( forward + yawOff * 16.0f ) + Vector( 0, 0, 250 );
+		Vector	forceAng = vec3_origin;
+
+		// Give us velocity
+		pPhysObj->AddVelocity( &forceVel, &forceAng );
+	}
+
+	// Stop dealing with this manhack
+	//m_hManhack = NULL;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CNPC_Combine::OnScheduleChange()
+{
+	BaseClass::OnScheduleChange();
+
+	// Ensures we deploy the manhack
+	if ( m_hManhack && m_hManhack->GetParent() == this )
+	{
+		OnAnimEventDeployManhack( NULL );
+	}
+
+#ifdef EZ2
+	if (!HasCondition( COND_COMBINE_OBSTRUCTED ))
+	{
+		m_hObstructor = NULL;
+	}
+#endif
+}
+#endif
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -3129,6 +5853,11 @@ bool CNPC_Combine::OnBeginMoveAndShoot()
 {
 	if ( BaseClass::OnBeginMoveAndShoot() )
 	{
+#ifdef EZ
+		if ( IsMajorCharacter() )
+			return true; // Commandable Combine soldiers don't need a squad slot to move and shoot
+#endif
+
 		if( HasStrategySlotRange( SQUAD_SLOT_ATTACK1, SQUAD_SLOT_ATTACK2 ) )
 			return true; // already have the slot I need
 
@@ -3145,11 +5874,78 @@ void CNPC_Combine::OnEndMoveAndShoot()
 	VacateStrategySlot();
 }
 
+#ifdef EZ
+//-----------------------------------------------------------------------------
+// Blixibon - Soldiers need to be locked onto their enemies or else they end up looking in odd-looking directions.
+//-----------------------------------------------------------------------------
+bool CNPC_Combine::PickTacticalLookTarget( AILookTargetArgs_t *pArgs )
+{
+	if( GetState() == NPC_STATE_COMBAT )
+	{
+		CBaseEntity *pEnemy = GetEnemy();
+		if ( pEnemy && FVisible( pEnemy ) && ValidHeadTarget(pEnemy->EyePosition()) )
+		{
+			// Look at the enemy if possible.
+			pArgs->hTarget = pEnemy;
+			pArgs->flInfluence = random->RandomFloat( 0.8, 1.0 );
+			pArgs->flRamp = 0;
+		}
+		else
+		{
+			// Look at yourself instead. We can't be looking in random directions.
+			pArgs->hTarget = this;
+			pArgs->flInfluence = random->RandomFloat( 0.8, 1.0 );
+			pArgs->flRamp = 0;
+		}
+
+		return true;
+	}
+	else
+	{
+		return BaseClass::PickTacticalLookTarget( pArgs );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Blixibon - Hack to kick in the above look target code as soon as we're in combat
+//-----------------------------------------------------------------------------
+void CNPC_Combine::OnStateChange( NPC_STATE OldState, NPC_STATE NewState )
+{
+	BaseClass::OnStateChange( OldState, NewState );
+
+	if (NewState == NPC_STATE_COMBAT)
+	{
+		// Pick a new look target
+		ExpireCurrentRandomLookTarget();
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Blixibon - Part of getting Combine soldiers to look at visually interesting hints
+//-----------------------------------------------------------------------------
+void CNPC_Combine::AimGun()
+{
+	BaseClass::AimGun();
+
+	// CNPC_PlayerCompanion's AimGun() handling makes this safe.
+	if (!GetEnemy() && GetAimTarget())
+	{
+		// There's probably a better way to do this I'm missing, but this allows soldiers to face their aim targets.
+		// This has 0.75 importance so other facing calls take priority.
+		AddFacingTarget(GetAimTarget(), 0.75f, 0.75f);
+	}
+}
+#endif
+
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 WeaponProficiency_t CNPC_Combine::CalcWeaponProficiency( CBaseCombatWeapon *pWeapon )
 {
+#ifdef MAPBASE
+	if( pWeapon->ClassMatches( gm_isz_class_AR2 ) )
+#else
 	if( FClassnameIs( pWeapon, "weapon_ar2" ) )
+#endif
 	{
 		if( hl2_episodic.GetBool() )
 		{
@@ -3160,19 +5956,47 @@ WeaponProficiency_t CNPC_Combine::CalcWeaponProficiency( CBaseCombatWeapon *pWea
 			return WEAPON_PROFICIENCY_GOOD;
 		}
 	}
+#ifdef MAPBASE
+	else if( pWeapon->ClassMatches( gm_isz_class_Shotgun ) )
+#else
 	else if( FClassnameIs( pWeapon, "weapon_shotgun" )	)
+#endif
 	{
+#ifndef MAPBASE // Moved so soldiers don't change skin unnaturally and uncontrollably
 		if( m_nSkin != COMBINE_SKIN_SHOTGUNNER )
 		{
 			m_nSkin = COMBINE_SKIN_SHOTGUNNER;
 		}
+#endif
 
 		return WEAPON_PROFICIENCY_PERFECT;
 	}
+#ifdef MAPBASE
+	else if( pWeapon->ClassMatches( gm_isz_class_SMG1 ) )
+#else
 	else if( FClassnameIs( pWeapon, "weapon_smg1" ) )
+#endif
 	{
 		return WEAPON_PROFICIENCY_GOOD;
 	}
+#ifdef MAPBASE
+	else if ( pWeapon->ClassMatches( gm_isz_class_Pistol ) )
+	{
+		// Mods which need a lower soldier pistol accuracy can either change this value or use proficiency override in Hammer.
+		return WEAPON_PROFICIENCY_VERY_GOOD;
+	}
+#endif
+
+#ifdef EZ
+	else if (FClassnameIs( pWeapon, "weapon_smg2" ))
+	{
+		return WEAPON_PROFICIENCY_GOOD;
+	}
+	else if (FClassnameIs( pWeapon, "weapon_pulsepistol" ))
+	{
+		return WEAPON_PROFICIENCY_VERY_GOOD;
+	}
+#endif
 
 	return BaseClass::CalcWeaponProficiency( pWeapon );
 }
@@ -3230,10 +6054,38 @@ bool CNPC_Combine::HandleInteraction(int interactionType, void *data, CBaseComba
 		}
 		return true;
 	}
-
+#ifdef EZ
+	// Blixibon - Combine soldiers should act weird if you bound stuff off of them
+	else if (interactionType == g_interactionHitByPlayerThrownPhysObj)
+	{
+		CBaseEntity *pTarget = UTIL_GetLocalPlayer();
+		if (pTarget)
+		{
+			CSoundEnt::InsertSound(SOUND_PLAYER | SOUND_CONTEXT_COMBINE_ONLY, pTarget->GetAbsOrigin(), 128, 0.1, pTarget);
+		}
+	}
+#endif
 	return BaseClass::HandleInteraction( interactionType, data, sourceEnt );
 }
+#ifdef EZ
+//-----------------------------------------------------------------------------
+// Blixibon - Allows Combine soldiers to use visually interesting hints.
+//-----------------------------------------------------------------------------
+bool CNPC_Combine::FValidateHintType( CAI_Hint *pHint )
+{
+	switch( pHint->HintType() )
+	{
+	case HINT_WORLD_VISUALLY_INTERESTING:
+		return true;
+		break;
 
+	default:
+		break;
+	}
+
+	return BaseClass::FValidateHintType( pHint );
+}
+#endif
 //-----------------------------------------------------------------------------
 //
 //-----------------------------------------------------------------------------
@@ -3288,8 +6140,88 @@ bool CNPC_Combine::IsRunningApproachEnemySchedule()
 
 bool CNPC_Combine::ShouldPickADeathPose( void ) 
 { 
+#ifdef MAPBASE
+	// Check base class as well
+	return !IsCrouching() && BaseClass::ShouldPickADeathPose();
+#else
 	return !IsCrouching(); 
+#endif
 }
+
+#ifdef EZ
+ConVar npc_combine_new_follow_behavior( "npc_combine_new_follow_behavior", "1" );
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int CNPC_Combine::CCombineFollowBehavior::SelectSchedule( void )
+{
+	int result = SCHED_NONE;
+
+	// We could just make them use SelectScheduleAttack() like standoff behavior does, which makes soldiers
+	// only use special schedules like grenade-throwing or manhack deployment, avoiding AI which would
+	// otherwise interfere with the running behavior. 
+	// 
+	// This is what we were doing before, with the logic being that soldiers should always follow the player.
+	// 
+	// However, players were disappointed that they weren't using their signature "Combine AI" and were basically
+	// just acting like reskinned citizens. As a result, we've expanded follow behavior to utilize all Combine
+	// combat schedules, including those that would take cover and otherwise give them plenty of freedom over
+	// the player's orders.
+	// 
+	// -Blixibon
+	if (npc_combine_new_follow_behavior.GetBool())
+	{
+		if ( GetOuterS()->GetState() == NPC_STATE_COMBAT && IsFollowTargetInRange(1.5f) )
+			result = GetOuterS()->SelectCombatSchedule();
+	}
+	else
+	{
+		result = GetOuterS()->SelectScheduleAttack();
+	}
+
+	if ( result == SCHED_NONE || result == SCHED_RANGE_ATTACK1 )
+		result = BaseClass::SelectSchedule();
+	return result;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int CNPC_Combine::CCombineFollowBehavior::TranslateSchedule( int scheduleType )
+{
+	switch( scheduleType )
+	{
+		case SCHED_COMBINE_TAKE_COVER1:
+
+			if ( ShouldMoveToFollowTarget() && !IsFollowGoalInRange( GetGoalRange(), GetGoalZRange(), GetGoalFlags() ) )
+			{
+				return SCHED_MOVE_TO_FACE_FOLLOW_TARGET;			
+			}
+			
+			break;
+	}
+	return BaseClass::TranslateSchedule( scheduleType );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CNPC_Combine::CCombineFollowBehavior::PlayerIsPushing()
+{
+	if (!BaseClass::PlayerIsPushing())
+		return false;
+
+	// HACKHACK: By default, follow behavior uses its own push code
+	// that acts independent of CNPC_PlayerCompanion.
+	// Combine soldiers in the player's squad need to avoid moving
+	// away when players are trying to give them a new weapon.
+	if (GetOuterS()->IgnorePlayerPushing())
+		return false;
+
+	return true;
+}
+#endif
 
 //-----------------------------------------------------------------------------
 //
@@ -3311,15 +6243,31 @@ DECLARE_TASK( TASK_COMBINE_GET_PATH_TO_FORCED_GREN_LOS )
 DECLARE_TASK( TASK_COMBINE_SET_STANDING )
 
 //Activities
+#if !SHARED_COMBINE_ACTIVITIES
 DECLARE_ACTIVITY( ACT_COMBINE_THROW_GRENADE )
+#endif
 DECLARE_ACTIVITY( ACT_COMBINE_LAUNCH_GRENADE )
 DECLARE_ACTIVITY( ACT_COMBINE_BUGBAIT )
+#if !SHARED_COMBINE_ACTIVITIES
 DECLARE_ACTIVITY( ACT_COMBINE_AR2_ALTFIRE )
+#endif
 DECLARE_ACTIVITY( ACT_WALK_EASY )
 DECLARE_ACTIVITY( ACT_WALK_MARCH )
+#ifdef MAPBASE
+DECLARE_ACTIVITY( ACT_TURRET_CARRY_IDLE )
+DECLARE_ACTIVITY( ACT_TURRET_CARRY_WALK )
+DECLARE_ACTIVITY( ACT_TURRET_CARRY_RUN )
+#endif
+#ifdef EZ
+DECLARE_ACTIVITY( ACT_METROPOLICE_DEPLOY_MANHACK )
+#endif
 
 DECLARE_ANIMEVENT( COMBINE_AE_BEGIN_ALTFIRE )
 DECLARE_ANIMEVENT( COMBINE_AE_ALTFIRE )
+#ifdef EZ
+DECLARE_ANIMEVENT( AE_METROPOLICE_START_DEPLOY );
+DECLARE_ANIMEVENT( AE_METROPOLICE_DEPLOY_MANHACK );
+#endif
 
 DECLARE_SQUADSLOT( SQUAD_SLOT_GRENADE1 )
 DECLARE_SQUADSLOT( SQUAD_SLOT_GRENADE2 )
@@ -3331,8 +6279,16 @@ DECLARE_CONDITION( COND_COMBINE_HIT_BY_BUGBAIT )
 DECLARE_CONDITION( COND_COMBINE_DROP_GRENADE )
 DECLARE_CONDITION( COND_COMBINE_ON_FIRE )
 DECLARE_CONDITION( COND_COMBINE_ATTACK_SLOT_AVAILABLE )
+#ifdef EZ2
+DECLARE_CONDITION( COND_COMBINE_CAN_ORDER_SURRENDER )
+DECLARE_CONDITION( COND_COMBINE_OBSTRUCTED )
+#endif
 
 DECLARE_INTERACTION( g_interactionCombineBash );
+#ifdef EZ2
+DECLARE_INTERACTION( g_interactionBadCopKick );
+#endif
+
 
 //=========================================================
 // SCHED_COMBINE_TAKE_COVER_FROM_BEST_SOUND
@@ -3911,6 +6867,34 @@ DEFINE_SCHEDULE
  //	Used to run straight at enemy turrets to knock them over.
  //  Prevents squadmates from throwing grenades during.
  //=========================================================
+#ifdef EZ
+ DEFINE_SCHEDULE
+ (
+ SCHED_COMBINE_CHARGE_TURRET,
+
+ "	Tasks"
+ "		TASK_COMBINE_DEFER_SQUAD_GRENADES	0"
+ "		TASK_STOP_MOVING					0"
+ "		TASK_SET_FAIL_SCHEDULE				SCHEDULE:SCHED_CHASE_ENEMY_FAILED"
+ "		TASK_GET_CHASE_PATH_TO_ENEMY		300"
+ "		TASK_RUN_PATH						0"
+ "		TASK_WAIT_FOR_MOVEMENT				0"
+ "		TASK_FACE_ENEMY						0"
+ ""
+ "	Interrupts"
+ "		COND_NEW_ENEMY"
+ "		COND_ENEMY_DEAD"
+ "		COND_ENEMY_UNREACHABLE"
+ "		COND_CAN_MELEE_ATTACK1"
+ "		COND_CAN_MELEE_ATTACK2"
+ "		COND_TOO_CLOSE_TO_ATTACK"
+ "		COND_TASK_FAILED"
+ "		COND_LOST_ENEMY"
+ "		COND_BETTER_WEAPON_AVAILABLE"
+ "		COND_HEAR_DANGER"
+ "		COND_ENEMY_FACING_ME" // Blixibon - Makes soldiers stop charging a turret if the turret starts facing them (fixes a problem in ez2_c5_2)
+ )
+#else
  DEFINE_SCHEDULE
  (
  SCHED_COMBINE_CHARGE_TURRET,
@@ -3936,6 +6920,7 @@ DEFINE_SCHEDULE
  "		COND_BETTER_WEAPON_AVAILABLE"
  "		COND_HEAR_DANGER"
  )
+#endif
 
  //=========================================================
  // SCHED_COMBINE_CHARGE_PLAYER
@@ -4052,5 +7037,62 @@ DEFINE_SCHEDULE
  "		COND_ENEMY_DEAD"
  "		COND_CAN_MELEE_ATTACK1"
  )
+
+#ifdef EZ
+ //=========================================================
+ // The uninterruptible portion of this behavior, whereupon 
+ // the soldier actually releases the manhack.
+ //=========================================================
+ DEFINE_SCHEDULE
+ (
+ 	SCHED_COMBINE_DEPLOY_MANHACK,
+ 
+ 	"	Tasks"
+ 	"		TASK_SPEAK_SENTENCE					5"	// METROPOLICE_SENTENCE_DEPLOY_MANHACK
+ 	"		TASK_PLAY_SEQUENCE					ACTIVITY:ACT_METROPOLICE_DEPLOY_MANHACK"
+ 	"	"
+ 	"	Interrupts"
+ 	"		COND_RECEIVED_ORDERS"
+ )
+#endif
+
+#ifdef EZ2
+ //=========================================================
+ // Soldier orders surrender and plays a sequence
+ //=========================================================
+ DEFINE_SCHEDULE
+ (
+	 SCHED_COMBINE_ORDER_SURRENDER,
+ 
+ 	"	Tasks"
+	"		TASK_STOP_MOVING					0"
+	"		TASK_FACE_IDEAL						0"
+ 	"		TASK_SPEAK_SENTENCE					6"	// Order surrender
+	"		TASK_PLAY_SEQUENCE_FACE_ENEMY		ACTIVITY:ACT_SIGNAL_TAKECOVER"
+ 	"	"
+ 	"	Interrupts"
+	"		COND_ENEMY_DEAD"
+	"		COND_ENEMY_WENT_NULL"
+ )
+
+ //=========================================================
+ // Soldier attacks a prop
+ //=========================================================
+ DEFINE_SCHEDULE
+ (
+	 SCHED_COMBINE_ATTACK_TARGET,
+ 
+ 	"	Tasks"
+ 	"		TASK_GET_PATH_TO_TARGET		0"
+ 	"		TASK_MOVE_TO_TARGET_RANGE	50"
+ 	"		TASK_STOP_MOVING			0"
+ 	"		TASK_FACE_TARGET			0"
+ 	"		TASK_PLAY_SEQUENCE			ACTIVITY:ACT_MELEE_ATTACK2"
+ 	"	"
+ 	"	Interrupts"
+ 	"		COND_NEW_ENEMY"
+ 	"		COND_ENEMY_DEAD"
+ )
+#endif
 
  AI_END_CUSTOM_NPC()

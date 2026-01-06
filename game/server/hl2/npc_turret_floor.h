@@ -8,6 +8,9 @@
 #include "ai_basenpc.h"
 #include "player_pickup.h"
 #include "particle_system.h"
+#ifdef EZ2
+#include "ai_speech.h"
+#endif
 
 //Turret states
 enum turretState_e
@@ -43,15 +46,41 @@ enum eyeState_t
 #define SF_FLOOR_TURRET_FASTRETIRE			0x00000080
 #define SF_FLOOR_TURRET_OUT_OF_AMMO			0x00000100
 #define SF_FLOOR_TURRET_CITIZEN				0x00000200	// Citizen modified turret
+#ifdef MAPBASE
+#define SF_FLOOR_TURRET_NO_SPRITE			0x00000400
+#endif
 
 class CTurretTipController;
 class CBeam;
 class CSprite;
+#ifdef EZ2
+//-----------------------------------------------------------------------------
+// A new abstract class that allows us to use CTurretTipController on Wilson.
+// -Blixibon
+//-----------------------------------------------------------------------------
+abstract_class ITippableTurret
+{
+public:
+	virtual bool IsBeingCarriedByPlayer( void ) = 0;
+	virtual bool WasJustDroppedByPlayer( void ) = 0;
+
+	// Prevents tip controller from interfering with turrets under low gravity
+	// trigger_vphysics_motion also uses this class and these methods to detect and apply that to both turrets and Wilson
+	bool	InLowGravity( void ) { return m_bInLowGravity; }
+	void	SetLowGravity( bool bToggle ) { m_bInLowGravity = bToggle; }
+
+	bool	m_bInLowGravity; // Not saved
+};
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Floor turret
 //-----------------------------------------------------------------------------
+#ifdef EZ2
+class CNPC_FloorTurret : public CNPCBaseInteractive<CAI_BaseNPC>, public CDefaultPlayerPickupVPhysics, public ITippableTurret
+#else
 class CNPC_FloorTurret : public CNPCBaseInteractive<CAI_BaseNPC>, public CDefaultPlayerPickupVPhysics
+#endif
 {
 	DECLARE_CLASS( CNPC_FloorTurret, CNPCBaseInteractive<CAI_BaseNPC> );
 public:
@@ -131,6 +160,11 @@ public:
 	void	InputDepleteAmmo( inputdata_t &inputdata );
 	void	InputRestoreAmmo( inputdata_t &inputdata );
 	void	InputSelfDestruct( inputdata_t &inputdata );
+#ifdef MAPBASE
+	void	InputCreateSprite( inputdata_t &inputdata );
+	void	InputDestroySprite( inputdata_t &inputdata );
+	void	InputPowerdown( inputdata_t &inputdata ) { InputSelfDestruct(inputdata); }
+#endif
 
 	virtual bool	IsValidEnemy( CBaseEntity *pEnemy );
 	bool			CanBeAnEnemyOf( CBaseEntity *pEnemy );
@@ -168,13 +202,20 @@ public:
 	int		DrawDebugTextOverlays( void );
 
 	// INPCInteractive Functions
+#ifdef MAPBASE
+	virtual bool	CanInteractWith( CAI_BaseNPC *pUser );
+#else
 	virtual bool	CanInteractWith( CAI_BaseNPC *pUser ) { return false; } // Disabled for now (sjb)
+#endif
 	virtual	bool	HasBeenInteractedWith()	{ return m_bHackedByAlyx; }
 	virtual void	NotifyInteraction( CAI_BaseNPC *pUser )
 	{
 		// For now, turn green so we can tell who is hacked.
 		SetRenderColor( 0, 255, 0 );
 		m_bHackedByAlyx = true; 
+#ifdef MAPBASE
+		m_OnHacked.FireOutput(pUser, this);
+#endif
 	}
 
 	static float	fMaxTipControllerVelocity;
@@ -196,8 +237,15 @@ protected:
 
 	bool	IsCitizenTurret( void ) { return HasSpawnFlags( SF_FLOOR_TURRET_CITIZEN ); }
 	bool	UpdateFacing( void );
+#ifdef EZ2
+	virtual
+#endif
 	void	DryFire( void );
 	void	UpdateMuzzleMatrix();
+
+#ifdef EZ2
+	virtual float	GetRange();
+#endif
 
 protected:
 	matrix3x4_t m_muzzleToWorld;
@@ -220,7 +268,9 @@ protected:
 	bool	m_bCarriedByPlayer;
 	bool	m_bUseCarryAngles;
 	float	m_flPlayerDropTime;
+#ifndef MAPBASE // Replaced with m_nSkin.
 	int		m_iKeySkin;
+#endif
 
 	CHandle<CBaseCombatCharacter> m_hLastNPCToKickMe;		// Stores the last NPC who tried to knock me over
 	float	m_flKnockOverFailedTime;						// Time at which we should tell the NPC that he failed to knock me over
@@ -276,16 +326,32 @@ public:
 
 	bool Enabled( void );
 
+#ifdef EZ2
+	static CTurretTipController	*CreateTipController( CBaseEntity *pOwner )
+#else
 	static CTurretTipController	*CreateTipController( CNPC_FloorTurret *pOwner )
+#endif
 	{
 		if ( pOwner == NULL )
 			return NULL;
+
+#ifdef EZ2
+		ITippableTurret *pTippable = dynamic_cast<ITippableTurret*>(pOwner);
+		if ( pTippable == NULL )
+		{
+			Warning("WARNING: %s isn't an ITippableTurret!\n", pOwner->GetDebugName());
+			return NULL;
+		}
+#endif
 
 		CTurretTipController *pController = (CTurretTipController *) Create( "floorturret_tipcontroller", pOwner->GetAbsOrigin(), pOwner->GetAbsAngles() );
 
 		if ( pController != NULL )
 		{
 			pController->m_pParentTurret = pOwner;
+#ifdef EZ2
+			pController->m_pTippable = pTippable;
+#endif
 		}
 
 		return pController;
@@ -301,7 +367,129 @@ private:
 	Vector						m_localTestAxis;
 	IPhysicsMotionController	*m_pController;
 	float						m_angularLimit;
+#ifdef EZ2
+	// Should still have ITippableTurret
+	CBaseEntity					*m_pParentTurret;
+	// So we don't have to use dynamic_cast
+	ITippableTurret				*m_pTippable;
+#else
 	CNPC_FloorTurret			*m_pParentTurret;
+#endif
 };
+
+#ifdef EZ2
+// Turret concepts
+#define TLK_SEARCHING "TLK_SEARCHING"
+#define TLK_AUTOSEARCH "TLK_AUTOSEARCH"
+#define TLK_ACTIVE "TLK_ACTIVE"
+#define TLK_SUPPRESS "TLK_SUPPRESS"
+#define TLK_DEPLOY "TLK_DEPLOY"
+#define TLK_RETIRE "TLK_RETIRE"
+#define TLK_TIPPED "TLK_TIPPED"
+#define TLK_DISABLED "TLK_DISABLED"
+#define TLK_PICKUP "TLK_PICKUP"
+
+//-----------------------------------------------------------------------------
+// Purpose: Bootleg version of the Portal floor turret
+//-----------------------------------------------------------------------------
+class CNPC_Arbeit_FloorTurret : public CAI_ExpresserHost<CNPC_FloorTurret>
+{
+	DECLARE_CLASS( CNPC_Arbeit_FloorTurret, CAI_ExpresserHost<CNPC_FloorTurret> );
+	DECLARE_DATADESC();
+	DECLARE_SERVERCLASS();
+public:
+
+	CNPC_Arbeit_FloorTurret( void );
+
+	virtual void	Precache( void );
+	virtual void	Spawn( void );
+	virtual void	Activate( void );
+	virtual bool	CreateVPhysics( void );
+
+	// Player pickup
+	virtual void	OnPhysGunPickup( CBasePlayer *pPhysGunUser, PhysGunPickup_t reason );
+	virtual void	OnPhysGunDrop( CBasePlayer *pPhysGunUser, PhysGunDrop_t Reason );
+
+	const char *GetTracerType( void ) { return "Tracer"; }
+
+	void			OnChangeActivity( Activity eNewActivity );
+
+	Class_T			Classify( void );
+
+	bool			CanBeAnEnemyOf( CBaseEntity *pEnemy );
+
+	void			InputTurnOnEyeLight( inputdata_t &inputdata ) { m_bEyeLightEnabled = true; }
+	void			InputTurnOffEyeLight( inputdata_t &inputdata ) { m_bEyeLightEnabled = false; }
+
+	void			InputTurnOnLaser( inputdata_t &inputdata ) { m_bLaser = true; }
+	void			InputTurnOffLaser( inputdata_t &inputdata ) { m_bLaser = false; }
+
+	void			InputEnableSilently( inputdata_t &inputdata );
+
+	void			InputEnableRetire( inputdata_t &inputdata );
+	void			InputDisableRetire( inputdata_t &inputdata );
+
+	bool SpeakIfAllowed( const char *concept );
+	bool SpeakIfAllowed( const char *concept, AI_CriteriaSet &modifiers );
+	void ModifyOrAppendCriteria( AI_CriteriaSet& set );
+
+	virtual CAI_Expresser *CreateExpresser( void );
+	virtual CAI_Expresser *GetExpresser() { return m_pExpresser; }
+	virtual void		PostConstructor( const char *szClassname );
+
+	bool IsPlayerAlly() { return m_iTurretType == TURRET_TYPE_ALLY; }
+
+protected:
+
+	virtual void	SetEyeState( eyeState_t state );
+	virtual bool	PreThink( turretState_e state );
+
+	virtual void	TippedThink( void );
+	virtual void	InactiveThink( void );
+
+	virtual void	RetireRestrictedThink( void );
+
+	void	UpdateLaser();
+
+	void	DryFire( void );
+
+	float	GetRange() { return m_flRange; }
+
+private:
+	CAI_Expresser *m_pExpresser;
+
+	turretState_e m_iCurrentState;
+
+	bool	m_bCanRetire;
+
+	enum TurretType_t
+	{
+		TURRET_TYPE_NORMAL,
+		TURRET_TYPE_BEAST,
+		TURRET_TYPE_ALLY,
+	};
+
+	TurretType_t	m_iTurretType;
+
+	bool	m_bStatic;
+
+	CNetworkVar( float, m_flRange );
+	CNetworkVar( float, m_flFOV );
+
+	// Enables a projected texture spotlight on the client.
+	CNetworkVar( bool, m_bEyeLightEnabled );
+	CNetworkVar( int, m_iEyeLightBrightness );
+
+	bool	m_bUseLaser;
+	CNetworkVar( bool, m_bLaser );
+
+	CNetworkVar( bool, m_bGooTurret );
+
+	CNetworkVar( bool, m_bCitizenTurret );
+
+	// Client needs to know for ropes
+	CNetworkVar( bool, m_bClosedIdle );
+};
+#endif
 
 #endif //#ifndef NPC_TURRET_FLOOR_H

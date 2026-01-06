@@ -14,6 +14,19 @@
 #include "hl2_playerlocaldata.h"
 #include "simtimer.h"
 #include "soundenvelope.h"
+#ifdef EZ
+#include "ai_basenpc.h"
+#include "ai_condition.h"
+#include "ai_npcstate.h"
+#include "ai_squad.h"
+#endif
+
+// In HL2MP we need to inherit from  BaseMultiplayerPlayer!
+#if defined ( HL2MP )
+#include "basemultiplayerplayer.h"
+#elif defined ( MAPBASE )
+#include "mapbase/singleplayer_animstate.h"
+#endif
 
 class CAI_Squad;
 class CPropCombineBall;
@@ -70,15 +83,29 @@ public:
 		else
 			return m_flDrainRate; 
 	}
+#ifdef MAPBASE
+	void	SetDeviceDrainRate( float flDrainRate ) { m_flDrainRate = flDrainRate; }
+#endif
 };
 
 //=============================================================================
 // >> HL2_PLAYER
 //=============================================================================
+#if defined ( HL2MP )
+class CHL2_Player : public CBaseMultiplayerPlayer
+#else
 class CHL2_Player : public CBasePlayer
+#endif
 {
 public:
+#if defined ( HL2MP )
+	DECLARE_CLASS( CHL2_Player, CBaseMultiplayerPlayer );
+#else
 	DECLARE_CLASS( CHL2_Player, CBasePlayer );
+#endif
+#ifdef MAPBASE_VSCRIPT
+	DECLARE_ENT_SCRIPTDESC();
+#endif
 
 	CHL2_Player();
 	~CHL2_Player( void );
@@ -100,12 +127,32 @@ public:
 	virtual void		CheatImpulseCommands( int iImpulse );
 	virtual void		PlayerRunCommand( CUserCmd *ucmd, IMoveHelper *moveHelper);
 	virtual void		PlayerUse ( void );
+#ifdef EZ
+	virtual void		OnUseEntity( CBaseEntity *pEntity ) {}
+#endif
 	virtual void		SuspendUse( float flDuration ) { m_flTimeUseSuspended = gpGlobals->curtime + flDuration; }
 	virtual void		UpdateClientData( void );
 	virtual void		OnRestore();
 	virtual void		StopLoopingSounds( void );
 	virtual void		Splash( void );
 	virtual void 		ModifyOrAppendPlayerCriteria( AI_CriteriaSet& set );
+
+#ifdef MAPBASE
+	// For the logic_playerproxy output
+	void				SpawnedAtPoint( CBaseEntity *pSpawnPoint );
+
+	Activity			Weapon_TranslateActivity( Activity baseAct, bool *pRequired = NULL );
+
+#ifdef SP_ANIM_STATE
+	void				SetAnimation( PLAYER_ANIM playerAnim );
+
+	void				AddAnimStateLayer( int iSequence, float flBlendIn = 0.0f, float flBlendOut = 0.0f, float flPlaybackRate = 1.0f, bool bHoldAtEnd = false, bool bOnlyWhenStill = false );
+#endif
+
+	virtual CStudioHdr*	OnNewModel();
+
+	virtual const char *GetOverrideStepSound( const char *pszBaseStepSoundName );
+#endif
 
 	void				DrawDebugGeometryOverlays(void);
 
@@ -139,6 +186,25 @@ public:
 	
 	void SetFlashlightEnabled( bool bState );
 
+#ifdef MAPBASE
+	// Needed for logic_playerproxy
+	float GetFlashlightBattery();
+#endif
+
+#ifdef EZ2
+	virtual void ApplyFlashlightColorCorrection( bool bColorCorrectionEnabled );
+
+	virtual void SetLegModel( string_t iszModel );
+
+	void		OnDropSatchel( CBaseEntity *pSatchel );
+	void		OnSetupTripmine( CBaseEntity *pTripmine );
+	void		OnSetupDetonatable( CBaseEntity *pDetonatable );
+	void		OnSatchelExploded( CBaseEntity *pSatchel, CBaseEntity *pAttacker );
+	void		OnTripmineExploded( CBaseEntity *pTripmine, CBaseEntity *pAttacker );
+	void		OnDetonatableExploded( CBaseEntity *pDetonatable, CBaseEntity *pAttacker );
+	void		OnDetonatableDisabled( CBaseEntity *pDetonatable );
+#endif
+
 	// Apply a battery
 	bool ApplyBattery( float powerMultiplier = 1.0 );
 
@@ -156,8 +222,27 @@ public:
 	bool CommanderFindGoal( commandgoal_t *pGoal );
 	void NotifyFriendsOfDamage( CBaseEntity *pAttackerEntity );
 	CAI_BaseNPC *GetSquadCommandRepresentative();
+#ifdef EZ
+	// Blixibon - Silent commandables follow orders, but don't count towards squad tallies
+	int GetNumSquadCommandables(bool bSilentMembers = false);
+#else
 	int GetNumSquadCommandables();
+#endif
 	int GetNumSquadCommandableMedics();
+#ifdef EZ2
+	inline CAI_Squad	*GetPlayerSquad() { return m_pPlayerAISquad; } // Blixibon - Needed for Bad Cop responses
+#endif
+
+#ifdef MAPBASE
+	void InputSquadForceSummon( inputdata_t &inputdata );
+	void InputSquadForceGoTo( inputdata_t &inputdata );
+
+	void InputEnableGeigerCounter( inputdata_t &inputdata );
+	void InputDisableGeigerCounter( inputdata_t &inputdata );
+
+	void InputShowSquadHUD( inputdata_t &inputdata );
+	void InputHideSquadHUD( inputdata_t &inputdata );
+#endif
 
 	// Locator
 	void UpdateLocatorPosition( const Vector &vecPosition );
@@ -170,7 +255,7 @@ public:
 	bool IsSprinting( void ) { return m_fIsSprinting; }
 	bool CanSprint( void );
 	void EnableSprint( bool bEnable);
-
+	
 	bool CanZoom( CBaseEntity *pRequester );
 	void ToggleZoom(void);
 	void StartZooming( void );
@@ -195,6 +280,19 @@ public:
 	void				InputEnableFlashlight( inputdata_t &inputdata );
 	void				InputDisableFlashlight( inputdata_t &inputdata );
 
+#ifdef MAPBASE
+	void				InputAddArmor( inputdata_t &inputdata );
+	void				InputRemoveArmor( inputdata_t &inputdata );
+	void				InputSetArmor( inputdata_t &inputdata );
+
+	void				InputAddAuxPower( inputdata_t &inputdata );
+	void				InputRemoveAuxPower( inputdata_t &inputdata );
+	void				InputSetAuxPower( inputdata_t &inputdata );
+
+	void				InputTurnFlashlightOn( inputdata_t &inputdata );
+	void				InputTurnFlashlightOff( inputdata_t &inputdata );
+#endif
+
 	const impactdamagetable_t &GetPhysicsImpactDamageTable();
 	virtual int			OnTakeDamage( const CTakeDamageInfo &info );
 	virtual int			OnTakeDamage_Alive( const CTakeDamageInfo &info );
@@ -209,6 +307,10 @@ public:
 	bool				ShouldKeepLockedAutoaimTarget( EHANDLE hLockedTarget );
 
 	void				SetLocatorTargetEntity( CBaseEntity *pEntity ) { m_hLocatorTargetEntity.Set( pEntity ); }
+
+#ifdef MAPBASE
+	virtual bool		CanAutoSwitchToNextBestWeapon( CBaseCombatWeapon *pWeapon );
+#endif
 
 	virtual int			GiveAmmo( int nCount, int nAmmoIndex, bool bSuppressSound);
 	virtual bool		BumpWeapon( CBaseCombatWeapon *pWeapon );
@@ -241,6 +343,7 @@ public:
 	virtual	bool		IsHoldingEntity( CBaseEntity *pEnt );
 	virtual void		ForceDropOfCarriedPhysObjects( CBaseEntity *pOnlyIfHoldindThis );
 	virtual float		GetHeldObjectMass( IPhysicsObject *pHeldObject );
+	virtual CBaseEntity	*GetHeldObject( void );
 
 	virtual bool		IsFollowingPhysics( void ) { return (m_afPhysicsFlags & PFLAG_ONBARNACLE) > 0; }
 	void				InputForceDropPhysObjects( inputdata_t &data );
@@ -281,6 +384,13 @@ public:
 	// HUD HINTS
 	void DisplayLadderHudHint();
 
+#ifdef MAPBASE
+	void InitCustomSuitDevice( int iDeviceID, float flDrainRate );
+	void AddCustomSuitDevice( int iDeviceID );
+	void RemoveCustomSuitDevice( int iDeviceID );
+	bool IsCustomSuitDeviceActive( int iDeviceID );
+#endif
+
 	CSoundPatch *m_sndLeeches;
 	CSoundPatch *m_sndWaterSplashes;
 
@@ -294,10 +404,31 @@ protected:
 	virtual void		ItemPostFrame();
 	virtual void		PlayUseDenySound();
 
-private:
-	bool				CommanderExecuteOne( CAI_BaseNPC *pNpc, const commandgoal_t &goal, CAI_BaseNPC **Allies, int numAllies );
+#ifdef EZ2
+	virtual void		HandleKickAttack();
+	virtual void		TraceKick( trace_t &tr, const Vector &vecAim );
+	virtual void		TraceKickAttack( CBaseEntity* pKickedEntity = NULL );
+	virtual bool		TryRagdollKickedEnemy(CBaseEntity* pKickedEntity, trace_t* tr, CTakeDamageInfo* dmgInfo, CBaseEntity* pKickingEntity);
 
+	void  HandleKickAnimation( void );
+	void  StartKickAnimation( void );
+
+	virtual void HandleAnimEvent( animevent_t *pEvent );
+#endif
+
+#ifndef EZ
+private:
 	void				OnSquadMemberKilled( inputdata_t &data );
+#else
+	virtual void		CreateSquadMarker( commandgoal_t &goal );
+	virtual void		CleanUpSquadMarker( void ); // 1upD - remove squad marker if all squadmates are dead
+	virtual void		OnSquadMemberKilled( inputdata_t &data ); // 1upD - made protected and virtual so EZ2 player can override							
+#endif
+	virtual bool		CommanderExecuteOne( CAI_BaseNPC *pNpc, const commandgoal_t &goal, CAI_BaseNPC **Allies, int numAllies ); // 1upD - made protected and virtual so EZ2 player can override
+#ifdef EZ
+private:
+	void				helperFireSquadCommandOuput( const char * outputName,CAI_BaseNPC ** Allies ); // 1upD - fire player proxy output for squad control changes
+#endif
 
 	Class_T				m_nControlClass;			// Class when player is controlling another entity
 	// This player's HL2 specific data that should only be replicated to 
@@ -322,6 +453,15 @@ private:
 	CSimpleSimTimer		m_CommanderUpdateTimer;
 	float				m_RealTimeLastSquadCommand;
 	CommanderCommand_t	m_QueuedCommand;
+#ifdef EZ
+	EHANDLE				m_hCommandPointProp;
+#endif
+
+#ifdef EZ2
+	CUtlVector<CBaseEntity*>	m_hActiveSatchels;
+	CUtlVector<CBaseEntity*>	m_hActiveTripmines;
+	CUtlVector<CBaseEntity*>	m_hActiveDetonatables;
+#endif
 
 	Vector				m_vecMissPositions[16];
 	int					m_nNumMissPositions;
@@ -335,6 +475,16 @@ private:
 
 	float				m_flNextFlashlightCheckTime;
 	float				m_flFlashlightPowerDrainScale;
+
+#ifdef EZ2
+	EHANDLE				m_hFlashlightColorCorrection;
+	bool				m_bHandledColorCorrection; // NOT saved - this tells us that within this session, CC hasn't been cleaned up yet
+
+	float				m_flNextKickAttack;
+	bool				m_bKickWeaponLowered;
+
+	string_t		    m_LegModelName;
+#endif
 
 	// Aiming heuristics code
 	float				m_flIdleTime;		//Amount of time we've been motionless
@@ -362,6 +512,14 @@ private:
 	float				m_flTimeNextLadderHint;	// Next time we're eligible to display a HUD hint about a ladder.
 	
 	friend class CHL2GameMovement;
+
+#ifdef SP_ANIM_STATE
+	CSinglePlayerAnimState* m_pPlayerAnimState;
+
+	// At the moment, we network the render angles since almost none of the player anim stuff is done on the client in SP.
+	// If any of this is ever adapted for MP, this method should be replaced with replicating/moving the anim state to the client.
+	CNetworkVar( float, m_flAnimRenderYaw );
+#endif
 };
 
 
@@ -380,5 +538,62 @@ void CHL2_Player::DisableCappedPhysicsDamage()
 	m_bUseCappedPhysicsDamageTable = false;
 }
 
+#ifdef EZ
+//-----------------------------------------------------------------------------
+// Purpose: Special template class for minor Combine units like manhacks to serve as "silent" squad members
+// which follow orders, but don't count towards squad tallies and prioritize non-silent members like soldiers.
+// 
+// This is intended to be a temporary location for this class until something more dedicated comes along.
+// 
+// Created by Blixibon.
+//-----------------------------------------------------------------------------
+template <class BASE_NPC>
+class CAI_SilentSquadMember : public BASE_NPC
+{
+public:
+	// This should probably still be overridden
+	virtual bool	IsCommandable() { return true; }
+
+	virtual bool	IsSilentCommandable() { return true; }
+
+	virtual bool TargetOrder( CBaseEntity *pTarget, CAI_BaseNPC **Allies, int numAllies ) { this->OnTargetOrder(); this->ClearCommandGoal(); this->ClearCondition( COND_RECEIVED_ORDERS ); return true; }
+
+	virtual CAI_BaseNPC *GetSquadCommandRepresentative()
+	{
+		// Look through the squad and find the first member that isn't silent
+		if ( this->m_pSquad )
+		{
+			AISquadIter_t iter;
+			CAI_BaseNPC *pSquadmate = this->m_pSquad->GetFirstMember( &iter );
+			while ( pSquadmate )
+			{
+				if ( pSquadmate->IsCommandable() && !pSquadmate->IsSilentCommandable() )
+					return pSquadmate->GetSquadCommandRepresentative();
+
+				pSquadmate = this->m_pSquad->GetNextMember( &iter );
+			}
+		}
+
+		// Well, if we can't find a non-silent squadmate, Bad Cop must be stuck with us.
+		// (lets Bad Cop order silent members without needing fully-fledged members)
+		return this;
+	}
+
+	// Override with commander interrupt conditions
+	virtual bool CanOrdersInterrupt() { return this->GetState() != NPC_STATE_COMBAT; }
+
+	void BuildScheduleTestBits( void )
+	{
+		BASE_NPC::BuildScheduleTestBits();
+
+		if ( this->CanOrdersInterrupt() )
+		{
+			this->SetCustomInterruptCondition( COND_RECEIVED_ORDERS );
+		}
+	}
+
+	bool HaveCommandGoal() const { return this->GetCommandGoal() != vec3_invalid; }
+};
+#endif
 
 #endif	//HL2_PLAYER_H

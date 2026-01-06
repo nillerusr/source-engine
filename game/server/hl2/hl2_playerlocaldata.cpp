@@ -32,6 +32,11 @@ BEGIN_SEND_TABLE_NOBASE( CHL2PlayerLocalData, DT_HL2Local )
 	SendPropFloat( SENDINFO(m_flFlashBattery) ),
 	SendPropVector( SENDINFO(m_vecLocatorOrigin) ),
 #endif
+#ifdef EZ2
+	SendPropInt( SENDINFO( m_iSatchelCount ) ),
+	SendPropInt( SENDINFO( m_iTripmineCount ) ),
+	SendPropInt( SENDINFO( m_iDetonatableCount ) ),
+#endif
 END_SEND_TABLE()
 
 BEGIN_SIMPLE_DATADESC( CHL2PlayerLocalData )
@@ -47,6 +52,11 @@ BEGIN_SIMPLE_DATADESC( CHL2PlayerLocalData )
 #ifdef HL2_EPISODIC
 	DEFINE_FIELD( m_flFlashBattery, FIELD_FLOAT ),
 	DEFINE_FIELD( m_vecLocatorOrigin, FIELD_POSITION_VECTOR ),
+#endif
+#ifdef EZ2
+	DEFINE_FIELD( m_iSatchelCount, FIELD_INTEGER ),
+	DEFINE_FIELD( m_iTripmineCount, FIELD_INTEGER ),
+	DEFINE_FIELD( m_iDetonatableCount, FIELD_INTEGER ),
 #endif
 	// Ladder related stuff
 	DEFINE_FIELD( m_hLadder, FIELD_EHANDLE ),

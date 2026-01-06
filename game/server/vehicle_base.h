@@ -109,6 +109,12 @@ public:
 	void InputHandBrakeOff( inputdata_t &inputdata );
 
 	DECLARE_DATADESC();
+#ifdef MAPBASE_VSCRIPT
+	DECLARE_ENT_SCRIPTDESC();
+
+	HSCRIPT	ScriptGetPhysics();
+	int		ScriptGetVehicleType() { return GetVehicleType(); }
+#endif
 
 #ifdef HL2_EPISODIC
 	void AddPhysicsChild( CBaseEntity *pChild );
@@ -166,6 +172,9 @@ class CPropVehicleDriveable : public CPropVehicle, public IDrivableVehicle, publ
 	DECLARE_CLASS( CPropVehicleDriveable, CPropVehicle );
 	DECLARE_SERVERCLASS();
 	DECLARE_DATADESC();
+#ifdef MAPBASE_VSCRIPT
+	DECLARE_ENT_SCRIPTDESC();
+#endif
 public:
 	CPropVehicleDriveable( void );
 	~CPropVehicleDriveable( void );
@@ -192,6 +201,12 @@ public:
 	void	InputUnlock( inputdata_t &inputdata );
 	void	InputTurnOn( inputdata_t &inputdata );
 	void	InputTurnOff( inputdata_t &inputdata );
+#ifdef MAPBASE
+	virtual void	InputEnterVehicle( inputdata_t &inputdata );
+	virtual void	InputEnterVehicleImmediate( inputdata_t &inputdata );
+	virtual void	InputExitVehicle( inputdata_t &inputdata );
+	virtual void	InputExitVehicleImmediate( inputdata_t &inputdata );
+#endif
 
 	// Locals
 	void	ResetUseKey( CBasePlayer *pPlayer );
@@ -232,6 +247,14 @@ public:
 	// If this is a vehicle, returns the vehicle interface
 	virtual IServerVehicle *GetServerVehicle() { return m_pServerVehicle; }
 
+#ifdef MAPBASE_VSCRIPT
+	HSCRIPT		ScriptGetDriver() { return ToHScript( GetDriver() ); }
+#endif
+
+#ifdef EZ
+	virtual bool	IsDisplacementImpossible();
+#endif
+
 protected:
 
 	virtual bool	ShouldThink() { return ( GetDriver() != NULL ); }
@@ -250,6 +273,10 @@ protected:
 
 	COutputFloat		m_attackaxis;
 	COutputFloat		m_attack2axis;
+
+#ifdef MAPBASE
+	COutputEvent		m_OnPlayerUse;
+#endif
 
 	CNetworkHandle( CBasePlayer, m_hPlayer );
 public:

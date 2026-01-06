@@ -55,10 +55,19 @@ ConVar player_limit_jump_speed( "player_limit_jump_speed", "1", FCVAR_REPLICATED
 // duck controls. Its value is meaningless anytime we don't have the options window open.
 ConVar option_duck_method("option_duck_method", "1", FCVAR_REPLICATED|FCVAR_ARCHIVE );// 0 = HOLD to duck, 1 = Duck is a toggle
 
+#ifdef MAPBASE
+ConVar player_crouch_multiplier( "player_crouch_multiplier", "0.33333333", FCVAR_NONE );
+#endif
+
 #ifdef STAGING_ONLY
 #ifdef CLIENT_DLL
 ConVar debug_latch_reset_onduck( "debug_latch_reset_onduck", "1", FCVAR_CHEAT );
 #endif
+#endif
+
+#ifdef STEAM_INPUT
+ConVar player_x360_crouch_friction( "player_x360_crouch_friction", "0" );
+ConVar player_x360_crouch_hints( "player_x360_crouch_hints", "0" );
 #endif
 
 // [MD] I'll remove this eventually. For now, I want the ability to A/B the optimizations.
@@ -1638,7 +1647,11 @@ void CGameMovement::Friction( void )
 		// Bleed off some speed, but if we have less than the bleed
 		//  threshold, bleed the threshold amount.
 
+#ifdef STEAM_INPUT
+		if ( IsX360() || player_x360_crouch_friction.GetBool() )
+#else
 		if ( IsX360() )
+#endif
 		{
 			if( player->m_Local.m_bDucked )
 			{
@@ -2840,9 +2853,12 @@ inline bool CGameMovement::OnLadder( trace_t &trace )
 // HPE_BEGIN
 // [sbodenbender] make ladders easier to climb in cstrike
 //=============================================================================
-#if defined (CSTRIKE_DLL)
+#if defined (CSTRIKE_DLL) || defined(HL2_USES_FUNC_LADDER_CODE)
 ConVar sv_ladder_dampen ( "sv_ladder_dampen", "0.2", FCVAR_REPLICATED, "Amount to dampen perpendicular movement on a ladder", true, 0.0f, true, 1.0f );
 ConVar sv_ladder_angle( "sv_ladder_angle", "-0.707", FCVAR_REPLICATED, "Cos of angle of incidence to ladder perpendicular for applying ladder_dampen", true, -1.0f, true, 1.0f );
+#endif
+#ifdef STEAM_INPUT
+ConVar sv_ladder_use_movespeeds( "sv_ladder_use_movespeeds", "1", FCVAR_REPLICATED );
 #endif
 //=============================================================================
 // HPE_END
@@ -2919,6 +2935,14 @@ bool CGameMovement::LadderMove( void )
 	float climbSpeed = ClimbSpeed();
 
 	float forwardSpeed = 0, rightSpeed = 0;
+#ifdef STEAM_INPUT
+	if (sv_ladder_use_movespeeds.GetBool())
+	{
+		forwardSpeed = clamp( mv->m_flForwardMove, -MAX_CLIMB_SPEED, MAX_CLIMB_SPEED );
+		rightSpeed = clamp( mv->m_flSideMove, -MAX_CLIMB_SPEED, MAX_CLIMB_SPEED );
+	}
+	else
+#endif
 	if ( mv->m_nButtons & IN_BACK )
 		forwardSpeed -= climbSpeed;
 	
@@ -3902,12 +3926,24 @@ void CGameMovement::CheckFalling( void )
 	if ( player->GetGroundEntity() == NULL || player->m_Local.m_flFallVelocity <= 0 )
 		return;
 
+#ifdef MAPBASE
+	if ( player->m_bInTriggerFall )
+	{
+		// This value lets the existing fall damage functions ensure a fatal fall.
+		player->m_Local.m_flFallVelocity += (PLAYER_FATAL_FALL_SPEED + PLAYER_LAND_ON_FLOATING_OBJECT);
+	}
+#endif
+
 	if ( !IsDead() && player->m_Local.m_flFallVelocity >= PLAYER_FALL_PUNCH_THRESHOLD )
 	{
 		bool bAlive = true;
 		float fvol = 0.5;
 
+#ifdef MAPBASE
+		if ( player->GetWaterLevel() > 0 && !player->m_bInTriggerFall )
+#else
 		if ( player->GetWaterLevel() > 0 )
+#endif
 		{
 			// They landed in water.
 		}
@@ -4292,7 +4328,8 @@ void CGameMovement::HandleDuckingSpeedCrop( void )
 {
 	if ( !( m_iSpeedCropped & SPEED_CROPPED_DUCK ) && ( player->GetFlags() & FL_DUCKING ) && ( player->GetGroundEntity() != NULL ) )
 	{
-		float frac = 0.33333333f;
+		// Mapbase makes this an adjustable convar
+		float frac = player_crouch_multiplier.GetFloat();
 		mv->m_flForwardMove	*= frac;
 		mv->m_flSideMove	*= frac;
 		mv->m_flUpMove		*= frac;
@@ -4366,7 +4403,11 @@ void CGameMovement::Duck( void )
 		{
 // XBOX SERVER ONLY
 #if !defined(CLIENT_DLL)
+#ifdef STEAM_INPUT
+			if ( (IsX360() || player_x360_crouch_hints.GetBool()) && buttonsPressed & IN_DUCK )
+#else
 			if ( IsX360() && buttonsPressed & IN_DUCK )
+#endif
 			{
 				// Hinting logic
 				if ( player->GetToggledDuckState() && player->m_nNumCrouches < NUM_CROUCH_HINTS )

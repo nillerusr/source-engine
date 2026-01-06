@@ -22,6 +22,15 @@
 #include "ai_behavior_passenger_companion.h"
 #endif
 
+#ifdef MAPBASE
+#include "ai_behavior_functank.h"
+#include "mapbase/ai_grenade.h"
+#endif
+
+#ifdef EZ2
+#include "ez2/ai_behavior_surrender.h"
+#endif
+
 #if defined( _WIN32 )
 #pragma once
 #endif
@@ -85,17 +94,29 @@ public:
 
 class CPhysicsProp;
 
+#ifdef MAPBASE
+// If you think about it, this is really unnecessary.
+//#define COMPANION_MELEE_ATTACK 1
+#endif
+
 //-----------------------------------------------------------------------------
 //
 // CLASS: CNPC_PlayerCompanion
 //
 //-----------------------------------------------------------------------------
-
+#ifdef MAPBASE
+class CNPC_PlayerCompanion : public CAI_GrenadeUser<CAI_PlayerAlly>
+{
+	DECLARE_CLASS( CNPC_PlayerCompanion, CAI_GrenadeUser<CAI_PlayerAlly> );
+#else
 class CNPC_PlayerCompanion : public CAI_PlayerAlly
 {
 	DECLARE_CLASS( CNPC_PlayerCompanion, CAI_PlayerAlly );
-
+#endif
 public:
+
+	CNPC_PlayerCompanion();
+
 	//---------------------------------
 	bool			CreateBehaviors();
 	void			Precache();
@@ -133,6 +154,10 @@ public:
 	virtual int 	SelectScheduleCombat();
 	int 			SelectSchedulePlayerPush();
 
+#ifdef EZ
+	virtual int		SelectRangeAttack2Schedule();
+#endif
+
 	virtual bool	CanReload( void );
 
 	virtual bool	ShouldDeferToFollowBehavior();
@@ -147,6 +172,7 @@ public:
 	
 	Activity		TranslateActivityReadiness( Activity activity );
 	Activity		NPC_TranslateActivity( Activity eNewActivity );
+	void			OnChangeActivity( Activity eNewActivity );
 	void 			HandleAnimEvent( animevent_t *pEvent );
 	bool			HandleInteraction(int interactionType, void *data, CBaseCombatCharacter* sourceEnt);
 
@@ -189,7 +215,9 @@ public:
 
 	virtual			void ReadinessLevelChanged( int iPriorLevel ) { 	}
 
+#ifndef MAPBASE
 	void			InputGiveWeapon( inputdata_t &inputdata );
+#endif
 
 #ifdef HL2_EPISODIC
 	//---------------------------------
@@ -217,6 +245,15 @@ public:
 public:
 
 	virtual void	OnPlayerKilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &info );
+#ifdef MAPBASE
+	// This is just here to overwrite ai_playerally's TLK_ENEMY_DEAD
+	virtual void	OnKilledNPC(CBaseCombatCharacter *pKilled) {}
+
+	virtual void	Event_Killed( const CTakeDamageInfo &info );
+	virtual void	Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &info );
+	virtual void	EnemyIgnited( CAI_BaseNPC *pVictim );
+	virtual void	DoCustomCombatAI( void );
+#endif
 
 	//---------------------------------
 	//---------------------------------
@@ -255,7 +292,15 @@ public:
 	bool			ShouldLookForBetterWeapon();
 	bool			Weapon_CanUse( CBaseCombatWeapon *pWeapon );
 	void			Weapon_Equip( CBaseCombatWeapon *pWeapon );
+#ifdef MAPBASE
+	bool			DoUnholster( void );
+#endif
 	void			PickupWeapon( CBaseCombatWeapon *pWeapon );
+
+#if COMPANION_MELEE_ATTACK
+	bool			KeyValue( const char *szKeyName, const char *szValue );
+	int				MeleeAttack1Conditions( float flDot, float flDist );
+#endif
 	
 	bool 			FindCoverPos( CBaseEntity *pEntity, Vector *pResult);
 	bool			FindCoverPosInRadius( CBaseEntity *pEntity, const Vector &goalPos, float coverRadius, Vector *pResult );
@@ -269,7 +314,9 @@ public:
 	static bool		IsSniper( CBaseEntity *pEntity );
 	static bool		IsTurret(  CBaseEntity *pEntity );
 	static bool		IsGunship( CBaseEntity *pEntity );
-	
+#ifdef EZ
+	virtual bool		UseAttackSquadSlots() { return !IsCommandable(); } // All non-commandable "companions" should use attack squad slots
+#endif
 	//---------------------------------
 	// Damage handling
 	//---------------------------------
@@ -288,9 +335,16 @@ public:
 	bool 			ValidateNavGoal();
 	bool 			OverrideMove( float flInterval );				// Override to take total control of movement (return true if done so)
 	bool			MovementCost( int moveType, const Vector &vecStart, const Vector &vecEnd, float *pCost );
+#ifdef EZ2
+	virtual float	HintCost( int iHint, float dist, Vector &vecEnd );
+#endif
 	float			GetIdealSpeed() const;
 	float			GetIdealAccel() const;
 	bool			OnObstructionPreSteer( AILocalMoveGoal_t *pMoveGoal, float distClear, AIMoveResult_t *pResult );
+#ifdef EZ
+	bool			IsJumpLegal(const Vector &startPos, const Vector &apex, const Vector &endPos, float maxUp, float maxDown, float maxDist) const; // For inheritance reasons, need to pass this through to base class
+	bool			IsJumpLegal(const Vector & startPos, const Vector & apex, const Vector & endPos) const; // Added by 1upD - all 'player companions' should be able to jump
+#endif
 
 	//---------------------------------
 	// Inputs
@@ -307,6 +361,21 @@ public:
 #endif
 
 	bool			AllowReadinessValueChange( void );
+
+#ifdef MAPBASE
+	virtual bool IsAltFireCapable() { return (m_iGrenadeCapabilities & GRENCAP_ALTFIRE) != 0 && BaseClass::IsAltFireCapable(); }
+	virtual bool IsGrenadeCapable() { return (m_iGrenadeCapabilities & GRENCAP_GRENADE) != 0; }
+
+	virtual bool	ShouldDropGrenades() { return (m_iGrenadeDropCapabilities & GRENDROPCAP_GRENADE) != 0 && BaseClass::ShouldDropGrenades(); }
+	virtual bool	ShouldDropInterruptedGrenades() { return (m_iGrenadeDropCapabilities & GRENDROPCAP_INTERRUPTED) != 0 && BaseClass::ShouldDropInterruptedGrenades(); }
+	virtual bool	ShouldDropAltFire() { return (m_iGrenadeDropCapabilities & GRENDROPCAP_ALTFIRE) != 0 && BaseClass::ShouldDropAltFire(); }
+
+private:
+
+	// Determines whether this NPC is allowed to use grenades or alt-fire stuff.
+	eGrenadeCapabilities m_iGrenadeCapabilities;
+	eGrenadeDropCapabilities m_iGrenadeDropCapabilities;
+#endif
 
 protected:
 	//-----------------------------------------------------
@@ -326,11 +395,29 @@ protected:
 		SCHED_PC_FAIL_TAKE_COVER_TURRET,
 		SCHED_PC_FAKEOUT_MORTAR,
 		SCHED_PC_GET_OFF_COMPANION,
+#ifdef COMPANION_MELEE_ATTACK
+		SCHED_PC_MELEE_AND_MOVE_AWAY,
+#endif
+#ifdef MAPBASE
+		SCHED_PC_AR2_ALTFIRE,
+		SCHED_PC_MOVE_TO_FORCED_GREN_LOS,
+		SCHED_PC_FORCED_GRENADE_THROW,
+		SCHED_PC_RANGE_ATTACK2,		// Grenade throw
+#endif
 		NEXT_SCHEDULE,
 
 		TASK_PC_WAITOUT_MORTAR = BaseClass::NEXT_TASK,
 		TASK_PC_GET_PATH_OFF_COMPANION,
+#ifdef MAPBASE
+		TASK_PC_PLAY_SEQUENCE_FACE_ALTFIRE_TARGET,
+		TASK_PC_GET_PATH_TO_FORCED_GREN_LOS,
+		TASK_PC_DEFER_SQUAD_GRENADES,
+		TASK_PC_FACE_TOSS_DIR,
+#endif
 		NEXT_TASK,
+
+		AE_PC_MELEE = LAST_SHARED_ANIMEVENT
+
 	};
 
 private:
@@ -354,6 +441,10 @@ private:
 
 	CSimpleSimTimer		m_FakeOutMortarTimer;
 
+#ifdef EZ
+// In EZ, soldiers need to access GetExpresser()
+protected:
+#endif
 	// Derived classes should not use the expresser directly
 	virtual CAI_Expresser *GetExpresser()	{ return BaseClass::GetExpresser(); }
 
@@ -361,6 +452,10 @@ protected:
 	//-----------------------------------------------------
 
 	virtual CAI_FollowBehavior &GetFollowBehavior( void ) { return m_FollowBehavior; }
+	virtual CAI_StandoffBehavior &GetStandoffBehavior( void ) { return m_StandoffBehavior; } // Blixibon - Added because soldiers have their own special standoff behavior
+#ifdef EZ2
+	virtual CAI_SurrenderBehavior &GetSurrenderBehavior( void ) { return m_SurrenderBehavior; }
+#endif
 
 	CAI_AssaultBehavior				m_AssaultBehavior;
 	CAI_FollowBehavior				m_FollowBehavior;
@@ -371,6 +466,12 @@ protected:
 	CAI_OperatorBehavior			m_OperatorBehavior;
 	CAI_PassengerBehaviorCompanion	m_PassengerBehavior;
 	CAI_FearBehavior				m_FearBehavior;
+#endif
+#ifdef MAPBASE
+	CAI_FuncTankBehavior			m_FuncTankBehavior;
+#endif
+#ifdef EZ2
+	CAI_SurrenderBehavior			m_SurrenderBehavior;
 #endif
 	//-----------------------------------------------------
 
@@ -406,11 +507,25 @@ protected:
 
 	//-----------------------------------------------------
 
+#ifdef MAPBASE
+	static string_t gm_iszMortarClassname;
+	#define gm_iszFloorTurretClassname gm_isz_class_FloorTurret
+	static string_t gm_iszGroundTurretClassname;
+	#define gm_iszShotgunClassname gm_isz_class_Shotgun
+	#define gm_iszRollerMineClassname gm_isz_class_Rollermine
+	#define gm_iszSMG1Classname gm_isz_class_SMG1
+	#define gm_iszAR2Classname gm_isz_class_AR2
+#else
 	static string_t gm_iszMortarClassname;
 	static string_t gm_iszFloorTurretClassname;
 	static string_t gm_iszGroundTurretClassname;
 	static string_t gm_iszShotgunClassname;
 	static string_t	gm_iszRollerMineClassname;
+#ifdef MAPBASE
+	static string_t gm_iszSMG1Classname;
+	static string_t gm_iszAR2Classname;
+#endif
+#endif
 
 	//-----------------------------------------------------
 
@@ -424,11 +539,29 @@ protected:
 
 	COutputEvent	m_OnWeaponPickup;
 
+#if COMPANION_MELEE_ATTACK
+	int		m_nMeleeDamage;
+#endif
+
 	CStopwatch		m_SpeechWatch_PlayerLooking;
 
 	DECLARE_DATADESC();
 	DEFINE_CUSTOM_AI;
 };
+
+#ifdef EZ
+//-----------------------------------------------------------------------------
+// Blixibon - Moved to CNPC_PlayerCompanion so soldiers can use it
+//-----------------------------------------------------------------------------
+struct SquadMemberInfo_t
+{
+	CNPC_PlayerCompanion *pMember;
+	bool			bSeesPlayer;
+	float			distSq;
+};
+
+int __cdecl SquadSortFunc( const SquadMemberInfo_t *pLeft, const SquadMemberInfo_t *pRight );
+#endif
 
 // Used for quick override move searches against certain types of entities
 void OverrideMoveCache_ForceRepopulateList( void );

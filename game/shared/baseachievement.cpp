@@ -15,6 +15,13 @@
 #include "gamestats.h"
 #endif // CLIENT_DLL
 
+#ifdef EZ
+#ifdef GAME_DLL
+#include "ai_squad.h"
+#include "ai_basenpc.h"
+#endif
+#endif
+
 //=============================================================================
 // HPE_BEGIN
 // [dwenger] Necessary for sorting achievements by award time
@@ -192,6 +199,45 @@ void CBaseAchievement::Event_EntityKilled( CBaseEntity *pVictim, CBaseEntity *pA
 	IncrementCount();
 }
 
+// By default, Xen grenade achievement events increment count by mass
+#ifdef EZ2
+void CBaseAchievement::Event_XenGrenade( float flMass, IGameEvent *event )
+{
+	// extra paranoid check: should only get here if registered as a kill event listener
+	Assert( GetFlags() & ACH_LISTEN_XENGRENADE_EVENTS );
+	if (!(GetFlags() & ACH_LISTEN_XENGRENADE_EVENTS))
+		return;
+
+	IncrementCount( flMass );
+
+	// We need to override the way notifications are handled because of the quantities involved
+	int iProgress = MAX(m_iCount / m_iProgressMsgIncrement, 1);
+	// if we haven't already shown this progress step, show it
+	if (iProgress > m_iProgressShown)
+	{
+		ShowProgressNotification();
+		// remember progress step shown so we don't show it again if the player loads an earlier save game
+		// and gets past this point again
+		m_iProgressShown = iProgress;
+		m_pAchievementMgr->SetDirty( true );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: called when a kick that passes filter critera occurs.  This
+//			is the default implementation, achievements can override to
+//			do special handling
+//-----------------------------------------------------------------------------
+void CBaseAchievement::Event_EntityKicked( CBaseEntity *pVictim, CBaseEntity *pAttacker, CBaseEntity *pInflictor, IGameEvent *event )
+{
+	Assert( GetFlags() & ACH_LISTEN_KICK_EVENTS );
+	if (!(GetFlags() & ACH_LISTEN_KICK_EVENTS))
+		return;
+
+	IncrementCount();
+}
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: called when an event that counts toward an achievement occurs
 //-----------------------------------------------------------------------------
@@ -275,6 +321,13 @@ void CBaseAchievement::SetShowOnHUD( bool bShow )
 
 void CBaseAchievement::HandleProgressUpdate()
 {
+#ifdef EZ2
+	if (cc_achievement_debug.GetInt())
+	{
+		DevMsg( "Handling progress update for %s: %d/%d/%d/%d\n", GetName(), m_iCount, m_iProgressMsgMinimum, m_iProgressMsgIncrement, m_iGoal );
+	}
+#endif
+
 	// which notification is this
 	int iProgress = -1;
 	if( m_iProgressMsgIncrement > 0 ) iProgress = m_iCount / m_iProgressMsgIncrement;
@@ -724,6 +777,79 @@ void CFailableAchievement::SetFailed()
 			Msg( "Achievement failed: %s (%s)\n", GetName(), GetName() );
 		}	
 	}	
+}
+
+#define PLAYER_SQUADNAME "player_squad"
+
+//-----------------------------------------------------------------------------
+// Purpose: called when a map event occurs to evaluate the squad
+//-----------------------------------------------------------------------------
+void CSquadAchievement::OnMapEvent( const char *pEventName )
+{
+#ifdef GAME_DLL
+	Assert( m_iFlags & ACH_LISTEN_MAP_EVENTS );
+
+	// if this is the evaluation event, see if we've failed or not
+	if (0 != Q_stricmp( pEventName, GetEvaluationEventName() ))
+		return;
+	
+	if (cc_achievement_debug.GetInt())
+	{
+		Msg( "Evaluating squad event: %s\n", GetName() );
+	}
+
+	CAI_Squad * pSquad = g_AI_SquadManager.FindSquad( AllocPooledString( PLAYER_SQUADNAME ) );
+
+	if (pSquad == NULL)
+		return;
+
+	if (cc_achievement_debug.GetInt())
+	{
+		Msg( "Found squad %s - Number of members: %i\n", pSquad->GetName(), pSquad->NumMembers() );
+	}
+
+	// First check the squad size
+	if (pSquad->NumMembers() < GetGoal())
+		return;
+
+	// If there is no filter, add the total squad size
+	if (!m_pSquadClassNameFilter)
+	{
+		if (cc_achievement_debug.GetInt())
+		{
+			Msg( "%s - No squad name filter set, so counting number of squadmates.\n", GetName() );
+		}
+
+		IncrementCount( pSquad->NumMembers() );
+		return;
+	}
+
+	// Loop over squad members and check the filter
+	AISquadIter_t iter;
+	int count = 0;
+	for (CAI_BaseNPC * pSquadMate = pSquad->GetFirstMember( &iter ); pSquadMate; pSquadMate = pSquad->GetNextMember( &iter ))
+	{
+		if (!pSquadMate->ClassMatches( m_pSquadClassNameFilter ))
+			continue;
+
+		count++;
+
+		if (cc_achievement_debug.GetInt())
+		{
+			Msg( "%s - Squad member %s matches filter.\n", GetName(), pSquadMate->GetDebugName() );
+		}
+	}
+
+	IncrementCount(count);
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: sets victim class to filter with
+//-----------------------------------------------------------------------------
+void CSquadAchievement::SetSquadFilter( const char *pClassName )
+{
+	m_pSquadClassNameFilter = pClassName;
 }
 
 //===========================================

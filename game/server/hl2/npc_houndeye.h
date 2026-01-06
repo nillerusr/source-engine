@@ -18,7 +18,9 @@
 
 #include	"ai_basenpc.h"
 
+#ifndef EZ
 #include	"energy_wave.h"
+#endif
 
 class CNPC_Houndeye : public CAI_BaseNPC
 {
@@ -57,8 +59,10 @@ public:
 	float			m_flNextSecondaryAttack;
 	bool			m_bLoopClockwise;
 
+#ifndef EZ
 	CEnergyWave*	m_pEnergyWave;
 	float			m_flEndEnergyWaveTime;
+#endif
 
 	bool			m_fAsleep;// some houndeyes sleep in idle mode if this is set, the houndeye is lying down
 	bool			m_fDontBlink;// don't try to open/close eye if this bit is set!

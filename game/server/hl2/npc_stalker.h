@@ -15,6 +15,9 @@
 #include "entityoutput.h"
 #include "ai_behavior.h"
 #include "ai_behavior_actbusy.h"
+#ifdef EZ2
+#include "ez2/npc_husk_base.h"
+#endif
 
 class CBeam;
 class CSprite;
@@ -22,7 +25,12 @@ class CScriptedTarget;
 
 typedef CAI_BehaviorHost<CAI_BaseNPC> CAI_BaseStalker;
 
+#ifdef EZ2
+// Stalkers use CAI_HuskSink to seamlessly integrate with husk squads
+class CNPC_Stalker : public CAI_BaseStalker, public CAI_HuskSink
+#else
 class CNPC_Stalker : public CAI_BaseStalker
+#endif
 {
 	DECLARE_CLASS( CNPC_Stalker, CAI_BaseStalker );
 
@@ -46,8 +54,18 @@ public:
 	float				m_bPlayingHitFlesh;
 	CBeam*				m_pBeam;
 	CSprite*			m_pLightGlow;
+#ifdef MAPBASE
+	// This is a keyvalue now, so we have to initialize the value through somewhere that isn't Spawn()
+	int					m_iPlayerAggression = 0;
+	bool				m_bBleed;
+#else
 	int					m_iPlayerAggression;
+#endif
 	float				m_flNextScreamTime;
+
+#ifdef MAPBASE
+	void				UpdateOnRemove( void );
+#endif
 
 	void				KillAttackBeam(void);
 	void				DrawAttackBeam(void);
@@ -97,11 +115,33 @@ public:
 	void			PainSound( const CTakeDamageInfo &info );
 
 	void			Event_Killed( const CTakeDamageInfo &info );
+#ifdef MAPBASE
+	void			TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr, CDmgAccumulator *pAccumulator );
+#endif
 	void			DoSmokeEffect( const Vector &position );
 
 	void			AddZigZagToPath(void);
 	void			StartAttackBeam();
 	void			UpdateAttackBeam();
+
+#ifdef EZ2
+	// Stalkers use CAI_HuskSink to seamlessly integrate with husk squads
+	const char *GetBaseNPCClassname() override { return "npc_stalker"; }
+	
+	int GetHuskAggressionLevel() override { return m_iPlayerAggression >= 1 ? HUSK_AGGRESSION_LEVEL_ANGRY : HUSK_AGGRESSION_LEVEL_CALM; }
+	int GetHuskCognitionFlags() override { return 0; }
+	
+	void MakeCalm( CBaseEntity *pActivator ) override { m_iPlayerAggression = 0; }
+	void MakeSuspicious( CBaseEntity *pActivator ) override { }
+	void MakeAngry( CBaseEntity *pActivator ) override { m_iPlayerAggression++; }
+	
+	bool IsSuspicious() override { return false; }
+	bool IsSuspiciousOrHigher() override { return IsAngry(); }
+	bool IsAngry() override { return m_iPlayerAggression >= 1; }
+
+	bool IsPassiveTarget( CBaseEntity *pTarget ) override { return false; };
+	bool IsHostileOverrideTarget( CBaseEntity *pTarget ) override { return false; };
+#endif
 
 	CNPC_Stalker(void);
 

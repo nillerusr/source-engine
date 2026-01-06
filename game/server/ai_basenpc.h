@@ -36,6 +36,7 @@
 #include "soundent.h"
 #include "ai_navigator.h"
 #include "tier1/functors.h"
+#include "Sprite.h"
 
 
 #define PLAYER_SQUADNAME "player_squad"
@@ -64,7 +65,9 @@ class CBaseGrenade;
 class CBaseDoor;
 class CBasePropDoor;
 struct AI_Waypoint_t;
+#ifndef NEW_RESPONSE_SYSTEM
 class AI_Response;
+#endif
 class CBaseFilter;
 
 typedef CBitVec<MAX_CONDITIONS> CAI_ScheduleBits;
@@ -94,6 +97,36 @@ extern bool AIStrongOpt( void );
 
 // Max's of the box used to search for a weapon to pick up. 45x45x~8 ft.
 #define WEAPON_SEARCH_DELTA	Vector( 540, 540, 100 )
+
+#ifdef MAPBASE
+// Defines Mapbase's extended NPC response system usage.
+#define EXPANDED_RESPONSE_SYSTEM_USAGE
+#endif
+
+#ifdef EXPANDED_RESPONSE_SYSTEM_USAGE
+
+// This macro implements the response system on any NPC, particularly non-actors that can't use CAI_ExpresserHost.
+// NOTE: Because of the lack of CAI_ExpresserHost, some Response System settings like odds, delays, etc. cannot be used.
+// It's recommended to just use CAI_ExpresserHost if possible.
+#define DeclareResponseSystem IResponseSystem *GetResponseSystem() { extern IResponseSystem *g_pResponseSystem; return g_pResponseSystem; }
+
+// Default CAI_ExpresserHost implementation for NPCs using CAI_ExpresserHost.
+#define DeclareDefaultExpresser() virtual CAI_Expresser *CreateExpresser( void ) { m_pExpresser = new CAI_Expresser(this); if (!m_pExpresser) return NULL; m_pExpresser->Connect(this); return m_pExpresser; } \\
+		virtual CAI_Expresser *GetExpresser() { return m_pExpresser;  } \\
+		virtual void		PostConstructor(const char *szClassname) { BaseClass::PostConstructor(szClassname); CreateExpresser(); } \\
+	private: \\
+		CAI_Expresser *m_pExpresser; \\
+	public:
+
+// Variant of DeclareDefaultExpresser() that doesn't implement its own PostConstructor.
+// CreateExpresser() should still be called from there.
+#define DeclareDefaultExpresser_ExistingPC() virtual CAI_Expresser *CreateExpresser( void ) { m_pExpresser = new CAI_Expresser(this); if (!m_pExpresser) return NULL; m_pExpresser->Connect(this); return m_pExpresser; } \\
+		virtual CAI_Expresser *GetExpresser() { return m_pExpresser;  } \\
+	private: \\
+		CAI_Expresser *m_pExpresser; \\
+	public:
+
+#endif
 
 enum Interruptability_t
 {
@@ -225,6 +258,7 @@ enum AI_SleepState_t
 	AISS_WAITING_FOR_INPUT,
 	AISS_AUTO_PVS,
 	AISS_AUTO_PVS_AFTER_PVS, // Same as AUTO_PVS, except doesn't activate until/unless the NPC is IN the player's PVS. 
+	AISS_IGNORE_INPUT
 };
 
 #define AI_SLEEP_FLAGS_NONE					0x00000000
@@ -316,6 +350,13 @@ struct UnreachableEnt_t
 #define SCNPC_FLAG_NEEDS_WEAPON_THEM			( 1 << 5 )
 #define SCNPC_FLAG_DONT_TELEPORT_AT_END_ME		( 1 << 6 )
 #define SCNPC_FLAG_DONT_TELEPORT_AT_END_THEM	( 1 << 7 )
+#ifdef MAPBASE
+#define SCNPC_FLAG_MAPBASE_ADDITION				( 1 << 8 )
+#define SCNPC_FLAG_TEST_END_POSITION            ( 1 << 9 )
+#endif
+// If Mapbase adds more flags for some reason, we'd have to bump this up to prevent conflicts.
+// That's not really a problem, but to prevent this, I'm starting E:Z2-specific flags at 16. No harm in it.
+#define SCNPC_FLAG_TEST_SQUADMATE_HEALTH		( 1 << 16 )
 
 // -----------------------------------------
 //	Scripted NPC interaction trigger methods
@@ -387,11 +428,26 @@ struct ScriptedNPCInteraction_t
 		flNextAttemptTime = 0;
 		iszMyWeapon = NULL_STRING;
 		iszTheirWeapon = NULL_STRING;
+#ifdef MAPBASE
+		vecRelativeEndPos = vec3_origin;
+		bHasSeparateSequenceNames = false;
+		flMaxAngleDiff = DSS_MAX_ANGLE_DIFF;
+		iszRelatedInteractions = NULL_STRING;
+		MiscCriteria = NULL_STRING;
+#endif
+
+		flHealthRatio = 0.0f;
+		vecRelativeEndPos = vec3_invalid;
+
 
 		for ( int i = 0; i < SNPCINT_NUM_PHASES; i++)
 		{
 			sPhases[i].iszSequence = NULL_STRING;
 			sPhases[i].iActivity = ACT_INVALID;
+#ifdef MAPBASE
+			sTheirPhases[i].iszSequence = NULL_STRING;
+			sTheirPhases[i].iActivity = ACT_INVALID;
+#endif
 		}
 	}
 
@@ -403,11 +459,16 @@ struct ScriptedNPCInteraction_t
 	Vector		vecRelativeOrigin;			// (forward, right, up)
 	QAngle		angRelativeAngles;				
 	Vector		vecRelativeVelocity;		// Desired relative velocity of the other NPC
+#ifdef MAPBASE
+	Vector		vecRelativeEndPos;			// Relative position that the NPC must fit in
+#endif
 	float		flDelay;					// Delay before interaction can be used again
 	float		flDistSqr;					// Max distance sqr from the relative origin the NPC is allowed to be to trigger
 	string_t	iszMyWeapon;				// Classname of the weapon I'm holding, if any
 	string_t	iszTheirWeapon;				// Classname of the weapon my interaction partner is holding, if any
 	ScriptedNPCInteraction_Phases_t sPhases[SNPCINT_NUM_PHASES];
+
+		float		flHealthRatio; // Added by 1upD / Blixibon
 
 	// These will be filled out for you in AddScriptedNPCInteraction
 	VMatrix		matDesiredLocalToWorld;		// Desired relative position / angles of the other NPC
@@ -415,7 +476,49 @@ struct ScriptedNPCInteraction_t
 
 	float		flNextAttemptTime;
 
+#ifdef MAPBASE
+	ScriptedNPCInteraction_Phases_t sTheirPhases[SNPCINT_NUM_PHASES];	// The animations played by the target NPC, if they are different
+	bool		bHasSeparateSequenceNames;
+
+	float		flMaxAngleDiff;
+	string_t	iszRelatedInteractions;	// These interactions will be delayed as well when this interaction is used.
+
+	// Unrecognized keyvalues which are tested against response criteria later.
+	string_t	MiscCriteria;
+#endif
+
 	DECLARE_SIMPLE_DATADESC();
+};
+
+// -----------------------------------------
+// Glow sprite data
+// -----------------------------------------
+struct EyeGlow_t
+{
+	EyeGlow_t() 
+	{
+		red = 0;
+		green = 0;
+		blue = 0;
+		scale = 0;
+		alpha = 0;
+		renderMode = kRenderTransAdd;
+		brightness = 0;
+		proxyScale = 0.0f;
+		spriteName = NULL_STRING;
+		attachment = NULL_STRING;
+	}
+
+	int red;
+	int green;
+	int blue;
+	int alpha;
+	RenderMode_t renderMode;
+	float brightness;
+	float scale;
+	float proxyScale;
+	string_t spriteName;
+	string_t attachment;
 };
 
 //=============================================================================
@@ -499,6 +602,9 @@ public:
 	
 	DECLARE_DATADESC();
 	DECLARE_SERVERCLASS();
+#ifdef MAPBASE_VSCRIPT
+	DECLARE_ENT_SCRIPTDESC();
+#endif
 
 	virtual int			Save( ISave &save ); 
 	virtual int			Restore( IRestore &restore );
@@ -510,6 +616,9 @@ public:
 	virtual unsigned int	PhysicsSolidMaskForEntity( void ) const;
 
 	virtual bool KeyValue( const char *szKeyName, const char *szValue );
+#ifdef MAPBASE
+	virtual bool GetKeyValue( const char *szKeyName, char *szValue, int iMaxLen );
+#endif
 
 	//---------------------------------
 	
@@ -565,6 +674,10 @@ public:
 	// Thinking, including core thinking, movement, animation
 	virtual void		NPCThink( void );
 
+#ifdef MAPBASE
+	void				InputSetThinkNPC( inputdata_t &inputdata );
+#endif
+
 	// Core thinking (schedules & tasks)
 	virtual void		RunAI( void );// core ai function!	
 
@@ -607,6 +720,7 @@ public:
 
 	virtual bool		ShouldAlwaysThink();
 	void				ForceGatherConditions()	{ m_bForceConditionsGather = true; SetEfficiency( AIE_NORMAL ); }	// Force an NPC out of PVS to call GatherConditions on next think
+	bool				IsForceGatherConditionsSet() { return m_bForceConditionsGather; }
 
 	virtual float		LineOfSightDist( const Vector &vecDir = vec3_invalid, float zEye = FLT_MAX );
 
@@ -777,6 +891,9 @@ protected: // pose parameters
 	int					m_poseAim_Pitch;
 	int					m_poseAim_Yaw;
 	int					m_poseMove_Yaw;
+#ifdef MAPBASE
+	int					m_poseInteractionRelativeYaw;
+#endif
 	virtual void		PopulatePoseParameters( void );
 
 public:
@@ -784,6 +901,10 @@ public:
 
 	// Return the stored pose parameter for "move_yaw"
 	inline int			LookupPoseMoveYaw()		{ return m_poseMove_Yaw; }
+
+#ifdef MAPBASE
+	inline int			LookupPoseInteractionRelativeYaw()	{ return m_poseInteractionRelativeYaw; }
+#endif
  
 
 	//-----------------------------------------------------
@@ -853,6 +974,11 @@ public:
 
 	bool				DidChooseEnemy() const			{ return !m_bSkippedChooseEnemy; }
 
+#ifdef MAPBASE
+	void				InputSetCondition( inputdata_t &inputdata );
+	void				InputClearCondition( inputdata_t &inputdata );
+#endif
+
 private:
 	CAI_ScheduleBits	m_Conditions;
 	CAI_ScheduleBits	m_CustomInterruptConditions;	//Bit string assembled by the schedule running, then 
@@ -895,8 +1021,12 @@ public:
 	void				RemoveSleepFlags( int flags ) { m_SleepFlags &= ~flags; }
 	bool				HasSleepFlags( int flags ) { return (m_SleepFlags & flags) == flags; }
 
-	void				UpdateSleepState( bool bInPVS );
+	virtual void		UpdateSleepState( bool bInPVS );
 	virtual	void		Wake( bool bFireOutput = true );
+#ifdef MAPBASE
+	// A version of Wake() that takes an activator
+	virtual	void		Wake( CBaseEntity *pActivator );
+#endif
 	void				Sleep();
 	bool				WokeThisTick() const;
 
@@ -926,10 +1056,19 @@ public:
 	
 	Activity			TranslateActivity( Activity idealActivity, Activity *pIdealWeaponActivity = NULL );
 	Activity			NPC_TranslateActivity( Activity eNewActivity );
+#ifdef MAPBASE
+	Activity			TranslateCrouchActivity( Activity baseAct );
+	virtual bool		CanTranslateCrouchActivity( void ) { return true; }
+	virtual Activity	NPC_BackupActivity( Activity eNewActivity );
+#endif
 	Activity			GetActivity( void ) { return m_Activity; }
 	virtual void		SetActivity( Activity NewActivity );
 	Activity			GetIdealActivity( void ) { return m_IdealActivity; }
 	void				SetIdealActivity( Activity NewActivity );
+#ifdef MAPBASE
+	Activity			GetTranslatedActivity( void ) { return m_translatedActivity; }
+	Activity			GetIdealTranslatedActivity( void ) { return m_IdealTranslatedActivity; }
+#endif
 	void				ResetIdealActivity( Activity newIdealActivity );
 	void				SetSequenceByName( const char *szSequence );
 	void				SetSequenceById( int iSequence );
@@ -946,6 +1085,25 @@ public:
 
 	void				SetActivityAndSequence(Activity NewActivity, int iSequence, Activity translatedActivity, Activity weaponActivity);
 
+#ifdef MAPBASE
+	//-----------------------------------------------------
+
+	// Returns the gesture variant of an activity (i.e. "ACT_GESTURE_RANGE_ATTACK1")
+	static Activity			GetGestureVersionOfActivity( Activity inActivity );
+
+	// Returns the sequence variant of a gesture activity
+	static Activity			GetSequenceVersionOfGesture( Activity inActivity );
+
+	//-----------------------------------------------------
+
+	virtual bool				ShouldPlayFakeSequenceGesture( Activity nActivity, Activity nTranslatedActivity );
+	virtual Activity			SelectFakeSequenceGesture( Activity nActivity, Activity nTranslatedActivity );
+	void				PlayFakeSequenceGesture( Activity nActivity, Activity nSequence, Activity nTranslatedSequence );
+
+	int					GetFakeSequenceGesture();
+	void				ResetFakeSequenceGesture();
+#endif
+
 private:
 
 	void				AdvanceToIdealActivity(void);
@@ -958,6 +1116,10 @@ private:
 	int					m_nIdealSequence;				// Desired animation sequence
 	Activity			m_IdealTranslatedActivity;		// Desired actual translated animation state
 	Activity			m_IdealWeaponActivity;			// Desired weapon animation state
+
+#ifdef MAPBASE
+	int					m_FakeSequenceGestureLayer;		// The gesture layer impersonating a sequence (-1 if invalid)
+#endif
 
 	CNetworkVar(int, m_iDeathPose );
 	CNetworkVar(int, m_iDeathFrame );
@@ -973,6 +1135,10 @@ public:
 	const CAI_Senses *	GetSenses() const	{ return m_pSenses; }
 	
 	void				SetDistLook( float flDistLook );
+#ifdef MAPBASE
+	void				InputSetDistLook( inputdata_t &inputdata );
+	void				InputSetDistTooFar( inputdata_t &inputdata );
+#endif
 
 	virtual bool		QueryHearSound( CSound *pSound );
 	virtual bool		QuerySeeEntity( CBaseEntity *pEntity, bool bOnlyHateOrFearIfNPC = false );
@@ -994,10 +1160,13 @@ public:
 	virtual float		HearingSensitivity( void )		{ return 1.0;	}
 	virtual bool		ShouldIgnoreSound( CSound * )	{ return false; }
 	bool				SoundIsVisible( CSound *pSound );
+	virtual bool		ShouldInvestigateSounds(void)	{ return m_bInvestigateSounds; }; // If true, this NPC will investigate sounds instead of facing them
 
 protected:
 	virtual void		ClearSenseConditions( void );
 	
+	bool				m_bInvestigateSounds;
+
 private:
 	void				LockBestSound();
 	void				UnlockBestSound();
@@ -1042,6 +1211,9 @@ public:
 	CBaseEntity *GetEnemyOccluder(void);
 
 	virtual void		StartTargetHandling( CBaseEntity *pTargetEnt );
+#ifdef MAPBASE
+	void				InputSetTarget( inputdata_t &inputdata );
+#endif
 
 	//---------------------------------
 	
@@ -1093,6 +1265,14 @@ public:
 	//
 	//-----------------------------------------------------
 	virtual bool IsCommandable()										{ return false; }
+#ifdef EZ
+	// Blixibon - Silent commandable NPCs follow move orders, but don't count towards squad tallies.
+	// For insignificant NPCs like rollermines or manhacks that the system shouldn't confuse with soldiers.
+	virtual bool IsSilentCommandable()										{ return false; }
+	// 1upD - how is there not already a method for this? Check if my squad slot is an attack slot - in case custom NPCs use more or fewer attack slots
+	virtual bool HasAttackSlot();
+	virtual bool AttackSlotOccupied();
+#endif
 	virtual bool IsPlayerAlly( CBasePlayer *pPlayer = NULL );
 	virtual bool IsMedic()												{ return false; }
 	virtual bool IsCommandMoving()										{ return false; }
@@ -1122,34 +1302,109 @@ private:
 public:
 	CAI_MoveMonitor	m_CommandMoveMonitor;
 
+#ifdef MAPBASE
+	ThreeState_t m_FriendlyFireOverride = TRS_NONE;
+	virtual bool	FriendlyFireEnabled();
+	void			InputSetFriendlyFire( inputdata_t &inputdata );
+
+	// Grenade-related functions from Combine soldiers ported to ai_basenpc so they could be shared.
+	// 
+	// This is necessary because other NPCs can use them now and many instances where they were used relied on dynamic_casts.
+	virtual Vector		GetAltFireTarget() { return GetEnemy() ? GetEnemy()->BodyTarget(Weapon_ShootPosition()) : vec3_origin; }
+	virtual void		DelayGrenadeCheck(float delay) { ; }
+	virtual void		AddGrenades( int inc, CBaseEntity *pLastGrenade = NULL ) { ; }
+#endif
+
+#ifdef MAPBASE_VSCRIPT
+private:
+
+	// VScript stuff uses "VScript" instead of just "Script" to avoid
+	// confusion with NPC_STATE_SCRIPT or StartScripting
+	HSCRIPT				VScriptGetEnemy();
+	void				VScriptSetEnemy( HSCRIPT pEnemy );
+	Vector				VScriptGetEnemyLKP();
+
+	HSCRIPT				VScriptFindEnemyMemory( HSCRIPT pEnemy );
+
+	int					VScriptGetState();
+
+	void				VScriptWake( HSCRIPT hActivator ) { Wake( ToEnt(hActivator) ); }
+	void				VScriptSleep() { Sleep(); }
+
+	int					VScriptGetSleepState()	{ return (int)GetSleepState(); }
+	void				VScriptSetSleepState( int sleepState ) { SetSleepState( (AI_SleepState_t)sleepState ); }
+
+	const char*			VScriptGetHintGroup() { return STRING( GetHintGroup() ); }
+	HSCRIPT				VScriptGetHintNode();
+
+	const char*			ScriptGetActivity() { return GetActivityName( GetActivity() ); }
+	int					ScriptGetActivityID() { return GetActivity(); }
+	void				ScriptSetActivity( const char *szActivity ) { SetActivity( (Activity)GetActivityID( szActivity ) ); }
+	void				ScriptSetActivityID( int iActivity ) { SetActivity((Activity)iActivity); }
+	int					ScriptTranslateActivity( const char *szActivity ) { return TranslateActivity( (Activity)GetActivityID( szActivity ) ); }
+	int					ScriptTranslateActivityID( int iActivity ) { return TranslateActivity( (Activity)iActivity ); }
+
+	const char*			VScriptGetGestureVersionOfActivity( const char *pszActivity ) { return GetActivityName( GetGestureVersionOfActivity( (Activity)GetActivityID( pszActivity ) ) ); }
+	int					VScriptGetGestureVersionOfActivityID( int iActivity ) { return GetGestureVersionOfActivity( (Activity)iActivity ); }
+	const char*			VScriptGetSequenceVersionOfGesture( const char *pszActivity ) { return GetActivityName( GetSequenceVersionOfGesture( (Activity)GetActivityID( pszActivity ) ) ); }
+	int					VScriptGetSequenceVersionOfGestureID( int iActivity ) { return GetSequenceVersionOfGesture( (Activity)iActivity ); }
+
+	const char*			VScriptGetSchedule();
+	int					VScriptGetScheduleID();
+	void				VScriptSetSchedule( const char *szSchedule );
+	void				VScriptSetScheduleID( int iSched ) { SetSchedule( iSched ); }
+	const char*			VScriptGetTask();
+	int					VScriptGetTaskID();
+
+	bool				VScriptHasCondition( const char *szCondition ) { return HasCondition( GetConditionID( szCondition ) ); }
+	bool				VScriptHasConditionID( int iCondition ) { return HasCondition( iCondition ); }
+	void				VScriptSetCondition( const char *szCondition ) { SetCondition( GetConditionID( szCondition ) ); }
+	void				VScriptClearCondition( const char *szCondition ) { ClearCondition( GetConditionID( szCondition ) ); }
+
+	HSCRIPT				VScriptGetExpresser();
+
+	HSCRIPT				VScriptGetCine();
+	int					GetScriptState() { return m_scriptState; }
+
+	HSCRIPT				VScriptGetSquad();
+#endif
+
 	//-----------------------------------------------------
 	// Dynamic scripted NPC interactions
 	//-----------------------------------------------------
 public:
 	float GetInteractionYaw( void ) const { return m_flInteractionYaw; }
 
+	bool IsRunningDynamicInteraction( void ) { return (m_iInteractionState != NPCINT_NOT_RUNNING && (m_hCine != NULL)); }
+	bool IsActiveDynamicInteraction( void ) { return (m_iInteractionState == NPCINT_RUNNING_ACTIVE && (m_hCine != NULL)); }
+	CAI_BaseNPC *GetInteractionPartner( void );
+
 protected:
 	void ParseScriptedNPCInteractions( void );
 	void AddScriptedNPCInteraction( ScriptedNPCInteraction_t *pInteraction  );
-	const char *GetScriptedNPCInteractionSequence( ScriptedNPCInteraction_t *pInteraction, int iPhase );
+	const char *GetScriptedNPCInteractionSequence( ScriptedNPCInteraction_t *pInteraction, int iPhase, bool bOtherNPC = false );
 	void StartRunningInteraction( CAI_BaseNPC *pOtherNPC, bool bActive );
 	void StartScriptedNPCInteraction( CAI_BaseNPC *pOtherNPC, ScriptedNPCInteraction_t *pInteraction, Vector vecOtherOrigin, QAngle angOtherAngles );
 	void CheckForScriptedNPCInteractions( void );
 	void CalculateValidEnemyInteractions( void );
 	void CheckForcedNPCInteractions( void );
+#ifdef MAPBASE
+	// This is checked during automatic dynamic interactions, but not during forced interactions.
+	// This is so we can control interaction permissions while still letting forced interactions play when needed.
+	virtual bool InteractionIsAllowed( CAI_BaseNPC *pOtherNPC, ScriptedNPCInteraction_t *pInteraction );
+#endif
 	bool InteractionCouldStart( CAI_BaseNPC *pOtherNPC, ScriptedNPCInteraction_t *pInteraction, Vector &vecOrigin, QAngle &angAngles );
 	virtual bool CanRunAScriptedNPCInteraction( bool bForced = false );
-	bool IsRunningDynamicInteraction( void ) { return (m_iInteractionState != NPCINT_NOT_RUNNING && (m_hCine != NULL)); }
-	bool IsActiveDynamicInteraction( void ) { return (m_iInteractionState == NPCINT_RUNNING_ACTIVE && (m_hCine != NULL)); }
 	ScriptedNPCInteraction_t *GetRunningDynamicInteraction( void ) { return &(m_ScriptedInteractions[m_iInteractionPlaying]); }
 	void SetInteractionCantDie( bool bCantDie ) { m_bCannotDieDuringInteraction = bCantDie; }
 	bool HasInteractionCantDie( void );
+	bool HasValidInteractionsOnCurrentEnemy( void );
+	virtual bool CanStartDynamicInteractionDuringMelee() { return false; }
 
 	void InputForceInteractionWithNPC( inputdata_t &inputdata );
 	void StartForcedInteraction( CAI_BaseNPC *pNPC, int iInteraction );
 	void CleanupForcedInteraction( void );
 	void CalculateForcedInteractionPosition( void );
-	CAI_BaseNPC *GetInteractionPartner( void );
 
 private:
 	// Forced interactions
@@ -1162,9 +1417,19 @@ private:
 	bool								 m_bCannotDieDuringInteraction;
 	int									 m_iInteractionState;
 	int									 m_iInteractionPlaying;
+#ifdef MAPBASE
+public:
+#endif
 	CUtlVector<ScriptedNPCInteraction_t> m_ScriptedInteractions;
 
 	float								 m_flInteractionYaw;
+
+#ifdef MAPBASE
+	// Allows mappers to control dynamic interactions.
+	// DI added by Mapbase requires this to be on TRS_TRUE (1). Others, like Alyx's interactions, only require TRS_NONE (2).
+	// TRS_FALSE (0) disables all dynamic interactions, including existing ones.
+	ThreeState_t						m_iDynamicInteractionsAllowed;
+#endif
 
 	
 public:
@@ -1186,6 +1451,9 @@ public:
 	virtual void		AlertSound( void )							{ return; };
 	virtual void		IdleSound( void )							{ return; };
 	virtual void		PainSound( const CTakeDamageInfo &info )	{ return; };
+#ifdef EZ
+	virtual void		RegenSound()		{ return; }; // Added by 1upD
+#endif
 	virtual void		FearSound( void )				 			{ return; };
 	virtual void		LostEnemySound( void ) 						{ return; };
 	virtual void		FoundEnemySound( void ) 					{ return; };
@@ -1209,6 +1477,15 @@ public:
 	virtual void		PlayerHasIlluminatedNPC( CBasePlayer *pPlayer, float flDot );
 
 	virtual void		ModifyOrAppendCriteria( AI_CriteriaSet& set );
+#ifdef MAPBASE
+	virtual void		ModifyOrAppendEnemyCriteria( AI_CriteriaSet& set, CBaseEntity *pEnemy );
+	virtual void		ModifyOrAppendDamageCriteria( AI_CriteriaSet& set, const CTakeDamageInfo &info );
+#endif
+
+#ifdef EZ2
+	// Blixibon - Gets criteria the player should use in speech
+	virtual void		ModifyOrAppendCriteriaForPlayer( CBasePlayer *pPlayer, AI_CriteriaSet& set );
+#endif
 
 protected:
 	float		SoundWaitTime() const { return m_flSoundWaitTime; }
@@ -1225,6 +1502,11 @@ public:
 	int					CapabilitiesAdd( int capabilities );
 	int					CapabilitiesRemove( int capabilities );
 	void				CapabilitiesClear( void );
+
+#ifdef MAPBASE
+	void				InputAddCapabilities( inputdata_t &inputdata );
+	void				InputRemoveCapabilities( inputdata_t &inputdata );
+#endif
 
 private:
 	int					m_afCapability;			// tells us what a npc can/can't do.
@@ -1272,6 +1554,9 @@ public:
 	
 	// NPCs can override this to tweak with how costly particular movements are
 	virtual	bool		MovementCost( int moveType, const Vector &vecStart, const Vector &vecEnd, float *pCost );
+#ifdef EZ2
+	virtual float		HintCost( int iHint, float dist, Vector &vecEnd );
+#endif
 
 	// Turns a directional vector into a yaw value that points down that vector.
 	float				VecToYaw( const Vector &vecDir );
@@ -1542,6 +1827,14 @@ public:
 	virtual float		GetReactionDelay( CBaseEntity *pEnemy );
 	
 	void				SetLastAttackTime( float time)	{ m_flLastAttackTime = time; }
+#ifdef EZ2
+	// Tragically, CAI_BaseNPC's implementation of m_flLastDamageTime doesn't work with trigger_hurts because it doesn't register with non-NPC/player attackers.
+	// I can't access m_flLastDamageTime directly from CNPC_Wilson. I could create my own timer variable, but that's just so...wasteful!
+	// As a result, I decided to add a "SetLastDamageTime" function that Wilson sets himself when he's damaged.
+	// 
+	// I mean, there's not really any harm to this except that I like to avoid changing existing base classes for new derivatives.
+	void				SetLastDamageTime( float time)	{ m_flLastDamageTime = time; }
+#endif
 
 	float				GetLastAttackTime() const { return m_flLastAttackTime; }
 	float				GetLastDamageTime() const { return m_flLastDamageTime; }
@@ -1562,8 +1855,25 @@ public:
 	bool				IsWeaponStateChanging( void );
 	void				SetDesiredWeaponState( DesiredWeaponState_t iState ) { m_iDesiredWeaponState = iState; }
 
+#ifdef MAPBASE
+	virtual bool		DoHolster(void);
+	virtual bool		DoUnholster(void);
+
+	virtual bool		ShouldUnholsterWeapon();
+	virtual bool		CanUnholsterWeapon();
+
+	void				InputGiveWeaponHolstered( inputdata_t &inputdata );
+	void				InputChangeWeapon( inputdata_t &inputdata );
+	void				InputPickupWeapon( inputdata_t &inputdata );
+	void				InputPickupItem( inputdata_t &inputdata );
+#endif
+
 	// NOTE: The Shot Regulator is used to manage the RangeAttack1 weapon.
 	inline CAI_ShotRegulator* GetShotRegulator()		{ return &m_ShotRegulator; }
+#ifdef MAPBASE
+	// A special function for ai_weaponmodifier.
+	inline void SetShotRegulator(CAI_ShotRegulator NewRegulator) { m_ShotRegulator = NewRegulator; }
+#endif
 	virtual void		OnRangeAttack1();
 	
 protected:
@@ -1582,6 +1892,10 @@ protected:
 	float				m_flLastAttackTime;			// Last time that I attacked my current enemy
 	float				m_flLastEnemyTime;
 	float				m_flNextWeaponSearchTime;	// next time to search for a better weapon
+#ifdef MAPBASE
+public:
+	int					m_iLastHolsteredWeapon;
+#endif
 	string_t			m_iszPendingWeapon;			// THe NPC should create and equip this weapon.
 	bool				m_bIgnoreUnseenEnemies;
 
@@ -1624,6 +1938,10 @@ public:
 	void				SetHintGroup( string_t name, bool bHintGroupNavLimiting = false );
 	bool				IsLimitingHintGroups( void )	{ return m_bHintGroupNavLimiting; }
 
+#ifdef MAPBASE
+	void				InputSetHintGroup( inputdata_t &inputdata ) { SetHintGroup(inputdata.value.StringID()); }
+#endif
+
 	//---------------------------------
 
 	CAI_TacticalServices *GetTacticalServices()			{ return m_pTacticalServices; }
@@ -1663,7 +1981,9 @@ public:
 	//-----------------------------------------------------
 
 	void				InitRelationshipTable( void );
+#ifndef MAPBASE
 	void				AddRelationship( const char *pszRelationship, CBaseEntity *pActivator );
+#endif
 
 	virtual void		AddEntityRelationship( CBaseEntity *pEntity, Disposition_t nDisposition, int nPriority );
 	virtual void		AddClassRelationship( Class_T nClass, Disposition_t nDisposition, int nPriority );
@@ -1695,7 +2015,9 @@ public:
 
 	//---------------------------------
 	
+#ifndef MAPBASE // Moved to CBaseCombatCharacter
 	virtual	CBaseEntity *FindNamedEntity( const char *pszName, IEntityFindFilter *pFilter = NULL );
+#endif
 
 	//---------------------------------
 	//  States
@@ -1706,13 +2028,23 @@ public:
 	virtual bool		ShouldLookForBetterWeapon();
 	bool				Weapon_IsBetterAvailable ( void ) ;
 	virtual Vector		Weapon_ShootPosition( void );
+#ifdef MAPBASE
+	virtual	CBaseCombatWeapon*		GiveWeapon( string_t iszWeaponName, bool bDiscardCurrent = true );
+	virtual	CBaseCombatWeapon*		GiveWeaponHolstered( string_t iszWeaponName );
+#else
 	virtual	void		GiveWeapon( string_t iszWeaponName );
+#endif
 	virtual void		OnGivenWeapon( CBaseCombatWeapon *pNewWeapon ) { }
 	bool				IsMovingToPickupWeapon();
 	virtual bool		WeaponLOSCondition(const Vector &ownerPos, const Vector &targetPos, bool bSetConditions);
 	virtual bool		CurrentWeaponLOSCondition(const Vector &targetPos, bool bSetConditions) { return WeaponLOSCondition( GetAbsOrigin(), targetPos, bSetConditions ); }
 	virtual bool		IsWaitingToRappel( void ) { return false; }
 	virtual void		BeginRappel() {}
+#ifdef EZ2
+	// Used by the Arbeit helicopter
+	virtual bool		HasRappelBehavior() { return false; }
+	virtual void		StartWaitingForRappel() {}
+#endif
 
 	// override to change the chase location of an enemy
 	// This is where your origin should go when you are chasing pEnemy when his origin is at chasePosition
@@ -1740,6 +2072,9 @@ public:
 	//---------------------------------
 
 	virtual void		Ignite( float flFlameLifetime, bool bNPCOnly = true, float flSize = 0.0f, bool bCalledByLevelDesigner = false );
+#ifdef MAPBASE
+	virtual void		EnemyIgnited( CAI_BaseNPC *pVictim ) {}
+#endif
 	virtual bool		PassesDamageFilter( const CTakeDamageInfo &info );
 
 	//---------------------------------
@@ -1764,6 +2099,10 @@ public:
 	virtual bool		ShouldGib( const CTakeDamageInfo &info ) { return false; }	// Always ragdoll, unless specified by the leaf class
 	virtual bool		Event_Gibbed( const CTakeDamageInfo &info );
 	virtual void		Event_Killed( const CTakeDamageInfo &info );
+
+#ifdef EZ
+	void DropGooPuddle( const CTakeDamageInfo & info );
+#endif
 
 	virtual Vector		GetShootEnemyDir( const Vector &shootOrigin, bool bNoisy = true );
 #ifdef HL2_DLL
@@ -1804,16 +2143,27 @@ public:
 	//---------------------------------
 
 	virtual void	PickupWeapon( CBaseCombatWeapon *pWeapon );
+#ifdef MAPBASE
+	virtual void	PickupItem( CBaseEntity *pItem );
+#else
 	virtual void	PickupItem( CBaseEntity *pItem ) { };
+#endif
 	CBaseEntity*	DropItem( const char *pszItemName, Vector vecPos, QAngle vecAng );// drop an item.
 
 
 	//---------------------------------
 	// Inputs
 	//---------------------------------
+#ifndef MAPBASE // Moved to CBaseCombatCharacter
 	void InputSetRelationship( inputdata_t &inputdata );
+#endif
 	void InputSetEnemyFilter( inputdata_t &inputdata );
+#ifdef MAPBASE
+	// This is virtual so npc_helicopter can override it
+	virtual void InputSetHealthFraction( inputdata_t &inputdata );
+#else
 	void InputSetHealth( inputdata_t &inputdata );
+#endif
 	void InputBeginRappel( inputdata_t &inputdata );
 	void InputSetSquad( inputdata_t &inputdata );
 	void InputWake( inputdata_t &inputdata );
@@ -1904,6 +2254,16 @@ public:
 	COutputEvent		m_OnForcedInteractionAborted;
 	COutputEvent		m_OnForcedInteractionFinished;
 
+#ifdef MAPBASE
+	COutputEHANDLE		m_OnHolsterWeapon;
+	COutputEHANDLE		m_OnUnholsterWeapon;
+
+	COutputEHANDLE		m_OnItemPickup;
+	COutputEHANDLE		m_OnItemDrop;
+
+	COutputInt			m_OnStateChange;
+#endif
+
 public:
 	// use this to shrink the bbox temporarily
 	void				SetHullSizeNormal( bool force = false );
@@ -1973,6 +2333,9 @@ public:
 	static const char*	GetActivityName	(int actID);	
 
 	static void			AddActivityToSR(const char *actName, int conID);
+#ifdef MAPBASE
+	static int			GetOrRegisterActivity( const char *actName );
+#endif
 	
 	static void			AddEventToSR(const char *eventName, int conID);
 	static const char*	GetEventName	(int actID);
@@ -1986,6 +2349,15 @@ public:
 	virtual bool IsCrouching( void );
 	inline void	ForceCrouch( void );
 	inline void	ClearForceCrouch( void );
+
+#ifdef EZ
+	// Blixibon - Added so we can make soldiers crouch without being part of the class
+	inline void DispatchCrouch( void ) { Crouch(); }
+#endif
+
+#ifdef MAPBASE
+	bool		 CouldShootIfCrouchingAt( const Vector &vecPosition, const Vector &vecForward, const Vector &vecRight, float flDist = 48.0f );
+#endif
 
 protected:
 	virtual bool Crouch( void );
@@ -2004,7 +2376,20 @@ private:
 	bool	m_bCrouchDesired;
 	bool	m_bForceCrouch;
 	bool	m_bIsCrouching;
+
 	//-----------------------------------------------------
+	// Entropy : Zero 2 Variants
+	//-----------------------------------------------------
+public:
+
+	EZ_VARIANT	GetEZVariant() { return m_tEzVariant; }
+	void		SetEZVariant( EZ_VARIANT variant ) { m_tEzVariant = variant; }
+
+	EZ_VARIANT m_tEzVariant; // TODO: Now that we have accessor functions, this should be private
+
+#ifdef EZ
+	virtual bool	ShouldDropGooPuddle() { return true; }
+#endif
 
 	//-----------------------------------------------------
 	// ai_post_frame_navigation
@@ -2045,6 +2430,16 @@ private:
 	
 	static CAI_GlobalScheduleNamespace	gm_SchedulingSymbols;
 	static CAI_ClassScheduleIdSpace		gm_ClassScheduleIdSpace;
+
+#ifdef MAPBASE
+	typedef struct
+	{
+		Activity	sequence;
+		Activity	gesture;
+	} actlink_t;
+
+	static actlink_t		gm_ActivityGestureLinks[];
+#endif
 
 public:
 	//----------------------------------------------------
@@ -2090,6 +2485,16 @@ public:
 	CUtlVector<AIScheduleChoice_t>	m_ScheduleHistory;
 #endif//AI_MONITOR_FOR_OSCILLATION
 
+#ifdef MAPBASE_VSCRIPT
+	static ScriptHook_t	g_Hook_QueryHearSound;
+	static ScriptHook_t	g_Hook_QuerySeeEntity;
+	static ScriptHook_t	g_Hook_TranslateActivity;
+	static ScriptHook_t	g_Hook_TranslateSchedule;
+	static ScriptHook_t	g_Hook_GetActualShootPosition;
+	static ScriptHook_t	g_Hook_OverrideMove;
+	static ScriptHook_t	g_Hook_ShouldPlayFakeSequenceGesture;
+#endif
+
 private:
 
 	// Break into pieces!
@@ -2117,12 +2522,36 @@ public:
 	void				InputSetSpeedModifierRadius( inputdata_t &inputdata );
 	void				InputSetSpeedModifierSpeed( inputdata_t &inputdata );
 
+#ifdef MAPBASE
+	// Hammer input to change the speed of the NPC (based on 1upD's npc_shadow_walker code)
+	// Not to be confused with the inputs above
+	virtual float		GetSequenceGroundSpeed( CStudioHdr *pStudioHdr, int iSequence );
+	inline float		GetSequenceGroundSpeed( int iSequence ) { return GetSequenceGroundSpeed( GetModelPtr(), iSequence ); }
+	void				InputSetSpeedModifier( inputdata_t &inputdata );
+	float				m_flSpeedModifier;
+#endif
+
 	virtual bool		ShouldProbeCollideAgainstEntity( CBaseEntity *pEntity );
 
 	bool				m_bPlayerAvoidState;
 	void				GetPlayerAvoidBounds( Vector *pMins, Vector *pMaxs );
 
 	void				StartPingEffect( void ) { m_flTimePingEffect = gpGlobals->curtime + 2.0f; DispatchUpdateTransmitState(); }
+
+#ifdef EZ
+	virtual void		StartEye( void ); // Start glow effects for this NPC
+	virtual void		KillSprites( float flDelay ); // Stop all glow effects
+
+protected:
+	// Glow Effects
+	CSprite		* m_pEyeGlow;
+	bool		m_bNoGlow; // Don't glow!
+
+	virtual CSprite		* GetGlowSpritePtr(int i);
+	virtual void		  SetGlowSpritePtr(int i, CSprite * sprite);
+	virtual EyeGlow_t	* GetEyeGlowData(int i);
+	virtual int			GetNumGlows() { return 1; };
+#endif
 };
 
 
@@ -2676,7 +3105,11 @@ public:
 	derivedClass::AccessClassScheduleIdSpaceDirect().Init( #derivedClass, BaseClass::GetSchedulingSymbols(), &BaseClass::AccessClassScheduleIdSpaceDirect() ); \
 	derivedClass::gm_SquadSlotIdSpace.Init( &CAI_BaseNPC::gm_SquadSlotNamespace, &BaseClass::gm_SquadSlotIdSpace);
 
+#ifdef MAPBASE
+#define ADD_CUSTOM_INTERACTION( interaction )	{ CBaseCombatCharacter::AddInteractionWithString( interaction, #interaction ); }
+#else
 #define	ADD_CUSTOM_INTERACTION( interaction )	{ interaction = CBaseCombatCharacter::GetInteractionID(); }
+#endif
 
 #define ADD_CUSTOM_SQUADSLOT_NAMED(derivedClass,squadSlotName,squadSlotEN)\
 	if ( !derivedClass::gm_SquadSlotIdSpace.AddSymbol( squadSlotName, squadSlotEN, "squadslot", derivedClass::gm_pszErrorClassName ) ) return;
@@ -3059,10 +3492,19 @@ public:
 // NOTE: YOU MUST DEFINE THE OUTPUTS IN YOUR CLASS'S DATADESC!
 //		 THE DO SO, INSERT THE FOLLOWING MACRO INTO YOUR CLASS'S DATADESC.
 //		
+#ifdef MAPBASE
+#define	DEFINE_BASENPCINTERACTABLE_DATADESC() \
+	DEFINE_OUTPUT( m_OnAlyxStartedInteraction,				"OnAlyxStartedInteraction" ),	\
+	DEFINE_OUTPUT( m_OnAlyxFinishedInteraction,				"OnAlyxFinishedInteraction" ),  \
+	DEFINE_OUTPUT( m_OnHacked,								"OnHacked" ),  \
+	DEFINE_INPUTFUNC( FIELD_VOID, "InteractivePowerDown", InputPowerdown ), \
+	DEFINE_INPUTFUNC( FIELD_VOID, "Hack", InputDoInteraction )
+#else
 #define	DEFINE_BASENPCINTERACTABLE_DATADESC() \
 	DEFINE_OUTPUT( m_OnAlyxStartedInteraction,				"OnAlyxStartedInteraction" ),	\
 	DEFINE_OUTPUT( m_OnAlyxFinishedInteraction,				"OnAlyxFinishedInteraction" ),  \
 	DEFINE_INPUTFUNC( FIELD_VOID, "InteractivePowerDown", InputPowerdown )
+#endif
 
 template <class NPC_CLASS>
 class CNPCBaseInteractive : public NPC_CLASS, public INPCInteractive
@@ -3077,6 +3519,13 @@ public:
 	{
 
 	}
+
+#ifdef MAPBASE
+	virtual void	InputDoInteraction( inputdata_t &inputdata )
+	{
+		NotifyInteraction(inputdata.pActivator ? inputdata.pActivator->MyNPCPointer() : NULL);
+	}
+#endif
 
 	// Alyx specific interactions
 	virtual void	AlyxStartedInteraction( void )
@@ -3093,6 +3542,9 @@ public:
 	// Alyx specific interactions
 	COutputEvent	m_OnAlyxStartedInteraction;
 	COutputEvent	m_OnAlyxFinishedInteraction;
+#ifdef MAPBASE
+	COutputEvent	m_OnHacked;
+#endif
 };
 
 //

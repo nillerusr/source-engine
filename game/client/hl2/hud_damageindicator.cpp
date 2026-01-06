@@ -27,6 +27,25 @@ using namespace vgui;
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+#ifdef EZ
+void CV_DeathScreenFade( IConVar *var, const char *pOldValue, float flOldValue );
+ConVar cl_death_screen_fadeout( "cl_death_screen_fadeout", "0", FCVAR_ARCHIVE, "", CV_DeathScreenFade );
+
+void CV_DeathScreenFade( IConVar *var, const char *pOldValue, float flOldValue )
+{
+	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+	if ( !pPlayer )
+		return;
+
+	// Return or remove the fade
+	if ( pPlayer->GetHealth() <= 0 )
+	{
+		g_pClientMode->GetViewportAnimationController()->RunAllAnimationsToCompletion();
+		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( cl_death_screen_fadeout.GetBool() ? "HudPlayerDeathFadeFromOut" : "HudPlayerDeath" );
+	}
+}
+#endif
+
 
 //-----------------------------------------------------------------------------
 // Purpose: HDU Damage indication
@@ -344,6 +363,14 @@ void CHudDamageIndicator::MsgFunc_Damage( bf_read &msg )
 	// player has just died, just run the dead damage animation
 	if ( pPlayer->GetHealth() <= 0 )
 	{
+#ifdef EZ
+		if (cl_death_screen_fadeout.GetBool())
+		{
+			// Do a version of the death screen which fades out
+			g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "HudPlayerDeathFadeOut" );
+			return;
+		}
+#endif
 		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "HudPlayerDeath" );
 		return;
 	}

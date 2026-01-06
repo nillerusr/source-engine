@@ -22,4 +22,8 @@ void Hunter_StriderBusterAttached( CBaseEntity *pHunter, CBaseEntity *pAttached 
 void Hunter_StriderBusterDetached( CBaseEntity *pHunter, CBaseEntity *pAttached );
 void Hunter_StriderBusterLaunched( CBaseEntity *pBuster );
 
+#ifdef EZ2
+CBaseEntity *FlechetteShotgun_CreateFlechette( const Vector &vecOrigin, Vector &vecDir, CBaseEntity *pOwner );
+#endif
+
 #endif

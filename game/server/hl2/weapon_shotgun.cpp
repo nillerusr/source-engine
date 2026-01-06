@@ -18,12 +18,20 @@
 #include "soundent.h"
 #include "vstdlib/random.h"
 #include "gamestats.h"
+#ifdef EZ2
+#include "shot_manipulator.h"
+#include "npc_hunter.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 extern ConVar sk_auto_reload_time;
 extern ConVar sk_plr_num_shotgun_pellets;
+#ifdef MAPBASE
+extern ConVar sk_plr_num_shotgun_pellets_double;
+extern ConVar sk_npc_num_shotgun_pellets;
+#endif
 
 class CWeaponShotgun : public CBaseHLCombatWeapon
 {
@@ -33,8 +41,9 @@ public:
 
 	DECLARE_SERVERCLASS();
 
-private:
+protected:
 	bool	m_bNeedPump;		// When emptied completely
+private:
 	bool	m_bDelayedFire1;	// Fire primary when finished reloading
 	bool	m_bDelayedFire2;	// Fire secondary when finished reloading
 
@@ -79,6 +88,13 @@ public:
 	void SecondaryAttack( void );
 	void DryFire( void );
 
+#ifdef EZ
+	virtual Activity GetDrawActivity( void );
+#endif
+
+#ifdef EZ2
+	virtual
+#endif
 	void FireNPCPrimaryAttack( CBaseCombatCharacter *pOperator, bool bUseWeaponAngles );
 	void Operator_ForceNPCFire( CBaseCombatCharacter  *pOperator, bool bSecondary );
 	void Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCharacter *pOperator );
@@ -104,6 +120,57 @@ END_DATADESC()
 
 acttable_t	CWeaponShotgun::m_acttable[] = 
 {
+#if EXPANDED_HL2_WEAPON_ACTIVITIES
+	// Note that ACT_IDLE_SHOTGUN_AGITATED seems to be a stand-in for ACT_IDLE_SHOTGUN on citizens,
+	// but that isn't acceptable for NPCs which don't use readiness activities.
+	{ ACT_IDLE,						ACT_IDLE_SHOTGUN,		true },
+
+	{ ACT_RANGE_ATTACK1,			ACT_RANGE_ATTACK_SHOTGUN,			true },
+	{ ACT_RELOAD,					ACT_RELOAD_SHOTGUN,					false },
+	{ ACT_WALK,						ACT_WALK_SHOTGUN,					true },
+	{ ACT_IDLE_ANGRY,				ACT_IDLE_ANGRY_SHOTGUN,				true },
+
+// Readiness activities (not aiming)
+	{ ACT_IDLE_RELAXED,				ACT_IDLE_SHOTGUN_RELAXED,		false },//never aims
+	{ ACT_IDLE_STIMULATED,			ACT_IDLE_SHOTGUN_STIMULATED,	false },
+	{ ACT_IDLE_AGITATED,			ACT_IDLE_ANGRY_SHOTGUN,			false },//always aims
+
+	{ ACT_WALK_RELAXED,				ACT_WALK_SHOTGUN_RELAXED,		false },//never aims
+	{ ACT_WALK_STIMULATED,			ACT_WALK_SHOTGUN_STIMULATED,	false },
+	{ ACT_WALK_AGITATED,			ACT_WALK_AIM_SHOTGUN,			false },//always aims
+
+	{ ACT_RUN_RELAXED,				ACT_RUN_SHOTGUN_RELAXED,		false },//never aims
+	{ ACT_RUN_STIMULATED,			ACT_RUN_SHOTGUN_STIMULATED,		false },
+	{ ACT_RUN_AGITATED,				ACT_RUN_AIM_SHOTGUN,			false },//always aims
+
+// Readiness activities (aiming)
+	{ ACT_IDLE_AIM_RELAXED,			ACT_IDLE_SHOTGUN_RELAXED,			false },//never aims	
+	{ ACT_IDLE_AIM_STIMULATED,		ACT_IDLE_AIM_SHOTGUN_STIMULATED,	false },
+	{ ACT_IDLE_AIM_AGITATED,		ACT_IDLE_ANGRY_SHOTGUN,				false },//always aims
+
+	{ ACT_WALK_AIM_RELAXED,			ACT_WALK_SHOTGUN_RELAXED,			false },//never aims
+	{ ACT_WALK_AIM_STIMULATED,		ACT_WALK_AIM_SHOTGUN_STIMULATED,	false },
+	{ ACT_WALK_AIM_AGITATED,		ACT_WALK_AIM_SHOTGUN,				false },//always aims
+
+	{ ACT_RUN_AIM_RELAXED,			ACT_RUN_SHOTGUN_RELAXED,			false },//never aims
+	{ ACT_RUN_AIM_STIMULATED,		ACT_RUN_AIM_SHOTGUN_STIMULATED,		false },
+	{ ACT_RUN_AIM_AGITATED,			ACT_RUN_AIM_SHOTGUN,				false },//always aims
+//End readiness activities
+
+	{ ACT_WALK_AIM,					ACT_WALK_AIM_SHOTGUN,				true },
+	{ ACT_WALK_CROUCH,				ACT_WALK_CROUCH_RIFLE,				true },
+	{ ACT_WALK_CROUCH_AIM,			ACT_WALK_CROUCH_AIM_RIFLE,			true },
+	{ ACT_RUN,						ACT_RUN_SHOTGUN,					true },
+	{ ACT_RUN_AIM,					ACT_RUN_AIM_SHOTGUN,				true },
+	{ ACT_RUN_CROUCH,				ACT_RUN_CROUCH_RIFLE,				true },
+	{ ACT_RUN_CROUCH_AIM,			ACT_RUN_CROUCH_AIM_RIFLE,			true },
+	{ ACT_GESTURE_RANGE_ATTACK1,	ACT_GESTURE_RANGE_ATTACK_SHOTGUN,	true },
+	{ ACT_RANGE_ATTACK1_LOW,		ACT_RANGE_ATTACK_SHOTGUN_LOW,		true },
+	{ ACT_RELOAD_LOW,				ACT_RELOAD_SHOTGUN_LOW,				false },
+	{ ACT_GESTURE_RELOAD,			ACT_GESTURE_RELOAD_SHOTGUN,			false },
+	{ ACT_COVER_LOW,				ACT_COVER_SHOTGUN_LOW,				false },
+	{ ACT_RANGE_AIM_LOW,			ACT_RANGE_AIM_SHOTGUN_LOW,			false },
+#else
 	{ ACT_IDLE,						ACT_IDLE_SMG1,					true },	// FIXME: hook to shotgun unique
 
 	{ ACT_RANGE_ATTACK1,			ACT_RANGE_ATTACK_SHOTGUN,			true },
@@ -140,18 +207,65 @@ acttable_t	CWeaponShotgun::m_acttable[] =
 
 	{ ACT_WALK_AIM,					ACT_WALK_AIM_SHOTGUN,				true },
 	{ ACT_WALK_CROUCH,				ACT_WALK_CROUCH_RIFLE,				true },
+#ifdef EZ2 // For some reason, soldiers get confused if this is required on shotguns
+	{ ACT_WALK_CROUCH_AIM,			ACT_WALK_CROUCH_AIM_RIFLE,			false },
+#else
 	{ ACT_WALK_CROUCH_AIM,			ACT_WALK_CROUCH_AIM_RIFLE,			true },
+#endif
 	{ ACT_RUN,						ACT_RUN_RIFLE,						true },
 	{ ACT_RUN_AIM,					ACT_RUN_AIM_SHOTGUN,				true },
 	{ ACT_RUN_CROUCH,				ACT_RUN_CROUCH_RIFLE,				true },
+#ifdef EZ2 // For some reason, soldiers get confused if this is required on shotguns
+	{ ACT_RUN_CROUCH_AIM,			ACT_RUN_CROUCH_AIM_RIFLE,			false },
+#else
 	{ ACT_RUN_CROUCH_AIM,			ACT_RUN_CROUCH_AIM_RIFLE,			true },
+#endif
 	{ ACT_GESTURE_RANGE_ATTACK1,	ACT_GESTURE_RANGE_ATTACK_SHOTGUN,	true },
 	{ ACT_RANGE_ATTACK1_LOW,		ACT_RANGE_ATTACK_SHOTGUN_LOW,		true },
 	{ ACT_RELOAD_LOW,				ACT_RELOAD_SHOTGUN_LOW,				false },
 	{ ACT_GESTURE_RELOAD,			ACT_GESTURE_RELOAD_SHOTGUN,			false },
+#endif
+
+#if EXPANDED_HL2_WEAPON_ACTIVITIES
+	{ ACT_ARM,						ACT_ARM_SHOTGUN,				true },
+	{ ACT_DISARM,					ACT_DISARM_SHOTGUN,				true },
+#endif
+
+#if EXPANDED_HL2_COVER_ACTIVITIES
+	{ ACT_RANGE_AIM_MED,			ACT_RANGE_AIM_SHOTGUN_MED,			false },
+	{ ACT_RANGE_ATTACK1_MED,		ACT_RANGE_ATTACK_SHOTGUN_MED,		false },
+#endif
+
+#ifdef MAPBASE
+	// HL2:DM activities (for third-person animations in SP)
+	{ ACT_HL2MP_IDLE,                    ACT_HL2MP_IDLE_SHOTGUN,                    false },
+	{ ACT_HL2MP_RUN,                    ACT_HL2MP_RUN_SHOTGUN,                    false },
+	{ ACT_HL2MP_IDLE_CROUCH,            ACT_HL2MP_IDLE_CROUCH_SHOTGUN,            false },
+	{ ACT_HL2MP_WALK_CROUCH,            ACT_HL2MP_WALK_CROUCH_SHOTGUN,            false },
+	{ ACT_HL2MP_GESTURE_RANGE_ATTACK,    ACT_HL2MP_GESTURE_RANGE_ATTACK_SHOTGUN,    false },
+	{ ACT_HL2MP_GESTURE_RELOAD,            ACT_HL2MP_GESTURE_RELOAD_SHOTGUN,        false },
+	{ ACT_HL2MP_JUMP,                    ACT_HL2MP_JUMP_SHOTGUN,                    false },
+#if EXPANDED_HL2DM_ACTIVITIES
+	{ ACT_HL2MP_WALK,					ACT_HL2MP_WALK_SHOTGUN,						false },
+	{ ACT_HL2MP_GESTURE_RANGE_ATTACK2,	ACT_HL2MP_GESTURE_RANGE_ATTACK2_SHOTGUN,	false },
+#endif
+#endif
 };
 
 IMPLEMENT_ACTTABLE(CWeaponShotgun);
+
+#ifdef MAPBASE
+// Allows Weapon_BackupActivity() to access the shotgun's activity table.
+acttable_t *GetShotgunActtable()
+{
+	return CWeaponShotgun::m_acttable;
+}
+
+int GetShotgunActtableCount()
+{
+	return ARRAYSIZE(CWeaponShotgun::m_acttable);
+}
+#endif
 
 void CWeaponShotgun::Precache( void )
 {
@@ -183,7 +297,11 @@ void CWeaponShotgun::FireNPCPrimaryAttack( CBaseCombatCharacter *pOperator, bool
 		vecShootDir = npc->GetActualShootTrajectory( vecShootOrigin );
 	}
 
+#ifdef MAPBASE
+	pOperator->FireBullets( sk_npc_num_shotgun_pellets.GetInt(), vecShootOrigin, vecShootDir, GetBulletSpread(), MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 0 );
+#else
 	pOperator->FireBullets( 8, vecShootOrigin, vecShootDir, GetBulletSpread(), MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 0 );
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -233,7 +351,11 @@ void CWeaponShotgun::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatC
 //-----------------------------------------------------------------------------
 float CWeaponShotgun::GetMinRestTime()
 {
+#ifndef EZ2
 	if( hl2_episodic.GetBool() && GetOwner() && GetOwner()->Classify() == CLASS_COMBINE )
+#else
+	if( GetOwner() && GetOwner()->Classify() != CLASS_PLAYER_ALLY_VITAL )
+#endif
 	{
 		return 1.2f;
 	}
@@ -245,7 +367,11 @@ float CWeaponShotgun::GetMinRestTime()
 //-----------------------------------------------------------------------------
 float CWeaponShotgun::GetMaxRestTime()
 {
+#ifndef EZ2
 	if( hl2_episodic.GetBool() && GetOwner() && GetOwner()->Classify() == CLASS_COMBINE )
+#else
+	if( GetOwner() && GetOwner()->Classify() != CLASS_PLAYER_ALLY_VITAL )
+#endif
 	{
 		return 1.5f;
 	}
@@ -259,7 +385,11 @@ float CWeaponShotgun::GetMaxRestTime()
 //-----------------------------------------------------------------------------
 float CWeaponShotgun::GetFireRate()
 {
+#ifndef EZ2
 	if( hl2_episodic.GetBool() && GetOwner() && GetOwner()->Classify() == CLASS_COMBINE )
+#else
+	if( GetOwner() && GetOwner()->Classify() != CLASS_PLAYER_ALLY_VITAL )
+#endif
 	{
 		return 0.8f;
 	}
@@ -307,6 +437,13 @@ bool CWeaponShotgun::StartReload( void )
 
 	pOwner->m_flNextAttack = gpGlobals->curtime;
 	m_flNextPrimaryAttack = gpGlobals->curtime + SequenceDuration();
+
+#ifdef MAPBASE
+	if ( pOwner->IsPlayer() )
+	{
+		static_cast<CBasePlayer*>(pOwner)->SetAnimation( PLAYER_RELOAD );
+	}
+#endif
 
 	m_bInReload = true;
 	return true;
@@ -435,6 +572,25 @@ void CWeaponShotgun::DryFire( void )
 	m_flNextPrimaryAttack = gpGlobals->curtime + SequenceDuration();
 }
 
+#ifdef EZ
+Activity CWeaponShotgun::GetDrawActivity( void )
+{
+	CBaseCombatCharacter *pOwner  = GetOwner();
+
+	if ( pOwner != NULL && m_bNeedPump && SelectWeightedSequence( ACT_VM_FIRSTDRAW_PUMP ) != -1)
+	{
+		m_bNeedPump = false;
+
+		pOwner->m_flNextAttack	= gpGlobals->curtime + SequenceDuration( ACT_VM_FIRSTDRAW_PUMP );
+		m_flNextPrimaryAttack	= gpGlobals->curtime + SequenceDuration( ACT_VM_FIRSTDRAW_PUMP );
+
+		return ACT_VM_FIRSTDRAW_PUMP;
+	}
+
+	return BaseClass::GetDrawActivity();
+}
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //
@@ -461,7 +617,11 @@ void CWeaponShotgun::PrimaryAttack( void )
 	pPlayer->SetAnimation( PLAYER_ATTACK1 );
 
 	// Don't fire again until fire animation has completed
+#ifdef MAPBASE
+	m_flNextPrimaryAttack = gpGlobals->curtime + GetViewModelSequenceDuration();
+#else
 	m_flNextPrimaryAttack = gpGlobals->curtime + SequenceDuration();
+#endif
 	m_iClip1 -= 1;
 
 	Vector	vecSrc		= pPlayer->Weapon_ShootPosition( );
@@ -472,7 +632,11 @@ void CWeaponShotgun::PrimaryAttack( void )
 	// Fire the bullets, and force the first shot to be perfectly accuracy
 	pPlayer->FireBullets( sk_plr_num_shotgun_pellets.GetInt(), vecSrc, vecAiming, GetBulletSpread(), MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 0, -1, -1, 0, NULL, true, true );
 	
+#ifdef EZ
+	pPlayer->ViewPunch(QAngle(random->RandomFloat(-4, -2), random->RandomFloat(-4, 4), 0)); // Breadman - values doubled
+#else
 	pPlayer->ViewPunch( QAngle( random->RandomFloat( -2, -1 ), random->RandomFloat( -2, 2 ), 0 ) );
+#endif
 
 	CSoundEnt::InsertSound( SOUND_COMBAT, GetAbsOrigin(), SOUNDENT_VOLUME_SHOTGUN, 0.2, GetOwner() );
 
@@ -516,18 +680,34 @@ void CWeaponShotgun::SecondaryAttack( void )
 	SendWeaponAnim( ACT_VM_SECONDARYATTACK );
 
 	// player "shoot" animation
+#ifdef MAPBASE
+	pPlayer->SetAnimation( PLAYER_ATTACK2 );
+#else
 	pPlayer->SetAnimation( PLAYER_ATTACK1 );
+#endif
 
 	// Don't fire again until fire animation has completed
+#ifdef MAPBASE
+	m_flNextPrimaryAttack = gpGlobals->curtime + GetViewModelSequenceDuration();
+#else
 	m_flNextPrimaryAttack = gpGlobals->curtime + SequenceDuration();
+#endif
 	m_iClip1 -= 2;	// Shotgun uses same clip for primary and secondary attacks
 
 	Vector vecSrc	 = pPlayer->Weapon_ShootPosition();
 	Vector vecAiming = pPlayer->GetAutoaimVector( AUTOAIM_SCALE_DEFAULT );	
 
 	// Fire the bullets
+#ifdef MAPBASE
+	pPlayer->FireBullets( sk_plr_num_shotgun_pellets_double.GetInt(), vecSrc, vecAiming, GetBulletSpread(), MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 0, -1, -1, 0, NULL, false, false );
+#else
 	pPlayer->FireBullets( 12, vecSrc, vecAiming, GetBulletSpread(), MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 0, -1, -1, 0, NULL, false, false );
+#endif
+#ifdef EZ
+	pPlayer->ViewPunch(QAngle(random->RandomFloat(-7, -7), random->RandomFloat(-6, 6), 0)); // Breadman - was 5 5 and second bit wasn't present
+#else
 	pPlayer->ViewPunch( QAngle(random->RandomFloat( -5, 5 ),0,0) );
+#endif
 
 	pPlayer->SetMuzzleFlashTime( gpGlobals->curtime + 1.0 );
 
@@ -734,9 +914,17 @@ CWeaponShotgun::CWeaponShotgun( void )
 	m_bDelayedFire2 = false;
 
 	m_fMinRange1		= 0.0;
+#ifndef EZ2
 	m_fMaxRange1		= 500;
+#else
+	m_fMaxRange1		= 1400; // BREADMAN
+#endif
 	m_fMinRange2		= 0.0;
+#ifndef EZ2
 	m_fMaxRange2		= 200;
+#else
+	m_fMaxRange2		= 1400; // BREADMAN
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -791,3 +979,249 @@ void CWeaponShotgun::WeaponIdle( void )
 	}
 }
 */
+
+#ifdef EZ2
+//-----------------------------------------------------------------------------
+// CWeaponFlechetteShotgun
+//-----------------------------------------------------------------------------
+
+ConVar	sk_plr_flechette_shotgun_num_pellets( "sk_plr_flechette_shotgun_num_pellets","6", FCVAR_REPLICATED);
+ConVar	sk_plr_flechette_shotgun_num_pellets_double( "sk_plr_flechette_shotgun_num_pellets_double","9", FCVAR_REPLICATED);
+ConVar	sk_npc_flechette_shotgun_num_pellets( "sk_npc_flechette_shotgun_num_pellets","6", FCVAR_REPLICATED);
+
+ConVar	sk_plr_flechette_shotgun_speed_min( "sk_plr_flechette_shotgun_speed_min","1750", FCVAR_REPLICATED);
+ConVar	sk_plr_flechette_shotgun_speed_max( "sk_plr_flechette_shotgun_speed_max","2100", FCVAR_REPLICATED);
+ConVar	sk_npc_flechette_shotgun_speed_min( "sk_npc_flechette_shotgun_speed_min","1000", FCVAR_REPLICATED);
+ConVar	sk_npc_flechette_shotgun_speed_max( "sk_npc_flechette_shotgun_speed_max","1250", FCVAR_REPLICATED);
+
+ConVar	sk_plr_dmg_flechette( "sk_plr_dmg_flechette", "4.0" );
+ConVar	sk_plr_flechette_shotgun_explode_dmg( "sk_plr_flechette_shotgun_explode_dmg", "13.0" );
+ConVar	sk_plr_flechette_shotgun_explode_radius( "sk_plr_flechette_shotgun_explode_radius", "128.0" );
+ConVar	sk_npc_dmg_flechette( "sk_npc_dmg_flechette", "6.0" );
+ConVar	sk_npc_flechette_shotgun_explode_dmg( "sk_npc_flechette_shotgun_explode_dmg", "11.0" );
+ConVar	sk_npc_flechette_shotgun_explode_radius( "sk_npc_flechette_shotgun_explode_radius", "128.0" );
+
+ConVar	sk_plr_flechette_shotgun_explode_delay( "sk_plr_flechette_shotgun_explode_delay", "0" );
+ConVar	sk_npc_flechette_shotgun_explode_delay( "sk_npc_flechette_shotgun_explode_delay", "0" );
+
+ConVar	sk_plr_flechette_shotgun_explode_warn_duration( "sk_plr_flechette_shotgun_explode_warn_duration", "0.25" );
+ConVar	sk_npc_flechette_shotgun_explode_warn_duration( "sk_npc_flechette_shotgun_explode_warn_duration", "0.5" );
+
+class CWeaponFlechetteShotgun : public CWeaponShotgun
+{
+public:
+	DECLARE_CLASS( CWeaponFlechetteShotgun, CWeaponShotgun );
+	DECLARE_SERVERCLASS();
+
+public:
+	void	Precache( void );
+
+	int CapabilitiesGet( void ) { return bits_CAP_WEAPON_RANGE_ATTACK1; }
+
+	virtual const Vector& GetBulletSpread( void )
+	{
+		static Vector npcCone = VECTOR_CONE_7DEGREES;
+		if ( GetOwner() && GetOwner()->IsNPC() )
+			return npcCone;
+
+		static Vector cone = VECTOR_CONE_6DEGREES;
+		return cone;
+	}
+
+	void PrimaryAttack( void );
+	void SecondaryAttack( void );
+
+	void FireNPCPrimaryAttack( CBaseCombatCharacter *pOperator, bool bUseWeaponAngles );
+
+	//DECLARE_ACTTABLE();
+
+	//CWeaponFlechetteShotgun(void);
+};
+
+IMPLEMENT_SERVERCLASS_ST( CWeaponFlechetteShotgun, DT_WeaponFlechetteShotgun )
+END_SEND_TABLE()
+
+LINK_ENTITY_TO_CLASS( weapon_flechette_shotgun, CWeaponFlechetteShotgun );
+//PRECACHE_WEAPON_REGISTER( weapon_flechette_shotgun );
+
+void CWeaponFlechetteShotgun::Precache( void )
+{
+	BaseClass::Precache();
+	UTIL_PrecacheOther( "shotgun_flechette" );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input  : *pOperator - 
+//-----------------------------------------------------------------------------
+void CWeaponFlechetteShotgun::FireNPCPrimaryAttack( CBaseCombatCharacter *pOperator, bool bUseWeaponAngles )
+{
+	Vector vecShootOrigin, vecShootDir;
+	CAI_BaseNPC *npc = pOperator->MyNPCPointer();
+	ASSERT( npc != NULL );
+	WeaponSound( SINGLE_NPC );
+	pOperator->DoMuzzleFlash();
+	m_iClip1 = m_iClip1 - 1;
+
+	if ( bUseWeaponAngles )
+	{
+		QAngle	angShootDir;
+		GetAttachment( LookupAttachment( "muzzle" ), vecShootOrigin, angShootDir );
+		AngleVectors( angShootDir, &vecShootDir );
+	}
+	else 
+	{
+		vecShootOrigin = pOperator->Weapon_ShootPosition();
+		vecShootDir = npc->GetActualShootTrajectory( vecShootOrigin );
+	}
+
+	CShotManipulator Manipulator( vecShootDir );
+	Vector vecDir;
+	static const Vector vecCone = VECTOR_CONE_10DEGREES;
+
+	for (int i = 0; i < sk_npc_flechette_shotgun_num_pellets.GetInt(); i++)
+	{
+		vecDir = Manipulator.ApplySpread( vecCone );
+		vecDir *= RandomFloat( sk_npc_flechette_shotgun_speed_min.GetFloat(), sk_npc_flechette_shotgun_speed_max.GetFloat() );
+		FlechetteShotgun_CreateFlechette( vecShootOrigin, vecDir, npc );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CWeaponFlechetteShotgun::PrimaryAttack( void )
+{
+	// Only the player fires this way so we can cast
+	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
+
+	if (!pPlayer)
+	{
+		return;
+	}
+
+	// MUST call sound before removing a round from the clip of a CMachineGun
+	WeaponSound(SINGLE);
+
+	pPlayer->DoMuzzleFlash();
+
+	SendWeaponAnim( ACT_VM_PRIMARYATTACK );
+
+	// player "shoot" animation
+	pPlayer->SetAnimation( PLAYER_ATTACK1 );
+
+	// Don't fire again until fire animation has completed
+	m_flNextPrimaryAttack = gpGlobals->curtime + GetViewModelSequenceDuration();
+	m_iClip1 -= 1;
+
+	Vector	vecSrc		= pPlayer->Weapon_ShootPosition( );
+	Vector	vecAiming	= pPlayer->GetAutoaimVector( AUTOAIM_SCALE_DEFAULT );	
+
+	pPlayer->SetMuzzleFlashTime( gpGlobals->curtime + 1.0 );
+
+	// Fire the flechettes
+	CShotManipulator Manipulator( vecAiming );
+	Vector vecDir;
+
+	for (int i = 0; i < sk_plr_flechette_shotgun_num_pellets.GetInt(); i++)
+	{
+		if ( i == 0 )
+		{
+			// Force the first shot to be perfectly accurate and at max speed
+			vecDir = Manipulator.GetShotDirection();
+			vecDir *= sk_plr_flechette_shotgun_speed_max.GetFloat();
+			FlechetteShotgun_CreateFlechette( vecSrc, vecDir, pPlayer );
+		}
+		else
+		{
+			vecDir = Manipulator.ApplySpread( GetBulletSpread() );
+			vecDir *= RandomFloat( sk_plr_flechette_shotgun_speed_min.GetFloat(), sk_plr_flechette_shotgun_speed_max.GetFloat() );
+			FlechetteShotgun_CreateFlechette( vecSrc, vecDir, pPlayer );
+		}
+	}
+	
+	pPlayer->ViewPunch(QAngle(random->RandomFloat(-4, -2), random->RandomFloat(-4, 4), 0)); // Breadman - values doubled
+
+	CSoundEnt::InsertSound( SOUND_COMBAT, GetAbsOrigin(), SOUNDENT_VOLUME_SHOTGUN, 0.2, GetOwner() );
+
+	if (!m_iClip1 && pPlayer->GetAmmoCount(m_iPrimaryAmmoType) <= 0)
+	{
+		// HEV suit - indicate out of ammo condition
+		pPlayer->SetSuitUpdate("!HEV_AMO0", FALSE, 0); 
+	}
+
+	if( m_iClip1 )
+	{
+		// pump so long as some rounds are left.
+		m_bNeedPump = true;
+	}
+
+	m_iPrimaryAttacks++;
+	gamestats->Event_WeaponFired( pPlayer, true, GetClassname() );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CWeaponFlechetteShotgun::SecondaryAttack( void )
+{
+	// Only the player fires this way so we can cast
+	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
+
+	if (!pPlayer)
+	{
+		return;
+	}
+
+	pPlayer->m_nButtons &= ~IN_ATTACK2;
+	// MUST call sound before removing a round from the clip of a CMachineGun
+	WeaponSound(WPN_DOUBLE);
+
+	pPlayer->DoMuzzleFlash();
+
+	SendWeaponAnim( ACT_VM_SECONDARYATTACK );
+
+	// player "shoot" animation
+	pPlayer->SetAnimation( PLAYER_ATTACK2 );
+
+	// Don't fire again until fire animation has completed
+	m_flNextPrimaryAttack = gpGlobals->curtime + GetViewModelSequenceDuration();
+	m_iClip1 -= 2;	// Shotgun uses same clip for primary and secondary attacks
+
+	Vector vecSrc	 = pPlayer->Weapon_ShootPosition();
+	Vector vecAiming = pPlayer->GetAutoaimVector( AUTOAIM_SCALE_DEFAULT );	
+
+	// Fire the flechettes
+	CShotManipulator Manipulator( vecAiming );
+	Vector vecDir;
+
+	for (int i = 0; i < sk_plr_flechette_shotgun_num_pellets_double.GetInt(); i++)
+	{
+		// Use a wider spread for the secondary
+		vecDir = Manipulator.ApplySpread( VECTOR_CONE_10DEGREES );
+		vecDir *= RandomFloat( sk_plr_flechette_shotgun_speed_min.GetFloat(), sk_plr_flechette_shotgun_speed_max.GetFloat() );
+		FlechetteShotgun_CreateFlechette( vecSrc, vecDir, pPlayer );
+	}
+
+	pPlayer->ViewPunch(QAngle(random->RandomFloat(-7, -7), random->RandomFloat(-6, 6), 0)); // Breadman - was 5 5 and second bit wasn't present
+
+	pPlayer->SetMuzzleFlashTime( gpGlobals->curtime + 1.0 );
+
+	CSoundEnt::InsertSound( SOUND_COMBAT, GetAbsOrigin(), SOUNDENT_VOLUME_SHOTGUN, 0.2 );
+
+	if (!m_iClip1 && pPlayer->GetAmmoCount(m_iPrimaryAmmoType) <= 0)
+	{
+		// HEV suit - indicate out of ammo condition
+		pPlayer->SetSuitUpdate("!HEV_AMO0", FALSE, 0); 
+	}
+
+	if( m_iClip1 )
+	{
+		// pump so long as some rounds are left.
+		m_bNeedPump = true;
+	}
+
+	m_iSecondaryAttacks++;
+	gamestats->Event_WeaponFired( pPlayer, false, GetClassname() );
+}
+#endif

@@ -11,6 +11,13 @@
 #include "npc_playercompanion.h"
 
 #include "ai_behavior_functank.h"
+#ifdef MAPBASE
+#include "ai_behavior_rappel.h"
+#include "ai_behavior_police.h"
+#endif
+#ifdef EZ2
+#include "ez2/ai_behavior_surrender.h"
+#endif
 
 struct SquadCandidate_t;
 
@@ -33,6 +40,9 @@ struct SquadCandidate_t;
 #define SF_CITIZEN_RANDOM_HEAD_MALE	( 1 << 22 )	//4194304
 #define SF_CITIZEN_RANDOM_HEAD_FEMALE ( 1 << 23 )//8388608
 #define SF_CITIZEN_USE_RENDER_BOUNDS ( 1 << 24 )//16777216
+#ifdef MAPBASE
+#define SF_CITIZEN_PLAYER_TOGGLE_SQUAD ( 1 << 25 ) //33554432		Prevents the citizen from joining the squad automatically, but still being commandable if the player toggles it
+#endif
 
 //-------------------------------------
 // Animation events
@@ -44,7 +54,12 @@ enum CitizenType_t
 	CT_DOWNTRODDEN,
 	CT_REFUGEE,
 	CT_REBEL,
-	CT_UNIQUE
+	CT_UNIQUE,
+	CT_BRUTE,
+	CT_LONGFALL,
+	CT_ARCTIC,
+	CT_ARBEIT,		// Pre-war Arbeit employees
+	CT_ARBEIT_SEC,	// Pre-war Arbeit security guards
 };
 
 //-----------------------------------------------------------------------------
@@ -69,7 +84,13 @@ class CNPC_Citizen : public CNPC_PlayerCompanion
 public:
 	CNPC_Citizen()
 	 :	m_iHead( -1 )
+#ifdef EZ
+		, m_iWillpowerModifier( 0 )
+#endif
 	{
+#ifdef EZ2
+		m_bInvestigateSounds = true; // Rebels should investigate sounds
+#endif
 	}
 
 	//---------------------------------
@@ -120,6 +141,7 @@ public:
 	bool			ShouldDeferToFollowBehavior();
 	int 			TranslateSchedule( int scheduleType );
 
+
 	bool			ShouldAcceptGoal( CAI_BehaviorBase *pBehavior, CAI_GoalEntity *pGoal );
 	void			OnClearGoal( CAI_BehaviorBase *pBehavior, CAI_GoalEntity *pGoal );
 	
@@ -127,10 +149,18 @@ public:
 	void 			RunTask( const Task_t *pTask );
 	
 	Activity		NPC_TranslateActivity( Activity eNewActivity );
+#ifdef EZ
+	void			TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr, CDmgAccumulator *pAccumulator );
+	void			Event_Killed( const CTakeDamageInfo &info );
+	void			OnChangeActivity( Activity eNewActivity );
+	void			Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &info );
+#endif
 	void 			HandleAnimEvent( animevent_t *pEvent );
 	void			TaskFail( AI_TaskFailureCode_t code );
 
+#ifndef MAPBASE // Moved to CAI_BaseNPC
 	void 			PickupItem( CBaseEntity *pItem );
+#endif
 
 	void 			SimpleUse( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 
@@ -140,13 +170,31 @@ public:
 
 	virtual const char *SelectRandomExpressionForState( NPC_STATE state );
 
+#ifdef EZ
+	// Blixibon - Lets citizens ignite from gas cans, etc.
+	bool			AllowedToIgnite( void ) { return true; }
+
+	// 1upD - Citizens can gib if killed by massive explosive damage or acid
+	virtual bool		ShouldGib( const CTakeDamageInfo &info );
+	virtual bool		CorpseGib( const CTakeDamageInfo &info );
+
+	virtual CSprite		* GetGlowSpritePtr( int i );
+	virtual void		  SetGlowSpritePtr( int i, CSprite * sprite );
+	virtual EyeGlow_t	* GetEyeGlowData( int i );
+	virtual int			  GetNumGlows();
+#endif
+
 	//---------------------------------
 	// Combat
 	//---------------------------------
 	bool 			OnBeginMoveAndShoot();
 	void 			OnEndMoveAndShoot();
-	
+#ifndef EZ
 	virtual bool	UseAttackSquadSlots()	{ return false; }
+#else
+	virtual bool	HasAttackSlot();
+#endif
+
 	void 			LocateEnemySound();
 
 	bool			IsManhackMeleeCombatant();
@@ -155,12 +203,63 @@ public:
 	void 			OnChangeActiveWeapon( CBaseCombatWeapon *pOldWeapon, CBaseCombatWeapon *pNewWeapon );
 
 	bool			ShouldLookForBetterWeapon();
+#ifdef EZ
+	WeaponProficiency_t CalcWeaponProficiency(CBaseCombatWeapon *pWeapon); // Added by 1upD - Citizen proficiency should be configurable
+	bool			IsJumpLegal(const Vector & startPos, const Vector & apex, const Vector & endPos) const; // Added by 1upD - Override for jump rebels
+	bool			TestShootPosition( const Vector &vecShootPos, const Vector &targetPos );
 
+	//---------------------------------
+	// Willpower
+	//---------------------------------
+	void			GatherWillpowerConditions();
+	int				MeleeAttack1Conditions( float flDot, float flDist );
 
+	Disposition_t	IRelationType(CBaseEntity *pTarget);
+#ifdef EZ2
+	bool			JustStartedFearing( CBaseEntity *pTarget ); // Blixibon - Needed so the player's speech AI doesn't pick this up as D_FR before it's apparent (e.g. fast, rapid kills)
+
+	CitizenType_t	GetCitiznType() { return m_Type; }
+
+	bool			GiveBackupWeapon( CBaseCombatWeapon * pWeapon, CBaseEntity * pActivator );
+	bool			TrySpeakBeg();
+
+	inline bool		IsSurrendered() { return m_SurrenderBehavior.IsSurrendered(); } //{ return GetContextValue( "surrendered" )[0] == '1'; };
+	inline bool		IsSurrenderIdle() { return m_SurrenderBehavior.IsSurrenderIdle(); }
+	inline bool		CanSurrender() { return m_SurrenderBehavior.CanSurrender(); }
+	inline bool		SurrenderAutomatically() { return m_SurrenderBehavior.SurrenderAutomatically(); }
+#endif
+	void			MsgWillpower(const tchar* pMsg, int willpower);
+	int 			TranslateWillpowerSchedule(int scheduleType);
+	int				TranslateSuppressingFireSchedule(int scheduleType);
+	int				SelectRangeAttack2Schedule();
+	bool			FindDecoyObject(void);
+	bool			FindEnemyCoverTarget(void);
+	void			AimGun();
+
+	const char*		GetSquadSlotDebugName(int iSquadSlot); // Debug names for new squad slots
+
+	float			m_flLastWillpowerMsgTime;
+	Vector			m_vecDecoyObjectTarget;
+#endif
 	//---------------------------------
 	// Damage handling
 	//---------------------------------
 	int 			OnTakeDamage_Alive( const CTakeDamageInfo &info );
+#ifdef EZ
+	float			GetHitgroupDamageMultiplier( int iHitGroup, const CTakeDamageInfo &info );
+#endif
+
+#ifdef MAPBASE
+	//---------------------------------
+	void			ModifyOrAppendCriteria( AI_CriteriaSet& set );
+#endif
+
+#ifdef EZ2
+	// Blixibon - Gets criteria the player should use in speech
+	virtual void		ModifyOrAppendCriteriaForPlayer( CBasePlayer *pPlayer, AI_CriteriaSet& set );
+
+	bool			GetGameTextSpeechParams( hudtextparms_t &params );
+#endif
 	
 	//---------------------------------
 	// Commander mode
@@ -179,6 +278,9 @@ public:
 	void 			MoveOrder( const Vector &vecDest, CAI_BaseNPC **Allies, int numAllies );
 	void			OnMoveOrder();
 	void 			CommanderUse( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
+#ifdef MAPBASE
+	bool			ShouldAllowSquadToggleUse( CBasePlayer *pPlayer );
+#endif
 	bool			ShouldSpeakRadio( CBaseEntity *pListener );
 	void			OnMoveToCommandGoalFailed();
 	void			AddToPlayerSquad();
@@ -195,6 +297,10 @@ public:
 	void			AddInsignia();
 	void			RemoveInsignia();
 	bool			SpeakCommandResponse( AIConcept_t concept, const char *modifiers = NULL );
+
+#ifdef MAPBASE
+	virtual void	SetPlayerAvoidState( void );
+#endif
 	
 	//---------------------------------
 	// Scanner interaction
@@ -235,11 +341,27 @@ public:
 	void 			InputStartPatrolling( inputdata_t &inputdata );
 	void 			InputStopPatrolling( inputdata_t &inputdata );
 	void			InputSetCommandable( inputdata_t &inputdata );
+#ifdef MAPBASE
+	void			InputSetUnCommandable( inputdata_t &inputdata );
+#endif
 	void			InputSetMedicOn( inputdata_t &inputdata );
 	void			InputSetMedicOff( inputdata_t &inputdata );
 	void			InputSetAmmoResupplierOn( inputdata_t &inputdata );
 	void			InputSetAmmoResupplierOff( inputdata_t &inputdata );
 	void			InputSpeakIdleResponse( inputdata_t &inputdata );
+#ifdef MAPBASE
+	void			InputSetPoliceGoal( inputdata_t &inputdata );
+#endif
+#ifdef EZ2
+	void			InputSurrender( inputdata_t &inputdata );
+	void			InputSetSurrenderFlags( inputdata_t &inputdata );
+	void			InputAddSurrenderFlags( inputdata_t &inputdata );
+	void			InputRemoveSurrenderFlags( inputdata_t &inputdata );
+	void			InputSetWillpowerModifier( inputdata_t &inputdata );
+	void			InputSetWillpowerDisabled( inputdata_t &inputdata );
+	void			InputSetSuppressiveFireDisabled( inputdata_t &inputdata );
+	void			InputForcePanic( inputdata_t &inputdata );
+#endif
 
 	//---------------------------------
 	//	Sounds & speech
@@ -249,6 +371,11 @@ public:
 	bool			UseSemaphore( void );
 
 	virtual void	OnChangeRunningBehavior( CAI_BehaviorBase *pOldBehavior,  CAI_BehaviorBase *pNewBehavior );
+
+#ifdef MAPBASE
+	int				GetCitizenType() { return (int)m_Type; }
+	void			SetCitizenType( int iType ) { m_Type = (CitizenType_t)iType; }
+#endif
 
 private:
 	//-----------------------------------------------------
@@ -260,6 +387,14 @@ private:
 		COND_CIT_COMMANDHEAL,
 		COND_CIT_HURTBYFIRE,
 		COND_CIT_START_INSPECTION,
+#ifdef EZ
+		COND_CIT_WILLPOWER_VERY_LOW,
+		COND_CIT_WILLPOWER_LOW,
+		COND_CIT_WILLPOWER_HIGH,
+		COND_CIT_ON_FIRE,
+		COND_CIT_DISARMED,
+		NEXT_CONDITION,
+#endif
 		
 		SCHED_CITIZEN_PLAY_INSPECT_ACTIVITY = BaseClass::NEXT_SCHEDULE,
 		SCHED_CITIZEN_HEAL,
@@ -271,6 +406,12 @@ private:
 #ifdef HL2_EPISODIC
 		SCHED_CITIZEN_HEAL_TOSS,
 #endif
+#ifdef EZ
+		SCHED_CITIZEN_RANGE_ATTACK1_ADVANCE,
+		SCHED_CITIZEN_RANGE_ATTACK1_SUPPRESS,
+		SCHED_CITIZEN_BURNING_STAND,
+		NEXT_SCHEDULE,
+#endif
 		
 		TASK_CIT_HEAL = BaseClass::NEXT_TASK,
 		TASK_CIT_RPG_AUGER,
@@ -281,7 +422,11 @@ private:
 #ifdef HL2_EPISODIC
 		TASK_CIT_HEAL_TOSS,
 #endif
-
+#ifdef EZ
+		TASK_CIT_DIE_INSTANTLY,
+		TASK_CIT_PAINT_SUPPRESSION_TARGET,
+		NEXT_TASK,
+#endif
 	};
 
 	//-----------------------------------------------------
@@ -303,6 +448,10 @@ private:
 	bool			m_bWasInPlayerSquad;
 	float			m_flTimeLastCloseToPlayer;
 	string_t		m_iszDenyCommandConcept;
+#ifdef MAPBASE
+	bool			m_bTossesMedkits;
+	bool			m_bAlternateAiming;
+#endif
 
 	CSimpleSimTimer	m_AutoSummonTimer;
 	Vector			m_vAutoSummonAnchor;
@@ -316,7 +465,15 @@ private:
 
 	float			m_flTimePlayerStare;	// The game time at which the player started staring at me.
 	float			m_flTimeNextHealStare;	// Next time I'm allowed to heal a player who is staring at me.
+#ifdef EZ
+	int				m_iWillpowerModifier;	// 1upD - Amount of 'mental fortitude' points before panic
+	bool			m_bWillpowerDisabled;	// 1upD - Override willpower behavior
+	bool			m_bSuppressiveFireDisabled; // 1upD - Override suppressive fire behavior
 
+	bool			m_bUsedBackupWeapon;	// 1upD - Has this rebel been given a backup weapon already?
+
+	CSprite			*m_pShoulderGlow;
+#endif
 	//-----------------------------------------------------
 	//	Outputs
 	//-----------------------------------------------------
@@ -326,9 +483,58 @@ private:
 	COutputEvent		m_OnStationOrder; 
 	COutputEvent		m_OnPlayerUse;
 	COutputEvent		m_OnNavFailBlocked;
+#ifdef MAPBASE
+	COutputEvent		m_OnHealedNPC;
+	COutputEvent		m_OnHealedPlayer;
+	COutputEHANDLE		m_OnThrowMedkit;
+	COutputEvent		m_OnGiveAmmo;
+#endif
+
+#ifdef EZ2
+	COutputEvent		m_OnSurrender;
+	COutputEvent		m_OnStopSurrendering;
+#endif
 
 	//-----------------------------------------------------
+#ifdef MAPBASE
+	CAI_RappelBehavior		m_RappelBehavior;
+	CAI_PolicingBehavior	m_PolicingBehavior;
+
+	// Rappel
+	virtual bool IsWaitingToRappel( void ) { return m_RappelBehavior.IsWaitingToRappel(); }
+	void BeginRappel() { m_RappelBehavior.BeginRappel(); }
+#else // Moved to CNPC_PlayerCompanion
 	CAI_FuncTankBehavior	m_FuncTankBehavior;
+#endif
+#ifdef EZ2
+	// Used by the Arbeit helicopter
+	virtual bool HasRappelBehavior() { return true; }
+	virtual void StartWaitingForRappel() { m_RappelBehavior.StartWaitingForRappel(); }
+#endif
+
+#ifdef EZ2
+	class CCitizenSurrenderBehavior : public CAI_SurrenderBehavior
+	{
+		typedef CAI_SurrenderBehavior BaseClass;
+
+	public:
+		virtual void Surrender( CBaseCombatCharacter *pCaptor );
+
+		virtual int SelectSchedule();
+
+		virtual void BuildScheduleTestBits();
+
+		virtual void RunTask( const Task_t *pTask );
+
+		virtual int ModifyResistanceValue( int iVal );
+
+		inline CNPC_Citizen *GetOuterCit() { return static_cast<CNPC_Citizen*>(GetOuter()); }
+	};
+
+	virtual CAI_SurrenderBehavior &GetSurrenderBehavior( void ) { return m_SurrenderBehavior; }
+
+	CCitizenSurrenderBehavior	m_SurrenderBehavior;
+#endif
 
 	CHandle<CAI_FollowGoal>	m_hSavedFollowGoalEnt;
 
@@ -337,6 +543,10 @@ private:
 	
 	//-----------------------------------------------------
 	
+#ifdef MAPBASE_VSCRIPT
+	static ScriptHook_t		g_Hook_SelectModel;
+	DECLARE_ENT_SCRIPTDESC();
+#endif
 	DECLARE_DATADESC();
 #ifdef _XBOX
 protected:

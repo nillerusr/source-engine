@@ -408,7 +408,7 @@ void CClientScoreBoardDialog::AddSection(int teamType, int teamNumber)
 			teamName = name;
 		}
 
-		g_pVGuiLocalize->ConstructString_safe( string1, g_pVGuiLocalize->Find("#Player"), 2, teamName );
+		g_pVGuiLocalize->ConstructString( string1, sizeof( string1 ), g_pVGuiLocalize->Find("#Player"), 2, teamName );
 		
 		m_pPlayerList->AddSection(m_iSectionId, "", StaticPlayerSortFunc);
 
@@ -498,7 +498,7 @@ void CClientScoreBoardDialog::UpdatePlayerAvatar( int playerIndex, KeyValues *kv
 		{
 			if ( pi.friendsID )
 			{
-				CSteamID steamIDForPlayer( pi.friendsID, 1,  steamapicontext->SteamUtils()->GetConnectedUniverse(), k_EAccountTypeIndividual );
+				CSteamID steamIDForPlayer( pi.friendsID, 1, steamapicontext->SteamUtils()->GetConnectedUniverse(), k_EAccountTypeIndividual );
 
 				// See if we already have that avatar in our list
 				int iMapIndex = m_mapAvatarsToImageList.Find( steamIDForPlayer );

@@ -15,6 +15,9 @@
 #include "saverestore_utlvector.h"
 #include "bone_setup.h"
 #include "physics_npc_solver.h"
+#ifdef EZ2
+#include "mapbase/info_remarkable.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -97,6 +100,15 @@ BEGIN_DATADESC( CAI_BaseActor )
 	DEFINE_INPUTFUNC( FIELD_STRING,	"SetExpressionOverride",	InputSetExpressionOverride ),
 
 END_DATADESC()
+
+#ifdef MAPBASE_VSCRIPT
+BEGIN_ENT_SCRIPTDESC( CAI_BaseActor, CAI_BaseNPC, "The base class for NPCs which act in complex choreo scenes." )
+
+	DEFINE_SCRIPTFUNC_NAMED( ScriptAddLookTarget, "AddLookTarget", "Add a potential look target for this actor with the specified importance, duration, and ramp." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptAddLookTargetPos, "AddLookTargetPos", "Add a potential look target position for this actor with the specified importance, duration, and ramp." )
+
+END_SCRIPTDESC();
+#endif
 
 
 BEGIN_SIMPLE_DATADESC( CAI_InterestTarget_t )
@@ -230,7 +242,11 @@ void CAI_BaseActor::SetModel( const char *szModelName )
 // Purpose: 
 //-----------------------------------------------------------------------------
 
+#ifdef MAPBASE
+bool CAI_BaseActor::StartSceneEvent( CSceneEventInfo *info, CChoreoScene *scene, CChoreoEvent *event, CChoreoActor *actor, CBaseEntity *pTarget, CSceneEntity *pSceneEnt )
+#else
 bool CAI_BaseActor::StartSceneEvent( CSceneEventInfo *info, CChoreoScene *scene, CChoreoEvent *event, CChoreoActor *actor, CBaseEntity *pTarget )
+#endif
 {
 	Assert( info );
 	Assert( info->m_pScene );
@@ -314,6 +330,109 @@ bool CAI_BaseActor::StartSceneEvent( CSceneEventInfo *info, CChoreoScene *scene,
 			{
 				info->m_nType = SCENE_AI_DISABLEAI;
 			}
+#ifdef MAPBASE
+			else if (stricmp(event->GetParameters(), "AI_ADDCONTEXT") == 0)
+			{
+				// Adds a response context to the caller in place of the target field.
+				// This is supposed to be used with the talker system.
+				if (event->GetParameters2())
+				{
+					info->m_nType = SCENE_AI_ADDCONTEXT;
+					AddContext(event->GetParameters2());
+					return true;
+				}
+			}
+			else if (stricmp(event->GetParameters(), "AI_INPUT") == 0)
+			{
+				// Fires an input on an entity in place of the target field.
+				// This is supposed to be used with the talker system.
+				if (event->GetParameters2())
+				{
+					info->m_nType = SCENE_AI_INPUT;
+
+					const char *raw = event->GetParameters2();
+					char sTarget[128];
+					char sInput[128];
+					char sParameter[128];
+					char *colon1 = Q_strstr( raw, ":" );
+					if (!colon1)
+					{
+						Warning("%s (%s) AI_INPUT missing colon separator!\n", GetClassname(), GetDebugName());
+						return false;
+					}
+
+					int len = colon1 - raw;
+					Q_strncpy( sTarget, raw, MIN( len + 1, sizeof(sTarget) ) );
+					sTarget[MIN(len, sizeof(sTarget) - 1)] = 0;
+
+					bool bParameter = true;
+					char *colon2 = Q_strstr(colon1 + 1, ":");
+					if (!colon2)
+					{
+						DevMsg("Assuming no parameter\n");
+						colon2 = colon1 + 1;
+						bParameter = false;
+					}
+					
+					if (bParameter)
+					{
+						len = MIN(colon2 - (colon1 + 1), sizeof(sInput) - 1);
+						Q_strncpy(sInput, colon1 + 1, MIN(len + 1, sizeof(sInput)));
+						sInput[MIN(len, sizeof(sInput) - 1)] = 0;
+
+						Q_strncpy(sParameter, colon2 + 1, sizeof(sInput));
+					}
+					else
+					{
+						len = colon2 - raw;
+						Q_strncpy(sInput, colon2, sizeof(sInput));
+					}
+
+					CBaseEntity *pEnt = gEntList.FindEntityByName(NULL, sTarget, this);
+					if (!pEnt)
+					{
+						DevMsg("%s not found with normal search, slamming to scene ent\n", sTarget);
+						pEnt = UTIL_FindNamedSceneEntity(sTarget, this, pSceneEnt);
+						if (!pEnt)
+						{
+							DevWarning("%s slammed to self!\n", sTarget);
+							pEnt = this;
+						}
+					}
+
+					if (pEnt && sInput)
+					{
+						variant_t variant;
+						if (bParameter && sParameter)
+						{
+							const char *strParam = sParameter;
+							if (strParam[0] == '!')
+							{
+								CBaseEntity *pParamEnt = UTIL_FindNamedSceneEntity(strParam, this, pSceneEnt);
+								if (pParamEnt && pParamEnt->GetEntityName() != NULL_STRING && !gEntList.FindEntityProcedural(strParam))
+								{
+									// We make sure it's a scene entity that can't be found with entlist procedural so we can translate !target# without messing with !activators, etc.
+									//const char *newname = pParamEnt->GetEntityName().ToCStr();
+									strParam = pParamEnt->GetEntityName().ToCStr();
+								}
+							}
+
+							if (strParam)
+							{
+								variant.SetString(MAKE_STRING(strParam));
+							}
+						}
+
+						pEnt->AcceptInput(sInput, this, this, variant, 0);
+						return true;
+					}
+					else
+					{
+						Warning("%s (%s) AI_INPUT cannot find entity %s!\n", GetClassname(), GetDebugName(), sTarget);
+					}
+				}
+			}
+#endif
 			else
 			{
 				return BaseClass::StartSceneEvent( info, scene, event, actor, pTarget );
@@ -508,6 +627,11 @@ bool CAI_BaseActor::ProcessSceneEvent( CSceneEventInfo *info, CChoreoScene *scen
 							Vector vecAimTargetLoc = info->m_hTarget->EyePosition();
 							Vector vecAimDir = vecAimTargetLoc - EyePosition();
 
+#ifdef MAPBASE
+							// Mind the ramp
+							vecAimDir *= event->GetIntensity(scene->GetTime());
+#endif
+
 							VectorNormalize( vecAimDir );
 							SetAim( vecAimDir);
 						}
@@ -548,6 +672,16 @@ bool CAI_BaseActor::ProcessSceneEvent( CSceneEventInfo *info, CChoreoScene *scen
 						EnterSceneSequence( scene, event );
 					}
 					return true;
+#ifdef MAPBASE
+				case SCENE_AI_ADDCONTEXT:
+					{
+					}
+					return true;
+				case SCENE_AI_INPUT:
+					{
+					}
+					return true;
+#endif
 				default:
 					return false;
 			}
@@ -704,7 +838,11 @@ void CAI_BaseActor::UpdateLatchedValues( )
 		// set head latch
 		m_fLatchedPositions |= HUMANOID_LATCHED_HEAD;
 
+#ifdef MAPBASE // From Alien Swarm SDK
+		if ( CanSkipAnimation() || !GetAttachment( "eyes", m_latchedEyeOrigin, &m_latchedHeadDirection ))
+#else
 		if (!HasCondition( COND_IN_PVS ) || !GetAttachment( "eyes", m_latchedEyeOrigin, &m_latchedHeadDirection ))
+#endif
 		{
 			m_latchedEyeOrigin = BaseClass::EyePosition( );
 			AngleVectors( GetLocalAngles(), &m_latchedHeadDirection );
@@ -1006,6 +1144,24 @@ void CAI_BaseActor::UpdateHeadControl( const Vector &vHeadTarget, float flHeadIn
 	matrix3x4_t headXform;
 	ConcatTransforms( worldToForward, targetXform, headXform );
 	MatrixAngles( headXform, vTargetAngles );
+
+#ifdef MAPBASE
+	// This is here to cover an edge case where pose parameters set to NaN invalidate the model.
+	if (!vTargetAngles.IsValid())
+	{
+		Warning(	"================================================================================\n"
+					"!!!!! %s tried to set a NaN head angle (can happen when look targets have >1 importance) !!!!!\n"
+					"================================================================================\n", GetDebugName() );
+		m_goalHeadCorrection.Init();
+		Set( m_FlexweightHeadRightLeft, 0.0f );
+		Set( m_FlexweightHeadUpDown, 0.0f );
+		Set( m_FlexweightHeadTilt, 0.0f );
+		Set( m_ParameterHeadYaw, 0.0f );
+		Set( m_ParameterHeadPitch, 0.0f );
+		Set( m_ParameterHeadRoll, 0.0f );
+		return;
+	}
+#endif
 
 	// partially debounce head goal
 	float s0 = 1.0 - flHeadInfluence + GetHeadDebounce() * flHeadInfluence;
@@ -1413,6 +1569,52 @@ void CAI_BaseActor::StartTaskRangeAttack1( const Task_t *pTask )
 }
 
 
+#ifdef EZ2
+extern ConVar ai_debug_remarkables;
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CAI_BaseActor::OnSeeEntity( CBaseEntity *pEntity )
+{
+	BaseClass::OnSeeEntity(pEntity);
+
+	if ( pEntity->IsRemarkable() )
+	{
+		CInfoRemarkable * pRemarkable = dynamic_cast<CInfoRemarkable *>(pEntity);
+		if ( pRemarkable != NULL )
+		{
+			AI_CriteriaSet modifiers = pRemarkable->GetModifiers( this );
+			if ( Remark( modifiers, pRemarkable ) )
+			{
+				pRemarkable->OnRemarked();
+
+				if (ai_debug_remarkables.GetBool())
+				{
+					Msg( "%s noticed remarkable %s and remarked on it!\n", GetDebugName(), pRemarkable->GetDebugName() );
+					if (m_debugOverlays & OVERLAY_NPC_SELECTED_BIT)
+					{
+						pRemarkable->DrawDebugGeometryOverlays();
+					}
+				}
+			}
+			else
+			{
+				if (ai_debug_remarkables.GetBool())
+				{
+					Msg( "%s noticed remarkable %s, but could not remark on it\n", GetDebugName(), pRemarkable->GetDebugName() );
+					if (m_debugOverlays & OVERLAY_NPC_SELECTED_BIT)
+					{
+						pRemarkable->DrawDebugGeometryOverlays();
+					}
+				}
+			}
+		}
+	}
+}
+#endif
+
+
 //-----------------------------------------------------------------------------
 // Purpose: Set direction that the NPC is looking
 //-----------------------------------------------------------------------------
@@ -1495,7 +1697,11 @@ void CAI_BaseActor::MaintainLookTargets( float flInterval )
 	}
 
 	// don't bother with any of the rest if the player can't see you
+#ifdef MAPBASE // From Alien Swarm SDK
+	if ( CanSkipAnimation() )
+#else
 	if (!HasCondition( COND_IN_PVS ))
+#endif
 	{
 		return;
 	}
@@ -1802,7 +2008,7 @@ void CAI_BaseActor::OnStateChange( NPC_STATE OldState, NPC_STATE NewState )
 {
 	PlayExpressionForState( NewState );
 
-#ifdef HL2_EPISODIC
+#if defined(HL2_EPISODIC) || defined(MAPBASE)
 	// If we've just switched states, ensure we stop any scenes that asked to be stopped
 	if ( OldState == NPC_STATE_IDLE )
 	{
@@ -1902,7 +2108,11 @@ bool CAI_BaseActor::UseSemaphore( void )
 
 CAI_Expresser *CAI_BaseActor::CreateExpresser()
 {
+#ifdef NEW_RESPONSE_SYSTEM
+	m_pExpresser = new CAI_ExpresserWithFollowup(this);
+#else
 	m_pExpresser = new CAI_Expresser(this);
+#endif
 	return m_pExpresser;
 }
 

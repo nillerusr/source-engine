@@ -43,6 +43,9 @@ public:
 
 	// Purpose: check ammo
 	virtual void CheckAmmo( void );
+
+	// Whether or not we can die in one hit from a sneak attack
+	virtual bool CanBeSneakAttacked( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr ) { return true; }
 };
 
 //-----------------------------------------------------------------------------

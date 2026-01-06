@@ -29,12 +29,24 @@ extern ConVar r_flashlightdepthres;
 #include "tier0/memdbgon.h"
 
 extern ConVar r_flashlightdepthtexture;
+extern ConCommand Ez_Nvg_On; // Breadman - Probably don't need this.
 
 void r_newflashlightCallback_f( IConVar *pConVar, const char *pOldString, float flOldValue );
 
 static ConVar r_newflashlight( "r_newflashlight", "1", FCVAR_CHEAT, "", r_newflashlightCallback_f );
 static ConVar r_swingflashlight( "r_swingflashlight", "1", FCVAR_CHEAT );
 static ConVar r_flashlightlockposition( "r_flashlightlockposition", "0", FCVAR_CHEAT );
+#ifdef EZ
+static ConVar r_nvgfov( "r_nvgfov", "100", FCVAR_CHEAT ); // Breadman - Changed for NVG effect
+static ConVar r_nvgshadows( "r_nvgshadows", "1", FCVAR_CHEAT ); // Should the NVG cast shadows?
+// z33ky - workaround for Linux issue with bordercolor-support detection
+#ifdef EZ2
+// EZ2 does not ship the _border flashlight material?
+static ConVar r_nvg_force_nonbordered( "r_nvg_force_nonbordered", "1" );
+#else
+static ConVar r_nvg_force_nonbordered( "r_nvg_force_nonbordered", "0" );
+#endif
+#endif
 static ConVar r_flashlightfov( "r_flashlightfov", "45.0", FCVAR_CHEAT );
 static ConVar r_flashlightoffsetx( "r_flashlightoffsetx", "10.0", FCVAR_CHEAT );
 static ConVar r_flashlightoffsety( "r_flashlightoffsety", "-20.0", FCVAR_CHEAT );
@@ -48,8 +60,16 @@ static ConVar r_flashlightvisualizetrace( "r_flashlightvisualizetrace", "0", FCV
 static ConVar r_flashlightambient( "r_flashlightambient", "0.0", FCVAR_CHEAT );
 static ConVar r_flashlightshadowatten( "r_flashlightshadowatten", "0.35", FCVAR_CHEAT );
 static ConVar r_flashlightladderdist( "r_flashlightladderdist", "40.0", FCVAR_CHEAT );
+#ifndef MAPBASE
 static ConVar mat_slopescaledepthbias_shadowmap( "mat_slopescaledepthbias_shadowmap", "16", FCVAR_CHEAT );
 static ConVar mat_depthbias_shadowmap(	"mat_depthbias_shadowmap", "0.0005", FCVAR_CHEAT  );
+#else
+extern ConVarRef mat_slopescaledepthbias_shadowmap;
+extern ConVarRef mat_depthbias_shadowmap;
+#endif
+#ifdef MAPBASE
+static ConVar r_flashlighttextureoverride( "r_flashlighttextureoverride", "", FCVAR_CHEAT );
+#endif
 
 
 void r_newflashlightCallback_f( IConVar *pConVar, const char *pOldString, float flOldValue )
@@ -60,6 +80,16 @@ void r_newflashlightCallback_f( IConVar *pConVar, const char *pOldString, float 
 	}	
 }
 
+#ifdef EZ
+//-----------------------------------------------------------------------------
+// Purpose: Alternate constructor for Entropy : Zero.
+// Input  : type - flashlight, NVG, or muzzleflash
+//			nEntIndex - The m_nEntIndex of the client entity that is creating us.
+//			vecPos - The position of the light emitter.
+//			vecDir - The direction of the light emission.
+//-----------------------------------------------------------------------------
+CFlashlightEffect::CFlashlightEffect( int nEntIndex, flashlighttype type )
+#else
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : nEntIndex - The m_nEntIndex of the client entity that is creating us.
@@ -67,6 +97,7 @@ void r_newflashlightCallback_f( IConVar *pConVar, const char *pOldString, float 
 //			vecDir - The direction of the light emission.
 //-----------------------------------------------------------------------------
 CFlashlightEffect::CFlashlightEffect(int nEntIndex)
+#endif
 {
 	m_FlashlightHandle = CLIENTSHADOW_INVALID_HANDLE;
 	m_nEntIndex = nEntIndex;
@@ -76,9 +107,32 @@ CFlashlightEffect::CFlashlightEffect(int nEntIndex)
 	if( engine->GetDXSupportLevel() < 70 )
 	{
 		r_newflashlight.SetValue( 0 );
-	}	
+	}
 
-	if ( g_pMaterialSystemHardwareConfig->SupportsBorderColor() )
+#ifdef EZ
+	m_iFlashLightType = type;
+	if ( g_pMaterialSystemHardwareConfig->SupportsBorderColor() && !r_nvg_force_nonbordered.GetBool() && IsNVG() )
+	{
+		m_FlashlightTexture.Init( "effects/Ez_MetroVision_border", TEXTURE_GROUP_OTHER, true );
+	}
+	else if ( IsNVG() )
+	{
+		m_FlashlightTexture.Init( "effects/Ez_MetroVision", TEXTURE_GROUP_OTHER, true );
+	}
+	else if ( m_iFlashLightType == HEADLAMP )
+	{
+		m_FlashlightTexture.Init( "effects/headlamp001", TEXTURE_GROUP_OTHER, true );
+	}
+	else
+#endif
+#ifdef MAPBASE
+	if ( r_flashlighttextureoverride.GetString()[0] != '\0' ) 
+	{
+		m_FlashlightTexture.Init( r_flashlighttextureoverride.GetString(), TEXTURE_GROUP_OTHER, true );
+	}
+	else
+#endif
+	if (g_pMaterialSystemHardwareConfig->SupportsBorderColor())
 	{
 		m_FlashlightTexture.Init( "effects/flashlight_border", TEXTURE_GROUP_OTHER, true );
 	}
@@ -95,6 +149,12 @@ CFlashlightEffect::CFlashlightEffect(int nEntIndex)
 CFlashlightEffect::~CFlashlightEffect()
 {
 	LightOff();
+#ifdef EZ
+	if ( IsNVG() )
+	{
+		engine->ClientCmd( "Ez_Nvg_On" ); //Breadman - see View_scene.cpp for this Convar
+	}
+#endif
 }
 
 
@@ -105,6 +165,12 @@ void CFlashlightEffect::TurnOn()
 {
 	m_bIsOn = true;
 	m_flDistMod = 1.0f;
+#ifdef EZ
+	if ( IsNVG() )
+	{
+		engine->ClientCmd( "Ez_Nvg_On" ); //Breadman - see View_scene.cpp for this Convar
+	}
+#endif
 }
 
 
@@ -146,11 +212,35 @@ public:
 	}
 };
 
+extern ConVar cl_stunstick_flashlight_distance;
+extern ConVar cl_stunstick_flashlight_intensity;
+
 //-----------------------------------------------------------------------------
 // Purpose: Do the headlight
 //-----------------------------------------------------------------------------
 void CFlashlightEffect::UpdateLightNew(const Vector &vecPos, const Vector &vecForward, const Vector &vecRight, const Vector &vecUp )
 {
+	float fov, flashlightFar;
+
+#ifdef EZ
+	if ( m_iFlashLightType == NVG )
+	{
+ 		fov = r_nvgfov.GetFloat();
+		flashlightFar =  r_flashlightfar.GetFloat();
+	}
+	else if ( m_iFlashLightType == MUZZLEFLASH )
+	{
+		fov = 179;
+		flashlightFar =  cl_stunstick_flashlight_distance.GetFloat();
+	}
+	else
+#endif
+	{
+		fov = r_flashlightfov.GetFloat();
+		flashlightFar =  r_flashlightfar.GetFloat();
+	}
+
+
 	VPROF_BUDGET( "CFlashlightEffect::UpdateLightNew", VPROF_BUDGETGROUP_SHADOW_DEPTH_TEXTURING );
 
 	FlashlightState_t state;
@@ -199,7 +289,7 @@ void CFlashlightEffect::UpdateLightNew(const Vector &vecPos, const Vector &vecFo
 	iMask &= ~CONTENTS_HITBOX;
 	iMask |= CONTENTS_WINDOW;
 
-	Vector vTarget = vecPos + vecForward * r_flashlightfar.GetFloat();
+	Vector vTarget = vecPos + vecForward * flashlightFar;
 
 	// Work with these local copies of the basis for the rest of the function
 	Vector vDir   = vTarget - vOrigin;
@@ -305,8 +395,8 @@ void CFlashlightEffect::UpdateLightNew(const Vector &vecPos, const Vector &vecFo
 				state.m_fLinearAtten = r_flashlightlinear.GetFloat() * flScale + 1.5f * flNoise;
 			}
 
-			state.m_fHorizontalFOVDegrees = r_flashlightfov.GetFloat() - ( 16.0f * (1.0f-flScale) );
-			state.m_fVerticalFOVDegrees = r_flashlightfov.GetFloat() - ( 16.0f * (1.0f-flScale) );
+			state.m_fHorizontalFOVDegrees = fov - ( 16.0f * (1.0f-flScale) );
+			state.m_fVerticalFOVDegrees = fov - ( 16.0f * (1.0f-flScale) );
 			
 			bFlicker = true;
 		}
@@ -316,18 +406,30 @@ void CFlashlightEffect::UpdateLightNew(const Vector &vecPos, const Vector &vecFo
 	if ( bFlicker == false )
 	{
 		state.m_fLinearAtten = r_flashlightlinear.GetFloat();
-		state.m_fHorizontalFOVDegrees = r_flashlightfov.GetFloat();
-		state.m_fVerticalFOVDegrees = r_flashlightfov.GetFloat();
+		state.m_fHorizontalFOVDegrees = fov;
+		state.m_fVerticalFOVDegrees = fov;
 	}
 
 	state.m_fConstantAtten = r_flashlightconstant.GetFloat();
+#ifndef EZ
 	state.m_Color[0] = 1.0f;
 	state.m_Color[1] = 1.0f;
 	state.m_Color[2] = 1.0f;
+#else
+	state.m_Color[0] = m_iFlashLightType == MUZZLEFLASH ? cl_stunstick_flashlight_intensity.GetFloat() : 1.0f;
+	state.m_Color[1] = m_iFlashLightType == MUZZLEFLASH ? cl_stunstick_flashlight_intensity.GetFloat() : 1.0f;
+	state.m_Color[2] = m_iFlashLightType == MUZZLEFLASH ? cl_stunstick_flashlight_intensity.GetFloat() : 1.0f;
+#endif
+	
 	state.m_Color[3] = r_flashlightambient.GetFloat();
 	state.m_NearZ = r_flashlightnear.GetFloat() + m_flDistMod;	// Push near plane out so that we don't clip the world when the flashlight pulls back 
-	state.m_FarZ = r_flashlightfar.GetFloat();
+	state.m_FarZ = flashlightFar;
+#ifdef EZ
+	// The NVG projected texture should not cast shadows
+	state.m_bEnableShadows = ( m_iFlashLightType == FLASHLIGHT ||  ( m_iFlashLightType == HEADLAMP && r_nvgshadows.GetBool() ) ) && r_flashlightdepthtexture.GetBool();
+#else
 	state.m_bEnableShadows = r_flashlightdepthtexture.GetBool();
+#endif
 	state.m_flShadowMapResolution = r_flashlightdepthres.GetInt();
 
 	state.m_pSpotlightTexture = m_FlashlightTexture;
@@ -379,6 +481,14 @@ void CFlashlightEffect::UpdateLightOld(const Vector &vecPos, const Vector &vecDi
 		m_pPointLight = effects->CL_AllocDlight(m_nEntIndex);
 		m_pPointLight->flags = 0.0f;
 		m_pPointLight->radius = 80;
+#ifdef EZ
+		if ( IsNVG() )
+		{
+			m_pPointLight->color.r = 5; // Breadman - Doesn't actually work here. Seems to be derived from the texture colour.
+			m_pPointLight->color.g = 230; // Breadman
+			m_pPointLight->color.b = 255; // Breadman
+		}
+#endif
 	}
 	
 	// For bumped lighting
@@ -483,6 +593,11 @@ void CFlashlightEffect::LightOff()
 	LightOffNew();
 }
 
+#ifdef EZ
+static ConVar r_headlightfov( "r_headlightfov", "90.0", FCVAR_CHEAT );
+static ConVar r_headlightfar( "r_headlightfar", "1250.0", FCVAR_CHEAT );
+#endif
+
 CHeadlightEffect::CHeadlightEffect() 
 {
 
@@ -511,8 +626,13 @@ void CHeadlightEffect::UpdateLight( const Vector &vecPos, const Vector &vecDir, 
 		
 	state.m_vecLightOrigin = vecPos;
 
+#ifdef EZ // Blixibon - Shadows don't work well with non-symmetrical FOV
+	state.m_fHorizontalFOVDegrees = r_headlightfov.GetFloat();
+	state.m_fVerticalFOVDegrees = r_headlightfov.GetFloat();
+#else
 	state.m_fHorizontalFOVDegrees = 45.0f;
 	state.m_fVerticalFOVDegrees = 30.0f;
+#endif
 	state.m_fQuadraticAtten = r_flashlightquadratic.GetFloat();
 	state.m_fLinearAtten = r_flashlightlinear.GetFloat();
 	state.m_fConstantAtten = r_flashlightconstant.GetFloat();
@@ -521,7 +641,11 @@ void CHeadlightEffect::UpdateLight( const Vector &vecPos, const Vector &vecDir, 
 	state.m_Color[2] = 1.0f;
 	state.m_Color[3] = r_flashlightambient.GetFloat();
 	state.m_NearZ = r_flashlightnear.GetFloat();
+#ifdef EZ
+	state.m_FarZ = r_headlightfar.GetFloat();
+#else
 	state.m_FarZ = r_flashlightfar.GetFloat();
+#endif
 	state.m_bEnableShadows = true;
 	state.m_pSpotlightTexture = m_FlashlightTexture;
 	state.m_nSpotlightTextureFrame = 0;
@@ -538,3 +662,159 @@ void CHeadlightEffect::UpdateLight( const Vector &vecPos, const Vector &vecDir, 
 	g_pClientShadowMgr->UpdateProjectedTexture( GetFlashlightHandle(), true );
 }
 
+#ifdef EZ2
+static ConVar r_turretlightbrightness( "r_turretlightbrightness", "5.0", FCVAR_CHEAT );
+static ConVar r_turretlightfar( "r_turretlightfar", "500", FCVAR_CHEAT );
+static ConVar r_turretlightnear( "r_turretlightnear", "1.0", FCVAR_CHEAT );
+static ConVar r_turretlightconstant( "r_turretlightconstant", "0.0", FCVAR_CHEAT );
+static ConVar r_turretlightlinear( "r_turretlightlinear", "0.0", FCVAR_CHEAT );
+static ConVar r_turretlightquadratic( "r_turretlightquadratic", "100.0", FCVAR_CHEAT );
+static ConVar r_turretlightfov( "r_turretlightfov", "60.0", FCVAR_CHEAT ); // Based on the actual turret FOV
+static ConVar r_turretlightshadowsenabled( "r_turretlightshadowsenabled", "0", FCVAR_CHEAT );
+static ConVar r_turretlightshadowatten( "r_turretlightshadowatten", "1.0", FCVAR_CHEAT );
+static ConVar r_turretlighttexture( "r_turretlighttexture", "effects/turret_light", FCVAR_CHEAT );
+
+CTurretLightEffect::CTurretLightEffect()
+{
+	m_FlashlightTexture.Init( r_turretlighttexture.GetString(), TEXTURE_GROUP_OTHER, true );
+	m_flBrightnessScale = 1.0f;
+	m_flFarZ = r_turretlightfar.GetFloat();
+	m_flFOV = r_turretlightfov.GetFloat();
+
+	m_Color[0] = 1.0f;
+	m_Color[1] = 0.0f;
+	m_Color[2] = 0.0f;
+}
+
+CTurretLightEffect::~CTurretLightEffect()
+{
+}
+
+void CTurretLightEffect::UpdateLight( const Vector &vecPos, const Vector &vecDir, const Vector &vecRight, const Vector &vecUp, int nDistance )
+{
+	if ( IsOn() == false )
+		 return;
+
+	FlashlightState_t state;
+	Vector basisX, basisY, basisZ;
+	basisX = vecDir;
+	basisY = vecRight;
+	basisZ = vecUp;
+	VectorNormalize(basisX);
+	VectorNormalize(basisY);
+	VectorNormalize(basisZ);
+
+	BasisToQuaternion( basisX, basisY, basisZ, state.m_quatOrientation );
+		
+	state.m_vecLightOrigin = vecPos;
+
+	state.m_fHorizontalFOVDegrees = m_flFOV;
+	state.m_fVerticalFOVDegrees = m_flFOV;
+	state.m_fQuadraticAtten = r_turretlightquadratic.GetFloat();
+	state.m_fLinearAtten = r_turretlightlinear.GetFloat();
+	state.m_fConstantAtten = r_turretlightconstant.GetFloat();
+	state.m_Color[0] = m_Color[0] * (m_flBrightnessScale != 1.0f ? r_turretlightbrightness.GetFloat() * m_flBrightnessScale : r_turretlightbrightness.GetFloat());
+	state.m_Color[1] = m_Color[1] * (m_flBrightnessScale != 1.0f ? r_turretlightbrightness.GetFloat() * m_flBrightnessScale : r_turretlightbrightness.GetFloat());
+	state.m_Color[2] = m_Color[2] * (m_flBrightnessScale != 1.0f ? r_turretlightbrightness.GetFloat() * m_flBrightnessScale : r_turretlightbrightness.GetFloat());
+	state.m_Color[3] = r_flashlightambient.GetFloat();
+
+	state.m_NearZ = r_turretlightnear.GetFloat();
+	state.m_FarZ = m_flFarZ;
+
+	state.m_bEnableShadows = r_turretlightshadowsenabled.GetBool();
+	state.m_pSpotlightTexture = m_FlashlightTexture;
+	state.m_nSpotlightTextureFrame = 0;
+
+	state.m_flShadowAtten = r_turretlightshadowatten.GetFloat();
+	state.m_flShadowSlopeScaleDepthBias = mat_slopescaledepthbias_shadowmap.GetFloat();
+	state.m_flShadowDepthBias = mat_depthbias_shadowmap.GetFloat();
+	
+	if( GetFlashlightHandle() == CLIENTSHADOW_INVALID_HANDLE )
+	{
+		SetFlashlightHandle( g_pClientShadowMgr->CreateFlashlight( state ) );
+	}
+	else
+	{
+		g_pClientShadowMgr->UpdateFlashlightState( GetFlashlightHandle(), state );
+	}
+	
+	g_pClientShadowMgr->UpdateProjectedTexture( GetFlashlightHandle(), true );
+}
+
+//-----------------------------------------------------------------------------
+// Crab Synth light effect
+//-----------------------------------------------------------------------------
+static ConVar r_crabsynthlightbrightness( "r_crabsynthlightbrightness", "255.0", FCVAR_CHEAT );
+static ConVar r_crabsynthlightfar( "r_crabsynthlightfar", "400", FCVAR_CHEAT );
+static ConVar r_crabsynthlightnear( "r_crabsynthlightnear", "2.0", FCVAR_CHEAT );
+static ConVar r_crabsynthlightconstant( "r_crabsynthlightconstant", "0.0", FCVAR_CHEAT );
+static ConVar r_crabsynthlightlinear( "r_crabsynthlightlinear", "0.0", FCVAR_CHEAT );
+static ConVar r_crabsynthlightquadratic( "r_crabsynthlightquadratic", "100.0", FCVAR_CHEAT );
+static ConVar r_crabsynthlightshadowatten( "r_crabsynthlightshadowatten", "1.0", FCVAR_CHEAT );
+static ConVar r_crabsynthlighttexture( "r_crabsynthlighttexture", "effects/crabsynthlight", FCVAR_CHEAT );
+
+CCrabSynthLightEffect::CCrabSynthLightEffect()
+{
+	m_FlashlightTexture.Init( r_crabsynthlighttexture.GetString(), TEXTURE_GROUP_OTHER, true );
+	m_flBrightnessScale = 1.0f;
+
+	m_Color[0] = 1.0f;
+	m_Color[1] = 1.0f;
+	m_Color[2] = 1.0f;
+}
+
+CCrabSynthLightEffect::~CCrabSynthLightEffect()
+{
+}
+
+void CCrabSynthLightEffect::UpdateLight( const Vector &vecPos, const Vector &vecDir, const Vector &vecRight, const Vector &vecUp, int nDistance )
+{
+	if ( IsOn() == false )
+		 return;
+
+	FlashlightState_t state;
+	Vector basisX, basisY, basisZ;
+	basisX = vecDir;
+	basisY = vecRight;
+	basisZ = vecUp;
+	VectorNormalize(basisX);
+	VectorNormalize(basisY);
+	VectorNormalize(basisZ);
+
+	BasisToQuaternion( basisX, basisY, basisZ, state.m_quatOrientation );
+		
+	state.m_vecLightOrigin = vecPos;
+
+	state.m_fHorizontalFOVDegrees = m_flHorzFOV;
+	state.m_fVerticalFOVDegrees = m_flFOV;
+	state.m_fQuadraticAtten = r_crabsynthlightquadratic.GetFloat();
+	state.m_fLinearAtten = r_crabsynthlightlinear.GetFloat();
+	state.m_fConstantAtten = r_crabsynthlightconstant.GetFloat();
+	state.m_Color[0] = m_Color[0] * (m_flBrightnessScale != 1.0f ? r_crabsynthlightbrightness.GetFloat() * m_flBrightnessScale : r_crabsynthlightbrightness.GetFloat());
+	state.m_Color[1] = m_Color[1] * (m_flBrightnessScale != 1.0f ? r_crabsynthlightbrightness.GetFloat() * m_flBrightnessScale : r_crabsynthlightbrightness.GetFloat());
+	state.m_Color[2] = m_Color[2] * (m_flBrightnessScale != 1.0f ? r_crabsynthlightbrightness.GetFloat() * m_flBrightnessScale : r_crabsynthlightbrightness.GetFloat());
+	state.m_Color[3] = r_flashlightambient.GetFloat();
+
+	state.m_NearZ = r_crabsynthlightnear.GetFloat();
+	state.m_FarZ = r_crabsynthlightfar.GetFloat();
+
+	state.m_bEnableShadows = m_bShadowsEnabled;
+	state.m_pSpotlightTexture = m_FlashlightTexture;
+	state.m_nSpotlightTextureFrame = 0;
+
+	state.m_flShadowAtten = r_crabsynthlightshadowatten.GetFloat();
+	state.m_flShadowSlopeScaleDepthBias = mat_slopescaledepthbias_shadowmap.GetFloat();
+	state.m_flShadowDepthBias = mat_depthbias_shadowmap.GetFloat();
+	
+	if( GetFlashlightHandle() == CLIENTSHADOW_INVALID_HANDLE )
+	{
+		SetFlashlightHandle( g_pClientShadowMgr->CreateFlashlight( state ) );
+	}
+	else
+	{
+		g_pClientShadowMgr->UpdateFlashlightState( GetFlashlightHandle(), state );
+	}
+	
+	g_pClientShadowMgr->UpdateProjectedTexture( GetFlashlightHandle(), true );
+}
+#endif

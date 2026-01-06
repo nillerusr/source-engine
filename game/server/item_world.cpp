@@ -93,6 +93,10 @@ BEGIN_DATADESC( CItem )
 	DEFINE_FIELD( m_vOriginalSpawnAngles, FIELD_VECTOR ),
 	DEFINE_PHYSPTR( m_pConstraint ),
 
+#ifdef EZ
+	DEFINE_KEYFIELD( m_tEzVariant, FIELD_INTEGER, "ezvariant" ),
+#endif
+
 	// Function Pointers
 	DEFINE_ENTITYFUNC( ItemTouch ),
 	DEFINE_THINKFUNC( Materialize ),
@@ -101,6 +105,14 @@ BEGIN_DATADESC( CItem )
 #if defined( HL2MP ) || defined( TF_DLL )
 	DEFINE_FIELD( m_flNextResetCheckTime, FIELD_TIME ),
 	DEFINE_THINKFUNC( FallThink ),
+#endif
+
+#ifdef MAPBASE
+	DEFINE_INPUTFUNC( FIELD_VOID, "EnablePlayerPickup", InputEnablePlayerPickup ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "DisablePlayerPickup", InputDisablePlayerPickup ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "EnableNPCPickup", InputEnableNPCPickup ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "DisableNPCPickup", InputDisableNPCPickup ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "BreakConstraint", InputBreakConstraint ),
 #endif
 
 	// Outputs
@@ -344,6 +356,19 @@ bool UTIL_ItemCanBeTouchedByPlayer( CBaseEntity *pItem, CBasePlayer *pPlayer )
 	if ( pItem == NULL || pPlayer == NULL )
 		return false;
 
+#ifdef MAPBASE
+	// Weapons go through this, but this is identical to SF_WEAPON_NO_PLAYER_PICKUP and that would be a convenient coincidence,
+	// but OnCacheInteraction worked with "No player pickup" before and SF_WEAPON_NO_PLAYER_PICKUP is often checked after this,
+	// so we have to make sure we're not dealing with a weapon for this check after all.
+	if (pItem->HasSpawnFlags(SF_ITEM_NO_PLAYER_PICKUP) && !pItem->IsBaseCombatWeapon())
+		return false;
+
+	// Fortunately, unlike the above code, this flag is identical in between weapons and items
+	// and can safely be used without identifying the entity.
+	if (pItem->HasSpawnFlags(SF_ITEM_ALWAYS_TOUCHABLE))
+		return true;
+#endif
+
 	// For now, always allow a vehicle riding player to pick up things they're driving over
 	if ( pPlayer->IsInAVehicle() )
 		return true;
@@ -545,3 +570,49 @@ void CItem::OnPhysGunDrop( CBasePlayer *pPhysGunUser, PhysGunDrop_t reason )
 	// Restore the pickup box to the original
 	CollisionProp()->UseTriggerBounds( true, ITEM_PICKUP_BOX_BLOAT );
 }
+
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CItem::InputEnablePlayerPickup( inputdata_t &inputdata )
+{
+	RemoveSpawnFlags(SF_ITEM_NO_PLAYER_PICKUP);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CItem::InputDisablePlayerPickup( inputdata_t &inputdata )
+{
+	AddSpawnFlags(SF_ITEM_NO_PLAYER_PICKUP);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CItem::InputEnableNPCPickup( inputdata_t &inputdata )
+{
+	RemoveSpawnFlags(SF_ITEM_NO_NPC_PICKUP);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CItem::InputDisableNPCPickup( inputdata_t &inputdata )
+{
+	AddSpawnFlags(SF_ITEM_NO_NPC_PICKUP);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CItem::InputBreakConstraint( inputdata_t &inputdata )
+{
+	if ( m_pConstraint != NULL )
+	{
+		physenv->DestroyConstraint( m_pConstraint );
+		m_pConstraint = NULL;
+	}
+}
+#endif

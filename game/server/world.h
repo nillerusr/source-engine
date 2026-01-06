@@ -52,10 +52,32 @@ public:
 
 	bool IsColdWorld( void );
 
+#ifdef MAPBASE
+	inline const char *GetChapterTitle()
+	{
+		return STRING(m_iszChapterTitle.Get());
+	}
+
+	void InputSetChapterTitle( inputdata_t &inputdata );
+#endif
+
+#ifdef MAPBASE_VSCRIPT
+	ScriptLanguage_t GetScriptLanguage() { return (ScriptLanguage_t)(m_iScriptLanguage); }
+#endif
+
 private:
 	DECLARE_DATADESC();
 
+#ifdef MAPBASE
+	// Now needs to show up on the client for RPC
+	CNetworkVar( string_t, m_iszChapterTitle );
+
+	// Suppresses m_iszChapterTitle's env_message creation,
+	// allowing it to only be used for saves and RPC
+	bool m_bChapterTitleNoMessage;
+#else
 	string_t m_iszChapterTitle;
+#endif
 
 	CNetworkVar( float, m_flWaveHeight );
 	CNetworkVector( m_WorldMins );
@@ -65,6 +87,11 @@ private:
 	CNetworkVar( float, m_flMinPropScreenSpaceWidth );
 	CNetworkVar( float, m_flMaxPropScreenSpaceWidth );
 	CNetworkVar( string_t, m_iszDetailSpriteMaterial );
+
+#ifdef MAPBASE_VSCRIPT
+	int m_iScriptLanguage;
+	//CNetworkVar( int, m_iScriptLanguageClient ); // Now entirely on client
+#endif
 
 	// start flags
 	CNetworkVar( bool, m_bStartDark );

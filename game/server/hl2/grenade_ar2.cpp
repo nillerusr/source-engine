@@ -34,6 +34,9 @@ extern ConVar    sk_npc_dmg_smg1_grenade;
 extern ConVar    sk_max_smg1_grenade;
 
 ConVar	  sk_smg1_grenade_radius		( "sk_smg1_grenade_radius","0");
+#ifdef MAPBASE
+ConVar	smg1_grenade_credit_transfer("smg1_grenade_credit_transfer", "1");
+#endif
 
 ConVar g_CV_SmokeTrail("smoke_trail", "1", 0); // temporary dust explosion switch
 
@@ -63,6 +66,11 @@ void CGrenadeAR2::Spawn( void )
 	SetModel( "models/Weapons/ar2_grenade.mdl");
 	UTIL_SetSize(this, Vector(-3, -3, -3), Vector(3, 3, 3));
 //	UTIL_SetSize(this, Vector(0, 0, 0), Vector(0, 0, 0));
+
+#ifdef EZ2
+	// For player sight event
+	AddFlag( FL_OBJECT );
+#endif
 
 	SetUse( &CGrenadeAR2::DetonateUse );
 	SetTouch( &CGrenadeAR2::GrenadeAR2Touch );
@@ -161,6 +169,14 @@ void CGrenadeAR2::GrenadeAR2Think( void )
 
 void CGrenadeAR2::Event_Killed( const CTakeDamageInfo &info )
 {
+#ifdef MAPBASE
+	if (smg1_grenade_credit_transfer.GetBool() && info.GetAttacker()->MyCombatCharacterPointer())
+	{
+		CBaseCombatCharacter *pBCC = info.GetAttacker()->MyCombatCharacterPointer();
+		SetThrower(pBCC);
+		SetOwnerEntity(pBCC);
+	}
+#endif
 	Detonate( );
 }
 
@@ -247,7 +263,23 @@ void CGrenadeAR2::Precache( void )
 }
 
 
+#ifdef EZ2
+// Blixibon - Makes SMG grenades dodgable by hunters
+extern CUtlVector<CBaseEntity*> g_pDodgeableProjectiles;
+
+CGrenadeAR2::CGrenadeAR2(void)
+{
+	m_hSmokeTrail  = NULL;
+	g_pDodgeableProjectiles.AddToTail( this );
+}
+
+CGrenadeAR2::~CGrenadeAR2()
+{
+	g_pDodgeableProjectiles.FindAndRemove( this );
+}
+#else
 CGrenadeAR2::CGrenadeAR2(void)
 {
 	m_hSmokeTrail  = NULL;
 }
+#endif

@@ -37,10 +37,20 @@
 #include "physics_saverestore.h"
 #include "ai_memory.h"
 #include "npc_attackchopper.h"
+#ifdef EZ2
+#include "TemplateEntities.h"
+#include "mapentities.h"
+#include "ai_pathfinder.h"
+#include "ai_route.h"
+#endif
 
 #ifdef HL2_EPISODIC
 #include "physics_bone_follower.h"
 #endif // HL2_EPISODIC
+
+#ifdef MAPBASE
+#include "filters.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -115,6 +125,9 @@ static const char *s_pChunkModelName[CHOPPER_MAX_CHUNKS] =
 #define SF_HELICOPTER_IGNORE_AVOID_FORCES	0x00080000
 #define SF_HELICOPTER_AGGRESSIVE			0x00100000
 #define SF_HELICOPTER_LONG_SHADOW			0x00200000
+#ifdef MAPBASE
+#define SF_HELICOPTER_AIM_WITH_GUN_OFF		0x00400000
+#endif
 
 #define CHOPPER_SLOW_BOMB_SPEED	250
 
@@ -347,6 +360,10 @@ protected:
 
 	void	CollisionCallback( CHelicopterChunk *pCaller );
 
+#ifdef MAPBASE
+	void	InputFallApart( inputdata_t &inputdata );
+#endif
+
 	void	FallThink( void );
 
 	bool	m_bLanded;
@@ -507,6 +524,9 @@ private:
 	void ShootAtFacingDirection( const Vector &vBasePos, const Vector &vGunDir, bool bFirstShotAccurate );
 
 	// Updates the facing direction
+#ifdef EZ2
+	virtual
+#endif
 	void UpdateFacingDirection( const Vector &vecActualDesiredPosition );
 
 	// Various states of the helicopter firing...
@@ -639,6 +659,10 @@ private:
 	void SpotlightStartup();
 	void SpotlightShutdown();
 
+#ifdef EZ2
+protected:
+#endif
+
 	CBaseEntity *GetCrashPoint()	{ return m_hCrashPoint.Get(); }
 
 private:
@@ -678,7 +702,12 @@ private:
 	};
 
 #ifdef HL2_EPISODIC
+#ifdef EZ2
+protected:
+	virtual void InitBoneFollowers( void );
+#else
 	void InitBoneFollowers( void );
+#endif
 	CBoneFollowerManager	m_BoneFollowerManager;
 #endif // HL2_EPISODIC
 
@@ -687,6 +716,9 @@ private:
 	QAngle		m_vecAngAcceleration;
 	int			m_iAmmoType;
 	float		m_flLastCorpseFall;
+#ifdef EZ2
+private:
+#endif
 	GunState_t	m_nGunState;
 	float		m_flChargeTime;
 	float		m_flIdleTimeDelay;
@@ -708,7 +740,14 @@ private:
 	bool		m_bIndestructible;
 	float		m_flGracePeriod;
 	bool		m_bBombsExplodeOnContact;
+
+#ifdef EZ2
+protected:
+#endif
 	bool		m_bNonCombat;
+#ifdef EZ2
+private:
+#endif
 
 	int			m_nNearShots;
 	int			m_nMaxNearShots;
@@ -756,12 +795,21 @@ private:
 	float		m_flGoalRollDmg;
 	float		m_flGoalYawDmg;
 
+#ifdef EZ2
+protected:
+#endif
+
 	// Sounds
 	CSoundPatch	*m_pGunFiringSound;
 
 	// Outputs
+#ifndef MAPBASE
 	COutputInt	m_OnHealthChanged;
+#endif
 	COutputEvent m_OnShotDown;
+#ifdef MAPBASE
+	COutputEHANDLE m_OutBomb;
+#endif
 
 	// Crashing
 	EHANDLE		m_hCrashPoint;
@@ -842,6 +890,10 @@ BEGIN_DATADESC( CNPC_AttackHelicopter )
 	DEFINE_KEYFIELD( m_flMaxSpeed,		FIELD_FLOAT, "PatrolSpeed" ),
 	DEFINE_KEYFIELD( m_bNonCombat,		FIELD_BOOLEAN,	"NonCombat" ),
 
+#ifdef MAPBASE
+	DEFINE_KEYFIELD( m_flFieldOfView,	FIELD_FLOAT, "FieldOfView" ),
+#endif
+
 	DEFINE_FIELD( m_hCrashPoint,		FIELD_EHANDLE ),
 
 	DEFINE_INPUTFUNC( FIELD_VOID, "ResetIdleTime", InputResetIdleTime ),
@@ -866,7 +918,9 @@ BEGIN_DATADESC( CNPC_AttackHelicopter )
 	DEFINE_INPUTFUNC( FIELD_VOID, "StartContinuousShooting", InputStartContinuousShooting ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "StartFastShooting", InputStartFastShooting ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "GunOff", InputGunOff ),
+#ifndef MAPBASE // This has been added to all NPCs. npc_helicopter overrides it with its original function, but the datadesc entry isn't needed anymore.
 	DEFINE_INPUTFUNC( FIELD_FLOAT, "SetHealthFraction", InputSetHealthFraction ),
+#endif
 	DEFINE_INPUTFUNC( FIELD_VOID, "StartBombExplodeOnContact", InputStartBombExplodeOnContact ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "StopBombExplodeOnContact", InputStopBombExplodeOnContact ),
 
@@ -878,8 +932,13 @@ BEGIN_DATADESC( CNPC_AttackHelicopter )
 	DEFINE_THINKFUNC( BlinkLightsThink ),
 	DEFINE_THINKFUNC( SpotlightThink ),
 
+#ifndef MAPBASE
 	DEFINE_OUTPUT( m_OnHealthChanged, "OnHealthChanged" ),
+#endif
 	DEFINE_OUTPUT( m_OnShotDown, "OnShotDown" ),
+#ifdef MAPBASE
+	DEFINE_OUTPUT( m_OutBomb, "OutBomb" ),
+#endif
 
 END_DATADESC()
 
@@ -893,6 +952,9 @@ CNPC_AttackHelicopter::CNPC_AttackHelicopter() :
 	m_bBombsExplodeOnContact( false )
 {
 	m_flMaxSpeed = 0;
+#ifdef MAPBASE
+	m_flFieldOfView = -1.0; // 360 degrees
+#endif
 }
 
 CNPC_AttackHelicopter::~CNPC_AttackHelicopter(void)
@@ -937,6 +999,13 @@ void CNPC_AttackHelicopter::Precache( void )
 {
 	BaseClass::Precache();
 
+#ifdef MAPBASE
+	if ( GetModelName() != NULL_STRING )
+	{
+		PrecacheModel( STRING(GetModelName()) );
+	}
+	else
+#endif
 	if ( !HasSpawnFlags(SF_HELICOPTER_ELECTRICAL_DRONE) )
 	{
 		PrecacheModel( CHOPPER_MODEL_NAME );
@@ -1038,6 +1107,13 @@ void CNPC_AttackHelicopter::Spawn( void )
 	m_bBombingSuppressed = false;
 	m_bIgnorePathVisibilityTests = false;
 
+#ifdef MAPBASE
+	if ( GetModelName() != NULL_STRING )
+	{
+		SetModel( STRING(GetModelName()) );
+	}
+	else
+#endif
 	if ( !HasSpawnFlags(SF_HELICOPTER_ELECTRICAL_DRONE) )
 	{
 		SetModel( CHOPPER_MODEL_NAME );
@@ -1070,6 +1146,11 @@ void CNPC_AttackHelicopter::Spawn( void )
 
 	SetPauseState( PAUSE_NO_PAUSE );
 
+#ifdef MAPBASE
+	if (m_iHealth != 0)
+		m_iMaxHealth = m_iHealth;
+	else
+#endif
 	m_iMaxHealth = m_iHealth = sk_helicopter_health.GetInt();
 	
 	m_flMaxSpeed = flLoadedSpeed;
@@ -1081,7 +1162,9 @@ void CNPC_AttackHelicopter::Spawn( void )
 
 	m_nGrenadeCount = CHOPPER_BOMB_DROP_COUNT;
 
+#ifndef MAPBASE // Moved to constructor because this is a keyvalue now
 	m_flFieldOfView = -1.0; // 360 degrees
+#endif
 	m_flIdleTimeDelay = 0.0f;
 	m_iAmmoType = GetAmmoDef()->Index("HelicopterGun"); 
 
@@ -2790,6 +2873,10 @@ CGrenadeHelicopter *CNPC_AttackHelicopter::SpawnBombEntity( const Vector &vecPos
 	}
 #endif // HL2_EPISODIC
 
+#ifdef MAPBASE
+	m_OutBomb.Set(pGrenade, pGrenade, this);
+#endif
+
 	return pGrenade;
 }
 
@@ -3475,9 +3562,16 @@ void CNPC_AttackHelicopter::TraceAttack( const CTakeDamageInfo &info, const Vect
 	// Take no damage from trace attacks unless it's blast damage. RadiusDamage() sometimes calls
 	// TraceAttack() as a means for delivering blast damage. Usually when the explosive penetrates
 	// the target. (RPG missiles do this sometimes).
+#ifdef MAPBASE
+	if ( ( info.GetDamageType() & DMG_AIRBOAT ) || 
+		 ( info.GetInflictor()->Classify() == CLASS_MISSILE ) || 
+		 ( info.GetAttacker()->Classify() == CLASS_MISSILE ) ||
+		 m_bAllowAnyDamage )
+#else
 	if ( ( info.GetDamageType() & DMG_AIRBOAT ) || 
 		 ( info.GetInflictor()->Classify() == CLASS_MISSILE ) || 
 		 ( info.GetAttacker()->Classify() == CLASS_MISSILE ) )
+#endif
 	{
 		BaseClass::BaseClass::TraceAttack( info, vecDir, ptr, pAccumulator );
 	}
@@ -3490,7 +3584,11 @@ void CNPC_AttackHelicopter::TraceAttack( const CTakeDamageInfo &info, const Vect
 int CNPC_AttackHelicopter::OnTakeDamage( const CTakeDamageInfo &info )
 {
 	// We don't take blast damage from anything but the airboat or missiles (or myself!)
+#ifdef MAPBASE
+	if( info.GetInflictor() != this && !m_bAllowAnyDamage )
+#else
 	if( info.GetInflictor() != this )
+#endif
 	{
 		if ( ( ( info.GetDamageType() & DMG_AIRBOAT ) == 0 ) && 
 			( info.GetInflictor()->Classify() != CLASS_MISSILE ) && 
@@ -3605,12 +3703,14 @@ int CNPC_AttackHelicopter::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 			ExplodeAndThrowChunk( info.GetDamagePosition() );
 		}
 
+#ifndef MAPBASE // We need to make sure the base OnHealthChanged works with helicopters
 		int nPrevPercent = (int)(100.0f * nPrevHealth / GetMaxHealth());
 		int nCurrPercent = (int)(100.0f * GetHealth() / GetMaxHealth());
 		if (( (nPrevPercent + 9) / 10 ) != ( (nCurrPercent + 9) / 10 ))
 		{
 			m_OnHealthChanged.Set( nCurrPercent, this, this );
 		}
+#endif
 	}
 
 	return nRetVal;
@@ -4795,6 +4895,33 @@ void CNPC_AttackHelicopter::Hunt( void )
 		{
 			BullrushBombs();
 		}
+#ifdef MAPBASE
+		// Some may want the hunter-chopper to aim at different positions searching for its target
+		// without actually firing at anything. Gun aiming is only handled in FireGun(), which is
+		// disabled when the gun is disabled. point_posecontroller doesn't seem to work well for this either,
+		// so a new spawnflag is handled here to allow the chopper to aim at its enemy even when the gun is off.
+#ifdef EZ2
+		// HACKHACK: E:Z2 had already implemented this feature, but without the spawnflag.
+		// As a result, E:Z2's code will not use the spawnflag until all maps which use this feature have
+		// this spawnflag ticked on all of the involved npc_helicopters.
+		else if ( GetEnemy() )
+#else
+		else if ( HasSpawnFlags( SF_HELICOPTER_AIM_WITH_GUN_OFF ) && GetEnemy() )
+#endif
+		{
+			// Get gun attachment points
+			Vector vBasePos;
+			GetAttachment( m_nGunBaseAttachment, vBasePos );
+
+			Vector vecFireAtPosition;
+			ComputeFireAtPosition( &vecFireAtPosition );
+	
+			Vector vTargetDir = vecFireAtPosition - vBasePos;
+			VectorNormalize( vTargetDir );
+
+			PoseGunTowardTargetDirection( vTargetDir );
+		}
+#endif
 	}
 
 #ifdef HL2_EPISODIC
@@ -5596,6 +5723,9 @@ LINK_ENTITY_TO_CLASS( npc_heli_avoidsphere, CAvoidSphere );
 BEGIN_DATADESC( CAvoidSphere )
 
 	DEFINE_KEYFIELD( m_flRadius, FIELD_FLOAT, "radius" ),
+#ifdef MAPBASE
+	DEFINE_KEYFIELD( m_iszAvoidFilter, FIELD_STRING, "AvoidFilter" ),
+#endif
 
 END_DATADESC()
 
@@ -5636,6 +5766,18 @@ void CAvoidSphere::Activate( )
 {
 	BaseClass::Activate();
 	s_AvoidSpheres.AddToTail( this );
+
+#ifdef MAPBASE
+	m_hAvoidFilter = gEntList.FindEntityByName( NULL, m_iszAvoidFilter, this );
+	if (m_hAvoidFilter)
+	{
+		if (dynamic_cast<CBaseFilter*>(m_hAvoidFilter.Get()) == NULL)
+		{
+			Warning( "%s: \"%s\" is not a valid filter", GetDebugName(), m_hAvoidFilter->GetDebugName() );
+			m_hAvoidFilter = NULL;
+		}
+	}
+#endif
 }
 
 void CAvoidSphere::UpdateOnRemove( )
@@ -5661,6 +5803,12 @@ void CAvoidSphere::ComputeAvoidanceForces( CBaseEntity *pEntity, float flEntityR
 	{
 		CAvoidSphere *pSphere = s_AvoidSpheres[i].Get();
 		const Vector &vecAvoidCenter = pSphere->WorldSpaceCenter();
+
+#ifdef MAPBASE
+		// Continue if not passing the avoid sphere filter
+		if ( pSphere->m_hAvoidFilter && !(static_cast<CBaseFilter*>( pSphere->m_hAvoidFilter.Get())->PassesFilter(pSphere, pEntity )) )
+			continue;
+#endif
 
 		// NOTE: This test can be thought of sweeping a sphere through space
 		// and seeing if it intersects the avoidance sphere
@@ -5875,6 +6023,18 @@ void CAvoidBox::ComputeAvoidanceForces( CBaseEntity *pEntity, float flEntityRadi
 }
 
 
+#ifdef EZ2
+void GetAvoidanceForcesForAdvisor( Vector &vecOutForce, CBaseEntity *pEntity, float flEntityRadius, float flAvoidTime )
+{
+	Vector vecAvoidForce;
+	CAvoidSphere::ComputeAvoidanceForces( pEntity, flEntityRadius, flAvoidTime, &vecAvoidForce );
+	vecOutForce += vecAvoidForce;
+	CAvoidBox::ComputeAvoidanceForces( pEntity, flEntityRadius, flAvoidTime, &vecAvoidForce );
+	vecOutForce += vecAvoidForce;
+}
+#endif
+
+
 //-----------------------------------------------------------------------------
 //
 // This entity is used to create little force boxes that the helicopters should avoid. 
@@ -5938,6 +6098,10 @@ BEGIN_DATADESC( CHelicopterChunk )
 	DEFINE_FIELD( m_nChunkID, FIELD_INTEGER ),
 	DEFINE_PHYSPTR( m_pTailConstraint ),
 	DEFINE_PHYSPTR( m_pCockpitConstraint ),
+
+#ifdef MAPBASE
+	DEFINE_INPUTFUNC( FIELD_VOID, "FallApart", InputFallApart ),
+#endif
 
 END_DATADESC()
 
@@ -6040,6 +6204,17 @@ void CHelicopterChunk::CollisionCallback( CHelicopterChunk *pCaller )
 	}
 }
 
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input  : *pCaller - 
+//-----------------------------------------------------------------------------
+void CHelicopterChunk::InputFallApart( inputdata_t &inputdata )
+{
+	CollisionCallback(this);
+}
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : &vecPos - 
@@ -6115,3 +6290,904 @@ CHelicopterChunk *CHelicopterChunk::CreateHelicopterChunk( const Vector &vecPos,
 
 	return pChunk;
 }
+
+#ifdef EZ2
+#define ARBEIT_HELI_MAX_GUNNERS 2
+#define ARBEIT_HELI_DOOR_TIME 1.0f
+#define ARBEIT_HELI_RESPAWN_TIME 2.0f
+
+static const char *g_pszGunnerSpawnContext = "GunnerSpawn";
+
+// CVars
+ConVar	sk_arbeit_helicopter_health( "sk_arbeit_helicopter_health", "2000" );
+
+//-----------------------------------------------------------------------------
+// A functional Arbeit Communications helicopter
+//-----------------------------------------------------------------------------
+class CNPC_ArbeitHelicopter : public CNPC_AttackHelicopter
+{
+public:
+	DECLARE_CLASS( CNPC_ArbeitHelicopter, CNPC_AttackHelicopter );
+	DECLARE_DATADESC();
+
+	CNPC_ArbeitHelicopter();
+	~CNPC_ArbeitHelicopter();
+
+	virtual void	Precache( void );
+	virtual void	Spawn( void );
+	virtual void	Activate( void );
+	virtual bool	CreateVPhysics( void );
+
+	void	OpenDoorsThink();
+	void	CloseDoorsThink();
+	void	SpawnGunner( int iIndex = 0 );
+	void	SpawnGunners();
+	void	RefreshGunnerState();
+
+	Class_T Classify ( void ) { return CLASS_PLAYER_ALLY; }
+
+	virtual int	OnTakeDamage_Alive( const CTakeDamageInfo &info );
+	virtual void Event_Killed( const CTakeDamageInfo &info );
+
+	// Think!
+	virtual void PrescheduleThink( void );
+
+	void	InputRespawnAllGunners( inputdata_t &inputdata );
+	void	InputRespawnRightGunner( inputdata_t &inputdata );
+	void	InputRespawnLeftGunner( inputdata_t &inputdata );
+	void	InputOpenDoors( inputdata_t &inputdata );
+	void	InputCloseDoors( inputdata_t &inputdata );
+
+	void	InputForceGunnerJump( inputdata_t &inputdata );
+	void	InputForceGunnerRappel( inputdata_t &inputdata );
+
+protected:
+
+	int m_poseDoors;
+	virtual void	PopulatePoseParameters( void );
+
+private:
+
+	void	InitializeRotorSound( void );
+
+	// No gun at the moment
+	bool	FireGun( void ) { return false; }
+
+	// Gets the max speed of the helicopter
+	virtual float GetMaxSpeed();
+	virtual float GetMaxSpeedFiring();
+
+	// Updates the facing direction
+	void UpdateFacingDirection( const Vector &vecActualDesiredPosition );
+
+private:
+
+	void InitBoneFollowers( void );
+
+	enum GunnerState_t
+	{
+		GUNNER_NONE,			// No gunners
+		GUNNER_ALL,				// Both gunners
+		GUNNER_RIGHT_ONLY,		// Only the right gunner
+		GUNNER_LEFT_ONLY,		// Only the left gunner
+	};
+
+	GunnerState_t	m_iGunnerSpawnState;	// The state the gunners should be in
+	GunnerState_t	m_iGunnerState;			// The state the gunners are currently in
+	GunnerState_t	m_iSideFacing;			// Which side the helicopter should currently face the enemy with
+
+	bool		m_bAutoRespawnGunners;
+	
+	// Template data for the gunners
+	string_t	m_sNPCTemplate[ ARBEIT_HELI_MAX_GUNNERS ];
+	string_t	m_sNPCTemplateData[ ARBEIT_HELI_MAX_GUNNERS ];
+
+	// Handles to our current gunners
+	AIHANDLE	m_hGunners[ ARBEIT_HELI_MAX_GUNNERS ];
+
+	// Door stuff
+	bool		m_bDoorsOpen;
+	float		m_flDoorTransitionTime;
+
+	// Attachments
+	int			m_nGunnerAttachments[ ARBEIT_HELI_MAX_GUNNERS ];
+	int			m_nGunnerJumpAttachments[ ARBEIT_HELI_MAX_GUNNERS ];
+	int			m_nGunnerRappelAttachments[ ARBEIT_HELI_MAX_GUNNERS ];
+
+	// Outputs
+	COutputEHANDLE	m_OnSpawnNPC;
+};
+
+static const char *pArbeitFollowerBoneNames[] =
+{
+	"root",
+	"door_r",
+	"door_l",
+};
+
+LINK_ENTITY_TO_CLASS( npc_arbeit_helicopter, CNPC_ArbeitHelicopter );
+
+BEGIN_DATADESC( CNPC_ArbeitHelicopter )
+
+	DEFINE_KEYFIELD( m_iGunnerSpawnState, FIELD_INTEGER,	"GunnerSpawnState" ),
+	DEFINE_FIELD( m_iGunnerState, FIELD_INTEGER ),
+	DEFINE_FIELD( m_iSideFacing, FIELD_INTEGER ),
+	DEFINE_KEYFIELD( m_bAutoRespawnGunners, FIELD_BOOLEAN, "AutoRespawnGunners" ),
+
+	DEFINE_ARRAY( m_sNPCTemplateData, FIELD_STRING, ARBEIT_HELI_MAX_GUNNERS ),
+	DEFINE_KEYFIELD( m_sNPCTemplate[0], FIELD_STRING,	"NPCTemplate" ),
+	DEFINE_KEYFIELD( m_sNPCTemplate[1], FIELD_STRING,	"NPCTemplate2" ),
+
+	DEFINE_ARRAY( m_hGunners, FIELD_EHANDLE, ARBEIT_HELI_MAX_GUNNERS ),
+
+	DEFINE_KEYFIELD( m_bDoorsOpen, FIELD_BOOLEAN,	"DoorsOpen" ),
+	DEFINE_FIELD( m_flDoorTransitionTime, FIELD_TIME ),
+
+	DEFINE_INPUTFUNC( FIELD_VOID, "RespawnAllGunners", InputRespawnAllGunners ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "RespawnRightGunner", InputRespawnRightGunner ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "RespawnLeftGunner", InputRespawnLeftGunner ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "OpenDoors", InputOpenDoors ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "CloseDoors", InputCloseDoors ),
+
+	DEFINE_INPUTFUNC( FIELD_VOID, "ForceGunnerJump", InputForceGunnerJump ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "ForceGunnerRappel", InputForceGunnerRappel ),
+
+	DEFINE_OUTPUT( m_OnSpawnNPC, "OnSpawnNPC" ),
+
+END_DATADESC()
+
+//------------------------------------------------------------------------------
+// Purpose :
+//------------------------------------------------------------------------------
+CNPC_ArbeitHelicopter::CNPC_ArbeitHelicopter()
+{
+	m_flDoorTransitionTime = -1.0f;
+	m_flLastCorpseFall = FLT_MAX; // Never drop a corpse
+}
+
+CNPC_ArbeitHelicopter::~CNPC_ArbeitHelicopter(void)
+{
+}
+
+//-----------------------------------------------------------------------------
+// Purpose :
+//-----------------------------------------------------------------------------
+void CNPC_ArbeitHelicopter::Spawn( void )
+{
+	if (m_iHealth != 0)
+		m_iHealth = sk_arbeit_helicopter_health.GetInt();
+
+	BaseClass::Spawn();
+	m_fHelicopterFlags &= ~BITS_HELICOPTER_GUN_ON;
+
+	AddEFlags( EFL_DONTBLOCKLOS );
+	AddSolidFlags( FSOLID_NOT_SOLID ); // Hand all collision to the VPhysics
+	CapabilitiesAdd( bits_CAP_SQUAD ); // Allow being in the same squad as the gunners
+
+	if ( m_flMaxSpeed == CHOPPER_MAX_SPEED )
+	{
+		m_flMaxSpeed = 850.0f;
+	}
+
+	if (m_iGunnerSpawnState != GUNNER_NONE)
+	{
+		// Spawn the gunners next tick
+		SetContextThink( &CNPC_ArbeitHelicopter::SpawnGunners, gpGlobals->curtime + TICK_INTERVAL, g_pszGunnerSpawnContext );
+	}
+
+	SetPoseParameter( m_poseDoors, m_bDoorsOpen ? 25.0f : 0.0f );
+
+	// UNDONE: Use our real size for now
+	//Vector mins, maxs;
+	//if ( ComputeHitboxSurroundingBox( &mins, &maxs ) )
+	//{
+	//	UTIL_SetSize( this, mins - GetAbsOrigin(), maxs - GetAbsOrigin());
+	//}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//
+//
+//-----------------------------------------------------------------------------
+bool CNPC_ArbeitHelicopter::CreateVPhysics( void )
+{
+	SetSolid( SOLID_VPHYSICS );
+	return BaseClass::CreateVPhysics();
+	//if (VPhysicsGetObject())
+	//	return true;
+	//
+	//// For the helicopter, create the object in the physics system
+	//IPhysicsObject *pPhysicsObject = VPhysicsInitNormal( SOLID_VPHYSICS, FSOLID_NOT_STANDABLE, false );
+	//SetMoveType( MOVETYPE_STEP );
+	//
+	//InitBoneFollowers();
+	//return pPhysicsObject != NULL;
+}
+
+//------------------------------------------------------------------------------
+// Purpose :
+//------------------------------------------------------------------------------
+void CNPC_ArbeitHelicopter::Precache( void )
+{
+	BaseClass::Precache();
+
+	if (!m_bNonCombat)
+	{
+		PrecacheModel( "models/props_vehicles/arbeit_heli_stationary.mdl" );
+	}
+
+	PrecacheScriptSound( "NPC_ArbeitHelicopter.RotorBlast" );
+	PrecacheScriptSound( "NPC_ArbeitHelicopter.RotorsLoud" );
+	PrecacheScriptSound( "NPC_ArbeitHelicopter.Rotors" );
+
+	//
+	// Precache the all templates that we are configured to spawn
+	//
+	for ( int i = 0; i < ARBEIT_HELI_MAX_GUNNERS; i++ )
+	{
+		if ( m_sNPCTemplate[i] != NULL_STRING )
+		{
+			if ( m_sNPCTemplateData[i] == NULL_STRING )
+			{
+				m_sNPCTemplateData[i] = Templates_FindByTargetName(STRING(m_sNPCTemplate[i]));
+			}
+			if ( m_sNPCTemplateData[i] != NULL_STRING )
+			{
+				CBaseEntity *pEntity = NULL;
+				MapEntity_ParseEntity( pEntity, STRING(m_sNPCTemplateData[i]), NULL );
+				if ( pEntity != NULL )
+				{
+					pEntity->Precache();
+					UTIL_RemoveImmediate( pEntity );
+				}
+			}
+			else
+			{
+				Warning( "npc_arbeit_helicopter %s: Template NPC %s not found!\n", STRING(GetEntityName()), STRING(m_sNPCTemplate[i]) );
+
+				// Use the first template we've got
+				m_sNPCTemplateData[i] = m_sNPCTemplateData[0];
+			}
+		}
+		else
+		{
+			m_sNPCTemplateData[i] = NULL_STRING;
+		}
+	}
+}
+
+//------------------------------------------------------------------------------
+// Purpose :
+//------------------------------------------------------------------------------
+void CNPC_ArbeitHelicopter::Activate( void )
+{
+	BaseClass::Activate();
+
+	m_nGunnerAttachments[0] = LookupAttachment("gunner1_point");
+	m_nGunnerAttachments[1] = LookupAttachment("gunner2_point");
+
+	m_nGunnerJumpAttachments[0] = LookupAttachment( "gunner1_jump" );
+	m_nGunnerJumpAttachments[1] = LookupAttachment( "gunner2_jump" );
+
+	m_nGunnerRappelAttachments[0] = LookupAttachment( "gunner1_rappel" );
+	m_nGunnerRappelAttachments[1] = LookupAttachment( "gunner2_rappel" );
+}
+
+//------------------------------------------------------------------------------
+// Purpose : 
+//------------------------------------------------------------------------------
+void CNPC_ArbeitHelicopter::OpenDoorsThink( void )
+{
+	if (m_flDoorTransitionTime <= gpGlobals->curtime)
+	{
+		//Msg("Done opening doors\n");
+		m_flDoorTransitionTime = -1.0f;
+		SetPoseParameter( m_poseDoors, 25.0f );
+		SetContextThink( NULL, TICK_NEVER_THINK, g_pszGunnerSpawnContext );
+		return;
+	}
+
+	//Msg("Opening doors (%f)\n", Lerp( m_flDoorTransitionTime - gpGlobals->curtime, 0.0f, 25.0f ) );
+
+	SetPoseParameter( m_poseDoors, Lerp( m_flDoorTransitionTime - gpGlobals->curtime, 25.0f, 0.0f ) );
+
+	SetContextThink( &CNPC_ArbeitHelicopter::OpenDoorsThink, gpGlobals->curtime + TICK_INTERVAL, g_pszGunnerSpawnContext );
+}
+
+//------------------------------------------------------------------------------
+// Purpose : 
+//------------------------------------------------------------------------------
+void CNPC_ArbeitHelicopter::CloseDoorsThink( void )
+{
+	if (m_flDoorTransitionTime <= gpGlobals->curtime)
+	{
+		//Msg("Done closing doors\n");
+		m_flDoorTransitionTime = -1.0f;
+		SetPoseParameter( m_poseDoors, 0.0f );
+
+		if (m_iGunnerSpawnState != GUNNER_NONE)
+		{
+			// Spawn gunners now
+			SetContextThink( &CNPC_ArbeitHelicopter::SpawnGunners, gpGlobals->curtime + TICK_INTERVAL, g_pszGunnerSpawnContext );
+		}
+
+		return;
+	}
+
+	//Msg("Closing doors (%f)\n", Lerp( m_flDoorTransitionTime - gpGlobals->curtime, 25.0f, 0.0f ) );
+
+	SetPoseParameter( m_poseDoors, Lerp( m_flDoorTransitionTime - gpGlobals->curtime, 0.0f, 25.0f ) );
+
+	SetContextThink( &CNPC_ArbeitHelicopter::CloseDoorsThink, gpGlobals->curtime + TICK_INTERVAL, g_pszGunnerSpawnContext );
+}
+
+//------------------------------------------------------------------------------
+// Purpose : 
+//------------------------------------------------------------------------------
+void CNPC_ArbeitHelicopter::SpawnGunner( int iIndex )
+{
+	// Make sure we don't already have a gunner here
+	if (m_hGunners[iIndex] != NULL)
+		return;
+
+	if ( m_sNPCTemplateData[iIndex] == NULL_STRING )
+		return;
+
+	// Spawn the templated NPC
+	CBaseEntity *pEntity = NULL;
+	MapEntity_ParseEntity( pEntity, STRING( m_sNPCTemplateData[iIndex] ), NULL );
+	
+	if ( !pEntity || !pEntity->MyNPCPointer() )
+	{
+		Warning( "Arbeit helicopter could not create template NPC\n" );
+		return;
+	}
+
+	m_hGunners[iIndex] = pEntity->MyNPCPointer();
+
+	DispatchSpawn( pEntity );
+	m_hGunners[iIndex]->m_NPCState = NPC_STATE_IDLE;
+	pEntity->Activate();
+
+	// Parent it to the point inside the helicopter and spawn it
+	pEntity->SetParent( this, m_nGunnerAttachments[iIndex] );
+	pEntity->SetOwnerEntity( this );
+	pEntity->SetLocalOrigin( vec3_origin );
+	pEntity->SetLocalAngles( vec3_angle );
+
+	// Make sure they're set to work well while parented
+	m_hGunners[iIndex]->SetMoveType( MOVETYPE_NONE );
+	m_hGunners[iIndex]->CapabilitiesRemove( bits_CAP_MOVE_GROUND );
+	//m_hGunners[iIndex]->GetMotor()->SetYawLocked( true );
+
+	m_OnSpawnNPC.Set( pEntity, pEntity, this );
+}
+
+//------------------------------------------------------------------------------
+// Purpose : Spawn the next NPC in our template list
+//------------------------------------------------------------------------------
+void CNPC_ArbeitHelicopter::SpawnGunners( void )
+{
+	if ((m_iGunnerSpawnState == GUNNER_ALL || m_iGunnerSpawnState == GUNNER_RIGHT_ONLY))
+	{
+		// Spawn the right gunner
+		SpawnGunner( 0 );
+	}
+	if ((m_iGunnerSpawnState == GUNNER_ALL || m_iGunnerSpawnState == GUNNER_LEFT_ONLY))
+	{
+		// Spawn the left gunner
+		SpawnGunner( 1 );
+	}
+
+	// Get new state
+	RefreshGunnerState();
+
+	// Reset target state
+	m_iGunnerSpawnState = GUNNER_NONE;
+
+	// If our doors are supposed to be open, open them now
+	if (m_bDoorsOpen)
+	{
+		m_flDoorTransitionTime = gpGlobals->curtime + ARBEIT_HELI_RESPAWN_TIME + ARBEIT_HELI_DOOR_TIME;
+		SetContextThink( &CNPC_ArbeitHelicopter::OpenDoorsThink, gpGlobals->curtime + ARBEIT_HELI_RESPAWN_TIME, g_pszGunnerSpawnContext );
+	}
+}
+
+//------------------------------------------------------------------------------
+// Purpose : 
+//------------------------------------------------------------------------------
+void CNPC_ArbeitHelicopter::RefreshGunnerState( void )
+{
+	bool bRightGunnerActive = m_hGunners[0] != NULL && m_hGunners[0]->IsAlive();
+	bool bLeftGunnerActive = m_hGunners[1] != NULL && m_hGunners[1]->IsAlive();
+
+	if (bRightGunnerActive && bLeftGunnerActive)
+		m_iGunnerState = GUNNER_ALL;
+	else if (bRightGunnerActive)
+		m_iGunnerState = GUNNER_RIGHT_ONLY;
+	else if (bLeftGunnerActive)
+		m_iGunnerState = GUNNER_LEFT_ONLY;
+	else
+		m_iGunnerState = GUNNER_NONE;
+}
+
+//-----------------------------------------------------------------------------
+// Think!	
+//-----------------------------------------------------------------------------
+void CNPC_ArbeitHelicopter::PrescheduleThink( void )
+{
+	BaseClass::PrescheduleThink();
+
+	// Determine gunner stuff
+	RefreshGunnerState();
+
+	// TODO
+	if (m_hGunners[0])
+		m_iSideFacing = GUNNER_RIGHT_ONLY;
+	else if (m_hGunners[1])
+		m_iSideFacing = GUNNER_LEFT_ONLY;
+	else
+		m_iSideFacing = GUNNER_NONE;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Take damage from trace attacks if they hit the gunner
+//-----------------------------------------------------------------------------
+int CNPC_ArbeitHelicopter::OnTakeDamage_Alive( const CTakeDamageInfo &info )
+{
+	int nPrevHealth = GetHealth();
+
+	// Chain
+	int nRetVal = BaseClass::OnTakeDamage_Alive( info );
+
+	if ( nPrevHealth != GetHealth() )
+	{
+		// If our doors are open and the damage position was near a gunner, have a random chance of applying the damage to one of our gunners
+		if (m_bDoorsOpen)
+		{
+			for (int i = 0; i < ARBEIT_HELI_MAX_GUNNERS; i++)
+			{
+				if (!m_hGunners[i])
+					continue;
+
+				if ((info.GetDamagePosition() - m_hGunners[i]->GetAbsOrigin()).LengthSqr() > Square( 64.0f ))
+					continue;
+
+				if (RandomInt( 0, 100 ) <= 25)
+					m_hGunners[i]->TakeDamage( info );
+			}
+		}
+	}
+
+	return nRetVal;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Start us crashing
+//-----------------------------------------------------------------------------
+void CNPC_ArbeitHelicopter::Event_Killed( const CTakeDamageInfo &info )
+{
+	if( m_lifeState == LIFE_ALIVE )
+	{
+		m_OnShotDown.FireOutput( this, this );
+	}
+
+	m_lifeState	= LIFE_DYING;
+
+	if (m_pGunFiringSound)
+	{
+		CSoundEnvelopeController &controller = CSoundEnvelopeController::GetController();
+		controller.SoundChangeVolume( m_pGunFiringSound, 0.0, 0.1f );
+	}
+
+	if( GetCrashPoint() == NULL )
+	{
+		CBaseEntity *pCrashPoint = gEntList.FindEntityByClassname( NULL, "info_target_helicopter_crash" );
+		if( pCrashPoint != NULL )
+		{
+			m_hCrashPoint.Set( pCrashPoint );
+			SetDesiredPosition( pCrashPoint->GetAbsOrigin() );
+
+			// Start the failing engine sound
+			CSoundEnvelopeController &controller = CSoundEnvelopeController::GetController();
+			controller.SoundDestroy( m_pRotorSound );
+
+			CPASAttenuationFilter filter( this );
+			m_pRotorSound = controller.SoundCreate( filter, entindex(), "NPC_AttackHelicopter.EngineFailure" );
+			controller.Play( m_pRotorSound, 1.0, 100 );
+
+			if ( HaveSequenceForActivity( ACT_HELICOPTER_CRASHING ) )
+			{
+				// Tailspin!!
+				SetActivity( ACT_HELICOPTER_CRASHING );
+			}
+
+			// Intentionally returning with m_lifeState set to LIFE_DYING
+			return;
+		}
+	}
+
+	// Kill our gunners
+	for (int i = 0; i < ARBEIT_HELI_MAX_GUNNERS; i++)
+	{
+		CAI_BaseNPC *pNPC = m_hGunners[i];
+		if (!pNPC)
+			continue;
+
+		pNPC->TakeDamage( info );
+
+		m_hGunners[i] = NULL;
+	}
+
+	// For now, create a charred stationary version of ourselves
+	// TODO: Unique crash model
+	CHelicopterChunk *pBodyChunk = CHelicopterChunk::CreateHelicopterChunk( GetAbsOrigin(), GetAbsAngles(), GetAbsVelocity(), "models/props_vehicles/arbeit_heli_stationary.mdl", CHUNK_BODY );
+	if (pBodyChunk)
+	{
+		pBodyChunk->SetRenderColor( 64, 64, 64 );
+	}
+
+	StopLoopingSounds();
+
+	m_lifeState = LIFE_DEAD;
+
+	EmitSound( "NPC_CombineGunship.Explode" );
+
+	SetThink( &CNPC_AttackHelicopter::SUB_Remove );
+	SetNextThink( gpGlobals->curtime + 0.1f );
+
+	AddEffects( EF_NODRAW );
+
+	// Makes the slower rotors fade back in
+	SetStartupTime( gpGlobals->curtime + 99.0f );
+
+	m_iHealth = 0;
+	m_takedamage = DAMAGE_NO;
+
+	m_OnDeath.FireOutput( info.GetAttacker(), this );
+}
+
+//------------------------------------------------------------------------------
+// Purpose : Create our rotor sound
+//------------------------------------------------------------------------------
+void CNPC_ArbeitHelicopter::InitializeRotorSound( void )
+{
+	if ( !m_pRotorSound )
+	{
+		CSoundEnvelopeController &controller = CSoundEnvelopeController::GetController();
+		CPASAttenuationFilter filter( this );
+
+		if ( HasSpawnFlags( SF_HELICOPTER_LOUD_ROTOR_SOUND ) )
+		{
+			m_pRotorSound = controller.SoundCreate( filter, entindex(), "NPC_ArbeitHelicopter.RotorsLoud" );
+		}
+		else
+		{
+			m_pRotorSound = controller.SoundCreate( filter, entindex(), "NPC_ArbeitHelicopter.Rotors" );
+		}
+
+		m_pRotorBlast = controller.SoundCreate( filter, entindex(), "NPC_ArbeitHelicopter.RotorBlast" );
+		//m_pGunFiringSound = controller.SoundCreate( filter, entindex(), "NPC_AttackHelicopter.FireGun" );
+		//controller.Play( m_pGunFiringSound, 0.0, 100 );
+	}
+	else
+	{
+		Assert(m_pRotorSound);
+		Assert(m_pRotorBlast);
+		//Assert(m_pGunFiringSound);
+	}
+
+	// Don't need to call CNPC_AttackHelicopter (it's also normally private)
+	BaseClass::BaseClass::InitializeRotorSound();
+}
+
+//------------------------------------------------------------------------------
+// Gets the max speed of the helicopter
+//------------------------------------------------------------------------------
+float CNPC_ArbeitHelicopter::GetMaxSpeed()
+{
+	float flBase = BaseClass::BaseClass::GetMaxSpeed();
+
+	// Reduced speed when doors are open
+	if (m_bDoorsOpen)
+		return flBase * 0.5f;
+
+	return flBase;
+}
+
+float CNPC_ArbeitHelicopter::GetMaxSpeedFiring()
+{
+	float flBase = BaseClass::BaseClass::GetMaxSpeedFiring();
+
+	// Reduced speed when doors are open
+	if (m_bDoorsOpen)
+		return flBase * 0.5f;
+
+	return flBase;
+}
+
+//------------------------------------------------------------------------------
+// Updates the facing direction
+//------------------------------------------------------------------------------
+void CNPC_ArbeitHelicopter::UpdateFacingDirection( const Vector &vecActualDesiredPosition )
+{
+	bool bSeenTargetRecently = HasSpawnFlags( SF_HELICOPTER_AGGRESSIVE ) || ( m_flLastSeen + 5 > gpGlobals->curtime ); 
+	if ( GetEnemy() )
+	{
+		if ( !IsLeading() )
+		{
+			if ( !IsCrashing() && bSeenTargetRecently )
+			{
+				// If we've seen the target recently, face the target.
+				m_vecDesiredFaceDir = m_vecTargetPosition - GetAbsOrigin();
+			}
+			else
+			{
+				// Remain facing the way you were facing...
+			}
+		}
+		else
+		{
+			m_vecDesiredFaceDir = m_vecTargetPosition - GetAbsOrigin();
+		}
+		
+		if (m_iSideFacing != GUNNER_NONE)
+		{
+			QAngle angDesiredFace;
+			VectorAngles( m_vecDesiredFaceDir, angDesiredFace );
+
+			if (m_iSideFacing == GUNNER_RIGHT_ONLY)
+			{
+				AngleVectors( angDesiredFace, NULL, &m_vecDesiredFaceDir, NULL );
+			}
+			else if (m_iSideFacing == GUNNER_LEFT_ONLY)
+			{
+				AngleVectors( angDesiredFace, NULL, &m_vecDesiredFaceDir, NULL );
+				-m_vecDesiredFaceDir;
+			}
+		}
+	}
+	else
+	{
+		// Face our desired position
+		float flDistSqr = vecActualDesiredPosition.AsVector2D().DistToSqr( GetAbsOrigin().AsVector2D() );
+		if ( flDistSqr <= 50 * 50 )
+		{
+			GetVectors( &m_vecDesiredFaceDir, NULL, NULL );
+		}
+		else
+		{
+			m_vecDesiredFaceDir = vecActualDesiredPosition - GetAbsOrigin();
+		}
+	}
+
+	VectorNormalize( m_vecDesiredFaceDir ); 
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Cache whatever pose parameters we intend to use
+//-----------------------------------------------------------------------------
+void CNPC_ArbeitHelicopter::PopulatePoseParameters( void )
+{
+	m_poseDoors = LookupPoseParameter("doors_open");
+
+	BaseClass::PopulatePoseParameters();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CNPC_ArbeitHelicopter::InitBoneFollowers( void )
+{
+	// Don't do this if we're already loaded
+	if ( m_BoneFollowerManager.GetNumBoneFollowers() != 0 )
+		return;
+
+	// Init our followers
+	m_BoneFollowerManager.InitBoneFollowers( this, ARRAYSIZE(pArbeitFollowerBoneNames), pArbeitFollowerBoneNames );
+}
+
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+void CNPC_ArbeitHelicopter::InputRespawnAllGunners( inputdata_t &inputdata )
+{
+	m_iGunnerSpawnState = GUNNER_ALL;
+
+	if (m_bDoorsOpen)
+	{
+		// Already closing the doors
+		if (m_flDoorTransitionTime != -1.0f)
+			return;
+
+		// Close the doors first
+		m_flDoorTransitionTime = gpGlobals->curtime + ARBEIT_HELI_DOOR_TIME;
+		SetContextThink( &CNPC_ArbeitHelicopter::CloseDoorsThink, gpGlobals->curtime + TICK_INTERVAL, g_pszGunnerSpawnContext );
+	}
+	else
+	{
+		// Doors are already closed, spawn immediately
+		SpawnGunners();
+	}
+}
+
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+void CNPC_ArbeitHelicopter::InputRespawnRightGunner( inputdata_t &inputdata )
+{
+	m_iGunnerSpawnState = GUNNER_RIGHT_ONLY;
+
+	if (m_bDoorsOpen)
+	{
+		// Already closing the doors
+		if (m_flDoorTransitionTime != -1.0f)
+			return;
+
+		// Close the doors first
+		m_flDoorTransitionTime = gpGlobals->curtime + ARBEIT_HELI_DOOR_TIME;
+		SetContextThink( &CNPC_ArbeitHelicopter::CloseDoorsThink, gpGlobals->curtime + TICK_INTERVAL, g_pszGunnerSpawnContext );
+	}
+	else
+	{
+		// Doors are already closed, spawn immediately
+		SpawnGunners();
+	}
+}
+
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+void CNPC_ArbeitHelicopter::InputRespawnLeftGunner( inputdata_t &inputdata )
+{
+	m_iGunnerSpawnState = GUNNER_LEFT_ONLY;
+
+	if (m_bDoorsOpen)
+	{
+		// Already closing the doors
+		if (m_flDoorTransitionTime != -1.0f)
+			return;
+
+		// Close the doors first
+		m_flDoorTransitionTime = gpGlobals->curtime + ARBEIT_HELI_DOOR_TIME;
+		SetContextThink( &CNPC_ArbeitHelicopter::CloseDoorsThink, gpGlobals->curtime + TICK_INTERVAL, g_pszGunnerSpawnContext );
+	}
+	else
+	{
+		// Doors are already closed, spawn immediately
+		SpawnGunners();
+	}
+}
+
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+void CNPC_ArbeitHelicopter::InputOpenDoors( inputdata_t &inputdata )
+{
+	m_bDoorsOpen = true;
+
+	if (m_flDoorTransitionTime != -1.0f && m_iGunnerSpawnState == GUNNER_NONE)
+	{
+		m_flDoorTransitionTime = gpGlobals->curtime + ARBEIT_HELI_DOOR_TIME;
+		SetContextThink( &CNPC_ArbeitHelicopter::OpenDoorsThink, gpGlobals->curtime + TICK_INTERVAL, g_pszGunnerSpawnContext );
+	}
+}
+
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+void CNPC_ArbeitHelicopter::InputCloseDoors( inputdata_t &inputdata )
+{
+	m_bDoorsOpen = false;
+
+	if (m_flDoorTransitionTime != -1.0f && m_iGunnerSpawnState == GUNNER_NONE)
+	{
+		m_flDoorTransitionTime = gpGlobals->curtime + ARBEIT_HELI_DOOR_TIME;
+		SetContextThink( &CNPC_ArbeitHelicopter::CloseDoorsThink, gpGlobals->curtime + TICK_INTERVAL, g_pszGunnerSpawnContext );
+	}
+}
+
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+void CNPC_ArbeitHelicopter::InputForceGunnerJump( inputdata_t &inputdata )
+{
+	for (int i = 0; i < ARBEIT_HELI_MAX_GUNNERS; i++)
+	{
+		CAI_BaseNPC *pNPC = m_hGunners[i];
+		if (!pNPC)
+			continue;
+
+		// Do a trace from the attachment position to the nearby ground
+		Vector vecJumpPos;
+		QAngle angJumpAngles;
+		GetAttachment( m_nGunnerJumpAttachments[i], vecJumpPos, angJumpAngles );
+		angJumpAngles.x = 0; angJumpAngles.z = 0;
+
+		CTraceFilterSkipTwoEntities traceFilter( this, pNPC, COLLISION_GROUP_NONE );
+		trace_t tr;
+		AI_TraceLine( vecJumpPos, vecJumpPos + Vector(0,0,-4096), MASK_NPCSOLID, &traceFilter, &tr );
+
+		pNPC->SetParent( NULL );
+		pNPC->SetAbsAngles( angJumpAngles );
+		pNPC->CapabilitiesAdd( bits_CAP_MOVE_GROUND | bits_CAP_MOVE_JUMP );
+		pNPC->SetMoveType( MOVETYPE_STEP );
+		pNPC->GetMotor()->SetYawLocked( false );
+		pNPC->SetSchedule( SCHED_DROPSHIP_DUSTOFF );
+
+		AI_NavGoal_t goal( GOALTYPE_LOCATION_NEAREST_NODE, tr.endpos, ACT_RUN, AIN_HULL_TOLERANCE );
+
+		if (!pNPC->GetNavigator()->SetGoal( goal ))
+		{
+			// Try going there directly
+			goal = AI_NavGoal_t( GOALTYPE_LOCATION, tr.endpos, ACT_RUN, AIN_HULL_TOLERANCE );
+			if (!pNPC->GetNavigator()->SetGoal( goal ))
+			{
+				AI_Waypoint_t *pWaypoint = pNPC->GetPathfinder()->BuildLocalRoute( pNPC->GetAbsOrigin(), tr.endpos, this, 0, NO_NODE, bits_BUILD_JUMP, AIN_HULL_TOLERANCE );
+				if (pWaypoint)
+				{
+					Warning( "Had to do manual jump\n" );
+					pNPC->GetNavigator()->GetPath()->SetWaypoints( pWaypoint );
+				}
+				else if (pNPC->HasRappelBehavior())
+				{
+					Warning( "Had to rappel\n" );
+					GetAttachment( m_nGunnerRappelAttachments[i], vecJumpPos, angJumpAngles );
+					angJumpAngles.x = 0; angJumpAngles.z = 0;
+					pNPC->Teleport( &vecJumpPos, &angJumpAngles, NULL );
+					pNPC->StartWaitingForRappel();
+					pNPC->BeginRappel();
+					pNPC->ForceDecisionThink();
+				}
+				else
+				{
+					Warning( "Had to teleport\n" );
+					pNPC->Teleport( &tr.endpos, &angJumpAngles, NULL );
+				}
+			}
+			else
+			{
+				Msg( "Location type was successful\n" );
+			}
+		}
+		else
+		{
+			Msg( "Location nearest node type was successful\n" );
+		}
+
+		m_hGunners[i] = NULL;
+	}
+}
+
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+void CNPC_ArbeitHelicopter::InputForceGunnerRappel( inputdata_t &inputdata )
+{
+	for (int i = 0; i < ARBEIT_HELI_MAX_GUNNERS; i++)
+	{
+		CAI_BaseNPC *pNPC = m_hGunners[i];
+		if (!pNPC)
+			continue;
+
+		pNPC->SetParent( NULL );
+		pNPC->CapabilitiesAdd( bits_CAP_MOVE_GROUND | bits_CAP_MOVE_JUMP );
+		pNPC->SetMoveType( MOVETYPE_STEP );
+		pNPC->GetMotor()->SetYawLocked( false );
+
+		// Do a trace from the attachment position to the nearby ground
+		Vector vecJumpPos;
+		QAngle angJumpAngles;
+		GetAttachment( m_nGunnerRappelAttachments[i], vecJumpPos, angJumpAngles );
+		angJumpAngles.x = 0; angJumpAngles.z = 0;
+
+		if (pNPC->HasRappelBehavior())
+		{
+			pNPC->Teleport( &vecJumpPos, &angJumpAngles, NULL );
+			pNPC->StartWaitingForRappel();
+			pNPC->BeginRappel();
+			pNPC->ForceDecisionThink();
+
+			m_hGunners[i] = NULL;
+		}
+		else
+		{
+			Warning( "%s has no rappel behavior\n", pNPC->GetDebugName() );
+		}
+	}
+}
+#endif

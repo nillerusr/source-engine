@@ -470,7 +470,7 @@ CAI_Schedule *CAI_BaseNPC::GetNewSchedule( void )
 		// You may not be in combat state with no enemy!!! (sjb) 11/4/03
 		if( m_NPCState == NPC_STATE_COMBAT && !GetEnemy() )
 		{
-			DevMsg("**ERROR: Combat State with no enemy! slamming to ALERT\n");
+			CGMsg( 1, CON_GROUP_NPC_AI, "**ERROR: Combat State with no enemy! slamming to ALERT\n" );
 			SetState( NPC_STATE_ALERT );
 		}
 
@@ -693,7 +693,7 @@ void CAI_BaseNPC::MaintainSchedule ( void )
 
 		if ( !GetCurSchedule() || GetCurSchedule()->NumTasks() == 0 )
 		{
-			DevMsg("ERROR: Missing or invalid schedule!\n");
+			CGMsg( 1, CON_GROUP_NPC_AI, "ERROR: Missing or invalid schedule!\n" );
 			SetActivity ( ACT_IDLE );
 			return;
 		}
@@ -980,8 +980,12 @@ bool CAI_BaseNPC::FindCoverFromEnemy( bool bNodesOnly, float flMinDistance, floa
 	// FIXME: add to goal
 	if (GetHintNode())
 	{
+#ifdef MAPBASE
+		GetHintNode()->NPCHandleStartNav( this, true );
+#else
 		GetNavigator()->SetArrivalActivity( GetCoverActivity( GetHintNode() ) );
 		GetNavigator()->SetArrivalDirection( GetHintNode()->GetDirection() );
+#endif
 	}
 	
 	return true;
@@ -1004,7 +1008,7 @@ bool CAI_BaseNPC::FindCoverFromBestSound( Vector *pCoverPos )
 	}
 	else
 	{
-		DevMsg( 2, "Attempting to find cover from best sound, but best sound not founc.\n" );
+		CGMsg( 2, CON_GROUP_NPC_AI, "Attempting to find cover from best sound, but best sound not founc.\n" );
 	}
 	
 	return false;
@@ -1360,6 +1364,14 @@ void CAI_BaseNPC::StartTask( const Task_t *pTask )
 		break;
 
 	case TASK_STOP_MOVING:
+#ifdef MAPBASE
+		if ( GetNavType() == NAV_CLIMB )
+		{
+			// Don't clear the goal so that the climb can finish
+			DbgNavMsg( this, "Start TASK_STOP_MOVING with climb workaround\n" );
+		}
+		else
+#endif
 		if ( ( GetNavigator()->IsGoalSet() && GetNavigator()->IsGoalActive() ) || GetNavType() == NAV_JUMP )
 		{
 			DbgNavMsg( this, "Start TASK_STOP_MOVING\n" );
@@ -1584,6 +1596,45 @@ void CAI_BaseNPC::StartTask( const Task_t *pTask )
 		// track head to the client for a while.
 		SetWait( pTask->flTaskData );
 		break;
+
+#ifdef MAPBASE
+	case TASK_FACE_INTERACTION_ANGLES:
+		{
+			if ( !m_hForcedInteractionPartner )
+			{
+				TaskFail( FAIL_NO_TARGET );
+				return;
+			}
+
+			// Get our running interaction from our partner,
+			// as this should only run with the NPC "receiving" the interaction
+			ScriptedNPCInteraction_t *pInteraction = m_hForcedInteractionPartner->GetRunningDynamicInteraction();
+
+			if ( !(pInteraction->iFlags & SCNPC_FLAG_TEST_OTHER_ANGLES) )
+			{
+				TaskComplete();
+				return;
+			}
+
+			// Get our target's origin
+			Vector vecTarget = m_hForcedInteractionPartner->GetAbsOrigin();
+
+			// Face the angles the interaction actually wants us at, opposite to the partner
+			float angInteractionAngle = pInteraction->angRelativeAngles.y;
+			angInteractionAngle += 180.0f;
+
+			GetMotor()->SetIdealYaw( AngleNormalize( CalcIdealYaw( vecTarget ) + angInteractionAngle ) );
+
+			if (FacingIdeal())
+				TaskComplete();
+			else
+			{
+				GetMotor()->SetIdealYaw( CalcReasonableFacing( true ) );
+				SetTurnActivity();
+			}
+		}
+		break;
+#endif
 
 	case TASK_FACE_ENEMY:
 		{
@@ -2285,11 +2336,20 @@ void CAI_BaseNPC::StartTask( const Task_t *pTask )
 				bool bHasPath = true;
 				Vector vecNodePos;
 
+#ifdef EZ
+				bool bPlayerHolding = (m_hTargetEnt->VPhysicsGetObject() && m_hTargetEnt->VPhysicsGetObject()->GetGameFlags() & FVPHYSICS_PLAYER_HELD);
+#endif
+
 				vecNodePos = pNode->GetPosition( GetHullType() );
 
 				float flDistZ;
 				flDistZ = fabs( vecNodePos.z - m_hTargetEnt->GetAbsOrigin().z );
+#ifdef EZ
+				// If the player is holding it, don't bother with Z leniency
+				if( flDistZ > Z_LENIENCY && !bPlayerHolding )
+#else
 				if( flDistZ > Z_LENIENCY )
+#endif
 				{
 					// The gun is too far away from its nearest node on the Z axis.
 					TaskFail( "Target not within Z_LENIENCY!\n");
@@ -2302,6 +2362,17 @@ void CAI_BaseNPC::StartTask( const Task_t *pTask )
 					}
 				}
 
+#ifdef EZ
+				// If the player is holding it, don't bother with XY leniency
+				if ( bPlayerHolding )
+				{
+					//AI_NavGoal_t goal( m_hTargetEnt->GetAbsOrigin(), ACT_INVALID, 48.0f, AIN_DEF_FLAGS, m_hTargetEnt );
+					AI_NavGoal_t goal( m_hTargetEnt->GetAbsOrigin() );
+					goal.pTarget = m_hTargetEnt;
+					bHasPath = GetNavigator()->SetGoal( goal );
+				}
+				else
+#endif
 				if( flDistZ >= 16.0 )
 				{
 					// The gun is higher or lower, but it's within reach. (probably on a table).
@@ -2498,8 +2569,22 @@ void CAI_BaseNPC::StartTask( const Task_t *pTask )
 
 	case TASK_WEAPON_RUN_PATH:
 	case TASK_ITEM_RUN_PATH:
-		GetNavigator()->SetMovementActivity(ACT_RUN);
+	{
+#ifdef EZ
+		if (m_hTargetEnt->VPhysicsGetObject() && m_hTargetEnt->VPhysicsGetObject()->GetGameFlags() & FVPHYSICS_PLAYER_HELD)
+		{
+			if ((GetAbsOrigin() - m_hTargetEnt->GetAbsOrigin()).Length2DSqr() < Square( 32.0f ))
+			{
+				GetNavigator()->ClearGoal();
+				TaskComplete();
+				break;
+			}
+		}
+#endif
+
+		GetNavigator()->SetMovementActivity( ACT_RUN );
 		break;
+	}
 
 	case TASK_RUN_PATH:
 		{
@@ -2707,7 +2792,7 @@ void CAI_BaseNPC::StartTask( const Task_t *pTask )
 	case TASK_SOUND_ANGRY:
 		{
 			// sounds are complete as soon as we get here, cause we've already played them.
-			DevMsg( 2, "SOUND\n" );			
+			CGMsg( 2, CON_GROUP_NPC_AI, "SOUND\n" );			
 			TaskComplete();
 			break;
 		}
@@ -2749,7 +2834,7 @@ void CAI_BaseNPC::StartTask( const Task_t *pTask )
 		{
 			if ( !m_hCine )
 			{
-				DevMsg( "Scripted sequence destroyed while in use\n" );
+				CGMsg( 1, CON_GROUP_NPC_SCRIPTS, "Scripted sequence destroyed while in use\n" );
 				TaskFail( FAIL_SCHEDULE_NOT_FOUND );
 				break;
 			}
@@ -2760,13 +2845,20 @@ void CAI_BaseNPC::StartTask( const Task_t *pTask )
 		{
 			if ( !m_hCine )
 			{
-				DevMsg( "Scripted sequence destroyed while in use\n" );
+				CGMsg( 1, CON_GROUP_NPC_SCRIPTS, "Scripted sequence destroyed while in use\n" );
 				TaskFail( FAIL_SCHEDULE_NOT_FOUND );
 				break;
 			}
 
 			string_t iszArrivalText;
 
+#ifdef MAPBASE
+			if ( m_hCine->m_iszPreIdle != NULL_STRING )
+			{
+				iszArrivalText = m_hCine->m_iszPreIdle;
+			}
+			else
+#endif
 			if ( m_hCine->m_iszEntry != NULL_STRING )
 			{
 				iszArrivalText = m_hCine->m_iszEntry;
@@ -2857,6 +2949,9 @@ void CAI_BaseNPC::StartTask( const Task_t *pTask )
 			//
 			if ( m_hCine->m_iszPreIdle != NULL_STRING )
 			{
+#ifdef MAPBASE
+				m_hCine->OnPreIdleSequence( this );
+#endif
 				m_hCine->StartSequence( ( CAI_BaseNPC * )this, m_hCine->m_iszPreIdle, false );
 				if ( FStrEq( STRING( m_hCine->m_iszPreIdle ), STRING( m_hCine->m_iszPlay ) ) )
 				{
@@ -2969,7 +3064,16 @@ void CAI_BaseNPC::StartTask( const Task_t *pTask )
 
 	case TASK_ITEM_PICKUP:
 		{
-			SetIdealActivity( ACT_PICKUP_GROUND );
+#ifdef MAPBASE
+			if (GetTarget() && fabs( GetTarget()->WorldSpaceCenter().z - GetAbsOrigin().z ) >= 12.0f)
+			{
+				SetIdealActivity( ACT_PICKUP_RACK );
+			}
+			else
+#endif
+			{
+				SetIdealActivity( ACT_PICKUP_GROUND );
+			}
 		}
 		break;
 
@@ -3097,7 +3201,7 @@ void CAI_BaseNPC::StartTask( const Task_t *pTask )
 
 	default:
 		{
-			DevMsg( "No StartTask entry for %s\n", TaskName( task ) );
+			CGMsg( 1, CON_GROUP_NPC_AI, "No StartTask entry for %s\n", TaskName( task ) );
 		}
 		break;
 	}
@@ -3244,7 +3348,7 @@ void CAI_BaseNPC::RunTask( const Task_t *pTask )
 			// Put a debugging check in here
 			if (GetHintNode()->User() != this)
 			{
-				DevMsg("Hint node (%s) being used by non-owner!\n",GetHintNode()->GetDebugName());
+				CGMsg( 1, CON_GROUP_NPC_AI, "Hint node (%s) being used by non-owner!\n", GetHintNode()->GetDebugName() );
 			}
 
 			if ( IsActivityFinished() )
@@ -3293,8 +3397,40 @@ void CAI_BaseNPC::RunTask( const Task_t *pTask )
 				// 						  a navigation while in the middle of a climb
 				if (GetNavType() == NAV_CLIMB)
 				{
+#ifdef MAPBASE
+					if (GetActivity() != ACT_CLIMB_DISMOUNT)
+					{
+						// Try to just pause the climb, but dismount if we're in SCHED_FAIL
+						if (IsCurSchedule( SCHED_FAIL, false ))
+						{
+							GetMotor()->MoveClimbStop();
+						}
+						else
+						{
+							GetMotor()->MoveClimbPause();
+						}
+
+						TaskComplete();
+					}
+					else if (IsActivityFinished())
+					{
+						// Dismount complete.
+						GetMotor()->MoveClimbStop();
+
+						// Fix up our position if we have to
+						Vector vecTeleportOrigin;
+						if (GetMotor()->MoveClimbShouldTeleportToSequenceEnd( vecTeleportOrigin ))
+						{
+							SetLocalOrigin( vecTeleportOrigin );
+						}
+
+						TaskComplete();
+					}
+					break;
+#else
 					// wait until you reach the end
 					break;
+#endif
 				}
 
 				DbgNavMsg( this, "TASK_STOP_MOVING Complete\n" );
@@ -3339,6 +3475,17 @@ void CAI_BaseNPC::RunTask( const Task_t *pTask )
 			// If the yaw is locked, this function will not act correctly
 			Assert( GetMotor()->IsYawLocked() == false );
 
+#ifdef MAPBASE
+			if ( GetHintNode() && GetHintNode()->OverridesNPCYaw( this ) )
+			{
+				// If the yaw is supposed to use that of a hint node, chain to TASK_FACE_HINTNODE
+				GetMotor()->SetIdealYaw( GetHintNode()->Yaw() );
+				GetMotor()->SetIdealYaw( CalcReasonableFacing( true ) ); // CalcReasonableFacing() is based on previously set ideal yaw
+				ChainRunTask( TASK_FACE_HINTNODE, pTask->flTaskData );
+				break;
+			}
+#endif
+
 			Vector vecEnemyLKP = GetEnemyLKP();
 			if (!FInAimCone( vecEnemyLKP ))
 			{
@@ -3379,6 +3526,36 @@ void CAI_BaseNPC::RunTask( const Task_t *pTask )
 			}
 		}
 		break;
+
+#ifdef MAPBASE
+	case TASK_FACE_INTERACTION_ANGLES:
+		{
+			if ( !m_hForcedInteractionPartner )
+			{
+				TaskFail( FAIL_NO_TARGET );
+				return;
+			}
+
+			// Get our running interaction from our partner,
+			// as this should only run with the NPC "receiving" the interaction
+			ScriptedNPCInteraction_t *pInteraction = m_hForcedInteractionPartner->GetRunningDynamicInteraction();
+
+			// Get our target's origin
+			Vector vecTarget = m_hForcedInteractionPartner->GetAbsOrigin();
+
+			// Face the angles the interaction actually wants us at, opposite to the partner
+			float angInteractionAngle = pInteraction->angRelativeAngles.y;
+			angInteractionAngle += 180.0f;
+
+			GetMotor()->SetIdealYawAndUpdate( CalcIdealYaw( vecTarget ) + angInteractionAngle, AI_KEEP_YAW_SPEED );
+
+			if (IsWaitFinished())
+			{
+				TaskComplete();
+			}
+		}
+		break;
+#endif
 
 	case TASK_FIND_COVER_FROM_BEST_SOUND:
 		{
@@ -3668,9 +3845,22 @@ void CAI_BaseNPC::RunTask( const Task_t *pTask )
 							{
 								if( GetNavigator()->SetGoal(vecGoal) )
 								{
+#ifdef MAPBASE
+									// Pushaway destinations could be an entire floor above.
+									// That would get frustrating. Only go to hints within a path distance of 300 units,
+									// only slightly above our initial search conditions.
+									if (GetNavigator()->BuildAndGetPathDistToGoal() < 300.0f)
+									{
+										pHint->NPCHandleStartNav(this, false);
+										pHint->DisableForSeconds( 0.1f ); // Force others to find their own.
+										TaskComplete();
+										break;
+									}
+#else
 									pHint->DisableForSeconds( 0.1f ); // Force others to find their own.
 									TaskComplete();
 									break;
+#endif
 								}
 							}
 						}
@@ -3789,6 +3979,16 @@ void CAI_BaseNPC::RunTask( const Task_t *pTask )
 				{
 					TaskComplete();
 				}
+#ifdef EZ
+				else if (m_hTargetEnt->VPhysicsGetObject() && m_hTargetEnt->VPhysicsGetObject()->GetGameFlags() & FVPHYSICS_PLAYER_HELD)
+				{
+					if ((GetAbsOrigin() - m_hTargetEnt->GetAbsOrigin()).Length2DSqr() < Square( 32.0f ))
+					{
+						GetNavigator()->ClearGoal();
+						TaskComplete();
+					}
+				}
+#endif
 			}
 			else
 			{
@@ -3881,15 +4081,25 @@ void CAI_BaseNPC::RunTask( const Task_t *pTask )
 			if ( m_hCine && m_hCine->IsTimeToStart() )
 			{
 				TaskComplete();
+#ifdef MAPBASE
+				m_hCine->OnBeginSequence(this);
+#else
 				m_hCine->OnBeginSequence();
+#endif
 
 				// If we have an entry, we have to play it first
 				if ( m_hCine->m_iszEntry != NULL_STRING )
 				{
+#ifdef MAPBASE
+					m_hCine->OnEntrySequence( this );
+#endif
 					m_hCine->StartSequence( (CAI_BaseNPC *)this, m_hCine->m_iszEntry, true );
 				}
 				else
 				{
+#ifdef MAPBASE
+					m_hCine->OnActionSequence( this );
+#endif
 					m_hCine->StartSequence( (CAI_BaseNPC *)this, m_hCine->m_iszPlay, true );
 				}
 
@@ -3904,7 +4114,7 @@ void CAI_BaseNPC::RunTask( const Task_t *pTask )
 			}
 			else if (!m_hCine)
 			{
-				DevMsg( "Cine died!\n");
+				CGMsg( 1, CON_GROUP_NPC_SCRIPTS, "Cine died!\n" );
 				TaskComplete();
 			}
 			else if ( IsRunningDynamicInteraction() )
@@ -3953,6 +4163,15 @@ void CAI_BaseNPC::RunTask( const Task_t *pTask )
 					m_hCine->SynchronizeSequence( this );
 				}
 			}
+
+#ifdef MAPBASE
+			if ( IsRunningDynamicInteraction() && m_poseInteractionRelativeYaw > -1 )
+			{
+				// Animations in progress require pose parameters to be set every frame, so keep setting the interaction relative yaw pose.
+				// The random value is added to help it pass server transmit checks.
+				SetPoseParameter( m_poseInteractionRelativeYaw, GetPoseParameter( m_poseInteractionRelativeYaw ) + RandomFloat( -0.1f, 0.1f ) );
+			}
+#endif
 			break;
 		}
 
@@ -3960,7 +4179,7 @@ void CAI_BaseNPC::RunTask( const Task_t *pTask )
 		{
 			if ( !m_hCine )
 			{
-				DevMsg( "Scripted sequence destroyed while in use\n" );
+				CGMsg( 1, CON_GROUP_NPC_SCRIPTS, "Scripted sequence destroyed while in use\n" );
 				TaskFail( FAIL_SCHEDULE_NOT_FOUND );
 				break;
 			}
@@ -3979,7 +4198,7 @@ void CAI_BaseNPC::RunTask( const Task_t *pTask )
 		{
 			if ( !m_hCine )
 			{
-				DevMsg( "Scripted sequence destroyed while in use\n" );
+				CGMsg( 1, CON_GROUP_NPC_SCRIPTS, "Scripted sequence destroyed while in use\n" );
 				TaskFail( FAIL_SCHEDULE_NOT_FOUND );
 				break;
 			}
@@ -4136,7 +4355,7 @@ void CAI_BaseNPC::RunTask( const Task_t *pTask )
 
 	default:
 		{
-			DevMsg( "No RunTask entry for %s\n", TaskName( pTask->iTask ) );
+			CGMsg( 1, CON_GROUP_NPC_AI, "No RunTask entry for %s\n", TaskName( pTask->iTask ) );
 			TaskComplete();
 		}
 		break;
@@ -4172,6 +4391,15 @@ void CAI_BaseNPC::SetTurnActivity ( void )
 	float flYD;
 	flYD = GetMotor()->DeltaIdealYaw();
 
+#ifdef MAPBASE
+	// Allow AddTurnGesture() to decide this
+	if (GetMotor()->AddTurnGesture( flYD ))
+	{
+		SetIdealActivity( ACT_IDLE );
+		Remember( bits_MEMORY_TURNING );
+		return;
+	}
+#else
 	// FIXME: unknown case, update yaw should catch these
 	/*
 	if (GetMotor()->AddTurnGesture( flYD ))
@@ -4181,6 +4409,7 @@ void CAI_BaseNPC::SetTurnActivity ( void )
 		return;
 	}
 	*/
+#endif
 
 	if( flYD <= -80 && flYD >= -100 && SelectWeightedSequence( ACT_90_RIGHT ) != ACTIVITY_NOT_AVAILABLE )
 	{
@@ -4308,7 +4537,7 @@ int CAI_BaseNPC::GetScriptCustomMoveSequence( void )
 		iSequence = LookupSequence( STRING( m_hCine->m_iszCustomMove ) );
 		if ( iSequence == ACTIVITY_NOT_AVAILABLE )
 		{
-			DevMsg( "SCRIPT_CUSTOM_MOVE: %s has no sequence:%s\n", GetClassname(), STRING(m_hCine->m_iszCustomMove) );
+			CGMsg( 1, CON_GROUP_NPC_SCRIPTS, "SCRIPT_CUSTOM_MOVE: %s has no sequence:%s\n", GetClassname(), STRING(m_hCine->m_iszCustomMove) );
 		}
 	}
 	else if ( m_iszSceneCustomMoveSeq != NULL_STRING )
@@ -4567,7 +4796,7 @@ int CAI_BaseNPC::SelectCombatSchedule()
 	if ( !HasCondition(COND_CAN_RANGE_ATTACK1) && !HasCondition(COND_CAN_MELEE_ATTACK1) )
 	{
 		// if we can see enemy but can't use either attack type, we must need to get closer to enemy
-		if ( GetActiveWeapon() )
+		if (GetActiveWeapon())
 			return SCHED_MOVE_TO_WEAPON_RANGE;
 
 		// If we have an innate attack and we're too far (or occluded) then get line of sight

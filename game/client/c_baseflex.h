@@ -214,7 +214,7 @@ public:
 	virtual	bool		ClearSceneEvent( CSceneEventInfo *info, bool fastKill, bool canceled );
 
 	// Add the event to the queue for this actor
-	void				AddSceneEvent( CChoreoScene *scene, CChoreoEvent *event, C_BaseEntity *pTarget = NULL, bool bClientSide = false );
+	void				AddSceneEvent( CChoreoScene *scene, CChoreoEvent *event, C_BaseEntity *pTarget = NULL, bool bClientSide = false, C_SceneEntity* pSceneEntity = NULL);
 
 	// Remove the event from the queue for this actor
 	void				RemoveSceneEvent( CChoreoScene *scene, CChoreoEvent *event, bool fastKill );
@@ -273,7 +273,9 @@ protected:
 
 	Emphasized_Phoneme m_PhonemeClasses[ NUM_PHONEME_CLASSES ];
 
+#ifndef EZ2 // Wilson phoneme test
 private:
+#endif
 
 	C_BaseFlex( const C_BaseFlex & ); // not defined, not accessible
 
@@ -281,6 +283,9 @@ private:
 
 	void			ProcessVisemes( Emphasized_Phoneme *classes );
 	void			AddVisemesForSentence( Emphasized_Phoneme *classes, float emphasis_intensity, CSentence *sentence, float t, float dt, bool juststarted );
+#ifdef EZ2 // Wilson phoneme test
+	virtual
+#endif
 	void			AddViseme( Emphasized_Phoneme *classes, float emphasis_intensity, int phoneme, float scale, bool newexpression );
 	bool			SetupEmphasisBlend( Emphasized_Phoneme *classes, int phoneme );
 	void			ComputeBlendedSetting( Emphasized_Phoneme *classes, float emphasis_intensity );

@@ -29,11 +29,19 @@
 #include "Sprite.h"
 #include "precipitation_shared.h"
 #include "shot_manipulator.h"
+#ifdef MAPBASE
+#include "point_template.h"
+#include "TemplateEntities.h"
+#include "mapentities_shared.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 #define SF_FUNNEL_REVERSE			1 // funnel effect repels particles instead of attracting them.
+#ifdef MAPBASE
+#define SF_FUNNEL_DONT_REMOVE		2
+#endif
 
 #define	SF_GIBSHOOTER_REPEATABLE	(1<<0)	// allows a gibshooter to be refired
 #define	SF_SHOOTER_FLAMING			(1<<1)	// gib is on fire
@@ -536,7 +544,11 @@ CBaseEntity *CGibShooter::SpawnGib( const Vector &vecShootDir, float flSpeed )
 		{
 			// UNDONE: Assume a mass of 200 for now
 			Vector force = vecShootDir * flSpeed * 200;
+#ifdef MAPBASE
+			return CreateRagGib( STRING( GetModelName() ), GetAbsOrigin(), GetAbsAngles(), force, m_flGibLife, HasSpawnFlags(SF_SHOOTER_FLAMING) );
+#else
 			return CreateRagGib( STRING( GetModelName() ), GetAbsOrigin(), GetAbsAngles(), force, m_flGibLife );
+#endif
 		}
 
 		case GIB_SIMULATE_PHYSICS:
@@ -1246,6 +1258,10 @@ public:
 	void	Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 
 	int		m_iSprite;	// Don't save, precache
+#ifdef MAPBASE
+	// This unfortunately doesn't work with the way the effect is set up
+	//string_t	m_iszSprite;
+#endif
 };
 
 LINK_ENTITY_TO_CLASS( env_funnel, CEnvFunnel );
@@ -1255,6 +1271,10 @@ LINK_ENTITY_TO_CLASS( env_funnel, CEnvFunnel );
 //---------------------------------------------------------
 BEGIN_DATADESC( CEnvFunnel )
 
+#ifdef MAPBASE
+	//DEFINE_KEYFIELD( m_iszSprite, FIELD_STRING, "Sprite" ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "Activate", InputUse ),
+#endif
 //	DEFINE_FIELD( m_iSprite,	FIELD_INTEGER ),
 
 END_DATADESC()
@@ -1263,7 +1283,15 @@ END_DATADESC()
 
 void CEnvFunnel::Precache ( void )
 {
+#ifdef MAPBASE
+	//if (m_iszSprite == NULL_STRING)
+	//	m_iszSprite = AllocPooledString("sprites/flare6.vmt");
+
+	//m_iSprite = PrecacheModel(STRING(m_iszSprite));
 	m_iSprite = PrecacheModel ( "sprites/flare6.vmt" );
+#else
+	m_iSprite = PrecacheModel ( "sprites/flare6.vmt" );
+#endif
 }
 
 void CEnvFunnel::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
@@ -1272,6 +1300,10 @@ void CEnvFunnel::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE us
 	te->LargeFunnel( filter, 0.0,
 		&GetAbsOrigin(), m_iSprite, HasSpawnFlags( SF_FUNNEL_REVERSE ) ? 1 : 0 );
 
+#ifdef MAPBASE
+	if (HasSpawnFlags(SF_FUNNEL_DONT_REMOVE))
+		return;
+#endif
 	SetThink( &CEnvFunnel::SUB_Remove );
 	SetNextThink( gpGlobals->curtime );
 }
@@ -1434,12 +1466,7 @@ void CItemSoda::CanThink ( void )
 
 	SetSolid( SOLID_BBOX );
 	AddSolidFlags( FSOLID_TRIGGER );
-
-#ifdef HL1_DLL
-	UTIL_SetSize(this, Vector(-16, -16, 0), Vector(16, 16, 16));
-#else
 	UTIL_SetSize ( this, Vector ( -8, -8, 0 ), Vector ( 8, 8, 8 ) );
-#endif
 
 	SetThink ( NULL );
 	SetTouch ( &CItemSoda::CanTouch );
@@ -1485,6 +1512,7 @@ public:
 	DECLARE_SERVERCLASS();
 
 	CPrecipitation();
+	int UpdateTransmitState();
 	void	Spawn( void );
 
 	CNetworkVar( PrecipitationType_t, m_nPrecipType );
@@ -1498,7 +1526,10 @@ END_DATADESC()
 
 // Just send the normal entity crap
 IMPLEMENT_SERVERCLASS_ST( CPrecipitation, DT_Precipitation)
-	SendPropInt( SENDINFO( m_nPrecipType ), Q_log2( NUM_PRECIPITATION_TYPES ) + 1, SPROP_UNSIGNED )
+	SendPropInt( SENDINFO( m_nPrecipType ), Q_log2( NUM_PRECIPITATION_TYPES ) + 1, SPROP_UNSIGNED ),
+#ifdef MAPBASE
+	SendPropInt( SENDINFO( m_spawnflags ), 2, SPROP_UNSIGNED ),
+#endif
 END_SEND_TABLE()
 
 
@@ -1507,17 +1538,35 @@ CPrecipitation::CPrecipitation()
 	m_nPrecipType = PRECIPITATION_TYPE_RAIN; // default to rain.
 }
 
+int CPrecipitation::UpdateTransmitState()
+{
+	return SetTransmitState( FL_EDICT_ALWAYS );
+}
+
 void CPrecipitation::Spawn( void )
 {
+	//SetTransmitState( FL_EDICT_ALWAYS );
+	SetTransmitState( FL_EDICT_PVSCHECK );
+
 	PrecacheMaterial( "effects/fleck_ash1" );
 	PrecacheMaterial( "effects/fleck_ash2" );
 	PrecacheMaterial( "effects/fleck_ash3" );
 	PrecacheMaterial( "effects/ember_swirling001" );
 
 	Precache();
-	SetSolid( SOLID_NONE );							// Remove model & collisions
 	SetMoveType( MOVETYPE_NONE );
 	SetModel( STRING( GetModelName() ) );		// Set size
+	if ( IsParticleRainType( m_nPrecipType ) )
+	{
+		SetSolid( SOLID_VPHYSICS );
+		AddSolidFlags( FSOLID_NOT_SOLID );
+		AddSolidFlags( FSOLID_FORCE_WORLD_ALIGNED );
+		VPhysicsInitStatic();
+	}
+	else
+	{
+		SetSolid( SOLID_NONE );							// Remove model & collisions
+	}
 
 	// Default to rain.
 	if ( m_nPrecipType < 0 || m_nPrecipType > NUM_PRECIPITATION_TYPES )
@@ -1564,12 +1613,31 @@ BEGIN_DATADESC( CEnvWind )
 	DEFINE_KEYFIELD( m_EnvWindShared.m_iGustDirChange, FIELD_INTEGER, "gustdirchange" ),
 	DEFINE_KEYFIELD( m_EnvWindShared.m_flGustDuration, FIELD_FLOAT, "gustduration" ),
 //	DEFINE_KEYFIELD( m_EnvWindShared.m_iszGustSound, FIELD_STRING, "gustsound" ),
+#ifdef MAPBASE
+	DEFINE_KEYFIELD( m_EnvWindShared.m_windRadius, FIELD_FLOAT, "windradius" ),
+	DEFINE_KEYFIELD( m_EnvWindShared.m_windRadiusInner, FIELD_FLOAT, "windradiusinner" ),
+	DEFINE_KEYFIELD( m_EnvWindShared.m_flTreeSwayScale, FIELD_FLOAT, "treeswayscale" ),
+#endif
 
 // Just here to quiet down classcheck
 	// DEFINE_FIELD( m_EnvWindShared, CEnvWindShared ),
 
 	DEFINE_FIELD( m_EnvWindShared.m_iWindDir, FIELD_INTEGER ),
 	DEFINE_FIELD( m_EnvWindShared.m_flWindSpeed, FIELD_FLOAT ),
+
+#ifdef MAPBASE
+	DEFINE_INPUT( m_EnvWindShared.m_iMinWind, FIELD_INTEGER, "SetMinWind" ),
+	DEFINE_INPUT( m_EnvWindShared.m_iMaxWind, FIELD_INTEGER, "SetMaxWind" ),
+	DEFINE_INPUT( m_EnvWindShared.m_iMinGust, FIELD_INTEGER, "SetMinGust" ),
+	DEFINE_INPUT( m_EnvWindShared.m_iMaxGust, FIELD_INTEGER, "SetMaxGust" ),
+	DEFINE_INPUT( m_EnvWindShared.m_flMinGustDelay, FIELD_FLOAT, "SetMinGustDelay" ),
+	DEFINE_INPUT( m_EnvWindShared.m_flMaxGustDelay, FIELD_FLOAT, "SetMaxGustDelay" ),
+	DEFINE_INPUT( m_EnvWindShared.m_iGustDirChange, FIELD_INTEGER, "SetGustDirChange" ),
+	DEFINE_INPUT( m_EnvWindShared.m_flGustDuration, FIELD_FLOAT, "SetGustDuration" ),
+	DEFINE_INPUT( m_EnvWindShared.m_windRadius, FIELD_FLOAT, "SetWindRadius" ),
+	DEFINE_INPUT( m_EnvWindShared.m_windRadiusInner, FIELD_FLOAT, "SetWindRadiusInner" ),
+	DEFINE_INPUT( m_EnvWindShared.m_flTreeSwayScale, FIELD_FLOAT, "SetTreeSwayScale" ),
+#endif
 
 	DEFINE_OUTPUT( m_EnvWindShared.m_OnGustStart, "OnGustStart" ),
 	DEFINE_OUTPUT( m_EnvWindShared.m_OnGustEnd,	"OnGustEnd" ),
@@ -1599,6 +1667,12 @@ BEGIN_SEND_TABLE_NOBASE(CEnvWindShared, DT_EnvWindShared)
 	SendPropFloat	(SENDINFO(m_flGustDuration), 0, SPROP_NOSCALE),
 	// Sound related
 //	SendPropInt		(SENDINFO(m_iszGustSound),	10, SPROP_UNSIGNED ),
+#ifdef MAPBASE
+	SendPropFloat	(SENDINFO(m_windRadius), 0, SPROP_NOSCALE),
+	SendPropFloat	(SENDINFO(m_windRadiusInner), 0, SPROP_NOSCALE),
+	SendPropVector	(SENDINFO(m_location), -1, SPROP_COORD),
+	SendPropFloat	(SENDINFO(m_flTreeSwayScale), 0, SPROP_NOSCALE),
+#endif
 END_SEND_TABLE()
 
 // This table encodes the CBaseEntity data.
@@ -1620,7 +1694,13 @@ void CEnvWind::Spawn( void )
 	SetSolid( SOLID_NONE );
 	AddEffects( EF_NODRAW );
 
+#ifdef MAPBASE
+	m_EnvWindShared.m_iInitialWindDir = (int)(anglemod( m_EnvWindShared.m_iInitialWindDir ));
+	m_EnvWindShared.Init( entindex(), 0, gpGlobals->curtime, GetLocalAngles().y, 0 );
+	m_EnvWindShared.m_location = GetAbsOrigin();
+#else
 	m_EnvWindShared.Init( entindex(), 0, gpGlobals->frametime, GetLocalAngles().y, 0 );
+#endif
 
 	SetThink( &CEnvWind::WindThink );
 	SetNextThink( gpGlobals->curtime );
@@ -2042,6 +2122,10 @@ public:
 	void InputEnable( inputdata_t &inputdata );
 	void InputDisable( inputdata_t &inputdata );
 
+#ifdef MAPBASE
+	void InputFireBurst( inputdata_t &inputdata );
+#endif
+
 	int	m_iMinBurstSize;
 	int m_iMaxBurstSize;
 
@@ -2066,6 +2150,10 @@ public:
 	bool	m_bCollide;
 
 	EHANDLE m_hTarget;
+
+#ifdef MAPBASE
+	COutputEvent m_OnFire;
+#endif
 
 
 	DECLARE_DATADESC();
@@ -2095,6 +2183,11 @@ BEGIN_DATADESC( CEnvGunfire )
 
 	DEFINE_INPUTFUNC( FIELD_VOID, "Enable", InputEnable ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "Disable", InputDisable ),
+#ifdef MAPBASE
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "FireBurst", InputFireBurst ),
+
+	DEFINE_OUTPUT( m_OnFire, "OnFire" ),
+#endif
 END_DATADESC()
 LINK_ENTITY_TO_CLASS( env_gunfire, CEnvGunfire );
 
@@ -2239,10 +2332,26 @@ void CEnvGunfire::ShootThink()
 
 	m_iShotsRemaining--;
 
+#ifdef MAPBASE
+	m_OnFire.FireOutput(m_hTarget, this);
+#endif
+
 	if( m_iShotsRemaining == 0 )
 	{
+#ifdef MAPBASE
+		if (m_bDisabled)
+		{
+			StopShooting();
+		}
+		else
+		{
+			StartShooting();
+			SetNextThink( gpGlobals->curtime + random->RandomFloat( m_flMinBurstDelay, m_flMaxBurstDelay ) );
+		}
+#else
 		StartShooting();
 		SetNextThink( gpGlobals->curtime + random->RandomFloat( m_flMinBurstDelay, m_flMaxBurstDelay ) );
+#endif
 	}
 }
 
@@ -2261,6 +2370,18 @@ void CEnvGunfire::InputDisable( inputdata_t &inputdata )
 	m_bDisabled = true;
 	SetThink( NULL );
 }
+
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CEnvGunfire::InputFireBurst( inputdata_t &inputdata )
+{
+	m_iShotsRemaining = inputdata.value.Int();
+
+	SetThink( &CEnvGunfire::ShootThink );
+	SetNextThink( gpGlobals->curtime );
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Quadratic spline beam effect
@@ -2382,3 +2503,123 @@ void CEnvViewPunch::InputViewPunch( inputdata_t &inputdata )
 {
 	DoViewPunch();
 }
+
+#ifdef MAPBASE
+class CBreakableGibShooter : public CBaseEntity
+{
+	DECLARE_CLASS( CBreakableGibShooter, CBaseEntity );
+	DECLARE_DATADESC();
+public:
+
+	int GetRandomTemplateModelIndex( CPointTemplate *pTemplate );
+
+	void		Precache( void );
+
+	void		Shoot( void );
+
+	// ----------------
+	//	Inputs
+	// ----------------
+	void InputShoot( inputdata_t &inputdata );
+
+public:
+
+	int m_iModelType;
+	enum
+	{
+		MODELTYPE_BREAKABLECHUNKS,
+		MODELTYPE_MODEL,
+		MODELTYPE_TEMPLATE,
+	};
+
+	int m_iCount;
+	float m_flDelay;
+	Vector m_vecGibSize;
+	float m_flGibSpeed;
+	int m_iRandomization;
+	float m_flLifetime;
+	int m_iGibFlags;
+};
+
+BEGIN_DATADESC( CBreakableGibShooter )
+
+	DEFINE_KEYFIELD( m_iModelType, FIELD_INTEGER, "modeltype" ),
+	DEFINE_INPUT( m_iCount, FIELD_INTEGER, "SetCount" ),
+	DEFINE_INPUT( m_flDelay, FIELD_FLOAT, "SetDelay" ),
+	DEFINE_INPUT( m_vecGibSize, FIELD_VECTOR, "SetGibSize" ),
+	DEFINE_INPUT( m_flGibSpeed, FIELD_FLOAT, "SetGibSpeed" ),
+	DEFINE_INPUT( m_iRandomization, FIELD_INTEGER, "SetRandomization" ),
+	DEFINE_INPUT( m_flLifetime, FIELD_FLOAT, "SetLifetime" ),
+	DEFINE_INPUT( m_iGibFlags, FIELD_INTEGER, "SetGibFlags" ),
+
+	DEFINE_INPUTFUNC( FIELD_VOID, "Shoot", InputShoot ),
+
+END_DATADESC()
+
+
+LINK_ENTITY_TO_CLASS( env_break_shooter, CBreakableGibShooter );
+
+
+int CBreakableGibShooter::GetRandomTemplateModelIndex( CPointTemplate *pTemplate )
+{
+	int iIndex = RandomInt( 0, pTemplate->GetNumTemplates() );
+	const char *szTemplate = STRING(Templates_FindByIndex(pTemplate->GetTemplateIndexForTemplate(iIndex)));
+
+	// This might seem a little messy, but I think it's cheaper than creating the entity.
+	char szModel[MAPKEY_MAXLENGTH];
+	bool modelExtracted = MapEntity_ExtractValue(szTemplate, "model", szModel);
+
+	return modelinfo->GetModelIndex( modelExtracted ? szModel : NULL );
+}
+
+void CBreakableGibShooter::Precache( void )
+{
+	if (m_iModelType == MODELTYPE_MODEL)
+		PrecacheModel( STRING(GetModelName()) );
+}
+
+void CBreakableGibShooter::Shoot( void )
+{
+	int iModelIndex = 0;
+	if (m_iModelType == MODELTYPE_MODEL)
+		iModelIndex = modelinfo->GetModelIndex( STRING(GetModelName()) );
+
+	CPointTemplate *pTemplate = NULL;
+	if (m_iModelType == MODELTYPE_TEMPLATE)
+	{
+		pTemplate = dynamic_cast<CPointTemplate*>(gEntList.FindEntityByName(NULL, STRING(GetModelName()), this));
+		if (!pTemplate)
+		{
+			Warning("%s cannot find point_template %s!\n", GetDebugName(), STRING(GetModelName()));
+			return;
+		}
+	}
+
+	CPVSFilter filter( GetAbsOrigin() );
+	for ( int i = 0; i < m_iCount; i++ )
+	{
+		if (m_iModelType == MODELTYPE_BREAKABLECHUNKS)
+			iModelIndex = modelinfo->GetModelIndex( g_PropDataSystem.GetRandomChunkModel( STRING( GetModelName() ) ) );
+		else if (m_iModelType == MODELTYPE_TEMPLATE)
+			iModelIndex = GetRandomTemplateModelIndex( pTemplate );
+
+		// All objects except the first one in this run are marked as slaves...
+		int slaveFlag = 0;
+		if ( i != 0 )
+		{
+			slaveFlag = BREAK_SLAVE;
+		}
+
+		Vector vecShootDir;
+		AngleVectors( GetAbsAngles(), &vecShootDir );
+		VectorNormalize( vecShootDir );
+
+		te->BreakModel( filter, m_flDelay, GetAbsOrigin(), GetAbsAngles(), m_vecGibSize, vecShootDir * m_flGibSpeed, iModelIndex, m_iRandomization, 1, m_flLifetime, m_iGibFlags | slaveFlag );
+	}
+}
+
+void CBreakableGibShooter::InputShoot( inputdata_t &inputdata )
+{
+	Shoot();
+}
+#endif

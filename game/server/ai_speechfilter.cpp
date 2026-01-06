@@ -10,6 +10,9 @@
 #ifndef CSTRIKE_DLL
 #include "ai_playerally.h"
 #endif
+#ifdef EZ2
+#include "ez2/ez2_player.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -122,6 +125,26 @@ void CAI_SpeechFilter::PopulateSubjectList( bool purge )
 				DevWarning("ai_speechfilter %s tries to use %s as a subject, but it's not a talking NPC.\n", STRING(GetEntityName()), STRING(pSearch->GetEntityName()) );
 			}
 #endif
+#ifdef EZ2
+			else if ( pSearch->IsPlayer() )
+			{
+				CEZ2_Player *pPlayer = assert_cast<CEZ2_Player*>(pSearch);
+
+				if( purge )
+				{
+					pPlayer->SetSpeechFilter( NULL );
+				}
+				else
+				{
+					if( pPlayer->GetSpeechFilter() != NULL )
+					{
+						DevWarning("ai_speechfilter %s is slamming %s's current speech filter.\n", STRING(GetEntityName()), STRING(pSearch->GetEntityName()) );
+					}
+
+					pPlayer->SetSpeechFilter( this );
+				}
+			}
+#endif
 			iNumSubjects++;
 		}
 	} while( pSearch );
@@ -155,6 +178,26 @@ void CAI_SpeechFilter::PopulateSubjectList( bool purge )
 				else if ( pSearch->IsNPC() )
 				{
 					DevWarning("ai_speechfilter %s tries to use %s as a subject, but it's not a talking NPC.\n", STRING(GetEntityName()), STRING(pSearch->GetEntityName()) );
+				}
+#endif
+#ifdef EZ2
+				else if ( pSearch->IsPlayer() )
+				{
+					CEZ2_Player *pPlayer = assert_cast<CEZ2_Player*>(pSearch);
+
+					if( purge )
+					{
+						pPlayer->SetSpeechFilter( NULL );
+					}
+					else
+					{
+						if( pPlayer->GetSpeechFilter() != NULL )
+						{
+							DevWarning("ai_speechfilter %s is slamming %s's current speech filter.\n", STRING(GetEntityName()), STRING(pSearch->GetEntityName()) );
+						}
+
+						pPlayer->SetSpeechFilter( this );
+					}
 				}
 #endif
 				iNumSubjects++;

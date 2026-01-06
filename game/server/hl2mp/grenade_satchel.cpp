@@ -13,15 +13,18 @@
 #include "explode.h"
 #include "Sprite.h"
 #include "grenade_satchel.h"
+#ifdef EZ2
+#include "hl2_player.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 #define	SLAM_SPRITE	"sprites/redglow1.vmt"
 
-ConVar    sk_plr_dmg_satchel		( "sk_plr_dmg_satchel","150"); // commented lines in hl2/skill.cfg
-ConVar    sk_npc_dmg_satchel		( "sk_npc_dmg_satchel","75");
-ConVar    sk_satchel_radius		( "sk_satchel_radius","150");
+ConVar    sk_plr_dmg_satchel		( "sk_plr_dmg_satchel", "150" );
+ConVar    sk_npc_dmg_satchel		( "sk_npc_dmg_satchel", "0" );
+ConVar    sk_satchel_radius			( "sk_satchel_radius", "200" );
 
 BEGIN_DATADESC( CSatchelCharge )
 
@@ -29,7 +32,7 @@ BEGIN_DATADESC( CSatchelCharge )
 	DEFINE_FIELD( m_bInAir, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_vLastPosition, FIELD_POSITION_VECTOR ),
 	DEFINE_FIELD( m_pMyWeaponSLAM, FIELD_CLASSPTR ),
-	DEFINE_FIELD( m_bIsAttached, FIELD_BOOLEAN ),
+	DEFINE_KEYFIELD( m_bIsAttached, FIELD_BOOLEAN, "IsAttached" ),
 
 	// Function Pointers
 	DEFINE_THINKFUNC( SatchelThink ),
@@ -38,6 +41,13 @@ BEGIN_DATADESC( CSatchelCharge )
 	DEFINE_INPUTFUNC( FIELD_VOID, "Explode", InputExplode),
 
 END_DATADESC()
+
+#ifdef EZ2
+IMPLEMENT_NETWORKCLASS_ALIASED( SatchelCharge, DT_SatchelCharge )
+
+BEGIN_SEND_TABLE( CSatchelCharge, DT_SatchelCharge )
+END_SEND_TABLE()
+#endif
 
 LINK_ENTITY_TO_CLASS( npc_satchel, CSatchelCharge );
 
@@ -64,8 +74,6 @@ void CSatchelCharge::Spawn( void )
 	SetModel( "models/Weapons/w_slam.mdl" );
 
 	VPhysicsInitNormal( SOLID_BBOX, GetSolidFlags() | FSOLID_TRIGGER, false );
-	SetMoveType( MOVETYPE_VPHYSICS );
-
 	SetCollisionGroup( COLLISION_GROUP_WEAPON );
 
 	UTIL_SetSize(this, Vector( -6, -6, -2), Vector(6, 6, 2));
@@ -73,16 +81,23 @@ void CSatchelCharge::Spawn( void )
 	SetThink( &CSatchelCharge::SatchelThink );
 	SetNextThink( gpGlobals->curtime + 0.1f );
 
+	m_flDamage		= sk_plr_dmg_satchel.GetFloat();
+	m_DmgRadius		= sk_satchel_radius.GetFloat();
 	m_takedamage	= DAMAGE_YES;
 	m_iHealth		= 1;
-
-	SetGravity( UTIL_ScaleForGravity( 560 ) );	// slightly lower gravity
-	SetFriction( 1.0 );
+	if ( m_bIsAttached )
+	{
+		SetMoveType( MOVETYPE_NONE );
+	}
+	else
+	{
+		SetMoveType( MOVETYPE_VPHYSICS );
+		SetGravity( UTIL_ScaleForGravity( 560 ) );	// slightly lower gravity
+		SetFriction( 1.0 );
+	}
 	SetSequence( 1 );
 	SetDamage( sk_plr_dmg_satchel.GetFloat() );
-	SetDamageRadius( sk_satchel_radius.GetFloat() );
 
-	m_bIsAttached			= false;
 	m_bInAir				= true;
 	m_flNextBounceSoundTime	= 0;
 
@@ -90,6 +105,21 @@ void CSatchelCharge::Spawn( void )
 
 	m_hGlowSprite = NULL;
 	CreateEffects();
+
+#ifdef EZ2
+	m_bIsLive = true; // Satchels are always live in EZ2
+
+	if (GetOwnerEntity() && GetOwnerEntity()->IsPlayer())
+	{
+		CHL2_Player *pHL2Player = static_cast<CHL2_Player*>(GetOwnerEntity());
+		if (pHL2Player)
+		{
+			pHL2Player->OnDropSatchel( this );
+		}
+	}
+
+	m_hAttacker = NULL;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -117,11 +147,71 @@ void CSatchelCharge::CreateEffects( void )
 //-----------------------------------------------------------------------------
 void CSatchelCharge::InputExplode( inputdata_t &inputdata )
 {
-	ExplosionCreate( GetAbsOrigin() + Vector( 0, 0, 16 ), GetAbsAngles(), GetThrower(), GetDamage(), GetDamageRadius(), 
-		SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS | SF_ENVEXPLOSION_NOSMOKE, 0.0f, this);
+	ExplosionCreate( GetAbsOrigin() + Vector( 0, 0, 16 ), GetAbsAngles(), GetThrower(), GetDamage(), sk_satchel_radius.GetFloat(),
+		SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS | SF_ENVEXPLOSION_NOSMOKE, 0.0f, this );
+
+#ifdef EZ2
+	if (GetThrower() && GetThrower()->IsPlayer())
+	{
+		CHL2_Player *pHL2Player = static_cast<CHL2_Player*>(GetThrower());
+		if (pHL2Player)
+		{
+			pHL2Player->OnSatchelExploded( this, inputdata.pActivator );
+		}
+	}
+#endif
 
 	UTIL_Remove( this );
 }
+
+#ifdef EZ2
+//-----------------------------------------------------------------------------
+// Purpose:
+// Input  :
+// Output :
+//-----------------------------------------------------------------------------
+void CSatchelCharge::Event_Killed( const CTakeDamageInfo &info )
+{
+	m_hAttacker = info.GetAttacker();
+
+	BaseClass::Event_Killed( info );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+// Input  :
+// Output :
+//-----------------------------------------------------------------------------
+void CSatchelCharge::Explode( trace_t *pTrace, int bitsDamageType )
+{
+	if (GetThrower() && GetThrower()->IsPlayer())
+	{
+		CHL2_Player *pHL2Player = static_cast<CHL2_Player*>(GetThrower());
+		if (pHL2Player)
+		{
+			pHL2Player->OnSatchelExploded( this, m_hAttacker );
+		}
+	}
+
+	BaseClass::Explode( pTrace, bitsDamageType );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+int CSatchelCharge::UpdateTransmitState()
+{
+	if ( GetThrower() && GetThrower()->IsPlayer() )
+	{
+		// Player satchels need to be transmitted for HUD glow
+		return SetTransmitState( FL_EDICT_ALWAYS );
+	}
+	else
+	{
+		return BaseClass::UpdateTransmitState();
+	}
+}
+#endif
 
 
 void CSatchelCharge::SatchelThink( void )

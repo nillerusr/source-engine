@@ -328,6 +328,9 @@ BEGIN_DATADESC( CPropJeepEpisodic )
 	DEFINE_ARRAY( m_hHazardLights, FIELD_EHANDLE, NUM_HAZARD_LIGHTS ),
 	DEFINE_FIELD( m_flCargoStartTime, FIELD_TIME ),
 	DEFINE_FIELD( m_bBlink, FIELD_BOOLEAN ),
+#ifdef MAPBASE
+	DEFINE_KEYFIELD( m_bNoHazardLights, FIELD_BOOLEAN, "NoHazardLights" ),
+#endif
 	DEFINE_FIELD( m_bRadarEnabled, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_bRadarDetectsEnemies, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_hRadarScreen, FIELD_EHANDLE ),
@@ -357,12 +360,19 @@ BEGIN_DATADESC( CPropJeepEpisodic )
 	DEFINE_INPUTFUNC( FIELD_VOID, "EnableRadarDetectEnemies",	InputEnableRadarDetectEnemies ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "AddBusterToCargo",			InputAddBusterToCargo ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "OutsideTransition",			InputOutsideTransition ),
+#ifndef MAPBASE
 	DEFINE_INPUTFUNC( FIELD_VOID, "DisablePhysGun",				InputDisablePhysGun ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "EnablePhysGun",				InputEnablePhysGun ),
+#endif
 	DEFINE_INPUTFUNC( FIELD_VOID, "CreateLinkController",		InputCreateLinkController ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "DestroyLinkController",		InputDestroyLinkController ),
 
 	DEFINE_INPUTFUNC( FIELD_BOOLEAN, "SetCargoHopperVisibility",   InputSetCargoVisibility ),
+
+#ifdef MAPBASE
+	DEFINE_INPUTFUNC( FIELD_VOID, "EnableHazardLights", InputEnableHazardLights ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "DisableHazardLights", InputDisableHazardLights ),
+#endif
 
 END_DATADESC();
 
@@ -1354,6 +1364,11 @@ void CPropJeepEpisodic::DriveVehicle( float flFrameTime, CUserCmd *ucmd, int iBu
 //-----------------------------------------------------------------------------
 void CPropJeepEpisodic::CreateHazardLights( void )
 {
+#ifdef MAPBASE
+	if (m_bNoHazardLights)
+		return;
+#endif
+
 	static const char *s_szAttach[NUM_HAZARD_LIGHTS] =
 	{
 		"rearlight_r",
@@ -1411,6 +1426,26 @@ void CPropJeepEpisodic::DestroyHazardLights( void )
 
 	SetContextThink( NULL, gpGlobals->curtime, "HazardBlink" );
 }
+
+#ifdef MAPBASE
+void CPropJeepEpisodic::InputEnableHazardLights( inputdata_t &data )
+{
+	if (m_bNoHazardLights)
+	{
+		m_bNoHazardLights = false;
+		CreateHazardLights();
+	}
+}
+
+void CPropJeepEpisodic::InputDisableHazardLights( inputdata_t &data )
+{
+	if (!m_bNoHazardLights)
+	{
+		m_bNoHazardLights = true;
+		DestroyHazardLights();
+	}
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1664,6 +1699,7 @@ void CPropJeepEpisodic::InputOutsideTransition( inputdata_t &inputdata )
 	Warning("No valid vehicle teleport points!\n");
 }
 
+#ifndef MAPBASE
 //-----------------------------------------------------------------------------
 // Purpose: Stop players punting the car around.
 //-----------------------------------------------------------------------------
@@ -1678,6 +1714,7 @@ void CPropJeepEpisodic::InputEnablePhysGun( inputdata_t &data )
 {
 	RemoveEFlags( EFL_NO_PHYSCANNON_INTERACTION );
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // Create and parent two radial node link controllers.

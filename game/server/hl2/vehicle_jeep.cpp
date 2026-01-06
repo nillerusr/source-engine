@@ -135,6 +135,10 @@ BEGIN_DATADESC( CPropJeep )
 	DEFINE_INPUTFUNC( FIELD_VOID, "ShowHudHint", InputShowHudHint ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "StartRemoveTauCannon", InputStartRemoveTauCannon ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "FinishRemoveTauCannon", InputFinishRemoveTauCannon ),
+#ifdef MAPBASE
+	DEFINE_INPUTFUNC( FIELD_VOID, "DisablePhysGun",				InputDisablePhysGun ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "EnablePhysGun",				InputEnablePhysGun ),
+#endif
 
 	DEFINE_THINKFUNC( JeepSeagullThink ),
 END_DATADESC()
@@ -146,6 +150,11 @@ END_SEND_TABLE();
 // This is overriden for the episodic jeep
 #ifndef HL2_EPISODIC
 LINK_ENTITY_TO_CLASS( prop_vehicle_jeep, CPropJeep );
+#endif
+
+#ifdef MAPBASE
+// Shortcut to old jeep for those who want to use the scout car in Episodic
+LINK_ENTITY_TO_CLASS( prop_vehicle_jeep_old, CPropJeep );
 #endif
 
 //-----------------------------------------------------------------------------
@@ -898,6 +907,8 @@ void CPropJeep::FireCannon( void )
 	if ( m_bUnableToFire )
 		return;
 
+	CDisablePredictionFiltering disabler;
+
 	m_flCannonTime = gpGlobals->curtime + 0.2f;
 	m_bCannonCharging = false;
 
@@ -936,6 +947,8 @@ void CPropJeep::FireCannon( void )
 //-----------------------------------------------------------------------------
 void CPropJeep::FireChargedCannon( void )
 {
+	CDisablePredictionFiltering disabler;
+
 	bool penetrated = false;
 
 	m_bCannonCharging	= false;
@@ -1673,6 +1686,23 @@ void CPropJeep::InputFinishRemoveTauCannon( inputdata_t &inputdata )
 	SetBodygroup( 1, false );
 	m_bHasGun = false;
 }
+
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: Stop players punting the car around.
+//-----------------------------------------------------------------------------
+void CPropJeep::InputDisablePhysGun( inputdata_t &data )
+{
+	AddEFlags( EFL_NO_PHYSCANNON_INTERACTION );
+}
+//-----------------------------------------------------------------------------
+// Purpose: Return to normal
+//-----------------------------------------------------------------------------
+void CPropJeep::InputEnablePhysGun( inputdata_t &data )
+{
+	RemoveEFlags( EFL_NO_PHYSCANNON_INTERACTION );
+}
+#endif
 
 //========================================================================================================================================
 // JEEP FOUR WHEEL PHYSICS VEHICLE SERVER VEHICLE

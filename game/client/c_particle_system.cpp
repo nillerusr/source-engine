@@ -32,6 +32,9 @@ public:
 protected:
 	int			m_iEffectIndex;
 	bool		m_bActive;
+#ifdef MAPBASE
+	bool		m_bDestroyImmediately;
+#endif
 	bool		m_bOldActive;
 	float		m_flStartTime;	// Time at which the effect started
 
@@ -39,6 +42,7 @@ protected:
 
 	
 	EHANDLE		m_hControlPointEnts[kMAXCONTROLPOINTS];
+	Vector		m_vControlPointVecs[kMAXCONTROLPOINTS];
 	//	SendPropArray3( SENDINFO_ARRAY3(m_iControlPointParents), SendPropInt( SENDINFO_ARRAY(m_iControlPointParents), 3, SPROP_UNSIGNED ) ),
 	unsigned char m_iControlPointParents[kMAXCONTROLPOINTS];
 
@@ -56,9 +60,13 @@ BEGIN_RECV_TABLE_NOBASE( C_ParticleSystem, DT_ParticleSystem )
 
 	RecvPropInt( RECVINFO( m_iEffectIndex ) ),
 	RecvPropBool( RECVINFO( m_bActive ) ),
+#ifdef MAPBASE
+	RecvPropBool( RECVINFO( m_bDestroyImmediately ) ),
+#endif
 	RecvPropFloat( RECVINFO( m_flStartTime ) ),
 
 	RecvPropArray3( RECVINFO_ARRAY(m_hControlPointEnts), RecvPropEHandle( RECVINFO( m_hControlPointEnts[0] ) ) ),
+	RecvPropArray3( RECVINFO_ARRAY(m_vControlPointVecs), RecvPropVector( RECVINFO( m_vControlPointVecs[0] ) ) ),
 	RecvPropArray3( RECVINFO_ARRAY(m_iControlPointParents), RecvPropInt( RECVINFO(m_iControlPointParents[0]))), 
 	RecvPropBool( RECVINFO( m_bWeatherEffect ) ),
 END_RECV_TABLE();
@@ -108,9 +116,18 @@ void C_ParticleSystem::PostDataUpdate( DataUpdateType_t updateType )
 				SetNextClientThink( gpGlobals->curtime );
 			}
 			else
+#ifdef MAPBASE
+			{
+				if (!m_bDestroyImmediately)
+					ParticleProp()->StopEmission();
+				else
+					ParticleProp()->StopEmissionAndDestroyImmediately();
+			}
+#else
 			{
 						ParticleProp()->StopEmission();
 					}
+#endif
 		}
 	}
 }
@@ -135,21 +152,41 @@ void C_ParticleSystem::ClientThink( void )
 			AssertMsg1( pEffect, "Particle system couldn't make %s", pszName );
 			if (pEffect)
 			{
-				for ( int i = 0 ; i < kMAXCONTROLPOINTS ; ++i )
+				if (m_vControlPointVecs[0] != GetAbsOrigin() && m_hControlPointEnts[0] == NULL)
 				{
-					CBaseEntity *pOnEntity = m_hControlPointEnts[i].Get();
-					if ( pOnEntity )
+					// we are using info_particle_system_coordinate
+					for (int i = 0; i < kMAXCONTROLPOINTS; ++i)
 					{
-						ParticleProp()->AddControlPoint( pEffect, i + 1, pOnEntity, PATTACH_ABSORIGIN_FOLLOW );
+						ParticleProp()->AddControlPoint(pEffect, i + 1, this, PATTACH_WORLDORIGIN, 0, m_vControlPointVecs[i] - GetAbsOrigin());
+
+						AssertMsg2(m_iControlPointParents[i] >= 0 && m_iControlPointParents[i] <= kMAXCONTROLPOINTS,
+							"Particle system specified bogus control point parent (%d) for point %d.",
+							m_iControlPointParents[i], i);
+
+						if (m_iControlPointParents[i] != 0)
+						{
+							pEffect->SetControlPointParent(i + 1, m_iControlPointParents[i]);
+						}
 					}
-
-					AssertMsg2( m_iControlPointParents[i] >= 0 && m_iControlPointParents[i] <= kMAXCONTROLPOINTS ,
-						"Particle system specified bogus control point parent (%d) for point %d.",
-						m_iControlPointParents[i], i );
-
-					if (m_iControlPointParents[i] != 0)
+				}
+				else
+				{
+					for ( int i = 0 ; i < kMAXCONTROLPOINTS ; ++i )
 					{
-						pEffect->SetControlPointParent(i+1, m_iControlPointParents[i]);
+						CBaseEntity *pOnEntity = m_hControlPointEnts[i].Get();
+						if ( pOnEntity )
+						{
+							ParticleProp()->AddControlPoint( pEffect, i + 1, pOnEntity, PATTACH_ABSORIGIN_FOLLOW );
+						}
+
+						AssertMsg2( m_iControlPointParents[i] >= 0 && m_iControlPointParents[i] <= kMAXCONTROLPOINTS ,
+							"Particle system specified bogus control point parent (%d) for point %d.",
+							m_iControlPointParents[i], i );
+
+						if (m_iControlPointParents[i] != 0)
+						{
+							pEffect->SetControlPointParent(i+1, m_iControlPointParents[i]);
+						}
 					}
 				}
 

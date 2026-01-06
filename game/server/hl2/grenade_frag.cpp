@@ -11,6 +11,9 @@
 #include "Sprite.h"
 #include "SpriteTrail.h"
 #include "soundent.h"
+#ifdef MAPBASE
+#include "mapbase/ai_grenade.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -72,6 +75,10 @@ protected:
 	bool	m_inSolid;
 	bool	m_combineSpawned;
 	bool	m_punted;
+
+#ifdef EZ
+	bool	m_bRebelColor;
+#endif
 };
 
 LINK_ENTITY_TO_CLASS( npc_grenade_frag, CGrenadeFrag );
@@ -85,6 +92,10 @@ BEGIN_DATADESC( CGrenadeFrag )
 	DEFINE_FIELD( m_inSolid, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_combineSpawned, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_punted, FIELD_BOOLEAN ),
+
+#ifdef EZ
+	DEFINE_KEYFIELD( m_bRebelColor, FIELD_BOOLEAN, "RebelColor" ),
+#endif
 	
 	// Function Pointers
 	DEFINE_THINKFUNC( DelayThink ),
@@ -104,6 +115,12 @@ CGrenadeFrag::~CGrenadeFrag( void )
 
 void CGrenadeFrag::Spawn( void )
 {
+#ifdef EZ
+	// Blixibon - Rebel grenades use an orange trail
+	if (GetThrower() && GetThrower()->Classify() == CLASS_PLAYER_ALLY)
+		m_bRebelColor = true;
+#endif
+
 	Precache( );
 
 	SetModel( GRENADE_MODEL );
@@ -126,8 +143,31 @@ void CGrenadeFrag::Spawn( void )
 	SetCollisionGroup( COLLISION_GROUP_WEAPON );
 	CreateVPhysics();
 
+#ifdef MAPBASE
+	if (GetThrower() && GetThrower()->IsNPC())
+	{
+		// One of OnThrowGrenade's useful applications is replacing it with another entity using point_entity_replace.
+		// However, the grenade is always able to let out a blip before being replaced, which can be confusing/undesirable.
+		// This code checks to see if OnThrowGrenade is being used for anything, in which case the first blip will be very slightly delayed.
+		// This doesn't interfere with when the grenade actually detonates and shouldn't be noticable if the grenade is kept by OnThrowGrenade anyway.
+		CAI_GrenadeUserSink *pGrenadeUser = dynamic_cast<CAI_GrenadeUserSink*>(GetThrower());
+		if (pGrenadeUser && pGrenadeUser->UsingOnThrowGrenade())
+		{
+			// We delay the blip by 0.05, so replacement must occur within that period in order to skip the blip.
+			m_flNextBlipTime = gpGlobals->curtime + 0.05f;
+		}
+	}
+
+	// Do the blip if m_flNextBlipTime wasn't changed
+	if (m_flNextBlipTime <= gpGlobals->curtime)
+	{
+		BlipSound();
+		m_flNextBlipTime = gpGlobals->curtime + FRAG_GRENADE_BLIP_FREQUENCY;
+	}
+#else
 	BlipSound();
 	m_flNextBlipTime = gpGlobals->curtime + FRAG_GRENADE_BLIP_FREQUENCY;
+#endif
 
 	AddSolidFlags( FSOLID_NOT_STANDABLE );
 
@@ -155,28 +195,41 @@ void CGrenadeFrag::OnRestore( void )
 void CGrenadeFrag::CreateEffects( void )
 {
 	// Start up the eye glow
-	if( !m_pMainGlow )
-		m_pMainGlow = CSprite::SpriteCreate( "sprites/redglow1.vmt", GetLocalOrigin(), false );
+#ifdef EZ
+	if (m_bRebelColor)
+		m_pMainGlow = CSprite::SpriteCreate( "sprites/physcannon_blueglow.vmt", GetLocalOrigin(), false );
+	else
+#endif
+	m_pMainGlow = CSprite::SpriteCreate( "sprites/redglow1.vmt", GetLocalOrigin(), false );
 
-	int nAttachment = LookupAttachment( "fuse" );
+	int	nAttachment = LookupAttachment( "fuse" );
 
 	if ( m_pMainGlow != NULL )
 	{
 		m_pMainGlow->FollowEntity( this );
 		m_pMainGlow->SetAttachment( this, nAttachment );
+#ifdef EZ
+		if (m_bRebelColor)
+			m_pMainGlow->SetTransparency( kRenderGlow, 255, 192, 0, 200, kRenderFxNoDissipation );
+		else
+#endif
 		m_pMainGlow->SetTransparency( kRenderGlow, 255, 255, 255, 200, kRenderFxNoDissipation );
 		m_pMainGlow->SetScale( 0.2f );
 		m_pMainGlow->SetGlowProxySize( 4.0f );
 	}
 
 	// Start up the eye trail
-	if( !m_pGlowTrail )
-		m_pGlowTrail = CSpriteTrail::SpriteTrailCreate( "sprites/bluelaser1.vmt", GetLocalOrigin(), false );
+	m_pGlowTrail	= CSpriteTrail::SpriteTrailCreate( "sprites/bluelaser1.vmt", GetLocalOrigin(), false );
 
 	if ( m_pGlowTrail != NULL )
 	{
 		m_pGlowTrail->FollowEntity( this );
 		m_pGlowTrail->SetAttachment( this, nAttachment );
+#ifdef EZ
+		if (m_bRebelColor)
+			m_pGlowTrail->SetTransparency( kRenderTransAdd, 255, 128, 0, 255, kRenderFxNone );
+		else
+#endif
 		m_pGlowTrail->SetTransparency( kRenderTransAdd, 255, 0, 0, 255, kRenderFxNone );
 		m_pGlowTrail->SetStartWidth( 8.0f );
 		m_pGlowTrail->SetEndWidth( 1.0f );
@@ -283,6 +336,10 @@ void CGrenadeFrag::Precache( void )
 
 	PrecacheModel( "sprites/redglow1.vmt" );
 	PrecacheModel( "sprites/bluelaser1.vmt" );
+#ifdef EZ
+	if (m_bRebelColor)
+		PrecacheModel( "sprites/physcannon_blueglow.vmt" );
+#endif
 
 	BaseClass::Precache();
 }

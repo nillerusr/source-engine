@@ -36,6 +36,10 @@ END_DATADESC()
 
 #define MOVESHOOT_DO_NOT_SUSPEND	-1.0f
 
+#ifdef EZ
+ConVar	ai_aim_requires_squadslots( "ai_aim_requires_squadslots", "1" );
+#endif
+
 //-------------------------------------
 
 CAI_MoveAndShootOverlay::CAI_MoveAndShootOverlay() : m_bMovingAndShooting(false), m_initialDelay(0)
@@ -85,6 +89,13 @@ bool CAI_MoveAndShootOverlay::CanAimAtEnemy()
 	bool result = false;
 	bool resetConditions = false;
 	CAI_ScheduleBits savedConditions;
+
+#ifdef EZ
+	if ( ai_aim_requires_squadslots.GetBool() && pOuter->IsInSquad() && !pOuter->HasAttackSlot() && pOuter->AttackSlotOccupied() )
+	{
+		return false;
+	}
+#endif
 
 	if ( !GetOuter()->ConditionsGathered() )
 	{

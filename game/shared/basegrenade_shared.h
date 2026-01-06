@@ -49,6 +49,9 @@ public:
 #if !defined( CLIENT_DLL )
 	DECLARE_DATADESC();
 #endif
+#ifdef MAPBASE_VSCRIPT
+	DECLARE_ENT_SCRIPTDESC();
+#endif
 
 	virtual void		Precache( void );
 
@@ -103,6 +106,17 @@ public:
 	void				  SetThrower( CBaseCombatCharacter *pThrower );
 	CBaseEntity *GetOriginalThrower() { return m_hOriginalThrower; }
 
+#ifdef MAPBASE_VSCRIPT
+	HSCRIPT				ScriptGetThrower( void ) { return ToHScript( GetThrower() ); }
+	void				ScriptSetThrower( HSCRIPT hThrower ) { SetThrower( ToEnt(hThrower) ? ToEnt(hThrower)->MyCombatCharacterPointer() : NULL ); }
+	HSCRIPT				ScriptGetOriginalThrower() { return ToHScript( GetOriginalThrower() ); }
+
+	float				GetDetonateTime() { return m_flDetonateTime; }
+	bool				HasWarnedAI() { return m_bHasWarnedAI; }
+	bool				IsLive() { return m_bIsLive; }
+	float				GetWarnAITime() { return m_flWarnAITime; }
+#endif
+
 #if !defined( CLIENT_DLL )
 	// Allow +USE pickup
 	int ObjectCaps() 
@@ -111,6 +125,12 @@ public:
 	}
 
 	void				Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
+
+#ifdef MAPBASE
+	void				InputSetDamage( inputdata_t &inputdata );
+	void				InputDetonate( inputdata_t &inputdata );
+#endif
+
 #endif
 
 public:
@@ -128,6 +148,11 @@ protected:
 
 	CNetworkVar( float, m_flDamage );		// Damage to inflict.
 	string_t m_iszBounceSound;	// The sound to make on bouncing.  If not NULL, overrides the BounceSound() function.
+
+#if defined(MAPBASE) && !defined(CLIENT_DLL)
+	COutputEvent m_OnDetonate;
+	COutputVector m_OnDetonate_OutPosition;
+#endif
 
 private:
 	CNetworkHandle( CBaseEntity, m_hThrower );					// Who threw this grenade

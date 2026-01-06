@@ -8,7 +8,11 @@
 #include "cbase.h"
 #include "c_rumble.h"
 #include "rumble_shared.h"
+#ifdef STEAM_INPUT
+#include "expanded_steam/isteaminput.h"
+#else
 #include "inputsystem/iinputsystem.h"
+#endif
 
 ConVar cl_rumblescale( "cl_rumblescale", "1.0", FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX, "Scale sensitivity of rumble effects (0 to 1.0)" ); 
 ConVar cl_debugrumble( "cl_debugrumble", "0", FCVAR_ARCHIVE, "Turn on rumble debugging spew" );
@@ -517,7 +521,11 @@ void CRumbleEffects::SetOutputEnabled( bool bEnable )
 		// and some other process blocks us before the next rumble system update.
 		m_flScreenShake = 0.0f;
 
+#ifdef STEAM_INPUT
+		g_pSteamInput->StopRumble();
+#else
 		inputsystem->StopRumble();
+#endif
 	}
 }
 
@@ -772,7 +780,11 @@ void CRumbleEffects::UpdateEffects( float curtime )
 		fRightMotor = 0.0f;
 	}
 
+#ifdef STEAM_INPUT
+	g_pSteamInput->SetRumble( 0, fLeftMotor, fRightMotor );
+#else
 	inputsystem->SetRumble( fLeftMotor, fRightMotor );
+#endif
 }
 
 //---------------------------------------------------------
@@ -781,7 +793,11 @@ void StopAllRumbleEffects( void )
 {
 	g_RumbleEffects.StopAllEffects();
 
+#ifdef STEAM_INPUT
+	g_pSteamInput->StopRumble();
+#else
 	inputsystem->StopRumble();
+#endif
 }
 
 //---------------------------------------------------------

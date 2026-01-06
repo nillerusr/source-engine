@@ -171,7 +171,7 @@ void CAI_BaseHumanoid::TraceAttack( const CTakeDamageInfo &info, const Vector &v
 {
 	bool bSneakAttacked = false;
 
-	if( ptr->hitgroup == HITGROUP_HEAD )
+	if( ptr->hitgroup == HITGROUP_HEAD && CanBeSneakAttacked( info, vecDir, ptr ) )
 	{
 		if ( info.GetAttacker() && info.GetAttacker()->IsPlayer() && info.GetAttacker() != GetEnemy() && !IsInAScript() )
 		{

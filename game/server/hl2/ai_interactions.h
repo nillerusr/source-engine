@@ -26,8 +26,11 @@ extern int	g_interactionBarnacleVictimReleased;
 extern int	g_interactionBarnacleVictimGrab;
 
 //Bullsquid
-//extern int	g_interactionBullsquidPlay;
-//extern int	g_interactionBullsquidThrow;
+extern int	g_interactionBullsquidPlay;
+extern int	g_interactionBullsquidThrow;
+#ifdef EZ
+extern int	g_interactionBullsquidMonch;
+#endif
 
 //Combine
 extern int	g_interactionCombineBash;
@@ -76,5 +79,36 @@ extern int	g_interactionPlayerPuntedHeavyObject;
 // Zombie
 // Melee attack will land in one second or so.
 extern int	g_interactionZombieMeleeWarning;
+
+#ifdef EZ
+extern int  g_interactionZombinePullGrenade;
+#endif
+
+#ifdef EZ2
+// Headcrab
+extern int	g_interactionHeadcrabJump;
+
+// Xen Grenade
+extern int	g_interactionXenGrenadePull;
+extern int	g_interactionXenGrenadeConsume;
+extern int	g_interactionXenGrenadeRelease;
+extern int	g_interactionXenGrenadeCreate;
+extern int	g_interactionXenGrenadeHop;
+extern int  g_interactionXenGrenadeRagdoll;
+
+// Bad Cop kick
+extern int	g_interactionBadCopKick;
+extern int	g_interactionBadCopKickWarn;
+
+// Bad Cop order surrender
+extern int	g_interactionBadCopOrderSurrender;
+
+// Melee warning used by all companions via CNPC_PlayerCompanion::OnChangeActivity
+extern int g_interactionGenericMeleeWarning;
+
+// Husks
+extern int	g_interactionHuskSuspicious;
+extern int	g_interactionHuskAngry;
+#endif
 
 #endif	//AI_INTERACTIONS_H
