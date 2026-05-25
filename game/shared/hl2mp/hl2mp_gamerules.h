@@ -28,8 +28,10 @@
 
 enum
 {
-	TEAM_COMBINE = 2,
-	TEAM_REBELS,
+	TEAM_COMBINE = 2,	// StargateTC: Tau'ri / SG team slot
+	TEAM_REBELS,		// StargateTC: Goa'uld slot
+	TEAM_JAFFA,
+	TEAM_UNAS,
 };
 
 

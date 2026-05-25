@@ -15,7 +15,7 @@ $Configuration
 {
 	$Compiler
 	{
-		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\game\shared\hl2,.\hl2,.\hl2mp,$SRCDIR\game\shared\hl2mp"
+		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\game\shared\hl2,.\hl2,.\hl2mp,$SRCDIR\game\shared\hl2mp,.\stargate,$SRCDIR\game\shared\stargate"
 		$PreprocessorDefinitions		"$BASE;HL2MP;HL2_DLL"
 	}
 }
@@ -291,6 +291,21 @@ $Project "Server (HL2MP)"
 				$File	"$SRCDIR\game\shared\hl2mp\weapon_smg1.cpp"
 				$File	"$SRCDIR\game\shared\hl2mp\weapon_stunstick.cpp"
 			}
+		}
+
+		$Folder	"Stargate"
+		{
+			$File	"stargate\dhd_console.cpp"
+			$File	"stargate\gate_travel.cpp"
+			$File	"stargate\multi_gate.cpp"
+			$File	"stargate\recovered_entities.cpp"
+			$File	"stargate\ring_transporter.cpp"
+			$File	"stargate\sg_event.cpp"
+			$File	"stargate\sg_kawoosh.cpp"
+			$File	"stargate\sg_player_spawn.cpp"
+			$File	"stargate\STUBS.cpp"
+			$File	"$SRCDIR\game\shared\stargate\sg_weapons.cpp"
+			$File	"$SRCDIR\game\shared\stargate\sg_constants.h"
 		}
 	}
 }

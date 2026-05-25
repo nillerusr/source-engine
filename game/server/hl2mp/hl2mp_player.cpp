@@ -1321,19 +1321,44 @@ CBaseEntity* CHL2MP_Player::EntSelectSpawnPoint( void )
 	{
 		if ( GetTeamNumber() == TEAM_COMBINE )
 		{
-			pSpawnpointName = "info_player_combine";
+			pSpawnpointName = "info_player_torri";
 			pLastSpawnPoint = g_pLastCombineSpawn;
 		}
 		else if ( GetTeamNumber() == TEAM_REBELS )
 		{
-			pSpawnpointName = "info_player_rebel";
+			pSpawnpointName = "info_player_goauld";
 			pLastSpawnPoint = g_pLastRebelSpawn;
+		}
+		else if ( GetTeamNumber() == TEAM_JAFFA )
+		{
+			pSpawnpointName = "info_player_marine";
+			pLastSpawnPoint = g_pLastSpawn;
+		}
+		else if ( GetTeamNumber() == TEAM_UNAS )
+		{
+			pSpawnpointName = "info_player_unas";
+			pLastSpawnPoint = g_pLastSpawn;
 		}
 
 		if ( gEntList.FindEntityByClassname( NULL, pSpawnpointName ) == NULL )
 		{
-			pSpawnpointName = "info_player_deathmatch";
-			pLastSpawnPoint = g_pLastSpawn;
+			if ( GetTeamNumber() == TEAM_COMBINE && gEntList.FindEntityByClassname( NULL, "info_player_marine" ) != NULL )
+			{
+				pSpawnpointName = "info_player_marine";
+			}
+			else if ( GetTeamNumber() == TEAM_COMBINE && gEntList.FindEntityByClassname( NULL, "info_player_combine" ) != NULL )
+			{
+				pSpawnpointName = "info_player_combine";
+			}
+			else if ( GetTeamNumber() == TEAM_REBELS && gEntList.FindEntityByClassname( NULL, "info_player_rebel" ) != NULL )
+			{
+				pSpawnpointName = "info_player_rebel";
+			}
+			else
+			{
+				pSpawnpointName = "info_player_deathmatch";
+				pLastSpawnPoint = g_pLastSpawn;
+			}
 		}
 	}
 
