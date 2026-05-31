@@ -35,12 +35,21 @@ void Host_Say( edict_t *pEdict, bool teamonly );
 
 ConVar sv_motd_unload_on_dismissal( "sv_motd_unload_on_dismissal", "0", 0, "If enabled, the MOTD contents will be unloaded when the player closes the MOTD." );
 
+// StargateTC: the MOTD info panel popped over the screen on every join and the
+// mod ships no MOTD content, so it just obscured the game. Default it OFF;
+// set "sv_show_motd 1" to restore the vanilla HL2DM message-of-the-day panel.
+ConVar sv_show_motd( "sv_show_motd", "0", FCVAR_NOTIFY, "Show the MOTD info panel to players when they join." );
+
 extern CBaseEntity*	FindPickerEntityClass( CBasePlayer *pPlayer, char *classname );
 extern bool			g_fGameOver;
 
 void FinishClientPutInServer( CHL2MP_Player *pPlayer )
 {
 	pPlayer->InitialSpawn();
+
+	extern void Sg_ResetPlayerClass( CHL2MP_Player *pPlayer );
+	Sg_ResetPlayerClass( pPlayer );
+
 	pPlayer->Spawn();
 
 
@@ -61,20 +70,24 @@ void FinishClientPutInServer( CHL2MP_Player *pPlayer )
 	if ( HL2MPRules()->IsTeamplay() == true )
 	{
 		ClientPrint( pPlayer, HUD_PRINTTALK, "You are on team %s1\n", pPlayer->GetTeam()->GetName() );
+		pPlayer->ShowViewPortPanel( PANEL_TEAM, true );
 	}
 
-	const ConVar *hostname = cvar->FindVar( "hostname" );
-	const char *title = (hostname) ? hostname->GetString() : "MESSAGE OF THE DAY";
+	if ( sv_show_motd.GetBool() )
+	{
+		const ConVar *hostname = cvar->FindVar( "hostname" );
+		const char *title = (hostname) ? hostname->GetString() : "MESSAGE OF THE DAY";
 
-	KeyValues *data = new KeyValues("data");
-	data->SetString( "title", title );		// info panel title
-	data->SetString( "type", "1" );			// show userdata from stringtable entry
-	data->SetString( "msg",	"motd" );		// use this stringtable entry
-	data->SetBool( "unload", sv_motd_unload_on_dismissal.GetBool() );
+		KeyValues *data = new KeyValues("data");
+		data->SetString( "title", title );		// info panel title
+		data->SetString( "type", "1" );			// show userdata from stringtable entry
+		data->SetString( "msg",	"motd" );		// use this stringtable entry
+		data->SetBool( "unload", sv_motd_unload_on_dismissal.GetBool() );
 
-	pPlayer->ShowViewPortPanel( PANEL_INFO, true, data );
+		pPlayer->ShowViewPortPanel( PANEL_INFO, true, data );
 
-	data->deleteThis();
+		data->deleteThis();
+	}
 }
 
 /*

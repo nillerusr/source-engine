@@ -97,6 +97,8 @@ public:
 	void SetPlayerModel( void );
 	void SetPlayerTeamModel( void );
 	Activity TranslateTeamActivity( Activity ActToTranslate );
+	int GetStargateClass() const { return m_iStargateClass; }
+	void SetStargateClass( int iClass ) { m_iStargateClass = iClass; }
 	
 	float GetNextModelChangeTime( void ) { return m_flNextModelChangeTime; }
 	float GetNextTeamChangeTime( void ) { return m_flNextTeamChangeTime; }
@@ -147,6 +149,7 @@ private:
 	int m_iModelType;
 	CNetworkVar( int, m_iSpawnInterpCounter );
 	CNetworkVar( int, m_iPlayerSoundType );
+	CNetworkVar( int, m_iStargateClass );
 
 	float m_flNextModelChangeTime;
 	float m_flNextTeamChangeTime;

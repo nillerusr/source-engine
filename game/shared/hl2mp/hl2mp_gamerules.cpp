@@ -115,6 +115,11 @@ static const char *s_PreserveEnts[] =
 	"info_player_deathmatch",
 	"info_player_combine",
 	"info_player_rebel",
+	"info_player_torri",
+	"info_player_marine",
+	"info_player_goauld",
+	"info_player_unas",
+	"info_player_coop",
 	"info_map_parameters",
 	"keyframe_rope",
 	"move_rope",
@@ -179,8 +184,10 @@ char *sTeamNames[] =
 {
 	"Unassigned",
 	"Spectator",
-	"Combine",
-	"Rebels",
+	"Tau'ri",
+	"Goa'uld",
+	"Jaffa",
+	"Unas",
 };
 
 CHL2MPRules::CHL2MPRules()
@@ -804,14 +811,7 @@ void CHL2MPRules::ClientSettingsChanged( CBasePlayer *pPlayer )
 		}
 		else
 		{
-			if ( Q_stristr( szModelName, "models/human") )
-			{
-				pHL2Player->ChangeTeam( TEAM_REBELS );
-			}
-			else
-			{
-				pHL2Player->ChangeTeam( TEAM_COMBINE );
-			}
+			pHL2Player->SetPlayerTeamModel();
 		}
 	}
 	if ( sv_report_client_settings.GetInt() == 1 )
@@ -844,10 +844,10 @@ int CHL2MPRules::PlayerRelationship( CBaseEntity *pPlayer, CBaseEntity *pTarget 
 const char *CHL2MPRules::GetGameDescription( void )
 { 
 	if ( IsTeamplay() )
-		return "Team Deathmatch"; 
+		return "StargateTC Teamplay";
 
-	return "Deathmatch"; 
-} 
+	return "StargateTC";
+}
 
 bool CHL2MPRules::IsConnectedUserInfoChangeAllowed( CBasePlayer *pPlayer )
 {
