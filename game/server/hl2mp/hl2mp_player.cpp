@@ -20,6 +20,7 @@
 #include "grenade_satchel.h"
 #include "eventqueue.h"
 #include "gamestats.h"
+#include "viewport_panel_names.h"
 
 #include "engine/IEngineSound.h"
 #include "SoundEmitterSystem/isoundemittersystembase.h"
@@ -35,6 +36,9 @@ extern CBaseEntity				*g_pLastSpawn;
 
 #define HL2MP_COMMAND_MAX_RATE 0.3
 
+ConVar mp_wepselmode( "mp_wepselmode", "2", FCVAR_GAMEDLL | FCVAR_NOTIFY, "StargateTC weapon selection: 0=team melee only, 1=team melee plus class weapon, 2=team default pack plus class weapon." );
+ConVar mp_autobalance( "mp_autobalance", "2", FCVAR_GAMEDLL | FCVAR_NOTIFY, "StargateTC team auto-balance: 0=off, non-zero blocks joins that would stack Tau'ri/Goa'uld." );
+
 void DropPrimedFragGrenade( CHL2MP_Player *pPlayer, CBaseCombatWeapon *pGrenade );
 
 LINK_ENTITY_TO_CLASS( player, CHL2MP_Player );
@@ -48,6 +52,7 @@ IMPLEMENT_SERVERCLASS_ST(CHL2MP_Player, DT_HL2MP_Player)
 	SendPropEHandle( SENDINFO( m_hRagdoll ) ),
 	SendPropInt( SENDINFO( m_iSpawnInterpCounter), 4 ),
 	SendPropInt( SENDINFO( m_iPlayerSoundType), 3 ),
+	SendPropInt( SENDINFO( m_iStargateClass ), 4 ),
 	
 	SendPropExclude( "DT_BaseAnimating", "m_flPoseParameter" ),
 	SendPropExclude( "DT_BaseFlex", "m_viewtarget" ),
@@ -60,35 +65,82 @@ END_SEND_TABLE()
 BEGIN_DATADESC( CHL2MP_Player )
 END_DATADESC()
 
-const char *g_ppszRandomCitizenModels[] = 
+// StargateTC: team 3 (Goa'uld, == TEAM_REBELS index) draws from this list.
+const char *g_ppszRandomCitizenModels[] =
 {
-	"models/humans/group03/male_01.mdl",
-	"models/humans/group03/male_02.mdl",
-	"models/humans/group03/female_01.mdl",
-	"models/humans/group03/male_03.mdl",
-	"models/humans/group03/female_02.mdl",
-	"models/humans/group03/male_04.mdl",
-	"models/humans/group03/female_03.mdl",
-	"models/humans/group03/male_05.mdl",
-	"models/humans/group03/female_04.mdl",
-	"models/humans/group03/male_06.mdl",
-	"models/humans/group03/female_06.mdl",
-	"models/humans/group03/male_07.mdl",
-	"models/humans/group03/female_07.mdl",
-	"models/humans/group03/male_08.mdl",
-	"models/humans/group03/male_09.mdl",
+	"models/stargate/player/goauld3/goauld3.mdl",
+	"models/stargate/player/anubis/anubis.mdl",
+	"models/stargate/player/horus/horus.mdl",
+	"models/stargate/player/systemlord/systemlord.mdl",
+	"models/stargate/player/snakegoauld/snakegoauld.mdl",
 };
 
+// StargateTC: team 2 (Tau'ri, == TEAM_COMBINE index) draws from this list (SG-1).
 const char *g_ppszRandomCombineModels[] =
 {
-	"models/combine_soldier.mdl",
-	"models/combine_soldier_prisonguard.mdl",
-	"models/combine_super_soldier.mdl",
-	"models/police.mdl",
+	"models/stargate/player/oneill/oneill.mdl",
+	"models/stargate/player/carter/carter.mdl",
+	"models/stargate/player/jackson/jackson.mdl",
+	"models/stargate/player/tealc/tealc.mdl",
+	"models/stargate/player/commander/commander.mdl",
 };
 
+static bool Sg_IsModelInList( const char *pModel, const char * const *ppModels, int iModelCount )
+{
+	if ( !pModel || !pModel[0] )
+		return false;
 
-#define MAX_COMBINE_MODELS 4
+	for ( int i = 0; i < iModelCount; i++ )
+	{
+		if ( !Q_stricmp( ppModels[i], pModel ) )
+			return true;
+	}
+
+	return false;
+}
+
+static int Sg_CountTeamPlayers( int iTeam )
+{
+	CTeam *pTeam = GetGlobalTeam( iTeam );
+	return pTeam ? pTeam->GetNumPlayers() : 0;
+}
+
+static int Sg_GetAutoTeam()
+{
+	const int iTorri = Sg_CountTeamPlayers( TEAM_COMBINE );
+	const int iGoauld = Sg_CountTeamPlayers( TEAM_REBELS );
+
+	if ( iTorri < iGoauld )
+		return TEAM_COMBINE;
+	if ( iGoauld < iTorri )
+		return TEAM_REBELS;
+
+	return random->RandomInt( 0, 1 ) ? TEAM_COMBINE : TEAM_REBELS;
+}
+
+static bool Sg_WouldStackTeams( CHL2MP_Player *pPlayer, int iTeam )
+{
+	if ( mp_autobalance.GetInt() <= 0 )
+		return false;
+
+	if ( iTeam != TEAM_COMBINE && iTeam != TEAM_REBELS )
+		return false;
+
+	const int iOtherTeam = ( iTeam == TEAM_COMBINE ) ? TEAM_REBELS : TEAM_COMBINE;
+	int iJoinTeamPlayers = Sg_CountTeamPlayers( iTeam );
+	int iOtherTeamPlayers = Sg_CountTeamPlayers( iOtherTeam );
+
+	if ( pPlayer && pPlayer->GetTeamNumber() == iTeam )
+		return false;
+
+	if ( pPlayer && pPlayer->GetTeamNumber() == iOtherTeam )
+		iOtherTeamPlayers--;
+
+	return iJoinTeamPlayers > iOtherTeamPlayers;
+}
+
+
+#define MAX_COMBINE_MODELS 5
 #define MODEL_CHANGE_INTERVAL 5.0f
 #define TEAM_CHANGE_INTERVAL 5.0f
 
@@ -106,6 +158,7 @@ CHL2MP_Player::CHL2MP_Player() : m_PlayerAnimState( this )
 	m_flNextTeamChangeTime = 0.0f;
 
 	m_iSpawnInterpCounter = 0;
+	m_iStargateClass = 0;
 
     m_bEnterObserver = false;
 	m_bReady = false;
@@ -198,38 +251,52 @@ void CHL2MP_Player::GiveDefaultItems( void )
 {
 	EquipSuit();
 
-	CBasePlayer::GiveAmmo( 255,	"Pistol");
-	CBasePlayer::GiveAmmo( 45,	"SMG1");
-	CBasePlayer::GiveAmmo( 1,	"grenade" );
-	CBasePlayer::GiveAmmo( 6,	"Buckshot");
-	CBasePlayer::GiveAmmo( 6,	"357" );
+	// StargateTC: no Half-Life 2 weapons. The recovered GoldSrc rules use
+	// mp_wepselmode 0/1/2 for melee-only, class choice, or the team pack.
+	CBasePlayer::GiveAmmo( 255, "Pistol" );
+	CBasePlayer::GiveAmmo( 255, "SMG1" );
+	CBasePlayer::GiveAmmo( 64,  "Buckshot" );
+	CBasePlayer::GiveAmmo( 32,  "357" );
+	CBasePlayer::GiveAmmo( 5,   "Grenade" );
 
-	if ( GetPlayerModelType() == PLAYER_SOUNDS_METROPOLICE || GetPlayerModelType() == PLAYER_SOUNDS_COMBINESOLDIER )
+	const int iWeaponMode = mp_wepselmode.GetInt();
+	const char *pSwitchTo = "weapon_couteau";
+
+	if ( GetTeamNumber() == TEAM_REBELS )        // Goa'uld (StargateTC::TEAM_GOAULD == 3)
 	{
-		GiveNamedItem( "weapon_stunstick" );
+		GiveNamedItem( "weapon_coujaf" );        // team melee
+		pSwitchTo = "weapon_coujaf";
+
+		if ( iWeaponMode >= 2 )
+		{
+			GiveNamedItem( "weapon_zat" );
+			GiveNamedItem( "weapon_glstaff" );       // Goa'uld staff
+			GiveNamedItem( "weapon_gacgoa" );
+			pSwitchTo = "weapon_glstaff";
+		}
 	}
-	else if ( GetPlayerModelType() == PLAYER_SOUNDS_CITIZEN )
+	else if ( GetTeamNumber() == TEAM_COMBINE )  // Tau'ri / Torri (StargateTC::TEAM_TORRI == 2)
 	{
-		GiveNamedItem( "weapon_crowbar" );
-	}
-	
-	GiveNamedItem( "weapon_pistol" );
-	GiveNamedItem( "weapon_smg1" );
-	GiveNamedItem( "weapon_frag" );
-	GiveNamedItem( "weapon_physcannon" );
+		GiveNamedItem( "weapon_couteau" );       // team melee (knife)
 
-	const char *szDefaultWeaponName = engine->GetClientConVarValue( engine->IndexOfEdict( edict() ), "cl_defaultweapon" );
-
-	CBaseCombatWeapon *pDefaultWeapon = Weapon_OwnsThisType( szDefaultWeaponName );
-
-	if ( pDefaultWeapon )
-	{
-		Weapon_Switch( pDefaultWeapon );
+		if ( iWeaponMode >= 2 )
+		{
+			GiveNamedItem( "weapon_m92s" );
+			GiveNamedItem( "weapon_m16" );
+			GiveNamedItem( "weapon_zat" );
+			GiveNamedItem( "weapon_flashbang" );
+			pSwitchTo = "weapon_m16";
+		}
 	}
 	else
 	{
-		Weapon_Switch( Weapon_OwnsThisType( "weapon_physcannon" ) );
+		// Unassigned / spectator: only a knife so they spawn with something SG.
+		GiveNamedItem( "weapon_couteau" );
 	}
+
+	CBaseCombatWeapon *pWeapon = Weapon_OwnsThisType( pSwitchTo );
+	if ( pWeapon )
+		Weapon_Switch( pWeapon );
 }
 
 void CHL2MP_Player::PickDefaultSpawnTeam( void )
@@ -256,28 +323,9 @@ void CHL2MP_Player::PickDefaultSpawnTeam( void )
 		}
 		else
 		{
-			CTeam *pCombine = g_Teams[TEAM_COMBINE];
-			CTeam *pRebels = g_Teams[TEAM_REBELS];
-
-			if ( pCombine == NULL || pRebels == NULL )
-			{
-				ChangeTeam( random->RandomInt( TEAM_COMBINE, TEAM_REBELS ) );
-			}
-			else
-			{
-				if ( pCombine->GetNumPlayers() > pRebels->GetNumPlayers() )
-				{
-					ChangeTeam( TEAM_REBELS );
-				}
-				else if ( pCombine->GetNumPlayers() < pRebels->GetNumPlayers() )
-				{
-					ChangeTeam( TEAM_COMBINE );
-				}
-				else
-				{
-					ChangeTeam( random->RandomInt( TEAM_COMBINE, TEAM_REBELS ) );
-				}
-			}
+			// GoldSrc StargateTC starts clients as spectators and opens the
+			// team/class menu; it does not auto-spawn them onto a combat team.
+			BaseClass::ChangeTeam( TEAM_SPECTATOR );
 		}
 	}
 }
@@ -302,6 +350,10 @@ void CHL2MP_Player::Spawn(void)
 		RemoveEffects( EF_NODRAW );
 		
 		GiveDefaultItems();
+
+		// StargateTC: re-apply the chosen class loadout + refresh HUD team state.
+		extern void Sg_OnPlayerSpawn( CHL2MP_Player *pPlayer );
+		Sg_OnPlayerSpawn( this );
 	}
 
 	SetNumAnimOverlays( 3 );
@@ -366,25 +418,18 @@ bool CHL2MP_Player::ValidatePlayerModel( const char *pModel )
 
 void CHL2MP_Player::SetPlayerTeamModel( void )
 {
+	if ( GetTeamNumber() == TEAM_SPECTATOR )
+		return;
+
+	if ( GetStargateClass() > 0 )
+		return;
+
 	const char *szModelName = NULL;
 	szModelName = engine->GetClientConVarValue( engine->IndexOfEdict( edict() ), "cl_playermodel" );
 
-	int modelIndex = modelinfo->GetModelIndex( szModelName );
-
-	if ( modelIndex == -1 || ValidatePlayerModel( szModelName ) == false )
-	{
-		szModelName = "models/Combine_Soldier.mdl";
-		m_iModelType = TEAM_COMBINE;
-
-		char szReturnString[512];
-
-		Q_snprintf( szReturnString, sizeof (szReturnString ), "cl_playermodel %s\n", szModelName );
-		engine->ClientCommand ( edict(), szReturnString );
-	}
-
 	if ( GetTeamNumber() == TEAM_COMBINE )
 	{
-		if ( Q_stristr( szModelName, "models/human") )
+		if ( !Sg_IsModelInList( szModelName, g_ppszRandomCombineModels, ARRAYSIZE( g_ppszRandomCombineModels ) ) )
 		{
 			int nHeads = ARRAYSIZE( g_ppszRandomCombineModels );
 		
@@ -396,7 +441,7 @@ void CHL2MP_Player::SetPlayerTeamModel( void )
 	}
 	else if ( GetTeamNumber() == TEAM_REBELS )
 	{
-		if ( !Q_stristr( szModelName, "models/human") )
+		if ( !Sg_IsModelInList( szModelName, g_ppszRandomCitizenModels, ARRAYSIZE( g_ppszRandomCitizenModels ) ) )
 		{
 			int nHeads = ARRAYSIZE( g_ppszRandomCitizenModels );
 
@@ -404,6 +449,11 @@ void CHL2MP_Player::SetPlayerTeamModel( void )
 			szModelName = g_ppszRandomCitizenModels[g_iLastCitizenModel];
 		}
 
+		m_iModelType = TEAM_REBELS;
+	}
+	else
+	{
+		szModelName = g_ppszRandomCitizenModels[0];
 		m_iModelType = TEAM_REBELS;
 	}
 	
@@ -426,7 +476,7 @@ void CHL2MP_Player::SetPlayerModel( void )
 
 		if ( ValidatePlayerModel( pszCurrentModelName ) == false )
 		{
-			pszCurrentModelName = "models/Combine_Soldier.mdl";
+			pszCurrentModelName = "models/stargate/player/oneill/oneill.mdl";
 		}
 
 		Q_snprintf( szReturnString, sizeof (szReturnString ), "cl_playermodel %s\n", pszCurrentModelName );
@@ -474,7 +524,7 @@ void CHL2MP_Player::SetPlayerModel( void )
 
 	if ( modelIndex == -1 )
 	{
-		szModelName = "models/Combine_Soldier.mdl";
+		szModelName = "models/stargate/player/oneill/oneill.mdl";
 		m_iModelType = TEAM_COMBINE;
 
 		char szReturnString[512];
@@ -502,6 +552,10 @@ void CHL2MP_Player::SetupPlayerSoundsByModel( const char *pModelName )
 	else if ( Q_stristr(pModelName, "combine" ) )
 	{
 		m_iPlayerSoundType = (int)PLAYER_SOUNDS_COMBINESOLDIER;
+	}
+	else
+	{
+		m_iPlayerSoundType = (int)PLAYER_SOUNDS_CITIZEN;
 	}
 }
 
@@ -900,6 +954,7 @@ void CHL2MP_Player::ChangeTeam( int iTeam )
 	}*/
 
 	bool bKill = false;
+	const int iOldTeam = GetTeamNumber();
 
 	if ( HL2MPRules()->IsTeamplay() != true && iTeam != TEAM_SPECTATOR )
 	{
@@ -909,7 +964,7 @@ void CHL2MP_Player::ChangeTeam( int iTeam )
 
 	if ( HL2MPRules()->IsTeamplay() == true )
 	{
-		if ( iTeam != GetTeamNumber() && GetTeamNumber() != TEAM_UNASSIGNED )
+		if ( iTeam != iOldTeam && iOldTeam != TEAM_UNASSIGNED && iOldTeam != TEAM_SPECTATOR && iTeam != TEAM_SPECTATOR && IsAlive() )
 		{
 			bKill = true;
 		}
@@ -919,20 +974,19 @@ void CHL2MP_Player::ChangeTeam( int iTeam )
 
 	m_flNextTeamChangeTime = gpGlobals->curtime + TEAM_CHANGE_INTERVAL;
 
-	if ( HL2MPRules()->IsTeamplay() == true )
+	if ( iTeam == TEAM_SPECTATOR )
+	{
+		RemoveAllItems( true );
+
+		State_Transition( STATE_OBSERVER_MODE );
+	}
+	else if ( HL2MPRules()->IsTeamplay() == true )
 	{
 		SetPlayerTeamModel();
 	}
 	else
 	{
 		SetPlayerModel();
-	}
-
-	if ( iTeam == TEAM_SPECTATOR )
-	{
-		RemoveAllItems( true );
-
-		State_Transition( STATE_OBSERVER_MODE );
 	}
 
 	if ( bKill == true )
@@ -943,7 +997,12 @@ void CHL2MP_Player::ChangeTeam( int iTeam )
 
 bool CHL2MP_Player::HandleCommand_JoinTeam( int team )
 {
-	if ( !GetGlobalTeam( team ) || team == 0 )
+	if ( team == 0 )
+	{
+		team = Sg_GetAutoTeam();
+	}
+
+	if ( !GetGlobalTeam( team ) )
 	{
 		Warning( "HandleCommand_JoinTeam( %d ) - invalid team index.\n", team );
 		return false;
@@ -974,12 +1033,25 @@ bool CHL2MP_Player::HandleCommand_JoinTeam( int team )
 	}
 	else
 	{
+		if ( Sg_WouldStackTeams( this, team ) )
+		{
+			ClientPrint( this, HUD_PRINTCENTER, "That team has too many players." );
+			ShowViewPortPanel( PANEL_TEAM, true );
+			return false;
+		}
+
+		const bool bNeedsRespawn = ( GetTeamNumber() == TEAM_UNASSIGNED || GetTeamNumber() == TEAM_SPECTATOR || IsObserver() || IsDead() );
 		StopObserverMode();
 		State_Transition(STATE_ACTIVE);
-	}
 
-	// Switch their actual team...
-	ChangeTeam( team );
+		// Switch their actual team...
+		ChangeTeam( team );
+
+		if ( bNeedsRespawn )
+		{
+			Spawn();
+		}
+	}
 
 	return true;
 }
@@ -1000,6 +1072,7 @@ bool CHL2MP_Player::ClientCommand( const CCommand &args )
 		if ( args.ArgC() < 2 )
 		{
 			Warning( "Player sent bad jointeam syntax\n" );
+			return true;
 		}
 
 		if ( ShouldRunRateLimitedCommand( args ) )
@@ -1007,6 +1080,39 @@ bool CHL2MP_Player::ClientCommand( const CCommand &args )
 			int iTeam = atoi( args[1] );
 			HandleCommand_JoinTeam( iTeam );
 		}
+		return true;
+	}
+	else if ( FStrEq( args[0], "joinclass" ) )
+	{
+		extern void Sg_HandleJoinClass( CHL2MP_Player *pPlayer, const char *pszClass );
+		Sg_HandleJoinClass( this, args.ArgC() >= 2 ? args[1] : "" );
+		return true;
+	}
+	else if ( FStrEq( args[0], "autopick" ) )
+	{
+		if ( ShouldRunRateLimitedCommand( args ) )
+		{
+			HandleCommand_JoinTeam( 0 );
+			extern void Sg_HandleJoinClass( CHL2MP_Player *pPlayer, const char *pszClass );
+			Sg_HandleJoinClass( this, "auto" );
+		}
+		return true;
+	}
+	else if ( FStrEq( args[0], "classe" ) )
+	{
+		extern void Sg_HandleJoinClass( CHL2MP_Player *pPlayer, const char *pszClass );
+		Sg_HandleJoinClass( this, args.ArgC() >= 2 ? args[1] : "" );
+		return true;
+	}
+	else if ( FStrEq( args[0], "showmenu" ) )
+	{
+		ShowViewPortPanel( PANEL_TEAM, true );
+		return true;
+	}
+	else if ( FStrEq( args[0], "showequip" ) )
+	{
+		if ( mp_wepselmode.GetInt() > 0 )
+			ShowViewPortPanel( PANEL_TEAM, true );
 		return true;
 	}
 	else if ( FStrEq( args[0], "joingame" ) )
@@ -1576,7 +1682,7 @@ CHL2MPPlayerStateInfo *CHL2MP_Player::State_LookupInfo( HL2MPPlayerState state )
 bool CHL2MP_Player::StartObserverMode(int mode)
 {
 	//we only want to go into observer mode if the player asked to, not on a death timeout
-	if ( m_bEnterObserver == true )
+	if ( m_bEnterObserver == true || GetTeamNumber() == TEAM_SPECTATOR )
 	{
 		VPhysicsDestroyObject();
 		return BaseClass::StartObserverMode( mode );

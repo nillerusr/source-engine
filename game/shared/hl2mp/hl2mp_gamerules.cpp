@@ -811,14 +811,7 @@ void CHL2MPRules::ClientSettingsChanged( CBasePlayer *pPlayer )
 		}
 		else
 		{
-			if ( Q_stristr( szModelName, "models/human") )
-			{
-				pHL2Player->ChangeTeam( TEAM_REBELS );
-			}
-			else
-			{
-				pHL2Player->ChangeTeam( TEAM_COMBINE );
-			}
+			pHL2Player->SetPlayerTeamModel();
 		}
 	}
 	if ( sv_report_client_settings.GetInt() == 1 )
