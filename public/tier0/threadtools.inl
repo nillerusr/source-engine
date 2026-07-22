@@ -321,7 +321,8 @@ INLINE_ON_PS3 void CThread::Stop(int exitCode)
 		}
 		else
 		{
-			throw exitCode;
+			pthread_exit((void*)(intptr_t)exitCode);
+
 		}
 #else
 		AssertMsg( false, "Called CThread::Stop() for a platform that doesn't have it!\n");

@@ -14,7 +14,7 @@ $Configuration
 	$Compiler
 	{
 		$AdditionalIncludeDirectories	".\hl2;.\hl2\elements;.\portal;.\portal\vgui;$SRCDIR\game\shared\hl2;$SRCDIR\game\shared\Multiplayer;$SRCDIR\gcsdk\steamextra;$SRCDIR\game\shared\portal;$BASE"
-		$PreprocessorDefinitions		"$BASE;PORTAL;HL2_EPISODIC;HL2_CLIENT_DLL"
+		$PreprocessorDefinitions		"$BASE;PORTAL;HL2_EPISODIC;HL2_CLIENT_DLL;GAMEPADUI"
 	}
 }
 

@@ -27,6 +27,7 @@ $Configuration "Debug"
 // Need to revisit the code to make things run with the _RETAIL preprocessor definition
 // This line was added in the previous check-in, but had previously not been defined in this branch
 //		$PreprocessorDefinitions		"$BASE;_RETAIL"		[$RETAIL]
+		$CompilerFlags					"$BASE -fexceptions" [$LINUX]
 	}
 }
 
@@ -42,5 +43,6 @@ $Configuration "Release"
 // Need to revisit the code to make things run with the _RETAIL preprocessor definition
 // This line was added in the previous check-in, but had previously not been defined in this branch
 //		$PreprocessorDefinitions		"$BASE;_RETAIL"		[$RETAIL]
+		$CompilerFlags					"$BASE -fexceptions" [$LINUX]
 	}
 }

@@ -57,6 +57,7 @@ projects={
 		'game/client',
 		'game/server',
 		'gameui',
+		'game/gamepadui',
 		'inputsystem',
 		'ivp/havana',
 		'ivp/havana/havok/hk_base',
@@ -333,7 +334,11 @@ def check_deps(conf):
 	if conf.env.DEST_OS != 'win32':
 		conf.check_cc(lib='dl', mandatory=False)
 		conf.check_cc(lib='bz2', mandatory=True)
-		conf.check_cc(lib='rt', mandatory=False)
+		conf.check_cc(lib='atomic', mandatory=False)
+		if conf.env.DEST_OS == 'android' and not conf.env.LIB_ATOMIC:
+			conf.env.LIB_ATOMIC = ['atomic']
+		if conf.env.DEST_OS != 'android':
+			conf.check_cc(lib='rt', mandatory=False)
 
 		if not conf.env.LIB_M: # HACK: already added in xcompile!
 			conf.check_cc(lib='m')
@@ -404,7 +409,20 @@ def check_deps(conf):
 			if conf.options.OPUS:
 				conf.check_cfg(package='opus', uselib_store='OPUS', args=['--cflags', '--libs'])
 	else:
-		conf.check(lib='SDL2', uselib_store='SDL2')
+		if conf.env.DEST_OS == 'android' and conf.env.DEST_CPU in ['aarch64', 'arm64', 'arm64-v8a']:
+			# SADECE 64-bit Android için manuel ayar yap ve aramayı pas geç
+			conf.env.HAVE_SDL2 = 1
+			conf.env.LIB_SDL2 = ['SDL2']
+			conf.env.LIBPATH_SDL2 = [os.path.abspath('sdllib/android')]
+			conf.env.INCLUDES_SDL2 = [
+				os.path.abspath('thirdparty/SDL'),
+				os.path.abspath('thirdparty/SDL/include')
+			]
+			conf.msg('Checking for library SDL2 (Android 64-bit Manual)', 'yes')
+		else:
+			# 32-bit Android ve diğer sistemler için NORMAL KONTROL (Atlamıyor)
+			conf.check(lib='SDL2', uselib_store='SDL2')
+		
 		conf.check(lib='freetype2', uselib_store='FT2')
 		conf.check(lib='jpeg', uselib_store='JPEG', define_name='HAVE_JPEG')
 		conf.check(lib='png', uselib_store='PNG', define_name='HAVE_PNG')
@@ -502,7 +520,31 @@ def configure(conf):
 		flags += ['-fsanitize=%s'%conf.options.SANITIZE, '-fno-sanitize=vptr']
 
 	if conf.env.DEST_OS != 'win32':
-		flags += ['-pipe', '-fPIC', '-L'+os.path.abspath('.')+'/lib/'+conf.env.DEST_OS+'/'+conf.env.DEST_CPU+'/']
+		lib_cpu = conf.env.DEST_CPU
+		if conf.env.DEST_OS == 'android':
+			# Kullanıcının belirttiği klasör yapısına göre yolları ayarla
+			if conf.env.DEST_CPU in ['aarch64', 'arm64', 'arm64-v8a']:
+				lib_cpu = 'aarch64'
+				# 64-bit için özel SDL yolu (sdllib/android/)
+				sdl_lib_path = os.path.abspath('sdllib/android')
+				lib_path = os.path.abspath('lib/android/aarch64')
+				
+				Logs.info('[AArch64] Lib Path: %s' % lib_path)
+				Logs.info('[AArch64] SDL Path: %s' % sdl_lib_path)
+				
+				flags += ['-L' + lib_path, '-L' + sdl_lib_path]
+				conf.env.append_unique('LIBPATH', [lib_path, sdl_lib_path])
+			else:
+				# 32-bit (armeabi-v7a) için ESKİ DÜZEN (Değişiklik yok)
+				lib_path = os.path.abspath('lib/android/arm')
+				flags += ['-L' + lib_path]
+				conf.env.append_unique('LIBPATH', [lib_path])
+		else:
+			# Android dışı POSIX sistemler
+			lib_path = os.path.abspath('lib/%s/%s' % (conf.env.DEST_OS, lib_cpu))
+			flags += ['-L' + lib_path]
+			conf.env.append_unique('LIBPATH', [lib_path])
+
 	if conf.env.COMPILER_CC != 'msvc':
 		flags += ['-pthread']
 
@@ -512,10 +554,9 @@ def configure(conf):
 			'-I'+os.path.abspath('.')+'/thirdparty/SDL',
 			'-I'+os.path.abspath('.')+'/thirdparty/openal-soft/include/',
 			'-I'+os.path.abspath('.')+'/thirdparty/fontconfig',
-			'-I'+os.path.abspath('.')+'/thirdparty/freetype/include',
-			'-llog',
-			'-lz'
+			'-I'+os.path.abspath('.')+'/thirdparty/freetype/include'
 		]
+		conf.env.append_unique('LIB', ['log', 'z', 'atomic'])
 
 		flags += ['-funwind-tables', '-g']
 	elif conf.env.COMPILER_CC != 'msvc' and conf.env.DEST_OS != 'darwin' and conf.env.DEST_CPU in ['x86', 'x86_64']:
@@ -629,7 +670,14 @@ def build(bld):
 
 	if bld.env.DEST_OS in ['win32', 'android']:
 		sdl_name = 'SDL2.dll' if bld.env.DEST_OS == 'win32' else 'libSDL2.so'
-		sdl_path = os.path.join('lib', bld.env.DEST_OS, bld.env.DEST_CPU, sdl_name)
+		
+		# AArch64 (64-bit Android) için sdllib/android klasörüne yönlendiriyoruz
+		if bld.env.DEST_OS == 'android' and bld.env.DEST_CPU in ['aarch64', 'arm64', 'arm64-v8a']:
+			sdl_path = os.path.join('sdllib', 'android', sdl_name)
+		else:
+			# Diğer durumlar için eski standart yol geçerli
+			sdl_path = os.path.join('lib', bld.env.DEST_OS, bld.env.DEST_CPU, sdl_name)
+			
 		bld.install_files(bld.env.LIBDIR, [sdl_path])
 
 	if bld.env.DEST_OS == 'win32':

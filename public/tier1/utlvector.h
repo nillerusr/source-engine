@@ -1433,7 +1433,7 @@ inline void CUtlVector<T, A>::PurgeAndDeleteElementsArray()
 	{
 		delete[] Element(i);
 	}
-	RemoveAll();
+	Purge();
 }
 
 

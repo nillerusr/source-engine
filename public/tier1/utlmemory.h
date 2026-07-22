@@ -988,7 +988,7 @@ CUtlMemoryAligned<T, nAlignment>::CUtlMemoryAligned( T* pMemory, int numElements
 	CUtlMemory<T>::m_nGrowSize = CUtlMemory<T>::EXTERNAL_BUFFER_MARKER;
 
 	CUtlMemory<T>::m_pMemory = (T*)Align( pMemory );
-	CUtlMemory<T>::m_nAllocationCount = ( (int)(pMemory + numElements) - (int)CUtlMemory<T>::m_pMemory ) / sizeof(T);
+	CUtlMemory<T>::m_nAllocationCount = ( (T*)pMemory + numElements ) - (T*)CUtlMemory<T>::m_pMemory;
 }
 
 template< class T, int nAlignment >
@@ -998,7 +998,7 @@ CUtlMemoryAligned<T, nAlignment>::CUtlMemoryAligned( const T* pMemory, int numEl
 	CUtlMemory<T>::m_nGrowSize = CUtlMemory<T>::EXTERNAL_CONST_BUFFER_MARKER;
 
 	CUtlMemory<T>::m_pMemory = (T*)Align( pMemory );
-	CUtlMemory<T>::m_nAllocationCount = ( (int)(pMemory + numElements) - (int)CUtlMemory<T>::m_pMemory ) / sizeof(T);
+	CUtlMemory<T>::m_nAllocationCount = ( (T*)pMemory + numElements ) - (T*)CUtlMemory<T>::m_pMemory;
 }
 
 template< class T, int nAlignment >
@@ -1018,7 +1018,7 @@ void CUtlMemoryAligned<T, nAlignment>::SetExternalBuffer( T* pMemory, int numEle
 	Purge();
 
 	CUtlMemory<T>::m_pMemory = (T*)Align( pMemory );
-	CUtlMemory<T>::m_nAllocationCount = ( (int)(pMemory + numElements) - (int)CUtlMemory<T>::m_pMemory ) / sizeof(T);
+	CUtlMemory<T>::m_nAllocationCount = ( (T*)pMemory + numElements ) - (T*)CUtlMemory<T>::m_pMemory;
 
 	// Indicate that we don't own the memory
 	CUtlMemory<T>::m_nGrowSize = CUtlMemory<T>::EXTERNAL_BUFFER_MARKER;
@@ -1031,7 +1031,7 @@ void CUtlMemoryAligned<T, nAlignment>::SetExternalBuffer( const T* pMemory, int 
 	Purge();
 
 	CUtlMemory<T>::m_pMemory = (T*)Align( pMemory );
-	CUtlMemory<T>::m_nAllocationCount = ( (int)(pMemory + numElements) - (int)CUtlMemory<T>::m_pMemory ) / sizeof(T);
+	CUtlMemory<T>::m_nAllocationCount = ( (T*)pMemory + numElements ) - (T*)CUtlMemory<T>::m_pMemory;
 
 	// Indicate that we don't own the memory
 	CUtlMemory<T>::m_nGrowSize = CUtlMemory<T>::EXTERNAL_CONST_BUFFER_MARKER;

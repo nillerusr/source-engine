@@ -2183,28 +2183,17 @@ static int s_nSteamDeckCached = -1;
 
 bool IsSteamDeck()
 {
-	if (s_nSteamDeckCached == -1) {
-		if ( CommandLine()->CheckParm( "-nogamepadui" ) != 0 )
-		{
-			s_nSteamDeckCached = 0;
-		}
-		else
-		{
-			if ( CommandLine()->CheckParm( "-gamepadui" ) != 0 )
-			{
-				s_nSteamDeckCached = 1;
-			}
-			else
-			{
-				char *deck = getenv("SteamDeck");
-				if ( deck == 0 || *deck == 0 )
-					s_nSteamDeckCached = 0;
-				else
-					s_nSteamDeckCached = atoi(deck) != 0;
-			}
-		}
-	}
-	return s_nSteamDeckCached;
+	if ( CommandLine()->FindParm( "-gamepadui" ) )
+		return true;
+
+	if ( CommandLine()->FindParm( "-nogamepadui" ) )
+		return false;
+
+	const char *pszSteamDeckEnv = getenv( "SteamDeck" );
+	if ( pszSteamDeckEnv && *pszSteamDeckEnv )
+		return atoi( pszSteamDeckEnv ) != 0;
+
+	return false;
 }
 
 //-----------------------------------------------------------------------------

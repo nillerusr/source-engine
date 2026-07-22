@@ -15,7 +15,7 @@ $Configuration
 	$Compiler
 	{
 		$AdditionalIncludeDirectories	".\hl2;.\hl2\elements;$SRCDIR\game\shared\hl2;$BASE"
-		$PreprocessorDefinitions		"$BASE;HL2_CLIENT_DLL"
+		$PreprocessorDefinitions		"$BASE;HL2_CLIENT_DLL;GAMEPADUI"
 	}
 }
 

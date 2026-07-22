@@ -217,6 +217,21 @@ typedef float64x2_t __m128d; /* 128-bit vector containing 2 doubles */
 #else
 typedef float32x4_t __m128d;
 #endif
+
+#if defined(__aarch64__) && defined(__GNUC__) && !defined(__clang__) && (__GNUC__ < 8)
+// Workaround for missing double-precision reinterpret intrinsics in older GCC
+FORCE_INLINE int64x2_t vreinterpretq_s64_f64(float64x2_t x) { return (int64x2_t)x; }
+FORCE_INLINE float64x2_t vreinterpretq_f64_s64(int64x2_t x) { return (float64x2_t)x; }
+FORCE_INLINE float64x2_t vreinterpretq_f64_s32(int32x4_t x) { return (float64x2_t)x; }
+FORCE_INLINE int32x4_t vreinterpretq_s32_f64(float64x2_t x) { return (int32x4_t)x; }
+FORCE_INLINE float64x2_t vreinterpretq_f64_u64(uint64x2_t x) { return (float64x2_t)x; }
+FORCE_INLINE uint64x2_t vreinterpretq_u64_f64(float64x2_t x) { return (uint64x2_t)x; }
+FORCE_INLINE float64x2_t vreinterpretq_f64_u32(uint32x4_t x) { return (float64x2_t)x; }
+FORCE_INLINE uint32x4_t vreinterpretq_u32_f64(float64x2_t x) { return (uint32x4_t)x; }
+FORCE_INLINE float32x4_t vreinterpretq_f32_f64(float64x2_t x) { return (float32x4_t)x; }
+FORCE_INLINE float64x2_t vreinterpretq_f64_f32(float32x4_t x) { return (float64x2_t)x; }
+#endif
+
 typedef int64x2_t __m128i; /* 128-bit vector containing integers */
 
 // __int64 is defined in the Intrinsics Guide which maps to different datatype

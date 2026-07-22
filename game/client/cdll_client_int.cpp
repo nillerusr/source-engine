@@ -171,6 +171,10 @@ extern vgui::IInputInternal *g_InputInternal;
 #include "sixense/in_sixense.h"
 #endif
 
+#if defined( GAMEPADUI )
+#include "../gamepadui/igamepadui.h"
+#endif // GAMEPADUI
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -216,6 +220,10 @@ IEngineReplay *g_pEngineReplay = NULL;
 IEngineClientReplay *g_pEngineClientReplay = NULL;
 IReplaySystem *g_pReplay = NULL;
 #endif
+
+#if defined(GAMEPADUI)
+IGamepadUI* g_pGamepadUI = nullptr;
+#endif // GAMEPADUI
 
 IHaptics* haptics = NULL;// NVNT haptics system interface singleton
 
@@ -1156,6 +1164,43 @@ void CHLClient::PostInit()
 		}
 	}
 #endif
+
+#if defined(GAMEPADUI)
+	if ( IsSteamDeck() )
+	{
+		CSysModule* pGamepadUIModule = g_pFullFileSystem->LoadModule( "gamepadui", "GAMEBIN", false );
+		if ( pGamepadUIModule != nullptr )
+		{
+			GamepadUI_Log( "Loaded gamepadui module.\n" );
+
+			CreateInterfaceFn gamepaduiFactory = Sys_GetFactory( pGamepadUIModule );
+			if ( gamepaduiFactory != nullptr )
+			{
+				g_pGamepadUI = (IGamepadUI*) gamepaduiFactory( GAMEPADUI_INTERFACE_VERSION, NULL );
+				if ( g_pGamepadUI != nullptr )
+				{
+					GamepadUI_Log( "Initializing IGamepadUI interface...\n" );
+
+					factorylist_t factories;
+					FactoryList_Retrieve( factories );
+					g_pGamepadUI->Initialize( factories.appSystemFactory );
+				}
+				else
+				{
+					GamepadUI_Log( "Unable to pull IGamepadUI interface.\n" );
+				}
+			}
+			else
+			{
+				GamepadUI_Log( "Unable to get gamepadui factory.\n" );
+			}
+		}
+		else
+		{
+			GamepadUI_Log( "Unable to load gamepadui module\n" );
+		}
+	}
+#endif // GAMEPADUI
 }
 
 //-----------------------------------------------------------------------------
@@ -1196,9 +1241,13 @@ void CHLClient::Shutdown( void )
 	UncacheAllMaterials();
 
 	IGameSystem::ShutdownAllSystems();
-	
-	gHUD.Shutdown();
-	VGui_Shutdown();
+
+	#if defined(GAMEPADUI)
+	if (g_pGamepadUI != nullptr)
+		g_pGamepadUI->Shutdown();
+	#endif // GAMEPADUI
+
+	gHUD.Shutdown();	VGui_Shutdown();
 	gTouch.Shutdown();
 
 	ParticleMgr()->Term();
@@ -1242,6 +1291,11 @@ int CHLClient::HudVidInit( void )
 	gHUD.VidInit();
 
 	GetClientVoiceMgr()->VidInit();
+
+#if defined(GAMEPADUI)
+	if (g_pGamepadUI != nullptr)
+		g_pGamepadUI->VidInit();
+#endif // GAMEPADUI
 
 	return 1;
 }
@@ -1293,6 +1347,11 @@ void CHLClient::HudUpdate( bool bActive )
 		g_pSixenseInput->SixenseFrame( 0, NULL ); 
 	}
 #endif
+
+#if defined(GAMEPADUI)
+	if (g_pGamepadUI != nullptr)
+		g_pGamepadUI->OnUpdate( frametime );
+#endif // GAMEPADUI
 }
 
 //-----------------------------------------------------------------------------
@@ -1640,6 +1699,11 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 		CReplayRagdollRecorder::Instance().Init();
 	}
 #endif
+
+#if defined(GAMEPADUI)
+	if (g_pGamepadUI != nullptr)
+		g_pGamepadUI->OnLevelInitializePreEntity();
+#endif // GAMEPADUI
 }
 
 
@@ -1651,6 +1715,11 @@ void CHLClient::LevelInitPostEntity( )
 	IGameSystem::LevelInitPostEntityAllSystems();
 	C_PhysPropClientside::RecreateAll();
 	internalCenterPrint->Clear();
+
+#if defined(GAMEPADUI)
+	if (g_pGamepadUI != nullptr)
+		g_pGamepadUI->OnLevelInitializePostEntity();
+#endif // GAMEPADUI
 }
 
 //-----------------------------------------------------------------------------
@@ -1716,6 +1785,11 @@ void CHLClient::LevelShutdown( void )
 	ParticleMgr()->RemoveAllEffects();
 	
 	StopAllRumbleEffects();
+
+#if defined(GAMEPADUI)
+	if (g_pGamepadUI != nullptr)
+		g_pGamepadUI->OnLevelShutdown();
+#endif // GAMEPADUI
 
 	gHUD.LevelShutdown();
 
@@ -2655,3 +2729,4 @@ void CHLClient::IN_TouchEvent( int type, int fingerId, int x, int y )
 
 	gTouch.ProcessEvent( &ev );
 }
+

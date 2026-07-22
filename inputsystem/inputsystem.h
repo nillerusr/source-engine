@@ -461,6 +461,8 @@ public:
 	int	 m_mouseRawAccumX, m_mouseRawAccumY;
 
 	float m_touchAccumX[TOUCH_FINGER_MAX_COUNT], m_touchAccumY[TOUCH_FINGER_MAX_COUNT];
+	int m_touchFingerIds[TOUCH_FINGER_MAX_COUNT];
+	int GetFingerIndex( int fingerId, bool bAdd );
 
 	// For the 'SleepUntilInput' feature
 	HANDLE m_hEvent;

@@ -50,8 +50,9 @@ void CInputSystem::InitializeTouch( void )
 
 	memset( m_touchAccumX, 0, sizeof(m_touchAccumX) );
 	memset( m_touchAccumY, 0, sizeof(m_touchAccumY) );
+	for( int i = 0; i < TOUCH_FINGER_MAX_COUNT; i++ ) m_touchFingerIds[i] = -1;
 
-	m_bJoystickInitialized = true;
+	m_bTouchInitialized = true;
 	SDL_AddEventWatch(TouchSDLWatcher, this);
 }
 
@@ -64,35 +65,64 @@ void CInputSystem::ShutdownTouch()
 	m_bTouchInitialized = false;
 }
 
-bool CInputSystem::GetTouchAccumulators( int fingerId, float &dx, float &dy )
+int CInputSystem::GetFingerIndex( int fingerId, bool bAdd )
 {
-	dx = m_touchAccumX[fingerId];
-	dy = m_touchAccumY[fingerId];
+	for( int i = 0; i < TOUCH_FINGER_MAX_COUNT; i++ )
+	{
+		if( m_touchFingerIds[i] == fingerId )
+			return i;
+	}
 
-	m_touchAccumX[fingerId] = m_touchAccumY[fingerId] = 0.f;
+	if( bAdd )
+	{
+		for( int i = 0; i < TOUCH_FINGER_MAX_COUNT; i++ )
+		{
+			if( m_touchFingerIds[i] == -1 )
+			{
+				m_touchFingerIds[i] = fingerId;
+				return i;
+			}
+		}
+	}
+
+	return -1;
+}
+
+bool CInputSystem::GetTouchAccumulators( int index, float &dx, float &dy )
+{
+	if( index < 0 || index >= TOUCH_FINGER_MAX_COUNT )
+		return false;
+
+	dx = m_touchAccumX[index];
+	dy = m_touchAccumY[index];
+
+	m_touchAccumX[index] = m_touchAccumY[index] = 0.f;
 
 	return true;
 }
 
 void CInputSystem::FingerEvent(int eventType, int fingerId, float x, float y, float dx, float dy)
 {
-	if( fingerId >= TOUCH_FINGER_MAX_COUNT )
+	int index = GetFingerIndex( fingerId, eventType != IE_FingerUp );
+
+	if( index < 0 || index >= TOUCH_FINGER_MAX_COUNT )
 		return;
 
 	if( eventType == IE_FingerUp )
 	{
-		m_touchAccumX[fingerId] = 0.f;
-		m_touchAccumY[fingerId] = 0.f;
+		m_touchAccumX[index] = 0.f;
+		m_touchAccumY[index] = 0.f;
+		m_touchFingerIds[index] = -1;
 	}
 	else
 	{
-		m_touchAccumX[fingerId] += dx;
-		m_touchAccumY[fingerId] += dy;
+		m_touchAccumX[index] += dx;
+		m_touchAccumY[index] += dy;
 	}
 
 	int _x,_y;
 	memcpy( &_x, &x, sizeof(float) );
 	memcpy( &_y, &y, sizeof(float) );
-	PostEvent(eventType, m_nLastSampleTick, fingerId, _x, _y);
+	PostEvent(eventType, m_nLastSampleTick, index, _x, _y);
 }
 

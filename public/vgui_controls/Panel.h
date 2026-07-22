@@ -12,6 +12,7 @@
 #pragma once
 #endif
 
+#include "tier1/KeyValues.h"
 #include "tier1/utlflags.h"
 #include "vgui/VGUI.h"
 #include "vgui/Dar.h"
@@ -959,7 +960,7 @@ inline bool	Panel::IsMouseInputDisabledForThisPanel() const
 	return _flags.IsFlagSet( IS_MOUSE_DISABLED_FOR_THIS_PANEL_ONLY );
 }
 
-#if 0
+#if 1
 // This function cannot be defined here because it requires on a full definition of
 // KeyValues (to call KeyValues::MakeCopy()) whereas the rest of this header file
 // assumes a forward declared definition of KeyValues.
@@ -981,7 +982,6 @@ inline void Panel::PostMessageToAllSiblingsOfType( KeyValues *msg, float delaySe
 			}
 		}
 	}
-
 	msg->deleteThis();
 }
 #endif

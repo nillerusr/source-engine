@@ -76,6 +76,7 @@ def build(bld):
 	source += game["sources"] + ['../../public/tier0/memoverride.cpp']
 	includes += game["includes"]
 	defines = game["defines"]
+	defines += ['GAMEPADUI']
 
 	defines.remove('PROTECTED_THINGS_ENABLE')
 

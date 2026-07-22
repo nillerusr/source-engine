@@ -450,7 +450,7 @@ void CTouchControls::CreateAtlasTexture()
 	int atlasSize = 0;
 
 	stbrp_rect *rects = (stbrp_rect*)malloc(textureList.Count()*sizeof(stbrp_rect));
-	memset(rects, 0, sizeof(stbrp_node)*textureList.Count());
+	memset(rects, 0, sizeof(stbrp_rect)*textureList.Count());
 
 	if( touchTextureID )
 		vgui::surface()->DeleteTextureByID( touchTextureID );

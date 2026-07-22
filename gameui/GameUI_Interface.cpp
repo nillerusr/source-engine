@@ -507,7 +507,7 @@ void CGameUI::PlayGameStartupSound()
 			engine->ClientCmd_Unrestricted( found );
 		}
 
-		fileNames.PurgeAndDeleteElements();
+		fileNames.PurgeAndDeleteElementsArray();
 	}
 }
 

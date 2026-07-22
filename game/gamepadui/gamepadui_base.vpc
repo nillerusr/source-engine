@@ -1,0 +1,129 @@
+//-----------------------------------------------------------------------------
+// GAMEPADUI_BASE.VPC
+//
+// Project Script
+//-----------------------------------------------------------------------------
+
+$Macro OUTBINDIR "$SRCDIR\..\game\$GAMENAME\bin"
+
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration "Debug"
+{
+    $General
+    {
+        $OutputDirectory        ".\Debug_$GAMENAME"   [$WINDOWS]
+        $IntermediateDirectory  ".\Debug_$GAMENAME"   [$WINDOWS]
+    }
+}
+
+$Configuration "Release"
+{
+    $General
+    {
+        $OutputDirectory        ".\Release_$GAMENAME"  [$WINDOWS]
+        $IntermediateDirectory  ".\Release_$GAMENAME"  [$WINDOWS]
+    }
+}
+
+$Configuration
+{
+    $General
+    {
+        $OutputDirectory ".\$GAMENAME"  [$OSXALL]
+    }
+
+    $Compiler
+    {
+        $AdditionalIncludeDirectories "$BASE;.\;$SRCDIR\vgui2\include;$SRCDIR\vgui2\controls;$SRCDIR\game\gamepadui;..\..\public"
+        $PreprocessorDefinitions      "$BASE;GAMEPADUI_DLL;VERSION_SAFE_STEAM_API_INTERFACES;strncpy=use_Q_strncpy_instead;_snprintf=use_Q_snprintf_instead"
+    }
+
+    $Linker
+    {
+        $SystemLibraries "iconv" [$OSXALL]
+        $SystemFrameworks "Carbon" [$OSXALL]
+        $SystemLibraries "rt" [$LINUXALL]
+        $IgnoreImportLibrary "TRUE"
+        $AdditionalDependencies "$BASE winmm.lib" [$WINDOWS]
+        $AdditionalDependencies "$BASE wsock32.lib Ws2_32.lib" [$BUILD_REPLAY]
+    }
+}
+
+$Project
+{
+    $Folder "Header Files"
+    {
+        $Folder "Public"
+        {
+            $File "igamepadui.h"
+        }
+
+        $File "gamepadui_basepanel.h"
+        $File "gamepadui_button.h"
+        $File "gamepadui_frame.h"
+        $File "gamepadui_genericconfirmation.h"
+        $File "gamepadui_gradient_helper.h"
+        $File "gamepadui_image.h"
+        $File "gamepadui_interface.h"
+        $File "gamepadui_mainmenu.h"
+        $File "gamepadui_panel.h"
+        $File "gamepadui_scroll.h"
+        $File "gamepadui_string.h"
+        $File "gamepadui_util.h"
+    }
+
+    $Folder "Source Files"
+    {
+        $Folder "Common"
+        {
+            $File "$SRCDIR\public\vgui_controls\vgui_controls.cpp"
+            $File "$SRCDIR\common\language.cpp"
+        }
+
+        $File "gamepadui_achievements.cpp"
+        $File "gamepadui_basepanel.cpp"
+        $File "gamepadui_button.cpp"
+        $File "gamepadui_frame.cpp"
+        $File "gamepadui_genericconfirmation.cpp"
+        $File "gamepadui_interface.cpp"
+        $File "gamepadui_mainmenu.cpp"
+        $File "gamepadui_newgame.cpp"
+        $File "gamepadui_savegame.cpp"
+        $File "gamepadui_options.cpp"
+        $File "gamepadui_util.cpp"
+    }
+
+    $Folder "Link Libraries"
+    {
+        $Lib  bitmap
+        $Lib  choreoobjects
+        $Lib  mathlib
+        $Lib  matsys_controls
+        $Lib  tier1
+        $Lib  tier2
+        $Lib  tier3
+        $Lib  vgui_controls
+        $Lib  vtf
+
+		// these are only necessary if HL2_RETAIL is enabled.
+        $ImpLib  steam_api [$HL2_RETAIl]
+        $Lib "$LIBCOMMON/libjpeg" [$HL2_RETAIl]
+		$Lib libpng [$HL2_RETAIl]
+
+        $Lib $LIBCOMMON/libcrypto [$POSIX]
+
+        $ImpLib "$LIBCOMMON\curl"   [$OSXALL]
+
+        $Lib "$LIBCOMMON\libcurl" [$WIN32]
+        $Lib "libz" [$WINDOWS]
+
+        $ImpLib	"SDL2" [$SDL]
+
+        $Libexternal libz [$LINUXALL]
+        $Libexternal "$LIBCOMMON/libcurl" [$LINUXALL]
+        $Libexternal "$LIBCOMMON/libcurlssl" [$LINUXALL]
+        $Libexternal "$LIBCOMMON/libssl" [$LINUXALL]
+    }
+
+}

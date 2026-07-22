@@ -12,6 +12,7 @@ $Group "gamedlls"
 {
 	"client"
 	"server"
+	"gamepadui"
 }
 
 
@@ -142,6 +143,7 @@ $Group "game"
 //	"fbxutils"
 	"filesystem_stdio"
 	"gameui"
+	"gamepadui"
 //	"gc"
 //	"gcsdk"
 //	"gcsdk_gc"
@@ -246,6 +248,7 @@ $Group "everything"
 	"foundry"
 	"gameevents"
 	"gameui"
+	"gamepadui"
 //	"gc"
 	"gcsdk"
 //	"gcsdk_gc"

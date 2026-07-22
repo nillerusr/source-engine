@@ -1,0 +1,69 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+from waflib import Utils
+import os
+
+top = '.'
+PROJECT_NAME = 'gamepadui'
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	conf.define('GAMEPADUI_DLL', 1)
+	conf.define('GAMEPADUI_GAME_HL2', 1)
+	conf.define('VERSION_SAFE_STEAM_API_INTERFACES', 1)
+
+def build(bld):
+	source = [
+		'gamepadui_achievements.cpp',
+		'gamepadui_basepanel.cpp',
+		'gamepadui_button.cpp',
+		'gamepadui_frame.cpp',
+		'gamepadui_genericconfirmation.cpp',
+		'gamepadui_interface.cpp',
+		'gamepadui_mainmenu.cpp',
+		'gamepadui_newgame.cpp',
+		'gamepadui_savegame.cpp',
+		'gamepadui_options.cpp',
+		'gamepadui_util.cpp',
+		'../../common/language.cpp',
+		'../../public/vgui_controls/vgui_controls.cpp',
+		'../../public/tier0/memoverride.cpp',
+	]
+
+	includes = [
+		'.',
+		'..',
+		'../../public',
+		'../../public/tier0',
+		'../../public/tier1',
+		'../../common',
+		'../../thirdparty',
+		'../../vgui2/include',
+		'../../vgui2/controls'
+	]
+
+	defines = []
+
+	libs = ['tier0', 'vgui_controls', 'tier1', 'tier2', 'tier3', 'vstdlib', 'vtf', 'bitmap', 'mathlib', 'SDL2', 'matsys_controls', 'choreoobjects', 'CRYPTO']
+
+	if bld.env.DEST_OS == 'win32':
+		libs += ['USER32', 'GDI32', 'winmm', 'wsock32', 'Ws2_32']
+		
+	install_path = bld.env.LIBDIR
+
+	bld.shlib(
+		source   = source,
+		target   = PROJECT_NAME,
+		name     = PROJECT_NAME,
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		install_path = install_path,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)

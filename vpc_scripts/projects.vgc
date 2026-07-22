@@ -304,6 +304,13 @@ $Project "GameUI"
 	"gameui\GameUI.vpc" [$WINDOWS||$X360||$POSIX]
 }
 
+$Project "gamepadui"
+{
+	"game\gamepadui\gamepadui_hl2.vpc"		[($WIN32||$X360||$POSIX) && $HL2]
+	"game\gamepadui\gamepadui_episodic.vpc"	[($WIN32||$X360||$POSIX) && $EPISODIC]
+	"game\gamepadui\gamepadui_portal.vpc"		[($WIN32||$X360||$POSIX) && $PORTAL]
+}
+
 $Project "game_shader_generic_advanced"
 {
 	"sdkshaders\advanced\game_shader_generic_advanced.vpc" [$WIN32]

@@ -540,6 +540,8 @@ DBG_INTERFACE bool DoNewAssertDialog( const tchar *pFilename, int line, const tc
 	{
 #ifdef OSX
 		void *ret = dlopen( "libSDL2-2.0.0.dylib", RTLD_LAZY );
+#elif defined( __ANDROID__ )
+		void *ret = dlopen( "libSDL2.so", RTLD_LAZY );
 #else
 		void *ret = dlopen( "libSDL2-2.0.so.0", RTLD_LAZY );
 #endif

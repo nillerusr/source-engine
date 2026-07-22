@@ -67,7 +67,7 @@ GL_FUNC_VOID(OpenGL,true,glDeleteSync,(GLsync a),(a))
 GL_FUNC(OpenGL,true,GLsync,glFenceSync,(GLenum a, GLbitfield b),(a,b))
 
 #if 1 //ifndef OSX // 10.6/GL 2.1 compatability
-GL_FUNC_VOID(OpenGL,true,glDrawRangeElementsBaseVertex,(GLenum a,GLuint b,GLuint c,GLsizei d,GLenum e,const GLvoid *f, GLenum g),(a,b,c,d,e,f,g))
+GL_FUNC_VOID(OpenGL,false,glDrawRangeElementsBaseVertex,(GLenum a,GLuint b,GLuint c,GLsizei d,GLenum e,const GLvoid *f, GLenum g),(a,b,c,d,e,f,g))
 #endif
 GL_FUNC_VOID(OpenGL,true,glEnable,(GLenum a),(a))
 GL_FUNC_VOID(OpenGL,true,glEnableVertexAttribArray,(GLuint a),(a))

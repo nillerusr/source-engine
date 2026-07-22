@@ -1901,7 +1901,21 @@ FORCEINLINE void GLMContext::DrawRangeElements(	GLenum mode, GLuint start, GLuin
 		// do the drawing
 		if (hasVP && hasFP)
 		{
+			if ( gGL->glDrawRangeElementsBaseVertex )
+		{
 			gGL->glDrawRangeElementsBaseVertex( mode, start, end, count, type, indicesActual, baseVertex );
+		}
+		else
+		{
+			if ( baseVertex == 0 )
+			{
+				gGL->glDrawRangeElements( mode, start, end, count, type, indicesActual );
+			}
+			else
+			{
+				Assert( !"glDrawRangeElementsBaseVertex not supported but baseVertex != 0" );
+			}
+		}
 
 			if ( m_slowCheckEnable )
 			{
@@ -1916,7 +1930,21 @@ FORCEINLINE void GLMContext::DrawRangeElements(	GLenum mode, GLuint start, GLuin
 
 	if ( m_pBoundPair )
 	{
-		gGL->glDrawRangeElementsBaseVertex( mode, start, end, count, type, indicesActual, baseVertex );
+		if ( gGL->glDrawRangeElementsBaseVertex )
+		{
+			gGL->glDrawRangeElementsBaseVertex( mode, start, end, count, type, indicesActual, baseVertex );
+		}
+		else
+		{
+			if ( baseVertex == 0 )
+			{
+				gGL->glDrawRangeElements( mode, start, end, count, type, indicesActual );
+			}
+			else
+			{
+				Assert( !"glDrawRangeElementsBaseVertex not supported but baseVertex != 0" );
+			}
+		}
 
 #if GLMDEBUG
 		if ( m_slowCheckEnable )
