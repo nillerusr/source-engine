@@ -2736,7 +2736,7 @@ void CL_SetSteamCrashComment()
 //
 static ConCommand startupmenu( "startupmenu", &CL_CheckToDisplayStartupMenus, "Opens initial menu screen and loads the background bsp, but only if no other level is being loaded, and we're not in developer mode." );
 
-ConVar cl_language( "cl_language", "english", FCVAR_USERINFO, "Language (from HKCU\\Software\\Valve\\Steam\\Language)" );
+ConVar cl_language( "cl_language", "english", FCVAR_USERINFO | FCVAR_ARCHIVE, "Language (from HKCU\\Software\\Valve\\Steam\\Language)" );
 void CL_InitLanguageCvar()
 {
 	Msg("CL_InitLanguageCvar\n");
