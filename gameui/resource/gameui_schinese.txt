@@ -1,0 +1,301 @@
+"lang"
+{
+"Language" "schinese"
+"Tokens"
+{
+//
+// Main menu
+//
+"GameUI_GameTitle" "Garry's Mod"
+"GameUI_Options" "选项"
+"GameUI_Quit" "退出游戏"
+"GameUI_QuitConfirmation" "确定要退出游戏吗？"
+"GameUI_Yes" "是"
+"GameUI_No" "否"
+"GameUI_OK" "确定"
+"GameUI_Cancel" "取消"
+"GameUI_Apply" "应用"
+"GameUI_Close" "关闭"
+"GameUI_Back" "返回"
+"GameUI_Next" "下一步"
+"GameUI_Previous" "上一步"
+"GameUI_Finish" "完成"
+"GameUI_Loading" "加载中..."
+"GameUI_Console" "控制台"
+"GameUI_NewGame" "开始新游戏"
+"GameUI_LoadGame" "读取游戏"
+"GameUI_SaveGame" "保存游戏"
+"GameUI_Disconnect" "断开连接"
+"GameUI_FindServers" "查找服务器"
+"GameUI_CreateServer" "创建服务器"
+"GameUI_ResumeGame" "继续游戏"
+"GameUI_RestartLevel" "重新开始关卡"
+"GameUI_Workshop" "创意工坊"
+"GameUI_Addons" "插件"
+"GameUI_Demos" "演示"
+"GameUI_Saves" "存档"
+
+//
+// Options dialog tabs
+//
+"GameUI_Keyboard" "键盘"
+"GameUI_Mouse" "鼠标"
+"GameUI_Audio" "音频"
+"GameUI_Video" "视频"
+"GameUI_Voice" "语音"
+"GameUI_Multiplayer" "多人游戏"
+"GameUI_Difficulty" "难度"
+"GameUI_Portal" "传送门"
+"GameUI_Touch" "触摸"
+"GameUI_Language" "语言"
+
+//
+// Language names
+//
+"GameUI_Language_English" "英语"
+"GameUI_Language_German" "德语"
+"GameUI_Language_French" "法语"
+"GameUI_Language_Italian" "意大利语"
+"GameUI_Language_Korean" "韩语"
+"GameUI_Language_Spanish" "西班牙语"
+"GameUI_Language_Simplified_Chinese" "简体中文"
+"GameUI_Language_Traditional_Chinese" "繁体中文"
+"GameUI_Language_Russian" "俄语"
+"GameUI_Language_Thai" "泰语"
+"GameUI_Language_Japanese" "日语"
+"GameUI_Language_Portuguese" "葡萄牙语"
+"GameUI_Language_Polish" "波兰语"
+"GameUI_Language_Danish" "丹麦语"
+"GameUI_Language_Dutch" "荷兰语"
+"GameUI_Language_Finnish" "芬兰语"
+"GameUI_Language_Norwegian" "挪威语"
+"GameUI_Language_Swedish" "瑞典语"
+"GameUI_Language_Romanian" "罗马尼亚语"
+"GameUI_Language_Turkish" "土耳其语"
+"GameUI_Language_Hungarian" "匈牙利语"
+"GameUI_Language_Czech" "捷克语"
+"GameUI_Language_Brazilian" "巴西葡萄牙语"
+"GameUI_Language_Bulgarian" "保加利亚语"
+"GameUI_Language_Greek" "希腊语"
+"GameUI_Language_Ukrainian" "乌克兰语"
+
+//
+// Language change dialog
+//
+"GameUI_ChangeLanguageRestart_Title" "更改语言"
+"GameUI_ChangeLanguageRestart_Info" "更改语言后需要重启游戏才能完全生效。是否继续？"
+"GameUI_ChangeLanguageRestart_OkButton" "更改语言"
+"GameUI_ChangeLanguageRestart_CancelButton" "取消"
+
+//
+// Video options
+//
+"GameUI_Resolution" "分辨率"
+"GameUI_AspectRatio" "宽高比"
+"GameUI_RefreshRate" "刷新率"
+"GameUI_Fullscreen" "全屏模式"
+"GameUI_Windowed" "窗口模式"
+"GameUI_WindowedNoBorder" "无边框窗口"
+"GameUI_Antialiasing" "抗锯齿"
+"GameUI_FilteringMode" "纹理过滤模式"
+"GameUI_Bilinear" "双线性"
+"GameUI_Trilinear" "三线性"
+"GameUI_Anisotropic" "各向异性"
+"GameUI_VerticalSync" "垂直同步"
+"GameUI_MulticoreRendering" "多核渲染"
+"GameUI_Brightness" "亮度"
+"GameUI_Gamma" "伽马值"
+"GameUI_AdjustGamma" "调整伽马"
+"GameUI_AdjustGamma_Title" "伽马校正"
+"GameUI_HDR" "高动态范围"
+"GameUI_HDR_Quality" "HDR 质量"
+"GameUI_ShadowQuality" "阴影质量"
+"GameUI_TextureQuality" "纹理质量"
+"GameUI_FilteringMode_Trilinear" "三线性过滤"
+"GameUI_PixelShader" "像素着色器"
+"GameUI_Mat_DxLevel" "DirectX 级别"
+"GameUI_Auto" "自动"
+
+//
+// Audio options
+//
+"GameUI_SpeakerSetup" "扬声器设置"
+"GameUI_SoundQuality" "声音质量"
+"GameUI_High" "高"
+"GameUI_Medium" "中"
+"GameUI_Low" "低"
+"GameUI_MasterVolume" "主音量"
+"GameUI_MusicVolume" "音乐音量"
+"GameUI_SFXVolume" "音效音量"
+"GameUI_VoiceVolume" "语音音量"
+"GameUI_NoClosedCaptions" "无字幕"
+"GameUI_SubtitlesAndSoundEffects" "字幕和音效"
+"GameUI_Subtitles" "仅字幕"
+"GameUI_Captions" "字幕"
+"GameUI_CloseCaptioning" "字幕"
+"GameUI_SpokenLanguage" "配音语言"
+
+//
+// Keyboard options
+//
+"GameUI_UseDefaults" "使用默认值"
+"GameUI_Key" "按键"
+"GameUI_Bind" "绑定"
+"GameUI_Clear" "清除"
+"GameUI_AdvancedEllipsis" "高级..."
+"GameUI_KeyboardSettings" "键盘设置"
+"GameUI_KeyBinding" "按键绑定"
+
+//
+// Mouse options
+//
+"GameUI_MouseSensitivity" "鼠标灵敏度"
+"GameUI_InvertMouse" "鼠标反向"
+"GameUI_MouseFilter" "鼠标过滤"
+"GameUI_RawMouseInput" "原始鼠标输入"
+"GameUI_JoyLook" "摇杆视角"
+"GameUI_JoyForward" "摇杆前进"
+"GameUI_Joystick" "手柄"
+"GameUI_JoystickLookSpeedYaw" "水平视角速度"
+"GameUI_JoystickLookSpeedPitch" "垂直视角速度"
+"GameUI_JoystickYawSensitivity" "水平灵敏度"
+"GameUI_JoystickPitchSensitivity" "垂直灵敏度"
+
+//
+// Touch options
+//
+"GameUI_TouchEnable" "启用触摸"
+"GameUI_TouchDraw" "显示触摸按钮"
+"GameUI_TouchReverse" "反向触摸"
+"GameUI_TouchFilter" "触摸过滤"
+"GameUI_TouchAcceleration" "触摸加速"
+"GameUI_TouchSensitivity" "触摸灵敏度"
+
+//
+// Multiplayer options
+//
+"GameUI_PlayerName" "玩家名称"
+"GameUI_PlayerModel" "玩家模型"
+"GameUI_Crosshair" "准星"
+"GameUI_CrosshairColor" "准星颜色"
+"GameUI_Crosshair_Thickness" "准星粗细"
+"GameUI_Crosshair_Size" "准星大小"
+"GameUI_Crosshair_Gap" "准星间隙"
+"GameUI_Crosshair_Alpha" "准星透明度"
+"GameUI_CrosshairColor_Red" "红"
+"GameUI_CrosshairColor_Green" "绿"
+"GameUI_CrosshairColor_Blue" "蓝"
+"GameUI_CrosshairColor_Alpha" "透明度"
+"GameUI_Crosshair_Dynamic" "动态准星"
+"GameUI_Crosshair_Dot" "准星中心点"
+"GameUI_Crosshair_Blend" "准星混合"
+"GameUI_CrosshairScale" "准星缩放"
+
+//
+// Dialog titles and messages
+//
+"GameUI_ConfirmNewGame_Title" "开始新游戏"
+"GameUI_NewGameWarning" "开始新游戏将丢失当前进度。是否继续？"
+"GameUI_ConfirmLoadGame_Title" "读取游戏"
+"GameUI_LoadWarning" "读取存档将丢失当前进度。是否继续？"
+"GameUI_ConfirmSaveGame_Title" "保存游戏"
+"GameUI_ConfirmOverwriteSaveGame_Title" "覆盖存档"
+"GameUI_ConfirmOverwriteSaveGame_Info" "是否覆盖此存档？"
+"GameUI_ConfirmDeleteSaveGame_Title" "删除存档"
+"GameUI_ConfirmDeleteSaveGame_Info" "是否删除此存档？"
+"GameUI_SavingWarning" "正在保存...请勿关闭游戏"
+"GameUI_CommentaryDialogTitle" "解说"
+"GameUI_CommentaryUnlock" "解锁解说"
+"GameUI_Dialog_Warning" "警告"
+"GameUI_Action" "操作"
+
+//
+// Server browser
+//
+"GameUI_Servers" "服务器"
+"GameUI_Internet" "互联网"
+"GameUI_LAN" "局域网"
+"GameUI_Favorites" "收藏"
+"GameUI_History" "历史"
+"GameUI_Refresh" "刷新"
+"GameUI_Connect" "连接"
+"GameUI_AddServer" "添加服务器"
+"GameUI_GameInfo" "游戏信息"
+"GameUI_ServerPassword" "服务器密码"
+
+//
+// Load/Save
+//
+"GameUI_Load" "读取"
+"GameUI_Save" "保存"
+"GameUI_Delete" "删除"
+"GameUI_FileName" "文件名"
+"GameUI_Date" "日期"
+"GameUI_ElapsedTime" "游戏时间"
+"GameUI_MapName" "地图名称"
+
+//
+// Create server
+//
+"GameUI_Map" "地图"
+"GameUI_ServerName" "服务器名称"
+"GameUI_MaxPlayers" "最大玩家数"
+"GameUI_ServerPassword" "服务器密码"
+"GameUI_Start" "开始"
+"GameUI_Settings" "设置"
+
+//
+// Achievements
+//
+"GameUI_Achievements" "成就"
+"GameUI_Achievements_SteamRequired_Title" "需要 Steam"
+"GameUI_Achievements_SteamRequired_Message" "需要 Steam 才能查看成就。"
+
+//
+// Common
+//
+"GameUI_Accept" "接受"
+"GameUI_Decline" "拒绝"
+"GameUI_Retry" "重试"
+"GameUI_Reset" "重置"
+"GameUI_Default" "默认"
+"GameUI_Advanced" "高级"
+"GameUI_General" "常规"
+"GameUI_Details" "详情"
+"GameUI_Play" "开始游戏"
+"GameUI_Stop" "停止"
+"GameUI_Pause" "暂停"
+"GameUI_Continue" "继续"
+"GameUI_Enabled" "已启用"
+"GameUI_Disabled" "已禁用"
+"GameUI_On" "开"
+"GameUI_Off" "关"
+"GameUI_Yes" "是"
+"GameUI_No" "否"
+"GameUI_None" "无"
+"GameUI_Unknown" "未知"
+
+//
+// Controller
+//
+"GameUI_ControllerSettingsText" "控制器设置"
+
+//
+// Console warnings
+//
+"GameUI_Console_QuitWarning" "退出游戏"
+"GameUI_Console_FileCorrupt" "文件已损坏"
+"GameUI_Console_NoStorageDeviceSelectedTitle" "未选择存储设备"
+"GameUI_Console_NoStorageDeviceSelectedBody" "请选择一个存储设备以继续。"
+"GameUI_Console_NoUserProfileSelectedTitle" "未选择用户档案"
+"GameUI_Console_NoUserProfileSelectedBody" "请选择一个用户档案以继续。"
+"GameUI_Console_StorageDeviceRequiredBody" "需要存储设备。"
+"GameUI_Console_StorageNeededBody" "需要更多存储空间。"
+"GameUI_Console_StorageRemovedTitle" "存储设备已移除"
+"GameUI_Console_StorageRemovedBody" "存储设备已被移除。"
+"GameUI_Console_StorageTooFullTitle" "存储空间不足"
+"GameUI_Console_StorageTooFullBody" "存储空间已满。"
+"GameUI_Console_UserProfileRequiredBody" "需要用户档案。"
+
+}
+}

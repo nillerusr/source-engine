@@ -408,7 +408,7 @@ bool CLinuxFont::CreateFromMemory(const char *windowsFontName, void *data, int d
 }
 
 #include "tier1/convar.h"
-ConVar cl_language( "cl_language", "english", FCVAR_USERINFO, "Language (from HKCU\\Software\\Valve\\Steam\\Language)" );
+ConVar cl_language( "cl_language", "english", FCVAR_USERINFO | FCVAR_ARCHIVE, "Language (from HKCU\\Software\\Valve\\Steam\\Language)" );
 
 #if !HAVE_FC
 char *TryFindFont(const char *winFontName, bool bBold, int italic)
