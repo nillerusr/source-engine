@@ -41,7 +41,14 @@ typedef void *HDC;
 #include "materialsystem/materialsystem_config.h"
 #include "materialsystem/itexture.h"
 #include "materialsystem/imaterialsystemhardwareconfig.h"
+#if defined(_WIN32) || defined(ANDROID)
 #include "jpeglib/jpeglib.h"
+#else
+// Use the system libjpeg headers: we link against the system libjpeg(-turbo), whose ABI
+// (JPEG_LIB_VERSION 62) differs from the bundled v8 headers in public/jpeglib.
+#include <stdio.h>
+#include <jpeglib.h>
+#endif
 #include "vgui/ISurface.h"
 #include "vgui_controls/Controls.h"
 #include "gl_shader.h"
