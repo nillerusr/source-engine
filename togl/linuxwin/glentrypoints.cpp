@@ -45,6 +45,7 @@
 
 #if (defined(_LINUX) || defined(PLATFORM_BSD)) && !defined(__ANDROID__)
 #include <GL/glx.h>
+#include <dlfcn.h>
 #endif
 
 // NOTE: This has to be the last file included!
@@ -301,9 +302,22 @@ static bool CheckOpenGLExtension_internal(const char *ext, const int coremajor, 
 		{
 			static CDynamicFunctionOpenGL< true, Display *( APIENTRY *)( ), Display* > glXGetCurrentDisplay("glXGetCurrentDisplay");
 			static CDynamicFunctionOpenGL< true, const char *( APIENTRY *)( Display*, int ), const char * > glXQueryExtensionsString("glXQueryExtensionsString");
-			if (glXQueryExtensionsString && glXGetCurrentDisplay) 
+			// Under Wayland, SDL uses EGL: there is no GLX context, and the GLX entry
+			// points returned by SDL_GL_GetProcAddress/eglGetProcAddress are unusable
+			// stubs. Only query GLX extensions when SDL's video driver is x11.
+			static int s_bIsX11 = -1;
+			if (s_bIsX11 < 0)
 			{
-				extensions = glXQueryExtensionsString(glXGetCurrentDisplay(), 0);
+				typedef const char *(*SDL_GetCurrentVideoDriver_t)(void);
+				SDL_GetCurrentVideoDriver_t pfn = (SDL_GetCurrentVideoDriver_t)dlsym(RTLD_DEFAULT, "SDL_GetCurrentVideoDriver");
+				const char *drv = pfn ? pfn() : NULL;
+				s_bIsX11 = (!drv || !strcmp(drv, "x11")) ? 1 : 0;
+			}
+			Display *dpy = (s_bIsX11 && glXQueryExtensionsString && glXGetCurrentDisplay) ? glXGetCurrentDisplay() : NULL;
+			const char *glxext = dpy ? glXQueryExtensionsString(dpy, 0) : NULL;
+			if (glxext)
+			{
+				extensions = glxext;
 				ptr = strstr(extensions, ext);
 			}
 		}
