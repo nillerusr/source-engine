@@ -50,7 +50,13 @@
 
 // use the JPEGLIB_USE_STDIO define so that we can read in jpeg's from outside the game directory tree.  For Spray Import.
 #define JPEGLIB_USE_STDIO
+#if defined(_WIN32) || defined(ANDROID)
 #include "jpeglib/jpeglib.h"
+#else
+// System libjpeg headers, matching the linked system libjpeg(-turbo) (see engine/sys_getmodes.cpp).
+#include <stdio.h>
+#include <jpeglib.h>
+#endif
 #undef JPEGLIB_USE_STDIO
 
 #include <setjmp.h>
