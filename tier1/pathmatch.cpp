@@ -71,7 +71,7 @@ static bool s_bShowDiag;
 #ifdef POSIX
 #include <signal.h>
 #define DEBUG_BREAK() raise(SIGINT)
-#elif !defined (__arm__)
+#elif !defined (__arm__) && !defined(__aarch64__) && !defined(__riscv)
 #define DEBUG_BREAK() __asm__ __volatile__ ( "int $3" )
 #else
 #define DEBUG_BREAK() 

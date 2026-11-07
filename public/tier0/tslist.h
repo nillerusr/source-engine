@@ -53,7 +53,13 @@ inline bool ThreadInterlockedAssignIf128( int128 volatile * pDest, const int128 
     // We do not want the original comparand modified by the swap
     // so operate on a local copy.
     int128 local_comparand = comparand;
+#if defined( __riscv )
+	// RISC-V (without Zacas) has no 128-bit CAS instruction, so there is no
+	// __sync_bool_compare_and_swap_16. libatomic provides a (lock-based) 16-byte CAS.
+	return __atomic_compare_exchange_n( pDest, &local_comparand, value, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST );
+#else
 	return __sync_bool_compare_and_swap( pDest, local_comparand, value );
+#endif
 }
 #endif
 

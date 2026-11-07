@@ -124,7 +124,7 @@ uint64 CalculateCPUFreq()
 		}
 	}
 
-#if !defined(__arm__) && !defined(__aarch64__)
+#if !defined(__arm__) && !defined(__aarch64__) && !defined(__riscv)
 	// fallback mechanism to calculate when failed
 	// Compute the period. Loop until we get 3 consecutive periods that
 	// are the same to within a small error. The error is chosen
