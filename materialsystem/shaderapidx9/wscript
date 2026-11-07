@@ -25,6 +25,12 @@ def configure(conf):
 			'USE_ACTUAL_DX',
 		])
 
+	if conf.env.DXVK:
+		# these break <cstring> (included by DXVK's windows headers): string.h is already
+		# parsed with the macro active, so ::strncpy is never declared
+		conf.env.DEFINES.remove('strncpy=use_Q_strncpy_instead')
+		conf.env.DEFINES.remove('_snprintf=use_Q_snprintf_instead')
+
 
 def build(bld):
 	source = [
@@ -56,6 +62,9 @@ def build(bld):
 	if bld.env.DEST_OS != 'win32':
 		source += ['winutils.cpp']
 
+	if bld.env.DXVK:
+		source += ['dxvk_d3dx9.cpp']
+
 	includes = [
 		'.',
 		'../../public',
@@ -69,6 +78,8 @@ def build(bld):
 
 	libs = ['tier0','tier1','tier2','vstdlib','togl','bitmap','mathlib']
 
+	if bld.env.DXVK:
+		libs += ['DXVK', 'SDL2']
 	if bld.env.DEST_OS == 'android':
 		libs += ['ANDROID_SUPPORT']
 	elif bld.env.DEST_OS == 'win32' and not bld.env.GL:

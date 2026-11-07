@@ -7,3 +7,8 @@
 [submodule "lib"]
 	path = lib
 	url = https://github.com/nillerusr/source-engine-libs.git
+[submodule "dxvk"]
+	path = dxvk
+	url = https://github.com/doitsujin/dxvk.git
+	update = none
+	ignore = untracked

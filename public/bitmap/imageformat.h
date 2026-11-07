@@ -108,7 +108,11 @@ enum ImageFormat
 	NUM_IMAGE_FORMATS
 };
 
-#if defined( POSIX  ) || defined( DX_TO_GL_ABSTRACTION )
+#if defined( DXVK )
+// DXVK-native uses the real D3D9 formats (togl/dxvk_d3d9.h). That header is only included
+// by the D3D9 code; the D3DFORMAT functions below are declared when it is present
+// (dxvk_d3d9.h includes this file again at its end for the other include order).
+#elif defined( POSIX  ) || defined( DX_TO_GL_ABSTRACTION )
 typedef enum _D3DFORMAT
 	{
 		D3DFMT_INDEX16,
@@ -410,8 +414,10 @@ namespace ImageLoader
 	// convert back and forth from D3D format to ImageFormat, regardless of
 	// whether it's supported or not
 	//-----------------------------------------------------------------------------
+#if !defined( DXVK ) || defined( DXVK_D3D9_H )
 	ImageFormat D3DFormatToImageFormat( D3DFORMAT format );
 	D3DFORMAT ImageFormatToD3DFormat( ImageFormat format );
+#endif
 
 	// Flags for ResampleRGBA8888
 	enum

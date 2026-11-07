@@ -180,7 +180,9 @@ def define_platform(conf):
 	conf.env.DEDICATED = conf.options.DEDICATED
 	conf.env.TESTS = conf.options.TESTS
 	conf.env.TOGLES = conf.options.TOGLES
-	conf.env.GL = conf.options.GL and not conf.options.TESTS and not conf.options.DEDICATED
+	conf.env.DXVK = conf.options.DXVK and not conf.options.TESTS and not conf.options.DEDICATED
+	# DXVK-native replaces ToGL: the engine uses its real D3D9 path, DXVK translates D3D9 to Vulkan
+	conf.env.GL = conf.options.GL and not conf.env.DXVK and not conf.options.TESTS and not conf.options.DEDICATED
 	conf.env.OPUS = conf.options.OPUS
 
 	arch32 = conf.run_test(CPP_32BIT_CHECK, 'Testing 32bit support')
@@ -205,6 +207,9 @@ def define_platform(conf):
 
 	if conf.options.TOGLES:
 		conf.env.append_unique('DEFINES', ['TOGLES'])
+
+	if conf.env.DXVK:
+		conf.env.append_unique('DEFINES', ['DXVK'])
 
 	if conf.options.TESTS:
 		conf.define('UNITTESTS', 1)
@@ -302,6 +307,12 @@ def options(opt):
 
 	grp.add_option('--use-togl', action = 'store', dest = 'GL', type = 'int', default = sys.platform != 'win32',
 		help = 'build engine with ToGL [default: %default]')
+
+	grp.add_option('--use-dxvk', action = 'store_true', dest = 'DXVK', default = False,
+		help = 'build engine with DXVK-native (D3D9 on Vulkan) instead of ToGL [default: %default]')
+
+	grp.add_option('--dxvk-prefix', action = 'store', dest = 'DXVK_PREFIX', type = 'string', default = None,
+		help = 'install prefix of DXVK-native (include/dxvk, lib/libdxvk_d3d9.so) [default: dxvk-<arch>]')
 
 	grp.add_option('--build-games', action = 'store', dest = 'GAMES', type = 'string', default = 'hl2',
 		help = 'build games [default: %default]')
@@ -403,6 +414,14 @@ def check_deps(conf):
 
 			if conf.options.OPUS:
 				conf.check_cfg(package='opus', uselib_store='OPUS', args=['--cflags', '--libs'])
+
+			if conf.env.DXVK:
+				prefix = conf.options.DXVK_PREFIX or os.path.join(conf.path.abspath(), 'dxvk-' + ('x86_64' if conf.env.DEST_CPU == 'amd64' else conf.env.DEST_CPU))
+				conf.env.INCLUDES_DXVK = [os.path.join(prefix, 'include', 'dxvk')]
+				conf.env.LIBPATH_DXVK = [os.path.join(prefix, 'lib')]
+				conf.check_cxx(lib='dxvk_d3d9', uselib_store='DXVK', use='DXVK', msg='Checking for DXVK-native d3d9 in ' + prefix)
+				# d3d9.h etc. are included from shared engine headers (rendermechanism.h), so make them visible everywhere
+				conf.env.append_unique('INCLUDES', conf.env.INCLUDES_DXVK)
 	else:
 		conf.check(lib='SDL2', uselib_store='SDL2')
 		conf.check(lib='freetype2', uselib_store='FT2')

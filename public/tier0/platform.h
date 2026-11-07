@@ -173,7 +173,12 @@
 	#endif
 
 	#define IsPosix() true
-	#define IsPlatformOpenGL() true
+	#if defined( DXVK )
+		// DXVK-native: real D3D9 (on Vulkan), so take the same rendering paths as Windows
+		#define IsPlatformOpenGL() false
+	#else
+		#define IsPlatformOpenGL() true
+	#endif
 #else
 	#error
 #endif
