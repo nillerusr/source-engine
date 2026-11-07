@@ -66,9 +66,13 @@
 			#include "../../dx9sdk/include/d3dx9.h"
 		#endif
 		typedef HWND VD3DHWND;
+	#elif defined( DXVK )
+		// DXVK-native: the real D3D9 API on Linux, translated to Vulkan by libdxvk_d3d9.
+		#include "togl/dxvk_d3d9.h"
+		typedef HWND VD3DHWND;
 	#endif
 
-	#define	GLMPRINTF(args)	
+	#define	GLMPRINTF(args)
 	#define	GLMPRINTSTR(args)
 	#define	GLMPRINTTEXT(args)
 #endif // defined(DX_TO_GL_ABSTRACTION)

@@ -16,6 +16,12 @@
 	void* GetCurrentThread();
 	void SetThreadAffinityMask( void *hThread, int nMask );
 	void GlobalMemoryStatus( MEMORYSTATUS *pOut );
+
+#if defined( DXVK )
+	// DXVK-native: HWND is the SDL_Window* (implemented with SDL in winutils.cpp);
+	// with ToGL this one comes from togl.
+	BOOL GetClientRect( VD3DHWND hWnd, RECT *pRect );
+#endif
 #endif
 
 #endif // WINUTILS_H

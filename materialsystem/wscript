@@ -20,6 +20,12 @@ def configure(conf):
 		'_snprintf=use_Q_snprintf_instead'
 	])
 
+	if conf.env.DXVK:
+		# these break <cstring> (included by DXVK's windows headers): string.h is already
+		# parsed with the macro active, so ::strncpy is never declared
+		conf.env.DEFINES.remove('strncpy=use_Q_strncpy_instead')
+		conf.env.DEFINES.remove('_snprintf=use_Q_snprintf_instead')
+
 def build(bld):
 	source = [
 		'CColorCorrection.cpp',
