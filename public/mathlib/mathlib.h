@@ -1203,6 +1203,8 @@ FORCEINLINE int RoundFloatToInt(float f)
 	return pResult[1];
 #elif defined (__arm__) ||  defined (__aarch64__)
         return (int)(f + 0.5f);
+#elif defined( PLATFORM_RISCV64 )
+	return (int)lrintf( f );	// round to nearest (even), like cvtss2si on x86
 #else
 #error Unknown architecture
 #endif
@@ -1235,6 +1237,8 @@ FORCEINLINE unsigned long RoundFloatToUnsignedLong(float f)
 #else  // !X360
 #if defined(__arm__) || defined(__aarch64__)
         return (unsigned long)(f + 0.5f);
+#elif defined( PLATFORM_RISCV64 )
+	return (unsigned long)llrintf( f );
 #elif defined( PLATFORM_WINDOWS_PC64 )
 	uint nRet = ( uint ) f;
 	if ( nRet & 1 )
