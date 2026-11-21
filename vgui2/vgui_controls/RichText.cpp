@@ -862,6 +862,12 @@ void RichText::Paint()
 		if ( m_LineBreaks.IsValidIndex( lineBreakIndexIndex ) && m_LineBreaks[lineBreakIndexIndex] < iLim )
 			iLim = m_LineBreaks[lineBreakIndexIndex];
 
+		// Stop when entering or exiting the selected range
+		if ( i < selection0 && iLim >= selection0 )
+			iLim = selection0;
+		if ( i >= selection0 && i < selection1 && iLim >= selection1 )
+			iLim = selection1;
+
 		// Handle non-drawing characters specially
 		for ( int iT = i; iT < iLim; iT++ )
 		{
