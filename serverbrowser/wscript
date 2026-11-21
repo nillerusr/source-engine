@@ -60,7 +60,7 @@ def build(bld):
 
 	bld.shlib(
 		source   = source,
-		target   = PROJECT_NAME,
+		target   = PROJECT_NAME.lower() if bld.env.DEST_OS == 'darwin' else PROJECT_NAME,
 		name     = PROJECT_NAME,
 		features = 'c cxx',
 		includes = includes,
