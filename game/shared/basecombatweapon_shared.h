@@ -526,6 +526,11 @@ private:
 	CNetworkVar( CBaseCombatCharacterHandle, m_hOwner );				// Player carrying this weapon
 
 protected:
+#ifdef GAME_DLL
+	bool			m_bLowered;			// Whether the viewmodel is raised or lowered
+	float			m_flRaiseTime;		// If lowered, the time we should raise the viewmodel
+#endif
+
 #if defined ( TF_CLIENT_DLL ) || defined ( TF_DLL )
 	// Regulate crit frequency to reduce client-side seed hacking
 	void					AddToCritBucket( float flAmount );
