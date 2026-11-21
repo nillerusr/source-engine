@@ -24,7 +24,7 @@
 #include "tier1/utllinkedlist.h"
 #include "togl/rendermechanism.h"
 #include "appframework/ilaunchermgr.h"	// gets pulled in from glmgr.h
-#include "appframework/iappsystemgroup.h"
+#include "appframework/IAppSystemGroup.h"
 #include "inputsystem/ButtonCode.h"
 
 
