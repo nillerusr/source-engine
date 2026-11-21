@@ -17,6 +17,8 @@ def configure(conf):
 	conf.define('TIER0_DLL_EXPORT',1)
 #	conf.define('NO_HOOK_MALLOC',1)
 
+	if conf.env.DEST_OS == 'freebsd': conf.check_cc(lib='execinfo')
+
 def build(bld):
 	source = [
 		'assert_dialog.cpp',
@@ -82,6 +84,7 @@ def build(bld):
 		libs = ['ADVAPI32', 'WS2_32']
 	else:
 		libs = ['DL', 'M', 'LOG']
+	if bld.env.DEST_OS == 'freebsd': libs += ['EXECINFO']
 
 	install_path = None if bld.env.BUILD_SDK else bld.env.LIBDIR
 
