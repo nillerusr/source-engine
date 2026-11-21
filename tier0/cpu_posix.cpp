@@ -124,7 +124,7 @@ uint64 CalculateCPUFreq()
 		}
 	}
 
-#if !defined(__arm__) && !defined(__aarch64__)
+#if defined(__i386__) || defined(_M_IX86)
 	// fallback mechanism to calculate when failed
 	// Compute the period. Loop until we get 3 consecutive periods that
 	// are the same to within a small error. The error is chosen
@@ -178,7 +178,6 @@ uint64 CalculateCPUFreq()
 #else
 	// ARM hard-coded frequency
 	return (uint64)2000000000;
-#endif // if !ARM
+#endif // if i386
 #endif // if APPLE
 }
-

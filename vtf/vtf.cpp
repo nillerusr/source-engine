@@ -951,7 +951,8 @@ static bool ReadHeaderFromBufferPastBaseHeader( CUtlBuffer &buf, VTFFileHeader_t
 
 bool CVTFTexture::ReadHeader( CUtlBuffer &buf, VTFFileHeader_t &header )
 {
-	if ( IsX360() && SetupByteSwap( buf ) )
+#ifdef _X360
+	if ( SetupByteSwap( buf ) )
 	{
 		VTFFileBaseHeader_t baseHeader;
 		m_Swap.SwapFieldsToTargetEndian( &baseHeader, (VTFFileBaseHeader_t*)buf.PeekGet() );
@@ -979,6 +980,7 @@ bool CVTFTexture::ReadHeader( CUtlBuffer &buf, VTFFileHeader_t &header )
 			}
 		}
 	}
+#endif
 
 	memset( &header, 0, sizeof(VTFFileHeader_t) );
 	buf.Get( &header, sizeof(VTFFileBaseHeader_t) );
