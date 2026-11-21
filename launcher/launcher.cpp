@@ -239,11 +239,7 @@ void SetGameDirectory( const char *game )
 bool GetExecutableName( char *out, int outSize )
 {
 #ifdef WIN32
-	if ( !::GetModuleFileName( ( HINSTANCE )GetModuleHandle( NULL ), out, outSize ) )
-	{
-		return false;
-	}
-	return true;
+	return !!::GetModuleFileName( ( HINSTANCE )GetModuleHandle( NULL ), out, outSize );
 #else
 	return false;
 #endif

@@ -269,12 +269,6 @@ static bool s_bRunningWithDebugModules = false;
 
 #ifdef POSIX
 
-#ifdef ANDROID
-#define DEFAULT_LIB_PATH ""
-#else
-#define DEFAULT_LIB_PATH "bin/"
-#endif
-
 bool foundLibraryWithPrefix( char *pModuleAbsolutePath, size_t AbsolutePathSize, const char *pPath, const char *pModuleName )
 {
 	char str[1024];
@@ -283,20 +277,8 @@ bool foundLibraryWithPrefix( char *pModuleAbsolutePath, size_t AbsolutePathSize,
 	bool bFound = false;
 
 	struct stat statBuf;
-	Q_snprintf(pModuleAbsolutePath, AbsolutePathSize, "%s/" DEFAULT_LIB_PATH "lib%s", pPath, str);
+	Q_snprintf(pModuleAbsolutePath, AbsolutePathSize, "%s/lib%s", pPath, str);
 	bFound |= stat(pModuleAbsolutePath, &statBuf) == 0;
-
-	if( !bFound )
-	{
-		Q_snprintf(pModuleAbsolutePath, AbsolutePathSize, "%s/" DEFAULT_LIB_PATH "%s", pPath, str);
-		bFound |= stat(pModuleAbsolutePath, &statBuf) == 0;
-	}
-
-	if( !bFound )
-	{
-		Q_snprintf(pModuleAbsolutePath, AbsolutePathSize, "%s/lib%s", pPath, str);
-		bFound |= stat(pModuleAbsolutePath, &statBuf) == 0;
-	}
 
 	if( !bFound )
 	{
@@ -321,7 +303,7 @@ CSysModule *Sys_LoadModule( const char *pModuleName, Sys_Flags flags /* = SYS_NO
 	// prior to the call to this routine.
 	char szCwd[1024];
 #ifdef POSIX
-	char szModuleName[1024] = { 0 };
+	char szModuleName[1024] = { '\0' };
 #endif
 	HMODULE hDLL = NULL;
 
@@ -367,7 +349,7 @@ CSysModule *Sys_LoadModule( const char *pModuleName, Sys_Flags flags /* = SYS_NO
 		}
 
 #elif defined( POSIX )
-		if( !foundLibraryWithPrefix(szAbsoluteModuleName, sizeof(szAbsoluteModuleName), szCwd, pModuleName) )
+		if( !foundLibraryWithPrefix(szAbsoluteModuleName, sizeof(szAbsoluteModuleName), LIBDIR, pModuleName) )
 		{
 			Warning("Can't find module - %s\n", pModuleName);
 			return reinterpret_cast<CSysModule *>(hDLL);

@@ -369,6 +369,16 @@ DBG_INTERFACE struct SDL_Window * GetAssertDialogParent()
 {
 	return g_SDLWindow;
 }
+#elif !defined( _WIN32 )
+DBG_INTERFACE void SetAssertDialogParent( void *window)
+{
+	(void)window;
+}
+
+DBG_INTERFACE void * GetAssertDialogParent()
+{
+	return NULL;
+}
 #endif
 
 DBG_INTERFACE bool ShouldUseNewAssertDialog()

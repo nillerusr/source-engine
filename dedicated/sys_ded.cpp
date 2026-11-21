@@ -360,12 +360,9 @@ void CDedicatedAppSystemGroup::Destroy()
 bool GetExecutableName( char *out, int nMaxLen )
 {
 #ifdef _WIN32
-	if ( !::GetModuleFileName( ( HINSTANCE )GetModuleHandle( NULL ), out, nMaxLen ) )
-		return false;
-	return true;
-#elif POSIX
-	Q_strncpy( out, g_szEXEName, nMaxLen );
-	return true;
+	return !!::GetModuleFileName( ( HINSTANCE )GetModuleHandle( NULL ), out, nMaxLen );
+#else
+	return false;
 #endif
 }
 

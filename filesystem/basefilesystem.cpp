@@ -5057,20 +5057,17 @@ CSysModule *CBaseFileSystem::LoadModule( const char *pFileName, const char *pPat
 		if ( FilterByPathID( &m_SearchPaths[i], lookup ) )
 			continue;
 
-		Q_snprintf( tempPathID, sizeof(tempPathID), "%s%s", m_SearchPaths[i].GetPathString(), pFileName ); // append the path to this dir.
-		pModule = Sys_LoadModule( tempPathID );
-		if ( pModule ) 
-		{
-			// we found the binary in one of our search paths
-			return pModule;
-		}
-
 #ifdef POSIX
 		Q_snprintf( tempPathID, sizeof(tempPathID), "%slib%s", m_SearchPaths[i].GetPathString(), pFileName ); // append the path to this dir.
 		pModule = Sys_LoadModule( tempPathID );
 		if ( pModule )
 			return pModule;
 #endif
+
+		Q_snprintf( tempPathID, sizeof(tempPathID), "%s%s", m_SearchPaths[i].GetPathString(), pFileName ); // append the path to this dir.
+		pModule = Sys_LoadModule( tempPathID );
+		if ( pModule ) 
+			return pModule;
 	}
 #endif
 

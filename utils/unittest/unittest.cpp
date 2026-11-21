@@ -94,7 +94,7 @@ bool CUnitTestApp::Create()
 
 #ifdef WIN32
 	WIN32_FIND_DATA findFileData;
-	HANDLE hFind= FindFirstFile("tests/*.dll", &findFileData);
+	HANDLE hFind= FindFirstFile("bin/tests/*.dll", &findFileData);
 
 	while (hFind != INVALID_HANDLE_VALUE)
 	{
@@ -122,7 +122,7 @@ bool CUnitTestApp::Create()
 #elif POSIX
 	DIR *d;
 	struct dirent *dir;
-	d = opendir("tests");
+	d = opendir(LIBDIR "/tests");
 	if (d)
 	{
 		while ((dir = readdir(d)) != NULL)

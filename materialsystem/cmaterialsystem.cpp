@@ -672,7 +672,7 @@ bool CMaterialSystem::Connect( CreateInterfaceFn factory )
 	g_pLauncherMgr = (ILauncherMgr *)factory( "SDLMgrInterface001" /*SDL_MGR_INTERFACE_VERSION*/, NULL );		
 	if ( !g_pLauncherMgr )
 	{
-		return false;
+		Warning("Cannot connect SDL\n");
 	}
 #endif // USE_SDL
 #endif // !DEDICATED
@@ -3102,8 +3102,6 @@ void CMaterialSystem::ResetTempHWMemory( bool bExitingLevel )
 //-----------------------------------------------------------------------------
 void CMaterialSystem::CacheUsedMaterials( )
 {
-	printf("Cache materials\n");
-
 	g_pShaderAPI->EvictManagedResources();
 
 	for (MaterialHandle_t i = FirstMaterial(); i != InvalidMaterial(); i = NextMaterial(i) )
