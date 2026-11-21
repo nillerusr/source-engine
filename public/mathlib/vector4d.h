@@ -25,6 +25,8 @@
 
 #if defined (__arm__) || defined(__aarch64__)
 #include "sse2neon.h"
+#elif defined(__riscv)
+#include "sse2simde.h"
 #endif
 
 // forward declarations

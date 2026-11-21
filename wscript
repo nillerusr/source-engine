@@ -523,7 +523,8 @@ def configure(conf):
 
 	if conf.env.DEST_CPU in ['x86', 'x86_64']:
 		flags += ['-mfpmath=sse']
-	elif conf.env.DEST_CPU in ['arm', 'aarch64']:
+	elif conf.env.DEST_CPU in ['arm', 'aarch64', 'riscv']:
+		# char is unsigned by default on ARM and RISC-V, the code assumes x86 (signed)
 		flags += ['-fsigned-char']
 
 	if conf.env.DEST_CPU == 'arm':
@@ -531,6 +532,11 @@ def configure(conf):
 
 	if conf.env.DEST_OS == 'freebsd':
 		linkflags += ['-lexecinfo']
+
+	if conf.env.DEST_CPU == 'riscv':
+		# 16-byte CAS (tier0/tslist.h) comes from libatomic on RISC-V.
+		# Added as LIB (not a linker flag) so it comes after the objects (--as-needed).
+		conf.env.append_unique('LIB', ['atomic'])
 
 	if conf.env.DEST_OS != 'win32':
 		cflags += flags
