@@ -9,6 +9,10 @@
 #ifndef _WIN32
 
 #include "appframework/ilaunchermgr.h"
+#include <ctype.h>
+#ifdef DXVK
+#include <SDL.h>
+#endif
 
 // LINUX path taken from //Steam/main/src/tier0/platform_posix.cpp - Returns installed RAM in MB. 
 static unsigned long GetInstalledRAM()
@@ -55,11 +59,47 @@ void GlobalMemoryStatus( MEMORYSTATUS *pOut )
 	pOut->dwTotalPhys = static_cast<SIZE_T>( ulTotalRam );
 }
 
+// With ToGL these functions are never expected to be called (DebuggerBreak); the real D3D9
+// path used with DXVK-native does call them.
+
 void Sleep( unsigned int ms )
 {
+#ifndef DXVK
 	DebuggerBreak();
+#endif
 	ThreadSleep( ms );
 }
+
+#ifdef DXVK
+// DXVK-native: HWND is the SDL_Window*
+
+bool IsIconic( VD3DHWND hWnd )
+{
+	return hWnd && ( SDL_GetWindowFlags( (SDL_Window *)hWnd ) & SDL_WINDOW_MINIMIZED );
+}
+
+BOOL GetClientRect( VD3DHWND hWnd, RECT *pRect )
+{
+	int w = 0, h = 0;
+	if ( hWnd )
+		SDL_GetWindowSize( (SDL_Window *)hWnd, &w, &h );
+	pRect->left = pRect->top = 0;
+	pRect->right = w;
+	pRect->bottom = h;
+	return hWnd != NULL;
+}
+
+BOOL ClientToScreen( VD3DHWND hWnd, LPPOINT pPoint )
+{
+	int x = 0, y = 0;
+	if ( hWnd )
+		SDL_GetWindowPosition( (SDL_Window *)hWnd, &x, &y );
+	pPoint->x += x;
+	pPoint->y += y;
+	return TRUE;
+}
+
+#else
 
 bool IsIconic( VD3DHWND hWnd )
 {
@@ -74,20 +114,28 @@ BOOL ClientToScreen( VD3DHWND hWnd, LPPOINT pPoint )
 	return true;
 }
 
+#endif // DXVK
+
 void* GetCurrentThread()
 {
+#ifndef DXVK
 	DebuggerBreak();
+#endif
 	return 0;
 }
 
 void SetThreadAffinityMask( void *hThread, int nMask )
 {
+#ifndef DXVK
 	DebuggerBreak();
+#endif
 }
 
+#ifndef DXVK // DXVK's GUID has its own operator==
 bool GUID::operator==( const struct _GUID &other ) const
 {
 	DebuggerBreak();
 	return memcmp( this, &other, sizeof( GUID ) ) == 0;
 }
+#endif
 #endif

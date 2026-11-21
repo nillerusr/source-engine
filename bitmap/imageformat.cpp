@@ -7,6 +7,8 @@
 #if defined( _WIN32 ) && !defined( _X360 ) && !defined( DX_TO_GL_ABSTRACTION )
 #include <windows.h>
 #include "../dx9sdk/include/d3d9types.h"
+#elif defined( DXVK )
+#include "togl/dxvk_d3d9.h"
 #endif
 #include "bitmap/imageformat.h"
 #include "basetypes.h"

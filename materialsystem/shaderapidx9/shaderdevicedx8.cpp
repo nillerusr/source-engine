@@ -147,6 +147,12 @@ bool CShaderDeviceMgrDx8::Connect( CreateInterfaceFn factory )
 	gGL = ToGLConnectLibraries( factory );
 #endif
 
+#if defined( DXVK )
+	// DXVK-native must be told which window system the HWNDs belong to: the engine's
+	// windows are SDL2 windows. Respect an explicit choice from the environment.
+	setenv( "DXVK_WSI_DRIVER", "SDL2", 0 );
+#endif
+
 #if defined(IS_WINDOWS_PC) && defined(SHADERAPIDX9) && !defined(RECORDING) && !defined( DX_TO_GL_ABSTRACTION )
 	m_pD3D = NULL;
 
