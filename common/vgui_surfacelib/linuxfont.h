@@ -112,8 +112,8 @@ private:
 	struct abc_t
 	{
 		short b;
-		char a;
-		char c;
+		int8 a;
+		int8 c;
 	};
 
 	// cache for storing asian abc widths (since it's too big too just store them all)
