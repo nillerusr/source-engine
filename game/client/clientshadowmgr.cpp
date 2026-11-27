@@ -243,15 +243,15 @@ void CTextureAllocator::Init()
 
 #if !defined( _X360 )
 	// don't need depth buffer for shadows
-	m_TexturePage.InitRenderTarget( TEXTURE_PAGE_SIZE, TEXTURE_PAGE_SIZE, RT_SIZE_NO_CHANGE, IMAGE_FORMAT_ARGB8888, MATERIAL_RT_DEPTH_NONE, false, "_rt_Shadows" );
+	m_TexturePage.InitRenderTarget( TEXTURE_PAGE_SIZE, TEXTURE_PAGE_SIZE, RT_SIZE_NO_CHANGE, IMAGE_FORMAT_A8, MATERIAL_RT_DEPTH_NONE, false, "_rt_Shadows" );
 #else
 	// unfortunate explicit management required for this render target
 	// 32bpp edram is only largest shadow fragment, but resolved to actual shadow atlas
 	// because full-res 1024x1024 shadow buffer is too large for EDRAM
-	m_TexturePage.InitRenderTargetTexture( TEXTURE_PAGE_SIZE, TEXTURE_PAGE_SIZE, RT_SIZE_NO_CHANGE, IMAGE_FORMAT_ARGB8888, MATERIAL_RT_DEPTH_NONE, false, "_rt_Shadows" );
+	m_TexturePage.InitRenderTargetTexture( TEXTURE_PAGE_SIZE, TEXTURE_PAGE_SIZE, RT_SIZE_NO_CHANGE, IMAGE_FORMAT_A8, MATERIAL_RT_DEPTH_NONE, false, "_rt_Shadows" );
 
 	// edram footprint is only 256x256x4 = 256K
-	m_TexturePage.InitRenderTargetSurface( MAX_TEXTURE_SIZE, MAX_TEXTURE_SIZE, IMAGE_FORMAT_ARGB8888, false );
+	m_TexturePage.InitRenderTargetSurface( MAX_TEXTURE_SIZE, MAX_TEXTURE_SIZE, IMAGE_FORMAT_A8, false );
 
 	// due to texture/surface size mismatch, ensure texture page is entirely cleared translucent
 	// otherwise border artifacts at edge of shadows due to pixel shader averaging of unwanted bits
